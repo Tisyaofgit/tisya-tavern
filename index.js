@@ -58,7 +58,6 @@ function nativeControl(selector) {
     const target = query(selector);
     if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') throw new Error('原生操作当前不可用');
     close(); closeNativeDrawers(); hidePage();
-    if(selector==='#options_button'&&query('#tisya-input-more')?.getAttribute('aria-expanded')==='false')query('#tisya-input-more').click();
     target.focus({preventScroll:true});
     target.click();
 }
@@ -83,7 +82,7 @@ function nav() {
     const sections=SECTIONS.filter(([,id])=>document.getElementById(id)?.querySelector('.inline-drawer-toggle')).map(([key,,label])=>button(label,`section:${key}`)).join('');
     const native=groupOrder.filter(name=>groups.has(name)).map(name=>`<h3>${esc(name)}</h3><div class="tisya-list">${name==='工作流'?sections:''}${groups.get(name).map(entry=>button(entry.label,`drawer:${entry.key}`)).join('')}</div>`).join('');
     const styleVersion=getComputedStyle(document.body).getPropertyValue('--tisya-style-version').replace(/["']/g,'').trim();
-    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入工具','input-tools')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
+    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入快捷栏','input-tools')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
     overlay.querySelector('.tisya-backdrop').classList.add('tisya-navigation');
 }
 function page(title, html) {
@@ -253,7 +252,7 @@ async function run(fn) {
 }
 function stopUI() {
     if(generationBusy)throw new Error('请等当前操作完成再返回原生界面');
-    enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-input-expanded');query('#tisya-input-more')?.remove();
+    enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
     document.querySelectorAll('.tisya-actions').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
@@ -271,7 +270,7 @@ function init() {
         if(action==='chat'){close();closeNativeDrawers();hidePage();return;}
         if(action==='menu'){nav();return;}
         run(async()=>{
-        if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();if(query('#tisya-input-more')?.getAttribute('aria-expanded')==='false')query('#tisya-input-more').click();}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
+        if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('联系人分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);

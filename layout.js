@@ -1,5 +1,5 @@
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.1';
+export const VERSION = '0.2.0-alpha.2';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -92,21 +92,35 @@ export function mountLayout(document) {
     return { root, top, controls, overlay, dispose() { observer.disconnect(); root.remove(); top.remove(); controls.remove(); overlay.remove(); restores.reverse().forEach(fn => fn()); } };
 }
 
-export function installComposer(document) {
+export function installComposer(document, { onError = message => document.defaultView.toastr?.error(message) } = {}) {
     const composer = document.querySelector('#nonQRFormItems'), left = document.querySelector('#leftSendForm'), right = document.querySelector('#rightSendForm');
     if (!composer || !left || !right) return () => {};
-    const extra = document.createElement('button');
-    extra.id = 'tisya-input-more'; extra.type = 'button'; extra.textContent = '工具';
-    extra.setAttribute('aria-label', '展开输入工具'); extra.setAttribute('aria-expanded', 'false');
-    document.body.classList.add('tisya-tools-collapsed');
+    const attachment = document.createElement('button');
+    attachment.id = 'tisya-attach'; attachment.type = 'button';
+    attachment.title = '添加文件或图片'; attachment.setAttribute('aria-label', '添加文件或图片');
+    attachment.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l8-8a7 7 0 0 1 10 10l-8 8"/></svg><span>附件</span>';
+    attachment.addEventListener('click', () => {
+        const native = document.getElementById('attachFile'), input = document.getElementById('file_form_input');
+        if (!native || !input || input.disabled || native.matches('[disabled],[aria-disabled="true"]')) {
+            onError('宿主附件功能尚未就绪，请在扩展设置中启用附件功能后重试。');
+            return;
+        }
+        // Keep the user gesture synchronous. The native action installs its change
+        // handler and merges existing selections before opening the system picker.
+        native.click();
+    });
+    const separator = document.createElement('div');
+    separator.id = 'tisya-composer-separator'; separator.setAttribute('aria-hidden', 'true');
     const originals = new Map();
-    const labels = {options_button:'聊天菜单',mes_continue:'接写本条',mes_impersonate:'代写输入',stscript_continue:'恢复脚本',stscript_pause:'暂停脚本',stscript_stop:'停止脚本'};
+    const labels = {options_button:'聊天',extensionsMenuButton:'扩展',ttas_agent_send_toggle:'Agent',mes_continue:'接写',mes_impersonate:'代写',stscript_continue:'恢复',stscript_pause:'暂停',stscript_stop:'终止'};
     const scan = () => {
         for (const element of [...left.children, ...right.children]) {
-            if (element === extra || ['send_but', 'mes_stop', 'tisya-menu-trigger'].includes(element.id)) continue;
+            if (element === attachment || ['send_but', 'mes_stop', 'tisya-menu-trigger'].includes(element.id)) continue;
             if (!originals.has(element)) originals.set(element, {label:element.getAttribute('data-tisya-tool-label'),role:element.getAttribute('role'),tabindex:element.getAttribute('tabindex')});
             element.classList.add('tisya-composer-tool');
-            element.classList.toggle('tisya-tool-caption', !!labels[element.id] || element.textContent.trim().length < 3);
+            const simple = !element.querySelector('button,input,select,textarea,a') && (!!labels[element.id] || element.matches('button,.interactable,.fa-solid,.fa-fw') || element.textContent.trim().length < 3);
+            element.classList.toggle('tisya-tool-compact', simple);
+            element.classList.toggle('tisya-tool-caption', simple && (!!labels[element.id] || !/[\p{L}\p{N}]/u.test(element.textContent)));
             const text = labels[element.id] || element.getAttribute('aria-label') || element.title || element.getAttribute('data-tooltip')?.split('\n')[0] || element.textContent.trim() || '扩展操作';
             element.setAttribute('data-tisya-tool-label', text);
             // Simple icon buttons get keyboard access; complex extension widgets stay intact.
@@ -115,26 +129,18 @@ export function installComposer(document) {
             }
         }
     };
-    extra.addEventListener('click', () => {
-        const expanded = document.body.classList.toggle('tisya-input-expanded');
-        document.body.classList.toggle('tisya-tools-collapsed', !expanded);
-        extra.textContent = expanded ? '收起' : '工具';
-        extra.setAttribute('aria-expanded', String(expanded));
-        extra.setAttribute('aria-label', expanded ? '收起输入工具' : '展开输入工具');
-    });
     const keyboard = event => {
         if (!['Enter',' '].includes(event.key) || event.target.getAttribute('role') !== 'button' || !originals.has(event.target)) return;
         event.preventDefault(); event.target.click();
     };
     composer.addEventListener('keydown', keyboard);
-    left.append(extra); scan();
+    left.prepend(attachment); composer.append(separator); scan();
     const observer = new document.defaultView.MutationObserver(scan);
     observer.observe(left, {childList:true}); observer.observe(right, {childList:true});
     return () => {
-        observer.disconnect(); extra.remove(); composer.removeEventListener('keydown', keyboard);
-        document.body.classList.remove('tisya-input-expanded', 'tisya-tools-collapsed');
+        observer.disconnect(); attachment.remove(); separator.remove(); composer.removeEventListener('keydown', keyboard);
         for (const [element, old] of originals) {
-            element.classList.remove('tisya-composer-tool', 'tisya-tool-caption');
+            element.classList.remove('tisya-composer-tool', 'tisya-tool-compact', 'tisya-tool-caption');
             for (const [name, value] of [['data-tisya-tool-label',old.label],['role',old.role],['tabindex',old.tabindex]]) {
                 if (value === null) element.removeAttribute(name); else element.setAttribute(name,value);
             }

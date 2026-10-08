@@ -66,14 +66,14 @@ test('workflow navigation expands the existing native section and does not repla
 test('chat menu navigation exposes and focuses its actual native anchor',async()=>{
  const f=await setup(),d=f.w.document,anchor=d.querySelector('#options_button');anchor.setAttribute('tabindex','0');let focused=false;
  anchor.addEventListener('click',()=>{focused=d.activeElement===anchor;});
- await click(f,'menu');await click(f,'chat-all');assert.equal(d.querySelector('#tisya-input-more').getAttribute('aria-expanded'),'true');assert.equal(focused,true);f.w.happyDOM.abort();
+ await click(f,'menu');await click(f,'chat-all');assert.equal(d.querySelector('#tisya-input-more'),null);assert.equal(focused,true);f.w.happyDOM.abort();
 });
 
-test('sidebar input tools closes the page and exposes the original tool group',async()=>{
+test('sidebar shortcut entry closes the page and focuses the persistent attachment action',async()=>{
  const f=await setup();await click(f,'menu');await click(f,'input-tools');const d=f.w.document;
  assert.equal(d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),false);
- assert.equal(d.querySelector('#tisya-overlay').open,false);assert.equal(d.querySelector('#tisya-input-more').getAttribute('aria-expanded'),'true');
- d.querySelector('#tisya-input-more').click();assert.equal(d.body.classList.contains('tisya-tools-collapsed'),true);f.w.happyDOM.abort();
+ assert.equal(d.querySelector('#tisya-overlay').open,false);assert.equal(d.activeElement,d.querySelector('#tisya-attach'));
+ assert.equal(d.querySelector('#tisya-input-more'),null);assert.equal(d.body.classList.contains('tisya-tools-collapsed'),false);f.w.happyDOM.abort();
 });
 
 test('supported system fullscreen routes to native action while app header stays removed',async()=>{

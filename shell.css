@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.1 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.1";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.2 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.2";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -9,7 +9,7 @@ body.tisya-active #top-bar{display:none!important}
 #tisya-panel-controls *,#tisya-shell *,#tisya-overlay *,.tisya-actions *{box-sizing:border-box}
 #tisya-panel-controls button,#tisya-shell button,#tisya-overlay button,.tisya-actions button{font:inherit;line-height:1.4;min-height:44px;margin:0;border:1px solid var(--tisya-line);border-radius:10px;padding:8px 12px;background:#173e31;color:var(--tisya-gold);box-shadow:none;cursor:pointer;white-space:normal;text-shadow:none;letter-spacing:normal;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #tisya-panel-controls button:active,#tisya-shell button:active,#tisya-overlay button:active,.tisya-actions button:active{background:#315640}
-#tisya-panel-controls button:focus-visible,#tisya-shell button:focus-visible,#tisya-overlay button:focus-visible,.tisya-actions button:focus-visible,#tisya-input-more:focus-visible{outline:2px solid var(--tisya-gold);outline-offset:-3px}
+#tisya-panel-controls button:focus-visible,#tisya-shell button:focus-visible,#tisya-overlay button:focus-visible,.tisya-actions button:focus-visible,#tisya-menu-trigger:focus-visible,#tisya-attach:focus-visible,body.tisya-active #nonQRFormItems .tisya-composer-tool:focus-visible{outline:2px solid var(--tisya-gold);outline-offset:-3px}
 #tisya-shell{position:absolute;inset:0;z-index:100;pointer-events:none;min-width:0}
 #tisya-shell .tisya-page{display:none}
 #tisya-shell.tisya-page-open .tisya-page{display:block;position:absolute;inset:0 0 var(--tisya-safe-bottom);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:16px max(16px,calc((100% - 720px)/2));pointer-events:auto;background:linear-gradient(#062a20f5,#062a20f5),url(assets/water.png) center/cover}
@@ -69,22 +69,25 @@ body.tisya-active #chat .mes_button[data-tisya-label]::after,body.tisya-active #
 .tisya-actions button:disabled{opacity:.4;cursor:default}
 /* display:contents preserves native/third-party parent relationships and events. */
 body.tisya-active #send_form{width:calc(100% - 16px)!important;max-width:calc(100% - 16px)!important;margin:4px 8px 8px!important;padding:6px!important;box-sizing:border-box!important;border:1px solid #b5a87580!important;border-radius:18px!important;background:#10392df5!important;box-shadow:0 2px 12px #0003!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-body.tisya-active #nonQRFormItems{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px;grid-auto-flow:row;gap:4px!important;align-items:end!important;min-width:0;width:100%;margin:0;padding:0;max-height:min(50vh,360px);overflow-y:auto}
+body.tisya-active #nonQRFormItems{display:grid!important;grid-template-columns:44px repeat(4,minmax(0,1fr)) 44px;grid-auto-flow:row;gap:4px!important;align-items:end!important;min-width:0;width:100%;margin:0;padding:0;max-height:min(50vh,360px);overflow-y:auto}
 body.tisya-active #leftSendForm,body.tisya-active #rightSendForm{display:contents!important}
-body.tisya-active #send_textarea{grid-column:2;grid-row:1;width:100%!important;max-width:100%!important;min-width:0!important;min-height:44px!important;max-height:144px!important;box-sizing:border-box!important;padding:10px 4px!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font:16px/1.5 var(--tisya-ui)!important;color:var(--tisya-ink)!important;resize:none}
+body.tisya-active #send_textarea{order:2;grid-column:2/6;grid-row:auto;width:100%!important;max-width:100%!important;min-width:0!important;min-height:44px!important;max-height:144px!important;box-sizing:border-box!important;padding:10px 4px!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font:16px/1.5 var(--tisya-ui)!important;color:var(--tisya-ink)!important;resize:none}
 body.tisya-active #send_textarea::placeholder{color:#a5bcb0;opacity:1}
-#tisya-menu-trigger{grid-column:1;grid-row:1;border:0;background:transparent!important;color:var(--tisya-gold);width:44px;height:44px;min-width:0;padding:0;margin:0;font:13px/1.4 var(--tisya-ui);cursor:pointer;border-radius:10px}
-body.tisya-active #rightSendForm>#send_but,body.tisya-active #rightSendForm>#mes_stop{grid-column:3;grid-row:1;box-sizing:border-box!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;max-width:44px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;font-size:0!important;opacity:1}
+#tisya-menu-trigger{order:2;grid-column:1;grid-row:auto;border:0;background:transparent!important;color:var(--tisya-gold);width:44px;height:44px;min-width:0;padding:0;margin:0;font:13px/1.4 var(--tisya-ui);cursor:pointer;border-radius:10px}
+body.tisya-active #rightSendForm>#send_but,body.tisya-active #rightSendForm>#mes_stop{order:2;grid-column:6;grid-row:auto;box-sizing:border-box!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;max-width:44px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;font-size:0!important;opacity:1}
 body.tisya-active #send_but{background:url(assets/send.svg) center/36px 36px no-repeat!important}
 body.tisya-active #mes_stop{background:url(assets/stop.svg) center/36px 36px no-repeat!important}
 body.tisya-active #send_but::before,body.tisya-active #send_but::after,body.tisya-active #mes_stop::before,body.tisya-active #mes_stop::after,body.tisya-active #mes_stop>i{display:none!important;content:none!important}
-body.tisya-active #nonQRFormItems .tisya-composer-tool{grid-column:1/-1;min-width:0!important;max-width:100%!important;width:100%!important;min-height:44px!important;height:auto!important;padding:10px!important;margin:0!important;border:1px solid var(--tisya-line)!important;border-radius:8px!important;box-sizing:border-box!important;font-size:17px!important;gap:8px;background:#164333!important;align-items:center;justify-content:flex-start!important;overflow-wrap:anywhere}
-body.tisya-active #nonQRFormItems .tisya-composer-tool.tisya-tool-caption::after{content:attr(data-tisya-tool-label)!important;font:13px/1.4 var(--tisya-ui)!important;color:var(--tisya-ink);margin:0!important;white-space:normal}
-body.tisya-active.tisya-tools-collapsed #nonQRFormItems .tisya-composer-tool:not(.stscript_btn){display:none!important}
-body.tisya-active.tisya-input-expanded #nonQRFormItems{grid-template-columns:repeat(6,minmax(0,1fr))}
-body.tisya-active.tisya-input-expanded #send_textarea{grid-column:2/6}
-body.tisya-active.tisya-input-expanded #rightSendForm>#send_but,body.tisya-active.tisya-input-expanded #rightSendForm>#mes_stop{grid-column:6;justify-self:end}
-body.tisya-active.tisya-input-expanded #nonQRFormItems .tisya-composer-tool{grid-column:span 3}
+/* Tools precede the full-width divider; the last row keeps the accepted
+   44px menu / flexible input / 44px send geometry. No native node is moved. */
+body.tisya-active #nonQRFormItems .tisya-composer-tool,#tisya-attach{order:0;grid-column:auto;grid-row:auto;min-width:0!important;max-width:100%!important;width:100%!important;min-height:44px!important;height:auto!important;padding:4px 2px!important;margin:0!important;border:1px solid var(--tisya-line)!important;border-radius:8px!important;box-sizing:border-box!important;font-size:16px!important;line-height:18px!important;gap:2px!important;flex-direction:column!important;background:#164333!important;align-items:center;justify-content:center!important;overflow-wrap:anywhere;color:var(--tisya-gold);opacity:1;text-shadow:none;cursor:pointer}
+body.tisya-active #nonQRFormItems .tisya-composer-tool:not(.tisya-tool-compact){grid-column:1/-1;padding:6px 8px!important;font:13px/1.4 var(--tisya-ui)!important}
+body.tisya-active #nonQRFormItems .tisya-composer-tool.tisya-tool-caption::after{content:attr(data-tisya-tool-label)!important;display:block!important;font:11px/16px var(--tisya-ui)!important;color:var(--tisya-ink);margin:0!important;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:static!important;opacity:1!important;transform:none!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important}
+body.tisya-active #nonQRFormItems .tisya-composer-tool.tisya-tool-caption>svg{width:18px!important;height:18px!important;flex:none}
+#tisya-attach{order:-1;display:flex;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#tisya-attach svg{width:18px;height:18px;flex:none}
+#tisya-attach span{font:11px/16px var(--tisya-ui);color:var(--tisya-ink)}
+#tisya-composer-separator{order:1;grid-column:1/-1;height:1px;min-width:0;background:linear-gradient(90deg,transparent,#d8bf8866,transparent);pointer-events:none}
 /* Keep native visibility and IME controls; never force hidden send/script buttons visible. */
 body.tisya-active #top-settings-holder>.drawer>.drawer-content{pointer-events:auto;min-width:0!important;box-sizing:border-box!important;font:14px/1.5 var(--tisya-ui);background:#0d2d24f7!important;border:1px solid var(--tisya-line)!important;border-radius:0 0 14px 14px!important;color:var(--tisya-ink)!important;box-shadow:0 10px 20px #001a1466!important}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content input:not([type=checkbox]):not([type=radio]),body.tisya-active #top-settings-holder>.drawer>.drawer-content select,body.tisya-active #top-settings-holder>.drawer>.drawer-content textarea{max-width:100%;box-sizing:border-box;font-size:16px;color:var(--tisya-ink)!important;background-color:#123c2f!important;border-color:var(--tisya-line)!important;border-radius:8px}
@@ -107,10 +110,62 @@ body.tisya-active dialog.popup input:not([type=checkbox]):not([type=radio]),body
 body.tisya-active dialog.popup .popup-controls .menu_button{min-height:44px;font-size:14px}
 
 /* No global top bar: native geometry consumes a zero-height header. */
-#tisya-input-more{grid-column:span 3;min-height:44px;font:13px var(--tisya-ui);border:1px solid var(--tisya-line);background:transparent;color:var(--tisya-gold);border-radius:8px;margin:0;padding:8px;cursor:pointer}
-body.tisya-tools-collapsed #tisya-input-more{display:none}
 #tisya-panel-controls{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:8px;padding:2px 8px;background:#0c3026;pointer-events:auto;z-index:4000;border-bottom:1px solid var(--tisya-line)}
 #tisya-panel-controls[hidden]{display:none!important}
 #tisya-panel-controls span{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #tisya-panel-controls button{border:0;background:none;font-size:13px;padding:8px}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content.openDrawer{padding-top:56px!important}
+
+/* Moon Tide material layer. Paint only: no viewport, safe-area, IME, text
+   sizing or page geometry overrides. Adapted from the original THM 0.2.6. */
+body.tisya-active{--tisya-gold:#e0ca92;--tisya-ink:#e1e8dc;--tisya-muted:#acc3b4;--tisya-line:#cfbd8252;--tisya-glass:radial-gradient(ellipse at 12% 0,#a2c1a925,transparent 68%),linear-gradient(150deg,#2c5144,#0b302b);--tisya-inlay:inset 0 0 0 2px #79907820,inset 0 1px 1px #f3e1b451,inset 0 -2px 5px #001e2466}
+body.tisya-active #bg1{background:linear-gradient(#03251b55,#03231988),url(assets/water.png) center/cover!important}
+#tisya-panel-controls button,#tisya-shell button,#tisya-overlay button,.tisya-actions button{background:var(--tisya-glass);border-color:#cdb98475;box-shadow:var(--tisya-inlay);color:var(--tisya-gold)}
+#tisya-panel-controls button:active,#tisya-shell button:active,#tisya-overlay button:active,.tisya-actions button:active{background:linear-gradient(150deg,#345c49,#173e32);box-shadow:inset 0 1px 4px #001c2670}
+#tisya-shell.tisya-page-open .tisya-page{background:linear-gradient(#05281feb,#062a20ed),url(assets/water.png) center/cover}
+#tisya-shell h2,#tisya-overlay h2{color:#e2cc91;text-shadow:0 1px 0 #001a24}
+#tisya-shell header button,#tisya-overlay header button,#tisya-panel-controls button{background:transparent;box-shadow:none;color:#d7c69b}
+#tisya-shell input,#tisya-overlay input,#tisya-overlay textarea{background:linear-gradient(#072b23b8,#173e3299);border-color:#bbad7766;box-shadow:inset 0 2px 5px #001b244d}
+#tisya-shell input::placeholder,#tisya-overlay input::placeholder,#tisya-overlay textarea::placeholder{color:#9fbaaa;opacity:1}
+#tisya-shell input:focus,#tisya-overlay input:focus,#tisya-overlay textarea:focus{outline:1px solid #ddc58b;outline-offset:-1px;border-color:#ddc58b}
+#tisya-shell summary{color:#d5c38d;background:linear-gradient(90deg,#9ab7980d,transparent)}
+#tisya-shell .tisya-chat-row{background:linear-gradient(120deg,#244b3ab8,#0c3128bd);border-bottom-color:#cbb98540;box-shadow:inset 1px 0 #cbb98525,inset -1px 0 #cbb98525}
+#tisya-shell .tisya-chat-row:first-of-type{box-shadow:inset 0 1px #e9d59d4d,inset 1px 0 #cbb98525,inset -1px 0 #cbb98525}
+#tisya-shell .tisya-chat-row:active{background:linear-gradient(120deg,#315642,#123c2e)}
+#tisya-shell .tisya-contact{border-bottom-color:#cbb98540;background:linear-gradient(90deg,#92ad8e0a,transparent)}
+#tisya-shell .tisya-contact-link,#tisya-shell .tisya-contact>button{box-shadow:none}
+#tisya-shell .tisya-contact-link{background:transparent;color:#cdbd92}
+.tisya-sheet{background:linear-gradient(#0b2e25ee,#0b3025f8),url(assets/water.png) center/cover;border-color:#cdb98488;box-shadow:inset 0 0 0 2px #8ca0801c,0 8px 28px #001a2477}
+.tisya-sheet>header{background:linear-gradient(#10372efc,#0c3026fc);box-shadow:0 1px #cbb9854d}
+#tisya-overlay .tisya-navigation .tisya-list>button{background:linear-gradient(90deg,#76967610,transparent);box-shadow:none}
+#tisya-overlay .tisya-navigation .tisya-list>button:hover,#tisya-overlay .tisya-navigation .tisya-list>button:focus-visible{background:linear-gradient(90deg,#62866c40,#2d56432a);box-shadow:inset 2px 0 #dec68a}
+#tisya-overlay h3{color:#bfae7c;background:linear-gradient(90deg,#b9ab7515,transparent)}
+#tisya-overlay .tisya-version{color:#a5bcac}
+body.tisya-active #chat .mes[is_user=true] .mes_text{background:linear-gradient(90deg,#08231d30,#051a165e)!important;box-shadow:inset 0 1px #cbb98580,inset 0 -1px #cbb98580!important;color:#c8dbca!important}
+body.tisya-active #chat .mes_text a{color:#e2cb91;text-decoration-color:#cbb9859c;text-underline-offset:.2em}
+body.tisya-active #chat .mes_text blockquote{border-color:#cbb98580;color:#c6d8c4}
+body.tisya-active #chat .mes_reasoning_details{background:#0a29267a;border-color:#bdd0b645;color:#b7cbbc}
+body.tisya-active #chat .mes_reasoning_summary{color:#cbbd93}
+.tisya-actions button{border:1px solid #b8a87573;background:var(--tisya-glass);box-shadow:var(--tisya-inlay)}
+body.tisya-active #send_form{border-color:#d8bf88!important;background:radial-gradient(ellipse at 10% 0,#8aa99822,transparent 65%),linear-gradient(#163c37,#082c2b)!important;box-shadow:inset 0 0 0 3px #48675859,inset 0 1px 2px #ebdeb58c,inset 0 -3px 6px #00192199,0 3px 9px #001a1938!important}
+body.tisya-active #send_form:focus-within{border-color:#edcf91!important;box-shadow:inset 0 0 0 3px #7186704d,inset 0 1px 2px #ebdeb58c,0 3px 9px #001a1938!important}
+#tisya-menu-trigger{background:radial-gradient(ellipse at 30% 10%,#74927a30,transparent 65%)!important;box-shadow:inset 0 0 0 1px #cbb98566,inset 0 0 0 3px #45695655;color:#ead6a0}
+body.tisya-active #nonQRFormItems .tisya-composer-tool,#tisya-attach{background:var(--tisya-glass)!important;border-color:#b8a87573!important;box-shadow:inset 0 1px 1px #e2deac35!important}
+body.tisya-active #nonQRFormItems .tisya-composer-tool:active,#tisya-attach:active{background:linear-gradient(#355b49,#214736)!important}
+body.tisya-active #ttas_agent_send_toggle[aria-pressed=true]{border-color:#d6c184!important;box-shadow:inset 0 0 0 1px #d6c18488,0 0 5px #d6c18433!important}
+body.tisya-active #file_form{color:var(--tisya-ink);font:12px/1.5 var(--tisya-ui);background:#07282066;border-color:#cbb98555}
+body.tisya-active #file_form .file_name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.tisya-active #file_form .file_size{color:var(--tisya-muted)}
+body.tisya-active #file_form_reset{color:var(--tisya-gold);background:var(--tisya-glass);border-color:var(--tisya-line)}
+body.tisya-active #qr--bar .qr--button{background:var(--tisya-glass);color:var(--tisya-gold);border-color:#b8a87573;box-shadow:inset 0 1px 1px #e2deac35}
+body.tisya-active #options,body.tisya-active #extensionsMenu{font-family:var(--tisya-ui);background:linear-gradient(#153c30f7,#0b3028fc)!important;border-color:#cdb98485!important;color:var(--tisya-ink);box-shadow:inset 0 1px #e9d59d40,0 6px 24px #001b1499}
+body.tisya-active #top-settings-holder>.drawer>.drawer-content{background:linear-gradient(#0d2d24f2,#0b2924f8),url(assets/water.png) center/cover!important;border-color:#cdb98466!important;box-shadow:inset 0 0 0 2px #6b836319,0 10px 20px #001a1466!important}
+body.tisya-active #top-settings-holder .drawer-content .inline-drawer-header{background:var(--tisya-glass)!important;box-shadow:inset 0 1px 1px #e2deac35!important;color:var(--tisya-gold)}
+body.tisya-active #top-settings-holder .drawer-content .menu_button{background:var(--tisya-glass);color:var(--tisya-gold);border-color:#b8a87573;box-shadow:inset 0 1px 1px #e2deac35}
+body.tisya-active dialog.popup{background:radial-gradient(ellipse at 10% 0,#8aa99819,transparent 65%),linear-gradient(#14392f,#0b2c26)!important;border-color:#cdb98485!important;box-shadow:inset 0 0 0 2px #6b836333,0 10px 28px #001a2477}
+#tisya-panel-controls{background:linear-gradient(#163d32,#0d3027);border-bottom-color:#cbb98566;box-shadow:inset 0 1px #ead7a833}
+@media (forced-colors:active){#tisya-composer-separator{background:CanvasText}#tisya-menu-trigger,.tisya-actions button{border:1px solid ButtonText}}
+
+/* Agent remains its original toggle, including long press and live state. */
+body.tisya-active #ttas_agent_send_toggle::before{content:none!important}
+body.tisya-active #ttas_agent_send_toggle .ttas-agent-send-toggle-status{top:4px;right:4px;bottom:auto}
