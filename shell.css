@@ -1,0 +1,116 @@
+/* Tisya 0.2.0-alpha.1 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.1";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
+body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
+body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
+body.tisya-active #top-settings-holder>.drawer>.drawer-toggle{visibility:hidden!important;pointer-events:none!important}
+body.tisya-active #top-bar{display:none!important}
+#tisya-panel-controls,#tisya-shell,#tisya-overlay{font:14px/1.5 var(--tisya-ui);color:var(--tisya-ink);text-shadow:none;letter-spacing:normal}
+#tisya-panel-controls *,#tisya-shell *,#tisya-overlay *,.tisya-actions *{box-sizing:border-box}
+#tisya-panel-controls button,#tisya-shell button,#tisya-overlay button,.tisya-actions button{font:inherit;line-height:1.4;min-height:44px;margin:0;border:1px solid var(--tisya-line);border-radius:10px;padding:8px 12px;background:#173e31;color:var(--tisya-gold);box-shadow:none;cursor:pointer;white-space:normal;text-shadow:none;letter-spacing:normal;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#tisya-panel-controls button:active,#tisya-shell button:active,#tisya-overlay button:active,.tisya-actions button:active{background:#315640}
+#tisya-panel-controls button:focus-visible,#tisya-shell button:focus-visible,#tisya-overlay button:focus-visible,.tisya-actions button:focus-visible,#tisya-input-more:focus-visible{outline:2px solid var(--tisya-gold);outline-offset:-3px}
+#tisya-shell{position:absolute;inset:0;z-index:100;pointer-events:none;min-width:0}
+#tisya-shell .tisya-page{display:none}
+#tisya-shell.tisya-page-open .tisya-page{display:block;position:absolute;inset:0 0 var(--tisya-safe-bottom);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:16px max(16px,calc((100% - 720px)/2));pointer-events:auto;background:linear-gradient(#062a20f5,#062a20f5),url(assets/water.png) center/cover}
+#tisya-shell header,#tisya-overlay header{display:flex;align-items:center;gap:12px;margin:0 0 12px;min-width:0}
+#tisya-shell h2,#tisya-overlay h2{font:600 19px/1.4 var(--tisya-ui);color:var(--tisya-gold);margin:0;min-width:0;flex:1;overflow-wrap:anywhere}
+#tisya-shell header button,#tisya-overlay header button{border:0;background:transparent;font-size:13px;padding-inline:8px}
+#tisya-shell .tisya-note,#tisya-overlay .tisya-note{font-size:12px;line-height:1.6;color:var(--tisya-muted);margin:6px 0 12px}
+#tisya-shell input,#tisya-overlay input,#tisya-overlay textarea{font:16px/1.5 var(--tisya-ui);color:var(--tisya-ink);background:#11392c;border:1px solid var(--tisya-line);border-radius:10px;width:100%;max-width:100%;min-width:0;min-height:44px;padding:10px 12px;box-shadow:none;box-sizing:border-box}
+#tisya-overlay textarea{min-height:120px;resize:vertical;margin:8px 0 12px}
+#tisya-shell .tisya-search{margin-bottom:12px}
+.tisya-list{display:flex;flex-direction:column;gap:4px;margin:8px 0 16px;min-width:0}
+#tisya-shell .tisya-list>button,#tisya-overlay .tisya-list>button{text-align:left;min-width:0}
+#tisya-shell details{margin:0 0 10px;padding:0;border:0;background:none;min-width:0}
+#tisya-shell summary{cursor:pointer;color:var(--tisya-muted);font-size:13px;line-height:1.5;padding:10px 4px;min-height:40px;overflow-wrap:anywhere}
+#tisya-shell .tisya-chat-row{display:block;width:100%;text-align:left;padding:12px;border:0;border-bottom:1px solid var(--tisya-line);border-radius:0;background:#10382b85;min-width:0}
+#tisya-shell .tisya-chat-row:first-of-type{border-radius:10px 10px 0 0}
+#tisya-shell .tisya-chat-row:last-of-type{border-radius:0 0 10px 10px}
+#tisya-shell .tisya-chat-row strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:14px;font-weight:500;line-height:1.5;color:#e0d6b3;overflow-wrap:anywhere}
+#tisya-shell .tisya-chat-row small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:1.6;color:var(--tisya-muted);margin-top:4px}
+#tisya-shell .tisya-contact-link{border:0;background:none;min-height:40px;padding:8px 4px;font-size:12px}
+#tisya-shell footer{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+#tisya-shell footer button{flex:1;font-size:13px;padding:8px}
+#tisya-shell .tisya-contact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--tisya-line)}
+#tisya-shell .tisya-contact>button:first-child{text-align:left;background:none;border:0;grid-row:1/3;min-width:0;overflow-wrap:anywhere}
+#tisya-shell .tisya-contact small{font-size:12px;color:var(--tisya-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tisya-shell .tisya-contact>button:last-child{font-size:12px;min-height:36px;background:none;border:0;padding:4px 8px}
+#tisya-shell [hidden]{display:none!important}
+#tisya-shell [role=alert],#tisya-overlay [role=alert]{font-size:13px;color:#edbd9d;overflow-wrap:anywhere}
+#tisya-overlay{position:fixed;inset:0;width:100vw;height:var(--tisya-height);max-width:none;max-height:none;padding:var(--tisya-safe-top) max(var(--tt-inset-right,0px),0px) var(--tisya-safe-bottom) max(var(--tt-inset-left,0px),0px);margin:0;border:0;background:transparent;overflow:hidden;box-sizing:border-box}
+#tisya-overlay::backdrop{background:#001811a8}
+#tisya-overlay:not([open]){display:none}
+.tisya-backdrop{display:flex;align-items:flex-end;justify-content:center;width:100%;height:100%;min-height:0}
+.tisya-sheet{width:min(580px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;border:1px solid var(--tisya-line);border-radius:18px 18px 0 0;background:#0b3025;padding:16px;box-sizing:border-box}
+.tisya-sheet>header{position:sticky;top:-16px;background:#0b3025;padding:8px 0;z-index:1}
+.tisya-sheet p{line-height:1.7}
+.tisya-navigation{align-items:stretch;justify-content:flex-start}
+.tisya-navigation .tisya-sheet{width:min(320px,88vw);border-radius:0 16px 16px 0}
+#tisya-overlay h3{font:500 12px/1.5 var(--tisya-ui);color:var(--tisya-muted);padding:10px 8px 4px;margin:0}
+#tisya-overlay .tisya-navigation .tisya-list{gap:2px;margin:0 0 6px}
+#tisya-overlay .tisya-navigation .tisya-list>button{background:transparent;border:0;border-radius:8px;padding:10px 8px}
+#tisya-overlay .tisya-navigation .tisya-list>button:hover{background:#244b37}
+.tisya-version{color:var(--tisya-muted);font-size:11px;margin:12px 8px}
+/* Reading layout keeps rich message contents intact. */
+body.tisya-active #chat{background:transparent!important;box-shadow:none!important;border:0!important;padding:12px 16px!important;min-height:0;font-family:TisyaReading,serif;scroll-padding-bottom:16px}
+body.tisya-active #chat .mes{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 0 16px!important;gap:0!important}
+body.tisya-active #chat .mesAvatarWrapper,body.tisya-active #chat .mes_header_info{display:none!important}
+body.tisya-active #chat .mes_block{width:100%;min-width:0;margin:0!important;padding:0!important}
+body.tisya-active #chat .mes_text{background:transparent!important;color:var(--tisya-ink)!important;font-size:17px!important;line-height:1.85!important;padding:8px 0!important;overflow-wrap:anywhere}
+body.tisya-active #chat .mes[is_user=true] .mes_text{color:#b6d0bc!important;font-size:16px!important}
+body.tisya-active #chat .mes_text p{font-size:inherit!important;line-height:inherit!important}
+body.tisya-active #chat .mes_buttons{display:none!important}
+body.tisya-active #chat .tisya-native-tools .mes_buttons{display:flex!important;flex-wrap:wrap;gap:8px;padding:8px 0}
+body.tisya-active #chat .tisya-native-tools .extraMesButtons{flex-wrap:wrap;gap:8px}
+body.tisya-active #chat .mes_button[data-tisya-label]::after,body.tisya-active #chat .mes_edit_buttons>div[data-tisya-label]::after{content:attr(data-tisya-label);font:12px/1.4 var(--tisya-ui);padding-left:4px}
+.tisya-actions{display:flex;justify-content:flex-end;gap:4px;flex-wrap:wrap;padding:4px 0 24px;background:url(assets/message-divider.svg) bottom/100% 20px no-repeat;font:13px/1.4 var(--tisya-ui)}
+.tisya-actions button{background:transparent;border:0;padding:8px 12px}
+.tisya-actions button:disabled{opacity:.4;cursor:default}
+/* display:contents preserves native/third-party parent relationships and events. */
+body.tisya-active #send_form{width:calc(100% - 16px)!important;max-width:calc(100% - 16px)!important;margin:4px 8px 8px!important;padding:6px!important;box-sizing:border-box!important;border:1px solid #b5a87580!important;border-radius:18px!important;background:#10392df5!important;box-shadow:0 2px 12px #0003!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.tisya-active #nonQRFormItems{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px;grid-auto-flow:row;gap:4px!important;align-items:end!important;min-width:0;width:100%;margin:0;padding:0;max-height:min(50vh,360px);overflow-y:auto}
+body.tisya-active #leftSendForm,body.tisya-active #rightSendForm{display:contents!important}
+body.tisya-active #send_textarea{grid-column:2;grid-row:1;width:100%!important;max-width:100%!important;min-width:0!important;min-height:44px!important;max-height:144px!important;box-sizing:border-box!important;padding:10px 4px!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font:16px/1.5 var(--tisya-ui)!important;color:var(--tisya-ink)!important;resize:none}
+body.tisya-active #send_textarea::placeholder{color:#a5bcb0;opacity:1}
+#tisya-menu-trigger{grid-column:1;grid-row:1;border:0;background:transparent!important;color:var(--tisya-gold);width:44px;height:44px;min-width:0;padding:0;margin:0;font:13px/1.4 var(--tisya-ui);cursor:pointer;border-radius:10px}
+body.tisya-active #rightSendForm>#send_but,body.tisya-active #rightSendForm>#mes_stop{grid-column:3;grid-row:1;box-sizing:border-box!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;max-width:44px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;font-size:0!important;opacity:1}
+body.tisya-active #send_but{background:url(assets/send.svg) center/36px 36px no-repeat!important}
+body.tisya-active #mes_stop{background:url(assets/stop.svg) center/36px 36px no-repeat!important}
+body.tisya-active #send_but::before,body.tisya-active #send_but::after,body.tisya-active #mes_stop::before,body.tisya-active #mes_stop::after,body.tisya-active #mes_stop>i{display:none!important;content:none!important}
+body.tisya-active #nonQRFormItems .tisya-composer-tool{grid-column:1/-1;min-width:0!important;max-width:100%!important;width:100%!important;min-height:44px!important;height:auto!important;padding:10px!important;margin:0!important;border:1px solid var(--tisya-line)!important;border-radius:8px!important;box-sizing:border-box!important;font-size:17px!important;gap:8px;background:#164333!important;align-items:center;justify-content:flex-start!important;overflow-wrap:anywhere}
+body.tisya-active #nonQRFormItems .tisya-composer-tool.tisya-tool-caption::after{content:attr(data-tisya-tool-label)!important;font:13px/1.4 var(--tisya-ui)!important;color:var(--tisya-ink);margin:0!important;white-space:normal}
+body.tisya-active.tisya-tools-collapsed #nonQRFormItems .tisya-composer-tool:not(.stscript_btn){display:none!important}
+body.tisya-active.tisya-input-expanded #nonQRFormItems{grid-template-columns:repeat(6,minmax(0,1fr))}
+body.tisya-active.tisya-input-expanded #send_textarea{grid-column:2/6}
+body.tisya-active.tisya-input-expanded #rightSendForm>#send_but,body.tisya-active.tisya-input-expanded #rightSendForm>#mes_stop{grid-column:6;justify-self:end}
+body.tisya-active.tisya-input-expanded #nonQRFormItems .tisya-composer-tool{grid-column:span 3}
+/* Keep native visibility and IME controls; never force hidden send/script buttons visible. */
+body.tisya-active #top-settings-holder>.drawer>.drawer-content{pointer-events:auto;min-width:0!important;box-sizing:border-box!important;font:14px/1.5 var(--tisya-ui);background:#0d2d24f7!important;border:1px solid var(--tisya-line)!important;border-radius:0 0 14px 14px!important;color:var(--tisya-ink)!important;box-shadow:0 10px 20px #001a1466!important}
+body.tisya-active #top-settings-holder>.drawer>.drawer-content input:not([type=checkbox]):not([type=radio]),body.tisya-active #top-settings-holder>.drawer>.drawer-content select,body.tisya-active #top-settings-holder>.drawer>.drawer-content textarea{max-width:100%;box-sizing:border-box;font-size:16px;color:var(--tisya-ink)!important;background-color:#123c2f!important;border-color:var(--tisya-line)!important;border-radius:8px}
+body.tisya-active #top-settings-holder>.drawer>.drawer-content .inline-drawer{border-color:var(--tisya-line)!important;box-shadow:none!important}
+@media(max-width:600px){body.tisya-active #top-settings-holder>.drawer>.drawer-content{padding:12px!important;max-width:100vw!important;overflow-x:hidden!important}#tisya-shell h2,#tisya-overlay h2{font-size:18px}}
+@media(min-width:800px){body.tisya-active #chat{padding-inline:max(24px,calc((100% - 760px)/2))!important}}
+@media(prefers-reduced-motion:reduce){#tisya-panel-controls *,#tisya-shell *,#tisya-overlay *,.tisya-actions *{transition:none!important;animation:none!important}}
+body.tisya-active #options{font:14px/1.5 var(--tisya-ui);background:#0c3026!important;border:1px solid var(--tisya-line)!important;border-radius:12px!important;color:var(--tisya-ink);box-shadow:0 6px 24px #001b1499}
+body.tisya-active #options .options-content{max-height:min(52vh,380px);overflow-y:auto;min-width:0}
+body.tisya-active #options .options-content a{min-height:40px;box-sizing:border-box;align-items:center}
+/* Native management content retains its fields; only visual hierarchy changes. */
+body.tisya-active #top-settings-holder .drawer-content h3{font-size:17px;margin:14px 0 10px}
+body.tisya-active #top-settings-holder .drawer-content .inline-drawer-header{background:#143b2e!important;padding:10px 12px!important;margin:4px 0!important;min-height:44px;border-radius:9px!important}
+body.tisya-active #top-settings-holder .drawer-content .inline-drawer-content{padding:8px 2px 14px}
+body.tisya-active .tt-mcp-root,body.tisya-active .tt-mcp-add-form,body.tisya-active .tt-mcp-test,body.tisya-active .tt-mcp-tool-dialog,body.tisya-active .ttas-root{--mainFontFamily:var(--tisya-ui);--mainFontSize:14px;font-family:var(--tisya-ui);font-size:14px;line-height:1.5;min-width:0;max-width:100%;text-shadow:none}
+body.tisya-active .tt-mcp-toolbar,body.tisya-active .tt-mcp-toolbar-actions{flex-wrap:wrap}
+body.tisya-active .tt-mcp-add-form h3{font-size:18px;margin:0 0 14px}
+body.tisya-active dialog.popup{font-family:var(--tisya-ui);background:#0d3026!important;color:var(--tisya-ink);border:1px solid #b9ab7866!important;border-radius:16px!important}
+body.tisya-active dialog.popup input:not([type=checkbox]):not([type=radio]),body.tisya-active dialog.popup textarea,body.tisya-active dialog.popup select{font-family:var(--tisya-ui);font-size:16px;min-width:0;max-width:100%;box-sizing:border-box}
+body.tisya-active dialog.popup .popup-controls .menu_button{min-height:44px;font-size:14px}
+
+/* No global top bar: native geometry consumes a zero-height header. */
+#tisya-input-more{grid-column:span 3;min-height:44px;font:13px var(--tisya-ui);border:1px solid var(--tisya-line);background:transparent;color:var(--tisya-gold);border-radius:8px;margin:0;padding:8px;cursor:pointer}
+body.tisya-tools-collapsed #tisya-input-more{display:none}
+#tisya-panel-controls{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:8px;padding:2px 8px;background:#0c3026;pointer-events:auto;z-index:4000;border-bottom:1px solid var(--tisya-line)}
+#tisya-panel-controls[hidden]{display:none!important}
+#tisya-panel-controls span{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tisya-panel-controls button{border:0;background:none;font-size:13px;padding:8px}
+body.tisya-active #top-settings-holder>.drawer>.drawer-content.openDrawer{padding-top:56px!important}

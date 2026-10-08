@@ -4,12 +4,13 @@ import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-gene
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
 import { loadReadingFont } from './font.js';
+import { VERSION, SECTIONS, drawerEntries, chatPreview, chatTitle, mountLayout, installComposer } from './layout.js';
 
 const KEY = '缇斯亚界面';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const query = selector => document.querySelector(selector);
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
-const labels = ['创作设置','模型连接','输出格式','世界与资料','外观与系统','背景','工作流与扩展','用户身份','角色卡与群聊'];
+let layout, top, controls;
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 const FONT_URLS=Array.from({length:4},(_,i)=>`https://raw.githubusercontent.com/Tisyaofgit/tisya-tavern/cfc9d8c1ce4be94334c3b748addb0936802b2d2b/font/reading.part${i+1}.bin`);
@@ -33,36 +34,65 @@ function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy) throw new Error('请先等待或停止正在进行的生成');
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
-function close() { overlay.replaceChildren(); }
+function close() { if(overlay.open)overlay.close(); overlay.replaceChildren(); }
 function sheet(title, body) {
-    overlay.innerHTML = `<div class="tisya-backdrop"><section class="tisya-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2>${button('关闭','close')}</header>${body}</section></div>`;
+    overlay.setAttribute('aria-label',title);
+    overlay.innerHTML = `<div class="tisya-backdrop"><section class="tisya-sheet"><header><h2>${esc(title)}</h2>${button('关闭','close')}</header>${body}</section></div>`;
+    if(!overlay.open)overlay.showModal();
     overlay.querySelector('.tisya-backdrop').addEventListener('click', e => { if (e.target.classList.contains('tisya-backdrop') && !busy) close(); });
 }
+function closeNativeDrawers(except=null) {
+    for(const entry of drawerEntries(document)) {
+        if(entry.element!==except&&entry.element.querySelector(':scope > .drawer-content.openDrawer'))entry.element.querySelector('.drawer-toggle')?.click();
+    }
+}
 function hidePage() { renderEpoch++; root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); }
-function nativeDrawer(index) {
-    const drawers = [...document.querySelectorAll('#top-settings-holder > .drawer')];
-    const target = drawers[index]?.querySelector('.drawer-toggle');
-    if (!target) throw new Error('此版本缺少对应的原生入口');
-    close(); hidePage();
-    if (!drawers[index].querySelector('.openDrawer')) target.click();
+function nativeDrawer(key) {
+    const entry=drawerEntries(document).find(entry=>entry.key===key);
+    const target=entry?.element.querySelector('.drawer-toggle');
+    if(!target)throw new Error('此版本缺少对应的原生入口');
+    close(); hidePage(); closeNativeDrawers(entry.element);
+    if(!entry.element.querySelector(':scope > .openDrawer'))target.click();
 }
 function nativeControl(selector) {
     const target = query(selector);
     if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') throw new Error('原生操作当前不可用');
-    close(); hidePage(); target.click();
+    close(); closeNativeDrawers(); hidePage();
+    if(selector==='#options_button'&&query('#tisya-input-more')?.getAttribute('aria-expanded')==='false')query('#tisya-input-more').click();
+    target.focus({preventScroll:true});
+    target.click();
+}
+function extensionSection(key) {
+    const entry=SECTIONS.find(([id])=>id===key);
+    const section=entry&&document.getElementById(entry[1]);
+    const toggle=section?.querySelector('.inline-drawer-toggle');
+    if(!toggle)throw new Error('该扩展尚未就绪，可从“全部扩展与自动化”查看');
+    nativeDrawer('extensions-settings-button');
+    if(toggle.querySelector('.inline-drawer-icon.down'))toggle.click();
+    requestAnimationFrame(()=>{if(enabled&&section.isConnected)section.scrollIntoView({block:'start',behavior:'auto'});});
 }
 function nav() {
-    const drawers = [...document.querySelectorAll('#top-settings-holder > .drawer')];
-    sheet('TISYA · 月潮', `<div class="tisya-list">${button('会话','home')}${button('联系人','contacts')}${drawers.map((drawer, i) => button(labels[i] ?? drawer.querySelector('.drawer-icon')?.title ?? `原生入口 ${i+1}`,`drawer:${i}`)).join('')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}<p id="tisya-font-state" role="status">${esc(fontState)}</p>${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div>`);
+    const groups=new Map();
+    for(const entry of drawerEntries(document)) {
+        if(!groups.has(entry.group))groups.set(entry.group,[]);
+        groups.get(entry.group).push(entry);
+    }
+    const groupOrder=['创作','资料','工作流','系统','其他扩展'];
+    const fullscreen=query('#option_toggle_fullscreen');
+    const fullscreenButton=fullscreen&&!fullscreen.classList.contains('displayNone')?button('切换系统全屏','fullscreen'):'';
+    const sections=SECTIONS.filter(([,id])=>document.getElementById(id)?.querySelector('.inline-drawer-toggle')).map(([key,,label])=>button(label,`section:${key}`)).join('');
+    const native=groupOrder.filter(name=>groups.has(name)).map(name=>`<h3>${esc(name)}</h3><div class="tisya-list">${name==='工作流'?sections:''}${groups.get(name).map(entry=>button(entry.label,`drawer:${entry.key}`)).join('')}</div>`).join('');
+    const styleVersion=getComputedStyle(document.body).getPropertyValue('--tisya-style-version').replace(/["']/g,'').trim();
+    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入工具','input-tools')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
     overlay.querySelector('.tisya-backdrop').classList.add('tisya-navigation');
 }
 function page(title, html) {
-    close(); root.classList.add('tisya-page-open');
-    root.querySelector('.tisya-page').innerHTML = `<header><h2>${esc(title)}</h2>${button('返回聊天','chat')}</header>${html}`;
+    close(); closeNativeDrawers(); root.classList.add('tisya-page-open');
+    root.querySelector('.tisya-page').innerHTML = `<header>${button('菜单','menu')}<h2>${esc(title)}</h2>${button('返回聊天','chat')}</header>${html}`;
 }
 function contacts() {
     const groups = groupContacts(context().characters, settings().联系人分组);
-    page('联系人', `<input class="tisya-search" placeholder="搜索名称、分组或作者标签" aria-label="搜索联系人"><div class="tisya-list">${[...groups].map(([group,cards])=>`<details open><summary>${esc(group)} · ${cards.length}</summary>${cards.map(card=>`<div class="tisya-contact" data-search="${esc([card.name,group,...card.tags].join(' ').toLowerCase())}">${button(card.name,`card:${card.id}`)}<small>${esc(card.tags.join(' · '))}</small>${button('分组',`group:${card.id}`)}</div>`).join('')}</details>`).join('')}</div><footer>${button('创建或导入角色卡','drawer:8')}${button('群聊','drawer:8')}</footer>`);
+    page('联系人', `<input class="tisya-search" placeholder="搜索名称、分组或作者标签" aria-label="搜索联系人"><div class="tisya-list">${[...groups].map(([group,cards])=>`<details open><summary>${esc(group)} · ${cards.length}</summary>${cards.map(card=>`<div class="tisya-contact" data-search="${esc([card.name,group,...card.tags].join(' ').toLowerCase())}">${button(card.name,`card:${card.id}`)}<small>${esc(card.tags.join(' · '))}</small>${button('分组',`group:${card.id}`)}</div>`).join('')}</details>`).join('')}</div><footer>${button('创建或导入角色卡','drawer:rightNavHolder')}${button('群聊','drawer:rightNavHolder')}</footer>`);
 }
 async function listChats(id, signal) {
     const card = context().characters[id];
@@ -80,7 +110,7 @@ async function showCard(id) {
     page(card.name,'<p>正在读取会话…</p>');
     const chats = await listChats(id);
     if (epoch !== renderEpoch || !enabled) return;
-    page(card.name,`<div class="tisya-list">${chats.map((chat,i)=>`<button type="button" data-chat-index="${i}"><strong>${esc(chat.file_name.replace(/\.jsonl$/,''))}</strong><small>${esc(chat.mes ?? '')}</small></button>`).join('') || '<p>还没有会话</p>'}</div>${button('打开角色卡 / 新建会话',`select:${id}`)}`);
+    page(card.name,`<div class="tisya-list">${chats.map((chat,i)=>`<button type="button" class="tisya-chat-row" data-chat-index="${i}"><strong>${esc(chatTitle(chat.file_name,card.name))}</strong><small>${esc(chatPreview(chat.mes))}</small></button>`).join('') || '<p>还没有会话</p>'}</div>${button('打开角色卡 / 新建会话',`select:${id}`)}`);
     root.querySelectorAll('[data-chat-index]').forEach(el=>el.addEventListener('click',()=>run(async()=>{assertIdle();const file=chats[Number(el.dataset.chatIndex)].file_name.replace(/\.jsonl$/,'');await context().selectCharacterById(id,{switchMenu:false,chatFile:file});if(String(context().characterId)!==String(id)||context().chatId!==file)throw new Error('宿主未切换到目标会话');hidePage();})));
 }
 async function home() {
@@ -101,11 +131,11 @@ async function home() {
         }
     }));
     if(!current())return;
-    page('会话',`<p class="tisya-note">每个联系人下的聊天独立保存。群聊保留专用入口。</p><input class="tisya-search" placeholder="搜索联系人或会话" aria-label="搜索会话"><div class="tisya-list">${cards.map((card,index)=>{
+    page('会话',`<p class="tisya-note">按联系人查看各段会话。</p><input class="tisya-search" placeholder="搜索联系人或会话" aria-label="搜索会话"><div class="tisya-list">${cards.map((card,index)=>{
         const result=results[index];
         if(!result?.error&&!result?.chats?.length)return '';
-        return `<details open data-search="${esc([card.name,...(result.chats??[]).map(c=>c.file_name)].join(' ').toLowerCase())}"><summary>${esc(card.name)}</summary>${result.error?`<p role="alert">${esc(result.error)}</p>`:result.chats.map((chat,i)=>`<button type="button" data-home-card="${index}" data-home-chat="${i}"><strong>${esc(chat.file_name.replace(/\.jsonl$/,''))}</strong><small>${esc(chat.mes??'')}</small></button>`).join('')}${button('联系人详情',`card:${card.id}`)}</details>`;
-    }).join('')||'<p>暂无会话，先选择联系人。</p>'}</div>${button('刷新会话','home')}${button('全部联系人','contacts')}${button('群聊与会话管理','drawer:8')}`);
+        return `<details open data-search="${esc([card.name,...(result.chats??[]).map(c=>c.file_name)].join(' ').toLowerCase())}"><summary>${esc(card.name)} · ${result.chats?.length??0}</summary>${result.error?`<p role="alert">${esc(result.error)}</p>`:result.chats.map((chat,i)=>`<button type="button" class="tisya-chat-row" data-home-card="${index}" data-home-chat="${i}"><strong>${esc(chatTitle(chat.file_name,card.name))}</strong><small>${esc(chatPreview(chat.mes))}</small></button>`).join('')}<button type="button" class="tisya-contact-link" data-tisya-action="card:${card.id}">查看联系人</button></details>`;
+    }).join('')||'<p>暂无会话，先选择联系人。</p>'}</div><footer>${button('刷新','home')}${button('联系人','contacts')}${button('群聊管理','drawer:rightNavHolder')}</footer>`);
     root.querySelectorAll('[data-home-chat]').forEach(el=>el.addEventListener('click',()=>run(async()=>{
         assertIdle();const index=Number(el.dataset.homeCard),card=cards[index],chat=results[index].chats[Number(el.dataset.homeChat)];
         if(context().characters[card.id]?.avatar!==card.avatar)throw new Error('联系人列表已变化，请刷新');
@@ -223,19 +253,25 @@ async function run(fn) {
 }
 function stopUI() {
     if(generationBusy)throw new Error('请等当前操作完成再返回原生界面');
-    enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];root.remove();overlay.remove();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-input-expanded');query('#tisya-input-more')?.remove();
+    enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-input-expanded');query('#tisya-input-more')?.remove();
     document.querySelectorAll('.tisya-actions').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
 function init() {
     if(query('#tisya-shell'))return;
-    if(!query('#chat')||!query('#top-settings-holder'))throw new Error('当前宿主布局不匹配，未启用界面');
+    if(!query('#chat')||!query('#sheld')||!query('#top-settings-holder'))throw new Error('当前宿主布局不匹配，未启用界面');
     settings();
-    root=document.createElement('div');root.id='tisya-shell';root.innerHTML=`<div class="tisya-top">${button('☰','menu')}<span>TISYA · 月潮</span>${button('会话','home')}${button('联系人','contacts')}</div><main class="tisya-page"></main>`;
-    overlay=document.createElement('div');overlay.id='tisya-overlay';document.body.append(root,overlay);document.body.classList.add('tisya-active');
-    const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)))return;run(async()=>{
-        const [action,id]=b.dataset.tisyaAction.split(':');
-        if(action==='continue-settings'){sheet('继续设置',`<p>点继续时自动发送以下用户消息。留空时直接请求下一条回复。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='input-more'){document.body.classList.toggle('tisya-input-expanded');b.setAttribute('aria-expanded',String(document.body.classList.contains('tisya-input-expanded')));}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='menu')nav();else if(action==='home')await home();else if(action==='contacts'){renderEpoch++;contacts();}else if(action==='chat'){close();hidePage();}else if(action==='drawer')nativeDrawer(Number(id));else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer(8);}else if(action==='disable')stopUI();
+    layout=mountLayout(document);
+    ({root,top,controls,overlay}=layout);
+    cleanups.push(installComposer(document));
+    const cancelDialog=e=>{e.preventDefault();if(!busy)close();};overlay.addEventListener('cancel',cancelDialog);
+    const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
+        if(action==='home'){home().catch(error);return;}
+        if(action==='contacts'){renderEpoch++;contacts();return;}
+        if(action==='chat'){close();closeNativeDrawers();hidePage();return;}
+        if(action==='menu'){nav();return;}
+        run(async()=>{
+        if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();if(query('#tisya-input-more')?.getAttribute('aria-expanded')==='false')query('#tisya-input-more').click();}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('联系人分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);
@@ -246,7 +282,6 @@ function init() {
         } else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
     });};
-    const left=query('#leftSendForm');if(left){const extra=document.createElement('button');extra.id='tisya-input-more';extra.type='button';extra.textContent='＋';extra.dataset.tisyaAction='input-more';extra.setAttribute('aria-label','更多输入操作');extra.setAttribute('aria-expanded','false');extra.addEventListener('click',()=>{document.body.classList.toggle('tisya-input-expanded');extra.setAttribute('aria-expanded',String(document.body.classList.contains('tisya-input-expanded')));});left.append(extra);}
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
     const escape=e=>{if(e.key==='Escape'&&!busy)close();};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
     const input=e=>{if(!e.target.classList.contains('tisya-search'))return;const q=e.target.value.toLowerCase();root.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q));};root.addEventListener('input',input);
