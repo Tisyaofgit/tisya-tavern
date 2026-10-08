@@ -1,9 +1,9 @@
 /* 默认阅读字体立即可用；原字体校验并保存后由 FontFace 启用。 */
-body.tisya-active{--tisya-gold:#d5c38e;--tisya-line:#d5c38e55;background:linear-gradient(#03211a70,#031c17b0),url(assets/water.png) center/cover fixed!important;color:#e2e8d8}
+body.tisya-active{--topBarBlockSize:54px;--tisya-inset-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-viewport:var(--tt-base-viewport-height,var(--doc-height,100dvh));--tisya-inset-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-gold:#d5c38e;--tisya-line:#d5c38e55;background:linear-gradient(#03211a70,#031c17b0),url(assets/water.png) center/cover fixed!important;color:#e2e8d8}
 .tisya-active #top-settings-holder>.drawer>.drawer-toggle{visibility:hidden;pointer-events:none}
-.tisya-active #top-settings-holder{top:54px!important}
+.tisya-active #top-settings-holder{top:calc(54px + var(--tisya-inset-top))!important}
 .tisya-active #top-bar{background:transparent!important;box-shadow:none!important}
-.tisya-active #sheld{top:56px!important;height:calc(100dvh - 56px)!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important}
 .tisya-active #chat{background:transparent!important;box-shadow:none!important;border:0!important;padding:12px 18px!important;font-family:TisyaReading,serif}
 .tisya-active #chat .mes{background:transparent!important;border:0!important;box-shadow:none!important;padding:10px 0 20px!important;gap:0!important}
 .tisya-active #chat .mesAvatarWrapper{display:none!important}
@@ -19,18 +19,18 @@ body.tisya-active{--tisya-gold:#d5c38e;--tisya-line:#d5c38e55;background:linear-
 .tisya-actions button,#tisya-shell button,#tisya-overlay button{color:#e4d8b1;background:linear-gradient(#284b3c,#0b3026);border:1px solid #bbaa765e;border-radius:11px;min-height:44px;padding:8px 14px;font:15px TisyaReading,serif;cursor:pointer}
 .tisya-actions button:disabled{opacity:.4;cursor:default}
 .tisya-actions button:active,#tisya-shell button:active,#tisya-overlay button:active{background:#3b5b46}
-.tisya-active #send_form{background:linear-gradient(#163c32,#082b23)!important;border:1px solid #d8bf8890!important;border-radius:22px!important;box-shadow:inset 0 0 0 3px #48675840!important;margin:4px 10px 8px!important;padding:8px!important}
+.tisya-active #send_form{background:linear-gradient(#163c32,#082b23)!important;border:1px solid #d8bf8890!important;border-radius:22px!important;box-shadow:inset 0 0 0 3px #48675840!important;box-sizing:border-box!important;width:calc(100% - 16px)!important;max-width:calc(100% - 16px)!important;margin:4px 8px 8px!important;padding:6px!important}
 .tisya-active #send_textarea{font-family:TisyaReading,serif;font-size:16px!important;line-height:1.6!important;background:transparent!important;color:#e2e8d8!important}
 .tisya-active #send_but{background:url(assets/send.svg) center/36px 36px no-repeat!important;font-size:0!important;width:44px!important;min-height:44px!important}
 .tisya-active #send_but::before{content:none!important}
 .tisya-active #mes_stop{background:url(assets/stop.svg) center/36px 36px no-repeat!important;font-size:0!important;width:44px!important;min-height:44px!important}
 .tisya-active #mes_stop::before{content:none!important}
 #tisya-shell,#tisya-overlay{font-family:TisyaReading,serif;color:#e2e8d8}
-.tisya-top{position:fixed;z-index:2999;top:0;left:0;right:0;height:54px;display:flex;align-items:center;gap:8px;padding:4px 12px;background:#08271ff5;border-bottom:1px solid #d5c38e55}
+.tisya-top{position:fixed;z-index:2999;top:var(--tisya-inset-top);left:0;right:0;height:54px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:4px 12px;background:#08271ff5;border-bottom:1px solid #d5c38e55}
 .tisya-top span{flex:1;font-size:17px;color:#d5c38e;white-space:nowrap}
 .tisya-top button{padding:5px 10px!important}
 .tisya-page{display:none}
-.tisya-page-open .tisya-page{display:block;position:fixed;inset:54px 0 0;z-index:2998;background:linear-gradient(#06271aea,#06271aee),url(assets/water.png) center/cover;padding:20px max(18px,calc((100vw - 760px)/2));overflow:auto;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.tisya-page-open .tisya-page{display:block;position:fixed;top:calc(54px + var(--tisya-inset-top));left:0;right:0;height:calc(var(--tisya-viewport) - 54px - var(--tisya-inset-top) - var(--tisya-inset-bottom));box-sizing:border-box;z-index:2998;background:linear-gradient(#06271aea,#06271aee),url(assets/water.png) center/cover;padding:20px max(18px,calc((100vw - 760px)/2));overflow:auto;padding-bottom:max(24px,env(safe-area-inset-bottom))}
 #tisya-shell header,#tisya-overlay header{display:flex;gap:14px;align-items:center;margin-bottom:18px}
 #tisya-shell h2,#tisya-overlay h2{flex:1;color:#d5c38e;font-size:23px;font-weight:normal;margin:0}
 .tisya-list{display:flex;flex-direction:column;gap:12px;margin:16px 0}
@@ -44,8 +44,8 @@ body.tisya-active{--tisya-gold:#d5c38e;--tisya-line:#d5c38e55;background:linear-
 .tisya-contact[hidden]{display:none}
 #tisya-shell details{background:#10382b9c;border:1px solid #d5c38e55;padding:14px;border-radius:12px}
 #tisya-shell summary{cursor:pointer;color:#d5c38e;min-height:32px}
-.tisya-backdrop{position:fixed;inset:0;z-index:4000;background:#00140f99;display:flex;align-items:flex-end;justify-content:center}
-.tisya-sheet{background:#0b2e23;border:1px solid #d5c38e70;border-radius:22px 22px 0 0;width:min(760px,100%);max-height:85dvh;overflow:auto;padding:20px 18px max(24px,env(safe-area-inset-bottom))}
+.tisya-backdrop{position:fixed;top:var(--tisya-inset-top);left:0;right:0;bottom:var(--tisya-inset-bottom);z-index:4000;background:#00140f99;display:flex;align-items:flex-end;justify-content:center}
+.tisya-sheet{background:#0b2e23;border:1px solid #d5c38e70;border-radius:22px 22px 0 0;box-sizing:border-box;width:min(760px,100%);max-height:calc(var(--tisya-viewport) - var(--tisya-inset-top) - var(--tisya-inset-bottom) - 54px);overflow:auto;padding:20px 18px max(24px,env(safe-area-inset-bottom))}
 .tisya-sheet p{line-height:1.8}
 .tisya-active .drawer-content{background:#0c2c23f7!important;border:1px solid #d5c38e66!important;border-radius:14px!important;color:#e2e8d8!important}
 #tisya-shell button:focus-visible,#tisya-overlay button:focus-visible,.tisya-actions button:focus-visible{outline:2px solid #d5c38e;outline-offset:2px}
@@ -60,4 +60,16 @@ body.tisya-active{--tisya-gold:#d5c38e;--tisya-line:#d5c38e55;background:linear-
 .tisya-page-open [role=alert]{color:#f2c4a1;font-size:14px}
 .tisya-active .drawer-content input:not([type=checkbox]):not([type=radio]),.tisya-active .drawer-content select,.tisya-active .drawer-content textarea{color:#e2e8d8!important;background-color:#123c2f!important;border-color:#d5c38e66!important;border-radius:8px}
 .tisya-active .drawer-content .inline-drawer{border-color:#d5c38e44!important;box-shadow:none!important}
-@media(max-width:600px){.tisya-active .drawer-content{max-width:100vw!important;width:100vw!important;max-height:calc(100dvh - 58px)!important;overflow-y:auto!important;padding:16px!important}.tisya-top{padding-left:8px;padding-right:8px;gap:5px}.tisya-top span{font-size:15px}.tisya-top button{font-size:14px!important;padding:5px 8px!important}}
+@media(max-width:600px){.tisya-active .drawer-content{max-width:100vw!important;width:100vw!important;box-sizing:border-box!important;max-height:calc(var(--tisya-viewport) - 54px - var(--tisya-inset-top))!important;overflow-y:auto!important;padding:16px!important}.tisya-top{padding-left:8px;padding-right:8px;gap:5px}.tisya-top span{font-size:15px}.tisya-top button{font-size:14px!important;padding:5px 8px!important}}
+
+/* 保留宿主安全区和IME几何，只约束扩展自有尺寸及输入栏内部排列。 */
+#tisya-shell *,#tisya-overlay *,.tisya-actions *{box-sizing:border-box}
+.tisya-active #nonQRFormItems{min-width:0;flex-wrap:nowrap;align-items:flex-end;gap:4px}
+.tisya-active #leftSendForm,.tisya-active #rightSendForm{flex:0 0 auto;flex-wrap:wrap;max-width:88px;align-content:flex-end}
+.tisya-active #send_textarea{min-width:0!important;width:0;flex:1 1 0;box-sizing:border-box;max-width:100%;font-size:16px!important;line-height:1.5!important}
+.tisya-active #leftSendForm>div,.tisya-active #rightSendForm>div{max-width:44px;flex:0 0 44px;font-size:22px}
+.tisya-active #chat .mes_text p{font-size:inherit!important;line-height:inherit!important}
+.tisya-top span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tisya-navigation .tisya-sheet{max-height:100%;min-width:0;overflow-x:hidden}
+
+body.tisya-active #bg1{background-image:linear-gradient(#03211a70,#031c17b0),url(assets/water.png)!important;background-position:center!important;background-size:cover!important}

@@ -187,7 +187,7 @@ function decorate(element = null) {
             });});
         }
         const id=Number(node.getAttribute('mesid')),msg=context().chat[id];
-        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more')b.disabled=!msg||msg.is_user||msg.is_system||id!==context().chat.length-1||isGenerating()||generationBusy;});
+        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':msg.is_user||msg.is_system?'请在AI回复下操作':id!==context().chat.length-1?'历史消息请先创建分支':isGenerating()||hasActiveAgentRun()||generationBusy?'正在生成，请先停止或等待结束':'';b.disabled=!!reason;b.title=reason||b.textContent;b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
             if(title)el.dataset.tisyaLabel=title;
@@ -195,7 +195,7 @@ function decorate(element = null) {
     });
 }
 async function run(fn) {
-    if(busy)return;
+    if(busy){error(new Error('上一项操作仍在进行，请稍后再试'));return;}
     busy=true;
     try{await fn();}catch(err){error(err);}finally{busy=false;decorate();}
 }
@@ -236,12 +236,19 @@ function init() {
         observer=new MutationObserver(records=>{if(records.some(r=>r.type==='childList'&&[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('tisya-actions'))))decorate();});
         observer.observe(query('#chat'),{childList:true,subtree:true});
     }
+    let refreshTimer;
+    const refreshActions=()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(enabled)decorate();},0);};
+    for(const name of ['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_SWIPED']) {
+        const event=context().eventTypes[name];if(!event)continue;
+        context().eventSource.on(event,refreshActions);cleanups.push(()=>context().eventSource.removeListener(event,refreshActions));
+    }
+    cleanups.push(()=>clearTimeout(refreshTimer));
     const onChange=()=>{close();hidePage();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
-    decorate();run(home);startFont();
+    decorate();home().catch(error);startFont();
 }
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
     managed=api?.isManagedOwnershipRequired?.()===true;
-    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didMount({element}){decorate(element);return ()=>element.querySelector('.tisya-actions')?.remove();}});
+    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>element.querySelector('.tisya-actions')?.remove();}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,()=>{try{init();}catch(err){error(err);}});
