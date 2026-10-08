@@ -1,6 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {Window} from 'happy-dom';import * as model from '../model.js';
 async function setup(){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div><textarea id="send_textarea"></textarea><button id="option_regenerate"></button><button id="options_button"></button>';
-w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={};const ctx={chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getCurrentChatId:()=> 'a',eventTypes:{APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received'},eventSource:{on:(e,f)=>{handlers[e]=f},removeListener:()=>{}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push(args)},getAgentGenerationOptions:async()=>({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},...model};w.toastr={error:t=>errors.push(t)};
+w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={};const ctx={chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getCurrentChatId:()=> 'a',eventTypes:{APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received'},eventSource:{on:(e,f)=>{handlers[e]=f},removeListener:()=>{}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value])},getAgentGenerationOptions:async()=>({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},...model};w.toastr={error:t=>errors.push(t)};
 let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>`const {${names}}=window.fixture;`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,setGenerating:v=>generating=v};}
 async function click(f,a){f.w.document.querySelector(`[data-tisya-action="${a}"]`).click();await f.w.happyDOM.whenAsyncComplete();}
 test('contacts, labels, grouping and teardown keep native nodes',async()=>{const f=await setup();const native=f.w.document.querySelector('.mes_text');await click(f,'contacts');assert.equal(f.w.document.querySelectorAll('.tisya-contact').length,2);await click(f,'group:0');f.w.document.querySelector('#tisya-group-name').value='世界卡';await click(f,'save-group:a.png');assert.deepEqual(f.errors,[]);assert.equal(f.ctx.extensionSettings.缇斯亚界面.联系人分组['a.png'],'世界卡');await click(f,'menu');assert.match(f.w.document.querySelector('[data-tisya-action="drawer:5"]').textContent,/背景/);await click(f,'disable');assert.equal(f.w.document.querySelector('#tisya-shell'),null);assert.equal(f.w.document.querySelectorAll('.tisya-actions').length,0);assert.equal(f.w.document.querySelector('.mes_text'),native);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
@@ -15,8 +15,44 @@ test('streaming disables actions and generation end re-enables both on same moun
  assert.equal(regen.disabled,true);assert.equal(next.disabled,true);assert.match(next.title,/生成/);
  f.setGenerating(false);f.handlers['generation-end']();await f.w.happyDOM.whenAsyncComplete();
  assert.equal(regen.disabled,false);assert.equal(next.disabled,false);
- let requested=0;f.w.document.querySelector('#option_regenerate').addEventListener('click',()=>requested++);
- await click(f,'regen');assert.equal(requested,1);
- await click(f,'next');assert.equal(f.generated.length,1);assert.equal(f.generated[0][0],'normal');
+ await click(f,'regen');assert.equal(f.generated[0][0],'regenerate');
+ await click(f,'next');assert.equal(f.generated.length,2);assert.equal(f.generated[1][0],'normal');
  await click(f,'menu');await click(f,'disable');f.handlers['generation-end']();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.document.querySelector('.tisya-actions'),null);f.w.happyDOM.abort();
+});
+
+function addHistory(f){
+ f.ctx.chat=[{mes:'第一条',is_user:false},{mes:'用户第二条',is_user:true},{mes:'最后条',is_user:false}];
+ f.w.document.querySelector('.mes_text').textContent='第一条';
+ const log=[];f.ctx.deleteMessage=async id=>{log.push('delete:'+id);f.ctx.chat.splice(id,1);};f.ctx.saveChat=async()=>{log.push('save');};
+ return log;
+}
+test('old AI reroll deletes following messages before regenerating selected turn',async()=>{
+ const f=await setup(),log=addHistory(f);await click(f,'regen');
+ assert.deepEqual(log,['delete:2','delete:1','save']);assert.equal(f.ctx.chat.length,1);assert.equal(f.generated[0][0],'regenerate');assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+});
+test('old user continue returns to that turn and requests next reply',async()=>{
+ const f=await setup(),log=addHistory(f);f.ctx.chat[0].is_user=true;await click(f,'next');
+ assert.deepEqual(log,['delete:2','delete:1','save']);assert.equal(f.ctx.chat[0].mes,'第一条');assert.equal(f.generated[0][0],'normal');assert.equal(f.generated[0][1].automatic_trigger,true);f.w.happyDOM.abort();
+});
+test('rollback save failure prevents generation and reports partial deletion',async()=>{
+ const f=await setup();addHistory(f);f.ctx.saveChat=async()=>{throw Error('保存失败');};await click(f,'next');
+ assert.equal(f.generated.length,0);assert.match(f.errors.at(-1),/已删除后续 2 条消息.*保存失败/);f.w.happyDOM.abort();
+});
+test('draft and disconnected model prevent any history deletion',async()=>{
+ for(const offline of [false,true]){const f=await setup(),log=addHistory(f);if(offline)f.ctx.onlineStatus='no_connection';else f.w.document.querySelector('#send_textarea').value='草稿';await click(f,'next');assert.deepEqual(log,[]);assert.equal(f.ctx.chat.length,3);assert.equal(f.generated.length,0);f.w.happyDOM.abort();}
+});
+test('custom continue text persists and reaches native normal generation as user input',async()=>{
+ const f=await setup();await click(f,'menu');await click(f,'continue-settings');f.w.document.querySelector('#tisya-continue-text').value='请从这里继续。';await click(f,'save-continue');
+ assert.equal(f.ctx.extensionSettings.缇斯亚界面.继续用户消息,'请从这里继续。');
+ await click(f,'next');assert.equal(f.generated[0][0],'normal');assert.equal(f.generated[0][1].automatic_trigger,false);assert.equal(f.generated[0][2],'请从这里继续。');f.w.happyDOM.abort();
+});
+
+test('typing a draft during rollback preserves it and stops generation',async()=>{
+ const f=await setup();addHistory(f);const remove=f.ctx.deleteMessage;
+ f.ctx.deleteMessage=async id=>{await remove(id);f.w.document.querySelector('#send_textarea').value='刚写的草稿';};
+ f.ctx.extensionSettings.缇斯亚界面={联系人分组:{},继续用户消息:'继续'};
+ await click(f,'next');assert.equal(f.generated.length,0);assert.equal(f.w.document.querySelector('#send_textarea').value,'刚写的草稿');assert.match(f.errors.at(-1),/新增了草稿/);f.w.happyDOM.abort();
+});
+test('unloaded sparse history is rejected without deletion',async()=>{
+ const f=await setup(),log=addHistory(f);delete f.ctx.chat[1];await click(f,'next');assert.deepEqual(log,[]);assert.equal(f.generated.length,0);assert.match(f.errors.at(-1),/完整加载/);f.w.happyDOM.abort();
 });
