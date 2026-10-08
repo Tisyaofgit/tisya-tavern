@@ -1,5 +1,8 @@
+import { iconMarkup } from './icons.js';
+import { mountMessageNavigation } from './navigation.js';
+import { mountMessageReader } from './reader.js';
 import { getContext } from '/scripts/st-context.js';
-import { isGenerating, Generate } from '/script.js';
+import { isGenerating, Generate, messageFormatting } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
@@ -9,8 +12,9 @@ import { VERSION, SECTIONS, drawerEntries, chatPreview, chatTitle, mountLayout, 
 const KEY = '缇斯亚界面';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const query = selector => document.querySelector(selector);
+const iconButton = (text, action, icon) => `<button type="button" class="tisya-icon-button" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}</button>`;
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
-let layout, top, controls;
+let layout, top, controls, messageNavigation, releaseReader;
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 const FONT_URLS=Array.from({length:4},(_,i)=>`https://raw.githubusercontent.com/Tisyaofgit/tisya-tavern/cfc9d8c1ce4be94334c3b748addb0936802b2d2b/font/reading.part${i+1}.bin`);
@@ -34,8 +38,10 @@ function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy) throw new Error('请先等待或停止正在进行的生成');
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
-function close() { if(overlay.open)overlay.close(); overlay.replaceChildren(); }
+function clearReader() {releaseReader?.();releaseReader=null;delete overlay._actionDraft;}
+function close() { clearReader();if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
 function sheet(title, body) {
+    clearReader();
     overlay.setAttribute('aria-label',title);
     overlay.innerHTML = `<div class="tisya-backdrop"><section class="tisya-sheet"><header><h2>${esc(title)}</h2>${button('关闭','close')}</header>${body}</section></div>`;
     if(!overlay.open)overlay.showModal();
@@ -148,7 +154,7 @@ function messageToken(id) { return capture(context(),id); }
 function messageMenu(node) {
     const id = Number(node.getAttribute('mesid'));
     const token = messageToken(id);
-    sheet('消息操作',`<div class="tisya-list">${button('改写','msg-edit')}${button('回溯 · 删除这条及以下全部','msg-rollback')}${button('删除本条','msg-delete')}${button('创建分支','msg-branch')}${button('复制消息正文','msg-copy')}${button('更多功能','msg-native')}</div>`);
+    sheet('消息操作',`<div class="tisya-list">${button('阅读与回合记录','msg-read')}${button('改写','msg-edit')}${button('回溯 · 删除这条及以下全部','msg-rollback')}${button('删除本条','msg-delete')}${button('创建分支','msg-branch')}${button('复制消息正文','msg-copy')}${button('更多功能','msg-native')}</div>`);
     overlay._messageToken = token;
 }
 function nodeFor(token) {
@@ -160,6 +166,7 @@ function nodeFor(token) {
 async function messageAction(action) {
     const token = overlay._messageToken;
     const node = nodeFor(token);
+    if(action==='msg-read') {openReader(token);return;}
     if(action==='msg-copy') { await navigator.clipboard.writeText(validate(context(),token).mes); close(); return; }
     if(action==='msg-native') { close(); node.classList.toggle('tisya-native-tools'); node.querySelector('.extraMesButtonsHint')?.click(); return; }
     assertIdle();
@@ -173,6 +180,36 @@ async function messageAction(action) {
         sheet(action==='msg-delete'?'删除本条':'回溯确认',`<p>将删除 ${count} 条消息${action==='msg-rollback'?'，包括选中消息及其后的全部消息':''}。操作使用宿主删除接口。</p>${button('取消','close')}${button('确认删除',action==='msg-delete'?'delete-confirm':'rollback-confirm')}`);
         overlay._messageToken = token;
     }
+}
+function openReader(token) {
+    const message=validate(context(),token);
+    sheet('阅读与回合记录','<div id="tisya-reader"></div>');
+    releaseReader=mountMessageReader(document,query('#tisya-reader'),{
+        source:message.mes,
+        formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
+            {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
+            false,{regexPrepared:true,regexSourceText:body}),
+        onChooseAction:text=>run(()=>chooseReaderAction(token,text)),
+    }).dispose;
+}
+function chooseReaderAction(token,text) {
+    assertIdle();nodeFor(token);
+    const input=query('#send_textarea');if(!input)throw new Error('宿主输入框不存在');
+    if(input.value.length){
+        const draft=input.value;
+        sheet('填入行动建议',`<p>输入框已有草稿，请选择如何放入这条行动。</p><blockquote>${esc(text)}</blockquote><div class="tisya-list">${button('追加到草稿后','action-append')}${button('替换草稿','action-replace')}${button('取消','close')}</div>`);
+        overlay._actionDraft={token,text,draft};return;
+    }
+    fillReaderAction(token,text,'');
+}
+function fillReaderAction(token,text,draft) {
+    assertIdle();nodeFor(token);
+    const input=query('#send_textarea');if(!input||input.value!==draft)throw new Error('输入草稿已变化，请重新选择行动');
+    input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));close();closeNativeDrawers();hidePage();input.focus({preventScroll:true});
+}
+function confirmReaderAction(append) {
+    const choice=overlay._actionDraft;if(!choice)throw new Error('行动选择已失效，请重新打开消息');
+    fillReaderAction(choice.token,append?choice.draft+'\n'+choice.text:choice.text,choice.draft);
 }
 async function removeMessages(rollback) {
     const token=overlay._messageToken;assertIdle();validate(context(),token,{tail:true});
@@ -228,7 +265,7 @@ function decorate(element = null) {
     (element ? [element] : [...document.querySelectorAll('#chat .mes')]).forEach(node=>{
         if(!node.querySelector('.tisya-actions')) {
             const row=document.createElement('div');row.className='tisya-actions';
-            row.innerHTML=`${button('重骰','regen')}${button('继续','next')}${button('更多','more')}`;
+            row.innerHTML=`${iconButton('重骰','regen','reroll')}${iconButton('继续','next','continue')}${iconButton('更多','more','more')}`;
             (node.querySelector('.mes_block')??node).append(row);
             row.addEventListener('click',e=>{const b=e.target.closest('[data-tisya-action]');if(!b)return;e.stopPropagation();run(async()=>{
                 const token=messageToken(Number(node.getAttribute('mesid')));
@@ -238,7 +275,7 @@ function decorate(element = null) {
             });});
         }
         const id=Number(node.getAttribute('mesid')),msg=context().chat[id];
-        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':isGenerating()||hasActiveAgentRun()||generationBusy?'正在生成，请先停止或等待结束':'';b.disabled=!!reason;b.title=reason||(id<context().chat.length-1?'将自动删除下面的消息，再'+b.textContent:b.textContent);b.setAttribute('aria-disabled',String(!!reason));}});
+        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':isGenerating()||hasActiveAgentRun()||generationBusy?'正在生成，请先停止或等待结束':'';b.disabled=!!reason;b.title=reason||(id<context().chat.length-1?'将自动删除下面的消息，再'+b.getAttribute('aria-label'):b.getAttribute('aria-label'));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
             if(title)el.dataset.tisyaLabel=title;
@@ -252,7 +289,7 @@ async function run(fn) {
 }
 function stopUI() {
     if(generationBusy)throw new Error('请等当前操作完成再返回原生界面');
-    enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
+    clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
     document.querySelectorAll('.tisya-actions').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
@@ -263,6 +300,7 @@ function init() {
     layout=mountLayout(document);
     ({root,top,controls,overlay}=layout);
     cleanups.push(installComposer(document));
+    messageNavigation=mountMessageNavigation(document,{onNavigate:()=>{closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     const cancelDialog=e=>{e.preventDefault();if(!busy)close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(action==='home'){home().catch(error);return;}
@@ -271,6 +309,7 @@ function init() {
         if(action==='menu'){nav();return;}
         run(async()=>{
         if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
+        else if(action==='action-append'||action==='action-replace')confirmReaderAction(action==='action-append');
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('联系人分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);
@@ -300,7 +339,7 @@ function init() {
         context().eventSource.on(event,refreshActions);cleanups.push(()=>context().eventSource.removeListener(event,refreshActions));
     }
     cleanups.push(()=>clearTimeout(refreshTimer));
-    const onChange=()=>{close();hidePage();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
+    const onChange=()=>{close();hidePage();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
     decorate();home().catch(error);startFont();
 }
 export function registerChatSurface() {

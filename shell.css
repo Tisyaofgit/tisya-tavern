@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.2 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.2";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.3 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.3";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -169,3 +169,33 @@ body.tisya-active dialog.popup{background:radial-gradient(ellipse at 10% 0,#8aa9
 /* Agent remains its original toggle, including long press and live state. */
 body.tisya-active #ttas_agent_send_toggle::before{content:none!important}
 body.tisya-active #ttas_agent_send_toggle .ttas-agent-send-toggle-status{top:4px;right:4px;bottom:auto}
+
+/* One visible reroll/continue entry per message. Native data and handlers stay
+   in place for the host; disabling Tisya reveals the native controls again. */
+body.tisya-active #mes_continue,body.tisya-active #option_continue,body.tisya-active #option_regenerate{display:none!important}
+#tisya-menu-trigger,.tisya-actions .tisya-icon-button{display:grid;place-items:center;width:44px;min-width:44px;height:44px;padding:9px;flex:none}
+.tisya-icon-button svg{display:block;width:22px;height:22px;pointer-events:none;flex:none}
+body.tisya-active #nonQRFormItems .tisya-nav-button{grid-column:auto;grid-row:auto;display:grid;place-items:center;min-width:0;min-height:44px;height:44px;width:100%;margin:0;padding:9px;border:1px solid #b8a87573;border-radius:8px;background:var(--tisya-glass);box-shadow:inset 0 1px 1px #e2deac35;color:var(--tisya-gold);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#tisya-attach{order:-3}
+#tisya-previous-message{order:-2}
+#tisya-next-message{order:-1}
+body.tisya-active #nonQRFormItems .tisya-nav-button:disabled{opacity:.35;cursor:default}
+body.tisya-active #nonQRFormItems .tisya-nav-button:focus-visible{outline:2px solid var(--tisya-gold);outline-offset:-3px}
+
+/* Optional reply reader: no source replacement or host message reformatting. */
+#tisya-overlay .tisya-reader-tabs{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+#tisya-overlay .tisya-reader-tabs button{flex:1;min-width:70px}
+#tisya-overlay .tisya-reader-tabs button[aria-pressed=true]{border-color:var(--tisya-gold);background:#355544;box-shadow:inset 0 -2px var(--tisya-gold)}
+#tisya-overlay .tisya-reader-panel{min-width:0;overflow-wrap:anywhere}
+#tisya-overlay .tisya-reader-body{font:17px/1.85 TisyaReading,serif;color:var(--tisya-ink)}
+#tisya-overlay .tisya-reader-body p{font:inherit;line-height:inherit;margin:0 0 1em}
+#tisya-overlay .tisya-reader-body img,#tisya-overlay .tisya-reader-body video{max-width:100%;height:auto}
+#tisya-overlay .tisya-reader-body pre{white-space:pre-wrap;overflow-wrap:anywhere}
+#tisya-overlay .tisya-reader-paragraph{margin:0 0 16px}
+#tisya-overlay .tisya-paragraph-number{display:block;font:12px/1.5 var(--tisya-ui);color:var(--tisya-muted);margin-bottom:4px}
+#tisya-overlay .tisya-reader-card{padding:12px;margin:12px 0;border:1px solid var(--tisya-line);border-radius:12px;background:#092b2366}
+#tisya-overlay .tisya-reader-card h3,#tisya-overlay .tisya-reader-card h4{margin:0 0 8px;color:var(--tisya-gold);font-size:16px}
+#tisya-overlay .tisya-reader-card p{margin:8px 0}
+#tisya-overlay .tisya-reader-card blockquote{white-space:pre-wrap;margin:12px 0;padding:0 0 0 12px;border-left:2px solid var(--tisya-line)}
+#tisya-overlay .tisya-reader-actions{display:grid;gap:10px}
+#tisya-overlay .tisya-reader-actions button{text-align:left;white-space:normal;overflow-wrap:anywhere}

@@ -1,5 +1,6 @@
+import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.2';
+export const VERSION = '0.2.0-alpha.3';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -65,7 +66,7 @@ export function mountLayout(document) {
     for (const [name, value] of Object.entries({background:'transparent', 'box-shadow':'none', 'backdrop-filter':'none', '-webkit-backdrop-filter':'none', border:'0', height:'0px', 'min-height':'0', 'max-height':'0px'})) ownStyle(holder, name, value);
 
     const top = document.createElement('button');
-    top.id = 'tisya-menu-trigger'; top.type = 'button'; top.textContent = '菜单';
+    top.id = 'tisya-menu-trigger'; top.type = 'button'; top.innerHTML = iconMarkup('menu'); top.className = 'tisya-icon-button'; top.title = '打开侧栏';
     top.dataset.tisyaAction = 'menu'; top.setAttribute('aria-label', '打开侧栏');
     left.append(top);
     const controls = document.createElement('div'); controls.id = 'tisya-panel-controls'; controls.hidden = true;
@@ -115,7 +116,7 @@ export function installComposer(document, { onError = message => document.defaul
     const labels = {options_button:'聊天',extensionsMenuButton:'扩展',ttas_agent_send_toggle:'Agent',mes_continue:'接写',mes_impersonate:'代写',stscript_continue:'恢复',stscript_pause:'暂停',stscript_stop:'终止'};
     const scan = () => {
         for (const element of [...left.children, ...right.children]) {
-            if (element === attachment || ['send_but', 'mes_stop', 'tisya-menu-trigger'].includes(element.id)) continue;
+            if (element === attachment || element.hasAttribute('data-tisya-shortcut') || ['send_but', 'mes_stop', 'tisya-menu-trigger'].includes(element.id)) continue;
             if (!originals.has(element)) originals.set(element, {label:element.getAttribute('data-tisya-tool-label'),role:element.getAttribute('role'),tabindex:element.getAttribute('tabindex')});
             element.classList.add('tisya-composer-tool');
             const simple = !element.querySelector('button,input,select,textarea,a') && (!!labels[element.id] || element.matches('button,.interactable,.fa-solid,.fa-fw') || element.textContent.trim().length < 3);

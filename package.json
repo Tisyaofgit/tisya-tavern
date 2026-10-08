@@ -1,10 +1,11 @@
 {
   "name": "tisya-tavern",
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0-alpha.3",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node tools/build-reader.mjs --check && node --test tests/*.test.js",
+    "build:reader": "node tools/build-reader.mjs"
   },
   "devDependencies": {
     "happy-dom": "20.14.5"

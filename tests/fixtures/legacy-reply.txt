@@ -1,0 +1,11 @@
+<reply id="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
+<task><![CDATA[{"tasks":[{"id":1,"source":"本轮用户输入","input":"扩写","plan":"展现场面","stop":"场面节点"}],"refs":{"style":[],"cast":[]},"pending":[],"heart":{"status":"关闭","items":[]},"audit":[{"kind":"身份与授权","status":"待确认","evidence":"待实际核验"},{"kind":"资料与知情","status":"待确认","evidence":"待实际核验"},{"kind":"人物与关系","status":"待确认","evidence":"待实际核验"},{"kind":"行动与因果","status":"待确认","evidence":"待实际核验"},{"kind":"数值与机制","status":"待确认","evidence":"待实际核验"},{"kind":"文风与表现","status":"待确认","evidence":"待实际核验"},{"kind":"成稿与交付","status":"待确认","evidence":"待实际核验"}],"characters":[]}]]></task>
+<title><![CDATA[{"text":"临水","time":null,"place":null,"world":null}]]></title>
+<body min="1200" max="1800" unit="字"><![CDATA[旧正文]]></body>
+<status><![CDATA[]]></status>
+<extra><![CDATA[]]></extra>
+<vars><![CDATA[]]></vars>
+<archive><![CDATA[]]></archive>
+<memory><![CDATA[]]></memory>
+<next><![CDATA[{"tasks":[{"id":"T1","type":"下轮基础任务","trigger":"用户选择","text":"回应选定行动","actions":[1,2,3,4]}],"actions":[{"id":1,"type":"调查","text":"查看线索1","source":"现场对象1"},{"id":2,"type":"调查","text":"查看线索2","source":"现场对象2"},{"id":3,"type":"调查","text":"查看线索3","source":"现场对象3"},{"id":4,"type":"调查","text":"查看线索4","source":"现场对象4"}],"heart":{"status":"关闭","items":[]},"delivered":["本轮正文"],"candidates":[],"branches":[]}]]></next>
+</reply>
