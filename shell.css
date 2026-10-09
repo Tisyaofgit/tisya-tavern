@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.4 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.4";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.5 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.5";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -199,6 +199,15 @@ body.tisya-active #nonQRFormItems .tisya-nav-button:focus-visible{outline:2px so
 #tisya-overlay .tisya-reader-card blockquote{white-space:pre-wrap;margin:12px 0;padding:0 0 0 12px;border-left:2px solid var(--tisya-line)}
 #tisya-overlay .tisya-reader-actions{display:grid;gap:10px}
 #tisya-overlay .tisya-reader-actions button{text-align:left;white-space:normal;overflow-wrap:anywhere}
+#tisya-shell .tisya-notebook-list{display:grid;gap:12px;min-width:0}
+#tisya-shell .tisya-notebook-card{padding:12px;border:1px solid var(--tisya-line);border-radius:12px;background:#092b2380;min-width:0;overflow-wrap:anywhere}
+#tisya-shell .tisya-notebook-card h3{font-size:14px;color:var(--tisya-gold);margin:0 0 8px}
+#tisya-shell .tisya-notebook-card p{font:15px/1.7 var(--tisya-ui);margin:8px 0 12px;white-space:pre-wrap}
+#tisya-shell .tisya-notebook-actions,#tisya-shell .tisya-notebook-pager{display:flex;flex-wrap:wrap;gap:8px}
+#tisya-shell .tisya-notebook-actions button{flex:1;min-width:110px}
+#tisya-shell .tisya-notebook-pager{margin:16px 0}
+#tisya-shell .tisya-notebook-pager button{flex:1;min-width:70px}
+#tisya-shell .tisya-notebook input{margin-bottom:12px}
 
 /* Original message artwork is isolated in a shadow tree; native nodes stay owned by the host. */
 body.tisya-active .tisya-source-concealed{display:none!important}

@@ -1,6 +1,6 @@
 import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.4';
+export const VERSION = '0.2.0-alpha.5';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -20,6 +20,8 @@ export const SECTIONS = [
     ['agent', 'agent_system_container', 'Agent 工作流'],
     ['skill', 'skill_manager_container', 'Skill 指南'],
     ['mcp', 'mcp_manager_container', 'MCP 外部工具'],
+    ['image', '.sd_settings', '生图设置'],
+    ['voice', 'tts_settings', '语音设置'],
 ];
 
 export function drawerEntries(document) {

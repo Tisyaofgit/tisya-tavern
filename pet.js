@@ -8,7 +8,7 @@ export function petBounds(document){
  const bottom=Math.min(w.innerHeight,(v?.offsetTop??0)+(v?.height??w.innerHeight),c?.height?c.bottom:w.innerHeight,form?.height?form.top:w.innerHeight)-4;
  return {x:left,y:top,width:Math.max(1,right-left),height:Math.max(1,bottom-top)};
 }
-export function mountPet(document,{onError=()=>{},onVisibility=()=>{},getMotion=()=>true}={}){
+export function mountPet(document,{onError=()=>{},onVisibility=()=>{},onOpenApp=()=>false,getMotion=()=>true}={}){
  const win=document.defaultView,host=document.createElement('aside');host.id='tisya-pet';host.setAttribute('data-tt-mobile-surface','none');host.setAttribute('aria-label','缇斯亚桌宠与手机');const root=host.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=css;root.append(style);document.body.append(host);
  const make=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls;if(text)n.textContent=text;return n;},viewport=make('div','viewport'),scene=make('div','scene'),status=make('span','status');status.setAttribute('role','status');status.hidden=true;viewport.append(scene);root.append(viewport,status);
  let alive=true,shown=true,mode='standing',page=null,g,position=null,drag=null,reaction=null,epoch=0,ready=false,failed=false,canvases=[],off=[],blocked=false,lastMode=null;
@@ -30,7 +30,7 @@ export function mountPet(document,{onError=()=>{},onVisibility=()=>{},getMotion=
   position={x:Math.max(b.x,Math.min(position.x,b.x+b.width-width)),y:Math.max(b.y,Math.min(position.y,b.y+b.height-height))};
   Object.assign(host.style,{left:position.x+'px',top:position.y+'px',width:width+'px',height:height+'px'});Object.assign(viewport.style,{width:width+'px',height:height+'px',pointerEvents:mode==='standing'?'none':'auto'});reaction?.refresh();
  }
- function openApp(name){page=name;render(mode);}
+ function openApp(name){if(!alive||!shown)return;try{if(onOpenApp(name)===true){page=null;render('standing',true);return;}}catch(error){fail(error);return;}page=name;render(mode);}
  function request(action){if(action==='poke'||action==='drag-face'){reaction?.poke();return;}if(action==='open')render('folded',true);else if(action==='expand')render('expanded',true);else if(action==='collapse')render('folded',true);else if(action==='close'){page=null;render('standing',true);}else if(action==='home'||action==='back'){page=null;render(mode);}else if(action==='more')openApp('设置');}
  function render(next=mode,center=false){
   if(!alive)return;const ticket=++epoch;reaction?.dismiss('layout');mode=next;if(mode!=='expanded')page=null;

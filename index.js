@@ -3,6 +3,7 @@ import {mountPet} from './pet.js';
 import { iconMarkup } from './icons.js';
 import { mountMessageNavigation } from './navigation.js';
 import { mountMessageReader } from './reader.js';
+import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { isGenerating, Generate, messageFormatting } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
@@ -16,7 +17,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;'
 const query = selector => document.querySelector(selector);
 const iconButton = (text, action, icon) => `<button type="button" class="tisya-icon-button" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}</button>`;
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
-let layout, top, controls, messageNavigation, releaseReader, appearance, chatEffects, pet;
+let layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;
 let motionEnabled=true;
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){appearance?.refresh();chatEffects?.refresh();pet?.refresh();}
@@ -43,7 +44,12 @@ function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy) throw new Error('请先等待或停止正在进行的生成');
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
-function clearReader() {releaseReader?.();releaseReader=null;delete overlay._actionDraft;}
+function clearReader() {releaseReader?.();releaseReader=null;readerToken=null;delete overlay._actionDraft;}
+function checkReadingSource(){
+    notebook?.checkCurrent();
+    if(readerToken)try{validate(context(),readerToken);}catch{sheet('阅读已失效','<p role="status">原消息或候选已变化，请重新打开阅读。</p>');}
+}
+function clearNotebook(){notebook?.dispose();notebook=null;}
 function close(expectedEpoch = sheetEpoch) { if(expectedEpoch!==sheetEpoch)return;sheetEpoch++;clearReader();if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
 function sheet(title, body) {
     sheetEpoch++;
@@ -58,7 +64,7 @@ function closeNativeDrawers(except=null) {
         if(entry.element!==except&&entry.element.querySelector(':scope > .drawer-content.openDrawer'))entry.element.querySelector('.drawer-toggle')?.click();
     }
 }
-function hidePage() { renderEpoch++; root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); refreshVisuals(); }
+function hidePage() { renderEpoch++; clearNotebook();root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); refreshVisuals(); }
 function nativeDrawer(key) {
     const entry=drawerEntries(document).find(entry=>entry.key===key);
     const target=entry?.element.querySelector('.drawer-toggle');
@@ -73,9 +79,10 @@ function nativeControl(selector) {
     target.focus({preventScroll:true});
     target.click();
 }
+function sectionNode(selector){return selector.startsWith('.')?query(selector):document.getElementById(selector);}
 function extensionSection(key) {
     const entry=SECTIONS.find(([id])=>id===key);
-    const section=entry&&document.getElementById(entry[1]);
+    const section=entry&&sectionNode(entry[1]);
     const toggle=section?.querySelector('.inline-drawer-toggle');
     if(!toggle)throw new Error('该扩展尚未就绪，可从“全部扩展与自动化”查看');
     nativeDrawer('extensions-settings-button');
@@ -91,15 +98,28 @@ function nav() {
     const groupOrder=['创作','资料','工作流','系统','其他扩展'];
     const fullscreen=query('#option_toggle_fullscreen');
     const fullscreenButton=fullscreen&&!fullscreen.classList.contains('displayNone')?button('切换系统全屏','fullscreen'):'';
-    const sections=SECTIONS.filter(([,id])=>document.getElementById(id)?.querySelector('.inline-drawer-toggle')).map(([key,,label])=>button(label,`section:${key}`)).join('');
+    const sections=SECTIONS.filter(([,id])=>sectionNode(id)?.querySelector('.inline-drawer-toggle')).map(([key,,label])=>button(label,`section:${key}`)).join('');
     const native=groupOrder.filter(name=>groups.has(name)).map(name=>`<h3>${esc(name)}</h3><div class="tisya-list">${name==='工作流'?sections:''}${groups.get(name).map(entry=>button(entry.label,`drawer:${entry.key}`)).join('')}</div>`).join('');
     const styleVersion=getComputedStyle(document.body).getPropertyValue('--tisya-style-version').replace(/["']/g,'').trim();
-    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入快捷栏','input-tools')}${button(pet?.isVisible()?'隐藏桌宠':'显示桌宠','pet-toggle')}${button(motionEnabled?'暂停动态效果':'开启动态效果','motion-toggle')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
+    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('会话手记','notes')}${button('公开记忆','memory')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入快捷栏','input-tools')}${button(pet?.isVisible()?'隐藏桌宠':'显示桌宠','pet-toggle')}${button(motionEnabled?'暂停动态效果':'开启动态效果','motion-toggle')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
     overlay.querySelector('.tisya-backdrop').classList.add('tisya-navigation');
 }
 function page(title, html) {
-    close(); closeNativeDrawers(); root.classList.add('tisya-page-open'); refreshVisuals();
+    clearNotebook();close(); closeNativeDrawers(); root.classList.add('tisya-page-open'); refreshVisuals();
     root.querySelector('.tisya-page').innerHTML = `<header>${button('菜单','menu')}<h2>${esc(title)}</h2>${button('返回聊天','chat')}</header>${html}`;
+}
+function openNotebook(mode){
+    renderEpoch++;
+    page(mode==='memory'?'公开记忆':'会话手记',`<div id="tisya-notebook"></div><footer>${button(mode==='memory'?'查看会话手记':'查看公开记忆',mode==='memory'?'notes':'memory')}</footer>`);
+    notebook=mountNotebook(document,query('#tisya-notebook'),{getContext:context,mode,onRead:openReader,onError:error,onLocate:token=>{
+        const node=nodeFor(token);close();closeNativeDrawers();hidePage();node.scrollIntoView({block:'start',behavior:'auto'});
+    }});
+}
+function phoneApp(name){
+    if(!enabled)return false;
+    const routes={手记:()=>openNotebook('notes'),记忆:()=>openNotebook('memory'),通信:()=>{renderEpoch++;contacts();},生图:()=>extensionSection('image'),语音:()=>extensionSection('voice'),主题:()=>nativeDrawer('user-settings-button'),协议:()=>nativeDrawer('advanced-formatting-button'),应用:()=>nativeDrawer('extensions-settings-button'),设置:nav};
+    if(!Object.hasOwn(routes,name))return false;
+    run(routes[name],{exclusive:false});return true;
 }
 function contacts() {
     const groups = groupContacts(context().characters, settings().联系人分组);
@@ -187,16 +207,18 @@ async function messageAction(action) {
         overlay._messageToken = token;
     }
 }
-function openReader(token) {
+function openReader(token,initialTab='body') {
     const message=validate(context(),token);
     sheet('阅读与回合记录','<div id="tisya-reader"></div>');
     releaseReader=mountMessageReader(document,query('#tisya-reader'),{
         source:message.mes,
+        initialTab,
         formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
             false,{regexPrepared:true,regexSourceText:body}),
         onChooseAction:text=>run(()=>chooseReaderAction(token,text)),
     }).dispose;
+    readerToken=token;
 }
 function chooseReaderAction(token,text) {
     assertIdle();nodeFor(token);
@@ -296,7 +318,7 @@ async function run(fn,{exclusive=true}={}) {
 }
 function stopUI() {
     if(busy||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
-    clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
+    clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
     document.querySelectorAll('.tisya-actions').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
@@ -317,13 +339,14 @@ function init() {
     });
     cleanups.push(()=>appearance.dispose());
     chatEffects=mountChatEffects(document,{getMotion:()=>motionEnabled,onError:visualError});cleanups.push(()=>chatEffects.dispose());
-    pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onVisibility:value=>{const next=structuredClone(settings());next.显示桌宠=value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();}});cleanups.push(()=>pet.dispose());
+    pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onOpenApp:phoneApp,onVisibility:value=>{const next=structuredClone(settings());next.显示桌宠=value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();}});cleanups.push(()=>pet.dispose());
     if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{onNavigate:()=>{closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(action==='home'){home().catch(error);return;}
         if(action==='contacts'){renderEpoch++;contacts();return;}
+        if(action==='notes'||action==='memory'){run(()=>openNotebook(action),{exclusive:false});return;}
         if(action==='chat'){close();closeNativeDrawers();hidePage();return;}
         if(action==='menu'){nav();return;}
         run(async()=>{
@@ -352,10 +375,14 @@ function init() {
         observer.observe(query('#chat'),{childList:true,subtree:true});
     }
     let refreshTimer;
-    const refreshActions=()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(enabled)decorate();},0);};
-    for(const name of ['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_SWIPED']) {
+    const refreshActions=()=>{if(!enabled)return;checkReadingSource();clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(enabled)decorate();},0);};
+    for(const name of ['GENERATION_STARTED','GENERATION_ENDED','GENERATION_STOPPED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED']) {
         const event=context().eventTypes[name];if(!event)continue;
         context().eventSource.on(event,refreshActions);cleanups.push(()=>context().eventSource.removeListener(event,refreshActions));
+    }
+    for(const name of ['STREAM_TOKEN_RECEIVED','CHARACTER_MESSAGE_RENDERED','USER_MESSAGE_RENDERED']){
+        const event=context().eventTypes[name];if(!event)continue;
+        context().eventSource.on(event,checkReadingSource);cleanups.push(()=>context().eventSource.removeListener(event,checkReadingSource));
     }
     cleanups.push(()=>clearTimeout(refreshTimer));
     const onChange=()=>{close();hidePage();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));

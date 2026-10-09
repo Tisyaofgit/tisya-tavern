@@ -1,7 +1,12 @@
 import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs,strictJSON} from './reader-core.js';
 
-const errorCode=error=>/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(error?.code??'')?error.code:'TISYA_READER_INVALID';
-const attempt=fn=>{try{return {value:fn()};}catch(error){return {error:errorCode(error)};}};
+export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
+export function readerErrorText(code){
+    const safe=readerErrorCode({code});
+    const message=safe==='TISYA_JOURNEY_MEMORY_UNSUPPORTED'?'本条记忆格式不受支持，无法核验公开权限。':safe==='TISHA_OUTPUT_SIZE'?'消息过长，无法打开阅读页。':/^TISHA_OUTPUT_|^TISYA_HANDOFF_|^TISYA_PIPES_|^TISHA_JSON_/.test(safe)?'消息结构不完整或格式不符合协议。':/^TISYA_MEMORY5_|^TISYA_JOURNEY_|^TISYA_PERMISSION_/.test(safe)?'回合记录未通过权限或原文引用校验。':safe==='TISYA_READER_ACTIONS_INVALID'?'行动列表格式不完整。':safe==='TISYA_READER_FORMAT'?'正文排版失败。':'本条内容未通过阅读校验。';
+    return `${message}原消息仍保留。（${safe}）`;
+}
+const attempt=fn=>{try{return {value:fn()};}catch(error){return {error:readerErrorCode(error)};}};
 const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|thinking|world_thinking|character_mode|character_thinking|task|next|status|memory|actions)\b/i.test(source);
 
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
@@ -24,12 +29,12 @@ export function inspectMessage(source) {
     return {structured,body,journey,actions};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,onChooseAction}) {
+export function mountMessageReader(document, container, {source,formatBody,onChooseAction,initialTab='body'}) {
     const data=inspectMessage(source);
     let alive=true;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
-    const failure=(target,label,code)=>{const el=note(`${label}暂不可用（${code}）。原消息仍保留。`);el.setAttribute('role','status');target.append(el);};
+    const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
     const tabs=make('div',null,'tisya-reader-tabs');tabs.setAttribute('aria-label','阅读内容');
     const panel=make('div',null,'tisya-reader-panel');panel.id='tisya-reader-panel';panel.setAttribute('role','region');
     const buttons=new Map();
@@ -103,6 +108,6 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         if(key==='body')renderBody();else if(key==='journey')renderJourney();else renderActions();
         panel.scrollTop=0;
     }
-    render('body');
+    render(buttons.has(initialTab)?initialTab:'body');
     return {dispose(){alive=false;container.replaceChildren();buttons.clear();}};
 }
