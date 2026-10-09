@@ -1,10 +1,10 @@
 {
   "name": "tisya-tavern",
-  "version": "0.2.0-alpha.3",
+  "version": "0.2.0-alpha.4",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tools/build-reader.mjs --check && node --test tests/*.test.js",
+    "test": "node tools/build-reader.mjs --check && node tools/build-visual.mjs --check && node --test tests/*.test.js",
     "build:reader": "node tools/build-reader.mjs"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.3 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.3";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.4 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.4";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -199,3 +199,39 @@ body.tisya-active #nonQRFormItems .tisya-nav-button:focus-visible{outline:2px so
 #tisya-overlay .tisya-reader-card blockquote{white-space:pre-wrap;margin:12px 0;padding:0 0 0 12px;border-left:2px solid var(--tisya-line)}
 #tisya-overlay .tisya-reader-actions{display:grid;gap:10px}
 #tisya-overlay .tisya-reader-actions button{text-align:left;white-space:normal;overflow-wrap:anywhere}
+
+/* Original message artwork is isolated in a shadow tree; native nodes stay owned by the host. */
+body.tisya-active .tisya-source-concealed{display:none!important}
+body.tisya-active .tisya-projected{background:transparent!important}
+body.tisya-active .tisya-projected .mes_block{min-width:0;overflow:visible}
+body.tisya-active #tisya-chat-effects{position:absolute;pointer-events:none;overflow:hidden;z-index:0;opacity:.75}
+body.tisya-active #tisya-chat-effects canvas{display:block;pointer-events:none}
+body.tisya-active #chat{position:relative;z-index:1}
+body.tisya-active .tisya-message-visual{min-width:0;max-width:100%}
+
+/* The left shortcut rail can scroll; its native children never change parents.
+   The accepted bottom menu / input / send grid keeps the same six columns. */
+body.tisya-active #leftSendForm{display:flex!important;grid-column:1/6;order:0;min-width:0!important;width:100%!important;max-width:100%!important;flex-flow:row nowrap!important;gap:4px!important;align-items:stretch!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-inline:contain;scrollbar-width:none;padding:0!important;margin:0!important}
+body.tisya-active #leftSendForm::-webkit-scrollbar{display:none}
+body.tisya-active #nonQRFormItems #leftSendForm>:is(.tisya-tool-compact,.tisya-nav-button,#tisya-attach){flex:0 0 44px!important;width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important}
+body.tisya-active #nonQRFormItems #leftSendForm>.tisya-composer-tool:not(.tisya-tool-compact){flex:0 0 auto!important;max-width:none!important;width:auto!important;min-width:44px!important}
+#tisya-attach{order:-4}
+#tisya-previous-message{order:-3}
+#tisya-next-message{order:-2}
+#tisya-bottom-message{order:-1}
+/* Native editor controls stay under .ch_name for every existing host selector.
+   display:contents lets them participate in the message's flex layout. */
+body.tisya-active #chat .mes_block:has(.edit_textarea){display:flex!important;flex-direction:column;min-width:0}
+body.tisya-active #chat .mes_block:has(.edit_textarea)>.ch_name{display:contents!important}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons{display:flex!important;order:50;position:sticky;bottom:0;z-index:5;float:none;align-self:stretch;flex-flow:row nowrap;gap:4px;width:100%;min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:none;padding:6px 0 3px;margin:0;background:linear-gradient(#073027f5,#0b3027);border-top:1px solid #cdb98475;border-radius:10px 10px 0 0;box-shadow:0 -3px 10px #03251b80;filter:none;transition:none}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.menu_button{order:2;flex:0 0 44px;min-width:44px;width:44px;height:44px;min-height:44px;aspect-ratio:auto;gap:5px;padding:8px;border-radius:8px;opacity:1;background:var(--tisya-glass);color:var(--tisya-gold);border:1px solid var(--tisya-line);font-size:16px;box-sizing:border-box}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.menu_button::after{display:none}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.mes_edit_done{order:0;flex-basis:72px;width:72px;background:#285642}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.mes_edit_cancel{order:1;flex-basis:72px;width:72px}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.mes_edit_done::after,body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.mes_edit_cancel::after{display:inline;content:'保存';padding:0;font:13px/1.3 var(--tisya-ui)}
+body.tisya-active #chat .mes_block:has(.edit_textarea) .mes_edit_buttons>.mes_edit_cancel::after{content:'取消'}
+body.tisya-active #chat .mes_block:has(.edit_textarea)>.tisya-actions{display:none!important}
+body.tisya-active #chat .edit_textarea{max-width:100%;min-width:0;scroll-padding-bottom:24px;box-sizing:border-box}
+
+/* Native messageEdit focuses immediately after inserting its textarea. */
+body.tisya-active #chat .tisya-source-concealed:has(.edit_textarea){display:block!important}

@@ -1,0 +1,17 @@
+{
+  "source": "Foundation r243 / 0.30.1-journey.r2",
+  "files": {
+    "src/character-renderer.cjs": "268d49db1c2ead0775a3a7383294f7d471fbc855958bbfac06ae4cdd65c4cada",
+    "src/character-leaning.cjs": "07f3026f795ca54565be924076ce715473a50fb0bdf7842b555b2ec5e3b5ed98",
+    "src/character-frames.cjs": "e5e3dc0f1da4d3cb7da4711dc31d2029ec22d753c397f95a450ed2be0baa1827",
+    "assets/character-frames.json": "5635e6be37bb642b5d29f00ff2229f373a15463e226e1d14b4a612a9b2bf5a2e",
+    "src/character-eye-light.cjs": "43dbd83d8b07297bf1673073d4b4970698202ddc03b8ca16a0546639299faa55",
+    "src/character-idle.cjs": "438ebd68ef4bb56dea90fd935c6b07d5af72fa52c89e54f33e7ba532e2af3f74",
+    "src/character-reaction.cjs": "f83569f717a1618dbb383abc6f73db3e2d56a6bdef819f3dba0a0f5084d04a4d",
+    "src/water-motion.cjs": "a3a919af97a6c4c0f6a58c391fe4c01a63a0ee078481deb13b1527710ab1481d",
+    "src/resource-runtime.cjs": "844c031296343d8ae6f60e496593f91eeb306905aa82838328f1be0f82e10bd1",
+    "src/chat-effects-options.cjs": "9d954b1868f07d6a7d97efd794889c2c8d6ded489b05b4b706d1db3a3802ed05",
+    "src/pendant-rack.cjs": "dc3fac0a556518c50b1e819a2275c791cded38f7e4024ae58a9e6eec3636b13d",
+    "vendor/foundation-core.js": "1380f6fc50bed86339868eddb62e3e95a4790eed37c8bb419ea93c5aaa62f2fe"
+  }
+}

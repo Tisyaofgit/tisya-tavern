@@ -1,3 +1,5 @@
+import {mountMessageAppearance,mountChatEffects} from './message-ui.js';
+import {mountPet} from './pet.js';
 import { iconMarkup } from './icons.js';
 import { mountMessageNavigation } from './navigation.js';
 import { mountMessageReader } from './reader.js';
@@ -14,8 +16,11 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;'
 const query = selector => document.querySelector(selector);
 const iconButton = (text, action, icon) => `<button type="button" class="tisya-icon-button" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}</button>`;
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
-let layout, top, controls, messageNavigation, releaseReader;
-let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0;
+let layout, top, controls, messageNavigation, releaseReader, appearance, chatEffects, pet;
+let motionEnabled=true;
+const visualError=err=>console.warn('[Tisya visual]',err);
+function refreshVisuals(){appearance?.refresh();chatEffects?.refresh();pet?.refresh();}
+let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 const FONT_URLS=Array.from({length:4},(_,i)=>`https://raw.githubusercontent.com/Tisyaofgit/tisya-tavern/cfc9d8c1ce4be94334c3b748addb0936802b2d2b/font/reading.part${i+1}.bin`);
 async function startFont(){
@@ -39,20 +44,21 @@ function assertIdle() {
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
 function clearReader() {releaseReader?.();releaseReader=null;delete overlay._actionDraft;}
-function close() { clearReader();if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
+function close(expectedEpoch = sheetEpoch) { if(expectedEpoch!==sheetEpoch)return;sheetEpoch++;clearReader();if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
 function sheet(title, body) {
+    sheetEpoch++;
     clearReader();
     overlay.setAttribute('aria-label',title);
     overlay.innerHTML = `<div class="tisya-backdrop"><section class="tisya-sheet"><header><h2>${esc(title)}</h2>${button('关闭','close')}</header>${body}</section></div>`;
     if(!overlay.open)overlay.showModal();
-    overlay.querySelector('.tisya-backdrop').addEventListener('click', e => { if (e.target.classList.contains('tisya-backdrop') && !busy) close(); });
+    overlay.querySelector('.tisya-backdrop').addEventListener('click', e => { if (e.target.classList.contains('tisya-backdrop')) close(); });
 }
 function closeNativeDrawers(except=null) {
     for(const entry of drawerEntries(document)) {
         if(entry.element!==except&&entry.element.querySelector(':scope > .drawer-content.openDrawer'))entry.element.querySelector('.drawer-toggle')?.click();
     }
 }
-function hidePage() { renderEpoch++; root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); }
+function hidePage() { renderEpoch++; root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); refreshVisuals(); }
 function nativeDrawer(key) {
     const entry=drawerEntries(document).find(entry=>entry.key===key);
     const target=entry?.element.querySelector('.drawer-toggle');
@@ -88,11 +94,11 @@ function nav() {
     const sections=SECTIONS.filter(([,id])=>document.getElementById(id)?.querySelector('.inline-drawer-toggle')).map(([key,,label])=>button(label,`section:${key}`)).join('');
     const native=groupOrder.filter(name=>groups.has(name)).map(name=>`<h3>${esc(name)}</h3><div class="tisya-list">${name==='工作流'?sections:''}${groups.get(name).map(entry=>button(entry.label,`drawer:${entry.key}`)).join('')}</div>`).join('');
     const styleVersion=getComputedStyle(document.body).getPropertyValue('--tisya-style-version').replace(/["']/g,'').trim();
-    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入快捷栏','input-tools')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
+    sheet('TISYA · 月潮', `<h3>聊天</h3><div class="tisya-list">${button('返回聊天','chat')}${button('会话','home')}${button('联系人','contacts')}${button('全部聊天功能','chat-all')}${button('继续设置','continue-settings')}</div>${native}<h3>界面</h3><div class="tisya-list">${button('输入快捷栏','input-tools')}${button(pet?.isVisible()?'隐藏桌宠':'显示桌宠','pet-toggle')}${button(motionEnabled?'暂停动态效果':'开启动态效果','motion-toggle')}${fullscreenButton}${button('重试下载字体','font-retry')}${button('返回原生界面','disable')}</div><p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${VERSION} · TauriTavern 2.3.0</p>${styleVersion!==VERSION?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`);
     overlay.querySelector('.tisya-backdrop').classList.add('tisya-navigation');
 }
 function page(title, html) {
-    close(); closeNativeDrawers(); root.classList.add('tisya-page-open');
+    close(); closeNativeDrawers(); root.classList.add('tisya-page-open'); refreshVisuals();
     root.querySelector('.tisya-page').innerHTML = `<header>${button('菜单','menu')}<h2>${esc(title)}</h2>${button('返回聊天','chat')}</header>${html}`;
 }
 function contacts() {
@@ -167,7 +173,7 @@ async function messageAction(action) {
     const token = overlay._messageToken;
     const node = nodeFor(token);
     if(action==='msg-read') {openReader(token);return;}
-    if(action==='msg-copy') { await navigator.clipboard.writeText(validate(context(),token).mes); close(); return; }
+    if(action==='msg-copy') { const epoch=sheetEpoch;await navigator.clipboard.writeText(validate(context(),token).mes);close(epoch);return; }
     if(action==='msg-native') { close(); node.classList.toggle('tisya-native-tools'); node.querySelector('.extraMesButtonsHint')?.click(); return; }
     assertIdle();
     if(action==='msg-edit'||action==='msg-branch') {
@@ -212,7 +218,7 @@ function confirmReaderAction(append) {
     fillReaderAction(choice.token,append?choice.draft+'\n'+choice.text:choice.text,choice.draft);
 }
 async function removeMessages(rollback) {
-    const token=overlay._messageToken;assertIdle();validate(context(),token,{tail:true});
+    const token=overlay._messageToken,epoch=sheetEpoch;assertIdle();validate(context(),token,{tail:true});
     const original=context().chat.slice(token.id);
     const snapshots=original.map(message=>message && ({text:message.mes,swipe:message.swipe_id}));
     if(rollback && original.some(message=>!message)) throw new Error('后续历史尚未完整加载，未执行回溯');
@@ -224,7 +230,7 @@ async function removeMessages(rollback) {
             if(context().getCurrentChatId()!==token.chatId||message!==original[id-token.id]||!snapshot||message?.mes!==snapshot.text||message?.swipe_id!==snapshot.swipe) throw new Error('删除期间消息发生变化');
             await context().deleteMessage(id,undefined,false);deleted++;
         }
-        await context().saveChat();close();
+        await context().saveChat();close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
 }
 async function generateAt(token, reroll = false) {
@@ -272,9 +278,10 @@ function decorate(element = null) {
                 if(b.dataset.tisyaAction==='more')return messageMenu(node);
                 if(b.dataset.tisyaAction==='next')return generateAt(token);
                 return generateAt(token,true);
-            });});
+            },{exclusive:b.dataset.tisyaAction!=='more'});});
         }
         const id=Number(node.getAttribute('mesid')),msg=context().chat[id];
+        appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy)});
         node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':isGenerating()||hasActiveAgentRun()||generationBusy?'正在生成，请先停止或等待结束':'';b.disabled=!!reason;b.title=reason||(id<context().chat.length-1?'将自动删除下面的消息，再'+b.getAttribute('aria-label'):b.getAttribute('aria-label'));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
@@ -282,13 +289,13 @@ function decorate(element = null) {
         });
     });
 }
-async function run(fn) {
-    if(busy){error(new Error('上一项操作仍在进行，请稍后再试'));return;}
-    busy=true;
-    try{await fn();}catch(err){error(err);}finally{busy=false;decorate();}
+async function run(fn,{exclusive=true}={}) {
+    if(exclusive&&busy){error(new Error('正在生成或修改聊天，请等待完成后再修改历史'));return;}
+    if(exclusive)busy=true;
+    try{await fn();}catch(err){error(err);}finally{if(exclusive)busy=false;decorate();}
 }
 function stopUI() {
-    if(generationBusy)throw new Error('请等当前操作完成再返回原生界面');
+    if(busy||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
     clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu');
     document.querySelectorAll('.tisya-actions').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
@@ -300,15 +307,27 @@ function init() {
     layout=mountLayout(document);
     ({root,top,controls,overlay}=layout);
     cleanups.push(installComposer(document));
+    motionEnabled=settings().动态效果!==false;
+    appearance=mountMessageAppearance(document,{
+        getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
+        getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
+        formatBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),
+            {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},false,{regexPrepared:true,regexSourceText:body}),
+        onChooseAction:(node,source,text)=>run(()=>{const token=messageToken(Number(node.getAttribute('mesid')));if(validate(context(),token).mes!==source)throw new Error('消息已变化，请重新选择行动');chooseReaderAction(token,text);}),
+    });
+    cleanups.push(()=>appearance.dispose());
+    chatEffects=mountChatEffects(document,{getMotion:()=>motionEnabled,onError:visualError});cleanups.push(()=>chatEffects.dispose());
+    pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onVisibility:value=>{const next=structuredClone(settings());next.显示桌宠=value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();}});cleanups.push(()=>pet.dispose());
+    if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{onNavigate:()=>{closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
-    const cancelDialog=e=>{e.preventDefault();if(!busy)close();};overlay.addEventListener('cancel',cancelDialog);
+    const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(action==='home'){home().catch(error);return;}
         if(action==='contacts'){renderEpoch++;contacts();return;}
         if(action==='chat'){close();closeNativeDrawers();hidePage();return;}
         if(action==='menu'){nav();return;}
         run(async()=>{
-        if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
+        if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
         else if(action==='action-append'||action==='action-replace')confirmReaderAction(action==='action-append');
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
@@ -319,11 +338,11 @@ function init() {
             const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
         } else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
-    });};
+    },{exclusive:['select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm','action-append','action-replace'].includes(action)});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
-    const escape=e=>{if(e.key==='Escape'&&!busy)close();};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
+    const escape=e=>{if(e.key==='Escape')close();};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
     const input=e=>{if(!e.target.classList.contains('tisya-search'))return;const q=e.target.value.toLowerCase();root.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q));};root.addEventListener('input',input);
-    const down=e=>{const node=e.target.closest('#chat .mes');if(!node||e.target.closest('button,a,input,textarea,iframe,.mes_button,.mes_edit_buttons')||e.button!==0)return;clearTimeout(hold?.timer);hold={x:e.clientX,y:e.clientY,timer:setTimeout(()=>{if(!String(window.getSelection()))run(()=>messageMenu(node));},650)};};
+    const down=e=>{const node=e.target.closest('#chat .mes');if(!node||e.composedPath().some(n=>n.matches?.('button,a,input,textarea,iframe,.mes_button,.mes_edit_buttons'))||e.button!==0)return;clearTimeout(hold?.timer);hold={x:e.clientX,y:e.clientY,timer:setTimeout(()=>{if(!String(window.getSelection()))run(()=>messageMenu(node),{exclusive:false});},650)};};
     const cancel=()=>{clearTimeout(hold?.timer);hold=null;};
     const move=e=>{if(hold&&Math.hypot(e.clientX-hold.x,e.clientY-hold.y)>10)cancel();};
     query('#chat').addEventListener('pointerdown',down);query('#chat').addEventListener('pointermove',move);document.addEventListener('pointerup',cancel);document.addEventListener('pointercancel',cancel);
@@ -345,6 +364,6 @@ function init() {
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
     managed=api?.isManagedOwnershipRequired?.()===true;
-    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>element.querySelector('.tisya-actions')?.remove();}});
+    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>{appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();};}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,()=>{try{init();}catch(err){error(err);}});

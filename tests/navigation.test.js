@@ -9,7 +9,7 @@ function fixture(heights,{reverse=false,landing='底部'}={}) {
     const chat=d.getElementById('chat'),area={left:0,top:0,right:400,bottom:800,width:400,height:800};
     const total=heights.reduce((a,b)=>a+b,0);let scroll=0;
     const move=value=>{scroll=Math.max(0,Math.min(Math.max(total-800,0),value));};
-    chat.getBoundingClientRect=()=>area;Object.defineProperty(chat,'offsetHeight',{value:800});
+    chat.getBoundingClientRect=()=>area;Object.defineProperty(chat,'offsetHeight',{value:800});Object.defineProperty(chat,'scrollHeight',{value:total});Object.defineProperty(chat,'clientHeight',{value:800});
     Object.defineProperty(chat,'scrollTop',{get:()=>scroll,set:move});chat.scrollTo=options=>move(options.top);
     let offset=0;const nodes=heights.map((height,id)=>{
         const node=d.createElement('div'),start=offset;offset+=height;node.className='mes';node.setAttribute('mesid',id);
@@ -19,7 +19,7 @@ function fixture(heights,{reverse=false,landing='底部'}={}) {
     if(reverse)nodes.slice().reverse().forEach(node=>chat.append(node));
     let selectedLanding=landing,navigated=0;
     const nav=mountMessageNavigation(d,{getLanding:()=>selectedLanding,onNavigate:()=>navigated++});
-    return {w,d,nav,nodes,move,previous:d.getElementById('tisya-previous-message'),next:d.getElementById('tisya-next-message'),setLanding:value=>selectedLanding=value,get scroll(){return scroll;},get navigated(){return navigated;},dispose(){nav.dispose();w.happyDOM.abort();}};
+    return {w,d,nav,nodes,move,previous:d.getElementById('tisya-previous-message'),next:d.getElementById('tisya-next-message'),bottom:d.getElementById('tisya-bottom-message'),setLanding:value=>selectedLanding=value,get scroll(){return scroll;},get navigated(){return navigated;},dispose(){nav.dispose();w.happyDOM.abort();}};
 }
 
 test('reading position uses the dominant visible message, including short user turns',()=>{
@@ -60,4 +60,12 @@ test('empty chat, removed messages and chat reset never keep a stale target',()=
     const empty=fixture([]);assert.equal(empty.previous.disabled,true);assert.equal(empty.next.disabled,true);empty.dispose();
     const f=fixture([1500,600,2300,1300]);f.move(3900);f.nav.update();f.previous.click();f.nodes[1].remove();f.nav.update();assert.equal(f.nav.report().current,0);
     f.nodes.forEach(node=>node.remove());f.nav.reset();f.nav.update();assert.equal(f.previous.disabled,true);assert.equal(f.next.disabled,true);f.dispose();
+});
+
+
+test('bottom shortcut follows Next and reaches true chat end even inside one very long final message',()=>{
+ const f=fixture([1200,6400]);f.move(1800);f.nav.update();assert.equal(f.nav.report().current,1);assert.equal(f.next.disabled,true);assert.equal(f.bottom.disabled,false);assert.equal(f.bottom.previousElementSibling,f.next);assert.equal(f.bottom.textContent,'');assert.equal(f.bottom.getAttribute('aria-label'),'回到最底部');f.bottom.click();assert.equal(f.scroll,6800);assert.equal(f.bottom.disabled,true);assert.equal(f.previous.disabled,false);assert.equal(f.navigated,1);f.move(400);f.nav.update();assert.equal(f.bottom.disabled,false);f.dispose();assert.equal(f.d.querySelector('#tisya-bottom-message'),null);
+});
+test('bottom shortcut is disabled for empty and non-scrollable chats',()=>{
+ for(const heights of [[],[100,100]]){const f=fixture(heights);assert.equal(f.bottom.disabled,true);f.bottom.click();assert.equal(f.scroll,0);assert.equal(f.navigated,0);f.dispose();}
 });

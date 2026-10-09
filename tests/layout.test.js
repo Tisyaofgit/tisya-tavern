@@ -22,7 +22,7 @@ test('native and anonymous drawers keep their identities after DOM reorder',()=>
 test('mounting uses native shells and teardown restores decorated surfaces without losing nodes',()=>{
     const {w,d}=fixture(),native=d.querySelector('#rightNavHolder');
     const ui=mountLayout(d,'<button>菜单</button>');
-    assert.equal(ui.top.parentElement.id,'leftSendForm');
+    assert.equal(ui.top.parentElement.id,'nonQRFormItems');
     assert.equal(d.body.style.getPropertyValue('--topBarBlockSize'),'0px');
     assert.equal(ui.controls.hidden,true);
     assert.equal(ui.root.parentElement.id,'sheld');

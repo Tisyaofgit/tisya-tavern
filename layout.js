@@ -1,6 +1,6 @@
 import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.3';
+export const VERSION = '0.2.0-alpha.4';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -68,7 +68,7 @@ export function mountLayout(document) {
     const top = document.createElement('button');
     top.id = 'tisya-menu-trigger'; top.type = 'button'; top.innerHTML = iconMarkup('menu'); top.className = 'tisya-icon-button'; top.title = '打开侧栏';
     top.dataset.tisyaAction = 'menu'; top.setAttribute('aria-label', '打开侧栏');
-    left.append(top);
+    (document.querySelector('#nonQRFormItems')??left).prepend(top);
     const controls = document.createElement('div'); controls.id = 'tisya-panel-controls'; controls.hidden = true;
     controls.innerHTML = '<button type="button" data-tisya-action="menu">菜单</button><span></span><button type="button" data-tisya-action="chat">返回聊天</button>';
     holder.append(controls);

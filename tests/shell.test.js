@@ -1,6 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {Window} from 'happy-dom';import * as model from '../model.js';import * as layout from '../layout.js';import * as icons from '../icons.js';import * as navigation from '../navigation.js';import * as reader from '../reader.js';import {fixture as replyFixture} from './fixtures/journey-r4.cjs';
-async function setup(){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
-w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={},formatCalls=[];const ctx={chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getCurrentChatId:()=> 'a',eventTypes:{APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received'},eventSource:{on:(e,f)=>{handlers[e]=f},removeListener:()=>{}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value])},getAgentGenerationOptions:async()=>({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader};w.toastr={error:t=>errors.push(t)};
+async function setup({generateWait,optionsWait}={}){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
+w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={},formatCalls=[];const ctx={chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getCurrentChatId:()=> 'a',eventTypes:{APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received'},eventSource:{on:(e,f)=>{handlers[e]=f},removeListener:()=>{}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={mountMessageAppearance:()=>({sync(){},dispose(){},restore(){},refresh(){}}),mountChatEffects:()=>({dispose(){},refresh(){}}),mountPet:()=>({dispose(){},refresh(){},isVisible:()=>true,setVisible(){}}),getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value]);await generateWait?.(...args);},getAgentGenerationOptions:async()=>await optionsWait?.()??({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader};w.toastr={error:t=>errors.push(t)};
 let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>`const {${names}}=window.fixture;`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,formatCalls,setGenerating:v=>generating=v};}
 async function click(f,a){let target=a==='menu'?f.w.document.querySelector('#tisya-menu-trigger'):f.w.document.querySelector(`[data-tisya-action="${a}"]`);if(!target&&['contacts','home'].includes(a)){await click(f,'menu');target=f.w.document.querySelector(`[data-tisya-action="${a}"]`);}target.click();await f.w.happyDOM.whenAsyncComplete();}
 test('contacts, labels, grouping and teardown keep native nodes',async()=>{const f=await setup();const native=f.w.document.querySelector('.mes_text');await click(f,'contacts');assert.equal(f.w.document.querySelectorAll('.tisya-contact').length,2);await click(f,'group:0');f.w.document.querySelector('#tisya-group-name').value='世界卡';await click(f,'save-group:a.png');assert.deepEqual(f.errors,[]);assert.equal(f.ctx.extensionSettings.缇斯亚界面.联系人分组['a.png'],'世界卡');await click(f,'menu');assert.match(f.w.document.querySelector('[data-tisya-action="drawer:backgrounds-button"]').textContent,/背景/);await click(f,'disable');assert.equal(f.w.document.querySelector('#tisya-shell'),null);assert.equal(f.w.document.querySelectorAll('.tisya-actions').length,0);assert.equal(f.w.document.querySelector('.mes_text'),native);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
@@ -105,4 +105,61 @@ for(const change of ['draft','message','chat'])test('pending action refuses chan
 });
 test('chat change closes reader and stale actions cannot write into the next conversation',async()=>{
  const f=await setup(),button=await openActions(f);f.handlers.chat();button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.document.querySelector('#send_textarea').value,'');assert.equal(f.w.document.querySelector('#tisya-overlay').open,false);assert.equal(f.generated.length,0);f.w.happyDOM.abort();
+});
+
+
+test('holding a shadow UI button never opens the native long-press message menu',async()=>{
+ const f=await setup(),d=f.w.document;await click(f,'menu');await click(f,'chat');const host=d.createElement('div'),shadow=host.attachShadow({mode:'open'}),button=d.createElement('button');button.textContent='挂坠';shadow.append(button);d.querySelector('.mes_text').append(host);button.dispatchEvent(new f.w.PointerEvent('pointerdown',{bubbles:true,composed:true,button:0,clientX:20,clientY:20}));await new Promise(resolve=>setTimeout(resolve,700));assert.equal(d.querySelector('#tisya-overlay').open,false);d.dispatchEvent(new f.w.PointerEvent('pointerup',{bubbles:true}));await f.w.happyDOM.abort();
+});
+
+function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
+test('a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation',async()=>{
+ const stream=deferred(),f=await setup({generateWait:()=>stream.promise}),d=f.w.document;
+ try {
+  await click(f,'next');assert.equal(f.generated.length,1);assert.equal(d.querySelector('[data-tisya-action="next"]').disabled,true);
+  for(const dismiss of ['close','backdrop','escape','cancel']){
+   await click(f,'menu');const dialog=d.querySelector('#tisya-overlay');assert.equal(dialog.open,true);
+   if(dismiss==='close')await click(f,'close');
+   else if(dismiss==='backdrop')dialog.querySelector('.tisya-backdrop').click();
+   else if(dismiss==='escape')d.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+   else dialog.dispatchEvent(new f.w.Event('cancel',{cancelable:true}));
+   await f.w.happyDOM.whenAsyncComplete();assert.equal(dialog.open,false,dismiss);
+  }
+  await click(f,'more');await click(f,'msg-read');assert.equal(d.querySelector('#tisya-overlay').getAttribute('aria-label'),'阅读与回合记录');await click(f,'close');
+  await click(f,'menu');await click(f,'continue-settings');d.querySelector('#tisya-continue-text').value='以后继续用这条';await click(f,'save-continue');assert.equal(f.ctx.extensionSettings.缇斯亚界面.继续用户消息,'以后继续用这条');
+  await click(f,'menu');await click(f,'motion-toggle');assert.equal(f.ctx.extensionSettings.缇斯亚界面.动态效果,false);
+  let opened=0;d.querySelector('#backgrounds-button .drawer-toggle').addEventListener('click',()=>opened++);await click(f,'drawer:backgrounds-button');assert.equal(opened,1);assert.equal(d.querySelector('#tisya-overlay').open,false);
+  assert.deepEqual(f.errors,[]);assert.equal(f.generated.length,1);
+  const next=d.querySelector('[data-tisya-action="next"]');next.disabled=false;await click(f,'next');assert.equal(f.generated.length,1);assert.match(f.errors.at(-1),/生成或修改聊天/);
+  stream.resolve();await f.w.happyDOM.whenAsyncComplete();assert.equal(next.disabled,false);
+ } finally {stream.resolve();await f.w.happyDOM.abort();}
+});
+
+test('UI completions cannot release the history lock while generation options are pending',async()=>{
+ const options=deferred();let calls=0;const f=await setup({optionsWait:()=>{calls++;return options.promise;}});
+ try {
+  await click(f,'next');assert.equal(calls,1);assert.equal(f.generated.length,0);
+  await click(f,'more');await click(f,'close');await click(f,'menu');await click(f,'input-tools');assert.deepEqual(f.errors,[]);
+  await click(f,'next');assert.equal(calls,1);assert.match(f.errors.at(-1),/生成或修改聊天/);
+  options.resolve({});await f.w.happyDOM.whenAsyncComplete();assert.equal(f.generated.length,1);
+ } finally {options.resolve({});await f.w.happyDOM.abort();}
+});
+
+test('late clipboard completion leaves a newly opened menu intact',async()=>{
+ const copy=deferred(),f=await setup(),d=f.w.document;let copied;
+ Object.defineProperty(f.w.navigator.clipboard,'writeText',{value:async text=>{copied=text;await copy.promise;}});
+ try {
+  await click(f,'more');await click(f,'msg-copy');assert.equal(copied,'正文');
+  await click(f,'close');await click(f,'menu');copy.resolve();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelector('#tisya-overlay').open,true);assert.equal(d.querySelector('#tisya-overlay').getAttribute('aria-label'),'TISYA · 月潮');assert.deepEqual(f.errors,[]);
+ } finally {copy.resolve();await f.w.happyDOM.abort();}
+});
+
+test('pending history save allows menu dismissal and does not close a later panel',async()=>{
+ const save=deferred(),f=await setup(),d=f.w.document;addHistory(f);f.ctx.saveChat=()=>save.promise;
+ try {
+  await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,2);
+  await click(f,'close');await click(f,'menu');save.resolve();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelector('#tisya-overlay').open,true);assert.equal(d.querySelector('#tisya-overlay').getAttribute('aria-label'),'TISYA · 月潮');assert.deepEqual(f.errors,[]);
+ } finally {save.resolve();await f.w.happyDOM.abort();}
 });

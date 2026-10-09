@@ -6,6 +6,7 @@ const shapes = {
     more:'<g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></g>',
     previous:'<path d="m6 13 6-6 6 6M6 4h12M12 7v13"/>',
     next:'<path d="m6 11 6 6 6-6M6 20h12M12 4v13"/>',
+    bottom:'<path d="m6 5 6 6 6-6m-12 7 6 6 6-6M5 22h14"/>',
     book:'<path d="M12 6v14M12 6C8 3 5 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-2-1-5-1-9 2Z"/>',
 };
 export function iconMarkup(name) {
