@@ -1,9 +1,10 @@
+import {formatProse,proseCSS} from './prose.js';
 import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs,strictJSON} from './reader-core.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
-    const message=safe==='TISYA_JOURNEY_MEMORY_UNSUPPORTED'?'本条记忆格式不受支持，无法核验公开权限。':safe==='TISHA_OUTPUT_SIZE'?'消息过长，无法打开阅读页。':/^TISHA_OUTPUT_|^TISYA_HANDOFF_|^TISYA_PIPES_|^TISHA_JSON_/.test(safe)?'消息结构不完整或格式不符合协议。':/^TISYA_MEMORY5_|^TISYA_JOURNEY_|^TISYA_PERMISSION_/.test(safe)?'回合记录未通过权限或原文引用校验。':safe==='TISYA_READER_ACTIONS_INVALID'?'行动列表格式不完整。':safe==='TISYA_READER_FORMAT'?'正文排版失败。':'本条内容未通过阅读校验。';
+    const message=safe==='TISYA_JOURNEY_MEMORY_UNSUPPORTED'?'本条记忆格式不受支持，无法核验公开权限。':safe==='TISHA_OUTPUT_SIZE'?'消息过长，无法打开阅读页。':/^TISHA_OUTPUT_|^TISYA_HANDOFF_|^TISYA_PIPES_|^TISHA_JSON_/.test(safe)?'消息结构不完整或格式不符合协议。':/^TISYA_MEMORY5_|^TISYA_JOURNEY_|^TISYA_PERMISSION_/.test(safe)?'回合记录未通过权限或原文引用校验。':safe==='TISYA_READER_ACTIONS_INVALID'?'行动列表格式不完整。':safe==='TISYA_READER_FORMAT'||/^TISYA_MARK_/.test(safe)?'正文排版失败。':'本条内容未通过阅读校验。';
     return `${message}原消息仍保留。（${safe}）`;
 }
 const attempt=fn=>{try{return {value:fn()};}catch(error){return {error:readerErrorCode(error)};}};
@@ -42,7 +43,8 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         const b=make('button',label);b.type='button';b.dataset.readerTab=key;b.setAttribute('aria-controls',panel.id);
         b.addEventListener('click',()=>render(key));tabs.append(b);buttons.set(key,b);
     }
-    container.classList.add('tisya-reader');container.replaceChildren(tabs,panel);
+    const proseStyle=make('style');proseStyle.textContent=proseCSS;
+    container.classList.add('tisya-reader');container.replaceChildren(proseStyle,tabs,panel);
     const field=(target,label,value)=>{if(value===null||value===undefined||value==='')return;const p=make('p');p.append(make('strong',label+'：'),make('span',value));target.append(p);};
     const scene=(target,value)=>{
         if(!value)return;
@@ -61,9 +63,9 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
             const paragraphs=data.body.paragraphs.value;
             if(paragraphs?.length)for(const p of paragraphs){
                 const section=make('section',null,'tisya-reader-paragraph'),number=make('span',p.id,'tisya-paragraph-number'),content=make('div');
-                number.setAttribute('aria-label','段落 '+p.id);content.innerHTML=formatBody(p.raw);section.append(number,content);text.append(section);
+                number.setAttribute('aria-label','段落 '+p.id);content.innerHTML=formatProse(document,p.raw,formatBody);section.append(number,content);text.append(section);
             }
-            else text.innerHTML=formatBody(data.body.value);
+            else text.innerHTML=formatProse(document,data.body.value,formatBody);
             panel.append(text);
         } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
     }

@@ -1,0 +1,8 @@
+{
+  "source": "Foundation r243 / 0.30.1-journey.r2; also byte-matched inside final TPG entry.js",
+  "files": {
+    "body-typography.cjs": "18dcb7b2072fe4f8fc97195dccdf27393d3ed425fb942f1b8bdbd8e7bcc6a505",
+    "body-typography-options.cjs": "9ee1a62d9757922b8c3c1c869afb52e0c7ae3d3adc0fb29156878dd77f5d1368",
+    "prose-marks.cjs": "294ffb13be04a36f154a225a8c972a6a92f00de3f8bd3f8de460a4e230face50"
+  }
+}
