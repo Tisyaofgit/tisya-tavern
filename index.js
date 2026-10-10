@@ -5,6 +5,8 @@ import { mountMessageNavigation } from './navigation.js';
 import { mountMessageReader } from './reader.js';
 import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
+import { promptManager } from '/scripts/openai.js';
+import { registerPresetProtocol } from './preset.js';
 import { isGenerating, Generate, messageFormatting } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
@@ -393,4 +395,8 @@ export function registerChatSurface() {
     managed=api?.isManagedOwnershipRequired?.()===true;
     if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>{appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();};}});
 }
-context().eventSource.on(context().eventTypes.APP_READY,()=>{try{init();}catch(err){error(err);}});
+context().eventSource.on(context().eventTypes.APP_READY,()=>{
+    // Keep protocol macros available when the user switches back to native UI.
+    try{registerPresetProtocol(context(),()=>({prompts:context().chatCompletionSettings.prompts,order:promptManager?.getPromptOrderForCharacter(promptManager.activeCharacter)}),error);}catch(err){error(err);}
+    try{init();}catch(err){error(err);}
+});

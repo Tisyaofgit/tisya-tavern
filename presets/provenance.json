@@ -1,0 +1,245 @@
+{
+  "schema": "tisya.tavern-preset/1",
+  "source": "Foundation r243 + Tisya-Preset-0.11.2",
+  "source_sha256": "7dfd0e6f7e2009cdef38ed4d76576cc42b28b55c66de8db03dcf82359d3d12f2",
+  "compiler_source_sha256": "8c0886fb8849a141df61b8e76c049684a3829f7adc783cfd7fc94c0ce81317e1",
+  "compiled_settings": {
+    "缇斯亚叙事玩家代写": "不代写",
+    "缇斯亚叙事重大选择权限": "留给玩家",
+    "缇斯亚叙事输入转述": "简短承接",
+    "缇斯亚叙事玩家内心代写": "不新增",
+    "缇斯亚叙事回合停点": "待玩家选择时",
+    "缇斯亚叙事创作模式": "互动叙事",
+    "缇斯亚叙事人称": "第三",
+    "缇斯亚叙事视角主体": "玩家角色",
+    "缇斯亚叙事信息视角": "限知",
+    "缇斯亚叙事心理呈现": "视角人物内心",
+    "缇斯亚叙事旁线呈现": "关闭",
+    "缇斯亚叙事秘密公开": "不揭示未公开秘密",
+    "缇斯亚叙事文风": "自然小说",
+    "缇斯亚叙事基调": "随世界设定",
+    "缇斯亚叙事推进速度": "均衡",
+    "缇斯亚叙事剧情烈度": "适中",
+    "缇斯亚叙事对白比重": "随场景",
+    "缇斯亚叙事描写重心": [],
+    "缇斯亚叙事篇幅区间": {
+      "下限": 2000,
+      "上限": 5000,
+      "单位": "字"
+    },
+    "缇斯亚叙事语言": "简体中文",
+    "缇斯亚叙事表达纪律": "克制套话",
+    "缇斯亚叙事情绪表现": "遵循人物",
+    "缇斯亚叙事推演详度": "标准",
+    "缇斯亚叙事人物推演重点": "关键人物",
+    "缇斯亚叙事创作摘要详度": "简短",
+    "缇斯亚叙事作者交流口吻": "原本人格",
+    "缇斯亚叙事作者留言": "关闭",
+    "缇斯亚叙事行动选项": {
+      "下限": 4,
+      "上限": 6
+    },
+    "缇斯亚叙事战斗规则": null,
+    "缇斯亚叙事关系呈现": null,
+    "缇斯亚叙事内容偏好": null,
+    "缇斯亚叙事状态展示": null,
+    "缇斯亚叙事气氛内容": null,
+    "缇斯亚叙事行内美化": null,
+    "缇斯亚当前任务": "叙事",
+    "缇斯亚叙事语言配置": [],
+    "缇斯亚叙事步序": [
+      "身份复核",
+      "资料承接",
+      "视角认知",
+      "人物反应",
+      "行动与剧情",
+      "正文组织",
+      "成稿总检"
+    ],
+    "缇斯亚叙事角色自主": true,
+    "缇斯亚叙事防绝望": true,
+    "缇斯亚叙事防神化": true,
+    "缇斯亚叙事防八股": true,
+    "缇斯亚叙事防名词堆砌": true,
+    "缇斯亚叙事文风鲜活": true,
+    "缇斯亚叙事角色鲜活": true,
+    "缇斯亚MVU兼容": false
+  },
+  "output": {
+    "summary": true,
+    "directions": []
+  },
+  "version": "0.2.0-alpha.7",
+  "sha256": "6e5dad6ec6baf8e41a442c41245de77fe5206e62f9dbd707c659a390c3e14956",
+  "changes": [
+    {
+      "id": "tisya_material_tool_prompt",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_tool_calls",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_tool_result",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_task_analysis",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_external_evidence",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_world_context",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_rule_material",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_location_context",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_current_state",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_focus_entities",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_present_entities",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_player_archive",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_persona_extensions",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_character_archives",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_style_card",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_event_context",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_pending_tasks",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_memory_archive",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_memory_summary",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_card_extensions",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_faction_context",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_asset_context",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_cast_registry",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_calculation_result",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_memory_excerpt",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_knowledge_material",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_secret_material",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_offstage_state",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_task_material",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_cardflow",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_material_display_material",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "worldInfoBefore",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "personaDescription",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "charDescription",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "charPersonality",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "scenario",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "worldInfoAfter",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "dialogueExamples",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "chatHistory",
+      "reason": "Native marker supplies live host data"
+    },
+    {
+      "id": "tisya_recent_reply",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_current_input",
+      "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    }
+  ],
+  "limits": [
+    "Narrative default settings compiled at build time; not a live Tavo settings migration",
+    "Native character/persona/worldbook/history slots provide actual request data",
+    "No Tavo state, atlas, memory recall or commit service is claimed"
+  ]
+}

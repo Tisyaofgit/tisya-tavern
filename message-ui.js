@@ -46,13 +46,23 @@ export function mountMessageVisual(document,container,{source,name,formatBody,on
 export function mountMessageAppearance(document,{getMessage,formatBody,onChooseAction,getMotion=()=>true,onError=()=>{}}){
  const views=new Map();let alive=true;const editing=n=>n.classList.contains('editing')||!!n.querySelector('.edit_textarea');
  function restore(node){const row=views.get(node);if(!row)return;row.view.dispose();row.native.classList.remove('tisya-source-concealed');node.classList.remove('tisya-projected');views.delete(node);}
- function sync(node,{pending=false}={}){if(!alive||!node?.isConnected)return;const msg=getMessage(node),native=node.querySelector('.mes_text');if(!msg||msg.is_user||msg.is_system||!native||editing(node)){restore(node);return;}const previous=views.get(node);if(pending)return;if(previous?.source===msg.mes&&previous.native===native&&previous.view.host.isConnected){if(!native.classList.contains('tisya-source-concealed'))native.classList.add('tisya-source-concealed');return;}restore(node);
+ function sync(node,{pending=false}={}){if(!alive||!node?.isConnected)return;const msg=getMessage(node),native=node.querySelector('.mes_text');if(!msg||msg.is_system||!native||editing(node)){restore(node);return;}const previous=views.get(node);if(pending)return;const role=msg.is_user?'user':'assistant';if(previous?.source===msg.mes&&previous.role===role&&previous.native===native&&previous.view.host.isConnected){if(!native.classList.contains('tisya-source-concealed'))native.classList.add('tisya-source-concealed');return;}restore(node);
   // Embedded native interactive content keeps its host-owned document and listeners.
   const candidate=inspectMessage(msg.mes);if(!candidate.structured&&native.querySelector('iframe,custom-style,style,script'))return;
-  try{const source=msg.mes,block=node.querySelector('.mes_block')??node,view=mountMessageVisual(document,block,{source,name:msg.name,formatBody:text=>formatBody(text,msg,node),onChooseAction:text=>onChooseAction(node,source,text),getMotion,onError});native.after(view.host);native.classList.add('tisya-source-concealed');node.classList.add('tisya-projected');views.set(node,{view,native,source:msg.mes});}catch(e){native.classList.remove('tisya-source-concealed');node.querySelectorAll('.tisya-message-visual').forEach(n=>n.remove());onError(e);}
+  // User-authored prose marks are a formatting preview, never an AI reply or a
+  // state/action envelope. Unmarked input and literal protocol examples stay native.
+  if(msg.is_user&&(candidate.structured||!msg.mes.includes('〔')))return;
+  try{const source=msg.mes,block=node.querySelector('.mes_block')??node,options={source,name:msg.name,formatBody:text=>formatBody(text,msg,node),onChooseAction:text=>onChooseAction(node,source,text),getMotion,onError},view=msg.is_user?mountUserProse(document,block,options):mountMessageVisual(document,block,options);native.after(view.host);native.classList.add('tisya-source-concealed');node.classList.add('tisya-projected');views.set(node,{view,native,source:msg.mes,role});}catch(e){native.classList.remove('tisya-source-concealed');node.querySelectorAll('.tisya-message-visual').forEach(n=>n.remove());onError(e);}
  }
  const observer=new document.defaultView.MutationObserver(records=>{for(const [n]of views)if(!n.isConnected)restore(n);const nodes=new Set();for(const r of records){if(r.type==='attributes'&&r.target.matches?.('.mes'))nodes.add(r.target);if(r.type==='childList'&&[...r.addedNodes].some(n=>n.nodeType===1&&n.matches?.('.edit_textarea')))nodes.add(r.target.closest?.('.mes'));}for(const n of nodes)if(n)sync(n);});observer.observe(document.querySelector('#chat'),{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
  return {sync,restore,refresh(){for(const {view}of views.values())view.refresh();},dispose(){alive=false;observer.disconnect();for(const n of [...views.keys()])restore(n);},size:()=>views.size};
+}
+function mountUserProse(document,container,{source,formatBody,onError}){
+ const host=document.createElement('div');host.className='tisya-message-visual';host.dataset.prosePreview='user';
+ const shadow=host.attachShadow({mode:'open'}),style=document.createElement('style'),body=document.createElement('article');
+ style.textContent=adaptation+'\n'+proseCSS;body.className='story';
+ try{body.innerHTML=formatProse(document,source,formatBody);}catch(error){const note=document.createElement('p');note.className='loading-note';note.setAttribute('role','status');note.textContent='正文排版暂不可用。'+readerErrorText(readerErrorCode(error));body.append(note);onError(error);}
+ shadow.append(style,body);container.append(host);return {host,refresh(){},dispose(){host.remove();}};
 }
 export function mountChatEffects(document,{getMotion=()=>true,onError=()=>{}}={}){
  const win=document.defaultView,sheld=document.querySelector('#sheld'),chat=document.querySelector('#chat'),host=document.createElement('div'),canvas=document.createElement('canvas');host.id='tisya-chat-effects';host.setAttribute('aria-hidden','true');host.append(canvas);sheld.prepend(host);let effect=null,alive=true;
