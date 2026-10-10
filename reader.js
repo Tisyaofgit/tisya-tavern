@@ -1,3 +1,5 @@
+import {mountActionChoice} from './actions.js';
+import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS} from './prose.js';
 import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs,strictJSON} from './reader-core.js';
 
@@ -27,23 +29,23 @@ export function inspectMessage(source) {
         if(!Array.isArray(next?.actions)||next.actions.some(row=>!row||typeof row.text!=='string'||!row.text.trim()||typeof row.type!=='string'||typeof row.source!=='string'))throw Object.assign(Error(),{code:'TISYA_READER_ACTIONS_INVALID'});
         return next.actions.map(({text,type})=>({text,type}));
     });
-    return {structured,body,journey,actions};
+    return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,onChooseAction,initialTab='body'}) {
+export function mountMessageReader(document, container, {source,formatBody,onChooseAction,getActionMode,setActionMode,initialTab='body'}) {
     const data=inspectMessage(source);
-    let alive=true;
+    let alive=true,actionChoice=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
     const tabs=make('div',null,'tisya-reader-tabs');tabs.setAttribute('aria-label','阅读内容');
     const panel=make('div',null,'tisya-reader-panel');panel.id='tisya-reader-panel';panel.setAttribute('role','region');
     const buttons=new Map();
-    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动']]) {
+    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动'],['checks','心声与核验']]) {
         const b=make('button',label);b.type='button';b.dataset.readerTab=key;b.setAttribute('aria-controls',panel.id);
         b.addEventListener('click',()=>render(key));tabs.append(b);buttons.set(key,b);
     }
-    const proseStyle=make('style');proseStyle.textContent=proseCSS;
+    const proseStyle=make('style');proseStyle.textContent=proseCSS+replyControlsCSS+' .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}';
     container.classList.add('tisya-reader');container.replaceChildren(proseStyle,tabs,panel);
     const field=(target,label,value)=>{if(value===null||value===undefined||value==='')return;const p=make('p');p.append(make('strong',label+'：'),make('span',value));target.append(p);};
     const scene=(target,value)=>{
@@ -63,7 +65,7 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
             const paragraphs=data.body.paragraphs.value;
             if(paragraphs?.length)for(const p of paragraphs){
                 const section=make('section',null,'tisya-reader-paragraph'),number=make('span',p.id,'tisya-paragraph-number'),content=make('div');
-                number.setAttribute('aria-label','段落 '+p.id);content.innerHTML=formatProse(document,p.raw,formatBody);section.append(number,content);text.append(section);
+                number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody);section.append(number,content);text.append(section);
             }
             else text.innerHTML=formatProse(document,data.body.value,formatBody);
             panel.append(text);
@@ -99,17 +101,15 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         if(data.actions.error){failure(panel,'行动建议',data.actions.error);return;}
         if(!data.actions.value.length){panel.append(note('本条没有行动建议。'));return;}
         panel.append(note('点选后填入输入框，发送前可以继续修改。'));
-        const list=make('div',null,'tisya-reader-actions');
-        for(const action of data.actions.value){const b=make('button',action.text);b.type='button';b.addEventListener('click',()=>{if(alive)onChooseAction(action.text);});list.append(b);}
-        panel.append(list);
+        actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode});
     }
     function render(key){
-        if(!alive)return;panel.replaceChildren();
+        if(!alive)return;actionChoice?.dispose();actionChoice=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else renderActions();
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
-    return {dispose(){alive=false;container.replaceChildren();buttons.clear();}};
+    return {dispose(){alive=false;actionChoice?.dispose();container.replaceChildren();buttons.clear();}};
 }

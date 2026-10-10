@@ -67,10 +67,15 @@
   },
   "output": {
     "summary": true,
-    "directions": []
+    "directions": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
   },
-  "version": "0.2.0-alpha.7",
-  "sha256": "6e5dad6ec6baf8e41a442c41245de77fe5206e62f9dbd707c659a390c3e14956",
+  "version": "0.2.0-alpha.8",
+  "sha256": "e8440d10ed53cab867e9010fe1f4e246cd3bf55501c89549e1c49123d2619536",
+  "heart_macros_sha256": "0957e9bf1919b5bb12bd045bad838009943afd012c61923a23b7946bdbf9e60d",
   "changes": [
     {
       "id": "tisya_material_tool_prompt",

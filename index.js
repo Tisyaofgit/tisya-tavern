@@ -1,3 +1,4 @@
+import {ACTION_MODES,executeAction} from './actions.js';
 import {mountMessageAppearance,mountChatEffects} from './message-ui.js';
 import {mountPet} from './pet.js';
 import { iconMarkup } from './icons.js';
@@ -7,7 +8,7 @@ import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { promptManager } from '/scripts/openai.js';
 import { registerPresetProtocol } from './preset.js';
-import { isGenerating, Generate, messageFormatting } from '/script.js';
+import { isGenerating, Generate, messageFormatting, sendTextareaMessage } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
@@ -42,11 +43,13 @@ function settings() {
     if(s.继续用户消息!==undefined&&typeof s.继续用户消息!=='string')throw new Error('继续设置损坏');
     return s;
 }
+function getActionMode(){const value=settings().行动建议?.写入方式??'续接输入框';const row=ACTION_MODES.find(row=>row.label===value);if(!row)throw Error('行动写入方式配置损坏');return row.id;}
+function setActionMode(mode){const row=ACTION_MODES.find(row=>row.id===mode);if(!row)throw Error('行动写入方式无效');const next=structuredClone(settings());next.行动建议={...(next.行动建议??{}),写入方式:row.label};context().extensionSettings[KEY]=next;context().saveSettingsDebounced();appearance?.refresh();}
 function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy) throw new Error('请先等待或停止正在进行的生成');
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
-function clearReader() {releaseReader?.();releaseReader=null;readerToken=null;delete overlay._actionDraft;}
+function clearReader() {releaseReader?.();releaseReader=null;readerToken=null;}
 function checkReadingSource(){
     notebook?.checkCurrent();
     if(readerToken)try{validate(context(),readerToken);}catch{sheet('阅读已失效','<p role="status">原消息或候选已变化，请重新打开阅读。</p>');}
@@ -218,28 +221,17 @@ function openReader(token,initialTab='body') {
         formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
             false,{regexPrepared:true,regexSourceText:body}),
-        onChooseAction:text=>run(()=>chooseReaderAction(token,text)),
+        onChooseAction:(text,mode)=>chooseReaderAction(token,text,mode),getActionMode,setActionMode,
     }).dispose;
     readerToken=token;
 }
-function chooseReaderAction(token,text) {
-    assertIdle();nodeFor(token);
-    const input=query('#send_textarea');if(!input)throw new Error('宿主输入框不存在');
-    if(input.value.length){
-        const draft=input.value;
-        sheet('填入行动建议',`<p>输入框已有草稿，请选择如何放入这条行动。</p><blockquote>${esc(text)}</blockquote><div class="tisya-list">${button('追加到草稿后','action-append')}${button('替换草稿','action-replace')}${button('取消','close')}</div>`);
-        overlay._actionDraft={token,text,draft};return;
-    }
-    fillReaderAction(token,text,'');
-}
-function fillReaderAction(token,text,draft) {
-    assertIdle();nodeFor(token);
-    const input=query('#send_textarea');if(!input||input.value!==draft)throw new Error('输入草稿已变化，请重新选择行动');
-    input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));close();closeNativeDrawers();hidePage();input.focus({preventScroll:true});
-}
-function confirmReaderAction(append) {
-    const choice=overlay._actionDraft;if(!choice)throw new Error('行动选择已失效，请重新打开消息');
-    fillReaderAction(choice.token,append?choice.draft+'\n'+choice.text:choice.text,choice.draft);
+async function chooseReaderAction(token,text,mode) {
+    if(busy)throw new Error('当前聊天操作尚未完成，请稍后再选行动');
+    assertIdle();nodeFor(token);busy=true;
+    try{
+        const result=await executeAction({document,text,mode,validate:()=>{assertIdle();nodeFor(token);},send:async()=>{close();closeNativeDrawers();hidePage();try{await sendTextareaMessage();}catch(e){error(e);throw e;}}});
+        close();closeNativeDrawers();hidePage();query('#send_textarea')?.focus({preventScroll:true});return result;
+    }finally{busy=false;decorate();}
 }
 async function removeMessages(rollback) {
     const token=overlay._messageToken,epoch=sheetEpoch;assertIdle();validate(context(),token,{tail:true});
@@ -337,7 +329,7 @@ function init() {
         getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
         formatBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},false,{regexPrepared:true,regexSourceText:body}),
-        onChooseAction:(node,source,text)=>run(()=>{const token=messageToken(Number(node.getAttribute('mesid')));if(validate(context(),token).mes!==source)throw new Error('消息已变化，请重新选择行动');chooseReaderAction(token,text);}),
+        getActionMode,setActionMode,onChooseAction:async(node,source,text,mode)=>{const token=messageToken(Number(node.getAttribute('mesid')));if(validate(context(),token).mes!==source)throw new Error('消息已变化，请重新选择行动');return chooseReaderAction(token,text,mode);},
     });
     cleanups.push(()=>appearance.dispose());
     chatEffects=mountChatEffects(document,{getMotion:()=>motionEnabled,onError:visualError});cleanups.push(()=>chatEffects.dispose());
@@ -353,7 +345,6 @@ function init() {
         if(action==='menu'){nav();return;}
         run(async()=>{
         if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
-        else if(action==='action-append'||action==='action-replace')confirmReaderAction(action==='action-append');
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('联系人分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);
@@ -363,7 +354,7 @@ function init() {
             const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
         } else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
-    },{exclusive:['select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm','action-append','action-replace'].includes(action)});};
+    },{exclusive:['select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action)});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
     const escape=e=>{if(e.key==='Escape')close();};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
     const input=e=>{if(!e.target.classList.contains('tisya-search'))return;const q=e.target.value.toLowerCase();root.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q));};root.addEventListener('input',input);
