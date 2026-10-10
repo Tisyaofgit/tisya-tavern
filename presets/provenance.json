@@ -73,6 +73,8 @@
       "剧情吐槽"
     ]
   },
+  "heart_configurations_verified": 16,
+  "heart_variants_sha256": "9683b4a89fe1b19cf4aeed6003d870776b82378ec01b8fe02d70fb9f76da6900",
   "compiled_emotion_names": [
     "困倦",
     "好奇",
@@ -82,8 +84,8 @@
     "闹别扭"
   ],
   "emotion_assets_sha256": "b1e6d5872f905c6ed423ecb5df39a4815ca61b3958bc95066f8b369f8f06cddf",
-  "version": "0.2.0-alpha.9",
-  "sha256": "28380b468cfc245e4e7a35325fc4d455b06dbb46f05e59efcbbc4547391e756c",
+  "version": "0.2.0-alpha.10",
+  "sha256": "5ca742da65f425154fa1cbbee09a5b254870468eaca2ec21d2ee9aa87719aba3",
   "heart_macros_sha256": "0957e9bf1919b5bb12bd045bad838009943afd012c61923a23b7946bdbf9e60d",
   "changes": [
     {
@@ -249,6 +251,18 @@
     {
       "id": "tisya_current_input",
       "reason": "Tavo service not connected; editable slot kept empty; native sources remain enabled"
+    },
+    {
+      "id": "tisya_heart_input_review",
+      "reason": "Native preset switch owns this selected heart direction; empty control prompt"
+    },
+    {
+      "id": "tisya_heart_user_reply",
+      "reason": "Native preset switch owns this selected heart direction; empty control prompt"
+    },
+    {
+      "id": "tisya_heart_plot_comment",
+      "reason": "Native preset switch owns this selected heart direction; empty control prompt"
     }
   ],
   "limits": [

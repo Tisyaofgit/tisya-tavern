@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.9 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.9";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.10 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.10";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
