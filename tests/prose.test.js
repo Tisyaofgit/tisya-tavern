@@ -24,5 +24,5 @@ test('message and reader both mount original prose styles and keep private block
 });
 test('broken prose formatting has an explicit local notice without exposing the original envelope',async()=>{
  const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const errors=[],source=fixture({body:'〔信笺〕未闭合',taskExtra:'PRIVATE_CANARY'}),view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,formatBody:x=>x,onChooseAction(){},getMotion:()=>false,onError:e=>errors.push(e.code)});
- assert.match(view.host.shadowRoot.querySelector('.story [role=status]').textContent,/TISYA_MARK_UNCLOSED/);assert.ok(!view.host.shadowRoot.textContent.includes('PRIVATE_CANARY'));assert.deepEqual(errors,['TISYA_MARK_UNCLOSED']);view.dispose();await w.happyDOM.abort();
+ assert.match(view.host.shadowRoot.querySelector('.story [role=status]').textContent,/TISYA_MARK_UNCLOSED/);assert.ok(!view.host.shadowRoot.textContent.includes('PRIVATE_CANARY'));assert.deepEqual(errors,['TISYA_MARK_UNCLOSED','TISYA_PIPES_LABEL']);view.dispose();await w.happyDOM.abort();
 });

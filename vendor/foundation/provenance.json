@@ -14,6 +14,8 @@
     "task-handoff-wire.cjs": "6b779380187fb1696ad5823d4e5692794a5e68c36fed26d186fbb275830fa82d",
     "strict-json.cjs": "d4ac8a1711e9129d56d8991c9e5967bb9e4f51494a7cc4b895b1c6d753979609",
     "memory-permissions.cjs": "4f5d2715cdebcfda069032ce187a767e983e0b47fe72564f3c8b4f0b7e18f59f",
-    "body-count.cjs": "4a452d1b533b3cc175ab3c07aafa1f2a836a1f4f8213e33b836b1802eb701315"
+    "body-count.cjs": "4a452d1b533b3cc175ab3c07aafa1f2a836a1f4f8213e33b836b1802eb701315",
+    "display-regex.cjs": "998e6fc5c3536a6cc3a012560b6917eec627ad1ebe6d5d7e44c2760a19fb0e02",
+    "reader-projection.cjs": "ff4f894257179ab3a4f2483d4d96a94d3b82d24805597d786b0a0322fcd3b82f"
   }
 }

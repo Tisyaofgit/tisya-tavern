@@ -1,6 +1,7 @@
 import {mountActionChoice} from './actions.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS} from './prose.js';
+import {mountWorldExtra,extraCSS} from './world-extra.js';
 import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs,strictJSON} from './reader-core.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
@@ -34,18 +35,18 @@ export function inspectMessage(source) {
 
 export function mountMessageReader(document, container, {source,formatBody,onChooseAction,getActionMode,setActionMode,initialTab='body'}) {
     const data=inspectMessage(source);
-    let alive=true,actionChoice=null;
+    let alive=true,actionChoice=null,extraView=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
     const tabs=make('div',null,'tisya-reader-tabs');tabs.setAttribute('aria-label','阅读内容');
     const panel=make('div',null,'tisya-reader-panel');panel.id='tisya-reader-panel';panel.setAttribute('role','region');
     const buttons=new Map();
-    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动'],['checks','心声与核验']]) {
+    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动'],['checks','心声与核验'],['extra','世界扩展']]) {
         const b=make('button',label);b.type='button';b.dataset.readerTab=key;b.setAttribute('aria-controls',panel.id);
         b.addEventListener('click',()=>render(key));tabs.append(b);buttons.set(key,b);
     }
-    const proseStyle=make('style');proseStyle.textContent=proseCSS+replyControlsCSS+' .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}';
+    const proseStyle=make('style');proseStyle.textContent=proseCSS+replyControlsCSS+extraCSS+' .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}';
     container.classList.add('tisya-reader');container.replaceChildren(proseStyle,tabs,panel);
     const field=(target,label,value)=>{if(value===null||value===undefined||value==='')return;const p=make('p');p.append(make('strong',label+'：'),make('span',value));target.append(p);};
     const scene=(target,value)=>{
@@ -104,12 +105,12 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode});
     }
     function render(key){
-        if(!alive)return;actionChoice?.dispose();actionChoice=null;panel.replaceChildren();
+        if(!alive)return;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
-    return {dispose(){alive=false;actionChoice?.dispose();container.replaceChildren();buttons.clear();}};
+    return {dispose(){alive=false;actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
 }

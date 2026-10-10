@@ -11,7 +11,13 @@ const sourcePreset=fs.readFileSync(path.join(baseline,'outputs/Tisya-Preset-0.11
 if(JSON.stringify(JSON.parse(sourcePreset))!==JSON.stringify(base))throw Error('Preset/compiler pair mismatch');
 const settings={...N.suggestions(),'缇斯亚MVU兼容':false},output={summary:true,directions:['输入评价','回应用户评价','剧情吐槽']};
 const activeEntries=base.prompts.filter(p=>p.enabled!==false).map(p=>p.identifier);
-const on=N.previewSettings(settings,output,{activeEntries,outputEnabled:true}).rest.entries;
+const onContext=N.previewSettings(settings,output,{activeEntries,outputEnabled:true});
+const {render:renderProtocol}=require('./src/tisya-protocol.cjs');
+if(JSON.stringify(renderProtocol(onContext).entries)!==JSON.stringify(onContext.rest.entries))throw Error('Protocol replay differs from original compiler');
+const emotionNames=JSON.parse(fs.readFileSync(path.join(root,'emotion-assets.json'),'utf8')).entries.map(r=>r.name);
+const values=JSON.parse(onContext.outputValues);values.mood=[null,...emotionNames];onContext.outputValues=JSON.stringify(values);
+const on=renderProtocol(onContext).entries,moods=JSON.stringify(values.mood);
+if(on.tisya_inner_chain.split('mood must be one of '+moods).length!==2)throw Error('Emotion compilation anchor changed');
 const off=N.previewSettings(settings,output,{activeEntries,outputEnabled:false}).rest.entries;
 // The optional heart instructions and wire rows come from the same approved
 // compiler as the rest of the prompt. Native macros remove exactly these spans
@@ -22,7 +28,7 @@ for(const key of Object.keys(on)){
  let expected=on[key];
  if(key==='tisya_inner_chain'){
   if(expected.split(directions).length!==2||expected.split(rows).length!==3)throw Error('Heart compilation anchors changed');
-  expected=expected.replace('"kind":"structured"','"kind":"plain"').replace(directions,'').replaceAll(rows,'');
+  expected=expected.replace('"kind":"structured"','"kind":"plain"').replace(directions,'').replaceAll(rows,'').replace('mood must be one of '+moods,'mood must be one of [null]');
  }
  if(expected!==off[key])throw Error('Unreviewed output-switch difference: '+key);
 }
@@ -37,14 +43,14 @@ for(const entry of preset.prompts){
  else if(id.startsWith('tisya_material_')||['tisya_recent_reply','tisya_current_input'].includes(id)){
   entry.content='';changes.push({id,reason:'Tavo service not connected; editable slot kept empty; native sources remain enabled'});
  }else throw Error('Unmapped preset entry: '+id);
- if(id==='tisya_inner_chain')entry.content=entry.content.replace('"kind":"structured"','"kind":"{{tisya_output_kind}}"').replace(directions,'{{tisya_heart_directions}}').replaceAll(rows,'{{tisya_heart_rows}}');
+ if(id==='tisya_inner_chain')entry.content=entry.content.replace('"kind":"structured"','"kind":"{{tisya_output_kind}}"').replace(directions,'{{tisya_heart_directions}}').replaceAll(rows,'{{tisya_heart_rows}}').replace('mood must be one of '+moods,'mood must be one of {{tisya_heart_moods}}');
 }
 const marks={identifier:'tisya_prose_marks',name:'正文 · 美化标记',role:'system',system_prompt:false,marker:false,injection_position:0,injection_depth:4,forbid_overrides:false,enabled:true,content:'正文可依实际内容使用短标记：〔标题〕小标题〔/标题〕；〔信笺:信件标题〕信件正文〔/信笺〕；〔档案:档案标题〕档案正文〔/档案〕；〔密档:折叠标题〕读者已经获准看到的内容〔/密档〕；〔收获:标题〕本轮实际收获〔/收获〕。没有对应内容时不添加。标签必须成对闭合，每个标记完整放在同一编号段内；标记内部换行不插入新的段号。密档仅是折叠展示，不授权公开秘密。结构化回复时这些标记只放在 body 中；普通交付时可直接用于正文。'};
 preset.prompts.splice(preset.prompts.findIndex(p=>p.identifier==='tisya_registry'),0,marks);
 for(const order of preset.prompt_order)order.order.splice(order.order.findIndex(p=>p.identifier==='tisya_registry'),0,{identifier:marks.identifier,enabled:true});
 if(/<%|getvar\(|print\(c\./.test(JSON.stringify(preset)))throw Error('Tavo template leaked into native preset');
 const dir=path.join(root,'presets');fs.mkdirSync(dir,{recursive:true});
-const dest=path.join(dir,'Tisya-TauriTavern-0.2.0-alpha.8.json'),bytes=JSON.stringify(preset,null,2)+'\n';fs.writeFileSync(dest,bytes);
+const dest=path.join(dir,'Tisya-TauriTavern-0.2.0-alpha.9.json'),bytes=JSON.stringify(preset,null,2)+'\n';fs.writeFileSync(dest,bytes);
 const sha=x=>createHash('sha256').update(x).digest('hex');
-fs.writeFileSync(path.join(dir,'provenance.json'),JSON.stringify({schema:'tisya.tavern-preset/1',source:'Foundation r243 + Tisya-Preset-0.11.2',source_sha256:sha(sourcePreset),compiler_source_sha256:sha(fs.readFileSync(path.join(baseline,'src/tisya-protocol/source.json'))),compiled_settings:settings,output,version:'0.2.0-alpha.8',sha256:sha(bytes),heart_macros_sha256:sha(fs.readFileSync(path.join(root,'preset-hearts.js'))),changes,limits:['Narrative default settings compiled at build time; not a live Tavo settings migration','Native character/persona/worldbook/history slots provide actual request data','No Tavo state, atlas, memory recall or commit service is claimed']},null,2)+'\n');
+fs.writeFileSync(path.join(dir,'provenance.json'),JSON.stringify({schema:'tisya.tavern-preset/1',source:'Foundation r243 + Tisya-Preset-0.11.2',source_sha256:sha(sourcePreset),compiler_source_sha256:sha(fs.readFileSync(path.join(baseline,'src/tisya-protocol/source.json'))),compiled_settings:settings,output,compiled_emotion_names:emotionNames,emotion_assets_sha256:sha(fs.readFileSync(path.join(root,'emotion-assets.json'))),version:'0.2.0-alpha.9',sha256:sha(bytes),heart_macros_sha256:sha(fs.readFileSync(path.join(root,'preset-hearts.js'))),changes,limits:['Narrative default settings compiled at build time; not a live Tavo settings migration','Native character/persona/worldbook/history slots provide actual request data','Built-in emotion catalog only; custom atlas/state/memory recall/commit services are not claimed']},null,2)+'\n');
 console.log(JSON.stringify({file:dest,prompts:preset.prompts.length,bytes:Buffer.byteLength(bytes),sha256:sha(bytes)}));

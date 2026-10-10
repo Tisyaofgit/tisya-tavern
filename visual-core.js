@@ -413,6 +413,53 @@ function selectedEffects(values,time){
 module.exports={EFFECTS,CHAT_FIELDS,CHAT_DEFAULTS,selectedEffects};
 
 },{}],
+"src/display-card-state.cjs":[function(module,exports,require){
+'use strict';
+// Only view state crosses the opaque card boundary; it cannot request host work.
+const CARD_MOTION_CSS='html[data-tisya-card-paused] *,html[data-tisya-card-paused] *::before,html[data-tisya-card-paused] *::after{animation-play-state:paused!important;transition:none!important}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-play-state:paused!important;transition:none!important}}';
+function validCardFolds(value){return Array.isArray(value)&&value.length<=2048&&value.every(v=>typeof v==='boolean');}
+module.exports={CARD_MOTION_CSS,validCardFolds};
+
+},{}],
+"src/display-size.cjs":[function(module,exports,require){
+'use strict';
+// Self-contained so the same sizing contract can run inside an opaque card
+// document. It reports geometry only; no parent or business API access.
+function observeDisplaySize(doc,report,onError){
+ const win=doc.defaultView;let alive=true,frame=0,last=-1;
+ function measure(){
+  frame=0;if(!alive||!doc.body||!doc.documentElement.clientWidth)return;
+  try{
+   const body=doc.body,box=body.getBoundingClientRect(),style=win.getComputedStyle(body);
+   const height=Math.ceil(Math.max(box.height,body.scrollHeight)+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0));
+   if(!Number.isFinite(height)||height<0||height>200000)throw Error('TISYA_CARD_FRAME_SIZE');
+   if(height!==last){last=height;report(Math.max(1,height));}
+  }catch(error){onError(error);}
+ }
+ function schedule(){if(alive&&!frame)frame=win.requestAnimationFrame(measure);}
+ // A full-page card's 100vh body must not use yesterday's iframe height as
+ // today's content minimum. The authored inner panel/styles remain intact.
+ const sizeStyle=doc.createElement('style');sizeStyle.dataset.tisyaIntrinsicSize='';
+ sizeStyle.textContent='html,body{height:auto!important;min-height:0!important}';doc.head.append(sizeStyle);
+ const observer=new win.ResizeObserver(schedule);observer.observe(doc.body);
+ const changes=new win.MutationObserver(schedule);changes.observe(doc.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['style','class','open','hidden','src','width','height']});
+ doc.addEventListener('load',schedule,true);doc.addEventListener('toggle',schedule,true);win.addEventListener('resize',schedule);
+ doc.fonts?.addEventListener('loadingdone',schedule);doc.fonts?.ready.then(schedule);
+ measure();
+ return {refresh:schedule,dispose(){alive=false;win.cancelAnimationFrame(frame);observer.disconnect();changes.disconnect();doc.removeEventListener('load',schedule,true);doc.removeEventListener('toggle',schedule,true);win.removeEventListener('resize',schedule);doc.fonts?.removeEventListener('loadingdone',schedule);sizeStyle.remove();}};
+}
+module.exports={observeDisplaySize};
+
+},{}],
+"src/journey-options.cjs":[function(module,exports,require){
+'use strict';
+// Optional preference on the existing extensions record. Local button choices
+// stay with the displayed message; they never write this preference back.
+const JOURNEY_FIELDS=Object.freeze({旅程球默认状态:['收起','展开'],世界扩展默认状态:['收起','展开'],旅程外观:['日间','夜间'],显示角色心理:[true,false]});
+const JOURNEY_DEFAULTS=Object.freeze({旅程球默认状态:'展开',世界扩展默认状态:'展开',旅程外观:'日间',显示角色心理:false});
+module.exports={JOURNEY_FIELDS,JOURNEY_DEFAULTS};
+
+},{}],
 "src/pendant-rack.cjs":[function(module,exports,require){
 'use strict';
 // A single live pearl per panel. Folding preserves the card document and its
@@ -882,6 +929,9 @@ export const {renderCharacter}=visualRequire('src/character-renderer.cjs');
 export const {characterIdlePose}=visualRequire('src/character-idle.cjs');
 export const {createCharacterReaction}=visualRequire('src/character-reaction.cjs');
 export const {createWaterMotion}=visualRequire('src/water-motion.cjs');
-export const {CHAT_DEFAULTS}=visualRequire('src/chat-effects-options.cjs');
+export const {CHAT_DEFAULTS,CHAT_FIELDS}=visualRequire('src/chat-effects-options.cjs');
+export const {JOURNEY_DEFAULTS,JOURNEY_FIELDS}=visualRequire('src/journey-options.cjs');
+export const {observeDisplaySize}=visualRequire('src/display-size.cjs');
+export const {CARD_MOTION_CSS}=visualRequire('src/display-card-state.cjs');
 export const {mountPendantRack}=visualRequire('src/pendant-rack.cjs');
 export const {decodedResourceImage}=visualRequire('src/resource-runtime.cjs');

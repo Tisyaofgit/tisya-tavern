@@ -8,7 +8,7 @@ test('public heart and audit projection uses canonical pipe ownership and never 
  const empty=mountHeartBlock(d,host,{status:'关闭',items:[]});assert.equal(empty,null);assert.equal(host.querySelectorAll('.heart-host').length,1);await w.happyDOM.abort();
 });
 test('broken heart state has a local error while body and source remain intact; display text is not executable markup',async()=>{
- const text=source.replace('心声：有内容|输入评价|null|信封递过来了。先读信，还是先问来历？','心声：关闭|输入评价|null|PRIVATE_CANARY');const data=inspectMessage(text);assert.ok(data.details.error);assert.match(data.body.value,/潮水/);assert.ok(!JSON.stringify(data.details).includes('PRIVATE_CANARY'));
+ const text=source.replace('心声：有内容|输入评价|好奇|信封递过来了。先读信，还是先问来历？','心声：关闭|输入评价|null|PRIVATE_CANARY');const data=inspectMessage(text);assert.ok(data.details.error);assert.match(data.body.value,/潮水/);assert.ok(!JSON.stringify(data.details).includes('PRIVATE_CANARY'));
  const w=new Window(),host=w.document.createElement('div');w.document.body.append(host);mountHeartBlock(w.document,host,{status:'有内容',items:[{type:'输入评价',mood:null,text:'<img src=x onerror=alert(1)>'}]});assert.equal(host.querySelector('img'),null);assert.match(host.textContent,/<img/);await w.happyDOM.abort();
 });
 test('reader hides paragraph labels while keeping canonical source references and shows heart/audit tab',async()=>{

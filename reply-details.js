@@ -1,4 +1,5 @@
 import {parseDisplayEnvelope,strictJSON} from './reader-core.js';
+import {emotionCatalog} from './emotion-catalog.js';
 
 const fail=()=>{throw Object.assign(Error('TISYA_READER_DETAILS_INVALID'),{code:'TISYA_READER_DETAILS_INVALID'});};
 function heart(value){
@@ -18,9 +19,11 @@ export function mountHeartBlock(document,container,value,{label}={}){
  const host=document.createElement('section');host.className='heart-host';host.setAttribute('aria-label',label??'缇斯亚心声');host.dataset.status=value.status;
  if(!value.items.length)return null;
  const line=document.createElement('div'),bubble=document.createElement('button'),text=document.createElement('span'),dots=document.createElement('span'),mood=document.createElement('span');
- line.className='heart-line';bubble.className='heart-bubble';bubble.type='button';dots.className='heart-dots';mood.className='heart-mood';let index=0;
+ line.className='heart-line';bubble.className='heart-bubble';bubble.type='button';dots.className='heart-dots';mood.className='heart-mood';let index=0,revision=0;
+ function bindMood(name){const current=++revision;mood.replaceChildren();mood.hidden=name===null;if(name===null)return;mood.textContent='表情加载中…';emotionCatalog(document).resolve(name).then(row=>{if(current!==revision||!host.isConnected)return;const img=document.createElement('img');img.src=row.url;img.alt=row.name;img.className='heart-emotion';mood.replaceChildren(img);},()=>{if(current!==revision||!host.isConnected)return;mood.textContent='表情不可用：'+name;mood.setAttribute('role','status');});}
  function render(){const item=value.items[index];text.textContent=item.text;host.dataset.direction=item.type;host.dataset.mood=item.mood??'';mood.textContent=item.mood&&item.mood!=='无'?item.mood:'';mood.hidden=!mood.textContent;bubble.setAttribute('aria-label',item.text+(value.items.length>1?'；第'+(index+1)+'条，共'+value.items.length+'条，点击下一条':''));bubble.dataset.index=String(index);dots.replaceChildren();dots.hidden=value.items.length<2;for(let i=0;i<value.items.length;i++){const dot=document.createElement('i');if(i===index)dot.className='active';dots.append(dot);}}
- bubble.onclick=()=>{index=(index+1)%value.items.length;render();};bubble.append(text,dots);line.append(bubble,mood);host.append(line);container.append(host);render();return host;
+ const renderText=render;function update(){renderText();bindMood(value.items[index].mood);}
+ bubble.onclick=()=>{if(!host.isConnected)return;index=(index+1)%value.items.length;update();};bubble.append(text,dots);line.append(bubble,mood);host.append(line);container.append(host);update();return host;
 }
 export function mountAuditBlock(document,container,rows){
  if(!rows.length)return null;const wrapper=document.createElement('div');wrapper.className='fold-content reply-checks';const fold=document.createElement('details'),title=document.createElement('summary'),body=document.createElement('div');fold.className='ledger-section audit-ledger';title.textContent='核验 · '+rows.length;body.className='ledger-body';
@@ -38,5 +41,5 @@ export const replyControlsCSS=`
 .action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}
 .heart-host{position:relative;margin:16px 0 20px;padding-top:8px;min-width:0}.heart-host>.visual-creature{position:absolute!important;top:-26px!important;right:-3px!important;left:auto!important;width:42px!important;height:42px!important;z-index:1}
 .heart-host .heart-bubble{text-align:left;font-size:14px;padding:12px 30px 10px 15px;white-space:normal;overflow-wrap:anywhere;max-width:100%}.heart-mood{font-size:12px;color:#dfc88d;flex:0 0 auto;max-width:4em;overflow-wrap:anywhere}
-.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
+.heart-mood{width:54px;max-width:54px}.heart-mood[hidden]{display:none!important}.heart-emotion{display:block;width:54px;height:54px;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;

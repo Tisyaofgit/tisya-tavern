@@ -73,8 +73,17 @@
       "剧情吐槽"
     ]
   },
-  "version": "0.2.0-alpha.8",
-  "sha256": "e8440d10ed53cab867e9010fe1f4e246cd3bf55501c89549e1c49123d2619536",
+  "compiled_emotion_names": [
+    "困倦",
+    "好奇",
+    "开心",
+    "怀疑",
+    "惊讶",
+    "闹别扭"
+  ],
+  "emotion_assets_sha256": "b1e6d5872f905c6ed423ecb5df39a4815ca61b3958bc95066f8b369f8f06cddf",
+  "version": "0.2.0-alpha.9",
+  "sha256": "28380b468cfc245e4e7a35325fc4d455b06dbb46f05e59efcbbc4547391e756c",
   "heart_macros_sha256": "0957e9bf1919b5bb12bd045bad838009943afd012c61923a23b7946bdbf9e60d",
   "changes": [
     {
@@ -245,6 +254,6 @@
   "limits": [
     "Narrative default settings compiled at build time; not a live Tavo settings migration",
     "Native character/persona/worldbook/history slots provide actual request data",
-    "No Tavo state, atlas, memory recall or commit service is claimed"
+    "Built-in emotion catalog only; custom atlas/state/memory recall/commit services are not claimed"
   ]
 }

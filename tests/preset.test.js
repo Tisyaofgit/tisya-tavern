@@ -6,7 +6,7 @@ import {HEART_DIRECTIONS,HEART_ROWS} from '../preset-hearts.js';
 import {outputEnabled,registerPresetProtocol,DELIVERY_WARNING} from '../preset.js';
 import {inspectMessage} from '../reader.js';
 import {parseDisplayEnvelope,strictJSON} from '../reader-core.js';
-const source=fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.8.json',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.9.json',import.meta.url),'utf8');
 const preset=JSON.parse(source),clone=()=>structuredClone(preset);
 test('native paired preset is complete, traceable and has no unexpanded Tavo code',()=>{
  const provenance=JSON.parse(fs.readFileSync(new URL('../presets/provenance.json',import.meta.url),'utf8'));
@@ -27,7 +27,7 @@ test('native paired preset is complete, traceable and has no unexpanded Tavo cod
 test('native output switch follows both entry and order state without rewriting the preset',()=>{
  const p=clone(),before=JSON.stringify(p),get=()=>({prompts:p.prompts,order:p.prompt_order[0].order}),macros=new Map(),errors=[];
  const release=registerPresetProtocol({registerMacro:(n,f)=>macros.set(n,f),unregisterMacro:n=>macros.delete(n)},get,e=>errors.push(e));
- const render=()=>p.prompts.map(e=>e.content.replace(/\{\{(tisya_output_kind|tisya_delivery_warning|tisya_heart_directions|tisya_heart_rows)\}\}/g,(_,id)=>macros.get(id)())).join('\n');
+ const render=()=>p.prompts.map(e=>e.content.replace(/\{\{(tisya_output_kind|tisya_delivery_warning|tisya_heart_directions|tisya_heart_rows|tisya_heart_moods)\}\}/g,(_,id)=>macros.get(id)())).join('\n');
  assert.match(render(),/"kind":"structured"/);assert.ok(render().includes(DELIVERY_WARNING));assert.ok(render().includes(HEART_DIRECTIONS));assert.ok(render().includes(HEART_ROWS));assert.equal(JSON.stringify(p),before);
  p.prompt_order[0].order.find(e=>e.identifier==='tisya_output').enabled=false;
  assert.match(render(),/"kind":"plain"/);assert.ok(!render().includes(DELIVERY_WARNING));assert.ok(!render().includes(HEART_DIRECTIONS));assert.ok(!render().includes(HEART_ROWS));
