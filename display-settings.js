@@ -9,7 +9,7 @@ export function displayOverrides(settings){
  const blocks=settings.显示区块;if(blocks===undefined)return {};
  if(!plain(blocks))throw Error('显示区块配置损坏');
  const values=blocks.extensions;if(values===undefined)return {};
- if(!plain(values)||Object.entries(values).some(([k,v])=>!DISPLAY_FIELDS[k]?.includes(v)))throw Error('聊天显示配置损坏；未使用默认值覆盖');
+ if(!plain(values)||Object.entries(values).some(([k,v])=>!({...DISPLAY_FIELDS,装饰程度:['简洁','标准','丰富'],动画效果:[true,false]})[k]?.includes(v)))throw Error('聊天显示配置损坏；未使用默认值覆盖');
  return {...values};
 }
 export function displayValues(settings){return {...DISPLAY_DEFAULTS,...displayOverrides(settings)};}

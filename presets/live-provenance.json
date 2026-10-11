@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0-alpha.12",
+  "base": "Tisya-TauriTavern-0.2.0-alpha.10.json",
+  "source": "Foundation r243 / original 0.11.2 compiler",
+  "sha256": "6d931bf676815de53543656e96def43423b2002b775855d872a9a3ca4a30430f",
+  "compiler_bundle_sha256": "a6d14c9a9b7b3f73e3c13b506cb43206264c3f8a8ee3d2bb6bb8e8b6b4533996",
+  "original_source_manifest": "../vendor/settings/provenance.json",
+  "dynamic_entry_count": 14,
+  "preserves": [
+    "prompt identifiers",
+    "roles",
+    "prompt order",
+    "native material markers",
+    "original compiled identity",
+    "existing native output and heart controls"
+  ],
+  "macro_persistence": "read only; defaults initialized only by chat lifecycle",
+  "state_services": "not migrated; no MVU/state/archive/import writes"
+}

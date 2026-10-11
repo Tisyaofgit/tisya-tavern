@@ -144,4 +144,5 @@ module.exports={MARK_NAMES,formatMarks,parseMarks,MARK_CSS};
 const typographyCache=new Map();
 function typographyRequire(id){if(typographyCache.has(id))return typographyCache.get(id).exports;const entry=typographyModules[id];if(!entry)throw Error('Unknown typography module');const module={exports:{}};typographyCache.set(id,module);entry[0](module,module.exports,name=>typographyRequire(entry[1][name]));return module.exports;}
 export const {formatBody:decorateBody,bodyCSS}=typographyRequire('body-typography.cjs');
+export const {BODY_FIELDS,BODY_DEFAULTS}=typographyRequire('body-typography-options.cjs');
 export const {formatMarks,MARK_CSS}=typographyRequire('prose-marks.cjs');

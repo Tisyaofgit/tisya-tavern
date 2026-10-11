@@ -1,6 +1,6 @@
 import {mountActionChoice} from './actions.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
-import {formatProse,proseCSS} from './prose.js';
+import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
 import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs,strictJSON} from './reader-core.js';
 
@@ -33,7 +33,7 @@ export function inspectMessage(source) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,onChooseAction,getActionMode,setActionMode,initialTab='body'}) {
+export function mountMessageReader(document, container, {source,formatBody,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({})}) {
     const data=inspectMessage(source);
     let alive=true,actionChoice=null,extraView=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
@@ -46,7 +46,7 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         const b=make('button',label);b.type='button';b.dataset.readerTab=key;b.setAttribute('aria-controls',panel.id);
         b.addEventListener('click',()=>render(key));tabs.append(b);buttons.set(key,b);
     }
-    const proseStyle=make('style');proseStyle.textContent=proseCSS+replyControlsCSS+extraCSS+' .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-host{margin:16px 0}.tisya-reader .heart-line{display:flex;align-items:center;gap:6px}.tisya-reader .emotion{flex:0 0 48px;width:48px;height:48px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}';
+    const proseStyle=make('style');proseStyle.textContent=proseStyles(getAppearance('body'))+replyControlsCSS+extraCSS+' .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-host{margin:16px 0}.tisya-reader .heart-line{display:flex;align-items:center;gap:6px}.tisya-reader .emotion{flex:0 0 48px;width:48px;height:48px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}';
     container.classList.add('tisya-reader');container.replaceChildren(proseStyle,tabs,panel);
     const field=(target,label,value)=>{if(value===null||value===undefined||value==='')return;const p=make('p');p.append(make('strong',label+'：'),make('span',value));target.append(p);};
     const scene=(target,value)=>{
@@ -66,9 +66,9 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
             const paragraphs=data.body.paragraphs.value;
             if(paragraphs?.length)for(const p of paragraphs){
                 const section=make('section',null,'tisya-reader-paragraph'),number=make('span',p.id,'tisya-paragraph-number'),content=make('div');
-                number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody);section.append(number,content);text.append(section);
+                number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody,getAppearance('body'));section.append(number,content);text.append(section);
             }
-            else text.innerHTML=formatProse(document,data.body.value,formatBody);
+            else text.innerHTML=formatProse(document,data.body.value,formatBody,getAppearance('body'));
             panel.append(text);
         } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
     }

@@ -1,0 +1,17 @@
+{
+  "填写": "只输出一个reply，九块按模板顺序各一次；不输出output包装、说明、注释、占位或代码围栏。字段完整；空清单写[]，可空字段未知写null，空字符串写\"\"，不以“无”代替空清单。task、title、next为YAML，status、memory和vars为JSON。所有块的文本值中，与号和小于号按XML实体转义；JSON字符串同时遵守JSON转义。YAML使用两空格逐级缩进、不用制表符；长文字沿用|-及缩进，null写在键后且不加引号、不放进|-。",
+  "落位": "body写叙事成稿；原卡状态栏及其他附属展示只在extra各放一次，保留模板字段与顺序；无展示留空。status只按状态契约填写，archive留空。",
+  "字段": {
+    "task": "tasks提炼本轮要求与停点；pending只列真正阻塞本轮目标的缺口。audit按audit取值列表顺序填写全部七类，每类一次，evidence写可公开的实际依据；未完成的核验不能标为符合。人物打算只填characters，actor用本轮相关人物姓名且不重复，intent仅填已表露或将外显的打算，无公开依据填null，evidence保留公开依据；不泄露隐藏动机。refs只列实际使用且可公开的资料名称。",
+    "title": "text写场面标题；time、place、world取有效资料，未知填null。",
+    "next": "tasks每项只写一次待办：text写尚未完成的工作与所需结果，trigger写其全部必要条件；条件齐备写可开始，同一条件下多个待办各列一项，不再另列branches或引用待办名称。actions按actions_min至actions_max填写可选行动，目标或做法各异，text与source均为非空单行纯文本；source写当前可知依据，结果留待选择后判定。type取对应枚举。delivered只记本轮完成结果；candidates只记尚未采纳的变更，不重复行动建议。delivered与candidates的元素为字符串，不要求模型补编号。"
+  },
+  "审计": {
+    "符合": "有依据且已核对",
+    "已修正": "写明确实完成的修正",
+    "待确认": "依据或核验不足",
+    "不适用": "本轮无相关内容",
+    "不符合": "仍有未修复问题"
+  },
+  "取值": {}
+}
