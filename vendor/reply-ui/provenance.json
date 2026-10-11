@@ -1,0 +1,16 @@
+{
+  "source": "Foundation r243 approved water message UI",
+  "files": {
+    "water-layout.html": "23ff0d566789489d67be1ddcd8930b99e6519aecc22d4d3f9a120608fa76397b",
+    "water-view.cjs": "0df164670b63f9f69e6adbe69202fd9975ed5647b99e8047fab4d9d454601fbf",
+    "water-controls.cjs": "54009004cf3596b4dda648d79aee2652f29bb950a03e6eae5f8082036d7a209f"
+  },
+  "art": {
+    "assets/controls/pending.svg": "a8a6c0b585a5d469f5370bbf9653b8667c553883e767f432defd0ed0559547d4",
+    "assets/controls/task.svg": "28eca9174da512dbca73a44a66f05dfe204e046db97172941e7c8148752a9b38"
+  },
+  "adaptations": [
+    "Generated template fragments and original section renderer without host I/O",
+    "Original water control font names mapped to the shared TisyaReading font"
+  ]
+}

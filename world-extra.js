@@ -53,7 +53,7 @@ export function mountWorldExtra(document,container,{source,structured,formatBody
  const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
  let alive=true,children=[],active=null,paused=false;const pages=[],nav=make('nav',undefined,'extra-tabs');nav.setAttribute('aria-label','世界扩展页面');
  container.replaceChildren();
- let rows;try{rows=structured?readWorldExtra(source):[];}catch(error){container.append(make('p','本条扩展未通过结构或公开权限校验，原消息仍保留。','public-note'));onError(error);return {refresh(){},capture(){},restore(){},dispose(){alive=false;container.replaceChildren();}};}
+ let rows;try{rows=structured?readWorldExtra(source):[];}catch(error){container.append(make('p','本条扩展未通过结构或公开权限校验，原消息仍保留。','public-note'));onError(error);return {hasContent:true,refresh(){},capture(){},restore(){},dispose(){alive=false;container.replaceChildren();}};}
  if(!rows.length)container.append(make('p','本条没有可展示的世界扩展。','public-note'));
  else container.append(nav);
  function select(id){if(!alive)return;active=id;for(const row of pages){row.panel.hidden=row.id!==id;row.button.setAttribute('aria-pressed',String(row.id===id));}for(const child of children)child.refresh(paused||child.page!==active);}
@@ -65,6 +65,6 @@ export function mountWorldExtra(document,container,{source,structured,formatBody
   try{for(const html of splitExtraDocuments(row.html))children.push({...mountDocument(document,panel,html,title,{formatBody,onError:failed}),page:row.id});}catch(error){failed(error);}
  }
  if(pages.length)select(pages[0].id);nav.hidden=pages.length<2;
- return {capture:()=>({active,documents:children.map(c=>({page:c.page,source:c.source,folds:c.capture()}))}),restore(state){if(!state)return;if(pages.some(p=>p.id===state.active))select(state.active);for(const child of children){const saved=state.documents?.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}},refresh(value){paused=value;if(alive)for(const child of children)child.refresh(paused||child.page!==active);},dispose(){alive=false;children.forEach(c=>c.dispose());pages.forEach(p=>p.button.onclick=null);container.replaceChildren();}};
+ return {hasContent:pages.length>0,capture:()=>({active,documents:children.map(c=>({page:c.page,source:c.source,folds:c.capture()}))}),restore(state){if(!state)return;if(pages.some(p=>p.id===state.active))select(state.active);for(const child of children){const saved=state.documents?.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}},refresh(value){paused=value;if(alive)for(const child of children)child.refresh(paused||child.page!==active);},dispose(){alive=false;children.forEach(c=>c.dispose());pages.forEach(p=>p.button.onclick=null);container.replaceChildren();}};
 }
 export const extraCSS='.extra-tabs{display:flex;gap:8px;overflow:auto;padding:2px 0 12px}.extra-tabs[hidden],.extra-page[hidden]{display:none!important}.extra-tabs button{white-space:nowrap;min-height:44px;border:1px solid #a6b98c66;border-radius:20px;padding:6px 14px;color:inherit;background:#103f3580;font:14px/1.6 TisyaReading,serif}.extra-tabs [aria-pressed=true]{color:#efd99a;background:#52796b55}.extra-page{min-width:0}.extra-page pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 monospace}';

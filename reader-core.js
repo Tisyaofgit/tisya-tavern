@@ -1093,3 +1093,4 @@ export const {countBody}=foundationRequire('body-count.cjs');
 export const {read:readParagraphs}=foundationRequire('numbered-paragraphs.cjs');
 export const {runDisplay}=foundationRequire('display-regex.cjs');
 export const {strictJSON}=foundationRequire('strict-json.cjs');
+export const {validate:validateMemoryProjection,visibleTask:visiblePending}=foundationRequire('memory-permissions.cjs');

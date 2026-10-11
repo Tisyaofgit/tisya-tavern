@@ -1,0 +1,19 @@
+<main class="page" id="page">
+<section class="task-region" data-component="task"><header class="task-masthead scene-heading" data-component="title"><div class="task-identity"><span class="hero"><img id="cover" class="cover" alt="角色卡封面"></span><div class="hero-text"><h1></h1><p></p></div></div><div class="lamp-light" aria-hidden="true"><div class="lamp-composition"><img data-asset="lamp-scene.png" alt=""><canvas id="lamp-flame" width="100" height="160"></canvas></div></div></header><div class="fold-head"><button id="task-toggle" class="fold-title" aria-controls="task-content" aria-expanded="false">本轮任务</button><span class="task-line"></span></div><div id="task-heart" class="heart-host" aria-label="本轮心声"></div><div id="task-content" class="fold-content" hidden></div></section>
+<article class="story-region" data-component="body"><p class="dateline"></p><div class="wave-rule" aria-hidden="true"></div><div id="story" class="story"></div></article>
+<div class="pendant-dock" data-component="extensions" aria-label="世界与旅程书签"><div class="pendant-divider" aria-hidden="true"><i></i><i></i></div><div class="pendant-hooks"></div></div>
+<section class="world-extension scroll-region" data-component="extra" aria-label="世界扩展" hidden>
+<div class="scroll-crest" id="world-extension-landing"></div>
+<div id="world-extension-expanded" class="crystal-scroll"><div class="scroll-skin" aria-hidden="true"><img class="scroll-top" data-asset="scroll-top.png" alt=""><div class="scroll-sides"></div><img class="scroll-bottom" data-asset="scroll-bottom.png" alt=""></div>
+<header class="extension-heading"><h2>世界扩展</h2><p class="extension-world"></p></header>
+<nav id="world-extension-tabs" aria-label="世界扩展页面"></nav>
+<div class="extension-sheet"><section id="world-extension-content" role="region" aria-label="角色卡扩展与本轮记录"></section></div>
+</div></section>
+<section class="journey-region scroll-region" data-component="extensions" aria-label="旅程仪表盘">
+<div class="scroll-crest" id="journey-landing"></div>
+<div class="dashboard" id="journey-dashboard"></div></section>
+<section class="action-region" data-component="next"><div class="next-heading"><button id="next-toggle" class="fold-title" aria-controls="next-content" aria-expanded="false">下轮待办</button><div id="next-heart" class="heart-host" aria-label="下轮心声"></div></div><div id="next-content" class="fold-content" hidden></div>
+<div class="action-heading"><h2>下一步，往哪里？</h2><div class="mode-control"><button id="mode-toggle" aria-label="选择行动模式" aria-haspopup="menu" aria-controls="mode-menu" aria-expanded="false"><img data-asset="quill.png" alt=""></button><span id="mode-current"></span><div id="mode-menu" role="menu" aria-label="行动模式" hidden></div></div></div>
+<div id="actions" class="actions"></div><p id="action-feedback" class="small-note" role="status"></p></section>
+</main><dialog id="term-dialog"><div class="dialog-heading"><h2 id="term-title"></h2><button class="close" aria-label="关闭词条">×</button></div><p id="term-summary"></p><div id="term-body" hidden></div><button id="term-details">完整档案</button></dialog>
+<div id="toast" role="status" hidden></div>
