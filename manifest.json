@@ -1,6 +1,6 @@
 {
   "display_name": "缇斯亚 · 月潮",
-  "version": "0.2.0-alpha.12",
+  "version": "0.2.0-alpha.13",
   "author": "Tisya Project",
   "loading_order": 100,
   "requires": [],
@@ -10,5 +10,5 @@
   "hooks": {
     "chatSurface": "registerChatSurface"
   },
-  "description": "缇斯亚酒馆扩展开发版：月潮阅读、会话与联系人。其他模块开发中。"
+  "description": "五页配置、独立 API／预设路由、选中项装配与原生正则正文兼容；Agent 和创世等执行器预留。"
 }

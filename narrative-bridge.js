@@ -1,3 +1,4 @@
+import {modularSource,currentConfiguration,refineCompiled} from './config/compiler.js';
 import {NARRATIVE as N} from './settings-core.js';
 import {outputEnabled,heartSelection} from './preset.js';
 import {HEART_CONTROLS} from './preset-heart-variants.js';
@@ -19,15 +20,15 @@ export function readNarrative(context,scope='chat'){
  const summary=tree[key(SUMMARY,scope)];if(typeof summary!=='boolean')fail('公开摘要配置损坏。');return {kind:'ready',revision:stamp([marker.修订,settings,summary]),storageRevision:marker.修订,settings,summary};
 }
 export function compileNarrative(context,source,moods=[]){
- const config=readNarrative(context),selection=nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
+ const modular=modularSource(source),current=modular?currentConfiguration(context,()=>readNarrative(context).settings):null,config=modular?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:readNarrative(context),selection=modular&&current.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});
  if(c.prose&&c.outputEnabled&&c.heartActive){if(!Array.isArray(moods)||moods.some(n=>typeof n!=='string'||!n.trim())||new Set(moods).size!==moods.length)fail('心声表情目录无效。');const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=[null,...moods];c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,'mood must be one of '+JSON.stringify(values.mood));}
- return c;
+ return modular?refineCompiled(c,current,source):c;
 }
 export function registerLivePreset(context,getSource,getContext,getMoods,onError=()=>{}){
  const ids=Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries);let cacheKey=null,cached=null;
- const execution=()=>{const source=getSource(),ctx=getContext(),config=readNarrative(ctx),selection=nativeSelection(source);const enabled=outputEnabled(source);const moods=enabled&&selection.directions.length&&config.settings.缇斯亚当前任务==='叙事'&&['互动叙事','大纲扩写'].includes(config.settings.缇斯亚叙事创作模式)?getMoods():[];
-  const next=stamp([config.settings,config.summary,source.order,source.prompts.map(p=>[p.identifier,p.enabled]),moods]);if(next!==cacheKey){cacheKey=null;cached=null;cached=compileNarrative(ctx,source,moods);cacheKey=next;}return cached;};
+ const execution=()=>{const source=getSource(),ctx=getContext(),current=modularSource(source)?currentConfiguration(ctx,()=>readNarrative(ctx).settings):null,legacy=current?null:readNarrative(ctx),config=current?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:legacy,selection=current?.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source);const enabled=outputEnabled(source);const moods=enabled&&selection.directions.length&&config.settings.缇斯亚当前任务==='叙事'&&['互动叙事','大纲扩写'].includes(config.settings.缇斯亚叙事创作模式)?getMoods():[];
+  const next=stamp([modularSource(source)?currentConfiguration(ctx):null,config.settings,config.summary,source.order,source.prompts.map(p=>[p.identifier,p.enabled]),moods]);if(next!==cacheKey){cacheKey=null;cached=null;cached=compileNarrative(ctx,source,moods);cacheKey=next;}return cached;};
  for(const id of ids)context.registerMacro(LIVE_PREFIX+id,()=>{try{return execution().rest.entries[id]??'';}catch(e){cacheKey=null;cached=null;onError(e);throw e;}},'缇斯亚：当前聊天配置 · '+id);
  return {execution,dispose(){ids.forEach(id=>context.unregisterMacro(LIVE_PREFIX+id));cached=null;cacheKey=null;}};
 }

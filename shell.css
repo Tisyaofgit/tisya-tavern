@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.12 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.12";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.13 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.13";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -57,9 +57,9 @@ body.tisya-active #chat{background:transparent!important;box-shadow:none!importa
 body.tisya-active #chat .mes{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 0 16px!important;gap:0!important}
 body.tisya-active #chat .mesAvatarWrapper,body.tisya-active #chat .mes_header_info{display:none!important}
 body.tisya-active #chat .mes_block{width:100%;min-width:0;margin:0!important;padding:0!important}
-body.tisya-active #chat .mes_text{background:transparent!important;color:var(--tisya-ink)!important;font-size:17px!important;line-height:1.85!important;padding:8px 0!important;overflow-wrap:anywhere}
-body.tisya-active #chat .mes[is_user=true] .mes_text{color:#b6d0bc!important;font-size:16px!important}
-body.tisya-active #chat .mes_text p{font-size:inherit!important;line-height:inherit!important}
+body.tisya-active #chat .mes_text:not(.tisya-native-beauty){background:transparent!important;color:var(--tisya-ink)!important;font-size:17px!important;line-height:1.85!important;padding:8px 0!important;overflow-wrap:anywhere}
+body.tisya-active #chat .mes[is_user=true] .mes_text:not(.tisya-native-beauty){color:#b6d0bc!important;font-size:16px!important}
+body.tisya-active #chat .mes_text:not(.tisya-native-beauty) p{font-size:inherit!important;line-height:inherit!important}
 body.tisya-active #chat .mes_buttons{display:none!important}
 body.tisya-active #chat .tisya-native-tools .mes_buttons{display:flex!important;flex-wrap:wrap;gap:8px;padding:8px 0}
 body.tisya-active #chat .tisya-native-tools .extraMesButtons{flex-wrap:wrap;gap:8px}
@@ -141,9 +141,9 @@ body.tisya-active #bg1{background:linear-gradient(#03251b55,#03231988),url(asset
 #tisya-overlay .tisya-navigation .tisya-list>button:hover,#tisya-overlay .tisya-navigation .tisya-list>button:focus-visible{background:linear-gradient(90deg,#62866c40,#2d56432a);box-shadow:inset 2px 0 #dec68a}
 #tisya-overlay h3{color:#bfae7c;background:linear-gradient(90deg,#b9ab7515,transparent)}
 #tisya-overlay .tisya-version{color:#a5bcac}
-body.tisya-active #chat .mes[is_user=true] .mes_text{background:linear-gradient(90deg,#08231d30,#051a165e)!important;box-shadow:inset 0 1px #cbb98580,inset 0 -1px #cbb98580!important;color:#c8dbca!important}
-body.tisya-active #chat .mes_text a{color:#e2cb91;text-decoration-color:#cbb9859c;text-underline-offset:.2em}
-body.tisya-active #chat .mes_text blockquote{border-color:#cbb98580;color:#c6d8c4}
+body.tisya-active #chat .mes[is_user=true] .mes_text:not(.tisya-native-beauty){background:linear-gradient(90deg,#08231d30,#051a165e)!important;box-shadow:inset 0 1px #cbb98580,inset 0 -1px #cbb98580!important;color:#c8dbca!important}
+body.tisya-active #chat .mes_text:not(.tisya-native-beauty) a{color:#e2cb91;text-decoration-color:#cbb9859c;text-underline-offset:.2em}
+body.tisya-active #chat .mes_text:not(.tisya-native-beauty) blockquote{border-color:#cbb98580;color:#c6d8c4}
 body.tisya-active #chat .mes_reasoning_details{background:#0a29267a;border-color:#bdd0b645;color:#b7cbbc}
 body.tisya-active #chat .mes_reasoning_summary{color:#cbbd93}
 .tisya-actions button{border:1px solid #b8a87573;background:var(--tisya-glass);box-shadow:var(--tisya-inlay)}

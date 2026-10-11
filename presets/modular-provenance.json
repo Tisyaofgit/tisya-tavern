@@ -1,0 +1,12 @@
+{
+  "schema": "tisya.modular-preset/1",
+  "version": "0.2.0-alpha.13",
+  "base": "Tisya-TauriTavern-0.2.0-alpha.12.json",
+  "base_sha256": "6d931bf676815de53543656e96def43423b2002b775855d872a9a3ca4a30430f",
+  "preset_sha256": "bbb688dcb2e555536504f58964202e0c83b83b8835c7ba76f2ddf0bd38568d41",
+  "fixed_protocol_source_sha256": "8c0886fb8849a141df61b8e76c049684a3829f7adc783cfd7fc94c0ce81317e1",
+  "config_schema": 2,
+  "optional_rules": "compiled from selected runtime configuration",
+  "asset_vendor_changes": false,
+  "android_live_verification": false
+}
