@@ -560,6 +560,8 @@ function decode(name,source,{body,title}={}){
     else if(n==='待定')b.pending.push(...optionalItem(x));
     else if(n==='人物'){const [status,actor,intent,evidence]=cells(x,'ss?s');b.characters.push({status,actor,intent,evidence});}
     else if(n==='解锁')b.unlocks.push(cells(x,'sss'));
+    else if(n==='引用'){const [names]=cells(x,'l');(b.tableReferences??=[]).push(...names);}
+    else if(n==='新发现'){const [kind,type,name,evidence]=cells(x,'ssss');if(!['对象','事实'].includes(kind))bad('DISCOVERY_KIND');(b.tableDiscoveries??=[]).push({kind,type,name,evidence});}
     else bad('TASK_FIELD');
    }else if(name==='next'){
     if(n==='审计'){const [status,kind,evidence]=cells(x,'sss');if(!AUDIT.includes(kind)||b.audit.some(a=>a.kind===kind))bad('AUDIT');b.audit.push({status,kind,evidence});}
@@ -620,7 +622,7 @@ function projectEnvelope(e){
  for(const name of ['task','title','next','status','memory','actions']){
   if(e.attrs[name]?.format!=='pipes'&&!(name==='status'||name==='memory')||!['pipes',undefined].includes(e.attrs[name]?.format))bad('FORMAT_'+name);
   const b=name==='title'?publicTitle:decode(name,e.blocks[name],{body:e.blocks.body,title});
-  if(name==='task'){r.wire.unlocks=b.unlocks;delete b.unlocks;}
+  if(name==='task'){r.wire.unlocks=b.unlocks;r.wire.tableReferences=b.tableReferences??[];r.wire.tableDiscoveries=b.tableDiscoveries??[];delete b.unlocks;delete b.tableReferences;delete b.tableDiscoveries;}
   r.blocks[name]=JSON.stringify(b);r.attrs[name]={...e.attrs[name],format:'json'};
  }
  require('./numbered-paragraphs.cjs').read(e.blocks.body,{required:true});

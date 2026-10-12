@@ -1,10 +1,12 @@
+import {createTableService} from './tables/service.js';
+import {createNativeVectors} from './tables/vectors.js';
 import {appendFileContent} from '/scripts/chats.js';
 import {yaml} from '/lib.js';
 import {configureReplyFormats} from './reply-formats.js';
 import {GENERATION_CONTRACTS,MODE_CONTRACT,ARCHIVE_CONTRACT,validateGeneratedTask} from './config/contracts.js';
 import {loadAgentSystemSettings} from '/scripts/tauritavern/agent/agent-system-settings.js';
 import {createStore,register,registry} from './config/core.js';
-import {createHost} from './config/host.js';
+import {createHost,blockPayload} from './config/host.js';
 import {mountConfiguration} from './config/panel.js';
 import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
 import {createNativeDisplayPipeline} from './native-display.js';
@@ -27,7 +29,7 @@ import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';
 import { registerPresetProtocol } from './preset.js';
-import { isGenerating, Generate, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata } from '/script.js';
+import { setExtensionPrompt, isGenerating, Generate, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
@@ -64,7 +66,9 @@ const configStore=createStore({getContext:context,persist:saveSettings,assertIdl
 let requiredPreset=null;
 async function mandatoryPresetSource(){if(!requiredPreset){const response=await fetch(new URL('./presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url));if(!response.ok)throw Error('必需协议加载失败，请更新并重启扩展');requiredPreset=await response.json();}return {prompts:requiredPreset.prompts,order:requiredPreset.prompt_order[0].order};}
 const configHost=createHost({getContext:context,getSource:presetSource,getBaseSource:mandatoryPresetSource,prepareMessage:m=>appendFileContent(m,String(m.mes??'')),parseRequestBody:s=>typeof yaml.parse==='function'?yaml.parse(s):yaml.load(s),store:configStore,createParameters:createGenerationParameters,getProxies:()=>proxies,isAgentEnabled:async()=>(await loadAgentSystemSettings()).agentModeEnabled,onError:error});
-globalThis.tisyaHistoryInput=(chat,contextSize,abort,type)=>{try{return configHost.historyInput(chat,type);}catch(e){abort(true);throw e;}};
+const tableService=createTableService({store:configStore,getContext:context,request:(...args)=>configHost.request(...args),vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter)});
+let tableGeneration=false;
+globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{try{const result=await tableService.prepare(type);tableGeneration=!!result;configHost.attachTableContext(result);return configHost.historyInput(chat,type);}catch(e){abort(true);error(e);throw e;}};
 function error(err) { console.error('[Tisya UI]', err); window.toastr?.error(String(err.message ?? err), '缇斯亚界面'); }
 function settings() {
     const s = context().extensionSettings[KEY];
@@ -158,7 +162,7 @@ function narrativeController(){return createNarrativeBridge({getContext:context,
 async function saveInterfaceSettings(next){assertIdle();const previous=settings();context().extensionSettings[KEY]=next;refreshVisuals();try{if(await saveSettings()!==true)throw Error('宿主尚未确认保存');}catch(e){if(context().extensionSettings[KEY]===next)context().extensionSettings[KEY]=previous;refreshVisuals();throw Error('保存未完成，草稿保留：'+e.message);}}
 function openSettings(tab='mode'){
  renderEpoch++;page('缇斯亚 · 配置','<div id="tisya-settings-app"></div>');
- utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,getSettings:settings,initialTab:tab,
+ utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
  saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),onApplied:()=>{appearance?.refresh();decorate();},onClose:hidePage,
  onNative:kind=>{if(utility?.requestLeave?.().allowed===false)throw Error('请先保存或放弃修改');if(kind==='agent')extensionSection('agent');else nativeDrawer(kind==='api'?'sys-settings-button':'ai-config-button');}
@@ -451,8 +455,8 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // Register once independently of the visible surface; expanding a macro is read-only.
     try{context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
-     bind('GENERATION_AFTER_COMMANDS',(...args)=>configHost.before(...args));bind('CHAT_COMPLETION_SETTINGS_READY',p=>configHost.payloadReady(p));bind('GENERATION_ENDED',()=>configHost.clear());bind('GENERATION_STOPPED',()=>configHost.clear());bind('CHAT_CHANGED',()=>configHost.clear());
-     window.Tisya=Object.freeze({version:VERSION,register,registry,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     bind('GENERATION_AFTER_COMMANDS',(...args)=>{tableGeneration=false;tableService.clear();return configHost.before(...args);});if(tableService.worldbook.available()){bind('WORLDINFO_ENTRIES_LOADED',p=>tableService.worldbook.entriesLoaded(p));bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));}bind('CHAT_COMPLETION_SETTINGS_READY',p=>{try{const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{configHost.clear();const runTables=tableGeneration;tableGeneration=false;tableService.clear();if(runTables)try{await tableService.archive();}catch(e){error(e);}});bind('GENERATION_STOPPED',()=>{tableGeneration=false;tableService.clear();configHost.clear();});bind('CHAT_CHANGED',()=>{tableGeneration=false;tableService.clear();configHost.clear();});
+     window.Tisya=Object.freeze({version:VERSION,register,registry,tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      const activeSource=()=>configHost.activeSource()??presetSource();const live=registerLivePreset(context(),activeSource,context,()=>emotionCatalog(document).names(),error);registerPresetProtocol(context(),activeSource,error,()=>emotionCatalog(document).names(),source=>!isLivePreset(source)||live.execution().prose);
      const initialize=async()=>{if(context().chatId&&configStore.read().revision!==null)return;const bridge=narrativeController();try{await bridge.initialize();}catch(e){error(e);}finally{bridge.dispose();}};
      context().eventSource.on(context().eventTypes.CHAT_CHANGED,initialize);await initialize();

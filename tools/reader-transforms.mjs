@@ -15,6 +15,12 @@ export function adaptReaderSource(id,source){
  if(id==='pipes-wire.cjs')source=replaceOnce(source,
   "const a=split(s,'、').map(text);if(new Set(a).size!==a.length)bad('LIST_DUPLICATE');return a;",
   "const a=s.startsWith('[')?wireValue(s):split(s,'、').map(text);if(!Array.isArray(a)||a.some(x=>typeof x!=='string'||!x.trim()))bad('LIST');if(new Set(a).size!==a.length)bad('LIST_DUPLICATE');return a;");
+ if(id==='pipes-wire.cjs'){
+  source=replaceOnce(source,"else if(n==='解锁')b.unlocks.push(cells(x,'sss'));",`else if(n==='解锁')b.unlocks.push(cells(x,'sss'));
+    else if(n==='引用'){const [names]=cells(x,'l');(b.tableReferences??=[]).push(...names);}
+    else if(n==='新发现'){const [kind,type,name,evidence]=cells(x,'ssss');if(!['对象','事实'].includes(kind))bad('DISCOVERY_KIND');(b.tableDiscoveries??=[]).push({kind,type,name,evidence});}`);
+  source=replaceOnce(source,"if(name==='task'){r.wire.unlocks=b.unlocks;delete b.unlocks;}","if(name==='task'){r.wire.unlocks=b.unlocks;r.wire.tableReferences=b.tableReferences??[];r.wire.tableDiscoveries=b.tableDiscoveries??[];delete b.unlocks;delete b.tableReferences;delete b.tableDiscoveries;}");
+ }
  if(id==='journey-reader.cjs'){
   source=replaceOnce(source,
    "function projectJourney(source,{showPsychology=false,playerName=null}={}){\n  const envelope=parseDisplayEnvelope(source);",

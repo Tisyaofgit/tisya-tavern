@@ -78,3 +78,8 @@ test('message UI mounts legacy hearts and actions; click writes a draft, remount
  ui=mountMessageVisual(d,node,options);ui.restore(state);root=ui.host.shadowRoot;assert.equal(root.querySelector('#next-content .audit-ledger').open,true);
  assert.equal(source,legacyFixture());ui.dispose();await w.happyDOM.abort();
 });
+
+test('table reference and discovery task rows are recognized without breaking public reader',()=>{
+ const source=richFixture().replace('</task>','引用：北门、铜钥匙\n新发现：事实|规则|门锁规则|铜钥匙打开北门\n</task>');
+ const envelope=parseDisplayEnvelope(source);assert.deepEqual(envelope.wire.tableReferences,['北门','铜钥匙']);assert.equal(envelope.wire.tableDiscoveries[0].name,'门锁规则');const data=inspectMessage(source);assert.ok(data.body.value);assert.ok(data.details.value);assert.equal(data.actions.value.length,4);
+});
