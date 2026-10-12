@@ -1,3 +1,4 @@
+import {interfaceSnapshot,validateInterfaceSettings} from './tables/interface-config.js';
 import {createNativeConfiguration,createRegexGate} from './tables/native-config.js';
 import {createTableService} from './tables/service.js';
 import {createNativeVectors} from './tables/vectors.js';
@@ -24,7 +25,9 @@ import {mountPet} from './pet.js';
 import { iconMarkup } from './icons.js';
 import { mountMessageNavigation } from './navigation.js';
 import {mountInputShortcuts} from './input-shortcuts.js';
+import {createEditToolbarPlacement} from './edit-toolbar.js';
 let inputShortcuts=null;
+let editToolbarPlacement=null;
 import { mountMessageReader } from './reader.js';
 import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
@@ -68,7 +71,7 @@ let requiredPreset=null;
 async function mandatoryPresetSource(){if(!requiredPreset){const response=await fetch(new URL('./presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url));if(!response.ok)throw Error('必需协议加载失败，请更新并重启扩展');requiredPreset=await response.json();}return {prompts:requiredPreset.prompts,order:requiredPreset.prompt_order[0].order};}
 const configHost=createHost({getContext:context,getSource:presetSource,getBaseSource:mandatoryPresetSource,prepareMessage:m=>appendFileContent(m,String(m.mes??'')),parseRequestBody:s=>typeof yaml.parse==='function'?yaml.parse(s):yaml.load(s),store:configStore,createParameters:createGenerationParameters,getProxies:()=>proxies,getMoods:()=>emotionCatalog(document).names(),isAgentEnabled:async()=>(await loadAgentSystemSettings()).agentModeEnabled,onError:error});
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
-const tableService=createTableService({store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
+const tableService=createTableService({store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,getConfigurationChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
 let tableGeneration=false,preparationError=null;
 globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{try{if(['quiet','impersonate'].includes(type))return configHost.historyInput(chat,type);const result=await tableService.prepare(type);tableGeneration=!!result;const rules=result?null:tableService.rulesContext();setExtensionPrompt('tisya_style_rules',rules?.text??'',1,1,false,0);configHost.attachTableContext(result??rules);return configHost.historyInput(chat,type);}catch(e){abort(true);error(e);throw e;}};
 function error(err) { console.error('[Tisya UI]', err); window.toastr?.error(String(err.message ?? err), '缇斯亚界面'); }
@@ -161,6 +164,12 @@ function narrativeController(){return createNarrativeBridge({getContext:context,
  const live=context();if(live.chatId!==t.id||live.characterId!==t.character||live.groupId!==t.group||live.chatMetadata!==t.meta)throw Error('聊天已切换，旧页面未写入新聊天。');
  const metadata=persistedChatMetadata();if(t.group){await saveGroupChatMetadata({id:t.id,chatMetadata:metadata});}else{const card=c.characters[t.character];if(!card||card.chat!==t.id)throw Error('聊天目标已变化。');await saveCharacterChatMetadata({characterName:card.name,avatarUrl:card.avatar,fileName:t.id,chatMetadata:metadata});}
  })});}
+async function saveAssistantConfiguration({data,revision,key,value,expected}){
+ assertIdle();if(JSON.stringify(settings())!==expected)throw Error('界面配置已变化，请重新让助手核对');validateInterfaceSettings(value);
+ const c=context(),previous=c.extensionSettings[KEY],beforeConfig=c.extensionSettings.缇斯亚配置;c.extensionSettings[KEY]=value;
+ try{await configStore.save(data,revision,key);}catch(e){if(c.extensionSettings[KEY]===value&&c.extensionSettings.缇斯亚配置===beforeConfig){if(previous===undefined)delete c.extensionSettings[KEY];else c.extensionSettings[KEY]=previous;}throw e;}
+ motionEnabled=settings().动态效果!==false;if(pet&&pet.isVisible()!==(settings().显示桌宠!==false))pet.setVisible(settings().显示桌宠!==false);refreshVisuals();inputShortcuts?.refresh();messageNavigation?.update();decorate();
+}
 async function saveInterfaceSettings(next){assertIdle();const previous=settings();context().extensionSettings[KEY]=next;refreshVisuals();try{if(await saveSettings()!==true)throw Error('宿主尚未确认保存');}catch(e){if(context().extensionSettings[KEY]===next)context().extensionSettings[KEY]=previous;refreshVisuals();throw Error('保存未完成，草稿保留：'+e.message);}}
 function openSettings(tab='mode'){
  renderEpoch++;page('缇斯亚 · 配置','<div id="tisya-settings-app"></div>');
@@ -359,6 +368,7 @@ function decorate(element = null) {
         const row=node.querySelector('.tisya-actions'),key=JSON.stringify(messageSlots());if(row.dataset.slots!==key){row.innerHTML=messageSlots().map(messageToolButton).join('');row.dataset.slots=key;}
         const id=Number(node.getAttribute('mesid')),msg=context().chat[id];
         appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy)});
+        editToolbarPlacement?.sync(node);
         node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':isGenerating()||hasActiveAgentRun()||generationBusy?'正在生成，请先停止或等待结束':'';b.disabled=!!reason;b.title=reason||(['regen','next'].includes(b.dataset.tisyaAction)&&id<context().chat.length-1?'将自动删除下面的消息，再'+b.getAttribute('aria-label'):(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
@@ -384,6 +394,12 @@ function init() {
     layout=mountLayout(document);
     ({root,top,controls,overlay}=layout);
     cleanups.push(installComposer(document));
+    editToolbarPlacement=createEditToolbarPlacement(document);
+    // Managed surfaces do not necessarily emit a commit for transient edit UI.
+    // Native messageEdit focuses the new textarea after inserting its controls.
+    const placeEditor=e=>{if(e.target.matches?.('#chat .edit_textarea'))editToolbarPlacement.sync(e.target.closest('.mes'));};
+    document.addEventListener('focusin',placeEditor);
+    cleanups.push(()=>{document.removeEventListener('focusin',placeEditor);editToolbarPlacement.dispose();editToolbarPlacement=null;});
     motionEnabled=settings().动态效果!==false;
     nativeDisplay=createNativeDisplayPipeline({enabled:()=>configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
     appearance=mountMessageAppearance(document,{
@@ -451,7 +467,7 @@ function init() {
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
     managed=api?.isManagedOwnershipRequired?.()===true;
-    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>{appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();};}});
+    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element}){decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();};}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // Register once independently of the visible surface; expanding a macro is read-only.

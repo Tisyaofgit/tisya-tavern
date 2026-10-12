@@ -1,8 +1,9 @@
+import {characterWorldbookScope} from './character-scope.js';
 import {FORMAT, check, copy, object, defaultRegistry} from './schema.js';
 const ENTRY = '缇斯亚 · 表单数据';
 export async function digest(value){const bytes=new TextEncoder().encode(typeof value==='string'?value:JSON.stringify(value));const hash=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 export const uuid = prefix => prefix+':'+crypto.randomUUID();
-export function createBookGateway(getHelper=()=>globalThis.TavernHelper){
+export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getContext){
  const locks=new Map();
  function helper(){const h=getHelper();check(h&&['getWorldbook','getWorldbookNames','createWorldbook','updateWorldbookWith'].every(k=>typeof h[k]==='function'),'表单存档需要新版酒馆助手的世界书 API；未启用表单时不影响聊天');return h;}
  function find(entries){check(Array.isArray(entries),'世界书未返回条目列表');const matches=entries.filter(e=>e.name===ENTRY);check(matches.length<=1,'表单数据条目重复，请保留原书并检查冲突');return matches[0];}
@@ -22,7 +23,7 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper){
    check(invoked,'宿主未执行表单更新');const verified=await read(snapshot.name);check(verified.stamp===expected,'表单保存结果不一致；写入状态未知，请重新载入核对');return verified;
   }catch(e){throw Error('表单保存未完成：'+e.message);}finally{locks.delete(snapshot.name);}
  }
- async function bindOrigin(card,name,guard=()=>{}){const h=helper();check(typeof h.getCharWorldbookNames==='function'&&typeof h.rebindCharWorldbooks==='function','宿主缺少角色卡世界书绑定接口');guard();const prior=await h.getCharWorldbookNames(card);guard();check(object(prior)&&Array.isArray(prior.additional),'角色卡世界书绑定格式无效');if(prior.primary===name||prior.additional.includes(name))return;await h.rebindCharWorldbooks(card,{primary:prior.primary,additional:[...prior.additional,name]});const after=await h.getCharWorldbookNames(card);check(after.primary===prior.primary&&after.additional.includes(name)&&prior.additional.every(n=>after.additional.includes(n)),'原点书绑定未确认，原有角色书请核对');}
- async function cardBooks(card){const h=helper();check(typeof h.getCharWorldbookNames==='function','宿主缺少角色书绑定读取接口');const refs=await h.getCharWorldbookNames(card);return [...new Set([refs.primary,...refs.additional].filter(Boolean))];}
+ async function bindOrigin(card,name,outerGuard=()=>{}){const h=helper();check(typeof h.getCharWorldbookNames==='function'&&typeof h.rebindCharWorldbooks==='function','宿主缺少角色卡世界书绑定接口');const {target,guard}=characterWorldbookScope(card,getContext,outerGuard);guard();const prior=await h.getCharWorldbookNames(target);guard();check(object(prior)&&Array.isArray(prior.additional),'角色卡世界书绑定格式无效');if(prior.primary===name||prior.additional.includes(name))return;await h.rebindCharWorldbooks(target,{primary:prior.primary,additional:[...prior.additional,name]});guard();const after=await h.getCharWorldbookNames(target);guard();check(after.primary===prior.primary&&Array.isArray(after.additional)&&after.additional.includes(name)&&prior.additional.every(n=>after.additional.includes(n)),'原点书绑定未确认，原有角色书请核对');}
+ async function cardBooks(card){const h=helper();check(typeof h.getCharWorldbookNames==='function','宿主缺少角色书绑定读取接口');const {target,guard}=characterWorldbookScope(card,getContext);const refs=await h.getCharWorldbookNames(target);guard();check(object(refs)&&Array.isArray(refs.additional),'角色卡世界书绑定格式无效');return [...new Set([refs.primary,...refs.additional].filter(Boolean))];}
  return {read,write,create,bindOrigin,cardBooks,names:()=>helper().getWorldbookNames(),available:()=>{try{helper();return true;}catch{return false;}}};
 }

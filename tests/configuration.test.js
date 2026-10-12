@@ -182,3 +182,10 @@ test('manual auxiliary modes also omit narrative wrappers while main narration k
  }
  f.w.mode='narrative';await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);assert.match(JSON.stringify(p.messages),/<reply>/);
 });
+
+test('configuration assistant uses paired JSON route and saved per-task instructions reach only that task',async()=>{
+ const f=fixture();f.w.tables={taskInstructions:{tableAssistant:'ASSISTANT_ONLY_SUPPLEMENT',historyImport:'HISTORY_ONLY_SUPPLEMENT'}};const prior=globalThis.fetch;let sent;globalThis.fetch=async(url,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'{"answer":"可以","changes":[],"backfill":null,"genesisGoal":""}'}}]})};};
+ try{await f.host.request('tableAssistant',JSON.stringify({question:'UPDATE_CONFIGURATION_ONCE',configuration:{world:{context:{history:15}}},editablePaths:['/world/context/history'],choices:{},registry:{tables:[],types:[]},currentRows:[],storage:{ready:false},history:[],diagnostics:{jobs:[]}}));let text=JSON.stringify(sent.messages);assert.match(text,/UPDATE_CONFIGURATION_ONCE/);assert.match(text,/ASSISTANT_ONLY_SUPPLEMENT/);assert.doesNotMatch(text,/HISTORY_ONLY_SUPPLEMENT|<reply>|心声：|<vars/);assert.match(text,/editablePaths/);
+ await f.host.request('historyImport',JSON.stringify({historyText:'抵达门口',registry:{tables:[],types:[]},currentRows:[]}));text=JSON.stringify(sent.messages);assert.match(text,/HISTORY_ONLY_SUPPLEMENT/);assert.doesNotMatch(text,/ASSISTANT_ONLY_SUPPLEMENT/);
+ }finally{globalThis.fetch=prior;}
+});

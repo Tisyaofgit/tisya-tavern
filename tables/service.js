@@ -1,8 +1,9 @@
+import {createTableAssistant} from './assistant.js';
 import {validateNativeConfig} from './native-config.js';
 import {materialSlots} from './slots.js';
 import {styleRules,stylePrompt,scanStyle} from './style-rules.js';
 import {validateGeneratedTask} from '../config/contracts.js';
-import {tableSettings,copy,check,derive,registryIndex,validateRow} from './schema.js';
+import {tableSettings,copy,check,derive,registryIndex,validateRow,defaultRegistry} from './schema.js';
 import {createBookGateway,digest} from './books.js';
 import {sources,selectedMessages,memoryBlock,taskTags,project,parseJSONResponse,prepareCommit,retrieval,sourceTime,dueChecks} from './ledger.js';
 import {worldbookEntries,createWorldbookProjection} from './worldbook-context.js';
@@ -10,7 +11,7 @@ import {NARRATIVE_TAGS} from './prompts.js';
 const fields=['objects','facts','scene','state','relations','cognition','holdings','tasks','timers','clues','events'];
 const cardBasis=c=>{const card=c.characters?.[c.characterId],data=card?.data??card??{};return [card?.name,data.description,data.personality,data.scenario].filter(x=>typeof x==='string'&&x).join('\n\n');};
 const stampChat=c=>JSON.stringify(selectedMessages(c.chat).map(m=>[!!m.is_user,m.name??'',m.mes??'',m.swipe_id??0]));
-export function createTableService({store,getContext,request,books=createBookGateway(),vector=null,nativeConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
+export function createTableService({store,getContext,request,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
  let busy=false,controller=null,latest=null;const jobs=[],worldbook=createWorldbookProjection({getContext});
  const state=()=>({busy,jobs:copy(jobs),latest:copy(latest),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='')=>{jobs.push({task,status,detail,at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail});};
@@ -99,6 +100,12 @@ export function createTableService({store,getContext,request,books=createBookGat
  async function initialize(options={}){return exclusive(()=>initializeCaptured(capture(),options));}
  async function ensureInitialized(){const c=capture();if(!c.settings.enabled||c.settings.originBook&&c.settings.sessionBook)return;return exclusive(()=>initializeCaptured(c));}
  async function inspect(){const c=capture(),loaded=await load(c);return {settings:c.settings,registry:loaded.view.registry,rows:loaded.view.rows,anchors:loaded.view.anchors,archived:loaded.view.archived.size,sourceCount:loaded.chain.filter(s=>s.role==='assistant').length,origin:loaded.origin.data,session:loaded.session.data,preferenceDrafts:(loaded.session.data.preferenceDrafts??[]).filter(d=>loaded.chain.some(s=>s.key===d.source)),jobs:copy(jobs)};}
+ async function review(){
+  const c=capture(),chain=await sources(getContext().chat);c.guard();let view=null,origin=null,session=null,error='';
+  if(c.settings.originBook&&c.settings.sessionBook){try{origin=await books.read(c.settings.originBook);session=await books.read(c.settings.sessionBook);check(origin.data.kind==='origin'&&session.data.kind==='session'&&session.data.owner===c.key,'当前会话存档绑定不匹配');view=project(origin.data,session.data,chain.map(s=>s.key));}catch(e){error=e.message;}}
+  else error='尚未建立完整存档；开始补录时会自动创建／复用。';
+  c.guard();const last=chain.findLast(s=>s.role==='assistant');return {world:c.key,chatStamp:c.chat,settings:c.settings,registry:view?.registry??defaultRegistry(),rows:view?.rows??[],blueprint:session?.data.blueprint??null,storageReady:!!view,storageError:error,jobs:copy(jobs),history:chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:view?view.archived.has(s.key):null,latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}))};
+ }
  async function archive({includeLatest=false,range=null}={}){return exclusive(async signal=>{const c=capture();if(range)check(Number.isSafeInteger(range.from)&&Number.isSafeInteger(range.to)&&range.from>=1&&range.to>=range.from&&Number.isSafeInteger(range.limit)&&range.limit>=1&&range.limit<=100,'楼层范围或批量数无效');let loaded=await load(c);loaded=await archiveLoaded(c,loaded,signal,includeLatest,range);return {archived:loaded.view.archived.size,revision:loaded.session.data.revision};});}
  async function scan(){const c=capture(),loaded=await load(c),last=loaded.chain.findLast(s=>s.role==='assistant');return loaded.chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:loaded.view.archived.has(s.key),latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}));}
  async function importHistory(text,{label='手写历史',worldTime=null}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c);check(typeof text==='string'&&text.trim(),'请填写历史原文');const hash=await digest(text);check(!loaded.session.data.commits.some(x=>x.importSource?.hash===hash),'这份历史已导入，不能重复入账');const proposal=await invoke('historyImport',{registry:loaded.view.registry,currentRows:loaded.view.rows,historyText:text,label,worldTime},c,signal);return {format:'tisya.history-draft/1',text,label,worldTime,hash,proposal,world:c.key,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};});}
@@ -123,7 +130,8 @@ export function createTableService({store,getContext,request,books=createBookGat
  async function pinOrigins(pins){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(Array.isArray(pins)&&pins.every(p=>loaded.origin.data.bases.some(b=>b.id+'@'+b.rev===p)),'所选原点版本不存在');check(new Set(pins.map(p=>p.slice(0,p.lastIndexOf('@')))).size===pins.length,'同一档案只能选择一个版本');const next=copy(loaded.session.data);next.revision++;next.pins=copy(pins);project(loaded.origin.data,next,loaded.chain.map(s=>s.key));await books.write(loaded.session,next,c.guard);return pins;});}
  async function saveTemplates(nextRegistry,expectedRevision){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(loaded.origin.data.revision===expectedRevision,'模板版本已变化，请重新载入');compatibleRegistry(nextRegistry,loaded.origin.data.registry);for(const row of loaded.view.rows)validateRow(nextRegistry,row);
   const next=copy(loaded.origin.data);next.revision++;next.registry=copy(nextRegistry);next.schemaHistory??=[];next.schemaHistory.push({at:new Date().toISOString(),before:loaded.origin.data.registry,after:copy(nextRegistry),source:'用户编辑模板'});await books.write(loaded.origin,next,c.guard);status('模板','已保存','新字段和别名已登记');return next.revision;});}
- return {state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){return scanStyle(text,styleRules(tableSettings(store.read().world)));},edit,pinOrigins,books,clear(){controller?.abort();worldbook.clear();setPrompt('');latest=null;},preview:()=>copy(latest)};
+ const api={review,state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){return scanStyle(text,styleRules(tableSettings(store.read().world)));},edit,pinOrigins,books,clear(){controller?.abort();worldbook.clear();setPrompt('');latest=null;},preview:()=>copy(latest)};
+ api.assistant=createTableAssistant({store,getContext,review,run:exclusive,call:(input,signal)=>invoke('tableAssistant',input,capture(),signal),getChoices:getConfigurationChoices,interfaceConfig});return api;
 }
 
 function compatibleRegistry(nextRegistry,previous){registryIndex(nextRegistry);for(const kind of ['tables','types'])for(const old of previous[kind]){const next=nextRegistry[kind].find(x=>x.id===old.id);check(next&&next.name===old.name&&(old.aliases??[]).every(x=>next.aliases.includes(x)),'现有名称不可删除或改名；请添加别名');for(const [key,field]of Object.entries(old.fields))check(JSON.stringify(next.fields[key])===JSON.stringify(field),'已有字段不可改变类型／公式');check(next.parent===old.parent&&next.owner===old.owner,'不能改变模板继承或职责');for(const [key,field]of Object.entries(next.fields))if(!old.fields[key])check(!field.required,'已有模板只能增加可选字段');next.version=JSON.stringify({...next,version:old.version})===JSON.stringify(old)?old.version:old.version+1;}for(const t of nextRegistry.tables)check(t.owner==='archive'||t.id==='preferences'&&t.owner==='preferences','新增业务表由记忆归档填录，偏好使用共用确认表');return nextRegistry;}

@@ -15,6 +15,7 @@ export function readerErrorText(code){
     const safe=readerErrorCode({code});
     const block=/^TISYA_READER_(TASK|TITLE|NEXT)_(YAML_\w+|JSON_SYNTAX|FORMAT|OBJECT|MISSING)$/.exec(safe);
     if(block){const name={TASK:'本轮任务',TITLE:'标题',NEXT:'下轮交付'}[block[1]];return `${name}区块${block[2]==='YAML_UNAVAILABLE'?'缺少宿主 YAML 读取组件，请更新并完全重启扩展。':'格式未通过读取校验。'}原消息仍保留。（${safe}）`;}
+    if(safe==='TISYA_PIPES_TEXT')return `记录中有必填文本为空或写成了占位符。空的可选解锁行可以省略；已填写的解锁行需要完整三项。原消息仍保留。（${safe}）`;
     if(safe==='TISYA_PERMISSION_SHAPE')return `记录中的权限字段格式不符合协议，该记录暂不展示。原消息仍保留。（${safe}）`;
     if(['TISYA_MEMORY5_ACL_TARGET','TISYA_MEMORY5_ACL_UNRESOLVED','TISYA_MEMORY5_ACL_EXTRA_TARGET'].includes(safe))return `权限记录没有匹配到有效字段，相关字段暂不展示。原消息仍保留。（${safe}）`;
     if(safe==='TISYA_MEMORY5_STATUS_PERMISSION_MISSING')return `原生状态缺少有效的字段权限，相关字段暂不展示。原消息仍保留。（${safe}）`;

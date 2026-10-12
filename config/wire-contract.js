@@ -43,6 +43,7 @@ export function applyWireContract(entries){
   return '@HEART {\n'+voice+'\n'+directions.join('\n')+'\n'+heartRule(count,JSON.parse(moods[1]))+'\n}';
  });
  inner=inner.replaceAll('{mood或null}','{mood}');
+ inner=inner.replace('@OPTION omit absent unlock/person/material/pending/delivered/candidate rows;heart per @HEART','@OPTION omit absent unlock/person/material/pending/delivered/candidate rows;heart per @HEART。没有解锁则省略整行，不输出“解锁：~|~|~”。');
  // The closing writer must consume the finished story and opening comments;
  // an audit-only input cannot support a new, evidence-bound closing response.
  inner=inner.replace(/(\[CALL blk\.next\]\n@INPUT [^\n]+)/,'$1+@BLOCK.body+@BLOCK.task.heart');

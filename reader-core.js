@@ -559,7 +559,7 @@ function decode(name,source,{body,title}={}){
     else if(n==='资料'){if(x.length===1&&emptyItem(x[0]))continue;if(x.length!==2)bad('COLUMNS');const kind=text(x[0]);if(!['文风','人物'].includes(kind))bad('REF');b.refs[kind==='文风'?'style':'cast'].push(...optionalItem(x.slice(1)));}
     else if(n==='待定')b.pending.push(...optionalItem(x));
     else if(n==='人物'){const [status,actor,intent,evidence]=cells(x,'ss?s');b.characters.push({status,actor,intent,evidence});}
-    else if(n==='解锁')b.unlocks.push(cells(x,'sss'));
+    else if(n==='解锁'){if((x.length===1||x.length===3)&&x.every(emptyItem))continue;b.unlocks.push(cells(x,'sss'));}
     else if(n==='引用'){const [names]=cells(x,'l');(b.tableReferences??=[]).push(...names);}
     else if(n==='新发现'){const [kind,type,name,evidence]=cells(x,'ssss');if(!['对象','事实'].includes(kind))bad('DISCOVERY_KIND');(b.tableDiscoveries??=[]).push({kind,type,name,evidence});}
     else bad('TASK_FIELD');

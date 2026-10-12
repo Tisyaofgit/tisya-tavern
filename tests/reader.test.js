@@ -39,3 +39,13 @@ test('turn records preserve null, false, zero and deletion; all-secret records l
 test('disposing the reader disconnects action effects even when an old button reference survives',()=>{
     const f=ui(fixture());f.tab('actions');const old=f.root.querySelector('.tisya-reader-actions button');f.dispose();old.click();assert.deepEqual(f.choices,[]);assert.equal(f.root.childNodes.length,0);
 });
+
+test('empty optional unlock placeholders do not block other blocks or alter native variable payload',async()=>{
+ const {parseDisplayEnvelope}=await import('../reader-core.js');
+ const update='<UpdateVariable>\n<Analysis>Three minutes passed.</Analysis>\n<JSONPatch>[{"op":"replace","path":"/世界状态/当前时间","value":"2001-10-12 11:08"},{"op":"delta","path":"/玩家角色/身体/疲劳值","value":2}]</JSONPatch>\n</UpdateVariable>';
+ for(const row of ['解锁：~|~|~','解锁：[]|[]|[]','解锁：~']){
+  const original=fixture({taskExtra:row+'\n待定：~',status:'叙事状态：玩家|E|所在|门内|门外',memory:'关联：[玩家,守卫]|E\n权限：status|[/世界状态/当前时间]|A\n权限：vars|/世界状态/当前时间|A\n权限：vars|/玩家角色/身体/疲劳值|C\n事件：[玩家,守卫]|E|两人到了门口\n原文：段落1、2\n标签：[门口,出发]'}).replace('<vars/>','<vars>'+update+'</vars>');
+  const source=original,result=inspectMessage(source),envelope=parseDisplayEnvelope(source);assert.equal(result.body.error,undefined);assert.equal(result.journey.error,undefined);assert.equal(result.actions.error,undefined);assert.equal(result.details.error,undefined);assert.equal(result.journey.value.memories.length,1);assert.deepEqual(JSON.parse(envelope.blocks.vars).operations.map(x=>x.op),['replace','delta']);assert.equal(source,original);assert(source.includes(update));
+ }
+ assert.equal(inspectMessage(fixture({taskExtra:'解锁：实际秘密|~|~'})).actions.error,'TISYA_PIPES_TEXT');
+});

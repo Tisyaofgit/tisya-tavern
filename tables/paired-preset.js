@@ -8,7 +8,7 @@ export function pairedPreset({task,configuration}){
  const settings=configuration.world.modes[configuration.world.mode].narrative;
  const base=N.previewSettings(settings,{summary:false,directions:[]}).rest.entries;
  const entries=Object.fromEntries(IDENTITY_ENTRIES.map(k=>[k,base[k]]));
- entries.tisya_inner_chain=taskWorkflow(task,AUX_TASKS[task].instructions);
+ entries.tisya_inner_chain=taskWorkflow(task,AUX_TASKS[task].instructions+(configuration.world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''));
  return {entries,mode:mode.id};
 }
 export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
