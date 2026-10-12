@@ -1,3 +1,5 @@
+import {EMOTIONS} from '../emotion-catalog.js';
+const MOODS=EMOTIONS.map(r=>r.name);
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {MEMORY_EXAMPLE,MEMORY_DELIVERY,MEMORY_RULES} from '../config/memory-output.js';
 import {readJourney} from '../reply-records.js';
@@ -29,7 +31,7 @@ test('imported alpha20 preset emits the new minimal memory skeleton and final re
  const config=emptyConfig(),context={chatId:'memory-preset',characterId:0,characters:[{avatar:'demo',name:'示例',data:{}}],chat:[],chatMetadata:{},extensionSettings:{[KEY]:config},powerUserSettings:{},chatCompletionSettings:{chat_completion_source:'openai',model:'fixture'},getChatCompletionModel:()=> 'fixture',getPresetManager:()=>({getAllPresets:()=>['r20'],getSelectedPresetName:()=> 'r20',getCompletionPresetByName:()=>preset})};
  const w=defaultWorld();config.worlds[worldKey(context)]=w;w.modes.narrative.heartDirections=['输入评价','回应用户评价','剧情吐槽'];
  const macros=new Map();context.registerMacro=(n,f)=>macros.set(n,f);context.unregisterMacro=n=>macros.delete(n);context.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,name)=>{assert.ok(macros.has(name),name);return macros.get(name)();});
- const live=registerLivePreset(context,()=>source,()=>context,()=>[]),dispose=registerPresetProtocol(context,()=>source),store=createStore({getContext:()=>context,persist:async()=>true}),host=createHost({getContext:()=>context,getSource:()=>source,store,createParameters:async(s,m,t,messages)=>({generate_data:{messages,model:m}})});context.registerMacro('tisya_config_selected',()=>host.selectedText());
+ const live=registerLivePreset(context,()=>source,()=>context,()=>MOODS),dispose=registerPresetProtocol(context,()=>source,()=>{},()=>MOODS),store=createStore({getContext:()=>context,persist:async()=>true}),host=createHost({getContext:()=>context,getSource:()=>source,store,createParameters:async(s,m,t,messages)=>({generate_data:{messages,model:m}})});context.registerMacro('tisya_config_selected',()=>host.selectedText());
  for(const detail of ['full','compact','format']){
   w.modes.narrative.workflowDetail=detail;await host.before('normal');const payload={messages:[]};await host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');
   if(process.env.TISYA_REQUEST_EVIDENCE){fs.mkdirSync(process.env.TISYA_REQUEST_EVIDENCE,{recursive:true});fs.writeFileSync(process.env.TISYA_REQUEST_EVIDENCE+'/request-'+detail+'.json',JSON.stringify({evidence:'Production preset + production host; neutral fixture context, no provider API call',payload},null,2));}

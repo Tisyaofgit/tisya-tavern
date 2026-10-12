@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0-alpha.22",
+  "automatedTests": 244,
+  "automatedFailures": 0,
+  "historyFixture": {
+    "priorMessages": 70,
+    "recentPriorLimit": 50,
+    "injectedMemoryRecords": 10,
+    "recentMessagesWithCurrentInput": 51,
+    "originalMessagesUnchanged": true
+  },
+  "isolatedGeneration": {
+    "mode": "fresh agent; full assembled request read from fixed chunks before first draft",
+    "promptSha256": "9e986d0dcced19faef34c31acc07d426b11d1220e1f8b7a481d33fbccf0db909",
+    "replySha256": "aaebb6e908c5459633ce68d5b61ea22d98e29748818f96765a5cdc5c86702cc5",
+    "bodyCharacters": 2613,
+    "paragraphs": 23,
+    "hearts": 6,
+    "nullMoods": 0,
+    "exactDuplicates": 0,
+    "distinctClosingTopics": true,
+    "oldKeyAndKnockPatternRecalled": true,
+    "scope": "Prompt compliance sample, not user provider or native API delivery"
+  },
+  "browser": {
+    "widths": [
+      360,
+      736
+    ],
+    "sixHeartImagesLoaded": true,
+    "memoryCheckboxPersisted": true,
+    "injectionReportShown": true,
+    "pageErrors": 0
+  },
+  "limitations": [
+    "Android and user provider untested",
+    "Sample has a non-verbatim quoted paraphrase of a tea warning; not a full literary quality acceptance",
+    "Tables/genesis/vector architecture is a separate upcoming change; this release injects existing old memory blocks"
+  ]
+}

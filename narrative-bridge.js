@@ -1,4 +1,5 @@
 import {nativeMvuDeclaration,applyNativeMvuContract} from './config/native-mvu.js';
+import {requireMoodNames} from './heart-contract.js';
 import {modularSource,currentConfiguration,refineCompiled} from './config/compiler.js';
 import {NARRATIVE as N} from './settings-core.js';
 import {outputEnabled,heartSelection} from './preset.js';
@@ -23,7 +24,7 @@ export function readNarrative(context,scope='chat'){
 export function compileNarrative(context,source,moods=[]){
  const modular=modularSource(source),current=modular?currentConfiguration(context,()=>readNarrative(context).settings):null,config=modular?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:readNarrative(context),selection=modular&&current.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});
- if(c.prose&&c.outputEnabled&&c.heartActive){if(!Array.isArray(moods)||moods.some(n=>typeof n!=='string'||!n.trim())||new Set(moods).size!==moods.length)fail('心声表情目录无效。');const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=[null,...moods];c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,'mood must be one of '+JSON.stringify(values.mood));}
+ if(c.prose&&c.outputEnabled&&c.heartActive){const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=requireMoodNames(moods);c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,'mood must be one of '+JSON.stringify(values.mood)).replaceAll('{mood或null}','{mood}');}
  const result=modular?refineCompiled(c,current,source):c;if(modular&&c.prose&&c.outputEnabled&&nativeMvuDeclaration(context,current.world))applyNativeMvuContract(result.rest.entries);return result;
 }
 export function registerLivePreset(context,getSource,getContext,getMoods,onError=()=>{}){

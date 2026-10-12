@@ -1,4 +1,5 @@
 import {applyMemoryOutputContract} from './memory-output.js';
+import {heartRule} from '../heart-contract.js';
 // The compact permission spelling is user-facing wire syntax. Scoped policies
 // remain supported for explicit audience/field overrides, never required merely
 // to make a compact record parse. Keep the frozen upstream source unchanged.
@@ -39,8 +40,12 @@ export function applyWireContract(entries){
   if(!count)return '@HEART {\n心声关闭。\n}';
   const lines=body.split('\n'),voice=lines[0].replace('缇斯亚的场外表达沿用 @self_voice，内容服从 @self_known。',''),directions=lines.filter(x=>/^(输入评价|回应用户评价|剧情吐槽)：/.test(x));
   const moods=body.match(/mood must be one of (\[[^\n]+?\])/);if(!moods)throw Error('心声表情来源不匹配');
-  return '@HEART {\n'+voice+'\n'+directions.join('\n')+'\n首尾各按所选方向写'+count+'条心声：上评输入，下评结果，内容不同，不重复或同义复述。每条1—80字，只评实际且可公开的内容；mood选'+moods[1]+'。\n}';
+  return '@HEART {\n'+voice+'\n'+directions.join('\n')+'\n'+heartRule(count,JSON.parse(moods[1]))+'\n}';
  });
+ inner=inner.replaceAll('{mood或null}','{mood}');
+ // The closing writer must consume the finished story and opening comments;
+ // an audit-only input cannot support a new, evidence-bound closing response.
+ inner=inner.replace(/(\[CALL blk\.next\]\n@INPUT [^\n]+)/,'$1+@BLOCK.body+@BLOCK.task.heart');
  for(const part of ['task','next'])inner=inner.replace(new RegExp('(<'+part+' format="pipes"[^>]*>)([\\s\\S]*?)(</'+part+'>)'),(_,a,b,z)=>a+b.replace(/^(心声：有内容\|[^|]+\|[^|]+\|).*$/gm,'$1{'+(part==='task'?'开篇短评':'收篇短评')+'}')+z);
  inner=inner.replace('@EXTENSION Only supplied triggered components may be displayed;display grants no state write', '@BRIEF 任务摘要只点明本轮目标；七项审计各给一句实际核验结论及必要字段/段号，不复述剧情、输入清单或自夸；已交付只写尚未表达的新增结果，无则省略。辅助字段删去同义叠加、空泛修辞和无依据的极端评价。\n@EXTENSION Only supplied triggered components may be displayed;display grants no state write');
  entries.tisya_inner_chain=applyMemoryOutputContract(inner);

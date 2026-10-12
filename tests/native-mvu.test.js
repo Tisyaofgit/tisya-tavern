@@ -1,3 +1,5 @@
+import {EMOTIONS} from '../emotion-catalog.js';
+const MOODS=EMOTIONS.map(r=>r.name);
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {nativeMvuDeclaration,prepareNativeMvu} from '../config/native-mvu.js';
 import {emptyConfig,defaultWorld,worldKey,KEY,createStore} from '../config/core.js';
@@ -33,14 +35,14 @@ test('native MVU uses selected branch pre-swipe state and current user snapshot 
  assert.equal((await prepareNativeMvu(f.c,f.w,'normal',runtime)).messageIndex,2);
 });
 test('all compiled detail levels retain native JSONPatch format without disabled MVU wording',()=>{
- const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source).rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/MVU is disabled|MVU disabled→/);assert.match(text,/<UpdateVariable><JSONPatch>/);assert.match(text,/结算由原生脚本负责/);}
+ const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/MVU is disabled|MVU disabled→/);assert.match(text,/<UpdateVariable><JSONPatch>/);assert.match(text,/结算由原生脚本负责/);}
 });
 test('actual host request supplies native state and rules, and rejects state drift before send',async()=>{
  const f=setup(),old=globalThis.Mvu;globalThis.Mvu=f.runtime;
  try{
   const macros=new Map();f.c.registerMacro=(k,v)=>macros.set(k,v);f.c.unregisterMacro=k=>macros.delete(k);f.c.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,k)=>macros.get(k)());
   const store=createStore({getContext:()=>f.c,persist:async()=>true});const host=createHost({getContext:()=>f.c,getSource:()=>f.source,store,createParameters:async(_,model,type,messages)=>({generate_data:{model,messages}})});
-  registerLivePreset(f.c,()=>f.source,()=>f.c,()=>[]);registerPresetProtocol(f.c,()=>f.source);f.c.registerMacro('tisya_config_selected',()=>host.selectedText());
+  registerLivePreset(f.c,()=>f.source,()=>f.c,()=>MOODS);registerPresetProtocol(f.c,()=>f.source,()=>{},()=>MOODS);f.c.registerMacro('tisya_config_selected',()=>host.selectedText());
   await host.before('normal');const payload={messages:[]};await host.payloadReady(payload);const text=JSON.stringify(payload);
   assert.match(text,/status_current_variables/);assert.match(text,/只按实际事件修改计数/);assert.doesNotMatch(text,/MVU is disabled|UNRELATED_BOOK/);
   await host.before('normal');f.setState({计数:1});const drift={messages:[]};await assert.rejects(host.payloadReady(drift),/MVU 来源或变量已变化/);assert.throws(()=>JSON.stringify(drift));

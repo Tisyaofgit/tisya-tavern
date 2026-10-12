@@ -1,3 +1,5 @@
+import {EMOTIONS} from '../emotion-catalog.js';
+const MOODS=EMOTIONS.map(r=>r.name);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -26,11 +28,11 @@ test('native paired preset is complete, traceable and has no unexpanded Tavo cod
 });
 test('native output switch follows both entry and order state without rewriting the preset',()=>{
  const p=clone(),before=JSON.stringify(p),get=()=>({prompts:p.prompts,order:p.prompt_order[0].order}),macros=new Map(),errors=[];
- const release=registerPresetProtocol({registerMacro:(n,f)=>macros.set(n,f),unregisterMacro:n=>macros.delete(n)},get,e=>errors.push(e));
+ const release=registerPresetProtocol({registerMacro:(n,f)=>macros.set(n,f),unregisterMacro:n=>macros.delete(n)},get,e=>errors.push(e),()=>MOODS);
  const render=()=>p.prompts.map(e=>e.content.replace(/\{\{(tisya_output_kind|tisya_delivery_warning|tisya_heart_directions|tisya_heart_rows|tisya_heart_moods|tisya_heart_protocol)\}\}/g,(_,id)=>macros.get(id)())).join('\n');
- assert.match(render(),/"kind":"structured"/);assert.ok(render().includes(DELIVERY_WARNING));assert.ok(render().includes(HEART_DIRECTIONS));assert.ok(render().includes(HEART_ROWS));assert.equal(JSON.stringify(p),before);
+ assert.match(render(),/"kind":"structured"/);assert.ok(render().includes(DELIVERY_WARNING));assert.ok(render().includes(HEART_DIRECTIONS));assert.ok(render().includes(HEART_ROWS.replaceAll('{mood或null}','{mood}')));assert.equal(JSON.stringify(p),before);
  p.prompt_order[0].order.find(e=>e.identifier==='tisya_output').enabled=false;
- assert.match(render(),/"kind":"plain"/);assert.ok(!render().includes(DELIVERY_WARNING));assert.ok(!render().includes(HEART_DIRECTIONS));assert.ok(!render().includes(HEART_ROWS));
+ assert.match(render(),/"kind":"plain"/);assert.ok(!render().includes(DELIVERY_WARNING));assert.ok(!render().includes(HEART_DIRECTIONS));assert.ok(!render().includes(HEART_ROWS.replaceAll('{mood或null}','{mood}')));
  p.prompt_order[0].order.find(e=>e.identifier==='tisya_output').enabled=true;p.prompts.find(e=>e.identifier==='tisya_output').enabled=false;
  assert.equal(macros.get('tisya_output_kind')(),'plain');
  p.prompts=p.prompts.filter(e=>e.identifier!=='tisya_output');assert.equal(macros.get('tisya_delivery_warning')(),'');
@@ -55,7 +57,7 @@ test('all eight native heart selections affect both positions; empty selection s
   HEART_CONTROLS.forEach((c,i)=>source.order.find(p=>p.identifier===c.id).enabled=!!(mask&(1<<i)));
   const untouched=JSON.stringify(source),beforeCalls=calls,protocol=macros.get('tisya_heart_protocol')(),rows=macros.get('tisya_heart_rows')();
   for(let i=0;i<3;i++){assert.equal(protocol.includes(HEART_CONTROLS[i].name+'：'),!!(mask&(1<<i)));assert.equal(rows.includes('|'+HEART_CONTROLS[i].name+'|'),!!(mask&(1<<i)));}
-  if(mask===0){assert.match(protocol,/Heart comments are disabled/);assert.equal(rows,'心声：关闭');assert.equal(calls,beforeCalls);}else{assert.match(protocol,/好奇/);assert.equal(calls,beforeCalls+1);}assert.equal(JSON.stringify(source),untouched);
+  if(mask===0){assert.match(protocol,/心声关闭/);assert.equal(rows,'心声：关闭');assert.equal(calls,beforeCalls);}else{assert.match(protocol,/好奇/);assert.equal(calls,beforeCalls+1);}assert.equal(JSON.stringify(source),untouched);
  }
  // Native entry-level disable also overrides an enabled order slot.
  source.prompts.find(p=>p.identifier===HEART_CONTROLS[0].id).enabled=false;
