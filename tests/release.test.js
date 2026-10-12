@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {VERSION} from '../layout.js';
+test('installed, displayed and stylesheet versions agree',()=>{const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8'),version=JSON.parse(read('package.json')).version;assert.equal(JSON.parse(read('manifest.json')).version,version);assert.equal(VERSION,version);assert.equal(read('shell.css').match(/--tisya-style-version:"([^"]+)"/)?.[1],version);});

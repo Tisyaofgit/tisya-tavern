@@ -8,13 +8,13 @@ export function worldbookEntries({rows,registry,scope,tags=[],forcedIds=[],tempo
  for(const row of rows){
   const def=registry.tables.find(t=>t.id===row.table);check(def,'缺少表定义：'+row.table);
   const refs=references(row,registry);
-  const keys=[...names(row),...(row.values.标签??[]),...refs.flatMap(id=>names(byId.get(id)))].filter(x=>typeof x==='string'&&x.trim());
+  const keys=[...names(row),...(row.values.标签??[]),...(row.table==='events'?[]:refs.flatMap(id=>names(byId.get(id))))].filter(x=>typeof x==='string'&&x.trim());
   const tagged=keys.some(key=>tags.some(tag=>normalized(tag).includes(normalized(key))));
   const reason=tagged?'上回合引用':forced.has(row.id)?'检索命中':dueIds.has(row.id)?'到期检查':['scene','preferences'].includes(row.table)?'当前场景／偏好':'关键词';
   const constant=reason!=='关键词';
   // Native syntax can interpret /name/ as a regular expression; escape literal names.
   const safeKeys=keys.map(key=>key.startsWith('/')?'/'+key.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')+'/i':key);
-  entry(row.id,row.values.名称,'表单资料；access 分别限定读者与人物知情：\n'+JSON.stringify({id:row.id,table:row.table,values:row.values,access:row.access}),safeKeys,constant,reason);
+  entry(row.id,row.values.名称,'表单资料；access 分别限定读者与人物知情；失效或待确认的状态值不是当前确证：\n'+JSON.stringify({id:row.id,table:row.table,values:row.values,access:row.access}),safeKeys,constant,reason);
  }
  if(temporary?.text)entry('latest-temporary','最新回复暂存','最新回复接续资料（尚未确认归档）：\n'+temporary.text,[],true,'最新回复暂存');
  return entries;

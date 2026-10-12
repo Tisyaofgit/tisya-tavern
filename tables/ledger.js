@@ -67,8 +67,8 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
 }
 export function retrieval(view,{tags=[],query='',topK=8}={}){
  const byId=new Map(view.rows.map(r=>[r.id,r])),mandatory=new Set();
- for(const row of view.rows){const names=[row.values.名称,...(row.values.别名??[])];if(row.table!=='preferences'&&names.some(n=>tags.some(tag=>tag.includes(n))))mandatory.add(row.id);if(['scene','state','tasks','timers','clues','preferences'].includes(row.table))mandatory.add(row.id);}
- for(const row of view.rows)if(references(row,view.registry).some(id=>mandatory.has(id)))mandatory.add(row.id);
+ for(const row of view.rows){const names=[row.values.名称,...(row.values.别名??[])];if(row.table!=='preferences'&&names.some(n=>tags.some(tag=>tag.includes(n))))mandatory.add(row.id);if(['scene','state','tasks','timers','clues','preferences'].includes(row.table)&&!(row.table==='state'&&row.values.有效性==='失效'))mandatory.add(row.id);}
+ for(const row of view.rows)if(row.table!=='events'&&references(row,view.registry).some(id=>mandatory.has(id)))mandatory.add(row.id);
  const queue=[...mandatory];for(let i=0;i<queue.length;i++)for(const ref of references(byId.get(queue[i]),view.registry))if(byId.has(ref)&&!mandatory.has(ref)){mandatory.add(ref);queue.push(ref);}
  const segments=query.toLocaleLowerCase().match(/[\p{L}\p{N}]{2,}/gu)??[];const words=[...new Set(segments.flatMap(w=>/[\p{Script=Han}]/u.test(w)?Array.from({length:w.length-1},(_,i)=>w.slice(i,i+2)):[w]))];
  const scored=view.rows.filter(r=>!mandatory.has(r.id)&&r.table!=='preferences').map(row=>{const content=JSON.stringify(row.values).toLocaleLowerCase();return {row,score:words.reduce((s,w)=>s+(content.includes(w)?1:0),0)};}).filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
@@ -81,12 +81,21 @@ export function sourceTime(text){
  const match=title.match(/^\s*场景：[^\n]*?\|\s*"?(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:\d{2})?)"?\s*\|/m);
  return match?.[1]??null;
 }
+// Compare explicit Gregorian story dates only; never borrow the host date/timezone.
+function calendarTime(text){
+ if(typeof text!=='string')return null;
+ const m=text.trim().match(/^(\d{4})(?:-(\d{1,2})-(\d{1,2})|年(\d{1,2})月(\d{1,2})日)[ T]?(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+ if(!m)return null;const [year,month,day,hour,minute,second]=[m[1],m[2]??m[4],m[3]??m[5],m[6],m[7],m[8]??0].map(Number);
+ if(month<1||month>12||day<1||day>31||hour>23||minute>59||second>59)return null;
+ const time=Date.UTC(year,month-1,day,hour,minute,second),date=new Date(time);
+ return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day?time:null;
+}
 export function dueChecks(view,chain){
  const scenes=view.rows.filter(r=>r.table==='scene'),times=scenes.map(r=>r.values.当前时间).filter(t=>typeof t==='string'),turns=chain.filter(s=>s.role==='assistant').length;
  return view.rows.filter(r=>r.table==='timers'&&!['完成','取消'].includes(r.values.状态)).map(row=>{
   const value=row.values;let due=null,basis='缺少可比较的时间依据';
   if(value.时间基准==='轮'&&Number.isSafeInteger(value.到期轮次)){due=turns>=value.到期轮次;basis='已保留 AI 楼层数 '+turns;}
-  else if(value.到期时间&&times.length===1&&/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value.到期时间)&&/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(times[0])){due=times[0]>=value.到期时间;basis='唯一当前场景时间 '+times[0];}
+  else if(times.length===1){const now=calendarTime(times[0]),end=calendarTime(value.到期时间);if(now!==null&&end!==null){due=now>=end;basis='唯一当前场景时间 '+times[0];}}
   return {id:row.id,name:value.名称,due,basis,condition:value.触发条件??null,note:'到期只供检查触发条件，不代表事件已发生或任务完成'};
  });
 }

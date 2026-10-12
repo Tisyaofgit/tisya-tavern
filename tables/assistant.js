@@ -53,6 +53,16 @@ export function createTableAssistant({store,getContext,review,run,call,getChoice
   return {format:'tisya.assistant-draft/1',...copy(response),diff:plan.diff,world:captured.key,revision:captured.revision,interfaceStamp:captured.interface?.stamp,chatStamp:state.chatStamp,question};
  });}
  function guard(draft){const s=snapshot();check(!interfaceConfig||draft.interfaceStamp===s.interface.stamp,'界面配置已变化，请重新让助手核对');check(draft.format==='tisya.assistant-draft/1'&&draft.world===s.key&&draft.revision===s.revision&&draft.chatStamp===JSON.stringify(getContext().chat.filter(m=>!m.is_system&&m.role!=='tool').map(m=>[!!m.is_user,m.name??'',m.mes??'',m.swipe_id??0])),'会话或配置已变化，请重新让助手核对');return s;}
- async function apply(draft){return run(async()=>{const s=guard(draft);check(draft.changes.length,'没有待应用的配置修改');const plan=prepared(s,draft.changes,choices());if(plan.interfaceValue!==undefined)await interfaceConfig.save({data:plan.data,revision:s.revision,key:s.key,value:plan.interfaceValue,expected:s.interface.stamp});else await store.save(plan.data,s.revision,s.key);return plan.diff.length;});}
- return {ask,apply,guard,catalog};
+ async function applyChanges(draft,continueActions){return run(async()=>{
+  const s=guard(draft);check(draft.changes.length,'没有待应用的配置修改');const plan=prepared(s,draft.changes,choices());
+  if(plan.interfaceValue!==undefined)await interfaceConfig.save({data:plan.data,revision:s.revision,key:s.key,value:plan.interfaceValue,expected:s.interface.stamp});else await store.save(plan.data,s.revision,s.key);
+  if(!continueActions)return plan.diff.length;
+  const after=snapshot(),expected={...plan.data,revision:s.data.revision+1};
+  check(after.key===s.key&&JSON.stringify(after.data)===JSON.stringify(expected),'配置已保存，但后续配置发生变化，请重新让助手核对');
+  if(after.interface)check(after.interface.stamp===JSON.stringify(plan.interfaceValue??s.interface.source),'界面配置已保存，但后续配置发生变化，请重新让助手核对');
+  const next={...copy(draft),changes:[],diff:[],revision:after.revision,interfaceStamp:after.interface?.stamp};guard(next);
+  return {count:plan.diff.length,next};
+ });}
+ const apply=draft=>applyChanges(draft,false),applyAndContinue=draft=>applyChanges(draft,true);
+ return {ask,apply,applyAndContinue,guard,catalog};
 }

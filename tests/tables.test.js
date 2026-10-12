@@ -217,3 +217,35 @@ test('valid independent archive items persist while malformed items leave floor 
 test('archive object is reusable in origin while source removal removes current overlay',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('岚在北门。'),user('继续'),ai('最新')];f.responder(()=>({changes:[op('new:lan','objects',{名称:'岚',类型:'character'},'岚'),op('new:where','state',{名称:'岚位置',对象:'new:lan',字段:'当前位置',值:'北门'},'岚在北门。')]}));await f.service.archive({range:{from:1,to:1,limit:1}});let data=await f.service.inspect();assert.equal(data.origin.bases.length,1);assert.equal(data.rows.length,2);f.c.chat[0].mes='此段被重投替换';data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(data.origin.bases.length,1);
 });
+
+test('assistant apply preserves guarded follow-up actions and UI backfill reaches actual archive',async()=>{
+ const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js'),w=new Window(),f=fixture();
+ f.c.chat=[ai('城门开放。'),user('继续'),ai('最新保留。')];let archiveCalls=0;
+ f.responder(async(task,input)=>task==='tableAssistant'?{answer:'启用后补录，并保留创世需求。',changes:[{path:'/world/tables/enabled',value:true,reason:'用户要求'}],backfill:{from:1,to:1,limit:10},genesisGoal:'建立航线模板'}:(archiveCalls++,{changes:[op('new:event','events',{名称:'城门开放',经过:'城门开放。'},'城门开放。')]}));
+ const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;
+ const click=async label=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===label);assert(b,label);await b.onclick();};
+ await click('缇斯亚助手');const q=panel.root.querySelector('textarea');q.value='启用并补录';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.equal(f.saved.size,0);
+ await click('应用全部更改');assert.match(panel.root.textContent,/按建议开始楼层补录/);assert.match(panel.root.textContent,/带着需求交给创世/);
+ await click('按建议开始楼层补录');assert.equal(archiveCalls,1);assert.equal((await f.service.scan()).filter(r=>r.archived).length,1);assert.match(panel.root.textContent,/缇斯亚保留的创世需求/);panel.dispose();await w.happyDOM.abort();
+});
+
+test('assistant continuation refreshes only its own save and still rejects chat changes',async()=>{
+ const f=fixture();f.responder(async()=>({answer:'修改',changes:[{path:'/world/context/history',value:15,reason:'用户要求'}],backfill:{from:1,to:1,limit:1},genesisGoal:''}));
+ const draft=await f.service.assistant.ask('15条'),result=await f.service.assistant.applyAndContinue(draft);assert.equal(result.count,1);assert.deepEqual(result.next.changes,[]);f.service.assistant.guard(result.next);assert.throws(()=>f.service.assistant.guard(draft),/已变化/);f.c.chat.push(user('新消息'));assert.throws(()=>f.service.assistant.guard(result.next),/已变化/);
+});
+
+test('due checks compare explicit Chinese and ISO story dates but retain unknown eras and impossible dates',async()=>{
+ const {dueChecks}=await import('../tables/ledger.js');const view={rows:[{id:'s',table:'scene',values:{当前时间:'2026年4月2日11:30'}},{id:'t',table:'timers',values:{名称:'期限',到期时间:'2026-04-01 17:00',状态:'等待'}}]};
+ assert.equal(dueChecks(view,[])[0].due,true);view.rows[1].values.到期时间='2026年4月2日12:00';assert.equal(dueChecks(view,[])[0].due,false);view.rows[1].values.到期时间='2026年2月30日12:00';assert.equal(dueChecks(view,[])[0].due,null);view.rows[0].values.当前时间='霜月二日午时';assert.equal(dueChecks(view,[])[0].due,null);assert.equal(view.rows[1].values.状态,'等待');
+});
+
+test('participant tags do not force every past event into narrative context',async()=>{
+ const {worldbookEntries}=await import('../tables/worldbook-context.js');const registry=defaultRegistry(),person={id:'person',table:'objects',values:{名称:'叶舟',类型:'character'},access},events=Array.from({length:12},(_,i)=>({id:'event-'+i,table:'events',values:{名称:'旧事'+i,经过:i===8?'铜铃归還':'别的往事',参与者:['person']},access})),view={registry,rows:[person,...events]};
+ const found=retrieval(view,{tags:['引用：叶舟'],query:'铜铃',topK:1});assert.deepEqual(found.mandatory.map(r=>r.id),['person']);assert.deepEqual(found.optional.map(r=>r.id),['event-8']);
+ const entries=worldbookEntries({rows:view.rows,registry,scope:'x',tags:['叶舟'],forcedIds:found.optional.map(r=>r.id)});assert.equal(entries.filter(e=>e.constant).length,2);assert(entries.filter(e=>e.tisyaTable.id.startsWith('event')).every(e=>!e.key.includes('叶舟')));
+});
+
+test('state validity migrates additively and expired values stay available without mandatory current injection',async()=>{
+ const {upgradeRegistry}=await import('../tables/schema.js');const reg=defaultRegistry();delete reg.tables.find(t=>t.id==='state').fields.有效性;const upgraded=upgradeRegistry(reg);assert.deepEqual(upgraded.tables.find(t=>t.id==='state').fields.有效性.values,['有效','失效','待确认']);
+ const view={registry:upgraded,rows:[{id:'p',table:'objects',values:{名称:'周宁',类型:'character'},access},{id:'old',table:'state',values:{名称:'旧位置',对象:'p',字段:'位置',值:'码头',有效性:'失效'},access}]};validateRow(upgraded,view.rows[1]);assert.equal(retrieval(view,{topK:0}).mandatory.length,0);assert.equal(view.rows[1].values.值,'码头');
+});
