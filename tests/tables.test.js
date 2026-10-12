@@ -9,12 +9,12 @@ import {createNativeVectors} from '../tables/vectors.js';
 const access={readers:['读者'],knowers:[]};
 const blank=()=>({registry:defaultRegistry(),rows:[],last:null});
 const op=(id,table,values,evidence='源',expected=0)=>({id,table,expected,values,access,evidence});
-function fixture(){
+function fixture(nativeConfig=null){
  const d=emptyConfig(),c={chatId:'one',characterId:0,characters:[{avatar:'a.png',name:'甲'}],chat:[{is_user:false,mes:'开场白'}],extensionSettings:{[KEY]:d},getRequestHeaders:()=>({csrf:'test'})};d.worlds[worldKey(c)]=defaultWorld();d.worlds[worldKey(c)].tables={injection:'direct'};
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async()=>structuredClone(binding),rebindCharWorldbooks:async(_,b)=>{Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
- const service=createTableService({store,getContext:()=>c,books,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return responder(task,JSON.parse(text));},setPrompt:(text,filter)=>prompts.push({text,filter})});
+ const service=createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return responder(task,JSON.parse(text));},setPrompt:(text,filter)=>prompts.push({text,filter})});
  const set=async fields=>{const snap=store.read();snap.data.worlds[snap.key].tables={...snap.world.tables,...fields};await store.save(snap.data,snap.revision,snap.key);};
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
@@ -153,4 +153,18 @@ test('explicit style rules remain available without enabled tables, books or aux
 
 test('new custom table names participate in previous-turn tags and keyword retrieval',()=>{
  const view=blank();view.registry.tables.push({id:'weather',name:'气象',aliases:[],version:1,owner:'archive',fields:{名称:{type:'text',required:true},天气:{type:'text'}}});view.rows=[{id:'sky',table:'weather',values:{名称:'天空',天气:'晴朗'},access}];assert.equal(retrieval(view,{tags:['引用：天空']}).mandatory[0].id,'sky');assert.equal(retrieval(view,{query:'天空'}).optional[0].id,'sky');
+});
+
+test('first table use auto-creates card origin and independent session; repeated initialize is idempotent',async()=>{
+ const f=fixture();await f.service.ensureInitialized();assert.equal(f.saved.size,0);await f.set({enabled:true,plot:false,archive:false});await f.service.ensureInitialized();assert.equal(f.saved.size,2);const before=f.store.read().revision,refs=f.store.read().world.tables;await f.service.initialize();await f.service.prepare();assert.equal(f.saved.size,2);assert.equal(f.store.read().revision,before);assert.equal(f.binding.primary,'角色原书');assert(f.binding.additional.includes('数据库资料'));assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
+ // Lost settings can recover deterministic books without duplicating stored data.
+ await f.set({originBook:'',sessionBook:''});await f.service.ensureInitialized();assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
+});
+test('manual forms/history work before memory setup without enabling automatic table processing',async()=>{
+ const f=fixture();const data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.enabled,false);assert.equal(await f.service.prepare(),null);
+});
+
+test('Genesis native creation runs after confirmed tables, saves explicit scope targets and supports retry without refilling',async()=>{
+ let called=0,fail=true,received;const nativeConfig={resolveTargets:spec=>({...spec,worldbooks:spec.worldbooks.map(x=>({...x,target:'原预设'}))}),apply:async spec=>{called++;received=spec;if(fail)throw Error('宿主暂不可用');return [{kind:'世界书',name:'规则',status:'已创建'}];}};const f=fixture(nativeConfig);f.responder(async()=>({blueprint:{name:'测试',goal:'创建规则',decisions:['创建规则'],unresolved:[]},checklist:[],artifacts:{registry:defaultRegistry(),base:{templates:[],changes:[]},initial:{templates:[],changes:[]},native:{presets:[],regexes:[],worldbooks:[{name:'规则',scope:'preset',entries:[]}]}},workflow:{id:'setup',name:'初始化',version:1,steps:[]}}));
+ const draft=await f.service.genesis('创建规则');assert.equal(called,0);await assert.rejects(f.service.saveGenesis(draft),e=>e.blueprintSaved&&/宿主/.test(e.message));const saved=await f.service.inspect(),revision=saved.session.revision;assert.equal(saved.session.blueprint.native.worldbooks[0].target,'原预设');fail=false;await f.service.applyNative();assert.equal(called,2);assert.equal(received.worldbooks[0].target,'原预设');assert.equal((await f.service.inspect()).session.revision,revision);
 });

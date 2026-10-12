@@ -87,3 +87,14 @@ Agent、数据库、检索、语音、绘图、嵌入、重排执行器需另外
 ## 上下文来源与接口
 
 `context.owner` 为 native（数据库／原生）或 tisya（手选资料），新配置及缺省旧配置按 native 处理，按聊天保存。原生模式不切换独立主聊天 API／预设，不封存 payload，允许数据库后续注入；历史范围在前述输入入口独立处理。手选资料保留资源选择与独立路由。任务／执行器登记接口和手动辅助调用保留，表单记忆重构仍未接入。
+
+
+## alpha27 辅助输出与原生配置
+
+六类配套辅助预设只有身份、任务核对要求、实际资料槽与 JSON 契约，不编译正文交付协议。`compileTaskMode` 标记 taskMode、关闭 prose，手动模式与自动 API 一致；叙事模式保留完整交付。旧 extra/tisya_result 解码仅用于历史兼容。
+
+`Tisya.tables.nativeConfiguration.apply(spec)` 负责经确认的原生配置补建；`resolveTargets(spec)` 在蓝图保存时固定省略的当前角色／预设目标。`artifacts.native` 与该 spec 共用校验及可视化编辑器。字段见 `tables/native-config.js`；不接受任意脚本、凭据、端点或对象写入路径。
+
+新预设创建后不自动切换。世界书 global/character 追加原生绑定，preset 关联存入指定预设 extensions.tisya.worldbooks，由 WORLDINFO_ENTRIES_LOADED 读取并去重，继续使用宿主预算和蓝绿灯扫描。显式关闭已有正则作用域不被开启。只在创建前为空的作用域中自动开启新规则，其余保留并报告原生开关状态。
+
+表单 `ensureInitialized` 在主请求快照前执行；关闭表单不调用它的写入分支。首次手动使用表单或补录也会初始化存档。世界书命名稳定并读回验证，重试不会产生新副本。

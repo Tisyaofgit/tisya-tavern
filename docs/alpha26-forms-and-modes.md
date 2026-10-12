@@ -1,5 +1,7 @@
 # alpha26 · 可视化表单、配套模式与资料槽
 
+版本说明：alpha27 已将辅助任务改为直接 JSON，不再沿用本文的十块回复包装；当前用法见 [alpha27](alpha27-auxiliary-and-native.md)。
+
 本版修复设置页给 `textarea.type` 赋值导致中断的问题。输入控件只对 `input` 设置 type，文本区保持自身类型。原有数据不会因升级被重建。
 
 ## 使用入口
