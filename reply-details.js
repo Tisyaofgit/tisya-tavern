@@ -1,5 +1,6 @@
 import {parseDisplayEnvelope,strictJSON,validateMemoryProjection,visiblePending} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
+import {readReplyBlock} from './reply-formats.js';
 
 const fail=()=>{throw Object.assign(Error('TISYA_READER_DETAILS_INVALID'),{code:'TISYA_READER_DETAILS_INVALID'});};
 function heart(value){
@@ -10,7 +11,7 @@ function heart(value){
 // Public summaries retain the original task.plan field. Internal input, stop,
 // references, unlocks and next planning never become presentation data.
 export function readReplyDetails(source){
- const envelope=parseDisplayEnvelope(source),task=strictJSON(envelope.blocks.task),next=strictJSON(envelope.blocks.next);
+ const envelope=parseDisplayEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
  if(!Array.isArray(task.audit))fail();
  const audit=task.audit.map(row=>{if(!row||['kind','status','evidence'].some(k=>typeof row[k]!=='string'||!row[k].trim()))fail();return {kind:row.kind,status:row.status,evidence:row.evidence};});
  let rounds;try{

@@ -7,7 +7,8 @@ import {replyControlsCSS} from './reply-details.js';
 import {appearanceValues} from './appearance-settings.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {inspectMessage,readerErrorText,readerErrorCode} from './reader.js';
-import {parseDisplayEnvelope,strictJSON} from './reader-core.js';
+import {parseDisplayEnvelope} from './reader-core.js';
+import {readReplyBlock} from './reply-formats.js';
 import {waterStyle} from './visual-theme.js';
 import {visualAssets,motionManifest,journeyArt,journeyIcons} from './visual-assets.js';
 import {createWaterMotion,mountPendantRack,CHAT_DEFAULTS} from './visual-core.js';
@@ -40,7 +41,7 @@ export function mountMessageVisual(document,container,{source,name,formatBody,fo
  let taskRound=null,nextRound=null;
  if(data.details?.value)taskRound=mountRoundPanel(document,task,data.details.value,'task');else{for(const n of task.querySelectorAll('.fold-head,#task-heart,#task-content'))n.remove();}
  const taskHeart=taskRound?.heart;
- let envelope=null;try{envelope=data.structured?parseDisplayEnvelope(source):null;const title=envelope&&strictJSON(envelope.blocks.title);if(typeof title?.text==='string'&&title.text.trim())heading.textContent=title.text;const meta=[title?.time,title?.place,title?.world].filter(x=>typeof x==='string'&&x.trim());if(meta.length)subtitle.textContent=meta.join(' · ');}catch{}
+ let envelope=null;try{envelope=data.structured?parseDisplayEnvelope(source):null;const title=envelope&&readReplyBlock(envelope,'title');if(typeof title?.text==='string'&&title.text.trim())heading.textContent=title.text;const meta=[title?.time,title?.place,title?.world].filter(x=>typeof x==='string'&&x.trim());if(meta.length)subtitle.textContent=meta.join(' · ');}catch(error){subtitle.textContent=readerErrorText(readerErrorCode(error));}
  const story=make('article',null,'story-region'),body=make('div',null,'story');story.append(make('div',null,'wave-rule'),body);root.append(story);let bodyStamp=null;
  function renderBody(){const nativeHTML=!data.body.error?formatNativeBody?.(data.body.paragraphs?.value?.length?data.body.paragraphs.value.map(p=>p.raw).join('\n\n'):data.body.value):null;const options=getAppearance('body'),key=JSON.stringify([options,nativeHTML]);if(key===bodyStamp)return;const folds=[...body.querySelectorAll('details')].map(n=>n.open);body.replaceChildren();if(data.body.error)body.append(make('p','正文尚未完整就绪，可在消息菜单中查看或编辑原消息。','loading-note'));else if(nativeHTML!==null&&nativeHTML!==undefined){const nativeBody=make('div',null,'mes_text tisya-native-body');nativeBody.innerHTML=nativeHTML;body.append(nativeBody);}else try{const rows=data.body.paragraphs?.value;if(rows?.length){for(const p of rows){const section=make('section',null,'reading-paragraph'),text=make('div');text.innerHTML=formatProse(document,p.raw,formatBody,options);section.append(text);body.append(section);}}else body.innerHTML=formatProse(document,data.body.value,formatBody,options);}catch(error){const note=make('p','正文排版暂不可用。'+readerErrorText(readerErrorCode(error)),'loading-note');note.setAttribute('role','status');body.append(note);onError(error);}body.querySelectorAll('details').forEach((n,i)=>{if(folds[i]!==undefined)n.open=folds[i];});style.textContent=waterStyle+'\n'+adaptation+'\n'+proseStyles(options)+'\n'+replyControlsCSS+'\n'+WATER_CONTROL_CSS+'\n'+extraCSS;bodyStamp=key;}
  renderBody();

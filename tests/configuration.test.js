@@ -11,6 +11,64 @@ test('actual settings-ready payload excludes all native worldbook bypasses, opti
 test('late third-party injection and swallowed event errors cannot serialize an unverified request',async()=>{const p={messages:[{role:'user',content:'OK'}]};sealPayload(p);assert.ok(JSON.stringify(p));p.messages.push({role:'system',content:'LATE_UNSELECTED'});assert.throws(()=>JSON.stringify(p),/其他扩展/);const f=fixture();f.w.controller='missing';await assert.rejects(f.host.before('normal'));const request={messages:[{role:'system',content:'DO_NOT_SEND'}]};await assert.rejects(f.host.payloadReady(request));assert.throws(()=>JSON.stringify(request));});
 test('worldbook resource version drift and exact duplicate sources are detected before send',async()=>{const f=fixture();f.d.resources=[{id:'a',kind:'style',name:'A',content:'BOOK_STYLE_ONLY',source:{book:'book',uid:2}}];f.w.style='a';f.w.context.entries=[{book:'book',uid:2}];const p=await f.host.resolveMaterials(f.d,f.w);assert.equal((p.text.match(/BOOK_STYLE_ONLY/g)??[]).length,1);f.d.resources[0].content='OLD';await assert.rejects(f.host.resolveMaterials(f.d,f.w),/已更新/);});
 test('selected workflow compiles only enabled enhancement text while preserving fixed output block names',()=>{const f=fixture();f.w.modes.narrative.narrative.缇斯亚叙事防神化=false;const c=compileNarrative(f.c,f.source,[]),text=c.rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/不无因崇拜/);for(const tag of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(text.includes('<'+tag)||text.includes('blk.'+tag),tag);assert.match(text,/@DEFINE @OUT/);assert.doesNotMatch(text,/自然小说/);});
+
+test('three workflow detail levels change actual compiled requests and preserve selected constraints',async()=>{
+ const f=fixture(),m=f.w.modes.narrative,results={};
+ m.narrative.缇斯亚叙事基调='诙谐';m.narrative.缇斯亚叙事玩家代写='补充轻微言行';
+ // The legacy default remains compact without writing a new setting.
+ delete m.workflowDetail;assert.equal(compileNarrative(f.c,f.source,[]).workflowDetail,'compact');assert.equal(m.workflowDetail,undefined);
+ for(const detail of ['full','compact','format']){
+  m.workflowDetail=detail;await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
+  const inner=f.macros.get('tisya_live_tisya_inner_chain')();results[detail]=inner;
+  assert.ok(JSON.stringify(payload.messages).includes(JSON.stringify(inner).slice(1,-1)));
+  assert.match(inner,/采用诙谐基调/);assert.match(inner,/围绕玩家已经确定的意图/);assert.match(inner,/重大选择保留给玩家/);
+  assert.match(inner,/"min":2000,"max":5000/);assert.match(inner,/MVU is disabled/);assert.match(inner,/!private reasoning/);
+  for(const name of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(inner.includes('<'+name),detail+' '+name);
+  assert.doesNotMatch(inner,/自然小说|缇斯亚叙事基调|T\.1|<think>/);
+ }
+ assert.match(results.full,/\[P\.1\]/);assert.match(results.full,/\[B\.6\]/);assert.match(results.full,/\[CALL para_n\]/);assert.match(results.full,/@REQUIRE DONE\(C\.3\)/);assert.match(results.full,/资料与知情←E\.1\/B\.1\/C\.1/);
+ assert.match(results.compact,/\[WORKFLOW\]/);assert.doesNotMatch(results.compact,/\[P\.1\]|\[CALL para_n\]|E\.1\/B\.1/);
+ assert.doesNotMatch(results.format,/\[WORKFLOW\]|\[D\.1\]|\[CALL para_n\]/);assert.match(results.format,/unperformed or unsupported checks→待确认/);
+ assert.ok(results.full.length>results.compact.length);assert.ok(results.compact.length>results.format.length);
+});
+
+test('full detail keeps source stages while disabled simulation questions and features stay absent',()=>{
+ const f=fixture(),m=f.w.modes.narrative;m.workflowDetail='full';const steps=[...m.narrative.缇斯亚叙事步序];
+ for(const omitted of steps){
+  m.narrative.缇斯亚叙事步序=steps.filter(s=>s!==omitted);const text=compileNarrative(f.c,f.source,[]).rest.entries.tisya_inner_chain;
+  assert.match(text,/\[CALL para_n\]/);assert.match(text,/\[D\.2\]/);assert.match(text,/\[D\.4\]/);
+  if(omitted==='人物反应')assert.doesNotMatch(text,/\[B\]|B\.[1-6]|Scrutinize remaining capacities/);
+  if(omitted==='行动与剧情')assert.doesNotMatch(text,/Within the allowed time window|On one timeline|@ASK IF\(false/);
+  if(omitted==='视角认知')assert.doesNotMatch(text,/Whose narrative viewpoints apply/);
+  if(omitted==='正文组织')assert.doesNotMatch(text,/How should the narrative resume|perform targeted cliché review/);
+ }
+ m.narrative.缇斯亚叙事步序=steps;m.narrative.缇斯亚叙事防神化=false;const entries=compileNarrative(f.c,f.source,[]).rest.entries;
+ assert.doesNotMatch(entries.tisya_inner_chain,/Scrutinize player-regard|deification/);assert.doesNotMatch(entries.tisya_registry,/deify player/);
+});
+
+test('all detail levels honor disabled actions and plain output without running unused output branches',()=>{
+ for(const detail of ['full','compact','format']){
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.actions=false;
+  const text=compileNarrative(f.c,f.source,[]).rest.entries.tisya_inner_chain;
+  assert.match(text,/<actions\/>/);assert.doesNotMatch(text,/行动：\{交流|materially different optional goals/);
+  f.source.order.find(e=>e.identifier==='tisya_output').enabled=false;
+  const plain=compileNarrative(f.c,f.source,[]).rest.entries.tisya_inner_chain;
+  assert.match(plain,/"kind":"plain"/);assert.doesNotMatch(plain,/<reply>|<actions|\[CALL blk.memory\]|\[CALL blk.next\]/);
+ }
+});
+
+test('workflow detail saves through production UI, reopens, stays world-scoped and rejects invalid stored values',async()=>{
+ const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
+ const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}})};
+ let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
+ const select=root.querySelector('[aria-label="思维链详细程度"]');assert.equal(select.value,'"compact"');assert.equal(select.options.length,3);
+ select.value='"format"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');ui.dispose();
+ ui=mountConfiguration(doc,box,options);await ui.ready;root=ui.root.shadowRoot;assert.equal(root.querySelector('[aria-label="思维链详细程度"]').value,'"format"');ui.dispose();
+ f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.workflowDetail,'compact');f.c.chatId='one';
+ for(const value of [null,false,0,'unknown']){const s=f.store.read();s.data.worlds[f.k].modes.narrative.workflowDetail=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/详细程度无效/);}
+ assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');await win.happyDOM.abort();
+});
 test('five-tab production UI saves, reopens, and registers extra theme fields without injecting them',async()=>{const f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div');doc.body.append(container);const ui=mountConfiguration(doc,container,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),onClose(){},onNative(){}});await ui.ready;const root=ui.root.shadowRoot;assert.equal(root.querySelectorAll('[role=tab]').length,5);root.querySelector('[data-tab=world]').click();await new Promise(r=>setTimeout(r,10));assert.match(root.textContent,/本世界 user/);root.querySelector('[data-tab=theme]').click();await new Promise(r=>setTimeout(r,10));const check=root.querySelector('input[type=checkbox]');check.checked=false;check.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));assert.equal(f.store.read().world.theme.nativeRegex,false);assert.match(root.textContent,/配置已保存/);ui.dispose();await win.happyDOM.abort();});
 test('native card beauty keeps original DOM nodes and handlers including late helper iframe mounting',async()=>{const win=new Window(),doc=win.document;doc.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><button>开场白按钮</button></div></div></div></div></div>';const node=doc.querySelector('.mes'),native=doc.querySelector('.mes_text'),button=doc.querySelector('button'),message={mes:'【系统启动】',is_user:false,name:'卡'};let clicks=0;button.onclick=()=>clicks++;const view=mountMessageAppearance(doc,{getMessage:()=>message,preferNative:(m,n,c)=>preferNativeBeauty({message:m,native:n,structured:c.structured,scripts:[{markdownOnly:true,placement:[2]}]}),formatBody:s=>s});view.sync(node);assert.equal(doc.querySelector('.tisya-message-visual'),null);assert.equal(doc.querySelector('button'),button);assert.equal(native.classList.contains('tisya-source-concealed'),false);button.click();assert.equal(clicks,1);native.append(doc.createElement('iframe'));view.sync(node);assert.equal(native.querySelectorAll('iframe').length,1);view.dispose();assert.equal(doc.querySelector('button'),button);await win.happyDOM.abort();});
 

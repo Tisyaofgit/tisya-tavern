@@ -1,5 +1,6 @@
 import {appendFileContent} from '/scripts/chats.js';
 import {yaml} from '/lib.js';
+import {configureReplyFormats} from './reply-formats.js';
 import {GENERATION_CONTRACTS,MODE_CONTRACT,ARCHIVE_CONTRACT,validateGeneratedTask} from './config/contracts.js';
 import {loadAgentSystemSettings} from '/scripts/tauritavern/agent/agent-system-settings.js';
 import {createStore,register,registry} from './config/core.js';
@@ -31,6 +32,7 @@ import { loadReadingFont } from './font.js';
 import { VERSION, SECTIONS, drawerEntries, chatPreview, chatTitle, mountLayout, installComposer } from './layout.js';
 
 const KEY = '缇斯亚界面';
+configureReplyFormats({yaml});
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const query = selector => document.querySelector(selector);
 const iconButton = (text, action, icon) => `<button type="button" class="tisya-icon-button" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}</button>`;

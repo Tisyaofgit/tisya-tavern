@@ -59,3 +59,5 @@ API、模型、预设逐字段解析 task → mode → global；参数逐字段�
 外部主预设只有在没有选中项要求时沿用原生请求，不承诺完整裁剪。第三方 quiet/impersonate 不由本模块劫持。主预设深度条目暂未适配时明确报错；世界书旁路及工具目录不会因注册就被复制进去。API 附加请求体不得覆盖 messages/system/prompt/tools 等控制字段。
 
 Agent、数据库、检索、语音、绘图、嵌入、重排执行器需另外注册，不以普通聊天替代不具备的能力。生成候选与保存／启用是不同动作。
+
+`modes.narrative.workflowDetail`：`full` / `compact` / `format`，缺省为 `compact`；未知或非字符串值拒绝保存。旧配置不自动重写。该字段纳入既有配置版本检查、世界隔离、备份与 live macro 缓存。完整档由现有 source 渲染并裁去停用可选工作；其他档显式压缩流程，输出协议和实际配置保持同源。

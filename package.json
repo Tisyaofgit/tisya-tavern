@@ -1,6 +1,6 @@
 {
   "name": "tisya-tavern",
-  "version": "0.2.0-alpha.13",
+  "version": "0.2.0-alpha.14",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build:reader": "node tools/build-reader.mjs"
   },
   "devDependencies": {
-    "happy-dom": "20.14.5"
+    "happy-dom": "20.14.5",
+    "yaml": "2.8.3"
   }
 }
