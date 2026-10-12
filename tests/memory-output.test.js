@@ -1,11 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
-import {MEMORY_EXAMPLE,MEMORY_DELIVERY} from '../config/memory-output.js';
+import {MEMORY_EXAMPLE,MEMORY_DELIVERY,MEMORY_RULES} from '../config/memory-output.js';
 import {fixture} from './fixtures/journey-r4.cjs';
 import {parseDisplayEnvelope,projectJourney,validateMemoryProjection,validateMemoryLocators} from '../reader-core.js';
 import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
 import {KEY,emptyConfig,defaultWorld,worldKey,createStore} from '../config/core.js';
 import {createHost} from '../config/host.js';
+
+test('the prescribed string-cell syntax preserves literal separators and newlines',()=>{
+ assert.match(MEMORY_RULES,/整格写成严格 JSON 字符串/);
+ for(const value of ['甲|乙','第一行\n第二行','引号"与反斜杠\\','原字面 ~']){
+  const raw=fixture({memory:'事件：玩家|A|'+JSON.stringify(value)});
+  assert.equal(JSON.parse(parseDisplayEnvelope(raw).blocks.memory).事件[0].梗概,value);
+ }
+ assert.throws(()=>parseDisplayEnvelope(fixture({memory:'事件：玩家|A|甲\\|乙'})),{code:'TISYA_PIPES_COLUMNS'});
+});
 
 test('the prescribed memory example passes strict parsing and displays its event and reader-authorized cognition',()=>{
  const source=fixture({body:'1\n两人站在台前向观众谢幕。\n\n2\n队员甲感觉自己仍有些紧张。\n\n3\n两人随后返回后台。',memory:MEMORY_EXAMPLE});
