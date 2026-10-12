@@ -1,5 +1,6 @@
 import {renderProtocol} from '../settings-core.js';
 import {selectWorkflow,condenseWorkflow} from './workflow.js';
+import {applyWireContract} from './wire-contract.js';
 import {KEY,registry,worldKey,defaultWorld,emptyConfig,compileSelected,validateConfig,workflowDetail} from './core.js';
 export function modularSource(source){return source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));}
 export function currentConfiguration(context,legacy={}){const d=context.extensionSettings[KEY]===undefined?emptyConfig():validateConfig(context.extensionSettings[KEY]);return {data:d,world:d.worlds[worldKey(context)]??defaultWorld(typeof legacy==='function'?legacy():legacy)};}
@@ -8,15 +9,13 @@ export function refineCompiled(c,{data,world},source){
  const m=world.modes[world.mode],r=c.stepwiseRules;
  // Main style is an open resource slot, never a built-in style choice.
  r.C01='';if(!m.actions)c.actionRange={下限:0,上限:0};const actor={难度:world.switches.difficulty,中心化:world.switches.centrality};
- c.rest=renderProtocol(c,{actor});const entries=c.rest.entries,I=entries.tisya_inner_chain;
+ c.rest=renderProtocol(c,{actor});const entries=c.rest.entries;
  if(!c.prose)return c;
  if(c.outputEnabled){
-  const anchor='@AUDIENCE ';
-  if(entries.tisya_registry.split(anchor).length!==2)throw Error('权限格式来源锚点不匹配');
-  entries.tisya_registry=entries.tisya_registry.replace(anchor,'@PERM_SHAPE every permission cell is the complete four-cell @PERM tuple or exact @FIELD_PERM object;unknown whole policy→[null,null,null,null],never bare null/~/公开/后台/视角已知;missing individual scope→null,known empty scope→[];do not invent reader scopes to satisfy shape;unresolved permissions keep dependent use pending\n'+anchor);
+  applyWireContract(entries);
  }
  const selected=compileSelected(data,world); // Validate resources without copying their material slot.
- entries.tisya_inner_chain=selectWorkflow(I,c,m);
+ entries.tisya_inner_chain=selectWorkflow(entries.tisya_inner_chain,c,m);
  const detail=workflowDetail(m);
  if(detail!=='full')entries.tisya_inner_chain=condenseWorkflow(entries.tisya_inner_chain,c,m,actor,detail);
  entries.tisya_internal_login=entries.tisya_internal_login.replace('narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;utility:T.1→D.4;then','narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;then');

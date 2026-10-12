@@ -3,7 +3,8 @@ import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
-import {isReplyMessage,extractXMLBody,projectJourney,countBody,readParagraphs} from './reader-core.js';
+import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-core.js';
+import {readJourney} from './reply-records.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
 export function readerErrorText(code){
@@ -11,6 +12,8 @@ export function readerErrorText(code){
     const block=/^TISYA_READER_(TASK|TITLE|NEXT)_(YAML_\w+|JSON_SYNTAX|FORMAT|OBJECT|MISSING)$/.exec(safe);
     if(block){const name={TASK:'本轮任务',TITLE:'标题',NEXT:'下轮交付'}[block[1]];return `${name}区块${block[2]==='YAML_UNAVAILABLE'?'缺少宿主 YAML 读取组件，请更新并完全重启扩展。':'格式未通过读取校验。'}原消息仍保留。（${safe}）`;}
     if(safe==='TISYA_PERMISSION_SHAPE')return `记录中的权限字段格式不符合协议，该记录暂不展示。原消息仍保留。（${safe}）`;
+    if(['TISYA_MEMORY5_ACL_TARGET','TISYA_MEMORY5_ACL_UNRESOLVED','TISYA_MEMORY5_ACL_EXTRA_TARGET'].includes(safe))return `权限记录没有匹配到有效字段，相关字段暂不展示。原消息仍保留。（${safe}）`;
+    if(safe==='TISYA_MEMORY5_STATUS_PERMISSION_MISSING')return `原生状态缺少有效的字段权限，相关字段暂不展示。原消息仍保留。（${safe}）`;
     const message=safe==='TISYA_JOURNEY_MEMORY_UNSUPPORTED'?'本条记忆格式不受支持，无法核验公开权限。':safe==='TISHA_OUTPUT_SIZE'?'消息过长，无法打开阅读页。':/^TISHA_OUTPUT_|^TISYA_HANDOFF_|^TISYA_PIPES_|^TISHA_JSON_/.test(safe)?'消息结构不完整或格式不符合协议。':/^TISYA_MEMORY5_|^TISYA_JOURNEY_|^TISYA_PERMISSION_/.test(safe)?'回合记录未通过权限或原文引用校验。':safe==='TISYA_READER_ACTIONS_INVALID'?'行动列表格式不完整。':safe==='TISYA_READER_FORMAT'||/^TISYA_MARK_/.test(safe)?'正文排版失败。':'本条内容未通过阅读校验。';
     return `${message}原消息仍保留。（${safe}）`;
 }
@@ -28,7 +31,7 @@ export function inspectMessage(source) {
         body.paragraphs=attempt(()=>readParagraphs(body.value));
     }
     if(!structured)return {structured:false,body,journey:{value:null},actions:{value:[]}};
-    const journey=attempt(()=>projectJourney(source));
+    const journey=attempt(()=>readJourney(source));
     const actions=attempt(()=>{
         const envelope=readPublicReplyEnvelope(source),next=readReplyBlock(envelope,'next');
         if(!Array.isArray(next?.actions)||next.actions.some(row=>!row||typeof row.text!=='string'||!row.text.trim()||typeof row.type!=='string'||typeof row.source!=='string'))throw Object.assign(Error(),{code:'TISYA_READER_ACTIONS_INVALID'});
@@ -80,6 +83,7 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         if(data.journey.error){failure(panel,'回合记录',data.journey.error);return;}
         const view=data.journey.value;
         panel.append(note('记录对应所选消息这一回合。'));
+        for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
         if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length)&&!view.changes.length){panel.append(note('本条没有可显示的公开回合记录。'));return;}
         for(const memory of view.memories){
             const card=make('article',null,'tisya-reader-card');scene(card,memory.scene);

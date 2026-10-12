@@ -22,8 +22,11 @@ test('three workflow detail levels change actual compiled requests and preserve 
   const inner=f.macros.get('tisya_live_tisya_inner_chain')();results[detail]=inner;
   assert.ok(JSON.stringify(payload.messages).includes(JSON.stringify(inner).slice(1,-1)));
   const request=JSON.stringify(payload.messages);
-  assert.match(request,/unknown whole policy→\[null,null,null,null\]/);
-  assert.match(request,/do not invent reader scopes to satisfy shape/);
+  assert.match(request,/one compact grade A\/B\/C\/D\/E or ~/);
+  assert.match(request,/~ means public only in a permission cell/);
+  assert.match(request,/never invent a scope or treat unresolved as public/);
+  assert.doesNotMatch(request,/PERM_SHAPE|never bare null\/~/);
+  assert.doesNotMatch(inner,/权限：vars\||valid variable operations replace/);
   assert.match(inner,/采用诙谐基调/);assert.match(inner,/围绕玩家已经确定的意图/);assert.match(inner,/重大选择保留给玩家/);
   assert.match(inner,/"min":2000,"max":5000/);assert.match(inner,/MVU is disabled/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
   for(const name of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(inner.includes('<'+name),detail+' '+name);
