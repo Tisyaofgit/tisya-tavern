@@ -12,5 +12,11 @@ export function adaptReaderSource(id,source){
    "function projectJourney(source,options){return projectJourneyEnvelope(parseDisplayEnvelope(source),options);}\nfunction projectJourneyEnvelope(envelope,{showPsychology=false,playerName=null}={}){");
   source=replaceOnce(source,'module.exports={projectJourney};','module.exports={projectJourney,projectJourneyEnvelope};');
  }
+ if(id==='display-regex.cjs'){
+  source=replaceOnce(source,'function applyRule(runs,entry){\n const re=compile(entry),input=', 'function applyRule(runs,entry,prepareRule){\n const native=prepareRule?.(entry),re=native?.regex??compile(entry),input=');
+  source=replaceOnce(source,'text:expand(entry.replaceString,m,input)','text:native?native.expand(m,input):expand(entry.replaceString,m,input)');
+  source=replaceOnce(source,'function runDisplay({source,groups,depth=null,opening=false}){','function runDisplay({source,groups,depth=null,opening=false,prepareRule=null}){');
+  source=replaceOnce(source,'applyRule(runs,entry);','applyRule(runs,entry,prepareRule);');
+ }
  return source;
 }

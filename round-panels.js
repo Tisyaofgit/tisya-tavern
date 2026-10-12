@@ -13,7 +13,7 @@ export function mountRoundPanel(document,container,value,part){
  decorateWaterControl(button,new URL('./assets/controls/'+(part==='task'?'task':'pending')+'.svg',import.meta.url).href);
  const toggle=()=>{if(!alive||!container.isConnected)return;content.hidden=!content.hidden;button.setAttribute('aria-expanded',String(!content.hidden));};
  button.addEventListener('click',toggle);
- const heart=mountHeartBlock(document,container,part==='task'?value.taskHeart:value.nextHeart,{label:part==='task'?'本轮心声':'下轮心声'});
+ const heart=mountHeartBlock(document,container,part==='task'?value.taskHeart:value.nextHeart,{label:part==='task'?'任务心声':'剧情心声'});
  if(heart){heart.id=part+'-heart';placeholder.replaceWith(heart);}else placeholder.remove();
  const empty=text=>{const p=document.createElement('p');p.className='round-empty';p.textContent=text;content.append(p);};
  if(value.rounds.error){const p=document.createElement('p');p.setAttribute('role','status');p.textContent='任务与待办暂未通过显示校验，原消息保留。';content.append(p);}

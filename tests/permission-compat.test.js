@@ -37,13 +37,13 @@ test('compact field overrides and scoped policies keep private nested records ou
  const view=inspectMessage(source);assert.equal(view.journey.error,undefined);assert.equal(view.journey.value.memories.length,1);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_/);
 });
 
-test('supplied reply shape keeps public controls and isolates its orphan locator without changing the source',()=>{
+test('supplied legacy one-cell status locator resolves only to its exact vars operation without changing the source',()=>{
  const source=compactReplyFixture(),before=source,e=parseDisplayEnvelope(source),memory=JSON.parse(e.blocks.memory);
  assert.throws(()=>validateMemoryProjection(memory,{body:e.blocks.body}),{code:'TISYA_MEMORY5_ACL_TARGET'});
  const view=inspectMessage(source);
  assert.equal(view.journey.error,undefined);assert.equal(view.details.error,undefined);assert.equal(view.details.value.rounds.pendingError,false);
  assert.equal(view.details.value.audit.length,7);assert.equal(view.details.value.taskHeart.items.length,1);assert.equal(view.details.value.nextHeart.items.length,1);assert.equal(view.actions.value.length,4);
- assert.deepEqual(view.journey.value.diagnostics,[{code:'TISYA_MEMORY5_ACL_TARGET',section:'权限',row:1}]);
+ assert.equal(view.journey.value.diagnostics,undefined);
  assert.equal(view.journey.value.memories.length,0);assert.equal(view.journey.value.changes.length,0);
  assert.equal(readWorldExtra(source).length,2);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_|TISYA_PERMISSION_SHAPE/);assert.equal(source,before);
 });
@@ -74,8 +74,8 @@ test('mobile UI presents compact records and a local locator notice with usable 
  const node=doc.createElement('div');doc.body.append(node);const chosen=[];
  const ui=mountMessageVisual(doc,node,{source:compactReplyFixture(),name:'测试',formatBody:s=>s,getMotion:()=>false,onChooseAction:text=>chosen.push(text)}),root=ui.host.shadowRoot;
  assert.equal(root.querySelectorAll('.heart-host').length,2);assert.equal(root.querySelectorAll('.audit-bead').length,7);assert.equal(root.querySelectorAll('.action').length,4);
- assert.match(root.querySelector('.journey-reader').textContent,/权限第 1 条/);assert.doesNotMatch(root.innerHTML,/PRIVATE_|TISYA_PERMISSION_SHAPE|任务、心声与核验暂不可用/);
- assert.equal(root.querySelectorAll('.record-notice').length,1);
+ assert.doesNotMatch(root.querySelector('.journey-reader').textContent,/权限第 1 条/);assert.doesNotMatch(root.innerHTML,/PRIVATE_|TISYA_PERMISSION_SHAPE|任务、心声与核验暂不可用/);
+ assert.equal(root.querySelectorAll('.record-notice').length,0);
  root.querySelector('.action').click();await Promise.resolve();await Promise.resolve();assert.equal(chosen.length,1);
  ui.dispose();await win.happyDOM.abort();
 });

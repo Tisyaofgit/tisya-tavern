@@ -22,5 +22,17 @@ export function applyWireContract(entries){
   inner=once(inner,'权限：vars|{已输出操作的实际JSON Pointer}|{本操作权限}\n','');
   inner=once(inner,'@OPTION valid variable operations replace <vars/> with <vars format="json">...</vars>;final output contains actual operations only','@OPTION MVU disabled→only <vars/>;omit vars permission rows;do not move disabled operations to another block');
  }
+ inner=inner.replace('@OPTION permission rows require actual targets;', '@OPTION status权限定位必须是[已登记类型,已登记对象,字段]三项；单独JSON Pointer只能属于实际输出的vars操作；叙事状态自带权限，不另造status权限行。permission rows require actual targets;');
+ inner=inner.replace('opening←actual input/task;closing←completed progress',
+  'opening/task：只针对用户本轮任务、指令与扮演选择进行输入评价；回应用户评价只在此直接回应实际聊天。closing/next：只针对本轮正文已经发生的剧情、互动和结果进行剧情吐槽。两轮分别撰写、各有对象与新内容；禁止复制、近义改写或回放开篇心声，禁止把预计剧情写成已发生。');
+ inner=inner.replace('one content row/applicable enabled direction at each position','one content row per applicable selected direction at its assigned position only;task receives 输入评价/回应用户评价,next receives 剧情吐槽;do not require the same directions at both positions');
+ for(const part of ['task','next']){
+  const re=new RegExp('(<'+part+' format="pipes"[^>]*>)([\\s\\S]*?)(</'+part+'>)');
+  inner=inner.replace(re,(_,open,body,close)=>{
+   const lines=body.split('\n').filter(line=>!line.startsWith('心声：有内容|')||(part==='task'?!line.includes('|剧情吐槽|'):line.includes('|剧情吐槽|')));
+   if(!lines.some(line=>line.startsWith('心声：')))lines.push('心声：关闭');
+   return open+lines.join('\n')+close;
+  });
+ }
  entries.tisya_inner_chain=inner;
 }

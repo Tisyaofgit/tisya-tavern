@@ -7,7 +7,8 @@ import {createStore,register,registry} from './config/core.js';
 import {createHost} from './config/host.js';
 import {mountConfiguration} from './config/panel.js';
 import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
-import {getRegexScripts,getRegexedString} from '/scripts/extensions/regex/engine.js';
+import {createNativeDisplayPipeline} from './native-display.js';
+import {getRegexScripts,getRegexedString,RegexProvider} from '/scripts/extensions/regex/engine.js';
 import {readNarrative} from './narrative-bridge.js';
 import {createNarrativeBridge,registerLivePreset,isLivePreset} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
@@ -24,7 +25,7 @@ import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';
 import { registerPresetProtocol } from './preset.js';
-import { isGenerating, Generate, messageFormatting, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata } from '/script.js';
+import { isGenerating, Generate, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
@@ -38,11 +39,11 @@ const query = selector => document.querySelector(selector);
 const iconButton = (text, action, icon) => `<button type="button" class="tisya-icon-button" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}</button>`;
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
 let layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;
-let motionEnabled=true,utility=null;
+let motionEnabled=true,utility=null,nativeDisplay=null;
 const getAppearance=owner=>appearanceValues(settings(),owner);
 const getDisplay=()=>getAppearance('extensions');
 const visualError=err=>console.warn('[Tisya visual]',err);
-function refreshVisuals(){appearance?.refresh();chatEffects?.refresh();pet?.refresh();}
+function refreshVisuals(){nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();}
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 const FONT_URLS=Array.from({length:4},(_,i)=>`https://raw.githubusercontent.com/Tisyaofgit/tisya-tavern/cfc9d8c1ce4be94334c3b748addb0936802b2d2b/font/reading.part${i+1}.bin`);
@@ -253,9 +254,10 @@ async function messageAction(action) {
 }
 function openReader(token,initialTab='body') {
     const message=validate(context(),token);
+    nativeDisplay?.refresh();
     sheet('阅读与回合记录','<div id="tisya-reader"></div>');
     releaseReader=mountMessageReader(document,query('#tisya-reader'),{
-        source:message.mes,
+        source:message.mes,getNativeDisplay:()=>nativeDisplay?.project(message.mes,message,{getAttribute:()=>String(token.id)}),
         initialTab,getAppearance,
         formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
@@ -323,6 +325,7 @@ async function generateAt(token, reroll = false) {
 }
 function decorate(element = null) {
     if(!enabled)return;
+    nativeDisplay?.refresh();
     (element ? [element] : [...document.querySelectorAll('#chat .mes')]).forEach(node=>{
         if(!node.querySelector('.tisya-actions')) {
             const row=document.createElement('div');row.className='tisya-actions';
@@ -363,10 +366,13 @@ function init() {
     ({root,top,controls,overlay}=layout);
     cleanups.push(installComposer(document));
     motionEnabled=settings().动态效果!==false;
+    nativeDisplay=createNativeDisplayPipeline({enabled:()=>configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
-        preferNative:(message,native,data)=>preferNativeBeauty({message,native,structured:data.structured,enabled:configStore.read().world.theme.nativeRegex,scripts:context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true})}),
-        formatNativeBody:createNativeBodyFormatter({contextKey:()=>context().chat.length,onError:visualError,enabled:()=>configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regex:(body,msg,node)=>getRegexedString(body,msg.is_user?1:2,{isMarkdown:true,characterOverride:msg.name,depth:Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)}),format:(prepared,source,msg,node)=>messageFormatting(prepared,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:source})}),
+        formatPreparedBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:body}),
+        getNativeDisplay:(...args)=>nativeDisplay.project(...args),getRenderKey:(...args)=>nativeDisplay.key(...args),
+        preferNative:(message,native,data)=>preferNativeBeauty({message,native,structured:data.structured,...nativeDisplay.state()}),
+        formatNativeBody:createNativeBodyFormatter({contextKey:()=>context().chat.length,onError:visualError,enabled:()=>nativeDisplay.state().enabled,scripts:()=>nativeDisplay.state().scripts,regex:(body,msg,node)=>getRegexedString(body,msg.is_user?1:2,{isMarkdown:true,characterOverride:msg.name,depth:Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)}),format:(prepared,source,msg,node)=>messageFormatting(prepared,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:source})}),
         getDisplay,getAppearance,getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
         formatBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},false,{regexPrepared:true,regexSourceText:body}),
@@ -405,7 +411,7 @@ function init() {
     query('#chat').addEventListener('pointerdown',down);query('#chat').addEventListener('pointermove',move);document.addEventListener('pointerup',cancel);document.addEventListener('pointercancel',cancel);
     cleanups.push(()=>{cancel();query('#chat')?.removeEventListener('pointerdown',down);query('#chat')?.removeEventListener('pointermove',move);document.removeEventListener('pointerup',cancel);document.removeEventListener('pointercancel',cancel);});
     if(!managed) {
-        observer=new MutationObserver(records=>{if(records.some(r=>r.type==='childList'&&[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('tisya-actions'))))decorate();});
+        observer=new MutationObserver(records=>{const changed=new Set();for(const r of records){if(r.target.closest?.('.tisya-actions,.tisya-message-visual'))continue;if(r.target.closest?.('.mes_text'))changed.add(r.target.closest('.mes'));for(const n of r.addedNodes)if(n.nodeType===1){if(n.matches?.('.mes'))changed.add(n);else if(!n.matches?.('.tisya-actions,.tisya-message-visual'))for(const mes of n.querySelectorAll?.('.mes')??[])changed.add(mes);}}for(const node of changed)if(node?.isConnected)decorate(node);});
         observer.observe(query('#chat'),{childList:true,subtree:true});
     }
     let refreshTimer;

@@ -1,3 +1,4 @@
+import {mountIsolatedCard} from './card-runtime.js';
 import {runDisplay} from './reader-core.js';
 import {observeDisplaySize,CARD_MOTION_CSS} from './visual-core.js';
 
@@ -21,12 +22,15 @@ export function splitExtraDocuments(html){
 }
 function inspect(document,html){
  const template=document.createElement('template');template.innerHTML=html;
- if(/<%/.test(html)||template.content.querySelector('script,iframe,object,embed,form,input,button,select,textarea,audio,video,meta[http-equiv],base,link'))fail('TISYA_EXTRA_RUNTIME_REQUIRED');
- for(const node of template.content.querySelectorAll('*'))for(const attr of node.attributes)if(/^on/i.test(attr.name)||/^(?:href|src|xlink:href)$/i.test(attr.name)&&/^\s*(?:javascript|vbscript):/i.test(attr.value))fail('TISYA_EXTRA_RUNTIME_REQUIRED');
+ if(/<%/.test(html)||template.content.querySelector('script[src],iframe,object,embed,form,meta[http-equiv],base')||[...template.content.querySelectorAll('script')].some(n=>/\b(?:parent|top|TavernHelper|SillyTavern|tavo)\s*[.[]/.test(n.textContent)))fail('TISYA_EXTRA_RUNTIME_REQUIRED');
+ for(const node of template.content.querySelectorAll('*'))for(const attr of node.attributes)if(/^(?:href|src|xlink:href)$/i.test(attr.name)&&/^\s*(?:javascript|vbscript):/i.test(attr.value))fail('TISYA_EXTRA_RUNTIME_REQUIRED');
  return template;
 }
 function mountDocument(document,container,html,label,{formatBody,onError}){
- const template=inspect(document,html),authored=!!template.content.querySelector('style,div,section,article,table,details,html');
+ const template=inspect(document,html);
+ const interactive=!!template.content.querySelector('script,button,input,select,textarea,audio,video,link')||[...template.content.querySelectorAll('*')].some(n=>[...n.attributes].some(a=>/^on/i.test(a.name)));
+ if(interactive){const box=document.createElement('div');container.append(box);const view=mountIsolatedCard({container:box,html,label,onError});view.ready.catch(onError);let paused=null;return {source:html,capture:()=>view.captureState().details,restore:folds=>view.restoreState({details:folds}),refresh(value){if(paused!==value){paused=value;view.setPaused(value);}},dispose(){view.dispose();box.remove();}};}
+ const authored=!!template.content.querySelector('style,div,section,article,table,details,html');
  if(!authored)html=formatBody(html);
  inspect(document,html);
  const frame=document.createElement('iframe');frame.title=label;frame.dataset.tisyaExtraDocument='';frame.sandbox='allow-same-origin';frame.referrerPolicy='no-referrer';
@@ -47,24 +51,25 @@ function mountDocument(document,container,html,label,{formatBody,onError}){
  const h=/^\s*(?:<!doctype[^>]*>\s*)?<html\b[^>]*>\s*(?:<head\b[^>]*>)?/i.exec(html);
  frame.srcdoc=h?html.slice(0,h[0].length)+(/<head\b/i.test(h[0])?head:'<head>'+head+'</head>')+html.slice(h[0].length):'<!doctype html><html><head>'+head+'</head><body>'+html+'</body></html>';
  container.append(frame);
- return {source:html,capture:()=>pending??folds().map(n=>n.open),restore,refresh(value){paused=value;if(ready)syncFonts();frame.contentDocument?.documentElement?.toggleAttribute('data-tisya-card-paused',paused);sizing?.refresh();},dispose(){alive=false;clearTimeout(timer);sizing?.dispose();frame.contentDocument?.removeEventListener('error',resourceError,true);for(const face of added)frame.contentDocument?.fonts?.delete(face);frame.onload=null;frame.remove();}};
+ return {source:html,capture:()=>pending??folds().map(n=>n.open),restore,refresh(value){const changed=paused!==value;paused=value;if(ready)syncFonts();frame.contentDocument?.documentElement?.toggleAttribute('data-tisya-card-paused',paused);if(changed&&!paused)sizing?.refresh();},dispose(){alive=false;clearTimeout(timer);sizing?.dispose();frame.contentDocument?.removeEventListener('error',resourceError,true);for(const face of added)frame.contentDocument?.fonts?.delete(face);frame.onload=null;frame.remove();}};
 }
-export function mountWorldExtra(document,container,{source,structured,formatBody,onError=()=>{}}){
+export function mountWorldExtra(document,container,{source,structured,formatBody,display=null,displayError=null,lazy=false,onError=()=>{}}){
  const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
- let alive=true,children=[],active=null,paused=false;const pages=[],nav=make('nav',undefined,'extra-tabs');nav.setAttribute('aria-label','世界扩展页面');
+ let alive=true,children=[],active=null,paused=false,shown=!lazy,savedDocuments=[];const pages=[],nav=make('nav',undefined,'extra-tabs');nav.setAttribute('aria-label','世界扩展页面');
  container.replaceChildren();
- let rows;try{rows=structured?readWorldExtra(source):[];}catch(error){container.append(make('p','本条扩展未通过结构或公开权限校验，原消息仍保留。','public-note'));onError(error);return {hasContent:true,refresh(){},capture(){},restore(){},dispose(){alive=false;container.replaceChildren();}};}
+ let rows;try{rows=structured?(display?.extraPanels??readWorldExtra(source)):[];}catch(error){container.append(make('p','本条扩展未通过结构或公开权限校验，原消息仍保留。','public-note'));onError(error);return {hasContent:true,refresh(){},capture(){},restore(){},dispose(){alive=false;container.replaceChildren();}};}
+ if(displayError)container.append(make('p','角色卡正则暂未能完成显示，原始扩展内容保留。','public-note round-empty'));
  if(!rows.length)container.append(make('p','本条没有可展示的世界扩展。','public-note'));
  else container.append(nav);
- function select(id){if(!alive)return;active=id;for(const row of pages){row.panel.hidden=row.id!==id;row.button.setAttribute('aria-pressed',String(row.id===id));}for(const child of children)child.refresh(paused||child.page!==active);}
+ function select(id){if(!alive)return;active=id;for(const row of pages){row.panel.hidden=row.id!==id;row.button.setAttribute('aria-pressed',String(row.id===id));}if(shown)pages.find(p=>p.id===active)?.mount();for(const child of children)child.refresh(paused||!shown||child.page!==active);}
  for(const [index,row]of rows.entries()){
   const panel=make('section',undefined,'extra-page'),button=make('button');button.type='button';
   const template=document.createElement('template');template.innerHTML=row.html;
-  const title=(row.label||template.content.querySelector('h1,h2,h3,title')?.textContent||row.ruleName||row.tag||'扩展 '+(index+1)).slice(0,100);button.textContent=title;button.onclick=()=>select(row.id);nav.append(button);container.append(panel);pages.push({id:row.id,panel,button});
+  const title=(row.label||template.content.querySelector('h1,h2,h3,title')?.textContent||row.ruleName||row.tag||'扩展 '+(index+1)).slice(0,100);button.textContent=title;button.onclick=()=>select(row.id);nav.append(button);container.append(panel);const page={id:row.id,panel,button,mounted:false};pages.push(page);
   const failed=error=>{if(!alive)return;let note=panel.querySelector('.extra-error');if(!note){note=make('p',undefined,'public-note extra-error');note.setAttribute('role','status');panel.append(note);const raw=make('details'),summary=make('summary','查看原始扩展文本'),pre=make('pre',row.html);raw.append(summary,pre);panel.append(raw);}note.textContent=error.message==='TISYA_EXTRA_RUNTIME_REQUIRED'?'这一页需要卡片脚本或交互运行时，尚未接入；原始内容保留。':error.message==='TISYA_EXTRA_RESOURCE_FAILED'?'这一页有图片未能加载，已显示的内容和原始文本均保留。':'这一页暂时无法显示，原始内容保留。';onError(error);};
-  try{for(const html of splitExtraDocuments(row.html))children.push({...mountDocument(document,panel,html,title,{formatBody,onError:failed}),page:row.id});}catch(error){failed(error);}
+  page.mount=()=>{if(page.mounted||!alive)return;page.mounted=true;try{for(const html of splitExtraDocuments(row.html)){const child={...mountDocument(document,panel,html,title,{formatBody,onError:failed}),page:row.id};children.push(child);const saved=savedDocuments.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}}catch(error){failed(error);}};if(!lazy)page.mount();
  }
  if(pages.length)select(pages[0].id);nav.hidden=pages.length<2;
- return {hasContent:pages.length>0,capture:()=>({active,documents:children.map(c=>({page:c.page,source:c.source,folds:c.capture()}))}),restore(state){if(!state)return;if(pages.some(p=>p.id===state.active))select(state.active);for(const child of children){const saved=state.documents?.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}},refresh(value){paused=value;if(alive)for(const child of children)child.refresh(paused||child.page!==active);},dispose(){alive=false;children.forEach(c=>c.dispose());pages.forEach(p=>p.button.onclick=null);container.replaceChildren();}};
+ return {hasContent:pages.length>0,capture:()=>({active,documents:[...savedDocuments.filter(d=>!children.some(c=>c.page===d.page&&c.source===d.source)),...children.map(c=>({page:c.page,source:c.source,folds:c.capture()}))]}),restore(state){if(!state)return;savedDocuments=state.documents??[];if(pages.some(p=>p.id===state.active))select(state.active);for(const child of children){const saved=state.documents?.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}},refresh(value,show=true){paused=value;shown=show;if(!alive)return;if(shown)pages.find(p=>p.id===active)?.mount();for(const child of children)child.refresh(paused||!shown||child.page!==active);},dispose(){alive=false;children.forEach(c=>c.dispose());pages.forEach(p=>p.button.onclick=null);container.replaceChildren();}};
 }
 export const extraCSS='.extra-tabs{display:flex;gap:8px;overflow:auto;padding:2px 0 12px}.extra-tabs[hidden],.extra-page[hidden]{display:none!important}.extra-tabs button{white-space:nowrap;min-height:44px;border:1px solid #a6b98c66;border-radius:20px;padding:6px 14px;color:inherit;background:#103f3580;font:14px/1.6 TisyaReading,serif}.extra-tabs [aria-pressed=true]{color:#efd99a;background:#52796b55}.extra-page{min-width:0}.extra-page pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 monospace}';

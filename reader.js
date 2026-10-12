@@ -1,3 +1,5 @@
+import {createDisplayCache} from './display-cache.js';
+import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
@@ -22,7 +24,10 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
 // fallback, including when a structured reply is partial or malformed.
-export function inspectMessage(source) {
+const inspectionCache=createDisplayCache();
+export const messageCacheReport=()=>inspectionCache.report();
+export function inspectMessage(source){return typeof source==='string'&&source.length<=2000000?inspectionCache.read(replyFormatRevision()+':'+source,()=>inspectUncached(source)):inspectUncached(source);}
+function inspectUncached(source) {
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
     const structured=isReplyMessage(source)||candidate(source);
     const body=structured?attempt(()=>extractXMLBody(source)):{value:source};
@@ -40,7 +45,7 @@ export function inspectMessage(source) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({})}) {
+export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({})}) {
     const data=inspectMessage(source);
     let alive=true,actionChoice=null,extraView=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
@@ -116,7 +121,7 @@ export function mountMessageReader(document, container, {source,formatBody,onCho
         if(!alive)return;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');

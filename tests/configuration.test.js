@@ -88,3 +88,14 @@ test('native additional body parameters cannot replace the compiled messages or 
 test('selected media retains native image parts but strips merged unselected text',()=>{const f=fixture();f.c.chat=[{is_user:true,mes:'看图',extra:{media:[{url:'image'}]}}];f.w.context.history=0;const source={prompts:[{identifier:'chatHistory',marker:true}],order:[{identifier:'chatHistory',enabled:true}]};const out=buildMessages({source,context:f.c,world:f.w,substitute:s=>s,nativeMessages:[{role:'user',content:[{type:'text',text:'看图 NATIVE_INJECTION_CANARY'},{type:'image_url',image_url:{url:'data:image/png;base64,AA'}}]}]});assert.equal(out[0].content[0].text,'看图');assert.equal(out[0].content[1].type,'image_url');assert.doesNotMatch(JSON.stringify(out),/CANARY/);assert.throws(()=>buildMessages({source,context:f.c,world:f.w,substitute:s=>s}),/未提供/);});
 
 test('selecting a task preset cannot replace the native API or model on later requests',async()=>{const f=fixture(),handlers=new Map();f.c.eventTypes={OAI_PRESET_CHANGED_BEFORE:'before',OAI_PRESET_CHANGED_AFTER:'after'};f.c.eventSource={on:(e,fn)=>handlers.set(e,fn),removeListener:e=>handlers.delete(e)};let selected='r13';f.c.getPresetManager=()=>({getAllPresets:()=>['r13','changed'],getSelectedPresetName:()=>selected,getCompletionPresetByName:()=>preset,findPreset:n=>n,selectPreset(n){const change={presetName:n,preset:{chat_completion_source:'wrong',model:'WRONG_MODEL'},settingsToUpdate:{chat_completion_source:['','',false,true],model:['','',false,true]}};handlers.get('before')?.(change);Object.assign(f.c.chatCompletionSettings,change.preset);selected=n;handlers.get('after')?.();}});f.d.routes.tasks.main={preset:'changed'};await f.host.before('normal');let p={messages:[],stream:false};await f.host.payloadReady(p);assert.equal(p.model,'N-model');assert.equal(f.c.chatCompletionSettings.chat_completion_source,'openai');await f.host.before('normal');p={messages:[],stream:false};await f.host.payloadReady(p);assert.equal(p.model,'N-model');assert.equal(handlers.size,0);});
+
+test('two heart rounds use separate selected directions at every workflow level, never copying opening to closing',()=>{
+ for(const detail of ['full','compact','format'])for(let mask=0;mask<8;mask++){
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.heartDirections=['输入评价','回应用户评价','剧情吐槽'].filter((_,i)=>mask&(1<<i));
+  const text=compileNarrative(f.c,f.source,[]).rest.entries.tisya_inner_chain;
+  const top=text.match(/<task format="pipes">([\s\S]*?)<\/task>/)[1],bottom=text.match(/<next format="pipes"[^>]*>([\s\S]*?)<\/next>/)[1];
+  assert.doesNotMatch(top,/心声：有内容\|剧情吐槽/);assert.doesNotMatch(bottom,/心声：有内容\|输入评价|心声：有内容\|回应用户评价/);
+  assert.equal(top.includes('心声：有内容|输入评价'),!!(mask&1));assert.equal(top.includes('心声：有内容|回应用户评价'),!!(mask&2));assert.equal(bottom.includes('心声：有内容|剧情吐槽'),!!(mask&4));
+  if(mask)assert.match(text,/禁止复制、近义改写或回放开篇心声/);
+ }
+});

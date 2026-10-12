@@ -98,8 +98,8 @@ function expand(template,match,input){
   return token;
  });
 }
-function applyRule(runs,entry){
- const re=compile(entry),input=runs.map(r=>r.text).join(''),out=[];
+function applyRule(runs,entry,prepareRule){
+ const native=prepareRule?.(entry),re=native?.regex??compile(entry),input=runs.map(r=>r.text).join(''),out=[];
  let cursor=0,count=0,size=0;
  function append(items){for(const r of items){size+=r.text.length;if(size>LIMIT)fail('DISPLAY_SIZE_LIMIT');out.push(r);}}
  for(let m;(m=re.exec(input));){
@@ -118,7 +118,7 @@ function applyRule(runs,entry){
   // everywhere instead of re-running the rule on isolated fragments.
   if(panels.length>1){const ids=new Set(panels.map(p=>p.id));panel={...panel,tag:null,label:'组合扩展'};for(const r of [...runs,...out])if(ids.has(r.panel?.id))r.panel=panel;}
   append(sliceRuns(runs,cursor,start));
-  append([{text:expand(entry.replaceString,m,input),owner,boundary:false,panel,ruleName:entry.name??entry.scriptName??null}]);
+  append([{text:native?native.expand(m,input):expand(entry.replaceString,m,input),owner,boundary:false,panel,ruleName:entry.name??entry.scriptName??null}]);
   cursor=end;
   if(!re.global)break;
   if(m[0]===''){
@@ -153,7 +153,7 @@ function projectDisplayMarkers(html){
   return close?'</div>':'<div data-tisya-marker="'+name+'"'+attrs+'>'+(empty?'</div>':'');
  });
 }
-function runDisplay({source,groups,depth=null,opening=false}){
+function runDisplay({source,groups,depth=null,opening=false,prepareRule=null}){
  if(!Array.isArray(groups)||groups.length>100)fail('GROUP_LIMIT');
  let runs=opening?[{text:source,owner:'body',boundary:false,panel:null}]:partition(source),total=0;const rules=[];
  for(let g=0;g<groups.length;g++){
@@ -162,7 +162,7 @@ function runDisplay({source,groups,depth=null,opening=false}){
    if(++total>1000)fail('RULE_COUNT_LIMIT');
    const entry=group.entries[i],label={groupId:group.id,groupIndex:g,entryIndex:i};
    try{const reason=applicable(entry,depth);if(reason){rules.push({...label,status:'skipped',reason});continue;}
-    const result=applyRule(runs,entry);runs=result.runs;rules.push({...label,status:'applied',matches:result.count});
+    const result=applyRule(runs,entry,prepareRule);runs=result.runs;rules.push({...label,status:'applied',matches:result.count});
    }catch(error){error.details={...label,...error.details};error.rules=rules;throw error;}
   }
  }

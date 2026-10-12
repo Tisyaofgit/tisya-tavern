@@ -1,6 +1,9 @@
+import {createDisplayCache} from './display-cache.js';
 import {strictJSON,parseDisplayEnvelope,xmlTokens,replyRegion} from './reader-core.js';
 
-let yamlReader=null;
+let yamlReader=null,revision=0;
+const publicCache=createDisplayCache(),memoryCache=createDisplayCache();
+export const replyFormatRevision=()=>revision;
 const fail=(block,reason)=>{const code=`TISYA_READER_${block.toUpperCase()}_${reason}`;throw Object.assign(Error(code),{code});};
 
 // Private record schema errors must not prevent public UI blocks from being
@@ -27,13 +30,15 @@ function withoutRecords(source,names){
  return view;
 }
 
-export function readPublicReplyEnvelope(source){
+export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>publicEnvelope(source));}
+function publicEnvelope(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status','memory'])));
  const publicNames=new Set(['task','title','body','next','actions']);
  return {id:e.id,blocks:Object.fromEntries(Object.entries(e.blocks).filter(([name])=>publicNames.has(name))),attrs:Object.fromEntries(Object.entries(e.attrs).filter(([name])=>publicNames.has(name))),...(e.wire?{wire:{version:e.wire.version}}:{}),projection:'public-ui'};
 }
 
-export function readReplyMemory(source){
+export function readReplyMemory(source){return memoryCache.read(source,()=>replyMemory(source));}
+function replyMemory(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status'])));
  return e.blocks.memory.trim()?strictJSON(e.blocks.memory):null;
 }
@@ -41,6 +46,7 @@ export function readReplyMemory(source){
 // The host owns the YAML dependency. This adapter is a read-only display
 // boundary; it never changes messages, protocol generations, or stored state.
 export function configureReplyFormats({yaml}){
+ revision++;publicCache.clear();memoryCache.clear();
  yamlReader=['parseDocument','isAlias','isMap','isSeq','isScalar'].every(key=>typeof yaml?.[key]==='function')?yaml:null;
 }
 

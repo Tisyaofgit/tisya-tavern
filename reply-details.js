@@ -40,6 +40,8 @@ export function mountAuditBlock(document,container,rows){
  fold.append(title,body);wrapper.append(fold);container.append(wrapper);return wrapper;
 }
 export const replyControlsCSS=`
+.round-empty{box-sizing:border-box;align-self:start;margin:0;padding:14px 18px;border:1px solid #a8c7ad80;border-radius:30px 25px 32px 24px;background:linear-gradient(145deg,#456b5660,#0b342c9c);box-shadow:inset 0 2px 3px #e5e8be25,0 5px 12px #001c1830;color:#cbdac7;font:14px/1.8 TisyaReading,serif;overflow-wrap:anywhere;min-width:0}
+
 .action-mode-control{position:relative;display:flex;justify-content:flex-end;margin:-44px 0 12px;min-height:44px}
 .action-mode-toggle{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#dfc88d;font:13px/1.6 TisyaReading,serif;padding:3px 6px;min-height:44px}
 .action-mode-toggle img{width:27px;height:35px;object-fit:contain}
