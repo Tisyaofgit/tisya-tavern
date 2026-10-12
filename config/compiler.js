@@ -10,6 +10,11 @@ export function refineCompiled(c,{data,world},source){
  r.C01='';if(!m.actions)c.actionRange={下限:0,上限:0};const actor={难度:world.switches.difficulty,中心化:world.switches.centrality};
  c.rest=renderProtocol(c,{actor});const entries=c.rest.entries,I=entries.tisya_inner_chain;
  if(!c.prose)return c;
+ if(c.outputEnabled){
+  const anchor='@AUDIENCE ';
+  if(entries.tisya_registry.split(anchor).length!==2)throw Error('权限格式来源锚点不匹配');
+  entries.tisya_registry=entries.tisya_registry.replace(anchor,'@PERM_SHAPE every permission cell is the complete four-cell @PERM tuple or exact @FIELD_PERM object;unknown whole policy→[null,null,null,null],never bare null/~/公开/后台/视角已知;missing individual scope→null,known empty scope→[];do not invent reader scopes to satisfy shape;unresolved permissions keep dependent use pending\n'+anchor);
+ }
  const selected=compileSelected(data,world); // Validate resources without copying their material slot.
  entries.tisya_inner_chain=selectWorkflow(I,c,m);
  const detail=workflowDetail(m);

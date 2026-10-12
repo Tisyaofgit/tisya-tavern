@@ -1,7 +1,42 @@
-import {strictJSON} from './reader-core.js';
+import {strictJSON,parseDisplayEnvelope,xmlTokens,replyRegion} from './reader-core.js';
 
 let yamlReader=null;
 const fail=(block,reason)=>{const code=`TISYA_READER_${block.toUpperCase()}_${reason}`;throw Object.assign(Error(code),{code});};
+
+// Private record schema errors must not prevent public UI blocks from being
+// read. Omit record contents in an ephemeral parsing view, using the original
+// XML tokenizer and complete reply boundary checks. Never return these omitted
+// records as valid empty state, and never change the stored source.
+function withoutRecords(source,names){
+ const region=replyRegion(source).source,stack=[],cuts=[];let current=null;
+ const malformed=code=>{throw Object.assign(Error('TISHA_OUTPUT_'+code),{code:'TISHA_OUTPUT_'+code});};
+ for(const token of xmlTokens(region)){
+  if(token.kind==='comment'&&/填写|占位/.test(token.value))malformed('PLACEHOLDER');
+  if(token.kind==='open'){
+   if(stack.length>1&&names.has(stack[1]))malformed('NESTED_BLOCK_'+stack[1].toUpperCase());
+   if(stack.length===1&&names.has(token.name)&&!token.selfClose)current={name:token.name,start:token.end};
+   if(!token.selfClose){stack.push(token.name);if(stack.length>64)malformed('XML_DEPTH');}
+  }else if(token.kind==='close'){
+   if(stack.at(-1)!==token.name)malformed('XML_CLOSE');
+   if(stack.length===2&&current?.name===token.name){cuts.push([current.start,token.start]);current=null;}
+   stack.pop();
+  }
+ }
+ if(stack.length)malformed('INCOMPLETE');
+ let view=region;for(const [start,end]of cuts.reverse())view=view.slice(0,start)+view.slice(end);
+ return view;
+}
+
+export function readPublicReplyEnvelope(source){
+ const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status','memory'])));
+ const publicNames=new Set(['task','title','body','next','actions']);
+ return {id:e.id,blocks:Object.fromEntries(Object.entries(e.blocks).filter(([name])=>publicNames.has(name))),attrs:Object.fromEntries(Object.entries(e.attrs).filter(([name])=>publicNames.has(name))),...(e.wire?{wire:{version:e.wire.version}}:{}),projection:'public-ui'};
+}
+
+export function readReplyMemory(source){
+ const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status'])));
+ return e.blocks.memory.trim()?strictJSON(e.blocks.memory):null;
+}
 
 // The host owns the YAML dependency. This adapter is a read-only display
 // boundary; it never changes messages, protocol generations, or stored state.

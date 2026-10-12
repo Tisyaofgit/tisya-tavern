@@ -1087,7 +1087,7 @@ function foundationRequire(id){
  entry[0](module,module.exports,name=>{if(!Object.hasOwn(entry[1],name))throw Error('Unknown Foundation dependency');return foundationRequire(entry[1][name]);});
  return module.exports;
 }
-export const {isReplyMessage,extractXMLBody,parseDisplayEnvelope}=foundationRequire('xml-envelope.cjs');
+export const {isReplyMessage,extractXMLBody,parseDisplayEnvelope,xmlTokens,replyRegion}=foundationRequire('xml-envelope.cjs');
 export const {projectJourney}=foundationRequire('journey-reader.cjs');
 export const {countBody}=foundationRequire('body-count.cjs');
 export const {read:readParagraphs}=foundationRequire('numbered-paragraphs.cjs');

@@ -1,6 +1,6 @@
-import {parseDisplayEnvelope,strictJSON,validateMemoryProjection,visiblePending} from './reader-core.js';
+import {validateMemoryProjection,visiblePending} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
-import {readReplyBlock} from './reply-formats.js';
+import {readReplyBlock,readPublicReplyEnvelope,readReplyMemory} from './reply-formats.js';
 
 const fail=()=>{throw Object.assign(Error('TISYA_READER_DETAILS_INVALID'),{code:'TISYA_READER_DETAILS_INVALID'});};
 function heart(value){
@@ -11,7 +11,7 @@ function heart(value){
 // Public summaries retain the original task.plan field. Internal input, stop,
 // references, unlocks and next planning never become presentation data.
 export function readReplyDetails(source){
- const envelope=parseDisplayEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
+ const envelope=readPublicReplyEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
  if(!Array.isArray(task.audit))fail();
  const audit=task.audit.map(row=>{if(!row||['kind','status','evidence'].some(k=>typeof row[k]!=='string'||!row[k].trim()))fail();return {kind:row.kind,status:row.status,evidence:row.evidence};});
  let rounds;try{
@@ -19,7 +19,7 @@ export function readReplyDetails(source){
   const tasks=(envelope.wire?task.tasks:[]).flatMap((row,i)=>{if(!row||typeof row.plan!=='string')fail();return row.plan.trim()?[{label:'任务 '+String(i+1).padStart(2,'0'),text:row.plan}]:[];});
   const delivered=next.delivered.map(text=>{if(typeof text!=='string')fail();return {text};});
   let pending=[],pendingError=false;
-  if(envelope.blocks.memory?.trim())try{const memory=strictJSON(envelope.blocks.memory);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection(memory,{body:envelope.blocks.body});pending=memory.未完事项.filter(row=>visiblePending(row,{mode:'emit',audience:'读者'})&&next.tasks?.some(task=>task.text===row.事项)).map(row=>({label:row.事项,status:row.状态,text:row.触发,fields:[['依据',row.依据]]}));}}catch{pendingError=true;}
+  try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection(memory,{body:envelope.blocks.body});pending=memory.未完事项.filter(row=>visiblePending(row,{mode:'emit',audience:'读者'})&&next.tasks?.some(task=>task.text===row.事项)).map(row=>({label:row.事项,status:row.状态,text:row.触发,fields:[['依据',row.依据]]}));}}catch{pendingError=true;}
   rounds={tasks,delivered,pending,pendingError};
  }catch{rounds={error:true,tasks:[],delivered:[],pending:[]};}
  return {taskHeart:heart(task.heart),nextHeart:heart(next.heart),audit,rounds};

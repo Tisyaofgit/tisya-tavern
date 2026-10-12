@@ -1,15 +1,16 @@
 import {mountActionChoice} from './actions.js';
-import {readReplyBlock} from './reply-formats.js';
+import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
-import {isReplyMessage,extractXMLBody,parseDisplayEnvelope,projectJourney,countBody,readParagraphs} from './reader-core.js';
+import {isReplyMessage,extractXMLBody,projectJourney,countBody,readParagraphs} from './reader-core.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
     const block=/^TISYA_READER_(TASK|TITLE|NEXT)_(YAML_\w+|JSON_SYNTAX|FORMAT|OBJECT|MISSING)$/.exec(safe);
     if(block){const name={TASK:'本轮任务',TITLE:'标题',NEXT:'下轮交付'}[block[1]];return `${name}区块${block[2]==='YAML_UNAVAILABLE'?'缺少宿主 YAML 读取组件，请更新并完全重启扩展。':'格式未通过读取校验。'}原消息仍保留。（${safe}）`;}
+    if(safe==='TISYA_PERMISSION_SHAPE')return `记录中的权限字段格式不符合协议，该记录暂不展示。原消息仍保留。（${safe}）`;
     const message=safe==='TISYA_JOURNEY_MEMORY_UNSUPPORTED'?'本条记忆格式不受支持，无法核验公开权限。':safe==='TISHA_OUTPUT_SIZE'?'消息过长，无法打开阅读页。':/^TISHA_OUTPUT_|^TISYA_HANDOFF_|^TISYA_PIPES_|^TISHA_JSON_/.test(safe)?'消息结构不完整或格式不符合协议。':/^TISYA_MEMORY5_|^TISYA_JOURNEY_|^TISYA_PERMISSION_/.test(safe)?'回合记录未通过权限或原文引用校验。':safe==='TISYA_READER_ACTIONS_INVALID'?'行动列表格式不完整。':safe==='TISYA_READER_FORMAT'||/^TISYA_MARK_/.test(safe)?'正文排版失败。':'本条内容未通过阅读校验。';
     return `${message}原消息仍保留。（${safe}）`;
 }
@@ -29,7 +30,7 @@ export function inspectMessage(source) {
     if(!structured)return {structured:false,body,journey:{value:null},actions:{value:[]}};
     const journey=attempt(()=>projectJourney(source));
     const actions=attempt(()=>{
-        const envelope=parseDisplayEnvelope(source),next=readReplyBlock(envelope,'next');
+        const envelope=readPublicReplyEnvelope(source),next=readReplyBlock(envelope,'next');
         if(!Array.isArray(next?.actions)||next.actions.some(row=>!row||typeof row.text!=='string'||!row.text.trim()||typeof row.type!=='string'||typeof row.source!=='string'))throw Object.assign(Error(),{code:'TISYA_READER_ACTIONS_INVALID'});
         return next.actions.map(({text,type})=>({text,type}));
     });

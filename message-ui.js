@@ -7,8 +7,7 @@ import {replyControlsCSS} from './reply-details.js';
 import {appearanceValues} from './appearance-settings.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {inspectMessage,readerErrorText,readerErrorCode} from './reader.js';
-import {parseDisplayEnvelope} from './reader-core.js';
-import {readReplyBlock} from './reply-formats.js';
+import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {waterStyle} from './visual-theme.js';
 import {visualAssets,motionManifest,journeyArt,journeyIcons} from './visual-assets.js';
 import {createWaterMotion,mountPendantRack,CHAT_DEFAULTS} from './visual-core.js';
@@ -27,7 +26,7 @@ function mountJourney(document,container,data){
   if(id==='player'){empty('玩家档案与实时状态将在后续版本接入。','backpack');}
   else if(id==='tasks'){empty('任务页面已就位，任务功能待接入。','task-scroll');}
   else if(id==='more'){const c=card('日夜之间','选择旅程的纸色与灯光');const options=make('div',null,'jr-theme-options');for(const [k,text]of [['day','日间'],['night','夜间']]){const b=make('button',text,'jr-theme-choice');b.type='button';b.setAttribute('aria-pressed',String(root.dataset.theme===k));b.onclick=()=>{manualTheme=true;root.dataset.theme=k;options.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));};options.append(b);}c.append(options);}
-  else if(!model){empty('本条记录暂未就绪，原消息保留。',id==='memory'?'memory-letter':null);}
+  else if(!model){empty(data.journey.error?readerErrorText(data.journey.error):'本条记录暂未就绪，原消息保留。',id==='memory'?'memory-letter':null);}
   else if(id==='memory'){if(!model.memories.length&&!model.changes.length)empty('这一回合，暂无可展示的记忆。','memory-letter');for(const memory of model.memories){const c=card(memory.scene?.title,memory.summary);if(memory.scene?.places?.length)c.prepend(make('p',memory.scene.places.join(' · '),'jr-meta'));if(memory.quote){const d=make('details',null,'jr-quote');d.append(make('summary','回看这一刻'),make('p',memory.quote.text,'jr-quote-text'));c.append(d);}for(const result of memory.results??[])c.append(make('p',result,'jr-meta'));if(memory.impact)c.append(make('p',memory.impact));}for(const change of model.changes){const c=card(change.object+' · '+change.field);if(change.hasNewValue)c.append(make('p',typeof change.newValue==='string'?change.newValue:JSON.stringify(change.newValue)));if(change.deleted)c.append(make('p','已移除'));if(change.reason)c.append(make('p',change.reason,'jr-meta'));}}
   else if(id==='characters'){const rows=model.characters.filter(c=>c.cognition.length);if(!rows.length)empty('相遇，会在这里留下记录。');for(const row of rows){const c=card(row.name);row.cognition.forEach(r=>c.append(make('p',r.content)));}}
   viewport.scrollTop=positions.get(id)??0;
@@ -41,7 +40,7 @@ export function mountMessageVisual(document,container,{source,name,formatBody,fo
  let taskRound=null,nextRound=null;
  if(data.details?.value)taskRound=mountRoundPanel(document,task,data.details.value,'task');else{for(const n of task.querySelectorAll('.fold-head,#task-heart,#task-content'))n.remove();}
  const taskHeart=taskRound?.heart;
- let envelope=null;try{envelope=data.structured?parseDisplayEnvelope(source):null;const title=envelope&&readReplyBlock(envelope,'title');if(typeof title?.text==='string'&&title.text.trim())heading.textContent=title.text;const meta=[title?.time,title?.place,title?.world].filter(x=>typeof x==='string'&&x.trim());if(meta.length)subtitle.textContent=meta.join(' · ');}catch(error){subtitle.textContent=readerErrorText(readerErrorCode(error));}
+ let envelope=null;try{envelope=data.structured?readPublicReplyEnvelope(source):null;const title=envelope&&readReplyBlock(envelope,'title');if(typeof title?.text==='string'&&title.text.trim())heading.textContent=title.text;const meta=[title?.time,title?.place,title?.world].filter(x=>typeof x==='string'&&x.trim());if(meta.length)subtitle.textContent=meta.join(' · ');}catch(error){subtitle.textContent=readerErrorText(readerErrorCode(error));}
  const story=make('article',null,'story-region'),body=make('div',null,'story');story.append(make('div',null,'wave-rule'),body);root.append(story);let bodyStamp=null;
  function renderBody(){const nativeHTML=!data.body.error?formatNativeBody?.(data.body.paragraphs?.value?.length?data.body.paragraphs.value.map(p=>p.raw).join('\n\n'):data.body.value):null;const options=getAppearance('body'),key=JSON.stringify([options,nativeHTML]);if(key===bodyStamp)return;const folds=[...body.querySelectorAll('details')].map(n=>n.open);body.replaceChildren();if(data.body.error)body.append(make('p','正文尚未完整就绪，可在消息菜单中查看或编辑原消息。','loading-note'));else if(nativeHTML!==null&&nativeHTML!==undefined){const nativeBody=make('div',null,'mes_text tisya-native-body');nativeBody.innerHTML=nativeHTML;body.append(nativeBody);}else try{const rows=data.body.paragraphs?.value;if(rows?.length){for(const p of rows){const section=make('section',null,'reading-paragraph'),text=make('div');text.innerHTML=formatProse(document,p.raw,formatBody,options);section.append(text);body.append(section);}}else body.innerHTML=formatProse(document,data.body.value,formatBody,options);}catch(error){const note=make('p','正文排版暂不可用。'+readerErrorText(readerErrorCode(error)),'loading-note');note.setAttribute('role','status');body.append(note);onError(error);}body.querySelectorAll('details').forEach((n,i)=>{if(folds[i]!==undefined)n.open=folds[i];});style.textContent=waterStyle+'\n'+adaptation+'\n'+proseStyles(options)+'\n'+replyControlsCSS+'\n'+WATER_CONTROL_CSS+'\n'+extraCSS;bodyStamp=key;}
  renderBody();
