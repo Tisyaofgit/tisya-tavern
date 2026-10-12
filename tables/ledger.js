@@ -29,9 +29,9 @@ export function project(origin,session,sourceKeys){
  return {registry:copy(origin.registry),rows:values,anchors,commits:accepted,archived:new Set(accepted.filter(c=>['archive','history'].includes(c.kind)).map(c=>c.source)),last:accepted.at(-1)?.id??null,revision:session.revision};
 }
 export function parseJSONResponse(response){
- if(object(response)&&(Array.isArray(response.changes)||typeof response.goal==='string'))return response;
+ if(object(response)&&(Array.isArray(response.changes)||typeof response.goal==='string'||response.blueprint&&response.artifacts))return response;
  let text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('');
- check(typeof text==='string'&&text.trim(),'辅助 API 没有返回文本结果');text=text.trim();if(/^```(?:json)?\s/i.test(text))text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+ check(typeof text==='string'&&text.trim(),'辅助 API 没有返回文本结果');text=text.trim();if(text.includes('<reply')){const extra=text.match(/<extra(?:\s[^>]*)?>([\s\S]*?)<\/extra>/i)?.[1]??'';const results=[...extra.matchAll(/<tisya_result(?:\s[^>]*)?>([\s\S]*?)<\/tisya_result>/gi)];check(results.length===1,'配套模式回复须在 extra 中提供唯一的 tisya_result');text=results[0][1].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&').trim();}if(/^```(?:json)?\s/i.test(text))text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
  let result;try{result=JSON.parse(text);}catch{throw Error('辅助 API 返回的不是完整 JSON，未写入表单');}check(object(result),'辅助产物必须是对象');return result;
 }
 export function prepareCommit(view,proposal,{source,kind='archive',evidence,worldTime=null,allowedTables,sourceOrder={},now=new Date().toISOString()}){
@@ -45,7 +45,7 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
   check(object(op.values)&&object(op.access)&&typeof op.evidence==='string'&&op.evidence.trim()&&evidence.includes(op.evidence),'每项更新需有当前来源中真实存在的连续原文证据');
   const id=ids.get(op.id)??op.id,before=rows.get(id);
   check((before?.rev??0)===op.expected,'记录版本冲突：'+op.id);if(before&&['scene','state','relations','cognition','holdings','tasks','timers','clues'].includes(table.id)&&sourceOrder[before.source]!==undefined&&sourceOrder[source]!==undefined)check(sourceOrder[before.source]<=sourceOrder[source],'旧楼层不能覆盖更晚的当前状态；请按楼层从早到晚补录，或将这项改为历史事件');check(!before||before.table===table.id,'记录不能迁移到另一张表');check(before||ids.has(op.id),'新记录必须使用 new: 临时 ID');
-  check(kind==='manual'||!Object.keys(op.values).some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
+  check(kind==='manual'||![...Object.keys(op.values),...(op.unset??[])].some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
   const values={...(before?.values??{}),...copy(op.values)};check(op.unset===undefined||Array.isArray(op.unset)&&op.unset.every(k=>table.fields[k]&&!table.fields[k].required),'不能清除必填或未知字段');for(const key of op.unset??[])delete values[key];
   for(const [key,def]of Object.entries(table.fields))if(Object.hasOwn(values,key)){if(def.type==='ref')values[key]=ids.get(values[key])??values[key];else if(def.type==='refs')values[key]=values[key].map(x=>ids.get(x)??x);}
   if(table.id==='objects'){const type=index.types.get(normalized(values.类型));check(type,'类型未登记：'+values.类型);values.类型=type.id;}
@@ -65,11 +65,11 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
 }
 export function retrieval(view,{tags=[],query='',topK=8}={}){
  const byId=new Map(view.rows.map(r=>[r.id,r])),mandatory=new Set();
- for(const row of view.rows){const names=[row.values.名称,...(row.values.别名??[])];if(row.table==='objects'&&names.some(n=>tags.some(tag=>tag.includes(n))))mandatory.add(row.id);if(['scene','state','tasks','timers','clues','preferences'].includes(row.table))mandatory.add(row.id);}
+ for(const row of view.rows){const names=[row.values.名称,...(row.values.别名??[])];if(row.table!=='preferences'&&names.some(n=>tags.some(tag=>tag.includes(n))))mandatory.add(row.id);if(['scene','state','tasks','timers','clues','preferences'].includes(row.table))mandatory.add(row.id);}
  for(const row of view.rows){const table=view.registry.tables.find(t=>t.id===row.table);const refs=Object.entries(row.values).flatMap(([k,v])=>table.fields[k]?.type==='ref'?[v]:table.fields[k]?.type==='refs'?v:[]);if(refs.some(id=>mandatory.has(id)))mandatory.add(row.id);}
  for(const id of [...mandatory]){const row=byId.get(id),table=view.registry.tables.find(t=>t.id===row.table);for(const [k,d]of Object.entries(table.fields)){const refs=d.type==='ref'?[row.values[k]]:d.type==='refs'?row.values[k]??[]:[];for(const ref of refs)if(byId.has(ref))mandatory.add(ref);}}
  const segments=query.toLocaleLowerCase().match(/[\p{L}\p{N}]{2,}/gu)??[];const words=[...new Set(segments.flatMap(w=>/[\p{Script=Han}]/u.test(w)?Array.from({length:w.length-1},(_,i)=>w.slice(i,i+2)):[w]))];
- const scored=view.rows.filter(r=>!mandatory.has(r.id)&&['events','objects','facts'].includes(r.table)).map(row=>{const content=JSON.stringify(row.values).toLocaleLowerCase();return {row,score:words.reduce((s,w)=>s+(content.includes(w)?1:0),0)};}).filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
+ const scored=view.rows.filter(r=>!mandatory.has(r.id)&&r.table!=='preferences').map(row=>{const content=JSON.stringify(row.values).toLocaleLowerCase();return {row,score:words.reduce((s,w)=>s+(content.includes(w)?1:0),0)};}).filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
  return {mandatory:[...mandatory].map(id=>byId.get(id)),optional:scored.slice(0,topK).map(x=>x.row),unresolved:tags.filter(tag=>!view.rows.some(r=>r.table==='objects'&&tag.includes(r.values.名称)))};
 }
 

@@ -1,0 +1,15 @@
+import {routeStyleRules} from './style-rules.js';
+import {renderProtocol} from '../settings-core.js';
+import {applyWireContract} from '../config/wire-contract.js';
+import {SLOT_ROUTER,SLOT_NAMES} from './slots.js';
+export const TABLE_MODES=Object.freeze({tableArchive:{id:'archive',name:'记忆归档',steps:'核来源与归档边界→比对当前表→按模板提出有证据的变更→校验版本、权限和关联；不推进剧情'},plotAdvance:{id:'plot',name:'剧情推进',steps:'读取用户输入和最新进度→核任务、到期条件与伏笔→按人物动机设计条件性节拍→保留玩家未定选择；不写入事实'},preferenceAnalysis:{id:'preferences',name:'偏好确认',steps:'识别用户明确要求→分析候选表现偏好→逐项绑定用户原句→标注推测与作用域→交给用户确认；重投本身不证明原因'},tableGenesis:{id:'genesis',name:'创世设计',steps:'接续创世蓝图→登记表、字段与类型→生成底档和初始状态→核关联、公式及后续填录规则→形成可修改草稿'},objectArchive:{id:'objects',name:'新发现建档',steps:'区分新对象与已有对象的新事实→复用类型及别名→补齐有依据字段→形成档案提案'},historyImport:{id:'history',name:'历史补录',steps:'按来源楼层和已知时间整理→保留事件经过→核对象与当时状态→防止旧状态覆盖新进度→形成补录提案'}});
+export function addSlotRouting(entries){const route=SLOT_ROUTER.split('\n').slice(1,-1).join('\n');if(!entries.tisya_task_start.includes('@ROUTE TISYA.DATA.SOURCE'))entries.tisya_task_start=entries.tisya_task_start.replace('[/TASK.START]',route+'\n[/TASK.START]');return entries;}
+export function compileTaskMode({compiledBase:c,configuration,source},task,instructions=''){
+ const mode=TABLE_MODES[task];if(!mode)throw Error('辅助模式未登记');const m=configuration.world.modes[configuration.world.mode],min=m.parameters?.minBody??80,max=m.parameters?.maxBody??600;if(!Number.isInteger(min)||!Number.isInteger(max)||min<0||max<min)throw Error('模式报告长度无效');
+ c.range={下限:min,上限:max};c.rest=renderProtocol(c,{});applyWireContract(c.rest.entries);const entries=routeStyleRules(addSlotRouting(c.rest.entries)),chain=entries.tisya_inner_chain,match=chain.match(/\[C\.2\][\s\S]*?\[\/C\.2\]/);if(!match)throw Error('共用输出契约缺失');
+ const resultContract=match[0].replace('@REQUIRE DONE(C.1)','@REQUIRE DONE(MODE.CHECK)');
+ entries.tisya_internal_login=entries.tisya_internal_login.replace(/^@FLOW .*$/m,'@FLOW MODE.INPUT→MODE.ANALYZE→MODE.PROPOSE→MODE.CHECK→C.2→INNER_END→COMMIT.READY→PREPARE_STEP');
+ entries.tisya_inner_chain='[INNER]\n@USE [REGISTRY]; private workflow, never disclose internal reasoning\n@MODE '+mode.name+'; assistant identity, voice and outward reply blocks remain shared\n[MODE.INPUT]\n@USE current task material slots only; capture source and revision once\n[/MODE.INPUT]\n[MODE.ANALYZE]\n'+mode.steps+'\n[/MODE.ANALYZE]\n[MODE.PROPOSE]\n'+instructions+'\n[/MODE.PROPOSE]\n[MODE.CHECK]\n核真实证据、当前版本、字段类型、知情范围与未定选择。正文只给用户可核对的结论和待确认事项。不得把候选说成已经写入。\n@RESULT selected output schema payload; display is not state write\n@DONE MODE.CHECK\n[/MODE.CHECK]\n'+resultContract+'\n@EXTENSION 本模式已登记 extra/tisya_result；将本次机器产物的严格 JSON 作为该组件文本，按 XML 转义 & 和 <。保留 reply 的十块结构；不将数据挪到 vars。\n@DELIVER body is a concise mode report using the same assistant voice; task/next heart directions follow selected settings, opening and closing must concern different actual points. No fictional scene continuation in utility modes.\n[/INNER]';
+ c.taskMode=mode.id;return c;
+}
+export const auxiliaryWire='机器产物放入 <extra><tisya_result>严格 JSON</tisya_result></extra>，其余 reply 区块沿用共用格式。正文报告工作结果，不输出私有分析过程；这是一份待校验产物，不是写入回执。';
