@@ -30,7 +30,7 @@ test('three workflow detail levels change actual compiled requests and preserve 
   assert.doesNotMatch(request,/PERM_SHAPE|never bare null\/~/);
   assert.doesNotMatch(inner,/权限：vars\||valid variable operations replace/);
   assert.match(inner,/采用诙谐基调/);assert.match(inner,/围绕玩家已经确定的意图/);assert.match(inner,/重大选择保留给玩家/);
-  assert.match(inner,/"min":2000,"max":5000/);assert.match(inner,/MVU is disabled/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
+  assert.match(inner,/"min":2000,"max":5000/);assert.doesNotMatch(inner,/MVU is disabled/);assert.match(inner,/自有状态执行器停用不禁用其他来源/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
   for(const name of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(inner.includes('<'+name),detail+' '+name);
   assert.doesNotMatch(inner,/自然小说|缇斯亚叙事基调|T\.1|<think>/);
  }
@@ -141,15 +141,19 @@ test('native database mode defaults on, preserves external payloads and allows l
  assert.equal(defaultWorld().context.owner,'native');
 });
 
-test('memory owner selector persists per chat, restores managed settings, and rejects malformed values',async()=>{
+test('context owner keeps independent history controls visible and preserves saved selections',async()=>{
  const f=fixture();delete f.w.context.owner;f.w.context.memory=true;f.w.context.history=17;
  const win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const mount=()=>mountConfiguration(doc,box,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),initialTab:'data'});
- let ui=mount();await ui.ready;let root=ui.root.shadowRoot,select=root.querySelector('[aria-label="记忆与上下文"]');
- assert.equal(select.value,'"native"');assert.match(root.textContent,/允许数据库等扩展注入/);
+ let ui=mount();await ui.ready;let root=ui.root.shadowRoot,select=root.querySelector('[aria-label="上下文来源"]');
+ assert.equal(select.value,'"native"');assert.match(root.textContent,/允许数据库扩展注入/);
+ assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
+ assert.equal(root.querySelector('[aria-label="原卡 MVU"]').closest('fieldset').hidden,false);
+ assert.equal(root.querySelector('[aria-label="注入窗口以前的记忆"]'),null);
  select.value='"tisya"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
  assert.equal(f.store.read().world.context.owner,'tisya');assert.equal(f.store.read().world.context.memory,true);assert.equal(f.store.read().world.context.history,17);
- ui.dispose();ui=mount();await ui.ready;root=ui.root.shadowRoot;select=root.querySelector('[aria-label="记忆与上下文"]');assert.equal(select.value,'"tisya"');
+ ui.dispose();ui=mount();await ui.ready;root=ui.root.shadowRoot;select=root.querySelector('[aria-label="上下文来源"]');assert.equal(select.value,'"tisya"');
+ assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
  select.value='"native"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));assert.equal(f.store.read().world.context.owner,'native');ui.dispose();
  f.c.chatId='other';assert.equal(f.store.read().world.context.owner,'native');f.c.chatId='one';assert.equal(f.store.read().world.context.history,17);
  for(const value of [null,false,'unknown']){const s=f.store.read();s.world.context.owner=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/记忆与上下文选项无效/);}

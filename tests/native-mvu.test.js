@@ -35,7 +35,7 @@ test('native MVU uses selected branch pre-swipe state and current user snapshot 
  assert.equal((await prepareNativeMvu(f.c,f.w,'normal',runtime)).messageIndex,2);
 });
 test('all compiled detail levels retain native JSONPatch format without disabled MVU wording',()=>{
- const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/MVU is disabled|MVU disabled→/);assert.match(text,/<UpdateVariable><JSONPatch>/);assert.match(text,/结算由原生脚本负责/);}
+ const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/MVU is disabled|MVU disabled→/);assert.match(text,/原生更新标签/);assert.match(text,/原生脚本为唯一结算者/);}
 });
 test('actual host request supplies native state and rules, and rejects state drift before send',async()=>{
  const f=setup(),old=globalThis.Mvu;globalThis.Mvu=f.runtime;
@@ -57,3 +57,50 @@ test('native appended status marker is a read-only extra attachment; arbitrary t
  const original=fixture()+'\n<StatusPlaceHolderImpl/>',e=parseDisplayEnvelope(original);assert.match(e.blocks.extra,/<StatusPlaceHolderImpl\/>/);assert.ok(original.endsWith('</reply>\n<StatusPlaceHolderImpl/>'));
  assert.throws(()=>parseDisplayEnvelope(fixture()+'\nNOPE\n<StatusPlaceHolderImpl/>'));
 });
+
+const nativeFormat=`变量输出格式:
+ rule:
+ - you must output the update analysis and the actual update commands at once in the end of the next reply
+ format: |-
+  <UpdateVariable>
+  <Analysis>private example</Analysis>
+  <JSONPatch>[]</JSONPatch>
+  </UpdateVariable>
+关键变量 value 形态速查:
+  /玩家角色/背包物品: {物品名: {数量: 数字}}
+  FIELD_SCHEMA_MUST_SURVIVE`;
+test('native request leaves original variable material, history and tools byte-for-byte unchanged',async()=>{
+ const f=setup();f.w.context.owner='native';f.w.context.card=false;
+ f.c.characters[0].data.character_book.entries[0].content=nativeFormat;
+ const store=createStore({getContext:()=>f.c,persist:async()=>true}),host=createHost({getContext:()=>f.c,getSource:()=>f.source,store,createParameters(){throw Error('native route must not be rebuilt');}});
+ const payload={messages:[{role:'system',content:nativeFormat},{role:'user',content:'current'}],tools:[{type:'function',function:{name:'database'}}],model:'native'};
+ const before=structuredClone(payload);await host.before('normal');await host.payloadReady(payload);assert.deepEqual(payload,before);assert.equal(Object.hasOwn(payload,'toJSON'),false);
+ payload.messages.push({role:'system',content:'DATABASE_LATE'});assert.doesNotThrow(()=>JSON.stringify(payload));
+});
+test('preprocessing and all three output consumers are generic without an MVU brand declaration',()=>{
+ const f=setup();f.c.characters[0].data.extensions.tavern_helper.scripts=[];
+ for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;
+  const entries=compileNarrative(f.c,f.source,MOODS).rest.entries;
+  assert.match(entries.tisya_task_start,/@COMPONENT_ROUTE/);assert.match(entries.tisya_task_start,/@VARIABLE_ROUTE/);
+  assert.doesNotMatch(entries.tisya_inner_chain,/MVU is disabled|MVU disabled→/);
+  assert.match(entries.tisya_inner_chain,/不转换成另一种 MVU 方言/);
+  if(detail!=='format')for(const block of ['vars','extra','status'])assert.match(entries.tisya_inner_chain,new RegExp('@IN.output_refs.'+block));
+ }
+});
+test('different external update syntaxes stay opaque, private and available to their native writer',()=>{
+ for(const update of ['<UpdateVariable>_.set(\"score\", 4);</UpdateVariable>','<StateChange>{\"score\":4}</StateChange>']){
+  const source=fixture().replace('<vars/>','<vars format="xml"><![CDATA['+update+']]></vars>'),before=source;
+  const e=parseDisplayEnvelope(source),view=inspectMessage(source),v=JSON.parse(e.blocks.vars);
+  assert.equal(v.protocol,'external-native');assert.equal(v.opaque,true);assert.equal(v.source,update);assert.equal(view.journey.error,undefined);assert.equal(source,before);assert.doesNotMatch(JSON.stringify(view.journey),/StateChange|_.set/);
+ }
+});
+test('legacy appended native update is readable once without source writes or private Analysis leakage',()=>{
+ const ops=[{op:'replace',path:'/世界状态/当前时间',value:'2001-10-12 11:08'},{op:'replace',path:'/备注',value:'literal </JSONPatch> & <not-tag>'}];
+ const block='<UpdateVariable><Analysis>PRIVATE_REASONING_DO_NOT_SHOW</Analysis><JSONPatch>'+JSON.stringify(ops)+'</JSONPatch></UpdateVariable>';
+ for(const slot of ['<vars/>','<vars>  </vars>'])for(const status of ['','\n<StatusPlaceHolderImpl/>']){
+  const source=fixture().replace('<vars/>',slot)+'\n'+block+status,prior=source;
+  const e=parseDisplayEnvelope(source);assert.deepEqual(JSON.parse(e.blocks.vars).operations,ops);assert.doesNotMatch(JSON.stringify(inspectMessage(source)),/PRIVATE_REASONING_DO_NOT_SHOW/);assert.equal(source,prior);
+ }
+ for(const source of [fixture()+'\n'+block+'\n'+block,fixture()+'\n'+block+'\nARBITRARY_TAIL',fixture().replace('<vars/>','<vars format="xml">'+block+'</vars>')+'\n'+block,fixture()+'\n<UpdateVariable><JSONPatch>[bad]</JSONPatch></UpdateVariable>'])assert.throws(()=>parseDisplayEnvelope(source));
+});
+test('native RFC add operation is retained without changing its dialect',()=>{const source=fixture().replace('<vars/>','<vars format="xml"><UpdateVariable><JSONPatch>[{"op":"add","path":"/items/-","value":"新增"}]</JSONPatch></UpdateVariable></vars>');assert.deepEqual(JSON.parse(parseDisplayEnvelope(source).blocks.vars).operations,[{op:'add',path:'/items/-',value:'新增'}]);});

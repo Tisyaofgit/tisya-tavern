@@ -1,0 +1,125 @@
+{
+  "version": "0.2.0-alpha.24",
+  "scope": [
+    "independent native/managed history count",
+    "remove legacy history-memory injection",
+    "generic preset component/variable routing without final-request rewriting",
+    "read-only native variable compatibility",
+    "configurable per-message shortcut row"
+  ],
+  "automated": {
+    "fullSuite": {
+      "passed": 251,
+      "failed": 0
+    },
+    "nativeFocused": {
+      "passed": 12,
+      "failed": 0
+    }
+  },
+  "modelFirstDrafts": {
+    "method": "fresh agents, no conversation inheritance, full request chunks and pre-generation receipts; neutral adult card scenario",
+    "originalCard": {
+      "chunks": 20,
+      "rawVarsInsideReply": true,
+      "originalWorldbookUnchanged": true,
+      "bodyCharacters": 1846,
+      "bodyMinimum": 2000,
+      "journeyError": "TISYA_PIPES_EVENT_PARENT"
+    },
+    "alternateLegacyProtocol": {
+      "chunks": 19,
+      "rawVarsInsideReply": true,
+      "protocolPreserved": "_.set",
+      "bodyCharacters": 1986,
+      "bodyMinimum": 2000,
+      "journeyError": "TISYA_PIPES_EVENT_PARENT"
+    },
+    "claim": "Variable placement passed; complete narrative-format acceptance did NOT pass. No repaired draft presented as first-pass."
+  },
+  "nativeFramework": {
+    "upstream": {
+      "helper": "c0196caee03955aa39e00db1a2623b2591bd3c6f",
+      "mvu": "54be11b09f21b1c4266e2d54b6f1ba9a3598db05"
+    },
+    "test": "Actual upstream extraction functions, type-stripped, pure dependency shims; no storage or Android execution",
+    "results": [
+      {
+        "dir": "source-routes-native",
+        "commands": [
+          {
+            "type": "set",
+            "full_match": "{\"op\":\"replace\",\"path\":\"/世界状态/当前时间\",\"value\":\"2001-10-12 11:08\"}",
+            "args": [
+              "[\"世界状态\"][\"当前时间\"]",
+              "\"2001-10-12 11:08\""
+            ],
+            "reason": "json_patch"
+          },
+          {
+            "type": "add",
+            "full_match": "{\"op\":\"delta\",\"path\":\"/玩家角色/身体/体能状态\",\"value\":1}",
+            "args": [
+              "[\"玩家角色\"][\"身体\"][\"体能状态\"]",
+              "1"
+            ],
+            "reason": "json_patch"
+          }
+        ],
+        "bodyCount": {
+          "value": 1846
+        },
+        "varsRead": {
+          "protocol": "mvu-json-patch",
+          "operations": [
+            {
+              "op": "replace",
+              "path": "/世界状态/当前时间",
+              "value": "2001-10-12 11:08"
+            },
+            {
+              "op": "delta",
+              "path": "/玩家角色/身体/体能状态",
+              "value": 1
+            }
+          ]
+        },
+        "journeyError": "TISYA_PIPES_EVENT_PARENT",
+        "actionsError": null
+      },
+      {
+        "dir": "source-routes-legacy-native",
+        "commands": [
+          {
+            "type": "set",
+            "full_match": "_.set(\"世界状态.当前时间\", \"2001-10-12 11:08\");",
+            "args": [
+              "\"世界状态.当前时间\"",
+              "\"2001-10-12 11:08\""
+            ],
+            "reason": ""
+          }
+        ],
+        "bodyCount": {
+          "value": 1986
+        },
+        "varsRead": {
+          "protocol": "external-native",
+          "opaque": true,
+          "source": "<UpdateVariable>\n_.set(\"世界状态.当前时间\", \"2001-10-12 11:08\");\n</UpdateVariable>"
+        },
+        "journeyError": "TISYA_PIPES_EVENT_PARENT",
+        "actionsError": null
+      }
+    ],
+    "duplicateCommandInsideJSON": false,
+    "cdata": true
+  },
+  "boundaries": [
+    "No Android or real-chat variable-write test.",
+    "Native framework remains sole writer; no parseMessage/replaceMvuData calls added to renderer.",
+    "Unknown external protocols remain opaque to Tisya; execution requires their original enabled script.",
+    "Native history interceptor runs on actual generation, not native dry-run previews.",
+    "Earlier rewritten-request draft rejected by user; its model samples excluded."
+  ]
+}

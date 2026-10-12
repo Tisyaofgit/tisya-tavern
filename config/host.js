@@ -1,5 +1,6 @@
 import {prepareNativeMvu} from './native-mvu.js';
-import {selectedHistory,historySignature,buildHistoryMemory,withoutHistoricalHearts} from './history-context.js';
+import {outputEnabled} from '../preset.js';
+import {selectedHistory,historySignature,limitNativeHistory} from './history-context.js';
 import {clone,fail,plain,worldKey,registry,resolveRoute,compileSelected,resources,resourceText,contextOwner} from './core.js';
 // Host APIs remain at this boundary. No credential value enters a prompt or backup.
 const list=value=>Array.isArray(value)?value:Array.isArray(value?.items)?value.items:Array.isArray(value?.connections)?value.connections:Array.isArray(value?.profiles)?value.profiles:[];
@@ -34,34 +35,46 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(p['prompt-post-processing']!==undefined)settings.custom_prompt_post_processing=p['prompt-post-processing'];settings.__tisyaModel=route.model||p.model;return settings;
  }
  async function before(type,options={},dryRun=false){if(type==='quiet'||type==='impersonate'){generation={passthrough:true};return;}const current=store.read(),{data:d,world:w}=current;generation=null;
-  if(contextOwner(w)==='native'){generation={...current,passthrough:true,nativeContext:true,type};return;}
+  if(contextOwner(w)==='native'){
+   generation={...current,passthrough:true,nativeContext:true,type};return;
+  }
   const route=resolveRoute(d,w,'main');
    const capturedSettings=connectionSettings(route),manager=ctx().getPresetManager('openai');
   if(route.preset!==null&&route.preset!=='native'&&manager.getSelectedPresetName()!==route.preset){nativePreset(route.preset);await new Promise((resolve,reject)=>{const c=ctx(),event=c.eventTypes.OAI_PRESET_CHANGED_AFTER,beforeEvent=c.eventTypes.OAI_PRESET_CHANGED_BEFORE;let timer;const protect=change=>{if(change.presetName!==route.preset)return;for(const [key,definition]of Object.entries(change.settingsToUpdate??{}))if(definition[3])delete change.preset[key];delete change.preset.bind_preset_to_connection;};const cleanup=()=>{clearTimeout(timer);c.eventSource.removeListener(event,done);if(beforeEvent)c.eventSource.removeListener(beforeEvent,protect);};const done=()=>{cleanup();manager.getSelectedPresetName()===route.preset?resolve():reject(Error('原生预设切换目标不一致'));};if(beforeEvent)c.eventSource.on(beforeEvent,protect);c.eventSource.on(event,done);timer=setTimeout(()=>{cleanup();reject(Error('原生预设切换超时'));},5000);try{manager.selectPreset(manager.findPreset(route.preset));}catch(e){cleanup();reject(e);}});}
   const source=route.preset===null?clone(await getBaseSource()):clone(getSource()),modular=route.preset===null||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));
   if(!modular){if(compileSelected(d,w).ids.length||w.controller||w.context.entries.length)fail('当前预设尚未适配选中项装配，请选用 alpha.13 配套预设');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials:{text:'',ids:[]},settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:false};return;}
   if(options.agentMode||await isAgentEnabled())fail('本版选中项编译使用普通生成；Agent 执行适配接口已预留，请先关闭原生 Agent 模式');
-  const materials=await resolveMaterials(d,w),nativeMvu=await prepareNativeMvu(ctx(),w,type);if(nativeMvu)materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu};
+  const materials=await resolveMaterials(d,w),nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(nativeMvu)materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu};
+ }
+ function historyInput(chat,type='normal'){
+  if(type==='quiet'||type==='impersonate')return null;
+  const current=store.read();
+  if(contextOwner(current.world)!=='native')return null;
+  if(chat===ctx().chat)fail('历史范围必须作用于宿主发送副本，原始聊天未改动。');
+  if(generation&&(generation.key!==current.key||generation.revision!==current.revision))fail('生成期间聊天或配置已变化，请重试');
+  const report=limitNativeHistory(chat,current.world.context.history);
+  if(generation)generation.historyWindow=report;
+  return report;
  }
  function selectedText(){return generation?.materials?.text??'';}
  async function payloadReady(payload){if(!generation)return;if(generation.passthrough){
   if(generation.nativeContext){
    if(worldKey(ctx())!==generation.key||store.read().revision!==generation.revision)fail('生成期间聊天或配置已变化，请重试');
-   const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
+   const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,historyWindow:generation.historyWindow??null,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
   }
   return;
  }const g=generation;if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');
   // Rebuild the controlled preset's material channels. Native worldbook activation
   // is deliberately not forwarded: only explicit selected refs can re-enter.
-  const c=ctx(),w=g.world,source=g.source,preparedHistory=new Map(),historyStamp=historySignature(c),historyMemory=g.modular&&enabledPrompts(source).some(p=>p.identifier==='chatHistory')?buildHistoryMemory(c,w,g.type):null;
-  if(g.nativeMvu){const now=await prepareNativeMvu(c,w,g.type);if(!now||now.signature!==g.nativeMvu.signature||now.messageIndex!==g.nativeMvu.messageIndex||now.stateDigest!==g.nativeMvu.stateDigest||now.text!==g.nativeMvu.text)fail('原卡 MVU 来源或变量已变化，请重新生成');}
+  const c=ctx(),w=g.world,source=g.source,preparedHistory=new Map(),historyStamp=historySignature(c);
+  if(g.nativeMvu){const now=await prepareNativeMvu(c,w,g.type,undefined,outputEnabled(source));if(!now||now.signature!==g.nativeMvu.signature||now.messageIndex!==g.nativeMvu.messageIndex||now.stateDigest!==g.nativeMvu.stateDigest||now.text!==g.nativeMvu.text)fail('原卡 MVU 来源或变量已变化，请重新生成');}
   if(g.modular)for(const m of selectedHistory(c,w,g.type))preparedHistory.set(m,await prepareMessage(clone(m)));
   if(g.modular&&historySignature(c)!==historyStamp)fail('聊天记录已变化，请重新生成');
-  const messages=g.modular?buildMessages({source,context:c,world:w,materials:g.materials.text,substitute:s=>c.substituteParams(s),nativeMessages:payload.messages,type:g.type,options:g.options,preparedHistory,historyMemory}):clone(payload.messages);
+  const messages=g.modular?buildMessages({source,context:c,world:w,materials:g.materials.text,substitute:s=>c.substituteParams(s),nativeMessages:payload.messages,type:g.type,options:g.options,preparedHistory}):clone(payload.messages);
   const settings={...g.settings,...g.route.parameters};const model=g.route.model||settings.__tisyaModel||c.getChatCompletionModel(settings);delete settings.__tisyaModel;
   await checkBudget(messages,g.world.context.maxInputTokens,c);
   const {generate_data:next}=await createParameters(settings,model,g.type,messages,{allowToolCalls:!g.modular,toolData:g.modular?{}:undefined});if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');if(g.modular&&historySignature(ctx())!==historyStamp)fail('聊天记录已变化，请重新生成');next.stream=payload.stream;if(g.modular)validateBodyOverrides(next,parseRequestBody);for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,next);
-  const snap={at:new Date().toISOString(),world:g.key,revision:g.data.revision,task:'main',route:{connection:g.route.connection,preset:g.route.preset,model,sources:g.route.sources},selected:g.materials.ids,...historyMemory?{memory:clone(historyMemory.report)}:{},messages:clone(payload.messages),tools:clone(payload.tools??[])};last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();sealPayload(payload);onSnapshot(snap);
+  const snap={at:new Date().toISOString(),world:g.key,revision:g.data.revision,task:'main',route:{connection:g.route.connection,preset:g.route.preset,model,sources:g.route.sources},selected:g.materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();sealPayload(payload);onSnapshot(snap);
  }
  async function request(task,input,{signal}={}){const {data:d,world:w,key,revision}=store.read(),route=resolveRoute(d,w,task),definition=registry.tasks.get(task);if(task==='main')fail('主聊天请使用原生发送按钮');const driver=registry.executors.get(task);if(driver){if(typeof driver.run!=='function')fail('执行器缺少 run 接口');const selected=await resolveMaterials(d,w,task);if(worldKey(ctx())!==key||store.read().revision!==revision)fail('世界或配置已变化，任务未发送');return driver.run({input,route,signal,task,world:key,selected:clone(selected)});}if(definition.capability!=='chat')fail(definition.name+'执行接口尚未接入');
   const materials=await resolveMaterials(d,w,task),preset=nativePreset(route.preset),settings={...connectionSettings(route),...(preset?pickParameters(preset):{}),...route.parameters},messages=[];
@@ -70,17 +83,15 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(worldKey(ctx())!==key||store.read().revision!==revision)fail('世界或配置已变化，任务未发送');const snap={at:new Date().toISOString(),world:key,task,route:{connection:route.connection,preset:route.preset,model},selected:materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
   const response=await fetch('/api/backends/chat-completions/generate',{method:'POST',headers:ctx().getRequestHeaders(),body:JSON.stringify(payload),signal});if(!response.ok)fail('生成请求失败：'+response.status);return response.json();
  }
- return {presets,connections,books,entries,searchBooks,archives,before:async(...args)=>{try{await before(...args);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),clear(){generation=null;},api};
+ return {presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),clear(){generation=null;},api};
 }
-export function buildMessages({source,context:c,world:w,materials,substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map(),historyMemory}){const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
+export function buildMessages({source,context:c,world:w,materials,substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map()}){const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
  let historyInserted=false;
  for(const p of enabledPrompts(source)){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
   if(p.identifier==='chatHistory'){
    if(historyInserted)fail('聊天历史槽重复，请在预设中只保留一个已启用的 chatHistory');historyInserted=true;
-   const memory=historyMemory??buildHistoryMemory(c,w,type);if(memory.text)out.push({role:'system',content:memory.text});
    const chat=selectedHistory(c,w,type);for(const [i,m]of chat.entries()){
-    const raw=preparedHistory.get(m)??String(m.mes??''),text=!m.is_user&&!(type==='continue'&&i===chat.length-1)?withoutHistoricalHearts(raw):raw,role=m.is_user?'user':'assistant',hasMedia=!!m.extra?.media?.length;
-    if(text!==raw)memory.report.strippedHeartMessages.push(c.chat.indexOf(m));
+    const text=preparedHistory.get(m)??String(m.mes??''),role=m.is_user?'user':'assistant',hasMedia=!!m.extra?.media?.length;
     let media=nativeMessages.filter(n=>n.role===role&&Array.isArray(n.content)&&n.content.some(p=>p.type==='text'&&m.mes&&p.text.includes(m.mes)));if(!m.mes&&hasMedia&&i===chat.length-1)media=nativeMessages.filter(n=>n.role===role&&Array.isArray(n.content)).slice(-1);if(media.length>1)fail('多媒体消息无法唯一对应，请缩小历史范围');if(hasMedia&&!media.length)fail('宿主未提供该消息的多媒体内容，请检查模型能力或历史范围');if(text||media.length)out.push({role,content:media.length?[...(text?[{type:'text',text}]:[]),...clone(media[0].content.filter(p=>p.type!=='text'))]:text});
    }if(type==='continue')out.push({role:'system',content:'继续上一条 assistant 回复中尚未完成的部分，不重复已经输出的文本。'});if(options.quiet_prompt)out.push({role:'system',content:substitute(options.quiet_prompt)});continue;
   }

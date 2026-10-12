@@ -272,3 +272,5 @@ body.tisya-active .tisya-shortcut-panel label{display:grid;grid-template-columns
 body.tisya-active .tisya-shortcut-panel :is(select,textarea){min-width:0;width:100%;box-sizing:border-box;font-size:16px;line-height:1.5;font-family:inherit;background:#183a33;color:inherit;border:1px solid #a8b98b88;border-radius:8px;padding:8px}
 body.tisya-active .tisya-phrase-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;margin-bottom:8px}
 body.tisya-active .tisya-phrase-use{text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}
+
+body.tisya-active .tisya-actions{flex-wrap:wrap;gap:6px}#tisya-message-slots{display:grid;gap:8px}#tisya-message-slots label{display:flex;justify-content:space-between;gap:12px}#tisya-message-slots select{max-width:70%}
