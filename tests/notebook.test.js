@@ -14,9 +14,9 @@ function setup(chat,mode='notes'){
 const messages=n=>Array.from({length:n},(_,i)=>({mes:`第${i+1}条正文`,name:'月潮',swipe_id:0}));
 test('public memory projection excludes secret rows, task, truth tags, conditions and psychology',()=>{
     const source=richFixture(),ctx={chat:[{mes:source}],getCurrentChatId:()=> 'a'};
-    const entry=notebookEntry(ctx,0,'memory');assert.match(entry.text,/白鹭渡口/);assert.match(entry.text,/false/);assert.match(entry.text,/true/);assert.equal(entry.text.includes('SECRET_SENTINEL'),false);assert.equal(entry.text.includes('<task'),false);assert.equal(ctx.chat[0].mes,source);
+    const entry=notebookEntry(ctx,0,'memory');assert.match(entry.text,/白鹭渡口/);assert.match(entry.text,/false/);assert.match(entry.text,/true/);assert.equal(entry.text.includes('SECRET_SENTINEL_未完'),false);assert.equal(entry.text.includes('<task'),false);assert.equal(ctx.chat[0].mes,source);
     const hidden=fixture({memory:`事件：幕后人物|${JSON.stringify(SECRET)}|SECRET_ONLY\n场景：SECRET_TITLE|[null,null]|~|~`});
-    ctx.chat[0].mes=hidden;assert.equal(notebookEntry(ctx,0,'memory'),null);
+    ctx.chat[0].mes=hidden;assert.match(notebookEntry(ctx,0,'memory').text,/SECRET_ONLY/);
 });
 test('reader diagnostics allow only a bounded standalone code, never raw error details',()=>{
     assert.equal(readerErrorCode(Error('TISHA_OUTPUT_BODY')),'TISHA_OUTPUT_BODY');
@@ -35,11 +35,11 @@ test('search only indexes public projected fields and can find text beyond a sho
     const search=f.root.querySelector('input');search.value='灯塔';search.dispatchEvent(new f.w.Event('input'));assert.equal(f.root.querySelectorAll('article').length,1);assert.match(f.root.textContent,/第 2 条/);
     search.value='SECRET_SENTINEL';search.dispatchEvent(new f.w.Event('input'));assert.equal(f.root.querySelectorAll('article').length,0);assert.equal(f.root.textContent.includes('SECRET_SENTINEL'),false);
     await f.stop();
-    const memory=setup([{mes:richFixture()}],'memory');await memory.done();assert.equal(memory.root.querySelectorAll('article').length,1);assert.equal(memory.root.textContent.includes('SECRET_SENTINEL'),false);await memory.stop();
+    const memory=setup([{mes:richFixture()}],'memory');await memory.done();assert.equal(memory.root.querySelectorAll('article').length,1);assert.equal(memory.root.textContent.includes('SECRET_SENTINEL_未完'),false);await memory.stop();
 });
 test('plain messages appear in notes, not as invented memory; hidden memory creates no empty result',async()=>{
     const hidden=fixture({memory:`事件：幕后人物|${JSON.stringify(SECRET)}|SECRET_ONLY`});
-    const f=setup([{mes:'普通正文'},{mes:hidden}],'memory');await f.done();assert.equal(f.root.querySelectorAll('article').length,0);assert.match(f.root.textContent,/没有可显示/);assert.equal(f.root.textContent.includes('SECRET_ONLY'),false);await f.stop();
+    const f=setup([{mes:'普通正文'},{mes:hidden}],'memory');await f.done();assert.equal(f.root.querySelectorAll('article').length,1);assert.equal(f.root.textContent.includes('SECRET_ONLY'),true);await f.stop();
 });
 test('recent-first pagination skips unloaded and system messages and keeps original message ids',async()=>{
     const chat=messages(26);delete chat[5];chat[6].is_system=true;

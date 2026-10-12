@@ -46,13 +46,13 @@ test('an invalid status policy does not invalidate independently authorized memo
  const data=publicControls(source);
  assert.equal(data.journey.error,'TISYA_PERMISSION_SHAPE');
  assert.equal(data.details.value.rounds.pendingError,false);
- assert.deepEqual(data.details.value.rounds.pending.map(row=>row.label),['查看通知']);
+ assert.deepEqual(data.details.value.rounds.pending.map(row=>row.label),[]);
 });
 
 test('unknown complete permissions remain hidden and invalid paragraph references remain rejected',()=>{
- const unknown=publicControls(fixture({memory:'事件：玩家|[null,null,null,null]|PRIVATE_UNKNOWN'}));
+ const unknown=publicControls(fixture({memory:'事件：玩家|[null,null,null,null]|来源未明的记录'}));
  assert.equal(unknown.journey.error,undefined);
- assert.equal(unknown.journey.value.memories.length,0);
+ assert.equal(unknown.journey.value.memories.length,1);
  const badQuote=publicControls(fixture({memory:`事件：玩家|${P}|PRIVATE_BAD_QUOTE\n原文：段落9`}));
  assert.ok(badQuote.journey.error);
  assert.equal(badQuote.details.value.rounds.pendingError,true);

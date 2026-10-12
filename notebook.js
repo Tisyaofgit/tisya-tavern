@@ -12,27 +12,27 @@ export function publicJourneyText(view) {
         m.participants.forEach(add);add(m.summary);add(m.quote?.reference);add(m.quote?.text);
         m.results.forEach(add);add(m.impact);m.tags.forEach(add);
     }
-    for(const c of view.characters)if(c.cognition.length){add(c.name);for(const r of c.cognition){add(r.content);add(r.source);add(r.certainty);}}
+    for(const c of [...(view.player?[view.player]:[]),...view.characters]){add(c.name);for(const r of c.cognition){add(r.content);add(r.source);add(r.certainty);}for(const r of c.psychology){add(r.content);add(r.evidence);}}
     const valueText=value=>typeof value==='string'?value:JSON.stringify(value);
     for(const c of view.changes){add(c.object);add(c.field);if(c.hasOldValue)add(valueText(c.oldValue));if(c.deleted)add('已移除');else if(c.hasNewValue)add(valueText(c.newValue));add(c.reason);}
     return parts.join('\n');
 }
 
-export function notebookEntry(context,id,mode) {
+export function notebookEntry(context,id,mode,display={}) {
     const message=context.chat[id];
     if(!message||message.is_system||typeof message.mes!=='string')return null;
-    const token=capture(context,id),data=inspectMessage(token.text);
+    const token=capture(context,id),data=inspectMessage(token.text,{showPsychology:display.显示角色心理===true,playerName:context.name1??null});
     const result=mode==='memory'?data.journey:data.body;
     const text=result.error?'':mode==='memory'?publicJourneyText(result.value):result.value;
     if(!result.error&&!text?.trim())return null;
     return {token,text,error:result.error??null,name:message.is_user?'你':String(message.name??'角色')};
 }
 
-export function mountNotebook(document,container,{getContext,mode='notes',onRead,onLocate,onError}) {
+export function mountNotebook(document,container,{getContext,getDisplay=()=>({}),mode='notes',onRead,onLocate,onError}) {
     if(!['notes','memory'].includes(mode))throw new Error('未知的阅读页');
     const win=document.defaultView,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
-    const note=make('p',mode==='memory'?'公开记录按原消息所属回合展示，不代表当前状态。仅浏览当前会话已载入的内容。':'只读浏览当前会话已载入的对话消息，最近的消息在前。','tisya-note');
-    const search=make('input');search.type='search';search.placeholder=mode==='memory'?'搜索公开记录':'搜索正文';search.setAttribute('aria-label',search.placeholder);
+    const note=make('p',mode==='memory'?'读者记录按原消息所属回合展示，不代表当前状态。仅浏览当前会话已载入的内容。':'只读浏览当前会话已载入的对话消息，最近的消息在前。','tisya-note');
+    const search=make('input');search.type='search';search.placeholder=mode==='memory'?'搜索读者记录':'搜索正文';search.setAttribute('aria-label',search.placeholder);
     const status=make('p','','tisya-note');status.setAttribute('role','status');
     const list=make('div',undefined,'tisya-notebook-list'),pager=make('nav',undefined,'tisya-notebook-pager');pager.setAttribute('aria-label','阅读分页');
     const previous=make('button','上一页'),next=make('button','下一页'),refresh=make('button','刷新');for(const b of [previous,next,refresh])b.type='button';pager.append(previous,next,refresh);
@@ -47,6 +47,7 @@ export function mountNotebook(document,container,{getContext,mode='notes',onRead
     function checkCurrent(){
         if(!alive||stale||!snapshot)return false;
         const ctx=getContext();
+        if(snapshot.psychology!==(getDisplay().显示角色心理===true)||snapshot.player!==(ctx.name1??null)){invalidate();return false;}
         if(ctx.getCurrentChatId()!==snapshot.chatId||ctx.chat.length!==snapshot.length){invalidate();return false;}
         for(let i=0;i<snapshot.length;i++){
             const before=snapshot.messages[i],now=ctx.chat[i];
@@ -73,18 +74,18 @@ export function mountNotebook(document,container,{getContext,mode='notes',onRead
             read.addEventListener('click',()=>invoke(entry,onRead));locate.addEventListener('click',()=>invoke(entry,onLocate));
             actions.append(read,locate);card.append(title,preview,actions);list.append(card);
         }
-        status.textContent=found.length?`${found.length} 条可显示记录 · 第 ${page+1} / ${pages} 页`:query?'没有匹配的公开内容。':mode==='memory'?'已载入消息中没有可显示的公开回合记录。':'已载入消息中没有可显示的正文。';
+        status.textContent=found.length?`${found.length} 条可显示记录 · 第 ${page+1} / ${pages} 页`:query?'没有匹配的记录内容。':mode==='memory'?'已载入消息中没有可显示的回合记录。':'已载入消息中没有可显示的正文。';
         previous.disabled=page===0;next.disabled=page>=pages-1;
     }
     function refreshView(){
         if(!alive)return;epoch++;clearTimer();const ticket=epoch,ctx=getContext();
         entries=[];page=0;stale=false;loading=true;list.replaceChildren();search.disabled=true;previous.disabled=next.disabled=true;
-        snapshot={chatId:ctx.getCurrentChatId(),length:ctx.chat.length,messages:Array.from(ctx.chat,m=>({message:m,text:m?.mes,swipe:m?.swipe_id,name:m?.name,user:m?.is_user,system:m?.is_system}))};
+        snapshot={psychology:getDisplay().显示角色心理===true,player:ctx.name1??null,chatId:ctx.getCurrentChatId(),length:ctx.chat.length,messages:Array.from(ctx.chat,m=>({message:m,text:m?.mes,swipe:m?.swipe_id,name:m?.name,user:m?.is_user,system:m?.is_system}))};
         let cursor=snapshot.length-1;status.textContent='正在读取已载入的消息…';
         function batch(){
             timer=null;if(!alive||ticket!==epoch||!checkCurrent())return;
             try{
-                for(let count=0;count<12&&cursor>=0;count++,cursor--){const entry=notebookEntry(getContext(),cursor,mode);if(entry)entries.push(entry);}
+                for(let count=0;count<12&&cursor>=0;count++,cursor--){const entry=notebookEntry(getContext(),cursor,mode,getDisplay());if(entry)entries.push(entry);}
                 if(cursor>=0){timer=win.setTimeout(batch,0);return;}
                 if(!checkCurrent())return;loading=false;search.disabled=false;render();
             }catch(error){epoch++;entries=[];snapshot=null;loading=false;stale=true;list.replaceChildren();status.textContent='读取失败，请刷新重试。';onError(error);}

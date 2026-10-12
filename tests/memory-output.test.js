@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {MEMORY_EXAMPLE,MEMORY_DELIVERY,MEMORY_RULES} from '../config/memory-output.js';
+import {readJourney} from '../reply-records.js';
 import {fixture} from './fixtures/journey-r4.cjs';
 import {parseDisplayEnvelope,projectJourney,validateMemoryProjection,validateMemoryLocators} from '../reader-core.js';
 import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
@@ -19,7 +20,7 @@ test('the prescribed string-cell syntax preserves literal separators and newline
 test('the prescribed memory example passes strict parsing and displays its event and reader-authorized cognition',()=>{
  const source=fixture({body:'1\n两人站在台前向观众谢幕。\n\n2\n队员甲感觉自己仍有些紧张。\n\n3\n两人随后返回后台。',memory:MEMORY_EXAMPLE});
  const e=parseDisplayEnvelope(source),m=JSON.parse(e.blocks.memory);validateMemoryProjection(m,{body:e.blocks.body});validateMemoryLocators(m,e.blocks);
- const view=projectJourney(source);assert.equal(view.memories.length,1);assert.equal(view.memories[0].quote.text,'两人站在台前向观众谢幕。\n\n两人随后返回后台。');
+ const view=readJourney(source);assert.equal(view.memories.length,1);assert.equal(view.memories[0].quote.text,'两人站在台前向观众谢幕。\n\n两人随后返回后台。');
  assert.equal(view.characters.find(c=>c.name==='队员甲').cognition.length,1);
 });
 
@@ -35,7 +36,7 @@ test('imported alpha20 preset emits the new minimal memory skeleton and final re
   assert.ok(text.includes(MEMORY_DELIVERY));assert.doesNotMatch(text,/\{\{tisya_memory_delivery\}\}/);
   const block=text.match(/<memory format="pipes">([\s\S]*?)<\/memory>/)[1].trim().split('\n');
   assert.equal(block.length,2);assert.match(block[0],/^事件：/);assert.match(block[1],/^原文：/);assert.doesNotMatch(block.join('\n'),/倒计时：|权限：|关联：/);
-  assert.match(text,/认知和心理还要通过所属事件权限/);assert.match(text,/固定列数/);
+  assert.match(text,/读者可见不等于所有人物知情/);assert.match(text,/固定列数/);
  }
  const slot=source.order.find(x=>x.identifier==='tisya_output');slot.enabled=false;
  assert.equal(macros.get('tisya_memory_delivery')(),'');assert.doesNotMatch(compileNarrative(context,source,[]).rest.entries.tisya_inner_chain,/@MEMORY_WRITE|<memory/);

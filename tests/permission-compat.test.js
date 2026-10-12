@@ -35,7 +35,7 @@ test('public ~ does not replace missing metadata, deletion, JSON Pointer escapin
 
 test('compact field overrides and scoped policies keep private nested records out of public projection',()=>{
  const source=fixture({memory:'事件：[玩家,队友]|{默认:A,字段:{/认知/0/4:E}}|抵达门口\n认知：队友|对外|确认|A|PRIVATE_SECRET|当场核对\n心理：队友|E|PRIVATE_PLAN|尚未表露'});
- const view=inspectMessage(source);assert.equal(view.journey.error,undefined);assert.equal(view.journey.value.memories.length,1);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_/);
+ const view=inspectMessage(source);assert.equal(view.journey.error,undefined);assert.equal(view.journey.value.memories.length,1);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_PLAN|PRIVATE_NATIVE/);
 });
 
 test('supplied legacy one-cell status locator resolves only to its exact vars operation without changing the source',()=>{
@@ -45,8 +45,8 @@ test('supplied legacy one-cell status locator resolves only to its exact vars op
  assert.equal(view.journey.error,undefined);assert.equal(view.details.error,undefined);assert.equal(view.details.value.rounds.pendingError,false);
  assert.equal(view.details.value.audit.length,7);assert.equal(view.details.value.taskHeart.items.length,1);assert.equal(view.details.value.nextHeart.items.length,1);assert.equal(view.actions.value.length,4);
  assert.equal(view.journey.value.diagnostics,undefined);
- assert.equal(view.journey.value.memories.length,0);assert.equal(view.journey.value.changes.length,0);
- assert.equal(readWorldExtra(source).length,2);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_|TISYA_PERMISSION_SHAPE/);assert.equal(source,before);
+ assert.equal(view.journey.value.memories.length,1);assert.equal(view.journey.value.changes.length,3);
+ assert.equal(readWorldExtra(source).length,2);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_NATIVE|TISYA_PERMISSION_SHAPE/);assert.equal(source,before);
 });
 
 test('locators validate actual operation paths and native card rows, not coincidental text',()=>{
@@ -75,10 +75,10 @@ test('the supplied empty-vars reply reads without a locator error, does not chan
  assert.equal(view.journey.error,undefined);assert.equal(view.details.error,undefined);
  assert.equal(view.journey.value.diagnostics,undefined);
  assert.deepEqual(view.journey.value.compatibility,[{kind:'unused-legacy-permission',row:1}]);
- assert.equal(view.journey.value.memories.length,0);assert.equal(view.journey.value.changes.length,0);
+ assert.equal(view.journey.value.memories.length,1);assert.equal(view.journey.value.changes.length,3);
  assert.equal(view.details.value.audit.length,7);assert.equal(view.actions.value.length,4);
  assert.equal(readWorldExtra(source).length,2);assert.equal(source,before);
- assert.doesNotMatch(JSON.stringify(view),/PRIVATE_|ACL_TARGET/);
+ assert.doesNotMatch(JSON.stringify(view),/PRIVATE_NATIVE|ACL_TARGET/);
  const publicRecord=source.replace('事件：[队员甲,队员乙,工作人员]|E|PRIVATE_EVENT','事件：[队员甲,队员乙,工作人员]|~|公开排练记录');
  assert.equal(inspectMessage(publicRecord).journey.value.memories.length,1);
  // A harmless unused vars annotation cannot authorize a real native field.
@@ -116,7 +116,7 @@ test('mobile UI presents compact records and a local locator notice with usable 
  const node=doc.createElement('div');doc.body.append(node);const chosen=[];
  const ui=mountMessageVisual(doc,node,{source:compactReplyFixture(),name:'测试',formatBody:s=>s,getMotion:()=>false,onChooseAction:text=>chosen.push(text)}),root=ui.host.shadowRoot;
  assert.equal(root.querySelectorAll('.heart-host').length,2);assert.equal(root.querySelectorAll('.audit-bead').length,7);assert.equal(root.querySelectorAll('.action').length,4);
- assert.doesNotMatch(root.querySelector('.journey-reader').textContent,/权限第 1 条/);assert.doesNotMatch(root.innerHTML,/PRIVATE_|TISYA_PERMISSION_SHAPE|任务、心声与核验暂不可用/);
+ assert.doesNotMatch(root.querySelector('.journey-reader').textContent,/权限第 1 条/);assert.doesNotMatch(root.innerHTML,/PRIVATE_NATIVE|TISYA_PERMISSION_SHAPE|任务、心声与核验暂不可用/);
  assert.equal(root.querySelectorAll('.record-notice').length,0);
  root.querySelector('.action').click();await Promise.resolve();await Promise.resolve();assert.equal(chosen.length,1);
  ui.dispose();await win.happyDOM.abort();

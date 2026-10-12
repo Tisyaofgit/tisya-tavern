@@ -1,5 +1,5 @@
-/* Tisya 0.2.0-alpha.20 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.20";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+/* Tisya 0.2.0-alpha.21 — native shells own geometry; this sheet owns their contents. */
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.21";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -79,7 +79,7 @@ body.tisya-active #send_but{background:url(assets/send.svg) center/36px 36px no-
 body.tisya-active #mes_stop{background:url(assets/stop.svg) center/36px 36px no-repeat!important}
 body.tisya-active #send_but::before,body.tisya-active #send_but::after,body.tisya-active #mes_stop::before,body.tisya-active #mes_stop::after,body.tisya-active #mes_stop>i{display:none!important;content:none!important}
 /* Tools precede the full-width divider; the last row keeps the accepted
-   44px menu / flexible input / 44px send geometry. No native node is moved. */
+   44px menu / flexible input / 44px send geometry. Shortcut relocation retains original nodes and restores source anchors on exit. */
 body.tisya-active #nonQRFormItems .tisya-composer-tool,#tisya-attach{order:0;grid-column:auto;grid-row:auto;min-width:0!important;max-width:100%!important;width:100%!important;min-height:44px!important;height:auto!important;padding:4px 2px!important;margin:0!important;border:1px solid var(--tisya-line)!important;border-radius:8px!important;box-sizing:border-box!important;font-size:16px!important;line-height:18px!important;gap:2px!important;flex-direction:column!important;background:#164333!important;align-items:center;justify-content:center!important;overflow-wrap:anywhere;color:var(--tisya-gold);opacity:1;text-shadow:none;cursor:pointer}
 body.tisya-active #nonQRFormItems .tisya-composer-tool:not(.tisya-tool-compact){grid-column:1/-1;padding:6px 8px!important;font:13px/1.4 var(--tisya-ui)!important}
 body.tisya-active #nonQRFormItems .tisya-composer-tool.tisya-tool-caption::after{content:attr(data-tisya-tool-label)!important;display:block!important;font:11px/16px var(--tisya-ui)!important;color:var(--tisya-ink);margin:0!important;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:static!important;opacity:1!important;transform:none!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important}
@@ -255,3 +255,20 @@ body.tisya-active #chat .tisya-source-concealed:has(.edit_textarea){display:bloc
 #tisya-shell .tisya-emotion-grid figcaption{padding-top:8px;color:#e1cb91}
 
 #tisya-shell .tisya-display-settings,#tisya-shell .tisya-emotion-grid{font-family:TisyaReading,serif}
+/* Seven configurable shortcut positions, plus a fixed overflow entry. */
+body.tisya-active #tisya-shortcuts{grid-column:1/-1;position:relative;min-width:0;width:100%;order:-10}
+body.tisya-active .tisya-shortcut-bar{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+body.tisya-active .tisya-shortcut-slot{min-width:0;display:flex;align-items:stretch}
+body.tisya-active #tisya-shortcuts .tisya-shortcut-item,body.tisya-active #tisya-shortcut-more{margin:0!important;min-width:0!important;width:100%!important;min-height:46px!important;max-width:100%;font-size:11px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid #a4aa7d66;border-radius:10px;background:#244a42;color:#dece9f;box-sizing:border-box;overflow-wrap:anywhere;cursor:pointer}
+body.tisya-active #tisya-shortcuts svg{width:20px;height:20px;flex-shrink:0}
+body.tisya-active #tisya-shortcuts .tisya-nav-button::after{display:none}
+body.tisya-active #tisya-shortcuts [hidden]{display:none!important}
+body.tisya-active .tisya-shortcut-panel{box-sizing:border-box;position:absolute;bottom:calc(100% + 10px);left:0;right:0;max-height:min(60dvh,520px);overflow:auto;overscroll-behavior:contain;border:1px solid #d6c48f;border-radius:14px;background:#113c34;color:#e0e5d4;padding:12px;z-index:1010;box-shadow:0 8px 28px #001c2280;font-size:14px}
+body.tisya-active .tisya-shortcut-panel nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+body.tisya-active .tisya-shortcut-panel button{min-height:40px;padding:6px 10px;border:1px solid #a8b98b66;border-radius:8px;background:#244d40;color:inherit;cursor:pointer}
+body.tisya-active .tisya-shortcut-overflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+body.tisya-active .tisya-shortcut-panel form{display:grid;gap:8px}
+body.tisya-active .tisya-shortcut-panel label{display:grid;grid-template-columns:65px 1fr;align-items:center;gap:8px}
+body.tisya-active .tisya-shortcut-panel :is(select,textarea){min-width:0;width:100%;box-sizing:border-box;font-size:16px;line-height:1.5;font-family:inherit;background:#183a33;color:inherit;border:1px solid #a8b98b88;border-radius:8px;padding:8px}
+body.tisya-active .tisya-phrase-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;margin-bottom:8px}
+body.tisya-active .tisya-phrase-use{text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}

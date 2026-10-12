@@ -20,7 +20,7 @@ export function mountMessageNavigation(document, { getLanding = () => '底部', 
     for(const [id,label] of [['previous','上一条消息'],['next','下一条消息'],['bottom','回到最底部']]) {
         const button=document.createElement('button');button.id=`tisya-${id}-message`;button.type='button';
         button.dataset.tisyaShortcut=id;button.className='tisya-nav-button tisya-icon-button';
-        button.innerHTML=iconMarkup(id);button.setAttribute('aria-label',label);button.title=label;
+        button.innerHTML=iconMarkup(id)+'<span>'+({previous:'上条',next:'下条',bottom:'回底'}[id])+'</span>'; button.setAttribute('aria-label',label);button.title=label;
         button.addEventListener('click',()=>go(id));buttons[id]=button;
     }
     const attachment=document.getElementById('tisya-attach');

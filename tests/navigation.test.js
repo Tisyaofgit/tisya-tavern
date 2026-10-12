@@ -27,9 +27,9 @@ test('reading position uses the dominant visible message, including short user t
     assert.equal(readingIndex([{top:-1000,bottom:100},{top:110,bottom:530},{top:540,bottom:3000}],16,784),1);
     assert.equal(readingIndex([],16,784),-1);
 });
-test('previous lands at previous bottom; controls are persistent, named and icon-only',()=>{
+test('previous lands at previous bottom; controls are persistent, named and visibly labeled',()=>{
     const f=fixture([1200,2500,1300]);f.move(3000);f.nav.update();assert.equal(f.nav.report().current,1);
-    assert.equal(f.previous.textContent,'');assert.match(f.previous.getAttribute('aria-label'),/上一条/);
+    assert.equal(f.previous.textContent,'上条');assert.match(f.previous.getAttribute('aria-label'),/上一条/);
     assert.equal(f.previous.previousElementSibling.id,'tisya-attach');assert.equal(f.next.previousElementSibling,f.previous);
     f.previous.click();assert.equal(f.scroll,416);assert.equal(f.navigated,1);assert.equal(f.nodes[0].getBoundingClientRect().bottom,784);
     assert.equal(f.previous.disabled,true);assert.equal(f.next.disabled,false);f.dispose();assert.equal(f.d.querySelector('.tisya-nav-button'),null);
@@ -64,7 +64,7 @@ test('empty chat, removed messages and chat reset never keep a stale target',()=
 
 
 test('bottom shortcut follows Next and reaches true chat end even inside one very long final message',()=>{
- const f=fixture([1200,6400]);f.move(1800);f.nav.update();assert.equal(f.nav.report().current,1);assert.equal(f.next.disabled,true);assert.equal(f.bottom.disabled,false);assert.equal(f.bottom.previousElementSibling,f.next);assert.equal(f.bottom.textContent,'');assert.equal(f.bottom.getAttribute('aria-label'),'回到最底部');f.bottom.click();assert.equal(f.scroll,6800);assert.equal(f.bottom.disabled,true);assert.equal(f.previous.disabled,false);assert.equal(f.navigated,1);f.move(400);f.nav.update();assert.equal(f.bottom.disabled,false);f.dispose();assert.equal(f.d.querySelector('#tisya-bottom-message'),null);
+ const f=fixture([1200,6400]);f.move(1800);f.nav.update();assert.equal(f.nav.report().current,1);assert.equal(f.next.disabled,true);assert.equal(f.bottom.disabled,false);assert.equal(f.bottom.previousElementSibling,f.next);assert.equal(f.bottom.textContent,'回底');assert.equal(f.bottom.getAttribute('aria-label'),'回到最底部');f.bottom.click();assert.equal(f.scroll,6800);assert.equal(f.bottom.disabled,true);assert.equal(f.previous.disabled,false);assert.equal(f.navigated,1);f.move(400);f.nav.update();assert.equal(f.bottom.disabled,false);f.dispose();assert.equal(f.d.querySelector('#tisya-bottom-message'),null);
 });
 test('bottom shortcut is disabled for empty and non-scrollable chats',()=>{
  for(const heights of [[],[100,100]]){const f=fixture(heights);assert.equal(f.bottom.disabled,true);f.bottom.click();assert.equal(f.scroll,0);assert.equal(f.navigated,0);f.dispose();}

@@ -12,7 +12,7 @@ import {getRegexScripts,getRegexedString,RegexProvider} from '/scripts/extension
 import {readNarrative} from './narrative-bridge.js';
 import {createNarrativeBridge,registerLivePreset,isLivePreset} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
-import {appearanceValues,withAppearanceOverrides} from './appearance-settings.js';
+import {appearanceValues,appearanceOverrides,withAppearanceOverrides} from './appearance-settings.js';
 import {saveCharacterChatMetadata,saveGroupChatMetadata} from '/scripts/chat-payload-transport.js';
 import {emotionCatalog,mountEmotionAtlas} from './emotion-catalog.js';
 import {ACTION_MODES,executeAction} from './actions.js';
@@ -20,6 +20,8 @@ import {mountMessageAppearance,mountChatEffects} from './message-ui.js';
 import {mountPet} from './pet.js';
 import { iconMarkup } from './icons.js';
 import { mountMessageNavigation } from './navigation.js';
+import {mountInputShortcuts} from './input-shortcuts.js';
+let inputShortcuts=null;
 import { mountMessageReader } from './reader.js';
 import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
@@ -42,6 +44,9 @@ let layout, top, controls, messageNavigation, releaseReader, readerToken, notebo
 let motionEnabled=true,utility=null,nativeDisplay=null;
 const getAppearance=owner=>appearanceValues(settings(),owner);
 const getDisplay=()=>getAppearance('extensions');
+const getPlayerName=()=>context().name1??null;
+let displaySaving=false;
+async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();}
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, hold, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
@@ -140,7 +145,7 @@ function page(title, html) {
 function openNotebook(mode){
     renderEpoch++;
     page(mode==='memory'?'公开记忆':'会话手记',`<div id="tisya-notebook"></div><footer>${button(mode==='memory'?'查看会话手记':'查看公开记忆',mode==='memory'?'notes':'memory')}</footer>`);
-    notebook=mountNotebook(document,query('#tisya-notebook'),{getContext:context,mode,onRead:openReader,onError:error,onLocate:token=>{
+    notebook=mountNotebook(document,query('#tisya-notebook'),{getContext:context,getDisplay,mode,onRead:openReader,onError:error,onLocate:token=>{
         const node=nodeFor(token);close();closeNativeDrawers();hidePage();node.scrollIntoView({block:'start',behavior:'auto'});
     }});
 }
@@ -258,7 +263,7 @@ function openReader(token,initialTab='body') {
     sheet('阅读与回合记录','<div id="tisya-reader"></div>');
     releaseReader=mountMessageReader(document,query('#tisya-reader'),{
         source:message.mes,getNativeDisplay:()=>nativeDisplay?.project(message.mes,message,{getAttribute:()=>String(token.id)}),
-        initialTab,getAppearance,
+        initialTab,getAppearance,getDisplay,getPlayerName,
         formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
             false,{regexPrepared:true,regexSourceText:body}),
@@ -373,7 +378,7 @@ function init() {
         getNativeDisplay:(...args)=>nativeDisplay.project(...args),getRenderKey:(...args)=>nativeDisplay.key(...args),
         preferNative:(message,native,data)=>preferNativeBeauty({message,native,structured:data.structured,...nativeDisplay.state()}),
         formatNativeBody:createNativeBodyFormatter({contextKey:()=>context().chat.length,onError:visualError,enabled:()=>nativeDisplay.state().enabled,scripts:()=>nativeDisplay.state().scripts,regex:(body,msg,node)=>getRegexedString(body,msg.is_user?1:2,{isMarkdown:true,characterOverride:msg.name,depth:Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)}),format:(prepared,source,msg,node)=>messageFormatting(prepared,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:source})}),
-        getDisplay,getAppearance,getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
+        getDisplay,getAppearance,getPlayerName,saveDisplayPreference,getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
         formatBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},false,{regexPrepared:true,regexSourceText:body}),
         getActionMode,setActionMode,onChooseAction:async(node,source,text,mode)=>{const token=messageToken(Number(node.getAttribute('mesid')));if(validate(context(),token).mes!==source)throw new Error('消息已变化，请重新选择行动');return chooseReaderAction(token,text,mode);},
@@ -383,6 +388,7 @@ function init() {
     pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onOpenApp:phoneApp,onVisibility:value=>{const next=structuredClone(settings());next.显示桌宠=value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();}});cleanups.push(()=>pet.dispose());
     if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{getLanding:()=>getDisplay().上条落点,onNavigate:()=>{closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
+    inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(action==='home'){home().catch(error);return;}
@@ -391,7 +397,7 @@ function init() {
         if(action==='chat'){close();closeNativeDrawers();hidePage();return;}
         if(action==='menu'){nav();return;}
         run(async()=>{
-        if(action==='settings-app')openSettings();else if(action==='context-overview'){openSettings();utility.root.shadowRoot.querySelector('header button:nth-of-type(2)').click();}else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();query('#tisya-attach')?.focus({preventScroll:true});}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
+        if(action==='settings-app')openSettings();else if(action==='context-overview'){openSettings();utility.root.shadowRoot.querySelector('header button:nth-of-type(2)').click();}else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen')nativeControl('#option_toggle_fullscreen');else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('联系人分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);

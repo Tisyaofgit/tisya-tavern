@@ -15,14 +15,14 @@ const source=()=>fixture({
 
 test('feedback decodes a complete E record, distinguishes filtering, and reports three source duplicates without changing six selected hearts',async()=>{
  const raw=source(),memory=JSON.parse(parseDisplayEnvelope(raw).blocks.memory),view=inspectMessage(raw);
- assert.equal(memory.事件.length,1);assert.equal(view.journey.error,undefined);assert.equal(view.journey.value.memories.length,0);
+ assert.equal(memory.事件.length,1);assert.equal(view.journey.error,undefined);assert.equal(view.journey.value.memories.length,1);
  assert.match(view.details.value.heartDiagnostic,/3 条/);assert.equal(view.details.value.taskHeart.items.length,3);assert.equal(view.details.value.nextHeart.items.length,3);
  const win=new Window(),doc=win.document;win.IntersectionObserver=class{observe(){}disconnect(){}};const box=doc.createElement('div');doc.body.append(box);
  const ui=mountMessageVisual(doc,box,{source:raw,formatBody:s=>s,getMotion:()=>false}),root=ui.host.shadowRoot;
- assert.match(root.querySelector('.jr-empty').textContent,/记忆已解析/);assert.doesNotMatch(root.innerHTML,/PRIVATE_/);
+ assert.match(root.querySelector('.journey-reader').textContent,/PRIVATE_EVENT/);
  root.querySelector('[data-jr-tab=more]').click();assert.match(root.querySelector('.heart-diagnostic').textContent,/原回复有 3 条/);
  for(const h of root.querySelectorAll('.heart-host'))assert.equal(h.querySelectorAll('.heart-dots i').length,3);
- ui.dispose();const reader=mountMessageReader(doc,box,{source:raw,formatBody:s=>s,initialTab:'journey'});assert.match(box.textContent,/记忆已解析/);reader.dispose();await win.happyDOM.abort();
+ ui.dispose();const reader=mountMessageReader(doc,box,{source:raw,formatBody:s=>s,initialTab:'journey'});assert.match(box.textContent,/PRIVATE_EVENT/);reader.dispose();await win.happyDOM.abort();
 });
 
 test('public event and reader-authorized private cognition remain visible without granting an unrelated private child',()=>{

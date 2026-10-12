@@ -9,7 +9,7 @@ import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-c
 import {readJourney} from './reply-records.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
-export const journeyEmptyText='记忆已解析，但本条没有获准向读者显示的记录。显示权限取自原回复；单独的 B–E 不包含读者授权。';
+export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
@@ -28,8 +28,8 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 // fallback, including when a structured reply is partial or malformed.
 const inspectionCache=createDisplayCache();
 export const messageCacheReport=()=>inspectionCache.report();
-export function inspectMessage(source){return typeof source==='string'&&source.length<=2000000?inspectionCache.read(replyFormatRevision()+':'+source,()=>inspectUncached(source)):inspectUncached(source);}
-function inspectUncached(source) {
+export function inspectMessage(source,options={}){const selected={showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null};return typeof source==='string'&&source.length<=2000000?inspectionCache.read(replyFormatRevision()+':'+JSON.stringify(selected)+':'+source,()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+function inspectUncached(source,options) {
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
     const structured=isReplyMessage(source)||candidate(source);
     const body=structured?attempt(()=>extractXMLBody(source)):{value:source};
@@ -38,7 +38,7 @@ function inspectUncached(source) {
         body.paragraphs=attempt(()=>readParagraphs(body.value));
     }
     if(!structured)return {structured:false,body,journey:{value:null},actions:{value:[]}};
-    const journey=attempt(()=>readJourney(source));
+    const journey=attempt(()=>readJourney(source,options));
     const actions=attempt(()=>{
         const envelope=readPublicReplyEnvelope(source),next=readReplyBlock(envelope,'next');
         if(!Array.isArray(next?.actions)||next.actions.some(row=>!row||typeof row.text!=='string'||!row.text.trim()||typeof row.type!=='string'||typeof row.source!=='string'))throw Object.assign(Error(),{code:'TISYA_READER_ACTIONS_INVALID'});
@@ -47,8 +47,8 @@ function inspectUncached(source) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({})}) {
-    const data=inspectMessage(source);
+export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null}) {
+    const data=inspectMessage(source,{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()});
     let alive=true,actionChoice=null,extraView=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
@@ -92,7 +92,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         panel.append(note('记录对应所选消息这一回合。'));
         for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
         const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}
-        if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length)&&!view.changes.length){panel.append(note(journeyEmptyText));return;}
+        if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length||c.psychology.length)&&!view.player&&!view.changes.length){panel.append(note(journeyEmptyText));return;}
         for(const memory of view.memories){
             const card=make('article',null,'tisya-reader-card');scene(card,memory.scene);
             field(card,'在场',memory.participants.join('、'));if(memory.summary)card.append(make('p',memory.summary));
@@ -100,10 +100,11 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
             if(memory.results.length){const list=make('ul');memory.results.forEach(result=>list.append(make('li',result)));card.append(list);}
             field(card,'影响',memory.impact);if(memory.tags.length)card.append(note(memory.tags.join(' · ')));panel.append(card);
         }
-        for(const character of view.characters){
-            if(!character.cognition.length)continue;
+        for(const character of [...(view.player?[view.player]:[]),...view.characters]){
+            if(!character.cognition.length&&!character.psychology.length)continue;
             const card=make('article',null,'tisya-reader-card');card.append(make('h3',character.name));
             for(const record of character.cognition){card.append(make('p',record.content));field(card,record.certainty||'来源',record.source);}
+            for(const record of character.psychology){field(card,'内心',record.content);field(card,'依据',record.evidence);}
             panel.append(card);
         }
         if(view.changes.length){panel.append(make('h3','本回合变动'));for(const change of view.changes){

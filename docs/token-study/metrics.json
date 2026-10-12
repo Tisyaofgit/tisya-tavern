@@ -1,0 +1,35 @@
+{
+  "scope": "完整 INNER 工作流块；三个清理后版本保留同一规则含义与输出协议，翻译说明文字；字段名、枚举、标识符保留。固定为同一中性宿主配置的实际装配样稿，不含角色卡、聊天历史、其他预设块及消息封装开销。",
+  "tokenizer": "tiktoken 0.14.0",
+  "provider_usage": false,
+  "variants": {
+    "原版混合": {
+      "file": "inner-original-mixed.txt",
+      "characters": 40103,
+      "sha256": "300e16d15562222116b1f9a58971d1f1b55e64e785d1e5342729a2784a3ed6c3",
+      "cl100k_base": 12429,
+      "o200k_base": 11477
+    },
+    "清理后混合": {
+      "file": "inner-cleaned-mixed.txt",
+      "characters": 39627,
+      "sha256": "1c88d3975f7c7e91e2a280e0c3be03e64b8a8d06b7d29864baa6e0f21c1ef63e",
+      "cl100k_base": 12010,
+      "o200k_base": 11143
+    },
+    "全中文说明": {
+      "file": "inner-zh.txt",
+      "characters": 20249,
+      "sha256": "3c71415316937ec2d26b7429eaa14d52cd326b8b85d7180a63576fb9d1e126fd",
+      "cl100k_base": 15664,
+      "o200k_base": 12317
+    },
+    "全英文说明": {
+      "file": "inner-en.txt",
+      "characters": 46153,
+      "sha256": "3666d5c1f5f74a29cf5fb6f224c880d5be97e52d60ec27f1f1d68aeb27770a2a",
+      "cl100k_base": 10805,
+      "o200k_base": 10753
+    }
+  }
+}

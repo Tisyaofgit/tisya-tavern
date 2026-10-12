@@ -17,9 +17,9 @@ test('original task/next folds, owned animals and ledger clicks stay independent
 });
 test('task summary and pending records keep public field ownership, including folded DOM and counters',async()=>{
  const source=sample.replace(/^未完：[^\n]*\n/gm,'').replace(/^待办：[^\n]*\n/gm,'').replace('任务：阅读来信|','任务：PRIVATE_INPUT|').replace('等候旅人的下一步选择','PRIVATE_STOP').replace('<next format="pipes" audit_count="7">','<next format="pipes" audit_count="7">\n待办：推演|PRIVATE_TRIGGER|PRIVATE_NEXT\n待办：选择|打开信封|阅读来信\n候选：PRIVATE_CANDIDATE').replace('<memory format="pipes">','<memory format="pipes">\n未完：待处理|阅读来信|玩家|打开信封|信封已递到面前|'+publicRule+'\n未完：待处理|PRIVATE_PENDING|玩家|PRIVATE_FUTURE|PRIVATE_CAUSE|'+secretRule);
- const data=readReplyDetails(source);assert.equal(data.rounds.pendingError,false);assert.equal(data.rounds.tasks.length,1);assert.equal(data.rounds.pending.length,1);assert.ok(!JSON.stringify(data).includes('PRIVATE_'));
+ const data=readReplyDetails(source);assert.equal(data.rounds.pendingError,false);assert.equal(data.rounds.tasks.length,1);assert.equal(data.rounds.pending.length,0);assert.ok(!JSON.stringify(data).includes('PRIVATE_'));
  const {w,d,node}=setup(),ui=mountMessageVisual(d,node,props(source)),r=ui.host.shadowRoot;
- assert.match(r.querySelector('#task-content').textContent,/旅人抵达旧灯塔/);assert.match(r.querySelector('#next-content').textContent,/阅读来信/);assert.ok(!r.innerHTML.includes('PRIVATE_'));assert.equal(r.querySelectorAll('.todo-ledger .ledger-entry').length,1);assert.match(r.querySelector('.task-line').textContent,/1待办/);assert.equal(ui.data.body.value.includes('PRIVATE_'),false);ui.dispose();await w.happyDOM.abort();
+ assert.match(r.querySelector('#task-content').textContent,/旅人抵达旧灯塔/);assert.doesNotMatch(r.querySelector('#next-content .todo-ledger').textContent,/阅读来信/);assert.ok(!r.innerHTML.includes('PRIVATE_'));assert.equal(r.querySelectorAll('.todo-ledger .ledger-entry').length,0);assert.match(r.querySelector('.task-line').textContent,/0待办/);assert.equal(ui.data.body.value.includes('PRIVATE_'),false);ui.dispose();await w.happyDOM.abort();
 });
 test('closed hearts do not become orphan decorations and an empty world scroll starts folded',async()=>{
  const source=sample.replace(/心声：有内容[^\n]*(?:\n心声：有内容[^\n]*)*/g,'心声：关闭').replace(/<extra>[\s\S]*?<\/extra>/,'<extra/>');

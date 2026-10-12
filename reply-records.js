@@ -1,4 +1,5 @@
-import {parseDisplayEnvelope,strictJSON,validateMemoryProjection,validateMemoryLocator,projectJourneyEnvelope} from './reader-core.js';
+import {parseDisplayEnvelope,strictJSON,validateMemoryProjection,validateMemoryLocator,validateMemoryLocators} from './reader-core.js';
+import {projectReaderLayer} from './reader-layer.js';
 
 // A sidecar grants access only to its exact existing native target. Invalid
 // sidecars do not invalidate independently permissioned narrative records.
@@ -53,6 +54,8 @@ export function readJourney(source,options){
  // vars is an external writer's payload, not a journey-reader state source.
  // Validate its sidecars above, then omit both from this display-only view.
  const view={...envelope,blocks:{...envelope.blocks,status:JSON.stringify(status),vars:'',memory:JSON.stringify({...memory,权限:accepted.filter(row=>row.区块!=='vars')})}};
- const result=projectJourneyEnvelope(view,options);
+ const validMemory=strictJSON(view.blocks.memory);
+ validateMemoryLocators(validMemory,view.blocks);
+ const result=projectReaderLayer(validMemory,status,options);
  return {...result,...diagnostics.length?{diagnostics}:{},...compatibility.length?{compatibility}:{}};
 }

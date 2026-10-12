@@ -3,7 +3,7 @@ import {CHAT_DEFAULTS,CHAT_FIELDS,JOURNEY_DEFAULTS,JOURNEY_FIELDS} from './visua
 // Global display preferences belong to the existing native extension settings.
 // Only explicit overrides are stored. Original registered defaults stay read-only.
 export const DISPLAY_DEFAULTS=Object.freeze({...CHAT_DEFAULTS,...JOURNEY_DEFAULTS});
-export const DISPLAY_FIELDS=Object.freeze({...CHAT_FIELDS,...Object.fromEntries(Object.entries(JOURNEY_FIELDS).filter(([k])=>k!=='显示角色心理'))});
+export const DISPLAY_FIELDS=Object.freeze({...CHAT_FIELDS,...JOURNEY_FIELDS});
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 export function displayOverrides(settings){
  const blocks=settings.显示区块;if(blocks===undefined)return {};
