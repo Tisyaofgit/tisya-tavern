@@ -89,13 +89,31 @@ test('selected media retains native image parts but strips merged unselected tex
 
 test('selecting a task preset cannot replace the native API or model on later requests',async()=>{const f=fixture(),handlers=new Map();f.c.eventTypes={OAI_PRESET_CHANGED_BEFORE:'before',OAI_PRESET_CHANGED_AFTER:'after'};f.c.eventSource={on:(e,fn)=>handlers.set(e,fn),removeListener:e=>handlers.delete(e)};let selected='r13';f.c.getPresetManager=()=>({getAllPresets:()=>['r13','changed'],getSelectedPresetName:()=>selected,getCompletionPresetByName:()=>preset,findPreset:n=>n,selectPreset(n){const change={presetName:n,preset:{chat_completion_source:'wrong',model:'WRONG_MODEL'},settingsToUpdate:{chat_completion_source:['','',false,true],model:['','',false,true]}};handlers.get('before')?.(change);Object.assign(f.c.chatCompletionSettings,change.preset);selected=n;handlers.get('after')?.();}});f.d.routes.tasks.main={preset:'changed'};await f.host.before('normal');let p={messages:[],stream:false};await f.host.payloadReady(p);assert.equal(p.model,'N-model');assert.equal(f.c.chatCompletionSettings.chat_completion_source,'openai');await f.host.before('normal');p={messages:[],stream:false};await f.host.payloadReady(p);assert.equal(p.model,'N-model');assert.equal(handlers.size,0);});
 
-test('two heart rounds use separate selected directions at every workflow level, never copying opening to closing',()=>{
+test('each heart position emits all selected directions in the actual request, for every detail and selection',async()=>{
+ const directions=['输入评价','回应用户评价','剧情吐槽'];
  for(const detail of ['full','compact','format'])for(let mask=0;mask<8;mask++){
-  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.heartDirections=['输入评价','回应用户评价','剧情吐槽'].filter((_,i)=>mask&(1<<i));
-  const text=compileNarrative(f.c,f.source,[]).rest.entries.tisya_inner_chain;
-  const top=text.match(/<task format="pipes">([\s\S]*?)<\/task>/)[1],bottom=text.match(/<next format="pipes"[^>]*>([\s\S]*?)<\/next>/)[1];
-  assert.doesNotMatch(top,/心声：有内容\|剧情吐槽/);assert.doesNotMatch(bottom,/心声：有内容\|输入评价|心声：有内容\|回应用户评价/);
-  assert.equal(top.includes('心声：有内容|输入评价'),!!(mask&1));assert.equal(top.includes('心声：有内容|回应用户评价'),!!(mask&2));assert.equal(bottom.includes('心声：有内容|剧情吐槽'),!!(mask&4));
-  if(mask)assert.match(text,/禁止复制、近义改写或回放开篇心声/);
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.heartDirections=directions.filter((_,i)=>mask&(1<<i));
+  await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
+  const text=f.macros.get('tisya_live_tisya_inner_chain')();
+  assert.ok(JSON.stringify(payload.messages).includes(JSON.stringify(text).slice(1,-1)));
+  for(const part of ['task','next']){
+   const block=text.match(new RegExp('<'+part+' format="pipes"[^>]*>([\\s\\S]*?)</'+part+'>'))[1];
+   const rows=[...block.matchAll(/^心声：有内容\|([^|]+)\|/gm)].map(m=>m[1]);
+   assert.deepEqual(rows,m.heartDirections,detail+' '+part+' mask '+mask);
+   if(!mask)assert.match(block,/心声：关闭/);
+  }
+  if(mask){assert.match(text,new RegExp('task与next各输出'+m.heartDirections.length+'条心声'));assert.match(text,/禁止复制、近义改写或回放开篇心声/);}
+  assert.doesNotMatch(text,/assigned position only|task receives|no public basis→omit item/);
+  assert.match(text,/无原生状态行→省略全部status注记/);assert.match(text,/<vars\/>→省略全部vars注记/);
+  assert.match(text,/七项审计各给一句实际核验结论/);assert.doesNotMatch(text,/WORKFLOW\/WORKFLOW/);
  }
+});
+
+test('compact workflow states authorization once and keeps its selected constraints',()=>{
+ const f=fixture();f.w.modes.narrative.workflowDetail='compact';
+ const c=compileNarrative(f.c,f.source,[]),text=c.rest.entries.tisya_inner_chain;
+ for(const id of ['A01','A02','A03','A04','A05','B01','B02','B03','B04','B05','B06']){
+  const rule=c.stepwiseRules[id];if(rule)assert.equal(text.split(rule).length-1,1,id);
+ }
+ assert.match(text,/按 @AUTH 核对主镜头/);
 });

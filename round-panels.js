@@ -15,13 +15,13 @@ export function mountRoundPanel(document,container,value,part){
  button.addEventListener('click',toggle);
  const heart=mountHeartBlock(document,container,part==='task'?value.taskHeart:value.nextHeart,{label:part==='task'?'任务心声':'剧情心声'});
  if(heart){heart.id=part+'-heart';placeholder.replaceWith(heart);}else placeholder.remove();
- const empty=text=>{const p=document.createElement('p');p.className='round-empty';p.textContent=text;content.append(p);};
+ const empty=(title,text,kind)=>{const ledger=mountOriginalLedger(document,content,title,[],kind),p=document.createElement('p');p.textContent=text;ledger.querySelector('.ledger-body').append(p);};
  if(value.rounds.error){const p=document.createElement('p');p.setAttribute('role','status');p.textContent='任务与待办暂未通过显示校验，原消息保留。';content.append(p);}
  else if(part==='task'){
-  if(value.rounds.tasks.length)mountOriginalLedger(document,content,'任务',value.rounds.tasks,'task-ledger');else empty('本条暂无公开任务摘要。');
+  if(value.rounds.tasks.length)mountOriginalLedger(document,content,'任务',value.rounds.tasks,'task-ledger');else empty('暂无公开任务','本条没有可展示的任务摘要。','task-ledger');
  }else{
   mountOriginalLedger(document,content,'核验',value.audit.map(a=>({label:a.kind,status:a.status,text:a.evidence})),'audit-ledger');
-  if(value.rounds.pending.length)mountOriginalLedger(document,content,'待办事项',value.rounds.pending,'todo-ledger');else empty('本条暂无公开待办。');
+  if(value.rounds.pending.length)mountOriginalLedger(document,content,'待办事项',value.rounds.pending,'todo-ledger');else empty('暂无公开待办','本条没有可展示的待办记录。','todo-ledger');
   if(value.rounds.delivered.length)mountOriginalLedger(document,content,'本轮交付',value.rounds.delivered);
   if(value.rounds.pendingError){const p=document.createElement('p');p.setAttribute('role','status');p.textContent='待办记录未通过公开权限校验，原消息保留。';content.append(p);}
  }

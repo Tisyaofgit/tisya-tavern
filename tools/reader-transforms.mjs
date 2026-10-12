@@ -2,6 +2,15 @@
 // No guessed data, schema disabling, or changes to generation/state writers.
 function replaceOnce(source,from,to){if(source.split(from).length!==2)throw Error('Reader adapter anchor mismatch');return source.replace(from,to);}
 export function adaptReaderSource(id,source){
+ if(id==='xml-envelope.cjs'){
+  source=replaceOnce(source,"if(c==='&'){","if(c==='&'&&literalAmpersands!=='native'){");
+  source=replaceOnce(source,"value=unxml(literalAmpersands?escapeBareAmpersands(raw):raw);","value=literalAmpersands==='native'?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw);");
+  source=replaceOnce(source,
+   "if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])){",
+   "const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';\n  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])||nativeJSON){");
+  source=replaceOnce(source,"const end=jsonTextEnd(s,p,literalAmpersands);","const end=jsonTextEnd(s,p,nativeJSON?'native':literalAmpersands);");
+  source=replaceOnce(source,"value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true","value:nativeJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true");
+ }
  if(id==='pipes-wire.cjs')source=replaceOnce(source,"if(t==='p')return ACL.validate(wireValue(s));","if(t==='p')return ACL.validate(s==='~'?'~':wireValue(s));");
  if(id==='pipes-wire.cjs')source=replaceOnce(source,
   "const a=split(s,'、').map(text);if(new Set(a).size!==a.length)bad('LIST_DUPLICATE');return a;",

@@ -9,6 +9,7 @@ import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-c
 import {readJourney} from './reply-records.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
+export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
     const block=/^TISYA_READER_(TASK|TITLE|NEXT)_(YAML_\w+|JSON_SYNTAX|FORMAT|OBJECT|MISSING)$/.exec(safe);
@@ -89,6 +90,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         const view=data.journey.value;
         panel.append(note('记录对应所选消息这一回合。'));
         for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
+        const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}
         if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length)&&!view.changes.length){panel.append(note('本条没有可显示的公开回合记录。'));return;}
         for(const memory of view.memories){
             const card=make('article',null,'tisya-reader-card');scene(card,memory.scene);

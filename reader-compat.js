@@ -1,3 +1,4 @@
+import {nativeVarsJSON,nativeStatusTail} from './native-mvu-wire.js';
 // Read-only wire compatibility. Original messages and vendor sources are never
 // rewritten. Compact grades carry no inferred character/participant knowledge.
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -54,6 +55,18 @@ function validateLocator(row,blocks,load){
 }
 
 export function adaptReaderModule(id,original,load){
+ if(id==='xml-envelope.cjs'){
+  const normalize=source=>nativeStatusTail(source,original.xmlTokens);
+  const envelope=source=>{
+   const e=original.parseDisplayEnvelope(normalize(source));
+   if(e.blocks.vars.trim().startsWith('<UpdateVariable>')){
+    try{e.blocks.vars=nativeVarsJSON(e.blocks.vars,load('strict-json.cjs').strictJSON);}catch{/* Invalid writer payload remains invalid, never executed or repaired. */}
+   }
+   return e;
+  };
+  return {...original,parseDisplayEnvelope:envelope,replyRegion:(source,options)=>original.replyRegion(options?.partial?source:normalize(source),options)};
+ }
+
  if(id==='permission-wire.cjs')return {
   ...original,
   validate:(value,paths)=>original.validate(expandPermission(value),paths),

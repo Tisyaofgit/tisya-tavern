@@ -63,17 +63,17 @@ function plainDelivery(text,c){
 const featureRules={角色自主:'人物保有独立目标、意愿与已有事务，按实际接触决定是否回应及主动行动。',防绝望:'依据人物现有资源保留改变可能，困难不预设必败，也不强制治愈或救赎。',防神化:'人物对主控的态度以实际互动为依据，不无因崇拜、依附或贬低。',防八股:'删除套话、预总结、无新增作用的重复和定义式旁白。',防名词堆砌:'用具体可感知的过程和后果表达，不以抽象术语替代行动。',文风鲜活:'使用符合场景的物件、声音、动作痕迹与生活化语言，避免灌水。',角色鲜活:'依据已知档案呈现个人习惯和差异化声口，不虚构人物旧经历为事实。'};
 const conclusions='bind @P.control_limits from selected authorization; @P.update only actual authorized player changes; @POV and @POV.authorized_secret_fragments from source permissions and selected viewpoint; @OUTLINE.title_anchor from actual scene; @BODY complete public prose with paragraph_refs; settled results and actual state changes from supplied sources; unresolved facts remain unresolved; disabled optional work has no fabricated result';
 function extract(text,id){let value;block(text,id,s=>{value=s;return s;});return value;}
-const remap=text=>text.replace(/\b(?:P\.[1-9]|A\.[1-9]|B\.[1-9]|C\.[13456789]|E\.[1-9])\b/g,'WORKFLOW')
+const remap=text=>text.replace(/\b(?:P\.[1-9]|A\.[1-9]|B\.[1-9]|C\.[13456789]|E\.[1-9])\b/g,'WORKFLOW').replace(/WORKFLOW(?:\/WORKFLOW)+/g,'WORKFLOW')
  .replaceAll('DONE(C)','DONE(WORKFLOW)').replaceAll('responsible P/E/B/C stage','WORKFLOW').replaceAll('responsible P/E/C stage','WORKFLOW');
 
 export function condenseWorkflow(text,c,mode,actor,detail){
  const r=c.stepwiseRules,steps=new Set(mode.narrative.缇斯亚叙事步序),lines=[],join=ids=>ids.map(id=>r[id]??'').join('');
  const add=(name,value)=>{if(steps.has(name))lines.push(name+'：'+value);};
- add('身份复核','核对实际世界、user 主控、人物身份与来源。'+join(['A01','A02','A04']));
- add('资料承接','承接已发生事实与后果；区分事实、传闻、推测、计划和未执行事项。'+r.A03);
- add('视角认知',join(['B01','B02','B03','B04','B05','B06']));
+ add('身份复核','核对实际世界、user 主控、人物身份与来源。');
+ add('资料承接','承接已发生事实与后果；区分事实、传闻、推测、计划和未执行事项。');
+ add('视角认知','按 @AUTH 核对主镜头、人物可知信息与读者公开范围。');
  add('人物反应','每名有关人物依据自身所知、经历、意愿和当前目标作出反应。'+r.D02+r.C10);
- add('行动与剧情','沿实际能力、资源、意愿和因果判断结果；未执行计划不能写成既成事实。'+join(['A05','C03','C04']));
+ add('行动与剧情','沿实际能力、资源、意愿和因果判断结果；未执行计划不能写成既成事实。'+join(['C03','C04']));
  add('正文组织',r.C02.split('场外的缇斯亚')[0]+join(['C05','C06','C08','C09'])+'依已发生事件展开动作、对白和过程，完成完整自然段落。');
  add('成稿总检','复核草稿的身份、事实、知情、授权、篇幅及输出格式，修正后一次交付；只展示结论。');
  const activeFeatures={角色自主:c.checks.initiative,防绝望:c.checks.resilience,防神化:c.checks.regard,防八股:c.checks.cliche,防名词堆砌:c.checks.plain_language,文风鲜活:c.checks.vivid,角色鲜活:c.checks.voice};

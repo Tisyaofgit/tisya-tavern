@@ -948,7 +948,7 @@ function jsonTextEnd(s,start,literalAmpersands){
  const stack=[];let quoted=false,escaped=false;
  for(let i=p;i<s.length;){
   let c=s[i++];
-  if(c==='&'){
+  if(c==='&'&&literalAmpersands!=='native'){
    const entity=/^&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-fA-F]+);/.exec(s.slice(i-1));
    if(entity){c=unxml(entity[0]);i+=entity[0].length-1;}
   }
@@ -959,7 +959,7 @@ function jsonTextEnd(s,start,literalAmpersands){
   else if(c==='}'||c===']'){
    if(stack.pop()!==(c==='}'?'{':'['))return null;
    if(!stack.length){
-    const raw=s.slice(start,i),value=unxml(literalAmpersands?escapeBareAmpersands(raw):raw);
+    const raw=s.slice(start,i),value=literalAmpersands==='native'?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw);
     try{JSON.parse(value);}catch(_){return null;}
     return i;
    }
@@ -972,9 +972,10 @@ function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false}={}){
  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s))bad('XML_CHARACTER');
  let p=0;const path=[];
  while(p<s.length){
-  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])){
-   const end=jsonTextEnd(s,p,literalAmpersands);
-   if(end!==null){const raw=s.slice(p,end);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true,start:p,end};p=end;continue;}
+  const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';
+  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])||nativeJSON){
+   const end=jsonTextEnd(s,p,nativeJSON?'native':literalAmpersands);
+   if(end!==null){const raw=s.slice(p,end);yield {kind:'text',value:nativeJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true,start:p,end};p=end;continue;}
   }
   if(s[p]!=='<'){let q=s.indexOf('<',p);if(q<0)q=s.length;const raw=s.slice(p,q);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,start:p,end:q};p=q;continue;}
   if(s.startsWith('<![CDATA[',p)){const q=s.indexOf(']]>',p+9);if(q<0){if(tolerateTail)return;bad('XML_CDATA');}yield {kind:'text',value:s.slice(p+9,q),cdata:true,start:p,end:q+3};p=q+3;continue;}

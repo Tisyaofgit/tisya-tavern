@@ -22,17 +22,18 @@ export function applyWireContract(entries){
   inner=once(inner,'权限：vars|{已输出操作的实际JSON Pointer}|{本操作权限}\n','');
   inner=once(inner,'@OPTION valid variable operations replace <vars/> with <vars format="json">...</vars>;final output contains actual operations only','@OPTION MVU disabled→only <vars/>;omit vars permission rows;do not move disabled operations to another block');
  }
- inner=inner.replace('@OPTION permission rows require actual targets;', '@OPTION status权限定位必须是[已登记类型,已登记对象,字段]三项；单独JSON Pointer只能属于实际输出的vars操作；叙事状态自带权限，不另造status权限行。permission rows require actual targets;');
+ // Narrative states carry their own policy. The optional native route is
+ // valid only with a supplied registry AND an actual row in this same reply.
+ inner=inner.replace('@OPTION permission rows require actual targets;', '@OPTION 权限注记只从本轮已输出目标生成；先核目标再写注记。叙事状态自带权限，不生成status注记；原生状态注记仅用[类型,对象,字段]且逐项匹配本轮原生状态行。标题时间不是状态写入；不得照抄历史注记或以JSON Pointer填status。无原生状态行→省略全部status注记；<vars/>→省略全部vars注记。permission rows require actual targets;');
+ const top=inner.match(/<task format="pipes">([\s\S]*?)<\/task>/)?.[1];
+ if(top===undefined)throw Error('回复格式来源锚点不匹配：task');
+ const count=(top.match(/^心声：有内容\|/gm)??[]).length;
  inner=inner.replace('opening←actual input/task;closing←completed progress',
-  'opening/task：只针对用户本轮任务、指令与扮演选择进行输入评价；回应用户评价只在此直接回应实际聊天。closing/next：只针对本轮正文已经发生的剧情、互动和结果进行剧情吐槽。两轮分别撰写、各有对象与新内容；禁止复制、近义改写或回放开篇心声，禁止把预计剧情写成已发生。');
- inner=inner.replace('one content row/applicable enabled direction at each position','one content row per applicable selected direction at its assigned position only;task receives 输入评价/回应用户评价,next receives 剧情吐槽;do not require the same directions at both positions');
- for(const part of ['task','next']){
-  const re=new RegExp('(<'+part+' format="pipes"[^>]*>)([\\s\\S]*?)(</'+part+'>)');
-  inner=inner.replace(re,(_,open,body,close)=>{
-   const lines=body.split('\n').filter(line=>!line.startsWith('心声：有内容|')||(part==='task'?!line.includes('|剧情吐槽|'):line.includes('|剧情吐槽|')));
-   if(!lines.some(line=>line.startsWith('心声：')))lines.push('心声：关闭');
-   return open+lines.join('\n')+close;
-  });
- }
+  'task依据本轮输入与开局；next依据本轮正文的实际进展。同一方向在两处各写新内容：上评任务，下评落地结果；禁止复制、近义改写或回放开篇心声，未发生情节不得当成结果。');
+ inner=inner.replace('one content row/applicable enabled direction at each position',`task与next各输出${count}条心声；每处将已选方向逐项写一条，顺序按模板；不拆分到两处、不合并、不减项`);
+ inner=inner.replace('回应用户评价：以缇斯亚身份直接回应用户对缇斯亚说的话、问题或感想，与用户聊天互动。','回应用户评价：以缇斯亚身份回应用户实际的话、问题或感想；只有指令时就接这句话，不虚构用户发言。');
+ inner=inner.replace('no public basis→omit item;all enabled items omitted→心声：沉默;disabled→心声：关闭',count?'只评可公开的输入、开局或已发生结果；依据不足就点明未知，不编造情节或私密信息；仍保留该方向一条。':'未选心声：两处均写心声：关闭。');
+ inner=inner.replace('selected opening hearts/moods;', 'both heart positions: exact selected directions/count and allowed moods per @HEART;');
+ inner=inner.replace('@EXTENSION Only supplied triggered components may be displayed;display grants no state write', '@BRIEF 任务摘要只点明本轮目标；七项审计各给一句实际核验结论及必要字段/段号，不复述剧情、输入清单或自夸；已交付只写尚未表达的新增结果，无则省略。辅助字段删去同义叠加、空泛修辞和无依据的极端评价。\n@EXTENSION Only supplied triggered components may be displayed;display grants no state write');
  entries.tisya_inner_chain=inner;
 }

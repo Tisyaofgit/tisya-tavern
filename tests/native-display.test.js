@@ -32,8 +32,19 @@ test('unchanged message DOM updates skip inspection and keep body/card documents
 test('world documents mount on first visible tab, preserve mounted frames and do not eagerly create all history iframes',async()=>{
  const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document,root=d.createElement('div');d.body.append(root);const value=fixture({extra:'<one><div>一</div></one><two><div>二</div></two>'});const view=mountWorldExtra(d,root,{source:value,structured:true,lazy:true,formatBody:s=>s});assert.equal(root.querySelectorAll('iframe').length,0);view.refresh(false,false);assert.equal(root.querySelectorAll('iframe').length,0);view.refresh(false,true);const frame=root.querySelector('iframe');assert.ok(frame);for(let i=0;i<30;i++)view.refresh(true,false);view.refresh(false,true);assert.equal(root.querySelector('iframe'),frame);root.querySelectorAll('button')[1].click();assert.equal(root.querySelectorAll('iframe').length,2);view.dispose();await w.happyDOM.abort();
 });
-test('orphan metadata is folded inside a bubble and cannot block an independent public memory',async()=>{
- const w=new Window(),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};const root=d.createElement('div');d.body.append(root);const s=fixture({memory:'权限：status|[/无此路径]|A\n事件：玩家|~|公开记忆保留'}),result=inspectMessage(s);assert.equal(result.journey.value.memories.length,1);assert.equal(result.journey.value.diagnostics.length,1);const view=mountMessageVisual(d,root,{source:s,formatBody:s=>s,getMotion:()=>false});const notice=view.host.shadowRoot.querySelector('.record-notice');assert.equal(notice.tagName,'DETAILS');assert.equal(notice.open,false);assert.ok(notice.classList.contains('round-empty'));assert.match(view.host.shadowRoot.querySelector('.journey-reader').textContent,/公开记忆保留/);view.dispose();await w.happyDOM.abort();
+test('native regex cards expand without the moon-tide scroll or paging shell and retain their own documents',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};
+ const root=d.createElement('div');d.body.append(root);const f=setup(),s=fixture({extra:'<raw>[Count|1]</raw><starchat_app>[Overview|270000^1350]</starchat_app>'});
+ f.scripts[0].replaceString='<button class="original-orb" style="width:55px;height:55px">球</button>';f.pipeline.refresh();
+ const view=mountMessageVisual(d,root,{source:s,formatBody:s=>s,getMotion:()=>false,getNativeDisplay:()=>f.pipeline.project(s)}),shadow=view.host.shadowRoot;
+ const world=shadow.querySelector('.world-extension');assert.equal(world.dataset.presentation,'native');
+ assert.equal(world.querySelector('.scroll-skin,.crystal-scroll,.extension-heading,.extra-tabs'),null);
+ const raw=world.querySelector('.native-unformatted');assert.equal(raw.open,false);assert.match(raw.textContent,/Count/);
+ assert.equal(world.querySelectorAll('.extra-page[hidden]').length,0);assert.ok(world.querySelector('.native-card-stack'));
+ view.dispose();await w.happyDOM.abort();
+});
+test('unused legacy annotations are explained in More while independent public memory remains readable',async()=>{
+ const w=new Window(),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};const root=d.createElement('div');d.body.append(root);const s=fixture({memory:'权限：status|[/无此路径]|A\n事件：玩家|~|公开记忆保留'}),result=inspectMessage(s);assert.equal(result.journey.value.memories.length,1);assert.equal(result.journey.value.diagnostics,undefined);assert.equal(result.journey.value.compatibility.length,1);const view=mountMessageVisual(d,root,{source:s,formatBody:s=>s,getMotion:()=>false});assert.equal(view.host.shadowRoot.querySelector('.record-notice'),null);assert.match(view.host.shadowRoot.querySelector('.journey-reader').textContent,/公开记忆保留/);view.host.shadowRoot.querySelector('[data-jr-tab=more]').click();assert.match(view.host.shadowRoot.querySelector('.record-compatibility').textContent,/没有对应的变量写入/);view.dispose();await w.happyDOM.abort();
 });
 
 test('bad capture numbers and lookaround captures cannot insert hidden source context into a public panel; failures are cached',()=>{

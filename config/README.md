@@ -61,3 +61,7 @@ API、模型、预设逐字段解析 task → mode → global；参数逐字段�
 Agent、数据库、检索、语音、绘图、嵌入、重排执行器需另外注册，不以普通聊天替代不具备的能力。生成候选与保存／启用是不同动作。
 
 `modes.narrative.workflowDetail`：`full` / `compact` / `format`，缺省为 `compact`；未知或非字符串值拒绝保存。旧配置不自动重写。该字段纳入既有配置版本检查、世界隔离、备份与 live macro 缓存。完整档由现有 source 渲染并裁去停用可选工作；其他档显式压缩流程，输出协议和实际配置保持同源。
+
+## 原卡 MVU
+
+`modes.narrative.nativeMvu` 缺省 `auto`（跟随原卡），可设 `off`。当前卡启用了 MagVarUpdate 导入脚本才适用，与缇斯亚自有状态执行器的旧开关独立。主请求读取原生 `Mvu.getMvuData` 的当前有效消息快照、当前关联书启用的 `[mvu_update]` 规则；不将其他自动世界书条目放回请求。发送前复核来源与状态，无运行时、初始状态或 JSONPatch 格式时明确停止且零写入。更新块保留在 vars 中，原生脚本负责结算；阅读层只生成规范 JSON 的临时视图，不重放、不补结算。

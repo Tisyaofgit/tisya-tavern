@@ -32,6 +32,13 @@ test('extra document fences preserve code, reject incomplete fences, and unsuppo
  const {w,d,root}=ui(),errors=[],source=fixture({extra:'<first title="交互"><![CDATA[<script>parent.PRIVATE_CANARY=1</script><p>公开交互</p>]]></first><second title="普通"><p>正常页</p></second>'}),view=mountWorldExtra(d,root,{source,structured:true,formatBody:format,onError:e=>errors.push(e.message)});
  assert.deepEqual(errors,['TISYA_EXTRA_RUNTIME_REQUIRED']);assert.equal(root.querySelector('script'),null);assert.equal(root.querySelectorAll('iframe').length,1);assert.match(root.textContent,/交互运行时/);const tabs=root.querySelectorAll('.extra-tabs button');tabs[1].click();assert.equal(root.querySelectorAll('.extra-page')[1].hidden,false);assert.equal(root.querySelectorAll('.extra-page')[0].hidden,true);assert.equal(view.capture().active,'extra-2');view.dispose();tabs[0].click();assert.equal(root.childNodes.length,0);await w.happyDOM.abort();
 });
+test('a guarded host send call has an explicit capability note without blocking card display',async()=>{
+ const {w,d,root}=ui(),errors=[];
+ const source=fixture({extra:'<card><![CDATA[<button onclick="send()">发送</button><script>function send(){if(typeof triggerSlash==="function")triggerSlash("/send test");}</script>]]></card>'});
+ const view=mountWorldExtra(d,root,{source,structured:true,formatBody:format,onError:e=>errors.push(e.message)});
+ assert.match(root.querySelector('.card-capability-note').textContent,/按钮暂不可用/);assert.equal(root.querySelectorAll('iframe').length,1);assert.deepEqual(errors,[]);
+ view.dispose();await w.happyDOM.abort();
+});
 function decodedImages(w,{missing=null,wait={}}={}){w.Image=class{set src(value){this.url=value;}async decode(){const row=EMOTIONS.find(x=>x.url===this.url);if(row.name===missing)throw Error('missing');if(wait[row.name])await wait[row.name];this.naturalWidth=row.size[0];this.naturalHeight=row.size[1];}};}
 test('one decoded six-emotion catalog feeds the atlas, every heart image and actual preset mood macro',async()=>{
  const {w,d,root}=ui();decodedImages(w);const catalog=emotionCatalog(d);assert.throws(()=>catalog.names(),/仍在加载/);await catalog.ready;assert.equal(emotionCatalog(d),catalog);assert.deepEqual(catalog.names(),['困倦','好奇','开心','怀疑','惊讶','闹别扭']);

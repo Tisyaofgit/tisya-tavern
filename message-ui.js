@@ -7,7 +7,7 @@ import {mountActionChoice} from './actions.js';
 import {replyControlsCSS} from './reply-details.js';
 import {appearanceValues} from './appearance-settings.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
-import {inspectMessage,readerErrorText,readerErrorCode} from './reader.js';
+import {inspectMessage,readerErrorText,readerErrorCode,journeyCompatibilityText} from './reader.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {waterStyle} from './visual-theme.js';
 import {visualAssets,motionManifest,journeyArt,journeyIcons} from './visual-assets.js';
@@ -34,6 +34,7 @@ function mountJourney(document,container,data){
   if(['memory','characters'].includes(id))for(const row of [...(model?.diagnostics??[])].reverse()){
    const notice=make('details',null,'public-note record-notice round-empty');notice.append(make('summary','一条附加记录暂未关联'),make('p',`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));notice.style.fontFamily='TisyaReading,serif';viewport.prepend(notice);
   }
+  if(id==='more'){const compatibility=journeyCompatibilityText(model);if(compatibility)card('旧记录兼容',compatibility).classList.add('record-compatibility');}
   viewport.scrollTop=positions.get(id)??0;
  }
  for(const [id,label,glyph]of tabs){const b=make('button');b.type='button';b.dataset.jrTab=id;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');p.setAttribute('d',journeyIcons[glyph]);svg.append(p);b.append(svg,make('span',label));b.onclick=()=>go(id);buttons.set(id,b);nav.append(b);}go('memory');
@@ -53,7 +54,10 @@ export function mountMessageVisual(document,container,{source,name,formatBody,fo
  renderBody();
  const dock=make('div',null,'pendant-dock');dock.innerHTML='<div class="pendant-divider"><i></i><i></i></div><div class="pendant-hooks"></div>';root.append(dock);
  const world=make('section',null,'world-extension scroll-region'),worldLanding=make('div',null,'scroll-crest'),worldPanel=make('div',null,'crystal-scroll');worldPanel.id='world-extension-expanded';worldPanel.innerHTML=`<div class="scroll-skin"><img class="scroll-top" alt="" src="${visualAssets['scroll-top.png']}"><div class="scroll-sides"></div><img class="scroll-bottom" alt="" src="${visualAssets['scroll-bottom.png']}"></div>`;
- const worldHeader=make('header',null,'extension-heading');worldHeader.append(make('h2','世界扩展'));const worldContent=make('div',null,'extension-sheet');const extraView=mountWorldExtra(document,worldContent,{source,structured:data.structured,formatBody,display,displayError,lazy:true,onError});worldPanel.append(worldHeader,worldContent);world.append(worldLanding,worldPanel);root.append(world);
+ const worldHeader=make('header',null,'extension-heading');worldHeader.append(make('h2','世界扩展'));const worldContent=make('div',null,'extension-sheet');const extraView=mountWorldExtra(document,worldContent,{source,structured:data.structured,formatBody,display,displayError,lazy:true,onError});
+ if(extraView.presentation==='native'){world.dataset.presentation='native';worldPanel.className='native-card-stack';worldPanel.replaceChildren(worldContent);worldContent.className='native-card-content';}
+ else worldPanel.append(worldHeader,worldContent);
+ world.append(worldLanding,worldPanel);root.append(world);
  const journey=make('section',null,'journey-region scroll-region'),journeyLanding=make('div',null,'scroll-crest'),journeyPanel=make('div',null,'dashboard');journeyPanel.id='journey-dashboard';journey.append(journeyLanding,journeyPanel);root.append(journey);const journeyView=mountJourney(document,journeyPanel,data);
  rack=mountPendantRack({root,assets:visualAssets});for(const [id,title,region,panel,landing,cover]of [['journey','旅程手记',journey,journeyPanel,journeyLanding,'journey-cover.png'],['world-extension','世界扩展',world,worldPanel,worldLanding,'cover.png']])rack.register({id,title,region,panel,landing,cover:visualAssets[cover],onToggle:value=>{if(alive){manualFolds[id]=value;rack.setExpanded(id,value,{animate:true});extraView.refresh(!getMotion(),visible&&value);}}});
  const action=make('section',null,'action-region');if(data.details?.value)nextRound=mountRoundPanel(document,action,data.details.value,'next');else if(data.details?.error)action.append(make('p','任务、心声与核验暂不可用。'+readerErrorText(data.details.error),'loading-note'));const nextHeart=nextRound?.heart,actors=[];

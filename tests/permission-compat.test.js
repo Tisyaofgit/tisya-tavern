@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {fixture,SECRET} from './fixtures/journey-r4.cjs';
 import {compactReplyFixture} from './fixtures/compact-permissions.cjs';
+import {feedbackReplyFixture} from './fixtures/feedback-alpha18.cjs';
 import {parseDisplayEnvelope,projectJourney,validateMemoryProjection,validateMemoryLocators} from '../reader-core.js';
-import {inspectMessage} from '../reader.js';
+import {inspectMessage,mountMessageReader} from '../reader.js';
 import {readWorldExtra} from '../world-extra.js';
 import {expandPermission} from '../reader-compat.js';
 import {mountMessageVisual} from '../message-ui.js';
@@ -67,6 +68,47 @@ test('an orphan or conflicting native permission never grants access; valid inde
  }
  const source=fixture({status:'原生状态：人物|玩家|分数|0',memory:'权限：status|[人物,玩家,分数]|~\n事件：玩家|A|公开消息'});
  assert.equal(inspectMessage(source).journey.value.changes[0].newValue,0);
+});
+
+test('the supplied empty-vars reply reads without a locator error, does not change E visibility, and retains compatibility provenance',()=>{
+ const source=feedbackReplyFixture(),before=source,view=inspectMessage(source);
+ assert.equal(view.journey.error,undefined);assert.equal(view.details.error,undefined);
+ assert.equal(view.journey.value.diagnostics,undefined);
+ assert.deepEqual(view.journey.value.compatibility,[{kind:'unused-legacy-permission',row:1}]);
+ assert.equal(view.journey.value.memories.length,0);assert.equal(view.journey.value.changes.length,0);
+ assert.equal(view.details.value.audit.length,7);assert.equal(view.actions.value.length,4);
+ assert.equal(readWorldExtra(source).length,2);assert.equal(source,before);
+ assert.doesNotMatch(JSON.stringify(view),/PRIVATE_|ACL_TARGET/);
+ const publicRecord=source.replace('事件：[队员甲,队员乙,工作人员]|E|PRIVATE_EVENT','事件：[队员甲,队员乙,工作人员]|~|公开排练记录');
+ assert.equal(inspectMessage(publicRecord).journey.value.memories.length,1);
+ // A harmless unused vars annotation cannot authorize a real native field.
+ const native=source.replace('<status format="pipes">','<status format="pipes">\n原生状态：人物|玩家|秘密|PRIVATE_NATIVE');
+ assert.ok(inspectMessage(native).journey.value.diagnostics.some(r=>r.code==='TISYA_MEMORY5_STATUS_PERMISSION_MISSING'));
+ assert.doesNotMatch(JSON.stringify(inspectMessage(native)),/PRIVATE_NATIVE/);
+ assert.throws(()=>parseDisplayEnvelope(source.replace(']|A\n权限：extra',']|未知权限\n权限：extra')),{code:'TISYA_PERMISSION_SHAPE'});
+});
+
+test('empty pending shares the original audit and delivery ledger, while both three-item heart carousels remain independent',async()=>{
+ const win=new Window(),doc=win.document;win.IntersectionObserver=class{observe(){}disconnect(){}};
+ const node=doc.createElement('div');doc.body.append(node);
+ const directions=['输入评价','回应用户评价','剧情吐槽'];let source=feedbackReplyFixture();
+ for(const part of ['task','next'])source=source.replace(new RegExp('(<'+part+' format="pipes"[^>]*>)([\\s\\S]*?)(</'+part+'>)'),(_,a,b,c)=>a+b.replace(/^心声：[^\n]*\n/gm,'')+directions.map((d,i)=>`心声：有内容|${d}|null|${part}独立评论${i+1}`).join('\n')+'\n'+c);
+ const ui=mountMessageVisual(doc,node,{source,formatBody:s=>s,getMotion:()=>false}),root=ui.host.shadowRoot;
+ const ledgers=[...root.querySelectorAll('#next-content>.ledger-section')];
+ assert.equal(ledgers.length,3);const empty=ledgers[1];assert.ok(empty.classList.contains('todo-ledger'));
+ assert.equal(empty.querySelector('.ledger-count').textContent,'00');assert.match(empty.querySelector('summary').textContent,/暂无公开待办/);
+ assert.equal(root.querySelector('#next-content>.round-empty'),null);
+ for(const ledger of ledgers)assert.deepEqual([...ledger.children].map(n=>n.tagName),['SUMMARY','DIV']);
+ const hearts=root.querySelectorAll('.heart-host');assert.equal(hearts.length,2);
+ for(const h of hearts)assert.equal(h.querySelectorAll('.heart-dots i').length,3);
+ const [top,bottom]=[...hearts].map(h=>h.querySelector('.heart-bubble'));
+ top.click();assert.match(top.textContent,/task独立评论2/);assert.match(bottom.textContent,/next独立评论1/);
+ bottom.click();bottom.click();assert.match(bottom.textContent,/next独立评论3/);assert.match(top.textContent,/task独立评论2/);
+ assert.equal(root.querySelector('.record-notice'),null);
+ root.querySelector('[data-jr-tab=more]').click();assert.match(root.querySelector('.record-compatibility').textContent,/未参与授权/);
+ const modal=doc.createElement('div');doc.body.append(modal);const reader=mountMessageReader(doc,modal,{source,formatBody:s=>s,initialTab:'journey'});
+ assert.equal(modal.querySelector('.tisya-record-compatibility').open,false);assert.doesNotMatch(modal.textContent,/ACL_TARGET|未通过/);
+ reader.dispose();ui.dispose();await win.happyDOM.abort();
 });
 
 test('mobile UI presents compact records and a local locator notice with usable public controls',async()=>{
