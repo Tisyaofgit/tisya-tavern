@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0-alpha.23",
+  "scope": "Switchable native/database vs Tisya context ownership; table-memory R2 remains design only",
+  "default": "native for new and missing-field configurations",
+  "tests": 247,
+  "test_log": "apk-audit/alpha23/all-tests.log",
+  "browser_widths": [
+    360,
+    736
+  ],
+  "browser_checks": [
+    {
+      "width": 360,
+      "defaultNative": true,
+      "switchSavedAndReopened": true,
+      "settingsRetained": true,
+      "externalPayloadPreserved": true,
+      "lateInjectionAllowed": true,
+      "observedSnapshotLabel": true,
+      "errors": []
+    },
+    {
+      "width": 736,
+      "defaultNative": true,
+      "switchSavedAndReopened": true,
+      "settingsRetained": true,
+      "externalPayloadPreserved": true,
+      "lateInjectionAllowed": true,
+      "observedSnapshotLabel": true,
+      "errors": []
+    }
+  ],
+  "verified": [
+    "external payload remains unchanged",
+    "late third-party injection serializes without Tisya seal",
+    "no managed route switching in native mode",
+    "no old-memory parsing when disabled",
+    "mode saved and restored per chat",
+    "existing stored memory/history options retained",
+    "quiet, impersonate, swipe and continue paths pass through",
+    "managed mode existing checks preserved"
+  ],
+  "limitations": [
+    "Database plugin real API fill/retrieval not tested",
+    "Android not tested",
+    "Native context snapshots are observations, not final request verification"
+  ]
+}

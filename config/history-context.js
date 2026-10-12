@@ -1,5 +1,6 @@
 import {isReplyMessage,replyRegion,xmlTokens} from '../reader-core.js';
 import {readReplyBlock} from '../reply-formats.js';
+import {contextOwner} from './core.js';
 
 // Read the selected native branch on every request. No mirror, state write,
 // reader projection, vector service, or stale cross-chat cache is involved.
@@ -33,7 +34,7 @@ export function historicalBlocks(text){
 }
 
 export function buildHistoryMemory(context,world,type='normal'){
- const window=historyWindow(context,world,type),report={enabled:world.context.memory!==false,earlierMessages:window.earlier.length,recentMessages:window.recent.length,injectedSources:[],withoutMemory:[],strippedHeartMessages:[]};
+ const window=historyWindow(context,world,type),report={enabled:contextOwner(world)==='tisya'&&world.context.memory!==false,earlierMessages:window.earlier.length,recentMessages:window.recent.length,injectedSources:[],withoutMemory:[],strippedHeartMessages:[]};
  if(!report.enabled)return {text:'',report};
  const records=[];
  for(const {message,index} of window.earlier){

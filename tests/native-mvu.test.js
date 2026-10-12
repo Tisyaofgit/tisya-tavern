@@ -11,7 +11,7 @@ import {fixture} from './fixtures/journey-r4.cjs';
 function setup(){
  const card={avatar:'native.png',name:'变量卡',data:{extensions:{tavern_helper:{scripts:[{type:'script',enabled:true,id:'native-mvu',content:"import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@master/artifact/bundle.js'"}]}},character_book:{entries:[{comment:'变量格式',enabled:true,content:'<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>'},{comment:'[mvu_update]计数规则',enabled:true,content:'只按实际事件修改计数。'},{comment:'[mvu_update]禁用规则',enabled:false,content:'DISABLED_RULE'},{comment:'无关条目',enabled:true,content:'UNRELATED_BOOK'}]}}};
  const c={chatId:'test',characterId:0,characters:[card],extensionSettings:{},chatMetadata:{},chat:[{mes:'开场'},{mes:'继续',is_user:true}],chatCompletionSettings:{},getPresetManager:()=>({getAllPresets:()=>['paired'],getSelectedPresetName:()=> 'paired'}),getChatCompletionModel:()=> 'test',stopGeneration(){}};
- const d=emptyConfig(),w=defaultWorld();d.worlds[worldKey(c)]=w;c.extensionSettings[KEY]=d;
+ const d=emptyConfig(),w=defaultWorld();w.context.owner='tisya';d.worlds[worldKey(c)]=w;c.extensionSettings[KEY]=d;
  const p=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url))),source={prompts:p.prompts,order:p.prompt_order[0].order};
  let state={计数:0,开启:false,文本:''};const reads=[],runtime={getMvuData(o){reads.push(o);return o.message_id===0?{stat_data:state}:{};},parseMessage(){throw Error('adapter must never execute updates');}};
  return {c,w,d,source,runtime,reads,setState:s=>state=s};

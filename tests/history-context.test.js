@@ -17,7 +17,7 @@ const moods=EMOTIONS.map(r=>r.name);
 function setup({createParameters,prepareMessage}={}){
  const preset=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.20.json',import.meta.url))),source={prompts:preset.prompts,order:preset.prompt_order[0].order};
  const data=emptyConfig(),c={chatId:'memory-test',characterId:0,characters:[{avatar:'lighthouse',name:'守灯人',data:{description:'这是一个虚构的旧灯塔故事。所有人物均为成年人。玩家角色阿岚是负责维修灯塔的旅人，守灯人话少、务实但关心伙伴。'}}],chatMetadata:{},chat:[],extensionSettings:{[KEY]:data},chatCompletionSettings:{model:'isolated-fixture'},getChatCompletionModel:()=> 'isolated-fixture',getPresetManager:()=>({getAllPresets:()=>['r20'],getSelectedPresetName:()=> 'r20',getCompletionPresetByName:()=>preset})};
- const w=data.worlds[worldKey(c)]=defaultWorld();w.modes.narrative.heartDirections=['输入评价','回应用户评价','剧情吐槽'];
+ const w=data.worlds[worldKey(c)]=defaultWorld();w.context.owner='tisya';w.modes.narrative.heartDirections=['输入评价','回应用户评价','剧情吐槽'];
  const macros=new Map();c.registerMacro=(n,f)=>macros.set(n,f);c.unregisterMacro=n=>macros.delete(n);c.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,n)=>macros.get(n)());
  registerLivePreset(c,()=>source,()=>c,()=>moods);registerPresetProtocol(c,()=>source,()=>{},()=>moods);
  const store=createStore({getContext:()=>c,persist:async()=>true}),host=createHost({getContext:()=>c,getSource:()=>source,store,prepareMessage,createParameters:createParameters??(async(s,model,type,messages)=>({generate_data:{messages,model}}))});c.registerMacro('tisya_config_selected',()=>host.selectedText());
@@ -92,4 +92,12 @@ test('isolated sandbox exports the complete production request with neutral sour
  if(!process.env.TISYA_SANDBOX_INPUT)return;
  const f=setup();f.w.context.history=2;f.c.chat=[{mes:saved(1)},{is_user:true,mes:'阿岚沿楼梯回到值班室。'},{mes:fixture({body:'1\n阿岚和守灯人回到旧灯塔的值班室，维修告一段落。\n\n2\n桌边晾着湿斗篷，灯芯仍然忽明忽暗。\n\n3\n守灯人把工具箱放下，问阿岚要不要先坐着等雨停。',memory:'事件：[阿岚,守灯人]|A|两人回到值班室，工具箱已经放下，雨尚未停。'})},{is_user:true,mes:'我让阿岚嘴硬说一点也不冷，可是伸手烤火又被烟呛得打喷嚏。让守灯人拆穿他并照顾他，嘴上嫌麻烦，实际把热茶推过来。外面响起三短两长的敲门声，只到阿岚摸到自己保管的钥匙，开不开门留给我。qwq缇斯亚你别笑太大声。'}];
  await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);fs.writeFileSync(process.env.TISYA_SANDBOX_INPUT,JSON.stringify({messages:payload.messages},null,2));
+});
+
+
+test('external memory mode never reads old memory even when the saved injection flag is on',()=>{
+ const f=setup();f.w.context.owner='native';f.w.context.memory=true;f.w.context.history=0;
+ f.c.chat=[{mes:saved(1).replace('</memory>','')},{is_user:true,mes:'现在'}];
+ const original=JSON.stringify(f.c.chat);let result=buildHistoryMemory(f.c,f.w);assert.equal(result.text,'');assert.equal(result.report.enabled,false);assert.deepEqual(result.report.injectedSources,[]);
+ delete f.w.context.owner;result=buildHistoryMemory(f.c,f.w);assert.equal(result.text,'');assert.equal(result.report.enabled,false);assert.equal(JSON.stringify(f.c.chat),original);
 });
