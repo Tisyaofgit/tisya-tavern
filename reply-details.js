@@ -22,7 +22,12 @@ export function readReplyDetails(source){
   try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});pending=memory.未完事项.filter(row=>visiblePending(row,{mode:'emit',audience:'读者'})&&next.tasks?.some(task=>task.text===row.事项)).map(row=>({label:row.事项,status:row.状态,text:row.触发,fields:[['依据',row.依据]]}));}}catch{pendingError=true;}
   rounds={tasks,delivered,pending,pendingError};
  }catch{rounds={error:true,tasks:[],delivered:[],pending:[]};}
- return {taskHeart:heart(task.heart),nextHeart:heart(next.heart),audit,rounds};
+ const taskHeart=heart(task.heart),nextHeart=heart(next.heart);
+ // Report an observed source defect without silently rewriting or dropping a
+ // selected direction. Punctuation/spacing alone do not make a new comment.
+ const normalized=s=>s.normalize('NFKC').replace(/[\s\p{P}\p{Z}]/gu,'');
+ const repeated=nextHeart.items.filter(row=>taskHeart.items.some(top=>normalized(top.text)===normalized(row.text))).length;
+ return {taskHeart,nextHeart,audit,rounds,...repeated?{heartDiagnostic:`原回复有 ${repeated} 条收篇心声与开篇重复；当前按原文显示。`}:{}};
 }
 export function mountHeartBlock(document,container,value,{label}={}){
  const host=document.createElement('div');host.className='heart-host';host.setAttribute('aria-label',label??'缇斯亚心声');host.dataset.status=value.status;

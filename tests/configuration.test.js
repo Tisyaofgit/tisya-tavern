@@ -100,12 +100,15 @@ test('each heart position emits all selected directions in the actual request, f
    const block=text.match(new RegExp('<'+part+' format="pipes"[^>]*>([\\s\\S]*?)</'+part+'>'))[1];
    const rows=[...block.matchAll(/^心声：有内容\|([^|]+)\|/gm)].map(m=>m[1]);
    assert.deepEqual(rows,m.heartDirections,detail+' '+part+' mask '+mask);
+   if(mask){assert.match(block,part==='task'?/开篇：/:/收篇：/);assert.doesNotMatch(block,/该方向短评/);}
    if(!mask)assert.match(block,/心声：关闭/);
   }
   if(mask){assert.match(text,new RegExp('task与next各输出'+m.heartDirections.length+'条心声'));assert.match(text,/禁止复制、近义改写或回放开篇心声/);}
   assert.doesNotMatch(text,/assigned position only|task receives|no public basis→omit item/);
   assert.match(text,/无原生状态行→省略全部status注记/);assert.match(text,/<vars\/>→省略全部vars注记/);
   assert.match(text,/七项审计各给一句实际核验结论/);assert.doesNotMatch(text,/WORKFLOW\/WORKFLOW/);
+  assert.match(text,/记忆是存放位置，不是权限等级/);assert.match(text,/入档时保留同一读者授权/);
+  assert.match(text,/不能用整条E吞掉公开经过/);assert.match(text,/若文字或评论要点重复，重写next/);
  }
 });
 

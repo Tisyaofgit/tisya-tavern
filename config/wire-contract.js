@@ -34,6 +34,22 @@ export function applyWireContract(entries){
  inner=inner.replace('回应用户评价：以缇斯亚身份直接回应用户对缇斯亚说的话、问题或感想，与用户聊天互动。','回应用户评价：以缇斯亚身份回应用户实际的话、问题或感想；只有指令时就接这句话，不虚构用户发言。');
  inner=inner.replace('no public basis→omit item;all enabled items omitted→心声：沉默;disabled→心声：关闭',count?'只评可公开的输入、开局或已发生结果；依据不足就点明未知，不编造情节或私密信息；仍保留该方向一条。':'未选心声：两处均写心声：关闭。');
  inner=inner.replace('selected opening hearts/moods;', 'both heart positions: exact selected directions/count and allowed moods per @HEART;');
+ // Position-specific row instructions survive all three workflow detail levels.
+ // A shared placeholder encouraged copying even when the remote HEART rule said
+ // not to repeat. Keep every selected direction at both positions.
+ const heartPrompts={
+  task:{输入评价:'开篇：只评用户本轮输入带来的选择或处境；尚未成稿的结果不得当成已经发生',回应用户评价:'开篇：直接回应用户实际的话或要求，交代对此的态度，不预报正文结果',剧情吐槽:'开篇：吐槽承接进来的局面或难题，不抢先评论本轮结局'},
+  next:{输入评价:'收篇：回看该输入在本轮正文中实际造成的新变化，不重复开篇对输入的评价',回应用户评价:'收篇：结合本轮实际完成或尚未完成之处给用户新的回应，不复述开篇答话',剧情吐槽:'收篇：只挑本轮正文新增的反应、转折或后果来吐槽，不重讲开局'}
+ };
+ for(const part of ['task','next'])inner=inner.replace(new RegExp('(<'+part+' format="pipes"[^>]*>)([\\s\\S]*?)(</'+part+'>)'),(_,a,b,z)=>a+b.replace(/^(心声：有内容\|([^|]+)\|[^|]+\|).*$/gm,(_,prefix,direction)=>{
+  if(!heartPrompts[part][direction])throw Error('未知心声方向：'+direction);
+  return prefix+'{'+heartPrompts[part][direction]+'}';
+ })+z);
+ inner=once(inner,'@ARCHIVE <archive/>',`@MEMORY_SCOPE 记忆是存放位置，不是权限等级。不得因写入memory、由作者整理或回顾正文而统一标E，也不得沿用历史回复的E标签。逐事实判定：A公开，B实际接触，C个人私有，D定向秘密，E未公开的作者后台；K等级另按实际接触记录。
+读者已经获准阅读的叙事片段，入档时保留同一读者授权；这不使它成为世界内公开信息。世界内公开事件可用A；已获叙事公开授权的私人片段保留原等级并用[level,[叙事组织,记录整理及实际获权主体],[读者],[实际知情主体]]，不得把读者授权扩给其他人物。未获公开授权的秘密仍不向读者显示。
+一个事件混有公开经过和后台推演时，分别记录或用字段权限区分，不能用整条E吞掉公开经过，也不能用整条A公开私密子项。原文选段只引用获准公开的完整段落；对外猜测仍为推测，不能因为被记录就升级为确认。
+@REPLY_CHECK 交付前逐项核对：公开记忆沿用了其真实来源的读者授权；E仅用于真正未公开的后台事实；没有照抄历史权限注记。task与next按同一方向逐条比较，若文字或评论要点重复，重写next为本轮新增结果的短评；不是改同义词，也不删减已选条数。无新增结果就回应实际停点或未完成处，不编造推进。只交付修正后的内容，不输出比较过程。
+@ARCHIVE <archive/>`);
  inner=inner.replace('@EXTENSION Only supplied triggered components may be displayed;display grants no state write', '@BRIEF 任务摘要只点明本轮目标；七项审计各给一句实际核验结论及必要字段/段号，不复述剧情、输入清单或自夸；已交付只写尚未表达的新增结果，无则省略。辅助字段删去同义叠加、空泛修辞和无依据的极端评价。\n@EXTENSION Only supplied triggered components may be displayed;display grants no state write');
  entries.tisya_inner_chain=inner;
 }

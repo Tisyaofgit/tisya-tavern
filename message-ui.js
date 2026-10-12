@@ -7,7 +7,7 @@ import {mountActionChoice} from './actions.js';
 import {replyControlsCSS} from './reply-details.js';
 import {appearanceValues} from './appearance-settings.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
-import {inspectMessage,readerErrorText,readerErrorCode,journeyCompatibilityText} from './reader.js';
+import {inspectMessage,readerErrorText,readerErrorCode,journeyCompatibilityText,journeyEmptyText} from './reader.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {waterStyle} from './visual-theme.js';
 import {visualAssets,motionManifest,journeyArt,journeyIcons} from './visual-assets.js';
@@ -29,12 +29,12 @@ function mountJourney(document,container,data){
   else if(id==='tasks'){empty('任务页面已就位，任务功能待接入。','task-scroll');}
   else if(id==='more'){const c=card('日夜之间','选择旅程的纸色与灯光');const options=make('div',null,'jr-theme-options');for(const [k,text]of [['day','日间'],['night','夜间']]){const b=make('button',text,'jr-theme-choice');b.type='button';b.setAttribute('aria-pressed',String(root.dataset.theme===k));b.onclick=()=>{manualTheme=true;root.dataset.theme=k;options.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));};options.append(b);}c.append(options);}
   else if(!model){empty(data.journey.error?readerErrorText(data.journey.error):'本条记录暂未就绪，原消息保留。',id==='memory'?'memory-letter':null);}
-  else if(id==='memory'){if(!model.memories.length&&!model.changes.length)empty('这一回合，暂无可展示的记忆。','memory-letter');for(const memory of model.memories){const c=card(memory.scene?.title,memory.summary);if(memory.scene?.places?.length)c.prepend(make('p',memory.scene.places.join(' · '),'jr-meta'));if(memory.quote){const d=make('details',null,'jr-quote');d.append(make('summary','回看这一刻'),make('p',memory.quote.text,'jr-quote-text'));c.append(d);}for(const result of memory.results??[])c.append(make('p',result,'jr-meta'));if(memory.impact)c.append(make('p',memory.impact));}for(const change of model.changes){const c=card(change.object+' · '+change.field);if(change.hasNewValue)c.append(make('p',typeof change.newValue==='string'?change.newValue:JSON.stringify(change.newValue)));if(change.deleted)c.append(make('p','已移除'));if(change.reason)c.append(make('p',change.reason,'jr-meta'));}}
+  else if(id==='memory'){if(!model.memories.length&&!model.changes.length)empty(journeyEmptyText,'memory-letter');for(const memory of model.memories){const c=card(memory.scene?.title,memory.summary);if(memory.scene?.places?.length)c.prepend(make('p',memory.scene.places.join(' · '),'jr-meta'));if(memory.quote){const d=make('details',null,'jr-quote');d.append(make('summary','回看这一刻'),make('p',memory.quote.text,'jr-quote-text'));c.append(d);}for(const result of memory.results??[])c.append(make('p',result,'jr-meta'));if(memory.impact)c.append(make('p',memory.impact));}for(const change of model.changes){const c=card(change.object+' · '+change.field);if(change.hasNewValue)c.append(make('p',typeof change.newValue==='string'?change.newValue:JSON.stringify(change.newValue)));if(change.deleted)c.append(make('p','已移除'));if(change.reason)c.append(make('p',change.reason,'jr-meta'));}}
   else if(id==='characters'){const rows=model.characters.filter(c=>c.cognition.length);if(!rows.length)empty('相遇，会在这里留下记录。');for(const row of rows){const c=card(row.name);row.cognition.forEach(r=>c.append(make('p',r.content)));}}
   if(['memory','characters'].includes(id))for(const row of [...(model?.diagnostics??[])].reverse()){
    const notice=make('details',null,'public-note record-notice round-empty');notice.append(make('summary','一条附加记录暂未关联'),make('p',`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));notice.style.fontFamily='TisyaReading,serif';viewport.prepend(notice);
   }
-  if(id==='more'){const compatibility=journeyCompatibilityText(model);if(compatibility)card('旧记录兼容',compatibility).classList.add('record-compatibility');}
+  if(id==='more'){if(data.details?.value?.heartDiagnostic)card('心声检查',data.details.value.heartDiagnostic).classList.add('heart-diagnostic');const compatibility=journeyCompatibilityText(model);if(compatibility)card('旧记录兼容',compatibility).classList.add('record-compatibility');}
   viewport.scrollTop=positions.get(id)??0;
  }
  for(const [id,label,glyph]of tabs){const b=make('button');b.type='button';b.dataset.jrTab=id;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');p.setAttribute('d',journeyIcons[glyph]);svg.append(p);b.append(svg,make('span',label));b.onclick=()=>go(id);buttons.set(id,b);nav.append(b);}go('memory');

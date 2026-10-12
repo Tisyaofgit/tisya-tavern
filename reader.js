@@ -9,6 +9,7 @@ import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-c
 import {readJourney} from './reply-records.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
+export const journeyEmptyText='记忆已解析，但本条没有获准向读者显示的记录。显示权限取自原回复；单独的 B–E 不包含读者授权。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
@@ -91,7 +92,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         panel.append(note('记录对应所选消息这一回合。'));
         for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
         const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}
-        if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length)&&!view.changes.length){panel.append(note('本条没有可显示的公开回合记录。'));return;}
+        if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length)&&!view.changes.length){panel.append(note(journeyEmptyText));return;}
         for(const memory of view.memories){
             const card=make('article',null,'tisya-reader-card');scene(card,memory.scene);
             field(card,'在场',memory.participants.join('、'));if(memory.summary)card.append(make('p',memory.summary));
@@ -123,7 +124,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         if(!alive)return;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;if(value.heartDiagnostic)panel.append(note(value.heartDiagnostic));mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
