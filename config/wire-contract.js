@@ -1,3 +1,4 @@
+import {applyMemoryOutputContract} from './memory-output.js';
 // The compact permission spelling is user-facing wire syntax. Scoped policies
 // remain supported for explicit audience/field overrides, never required merely
 // to make a compact record parse. Keep the frozen upstream source unchanged.
@@ -45,11 +46,8 @@ export function applyWireContract(entries){
   if(!heartPrompts[part][direction])throw Error('未知心声方向：'+direction);
   return prefix+'{'+heartPrompts[part][direction]+'}';
  })+z);
- inner=once(inner,'@ARCHIVE <archive/>',`@MEMORY_SCOPE 记忆是存放位置，不是权限等级。不得因写入memory、由作者整理或回顾正文而统一标E，也不得沿用历史回复的E标签。逐事实判定：A公开，B实际接触，C个人私有，D定向秘密，E未公开的作者后台；K等级另按实际接触记录。
-读者已经获准阅读的叙事片段，入档时保留同一读者授权；这不使它成为世界内公开信息。世界内公开事件可用A；已获叙事公开授权的私人片段保留原等级并用[level,[叙事组织,记录整理及实际获权主体],[读者],[实际知情主体]]，不得把读者授权扩给其他人物。未获公开授权的秘密仍不向读者显示。
-一个事件混有公开经过和后台推演时，分别记录或用字段权限区分，不能用整条E吞掉公开经过，也不能用整条A公开私密子项。原文选段只引用获准公开的完整段落；对外猜测仍为推测，不能因为被记录就升级为确认。
-@REPLY_CHECK 交付前逐项核对：公开记忆沿用了其真实来源的读者授权；E仅用于真正未公开的后台事实；没有照抄历史权限注记。task与next按同一方向逐条比较，若文字或评论要点重复，重写next为本轮新增结果的短评；不是改同义词，也不删减已选条数。无新增结果就回应实际停点或未完成处，不编造推进。只交付修正后的内容，不输出比较过程。
+ inner=once(inner,'@ARCHIVE <archive/>',`@REPLY_CHECK task与next按同一方向逐条比较，若文字或评论要点重复，重写next为本轮新增结果的短评；不是改同义词，也不删减已选条数。无新增结果就回应实际停点或未完成处，不编造推进。只交付修正后的内容，不输出比较过程。
 @ARCHIVE <archive/>`);
  inner=inner.replace('@EXTENSION Only supplied triggered components may be displayed;display grants no state write', '@BRIEF 任务摘要只点明本轮目标；七项审计各给一句实际核验结论及必要字段/段号，不复述剧情、输入清单或自夸；已交付只写尚未表达的新增结果，无则省略。辅助字段删去同义叠加、空泛修辞和无依据的极端评价。\n@EXTENSION Only supplied triggered components may be displayed;display grants no state write');
- entries.tisya_inner_chain=inner;
+ entries.tisya_inner_chain=applyMemoryOutputContract(inner);
 }
