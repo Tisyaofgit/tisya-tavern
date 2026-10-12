@@ -44,3 +44,11 @@ export function applyMemoryOutputContract(inner){
 }
 
 export const MEMORY_EXAMPLE='事件：[队员甲,队员乙]|A|两人完成公开谢幕，随后返回后台。\n原文：段落1、3\n认知：队员甲|自我|确认|C|自己仍然有些紧张|本轮已获准叙述的个人感受';
+// When the archival API owns events, the main model only retains ACL annotations
+// needed by native components. It does not produce another narrative summary.
+export function applyTableArchiveMemory(entries){
+ let inner=entries.tisya_inner_chain;
+ inner=inner.replace(/@MEMORY_WRITE \{[\s\S]*?\n\}/,'@MEMORY_WRITE {\n本轮事件、发现、认识及状态变化由辅助记忆归档 API 从正文填表。此处不重复写事件、经过、心理摘要、未完、倒计时或表行。memory 仅在本条原生状态、vars 或 extra 确实需要独立权限注记时保留匹配的权限行；无注记输出 <memory/>。保留实际类型/对象/字段及原生操作 JSON Pointer，不制造占位权限。\n}');
+ inner=inner.replace(/<memory format="pipes">[\s\S]*?<\/memory>/,'<memory/>');
+ entries.tisya_inner_chain=inner;return entries;
+}

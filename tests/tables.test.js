@@ -19,11 +19,11 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
-test('twelve shared forms keep typed zero, false and null; reject nonexistent fields',()=>{
+test('shared forms retain zero false null and register new typed fields',()=>{
  const v=blank();assert.equal(v.registry.tables.length,12);
  const p=prepareCommit(v,{changes:[op('new:a','state',{名称:'全局旗标',对象:'new:b',字段:'次数',值:0}),op('new:b','objects',{名称:'城门',类型:'地点',属性:{特征:'石门'}})]},{source:'s',kind:'archive',evidence:'源',allowedTables:['state','objects']});
  assert.equal(p.rows[0].values.值,0);assert.notEqual(p.rows[0].values.对象,'new:b');assert.equal(p.commit.anchors.length,2);assert.equal(p.commit.anchors[0].worldTime,null);
- assert.throws(()=>prepareCommit(v,{changes:[op('new:a','objects',{名称:'A',类型:'place',不存在:1})]},{source:'s',evidence:'源',allowedTables:['objects']}),/未知字段/);
+ const extended=prepareCommit(v,{changes:[op('new:a','objects',{名称:'A',类型:'place',新增数据:1})]},{source:'s',evidence:'源',allowedTables:['objects']});assert.equal(extended.registry.tables.find(t=>t.id==='objects').fields.新增数据.type,'number');
  const r={id:'x',table:'state',values:{名称:'值',对象:'x',字段:'是否',值:false},access};assert.equal(validateRow(v.registry,r).values.值,false);r.values.值=null;assert.equal(validateRow(v.registry,r).values.值,null);
 });
 test('canonical type registry reuses aliases and rejects synonym and inheritance collisions',()=>{
@@ -88,8 +88,10 @@ test('vector index is isolated, removes stale sources and never trusts returned 
  const broken=createNativeVectors({getContext:()=>c,fetcher:async()=>({ok:false,status:500})});await assert.rejects(broken.search({scope:'x',rows:[row],query:'事件',topK:1}),/未降级/);
 });
 
-test('source memory is archived verbatim even if filler changes no fields',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});const summary='事件：北门|A|抵达门口';f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><memory>'+summary+'</memory>'),user('继续'),ai('暂存')];await f.service.prepare();const data=await f.service.inspect();assert.equal(data.rows.find(r=>r.table==='events').values.经过,summary);assert.equal(data.anchors[0].worldTime,'2026-10-12 10:00');
+test('body archives without memory and does not copy contradictory old summary',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><body>抵达门口，尚未进入。</body><memory>已经进入城中</memory>'),user('继续'),ai('暂存')];
+ f.responder((task,input)=>{assert.equal(input.archiveSource.text,'抵达门口，尚未进入。');return {changes:[op('new:event','events',{名称:'抵达北门',经过:'抵达门口，尚未进入。'},'抵达门口，尚未进入。')]};});
+ await f.service.prepare();const data=await f.service.inspect();assert.equal(data.rows.find(r=>r.table==='events').values.经过,'抵达门口，尚未进入。');assert.equal(data.anchors[0].worldTime,'2026-10-12 10:00');assert(!JSON.stringify(data.rows).includes('已经进入城中'));
 });
 test('template editor adds safe columns and tables but cannot mutate an existing field type',async()=>{
  const f=fixture();await f.service.initialize();let data=await f.service.inspect(),next=structuredClone(data.registry);next.types[0].fields.习惯={type:'text'};await f.service.saveTemplates(next,data.origin.revision);data=await f.service.inspect();assert.equal(data.registry.types[0].version,2);next=structuredClone(data.registry);next.types[0].fields.身份={type:'number'};await assert.rejects(f.service.saveTemplates(next,data.origin.revision),/已有字段不可改变/);
@@ -201,4 +203,17 @@ test('interface and main configuration share one explicit assistant apply, with 
  const {interfaceSnapshot,validateInterfaceSettings}=await import('../tables/interface-config.js');const f=fixture();let display={联系人分组:{},未知旧字段:'保留'},saves=0;
  const service=createTableService({store:f.store,getContext:()=>f.c,books:f.books,request:async()=>({answer:'改历史条数、阅读心理和消息栏',changes:[{path:'/world/context/history',value:16,reason:'用户要求'},{path:'/interface/显示区块/extensions/显示角色心理',value:true,reason:'用户要求'},{path:'/interface/消息快捷栏',value:['next','more'],reason:'用户要求'}],backfill:null,genesisGoal:''}),interfaceConfig:{read:()=>interfaceSnapshot(display),save:async({data,revision,key,value,expected})=>{assert.equal(expected,JSON.stringify(display));validateInterfaceSettings(value);await f.store.save(data,revision,key);display=value;saves++;}}});
  const result=await service.assistant.ask('开启心理，精简消息栏，历史16条');assert.equal(saves,0);await service.assistant.apply(result);assert.equal(saves,1);assert.equal(display.显示区块.extensions.显示角色心理,true);assert.equal(display.未知旧字段,'保留');assert.deepEqual(display.消息快捷栏,['next','more']);assert.equal(f.store.read().world.context.history,16);assert.throws(()=>validateInterfaceSettings({...display,消息快捷栏:['next']}),/保留更多/);assert.throws(()=>service.assistant.guard(result),/已变化/);
+});
+
+test('card initialization saves reusable object and discovery context but isolates initial state',async()=>{
+ const f=fixture();f.c.characters[0].data={description:'驿长顾青每日下午在白鹭驿站值班。初始位于驿站。'};for(const name of ['角色原书','数据库资料'])f.saved.set(name,[]);
+ f.responder((task,input)=>{assert.equal(task,'templateInit');const r=input.registry;return {registry:r,notes:['依据角色卡初始化'],base:{changes:[op('new:station','objects',{名称:'白鹭驿站',类型:'place'},'白鹭驿站'),op('new:gu','objects',{名称:'顾青',类型:'character',属性:{身份:'驿长'},发现环境:{地点:['new:station'],时段:'每日下午',来源依据:'驿长顾青每日下午在白鹭驿站值班。'}},'驿长顾青每日下午在白鹭驿站值班。')]},initial:{changes:[op('new:place','state',{名称:'顾青位置',对象:'new:gu',字段:'当前位置',值:'白鹭驿站'},'初始位于驿站。')]}};});
+ const draft=await f.service.cardTemplate();assert.equal((await f.service.inspect()).rows.length,0);await f.service.saveCardTemplate(draft);const first=await f.service.inspect();assert.equal(first.origin.bases.length,2);assert.equal(first.rows.filter(x=>x.table==='state').length,1);const gu=first.rows.find(x=>x.values.名称==='顾青');assert(!gu.values.发现环境.地点[0].startsWith('new:'));
+ f.c.chatId='new-save';await f.service.initialize();assert.equal((await f.service.inspect()).rows.length,0);await f.service.pinOrigins(first.origin.bases.map(b=>b.id+'@'+b.rev));const second=await f.service.inspect();assert.equal(second.rows.length,2);assert(second.rows.every(x=>x.table==='objects'));assert(second.rows.find(x=>x.values.名称==='顾青').values.发现环境);
+});
+test('valid independent archive items persist while malformed items leave floor pending',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('收到信件。'),user('继续'),ai('最新')];f.responder(()=>({changes:[op('new:event','events',{名称:'收信',经过:'收到信件。'},'收到信件。'),op('new:bad','state',{名称:'错误引用',对象:'missing',字段:'伤势',值:'无'},'收到信件。')]}));const result=await f.service.archive({range:{from:1,to:1,limit:1}});const data=await f.service.inspect();assert.equal(data.rows.length,1);assert.equal(result.archived,0);assert(result.pending.length);assert.equal(f.calls.length,2);assert.equal((await f.service.scan())[0].archived,false);
+});
+test('archive object is reusable in origin while source removal removes current overlay',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('岚在北门。'),user('继续'),ai('最新')];f.responder(()=>({changes:[op('new:lan','objects',{名称:'岚',类型:'character'},'岚'),op('new:where','state',{名称:'岚位置',对象:'new:lan',字段:'当前位置',值:'北门'},'岚在北门。')]}));await f.service.archive({range:{from:1,to:1,limit:1}});let data=await f.service.inspect();assert.equal(data.origin.bases.length,1);assert.equal(data.rows.length,2);f.c.chat[0].mes='此段被重投替换';data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(data.origin.bases.length,1);
 });

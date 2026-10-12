@@ -30,12 +30,12 @@ export function heartSelection(source){
  return mask;
 }
 export const DELIVERY_WARNING='【特别警告】\n内部规划与检查完成后，立即按既定格式输出完整的 <reply> 正文；不复述任何思考过程，回复在 </reply> 处结束。';
-export function registerPresetProtocol(context,getSource,onError=()=>{},getEmotionNames=()=>[],isProse=()=>true){
+export function registerPresetProtocol(context,getSource,onError=()=>{},getEmotionNames=()=>[],isProse=()=>true,getExecution=()=>null){
  const names=['tisya_output_kind','tisya_delivery_warning','tisya_heart_directions','tisya_heart_rows','tisya_heart_moods','tisya_heart_protocol','tisya_memory_delivery'];
  if(typeof context.registerMacro!=='function'||typeof context.unregisterMacro!=='function')throw Error('TISYA_PRESET_MACROS_UNAVAILABLE');
  const wrap=fn=>()=>{try{const source=getSource();return fn(outputEnabled(source)&&isProse(source),heartSelection(source));}catch(error){onError(error);throw error;}};
  context.registerMacro(names[0],wrap(on=>on?'structured':'plain'),'缇斯亚配套预设：跟随十块结构开关');
- context.registerMacro(names[1],wrap(on=>on?DELIVERY_WARNING:''),'缇斯亚配套预设：结构化交付提示');
+ context.registerMacro(names[1],()=>{const c=getExecution();return c?.taskMode?c.rest.entries.tisya_delivery_warning:wrap(on=>on?DELIVERY_WARNING:'')();},'缇斯亚配套预设：结构化交付提示');
  context.registerMacro(names[6],wrap(on=>on?MEMORY_DELIVERY:''),'缇斯亚配套预设：记忆与心声交付复核');
  context.registerMacro(names[2],wrap((on,mask)=>on?HEART_DIRECTIONS.split('\n').filter((_,i)=>mask&(1<<i)).join('\n'):''),'缇斯亚配套预设：首尾心声方向');
  context.registerMacro(names[3],wrap((on,mask)=>HEART_VARIANTS[mask][on?'on':'off'].rows.replaceAll('{mood或null}','{mood}')),'缇斯亚配套预设：首尾心声格式');

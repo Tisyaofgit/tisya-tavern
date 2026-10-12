@@ -1,3 +1,4 @@
+import {applyTableArchiveMemory} from './memory-output.js';
 import {routeStyleRules} from '../tables/style-rules.js';
 import {addSlotRouting} from '../tables/modes.js';
 import {renderProtocol} from '../settings-core.js';
@@ -22,7 +23,7 @@ export function refineCompiled(c,{data,world},source){
  if(detail!=='full')entries.tisya_inner_chain=condenseWorkflow(entries.tisya_inner_chain,c,m,actor,detail);
  entries.tisya_internal_login=entries.tisya_internal_login.replace('narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;utility:T.1→D.4;then','narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;then');
  if(detail!=='full')entries.tisya_internal_login=entries.tisya_internal_login.replace(/^@FLOW .*$/m,'@FLOW narrative:'+(detail==='compact'?'WORKFLOW→C.2→D.1..D.4':'C.2→INNER_END')+'→COMMIT.READY→PREPARE_STEP');
- c.workflowDetail=detail;pruneRegistry(entries,c.checks);c.selectedIds=selected.ids;return c;
+ c.workflowDetail=detail;if(world.tables?.enabled&&world.tables.archive!==false)applyTableArchiveMemory(entries);pruneRegistry(entries,c.checks);c.selectedIds=selected.ids;return c;
 }
 
 function pruneRegistry(entries,checks){

@@ -1,4 +1,4 @@
-import {copy,check,normalized} from './schema.js';
+import {copy,check,normalized,references} from './schema.js';
 // Read-only generation projection. Storage journals never become active lore.
 export function worldbookEntries({rows,registry,scope,tags=[],forcedIds=[],temporary=null,due=[]}){
  const byId=new Map(rows.map(r=>[r.id,r])),forced=new Set(forcedIds),dueIds=new Set(due.filter(x=>x.due===true).map(x=>x.id));
@@ -7,7 +7,7 @@ export function worldbookEntries({rows,registry,scope,tags=[],forcedIds=[],tempo
  function entry(id,name,content,keys,constant,reason){entries.push({uid:entries.length+1,world:'Tisya tables / '+scope,key:[...new Set(keys)],keysecondary:[],comment:name,content,constant,selective:false,selectiveLogic:0,disable:false,position:4,depth:1,role:0,order:constant?200:100,probability:100,useProbability:false,ignoreBudget:false,excludeRecursion:true,preventRecursion:true,delayUntilRecursion:false,matchWholeWords:false,caseSensitive:false,scanDepth:null,vectorized:false,sticky:0,cooldown:0,delay:0,group:'',triggers:[],tisyaTable:{id,reason}});}
  for(const row of rows){
   const def=registry.tables.find(t=>t.id===row.table);check(def,'缺少表定义：'+row.table);
-  const refs=Object.entries(def.fields).flatMap(([key,d])=>d.type==='ref'?[row.values[key]]:d.type==='refs'?row.values[key]??[]:[]);
+  const refs=references(row,registry);
   const keys=[...names(row),...(row.values.标签??[]),...refs.flatMap(id=>names(byId.get(id)))].filter(x=>typeof x==='string'&&x.trim());
   const tagged=keys.some(key=>tags.some(tag=>normalized(tag).includes(normalized(key))));
   const reason=tagged?'上回合引用':forced.has(row.id)?'检索命中':dueIds.has(row.id)?'到期检查':['scene','preferences'].includes(row.table)?'当前场景／偏好':'关键词';

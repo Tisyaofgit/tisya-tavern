@@ -91,7 +91,7 @@ Agent、数据库、检索、语音、绘图、嵌入、重排执行器需另外
 
 ## alpha27 辅助输出与原生配置
 
-六类配套辅助预设只有身份、任务核对要求、实际资料槽与 JSON 契约，不编译正文交付协议。`compileTaskMode` 标记 taskMode、关闭 prose，手动模式与自动 API 一致；叙事模式保留完整交付。旧 extra/tisya_result 解码仅用于历史兼容。
+配套辅助预设由共用身份、输入预处理与资料路由、资料槽、模式任务、助手就绪、交付复核和唯一执行尾部组成，输出任务 JSON。卡模板初始化读取角色卡及已绑定定义，返回模板增量与可编辑底档。`compileTaskMode` 标记 taskMode、关闭 prose，手动模式与自动 API 一致；叙事模式保留完整交付。旧 extra/tisya_result 解码仅用于历史兼容。
 
 `Tisya.tables.nativeConfiguration.apply(spec)` 负责经确认的原生配置补建；`resolveTargets(spec)` 在蓝图保存时固定省略的当前角色／预设目标。`artifacts.native` 与该 spec 共用校验及可视化编辑器。字段见 `tables/native-config.js`；不接受任意脚本、凭据、端点或对象写入路径。
 
