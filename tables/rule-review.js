@@ -12,7 +12,7 @@ export async function ruleSources(card,books=[]){
  bound.forEach((e,i)=>{if(!e.runtimeSource)sources.push({id:'book.'+i,label:e.book+' / '+e.entry,kind:'definition',text:e.content});});
  return {fingerprint:await digest(JSON.stringify({ai,bound})),sources,runtimeSources:[...ai.runtimeSources,...bound.filter(e=>e.runtimeSource)]};
 }
-const safeId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(value)&&!['__proto__','constructor','prototype'].includes(value);
+const safeId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(value)&&value!=='prototype'&&!Object.hasOwn(Object.prototype,value);
 const text=(value,label)=>check(typeof value==='string'&&value.trim(),label+'不能为空');
 function keys(value,allowed,label){check(value&&typeof value==='object'&&!Array.isArray(value),label+'格式无效');check(Object.keys(value).every(k=>allowed.includes(k)),label+'包含未登记字段');}
 export function validateRuleReview(proposal,source){
