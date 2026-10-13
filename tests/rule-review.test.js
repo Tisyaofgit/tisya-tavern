@@ -47,3 +47,7 @@ test('production initialization gates on choices, persists scope, propagates thr
  status=await f.service.ruleReviewStatus();await f.service.saveRuleChoice({issueId:'slots',action:'keep'},{fingerprint:status.review.fingerprint,sessionRevision:status.sessionRevision});assert.equal((await f.service.prepare()).slots.state.rulePolicy.decisions[0].action,'keep');
  f.c.characters[0].description+='新增条款。';assert.equal((await f.service.ruleReviewStatus()).stale,true);await assert.rejects(f.service.prepare(),/原卡或绑定规则已改变/);
 });
+
+test('rule review cannot display another session decisions through a misbound book',async()=>{
+ const f=fixture();await f.service.reviewCardRules();const settings=(await f.service.inspect()).settings;f.c.chatId='another-chat';const snapshot=f.store.read();snapshot.data.worlds[snapshot.key]={...snapshot.world,tables:{...settings}};await f.store.save(snapshot.data,snapshot.revision,snapshot.key);await assert.rejects(f.service.ruleReviewStatus(),/属于另一会话/);
+});
