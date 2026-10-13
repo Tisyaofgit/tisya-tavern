@@ -20,7 +20,7 @@ function fixture(nativeConfig=null){
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
 test('shared forms retain zero false null and register new typed fields',()=>{
- const v=blank();assert.equal(v.registry.tables.length,12);
+ const v=blank();assert.equal(v.registry.tables.length,16);
  const p=prepareCommit(v,{changes:[op('new:a','state',{名称:'全局旗标',对象:'new:b',字段:'次数',值:0}),op('new:b','objects',{名称:'城门',类型:'地点',属性:{特征:'石门'}})]},{source:'s',kind:'archive',evidence:'源',allowedTables:['state','objects']});
  assert.equal(p.rows[0].values.值,0);assert.notEqual(p.rows[0].values.对象,'new:b');assert.equal(p.commit.anchors.length,2);assert.equal(p.commit.anchors[0].worldTime,null);
  const extended=prepareCommit(v,{changes:[op('new:a','objects',{名称:'A',类型:'place',新增数据:1})]},{source:'s',evidence:'源',allowedTables:['objects']});assert.equal(extended.registry.tables.find(t=>t.id==='objects').fields.新增数据.type,'number');
@@ -50,7 +50,7 @@ test('disabled feature and memoryless greeting issue no auxiliary calls',async()
 });
 test('archive stays one assistant reply behind and retry discards candidate tags',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('开场'),user('去城门'),ai('<task>引用：城门</task><memory>抵达城门</memory>'),user('继续'),ai('<task>引用：被丢弃的名字</task><memory>最新候选</memory>')];
- await f.service.prepare('swipe');const archiveCalls=f.calls.filter(c=>c.task==='tableArchive');assert.equal(archiveCalls.length,1);assert.equal(archiveCalls[0].input.archiveSource.text,'开场');assert(!JSON.stringify(f.calls).includes('被丢弃的名字'));assert.match(f.service.preview().text,/引用：城门/);
+ await f.service.prepare('swipe');const archiveCalls=f.calls.filter(c=>c.task==='tableArchive');assert.equal(archiveCalls.length,2);assert.equal(archiveCalls[0].input.archiveSource.text,'开场');assert(!JSON.stringify(f.calls).includes('被丢弃的名字'));assert.match(f.service.preview().text,/引用：城门/);
  f.calls.length=0;await f.service.prepare('swipe');assert.equal(f.calls.length,0);
 });
 test('source fingerprints invalidate an edited prefix and dependent records',async()=>{
@@ -192,7 +192,7 @@ test('assistant unrelated configuration edit retains old alias routing and secre
 });
 test('preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),d=w.document;Object.defineProperty(w.HTMLTextAreaElement.prototype,'type',{get(){return 'textarea';},configurable:true});const f=fixture();delete f.helper.getWorldbook;f.c.chat=[ai('旧正文'),user('继续'),ai('最新')];const panel=mountTablePanel(d,d.body,{service:f.service,store:f.store});await panel.ready;
- const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);assert(b,text);await b.onclick();};await click('历史补录');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/只返回一个严格 JSON/);assert.equal(f.saved.size,0);
+ const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);assert(b,text);await b.onclick();};await click('历史补录');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
  await click('缇斯亚助手');f.responder(async()=>({answer:'把历史条数改为10',changes:[{path:'/world/context/history',value:10,reason:'用户要求'}],backfill:null,genesisGoal:''}));const q=panel.root.querySelector('[aria-label="想让缇斯亚帮你做什么"]');q.value='保留10条历史';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.match(panel.root.textContent,/修改前/);await click('应用全部更改');assert.equal(f.store.read().world.context.history,10);assert.match(panel.root.textContent,/已保存 1 项/);panel.dispose();await w.happyDOM.abort();
 });
 
@@ -248,4 +248,33 @@ test('participant tags do not force every past event into narrative context',asy
 test('state validity migrates additively and expired values stay available without mandatory current injection',async()=>{
  const {upgradeRegistry}=await import('../tables/schema.js');const reg=defaultRegistry();delete reg.tables.find(t=>t.id==='state').fields.有效性;const upgraded=upgradeRegistry(reg);assert.deepEqual(upgraded.tables.find(t=>t.id==='state').fields.有效性.values,['有效','失效','待确认']);
  const view={registry:upgraded,rows:[{id:'p',table:'objects',values:{名称:'周宁',类型:'character'},access},{id:'old',table:'state',values:{名称:'旧位置',对象:'p',字段:'位置',值:'码头',有效性:'失效'},access}]};validateRow(upgraded,view.rows[1]);assert.equal(retrieval(view,{topK:0}).mandatory.length,0);assert.equal(view.rows[1].values.值,'码头');
+});
+
+test('native bridge defers latest candidate, fills after user continuation and carries native state to that input',async()=>{
+ const f=fixture(),previous=globalThis.Mvu;const values=new Map([[0,{stat_data:{energy:10,bag:['钥匙']},display_data:{ready:true}}]]);let parses=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const patch=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);for(const op of patch){assert.equal(op.op,'replace');before.stat_data[op.path.slice(1)]=op.value;}return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降到8。')];await f.service.enableNativeBridge();assert.equal((await f.service.syncNative()).deferred,true);assert.equal(f.calls.length,0);
+ f.c.chat.push(user('去吃饭'));values.set(1,structuredClone(values.get(0)));
+ f.responder(async(task,input)=>{assert.equal(task,'nativeFill');assert(!input.archiveSource.text.includes('去吃饭'));const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}],pending:[]};});
+ const result=await f.service.syncNative();assert.equal(result.updated,1);assert.equal(parses,1);assert.equal(values.get(0).stat_data.energy,8);assert.equal(values.get(1).stat_data.energy,8);assert.deepEqual(values.get(1).stat_data.bag,['钥匙']);assert.equal((await f.service.syncNative()).already,true);assert.equal(parses,1);assert.equal(f.calls.length,1);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('native bridge leaves independently changed input-floor variables intact',async()=>{
+ const {carryNativeForward}=await import('../tables/native-bridge.js');const data=new Map([[1,{stat_data:{energy:9}}]]);await carryNativeForward({context:{chat:[ai('训练'),user('继续')]},runtime:{getMvuData:({message_id})=>data.get(message_id),replaceMvuData:async(d,{message_id})=>data.set(message_id,d)},index:0,before:{stat_data:{energy:10}},after:{stat_data:{energy:8}},guard(){}});assert.equal(data.get(1).stat_data.energy,9);
+});
+
+test('native bridge rejects evidence-free updates, type changes and path changes',async()=>{
+ const {bridgePatch}=await import('../tables/native-bridge.js');const row={id:'cell',table:'native_cells',rev:1,values:{路径:'/energy',值:10}},base={stat_data:{energy:10}};
+ const change={id:'cell',table:'native_cells',expected:1,values:{值:8},evidence:'体能下降'};
+ assert.equal(bridgePatch([row],{changes:[change]},base,'体能下降').operations[0].value,8);
+ for(const op of [{...change,evidence:'未知'}, {...change,values:{值:'8'}}, {...change,values:{值:8,路径:'/gold'}}])assert.throws(()=>bridgePatch([row],{changes:[op]},base,'体能下降'));
+});
+
+test('rollback and native branch preserve a chosen future blueprint without rearchiving the frozen prefix',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('10点已抵达城门'),user('继续'),ai('11点钟楼鸣响'),user('接着走'),ai('尚未确认')];
+ f.responder(async(_,input)=>({changes:[op('new:event','events',{名称:input.archiveSource.text,经过:input.archiveSource.text},input.archiveSource.text)]}));await f.service.archive();assert.equal((await f.service.inspect()).archived,2);
+ const staged=await f.service.stageFork(1,true);assert.equal(staged.nodes,1);f.c.chat=f.c.chat.slice(0,1);await f.service.activateFork({rollback:true});const info=await f.service.inspect();assert.equal(info.session.branchSeed.nodes.length,1);assert.equal(info.archived,1);assert.equal(info.rows.filter(r=>r.table==='events').length,1);assert.equal(info.session.retiredBranches.length,1);
+ f.c.chat.push(user('新的路线'));const before=f.calls.length;await f.service.archive();assert.equal(f.calls.length,before);
+ const cleared=await f.service.stageFork(1,false);assert.equal(cleared.nodes,0);f.c.chatId='new-branch';f.c.chat=f.c.chat.slice(0,1);await f.service.activateFork();const other=await f.service.inspect();assert.equal(other.session.branchSeed.nodes.length,0);assert.equal(other.archived,1);assert.notEqual(other.session.id,info.session.id);
 });

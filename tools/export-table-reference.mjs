@@ -5,7 +5,7 @@ import {defaultWorld,emptyConfig} from '../config/core.js';
 import {pairedPreset} from '../tables/paired-preset.js';
 import {AUX_TASKS} from '../tables/prompts.js';
 const configuration={data:emptyConfig(),world:defaultWorld()},reg=defaultRegistry(),entries=pairedPreset({task:'tableArchive',configuration}).entries;
-const label=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url))).version.split('-').at(-1).replaceAll('.','');
+const label=process.env.TISYA_DOC_LABEL??JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url))).version.split('-').at(-1).replaceAll('.','');
 let out='# '+label+' · 记忆归档 · 完整预设与基础表单\n\n此文件直接从本版代码导出。应用内“预设与表单全文”显示已保存的补充要求及实际存档模板。共用身份只列一次，每个任务另列完整运行指令；所有辅助输出为任务 JSON。\n\n## 共用身份提示词\n\n';
 for(const [id,text] of Object.entries(entries))if(id!=='tisya_inner_chain')out+='### '+id+'\n\n```text\n'+text+'\n```\n\n';
 for(const [id,t] of Object.entries(AUX_TASKS))out+='## '+t.name+' · '+id+'\n\n```text\n'+pairedPreset({task:id,configuration}).entries.tisya_inner_chain+'\n```\n\n';

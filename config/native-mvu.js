@@ -38,6 +38,7 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
  }
  if(!current)fail('原卡 MVU 尚无可读取的消息变量，请先完成原卡开场初始化。');
  const stat=structuredClone(current.stat_data);
+ if(world.tables?.nativeBridge)return {...declaration,messageIndex:index,stateDigest:JSON.stringify(stat),text:'[原生变量由表单辅助API负责填写；插件生成更新块交原MVU解析。正文不得再输出变量命令，vars留空；状态供叙事参考。]\n<status_current_variables>\n'+JSON.stringify(stat)+'\n</status_current_variables>'};
  const enabled=declaration.enabled;
  const format=enabled.find(e=>/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(e.content??''));
  if(!format)fail('原卡 MVU 的 JSONPatch 输出格式未启用或无法识别；原配置保留。');
