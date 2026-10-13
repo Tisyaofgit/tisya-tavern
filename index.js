@@ -267,6 +267,7 @@ async function messageAction(action) {
     if(action==='msg-copy') { const epoch=sheetEpoch;await navigator.clipboard.writeText(validate(context(),token).mes);close(epoch);return; }
     if(action==='msg-native') { close(); node.classList.toggle('tisya-native-tools'); node.querySelector('.extraMesButtonsHint')?.click(); return; }
     assertIdle();
+    if(action==='msg-branch'&&configStore.read().world.tables?.enabled){sheet('创建平行分支',`<p>保留此条消息及以前进度。后续事件可以作为条件蓝本保留，也可以全部清空。</p>${button('保留后续可能性','branch-keep')}${button('清空后续蓝本','branch-clear')}${button('取消','close')}`);overlay._messageToken=token;return;}
     if(action==='msg-edit'||action==='msg-branch') {
         const target = node.querySelector(action==='msg-edit'?'.mes_edit':'.mes_create_branch');
         if(!target) throw new Error('原生消息操作未挂载');
@@ -274,7 +275,7 @@ async function messageAction(action) {
     }
     if(action==='msg-delete'||action==='msg-rollback') {
         const count = action==='msg-delete'?1:context().chat.length-token.id;
-        sheet(action==='msg-delete'?'删除本条':'回溯确认',`<p>将删除 ${count} 条消息${action==='msg-rollback'?'，包括选中消息及其后的全部消息':''}。操作使用宿主删除接口。</p>${button('取消','close')}${button('确认删除',action==='msg-delete'?'delete-confirm':'rollback-confirm')}`);
+        sheet(action==='msg-delete'?'删除本条':'回溯确认',`<p>将删除 ${count} 条消息${action==='msg-rollback'?'，包括选中消息及其后的全部消息':''}。操作使用宿主删除接口。</p>${action==='msg-rollback'&&configStore.read().world.tables?.enabled?'<label>后续时间锚<select id="tisya-future-choice"><option value="keep">保留事件可能性</option><option value="clear">清空后续蓝本</option></select></label>':''}${button('取消','close')}${button('确认删除',action==='msg-delete'?'delete-confirm':'rollback-confirm')}`);
         overlay._messageToken = token;
     }
 }
@@ -305,6 +306,7 @@ async function removeMessages(rollback) {
     const original=context().chat.slice(token.id);
     const snapshots=original.map(message=>message && ({text:message.mes,swipe:message.swipe_id}));
     if(rollback && original.some(message=>!message)) throw new Error('后续历史尚未完整加载，未执行回溯');
+    if(rollback)await tableService.stageFork(token.id,query('#tisya-future-choice')?.value!=='clear');
     let deleted=0;
     try {
         const end=rollback?token.length-1:token.id;
@@ -313,7 +315,7 @@ async function removeMessages(rollback) {
             if(context().getCurrentChatId()!==token.chatId||message!==original[id-token.id]||!snapshot||message?.mes!==snapshot.text||message?.swipe_id!==snapshot.swipe) throw new Error('删除期间消息发生变化');
             await context().deleteMessage(id,undefined,false);deleted++;
         }
-        await context().saveChat();close(epoch);
+        await context().saveChat();if(rollback)await tableService.activateFork({rollback:true});close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
 }
 async function generateAt(token, reroll = false) {
@@ -401,7 +403,6 @@ function init() {
     document.addEventListener('focusin',placeEditor);
     cleanups.push(()=>{document.removeEventListener('focusin',placeEditor);editToolbarPlacement.dispose();editToolbarPlacement=null;});
     motionEnabled=settings().动态效果!==false;
-    // The welcome screen has no world. Mount the global UI now; CHAT_CHANGED refreshes the selected world later.
     nativeDisplay=createNativeDisplayPipeline({enabled:()=>!!context().chatId&&configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
@@ -436,7 +437,7 @@ function init() {
             const name=query('#tisya-group-name').value.trim();if(!name)throw new Error('请输入分组名称');
             const avatar=decodeURIComponent(id);if(!context().characters.some(x=>x.avatar===avatar))throw new Error('角色已变化');
             const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
-        } else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
+        } else if(action==='branch-keep'||action==='branch-clear'){const token=overlay._messageToken;validate(context(),token,{tail:true});await tableService.stageFork(token.id+1,action==='branch-keep');const target=nodeFor(token).querySelector('.mes_create_branch');if(!target)throw Error('原生分支操作未挂载');close();target.click();} else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
     },{exclusive:['select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action)});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
@@ -474,7 +475,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // Register once independently of the visible surface; expanding a macro is read-only.
     try{context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
-     bind('GENERATION_AFTER_COMMANDS',async(...args)=>{tableGeneration=false;tableService.clear();nativeConfiguration.clearScan();preparationError=null;try{if(!['quiet','impersonate'].includes(args[0]))await tableService.ensureInitialized();return await configHost.before(...args);}catch(e){preparationError=e;context().stopGeneration?.();error(e);throw e;}});if(tableService.worldbook.available()){bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);});bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));}bind('CHAT_COMPLETION_SETTINGS_READY',p=>{try{if(preparationError)throw preparationError;nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{configHost.clear();const runTables=tableGeneration;tableGeneration=false;tableService.clear();if(runTables)try{await tableService.archive();}catch(e){error(e);}});bind('GENERATION_STOPPED',()=>{tableGeneration=false;tableService.clear();configHost.clear();});bind('CHAT_CHANGED',()=>{tableGeneration=false;tableService.clear();configHost.clear();});
+     bind('GENERATION_AFTER_COMMANDS',async(...args)=>{tableGeneration=false;tableService.clear();nativeConfiguration.clearScan();preparationError=null;try{if(!['quiet','impersonate'].includes(args[0])){await tableService.ensureInitialized();await tableService.syncNative();}return await configHost.before(...args);}catch(e){preparationError=e;context().stopGeneration?.();error(e);throw e;}});if(tableService.worldbook.available()){bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);});bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));}bind('CHAT_COMPLETION_SETTINGS_READY',p=>{try{if(preparationError)throw preparationError;nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{configHost.clear();const runTables=tableGeneration;tableGeneration=false;tableService.clear();if(runTables)try{await tableService.archive();}catch(e){error(e);}});bind('GENERATION_STOPPED',()=>{tableGeneration=false;tableService.clear();configHost.clear();});bind('CHAT_CHANGED',()=>{tableGeneration=false;tableService.clear();configHost.clear();tableService.activateFork().catch(error);});
      window.Tisya=Object.freeze({version:VERSION,register,registry,tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      const activeSource=()=>configHost.activeSource()??presetSource();const live=registerLivePreset(context(),activeSource,context,()=>emotionCatalog(document).names(),error);registerPresetProtocol(context(),activeSource,error,()=>emotionCatalog(document).names(),source=>!isLivePreset(source)||live.execution().prose,()=>isLivePreset(activeSource())?live.execution():null);
      const initialize=async()=>{if(context().chatId&&configStore.read().revision!==null)return;const bridge=narrativeController();try{await bridge.initialize();}catch(e){error(e);}finally{bridge.dispose();}};

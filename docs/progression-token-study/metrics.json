@@ -1,0 +1,51 @@
+{
+  "tokenizer": "o200k_base",
+  "scope": "flow + instructions; identity/source data excluded; before is original mixed candidate, after includes current wording refinements",
+  "rows": [
+    {
+      "task": "templateInit",
+      "before": 1900,
+      "after": 1439
+    },
+    {
+      "task": "tableAssistant",
+      "before": 670,
+      "after": 636
+    },
+    {
+      "task": "historyImport",
+      "before": 1943,
+      "after": 1451
+    },
+    {
+      "task": "tableGenesis",
+      "before": 2180,
+      "after": 1708
+    },
+    {
+      "task": "assetAdapt",
+      "before": 610,
+      "after": 465
+    },
+    {
+      "task": "objectArchive",
+      "before": 1775,
+      "after": 1353
+    },
+    {
+      "task": "preferenceAnalysis",
+      "before": 1886,
+      "after": 1424
+    },
+    {
+      "task": "plotAdvance",
+      "before": 1124,
+      "after": 1013
+    },
+    {
+      "task": "tableArchive",
+      "before": 1833,
+      "after": 1395
+    }
+  ]
+}

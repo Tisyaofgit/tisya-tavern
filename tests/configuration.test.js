@@ -163,7 +163,7 @@ test('context owner keeps independent history controls visible and preserves sav
 test('paired auxiliary API retains identity and direct JSON while isolating source slots and unselected books',async()=>{
  const f=fixture();f.d.routes.tasks.main={connection:'profile:b',model:'B-AUX',preset:'r13'};const prior=globalThis.fetch;let sent;
  globalThis.fetch=async(url,opts)=>{sent=JSON.parse(opts.body);return {ok:true,json:async()=>({choices:[{message:{content:'{"changes":[],"templates":[]}'}}]})};};
- try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_INPUT'},registry:{tables:[],types:[]},currentRows:[]}));assert.equal(sent.model,'B-AUX');assert.equal(sent.custom_url,'https://example.invalid/v1');const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MODE.ANALYZE/);assert.match(text,/TISYA.DATA.SOURCE/);assert.equal((text.match(/ONLY_TABLE_INPUT/g)??[]).length,1);assert.match(text,/只返回一个严格 JSON 对象/);assert.doesNotMatch(text,/<tisya_result>|首尾各按所选方向|心声：/);assert.doesNotMatch(text,/BOOK_STYLE_ONLY|角色甲|\{mood或null\}/);assert.doesNotMatch(text,/<reply>|<body>|<extra>|<vars/);assert.equal(f.c.chatCompletionSettings.model,'N-model');}finally{globalThis.fetch=prior;}
+ try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_INPUT'},registry:{tables:[],types:[]},currentRows:[]}));assert.equal(sent.model,'B-AUX');assert.equal(sent.custom_url,'https://example.invalid/v1');const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MODE.ANALYZE/);assert.match(text,/TISYA.DATA.SOURCE/);assert.equal((text.match(/ONLY_TABLE_INPUT/g)??[]).length,1);assert.match(text,/Return one strict JSON object/);assert.doesNotMatch(text,/<tisya_result>|首尾各按所选方向|心声：/);assert.doesNotMatch(text,/BOOK_STYLE_ONLY|角色甲|\{mood或null\}/);assert.doesNotMatch(text,/<reply>|<body>|<extra>|<vars/);assert.equal(f.c.chatCompletionSettings.model,'N-model');}finally{globalThis.fetch=prior;}
 });
 
 test('managed table activation is included exactly once and native mode keeps native lore untouched',async()=>{
@@ -178,7 +178,7 @@ test('managed material slots survive an older disabled empty slot without duplic
 test('manual auxiliary modes also omit narrative wrappers while main narration keeps them',async()=>{
  const f=fixture();const live=registerLivePreset(f.c,()=>f.source,()=>f.c,()=>{if(f.w.mode!=='narrative')throw Error('辅助模式不应读取表情目录');return MOODS;});registerPresetProtocol(f.c,()=>f.source,()=>{},()=>MOODS,s=>!isLivePreset(s)||live.execution().prose);
  for(const mode of ['archive','plot','preferences','genesis','objects','history']){
-  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');assert.match(text,/只返回一个严格 JSON 对象/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);f.host.clear();
+  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');assert.match(text,/Return one strict JSON object/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);f.host.clear();
  }
  f.w.mode='narrative';await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);assert.match(JSON.stringify(p.messages),/<reply>/);
 });

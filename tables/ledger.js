@@ -17,7 +17,7 @@ export async function sources(chat,type='normal'){
 export function memoryBlock(text){return text.match(/<memory(?:\s[^>]*)?>([\s\S]*?)<\/memory>/i)?.[1]?.trim()??'';}
 export function taskTags(text){const block=text.match(/<task(?:\s[^>]*)?>([\s\S]*?)<\/task>/i)?.[1]??'';return block.split('\n').map(s=>s.trim()).filter(s=>/^(?:引用|新发现|资料)：/.test(s));}
 export function project(origin,session,sourceKeys){
- const registry=upgradeRegistry(session.schemaPinned?session.registry:origin.registry);registryIndex(registry);const allowed=new Set(sourceKeys),rows=new Map(),anchors=[],accepted=[];const bases=new Map(origin.bases.map(b=>[b.id+'@'+b.rev,b]));
+ const registry=upgradeRegistry(session.schemaPinned?session.registry:origin.registry);registryIndex(registry);const allowed=new Set(sourceKeys),rows=new Map((session.branchSeed?.rows??[]).map(r=>[r.id,copy(r)])),anchors=[],accepted=[];const bases=new Map(origin.bases.map(b=>[b.id+'@'+b.rev,b]));
  for(const pin of session.pins??[]){const base=bases.get(pin);check(base,'原点档案版本缺失：'+pin);const row=copy(base);row.access.knowers=[];rows.set(base.id,row);}
  const applied=new Set();
  for(const commit of session.commits){
@@ -27,16 +27,17 @@ export function project(origin,session,sourceKeys){
   if(commit.registry)Object.assign(registry,upgradeRegistry(commit.registry));accepted.push(commit);applied.add(commit.id);const times=[...new Set(commit.changes.flatMap(ch=>ch.after?.table==='scene'?[ch.after.values.当前时间]:ch.after?.table==='events'?[ch.after.values.时间]:[]).filter(t=>typeof t==='string'&&t&&commit.anchors.some(a=>a.evidence?.includes(t))))];anchors.push(...commit.anchors.map(a=>a.worldTime===null&&times.length===1?{...a,worldTime:times[0]}:a));
  }
  const values=[...rows.values()];for(const row of values)validateRow(registry,row);validateReferences(values,registry);
- return {registry,rows:values,anchors,commits:accepted,archived:new Set(accepted.filter(c=>['archive','history'].includes(c.kind)&&c.complete!==false).map(c=>c.source)),last:accepted.at(-1)?.id??null,revision:session.revision};
+ return {registry,baseTime:session.branchSeed?.anchor?.worldTime??null,rows:values,anchors,commits:accepted,archived:new Set([...(session.branchSeed?.archivedSources??[]).filter(s=>allowed.has(s)),...accepted.filter(c=>['archive','history'].includes(c.kind)&&c.complete!==false).map(c=>c.source)]),last:accepted.at(-1)?.id??null,revision:session.revision};
 }
 export function parseJSONResponse(response){
- if(object(response)&&(Array.isArray(response.changes)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.registry&&response.base))return response;
+ if(object(response)&&(Array.isArray(response.changes)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.registry&&response.base))return response;
  let text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('');
  check(typeof text==='string'&&text.trim(),'辅助 API 没有返回文本结果');text=text.trim();if(text.includes('<reply')){const extra=text.match(/<extra(?:\s[^>]*)?>([\s\S]*?)<\/extra>/i)?.[1]??'';const results=[...extra.matchAll(/<tisya_result(?:\s[^>]*)?>([\s\S]*?)<\/tisya_result>/gi)];check(results.length===1,'配套模式回复须在 extra 中提供唯一的 tisya_result');text=results[0][1].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&').trim();}if(/^```(?:json)?\s/i.test(text))text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
  let result;try{result=JSON.parse(text);}catch{throw Error('辅助 API 返回的不是完整 JSON，未写入表单');}check(object(result),'辅助产物必须是对象');return result;
 }
 export function prepareCommit(view,proposal,{source,kind='archive',evidence,worldTime=null,allowedTables,sourceOrder={},now=new Date().toISOString()}){
- check(object(proposal)&&Array.isArray(proposal.changes)&&proposal.changes.length<=200,'辅助填表产物缺少 changes 或修改过多');
+ const limit=['init','genesis'].includes(kind)?2000:200;
+ check(object(proposal)&&Array.isArray(proposal.changes)&&proposal.changes.length<=limit,'辅助填表产物缺少 changes 或修改超过 '+limit+' 项');
  check(Array.isArray(proposal.templates??[]),'templates 必须是数组');
  const reconciled=reconcileProposal(view.registry,{...proposal,currentRows:view.rows});proposal=reconciled.proposal;const registry=reconciled.registry,index=registryIndex(registry),rows=new Map(view.rows.map(r=>[r.id,copy(r)])),ids=new Map(),seen=new Set();
  for(const op of proposal.changes){check(object(op)&&typeof op.id==='string'&&op.id&&!seen.has(op.id),'修改 ID 缺失或重复');seen.add(op.id);if(op.id.startsWith('new:'))ids.set(op.id,uuid('row'));}
@@ -46,7 +47,7 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
   const table=index.tables.get(normalized(op.table));check(table&&(allowedTables.includes(table.id)||table.owner==='archive'&&!view.registry.tables.some(t=>t.id===table.id)),'该辅助任务不能修改此表：'+op.table);
   check(object(op.values)&&object(op.access)&&typeof op.evidence==='string'&&op.evidence.trim()&&evidence.includes(op.evidence),'每项更新需有当前来源中真实存在的连续原文证据');
   const id=ids.get(op.id)??op.id,before=rows.get(id);
-  check((before?.rev??0)===op.expected,'记录版本冲突：'+op.id);if(before&&['scene','state','relations','cognition','holdings','tasks','timers','clues'].includes(table.id)&&sourceOrder[before.source]!==undefined&&sourceOrder[source]!==undefined)check(sourceOrder[before.source]<=sourceOrder[source],'旧楼层不能覆盖更晚的当前状态；请按楼层从早到晚补录，或将这项改为历史事件');check(!before||before.table===table.id,'记录不能迁移到另一张表');check(before||ids.has(op.id),'新记录必须使用 new: 临时 ID');
+  check((before?.rev??0)===op.expected,'记录版本冲突：'+op.id);if(before&&['scene','state','relations','cognition','holdings','tasks','timers','clues','activities','experiences','growth'].includes(table.id)&&sourceOrder[before.source]!==undefined&&sourceOrder[source]!==undefined)check(sourceOrder[before.source]<=sourceOrder[source],'旧楼层不能覆盖更晚的当前状态；请按楼层从早到晚补录，或将这项改为历史事件');check(!before||before.table===table.id,'记录不能迁移到另一张表');check(before||ids.has(op.id),'新记录必须使用 new: 临时 ID');
   check(kind==='manual'||![...Object.keys(op.values),...(op.unset??[])].some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
   const values=mergeValues(before?.values??{},op.values,table.fields,kind==='manual');if(table.id==='objects'&&op.values.属性&&kind!=='manual'){const type=index.types.get(normalized(values.类型??''));if(type)values.属性=mergeValues(before?.values.属性??{},op.values.属性,typeFields(registry,type.id),false);}check(op.unset===undefined||Array.isArray(op.unset)&&op.unset.every(k=>table.fields[k]&&!table.fields[k].required),'不能清除必填或未知字段');for(const key of op.unset??[])delete values[key];
   if(table.id==='objects'){const type=index.types.get(normalized(values.类型));check(type,'类型未登记：'+values.类型);values.类型=type.id;}
@@ -60,7 +61,7 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
   changes.push({id,before:before?copy(before):null,after:row});anchors.push({id:uuid('change'),group:batch,source,worldTime,recordedAt:now,row:id,table:table.id,before:before?.values??null,after:copy(values),evidence:op.evidence});
  }
  for(const row of rows.values())validateRow(registry,row);validateReferences([...rows.values()],registry);
- const business=new Set();for(const row of rows.values()){let key;if(row.table==='state')key=JSON.stringify([row.table,row.values.对象,row.values.字段]);if(row.table==='scene')key='scene';if(key){check(!business.has(key),'当前状态重复，请更新已有行：'+row.values.名称);business.add(key);}}
+ const business=new Set();for(const row of rows.values()){let key;if(row.table==='state')key=JSON.stringify([row.table,row.values.对象,row.values.字段]);if(row.table==='scene')key='scene';if(row.table==='native_cells')key=JSON.stringify([row.table,row.values.路径]);if(row.table==='growth')key=JSON.stringify([row.table,row.values.主体,row.values.方面]);if(row.table==='experiences')key=JSON.stringify([row.table,row.values.主体,row.values.相关对象??[],row.values.类别,row.values.情境,row.values.名称]);if(key){check(!business.has(key),'当前状态重复，请更新已有行：'+row.values.名称);business.add(key);}}
  // Ambiguous names cannot become an accidental alias-based merge.
  const names=new Map();for(const row of rows.values())if(row.table==='objects')for(const name of [row.values.名称]){const key=normalized(name);if(names.has(key)&&names.get(key)!==row.id)throw Error('对象显示名称冲突：'+name+'；请在名称中区分身份');names.set(key,row.id);}
  return {registry,extensions:reconciled.extensions,commit:{id:uuid('commit'),kind,source,depends:view.last,at:now,changes,anchors,...(JSON.stringify(registry)!==JSON.stringify(view.registry)?{registry}:{}),complete:!(proposal.pending?.length),pending:proposal.pending??[]},rows:[...rows.values()]};
@@ -82,7 +83,7 @@ export function sourceTime(text){
  return match?.[1]??null;
 }
 // Compare explicit Gregorian story dates only; never borrow the host date/timezone.
-function calendarTime(text){
+export function calendarTime(text){
  if(typeof text!=='string')return null;
  const m=text.trim().match(/^(\d{4})(?:-(\d{1,2})-(\d{1,2})|年(\d{1,2})月(\d{1,2})日)[ T]?(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
  if(!m)return null;const [year,month,day,hour,minute,second]=[m[1],m[2]??m[4],m[3]??m[5],m[6],m[7],m[8]??0].map(Number);

@@ -5,6 +5,21 @@ import {createDisplayCache} from '../display-cache.js';
 import {inspectMessage,messageCacheReport} from '../reader.js';
 import {mountMessageAppearance,mountMessageVisual} from '../message-ui.js';
 import {mountWorldExtra} from '../world-extra.js';
+import {preserveNativePanels} from '../native-panels.js';
+
+test('structured projection preserves only matching public native frames without reload or duplication',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;d.body.innerHTML='<div class="mes_block"><div class="mes_text">PRIVATE_RAW<div class="host"><pre><code></code></pre><iframe id="TH-message--0-0"></iframe></div><div class="secret"><pre><code>private source</code></pre><iframe id="TH-message--0-1"></iframe></div></div></div>';
+ const native=d.querySelector('.mes_text'),html='<script>getVariables()</script><button>open</button>',code=native.querySelector('code');code.textContent=html;
+ const frame=native.querySelector('iframe'),parent=frame.parentElement,originalWindow=frame.contentWindow;
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'public',html,ruleName:'card'}]});
+ for(let round=0;round<10;round++){keeper.refresh();assert.equal(frame.parentElement,parent);assert.equal(frame.contentWindow,originalWindow);assert.equal(native.querySelectorAll('iframe').length,2);assert.equal(parent.classList.contains('tisya-native-pruned'),false);assert.equal(native.querySelector('.secret').classList.contains('tisya-native-pruned'),true);}
+ assert.equal(keeper.display.extraPanels[0].nativeHosted,true);keeper.dispose();assert.equal(native.textContent.startsWith('PRIVATE_RAW'),true);assert.equal(native.querySelectorAll('.tisya-native-pruned').length,0);assert.equal(frame.parentElement,parent);await w.happyDOM.abort();
+});
+
+test('late helper mounting reveals the matching original frame and never treats private code as public',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document,native=d.createElement('div');d.body.append(native);native.innerHTML='<div><pre><code></code></pre></div>';const html='<script type="module">Mvu.getMvuData()</script>';native.querySelector('code').textContent=html;
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'p',ruleName:'card',html}]});assert.equal(native.classList.contains('tisya-native-panels'),false);const f=d.createElement('iframe');f.id='TH-message--1-0';native.firstElementChild.append(f);keeper.refresh();assert.equal(native.classList.contains('tisya-native-panels'),true);keeper.dispose();await w.happyDOM.abort();
+});
 function setup(){let calls=0,active=true,depth=0;const scripts=[{scriptName:'状态',findRegex:'/\\[Overview\\|(\\d+)\\^(\\d+)\\]/g',replaceString:'<div class="status"><h2>星光</h2><strong>$1</strong><small>$2</small></div>',placement:[2],markdownOnly:true,trimStrings:[],substituteRegex:0}];const pipeline=createNativeDisplayPipeline({scripts:()=>scripts,enabled:()=>active,depth:()=>depth,regexProvider:{get(s){calls++;const m=/^\/(.*)\/([a-z]*)$/.exec(s);return m?new RegExp(m[1],m[2]):new RegExp(s);}}});return {pipeline,scripts,calls:()=>calls,enable:v=>active=v,depth:v=>depth=v};}
 const source=fixture({extra:'<starchat_app>[Overview|270000^1350]</starchat_app>'});
 test('native ordered display rules render card status once on the complete envelope and cache exact input',()=>{
