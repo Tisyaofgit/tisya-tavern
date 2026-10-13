@@ -1,6 +1,10 @@
 // Every auxiliary operation has its own authorization, intake destinations and
 // execution procedure. Source text never selects an operation or expands it.
 export const TASK_PROFILES=Object.freeze({
+ ruleReview:{
+  authorize:'校对完整原卡 AI 须知与绑定规则，指出有原文依据的冲突、缺口或不可能条件，提出缇斯亚版优化选择。只生成问题与方案；玩家选择前不生效，不修改原始资料、历史或运行脚本。',
+  route:['STATE.ruleSources→逐字原文、来源 ID 与定义/示例分类；先核适用阶段、对象与条件，不能把不同作用域误判为冲突。','相互冲突、缺单位、无可执行分支、约束不相容→issues；原文定位→sources；可执行的局部改法与取舍→options。','运行脚本与原生约束未知→说明待验证；不能用 AI 文本改法冒称已修好宿主行为。'],
+  steps:['逐项读完所有规则，核定作用域、触发条件、数值单位、上限与优先关系；区分有证据的缺陷和审美偏好。','每个问题引用准确连续原文，说明具体失败情形；不以历史执行漂移自动判原卡错误。','有可行改法时给一至三个不同优化方向，列明每处原文与替换文本、影响和取舍；不替玩家选择。','核对来源 ID、唯一定位、方案内部不重叠；返回严格 JSON，原卡原文和历史不改写。']},
  templateInit:{
   authorize:'整理完整原卡 AI 须知、绑定定义、用户人设和原始历史，提出模板初始化草稿。只由程序核验并保存；不执行卡内脚本，不改原卡，不把历史进度写成开局。',
   route:['CARD/BOOKS 的完整 AI 须知定义→base.objects/facts；示例和备选开场→保留的源资料与适用性索引，不作已发生事件；脚本与显示实现由宿主处理，不进入本请求。','SOURCE.sourceUser→程序独占的原生用户对象；使用给定 objectId，不重建或改写其原文。','HISTORY 全部原文→按楼层的历史索引、矛盾索引与后续 historyImport；用于识别当前进度及所需模板，不能拿旧状态重置当前值。','定义明示的开局状态→initial；已发生的历史状态→后续历史补录；已有 STATE.rows→ID/字段复用与版本核对。'],

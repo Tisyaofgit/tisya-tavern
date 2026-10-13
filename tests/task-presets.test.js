@@ -13,7 +13,7 @@ const configuration={data:emptyConfig(),world:defaultWorld()};
 const input={goal:'核对原始定义',sourceCardRaw:{fields:{name:'源卡',description:'原始定义 {{user}} <not-a-macro> 0 false null'},entries:[{id:7,content:'格式：<receipt>完整值</receipt>'}]},sourceHistory:[{floor:1,role:'user',text:'原始用户 {{user}}'},{floor:2,role:'assistant',text:'<body>实际事件</body><memory>旧摘要</memory>'}],sourceBooks:[],registry:defaultRegistry(),currentRows:[]};
 function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return JSON.parse(text.split('\n').slice(2,-1).join('\n'));}
 
-test('all ten operations own distinct authorization, routing, procedure and norms in narrative preset order',()=>{
+test('all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order',()=>{
  assert.deepEqual(Object.keys(TABLE_MODES).sort(),Object.keys(TASK_PROFILES).sort());
  const authorizations=new Set(),routes=new Set(),workflows=new Set();
  for(const task of Object.keys(TABLE_MODES)){
@@ -23,7 +23,7 @@ test('all ten operations own distinct authorization, routing, procedure and norm
   const content=messages.map(m=>m.content).join('\n');assert(content.indexOf('[MATERIALS]')<content.indexOf('[REGISTRY]'));assert(content.indexOf('[REGISTRY]')<content.indexOf('[INNER.LOGIN]'));assert.equal(messages.at(-1).role,'system');
   assert.equal(new Set(p.prompts.map(x=>x.identifier)).size,p.prompts.length);assert.equal(p.prompts.filter(x=>x.tisyaMaterialSlot).length,Object.keys(SLOT_NAMES).length);
  }
- assert.equal(authorizations.size,10);assert.equal(routes.size,10);assert.equal(workflows.size,10);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);
+ assert.equal(authorizations.size,11);assert.equal(routes.size,11);assert.equal(workflows.size,11);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);
 });
 
 test('material values survive actual paired message assembly without source macro expansion',()=>{
