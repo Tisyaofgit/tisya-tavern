@@ -19,6 +19,16 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('initialization retains disabled AI sources without making them operative, and rejects changed raw material',async()=>{
+ const f=fixture();f.c.characters[0].character_book={entries:[{id:1,enabled:true,content:'生效卡规则'},{id:2,enabled:false,content:'关闭卡规则'}]};
+ f.saved.set('角色原书',[{name:'启用书条',enabled:true,content:'生效书规则'},{name:'关闭书条',enabled:false,content:'关闭书规则'}]);f.saved.set('数据库资料',[]);
+ f.responder(()=>({base:{changes:[]},initial:{changes:[]},notes:[]}));const draft=await f.service.cardTemplate();const input=f.calls.at(-1).input;
+ assert.equal(input.sourceCardRaw.inactiveEntries[0].content,'关闭卡规则');assert.equal(input.sourceBooks.find(x=>x.enabled===false).content,'关闭书规则');
+ assert.doesNotMatch(draft.basis,/关闭卡规则|关闭书规则/);assert.match(draft.basis,/生效卡规则/);assert.match(draft.basis,/生效书规则/);
+ assert(!f.calls.find(x=>x.task==='ruleReview').input.ruleSources.sources.some(x=>/关闭/.test(x.text)));
+ f.saved.get('角色原书')[1].content='修改了关闭书规则';await assert.rejects(f.service.saveCardTemplate(draft),/原卡或历史资料已改变/);
+ assert.equal((await f.service.inspect()).rows.length,0);
+});
 test('task cancellation is scoped, same-chat notifications are harmless and actual switches cancel',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('城门开放'),user('继续'),ai('暂存')];let release;
  f.responder(()=>new Promise(r=>release=r));

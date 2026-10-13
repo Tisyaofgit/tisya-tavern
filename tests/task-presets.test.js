@@ -46,8 +46,8 @@ test('AI notices retain complete rules and format examples while scripts remain 
  const card={data:{name:'卡',description:'完整设定',system_prompt:'系统原文',mes_example:'仅作示例',first_mes:'备选开场',character_book:{entries:[{id:1,content:rule,enabled:true},{id:2,content:'关闭定义',enabled:false},{id:3,content:'@@preprocessing\n<% execute_code() %>动态内容',enabled:true}]},extensions:{tavern_helper:{scripts:[{type:'script',content:'RUNTIME_SCRIPT()'}]},regex_scripts:[{replaceString:'DISPLAY_IMPLEMENTATION'}]}}};
  const original=structuredClone(card),material=cardAIMaterials(card);
  assert.equal(material.entries[0].content,rule);assert.equal(material.fields.mes_example,'仅作示例');assert.equal(material.runtimeSources.length,1);
- assert.doesNotMatch(JSON.stringify(material),/RUNTIME_SCRIPT|DISPLAY_IMPLEMENTATION|execute_code|关闭定义/);
- assert.match(cardDefinitionSource(card),/系统原文/);assert.doesNotMatch(cardDefinitionSource(card),/仅作示例|备选开场/);assert.deepEqual(card,original);
+ assert.doesNotMatch(JSON.stringify(material),/RUNTIME_SCRIPT|DISPLAY_IMPLEMENTATION|execute_code/);
+ assert.equal(material.inactiveEntries[0].content,'关闭定义');assert.equal(material.inactiveEntries[0].enabled,false);assert.doesNotMatch(cardDefinitionSource(card),/关闭定义/); assert.match(cardDefinitionSource(card),/系统原文/);assert.doesNotMatch(cardDefinitionSource(card),/仅作示例|备选开场/);assert.deepEqual(card,original);
  const books=bookAIMaterials([{book:'书',entry:'普通',content:rule},{book:'书',entry:'动态',content:'<% TEMPLATE_CODE() %>'}]);assert.equal(books[0].content,rule);assert.equal(books[1].content,'');assert(books[1].runtimeSource);
 });
 

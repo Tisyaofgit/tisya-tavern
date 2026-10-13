@@ -4,10 +4,10 @@ export function cardScripts(card){const data=card?.data??card??{},out=[],seen=ne
 // in the original card; they are not initialization instructions for the model.
 export function cardAIMaterials(card){
  const data=card?.data??card??{},fields=['name','description','personality','scenario','system_prompt','post_history_instructions','mes_example','first_mes','alternate_greetings'];
- const out={fields:Object.fromEntries(fields.filter(k=>data[k]!==undefined||card?.[k]!==undefined).map(k=>[k,structuredClone(data[k]??card[k])])),entries:[],runtimeSources:[]};
+ const out={fields:Object.fromEntries(fields.filter(k=>data[k]!==undefined||card?.[k]!==undefined).map(k=>[k,structuredClone(data[k]??card[k])])),entries:[],runtimeSources:[],inactiveEntries:[]};
  for(const [index,entry]of (data.character_book?.entries??[]).entries()){
-  if(entry.enabled===false)continue;
   const source={path:'/data/character_book/entries/'+index,id:entry.id??index,name:entry.comment??entry.name??'',content:entry.content??''};
+  if(entry.enabled===false){out.inactiveEntries.push(/<%|^\s*@@preprocessing/m.test(source.content)?{...source,enabled:false,content:'',runtimeSource:'disabled executable template remains in original card'}:{...source,enabled:false});continue;}
   if(/<%|^\s*@@preprocessing/m.test(source.content))out.runtimeSources.push({path:source.path,id:source.id,name:source.name,status:'host-rendered text required; executable template remains in original card'});
   else out.entries.push(source);
  }

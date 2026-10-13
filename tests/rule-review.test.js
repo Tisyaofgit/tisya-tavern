@@ -25,6 +25,11 @@ test('fabricated evidence, outside edits, ambiguous anchors and unsafe IDs are r
  for(const mutate of [p=>p.issues[0].sources[0].quote='未提供的原文',p=>p.issues[0].sources[0].quote=original.replaceAll(' ',''),p=>p.issues[0].options[0].changes[0].before='每次训练占用10个时段。',p=>p.issues[0].options[0].changes[0].sourceId='missing',p=>p.issues[0].sources[0].quote='每日只有 8 个时段。',p=>p.issues[0].id='constructor',p=>p.issues[0].id='toString',p=>p.issues[0].options[0].id='__proto__']){const p=proposal();mutate(p);assert.throws(()=>validateRuleReview(p,source));}
  const repeated=await ruleSources({...makeCard(),description:original+original});assert.throws(()=>validateRuleReview(proposal(),repeated),/不唯一/);
 });
+test('inactive definitions are not operative review sources until enabled',async()=>{
+ const card=makeCard(),base=await ruleSources(card);card.data.character_book={entries:[{id:9,enabled:false,content:'关闭规则'}]};
+ assert.deepEqual(await ruleSources(card),base);card.data.character_book.entries[0].content='仍关闭的新规则';assert.deepEqual(await ruleSources(card),base);
+ card.data.character_book.entries[0].enabled=true;const enabled=await ruleSources(card);assert.notEqual(enabled.fingerprint,base.fingerprint);assert(enabled.sources.some(s=>s.text==='仍关闭的新规则'));
+});
 test('red review displays inert exact source and explicit selectable diffs; silent choice remains reopenable',async()=>{
  const window=new Window(),source=await ruleSources(makeCard()),review=validateRuleReview(proposal(),source),calls=[];
  renderRuleReview(window.document,window.document.body,{review,onChoose:c=>calls.push(c)});

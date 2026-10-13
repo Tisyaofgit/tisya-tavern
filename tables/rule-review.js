@@ -3,7 +3,7 @@ import {digest} from './books.js';
 import {cardAIMaterials,bookAIMaterials} from './card-source.js';
 
 export async function ruleSources(card,books=[]){
- const ai=cardAIMaterials(card),bound=bookAIMaterials(books),sources=[];
+ const {inactiveEntries,...ai}=cardAIMaterials(card),bound=bookAIMaterials(books.filter(e=>e.enabled!==false)),sources=[];
  for(const [name,value]of Object.entries(ai.fields)){
   if(typeof value==='string'&&value)sources.push({id:'card.field.'+name,label:name,kind:['first_mes','alternate_greetings','mes_example'].includes(name)?'example':'definition',text:value});
   else if(Array.isArray(value))value.forEach((text,i)=>{if(typeof text==='string')sources.push({id:'card.field.'+name+'.'+i,label:name+' '+i,kind:'example',text});});
