@@ -17,9 +17,10 @@ function align(values,fields,additions,path){
 // Add nested optional definitions without narrowing legacy open objects or changing value types.
 function fieldMerge(a,b,path){
  if(JSON.stringify(a)===JSON.stringify(b))return copy(a);
- const shape=d=>{const {fields,items,description,aliases,additionalProperties,...rest}=d;return rest;};
+ const shape=d=>{const {fields,items,description,aliases,additionalProperties,capture,include,follow,...rest}=d;return rest;};
  check(JSON.stringify(shape(a))===JSON.stringify(shape(b)),'模板字段类型或约束冲突：'+path);
- const out={...a,aliases:[...new Set([...(a.aliases??[]),...(b.aliases??[])])]};
+ for(const key of ['capture','include','follow'])check(b[key]===undefined||a[key]===undefined||JSON.stringify(a[key])===JSON.stringify(b[key]),'自动归档不能改写已有字段条件：'+path+'.'+key);
+ const out={...a,...(a.follow===undefined&&b.follow!==undefined?{follow:b.follow}:{}),...(a.capture===undefined&&b.capture!==undefined?{capture:b.capture}:{}),...(a.include===undefined&&b.include!==undefined?{include:b.include}:{}),aliases:[...new Set([...(a.aliases??[]),...(b.aliases??[])])]};
  if(a.fields||b.fields){check(a.type==='object','仅对象可以扩展子字段：'+path);const fields=copy(a.fields??{});for(const [k,d]of Object.entries(b.fields??{})){if(fields[k])fields[k]=fieldMerge(fields[k],d,path+'.'+k);else {check(!d.required,'自动新增子字段须为可选：'+path+'.'+k);fields[k]=copy(d);}}out.fields=fields;if(!a.fields||!b.fields||a.additionalProperties||b.additionalProperties)out.additionalProperties=true;}
  if(a.items||b.items){check(a.items&&b.items,'集合缺少 items：'+path);out.items=fieldMerge(a.items,b.items,path+'[]');}
  return out;

@@ -1,3 +1,4 @@
+import {applyConditionTemplates,validateCondition,CAPTURE_RULES} from './conditions.js';
 // Form definitions are data shared by Genesis, archive filling and the editor.
 export const FORMAT = 'tisya.tables/1';
 export const copy = value => structuredClone(value);
@@ -21,9 +22,9 @@ export const TABLES = [
  table('tasks','任务待办',{...text('来源 发布者 目标 条件 下一步 截止时间'),类别:f('enum',{values:['主线','支线','日常','个人']}),进度:f('object',{fields:{当前:f('number'),目标:f('number'),单位:f()}}),...refs('负责人 前置任务 锚点事件'),蓝本节点:f(),状态:f('enum',{values:['发布','接受','进行','完成','取消']})}),
  table('timers','日程倒计时',{...text('时间基准 起点 到期时间 触发条件 失效条件 重复规则'),到期轮次:f('number',{description:'绝对已保留AI回复数；重投不新增轮次，非相对延后数'}),...refs('任务'),状态:f('enum',{values:['等待','到期','完成','取消']})}),
  table('clues','伏笔线索',{...text('已出现内容 阶段 公开范围 推进条件'),...refs('事件 对象')}),
- table('events','历史事件记忆',{...text('时间 地点 经过 结果'),...refs('参与者 关联事件'),标签:f('texts'),原文段落:f('texts')}),
+ table('events','历史事件记忆',{...text('时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波'),触发线索:f('texts'),...refs('参与者 关联事件 前置事件 后续事件'),标签:f('texts'),原文段落:f('texts')}),
  table('activities','进行中事务',{主体:f('ref',{required:true}),...text('目标 行动 开始时间 推进至 预计结束 阻力 下一步'),进度:f('number',{min:0,max:100}),状态:f('enum',{values:['计划','进行','等待','完成','取消']}),...refs('任务 地点 知情依据 锚点事件'),资源:f('object')}),
- table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外'),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
+ table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
  table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
  table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
  table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
@@ -35,7 +36,7 @@ export const TYPES = [
  {id:'rule',name:'规则',aliases:['法则','机制','制度'],fields:{...text('适用范围 条件 效果 例外')}},
  {id:'organization',name:'组织',aliases:['势力','团体'],fields:{...text('职责 结构 立场 历史')}},
 ].map(t=>({...t,version:1,parent:null}));
-export const defaultRegistry = () => ({tables:copy(TABLES),types:copy(TYPES)});
+export const defaultRegistry = () => applyConditionTemplates({tables:copy(TABLES),types:copy(TYPES)});
 const ID = /^[a-z][a-z0-9._-]{0,79}$/;
 const denied = new Set(['__proto__','constructor','prototype']);
 export function registryIndex(registry){
@@ -51,7 +52,7 @@ export function registryIndex(registry){
     check(!names.has(key)||names.get(key).id===item.id,'同义名称已属于 '+names.get(key)?.name+'：'+label);names.set(key,item);
    }
    check(object(item.fields)&&Object.keys(item.fields).length>0,'模板必须定义字段');
-   validateFields(item.fields);
+   validateFields(item.fields);if(item.assemble)validateCondition(item.assemble);
   }
   result[kind]=names;
  }
@@ -74,6 +75,8 @@ export function validateFields(fields,depth=0){
  for(const [key,def] of Object.entries(fields)){
   check(!denied.has(key)&&object(def)&&FIELD_TYPES.includes(def.type),'字段定义无效：'+key);
   for(const name of [key,...(def.aliases??[])]){check(typeof name==='string'&&name.trim(),'字段别名无效');const n=normalized(name);check(!names.has(n)||names.get(n)===key,'字段同义名冲突：'+name);names.set(n,key);}
+  if(def.capture!==undefined)check(Object.hasOwn(CAPTURE_RULES,def.capture),'录入条件模板不存在：'+def.capture);if(def.include)validateCondition(def.include);
+  if(def.follow!==undefined)check(['ref','refs'].includes(def.type)&&['identity','record'].includes(def.follow),'引用展开条件无效：'+key);
   if(def.type==='enum')check(Array.isArray(def.values)&&def.values.length&&def.values.every(x=>typeof x==='string'),'枚举未定义：'+key);
   if(def.fields)validateFields(def.fields,depth+1);
   if(['array','map'].includes(def.type)){check(object(def.items),'集合必须定义 items：'+key);validateFields({item:def.items},depth+1);}
@@ -123,11 +126,11 @@ export function formula(node,row,rows,depth=0){validateFormula(node,depth);const
  case'join':check(Array.isArray(args[0]),'join 需要数组');return args[0].join(String(args[1]??'、'));
  case'add':case'subtract':check(args.length===2&&args.every(Number.isFinite),'算术公式需要两个数');return node.op==='add'?args[0]+args[1]:args[0]-args[1];}}
 export function derive(rows,registry){return rows.map(row=>{const out=copy(row),visible=rows.filter(other=>row.access.readers.every(r=>other.access.readers.includes(r))&&row.access.knowers.every(r=>other.access.knowers.includes(r)));for(const [key,field]of Object.entries(registry.tables.find(t=>t.id===row.table).fields))if(field.formula)out.values[key]=formula(field.formula,row,visible);return out;});}
-export const TABLE_SETTINGS = Object.freeze({enabled:false,styleEnabled:true,archive:true,plot:false,preferences:false,offstage:false,nativeBridge:false,focusObjects:[],focusText:'',playerObjects:[],objectsSeparate:false,injection:'worldbook',retrieval:'keywords',topK:8,originBook:'',sessionBook:'',originPins:[],hardRules:[],taskInstructions:{},contextChars:40000});
-export function tableSettings(world){const s={...copy(TABLE_SETTINGS),styleEnabled:world.modes?.[world.mode]?.narrative?.缇斯亚叙事防八股??true,...world.tables};check(['worldbook','direct'].includes(s.injection),'表单注入方式无效');check(['keywords','vector'].includes(s.retrieval),'检索方式无效');for(const key of ['enabled','styleEnabled','archive','plot','preferences','offstage','nativeBridge','objectsSeparate'])check(typeof s[key]==='boolean','表格开关无效：'+key);check(Number.isSafeInteger(s.topK)&&s.topK>=0&&s.topK<=100,'检索数量须为 0—100');check(Number.isSafeInteger(s.contextChars)&&s.contextChars>=2000,'表格上下文预算至少 2000 字符');check(Array.isArray(s.hardRules)&&s.hardRules.every(x=>typeof x==='string'),'明确偏好规则格式无效');check(Array.isArray(s.focusObjects)&&s.focusObjects.every(x=>typeof x==='string')&&Array.isArray(s.playerObjects)&&s.playerObjects.every(x=>typeof x==='string')&&typeof s.focusText==='string','推进关注配置无效');check(Array.isArray(s.originPins),'原点版本引用无效');check(object(s.taskInstructions)&&Object.entries(s.taskInstructions).every(([k,v])=>['tableAssistant','tableArchive','objectArchive','historyImport','tableGenesis','plotAdvance','preferenceAnalysis','templateInit','assetAdapt','nativeFill'].includes(k)&&typeof v==='string'),'辅助模式补充指令无效');return s;}
+export const TABLE_SETTINGS = Object.freeze({enabled:false,continuity:'hybrid',styleEnabled:true,archive:true,plot:false,preferences:false,offstage:false,nativeBridge:false,focusObjects:[],focusText:'',playerObjects:[],objectsSeparate:false,injection:'worldbook',retrieval:'keywords',topK:8,originBook:'',sessionBook:'',originPins:[],hardRules:[],taskInstructions:{},contextChars:40000});
+export function tableSettings(world){const s={...copy(TABLE_SETTINGS),styleEnabled:world.modes?.[world.mode]?.narrative?.缇斯亚叙事防八股??true,...world.tables};check(['hybrid','tables'].includes(s.continuity),'历史接续方式无效');check(['worldbook','direct'].includes(s.injection),'表单注入方式无效');check(['keywords','vector'].includes(s.retrieval),'检索方式无效');for(const key of ['enabled','styleEnabled','archive','plot','preferences','offstage','nativeBridge','objectsSeparate'])check(typeof s[key]==='boolean','表格开关无效：'+key);check(Number.isSafeInteger(s.topK)&&s.topK>=0&&s.topK<=100,'检索数量须为 0—100');check(Number.isSafeInteger(s.contextChars)&&s.contextChars>=2000,'表格上下文预算至少 2000 字符');check(Array.isArray(s.hardRules)&&s.hardRules.every(x=>typeof x==='string'),'明确偏好规则格式无效');check(Array.isArray(s.focusObjects)&&s.focusObjects.every(x=>typeof x==='string')&&Array.isArray(s.playerObjects)&&s.playerObjects.every(x=>typeof x==='string')&&typeof s.focusText==='string','推进关注配置无效');check(Array.isArray(s.originPins),'原点版本引用无效');check(object(s.taskInstructions)&&Object.entries(s.taskInstructions).every(([k,v])=>['tableAssistant','tableArchive','objectArchive','historyImport','tableGenesis','plotAdvance','preferenceAnalysis','templateInit','assetAdapt','nativeFill'].includes(k)&&typeof v==='string'),'辅助模式补充指令无效');return s;}
 
 export const FORM_GROUPS=Object.freeze([{id:'definitions',name:'世界定义',tables:['facts']},{id:'archives',name:'对象底档',tables:['objects']},{id:'current',name:'当前状态',tables:['scene','state']},{id:'relationships',name:'关系与归属',tables:['relations','holdings']},{id:'knowledge',name:'认知与信息',tables:['cognition','experiences','growth']},{id:'affairs',name:'事务与日程',tables:['tasks','timers','activities']},{id:'history',name:'事件与修改历史',tables:['events']},{id:'threads',name:'线索与未解事项',tables:['clues']}]);
-export function upgradeRegistry(source){const r=copy(source),state=r.tables.find(t=>t.id==='state'),objects=r.tables.find(t=>t.id==='objects');if(state){if(JSON.stringify(state.fields.值)===JSON.stringify({type:'json',required:true}))state.fields.值={type:'json'};state.fields.值引用??={type:'ref'};state.fields.有效性??=copy(TABLES.find(t=>t.id==='state').fields.有效性);}if(objects)objects.fields.发现环境??=copy(TABLES.find(t=>t.id==='objects').fields.发现环境);for(const def of TABLES){const old=r.tables.find(t=>t.id===def.id);if(!old)r.tables.push(copy(def));else for(const [name,field]of Object.entries(def.fields))old.fields[name]??=copy(field);}return r;}
+export function upgradeRegistry(source){const r=copy(source),state=r.tables.find(t=>t.id==='state'),objects=r.tables.find(t=>t.id==='objects');if(state){if(JSON.stringify(state.fields.值)===JSON.stringify({type:'json',required:true}))state.fields.值={type:'json'};state.fields.值引用??={type:'ref'};state.fields.有效性??=copy(TABLES.find(t=>t.id==='state').fields.有效性);}if(objects)objects.fields.发现环境??=copy(TABLES.find(t=>t.id==='objects').fields.发现环境);for(const def of TABLES){const old=r.tables.find(t=>t.id===def.id);if(!old)r.tables.push(copy(def));else for(const [name,field]of Object.entries(def.fields))old.fields[name]??=copy(field);}return applyConditionTemplates(r);}
 
 export function validateScale(axis){check(!(axis.原生引用&&Object.hasOwn(axis,'值')),'原生刻度只保存引用，不复制数值');if(axis.值!==undefined){check(Number.isFinite(axis.最小)&&Number.isFinite(axis.最大)&&axis.最小<axis.最大,'刻度须明确上下限');check(axis.值>=axis.最小&&axis.值<=axis.最大,'刻度值超出范围');}return axis;}
 

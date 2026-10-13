@@ -1,5 +1,9 @@
+import {personaSnapshot,personaStamp,personaDefinition,personaObjectChange,personaProjection,personaDraft} from './persona.js';
+import {preferenceMatches} from './preferences.js';
+import {prepareArchiveInput,validateArchiveNeedsRows,archiveProposalNeedsRows} from './archive-input.js';
+import {assembleTableRows} from './assembly.js';
 import {cardDefinitionSource,cardMechanisms} from './card-source.js';
-import {nativeBranches,bridgeInput,bridgePatch,carryNativeForward,valueAt,parseNativeTransaction} from './native-bridge.js';
+import {nativeBranches,bridgeInput,bridgePatch,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
 import {nativeSnapshot} from './native-state.js';
 import {progressionWindow,validateWorldProposal,progressionKey,planContext} from './progression.js';
 import {snapshotAnchor,branchSeed} from './branches.js';
@@ -11,15 +15,16 @@ import {styleRules,stylePrompt,scanStyle} from './style-rules.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 import {tableSettings,copy,check,derive,registryIndex,validateRow,defaultRegistry,mapRowReferences,references} from './schema.js';
 import {createBookGateway,digest} from './books.js';
-import {sources,selectedMessages,memoryBlock,taskTags,project,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,retrieval,sourceTime,dueChecks} from './ledger.js';
+import {sources,selectedMessages,precedingUserSource,memoryBlock,taskTags,project,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,retrieval,sourceTime,dueChecks} from './ledger.js';
 import {worldbookEntries,createWorldbookProjection} from './worldbook-context.js';
 import {NARRATIVE_TAGS} from './prompts.js';
 const fields=['objects','facts','scene','state','relations','cognition','holdings','tasks','timers','clues','events'];
 const cardBasis=c=>cardDefinitionSource(c.characters?.[c.characterId]);
 const stampChat=c=>JSON.stringify(selectedMessages(c.chat).map(m=>[!!m.is_user,m.name??'',m.mes??'',m.swipe_id??0]));
-export function createTableService({store,getContext,request,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
- let busy=false,controller=null,jobScope=null,latest=null,pendingFork=null,boundWorld=getContext().chatId?store.read().key:null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
- const state=()=>({busy,jobScope,jobs:copy(jobs),latest:copy(latest),available:books.available(),worldbook:worldbook.preview()});
+export function createTableService({store,getContext,request,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,persona=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
+ let busy=false,controller=null,jobScope=null,latest=null,lastStyleAudit=null,pendingFork=null,boundWorld=getContext().chatId?store.read().key:null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
+ const readPersona=()=>persona?.read()??personaSnapshot(getContext());
+ const state=()=>({busy,jobScope,jobs:copy(jobs),latest:copy(latest),styleAudit:copy(lastStyleAudit),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='')=>{jobs.push({task,status,detail,at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail});};
  async function exclusive(fn,{scope='manual'}={}){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;jobScope=scope;controller=new AbortController();const signal=controller.signal;try{const result=await fn(signal);signal.throwIfAborted();return result;}catch(e){throw requestError(e,signal);}finally{busy=false;controller=null;jobScope=null;}}
  function requestError(error,signal){if(signal?.aborted)return signal.reason instanceof Error?signal.reason:Error('当前表单任务已停止');if(error?.name==='AbortError')return Error('辅助请求被宿主或 API 中止，请检查连接后重试；已保存的记录仍保留。',{cause:error});return error;}
@@ -42,22 +47,54 @@ export function createTableService({store,getContext,request,books=createBookGat
   try{const session=await books.write(loaded.session,next,c.guard);status(options.kind,prepared.commit.complete===false?'部分待处理':'已保存',prepared.commit.changes.length+' 项修改'+(prepared.commit.pending?.length?'，'+prepared.commit.pending.length+' 项待修正':''));return {...loaded,origin,session,view:project(origin.data,session.data,loaded.chain.map(s=>s.key))};}
   catch(e){if(origin.stamp!==loaded.origin.stamp)throw Error('原点候选版本已保存，但会话提交未确认；未绑定版本不会注入。'+e.message);throw e;}
  }
+ async function archiveProposal(task,input,view,c,signal,reading){
+  let previous=null;
+  while(true){
+   const projected=prepareArchiveInput(view,{sourceText:input.archiveSource?.text??input.historyText??'',userText:input.userSource?.text??'',actorIds:playerSettings(c,{session:{data:{}},view}).playerObjects,expandedIds:reading.ids});
+   const preparedInput={...input,...projected,...(previous?{readMore:{previous,expandedIds:reading.ids,note:'补读后的全文覆盖旧薄引用；重新提出完整本次提案，不沿用未见全文时的修改。'}}:{})};
+   const proposal=await invoke(task,preparedInput,c,signal),needs=[...(proposal.needsRows??[]),...(Array.isArray(proposal.changes)?archiveProposalNeedsRows(projected,proposal):[])];
+   if(!needs.length){check(Array.isArray(proposal.changes),'归档产物缺少 changes 或 needsRows');return proposal;}
+   const expanded=validateArchiveNeedsRows(view,needs,{expandedIds:reading.ids});check(expanded.length>reading.ids.length,'归档重复要求已完整提供的记录，未继续猜测');check(reading.rounds<8,'归档补读超过 8 回合；本楼层保留待处理');reading.ids=expanded;reading.rounds++;previous=proposal;
+  }
+ }
+ function proposalView(view,proposal,options){
+  const prepared=prepareCommit(view,proposal,options),aliases=new Map(proposal.changes.map((op,index)=>[prepared.commit.changes[index].id,op.id]));
+  const rows=prepared.rows.map(row=>{const next=copy(row);next.id=aliases.get(next.id)??next.id;mapRowReferences(next,prepared.registry,id=>aliases.get(id)??id);for(const key of ['readers','knowers'])next.access[key]=next.access[key].map(id=>aliases.get(id)??id);return next;});
+  return {...view,registry:prepared.registry,rows};
+ }
+ function mergeArchiveProposals(discovery,history){
+  const distinct=(a,b)=>[...a,...b.filter(item=>!a.some(prior=>JSON.stringify(prior)===JSON.stringify(item)))];
+  return {...history,templates:distinct(discovery.templates??[],history.templates??[]),schemaChanges:distinct(discovery.schemaChanges??[],history.schemaChanges??[]),changes:[...discovery.changes,...history.changes],pending:[...(discovery.pending??[]),...(history.pending??[])]};
+ }
  async function archiveLoaded(c,loaded,signal,includeLatest=false,range=null){
   if(!c.settings.archive&&!range)return loaded;
   const ai=loaded.chain.filter(s=>s.role==='assistant'),eligible=(includeLatest?ai:ai.filter(s=>loaded.chain.some(u=>u.role==='user'&&u.index>s.index))).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)).slice(0,range?.limit??Infinity);
   for(const source of eligible){
    if(loaded.view.archived.has(source.key))continue;
    c.guard();status('楼层归档','运行中','第 '+source.floor+' 层');
-   const userSource=loaded.chain.findLast(s=>s.index<source.index&&s.role==='user'),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n'),input={registry:loaded.view.registry,currentRows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null})),archiveSource:{...source,text,time:sourceTime(source.text),tags:taskTags(source.text)},userSource:userSource?{text:userSource.text,source:userSource.key,role:'user',note:'仅明确的角色设定/已授权心理可入档；动作尝试和未来要求不是已发生结果'}:null,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文。按来源顺序补录；计划、审核总结及旧记忆块不是事实依据。已存在的事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
-   const isHistory=!!range,task=isHistory?'historyImport':'tableArchive',options={source:source.key,kind:isHistory?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))};
+   const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n'),view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))};
+   const input={archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
+   const isHistory=!!range,task=isHistory?'historyImport':'tableArchive',options={source:source.key,kind:isHistory?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
    try{
-    let proposal=await invoke(task,input,c,signal);
-    if(c.settings.objectsSeparate){const objects=await invoke('objectArchive',input,c,signal);check(!proposal.changes.some(x=>['objects','facts'].includes(x.table)),'独立建档时归档任务不能重复填写对象');proposal={...proposal,templates:[...(proposal.templates??[]),...(objects.templates??[])],schemaChanges:[...(proposal.schemaChanges??[]),...(objects.schemaChanges??[])],changes:[...objects.changes,...proposal.changes]};}
-    try{prepareCommit(loaded.view,proposal,options);}catch(e){status('楼层归档','修正格式',e.message);proposal=await invoke(task,{...input,repair:{error:e.message,previous:proposal,instruction:'修正这份提案；保留正确项，不能编造新证据。无法解决的项目放入 pending。'}},c,signal);}
-    loaded=await commit(c,loaded,proposal,{...options,recover:true});
+    let discovery=null,working=view;
+    if(c.settings.objectsSeparate){
+     const discoveryOptions={...options,allowedTables:['objects','facts']};
+     discovery=await archiveProposal('objectArchive',input,view,c,signal,reading);
+     try{working=proposalView(view,discovery,discoveryOptions);}catch(e){status('对象建档','修正格式',e.message);discovery=await archiveProposal('objectArchive',{...input,repair:{error:e.message,previous:discovery,instruction:'只修正对象与事实提案，保留正确项；不可确认的冲突保留 pending。'}},view,c,signal,reading);working=proposalView(view,discovery,discoveryOptions);}
+    }
+    let history=await archiveProposal(task,input,working,c,signal,reading);
+    if(discovery)check(!history.changes.some(op=>['objects','facts'].includes(op.table)),'独立建档时历史归档不能重复填写对象或事实');
+    let proposal=discovery?mergeArchiveProposals(discovery,history):history;
+    try{prepareCommit(loaded.view,proposal,options);}catch(e){
+     status('楼层归档','修正格式',e.message);
+     history=await archiveProposal(task,{...input,repair:{error:e.message,previous:history,instruction:'修正本次会话提案；保留正确项和所有 discovery ID。不能修改独立对象提案或编造证据，不能解决的项放入 pending。'}},working,c,signal,reading);
+     if(discovery)check(!history.changes.some(op=>['objects','facts'].includes(op.table)),'独立建档时历史归档不能重复填写对象或事实');proposal=discovery?mergeArchiveProposals(discovery,history):history;
+    }
+    // Discovery and historical state share one commit. No discovery is visible
+    // while the second request is in flight or if either request is cancelled.
+    loaded=await commit(c,loaded,proposal,{...options,recover:!discovery});
     if(!loaded.view.archived.has(source.key)){status('楼层归档','待处理','第 '+source.floor+' 层仍有未解决项目，后续楼层暂停');break;}
    }catch(e){c.guard();if(signal.aborted)throw e;status('楼层归档','待重试','第 '+source.floor+' 层：'+e.message);loaded=await commit(c,loaded,{changes:[],pending:[{reason:e.message,source:source.key,floor:source.floor}]},{...options});break;}
-
   }
   return loaded;
  }
@@ -74,7 +111,7 @@ export function createTableService({store,getContext,request,books=createBookGat
   const c=capture();if(!c.settings.nativeBridge)return null;let loaded=await load(c);const source=loaded.chain.findLast(x=>x.role==='assistant');if(!source||!loaded.chain.some(x=>x.role==='user'&&x.index>source.index))return {deferred:true,reason:'最新回复暂不结算；等用户继续后生成更新块'};const index=source.floor-1;
   if(loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.source===source.key))return {already:true};
   if(/<JSONPatch>\s*\[(?!\s*\])/i.test(source.text)){const existing=globalThis.Mvu?.getMvuData?.({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');loaded=await nativeMapLoaded(c,loaded,existing,source.key,index);await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence:'沿用原回复已保存的原生变量',allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,legacyNative:true}});return {updated:0,already:true,nativeOwned:true};}
-  const native=bridgeInput(getContext(),undefined,index);const evidence=[archivalText(source.text),loaded.chain.findLast(x=>x.role==='user'&&x.index<source.index)?.text??''].join('\n\n');
+  const native=bridgeInput(getContext(),undefined,index);const evidence=[archivalText(source.text),precedingUserSource(loaded.chain,source)?.text??''].join('\n\n');
   let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
   if(waiting){
    if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
@@ -110,11 +147,12 @@ export function createTableService({store,getContext,request,books=createBookGat
   status('原生变量桥','已更新',intent.proposal.changes.length+' 项；原卡回调已结算');
   return {updated:intent.proposal.changes.length,block:intent.block};
  }
+ function playerSettings(c,loaded){const binding=loaded.session.data.personaBinding;return {...c.settings,playerObjects:[...new Set([...c.settings.playerObjects,...(binding?.state==='bound'&&binding.personaId===readPersona()?.id?[binding.objectId]:[])])]};}
  async function progressLoaded(c,loaded,signal){
   if(!c.settings.offstage)return loaded;
-  const window=progressionWindow(loaded.view,c.settings);if(!window.ready){status('场外推进','等待',window.reason);return loaded;}
+  const window=progressionWindow(loaded.view,playerSettings(c,loaded));if(!window.ready){status('场外推进','等待',window.reason);return loaded;}
   const key=await progressionKey(window);if(loaded.view.commits.some(x=>x.progression?.key===key))return loaded;
-  try{const result=await invoke('plotAdvance',{phase:'world',window,registry:loaded.view.registry,currentRows:loaded.view.rows,nativeState:nativeSnapshot(loaded.view.rows,{context:getContext(),messageIndex:(loaded.chain.find(x=>x.key===window.source)?.floor??0)-1}),...planContext(loaded,c.settings)},c,signal);const settled=validateWorldProposal(loaded.view,result,window);return await commit(c,loaded,settled.proposal,{source:window.source??null,kind:'simulation',evidence:settled.evidence,worldTime:window.to,allowedTables:['events','activities','state','relations','growth','tasks','timers','clues'],progression:{...settled.receipt,key}});}catch(e){c.guard();if(signal.aborted)throw e;status('场外推进','待重试',e.message);return loaded;}
+  try{const result=await invoke('plotAdvance',{phase:'world',window,registry:loaded.view.registry,currentRows:loaded.view.rows,nativeState:nativeSnapshot(loaded.view.rows,{context:getContext(),messageIndex:(loaded.chain.find(x=>x.key===window.source)?.floor??0)-1}),...planContext(loaded,playerSettings(c,loaded))},c,signal);const settled=validateWorldProposal(loaded.view,result,window);return await commit(c,loaded,settled.proposal,{source:window.source??null,kind:'simulation',evidence:settled.evidence,worldTime:window.to,allowedTables:['events','activities','state','relations','growth','tasks','timers','clues'],progression:{...settled.receipt,key}});}catch(e){c.guard();if(signal.aborted)throw e;status('场外推进','待重试',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}
  }
  async function advance(){return exclusive(async signal=>{const c=capture();let loaded=await load(c);loaded=await progressLoaded(c,loaded,signal);return {rows:loaded.view.rows,receipt:loaded.view.commits.findLast(x=>x.progression)?.progression??null};});}
  async function saveAnchor(options){return exclusive(async()=>{const c=capture(),loaded=await load(c),anchor=snapshotAnchor(loaded,options),next=copy(loaded.origin.data);next.revision++;next.timelineAnchors??=[];next.timelineAnchors.push(anchor);await books.write(loaded.origin,next,c.guard);return anchor;});}
@@ -130,20 +168,28 @@ export function createTableService({store,getContext,request,books=createBookGat
  async function listCores(book){const c=capture(),source=await books.read(book||c.settings.originBook);c.guard();check(source.data.kind==='origin','请选择原点书');return copy(source.data.coreAssets??[]);}
  async function adaptCore(book,id,goal=''){const c=capture(),source=await books.read(book);c.guard();const core=source.data.coreAssets?.find(x=>x.id===id);check(core,'通用核心不存在');const reference=book+' / '+id+'@'+core.version;const draft=await genesis('将以下可迁移核心整合成当前世界画风的新版本。保留核心价值与特征，用当前世界身份与机制重构，不继承原世界已完成任务或人际关系。可携带成长作为对应经历重新设计，不能把旧世界事件当作本世界已发生事实。核心引用：'+reference+'\n核心：'+JSON.stringify(core)+'\n用户补充：'+goal);for(const op of draft.proposal.artifacts.base.changes)if(op.table==='objects'&&['character','人物','角色'].includes(op.values.类型))op.values.核心引用=reference;return draft;}
  async function autoInitialize(mode='card'){const draft=await cardTemplate(mode);const count=await saveCardTemplate(draft);return {count,notes:draft.proposal.notes};}
+ async function analysePreferenceSource(c,loaded,source,signal,extra={}){
+  if((loaded.session.data.preferenceDrafts??[]).some(x=>x.source===source.key))return loaded;
+  const proposal=await invoke('preferenceAnalysis',{registry:loaded.view.registry,currentRows:loaded.view.rows.filter(r=>r.table==='preferences'),userInput:source.text,...extra,preferenceContext:{world:c.key,worldName:c.label,chatId:getContext().chatId,card:getContext().characters?.[getContext().characterId]?.avatar,user:readPersona()?.id},antiCliche:true},c,signal);
+  prepareCommit(loaded.view,proposal,{source:source.key,kind:'preferences',evidence:source.text,allowedTables:['preferences']});
+  const next=copy(loaded.session.data);next.revision++;next.preferenceDrafts??=[];next.preferenceDrafts.push({id:crypto.randomUUID(),source:source.key,text:source.text,proposal,status:proposal.changes.length?'pending':'empty',createdAt:new Date().toISOString()});
+  status('偏好确认',proposal.changes.length?'待确认':'无新候选','第 '+source.floor+' 层 · '+proposal.changes.length+' 项；尚未影响正文');return {...loaded,session:await books.write(loaded.session,next,c.guard)};
+ }
+ async function analysePreferences({from=1,to=Number.MAX_SAFE_INTEGER,limit=10}={}){return exclusive(async signal=>{
+  check(Number.isSafeInteger(from)&&from>=1&&Number.isSafeInteger(to)&&to>=from&&Number.isSafeInteger(limit)&&limit>=1&&limit<=100,'偏好分析楼层或批量无效');const c=capture();let loaded=await load(c),processed=0;
+  const queue=loaded.chain.filter(s=>s.role==='user'&&s.floor>=from&&s.floor<=to&&!(loaded.session.data.preferenceDrafts??[]).some(d=>d.source===s.key)).slice(0,limit);
+  for(const source of queue){loaded=await analysePreferenceSource(c,loaded,source,signal,{generationType:'history-analysis'});processed++;}
+  return {processed,pending:(loaded.session.data.preferenceDrafts??[]).filter(x=>x.status==='pending').length};
+ });}
  async function assemble(c,loaded,type,signal,{runPlan=true}={}){
   const chain=loaded.chain,lastAI=chain.findLast(s=>s.role==='assistant'),user=chain.findLast(s=>s.role==='user'),tags=taskTags(lastAI?.text??'');
-  if(c.settings.preferences&&user&&!(loaded.session.data.preferenceDrafts??[]).some(x=>x.source===user.key)){
-   const proposal=await invoke('preferenceAnalysis',{registry:loaded.view.registry,currentRows:loaded.view.rows.filter(r=>r.table==='preferences'),userInput:user.text,generationType:type,explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[],antiCliche:true},c,signal);
-   prepareCommit(loaded.view,proposal,{source:user.key,kind:'preferences',evidence:user.text,allowedTables:['preferences']});
-   const next=copy(loaded.session.data);next.revision++;next.preferenceDrafts??=[];next.preferenceDrafts.push({id:crypto.randomUUID(),source:user.key,text:user.text,proposal,status:proposal.changes.length?'pending':'empty',createdAt:new Date().toISOString()});
-   loaded={...loaded,session:await books.write(loaded.session,next,c.guard)};status('偏好确认','待确认',proposal.changes.length+' 项候选；尚未影响正文');
-  }
-  const allowedRows=loaded.view.rows.filter(r=>r.table!=='native_cells').filter(r=>r.table!=='preferences'||c.settings.preferences&&r.preferenceConfirmed===true&&r.values.启用!==false),readView={...loaded.view,rows:allowedRows};
+  if(c.settings.preferences&&user)loaded=await analysePreferenceSource(c,loaded,user,signal,{generationType:type});
+  const currentPersona=readPersona(),binding=loaded.session.data.personaBinding;const allowedRows=personaProjection(loaded.view.rows,binding,currentPersona).filter(r=>r.table!=='native_cells').filter(r=>r.table!=='preferences'||c.settings.preferences&&r.preferenceConfirmed===true&&r.values.启用!==false&&preferenceMatches(r,{context:getContext(),world:c,persona:currentPersona,binding})),readView={...loaded.view,rows:allowedRows};
   let found=retrieval(readView,{tags,query:user?.text??'',topK:c.settings.topK});
-  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:loaded.view.rows.filter(r=>['objects','facts','events'].includes(r.table)),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
+  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:allowedRows.filter(r=>['objects','facts','events'].includes(r.table)),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
   const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()];
   const data={format:'tisya.context/1',source:'本轮表单资料。人物知识与读者可见范围仍以每行 access 为准；读者展示开关不授予人物知识。state.有效性为失效或待确认时，所存值只是最后已知，不是当前确证。',originBook:loaded.origin.name,sessionBook:loaded.session.name,revision:loaded.session.data.revision,rows:derive(selected,loaded.view.registry),latestTemporary:lastAI?{source:lastAI.key,text:lastAI.text,tags}:null,unresolvedTags:found.unresolved,explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[],preferences:allowedRows.filter(r=>r.table==='preferences'),antiCliche:true,dueChecks:dueChecks(loaded.view,chain),plot:null};
-  if(runPlan&&c.settings.plot)data.plot=await invoke('plotAdvance',{...data,phase:'plan',nativeState:nativeSnapshot(loaded.view.rows,{context:getContext()}),registry:loaded.view.registry,...planContext(loaded,c.settings),userInput:user?.text??'',generationType:type},c,signal);
+  if(runPlan&&c.settings.plot)data.plot=await invoke('plotAdvance',{...data,phase:'plan',nativeState:nativeSnapshot(loaded.view.rows,{context:getContext()}),registry:loaded.view.registry,...planContext(loaded,playerSettings(c,loaded)),userInput:user?.text??'',generationType:type},c,signal);
   if(data.plot){check(typeof data.plot.goal==='string'&&Array.isArray(data.plot.beats)&&Array.isArray(data.plot.pendingChoices)&&Array.isArray(data.plot.constraints),'剧情推进产物字段不完整');check(!Object.hasOwn(data.plot,'changes'),'剧情推进不得产生事实写入');for(const beat of data.plot.beats)check(beat&&typeof beat.proposal==='string'&&Array.isArray(beat.basis)&&beat.basis.every(x=>typeof x==='string')&&typeof beat.condition==='string','剧情节拍须有提案、依据和触发条件');for(const name of ['pendingChoices','constraints'])check(data.plot[name].every(x=>typeof x==='string'),'剧情设计列表内容无效');}
   let entries=[],text;
   if(c.settings.injection==='worldbook'){
@@ -162,7 +208,7 @@ export function createTableService({store,getContext,request,books=createBookGat
  function rulesContext(){const c=capture(),rules=c.settings.styleEnabled?styleRules(c.settings):[],slots={preferences:{explicit:c.settings.hardRules,style:stylePrompt(rules)}};return {world:c.key,slots,text:materialSlots(slots),instructions:'已启用禁词、写作要求及用户明确限制按硬约束执行。'};}
  async function prepare(type='normal'){
   worldbook.clear();setPrompt('');const current=store.read();if(!tableSettings(current.world).enabled||['quiet','impersonate'].includes(type))return null;
-  return exclusive(async signal=>{const c=capture();try{if(c.settings.injection==='worldbook')check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');let loaded=await load(c,type);loaded=await archiveLoaded(c,loaded,signal);loaded=await progressLoaded(c,loaded,signal);const result=await assemble(c,loaded,type,signal);c.guard();setPrompt(result.text,()=>{try{c.guard();return true;}catch{return false;}});return result;}catch(e){status('表单推进','失败',e.message);setPrompt('');throw e;}},{scope:'generation'});
+  return exclusive(async signal=>{const c=capture();try{if(c.settings.injection==='worldbook')check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');let loaded=await load(c,type);loaded=await archiveLoaded(c,loaded,signal);loaded=await progressLoaded(c,loaded,signal);const result=await assemble(c,loaded,type,signal);c.guard();setPrompt(result.text,()=>{try{c.guard();return true;}catch{return false;}});return result;}catch(e){status('表单推进','失败',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}},{scope:'generation'});
  }
  async function initializeCaptured(c,{originBook=c.settings.originBook,sessionBook=c.settings.sessionBook}={}){
   const context=getContext(),card=context.characters?.[context.characterId]?.avatar;check(card&&!context.groupId,'请先在单角色卡会话中建立原点档案；群组复用需明确选择角色来源');
@@ -187,31 +233,57 @@ export function createTableService({store,getContext,request,books=createBookGat
   const c=capture(),chain=await sources(getContext().chat);c.guard();let view=null,origin=null,session=null,error='';
   if(c.settings.originBook&&c.settings.sessionBook){try{origin=await books.read(c.settings.originBook);session=await books.read(c.settings.sessionBook);check(origin.data.kind==='origin'&&session.data.kind==='session'&&session.data.owner===c.key,'当前会话存档绑定不匹配');view=project(origin.data,session.data,chain.map(s=>s.key));}catch(e){error=e.message;}}
   else error='尚未建立完整存档；开始补录时会自动创建／复用。';
-  c.guard();const last=chain.findLast(s=>s.role==='assistant');return {world:c.key,chatStamp:c.chat,settings:c.settings,registry:view?.registry??defaultRegistry(),rows:view?.rows??[],blueprint:session?.data.blueprint??null,storageReady:!!view,storageError:error,jobs:copy(jobs),history:chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:view?view.archived.has(s.key):null,pending:view?.archived.has(s.key)?[]:view?.commits.filter(c=>c.source===s.key).flatMap(c=>c.pending??[])??[],latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}))};
+  c.guard();const last=chain.findLast(s=>s.role==='assistant');return {world:c.key,chatStamp:c.chat,settings:c.settings,registry:view?.registry??defaultRegistry(),rows:view?.rows??[],blueprint:session?.data.blueprint??null,storageReady:!!view,storageError:error,jobs:copy(jobs),persona:readPersona(),personaBinding:copy(session?.data.personaBinding??null),history:chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:view?view.archived.has(s.key):null,pending:view?.archived.has(s.key)?[]:view?.commits.filter(c=>c.source===s.key).flatMap(c=>c.pending??[])??[],latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}))};
  }
  async function archive({includeLatest=false,range=null,scope='manual'}={}){return exclusive(async signal=>{const c=capture();if(range)check(Number.isSafeInteger(range.from)&&Number.isSafeInteger(range.to)&&range.from>=1&&range.to>=range.from&&Number.isSafeInteger(range.limit)&&range.limit>=1&&range.limit<=100,'楼层范围或批量数无效');let loaded=await load(c);loaded=await archiveLoaded(c,loaded,signal,includeLatest,range);return {archived:loaded.view.archived.size,pending:loaded.view.commits.filter(x=>x.complete===false&&!loaded.view.archived.has(x.source)).flatMap(x=>x.pending??[]),revision:loaded.session.data.revision};},{scope});}
  async function scan(){const c=capture(),loaded=await load(c),last=loaded.chain.findLast(s=>s.role==='assistant');return loaded.chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:loaded.view.archived.has(s.key),pending:loaded.view.archived.has(s.key)?[]:loaded.view.commits.filter(c=>c.source===s.key).flatMap(c=>c.pending??[]),latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}));}
  async function importHistory(text,{label='手写历史',worldTime=null}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c);check(typeof text==='string'&&text.trim(),'请填写历史原文');const hash=await digest(text);check(!loaded.session.data.commits.some(x=>x.importSource?.hash===hash),'这份历史已导入，不能重复入账');const proposal=await invoke('historyImport',{registry:loaded.view.registry,currentRows:loaded.view.rows,historyText:text,label,worldTime},c,signal);return {format:'tisya.history-draft/1',text,label,worldTime,hash,proposal,world:c.key,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};});}
  async function saveHistory(draft){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.history-draft/1'&&draft.world===c.key&&draft.originRevision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'历史草稿依据已变化，请重新核对');check(await digest(draft.text)===draft.hash,'历史原文已改变，请重新生成草稿');check(!loaded.session.data.commits.some(x=>x.importSource?.hash===draft.hash),'这份历史已经导入');const result=await commit(c,loaded,draft.proposal,{source:null,kind:'import',evidence:draft.text,worldTime:draft.worldTime,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),importSource:{label:draft.label,text:draft.text,hash:draft.hash,worldTime:draft.worldTime}});return result.session.data.revision;});}
  async function cardTemplate(mode='card'){return exclusive(async signal=>{
-  check(['card','generic','reuse'].includes(mode),'初始化方式无效');const c=capture(),loaded=await load(c);let material='';
-  if(mode==='card'){const context=getContext(),card=context.characters?.[context.characterId];material=cardBasis(context);const entries=await books.materials(card.avatar);c.guard();material+='\n\n'+entries.map(x=>'来源：'+x.book+' / '+x.entry+'\n'+x.content).join('\n\n');}
-  const result=mode==='card'?await invoke('templateInit',{sourceCard:material,registry:loaded.view.registry,currentRows:loaded.view.rows,goal:'从当前角色卡和定义初始化模板与底档；不读取聊天历史，不采纳示例为历史'},c,signal):{registry:mode==='reuse'?copy(loaded.origin.data.registry):copy(loaded.view.registry),base:{changes:[]},initial:{changes:[]},notes:[mode==='reuse'?'复用卡模板；原点对象版本在设置与绑定中选择':'使用通用模板；后续归档按来源扩展']};
-  result.registry??=reconcileProposal(loaded.view.registry,{templates:result.templates??[],schemaChanges:result.schemaChanges??[],changes:result.base?.changes??[],currentRows:loaded.view.rows}).registry;compatibleRegistry(result.registry,loaded.view.registry);check(result.base&&result.initial&&Array.isArray(result.notes),'初始化草稿不完整');return {format:'tisya.card-template/1',world:c.key,chat:c.chat,basis:material,mode,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,proposal:result};
+  check(['card','generic','reuse'].includes(mode),'初始化方式无效');const c=capture(),loaded=await load(c);let material='',userSource=null,userChange=null;
+  if(mode==='card'){const context=getContext(),card=context.characters?.[context.characterId];material=cardBasis(context);const entries=await books.materials(card.avatar);c.guard();material+='\n\n'+entries.map(x=>'来源：'+x.book+' / '+x.entry+'\n'+x.content).join('\n\n');userSource=readPersona();if(userSource){check(userSource.id,'当前用户人设缺少稳定标识，请先选择原生用户人设');userChange=personaObjectChange(userSource,loaded.view.rows,loaded.session.data.personaBinding);material+='\n\n'+personaDefinition(userSource);}}
+  const result=mode==='card'?await invoke('templateInit',{sourceCard:material,sourceUser:userSource?{id:userSource.id,name:userSource.name,description:userSource.description,objectId:userChange.id}:null,registry:loaded.view.registry,currentRows:loaded.view.rows,goal:'按当前角色卡和原生用户定义补齐模板与底档。已有 ID、名称及当前会话进度保持；已有字段只有原文支持的修正才提交，未变化项省略。定义、职责和硬性约束须完整且强度不变；原始冲突并存待确认。新增来源按现有模板录入；不读取聊天历史，不采纳示例为历史，不用定义初值重置已发生的会话状态。'},c,signal):{registry:mode==='reuse'?copy(loaded.origin.data.registry):copy(loaded.view.registry),base:{changes:[]},initial:{changes:[]},notes:[mode==='reuse'?'复用卡模板；原点对象版本在设置与绑定中选择':'使用通用模板；后续归档按来源扩展']};
+  if(userChange){check(Array.isArray(result.base?.changes),'初始化草稿缺少原点档案');check(!result.base.changes.some(x=>x.id===userChange.id||x.table==='objects'&&x.values?.名称===userSource.name),'模型重复生成了原生 user 档案，请修正草稿来源后重试');result.base.changes.unshift(userChange);}
+  result.registry??=reconcileProposal(loaded.view.registry,{templates:result.templates??[],schemaChanges:result.schemaChanges??[],changes:result.base?.changes??[],currentRows:loaded.view.rows}).registry;compatibleRegistry(result.registry,loaded.view.registry);await repairInitializationNames(result,loaded.view.rows,userChange?.id,material,c,signal);check(result.base&&result.initial&&Array.isArray(result.notes),'初始化草稿不完整');return {format:'tisya.card-template/1',world:c.key,chat:c.chat,basis:material,mode,userSource,userObjectId:userChange?.id??null,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,proposal:result};
  });}
  async function saveCardTemplate(draft){return exclusive(async()=>{
   const c=capture(),loaded=await load(c);check(draft.format==='tisya.card-template/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.originRevision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'初始化依据已变化，请重新读取');
-  if(draft.mode==='card'){const context=getContext(),card=context.characters?.[context.characterId],entries=await books.materials(card.avatar);c.guard();const actual=cardBasis(context)+'\n\n'+entries.map(x=>'来源：'+x.book+' / '+x.entry+'\n'+x.content).join('\n\n');check(actual===draft.basis,'角色卡或绑定定义已改变，请重新生成初始化草稿');}
+  if(draft.mode==='card'){const context=getContext(),card=context.characters?.[context.characterId],entries=await books.materials(card.avatar);c.guard();const currentUser=readPersona();check(personaStamp(currentUser)===personaStamp(draft.userSource??null),'用户身份或设定已改变，请重新生成初始化草稿');const actual=cardBasis(context)+'\n\n'+entries.map(x=>'来源：'+x.book+' / '+x.entry+'\n'+x.content).join('\n\n')+(currentUser?'\n\n'+personaDefinition(currentUser):'');check(actual===draft.basis,'角色卡或绑定定义已改变，请重新生成初始化草稿');}
+  if(draft.userSource){const user=draft.proposal.base.changes.find(x=>x.id===draft.userObjectId);check(user?.values.名称===draft.userSource.name&&user?.values.描述===draft.userSource.description,'原生用户档案须保持导入原文；修改请使用用户身份绑定预览');}
   const p=draft.proposal,reg=compatibleRegistry(copy(p.registry),loaded.view.registry);const options={source:null,kind:'init',evidence:draft.basis,allowedTables:['objects','facts']};
   const base=prepareCommit({...loaded.view,registry:reg,last:null},p.base,options),origin=copy(loaded.origin.data);origin.revision++;origin.registry=base.registry;
   for(const change of base.commit.changes){change.after.rev=Math.max(change.after.rev,...origin.bases.filter(b=>b.id===change.id).map(b=>b.rev+1));origin.bases.push(copy(change.after));}
   const session=copy(loaded.session.data);session.revision++;session.registry=copy(base.registry);session.schemaPinned=true;const pins=new Map((session.pins??[]).map(pin=>[pin.slice(0,pin.lastIndexOf('@')),pin]));for(const ch of base.commit.changes)pins.set(ch.id,ch.id+'@'+ch.after.rev);session.pins=[...pins.values()];
   const ids=new Map(p.base.changes.map((op,i)=>[op.id,base.commit.changes[i].id])),initial=copy(p.initial);for(const op of initial.changes){mapRowReferences({table:op.table,values:op.values},base.registry,id=>ids.get(id)??id);for(const field of ['readers','knowers'])if(op.access?.[field])op.access[field]=op.access[field].map(id=>ids.get(id)??id);}
+  if(draft.userSource){const objectId=ids.get(draft.userObjectId)??draft.userObjectId;check(origin.bases.some(x=>x.id===objectId),'用户档案在草稿中被删除，未保存');session.personaBinding={objectId,personaId:draft.userSource.id,state:'bound',at:new Date().toISOString()};}
+  for(const op of initial.changes){const prior=loaded.view.rows.find(row=>row.id===op.id);check(!prior||prior.source===null||Object.entries(op.values).every(([key,value])=>JSON.stringify(prior.values[key])===JSON.stringify(value)),'初始化不能覆盖已有来源的会话进度；请按正文补录或人工修订');}
   const view=project(origin,session,loaded.chain.map(x=>x.key)),filled=prepareCommit(view,initial,{...options,allowedTables:base.registry.tables.filter(t=>t.owner==='archive'&&!['objects','facts','events','cognition'].includes(t.id)).map(t=>t.id)});
   filled.commit.changes.unshift(...base.commit.changes.map(ch=>({id:ch.id,before:ch.before,origin:ch.id+'@'+ch.after.rev})));filled.commit.anchors.unshift(...base.commit.anchors);for(const anchor of filled.commit.anchors)anchor.group=filled.commit.id;session.commits.push(filled.commit);session.templateInitialization={mode:draft.mode,at:new Date().toISOString(),notes:copy(p.notes),registryVersion:origin.revision};
   await books.write(loaded.origin,origin,c.guard);try{await books.write(loaded.session,session,c.guard);}catch(e){throw Error('卡模板与原点候选已保存，本会话初始化未确认：'+e.message);}
   status('角色卡初始化','已保存','模板绑定角色卡，初始进度仅写入当前存档');return base.commit.changes.length+filled.commit.changes.length;
  });}
+ async function previewUserBinding(objectId){return exclusive(async()=>{const c=capture(),loaded=await load(c),current=readPersona();check(loaded.session.data.personaBinding?.state!=='writing','上次绑定尚未完成，请先继续核对');return {format:'tisya.persona-draft/1',...personaDraft(loaded.view.rows.find(r=>r.id===objectId),loaded.view.registry,current),world:c.key,chat:c.chat,sessionRevision:loaded.session.data.revision};});}
+ async function finishUserBinding(c,loaded,intent){
+  check(persona,'宿主用户人设写入接口未接入');let actual=readPersona();
+  const desired=actual?.id===intent.personaId&&actual.name===intent.name&&actual.description===intent.description&&actual.storedName===intent.name&&actual.descriptor.description===intent.description;
+  check(desired||personaStamp(actual)===personaStamp(intent.before),'原生人设已另行修改，不能继续旧绑定；请核对后重新操作');
+  actual=await persona.write({before:actual,name:intent.name,description:intent.description},c.guard);
+  const next=copy(loaded.session.data);next.revision++;next.personaBinding={objectId:intent.objectId,personaId:actual.id,state:'bound',at:new Date().toISOString()};
+  try{await books.write(loaded.session,next,c.guard);}catch(e){throw Error('原生 user 已更新，但档案绑定未完成；请点击继续核对绑定：'+e.message);}
+  status('用户身份','已绑定','原生名称与设定已保存；档案正文不再二次注入');return next.personaBinding;
+ }
+ async function saveUserBinding(draft){return exclusive(async()=>{const c=capture();let loaded=await load(c);check(draft.format==='tisya.persona-draft/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.sessionRevision===loaded.session.data.revision,'绑定草稿依据已改变，请重新预览');check(loaded.view.rows.some(r=>r.id===draft.objectId&&r.rev===draft.rowRevision),'人物档案版本已改变');check(personaStamp(readPersona())===personaStamp(draft.before),'原生 user 已改变，请重新预览');check(typeof draft.name==='string'&&draft.name.trim()&&!/[\r\n]/.test(draft.name)&&typeof draft.description==='string','姓名或设定格式无效');const next=copy(loaded.session.data);next.revision++;next.personaBinding={state:'writing',objectId:draft.objectId,personaId:draft.personaId,name:draft.name,description:draft.description,before:copy(draft.before),at:new Date().toISOString()};loaded={...loaded,session:await books.write(loaded.session,next,c.guard)};return finishUserBinding(c,loaded,next.personaBinding);});}
+ async function resumeUserBinding(){return exclusive(async()=>{const c=capture(),loaded=await load(c),intent=loaded.session.data.personaBinding;check(intent?.state==='writing','没有待核对的绑定');return finishUserBinding(c,loaded,intent);});}
+ async function repairInitializationNames(result,currentRows,userId,sourceCard,c,signal){
+  const changes=result.base?.changes;if(!Array.isArray(changes))return;
+  const current=new Map(currentRows.filter(row=>row.table==='objects').map(row=>[row.id,row])),proposed=new Map(changes.filter(op=>op.table==='objects').map(op=>[op.id,op]));
+  function collisions(){const names=new Map();for(const id of new Set([...current.keys(),...proposed.keys()])){const value={...current.get(id)?.values,...proposed.get(id)?.values},name=value.名称;check(typeof name==='string'&&name.trim(),'对象名称缺失：'+id);const key=name.trim().normalize('NFKC').toLocaleLowerCase();if(!names.has(key))names.set(key,[]);names.get(key).push({id,name,editable:proposed.has(id)&&id!==userId});}return [...names.values()].filter(rows=>rows.length>1);}
+  const conflicts=collisions();if(!conflicts.length)return;
+  const editable=new Set(conflicts.flat().filter(row=>row.editable).map(row=>row.id));check(editable.size,'现有对象名称冲突，初始化不能改写未提交档案或原生用户名称');
+  const repair=await invoke('templateInit',{sourceCard,registry:result.registry,currentRows,repair:{instruction:'仅修复所列新提案对象的显示名称冲突。返回 {renames:[{id,name}]}，保持 ID、引用、事实、用户原生名称以及不可编辑档案不变。依据来源用身份限定名称；不可确定放 notes，不合并同名不同人。',nameConflicts:conflicts,editableIds:[...editable]}},c,signal);
+  check(Array.isArray(repair.renames)&&repair.renames.length<=editable.size,'名称修复格式无效');const seen=new Set();for(const rename of repair.renames){check(editable.has(rename.id)&&!seen.has(rename.id)&&typeof rename.name==='string'&&rename.name.trim(),'名称修复越界或重复');seen.add(rename.id);proposed.get(rename.id).values.名称=rename.name;}
+  check(!collisions().length,'对象显示名称仍冲突，请在草稿中区分身份');
+ }
  async function genesis(goal){return exclusive(async signal=>{const c=capture(),loaded=await load(c);check(typeof goal==='string'&&goal.trim(),'请填写创世要求');const basisCard=cardBasis(getContext());const proposal=await invoke('tableGenesis',{goal,sourceCard:basisCard,registry:loaded.view.registry,baseArchives:loaded.view.rows.filter(r=>r.table==='objects')},c,signal);validateBlueprint(proposal,loaded.origin.data.registry);return {format:'tisya.genesis-draft/2',goal,basisCard,proposal,world:c.key,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};});}
  async function saveGenesis(draft){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.genesis-draft/2','请重新生成创世蓝图');check(draft.basisCard===cardBasis(getContext()),'角色卡资料已修改，请重新生成创世草稿');check(draft.world===c.key&&draft.originRevision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'创世草稿依据已变化，请重新生成或载入');
   const p=validateBlueprint(draft.proposal,loaded.origin.data.registry);if(p.artifacts.native&&Object.values(p.artifacts.native).some(x=>x.length)){check(nativeConfig,'原生配置接口尚未接入');p.artifacts.native=nativeConfig.resolveTargets(p.artifacts.native);}
@@ -237,7 +309,7 @@ export function createTableService({store,getContext,request,books=createBookGat
  });}
  async function saveTemplates(nextRegistry,expectedRevision){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(loaded.origin.data.revision===expectedRevision,'模板版本已变化，请重新载入');compatibleRegistry(nextRegistry,loaded.origin.data.registry);for(const row of loaded.view.rows)validateRow(nextRegistry,row);
   const next=copy(loaded.origin.data);next.revision++;next.registry=copy(nextRegistry);next.schemaHistory??=[];next.schemaHistory.push({at:new Date().toISOString(),before:loaded.origin.data.registry,after:copy(nextRegistry),source:'用户编辑模板'});await books.write(loaded.origin,next,c.guard);const session=copy(loaded.session.data);session.revision++;session.registry=copy(nextRegistry);session.schemaPinned=true;session.commits.push({id:crypto.randomUUID(),source:null,depends:loaded.view.last,kind:'schema',changes:[],anchors:[],registry:copy(nextRegistry)});await books.write(loaded.session,session,c.guard);status('模板','已保存','新字段和别名已登记');return next.revision;});}
- const api={stageFork,activateFork,cancelFork(){pendingFork=null;},enableNativeBridge,syncNative,coreDraft,saveCore,listCores,adaptCore,advance,saveAnchor,useAnchor,autoInitialize,cardTemplate,saveCardTemplate,review,state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){return scanStyle(text,styleRules(tableSettings(store.read().world)));},edit,pinOrigins,books,clear,contextChanged,preview:()=>copy(latest)};
+ const api={previewUserBinding,saveUserBinding,resumeUserBinding,analysePreferences,stageFork,activateFork,cancelFork(){pendingFork=null;},enableNativeBridge,syncNative,coreDraft,saveCore,listCores,adaptCore,advance,saveAnchor,useAnchor,autoInitialize,cardTemplate,saveCardTemplate,review,state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){const settings=tableSettings(store.read().world);return settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[];},auditStyle(text){const settings=tableSettings(store.read().world);lastStyleAudit={enabled:settings.styleEnabled,hits:settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[],at:new Date().toISOString()};return copy(lastStyleAudit);},reportError(task,error){status(task,'失败',error?.message??String(error));},edit,pinOrigins,books,clear,contextChanged,preview:()=>copy(latest)};
  api.assistant=createTableAssistant({store,getContext,review,run:exclusive,call:(input,signal)=>invoke('tableAssistant',input,capture(),signal),getChoices:getConfigurationChoices,interfaceConfig});return api;
 }
 

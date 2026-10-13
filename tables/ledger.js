@@ -14,6 +14,9 @@ export async function sources(chat,type='normal'){
  }
  return out;
 }
+export function precedingUserSource(chain,source){
+ const at=chain.findIndex(item=>item.key===source.key);if(at<0)return null;const selected=[];for(let i=at-1;i>=0&&chain[i].role==='user';i--)selected.unshift(chain[i]);if(!selected.length)return null;return {role:'user',source:selected.at(-1).key,text:selected.map(item=>item.text).join('\n\n'),sources:selected.map(({key,floor,index,text})=>({key,source:key,floor,index,text,role:'user'})),note:'按原顺序保留本 AI 回复前连续用户输入；仅明确的角色设定或已授权心理可入档，动作尝试和未来要求不是已发生结果'};
+}
 export function memoryBlock(text){return text.match(/<memory(?:\s[^>]*)?>([\s\S]*?)<\/memory>/i)?.[1]?.trim()??'';}
 export function taskTags(text){const block=text.match(/<task(?:\s[^>]*)?>([\s\S]*?)<\/task>/i)?.[1]??'';return block.split('\n').map(s=>s.trim()).filter(s=>/^(?:引用|新发现|资料)：/.test(s));}
 export function project(origin,session,sourceKeys){
@@ -30,7 +33,7 @@ export function project(origin,session,sourceKeys){
  return {registry,baseTime:session.branchSeed?.anchor?.worldTime??null,rows:values,anchors,commits:accepted,archived:new Set([...(session.branchSeed?.archivedSources??[]).filter(s=>allowed.has(s)),...accepted.filter(c=>['archive','history'].includes(c.kind)&&c.complete!==false).map(c=>c.source)]),last:accepted.at(-1)?.id??null,revision:session.revision};
 }
 export function parseJSONResponse(response){
- if(object(response)&&(Array.isArray(response.changes)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.registry&&response.base))return response;
+ if(object(response)&&(Array.isArray(response.changes)||Array.isArray(response.needsRows)||Array.isArray(response.renames)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.registry&&response.base))return response;
  let text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('');
  check(typeof text==='string'&&text.trim(),'辅助 API 没有返回文本结果');text=text.trim();if(text.includes('<reply')){const extra=text.match(/<extra(?:\s[^>]*)?>([\s\S]*?)<\/extra>/i)?.[1]??'';const results=[...extra.matchAll(/<tisya_result(?:\s[^>]*)?>([\s\S]*?)<\/tisya_result>/gi)];check(results.length===1,'配套模式回复须在 extra 中提供唯一的 tisya_result');text=results[0][1].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&').trim();}if(/^```(?:json)?\s/i.test(text))text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
  let result;try{result=JSON.parse(text);}catch{throw Error('辅助 API 返回的不是完整 JSON，未写入表单');}check(object(result),'辅助产物必须是对象');return result;
@@ -85,11 +88,14 @@ export function sourceTime(text){
 // Compare explicit Gregorian story dates only; never borrow the host date/timezone.
 export function calendarTime(text){
  if(typeof text!=='string')return null;
- const m=text.trim().match(/^(\d{4})(?:-(\d{1,2})-(\d{1,2})|年(\d{1,2})月(\d{1,2})日)[ T]?(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
- if(!m)return null;const [year,month,day,hour,minute,second]=[m[1],m[2]??m[4],m[3]??m[5],m[6],m[7],m[8]??0].map(Number);
+ const m=text.trim().match(/^(\d{4})(?:-(\d{1,2})-(\d{1,2})|年(\d{1,2})月(\d{1,2})日)[ T]?(\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})?$/);
+ if(!m)return null;const [year,month,day,hour,minute,second]=[m[1],m[2]??m[4],m[3]??m[5],m[6],m[7],m[8]??0].map(Number),millisecond=Number((m[9]??'').padEnd(3,'0'));
  if(month<1||month>12||day<1||day>31||hour>23||minute>59||second>59)return null;
- const time=Date.UTC(year,month-1,day,hour,minute,second),date=new Date(time);
- return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day?time:null;
+ // setUTCFullYear avoids Date.UTC's special interpretation of years 00–99.
+ const date=new Date(0);date.setUTCFullYear(year,month-1,day);date.setUTCHours(hour,minute,second,millisecond);
+ if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)return null;
+ let offset=0;if(m[10]&&m[10]!=='Z'){const hours=Number(m[10].slice(1,3)),minutes=Number(m[10].slice(4));if(hours>23||minutes>59)return null;offset=(hours*60+minutes)*(m[10][0]==='-'?-1:1);}
+ return date.getTime()-offset*60000;
 }
 export function dueChecks(view,chain){
  const scenes=view.rows.filter(r=>r.table==='scene'),times=scenes.map(r=>r.values.当前时间).filter(t=>typeof t==='string'),turns=chain.filter(s=>s.role==='assistant').length;
@@ -101,7 +107,14 @@ export function dueChecks(view,chain){
  });
 }
 
-export function archivalText(text){const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);if(body)return body[1].trim();return text.replace(/<(?:task|next|status|memory|vars|extra|actions|archive)(?:\s[^>]*)?>[\s\S]*?<\/(?:task|next|status|memory|vars|extra|actions|archive)>/gi,'').trim();}
+export function archivalText(text){
+ text=String(text??'');const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);let prose=body?body[1]:text;
+ const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+ // Nested control blocks can appear inside a body as well; neither path may
+ // turn old summaries, task labels or native commands into narrative evidence.
+ let prior;do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
+ return prose.replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
+}
 // A bad independent record must not discard valid records or mark the floor complete.
 export function prepareRecoverable(view,proposal,options){
  try{return prepareCommit(view,proposal,options);}catch(first){
