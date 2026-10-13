@@ -1,5 +1,14 @@
 import {CAPTURE_RULES} from './conditions.js';
 const own=(o,k)=>Object.hasOwn(o,k),missing=Symbol('missing');
+const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const accessValid=v=>object(v)&&['readers','knowers'].every(key=>Array.isArray(v[key])&&v[key].every(id=>typeof id==='string'));
+function validateRecord(row){
+ if(!object(row)||typeof row.id!=='string'||!row.id||typeof row.table!=='string'||!row.table||!object(row.values))throw Error('PIPES档案结构无效');
+ if(own(row,'referenceOnly')&&typeof row.referenceOnly!=='boolean')throw Error('PIPES只读引用标记无效');
+ if(own(row,'access')?!accessValid(row.access):row.referenceOnly!==true)throw Error('PIPES完整档案缺少有效权限；仅只读引用可以省略权限');
+ if(row.referenceOnly===true&&Object.keys(row.values).some(key=>!['名称','类型','别名'].includes(key)))throw Error('PIPES只读引用只能携带身份字段');
+ return row;
+}
 const safeJSON=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/\{/g,'\\u007b');
 // JSON strings remain typed; literal ~, null, false and numeric-looking text are quoted.
 export function pipeCell(value){
@@ -12,10 +21,11 @@ function split(line){const cells=[];let start=0,quote=false,escape=false,depth=0
 function cell(text){if(text==='~')return missing;if(text.startsWith('"')||text.startsWith('{')||text.startsWith('[')||text==='null'||text==='true'||text==='false'||/^-?\d/.test(text))return JSON.parse(text);return text;}
 const line=(label,cells)=>label+'：'+cells.map(pipeCell).join('|');
 function records(text,kind){const lines=text.trim().split(/\r?\n/);if(lines.shift()!=='[PIPES.'+kind+'/1]'||lines.pop()!=='[/PIPES.'+kind+'/1]')throw Error('PIPES协议边界无效');return lines.filter(Boolean).map(s=>{const i=s.indexOf('：');if(i<1)throw Error('PIPES记录缺少标签');return {label:s.slice(0,i),cells:split(s.slice(i+1)).map(cell)};});}
-export const PIPES_GUIDE='PIPES/1：标签：单元格|单元格；普通文字裸写，含分隔符/换行/保留值用JSON字符串，集合用JSON。~仅代表字段缺失，null/false/0/空串与空集合各自保留。列按表声明；档前7格为原序/ID/修订/来源/权限编号/其他元数据/表ID，随后依列取值，省略的末尾格均缺失。权限编号只引用明确权限记录，不授予人物知识。referenceOnly仅供名称解析，其余档案未展开，不能据此编造内容。字段格为名称/类型/其他约束/录入模板/注入条件；selected表示所属记录已选中；~表示未提供，程序再按模板默认处理。ref/refs的follow=record展开关联记录，identity仅带名称与类型，不递归拉入整张关系网。';
+export const PIPES_GUIDE='PIPES/1：标签：单元格|单元格；普通文字裸写，含分隔符/换行/保留值用JSON字符串，集合用JSON。~仅代表字段缺失，null/false/0/空串与空集合各自保留。列按表声明；档前7格为原序/ID/修订/来源/权限编号/其他元数据/表ID，随后依列取值，省略的末尾格均缺失。权限编号只引用明确权限记录，不授予人物知识。referenceOnly仅供名称解析，其余档案未展开，不能据此编造内容；只有这种只读引用可用~权限格，表示未提供权限，绝不等于公开或已获全文。字段格为名称/类型/其他约束/录入模板/注入条件；selected表示所属记录已选中；~表示未提供，程序再按模板默认处理。ref/refs的follow=record展开关联记录，identity仅带名称与类型，不递归拉入整张关系网。';
 export function rowsToPipes(rows){
  const out=['[PIPES.ROWS/1]'],tables=new Map(),permissions=new Map();
- for(const row of rows){if(!tables.has(row.table))tables.set(row.table,[]);const keys=tables.get(row.table);for(const key of Object.keys(row.values))if(!keys.includes(key))keys.push(key);const policy=JSON.stringify(row.access);if(!permissions.has(policy))permissions.set(policy,'a'+permissions.size);}
+ if(!Array.isArray(rows))throw Error('PIPES档案须为数组');
+ const ids=new Set();for(const row of rows){validateRecord(row);if(ids.has(row.id))throw Error('PIPES档案 ID 重复');ids.add(row.id);if(!tables.has(row.table))tables.set(row.table,[]);const keys=tables.get(row.table);for(const key of Object.keys(row.values))if(!keys.includes(key))keys.push(key);if(own(row,'access')){const policy=JSON.stringify(row.access);if(!permissions.has(policy))permissions.set(policy,'a'+permissions.size);}}
  for(const [value,id]of permissions)out.push(line('权限',[id,JSON.parse(value)]));
  for(const [table,keys]of tables)out.push(line('列',[table,...keys]));
  rows.forEach((row,index)=>{
@@ -24,13 +34,14 @@ export function rowsToPipes(rows){
  });out.push('[/PIPES.ROWS/1]');return out.join('\n');
 }
 export function rowsFromPipes(text){
- const tables=new Map(),permissions=new Map(),rows=[];
- for(const {label,cells:c}of records(text,'ROWS')){
-  if(label==='权限'){if(c.length!==2||permissions.has(c[0]))throw Error('PIPES权限记录冲突');permissions.set(c[0],c[1]);}
-  else if(label==='列'){if(tables.has(c[0])||new Set(c.slice(1)).size!==c.length-1)throw Error('PIPES列定义冲突');tables.set(c[0],c.slice(1));}
+ const entries=records(text,'ROWS'),count=entries.filter(r=>r.label==='档').length,tables=new Map(),permissions=new Map(),rows=[],ids=new Set();
+ for(const {label,cells:c}of entries){
+  if(label==='权限'){if(c.length!==2||typeof c[0]!=='string'||!c[0]||permissions.has(c[0])||!accessValid(c[1]))throw Error('PIPES权限记录冲突或无效');permissions.set(c[0],c[1]);}
+  else if(label==='列'){if(!c.length||c.some(key=>typeof key!=='string'||!key)||tables.has(c[0])||new Set(c.slice(1)).size!==c.length-1)throw Error('PIPES列定义冲突');tables.set(c[0],c.slice(1));}
   else if(label==='档'){
-   const [index,id,rev,source,acl,extra,table,...values]=c,keys=tables.get(table);if(!keys||!permissions.has(acl)||values.length>keys.length||!Number.isInteger(index)||rows[index])throw Error('PIPES档案结构无效');
-   const row={...(extra===missing?{}:extra),id,table,values:{},access:structuredClone(permissions.get(acl))};if(rev!==missing)row.rev=rev;if(source!==missing)row.source=source;values.forEach((v,i)=>{if(v!==missing)Object.defineProperty(row.values,keys[i],{value:v,enumerable:true,writable:true,configurable:true});});rows[index]=row;
+   const [index,id,rev,source,acl,extra,table,...values]=c,keys=tables.get(table);if(c.length<7||!keys||values.length>keys.length||!Number.isSafeInteger(index)||index<0||index>=count||rows[index]||ids.has(id)||extra!==missing&&(!object(extra)||Object.keys(extra).some(key=>['id','table','rev','source','access','values'].includes(key))))throw Error('PIPES档案结构无效');
+   if(acl!==missing&&!permissions.has(acl))throw Error('PIPES档案权限引用不存在');
+   const row={...(extra===missing?{}:extra),id,table,values:{},...(acl===missing?{}:{access:structuredClone(permissions.get(acl))})};if(rev!==missing)row.rev=rev;if(source!==missing)row.source=source;values.forEach((v,i)=>{if(v!==missing)Object.defineProperty(row.values,keys[i],{value:v,enumerable:true,writable:true,configurable:true});});validateRecord(row);rows[index]=row;ids.add(id);
   }else throw Error('PIPES未知记录 '+label);
  }if(rows.some(x=>!x)||Object.keys(rows).length!==rows.length)throw Error('PIPES档案序号有缺口');return rows;
 }
@@ -58,6 +69,6 @@ export function registryFromPipes(text){
 }
 export function compactMaterial(value){
  if(!value||typeof value!=='object'||Array.isArray(value))return typeof value==='string'?value:JSON.stringify(value);
- const {rows,registry,...meta}=value;const tabular=Array.isArray(rows)&&rows.length&&rows.every(r=>r&&typeof r.table==='string'&&r.values&&r.access);if(!tabular&&!registry)return JSON.stringify(value);if(Array.isArray(rows)&&rows.length&&!tabular)meta.rows=rows;
+ const {rows,registry,...meta}=value;const tabular=Array.isArray(rows)&&rows.every(r=>object(r)&&typeof r.table==='string'&&object(r.values));if(!tabular&&!registry)return JSON.stringify(value);if(own(value,'rows')&&!tabular)meta.rows=rows;
  const blocks=[];if(Object.keys(meta).length)blocks.push(JSON.stringify(meta));if(registry)blocks.push(registryToPipes(registry));if(tabular)blocks.push(rowsToPipes(rows));return blocks.join('\n');
 }

@@ -17,7 +17,7 @@ test('settings and every textarea use the browser read-only type descriptor safe
  const window=new Window();Object.defineProperty(window.HTMLTextAreaElement.prototype,'type',{configurable:true,get(){return 'textarea';}});
  const document=window.document,d=emptyConfig(),w=defaultWorld();d.worlds.test=w;let stored;
  const store={read:()=>({data:d,world:w,key:'test',revision:'v1'}),save:async data=>{stored=data;}},service={state:()=>({jobs:[]}),checkStyle:()=>[]};const panel=mountTablePanel(document,document.body,{service,store});await panel.ready;assert.equal(document.querySelector('[role=alert]'),null);
- click(panel.root,'禁词与文风');await new Promise(r=>setTimeout(r,0));assert.equal(document.querySelector('[role=alert]'),null);assert(document.querySelectorAll('textarea').length>=13);click(panel.root,'保存规则');await new Promise(r=>setTimeout(r,0));assert.equal(stored.worlds.test.tables.styleRules.length,13);panel.dispose();window.happyDOM.abort();
+ click(panel.root,'禁词与文风');await new Promise(r=>setTimeout(r,0));assert.equal(document.querySelector('[role=alert]'),null);assert(document.querySelectorAll('textarea').length>=15);click(panel.root,'保存规则');await new Promise(r=>setTimeout(r,0));assert.equal(stored.worlds.test.tables.styleRules.length,15);panel.dispose();window.happyDOM.abort();
 });
 test('typed editor retains zero false and null while supporting reference/list and nested value editing',()=>{
  const window=new Window(),document=window.document,ui=formUI(document),registry=defaultRegistry(),parent=document.body;
@@ -42,5 +42,5 @@ test('legacy routes resolve to one canonical task while keeping explicitly confi
  const d=emptyConfig(),w=defaultWorld();d.routes.tasks.memory={connection:'profile:old',model:'OLD'};assert.equal(resolveRoute(d,w,'tableArchive').connection,'profile:old');assert.equal(resolveRoute(d,w,'memory').preset,'tisya:tableArchive');assert.equal(registry.tasks.get('genesis').aliasOf,'tableGenesis');
 });
 test('built-in style rules are editable and report actual matches rather than rewriting text',()=>{
- const text='嘴角勾起一抹笑。他的心湖泛起涟漪。';const rules=styleRules({});assert.equal(rules.length,13);const hits=scanStyle(text,rules);assert(hits.some(h=>h.text==='嘴角勾起一抹'));assert(hits.some(h=>h.name==='水体意象解释情绪'));assert.equal(scanStyle(text,rules.map(r=>({...r,enabled:false}))).length,0);assert.throws(()=>styleRules({styleRules:[{id:'bad',name:'坏规则',kind:'regex',pattern:'[',flags:'u',enabled:true}]}),/正则无效/);assert.equal(BUILTIN_STYLE_RULES[0].enabled,true);
+ const text='嘴角勾起一抹笑。他的心湖泛起涟漪。';const rules=styleRules({});assert.equal(rules.length,15);assert.equal(rules.find(r=>r.id==='builtin.phrase.8').pattern,'生理性');assert.equal(rules.find(r=>r.id==='builtin.phrase.9').pattern,'极其');const hits=scanStyle(text,rules);assert(hits.some(h=>h.text==='嘴角勾起一抹'));assert(hits.some(h=>h.name==='水体意象解释情绪'));assert.equal(scanStyle(text,rules.map(r=>({...r,enabled:false}))).length,0);assert.throws(()=>styleRules({styleRules:[{id:'bad',name:'坏规则',kind:'regex',pattern:'[',flags:'u',enabled:true}]}),/正则无效/);assert.equal(BUILTIN_STYLE_RULES[0].enabled,true);
 });

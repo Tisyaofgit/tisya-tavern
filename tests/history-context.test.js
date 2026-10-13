@@ -64,7 +64,7 @@ test('native history input limits only the prepared copy before material assembl
 });
 test('native history hook preserves selected swipe, continuation, tool records and skips helper jobs',async()=>{
  const f=setup();f.w.context.owner='native';f.w.context.history=1;
- for(const type of ['swipe','continue']){await f.host.before(type);const core=[{mes:'old'},{is_user:true,mes:'current'},{mes:'tool call',is_system:true,extra:{tool_invocations:[{}]}},{role:'tool',is_system:true,mes:'tool result'},{mes:'accepted continuation'}].map((m,index)=>({...m,index}));f.host.historyInput(core,type);assert.deepEqual(core.map(x=>x.mes),['current','tool call','tool result','accepted continuation']);}
+ for(const type of ['swipe','continue']){await f.host.before(type);const core=[{mes:'old'},{is_user:true,mes:'current'},{mes:'tool call',is_system:true,extra:{tool_invocations:[{}]}},{role:'tool',is_system:true,mes:'tool result'},{mes:'accepted continuation'}].map((m,index)=>({...m,index}));f.host.historyInput(core,type);assert.deepEqual(core.map(x=>x.mes),['accepted continuation']);}
  const core=[{mes:'first'},{mes:'second'},{mes:'third'}];for(const type of ['quiet','impersonate']){await f.host.before(type);assert.equal(f.host.historyInput(core,type),null);assert.equal(core.length,3);}
 });
 

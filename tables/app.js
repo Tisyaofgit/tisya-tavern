@@ -24,5 +24,5 @@ export function mountTableApp(document,container,{service,store,onClose=()=>{},o
   if(leave.dirty){notice.hidden=false;notice.setAttribute('role','status');notice.textContent='草稿已保留，重新打开表单推进可继续编辑。';}
   onClose();
  };
- return {root,kind:'tables',keepAlive:true,ready:panel?.ready??Promise.resolve(),settled:()=>panel?.settled()??Promise.resolve(),requestLeave:options=>panel?.requestLeave(options)??{allowed:true,reason:''},dispose(){alive=false;clearInterval(timer);panel?.dispose();root.remove();}};
+ return {root,kind:'tables',keepAlive:true,ready:panel?.ready??Promise.resolve(),settled:()=>panel?.settled()??Promise.resolve(),resume:()=>{runView?.tick();return panel?.resume()??Promise.resolve();},requestLeave:options=>panel?.requestLeave(options)??{allowed:true,reason:''},dispose(){alive=false;clearInterval(timer);panel?.dispose();root.remove();}};
 }

@@ -33,7 +33,13 @@ function checkedValue(before,after,path){
  }
 }
 function checkedNew(value){if(object(value)||Array.isArray(value))for(const [key,child] of Object.entries(value)){check(!['__proto__','prototype','constructor'].includes(key)&&!key.startsWith('$')&&!key.startsWith('_'),'不能创建保留变量键');checkedNew(child);}}
-const within=(path,parent)=>path.length>=parent.length&&parent.every((key,index)=>path[index]===key);
+function absoluteChanges(before,after,path){
+ if(sameValue(before,after))return [];
+ // Preserve a native field's path. Structural collection changes and arrays stay
+ // atomic; scalar edits do not replace their unrelated ancestor branches.
+ if(object(before)&&object(after)&&Object.keys(before).length===Object.keys(after).length&&Object.keys(before).every(key=>Object.hasOwn(after,key)))return Object.keys(before).flatMap(key=>absoluteChanges(before[key],after[key],path+'/'+esc(key)));
+ return [{op:'replace',path,value:copy(after)}];
+}
 function requestedPaths(before,after,path){
  if(sameValue(before,after))return [];
  if(object(before)&&object(after))return [...new Set([...Object.keys(before),...Object.keys(after)])].flatMap(key=>{
@@ -42,48 +48,34 @@ function requestedPaths(before,after,path){
  });
  return [path];
 }
-function granularWrites(before,after,path){
- if(sameValue(before,after))return [];
- if(object(before)&&object(after)){
-  const oldKeys=Object.keys(before),nextKeys=Object.keys(after);
-  if(oldKeys.length===nextKeys.length&&oldKeys.every(key=>Object.hasOwn(after,key)))return oldKeys.flatMap(key=>granularWrites(before[key],after[key],path+'/'+esc(key)));
+function nativeWriteBoundaries(operations,writePaths,rootPath,before,after){
+ if(writePaths===undefined)return operations;
+ check(Array.isArray(writePaths)&&writePaths.length<=200,'原生写入边界须为至多 200 条路径');
+ const boundaries=[],rootKeys=keys(rootPath),diff=requestedPaths(before,after,rootPath);
+ for(const path of writePaths){
+  const parts=keys(path);check(path===rootPath||path.startsWith(rootPath+'/'),'原生写入边界超出映射范围');
+  check(!parts.some(readonly),'只读变量不能作为写入边界');
+  check(!boundaries.some(p=>path===p||path.startsWith(p+'/')||p.startsWith(path+'/')),'原生写入边界重复或互相重叠');
+  const relative=parts.slice(rootKeys.length);
+  check(snapshotAt(before,relative).exists||snapshotAt(after,relative).exists,'原生写入边界在前后状态均不存在');
+  if(relative.length){const priorParent=snapshotAt(before,relative.slice(0,-1)),nextParent=snapshotAt(after,relative.slice(0,-1));check(priorParent.exists&&nextParent.exists&&container(priorParent.value)&&container(nextParent.value),'原生写入边界父容器不存在，不能创建中间结构');}
+  check(diff.some(p=>p===path||p.startsWith(path+'/')),'原生写入边界没有覆盖实际修改或拆分了原子值');
+  boundaries.push(path);
  }
- // A membership change needs its existing parent; arrays and type changes stay atomic.
- return [{op:'replace',path,value:copy(after)}];
-}
-function selectedWrites(before,after,path,writePaths,granular){
- check(Array.isArray(writePaths)&&writePaths.length<=200,'writePaths 须为至多 200 项的 JSON Pointer 列表');
- const branch=keys(path),selected=writePaths.map(pointer=>({path:pointer,parts:keys(pointer)})),diff=requestedPaths(before,after,path).map(keys);
- for(let index=0;index<selected.length;index++){
-  const selectedPath=selected[index],relative=selectedPath.parts.slice(branch.length);
-  check(within(selectedPath.parts,branch),'writePaths 超出当前原生映射分支：'+selectedPath.path);
-  check(!selectedPath.parts.some(readonly),'writePaths 不能选择只读变量：'+selectedPath.path);
-  check(!selected.slice(0,index).some(prior=>within(prior.parts,selectedPath.parts)||within(selectedPath.parts,prior.parts)),'writePaths 重复或父子路径重叠');
-  check(snapshotAt(before,relative).exists||snapshotAt(after,relative).exists,'writePaths 路径在前后状态均不存在：'+selectedPath.path);
-  if(relative.length){const priorParent=snapshotAt(before,relative.slice(0,-1)),nextParent=snapshotAt(after,relative.slice(0,-1));check(priorParent.exists&&nextParent.exists&&container(priorParent.value)&&container(nextParent.value),'writePaths 父容器不存在，不能创建中间结构：'+selectedPath.path);}
-  check(diff.some(parts=>within(parts,selectedPath.parts)),'writePaths 未选择实际变化或拆分了原子值：'+selectedPath.path);
- }
- check(diff.every(parts=>selected.some(item=>within(parts,item.parts))),'writePaths 未完整覆盖本次变量差异');
- const effective=new Map();
- for(const item of selected){
-  // An explicit new/deleted member selects its minimum existing structural parent.
-  // Coverage was checked before promotion, so promotion cannot hide unselected sibling edits.
-  const atomic=granular.find(operation=>within(item.parts,keys(operation.path))),actualPath=atomic?.path??item.path;
-  if(!effective.has(actualPath))effective.set(actualPath,{op:'replace',path:actualPath,value:copy(valueAt({branch:after},'/branch'+actualPath.slice(path.length)))});
- }
- const operations=[...effective.values()];
- for(let index=0;index<operations.length;index++)check(!operations.slice(0,index).some(prior=>within(keys(prior.path),keys(operations[index].path))||within(keys(operations[index].path),keys(prior.path))),'writePaths 提交路径重叠');
- return operations;
+ // Validate requested coverage before using structural parents; a new member must
+ // not silently authorize an unselected sibling change in the same container.
+ check(diff.every(path=>boundaries.some(p=>path===p||path.startsWith(p+'/'))),'原生写入边界未完整覆盖本次变量差异');
+ const emitted=new Set();return operations.flatMap(op=>{
+  // New/deleted member selectors retain absoluteChanges' minimum existing parent.
+  const path=boundaries.find(p=>op.path===p||op.path.startsWith(p+'/'))??op.path;if(emitted.has(path))return [];emitted.add(path);
+  let value=after;for(const key of keys(path).slice(rootKeys.length)){check(container(value)&&Object.hasOwn(value,key),'原生写入边界在目标中不存在');value=value[key];}
+  return [{op:'replace',path,value:copy(value)}];
+ });
 }
 export function bridgePatch(rows,proposal,before,evidence){
  check(Array.isArray(proposal.changes)&&proposal.changes.length<=200,'变量填表产物无效');const byId=new Map(rows.map(r=>[r.id,r])),seen=new Set(),operations=[];
- for(const op of proposal.changes){
-  const row=byId.get(op.id);check(row?.table==='native_cells'&&row.values.启用!==false&&row.rev===op.expected,'变量映射不存在或版本已变化');check(op.table==='native_cells'&&object(op.values)&&Object.keys(op.values).every(k=>k==='值')&&Object.hasOwn(op.values,'值'),'变量归档只允许修改已有映射的值');check(typeof op.evidence==='string'&&op.evidence.trim()&&evidence.includes(op.evidence),'变量更新缺少本轮依据');
-  const path=row.values.路径;check(!seen.has(path)&&![...seen].some(p=>p.startsWith(path+'/')||path.startsWith(p+'/')),'变量重复或父子路径重叠');seen.add(path);
-  const old=valueAt(before.stat_data,path);check(sameValue(old,row.values.值),'原生值与表单映射已变化，请重新同步');check(!keys(path).some(readonly),'只读变量不能由填表改变');checkedValue(old,op.values.值,path);
-  const granular=granularWrites(old,op.values.值,path),writes=Object.hasOwn(op,'writePaths')?selectedWrites(old,op.values.值,path,op.writePaths,granular):granular;
-  check(operations.length+writes.length<=2000,'原生变量更新超过 2000 项，未回退整段写入');operations.push(...writes);
- }
+ for(const op of proposal.changes){const row=byId.get(op.id);check(row?.table==='native_cells'&&row.values.启用!==false&&row.rev===op.expected,'变量映射不存在或版本已变化');check(op.table==='native_cells'&&object(op.values)&&Object.keys(op.values).every(k=>k==='值')&&Object.hasOwn(op.values,'值'),'变量归档只允许修改已有映射的值');check(typeof op.evidence==='string'&&op.evidence.trim()&&evidence.includes(op.evidence),'变量更新缺少本轮依据');const path=row.values.路径;check(!seen.has(path)&&![...seen].some(p=>p.startsWith(path+'/')||path.startsWith(p+'/')),'变量重复或父子路径重叠');seen.add(path);const old=valueAt(before.stat_data,path);check(sameValue(old,row.values.值),'原生值与表单映射已变化，请重新同步');check(!keys(path).some(k=>k.startsWith('_')||k.startsWith('$')),'只读变量不能由填表改变');checkedValue(old,op.values.值,path);operations.push(...nativeWriteBoundaries(absoluteChanges(old,op.values.值,path),op.writePaths,path,old,op.values.值));}
+ check(operations.length<=2000,'原生变量修改超过单次 2000 条路径，请分批处理');
  // Absolute replacements are idempotent; no model-written commands, deltas or scripts.
  return {operations,block:operations.length?'<UpdateVariable>\n<JSONPatch>\n'+JSON.stringify(operations).replaceAll('&','\\u0026').replaceAll('<','\\u003c')+'\n</JSONPatch>\n</UpdateVariable>':''};
 }

@@ -49,6 +49,10 @@ th{text-align:left;color:#e5d5aa;background:#173930}
 .tisya-draft-note{padding:9px 12px;border-left:3px solid #c5b583;background:#a99b6920;color:#ead8a6}
 .tisya-table-wrap{width:100%;min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
 .tisya-card-meta{color:#becfc4;font-size:13px;margin:4px 0 10px}
+.tisya-run-view{margin:10px 12px;background:#102923}
+.tisya-run-view pre{max-height:18rem;overflow:auto;overscroll-behavior:contain}
+.tisya-run-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tisya-run-actions button{flex:1 1 160px}
 [role=status],[role=alert]{overflow-wrap:anywhere}
 [role=alert]{padding:10px;border-left:3px solid #e28e80;background:#913d2d22;color:#ffd5cd}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 monospace;max-width:100%}

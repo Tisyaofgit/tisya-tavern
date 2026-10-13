@@ -1,3 +1,4 @@
+import {isTableContinuity} from '../tables/continuity.js';
 import {tableSettings} from '../tables/schema.js';
 import {registerTableTasks} from '../tables/prompts.js';
 // Configuration is data. Registration never enables a resource or executes code.
@@ -11,7 +12,7 @@ export const KINDS={style:'文风',extension:'模式扩展',mark:'内容标记',
 export const TASKS={main:'主聊天',agent:'Agent',subtask:'子任务',summary:'总结',memory:'记忆整理',keywords:'关键词',table:'表格更新',review:'核验',style:'文风生成',extension:'扩展生成',workflow:'工作流生成',markup:'美化标记生成',genesis:'创世任务流生成',embedding:'嵌入',rerank:'重排',image:'绘图',tts:'语音合成',stt:'语音识别'};
 export const WORKFLOW_DETAILS=Object.freeze([['full','完整'],['compact','精简'],['format','仅格式与配置']]);
 export const workflowDetail=m=>m.workflowDetail===undefined?'compact':m.workflowDetail;
-export const contextOwner=w=>w.context.owner===undefined?'native':w.context.owner;
+export const contextOwner=w=>isTableContinuity(w)?'tisya':w.context.owner===undefined?'native':w.context.owner;
 export const FEATURES=N.protocol.P.features.map(([name,key])=>({id:'feature:'+name,name,key}));
 export const registry={modes:new Map([['narrative',{id:'narrative',name:'叙事',version:1,task:'main'}]]),tasks:new Map(Object.entries(TASKS).map(([id,name])=>[id,{id,name,capability:['agent','embedding','rerank','image','tts','stt'].includes(id)?id:'chat'}])),resources:new Map(),archives:new Map(),executors:new Map(),themes:new Map()};
 registerTableTasks(registry);
@@ -34,7 +35,7 @@ export function resolveRoute(d,w,task='main'){
  return {connection:'native',preset:'native',model:'',...route,sources};
 }
 export function resourceText(r,w){let text=r.content;const values={...r.defaults,...w.parameters?.[r.id]};for(const f of r.fields??[]){const v=values[f.key];if(v===undefined){if(f.required)fail(r.name+' 缺少 '+f.label);continue;}if(f.type==='number'&&!Number.isFinite(v)||f.type==='boolean'&&typeof v!=='boolean'||f.type==='select'&&!f.options.includes(v))fail(r.name+' 参数无效：'+f.key);text=text.split('${'+f.key+'}').join(String(v));}if(/\$\{[^}]+\}/.test(text))fail(r.name+' 有未填写参数');return text.trim();}
-export function compileSelected(d,w,task='main'){const rows=effectiveResources(d,w).filter(r=>(r.tasks??['main']).some(t=>(registry.tasks.get(t)?.aliasOf??t)===(registry.tasks.get(task)?.aliasOf??task))),seen=new Set(),parts=[];for(const r of rows){const text=resourceText(r,w);if(text&&!seen.has(text)){parts.push(text);seen.add(text);}}const b=w.switches.boundary?.trim();if(b)parts.push(b);return {text:parts.join('\n\n'),ids:rows.map(r=>r.id)};}
+export function compileSelected(d,w,task='main'){const rows=effectiveResources(d,w).filter(r=>!isTableContinuity(w)||!r.source).filter(r=>(r.tasks??['main']).some(t=>(registry.tasks.get(t)?.aliasOf??t)===(registry.tasks.get(task)?.aliasOf??task))),seen=new Set(),parts=[];for(const r of rows){const text=resourceText(r,w);if(text&&!seen.has(text)){parts.push(text);seen.add(text);}}const b=w.switches.boundary?.trim();if(b)parts.push(b);return {text:parts.join('\n\n'),ids:rows.map(r=>r.id)};}
 export function createStore({getContext,persist,assertIdle=()=>{},legacy=()=>({})}){let busy=false;
  function read(){const c=getContext(),raw=c.extensionSettings[KEY],d=raw===undefined?emptyConfig():clone(validateConfig(raw)),key=worldKey(c);if(!d.worlds[key])d.worlds[key]=defaultWorld(legacy());return {data:d,world:d.worlds[key],key,label:(c.characters?.[c.characterId]?.name??(c.groupId?'群组':'当前世界'))+' · '+c.chatId,revision:raw===undefined?null:JSON.stringify(raw)};}
  async function save(d,expected,key){if(busy)fail('上一项保存尚未结束');assertIdle();const c=getContext();if(worldKey(c)!==key)fail('聊天已切换，请重新打开配置');const before=c.extensionSettings[KEY];if((before===undefined?null:JSON.stringify(before))!==expected)fail('配置已被其他页面修改，请重新载入');const next=clone(validateConfig(d));next.revision=(before?.revision??0)+1;busy=true;c.extensionSettings[KEY]=next;try{if(await persist()!==true)fail('宿主未确认保存');if(worldKey(getContext())!==key)fail('配置已保存到原世界；当前聊天已切换，请重新打开');return read();}catch(e){if(c.extensionSettings[KEY]===next&&worldKey(getContext())===key){if(before===undefined)delete c.extensionSettings[KEY];else c.extensionSettings[KEY]=before;}throw e;}finally{busy=false;}}

@@ -2,11 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaultRegistry} from '../tables/schema.js';
 import {retrieval} from '../tables/ledger.js';
+import {assembleTableRows} from '../tables/assembly.js';
 import {anchorContext,phraseMatch,referenceClosure} from '../tables/anchor-context.js';
 
 const access={readers:['读者'],knowers:[]};
 const row=(id,table,values,knowers=[])=>({id,table,rev:1,values,access:{...access,knowers}});
 const person=(id,name)=>row(id,'objects',{名称:name,类型:'character'});
+function assembledContext(view,options){
+ const found=retrieval(view,options);
+ const assembled=assembleTableRows(view,{userText:options.query,strict:true,retrieved:[...found.mandatory,...found.optional].map(row=>row.id)});
+ return {...found,mandatory:assembled.rows};
+}
 
 test('scene-linked experience survives unrelated wording across mystery, war and domestic scenes',()=>{
  const cases=[
@@ -16,7 +22,7 @@ test('scene-linked experience survives unrelated wording across mystery, war and
  ];
  for(const c of cases){
   const rows=[person('a',c.name),person('b','来访者'),person('other','远方陌生人'),row('scene','scene',{名称:'当前',参与者:['a','b']}),row('origin','events',{名称:'转折',经过:c.before,参与者:['a','b']},['a','b']),row('experience','experiences',{名称:'往事的含义',主体:'a',相关对象:['b'],类别:'回忆',内容:c.meaning,触发线索:[c.cue],锚点事件:['origin'],默契层次:'明确约定',有效性:'有效'},['a','b']),row('unrelated','experiences',{名称:'另一人的故事',主体:'other',类别:'回忆',内容:'与当前人物无关'},['other'])];
-  const found=retrieval({registry:defaultRegistry(),rows},{query:c.input,topK:0}),ids=new Set(found.mandatory.map(r=>r.id));
+  const found=assembledContext({registry:defaultRegistry(),rows},{query:c.input,topK:0}),ids=new Set(found.mandatory.map(r=>r.id));
   assert(!phraseMatch(c.input,c.cue));assert(ids.has('experience'));assert(ids.has('origin'));assert(ids.has('a'));assert(ids.has('b'));assert(!ids.has('unrelated'));assert(!ids.has('other'));assert.equal(found.optional.length,0);
  }
 });
@@ -30,7 +36,7 @@ test('similar fragments and word substrings cannot force unrelated private ancho
 
 test('recalled broken agreements and one-sided meanings retain validity and knowledge instead of becoming mutual rules',()=>{
  const rows=[person('a','林谨'),person('b','阿遥'),row('scene','scene',{名称:'多年后',参与者:['b']}),row('e','events',{名称:'旧约定',经过:'约定已解除',参与者:['a','b']},['a','b']),row('old','experiences',{名称:'旧暗语',主体:'a',相关对象:['b'],类别:'回忆',内容:'旧日含义',锚点事件:['e'],默契层次:'单方联想',回应边界:'仅本人赋予此含义，对方没有听到解释',有效性:'已改变'},['a'])];
- const before=structuredClone(rows),found=retrieval({registry:defaultRegistry(),rows},{query:'我重复了那个动作。',topK:0});
+ const before=structuredClone(rows),found=assembledContext({registry:defaultRegistry(),rows},{query:'我重复了那个动作。',topK:0});
  const recalled=found.mandatory.find(r=>r.id==='old');assert.equal(recalled.values.有效性,'已改变');assert.deepEqual(recalled.access.knowers,['a']);assert.equal(recalled.values.默契层次,'单方联想');assert.deepEqual(rows,before);
 });
 

@@ -33,7 +33,7 @@ export function project(origin,session,sourceKeys){
  return {registry,baseTime:session.branchSeed?.anchor?.worldTime??null,rows:values,anchors,commits:accepted,archived:new Set([...(session.branchSeed?.archivedSources??[]).filter(s=>allowed.has(s)),...accepted.filter(c=>['archive','history'].includes(c.kind)&&c.complete!==false).map(c=>c.source)]),last:accepted.at(-1)?.id??null,revision:session.revision};
 }
 export function parseJSONResponse(response){
- if(object(response)&&(Array.isArray(response.changes)||Array.isArray(response.needsRows)||Array.isArray(response.renames)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.registry&&response.base))return response;
+ if(object(response)&&(Array.isArray(response.changes)||Array.isArray(response.needsRows)||Array.isArray(response.renames)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.base&&response.initial))return response;
  let text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('');
  check(typeof text==='string'&&text.trim(),'辅助 API 没有返回文本结果');text=text.trim();if(text.includes('<reply')){const extra=text.match(/<extra(?:\s[^>]*)?>([\s\S]*?)<\/extra>/i)?.[1]??'';const results=[...extra.matchAll(/<tisya_result(?:\s[^>]*)?>([\s\S]*?)<\/tisya_result>/gi)];check(results.length===1,'配套模式回复须在 extra 中提供唯一的 tisya_result');text=results[0][1].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&').trim();}if(/^```(?:json)?\s/i.test(text))text=text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
  let result;try{result=JSON.parse(text);}catch{throw Error('辅助 API 返回的不是完整 JSON，未写入表单');}check(object(result),'辅助产物必须是对象');return result;
@@ -53,6 +53,10 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
   check((before?.rev??0)===op.expected,'记录版本冲突：'+op.id);if(before&&['scene','state','relations','cognition','holdings','tasks','timers','clues','activities','experiences','growth'].includes(table.id)&&sourceOrder[before.source]!==undefined&&sourceOrder[source]!==undefined)check(sourceOrder[before.source]<=sourceOrder[source],'旧楼层不能覆盖更晚的当前状态；请按楼层从早到晚补录，或将这项改为历史事件');check(!before||before.table===table.id,'记录不能迁移到另一张表');check(before||ids.has(op.id),'新记录必须使用 new: 临时 ID');
   check(kind==='manual'||![...Object.keys(op.values),...(op.unset??[])].some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
   const values=mergeValues(before?.values??{},op.values,table.fields,kind==='manual');if(table.id==='objects'&&op.values.属性&&kind!=='manual'){const type=index.types.get(normalized(values.类型??''));if(type)values.属性=mergeValues(before?.values.属性??{},op.values.属性,typeFields(registry,type.id),false);}check(op.unset===undefined||Array.isArray(op.unset)&&op.unset.every(k=>table.fields[k]&&!table.fields[k].required),'不能清除必填或未知字段');for(const key of op.unset??[])delete values[key];
+  if(kind==='import'&&before&&['scene','state','relations','cognition','holdings','tasks','timers','clues','activities','experiences','growth'].includes(table.id)&&JSON.stringify(values)!==JSON.stringify(before.values)){
+   const prior=(view.anchors??[]).findLast(a=>a.row===before.id),current=calendarTime(prior?.worldTime),incoming=calendarTime(worldTime);
+   check(current!==null&&incoming!==null&&incoming>=current,'手写历史缺少可核实的较晚时间，不能覆盖已有当前状态；请保留为历史事件或人工核对');
+  }
   if(table.id==='objects'){const type=index.types.get(normalized(values.类型));check(type,'类型未登记：'+values.类型);values.类型=type.id;}
   mapRowReferences({table:table.id,values},registry,id=>ids.get(id)??id);
   if(table.id==='preferences'){
@@ -114,6 +118,15 @@ export function archivalText(text){
  // turn old summaries, task labels or native commands into narrative evidence.
  let prior;do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
  return prose.replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
+}
+// Handwritten history can contain several complete replies plus user prose
+// between them. Preserve all body segments; the single-reply reader above is
+// deliberately not applied to the entire concatenation.
+export function historyEvidence(text){
+ let prose=String(text??''),prior;
+ const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+ do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
+ return prose.replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();
 }
 // A bad independent record must not discard valid records or mark the floor complete.
 export function prepareRecoverable(view,proposal,options){
