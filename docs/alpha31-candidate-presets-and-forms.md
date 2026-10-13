@@ -132,7 +132,7 @@ native-fill: Read confirmed native mappings and current reply→fill value delta
 [/FILL.CHECK]
 [INNER]
 @INPUT SOURCE contains the completed current reply and user input. STATE.rows is an exact native-variable mapping. Apply selected card rules from STATE.nativeRules; preserve its data types and current values.
-@TASK Determine only changes justified by this reply, elapsed time and actual outcomes. Use existing native_cells IDs/revisions. Do not repeat costs already reflected in current values. No new paths, mirror state rows, schema edits, story extension or player choices. Derived values remain subject to native callbacks.
+@TASK Determine only changes justified by this reply, elapsed time and actual outcomes. Use existing native_cells IDs/revisions and return the full value of each changed branch. Preserve unmodified members. Native rules may allow adding/removing map members or array entries inside an existing branch; do not invent new root paths or rename fields. Preserve _/$ read-only keys. Do not repeat costs already reflected in current values. No mirror state rows, schema edits, story extension or player choices. Derived values remain subject to native callbacks.
 @OUTPUT {changes:[{id:existingID,table:"native_cells",expected:currentRevision,values:{值:newValue},evidence:exactContinuousSourceExcerpt}],pending:[]}
 @CHECK Unknown outcome or missing necessary rule→pending. No change→changes=[]. Never write XML,JSONPatch,code,analysis,hearts or a reply wrapper; the plugin builds the update block.
 [/INNER]

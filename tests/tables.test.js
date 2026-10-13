@@ -19,6 +19,42 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+
+test('native branch mappings retain dynamic maps and enforce nested read-only/prototype keys',async()=>{
+ const {nativeBranches,bridgePatch}=await import('../tables/native-bridge.js');
+ const stat={player:{bag:{key:{count:1}},_derived:7},$internal:{temporary:true}},cells=nativeBranches(stat);
+ assert.equal(cells.length,1);assert.equal(cells[0].path,'/player');
+ const row={id:'p',table:'native_cells',rev:1,values:{路径:'/player',值:stat.player}};
+ const make=value=>({changes:[{id:'p',table:'native_cells',expected:1,values:{值:value},evidence:'new item'}]});
+ const after={bag:{map:{count:1}},_derived:7};assert.deepEqual(bridgePatch([row],make(after),{stat_data:stat},'new item').operations[0].value,after);
+ for(const bad of [{...after,_derived:8},{bag:{}},JSON.parse('{"bag":{"__proto__":{}},"_derived":7}')])assert.throws(()=>bridgePatch([row],make(bad),{stat_data:stat},'new item'));
+});
+
+test('native callbacks stage only their own writes and restore runtime hooks after failure',async()=>{
+ const {parseNativeTransaction}=await import('../tables/native-bridge.js');
+ const listeners=new Map(),writes=[],bus={makeFirst:(k,f)=>listeners.set(k,f),removeListener:(k,f)=>{if(listeners.get(k)===f)listeners.delete(k);}};
+ const original=async(v,o)=>writes.push({v,o});
+ const runtime={events:{VARIABLE_UPDATE_STARTED:'start'},getMvuData(){},replaceMvuData:original,async parseMessage(_,old){const v=structuredClone(old);listeners.get('start')(v);v.stat_data.n++;await this.replaceMvuData(v.stat_data,{type:'message'});await this.replaceMvuData({unrelated:true},{type:'chat'});return v;}};
+ const r=await parseNativeTransaction({runtime,eventSource:bus,index:3,before:{stat_data:{n:0}},block:'generated',guard(){}});
+ assert.equal(r.after.stat_data.n,1);assert.equal(r.stagedWrites,1);assert.deepEqual(writes,[{v:{unrelated:true},o:{type:'chat'}}]);assert.equal(runtime.replaceMvuData,original);assert.equal(listeners.size,0);
+ runtime.parseMessage=async()=>{throw Error('parser failed');};await assert.rejects(parseNativeTransaction({runtime,eventSource:bus,index:3,before:{stat_data:{n:0}},block:'generated',guard(){}}),/parser failed/);assert.equal(runtime.replaceMvuData,original);assert.equal(listeners.size,0);
+});
+
+test('native bridge resumes saved outcome after write failure without repeating model or callback',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10,derived:0}}]]);let parses=0,fail=true;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;before.stat_data.derived=31;return before;},replaceMvuData:async(data,{message_id})=>{if(fail){fail=false;throw Error('write interrupted');}values.set(message_id,structuredClone(data));}};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('体能下降到8。'),user('继续')];await f.service.enableNativeBridge();
+ f.responder(async(_,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}]};});
+ await assert.rejects(f.service.syncNative(),/write interrupted/);assert.equal(parses,1);await f.service.syncNative();assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal(values.get(0).stat_data.derived,31);assert.equal(values.get(1).stat_data.derived,31);
+ const view=await f.service.inspect();assert.equal(view.rows.find(r=>r.table==='native_cells'&&r.values.路径==='/derived').values.值,31);assert.equal((await f.service.syncNative()).already,true);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('large card initialization retains over 200 definitions without loosening per-turn limits',()=>{
+ const changes=Array.from({length:218},(_,i)=>op('new:o'+i,'objects',{名称:'定义'+i,类型:'rule',属性:{}},'源'));
+ assert.equal(prepareCommit(blank(),{changes},{source:null,kind:'init',evidence:'源',allowedTables:['objects']}).rows.length,218);
+ assert.throws(()=>prepareCommit(blank(),{changes},{source:'turn',kind:'archive',evidence:'源',allowedTables:['objects']}),/200/);
+});
 test('shared forms retain zero false null and register new typed fields',()=>{
  const v=blank();assert.equal(v.registry.tables.length,16);
  const p=prepareCommit(v,{changes:[op('new:a','state',{名称:'全局旗标',对象:'new:b',字段:'次数',值:0}),op('new:b','objects',{名称:'城门',类型:'地点',属性:{特征:'石门'}})]},{source:'s',kind:'archive',evidence:'源',allowedTables:['state','objects']});

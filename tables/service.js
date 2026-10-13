@@ -1,5 +1,5 @@
 import {cardDefinitionSource,cardMechanisms} from './card-source.js';
-import {nativeLeaves,bridgeInput,bridgePatch,carryNativeForward,valueAt} from './native-bridge.js';
+import {nativeBranches,bridgeInput,bridgePatch,carryNativeForward,valueAt,parseNativeTransaction} from './native-bridge.js';
 import {nativeSnapshot} from './native-state.js';
 import {progressionWindow,validateWorldProposal,progressionKey,planContext} from './progression.js';
 import {snapshotAnchor,branchSeed} from './branches.js';
@@ -18,7 +18,7 @@ const fields=['objects','facts','scene','state','relations','cognition','holding
 const cardBasis=c=>cardDefinitionSource(c.characters?.[c.characterId]);
 const stampChat=c=>JSON.stringify(selectedMessages(c.chat).map(m=>[!!m.is_user,m.name??'',m.mes??'',m.swipe_id??0]));
 export function createTableService({store,getContext,request,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
- let busy=false,controller=null,latest=null,pendingFork=null;const jobs=[],worldbook=createWorldbookProjection({getContext});
+ let busy=false,controller=null,latest=null,pendingFork=null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
  const state=()=>({busy,jobs:copy(jobs),latest:copy(latest),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='')=>{jobs.push({task,status,detail,at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail});};
  async function exclusive(fn){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;controller=new AbortController();try{return await fn(controller.signal);}finally{busy=false;controller=null;}}
@@ -59,7 +59,7 @@ export function createTableService({store,getContext,request,books=createBookGat
   return loaded;
  }
  async function nativeMapLoaded(c,loaded,data,source,index){
-  const prior=loaded.view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeLeaves(data.stat_data),changes=[];
+  const prior=loaded.view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
   for(const [i,leaf] of leaves.entries()){const before=byPath.get(leaf.path);if(before&&before.values.启用!==false&&JSON.stringify(before.values.值)===JSON.stringify(leaf.value))continue;changes.push({id:before?.id??'new:native-'+i,table:'native_cells',expected:before?.rev??0,values:{名称:leaf.path,路径:leaf.path,值:leaf.value,启用:true},access:{readers:[],knowers:[]},evidence:'原生变量快照'});}
   const paths=new Set(leaves.map(l=>l.path));for(const old of prior)if(old.values.启用!==false&&!paths.has(old.values.路径))changes.push({id:old.id,table:'native_cells',expected:old.rev,values:{启用:false},access:{readers:[],knowers:[]},evidence:'原生变量快照'});
   for(let offset=0;offset<changes.length;offset+=100)loaded=await commit(c,loaded,{changes:changes.slice(offset,offset+100)},{source,kind:'native-snapshot',evidence:'原生变量快照',allowedTables:['native_cells'],nativeReceipt:{phase:'snapshot',index}});
@@ -72,20 +72,41 @@ export function createTableService({store,getContext,request,books=createBookGat
   if(loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.source===source.key))return {already:true};
   if(/<JSONPatch>\s*\[(?!\s*\])/i.test(source.text)){const existing=globalThis.Mvu?.getMvuData?.({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');loaded=await nativeMapLoaded(c,loaded,existing,source.key,index);await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence:'沿用原回复已保存的原生变量',allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,legacyNative:true}});return {updated:0,already:true,nativeOwned:true};}
   const native=bridgeInput(getContext(),undefined,index);const evidence=[archivalText(source.text),loaded.chain.findLast(x=>x.role==='user'&&x.index<source.index)?.text??''].join('\n\n');
-  const waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
-  if(waiting){const runtime=globalThis.Mvu,current=runtime.getMvuData({type:'message',message_id:index}),currentText=JSON.stringify(current?.stat_data);check(currentText===waiting.after||currentText===waiting.before,'上次变量写回状态未知，未重复更新');const after=waiting.afterData??{...copy(native.data),stat_data:JSON.parse(waiting.after)};if(currentText===waiting.before){c.guard();await runtime.replaceMvuData(after,{type:'message',message_id:index});c.guard();check(JSON.stringify(runtime.getMvuData({type:'message',message_id:index})?.stat_data)===waiting.after,'原生写回未确认');}await carryNativeForward({context:getContext(),runtime,index,before:{stat_data:JSON.parse(waiting.before)},after,guard:c.guard});await commit(c,loaded,waiting.proposal,{source:source.key,kind:'native-fill',evidence:waiting.evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:waiting.block,recovered:true}});return {updated:waiting.proposal.changes.length,recovered:true};}
+  let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
+  if(waiting){
+   if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
+   return finishNative(c,loaded,source,waiting);
+  }
   loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
   const rows=loaded.view.rows.filter(r=>r.table==='native_cells'&&r.values.启用!==false),entries=await books.materials(getContext().characters[getContext().characterId].avatar);c.guard();
   const proposal=await invoke('nativeFill',{archiveSource:{text:evidence},registry:loaded.view.registry,currentRows:rows,nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n')},c,signal);check(!proposal.pending?.length,'变量填录仍有未定条件，未生成更新块');
   const wire=bridgePatch(rows,proposal,native.data,evidence);if(!wire.operations.length){await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:''}});return {updated:0};}
-  // Native callbacks may derive or constrain values; validate and retain their actual result.
-  const runtime=globalThis.Mvu,after=await runtime.parseMessage(wire.block,copy(native.data));c.guard();check(after?.stat_data,'MVU 未返回更新结果');
-  const filled={changes:proposal.changes.map(op=>({...op,values:{值:copy(valueAt(after.stat_data,rows.find(r=>r.id===op.id).values.路径))},access:{readers:[],knowers:[]}}))};prepareCommit(loaded.view,filled,{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells']});
-  const next=copy(loaded.session.data);next.revision++;next.nativeIntents??=[];next.nativeIntents.push({source:source.key,index,before:JSON.stringify(native.data.stat_data),after:JSON.stringify(after.stat_data),afterData:copy(after),proposal:filled,evidence,block:wire.block});loaded={...loaded,session:await books.write(loaded.session,next,c.guard)};
-  const current=runtime.getMvuData({type:'message',message_id:index});check(!current?.stat_data||JSON.stringify(current.stat_data)===JSON.stringify(native.data.stat_data),'变量已经被其他来源修改');c.guard();await runtime.replaceMvuData(after,{type:'message',message_id:index});c.guard();check(JSON.stringify(runtime.getMvuData({type:'message',message_id:index})?.stat_data)===JSON.stringify(after.stat_data),'原生写回未确认；更新意图已保留');
-  await carryNativeForward({context:getContext(),runtime,index,before:native.data,after,guard:c.guard});
-  loaded=await commit(c,loaded,filled,{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:wire.block}});status('原生变量桥','已更新',wire.operations.length+' 项，原生解析器已写回');return {updated:wire.operations.length,block:wire.block};
+  const intent={source:source.key,index,phase:'parsing',before:JSON.stringify(native.data.stat_data),originalMissing:!globalThis.Mvu.getMvuData({type:'message',message_id:index})?.stat_data,proposal,evidence,block:wire.block};
+  // Journal before invoking callbacks, including random adjudication. An interrupted parse is not replayed.
+  loaded=await saveNativeIntent(c,loaded,intent);
+  const {after,stagedWrites}=await parseNativeTransaction({runtime:globalThis.Mvu,eventSource:getContext().eventSource,index,before:native.data,block:wire.block,guard:c.guard});
+  const filled={changes:proposal.changes.map(op=>({...op,values:{值:copy(valueAt(after.stat_data,rows.find(r=>r.id===op.id).values.路径))},access:{readers:[],knowers:[]}}))};
+  const ready={phase:'parsed',after:JSON.stringify(after.stat_data),afterData:copy(after),proposal:filled,stagedWrites};
+  parsedNative.set(c.key+':'+source.key,ready);
+  prepareCommit(loaded.view,filled,{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells']});
+  Object.assign(intent,ready);loaded=await saveNativeIntent(c,loaded,intent);
+  return finishNative(c,loaded,source,intent);
  });}
+ async function saveNativeIntent(c,loaded,intent){const next=copy(loaded.session.data);next.revision++;next.nativeIntents=(next.nativeIntents??[]).filter(x=>x.source!==intent.source);next.nativeIntents.push(copy(intent));return {...loaded,session:await books.write(loaded.session,next,c.guard)};}
+ async function finishNative(c,loaded,source,intent){
+  const runtime=globalThis.Mvu,index=intent.index,current=runtime.getMvuData({type:'message',message_id:index}),currentText=JSON.stringify(current?.stat_data);
+  check(currentText===intent.after||currentText===intent.before||intent.originalMissing&&!current?.stat_data,'变量已被其他来源修改，未覆盖');
+  if(currentText!==intent.after){c.guard();await runtime.replaceMvuData(intent.afterData,{type:'message',message_id:index});c.guard();check(JSON.stringify(runtime.getMvuData({type:'message',message_id:index})?.stat_data)===intent.after,'原生写回未确认；已保存结果可重试，随机判定不会重跑');}
+  await carryNativeForward({context:getContext(),runtime,index,before:{stat_data:JSON.parse(intent.before)},after:intent.afterData,guard:c.guard});
+  // Callbacks may update other branches; map the complete native result, not the model's requested values.
+  loaded=await nativeMapLoaded(c,loaded,intent.afterData,source.key,index);
+  await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence:intent.evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:intent.block,stagedWrites:intent.stagedWrites??0}});
+  parsedNative.delete(c.key+':'+source.key);
+  // Refresh display after the confirmed write. Do not re-emit MVU adjudication events.
+  if(typeof globalThis.TavernHelper?.refreshOneMessage==='function')try{await globalThis.TavernHelper.refreshOneMessage(index);}catch(e){status('原卡显示','待刷新','变量已保存；'+e.message);}
+  status('原生变量桥','已更新',intent.proposal.changes.length+' 项；原卡回调已结算');
+  return {updated:intent.proposal.changes.length,block:intent.block};
+ }
  async function progressLoaded(c,loaded,signal){
   if(!c.settings.offstage)return loaded;
   const window=progressionWindow(loaded.view,c.settings);if(!window.ready){status('场外推进','等待',window.reason);return loaded;}

@@ -70,6 +70,7 @@ export function mountWorldExtra(document,container,{source,structured,formatBody
  for(const [index,row]of rows.entries()){
   const panel=make('section',undefined,'extra-page'),button=make('button');button.type='button';panel.dataset.sourceTag=row.tag??'';
   const template=document.createElement('template');template.innerHTML=row.html;
+  if(row.nativeHosted){const note=make('p','原卡交互面板由酒馆助手在本条消息下方显示。','public-note native-host-note');panel.append(note);container.append(panel);continue;}
   const title=(row.label||template.content.querySelector('h1,h2,h3,title')?.textContent||row.ruleName||row.tag||'扩展 '+(index+1)).slice(0,100);button.textContent=title;button.onclick=()=>select(row.id);nav.append(button);container.append(panel);const page={id:row.id,panel,button,mounted:false};pages.push(page);
   const unformatted=native&&!row.ruleName&&!template.content.querySelector('style,script,div,section,article,table,details,h1,h2,h3');
   if(unformatted){const raw=make('details',undefined,'native-unformatted');raw.append(make('summary',title+' · 原始内容'),make('pre',row.html));panel.append(raw);page.mount=()=>{};page.raw=raw;continue;}

@@ -36,7 +36,8 @@ export function parseJSONResponse(response){
  let result;try{result=JSON.parse(text);}catch{throw Error('辅助 API 返回的不是完整 JSON，未写入表单');}check(object(result),'辅助产物必须是对象');return result;
 }
 export function prepareCommit(view,proposal,{source,kind='archive',evidence,worldTime=null,allowedTables,sourceOrder={},now=new Date().toISOString()}){
- check(object(proposal)&&Array.isArray(proposal.changes)&&proposal.changes.length<=200,'辅助填表产物缺少 changes 或修改过多');
+ const limit=['init','genesis'].includes(kind)?2000:200;
+ check(object(proposal)&&Array.isArray(proposal.changes)&&proposal.changes.length<=limit,'辅助填表产物缺少 changes 或修改超过 '+limit+' 项');
  check(Array.isArray(proposal.templates??[]),'templates 必须是数组');
  const reconciled=reconcileProposal(view.registry,{...proposal,currentRows:view.rows});proposal=reconciled.proposal;const registry=reconciled.registry,index=registryIndex(registry),rows=new Map(view.rows.map(r=>[r.id,copy(r)])),ids=new Map(),seen=new Set();
  for(const op of proposal.changes){check(object(op)&&typeof op.id==='string'&&op.id&&!seen.has(op.id),'修改 ID 缺失或重复');seen.add(op.id);if(op.id.startsWith('new:'))ids.set(op.id,uuid('row'));}

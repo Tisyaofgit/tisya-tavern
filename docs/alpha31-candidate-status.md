@@ -1,31 +1,33 @@
-# alpha31 candidate — progression and native variable bridge
+# alpha31 candidate — world progression and native compatibility
 
-Candidate only. Published main remains alpha30 until original-card integration checks finish.
+This is a candidate branch, not a stable release. Published alpha30 remains unchanged. Private card text and raw trial outputs are excluded from public source.
 
-Implemented: confirmed-reply archival after a later user input; elapsed-time offstage proposals with player/onstage exclusions; independently scoped positive/negative affection and reputation; impressions; ongoing activities; contextual experiences; evidence-linked growth; reusable core assets; branch anchors with retain/clear-future choices; program-built JSONPatch handed to the existing MVU parser while native scripts remain enabled. The latest unconfirmed AI reply is deferred.
+Implemented: confirmed-reply archival after a later user input; elapsed-time offstage proposals with player/onstage exclusions; independent positive/negative affection and reputation; impressions; activities, experiences and evidence-linked growth; reusable core assets and world adaptations; replayable branch anchors with retain/clear-future choices. Auxiliary tasks retain Tisya identity and replace task preprocessing/stages/output contracts. Sixteen base tables and ten auxiliary tasks are exported in the companion presets/forms document.
 
-Schema has 16 tables, including a private native-variable mapping. Existing native-owned business fields keep references rather than duplicate values. Original card extensions are read, not rewritten. Modern and legacy script storage layouts are both recognized. Auxiliary routing retains Tisya identity and replaces only task preprocessing/stages/output contracts.
+Native compatibility keeps original scripts enabled. The plugin fills typed branch cells and builds an update block for the existing MVU parser. Dynamic members within existing branches can be added or removed; native Zod rules validate/default the result. Reserved/read-only fields, overlapping paths and new top-level roots are rejected. Each settlement is journaled before callbacks. Writes of that callback's exact parser object are staged, then the complete normalized result is saved to its source AI floor and unchanged continuation snapshots. Interrupted uncertain callbacks are not replayed or rerolled. Display refresh runs after the confirmed commit.
 
-Verification as of 2026-10-13 03:58 UTC:
+Interactive original-card panels use the original Tavern Helper iframe in place, matched against the exact approved public projected HTML. Their windows are not copied/reloaded. Private protocol siblings remain hidden. Tisya story and native panels coexist, with actions below.
 
-- 354 automated tests pass, including branch freeze/reuse, deferred MVU filling, single application, input-floor carryover, type/evidence rejection and immutable card script extraction.
-- A fresh isolated world model sample received the complete 19,966-character request; its independent NPC affair advanced while the player was elsewhere. Accepted through production event validation.
-- The original KPOP card initializer received complete original definitions in an earlier isolated run; produced 48 reusable entries and no invented current player. Original contradictory rules remain unresolved. That run preceded the final English wording and script-source additions.
-- Three newly uploaded original cards are under conversion trials, with 62, 230 and 24 worldbook entries. These trials and full native script execution are not yet certified.
+## Verification completed on 2026-10-13
 
-Open integration checks:
+- 360 automated tests pass. These include scoped callback staging, once-only failure recovery, dynamic map/readonly/prototype checks, initialization of 218 definitions without relaxing ordinary-turn limits, and ten repeated native-frame refreshes without identity loss.
+- Complete original-card inputs were read in independent model conversion trials: card 1, 18 chunks, 97 reusable objects + 4 facts; card 2, 57 chunks, 218 reusable objects + 4 facts; card 3, 8 chunks, 21 reusable objects. Actual schema/ledger persistence validation passed. One nested type error in card 2 was returned to the isolated model and corrected before acceptance. No card text was replaced with a pre-converted dataset.
+- Card 2 has an entry-to-row coverage index for 218 active source definitions, including 690 mechanism records and 1,667 extracted numeric tokens. Coverage does not mean every prose rule has been compiled into an executable condition.
+- Actual official MVU parser, official Zod adapter, original card schemas and the original random callback were executed in an isolated runtime. All three cards completed ten variable rounds. Separate trigger/nontrigger cases each rolled once, with zero unintended writes. Dynamic actor insertion/defaulting/removal passed the original schema.
+- Chromium executed the original card status HTML/JS against snapshots produced by that runtime: ten rounds per card; Tisya story, native content and older iframe identities persisted; snapshots matched; no page/projection errors. Cards 2 and 3 each passed ten real pointer-driven tab changes after their own loading/display conditions. Card 1's tested status panel is read-only. Empty-default card-2 hiding was distinguished from renderer failure.
+- Earlier isolated KPOP initialization and world-progression samples passed their actual validators. The ten-round browser/native runs are deterministic mechanism regressions, not ten new model-authored story turns.
 
-1. One uploaded card has a VARIABLE_UPDATE_ENDED callback with its own random adjudication, delay guard and native write. Verify event timing/target floor and exactly-once behavior against the actual MVU runtime, not only a mock.
-2. Dynamic native map keys/new characters require a schema-aware mapping extension. The current bridge updates existing typed native paths; do not label new-key support complete.
-3. Full UI behavior, external script imports, derived callbacks and rendering have not been verified in an installed TauriTavern session.
-4. Large-card coverage must be checked by original entry/script identity, not just a successful JSON response. The 230-entry card remains particularly important.
-5. Non-Gregorian world calendars currently remain pending rather than borrowing host wall time.
+## Remaining release limits
 
-Token counter: o200k_base, flow + mode instructions only, identity and source data excluded. Archive before/after: 1,833 / 1,395 tokens; initializer: 1,900 / 1,439. These compare the earlier mixed candidate and current revised English core, not a controlled translation-only experiment.
+These browser trials use Tavern API host shims, not a live installed TauriTavern/Android session. External image/font/CDN requests were blocked; required Vue/particles libraries were provided locally, and the test browser lacks Chinese system fonts. Thus they verify rendering ownership, DOM/function persistence and variable delivery, not pixel-perfect fonts, network assets or every original opening/special-purpose panel. A final installed-host pass remains before stable publication.
 
-Official interfaces reviewed:
-- https://n0vi028.github.io/JS-Slash-Runner-Doc/
-- https://github.com/N0VI028/JS-Slash-Runner/blob/main/@types/function/script.d.ts
-- https://github.com/MagicalAstrogy/MagVarUpdate/blob/master/src/function/global/index.ts
+The bridge currently requires the official MVU parser/host event interfaces. New top-level variable branches require explicit mapping/schema setup. Non-Gregorian time that has no registered clock conversion remains pending. Original contradictory definitions are preserved as unresolved. Base English fill instructions retain inherited identity text; tokenizer figures are not an equivalent-content translation experiment.
 
-No original card narrative or private card payload is included in this report or repository.
+## Primary-source revisions used
+
+- MagicalAstrogy/MagVarUpdate: `54be11b09f21b1c4266e2d54b6f1ba9a3598db05`.
+- StageDog/tavern_resource MVU Zod adapter: `9255628bfbe7c3f92de4ba89fb2e250b10447976`.
+- N0VI028/JS-Slash-Runner API/render source: `c0196caee03955aa39e00db1a2623b2591bd3c6f`.
+- Documentation: https://n0vi028.github.io/JS-Slash-Runner-Doc/
+
+Private reproducibility artifacts retain source hashes, conversion read receipts/results, original-schema/native callback checks, browser reports and screenshots. They are not published in this repository.
