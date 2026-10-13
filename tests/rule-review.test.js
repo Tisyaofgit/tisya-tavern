@@ -22,7 +22,7 @@ test('choices preserve originals, silence only the selected issue, and reject st
 });
 test('fabricated evidence, outside edits, ambiguous anchors and unsafe IDs are rejected',async()=>{
  const source=await ruleSources(makeCard());
- for(const mutate of [p=>p.issues[0].sources[0].quote='未提供的原文',p=>p.issues[0].options[0].changes[0].sourceId='missing',p=>p.issues[0].sources[0].quote='每日只有 8 个时段。',p=>p.issues[0].id='constructor',p=>p.issues[0].id='toString',p=>p.issues[0].options[0].id='__proto__']){const p=proposal();mutate(p);assert.throws(()=>validateRuleReview(p,source));}
+ for(const mutate of [p=>p.issues[0].sources[0].quote='未提供的原文',p=>p.issues[0].sources[0].quote=original.replaceAll(' ',''),p=>p.issues[0].options[0].changes[0].before='每次训练占用10个时段。',p=>p.issues[0].options[0].changes[0].sourceId='missing',p=>p.issues[0].sources[0].quote='每日只有 8 个时段。',p=>p.issues[0].id='constructor',p=>p.issues[0].id='toString',p=>p.issues[0].options[0].id='__proto__']){const p=proposal();mutate(p);assert.throws(()=>validateRuleReview(p,source));}
  const repeated=await ruleSources({...makeCard(),description:original+original});assert.throws(()=>validateRuleReview(proposal(),repeated),/不唯一/);
 });
 test('red review displays inert exact source and explicit selectable diffs; silent choice remains reopenable',async()=>{
