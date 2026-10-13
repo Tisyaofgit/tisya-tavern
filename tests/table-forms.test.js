@@ -11,7 +11,7 @@ import {parseJSONResponse} from '../tables/ledger.js';
 import {BUILTIN_STYLE_RULES,styleRules,scanStyle} from '../tables/style-rules.js';
 const source=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url)));
 const find=(root,label)=>[...root.querySelectorAll('[aria-label]')].find(n=>n.getAttribute('aria-label')===label);
-const click=(root,text)=>{const b=[...root.querySelectorAll('button')].find(n=>n.textContent===text);assert(b,text);b.click();};
+const click=(root,text)=>{const b=[...root.querySelectorAll('button')].find(n=>n.textContent===text);if(b){b.click();return;}const select=root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;select.onchange();};
 const set=(window,node,value)=>{assert(node);node.value=value;node.dispatchEvent(new window.Event('input'));};
 test('settings and every textarea use the browser read-only type descriptor safely',async()=>{
  const window=new Window();Object.defineProperty(window.HTMLTextAreaElement.prototype,'type',{configurable:true,get(){return 'textarea';}});

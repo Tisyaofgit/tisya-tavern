@@ -19,6 +19,28 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('task cancellation is scoped, same-chat notifications are harmless and actual switches cancel',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('城门开放'),user('继续'),ai('暂存')];let release;
+ f.responder(()=>new Promise(r=>release=r));
+ let pending=f.service.archive({range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));
+ assert.equal(f.service.contextChanged(),false);f.service.clear({scope:'generation'});assert.equal(f.calls.at(-1).signal.aborted,false);release({changes:[]});await pending;assert.equal((await f.service.scan())[0].archived,true);
+ f.c.chat[0].mes='新来源';release=null;pending=f.service.archive({scope:'generation',range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));f.service.clear({scope:'generation',reason:'主聊天停止'});release({changes:[]});await assert.rejects(pending,/主聊天停止/);assert.equal(f.service.state().busy,false);
+ release=null;pending=f.service.archive({range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));f.c.chatId='another';assert.equal(f.service.contextChanged(),true);assert.equal(f.calls.at(-1).signal.aborted,true);release({changes:[]});await assert.rejects(pending,/会话已切换/);
+ f.c.chatId='one';f.service.contextChanged();assert.equal((await f.service.scan())[0].archived,false);
+});
+test('external AbortError is actionable and initialization can be retried without duplicate books',async()=>{
+ const f=fixture();f.binding.primary='';f.binding.additional=[];f.c.characters[0].description='北门是一座石门。';
+ f.responder(()=>{throw new DOMException('The operation was aborted.','AbortError');});await assert.rejects(f.service.autoInitialize(),/辅助请求被宿主或 API 中止/);assert.equal(f.saved.size,2);assert.equal(f.service.state().busy,false);assert.match(f.service.state().jobs.at(-1).detail,/检查连接后重试/);
+ f.responder(()=>({registry:defaultRegistry(),base:{changes:[op('new:gate','objects',{名称:'北门',类型:'place',属性:{}},'北门是一座石门。')]},initial:{changes:[]},notes:[]}));await f.service.autoInitialize();assert.equal(f.saved.size,2);assert.equal((await f.service.inspect()).rows.filter(r=>r.values.名称==='北门').length,1);
+});
+test('initializer dropdown uses selected mode and previews stay protected until saved or discarded',async()=>{
+ const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');const w=new Window(),f=fixture();f.binding.primary='';f.binding.additional=[];
+ const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;const select=panel.root.querySelector('[aria-label="表单功能"]');select.value='history';await select.onchange();
+ const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(n=>n.textContent===text);assert(button,text);await button.onclick();};
+ const mode=panel.root.querySelector('[aria-label="初始化来源"]');mode.value='generic';mode.dispatchEvent(new w.Event('input'));assert.equal(panel.requestLeave().allowed,true);await click('按所选来源建立表单');assert.equal(f.calls.length,0);assert.equal(f.saved.size,2);
+ const reused=panel.root.querySelector('[aria-label="初始化来源"]');reused.value='reuse';reused.dispatchEvent(new w.Event('input'));await click('读取并预览初始化模板');assert.equal(f.calls.length,0);assert.equal(panel.requestLeave().allowed,false);select.value='forms';await select.onchange();assert.equal(select.value,'history');assert.match(panel.root.textContent,/请先保存或放弃/);
+ await click('保存模板');assert.equal(panel.requestLeave().allowed,true);assert.equal(panel.root.querySelector('[role=alert]'),null);panel.dispose();await w.happyDOM.abort();
+});
 
 test('native branch mappings retain dynamic maps and enforce nested read-only/prototype keys',async()=>{
  const {nativeBranches,bridgePatch}=await import('../tables/native-bridge.js');
@@ -147,7 +169,7 @@ test('native-mode auxiliary default follows the actual native main connection',(
 });
 test('configuration UI can bind books, scan floors and backfill without memory blocks',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),container=w.document.createElement('div');w.document.body.append(container);const f=fixture();f.c.chat=[ai('旧正文'),user('继续'),ai('暂存')];
- const panel=mountTablePanel(w.document,container,{service:f.service,store:f.store});await panel.ready;const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);assert(button,text);await button.onclick();};
+ const panel=mountTablePanel(w.document,container,{service:f.service,store:f.store});await panel.ready;const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(button)return button.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};
  await click('创建／绑定世界书');assert.equal(f.saved.size,2);await click('历史补录');assert.match(panel.root.textContent,/待补录 1 条/);await click('开始／继续补录所选楼层');assert.equal(f.calls[0].task,'historyImport');assert.match(panel.root.textContent,/待补录 0 条/);assert.equal(panel.requestLeave().allowed,true);panel.dispose();await w.happyDOM.abort();
 });
 test('older floor cannot overwrite a field whose current source is later',()=>{
@@ -228,7 +250,7 @@ test('assistant unrelated configuration edit retains old alias routing and secre
 });
 test('preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),d=w.document;Object.defineProperty(w.HTMLTextAreaElement.prototype,'type',{get(){return 'textarea';},configurable:true});const f=fixture();delete f.helper.getWorldbook;f.c.chat=[ai('旧正文'),user('继续'),ai('最新')];const panel=mountTablePanel(d,d.body,{service:f.service,store:f.store});await panel.ready;
- const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);assert(b,text);await b.onclick();};await click('历史补录');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
+ const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};await click('历史补录');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
  await click('缇斯亚助手');f.responder(async()=>({answer:'把历史条数改为10',changes:[{path:'/world/context/history',value:10,reason:'用户要求'}],backfill:null,genesisGoal:''}));const q=panel.root.querySelector('[aria-label="想让缇斯亚帮你做什么"]');q.value='保留10条历史';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.match(panel.root.textContent,/修改前/);await click('应用全部更改');assert.equal(f.store.read().world.context.history,10);assert.match(panel.root.textContent,/已保存 1 项/);panel.dispose();await w.happyDOM.abort();
 });
 
@@ -259,7 +281,7 @@ test('assistant apply preserves guarded follow-up actions and UI backfill reache
  f.c.chat=[ai('城门开放。'),user('继续'),ai('最新保留。')];let archiveCalls=0;
  f.responder(async(task,input)=>task==='tableAssistant'?{answer:'启用后补录，并保留创世需求。',changes:[{path:'/world/tables/enabled',value:true,reason:'用户要求'}],backfill:{from:1,to:1,limit:10},genesisGoal:'建立航线模板'}:(archiveCalls++,{changes:[op('new:event','events',{名称:'城门开放',经过:'城门开放。'},'城门开放。')]}));
  const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;
- const click=async label=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===label);assert(b,label);await b.onclick();};
+ const click=async label=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===label);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===label);assert(option,label);select.value=option.value;return select.onchange();};
  await click('缇斯亚助手');const q=panel.root.querySelector('textarea');q.value='启用并补录';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.equal(f.saved.size,0);
  await click('应用全部更改');assert.match(panel.root.textContent,/按建议开始楼层补录/);assert.match(panel.root.textContent,/带着需求交给创世/);
  await click('按建议开始楼层补录');assert.equal(archiveCalls,1);assert.equal((await f.service.scan()).filter(r=>r.archived).length,1);assert.match(panel.root.textContent,/缇斯亚保留的创世需求/);panel.dispose();await w.happyDOM.abort();
