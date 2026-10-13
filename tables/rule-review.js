@@ -10,12 +10,16 @@ export async function ruleSources(card,books=[]){
  }
  for(const e of ai.entries)sources.push({id:'card'+e.path,label:e.name||String(e.id),kind:'definition',text:e.content});
  bound.forEach((e,i)=>{if(!e.runtimeSource)sources.push({id:'book.'+i,label:e.book+' / '+e.entry,kind:'definition',text:e.content});});
- return {fingerprint:await digest(JSON.stringify({ai,bound})),sources,runtimeSources:[...ai.runtimeSources,...bound.filter(e=>e.runtimeSource)]};
+ return {fingerprint:await digest(JSON.stringify({ai,bound})),sources:sources.map(s=>({...s,lines:sourceLines(s.text).map(({text},i)=>({line:i+1,text}))})),runtimeSources:[...ai.runtimeSources,...bound.filter(e=>e.runtimeSource)]};
+}
+function sourceLines(value){
+ const lines=[];let at=0;for(const part of value.split(/(\r\n|\r|\n)/)){if(/^(?:\r\n|\r|\n)$/.test(part)){at+=part.length;continue;}lines.push({text:part,start:at,end:at+part.length});at+=part.length;}return lines;
 }
 const safeId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(value)&&value!=='prototype'&&!Object.hasOwn(Object.prototype,value);
 const text=(value,label)=>check(typeof value==='string'&&value.trim(),label+'不能为空');
 function keys(value,allowed,label){check(value&&typeof value==='object'&&!Array.isArray(value),label+'格式无效');check(Object.keys(value).every(k=>allowed.includes(k)),label+'包含未登记字段');}
 export function validateRuleReview(proposal,source){
+ if(proposal?.format==='tisya.rule-review-proposal/2')proposal=resolveLineProposal(proposal,source);
  keys(proposal,['issues'],'规则校对');check(Array.isArray(proposal.issues)&&proposal.issues.length<=200,'规则问题列表无效');
  const ids=new Set(),bySource=new Map(source.sources.map(s=>[s.id,s]));
  for(const issue of proposal.issues){
@@ -30,6 +34,23 @@ export function validateRuleReview(proposal,source){
   }
  }
  return {format:'tisya.rule-review/1',fingerprint:source.fingerprint,sources:copy(source.sources),runtimeSources:copy(source.runtimeSources),issues:copy(proposal.issues),decisions:{},at:new Date().toISOString()};
+}
+function resolveLineProposal(proposal,source){
+ keys(proposal,['format','issues'],'行号规则校对');check(Array.isArray(proposal.issues)&&proposal.issues.length<=200,'规则问题列表无效');
+ const bySource=new Map(source.sources.map(s=>[s.id,s]));
+ function resolve(ref,label){
+  const s=bySource.get(ref.sourceId);check(s,'规则原文来源不存在');const lines=sourceLines(s.text);
+  check(Number.isSafeInteger(ref.fromLine)&&Number.isSafeInteger(ref.toLine)&&ref.fromLine>=1&&ref.toLine>=ref.fromLine&&ref.toLine<=lines.length,label+'行号越界或格式无效');
+  return s.text.slice(lines[ref.fromLine-1].start,lines[ref.toLine-1].end);
+ }
+ return {issues:proposal.issues.map(issue=>{
+  keys(issue,['id','title','problem','sources','options'],'规则问题');check(Array.isArray(issue.sources)&&Array.isArray(issue.options),'规则问题格式无效');
+  const anchors=issue.sources.map(a=>{keys(a,['sourceId','fromLine','toLine'],'行号原文定位');return {...a,quote:resolve(a,'原文引用')};});
+  const options=issue.options.map(option=>{keys(option,['id','label','rationale','tradeoffs','changes'],'优化方案');check(Array.isArray(option.changes),'优化方案缺少具体改动');return {...option,changes:option.changes.map(c=>{
+   keys(c,['sourceId','fromLine','toLine','after'],'行号规则改动');const before=resolve(c,'规则改动');check(anchors.some(a=>a.sourceId===c.sourceId&&a.fromLine<=c.fromLine&&a.toLine>=c.toLine),'优化越过本问题引用范围');return {sourceId:c.sourceId,before,after:c.after};
+  })};});
+  return {...issue,sources:anchors.map(({sourceId,quote})=>({sourceId,quote})),options};
+ })};
 }
 function validateOverlap(changes,bySource){
  const spans=[];
