@@ -175,7 +175,7 @@ async function saveAssistantConfiguration({data,revision,key,value,expected}){
 async function saveInterfaceSettings(next){assertIdle();const previous=settings();context().extensionSettings[KEY]=next;refreshVisuals();try{if(await saveSettings()!==true)throw Error('宿主尚未确认保存');}catch(e){if(context().extensionSettings[KEY]===next)context().extensionSettings[KEY]=previous;refreshVisuals();throw Error('保存未完成，草稿保留：'+e.message);}}
 function openSettings(tab='mode'){
  renderEpoch++;page('缇斯亚 · 配置','<div id="tisya-settings-app"></div>');
- utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,
+ utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,version:VERSION,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
  saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),onApplied:()=>{appearance?.refresh();decorate();},onClose:hidePage,
  onNative:kind=>{if(utility?.requestLeave?.().allowed===false)throw Error('请先保存或放弃修改');if(kind==='agent')extensionSection('agent');else nativeDrawer(kind==='api'?'sys-settings-button':'ai-config-button');}

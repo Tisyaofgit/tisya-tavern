@@ -1,0 +1,53 @@
+{
+  "task": "AT05",
+  "version": "0.2.0-alpha.31.5",
+  "recorded_utc": "2026-10-14T21:44:49.878904+00:00",
+  "base_commit": "7d01bce38894e9f3ed8f4958bfd5c43ceca235cf",
+  "checks": {
+    "targeted_tests": 66,
+    "passed": 66,
+    "failed": 0,
+    "full_suite_rerun": false,
+    "live_model_calls": 0,
+    "android_runs": 0
+  },
+  "test_files": [
+    "tests/context-export.test.js",
+    "tests/text-transport.test.js",
+    "tests/shell.test.js"
+  ],
+  "scope": [
+    "selected snapshot copy/export exact JSON including Unicode",
+    "own transport status per selected snapshot instead of latest other request",
+    "clipboard denial manual text and explicit failure",
+    "host export API missing/failed response rejection",
+    "existing shell and transport regression"
+  ],
+  "original_host_export_static": {
+    "apkSha256": "dd17a722f40ceed2aafd3d880f572f706085fb568b08661f54d6f44d65dbb361",
+    "files": [
+      {
+        "path": "/scripts/file-export.js",
+        "bytes": 18891,
+        "offset": 8644270,
+        "sha256": "d21999e1f64d04a9d9423aef9957e22fae2b01fcc61fd84f2481c2b2df043ffe",
+        "hasDownloadApi": true
+      },
+      {
+        "path": "/scripts/utils.js",
+        "bytes": 113692,
+        "offset": 8973979,
+        "sha256": "996f8d60cec41d52088e53eb927713cc0eafa528ccbe83ce2fe48b74dacac320",
+        "hasDownloadApi": false
+      }
+    ],
+    "method": "static Brotli extraction from original APK libtauritavern_lib.so; no native execution"
+  },
+  "limits": [
+    "No device clipboard or Android save UI run",
+    "Full context includes prompt/body; not a redacted diagnostics export",
+    "Earlier blank/truncation root cause unknown",
+    "Screenshot proves latest record skipped due to search setting, not that searches actually executed"
+  ],
+  "log_sha256": "2a825cb6621abd2403bfa478d0221f17de5a8f8b5bc2430156e309b569e8b58c"
+}

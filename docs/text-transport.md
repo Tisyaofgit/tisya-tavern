@@ -1,4 +1,4 @@
-# 正文传输（AT02 · alpha31.4）
+# 正文传输（AT02—AT05 · alpha31.5）
 
 在“预设与 API”的通用、模式或任务路由中选择“抗截断传输”，默认关闭。当前支持 OpenAI Chat Completions（原生 OpenAI 或自定义 openai_compat）及自定义 Gemini generateContent；接口凭据仍归宿主管理。原 Vertex 执行路径和选项已移除，旧 vertex-streaming 值只为读取历史设置保留，下拉框不再生成旧选项，旧值按关闭显示并提示停用，不会自动改为开启新功能。
 
@@ -30,3 +30,11 @@ Responses、Gemini Interactions、其他 provider、代理、真实工具/原生
 上游固定 e9603b2c9d81f7d683801ca12b9f95e10a5a8732。TauriTavern 前端核对已有 2.3.0 APK 提取的 openai.js；后端只读审阅 Darkatse/TauriTavern f6126b4fc9243eb3990f2c0bad86e2afcb502f22 的 custom/makersuite 参数构建、追加参数与 Gemini 响应归一化。后端源码审阅不等于用户安装版本一致，也不等于原生后端已执行验证。
 
 专项：node --test tests/text-transport.test.js；整套：npm test。记录见 text-transport-validation.json。所有自动测试是本地合成/宿主函数夹具；没有使用真实模型、密钥或模拟 Android 实机通过。用户原503报告独立保存，前三次静默结束根因仍未知。
+
+## 查看生效状态与分享上下文
+
+打开缇斯亚配置→上下文一览，选择对应时间/任务。状态和下方JSON都属于选中的那次请求；“正文抗截断已生效”只在tool-text完成且正文还原成功时显示。“仅完整性检查已完成”不是工具正文抗截断；“本次未启用抗截断：请求已开启搜索”表示本次旁路。搜索开关开启不等于已经实际执行搜索。完整收到正文也不能单凭结果证明抗截断介入。
+
+“复制当前记录”复制显示的JSON；自动剪贴板不可用或拒绝时明确报错并显示只读文本供长按复制。“导出当前记录”通过宿主file-export接口保存JSON，Android走宿主公共下载/系统文档选择流程；失败/取消不报成功、不修改配置、不触发模型调用。记录含原始正文和提示词，分享前可自行检查；此功能不是脱敏诊断摘要导出。
+
+用户05:40报告重启后完整返回，截图该次最近状态为搜索旁路；不能据此断言抗截断有效或此前空回已修复。真实剪贴板/Android文件保存交互待设备验证。
