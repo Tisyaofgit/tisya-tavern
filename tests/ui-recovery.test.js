@@ -88,3 +88,20 @@ test('resuming a clean configuration refreshes its revision while an edited draf
  await click(root,'保存配置');assert.match(root.querySelector('[role=alert]').textContent,/其他页面修改/);assert.equal(count.value,'2');assert.equal(f.store.read().world.context.history,9);await click(root,'放弃修改');await config.settled();assert.equal(find(root,'历史聊天条数（当前输入始终保留）').value,'9');
  config.dispose();await f.close();
 });
+
+test('bundle UI keeps explicit selection, edited draft and mapping across page changes',async()=>{
+ const f=fixture(),calls=[];const members=f.rows.map((row,i)=>({sourceObject:row.id,name:row.values.名称,traits:[{id:'trait-'+i,name:'性格核心',value:row.values.描述,evidence:row.values.描述}],growth:[]}));
+ f.service.previewCoreBundle=async ids=>{calls.push(['preview',ids]);return {objects:f.rows.filter(x=>ids.includes(x.id)),related:[],links:[],growth:[]};};
+ f.service.coreBundleDraft=async(ids,options)=>{calls.push(['extract',ids,options]);return {format:'tisya.core-bundle-draft/1',bundle:{name:'双人组',members,links:[]},notes:[]};};
+ f.service.saveCoreBundle=async value=>calls.push(['save-core',copy(value)]);
+ const core={id:'bundle-one',version:1,format:'tisya.core-bundle/1',name:'双人组'};f.service.listCores=async()=>[core];
+ const expectedMapping={members:members.map((m,i)=>({member:m.sourceObject,object:'new:m'+i,items:m.traits.map(item=>({item:item.id,path:['描述'],expression:m.name+'的世界表达'}))})),links:[]};
+ f.service.adaptCoreBundle=async(book,id,goal)=>{calls.push(['adapt',book,id,goal]);return {format:'tisya.genesis-draft/2',coreBinding:{book,id,version:1,fingerprint:'retained'},corePreview:{members,links:[]},mappingErrors:[],proposal:{blueprint:{name:'双人世界化',goal:'当前世界',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:copy(f.registry),base:{changes:members.map((m,i)=>({id:'new:m'+i,table:'objects',expected:0,values:{名称:'新'+m.name,类型:'character',描述:m.name+'的世界表达'},access:{readers:['读者'],knowers:[]},evidence:'创建新原点'}))},initial:{changes:[]}},workflow:{id:'flow',name:'适配',version:1,steps:[]},coreMapping:copy(expectedMapping)}};};
+ f.service.saveGenesis=async value=>calls.push(['save-genesis',copy(value)]);
+ const panel=mountTablePanel(f.document,f.document.body,{service:f.service,store:f.store});await panel.ready;await page(panel,'core');
+ input(f.window,find(panel.root,'带入 · 记录甲'),true);input(f.window,find(panel.root,'带入 · 记录乙'),true);input(f.window,find(panel.root,'补充设定与提取要求'),'保留耐心，但两人的表达各不相同。');await click(panel.root,'查看所选对象与关联');await click(panel.root,'生成整组基点草稿');
+ input(f.window,find(panel.root,'核心内容'),'用户改过的核心');await page(panel,'style');await page(panel,'core');assert.equal(find(panel.root,'核心内容').value,'用户改过的核心');await click(panel.root,'确认保存整组基点');
+ assert.deepEqual(calls[0],['preview',['person-a','person-b']]);assert.equal(calls[1][2].instructions,'保留耐心，但两人的表达各不相同。');assert.equal(calls[2][1].bundle.members[0].traits[0].value,'用户改过的核心');assert.equal(calls[2][1].bundle.members[0].traits[0].id,'trait-0');
+ input(f.window,find(panel.root,'核心所在原点书'),'已保存原点');await click(panel.root,'读取此书可用核心');await click(panel.root,'适配 · 双人组');assert.match(panel.root.textContent,/基点意义与世界表达对照/);await page(panel,'style');await page(panel,'core');await click(panel.root,'确认应用创世蓝图');
+ const saved=calls.find(x=>x[0]==='save-genesis')[1];assert.deepEqual(saved.proposal.coreMapping,expectedMapping);assert.equal(saved.coreBinding.id,'bundle-one');assert.equal(saved.coreBinding.fingerprint,'retained');panel.dispose();await f.close();
+});
