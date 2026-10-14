@@ -522,3 +522,33 @@ test('reroll branch preserves candidate ledger instead of freezing the replaced 
  f.c.chat[2].mes='甲拿到红夹';f.c.chat[2].swipe_id=1;info=await f.service.inspect();assert.equal(info.archived,1);assert.equal(info.rows.filter(r=>r.table==='events').length,1);assert(!info.rows.some(r=>r.values.名称==='甲拿到蓝夹'));assert.equal(info.session.commits.length,before.session.commits.length);
  f.c.chat[2].mes='甲拿到蓝夹';f.c.chat[2].swipe_id=0;assert.equal((await f.service.inspect()).archived,2);
 });
+
+test('global preferences require confirmation, survive reload and reach new origin design while local preferences stay scoped',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,preferences:true,archive:false,plot:false});
+ const source='以后所有故事的新角色都偏稳重。本会话用短句。';f.c.chat=[user(source),ai('暂存')];
+ f.responder(()=>({changes:[op('new:global','preferences',{名称:'稳重角色',内容:'以后所有故事的新角色都偏稳重。',性质:'明确要求',强度:'喜爱',类别:'SFW角色表现',作用域:{全局:true},启用:true},'以后所有故事的新角色都偏稳重。'),op('new:local','preferences',{名称:'短句',内容:'本会话用短句。',性质:'明确要求',强度:'喜爱',类别:'文风',作用域:{会话:['one']},启用:true},'本会话用短句。')]}));
+ assert.deepEqual(await f.service.analysePreferences(),{processed:1,pending:2});let info=await f.service.inspect();assert.equal(info.rows.filter(r=>r.table==='preferences').length,0);assert.equal(f.store.read().data.全局偏好,undefined);
+ const globalDraft=info.preferenceDrafts.find(d=>d.proposal.changes[0].values.作用域.全局===true),localDraft=info.preferenceDrafts.find(d=>d.id!==globalDraft.id),sessionBefore=JSON.stringify(info.session);
+ await f.service.reviewPreference(globalDraft.id,globalDraft.proposal);info=await f.makeService().inspect();assert.equal(JSON.stringify(info.session),sessionBefore);assert.equal(info.preferenceDrafts.find(d=>d.id===globalDraft.id).status,'accepted');assert.equal(info.preferenceDrafts.find(d=>d.id===localDraft.id).status,'pending');assert.equal(f.store.read().data.全局偏好.记录.length,1);
+ await f.service.reviewPreference(localDraft.id,localDraft.proposal);assert.equal((await f.service.inspect()).rows.filter(r=>r.table==='preferences').length,2);
+ f.c.chatId='two';f.c.chat=[user('设计两个不同的新同伴。')];await f.service.initialize();await f.set({preferences:false});
+ const blueprint=(task,input)=>{assert.equal(task,'tableGenesis');return {blueprint:{name:'新同伴',goal:input.goal,decisions:[],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[]},initial:{changes:[]}},workflow:{id:'new-cast',name:'新同伴',version:1,steps:[]}};};f.responder(blueprint);
+ await f.makeService().genesis('设计两个不同的新同伴。');let input=f.calls.at(-1).input;assert.deepEqual(input.preferences.map(r=>r.values.名称),['稳重角色']);assert.equal(input.preferences[0].source,null);
+ const {taskSlots}=await import('../tables/slots.js');assert.deepEqual(taskSlots('tableGenesis',input).preferences.rows,input.preferences);
+ const row=(await f.service.inspect()).rows.find(r=>r.table==='preferences');await f.service.edit({changes:[op(row.id,'preferences',{启用:false},'用户手动修改表单',row.rev)]});
+ await f.makeService().genesis('设计两个不同的新同伴。');assert.deepEqual(f.calls.at(-1).input.preferences,[]);assert.equal(f.store.read().data.全局偏好.历史.length,2);
+});
+
+test('failed global preference persistence keeps the candidate pending without writing a session or applying preferences',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[user('所有故事都避免空泛夸赞。'),ai('暂存')];f.responder(()=>({changes:[op('new:global','preferences',{名称:'避免空泛夸赞',内容:'所有故事都避免空泛夸赞。',性质:'明确要求',强度:'禁止',作用域:{全局:true},启用:true},'所有故事都避免空泛夸赞。')]}));await f.service.analysePreferences();
+ const draft=(await f.service.inspect()).preferenceDrafts[0],before=JSON.stringify([...f.saved]);let succeeds=false;
+ const failingStore=createStore({getContext:()=>f.c,persist:async()=>succeeds}),service=f.makeService({store:failingStore});
+ await assert.rejects(service.reviewPreference(draft.id,draft.proposal),/宿主未确认保存/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(f.store.read().data.全局偏好,undefined);assert.equal((await f.service.inspect()).preferenceDrafts[0].status,'pending');
+ succeeds=true;await service.reviewPreference(draft.id,draft.proposal);await assert.rejects(service.reviewPreference(draft.id,draft.proposal),/已处理/);assert.equal(f.store.read().data.全局偏好.记录.length,1);assert.equal(JSON.stringify([...f.saved]),before);
+});
+
+test('new object archive receives consecutive user definitions and saves a user-only dossier without requiring AI repetition',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({objectsSeparate:true,offstage:false});f.c.chat=[user('新人物设定：秋是信使。'),user('秋习惯先观察。'),ai('有人推开门。'),user('继续'),ai('暂存')];
+ f.responder((task,input)=>{if(task==='objectArchive'){assert.deepEqual(input.userSource.sources.map(s=>s.text),['新人物设定：秋是信使。','秋习惯先观察。']);assert.equal(input.archiveSource.text,'有人推开门。');return {changes:[op('new:qiu','objects',{名称:'秋',类型:'character',属性:{身份:'信使',性格:'习惯先观察'}},'秋是信使。')]};}assert.equal(task,'historyImport');return {changes:[]};});
+ await f.service.archive({range:{from:3,to:3,limit:1}});const info=await f.makeService().inspect();assert.equal(info.rows.find(r=>r.values.名称==='秋').values.属性.身份,'信使');assert.equal(info.rows.filter(r=>r.table==='events').length,0);
+});

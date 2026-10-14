@@ -273,3 +273,17 @@ body.tisya-active .tisya-phrase-row{display:grid;grid-template-columns:minmax(0,
 body.tisya-active .tisya-phrase-use{text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}
 
 body.tisya-active .tisya-actions{flex-wrap:wrap;gap:6px}#tisya-message-slots{display:grid;gap:8px}#tisya-message-slots label{display:flex;justify-content:space-between;gap:12px}#tisya-message-slots select{max-width:70%}
+/* Use the approved send-button glass and bronze frame without its send glyph. */
+body.tisya-active #tisya-menu-trigger,body.tisya-active .tisya-actions .tisya-orb-button,#tisya-overlay .tisya-message-actions .tisya-orb-button{display:grid;place-items:center;box-sizing:border-box;width:44px;min-width:44px;max-width:44px;height:44px;min-height:44px;padding:0;margin:0;flex:none;border:0;border-radius:50%;background:url(assets/control-orb.svg) center/36px 36px no-repeat!important;box-shadow:none;color:#ecddaf;line-height:1;touch-action:manipulation}
+body.tisya-active #tisya-menu-trigger>svg,.tisya-actions .tisya-orb-button>svg,#tisya-overlay .tisya-message-actions .tisya-orb-button>svg{width:19px;height:19px;pointer-events:none}
+body.tisya-active #tisya-menu-trigger:active,.tisya-actions .tisya-orb-button:active,#tisya-overlay .tisya-message-actions .tisya-orb-button:active{filter:brightness(1.15)}
+#tisya-overlay .tisya-message-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:8px 0}
+#tisya-message-slots label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:4px 12px}
+#tisya-message-slots select{width:100%;max-width:100%}
+#tisya-message-slots small{grid-column:1/-1;font-size:12px;line-height:1.5;color:var(--tisya-muted);overflow-wrap:anywhere}
+#tisya-message-tool-guide{display:grid;gap:12px;margin:18px 0}
+#tisya-message-tool-guide>div{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:start}
+#tisya-message-tool-guide p{margin:3px 0;font-size:12px;line-height:1.5;color:var(--tisya-muted)}
+.tisya-message-icon-preview{display:grid;place-items:center;width:44px;height:44px;background:url(assets/control-orb.svg) center/36px 36px no-repeat;color:#ecddaf}
+.tisya-message-icon-preview>svg{width:19px;height:19px}
+@media(forced-colors:active){body.tisya-active #tisya-menu-trigger,body.tisya-active .tisya-actions .tisya-orb-button,#tisya-overlay .tisya-message-actions .tisya-orb-button{background:ButtonFace!important;border:1px solid ButtonText;color:ButtonText}}
