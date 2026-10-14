@@ -62,3 +62,19 @@ test('manual old or undated history cannot overwrite current sourced state, late
  for(const worldTime of [null,'未知','2026-10-12 11:59'])assert.throws(()=>prepareCommit(view,proposal,{source:null,kind:'import',evidence:'抵达城外',worldTime,allowedTables:['scene']}),/不能覆盖已有当前状态/);
  assert.equal(prepareCommit(view,proposal,{source:null,kind:'import',evidence:'2026-10-12 12:01 抵达城外',worldTime:'2026-10-12 12:01',allowedTables:['scene']}).rows[0].values.场景,'城外');
 });
+
+
+test('actual archive request separates operational blockers and inaccessible corrections from source data',()=>{
+ const material={archiveSource:{text:'客人说稍后回来。'},userSource:{text:'旧余额为NaN；绝对钟点未知。'},registry:defaultRegistry(),currentRows:[]};
+ for(const task of ['objectArchive','historyImport','tableArchive']){
+  const messages=taskMessages({preset:pairedPreset({task,configuration}),task,input:material});
+  const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
+  assert.equal(norms.split('pending is an operational blocker').length-1,1);
+  assert.match(norms,/required write in this task that cannot be represented faithfully/);
+  assert.match(norms,/invalid or missing native values outside the required write are not archival blockers/);
+  assert.match(norms,/Do not silently drop a genuine required-write conflict/);
+  assert.match(norms,/Do not embed concealed objective facts in that record/);
+  assert.match(norms,/mistaken belief must not carry the hidden correction as character knowledge/);
+  assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
+ }
+});

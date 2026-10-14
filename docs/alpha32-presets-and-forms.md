@@ -2889,3 +2889,13 @@ Verify exact archive source excerpts, or real basis IDs/revisions in world mode.
 | 立场 | text | 否 |  |
 | 历史 | text | 否 |  |
 
+
+
+### 2026-10-14 历史第4楼压力测试
+
+真实首稿的63条历史增量经同版解析器保存，连同独立对象提案共159项修改、202条当前记录。正式引用全部转换，保存值中没有临时ID残留；原100楼、原玩家资料及43条规则保留。但首稿将旧资金NaN和未确定绝对钟点放入pending，生产流程正确停止，整楼未验收。失败稿和部分保存状态保持原样，下一轮从此前已验收断点重新运行。
+
+AI须知现在要求pending说明本任务无法忠实表示的具体必填变更；可以保留相对时间、来源限定或原生引用的未知值不阻塞独立事实归档。真正无法安全表示的必需写入仍然阻塞，不由程序清空pending。另明确角色认知中不得用“他不知道……”夹带其未接触的隐情。新增检查只证明规范进入真实装配及来源未变；新模型首稿、完整远期记忆和Android尚待验收。
+
+### Window29 initialization coverage correction (2026-10-14)
+The accepted 44-row recovery state contains 43 rules and one player origin. The complete player definition (11,584 characters) is preserved, but the four teammates are only embedded in that source and were not independently initialized before history import. Original floor 1 is only `【系统启动】`; it must not count as substantive narrative acceptance. Treat the former initialization claim as incomplete coverage. Next priority is to route the already supplied opening player/team definitions into separate source-backed origin identities and initial relationships before replaying the first substantive narrative at floor 4. Preserve raw card/log/persona bytes; never turn later plot developments into initial facts. Unknown fields remain unknown. The current pending/knowledge notice revision has passed code checks only and still requires a fresh model draft after initialization is corrected.
