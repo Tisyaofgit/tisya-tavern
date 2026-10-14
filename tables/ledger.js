@@ -19,14 +19,24 @@ export function precedingUserSource(chain,source){
 }
 export function memoryBlock(text){return text.match(/<memory(?:\s[^>]*)?>([\s\S]*?)<\/memory>/i)?.[1]?.trim()??'';}
 export function taskTags(text){const block=text.match(/<task(?:\s[^>]*)?>([\s\S]*?)<\/task>/i)?.[1]??'';return block.split('\n').map(s=>s.trim()).filter(s=>/^(?:引用|新发现|资料)：/.test(s));}
+// Genesis/init pins are convenient selections, not evidence that an object existed
+// before the commit which introduced it. Recover the pre-ledger pin baseline from
+// the first recorded before-image, including commits outside the selected candidate.
+export function originPinsAtStart(origin,session){
+ const bases=new Map(origin.bases.map(row=>[row.id+'@'+row.rev,row])),firstChanges=new Map();for(const commit of session.commits)for(const change of commit.changes)if(!firstChanges.has(change.id))firstChanges.set(change.id,change);
+ const pins=session.commits.find(commit=>commit.originSelection)?.originSelection.before??session.pins??[];
+ return pins.flatMap(pin=>{const base=bases.get(pin);check(base,'原点档案版本缺失：'+pin);const first=firstChanges.get(base.id);if(!first)return [pin];if(!first.before)return [];const ref=first.before.id+'@'+first.before.rev;check(bases.has(ref),'历史原点版本缺失：'+ref);return [ref];});
+}
 export function project(origin,session,sourceKeys){
  const registry=upgradeRegistry(session.schemaPinned?session.registry:origin.registry);registryIndex(registry);const allowed=new Set(sourceKeys),rows=new Map((session.branchSeed?.rows??[]).map(r=>[r.id,copy(r)])),anchors=[],accepted=[];const bases=new Map(origin.bases.map(b=>[b.id+'@'+b.rev,b]));
- for(const pin of session.pins??[]){const base=bases.get(pin);check(base,'原点档案版本缺失：'+pin);const row=copy(base);row.access.knowers=[];rows.set(base.id,row);}
- const applied=new Set();
+ let pins=originPinsAtStart(origin,session);for(const pin of pins){const base=bases.get(pin);const row=copy(base);row.access.knowers=[];rows.set(base.id,row);}
+ const applied=new Set(),overlays=new Set();
  for(const commit of session.commits){
   if(commit.source!==null&&!allowed.has(commit.source))continue;
+  if(commit.contextSource&&!allowed.has(commit.contextSource))continue;
   if(commit.depends&&!applied.has(commit.depends))continue;
-  for(const change of commit.changes){const row=change.origin?bases.get(change.origin):change.after;check(row,'关联原点版本缺失');rows.set(row.id,copy(row));}
+  if(commit.originSelection){const selected=commit.originSelection.after;check(Array.isArray(selected),'原点选择记录无效');for(const pin of pins){const row=bases.get(pin);check(row,'原点档案版本缺失：'+pin);if(!overlays.has(row.id))rows.delete(row.id);}for(const pin of selected){const base=bases.get(pin);check(base,'原点档案版本缺失：'+pin);if(!overlays.has(base.id)){const row=copy(base);row.access.knowers=[];rows.set(row.id,row);}}pins=selected;}
+  for(const change of commit.changes){const row=change.origin?bases.get(change.origin):change.after;check(row,'关联原点版本缺失');rows.set(row.id,copy(row));overlays.add(row.id);}
   if(commit.registry)Object.assign(registry,upgradeRegistry(commit.registry));accepted.push(commit);applied.add(commit.id);const times=[...new Set(commit.changes.flatMap(ch=>ch.after?.table==='scene'?[ch.after.values.当前时间]:ch.after?.table==='events'?[ch.after.values.时间]:[]).filter(t=>typeof t==='string'&&t&&commit.anchors.some(a=>a.evidence?.includes(t))))];anchors.push(...commit.anchors.map(a=>a.worldTime===null&&times.length===1?{...a,worldTime:times[0]}:a));
  }
  const values=[...rows.values()];for(const row of values)validateRow(registry,row);validateReferences(values,registry);

@@ -1,10 +1,17 @@
 import {check,copy,validateRow,validateReferences,references} from './schema.js';
-import {project,calendarTime} from './ledger.js';
+import {project,originPinsAtStart} from './ledger.js';
 import {uuid} from './books.js';
+export function forkCommits(commits,eligible){
+ const known=commit=>{const source=commit.source??commit.contextSource;return typeof source==='string'?eligible.has(source):Object.hasOwn(commit,'contextSource')&&source===null;};
+ const last=commits.findLastIndex(known);
+ // Legacy null-source records have no recoverable floor. Retain only those in
+ // the confirmed prefix, never a later tail merely because its source is null.
+ return commits.filter((commit,index)=>known(commit)||(commit.source===null&&!Object.hasOwn(commit,'contextSource')&&index<=last));
+}
 export function snapshotAnchor(loaded,{name,cut=null,nodes=null}){
  check(typeof name==='string'&&name.trim(),'请给时间锚命名');
  const commits=loaded.view.commits,at=cut==='start'?-1:cut===null?commits.length-1:commits.findIndex(c=>c.id===cut);check(at>=-1&&(cut===null||cut==='start'||at>=0),'时间锚起点不存在');
- const session={...loaded.session.data,commits:commits.slice(0,at+1)},view=project(loaded.origin.data,session,loaded.chain.map(s=>s.key));
+ const session={...loaded.session.data,pins:originPinsAtStart(loaded.origin.data,loaded.session.data),commits:commits.slice(0,at+1)},view=project(loaded.origin.data,session,loaded.chain.map(s=>s.key));
  const later=commits.slice(at+1).flatMap(c=>c.changes.filter(x=>x.after?.table==='events').map(x=>x.after));
  const story=nodes??later.map(r=>({id:uuid('node'),time:r.values.时间??'',name:r.values.名称,summary:r.values.经过??'',actors:r.values.参与者??[],condition:'原存档当时条件仍成立；玩家改变条件时允许分歧',kind:'主线'}));
  // Future actors remain reusable assets, but gain no future history or character knowledge.

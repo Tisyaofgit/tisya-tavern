@@ -173,6 +173,51 @@ test('handwritten import has review draft, original provenance, unknown time and
 test('Genesis uses the same forms, retains base versions and pins only chosen session',async()=>{
  const f=fixture();await f.service.initialize();f.responder(async()=>({blueprint:{name:'北门',goal:'创建北门',decisions:['创建北门'],unresolved:[]},checklist:[],artifacts:{registry:defaultRegistry(),base:{templates:[],changes:[op('new:gate','objects',{名称:'北门',类型:'place'},'创建北门')]},initial:{templates:[],changes:[]}},workflow:{id:'gate',name:'城门',version:1,steps:[]}}));const draft=await f.service.genesis('创建北门');await f.service.saveGenesis(draft);const data=await f.service.inspect();assert.equal(data.rows[0].values.名称,'北门');assert.equal(data.origin.bases.length,1);f.c.chatId='other';await f.service.initialize();assert.equal((await f.service.inspect()).rows.length,0);await f.service.pinOrigins([data.origin.bases[0].id+'@1']);assert.equal((await f.service.inspect()).rows[0].values.名称,'北门');
 });
+test('historical anchors do not inherit a later genesis pin or its initial relationship',async()=>{
+ const f=fixture();await f.service.initialize();
+ await f.service.edit({changes:[op('new:old','objects',{名称:'先到的岚',类型:'character'},'用户手动修改表单')]});
+ const early=await f.service.inspect(),cut=early.session.commits.at(-1).id,old=early.rows.find(r=>r.values.名称==='先到的岚');
+ f.responder(()=>({blueprint:{name:'后到者',goal:'新增后到的澄',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:early.registry,base:{changes:[op('new:late','objects',{名称:'后到的澄',类型:'character'},'新增后到的澄')]},initial:{changes:[op('new:rel','relations',{名称:'后来相识',主体:old.id,对象:'new:late',证据:'新增后到的澄'},'新增后到的澄')]}},workflow:{id:'late',name:'后到者',version:1,steps:[]}}));
+ await f.service.saveGenesis(await f.service.genesis('新增后到的澄'));
+ const before=await f.service.inspect();assert(before.session.pins.some(p=>p.startsWith(before.rows.find(r=>r.values.名称==='后到的澄').id+'@')));
+ const anchor=await f.service.saveAnchor({name:'澄到来以前',cut,nodes:[]});
+ assert.deepEqual(anchor.rows.map(r=>r.id),[old.id]);assert.equal(anchor.rows.some(r=>r.table==='relations'),false);
+ f.c.chatId='anchor-before-genesis';await f.service.initialize();await f.service.useAnchor(anchor.id);
+ const after=await f.service.inspect();assert.deepEqual(after.rows.map(r=>r.id),[old.id]);assert.equal(after.rows.find(r=>r.id===old.id).values.名称,'先到的岚');
+});
+test('historical anchors restore earlier object values and knowledge, leaving source history intact',async()=>{
+ const f=fixture();await f.service.initialize();await f.service.edit({changes:[op('new:person','objects',{名称:'岚',类型:'character',描述:'尚未承担守门职责'},'用户手动修改表单')]});
+ const early=await f.service.inspect(),cut=early.session.commits.at(-1).id,person=early.rows[0];
+ await f.service.edit({changes:[op(person.id,'objects',{描述:'多年后成为守门人'},'用户手动修改表单',person.rev),{...op('new:knowledge','cognition',{名称:'后来秘密',主体:person.id,认识:'地下室有暗门',确认程度:'确认'},'用户手动修改表单'),access:{readers:['读者'],knowers:[person.id]}}]});
+ const current=await f.service.inspect(),anchor=await f.service.saveAnchor({name:'当年',cut,nodes:[]});assert.equal(anchor.rows.find(r=>r.id===person.id).values.描述,'尚未承担守门职责');assert.equal(anchor.rows.some(r=>r.table==='cognition'),false);assert.equal(anchor.worldTime,null);
+ const after=await f.service.inspect();assert.deepEqual(after.rows,current.rows);assert.deepEqual(after.session.commits,current.session.commits);assert.equal(after.rows.find(r=>r.id===person.id).values.描述,'多年后成为守门人');
+});
+test('historical anchors keep the selected origin version at that time and omit later imported assets',async()=>{
+ const f=fixture();await f.service.initialize();await f.service.edit({changes:[op('new:one','objects',{名称:'外来者',类型:'character',描述:'第一版'},'用户手动修改表单'),op('new:two','objects',{名称:'后来选择的钟',类型:'item'},'用户手动修改表单')]});
+ let data=await f.service.inspect();const person=data.rows.find(r=>r.values.名称==='外来者'),item=data.rows.find(r=>r.values.类型==='item');await f.service.edit({changes:[op(person.id,'objects',{描述:'第二版'},'用户手动修改表单',person.rev)]});
+ f.c.chatId='pin-history';await f.service.initialize();await f.service.pinOrigins([person.id+'@1']);data=await f.service.inspect();const cut=data.session.commits.at(-1).id;
+ await f.service.pinOrigins([person.id+'@2',item.id+'@1']);assert.equal((await f.service.inspect()).rows.find(r=>r.id===person.id).values.描述,'第二版');
+ const anchor=await f.service.saveAnchor({name:'只选第一版时',cut,nodes:[]});assert.equal(anchor.rows.find(r=>r.id===person.id).values.描述,'第一版');assert.equal(anchor.rows.some(r=>r.id===item.id),false);
+ const start=await f.service.saveAnchor({name:'导入前',cut:'start',nodes:[]});assert.deepEqual(start.rows,[]);
+});
+test('forking an early floor excludes later source-less genesis commits',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true});f.c.chat=[ai('第一次抵达'),user('次日'),ai('后来相遇')];
+ f.responder(()=>({changes:[op('new:arrival','events',{名称:'第一次抵达',经过:'第一次抵达'},'第一次抵达')]}));await f.service.archive({range:{from:1,to:1,limit:1}});
+ const early=await f.service.inspect();f.responder(()=>({blueprint:{name:'后来人物',goal:'创建后来人物',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:early.registry,base:{changes:[op('new:later','objects',{名称:'后来人物',类型:'character'},'创建后来人物')]},initial:{changes:[]}},workflow:{id:'later',name:'后来人物',version:1,steps:[]}}));await f.service.saveGenesis(await f.service.genesis('创建后来人物'));
+ await f.service.stageFork(1,false);f.c.chat=f.c.chat.slice(0,1);await f.service.activateFork({rollback:true});const after=await f.service.inspect();assert.equal(after.rows.some(r=>r.values.名称==='后来人物'),false);assert.equal(after.rows.filter(r=>r.table==='events').length,1);
+});
+test('new genesis initial references remain valid after explicit origin selections',async()=>{
+ const f=fixture();await f.service.initialize();await f.service.pinOrigins([]);const data=await f.service.inspect();
+ f.responder(()=>({blueprint:{name:'岚与钟',goal:'创建岚和钟',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:data.registry,base:{changes:[op('new:person','objects',{名称:'岚',类型:'character'},'创建岚和钟'),op('new:item','objects',{名称:'钟',类型:'item'},'创建岚和钟')]},initial:{changes:[op('new:holding','holdings',{名称:'岚持钟',保管者:['new:person'],物品:'new:item',数量:1},'创建岚和钟')]}},workflow:{id:'pair',name:'岚与钟',version:1,steps:[]}}));await f.service.saveGenesis(await f.service.genesis('创建岚和钟'));const after=await f.service.inspect();assert.equal(after.rows.filter(r=>r.table==='objects').length,2);assert.equal(after.rows.filter(r=>r.table==='holdings').length,1);
+});
+test('equipment baselines retain source type and bind only the adapted item, never incidental characters',async()=>{
+ const f=fixture();await f.service.initialize();await f.service.edit({changes:[op('new:key','objects',{名称:'无齿铜钥匙',类型:'item',属性:{用途:'不能开锁，只在掌心留住熟悉重量；是师徒相处的纪念。'}},'用户手动修改表单')]});const before=await f.service.inspect(),item=before.rows[0];
+ f.responder((task,input)=>{assert.equal(task,'assetAdapt');assert.match(input.sourceCard,/无齿铜钥匙/);return JSON.stringify({core:{name:'掌心的旧物',traits:[{name:'用途与叙事意义',value:'没有实用开锁能力的掌心旧物，熟悉重量承载师徒纪念。',evidence:'不能开锁，只在掌心留住熟悉重量；是师徒相处的纪念。'}],growth:[]},notes:[]});});
+ const draft=await f.service.coreDraft(item.id),core=await f.service.saveCore(draft);assert.equal(core.kind,'item');assert.equal(core.sourceType,'item');assert.deepEqual(core.growth,[]);const originBook=before.settings.originBook;
+ f.c.chatId='other-world';f.c.characters[0].description='高科技港城，物品采用本地技术表达。';await f.service.initialize();let ambiguous=false;
+ f.responder((task,input)=>{assert.equal(task,'tableGenesis');assert.match(input.goal,/叙事意义/);return {blueprint:{name:'适配旧物',goal:'当前世界表达',decisions:['建立纪念物和路人'],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[op('new:item1','objects',{名称:'掌心旧构件',类型:'item',属性:{用途:'没有功能，只保留熟悉重量和师徒纪念。'}},'建立纪念物和路人'),op('new:extra','objects',{名称:ambiguous?'第二件旧物':'路过工匠',类型:ambiguous?'item':'character'},'建立纪念物和路人')]},initial:{changes:[]}},workflow:{id:'adapt-item',name:'适配旧物',version:1,steps:[]}};});
+ const adapted=await f.service.adaptCore(originBook,core.id);const changes=adapted.proposal.artifacts.base.changes;assert.match(changes[0].values.核心引用,new RegExp(core.id));assert.equal(changes[1].values.核心引用,undefined);const unchanged=JSON.stringify([...f.saved]);ambiguous=true;await assert.rejects(f.service.adaptCore(originBook,core.id),/明确的基点主体映射/);assert.equal(JSON.stringify([...f.saved]),unchanged);
+});
 test('plot API remains a proposal and explicit preference constraints reach context',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
 });
