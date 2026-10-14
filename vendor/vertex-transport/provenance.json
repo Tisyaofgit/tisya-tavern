@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/ken050210/vertex-streaming-anti-truncation",
+  "commit": "e9603b2c9d81f7d683801ca12b9f95e10a5a8732",
+  "license": "MIT",
+  "files": {
+    "anti-truncation.mjs": "d31ef1ef83c54ed8a3a3223f25a788cccf8502aa52ab1450adf6d00095f03fc6",
+    "vertex-native.mjs": "dfe705f9c48fb20ed6d36153002d3f88edd7f207358ba2b40dfdd8202fffd432",
+    "vertex-schema.mjs": "b0ac90352015c2496eeb7f38f9287c77b2c146395c5fde44b5cebf4d4b5c8840",
+    "vertex-text-stream.mjs": "8558a7d17109973880bf845296fd42cdb4934de84815e6f30e6a24cbef3999d8",
+    "completion-integrity.mjs": "24a570cda3864299fb0be0ccca139ac64ce8aa85df382ef68d1e27103dee69e8",
+    "gemini4.mjs": "8a3e9fb618596735a4cfa1d0d17d3f1cdc6636a3668a1c3688ee247920c0cadc",
+    "wire.mjs": "bdfafb055e9db79d99ed8efed55a31cdbc0eaea1f7127744630027b5a8ae09f0"
+  },
+  "changes": "Imported modules unmodified. Tisya adapter is config/vertex-transport.js. No Unicode/image/gateway features imported."
+}

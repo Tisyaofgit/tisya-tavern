@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0-alpha.31.2",
+  "base_commit": "777f64167d9b92e7c1cade37a66bd27a1d1543d5",
+  "scope": "AT01 only; no KB01/C01 development source included",
+  "checked_at_utc": "2026-10-14T20:13:11.345985+00:00",
+  "checked_at_singapore": "2026-10-15T04:13:11.346107+08:00",
+  "build_checks": 9,
+  "tests": {
+    "total": 394,
+    "passed": 394,
+    "failed": 0,
+    "command": "npm test"
+  },
+  "transport_tests": 10,
+  "response_reader_tests": 18,
+  "prior_candidate_tests": {
+    "passed": 560,
+    "note": "Different development baseline; not counted as main verification"
+  },
+  "real_model_calls": 0,
+  "android_runs": 0,
+  "default_transport": "off",
+  "requests_per_eligible_generation": 1,
+  "automatic_retry": false,
+  "automatic_continuation": false,
+  "old_auxiliary_response_preserved_when_off_or_bypassed": true,
+  "test_dependencies": {
+    "node": "24.19.0",
+    "happy-dom": "20.14.5",
+    "yaml": "2.8.3",
+    "font_sha256": "b68d6b9e4f3607fad79ab20c744092139aa64590a0c82354d31361929aa3afcb",
+    "font_note": "Existing test asset restored locally from project; not changed in this commit"
+  },
+  "upstream_commit": "e9603b2c9d81f7d683801ca12b9f95e10a5a8732"
+}
