@@ -19,6 +19,23 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('opening user definitions initialize separate companions, relations and knowledge before narrative replay',async()=>{
+ const {createPersonaGateway}=await import('../tables/persona.js');const f=fixture();f.binding.primary='';f.binding.additional=[];
+ const original='阿青来自南城。';f.c.userAvatar='user.png';f.c.name1='阿青';f.c.powerUserSettings={personas:{'user.png':'阿青'},persona_descriptions:{'user.png':{description:original}},persona_description:original};
+ f.c.chat=[ai('【系统启动】'),user('开局设定：岚是守门人。阿青与岚原本是同门。岚开局知道阿青来自南城。'),ai('后来岚收到了银钥匙。')];
+ const sourceChat=structuredClone(f.c.chat),persona=createPersonaGateway({getContext:()=>f.c,persist:async()=>true}),service=f.makeService({persona});let mode='valid';
+ f.responder((task,input)=>{assert.equal(task,'templateInit');assert.deepEqual(input.sourceHistory.map(x=>x.text),sourceChat.map(x=>x.mes));const player=input.sourceUser.objectId;
+  if(mode==='late-ai')return {base:{changes:[op('new:key','objects',{名称:'银钥匙',类型:'item'},'后来岚收到了银钥匙。')]},initial:{changes:[]},notes:[]};
+  return {base:{changes:[op('new:lan','objects',{名称:'岚',类型:'character',描述:'守门人。'},'岚是守门人。')]},initial:{changes:[op('new:relation','relations',{名称:'开局同门',主体:player,对象:'new:lan',证据:'阿青与岚原本是同门。'},'阿青与岚原本是同门。'),{...op('new:known','cognition',{名称:'岚开局所知',主体:'new:lan',认识:'阿青来自南城。',获知途径:'开局设定',确认程度:'确认'},'岚开局知道阿青来自南城。'),access:{readers:['读者'],knowers:['new:lan']}}]},notes:[]};});
+ const draft=await service.cardTemplate();assert.equal((await service.inspect()).rows.length,0);await service.saveCardTemplate(draft);
+ const after=await f.makeService({persona}).inspect(),player=after.rows.find(r=>r.values.名称==='阿青'),lan=after.rows.find(r=>r.values.名称==='岚'),relation=after.rows.find(r=>r.table==='relations'),known=after.rows.find(r=>r.table==='cognition');
+ assert.equal(player.values.描述,original);assert.equal(after.rows.filter(r=>r.table==='objects').length,2);assert.equal(relation.values.主体,player.id);assert.equal(relation.values.对象,lan.id);assert.equal(known.values.主体,lan.id);assert.deepEqual(known.access.knowers,[lan.id]);assert.equal(after.rows.some(r=>r.table==='events'),false);assert.deepEqual(f.c.chat,sourceChat);
+ mode='late-ai';const late=await service.cardTemplate(),before=JSON.stringify([...f.saved]);await assert.rejects(service.saveCardTemplate(late),/连续原文证据/);assert.equal(JSON.stringify([...f.saved]),before);
+});
+test('initialization blockers leave all proposed origin and session writes unsaved',async()=>{
+ const f=fixture();f.binding.primary='';f.binding.additional=[];f.c.characters[0].description='岚是守门人。';f.responder(()=>({base:{changes:[op('new:lan','objects',{名称:'岚',类型:'character'},'岚是守门人。')]},initial:{changes:[],pending:['必需定义有冲突']},notes:[]}));
+ const draft=await f.service.cardTemplate(),before=JSON.stringify([...f.saved]);await assert.rejects(f.service.saveCardTemplate(draft),/初始化仍有阻塞项/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal((await f.service.inspect()).rows.length,0);
+});
 test('genesis accepts reordered JSON object keys without schema revisions but rejects real field changes',async()=>{
  const f=fixture();await f.service.initialize();const before=await f.service.inspect();
  const reorder=value=>Array.isArray(value)?value.map(reorder):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).reverse().map(([key,item])=>[key,reorder(item)])):value;
