@@ -1,3 +1,4 @@
+import {createSwipeGestureControl,mountSwipeGestureToggle} from './swipe-gestures.js';
 import {createRevisionController,revisionParagraphs,candidatePosition} from './revision.js';
 import {branchChat} from '/scripts/bookmarks.js';
 import {mountTableApp} from './tables/app.js';
@@ -72,6 +73,7 @@ async function startFont(){
  finally{clearTimeout(timer);if(fontController===controller)fontController=null;}
 }
 const context = () => getContext();
+const swipeGestures=createSwipeGestureControl({getContext:context,persist:saveSettings,onSync:state=>{const checkbox=query('#gestures-checkbox');if(checkbox&&state.available)checkbox.checked=state.enabled;}});
 const configStore=createStore({getContext:context,persist:saveSettings,assertIdle,legacy:()=>readNarrative(context()).settings});
 let requiredPreset=null;
 async function mandatoryPresetSource(){if(!requiredPreset){const response=await fetch(new URL('./presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url));if(!response.ok)throw Error('必需协议加载失败，请更新并重启扩展');requiredPreset=await response.json();}return {prompts:requiredPreset.prompts,order:requiredPreset.prompt_order[0].order};}
@@ -337,10 +339,11 @@ function openRevision(token){
  assertIdle();const message=validate(context(),token,{tail:true});if(message.is_user||message.is_system)throw Error('请选择角色回复进行重骰');
  const preferencesAvailable=configStore.read().world.tables?.enabled===true;
  const key=JSON.stringify([token.chatId,token.id,token.swipe??0,token.text]),draft=revisionDrafts.get(key)??{mode:'whole',selected:[],direction:'',remember:false},parts=revisionParagraphs(token.text),position=candidatePosition(message);
- sheet('重骰与段落反馈',`<p>当前版本 ${esc(position.label)}。旧版本会保留；${token.id<token.length-1?'将在新分支重骰，原聊天及后文完整保留。':'可以用消息下的箭头随时切换。'}</p><label>修改范围<select id="tisya-revision-mode"><option value="whole">重写全文</option><option value="partial">只改勾选段落</option></select></label><fieldset><legend>标记不满意的段落</legend>${parts.map(p=>`<label style="display:block"><input type="checkbox" data-revision-paragraph="${p.id}" ${draft.selected.includes(p.id)?'checked':''}>第 ${p.id} 段<pre style="white-space:pre-wrap;max-height:12em;overflow:auto">${esc(p.raw)}</pre></label>`).join('')}</fieldset><label>希望怎么修改<textarea id="tisya-revision-direction" aria-label="修改方向">${esc(draft.direction)}</textarea></label><label><input type="checkbox" id="tisya-revision-remember" ${draft.remember?'checked':''} ${preferencesAvailable?'':'disabled'}>另提长期偏好候选，确认后才录入</label><p role="status" id="tisya-revision-status">${preferencesAvailable?'未勾选长期偏好时，修改要求仅本次有效。':'启用表单推进后，可把修改方向另提为待确认的偏好候选。'}</p>${button('生成新版本','revision-submit')}`);
+ sheet('重骰与段落反馈',`<p>当前版本 ${esc(position.label)}。旧版本会保留；${token.id<token.length-1?'将在新分支重骰，原聊天及后文完整保留。':'可以用消息下的箭头随时切换。'}</p><label>修改范围<select id="tisya-revision-mode"><option value="whole">重写全文</option><option value="partial">只改勾选段落</option></select></label><fieldset><legend>标记不满意的段落</legend>${parts.map(p=>`<label style="display:block"><input type="checkbox" data-revision-paragraph="${p.id}" ${draft.selected.includes(p.id)?'checked':''}>第 ${p.id} 段<pre style="white-space:pre-wrap;max-height:12em;overflow:auto">${esc(p.raw)}</pre></label>`).join('')}</fieldset><label>希望怎么修改<textarea id="tisya-revision-direction" aria-label="修改方向">${esc(draft.direction)}</textarea></label><label><input type="checkbox" id="tisya-revision-remember" ${draft.remember?'checked':''} ${preferencesAvailable?'':'disabled'}>另提长期偏好候选，确认后才录入</label><p role="status" id="tisya-revision-status">${preferencesAvailable?'未勾选长期偏好时，修改要求仅本次有效。':'启用表单推进后，可把修改方向另提为待确认的偏好候选。'}</p><fieldset><legend>防误触</legend><div id="tisya-revision-gestures"></div></fieldset>${button('生成新版本','revision-submit')}`);
  overlay._messageToken=token;overlay._revisionKey=key;query('#tisya-revision-mode').value=draft.mode;
  const read=()=>({mode:query('#tisya-revision-mode').value,selected:[...overlay.querySelectorAll('[data-revision-paragraph]:checked')].map(n=>Number(n.dataset.revisionParagraph)),direction:query('#tisya-revision-direction').value,remember:preferencesAvailable&&query('#tisya-revision-remember').checked});
  const save=()=>revisionDrafts.set(key,read());for(const node of overlay.querySelectorAll('input,textarea,select'))node.addEventListener('input',save);save();
+ mountSwipeGestureToggle(document,query('#tisya-revision-gestures'),{control:swipeGestures,onError:error});
 }
 async function submitRevision(){const token=overlay._messageToken,options=revisionDrafts.get(overlay._revisionKey);assertIdle();validate(context(),token,{tail:true});close();closeNativeDrawers();hidePage();releaseComposerDraft=isolateComposerDraft(document,{text:'',scope:configStore.read().key,getScope:()=>configStore.read().key,onUnrestored:draft=>parkedComposerDrafts.set(draft.scope,draft)});try{await revisionController.generate(token,options);}finally{restoreComposer();tableService.clear({scope:'generation'});decorate();}}
 async function generateAt(token, reroll = false) {
