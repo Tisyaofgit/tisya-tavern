@@ -1,0 +1,70 @@
+{
+  "task": "AT02",
+  "version": "0.2.0-alpha.31.3",
+  "recorded_utc": "2026-10-14T21:03:28.126998+00:00",
+  "base_commit": "a173ca74757139cf477e6321ccf68b7cd01537d4",
+  "authorization": [
+    "移除旧Vertex实现",
+    "OpenAI Chat Completions与自定义Gemini generateContent",
+    "按已有授权直接合main并更新蓝图"
+  ],
+  "checks": {
+    "build_checks": 9,
+    "tests": 404,
+    "passed": 404,
+    "failed": 0,
+    "skipped": 0,
+    "original_host_function_checks": 3,
+    "original_host_function_simulated_requests": 2,
+    "live_model_calls": 0,
+    "android_runs": 0,
+    "native_backend_runs": 0
+  },
+  "protocols": [
+    "openai",
+    "custom/openai_compat",
+    "custom/gemini_generate_content"
+  ],
+  "modes": [
+    "off (default)",
+    "tool-text",
+    "verify"
+  ],
+  "calls": "one upstream request; no retry, continuation or fallback",
+  "legacy": "vertex-streaming remains readable but retired and disabled in UI; explicit reselection required",
+  "coverage": [
+    "stream/buffer and main/aux paths",
+    "finish markers, malformed JSON/UTF-8, after-finish data",
+    "model ignores tool format",
+    "HTTP503 and host-wrapped CPU503 even with STOP",
+    "stop/context/endpoint changes, ownership, payload tampering and tool replay",
+    "synthetic tools removed from normalized native history"
+  ],
+  "limitations": [
+    "protocol success does not prove intended prose completeness",
+    "Gemini tool output may arrive all at once",
+    "host-normalized buffered Gemini may omit original finishReason; visibly labelled",
+    "pure text only; existing tools/history, schemas, media, proxies and unsupported protocols bypass",
+    "CPU503 is not fixed by client transport; previous silent truncations remain unattributed",
+    "real providers/native backend/Android not exercised"
+  ],
+  "logs": [
+    {
+      "file": "AT02-full-suite-first.log",
+      "sha256": "3c4d82a31b7e5ba74546e471a6b3b11c7dc27c82a321e417e8b72432e47607d0"
+    },
+    {
+      "file": "AT02-full-suite-final.log",
+      "sha256": "e8a815c80e7c677adc9ad7dddd61f755b8d42f679915519ce4e34ecd9e30e07f"
+    },
+    {
+      "file": "AT02-full-suite-corrected.log",
+      "sha256": "a0db4a44d381f6419c0661b08c52a2ccb8f26b3fe2ee5bb1bb83301fc8e6520f"
+    },
+    {
+      "file": "AT02-host-reader-result.json",
+      "sha256": "4e669276eaf954904ebaa1332b55bc08c54dc0ea83cb842fbfdb5adfae9d16da"
+    }
+  ],
+  "test_history": "First full run402 passed; final404 run found legacy UI placeholder selectable; corrected retired option disabled and404 all passed. Failure evidence retained."
+}
