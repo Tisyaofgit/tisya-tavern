@@ -51,8 +51,8 @@ const mapReason=reason=>reason==='STOP'?'stop':reason==='MAX_TOKENS'?'length':/S
 
 // Inspect native Gemini text without losing signatures or opaque metadata on
 // the main-chat path. The original event is carried locally through validation.
-export function geminiTextStream(response,status){
- let terminal=false,done=false;
+export function geminiTextStream(response,status,{allowTools=false}={}){
+ let terminal=false,done=false,toolIndex=0,hasTools=false;
  return transformSse(response,({data,event},emit)=>{
   if(!data){if(event==='error')throw transportFailure('upstream_stream_error');return;}
   if(done)throw transportFailure('data_after_done');
@@ -61,14 +61,17 @@ export function geminiTextStream(response,status){
   if(!object(p)||p.error||event==='error')throw transportFailure('upstream_stream_error');
   if(p.candidates!==undefined&&(!Array.isArray(p.candidates)||p.candidates.length>1))throw transportFailure('invalid_candidates');
   const c=p.candidates?.[0];if(c!==undefined&&(!object(c)||(c.index!==undefined&&c.index!==0)))throw transportFailure('invalid_candidate');
-  const parts=c?.content?.parts??[];if(!Array.isArray(parts)||parts.some(x=>!object(x)||x.functionCall||x.functionResponse||x.inlineData||x.fileData))throw transportFailure('unexpected_content');
+  const parts=c?.content?.parts??[];if(!Array.isArray(parts)||parts.some(x=>!object(x)||(!allowTools&&(x.functionCall||x.functionResponse))||x.inlineData||x.fileData))throw transportFailure('unexpected_content');
   let content='',reasoning='';for(const part of parts){if(part.text!==undefined&&typeof part.text!=='string')throw transportFailure('invalid_text');if(part.thought)reasoning+=part.text??'';else content+=part.text??'';}
+  const calls=[];
+  for(const part of parts)if(part.functionCall){const f=part.functionCall;if(typeof f.name!=='string'||!f.name||!object(f.args)||f.partialArgs||f.willContinue)throw transportFailure('invalid_tool_arguments');calls.push({index:toolIndex++,id:f.id,type:'function',function:{name:f.name,arguments:JSON.stringify(f.args)}});}
+  hasTools ||= calls.length>0;
   const reason=c?.finishReason??p.promptFeedback?.blockReason;
-  if(terminal&&(content||reasoning||reason))throw transportFailure('data_after_finish');
+  if(terminal&&(content||reasoning||calls.length||reason))throw transportFailure('data_after_finish');
   if(reason!==undefined){status.nativeFinishReason=nativeReason(reason);terminal=true;}
   // Tauri may append choices[].delta.native as history metadata after STOP.
   if(p.choices?.some(x=>x.delta?.content||x.delta?.tool_calls||x.finish_reason))throw transportFailure('invalid_native_envelope');
-  const choices=c||reason!==undefined?[{index:0,delta:{...(content?{content}:{}),...(reasoning?{reasoning_content:reasoning}:{})},...(reason!==undefined?{finish_reason:mapReason(reason),native_finish_reason:nativeReason(reason)}:{})}]:[];
+  const choices=c||reason!==undefined?[{index:0,delta:{...(content?{content}:{}),...(reasoning?{reasoning_content:reasoning}:{}),...(calls.length?{tool_calls:calls}:{})},...(reason!==undefined?{finish_reason:reason==='STOP'&&hasTools?'tool_calls':mapReason(reason),native_finish_reason:nativeReason(reason)}:{})}]:[];
   emit(sseData({choices,tisyaNativeFrame:p}));
  },emit=>{if(!terminal)throw transportFailure('missing_finish_reason');emit(sseData('[DONE]'));});
 }
@@ -88,7 +91,7 @@ function normalizeGemini(value,status){
  const message={role:'assistant',content:''},calls=[];
  for(const part of parts){
   if(!object(part))throw transportFailure('invalid_part');
-  if(part.functionCall){const f=part.functionCall;if(typeof f.name!=='string'||!object(f.args))throw transportFailure('invalid_tool_arguments');calls.push({id:f.id??'text_transport',type:'function',function:{name:f.name,arguments:JSON.stringify(f.args)}});}
+  if(part.functionCall){const f=part.functionCall;if(typeof f.name!=='string'||!f.name||!object(f.args)||f.partialArgs||f.willContinue)throw transportFailure('invalid_tool_arguments');calls.push({id:f.id??'text_transport',type:'function',function:{name:f.name,arguments:JSON.stringify(f.args)}});}
   else if(typeof part.text==='string'){if(part.thought)message.reasoning_content=(message.reasoning_content??'')+part.text;else message.content+=part.text;}
   else if(part.inlineData||part.fileData)throw transportFailure('unexpected_content');
  }
@@ -107,21 +110,22 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   raw+=decoder.decode();let value;try{value=JSON.parse(raw);}catch{throw transportFailure('invalid_json');}
   if(Number.isInteger(value?.error?.code))status.upstreamStatus=value.error.code;
   if(!object(value)||value.error)throw transportFailure('upstream_error');
+  const original=value;
   if(plan.protocol==='gemini')value=normalizeGemini(value,status);else status.completionEvidence='provider';
   if(!Array.isArray(value.choices)||value.choices.length!==1)throw transportFailure('invalid_choices');
   const before=inspectCompletion(value);Object.assign(status,{finishReason:before.integrity.finishReason});
   if(!before.valid)throw transportFailure(before.reason);
   if(['length','content_filter'].includes(before.integrity.outcome))throw transportFailure(before.integrity.outcome==='length'?'length':'filtered');
   if(plan.toolName){value=restoreAntiTruncationCompletion(value,plan.toolName);status.restored=value.router_anti_truncation?.restored===true;if(!status.restored)throw transportFailure('not_restored');}
-  const checked=inspectCompletion(value);if(!checked.valid||checked.integrity.outcome!=='complete')throw transportFailure(checked.reason??'unexpected_tools');
+  const checked=inspectCompletion(value),toolTurn=plan.allowTools&&checked.integrity.outcome==='tool_calls';if(!checked.valid||checked.integrity.outcome!=='complete'&&!toolTurn)throw transportFailure(checked.reason??'unexpected_tools');
   const message=value.choices[0].message;
-  if(typeof message.content!=='string'||!message.content.trim())throw transportFailure('empty_completion');
+  if(!toolTurn&&(typeof message.content!=='string'||!message.content.trim()))throw transportFailure('empty_completion');
   if(plan.toolName){
    // A synthetic function is never persisted as an executable/native tool turn.
    delete message.native;delete message.function_call;
    if(plan.protocol==='gemini')value.responseContent={role:'model',parts:[...(message.reasoning_content?[{thought:true,text:message.reasoning_content}]:[]),{text:message.content}]};
   }
-  Object.assign(status,{outcome:'complete',finishReason:checked.integrity.finishReason});
-  return new Response(JSON.stringify(value),{headers:{'content-type':'application/json'}});
+  Object.assign(status,{outcome:checked.integrity.outcome,toolTurn:!!toolTurn,finishReason:checked.integrity.finishReason});
+  return new Response(JSON.stringify(plan.mode==='verify-tools'?original:value),{headers:{'content-type':'application/json'}});
  }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
 }

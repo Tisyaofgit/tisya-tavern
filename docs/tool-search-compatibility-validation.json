@@ -1,0 +1,26 @@
+{
+  "task": "AT06",
+  "version": "0.2.0-alpha.31.6",
+  "base_commit": "fa4892dae0286c0b3d77f3ddd2905499f148ff51",
+  "recorded_utc": "2026-10-14T21:53:30.383516+00:00",
+  "tests": {
+    "total": 72,
+    "passed": 72,
+    "failed": 0,
+    "full_suite_rerun": false,
+    "model_calls": 0,
+    "native_backend_runs": 0,
+    "android_runs": 0
+  },
+  "scope": "Explicit verify-tools integrity-only compatibility; preserves original requests and response metadata; tool handoff gated from final-text archive. Not mixed synthetic-body wrapping.",
+  "source_reference_commit": "f6126b4fc9243eb3990f2c0bad86e2afcb502f22",
+  "official_reference": "https://ai.google.dev/gemini-api/docs/generate-content/tool-combination",
+  "limits": [
+    "Full body wrapping with real tools/search not implemented",
+    "Cannot repair truncation/503 or prove semantic completeness",
+    "Reference backend may differ from installed APK",
+    "Search requested is not search executed",
+    "Previous AT04 blank cause unresolved"
+  ],
+  "log_sha256": "78cacd6b7e3f1996c06996c2164e4f999faf63ee87d9dc6bfb010398904a4647"
+}

@@ -7,7 +7,7 @@ import {guardCompletionStream} from '../vendor/vertex-transport/completion-integ
 import {geminiTextStream,bufferedResponse,observeResponse,transportFailure} from './transport-response.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 
-export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['verify','仅检查完整结束（不包装正文）']];
+export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['verify','仅检查完整结束（不包装正文）'],['verify-tools','工具／搜索兼容检查（不包装正文）']];
 const PATH='/api/backends/chat-completions/generate',OWNER=Symbol.for('tisya.vertex-transport'),OTHER=Symbol.for('vertex-anti-truncation.fetch');
 const LIMIT=8*1024*1024,OUTPUT_LIMIT=32*1024*1024;
 const bytes=value=>new TextEncoder().encode(value).length;
@@ -18,6 +18,8 @@ export const transportReason=reason=>reasonLabels[reason]??reason;
 
 export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  if(mode!=='vertex-streaming'&&!TRANSPORT_MODES.some(([id])=>id===mode))throw problem('TISYA_TRANSPORT_MODE','正文传输配置无效');
+ const compatible=mode==='verify-tools';
+ const checking=mode==='verify'||compatible;
  const skip=reason=>({payload,audit:{mode,state:mode==='off'?'off':'bypassed',reason,label:transportReason(reason)}});
  if(mode==='off')return skip('off');
  if(mode==='vertex-streaming')return skip('retired');
@@ -26,16 +28,16 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  const protocol=custom&&format==='gemini_generate_content'?'gemini':payload.chat_completion_source==='openai'||custom&&format==='openai_compat'?'openai':null;
  if(!protocol)return skip('provider');
  if(payload.reverse_proxy)return skip('proxy');
- if(payload.tools?.length||payload.functions?.length||payload.tool_choice!=null||payload.function_call!=null)return skip('tools');
+ if(!compatible&&(payload.tools?.length||payload.functions?.length||payload.tool_choice!=null||payload.function_call!=null))return skip('tools');
  if(payload.json_schema||payload.responseSchema||payload.responseMimeType&&payload.responseMimeType!=='text/plain'||payload.response_format&&payload.response_format.type!=='text')return skip('schema');
  if(payload.n!=null&&payload.n!==1||payload.best_of!=null&&payload.best_of!==1)return skip('candidates');
- if(payload.enable_web_search)return skip('search');
+ if(payload.enable_web_search&&!compatible)return skip('search');
  if(!Array.isArray(payload.messages)||!payload.messages.length)throw problem('TISYA_TRANSPORT_MESSAGES','正文传输请求缺少消息');
- if(payload.messages.some(m=>m.role==='tool'||m.role==='function'||m.tool_calls?.length||m.function_call||m.tool_call_id||m.native))return skip('history');
- if(payload.request_images||payload.messages.some(m=>!['system','developer','user','assistant'].includes(m.role)||typeof m.content!=='string'&&!(Array.isArray(m.content)&&m.content.every(p=>p?.type==='text'&&typeof p.text==='string'))))return skip('media');
+ if(!compatible&&payload.messages.some(m=>m.role==='tool'||m.role==='function'||m.tool_calls?.length||m.function_call||m.tool_call_id||m.native))return skip('history');
+ if(payload.request_images||payload.messages.some(m=>!(compatible?['system','developer','user','assistant','tool','function']:['system','developer','user','assistant']).includes(m.role)||!(compatible&&m.content==null&&(m.tool_calls?.length||m.function_call))&&typeof m.content!=='string'&&!(Array.isArray(m.content)&&m.content.every(p=>p?.type==='text'&&typeof p.text==='string'))))return skip('media');
  let included={};
  try{if(payload.custom_include_body)included=typeof payload.custom_include_body==='string'?JSON.parse(payload.custom_include_body):structuredClone(payload.custom_include_body);}catch{return skip('parameters');}
- if(!object(included)||payload.custom_exclude_body&&String(payload.custom_exclude_body).trim()||Object.keys(included).some(k=>/^(tools?|toolConfig|tool_choice|parallel_tool_calls|functions?|function_call|contents?|messages?|systemInstruction|cachedContent|stream|stream_options|n|best_of|response_format|responseSchema|responseMimeType)$/i.test(k))||included.generationConfig?.responseSchema||included.generationConfig?.responseJsonSchema||included.generationConfig?.responseMimeType&&included.generationConfig.responseMimeType!=='text/plain'||included.generationConfig?.candidateCount>1)return skip('parameters');
+ if(!object(included)||payload.custom_exclude_body&&String(payload.custom_exclude_body).trim()||Object.keys(included).some(k=>!(compatible&&['tools','toolConfig','tool_choice','parallel_tool_calls','functions','function_call'].includes(k))&&/^(tools?|toolConfig|tool_choice|parallel_tool_calls|functions?|function_call|contents?|messages?|systemInstruction|cachedContent|stream|stream_options|n|best_of|response_format|responseSchema|responseMimeType)$/i.test(k))||included.generationConfig?.responseSchema||included.generationConfig?.responseJsonSchema||included.generationConfig?.responseMimeType&&included.generationConfig.responseMimeType!=='text/plain'||included.generationConfig?.candidateCount>1)return skip('parameters');
  const continuation=payload.type==='continue',prepared=prepareAntiTruncation({messages:payload.messages},mode==='tool-text',false,{continuation});
  const id=prepared.toolName??'tisya_check_'+crypto.randomUUID();
  let wire=structuredClone(payload),native;
@@ -49,13 +51,13 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
   }
  }
  if(bytes(JSON.stringify(wire))>LIMIT)return skip('size');
- return {payload:wire,plan:{id,toolName:prepared.toolName,protocol,model:payload.model,stream:payload.stream===true,continuation,mode},
-  audit:{mode,protocol,state:'prepared',label:mode==='verify'?'已准备完整性检查':'已准备正文抗截断',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
+ return {payload:wire,plan:{id,toolName:prepared.toolName,protocol,model:payload.model,stream:payload.stream===true,continuation,mode,allowTools:compatible},
+  audit:{mode,protocol,state:'prepared',label:checking?'已准备完整性检查':'已准备正文抗截断',allowTools:compatible,searchRequested:payload.enable_web_search===true,toolsRequested:!!(payload.tools?.length||payload.functions?.length),protection:checking?'integrity-only':'tool-text',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
 }
 
 // The host must not commit a truncated reply merely because it saw a finish
 // frame. Release terminal frames only after the complete upstream is verified.
-function verifiedStream(response,{guard,signal,status,onComplete,onFailure}){
+function verifiedStream(response,{guard,signal,status,onComplete,onFailure,allowTools=false}){
  let integrity,restored=null,held=[],heldBytes=0,total=0,terminal=false,controller,reader,settled=false,emitted=0;
  const checked=guardCompletionStream(response,meta=>{integrity=meta;Object.assign(status,{outcome:meta.outcome,finishReason:meta.finishReason,nativeFinishReason:meta.nativeFinishReason});},null,OUTPUT_LIMIT);
  reader=checked.body.getReader();const encoder=new TextEncoder();
@@ -75,9 +77,9 @@ function verifiedStream(response,{guard,signal,status,onComplete,onFailure}){
    if(!part.done){parser.push(part.value);continue;}
    parser.finish();if(!integrity?.streamDone)throw problem('TISYA_TRANSPORT_INCOMPLETE','抗截断流缺少完整结束信息');
    Object.assign(status,{outcome:integrity.outcome,finishReason:integrity.finishReason,nativeFinishReason:integrity.nativeFinishReason,restored});
-   if(integrity.outcome!=='complete')throw transportFailure(integrity.outcome==='length'?'length':integrity.outcome==='content_filter'?'filtered':'incomplete');
+   if(integrity.outcome!=='complete'&&!(allowTools&&integrity.outcome==='tool_calls'))throw transportFailure(integrity.outcome==='length'?'length':integrity.outcome==='content_filter'?'filtered':'incomplete');
    if(status.mode==='tool-text'&&restored!==true)throw transportFailure('not_restored');
-   settled=true;finish();Object.assign(status,{state:'complete',label:'本次完整结束'});
+   settled=true;finish();Object.assign(status,{toolTurn:integrity.outcome==='tool_calls'});
    onComplete();for(const frame of held)c.enqueue(frame);c.close();}
   }catch(e){if(settled)return;settled=true;finish();reader.cancel(e).catch(()=>{});onFailure(e,signal?.aborted?'cancelled':'error');c.error(e);}},
   cancel(reason){if(!settled){settled=true;finish();onFailure(reason??problem('TISYA_TRANSPORT_CANCELLED','抗截断读取提前结束'),'cancelled');}return reader.cancel(reason);},
@@ -137,13 +139,13 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
     e.status.httpStatus=response.status;if(!response.ok){failed(problem('TISYA_TRANSPORT_HTTP','上游请求失败'));return response;}
     if(!response.body)throw problem('TISYA_TRANSPORT_EMPTY','抗截断请求没有响应正文');
     const observed=observeResponse(response,e.status,now);
-    const complete=()=>{Object.assign(e.status,{state:'complete',label:e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
-    if(!e.plan.stream){const result=await bufferedResponse(observed,e.plan,e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
+    const complete=()=>{Object.assign(e.status,{state:e.status.toolTurn?'tool-handoff':'complete',label:e.status.toolTurn?'工具调用响应完整，交回酒馆处理；尚非最终正文':e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
+    if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,allowTools:e.plan.allowTools&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
     if(!/text\/event-stream/i.test(response.headers.get('content-type')??'')){await observed.body.cancel();throw transportFailure('content_type');}
     let usage;
-    const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status)):observed;
+    const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main'})):observed;
     const restored=e.plan.toolName?wrapAntiTruncationStream(translated,e.plan.toolName):translated;
-    const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed});
+    const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed,allowTools:e.plan.allowTools&&e.kind==='main'});
     return errorEvents(e.kind==='main'&&e.plan.protocol==='gemini'?nativeStream(checked,()=>usage):checked,controller.signal);
    }catch(error){failed(error,controller.signal.aborted?'cancelled':'error');throw error;}
   };

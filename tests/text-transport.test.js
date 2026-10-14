@@ -220,3 +220,68 @@ test('old Vertex is absent from every option, displays off, and never silently e
  await [...dom.querySelectorAll('button')].find(b=>b.textContent==='保存配置').onclick();assert.equal(f.store.read().data.routes.global.transport,'vertex-streaming');assert.equal(f.calls.length,0);
  ui.dispose();f.transport.dispose();window.happyDOM.abort();
 });
+
+test('tool/search check is explicit, retains requests and history, never adds a synthetic tool',()=>{
+ const tool={type:'function',function:{name:'weather',parameters:{type:'object'}}};
+ for(const make of [openai,request]){
+  const p=make({tools:[tool],tool_choice:'auto',enable_web_search:true,messages:[{role:'assistant',content:null,tool_calls:[{id:'real-1',type:'function',function:{name:'weather',arguments:'{}'}}],native:{gemini:{content:{parts:[{functionCall:{name:'weather',args:{}},thoughtSignature:'preserve'}]}}}},{role:'tool',tool_call_id:'real-1',content:'晴天'},{role:'user',content:'总结'}],custom_include_body:JSON.stringify({toolConfig:{includeServerSideToolInvocations:true}})});
+  const before=structuredClone(p),r=prepareTextTransport(p,'verify-tools');assert.ok(r.plan);assert.deepEqual(r.payload,before);assert.deepEqual(p,before);assert.equal(r.plan.toolName,null);assert.equal(r.audit.protection,'integrity-only');assert.equal(r.audit.searchRequested,true);assert.equal(r.audit.toolsRequested,true);
+  assert.equal(prepareTextTransport(p,'tool-text').audit.state,'bypassed');
+ }
+ const config=emptyConfig();config.routes.global.transport='verify-tools';assert.equal(validateConfig(config),config);
+});
+
+test('tool/search main buffered check preserves complete envelope, signatures, citations and real calls',async()=>{
+ const real={id:'call-1',type:'function',function:{name:'weather',arguments:'{"city":"上海"}'}};
+ for(const make of [openai,request])for(const native of [false,true])for(const toolTurn of [false,true]){
+  if(make===openai&&native)continue;
+  const parts=toolTurn?[{functionCall:{name:'weather',id:'call-1',args:{city:'上海'}},thoughtSignature:'signature'}]:[{text:'晴天',thoughtSignature:'signature'}];
+  const original=native?{candidates:[{content:{role:'model',parts},finishReason:'STOP',groundingMetadata:{groundingChunks:[{web:{uri:'https://example.test',title:'天气'}}]}}],usageMetadata:{totalTokenCount:3}}:{choices:[{message:{role:'assistant',content:toolTurn?null:'晴天',...(toolTurn?{tool_calls:[real]}:{}),native:{gemini:{content:{role:'model',parts}}},annotations:[{type:'url_citation',url_citation:{url:'https://example.test'}}]},finish_reason:toolTurn?'tool_calls':'stop'}],usage:{total_tokens:3},extraProviderField:'keep'};
+  const s=setup(()=>jsonResponse(original)),p=make({stream:false,enable_web_search:true,tools:[{type:'function',function:{name:'weather'}}]}),r=s.transport.prepare(p,'verify-tools');
+  const status=s.transport.authorize(r.payload,r,{kind:'main'}),body=await(await s.send(r.payload)).json();
+  assert.deepEqual(body,original);assert.deepEqual(s.calls[0].body,p);assert.equal(s.calls.length,1);assert.equal(status.state,toolTurn?'tool-handoff':'complete');assert.equal(status.toolTurn,toolTurn);assert.notEqual(status.restored,true);s.transport.dispose();
+ }
+});
+
+test('tool/search streaming checks preserve native real calls and grounding; tool handoff is not final text',async()=>{
+ for(const make of [openai,request])for(const toolTurn of [false,true]){
+  const native=make===request;
+  const part=toolTurn?{functionCall:{id:'call-1',name:'weather',args:{city:'上海'}},thoughtSignature:'keep-signature'}:{text:'晴天',thoughtSignature:'keep-signature'};
+  const nativeFrame={candidates:[{content:{role:'model',parts:[part]},groundingMetadata:{groundingChunks:[{web:{uri:'https://example.test'}}]}}]};
+  const delta=toolTurn?{tool_calls:[{index:0,id:'call-1',type:'function',function:{name:'weather',arguments:'{"city":"上海"}'}}]}:{content:'晴天',annotations:[{type:'url_citation',url_citation:{url:'https://example.test'}}]};
+  const raw=native?event(nativeFrame)+end():chatChunk(delta)+chatEnd(toolTurn?'tool_calls':'stop');
+  const s=setup(()=>new Response(raw,{headers:{'content-type':'text/event-stream'}})),r=s.transport.prepare(make({enable_web_search:true,tools:[{type:'function',function:{name:'weather'}}]}),'verify-tools');
+  const status=s.transport.authorize(r.payload,r,{kind:'main'}),out=await readFrames(await s.send(r.payload));
+  if(native)assert.deepEqual(out[0],nativeFrame);else assert.deepEqual(out[0].choices[0].delta,delta);
+  assert.equal(status.state,toolTurn?'tool-handoff':'complete');assert.equal(status.toolTurn,toolTurn);assert.notEqual(status.restored,true);assert.equal(s.calls.length,1);s.transport.dispose();
+ }
+});
+
+test('tool/search compatibility still rejects truncated tools, invalid args, length and 503 without retries',async()=>{
+ for(const native of [false,true])for(const failure of ['missing','bad-args','length','503']){
+  const raw=native?call({name:'weather',args:failure==='bad-args'?'bad':{city:'上海'}})+(failure==='missing'?'':end(failure==='length'?'MAX_TOKENS':'STOP')):chatChunk({tool_calls:[{index:0,function:{name:'weather',arguments:failure==='bad-args'?'broken':'{"city":"上海"}'}}]})+(failure==='missing'?'':chatEnd(failure==='length'?'length':'tool_calls'));
+  const s=setup(()=>failure==='503'?new Response('overloaded',{status:503}):new Response(raw,{headers:{'content-type':'text/event-stream'}})),r=s.transport.prepare((native?request:openai)({enable_web_search:true}),'verify-tools');
+  const status=s.transport.authorize(r.payload,r,{kind:'main'}),response=await s.send(r.payload),text=await response.text();
+  assert.equal(status.state,'error');assert.equal(s.calls.length,1);if(failure!=='503'){assert.match(text,/"error"/);assert.doesNotMatch(text,/"finishReason":"STOP"|"finish_reason":"tool_calls"/);}s.transport.dispose();
+ }
+});
+
+test('auxiliary tools are not executed or misreported as a complete text answer',async()=>{
+ for(const stream of [true,false]){
+  const s=setup(()=>stream?new Response(chatChunk({tool_calls:[{index:0,function:{name:'weather',arguments:'{}'}}]})+chatEnd('tool_calls'),{headers:{'content-type':'text/event-stream'}}):jsonResponse({choices:[{message:{tool_calls:[{function:{name:'weather',arguments:'{}'}}]},finish_reason:'tool_calls'}]})),r=s.transport.prepare(openai({stream}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'auxiliary'});
+  if(stream)assert.match(await(await s.send(r.payload)).text(),/"error"/);else await assert.rejects(s.send(r.payload));
+  assert.equal(status.state,'error');assert.equal(s.calls.length,1);s.transport.dispose();
+ }
+});
+
+test('production archive gate waits through a real tool handoff and accepts only the final text turn',async()=>{
+ let toolTurn=true;
+ const f=fixture(()=>{},()=>new Response((toolTurn?call({name:'weather',args:{city:'上海'}}):google({content:{parts:[{text:'最终回答'}]}}))+end(),{headers:{'content-type':'text/event-stream'}}));
+ f.d.routes.global.transport='verify-tools';
+ try{
+  await f.host.before('normal');let p=request({enable_web_search:true});await f.host.payloadReady(p);await(await f.send(p)).text();
+  assert.equal(f.host.preview().transport.state,'tool-handoff');assert.equal(f.host.generationAccepted(),false);
+  f.host.clear();toolTurn=false;await f.host.before('normal');p=request({enable_web_search:true});await f.host.payloadReady(p);await(await f.send(p)).text();
+  assert.equal(f.host.preview().transport.state,'complete');assert.equal(f.host.generationAccepted(),true);assert.equal(f.calls.length,2);
+ }finally{f.transport.dispose();}
+});
