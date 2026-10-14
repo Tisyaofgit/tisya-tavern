@@ -480,3 +480,20 @@ test('preserved raw auxiliary text cannot acquire archival evidence authority',a
  const f=fixture();await f.service.initialize();f.c.chat=[ai('<body>门仍关闭。</body><memory>门已经打开。</memory>'),user('继续')];f.responder((task,input)=>{assert.equal(input.sourceHistory[0].text,f.c.chat[0].mes);return {changes:[op('new:bad','events',{名称:'开门',经过:'门已经打开。'},'门已经打开。')]};});
  const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert(result.pending.length);assert.equal((await f.service.inspect()).rows.length,0);assert.equal((await f.service.scan())[0].archived,false);
 });
+
+test('reroll feedback remains pending across candidate changes and confirmation survives story branch selection',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,preferences:true,archive:false,plot:false});f.c.chat=[user('继续'),{...ai('旧候选'),swipe_id:0,swipes:['旧候选','新候选']}];
+ f.responder(()=>({templates:[],changes:[op('new:short','preferences',{名称:'短句',内容:'以后多用短句',性质:'明确要求',强度:'喜爱',类别:'文风',作用域:{会话:['one']},启用:true},'以后多用短句')]}));
+ const feedback={format:'tisya.revision/1',id:'feedback-1',chatId:'one',messageId:1,candidate:0,source:'旧候选',direction:'以后多用短句',mode:'whole',selected:[],remember:true,result:'accepted'};
+ assert.deepEqual(await f.service.recordRevisionFeedback(feedback),{recorded:true,pending:1});let info=await f.service.inspect();assert.equal(info.rows.filter(r=>r.table==='preferences').length,0);assert.equal(info.preferenceDrafts[0].status,'pending');assert.equal(f.calls.at(-1).input.userInput,feedback.direction);assert.equal(f.calls.at(-1).input.rerollFeedback.source,feedback.source);
+ f.c.chat[1].mes='新候选';f.c.chat[1].swipe_id=1;info=await f.service.inspect();assert.equal(info.preferenceDrafts.length,1);await f.service.reviewPreference(info.preferenceDrafts[0].id,info.preferenceDrafts[0].proposal);f.c.chat[1].mes='旧候选';f.c.chat[1].swipe_id=0;info=await f.service.inspect();assert.equal(info.rows.filter(r=>r.table==='preferences').length,1);assert.equal(info.session.commits.at(-1).depends,null);assert.equal(info.session.commits.at(-1).source,null);
+ const calls=f.calls.length;await f.service.recordRevisionFeedback(feedback);assert.equal(f.calls.length,calls);await f.service.recordRevisionFeedback({...feedback,id:'feedback-2',remember:false,direction:'这次改短'});assert.equal(f.calls.length,calls);assert.equal((await f.service.inspect()).session.revisionFeedback.length,2);
+});
+
+test('reroll branch preserves candidate ledger instead of freezing the replaced candidate into seed',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false,preferences:false});f.c.chat=[ai('甲在北门'),user('继续'),{...ai('甲拿到蓝夹'),swipe_id:0,swipes:['甲拿到蓝夹','甲拿到红夹']},user('后文')];
+ f.responder(async(_,input)=>({changes:[op('new:event','events',{名称:input.archiveSource.text,经过:input.archiveSource.text},input.archiveSource.text)]}));await f.service.archive({range:{from:1,to:3,limit:5}});const before=await f.service.inspect();assert.equal(before.archived,2);
+ await f.service.stageFork(3,false,{preserveCandidates:true});f.c.chat=f.c.chat.slice(0,3);f.c.chatId='reroll-branch';await Promise.all([f.service.activateFork(),f.service.activateFork()]);let info=await f.service.inspect();assert.equal(info.archived,2);assert.equal(info.session.branchSeed,undefined);
+ f.c.chat[2].mes='甲拿到红夹';f.c.chat[2].swipe_id=1;info=await f.service.inspect();assert.equal(info.archived,1);assert.equal(info.rows.filter(r=>r.table==='events').length,1);assert(!info.rows.some(r=>r.values.名称==='甲拿到蓝夹'));assert.equal(info.session.commits.length,before.session.commits.length);
+ f.c.chat[2].mes='甲拿到蓝夹';f.c.chat[2].swipe_id=0;assert.equal((await f.service.inspect()).archived,2);
+});

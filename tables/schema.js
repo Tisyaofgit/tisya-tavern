@@ -11,6 +11,7 @@ const f = (type='text', extra={}) => ({type, ...extra});
 const text = names => Object.fromEntries(names.split(' ').map(n => [n, f()]));
 const refs = names => Object.fromEntries(names.split(' ').map(n => [n, f('refs')]));
 const scale = () => f('object',{fields:{值:f('number'),最小:f('number'),最大:f('number'),低端:f(),高端:f(),依据:f('refs'),原生引用:f()}});
+const preferenceInterval = () => f('object',{ui:'bipolar-interval',fields:{左端:f('text',{required:true}),右端:f('text',{required:true}),下限:f('number',{required:true,min:-100,max:100}),上限:f('number',{required:true,min:-100,max:100}),依据:f('text',{required:true}),说明:f('text')}});
 const pair = () => f('object',{fields:{正面:scale(),负面:scale()}});
 const table = (id, name, fields, owner='archive') => ({id, name, aliases:[], version:1, owner, fields:{名称:f('text',{required:true}), ...fields}});
 export const TABLES = [
@@ -29,7 +30,7 @@ export const TABLES = [
  table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
  table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
  table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
- table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
+ table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),倾向区间:f('map',{items:preferenceInterval()}),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
 ];
 export const TYPES = [
  {id:'character',name:'人物',aliases:['角色','人类','NPC','角色档案'],fields:{...text('身份 外貌 性格 背景')}},
@@ -108,6 +109,7 @@ export function validateRow(registry,row){
  for(const [key,value]of Object.entries(row.values)){const def=table.fields[key];check(def&&!denied.has(key),'未知字段：'+key);check(!def.formula,'公式字段由程序计算：'+key);check(valueValid(value,def),'字段类型不符：'+key);}
  check(object(row.access)&&Array.isArray(row.access.readers)&&Array.isArray(row.access.knowers)&&row.access.readers.every(x=>typeof x==='string')&&row.access.knowers.every(x=>typeof x==='string'),'记录缺少读者／人物知情范围');
  if(row.table==='state')check([Object.hasOwn(row.values,'值'),!!row.values.原生引用,!!row.values.值引用].filter(Boolean).length===1,'当前状态必须且只能填写值、值引用或原生引用');
+ if(row.table==='preferences')for(const [name,axis]of Object.entries(row.values.倾向区间??{})){check(name.trim()&&axis.左端!==axis.右端,'偏好刻度两端必须表示不同倾向');check(axis.下限<=axis.上限,'偏好区间下限不能高于上限');}
  if(row.table==='objects'){
   const type=registry.types.find(t=>t.id===row.values.类型);check(type,'对象类型未登记');
   const fields=typeFields(registry,type.id);for(const [key,def]of Object.entries(fields))check(!def.required||Object.hasOwn(row.values.属性??{},key),'缺少类型必填属性：'+key);for(const [key,value]of Object.entries(row.values.属性??{}))check(fields[key]&&valueValid(value,fields[key]),'类型属性无效：'+key);
