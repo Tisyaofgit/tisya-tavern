@@ -7,7 +7,7 @@ import {guardCompletionStream} from '../vendor/vertex-transport/completion-integ
 import {geminiTextStream,bufferedResponse,observeResponse,transportFailure} from './transport-response.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 
-export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（OpenAI / 自定义 Gemini）'],['verify','仅检查完整结束（不包装正文）']];
+export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['verify','仅检查完整结束（不包装正文）']];
 const PATH='/api/backends/chat-completions/generate',OWNER=Symbol.for('tisya.vertex-transport'),OTHER=Symbol.for('vertex-anti-truncation.fetch');
 const LIMIT=8*1024*1024,OUTPUT_LIMIT=32*1024*1024;
 const bytes=value=>new TextEncoder().encode(value).length;
