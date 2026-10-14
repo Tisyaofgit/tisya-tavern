@@ -19,6 +19,15 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('genesis accepts reordered JSON object keys without schema revisions but rejects real field changes',async()=>{
+ const f=fixture();await f.service.initialize();const before=await f.service.inspect();
+ const reorder=value=>Array.isArray(value)?value.map(reorder):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).reverse().map(([key,item])=>[key,reorder(item)])):value;
+ let registry=reorder(before.registry);const response=()=>({blueprint:{name:'顺序验收',goal:'保持现有结构',decisions:[],unresolved:[]},checklist:[],artifacts:{registry,base:{templates:[],changes:[]},initial:{templates:[],changes:[]}},workflow:{id:'key-order',name:'顺序验收',version:1,steps:[]}});
+ f.responder(response);const draft=await f.service.genesis('保持现有结构');await f.service.saveGenesis(draft);assert.deepEqual((await f.service.inspect()).registry,before.registry);
+ registry=reorder(before.registry);registry.tables.find(t=>t.id==='state').fields.值.type='number';await assert.rejects(f.service.genesis('保持现有结构'),/已有字段不可改变/);
+ registry=reorder(before.registry);registry.tables.find(t=>t.id==='state').fields.有效性.values.reverse();await assert.rejects(f.service.genesis('保持现有结构'),/已有字段不可改变/);
+ registry=reorder(before.registry);registry.tables.find(t=>t.id==='state').fields.值.formula={op:'add',args:[1,2]};await assert.rejects(f.service.genesis('保持现有结构'),/已有字段不可改变/);
+});
 test('initialization retains disabled AI sources without making them operative, and rejects changed raw material',async()=>{
  const f=fixture();f.c.characters[0].character_book={entries:[{id:1,enabled:true,content:'生效卡规则'},{id:2,enabled:false,content:'关闭卡规则'}]};
  f.saved.set('角色原书',[{name:'启用书条',enabled:true,content:'生效书规则'},{name:'关闭书条',enabled:false,content:'关闭书规则'}]);f.saved.set('数据库资料',[]);
@@ -215,6 +224,12 @@ test('rejected preference is not retried or injected, and disabled preferences s
 test('Genesis validates the entire draft before writes and links base and initial-state time anchors',async()=>{
  const f=fixture();await f.service.initialize();const registry=defaultRegistry();registry.tables.push({id:'weather',name:'气象',aliases:[],version:1,owner:'archive',fields:{名称:{type:'text',required:true},天气:{type:'text'}}});const response={blueprint:{name:'城门',goal:'设计城门',decisions:['北门关闭，天空晴朗'],unresolved:[]},checklist:['核对门的状态'],artifacts:{registry,base:{templates:[],changes:[op('new:gate','objects',{名称:'北门',类型:'place'},'北门关闭')]},initial:{templates:[],changes:[op('new:gate-state','state',{名称:'门状态',对象:'new:gate',字段:'开闭',值:false},'北门关闭'),op('new:sky','weather',{名称:'气象',天气:'晴朗'},'天空晴朗')]}},workflow:{id:'gate',name:'城门推进',version:1,steps:[]}};
  f.responder(async()=>response);let draft=await f.service.genesis('设计城门');const before=JSON.stringify([...f.saved]);draft.proposal.artifacts.initial.changes[0].values.对象='missing';await assert.rejects(f.service.saveGenesis(draft),/关联对象不存在/);assert.equal(JSON.stringify([...f.saved]),before);draft=await f.service.genesis('设计城门');await f.service.saveGenesis(draft);const info=await f.service.inspect();assert.equal(info.rows.length,3);assert.equal(info.anchors.length,3);assert.equal(info.rows.find(r=>r.table==='state').values.对象,info.rows.find(r=>r.table==='objects').id);assert.equal(info.session.blueprint.workflow.id,'gate');assert(info.registry.tables.some(t=>t.id==='weather'));
+});
+test('genesis saves explicitly established initial knowledge while rejecting invented historical events atomically',async()=>{
+ const f=fixture();await f.service.initialize();const goal='林棠知道北门。';
+ const response={blueprint:{name:'初始认知',goal,decisions:[],unresolved:[]},checklist:[],artifacts:{registry:defaultRegistry(),base:{templates:[],changes:[op('new:person','objects',{名称:'林棠',类型:'character'},'林棠'),op('new:gate','objects',{名称:'北门',类型:'place'},'北门')]},initial:{templates:[],changes:[{...op('new:knowledge','cognition',{名称:'北门认知',主体:'new:person',事实:['new:gate'],认识:goal,授权依据:goal},goal),access:{readers:['读者'],knowers:['new:person']}}]}},workflow:{id:'knowledge',name:'初始认知',version:1,steps:[]}};
+ f.responder(()=>response);let draft=await f.service.genesis(goal);draft.proposal.artifacts.initial.changes.push(op('new:past','events',{名称:'过去事件',经过:goal},goal));const savedBefore=JSON.stringify([...f.saved]);await assert.rejects(f.service.saveGenesis(draft),/该辅助任务不能修改此表/);assert.equal(JSON.stringify([...f.saved]),savedBefore);
+ draft=await f.service.genesis(goal);await f.service.saveGenesis(draft);const info=await f.service.inspect(),person=info.rows.find(r=>r.values.名称==='林棠'),gate=info.rows.find(r=>r.values.名称==='北门'),knowledge=info.rows.find(r=>r.table==='cognition');assert.equal(info.rows.length,3);assert.equal(knowledge.values.主体,person.id);assert.deepEqual(knowledge.values.事实,[gate.id]);assert.deepEqual(knowledge.access.knowers,[person.id]);assert.equal(info.rows.filter(r=>r.table==='events').length,0);
 });
 
 test('explicit style rules remain available without enabled tables, books or auxiliary calls',async()=>{

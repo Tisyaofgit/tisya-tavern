@@ -4,6 +4,8 @@ export const FORMAT = 'tisya.tables/1';
 export const copy = value => structuredClone(value);
 export const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
 export const check = (ok, message) => { if (!ok) throw Error(message); };
+// JSON object property order is not part of a schema definition; array order remains significant.
+export function sameDefinition(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((value,i)=>sameDefinition(value,b[i]));const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&sameDefinition(a[key],b[key]));}
 export const normalized = text => String(text).normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s_·・-]+/gu, '');
 const f = (type='text', extra={}) => ({type, ...extra});
 const text = names => Object.fromEntries(names.split(' ').map(n => [n, f()]));
