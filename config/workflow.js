@@ -1,3 +1,4 @@
+import {LEGACY_INITIATIVE} from './initiative.js';
 // Preserve the rendered source protocol, including its stage inputs, results,
 // dependencies and repair routes. Selection removes only inactive work; it must
 // never replace the narrative stages with a summary of their configuration.
@@ -60,7 +61,7 @@ function plainDelivery(text,c){
  return text;
 }
 
-const featureRules={角色自主:'人物保有独立目标、意愿与已有事务，按实际接触决定是否回应及主动行动。',防绝望:'依据人物现有资源保留改变可能，困难不预设必败，也不强制治愈或救赎。',防神化:'人物对主控的态度以实际互动为依据，不无因崇拜、依附或贬低。',防八股:'删除套话、预总结、无新增作用的重复和定义式旁白。',防名词堆砌:'用具体可感知的过程和后果表达，不以抽象术语替代行动。',文风鲜活:'使用符合场景的物件、声音、动作痕迹与生活化语言，避免灌水。',角色鲜活:'依据已知档案呈现个人习惯和差异化声口，不虚构人物旧经历为事实。'};
+const featureRules={角色自主:LEGACY_INITIATIVE,防绝望:'依据人物现有资源保留改变可能，困难不预设必败，也不强制治愈或救赎。',防神化:'人物对主控的态度以实际互动为依据，不无因崇拜、依附或贬低。',防八股:'删除套话、预总结、无新增作用的重复和定义式旁白。',防名词堆砌:'用具体可感知的过程和后果表达，不以抽象术语替代行动。',文风鲜活:'使用符合场景的物件、声音、动作痕迹与生活化语言，避免灌水。',角色鲜活:'依据已知档案呈现个人习惯和差异化声口，不虚构人物旧经历为事实。'};
 const conclusions='bind @P.control_limits from selected authorization; @P.update only actual authorized player changes; @POV and @POV.authorized_secret_fragments from source permissions and selected viewpoint; @OUTLINE.title_anchor from actual scene; @BODY complete public prose with paragraph_refs; settled results and actual state changes from supplied sources; unresolved facts remain unresolved; disabled optional work has no fabricated result';
 function extract(text,id){let value;block(text,id,s=>{value=s;return s;});return value;}
 const remap=text=>text.replace(/\b(?:P\.[1-9]|A\.[1-9]|B\.[1-9]|C\.[13456789]|E\.[1-9])\b/g,'WORKFLOW').replace(/WORKFLOW(?:\/WORKFLOW)+/g,'WORKFLOW')

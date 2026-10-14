@@ -1,0 +1,52 @@
+{
+  "task": "RP01",
+  "version": "0.2.0-alpha.31.7",
+  "observed_at_utc": "2026-10-14T22:15:11.219191+00:00",
+  "observed_at_asia_singapore": "2026-10-15T06:15:11.229240+08:00",
+  "base_commit": "f793af3f2a8e36064a3290b3611b35906b9e5601",
+  "scope": "Optional character initiative; user config unchanged until explicit selection",
+  "unique_targeted_tests_passed": 85,
+  "runs": [
+    {
+      "suite": "configuration.test.js existing tests",
+      "passed": 30
+    },
+    {
+      "suite": "configuration.test.js RP01 regression rerun",
+      "passed": 6
+    },
+    {
+      "suite": "shell.test.js + preset.test.js",
+      "passed": 49
+    }
+  ],
+  "initial_failure": {
+    "kind": "test fixture supplied plain string to structured tableArchive input",
+    "implementation_fault": false,
+    "retained": "evidence/RP01-initial-test-failure.log",
+    "resolution": "Use required source snapshot JSON; affected RP01 suite rerun:6/6"
+  },
+  "build_checks": [
+    "settings original 33 modules verified",
+    "live preset verified",
+    "modular preset verified",
+    "memory preset verified"
+  ],
+  "coverage": [
+    "two explicit levels, three details, structured/plain output",
+    "single selected initiative owner, alternative absent",
+    "player choice/psychology/stopping/knowledge rules preserved",
+    "absent option returns legacy protocol; read does not write",
+    "disabled dependencies and noninteractive modes unchanged",
+    "native preset expansion preserves host messages and tools",
+    "UI save/reopen/dependency status/world isolation",
+    "backup round trip and invalid value rejection"
+  ],
+  "live_model_tested": false,
+  "android_tested": false,
+  "unresolved": [
+    "RP initiative experience awaits model/device trial",
+    "AT04 truncation and buffered blank root cause",
+    "full text wrapping together with native tools/search"
+  ]
+}

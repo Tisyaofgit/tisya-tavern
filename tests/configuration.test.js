@@ -189,3 +189,73 @@ test('configuration assistant uses paired JSON route and saved per-task instruct
  await f.host.request('historyImport',JSON.stringify({historyText:'抵达门口',registry:{tables:[],types:[]},currentRows:[]}));text=JSON.stringify(sent.messages);assert.match(text,/HISTORY_ONLY_SUPPLEMENT/);assert.doesNotMatch(text,/ASSISTANT_ONLY_SUPPLEMENT/);
  }finally{globalThis.fetch=prior;}
 });
+
+test('RP01 selected initiative reaches the assembled request once across all workflow and output modes',async()=>{
+ for(const detail of ['full','compact','format'])for(const level of ['自主互动','主动推进'])for(const structured of [true,false]){
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.角色主动性=level;
+  f.source.order.find(e=>e.identifier==='tisya_output').enabled=structured;
+  const saved=JSON.stringify(f.d);await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);
+  const text=p.messages.map(r=>r.content).join('\n'),c=compileNarrative(f.c,f.source,MOODS);
+  assert.equal(text.split('角色主动性·'+level+'：').length-1,1,detail+' '+level+' '+structured);
+  assert.doesNotMatch(text,new RegExp('角色主动性·'+(level==='主动推进'?'自主互动':'主动推进')));
+  assert.doesNotMatch(text,/allow supported initiative from the character’s own goals|人物保有独立目标、意愿与已有事务/);
+  assert.match(text,/不等于玩家已同意/);assert.match(text,/不虚构既往经历/);assert.match(text,/不为主动性强塞冲突/);
+  for(const id of ['A01','A02','A04','A05','B06'])assert.ok(text.includes(c.stepwiseRules[id]),detail+' preserves '+id);
+  if(level==='主动推进')assert.match(text,/不等待玩家设计大纲或逐项授权 NPC 行动/);
+  if(!structured)assert.doesNotMatch(c.rest.entries.tisya_inner_chain,/<reply>/);
+  assert.equal(JSON.stringify(f.d),saved,'compilation does not write settings');
+ }
+});
+
+test('RP01 missing value and disabled dependencies preserve existing compiled protocol',()=>{
+ const modifiers=[()=>{},m=>{m.narrative.缇斯亚叙事角色自主=false;},m=>{m.narrative.缇斯亚叙事步序=m.narrative.缇斯亚叙事步序.filter(v=>v!=='人物反应');},m=>{m.narrative.缇斯亚叙事步序=m.narrative.缇斯亚叙事步序.filter(v=>v!=='行动与剧情');},(m,f)=>{f.source.order.find(e=>e.identifier==='tisya_inner_chain').enabled=false;}];
+ for(const detail of ['full','compact','format'])for(const [i,change]of modifiers.entries()){
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;change(m,f);
+  const old=compileNarrative(f.c,f.source,MOODS).rest.entries;
+  if(i){m.角色主动性='主动推进';assert.deepEqual(compileNarrative(f.c,f.source,MOODS).rest.entries,old);}
+  else{m.角色主动性='主动推进';assert.notDeepEqual(compileNarrative(f.c,f.source,MOODS).rest.entries,old);delete m.角色主动性;assert.deepEqual(compileNarrative(f.c,f.source,MOODS).rest.entries,old);assert.equal(Object.hasOwn(m,'角色主动性'),false);}
+ }
+});
+
+test('RP01 initiative does not expand outlines, discussion, summaries or auxiliary task requests',async()=>{
+ for(const detail of ['full','compact','format'])for(const mode of ['大纲扩写','场外讨论','总结整理']){
+  const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.narrative.缇斯亚叙事创作模式=mode;
+  const old=compileNarrative(f.c,f.source,MOODS).rest.entries;m.角色主动性='主动推进';assert.deepEqual(compileNarrative(f.c,f.source,MOODS).rest.entries,old);
+ }
+ const f=fixture();f.w.modes.narrative.角色主动性='主动推进';const prior=globalThis.fetch;let sent;
+ globalThis.fetch=async(_,opts)=>{sent=JSON.parse(opts.body);return {ok:true,json:async()=>({choices:[{message:{content:'{"changes":[],"templates":[]}'}}]})};};
+ try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_SOURCE'},registry:{tables:[],types:[]},currentRows:[]}));assert.doesNotMatch(JSON.stringify(sent.messages),/角色主动性·|不等待玩家设计大纲/);}finally{globalThis.fetch=prior;}
+});
+
+test('RP01 native preset expansion uses the same initiative without replacing host messages or tools',async()=>{
+ const f=fixture();f.w.context.owner='native';f.w.modes.narrative.角色主动性='主动推进';
+ await f.host.before('normal');const messages=f.source.order.filter(o=>o.enabled).flatMap(o=>{const p=f.source.prompts.find(p=>p.identifier===o.identifier);return p?.content?[{role:p.role??'system',content:f.c.substituteParams(p.content)}]:[];});
+ messages.push({role:'user',content:'我抬眼看了看他。'});const payload={messages,tools:[{type:'function',function:{name:'native_tool'}}],stream:true},before=structuredClone(payload);
+ await f.host.payloadReady(payload);assert.deepEqual(payload,before);assert.equal(JSON.stringify(payload.messages).split('角色主动性·主动推进：').length-1,1);
+});
+
+test('RP01 UI saves and reopens world-scoped initiative, exposes dependency status and restores legacy without migration',async()=>{
+ const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
+ const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}})};
+ let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
+ const choose=value=>{const input=root.querySelector('[aria-label="char 主动性"]');input.value=JSON.stringify(value);input.dispatchEvent(new win.Event('change'));};
+ const save=async()=>{root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));};
+ assert.equal(root.querySelector('[aria-label="char 主动性"]').value,'""');assert.equal(Object.hasOwn(f.store.read().world.modes.narrative,'角色主动性'),false);
+ choose('主动推进');const autonomous=root.querySelector('[aria-label="角色自主"]');autonomous.checked=false;autonomous.dispatchEvent(new win.Event('change'));
+ assert.match(root.querySelector('[data-character-initiative-status]').textContent,/角色自主未开启/);await save();
+ assert.equal(f.store.read().world.modes.narrative.角色主动性,'主动推进');assert.equal(f.store.read().world.modes.narrative.narrative.缇斯亚叙事角色自主,false);
+ ui.dispose();ui=mountConfiguration(doc,box,options);await ui.ready;root=ui.root.shadowRoot;
+ assert.equal(root.querySelector('[aria-label="char 主动性"]').value,'"主动推进"');assert.match(root.textContent,/角色自主未开启/);
+ const on=root.querySelector('[aria-label="角色自主"]');on.checked=true;on.dispatchEvent(new win.Event('change'));assert.match(root.querySelector('[data-character-initiative-status]').textContent,/已选择主动推进/);
+ const step=root.querySelector('[aria-label="行动与剧情"]');step.checked=false;step.dispatchEvent(new win.Event('change'));assert.match(root.querySelector('[data-character-initiative-status]').textContent,/行动与剧情未开启/);await save();
+ f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.角色主动性,undefined);f.c.chatId='one';
+ choose('');await save();assert.equal(Object.hasOwn(f.store.read().world.modes.narrative,'角色主动性'),false);assert.equal(f.store.read().world.modes.narrative.narrative.缇斯亚叙事步序.includes('行动与剧情'),false);
+ ui.dispose();await win.happyDOM.abort();
+});
+
+test('RP01 config backup round-trips explicit levels and invalid stored values fail without replacing settings',async()=>{
+ const {cleanExport,validateConfig}=await import('../config/core.js');const f=fixture();
+ for(const level of ['自主互动','主动推进']){const s=f.store.read();s.world.modes.narrative.角色主动性=level;await f.store.save(s.data,s.revision,s.key);const restored=validateConfig(JSON.parse(JSON.stringify(cleanExport(f.store.read().data))).configuration);assert.equal(restored.worlds[f.k].modes.narrative.角色主动性,level);}
+ const saved=f.store.read().revision;
+ for(const value of ['',null,false,0,[],{},'随机剧情']){const s=f.store.read();s.world.modes.narrative.角色主动性=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/角色主动性选项无效/);assert.equal(f.store.read().revision,saved);}
+});
