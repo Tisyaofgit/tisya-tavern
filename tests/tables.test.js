@@ -28,6 +28,14 @@ test('genesis accepts reordered JSON object keys without schema revisions but re
  registry=reorder(before.registry);registry.tables.find(t=>t.id==='state').fields.有效性.values.reverse();await assert.rejects(f.service.genesis('保持现有结构'),/已有字段不可改变/);
  registry=reorder(before.registry);registry.tables.find(t=>t.id==='state').fields.值.formula={op:'add',args:[1,2]};await assert.rejects(f.service.genesis('保持现有结构'),/已有字段不可改变/);
 });
+test('genesis compares an upgraded effective schema with the same upgraded stored baseline',async()=>{
+ const f=fixture();await f.service.initialize();let before=await f.service.inspect();const legacy=structuredClone(before.registry);legacy.types.find(t=>t.id==='rule').fields.自定义条款={type:'text'};await f.service.saveTemplates(legacy,before.origin.revision);
+ before=await f.service.inspect();assert.equal(before.origin.registry.types.find(t=>t.id==='rule').fields.自定义条款.capture,undefined);assert.equal(before.registry.types.find(t=>t.id==='rule').fields.自定义条款.capture,'identity');
+ let registry=structuredClone(before.registry);f.responder(()=>({blueprint:{name:'升级基准验收',goal:'沿用既有模板',decisions:[],unresolved:[]},checklist:[],artifacts:{registry,base:{templates:[],changes:[]},initial:{templates:[],changes:[]}},workflow:{id:'schema-upgrade',name:'升级基准验收',version:1,steps:[]}}));
+ const draft=await f.service.genesis('沿用既有模板');await f.service.saveGenesis(draft);const after=await f.service.inspect();assert.deepEqual(after.registry,before.registry);assert.deepEqual(after.rows,before.rows);
+ const saved=JSON.stringify([...f.saved]);registry=structuredClone(before.registry);delete registry.types.find(t=>t.id==='rule').fields.自定义条款.capture;await assert.rejects(f.service.genesis('沿用既有模板'),/已有字段不可改变/);assert.equal(JSON.stringify([...f.saved]),saved);
+ registry=structuredClone(before.registry);registry.types.find(t=>t.id==='rule').fields.自定义条款.type='number';await assert.rejects(f.service.genesis('沿用既有模板'),/已有字段不可改变/);assert.equal(JSON.stringify([...f.saved]),saved);
+});
 test('initialization retains disabled AI sources without making them operative, and rejects changed raw material',async()=>{
  const f=fixture();f.c.characters[0].character_book={entries:[{id:1,enabled:true,content:'生效卡规则'},{id:2,enabled:false,content:'关闭卡规则'}]};
  f.saved.set('角色原书',[{name:'启用书条',enabled:true,content:'生效书规则'},{name:'关闭书条',enabled:false,content:'关闭书规则'}]);f.saved.set('数据库资料',[]);
