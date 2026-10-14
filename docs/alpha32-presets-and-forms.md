@@ -841,6 +841,7 @@ relations.好感 and 声望 each have independent 正面/负面 scales; 印象 i
 @CHOICE STATE.rulePolicy is the player-confirmed source-scoped rule version. Preserve original material separately; for optimize decisions fill the approved after text as the operative rule, citing that approved text. For keep retain original force and conflicts. Do not apply unselected suggestions or change past facts.
 @FORCECHECK Except for the exact player-approved optimize differences in STATE.rulePolicy, audit current and proposed operative fields against source force. Explicit only/must/must-not/forbidden constraints (Chinese: 仅/只/必须/不得/禁止) must not become default/usually/generally/try/recommended (原则上/通常/一般/尽量/建议). Keep qualifiers that actually occur in the source. If sources conflict, retain each source's original force and identify the unresolved conflict; do not invent a permissive exception to reconcile them. Repair the actual rule value, not just its notes or evidence.
 @NUMERICCHECK Except for exact player-approved optimize differences, preserve numeric comparators and their inclusive or exclusive boundaries, quantities, signs, units, denominators, proportions and frequencies in each operative field. Chinese 以上/以下/达到/不低于/不超过 and 超过/低于/不足 are not interchangeable. Check equality at each threshold as well as values just below and above it; retain both endpoints and their original inclusion for every interval. Preserve the subject, phase, trigger and exception attached to each number. Do not convert a percentage into percentage points or invent a scale conversion. If a shorthand is ambiguous, keep the original clause and flag the ambiguity rather than silently normalizing it. Check the filled value itself, not only evidence or notes.
+@CLAUSEFIDELITY Operative mechanics are source clauses, not narrative summaries. Place the exact applicable source wording in the operative definition fields, grouping clauses without rewriting their meaning; use the approved after wording only for player-selected optimize changes. A short title or explanation may accompany but never replace the operative clause. Preserve who acts, what is counted, the action, trigger, required check, result, causal direction, sequence, scope and every stated modifier. A check is not its outcome or a different action; a transfer is not independent losses; an activity count is not a count of actors. Do not add missing effects, remove mode modifiers, recast source examples, or translate source terms into apparently similar mechanics. Keep contradictory clauses separately under their source references rather than reconciling them. Compare each filled clause with its source, including its nouns and verbs, before returning; notes and retained raw material do not repair an altered operative definition.
 @NATIVE Native scripts remain source-owned, never rewrite or merge alternative adapters. Store exact native reference paths and their source duties for values owned by native variables; initial defaults are definitions, not the current save. Missing current snapshots, unsupported runtime fields and incompatible values remain visible gaps, not silently supplied defaults. Long nested native user definitions are application-owned exact text; never summarize or duplicate that user object.
 @DELTA Incremental initialization preserves current row IDs, unmodified names, earlier anchors and established session state. Add missing rule detail or correct source-supported errors through deltas. Do not replay initial defaults over current state; no fictional biography, example scene or unselected greeting becomes history.
 [/INIT.COVERAGE]Use {schemaChanges:[],templates:[],base:{templates:[],changes:[]},initial:{templates:[],changes:[]},notes:[]}. Omit unchanged full registry; the program merges schema deltas for review. Reuse fields/types. base holds reusable objects/facts; initial holds only explicitly established opening states, relations and affairs. Examples and unselected greetings are not history. Do not duplicate objects. Saving stores card-bound templates and origin assets; new saves do not automatically inherit initial values. Schemas must not embed this save's filled values.
@@ -879,10 +880,16 @@ relations.好感 and 声望 each have independent 正面/负面 scales; 印象 i
 [/FILL.3]
 [FILL.4]
 @REQUIRE DONE(FILL.3)
-@TASK 检查同名对象、引用、字段类型、原生写入归属和初始化不得倒灌当前进度；提交完整草稿与未决项。
+@TASK 机制定义字段逐字承载适用原句；仅已选优化使用其获准替换文本。标题或说明不能代替生效条款。逐一比对主体、计数对象、动作、触发、强制判定、结果、因果方向、顺序、范围及全部修正项；判定不等于结果或另一动作，转移不等于两类各自流失，活动次数不等于人数。不另写示例、不补效果、不删模式修正；矛盾原句分列并保留出处。资料层保留原文不能抵消实际字段失真。
 @RESULT verified local result and source references; keep internal reasoning private
 @DONE FILL.4 only after the task is complete
 [/FILL.4]
+[FILL.5]
+@REQUIRE DONE(FILL.4)
+@TASK 检查同名对象、引用、字段类型、原生写入归属和初始化不得倒灌当前进度；提交完整草稿与未决项。
+@RESULT verified local result and source references; keep internal reasoning private
+@DONE FILL.5 only after the task is complete
+[/FILL.5]
 Return one strict JSON object under the selected contract. No fences,XML wrapper,reports or hearts. Data awaits validation; it is not a write receipt.
 [/MODE.ANALYZE]
 ```
