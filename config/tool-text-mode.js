@@ -31,6 +31,36 @@ export function classifyToolTurn(names,plan){
  return owned.length?'synthetic':real.length?'real':'none';
 }
 
+// Inspect all public-text carriers, not just the one a normalizer selects.
+// A wrapper must never silently discard text from a shadow field.
+export function hasOutsideToolText(value){
+ const text=v=>typeof v==='string'?!!v.trim():Array.isArray(v)&&v.some(p=>typeof p?.text==='string'&&p.text.trim());
+ const parts=p=>Array.isArray(p)&&p.some(x=>!x?.thought&&typeof x?.text==='string'&&x.text.trim());
+ return text(value.content)||text(value.text)||text(value.message?.content)||
+  (value.choices??[]).some(c=>text(c.text)||text(c.message?.content)||text(c.delta?.content))||
+  parts(value.responseContent?.parts)||(value.candidates??[]).some(c=>parts(c.content?.parts));
+}
+
+// The host executes responseContent before choices. Validate the same calls
+// (including arguments and order) before returning the original envelope.
+export function verifyBufferedToolMirrors(value,plan){
+ if(Array.isArray(value.content)&&value.content.some(p=>p?.type!=='text'))fail('WRAP_MEDIA','正文工具包装收到非文字输出');
+ if(value.responseContent?.parts===undefined)return;
+ const parts=value.responseContent.parts;
+ if(!Array.isArray(parts))fail('WRAP_MIRROR','原生工具响应格式无效');
+ if(parts.some(p=>p?.inlineData||p?.fileData||p?.functionResponse))fail('WRAP_MEDIA','正文工具包装收到非文字输出');
+ const native=parts.filter(p=>p?.functionCall).map(p=>p.functionCall);
+ classifyToolTurn(native.map(f=>f.name),plan);
+ const projected=value.choices?.[0]?.message?.tool_calls??[];
+ const stable=v=>Array.isArray(v)?v.map(stable):object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
+ if(native.length!==projected.length)fail('WRAP_MIRROR','宿主工具与检查工具数量不一致，回复未交给宿主执行');
+ for(let i=0;i<native.length;i++){
+  const n=native[i],p=projected[i];let args;
+  try{args=JSON.parse(p.function.arguments);}catch{fail('WRAP_MIRROR','工具参数无法核对');}
+  if(!object(n.args)||n.partialArgs||n.willContinue||n.name!==p.function.name||n.id&&p.id&&n.id!==p.id||JSON.stringify(stable(n.args))!==JSON.stringify(stable(args)))fail('WRAP_MIRROR','宿主工具与检查工具内容不一致，回复未交给宿主执行');
+ }
+}
+
 // A mixed-tool stream is collected once so no synthetic call can escape to the
 // host executor. The selected original bytes are then checked by existing parsers.
 export async function selectToolTextStream(response,plan,status,{signal,guard,limit}){
@@ -46,6 +76,7 @@ export async function selectToolTextStream(response,plan,status,{signal,guard,li
   const parser=createSseParser(({data})=>{
    if(!data||data.trim()==='[DONE]')return;
    const p=JSON.parse(data);
+   if(hasOutsideToolText(p))plainText=true;
    if(plan.protocol==='gemini')for(const c of p.candidates??[])for(const part of c.content?.parts??[]){
     if(!part.thought&&typeof part.text==='string'&&part.text.trim())plainText=true;
     if(part.inlineData||part.fileData)fail('WRAP_MEDIA','正文工具包装收到非文字输出');

@@ -96,3 +96,40 @@ test('AT09 true tool responses remain forbidden to auxiliary text consumers',asy
 test('AT09 buffered stream collection remains cancellable with no retry',async()=>{
  const s=setup(()=>new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode(chunk({reasoning_content:'wait'})));}}),{headers:{'content-type':'text/event-stream'}}));const c=new AbortController(),pending=s.run(payload('openai',true),'main',c.signal);setTimeout(()=>c.abort(new DOMException('cancelled','AbortError')),10);await assert.rejects(pending);assert.equal(s.count(),1);assert.equal(s.t.status().state,'cancelled');s.t.dispose();
 });
+
+test('AT09 sandbox rejects public text in shadow fields before restoring synthetic output',async()=>{
+ for(const protocol of ['openai','gemini'])for(const carrier of ['content','text','choice','native']){
+  const s=setup(name=>{const v={choices:[{index:0,message:{role:'assistant',content:'',tool_calls:[tool(name,{content:'inside'})]},finish_reason:'tool_calls'}]};
+   if(carrier==='content')v.content=[{type:'text',text:'outside'}];
+   if(carrier==='text')v.text='outside';
+   if(carrier==='choice')v.choices[0].text='outside';
+   if(carrier==='native')v.responseContent={parts:[{functionCall:{name,args:{content:'inside'}}},{text:'outside'}]};
+   return json(v);
+  });
+  await assert.rejects(s.run(payload(protocol)),/正文传输失败/);assert.equal(s.t.status().state,'error');assert.equal(s.count(),1);s.t.dispose();
+ }
+});
+
+test('AT09 sandbox rejects streaming text arrays beside synthetic arguments',async()=>{
+ const s=setup(name=>sse(chunk({content:[{type:'text',text:'outside'}],tool_calls:[{index:0,...tool(name,{content:'inside'})}]})+end('tool_calls')));
+ await assert.rejects(s.run(payload('openai',true)),/正文同时出现在工具内外/);assert.equal(s.t.status().state,'error');assert.equal(s.count(),1);s.t.dispose();
+});
+
+test('AT09 sandbox checks the native calls the host actually executes including arguments and IDs',async()=>{
+ for(const protocol of ['openai','gemini'])for(const mismatch of ['unknown','args','empty','id']){
+  const s=setup(()=>json({choices:[{index:0,message:{role:'assistant',content:'',tool_calls:[tool('lookup',{q:'safe'})]},finish_reason:'tool_calls'}],responseContent:{parts:mismatch==='empty'?[]:[{functionCall:{name:mismatch==='unknown'?'undeclared_tool':'lookup',id:mismatch==='id'?'different':'stable-id',args:{q:mismatch==='args'?'different':'safe'}}}]}}));
+  await assert.rejects(s.run(payload(protocol)));assert.equal(s.t.status().state,'error');assert.equal(s.count(),1);s.t.dispose();
+ }
+});
+
+test('AT09 sandbox accepts equivalent native argument objects without changing signed history',async()=>{
+ let original;const s=setup(()=>json(original={choices:[{index:0,message:{role:'assistant',content:'',tool_calls:[tool('lookup',{q:'safe',options:{a:1,b:2}})]},finish_reason:'tool_calls'}],responseContent:{parts:[{functionCall:{name:'lookup',args:{options:{b:2,a:1},q:'safe'}},thoughtSignature:'preserve'}]}}));
+ const a=await s.run(payload('gemini'));assert.deepEqual(await a.response.json(),original);assert.equal(a.status.state,'tool-handoff');assert.equal(s.count(),1);s.t.dispose();
+});
+
+test('AT09 sandbox rejects media in shadow carriers rather than dropping it',async()=>{
+ for(const carrier of ['content','native']){
+  const s=setup(name=>json({choices:[{index:0,message:{content:'',tool_calls:[tool(name,{content:'inside'})]},finish_reason:'tool_calls'}],...(carrier==='content'?{content:[{type:'image_url',image_url:{url:'data:image/png;base64,aA=='}}]}:{responseContent:{parts:[{functionCall:{name,args:{content:'inside'}}},{inlineData:{mimeType:'image/png',data:'aA=='}}]}})}));
+  await assert.rejects(s.run(payload('gemini')),/非文字输出/);assert.equal(s.t.status().state,'error');s.t.dispose();
+ }
+});

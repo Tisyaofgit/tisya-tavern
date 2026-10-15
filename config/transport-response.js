@@ -1,4 +1,4 @@
-import {classifyToolTurn} from './tool-text-mode.js';
+import {classifyToolTurn,hasOutsideToolText,verifyBufferedToolMirrors} from './tool-text-mode.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 import {inspectCompletion} from '../vendor/vertex-transport/completion-integrity.mjs';
 import {restoreAntiTruncationCompletion} from '../vendor/vertex-transport/anti-truncation.mjs';
@@ -180,7 +180,8 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
    const message=value.choices[0].message;
    if(message?.function_call||message?.images||Array.isArray(message?.content)&&message.content.some(p=>p.type!=='text'))throw transportFailure('unexpected_content');
    const turn=classifyToolTurn((message?.tool_calls??[]).map(c=>c.function?.name),plan);status.toolTextTurn=turn;if(turn==='real')toolName=null;
-   if(turn==='synthetic'&&hasText(message))throw transportFailure('wrap_mixed_text');
+   verifyBufferedToolMirrors(value,plan);
+   if(turn==='synthetic'&&hasOutsideToolText(original))throw transportFailure('wrap_mixed_text');
   }
   if(toolName){value=restoreAntiTruncationCompletion(value,toolName);status.restored=value.router_anti_truncation?.restored===true;if(!status.restored)throw transportFailure('not_restored');}
   const checked=inspectCompletion(value,extra),toolTurn=plan.allowTools&&checked.integrity.outcome==='tool_calls';if(!checked.valid||checked.integrity.outcome!=='complete'&&!toolTurn)throw transportFailure(checked.reason??'unexpected_tools');
