@@ -102,7 +102,7 @@ test('production host visibly reports stream failure and guards same-provider en
 
 test('default-off and unsupported requests keep exact input; routes inherit with explicit off',()=>{
  const p=request();assert.equal(prepareTextTransport(p,'off').payload,p);
- for(const [patch,reason]of [[{chat_completion_source:'custom',custom_api_format:'openai_responses'},'provider'],[{reverse_proxy:'https://invalid.test'},'proxy'],[{tools:[{name:'read_archive'}]},'tools'],[{tool_choice:'none'},'tools'],[{messages:[{role:'tool',content:'资料'}]},'history'],[{json_schema:{type:'object'}},'schema'],[{n:2},'candidates'],[{enable_web_search:true},'search'],[{messages:[{role:'user',content:[{type:'image_url',image_url:{url:'data:image/png;base64,AA'}}]}]},'media'],[{custom_include_body:'tools: []'},'parameters'],[{custom_include_body:'{"toolConfig":{}}'},'parameters'],[{custom_exclude_body:'tools'},'parameters']]){
+ for(const [patch,reason]of [[{chat_completion_source:'custom',custom_api_format:'openai_responses'},'provider'],[{reverse_proxy:'https://invalid.test'},'proxy'],[{tools:[{name:'read_archive'}]},'tools'],[{tool_choice:'none'},'tools'],[{messages:[{role:'tool',content:'资料'}]},'history'],[{json_schema:{type:'object'}},'schema'],[{n:2},'candidates'],[{enable_web_search:true},'search'],[{messages:[{role:'user',content:[{type:'unknown',value:'unsupported'}]}]},'media'],[{custom_include_body:'tools: []'},'parameters'],[{custom_include_body:'{"toolConfig":{}}'},'parameters'],[{custom_exclude_body:'tools'},'parameters']]){
   const body=request(patch),before=JSON.stringify(body),r=prepareTextTransport(body,'tool-text');assert.equal(r.audit.reason,reason);assert.equal(r.payload,body);assert.equal(JSON.stringify(body),before);
  }
  const d=emptyConfig(),w=defaultWorld();d.routes.global.transport='tool-text';w.modes.narrative.routes.summary={transport:'off'};
@@ -284,4 +284,78 @@ test('production archive gate waits through a real tool handoff and accepts only
   f.host.clear();toolTurn=false;await f.host.before('normal');p=request({enable_web_search:true});await f.host.payloadReady(p);await(await f.send(p)).text();
   assert.equal(f.host.preview().transport.state,'complete');assert.equal(f.host.generationAccepted(),true);assert.equal(f.calls.length,2);
  }finally{f.transport.dispose();}
+});
+
+
+const mediaInputs=[
+ {type:'image_url',image_url:{url:'data:image/png;base64,aW1hZ2U=',detail:'low'},providerExtra:'keep'},
+ {type:'audio_url',audio_url:{url:'data:audio/wav;base64,YXVkaW8='}},
+ {type:'video_url',video_url:{url:'data:video/mp4;base64,dmlkZW8=',detail:'low'}},
+ {type:'input_audio',input_audio:{data:'YXVkaW8=',format:'wav'}},
+];
+const imageOutput={type:'image_url',image_url:{url:'data:image/png;base64,aW1hZ2U='}};
+const nativeImage={inlineData:{mimeType:'image/png',data:'aW1hZ2U='},thoughtSignature:'image-signature'};
+test('AT07 input media and inline toggle preserve complete original messages in every text-output mode',async()=>{
+ for(const make of [request,openai])for(const mode of ['tool-text','verify','verify-tools'])for(const stream of [true,false]){
+  const s=setup((name,body)=>mode==='tool-text'?(make===openai&&body.stream?new Response(chatChunk({tool_calls:[{index:0,function:{name,arguments:JSON.stringify({content:'文字答复'})}}]})+chatEnd('tool_calls'),{headers:{'content-type':'text/event-stream'}}):valid(name,body)):body.stream?new Response(make===request?google({content:{parts:[{text:'文字答复'}]}})+end():chatChunk({content:'文字答复'})+chatEnd(),{headers:{'content-type':'text/event-stream'}}):jsonResponse({choices:[{message:{content:'文字答复'},finish_reason:'stop'}]}));
+  const p=make({stream,request_images:mode==='verify-tools',media_inlining:true,messages:[{role:'user',content:[{type:'text',text:'请描述附件'},...structuredClone(mediaInputs)]}]}),before=structuredClone(p),r=s.transport.prepare(p,mode);
+  assert.ok(r.plan);assert.deepEqual(p,before);assert.deepEqual(r.payload.messages.slice(0,1),p.messages);assert.deepEqual(r.audit.inputMedia,{image:1,audio:2,video:1});
+  const status=s.transport.authorize(r.payload,r,{kind:'main'});await(await s.send(r.payload)).text();assert.equal(status.state,'complete',`${mode}/${stream}/${make===request?'gemini':'openai'}/${status.errorCode}`);assert.equal(s.calls.length,1);assert.deepEqual(s.calls[0].body.messages[0],p.messages[0]);s.transport.dispose();
+ }
+ for(const mode of ['tool-text','verify','verify-tools'])assert.ok(prepareTextTransport(request({media_inlining:true}),mode).plan);
+});
+test('AT07 image output is explicit compatibility, reports precise bypass and never changes settings',()=>{
+ for(const mode of ['tool-text','verify']){
+  const p=request({request_images:true}),r=prepareTextTransport(p,mode);assert.equal(r.payload,p);assert.equal(r.audit.reason,'media_output');assert.equal(r.audit.requestImages,true);assert.match(r.audit.label,/图片/);
+ }
+ const p=request({request_images:true,enable_web_search:true}),before=structuredClone(p),r=prepareTextTransport(p,'verify-tools');assert.ok(r.plan);assert.deepEqual(r.payload,before);assert.deepEqual(p,before);
+ for(const content of [[{type:'unknown',url:'secret'}],[{type:'image_url',image_url:{}}],[null]]){const r=prepareTextTransport(request({messages:[{role:'user',content}]}),'verify-tools');assert.equal(r.audit.reason,'media');assert.equal(r.audit.unsupportedContentParts,1);assert.doesNotMatch(JSON.stringify(r.audit),/secret/);}
+ for(const custom_include_body of [{generationConfig:{responseModalities:['TEXT','IMAGE']}},{modalities:['text','image']}])assert.ok(prepareTextTransport(request({custom_include_body}),'verify-tools').plan);
+ assert.equal(prepareTextTransport(request({custom_include_body:{modalities:['audio']}}),'verify-tools').audit.reason,'media_output');
+});
+test('AT07 image and mixed output preserve exact envelopes, signatures and bytes in streaming and buffered checks',async()=>{
+ for(const make of [request,openai])for(const stream of [true,false])for(const mixed of [false,true])for(const imageToggle of [false,true]){
+  const text=mixed?'图片说明':'',message={role:'assistant',content:text,images:[imageOutput]},native={candidates:[{content:{role:'model',parts:[...(text?[{text}]:[]),nativeImage]},finishReason:'STOP'}],usageMetadata:{totalTokenCount:5}};
+  const body=make===request?native:{choices:[{message,finish_reason:'stop'}],extra:'preserve'};
+  const frames=make===request?[{candidates:[{content:native.candidates[0].content}]},{candidates:[{finishReason:'STOP'}]}]:[{choices:[{index:0,delta:message}]},{choices:[{index:0,delta:{},finish_reason:'stop'}]}];
+  const raw=frames.map(event).join('')+event('[DONE]'),s=setup(()=>stream?new Response(raw,{headers:{'content-type':'text/event-stream'}}):jsonResponse(body));
+  const p=make({stream,request_images:imageToggle}),r=s.transport.prepare(p,'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'}),response=await s.send(r.payload);
+  if(stream)assert.deepEqual(await readFrames(response),frames);else assert.deepEqual(await response.json(),body);
+  assert.equal(status.state,mixed?'complete':'media-complete');assert.equal(status.hasImages,true);assert.equal(!!status.hasText,mixed);assert.equal(s.calls.length,1);assert.deepEqual(s.calls[0].body,p);s.transport.dispose();
+ }
+});
+test('AT07 image responses still reject missing or failed endings and malformed images without retries',async()=>{
+ for(const native of [false,true])for(const stream of [true,false])for(const failure of ['missing','length','bad-image','late-image','503']){
+  if(!stream&&failure==='late-image')continue;
+  const part=failure==='bad-image'?{inlineData:{mimeType:'image/png',data:''}}:nativeImage,img=failure==='bad-image'?{type:'image_url',image_url:{}}:imageOutput;
+  const text=native?google({content:{parts:[{text:'说明'},part]}}):chatChunk({content:'说明',images:[img]});
+  const tail=failure==='missing'?event('[DONE]'):native?end(failure==='length'?'MAX_TOKENS':'STOP'):chatEnd(failure==='length'?'length':'stop');
+  const body=native?{candidates:[{content:{parts:[{text:'说明'},part]},...(failure==='missing'?{}:{finishReason:failure==='length'?'MAX_TOKENS':'STOP'})}]}:{choices:[{message:{content:'说明',images:[img]},...(failure==='missing'?{}:{finish_reason:failure==='length'?'length':'stop'})}]};
+  const s=setup(()=>failure==='503'?new Response('busy',{status:503}):stream?new Response(text+tail+(failure==='late-image'?text:''),{headers:{'content-type':'text/event-stream'}}):jsonResponse(body)),r=s.transport.prepare((native?request:openai)({stream,request_images:true}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+  try{await(await s.send(r.payload)).text();}catch{}
+  assert.equal(status.state,'error',`${native}/${stream}/${failure}`);assert.equal(s.calls.length,1);s.transport.dispose();
+ }
+});
+test('AT07 production native snapshot exports image flag; image-only response does not authorize narrative archive',async()=>{
+ for(const stream of [true,false]){
+  const f=fixture(()=>{},()=>stream?new Response(google({content:{parts:[nativeImage]}})+end(),{headers:{'content-type':'text/event-stream'}}):jsonResponse({candidates:[{content:{parts:[nativeImage]},finishReason:'STOP'}]}));
+  f.d.routes.global.transport='verify-tools';f.w.context.owner='native';await f.host.before('normal');const p=request({stream,request_images:true,media_inlining:true});await f.host.payloadReady(p);await(await f.send(p)).text();
+  assert.equal(f.host.preview().transport.requestImages,true);assert.equal(f.host.preview().transport.state,'media-complete');assert.equal(f.host.generationAccepted(),false);assert.equal(f.calls.length,1);f.transport.dispose();
+ }
+});
+
+
+test('AT07 host-normalized Gemini image response is validated without modifying the native envelope',async()=>{
+ const original={choices:[{message:{role:'assistant',content:'',native:{gemini:{content:{role:'model',parts:[nativeImage]}}}},finish_reason:'stop'}],responseContent:{role:'model',parts:[nativeImage]}};
+ const s=setup(()=>jsonResponse(original)),r=s.transport.prepare(request({stream:false,request_images:true}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+ assert.deepEqual(await(await s.send(r.payload)).json(),original);assert.equal(status.state,'media-complete');assert.equal(status.completionEvidence,'host-normalized');s.transport.dispose();
+});
+test('AT07 image plus real tool handoff is not a final answer; auxiliary image-only replies fail',async()=>{
+ const tool={functionCall:{name:'lookup',args:{key:'a'}}};
+ for(const stream of [true,false]){
+  const original={candidates:[{content:{parts:[nativeImage,tool]},finishReason:'STOP'}]},s=setup(()=>stream?new Response(google({content:{parts:[nativeImage,tool]}})+end(),{headers:{'content-type':'text/event-stream'}}):jsonResponse(original)),r=s.transport.prepare(request({stream,request_images:true}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+  await(await s.send(r.payload)).text();assert.equal(status.state,'tool-handoff');assert.equal(status.hasImages,true);s.transport.dispose();
+  const a=setup(()=>stream?new Response(google({content:{parts:[nativeImage]}})+end(),{headers:{'content-type':'text/event-stream'}}):jsonResponse({candidates:[{content:{parts:[nativeImage]},finishReason:'STOP'}]})),q=a.transport.prepare(request({stream,request_images:true}),'verify-tools'),state=a.transport.authorize(q.payload,q,{kind:'auxiliary'});
+  try{await(await a.send(q.payload)).text();}catch{}assert.equal(state.state,'error');assert.equal(a.calls.length,1);a.transport.dispose();
+ }
 });

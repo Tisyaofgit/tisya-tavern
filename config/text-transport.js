@@ -1,10 +1,10 @@
-// Text-only transport adapter. Core streaming recognizers are MIT-licensed;
+// Text-output transport adapter; supported media inputs stay host-owned. Core streaming recognizers are MIT-licensed;
 // exact upstream identity and notices live in vendor/vertex-transport.
 import {prepareAntiTruncation,wrapAntiTruncationStream} from '../vendor/vertex-transport/anti-truncation.mjs';
 import {nativeRequestBody} from '../vendor/vertex-transport/vertex-native.mjs';
 import {wrapNativeTextStream} from '../vendor/vertex-transport/vertex-text-stream.mjs';
 import {guardCompletionStream} from '../vendor/vertex-transport/completion-integrity.mjs';
-import {geminiTextStream,bufferedResponse,observeResponse,transportFailure} from './transport-response.js';
+import {geminiTextStream,bufferedResponse,observeResponse,transportFailure,hasImageContent} from './transport-response.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 
 export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['verify','仅检查完整结束（不包装正文）'],['verify-tools','工具／搜索兼容检查（不包装正文）']];
@@ -13,14 +13,31 @@ const LIMIT=8*1024*1024,OUTPUT_LIMIT=32*1024*1024;
 const bytes=value=>new TextEncoder().encode(value).length;
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const problem=(code,message)=>Object.assign(new Error(message),{code});
-const reasonLabels={off:'关闭',retired:'旧 Vertex 选项已停用，请重新选择传输模式',provider:'仅支持 OpenAI Chat Completions 和自定义 Gemini generateContent',proxy:'代理连接未接入',tools:'本次带有工具调用',history:'本次含工具或原生回合历史',schema:'本次使用结构化输出',candidates:'本次请求多个候选',search:'本次使用搜索',media:'本期仅处理纯文字请求',parameters:'附加请求参数不适用',size:'包装后请求超过本功能大小限制',host:'当前宿主不是 TauriTavern'};
+const reasonLabels={off:'关闭',retired:'旧 Vertex 选项已停用，请重新选择传输模式',provider:'仅支持 OpenAI Chat Completions 和自定义 Gemini generateContent',proxy:'代理连接未接入',tools:'本次带有工具调用',history:'本次含工具或原生回合历史',schema:'本次使用结构化输出',candidates:'本次请求多个候选',search:'本次使用搜索',media:'本次含不支持或格式无效的消息内容',media_output:'本次请求图片／音频输出；当前仅支持文字输出',parameters:'附加请求参数不适用',size:'包装后请求超过本功能大小限制',host:'当前宿主不是 TauriTavern'};
 export const transportReason=reason=>reasonLabels[reason]??reason;
+
+// Inspect only known host input shapes. Never rewrite, fetch or decode media.
+// media_inlining is an input setting; request_images requests image OUTPUT.
+function inputShape(messages){
+ const counts={image:0,audio:0,video:0};let unsupported=0;
+ const nonempty=v=>typeof v==='string'&&v.length>0;
+ for(const m of Array.isArray(messages)?messages:[])if(Array.isArray(m?.content))for(const p of m.content){
+  if(!object(p)){unsupported++;continue;}
+  if(p.type==='text'){if(typeof p.text!=='string')unsupported++;continue;}
+  const kind={image_url:'image',audio_url:'audio',video_url:'video'}[p.type];
+  if(kind){const value=p[p.type];if(nonempty(value)||object(value)&&nonempty(value.url))counts[kind]++;else unsupported++;}
+  else if(p.type==='input_audio'&&object(p.input_audio)&&nonempty(p.input_audio.data)&&nonempty(p.input_audio.format))counts.audio++;
+  else unsupported++;
+ }
+ return {counts,unsupported};
+}
 
 export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  if(mode!=='vertex-streaming'&&!TRANSPORT_MODES.some(([id])=>id===mode))throw problem('TISYA_TRANSPORT_MODE','正文传输配置无效');
  const compatible=mode==='verify-tools';
  const checking=mode==='verify'||compatible;
- const skip=reason=>({payload,audit:{mode,state:mode==='off'?'off':'bypassed',reason,label:transportReason(reason)}});
+ const shape=inputShape(payload.messages),inputMedia=shape.counts,requestImages=payload.request_images===true;
+ const skip=reason=>({payload,audit:{mode,state:mode==='off'?'off':'bypassed',reason,label:transportReason(reason),requestImages,inputMedia,unsupportedContentParts:shape.unsupported}});
  if(mode==='off')return skip('off');
  if(mode==='vertex-streaming')return skip('retired');
  if(!isTauri)return skip('host');
@@ -34,9 +51,11 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  if(payload.enable_web_search&&!compatible)return skip('search');
  if(!Array.isArray(payload.messages)||!payload.messages.length)throw problem('TISYA_TRANSPORT_MESSAGES','正文传输请求缺少消息');
  if(!compatible&&payload.messages.some(m=>m.role==='tool'||m.role==='function'||m.tool_calls?.length||m.function_call||m.tool_call_id||m.native))return skip('history');
- if(payload.request_images||payload.messages.some(m=>!(compatible?['system','developer','user','assistant','tool','function']:['system','developer','user','assistant']).includes(m.role)||!(compatible&&m.content==null&&(m.tool_calls?.length||m.function_call))&&typeof m.content!=='string'&&!(Array.isArray(m.content)&&m.content.every(p=>p?.type==='text'&&typeof p.text==='string'))))return skip('media');
+ if(payload.request_images&&!compatible)return skip('media_output');
+ if(shape.unsupported||payload.messages.some(m=>!object(m)||!(compatible?['system','developer','user','assistant','tool','function']:['system','developer','user','assistant']).includes(m.role)||!(compatible&&m.content==null&&(m.tool_calls?.length||m.function_call))&&typeof m.content!=='string'&&!Array.isArray(m.content)))return skip('media');
  let included={};
  try{if(payload.custom_include_body)included=typeof payload.custom_include_body==='string'?JSON.parse(payload.custom_include_body):structuredClone(payload.custom_include_body);}catch{return skip('parameters');}
+ if(included?.modalities?.some?.(x=>x!=='text'&&!(compatible&&x==='image'))||included?.generationConfig?.responseModalities?.some?.(x=>x!=='TEXT'&&!(compatible&&x==='IMAGE')))return skip('media_output');
  if(!object(included)||payload.custom_exclude_body&&String(payload.custom_exclude_body).trim()||Object.keys(included).some(k=>!(compatible&&['tools','toolConfig','tool_choice','parallel_tool_calls','functions','function_call'].includes(k))&&/^(tools?|toolConfig|tool_choice|parallel_tool_calls|functions?|function_call|contents?|messages?|systemInstruction|cachedContent|stream|stream_options|n|best_of|response_format|responseSchema|responseMimeType)$/i.test(k))||included.generationConfig?.responseSchema||included.generationConfig?.responseJsonSchema||included.generationConfig?.responseMimeType&&included.generationConfig.responseMimeType!=='text/plain'||included.generationConfig?.candidateCount>1)return skip('parameters');
  const continuation=payload.type==='continue',prepared=prepareAntiTruncation({messages:payload.messages},mode==='tool-text',false,{continuation});
  const id=prepared.toolName??'tisya_check_'+crypto.randomUUID();
@@ -51,20 +70,20 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
   }
  }
  if(bytes(JSON.stringify(wire))>LIMIT)return skip('size');
- return {payload:wire,plan:{id,toolName:prepared.toolName,protocol,model:payload.model,stream:payload.stream===true,continuation,mode,allowTools:compatible},
-  audit:{mode,protocol,state:'prepared',label:checking?'已准备完整性检查':'已准备正文抗截断',allowTools:compatible,searchRequested:payload.enable_web_search===true,toolsRequested:!!(payload.tools?.length||payload.functions?.length),protection:checking?'integrity-only':'tool-text',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
+ return {payload:wire,plan:{id,toolName:prepared.toolName,protocol,model:payload.model,stream:payload.stream===true,continuation,mode,allowTools:compatible,allowImages:compatible},
+  audit:{mode,protocol,requestImages,inputMedia,unsupportedContentParts:shape.unsupported,state:'prepared',label:checking?'已准备完整性检查':'已准备正文抗截断',allowTools:compatible,searchRequested:payload.enable_web_search===true,toolsRequested:!!(payload.tools?.length||payload.functions?.length),protection:checking?'integrity-only':'tool-text',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
 }
 
 // The host must not commit a truncated reply merely because it saw a finish
 // frame. Release terminal frames only after the complete upstream is verified.
-function verifiedStream(response,{guard,signal,status,onComplete,onFailure,allowTools=false}){
+function verifiedStream(response,{guard,signal,status,onComplete,onFailure,allowTools=false,allowImages=false}){
  let integrity,restored=null,held=[],heldBytes=0,total=0,terminal=false,controller,reader,settled=false,emitted=0;
- const checked=guardCompletionStream(response,meta=>{integrity=meta;Object.assign(status,{outcome:meta.outcome,finishReason:meta.finishReason,nativeFinishReason:meta.nativeFinishReason});},null,OUTPUT_LIMIT);
+ const checked=guardCompletionStream(response,meta=>{integrity=meta;Object.assign(status,{outcome:meta.outcome,finishReason:meta.finishReason,nativeFinishReason:meta.nativeFinishReason});},null,OUTPUT_LIMIT,allowImages?hasImageContent:undefined);
  reader=checked.body.getReader();const encoder=new TextEncoder();
  const parser=createSseParser(({raw,data})=>{
   if(!data)return;
   if(data.trim()==='[DONE]')terminal=true;
-  else {const p=JSON.parse(data);if(p.router_anti_truncation)restored=p.router_anti_truncation.restored===true;if(p.choices?.some(c=>c.finish_reason!=null))terminal=true;}
+  else {const p=JSON.parse(data);for(const c of p.choices??[]){const d=c.delta??c.message;if(typeof d?.content==='string'&&d.content.trim()||Array.isArray(d?.content)&&d.content.some(x=>typeof x?.text==='string'&&x.text.trim()))status.hasText=true;if(allowImages&&hasImageContent(d))status.hasImages=true;}if(p.router_anti_truncation)restored=p.router_anti_truncation.restored===true;if(p.choices?.some(c=>c.finish_reason!=null))terminal=true;}
   const frame=encoder.encode(raw+'\n\n');total+=frame.length;if(total>OUTPUT_LIMIT)throw problem('TISYA_TRANSPORT_OUTPUT_LIMIT','抗截断输出超过本地读取限制');
   if(terminal){heldBytes+=frame.length;if(heldBytes>LIMIT)throw problem('TISYA_TRANSPORT_TAIL_LIMIT','抗截断结束信息过大');held.push(frame);}else {controller.enqueue(frame);emitted++;}
  });
@@ -139,13 +158,13 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
     e.status.httpStatus=response.status;if(!response.ok){failed(problem('TISYA_TRANSPORT_HTTP','上游请求失败'));return response;}
     if(!response.body)throw problem('TISYA_TRANSPORT_EMPTY','抗截断请求没有响应正文');
     const observed=observeResponse(response,e.status,now);
-    const complete=()=>{Object.assign(e.status,{state:e.status.toolTurn?'tool-handoff':'complete',label:e.status.toolTurn?'工具调用响应完整，交回酒馆处理；尚非最终正文':e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
-    if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,allowTools:e.plan.allowTools&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
+    const complete=()=>{Object.assign(e.status,{state:e.status.toolTurn?'tool-handoff':e.status.hasImages&&!e.status.hasText?'media-complete':'complete',label:e.status.toolTurn?'工具调用响应完整，交回酒馆处理；尚非最终正文':e.status.hasImages&&!e.status.hasText?'图片响应完整，交回宿主显示；不作为剧情正文归档':e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
+    if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
     if(!/text\/event-stream/i.test(response.headers.get('content-type')??'')){await observed.body.cancel();throw transportFailure('content_type');}
     let usage;
-    const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main'})):observed;
+    const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;
     const restored=e.plan.toolName?wrapAntiTruncationStream(translated,e.plan.toolName):translated;
-    const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed,allowTools:e.plan.allowTools&&e.kind==='main'});
+    const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed,allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'});
     return errorEvents(e.kind==='main'&&e.plan.protocol==='gemini'?nativeStream(checked,()=>usage):checked,controller.signal);
    }catch(error){failed(error,controller.signal.aborted?'cancelled':'error');throw error;}
   };

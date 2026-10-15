@@ -1,0 +1,32 @@
+{
+  "task": "AT07",
+  "version": "0.2.0-alpha.31.8",
+  "base_commit": "0abb7b0b45b6cbfd886d232de6119be9cc71bc78",
+  "checks": {
+    "build_checks": 9,
+    "full_tests": 426,
+    "full_failed": 0,
+    "targeted_tests": 36,
+    "targeted_failed": 0,
+    "original_host_reader_cases": 2
+  },
+  "real_model_calls": 0,
+  "android_runs": 0,
+  "native_backend_runs": 0,
+  "scope": [
+    "Preserve inline image/audio/video input",
+    "verify-tools preserves image output flag and original response envelopes",
+    "Image-only completion separated from final narrative archive",
+    "Exact bypass diagnostics and content counts"
+  ],
+  "limits": [
+    "Protocol validation only; image decoding and Android display untested",
+    "tool-text and verify still bypass explicit image output",
+    "Audio/video/fileData output unsupported",
+    "8MiB input and 32MiB output limits unchanged",
+    "Host-normalized Gemini may hide original finish reason",
+    "AT04 root cause not determined"
+  ],
+  "first_failure": "New input fixture incorrectly returned Gemini SSE to OpenAI protocol; fixture fixed; production fix not claimed for that failure",
+  "created_at": "2026-10-15T05:08:50.980884+00:00"
+}

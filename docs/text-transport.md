@@ -1,4 +1,4 @@
-# 正文传输（AT02—AT06 · alpha31.6）
+# 正文传输（AT02—AT07 · alpha31.8）
 
 在“预设与 API”的通用、模式或任务路由中选择“抗截断传输”，默认关闭。当前支持 OpenAI Chat Completions（原生 OpenAI 或自定义 openai_compat）及自定义 Gemini generateContent；接口凭据仍归宿主管理。原 Vertex 执行路径和选项已移除，旧 vertex-streaming 值只为读取历史设置保留，下拉框不再生成旧选项，旧值按关闭显示并提示停用，不会自动改为开启新功能。
 
@@ -13,7 +13,7 @@
 
 流式开关继续使用原生设置。非流式保留非流式上游请求，不强制改成流式。OpenAI 工具参数可以逐块还原；自定义 Gemini 不强塞 Vertex 专属参数流开关，按实际返回的完整 args 或 partialArgs 解码，服务商可能整段交付正文，不能保证首字实时出现。
 
-Responses、Gemini Interactions、其他 provider、代理、结构化输出、多候选和多媒体请求仍旁路。普通正文抗截断/仅检查模式还旁路真实工具/原生历史与搜索；新兼容检查模式允许这些请求并保留原字段。Unicode/图片转码未接入。不能删除工具历史来强开本功能。
+Responses、Gemini Interactions、其他 provider、代理、结构化输出、多候选与未知消息结构仍旁路。普通正文抗截断/仅检查模式还旁路真实工具/原生历史与搜索；新兼容检查模式允许这些请求并保留原字段。Unicode/图片转码未接入。不能删除工具历史来强开本功能。
 
 ## 完成与错误
 
@@ -49,3 +49,13 @@ alpha31.6新增的是显式兼容检查，不宣称“正文工具包装+联网�
 只读参考后端f6126b4f的makersuite构建器在存在function_declarations时省略google_search；用户安装APK的后端是否相同尚未执行验证。Google现行[generateContent组合工具文档](https://ai.google.dev/gemini-api/docs/generate-content/tool-combination)说明部分模型支持组合并需保留服务器工具上下文；任意自定义中转不自动具备相同能力。完整包装兼容需核具体接口与回合保存契约，未通过删除真实工具或覆盖搜索实现。
 
 72项定向本地测试通过，详见tool-search-compatibility-validation.json。主聊天引用、签名和工具响应保留，工具轮不会触发最终正文自动归档。真实模型、后端和Android仍待验。
+
+
+## AT07 · 媒体输入和图片输出
+
+- “发送内联媒体”（media_inlining）与“请求返回图片”（request_images）是不同设置。前者负责输入，后者请求图片输出。原media提示合并了两种情形；现在按实际结构/输出开关分别记录。
+- 三种有效模式支持宿主image_url、audio_url、video_url与标准input_audio输入。消息顺序、内容、画质、元数据保持；不下载、转码、删除媒体。原8 MiB请求/32 MiB响应上限保持，超限仍明确处理。
+- verify-tools允许图片输出开关，保留OpenAI图片字段、Gemini inlineData及宿主非流式responseContent/native结构。文字加图片可正常完成；纯图片为media-complete，交宿主显示，不触发剧情正文自动归档；工具加图片仍为tool-handoff。附属文字任务不接纳纯图片。
+- 普通tool-text/verify仍不接请求图片输出；不会静默换模式。音频/视频输出、fileData输出和未知结构不在本项验收范围。图片字节只作为不透明内容保留，协议完整不等于图片可解码或界面显示已验。
+- 完整性内核新增默认关闭的内容识别回调，仅兼容检查传入已校验图片识别器；许可证保留，来源原hash和本地补丁hash分列。结束标记/长度/工具/错误检查保持。
+- 用户截图同时勾选输入媒体与请求图片，支持request_images导致旧版旁路的解释；旧导出未记录此字段，不能追认为抓取到该次原始值。主动推进规则已进入其观察快照；不据历史回复宣称新模式行为验收通过。

@@ -4,6 +4,18 @@ import {restoreAntiTruncationCompletion} from '../vendor/vertex-transport/anti-t
 
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const nativeReason=v=>typeof v==='string'&&/^[A-Z][A-Z0-9_]{0,63}$/.test(v)?v:null;
+// Image bytes/URLs remain opaque and host-owned; validate the envelope only.
+const imageUrl=p=>p?.type==='image_url'&&typeof p.image_url?.url==='string'&&/^(data:image\/|https?:\/\/)/i.test(p.image_url.url);
+export function hasImageContent(message){
+ const images=message?.images;
+ if(images!==undefined&&(!Array.isArray(images)||images.some(p=>!imageUrl(p))))throw transportFailure('invalid_images');
+ const parts=Array.isArray(message?.content)?message.content:[];
+ if(parts.some(p=>p?.type==='image_url'&&!imageUrl(p)))throw transportFailure('invalid_images');
+ return !!images?.length||parts.some(imageUrl);
+}
+const inlineImage=part=>object(part?.inlineData)&&/^image\/[a-z0-9.+-]+$/i.test(part.inlineData.mimeType??'')&&typeof part.inlineData.data==='string'&&part.inlineData.data.length>0;
+const imagePart=part=>({type:'image_url',image_url:{url:`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`}});
+const hasText=message=>typeof message?.content==='string'?!!message.content.trim():Array.isArray(message?.content)&&message.content.some(p=>typeof p?.text==='string'&&p.text.trim());
 export function transportFailure(value){
  const code=typeof value==='string'&&/^[a-zA-Z0-9_]{1,100}$/.test(value)?value:'read';
  let message='正文传输失败，已显示片段未作为完整结果归档';
@@ -51,7 +63,7 @@ const mapReason=reason=>reason==='STOP'?'stop':reason==='MAX_TOKENS'?'length':/S
 
 // Inspect native Gemini text without losing signatures or opaque metadata on
 // the main-chat path. The original event is carried locally through validation.
-export function geminiTextStream(response,status,{allowTools=false}={}){
+export function geminiTextStream(response,status,{allowTools=false,allowImages=false}={}){
  let terminal=false,done=false,toolIndex=0,hasTools=false;
  return transformSse(response,({data,event},emit)=>{
   if(!data){if(event==='error')throw transportFailure('upstream_stream_error');return;}
@@ -61,27 +73,39 @@ export function geminiTextStream(response,status,{allowTools=false}={}){
   if(!object(p)||p.error||event==='error')throw transportFailure('upstream_stream_error');
   if(p.candidates!==undefined&&(!Array.isArray(p.candidates)||p.candidates.length>1))throw transportFailure('invalid_candidates');
   const c=p.candidates?.[0];if(c!==undefined&&(!object(c)||(c.index!==undefined&&c.index!==0)))throw transportFailure('invalid_candidate');
-  const parts=c?.content?.parts??[];if(!Array.isArray(parts)||parts.some(x=>!object(x)||(!allowTools&&(x.functionCall||x.functionResponse))||x.inlineData||x.fileData))throw transportFailure('unexpected_content');
+  const parts=c?.content?.parts??[];if(!Array.isArray(parts)||parts.some(x=>!object(x)||(!allowTools&&(x.functionCall||x.functionResponse))||x.inlineData&&(!allowImages||!inlineImage(x))||x.fileData))throw transportFailure('unexpected_content');
+  const images=parts.filter(p=>p.inlineData&&!p.thought).map(imagePart);
+  if(images.length)status.hasImages=true;
   let content='',reasoning='';for(const part of parts){if(part.text!==undefined&&typeof part.text!=='string')throw transportFailure('invalid_text');if(part.thought)reasoning+=part.text??'';else content+=part.text??'';}
+  if(content.trim())status.hasText=true;
   const calls=[];
   for(const part of parts)if(part.functionCall){const f=part.functionCall;if(typeof f.name!=='string'||!f.name||!object(f.args)||f.partialArgs||f.willContinue)throw transportFailure('invalid_tool_arguments');calls.push({index:toolIndex++,id:f.id,type:'function',function:{name:f.name,arguments:JSON.stringify(f.args)}});}
   hasTools ||= calls.length>0;
   const reason=c?.finishReason??p.promptFeedback?.blockReason;
-  if(terminal&&(content||reasoning||calls.length||reason))throw transportFailure('data_after_finish');
+  if(terminal&&(content||reasoning||images.length||calls.length||reason))throw transportFailure('data_after_finish');
   if(reason!==undefined){status.nativeFinishReason=nativeReason(reason);terminal=true;}
   // Tauri may append choices[].delta.native as history metadata after STOP.
   if(p.choices?.some(x=>x.delta?.content||x.delta?.tool_calls||x.finish_reason))throw transportFailure('invalid_native_envelope');
-  const choices=c||reason!==undefined?[{index:0,delta:{...(content?{content}:{}),...(reasoning?{reasoning_content:reasoning}:{}),...(calls.length?{tool_calls:calls}:{})},...(reason!==undefined?{finish_reason:reason==='STOP'&&hasTools?'tool_calls':mapReason(reason),native_finish_reason:nativeReason(reason)}:{})}]:[];
+  const choices=c||reason!==undefined?[{index:0,delta:{...(images.length?{images}:{}),...(content?{content}:{}),...(reasoning?{reasoning_content:reasoning}:{}),...(calls.length?{tool_calls:calls}:{})},...(reason!==undefined?{finish_reason:reason==='STOP'&&hasTools?'tool_calls':mapReason(reason),native_finish_reason:nativeReason(reason)}:{})}]:[];
   emit(sseData({choices,tisyaNativeFrame:p}));
  },emit=>{if(!terminal)throw transportFailure('missing_finish_reason');emit(sseData('[DONE]'));});
 }
 
-function normalizeGemini(value,status){
+function normalizeGemini(value,status,{allowImages=false}={}){
  if(value.promptFeedback?.blockReason)throw transportFailure('filtered');
  if(Array.isArray(value.choices)){
   // The host projects non-streaming Gemini responses into choices, sometimes
   // discarding the native finish code. Report that limit instead of inventing STOP.
-  status.completionEvidence='host-normalized';return value;
+  status.completionEvidence='host-normalized';
+  if(allowImages){
+   const parts=value.responseContent?.parts??value.choices[0]?.message?.native?.gemini?.content?.parts;
+   if(parts!==undefined){
+    if(!Array.isArray(parts)||parts.some(p=>!object(p)||p.inlineData&&!inlineImage(p)||p.fileData))throw transportFailure('invalid_images');
+    const images=parts.filter(p=>p.inlineData&&!p.thought).map(imagePart);
+    if(images.length){value=structuredClone(value);if(!object(value.choices[0]?.message))throw transportFailure('invalid_message');value.choices[0].message.images=images;}
+   }
+  }
+  return value;
  }
  if(!Array.isArray(value.candidates)||value.candidates.length!==1)throw transportFailure('invalid_candidates');
  const c=value.candidates[0],reason=c.finishReason;
@@ -93,6 +117,7 @@ function normalizeGemini(value,status){
   if(!object(part))throw transportFailure('invalid_part');
   if(part.functionCall){const f=part.functionCall;if(typeof f.name!=='string'||!f.name||!object(f.args)||f.partialArgs||f.willContinue)throw transportFailure('invalid_tool_arguments');calls.push({id:f.id??'text_transport',type:'function',function:{name:f.name,arguments:JSON.stringify(f.args)}});}
   else if(typeof part.text==='string'){if(part.thought)message.reasoning_content=(message.reasoning_content??'')+part.text;else message.content+=part.text;}
+  else if(allowImages&&inlineImage(part)){if(!part.thought)(message.images??=[]).push(imagePart(part));}
   else if(part.inlineData||part.fileData)throw transportFailure('unexpected_content');
  }
  if(calls.length)message.tool_calls=calls;
@@ -111,15 +136,17 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   if(Number.isInteger(value?.error?.code))status.upstreamStatus=value.error.code;
   if(!object(value)||value.error)throw transportFailure('upstream_error');
   const original=value;
-  if(plan.protocol==='gemini')value=normalizeGemini(value,status);else status.completionEvidence='provider';
+  if(plan.protocol==='gemini')value=normalizeGemini(value,status,plan);else status.completionEvidence='provider';
   if(!Array.isArray(value.choices)||value.choices.length!==1)throw transportFailure('invalid_choices');
-  const before=inspectCompletion(value);Object.assign(status,{finishReason:before.integrity.finishReason});
+  const extra=plan.allowImages?hasImageContent:undefined;
+  const before=inspectCompletion(value,extra);Object.assign(status,{finishReason:before.integrity.finishReason});
   if(!before.valid)throw transportFailure(before.reason);
   if(['length','content_filter'].includes(before.integrity.outcome))throw transportFailure(before.integrity.outcome==='length'?'length':'filtered');
   if(plan.toolName){value=restoreAntiTruncationCompletion(value,plan.toolName);status.restored=value.router_anti_truncation?.restored===true;if(!status.restored)throw transportFailure('not_restored');}
-  const checked=inspectCompletion(value),toolTurn=plan.allowTools&&checked.integrity.outcome==='tool_calls';if(!checked.valid||checked.integrity.outcome!=='complete'&&!toolTurn)throw transportFailure(checked.reason??'unexpected_tools');
+  const checked=inspectCompletion(value,extra),toolTurn=plan.allowTools&&checked.integrity.outcome==='tool_calls';if(!checked.valid||checked.integrity.outcome!=='complete'&&!toolTurn)throw transportFailure(checked.reason??'unexpected_tools');
   const message=value.choices[0].message;
-  if(!toolTurn&&(typeof message.content!=='string'||!message.content.trim()))throw transportFailure('empty_completion');
+  status.hasText=hasText(message);status.hasImages=!!(plan.allowImages&&hasImageContent(message));
+  if(!toolTurn&&!status.hasText&&!status.hasImages)throw transportFailure('empty_completion');
   if(plan.toolName){
    // A synthetic function is never persisted as an executable/native tool turn.
    delete message.native;delete message.function_call;

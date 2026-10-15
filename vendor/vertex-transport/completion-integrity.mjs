@@ -20,9 +20,11 @@ export function integrityLogFields(value) {
 }
 const contentPresent = value => typeof value === "string" ? value.length > 0 :
   Array.isArray(value) && value.some(part => typeof part?.text === "string" && part.text.length > 0);
-function flags(message) {
+// Tisya AT07: optional validated additional-content hook; default behavior unchanged.
+function flags(message, hasAdditionalContent = () => false) {
+  const additional = hasAdditionalContent(message);
   return {
-    hasContent: contentPresent(message?.content) || isObject(message?.audio),
+    hasContent: contentPresent(message?.content) || isObject(message?.audio) || additional,
     hasToolCalls: Boolean(message?.tool_calls?.length || message?.function_call),
     hasReasoning: contentPresent(message?.reasoning_content) || contentPresent(message?.reasoning) || Boolean(message?.reasoning_details?.length),
     hasRefusal: typeof message?.refusal === "string" && message.refusal.length > 0,
@@ -47,7 +49,7 @@ function choiceProblem(state) {
   if (["tool_calls", "function_call"].includes(state.finishReason) && !state.hasToolCalls) return "missing_tool_calls";
   return null;
 }
-export function inspectCompletion(completion) {
+export function inspectCompletion(completion, hasAdditionalContent = () => false) {
   // Malformed replies still carry useful terminal metadata. Keep only the failing
   // choice's flags/reason; neither a previous choice nor repair may imply success.
   const invalid = (reason, state) => ({ valid: false, reason, integrity: {
@@ -58,7 +60,7 @@ export function inspectCompletion(completion) {
   const states = [];
   for (const choice of completion.choices) {
     if (!isObject(choice)) return invalid("invalid_choice");
-    const state = { ...flags(isObject(choice.message) ? choice.message : null), finishReason: choice.finish_reason, nativeFinishReason: choice.native_finish_reason };
+    const state = { ...flags(isObject(choice.message) ? choice.message : null, hasAdditionalContent), finishReason: choice.finish_reason, nativeFinishReason: choice.native_finish_reason };
     if (choice.message == null) return invalid(isObject(choice.delta) ? "unexpected_stream_chunk" : "missing_message", state);
     if (!isObject(choice.message)) return invalid("invalid_message", state);
     const problem = choiceProblem(state);
@@ -77,7 +79,7 @@ export function inspectCompletion(completion) {
   return { valid: true, reason: null, integrity: summary(states) };
 }
 
-export function guardCompletionStream(response, onMetadata = () => {}, expectation = null, maxStructuredBytes = 32 * 1024 * 1024) {
+export function guardCompletionStream(response, onMetadata = () => {}, expectation = null, maxStructuredBytes = 32 * 1024 * 1024, hasAdditionalContent = () => false) {
   if (!response.ok || !response.body) return response;
   const states = new Map();
   const structured = new Map();
@@ -131,7 +133,7 @@ export function guardCompletionStream(response, onMetadata = () => {}, expectati
       const state = states.get(index) ?? { ...flags({}), finishReason: null };
       const delta = choice.delta ?? choice.message ?? {};
       if (!isObject(delta)) fail("invalid_stream_delta");
-      const incoming = flags(delta);
+      const incoming = flags(delta, hasAdditionalContent);
       const calls = delta.tool_calls ?? (delta.function_call ? [{ index: 0, function: delta.function_call }] : []);
       if (!Array.isArray(calls)) fail("invalid_tool_call");
       for (const [position, call] of calls.entries()) {

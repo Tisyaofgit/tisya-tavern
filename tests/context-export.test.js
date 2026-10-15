@@ -30,5 +30,6 @@ test('export uses the host runtime file API and propagates unsupported/failure; 
  let called=0;const result=await exportContextText('正文🙂','context.json',{load:async()=>({downloadBlobWithRuntime:async(blob,name)=>{called++;assert.equal(await blob.text(),'正文🙂');assert.equal(name,'context.json');return {mode:'android-document-picker'};}})});assert.equal(result.mode,'android-document-picker');assert.equal(called,1);
  await assert.rejects(exportContextText('x','x',{load:async()=>({})}),/缺少/);await assert.rejects(exportContextText('x','x',{load:async()=>({downloadBlobWithRuntime:async()=>({mode:'failed'})})}),/未确认/);
  let copied;await copyContextText({defaultView:{navigator:{clipboard:{writeText:async x=>{copied=x;}}}}},'原文');assert.equal(copied,'原文');await assert.rejects(copyContextText({defaultView:{navigator:{}}},'x'),/不支持/);
+ assert.match(transportSummary({mode:'verify-tools',state:'media-complete'}),/图片响应.*不作为剧情正文归档/);
  assert.match(transportSummary({mode:'verify-tools',state:'tool-handoff'}),/尚非最终正文/);assert.match(transportSummary({mode:'verify-tools',state:'complete',label:'完整'}),/仅完整性检查/);assert.match(transportSummary({mode:'verify',state:'complete',label:'完整'}),/仅完整性检查/);assert.match(transportSummary({mode:'tool-text',state:'receiving'}),/尚未完成/);
 });

@@ -11,5 +11,11 @@
     "gemini4.mjs": "8a3e9fb618596735a4cfa1d0d17d3f1cdc6636a3668a1c3688ee247920c0cadc",
     "wire.mjs": "bdfafb055e9db79d99ed8efed55a31cdbc0eaea1f7127744630027b5a8ae09f0"
   },
-  "changes": "Imported modules unmodified. Tisya adapter is config/vertex-transport.js. No Unicode/image/gateway features imported."
+  "changes": "AT07: completion-integrity.mjs adds an optional validated additional-content callback; default behavior unchanged. Original upstream hashes remain in files; local patch hashes recorded separately. Other imported modules unmodified. Adapter: config/text-transport.js.",
+  "local_patches": {
+    "completion-integrity.mjs": {
+      "sha256": "9ac13409fe4334bb1b5ad38abb4cd899b90091b8127945062b062f010b5f480b",
+      "reason": "Recognize validated image content without weakening terminal/tool/length validation or adding text to the response."
+    }
+  }
 }
