@@ -16,6 +16,7 @@ export const contextOwner=w=>w.context.owner===undefined?'native':w.context.owne
 export const FEATURES=N.protocol.P.features.map(([name,key])=>({id:'feature:'+name,name,key}));
 export const registry={modes:new Map([['narrative',{id:'narrative',name:'叙事',version:1,task:'main'}]]),tasks:new Map(Object.entries(TASKS).map(([id,name])=>[id,{id,name,capability:['agent','embedding','rerank','image','tts','stt'].includes(id)?id:'chat'}])),resources:new Map(),archives:new Map(),executors:new Map(),themes:new Map()};
 registerTableTasks(registry);
+registry.tasks.set('communication',{id:'communication',name:'场外交流',capability:'chat',isolated:true,inheritMain:true,preset:null});
 export function register(kind,row){const bank=registry[kind];if(!(bank instanceof Map)||!row||typeof row.id!=='string'||!row.id.trim())fail('登记类型或编号无效');if(bank.has(row.id))fail('编号已登记：'+row.id);bank.set(row.id,row);return ()=>bank.delete(row.id);}
 export function worldKey(c){if(!c.chatId)fail('请先打开一个世界的聊天');const card=c.characters?.[c.characterId];return JSON.stringify([c.groupId?'group':'card',c.groupId||card?.avatar||c.characterId,c.chatId]);}
 export function defaultMode(legacy={}){return {narrative:{...N.suggestions(),缇斯亚MVU兼容:false,...legacy},selected:[],routes:{},summary:true,actions:true,workflowDetail:'compact'};}

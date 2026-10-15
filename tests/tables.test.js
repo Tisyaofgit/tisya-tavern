@@ -336,3 +336,11 @@ test('rollback and native branch preserve a chosen future blueprint without rear
  f.c.chat.push(user('新的路线'));const before=f.calls.length;await f.service.archive();assert.equal(f.calls.length,before);
  const cleared=await f.service.stageFork(1,false);assert.equal(cleared.nodes,0);f.c.chatId='new-branch';f.c.chat=f.c.chat.slice(0,1);await f.service.activateFork();const other=await f.service.inspect();assert.equal(other.session.branchSeed.nodes.length,0);assert.equal(other.archived,1);assert.notEqual(other.session.id,info.session.id);
 });
+test('reroll branch keeps candidate commits switchable rather than freezing discarded facts into its baseline',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[{...ai('旧候选事实'),swipes:['旧候选事实','另一候选事实'],swipe_id:0},user('继续'),ai('后文事实')];
+ f.responder(async(_,input)=>({changes:[op('new:event','events',{名称:input.archiveSource.text,经过:input.archiveSource.text},input.archiveSource.text)]}));await f.service.archive({range:{from:1,to:3,limit:3}});const original=(await f.service.inspect()).session.id;
+ f.c.chat[0].mes='另一候选事实';f.c.chat[0].swipe_id=1;await f.service.archive({range:{from:1,to:1,limit:1}});await f.service.stageFork(1,false,{preserveCandidates:true});f.c.chatId='reroll-branch';f.c.chat=f.c.chat.slice(0,1);await Promise.all([f.service.activateFork(),f.service.activateFork()]);
+ const branched=await f.service.inspect();assert.notEqual(branched.session.id,original);assert.equal(branched.session.branchSeed,undefined);assert.deepEqual(branched.rows.filter(r=>r.table==='events').map(r=>r.values.名称),['另一候选事实']);
+ f.c.chat[0].mes='旧候选事实';f.c.chat[0].swipe_id=0;assert.deepEqual((await f.service.inspect()).rows.filter(r=>r.table==='events').map(r=>r.values.名称),['旧候选事实']);
+ f.c.chat[0].swipes.push('新生成未归档');f.c.chat[0].mes='新生成未归档';f.c.chat[0].swipe_id=2;assert.deepEqual((await f.service.inspect()).rows.filter(r=>r.table==='events'),[]);
+});

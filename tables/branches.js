@@ -15,3 +15,11 @@ export function snapshotAnchor(loaded,{name,cut=null,nodes=null}){
 }
 export function validateNodes(nodes,rows){check(Array.isArray(nodes)&&nodes.length<=1000,'蓝本节点格式或数量无效');const ids=new Set();for(const n of nodes){check(n&&typeof n.id==='string'&&n.id&&!ids.has(n.id)&&typeof n.name==='string'&&n.name.trim()&&typeof n.summary==='string'&&typeof n.condition==='string'&&['主线','支线','个人','日常'].includes(n.kind),'蓝本节点需有唯一ID、名称、内容、条件与类别');ids.add(n.id);check(Array.isArray(n.actors)&&n.actors.every(id=>rows.some(r=>r.id===id&&r.table==='objects')),'蓝本参与者不存在于起点；先选择可复用对象加入起点');}return nodes;}
 export function branchSeed(anchor){check(anchor?.version===1&&Array.isArray(anchor.rows),'时间锚版本无效');for(const row of anchor.rows)validateRow(anchor.registry,row);validateReferences(anchor.rows,anchor.registry);validateNodes(anchor.nodes,anchor.rows);return {anchor:{id:anchor.id,name:anchor.name,version:anchor.version,worldTime:anchor.worldTime},rows:copy(anchor.rows).map(r=>({...r,source:null})),nodes:copy(anchor.nodes),archivedSources:copy(anchor.archivedSources??[])};}
+
+export function forkCommits(commits,eligible){
+ const known=commit=>{const source=commit.source??commit.contextSource;return typeof source==='string'?eligible.has(source):Object.hasOwn(commit,'contextSource')&&source===null;};
+ const last=commits.findLastIndex(known);
+ // Legacy null-source records have no recoverable floor. Retain only those in
+ // the confirmed prefix, never a later tail merely because its source is null.
+ return commits.filter((commit,index)=>known(commit)||(commit.source===null&&!Object.hasOwn(commit,'contextSource')&&index<=last));
+}
