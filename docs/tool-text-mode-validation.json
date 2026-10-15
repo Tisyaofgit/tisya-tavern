@@ -1,0 +1,70 @@
+{
+  "task": "AT09",
+  "version": "0.2.0-alpha.31.14",
+  "at": "2026-10-15T11:00:55.429104+00:00",
+  "scope": "Explicit body-as-tool mode with host-owned real function tool rounds",
+  "base_commit": "56770246de04ce763d36a5b6317519f0aa1f116f",
+  "local_validation": {
+    "full_tests": 490,
+    "build_checks": 9,
+    "failures_final": 0,
+    "skipped": 0,
+    "log": "evidence/AT09-S1-final-full-tests.log"
+  },
+  "model_http_calls": 0,
+  "android_tested": false,
+  "native_backend_tested": false,
+  "limits": [
+    "Built-in provider web search rejected, standard function search tools supported",
+    "Image output rejected; existing supported media inputs preserved",
+    "New mode collects full stream before emitting selected tool/text round",
+    "No retry, no extra model request; host owns actual tool execution",
+    "User original 406-byte response not supplied; incident cause still unresolved"
+  ],
+  "files": {
+    "config/tool-text-mode.js": "8d0370d671546dd00c5db5b625a1fc5b3d103f7f20a0886b2597348fad7c4d84",
+    "config/text-transport.js": "38491ba25147bade447d7143af2ab2b59b56619a5fffa3978060292ea3bdc203",
+    "config/transport-response.js": "78a846b8fbd9bd103360f4b3a413392f8e213ab7f2a12796a0a72766b433c288",
+    "tests/tool-text-mode.test.js": "7dd0042a62248da5c92d61e0d061f690dba6fc2debc81953fcb56402276ef9ff",
+    "tests/text-transport.test.js": "c2a65abc73cb3411fda22b9208f2def43bdf4b7b1f5274457b4f52ad36f52eaf"
+  },
+  "integrated_main": "c121ba43d35450f55bd66ff01becd15b3f451222",
+  "publication": "Draft PR #1 only; main blocked by automatic approval and awaits explicit user confirmation",
+  "pre_sandbox_validation": {
+    "targeted_tests": 46,
+    "full_tests": 485,
+    "build_checks": 9,
+    "failures_final": 0,
+    "skipped": 0,
+    "first_targeted_failures": 2,
+    "first_failures_explained": [
+      "Old mode label changed; restored to preserve existing label contract",
+      "Fixture used auxiliary OpenAI reader for main Gemini stream; corrected to main native parts reader"
+    ],
+    "full_tests_before_merge": 484
+  },
+  "independent_sandbox": {
+    "baseline_commit": "58d315a7f2a969de1918a088be691232f6e48318",
+    "baseline_cases": 13,
+    "baseline_failures": 7,
+    "final_cases": 15,
+    "final_passed": 15,
+    "localhost_http_requests": 19,
+    "transport": "actual localhost HTTP/SSE fetch, production plugin, extracted original host readers/tool parsers",
+    "body_js_characters": 240052,
+    "body_sha256": "a7aca02da471660e850e703ed7d59c361e0303c93e9a43bc561c3b699b06a936",
+    "protocol_modes": [
+      "OpenAI buffered",
+      "OpenAI stream",
+      "Gemini buffered",
+      "Gemini stream"
+    ],
+    "tool_executor_run": false,
+    "fixes": [
+      "Reject shadow outside text rather than silently drop it",
+      "Validate host-priority native tool mirrors against projected calls including args/order/IDs",
+      "Reject shadow output media"
+    ],
+    "evidence": "evidence/AT09-S1-independent/final-evidence-manifest.json"
+  }
+}
