@@ -536,7 +536,7 @@ KB01-D1/D2设计完成；R0仅部分恢复；A1已完成窗口32可读源和2.3.
 - 本轮证据目录library-audit-20261015/request-audit-window9；完整语义核验结论、回归与同点保存待以下交接补齐。
 
 
-### AT07 · 内联媒体与图片返回兼容（alpha31.8，本地验证完成）
+### AT07 · 内联媒体与图片返回兼容（alpha31.8，已发布）
 
 - 用户2026-10-15 12:59 +08明确要求兼容内联媒体发送；沿直接合Git维护授权，基于main 0abb7b0，独立于KB01候选。窗口9截止06:00:27 UTC。
 - 当前导出确认alpha31.7、verify-tools因media旁路，主动推进完整规则已进入观察请求；所有可见content为文字。导出缺request_images，不能凭此确定设备实际开关。宿主源码区分media_inlining输入与request_images输出，撤回将两者等同的假设。
@@ -548,8 +548,8 @@ KB01-D1/D2设计完成；R0仅部分恢复；A1已完成窗口32可读源和2.3.
 - 已实现：输入媒体逐值保留；verify-tools保留Gemini inlineData、responseContent/native和OpenAI images；纯图片media-complete，不触发最终剧情归档；图文complete、工具图片tool-handoff。仅检查协议及内容信封，不解码图像或保证语义写完。
 - 验证：9构建+426项全回归通过；36项传输/导出定向用例通过（包含在426内）。原APK getStreamingReply提取函数另2个模拟HTTP夹具可收到原图片和文字。首轮新增夹具错用Gemini SSE到OpenAI协议，修正后通过。真实模型/原生后端/Android均0，旧AT04根因未定。
 - 版权与复用：completion-integrity.mjs只增默认关闭的已校验额外内容回调；原许可证和原始hash保留，本地补丁hash单列。其余vendor原样。完整正文工具包装+真实工具/搜索仍未实现。
-- 当前待办：核审定差异后合main alpha31.8，更新唯一蓝图及同点状态保存回执；用户更新重启后沿原verify-tools模式验实际返回。
-
+- 当前待办：同点状态持久保存；用户更新重启后沿原verify-tools模式验实际返回。源码、426项测试与Git合并已完成，不把本地检查等同实机通过。
+- AT07-G1：已合main `7702db81a21528d21a7d4a5bdf65712442eed669`，alpha31.8；18个审定文件、完整Git树及原有文件保持均读回核同。真实模型/Android待验，同点保存回执另记。
 
 ### 重建窗口9 · N04归档请求审计阶段交接
 
