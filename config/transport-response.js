@@ -1,3 +1,4 @@
+import {classifyToolTurn} from './tool-text-mode.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 import {inspectCompletion} from '../vendor/vertex-transport/completion-integrity.mjs';
 import {restoreAntiTruncationCompletion} from '../vendor/vertex-transport/anti-truncation.mjs';
@@ -174,17 +175,25 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   const before=inspectCompletion(value,extra);Object.assign(status,{finishReason:before.integrity.finishReason});
   if(!before.valid)throw transportFailure(before.reason);
   if(['length','content_filter'].includes(before.integrity.outcome))throw transportFailure(before.integrity.outcome==='length'?'length':'filtered');
-  if(plan.toolName){value=restoreAntiTruncationCompletion(value,plan.toolName);status.restored=value.router_anti_truncation?.restored===true;if(!status.restored)throw transportFailure('not_restored');}
+  let toolName=plan.toolName;
+  if(plan.mode==='tool-text-tools'){
+   const message=value.choices[0].message;
+   if(message?.function_call||message?.images||Array.isArray(message?.content)&&message.content.some(p=>p.type!=='text'))throw transportFailure('unexpected_content');
+   const turn=classifyToolTurn((message?.tool_calls??[]).map(c=>c.function?.name),plan);status.toolTextTurn=turn;if(turn==='real')toolName=null;
+   if(turn==='synthetic'&&hasText(message))throw transportFailure('wrap_mixed_text');
+  }
+  if(toolName){value=restoreAntiTruncationCompletion(value,toolName);status.restored=value.router_anti_truncation?.restored===true;if(!status.restored)throw transportFailure('not_restored');}
   const checked=inspectCompletion(value,extra),toolTurn=plan.allowTools&&checked.integrity.outcome==='tool_calls';if(!checked.valid||checked.integrity.outcome!=='complete'&&!toolTurn)throw transportFailure(checked.reason??'unexpected_tools');
   const message=value.choices[0].message;
   status.hasText=hasText(message);status.hasImages=!!(plan.allowImages&&hasImageContent(message));
   if(!toolTurn&&!status.hasText&&!status.hasImages)throw transportFailure('empty_completion');
-  if(plan.toolName){
+  if(toolName){
    // A synthetic function is never persisted as an executable/native tool turn.
    delete message.native;delete message.function_call;
+   if(plan.mode==='tool-text-tools'){delete value.content;delete value.text;delete value.choices[0].text;}
    if(plan.protocol==='gemini')value.responseContent={role:'model',parts:[...(message.reasoning_content?[{thought:true,text:message.reasoning_content}]:[]),{text:message.content}]};
   }
   Object.assign(status,{outcome:checked.integrity.outcome,toolTurn:!!toolTurn,finishReason:checked.integrity.finishReason});
-  return new Response(JSON.stringify(plan.mode==='verify-tools'?original:value),{headers:{'content-type':'application/json'}});
+  return new Response(JSON.stringify(plan.mode==='verify-tools'||plan.mode==='tool-text-tools'&&toolTurn?original:value),{headers:{'content-type':'application/json'}});
  }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
 }

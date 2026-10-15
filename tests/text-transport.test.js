@@ -399,3 +399,16 @@ test('AT07 image plus real tool handoff is not a final answer; auxiliary image-o
   try{await(await a.send(q.payload)).text();}catch{}assert.equal(state.state,'error');assert.equal(a.calls.length,1);a.transport.dispose();
  }
 });
+
+test('AT09 new mode survives UI save and production host only accepts restored final text',async()=>{
+ const f=fixture(()=>{},(_name,body)=>jsonResponse({choices:[{index:0,message:{role:'assistant',tool_calls:[{id:'transport',type:'function',function:{name:body.tools.at(-1).function.name,arguments:JSON.stringify({content:'本轮完整正文'})}}]},finish_reason:'tool_calls'}]}));
+ const window=new Window(),container=window.document.createElement('div');window.document.body.append(container);
+ const ui=mountConfiguration(window.document,container,{store:f.store,host:f.host,initialTab:'api'});await ui.ready;
+ const dom=ui.root.shadowRoot,select=[...dom.querySelectorAll('select')].find(s=>s.getAttribute('aria-label')==='通用 抗截断传输');
+ assert.ok([...select.options].some(o=>o.value==='"tool-text-tools"'));
+ select.value='"tool-text-tools"';select.dispatchEvent(new window.Event('change'));
+ await [...dom.querySelectorAll('button')].find(b=>b.textContent==='保存配置').onclick();assert.equal(f.store.read().data.routes.global.transport,'tool-text-tools');assert.equal(f.calls.length,0);
+ await f.host.before('normal');const p=request({stream:false,tools:[{type:'function',function:{name:'lookup',parameters:{type:'object'}}}]});await f.host.payloadReady(p);assert.equal(f.host.generationAccepted(),false);assert.equal(p.tools.length,2);
+ assert.equal((await(await f.send(p)).json()).choices[0].message.content,'本轮完整正文');assert.equal(f.host.generationAccepted(),true);assert.equal(f.host.preview().transport.restored,true);assert.equal(f.calls.length,1);
+ ui.dispose();f.transport.dispose();window.happyDOM.abort();
+});

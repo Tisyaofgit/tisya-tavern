@@ -1,13 +1,14 @@
 // Text-output transport adapter; supported media inputs stay host-owned. Core streaming recognizers are MIT-licensed;
 // exact upstream identity and notices live in vendor/vertex-transport.
 import {prepareAntiTruncation,wrapAntiTruncationStream} from '../vendor/vertex-transport/anti-truncation.mjs';
+import {prepareToolTextMode,selectToolTextStream} from './tool-text-mode.js';
 import {nativeRequestBody} from '../vendor/vertex-transport/vertex-native.mjs';
 import {wrapNativeTextStream} from '../vendor/vertex-transport/vertex-text-stream.mjs';
 import {guardCompletionStream} from '../vendor/vertex-transport/completion-integrity.mjs';
 import {geminiTextStream,bufferedResponse,observeResponse,transportFailure,hasImageContent} from './transport-response.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 
-export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['verify','仅检查完整结束（不包装正文）'],['verify-tools','工具／搜索兼容检查（不包装正文）']];
+export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['tool-text-tools','正文工具包装（兼容工具回合）'],['verify','仅检查完整结束（不包装正文）'],['verify-tools','工具／搜索兼容检查（不包装正文）']];
 const PATH='/api/backends/chat-completions/generate',OWNER=Symbol.for('tisya.vertex-transport'),OTHER=Symbol.for('vertex-anti-truncation.fetch');
 const LIMIT=8*1024*1024,OUTPUT_LIMIT=32*1024*1024;
 const bytes=value=>new TextEncoder().encode(value).length;
@@ -34,10 +35,10 @@ function inputShape(messages){
 
 export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  if(mode!=='vertex-streaming'&&!TRANSPORT_MODES.some(([id])=>id===mode))throw problem('TISYA_TRANSPORT_MODE','正文传输配置无效');
- const compatible=mode==='verify-tools';
- const checking=mode==='verify'||compatible;
+ const wrapping=mode==='tool-text-tools',compatible=mode==='verify-tools'||wrapping;
+ const checking=mode==='verify'||mode==='verify-tools';
  const shape=inputShape(payload.messages),inputMedia=shape.counts,requestImages=payload.request_images===true;
- const skip=reason=>({payload,audit:{mode,state:mode==='off'?'off':'bypassed',reason,label:transportReason(reason),requestImages,inputMedia,unsupportedContentParts:shape.unsupported}});
+ const skip=reason=>{if(wrapping)throw problem('TISYA_TRANSPORT_WRAP_'+reason.toUpperCase(),'正文工具包装未启用：'+transportReason(reason)+'；请调整设置或明确改选其他传输模式');return {payload,audit:{mode,state:mode==='off'?'off':'bypassed',reason,label:transportReason(reason),requestImages,inputMedia,unsupportedContentParts:shape.unsupported}};};
  if(mode==='off')return skip('off');
  if(mode==='vertex-streaming')return skip('retired');
  if(!isTauri)return skip('host');
@@ -48,17 +49,18 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
  if(!compatible&&(payload.tools?.length||payload.functions?.length||payload.tool_choice!=null||payload.function_call!=null))return skip('tools');
  if(payload.json_schema||payload.responseSchema||payload.responseMimeType&&payload.responseMimeType!=='text/plain'||payload.response_format&&payload.response_format.type!=='text')return skip('schema');
  if(payload.n!=null&&payload.n!==1||payload.best_of!=null&&payload.best_of!==1)return skip('candidates');
- if(payload.enable_web_search&&!compatible)return skip('search');
+ if(payload.enable_web_search&&(!compatible||wrapping))return skip('search');
  if(!Array.isArray(payload.messages)||!payload.messages.length)throw problem('TISYA_TRANSPORT_MESSAGES','正文传输请求缺少消息');
  if(!compatible&&payload.messages.some(m=>m.role==='tool'||m.role==='function'||m.tool_calls?.length||m.function_call||m.tool_call_id||m.native))return skip('history');
- if(payload.request_images&&!compatible)return skip('media_output');
+ if(payload.request_images&&(!compatible||wrapping))return skip('media_output');
  if(shape.unsupported||payload.messages.some(m=>!object(m)||!(compatible?['system','developer','user','assistant','tool','function']:['system','developer','user','assistant']).includes(m.role)||!(compatible&&m.content==null&&(m.tool_calls?.length||m.function_call))&&typeof m.content!=='string'&&!Array.isArray(m.content)))return skip('media');
  let included={};
  try{if(payload.custom_include_body)included=typeof payload.custom_include_body==='string'?JSON.parse(payload.custom_include_body):structuredClone(payload.custom_include_body);}catch{return skip('parameters');}
- if(included?.modalities?.some?.(x=>x!=='text'&&!(compatible&&x==='image'))||included?.generationConfig?.responseModalities?.some?.(x=>x!=='TEXT'&&!(compatible&&x==='IMAGE')))return skip('media_output');
+ if(included?.modalities?.some?.(x=>x!=='text'&&!(compatible&&!wrapping&&x==='image'))||included?.generationConfig?.responseModalities?.some?.(x=>x!=='TEXT'&&!(compatible&&!wrapping&&x==='IMAGE')))return skip('media_output');
  if(!object(included)||payload.custom_exclude_body&&String(payload.custom_exclude_body).trim()||Object.keys(included).some(k=>!(compatible&&['tools','toolConfig','tool_choice','parallel_tool_calls','functions','function_call'].includes(k))&&/^(tools?|toolConfig|tool_choice|parallel_tool_calls|functions?|function_call|contents?|messages?|systemInstruction|cachedContent|stream|stream_options|n|best_of|response_format|responseSchema|responseMimeType)$/i.test(k))||included.generationConfig?.responseSchema||included.generationConfig?.responseJsonSchema||included.generationConfig?.responseMimeType&&included.generationConfig.responseMimeType!=='text/plain'||included.generationConfig?.candidateCount>1)return skip('parameters');
  const continuation=payload.type==='continue',prepared=prepareAntiTruncation({messages:payload.messages},mode==='tool-text',false,{continuation});
- const id=prepared.toolName??'tisya_check_'+crypto.randomUUID();
+ let toolName=prepared.toolName,realToolNames=[];
+ const id=toolName??'tisya_check_'+crypto.randomUUID();
  let wire=structuredClone(payload),native;
  if(mode==='tool-text'){
   wire.messages=prepared.payload.messages;
@@ -69,9 +71,10 @@ export function prepareTextTransport(payload,mode,{isTauri=true}={}){
    Object.assign(wire,{tools:prepared.payload.tools,tool_choice:prepared.payload.tool_choice,parallel_tool_calls:false});
   }
  }
+ if(wrapping){const merged=prepareToolTextMode(payload,included,{continuation});wire=merged.payload;toolName=merged.toolName;realToolNames=merged.realToolNames;}
  if(bytes(JSON.stringify(wire))>LIMIT)return skip('size');
- return {payload:wire,plan:{id,toolName:prepared.toolName,protocol,model:payload.model,stream:payload.stream===true,continuation,mode,allowTools:compatible,allowImages:compatible},
-  audit:{mode,protocol,requestImages,inputMedia,unsupportedContentParts:shape.unsupported,state:'prepared',label:checking?'已准备完整性检查':'已准备正文抗截断',allowTools:compatible,searchRequested:payload.enable_web_search===true,toolsRequested:!!(payload.tools?.length||payload.functions?.length),protection:checking?'integrity-only':'tool-text',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
+ return {payload:wire,plan:{id:toolName??id,toolName,realToolNames,protocol,model:payload.model,stream:payload.stream===true,continuation,mode,allowTools:compatible,allowImages:compatible&&!wrapping},
+  audit:{mode,protocol,requestImages,inputMedia,unsupportedContentParts:shape.unsupported,state:'prepared',label:checking?'已准备完整性检查':'已准备正文抗截断',allowTools:compatible,searchRequested:payload.enable_web_search===true,toolsRequested:!!(payload.tools?.length||payload.functions?.length),protection:checking?'integrity-only':wrapping?'tool-text-tools':'tool-text',continuation,clientStream:payload.stream===true,upstreamStream:payload.stream===true,nativeTools:native?.tools??wire.tools??[],toolConfig:native?.toolConfig??wire.tool_choice??null}};
 }
 
 // The host must not commit a truncated reply merely because it saw a finish
@@ -97,7 +100,7 @@ function verifiedStream(response,{guard,signal,status,onComplete,onFailure,allow
    parser.finish();if(!integrity?.streamDone)throw problem('TISYA_TRANSPORT_INCOMPLETE','抗截断流缺少完整结束信息');
    Object.assign(status,{outcome:integrity.outcome,finishReason:integrity.finishReason,nativeFinishReason:integrity.nativeFinishReason,restored});
    if(integrity.outcome!=='complete'&&!(allowTools&&integrity.outcome==='tool_calls'))throw transportFailure(integrity.outcome==='length'?'length':integrity.outcome==='content_filter'?'filtered':'incomplete');
-   if(status.mode==='tool-text'&&restored!==true)throw transportFailure('not_restored');
+   if(['tool-text','tool-text-tools'].includes(status.mode)&&restored!==true&&!(allowTools&&integrity.outcome==='tool_calls'))throw transportFailure('not_restored');
    settled=true;finish();Object.assign(status,{toolTurn:integrity.outcome==='tool_calls'});
    onComplete();for(const frame of held)c.enqueue(frame);c.close();}
   }catch(e){if(settled)return;settled=true;finish();reader.cancel(e).catch(()=>{});onFailure(e,signal?.aborted?'cancelled':'error');c.error(e);}},
@@ -157,13 +160,15 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
     const response=await original.call(target,input,{...init,signal:controller.signal});e.guard();controller.signal.throwIfAborted();
     e.status.httpStatus=response.status;if(!response.ok){failed(problem('TISYA_TRANSPORT_HTTP','上游请求失败'));return response;}
     if(!response.body)throw problem('TISYA_TRANSPORT_EMPTY','抗截断请求没有响应正文');
-    const observed=observeResponse(response,e.status,now);
+    let observed=observeResponse(response,e.status,now);
     const complete=()=>{Object.assign(e.status,{state:e.status.toolTurn?'tool-handoff':e.status.hasImages&&!e.status.hasText?'media-complete':'complete',label:e.status.toolTurn?'工具调用响应完整，交回酒馆处理；尚非最终正文':e.status.hasImages&&!e.status.hasText?'图片响应完整，交回宿主显示；不作为剧情正文归档':e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
     if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,hostReader:e.kind==='main',allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
     if(!/text\/event-stream/i.test(response.headers.get('content-type')??'')){await observed.body.cancel();throw transportFailure('content_type');}
-    let usage;
-    const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;
-    const restored=e.plan.toolName?wrapAntiTruncationStream(translated,e.plan.toolName):translated;
+    let usage,toolName=e.plan.toolName;
+    if(e.plan.mode==='tool-text-tools'){const selected=await selectToolTextStream(observed,e.plan,e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});observed=selected.response;if(selected.selected==='real')toolName=null;}
+    const translated=e.plan.protocol==='gemini'?(toolName?wrapNativeTextStream(observed,toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;
+    let restored=toolName?wrapAntiTruncationStream(translated,toolName):translated;
+    if(e.plan.mode==='tool-text-tools'&&toolName&&e.plan.protocol==='openai')restored=transformSse(restored,({data,raw},emit)=>{if(!data||data.trim()==='[DONE]')return emit(raw+'\n\n');const p=JSON.parse(data);for(const c of p.choices??[])if(c.delta)delete c.delta.native;emit(sseData(p));});
     const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed,allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'});
     return errorEvents(e.kind==='main'&&e.plan.protocol==='gemini'?nativeStream(checked,()=>usage):checked,controller.signal);
    }catch(error){failed(error,controller.signal.aborted?'cancelled':'error');throw error;}
