@@ -17,7 +17,7 @@ function fixture(shadow=false){
 test('long press opens own menu; multiple paragraphs stay red and checkmark passes sorted ids',async()=>{
  const f=fixture(true),{d,root,w}=f;await f.press(root.children[1]);assert.ok(d.querySelector('#tisya-paragraph-menu'));
  const native=new w.Event('contextmenu',{bubbles:true,composed:true,cancelable:true});root.children[1].dispatchEvent(native);assert.equal(native.defaultPrevented,true);
- [...d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='修改').click();await wait();
+ [...d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='选段修改').click();await wait();
  assert.equal(root.children[1].classList.contains('tisya-paragraph-selected'),true);
  root.children[2].click();root.children[0].click();root.children[1].click();
  assert.equal(root.children[0].classList.contains('tisya-paragraph-selected'),true);assert.equal(root.children[1].classList.contains('tisya-paragraph-selected'),false);assert.match(d.querySelector('#tisya-paragraph-selection').textContent,/已选 2 段/);
@@ -29,8 +29,21 @@ test('scroll gesture cancels hold; editors retain native selection; teardown rem
  f.ui.dispose();await f.press(root.children[0]);assert.equal(d.querySelector('#tisya-paragraph-menu'),null);await w.happyDOM.abort();
 });
 test('swipe/edit invalidates selected source and cannot submit stale paragraph references',async()=>{
- const f=fixture();await f.press(f.root.children[0]);[...f.d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='修改').click();await wait();f.c.chat[0].mes='新的候选';f.ui.check();assert.equal(f.d.querySelector('#tisya-paragraph-selection'),null);assert.equal(f.root.querySelectorAll('.tisya-paragraph-selected').length,0);assert.equal(f.results.length,0);assert.match(f.errors[0],/变化/);f.ui.dispose();await f.w.happyDOM.abort();
+ const f=fixture();await f.press(f.root.children[0]);[...f.d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='选段修改').click();await wait();f.c.chat[0].mes='新的候选';f.ui.check();assert.equal(f.d.querySelector('#tisya-paragraph-selection'),null);assert.equal(f.root.querySelectorAll('.tisya-paragraph-selected').length,0);assert.equal(f.results.length,0);assert.match(f.errors[0],/变化/);f.ui.dispose();await f.w.happyDOM.abort();
 });
 test('transformed or merged display does not guess paragraph numbers; duplicate paragraphs retain order',async()=>{
  const f=fixture();f.root.innerHTML='<p>改过的显示</p>';assert.deepEqual(paragraphTargets(f.d,f.root,f.c.chat[0].mes),[]);f.root.innerHTML='<p>重复</p><p>重复</p>';assert.deepEqual(paragraphTargets(f.d,f.root,'重复\n\n重复').map(r=>r.id),[1,2]);f.ui.dispose();await f.w.happyDOM.abort();
+});
+test('more exposes manual edit and full copy; configurable primary actions survive busy generation',async()=>{
+ const f=fixture();f.ui.dispose();let busy=true,configured=0,edited=0;
+ const ui=mountParagraphActions(f.d,{capture:()=>capture(f.c,0),validate:t=>validate(f.c,t,{tail:true}),assertIdle(){if(busy)throw Error('生成中');},getSettings:()=>({长按菜单:['copy-source','more']}),onEdit:()=>edited++,onConfigure:()=>configured++,onRevise(){},onError:e=>f.errors.push(e.message),holdMs:5});
+ const button=label=>[...f.d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent===label);
+ await f.press(f.root.children[0]);button('复制原消息').click();await wait();assert.equal(await f.w.navigator.clipboard.readText(),f.c.chat[0].mes);assert.deepEqual(f.errors,[]);
+ await f.press(f.root.children[0]);button('更多').click();await wait();assert.ok(button('复制正文'));button('手工编辑').click();await wait();assert.equal(edited,0);assert.match(f.errors[0],/生成中/);
+ busy=false;await f.press(f.root.children[0]);button('更多').click();await wait();button('手工编辑').click();await wait();assert.equal(edited,1);
+ await f.press(f.root.children[0]);button('更多').click();await wait();button('配置长按菜单').click();await wait();assert.equal(configured,1);
+ ui.dispose();await f.w.happyDOM.abort();
+});
+test('an open copy menu rejects a changed source',async()=>{
+ const f=fixture();await f.press(f.root.children[0]);f.c.chat[0].mes='替换内容';[...f.d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='复制本段').click();await wait();assert.equal(await f.w.navigator.clipboard.readText(),'');assert.match(f.errors[0],/变化/);f.ui.dispose();await f.w.happyDOM.abort();
 });

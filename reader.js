@@ -1,5 +1,5 @@
 import {displayReplySource} from './display-repair.js';
-import {createLocalRenderCache} from './local-render-cache.js';
+import {createMessageCache} from './message-cache.js';
 import {createDisplayCache} from './display-cache.js';
 import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
@@ -29,20 +29,32 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
 // fallback, including when a structured reply is partial or malformed.
-let localCache=null;
-const inspectionCache=createDisplayCache({onWrite:()=>localCache?.schedule()});
+let localCache=null,cacheGeneration=0;
+const inspectionCache=createDisplayCache();
+const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
+const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(localCache)return localCache;
- localCache=createLocalRenderCache(window,{version:'reader-alpha31.12',snapshot:()=>inspectionCache.snapshot(),restore:rows=>{
-  if(!Array.isArray(rows)||rows.some(r=>!r?.value||typeof r.value.structured!=='boolean'||!r.value.body))throw Error('显示缓存内容无效');
-  inspectionCache.restore(rows);
- },onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.14',onError});
  return localCache;
 }
-export async function clearReaderCache(){await localCache?.clear();inspectionCache.clear();}
+export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}
+export const readerCacheGeneration=()=>cacheGeneration;
 export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null};
 export const messageCacheReport=()=>inspectionCache.report();
-export function inspectMessage(source,options={}){const selected={showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null};return typeof source==='string'&&source.length<=2000000?inspectionCache.read(replyFormatRevision()+':'+JSON.stringify(selected)+':'+source,()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+export const reconcileReaderCache=(scope,messages)=>localCache?.reconcile(scope,messages);
+export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(inspectionKey(source,selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+export async function prepareReaderMessage(identity,options={}){
+ const generation=cacheGeneration,source=identity.source,base=selectedOptions({}),selected=selectedOptions(options);
+ if(!localCache||typeof source!=='string'||source.length>2000000)return {inspection:inspectMessage(source)};
+ const variants=JSON.stringify(base)===JSON.stringify(selected)?[base]:[base,selected];
+ const rows=await Promise.all(variants.map(async value=>{
+  const row=await localCache.prepare({...identity,variant:replyFormatRevision()+':'+JSON.stringify(value)},()=>inspectMessage(source,value));
+  if(!row.value||typeof row.value.structured!=='boolean'||!row.value.body)throw Error('显示缓存内容无效');
+  if(generation===cacheGeneration)inspectionCache.restore([{key:inspectionKey(source,value),value:row.value}]);
+  return row;
+ }));
+ return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
+}
 function inspectUncached(source,options) {
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
     const structured=isReplyMessage(source)||candidate(source);
