@@ -304,3 +304,9 @@ test('welcome to chat to welcome keeps sidebar alive and reads only the selected
   assert.deepEqual(f.errors,[]);assert.equal(f.generated.length,0);
  }finally{await f.w.happyDOM.abort();}
 });
+test('native composer sends requirements separately and consumes them only after the assistant reply',async()=>{
+ const f=await setup(),d=f.w.document,input=d.querySelector('#tisya-contractor-input');input.value='请让角色主动回应';input.dispatchEvent(new f.w.Event('input'));d.querySelector('#send_textarea').value='递出礼物';
+ await f.emit('before','normal',{},false);f.ctx.chat.push({is_user:true,mes:'递出礼物'});const payload={messages:[{role:'user',content:'递出礼物'}],model:'test-model'};await f.emit('payload',payload);
+ assert.equal(payload.messages[0].content,'递出礼物');assert.equal(JSON.parse(payload.messages.at(-1).content).text,'请让角色主动回应');assert.equal(input.value,'请让角色主动回应');
+ f.ctx.chat.push({is_user:false,mes:'角色接过礼物并回应'});await f.emit('generation-end');assert.equal(input.value,'');assert.equal(f.ctx.chat.at(-2).mes,'递出礼物');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+});
