@@ -1,4 +1,4 @@
-# 正文传输（AT02—AT09 · alpha31.13）
+# 正文传输（AT02—AT09 · alpha31.14）
 
 在“预设与 API”的通用、模式或任务路由中选择“抗截断传输”，默认关闭。当前支持 OpenAI Chat Completions（原生 OpenAI 或自定义 openai_compat）及自定义 Gemini generateContent；接口凭据仍归宿主管理。原 Vertex 执行路径和选项已移除，旧 vertex-streaming 值只为读取历史设置保留，下拉框不再生成旧选项，旧值按关闭显示并提示停用，不会自动改为开启新功能。
 

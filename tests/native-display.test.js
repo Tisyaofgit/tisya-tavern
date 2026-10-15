@@ -87,3 +87,15 @@ test('far history is deferred before parsing and mounts when approaching the vie
 
 
 test('bounded derived cache snapshot restores exact keys without overwriting newly computed values',()=>{const cache=createDisplayCache({entries:2,units:500});cache.read('source-a',()=>({text:'old'}));const snapshot=cache.snapshot(),fresh=createDisplayCache({entries:2,units:500});fresh.read('source-a',()=>({text:'new'}));fresh.restore(snapshot);assert.equal(fresh.read('source-a',()=>{throw Error('should hit');}).text,'new');fresh.restore([{key:'source-b',value:{text:'b'}},{key:'source-c',value:{text:'c'}}]);assert.equal(fresh.report().entries,2);assert.throws(()=>fresh.restore([{key:1}]),/条目无效/);});
+
+test('offscreen deferral settles its MutationObserver and yields to input timers',async()=>{
+ const w=new Window(),d=w.document,NativeObserver=w.MutationObserver;let deliveries=0,storm=false;
+ // Bound the failing version so the regression itself cannot starve the runner.
+ w.MutationObserver=class extends NativeObserver{constructor(callback){super((records,observer)=>{deliveries++;if(deliveries>40){storm=true;observer.disconnect();return;}callback(records,observer);});}};
+ w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};
+ d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_text">original</div></div></div>';
+ const chat=d.querySelector('#chat'),node=d.querySelector('.mes');chat.getBoundingClientRect=()=>({top:0,bottom:800,height:800});node.getBoundingClientRect=()=>({top:3000,bottom:3500,height:500});
+ const ui=mountMessageAppearance(d,{getMessage:()=>({mes:source}),formatBody:x=>x,getMotion:()=>false});
+ try{ui.sync(node);await new Promise(resolve=>setTimeout(resolve,80));assert.equal(storm,false,'offscreen marker repeatedly retriggered its own observer');assert.ok(deliveries<=3,`unexpected observer deliveries: ${deliveries}`);assert.equal(ui.report().deferred,1);assert.equal(node.querySelector('.mes_text').textContent,'original');}
+ finally{ui.dispose();await w.happyDOM.abort();}
+});

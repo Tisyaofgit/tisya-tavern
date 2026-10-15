@@ -1,12 +1,12 @@
 {
   "task": "AT09",
-  "version": "0.2.0-alpha.31.13",
+  "version": "0.2.0-alpha.31.14",
   "at": "2026-10-15T10:33:07.852364+00:00",
   "scope": "Explicit body-as-tool mode with host-owned real function tool rounds",
   "base_commit": "56770246de04ce763d36a5b6317519f0aa1f116f",
   "local_validation": {
     "targeted_tests": 46,
-    "full_tests": 484,
+    "full_tests": 485,
     "build_checks": 9,
     "failures_final": 0,
     "skipped": 0,
@@ -14,7 +14,8 @@
     "first_failures_explained": [
       "Old mode label changed; restored to preserve existing label contract",
       "Fixture used auxiliary OpenAI reader for main Gemini stream; corrected to main native parts reader"
-    ]
+    ],
+    "full_tests_before_merge": 484
   },
   "model_http_calls": 0,
   "android_tested": false,
@@ -32,5 +33,7 @@
     "config/transport-response.js": "02ee05e69c98d873c30e0c12c00444d9a35de2c79be31f033c431fc5deae6abd",
     "tests/tool-text-mode.test.js": "f13be979f465b1de0f75490d9165c03212f22c398060fdf4e58fe881b13147e1",
     "tests/text-transport.test.js": "c2a65abc73cb3411fda22b9208f2def43bdf4b7b1f5274457b4f52ad36f52eaf"
-  }
+  },
+  "integrated_main": "c121ba43d35450f55bd66ff01becd15b3f451222",
+  "publication": "Draft PR #1 only; main blocked by automatic approval and awaits explicit user confirmation"
 }

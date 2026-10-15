@@ -585,3 +585,5 @@ KB01-D1/D2设计完成；R0仅部分恢复；A1已完成窗口32可读源和2.3.
 
 - AT09-V1本地验证完成：46项定向/484项全回归/9项构建检查通过，零最终失败或跳过。实际生产面板保存、真实函数工具两轮回填、OpenAI与Gemini原生流/非流包装还原均按良性模拟回执验证；无付费/真实模型HTTP调用，Rust/Android未实跑。证据docs/tool-text-mode-validation.json。
 - 规范增量核对：沿用P04实际宿主读取契约及现有task-checkpoints/platform-validation门槛；仅在本功能文档记录协议能力边界，未重复另立技能规则。AT09-D1/I1/V1已完成，G1进入窄范围发布与同点恢复保存；其他蓝图待办不因此完成。
+
+- AT09-G1状态：直接推送main被自动审批拒绝，理由为当前保留授权不足以确认这次默认分支发布；未绕过，改存独立codex/at09-tool-text-mode分支并建草稿PR #1（https://github.com/Tisyaofgit/tisya-tavern/pull/1），未合main。发布期间main新增c121ba43启动卡死热修复，已完整合入候选并将版本顺延alpha31.14；合并后485测试/9构建通过，正文包装业务代码不变。下一步仅待用户明确确认合入main，再核对最新主分支后发布；真实模型/Rust/Android仍待验。
