@@ -1,4 +1,4 @@
-import {communicationMessages} from '../communication.js';
+import {communicationMessages,appendContractorMessages} from '../communication.js';
 import {revisionMessages} from '../revision.js';
 import {readTaskResponse} from './stream-response.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
@@ -69,7 +69,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
  async function payloadReady(payload){if(!generation)return;if(generation.passthrough){
   if(generation.nativeContext){
    if(worldKey(ctx())!==generation.key||store.read().revision!==generation.revision)fail('生成期间聊天或配置已变化，请重试');
-   const directives=[...getContractorMessages(),...revisionMessages(pendingRevision)];if(directives.length){payload.messages.push(...directives);await checkBudget(payload.messages,generation.world.context.maxInputTokens,ctx());}
+   const directions=await getContractorMessages();appendContractorMessages(payload.messages,directions);const directives=revisionMessages(pendingRevision);if(directions.length||directives.length){payload.messages.push(...directives);await checkBudget(payload.messages,generation.world.context.maxInputTokens,ctx());}
    const prepared=await prepareTransport(payload,resolveRoute(generation.data,generation.world,'main').transport,generation);if(prepared?.plan){for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared.payload);sealPayload(payload);}
    const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,historyWindow:generation.historyWindow??null,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
   }
@@ -82,7 +82,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(g.modular)for(const m of selectedHistory(c,w,g.type))preparedHistory.set(m,await prepareMessage(clone(m)));
   if(g.modular&&historySignature(c)!==historyStamp)fail('聊天记录已变化，请重新生成');
   const messages=g.modular?buildMessages({source,context:c,world:w,materials:[g.materials.text,g.tableActivation].filter(Boolean).join('\n\n'),slots:g.tableSlots,substitute:s=>c.substituteParams(s),nativeMessages:payload.messages,type:g.type,options:g.options,preparedHistory}):clone(payload.messages);
-  messages.push(...getContractorMessages(),...revisionMessages(pendingRevision));
+  appendContractorMessages(messages,await getContractorMessages());messages.push(...revisionMessages(pendingRevision));
   const settings={...g.settings,...g.route.parameters};const model=g.route.model||settings.__tisyaModel||c.getChatCompletionModel(settings);delete settings.__tisyaModel;
   await checkBudget(messages,g.world.context.maxInputTokens,c);
   const {generate_data:next}=await createParameters(settings,model,g.type,messages,{allowToolCalls:!g.modular,toolData:g.modular?{}:undefined});if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');if(g.modular&&historySignature(ctx())!==historyStamp)fail('聊天记录已变化，请重新生成');next.stream=payload.stream;if(g.modular)validateBodyOverrides(next,parseRequestBody);const prepared=await prepareTransport(next,g.route.transport,g);for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared?.payload??next);

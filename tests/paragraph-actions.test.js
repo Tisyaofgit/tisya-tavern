@@ -47,3 +47,8 @@ test('more exposes manual edit and full copy; configurable primary actions survi
 test('an open copy menu rejects a changed source',async()=>{
  const f=fixture();await f.press(f.root.children[0]);f.c.chat[0].mes='替换内容';[...f.d.querySelectorAll('#tisya-paragraph-menu button')].find(b=>b.textContent==='复制本段').click();await wait();assert.equal(await f.w.navigator.clipboard.readText(),'');assert.match(f.errors[0],/变化/);f.ui.dispose();await f.w.happyDOM.abort();
 });
+test('round long-press menu directly dispatches message operations and is absent until summoned',async()=>{
+ const f=fixture();f.ui.dispose();const calls=[];const ui=mountParagraphActions(f.d,{capture:()=>capture(f.c,0),validate:t=>validate(f.c,t,{tail:true}),assertIdle(){},getSettings:()=>({长按菜单:['regen','next','branch','delete','more']}),onAction:(t,id)=>calls.push([t.id,id]),onRevise(){},onEdit(){},holdMs:5});assert.equal(f.d.querySelector('#tisya-paragraph-menu'),null);
+ for(const [label,id]of [['重骰','regen'],['继续','next'],['创建分支','branch'],['删除本条','delete']]){await f.press(f.root.children[0]);const menu=f.d.querySelector('#tisya-paragraph-menu');const button=[...menu.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===label);assert(button.classList.contains('tisya-orb-button'));assert(button.querySelector('svg'));button.click();await wait();assert.equal(f.d.querySelector('#tisya-paragraph-menu'),null);assert.deepEqual(calls.at(-1),[0,id]);}
+ ui.dispose();await f.w.happyDOM.abort();
+});

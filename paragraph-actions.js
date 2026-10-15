@@ -1,8 +1,9 @@
 import {revisionParagraphs} from './revision.js';
+import {iconMarkup} from './icons.js';
 
-export const LONG_PRESS_TOOLS=[['copy','复制本段'],['copy-body','复制正文'],['copy-source','复制原消息'],['select','选段修改'],['revision','高级重骰'],['edit','手工编辑'],['read','阅读与回合记录'],['message','消息操作'],['more','更多']];
+export const LONG_PRESS_TOOLS=[['copy','复制本段','copy'],['copy-body','复制正文','copy'],['copy-source','复制原消息','copy'],['select','选段修改','edit'],['revision','高级重骰','sliders'],['regen','重骰','reroll'],['next','继续','continue'],['versions','回复版本','book'],['edit','手工编辑','edit'],['read','阅读与回合记录','book'],['branch','创建分支','branch'],['delete','删除本条','trash'],['rollback','回溯','rollback'],['message','消息操作','tools'],['more','更多','more']];
 export function longPressSlots(settings={}){
- const slots=settings.长按菜单??['copy','select','more'];
+ const slots=settings.长按菜单??['copy','select','regen','more'];
  if(!Array.isArray(slots)||!slots.includes('more')||new Set(slots).size!==slots.length||slots.some(id=>!LONG_PRESS_TOOLS.some(t=>t[0]===id)))throw Error('长按菜单配置无效：须保留更多且不能重复');
  return [...slots];
 }
@@ -30,7 +31,7 @@ export function paragraphTargets(document,root,source,format=x=>x){
  return nodes.map((node,i)=>({node,id:parts[i].id,raw:parts[i].raw}));
 }
 
-export function mountParagraphActions(document,{capture,validate,assertIdle,format=x=>x,onRevise,onEdit,onRead,onMessage,onConfigure,getSettings=()=>({}),onError=()=>{},holdMs=550}){
+export function mountParagraphActions(document,{capture,validate,assertIdle,format=x=>x,onRevise,onEdit,onRead,onMessage,onAction,onConfigure,getSettings=()=>({}),onError=()=>{},holdMs=550}){
  const win=document.defaultView,chat=document.querySelector('#chat');let hold=null,menu=null,selection=null,suppressed=null,alive=true;
  const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
  const guard=fn=>{try{return fn();}catch(e){reset();onError(e);}};
@@ -62,7 +63,7 @@ export function mountParagraphActions(document,{capture,validate,assertIdle,form
  function show(item,x,y,more=false){
   closeMenu();const current=menu=make('div');menu._token=item.token;menu.id='tisya-paragraph-menu';menu.setAttribute('role','dialog');menu.setAttribute('aria-label',more?'更多段落操作':'段落操作');
   const finish=()=>{if(menu===current)closeMenu();};
-  const add=(label,fn)=>{const b=make('button',label);b.type='button';b.onclick=()=>{suppressed=null;Promise.resolve().then(()=>{validate(item.token);return fn();}).catch(e=>{if(menu===current)reset();onError(e);});};current.append(b);return b;};
+  const add=(label,fn,icon='more')=>{const b=make('button');b.type='button';b.className='tisya-orb-button';b.setAttribute('aria-label',label);b.title=label;b.innerHTML=iconMarkup(icon);const caption=make('small',label);caption.className='tisya-orb-caption';caption.setAttribute('aria-hidden','true');b.append(caption);b.onclick=()=>{suppressed=null;Promise.resolve().then(()=>{validate(item.token);return fn();}).catch(e=>{if(menu===current)reset();onError(e);});};current.append(b);return b;};
   const user=item.token.message.is_user||item.token.message.is_system||item.token.message.role==='tool';
   const copy=async text=>{await win.navigator.clipboard.writeText(text);finish();};
   const mutate=fn=>()=>{assertIdle();validate(item.token);finish();return fn();};
@@ -76,14 +77,17 @@ export function mountParagraphActions(document,{capture,validate,assertIdle,form
    read:()=>{finish();return onRead?.(item.token);},
    message:()=>{finish();return onMessage?.(item.token);},
    more:()=>show(item,x,y,true),
+   ...Object.fromEntries(['regen','next','versions','branch','delete','rollback'].map(id=>[id,mutate(()=>onAction?.(item.token,id))])),
   };
   const visible=longPressSlots(getSettings());
   const ids=more?LONG_PRESS_TOOLS.map(t=>t[0]).filter(id=>id!=='more'&&!visible.includes(id)):visible;
-  for(const id of ids){if(user&&['select','revision'].includes(id))continue;if(id==='read'&&!onRead||id==='message'&&!onMessage)continue;add(LONG_PRESS_TOOLS.find(t=>t[0]===id)[1],actions[id]);}
-  if(more){if(onConfigure)add('配置长按菜单',()=>{finish();return onConfigure(item.token);});add('返回',()=>show(item,x,y));}
-  const dismiss=add('关闭',finish);document.body.append(current);
-  const w=current.getBoundingClientRect().width||250,h=current.getBoundingClientRect().height||54;
-  current.style.left=Math.max(8,Math.min(x-w/2,win.innerWidth-w-8))+'px';current.style.top=Math.max(8,Math.min(y-h-16,win.innerHeight-h-8))+'px';dismiss.focus({preventScroll:true});
+  for(const id of ids){if(user&&['select','revision','regen','versions'].includes(id))continue;if(id==='read'&&!onRead||id==='message'&&!onMessage||['regen','next','versions','branch','delete','rollback'].includes(id)&&!onAction)continue;const tool=LONG_PRESS_TOOLS.find(t=>t[0]===id);add(tool[1],actions[id],tool[2]);}
+  if(more){if(onConfigure)add('配置长按菜单',()=>{finish();return onConfigure(item.token);},'sliders');add('返回',()=>show(item,x,y),'left');}
+  const dismiss=add('关闭',finish,'close');document.body.append(current);
+  const viewport=win.visualViewport,left=viewport?.offsetLeft??0,top=viewport?.offsetTop??0,width=viewport?.width??win.innerWidth,height=viewport?.height??win.innerHeight;
+  current.style.maxWidth=Math.max(0,width-16)+'px';current.style.maxHeight=Math.max(0,height-24)+'px';
+  const w=current.getBoundingClientRect().width||300,h=current.getBoundingClientRect().height||150;
+  current.style.left=Math.max(left+8,Math.min(x-w/2,left+width-w-8))+'px';current.style.top=Math.max(top+8,Math.min(y-h-16,top+height-h-8))+'px';dismiss.focus({preventScroll:true});
  }
  const down=e=>{
   cancelHold();if(e.button!==0||e.isPrimary===false)return;
