@@ -14,9 +14,14 @@ export function messageCacheInventory(messages){
  }
  return {owners,complete};
 }
+function sameInventory(a,b){
+ if(!a||a.complete!==b.complete||a.owners.size!==b.owners.size)return false;
+ for(const [owner,row]of a.owners){const next=b.owners.get(owner);if(!next||row.cold!==next.cold||row.count!==next.count||row.sources.size!==next.sources.size||[...row.sources].some(s=>!next.sources.has(s)))return false;}
+ return true;
+}
 export function createMessageCache(window,{version,onError=()=>{},digest,timeout=2500}={}){
  let db=null,state='loading',error=null,closed=false,epoch=0,hits=0,misses=0,tail=Promise.resolve();
- const inventories=new Map(),knownScopes=new Set(),inflight=new Map();
+ const inventories=new Map(),knownScopes=new Set(),inflight=new Map(),reconciliations=new Map();
  const hash=digest??(async text=>{const data=new TextEncoder().encode(text),bytes=await window.crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');});
  const fail=e=>{const first=state!=='failed';state='failed';error=e.message??String(e);if(first)onError(Error('逐条显示缓存不可用：'+error+'。原聊天未修改。'));};
  const ready=(async()=>{
@@ -38,11 +43,12 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
  const eligible=(scope,owner,source)=>{const inv=inventories.get(scope);return inv?allowed(inv,owner,source):!knownScopes.has(scope);};
  function transaction(mode,work){return new Promise((resolve,reject)=>{
   if(!db){reject(Error('缓存尚不可用'));return;}
-  const tx=db.transaction('messages',mode);let value,done=false;
+  const tx=db.transaction('messages',mode);let value,done=false,timer;
   const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);error?reject(error):resolve(value);};
-  const timer=setTimeout(()=>{finish(Error('显示缓存事务超时'));try{tx.abort();}catch{}},timeout);
+  // Watch stalled requests, not the elapsed time of an actively progressing scan.
+  const progress=()=>{if(done)return;clearTimeout(timer);timer=setTimeout(()=>{finish(Error('显示缓存事务超时'));try{tx.abort();}catch{}},timeout);};progress();
   tx.oncomplete=()=>finish();tx.onerror=()=>finish(tx.error??Error('缓存事务失败'));tx.onabort=()=>finish(tx.error??Error('缓存事务中止'));
-  try{work(tx.objectStore('messages'),v=>value=v);}catch(e){finish(e);try{tx.abort();}catch{}}
+  try{work(tx.objectStore('messages'),v=>value=v,progress);}catch(e){finish(e);try{tx.abort();}catch{}}
  });}
 
  function enqueue(work){const operation=tail.then(async()=>{await ready;if(closed||state!=='ready'||!db)return;return work();});tail=operation.catch(fail);return tail;}
@@ -68,9 +74,30 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
  }
  function saveView({scope,owner,source},view){if(inventories.get(scope)?.owners.get(owner)?.count>1)return Promise.resolve();const started=epoch;return enqueue(async()=>{if(started!==epoch||!eligible(scope,owner,source))return;const row=await readRow(scope,owner,source);if(!row||started!==epoch||!eligible(scope,owner,source))return;row.view=view;await transaction('readwrite',store=>store.put(row));});}
  function reconcile(scope,messages){
-  const inventory=messageCacheInventory(messages);knownScopes.add(scope);inventories.delete(scope);inventories.set(scope,inventory);
+  const inventory=messageCacheInventory(messages);if(sameInventory(inventories.get(scope),inventory))return reconciliations.get(scope)?.promise??Promise.resolve();
+  knownScopes.add(scope);inventories.delete(scope);inventories.set(scope,inventory);
   while(inventories.size>3)inventories.delete(inventories.keys().next().value);
-  return enqueue(()=>transaction('readwrite',store=>{const cursor=store.index('scope').openCursor(scope);cursor.onsuccess=()=>{const c=cursor.result;if(!c)return;const row=c.value;if(row.version!==version||!allowed(inventories.get(scope)??inventory,row.owner,row.source))c.delete();c.continue();};}));
+  const existing=reconciliations.get(scope);if(existing){existing.inventory=inventory;return existing.promise;}
+  const job={inventory,promise:null},started=epoch;reconciliations.set(scope,job);
+  job.promise=enqueue(async()=>{
+   let scanned;
+   do{
+    scanned=job.inventory;let after=null,more=true;
+    while(more&&!closed&&started===epoch&&state==='ready'){
+     const page=await transaction('readwrite',(store,set,progress)=>{
+      let count=0,last=after;const began=Date.now(),cursor=store.index('scope').openCursor(scope);
+      cursor.onsuccess=()=>{progress();const c=cursor.result;if(!c){set({after:last,more:false});return;}
+       if(after!==null&&window.indexedDB.cmp(c.primaryKey,after)<=0){if(window.indexedDB.cmp(c.primaryKey,after)<0)c.continuePrimaryKey(scope,after);else c.continue();return;}
+       last=c.primaryKey;const row=c.value;if(row.version!==version||!allowed(job.inventory,row.owner,row.source))c.delete();
+       count++;if(count>=32||Date.now()-began>=8){set({after:last,more:true});return;}c.continue();
+      };
+     });
+     after=page.after;more=page.more;
+     if(more)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+   }while(scanned!==job.inventory&&!closed&&started===epoch&&state==='ready');
+  });
+  job.promise.finally(()=>{if(reconciliations.get(scope)===job)reconciliations.delete(scope);}).catch(()=>{});return job.promise;
  }
  async function clear(){epoch++;inflight.clear();await enqueue(()=>transaction('readwrite',store=>store.clear()));if(state!=='ready')throw Error('显示缓存未清理：'+(error??state));}
  return {ready,prepare,saveView,reconcile,clear,flush:()=>tail,report:()=>({state,error,hits,misses,pending:inflight.size}),async dispose(){await tail;closed=true;epoch++;db?.close();db=null;state='closed';}};

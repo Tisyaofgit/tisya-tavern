@@ -99,3 +99,43 @@ test('offscreen deferral settles its MutationObserver and yields to input timers
  try{ui.sync(node);await new Promise(resolve=>setTimeout(resolve,80));assert.equal(storm,false,'offscreen marker repeatedly retriggered its own observer');assert.ok(deliveries<=3,`unexpected observer deliveries: ${deliveries}`);assert.equal(ui.report().deferred,1);assert.equal(node.querySelector('.mes_text').textContent,'original');}
  finally{ui.dispose();await w.happyDOM.abort();}
 });
+
+test('helper source identity is captured before slow cache preparation and survives replacement before first paint',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};
+ d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">PRIVATE<div class="TH-render"><pre><code></code></pre></div><div class="private"><iframe id="TH-message--0--1"></iframe></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),root=d.querySelector('.TH-render'),html='<!doctype html><html><body><script>getVariables()</script><p>public</p></body></html>',msg={mes:source};root.querySelector('code').textContent=html;let release;
+ const ui=mountMessageAppearance(d,{getMessage:()=>msg,formatBody:x=>x,getCacheKey:()=>source,prepareMessage:()=>new Promise(r=>release=r),getNativeDisplay:()=>({body:'第一段',extraPanels:[{id:'p',html,ruleName:'card'}]}),getMotion:()=>false});
+ try{ui.sync(node);const frame=d.createElement('iframe');frame.id='TH-message--0--0';root.replaceChildren(frame);const realm=frame.contentWindow;release({inspection:inspectMessage(source)});await new Promise(r=>setTimeout(r,40));
+ assert(native.classList.contains('tisya-native-panels'),'first view must associate the helper frame even after its code source is removed');assert(native.querySelector('.private').classList.contains('tisya-native-pruned'));assert.equal(frame.parentElement,root);assert.equal(frame.contentWindow,realm);assert.equal(root.querySelectorAll('iframe').length,1);
+ }finally{ui.dispose();await w.happyDOM.abort();}
+});
+
+test('a claimed helper container remains identifiable while its iframe is pending or temporarily suspended',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;d.body.innerHTML='<div class="mes_block"><div class="mes_text"><div class="TH-render"><pre><code></code></pre></div><p>PRIVATE</p></div></div>';
+ const native=d.querySelector('.mes_text'),root=d.querySelector('.TH-render'),html='<!doctype html><html><body><script>getVariables()</script></body></html>';root.querySelector('code').textContent=html;
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'p',html,ruleName:'card'}]});
+ try{assert(native.classList.contains('tisya-native-panels'),'pending helper must not be hidden by our presentation');const frame=d.createElement('iframe');frame.id='TH-message--0--0';root.append(frame);keeper.refresh();assert(keeper.hasMounted());frame.remove();keeper.refresh();assert(native.classList.contains('tisya-native-panels'));assert(!keeper.hasMounted());root.querySelector('code').textContent='<script>PRIVATE()</script>';keeper.refresh();assert(!native.classList.contains('tisya-native-panels'),'reused wrapper cannot retain previous public identity');}
+ finally{keeper.dispose();await w.happyDOM.abort();}
+});
+
+test('plain DOM scripts in regex cards stay helper-owned and never get a second isolated runtime',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="TH-render"><pre><code></code></pre></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),root=d.querySelector('.TH-render'),html='<!doctype html><html><body><button onclick="document.body.dataset.clicked=1">open</button><script>document.body.dataset.started=1</script></body></html>',msg={mes:source};root.querySelector('code').textContent=html;
+ const ui=mountMessageAppearance(d,{getMessage:()=>msg,formatBody:x=>x,getNativeDisplay:()=>({body:'第一段',extraPanels:[{id:'p',html,ruleName:'card'}]}),getMotion:()=>false});
+ try{ui.sync(node);const visual=node.querySelector('.tisya-message-visual'),notice=visual.shadowRoot.querySelector('.native-host-note');assert(notice&&!notice.hidden);assert.equal(visual.shadowRoot.querySelector('iframe'),null);assert.equal(d.body.dataset.started,undefined);
+ const frame=d.createElement('iframe');frame.id='TH-message--0--0';root.append(frame);await new Promise(r=>setTimeout(r,40));assert(notice.hidden);assert.equal(native.querySelectorAll('iframe').length,1);assert.equal(frame.parentElement,root);}
+ finally{ui.dispose();assert(!root.classList.contains('tisya-native-panel-root'));await w.happyDOM.abort();}
+});
+
+test('native content replacement is scheduled once, preserves folds, and cannot resurrect after disposal',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">old</div></div></div></div>';
+ const node=d.querySelector('.mes'),msg={mes:source},ui=mountMessageAppearance(d,{getMessage:()=>msg,formatBody:x=>x,getMotion:()=>false});ui.sync(node);
+ const old=node.querySelector('.tisya-message-visual'),toggle=old.shadowRoot.querySelector('#world-extension-toggle');toggle.click();const expanded=toggle.getAttribute('aria-expanded');const native=d.createElement('div');native.className='mes_text';native.textContent='new host render';node.querySelector('.mes_text').replaceWith(native);
+ await new Promise(r=>setTimeout(r,40));const next=node.querySelector('.tisya-message-visual');assert.notEqual(old,next);assert.equal(node.querySelectorAll('.tisya-message-visual').length,1);assert.equal(next.shadowRoot.querySelector('#world-extension-toggle').getAttribute('aria-expanded'),expanded);assert(native.classList.contains('tisya-source-concealed'));
+ native.append(d.createElement('span'));ui.dispose();await new Promise(r=>setTimeout(r,30));assert.equal(node.querySelector('.tisya-message-visual'),null);assert(!native.classList.contains('tisya-source-concealed'));await w.happyDOM.abort();
+});
+
+test('mixed regex output preserves static parts while only script documents belong to the helper',async()=>{
+ const w=new Window(),d=w.document,native=d.createElement('div');d.body.append(native);const html='说明文字\n```html\n<html><body><script>document.body.dataset.ok=1</script></body></html>\n```\n尾部说明';
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'mixed',html,ruleName:'card'}]});assert.equal(keeper.display.extraPanels.length,3);assert.deepEqual(keeper.display.extraPanels.map(p=>p.nativeHosted),[false,true,false]);assert.equal(keeper.status().expected,1);assert.match(keeper.display.extraPanels[0].html,/说明文字/);assert.match(keeper.display.extraPanels[2].html,/尾部说明/);keeper.dispose();await w.happyDOM.abort();
+});

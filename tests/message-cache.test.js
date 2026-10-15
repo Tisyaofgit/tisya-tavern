@@ -52,3 +52,25 @@ test('quickly visiting many chats releases old inventories without deleting save
  const w=env(),m=message(1),c=cache(w);for(let i=0;i<8;i++){await c.reconcile('chat-'+i,[m]);await read(c,m,'chat-'+i);await c.flush();}assert.equal((await rows(w)).length,8);
  await Promise.all(Array.from({length:8},(_,i)=>c.reconcile('chat-'+i,[m])));assert.equal((await rows(w)).length,8);await c.reconcile('chat-0',[m]);assert.equal((await read(c,m,'chat-0')).fromDisk,true);await c.dispose();
 });
+
+test('progressing history cleanup does not time out merely because the whole scan exceeds one timeout',async()=>{
+ const {IDBIndex}=await import('fake-indexeddb');const w=env(),messages=Array.from({length:100},(_,i)=>message(i)),original=IDBIndex.prototype.openCursor;let scans=0;
+ let c=cache(w);for(const m of messages)await read(c,m);await c.flush();await c.dispose();
+ // Real fake-indexeddb transactions/cursors, with 3 ms of per-row main-thread work.
+ IDBIndex.prototype.openCursor=function(...args){scans++;const request=original.apply(this,args);let callback;Object.defineProperty(request,'onsuccess',{configurable:true,get:()=>callback,set(fn){callback=function(e){const end=performance.now()+3;while(performance.now()<end){}return fn.call(this,e);};}});return request;};
+ const errors=[];c=cache(w,{timeout:200,onError:e=>errors.push(e.message)});
+ try{const start=performance.now();await c.reconcile('chat-a',messages);assert(performance.now()-start>200);assert.equal(c.report().state,'ready',errors.join('\n'));assert.deepEqual(errors,[]);const cached=await read(c,messages[0]);assert.equal(cached.fromDisk,true,JSON.stringify({report:c.report(),errors}));assert.equal((await rows(w)).length,100);
+ const before=scans;await Promise.all(Array.from({length:8},()=>c.reconcile('chat-a',messages)));assert.equal(scans,before,'unchanged inventories must not trigger repeat full scans');}
+ finally{IDBIndex.prototype.openCursor=original;await c.dispose();}
+});
+
+test('a genuinely stalled transaction still reports the failure and never reports a successful clear',async()=>{
+ let aborts=0;const db={objectStoreNames:{contains:()=>true},close(){},transaction(){return {objectStore:()=>({get:()=>({}),clear:()=>({})}),abort(){aborts++;this.onabort?.();}};}};
+ const errors=[],w={crypto:webcrypto,indexedDB:{open(){const request={result:db};queueMicrotask(()=>request.onsuccess());return request;}}};const c=cache(w,{timeout:15,onError:e=>errors.push(e.message)});
+ await c.ready;const result=await read(c,message(1));assert.equal(result.fromDisk,false);assert.equal(c.report().state,'failed');assert.match(errors[0],/显示缓存事务超时/);assert.equal(aborts,1);await assert.rejects(c.clear(),/未清理/);await c.dispose();
+});
+
+test('a changed inventory arriving during paged cleanup is applied without reviving deleted candidates',async()=>{
+ const w=env(),messages=Array.from({length:80},(_,i)=>message(i)),c=cache(w);for(const m of messages)await read(c,m);await c.flush();
+ const first=c.reconcile('chat-a',messages);const final=c.reconcile('chat-a',messages.slice(60));await Promise.all([first,final]);const stored=await rows(w);assert.equal(stored.length,20);assert(stored.every(r=>messages.slice(60).some(m=>messageCacheOwner(m)===r.owner)));await c.dispose();
+});
