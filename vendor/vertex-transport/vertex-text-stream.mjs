@@ -6,7 +6,7 @@ const fail = suffix => { throw protocolError("anti_truncation_native_" + suffix)
 // Convert the native partialArgs for our one owned string into valid, incremental
 // OpenAI tool JSON. The existing restorer then handles it just like a stable call.
 // The empty-choices usage chunk follows OpenAI's stream_options.include_usage.
-export function wrapNativeTextStream(response, toolName, model, onNativeUsage = () => {}, includeUsage = true) {
+export function wrapNativeTextStream(response, toolName, model, onNativeUsage = () => {}, includeUsage = true, preserveMetadata = false) {
   if (!response.ok || !response.body) return response;
   const id = "chatcmpl-" + crypto.randomUUID(), created = Math.floor(Date.now() / 1000);
   let started = false, stringStarted = false, stringClosed = false, callClosed = false;
@@ -53,6 +53,22 @@ export function wrapNativeTextStream(response, toolName, model, onNativeUsage = 
     }
     if (parsed.candidates?.length > 1) fail("multiple_candidates");
     const candidate = parsed.candidates?.[0];
+    if (preserveMetadata) {
+      const metadata = structuredClone(parsed);
+      delete metadata.choices;
+      delete metadata.responseContent;
+      if (metadata.candidates) metadata.candidates = metadata.candidates.map(c => {
+        const clean = { ...c }; delete clean.finishReason;
+        if (clean.content) {
+          const parts = (clean.content.parts ?? []).filter(p => p.toolCall || p.toolResponse);
+          if (parts.length) clean.content = { ...clean.content, parts };
+          else delete clean.content;
+        }
+        return clean;
+      }).filter(c => Object.keys(c).some(k => k !== 'index'));
+      if (metadata.candidates?.length === 0) delete metadata.candidates;
+      if (Object.keys(metadata).length) emit(sseData({ choices: [], tisyaNativeMetadata: metadata }));
+    }
     for (const part of candidate?.content?.parts ?? []) {
       if (terminal && (part.functionCall || part.text)) fail("data_after_finish");
       if (part.functionCall) call(emit, part.functionCall);

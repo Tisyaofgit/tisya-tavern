@@ -152,7 +152,31 @@ function normalizeGemini(value,status,{allowImages=false}={}){
   else if(part.inlineData||part.fileData)throw transportFailure('unexpected_content');
  }
  if(calls.length)message.tool_calls=calls;
- return {choices:[{index:0,message,finish_reason:reason==='STOP'&&calls.length?'tool_calls':mapReason(reason),native_finish_reason:nativeReason(reason)}],responseContent:c.content,usageMetadata:value.usageMetadata};
+ return {...value,choices:[{index:0,message,finish_reason:reason==='STOP'&&calls.length?'tool_calls':mapReason(reason),native_finish_reason:nativeReason(reason)}],responseContent:c.content,usageMetadata:value.usageMetadata};
+}
+
+// Cohere's host adapter returns v2 JSON unchanged. Validate a projection but
+// return the original envelope to main chat, including citations and tool IDs.
+function normalizeCohere(value,status,{hostReader=false}={}){
+ const reason=value.finish_reason;status.nativeStopReason=reason;status.completionEvidence='native';
+ if(reason==='MAX_TOKENS')throw transportFailure('length');
+ if(!['COMPLETE','STOP_SEQUENCE','TOOL_CALL'].includes(reason))throw transportFailure('incomplete_native_stop');
+ const m=value.message;if(!object(m)||m.role!=='assistant')throw transportFailure('invalid_message');
+ if(m.content!=null&&(!Array.isArray(m.content)||m.content.some(p=>!object(p)||p.type!=='text'||typeof p.text!=='string')))throw transportFailure('invalid_text');
+ if(m.tool_plan!=null&&typeof m.tool_plan!=='string')throw transportFailure('invalid_text');
+ const calls=m.tool_calls??[];
+ if(!Array.isArray(calls))throw transportFailure('invalid_tool_call');
+ const ids=new Set();
+ for(const c of calls){
+  if(!object(c)||c.type!=='function'||typeof c.id!=='string'||!c.id||ids.has(c.id)||typeof c.function?.name!=='string'||!c.function.name||typeof c.function.arguments!=='string')throw transportFailure('invalid_tool_call');
+  ids.add(c.id);let args;try{args=JSON.parse(c.function.arguments);}catch{throw transportFailure('invalid_tool_arguments');}if(!object(args))throw transportFailure('invalid_tool_arguments');
+ }
+ if(reason==='TOOL_CALL'&&!calls.length||calls.length&&reason!=='TOOL_CALL')throw transportFailure('invalid_tool_stop');
+ // Main host uses only the first content block, then tool_plan, with nullish
+ // precedence. An explicit empty first block must not become a hidden success.
+ const content=hostReader?(m.content?.[0]?.text??m.tool_plan??''):(m.content?.map(p=>p.text).join('')??m.tool_plan??'');
+ const message={role:'assistant',content,...(calls.length?{tool_calls:calls}:{})};
+ return {...value,choices:[{index:0,message,finish_reason:calls.length?'tool_calls':'stop'}]};
 }
 
 export async function bufferedResponse(response,plan,status,{signal,guard,limit}){
@@ -167,16 +191,29 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   if(Number.isInteger(value?.error?.code))status.upstreamStatus=value.error.code;
   if(!object(value)||value.error)throw transportFailure('upstream_error');
   const original=value;
+  if(plan.protocol==='claude'){
+   const reason=value.stop_reason??value.choices?.[0]?.message?.native?.claude?.stop_reason;
+   if(reason!=null){
+    status.nativeStopReason=reason;
+    if(['max_tokens','model_context_window_exceeded'].includes(reason))throw transportFailure('length');
+    if(reason==='refusal')throw transportFailure('filtered');
+    if(!['end_turn','stop_sequence','tool_use'].includes(reason))throw transportFailure('incomplete_native_stop');
+   }
+  }
   status.responseShape=responseShape(original);
-  if(plan.protocol==='gemini')value=normalizeGemini(value,status,plan);else status.completionEvidence='provider';
+  if(plan.protocol==='gemini')value=normalizeGemini(value,status,plan);else if(plan.protocol==='cohere')value=normalizeCohere(value,status,plan);else status.completionEvidence='provider';
   if(!Array.isArray(value.choices)||value.choices.length!==1)throw transportFailure('invalid_choices');
-  if(plan.hostReader&&!plan.toolName)value=hostTextView(value,status);
+  let toolName=plan.toolName;
+  if(plan.mode==='universal'&&toolName){
+   const turn=classifyToolTurn((value.choices[0].message?.tool_calls??[]).map(c=>c.function?.name),plan);
+   status.toolTextTurn=turn;if(turn!=='synthetic')toolName=null;
+  }
+  if(plan.hostReader&&!toolName)value=hostTextView(value,status);
   const extra=plan.allowImages?hasImageContent:undefined;
   const before=inspectCompletion(value,extra);Object.assign(status,{finishReason:before.integrity.finishReason});
   if(!before.valid)throw transportFailure(before.reason);
   if(['length','content_filter'].includes(before.integrity.outcome))throw transportFailure(before.integrity.outcome==='length'?'length':'filtered');
-  let toolName=plan.toolName;
-  if(plan.mode==='tool-text-tools'){
+  if(plan.mode==='tool-text-tools'||plan.mode==='universal'&&plan.toolName){
    const message=value.choices[0].message;
    if(message?.function_call||message?.images||Array.isArray(message?.content)&&message.content.some(p=>p.type!=='text'))throw transportFailure('unexpected_content');
    const turn=classifyToolTurn((message?.tool_calls??[]).map(c=>c.function?.name),plan);status.toolTextTurn=turn;if(turn==='real')toolName=null;
@@ -191,10 +228,17 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   if(toolName){
    // A synthetic function is never persisted as an executable/native tool turn.
    delete message.native;delete message.function_call;
-   if(plan.mode==='tool-text-tools'){delete value.content;delete value.text;delete value.choices[0].text;}
-   if(plan.protocol==='gemini')value.responseContent={role:'model',parts:[...(message.reasoning_content?[{thought:true,text:message.reasoning_content}]:[]),{text:message.content}]};
+   delete value.content;delete value.text;delete value.choices[0].text;
+   if(plan.protocol==='gemini'){
+    // Preserve search provenance and server-side tool records, but never put the
+    // synthetic function or its signature back into an executable history part.
+    const oldParts=value.responseContent?.parts??[];
+    const serverParts=oldParts.filter(p=>p.toolCall||p.toolResponse).map(p=>structuredClone(p));
+    value.responseContent={role:'model',parts:[...serverParts,...(message.reasoning_content?[{thought:true,text:message.reasoning_content}]:[]),{text:message.content}]};
+    if(value.candidates)value.candidates=value.candidates.map(c=>{const metadata={...c};delete metadata.content;return metadata;});
+   }
   }
-  Object.assign(status,{outcome:checked.integrity.outcome,toolTurn:!!toolTurn,finishReason:checked.integrity.finishReason});
-  return new Response(JSON.stringify(plan.mode==='verify-tools'||plan.mode==='tool-text-tools'&&toolTurn?original:value),{headers:{'content-type':'application/json'}});
+  Object.assign(status,{delivery:toolTurn?'tools':toolName?'wrapped':'direct',outcome:checked.integrity.outcome,toolTurn:!!toolTurn,finishReason:checked.integrity.finishReason});
+  return new Response(JSON.stringify(plan.protocol==='cohere'&&plan.hostReader||plan.mode==='verify-tools'||['tool-text-tools','universal'].includes(plan.mode)&&toolTurn?original:value),{headers:{'content-type':'application/json'}});
  }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
 }

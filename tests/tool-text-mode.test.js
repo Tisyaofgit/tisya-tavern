@@ -26,7 +26,7 @@ test('AT09 explicit mode adds one final-delivery function without losing real de
   const p=payload(protocol,true);p.messages.push(...history);p.parallel_tool_calls=true;p.custom_include_body='{"temperature":0.4}';const before=structuredClone(p),r=prepareTextTransport(p,mode);
   assert.deepEqual(p,before);assert.deepEqual(r.payload.messages.slice(0,-1),before.messages);assert.deepEqual(r.payload.tools.slice(0,-1),before.tools);assert.equal(r.payload.parallel_tool_calls,true);assert.equal(r.payload.tool_choice,'required');assert.equal(r.payload.custom_include_body,p.custom_include_body);assert.equal(r.payload.stream,true);assert.equal(r.plan.id,r.plan.toolName);assert.equal(r.audit.protection,mode);assert.equal(r.payload.max_tokens,undefined);assert.equal(r.payload.max_completion_tokens,undefined);
  }
- const d=emptyConfig();d.routes.global.transport=mode;assert.equal(validateConfig(d),d);assert.ok(TRANSPORT_MODES.some(([id])=>id===mode));
+ const d=emptyConfig();d.routes.global.transport=mode;assert.equal(validateConfig(d),d);assert.ok(TRANSPORT_MODES.some(([id])=>id==='universal'));
 });
 
 test('AT09 explicit conflicts fail without mutation or silent bypass',()=>{

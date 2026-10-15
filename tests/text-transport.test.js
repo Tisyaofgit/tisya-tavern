@@ -146,7 +146,7 @@ test('default-off and unsupported requests keep exact input; routes inherit with
   const body=request(patch),before=JSON.stringify(body),r=prepareTextTransport(body,'tool-text');assert.equal(r.audit.reason,reason);assert.equal(r.payload,body);assert.equal(JSON.stringify(body),before);
  }
  const d=emptyConfig(),w=defaultWorld();d.routes.global.transport='tool-text';w.modes.narrative.routes.summary={transport:'off'};
- assert.equal(resolveRoute(d,w,'main').transport,'tool-text');assert.equal(resolveRoute(d,w,'summary').transport,'off');d.routes.global.transport='bad';assert.throws(()=>validateConfig(d),/抗截断/);
+ assert.equal(resolveRoute(d,w,'main').transport,'universal');assert.equal(resolveRoute(d,w,'summary').transport,'off');d.routes.global.transport='bad';assert.throws(()=>validateConfig(d),/抗截断/);
 });
 
 test('native main, OpenAI auxiliary, and buffered replies preserve exact text with one upstream call',async()=>{
@@ -228,7 +228,7 @@ test('production auxiliary task consumes restored streaming and buffered respons
 test('configuration UI exposes route-specific choice and preserves explicit off without enabling other tasks',async()=>{
  const f=fixture(),window=new Window(),container=window.document.createElement('div');window.document.body.append(container);
  const ui=mountConfiguration(window.document,container,{store:f.store,host:f.host,initialTab:'api'});await ui.ready;
- const dom=ui.root.shadowRoot,selects=[...dom.querySelectorAll('select')].filter(s=>[...s.options].some(o=>o.value==='"tool-text"'));
+ const dom=ui.root.shadowRoot,selects=[...dom.querySelectorAll('select')].filter(s=>[...s.options].some(o=>o.value==='"universal"'));
  assert.ok(selects.length>0);assert.ok(selects.every(s=>[...s.options].some(o=>o.value==='"off"')));
  const main=selects.find(s=>s.getAttribute('aria-label')==='任务 · 正文生成 抗截断传输')??selects.find(s=>s.getAttribute('aria-label').startsWith('任务 · '));
  main.value='"off"';main.dispatchEvent(new window.Event('change'));
@@ -245,18 +245,18 @@ test('main errors notify the production host even if native reader swallows erro
 
 test('host-wrapped CPU 503 stays an error even if the host appends STOP',async()=>{
  const errors=[],f=fixture(e=>errors.push(e),()=>new Response(google({content:{parts:[{text:'[API Error] Google Gemini endpoint failed with status 503: system cpu overloaded (current: 99.8%, threshold: 90%)'}]}})+end(),{headers:{'content-type':'text/event-stream'}}));
- f.d.routes.global.transport='verify';await f.host.before('normal');const p=request();await f.host.payloadReady(p);await(await f.send(p)).text();
+ f.d.routes.global.transport='verify';await f.host.before('normal');const p=request();await f.host.payloadReady(p);await assert.rejects(async()=>await(await f.send(p)).text());
  assert.equal(f.host.generationAccepted(),false);assert.equal(errors.length,1);assert.match(errors[0].message,/503/);assert.equal(f.host.preview().transport.upstreamStatus,503);assert.equal(f.calls.length,1);f.transport.dispose();
 });
 
 test('old Vertex is absent from every option, displays off, and never silently enables a replacement',async()=>{
  const f=fixture();f.d.routes.global.transport='vertex-streaming';const before=JSON.stringify(f.d),window=new Window(),container=window.document.createElement('div');window.document.body.append(container);
  const ui=mountConfiguration(window.document,container,{store:f.store,host:f.host,initialTab:'api'});await ui.ready;const dom=ui.root.shadowRoot;
- assert.match(dom.textContent,/旧传输设置已停用/);assert.equal(JSON.stringify(f.d),before);assert.equal(f.calls.length,0);
+ assert.doesNotMatch(dom.textContent,/旧传输设置已停用/);assert.equal(JSON.stringify(f.d),before);assert.equal(f.calls.length,0);
  assert.equal([...dom.querySelectorAll('option')].some(o=>/vertex/i.test(o.value+' '+o.textContent)),false);
- assert.ok([...dom.querySelectorAll('option')].some(o=>o.value==='"tool-text"'));assert.ok([...dom.querySelectorAll('option')].some(o=>o.value==='"verify"'));
+ assert.ok([...dom.querySelectorAll('option')].some(o=>o.value==='"universal"'));assert.equal([...dom.querySelectorAll('option')].some(o=>o.value==='"verify"'),false);
  const global=[...dom.querySelectorAll('select')].find(s=>s.getAttribute('aria-label')==='通用 抗截断传输');
- assert.ok(global);assert.equal(global.value,'"off"');assert.match([...global.options].find(o=>o.value==='"tool-text"').textContent,/含完整性检查/);
+ assert.ok(global);assert.equal(global.value,'"off"');assert.match([...global.options].find(o=>o.value==='"universal"').textContent,/开启/);
  await [...dom.querySelectorAll('button')].find(b=>b.textContent==='保存配置').onclick();assert.equal(f.store.read().data.routes.global.transport,'vertex-streaming');assert.equal(f.calls.length,0);
  ui.dispose();f.transport.dispose();window.happyDOM.abort();
 });
@@ -319,9 +319,9 @@ test('production archive gate waits through a real tool handoff and accepts only
  const f=fixture(()=>{},()=>new Response((toolTurn?call({name:'weather',args:{city:'上海'}}):google({content:{parts:[{text:'最终回答'}]}}))+end(),{headers:{'content-type':'text/event-stream'}}));
  f.d.routes.global.transport='verify-tools';
  try{
-  await f.host.before('normal');let p=request({enable_web_search:true});await f.host.payloadReady(p);await(await f.send(p)).text();
+  await f.host.before('normal');let p=request({enable_web_search:true,tools:[{type:'function',function:{name:'weather',parameters:{type:'object'}}}]});await f.host.payloadReady(p);await(await f.send(p)).text();
   assert.equal(f.host.preview().transport.state,'tool-handoff');assert.equal(f.host.generationAccepted(),false);
-  f.host.clear();toolTurn=false;await f.host.before('normal');p=request({enable_web_search:true});await f.host.payloadReady(p);await(await f.send(p)).text();
+  f.host.clear();toolTurn=false;await f.host.before('normal');p=request({enable_web_search:true,tools:[{type:'function',function:{name:'weather',parameters:{type:'object'}}}]});await f.host.payloadReady(p);await(await f.send(p)).text();
   assert.equal(f.host.preview().transport.state,'complete');assert.equal(f.host.generationAccepted(),true);assert.equal(f.calls.length,2);
  }finally{f.transport.dispose();}
 });
@@ -405,9 +405,9 @@ test('AT09 new mode survives UI save and production host only accepts restored f
  const window=new Window(),container=window.document.createElement('div');window.document.body.append(container);
  const ui=mountConfiguration(window.document,container,{store:f.store,host:f.host,initialTab:'api'});await ui.ready;
  const dom=ui.root.shadowRoot,select=[...dom.querySelectorAll('select')].find(s=>s.getAttribute('aria-label')==='通用 抗截断传输');
- assert.ok([...select.options].some(o=>o.value==='"tool-text-tools"'));
- select.value='"tool-text-tools"';select.dispatchEvent(new window.Event('change'));
- await [...dom.querySelectorAll('button')].find(b=>b.textContent==='保存配置').onclick();assert.equal(f.store.read().data.routes.global.transport,'tool-text-tools');assert.equal(f.calls.length,0);
+ assert.ok([...select.options].some(o=>o.value==='"universal"'));
+ select.value='"universal"';select.dispatchEvent(new window.Event('change'));
+ await [...dom.querySelectorAll('button')].find(b=>b.textContent==='保存配置').onclick();assert.equal(f.store.read().data.routes.global.transport,'universal');assert.equal(f.calls.length,0);
  await f.host.before('normal');const p=request({stream:false,tools:[{type:'function',function:{name:'lookup',parameters:{type:'object'}}}]});await f.host.payloadReady(p);assert.equal(f.host.generationAccepted(),false);assert.equal(p.tools.length,2);
  assert.equal((await(await f.send(p)).json()).choices[0].message.content,'本轮完整正文');assert.equal(f.host.generationAccepted(),true);assert.equal(f.host.preview().transport.restored,true);assert.equal(f.calls.length,1);
  ui.dispose();f.transport.dispose();window.happyDOM.abort();

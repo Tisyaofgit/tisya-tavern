@@ -3,6 +3,8 @@ export function transportSummary(status){
  if(!status)return '当前记录没有抗截断状态';
  const name=['verify','verify-tools'].includes(status.mode)?'完整性检查':'抗截断';
  if(status.state==='bypassed')return `本次未启用${name}：${status.reason==='search'?'请求已开启搜索':status.label??status.reason??'请求不适用'}`;
+ if(status.mode==='universal'&&status.state==='complete')return status.restored?'正文工具已还原；'+status.label:'正文直接返回，完整性检查通过；'+status.label;
+ if(status.mode==='universal'&&status.state==='tool-handoff')return '搜索／工具回合已交回宿主，等待最终正文';
  if(status.state==='tool-handoff'&&status.mode==='tool-text-tools')return '真实工具回合已交回宿主；最终正文仍须通过正文工具包装';
  if(status.state==='tool-handoff')return '工具／搜索兼容检查通过：工具调用响应完整，尚非最终正文；未进行正文包装';
  if(status.state==='media-complete')return '图片响应完整性检查已完成；交回宿主显示，不作为剧情正文归档';

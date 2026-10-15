@@ -8,7 +8,10 @@ import {guardCompletionStream} from '../vendor/vertex-transport/completion-integ
 import {geminiTextStream,bufferedResponse,observeResponse,transportFailure,hasImageContent} from './transport-response.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 
-export const TRANSPORT_MODES=[['off','关闭'],['tool-text','正文抗截断（含完整性检查）'],['tool-text-tools','正文工具包装（兼容工具回合）'],['verify','仅检查完整结束（不包装正文）'],['verify-tools','工具／搜索兼容检查（不包装正文）']];
+import {guardNativeProtocolStream} from './native-protocol-guard.js';
+import {TRANSPORT_MODES,LEGACY_TRANSPORT_MODES} from './transport-modes.js';
+import {prepareUniversalTransport} from './universal-transport.js';
+export {TRANSPORT_MODES};
 const PATH='/api/backends/chat-completions/generate',OWNER=Symbol.for('tisya.vertex-transport'),OTHER=Symbol.for('vertex-anti-truncation.fetch');
 const LIMIT=8*1024*1024,OUTPUT_LIMIT=32*1024*1024;
 const bytes=value=>new TextEncoder().encode(value).length;
@@ -34,7 +37,8 @@ function inputShape(messages){
 }
 
 export function prepareTextTransport(payload,mode,{isTauri=true}={}){
- if(mode!=='vertex-streaming'&&!TRANSPORT_MODES.some(([id])=>id===mode))throw problem('TISYA_TRANSPORT_MODE','正文传输配置无效');
+ if(mode==='universal')return prepareUniversalTransport(payload,{isTauri});
+ if(!LEGACY_TRANSPORT_MODES.includes(mode)&&!TRANSPORT_MODES.some(([id])=>id===mode))throw problem('TISYA_TRANSPORT_MODE','正文传输配置无效');
  const wrapping=mode==='tool-text-tools',compatible=mode==='verify-tools'||wrapping;
  const checking=mode==='verify'||mode==='verify-tools';
  const shape=inputShape(payload.messages),inputMedia=shape.counts,requestImages=payload.request_images===true;
@@ -101,7 +105,7 @@ function verifiedStream(response,{guard,signal,status,onComplete,onFailure,allow
    Object.assign(status,{outcome:integrity.outcome,finishReason:integrity.finishReason,nativeFinishReason:integrity.nativeFinishReason,restored});
    if(integrity.outcome!=='complete'&&!(allowTools&&integrity.outcome==='tool_calls'))throw transportFailure(integrity.outcome==='length'?'length':integrity.outcome==='content_filter'?'filtered':'incomplete');
    if(['tool-text','tool-text-tools'].includes(status.mode)&&restored!==true&&!(allowTools&&integrity.outcome==='tool_calls'))throw transportFailure('not_restored');
-   settled=true;finish();Object.assign(status,{toolTurn:integrity.outcome==='tool_calls'});
+   settled=true;finish();Object.assign(status,{toolTurn:integrity.outcome==='tool_calls',delivery:integrity.outcome==='tool_calls'?'tools':restored?'wrapped':'direct'});
    onComplete();for(const frame of held)c.enqueue(frame);c.close();}
   }catch(e){if(settled)return;settled=true;finish();reader.cancel(e).catch(()=>{});onFailure(e,signal?.aborted?'cancelled':'error');c.error(e);}},
   cancel(reason){if(!settled){settled=true;finish();onFailure(reason??problem('TISYA_TRANSPORT_CANCELLED','抗截断读取提前结束'),'cancelled');}return reader.cancel(reason);},
@@ -112,6 +116,7 @@ function nativeStream(response,getUsage){
  const reasons={stop:'STOP',length:'MAX_TOKENS',content_filter:'SAFETY'};
  return transformSse(response,({data},emit)=>{if(!data)return;if(data.trim()==='[DONE]')return emit(sseData('[DONE]'));const p=JSON.parse(data);if(p.error)return emit(sseData(p));
   if(p.tisyaNativeFrame)return emit(sseData(p.tisyaNativeFrame));
+  if(p.tisyaNativeMetadata)return emit(sseData(p.tisyaNativeMetadata));
   const out={candidates:(p.choices??[]).map(c=>{if(c.delta?.tool_calls?.length)throw problem('TISYA_TRANSPORT_TOOL','文本传输出现意外工具');const parts=[];if(c.delta?.reasoning_content)parts.push({thought:true,text:c.delta.reasoning_content});if(c.delta?.content)parts.push({text:c.delta.content});return {index:c.index??0,content:{role:'model',parts},...(c.finish_reason!=null?{finishReason:c.native_finish_reason??reasons[c.finish_reason]??'OTHER'}:{})};})};
   if(p.usage){out.usage=p.usage;out.usageMetadata=getUsage();}if(p.router_anti_truncation)out.vertexAntiTruncation=p.router_anti_truncation;emit(sseData(out));
  });
@@ -165,12 +170,12 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
     if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,hostReader:e.kind==='main',allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
     if(!/text\/event-stream/i.test(response.headers.get('content-type')??'')){await observed.body.cancel();throw transportFailure('content_type');}
     let usage,toolName=e.plan.toolName;
-    if(e.plan.mode==='tool-text-tools'){const selected=await selectToolTextStream(observed,e.plan,e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});observed=selected.response;if(selected.selected==='real')toolName=null;}
-    const translated=e.plan.protocol==='gemini'?(toolName?wrapNativeTextStream(observed,toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;
+    if(e.plan.mode==='tool-text-tools'||e.plan.strategy==='wrapped'){const selected=await selectToolTextStream(observed,e.plan,e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});observed=selected.response;if(selected.selected==='real'||e.plan.mode==='universal'&&selected.selected==='none')toolName=null;}
+    const translated=['claude','cohere','unknown'].includes(e.plan.protocol)?guardNativeProtocolStream(observed,e.status,e.plan):e.plan.protocol==='gemini'?(toolName?wrapNativeTextStream(observed,toolName,e.plan.model,v=>{usage=v;},true,e.plan.mode==='universal'):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;
     let restored=toolName?wrapAntiTruncationStream(translated,toolName):translated;
-    if(e.plan.mode==='tool-text-tools'&&toolName&&e.plan.protocol==='openai')restored=transformSse(restored,({data,raw},emit)=>{if(!data||data.trim()==='[DONE]')return emit(raw+'\n\n');const p=JSON.parse(data);for(const c of p.choices??[])if(c.delta)delete c.delta.native;emit(sseData(p));});
+    if((e.plan.mode==='tool-text-tools'||e.plan.mode==='universal')&&toolName&&e.plan.protocol==='openai')restored=transformSse(restored,({data,raw},emit)=>{if(!data||data.trim()==='[DONE]')return emit(raw+'\n\n');const p=JSON.parse(data);for(const c of p.choices??[])if(c.delta)delete c.delta.native;emit(sseData(p));});
     const checked=verifiedStream(restored,{guard:e.guard,signal:controller.signal,status:e.status,onComplete:complete,onFailure:failed,allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'});
-    return errorEvents(e.kind==='main'&&e.plan.protocol==='gemini'?nativeStream(checked,()=>usage):checked,controller.signal);
+    return errorEvents(e.kind==='main'&&['gemini','claude','cohere'].includes(e.plan.protocol)?nativeStream(checked,()=>usage):checked,controller.signal);
    }catch(error){failed(error,controller.signal.aborted?'cancelled':'error');throw error;}
   };
   target.fetch=wrapped;target[OWNER]=api;installed=true;return api;
