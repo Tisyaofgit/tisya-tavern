@@ -21,6 +21,33 @@ function sameInventory(a,b){
 }
 export function createMessageCache(window,{version,onError=()=>{},digest,timeout=2500}={}){
  let db=null,state='loading',error=null,closed=false,epoch=0,hits=0,misses=0,tail=Promise.resolve();
+ let lastFailure=null,delayedTicks=0,maxSchedulingGap=0;
+ const now=()=>globalThis.performance.now();
+ // An overdue timer is not evidence that IndexedDB stopped: its success/commit
+ // tasks may have been waiting behind the same long rendering task. Charge at
+ // most one scheduled interval per callback, not the excess scheduling delay.
+ // Every callback still spends budget, even while hidden or repeatedly late:
+ // a stalled operation cannot receive an unlimited series of exemptions.
+ // Opening, reads, writes and cleanup share this no-progress policy.
+ function watchTimeout(phase,onTimeout){
+  const interval=Math.max(1,Math.min(100,timeout/4)),started=now();
+  const schedule=window.setTimeout?.bind(window)??setTimeout,cancel=window.clearTimeout?.bind(window)??clearTimeout;
+  let last=started,remaining=timeout,timer,done=false,delayedMs=0,confirming=false;
+  const tick=()=>{
+   if(done)return;const at=now(),elapsed=at-last;last=at;
+   if(elapsed>interval*2){delayedMs+=elapsed-interval;delayedTicks++;maxSchedulingGap=Math.max(maxSchedulingGap,elapsed);}
+   remaining-=Math.min(elapsed,interval);
+   if(remaining<=0){
+    // If the final tick itself was delayed, allow queued success/commit tasks
+    // one turn before aborting. This confirmation is never renewed by lateness.
+    if(elapsed>interval*2&&!confirming){confirming=true;timer=schedule(tick,interval);return;}
+    done=true;lastFailure={phase,elapsedMs:Math.round(at-started),schedulingDelayMs:Math.round(delayedMs),noProgressBudgetMs:timeout};onTimeout();
+   }
+   else timer=schedule(tick,interval);
+  };
+  timer=schedule(tick,interval);
+  return {progress(){if(!done){remaining=timeout;last=now();confirming=false;}},stop(){done=true;cancel(timer);}};
+ }
  const inventories=new Map(),knownScopes=new Set(),inflight=new Map(),reconciliations=new Map();
  const hash=digest??(async text=>{const data=new TextEncoder().encode(text),bytes=await window.crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');});
  const fail=e=>{const first=state!=='failed';state='failed';error=e.message??String(e);if(first)onError(Error('逐条显示缓存不可用：'+error+'。原聊天未修改。'));};
@@ -28,12 +55,12 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
   if(!window.indexedDB){state='unsupported';onError(Error('当前宿主不支持逐条显示缓存；原聊天未修改。'));return;}
   db=await new Promise((resolve,reject)=>{
    const open=window.indexedDB.open('tisya-render-cache',2);let done=false;
-   const stop=e=>{if(done)return;done=true;clearTimeout(timer);reject(e);};
-   const timer=setTimeout(()=>stop(Error('缓存读取超时，已继续显示原消息')),timeout);
+   const stop=e=>{if(done)return;done=true;watch.stop();reject(e);};
+   const watch=watchTimeout('open',()=>stop(Error('缓存读取超时，已继续显示原消息')));
    open.onupgradeneeded=()=>{const d=open.result;if(d.objectStoreNames.contains('snapshots'))d.deleteObjectStore('snapshots');if(!d.objectStoreNames.contains('messages')){const s=d.createObjectStore('messages',{keyPath:'id'});s.createIndex('scope','scope');}};
    open.onblocked=()=>stop(Error('显示缓存升级被旧窗口占用，请关闭旧窗口后重试'));
    open.onerror=()=>stop(open.error??Error('无法打开显示缓存'));
-   open.onsuccess=()=>{if(done){open.result.close();return;}done=true;clearTimeout(timer);resolve(open.result);};
+   open.onsuccess=()=>{if(done){open.result.close();return;}done=true;watch.stop();resolve(open.result);};
   });
   if(closed){db.close();db=null;return;}
   db.onversionchange=()=>{db.close();db=null;state='closed';onError(Error('显示缓存版本已变更，请重新加载扩展。'));};
@@ -41,12 +68,12 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
  })().catch(fail);
  const allowed=(inv,owner,source)=>{const row=inv.owners.get(owner);return row?row.cold||row.sources.has(source):!inv.complete;};
  const eligible=(scope,owner,source)=>{const inv=inventories.get(scope);return inv?allowed(inv,owner,source):!knownScopes.has(scope);};
- function transaction(mode,work){return new Promise((resolve,reject)=>{
+ function transaction(mode,work,phase=mode){return new Promise((resolve,reject)=>{
   if(!db){reject(Error('缓存尚不可用'));return;}
-  const tx=db.transaction('messages',mode);let value,done=false,timer;
-  const finish=(error)=>{if(done)return;done=true;clearTimeout(timer);error?reject(error):resolve(value);};
-  // Watch stalled requests, not the elapsed time of an actively progressing scan.
-  const progress=()=>{if(done)return;clearTimeout(timer);timer=setTimeout(()=>{finish(Error('显示缓存事务超时'));try{tx.abort();}catch{}},timeout);};progress();
+  const tx=db.transaction('messages',mode);let value,done=false;
+  const finish=(error)=>{if(done)return;done=true;watch.stop();error?reject(error):resolve(value);};
+  const watch=watchTimeout(phase,()=>{finish(Error('显示缓存事务超时（'+phase+'）'));try{tx.abort();}catch{}});
+  const progress=()=>watch.progress();
   tx.oncomplete=()=>finish();tx.onerror=()=>finish(tx.error??Error('缓存事务失败'));tx.onabort=()=>finish(tx.error??Error('缓存事务中止'));
   try{work(tx.objectStore('messages'),v=>value=v,progress);}catch(e){finish(e);try{tx.abort();}catch{}}
  });}
@@ -54,7 +81,8 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
  function enqueue(work){const operation=tail.then(async()=>{await ready;if(closed||state!=='ready'||!db)return;return work();});tail=operation.catch(fail);return tail;}
  async function key(scope,owner,source){return JSON.stringify([scope,await hash(JSON.stringify([version,owner,source]))]);}
  function valid(row,id,scope,owner,source){if(!row)return;if(row.id!==id||row.scope!==scope||row.owner!==owner||row.source!==source||row.version!==version||!Array.isArray(row.projections))throw Error('缓存内容与原消息不符');}
- async function readRow(scope,owner,source){await ready;if(closed||state!=='ready'||!db)return null;const id=await key(scope,owner,source);const row=await transaction('readonly',(store,set)=>{const r=store.get(id);r.onsuccess=()=>set(r.result);});valid(row,id,scope,owner,source);return row??{id,scope,owner,source,version,projections:[]};}
+ async function readRow(scope,owner,source){await ready;if(closed||state!=='ready'||!db)return null;const id=await key(scope,owner,source);const row=await transaction('readonly',(store,set,progress)=>{const r=store.get(id);r.onsuccess=()=>{progress();set(r.result);};},'读取');valid(row,id,scope,owner,source);return row??{id,scope,owner,source,version,projections:[]};}
+ const writeRow=row=>transaction('readwrite',(store,set,progress)=>{store.put(row).onsuccess=progress;},'写入');
  function prepare({scope,owner,source,variant},compute){
   const started=epoch,signature=JSON.stringify([started,scope,owner,source,variant]);if(inflight.has(signature))return inflight.get(signature);
   const job=(async()=>{
@@ -67,12 +95,12 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
     // Re-read inside the serialized queue so a concurrent view-state save is retained.
     const current=await readRow(scope,owner,source);if(!current)return;
     current.projections=current.projections.filter(p=>p.variant!==variant);current.projections.push({variant,value});current.projections=current.projections.slice(-4);
-    if(started===epoch&&eligible(scope,owner,source))await transaction('readwrite',store=>store.put(current));
+    if(started===epoch&&eligible(scope,owner,source))await writeRow(current);
    });
    return {value,view:inventories.get(scope)?.owners.get(owner)?.count>1?null:row?.view??null,fromDisk:!!cached};
   })();inflight.set(signature,job);job.finally(()=>{if(inflight.get(signature)===job)inflight.delete(signature);}).catch(()=>{});return job;
  }
- function saveView({scope,owner,source},view){if(inventories.get(scope)?.owners.get(owner)?.count>1)return Promise.resolve();const started=epoch;return enqueue(async()=>{if(started!==epoch||!eligible(scope,owner,source))return;const row=await readRow(scope,owner,source);if(!row||started!==epoch||!eligible(scope,owner,source))return;row.view=view;await transaction('readwrite',store=>store.put(row));});}
+ function saveView({scope,owner,source},view){if(inventories.get(scope)?.owners.get(owner)?.count>1)return Promise.resolve();const started=epoch;return enqueue(async()=>{if(started!==epoch||!eligible(scope,owner,source))return;const row=await readRow(scope,owner,source);if(!row||started!==epoch||!eligible(scope,owner,source))return;row.view=view;await writeRow(row);});}
  function reconcile(scope,messages){
   const inventory=messageCacheInventory(messages);if(sameInventory(inventories.get(scope),inventory))return reconciliations.get(scope)?.promise??Promise.resolve();
   knownScopes.add(scope);inventories.delete(scope);inventories.set(scope,inventory);
@@ -88,10 +116,10 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
       let count=0,last=after;const began=Date.now(),cursor=store.index('scope').openCursor(scope);
       cursor.onsuccess=()=>{progress();const c=cursor.result;if(!c){set({after:last,more:false});return;}
        if(after!==null&&window.indexedDB.cmp(c.primaryKey,after)<=0){if(window.indexedDB.cmp(c.primaryKey,after)<0)c.continuePrimaryKey(scope,after);else c.continue();return;}
-       last=c.primaryKey;const row=c.value;if(row.version!==version||!allowed(job.inventory,row.owner,row.source))c.delete();
+       last=c.primaryKey;const row=c.value;if(row.version!==version||!allowed(job.inventory,row.owner,row.source))c.delete().onsuccess=progress;
        count++;if(count>=32||Date.now()-began>=8){set({after:last,more:true});return;}c.continue();
       };
-     });
+     },'清理');
      after=page.after;more=page.more;
      if(more)await new Promise(resolve=>setTimeout(resolve,0));
     }
@@ -99,6 +127,6 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
   });
   job.promise.finally(()=>{if(reconciliations.get(scope)===job)reconciliations.delete(scope);}).catch(()=>{});return job.promise;
  }
- async function clear(){epoch++;inflight.clear();await enqueue(()=>transaction('readwrite',store=>store.clear()));if(state!=='ready')throw Error('显示缓存未清理：'+(error??state));}
- return {ready,prepare,saveView,reconcile,clear,flush:()=>tail,report:()=>({state,error,hits,misses,pending:inflight.size}),async dispose(){await tail;closed=true;epoch++;db?.close();db=null;state='closed';}};
+ async function clear(){epoch++;inflight.clear();await enqueue(()=>transaction('readwrite',(store,set,progress)=>{store.clear().onsuccess=progress;},'清空'));if(state!=='ready')throw Error('显示缓存未清理：'+(error??state));}
+ return {ready,prepare,saveView,reconcile,clear,flush:()=>tail,report:()=>({state,error,hits,misses,pending:inflight.size,delayedTicks,maxSchedulingGapMs:Math.round(maxSchedulingGap),lastFailure:lastFailure?{...lastFailure}:null}),async dispose(){await tail;closed=true;epoch++;db?.close();db=null;state='closed';}};
 }
