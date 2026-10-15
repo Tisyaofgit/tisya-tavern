@@ -55,3 +55,12 @@ test('message observer settles after projection instead of rewriting unchanged c
 });
 
 test('structured public body uses native display rendering without exposing private blocks',async()=>{const {w,d,node}=setup();let input;const message={mes:fixture(),name:'卡'},ui=mountMessageAppearance(d,{getMessage:()=>message,formatBody:format,formatNativeBody:s=>{input=s;return '<div class="card-beauty" style="color:red"><button>正文开场白</button></div>';},getMotion:()=>false});ui.sync(node);const root=node.querySelector('.tisya-message-visual').shadowRoot;assert.ok(root.querySelector('.tisya-native-body .card-beauty'));assert.match(root.querySelector('.story').textContent,/正文开场白/);assert.doesNotMatch(input,/<task>|<memory>|<archive>|<vars>|<status>/);assert.ok(node.querySelector('.mes_text').classList.contains('tisya-source-concealed'));ui.dispose();await w.happyDOM.abort();});
+
+test('ancillary parse failure cannot uncover raw protocol or suppress valid public body',async()=>{
+ const {w,d,node}=setup();const source=fixture().replace(/<actions([^>]*)>/,(_,attrs)=>'<actions'+attrs.replaceAll('"','\\"')+'>');
+ node.querySelector('.mes_text').textContent=source;
+ const ui=mountMessageAppearance(d,{getMessage:()=>({mes:source}),formatBody:format,getNativeDisplay(){throw Error('invalid ancillary record');},getMotion:()=>false});ui.sync(node);
+ assert.equal(node.querySelector('.mes_text').classList.contains('tisya-source-concealed'),true);
+ const root=node.querySelector('.tisya-message-visual').shadowRoot;assert.ok(root.querySelector('.story').textContent.length);assert.equal(root.querySelectorAll('.action').length,4);assert.doesNotMatch(root.querySelector('.story').textContent,/<memory|<task|<actions/);
+ ui.dispose();await w.happyDOM.abort();
+});

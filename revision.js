@@ -1,7 +1,8 @@
-import {isReplyMessage,parseDisplayEnvelope,readParagraphs} from './reader-core.js';
+import {displayReplySource} from './display-repair.js';
+import {isReplyMessage,parseDisplayEnvelope,readParagraphs,extractXMLBody} from './reader-core.js';
 import {capture,validate} from './model.js';
 const check=(ok,message)=>{if(!ok)throw Error(message);};
-export function revisionBody(source){return isReplyMessage(source)?parseDisplayEnvelope(source).blocks.body:String(source);}
+export function revisionBody(source){return isReplyMessage(source)?extractXMLBody(displayReplySource(source)):String(source);}
 export function revisionParagraphs(source){
  const body=revisionBody(source),numbered=readParagraphs(body);if(numbered)return numbered;
  const result=[];let start=0,fence=null,pre=false;
@@ -40,8 +41,8 @@ export function validateRevision(revision,source){
 export function candidatePosition(message){const total=Array.isArray(message?.swipes)&&message.swipes.length?message.swipes.length:1,index=message?.swipe_id??0;return {index,total,label:(index+1)+'/'+total};}
 // The host owns candidate bodies, extras, persistence and swipe events. Never
 // synthesize a swipe array or bypass the native swipe guards.
-export function createRevisionController({getContext,assertIdle,hydrate,swipe,branch,stageFork,activateFork,cancelFork,prepare=async()=>{},canSwipe,overswipe,setRevision,archive,feedback,onState=()=>{}}){
- let active=null;
+export function createRevisionController({getContext,assertIdle,hydrate,swipe,deleteSwipe,branch,stageFork,activateFork,cancelFork,prepare=async()=>{},canSwipe,overswipe,setRevision,archive,feedback,onState=()=>{}}){
+ let active=null,navigating=false;
  const same=run=>getContext().getCurrentChatId()===run.chatId&&getContext().chat[run.id]===run.message;
  async function tail(token){
   assertIdle();validate(getContext(),token,{tail:true});
@@ -53,13 +54,25 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,br
   const next=capture(getContext(),token.id);check(next.length===token.id+1&&next.text===token.text&&(next.swipe??0)===(token.swipe??0),'分支内容与重骰依据不一致');return next;
  }
  async function select(token,index){
-  check(!active,'重骰尚未结束');const before=candidatePosition(validate(getContext(),token,{tail:true}));check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');if(index===before.index)return;
-  token=await tail(token);await hydrate(token.id);validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生候选切换当前不可用');
-  await swipe(null,index<before.index?'left':'right',{message:token.message,forceMesId:token.id,forceSwipeId:index,forceDuration:0});
-  check(getContext().chat[token.id]?.swipe_id===index,'宿主未完成候选切换');await getContext().saveChat();
+  check(!active&&!navigating,'版本正在切换');assertIdle();const before=candidatePosition(validate(getContext(),token,{tail:true}));check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');if(index===before.index)return;
+  navigating=true;onState();
+  try{
+   token=await tail(token);check(await hydrate(token.id)!==false,'候选尚未载入');validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生候选切换当前不可用');
+   const expected=token.message.swipes[index];check(typeof expected==='string','候选正文尚未载入');
+   await swipe(null,index<before.index?'left':'right',{message:token.message,forceMesId:token.id,forceSwipeId:index,forceDuration:0});
+   const current=getContext();check(current.getCurrentChatId()===token.chatId&&current.chat[token.id]===token.message,'聊天已切换');
+   check(token.message.swipe_id===index&&token.message.mes===expected,'宿主未完成版本正文同步，请重新选择');
+   // Native swipe already schedules persistence. A second full save held the UI lock unnecessarily.
+  }finally{navigating=false;onState();}
+ }
+ async function remove(token,index=token.swipe??0){
+  check(!active&&!navigating,'版本正在切换');assertIdle();const message=validate(getContext(),token,{tail:true});check(!message.is_user&&!message.is_system,'请选择角色回复');
+  check(typeof deleteSwipe==='function','宿主未提供删除版本接口');check(await hydrate(token.id)!==false,'候选尚未载入');validate(getContext(),token,{tail:true});
+  const before=candidatePosition(message);check(before.total>1,'至少保留一个版本');check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');
+  navigating=true;onState();try{const selected=await deleteSwipe(index,token.id);check(getContext().getCurrentChatId()===token.chatId&&getContext().chat[token.id]===message,'聊天已切换');check(Number.isInteger(selected)&&message.swipes.length===before.total-1&&message.swipe_id===selected&&message.mes===message.swipes[selected],'宿主未确认版本删除');}finally{navigating=false;onState();}
  }
  async function generate(token,options){
-  check(!active,'重骰尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
+  check(!active&&!navigating,'版本操作尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
   check(!token.message.is_user&&!token.message.is_system&&token.message.role!=='tool','请选择角色回复进行重骰');
   check(getContext().onlineStatus!=='no_connection','模型尚未连接，未改动消息');
   token=await tail(token);await prepare();validate(getContext(),token,{tail:true});await hydrate(token.id);validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生重骰当前不可用');check(overswipe(token.id,token.message)==='regenerate','此消息的原生入口只允许切换候选，不能重骰');
@@ -80,5 +93,5 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,br
   if(accepted&&run.tables&&same(run))await archive();
   if(failure)throw failure;return {accepted};
  }
- return {generate,select,active:()=>active,received(id,type){if(active&&active.id===id&&type==='swipe'&&same(active))active.received=true;},ended(tables){if(!active)return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;}};
+ return {generate,select,remove,navigating:()=>navigating,active:()=>active,received(id,type){if(active&&active.id===id&&type==='swipe'&&same(active))active.received=true;},ended(tables){if(!active)return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;}};
 }

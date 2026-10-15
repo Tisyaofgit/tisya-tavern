@@ -1,3 +1,4 @@
+import {displayReplySource} from './display-repair.js';
 import {createDisplayCache} from './display-cache.js';
 import {strictJSON,parseDisplayEnvelope,xmlTokens,replyRegion} from './reader-core.js';
 
@@ -11,7 +12,7 @@ const fail=(block,reason)=>{const code=`TISYA_READER_${block.toUpperCase()}_${re
 // XML tokenizer and complete reply boundary checks. Never return these omitted
 // records as valid empty state, and never change the stored source.
 function withoutRecords(source,names){
- const region=replyRegion(source).source,stack=[],cuts=[];let current=null;
+ const region=replyRegion(displayReplySource(source)).source,stack=[],cuts=[];let current=null;
  const malformed=code=>{throw Object.assign(Error('TISHA_OUTPUT_'+code),{code:'TISHA_OUTPUT_'+code});};
  for(const token of xmlTokens(region)){
   if(token.kind==='comment'&&/填写|占位/.test(token.value))malformed('PLACEHOLDER');

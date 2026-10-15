@@ -83,3 +83,9 @@ test('table reference and discovery task rows are recognized without breaking pu
  const source=richFixture().replace('</task>','引用：北门、铜钥匙\n新发现：事实|规则|门锁规则|铜钥匙打开北门\n</task>');
  const envelope=parseDisplayEnvelope(source);assert.deepEqual(envelope.wire.tableReferences,['北门','铜钥匙']);assert.equal(envelope.wire.tableDiscoveries[0].name,'门锁规则');const data=inspectMessage(source);assert.ok(data.body.value);assert.ok(data.details.value);assert.equal(data.actions.value.length,4);
 });
+
+test('escaped closing action attributes recover public display without changing stored bytes',()=>{
+ const source=richFixture().replace(/<actions([^>]*)>/,(_,attrs)=>'<actions'+attrs.replaceAll('"','\\"')+'>');
+ const data=inspectMessage(source);assert.ok(data.body.value);assert.ok(data.details.value);assert.equal(data.actions.value.length,4);
+ assert.match(source,/<actions format=\\"/);assert.doesNotMatch(JSON.stringify(data.details),/<memory/);
+});

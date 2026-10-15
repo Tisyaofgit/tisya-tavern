@@ -1,3 +1,4 @@
+import {displayReplySource} from './display-repair.js';
 import {createLocalRenderCache} from './local-render-cache.js';
 import {createDisplayCache} from './display-cache.js';
 import {replyFormatRevision} from './reply-formats.js';
@@ -32,7 +33,7 @@ let localCache=null;
 const inspectionCache=createDisplayCache({onWrite:()=>localCache?.schedule()});
 export function startReaderCache(window,onError=()=>{}){
  if(localCache)return localCache;
- localCache=createLocalRenderCache(window,{version:'reader-alpha31.10',snapshot:()=>inspectionCache.snapshot(),restore:rows=>{
+ localCache=createLocalRenderCache(window,{version:'reader-alpha31.12',snapshot:()=>inspectionCache.snapshot(),restore:rows=>{
   if(!Array.isArray(rows)||rows.some(r=>!r?.value||typeof r.value.structured!=='boolean'||!r.value.body))throw Error('显示缓存内容无效');
   inspectionCache.restore(rows);
  },onError});
@@ -45,7 +46,7 @@ export function inspectMessage(source,options={}){const selected={showPsychology
 function inspectUncached(source,options) {
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
     const structured=isReplyMessage(source)||candidate(source);
-    const body=structured?attempt(()=>extractXMLBody(source)):{value:source};
+    const body=structured?attempt(()=>extractXMLBody(displayReplySource(source))):{value:source};
     if(Object.hasOwn(body,'value')) {
         body.count=attempt(()=>countBody(body.value,'字'));
         body.paragraphs=attempt(()=>readParagraphs(body.value));
