@@ -1,3 +1,4 @@
+import {createLocalRenderCache} from './local-render-cache.js';
 import {createDisplayCache} from './display-cache.js';
 import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
@@ -27,7 +28,18 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
 // fallback, including when a structured reply is partial or malformed.
-const inspectionCache=createDisplayCache();
+let localCache=null;
+const inspectionCache=createDisplayCache({onWrite:()=>localCache?.schedule()});
+export function startReaderCache(window,onError=()=>{}){
+ if(localCache)return localCache;
+ localCache=createLocalRenderCache(window,{version:'reader-alpha31.10',snapshot:()=>inspectionCache.snapshot(),restore:rows=>{
+  if(!Array.isArray(rows)||rows.some(r=>!r?.value||typeof r.value.structured!=='boolean'||!r.value.body))throw Error('显示缓存内容无效');
+  inspectionCache.restore(rows);
+ },onError});
+ return localCache;
+}
+export async function clearReaderCache(){await localCache?.clear();inspectionCache.clear();}
+export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null};
 export const messageCacheReport=()=>inspectionCache.report();
 export function inspectMessage(source,options={}){const selected={showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null};return typeof source==='string'&&source.length<=2000000?inspectionCache.read(replyFormatRevision()+':'+JSON.stringify(selected)+':'+source,()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
 function inspectUncached(source,options) {

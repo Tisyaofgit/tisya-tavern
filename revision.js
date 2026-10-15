@@ -59,12 +59,12 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,br
   check(getContext().chat[token.id]?.swipe_id===index,'宿主未完成候选切换');await getContext().saveChat();
  }
  async function generate(token,options){
-  check(!active,'重骰尚未结束');assertIdle();let request=makeRevision(token,options);validate(getContext(),token,{tail:true});
+  check(!active,'重骰尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
   check(!token.message.is_user&&!token.message.is_system&&token.message.role!=='tool','请选择角色回复进行重骰');
   check(getContext().onlineStatus!=='no_connection','模型尚未连接，未改动消息');
   token=await tail(token);await prepare();validate(getContext(),token,{tail:true});await hydrate(token.id);validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生重骰当前不可用');check(overswipe(token.id,token.message)==='regenerate','此消息的原生入口只允许切换候选，不能重骰');
-  const before=candidatePosition(token.message);request=makeRevision(token,options);
-  const run={id:token.id,chatId:token.chatId,message:token.message,request,finished:false,received:false,stopped:false,tables:false};active=run;setRevision(request);onState();
+  const before=candidatePosition(token.message);request=makeRevision(token,options??{});
+  const run={id:token.id,chatId:token.chatId,message:token.message,request,finished:false,received:false,stopped:false,tables:false};active=run;setRevision(options===null?null:request);onState();
   let accepted=false,failure=null;
   try{
    await swipe(null,'right',{message:token.message,forceMesId:token.id,forceSwipeId:before.total,forceDuration:0});
