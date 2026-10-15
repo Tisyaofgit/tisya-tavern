@@ -1,0 +1,33 @@
+{
+  "task": "AT08",
+  "base": "30341267dc933a7610d1b4fb4e9ab9402aef634a",
+  "version": "0.2.0-alpha.31.11",
+  "verified_at": "2026-10-15T09:49:12.796846+00:00",
+  "full_tests": 453,
+  "full_tests_failed": 0,
+  "build_checks": 9,
+  "transport_tests": 36,
+  "version_and_export_tests": 47,
+  "independent_agent_pairs": 13,
+  "synthetic_tool_restore_cases": 1,
+  "real_model_requests": 0,
+  "android_tests": 0,
+  "raw_user_response_available": false,
+  "confirmed_defect": "Main host and checker selected different buffered text fields; alternate text falsely empty, top-level empty array falsely complete",
+  "specific_user_incident_root_cause": "unknown; 406-byte response absent",
+  "request_mutations_in_verify_tools": false,
+  "compatible_response_envelope_preserved": true,
+  "native_reasoning_tool_promotion": false,
+  "evidence": {
+    "AT08-targeted.log": "2fcede69d778bfda2b9b97b435f5114156673c51869a151351b9acef6ee9421e",
+    "AT08-full-tests.log": "1a9ea446f4bf539521801aae66fe08eac722289d2ac2c0e972c1ffc04743774c",
+    "AT08-version-check.log": "c6af7624248d56466bb89f6de3a58cfc58da260b3514f162ae0602bd65004e5b",
+    "AT08-agent/results.json": "94f423eba98db2d80b6bcaa27db753facd576cf138a13cd3163053a8d5b067f3",
+    "AT08-agent/postfix-results.json": "e996c089820eb8fee1c79954b36917b3d7eb2ae1bdc82a139624ab23e1e1963f",
+    "AT08-agent/postfix-review.md": "66b352e3a0467e0c7d92497e54c3a2dd064bd997bc0c93a9ec4363d642b69538",
+    "AT08-integrated-tests.log": "7935c9377fc2c74360a3439f6ceccb647706d262a1e5415b6eda67b41d9376e8"
+  },
+  "integrated_base": "88dcbcd27cfa9a812ef1215fcc2fe9e2cfd4020d",
+  "integrated_full_tests": 467,
+  "integrated_failed": 0
+}

@@ -25,7 +25,7 @@ export function transportFailure(value){
  else if(/HTTP/i.test(code))message='上游 HTTP 请求失败，未自动重试';
  else if(/not_restored/i.test(code))message='服务商没有按正文工具格式返回，抗截断未生效';
  else if(/content_type/i.test(code))message='流式请求未收到 SSE 响应，请核对接口支持';
- else if(/empty/i.test(code))message='上游未返回可用正文';
+ else if(/empty/i.test(code))message='完整性检查未识别到可用正文；可能为空或响应格式未适配';
  else if(/incomplete|interrupted|missing_finish/i.test(code))message='回复中途结束，缺少完整完成信息；已显示片段未作为完整结果归档';
  else if(/data_after|duplicate_finish/i.test(code))message='完成信息之后仍有异常数据，回复未被接纳';
  else if(/invalid|malformed/i.test(code))message='上游响应格式损坏，回复未被接纳';
@@ -91,6 +91,36 @@ export function geminiTextStream(response,status,{allowTools=false,allowImages=f
  },emit=>{if(!terminal)throw transportFailure('missing_finish_reason');emit(sseData('[DONE]'));});
 }
 
+// Match the main host's extractMessageFromData nullish precedence. An explicit
+// empty string/array is authoritative; never promote reasoning or tool args.
+function hostTextView(value,status){
+ const choice=value.choices?.[0],message=choice?.message;
+ let content,source;
+ if(Array.isArray(value.content)){
+  const parts=value.content.filter(p=>p?.type==='text');
+  if(parts.some(p=>typeof p.text!=='string'))throw transportFailure('invalid_text');
+  content=parts.map(p=>p.text).join('\n\n');source='content';
+ }else if(message?.content!=null){content=message.content;source='message.content';}
+ else if(choice?.text!=null){content=choice.text;source='choice.text';}
+ else if(value.text!=null){content=value.text;source='text';}
+ else return value;
+ if(typeof content!=='string'&&!Array.isArray(content))throw transportFailure('invalid_text');
+ status.hostTextSource=source;
+ if(source==='message.content')return value;
+ if(!object(choice)||message!=null&&!object(message))throw transportFailure('invalid_message');
+ const projected=structuredClone(value);
+ projected.choices[0].message={...(message??{role:'assistant'}),content};
+ return projected;
+}
+
+// Fixed counts only, captured before validation; no text, arguments, names or URLs.
+function responseShape(value){
+ const choice=value.choices?.[0],message=choice?.message;
+ const chars=v=>typeof v==='string'?v.length:Array.isArray(v)?v.reduce((n,p)=>n+(typeof p?.text==='string'?p.text.length:0),0):0;
+ const parts=value.responseContent?.parts??message?.native?.gemini?.content?.parts??value.candidates?.[0]?.content?.parts;
+ return {messageTextChars:chars(message?.content),choiceTextChars:chars(choice?.text),topTextChars:chars(value.text),contentTextChars:chars(Array.isArray(value.content)?value.content.filter(p=>p?.type==='text'):null),reasoningChars:chars(message?.reasoning_content),toolCalls:Array.isArray(message?.tool_calls)?message.tool_calls.length:message?.function_call?1:0,nativeTextChars:chars(Array.isArray(parts)?parts.filter(p=>!p?.thought):null),nativeToolCalls:Array.isArray(parts)?parts.filter(p=>p?.functionCall).length:0};
+}
+
 function normalizeGemini(value,status,{allowImages=false}={}){
  if(value.promptFeedback?.blockReason)throw transportFailure('filtered');
  if(Array.isArray(value.choices)){
@@ -136,8 +166,10 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   if(Number.isInteger(value?.error?.code))status.upstreamStatus=value.error.code;
   if(!object(value)||value.error)throw transportFailure('upstream_error');
   const original=value;
+  status.responseShape=responseShape(original);
   if(plan.protocol==='gemini')value=normalizeGemini(value,status,plan);else status.completionEvidence='provider';
   if(!Array.isArray(value.choices)||value.choices.length!==1)throw transportFailure('invalid_choices');
+  if(plan.hostReader&&!plan.toolName)value=hostTextView(value,status);
   const extra=plan.allowImages?hasImageContent:undefined;
   const before=inspectCompletion(value,extra);Object.assign(status,{finishReason:before.integrity.finishReason});
   if(!before.valid)throw transportFailure(before.reason);

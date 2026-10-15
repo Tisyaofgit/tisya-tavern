@@ -159,7 +159,7 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
     if(!response.body)throw problem('TISYA_TRANSPORT_EMPTY','抗截断请求没有响应正文');
     const observed=observeResponse(response,e.status,now);
     const complete=()=>{Object.assign(e.status,{state:e.status.toolTurn?'tool-handoff':e.status.hasImages&&!e.status.hasText?'media-complete':'complete',label:e.status.toolTurn?'工具调用响应完整，交回酒馆处理；尚非最终正文':e.status.hasImages&&!e.status.hasText?'图片响应完整，交回宿主显示；不作为剧情正文归档':e.status.completionEvidence==='host-normalized'?'宿主报告完成（原始结束原因不可得）':'本次协议完整结束',elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
-    if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
+    if(!e.plan.stream){const result=await bufferedResponse(observed,{...e.plan,hostReader:e.kind==='main',allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'},e.status,{signal:controller.signal,guard:e.guard,limit:OUTPUT_LIMIT});e.guard();controller.signal.throwIfAborted();complete();return result;}
     if(!/text\/event-stream/i.test(response.headers.get('content-type')??'')){await observed.body.cancel();throw transportFailure('content_type');}
     let usage;
     const translated=e.plan.protocol==='gemini'?(e.plan.toolName?wrapNativeTextStream(observed,e.plan.toolName,e.plan.model,v=>{usage=v;}):geminiTextStream(observed,e.status,{allowTools:e.plan.allowTools&&e.kind==='main',allowImages:e.plan.allowImages&&e.kind==='main'})):observed;

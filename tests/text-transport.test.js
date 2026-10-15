@@ -27,6 +27,46 @@ const jsonResponse=value=>new Response(JSON.stringify(value),{headers:{'content-
 const chatChunk=delta=>event({choices:[{index:0,delta}]});
 const chatEnd=(reason='stop')=>event({choices:[{index:0,delta:{},finish_reason:reason}]})+event('[DONE]');
 
+test('AT08 main buffered checks use host-visible text fields without rewriting compatible envelopes',async()=>{
+ const text='完整正文🙂\n第二段';
+ const fixtures=[
+  [{choices:[{message:{content:null},text,finish_reason:'stop'}]},'choice.text'],
+  [{choices:[{text,finish_reason:'stop'}]},'choice.text'],
+  [{choices:[{message:{content:''},finish_reason:'stop'}],content:[{type:'thinking',text:'private'},{type:'text',text}]},'content'],
+  [{choices:[{message:{content:null},finish_reason:'stop'}],text},'text'],
+ ];
+ for(const make of [request,openai])for(const [original,field]of fixtures){
+  const s=setup(()=>jsonResponse(original)),p=make({stream:false}),r=s.transport.prepare(p,'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+  assert.deepEqual(await(await s.send(r.payload)).json(),original);
+  assert.equal(status.state,'complete');assert.equal(status.hostTextSource,field);
+  assert.deepEqual(s.calls[0].body,p);assert.equal(s.calls.length,1);
+  assert.doesNotMatch(JSON.stringify(status),/private|完整正文|第二段/);s.transport.dispose();
+ }
+});
+
+test('AT08 host nullish precedence and reasoning boundaries remain authoritative',async()=>{
+ const fixtures=[
+  {choices:[{message:{content:''},text:'must not replace empty',finish_reason:'stop'}]},
+  {choices:[{message:{content:'hidden by top-level empty array'},finish_reason:'stop'}],content:[]},
+  {choices:[{message:{content:null,reasoning_content:'private'},finish_reason:'stop'}]},
+  {choices:[{message:{content:null},finish_reason:'stop'}],responseContent:{parts:[{functionCall:{name:'secret',args:{content:'not body'}}}]}},
+ ];
+ for(const original of fixtures){
+  const s=setup(()=>jsonResponse(original)),r=s.transport.prepare(request({stream:false}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+  await assert.rejects(s.send(r.payload),{code:'TISYA_TRANSPORT_EMPTY_COMPLETION'});
+  assert.equal(status.state,'error');assert.ok(status.responseShape);assert.doesNotMatch(JSON.stringify(status),/private|secret|not body/);s.transport.dispose();
+ }
+});
+
+test('AT08 alternate text still needs a complete ending and is not borrowed by auxiliary readers',async()=>{
+ for(const finish of ['length','content_filter',null]){
+  const s=setup(()=>jsonResponse({choices:[{message:{content:null},text:'partial',finish_reason:finish}]})),r=s.transport.prepare(request({stream:false}),'verify-tools'),status=s.transport.authorize(r.payload,r,{kind:'main'});
+  await assert.rejects(s.send(r.payload));assert.equal(status.state,'error');s.transport.dispose();
+ }
+ const s=setup(()=>jsonResponse({choices:[{message:{content:null},text:'main host only',finish_reason:'stop'}]})),r=s.transport.prepare(request({stream:false}),'verify-tools');s.transport.authorize(r.payload,r,{kind:'auxiliary'});
+ await assert.rejects(s.send(r.payload),{code:'TISYA_TRANSPORT_EMPTY_COMPLETION'});s.transport.dispose();
+});
+
 test('Vertex is retired without changing saved settings; supported protocols do not depend on model aliases',()=>{
  const old=request({chat_completion_source:'vertexai'});
  assert.equal(prepareTextTransport(old,'vertex-streaming').audit.reason,'retired');
