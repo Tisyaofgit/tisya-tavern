@@ -1,5 +1,12 @@
 import {revisionParagraphs} from './revision.js';
 
+export const LONG_PRESS_TOOLS=[['copy','复制本段'],['copy-body','复制正文'],['copy-source','复制原消息'],['select','选段修改'],['revision','高级重骰'],['edit','手工编辑'],['read','阅读与回合记录'],['message','消息操作'],['more','更多']];
+export function longPressSlots(settings={}){
+ const slots=settings.长按菜单??['copy','select','more'];
+ if(!Array.isArray(slots)||!slots.includes('more')||new Set(slots).size!==slots.length||slots.some(id=>!LONG_PRESS_TOOLS.some(t=>t[0]===id)))throw Error('长按菜单配置无效：须保留更多且不能重复');
+ return [...slots];
+}
+
 // Styling is shared with the isolated message renderer; inputs stay native.
 export const paragraphInteractionCSS=`
 .story,.story *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -23,7 +30,7 @@ export function paragraphTargets(document,root,source,format=x=>x){
  return nodes.map((node,i)=>({node,id:parts[i].id,raw:parts[i].raw}));
 }
 
-export function mountParagraphActions(document,{capture,validate,assertIdle,format=x=>x,onRevise,onEdit,onError=()=>{},holdMs=550}){
+export function mountParagraphActions(document,{capture,validate,assertIdle,format=x=>x,onRevise,onEdit,onRead,onMessage,onConfigure,getSettings=()=>({}),onError=()=>{},holdMs=550}){
  const win=document.defaultView,chat=document.querySelector('#chat');let hold=null,menu=null,selection=null,suppressed=null,alive=true;
  const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
  const guard=fn=>{try{return fn();}catch(e){reset();onError(e);}};
@@ -42,7 +49,7 @@ export function mountParagraphActions(document,{capture,validate,assertIdle,form
   const rows=paragraphTargets(document,hit.root,token.text,raw=>format(raw,token));
   const row=rows.find(r=>r.node===hit.leaf||r.node.contains(hit.leaf));return {token,rows,row,root:hit.root};
  }
- function check(){if(!alive)return;guard(()=>{if(selection){validate(selection.token);if(!selection.root.isConnected||selection.rows.some(r=>!r.node.isConnected))throw Error('正文已更新，请重新选择段落');}});}
+ function check(){if(!alive)return;guard(()=>{if(menu){validate(menu._token);}if(selection){validate(selection.token);if(!selection.root.isConnected||selection.rows.some(r=>!r.node.isConnected))throw Error('正文已更新，请重新选择段落');}});}
  function update(){if(!selection)return;for(const row of selection.rows)row.node.classList.toggle('tisya-paragraph-selected',selection.ids.has(row.id));selection.count.textContent='已选 '+selection.ids.size+' 段';selection.done.disabled=!selection.ids.size;}
  function begin(item){
   assertIdle();validate(item.token);if(!item.row)throw Error('此处排版无法对应原段落，请从“高级重骰”选择');
@@ -52,22 +59,37 @@ export function mountParagraphActions(document,{capture,validate,assertIdle,form
   selection={...item,ids:new Set([item.row.id]),bar,count,done};update();
   cancel.onclick=()=>clearSelection();done.onclick=()=>guard(()=>{assertIdle();validate(selection.token);const token=selection.token,ids=[...selection.ids].sort((a,b)=>a-b);clearSelection();onRevise(token,ids);});
  }
- function show(item,x,y){
-  closeMenu();menu=make('div');menu.id='tisya-paragraph-menu';menu.setAttribute('role','dialog');menu.setAttribute('aria-label','段落操作');
-  const add=(label,fn)=>{const b=make('button',label);b.type='button';b.onclick=()=>{suppressed=null;Promise.resolve().then(()=>{validate(item.token);return fn();}).catch(e=>{reset();onError(e);});};menu.append(b);return b;};
+ function show(item,x,y,more=false){
+  closeMenu();const current=menu=make('div');menu._token=item.token;menu.id='tisya-paragraph-menu';menu.setAttribute('role','dialog');menu.setAttribute('aria-label',more?'更多段落操作':'段落操作');
+  const finish=()=>{if(menu===current)closeMenu();};
+  const add=(label,fn)=>{const b=make('button',label);b.type='button';b.onclick=()=>{suppressed=null;Promise.resolve().then(()=>{validate(item.token);return fn();}).catch(e=>{if(menu===current)reset();onError(e);});};current.append(b);return b;};
   const user=item.token.message.is_user||item.token.message.is_system||item.token.message.role==='tool';
-  add('复制',async()=>{if(!item.row)throw Error('无法定位此段原文，请使用消息复制');await win.navigator.clipboard.writeText(item.row.raw);closeMenu();});
-  add('修改',()=>user?(closeMenu(),onEdit(item.token)):begin(item));
-  if(!user)add('高级',()=>{closeMenu();onRevise(item.token,item.row?[item.row.id]:undefined);});
-  const dismiss=add('关闭',closeMenu);document.body.append(menu);
-  const w=menu.getBoundingClientRect().width||250,h=menu.getBoundingClientRect().height||54;
-  menu.style.left=Math.max(8,Math.min(x-w/2,win.innerWidth-w-8))+'px';menu.style.top=Math.max(8,Math.min(y-h-16,win.innerHeight-h-8))+'px';dismiss.focus({preventScroll:true});
+  const copy=async text=>{await win.navigator.clipboard.writeText(text);finish();};
+  const mutate=fn=>()=>{assertIdle();validate(item.token);finish();return fn();};
+  const actions={
+   copy:()=>{if(!item.row)throw Error('无法定位此段原文，请使用复制正文或复制原消息');return copy(item.row.raw);},
+   'copy-body':()=>copy(revisionParagraphs(item.token.text).map(p=>p.raw).join('\n\n')),
+   'copy-source':()=>copy(item.token.text),
+   select:()=>begin(item),
+   revision:mutate(()=>onRevise(item.token,item.row?[item.row.id]:undefined)),
+   edit:mutate(()=>onEdit(item.token)),
+   read:()=>{finish();return onRead?.(item.token);},
+   message:()=>{finish();return onMessage?.(item.token);},
+   more:()=>show(item,x,y,true),
+  };
+  const visible=longPressSlots(getSettings());
+  const ids=more?LONG_PRESS_TOOLS.map(t=>t[0]).filter(id=>id!=='more'&&!visible.includes(id)):visible;
+  for(const id of ids){if(user&&['select','revision'].includes(id))continue;if(id==='read'&&!onRead||id==='message'&&!onMessage)continue;add(LONG_PRESS_TOOLS.find(t=>t[0]===id)[1],actions[id]);}
+  if(more){if(onConfigure)add('配置长按菜单',()=>{finish();return onConfigure(item.token);});add('返回',()=>show(item,x,y));}
+  const dismiss=add('关闭',finish);document.body.append(current);
+  const w=current.getBoundingClientRect().width||250,h=current.getBoundingClientRect().height||54;
+  current.style.left=Math.max(8,Math.min(x-w/2,win.innerWidth-w-8))+'px';current.style.top=Math.max(8,Math.min(y-h-16,win.innerHeight-h-8))+'px';dismiss.focus({preventScroll:true});
  }
  const down=e=>{
   cancelHold();if(e.button!==0||e.isPrimary===false)return;
   const hit=target(e);if(!hit)return;
   if(selection)return;
-  hold={x:e.clientX,y:e.clientY,pointer:e.pointerId,timer:win.setTimeout(()=>{hold=null;guard(()=>{assertIdle();const item=locate(hit);suppressed={node:hit.node,until:Date.now()+900};document.getSelection()?.removeAllRanges();show(item,e.clientX,e.clientY);});},holdMs)};
+  hold={x:e.clientX,y:e.clientY,pointer:e.pointerId,timer:win.setTimeout(()=>{hold=null;guard(()=>{const item=locate(hit);suppressed={node:hit.node,until:Date.now()+900};document.getSelection()?.removeAllRanges();show(item,e.clientX,e.clientY);});},holdMs)};
  };
  const move=e=>{if(hold&&(e.pointerId!==hold.pointer||Math.hypot(e.clientX-hold.x,e.clientY-hold.y)>10))cancelHold();};
  const click=e=>{
