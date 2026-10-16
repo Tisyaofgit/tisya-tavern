@@ -7,9 +7,9 @@ const smooth=x=>{const t=Math.max(0,Math.min(1,x));return t*t*(3-2*t);};
 const shift=()=>0,shiftY=()=>0;
 const FORMS=['female','male'];
 export function blinkAmount(time,gender='female'){
-    // Unequal intervals avoid a metronome, with a quick close and softer release.
+    // A quiet first blink shortly after entry; later unequal intervals avoid a metronome.
     const cycle=gender==='female'?43:47,t=((time%cycle)+cycle)%cycle;
-    const moments=gender==='female'?[7.2,20.8,36.4]:[9.6,25.1,39.8];
+    const moments=gender==='female'?[2.4,20.8,36.4]:[3.3,25.1,39.8];
     for(const start of moments){const d=t-start;if(d>=0&&d<.36)return d<.095?smooth(d/.095):d<.14?1:1-smooth((d-.14)/.22);}
     return 0;
 }
@@ -17,10 +17,10 @@ function bubbles(ctx,time,gender){
     for(let i=0;i<13;i++){
         const period=24+(i*7%19),phase=((time/period+i*.137+(gender==='male'?.23:0))%1+1)%1;
         const x=90+(i*173%740)+Math.sin(time*.23+i*2.3)*3.5;
-        const y=H+14-phase*(H+55),radius=.65+(i*11%9)/10;
-        const alpha=.12*Math.min(1,phase*9,(1-phase)*9);
-        ctx.beginPath();ctx.arc(x,y,radius,0,TAU);ctx.lineWidth=.55;ctx.strokeStyle=`rgba(191,221,204,${alpha})`;ctx.stroke();
-        ctx.beginPath();ctx.arc(x-radius*.25,y-radius*.3,.3,0,TAU);ctx.fillStyle=`rgba(225,238,211,${alpha*.8})`;ctx.fill();
+        const y=H+14-phase*(H+55),radius=1.5+(i*11%9)/10;
+        const alpha=.38*Math.min(1,phase*9,(1-phase)*9);
+        ctx.beginPath();ctx.arc(x,y,radius,0,TAU);ctx.lineWidth=.9;ctx.strokeStyle=`rgba(191,221,204,${alpha})`;ctx.stroke();
+        ctx.beginPath();ctx.arc(x-radius*.25,y-radius*.3,.45,0,TAU);ctx.fillStyle=`rgba(225,238,211,${alpha*.8})`;ctx.fill();
     }
 }
 function draw(ctx,assets,time=0,options={}){
@@ -28,8 +28,8 @@ function draw(ctx,assets,time=0,options={}){
     ctx.save();ctx.setTransform(w/W,0,0,h/H,0,0);ctx.clearRect(0,0,W,H);
     const backdrop=options.backdrop||'water';
     if(backdrop==='water'){
-        const dx=2.4*Math.sin(TAU*time/39),dy=3.2*Math.sin(TAU*time/51);
-        ctx.drawImage(assets.background,-6+dx,-8+dy,W+12,H+16);
+        const dx=8*Math.sin(TAU*time/33),dy=11*Math.sin(TAU*time/47);
+        ctx.drawImage(assets.background,-12+dx,-15+dy,W+24,H+30);
         ctx.fillStyle='rgba(0,12,9,.16)';ctx.fillRect(0,0,W,H);
         bubbles(ctx,time,gender);
     }else if(backdrop!=='transparent'){ctx.fillStyle=backdrop;ctx.fillRect(0,0,W,H);}
