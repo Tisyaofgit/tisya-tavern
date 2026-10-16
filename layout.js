@@ -1,6 +1,6 @@
 import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.31.28';
+export const VERSION = '0.2.0-alpha.31.29';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -68,11 +68,11 @@ export function mountLayout(document) {
     for (const [name, value] of Object.entries({background:'transparent', 'box-shadow':'none', 'backdrop-filter':'none', '-webkit-backdrop-filter':'none', border:'0', height:'0px', 'min-height':'0', 'max-height':'0px'})) ownStyle(holder, name, value);
 
     const top = document.createElement('button');
-    top.id = 'tisya-menu-trigger'; top.type = 'button'; top.innerHTML = iconMarkup('menu'); top.className = 'tisya-icon-button'; top.title = '打开侧栏';
-    top.dataset.tisyaAction = 'menu'; top.setAttribute('aria-label', '打开侧栏');
+    top.id = 'tisya-menu-trigger'; top.type = 'button'; top.innerHTML = iconMarkup('settings'); top.className = 'tisya-icon-button'; top.title = '设置与功能';
+    top.dataset.tisyaAction = 'menu'; top.setAttribute('aria-label', '设置与功能');
     (document.querySelector('#nonQRFormItems')??left).prepend(top);
     const controls = document.createElement('div'); controls.id = 'tisya-panel-controls'; controls.hidden = true;
-    controls.innerHTML = '<button type="button" data-tisya-action="menu">菜单</button><span></span><button type="button" data-tisya-action="chat">返回聊天</button>';
+    controls.innerHTML = '<button type="button" data-tisya-action="menu">设置</button><span></span><button type="button" data-tisya-action="chat">返回聊天</button>';
     holder.append(controls);
     const root = document.createElement('div'); root.id = 'tisya-shell';
     root.setAttribute('data-tt-mobile-surface', 'none');

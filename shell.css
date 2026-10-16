@@ -1,5 +1,5 @@
 /* Native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.28";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.29";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -604,3 +604,28 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_
 .tisya-play-menu .tisya-settings-section .tisya-settings-links{display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px}.tisya-play-menu [hidden]{display:none!important}
 .tisya-play-menu .tisya-settings-result{color:#a8b99e;font-size:13px}.tisya-play-menu .tisya-version{opacity:.5}
 @media(max-width:380px){.tisya-play-menu .tisya-play-grid{grid-template-columns:1fr}.tisya-play-menu .tisya-setting-destination strong{font-size:16px}}
+
+/* A single settings page, with management destinations always visible. */
+#tisya-shell .tisya-settings-home .tisya-settings-search{margin:0 0 14px;padding:8px 0}
+#tisya-shell .tisya-settings-home .tisya-settings-section{padding:14px 0;margin:0}
+#tisya-shell .tisya-settings-home .tisya-settings-section:first-of-type{border-top:0;padding-top:0}
+#tisya-shell .tisya-settings-home .tisya-settings-section h3{font:14px/1.5 TisyaReading,serif;color:#b9c6b7;letter-spacing:.08em;margin:0 0 10px}
+#tisya-shell .tisya-settings-home .tisya-settings-links{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 0}
+#tisya-shell .tisya-settings-home .tisya-library-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#tisya-shell .tisya-settings-home .tisya-setting-destination{padding:10px 11px;gap:10px;min-height:54px;border-radius:11px}
+#tisya-shell .tisya-settings-home .tisya-setting-destination strong{font-size:16px;line-height:1.4}
+#tisya-shell .tisya-settings-home .tisya-setting-destination small{font-size:11px;line-height:1.5;margin-top:2px}
+#tisya-shell .tisya-settings-home .tisya-library-grid .tisya-setting-destination{align-items:flex-start;min-height:78px}
+#tisya-shell .tisya-settings-home .tisya-library-grid .tisya-setting-destination>svg{width:20px;height:20px;flex-basis:20px;margin-top:2px}
+#tisya-shell .tisya-settings-home .tisya-library-grid .tisya-setting-destination>svg:last-child{display:none}
+#tisya-shell .tisya-settings-home .tisya-settings-section summary{min-height:40px;align-items:center;cursor:pointer}
+#tisya-shell .tisya-settings-home .tisya-settings-section[open] summary>span{transform:rotate(45deg)}
+#tisya-shell .tisya-settings-home button:focus-visible{outline:2px solid #d1b775;outline-offset:2px}
+#tisya-shell .tisya-settings-home .tisya-version{font-size:11px;margin-top:8px}
+@media(min-width:650px){#tisya-shell .tisya-settings-home .tisya-library-grid{grid-template-columns:repeat(4,minmax(0,1fr))}#tisya-shell .tisya-settings-home [data-settings-group="tisya"] .tisya-settings-links{grid-template-columns:1fr 1fr}}
+
+#tisya-shell .tisya-sub-header{margin-bottom:14px}
+#tisya-shell h2.tisya-sub-title{font-size:30px}
+
+#tisya-shell .tisya-settings-home .tisya-settings-search input,#tisya-shell .tisya-settings-home .tisya-settings-search input::placeholder{font-family:TisyaReading,serif!important}
+#tisya-shell .tisya-settings-home .tisya-setting-destination small{color:#aebdaf}

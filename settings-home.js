@@ -1,0 +1,16 @@
+import {filterSettingsDestinations} from './settings-navigation.js';
+import {iconMarkup} from './icons.js';
+const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mounted=new WeakMap();
+export function mountSettingsHome(container,{rows,version,fontState='',styleVersion=version}){
+ const signature=JSON.stringify([rows,version,styleVersion]);if(mounted.get(container)?.signature===signature)return mounted.get(container).api;
+ const previous=container.querySelector('input'),query=previous?.value??'',focused=previous===container.ownerDocument.activeElement,expandedBefore=new Map([...container.querySelectorAll('details')].map(n=>[n.dataset.settingsGroup,n.open]));
+ container.classList.add('tisya-settings-home','tisya-play-menu');
+ const tile=r=>`<button type="button" class="tisya-setting-destination" data-tisya-action="${esc(r.action)}" aria-label="${esc(r.label)}">${iconMarkup(r.icon)}<span><strong>${esc(r.label)}</strong><small>${esc(r.description)}</small></span>${iconMarkup('right')}</button>`;
+ const group=(id,title,{fold=false}={})=>{const content=`<div class="tisya-settings-links ${id==='library'?'tisya-library-grid':''}">${rows.filter(r=>r.group===id).map(tile).join('')}</div>`;return fold?`<details class="tisya-settings-section" data-settings-group="${id}"><summary><strong>${title}</strong><span aria-hidden="true">＋</span></summary>${content}</details>`:`<section class="tisya-settings-section" data-settings-group="${id}"><h3>${title}</h3>${content}</section>`;};
+ container.innerHTML=`<label class="tisya-settings-search">${iconMarkup('search')}<input type="search" aria-label="查找全部设置" placeholder="搜索设置或功能"></label><p class="tisya-settings-result" role="status" hidden></p>${group('library','内容管理')}${group('play','常用设置')}${group('tisya','缇斯亚功能')}${group('comfort','外观与陪伴',{fold:true})}${group('advanced','扩展与系统',{fold:true})}<p id="tisya-font-state" class="tisya-note" role="status">${esc(fontState)}</p><p class="tisya-version">${esc(version)}</p>${styleVersion!==version?'<p role="alert">界面样式版本不一致，请更新扩展并重启应用。</p>':''}`;
+ const search=container.querySelector('input'),result=container.querySelector('.tisya-settings-result');let expanded=null;
+ search.oninput=()=>{const value=search.value.trim(),matches=new Set(filterSettingsDestinations(rows,value).map(r=>r.action));if(value&&!expanded)expanded=[...container.querySelectorAll('details')].map(n=>[n,n.open]);for(const node of container.querySelectorAll('.tisya-setting-destination'))node.hidden=!matches.has(node.dataset.tisyaAction);for(const section of container.querySelectorAll('[data-settings-group]')){section.hidden=!section.querySelector('.tisya-setting-destination:not([hidden])');if(value&&section.tagName==='DETAILS'&&!section.hidden)section.open=true;}if(!value&&expanded){for(const [node,open]of expanded)node.open=open;expanded=null;}result.hidden=!value;result.textContent=matches.size?'找到 '+matches.size+' 项':'没有找到，可以换个词试试。';};
+ for(const node of container.querySelectorAll('details'))if(expandedBefore.has(node.dataset.settingsGroup))node.open=expandedBefore.get(node.dataset.settingsGroup);search.value=query;search.oninput();if(focused)search.focus({preventScroll:true});
+ const api={focus:()=>search.focus({preventScroll:true})};mounted.set(container,{signature,api});return api;
+}

@@ -1,0 +1,3029 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>缇斯亚 · 角色与群聊</title><style>@font-face{font-family:Tisya;src:url('reading-subset.woff2') format('woff2');font-display:swap}*{box-sizing:border-box}html{color-scheme:dark;background:#0c1415;color:#e1e9e5;font-family:Tisya,serif;font-size:15px}body{margin:0}button,input,select,textarea{font:inherit}button,a,input,textarea,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer;min-height:40px;border:1px solid #334242;border-radius:10px;background:#172324;color:inherit;padding:8px 12px;transition:background .14s}button:active{background:#34413c}button:disabled{opacity:.42;cursor:default}button.primary{background:#c8b38a;border-color:#c8b38a;color:#202b28;font-weight:700}button.flat{border:0;background:transparent}button.danger{color:#e7a4a0;border-color:#704a49}button.small{padding:6px 10px;min-height:38px;font-size:13px}button.icon{width:40px;padding:0;font-size:19px;flex:none}button:focus:not(:focus-visible),input:focus:not(:focus-visible),textarea:focus:not(:focus-visible),select:focus:not(:focus-visible){outline:none}*:focus-visible{outline:2px solid #c8b38a;outline-offset:3px}input,textarea,select{width:100%;min-width:0;border:1px solid #334343;background:#101b1d;border-radius:9px;color:#e0e9e5;padding:10px;min-height:42px}textarea{resize:vertical;line-height:1.75;min-height:112px}input[type=checkbox]{width:20px;min-height:20px;accent-color:#c8b38a}input[type=range]{padding:4px;accent-color:#c8b38a}input::placeholder,textarea::placeholder{color:#899b96}h1,h2,h3,p{margin:0}h1{font-size:25px;font-weight:500;letter-spacing:.05em}h2{font-size:21px;font-weight:500}h3{font-size:16px}small,.muted{color:#9caca6;font-size:12px;line-height:1.6}.gold{color:#d4bd91}.eyebrow{font-size:11px;letter-spacing:.15em;color:#bca67f;text-transform:uppercase}.row{display:flex;align-items:center;gap:8px;min-width:0}.between{justify-content:space-between}.wrap{flex-wrap:wrap}.grow{flex:1;min-width:0}.stack{display:grid;gap:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.label{display:block;font-size:13px;color:#b7c4bd;margin:0 0 7px}.page{max-width:1400px;margin:auto;min-height:100dvh;display:grid;grid-template-columns:290px minmax(0,1fr)}.sidebar{background:#101a1c;border-right:1px solid #273536;padding:24px 16px;position:sticky;top:0;height:100dvh;overflow:auto}.brand{margin:3px 5px 22px}.brand h1{font-size:24px;margin-top:4px}.brand p{font-size:12px;color:#8eaaa0;margin-top:7px}.segment{display:flex;gap:4px;background:#0b1516;border:1px solid #293b3b;border-radius:12px;padding:4px}.segment button{flex:1;border:0;background:transparent;padding:7px;white-space:nowrap}.segment button.active{background:#2a3936;color:#ead7b3}.tools{margin:12px 0;display:grid;gap:8px}.search{position:relative}.filters{display:flex;gap:6px;overflow:auto;padding-bottom:4px;scrollbar-width:none}.chip{border:1px solid #3a4b45;color:#b7c4b8;border-radius:20px;padding:5px 10px;font-size:12px;white-space:nowrap;min-height:32px;background:#1b2927}.chip.active{border-color:#b9a57f;color:#e2cc9e;background:#32392e}.list{display:grid;gap:7px;margin-top:8px}.list.grid{grid-template-columns:1fr 1fr}.entity{border:1px solid #273a3b;border-radius:13px;background:#142224;padding:10px;text-align:left;display:flex;gap:10px;align-items:center;min-width:0;position:relative}.entity:hover,.entity.current{border-color:#9b8c6b;background:#1e302f}.entity-title{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.entity-sub{font-size:11px;color:#93a79d;margin-top:3px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list.grid .entity{flex-direction:column;align-items:flex-start}.avatar{width:43px;height:48px;border-radius:11px;background:linear-gradient(145deg,#3b554e,#172a2d);display:grid;place-items:center;color:#d8c392;font-size:23px;flex:none;border:1px solid #45605a}.avatar.violet{background:linear-gradient(145deg,#51434c,#262933);border-color:#5a4e5c}.avatar.blue{background:linear-gradient(145deg,#32515c,#1b2933);border-color:#40606a}.avatar.large{width:66px;height:78px;border-radius:14px;font-size:34px}.avatar.group{background:linear-gradient(145deg,#554e38,#2b382e);color:#ddc597}.entity input{width:18px;min-height:18px}.sidefoot{margin-top:18px;border-top:1px solid #293c3b;padding:12px 3px;display:grid;gap:5px}.main{padding:22px 28px 110px;min-width:0;background:radial-gradient(ellipse at 90% 0,rgba(56,80,74,.22),transparent 45%)}.topbar{margin-bottom:18px;min-height:38px}.back{display:none}.preview{font-size:11px;color:#adbaac;border:1px solid #3e4b40;padding:4px 8px;border-radius:6px}.hero{display:flex;gap:15px;padding:2px 0 18px}.hero h1{margin:3px 0 5px;overflow-wrap:anywhere}.hero-meta{display:flex;flex-wrap:wrap;gap:6px;color:#adbcad;font-size:12px}.pill{padding:3px 7px;background:#253632;border:1px solid #3a4d42;border-radius:5px;color:#c5d1be;font-size:11px}.hero-actions{margin-left:auto;display:flex;align-items:flex-start;gap:5px}.tabs{position:sticky;top:0;z-index:4;background:#101b1df5;backdrop-filter:blur(12px);display:flex;gap:0;border-bottom:1px solid #34443e;margin-bottom:18px}.tabs button{flex:1;border:0;border-radius:0;background:none;color:#93a99f;padding:10px 4px}.tabs button.active{color:#e6d3ad;border-bottom:2px solid #d0b382}.card{background:#152326;border:1px solid #2b3e40;border-radius:14px;padding:15px;min-width:0}.card.accent{background:linear-gradient(125deg,#243b35,#172729);border-color:#476054}.card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.section-title{margin:18px 0 10px;display:flex;align-items:center;gap:8px}.section-title:after{content:'';height:1px;flex:1;background:linear-gradient(90deg,#394a42,transparent)}.field{margin-bottom:13px}.field:last-child{margin-bottom:0}.field-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}.field-head label{font-size:13px;color:#bccabd}.field-head button{min-height:30px;padding:2px 7px;font-size:11px;color:#b9b393}.hint{font-size:12px;color:#93a99f;line-height:1.6;margin-top:6px}.choice-row{padding:10px 0;display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #293c3d}.choice-row:last-child{border-bottom:0}.switch{width:40px;min-height:24px;height:24px;border-radius:15px;padding:2px;background:#344548;flex:none;border:1px solid #5c7169}.switch:before{content:'';display:block;width:18px;height:18px;border-radius:50%;background:#a1b4ae;transition:transform .15s}.switch[aria-checked=true]{background:#b4a27b;border-color:#d4c196}.switch[aria-checked=true]:before{background:#172825;transform:translateX(16px)}details{border:1px solid #2e4040;border-radius:12px;background:#142124;min-width:0}summary{padding:13px;cursor:pointer;font-size:14px;color:#c4cfbf}details>.inner{padding:0 13px 13px}.note{padding:10px 12px;border-left:2px solid #ad9670;background:#202d29;color:#c2c6af;font-size:12px;line-height:1.65;border-radius:0 8px 8px 0}.warning{color:#e2b0a2;border-color:#b17865}.member{display:flex;gap:9px;align-items:center;border:1px solid #304342;padding:11px;border-radius:12px;background:#17282a;min-width:0}.member.muted-member{opacity:.68}.member-body{min-width:0;flex:1}.member h3{font-weight:500;margin-bottom:4px}.member-buttons{display:flex;align-items:center;gap:4px}.member-buttons button{min-height:36px;padding:5px 8px;font-size:12px}.member-index{font-size:12px;color:#b8a982;width:14px}.member.dragging{opacity:.4}.member.drag-over{border-color:#d0b382}.member-extra{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}.greeting{margin-bottom:9px}.greeting textarea{min-height:120px}.session{padding:11px 0;border-bottom:1px solid #2b3f3e;display:flex;gap:10px;align-items:center}.session:last-child{border-bottom:0}.session-title{font-size:14px;display:block;overflow-wrap:anywhere}.session-meta{font-size:11px;color:#91a59d;margin-top:3px}.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.action-grid button{text-align:left;background:#1b2b2c}.action-grid button span{display:block;font-size:11px;color:#9aaa9d;margin-top:4px}.footer{position:fixed;z-index:5;bottom:0;left:290px;right:0;border-top:1px solid #35443c;background:#101c1ef2;backdrop-filter:blur(16px);padding:11px max(20px,calc((100vw - 1400px)/2 + 28px)) calc(11px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:9px}.footer .primary{min-width:120px}.status{font-size:12px;color:#b7bb9d}.empty{padding:35px 15px;text-align:center;color:#95aba2;line-height:1.8}.panel-backdrop{position:fixed;inset:0;background:#02080899;z-index:20;display:flex;align-items:flex-end;justify-content:center;padding:16px}.panel{width:min(720px,100%);max-height:85dvh;overflow:auto;background:#152326;border:1px solid #4a5e55;border-radius:19px;padding:20px;box-shadow:0 15px 70px #0008}.panel h2{font-size:21px}.panel-head{position:sticky;top:-20px;background:#152326;padding:0 0 14px;z-index:3}.panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}.panel.full{height:90dvh}.panel.full textarea{height:calc(90dvh - 165px);resize:none}.dock{position:fixed;bottom:0;left:290px;right:0;z-index:10;background:#122325;border:1px solid #536455;border-radius:19px 19px 0 0;box-shadow:0 -12px 60px #0006;height:49dvh;display:flex;flex-direction:column;padding:0 max(20px,calc((100vw - 1400px)/2 + 28px)) max(14px,env(safe-area-inset-bottom))}.dock-head{padding:13px 0 11px;flex:none;display:flex;gap:8px;align-items:center;border-bottom:1px solid #374b44}.dock-content{overflow:auto;flex:1;padding-top:13px}.dock-handle{width:34px;height:3px;background:#6b7867;border-radius:2px;position:absolute;top:5px;left:calc(50% - 17px)}.dock-open .main{padding-bottom:calc(49dvh + 35px)}.dock-open .footer{display:none}.diff{border:1px solid #4a594b;padding:10px;border-radius:9px;margin-top:10px;font-size:12px;line-height:1.8;overflow-wrap:anywhere}.diff del{color:#d6a29b}.diff ins{color:#cbd5ad;text-decoration:none}.audit-row{padding:10px 0;border-bottom:1px solid #344742;display:grid;gap:5px}.audit-row code{font-size:10px;color:#8aa198;overflow-wrap:anywhere}.badge{font-size:10px;border:1px solid #586958;padding:2px 5px;border-radius:4px;color:#cccfaf}.native-zone{border:1px dashed #516254;border-radius:11px;padding:13px;line-height:1.8;font-size:12px;color:#a8b7a8}#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:50;max-width:90vw;padding:10px 16px;background:#d7c4a0;color:#172927;border-radius:9px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .15s}#toast.show{opacity:1}.mobile-banner{display:none}.link{color:#d7c49f}.error{color:#f0b1a7;margin-top:8px;font-size:13px}.hero-description{line-height:1.8;font-size:14px;color:#bacbbf}.queue{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.no-motion *{transition:none!important}
+@media(min-width:1400px){.footer,.dock{left:calc((100vw - 1400px)/2 + 290px);right:calc((100vw - 1400px)/2)}}@media(max-width:760px){.page{display:block}.sidebar{position:relative;height:auto;border:0;padding:20px 16px 110px}.page.detail .sidebar{display:none}.page:not(.detail) .main{display:none}.page:not(.detail) .footer{display:none}.main{padding:13px 15px 105px;min-height:100dvh}.topbar{margin-bottom:13px}.back{display:inline-block}.brand{margin-bottom:17px}.brand h1{font-size:27px}.hero{gap:11px;padding-bottom:15px}.hero h1{font-size:23px}.hero-actions{flex-direction:column}.avatar.large{width:60px;height:74px}.card{padding:13px}.footer{left:0;padding:10px 15px calc(10px + env(safe-area-inset-bottom))}.dock{left:0;padding:0 15px max(12px,env(safe-area-inset-bottom));height:51dvh}.dock-open .main{padding-bottom:calc(51dvh + 25px)}.dock-open .sidebar{padding-bottom:calc(51dvh + 20px)}.panel-backdrop{padding:8px}.panel{padding:16px;border-radius:18px;max-height:88dvh}.panel-head{top:-16px}.member{flex-wrap:wrap;gap:8px;padding:10px}.member .avatar{width:36px;height:42px;font-size:20px}.member-buttons{margin-left:0}.member-extra{width:100%;padding-left:23px;margin-top:0}.member-extra button{font-size:11px}.preview{font-size:10px}.action-grid{gap:6px}.mobile-banner{display:block}.hero-description{font-size:13px}.tabs{top:0}.grid2.narrow{grid-template-columns:1fr}.session{align-items:flex-start}.session>.row{flex-direction:column}.footer .primary{min-width:103px}.topbar button.small{padding:6px 8px}}@media(max-width:355px){.main{padding-left:11px;padding-right:11px}.avatar.large{width:51px;height:67px}.hero h1{font-size:21px}.hero-actions .icon{width:34px}.hero-meta{gap:4px}.member-buttons{margin-left:auto}.member .avatar{width:32px}.card{padding:11px}.panel{padding:13px}.action-grid button{padding:8px;font-size:13px}.footer{padding-left:11px;padding-right:11px;gap:6px}}@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+button{white-space:nowrap}.hero .eyebrow{overflow-wrap:anywhere}.topbar .eyebrow{white-space:nowrap}.member-index{touch-action:none;cursor:grab;min-width:18px;padding:12px 0}.hero-actions .icon{overflow:hidden}
+
+.member-buttons .switch{padding:2px;min-height:24px;height:24px;width:40px}
+
+[hidden]{display:none!important}
+
+html{font-family:TisyaReading,Tisya,serif}.host-float .sidebar,.host-float .main{display:none}.host-float .dock{height:100dvh;max-height:100dvh}.host-float{padding:0}.panel select{width:100%}.error{white-space:pre-wrap}.avatar{overflow:hidden}
+</style></head><body><div id="app"></div><div id="panel-root"></div><div id="dock-root"></div><div id="toast" role="status" aria-live="polite"></div><script id="native-catalog" type="application/json">{
+  "schema": "tisya.character-group-catalog/1",
+  "host": "TauriTavern 2.3.0 original APK",
+  "apk_sha256": "dd17a722f40ceed2aafd3d880f572f706085fb568b08661f54d6f44d65dbb361",
+  "provenance": [
+    {
+      "path": "index.html",
+      "sha256": "0aad58fcc6fb083609aee1f055872f4d1d0df74be23d18124feb936176deb0cd"
+    },
+    {
+      "path": "script.js",
+      "sha256": "3d12fa1991ee5f76c27630ca459fa9ff80dede081b5a22a398c25964fe4c43eb"
+    },
+    {
+      "path": "scripts/group-chats.js",
+      "sha256": "feef33ef7cd936d84e10dab024a6bc5a28e67ccb438e1da65f72c8b2b4f567ca"
+    },
+    {
+      "path": "scripts/personas.js",
+      "sha256": "2d4988180f5ab2872de13a37792ebaf7064719863cdfb81371d859be4d5f5366"
+    },
+    {
+      "path": "scripts/BulkEditOverlay.js",
+      "sha256": "75e5974e53d92dadf2b21d49c94e9e208f795deeb3d0c001f6f5419b3b0b2129"
+    }
+  ],
+  "rows": [
+    {
+      "key": "rm_button_panel_pin",
+      "selector": "#rm_button_panel_pin",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "rm_button_panel_pin",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:1",
+      "selector": ".fa-solid.unchecked.fa-unlock.right_menu_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:2",
+      "selector": ".fa-solid.checked.fa-lock.right_menu_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_button_characters",
+      "selector": "#rm_button_characters",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "选择/创建角色",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chartokenwarning",
+      "selector": "#chartokenwarning",
+      "source": "rightNavHolder",
+      "tag": "a",
+      "type": "",
+      "name": "",
+      "label": "关于词符“限制”",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:5",
+      "selector": ".fa-solid.fa-ranking-star.right_menu_button.rm_stats_button",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "点击即可查看统计~",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "hideCharPanelAvatarButton",
+      "selector": "#hideCharPanelAvatarButton",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "切换角色信息面板",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_name_pole",
+      "selector": "#character_name_pole",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "",
+      "name": "ch_name",
+      "label": "为这个角色命名",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "add_avatar_button",
+      "selector": "#add_avatar_button",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "file",
+      "name": "avatar",
+      "label": "add_avatar_button",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "rm_button_back",
+      "selector": "#rm_button_back",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "rm_button_back",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "favorite_button",
+      "selector": "#favorite_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "添加到收藏夹",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "fav_checkbox",
+      "selector": "#fav_checkbox",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "fav",
+      "label": "fav_checkbox",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "advanced_div",
+      "selector": "#advanced_div",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "高级定义",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "world_button",
+      "selector": "#world_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "角色世界书\n\n单击加载\nShift+单击打开“链接到世界信息”弹出窗口",
+      "route": "character:play",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:14",
+      "selector": ".chat_lorebook_button.menu_button.fa-solid.fa-passport",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "聊天世界书\n\n单击加载\nShift/Alt+单击或长按打开“链接到聊天世界书”弹出窗口",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "char_connections_button",
+      "selector": "#char_connections_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "绑定的用户设定",
+      "route": "character:play",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "export_button",
+      "selector": "#export_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "导出并下载",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "dupe_button",
+      "selector": "#dupe_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "复制角色",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "create_button_label",
+      "selector": "#create_button_label",
+      "source": "rightNavHolder",
+      "tag": "label",
+      "type": "",
+      "name": "",
+      "label": "创建角色",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "create_button",
+      "selector": "#create_button",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "submit",
+      "name": "create_button",
+      "label": "create_button",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "delete_button",
+      "selector": "#delete_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "删除角色",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "char-management-dropdown",
+      "selector": "#char-management-dropdown",
+      "source": "rightNavHolder",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "More... Link to World Info Import Card Lore Character Settings Overrides Convert to Persona Rename Link to Source Replace / Update",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [
+        {
+          "value": "default",
+          "label": "更多...",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Link to World Info",
+          "label": "链接到世界书",
+          "id": "set_character_world",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Import Card Lore",
+          "label": "导入角色卡的世界书",
+          "id": "import_character_info",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Character Settings Overrides",
+          "label": "角色设置覆盖",
+          "id": "set_chat_character_settings",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Convert to Persona",
+          "label": "转换为用户角色",
+          "id": "convert_to_persona",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Rename",
+          "label": "重命名",
+          "id": "renameCharButton",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Link to Source",
+          "label": "来源链接",
+          "id": "character_source",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Replace / Update",
+          "label": "替换 / 更新",
+          "id": "replace_update",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Import Tags",
+          "label": "导入标签",
+          "id": "import_tags",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Set / Unset as Welcome Page Assistant",
+          "label": "设置 / 取消 为欢迎页面助理",
+          "id": "set_as_assistant",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tagInput",
+      "selector": "#tagInput",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "",
+      "name": "",
+      "label": "搜索/创建标签",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:23",
+      "selector": ".tags_view.menu_button.fa-solid.fa-tags",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "查看所有标签",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "creators_note_styles_button",
+      "selector": "#creators_note_styles_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "允许 / 禁止 该角色使用全局样式。",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "spoiler_free_desc_button",
+      "selector": "#spoiler_free_desc_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "显示/隐藏描述和第一条消息",
+      "route": "character:play",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:26",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_open_media_overrides",
+      "selector": "#character_open_media_overrides",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "单击以允许/禁止此角色使用外部媒体。",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "description_textarea",
+      "selector": "#description_textarea",
+      "source": "rightNavHolder",
+      "tag": "textarea",
+      "type": "",
+      "name": "description",
+      "label": "在这里描述您角色的身体和精神特征。",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:29",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:30",
+      "selector": ".menu_button.menu_button_icon.open_alternate_greetings.margin0",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "单击以设置其他问候消息",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "firstmessage_textarea",
+      "selector": "#firstmessage_textarea",
+      "source": "rightNavHolder",
+      "tag": "textarea",
+      "type": "",
+      "name": "first_mes",
+      "label": "这将是角色在每次聊天开始时发送的第一条消息。",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_json_data",
+      "selector": "#character_json_data",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "json_data",
+      "label": "character_json_data",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "avatar_url_pole",
+      "selector": "#avatar_url_pole",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "avatar_url",
+      "label": "avatar_url_pole",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "selected_chat_pole",
+      "selector": "#selected_chat_pole",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "chat",
+      "label": "selected_chat_pole",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "create_date_pole",
+      "selector": "#create_date_pole",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "create_date",
+      "label": "create_date_pole",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "last_mes_pole",
+      "selector": "#last_mes_pole",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "last_mes",
+      "label": "last_mes_pole",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "character_world",
+      "selector": "#character_world",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "world",
+      "label": "character_world",
+      "route": "character:profile",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "rm_group_chat_name",
+      "selector": "#rm_group_chat_name",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "text",
+      "name": "chat_name",
+      "label": "聊天名称（可选）",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:39",
+      "selector": ".chat_lorebook_button.menu_button.fa-solid.fa-passport",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "聊天世界书\n\n单击加载\nShift/Alt+单击或长按打开“链接到聊天世界书”弹出窗口",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group-chat-lorebook-dropdown",
+      "selector": "#group-chat-lorebook-dropdown",
+      "source": "rightNavHolder",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "More... Link to Chat Lorebook",
+      "route": "group:history",
+      "hidden": false,
+      "options": [
+        {
+          "value": "default",
+          "label": "更多...",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "Link to Chat Lorebook",
+          "label": "链接到聊天世界书",
+          "id": "group_chat_lorebook_link",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "groupTagInput",
+      "selector": "#groupTagInput",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "",
+      "name": "",
+      "label": "搜索/创建标签",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rightNavHolder:42",
+      "selector": ".tags_view.menu_button.fa-solid.fa-tags.margin0",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "查看所有标签",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_avatar_button",
+      "selector": "#group_avatar_button",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "file",
+      "name": "avatar",
+      "label": "group_avatar_button",
+      "route": "group:manage",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "rm_group_activation_strategy",
+      "selector": "#rm_group_activation_strategy",
+      "source": "rightNavHolder",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "Manual Natural order List order Pooled order",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [
+        {
+          "value": "2",
+          "label": "手动",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "0",
+          "label": "自然顺序",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "1",
+          "label": "从上到下",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "3",
+          "label": "随机轮流顺序",
+          "id": "",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_generation_mode",
+      "selector": "#rm_group_generation_mode",
+      "source": "rightNavHolder",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "Swap character cards Join character cards (exclude muted) Join character cards (include muted)",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "label": "交换角色卡",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "1",
+          "label": "加入角色卡（不包括被禁言的）",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "2",
+          "label": "加入角色卡（包括被禁言的）",
+          "id": "",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_generation_mode_join_prefix",
+      "selector": "#rm_group_generation_mode_join_prefix",
+      "source": "rightNavHolder",
+      "tag": "textarea",
+      "type": "",
+      "name": "",
+      "label": "—",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_generation_mode_join_suffix",
+      "selector": "#rm_group_generation_mode_join_suffix",
+      "source": "rightNavHolder",
+      "tag": "textarea",
+      "type": "",
+      "name": "",
+      "label": "—",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_button_back_from_group",
+      "selector": "#rm_button_back_from_group",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "rm_button_back_from_group",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_scenario",
+      "selector": "#rm_group_scenario",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "设置群聊角色设置覆盖",
+      "route": "group:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_favorite_button",
+      "selector": "#group_favorite_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "添加到收藏夹",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_fav",
+      "selector": "#rm_group_fav",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "hidden",
+      "name": "",
+      "label": "rm_group_fav",
+      "route": "group:rules",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "group_open_media_overrides",
+      "selector": "#group_open_media_overrides",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "单击以允许/禁止该组使用外部媒体。",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_submit",
+      "selector": "#rm_group_submit",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "创建",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_restore_avatar",
+      "selector": "#rm_group_restore_avatar",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "恢复拼贴头像",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_delete",
+      "selector": "#rm_group_delete",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "删除",
+      "route": "group:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_allow_self_responses",
+      "selector": "#rm_group_allow_self_responses",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "rm_group_allow_self_responses",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_automode",
+      "selector": "#rm_group_automode",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "rm_group_automode",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_automode_delay",
+      "selector": "#rm_group_automode_delay",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "number",
+      "name": "",
+      "label": "自动模式延迟",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": "1",
+      "max": "999",
+      "step": "1",
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_hidemutedsprites",
+      "selector": "#rm_group_hidemutedsprites",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "rm_group_hidemutedsprites",
+      "route": "group:rules",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "groupCurrentMemberPopoutButton",
+      "selector": "#groupCurrentMemberPopoutButton",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "groupCurrentMemberPopoutButton",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_members_filter",
+      "selector": "#rm_group_members_filter",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "search",
+      "name": "",
+      "label": "搜索...",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_group_filter",
+      "selector": "#rm_group_filter",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "search",
+      "name": "",
+      "label": "搜索...",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_import_file",
+      "selector": "#character_import_file",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "file",
+      "name": "avatar",
+      "label": "character_import_file",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_import_file_type",
+      "selector": "#character_import_file_type",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "",
+      "name": "file_type",
+      "label": "character_import_file_type",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_replace_file",
+      "selector": "#character_replace_file",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "file",
+      "name": "replace_avatar",
+      "label": "character_replace_file",
+      "route": "list",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "rm_button_create",
+      "selector": "#rm_button_create",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "新建角色",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_import_button",
+      "selector": "#character_import_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "从文件导入角色",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "external_import_button",
+      "selector": "#external_import_button",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "从外部URL导入内容",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_button_group_chats",
+      "selector": "#rm_button_group_chats",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "创建新的群聊",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_sort_order",
+      "selector": "#character_sort_order",
+      "source": "rightNavHolder",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "角色排序顺序",
+      "route": "list",
+      "hidden": false,
+      "options": [
+        {
+          "value": "Search",
+          "label": "搜索",
+          "id": "",
+          "field": "search",
+          "order": "desc"
+        },
+        {
+          "value": "A-Z",
+          "label": "A-Z",
+          "id": "",
+          "field": "name",
+          "order": "asc"
+        },
+        {
+          "value": "Z-A",
+          "label": "Z-A",
+          "id": "",
+          "field": "name",
+          "order": "desc"
+        },
+        {
+          "value": "Newest",
+          "label": "最新",
+          "id": "",
+          "field": "create_date",
+          "order": "desc"
+        },
+        {
+          "value": "Oldest",
+          "label": "最旧",
+          "id": "",
+          "field": "create_date",
+          "order": "asc"
+        },
+        {
+          "value": "Favorites",
+          "label": "收藏夹",
+          "id": "",
+          "field": "fav",
+          "order": "desc"
+        },
+        {
+          "value": "Recent",
+          "label": "最近",
+          "id": "",
+          "field": "date_last_chat",
+          "order": "desc"
+        },
+        {
+          "value": "Most chats",
+          "label": "最多聊天",
+          "id": "",
+          "field": "chat_size",
+          "order": "desc"
+        },
+        {
+          "value": "Least chats",
+          "label": "最少聊天",
+          "id": "",
+          "field": "chat_size",
+          "order": "asc"
+        },
+        {
+          "value": "Most tokens",
+          "label": "最多词符",
+          "id": "",
+          "field": "data_size",
+          "order": "desc"
+        },
+        {
+          "value": "Least tokens",
+          "label": "最少词符",
+          "id": "",
+          "field": "data_size",
+          "order": "asc"
+        },
+        {
+          "value": "Random",
+          "label": "随机",
+          "id": "",
+          "field": "name",
+          "order": "random"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "rm_button_search",
+      "selector": "#rm_button_search",
+      "source": "rightNavHolder",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "切换搜索栏",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_search_bar",
+      "selector": "#character_search_bar",
+      "source": "rightNavHolder",
+      "tag": "input",
+      "type": "search",
+      "name": "",
+      "label": "搜索...",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "charListGridToggle",
+      "selector": "#charListGridToggle",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "切换角色网格视图",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "bulkEditButton",
+      "selector": "#bulkEditButton",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "批量编辑角色",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "bulkSelectAllButton",
+      "selector": "#bulkSelectAllButton",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "批量选择所有角色",
+      "route": "list",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "bulkDeleteButton",
+      "selector": "#bulkDeleteButton",
+      "source": "rightNavHolder",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "批量删除角色",
+      "route": "list",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:0",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "system_prompt_textarea",
+      "selector": "#system_prompt_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "system_prompt",
+      "label": "此处的任何内容都将替换用于此角色的默认主提示词。（v2规范：system_prompt）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:2",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "post_history_instructions_textarea",
+      "selector": "#post_history_instructions_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "post_history_instructions",
+      "label": "此处的任何内容都将替换此角色使用的默认后历史说明。\n（v2 规范：post_history_instructions）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "creator_textarea",
+      "selector": "#creator_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "creator",
+      "label": "（角色制作者的姓名/联系信息）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_version_textarea",
+      "selector": "#character_version_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "character_version",
+      "label": "（如果您想跟踪角色版本）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:6",
+      "selector": ".editor_maximize.fa-solid.fa-maximize",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "creator_notes_textarea",
+      "selector": "#creator_notes_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "creator_notes",
+      "label": "（描述角色，提供使用技巧，或列出已经测试过的聊天模型。这将显示在角色列表中。）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:8",
+      "selector": ".editor_maximize.fa-solid.fa-maximize",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tags_textarea",
+      "selector": "#tags_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "tags",
+      "label": "（编写一个以逗号分隔的标签列表。）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:10",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "personality_textarea",
+      "selector": "#personality_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "personality",
+      "label": "（角色设定的简要描述）",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:12",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "scenario_pole",
+      "selector": "#scenario_pole",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "scenario",
+      "label": "（交互的情况和背景）",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:14",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "depth_prompt_prompt",
+      "selector": "#depth_prompt_prompt",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "depth_prompt_prompt",
+      "label": "（文本将插入聊天中指定的深度和角色）",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "depth_prompt_depth",
+      "selector": "#depth_prompt_depth",
+      "source": "character_popup",
+      "tag": "input",
+      "type": "number",
+      "name": "depth_prompt_depth",
+      "label": "depth_prompt_depth",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": "0",
+      "max": "9999",
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "depth_prompt_role",
+      "selector": "#depth_prompt_role",
+      "source": "character_popup",
+      "tag": "select",
+      "type": "",
+      "name": "depth_prompt_role",
+      "label": "System User Assistant",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [
+        {
+          "value": "system",
+          "label": "系统",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "user",
+          "label": "用户",
+          "id": "",
+          "field": null,
+          "order": null
+        },
+        {
+          "value": "assistant",
+          "label": "助手",
+          "id": "",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "talkativeness_slider",
+      "selector": "#talkativeness_slider",
+      "source": "character_popup",
+      "tag": "input",
+      "type": "range",
+      "name": "talkativeness",
+      "label": "talkativeness_slider",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": "0",
+      "max": "1",
+      "step": "0.05",
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup:19",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "character_popup",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "mes_example_textarea",
+      "selector": "#mes_example_textarea",
+      "source": "character_popup",
+      "tag": "textarea",
+      "type": "",
+      "name": "mes_example",
+      "label": "（聊天对话的示例，每个示例都另起一行以\u003cSTART>开头。）",
+      "route": "character:profile",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_popup_ok",
+      "selector": "#character_popup_ok",
+      "source": "character_popup",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "保存",
+      "route": "character:advanced",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_world_template:0",
+      "selector": ".character_world_info_selector.wide100p",
+      "source": "character_world_template",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "--- None ---",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "label": "--- None ---",
+          "id": "",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_world_template:1",
+      "selector": ".character_extra_world_info_selector.wide100p",
+      "source": "character_world_template",
+      "tag": "select",
+      "type": "",
+      "name": "",
+      "label": "-- World Info not found --",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "label": "-- 未找到世界信息 --",
+          "id": "",
+          "field": null,
+          "order": null
+        }
+      ],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:0",
+      "selector": ".ch_fav",
+      "source": "group_member_template",
+      "tag": "input",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "group:members",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "group_member_template:1",
+      "selector": "[data-action=\"disable\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "临时禁言此角色",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:2",
+      "selector": "[data-action=\"enable\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "解除禁言此角色",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:3",
+      "selector": "[data-action=\"speak\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "强制触发该角色发言",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:4",
+      "selector": "[data-action=\"up\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "向上移动",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:5",
+      "selector": "[data-action=\"down\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "向下移动",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:6",
+      "selector": "[data-action=\"view\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "查看角色卡片",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:7",
+      "selector": "[data-action=\"remove\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "踢出群聊",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "group_member_template:8",
+      "selector": "[data-action=\"add\"]",
+      "source": "group_member_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "拉入群聊",
+      "route": "group:members",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greetings_template:0",
+      "selector": ".menu_button.menu_button_icon.add_alternate_greeting",
+      "source": "alternate_greetings_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "Add",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greeting_form_template:0",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "alternate_greeting_form_template",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greeting_form_template:1",
+      "selector": ".menu_button.menu_button_icon.move_up_alternate_greeting",
+      "source": "alternate_greeting_form_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "向上移动",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greeting_form_template:2",
+      "selector": ".menu_button.menu_button_icon.move_down_alternate_greeting",
+      "source": "alternate_greeting_form_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "向下移动",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greeting_form_template:3",
+      "selector": ".menu_button.menu_button_icon.delete_alternate_greeting",
+      "source": "alternate_greeting_form_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "Delete",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "alternate_greeting_form_template:4",
+      "selector": ".text_pole.textarea_compact.alternate_greeting_text.mdHotkeys",
+      "source": "alternate_greeting_form_template",
+      "tag": "textarea",
+      "type": "",
+      "name": "alternate_greetings",
+      "label": "（这是每次聊天开始时角色的第一条消息）",
+      "route": "character:greetings",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "export_format_popup:0",
+      "selector": ".export_format.list-group-item",
+      "source": "export_format_popup",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "PNG",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "export_format_popup:1",
+      "selector": ".export_format.list-group-item",
+      "source": "export_format_popup",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "JSON",
+      "route": "character:manage",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_context_menu_favorite",
+      "selector": "#character_context_menu_favorite",
+      "source": "character_context_menu",
+      "tag": "button",
+      "type": "",
+      "name": "",
+      "label": "星标",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_context_menu_tag",
+      "selector": "#character_context_menu_tag",
+      "source": "character_context_menu",
+      "tag": "button",
+      "type": "",
+      "name": "",
+      "label": "标签",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_context_menu_duplicate",
+      "selector": "#character_context_menu_duplicate",
+      "source": "character_context_menu",
+      "tag": "button",
+      "type": "",
+      "name": "",
+      "label": "复制",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_context_menu_persona",
+      "selector": "#character_context_menu_persona",
+      "source": "character_context_menu",
+      "tag": "button",
+      "type": "",
+      "name": "",
+      "label": "用户设定",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_context_menu_delete",
+      "selector": "#character_context_menu_delete",
+      "source": "character_context_menu",
+      "tag": "button",
+      "type": "",
+      "name": "",
+      "label": "删除",
+      "route": "list",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_import_file",
+      "selector": "#chat_import_file",
+      "source": "select_chat_popup",
+      "tag": "input",
+      "type": "file",
+      "name": "avatar",
+      "label": "chat_import_file",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_import_file_type",
+      "selector": "#chat_import_file_type",
+      "source": "select_chat_popup",
+      "tag": "input",
+      "type": "",
+      "name": "file_type",
+      "label": "chat_import_file_type",
+      "route": "shared:history",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_import_avatar_url",
+      "selector": "#chat_import_avatar_url",
+      "source": "select_chat_popup",
+      "tag": "input",
+      "type": "",
+      "name": "avatar_url",
+      "label": "chat_import_avatar_url",
+      "route": "shared:history",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_import_character_name",
+      "selector": "#chat_import_character_name",
+      "source": "select_chat_popup",
+      "tag": "input",
+      "type": "",
+      "name": "character_name",
+      "label": "chat_import_character_name",
+      "route": "shared:history",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "newChatFromManageScreenButton",
+      "selector": "#newChatFromManageScreenButton",
+      "source": "select_chat_popup",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "New Chat",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_import_button",
+      "selector": "#chat_import_button",
+      "source": "select_chat_popup",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "Import Chat",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "select_chat_search",
+      "selector": "#select_chat_search",
+      "source": "select_chat_popup",
+      "tag": "input",
+      "type": "search",
+      "name": "",
+      "label": "搜索...",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "past_chat_template:0",
+      "selector": ".renameChatButton.hoverglow.opacity50p.fa-solid.fa-pencil.fa-sm",
+      "source": "past_chat_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "重命名聊天文件",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "past_chat_template:1",
+      "selector": ".exportRawChatButton.opacity50p.hoverglow.fa-solid.fa-file-export",
+      "source": "past_chat_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "导出 .JSONL 聊天文件",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "past_chat_template:2",
+      "selector": ".exportChatButton.opacity50p.hoverglow.fa-solid.fa-file-lines",
+      "source": "past_chat_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "将聊天下载为纯文本文档",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "past_chat_template:3",
+      "selector": ".PastChat_cross.opacity50p.hoverglow.fa-solid.fa-skull",
+      "source": "past_chat_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "删除聊天文件",
+      "route": "shared:history",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:0",
+      "selector": ".drag-handle",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "拖动以排序",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:1",
+      "selector": ".tag_as_folder.fa-solid.fa-folder-open.right_menu_button",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "标记为文件夹",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:2",
+      "selector": ".right_menu_button.fa-solid.fa-eye.fa-fw.eye-toggle",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:3",
+      "selector": ".tag_view_color_picker",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:4",
+      "selector": ".tag_view_color_picker",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:5",
+      "selector": ".tag_view_name",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_view_template:6",
+      "selector": ".tag_delete.fa-solid.fa-trash-can.right_menu_button",
+      "source": "tag_view_template",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "删除标签",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "tag_template:0",
+      "selector": ".fa-solid.fa-circle-xmark.tag_remove",
+      "source": "tag_template",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "shared:tags",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "character_template:0",
+      "selector": ".ch_fav",
+      "source": "character_template",
+      "tag": "input",
+      "type": "",
+      "name": "",
+      "label": "原生布局/内部控件",
+      "route": "list",
+      "hidden": true,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "内部身份/文件选择控件，保持原生语义"
+    },
+    {
+      "key": "templates/scenarioOverride:0",
+      "selector": ".menu_button.menu_button_icon.remove_scenario_override",
+      "source": "templates/scenarioOverride",
+      "tag": "div",
+      "type": "",
+      "name": "",
+      "label": "Remove",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "templates/scenarioOverride:1",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "templates/scenarioOverride",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_scenario_override",
+      "selector": "#chat_scenario_override",
+      "source": "templates/scenarioOverride",
+      "tag": "textarea",
+      "type": "",
+      "name": "",
+      "label": "在此输入场景...",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "templates/scenarioOverride:3",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "templates/scenarioOverride",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_examples_override",
+      "selector": "#chat_examples_override",
+      "source": "templates/scenarioOverride",
+      "tag": "textarea",
+      "type": "",
+      "name": "",
+      "label": "在此输入示例消息...",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "templates/scenarioOverride:5",
+      "selector": ".editor_maximize.fa-solid.fa-maximize.right_menu_button",
+      "source": "templates/scenarioOverride",
+      "tag": "i",
+      "type": "",
+      "name": "",
+      "label": "展开编辑器",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "chat_system_prompt_override",
+      "selector": "#chat_system_prompt_override",
+      "source": "templates/scenarioOverride",
+      "tag": "textarea",
+      "type": "",
+      "name": "",
+      "label": "在此输入系统提示词...",
+      "route": "shared:overrides",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "del_char_checkbox",
+      "selector": "#del_char_checkbox",
+      "source": "templates/deleteConfirm",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "del_char_checkbox",
+      "route": "shared:confirm",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    },
+    {
+      "key": "del_chat_checkbox",
+      "selector": "#del_chat_checkbox",
+      "source": "templates/newChatConfirm",
+      "tag": "input",
+      "type": "checkbox",
+      "name": "",
+      "label": "del_chat_checkbox",
+      "route": "shared:confirm",
+      "hidden": false,
+      "options": [],
+      "min": null,
+      "max": null,
+      "step": null,
+      "preservation": "同原生节点/事件适配，当前仅独立样稿布局"
+    }
+  ],
+  "actions": [
+    {
+      "key": "history",
+      "label": "历史会话：搜索、打开、改名、删除、导入、导出",
+      "route": "shared:history",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "newChat",
+      "label": "新建会话与是否删除当前聊天",
+      "route": "shared:history",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "bulkFavorite",
+      "label": "批量切换收藏",
+      "route": "list",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "bulkDuplicate",
+      "label": "批量复制角色卡",
+      "route": "list",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "bulkPersona",
+      "label": "批量转换用户身份",
+      "route": "character:identity",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "bulkTags",
+      "label": "批量增删标签/清空标签/导入嵌入标签",
+      "route": "list",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "bulkDelete",
+      "label": "批量删卡与聊天文件独立选项",
+      "route": "list",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "connections",
+      "label": "查看/选择/解除角色与群聊已连接用户身份",
+      "route": "character:identity",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "source",
+      "label": "来源链接确认与无来源状态",
+      "route": "character:manage",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "replace",
+      "label": "文件/URL替换保留聊天/资产/群成员",
+      "route": "character:manage",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "welcome",
+      "label": "欢迎页助手设定",
+      "route": "character:manage",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "nativeExtensions",
+      "label": "运行时第三方/未知原生控件容器",
+      "route": "shared:extensions",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "pagination",
+      "label": "角色/成员/可加入成员分页与页大小",
+      "route": "list",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    },
+    {
+      "key": "panelPin",
+      "label": "原生抽屉固定、头像放大与恢复",
+      "route": "shared:layout",
+      "source": "host script.js/group-chats.js/personas.js/BulkEditOverlay.js",
+      "kind": "dynamic-action"
+    }
+  ],
+  "limits": [
+    "节点数含隐藏字段/文件选择器/同一功能多个入口，不等于独立功能数",
+    "tags.js静态提取本轮未取得：标签入口与批量调用有证据，完整标签模块行为仍需补验",
+    "第三方运行时注入无法由静态HTML穷举，保留原生扩展容器并在实机核对",
+    "独立样稿未连接原生保存、真实用户身份、模型或Android"
+  ]
+}
+</script><script>'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),clone=v=>JSON.parse(JSON.stringify(v));
+const catalog=JSON.parse($('#native-catalog').textContent);
+const defaultChar={name:'新角色',description:'',personality:'',scenario:'',first_mes:'',mes_example:'',system_prompt:'',post_history_instructions:'',creator:'',character_version:'',creator_notes:'',tagsText:'',tags:[],alternate_greetings:[],depth_prompt:'',depth:4,role:'system',talkativeness:.5,fav:false,pinned:false,world:'',extraBooks:[],chatWorld:'',allowStyles:false,allowMedia:false,spoiler:false,overrides:{scenario:'',examples:'',system:''},sessions:[],unknown:{preserve:true}};
+let store={characters:[],groups:[]};
+let type='character',selectedId=null,draft=null,tab='play',showDetail=innerWidth>760,search='',tagFilter='',sort='recent',grid=false,multi=false,selection=new Set(),dock=false,batchPlan=null,batchUndo=null,panelState=null,toastTimer,memberSearch='',historySearch='',revision=0;
+let randomOrder={};
+const data=()=>type==='character'?store.characters:store.groups,kindName=()=>type==='character'?'角色':'群聊',current=()=>data().find(x=>x.id===selectedId),dirty=()=>!!draft&&JSON.stringify(draft)!==JSON.stringify(current()),char=id=>store.characters.find(x=>x.id===id),nativeAttr=id=>id?` data-native="${esc(id)}"`:'';
+function toast(s){$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2600)}
+function button(label,action,arg='',cls='',native=''){return `<button class="${cls}" data-action="${action}" data-arg="${esc(arg)}"${nativeAttr(native)}>${label}</button>`}
+function switcher(label,key,hint='',native=''){return `<div class="choice-row"><div><div>${esc(label)}</div>${hint?`<small>${esc(hint)}</small>`:''}</div><button class="switch" role="switch" aria-label="${esc(label)}" aria-checked="${!!draft[key]}" data-action="toggle" data-arg="${key}"${nativeAttr(native)}></button></div>`}
+function field(label,key,kind='textarea',hint='',native='',options=[]){let v=draft[key]??'',id='field-'+key;let input=kind==='select'?`<select id="${id}" data-field="${key}"${nativeAttr(native)}>${options.map(([value,name])=>`<option value="${esc(value)}" ${String(v)===String(value)?'selected':''}>${esc(name)}</option>`).join('')}</select>`:kind==='textarea'?`<textarea id="${id}" data-field="${key}"${nativeAttr(native)}>${esc(v)}</textarea>`:`<input id="${id}" data-field="${key}" type="${kind}" value="${esc(v)}" ${key==='depth'?'min="0" max="9999" step="1"':key==='delay'?'min="1" max="999" step="1"':key==='talkativeness'?'min="0" max="1" step="0.05"':''}${nativeAttr(native)}>`;return `<div class="field"><div class="field-head"><label for="${id}">${esc(label)}</label>${kind==='textarea'?button('展开','expand',key,'flat small'):''}</div>${input}${hint?`<p class="hint">${esc(hint)}</p>`:''}</div>`}
+const card=(title,content,extra='')=>`<section class="card"><div class="card-title"><h3>${title}</h3>${extra}</div>${content}</section>`;
+function validateDraft(){if(!draft)return '没有选中对象';if(!draft.name.trim())return '名称不能为空';if(type==='character'&&((typeof draft.depth!=='number'||!Number.isInteger(draft.depth))||draft.depth<0||draft.depth>9999))return '注入深度需为 0–9999 的整数';if(type==='character'&&(!Number.isFinite(+draft.talkativeness)||draft.talkativeness<0||draft.talkativeness>1))return '健谈度需在 0–1 之间';if(type==='group'&&((typeof draft.delay!=='number'||!Number.isInteger(draft.delay))||draft.delay<1||draft.delay>999))return '自动模式延时需为 1–999 秒的整数';return ''}
+function saveDraft(){const error=validateDraft();if(error){toast(error);return false}const a=data(),i=a.findIndex(x=>x.id===selectedId);if(i<0){toast('对象已不存在，保留草稿');return false}a[i]=clone(draft);revision++;batchPlan=null;updateStatus();toast('已保存到本次样稿；未写入宿主');return true}
+function updateStatus(){const e=$('#save-state');if(e)e.textContent=dirty()?'有未保存的修改':'演示数据 · 已暂存';const b=$('[data-action="save"]');if(b)b.disabled=!dirty();}
+function guard(fn){if(!dirty()){fn();return}openPanel('guard',{fn})}
+function go(id,nextType=type){guard(()=>{if(type!==nextType){selection.clear();batchPlan=null;batchOp='fav';batchValue=''}type=nextType;selectedId=id;draft=clone(current());tab=type==='character'?'play':'members';showDetail=true;memberSearch='';render();window.scrollTo(0,0)})}
+function changeType(t){guard(()=>{type=t;selectedId=data()[0]?.id??null;draft=current()?clone(current()):null;tab=t==='character'?'play':'members';showDetail=innerWidth>760;selection.clear();search='';tagFilter='';batchOp='fav';batchValue='';batchPlan=null;render()})}
+function render(){document.body.classList.toggle('dock-open',dock);const list=data().filter(x=>(!search||(x.name+' '+x.tags.join(' ')).toLowerCase().includes(search.toLowerCase()))&&(!tagFilter||x.tags.includes(tagFilter))&&(!store.tagFolders||tagFilter||!(store.tagDefinitions??[]).some(t=>t.folder_type==='CLOSED'&&x.tags.includes(t.name))));list.sort((a,b)=>Number(b.pinned)-Number(a.pinned)||(sort==='az'?a.name.localeCompare(b.name,'zh'):sort==='za'?b.name.localeCompare(a.name,'zh'):sort==='fav'?Number(b.fav)-Number(a.fav):sort==='chats'?b.chatSize-a.chatSize:sort==='fewchats'?a.chatSize-b.chatSize:sort==='tokens'?b.tokenCount-a.tokenCount:sort==='fewtokens'?a.tokenCount-b.tokenCount:sort==='oldest'?new Date(a.createdAt)-new Date(b.createdAt):sort==='newest'?new Date(b.createdAt)-new Date(a.createdAt):sort==='recent'?Number(b.lastUsed)-Number(a.lastUsed):sort==='random'?(randomOrder[a.id]??0)-(randomOrder[b.id]??0):data().indexOf(b)-data().indexOf(a)));
+$('#app').innerHTML=`<div class="page ${showDetail?'detail':''}"><aside class="sidebar"><div class="brand"><div class="eyebrow">TISYA · THE COMPANY WE KEEP</div><h1>相逢有时</h1><p>角色与群聊，都在这里。</p></div><div class="segment">${button('角色 <small>'+store.characters.length+'</small>','type','character',type==='character'?'active':'')}${button('群聊 <small>'+store.groups.length+'</small>','type','group',type==='group'?'active':'')}</div><div class="tools"><input id="search" type="search" placeholder="搜索名字、标签…" aria-label="搜索角色或群聊" value="${esc(search)}" data-native="character_search_bar"><div class="row"><select id="sort" aria-label="排序" data-native="character_sort_order">${[['recent','最近使用'],['az','名称 A–Z'],['za','名称 Z–A'],['fav','收藏优先'],['newest','最新创建'],['oldest','最早创建'],['chats','会话最多'],['fewchats','会话最少'],['tokens','Token 最多'],['fewtokens','Token 最少'],['random','随机展示']].map(([v,l])=>`<option value="${v}"  ${sort===v?'selected':''}>${l}</option>`).join('')}</select>${button(grid?'☷':'▦','grid','','icon', 'charListGridToggle')}${button('＋','new','','icon',type==='character'?'rm_button_create':'rm_button_group_chats')}</div><div class="filters">${button('全部','tag','','chip '+(!tagFilter?'active':''))}${[...new Set(data().flatMap(x=>x.tags))].sort((a,b)=>store.tagSort==='alphabetical'?a.localeCompare(b,'zh'):store.tagSort==='by_entries'?data().filter(x=>x.tags.includes(b)).length-data().filter(x=>x.tags.includes(a)).length:((store.tagDefinitions??[]).find(t=>t.name===a)?.sort_order??0)-((store.tagDefinitions??[]).find(t=>t.name===b)?.sort_order??0)).map(t=>button(esc(t),'tag',t,'chip '+(tagFilter===t?'active':''))).join('')}</div><div class="row between"><small>${list.length} 个${kindName()}</small><div class="row">${button('导入','native','import','flat small','character_import_button')}${button(multi?'完成多选':'多选','multi','','flat small','bulkEditButton')}</div></div></div><div class="list ${grid?'grid':''}">${list.map(x=>`<div class="entity ${x.id===selectedId?'current':''}">${multi?`<input type="checkbox" aria-label="选择 ${esc(x.name)}" data-select="${esc(x.id)}" ${selection.has(x.id)?'checked':''}>`:''}<button class="flat grow row" style="text-align:left;padding:0" data-action="open" data-arg="${esc(x.id)}"><span class="avatar ${type==='group'?'group':x.tone||''}">${esc(x.initial||x.name[0])}</span><span class="grow"><span class="entity-title">${esc(x.name)} ${x.pinned?'<span class="gold">·</span>':''}</span><span class="entity-sub">${type==='group'?x.members.length+' 位成员 · ':''}${esc(x.tags.filter(n=>!(store.tagDefinitions??[]).find(t=>t.name===n)?.is_hidden_on_character_card).join(' / ')||'未分类')}</span></span><span class="gold">${x.fav?'✦':''}</span></button></div>`).join('')||'<div class="empty">没有匹配结果</div>'}</div>${multi?`<div class="row wrap" style="margin-top:10px">${button('选中当前结果','select-all','','small','bulkSelectAllButton')}${button('批量操作 · '+selection.size,'dock','','small primary')}</div>`:''}<div class="sidefoot"><div class="row between"><span class="preview">独立样稿 · 示例数据</span>${button('功能核对','audit','','flat small')}</div><div class="row wrap">${button('标签管理','native','tagManager','flat small')}${button('列表设置','native','listSettings','flat small')}</div><small>当前修改仅留在本页内存，刷新即重置。头像为演示字形。</small></div></aside><main class="main">${draft?detail():`<div class="empty">选择或新建一个${kindName()}</div>`}</main></div>`;renderDock();updateStatus();}
+function detail(){const tabs=type==='character'?[['play','游玩'],['profile','资料'],['advanced','高级'],['manage','管理']]:[['members','成员'],['rules','规则'],['history','会话'],['manage','管理']];return `<div class="topbar row between"><div class="row">${button('‹','back','','icon flat back')}<span class="eyebrow">${type==='character'?'角色卡':'群聊'}</span></div><div class="row"><span class="preview">样稿</span>${button('核对','audit','','flat small')}${button('操作台','dock','','small')}</div></div><header class="hero"><span class="avatar large ${type==='group'?'group':draft.tone||''}">${esc(draft.initial||draft.name[0])}</span><div class="grow"><div class="eyebrow">${type==='character'?'A FAMILIAR VOICE':'A GATHERING OF VOICES'}</div><h1>${esc(draft.name||'未命名')}</h1><div class="hero-meta">${draft.tags.map(t=>`<span class="pill">${esc(t)}</span>`).join('')}${type==='group'?`<span class="pill">${draft.members.length} 人 · ${draft.members.length-draft.disabled_members.filter(x=>draft.members.includes(x)).length} 自动回复</span>`:`<span>${esc(draft.character_version?'v'+draft.character_version:'未标版本')}</span>`}</div></div><div class="hero-actions">${button(draft.fav?'✦':'✧','toggle','fav','icon flat',type==='character'?'favorite_button':'group_favorite_button')}${button('…','tab','manage','icon flat')}</div></header><nav class="tabs" aria-label="详情页签">${tabs.map(([k,l])=>button(l,'tab',k,tab===k?'active':'')).join('')}</nav><div id="detail-content" class="stack">${type==='character'?characterContent():groupContent()}</div><footer class="footer"><div class="grow"><div class="status" id="save-state"></div><small>只保存本次样稿</small></div>${button('放弃修改','discard','','small')}${button('保存修改','save','','primary',type==='character'?'create_button':'rm_group_submit')}</footer>`}
+function characterContent(){if(tab==='play')return `<section class="card accent"><div class="eyebrow">PICK UP WHERE WE LEFT OFF</div><h2 style="margin:9px 0 6px">${esc(draft.sessions[0]?.name||'从第一次相遇开始')}</h2><p class="hint">${draft.sessions[0]?draft.sessions[0].count+' 条消息 · '+esc(draft.sessions[0].date):'为这个角色开启一段新故事。'}</p><div class="row wrap" style="margin-top:15px">${button('继续会话  ↗','session-open',draft.sessions[0]?.id||'','primary')}${button('＋ 新会话','new-chat','','small')}${button('历史会话','sessions','','flat small')}</div></section>${card('与你相遇之前',`<p class="hero-description">${esc(draft.creator_notes||'这张卡还没有作者说明。')}</p>${switcher('隐藏设定与开场白','spoiler','游玩时减少剧透；仍可进入资料页编辑。','spoiler_free_desc_button')}${!draft.spoiler?`<p class="hero-description" style="white-space:pre-line;margin-top:10px">${esc(draft.first_mes)}</p>`:''}`)}${identityCard()}${card('世界书与会话',`<div class="choice-row"><div><div>角色主世界书</div><small>${esc(draft.world||'未绑定')}</small></div>${button('关联','lore','','small','world_button')}</div><div class="choice-row"><div><div>附加世界书</div><small>${esc(draft.extraBooks.join('、')||'未绑定')}</small></div>${button('管理','lore','','small','set_character_world')}</div><div class="choice-row"><div><div>当前会话世界书</div><small>${esc(draft.chatWorld||'未绑定')}</small></div>${button('查看','native','chatLore','small')}</div><div class="choice-row"><div><div>本会话覆盖</div><small>场景、示例、主提示词</small></div>${button('编辑','overrides','','small','set_chat_character_settings')}</div>`)}`;
+if(tab==='profile')return `${card('角色定义',`${field('名字','name','text','','character_name_pole')}<div class="row wrap" style="margin-bottom:13px">${button('更换头像 / 裁切','native','avatar','small','add_avatar_button')}${button('管理标签','tags','','small','tagInput')}</div>${field('描述','description','textarea','人物外貌、背景与重要设定。','description_textarea')}${field('性格摘要','personality','textarea','','personality_textarea')}${field('场景','scenario','textarea','','scenario_pole')}`)}${card('开场白',`${field('默认开场白','first_mes','textarea','新会话的第一条角色消息。','firstmessage_textarea')}<div class="section-title"><span>备选开场白 · ${draft.alternate_greetings.length}</span>${button('＋ 添加','greet-add','','small','open_alternate_greetings')}</div>${draft.alternate_greetings.map((g,i)=>`<div class="greeting"><div class="row between"><small>开场 ${i+1}</small><div class="row">${button('↑','greet-up',i,'flat small')}${button('↓','greet-down',i,'flat small')}${button('删除','greet-delete',i,'flat small')}${button('展开','expand-greet',i,'flat small')}</div></div><textarea data-greeting="${i}" aria-label="备选开场白 ${i+1}">${esc(g)}</textarea></div>`).join('')}<p class="hint">备选开场白对应原生首条滑动候选；顺序独立保留。</p>`)}${card('对白示例',field('对白示例','mes_example','textarea','每个示例以 <START> 开头。','mes_example_textarea'))}`;
+if(tab==='advanced')return `${card('提示与注入',`${field('系统提示词','system_prompt','textarea','原生“优先使用角色提示”开启时生效；未连接宿主，当前不判断该开关。','system_prompt_textarea')}${field('历史后指令','post_history_instructions','textarea','保留原生优先设置；不擅自启用。','post_history_instructions_textarea')}${field('深度笔记','depth_prompt','textarea','','depth_prompt_prompt')}<div class="grid2">${field('深度','depth','number','','depth_prompt_depth')}${field('消息角色','role','select','','depth_prompt_role',[['system','系统'],['user','用户'],['assistant','助手']])}</div>${button('Token 计数','native','tokens','small')}`)}${card('群聊表现',`${field('健谈度','talkativeness','range','只影响原生群聊自然发言；不等于剧情主动性。','talkativeness_slider')}<div class="row between"><small>安静</small><output id="talk-output">${Math.round(draft.talkativeness*100)}%</output><small>健谈</small></div>`)}<details open><summary>作者信息与卡片元数据</summary><div class="inner">${field('作者','creator','text','','creator_textarea')}${field('角色卡版本','character_version','text','','character_version_textarea')}${field('作者说明','creator_notes','textarea','说明展示给玩家，不直接作为人物定义注入。','creator_notes_textarea')}${field('卡片嵌入标签','tagsText','textarea','和本地管理标签分开；导入需明确应用。','tags_textarea')}</div></details>${card('显示权限',switcher('允许全局样式','allowStyles','复用原生角色级许可。','creators_note_styles_button')+switcher('允许外部媒体','allowMedia','正式版沿原生许可与确认。','character_open_media_overrides'))}${nativeZone()}`;
+return manageContent();}
+function identityCard(){return card('用户身份',`<div class="row between"><div><div>沿用宿主当前身份</div><small>角色 / 群聊连接与会话锁定分别保留</small></div><span class="badge">接口预留</span></div><div class="row wrap" style="margin-top:12px">${button('查看身份连接','identity','','small','char_connections_button')}${button('身份作用域','identity','','flat small')}</div><p class="hint">样稿不读取、切换或绑定真实用户身份。</p>`)}
+function groupContent(){if(tab==='members'){const ids=draft.members.filter(id=>!memberSearch||(char(id)?.name||'').includes(memberSearch));return `${card('一起在场的人',`<div class="row"><input id="member-search" aria-label="搜索群成员" placeholder="搜索群成员" value="${esc(memberSearch)}" data-native="rm_group_members_filter">${button('＋ 加入','members-add','','small primary')}${button('浮动','member-popout','','small','groupCurrentMemberPopoutButton')}</div><p class="hint">拖动序号，或用上下按钮调整。停用自动发言的成员仍留在群中。</p>`)}<div class="stack" id="members">${ids.map(id=>{const c=char(id),i=draft.members.indexOf(id),muted=draft.disabled_members.includes(id);return `<article class="member ${muted?'muted-member':''}" draggable="true" data-member="${esc(id)}"><span class="member-index" data-drag-handle="${esc(id)}">${String(i+1).padStart(2,'0')}</span><span class="avatar ${c?.tone||''}">${esc(c?.initial||'?')}</span><div class="member-body"><h3>${esc(c?.name||'缺失角色卡')}</h3><small>${muted?'自动回复已停用':'参与自动回复'} · ${Math.round((c?.talkativeness??0)*100)}% 健谈度</small></div><div class="member-buttons"><button class="switch" role="switch" aria-label="${esc(c?.name)} 自动回复" aria-checked="${!muted}" data-action="member-toggle" data-arg="${esc(id)}" data-native="group-member-enable-disable"></button>${button('点名','speak',id,'small')}</div><div class="member-extra">${button('↑ 上移','member-up',id,'small flat')}${button('↓ 下移','member-down',id,'small flat')}${button('查看原卡','member-view',id,'small flat')}${button('移出','member-remove',id,'small flat')}</div></article>`}).join('')||'<div class="empty">没有匹配的成员</div>'}</div>${card('本轮发言队列',`<small>样稿仅演示点名，不启动模型生成。</small><div class="queue">${draft.queue.map(id=>`<span class="chip">${esc(char(id)?.name||id)}</span>`).join('')||'<span class="hint">尚未点名</span>'}</div>${draft.queue.length?button('清空队列','queue-clear','','flat small'):''}`)}${identityCard()}`}
+if(tab==='rules')return `${card('发言规则',`${field('回复策略','strategy','select','保持宿主四种策略及原值。','rm_group_activation_strategy',[['2','手动点名'],['0','自然顺序'],['1','成员列表顺序'],['3','轮转候选池']])}<p class="note">${({'2':'由你决定这一轮谁开口。','0':'宿主根据上下文与健谈度选择成员。','1':'按成员列表的先后顺序回复。','3':'沿用原生候选池策略，顺序由宿主管理。'})[draft.strategy]}</p>${switcher('允许连续自回复','allowSelf','同一成员可以接着自己的消息继续说。','rm_group_allow_self_responses')}${switcher('自动模式','auto','演示开关；本样稿不会计时或发起请求。','rm_group_automode')}${field('自动模式间隔（秒）','delay','number','1–999 秒。正式版保存后沿用原生调度。','rm_group_automode_delay')}`)}${card('角色卡如何进入上下文',`${field('角色卡处理方式','generation','select','','rm_group_generation_mode',[['0','轮到谁，就切换到谁的角色卡'],['1','合并角色卡 · 排除停用成员'],['2','合并角色卡 · 包含停用成员']])}${draft.generation==='2'?'<p class="note warning">停用自动发言的成员仍会进入合并上下文。停用不等于排除资料。</p>':''}${draft.generation!=='0'?`${field('每张卡的前缀','joinPrefix','textarea','','rm_group_generation_mode_join_prefix')}${field('每张卡的后缀','joinSuffix','textarea','','rm_group_generation_mode_join_suffix')}`:'<p class="hint">切换模式不使用拼接前后缀；已填内容仍保留。</p>'}${switcher('隐藏停用成员的立绘','hideMuted','','rm_group_hidemutedsprites')}`)}${card('本会话覆盖',`<p class="hint">覆盖场景、对白示例和主提示词，只作用于当前会话中的群成员，不改原卡。</p>${button('编辑覆盖','overrides','','small','rm_group_scenario')}`)}`;
+if(tab==='history')return historyContent();return manageContent();}
+function historyContent(){return `${card('会话入口',`<h2>${esc(draft.sessions[0]?.name||'还没有开始')}</h2><div class="row wrap" style="margin-top:12px">${button('继续会话','session-open',draft.sessions[0]?.id||'','primary')}${button('＋ 新会话','new-chat','','small')}${button('导入聊天','native','importChat','small')}</div>`)}${card('历史会话',`<input id="history-search" type="search" placeholder="搜索会话标题" value="${esc(historySearch)}" aria-label="搜索历史会话"><div id="session-list">${sessionRows()}</div>`)}${card('当前会话关联',`<div class="choice-row"><div>会话世界书<small style="display:block">${esc(draft.chatWorld||'未绑定')}</small></div>${button('管理','native','chatLore','small')}</div><div class="choice-row"><div>场景与提示词覆盖</div>${button('编辑','overrides','','small')}</div>`)}${identityCard()}`}
+function sessionRows(){return draft.sessions.filter(x=>!historySearch||x.name.includes(historySearch)).map(s=>`<div class="session"><div class="grow"><span class="session-title">${esc(s.name)}</span><div class="session-meta">${esc(s.date)} · ${s.count==null?'消息数未读取':s.count+' 条消息'}</div></div><div class="row"><div>${button('打开','session-open',s.id,'flat small')}${button('改名','session-rename',s.id,'flat small')}</div><div>${button('导出','native','exportChat','flat small').replace('data-action=',`data-chat="${esc(s.id)}" data-action=`)}${button('删除','session-delete',s.id,'flat small')}</div></div></div>`).join('')||'<div class="empty">没有匹配的会话</div>'}
+function manageContent(){return `${card('基本管理',`${field(type==='group'?'群聊名称':'显示名称','name','text','',''+(type==='group'?'rm_group_chat_name':'character_name_pole'))}<div class="row wrap">${button('管理标签','tags','','small',type==='group'?'groupTagInput':'tagInput')}${button('更换头像','native','avatar','small',type==='group'?'group_avatar_button':'add_avatar_button')}${type==='group'?button('恢复拼图头像','restore-avatar','','small','rm_group_restore_avatar'):''}</div>${switcher('收藏','fav','',''+(type==='group'?'group_favorite_button':'favorite_button'))}${switcher('手动置顶','pinned','沿用缇斯亚现有置顶，与收藏分别保存。')}${type==='group'?switcher('允许外部媒体','allowMedia','','group_open_media_overrides'):''}`)}${type==='character'?card('卡片工具',`<div class="action-grid">${[['复制角色卡','duplicate','dupe_button','不复制会话'],['导出角色卡','export','export_button','PNG / JSON 原生格式'],['正式更名','rename','renameCharButton','保留引用与原生确认'],['替换 / 更新','replace','replace_update','保留会话、素材、群成员'],['查看来源','source','character_source','保留原生链接确认'],['导入卡内世界书','embeddedLore','import_character_info','原生导入规则'],['导入嵌入标签','importTags','import_tags','本地标签独立管理'],['欢迎页助手','welcome','set_as_assistant','设定 / 取消'],['转换为用户身份','convert','convert_to_persona','独立身份接口'],['连接世界书','lore','set_character_world','主书 / 附加书']].map(([l,k,n,h])=>button(l+`<span>${h}</span>`,k==='duplicate'?'duplicate':k==='lore'?'lore':'native',k,'',n)).join('')}</div>`):card('会话与群成员',`<p class="hint">成员资料始终引用原角色卡。群聊设置和会话覆盖分别保存，不把群聊改动回写每张卡。</p><div class="row wrap">${button('管理会话','tab','history','small')}${button('用户身份连接','identity','','small')}${button('会话世界书','native','chatLore','small')}</div>`)}${nativeZone()}<details><summary class="warning">删除${kindName()}</summary><div class="inner"><p class="hint">${type==='group'?'原生删除群聊会同时删除该群全部会话。':'删卡与是否删除会话分开确认；不会默认勾选聊天文件。'}</p>${button('删除'+kindName(),'delete','','danger',''+(type==='group'?'rm_group_delete':'delete_button'))}</div></details>`}
+function nativeZone(){return `<details><summary>原生附加功能</summary><div class="inner"><div class="native-zone">附加控件保留原节点与事件，在此框架内操作。${button('查看接入范围','native','extensions','flat small')}</div></div></details>`}
+const nativeFlows={tagManager:['全局标签管理','保留原生标签重命名、排序、文件夹、可见性、两种颜色与删除。该管理器涉及全局标签定义；当前标签模块完整行为尚待核对，样稿不以本地名称列表替代它。'],listSettings:['列表与抽屉','保留原生列表分页、每页数量、群成员/可加入成员分页、抽屉固定及头像放大。正式版从宿主读取原选项；样稿不重置这些偏好。'],avatarPreview:['查看头像','正式版使用当前角色卡图片，保留原生放大与查看能力。样稿的字形不代替真实头像。'],batch:['批量复制与删除','仅对列表中明确选中的角色操作，复制不携带聊天；删除可独立选择是否删除聊天。'],import:['导入角色卡','正式版保留文件选择与外部网址两种原生导入入口。支持格式与来源由宿主决定，不用样稿解析器冒充原生导入。'],avatar:['头像与裁切','保留原生图片选择、裁切、替换和预览流程。本页字形头像仅是样稿展示，不会覆盖你的角色图片。'],tokens:['Token 计数','正式接入宿主当前 tokenizer 后读取实际计数。样稿不把字符数当作 Token 数。'],export:['导出角色卡','原生提供 PNG 与 JSON。导出前需处理未保存修改，沿原生保存与导出结果确认。样稿不生成伪角色卡文件。'],rename:['正式更名','原生更名会处理头像文件身份与相关引用，不等于只改显示名字。正式接线保留原生确认和冲突检查。'],replace:['替换 / 更新','保留文件或来源网址两种替换方式。原生保留聊天、素材和群成员关系，但会覆盖本地角色数据，需明确确认并保留失败报告。'],source:['角色来源','有来源时沿原生确认打开链接；没有来源时明确显示无来源。本样稿的演示角色没有外部来源。'],embeddedLore:['导入卡内世界书','原生解析卡内世界书并处理绑定；与外部世界书管理共用一个真源。样稿不写入世界书。'],importTags:['导入嵌入标签','嵌入卡片的标签与本地管理标签不同。正式版使用原生导入选择，不默默覆盖本地标签。'],welcome:['欢迎页助手','保留原生“设定 / 取消欢迎页助手”事件；是否生效由宿主能力决定。'],convert:['转换为用户身份','保留原生转换入口。身份接口尚未连接，此样稿不能创建或选择真实用户身份。'],chatLore:['当前会话世界书','绑定属于当前会话，不属于整张角色卡或全部群聊。正式接入已发布的世界书框架，保留原生绑定语义。'],importChat:['导入聊天','正式版沿原生聊天导入与格式校验，群聊和单角色会话分别处理。样稿不读取聊天文件。'],exportChat:['导出聊天','保留原生会话导出选项与真实文件内容。当前只提供演示会话列表，没有真实聊天可导出。'],extensions:['原生附加功能','已盘点主抽屉、高级定义、开场白、世界书绑定、群成员模板、导出格式及会话覆盖。第三方运行时新增控件留原节点容器；其完整交互需正式宿主和 Android 验收。']};
+function openPanel(kind,args={}){panelState={kind,...args};renderPanel()}
+function closePanel(){panelState=null;$('#panel-root').innerHTML=''}
+function renderPanel(){const p=panelState;if(!p)return closePanel();let title='',body='',actions='',full=false;
+if(p.kind==='guard'){title='还有未保存的修改';body='<p class="hint">当前草稿仍然保留。你希望如何离开？</p>';actions=button('继续编辑','panel-close')+button('放弃并离开','guard-discard','','danger')+button('保存后继续','guard-save','','primary')}
+if(p.kind==='native'){const [a,b]=nativeFlows[p.name]||['原生功能','该功能将在正式宿主中沿原控件接入。'];title=a;body=`<p class="note">${esc(b)}</p><p class="hint">当前为独立样稿，这个原生流程尚未执行。</p>`;if(p.name==='import')body+=`<div class="action-grid" style="margin-top:15px">${button('从文件导入','native-option','file','','character_import_file')}${button('从网址导入','native-option','url','','external_import_button')}</div><div id="native-option"></div>`;if(p.name==='tagManager')body+=`<div class="action-grid" style="margin-top:12px">${['标签重命名','拖动排序','用作文件夹','显示 / 隐藏','标签颜色 1','标签颜色 2','删除标签'].map(l=>button(l,'native-option','tags','small')).join('')}</div><div id="native-option"></div>`;if(p.name==='listSettings')body+=`<div class="action-grid" style="margin-top:12px">${['角色列表分页','群成员分页','候选成员分页','固定 / 取消固定抽屉'].map(l=>button(l,'native-option','list','small')).join('')}</div><div id="native-option"></div>`;if(p.name==='exportChat')body+=`<div class="row" style="margin-top:12px">${button('JSONL 原始聊天','native-option','jsonl','small')}${button('TXT 纯文本','native-option','txt','small')}</div><div id="native-option"></div>`;if(p.name==='export')body+=`<div class="row" style="margin-top:15px">${button('PNG 角色卡','native-option','png','','export-format-png')}${button('JSON 数据','native-option','json','','export-format-json')}</div><div id="native-option"></div>`;actions=button('知道了','panel-close','','primary')}
+if(p.kind==='identity'){title='用户身份 · 预留接口';body=`<p class="note">不把角色卡当用户身份，也不把用户自动加入群成员。</p><div class="stack" style="margin-top:12px">${[['全局默认','宿主默认身份'],['角色连接','以角色头像文件身份关联'],['群聊连接','以群聊 ID 关联'],['会话锁定','以当前会话 ID 与原生锁定状态关联']].map(([a,b])=>`<div class="choice-row"><div>${a}<small style="display:block">${b}</small></div><span class="badge">未连接</span></div>`).join('')}</div><div class="row wrap" style="margin-top:15px">${button('选择已连接身份','identity-command','select','small')}${button('连接 / 解除连接','identity-command','bind','small')}${button('打开身份管理','identity-command','openNative','small')}</div><div id="identity-result" class="hint"></div>`;actions=button('关闭','panel-close','','primary')}
+if(p.kind==='tags'){title='管理本地标签';p.value??=draft.tags.join('，');body=`<label class="label" for="tag-editor">逗号分隔；不会自动改卡片嵌入标签</label><input id="tag-editor" value="${esc(p.value)}"><div class="filters" style="margin-top:12px">${[...new Set([...store.characters,...store.groups].flatMap(x=>x.tags))].map(t=>button(esc(t),'suggest-tag',t,'chip')).join('')}</div>`;actions=button('全局标签工具','native','tagManager','small')+button('取消','panel-close')+button('应用到草稿','tags-apply','','primary')}
+if(p.kind==='lore'){title='角色世界书';p.world??=draft.world;p.extras??=draft.extraBooks.join('，');body=`<p class="hint">这是关联布局演示，正式绑定由世界书适配器写入。</p><label class="label" for="lore-primary">主世界书</label><select id="lore-primary">${['','潮汐纪事','渡口人物','航线与传闻'].map(x=>`<option ${p.world===x?'selected':''} value="${esc(x)}">${esc(x||'无')}</option>`).join('')}</select><label class="label" style="margin-top:12px" for="lore-extra">附加世界书（逗号分隔）</label><input id="lore-extra" value="${esc(p.extras)}"><p class="note" style="margin-top:12px">主书、附加书与会话书独立保留；不自动提升为全局世界书。</p>`;actions=button('取消','panel-close')+button('应用到演示草稿','lore-apply','','primary')}
+if(p.kind==='overrides'){title='仅本会话覆盖';p.value??=clone(draft.overrides);body=`<p class="note">${type==='group'?'本会话全部群成员使用覆盖值；不修改原角色卡。':'只影响当前会话；不修改角色卡定义。'}</p>${[['scenario','场景','chat_scenario_override'],['examples','对白示例','chat_examples_override'],['system','主提示词','chat_system_prompt_override']].map(([k,l,n])=>`<div class="field" style="margin-top:12px"><label class="label" for="override-${k}">${l}</label><textarea id="override-${k}" data-override="${k}" data-native="${n}">${esc(p.value[k])}</textarea></div>`).join('')}<small>主提示词覆盖仍依赖原生“优先使用角色提示”开关。</small>${button('清空三项覆盖','overrides-clear','','small danger','remove_scenario_override')}`;actions=button('取消','panel-close')+button('应用到草稿','overrides-apply','','primary')}
+if(p.kind==='expand'){title=p.label||'完整编辑';full=true;p.value??=p.greeting!==undefined?draft.alternate_greetings[p.greeting]:draft[p.key];body=`<textarea id="expanded-text" aria-label="完整编辑内容">${esc(p.value)}</textarea>`;actions=button('取消','panel-close')+button('应用','expand-apply','','primary')}
+if(p.kind==='new'){title='新建'+kindName();body='<label class="label" for="new-name">名字</label><input id="new-name" placeholder="给这次相遇起一个名字"><div id="new-error" class="error"></div>';actions=button('取消','panel-close')+button('创建演示'+kindName(),'new-confirm','','primary')}
+if(p.kind==='new-chat'){title='开启新会话';body='<label class="label" for="chat-name">会话标题</label><input id="chat-name" value="新的故事"><label class="row" style="margin-top:14px"><input id="delete-current-chat" type="checkbox" data-native="del_chat_checkbox">同时删除当前会话</label><p class="hint">默认保留当前会话。此处只修改样稿中的会话列表。</p><div id="new-error" class="error"></div>';actions=button('取消','panel-close')+button('创建演示会话','new-chat-confirm','','primary')}
+if(p.kind==='session-rename'){title='会话改名';body=`<label class="label" for="chat-name">新标题</label><input id="chat-name" value="${esc(draft.sessions.find(x=>x.id===p.id)?.name)}"><p class="note">原生改名可能影响检查点关联；正式接线保留原生提示与重名检查。</p><div id="new-error" class="error"></div>`;actions=button('取消','panel-close')+button('应用到草稿','session-rename-confirm','','primary')}
+if(p.kind==='delete'){title=p.session?'删除这段会话？':'删除'+kindName()+'？';body=`<p class="note warning">${p.session?'仅删除选中的演示会话，不影响其他会话。':type==='group'?'删除群聊会同时删除该群全部会话。':'删卡不会默认删除聊天。已有群成员引用需由原生删除逻辑处理。'}</p>${!p.session&&type==='character'?'<label class="row" style="margin-top:15px"><input type="checkbox" id="delete-chats" data-native="del_char_checkbox">同时删除聊天文件</label>':''}<p class="hint">只操作独立样稿数据；没有真实删除。</p>`;actions=button('取消','panel-close')+button('确认删除演示数据','delete-confirm','','danger')}
+if(p.kind==='duplicate'){title='复制角色卡';body='<p class="note">复制定义和未知扩展字段，生成新的演示身份。会话列表不复制。</p><p class="hint">如果只是想重新开始聊天，请使用“新会话”。</p>';actions=button('取消','panel-close')+button('复制演示角色','duplicate-confirm','','primary')}
+if(p.kind==='members-add'){title='加入群聊';p.chosen??=new Set();body=`<input id="candidate-search" aria-label="搜索可加入角色" placeholder="搜索可加入角色" data-native="rm_group_filter" style="margin-bottom:12px"><div class="stack" id="candidate-list">${store.characters.filter(x=>!draft.members.includes(x.id)).map(c=>`<label class="member" data-candidate-name="${esc(c.name)}"><input type="checkbox" data-candidate="${esc(c.id)}" ${p.chosen.has(c.id)?'checked':''}><span class="avatar ${c.tone}">${esc(c.initial||c.name[0])}</span><span>${esc(c.name)}</span></label>`).join('')||'<div class="empty">现有角色已经全部在群里了</div>'}</div>`;actions=button('取消','panel-close')+button('加入选中成员','members-apply','','primary')}
+if(p.kind==='member-popout'){title='当前群成员';body=`<p class="hint">正式版保留原生成员浮动窗；样稿展示同一成员数据。</p><div class="stack">${draft.members.map(id=>`<div class="choice-row"><span>${esc(char(id)?.name||id)}</span><small>${draft.disabled_members.includes(id)?'自动回复停用':'自动回复启用'}</small></div>`).join('')}</div>`;actions=button('关闭','panel-close','','primary')}
+if(p.kind==='sessions'){title='历史会话';body=`<input id="history-search" placeholder="搜索会话标题" aria-label="搜索历史会话" value="${esc(historySearch)}"><div id="session-list">${sessionRows()}</div>`;actions=button('新会话','new-chat','','small')+button('关闭','panel-close','','primary')}
+if(p.kind==='restore-avatar'){title='恢复群聊拼图头像？';body='<p class="note">原生操作会移除自定义群头像并恢复成员拼图。样稿只演示状态。</p>';actions=button('取消','panel-close')+button('恢复演示拼图','restore-avatar-confirm','','primary')}
+if(p.kind==='batch-tools'){title='选中角色 · '+selection.size+' 个';body=`<p class="note">${[...selection].map(id=>esc(char(id)?.name||id)).join('、')}</p><label class="row" style="margin-top:12px"><input id="batch-delete-chats" type="checkbox">删除角色时同时删除聊天</label><p class="hint">复制会保留卡片未知字段，但不复制聊天；删除需再次确认。</p>`;actions=button('取消','panel-close')+button('复制选中角色','batch-copy-confirm','','primary')+button('删除选中角色','batch-delete-confirm','','danger')}
+if(p.kind==='audit'){title='原生功能容纳核对';body=`<p class="note">已盘点 ${catalog.rows.length} 个静态控件节点、${catalog.actions.length} 组动态功能。包含隐藏字段与重复入口，不能当作独立功能数。</p><input id="audit-search" type="search" placeholder="搜索名称、原生 ID 或位置" aria-label="搜索原生控件" style="margin:12px 0"><div id="audit-results">${auditRows('')}</div><p class="hint">${catalog.limits.map(esc).join('<br>')}</p>`;actions=button('关闭','panel-close','','primary')}
+$('#panel-root').innerHTML=`<div class="panel-backdrop"><section class="panel ${full?'full':''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="panel-head row between"><h2>${title}</h2>${button('×','panel-close','','icon flat')}</div>${body}<div class="panel-actions">${actions}</div></section></div>`;const main=$('#app');main.inert=true;$('#dock-root').inert=true;const close=$('#panel-root [data-action="panel-close"]');close?.focus({preventScroll:true});}
+const originalClose=closePanel;closePanel=function(){originalClose();$('#app').inert=false;$('#dock-root').inert=false;};
+function auditRows(q){return [...catalog.rows,...catalog.actions].filter(x=>(x.label+' '+x.key+' '+x.route).toLowerCase().includes(q.toLowerCase())).map(x=>`<div class="audit-row"><div class="row between"><span class="grow">${esc(x.label)}</span>${button('查看位置','audit-route',x.route,'small')}</div><code>${esc(x.key)} · ${esc(x.source)}</code><small>${esc(x.route)} ${x.hidden?'· 隐藏数据/文件选择器，保留原语义':''}</small></div>`).join('')||'<div class="empty">没有匹配控件</div>'}
+let batchUndoRevision=null;
+let batchOp='fav',batchValue='';
+function batchFingerprint(){return JSON.stringify({revision,type,selection:[...selection].sort(),op:batchOp,value:batchValue,data:data()})}
+function planBatch(){if(dirty()){toast('先保存或放弃当前草稿，再预览批量修改');return}if(!selection.size){toast('先从列表多选对象');return}if(['tag-add','tag-remove'].includes(batchOp)&&!batchValue.trim()){toast('先填写标签');return}if(batchOp==='persona'){openPanel('identity');return}const targets=data().filter(x=>selection.has(x.id));const rows=targets.map(x=>{let y=clone(x);if(batchOp==='fav')y.fav=!y.fav;if(batchOp==='tag-add')y.tags=[...new Set([...y.tags,batchValue.trim()])];if(batchOp==='tag-remove')y.tags=y.tags.filter(t=>t!==batchValue.trim());if(batchOp==='tag-clear')y.tags=[];if(batchOp==='tag-import')y.tags=[...new Set([...y.tags,...String(y.tagsText||'').split(/[,，]/).map(s=>s.trim()).filter(Boolean)])];return {id:x.id,before:x,after:y}});batchPlan={fingerprint:batchFingerprint(),rows,op:batchOp};renderDock()}
+function applyBatch(){if(!batchPlan)return;if(dirty()||batchPlan.fingerprint!==batchFingerprint()){batchPlan=null;renderDock();toast('范围或数据已变化，请重新预览');return}batchUndo=clone(store);for(const r of batchPlan.rows){const i=data().findIndex(x=>x.id===r.id);if(i>=0)data()[i]=clone(r.after)}revision++;batchUndoRevision=revision;draft=current()?clone(current()):null;batchPlan=null;render();toast('批量修改已应用到样稿，可撤销')}
+function renderDock(){if(!dock){$('#dock-root').innerHTML='';return}$('#dock-root').innerHTML=`<section class="dock" role="region" aria-label="批量操作台"><div class="dock-handle"></div><div class="dock-head"><div class="grow"><h3>批量操作台 <small>已选 ${selection.size} 个${kindName()}</small></h3></div>${button('撤销上次','batch-undo','','small')}${button('×','dock-close','','icon flat')}</div><div class="dock-content"><div class="grid2"><div><label class="label" for="batch-op">操作</label><select id="batch-op">${[['fav','切换收藏'],['tag-add','增加标签'],['tag-remove','移除标签'],['tag-clear','清空本地标签'],...(type==='character'?[['tag-import','导入嵌入标签'],['persona','转换用户身份（接口）']]:[])].map(([v,l])=>`<option value="${v}" ${batchOp===v?'selected':''}>${l}</option>`).join('')}</select></div><div><label class="label" for="batch-value">标签内容</label><input id="batch-value" value="${esc(batchValue)}" placeholder="需要时填写" ${['tag-add','tag-remove'].includes(batchOp)?'':'disabled'}></div></div><div class="row wrap" style="margin-top:12px">${button('预览修改','batch-preview','','primary')}${button('多选列表','batch-list','','small')}${type==='character'?button('复制 / 删除','batch-native','','small'):''}</div>${batchPlan?`<div class="diff">${batchPlan.rows.map(r=>`<div><strong>${esc(r.before.name)}</strong> · <del>${batchPlan.op==='fav'?(r.before.fav?'收藏':'未收藏'):esc(r.before.tags.join('、')||'无标签')}</del> → <ins>${batchPlan.op==='fav'?(r.after.fav?'收藏':'未收藏'):esc(r.after.tags.join('、')||'无标签')}</ins></div>`).join('')}</div><div style="margin-top:10px">${button('应用 '+batchPlan.rows.length+' 项修改','batch-apply','','primary')}</div>`:'<p class="hint">范围始终是明确选中的对象。预览后才应用；当前草稿未保存时不会覆盖它。</p>'}</div></section>`}
+function moveIn(a,from,to){if(from<0||to<0||to>=a.length)return;const [v]=a.splice(from,1);a.splice(to,0,v)}
+function rerenderFocused(id){const el=document.getElementById(id),start=el?.selectionStart,end=el?.selectionEnd;render();const next=document.getElementById(id);next?.focus({preventScroll:true});if(start!=null)next?.setSelectionRange(start,end)}
+function addNew(){const name=$('#new-name').value.trim();if(!name){$('#new-error').textContent='名字不能为空';return}const id=(type==='character'?'character-':'group-')+Date.now();let x=type==='character'?{...clone(defaultChar),name,id,initial:name[0],tone:''}:{...clone(store.groups[0]||{strategy:'0',generation:'0',joinPrefix:'',joinSuffix:'',allowSelf:false,auto:false,delay:5,hideMuted:false,allowMedia:false,avatarCustom:false}),name,id,initial:name[0],members:[],disabled_members:[],sessions:[],tags:[],fav:false,pinned:false,queue:[],chatWorld:'',overrides:{scenario:'',examples:'',system:''}};data().push(x);revision++;selectedId=id;draft=clone(x);showDetail=true;tab=type==='character'?'profile':'members';closePanel();render();toast('已新建演示'+kindName())}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action,v=b.dataset.arg;try{
+if(a==='type')return changeType(v);if(a==='open')return go(v);if(a==='back')return guard(()=>{showDetail=false;render()});if(a==='tab'){tab=v;render();window.scrollTo(0,0);return}if(a==='grid'){grid=!grid;render();return}if(a==='tag'){tagFilter=v;render();return}if(a==='multi'){multi=!multi;render();return}if(a==='new')return guard(()=>openPanel('new'));if(a==='new-confirm')return addNew();if(a==='save'){if(saveDraft())render();return}if(a==='discard'){if(dirty())openPanel('guard',{fn:()=>{draft=clone(current());render()}});return}
+if(a==='panel-close')return closePanel();if(a==='guard-discard'){const fn=panelState.fn;draft=clone(current());closePanel();fn();return}if(a==='guard-save'){const fn=panelState.fn;if(saveDraft()){closePanel();fn()}return}if(a==='toggle'){draft[v]=!draft[v];render();return}
+if(a==='native')return openPanel('native',{name:v});if(a==='native-option'){const el=$('#native-option');el.textContent=({file:'接入后打开原生文件选择器（保留多选及格式校验）。',url:'接入后打开原生外部来源导入框；可多行输入。',png:'接入后保存角色卡，再使用原生 PNG 导出。',json:'接入后保存角色卡，再使用原生 JSON 导出。',jsonl:'接入后导出原始 JSONL 聊天，保留原生数据。',txt:'接入后导出原生纯文本聊天。',tags:'已保留此原生控件的布局位置；正式模块未连接，不修改全局标签。',list:'正式版读取并操作原生分页或抽屉控件；样稿未更改宿主偏好。'})[v];return}
+if(a==='batch-copy-confirm'){batchUndo=clone(store);for(const id of selection){const src=char(id);if(!src)continue;const x=clone(src);x.id='copy-'+Date.now()+'-'+store.characters.length;x.name+=' · 副本';x.sessions=[];x.pinned=false;store.characters.push(x)}revision++;batchUndoRevision=revision;closePanel();render();toast('选中角色已复制到样稿');return}if(a==='batch-delete-confirm'){if(!panelState.confirmed){panelState.confirmed=true;b.textContent='再次点击确认删除 '+selection.size+' 张卡';return}batchUndo=clone(store);const deleteChats=$('#batch-delete-chats').checked;for(const id of selection){const x=char(id);if(x&&!deleteChats)(store.retainedChats??=[]).push({avatar:id,sessions:clone(x.sessions)})}store.characters=store.characters.filter(x=>!selection.has(x.id));for(const g of store.groups){g.members=g.members.filter(x=>!selection.has(x));g.disabled_members=g.disabled_members.filter(x=>!selection.has(x));g.queue=g.queue.filter(x=>!selection.has(x))}revision++;batchUndoRevision=revision;selection.clear();selectedId=store.characters[0]?.id;draft=current()?clone(current()):null;batchPlan=null;closePanel();render();toast('选中演示卡已删除，可在操作台撤销');return}
+if(a==='identity')return openPanel('identity');if(a==='identity-command'){$('#identity-result').textContent='接口未连接：'+v+' 未执行，真实身份保持不变。';return}
+if(a==='tags')return openPanel('tags');if(a==='suggest-tag'){const el=$('#tag-editor'),list=el.value.split(/[,，]/).map(x=>x.trim()).filter(Boolean);el.value=[...new Set([...list,v])].join('，');return}if(a==='tags-apply'){draft.tags=[...new Set($('#tag-editor').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean))];closePanel();render();return}
+if(a==='lore')return openPanel('lore');if(a==='lore-apply'){draft.world=$('#lore-primary').value;draft.extraBooks=[...new Set($('#lore-extra').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean))];closePanel();render();return}
+if(a==='overrides')return openPanel('overrides');if(a==='overrides-clear'){if(!panelState.clearing){panelState.clearing=true;b.textContent='再次点击确认清空';return}panelState.value={scenario:'',examples:'',system:''};renderPanel();return}if(a==='overrides-apply'){draft.overrides=clone(panelState.value);closePanel();render();return}
+if(a==='expand')return openPanel('expand',{key:v,label:document.querySelector('[for="field-'+v+'"]')?.textContent});if(a==='expand-greet')return openPanel('expand',{greeting:+v,label:'备选开场白 '+(+v+1)});if(a==='expand-apply'){if(panelState.greeting!==undefined)draft.alternate_greetings[panelState.greeting]=$('#expanded-text').value;else draft[panelState.key]=$('#expanded-text').value;closePanel();render();return}
+if(a==='greet-add'){draft.alternate_greetings.push('');render();return}if(a==='greet-up'||a==='greet-down'){moveIn(draft.alternate_greetings,+v,+v+(a==='greet-up'?-1:1));render();return}if(a==='greet-delete'){draft.alternate_greetings.splice(+v,1);render();return}
+if(a==='member-toggle'){draft.disabled_members=draft.disabled_members.includes(v)?draft.disabled_members.filter(x=>x!==v):[...draft.disabled_members,v];render();return}if(a==='member-up'||a==='member-down'){const i=draft.members.indexOf(v);moveIn(draft.members,i,i+(a==='member-up'?-1:1));render();return}if(a==='member-remove'){draft.members=draft.members.filter(x=>x!==v);draft.disabled_members=draft.disabled_members.filter(x=>x!==v);draft.queue=draft.queue.filter(x=>x!==v);render();return}if(a==='speak'){draft.queue.push(v);render();toast('已加入演示队列；未调用模型');return}if(a==='queue-clear'){draft.queue=[];render();return}if(a==='member-view')return go(v,'character');if(a==='members-add')return openPanel('members-add');if(a==='members-apply'){draft.members=[...new Set([...draft.members,...panelState.chosen])];closePanel();render();return}if(a==='member-popout')return openPanel('member-popout');
+if(a==='sessions')return openPanel('sessions');if(a==='new-chat')return openPanel('new-chat');if(a==='new-chat-confirm'){const name=$('#chat-name').value.trim();if(!name||draft.sessions.some(x=>x.name===name)){$('#new-error').textContent=!name?'标题不能为空':'已存在同名会话';return}if($('#delete-current-chat').checked)draft.sessions.shift();draft.sessions.unshift({id:'chat-'+Date.now(),name,date:'刚刚 · 演示',count:0});closePanel();render();return}if(a==='session-open'){if(!v)return openPanel('new-chat');toast('演示：将进入“'+(draft.sessions.find(x=>x.id===v)?.name||'会话')+'”；未切换真实聊天');return}if(a==='session-rename')return openPanel('session-rename',{id:v});if(a==='session-rename-confirm'){const name=$('#chat-name').value.trim();if(!name||draft.sessions.some(x=>x.id!==panelState.id&&x.name===name)){$('#new-error').textContent=!name?'标题不能为空':'已存在同名会话';return}draft.sessions.find(x=>x.id===panelState.id).name=name;closePanel();render();return}if(a==='session-delete')return openPanel('delete',{session:v});
+if(a==='delete')return openPanel('delete');if(a==='delete-confirm'){if(panelState.session){draft.sessions=draft.sessions.filter(x=>x.id!==panelState.session);closePanel();render();return}if(type==='character'){if(!$('#delete-chats').checked)(store.retainedChats??=[]).push({avatar:selectedId,sessions:clone(draft.sessions)});store.characters=store.characters.filter(x=>x.id!==selectedId);for(const g of store.groups){g.members=g.members.filter(x=>x!==selectedId);g.disabled_members=g.disabled_members.filter(x=>x!==selectedId);g.queue=g.queue.filter(x=>x!==selectedId)}}else store.groups=store.groups.filter(x=>x.id!==selectedId);revision++;selectedId=data()[0]?.id;draft=current()?clone(current()):null;selection.clear();showDetail=false;closePanel();render();return}
+if(a==='duplicate')return openPanel('duplicate');if(a==='duplicate-confirm'){const x=clone(draft);x.id='copy-'+Date.now();x.name+=' · 副本';x.sessions=[];x.pinned=false;store.characters.push(x);revision++;closePanel();render();toast('演示副本已创建，未知字段保留');return}
+if(a==='restore-avatar')return openPanel('restore-avatar');if(a==='restore-avatar-confirm'){draft.avatarCustom=false;closePanel();render();toast('已恢复演示拼图状态');return}
+if(a==='audit')return openPanel('audit');if(a==='audit-route'){closePanel();const [t,k]=v.split(':');if(t==='shared'){if(k==='overrides')return openPanel('overrides');if(k==='history')return openPanel('sessions');if(k==='tags')return openPanel('native',{name:'tagManager'});if(k==='layout')return openPanel('native',{name:'listSettings'});return openPanel('native',{name:'extensions'})}if(t==='list'){guard(()=>{showDetail=false;render()});return}const nt=t==='group'?'group':'character';guard(()=>{if(type!==nt){type=nt;selectedId=data()[0]?.id;draft=current()?clone(current()):null}showDetail=true;tab=k==='greetings'?'profile':['identity'].includes(k)?(nt==='group'?'members':'play'):k;render();if(k==='identity')openPanel('identity')});return}
+if(a==='dock'){dock=true;render();return}if(a==='dock-close'){dock=false;render();return}if(a==='select-all'){for(const x of data().filter(x=>(!search||(x.name+' '+x.tags.join(' ')).toLowerCase().includes(search.toLowerCase()))&&(!tagFilter||x.tags.includes(tagFilter))&&(!store.tagFolders||tagFilter||!(store.tagDefinitions??[]).some(t=>t.folder_type==='CLOSED'&&x.tags.includes(t.name)))))selection.add(x.id);batchPlan=null;render();return}if(a==='batch-list'){guard(()=>{multi=true;showDetail=false;render()});return}if(a==='batch-preview')return planBatch();if(a==='batch-apply')return applyBatch();if(a==='batch-undo'){if(dirty())return toast('先处理当前草稿，再撤销批量修改');if(!batchUndo)return toast('没有可撤销的批量修改');if(revision!==batchUndoRevision)return toast('数据已在批量操作后改变，不能覆盖新修改');store=clone(batchUndo);batchUndo=null;revision++;draft=current()?clone(current()):null;batchPlan=null;render();toast('已撤销上次演示批量修改');return}if(a==='batch-native'){if(dirty())return toast('先处理当前草稿');if(!selection.size)return toast('先选择角色');return openPanel('batch-tools')}
+}catch(error){console.error(error);toast('操作未完成：'+error.message)}});
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.field){const k=el.dataset.field;draft[k]=['depth','delay','talkativeness'].includes(k)?(el.value===''?'':Number(el.value)):el.value;if(k==='talkativeness'&&$('#talk-output'))$('#talk-output').textContent=Math.round(draft[k]*100)+'%';updateStatus();return}if(el.dataset.greeting!==undefined){draft.alternate_greetings[+el.dataset.greeting]=el.value;updateStatus();return}if(el.dataset.override){panelState.value[el.dataset.override]=el.value;return}if(el.id==='search'){search=el.value;rerenderFocused('search')}if(el.id==='member-search'){memberSearch=el.value;rerenderFocused('member-search')}if(el.id==='history-search'){historySearch=el.value;$('#session-list').innerHTML=sessionRows()}if(el.id==='candidate-search')$$('[data-candidate-name]').forEach(n=>n.hidden=!n.dataset.candidateName.toLowerCase().includes(el.value.toLowerCase()));if(el.id==='audit-search')$('#audit-results').innerHTML=auditRows(el.value);if(el.id==='batch-value'){batchValue=el.value;batchPlan=null;const pos=el.selectionStart;renderDock();$('#batch-value').focus();$('#batch-value').setSelectionRange(pos,pos)}});
+document.addEventListener('change',e=>{const el=e.target;if(el.dataset.select){if(el.checked)selection.add(el.dataset.select);else selection.delete(el.dataset.select);batchPlan=null;render();return}if(el.dataset.candidate){if(el.checked)panelState.chosen.add(el.dataset.candidate);else panelState.chosen.delete(el.dataset.candidate);return}if(el.id==='sort'){sort=el.value;if(sort==='random')randomOrder=Object.fromEntries(data().map(x=>[x.id,Math.random()]));render()}if(el.id==='batch-op'){batchOp=el.value;batchPlan=null;renderDock()}if(el.dataset.field&&el.tagName==='SELECT'){draft[el.dataset.field]=el.value;render()}});
+let dragged=null;document.addEventListener('dragstart',e=>{const n=e.target.closest('[data-member]');if(!n||e.target.closest('button,input,textarea'))return;dragged=n.dataset.member;n.classList.add('dragging');e.dataTransfer?.setData('text/plain',dragged)});document.addEventListener('dragover',e=>{const n=e.target.closest('[data-member]');if(n&&dragged){e.preventDefault();n.classList.add('drag-over')}});document.addEventListener('dragleave',e=>e.target.closest('[data-member]')?.classList.remove('drag-over'));document.addEventListener('drop',e=>{const n=e.target.closest('[data-member]');if(n&&dragged){e.preventDefault();moveIn(draft.members,draft.members.indexOf(dragged),draft.members.indexOf(n.dataset.member));dragged=null;render()}});document.addEventListener('dragend',()=>{dragged=null;$$('.dragging,.drag-over').forEach(x=>x.classList.remove('dragging','drag-over'))});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panelState)closePanel();if(e.key==='Tab'&&panelState){const xs=$$('#panel-root button:not(:disabled),#panel-root input,#panel-root textarea,#panel-root select').filter(x=>x.offsetParent!==null),first=xs[0],last=xs.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}});
+window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue=''}});window.addEventListener('resize',()=>{if(innerWidth>760&&!showDetail){showDetail=true;render()}});
+window.characterGroupPreview={snapshot:()=>clone(store),getDraft:()=>clone(draft),isDirty:dirty,getCatalog:()=>clone(catalog),identity:()=>({status:'unavailable',reason:'reserved-not-connected',capabilities:[]})};render();
+let touchDrag=null;
+document.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-drag-handle]');if(!h||e.button>0||panelState)return;e.preventDefault();touchDrag={id:h.dataset.dragHandle,target:h.dataset.dragHandle,pointerId:e.pointerId,handle:h};h.setPointerCapture(e.pointerId);h.closest('.member').classList.add('dragging')});
+document.addEventListener('pointermove',e=>{if(!touchDrag||touchDrag.pointerId!==e.pointerId)return;const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-member]');$$('.drag-over').forEach(x=>x.classList.remove('drag-over'));if(target){touchDrag.target=target.dataset.member;target.classList.add('drag-over')}});
+function finishTouchDrag(e,cancel=false){if(!touchDrag||touchDrag.pointerId!==e.pointerId)return;const d=touchDrag;touchDrag=null;if(!cancel&&type==='group'){moveIn(draft.members,draft.members.indexOf(d.id),draft.members.indexOf(d.target));render()}else $$('.dragging,.drag-over').forEach(x=>x.classList.remove('dragging','drag-over'))}
+document.addEventListener('pointerup',e=>finishTouchDrag(e));document.addEventListener('pointercancel',e=>finishTouchDrag(e,true));document.addEventListener('lostpointercapture',e=>finishTouchDrag(e,true));
+
+// Production bridge: demo mutations are intercepted before the shared UI handler.
+let hostPort=null,hostSeq=0,hostBusy=false,hostError='',hostReady=false,hostTarget=null,hostRequests=new Map(),hostBinding=null,hostBindingDraft=null,hostBatchUndo=null;
+let notify=()=>hostPort?.postMessage({method:'state',payload:{dirty:dirty(),busy:hostBusy}});
+function callHost(method,payload={}){if(!hostPort)return Promise.reject(Error('尚未连接宿主'));const id=++hostSeq;return new Promise((resolve,reject)=>{hostRequests.set(id,{resolve,reject});hostPort.postMessage({id,method,payload})});}
+async function job(fn){if(hostBusy)return;hostBusy=true;hostError='';notify();render();try{return await fn()}catch(e){hostError=e.message;toast(e.message);throw e}finally{hostBusy=false;render();notify()}}
+async function loadHost(target={type, id:selectedId}){const data=await callHost('load');store=data;grid=!!data.listPrefs?.grid;type=target.type??type;selectedId=data[type==='character'?'characters':'groups'].find(x=>x.id===target.id)?.id??data[type==='character'?'characters':'groups'][0]?.id??null;draft=current()?clone(current()):null;hostReady=true;selection.clear();batchPlan=null;tab=type==='character'?'play':'members';showDetail=!!target.id||innerWidth>760;if(draft&&type==='character')await hydrate(selectedId);revision++;render();}
+async function hydrate(id){const result=await callHost('read',{id});if(type==='character'&&selectedId===id){const i=store.characters.findIndex(x=>x.id===id);store.characters[i]=result;draft=clone(result);draft.baseExtra=clone(draft.extraBooks);store.characters[i].baseExtra=clone(draft.extraBooks);}}
+const previewRender=render,previewStatus=updateStatus,previewPanel=renderPanel;
+updateStatus=function(){const e=$('#save-state');if(e)e.textContent=hostBusy?'正在处理…':dirty()?'有未保存的修改':'已读取宿主';const b=$('[data-action="save"]');if(b)b.disabled=hostBusy||!dirty();notify()};
+render=function(){previewRender();for(const el of $$('.preview'))el.outerHTML=button('设置','host-settings','','flat small');const note=$('.sidefoot>small');if(note)note.textContent='修改先保留为草稿，保存后写入宿主。';const footer=$('.footer small');if(footer)footer.textContent='角色与群聊沿用原生存档';$('.sidefoot')?.insertAdjacentHTML('afterbegin',`<div class="row wrap">${button('设置','host-settings','','small')}${button('收起','host-hide','','small')}${button('重新读取','host-refresh','','small')}${button('世界书','host-worldbook','','small')}</div>`);for(const n of $$('.queue'))n.closest('.card').hidden=true;for(const n of $$('.hint'))n.textContent=n.textContent.replaceAll('样稿不读取、切换或绑定真实用户身份。','身份接口已预留，暂不修改用户身份。').replaceAll('未连接宿主，当前不判断该开关。','是否优先使用角色提示由宿主原设置决定。');if(!hostReady)$('#app').innerHTML='<div class="empty">正在读取角色与群聊…</div>';if(hostError)$('#app').insertAdjacentHTML('afterbegin',`<div class="card error" role="alert">${esc(hostError)}<div class="row wrap">${button('导出当前草稿','host-export-draft','','small')}${button('重试设置保存','host-retry-settings','','small')}${button('重新读取','host-refresh','','small')}</div></div>`);for(const el of $$('[data-action="toggle"][data-arg="allowStyles"],[data-action="toggle"][data-arg="allowMedia"],[data-action="toggle"][data-arg="pinned"],[data-action="toggle"][data-arg="spoiler"]')){el.disabled=true;el.title='此原生许可适配尚未完成';}for(const n of $$('.avatar')){let id=n.closest('[data-member]')?.dataset.member??n.closest('[data-arg]')?.dataset.arg;if(n.classList.contains('large')&&type==='character')id=selectedId;const c=store.characters.find(x=>x.id===id);if(c){n.replaceChildren();const img=document.createElement('img');img.src='/thumbnail?type=avatar&file='+encodeURIComponent(c.id);img.alt='';img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit';n.append(img);}}if(hostBusy){$('#app').inert=true;$('#dock-root').inert=true;$('#panel-root').inert=true;}else{$('#app').inert=!!panelState;$('#dock-root').inert=!!panelState;$('#panel-root').inert=false;}notify();};
+renderPanel=function(){previewPanel();const p=panelState;if(!p)return;const panel=$('#panel-root .panel');if(p.kind==='lore'&&hostBinding){panel.innerHTML=`<div class="panel-head"><h2>绑定世界书 · ${esc(hostBinding.name)}</h2></div><p class="hint">主书与附加书分别保存，切换角色不会改变当前聊天。</p><label class="label">角色主世界书</label><select id="host-primary"><option value="">不绑定</option>${hostBinding.names.map(n=>`<option ${n===(hostBindingDraft?.primary??hostBinding.primary)?'selected':''} value="${esc(n)}">${esc(n)}</option>`).join('')}</select><label class="label">附加世界书 · 按此列表顺序</label><div class="stack">${[...(hostBindingDraft?.extra??hostBinding.extra),...hostBinding.names.filter(n=>!(hostBindingDraft?.extra??hostBinding.extra).includes(n))].map(n=>`<div class="row"><label class="grow"><input type="checkbox" data-world-extra="${esc(n)}" ${(hostBindingDraft?.extra??hostBinding.extra).includes(n)?'checked':''}>${esc(n)}</label>${(hostBindingDraft?.extra??hostBinding.extra).includes(n)?button('↑','adv-bind-up',n,'small')+button('↓','adv-bind-down',n,'small'):''}</div>`).join('')}</div><p class="hint">解除主书绑定保留卡内嵌入内容；不删除世界书文件。</p><div class="panel-actions">${button('取消','panel-close')}${button('打开世界书','host-worldbook','','small')}${button('保存绑定','host-bind-save','','primary')}</div>`;}
+if(p.kind==='native'){const sections={import:`<h2>导入角色卡</h2><p>PNG、JSON、YAML、CHARX、BYAF，沿用宿主导入器。</p><input type="file" id="host-import-file" multiple accept=".png,.json,.yaml,.yml,.charx,.byaf"><p class="hint">文件中的脚本及媒体沿原生许可；本地标签不会自动覆盖。</p>${button('导入','host-import-confirm','','primary')}${button('从网址导入','native','urlImport')}`,export:`<h2>导出角色卡</h2><p>导出宿主已保存的完整卡片。</p>${button('PNG 角色卡','host-export','png','primary')}${button('JSON 数据','host-export','json')}`,rename:`<h2>角色正式更名</h2><input id="host-rename" value="${esc(draft?.name)}"><label class="row"><input id="host-rename-chats" type="checkbox">同步改写历史聊天中的角色名称</label><p class="hint">会切换到该角色，保留宿主头像文件、群成员、标签与附加书引用处理。</p>${button('确认更名','host-rename-confirm','','primary')}`,tokens:`<h2>Token 计数</h2><p id="host-tokens">点击计算，使用当前宿主 tokenizer。</p>${button('计算','host-tokens-confirm','','primary')}`};if(sections[p.name])panel.innerHTML=sections[p.name]+`<div class="panel-actions">${button('关闭','panel-close')}</div>`;else panel.innerHTML=`<h2>${esc(nativeFlows[p.name]?.[0]??'附加功能')}</h2><p class="note">此项原生适配尚未完成；没有执行操作。常用导入、导出、删除与世界书绑定已在本页提供。</p><div class="panel-actions">${button('关闭','panel-close')}</div>`;}
+if(['delete','duplicate','new','new-chat','session-rename'].includes(p.kind)){for(const n of panel.querySelectorAll('p,button,small'))n.textContent=n.textContent.replaceAll('演示数据','数据').replaceAll('演示角色','角色').replaceAll('演示群聊','群聊').replaceAll('演示会话','会话').replaceAll('创建演示','创建').replaceAll('只操作独立样稿数据；没有真实删除。','确认后会修改宿主真实数据，无法撤销。').replaceAll('此处只修改样稿中的会话列表。','确认后使用宿主新建会话。').replaceAll('生成新的演示身份','生成新的角色文件').replaceAll('应用到草稿','确认修改');if(p.kind==='new-chat'){$('#chat-name').disabled=true;$('#chat-name').value='由宿主生成会话名称';}if(p.kind==='delete'&&!p.session)panel.insertAdjacentHTML('afterbegin',`<p class="note warning">目标：${esc(draft.name)} · ${esc(selectedId)}</p>`);}if(hostBusy)$('#panel-root').inert=true;};
+saveDraft=async function(){const err=validateDraft();if(err)throw Error(err);const result=await callHost('save',{type,draft:clone(draft)});const i=data().findIndex(x=>x.id===selectedId);data()[i]=result;draft=clone(result);if(type==='character'){draft.baseExtra=clone(draft.extraBooks);data()[i].baseExtra=clone(draft.extraBooks);}revision++;batchPlan=null;toast('已保存并回读确认');notify();return true;};
+go=function(id,nextType=type){guard(()=>{void job(async()=>{type=nextType;selectedId=id;draft=clone(current());tab=type==='character'?'play':'members';showDetail=true;memberSearch='';if(type==='character')await hydrate(id);}).catch(()=>{})})};
+changeType=function(t){guard(()=>{void job(async()=>{type=t;selectedId=data()[0]?.id??null;draft=current()?clone(current()):null;tab=t==='character'?'play':'members';showDetail=innerWidth>760;selection.clear();search='';tagFilter='';batchOp='fav';batchPlan=null;if(draft&&t==='character')await hydrate(selectedId);}).catch(()=>{})})};
+function cleanAction(){if(dirty()||advancedDirty())throw Error('请先保存或放弃当前草稿');}
+function exportRecovery(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({type,id:selectedId,draft,advanced:advancedState},null,2)],{type:'application/json'}));a.download='角色群聊-未保存草稿.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,v=b.dataset.arg;const actions=['save','guard-save','new-confirm','delete-confirm','duplicate-confirm','new-chat-confirm','session-open','session-rename-confirm','lore','host-bind-save','host-import-confirm','host-export','host-rename-confirm','host-tokens-confirm','host-worldbook','host-hide','host-settings','host-refresh','host-export-draft','host-retry-settings','batch-apply','batch-undo','batch-copy-confirm','batch-delete-confirm','speak'];if(!actions.includes(a)&&!(a==='toggle'&&v==='auto'))return;e.preventDefault();e.stopImmediatePropagation();if(a==='host-export-draft')return exportRecovery();if(a==='host-settings'){if(!hostBusy)callHost('settings').catch(err=>toast(err.message));return}if(a==='host-hide'){if(!hostBusy)callHost('display',dock?'float':'hidden').catch(err=>toast(err.message));return}void job(async()=>{
+if(a==='toggle'&&v==='auto'){cleanAction();const enabled=await callHost('groupAuto',{id:selectedId,enabled:!draft.auto});draft.auto=enabled;current().auto=enabled;return}if(a==='speak'){cleanAction();await callHost('speak',{id:selectedId,member:v});return}if(a==='save')return saveDraft();if(a==='guard-save'){const fn=panelState.fn;await saveDraft();closePanel();setTimeout(fn,0);return}if(a==='host-retry-settings'){await callHost('retrySettings');toast('设置已确认保存');return}
+if(a==='host-refresh'){cleanAction();return loadHost()}if(a==='lore'){cleanAction();hostBinding=await callHost('bindingsRead',{id:selectedId});hostBindingDraft={primary:hostBinding.primary,extra:[...hostBinding.extra]};openPanel('lore');return}if(a==='host-bind-save'){const p={...hostBinding,...hostBindingDraft};hostBinding=await callHost('bindingsSave',p);await hydrate(selectedId);closePanel();toast('主书与附加书绑定已保存');return}if(a==='host-worldbook'){cleanAction();await callHost('worldbook',{id:type==='character'?selectedId:null});return}
+if(a==='host-import-confirm'){cleanAction();const files=[...$('#host-import-file').files];if(!files.length)throw Error('请选择文件');let result;const done=[];for(const file of files){try{result=await callHost('import',{file});done.push(file.name)}catch(e){throw Error('已导入：'+(done.join('、')||'无')+'；停止于 '+file.name+'：'+e.message)}}closePanel();await loadHost({type:'character',id:result.id});toast('已导入 '+done.length+' 张角色卡；'+result.notice);return}if(a==='host-export'){cleanAction();await callHost('export',{id:selectedId,revision:draft.revision,format:v});toast('已交给系统保存');return}if(a==='host-tokens-confirm'){const count=await callHost('tokens',{text:[draft.description,draft.personality,draft.scenario,draft.first_mes,draft.mes_example,draft.system_prompt,draft.post_history_instructions,draft.depth_prompt].join('\n')});$('#host-tokens').textContent=count+' Token';return}
+if(a==='host-rename-confirm'){cleanAction();await callHost('rename',{id:selectedId,revision:draft.revision,name:$('#host-rename').value,renameChats:$('#host-rename-chats').checked});closePanel();await loadHost({type:'character'});return}
+if(a==='new-confirm'){cleanAction();const id=await callHost('create',{type,name:$('#new-name').value});closePanel();await loadHost({type,id});return}if(a==='duplicate-confirm'){cleanAction();const id=await callHost('duplicate',{id:selectedId,revision:draft.revision});closePanel();await loadHost({type:'character',id});return}
+if(a==='delete-confirm'){cleanAction();if(panelState.session)await callHost('deleteChat',{type,id:selectedId,chat:panelState.session});else await callHost('delete',{type,id:selectedId,revision:draft.revision,confirm:selectedId,deleteChats:!!$('#delete-chats')?.checked});closePanel();await loadHost();return}
+if(a==='session-open'){cleanAction();await callHost('openChat',{type,id:selectedId,chat:v});return}if(a==='new-chat-confirm'){cleanAction();await callHost('newChat',{type,id:selectedId,deleteCurrent:$('#delete-current-chat').checked});closePanel();return}if(a==='session-rename-confirm'){cleanAction();await callHost('renameChat',{type,id:selectedId,chat:panelState.id,name:$('#chat-name').value});closePanel();await loadHost();return}
+if(a==='batch-copy-confirm'||a==='batch-delete-confirm'){cleanAction();if(type!=='character'||!selection.size)throw Error('先选择角色');if(a==='batch-delete-confirm'&&!panelState.confirmed){panelState.confirmed=true;b.textContent='再次点击确认删除 '+selection.size+' 张卡';return}const targets=[...selection].map(id=>clone(char(id))),deleteChats=!!$('#batch-delete-chats')?.checked,done=[];try{for(const c of targets){await callHost(a==='batch-copy-confirm'?'duplicate':'delete',{type:'character',id:c.id,revision:c.revision,confirm:c.id,deleteChats});done.push(c.name);}}catch(e){closePanel();await loadHost();throw Error('已完成：'+(done.join('、')||'无')+'；其余未执行。'+e.message)}closePanel();await loadHost();hostBatchUndo=null;toast('已完成 '+done.length+' 张角色卡');return}
+if(a==='batch-apply'){cleanAction();if(!batchPlan||batchPlan.fingerprint!==batchFingerprint())throw Error('范围已变化，请重新预览');const plan=clone(batchPlan),completed=[];hostBatchUndo=[];try{for(const r of plan.rows){const saved=await callHost('save',{type,draft:{...r.after,baseExtra:r.before.extraBooks}});hostBatchUndo.push({before:r.before,after:saved});const i=data().findIndex(x=>x.id===r.id);data()[i]=saved;completed.push(r.before.name);}}catch(e){throw Error('已完成：'+(completed.join('、')||'无')+'；后续停止。'+e.message)}finally{draft=current()?clone(current()):null;batchPlan=null;revision++;}toast('选中项已保存，可撤销这次修改');return}
+if(a==='batch-undo'){cleanAction();if(!hostBatchUndo?.length)throw Error('没有可撤销的修改');for(const row of [...hostBatchUndo]){const restored=await callHost('save',{type,draft:{...row.before,revision:row.after.revision,baseExtra:row.after.extraBooks,baseTags:row.after.tags}});const i=data().findIndex(x=>x.id===row.before.id);data()[i]=restored;hostBatchUndo.shift();}draft=current()?clone(current()):null;revision++;return}
+throw Error('这项原生操作仍待适配；没有执行');}).catch(()=>{});},true);
+window.addEventListener('message',e=>{if(e.source!==parent||e.origin!==location.origin||e.data?.type!=='tisya-character-connect'||hostPort)return;hostPort=e.ports[0];hostTarget=e.data.target;hostPort.onmessage=ev=>{const m=ev.data;if(m.method==='open'){if(dirty()||advancedDirty()||hostBusy){toast('先处理当前草稿，再切换打开目标');return}void job(()=>loadHost(m.payload)).catch(()=>{});return}if(m.method==='nativeClosed'){if(!dirty()&&!advancedDirty())void job(()=>loadHost()).catch(()=>{});return}if(m.method==='display'){document.body.classList.toggle('host-float',m.payload==='float');return}const p=hostRequests.get(m.id);if(!p)return;hostRequests.delete(m.id);if(m.error)p.reject(Error(m.error));else p.resolve(m.result)};hostPort.start();void job(()=>loadHost(hostTarget)).catch(()=>{});});
+document.addEventListener('input',notify);document.addEventListener('change',notify);render();
+
+let advancedState=null,advancedBaseline='',cropImage=null,cropURL='',avatarCache=Date.now();
+const advancedDirty=()=>!!advancedState&&advancedBaseline!==JSON.stringify(advancedState.value)||panelState?.kind==='lore'&&!!hostBindingDraft&&JSON.stringify(hostBindingDraft)!==JSON.stringify({primary:hostBinding.primary,extra:hostBinding.extra});
+const notifyBasic=notify; // reassigned below by changing the original declaration to let
+notify=function(){hostPort?.postMessage({method:'state',payload:{dirty:dirty(),advancedDirty:advancedDirty(),busy:hostBusy}})};
+const closeBasic=closePanel;closePanel=function(){advancedState=null;advancedBaseline='';if(cropURL)URL.revokeObjectURL(cropURL);cropURL='';cropImage=null;closeBasic();notify()};
+const htmlOptions=(rows,value)=>rows.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(l)}</option>`).join('');
+const inputAdvanced=(key,label,value,kind='text')=>`<label class="field"><span class="label">${esc(label)}</span><input data-advanced="${key}" type="${kind}" value="${esc(value??'')}"></label>`;
+function advancedPanel(mode,value={},more={}){advancedState={mode,value:clone(value),...more};advancedBaseline=JSON.stringify(value);openPanel('advanced');notify();}
+const basePanel=renderPanel;renderPanel=function(){basePanel();if(panelState?.kind!=='advanced'||!advancedState)return;const p=advancedState,v=p.value;let title='',body='',save='保存';
+if(p.mode==='prefs'){title='许可与游玩显示';body=`<p class="note">媒体许可只作用于本角色／群聊；隐藏设定是宿主全局偏好。</p><label class="field"><span class="label">外部媒体</span><select data-advanced="media">${htmlOptions([['global','跟随全局（'+(p.globalMedia?'允许':'禁止')+'）'],['allow','允许'],['forbid','禁止']],v.media)}</select></label>${type==='character'?`<label class="row"><input type="checkbox" data-advanced="styles" ${v.styles?'checked':''}>允许作者说明使用全局样式</label>`:''}<label class="row"><input type="checkbox" data-advanced="spoiler" ${v.spoiler?'checked':''}>隐藏设定与开场白（全局）</label>`;}
+if(p.mode==='chat'){title='当前会话设置';body=`<p class="note">${esc(p.chat)} · 保存只影响此会话。切换会话后将拒绝旧草稿。</p>${[['scenario','场景'],['examples','对白示例'],['system','主提示词']].map(([k,l])=>`<label class="field"><span class="label">${l}</span><textarea data-advanced="${k}">${esc(v[k])}</textarea></label>`).join('')}<label class="field"><span class="label">会话世界书</span><select data-advanced="world">${htmlOptions([['','不绑定'],...p.names.map(n=>[n,n])],v.world)}</select></label>${button('清空覆盖与绑定','adv-chat-clear','','small danger')}`;}
+if(p.mode==='tags'){title='全局标签';body=`<p class="note">重命名保留关联；删除会解除所有角色／群聊上的此标签。点击保存才写入。</p><label class="row"><input type="checkbox" data-advanced="folders" ${v.folders?'checked':''}>启用标签文件夹（全局）</label><label class="field"><span class="label">排序方式</span><select data-advanced="sort">${htmlOptions([['manual','手动顺序'],['alphabetical','按名称'],['by_entries','按关联数']],v.sort)}</select></label><div class="stack">${v.rows.map((t,i)=>`<section class="card" data-tag-row="${i}"><div class="row"><input data-tag-key="name" value="${esc(t.name)}" aria-label="标签名称">${button('↑','adv-tag-move',i+':-1','small')}${button('↓','adv-tag-move',i+':1','small')}${button('删除','adv-tag-delete',i,'small danger')}</div><small>关联 ${Object.values(p.map).filter(a=>a.includes(t.id)).length} 项</small><label class="field"><span class="label">文件夹</span><select data-tag-key="folder_type">${htmlOptions([['NONE','普通标签'],['OPEN','开放文件夹'],['CLOSED','关闭文件夹（仅进入时显示）']],t.folder_type??'NONE')}</select></label><label class="row"><input type="checkbox" data-tag-key="is_hidden_on_character_card" ${t.is_hidden_on_character_card?'checked':''}>在角色卡上隐藏</label><div class="grid2"><label>背景色<input data-tag-key="color" value="${esc(t.color??'')}" placeholder="默认 / CSS 颜色"></label><label>文字色<input data-tag-key="color2" value="${esc(t.color2??'')}" placeholder="默认 / CSS 颜色"></label></div></section>`).join('')}</div>${button('＋ 新标签','adv-tag-add','','small')}`;}
+if(p.mode==='avatar'){title='更换头像';body='<p class="hint">选择图片后调缩放与位置，保存当前裁切。角色定义、聊天和群成员保持。</p><input type="file" id="adv-avatar-file" accept="image/png,image/jpeg,image/webp"><canvas id="adv-crop" width="400" height="600" style="max-width:200px;width:100%;display:block;margin:12px auto;border:1px solid #567063"></canvas>'+['zoom','x','y'].map((k,i)=>`<label>${['缩放','水平位置','垂直位置'][i]}<input type="range" data-crop="${k}" min="${i?0:1}" max="${i?100:4}" step="${i?1:.05}" value="${i?50:1}"></label>`).join('');save='保存裁切头像';}
+if(p.mode==='avatarPreview'){title='头像';body=type==='group'&&!draft.avatar_url?`<div class="grid2">${draft.members.slice(0,4).map(id=>`<img src="/thumbnail?type=avatar&file=${esc(encodeURIComponent(id))}" alt="${esc(char(id)?.name??'成员')}" style="width:100%">`).join('')}</div>`:`<img src="${esc(type==='character'?'/characters/'+encodeURIComponent(selectedId):draft.avatar_url||'')}" style="max-width:100%;max-height:70dvh;object-fit:contain" alt="当前头像">`;save='';}
+if(['replace','urlImport'].includes(p.mode)){title=p.mode==='replace'?'替换角色卡':'从网址导入';body=`${p.mode==='replace'?'<p class="note warning">覆盖本地角色定义，保留原文件身份、聊天、资产和群成员。请先导出原卡备份。</p><input type="file" id="adv-replace-file" accept=".png,.json,.yaml,.yml,.charx,.byaf">':''}${p.mode==='urlImport'?`<label class="field"><span class="label">来源网址或编号（每行一个）</span><textarea data-advanced="url">${esc(v.url)}</textarea></label>`:inputAdvanced('url','来源网址或原生来源编号',v.url)}<p class="hint">${p.mode==='replace'?'优先使用选中的文件；没有文件时从网址下载。':'使用宿主支持的来源，联网失败会显示原因。'}</p>`;save=p.mode==='replace'?'确认替换此角色':'下载并导入';}
+if(p.mode==='source'){title='角色来源';body=v.url?`<p class="note">确认后打开此来源网址：</p><p style="overflow-wrap:anywhere">${esc(v.url)}</p><a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" class="link">打开来源</a>`:'<p>此角色没有可用的来源链接。</p>';save='';}
+if(p.mode==='embedded'){title='导入内嵌世界书';body=inputAdvanced('name','新世界书名称',v.name)+'<p class="hint">拒绝覆盖同名书，导入后设为本角色主书。</p>';save='导入并绑定';}
+if(p.mode==='importTags'){title='导入卡内标签';body=`<p class="note">合并选中的嵌入标签到本地标签，不覆盖已有标签。</p>${v.names.map(n=>`<label class="row"><input type="checkbox" data-import-tag="${esc(n)}" checked>${esc(n)}</label>`).join('')||'<p>这张卡没有嵌入标签。</p>'}`;save='合并并保存';}
+if(p.mode==='welcome'){title='欢迎页助手';body=`<p>${p.assistant?'取消':'设为'} ${esc(draft.name)} 的欢迎页助手身份？</p><p class="hint">不创建用户身份，也不修改聊天内容。</p>`;save='确认';}
+if(p.mode==='importChat'){title='导入会话';body=`<p>${type==='group'?'群聊支持 JSONL。':'角色支持宿主认可的 JSON/JSONL 格式。'}</p><input type="file" id="adv-chat-file" accept="${type==='group'?'.jsonl':'.json,.jsonl'}"><p class="hint">导入为新会话，不覆盖当前聊天。</p>`;save='导入';}
+if(p.mode==='exportChat'){title='导出会话';body=`<label class="field"><span class="label">会话</span><select data-advanced="chat">${htmlOptions(draft.sessions.map(s=>[s.id,s.name]),v.chat)}</select></label><label class="field"><span class="label">文件格式</span><select data-advanced="format">${htmlOptions([['jsonl','JSONL 完整聊天'],['txt','TXT 纯文本']],v.format)}</select></label>`;save='导出';}
+if(p.mode==='list'){title='列表与头像偏好';body=[['characters','角色列表每页'],['members','群成员每页'],['candidates','候选成员每页']].map(([k,l])=>`<label class="field"><span class="label">${l}</span><select data-advanced="${k}">${htmlOptions([5,10,25,50,100,200,500,1000].map(n=>[n,n]),v[k])}</select></label>`).join('')+`<label class="row"><input type="checkbox" data-advanced="grid" ${v.grid?'checked':''}>网格列表</label><label class="row"><input type="checkbox" data-advanced="zoom" ${v.zoom?'checked':''}>原生头像放大镜</label>${button('固定／取消固定原生抽屉','adv-drawer-pin','','small')}`;}
+const panel=$('#panel-root .panel');panel.innerHTML=`<div class="panel-head"><h2>${title}</h2></div>${body}<div class="panel-actions">${button(save?'取消修改':'关闭','panel-close')}${save?button(save,'adv-save','','primary'):''}</div>`;
+};
+async function openAdvanced(name,chat){cleanAction();const target={type,id:selectedId,revision:draft?.revision};if(name==='urlImport'){advancedPanel('urlImport',{url:''});return}if(name==='convert'){openPanel('identity');return}if(name==='extensions'){await callHost('nativeExtras',target);return}if(name==='avatar'){advancedPanel('avatar');return}if(name==='avatarPreview'){advancedPanel('avatarPreview');return}if(name==='importChat'){advancedPanel('importChat');return}if(name==='exportChat'){advancedPanel('exportChat',{chat:chat??draft.sessions[0]?.id??'',format:'jsonl'});return}if(name==='tagManager'){const r=await callHost('tagsRead');advancedPanel('tags',{rows:r.rows.sort((a,b)=>(a.sort_order??0)-(b.sort_order??0)),sort:r.sort,folders:r.folders},{revision:r.revision,map:r.map});return}if(name==='listSettings'){advancedPanel('list',await callHost('listPrefsRead'));return}if(name==='chatLore'||name==='overrides'){const r=await callHost('chatSettingsRead',target);advancedPanel('chat',r.value,{scope:r.scope,revision:r.revision,names:r.names,chat:r.chat});return}if(name==='importTags'){advancedPanel('importTags',{names:[...new Set(String(draft.tagsText??'').split(/[,，]/).map(n=>n.trim()).filter(Boolean))]});return}const r=await callHost('advancedRead',target);if(name==='source'){let url='';try{const u=new URL(r.source);if(['http:','https:'].includes(u.protocol))url=u.href;}catch{}advancedPanel('source',{url});return}if(name==='replace'||name==='urlImport'){advancedPanel(name,{url:r.source??''});return}if(name==='embeddedLore'){if(!r.embedded)throw Error('此角色没有内嵌世界书');advancedPanel('embedded',{name:draft.name+'的世界书'});return}if(name==='welcome'){advancedPanel('welcome',{},r);return}advancedPanel('prefs',{media:r.media,styles:r.styles,spoiler:r.spoiler},{revision:r.revision,globalMedia:r.globalMedia});}
+async function saveAdvanced(){const p=advancedState,v=clone(p.value),target={type,id:selectedId,revision:draft?.revision};
+if(p.mode==='prefs')await callHost('prefsSave',{...target,...v,revision:p.revision});
+else if(p.mode==='chat')await callHost('chatSettingsSave',{...target,value:v,scope:p.scope,revision:p.revision});
+else if(p.mode==='tags')await callHost('tagsSave',{...v,revision:p.revision});
+else if(p.mode==='avatar'){if(!cropImage)throw Error('先选择图片');const blob=await new Promise(r=>$('#adv-crop').toBlob(r,'image/png'));if(!blob)throw Error('图片裁切失败');await callHost('avatarSave',{...target,file:new File([blob],'avatar.png',{type:'image/png'})});avatarCache=Date.now();}
+else if(p.mode==='replace')await callHost('replace',{...target,file:$('#adv-replace-file').files[0],url:v.url,confirm:selectedId});
+else if(p.mode==='urlImport'){const urls=v.url.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!urls.length)throw Error('请输入网址');let result,done=0;for(const url of urls){try{const file=await callHost('urlFile',{url});result=await callHost('import',{file});done++;}catch(e){throw Error('已导入 '+done+' 项；停止于 '+url+'：'+e.message)}}closePanel();await loadHost({type:'character',id:result.id});toast('已导入 '+done+' 项');return}
+else if(p.mode==='embedded')await callHost('embedded',{...target,name:v.name});
+else if(p.mode==='importTags'){const next=clone(draft);next.tags=[...new Set([...next.tags,...$$('[data-import-tag]:checked').map(n=>n.dataset.importTag)])];await callHost('save',{type,draft:next});}
+else if(p.mode==='welcome')await callHost('assistant',target);
+else if(p.mode==='importChat')await callHost('chatImport',{...target,file:$('#adv-chat-file').files[0]});
+else if(p.mode==='exportChat')await callHost('chatExport',{...target,...v});
+else if(p.mode==='list')await callHost('listPrefsSave',{...v,characters:Number(v.characters),members:Number(v.members),candidates:Number(v.candidates)});
+closePanel();await loadHost({type,id:selectedId});toast('操作已完成');}
+function drawCrop(){if(!cropImage)return;const c=$('#adv-crop'),x=Number($('[data-crop=x]').value)/100,y=Number($('[data-crop=y]').value)/100,z=Number($('[data-crop=zoom]').value),scale=Math.max(c.width/cropImage.width,c.height/cropImage.height)*z,w=cropImage.width*scale,h=cropImage.height*scale,g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.drawImage(cropImage,(c.width-w)*x,(c.height-h)*y,w,h);}
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.advanced&&advancedState){advancedState.value[el.dataset.advanced]=el.type==='checkbox'?el.checked:el.value;notify();}if(el.dataset.tagKey&&advancedState?.mode==='tags'){advancedState.value.rows[Number(el.closest('[data-tag-row]').dataset.tagRow)][el.dataset.tagKey]=el.type==='checkbox'?el.checked:el.value;notify();}if(el.dataset.crop)drawCrop();});
+document.addEventListener('change',e=>{const el=e.target;if(el.dataset.advanced||el.dataset.tagKey)el.dispatchEvent(new Event('input',{bubbles:true}));if(el.id==='adv-avatar-file'){const file=el.files[0];if(!file)return;if(cropURL)URL.revokeObjectURL(cropURL);cropURL=URL.createObjectURL(file);cropImage=new Image();cropImage.onload=()=>{drawCrop();advancedState.value.image=file.name;notify()};cropImage.onerror=()=>{cropImage=null;toast('图片无法解码，请选择 PNG/JPEG/WebP')};cropImage.src=cropURL;}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,v=b.dataset.arg;const nativeNames=['avatar','avatarPreview','replace','source','embeddedLore','importTags','welcome','convert','chatLore','importChat','exportChat','extensions','tagManager','listSettings','urlImport'];if(a==='audit-route'&&v.startsWith('shared:')||a==='native'&&nativeNames.includes(v)||a==='overrides'||a==='toggle'&&['allowStyles','allowMedia','spoiler','pinned'].includes(v)||a.startsWith('adv-')||a==='restore-avatar-confirm'){e.preventDefault();e.stopImmediatePropagation();if(a==='audit-route'){closePanel();const k=v.split(':')[1],name={tags:'tagManager',layout:'listSettings',overrides:'overrides'}[k];if(k==='history'){openPanel('sessions');return}void job(()=>openAdvanced(name??'extensions')).catch(()=>{});return}if(a==='adv-bind-up'||a==='adv-bind-down'){const i=hostBindingDraft.extra.indexOf(v),j=i+(a==='adv-bind-up'?-1:1);if(j>=0&&j<hostBindingDraft.extra.length){[hostBindingDraft.extra[i],hostBindingDraft.extra[j]]=[hostBindingDraft.extra[j],hostBindingDraft.extra[i]];renderPanel();notify()}return}if(a==='adv-page'){const [key,delta]=v.split(':');pageNumber[key]=Math.max(0,(pageNumber[key]??0)+Number(delta));applyPagination();return}if(a==='adv-tag-add'){advancedState.value.rows.push({id:crypto.randomUUID(),name:'新标签',folder_type:'NONE',create_date:Date.now()});renderPanel();notify();return}if(a==='adv-tag-delete'){const i=Number(v);if(b.dataset.confirmed!=='true'){b.dataset.confirmed='true';b.textContent='确认解除并删除';return}advancedState.value.rows.splice(i,1);renderPanel();notify();return}if(a==='adv-tag-move'){const [i,d]=v.split(':').map(Number),rows=advancedState.value.rows;if(rows[i+d]){[rows[i],rows[i+d]]=[rows[i+d],rows[i]];advancedState.value.sort='manual';renderPanel();notify()}return}if(a==='adv-chat-clear'){if(b.dataset.confirmed!=='true'){b.dataset.confirmed='true';b.textContent='再次确认清空';return}advancedState.value={scenario:'',examples:'',system:'',world:''};renderPanel();notify();return}void job(async()=>{if(a==='adv-save')return saveAdvanced();if(a==='adv-drawer-pin')return callHost('drawerPin');if(a==='restore-avatar-confirm'){cleanAction();await callHost('restoreAvatar',{type,id:selectedId,revision:draft.revision});closePanel();return loadHost({type,id:selectedId})}if(a==='toggle'&&v==='pinned'){cleanAction();const result=await callHost('pin',{type,id:selectedId,before:!!draft.pinned,enabled:!draft.pinned});draft.pinned=result;current().pinned=result;return}return openAdvanced(a==='native'?v:a==='overrides'?'overrides':'prefs',b.dataset.chat);}).catch(()=>{});}},true);
+const oldRenderAdvanced=render;render=function(){oldRenderAdvanced();for(const el of $$('[data-action="toggle"][data-arg="allowStyles"],[data-action="toggle"][data-arg="allowMedia"],[data-action="toggle"][data-arg="spoiler"],[data-action="toggle"][data-arg="pinned"]')){el.disabled=false;el.removeAttribute('title');}const root=$('#panel-root .panel');if(panelState?.kind==='native'&&panelState.name==='import'&&root&&!root.querySelector('[data-arg="urlImport"]'))root.insertAdjacentHTML('beforeend',button('从网址导入','native','urlImport','small'));for(const img of $$('.avatar img')){if(!img.src.includes('&t='))img.src+='&t='+avatarCache;img.onerror=()=>{img.parentElement.textContent=(img.closest('[data-member]')?char(img.closest('[data-member]').dataset.member)?.name:draft?.name)?.[0]??'◉';};}notify();};
+window.addEventListener('beforeunload',e=>{if(advancedDirty()){e.preventDefault();e.returnValue=''}});
+render();
+
+const pageNumber={list:0,members:0,candidates:0};
+function applyPagination(){const prefs=store.listPrefs??{};for(const [key,selector,size] of [['list','.list .entity',prefs.characters??50],['members','[data-member]',prefs.members??5],['candidates','[data-candidate-name]',prefs.candidates??5]]){let rows=$$(selector);if(key==='candidates'){const q=($('#candidate-search')?.value??'').toLowerCase();for(const r of rows)r.style.display=r.dataset.candidateName.toLowerCase().includes(q)?'':'none';rows=rows.filter(r=>r.dataset.candidateName.toLowerCase().includes(q));}const pages=Math.ceil(rows.length/size);pageNumber[key]=Math.min(pageNumber[key]??0,Math.max(0,pages-1));for(const [i,row]of rows.entries())row.style.display=Math.floor(i/size)===pageNumber[key]?'':'none';$('#pager-'+key)?.remove();if(pages>1){const nav=document.createElement('div');nav.id='pager-'+key;nav.className='row wrap';nav.style.marginTop='10px';nav.innerHTML=button('上一页','adv-page',key+':-1','small')+'<small>'+(pageNumber[key]+1)+' / '+pages+' · '+rows.length+' 项</small>'+button('下一页','adv-page',key+':1','small');rows[0].parentElement.append(nav);}}}
+const paginatedRender=render;render=function(){paginatedRender();for(const el of $$('[data-action=tag]')){const t=(store.tagDefinitions??[]).find(t=>t.name===el.dataset.arg);if(t){if(t.color)el.style.backgroundColor=t.color;if(t.color2)el.style.color=t.color2;}}if(type==='group'&&draft?.avatar_url){const avatar=$('.hero .avatar');if(avatar){const img=document.createElement('img');img.src=draft.avatar_url;img.alt=draft.name;img.style.cssText='width:100%;height:100%;object-fit:cover';avatar.replaceChildren(img);}}applyPagination();};
+const paginatedPanel=renderPanel;renderPanel=function(){paginatedPanel();applyPagination();};
+document.addEventListener('input',e=>{if(['search','member-search','candidate-search'].includes(e.target.id)){pageNumber.list=pageNumber.members=pageNumber.candidates=0;applyPagination();}});
+const sortFields={az:['name','asc'],za:['name','desc'],recent:['date_last_chat','desc'],newest:['create_date','desc'],oldest:['create_date','asc'],fav:['fav','desc'],chats:['chat_size','desc'],fewchats:['chat_size','asc'],tokens:['data_size','desc'],fewtokens:['data_size','asc'],random:['name','random']};
+document.addEventListener('change',e=>{if(e.target.id!=='sort')return;e.stopImmediatePropagation();const value=e.target.value;void job(async()=>{cleanAction();const [field,order]=sortFields[value];await callHost('listSort',{field,order});sort=value;pageNumber.list=0;if(sort==='random')randomOrder=Object.fromEntries(data().map(x=>[x.id,Math.random()]));}).catch(()=>{});},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-action="grid"]');if(!b)return;e.stopImmediatePropagation();void job(async()=>{cleanAction();const prefs=await callHost('listPrefsRead');await callHost('listPrefsSave',{...prefs,grid:!grid});grid=!grid;store.listPrefs={...prefs,grid};}).catch(()=>{});},true);
+const loadSorted=loadHost;loadHost=async function(target){await loadSorted(target);const p=store.listPrefs;if(p)sort=Object.entries(sortFields).find(([,s])=>s[0]===p.sortField&&s[1]===p.sortOrder)?.[0]??'recent';pageNumber.list=pageNumber.members=pageNumber.candidates=0;render();};
+render();
+
+document.addEventListener('change',e=>{if(panelState?.kind!=='lore'||!hostBindingDraft||!(e.target.id==='host-primary'||e.target.hasAttribute('data-world-extra')))return;hostBindingDraft.primary=$('#host-primary').value;const selected=$$('[data-world-extra]:checked').map(n=>n.dataset.worldExtra);hostBindingDraft.extra=[...hostBindingDraft.extra.filter(n=>selected.includes(n)),...selected.filter(n=>!hostBindingDraft.extra.includes(n))];renderPanel();notify();});
+</script></body></html>

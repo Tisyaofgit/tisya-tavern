@@ -4,18 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { webcrypto } from 'node:crypto';
 import { loadReadingFont } from '../font.js';
 
-let font;
-try { font = await readFile(new URL('../assets/reading.woff2', import.meta.url)); }
-catch (err) {
-  if (err.code !== 'ENOENT') throw err;
-  const parts = [];
-  for (let i = 1; i <= 4; i++) {
-    const response = await fetch(`https://raw.githubusercontent.com/Tisyaofgit/tisya-tavern/cfc9d8c1ce4be94334c3b748addb0936802b2d2b/font/reading.part${i}.bin`, { signal: AbortSignal.timeout(120000) });
-    if (!response.ok) throw Error(`Test font download failed (${response.status})`);
-    parts.push(Buffer.from(await response.arrayBuffer()));
-  }
-  font = Buffer.concat(parts);
-}
+const font=Buffer.concat(await Promise.all([1,2,3,4].map(i=>readFile(new URL(`../font/reading.part${i}.bin`,import.meta.url)))));
 const bytes = font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength);
 const local = '/user/files/tisya-font-b68d6b9e4f3607fad79ab20c744092139aa64590a0c82354d31361929aa3afcb.woff2';
 function fixture({ cached = false, corrupt = false, uploadFailure = false, missingReadback = false } = {}) {
