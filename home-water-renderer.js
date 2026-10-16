@@ -7,20 +7,51 @@ const smooth=x=>{const t=Math.max(0,Math.min(1,x));return t*t*(3-2*t);};
 const shift=()=>0,shiftY=()=>0;
 const FORMS=['female','male'];
 export function blinkAmount(time,gender='female'){
-    // A quiet first blink shortly after entry; later unequal intervals avoid a metronome.
-    const cycle=gender==='female'?43:47,t=((time%cycle)+cycle)%cycle;
-    const moments=gender==='female'?[2.4,20.8,36.4]:[3.3,25.1,39.8];
-    for(const start of moments){const d=t-start;if(d>=0&&d<.36)return d<.095?smooth(d/.095):d<.14?1:1-smooth((d-.14)/.22);}
-    return 0;
+    // One gentle blink about every ten seconds, without a blink on initial mount.
+    const period=gender==='male'?10.6:10;
+    if(time<period)return 0;
+    const d=time%period;
+    return d>=.36?0:d<.095?smooth(d/.095):d<.14?1:1-smooth((d-.14)/.22);
 }
-function bubbles(ctx,time,gender){
-    for(let i=0;i<13;i++){
-        const period=24+(i*7%19),phase=((time/period+i*.137+(gender==='male'?.23:0))%1+1)%1;
-        const x=90+(i*173%740)+Math.sin(time*.23+i*2.3)*3.5;
-        const y=H+14-phase*(H+55),radius=1.5+(i*11%9)/10;
-        const alpha=.38*Math.min(1,phase*9,(1-phase)*9);
-        ctx.beginPath();ctx.arc(x,y,radius,0,TAU);ctx.lineWidth=.9;ctx.strokeStyle=`rgba(191,221,204,${alpha})`;ctx.stroke();
-        ctx.beginPath();ctx.arc(x-radius*.25,y-radius*.3,.45,0,TAU);ctx.fillStyle=`rgba(225,238,211,${alpha*.8})`;ctx.fill();
+const fields=new WeakMap();
+export function createBubbleField(seed=Math.floor(Math.random()*4294967296)){
+    // Sample each birth once. Randomness must never be sampled on every frame:
+    // that would flicker instead of moving through water. Keep at most 3 batches.
+    const cache=new Map(),span=45;
+    function batch(epoch){
+        if(cache.has(epoch))return cache.get(epoch);
+        let state=(seed^Math.imul(epoch+1,0x9e3779b1))>>>0;
+        const random=()=>{state=(state+0x6d2b79f5)>>>0;let n=state;n=Math.imul(n^(n>>>15),n|1);n^=n+Math.imul(n^(n>>>7),n|61);return ((n^(n>>>14))>>>0)/4294967296;};
+        const particles=Array.from({length:15},(_,i)=>{
+            const radius=1.1+random()*1.4;
+            return {id:epoch+':'+i,born:epoch*span+random()*span,life:26+random()*22,
+                x:28+random()*(W-56),bottom:H+8+random()*48,radius,
+                aspect:.72+random()*.6,rotation:random()*Math.PI,
+                drift:2+random()*11,frequency:.12+random()*.15,phase:random()*TAU,
+                opacity:.23+random()*.22,arc:.96+random()*.04};
+        });
+        cache.set(epoch,particles);return particles;
+    }
+    return {sample(time){
+        const epoch=Math.floor(time/span),live=[];
+        for(let e=epoch-2;e<=epoch;e++)for(const p of batch(e)){
+            const age=time-p.born;if(age<0||age>=p.life)continue;
+            const phase=age/p.life;
+            live.push({...p,x:p.x+Math.sin(age*p.frequency+p.phase)*p.drift,
+                y:p.bottom-phase*(p.bottom+18),rx:p.radius,ry:p.radius*p.aspect,
+                alpha:p.opacity*Math.min(1,phase*8,(1-phase)*8)});
+        }
+        for(const e of cache.keys())if(e<epoch-2||e>epoch)cache.delete(e);
+        return live;
+    }};
+}
+function bubbles(ctx,time,field){
+    for(const p of field.sample(time)){
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation);
+        ctx.beginPath();ctx.ellipse(0,0,p.rx,p.ry,0,0,TAU*p.arc);ctx.lineWidth=.8;
+        ctx.strokeStyle=`rgba(191,221,204,${p.alpha})`;ctx.stroke();
+        ctx.beginPath();ctx.ellipse(-p.rx*.26,-p.ry*.3,.35,.5,0,0,TAU);
+        ctx.fillStyle=`rgba(225,238,211,${p.alpha*.85})`;ctx.fill();ctx.restore();
     }
 }
 function draw(ctx,assets,time=0,options={}){
@@ -31,7 +62,8 @@ function draw(ctx,assets,time=0,options={}){
         const dx=8*Math.sin(TAU*time/33),dy=11*Math.sin(TAU*time/47);
         ctx.drawImage(assets.background,-12+dx,-15+dy,W+24,H+30);
         ctx.fillStyle='rgba(0,12,9,.16)';ctx.fillRect(0,0,W,H);
-        bubbles(ctx,time,gender);
+        if(!options.bubbleField&&!fields.has(ctx))fields.set(ctx,createBubbleField(options.seed));
+        bubbles(ctx,time,options.bubbleField||fields.get(ctx));
     }else if(backdrop!=='transparent'){ctx.fillStyle=backdrop;ctx.fillRect(0,0,W,H);}
     const art=assets[gender];ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     ctx.drawImage(art,0,0,W,H);
@@ -44,7 +76,7 @@ function controller(canvas,assets,options={}){
     const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)throw Error('Canvas 2D is unavailable.');
     const document=canvas.ownerDocument,window=document.defaultView,media=window.matchMedia('(prefers-reduced-motion: reduce)');
     const requestAnimationFrame=window.requestAnimationFrame.bind(window),cancelAnimationFrame=window.cancelAnimationFrame.bind(window);
-    let config={gender:'female',layout:false,backdrop:'transparent',footer:false,...options};
+    let config={gender:'female',layout:false,backdrop:'transparent',footer:false,bubbleField:createBubbleField(options.seed),...options};
     let enabled=true,destroyed=false,frame=0,elapsed=0,last=null,lastDraw=0;
     function paint(){draw(ctx,assets,elapsed,{...config,blink:enabled&&!media.matches});}
     function tick(now){if(destroyed)return;if(!enabled||document.hidden||media.matches){frame=0;last=null;paint();return;}if(last!==null)elapsed+=(now-last)/1000;last=now;if(now-lastDraw>=1000/30){paint();lastDraw=now;}frame=requestAnimationFrame(tick);}
