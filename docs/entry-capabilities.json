@@ -1,0 +1,548 @@
+{
+  "schema": "tisya.entry-audit/1",
+  "baseline": "dbb8b6f1f7fc46011c74acdb87ae7b7a40daface",
+  "version": "0.2.0-alpha.31.26",
+  "status": "implemented-browser-and-regression-verified",
+  "definition": "每个管理目标在设置层只注册一次；主页负责用户/角色/群聊/世界书/预设；原生对象内操作与手机既有快捷入口保留并调用同一数据源。",
+  "native_control_count": 906,
+  "native_drawers": [
+    "ai-config-button",
+    "sys-settings-button",
+    "advanced-formatting-button",
+    "WI-SP-button",
+    "user-settings-button",
+    "backgrounds-button",
+    "extensions-settings-button",
+    "persona-management-button",
+    "rightNavHolder"
+  ],
+  "capabilities": [
+    {
+      "id": "persona.identity",
+      "owner": "user",
+      "label": "身份管理",
+      "features": [
+        "新建、切换、复制、删除",
+        "名称、头像、自我描述",
+        "搜索、排序、列表模式"
+      ],
+      "evidence": "persona-management-button"
+    },
+    {
+      "id": "persona.binding",
+      "owner": "user",
+      "label": "身份绑定与注入",
+      "features": [
+        "默认身份、绑定当前角色、锁定当前聊天",
+        "用户世界书关联",
+        "描述注入位置、深度与角色",
+        "多重关联、自动锁定和通知"
+      ],
+      "evidence": "persona-management-button"
+    },
+    {
+      "id": "persona.backup",
+      "owner": "user",
+      "label": "身份备份与恢复",
+      "features": [
+        "备份全部身份",
+        "恢复身份文件",
+        "将用户名称同步到已有消息"
+      ],
+      "evidence": "persona-management-button"
+    },
+    {
+      "id": "role.library",
+      "owner": "roles",
+      "label": "角色库",
+      "features": [
+        "搜索、排序、标签、分组、置顶",
+        "角色卡图片",
+        "整行进入角色",
+        "创建、文件导入与网址导入",
+        "批量管理"
+      ],
+      "evidence": "rightNavHolder"
+    },
+    {
+      "id": "role.editor",
+      "owner": "role-detail",
+      "label": "角色资料",
+      "features": [
+        "名称、描述、性格、场景、首条消息、示例对话",
+        "高级定义、备选开场白、作者与版本",
+        "系统提示词与历史后指令",
+        "卡内世界书、关联用户",
+        "标签、创作者说明、媒体与样式许可"
+      ],
+      "evidence": "rightNavHolder + character_popup"
+    },
+    {
+      "id": "role.operations",
+      "owner": "role-detail",
+      "label": "角色操作",
+      "features": [
+        "显示名与原卡名称分别保留",
+        "复制、导出、替换卡片",
+        "转换用户身份、收藏、删除",
+        "角色设置覆盖"
+      ],
+      "evidence": "rightNavHolder"
+    },
+    {
+      "id": "role.chats",
+      "owner": "role-detail",
+      "label": "该角色的会话",
+      "features": [
+        "整行进入指定会话",
+        "行下改名、置顶、删除",
+        "创建新会话",
+        "会话导入导出归聊天文件管理"
+      ],
+      "evidence": "index.js showCard/directoryMenu"
+    },
+    {
+      "id": "group.library",
+      "owner": "groups",
+      "label": "群聊目录",
+      "features": [
+        "搜索和收藏",
+        "创建群聊",
+        "整行进入群聊",
+        "对应行展开管理按钮"
+      ],
+      "evidence": "rightNavHolder/rm_group_chats_block"
+    },
+    {
+      "id": "group.members",
+      "owner": "groups",
+      "label": "成员与发言",
+      "features": [
+        "添加、移除、禁言和排序成员",
+        "回复策略、轮流/拼接生成",
+        "自动发言与间隔",
+        "允许自我回应、隐藏静音立绘"
+      ],
+      "evidence": "rightNavHolder/rm_group_chats_block"
+    },
+    {
+      "id": "group.settings",
+      "owner": "groups",
+      "label": "群聊资料",
+      "features": [
+        "名称、头像、恢复拼接头像",
+        "场景覆盖、群聊世界书、媒体权限",
+        "收藏与删除",
+        "群聊会话文件管理使用聊天内原入口"
+      ],
+      "evidence": "rightNavHolder/rm_group_chats_block"
+    },
+    {
+      "id": "world.books",
+      "owner": "world",
+      "label": "书籍管理",
+      "features": [
+        "新建、导入、导出、复制、改名、删除",
+        "书籍选择、搜索、排序、刷新"
+      ],
+      "evidence": "WI-SP-button"
+    },
+    {
+      "id": "world.entries",
+      "owner": "world",
+      "label": "词条编辑",
+      "features": [
+        "新增、编辑、删除、启用",
+        "关键词、正文、注释、触发逻辑",
+        "常驻/选择性、顺序、位置、深度、角色",
+        "概率、分组、递归、延迟等原生字段完整保留"
+      ],
+      "evidence": "WI-SP-button + native world-entry templates"
+    },
+    {
+      "id": "world.scope",
+      "owner": "world",
+      "label": "挂载与扫描",
+      "features": [
+        "全局、角色、用户、聊天各自作用域",
+        "扫描深度、预算与上限",
+        "最少激活、递归步数",
+        "区分大小写、整词、分组评分、溢出提示"
+      ],
+      "evidence": "WI-SP-button"
+    },
+    {
+      "id": "world.batch",
+      "owner": "world",
+      "label": "词条整理",
+      "features": [
+        "展开/折叠全部",
+        "补齐空标题",
+        "应用当前排序为顺序",
+        "分页和筛选"
+      ],
+      "evidence": "WI-SP-button"
+    },
+    {
+      "id": "preset.library",
+      "owner": "presets",
+      "label": "预设管理",
+      "features": [
+        "选择、导入、导出、更新、另存、删除",
+        "保留不同后端的预设类型"
+      ],
+      "evidence": "ai-config-button"
+    },
+    {
+      "id": "preset.prompts",
+      "owner": "presets",
+      "label": "提示词与采样",
+      "features": [
+        "提示词条目、顺序、开关与内容",
+        "温度、Top P、最大回复、上下文长度",
+        "采样器顺序、偏置、推理、多媒体及提供商专用参数"
+      ],
+      "evidence": "ai-config-button"
+    },
+    {
+      "id": "config.mode",
+      "owner": "settings/config",
+      "label": "本模式配置",
+      "features": [
+        "模式切换",
+        "叙事授权、视角、角色主动性、角色自主",
+        "创作摘要、行动建议、心声",
+        "步序、思维链详略",
+        "扩展、标记、工作流、要求资源的选择与编辑"
+      ],
+      "evidence": "config/panel.js:mode"
+    },
+    {
+      "id": "config.world",
+      "owner": "settings/config",
+      "label": "世界配置",
+      "features": [
+        "主控、关注对象",
+        "主文风与补充文风及参数",
+        "世界级扩展覆盖",
+        "内部开关、难度、中心化与内容边界"
+      ],
+      "evidence": "config/panel.js:world"
+    },
+    {
+      "id": "config.routes",
+      "owner": "settings/config",
+      "label": "任务 API 与预设引用",
+      "features": [
+        "通用、模式、各类任务的独立路由",
+        "模型、抗截断传输、请求参数覆盖",
+        "只选择引用，预设文件的编辑统一归预设页"
+      ],
+      "evidence": "config/panel.js:api"
+    },
+    {
+      "id": "config.connection",
+      "owner": "settings/config",
+      "label": "连接与模型管理",
+      "features": [
+        "API 类型、提供商、地址与凭据",
+        "连接档案、代理、模型选择",
+        "附加请求参数、消息后处理",
+        "测试连接"
+      ],
+      "evidence": "sys-settings-button"
+    },
+    {
+      "id": "config.format",
+      "owner": "settings/config",
+      "label": "输出格式",
+      "features": [
+        "上下文模板、指令模板、系统提示词",
+        "分词器、停止字符串、推理格式",
+        "高级格式导入导出"
+      ],
+      "evidence": "advanced-formatting-button"
+    },
+    {
+      "id": "config.context",
+      "owner": "settings/config",
+      "label": "上下文与数据",
+      "features": [
+        "原生/手选资料来源",
+        "原卡 MVU",
+        "历史条数与文本预算",
+        "角色卡、用户描述、世界书与具体词条范围",
+        "配置备份导出导入、资源 JSON 导入"
+      ],
+      "evidence": "config/panel.js:data"
+    },
+    {
+      "id": "config.overview",
+      "owner": "settings/config",
+      "label": "上下文一览",
+      "features": [
+        "逐任务实际请求记录",
+        "正文、提示词、参数",
+        "复制与导出当前记录",
+        "复制失败可选文本"
+      ],
+      "evidence": "config/panel.js:overview"
+    },
+    {
+      "id": "config.tables",
+      "owner": "settings/config",
+      "label": "表单推进",
+      "features": [
+        "独立启停、辅助 API、原生变量映射",
+        "当前表单、手动编辑、回合处理、历史补录",
+        "创世蓝图、模板与类型",
+        "偏好确认、禁词防套话",
+        "世界推进、平行存档、通用核心、修改时间线",
+        "预设全文与表单导出",
+        "配置助手、任务状态与取消"
+      ],
+      "evidence": "tables/panel.js"
+    },
+    {
+      "id": "display.theme",
+      "owner": "settings/theme",
+      "label": "主题配置",
+      "features": [
+        "通用、题签、任务、心声、正文、世界扩展、行动栏、记录、旅程外观",
+        "各区方案保存/应用/导入导出",
+        "原生正则覆盖开关",
+        "主题资源选择与参数"
+      ],
+      "evidence": "config/panel.js:theme + appearance-settings.js"
+    },
+    {
+      "id": "display.cache",
+      "owner": "settings/theme",
+      "label": "聊天显示与缓存",
+      "features": [
+        "首批显示条数",
+        "加载更早消息",
+        "清理可重建的显示缓存",
+        "不删除聊天原文"
+      ],
+      "evidence": "chat-loading.js"
+    },
+    {
+      "id": "display.background",
+      "owner": "settings/theme",
+      "label": "背景",
+      "features": [
+        "选择、上传、自动背景、适配方式",
+        "文件夹和批量整理",
+        "缩略图大小与排序"
+      ],
+      "evidence": "backgrounds-button"
+    },
+    {
+      "id": "display.atlas",
+      "owner": "settings/theme",
+      "label": "表情图鉴",
+      "features": [
+        "内置六张表情浏览与预览",
+        "不把图鉴展示扩充为未实现的可编辑收藏库"
+      ],
+      "evidence": "emotion-catalog.js"
+    },
+    {
+      "id": "display.pet",
+      "owner": "settings/theme",
+      "label": "桌宠显示",
+      "features": [
+        "显示或隐藏桌宠",
+        "保留人物上既有拖动、收起和打开手机的行为"
+      ],
+      "evidence": "index.js pet-toggle"
+    },
+    {
+      "id": "display.motion",
+      "owner": "settings/theme",
+      "label": "动态效果",
+      "features": [
+        "开关深水、微泡与眨眼",
+        "遵循系统减少动态与页面可见性"
+      ],
+      "evidence": "index.js motion-toggle"
+    },
+    {
+      "id": "display.fullscreen",
+      "owner": "settings/theme",
+      "label": "全屏",
+      "features": [
+        "宿主沉浸全屏优先",
+        "系统全屏依宿主可用性呈现",
+        "同一时刻只保留一个按钮"
+      ],
+      "evidence": "index.js fullscreen"
+    },
+    {
+      "id": "display.font",
+      "owner": "settings/theme",
+      "label": "字体状态与重试",
+      "features": [
+        "显示下载状态",
+        "失败后重试，不重置用户配置"
+      ],
+      "evidence": "index.js font-retry"
+    },
+    {
+      "id": "chat.notebook",
+      "owner": "settings/chat",
+      "label": "会话记录",
+      "features": [
+        "会话手记与公开记忆为同页两个栏目",
+        "搜索、分页、刷新",
+        "阅读正文/本回合、定位原文"
+      ],
+      "evidence": "notebook.js"
+    },
+    {
+      "id": "chat.shortcuts",
+      "owner": "settings/chat",
+      "label": "快捷操作配置",
+      "features": [
+        "输入快捷栏设置",
+        "消息快捷栏位置与更多项",
+        "长按菜单槽位",
+        "保留用户自定义顺序和全部动作"
+      ],
+      "evidence": "index.js input-tools/slots"
+    },
+    {
+      "id": "chat.continue",
+      "owner": "settings/chat",
+      "label": "继续设置",
+      "features": [
+        "自动附加的用户文字",
+        "留空直接继续",
+        "不与输入栏继续执行按钮混为同一项"
+      ],
+      "evidence": "index.js continue-settings"
+    },
+    {
+      "id": "system.extensions",
+      "owner": "settings/more",
+      "label": "扩展与自动化",
+      "features": [
+        "扩展管理、安装、连接与动态注入配置",
+        "Agent、Skill、MCP、生图、语音沿原面板内各自区块",
+        "正则、快捷回复、附件/资料库、向量、摘要、翻译、立绘、图集、资源、图像说明、代码渲染、连接档案、迁移、版本与token计数",
+        "未知扩展和无 ID 新抽屉按稳定标识去重纳入"
+      ],
+      "evidence": "layout.js drawerEntries/SECTIONS + extensions-settings-button"
+    },
+    {
+      "id": "system.native",
+      "owner": "settings/more",
+      "label": "酒馆与系统",
+      "features": [
+        "原生主题和显示偏好、语言、TauriTavern 设置",
+        "导入导出主题、角色/聊天绑定",
+        "输入行为、快捷补全",
+        "数据整理、调试、面板位置重置",
+        "提供商与系统后续新增控件原样保留"
+      ],
+      "evidence": "user-settings-button"
+    },
+    {
+      "id": "system.restore",
+      "owner": "settings/more",
+      "label": "返回原生界面",
+      "features": [
+        "退出扩展外壳，恢复原生控件",
+        "保留已保存配置和聊天"
+      ],
+      "evidence": "index.js disable"
+    },
+    {
+      "id": "chat.native",
+      "owner": "chat",
+      "label": "聊天原生菜单",
+      "features": [
+        "作者注释、CFG、Token 概率",
+        "书签/检查点、返回父分支",
+        "新建/关闭聊天、转群聊、聊天文件管理",
+        "导入导出",
+        "批量删除、重新生成、代写、继续"
+      ],
+      "evidence": "host #options + index.js chat-all"
+    },
+    {
+      "id": "chat.composer",
+      "owner": "chat",
+      "label": "输入与生成",
+      "features": [
+        "输入、发送、停止、附件",
+        "继续、代写、Agent 开关",
+        "脚本继续/暂停/停止",
+        "快捷回复与第三方复杂工具原节点"
+      ],
+      "evidence": "layout.js installComposer + host #send_form"
+    },
+    {
+      "id": "chat.message",
+      "owner": "chat",
+      "label": "消息操作",
+      "features": [
+        "原生编辑、复制、重写、下一条/候选、阅读、版本修订",
+        "分支、删除、回滚",
+        "候选选择、改写、删除、确认",
+        "正文行动建议和消息导航"
+      ],
+      "evidence": "index.js message-tools/msg-* + candidate-*"
+    },
+    {
+      "id": "chat.reader",
+      "owner": "chat",
+      "label": "阅读与定位",
+      "features": [
+        "折叠/展开、阅读长文、楼层导航、回到消息",
+        "原始消息、正则与原卡脚本功能不删"
+      ],
+      "evidence": "index.js + navigation.js"
+    },
+    {
+      "id": "home.directory",
+      "owner": "home",
+      "label": "最近会话",
+      "features": [
+        "搜索、角色卡图片、折叠角色、刷新",
+        "整行进入角色或聊天",
+        "箭头和长按展开原行菜单",
+        "改名、置顶、分组、删除"
+      ],
+      "evidence": "home.js + index.js directory*"
+    },
+    {
+      "id": "home.persona",
+      "owner": "home",
+      "label": "用户入口 ↗",
+      "features": [
+        "仅一处进入用户资料，保持颈肩位置和既定水相布局"
+      ],
+      "evidence": "home.js"
+    },
+    {
+      "id": "phone.apps",
+      "owner": "phone",
+      "label": "桌宠手机应用",
+      "features": [
+        "保留同一套数据和应用",
+        "接入后调用统一功能路由",
+        "应用层快捷入口不再复制到设置主菜单",
+        "不能删掉桌宠既有手机能力来凑去重"
+      ],
+      "evidence": "index.js phoneApp + phone UI"
+    }
+  ],
+  "unresolved": [
+    "无性别第三水相素材仍待确认；不是既有功能丢失",
+    "完整聊天读取缓存 RT14 待单独审计；当前仅显示缓存",
+    "第三方扩展运行时控件只能动态发现，静态 APK 清单不能穷尽",
+    "Android目标设备与运行时第三方扩展尚未逐项实测。"
+  ]
+}

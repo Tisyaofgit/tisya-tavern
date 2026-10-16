@@ -19,7 +19,7 @@ test('persona form reads only explicit fields, rejects ambiguous or contextual m
 test('homepage uses native routes and real card thumbnails, escapes all user content',async()=>{
  const f=fixture({cards:[{id:4,name:'<img src=x onerror=alert(1)>',avatar:'safe & name.png'}],profile:{name:'<script>x</script>',description:'性别：男'}});await f.view.ready;
  assert.equal(f.art[0].gender,'male');assert.equal(f.root.querySelectorAll('script').length,0);assert.equal(f.root.querySelector('.tisya-home-portrait img').src,'http://localhost/thumbnail?file=safe%20%26%20name.png');
- for(const action of ['drawer:persona-management-button','drawer:WI-SP-button','drawer:ai-config-button','menu','contacts','drawer:rightNavHolder'])assert(f.root.querySelector(`[data-tisya-action="${action}"]`));
+ for(const action of ['drawer:persona-management-button','drawer:WI-SP-button','drawer:ai-config-button','menu','contacts','groups'])assert(f.root.querySelector(`[data-tisya-action="${action}"]`));
  assert.equal(f.root.querySelector('[data-tisya-action=menu]').textContent,'设置');assert.equal(f.root.querySelector('.tisya-home-profile small').textContent,'用户入口 ↗');assert.match(f.root.querySelector('.tisya-home-dedication img').alt,/Svāti/);assert.equal(f.root.querySelector('.tisya-home-form-note'),null);
  f.view.refreshMotion(false);assert.equal(f.art.at(-1),false);await f.close();assert.equal(f.art.at(-1),'disposed');
 });

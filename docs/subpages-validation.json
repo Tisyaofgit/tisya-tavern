@@ -1,0 +1,122 @@
+{
+  "version": "0.2.0-alpha.31.26",
+  "buildChecks": 10,
+  "regression": {
+    "tests": 618,
+    "pass": 618,
+    "fail": 0
+  },
+  "browser": {
+    "environment": "Chromium, production runtime and assets with isolated host API/data fixture; not Android",
+    "results": [
+      {
+        "width": 320,
+        "roles": 2,
+        "groups": 2,
+        "inlineMenus": true,
+        "groupEditWithoutChatLoad": true,
+        "settingsTargets": 21,
+        "uniqueActions": true,
+        "cacheDraftGuard": true,
+        "overflow": false,
+        "runtimeErrors": []
+      },
+      {
+        "width": 430,
+        "roles": 2,
+        "groups": 2,
+        "inlineMenus": true,
+        "groupEditWithoutChatLoad": true,
+        "settingsTargets": 21,
+        "uniqueActions": true,
+        "cacheDraftGuard": true,
+        "overflow": false,
+        "runtimeErrors": []
+      },
+      {
+        "width": 900,
+        "roles": 2,
+        "groups": 2,
+        "inlineMenus": true,
+        "groupEditWithoutChatLoad": true,
+        "settingsTargets": 21,
+        "uniqueActions": true,
+        "cacheDraftGuard": true,
+        "overflow": false,
+        "runtimeErrors": []
+      }
+    ]
+  },
+  "nativeDOM": {
+    "environment": "Actual extracted host HTML and CSS; production runtime; isolated host APIs, no server-side save or Android run",
+    "results": [
+      {
+        "width": 320,
+        "page": "user",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 318,
+        "client": 318,
+        "display": "block"
+      },
+      {
+        "width": 320,
+        "page": "world",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 318,
+        "client": 318,
+        "display": "block"
+      },
+      {
+        "width": 320,
+        "page": "presets",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 318,
+        "client": 318,
+        "display": "block"
+      },
+      {
+        "width": 430,
+        "page": "user",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 428,
+        "client": 428,
+        "display": "block"
+      },
+      {
+        "width": 430,
+        "page": "world",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 428,
+        "client": 428,
+        "display": "block"
+      },
+      {
+        "width": 430,
+        "page": "presets",
+        "controls": 906,
+        "preserved": true,
+        "scroll": 428,
+        "client": 428,
+        "display": "block"
+      }
+    ]
+  },
+  "limits": [
+    "Not Android/device validation",
+    "Native host APIs and data are isolated fixtures; no model or server-side write validation",
+    "Native screenshots do not initialize host translation, select2 or provider visibility; show raw extracted form state",
+    "Unrelated fixture sound/default avatar/dialog polyfill resources not loaded; production extension own resources passed",
+    "Role native editor still uses host character selection and can read its active chat"
+  ],
+  "featureOwners": 45,
+  "settingsTargets": {
+    "standard": 21,
+    "fullscreenWhenAvailable": 1
+  },
+  "sourceContract": "Darkatse/TauriTavern a1855be4a4f8b6ee7cd0374a84dbb3709c3e5375"
+}

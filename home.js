@@ -27,7 +27,7 @@ export function mountHome(document,container,{cards,profile={},listChats,thumbna
       <div class="tisya-home-body">
         <aside class="tisya-home-rail" aria-label="主页导航">
           <button type="button" class="tisya-home-profile" data-tisya-action="drawer:persona-management-button" aria-label="USER 个人资料"><span>USER</span><small>用户入口 ↗</small></button>
-          <nav>${route('会话','home','chat','aria-current="page"')}${route('角色','contacts','character')}${route('群聊','drawer:rightNavHolder','group')}${route('世界书','drawer:WI-SP-button','worldbook')}</nav>
+          <nav>${route('会话','home','chat','aria-current="page"')}${route('角色','contacts','character')}${route('群聊','groups','group')}${route('世界书','drawer:WI-SP-button','worldbook')}</nav>
           <div class="tisya-home-rail-bottom">${route('预设','drawer:ai-config-button','preset')}${route('设置','menu','settings')}</div>
         </aside>
         <div class="tisya-home-main">

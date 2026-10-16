@@ -1,5 +1,7 @@
 // Static, local SVGs. Visible controls keep an accessible name and a tooltip.
 const shapes = {
+    search:'<circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/>',
+    group:'<circle cx="12" cy="7" r="3"/><path d="M6 21v-4a6 6 0 0 1 12 0v4ZM3 20v-4a4 4 0 0 1 2-3M21 20v-4a4 4 0 0 0-2-3M5 4a3 3 0 0 0 0 6M19 4a3 3 0 0 1 0 6"/>',
     close:'<path d="m6 6 12 12M18 6 6 18"/>',
     menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
     reroll:'<rect x="4" y="4" width="16" height="16" rx="4"/><g fill="currentColor" stroke="none"><circle cx="8" cy="8" r="1.2"/><circle cx="16" cy="8" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="8" cy="16" r="1.2"/><circle cx="16" cy="16" r="1.2"/></g>',
