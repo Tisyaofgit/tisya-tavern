@@ -1,0 +1,28 @@
+{
+  "source": "Approved material v1; female V13, male V14",
+  "reference_library_files": [
+    "libfile_a419022bfde48191a0c35b5159f4acee",
+    "libfile_76256be1d7148191844188a9a91df8f7"
+  ],
+  "material_pack": "libfile_b10f176b1a448191bf59011adc806a93",
+  "files": {
+    "dedication.webp": "ff6757b4fd92d35dbc34c214875d5ab103929a7d9a1ad9b5e03635a815956395",
+    "quiet-water.webp": "8bf736a5f216b5469b6b921f714d19d448f030229db08b6b09087e709697d27e",
+    "female-water.webp": "237d16492f18f3d561c29b1048f3f4a27a1854e9a67a2fa0664c6c90a494bd47",
+    "female-glint.webp": "dd310a829b447ec68509323266f5dffcf36d715df40f66dec76c43c3272a5e24",
+    "male-water.webp": "29cbadf4bbab7f240d1f81dbb704525f23aea3c663360e0575a59df9c33f657f",
+    "male-glint.webp": "0c3c5c350e941e6e1f4f610e44392154ad4feec9f7b24eb6d77fc4cf3122101a",
+    "icons/character.svg": "268b7bd1fc5cb7323ffe1e1a8c00bce4fcf357f9452d37133a53c96a5abf4584",
+    "icons/worldbook.svg": "55af6882169e2c64594ded8df53375ed391860bf8d23798378c280a41beda15d",
+    "icons/settings.svg": "6870c5fcfa32cf86f85778086fa8e3fc7428ff6831cfce989ac980150bf5a797",
+    "icons/expand.svg": "3b455c6b3d70874d08d618db41ab12bfefcf0ff29b04758b99ebfe09df2a5123",
+    "icons/group.svg": "bc55b9cf2fccd721da6d6cb400931166d96c187a79d1e670e4a0f6036edb3a5e",
+    "icons/search.svg": "62b940b7a295d7b1195ac13b6a7203cb39c3f5fd96975536bcb9ab14816aa727",
+    "icons/preset.svg": "7d79aede929095d5ed4b5f4ab9409839e7248a8dbd2c87d9b996cc5047ccf833",
+    "icons/refresh.svg": "0a5879652ce4f5cbc73cce29dc63b6b1511ce2327f798547c03915be2fbcfe44",
+    "icons/profile-arrow.svg": "42f862b32ec0319132a5ec3d2c9bb055b201787918101034284ba9feccbd551b",
+    "icons/back.svg": "fd578a708f3b659a6d0bc6e58090e51952509906874eb8a5997ae45487eadd7a",
+    "icons/chevron.svg": "c251b8348c6f4d885fb996e1e8d09eefcdeb82dd6a6d45b9d0d7468a44d10052",
+    "icons/chat.svg": "2f3a0da64788b9c616612a5b2dad74d71d3e58b6539f742b045922c1e8784d16"
+  }
+}

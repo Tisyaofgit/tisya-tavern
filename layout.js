@@ -1,6 +1,6 @@
 import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.2.0-alpha.31.20';
+export const VERSION = '0.2.0-alpha.31.21';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 
@@ -76,7 +76,7 @@ export function mountLayout(document) {
     holder.append(controls);
     const root = document.createElement('div'); root.id = 'tisya-shell';
     root.setAttribute('data-tt-mobile-surface', 'none');
-    root.innerHTML = '<main class="tisya-page" aria-label="会话与联系人"></main>';
+    root.innerHTML = '<main class="tisya-page" aria-label="会话与角色"></main>';
     sheld.append(root);
     const overlay = document.createElement('dialog'); overlay.id = 'tisya-overlay';
     overlay.setAttribute('data-tt-mobile-surface', 'none');
