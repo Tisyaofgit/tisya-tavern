@@ -23,6 +23,12 @@
     "icons/profile-arrow.svg": "42f862b32ec0319132a5ec3d2c9bb055b201787918101034284ba9feccbd551b",
     "icons/back.svg": "fd578a708f3b659a6d0bc6e58090e51952509906874eb8a5997ae45487eadd7a",
     "icons/chevron.svg": "c251b8348c6f4d885fb996e1e8d09eefcdeb82dd6a6d45b9d0d7468a44d10052",
-    "icons/chat.svg": "2f3a0da64788b9c616612a5b2dad74d71d3e58b6539f742b045922c1e8784d16"
+    "icons/chat.svg": "2f3a0da64788b9c616612a5b2dad74d71d3e58b6539f742b045922c1e8784d16",
+    "female-blink.webp": "b5be07611f8dc3d5f1cd53b2eb871c5740bf33b9972449b1c55511c5d1d9af84",
+    "male-blink.webp": "d50e943cf0155bead0f07ec8acdb81be2f930c6405a2f375044b238c2943ae01"
+  },
+  "blink_revision": {
+    "authorization": "2026-10-16 用户要求人物安静偶尔眨眼；仅局部眼睑派生，不替换原脸",
+    "metadata": "blink-provenance.json"
   }
 }

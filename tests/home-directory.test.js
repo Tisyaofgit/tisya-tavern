@@ -26,3 +26,9 @@ test('pinned role and chat order uses stable native identities and chevron never
  assert.match(d.querySelector('.tisya-home-role-name').textContent,/乙/);assert.match(d.querySelector('[data-home-chat]').textContent,/置顶旧聊/);d.querySelector('.tisya-home-chat-row .tisya-home-menu').click();assert.equal(selected.length,0);
  d.querySelector('[data-home-chat]').click();assert.equal(selected[0][0].avatar,'b');assert.equal(selected[0][1].file_name,'old.jsonl');view.dispose();await w.happyDOM.abort();
 });
+test('inline action remains clickable immediately after a held row without reopening its menu',async()=>{
+ const w=new Window(),d=w.document;d.body.innerHTML='<main><div data-directory="role"><button class="open">进入</button></div></main>';const root=d.querySelector('main'),row=root.firstChild,enter=row.firstChild;let menus=0,actions=0;
+ const off=mountDirectoryHold(root,{delay:10,onMenu:()=>{menus++;row.insertAdjacentHTML('beforeend','<div class="tisya-directory-inline"><button>改名</button></div>');row.lastChild.firstChild.onclick=()=>actions++;}});
+ enter.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:1,isPrimary:true,clientX:1,clientY:1}));await sleep(20);root.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true}));row.lastChild.firstChild.click();assert.equal(actions,1);assert.equal(menus,1);
+ row.lastChild.firstChild.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerId:2,isPrimary:true,clientX:1,clientY:1}));await sleep(20);assert.equal(menus,1);off();await w.happyDOM.abort();
+});

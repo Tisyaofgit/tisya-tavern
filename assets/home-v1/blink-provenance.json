@@ -1,0 +1,62 @@
+{
+  "female": {
+    "input_sha256": "1cf20acabf7a779b6fcafcee3984211b99d51ba0849d99111bd48b2519e7d997",
+    "input_name": "exec-21412c16-4f40-4cbd-b85e-85995334a3b3.png",
+    "output": "female-blink.webp",
+    "sha256": "b5be07611f8dc3d5f1cd53b2eb871c5740bf33b9972449b1c55511c5d1d9af84",
+    "bounds": [
+      240,
+      110,
+      110,
+      120
+    ],
+    "eye_masks": [
+      [
+        284,
+        183.3,
+        21,
+        11,
+        0.49
+      ],
+      [
+        325,
+        204,
+        10,
+        7,
+        -0.63
+      ]
+    ],
+    "generator": "built-in imagegen; precise-object-edit, close both eyes only",
+    "scope": "only masked eyelid pixels; original portrait and all other pixels unchanged"
+  },
+  "male": {
+    "input_sha256": "5754e280efdd6a4deae53a5a7aabbc01206cbc17540b97560124ce9e3ea4ef40",
+    "input_name": "exec-8602d0e4-1eae-4a1c-be0e-03935a5c785c.png",
+    "output": "male-blink.webp",
+    "sha256": "d50e943cf0155bead0f07ec8acdb81be2f930c6405a2f375044b238c2943ae01",
+    "bounds": [
+      240,
+      110,
+      110,
+      120
+    ],
+    "eye_masks": [
+      [
+        288,
+        144.8,
+        20,
+        10,
+        0.44
+      ],
+      [
+        331,
+        164,
+        10,
+        7,
+        -0.65
+      ]
+    ],
+    "generator": "built-in imagegen; precise-object-edit, close both eyes only",
+    "scope": "only masked eyelid pixels; original portrait and all other pixels unchanged"
+  }
+}

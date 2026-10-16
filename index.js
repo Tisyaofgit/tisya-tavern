@@ -115,10 +115,10 @@ function checkReadingSource(){
     notebook?.checkCurrent();
     if(readerToken)try{validate(context(),readerToken);}catch{sheet('阅读已失效','<p role="status">原消息或候选已变化，请重新打开阅读。</p>');}
 }
-function clearNotebook(){homeView?.dispose();homeView=null;notebook?.dispose();notebook=null;utility?.dispose();utility=null;}
+function clearNotebook(){closeDirectoryMenu();homeView?.dispose();homeView=null;notebook?.dispose();notebook=null;utility?.dispose();utility=null;}
 function close(expectedEpoch = sheetEpoch) { if(expectedEpoch!==sheetEpoch)return;sheetEpoch++;clearReader();revisionEditor?.dispose();revisionEditor=null;if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
 function sheet(title, body) {
-    sheetEpoch++;
+    closeDirectoryMenu();sheetEpoch++;
     clearReader();
     overlay.setAttribute('aria-label',title);
     overlay.innerHTML = `<div class="tisya-backdrop"><section class="tisya-sheet"><header><h2>${esc(title)}</h2>${button('关闭','close')}</header>${body}</section></div>`;
@@ -217,36 +217,63 @@ function contacts() {
     const prefs=settings();directoryState(prefs);
     page('角色', `<input class="tisya-search" placeholder="搜索名称、分组或作者标签" aria-label="搜索角色"><div class="tisya-list">${[...groups].map(([group,cards])=>`<details open><summary>${esc(group)} · ${cards.length}</summary>${cards.sort((a,b)=>(directoryEntry(prefs,b).置顶||0)-(directoryEntry(prefs,a).置顶||0)).map(card=>{const entry=directoryEntry(prefs,card),name=entry.名称||card.name;return `<div class="tisya-contact" data-directory="${esc(directoryToken(card))}" data-search="${esc([name,card.name,group,...card.tags].join(' ').toLowerCase())}">${button((entry.置顶?'置顶 · ':'')+name,`card:${card.id}`)}<small>${esc(card.tags.join(' · '))}</small><button type="button" data-tisya-action="directory-menu:${encodeURIComponent(directoryToken(card))}" aria-label="${esc(name)}操作菜单">&gt;</button></div>`;}).join('')}</details>`).join('')}</div><footer>${button('创建或导入角色卡','drawer:rightNavHolder')}${button('群聊','drawer:rightNavHolder')}</footer>`);
 }
-let directoryTarget=null;
+let directoryTarget=null,directoryPanel=null,directoryRow=null,directoryRevision=0;
+function closeDirectoryMenu(){
+    directoryRevision++;directoryPanel?.remove();directoryPanel=null;
+    directoryRow?.classList.remove('tisya-directory-expanded');
+    directoryRow?.querySelector('[data-tisya-action^="directory-menu:"]')?.setAttribute('aria-expanded','false');
+    directoryRow=null;directoryTarget=null;
+}
 function resolveDirectory(token){
     const target=JSON.parse(token),id=context().characters.findIndex(c=>c.avatar===target.avatar);
     if(id<0||typeof target.avatar!=='string'||(target.file!==undefined&&typeof target.file!=='string'))throw Error('目录目标已变化，请刷新');
     return {target,card:{...context().characters[id],id},chat:target.file===undefined?null:{file_name:target.file+'.jsonl'}};
 }
+function directoryBody(html){
+    if(!directoryPanel?.isConnected)throw Error('目录页面已变化，请重新打开菜单');
+    directoryRevision++;directoryPanel.innerHTML=html;
+}
 function directoryMenu(token){
     directoryState(settings());
+    if(directoryTarget?.token===token&&directoryPanel?.isConnected){closeDirectoryMenu();return;}
     const {card,chat}=resolveDirectory(token),entry=directoryEntry(settings(),card,chat);
+    const row=[...root.querySelectorAll('[data-directory]')].find(n=>n.dataset.directory===token);
+    if(!row)throw Error('目录行已变化，请重新打开');
+    closeDirectoryMenu();
     const origin=homeView?'home':root.querySelector('.tisya-search')?'contacts':'card';
     directoryTarget={token,origin,stamp:JSON.stringify(settings()),epoch:renderEpoch};
-    sheet(entry.名称||(chat?chatTitle(chat.file_name,card.name):card.name),`<div class="tisya-list">${button('重命名显示名称','directory-rename')}${button(entry.置顶?'取消置顶':'置顶','directory-pin')}${!chat?button('分组',`group:${card.id}`):''}${button(chat?'删除这段会话':'删除角色卡','directory-delete')}</div>`);
+    directoryRow=row;row.classList.add('tisya-directory-expanded');
+    row.querySelector('[data-tisya-action^="directory-menu:"]')?.setAttribute('aria-expanded','true');
+    directoryPanel=document.createElement('div');directoryPanel.className='tisya-directory-inline';
+    directoryPanel.setAttribute('role','group');directoryPanel.setAttribute('aria-label',(entry.名称||(chat?chatTitle(chat.file_name,card.name):card.name))+'操作');
+    // A role summary owns its submenu even when its conversations are folded.
+    // Prevent the summary default without cancelling editing/input focus.
+    directoryPanel.addEventListener('click',event=>{if(!event.target.closest('button,input,label'))event.preventDefault();});
+    row.append(directoryPanel);directoryButtons();
+}
+function directoryButtons(){
+    const d=checkedDirectory(),entry=directoryEntry(settings(),d.card,d.chat);
+    directoryBody(`<div class="tisya-directory-buttons">${button('改名','directory-rename')}${button(entry.置顶?'取消置顶':'置顶','directory-pin')}${!d.chat?button('分组','directory-group'):''}${button('删除','directory-delete')}${button('收起','directory-close')}</div>`);
 }
 function checkedDirectory(){
-    if(!directoryTarget||directoryTarget.epoch!==renderEpoch)throw Error('目录页面已变化，请重新打开菜单');
+    if(!directoryTarget||directoryTarget.epoch!==renderEpoch||!directoryPanel?.isConnected)throw Error('目录页面已变化，请重新打开菜单');
     if(directoryTarget.stamp!==JSON.stringify(settings()))throw Error('目录设置已变化，请重新打开菜单');
-    return {...resolveDirectory(directoryTarget.token),...directoryTarget,sheet:sheetEpoch};
+    return {...resolveDirectory(directoryTarget.token),...directoryTarget,sheet:sheetEpoch,revision:directoryRevision};
 }
 function directoryRename(){
     const d=checkedDirectory(),entry=directoryEntry(settings(),d.card,d.chat);
-    sheet('重命名显示名称',`<label for="tisya-directory-name">喜欢的名字</label><input id="tisya-directory-name" maxlength="120" value="${esc(entry.名称||(d.chat?chatTitle(d.chat.file_name,d.card.name):d.card.name))}"><p class="tisya-note">只更改列表显示名称；角色设定和聊天原文保留。留空恢复原名。</p>${button('保存','directory-save')}`);
+    directoryBody(`<label for="tisya-directory-name">显示名称</label><input id="tisya-directory-name" maxlength="120" value="${esc(entry.名称||(d.chat?chatTitle(d.chat.file_name,d.card.name):d.card.name))}"><p>仅改列表显示名，留空恢复原名。</p><div class="tisya-directory-buttons">${button('保存','directory-save')}${button('返回','directory-back')}</div>`);
 }
-async function refreshDirectory(d){if(d.epoch!==renderEpoch||d.sheet!==sheetEpoch)return;close();directoryTarget=null;if(d.origin==='home')await home();else if(d.origin==='contacts'){renderEpoch++;contacts();}else {const id=context().characters.findIndex(c=>c.avatar===d.target.avatar);if(id>=0)await showCard(id);else{renderEpoch++;contacts();}}}
+function directoryGroup(){const d=checkedDirectory();if(d.chat)throw Error('请从角色行设置分组');directoryBody(`<label for="tisya-directory-group-name">角色分组</label><input id="tisya-directory-group-name" maxlength="120" value="${esc(settings().联系人分组[d.card.avatar]??'未分组')}"><div class="tisya-directory-buttons">${button('保存','directory-group-save')}${button('返回','directory-back')}</div>`);}
+async function directoryGroupSave(){const d=checkedDirectory(),name=query('#tisya-directory-group-name').value.trim();if(!name)throw Error('请输入分组名称');if(name.length>120)throw Error('分组最多120字');await saveInterfaceSettings({...settings(),联系人分组:{...settings().联系人分组,[d.card.avatar]:name}});await refreshDirectory(d);}
+async function refreshDirectory(d){if(d.epoch!==renderEpoch||d.sheet!==sheetEpoch||d.revision!==directoryRevision)return;closeDirectoryMenu();if(d.origin==='home')await home();else if(d.origin==='contacts'){renderEpoch++;contacts();}else {const id=context().characters.findIndex(c=>c.avatar===d.target.avatar);if(id>=0)await showCard(id);else{renderEpoch++;contacts();}}}
 async function directorySave(){const d=checkedDirectory(),name=query('#tisya-directory-name').value.trim();if(name.length>120)throw Error('名称最多120字');await saveInterfaceSettings(changeDirectory(settings(),d.token,{名称:name||null}));await refreshDirectory(d);}
 async function directoryPin(){const d=checkedDirectory(),entry=directoryEntry(settings(),d.card,d.chat);await saveInterfaceSettings(changeDirectory(settings(),d.token,{置顶:entry.置顶?null:Date.now()}));await refreshDirectory(d);}
-function directoryDeleteAsk(){const d=checkedDirectory();sheet('确认删除',`<p>${d.chat?'将永久删除这段聊天记录。':'将永久删除这张角色卡；关联聊天文件保留。'}无法在这里撤销。</p><strong>${esc(directoryEntry(settings(),d.card,d.chat).名称||(d.chat?d.target.file:d.card.name))}</strong><div class="tisya-list">${button('取消','close')}${button('确认删除','directory-delete-confirm')}</div>`);}
+function directoryDeleteAsk(){const d=checkedDirectory();directoryBody(`<p class="tisya-directory-warning">${d.chat?'永久删除这段聊天记录？':'永久删除这张角色卡？关联聊天文件保留。'}此操作无法撤销。</p><div class="tisya-directory-buttons">${button('取消','directory-back')}${button('确认删除','directory-delete-confirm')}</div>`);}
 async function directoryDelete(){
     assertIdle();const d=checkedDirectory();
     if(d.chat){
-        const before=await listChats(d.card.id);if(d.epoch!==renderEpoch||d.sheet!==sheetEpoch)throw Error('页面已变化，未删除会话');assertIdle();if(!before.some(c=>c.file_name.replace(/\.jsonl$/i,'')===d.target.file))throw Error('会话已不存在，请刷新');
+        const before=await listChats(d.card.id);if(d.epoch!==renderEpoch||d.sheet!==sheetEpoch||d.revision!==directoryRevision||!directoryPanel?.isConnected)throw Error('页面已变化，未删除会话');assertIdle();if(!before.some(c=>c.file_name.replace(/\.jsonl$/i,'')===d.target.file))throw Error('会话已不存在，请刷新');
         // Closing the active chat prevents a later autosave from recreating it.
         if(String(context().characterId)===String(d.card.id)&&context().chatId===d.target.file){if(!await closeCurrentChat())throw Error('当前聊天未能关闭，未删除');}
         const live=resolveDirectory(d.token);await deleteCharacterChatByName(live.card.id,d.target.file);
@@ -550,7 +577,7 @@ function init() {
     communicationUI=mountCommunication(document,{controller:communication,onError:error});cleanups.push(()=>{communicationUI?.dispose();communicationUI=null;});
     inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
-    const listener=e=>{const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
+    const listener=e=>{if(directoryPanel&&!directoryRow?.contains(e.target))closeDirectoryMenu();const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(action==='home'){home().catch(error);return;}
         if(action==='contacts'){renderEpoch++;contacts();return;}
         if(action==='notes'||action==='memory'){run(()=>openNotebook(action),{exclusive:false});return;}
@@ -558,7 +585,7 @@ function init() {
         if(action==='menu'){nav();return;}
         if(action==='directory-menu'){try{directoryMenu(decodeURIComponent(id));}catch(e){error(e);}return;}
         run(async()=>{
-        if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')openSettings();else if(action==='context-overview'){openSettings();utility.root.shadowRoot.querySelector('header button:nth-of-type(2)').click();}else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
+        if(action==='directory-close')closeDirectoryMenu();else if(action==='directory-back')directoryButtons();else if(action==='directory-group')directoryGroup();else if(action==='directory-group-save')await directoryGroupSave();else if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')openSettings();else if(action==='context-overview'){openSettings();utility.root.shadowRoot.querySelector('header button:nth-of-type(2)').click();}else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav();}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='select'){assertIdle();await context().selectCharacterById(Number(id),{switchMenu:true});if(String(context().characterId)!==id)throw new Error('宿主未切换角色');close();hidePage();nativeDrawer('rightNavHolder');}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('角色分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);
@@ -568,9 +595,9 @@ function init() {
             const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
         } else if(action==='branch-keep'||action==='branch-clear'){const token=overlay._messageToken;validate(context(),token,{tail:true});await tableService.stageFork(token.id+1,action==='branch-keep');const target=nodeFor(token).querySelector('.mes_create_branch');if(!target)throw Error('原生分支操作未挂载');close();target.click();} else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
-    },{exclusive:['directory-save','directory-pin','directory-delete-confirm','select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action)});};
+    },{exclusive:['directory-group-save','directory-save','directory-pin','directory-delete-confirm','select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action)});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
-    const escape=e=>{if(e.key==='Escape')close();};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
+    const escape=e=>{if(e.key==='Escape'){closeDirectoryMenu();close();}};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
     const input=e=>{if(!e.target.classList.contains('tisya-search'))return;const q=e.target.value.toLowerCase();root.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q));};root.addEventListener('input',input);
     paragraphActions=mountParagraphActions(document,{
         capture:node=>messageToken(Number(node.getAttribute('mesid'))),validate:token=>validate(context(),token,{tail:true}),assertIdle,
