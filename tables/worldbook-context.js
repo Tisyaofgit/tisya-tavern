@@ -1,10 +1,11 @@
+import {archiveLayer} from './archive-book.js';
 import {copy,check,normalized,references} from './schema.js';
 // Read-only generation projection. Storage journals never become active lore.
-export function worldbookEntries({rows,registry,scope,tags=[],forcedIds=[],temporary=null,due=[]}){
+export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forcedIds=[],temporary=null,due=[]}){
  const byId=new Map(rows.map(r=>[r.id,r])),forced=new Set(forcedIds),dueIds=new Set(due.filter(x=>x.due===true).map(x=>x.id));
  const names=r=>[r?.values.名称,...(r?.values.别名??[])].filter(x=>typeof x==='string'&&x.trim());
  const entries=[];
- function entry(id,name,content,keys,constant,reason){entries.push({uid:entries.length+1,world:'Tisya tables / '+scope,key:[...new Set(keys)],keysecondary:[],comment:name,content,constant,selective:false,selectiveLogic:0,disable:false,position:4,depth:1,role:0,order:constant?200:100,probability:100,useProbability:false,ignoreBudget:false,excludeRecursion:true,preventRecursion:true,delayUntilRecursion:false,matchWholeWords:false,caseSensitive:false,scanDepth:null,vectorized:false,sticky:0,cooldown:0,delay:0,group:'',triggers:[],tisyaTable:{id,reason}});}
+ function entry(id,name,content,keys,constant,reason){entries.push({uid:entries.length+1,world:'Tisya tables / '+scope,key:[...new Set(keys)],keysecondary:[],comment:name,content,constant,selective:false,selectiveLogic:0,disable:false,position:4,depth:1,role:0,order:constant?200:100,probability:100,useProbability:false,ignoreBudget:false,excludeRecursion:true,preventRecursion:true,delayUntilRecursion:false,matchWholeWords:false,caseSensitive:false,scanDepth:null,vectorized:false,sticky:0,cooldown:0,delay:0,group:'',triggers:[],tisyaTable:{id,reason,...(bookName?{book:bookName}:{}),...(byId.has(id)?{layer:archiveLayer(byId.get(id).table,registry)}:{})}});}
  for(const row of rows){
   const def=registry.tables.find(t=>t.id===row.table);check(def,'缺少表定义：'+row.table);
   const refs=references(row,registry);

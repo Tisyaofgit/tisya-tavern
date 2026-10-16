@@ -1,0 +1,14 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {sheetCatalog} from '../../tables/foundation/catalog.js';
+import {createSheetEngine} from '../../tables/foundation/engine.js';
+import {mountFoundationSheet} from './ui.js';
+import {valueValid} from '../../tables/schema.js';
+const output=new URL('./dist/',import.meta.url);await mkdir(output,{recursive:true});
+const catalog=sheetCatalog(),css=await readFile(new URL('./style.css',import.meta.url),'utf8');
+const json=JSON.stringify(catalog).replaceAll('<','\\u003c');
+const script=`const catalog=${json};const object=v=>!!v&&typeof v==='object'&&!Array.isArray(v),denied=new Set(['__proto__','prototype','constructor']);\n${valueValid.toString()}\n${createSheetEngine.toString()}\n${mountFoundationSheet.toString()}\nconst engine=createSheetEngine(catalog,valueValid);const controller=mountFoundationSheet(document.querySelector('main'),engine,catalog,{download(name,text){const url=URL.createObjectURL(new Blob([text],{type:name.endsWith('.txt')?'text/plain;charset=utf-8':'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}});window.addEventListener('beforeunload',event=>{if(controller.isDirty()){event.preventDefault();event.returnValue='';}});`;
+const html='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>缇斯亚 · 基础表单</title><style>'+css+'</style></head><body><main></main><script>'+script.replaceAll('</script','<\\/script')+'</script></body></html>';
+await writeFile(new URL('foundation-sheet.html',output),html);await writeFile(new URL('catalog.json',output),JSON.stringify(catalog,null,2));
+await writeFile(new URL('manifest.json',output),JSON.stringify({format:'tisya.foundation-sheet-build/1',templates:catalog.templates.length,fields:catalog.templates.reduce((n,t)=>n+t.fields.length,0),htmlSha256:createHash('sha256').update(html).digest('hex'),status:'isolated-preview-not-installed',remoteResources:0},null,2));console.log(fileURLToPath(output));

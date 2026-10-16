@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "fields": [
+    {
+      "name": "方案安全已核验",
+      "key": "方案.安全已核验",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "可以重新协商",
+      "key": "方案.可以重新协商",
+      "scope": "context",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "已被要求保证未核实之事",
+      "key": "对话.被要求保证未核实之事",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "已说明没有把握",
+      "key": "对话.已说明没有把握",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "仍被要求保证",
+      "key": "对话.仍被要求保证",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "暂时沉默",
+      "key": "对话.暂时沉默",
+      "scope": "context",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "连续用力时长",
+      "key": "身体.连续用力时长",
+      "scope": "owner",
+      "type": "number",
+      "write": false,
+      "unit": "时辰",
+      "allowBareNumber": true
+    },
+    {
+      "name": "右腕旧伤发痛",
+      "key": "身体.右腕旧伤发痛",
+      "scope": "owner",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "必须停手休息",
+      "key": "行动.必须停手休息",
+      "scope": "owner",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "木料干燥",
+      "key": "木料.干燥",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "木料涂厚漆",
+      "key": "木料.涂厚漆",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "听木辨裂适用",
+      "key": "能力.听木辨裂适用",
+      "scope": "context",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "本人主动选择说明",
+      "key": "隐情.本人主动选择说明",
+      "scope": "record-context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "本人亲手取出凭据",
+      "key": "隐情.本人亲手取出凭据",
+      "scope": "record-context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "本条隐情可揭示",
+      "key": "隐情.可揭示",
+      "scope": "record-context",
+      "type": "boolean",
+      "write": true
+    },
+    {
+      "name": "可靠合作持续成立",
+      "key": "成长.可靠合作持续成立",
+      "scope": "context",
+      "type": "boolean",
+      "write": false
+    },
+    {
+      "name": "分担工作改变可推进",
+      "key": "成长.分担工作改变可推进",
+      "scope": "context",
+      "type": "boolean",
+      "write": true
+    }
+  ],
+  "slots": {
+    "origin.character": {
+      "性情·协商条件": {
+        "mode": "required",
+        "writeKeys": [
+          "方案.可以重新协商"
+        ]
+      },
+      "性情·改变条件": {
+        "mode": "required",
+        "writeKeys": [
+          "成长.分担工作改变可推进"
+        ]
+      },
+      "表达·沉默条件": {
+        "mode": "required",
+        "writeKeys": [
+          "对话.暂时沉默"
+        ]
+      },
+      "本领·代价限制": {
+        "mode": "mixed",
+        "writeKeys": [
+          "身体.右腕旧伤发痛",
+          "行动.必须停手休息",
+          "能力.听木辨裂适用"
+        ]
+      }
+    },
+    "origin.character.secrets": {
+      "隐情·揭示条件": {
+        "mode": "required",
+        "writeKeys": [
+          "隐情.可揭示"
+        ]
+      }
+    }
+  }
+}

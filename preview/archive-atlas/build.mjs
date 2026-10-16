@@ -1,0 +1,19 @@
+import {ATLAS_STYLE} from '../../tables/atlas-style.js';
+import {readFile,writeFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+const root=path.dirname(fileURLToPath(import.meta.url)),dist=path.join(root,'dist');await mkdir(dist,{recursive:true});
+const collected=new Map();
+async function bundle(file){file=path.resolve(file);if(collected.has(file))return;let src=await readFile(file,'utf8');const imports=[...src.matchAll(/^import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"];?\s*$/gm)];for(const [,names,relative]of imports)await bundle(path.resolve(path.dirname(file),relative));for(const [all,names,relative]of imports)src=src.replace(all,`const {${names.replace(/\s+as\s+/g,':')}}=__m[${JSON.stringify(path.relative(root,path.resolve(path.dirname(file),relative)))}];`);const exports=[...src.matchAll(/\bexport\s+(?:async\s+)?(?:function|const|class)\s+(\w+)/g)].map(m=>m[1]);src=src.replace(/\bexport\s+/g,'');if(/^import /m.test(src))throw Error('Unsupported module import '+file);collected.set(file,{src,exports});}
+await bundle(path.join(root,'demo.js'));await bundle(path.join(root,'ui.js'));
+const fontText=[...collected.values()].map(x=>x.src).join('\n');await writeFile(path.join(dist,'font-text.txt'),fontText);
+const python=process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3';
+const temp=await mkdtemp(path.join(tmpdir(),'tisya-atlas-font-'));
+try{const source=Buffer.concat(await Promise.all([1,2,3,4].map(i=>readFile(path.resolve(root,'../../font/reading.part'+i+'.bin')))));if(createHash('sha256').update(source).digest('hex')!=='b68d6b9e4f3607fad79ab20c744092139aa64590a0c82354d31361929aa3afcb')throw Error('Font parts do not match the released font');await writeFile(path.join(temp,'reading.woff2'),source);execFileSync(python,['-m','fontTools.subset',path.join(temp,'reading.woff2'),'--text-file='+path.join(dist,'font-text.txt'),'--output-file='+path.join(dist,'reading-subset.woff2'),'--flavor=woff2','--layout-features=*'],{stdio:'pipe'});}finally{await rm(temp,{recursive:true,force:true});}
+const font=await readFile(path.join(dist,'reading-subset.woff2'));if(font.length>500000)throw Error('Preview font subset unexpectedly large');
+const script='const __m={};\n'+[...collected].map(([file,{src,exports}])=>`__m[${JSON.stringify(path.relative(root,file))}]=(()=>{\n${src}\nreturn {${exports.join(',')}};})();`).join('\n')+`\nconst data=__m['demo.js'].demoArchive();const ui=__m['ui.js'].mountArchiveAtlas(document.querySelector('#app'),data,{download(name,text){const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}});`;
+const css=ATLAS_STYLE,html='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>缇斯亚 · 档案馆</title><style>@font-face{font-family:TisyaReading;src:url(data:font/woff2;base64,'+font.toString('base64')+')}'+css+'</style></head><body><div id="app"></div><script>'+script.replaceAll('</script','<\\/script')+'</script></body></html>';
+await writeFile(path.join(dist,'archive-atlas.html'),html);await writeFile(path.join(dist,'manifest.json'),JSON.stringify({format:'tisya.archive-atlas-preview/1',status:'independent-preview-not-installed',modules:[...collected.keys()].map(file=>path.relative(root,file)),htmlSha256:createHash('sha256').update(html).digest('hex'),fontSource:'font/reading.part{1..4}.bin',fontSha256:createHash('sha256').update(font).digest('hex'),fontBytes:font.length,networkRequests:0},null,2));console.log(JSON.stringify({htmlBytes:Buffer.byteLength(html),fontBytes:font.length}));

@@ -3434,7 +3434,7 @@ const renderV2=render,switchV2=switchPage,sayV2=say,sheetV2=sheetContent,commitV
 const validateV2=validateDraft;
 validateDraft=function(){if(!HOST_MODE)return validateV2();syncDraft();const before=entries.find(e=>e.uid===editing);if(!draft.comment.trim()&&(!before||before.comment.trim()))return '请填写条目名称';for(const f of catalog.fields.filter(f=>f.type.startsWith('number'))){const v=draft[f.key];if(before&&JSON.stringify(v)===JSON.stringify(before[f.key]))continue;if(v==null){if(f.type==='number')return f.label+'不能为空';continue}if(!Number.isFinite(v)||!Number.isInteger(v)||v<0)return f.label+'必须是非负整数';if(f.key==='probability'&&v>100)return '概率必须在 0–100 之间'}return ''};
 const stateV2=state,targetsV2=targets;
-state=function(e){if(!HOST_MODE)return stateV2(e);if(e.disable)return '已关闭';if(e.mode==='condition')return '条件接口未连接';const b=books.find(b=>b.id===e.book);return b?.enabled||b?.sources?.some(s=>['角色','聊天','人格'].includes(s))?'配置已启用 · 待扫描':'未绑定当前上下文'};
+state=function(e){if(!HOST_MODE)return stateV2(e);if(e.disable)return '已关闭';if(e.mode==='condition')return hostCapabilities.conditions?'条件已配置 · 待本轮判定':'条件接口未连接';const b=books.find(b=>b.id===e.book);return b?.enabled||b?.sources?.some(s=>['角色','聊天','人格'].includes(s))?'配置已启用 · 待扫描':'未绑定当前上下文'};
 targets=function(){if(!HOST_MODE||!['global','character'].includes(batchScope))return targetsV2();return entries.filter(e=>{const b=books.find(b=>b.id===e.book);return batchScope==='global'?b?.enabled:b?.sources?.includes('角色')})};
 let planContext=null,hostCapabilities={};
 const planScope=()=>JSON.stringify({book,books:books.map(b=>[b.id,b.scope,b.enabled,b.sources]),auto,tags,selected:[...selected].sort(),batchScope,batchAction,targetField,batchValue,batchOther,regexFlags,bulkField,bulkValue,entries});
@@ -3489,6 +3489,9 @@ if(HOST_MODE){books=[];entries=[];tags={prefix:[],suffix:[]};bindings={primary:'
 render();
 
 function returnToSettings(){if(!hostBusy)hostCall('settings').catch(e=>say(e.message));}
+
+const conditionActivationBase=editorActivation;
+editorActivation=function(){let html=conditionActivationBase();if(!HOST_MODE||draft.mode!=='condition')return html;const rules=(hostCapabilities.conditionRules??[]).filter(r=>r.valid!==false);return html.replace('<div class="native-state">条件接口待接入 · 暂不注入</div>','<div class="native-state">'+(hostCapabilities.conditions?'统一条件引擎已连接':'条件引擎未连接')+'</div>').replace(/<input value="[^"]*" placeholder="选择或填写规则引用" oninput="draft.ruleRef=this.value">/,'<select aria-label="条件集合引用" onchange="syncDraft();draft.ruleRef=this.value;draft.ruleVersion=(hostCapabilities.conditionRules??[]).find(r=>r.id===this.value)?.revision??null;render()">'+ '<option value="">请选择已登记门禁</option>'+rules.map(r=>'<option value="'+esc(r.id)+'" '+(draft.ruleRef===r.id?'selected':'')+'>'+esc(r.name)+' · v'+r.revision+'</option>').join('')+'</select><span>已选版本：'+esc(draft.ruleVersion??'未确认')+'</span><button type="button" onclick="syncDraft();draft.ruleVersion=(hostCapabilities.conditionRules??[]).find(r=>r.id===draft.ruleRef)?.revision??null;render()">确认使用当前规则版本</button>').replace('复杂条件由条件引擎提供。通过后仍检查概率、延时、互斥和预算。','规则在表单的“条件运行”中登记。本条概率由引擎保存每次机会的结果；通过后仍遵守原生延时、互斥和预算。');};
 
 // Character links and common file operations stay inside this UI.
 let linkCharacters=[],linkCharacter='',linkValue=null,deleteImpact=null,linkDraft=null;

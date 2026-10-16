@@ -1,0 +1,19 @@
+{
+  "format": "tisya.archive-atlas-preview/1",
+  "status": "independent-preview-not-installed",
+  "modules": [
+    "../../tables/conditions.js",
+    "../../tables/schema.js",
+    "../../tables/foundation-definitions.js",
+    "demo.js",
+    "../../tables/archive-access.js",
+    "../../tables/atlas.js",
+    "../../tables/atlas-ui.js",
+    "ui.js"
+  ],
+  "htmlSha256": "f5b89fbd20630f4e19230abcb2a1dc563574d17bf96cbfcf08ef7195c84f5c55",
+  "fontSource": "font/reading.part{1..4}.bin",
+  "fontSha256": "b44522f88d50a3967ce0913ae62406b0be245b7fb748eb26ee6bda1391c71e67",
+  "fontBytes": 408652,
+  "networkRequests": 0
+}

@@ -26,7 +26,7 @@ module.exports=async function({p,f,check,qa,root}){
  await p.evaluate(async({navSource,pageSource})=>{
   const {settingsDestinations}=await import('/settings-navigation.js'),{mountSettingsHome}=await import('/settings-home.js'),{hideFullPanels}=await import('/panel-surface.js');
   document.body.classList.add('tisya-active');const root=document.createElement('div');root.id='tisya-shell';root.innerHTML='<main class="tisya-page"></main>';document.body.append(root);root.style.cssText='position:fixed;inset:0;width:100%;height:100%;z-index:1';
-  let renderEpoch=0;const VERSION='0.2.0-alpha.31.29',fontState='阅读字体已就绪',motionEnabled=true,pet={isVisible:()=>true};
+  let renderEpoch=0;const VERSION='0.2.0-alpha.31.30',fontState='阅读字体已就绪',motionEnabled=true,pet={isVisible:()=>true};
   const query=s=>document.querySelector(s),immersiveSupported=()=>false,immersiveState=()=>false,drawerEntries=()=>[],close=()=>{},closeNativeDrawers=()=>{},refreshVisuals=()=>{},clearNotebook=()=>{fx.config?.dispose();fx.config=null;},esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),button=(label,action)=>`<button data-tisya-action="${esc(action)}">${esc(label)}</button>`;
   const api=eval(navSource+'\n'+pageSource+'\n({nav,page})');fx.showSettings=api.nav;fx.renderPage=api.page;fx.root=root;fx.showSettings();
   await document.fonts.ready;if(![...document.fonts].some(f=>f.family==='TisyaReading'&&f.status==='loaded'))throw Error('Font not ready');

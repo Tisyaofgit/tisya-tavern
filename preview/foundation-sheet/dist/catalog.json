@@ -1,0 +1,4847 @@
+{
+  "version": "FT21",
+  "templates": [
+    {
+      "id": "core",
+      "layer": "基点",
+      "label": "基点",
+      "table": "core-draft",
+      "groups": [
+        "核心"
+      ],
+      "fields": [
+        {
+          "key": "核心与不可替代性",
+          "label": "核心与不可替代性",
+          "path": [
+            "essence"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "去掉世界外壳后必须保留什么；不要只提取标签。"
+          }
+        },
+        {
+          "key": "价值与选择",
+          "label": "价值与选择",
+          "path": [
+            "choice"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "价值冲突、判断及拒绝边界，有原文才保留。"
+          }
+        },
+        {
+          "key": "愿望与形成因果",
+          "label": "愿望与形成因果",
+          "path": [
+            "motive"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "这里只保留经历如何形成或改变核心的依据；欲望本身归欲望双螺旋，不重复抄写，不复制旧世界人名和已完成事件。"
+          }
+        },
+        {
+          "key": "用途、能力与代价",
+          "label": "用途、能力与代价",
+          "path": [
+            "ability"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "能力/物品用途的意义、限制与代价；数值另由目标世界定义。"
+          }
+        },
+        {
+          "key": "辨识与象征",
+          "label": "辨识与象征",
+          "path": [
+            "anchor"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "只有核心必需的外形/象征才保留；其余允许世界化。"
+          }
+        },
+        {
+          "key": "选择携带的成长",
+          "label": "选择携带的成长",
+          "path": [
+            "growth"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "仅用户明确选择；作为待适配的经历意义，不冒充新会话已经发生。"
+          }
+        },
+        {
+          "key": "所选对象的关联意义",
+          "label": "所选对象的关联意义",
+          "path": [
+            "links"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "对象齐全且明确选择才保留；不自动扩大选取或携带旧关系、背包。"
+          }
+        },
+        {
+          "key": "性格核心标签",
+          "label": "性格核心标签",
+          "path": [
+            "personality-tags"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "人物核心的少量辨识词；与欲望、矛盾共同保留，不以同标签替换其具体意义。"
+          }
+        },
+        {
+          "key": "欲望双螺旋",
+          "label": "欲望双螺旋",
+          "path": [
+            "desire-axis"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "保留多股同时成立的核心欲望及优先关系，不简化为目标对障碍；原点分别映射具体表达，不复制旧任务进度。"
+          }
+        },
+        {
+          "key": "核心矛盾",
+          "label": "核心矛盾",
+          "path": [
+            "tension-axis"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "保留多股欲望的冲突、依赖与强化，以及它们与信念、恐惧、现实限制的拉扯和取舍代价；不强造创伤或预设成长。"
+          }
+        },
+        {
+          "key": "面具及真实落差",
+          "label": "面具及真实落差",
+          "path": [
+            "persona-mask"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "有依据才携带表层呈现的用途及与真实反应的落差；核心意义适配到原点面具层，旧世界场合、人名和已揭露状态不直接迁移。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.character",
+      "layer": "原点",
+      "label": "人物",
+      "table": "objects",
+      "kind": "character",
+      "groups": [
+        "身份",
+        "形貌",
+        "性情",
+        "生活",
+        "表达",
+        "本领",
+        "核心",
+        "面具"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "别名",
+          "label": "别名",
+          "path": [
+            "别名"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "texts",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "身份细目·物种",
+          "label": "物种",
+          "path": [
+            "属性",
+            "身份细目",
+            "物种"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "refs",
+            "description": "已登记物种定义的稳定引用；未知不补人类。"
+          }
+        },
+        {
+          "key": "身份细目·生命阶段",
+          "label": "生命阶段",
+          "path": [
+            "属性",
+            "身份细目",
+            "生命阶段"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "text",
+            "description": "按世界物种和历法表述；不把现实年龄默认给人物。"
+          }
+        },
+        {
+          "key": "身份细目·出生时期",
+          "label": "出生时期",
+          "path": [
+            "属性",
+            "身份细目",
+            "出生时期"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "text",
+            "description": "有来源的世界时间表达；不强制公历日期。"
+          }
+        },
+        {
+          "key": "身份细目·出身地",
+          "label": "出身地",
+          "path": [
+            "属性",
+            "身份细目",
+            "出身地"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "refs",
+            "description": "出生/成长来源地，不是当前位置。"
+          }
+        },
+        {
+          "key": "身份细目·语言",
+          "label": "语言",
+          "path": [
+            "属性",
+            "身份细目",
+            "语言"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "texts",
+            "description": "已确认可用语言；不因此自动懂秘密或暗语。"
+          }
+        },
+        {
+          "key": "身份细目·社会身份",
+          "label": "社会身份",
+          "path": [
+            "属性",
+            "身份细目",
+            "社会身份"
+          ],
+          "group": "身份",
+          "definition": {
+            "type": "text",
+            "description": "原点的社会位置、责任与限制；当前任职另由状态/关系维护。"
+          }
+        },
+        {
+          "key": "形貌·整体",
+          "label": "整体",
+          "path": [
+            "属性",
+            "形貌",
+            "整体"
+          ],
+          "group": "形貌",
+          "definition": {
+            "type": "text",
+            "description": "原点稳定体貌。"
+          }
+        },
+        {
+          "key": "形貌·辨识特征",
+          "label": "辨识特征",
+          "path": [
+            "属性",
+            "形貌",
+            "辨识特征"
+          ],
+          "group": "形貌",
+          "definition": {
+            "type": "texts",
+            "description": "有依据的独特外观锚点。"
+          }
+        },
+        {
+          "key": "形貌·仪态",
+          "label": "仪态",
+          "path": [
+            "属性",
+            "形貌",
+            "仪态"
+          ],
+          "group": "形貌",
+          "definition": {
+            "type": "text",
+            "description": "已确立的惯常动作、姿态和身体表达；语速归节奏，单次动作不算惯常。"
+          }
+        },
+        {
+          "key": "形貌·惯常装束",
+          "label": "惯常装束",
+          "path": [
+            "属性",
+            "形貌",
+            "惯常装束"
+          ],
+          "group": "形貌",
+          "definition": {
+            "type": "text",
+            "description": "衣着习惯，非当前穿戴或库存。"
+          }
+        },
+        {
+          "key": "形貌·感官印象",
+          "label": "感官印象",
+          "path": [
+            "属性",
+            "形貌",
+            "感官印象"
+          ],
+          "group": "形貌",
+          "definition": {
+            "type": "text",
+            "description": "可感知的稳定印象，不给观察者无依据的秘密知识。"
+          }
+        },
+        {
+          "key": "性情·价值取舍",
+          "label": "价值取舍",
+          "path": [
+            "属性",
+            "性情",
+            "价值取舍"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "选择之间的优先与代价。"
+          }
+        },
+        {
+          "key": "性情·判断方式",
+          "label": "判断方式",
+          "path": [
+            "属性",
+            "性情",
+            "判断方式"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "形成判断、核验证据和处理分歧的方法；具体操作流程归做事方式。"
+          }
+        },
+        {
+          "key": "性情·情绪处理",
+          "label": "情绪处理",
+          "path": [
+            "属性",
+            "性情",
+            "情绪处理"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "稳定应对方式，非当前心情。"
+          }
+        },
+        {
+          "key": "性情·长处",
+          "label": "长处",
+          "path": [
+            "属性",
+            "性情",
+            "长处"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "texts",
+            "description": "性情上的优点及具体表现；技艺归擅长。"
+          }
+        },
+        {
+          "key": "性情·短处",
+          "label": "短处",
+          "path": [
+            "属性",
+            "性情",
+            "短处"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "texts",
+            "description": "性情上的弱点及后果；未掌握技能归不足，伤势限制归代价限制。"
+          }
+        },
+        {
+          "key": "性情·拒绝边界",
+          "label": "拒绝边界",
+          "path": [
+            "属性",
+            "性情",
+            "拒绝边界"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "已确立的稳定拒绝原则；单次拒绝、未答应或尚未发生不构成原则。"
+          }
+        },
+        {
+          "key": "性情·协商条件",
+          "label": "协商条件",
+          "path": [
+            "属性",
+            "性情",
+            "协商条件"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "哪些新依据可能改变决定。"
+          }
+        },
+        {
+          "key": "性情·改变条件",
+          "label": "改变条件",
+          "path": [
+            "属性",
+            "性情",
+            "改变条件"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "材料明确说明的可能促成性情变化的条件；期待、尚未改变不算条件，未说明留空。"
+          }
+        },
+        {
+          "key": "生活·生计",
+          "label": "生计",
+          "path": [
+            "属性",
+            "生活",
+            "生计"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "日常谋生方式。"
+          }
+        },
+        {
+          "key": "生活·作息",
+          "label": "作息",
+          "path": [
+            "属性",
+            "生活",
+            "作息"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "日常起居、工作和休息的时间安排；反复小动作归习惯。"
+          }
+        },
+        {
+          "key": "生活·兴趣",
+          "label": "兴趣",
+          "path": [
+            "属性",
+            "生活",
+            "兴趣"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "texts",
+            "description": "稳定兴趣；单次行为不能自动确立。"
+          }
+        },
+        {
+          "key": "生活·习惯",
+          "label": "习惯",
+          "path": [
+            "属性",
+            "生活",
+            "习惯"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "texts",
+            "description": "已确认的日常反复行为；不复抄作息时间或性情判断原则。"
+          }
+        },
+        {
+          "key": "生活·长期目标",
+          "label": "长期目标",
+          "path": [
+            "属性",
+            "生活",
+            "长期目标"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "长期自主愿望及已知进展；不改成已成功或已接受的任务。"
+          }
+        },
+        {
+          "key": "生活·社会责任",
+          "label": "社会责任",
+          "path": [
+            "属性",
+            "生活",
+            "社会责任"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "稳定承担的职责范围；对象间持续联系另见关系，不复抄互动经过。"
+          }
+        },
+        {
+          "key": "表达·措辞",
+          "label": "措辞",
+          "path": [
+            "属性",
+            "表达",
+            "措辞"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "用词、比喻和话题选择；语速、长短及讲述次序归节奏。"
+          }
+        },
+        {
+          "key": "表达·节奏",
+          "label": "节奏",
+          "path": [
+            "属性",
+            "表达",
+            "节奏"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "句式与表达节奏。"
+          }
+        },
+        {
+          "key": "表达·幽默",
+          "label": "幽默",
+          "path": [
+            "属性",
+            "表达",
+            "幽默"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "适用的幽默方式，可没有。"
+          }
+        },
+        {
+          "key": "表达·沉默条件",
+          "label": "沉默条件",
+          "path": [
+            "属性",
+            "表达",
+            "沉默条件"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "何时不说及原因。"
+          }
+        },
+        {
+          "key": "表达·关系差异",
+          "label": "关系差异",
+          "path": [
+            "属性",
+            "表达",
+            "关系差异"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "对不同对象的表达差异；具体关系经过与协作分工留在关系表。"
+          }
+        },
+        {
+          "key": "表达·禁用套路",
+          "label": "禁用套路",
+          "path": [
+            "属性",
+            "表达",
+            "禁用套路"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "texts",
+            "description": "防止机械复读的边界，不要求每轮套例句。"
+          }
+        },
+        {
+          "key": "本领·擅长",
+          "label": "擅长",
+          "path": [
+            "属性",
+            "本领",
+            "擅长"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "texts",
+            "description": "有来源的稳定能力。"
+          }
+        },
+        {
+          "key": "本领·不足",
+          "label": "不足",
+          "path": [
+            "属性",
+            "本领",
+            "不足"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "texts",
+            "description": "明确不会或未受训练的技能；没提及不等于不会，已会技能的限制另填。"
+          }
+        },
+        {
+          "key": "本领·做事方式",
+          "label": "做事方式",
+          "path": [
+            "属性",
+            "本领",
+            "做事方式"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "text",
+            "description": "运用本领的惯常操作流程；不复抄一般性情原则。"
+          }
+        },
+        {
+          "key": "本领·代价限制",
+          "label": "代价限制",
+          "path": [
+            "属性",
+            "本领",
+            "代价限制"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "texts",
+            "description": "已掌握本领的适用条件、使用代价和身体限制；不会的技能归不足。"
+          }
+        },
+        {
+          "key": "本领·定义引用",
+          "label": "定义引用",
+          "path": [
+            "属性",
+            "本领",
+            "定义引用"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "refs",
+            "description": "引用已登记能力/规则，不复制公式与资源当前值。"
+          }
+        },
+        {
+          "key": "本领·叙事表现",
+          "label": "叙事表现",
+          "path": [
+            "属性",
+            "本领",
+            "叙事表现"
+          ],
+          "group": "本领",
+          "definition": {
+            "type": "text",
+            "description": "使用本领时旁人可感知的动作或现象；不复抄通用流程，不代表本轮已成功。"
+          }
+        },
+        {
+          "key": "人物核心·性格核心标签",
+          "label": "性格核心标签",
+          "path": [
+            "属性",
+            "人物核心",
+            "性格核心标签"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "texts",
+            "description": "少量有依据的性格辨识词；概括稳定底色，不用职业、能力或单次心情代替人格，不用标签取代欲望与矛盾。"
+          }
+        },
+        {
+          "key": "人物核心·欲望双螺旋",
+          "label": "欲望双螺旋",
+          "path": [
+            "属性",
+            "人物核心",
+            "欲望双螺旋"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "texts",
+            "description": "彼此同时成立的核心欲望，每股各一项：想得到、守住或避免失去什么。双螺旋指多股驱动力并行，不是欲望对障碍；有几股写几股，不为凑两股捏造动机。具体计划和进度归长期目标。"
+          }
+        },
+        {
+          "key": "人物核心·核心矛盾",
+          "label": "核心矛盾",
+          "path": [
+            "属性",
+            "人物核心",
+            "核心矛盾"
+          ],
+          "group": "核心",
+          "definition": {
+            "type": "text",
+            "description": "上述欲望怎样冲突、互相依赖或强化；它们与信念、恐惧、现实限制怎样拉扯，每次取舍付出什么代价，其应对如何反过来影响追求。只写有依据的联系和代价，不堆砌反义词，不强造创伤或预设成长。"
+          }
+        },
+        {
+          "key": "面具层·面具呈现",
+          "label": "面具呈现",
+          "path": [
+            "属性",
+            "面具层",
+            "面具呈现"
+          ],
+          "group": "面具",
+          "definition": {
+            "type": "text",
+            "description": "在什么对象或场合前，主动或习惯性维持什么外在形象；资料未说明伪装时留空，不把礼貌或一般表达自动判作虚假。"
+          }
+        },
+        {
+          "key": "面具层·面具作用",
+          "label": "面具作用",
+          "path": [
+            "属性",
+            "面具层",
+            "面具作用"
+          ],
+          "group": "面具",
+          "definition": {
+            "type": "text",
+            "description": "这层呈现用于保护、获得或回避什么，与真实欲望或反应有何落差；不复抄欲望全文，不泄露隐情内容。"
+          }
+        },
+        {
+          "key": "面具层·面具裂隙",
+          "label": "面具裂隙",
+          "path": [
+            "属性",
+            "面具层",
+            "面具裂隙"
+          ],
+          "group": "面具",
+          "definition": {
+            "type": "text",
+            "description": "哪些有依据的情境下，外在呈现与真实反应出现差异、松动或切换，旁人具体能看见什么；不是必然崩溃或已发生揭示，观察到征象不等于知道其原因。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.character.history",
+      "layer": "原点",
+      "label": "人物前史",
+      "table": "facts",
+      "kind": "character",
+      "groups": [
+        "经历"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "命题",
+          "label": "命题",
+          "path": [
+            "命题"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "前史·主体",
+          "label": "主体",
+          "path": [
+            "前史",
+            "主体"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "ref",
+            "description": "所属对象的稳定ID。"
+          }
+        },
+        {
+          "key": "前史·时期",
+          "label": "时期",
+          "path": [
+            "前史",
+            "时期"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "明确早于当前开局的世界时期。"
+          }
+        },
+        {
+          "key": "前史·地点",
+          "label": "地点",
+          "path": [
+            "前史",
+            "地点"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "refs",
+            "description": "已确认地点，不用文字邻接推导包含关系。"
+          }
+        },
+        {
+          "key": "前史·参与者",
+          "label": "参与者",
+          "path": [
+            "前史",
+            "参与者"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "refs",
+            "description": "实际参与者不等于全体知情者。"
+          }
+        },
+        {
+          "key": "前史·选择",
+          "label": "选择",
+          "path": [
+            "前史",
+            "选择"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "材料明确的主动抉择；不能从获赠、持有或结果倒推自愿选择。"
+          }
+        },
+        {
+          "key": "前史·后果",
+          "label": "后果",
+          "path": [
+            "前史",
+            "后果"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "材料明确的事件结果；不把相邻叙述补成先后或因果。"
+          }
+        },
+        {
+          "key": "前史·当下影响",
+          "label": "当下影响",
+          "path": [
+            "前史",
+            "当下影响"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "明确由此事造成且仍持续的影响；不把别处已知事实当作此事后果。"
+          }
+        },
+        {
+          "key": "前史·原文",
+          "label": "原文",
+          "path": [
+            "前史",
+            "原文"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "已确认前史的原文；讨论示例不得升为事实。"
+          }
+        },
+        {
+          "key": "前史·涉及对象",
+          "label": "涉及对象",
+          "path": [
+            "前史",
+            "涉及对象"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "refs",
+            "description": "本条明确涉及的其他已登记物品、组织或规则等；参与者与地点已有专格，不重复填；关联不代表参与或知情。"
+          }
+        },
+        {
+          "key": "前史·当时理解",
+          "label": "当时理解",
+          "path": [
+            "前史",
+            "当时理解"
+          ],
+          "group": "经历",
+          "definition": {
+            "type": "text",
+            "description": "所属人物在此事当时怎样理解、相信或误解，限资料明确给出的心理或话语；不是客观定论或他人也知道，不用后来的认识倒灌。不明留空，受保护隐情仍归独立隐情。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.character.relationships",
+      "layer": "原点",
+      "label": "关系底稿",
+      "table": "facts",
+      "kind": "character",
+      "groups": [
+        "关系"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "命题",
+          "label": "命题",
+          "path": [
+            "命题"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "关系底稿·主体",
+          "label": "主体",
+          "path": [
+            "关系底稿",
+            "主体"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "ref",
+            "description": "关系方向的主体。"
+          }
+        },
+        {
+          "key": "关系底稿·对象",
+          "label": "对象",
+          "path": [
+            "关系底稿",
+            "对象"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "ref",
+            "description": "持续联系另一端的稳定ID，可为人物、组织、地点或物品等；仅被提到不构成关系，同名不合并。"
+          }
+        },
+        {
+          "key": "关系底稿·性质",
+          "label": "性质",
+          "path": [
+            "关系底稿",
+            "性质"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "description": "已确立的联系性质，如师徒、协作、长期责任或归属；责任和协作不自动成为私交。"
+          }
+        },
+        {
+          "key": "关系底稿·形成经过",
+          "label": "形成经过",
+          "path": [
+            "关系底稿",
+            "形成经过"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "description": "该联系形成的已确认经过；不将仅同场或单次提及写成长期联系。"
+          }
+        },
+        {
+          "key": "关系底稿·相处方式",
+          "label": "相处方式",
+          "path": [
+            "关系底稿",
+            "相处方式"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "description": "主体与本条对象的惯常互动或分工；不混入其他关系，不推断双向对称。"
+          }
+        },
+        {
+          "key": "关系底稿·主体边界",
+          "label": "主体边界",
+          "path": [
+            "关系底稿",
+            "主体边界"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "description": "主体自己的边界与理由。"
+          }
+        },
+        {
+          "key": "关系底稿·成立条件",
+          "label": "成立条件",
+          "path": [
+            "关系底稿",
+            "成立条件"
+          ],
+          "group": "关系",
+          "definition": {
+            "type": "text",
+            "description": "哪些前提使该关系成立；换U不能只改ID照搬。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.character.secrets",
+      "layer": "原点",
+      "label": "隐情",
+      "table": "facts",
+      "kind": "character",
+      "groups": [
+        "隐情"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "命题",
+          "label": "命题",
+          "path": [
+            "命题"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "隐情·关联对象",
+          "label": "关联对象",
+          "path": [
+            "隐情",
+            "关联对象"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "refs",
+            "description": "秘密涉及的对象。"
+          }
+        },
+        {
+          "key": "隐情·可观察线索",
+          "label": "可观察线索",
+          "path": [
+            "隐情",
+            "可观察线索"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "texts",
+            "description": "有依据的线索，不自动授予事实全貌。"
+          }
+        },
+        {
+          "key": "隐情·揭示条件",
+          "label": "揭示条件",
+          "path": [
+            "隐情",
+            "揭示条件"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "text",
+            "description": "允许揭示的条件或永不揭示的约束，不等于已经公开。"
+          }
+        },
+        {
+          "key": "隐情·影响范围",
+          "label": "影响范围",
+          "path": [
+            "隐情",
+            "影响范围"
+          ],
+          "group": "隐情",
+          "definition": {
+            "type": "text",
+            "description": "秘密的影响，不作为人物已知信息。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.item",
+      "layer": "原点",
+      "label": "物品",
+      "table": "objects",
+      "kind": "item",
+      "groups": [
+        "物品原点"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "别名",
+          "label": "别名",
+          "path": [
+            "别名"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "texts",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "描述",
+          "label": "描述",
+          "path": [
+            "描述"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "形态",
+          "label": "形态",
+          "path": [
+            "属性",
+            "形态"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "用途",
+          "label": "用途",
+          "path": [
+            "属性",
+            "用途"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "材质",
+          "label": "材质",
+          "path": [
+            "属性",
+            "材质"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "规则",
+          "label": "规则",
+          "path": [
+            "属性",
+            "规则"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "独有意义",
+          "label": "独有意义",
+          "path": [
+            "属性",
+            "独有意义"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "description": "在目标世界中的具体意义；保留基点意义但不照搬旧世界事实。"
+          }
+        },
+        {
+          "key": "使用限制",
+          "label": "使用限制",
+          "path": [
+            "属性",
+            "使用限制"
+          ],
+          "group": "物品原点",
+          "definition": {
+            "type": "text",
+            "description": "来源明确的使用边界，不凭描述赋予可执行机制。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.place",
+      "layer": "原点",
+      "label": "地点",
+      "table": "objects",
+      "kind": "place",
+      "groups": [
+        "地点原点"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "别名",
+          "label": "别名",
+          "path": [
+            "别名"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "texts",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "描述",
+          "label": "描述",
+          "path": [
+            "描述"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "环境",
+          "label": "环境",
+          "path": [
+            "属性",
+            "环境"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "位置",
+          "label": "位置",
+          "path": [
+            "属性",
+            "位置"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "特征",
+          "label": "特征",
+          "path": [
+            "属性",
+            "特征"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "出入条件",
+          "label": "出入条件",
+          "path": [
+            "属性",
+            "出入条件"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "空间关系·上级地点",
+          "label": "上级地点",
+          "path": [
+            "属性",
+            "空间关系",
+            "上级地点"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "ref",
+            "description": "仅明确包含关系；提到或朝向不构成包含。"
+          }
+        },
+        {
+          "key": "空间关系·连接地点",
+          "label": "连接地点",
+          "path": [
+            "属性",
+            "空间关系",
+            "连接地点"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "refs",
+            "description": "明确可达连接；单向/许可细则由世界规则补定义。"
+          }
+        },
+        {
+          "key": "空间关系·有效范围",
+          "label": "有效范围",
+          "path": [
+            "属性",
+            "空间关系",
+            "有效范围"
+          ],
+          "group": "地点原点",
+          "definition": {
+            "type": "text",
+            "description": "地点边界与尺度，不由临近文字猜测。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.organization",
+      "layer": "原点",
+      "label": "组织",
+      "table": "objects",
+      "kind": "organization",
+      "groups": [
+        "组织原点"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "别名",
+          "label": "别名",
+          "path": [
+            "别名"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "texts",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "描述",
+          "label": "描述",
+          "path": [
+            "描述"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "职责",
+          "label": "职责",
+          "path": [
+            "属性",
+            "职责"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "结构",
+          "label": "结构",
+          "path": [
+            "属性",
+            "结构"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "立场",
+          "label": "立场",
+          "path": [
+            "属性",
+            "立场"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "历史",
+          "label": "历史",
+          "path": [
+            "属性",
+            "历史"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "组织目的",
+          "label": "组织目的",
+          "path": [
+            "属性",
+            "组织目的"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "text",
+            "description": "组织存在理由与目标。"
+          }
+        },
+        {
+          "key": "活动范围",
+          "label": "活动范围",
+          "path": [
+            "属性",
+            "活动范围"
+          ],
+          "group": "组织原点",
+          "definition": {
+            "type": "refs",
+            "description": "已确认的地点范围；不因此继承成员所在地。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.rule",
+      "layer": "原点",
+      "label": "规则",
+      "table": "objects",
+      "kind": "rule",
+      "groups": [
+        "规则原点"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "描述",
+          "label": "描述",
+          "path": [
+            "描述"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "适用范围",
+          "label": "适用范围",
+          "path": [
+            "属性",
+            "适用范围"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "条件",
+          "label": "条件",
+          "path": [
+            "属性",
+            "条件"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "效果",
+          "label": "效果",
+          "path": [
+            "属性",
+            "效果"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "例外",
+          "label": "例外",
+          "path": [
+            "属性",
+            "例外"
+          ],
+          "group": "规则原点",
+          "definition": {
+            "type": "text",
+            "capture": "identity",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "origin.world.world",
+      "layer": "原点",
+      "label": "世界定义",
+      "table": "facts",
+      "kind": "world",
+      "groups": [
+        "世界定义"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "命题",
+          "label": "命题",
+          "path": [
+            "命题"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "条件",
+          "label": "条件",
+          "path": [
+            "条件"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "生效时间",
+          "label": "生效时间",
+          "path": [
+            "生效时间"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "世界设定·领域",
+          "label": "领域",
+          "path": [
+            "世界设定",
+            "领域"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "方向",
+              "法则",
+              "空间",
+              "生态",
+              "社会",
+              "生活",
+              "文化",
+              "时间"
+            ]
+          }
+        },
+        {
+          "key": "世界设定·相关对象",
+          "label": "相关对象",
+          "path": [
+            "世界设定",
+            "相关对象"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "refs",
+            "description": "关联的真实实体/规则ID。"
+          }
+        },
+        {
+          "key": "世界设定·适用范围",
+          "label": "适用范围",
+          "path": [
+            "世界设定",
+            "适用范围"
+          ],
+          "group": "世界定义",
+          "definition": {
+            "type": "text",
+            "description": "设定适用的世界、时代和范围。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.scene",
+      "layer": "会话",
+      "label": "场景",
+      "table": "scene",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "世界",
+          "label": "世界",
+          "path": [
+            "世界"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "时代",
+          "label": "时代",
+          "path": [
+            "时代"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "场景",
+          "label": "场景",
+          "path": [
+            "场景"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "地点",
+          "label": "地点",
+          "path": [
+            "地点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "当前时间",
+          "label": "当前时间",
+          "path": [
+            "当前时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "阶段",
+          "label": "阶段",
+          "path": [
+            "阶段"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "参与者",
+          "label": "参与者",
+          "path": [
+            "参与者"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "标志",
+          "label": "标志",
+          "path": [
+            "标志"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "object",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.state",
+      "layer": "会话",
+      "label": "当前状态",
+      "table": "state",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "字段",
+          "label": "字段",
+          "path": [
+            "字段"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "有效性",
+          "label": "有效性",
+          "path": [
+            "有效性"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "有效",
+              "失效",
+              "待确认"
+            ],
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "值",
+          "label": "值",
+          "path": [
+            "值"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "json",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "值引用",
+          "label": "值引用",
+          "path": [
+            "值引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "生效时间",
+          "label": "生效时间",
+          "path": [
+            "生效时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "失效时间",
+          "label": "失效时间",
+          "path": [
+            "失效时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "变动原因",
+          "label": "变动原因",
+          "path": [
+            "变动原因"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "原生引用",
+          "label": "原生引用",
+          "path": [
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.relations",
+      "layer": "会话",
+      "label": "当前关系",
+      "table": "relations",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "主体",
+          "label": "主体",
+          "path": [
+            "主体"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "维度",
+          "label": "维度",
+          "path": [
+            "维度"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "object",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·值",
+          "label": "值",
+          "path": [
+            "好感",
+            "正面",
+            "值"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·最小",
+          "label": "最小",
+          "path": [
+            "好感",
+            "正面",
+            "最小"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·最大",
+          "label": "最大",
+          "path": [
+            "好感",
+            "正面",
+            "最大"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·低端",
+          "label": "低端",
+          "path": [
+            "好感",
+            "正面",
+            "低端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·高端",
+          "label": "高端",
+          "path": [
+            "好感",
+            "正面",
+            "高端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·正面·依据",
+          "label": "依据",
+          "path": [
+            "好感",
+            "正面",
+            "依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "好感·正面·原生引用",
+          "label": "原生引用",
+          "path": [
+            "好感",
+            "正面",
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·值",
+          "label": "值",
+          "path": [
+            "好感",
+            "负面",
+            "值"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·最小",
+          "label": "最小",
+          "path": [
+            "好感",
+            "负面",
+            "最小"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·最大",
+          "label": "最大",
+          "path": [
+            "好感",
+            "负面",
+            "最大"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·低端",
+          "label": "低端",
+          "path": [
+            "好感",
+            "负面",
+            "低端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·高端",
+          "label": "高端",
+          "path": [
+            "好感",
+            "负面",
+            "高端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "好感·负面·依据",
+          "label": "依据",
+          "path": [
+            "好感",
+            "负面",
+            "依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "好感·负面·原生引用",
+          "label": "原生引用",
+          "path": [
+            "好感",
+            "负面",
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·值",
+          "label": "值",
+          "path": [
+            "声望",
+            "正面",
+            "值"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·最小",
+          "label": "最小",
+          "path": [
+            "声望",
+            "正面",
+            "最小"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·最大",
+          "label": "最大",
+          "path": [
+            "声望",
+            "正面",
+            "最大"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·低端",
+          "label": "低端",
+          "path": [
+            "声望",
+            "正面",
+            "低端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·高端",
+          "label": "高端",
+          "path": [
+            "声望",
+            "正面",
+            "高端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·正面·依据",
+          "label": "依据",
+          "path": [
+            "声望",
+            "正面",
+            "依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "声望·正面·原生引用",
+          "label": "原生引用",
+          "path": [
+            "声望",
+            "正面",
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·值",
+          "label": "值",
+          "path": [
+            "声望",
+            "负面",
+            "值"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·最小",
+          "label": "最小",
+          "path": [
+            "声望",
+            "负面",
+            "最小"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·最大",
+          "label": "最大",
+          "path": [
+            "声望",
+            "负面",
+            "最大"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·低端",
+          "label": "低端",
+          "path": [
+            "声望",
+            "负面",
+            "低端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·高端",
+          "label": "高端",
+          "path": [
+            "声望",
+            "负面",
+            "高端"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "声望·负面·依据",
+          "label": "依据",
+          "path": [
+            "声望",
+            "负面",
+            "依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "声望·负面·原生引用",
+          "label": "原生引用",
+          "path": [
+            "声望",
+            "负面",
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "印象",
+          "label": "印象",
+          "path": [
+            "印象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "map",
+            "items": {
+              "type": "object",
+              "fields": {
+                "值": {
+                  "type": "number",
+                  "capture": "relation",
+                  "include": {
+                    "op": "selected"
+                  }
+                },
+                "最小": {
+                  "type": "number",
+                  "capture": "relation",
+                  "include": {
+                    "op": "selected"
+                  }
+                },
+                "最大": {
+                  "type": "number",
+                  "capture": "relation",
+                  "include": {
+                    "op": "selected"
+                  }
+                },
+                "低端": {
+                  "type": "text",
+                  "capture": "relation",
+                  "include": {
+                    "op": "selected"
+                  }
+                },
+                "高端": {
+                  "type": "text",
+                  "capture": "relation",
+                  "include": {
+                    "op": "selected"
+                  }
+                },
+                "依据": {
+                  "type": "refs",
+                  "capture": "reference",
+                  "include": {
+                    "op": "selected"
+                  },
+                  "follow": "record"
+                },
+                "原生引用": {
+                  "type": "text",
+                  "capture": "native",
+                  "include": {
+                    "op": "selected"
+                  }
+                }
+              },
+              "capture": "relation",
+              "include": {
+                "op": "selected"
+              }
+            },
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "证据",
+          "label": "证据",
+          "path": [
+            "证据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "生效时间",
+          "label": "生效时间",
+          "path": [
+            "生效时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.cognition",
+      "layer": "会话",
+      "label": "人物认知",
+      "table": "cognition",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "主体",
+          "label": "主体",
+          "path": [
+            "主体"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "事实",
+          "label": "事实",
+          "path": [
+            "事实"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "获知途径",
+          "label": "获知途径",
+          "path": [
+            "获知途径"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "确认程度",
+          "label": "确认程度",
+          "path": [
+            "确认程度"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "认识",
+          "label": "认识",
+          "path": [
+            "认识"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "心理",
+          "label": "心理",
+          "path": [
+            "心理"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "授权依据",
+          "label": "授权依据",
+          "path": [
+            "授权依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.holdings",
+      "layer": "会话",
+      "label": "持有流转",
+      "table": "holdings",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "物品",
+          "label": "物品",
+          "path": [
+            "物品"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "所有者",
+          "label": "所有者",
+          "path": [
+            "所有者"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "保管者",
+          "label": "保管者",
+          "path": [
+            "保管者"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "地点",
+          "label": "地点",
+          "path": [
+            "地点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "容器",
+          "label": "容器",
+          "path": [
+            "容器"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "数量",
+          "label": "数量",
+          "path": [
+            "数量"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "单位",
+          "label": "单位",
+          "path": [
+            "单位"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "流转原因",
+          "label": "流转原因",
+          "path": [
+            "流转原因"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "state",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "原生引用",
+          "label": "原生引用",
+          "path": [
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.activities",
+      "layer": "会话",
+      "label": "行动计划",
+      "table": "activities",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "主体",
+          "label": "主体",
+          "path": [
+            "主体"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "目标",
+          "label": "目标",
+          "path": [
+            "目标"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "行动",
+          "label": "行动",
+          "path": [
+            "行动"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "开始时间",
+          "label": "开始时间",
+          "path": [
+            "开始时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "推进至",
+          "label": "推进至",
+          "path": [
+            "推进至"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "预计结束",
+          "label": "预计结束",
+          "path": [
+            "预计结束"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "阻力",
+          "label": "阻力",
+          "path": [
+            "阻力"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "下一步",
+          "label": "下一步",
+          "path": [
+            "下一步"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "进度",
+          "label": "进度",
+          "path": [
+            "进度"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "min": 0,
+            "max": 100,
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "状态",
+          "label": "状态",
+          "path": [
+            "状态"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "计划",
+              "进行",
+              "等待",
+              "完成",
+              "取消"
+            ],
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "任务",
+          "label": "任务",
+          "path": [
+            "任务"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "地点",
+          "label": "地点",
+          "path": [
+            "地点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "知情依据",
+          "label": "知情依据",
+          "path": [
+            "知情依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "资源",
+          "label": "资源",
+          "path": [
+            "资源"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "object",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.tasks",
+      "layer": "会话",
+      "label": "任务",
+      "table": "tasks",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "来源",
+          "label": "来源",
+          "path": [
+            "来源"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "发布者",
+          "label": "发布者",
+          "path": [
+            "发布者"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "目标",
+          "label": "目标",
+          "path": [
+            "目标"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "条件",
+          "label": "条件",
+          "path": [
+            "条件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "下一步",
+          "label": "下一步",
+          "path": [
+            "下一步"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "截止时间",
+          "label": "截止时间",
+          "path": [
+            "截止时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "类别",
+          "label": "类别",
+          "path": [
+            "类别"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "主线",
+              "支线",
+              "日常",
+              "个人"
+            ],
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "进度·当前",
+          "label": "当前",
+          "path": [
+            "进度",
+            "当前"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "进度·目标",
+          "label": "目标",
+          "path": [
+            "进度",
+            "目标"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "进度·单位",
+          "label": "单位",
+          "path": [
+            "进度",
+            "单位"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "负责人",
+          "label": "负责人",
+          "path": [
+            "负责人"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "前置任务",
+          "label": "前置任务",
+          "path": [
+            "前置任务"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "蓝本节点",
+          "label": "蓝本节点",
+          "path": [
+            "蓝本节点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "状态",
+          "label": "状态",
+          "path": [
+            "状态"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "发布",
+              "接受",
+              "进行",
+              "完成",
+              "取消"
+            ],
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.timers",
+      "layer": "会话",
+      "label": "日程",
+      "table": "timers",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "时间基准",
+          "label": "时间基准",
+          "path": [
+            "时间基准"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "起点",
+          "label": "起点",
+          "path": [
+            "起点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "到期时间",
+          "label": "到期时间",
+          "path": [
+            "到期时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "触发条件",
+          "label": "触发条件",
+          "path": [
+            "触发条件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "失效条件",
+          "label": "失效条件",
+          "path": [
+            "失效条件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "重复规则",
+          "label": "重复规则",
+          "path": [
+            "重复规则"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "到期轮次",
+          "label": "到期轮次",
+          "path": [
+            "到期轮次"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "number",
+            "description": "绝对已保留AI回复数；重投不新增轮次，非相对延后数",
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "任务",
+          "label": "任务",
+          "path": [
+            "任务"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "状态",
+          "label": "状态",
+          "path": [
+            "状态"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "等待",
+              "到期",
+              "完成",
+              "取消"
+            ],
+            "capture": "pending",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.clues",
+      "layer": "会话",
+      "label": "线索",
+      "table": "clues",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "已出现内容",
+          "label": "已出现内容",
+          "path": [
+            "已出现内容"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "阶段",
+          "label": "阶段",
+          "path": [
+            "阶段"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "公开范围",
+          "label": "公开范围",
+          "path": [
+            "公开范围"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "推进条件",
+          "label": "推进条件",
+          "path": [
+            "推进条件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "evidence",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "事件",
+          "label": "事件",
+          "path": [
+            "事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "对象",
+          "label": "对象",
+          "path": [
+            "对象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.events",
+      "layer": "会话",
+      "label": "事件",
+      "table": "events",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "时间",
+          "label": "时间",
+          "path": [
+            "时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "时间范围",
+          "label": "时间范围",
+          "path": [
+            "时间范围"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "地点",
+          "label": "地点",
+          "path": [
+            "地点"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "经过",
+          "label": "经过",
+          "path": [
+            "经过"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "结果",
+          "label": "结果",
+          "path": [
+            "结果"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "场面",
+          "label": "场面",
+          "path": [
+            "场面"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "台词",
+          "label": "台词",
+          "path": [
+            "台词"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "dialogue",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "意象",
+          "label": "意象",
+          "path": [
+            "意象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "motif",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "前因",
+          "label": "前因",
+          "path": [
+            "前因"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "影响",
+          "label": "影响",
+          "path": [
+            "影响"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "后续",
+          "label": "后续",
+          "path": [
+            "后续"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "情感余波",
+          "label": "情感余波",
+          "path": [
+            "情感余波"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "触发线索",
+          "label": "触发线索",
+          "path": [
+            "触发线索"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "texts",
+            "capture": "motif",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "参与者",
+          "label": "参与者",
+          "path": [
+            "参与者"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "关联事件",
+          "label": "关联事件",
+          "path": [
+            "关联事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "identity"
+          }
+        },
+        {
+          "key": "前置事件",
+          "label": "前置事件",
+          "path": [
+            "前置事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "后续事件",
+          "label": "后续事件",
+          "path": [
+            "后续事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "标签",
+          "label": "标签",
+          "path": [
+            "标签"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "texts",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "原文段落",
+          "label": "原文段落",
+          "path": [
+            "原文段落"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "texts",
+            "capture": "dialogue",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.experiences",
+      "layer": "会话",
+      "label": "习惯与回忆",
+      "table": "experiences",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "主体",
+          "label": "主体",
+          "path": [
+            "主体"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "相关对象",
+          "label": "相关对象",
+          "path": [
+            "相关对象"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "类别",
+          "label": "类别",
+          "path": [
+            "类别"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "喜好",
+              "厌恶",
+              "习惯",
+              "回忆",
+              "安心方式",
+              "边界"
+            ],
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "情境",
+          "label": "情境",
+          "path": [
+            "情境"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "内容",
+          "label": "内容",
+          "path": [
+            "内容"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "感受",
+          "label": "感受",
+          "path": [
+            "感受"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "例外",
+          "label": "例外",
+          "path": [
+            "例外"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "表现方式",
+          "label": "表现方式",
+          "path": [
+            "表现方式"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "回应边界",
+          "label": "回应边界",
+          "path": [
+            "回应边界"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "触发线索",
+          "label": "触发线索",
+          "path": [
+            "触发线索"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "texts",
+            "capture": "motif",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "默契层次",
+          "label": "默契层次",
+          "path": [
+            "默契层次"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "共同经历",
+              "明确约定",
+              "单方联想",
+              "待确认"
+            ],
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "确定性",
+          "label": "确定性",
+          "path": [
+            "确定性"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "明确自述",
+              "反复表现",
+              "单次观察",
+              "暂定"
+            ],
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "有效性",
+          "label": "有效性",
+          "path": [
+            "有效性"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "有效",
+              "已改变",
+              "待确认"
+            ],
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "session.growth",
+      "layer": "会话",
+      "label": "成长",
+      "table": "growth",
+      "groups": [
+        "字段"
+      ],
+      "fields": [
+        {
+          "key": "名称",
+          "label": "名称",
+          "path": [
+            "名称"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "required": true,
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "主体",
+          "label": "主体",
+          "path": [
+            "主体"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "ref",
+            "required": true,
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "方面",
+          "label": "方面",
+          "path": [
+            "方面"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "原有倾向",
+          "label": "原有倾向",
+          "path": [
+            "原有倾向"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "当前倾向",
+          "label": "当前倾向",
+          "path": [
+            "当前倾向"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "变化依据",
+          "label": "变化依据",
+          "path": [
+            "变化依据"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "反例",
+          "label": "反例",
+          "path": [
+            "反例"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "生效时间",
+          "label": "生效时间",
+          "path": [
+            "生效时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
+          "key": "阶段",
+          "label": "阶段",
+          "path": [
+            "阶段"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "enum",
+            "values": [
+              "萌芽",
+              "积累",
+              "稳定",
+              "回退"
+            ],
+            "capture": "relation",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "原生引用",
+          "label": "原生引用",
+          "path": [
+            "原生引用"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "capture": "native",
+            "include": {
+              "op": "selected"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 // One canonical destination per item. Presentation never writes story settings.
 export const SETTINGS_DESTINATIONS=Object.freeze([
+ ['user-identity','用户身份','原点档案、角色和会话绑定','library','user'],
  ['role-library','角色卡','资料、会话与导入导出','library','user'],
  ['drawer:ai-config-button','预设','生成参数与预设管理','library','sliders'],
  ['drawer:WI-SP-button','世界书','条目、角色绑定与批量操作','library','book'],

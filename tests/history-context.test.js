@@ -9,13 +9,13 @@ import {KEY,emptyConfig,defaultWorld,worldKey,createStore} from '../config/core.
 import {createHost,buildMessages} from '../config/host.js';
 
 const moods=EMOTIONS.map(r=>r.name);
-function setup({createParameters,prepareMessage}={}){
+function setup({createParameters,prepareMessage,projectToolTurns}={}){
  const preset=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.20.json',import.meta.url))),source={prompts:preset.prompts,order:preset.prompt_order[0].order};
  const data=emptyConfig(),c={chatId:'memory-test',characterId:0,characters:[{avatar:'lighthouse',name:'守灯人',data:{description:'这是一个虚构的旧灯塔故事。所有人物均为成年人。玩家角色阿岚是负责维修灯塔的旅人，守灯人话少、务实但关心伙伴。'}}],chatMetadata:{},chat:[],extensionSettings:{[KEY]:data},chatCompletionSettings:{model:'isolated-fixture'},getChatCompletionModel:()=> 'isolated-fixture',getPresetManager:()=>({getAllPresets:()=>['r20'],getSelectedPresetName:()=> 'r20',getCompletionPresetByName:()=>preset})};
  const w=data.worlds[worldKey(c)]=defaultWorld();w.context.owner='tisya';w.modes.narrative.heartDirections=['输入评价','回应用户评价','剧情吐槽'];
  const macros=new Map();c.registerMacro=(n,f)=>macros.set(n,f);c.unregisterMacro=n=>macros.delete(n);c.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,n)=>macros.get(n)());
  registerLivePreset(c,()=>source,()=>c,()=>moods);registerPresetProtocol(c,()=>source,()=>{},()=>moods);
- const store=createStore({getContext:()=>c,persist:async()=>true}),host=createHost({getContext:()=>c,getSource:()=>source,store,prepareMessage,createParameters:createParameters??(async(s,model,type,messages)=>({generate_data:{messages,model}}))});c.registerMacro('tisya_config_selected',()=>host.selectedText());
+ const store=createStore({getContext:()=>c,persist:async()=>true}),host=createHost({getContext:()=>c,getSource:()=>source,store,prepareMessage,projectToolTurns,createParameters:createParameters??(async(s,model,type,messages)=>({generate_data:{messages,model}}))});c.registerMacro('tisya_config_selected',()=>host.selectedText());
  return {c,w,source,host};
 }
 test('every live heart has a required real mood; empty catalogs fail and non-heart null remains valid',()=>{
@@ -62,9 +62,9 @@ test('native history input limits only the prepared copy before material assembl
  }
  const f=setup();f.w.context.owner='native';await f.host.before('normal');assert.throws(()=>f.host.historyInput(f.c.chat,'normal'),/发送副本/);
 });
-test('native history hook preserves selected swipe, continuation, tool records and skips helper jobs',async()=>{
+test('native history hook preserves selected swipe and continuation and skips helper jobs',async()=>{
  const f=setup();f.w.context.owner='native';f.w.context.history=1;
- for(const type of ['swipe','continue']){await f.host.before(type);const core=[{mes:'old'},{is_user:true,mes:'current'},{mes:'tool call',is_system:true,extra:{tool_invocations:[{}]}},{role:'tool',is_system:true,mes:'tool result'},{mes:'accepted continuation'}].map((m,index)=>({...m,index}));f.host.historyInput(core,type);assert.deepEqual(core.map(x=>x.mes),['current','tool call','tool result','accepted continuation']);}
+ for(const type of ['swipe','continue']){await f.host.before(type);const core=[{mes:'old'},{is_user:true,mes:'current'},{mes:'accepted continuation'}].map((m,index)=>({...m,index}));f.host.historyInput(core,type);assert.deepEqual(core.map(x=>x.mes),['accepted continuation']);}
  const core=[{mes:'first'},{mes:'second'},{mes:'third'}];for(const type of ['quiet','impersonate']){await f.host.before(type);assert.equal(f.host.historyInput(core,type),null);assert.equal(core.length,3);}
 });
 
@@ -72,4 +72,19 @@ test('history input retains extension-added material that has no native message 
  const f=setup();f.w.context.owner='native';f.w.context.history=0;await f.host.before('normal');
  const db={is_system:true,mes:'DATABASE_INSERTION'},core=[db,{index:0,mes:'old'},{index:1,is_user:true,mes:'current'}];
  f.host.historyInput(core,'normal');assert.deepEqual(core,[db,{index:1,is_user:true,mes:'current'}]);
+});
+
+test('host passes the original prepared history to native projection and blocks a projection error',async()=>{
+ let observed;const f=setup({projectToolTurns:(chat,strip)=>{observed={chat,strip};return [{type:'tool-turn',sourceIndices:[0,2]},{type:'message',sourceIndex:1,message:chat[1]}];}});
+ f.w.context.owner='native';f.w.context.history=0;
+ const core=[{index:0,mes:'query',tool_calls:[{id:'a',name:'lookup',parameters:'{}'}]},{index:1,is_user:true,mes:'current'},{index:2,role:'tool',tool_call_id:'a',mes:'result',is_system:true}];
+ await f.host.before('normal');const report=f.host.historyInput(core,'normal');assert.equal(observed.chat,core);assert.equal(observed.strip,false);assert.equal(report.toolTurns,1);assert.equal(core.length,3);
+ const g=setup({projectToolTurns:()=>{throw Error('native invalid tool history');}});g.w.context.owner='native';await g.host.before('normal');const prior=structuredClone(core);
+ assert.throws(()=>g.host.historyInput(core,'normal'),/native invalid/);assert.deepEqual(core,prior);const p={messages:[]};await assert.rejects(g.host.payloadReady(p),/native invalid/);assert.throws(()=>JSON.stringify(p),/native invalid/);
+});
+
+test('tool metadata changed outside selected prose still invalidates an in-flight managed request',async()=>{
+ const f=setup({createParameters:async(s,model,type,messages)=>{f.c.chat[0].tool_calls[0].parameters='changed';return {generate_data:{messages}};}});
+ f.w.context.history=1;f.c.chat=[{mes:'query',tool_calls:[{id:'a',name:'lookup',parameters:'{}'}]},{role:'tool',tool_call_id:'a',mes:'result',is_system:true},{mes:'final prose'},{is_user:true,mes:'current'}];
+ await f.host.before('normal');const p={messages:[]};await assert.rejects(f.host.payloadReady(p),/聊天记录已变化/);assert.throws(()=>JSON.stringify(p));
 });

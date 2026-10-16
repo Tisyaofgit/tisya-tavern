@@ -1,0 +1,1475 @@
+// Declarative templates: no eval, scripts, arbitrary paths or generated regex.
+const CAPTURE_RULES=Object.freeze({
+ evidence:'来源支持该字段时录入；未知省略，0/false/空值按类型保留。',
+ identity:'初始化设定或新发现的稳定事实；既有常量仅凭明确用户纠正修改，当前变化另记。',
+ event:'正文实际发生的独立事件；保留顺序、因果、结果与未完后果，计划和未实施威胁不算发生。',
+ dialogue:'有后续作用的原句及说话者/场面；不把输入台词冒充AI正文，不改写暗语。',
+ motif:'有证据的重复或转折细节；不为普通动作虚构象征或默契。',
+ meaning:'依主体知识记录含义、前后变化及例外；共同经历可自然形成暗语，无须事先约定；私人解释与共同记忆分别保存。',
+ knowledge:'接触依据才改变知情；听闻/推测/误信与事实分开，同场和读者可见不授予人物知识。',
+ state:'实际变化才更新唯一当前行；未知去向使旧状态失效，回顾矛盾不算新变化。',
+ pending:'已接受约定、已启动事务或真实待答问题；拒绝、意图或到期不等于完成。',
+ relation:'关系各维独立，变化须锚点依据；一次表现不升级为永久习惯或人格替换。',
+ preference:'仅从用户要求或待确认候选提取；限定作用域，角色偏好不等于真实用户偏好。',
+ reference:'引用已登记或同批新ID；不以同名合并，不复制整份关联资料。',
+ native:'宿主唯一写入；表单保存原生路径引用，不复制数值或再次生成更新命令。',
+ derived:'程序派生，模型不填录。',
+});
+const fail=m=>{throw Error('表单条件：'+m);};
+const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+const simple=new Set(['always','selected','strict','context','cue','tagged','retrieved','focused','rule']);
+function validateCondition(node,depth=0){
+ if(depth>8||!object(node)||typeof node.op!=='string')fail('结构无效或嵌套过深');let keys=['op'];
+ if(simple.has(node.op)){}
+ else if(['any','all'].includes(node.op)){keys.push('args');if(!Array.isArray(node.args)||!node.args.length||node.args.length>20)fail('组合条件须有1—20项');for(const x of node.args)validateCondition(x,depth+1);}
+ else if(node.op==='not'){keys.push('arg');validateCondition(node.arg,depth+1);}
+ else if(['eq','oneOf','has'].includes(node.op)){keys.push('field');if(typeof node.field!=='string'||!node.field||['__proto__','prototype','constructor'].includes(node.field))fail('字段名无效');if(node.op!=='has'){keys.push('value');if(node.op==='oneOf'&&(!Array.isArray(node.value)||!node.value.length))fail('匹配值须为非空数组');if(node.value===undefined)fail('缺少匹配值');}}
+ else if(node.op==='text'){keys.push('source','terms');if(!['previous','user','either'].includes(node.source)||!Array.isArray(node.terms)||!node.terms.length||node.terms.length>100||!node.terms.every(x=>typeof x==='string'&&x.trim().length>=2))fail('文本条件缺少来源或有效短语');}
+ else fail('未登记操作 '+node.op);
+ if(Object.keys(node).some(k=>!keys.includes(k)))fail('含未登记参数');return node;
+}
+function phraseMatch(text,phrase){
+ const normalize=s=>String(s??'').normalize('NFKC').toLocaleLowerCase().replace(/\s+/gu,' ').trim();
+ text=normalize(text);phrase=normalize(phrase);if(phrase.length<2)return false;
+ for(let at=text.indexOf(phrase);at>=0;at=text.indexOf(phrase,at+1)){
+  const before=Array.from(text.slice(0,at)).at(-1)??'',after=Array.from(text.slice(at+phrase.length))[0]??'';
+  const word=c=>/[\p{L}\p{N}]/u.test(c)&&!/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(c);
+  if(!(word(phrase[0])&&word(before))&&!(word(phrase.at(-1))&&word(after)))return true;
+ }return false;
+}
+function conditionMatches(node,c){
+ validateCondition(node);function run(n){
+  if(n.op==='always')return true;if(simple.has(n.op))return c[n.op]===true;
+  if(n.op==='any')return n.args.some(run);if(n.op==='all')return n.args.every(run);if(n.op==='not')return !run(n.arg);
+  if(n.op==='has')return Object.hasOwn(c.row.values,n.field);
+  if(n.op==='eq')return JSON.stringify(c.row.values[n.field])===JSON.stringify(n.value);
+  if(n.op==='oneOf')return n.value.some(v=>JSON.stringify(c.row.values[n.field])===JSON.stringify(v));
+  const texts=n.source==='previous'?[c.previousText]:n.source==='user'?[c.userText]:[c.previousText,c.userText];return texts.some(text=>n.terms.some(term=>phraseMatch(text,term)));
+ }return run(node);
+}
+const any=(...ops)=>({op:'any',args:ops.map(op=>typeof op==='string'?{op}:op)});
+function tableCondition(id){
+ if(['scene','facts','tasks','timers','clues','preferences','holdings'].includes(id))return {op:'always'};
+ if(id==='state')return {op:'not',arg:{op:'eq',field:'有效性',value:'失效'}};
+ if(id==='objects')return any('context','cue','tagged','retrieved','rule');
+ if(id==='events')return any('cue','tagged','retrieved');if(id==='native_cells')return {op:'not',arg:{op:'always'}};
+ return any('context','cue','tagged','retrieved');
+}
+function captureRule(table,key,def){
+ if(def.formula)return 'derived';if(key==='原生引用'||table==='native_cells')return 'native';if(table==='preferences')return 'preference';if(['ref','refs'].includes(def.type))return 'reference';if(['台词','原文段落'].includes(key))return 'dialogue';if(['意象','触发线索'].includes(key))return 'motif';if(table==='experiences')return 'meaning';if(table==='cognition'||key==='公开范围')return 'knowledge';if(['relations','growth'].includes(table))return 'relation';if(['tasks','timers','activities'].includes(table))return 'pending';if(['state','scene','holdings'].includes(table))return 'state';if(table==='objects'||table==='type')return 'identity';if(table==='events')return 'event';return 'evidence';
+}
+function applyConditionTemplates(registry){
+ const fields=(defs,table)=>{for(const [key,def]of Object.entries(defs)){def.capture??=captureRule(table,key,def);def.include??={op:'selected'};if(['ref','refs'].includes(def.type))def.follow??=(table==='objects'||table==='type'||key==='关联事件')?'identity':'record';if(def.fields)fields(def.fields,table);if(def.items)fields({item:def.items},table);}};
+ for(const item of registry.tables){item.assemble??=tableCondition(item.id);fields(item.fields,item.id);}for(const item of registry.types)fields(item.fields,'type');return registry;
+}
+
+const {applyConditionTemplates,validateCondition,CAPTURE_RULES}=__m["../../tables/conditions.js"];
+// Form definitions are data shared by Genesis, archive filling and the editor.
+const FORMAT = 'tisya.tables/1';
+const copy = value => structuredClone(value);
+const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
+const check = (ok, message) => { if (!ok) throw Error(message); };
+// JSON object property order is not part of a schema definition; array order remains significant.
+function sameDefinition(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((value,i)=>sameDefinition(value,b[i]));const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&sameDefinition(a[key],b[key]));}
+const normalized = text => String(text).normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s_·・-]+/gu, '');
+const f = (type='text', extra={}) => ({type, ...extra});
+const text = names => Object.fromEntries(names.split(' ').map(n => [n, f()]));
+const refs = names => Object.fromEntries(names.split(' ').map(n => [n, f('refs')]));
+const scale = () => f('object',{fields:{值:f('number'),最小:f('number'),最大:f('number'),低端:f(),高端:f(),依据:f('refs'),原生引用:f()}});
+const preferenceInterval = () => f('object',{ui:'bipolar-interval',fields:{左端:f('text',{required:true}),右端:f('text',{required:true}),下限:f('number',{required:true,min:-100,max:100}),上限:f('number',{required:true,min:-100,max:100}),依据:f('text',{required:true}),说明:f('text')}});
+const pair = () => f('object',{fields:{正面:scale(),负面:scale()}});
+const table = (id, name, fields, owner='archive') => ({id, name, aliases:[], version:1, owner, fields:{名称:f('text',{required:true}), ...fields}});
+const TABLES = [
+ table('objects','常量档案',{类型:f('type',{required:true}),别名:f('texts'),...text('世界 描述 核心引用'),...refs('关联'),标签:f('texts'),发现环境:f('object',{fields:{地点:f('refs'),时段:f(),出现条件:f(),来源依据:f(),确认程度:f('enum',{values:['设定明确','当事人陈述','一次观察']}),可复用:f('boolean')}}),属性:f('object')}),
+ table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts')}),
+ table('scene','场景与全局进度',{...text('世界 时代 场景 地点 当前时间 阶段'),...refs('参与者'),标志:f('object')}),
+ table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
+ table('relations','关系',{主体:f('ref',{required:true}),对象:f('ref',{required:true}),维度:f('object'),好感:pair(),声望:pair(),印象:f('map',{items:scale()}),...refs('锚点事件'),...text('证据 生效时间')}),
+ table('cognition','认知与心理',{主体:f('ref',{required:true}),...refs('事实'),...text('获知途径 确认程度 认识 心理 授权依据')}),
+ table('holdings','持有与流转',{物品:f('ref',{required:true}),...refs('所有者 保管者 地点 容器'),数量:f('number'),...text('单位 流转原因 原生引用')}),
+ table('tasks','任务待办',{...text('来源 发布者 目标 条件 下一步 截止时间'),类别:f('enum',{values:['主线','支线','日常','个人']}),进度:f('object',{fields:{当前:f('number'),目标:f('number'),单位:f()}}),...refs('负责人 前置任务 锚点事件'),蓝本节点:f(),状态:f('enum',{values:['发布','接受','进行','完成','取消']})}),
+ table('timers','日程倒计时',{...text('时间基准 起点 到期时间 触发条件 失效条件 重复规则'),到期轮次:f('number',{description:'绝对已保留AI回复数；重投不新增轮次，非相对延后数'}),...refs('任务'),状态:f('enum',{values:['等待','到期','完成','取消']})}),
+ table('clues','伏笔线索',{...text('已出现内容 阶段 公开范围 推进条件'),...refs('事件 对象')}),
+ table('events','历史事件记忆',{...text('时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波'),触发线索:f('texts'),...refs('参与者 关联事件 前置事件 后续事件'),标签:f('texts'),原文段落:f('texts')}),
+ table('activities','进行中事务',{主体:f('ref',{required:true}),...text('目标 行动 开始时间 推进至 预计结束 阻力 下一步'),进度:f('number',{min:0,max:100}),状态:f('enum',{values:['计划','进行','等待','完成','取消']}),...refs('任务 地点 知情依据 锚点事件'),资源:f('object')}),
+ table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
+ table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
+ table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
+ table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),倾向区间:f('map',{items:preferenceInterval()}),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
+];
+const TYPES = [
+ {id:'character',name:'人物',aliases:['角色','人类','NPC','角色档案'],fields:{...text('身份 外貌 性格 背景')}},
+ {id:'item',name:'物品',aliases:['道具','物件','装备'],fields:{...text('形态 用途 材质 规则')}},
+ {id:'place',name:'地点',aliases:['场所','位置','地区'],fields:{...text('环境 位置 特征 出入条件')}},
+ {id:'rule',name:'规则',aliases:['法则','机制','制度'],fields:{...text('适用范围 条件 效果 例外')}},
+ {id:'organization',name:'组织',aliases:['势力','团体'],fields:{...text('职责 结构 立场 历史')}},
+].map(t=>({...t,version:1,parent:null}));
+const defaultRegistry = () => applyConditionTemplates({tables:copy(TABLES),types:copy(TYPES)});
+const ID = /^[a-z][a-z0-9._-]{0,79}$/;
+const denied = new Set(['__proto__','constructor','prototype']);
+function registryIndex(registry){
+ check(object(registry)&&Array.isArray(registry.tables)&&Array.isArray(registry.types),'模板注册表损坏');
+ const result = {};
+ for(const kind of ['tables','types']){
+  const names=new Map(),ids=new Set();
+  for(const item of registry[kind]){
+   check(ID.test(item.id)&&!ids.has(item.id),'模板 ID 无效或重复：'+item.id);ids.add(item.id);
+   check(typeof item.name==='string'&&item.name.trim()&&Array.isArray(item.aliases)&&Number.isSafeInteger(item.version)&&item.version>0,'模板名称或版本无效');
+   for(const label of [item.id,item.name,...item.aliases]){
+    check(typeof label==='string'&&label.trim(),'模板别名不能为空');const key=normalized(label);
+    check(!names.has(key)||names.get(key).id===item.id,'同义名称已属于 '+names.get(key)?.name+'：'+label);names.set(key,item);
+   }
+   check(object(item.fields)&&Object.keys(item.fields).length>0,'模板必须定义字段');
+   validateFields(item.fields);if(item.assemble)validateCondition(item.assemble);
+  }
+  result[kind]=names;
+ }
+ for(const type of registry.types){const seen=new Set([type.id]);let parent=type.parent;while(parent){const next=registry.types.find(t=>t.id===parent);check(next&&!seen.has(parent),'父模板不存在或循环');seen.add(parent);parent=next.parent;}}
+ return result;
+}
+function addTypes(registry, proposals=[]){
+ check(Array.isArray(proposals)&&proposals.length<=20,'新模板数量无效');const next=copy(registry);
+ for(const p of proposals){
+  check(object(p),'新模板无效');const index=registryIndex(next).types;const same=index.get(normalized(p.name));
+  if(same){check(same.id===p.id,'请复用已有模板 '+same.id+'，不能另建同义类名');check(JSON.stringify(same)===JSON.stringify(p),'已有模板不能由自动归档覆盖');continue;}
+  check(p.parent&&next.types.some(t=>t.id===p.parent),'新模板必须扩展已登记父模板');next.types.push(copy(p));registryIndex(next);
+ }
+ return next;
+}
+function typeFields(registry,id){const t=registry.types.find(t=>t.id===id);check(t,'未登记类型：'+id);return {...(t.parent?typeFields(registry,t.parent):{}),...t.fields};}
+const FIELD_TYPES=['text','texts','number','boolean','enum','ref','refs','json','object','map','array','type','time','duration'];
+function validateFields(fields,depth=0){
+ check(object(fields)&&depth<12,'字段嵌套过深或无效');const names=new Map();
+ for(const [key,def] of Object.entries(fields)){
+  check(!denied.has(key)&&object(def)&&FIELD_TYPES.includes(def.type),'字段定义无效：'+key);
+  for(const name of [key,...(def.aliases??[])]){check(typeof name==='string'&&name.trim(),'字段别名无效');const n=normalized(name);check(!names.has(n)||names.get(n)===key,'字段同义名冲突：'+name);names.set(n,key);}
+  if(def.capture!==undefined)check(Object.hasOwn(CAPTURE_RULES,def.capture),'录入条件模板不存在：'+def.capture);if(def.include)validateCondition(def.include);
+  if(def.follow!==undefined)check(['ref','refs'].includes(def.type)&&['identity','record'].includes(def.follow),'引用展开条件无效：'+key);
+  if(def.type==='enum')check(Array.isArray(def.values)&&def.values.length&&def.values.every(x=>typeof x==='string'),'枚举未定义：'+key);
+  if(def.fields)validateFields(def.fields,depth+1);
+  if(['array','map'].includes(def.type)){check(object(def.items),'集合必须定义 items：'+key);validateFields({item:def.items},depth+1);}
+  if(def.formula)validateFormula(def.formula);
+ }
+}
+function valueValid(v,def,depth=0){
+ if(depth>12)return false;if(v===null)return def.nullable===true||def.type==='json';
+ switch(def.type){
+ case'text':case'time':case'ref':case'type':return typeof v==='string'&&(!def.required||!!v.trim());
+ case'texts':case'refs':return Array.isArray(v)&&v.every(x=>typeof x==='string'&&!!x.trim())&&new Set(v).size===v.length;
+ case'number':case'duration':return typeof v==='number'&&Number.isFinite(v)&&(def.min===undefined||v>=def.min)&&(def.max===undefined||v<=def.max);
+ case'boolean':return typeof v==='boolean';case'enum':return def.values.includes(v);
+ case'array':return Array.isArray(v)&&v.every(x=>valueValid(x,def.items,depth+1))&&(!def.idKey||v.every(x=>object(x)&&typeof x[def.idKey]==='string')&&new Set(v.map(x=>x[def.idKey])).size===v.length);
+ case'map':return object(v)&&Object.entries(v).every(([k,x])=>!denied.has(k)&&valueValid(x,def.items,depth+1));
+ case'object':return object(v)&&(!def.fields||Object.entries(v).every(([k,x])=>!denied.has(k)&&(def.fields[k]?valueValid(x,def.fields[k],depth+1):def.additionalProperties===true))&&Object.entries(def.fields).every(([k,d])=>!d.required||Object.hasOwn(v,k)));
+ case'json':return v!==undefined;default:return false;
+ }
+}
+function invalidPath(v,d,path){if(valueValid(v,d))return '';if(d.type==='array'&&Array.isArray(v)){for(let i=0;i<v.length;i++){const p=invalidPath(v[i],d.items,path+'['+i+']');if(p)return p;}}if(object(v)&&['object','map'].includes(d.type))for(const [k,x]of Object.entries(v)){const child=d.type==='map'?d.items:d.fields?.[k];if(child){const p=invalidPath(x,child,path+'.'+k);if(p)return p;}}return path+' ('+d.type+')';}
+function mapValue(v,def,fn,path='值'){if(v===undefined||v===null)return v;check(valueValid(v,def),'关联字段类型无效：'+invalidPath(v,def,path));if(def.type==='ref')return fn(v);if(def.type==='refs')return v.map(fn);if(def.type==='array')return v.map((x,i)=>mapValue(x,def.items,fn,path+'['+i+']'));if(def.type==='map')return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,mapValue(x,def.items,fn,path+'.'+k)]));if(def.type==='object'&&def.fields)return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,def.fields[k]?mapValue(x,def.fields[k],fn,path+'.'+k):x]));return v;}
+function mapRowReferences(row,registry,fn){const t=registry.tables.find(t=>t.id===row.table),prefix=(row.id??row.table)+'.';for(const [k,d]of Object.entries(t.fields))if(Object.hasOwn(row.values,k))row.values[k]=mapValue(row.values[k],d,fn,prefix+k);if(row.table==='objects')for(const [k,d]of Object.entries(typeFields(registry,row.values.类型)))if(Object.hasOwn(row.values.属性??{},k))row.values.属性[k]=mapValue(row.values.属性[k],d,fn,prefix+'属性.'+k);return row;}
+function validateRow(registry,row){
+ check(object(row)&&typeof row.id==='string'&&row.id&&object(row.values),'表单记录无效');
+ const table=registry.tables.find(t=>t.id===row.table);check(table,'未知表：'+row.table);
+ for(const [key,def]of Object.entries(table.fields))check(!def.required||Object.hasOwn(row.values,key),'缺少必填字段：'+key);
+ for(const [key,value]of Object.entries(row.values)){const def=table.fields[key];check(def&&!denied.has(key),'未知字段：'+key);check(!def.formula,'公式字段由程序计算：'+key);check(valueValid(value,def),'字段类型不符：'+key);}
+ check(object(row.access)&&Array.isArray(row.access.readers)&&Array.isArray(row.access.knowers)&&row.access.readers.every(x=>typeof x==='string')&&row.access.knowers.every(x=>typeof x==='string'),'记录缺少读者／人物知情范围');
+ if(row.table==='state')check([Object.hasOwn(row.values,'值'),!!row.values.原生引用,!!row.values.值引用].filter(Boolean).length===1,'当前状态必须且只能填写值、值引用或原生引用');
+ if(row.table==='preferences')for(const [name,axis]of Object.entries(row.values.倾向区间??{})){check(name.trim()&&axis.左端!==axis.右端,'偏好刻度两端必须表示不同倾向');check(axis.下限<=axis.上限,'偏好区间下限不能高于上限');}
+ if(row.table==='objects'){
+  const type=registry.types.find(t=>t.id===row.values.类型);check(type,'对象类型未登记');
+  const fields=typeFields(registry,type.id);for(const [key,def]of Object.entries(fields))check(!def.required||Object.hasOwn(row.values.属性??{},key),'缺少类型必填属性：'+key);for(const [key,value]of Object.entries(row.values.属性??{}))check(fields[key]&&valueValid(value,fields[key]),'类型属性无效：'+key);
+ }
+ for(const group of ['好感','声望'])if(row.table==='relations'&&row.values[group])for(const axis of Object.values(row.values[group]))validateScale(axis);if(row.table==='relations')for(const axis of Object.values(row.values.印象??{}))validateScale(axis);
+ return row;
+}
+function references(row,registry){const refs=[];mapRowReferences(copy(row),registry,id=>{refs.push(id);return id;});return refs;}
+function validateReferences(rows,registry){const ids=new Set(rows.map(r=>r.id));for(const row of rows)for(const id of references(row,registry))check(ids.has(id),'关联对象不存在：'+id);}
+// Formula AST, not JavaScript. Bounded lookup; no eval, property paths or network.
+const OPS=new Set(['field','lookup','count','unique','join','add','subtract']);
+function validateFormula(node,depth=0){check(depth<12&&object(node)&&OPS.has(node.op),'公式无效或过深');check(!Object.keys(node).some(k=>denied.has(k)),'公式键名无效');for(const key of ['field','match'])if(node[key])check(typeof node[key]==='string'&&!denied.has(node[key]),'公式字段无效');if(node.args){check(Array.isArray(node.args)&&node.args.length<=30,'公式参数过多');for(const n of node.args)if(object(n))validateFormula(n,depth+1);}return node;}
+function formula(node,row,rows,depth=0){validateFormula(node,depth);const args=(node.args??[]).map(x=>object(x)?formula(x,row,rows,depth+1):x);switch(node.op){
+ case'field':return row.values[node.field];
+ case'lookup':{check(typeof node.table==='string'&&typeof node.field==='string'&&typeof node.match==='string','查询公式缺少字段');return rows.filter(r=>r.table===node.table&&r.values[node.match]===args[0]).map(r=>r.values[node.field]);}
+ case'count':check(Array.isArray(args[0]),'count 需要数组');return args[0].length;
+ case'unique':check(Array.isArray(args[0]),'unique 需要数组');return [...new Set(args[0])];
+ case'join':check(Array.isArray(args[0]),'join 需要数组');return args[0].join(String(args[1]??'、'));
+ case'add':case'subtract':check(args.length===2&&args.every(Number.isFinite),'算术公式需要两个数');return node.op==='add'?args[0]+args[1]:args[0]-args[1];}}
+function derive(rows,registry){return rows.map(row=>{const out=copy(row),visible=rows.filter(other=>row.access.readers.every(r=>other.access.readers.includes(r))&&row.access.knowers.every(r=>other.access.knowers.includes(r)));for(const [key,field]of Object.entries(registry.tables.find(t=>t.id===row.table).fields))if(field.formula)out.values[key]=formula(field.formula,row,visible);return out;});}
+const TABLE_SETTINGS = Object.freeze({enabled:false,continuity:'hybrid',styleEnabled:true,archive:true,plot:false,preferences:false,offstage:false,nativeBridge:false,focusObjects:[],focusText:'',playerObjects:[],objectsSeparate:false,injection:'worldbook',retrieval:'keywords',topK:8,originBook:'',sessionBook:'',originPins:[],hardRules:[],taskInstructions:{},contextChars:40000});
+function tableSettings(world){const s={...copy(TABLE_SETTINGS),styleEnabled:world.modes?.[world.mode]?.narrative?.缇斯亚叙事防八股??true,...world.tables};check(['hybrid','tables'].includes(s.continuity),'历史接续方式无效');check(['worldbook','direct'].includes(s.injection),'表单注入方式无效');check(['keywords','vector'].includes(s.retrieval),'检索方式无效');for(const key of ['enabled','styleEnabled','archive','plot','preferences','offstage','nativeBridge','objectsSeparate'])check(typeof s[key]==='boolean','表格开关无效：'+key);check(Number.isSafeInteger(s.topK)&&s.topK>=0&&s.topK<=100,'检索数量须为 0—100');check(Number.isSafeInteger(s.contextChars)&&s.contextChars>=2000,'表格上下文预算至少 2000 字符');check(Array.isArray(s.hardRules)&&s.hardRules.every(x=>typeof x==='string'),'明确偏好规则格式无效');check(Array.isArray(s.focusObjects)&&s.focusObjects.every(x=>typeof x==='string')&&Array.isArray(s.playerObjects)&&s.playerObjects.every(x=>typeof x==='string')&&typeof s.focusText==='string','推进关注配置无效');check(Array.isArray(s.originPins),'原点版本引用无效');check(object(s.taskInstructions)&&Object.entries(s.taskInstructions).every(([k,v])=>['ruleReview','tableAssistant','tableArchive','objectArchive','historyImport','tableGenesis','plotAdvance','preferenceAnalysis','templateInit','assetAdapt','nativeFill'].includes(k)&&typeof v==='string'),'辅助模式补充指令无效');return s;}
+
+const FORM_GROUPS=Object.freeze([{id:'definitions',name:'世界定义',tables:['facts']},{id:'archives',name:'对象底档',tables:['objects']},{id:'current',name:'当前状态',tables:['scene','state']},{id:'relationships',name:'关系与归属',tables:['relations','holdings']},{id:'knowledge',name:'认知与信息',tables:['cognition','experiences','growth']},{id:'affairs',name:'事务与日程',tables:['tasks','timers','activities']},{id:'history',name:'事件与修改历史',tables:['events']},{id:'threads',name:'线索与未解事项',tables:['clues']}]);
+function upgradeRegistry(source){const r=copy(source),state=r.tables.find(t=>t.id==='state'),objects=r.tables.find(t=>t.id==='objects');if(state){if(JSON.stringify(state.fields.值)===JSON.stringify({type:'json',required:true}))state.fields.值={type:'json'};state.fields.值引用??={type:'ref'};state.fields.有效性??=copy(TABLES.find(t=>t.id==='state').fields.有效性);}if(objects)objects.fields.发现环境??=copy(TABLES.find(t=>t.id==='objects').fields.发现环境);for(const def of TABLES){const old=r.tables.find(t=>t.id===def.id);if(!old)r.tables.push(copy(def));else for(const [name,field]of Object.entries(def.fields))old.fields[name]??=copy(field);}return applyConditionTemplates(r);}
+
+function validateScale(axis){check(!(axis.原生引用&&Object.hasOwn(axis,'值')),'原生刻度只保存引用，不复制数值');if(axis.值!==undefined){check(Number.isFinite(axis.最小)&&Number.isFinite(axis.最大)&&axis.最小<axis.最大,'刻度须明确上下限');check(axis.值>=axis.最小&&axis.值<=axis.最大,'刻度值超出范围');}return axis;}
+
+function isObjectType(registry,row,base){let type=registry.types.find(t=>t.id===row.values.类型);const seen=new Set();while(type&&!seen.has(type.id)){if(type.id===base)return true;seen.add(type.id);type=registry.types.find(t=>t.id===type.parent);}return false;}
+
+// FT01 candidate definitions. Not imported by the production service; no stored registry changes.
+const FOUNDATION_DEFINITIONS = {
+  "format": "tisya.foundation-template-catalog/1",
+  "status": "candidate-not-installed",
+  "version": 3,
+  "principle": "九组为视图；基点、原点、会话为来源与时间层，独立权限事实另分行。",
+  "schemaChanges": [
+    {
+      "kind": "type",
+      "id": "character",
+      "fields": {
+        "身份细目": {
+          "type": "object",
+          "fields": {
+            "物种": {
+              "type": "refs",
+              "description": "已登记物种定义的稳定引用；未知不补人类。"
+            },
+            "生命阶段": {
+              "type": "text",
+              "description": "按世界物种和历法表述；不把现实年龄默认给人物。"
+            },
+            "出生时期": {
+              "type": "text",
+              "description": "有来源的世界时间表达；不强制公历日期。"
+            },
+            "出身地": {
+              "type": "refs",
+              "description": "出生/成长来源地，不是当前位置。"
+            },
+            "语言": {
+              "type": "texts",
+              "description": "已确认可用语言；不因此自动懂秘密或暗语。"
+            },
+            "社会身份": {
+              "type": "text",
+              "description": "原点的社会位置、责任与限制；当前任职另由状态/关系维护。"
+            }
+          }
+        },
+        "形貌": {
+          "type": "object",
+          "fields": {
+            "整体": {
+              "type": "text",
+              "description": "原点稳定体貌。"
+            },
+            "辨识特征": {
+              "type": "texts",
+              "description": "有依据的独特外观锚点。"
+            },
+            "仪态": {
+              "type": "text",
+              "description": "已确立的惯常动作、姿态和身体表达；语速归节奏，单次动作不算惯常。"
+            },
+            "惯常装束": {
+              "type": "text",
+              "description": "衣着习惯，非当前穿戴或库存。"
+            },
+            "感官印象": {
+              "type": "text",
+              "description": "可感知的稳定印象，不给观察者无依据的秘密知识。"
+            }
+          }
+        },
+        "性情": {
+          "type": "object",
+          "fields": {
+            "价值取舍": {
+              "type": "text",
+              "description": "选择之间的优先与代价。"
+            },
+            "判断方式": {
+              "type": "text",
+              "description": "形成判断、核验证据和处理分歧的方法；具体操作流程归做事方式。"
+            },
+            "情绪处理": {
+              "type": "text",
+              "description": "稳定应对方式，非当前心情。"
+            },
+            "长处": {
+              "type": "texts",
+              "description": "性情上的优点及具体表现；技艺归擅长。"
+            },
+            "短处": {
+              "type": "texts",
+              "description": "性情上的弱点及后果；未掌握技能归不足，伤势限制归代价限制。"
+            },
+            "拒绝边界": {
+              "type": "text",
+              "description": "已确立的稳定拒绝原则；单次拒绝、未答应或尚未发生不构成原则。"
+            },
+            "协商条件": {
+              "type": "text",
+              "description": "哪些新依据可能改变决定。"
+            },
+            "改变条件": {
+              "type": "text",
+              "description": "材料明确说明的可能促成性情变化的条件；期待、尚未改变不算条件，未说明留空。"
+            }
+          }
+        },
+        "生活": {
+          "type": "object",
+          "fields": {
+            "生计": {
+              "type": "text",
+              "description": "日常谋生方式。"
+            },
+            "作息": {
+              "type": "text",
+              "description": "日常起居、工作和休息的时间安排；反复小动作归习惯。"
+            },
+            "兴趣": {
+              "type": "texts",
+              "description": "稳定兴趣；单次行为不能自动确立。"
+            },
+            "习惯": {
+              "type": "texts",
+              "description": "已确认的日常反复行为；不复抄作息时间或性情判断原则。"
+            },
+            "长期目标": {
+              "type": "text",
+              "description": "长期自主愿望及已知进展；不改成已成功或已接受的任务。"
+            },
+            "社会责任": {
+              "type": "text",
+              "description": "稳定承担的职责范围；对象间持续联系另见关系，不复抄互动经过。"
+            }
+          }
+        },
+        "表达": {
+          "type": "object",
+          "fields": {
+            "措辞": {
+              "type": "text",
+              "description": "用词、比喻和话题选择；语速、长短及讲述次序归节奏。"
+            },
+            "节奏": {
+              "type": "text",
+              "description": "句式与表达节奏。"
+            },
+            "幽默": {
+              "type": "text",
+              "description": "适用的幽默方式，可没有。"
+            },
+            "沉默条件": {
+              "type": "text",
+              "description": "何时不说及原因。"
+            },
+            "关系差异": {
+              "type": "text",
+              "description": "对不同对象的表达差异；具体关系经过与协作分工留在关系表。"
+            },
+            "禁用套路": {
+              "type": "texts",
+              "description": "防止机械复读的边界，不要求每轮套例句。"
+            }
+          }
+        },
+        "本领": {
+          "type": "object",
+          "fields": {
+            "擅长": {
+              "type": "texts",
+              "description": "有来源的稳定能力。"
+            },
+            "不足": {
+              "type": "texts",
+              "description": "明确不会或未受训练的技能；没提及不等于不会，已会技能的限制另填。"
+            },
+            "做事方式": {
+              "type": "text",
+              "description": "运用本领的惯常操作流程；不复抄一般性情原则。"
+            },
+            "代价限制": {
+              "type": "texts",
+              "description": "已掌握本领的适用条件、使用代价和身体限制；不会的技能归不足。"
+            },
+            "定义引用": {
+              "type": "refs",
+              "description": "引用已登记能力/规则，不复制公式与资源当前值。"
+            },
+            "叙事表现": {
+              "type": "text",
+              "description": "使用本领时旁人可感知的动作或现象；不复抄通用流程，不代表本轮已成功。"
+            }
+          }
+        },
+        "人物核心": {
+          "type": "object",
+          "fields": {
+            "性格核心标签": {
+              "type": "texts",
+              "description": "少量有依据的性格辨识词；概括稳定底色，不用职业、能力或单次心情代替人格，不用标签取代欲望与矛盾。"
+            },
+            "欲望双螺旋": {
+              "type": "texts",
+              "description": "彼此同时成立的核心欲望，每股各一项：想得到、守住或避免失去什么。双螺旋指多股驱动力并行，不是欲望对障碍；有几股写几股，不为凑两股捏造动机。具体计划和进度归长期目标。"
+            },
+            "核心矛盾": {
+              "type": "text",
+              "description": "上述欲望怎样冲突、互相依赖或强化；它们与信念、恐惧、现实限制怎样拉扯，每次取舍付出什么代价，其应对如何反过来影响追求。只写有依据的联系和代价，不堆砌反义词，不强造创伤或预设成长。"
+            }
+          }
+        },
+        "面具层": {
+          "type": "object",
+          "fields": {
+            "面具呈现": {
+              "type": "text",
+              "description": "在什么对象或场合前，主动或习惯性维持什么外在形象；资料未说明伪装时留空，不把礼貌或一般表达自动判作虚假。"
+            },
+            "面具作用": {
+              "type": "text",
+              "description": "这层呈现用于保护、获得或回避什么，与真实欲望或反应有何落差；不复抄欲望全文，不泄露隐情内容。"
+            },
+            "面具裂隙": {
+              "type": "text",
+              "description": "哪些有依据的情境下，外在呈现与真实反应出现差异、松动或切换，旁人具体能看见什么；不是必然崩溃或已发生揭示，观察到征象不等于知道其原因。"
+            }
+          }
+        }
+      }
+    },
+    {
+      "kind": "type",
+      "id": "item",
+      "fields": {
+        "独有意义": {
+          "type": "text",
+          "description": "在目标世界中的具体意义；保留基点意义但不照搬旧世界事实。"
+        },
+        "使用限制": {
+          "type": "text",
+          "description": "来源明确的使用边界，不凭描述赋予可执行机制。"
+        }
+      }
+    },
+    {
+      "kind": "type",
+      "id": "place",
+      "fields": {
+        "空间关系": {
+          "type": "object",
+          "fields": {
+            "上级地点": {
+              "type": "ref",
+              "description": "仅明确包含关系；提到或朝向不构成包含。"
+            },
+            "连接地点": {
+              "type": "refs",
+              "description": "明确可达连接；单向/许可细则由世界规则补定义。"
+            },
+            "有效范围": {
+              "type": "text",
+              "description": "地点边界与尺度，不由临近文字猜测。"
+            }
+          }
+        }
+      }
+    },
+    {
+      "kind": "type",
+      "id": "organization",
+      "fields": {
+        "组织目的": {
+          "type": "text",
+          "description": "组织存在理由与目标。"
+        },
+        "活动范围": {
+          "type": "refs",
+          "description": "已确认的地点范围；不因此继承成员所在地。"
+        }
+      }
+    },
+    {
+      "kind": "table",
+      "id": "facts",
+      "fields": {
+        "前史": {
+          "type": "object",
+          "fields": {
+            "主体": {
+              "type": "ref",
+              "description": "所属对象的稳定ID。"
+            },
+            "时期": {
+              "type": "text",
+              "description": "明确早于当前开局的世界时期。"
+            },
+            "地点": {
+              "type": "refs",
+              "description": "已确认地点，不用文字邻接推导包含关系。"
+            },
+            "参与者": {
+              "type": "refs",
+              "description": "实际参与者不等于全体知情者。"
+            },
+            "选择": {
+              "type": "text",
+              "description": "材料明确的主动抉择；不能从获赠、持有或结果倒推自愿选择。"
+            },
+            "后果": {
+              "type": "text",
+              "description": "材料明确的事件结果；不把相邻叙述补成先后或因果。"
+            },
+            "当下影响": {
+              "type": "text",
+              "description": "明确由此事造成且仍持续的影响；不把别处已知事实当作此事后果。"
+            },
+            "原文": {
+              "type": "text",
+              "description": "已确认前史的原文；讨论示例不得升为事实。"
+            },
+            "涉及对象": {
+              "type": "refs",
+              "description": "本条明确涉及的其他已登记物品、组织或规则等；参与者与地点已有专格，不重复填；关联不代表参与或知情。"
+            },
+            "当时理解": {
+              "type": "text",
+              "description": "所属人物在此事当时怎样理解、相信或误解，限资料明确给出的心理或话语；不是客观定论或他人也知道，不用后来的认识倒灌。不明留空，受保护隐情仍归独立隐情。"
+            }
+          }
+        },
+        "关系底稿": {
+          "type": "object",
+          "fields": {
+            "主体": {
+              "type": "ref",
+              "description": "关系方向的主体。"
+            },
+            "对象": {
+              "type": "ref",
+              "description": "持续联系另一端的稳定ID，可为人物、组织、地点或物品等；仅被提到不构成关系，同名不合并。"
+            },
+            "性质": {
+              "type": "text",
+              "description": "已确立的联系性质，如师徒、协作、长期责任或归属；责任和协作不自动成为私交。"
+            },
+            "形成经过": {
+              "type": "text",
+              "description": "该联系形成的已确认经过；不将仅同场或单次提及写成长期联系。"
+            },
+            "相处方式": {
+              "type": "text",
+              "description": "主体与本条对象的惯常互动或分工；不混入其他关系，不推断双向对称。"
+            },
+            "主体边界": {
+              "type": "text",
+              "description": "主体自己的边界与理由。"
+            },
+            "成立条件": {
+              "type": "text",
+              "description": "哪些前提使该关系成立；换U不能只改ID照搬。"
+            }
+          }
+        },
+        "隐情": {
+          "type": "object",
+          "fields": {
+            "关联对象": {
+              "type": "refs",
+              "description": "秘密涉及的对象。"
+            },
+            "可观察线索": {
+              "type": "texts",
+              "description": "有依据的线索，不自动授予事实全貌。"
+            },
+            "揭示条件": {
+              "type": "text",
+              "description": "允许揭示的条件或永不揭示的约束，不等于已经公开。"
+            },
+            "影响范围": {
+              "type": "text",
+              "description": "秘密的影响，不作为人物已知信息。"
+            }
+          }
+        },
+        "世界设定": {
+          "type": "object",
+          "fields": {
+            "领域": {
+              "type": "enum",
+              "values": [
+                "方向",
+                "法则",
+                "空间",
+                "生态",
+                "社会",
+                "生活",
+                "文化",
+                "时间"
+              ]
+            },
+            "相关对象": {
+              "type": "refs",
+              "description": "关联的真实实体/规则ID。"
+            },
+            "适用范围": {
+              "type": "text",
+              "description": "设定适用的世界、时代和范围。"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "originViews": {
+    "character": [
+      {
+        "id": "identity",
+        "label": "身份",
+        "table": "objects",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "别名"
+          ],
+          [
+            "属性",
+            "身份细目"
+          ]
+        ],
+        "source": "MOD-P02"
+      },
+      {
+        "id": "appearance",
+        "label": "形貌",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "形貌"
+          ]
+        ],
+        "source": "MOD-P03"
+      },
+      {
+        "id": "disposition",
+        "label": "性情",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "性情"
+          ]
+        ],
+        "source": "MOD-P04"
+      },
+      {
+        "id": "life",
+        "label": "生活",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "生活"
+          ]
+        ],
+        "source": "MOD-P05"
+      },
+      {
+        "id": "expression",
+        "label": "表达",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "表达"
+          ]
+        ],
+        "source": "MOD-P06"
+      },
+      {
+        "id": "skills",
+        "label": "本领",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "本领"
+          ]
+        ],
+        "source": "MOD-P07"
+      },
+      {
+        "id": "history",
+        "label": "经历",
+        "table": "facts",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "命题"
+          ],
+          [
+            "对象"
+          ],
+          [
+            "前史"
+          ]
+        ],
+        "source": "MOD-P08"
+      },
+      {
+        "id": "relationships",
+        "label": "关系",
+        "table": "facts",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "命题"
+          ],
+          [
+            "对象"
+          ],
+          [
+            "关系底稿"
+          ]
+        ],
+        "source": "MOD-P09"
+      },
+      {
+        "id": "secrets",
+        "label": "隐情",
+        "table": "facts",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "命题"
+          ],
+          [
+            "对象"
+          ],
+          [
+            "隐情"
+          ]
+        ],
+        "source": "MOD-P10"
+      },
+      {
+        "id": "characterCore",
+        "label": "核心",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "人物核心"
+          ]
+        ],
+        "source": "MOD-P01 / FT10-W28"
+      },
+      {
+        "id": "personaMask",
+        "label": "面具",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "面具层"
+          ]
+        ],
+        "source": "Luc entry 0 / FT10-W28"
+      }
+    ],
+    "item": [
+      {
+        "id": "item",
+        "label": "物品原点",
+        "table": "objects",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "别名"
+          ],
+          [
+            "描述"
+          ],
+          [
+            "属性",
+            "形态"
+          ],
+          [
+            "属性",
+            "用途"
+          ],
+          [
+            "属性",
+            "材质"
+          ],
+          [
+            "属性",
+            "规则"
+          ],
+          [
+            "属性",
+            "独有意义"
+          ],
+          [
+            "属性",
+            "使用限制"
+          ]
+        ],
+        "source": "MOD-O04"
+      }
+    ],
+    "place": [
+      {
+        "id": "place",
+        "label": "地点原点",
+        "table": "objects",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "别名"
+          ],
+          [
+            "描述"
+          ],
+          [
+            "属性",
+            "环境"
+          ],
+          [
+            "属性",
+            "位置"
+          ],
+          [
+            "属性",
+            "特征"
+          ],
+          [
+            "属性",
+            "出入条件"
+          ],
+          [
+            "属性",
+            "空间关系"
+          ]
+        ],
+        "source": "MOD-O03"
+      }
+    ],
+    "organization": [
+      {
+        "id": "organization",
+        "label": "组织原点",
+        "table": "objects",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "别名"
+          ],
+          [
+            "描述"
+          ],
+          [
+            "属性",
+            "职责"
+          ],
+          [
+            "属性",
+            "结构"
+          ],
+          [
+            "属性",
+            "立场"
+          ],
+          [
+            "属性",
+            "历史"
+          ],
+          [
+            "属性",
+            "组织目的"
+          ],
+          [
+            "属性",
+            "活动范围"
+          ]
+        ],
+        "source": "MOD-O02"
+      }
+    ],
+    "rule": [
+      {
+        "id": "rule",
+        "label": "规则原点",
+        "table": "objects",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "描述"
+          ],
+          [
+            "属性",
+            "适用范围"
+          ],
+          [
+            "属性",
+            "条件"
+          ],
+          [
+            "属性",
+            "效果"
+          ],
+          [
+            "属性",
+            "例外"
+          ]
+        ],
+        "source": "MOD-W02/R03"
+      }
+    ],
+    "world": [
+      {
+        "id": "world",
+        "label": "世界定义",
+        "table": "facts",
+        "paths": [
+          [
+            "名称"
+          ],
+          [
+            "命题"
+          ],
+          [
+            "条件"
+          ],
+          [
+            "生效时间"
+          ],
+          [
+            "对象"
+          ],
+          [
+            "世界设定"
+          ]
+        ],
+        "source": "MOD-W01—W08"
+      }
+    ]
+  },
+  "coreSlots": [
+    {
+      "id": "essence",
+      "label": "核心与不可替代性",
+      "target": "traits",
+      "prompt": "去掉世界外壳后必须保留什么；不要只提取标签。"
+    },
+    {
+      "id": "choice",
+      "label": "价值与选择",
+      "target": "traits",
+      "prompt": "价值冲突、判断及拒绝边界，有原文才保留。"
+    },
+    {
+      "id": "motive",
+      "label": "愿望与形成因果",
+      "target": "traits",
+      "prompt": "这里只保留经历如何形成或改变核心的依据；欲望本身归欲望双螺旋，不重复抄写，不复制旧世界人名和已完成事件。"
+    },
+    {
+      "id": "ability",
+      "label": "用途、能力与代价",
+      "target": "traits",
+      "prompt": "能力/物品用途的意义、限制与代价；数值另由目标世界定义。"
+    },
+    {
+      "id": "anchor",
+      "label": "辨识与象征",
+      "target": "traits",
+      "prompt": "只有核心必需的外形/象征才保留；其余允许世界化。"
+    },
+    {
+      "id": "growth",
+      "label": "选择携带的成长",
+      "target": "growth",
+      "prompt": "仅用户明确选择；作为待适配的经历意义，不冒充新会话已经发生。"
+    },
+    {
+      "id": "links",
+      "label": "所选对象的关联意义",
+      "target": "links",
+      "prompt": "对象齐全且明确选择才保留；不自动扩大选取或携带旧关系、背包。"
+    },
+    {
+      "id": "personality-tags",
+      "label": "性格核心标签",
+      "target": "traits",
+      "prompt": "人物核心的少量辨识词；与欲望、矛盾共同保留，不以同标签替换其具体意义。"
+    },
+    {
+      "id": "desire-axis",
+      "label": "欲望双螺旋",
+      "target": "traits",
+      "prompt": "保留多股同时成立的核心欲望及优先关系，不简化为目标对障碍；原点分别映射具体表达，不复制旧任务进度。"
+    },
+    {
+      "id": "tension-axis",
+      "label": "核心矛盾",
+      "target": "traits",
+      "prompt": "保留多股欲望的冲突、依赖与强化，以及它们与信念、恐惧、现实限制的拉扯和取舍代价；不强造创伤或预设成长。"
+    },
+    {
+      "id": "persona-mask",
+      "label": "面具及真实落差",
+      "target": "traits",
+      "prompt": "有依据才携带表层呈现的用途及与真实反应的落差；核心意义适配到原点面具层，旧世界场合、人名和已揭露状态不直接迁移。"
+    }
+  ],
+  "sessionViews": [
+    {
+      "table": "scene",
+      "label": "场景",
+      "inheritance": "仅以明确开局场景建立；随后按来源更新，不能复制旧会话在场者。"
+    },
+    {
+      "table": "state",
+      "label": "当前状态",
+      "inheritance": "明确开局值或锚点时值；逐对象/字段唯一，当前位置不能从出身地复制。"
+    },
+    {
+      "table": "relations",
+      "label": "当前关系",
+      "inheritance": "逐方向、双方实体与成立前提核对；换U不自动继承旧关系。"
+    },
+    {
+      "table": "cognition",
+      "label": "人物认知",
+      "inheritance": "仅明确开局知识/真实接触；原点秘密存在不等于人物知道。"
+    },
+    {
+      "table": "holdings",
+      "label": "持有流转",
+      "inheritance": "明确开局归属、保管或锚点值；模板物品存在不等于拥有。"
+    },
+    {
+      "table": "activities",
+      "label": "行动计划",
+      "inheritance": "有主体和依据的计划/行动，意图不是完成。"
+    },
+    {
+      "table": "tasks",
+      "label": "任务",
+      "inheritance": "明确发布/接受等真实阶段；愿望不是自动接受。"
+    },
+    {
+      "table": "timers",
+      "label": "日程",
+      "inheritance": "有时间基准与触发条件；到期不等于事件发生。"
+    },
+    {
+      "table": "clues",
+      "label": "线索",
+      "inheritance": "已出现内容和公开范围；未揭示真相不先给人物。"
+    },
+    {
+      "table": "events",
+      "label": "事件",
+      "inheritance": "当前线真实发生的过程；前史事实不伪装本轮事件。"
+    },
+    {
+      "table": "experiences",
+      "label": "习惯与回忆",
+      "inheritance": "按主体和形成依据记录；开局已有与后生变化分别注明来源。"
+    },
+    {
+      "table": "growth",
+      "label": "成长",
+      "inheritance": "变化及其证据，不能覆盖原点底档或默认跨世界继承。"
+    }
+  ],
+  "inheritance": [
+    {
+      "id": "core-to-origin",
+      "from": "基点",
+      "to": "原点",
+      "rule": "逐项意义适配与表达映射；不直接复制旧身份、数值、关系、持有、知情。",
+      "evidence": "已选基点版本＋目标世界定义＋用户确认",
+      "writes": "确认后origin.bases及coreAdaptations；模板预览零写"
+    },
+    {
+      "id": "origin-to-session",
+      "from": "原点",
+      "to": "新会话",
+      "rule": "固定原点版本引用；仅明确开局事实建立业务行；原点记录不自动授予知情。",
+      "evidence": "所选原点版本＋开局设计/原卡明确依据",
+      "writes": "session.pins及初始提交；不重置已有会话"
+    },
+    {
+      "id": "session-delta",
+      "from": "会话前态",
+      "to": "会话后态",
+      "rule": "真实来源驱动字段增量；前史与稳定底档不被后生变化覆盖。",
+      "evidence": "本线已保留正文/授权输入/宿主结算",
+      "writes": "session.commits，按修订/锁定/来源校验"
+    },
+    {
+      "id": "session-to-core",
+      "from": "会话",
+      "to": "基点提取",
+      "rule": "用户明确选择对象、关联、成长后提取可复用意义；不自动回流。",
+      "evidence": "所选来源快照与稳定项ID",
+      "writes": "origin.coreAssets新的基点版本"
+    },
+    {
+      "id": "anchor-to-branch",
+      "from": "冻结原著锚点",
+      "to": "新分支",
+      "rule": "只继承锚点已成立状态；新U的关系/持有/知情须逐项核对，未来不倒灌。",
+      "evidence": "冻结版本＋锚点＋主体映射与干预依据",
+      "writes": "分支种子及分歧记录；完整新U因果引擎仍待实现"
+    }
+  ],
+  "unknown": "缺失保持缺失；空数组/false/0仅在明确填写时保留；不由模板补默认值。",
+  "privacy": "access.readers与access.knowers按每条记录独立；同一行内不同秘密/知情范围拆成facts/cognition，不靠折叠或显示分组授权。",
+  "bindings": [
+    {
+      "label": "基点身份",
+      "path": "origin.coreAssets[].id / version",
+      "type": "string / number",
+      "owner": "保存基点时分配",
+      "rule": "定位被选基点；版本相同还须核内容指纹"
+    },
+    {
+      "label": "提取来源",
+      "path": "origin.coreAssets[].sourceSession / source",
+      "type": "string / object（整组）",
+      "owner": "明确选择后提取",
+      "rule": "整组source保存获选对象、成长、关联及说明；不得扩大选择集"
+    },
+    {
+      "label": "成员来源",
+      "path": "origin.coreAssets[].members[].sourceObject / sourceRevision / sourceType / kind",
+      "type": "string / number / string / string",
+      "owner": "整组基点保存",
+      "rule": "保留源对象与修订；不是目标世界对象ID"
+    },
+    {
+      "label": "核心与成长",
+      "path": "origin.coreAssets[].members[].traits[] / growth[]",
+      "type": "{id,name,value,evidence}[]",
+      "owner": "逐项提取并核证据",
+      "rule": "成长必须已选择；evidence对应被选来源中的连续原文"
+    },
+    {
+      "label": "关联闭包",
+      "path": "origin.coreAssets[].links[]",
+      "type": "{id,sourceRow,members,name,value,evidence}[]",
+      "owner": "整组基点保存",
+      "rule": "members必须属于已选成员；关联意义需显式适配"
+    },
+    {
+      "label": "目标底档",
+      "path": "origin.bases[].id / rev / values",
+      "type": "string / number / object",
+      "owner": "确认创世或原点编辑",
+      "rule": "固定修订，不以当前进度覆盖原点"
+    },
+    {
+      "label": "适配依据",
+      "path": "origin.coreAdaptations[].core",
+      "type": "{book,id,version,fingerprint}",
+      "owner": "确认整组适配",
+      "rule": "核相同基点版本及内容后保存；不是靠名字匹配"
+    },
+    {
+      "label": "成员映射",
+      "path": "origin.coreAdaptations[].members[].member / object",
+      "type": "源成员ID / 目标ID@rev",
+      "owner": "确认整组适配",
+      "rule": "明确哪位成员变成哪个世界版本"
+    },
+    {
+      "label": "逐项表达",
+      "path": "origin.coreAdaptations[].members[].items[]",
+      "type": "{item,path,expression}[]",
+      "owner": "确认整组适配",
+      "rule": "每个核心/成长项均须映射；expression逐字存在于目标字段文本"
+    },
+    {
+      "label": "关联表达",
+      "path": "origin.coreAdaptations[].links[].link / targets[]",
+      "type": "基点关联ID / {object,path,expression}[]",
+      "owner": "确认整组适配",
+      "rule": "关联成员的具体世界表达；不自动建立会话关系"
+    },
+    {
+      "label": "会话绑定",
+      "path": "session.origin / pins[]",
+      "type": "原点书名 / ID@rev[]",
+      "owner": "显式绑定与版本选择",
+      "rule": "每个对象只选一个修订；原点更新不自动替换已选版本"
+    },
+    {
+      "label": "版本选择历史",
+      "path": "session.commits[].originSelection",
+      "type": "{before,after}",
+      "owner": "显式重选原点版本",
+      "rule": "保留前后pins并按来源投影，不能只看当前pins还原过去"
+    },
+    {
+      "label": "剧情来源",
+      "path": "session.commits[].source / contextSource / depends",
+      "type": "string或null",
+      "owner": "受控提交",
+      "rule": "仅应用当前故事来源链及依赖均成立的提交；contextSource为按需字段"
+    },
+    {
+      "label": "变更前后",
+      "path": "session.commits[].changes[]",
+      "type": "{id,before,after} 或 {id,before,origin}",
+      "owner": "受控提交",
+      "rule": "after为会话行；origin指向固定原点修订，不能混为可变复制件"
+    },
+    {
+      "label": "逐条依据",
+      "path": "session.commits[].anchors[]",
+      "type": "{source,row,worldTime,recordedAt,evidence,…}[]",
+      "owner": "受控提交",
+      "rule": "世界时间和记录时间分开；每项须有来源证据"
+    },
+    {
+      "label": "行权限与人工值",
+      "path": "row.access.readers / access.knowers / lockedFields",
+      "type": "string[] / string[] / string[]",
+      "owner": "逐行确认",
+      "rule": "读者可见与角色知情分开；继承pins时清空knowers；人工锁保护原字段"
+    },
+    {
+      "label": "分支时点",
+      "path": "session.branchSeed / branchSeed.anchor",
+      "type": "object / object",
+      "owner": "显式选时间锚或分叉",
+      "rule": "已有锚点投影能力；完整新U映射、因果分歧与新模板接线待验"
+    }
+  ]
+};
+
+const {defaultRegistry,copy}=__m["../../tables/schema.js"];
+const {FOUNDATION_DEFINITIONS}=__m["../../tables/foundation-definitions.js"];
+function demoArchive(){
+ const registry=defaultRegistry();for(const c of FOUNDATION_DEFINITIONS.schemaChanges){const table=(c.kind==='type'?registry.types:registry.tables).find(t=>t.id===c.id);if(table)table.fields={...table.fields,...copy(c.fields)};}
+ const access={readers:['读者'],knowers:[]};
+ const row=(id,type,name,description,tags,attributes={})=>({id,table:'objects',rev:1,source:null,access,values:{名称:name,类型:type,描述:description,标签:tags,属性:attributes}});
+ const rows=[
+ row('fanglu','character','方鹿','一位总把难活揽到自己身上的修船匠。',['修船匠','青溪渡'],{人物核心:{性格核心标签:['认真负责','固执自揽','知错公开纠正'],欲望双螺旋:[],核心矛盾:'坚持自己全做、迟迟不肯求助，与工期和承诺冲突；即使因此少收工钱，下一次难活来了仍下意识揽过去。'},面具层:{面具呈现:'',面具作用:'',面具裂隙:''},身份细目:{名称:'方鹿'},生活:{长期目标:'造一条能安全穿过北峡暗流的小船；目前尚未成功。'}}),
+ row('ahe','character','阿禾','白沙滩救援中的同行者，也是方鹿信赖的老朋友。',['渡工','老朋友']),
+ row('sheny','character','沈砚〔船匠〕','八年前收方鹿为徒，让他为自己选错的木料负责。',['船匠','师父']),
+ row('guhuai','character','顾槐','负责渡船验收，与方鹿已有数年的固定协作。',['验船人']),
+ row('qingxi','place','青溪渡','修船、验船与渡工船歌交汇的地方。',['渡口']),
+ row('beixia','place','北峡','方鹿反复绘在船图上的暗流峡谷。',['暗流','造船目标']),
+ row('bell','item','旧铜铃','船匠师父传下的旧物，如今佩在方鹿腰间。',['随身物','师承']),
+ row('listen','rule','听木辨裂','轻敲木料、靠耳听回声，在可疑位置做记号。',['技艺','木料'])
+ ];
+ // Demo values are sourced from the supplied Fanglu material; no invented second
+ // desire or mask. A blank is visibly pending, never an automatic diagnosis.
+ rows[0].values.关联=['sheny','qingxi','beixia','bell','listen'];
+ rows[0].values.属性.身份细目={出身地:['qingxi'],生命阶段:'成年'};
+ rows[0].values.属性.本领={定义引用:['listen']};
+ rows.push({id:'r-fang-ahe',table:'relations',rev:1,source:null,access,values:{名称:'洪水之后的老朋友',主体:'fanglu',对象:'ahe',证据:'从白沙滩救援和此后多次合作中形成；不因交情放行不安全的船。'}});
+ rows.push({id:'e-flood',table:'events',rev:1,source:null,access,values:{名称:'白沙滩洪水救援',时间:'三年前',地点:'白沙滩',经过:'方鹿留下加固船板，让阿禾先带乘客撤离。乘客全部脱险，方鹿搬木料时伤了右腕。',参与者:['fanglu','ahe'],影响:'右腕留下连续用力就疼痛的旧伤。'}});
+ rows.push({id:'e-late',table:'events',rev:1,source:null,access,values:{名称:'误期交货',时间:'去年秋天',经过:'顾槐劝他把难修的船板分给别家，他坚持自己全做，迟迟不肯求助，最终误期并少收工钱。',参与者:['fanglu','guhuai'],影响:'如今难活来了仍会下意识揽过去。'}});
+ rows.push({id:'secret',table:'facts',rev:1,source:null,access:{readers:[],knowers:['fanglu']},values:{名称:'铜铃夹层欠款凭据',命题:'方鹿曾替不愿留名的人偿债而借钱，欠款至今未还清。',对象:['fanglu','bell']}});
+ const originRows=copy(rows.filter(r=>r.table==='objects'));const savedRows=copy(rows);savedRows.find(r=>r.id==='fanglu').values.描述='清晨，方鹿在青溪渡收拾好修船工具。';
+ return {registry,rows,originRows,savedRows,world:'青溪渡',branch:'渡口清晨',cores:[{id:'core-fanglu',name:'方鹿',version:1,traits:[{name:'性格底色',value:'认真负责；固执自揽；知错公开纠正'},{name:'价值取舍',value:'乘客安全优先，不为亲近者掩盖危险。'},{name:'欲望双螺旋',value:'？'},{name:'面具层',value:'？'}]}],saves:[{id:'save-dawn',name:'渡口清晨',time:'开局',note:'当前分支的起点',objects:8}],demo:true};
+}
+
+const {copy,object,typeFields,validateRow}=__m["../../tables/schema.js"];
+const MISSING=Symbol('missing'),DENIED=new Set(['__proto__','prototype','constructor']);
+const requireQuery=(ok,code,message)=>{if(!ok){const e=Error(message);e.code=code;throw e;}};
+function projectArchiveAccess({view,context,authorizeRow,authorizeField,authorizeMetadata=null,sourceOrder=null}){
+ requireQuery(typeof authorizeRow==='function'&&typeof authorizeField==='function','AUTHORIZATION_REQUIRED','图鉴必须绑定明确读取授权');
+ const raw=copy(view),bound=copy(context),rows=[],definitions=new Map(),metadata=new Map();
+ const authorized=(fn,...args)=>{const result=fn(...args);requireQuery(typeof result==='boolean','AUTHORIZATION_REQUIRED','读取授权必须返回明确布尔值');return result;};
+ const approved=raw.rows.filter(row=>authorized(authorizeRow,copy(row),copy(bound))),visibleIds=new Set(approved.map(r=>r.id));
+ requireQuery(visibleIds.size===approved.length,'INVALID_VIEW','档案视图包含重复身份');
+ function projectValue(row,value,def,path){
+  if(def.formula||!authorized(authorizeField,copy(row),copy(path),copy(bound)))return null;
+  let effective=copy(def),projected=value;
+  if(def.type==='ref'&&value!==MISSING&&value!==null&&!visibleIds.has(value))return null;
+  if(def.type==='refs'&&Array.isArray(value))projected=value.filter(id=>visibleIds.has(id));
+  if(def.type==='object'||def.type==='map'){
+   const children=def.fields??(def.type==='map'?Object.fromEntries(Object.keys(object(value)?value:{}).map(k=>[k,def.items])):Object.fromEntries(Object.keys(object(value)?value:{}).map(k=>[k,{type:'json'}]))),fields={},values={};
+   for(const [key,child]of Object.entries(children)){if(DENIED.has(key))continue;const item=projectValue(row,object(value)&&Object.hasOwn(value,key)?value[key]:MISSING,child,[...path,key]);if(item){fields[key]=item.def;if(item.value!==MISSING)values[key]=item.value;}}
+   effective={...effective,fields};if(object(value))projected=values;
+  }else if(def.type==='array'){
+   // Array field authorization uses schema paths, without numeric indices.
+   const items=Array.isArray(value)?value:[],projectedItems=items.map(v=>projectValue(row,v,def.items,path)).filter(Boolean),sample=projectValue(row,MISSING,def.items,path);
+   effective={...effective,items:sample?.def??def.items};if(Array.isArray(value))projected=projectedItems.map(v=>v.value);
+  }
+  return {def:effective,value:projected};
+ }
+ for(const row of approved){
+  requireQuery(row.referenceOnly!==true,'INVALID_VIEW','查询需要完整档案，不能以薄引用判断字段缺失');validateRow(raw.registry,row);requireQuery(Number.isSafeInteger(row.rev)&&row.rev>0,'INVALID_VIEW','档案修订无效');
+  const table=raw.registry.tables.find(t=>t.id===row.table);requireQuery(table,'INVALID_VIEW','档案表结构不完整');const fields={},values={};
+  for(const [name,originalDef]of Object.entries(table.fields)){
+   const def=row.table==='objects'&&name==='属性'?{...originalDef,fields:typeFields(raw.registry,row.values.类型)}:originalDef;
+   const field=projectValue(row,Object.hasOwn(row.values,name)?row.values[name]:MISSING,def,[name]);if(field){fields[name]=field.def;if(field.value!==MISSING)values[name]=field.value;}
+  }
+  if(authorizeMetadata&&authorized(authorizeMetadata,copy(row),copy(bound))){
+   const details={access:copy(row.access),lockedFields:copy(row.lockedFields??[])};
+   if(sourceOrder!==null){
+    const position=key=>key!=null&&Object.hasOwn(sourceOrder,key)&&Number.isSafeInteger(sourceOrder[key])&&sourceOrder[key]>=0?sourceOrder[key]:null;
+    const rowIndex=position(row.source),reviewIndex=position(bound.source);
+    details.sourcePosition={rowFloor:rowIndex===null?null:rowIndex+1,reviewFloor:reviewIndex===null?null:reviewIndex+1,relation:rowIndex===null||reviewIndex===null?'unknown':rowIndex<reviewIndex?'earlier':rowIndex>reviewIndex?'later':'same'};
+   }
+   metadata.set(row.id,details);
+  }
+  definitions.set(row.id,{type:'object',fields});rows.push({id:row.id,rev:row.rev,table:row.table,source:row.source??null,values});
+ }
+ return {rows,definitions,metadata};
+}
+
+const {check,copy,object,registryIndex}=__m["../../tables/schema.js"];
+const {projectArchiveAccess}=__m["../../tables/archive-access.js"];
+const ATLAS_LAYOUT={version:1,groups:[
+ {id:'people',name:'人物',types:['character'],accent:'jade'},
+ {id:'places',name:'山川与城邑',types:['place'],accent:'blue'},
+ {id:'factions',name:'势力与群体',types:['organization'],accent:'purple'},
+ {id:'items',name:'器物与资源',types:['item'],accent:'amber'},
+ {id:'rules',name:'法则与技艺',types:['rule'],accent:'red'}
+]};
+function validateAtlasLayout(layout,registry){
+ check(object(layout)&&layout.version===1&&Array.isArray(layout.groups)&&layout.groups.length<=32,'图鉴分类格式无效');registryIndex(registry);const ids=new Set(),types=new Set();
+ for(const g of layout.groups){check(object(g)&&/^[a-z][a-z0-9-]{0,39}$/.test(g.id)&&g.id!=='other'&&!ids.has(g.id)&&typeof g.name==='string'&&g.name.trim()&&g.name.length<=40&&Array.isArray(g.types)&&g.types.length>0,'图鉴分类名称或ID无效');ids.add(g.id);check(['jade','blue','purple','amber','red','slate'].includes(g.accent),'分类色无效');for(const t of g.types){check(registry.types.some(x=>x.id===t)&&!types.has(t),'图鉴类型缺失或重复归类：'+t);types.add(t);}}
+ return copy(layout);
+}
+function groupFor(type,layout,registry){const seen=new Set();while(type&&!seen.has(type)){seen.add(type);const group=layout.groups.find(g=>g.types.includes(type));if(group)return group;type=registry.types.find(t=>t.id===type)?.parent;}return {id:'other',name:'其他档案',accent:'slate'};}
+function refs(value,def,out=[],path=[]){if(value==null||!def)return out;if(def.type==='ref')out.push({id:value,path});else if(def.type==='refs')value.forEach((id,i)=>out.push({id,path:[...path,i]}));else if(def.type==='array')value.forEach((item,i)=>refs(item,def.items,out,[...path,i]));else if(def.fields&&object(value))for(const [key,child]of Object.entries(value))refs(child,def.fields[key],out,[...path,key]);return out;}
+// This is a disposable projection, never another editable database. Filtering
+// happens before search, category counts, links, snippets and serialized output.
+function createAtlas({view,context,layout=ATLAS_LAYOUT,authorizeRow,authorizeField,guard=()=>{}}){
+ const config=validateAtlasLayout(layout,view.registry),{rows,definitions}=projectArchiveAccess({view,context,authorizeRow,authorizeField}),byId=new Map(rows.map(r=>[r.id,r]));
+ const referencePaths=new Map(rows.map(r=>[r.id,refs(r.values,definitions.get(r.id)).filter(ref=>byId.has(ref.id))]));
+ const links=new Map(rows.map(r=>[r.id,[...new Set(referencePaths.get(r.id).map(ref=>ref.id))]]));
+ const target=id=>{const r=byId.get(id);return {id:r.id,table:r.table,revision:r.rev,name:r.values.名称??'未命名',kind:view.registry.tables.find(t=>t.id===r.table)?.name??'档案'};};
+ const cards=rows.filter(r=>r.table==='objects').map(r=>{const g=groupFor(r.values.类型,config,view.registry),type=view.registry.types.find(t=>t.id===r.values.类型);return {id:r.id,revision:r.rev,name:r.values.名称??'未命名',type:r.values.类型??null,typeName:type?.name??'档案',category:g.id,accent:g.accent,tags:copy(r.values.标签??[]),summary:r.values.描述??'',aliases:copy(r.values.别名??[])};});
+ const readGuard=()=>{const result=guard();check(!result||typeof result.then!=='function','同步图鉴需在宿主异步版本核验后读取');};
+ const term=s=>String(s).normalize('NFKC').toLocaleLowerCase();
+ return {
+  scope:copy(context),
+  list({query='',category=null,type=null,offset=0,limit=30}={}){readGuard();check(typeof query==='string'&&query.length<=300&&Number.isSafeInteger(offset)&&offset>=0&&Number.isSafeInteger(limit)&&limit>=1&&limit<=100,'图鉴查询参数无效');const words=term(query).split(/\s+/u).filter(Boolean);const matched=cards.filter(c=>(!type||c.type===type)&&words.every(w=>term(JSON.stringify(byId.get(c.id).values)).includes(w)));const selected=matched.filter(c=>!category||c.category===category);const groups=[...config.groups,{id:'other',name:'其他档案',accent:'slate'}].map(g=>({id:g.id,name:g.name,accent:g.accent,count:matched.filter(c=>c.category===g.id).length})).filter(g=>g.count>0);return {scope:copy(context),items:copy(selected.slice(offset,offset+limit)),total:selected.length,groups,hasMore:offset+limit<selected.length};},
+  detail(id){
+   readGuard();const row=byId.get(id);check(row,'档案不存在或不可读取');
+   const related=rows.filter(r=>r.id!==id&&(links.get(r.id).includes(id)||links.get(id).includes(r.id)));
+   // Edges come exclusively from authorized typed references. Co-participation
+   // is labelled through its record; it does not invent a personal relationship.
+   const neighbors=new Map();
+   const connect=(other,via)=>{if(other===id||byId.get(other)?.table!=='objects')return;const item=neighbors.get(other)??{...target(other),via:[]};if(!item.via.some(x=>x.id===via.id))item.via.push(via);neighbors.set(other,item);};
+   for(const other of related){if(other.table==='objects')connect(other.id,{id:other.id,label:'直接关联'});else for(const ref of links.get(other.id))connect(ref,{id:other.id,label:other.values.名称??'关联记录'});}
+   return {scope:copy(context),record:copy(row),kind:target(id).kind,sections:copy(Object.entries(row.values).filter(([k])=>!['名称','类型','别名','标签'].includes(k)).map(([name,value])=>({name,value}))),related:copy(related.map(r=>({...target(r.id),values:r.values}))),links:copy(links.get(id)),references:copy(referencePaths.get(id).map(ref=>({path:ref.path,target:target(ref.id)}))),neighbors:copy([...neighbors.values()])};
+  }
+ };
+}
+
+const {createAtlas}=__m["../../tables/atlas.js"];
+// Shared atlas renderer: standalone demo or an explicitly authorized host snapshot.
+function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null}={}){
+ const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=null,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[];
+ const win=doc.defaultView;let pending=Promise.resolve();
+ const failure=error=>{if(onFault)onFault(error);else notify(error.message);};
+ const act=fn=>{pending=Promise.resolve().then(beforeRead).then(fn).catch(failure);return pending;};
+ const icons={atlas:'◈',saves:'⌁',cores:'◇',overview:'⊞',changes:'⌁'};
+ const labels={atlas:'图鉴',saves:'存档',cores:'基点',overview:'总览',changes:'变更'};
+ function el(tag,text,cls){const e=doc.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
+ function button(text,fn,cls=''){const b=el('button',text,cls);b.type='button';b.addEventListener('click',()=>{if(data.live)act(fn);else try{fn();}catch(error){failure(error);}});return b;}
+ const field=(name,value)=>{const g=el('div',undefined,'field');g.append(el('dt',name),el('dd',renderValue(value)));return g;};
+ function pathLabel(valuePath){const key=valuePath.at(-1);return typeof key==='number'?'第 '+(key+1)+' 项':String(key);}
+ function currentFrame(){return {page,layer,category,query,selected,tab,audience,path:[...path],scroll:win.scrollY,focus:doc.activeElement?.dataset?.navKey??null};}
+ function resetTrail(){selected=null;path=[];trail=[];}
+ function restore(frame){({page,layer,category,query,selected,tab,audience,path}=frame);render();win.scrollTo(0,frame.scroll??0);if(frame.focus){const focus=[...root.querySelectorAll('[data-nav-key]')].find(e=>e.dataset.navKey===frame.focus);focus?.focus({preventScroll:true});}}
+ function visit(id,nextPath=[]){atlas().detail(id);trail.push(currentFrame());selected=id;path=[...nextPath];tab=nextPath.length||atlas().detail(id).record.table!=='objects'?'dossier':'core';page='atlas';render();win.scrollTo(0,0);}
+ function back(){if(trail.length)restore(trail.pop());else{resetTrail();render();win.scrollTo(0,0);}}
+ function jump(index){const frame=trail[index];trail=trail.slice(0,index);restore(frame);}
+ function recordLink(target,cls='reference-link'){const b=button(target.name+' ↗',()=>visit(target.id),cls);b.setAttribute('aria-label','打开'+target.name);b.dataset.navKey='record:'+target.id;return b;}
+ function displayValue(value,valuePath,detail){
+  const ref=detail.references.find(r=>JSON.stringify(r.path)===JSON.stringify(valuePath));
+  if(ref)return recordLink(ref.target);
+  if(value===null||value===undefined||value===''||Array.isArray(value)&&!value.length)return el('span','待补充','muted');
+  if(Array.isArray(value)){const list=el('div',undefined,'value-list');value.forEach((v,i)=>list.append(displayValue(v,[...valuePath,i],detail)));return list;}
+  if(typeof value==='object'){
+   const label=pathLabel(valuePath),b=button('',()=>visit(selected,valuePath),'subobject-card');b.setAttribute('aria-label','打开子项：'+label);b.dataset.navKey='path:'+JSON.stringify(valuePath);
+   b.append(el('span',label,'subobject-name'),el('span',Object.keys(value).length+' 项 · 点击展开 ↗','muted'));return b;
+  }
+  return el('span',String(value));
+ }
+ function dataField(name,value,valuePath,detail){const g=el('div',undefined,'field'),dd=el('dd');dd.append(displayValue(value,valuePath,detail));g.append(el('dt',name),dd);return g;}
+ function breadcrumbs(d){const nav=el('nav',undefined,'breadcrumbs');nav.setAttribute('aria-label','阅读路径');
+  trail.forEach((f,i)=>{const name=f.selected?(f.path.length?pathLabel(f.path):atlas().detail(f.selected).record.values.名称):labels[f.page];const b=button(name,()=>jump(i));b.setAttribute('aria-label','返回路径：'+name);nav.append(b,el('span','/','crumb-divider'));});
+  nav.append(el('span',path.length?pathLabel(path):d.record.values.名称,'crumb-current'));return nav;
+ }
+
+ function renderValue(value){if(value===null||value===undefined||value===''||Array.isArray(value)&&!value.length)return '待补充';if(typeof value!=='object')return String(value);if(Array.isArray(value))return value.map(renderValue).join('；');return Object.entries(value).map(([k,v])=>k+'：'+renderValue(v)).join('\n');}
+ function atlas(){return createAtlas({view:{registry:layer==='origin'?(data.originRegistry??data.registry):data.registry,rows:layer==='origin'?data.originRows:layer==='save'?data.savedRows:data.rows},context:{layer},authorizeRow:r=>audience==='author'||r.access.readers.includes('读者'),authorizeField:()=>true});}
+ function tags(values){const wrap=el('div',undefined,'tags');for(const value of values)wrap.append(el('span',value));return wrap;}
+ function top(){const head=el('header',undefined,'topbar');const brand=el('div',undefined,'brand');brand.append(el('span','缇','seal'),el('span','缇斯亚 / 档案馆'));head.append(brand,button(theme==='light'?'夜读':'日读',()=>{theme=theme==='light'?'dark':'light';root.dataset.theme=theme;render();},'quiet'));return head;}
+ function navigation(){const nav=el('nav',undefined,'navigation');nav.setAttribute('aria-label','档案馆导航');for(const id of (data.live?['atlas','changes']:['overview','atlas','saves','cores'])){const b=button('',()=>{page=id;resetTrail();render();},page===id?'active':'');b.append(el('span',icons[id],'nav-icon'),el('span',labels[id]));b.setAttribute('aria-current',page===id?'page':'false');nav.append(b);}return nav;}
+ function heading(eyebrow,title,description){const h=el('div',undefined,'heading');h.append(el('p',eyebrow,'eyebrow'),el('h1',title),el('p',description,'lede'));return h;}
+ function layerSwitch(){const bar=el('div',undefined,'scopebar');const select=el('select');select.setAttribute('aria-label','资料层');for(const [id,label]of [['session','当前存档 · '+data.branch],['origin','原点 · 世界初始档案'],...(!data.live?[['save','存档 · 渡口清晨']]:[])]){const o=el('option',label);o.value=id;select.append(o);}select.value=layer;select.addEventListener('change',()=>{const next=select.value;const change=()=>{layer=next;resetTrail();render();};if(data.live)act(change);else change();});const permission=button(audience==='reader'?'读者视图':'作者视图',()=>{audience=audience==='reader'?'author':'reader';resetTrail();render();},'quiet');permission.setAttribute('aria-label','切换读取视图');bar.append(select);if(!data.live)bar.append(permission);return bar;}
+ function collection(){const area=el('section',undefined,'collection');area.append(heading('WORLD ATLAS / '+(data.live?data.world:'青溪渡'),'众生与万象','从一个名字，读到它的来处。'),layerSwitch());const tools=el('div',undefined,'searchbar'),search=el('input');search.placeholder='寻找名字、别名或档案中的细节';search.value=query;search.type='search';search.setAttribute('aria-label','搜索图鉴');tools.append(el('span','⌕'),search);area.append(tools);const filters=el('div',undefined,'filters');filters.setAttribute('aria-label','图鉴分类');area.append(filters);const grid=el('div',undefined,'card-grid'),count=el('p',undefined,'result-count');area.append(count,grid);
+  function refresh(){const list=atlas().list({query,category,limit:100});filters.replaceChildren();const all=button('全部',()=>{category=null;refresh();},!category?'selected':'');filters.append(all);for(const g of list.groups)filters.append(button(g.name+' '+g.count,()=>{category=g.id;refresh();},category===g.id?'selected':''));count.textContent=list.total+' 份可读档案';grid.replaceChildren();if(!list.total)grid.append(el('p','没有找到匹配的档案，试试其他名字。','empty'));
+   for(const c of list.items){const card=button('',()=>{visit(c.id);},'archive-card '+c.accent);card.setAttribute('aria-label','打开'+c.name);card.dataset.navKey='record:'+c.id;const line=el('div',undefined,'card-top');line.append(el('span',c.typeName,'type'),el('span','↗','arrow'));card.append(line,el('h2',c.name),el('p',c.summary,'card-summary'),tags(c.tags));grid.append(card);}
+  }search.addEventListener('input',()=>{const change=()=>{query=search.value;refresh();};if(data.live)act(change);else change();});refresh();return area;
+ }
+ function detail(){const d=atlas().detail(selected),r=d.record,v=r.values;const panel=el('section',undefined,'detail');panel.setAttribute('aria-label','档案详情');
+  const toolbar=el('div',undefined,'detail-toolbar');toolbar.append(button(trail.length?'← 返回上一层':'← 返回图鉴',back,'back'));
+  if(trail.length)toolbar.append(button('返回图鉴',()=>{const index=trail.findIndex(f=>f.page==='atlas'&&!f.selected);if(index>=0)jump(index);else{resetTrail();render();}},'quiet'));
+  panel.append(toolbar,breadcrumbs(d));if(data.live)panel.append(layerSwitch());
+  const hero=el('div',undefined,'detail-hero');hero.append(el('p',(layer==='session'?'当前存档':layer==='origin'?'原点档案':'历史存档')+' / '+(audience==='reader'?'读者可见':'作者查看'),'eyebrow'),el('h1',path.length?pathLabel(path):v.名称),tags(path.length?[v.名称,'档案子项']:v.标签??[]),el('p',path.length?'所属档案：'+v.名称:v.描述??(r.table==='objects'?'':d.kind),'lede'));panel.append(hero);
+  const body=el('div',undefined,'detail-body');
+  if(path.length){let child=v;for(const key of path){if(!child||!Object.hasOwn(child,key))throw Error('子项不存在或不可读取');child=child[key];}for(const [key,value]of Object.entries(child))body.append(dataField(key,value,[...path,key],d));panel.append(body);return panel;}
+  const tabs=el('div',undefined,'detail-tabs');tabs.setAttribute('role','tablist');const choices=r.table==='objects'?[['core','核心'],['dossier','档案'],['history','履历'],['links','关联']]:[['dossier','记录'],['links','关联']];if(data.live&&layer==='session')choices.push(['changes','变更']);
+  for(const [id,label]of choices){const b=button(label,()=>{tab=id;render();},id===tab?'selected':'');b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===tab));tabs.append(b);}panel.append(tabs);
+  if(tab==='core'){const core=v.属性?.人物核心;if(core){body.append(tags(core.性格核心标签??[]));const spiral=el('div',undefined,'spiral');spiral.append(el('p','欲望双螺旋','eyebrow'));const desires=core.欲望双螺旋??[];if(desires.length)desires.forEach((s,i)=>spiral.append(field('欲望 '+(i+1),s)));else spiral.append(el('p','尚待提炼','pending-title'),el('p','资料尚不足以确认相互牵引的多股核心欲望。','muted'));body.append(spiral,field('核心矛盾',core.核心矛盾));const mask=v.属性?.面具层;const block=el('div',undefined,'mask');block.append(el('h3','面具层'));if(mask&&Object.values(mask).some(Boolean))Object.entries(mask).forEach(([k,x])=>block.append(field(k,x)));else block.append(el('p','资料尚未给出明确的面具与真实落差。','muted'));body.append(block);}else body.append(field('档案摘要',v.描述));}
+  if(tab==='dossier'){for(const s of d.sections){if(s.name==='属性'&&s.value&&typeof s.value==='object'){for(const [key,value]of Object.entries(s.value))body.append(dataField(key,value,['属性',key],d));}else body.append(dataField(s.name,s.value,[s.name],d));}body.append(field('记录版本',r.rev));}
+  if(tab==='history'){const events=d.related.filter(x=>x.table==='events');if(!events.length)body.append(el('p','这一层尚未记录相关履历。','empty'));for(const e of events){const block=el('article',undefined,'timeline-item');block.append(el('p',e.values.时间??'时间待补','eyebrow'),recordLink(e,'record-title'),el('p',e.values.经过??''));if(e.values.影响)block.append(el('p',e.values.影响,'aftermath'));body.append(block);}}
+  if(tab==='links'){
+   if(!d.neighbors.length&&!d.related.length)body.append(el('p','尚无可读的关联记录。','empty'));
+   if(d.neighbors.length){body.append(el('h3','相关对象'));const grid=el('div',undefined,'linked-grid');for(const target of d.neighbors){const card=el('article',undefined,'linked-object');card.append(recordLink(target),el('p',target.via.map(x=>x.label==='直接关联'?x.label:'共同记录 · '+x.label).join('；'),'muted'));grid.append(card);}body.append(grid);}
+   const records=d.related.filter(x=>x.table!=='objects');if(records.length)body.append(el('h3','关联记录'));
+   for(const item of records){const box=el('article',undefined,'link-card');box.append(el('p',item.kind,'eyebrow'),recordLink(item,'record-title'),el('p',item.values.证据??item.values.命题??item.values.经过??''));body.append(box);}
+  }
+  if(tab==='changes'){
+   const changes=(data.trace??[]).filter(a=>a.row===r.id).reverse();
+   if(!changes.length)body.append(el('p','这一层没有后续变更记录。','empty'));
+   for(const change of changes){const item=el('article',undefined,'timeline-item');item.append(el('p',change.worldTime??'剧情时间未提供','eyebrow'),el('h3',({create:'新增',update:'修改',delete:'删除'})[change.operation]),field('来源',change.sourceFloor===null?'明确导入或手动记录':'第 '+change.sourceFloor+' 楼'),field('剧情依据',change.evidence),field('记录时间',change.recordedAt),field('存档路径',change.path.join(' / ')));
+    for(const f of change.fields)item.append(field(f.path,(f.beforePresent?renderValue(f.before):'未设置')+' → '+(f.afterPresent?renderValue(f.after):'已移除')));
+    for(const event of change.events){try{atlas().detail(event.id);item.append(recordLink(event));}catch{}}
+    body.append(item);
+   }
+  }
+  panel.append(body);return panel;
+ }
+ function changeHistory(){const box=el('section',undefined,'changes');box.append(heading('SAVE HISTORY / 时间锚','故事留下的改动','按当前线路查看新增、修订与删除。'));
+  for(const change of [...(data.trace??[])].reverse()){
+   const item=el('article',undefined,'timeline-item');item.append(el('p',change.worldTime??'剧情时间未提供','eyebrow'),el('h3',({create:'新增',update:'修改',delete:'删除'})[change.operation]+' · '+(change.after?.名称??change.before?.名称??change.row)),field('来源楼层',change.sourceFloor??'明确导入或手动记录'),field('剧情依据',change.evidence),field('修改前',change.before),field('修改后',change.after===null?'已从当前存档移除':change.after),field('存档路径',change.path.join(' / ')),field('记录时间',change.recordedAt));
+   for(const target of [{id:change.row,name:'当前档案'},...(change.events??[])])try{atlas().detail(target.id);item.append(recordLink(target));}catch{}
+   box.append(item);
+  }if(!(data.trace??[]).length)box.append(el('p','当前线路尚无变更。','empty'));return box;
+ }
+ function overview(){const box=el('section',undefined,'overview');box.append(heading('ARCHIVE / 演示世界',data.world,'一条继承链，三个各司其职的层次。'));const rows=[['01','基点','保留是谁，以及为何如此。','人物的核心、欲望、矛盾与可携带成长。','cores'],['02','原点','在这个世界，成为怎样的存在。','世界化的身份、经历、规则与开局定义。','atlas'],['03','存档','记录这条故事真正走过的路。','选择的原点版本、已发生事件和当前变化。','saves']];for(const [n,name,title,desc,target]of rows){const card=button('',()=>{page=target;if(n==='02')layer='origin';render();},'layer-card');card.append(el('span',n,'layer-number'),el('div',name,'eyebrow'),el('h2',title),el('p',desc),el('span','查看'+name+' →','text-link'));box.append(card);}return box;}
+ function saves(){const box=el('section',undefined,'saves');box.append(heading('BRANCHES / 存档','故事的分岔处','回望某个时点，保留每条路自己的变化。'));const current=el('article',undefined,'current-save');current.append(el('p','正在阅读','eyebrow'),el('h2',data.branch),el('p','青溪渡 · 当前线路'),button('打开当前图鉴',()=>{page='atlas';layer='session';render();},'primary'));box.append(current);const list=el('div',undefined,'save-list');list.append(el('h3','保留的起点'));for(const save of data.saves){const c=el('article',undefined,'save-card');c.append(el('div',save.time,'save-time'),el('h2',save.name),el('p',save.note),button('查看这个时点 →',()=>{page='atlas';layer='save';render();},'text-link'));list.append(c);}box.append(list);box.append(button('导出演示存档',()=>{download('青溪渡-界面演示.json',JSON.stringify({format:'tisya.atlas-ui-demo/1',...data},null,2));notify('已导出界面演示资料。');},'secondary'));box.append(el('p','此预览演示浏览与导出；正式存档的保存和恢复由已验证的档案服务处理。','fine'));return box;}
+ function cores(){const box=el('section',undefined,'cores');box.append(heading('ESSENCE / 基点','不变的内核','身份可以世界化，核心意义逐项继承。'));for(const c of data.cores){const block=el('article',undefined,'core-card');block.append(el('p','人物基点 · 版本 '+c.version,'eyebrow'),el('h2',c.name));for(const t of c.traits)block.append(field(t.name,t.value==='？'?'待提炼':t.value));block.append(el('p','已映射原点：青溪渡 / 方鹿','core-link'),button('查看原点表达 →',()=>{layer='origin';resetTrail();visit('fanglu');},'text-link'));box.append(block);}return box;}
+ function notify(text){const node=root.querySelector('[role="status"]');node.textContent=text;}
+ function render(){root.dataset.theme=theme;const fragment=doc.createDocumentFragment();fragment.append(top());const shell=el('div',undefined,'shell');shell.append(navigation());const content=el('main',undefined,'content');if(page==='atlas'&&selected)content.append(detail());else content.append(page==='atlas'?collection():page==='overview'?overview():page==='saves'?saves():page==='changes'?changeHistory():cores());shell.append(content);fragment.append(shell);const footer=el('footer',data.live?'存档最新版 · 修订 '+data.revision+' · 更改请在当前表单填写':'独立交互预览 · 演示资料，不改动你的档案','preview-note');fragment.append(footer);const status=el('p',undefined,'toast');status.setAttribute('role','status');fragment.append(status);root.replaceChildren(fragment);}
+ render();return {settled:()=>pending,state:()=>({page,layer,category,query,selected,tab,audience,path:[...path],trail:trail.map(f=>({...f,path:[...f.path]}))}),dispose:()=>{root.replaceChildren();}};
+}
+
+const {mountArchiveAtlas:mount}=__m["../../tables/atlas-ui.js"];
+const mountArchiveAtlas=mount;

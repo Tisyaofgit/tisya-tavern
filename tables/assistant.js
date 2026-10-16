@@ -1,3 +1,4 @@
+import {historySignature} from '../config/history-context.js';
 import {NARRATIVE as N} from '../settings-core.js';
 import {validateInterfaceSettings} from './interface-config.js';
 import {check,copy,object,tableSettings,defaultRegistry} from './schema.js';
@@ -52,7 +53,7 @@ export function createTableAssistant({store,getContext,review,run,call,getChoice
   const now=store.read();check(now.key===captured.key&&now.revision===captured.revision,'配置已变化，助手结果未采用');check(!captured.interface||interfaceConfig.read().stamp===captured.interface.stamp,'界面配置已变化，助手结果未采用');const plan=prepared(captured,response.changes,options);
   return {format:'tisya.assistant-draft/1',...copy(response),diff:plan.diff,world:captured.key,revision:captured.revision,interfaceStamp:captured.interface?.stamp,chatStamp:state.chatStamp,question};
  });}
- function guard(draft){const s=snapshot();check(!interfaceConfig||draft.interfaceStamp===s.interface.stamp,'界面配置已变化，请重新让助手核对');check(draft.format==='tisya.assistant-draft/1'&&draft.world===s.key&&draft.revision===s.revision&&draft.chatStamp===JSON.stringify(getContext().chat.filter(m=>!m.is_system&&m.role!=='tool').map(m=>[!!m.is_user,m.name??'',m.mes??'',m.swipe_id??0])),'会话或配置已变化，请重新让助手核对');return s;}
+ function guard(draft){const s=snapshot();check(!interfaceConfig||draft.interfaceStamp===s.interface.stamp,'界面配置已变化，请重新让助手核对');check(draft.format==='tisya.assistant-draft/1'&&draft.world===s.key&&draft.revision===s.revision&&draft.chatStamp===historySignature(getContext()),'会话或配置已变化，请重新让助手核对');return s;}
  async function applyChanges(draft,continueActions){return run(async()=>{
   const s=guard(draft);check(draft.changes.length,'没有待应用的配置修改');const plan=prepared(s,draft.changes,choices());
   if(plan.interfaceValue!==undefined)await interfaceConfig.save({data:plan.data,revision:s.revision,key:s.key,value:plan.interfaceValue,expected:s.interface.stamp});else await store.save(plan.data,s.revision,s.key);

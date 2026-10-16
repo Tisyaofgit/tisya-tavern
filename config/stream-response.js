@@ -1,3 +1,4 @@
+import {toolResponseState} from './tool-response-state.js';
 // Response parsing only: the host owns requests and the service owns task validation.
 export function safeDiagnostic(text){
  let value=String(text??'');
@@ -75,7 +76,10 @@ function jsonText(payload,raw){
  return raw??JSON.stringify(payload);
 }
 
-export async function readTaskResponse(response,{signal,onProgress}={}){
+export function readTaskResponse(response,options={}){return readResponse(response,options,false);}
+export function readToolResponse(response,options={}){return readResponse(response,options,true);}
+async function readResponse(response,{signal,onProgress}={},allowTools=false){
+ const tools=allowTools?toolResponseState():null;
  if(!response||typeof response!=='object')throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 响应对象无效');
  let reader=null,ended=false,text='',lastStage='',lastText='',abortReject;
  const interrupted=new Promise((_,reject)=>{abortReject=reject;});
@@ -109,8 +113,10 @@ export async function readTaskResponse(response,{signal,onProgress}={}){
    if(raw!==null){if(typeof raw!=='string'||!raw.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 返回了空正文');try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 返回的正文不是有效 JSON');}}
    else if(typeof response.json==='function')payload=await guarded(Promise.resolve().then(()=>response.json()));
    else throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 响应缺少可读取的正文接口');
+   const apiFailure=apiError(payload);if(apiFailure)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+apiFailure);
+   const toolResult=tools?.json(payload);if(toolResult){text=toolResult.content;await progress('received');return toolResult;}
    text=jsonText(payload,raw);if(typeof text!=='string'||!text.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本结果');
-   await progress('received');return text;
+   await progress('received');return tools?tools.final(text):text;
   }
   await progress('connected');let pending='',data=[],event='',done=false,finished=false;
   async function frame(){
@@ -121,14 +127,13 @@ export async function readTaskResponse(response,{signal,onProgress}={}){
    let payload;try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效 JSON');}
    const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
    if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效对象');
-   if(!Object.hasOwn(payload,'choices')){if(object(payload.usage))return;throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 choices');}
-   const choice=firstChoice(payload.choices);if(!choice)return;
-   const terminal=checkFinish(choice.finish_reason);
+   let choice;if(Object.hasOwn(payload,'choices'))choice=firstChoice(payload.choices);else{choice=tools?.nativeFrame(payload);if(choice===null||choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}if(!choice)return;
+   tools?.delta(choice);const terminal=tools&&choice.finish_reason==='tool_calls'?true:checkFinish(choice.finish_reason);
    if(choice.delta!==undefined&&!object(choice.delta))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧 delta 格式无效');
    if(!choice.delta&&!terminal)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 delta');
    if(choice.delta?.refusal)throw failure('TISYA_RESPONSE_REFUSED','辅助 API 拒绝生成：'+description(choice.delta.refusal));
    const part=textParts(choice.delta?.content);
-   if(part){text+=part;await progress('receiving');}
+   if(part){text+=part;if(tools&&text.length>262144)throw failure('TISYA_RESPONSE_TOOL_PROTOCOL','工具响应超出长度限制');await progress('receiving');}
    else if(!text&&(choice.delta?.reasoning_content||choice.delta?.reasoning||choice.delta?.reasoning_details))await progress('thinking');
    if(terminal)finished=true;
   }
@@ -152,8 +157,8 @@ export async function readTaskResponse(response,{signal,onProgress}={}){
   }else if(typeof response.text==='function')await consume(await guarded(Promise.resolve().then(()=>response.text())),true);
   else throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流响应缺少正文读取接口');
   if(!done&&!finished)throw failure('TISYA_RESPONSE_TRUNCATED','辅助 API 流提前结束，缺少完成标记，结果未被接纳');
-  if(!text.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 完成但没有返回文本结果');
-  await progress('received');return text;
+  const toolResult=tools?.finish(text);if(!text.trim()&&!toolResult?.toolCalls.length)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 完成但没有返回文本结果');
+  await progress('received');return toolResult??text;
  }catch(error){
   if(signal?.aborted){cancel();throw aborted(signal);}
   if(error?.code?.startsWith?.('TISYA_RESPONSE_'))throw error;
