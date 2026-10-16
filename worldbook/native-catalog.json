@@ -1,0 +1,3257 @@
+{
+  "schema": "tisya.worldbook-native-audit/1",
+  "scope": "目标APK世界书静态控件、条目模板、默认字段与JS处理路径；不是Android或全插件运行验收",
+  "host_apk_sha256": "dd17a722f40ceed2aafd3d880f572f706085fb568b08661f54d6f44d65dbb361",
+  "host_html_sha256": "0aad58fcc6fb083609aee1f055872f4d1d0df74be23d18124feb936176deb0cd",
+  "host_js_sha256": "f48277fb75eb082a519f9262600d7bc292692205abaf0a2fe651385c19cab9f8",
+  "controls": [
+    {
+      "key": "WorldInfo:0",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "WI_panel_pin",
+      "label": "WI_panel_pin",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 4918,
+      "codeHits": [],
+      "destination": "世界书页·原生面板固定／取消固定（宿主态）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:1",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info",
+      "label": "-- 未找到世界信息 --",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "-- 未找到世界信息 --"
+        }
+      ],
+      "sourceLine": 4942,
+      "codeHits": [
+        33,
+        39,
+        71,
+        72,
+        75,
+        76,
+        77,
+        79,
+        80,
+        81,
+        82,
+        83
+      ],
+      "destination": "世界书队列·全局启用书选择",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:2",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "standoutHeader.inline-drawer-toggle.inline-drawer-header",
+      "label": "单击展开",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 4954,
+      "codeHits": [],
+      "destination": "全局设置·展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:3",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_depth",
+      "label": "world_info_depth",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        75,
+        497,
+        893,
+        919,
+        1022,
+        1023,
+        1071,
+        1072,
+        6523,
+        6524,
+        6525
+      ],
+      "destination": "全局设置·world_info_depth（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:4",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_depth_counter",
+      "label": "world_info_depth_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1071,
+        6525
+      ],
+      "destination": "全局设置·world_info_depth（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:5",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget",
+      "label": "world_info_budget",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        79,
+        87,
+        896,
+        903,
+        922,
+        929,
+        1028,
+        1029,
+        1042,
+        1043,
+        1050,
+        1051
+      ],
+      "destination": "全局设置·world_info_budget（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:6",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_counter",
+      "label": "world_info_budget_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1080,
+        6550
+      ],
+      "destination": "全局设置·world_info_budget（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:7",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_cap",
+      "label": "world_info_budget_cap",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        87,
+        903,
+        929,
+        1042,
+        1043,
+        1093,
+        1094,
+        4981,
+        4982,
+        4983,
+        4986,
+        6589
+      ],
+      "destination": "全局设置·world_info_budget_cap（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:8",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_cap_counter",
+      "label": "world_info_budget_cap_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1094,
+        6591
+      ],
+      "destination": "全局设置·world_info_budget_cap（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:9",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations",
+      "label": "world_info_min_activations",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        76,
+        77,
+        894,
+        895,
+        920,
+        921,
+        1024,
+        1025,
+        1026,
+        1027,
+        1074,
+        1075
+      ],
+      "destination": "全局设置·world_info_min_activations（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:10",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_counter",
+      "label": "world_info_min_activations_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1074,
+        6531
+      ],
+      "destination": "全局设置·world_info_min_activations（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:11",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_depth_max",
+      "label": "world_info_min_activations_depth_max",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        77,
+        895,
+        921,
+        1026,
+        1027,
+        1077,
+        1078,
+        5369,
+        5370,
+        6542,
+        6543,
+        6544
+      ],
+      "destination": "全局设置·world_info_min_activations_depth_max（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:12",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_depth_max_counter",
+      "label": "world_info_min_activations_depth_max_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1077,
+        6544
+      ],
+      "destination": "全局设置·world_info_min_activations_depth_max（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:13",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_max_recursion_steps",
+      "label": "world_info_max_recursion_steps",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        88,
+        905,
+        931,
+        1046,
+        1047,
+        1096,
+        1097,
+        5010,
+        5011,
+        5012,
+        6533,
+        6534
+      ],
+      "destination": "全局设置·world_info_max_recursion_steps（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:14",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_max_recursion_steps_counter",
+      "label": "world_info_max_recursion_steps_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1097,
+        6597
+      ],
+      "destination": "全局设置·world_info_max_recursion_steps（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:15",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info_character_strategy",
+      "label": "Sorted Evenly\n                                                    Character Lore First\n                                                    Global Lore First",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": null,
+          "label": "均匀排序"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "角色世界书优先"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "全局世界书优先"
+        }
+      ],
+      "sourceLine": 5016,
+      "codeHits": [
+        86,
+        902,
+        928,
+        1040,
+        1041,
+        1090,
+        1091,
+        4852,
+        4863,
+        4872,
+        6574,
+        6575
+      ],
+      "destination": "全局设置·world_info_character_strategy（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:16",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_include_names",
+      "label": "world_info_include_names",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5025,
+      "codeHits": [
+        80,
+        897,
+        923,
+        1030,
+        1031,
+        1083,
+        6554,
+        6555
+      ],
+      "destination": "全局设置·world_info_include_names（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:17",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_recursive",
+      "label": "world_info_recursive",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5031,
+      "codeHits": [
+        81,
+        898,
+        924,
+        1032,
+        1033,
+        1084,
+        5112,
+        5351,
+        5358,
+        6559,
+        6560
+      ],
+      "destination": "全局设置·world_info_recursive（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:18",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_case_sensitive",
+      "label": "world_info_case_sensitive",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5037,
+      "codeHits": [
+        83,
+        362,
+        900,
+        926,
+        1036,
+        1037,
+        1086,
+        6564,
+        6565
+      ],
+      "destination": "全局设置·world_info_case_sensitive（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:19",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_match_whole_words",
+      "label": "world_info_match_whole_words",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5043,
+      "codeHits": [
+        84,
+        440,
+        901,
+        927,
+        1038,
+        1039,
+        1087,
+        6569,
+        6570
+      ],
+      "destination": "全局设置·world_info_match_whole_words（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:20",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_use_group_scoring",
+      "label": "world_info_use_group_scoring",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5049,
+      "codeHits": [
+        85,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        5552,
+        5570,
+        6584,
+        6585
+      ],
+      "destination": "全局设置·world_info_use_group_scoring（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:21",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_overflow_alert",
+      "label": "world_info_overflow_alert",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5055,
+      "codeHits": [
+        82,
+        899,
+        925,
+        1034,
+        1035,
+        1085,
+        5318,
+        6579,
+        6580
+      ],
+      "destination": "全局设置·world_info_overflow_alert（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:22",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_import_file",
+      "label": "world_import_file",
+      "type": "file",
+      "hidden": true,
+      "options": [],
+      "sourceLine": 5069,
+      "codeHits": [
+        6481,
+        6484
+      ],
+      "destination": "世界书管理·导入文件原生接点",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:23",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_create_button",
+      "label": "创建",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5070,
+      "codeHits": [
+        6497
+      ],
+      "destination": "世界书管理·新建",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:24",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_editor_select",
+      "label": "--- 选择以编辑 ---",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "--- 选择以编辑 ---"
+        }
+      ],
+      "sourceLine": 5075,
+      "codeHits": [
+        1110,
+        1115,
+        1145,
+        1148,
+        2161,
+        2290,
+        2293,
+        2301,
+        2777,
+        2790,
+        4419,
+        4550
+      ],
+      "destination": "世界书队列·切换编辑目标",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:25",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_import_button",
+      "label": "导入世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5078,
+      "codeHits": [
+        6480
+      ],
+      "destination": "世界书管理·导入JSON/PNG/lorebook",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:26",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_export",
+      "label": "导出世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5079,
+      "codeHits": [
+        2547,
+        2767
+      ],
+      "destination": "世界书管理·导出",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:27",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_name_button",
+      "label": "重命名世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5080,
+      "codeHits": [
+        2546,
+        2702
+      ],
+      "destination": "世界书行内·改名",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:28",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_duplicate",
+      "label": "复制世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5081,
+      "codeHits": [
+        2549,
+        2775
+      ],
+      "destination": "世界书行内·复制",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:29",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_delete",
+      "label": "删除世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5082,
+      "codeHits": [
+        2548,
+        2557
+      ],
+      "destination": "世界书行内·删除确认",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:30",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_new",
+      "label": "新条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5085,
+      "codeHits": [
+        2545,
+        2697
+      ],
+      "destination": "条目列表·新增",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:31",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "OpenAllWIEntries",
+      "label": "打开所有条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5086,
+      "codeHits": [],
+      "destination": "条目列表工具·全部展开",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:32",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "CloseAllWIEntries",
+      "label": "关闭所有条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5087,
+      "codeHits": [],
+      "destination": "条目列表工具·全部收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:33",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_backfill_memos",
+      "label": "使用关键字填充空的备忘录/标题",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5088,
+      "codeHits": [
+        2706
+      ],
+      "destination": "操作台·关键词回填空标题",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:34",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_apply_current_sorting",
+      "label": "应用当前排序作为顺序",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5089,
+      "codeHits": [
+        2723
+      ],
+      "destination": "操作台·浏览排序写入原生Order的预览",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:35",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_search",
+      "label": "搜索...",
+      "type": "search",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5090,
+      "codeHits": [
+        2124,
+        6635
+      ],
+      "destination": "条目列表·搜索",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:36",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info_sort_order",
+      "label": "Search\n                                Priority\n                                Custom\n                                Title A-Z\n                                Title Z-A\n                                Tokens ↗\n                                Tokens ↘\n                                Depth ↗\n                                Depth ↘\n                                Order ↗\n                                Order ↘\n                                UID ↗\n                                UID ↘\n                                Trigger% ↗\n                                Trigger% ↘",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "14",
+          "role": null,
+          "label": "搜索"
+        },
+        {
+          "value": "0",
+          "role": null,
+          "label": "优先级"
+        },
+        {
+          "value": "13",
+          "role": null,
+          "label": "自定义"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "标题 A 到 Z"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "标题 Z 到 A"
+        },
+        {
+          "value": "3",
+          "role": null,
+          "label": "词符 ↗"
+        },
+        {
+          "value": "4",
+          "role": null,
+          "label": "词符 ↘"
+        },
+        {
+          "value": "5",
+          "role": null,
+          "label": "深度 ↗"
+        },
+        {
+          "value": "6",
+          "role": null,
+          "label": "深度 ↘"
+        },
+        {
+          "value": "7",
+          "role": null,
+          "label": "顺序 ↗"
+        },
+        {
+          "value": "8",
+          "role": null,
+          "label": "顺序 ↘"
+        },
+        {
+          "value": "9",
+          "role": null,
+          "label": "UID ↗"
+        },
+        {
+          "value": "10",
+          "role": null,
+          "label": "UID ↘"
+        },
+        {
+          "value": "11",
+          "role": null,
+          "label": "触发频率% ↗"
+        },
+        {
+          "value": "12",
+          "role": null,
+          "label": "触发频率% ↘"
+        }
+      ],
+      "sourceLine": 5091,
+      "codeHits": [
+        186,
+        1113,
+        2367,
+        2656,
+        2876,
+        2877,
+        6644
+      ],
+      "destination": "条目列表工具·完整浏览排序选项",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:37",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_refresh",
+      "label": "刷新",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5108,
+      "codeHits": [
+        6640
+      ],
+      "destination": "条目列表工具·刷新",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:0",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "key",
+      "label": "关键字或正则表达式",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7091,
+      "codeHits": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520
+      ],
+      "destination": "条目编辑·关键词与条件／主要关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:1",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "key",
+      "label": "逗号分隔列表",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7092,
+      "codeHits": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520
+      ],
+      "destination": "条目编辑·关键词与条件／主要关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:2",
+      "root": "entry_edit_template",
+      "tag": "button",
+      "id": "Switch to plaintext mode",
+      "label": "切换到纯文本模式",
+      "type": "button",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7093,
+      "codeHits": [],
+      "destination": "关键词与条件·富输入/纯文本切换",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:3",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "entryLogicType",
+      "label": "AND ANY\n                                AND ALL\n                                NOT ALL\n                                NOT ANY",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": null,
+          "label": "与任意"
+        },
+        {
+          "value": "3",
+          "role": null,
+          "label": "与所有"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "非所有"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "非任何"
+        }
+      ],
+      "sourceLine": 7099,
+      "codeHits": [
+        3759,
+        3769
+      ],
+      "destination": "关键词与条件·辅助逻辑selectiveLogic",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:4",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "keysecondary",
+      "label": "关键字或正则表达式（如果为空则忽略）",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7113,
+      "codeHits": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721
+      ],
+      "destination": "条目编辑·关键词与条件／辅助关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:5",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "keysecondary",
+      "label": "逗号分隔列表（如果为空则忽略）",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7114,
+      "codeHits": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721
+      ],
+      "destination": "条目编辑·关键词与条件／辅助关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:6",
+      "root": "entry_edit_template",
+      "tag": "button",
+      "id": "Switch to plaintext mode",
+      "label": "切换到纯文本模式",
+      "type": "button",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7093,
+      "codeHits": [],
+      "destination": "关键词与条件·富输入/纯文本切换",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:7",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "outletName",
+      "label": "锚点名称",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7126,
+      "codeHits": [
+        3849,
+        3850,
+        3851,
+        3854,
+        3855,
+        3858,
+        3859,
+        4138,
+        4266,
+        5506,
+        5510,
+        5511
+      ],
+      "destination": "条目编辑·注入与顺序／出口名称",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:8",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "scanDepth",
+      "label": "使用全局设置",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7130,
+      "codeHits": [
+        210,
+        373,
+        2861,
+        3862,
+        3863,
+        3864,
+        3878,
+        3879,
+        3882,
+        4270,
+        5762,
+        5807
+      ],
+      "destination": "条目编辑·扫描与递归／扫描深度覆盖",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:9",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "caseSensitive",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7134,
+      "codeHits": [
+        211,
+        362,
+        363,
+        2854,
+        3962,
+        4271,
+        5763,
+        5808,
+        5858,
+        5909
+      ],
+      "destination": "条目编辑·扫描与递归／区分大小写",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:10",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "matchWholeWords",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7142,
+      "codeHits": [
+        212,
+        440,
+        442,
+        2852,
+        3963,
+        4272,
+        5764,
+        5809,
+        5859,
+        5910
+      ],
+      "destination": "条目编辑·扫描与递归／全词匹配",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:11",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "useGroupScoring",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7150,
+      "codeHits": [
+        213,
+        2853,
+        3964,
+        4273,
+        5552,
+        5570,
+        5765,
+        5810,
+        5860,
+        5911
+      ],
+      "destination": "条目编辑·互斥与延时／按组评分",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:12",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "automationId",
+      "label": "（没有任何）",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7158,
+      "codeHits": [
+        2862,
+        3975,
+        3976,
+        3977,
+        3980,
+        3981,
+        3984,
+        3985,
+        4127,
+        4274,
+        5766,
+        5811
+      ],
+      "destination": "条目编辑·额外扫描与联动／自动化ID",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:13",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delayUntilRecursionLevel",
+      "label": "1",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7165,
+      "codeHits": [
+        3936,
+        3937,
+        3942,
+        3948,
+        3959
+      ],
+      "destination": "扫描与递归·递归延迟等级",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:14",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Expand the editor",
+      "label": "展开编辑器",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 2246,
+      "codeHits": [],
+      "destination": "条目正文·放大编辑器",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:15",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "excludeRecursion",
+      "label": "excludeRecursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7186,
+      "codeHits": [
+        2836,
+        3930,
+        4254,
+        5112,
+        5753,
+        5798,
+        5848,
+        5894
+      ],
+      "destination": "条目编辑·扫描与递归／不被其他条目递归激活",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:16",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "preventRecursion",
+      "label": "preventRecursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7192,
+      "codeHits": [
+        2837,
+        3931,
+        4255,
+        5334,
+        5895
+      ],
+      "destination": "条目编辑·扫描与递归／不再激活其他条目",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:17",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delay_until_recursion",
+      "label": "delay_until_recursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7200,
+      "codeHits": [
+        2838,
+        3934,
+        3944,
+        3956,
+        5896
+      ],
+      "destination": "扫描与递归·是否延迟到递归",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:18",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "ignoreBudget",
+      "label": "ignoreBudget",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7206,
+      "codeHits": [
+        2870,
+        4011,
+        4012,
+        4013,
+        4016,
+        4017,
+        4020,
+        4253,
+        5254,
+        5260,
+        5261,
+        5310
+      ],
+      "destination": "条目编辑·扫描与递归／忽略预算",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:19",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "content",
+      "label": "这个关键词对AI的含义，逐字发送",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7221,
+      "codeHits": [
+        1357,
+        1418,
+        1438,
+        1439,
+        1451,
+        1900,
+        1902,
+        1916,
+        1922,
+        1947,
+        1952,
+        1985
+      ],
+      "destination": "条目编辑·基础／条目正文",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:20",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "groupOverride",
+      "label": "groupOverride",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7237,
+      "codeHits": [
+        2864,
+        3898,
+        3899,
+        3900,
+        3903,
+        3904,
+        3907,
+        4268,
+        5701,
+        5760,
+        5805,
+        5855
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组优先",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:21",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "group",
+      "label": "只有一个带有相同标签的条目将被激活",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7247,
+      "codeHits": [
+        85,
+        213,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        1221,
+        1841,
+        2853
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:22",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "groupWeight",
+      "label": "100",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7257,
+      "codeHits": [
+        2865,
+        3911,
+        3912,
+        4269,
+        5709,
+        5715,
+        5761,
+        5806,
+        5856,
+        5907
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组权重",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:23",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "sticky",
+      "label": "无黏性",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7130,
+      "codeHits": [
+        225,
+        242,
+        597,
+        608,
+        610,
+        612,
+        620,
+        658,
+        779,
+        806,
+        828,
+        863
+      ],
+      "destination": "条目编辑·互斥与延时／粘性消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:24",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "cooldown",
+      "label": "无冷却",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7283,
+      "codeHits": [
+        226,
+        242,
+        598,
+        609,
+        613,
+        618,
+        619,
+        620,
+        621,
+        622,
+        626,
+        628
+      ],
+      "destination": "条目编辑·互斥与延时／冷却消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:25",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delay",
+      "label": "无延迟",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7165,
+      "codeHits": [
+        227,
+        242,
+        599,
+        634,
+        757,
+        762,
+        766,
+        768,
+        782,
+        843,
+        863,
+        2805
+      ],
+      "destination": "条目编辑·互斥与延时／延迟消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:26",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "character_exclusion",
+      "label": "character_exclusion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7307,
+      "codeHits": [
+        3793
+      ],
+      "destination": "适用范围·反向排除名单",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:27",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "characterFilter",
+      "label": "-- 未找到角色 --",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "-- 未找到角色 --"
+        }
+      ],
+      "sourceLine": 7317,
+      "codeHits": [
+        1384,
+        1385,
+        1386,
+        1389,
+        1390,
+        1391,
+        1395,
+        1398,
+        1399,
+        1400,
+        1454,
+        1456
+      ],
+      "destination": "适用范围·角色和标签",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:28",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "__invisible",
+      "label": "__invisible",
+      "type": "checkbox",
+      "hidden": true,
+      "options": [],
+      "sourceLine": 7333,
+      "codeHits": [],
+      "destination": "纯排版占位，原HTML明确非真实控件，不新增用户功能",
+      "realControl": false,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:29",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "triggers",
+      "label": "Normal\n                                Continue\n                                Impersonate\n                                Swipe\n                                Regenerate\n                                Quiet",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "normal",
+          "role": null,
+          "label": "正常"
+        },
+        {
+          "value": "continue",
+          "role": null,
+          "label": "继续"
+        },
+        {
+          "value": "impersonate",
+          "role": null,
+          "label": "AI 帮答"
+        },
+        {
+          "value": "swipe",
+          "role": null,
+          "label": "滑动"
+        },
+        {
+          "value": "regenerate",
+          "role": null,
+          "label": "重新生成"
+        },
+        {
+          "value": "quiet",
+          "role": null,
+          "label": "静默"
+        }
+      ],
+      "sourceLine": 7338,
+      "codeHits": [
+        2869,
+        3988,
+        3993,
+        3994,
+        4006,
+        4282,
+        5049,
+        5050,
+        5052,
+        5771,
+        5816,
+        5866
+      ],
+      "destination": "条目编辑·适用范围／生成类型过滤",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:30",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "selective",
+      "label": "selective",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 8536,
+      "codeHits": [
+        224,
+        556,
+        1686,
+        2839,
+        2851,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769
+      ],
+      "destination": "条目编辑·关键词与条件／启用辅助筛选",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:31",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "useProbability",
+      "label": "useProbability",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7356,
+      "codeHits": [
+        3353,
+        3739,
+        4264,
+        5270,
+        5757,
+        5802,
+        5852,
+        5901
+      ],
+      "destination": "条目编辑·基础／使用概率",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:32",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "addMemo",
+      "label": "addMemo",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7360,
+      "codeHits": [
+        1434,
+        3745,
+        3751,
+        4249,
+        5752,
+        5797,
+        5831,
+        5847,
+        5898
+      ],
+      "destination": "条目编辑·基础／附加备注",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:33",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "inline-drawer-toggle.inline-drawer-header.inline-drawer-header-pointer.userSettingsInnerExpandable",
+      "label": "额外匹配来源",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 817,
+      "codeHits": [],
+      "destination": "条目设置·分组展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:34",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterDescription",
+      "label": "matchCharacterDescription",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        215,
+        395,
+        2856,
+        3968,
+        4257,
+        5919
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色描述",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:35",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterPersonality",
+      "label": "matchCharacterPersonality",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        216,
+        398,
+        2857,
+        3969,
+        4258,
+        5920
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色性格",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:36",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchScenario",
+      "label": "matchScenario",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7385,
+      "codeHits": [
+        218,
+        404,
+        2859,
+        3971,
+        4260,
+        5922
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描场景",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:37",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchPersonaDescription",
+      "label": "matchPersonaDescription",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7393,
+      "codeHits": [
+        214,
+        392,
+        2855,
+        3967,
+        4256,
+        5918
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描用户描述",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:38",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterDepthPrompt",
+      "label": "matchCharacterDepthPrompt",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        217,
+        401,
+        2858,
+        3970,
+        4259,
+        5921
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色注释",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:39",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCreatorNotes",
+      "label": "matchCreatorNotes",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7405,
+      "codeHits": [
+        219,
+        407,
+        2860,
+        3972,
+        4261,
+        5923
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描创作者注释",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:40",
+      "root": "entry_edit_template",
+      "tag": "span",
+      "id": "drag-handle",
+      "label": "☰",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7526,
+      "codeHits": [
+        2659,
+        2806
+      ],
+      "destination": "条目列表·触控拖动；并保留上/下移",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:41",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "inline-drawer-toggle.fa-fw.fa-solid.fa-circle-chevron-down.inline-drawer-icon.down",
+      "label": "inline-drawer-toggle.fa-fw.fa-solid.fa-circle-chevron-down.inline-drawer-icon.down",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7420,
+      "codeHits": [],
+      "destination": "条目设置·分组展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:42",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "entryKillSwitch",
+      "label": "切换条目激活状态。",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7421,
+      "codeHits": [
+        3468,
+        3474,
+        3475,
+        3476,
+        3482,
+        3483,
+        3488,
+        3489,
+        3597
+      ],
+      "destination": "条目列表与编辑·独立启用开关",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:43",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "comment",
+      "label": "条目标题/备忘录",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7425,
+      "codeHits": [
+        1435,
+        1686,
+        2673,
+        2709,
+        2710,
+        2711,
+        2840,
+        3139,
+        3141,
+        3142,
+        3179,
+        3181
+      ],
+      "destination": "条目编辑·基础／条目名称／备注",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:44",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "entryStateSelector",
+      "label": "世界书条目状态：\r🔵 永久\r🟢 关键词\r🔗 向量化",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "constant",
+          "role": null,
+          "label": "🔵"
+        },
+        {
+          "value": "normal",
+          "role": null,
+          "label": "🟢"
+        },
+        {
+          "value": "vectorized",
+          "role": null,
+          "label": "🔗"
+        }
+      ],
+      "sourceLine": 7428,
+      "codeHits": [
+        3426,
+        3431,
+        3432,
+        3433,
+        3436,
+        3462,
+        3591
+      ],
+      "destination": "条目编辑·激活方式（常驻/关键词/向量/新增条件接口）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:45",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "position",
+      "label": "↑Char：在角色定义之前\n↓Char：在角色定义之后\n↑AN：在作者注释之前\n↓AN：在作者注释之后\n@D：在深度D处",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": "",
+          "label": "角色定义之前"
+        },
+        {
+          "value": "1",
+          "role": "",
+          "label": "角色定义之后"
+        },
+        {
+          "value": "5",
+          "role": "",
+          "label": "示例消息前（↑EM）"
+        },
+        {
+          "value": "6",
+          "role": "",
+          "label": "示例消息后（↓EM）"
+        },
+        {
+          "value": "2",
+          "role": "",
+          "label": "作者注释之前"
+        },
+        {
+          "value": "3",
+          "role": "",
+          "label": "作者注释之后"
+        },
+        {
+          "value": "4",
+          "role": "0",
+          "label": "@D ⚙ [系统]在深度​​️"
+        },
+        {
+          "value": "4",
+          "role": "1",
+          "label": "@D 👤 [用户]在深度"
+        },
+        {
+          "value": "4",
+          "role": "2",
+          "label": "@D 🤖 [AI]在深度"
+        },
+        {
+          "value": "7",
+          "role": "",
+          "label": "➡️ 锚点"
+        }
+      ],
+      "sourceLine": 7437,
+      "codeHits": [
+        950,
+        961,
+        1697,
+        1698,
+        1699,
+        1700,
+        1701,
+        1702,
+        1703,
+        1704,
+        2632,
+        2845
+      ],
+      "destination": "条目编辑·注入与顺序／注入位置",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:46",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "depth",
+      "label": "深度",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7472,
+      "codeHits": [
+        63,
+        75,
+        77,
+        202,
+        210,
+        217,
+        251,
+        262,
+        304,
+        306,
+        319,
+        324
+      ],
+      "destination": "条目编辑·注入与顺序／注入深度",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:47",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "order",
+      "label": "顺序",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7476,
+      "codeHits": [
+        181,
+        186,
+        982,
+        1113,
+        2367,
+        2369,
+        2371,
+        2380,
+        2414,
+        2417,
+        2422,
+        2656
+      ],
+      "destination": "条目编辑·注入与顺序／原生优先级",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:48",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "probability",
+      "label": "可能性",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7480,
+      "codeHits": [
+        2844,
+        3313,
+        3314,
+        3315,
+        3320,
+        3321,
+        3322,
+        3325,
+        3326,
+        3327,
+        3328,
+        3329
+      ],
+      "destination": "条目编辑·基础／激活概率",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:49",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Move/Copy Entry to Another Lorebook",
+      "label": "移动或复制条目到其他世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7485,
+      "codeHits": [],
+      "destination": "条目行下·移动或复制到另一世界书",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:50",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Duplicate world info entry",
+      "label": "重复的世界信息条目",
+      "type": "submit",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7486,
+      "codeHits": [],
+      "destination": "条目行下·复制并分配新UID",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:51",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Delete world info entry",
+      "label": "删除世界信息条目",
+      "type": "submit",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7487,
+      "codeHits": [],
+      "destination": "条目行下·删除确认",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    }
+  ],
+  "fields": [
+    {
+      "key": "key",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "主要关键词／正则",
+      "section": "关键词与条件",
+      "codeLines": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520,
+        529,
+        530,
+        531
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "keysecondary",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "辅助关键词／正则",
+      "section": "关键词与条件",
+      "codeLines": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721,
+        3780,
+        3781,
+        3784
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "comment",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "条目名称／备注",
+      "section": "基础",
+      "codeLines": [
+        1435,
+        1686,
+        2673,
+        2709,
+        2710,
+        2711,
+        2840,
+        3139,
+        3141,
+        3142,
+        3179,
+        3181,
+        3182,
+        3493,
+        3494
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "content",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "条目正文",
+      "section": "基础",
+      "codeLines": [
+        1357,
+        1418,
+        1438,
+        1439,
+        1451,
+        1900,
+        1902,
+        1916,
+        1922,
+        1947,
+        1952,
+        1985,
+        1987,
+        1998,
+        2727
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "constant",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "常驻",
+      "section": "基础",
+      "codeLines": [
+        13,
+        2399,
+        2401,
+        2402,
+        2841,
+        3424,
+        3440,
+        3441,
+        3443,
+        3447,
+        3449,
+        3453,
+        3455,
+        3461,
+        4245
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "vectorized",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "向量触发",
+      "section": "基础",
+      "codeLines": [
+        2863,
+        3424,
+        3442,
+        3444,
+        3448,
+        3450,
+        3452,
+        3454,
+        3456,
+        3461,
+        4246,
+        5747,
+        5792,
+        5842,
+        5914
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "selective",
+      "defaultCode": "true",
+      "type": "boolean",
+      "label": "启用辅助筛选",
+      "section": "关键词与条件",
+      "codeLines": [
+        224,
+        556,
+        1686,
+        2839,
+        2851,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769,
+        3772,
+        3773,
+        3774
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "selectiveLogic",
+      "defaultCode": "world_info_logic.AND_ANY",
+      "type": "enum",
+      "label": "辅助逻辑",
+      "section": "关键词与条件",
+      "codeLines": [
+        224,
+        556,
+        1686,
+        2839,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769,
+        4248,
+        5181,
+        5182,
+        5197
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "addMemo",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "附加备注",
+      "section": "基础",
+      "codeLines": [
+        1434,
+        3745,
+        3751,
+        4249,
+        5752,
+        5797,
+        5831,
+        5847,
+        5898
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "order",
+      "defaultCode": "100",
+      "type": "number",
+      "label": "原生优先级",
+      "section": "注入与顺序",
+      "codeLines": [
+        181,
+        186,
+        982,
+        1113,
+        2367,
+        2369,
+        2371,
+        2380,
+        2414,
+        2417,
+        2422,
+        2656,
+        2751,
+        2753,
+        2754
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "position",
+      "defaultCode": "0",
+      "type": "number",
+      "label": "注入位置",
+      "section": "注入与顺序",
+      "codeLines": [
+        950,
+        961,
+        1697,
+        1698,
+        1699,
+        1700,
+        1701,
+        1702,
+        1703,
+        1704,
+        2632,
+        2845,
+        3214,
+        3215,
+        3222
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "disable",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "是否禁用",
+      "section": "基础",
+      "codeLines": [
+        2399,
+        2401,
+        2402,
+        2582,
+        2831,
+        2924,
+        3478,
+        3479,
+        3481,
+        3486,
+        3487,
+        3571,
+        3576,
+        4252,
+        5010
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "ignoreBudget",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "忽略预算",
+      "section": "扫描与递归",
+      "codeLines": [
+        2870,
+        4011,
+        4012,
+        4013,
+        4016,
+        4017,
+        4020,
+        4253,
+        5254,
+        5260,
+        5261,
+        5310,
+        5315,
+        5772,
+        5817
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "excludeRecursion",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "不被其他条目递归激活",
+      "section": "扫描与递归",
+      "codeLines": [
+        2836,
+        3930,
+        4254,
+        5112,
+        5753,
+        5798,
+        5848,
+        5894
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "preventRecursion",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "不再激活其他条目",
+      "section": "扫描与递归",
+      "codeLines": [
+        2837,
+        3931,
+        4255,
+        5334,
+        5895
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchPersonaDescription",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描用户描述",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        214,
+        392,
+        2855,
+        3967,
+        4256,
+        5918
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterDescription",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色描述",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        215,
+        395,
+        2856,
+        3968,
+        4257,
+        5919
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterPersonality",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色性格",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        216,
+        398,
+        2857,
+        3969,
+        4258,
+        5920
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterDepthPrompt",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色注释",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        217,
+        401,
+        2858,
+        3970,
+        4259,
+        5921
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchScenario",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描场景",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        218,
+        404,
+        2859,
+        3971,
+        4260,
+        5922
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCreatorNotes",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描创作者注释",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        219,
+        407,
+        2860,
+        3972,
+        4261,
+        5923
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "delayUntilRecursion",
+      "defaultCode": "0",
+      "type": "number",
+      "label": "递归延迟等级",
+      "section": "扫描与递归",
+      "codeLines": [
+        2838,
+        3934,
+        3935,
+        3936,
+        3937,
+        3938,
+        3941,
+        3942,
+        3943,
+        3944,
+        3947,
+        3948,
+        3951,
+        3955,
+        3956
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "probability",
+      "defaultCode": "100",
+      "type": "number",
+      "label": "激活概率",
+      "section": "基础",
+      "codeLines": [
+        2844,
+        3313,
+        3314,
+        3315,
+        3320,
+        3321,
+        3322,
+        3325,
+        3326,
+        3327,
+        3328,
+        3329,
+        3332,
+        3335,
+        3336
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "useProbability",
+      "defaultCode": "true",
+      "type": "boolean",
+      "label": "使用概率",
+      "section": "基础",
+      "codeLines": [
+        3353,
+        3739,
+        4264,
+        5270,
+        5757,
+        5802,
+        5852,
+        5901
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "depth",
+      "defaultCode": "DEFAULT_DEPTH",
+      "type": "number",
+      "label": "注入深度",
+      "section": "注入与顺序",
+      "codeLines": [
+        63,
+        75,
+        77,
+        202,
+        210,
+        217,
+        251,
+        262,
+        304,
+        306,
+        319,
+        324,
+        344,
+        345,
+        346
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "outletName",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "出口名称",
+      "section": "注入与顺序",
+      "codeLines": [
+        3849,
+        3850,
+        3851,
+        3854,
+        3855,
+        3858,
+        3859,
+        4138,
+        4266,
+        5506,
+        5510,
+        5511,
+        5513,
+        5758,
+        5803
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "group",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "互斥组",
+      "section": "互斥与延时",
+      "codeLines": [
+        85,
+        213,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        1221,
+        1841,
+        2853,
+        2864,
+        2865,
+        3885
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "groupOverride",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "互斥组优先",
+      "section": "互斥与延时",
+      "codeLines": [
+        2864,
+        3898,
+        3899,
+        3900,
+        3903,
+        3904,
+        3907,
+        4268,
+        5701,
+        5760,
+        5805,
+        5855,
+        5906
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "groupWeight",
+      "defaultCode": "DEFAULT_WEIGHT",
+      "type": "number",
+      "label": "互斥组权重",
+      "section": "互斥与延时",
+      "codeLines": [
+        2865,
+        3911,
+        3912,
+        4269,
+        5709,
+        5715,
+        5761,
+        5806,
+        5856,
+        5907
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "scanDepth",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "扫描深度覆盖",
+      "section": "扫描与递归",
+      "codeLines": [
+        210,
+        373,
+        2861,
+        3862,
+        3863,
+        3864,
+        3878,
+        3879,
+        3882,
+        4270,
+        5762,
+        5807,
+        5857,
+        5908
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "caseSensitive",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "区分大小写",
+      "section": "扫描与递归",
+      "codeLines": [
+        211,
+        362,
+        363,
+        2854,
+        3962,
+        4271,
+        5763,
+        5808,
+        5858,
+        5909
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchWholeWords",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "全词匹配",
+      "section": "扫描与递归",
+      "codeLines": [
+        212,
+        440,
+        442,
+        2852,
+        3963,
+        4272,
+        5764,
+        5809,
+        5859,
+        5910
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "useGroupScoring",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "按组评分",
+      "section": "互斥与延时",
+      "codeLines": [
+        213,
+        2853,
+        3964,
+        4273,
+        5552,
+        5570,
+        5765,
+        5810,
+        5860,
+        5911
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "automationId",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "自动化ID",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        2862,
+        3975,
+        3976,
+        3977,
+        3980,
+        3981,
+        3984,
+        3985,
+        4127,
+        4274,
+        5766,
+        5811,
+        5861,
+        5912,
+        6693
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "role",
+      "defaultCode": "0",
+      "type": "enum",
+      "label": "注入消息角色",
+      "section": "注入与顺序",
+      "codeLines": [
+        4,
+        1704,
+        2846,
+        3573,
+        3574,
+        3578,
+        3583,
+        3586,
+        3587,
+        4275,
+        5493,
+        5500,
+        5528,
+        5767,
+        5812
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "sticky",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "粘性消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        225,
+        242,
+        597,
+        608,
+        610,
+        612,
+        620,
+        658,
+        779,
+        806,
+        828,
+        863,
+        867,
+        1691,
+        2055
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "cooldown",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "冷却消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        226,
+        242,
+        598,
+        609,
+        613,
+        618,
+        619,
+        620,
+        621,
+        622,
+        626,
+        628,
+        630,
+        658,
+        780
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "delay",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "延迟消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        227,
+        242,
+        599,
+        634,
+        757,
+        762,
+        766,
+        768,
+        782,
+        843,
+        863,
+        2805,
+        2838,
+        2868,
+        3915
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterNames",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "角色名单",
+      "section": "适用范围",
+      "codeLines": [
+        1384,
+        1512,
+        4279
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterTags",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "角色标签",
+      "section": "适用范围",
+      "codeLines": [
+        1389,
+        1521,
+        4280
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterExclude",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "排除名单",
+      "section": "适用范围",
+      "codeLines": [
+        1398,
+        1528,
+        4281
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "triggers",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "生成类型过滤",
+      "section": "适用范围",
+      "codeLines": [
+        2869,
+        3988,
+        3993,
+        3994,
+        4006,
+        4282,
+        5049,
+        5050,
+        5052,
+        5771,
+        5816,
+        5866,
+        5925
+      ],
+      "uiStatus": "列入新编辑页"
+    }
+  ],
+  "extras": [
+    {
+      "tag": "div",
+      "id": "world_button",
+      "label": "Character Lore\n\nClick to load\nShift/Alt-click or long-press to open 'Link to World Info' popup"
+    },
+    {
+      "tag": "option",
+      "id": "set_character_world",
+      "label": "Link to World Info"
+    },
+    {
+      "tag": "select",
+      "id": "character_world_info_selector wide100p",
+      "label": "character_world_info_selector wide100p"
+    },
+    {
+      "tag": "select",
+      "id": "character_extra_world_info_selector wide100p",
+      "label": "character_extra_world_info_selector wide100p"
+    }
+  ],
+  "counts": {
+    "controls": 90,
+    "fields": 42,
+    "externalBindings": 4
+  },
+  "unknown": [
+    "运行时第三方注入控件未穷尽",
+    "Rust后端跨书原子事务能力未核",
+    "Android实机未验",
+    "外部条件引擎正式协议待对接"
+  ]
+}

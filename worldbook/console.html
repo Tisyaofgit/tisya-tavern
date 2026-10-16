@@ -1,0 +1,3491 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>缇斯亚 · 世界书操作台</title><style>
+@font-face{font-family:Reading;src:url('reading.woff2')}*{box-sizing:border-box} :root{color-scheme:dark;--bg:#071211;--panel:#152321;--ink:#e8eee7;--muted:#b0bcb5;--gold:#d5bd83;--line:#35514a;--green:#83c5aa;--red:#e6a49d}body{margin:0;background:radial-gradient(ellipse at 85% 0,#16413966,transparent 50%),var(--bg);color:var(--ink);font:15px/1.55 Reading,system-ui,sans-serif}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;border:1px solid var(--line);background:#19322b;border-radius:11px;padding:10px 14px;min-height:44px;touch-action:manipulation}button:hover{background:#26463b}button:active{background:#365747}button:disabled{cursor:default;opacity:.45}button.primary{background:var(--gold);border-color:var(--gold);color:#192923;font-weight:600}button.ghost{background:transparent}button.danger{color:var(--red)}button.icon{padding:8px;min-width:44px}input,textarea,select{background:#0b1a16;border:1px solid #365047;border-radius:9px;padding:11px;min-width:0;width:100%;outline:none}textarea{resize:vertical;min-height:150px;line-height:1.7}input:focus,textarea:focus,select:focus{border-color:#9bbaab}button:focus:not(:focus-visible){outline:none}button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}input[type=checkbox]{width:19px;min-height:19px;accent-color:var(--gold)}input[type=number]{max-width:100%}header{max-width:1120px;margin:auto;padding:25px 24px 12px;display:flex;align-items:center;justify-content:space-between;gap:15px}header .brand{font-size:12px;letter-spacing:4px;color:var(--gold)}h1{font-size:25px;margin:2px 0 0;font-weight:500;letter-spacing:2px}h2{font-size:19px;font-weight:500;margin:0 0 12px}h3{font-size:16px;margin:0}p{margin:8px 0}.hint,small{color:var(--muted);font-size:12px}.caption{font-size:11px;color:#9cb5aa;letter-spacing:1px}.wrap{max-width:1120px;margin:auto;padding:12px 24px 110px}nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}nav button{flex:1;min-width:80px;border-color:transparent;background:#13251f;color:var(--muted)}nav button.active{color:var(--gold);background:#223a30;border-color:#5f6d4b}.panel{padding:19px;background:linear-gradient(145deg,#1a2b25dd,#111e1bd9);border:1px solid #31463d;border-radius:17px;margin-bottom:16px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.flex{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.stat{border-top:1px solid #697755;padding:10px 5px}.stat b{display:block;font-size:26px;color:var(--gold);font-weight:400}.stat span{font-size:12px;color:var(--muted)}.entry{padding:14px 15px;margin-bottom:10px;background:#1a2824;border:1px solid #30423b;border-radius:14px}.entry.off{background:#121e1a}.entry.off .title{color:#a8b3ad}.entry.selected{border-color:var(--gold);background:#29392d}.title{font-size:16px;font-weight:500;overflow-wrap:anywhere}.sub{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.pill{font-size:11px;padding:2px 7px;border-radius:5px;background:#0b1c17;color:#a6c7b5;white-space:nowrap}.pill.gold{color:var(--gold)}.pill.gray{color:#a8b3ad}.pill.warn{color:#dfbc91}.switch{width:44px;min-width:44px;height:26px;min-height:26px;border-radius:18px;padding:2px;border:1px solid #68726c;background:#27342d;position:relative}.switch:after{content:'';position:absolute;width:18px;height:18px;background:#c4cec6;border-radius:50%;left:3px;top:3px}.switch[aria-checked=true]{background:#639d83;border-color:#87b89e}.switch[aria-checked=true]:after{left:21px;background:#fbf6e7}.open-title{border:0;background:transparent;text-align:left;padding:0;min-height:36px;width:100%}.open-title:hover{background:transparent;color:var(--gold)}.entry-actions{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:flex;flex-wrap:wrap;gap:7px}.entry-actions button{font-size:12px;padding:8px 10px}.section-label{font-size:12px;letter-spacing:2px;color:var(--gold);margin:20px 0 10px}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}.toolbar input{flex:1;min-width:130px}.toolbar button{font-size:13px}.field{display:block;margin-bottom:13px}.field>span{display:block;color:#bfccc1;font-size:13px;margin-bottom:6px}.field small{display:block;margin-top:4px}.checkfield{display:flex;align-items:center;gap:8px;min-height:44px}.checkfield input{width:19px}details{border-top:1px solid var(--line);padding:15px 0}details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:34px;font-weight:500}details summary:after{content:'+';color:var(--gold)}details[open] summary:after{content:'−'}details[open]>div{margin-top:14px}.foot{position:fixed;bottom:0;left:0;right:0;z-index:5;background:#0b1b17f2;backdrop-filter:blur(15px);border-top:1px solid #425b46;padding:12px max(20px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:9px}.foot button{min-width:110px}.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#d6c796;color:#14231b;border-radius:12px;max-width:90vw;padding:12px 20px;z-index:20;box-shadow:0 10px 30px #0007}.diff{border-bottom:1px solid var(--line);padding:12px 0;font-size:13px}.old{color:#d5a8a2;white-space:pre-wrap;overflow-wrap:anywhere}.new{color:#aed1b7;white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--red)}.notice{background:#31402a;border-left:2px solid var(--gold);padding:11px 13px;border-radius:3px 10px 10px 3px;font-size:12px;color:#d3d9bf}.list-head{display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 12px}.book-rank{font-size:22px;color:#9d936b;min-width:30px}.divider{height:1px;background:var(--line);margin:16px 0}.hidden{display:none!important}.controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.native-card{border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0}code{overflow-wrap:anywhere;font-size:12px}label{cursor:pointer}a{color:var(--gold)} .micro{font-size:10px} .wide{grid-column:1/-1}button span{pointer-events:none}
+@media(min-width:850px){.page-columns{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}.panel{padding:24px}.entry{padding:17px 18px}.wrap{padding-top:15px}h1{font-size:29px}}
+@media(max-width:520px){header{padding:22px 18px 8px}h1{font-size:23px}.wrap{padding:12px 16px 110px}.panel{padding:16px}.stats{gap:5px}.stat b{font-size:24px}.grid,.controls-grid{grid-template-columns:1fr}.foot{padding-left:16px;padding-right:16px}.foot button{min-width:0;flex:1}button{padding:10px 11px}.caption{font-size:10px}.entry .row{gap:8px}.title{font-size:15px}.hint{font-size:12px}nav{gap:5px}nav button{padding:8px;font-size:13px;min-width:60px}}
+:root{--line:#314a40;--panel:#17251f;--muted:#a8b8ad}*{-webkit-tap-highlight-color:transparent}body{background:radial-gradient(ellipse at 95% 0,#28544344,transparent 50%),#0b1511}header{padding-top:30px}header .brand{letter-spacing:5px}.wrap{padding-bottom:160px}button{transition:background .15s,color .15s;border-radius:10px}button:active{background:#42614d}button.primary:active{background:#bca66f}button:disabled{opacity:.4}input:focus:not(:focus-visible),textarea:focus:not(:focus-visible),select:focus:not(:focus-visible){outline:none}input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.panel{border-color:#2c4337;background:linear-gradient(135deg,#1a2b21,#142018);box-shadow:0 8px 32px #00000010}h2{letter-spacing:1px}h3{font-weight:500}.eyebrow{font-size:11px;color:var(--gold);letter-spacing:3px;margin-bottom:6px}.page-intro{padding:6px 0 20px;display:flex;gap:12px;justify-content:space-between;align-items:center}.page-intro p{max-width:610px}.count-line{display:flex;gap:14px;align-items:baseline;color:var(--muted);font-size:12px}.count-line strong{color:var(--gold);font-size:23px;font-weight:400}nav{border-bottom:1px solid #2d4235;padding-bottom:14px}nav button{background:transparent;border-radius:7px}.editor-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#08170f;border:1px solid #304637;border-radius:12px;padding:4px;position:sticky;top:8px;z-index:4;margin:14px 0}.editor-tabs button{background:transparent;border:0;padding:9px 3px;color:#a9b8aa;font-size:13px}.editor-tabs button.active{background:#2a402e;color:#eeddb1}.editor-top{display:flex;justify-content:space-between;gap:12px;align-items:center;touch-action:pan-y}.editor-counter{text-align:right;font-size:12px;color:var(--muted)}.editor-counter b{display:block;font-size:17px;color:var(--gold);font-weight:400}.editor-meta{display:flex;justify-content:space-between;align-items:center;margin:15px 0;gap:8px}.editor-meta .pill{font-size:12px}.editor-tools{display:flex;gap:5px;flex-wrap:wrap}.editor-tools button{font-size:12px;padding:8px 10px}.swipe-surface{touch-action:pan-y}.nav-entries{display:flex;gap:8px;justify-content:space-between;margin-bottom:12px}.nav-entries button{flex:1;background:transparent;font-size:13px}.foot.editor-footer{display:grid;grid-template-columns:1fr 1fr;max-width:none;gap:8px}.foot-inner{max-width:1080px;margin:auto;width:100%;display:flex;gap:9px}.foot-inner>button{flex:1;min-width:0}.guard{border:1px solid #a58e56;background:#2c3220;border-radius:14px;padding:14px;margin-bottom:15px}.guard .flex{margin-top:10px}.guard button{font-size:12px}.capsules{display:flex;gap:7px;flex-wrap:wrap}.capsule{display:inline-flex;align-items:center;background:#243b2a;border:1px solid #40563c;border-radius:22px;max-width:100%;overflow:hidden}.capsule button{border:0;background:transparent;min-height:40px;padding:8px 12px;font-size:12px;overflow-wrap:anywhere;white-space:normal;text-align:left}.capsule button.copy{border-left:1px solid #40563c;color:#b7c4ad;padding:8px 10px;min-width:40px}.capsule button:hover{background:#3a5236}.capsule.suffix{background:#343322;border-color:#57523a}.capsule.suffix button.copy{border-color:#57523a}.tag-caption{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;font-size:11px;color:#b1bfae}.text-button{border:0;background:transparent;padding:4px 8px;color:var(--gold);font-size:12px;min-height:36px}.suggestions{border-top:1px solid #314435;padding-top:4px;margin-top:10px}.suggestions .empty{font-size:12px;color:var(--muted)}.field>span{font-size:13px}.field+.field{margin-top:12px}.field:has(textarea){grid-column:1/-1}.settings-group{margin-top:20px;padding-top:18px;border-top:1px solid #354937}.settings-group:first-child{margin-top:0;padding-top:0;border:0}.settings-group h3{color:#e4ddc1;margin-bottom:5px}.settings-group>p{margin:0 0 15px}.checkfield{border:1px solid #304838;border-radius:10px;padding:9px 11px;justify-content:flex-start;font-size:13px;background:#112015}.checkfield input{flex-shrink:0}.switch{min-height:44px;height:44px;min-width:54px;width:54px;border:0;background:transparent!important;flex-shrink:0}.switch:before{content:'';position:absolute;left:5px;right:5px;top:10px;height:24px;border-radius:14px;background:#34483b;border:1px solid #6b7869}.switch:after{left:9px;top:14px;width:16px;height:16px}.switch[aria-checked=true]:before{background:#89ad89;border-color:#aac49e}.switch[aria-checked=true]:after{left:29px;top:14px;background:#fff6dd}.entry{background:#18271d;border-color:#2d4232}.entry-head{display:flex;align-items:center;gap:10px}.entry .sub{gap:5px}.entry .entry-actions{padding-top:8px;margin-top:10px}.entry .entry-actions button{min-height:40px}.reorder-rail{display:flex;align-items:center;gap:3px}.reorder-rail button{padding:5px;min-width:40px;min-height:42px;background:transparent;border:0;color:#b9c6ad}.drag-handle{touch-action:none;cursor:grab;user-select:none}.drag-handle svg{width:16px;height:20px;pointer-events:none}.drag-target{border-color:var(--gold)!important;background:#35462b!important}.drag-active{opacity:.55}.rank{font-size:11px;color:#9fa88a;min-width:18px}.entry-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:9px;border-top:1px solid #2c4131;padding-top:5px}.entry-bottom .hint{font-size:11px}.quick-tools{display:flex;align-items:center;gap:3px}.quick-tools button{font-size:12px;padding:6px 9px;background:transparent;border:0}.entry-summary{color:#a6b5a7;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;padding:13px 0 2px}.pager{display:flex;justify-content:center;align-items:center;gap:10px;padding:16px 0}.pager select{width:100px;font-size:12px}.pager button{padding:8px 10px}.list-tools{display:flex;flex-wrap:wrap;gap:8px}.list-tools button{font-size:12px}.title-tools{display:flex;justify-content:space-between;align-items:center;gap:8px}.book-card .row{align-items:center}.book-actions{display:flex;gap:5px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:13px;padding-top:9px}.book-actions button{background:transparent;border:0;font-size:12px;padding:8px 10px}.binding-row{display:grid;grid-template-columns:140px 1fr;gap:12px;margin:13px 0;align-items:center}.bindings .checkfield{margin-bottom:6px}.setting-range{display:grid;grid-template-columns:1fr 80px;gap:12px;align-items:center}.setting-range input[type=range]{accent-color:#b9b77b;padding:0;border:0;background:transparent;min-height:44px}.setting-range input[type=number]{padding:10px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}.global-section{padding:20px 0;border-top:1px solid var(--line)}.global-section:first-child{border:0;padding-top:0}.global-section h3{margin-bottom:14px}.tags-list{display:flex;flex-direction:column;gap:8px}.tag-row{display:flex;align-items:center;gap:7px;border:1px solid var(--line);padding:8px;border-radius:12px;background:#14251a}.tag-row .capsule{flex:1;min-width:0}.tag-row .capsule button:first-child{flex:1}.tag-row .icon{padding:6px;min-width:38px}.empty-state{padding:30px 12px;text-align:center;color:var(--muted);font-size:13px}.native-state{font-size:12px;color:#b9c1a7;background:#283322;border-radius:8px;padding:10px 12px}.keyword-row{display:flex;gap:5px;align-items:center;margin-bottom:7px}.keyword-row input{flex:1}.keyword-row button{flex-shrink:0}.keyword-mode{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px}.keyword-mode small{max-width:65%}.fieldset-plain{border:0;padding:0;margin:0}.trigger-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.trigger-grid .checkfield{padding:9px 7px;font-size:12px}.field-help{color:#9cad9d;font-size:11px;margin:5px 0 0;line-height:1.6}.search-results{display:grid;gap:8px}.search-results button{text-align:left;background:#1c3021}.search-results small{display:block}.fullscreen-editor{position:fixed;inset:0;z-index:30;background:#0d1b12;padding:18px;display:flex;flex-direction:column;gap:12px}.fullscreen-editor textarea{flex:1;min-height:0}.fullscreen-editor .row{flex-shrink:0}.overlay{position:fixed;inset:0;background:#0008;backdrop-filter:blur(4px);z-index:25;display:flex;justify-content:center;align-items:flex-end;padding:16px}.sheet{max-width:650px;width:100%;max-height:85dvh;overflow:auto;padding:22px;background:#1a2b1e;border:1px solid #526046;border-radius:22px;box-shadow:0 30px 60px #0009}.sheet h2{margin-bottom:8px}.sheet .field{margin-top:16px}.sheet-footer{position:sticky;bottom:-22px;padding:12px 0;background:#1a2b1e;display:flex;gap:8px}.sheet-footer button{flex:1}.review-row{padding:12px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere;font-size:13px}.review-row del{color:#d6a89a;display:block}.review-row ins{color:#b8d0ad;display:block;text-decoration:none}.toast{max-width:min(520px,92vw);font-size:13px}.copy-manual{font-family:Reading,sans-serif}.overview{display:grid;grid-template-columns:1fr 1fr;gap:10px}.overview>div{padding:14px;border:1px solid var(--line);border-radius:12px;background:#122015}.overview b{display:block;font-size:20px;font-weight:400;color:var(--gold)}.overview span{font-size:12px;color:var(--muted)}.field-flash{border-radius:10px;background:#39472b;padding:10px}.details-caption{font-size:11px;color:var(--muted);margin-left:8px}input,textarea{scroll-margin-top:80px}.list-book-select{min-width:0;flex:1}.shortcut-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.shortcut-row button{font-size:12px}.section-empty{padding:15px;color:var(--muted)}.subtitle-mobile{display:none}.help-line{font-size:12px;color:#aebba9;max-width:650px}.footer-label{color:#b5c4ad;font-size:11px;text-align:center;margin-top:6px}
+@media(min-width:850px){.editor-layout{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:22px;align-items:start}.editor-aside{position:sticky;top:80px}.editor-form{min-width:0}.editor-footer .foot-inner{max-width:1080px}.sheet{margin-bottom:30px}.editor-tabs{max-width:100%}.content-pane .panel{padding:25px}.main-content-area{min-height:380px!important}}
+@media(max-width:849px){.editor-aside{display:none}.binding-row{grid-template-columns:1fr;gap:5px}.settings-grid{grid-template-columns:1fr}.page-intro{align-items:flex-start}.page-intro h2{margin:0}.page-intro .hint{font-size:12px}.entry{padding:14px}.list-tools button{flex:1}.sheet{padding:18px}.sheet-footer{bottom:-18px}.main-content-area{min-height:250px!important}}
+@media(max-width:380px){.wrap{padding-left:12px;padding-right:12px}.panel{padding:14px}.entry-head{gap:6px}.entry .title{font-size:15px}.trigger-grid{grid-template-columns:repeat(2,1fr)}.tag-row{gap:2px;padding:6px}.tag-row .icon{min-width:32px}.capsule button{padding:8px 9px}.editor-top .ghost{padding:8px 10px}.foot{padding-left:12px;padding-right:12px}.sheet{padding:15px}.overlay{padding:8px}.editor-tools button{font-size:11px;padding:8px}.book-actions{gap:0}.book-actions button{padding:8px}.pager{gap:6px}.reorder-rail button{min-width:36px}.count-line{gap:8px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.list-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}.list-tools button{padding:10px;line-height:1.6;min-height:46px}.editing-screen #nav{display:none}.editing-screen header{padding-top:16px;padding-bottom:5px}.editing-screen header .brand{font-size:10px}.editing-screen h1{font-size:21px}.editing-screen .wrap{padding-top:6px}.editing-screen .editor-meta{margin:8px 0}.editing-screen .nav-entries{margin-bottom:6px}.editing-screen .editor-tabs{margin:10px 0}.editing-screen .toolbar{margin-bottom:10px}.editing-screen .help-line{font-size:11px}.capsule svg{display:block;pointer-events:none}.tag-row .drag-handle{flex-shrink:0}
+.tag-search{margin:12px 0}.chip-more{font-size:11px;min-height:40px;padding:7px 10px;background:transparent;color:var(--gold);border:1px dashed #536143;border-radius:20px}
+
+body{font-size:14px}header{padding:14px 16px 5px}header .brand{font-size:10px;letter-spacing:3px}h1{font-size:22px}h2{font-size:17px;margin-bottom:8px}.wrap{padding:8px 16px 90px}.panel{padding:13px;margin-bottom:10px;border-radius:13px}.entry{padding:10px 12px;margin-bottom:7px;border-radius:12px}.entry-bottom{margin-top:5px;padding-top:2px}.title{font-size:15px}.page-intro{padding:2px 0 10px}.page-intro p{margin:3px 0}.eyebrow{font-size:10px;margin-bottom:3px}.toolbar,.shortcut-row{margin-bottom:9px;gap:6px}nav{gap:4px;padding-bottom:8px;margin-bottom:10px}nav button{padding:7px 5px}.row{gap:8px}.field{margin-bottom:9px}.field+.field{margin-top:8px}.field>span{margin-bottom:4px}input,textarea,select{padding:8px 10px}button{padding:7px 11px;min-height:40px}.switch,.drag-handle,.icon,.quick-tools button{min-height:44px}.checkfield{padding:7px 9px;min-height:40px}.settings-group{margin-top:13px;padding-top:12px}.settings-group>p{margin-bottom:10px}.controls-grid{gap:8px}.settings-grid{gap:0 14px}details{padding:10px 0}details[open]>div{margin-top:9px}.global-section{padding:12px 0}.global-section h3{margin-bottom:9px}.divider{margin:10px 0}.book-actions{margin-top:7px;padding-top:5px}.book-actions button{padding:5px 8px}.list-tools button{padding:7px;min-height:42px}.foot{padding:8px 12px max(8px,env(safe-area-inset-bottom))}.foot button{font-size:13px}.stats{margin-bottom:9px;gap:5px}.stat{padding:5px}.stat b{font-size:21px}.stat span{font-size:11px}.page-columns{gap:10px}.main-content-area{min-height:210px!important}.editing-screen header{padding:10px 16px 4px}.editing-screen .wrap{padding-top:3px}.help-line{margin:5px 0}.editor-tabs{margin:8px 0!important}.editor-tabs button{min-height:38px}.capsules{gap:5px}.capsule button{padding:6px 10px;min-height:36px}.tag-caption{margin:6px 0 3px}.editor-counter{max-width:55%;overflow-wrap:anywhere}.header-tools{display:flex;align-items:center;gap:5px}.header-tools button{font-size:12px;padding:6px 8px}.save-state{font-size:11px;color:var(--gold);min-height:18px;padding:0 2px}.save-error{color:var(--red);white-space:pre-wrap;overflow-wrap:anywhere}.host-loading{padding:24px;font-size:14px}.host-busy{pointer-events:none;opacity:.65}.console-dock{position:fixed;bottom:0;left:0;right:0;height:52dvh;min-height:220px;max-height:82dvh;z-index:15;background:#132219;border:1px solid #536349;border-bottom:0;border-radius:19px 19px 0 0;box-shadow:0 -12px 35px #0005;display:flex;flex-direction:column;max-width:1120px;margin:auto}.console-dock.collapsed{height:54px;min-height:54px}.console-head{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:7px 12px;border-bottom:1px solid var(--line);flex-shrink:0}.console-head h2{font-size:15px;margin:0}.console-head small{display:block;font-size:10px}.console-head button{min-width:38px;padding:6px 8px;font-size:12px}.console-head .flex{gap:4px;flex-wrap:nowrap}.console-scroll{overflow:auto;overscroll-behavior:contain;padding:10px 12px;flex:1;min-height:0}.console-scroll .panel{padding:11px}.console-scroll h2{font-size:15px}.console-foot{display:flex;align-items:center;gap:7px;padding:7px 12px max(7px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#14231a;flex-shrink:0}.console-foot button{flex:1;min-width:0;font-size:12px}.console-foot .save-state{max-width:40%;overflow-wrap:anywhere}.console-open .wrap{padding-bottom:calc(52dvh + 35px)}.console-open #foot{display:none}.console-collapsed .wrap{padding-bottom:140px}.console-collapsed #foot{bottom:54px;display:flex}.detached-console{background:transparent}.detached-console>header,.detached-console>main,.detached-console>#foot{display:none!important}.detached-console .console-dock{height:100dvh;min-height:0;max-height:none}.detached-console .console-dock.collapsed{height:100dvh}.console-resume{color:var(--gold)}.console-dock [id=diffs]{overflow-wrap:anywhere}.console-dock .notice{font-size:11px}.host-status{max-width:1080px;margin:0 auto 8px;padding:0 2px}.reserved-bindings{border-style:dashed}.reserved-bindings .binding-row{margin:9px 0}.reserved-bindings select{font-size:12px}.host-readonly{font-size:11px;color:var(--gold)}.save-error-panel{border:1px solid #986960;background:#33251f;border-radius:10px;padding:10px;margin-bottom:8px}.save-error-panel button{margin-top:6px}.host-saved-banner{color:#b6d4b7;font-size:12px}.console-scroll .shortcut-row{display:none}.native-link{background:transparent;font-size:12px}.sheet{border-radius:16px;padding:16px}.sheet-footer{bottom:-16px}.sheet h2{font-size:18px}.sheet .field{margin-top:10px}.fullscreen-editor{padding:12px}.fullscreen-editor textarea{min-height:0!important}@media(max-width:380px){.wrap{padding-left:10px;padding-right:10px}.panel{padding:11px}.entry{padding:9px}.console-head{padding:6px 9px}.console-head h2{font-size:14px}.console-head button{font-size:11px;min-width:34px;padding:5px}.console-scroll{padding:8px}.console-foot{padding:6px 8px}.header-tools button{font-size:11px}.console-head small{font-size:9px}.console-dock .stats{gap:3px}.stat b{font-size:20px}.stat span{font-size:10px}}@media(min-width:850px){.wrap{padding-left:20px;padding-right:20px}.panel{padding:16px}.entry{padding:11px 14px}.console-dock{width:calc(100% - 32px)}.console-scroll .page-columns{grid-template-columns:1fr 1fr}.editor-layout{gap:14px}.content-pane .panel{padding:16px}}@media(max-height:500px){.console-dock{height:60dvh;min-height:180px}.console-open .wrap{padding-bottom:calc(60dvh + 40px)}.console-head small{display:none}.console-foot{padding-top:4px;padding-bottom:4px}.console-head{padding-top:3px;padding-bottom:3px}}
+.console-open #app>.page-intro{display:none}.console-open .host-saved-banner{display:none}.console-open #app>.host-status{margin-bottom:4px}.console-open .console-scroll>.host-status{margin-bottom:3px}.console-open .console-scroll>.host-status>.save-state{font-size:10px}.console-open .console-scroll>.host-status:not(:has(.save-error-panel)){display:none}.toast{pointer-events:none}.detached-console .toast{top:auto;bottom:60px}.console-head h2{white-space:nowrap}.console-head small{white-space:normal}.console-dock .stats{margin-bottom:5px}.console-dock .stat{padding-top:3px;padding-bottom:3px}
+
+body{font-family:TisyaReading,Reading,system-ui,sans-serif}
+</style><body><header><div><div class="brand">TISYA · 月潮</div><h1 id="page-title">世界书</h1></div><span class="caption">交互样稿<br>示例数据</span></header><main class="wrap"><nav id="nav"></nav><div id="app"></div></main><div class="foot" id="foot"></div><div id="toast" class="toast hidden" role="status"></div>
+<script>window.__TISYA_WORLDBOOK_HOST__=true;
+const catalog={
+  "schema": "tisya.worldbook-native-audit/1",
+  "scope": "目标APK世界书静态控件、条目模板、默认字段与JS处理路径；不是Android或全插件运行验收",
+  "host_apk_sha256": "dd17a722f40ceed2aafd3d880f572f706085fb568b08661f54d6f44d65dbb361",
+  "host_html_sha256": "0aad58fcc6fb083609aee1f055872f4d1d0df74be23d18124feb936176deb0cd",
+  "host_js_sha256": "f48277fb75eb082a519f9262600d7bc292692205abaf0a2fe651385c19cab9f8",
+  "controls": [
+    {
+      "key": "WorldInfo:0",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "WI_panel_pin",
+      "label": "WI_panel_pin",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 4918,
+      "codeHits": [],
+      "destination": "世界书页·原生面板固定／取消固定（宿主态）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:1",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info",
+      "label": "-- 未找到世界信息 --",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "-- 未找到世界信息 --"
+        }
+      ],
+      "sourceLine": 4942,
+      "codeHits": [
+        33,
+        39,
+        71,
+        72,
+        75,
+        76,
+        77,
+        79,
+        80,
+        81,
+        82,
+        83
+      ],
+      "destination": "世界书队列·全局启用书选择",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:2",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "standoutHeader.inline-drawer-toggle.inline-drawer-header",
+      "label": "单击展开",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 4954,
+      "codeHits": [],
+      "destination": "全局设置·展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:3",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_depth",
+      "label": "world_info_depth",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        75,
+        497,
+        893,
+        919,
+        1022,
+        1023,
+        1071,
+        1072,
+        6523,
+        6524,
+        6525
+      ],
+      "destination": "全局设置·world_info_depth（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:4",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_depth_counter",
+      "label": "world_info_depth_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1071,
+        6525
+      ],
+      "destination": "全局设置·world_info_depth（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:5",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget",
+      "label": "world_info_budget",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        79,
+        87,
+        896,
+        903,
+        922,
+        929,
+        1028,
+        1029,
+        1042,
+        1043,
+        1050,
+        1051
+      ],
+      "destination": "全局设置·world_info_budget（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:6",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_counter",
+      "label": "world_info_budget_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1080,
+        6550
+      ],
+      "destination": "全局设置·world_info_budget（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:7",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_cap",
+      "label": "world_info_budget_cap",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        87,
+        903,
+        929,
+        1042,
+        1043,
+        1093,
+        1094,
+        4981,
+        4982,
+        4983,
+        4986,
+        6589
+      ],
+      "destination": "全局设置·world_info_budget_cap（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:8",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_budget_cap_counter",
+      "label": "world_info_budget_cap_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1094,
+        6591
+      ],
+      "destination": "全局设置·world_info_budget_cap（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:9",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations",
+      "label": "world_info_min_activations",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        76,
+        77,
+        894,
+        895,
+        920,
+        921,
+        1024,
+        1025,
+        1026,
+        1027,
+        1074,
+        1075
+      ],
+      "destination": "全局设置·world_info_min_activations（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:10",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_counter",
+      "label": "world_info_min_activations_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1074,
+        6531
+      ],
+      "destination": "全局设置·world_info_min_activations（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:11",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_depth_max",
+      "label": "world_info_min_activations_depth_max",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        77,
+        895,
+        921,
+        1026,
+        1027,
+        1077,
+        1078,
+        5369,
+        5370,
+        6542,
+        6543,
+        6544
+      ],
+      "destination": "全局设置·world_info_min_activations_depth_max（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:12",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_min_activations_depth_max_counter",
+      "label": "world_info_min_activations_depth_max_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1077,
+        6544
+      ],
+      "destination": "全局设置·world_info_min_activations_depth_max（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:13",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_max_recursion_steps",
+      "label": "world_info_max_recursion_steps",
+      "type": "range",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 271,
+      "codeHits": [
+        88,
+        905,
+        931,
+        1046,
+        1047,
+        1096,
+        1097,
+        5010,
+        5011,
+        5012,
+        6533,
+        6534
+      ],
+      "destination": "全局设置·world_info_max_recursion_steps（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:14",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_max_recursion_steps_counter",
+      "label": "world_info_max_recursion_steps_counter",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 273,
+      "codeHits": [
+        1097,
+        6597
+      ],
+      "destination": "全局设置·world_info_max_recursion_steps（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:15",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info_character_strategy",
+      "label": "Sorted Evenly\n                                                    Character Lore First\n                                                    Global Lore First",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": null,
+          "label": "均匀排序"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "角色世界书优先"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "全局世界书优先"
+        }
+      ],
+      "sourceLine": 5016,
+      "codeHits": [
+        86,
+        902,
+        928,
+        1040,
+        1041,
+        1090,
+        1091,
+        4852,
+        4863,
+        4872,
+        6574,
+        6575
+      ],
+      "destination": "全局设置·world_info_character_strategy（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:16",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_include_names",
+      "label": "world_info_include_names",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5025,
+      "codeHits": [
+        80,
+        897,
+        923,
+        1030,
+        1031,
+        1083,
+        6554,
+        6555
+      ],
+      "destination": "全局设置·world_info_include_names（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:17",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_recursive",
+      "label": "world_info_recursive",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5031,
+      "codeHits": [
+        81,
+        898,
+        924,
+        1032,
+        1033,
+        1084,
+        5112,
+        5351,
+        5358,
+        6559,
+        6560
+      ],
+      "destination": "全局设置·world_info_recursive（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:18",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_case_sensitive",
+      "label": "world_info_case_sensitive",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5037,
+      "codeHits": [
+        83,
+        362,
+        900,
+        926,
+        1036,
+        1037,
+        1086,
+        6564,
+        6565
+      ],
+      "destination": "全局设置·world_info_case_sensitive（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:19",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_match_whole_words",
+      "label": "world_info_match_whole_words",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5043,
+      "codeHits": [
+        84,
+        440,
+        901,
+        927,
+        1038,
+        1039,
+        1087,
+        6569,
+        6570
+      ],
+      "destination": "全局设置·world_info_match_whole_words（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:20",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_use_group_scoring",
+      "label": "world_info_use_group_scoring",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5049,
+      "codeHits": [
+        85,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        5552,
+        5570,
+        6584,
+        6585
+      ],
+      "destination": "全局设置·world_info_use_group_scoring（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:21",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_overflow_alert",
+      "label": "world_info_overflow_alert",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5055,
+      "codeHits": [
+        82,
+        899,
+        925,
+        1034,
+        1035,
+        1085,
+        5318,
+        6579,
+        6580
+      ],
+      "destination": "全局设置·world_info_overflow_alert（滑块/数值同源）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:22",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_import_file",
+      "label": "world_import_file",
+      "type": "file",
+      "hidden": true,
+      "options": [],
+      "sourceLine": 5069,
+      "codeHits": [
+        6481,
+        6484
+      ],
+      "destination": "世界书管理·导入文件原生接点",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:23",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_create_button",
+      "label": "创建",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5070,
+      "codeHits": [
+        6497
+      ],
+      "destination": "世界书管理·新建",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:24",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_editor_select",
+      "label": "--- 选择以编辑 ---",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "--- 选择以编辑 ---"
+        }
+      ],
+      "sourceLine": 5075,
+      "codeHits": [
+        1110,
+        1115,
+        1145,
+        1148,
+        2161,
+        2290,
+        2293,
+        2301,
+        2777,
+        2790,
+        4419,
+        4550
+      ],
+      "destination": "世界书队列·切换编辑目标",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:25",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_import_button",
+      "label": "导入世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5078,
+      "codeHits": [
+        6480
+      ],
+      "destination": "世界书管理·导入JSON/PNG/lorebook",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:26",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_export",
+      "label": "导出世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5079,
+      "codeHits": [
+        2547,
+        2767
+      ],
+      "destination": "世界书管理·导出",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:27",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_name_button",
+      "label": "重命名世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5080,
+      "codeHits": [
+        2546,
+        2702
+      ],
+      "destination": "世界书行内·改名",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:28",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_duplicate",
+      "label": "复制世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5081,
+      "codeHits": [
+        2549,
+        2775
+      ],
+      "destination": "世界书行内·复制",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:29",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_delete",
+      "label": "删除世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5082,
+      "codeHits": [
+        2548,
+        2557
+      ],
+      "destination": "世界书行内·删除确认",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:30",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_popup_new",
+      "label": "新条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5085,
+      "codeHits": [
+        2545,
+        2697
+      ],
+      "destination": "条目列表·新增",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:31",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "OpenAllWIEntries",
+      "label": "打开所有条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5086,
+      "codeHits": [],
+      "destination": "条目列表工具·全部展开",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:32",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "CloseAllWIEntries",
+      "label": "关闭所有条目",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5087,
+      "codeHits": [],
+      "destination": "条目列表工具·全部收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:33",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_backfill_memos",
+      "label": "使用关键字填充空的备忘录/标题",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5088,
+      "codeHits": [
+        2706
+      ],
+      "destination": "操作台·关键词回填空标题",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:34",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_apply_current_sorting",
+      "label": "应用当前排序作为顺序",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5089,
+      "codeHits": [
+        2723
+      ],
+      "destination": "操作台·浏览排序写入原生Order的预览",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:35",
+      "root": "WorldInfo",
+      "tag": "input",
+      "id": "world_info_search",
+      "label": "搜索...",
+      "type": "search",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5090,
+      "codeHits": [
+        2124,
+        6635
+      ],
+      "destination": "条目列表·搜索",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:36",
+      "root": "WorldInfo",
+      "tag": "select",
+      "id": "world_info_sort_order",
+      "label": "Search\n                                Priority\n                                Custom\n                                Title A-Z\n                                Title Z-A\n                                Tokens ↗\n                                Tokens ↘\n                                Depth ↗\n                                Depth ↘\n                                Order ↗\n                                Order ↘\n                                UID ↗\n                                UID ↘\n                                Trigger% ↗\n                                Trigger% ↘",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "14",
+          "role": null,
+          "label": "搜索"
+        },
+        {
+          "value": "0",
+          "role": null,
+          "label": "优先级"
+        },
+        {
+          "value": "13",
+          "role": null,
+          "label": "自定义"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "标题 A 到 Z"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "标题 Z 到 A"
+        },
+        {
+          "value": "3",
+          "role": null,
+          "label": "词符 ↗"
+        },
+        {
+          "value": "4",
+          "role": null,
+          "label": "词符 ↘"
+        },
+        {
+          "value": "5",
+          "role": null,
+          "label": "深度 ↗"
+        },
+        {
+          "value": "6",
+          "role": null,
+          "label": "深度 ↘"
+        },
+        {
+          "value": "7",
+          "role": null,
+          "label": "顺序 ↗"
+        },
+        {
+          "value": "8",
+          "role": null,
+          "label": "顺序 ↘"
+        },
+        {
+          "value": "9",
+          "role": null,
+          "label": "UID ↗"
+        },
+        {
+          "value": "10",
+          "role": null,
+          "label": "UID ↘"
+        },
+        {
+          "value": "11",
+          "role": null,
+          "label": "触发频率% ↗"
+        },
+        {
+          "value": "12",
+          "role": null,
+          "label": "触发频率% ↘"
+        }
+      ],
+      "sourceLine": 5091,
+      "codeHits": [
+        186,
+        1113,
+        2367,
+        2656,
+        2876,
+        2877,
+        6644
+      ],
+      "destination": "条目列表工具·完整浏览排序选项",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "WorldInfo:37",
+      "root": "WorldInfo",
+      "tag": "div",
+      "id": "world_refresh",
+      "label": "刷新",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 5108,
+      "codeHits": [
+        6640
+      ],
+      "destination": "条目列表工具·刷新",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:0",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "key",
+      "label": "关键字或正则表达式",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7091,
+      "codeHits": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520
+      ],
+      "destination": "条目编辑·关键词与条件／主要关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:1",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "key",
+      "label": "逗号分隔列表",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7092,
+      "codeHits": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520
+      ],
+      "destination": "条目编辑·关键词与条件／主要关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:2",
+      "root": "entry_edit_template",
+      "tag": "button",
+      "id": "Switch to plaintext mode",
+      "label": "切换到纯文本模式",
+      "type": "button",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7093,
+      "codeHits": [],
+      "destination": "关键词与条件·富输入/纯文本切换",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:3",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "entryLogicType",
+      "label": "AND ANY\n                                AND ALL\n                                NOT ALL\n                                NOT ANY",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": null,
+          "label": "与任意"
+        },
+        {
+          "value": "3",
+          "role": null,
+          "label": "与所有"
+        },
+        {
+          "value": "1",
+          "role": null,
+          "label": "非所有"
+        },
+        {
+          "value": "2",
+          "role": null,
+          "label": "非任何"
+        }
+      ],
+      "sourceLine": 7099,
+      "codeHits": [
+        3759,
+        3769
+      ],
+      "destination": "关键词与条件·辅助逻辑selectiveLogic",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:4",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "keysecondary",
+      "label": "关键字或正则表达式（如果为空则忽略）",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7113,
+      "codeHits": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721
+      ],
+      "destination": "条目编辑·关键词与条件／辅助关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:5",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "keysecondary",
+      "label": "逗号分隔列表（如果为空则忽略）",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7114,
+      "codeHits": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721
+      ],
+      "destination": "条目编辑·关键词与条件／辅助关键词／正则",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:6",
+      "root": "entry_edit_template",
+      "tag": "button",
+      "id": "Switch to plaintext mode",
+      "label": "切换到纯文本模式",
+      "type": "button",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7093,
+      "codeHits": [],
+      "destination": "关键词与条件·富输入/纯文本切换",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:7",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "outletName",
+      "label": "锚点名称",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7126,
+      "codeHits": [
+        3849,
+        3850,
+        3851,
+        3854,
+        3855,
+        3858,
+        3859,
+        4138,
+        4266,
+        5506,
+        5510,
+        5511
+      ],
+      "destination": "条目编辑·注入与顺序／出口名称",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:8",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "scanDepth",
+      "label": "使用全局设置",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7130,
+      "codeHits": [
+        210,
+        373,
+        2861,
+        3862,
+        3863,
+        3864,
+        3878,
+        3879,
+        3882,
+        4270,
+        5762,
+        5807
+      ],
+      "destination": "条目编辑·扫描与递归／扫描深度覆盖",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:9",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "caseSensitive",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7134,
+      "codeHits": [
+        211,
+        362,
+        363,
+        2854,
+        3962,
+        4271,
+        5763,
+        5808,
+        5858,
+        5909
+      ],
+      "destination": "条目编辑·扫描与递归／区分大小写",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:10",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "matchWholeWords",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7142,
+      "codeHits": [
+        212,
+        440,
+        442,
+        2852,
+        3963,
+        4272,
+        5764,
+        5809,
+        5859,
+        5910
+      ],
+      "destination": "条目编辑·扫描与递归／全词匹配",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:11",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "useGroupScoring",
+      "label": "Use global\n                                Yes\n                                No",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "null",
+          "role": null,
+          "label": "使用全局"
+        },
+        {
+          "value": "true",
+          "role": null,
+          "label": "是"
+        },
+        {
+          "value": "false",
+          "role": null,
+          "label": "否"
+        }
+      ],
+      "sourceLine": 7150,
+      "codeHits": [
+        213,
+        2853,
+        3964,
+        4273,
+        5552,
+        5570,
+        5765,
+        5810,
+        5860,
+        5911
+      ],
+      "destination": "条目编辑·互斥与延时／按组评分",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:12",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "automationId",
+      "label": "（没有任何）",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7158,
+      "codeHits": [
+        2862,
+        3975,
+        3976,
+        3977,
+        3980,
+        3981,
+        3984,
+        3985,
+        4127,
+        4274,
+        5766,
+        5811
+      ],
+      "destination": "条目编辑·额外扫描与联动／自动化ID",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:13",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delayUntilRecursionLevel",
+      "label": "1",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7165,
+      "codeHits": [
+        3936,
+        3937,
+        3942,
+        3948,
+        3959
+      ],
+      "destination": "扫描与递归·递归延迟等级",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:14",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Expand the editor",
+      "label": "展开编辑器",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 2246,
+      "codeHits": [],
+      "destination": "条目正文·放大编辑器",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:15",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "excludeRecursion",
+      "label": "excludeRecursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7186,
+      "codeHits": [
+        2836,
+        3930,
+        4254,
+        5112,
+        5753,
+        5798,
+        5848,
+        5894
+      ],
+      "destination": "条目编辑·扫描与递归／不被其他条目递归激活",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:16",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "preventRecursion",
+      "label": "preventRecursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7192,
+      "codeHits": [
+        2837,
+        3931,
+        4255,
+        5334,
+        5895
+      ],
+      "destination": "条目编辑·扫描与递归／不再激活其他条目",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:17",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delay_until_recursion",
+      "label": "delay_until_recursion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7200,
+      "codeHits": [
+        2838,
+        3934,
+        3944,
+        3956,
+        5896
+      ],
+      "destination": "扫描与递归·是否延迟到递归",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:18",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "ignoreBudget",
+      "label": "ignoreBudget",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7206,
+      "codeHits": [
+        2870,
+        4011,
+        4012,
+        4013,
+        4016,
+        4017,
+        4020,
+        4253,
+        5254,
+        5260,
+        5261,
+        5310
+      ],
+      "destination": "条目编辑·扫描与递归／忽略预算",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:19",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "content",
+      "label": "这个关键词对AI的含义，逐字发送",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7221,
+      "codeHits": [
+        1357,
+        1418,
+        1438,
+        1439,
+        1451,
+        1900,
+        1902,
+        1916,
+        1922,
+        1947,
+        1952,
+        1985
+      ],
+      "destination": "条目编辑·基础／条目正文",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:20",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "groupOverride",
+      "label": "groupOverride",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7237,
+      "codeHits": [
+        2864,
+        3898,
+        3899,
+        3900,
+        3903,
+        3904,
+        3907,
+        4268,
+        5701,
+        5760,
+        5805,
+        5855
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组优先",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:21",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "group",
+      "label": "只有一个带有相同标签的条目将被激活",
+      "type": "text",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7247,
+      "codeHits": [
+        85,
+        213,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        1221,
+        1841,
+        2853
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:22",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "groupWeight",
+      "label": "100",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7257,
+      "codeHits": [
+        2865,
+        3911,
+        3912,
+        4269,
+        5709,
+        5715,
+        5761,
+        5806,
+        5856,
+        5907
+      ],
+      "destination": "条目编辑·互斥与延时／互斥组权重",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:23",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "sticky",
+      "label": "无黏性",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7130,
+      "codeHits": [
+        225,
+        242,
+        597,
+        608,
+        610,
+        612,
+        620,
+        658,
+        779,
+        806,
+        828,
+        863
+      ],
+      "destination": "条目编辑·互斥与延时／粘性消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:24",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "cooldown",
+      "label": "无冷却",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7283,
+      "codeHits": [
+        226,
+        242,
+        598,
+        609,
+        613,
+        618,
+        619,
+        620,
+        621,
+        622,
+        626,
+        628
+      ],
+      "destination": "条目编辑·互斥与延时／冷却消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:25",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "delay",
+      "label": "无延迟",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7165,
+      "codeHits": [
+        227,
+        242,
+        599,
+        634,
+        757,
+        762,
+        766,
+        768,
+        782,
+        843,
+        863,
+        2805
+      ],
+      "destination": "条目编辑·互斥与延时／延迟消息数",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:26",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "character_exclusion",
+      "label": "character_exclusion",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7307,
+      "codeHits": [
+        3793
+      ],
+      "destination": "适用范围·反向排除名单",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:27",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "characterFilter",
+      "label": "-- 未找到角色 --",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "",
+          "role": null,
+          "label": "-- 未找到角色 --"
+        }
+      ],
+      "sourceLine": 7317,
+      "codeHits": [
+        1384,
+        1385,
+        1386,
+        1389,
+        1390,
+        1391,
+        1395,
+        1398,
+        1399,
+        1400,
+        1454,
+        1456
+      ],
+      "destination": "适用范围·角色和标签",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:28",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "__invisible",
+      "label": "__invisible",
+      "type": "checkbox",
+      "hidden": true,
+      "options": [],
+      "sourceLine": 7333,
+      "codeHits": [],
+      "destination": "纯排版占位，原HTML明确非真实控件，不新增用户功能",
+      "realControl": false,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:29",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "triggers",
+      "label": "Normal\n                                Continue\n                                Impersonate\n                                Swipe\n                                Regenerate\n                                Quiet",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "normal",
+          "role": null,
+          "label": "正常"
+        },
+        {
+          "value": "continue",
+          "role": null,
+          "label": "继续"
+        },
+        {
+          "value": "impersonate",
+          "role": null,
+          "label": "AI 帮答"
+        },
+        {
+          "value": "swipe",
+          "role": null,
+          "label": "滑动"
+        },
+        {
+          "value": "regenerate",
+          "role": null,
+          "label": "重新生成"
+        },
+        {
+          "value": "quiet",
+          "role": null,
+          "label": "静默"
+        }
+      ],
+      "sourceLine": 7338,
+      "codeHits": [
+        2869,
+        3988,
+        3993,
+        3994,
+        4006,
+        4282,
+        5049,
+        5050,
+        5052,
+        5771,
+        5816,
+        5866
+      ],
+      "destination": "条目编辑·适用范围／生成类型过滤",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:30",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "selective",
+      "label": "selective",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 8536,
+      "codeHits": [
+        224,
+        556,
+        1686,
+        2839,
+        2851,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769
+      ],
+      "destination": "条目编辑·关键词与条件／启用辅助筛选",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:31",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "useProbability",
+      "label": "useProbability",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7356,
+      "codeHits": [
+        3353,
+        3739,
+        4264,
+        5270,
+        5757,
+        5802,
+        5852,
+        5901
+      ],
+      "destination": "条目编辑·基础／使用概率",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:32",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "addMemo",
+      "label": "addMemo",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7360,
+      "codeHits": [
+        1434,
+        3745,
+        3751,
+        4249,
+        5752,
+        5797,
+        5831,
+        5847,
+        5898
+      ],
+      "destination": "条目编辑·基础／附加备注",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:33",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "inline-drawer-toggle.inline-drawer-header.inline-drawer-header-pointer.userSettingsInnerExpandable",
+      "label": "额外匹配来源",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 817,
+      "codeHits": [],
+      "destination": "条目设置·分组展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:34",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterDescription",
+      "label": "matchCharacterDescription",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        215,
+        395,
+        2856,
+        3968,
+        4257,
+        5919
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色描述",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:35",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterPersonality",
+      "label": "matchCharacterPersonality",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        216,
+        398,
+        2857,
+        3969,
+        4258,
+        5920
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色性格",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:36",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchScenario",
+      "label": "matchScenario",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7385,
+      "codeHits": [
+        218,
+        404,
+        2859,
+        3971,
+        4260,
+        5922
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描场景",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:37",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchPersonaDescription",
+      "label": "matchPersonaDescription",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7393,
+      "codeHits": [
+        214,
+        392,
+        2855,
+        3967,
+        4256,
+        5918
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描用户描述",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:38",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCharacterDepthPrompt",
+      "label": "matchCharacterDepthPrompt",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7373,
+      "codeHits": [
+        217,
+        401,
+        2858,
+        3970,
+        4259,
+        5921
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描角色注释",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:39",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "matchCreatorNotes",
+      "label": "matchCreatorNotes",
+      "type": "checkbox",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7405,
+      "codeHits": [
+        219,
+        407,
+        2860,
+        3972,
+        4261,
+        5923
+      ],
+      "destination": "条目编辑·额外扫描与联动／扫描创作者注释",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:40",
+      "root": "entry_edit_template",
+      "tag": "span",
+      "id": "drag-handle",
+      "label": "☰",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7526,
+      "codeHits": [
+        2659,
+        2806
+      ],
+      "destination": "条目列表·触控拖动；并保留上/下移",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:41",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "inline-drawer-toggle.fa-fw.fa-solid.fa-circle-chevron-down.inline-drawer-icon.down",
+      "label": "inline-drawer-toggle.fa-fw.fa-solid.fa-circle-chevron-down.inline-drawer-icon.down",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7420,
+      "codeHits": [],
+      "destination": "条目设置·分组展开／收起",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:42",
+      "root": "entry_edit_template",
+      "tag": "div",
+      "id": "entryKillSwitch",
+      "label": "切换条目激活状态。",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7421,
+      "codeHits": [
+        3468,
+        3474,
+        3475,
+        3476,
+        3482,
+        3483,
+        3488,
+        3489,
+        3597
+      ],
+      "destination": "条目列表与编辑·独立启用开关",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:43",
+      "root": "entry_edit_template",
+      "tag": "textarea",
+      "id": "comment",
+      "label": "条目标题/备忘录",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7425,
+      "codeHits": [
+        1435,
+        1686,
+        2673,
+        2709,
+        2710,
+        2711,
+        2840,
+        3139,
+        3141,
+        3142,
+        3179,
+        3181
+      ],
+      "destination": "条目编辑·基础／条目名称／备注",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:44",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "entryStateSelector",
+      "label": "世界书条目状态：\r🔵 永久\r🟢 关键词\r🔗 向量化",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "constant",
+          "role": null,
+          "label": "🔵"
+        },
+        {
+          "value": "normal",
+          "role": null,
+          "label": "🟢"
+        },
+        {
+          "value": "vectorized",
+          "role": null,
+          "label": "🔗"
+        }
+      ],
+      "sourceLine": 7428,
+      "codeHits": [
+        3426,
+        3431,
+        3432,
+        3433,
+        3436,
+        3462,
+        3591
+      ],
+      "destination": "条目编辑·激活方式（常驻/关键词/向量/新增条件接口）",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:45",
+      "root": "entry_edit_template",
+      "tag": "select",
+      "id": "position",
+      "label": "↑Char：在角色定义之前\n↓Char：在角色定义之后\n↑AN：在作者注释之前\n↓AN：在作者注释之后\n@D：在深度D处",
+      "type": null,
+      "hidden": false,
+      "options": [
+        {
+          "value": "0",
+          "role": "",
+          "label": "角色定义之前"
+        },
+        {
+          "value": "1",
+          "role": "",
+          "label": "角色定义之后"
+        },
+        {
+          "value": "5",
+          "role": "",
+          "label": "示例消息前（↑EM）"
+        },
+        {
+          "value": "6",
+          "role": "",
+          "label": "示例消息后（↓EM）"
+        },
+        {
+          "value": "2",
+          "role": "",
+          "label": "作者注释之前"
+        },
+        {
+          "value": "3",
+          "role": "",
+          "label": "作者注释之后"
+        },
+        {
+          "value": "4",
+          "role": "0",
+          "label": "@D ⚙ [系统]在深度​​️"
+        },
+        {
+          "value": "4",
+          "role": "1",
+          "label": "@D 👤 [用户]在深度"
+        },
+        {
+          "value": "4",
+          "role": "2",
+          "label": "@D 🤖 [AI]在深度"
+        },
+        {
+          "value": "7",
+          "role": "",
+          "label": "➡️ 锚点"
+        }
+      ],
+      "sourceLine": 7437,
+      "codeHits": [
+        950,
+        961,
+        1697,
+        1698,
+        1699,
+        1700,
+        1701,
+        1702,
+        1703,
+        1704,
+        2632,
+        2845
+      ],
+      "destination": "条目编辑·注入与顺序／注入位置",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:46",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "depth",
+      "label": "深度",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7472,
+      "codeHits": [
+        63,
+        75,
+        77,
+        202,
+        210,
+        217,
+        251,
+        262,
+        304,
+        306,
+        319,
+        324
+      ],
+      "destination": "条目编辑·注入与顺序／注入深度",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:47",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "order",
+      "label": "顺序",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7476,
+      "codeHits": [
+        181,
+        186,
+        982,
+        1113,
+        2367,
+        2369,
+        2371,
+        2380,
+        2414,
+        2417,
+        2422,
+        2656
+      ],
+      "destination": "条目编辑·注入与顺序／原生优先级",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:48",
+      "root": "entry_edit_template",
+      "tag": "input",
+      "id": "probability",
+      "label": "可能性",
+      "type": "number",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7480,
+      "codeHits": [
+        2844,
+        3313,
+        3314,
+        3315,
+        3320,
+        3321,
+        3322,
+        3325,
+        3326,
+        3327,
+        3328,
+        3329
+      ],
+      "destination": "条目编辑·基础／激活概率",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:49",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Move/Copy Entry to Another Lorebook",
+      "label": "移动或复制条目到其他世界书",
+      "type": null,
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7485,
+      "codeHits": [],
+      "destination": "条目行下·移动或复制到另一世界书",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:50",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Duplicate world info entry",
+      "label": "重复的世界信息条目",
+      "type": "submit",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7486,
+      "codeHits": [],
+      "destination": "条目行下·复制并分配新UID",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    },
+    {
+      "key": "entry_edit_template:51",
+      "root": "entry_edit_template",
+      "tag": "i",
+      "id": "Delete world info entry",
+      "label": "删除世界信息条目",
+      "type": "submit",
+      "hidden": false,
+      "options": [],
+      "sourceLine": 7487,
+      "codeHits": [],
+      "destination": "条目行下·删除确认",
+      "realControl": true,
+      "implementation": "独立样稿或已登记接线位置；正式宿主未接线"
+    }
+  ],
+  "fields": [
+    {
+      "key": "key",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "主要关键词／正则",
+      "section": "关键词与条件",
+      "codeLines": [
+        7,
+        110,
+        222,
+        223,
+        254,
+        265,
+        432,
+        433,
+        434,
+        443,
+        445,
+        520,
+        529,
+        530,
+        531
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "keysecondary",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "辅助关键词／正则",
+      "section": "关键词与条件",
+      "codeLines": [
+        223,
+        540,
+        541,
+        542,
+        1686,
+        2339,
+        2340,
+        2341,
+        2342,
+        2602,
+        2850,
+        3721,
+        3780,
+        3781,
+        3784
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "comment",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "条目名称／备注",
+      "section": "基础",
+      "codeLines": [
+        1435,
+        1686,
+        2673,
+        2709,
+        2710,
+        2711,
+        2840,
+        3139,
+        3141,
+        3142,
+        3179,
+        3181,
+        3182,
+        3493,
+        3494
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "content",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "条目正文",
+      "section": "基础",
+      "codeLines": [
+        1357,
+        1418,
+        1438,
+        1439,
+        1451,
+        1900,
+        1902,
+        1916,
+        1922,
+        1947,
+        1952,
+        1985,
+        1987,
+        1998,
+        2727
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "constant",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "常驻",
+      "section": "基础",
+      "codeLines": [
+        13,
+        2399,
+        2401,
+        2402,
+        2841,
+        3424,
+        3440,
+        3441,
+        3443,
+        3447,
+        3449,
+        3453,
+        3455,
+        3461,
+        4245
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "vectorized",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "向量触发",
+      "section": "基础",
+      "codeLines": [
+        2863,
+        3424,
+        3442,
+        3444,
+        3448,
+        3450,
+        3452,
+        3454,
+        3456,
+        3461,
+        4246,
+        5747,
+        5792,
+        5842,
+        5914
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "selective",
+      "defaultCode": "true",
+      "type": "boolean",
+      "label": "启用辅助筛选",
+      "section": "关键词与条件",
+      "codeLines": [
+        224,
+        556,
+        1686,
+        2839,
+        2851,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769,
+        3772,
+        3773,
+        3774
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "selectiveLogic",
+      "defaultCode": "world_info_logic.AND_ANY",
+      "type": "enum",
+      "label": "辅助逻辑",
+      "section": "关键词与条件",
+      "codeLines": [
+        224,
+        556,
+        1686,
+        2839,
+        3759,
+        3760,
+        3761,
+        3762,
+        3765,
+        3766,
+        3769,
+        4248,
+        5181,
+        5182,
+        5197
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "addMemo",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "附加备注",
+      "section": "基础",
+      "codeLines": [
+        1434,
+        3745,
+        3751,
+        4249,
+        5752,
+        5797,
+        5831,
+        5847,
+        5898
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "order",
+      "defaultCode": "100",
+      "type": "number",
+      "label": "原生优先级",
+      "section": "注入与顺序",
+      "codeLines": [
+        181,
+        186,
+        982,
+        1113,
+        2367,
+        2369,
+        2371,
+        2380,
+        2414,
+        2417,
+        2422,
+        2656,
+        2751,
+        2753,
+        2754
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "position",
+      "defaultCode": "0",
+      "type": "number",
+      "label": "注入位置",
+      "section": "注入与顺序",
+      "codeLines": [
+        950,
+        961,
+        1697,
+        1698,
+        1699,
+        1700,
+        1701,
+        1702,
+        1703,
+        1704,
+        2632,
+        2845,
+        3214,
+        3215,
+        3222
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "disable",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "是否禁用",
+      "section": "基础",
+      "codeLines": [
+        2399,
+        2401,
+        2402,
+        2582,
+        2831,
+        2924,
+        3478,
+        3479,
+        3481,
+        3486,
+        3487,
+        3571,
+        3576,
+        4252,
+        5010
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "ignoreBudget",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "忽略预算",
+      "section": "扫描与递归",
+      "codeLines": [
+        2870,
+        4011,
+        4012,
+        4013,
+        4016,
+        4017,
+        4020,
+        4253,
+        5254,
+        5260,
+        5261,
+        5310,
+        5315,
+        5772,
+        5817
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "excludeRecursion",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "不被其他条目递归激活",
+      "section": "扫描与递归",
+      "codeLines": [
+        2836,
+        3930,
+        4254,
+        5112,
+        5753,
+        5798,
+        5848,
+        5894
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "preventRecursion",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "不再激活其他条目",
+      "section": "扫描与递归",
+      "codeLines": [
+        2837,
+        3931,
+        4255,
+        5334,
+        5895
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchPersonaDescription",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描用户描述",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        214,
+        392,
+        2855,
+        3967,
+        4256,
+        5918
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterDescription",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色描述",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        215,
+        395,
+        2856,
+        3968,
+        4257,
+        5919
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterPersonality",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色性格",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        216,
+        398,
+        2857,
+        3969,
+        4258,
+        5920
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCharacterDepthPrompt",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描角色注释",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        217,
+        401,
+        2858,
+        3970,
+        4259,
+        5921
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchScenario",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描场景",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        218,
+        404,
+        2859,
+        3971,
+        4260,
+        5922
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchCreatorNotes",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "扫描创作者注释",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        219,
+        407,
+        2860,
+        3972,
+        4261,
+        5923
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "delayUntilRecursion",
+      "defaultCode": "0",
+      "type": "number",
+      "label": "递归延迟等级",
+      "section": "扫描与递归",
+      "codeLines": [
+        2838,
+        3934,
+        3935,
+        3936,
+        3937,
+        3938,
+        3941,
+        3942,
+        3943,
+        3944,
+        3947,
+        3948,
+        3951,
+        3955,
+        3956
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "probability",
+      "defaultCode": "100",
+      "type": "number",
+      "label": "激活概率",
+      "section": "基础",
+      "codeLines": [
+        2844,
+        3313,
+        3314,
+        3315,
+        3320,
+        3321,
+        3322,
+        3325,
+        3326,
+        3327,
+        3328,
+        3329,
+        3332,
+        3335,
+        3336
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "useProbability",
+      "defaultCode": "true",
+      "type": "boolean",
+      "label": "使用概率",
+      "section": "基础",
+      "codeLines": [
+        3353,
+        3739,
+        4264,
+        5270,
+        5757,
+        5802,
+        5852,
+        5901
+      ],
+      "uiStatus": "原生兼容隐藏项，仍保留字段与迁移审计"
+    },
+    {
+      "key": "depth",
+      "defaultCode": "DEFAULT_DEPTH",
+      "type": "number",
+      "label": "注入深度",
+      "section": "注入与顺序",
+      "codeLines": [
+        63,
+        75,
+        77,
+        202,
+        210,
+        217,
+        251,
+        262,
+        304,
+        306,
+        319,
+        324,
+        344,
+        345,
+        346
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "outletName",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "出口名称",
+      "section": "注入与顺序",
+      "codeLines": [
+        3849,
+        3850,
+        3851,
+        3854,
+        3855,
+        3858,
+        3859,
+        4138,
+        4266,
+        5506,
+        5510,
+        5511,
+        5513,
+        5758,
+        5803
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "group",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "互斥组",
+      "section": "互斥与延时",
+      "codeLines": [
+        85,
+        213,
+        904,
+        930,
+        1044,
+        1045,
+        1054,
+        1055,
+        1088,
+        1221,
+        1841,
+        2853,
+        2864,
+        2865,
+        3885
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "groupOverride",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "互斥组优先",
+      "section": "互斥与延时",
+      "codeLines": [
+        2864,
+        3898,
+        3899,
+        3900,
+        3903,
+        3904,
+        3907,
+        4268,
+        5701,
+        5760,
+        5805,
+        5855,
+        5906
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "groupWeight",
+      "defaultCode": "DEFAULT_WEIGHT",
+      "type": "number",
+      "label": "互斥组权重",
+      "section": "互斥与延时",
+      "codeLines": [
+        2865,
+        3911,
+        3912,
+        4269,
+        5709,
+        5715,
+        5761,
+        5806,
+        5856,
+        5907
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "scanDepth",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "扫描深度覆盖",
+      "section": "扫描与递归",
+      "codeLines": [
+        210,
+        373,
+        2861,
+        3862,
+        3863,
+        3864,
+        3878,
+        3879,
+        3882,
+        4270,
+        5762,
+        5807,
+        5857,
+        5908
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "caseSensitive",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "区分大小写",
+      "section": "扫描与递归",
+      "codeLines": [
+        211,
+        362,
+        363,
+        2854,
+        3962,
+        4271,
+        5763,
+        5808,
+        5858,
+        5909
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "matchWholeWords",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "全词匹配",
+      "section": "扫描与递归",
+      "codeLines": [
+        212,
+        440,
+        442,
+        2852,
+        3963,
+        4272,
+        5764,
+        5809,
+        5859,
+        5910
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "useGroupScoring",
+      "defaultCode": "null",
+      "type": "boolean?",
+      "label": "按组评分",
+      "section": "互斥与延时",
+      "codeLines": [
+        213,
+        2853,
+        3964,
+        4273,
+        5552,
+        5570,
+        5765,
+        5810,
+        5860,
+        5911
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "automationId",
+      "defaultCode": "''",
+      "type": "string",
+      "label": "自动化ID",
+      "section": "额外扫描与联动",
+      "codeLines": [
+        2862,
+        3975,
+        3976,
+        3977,
+        3980,
+        3981,
+        3984,
+        3985,
+        4127,
+        4274,
+        5766,
+        5811,
+        5861,
+        5912,
+        6693
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "role",
+      "defaultCode": "0",
+      "type": "enum",
+      "label": "注入消息角色",
+      "section": "注入与顺序",
+      "codeLines": [
+        4,
+        1704,
+        2846,
+        3573,
+        3574,
+        3578,
+        3583,
+        3586,
+        3587,
+        4275,
+        5493,
+        5500,
+        5528,
+        5767,
+        5812
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "sticky",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "粘性消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        225,
+        242,
+        597,
+        608,
+        610,
+        612,
+        620,
+        658,
+        779,
+        806,
+        828,
+        863,
+        867,
+        1691,
+        2055
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "cooldown",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "冷却消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        226,
+        242,
+        598,
+        609,
+        613,
+        618,
+        619,
+        620,
+        621,
+        622,
+        626,
+        628,
+        630,
+        658,
+        780
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "delay",
+      "defaultCode": "null",
+      "type": "number?",
+      "label": "延迟消息数",
+      "section": "互斥与延时",
+      "codeLines": [
+        227,
+        242,
+        599,
+        634,
+        757,
+        762,
+        766,
+        768,
+        782,
+        843,
+        863,
+        2805,
+        2838,
+        2868,
+        3915
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterNames",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "角色名单",
+      "section": "适用范围",
+      "codeLines": [
+        1384,
+        1512,
+        4279
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterTags",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "角色标签",
+      "section": "适用范围",
+      "codeLines": [
+        1389,
+        1521,
+        4280
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "characterFilterExclude",
+      "defaultCode": "false",
+      "type": "boolean",
+      "label": "排除名单",
+      "section": "适用范围",
+      "codeLines": [
+        1398,
+        1528,
+        4281
+      ],
+      "uiStatus": "列入新编辑页"
+    },
+    {
+      "key": "triggers",
+      "defaultCode": "[]",
+      "type": "array",
+      "label": "生成类型过滤",
+      "section": "适用范围",
+      "codeLines": [
+        2869,
+        3988,
+        3993,
+        3994,
+        4006,
+        4282,
+        5049,
+        5050,
+        5052,
+        5771,
+        5816,
+        5866,
+        5925
+      ],
+      "uiStatus": "列入新编辑页"
+    }
+  ],
+  "extras": [
+    {
+      "tag": "div",
+      "id": "world_button",
+      "label": "Character Lore\n\nClick to load\nShift/Alt-click or long-press to open 'Link to World Info' popup"
+    },
+    {
+      "tag": "option",
+      "id": "set_character_world",
+      "label": "Link to World Info"
+    },
+    {
+      "tag": "select",
+      "id": "character_world_info_selector wide100p",
+      "label": "character_world_info_selector wide100p"
+    },
+    {
+      "tag": "select",
+      "id": "character_extra_world_info_selector wide100p",
+      "label": "character_extra_world_info_selector wide100p"
+    }
+  ],
+  "counts": {
+    "controls": 90,
+    "fields": 42,
+    "externalBindings": 4
+  },
+  "unknown": [
+    "运行时第三方注入控件未穷尽",
+    "Rust后端跨书原子事务能力未核",
+    "Android实机未验",
+    "外部条件引擎正式协议待对接"
+  ]
+};
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let books=[];
+const seed=[];
+let entries=[];
+let displaySort='custom',expandAll=false,pageSize=20;let view='entries',book='b1',selected=new Set(),query='',batchMode=false,menu=null,editing=null,draft=null,history=[],plan=null,dirty=false,auto=true,batchAction='prefix',batchScope='selected',targetField='comment',batchValue='',batchOther='',regexFlags='g',pendingDelete=null,bookEdit=null;
+const modes={constant:'常驻',keyword:'关键词',condition:'条件接口',vector:'向量'};const prefix=n=>(n.match(/^\[[^\]]+\]/)||['未分组'])[0];
+function remember(){history.push(JSON.stringify({books,entries}));if(history.length>30)history.shift();dirty=true;plan=null}
+function undo(){if(!history.length)return;const s=JSON.parse(history.pop());books=s.books;entries=s.entries;plan=null;selected=new Set([...selected].filter(id=>entries.some(e=>e.uid===id)));dirty=history.length>0;render();say('已撤销上一步')}
+function say(s){$('#toast').textContent=s;$('#toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('#toast').classList.add('hidden'),2600)}
+function shown(){let a=entries.filter(e=>e.book===book&&(!query||(e.comment+'\n'+e.content).toLowerCase().includes(query.toLowerCase())));if(displaySort==='title')a.sort((a,b)=>a.comment.localeCompare(b.comment,'zh'));if(displaySort==='probability')a.sort((a,b)=>b.probability-a.probability);if(displaySort==='priority')a.sort((a,b)=>Number(a.disable)-Number(b.disable)||Number(b.mode==='constant')-Number(a.mode==='constant'));return a}
+function state(e){if(e.disable)return '已关闭';if(!books.find(b=>b.id===e.book)?.enabled)return '书未启用';if(e.mode==='condition')return '条件接口待接入';return '已启用'}
+function toggle(id){remember();const e=entries.find(e=>e.uid===id);e.disable=!e.disable;render()}
+function groupSort(){remember();const own=entries.filter(e=>e.book===book);const groups=[...new Set(own.map(e=>prefix(e.comment)))];own.sort((a,b)=>groups.indexOf(prefix(a.comment))-groups.indexOf(prefix(b.comment)));let i=0;entries=entries.map(e=>e.book===book?own[i++]:e);render();say('同前缀已归组，组内顺序保留')}
+function autogroup(id){if(!auto)return;const e=entries.find(x=>x.uid===id),g=prefix(e.comment);const others=entries.filter(x=>x.uid!==id);const last=others.map((x,i)=>x.book===e.book&&prefix(x.comment)===g?i:-1).filter(i=>i>=0).pop();if(last!==undefined){others.splice(last+1,0,e);entries=others}}
+function move(id,d){const e=entries.find(e=>e.uid===id),own=entries.filter(x=>x.book===e.book);let idx=own.indexOf(e),other=own[idx+d];if(!other)return;remember();let a=entries.indexOf(e),b=entries.indexOf(other);[entries[a],entries[b]]=[entries[b],entries[a]];render()}
+function switchPage(v){if(editing&&draft){say('请先保存本条或放弃修改');return}view=v;plan=null;menu=null;render();window.scrollTo(0,0)}
+function edit(id){editing=id;draft=structuredClone(entries.find(e=>e.uid===id));view='editor';render();window.scrollTo(0,0)}
+function newEntry(){editing='e'+Date.now();draft={uid:editing,book,comment:'[世界] 新条目',content:'',mode:'keyword',probability:100,disable:false,position:0,key:[],keysecondary:[],depth:4,role:0};view='editor';render();window.scrollTo(0,0)}
+function duplicate(id){remember();let e=structuredClone(entries.find(x=>x.uid===id));e.uid='e'+Date.now();e.comment+=' 副本';entries.push(e);autogroup(e.uid);menu=null;render();say('已复制，分配了新条目身份')}
+function saveEntry(){const name=$('#entry-name').value.trim();if(!name){say('请填写条目名称');return}draft.comment=name;draft.content=$('#entry-content').value;const previous=entries.find(e=>e.uid===editing);const regroup=!previous||prefix(previous.comment)!==prefix(draft.comment)||previous.book!==draft.book;remember();if(previous)entries[entries.findIndex(e=>e.uid===editing)]=draft;else entries.push(draft);if(regroup)autogroup(editing);draft=null;editing=null;view='entries';render();say('条目已保存在当前样稿中')}
+function selectOne(id,on){on?selected.add(id):selected.delete(id);render()}
+function entryHTML(e){return `<article class="entry ${e.disable?'off':''} ${selected.has(e.uid)?'selected':''}"><div class="row">${batchMode?`<input type="checkbox" aria-label="选择 ${esc(e.comment)}" ${selected.has(e.uid)?'checked':''} onchange="selectOne('${e.uid}',this.checked)">`:''}<div class="grow"><button class="open-title" onclick="edit('${e.uid}')"><div class="title">${esc(e.comment)}</div></button><div class="sub"><span class="pill ${e.mode==='constant'?'gold':''}">${modes[e.mode]}</span><span class="pill gray">${e.probability??100}%</span><span class="pill gray">${positionText(e)}</span></div><div class="hint" style="margin-top:7px">${state(e)}</div></div><div><button class="switch" role="switch" aria-label="启用 ${esc(e.comment)}" aria-checked="${!e.disable}" onclick="toggle('${e.uid}')"></button><div class="micro" style="text-align:center;color:var(--muted)">${e.disable?'关闭':'启用'}</div></div><button class="icon ghost" aria-label="${esc(e.comment)} 操作" onclick="menu=menu==='${e.uid}'?null:'${e.uid}';render()">⋮</button></div>${menu===e.uid?`<div class="entry-actions"><button onclick="edit('${e.uid}')">编辑</button><button onclick="duplicate('${e.uid}')">复制</button><button onclick="move('${e.uid}',-1)">上移</button><button onclick="move('${e.uid}',1)">下移</button><button onclick="pendingDelete='${e.uid}';render()" class="danger">删除</button><select aria-label="移动条目到世界书" onchange="if(this.value){remember();entries.find(e=>e.uid==='${e.uid}').book=this.value;autogroup('${e.uid}');render()}"><option value="">移到其他世界书…</option>${books.filter(b=>b.id!==e.book).map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select></div>`:''}${expandAll?`<div class="hint" style="white-space:pre-wrap;margin-top:12px">${esc(e.content)}</div>`:''}${pendingDelete===e.uid?`<div class="notice">删除后可撤销。<div class="flex"><button class="danger" onclick="remember();entries=entries.filter(e=>e.uid!=='${e.uid}');selected.delete('${e.uid}');pendingDelete=null;render()">删除此条</button><button onclick="pendingDelete=null;render()">取消</button></div></div>`:''}</article>`}
+function positionText(e){return ({0:'角色前',1:'角色后',2:'注释前',3:'注释后',4:'深度 '+(e.depth??4),5:'示例前',6:'示例后',7:'出口'})[e.position??0]}
+function entriesPage(){const b=books.find(b=>b.id===book);return `<div class="panel"><div class="row"><div class="grow"><small>${b.scope}世界书</small><h2 style="margin:4px 0">${esc(b.name)}</h2></div><button class="ghost" onclick="view='books';render()">切换</button></div><div class="hint">${entries.filter(e=>e.book===book).length} 个条目 · ${entries.filter(e=>e.book===book&&!e.disable).length} 个启用</div></div><div class="toolbar"><input id="search" type="search" placeholder="搜索名称或正文" aria-label="搜索条目" value="${esc(query)}" oninput="query=this.value;renderEntriesOnly()"><button onclick="batchMode=!batchMode;render()">${batchMode?'结束多选':'多选'}</button><button class="primary" onclick="newEntry()">＋ 新增</button></div><div class="row"><span class="hint">排布顺序 · 上方优先</span><button class="ghost" style="font-size:12px" onclick="groupSort()">按前缀归组</button></div><details><summary>列表工具</summary><div><label class="field"><span>浏览排序（不自动改注入顺序）</span><select onchange="displaySort=this.value;render()"><option value="custom" ${displaySort==='custom'?'selected':''}>自定义排布</option><option value="title" ${displaySort==='title'?'selected':''}>名称 A–Z</option><option value="probability" ${displaySort==='probability'?'selected':''}>概率从高到低</option><option value="priority" ${displaySort==='priority'?'selected':''}>常驻／普通／关闭</option></select></label><div class="flex"><button onclick="expandAll=true;render()">展开正文</button><button onclick="expandAll=false;render()">收起正文</button><button onclick="render();say('已刷新样稿列表')">刷新</button></div><p class="hint">深度、原生Order、UID、名称反序、内容长度等全部原生排序，分页、空标题回填及将浏览顺序写入Order保留在正式接线清单。</p></div></details>${batchMode?`<div class="toolbar" style="margin-top:12px"><button onclick="shown().forEach(e=>selected.add(e.uid));render()">选中筛选结果</button><button onclick="selected.clear();render()">清空</button><span class="hint">已选 ${selected.size} 条</span></div>`:''}<div id="entry-list">${shown().map(entryHTML).join('')||'<div class="panel hint">没有匹配条目。</div>'}</div><div class="notice">“上方优先”为拟定操作顺序；正式接线将同时核对扫描与最终提示词。不同注入位置仍各自在所属位置生效。</div>`}
+function renderEntriesOnly(){const el=$('#entry-list');if(el)el.innerHTML=shown().map(entryHTML).join('')||'<div class="panel hint">没有匹配条目。</div>'}
+function booksPage(){return `<div class="panel"><h2>世界书排布</h2><p class="hint">全局书与角色书放在同一条可排序队列中。上方先参与，点击名称管理条目。</p><div class="notice">聊天书、用户人格书仍保留原作用域；不因排序自动扩大适用范围。</div></div>${books.map((b,i)=>`<article class="entry"><div class="row"><span class="book-rank">${String(i+1).padStart(2,'0')}</span><button class="grow open-title" onclick="book='${b.id}';view='entries';query='';render()"><div class="title">${esc(b.name)}</div><div class="sub"><span class="pill">${b.scope}</span><span class="hint">${entries.filter(e=>e.book===b.id).length} 条</span></div></button><button class="switch" role="switch" aria-label="启用世界书 ${esc(b.name)}" aria-checked="${b.enabled}" onclick="remember();books.find(b=>b.id==='${b.id}').enabled=!books.find(b=>b.id==='${b.id}').enabled;render()"></button></div><div class="entry-actions"><button ${i===0?'disabled':''} onclick="remember();[books[${i-1}],books[${i}]]=[books[${i}],books[${i-1}]];render()">上移</button><button ${i===books.length-1?'disabled':''} onclick="remember();[books[${i+1}],books[${i}]]=[books[${i}],books[${i+1}]];render()">下移</button><button onclick="bookEdit=bookEdit==='${b.id}'?null:'${b.id}';render()">改名与归属</button></div>${bookEdit===b.id?`<div style="margin-top:10px"><label class="field"><span>名称</span><input value="${esc(b.name)}" onchange="if(this.value.trim()){remember();books.find(b=>b.id==='${b.id}').name=this.value.trim()}"></label><label class="field"><span>归属（样稿）</span><select onchange="remember();books.find(b=>b.id==='${b.id}').scope=this.value"><option ${b.scope==='全局'?'selected':''}>全局</option><option ${b.scope==='角色'?'selected':''}>角色</option></select></label><button onclick="bookEdit=null;render()">完成</button></div>`:''}</article>`).join('')}<div class="panel"><h2>书籍管理与绑定</h2><p class="hint">导入、导出、复制、删除、角色主书与附加书、聊天和用户人格绑定全部保留。正式版连接宿主现有数据。</p><details><summary>查看原生管理功能</summary><div>${catalog.controls.filter(c=>c.root==='WorldInfo'&&c.tag!=='input'&&c.tag!=='select').map(c=>`<div class="native-card"><b>${esc(c.label||c.id)}</b><div class="hint">列入正式接线 · 当前样稿不操作宿主</div></div>`).join('')}</div></details></div>`}
+const fieldOptions={selectiveLogic:[['0','AND ANY · 辅助任一满足'],['3','AND ALL · 辅助全部满足'],['1','NOT ALL · 辅助不全满足'],['2','NOT ANY · 辅助均不满足']],position:[['0','角色定义前'],['1','角色定义后'],['5','示例消息前'],['6','示例消息后'],['2','作者注释前'],['3','作者注释后'],['4','指定深度'],['7','出口（宏引用）']],role:[['0','系统'],['1','用户'],['2','助手']]};
+function fieldHTML(f){let v=draft[f.key];let key=f.key;if(fieldOptions[key])return `<label class="field"><span>${f.label}</span><select data-field="${key}" onchange="draft['${key}']=Number(this.value)">${fieldOptions[key].map(([n,t])=>`<option value="${n}" ${String(v??0)===n?'selected':''}>${t}</option>`).join('')}</select></label>`;if(f.type==='boolean')return `<label class="checkfield"><input data-field="${key}" type="checkbox" ${v?'checked':''} onchange="draft['${key}']=this.checked">${f.label}</label>`;if(f.type==='boolean?')return `<label class="field"><span>${f.label}</span><select data-field="${key}" onchange="draft['${key}']=this.value==='null'?null:this.value==='true'"><option value="null" ${v==null?'selected':''}>沿用全局</option><option value="true" ${v===true?'selected':''}>是</option><option value="false" ${v===false?'selected':''}>否</option></select></label>`;return `<label class="field"><span>${f.label}</span><input data-field="${key}" ${f.type.startsWith('number')?'type="number" min="0"':''} value="${esc(Array.isArray(v)?v.join(', '):v??'')}" placeholder="${f.type.endsWith('?')?'留空沿用／未设置':f.type==='array'?'用逗号分隔':''}" onchange="draft['${key}']=${f.type==='array'?"this.value.split(',').map(s=>s.trim()).filter(Boolean)":f.type.startsWith('number')?"this.value===''?null:Number(this.value)":"this.value"}">${key==='triggers'?'<small>normal, continue, impersonate, swipe, regenerate, quiet</small>':''}</label>`}
+function editorPage(){let first=['comment','content','disable','constant','vectorized','probability'];return `<div class="row" style="margin-bottom:15px"><button class="ghost" onclick="draft=null;editing=null;view='entries';render()">‹ 放弃并返回</button><span class="hint">${esc(draft.uid)} · 条目编辑</span></div><div class="page-columns"><section><div class="panel"><div class="row" style="margin-bottom:15px"><h2 style="margin:0">基本内容</h2><label class="checkfield"><input type="checkbox" ${!draft.disable?'checked':''} onchange="draft.disable=!this.checked">启用</label></div><label class="field"><span>条目名称</span><input id="entry-name" value="${esc(draft.comment)}"></label><label class="field"><span>正文</span><textarea id="entry-content" style="min-height:280px">${esc(draft.content)}</textarea><small>保留原文与空行；正式版显示宿主 Token 计数。</small></label><label class="checkfield"><input type="checkbox" ${auto?'checked':''} onchange="auto=this.checked">保存／新建后按名称前缀自动归组</label></div><div class="panel"><h2>激活方式</h2><label class="field"><span>常驻或条件</span><select id="mode" onchange="draft.comment=$('#entry-name').value;draft.content=$('#entry-content').value;draft.mode=this.value;render()">${Object.entries(modes).map(([k,v])=>`<option value="${k}" ${draft.mode===k?'selected':''}>${k==='constant'?'常驻':'条件 · '+v}</option>`).join('')}</select></label>${draft.mode==='condition'?`<label class="field"><span>条件集合</span><input value="${esc(draft.ruleRef)}" placeholder="选择或填写条件集合" onchange="draft.ruleRef=this.value"></label><div class="notice">条件引擎待接入。接口未连接、报错或结果未知时，本条不注入。满足条件后仍检查概率、延时、互斥和预算。</div>`:draft.mode==='constant'?'<p class="hint">常驻不依赖关键词；仍遵守启用、适用范围、延时、概率与预算。</p>':draft.mode==='vector'?'<p class="hint">保留宿主向量触发能力；是否可用取决于已配置的向量服务。</p>':'<p class="hint">保留关键词、正则、辅助逻辑及全部原生匹配规则。</p>'}<label class="field" style="margin-top:14px"><span>激活概率 %</span><input id="prob" type="number" min="0" max="100" value="${draft.probability??100}" onchange="draft.probability=Math.max(0,Math.min(100,Number(this.value)));this.value=draft.probability"></label></div></section><section class="panel"><h2>完整条目设置</h2><p class="hint">常用项在前，原生细项按用途收起。</p>${[...new Set(catalog.fields.map(f=>f.section))].map(g=>`<details ${g==='注入与顺序'?'open':''}><summary>${g==='基础'?'兼容选项':g}</summary><div class="controls-grid">${catalog.fields.filter(f=>f.section===g&&!first.includes(f.key)).map(fieldHTML).join('')}</div></details>`).join('')}<div class="hint">UID和未知扩展属性原样保留；“沿用全局”不等于关闭。互斥组只控制命中选择，与名称前缀分组互不替代。</div></section></div>`}
+function targets(){return entries.filter(e=>batchScope==='all'||batchScope==='selected'&&selected.has(e.uid)||batchScope==='book'&&e.book===book||batchScope==='global'&&books.find(b=>b.id===e.book).scope==='全局'||batchScope==='character'&&books.find(b=>b.id===e.book).scope==='角色')}
+function batchPage(){return `<div class="stats"><div class="stat"><b>${entries.length}</b><span>全部条目</span></div><div class="stat"><b>${entries.filter(e=>!e.disable).length}</b><span>条目已启用</span></div><div class="stat"><b>${entries.filter(e=>e.mode==='condition').length}</b><span>条件接口</span></div><div class="stat"><b>${selected.size}</b><span>已选条目</span></div></div><div class="page-columns"><section class="panel"><h2>批量操作台</h2><label class="field"><span>操作范围</span><select id="batch-scope" onchange="batchScope=this.value;plan=null;render()">${[['selected','已选条目'],['book','当前世界书'],['global','全局世界书'],['character','角色世界书'],['all','全部世界书']].map(([k,t])=>`<option value="${k}" ${batchScope===k?'selected':''}>${t}</option>`).join('')}</select><small>${targets().length} 个目标；包含范围内已关闭的条目。</small></label><label class="field"><span>操作</span><select id="batch-action" onchange="batchAction=this.value;batchValue='';batchOther='';plan=null;render()">${[['prefix','增加前缀'],['suffix','增加后缀'],['prefixReplace','替换前缀'],['suffixReplace','替换后缀'],['replace','正则检索与替换'],['probability','统一激活概率'],['mode','统一触发方式'],['enabled','统一启用状态']].map(([k,t])=>`<option value="${k}" ${batchAction===k?'selected':''}>${t}</option>`).join('')}</select></label>${['prefix','suffix','prefixReplace','suffixReplace','replace'].includes(batchAction)?`<label class="field"><span>修改字段</span><select id="target-field" onchange="targetField=this.value;plan=null">${[['comment','条目名称'],['content','正文'],['key','主要关键词'],['keysecondary','辅助关键词']].map(([k,t])=>`<option value="${k}" ${targetField===k?'selected':''}>${t}</option>`).join('')}</select></label>`:''}${batchAction==='mode'?`<select id="batch-value" onchange="batchValue=this.value;plan=null"><option value="">请选择</option>${Object.entries(modes).map(([k,v])=>`<option value="${k}" ${batchValue===k?'selected':''}>${v}</option>`).join('')}</select>`:batchAction==='enabled'?'<select id="batch-value" onchange="batchValue=this.value;plan=null"><option value="">请选择</option><option value="true">启用</option><option value="false">关闭</option></select>':`<label class="field"><span>${batchAction==='replace'?'正则表达式（不含两端斜杠）':batchAction.endsWith('Replace')?'原前／后缀':batchAction==='probability'?'概率 0–100':'添加内容'}</span><input id="batch-value" value="${esc(batchValue)}" ${batchAction==='probability'?'type="number" min="0" max="100"':''} placeholder="${batchAction==='replace'?'例如：^\\[世界\\]':batchAction==='probability'?'100':'例如：[北峡] '}" oninput="batchValue=this.value;plan=null"></label>`}${batchAction==='replace'||batchAction.endsWith('Replace')?`<label class="field"><span>替换为 ${batchAction==='replace'?'（支持 $1 捕获组）':''}</span><input id="batch-other" value="${esc(batchOther)}" oninput="batchOther=this.value;plan=null"></label>`:''}${batchAction==='replace'?`<label class="field"><span>正则标志</span><select id="regex-flags" onchange="regexFlags=this.value;plan=null"><option value="g">g · 全部匹配</option><option value="gi">gi · 忽略大小写</option><option value="gm">gm · 多行</option><option value="gim">gim · 多行、忽略大小写</option></select></label>`:''}<button class="primary" style="width:100%;margin-top:14px" onclick="makePlan()">检索并预览修改</button><div id="batch-error" class="error hint" role="alert"></div></section><section class="panel"><h2>修改预览</h2><div id="diffs">${plan?planHTML():'<p class="hint">先确定范围，再显示逐条修改前后内容。检查后一次应用，可撤销。</p><div class="notice">自动归组只按名称前缀整理，不修改条目正文，不把展示分组变成互斥组。</div>'}</div></section></div>`}
+function planHTML(){return `<p class="hint">范围 ${plan.total} 条 · 实际修改 ${plan.rows.length} 条</p>${plan.rows.map(r=>`<div class="diff"><b>${esc(r.name)}</b><div class="old">− ${esc(r.before)}</div><div class="new">＋ ${esc(r.after)}</div></div>`).join('')||'<p class="hint">没有需要修改的内容。</p>'}<button class="primary" style="width:100%;margin-top:14px" ${!plan.rows.length?'disabled':''} onclick="applyPlan()">应用 ${plan.rows.length} 项修改</button>`}
+async function regexTransform(values,pattern,replacement,flags){const code=`onmessage=e=>{try{let r=new RegExp(e.data.pattern,e.data.flags);postMessage({values:e.data.values.map(v=>v.replace(r,e.data.replacement))})}catch(x){postMessage({error:x.message})}}`;const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));return new Promise((resolve,reject)=>{let worker;try{worker=new Worker(url)}catch(e){URL.revokeObjectURL(url);reject(new Error('当前打开方式不支持安全正则预览，请用浏览器打开样稿'));return}let timer=setTimeout(()=>{worker.terminate();URL.revokeObjectURL(url);reject(new Error('正则计算超时，未修改任何条目'))},700);worker.onmessage=e=>{clearTimeout(timer);worker.terminate();URL.revokeObjectURL(url);e.data.error?reject(new Error(e.data.error)):resolve(e.data.values)};worker.onerror=e=>{clearTimeout(timer);worker.terminate();URL.revokeObjectURL(url);reject(new Error(e.message))};worker.postMessage({values,pattern,replacement,flags})})}
+async function makePlan(){const candidates=structuredClone(targets()),act=batchAction,value=batchValue,other=batchOther,field=['mode','probability','enabled'].includes(act)?act==='enabled'?'disable':act:targetField;plan=null;const err=$('#batch-error');err.textContent='';try{if(!candidates.length)throw Error('请先选择条目，或更改操作范围');if(!value)throw Error('请填写操作内容');if(act==='probability'&&(!Number.isFinite(Number(value))||+value<0||+value>100))throw Error('概率必须在 0–100 之间');let before=candidates.map(e=>String(e[field]??''));let after;const requestSignature=JSON.stringify({view,batchScope,batchAction,targetField,batchValue,batchOther,regexFlags,selected:[...selected],entries});if(act==='replace'){const flat=candidates.flatMap(e=>Array.isArray(e[field])?e[field]:[String(e[field]??'')]);const result=await regexTransform(flat,value,other,regexFlags);let n=0;after=candidates.map(e=>Array.isArray(e[field])?e[field].map(()=>result[n++]):result[n++]);if(requestSignature!==JSON.stringify({view,batchScope,batchAction,targetField,batchValue,batchOther,regexFlags,selected:[...selected],entries})){say('操作条件已变化，请重新预览');return}}else {const transform=v=>act==='prefix'?v.startsWith(value)?v:value+v:act==='suffix'?v.endsWith(value)?v:v+value:act==='prefixReplace'?v.startsWith(value)?other+v.slice(value.length):v:act==='suffixReplace'?v.endsWith(value)?v.slice(0,-value.length)+other:v:act==='probability'?Number(value):act==='enabled'?value==='false':value;after=candidates.map((e,i)=>Array.isArray(e[field])?e[field].map(v=>transform(String(v))):transform(before[i]));}plan={snapshot:JSON.stringify(entries),total:candidates.length,field,rows:candidates.map((e,i)=>({uid:e.uid,name:e.comment,before:e[field]??'',after:after[i]})).filter(r=>JSON.stringify(r.before)!==JSON.stringify(r.after))};$('#diffs').innerHTML=planHTML()}catch(e){err.textContent=e.message;$('#diffs').innerHTML='<p class="hint">没有应用任何修改。</p>'}}
+function applyPlan(){if(!plan||plan.snapshot!==JSON.stringify(entries)){say('内容已变化，请重新预览');plan=null;return}const p=plan;remember();p.rows.forEach(r=>{const e=entries.find(e=>e.uid===r.uid);e[p.field]=structuredClone(r.after);if(p.field==='comment')autogroup(e.uid)});render();say('已应用 '+p.rows.length+' 项，可撤销')}
+function globalPage(){const controls=catalog.controls.filter(c=>c.root==='WorldInfo'&&c.id.startsWith('world_info_')&&!c.id.endsWith('_counter')&&['input','select'].includes(c.tag)&&!['world_info_sort_order','world_info_search'].includes(c.id));return `<div class="panel"><h2>全局扫描与预算</h2><p class="hint">完整保留宿主设置；此页只演示控件布局，尚未写入宿主。</p>${controls.map(c=>`<label class="field"><span>${esc(globalLabel(c.id))}</span>${c.options.length?`<select>${c.options.map(o=>`<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('')}</select>`:c.type==='checkbox'?'<input type="checkbox">':'<input type="number" min="0" placeholder="沿用宿主当前值">'}</label>`).join('')}<details><summary>原生能力核对结果</summary><div><p>${catalog.counts.controls} 个DOM控件，${catalog.counts.fields} 个默认字段；包括隐藏兼容项与重复输入。</p><p class="hint">已核HTML和JS处理路径，尚未做宿主接线及Android验收。额外来源、生成类型、向量触发、出口与自动化均保留。</p></div></details></div>`}
+function globalLabel(k){return ({world_info_depth:'扫描深度',world_info_budget:'上下文预算百分比',world_info_budget_cap:'预算上限',world_info_min_activations:'最少激活条目',world_info_min_activations_depth_max:'最少激活的最大扫描深度',world_info_max_recursion_steps:'最大递归次数',world_info_character_strategy:'原生角色／全局优先策略',world_info_include_names:'扫描时包含名字',world_info_recursive:'递归扫描',world_info_case_sensitive:'区分大小写',world_info_match_whole_words:'全词匹配',world_info_use_group_scoring:'互斥组评分',world_info_overflow_alert:'预算溢出提醒'})[k]||k}
+function render(){const tabs=[['books','世界书'],['entries','条目'],['batch','操作台'],['global','全局设置']];$('#nav').innerHTML=tabs.map(([k,v])=>`<button class="${view===k?'active':''}" onclick="switchPage('${k}')">${v}</button>`).join('');$('#page-title').textContent=view==='editor'?'编辑条目':view==='batch'?'世界书操作台':'世界书';$('#app').innerHTML=view==='books'?booksPage():view==='editor'?editorPage():view==='batch'?batchPage():view==='global'?globalPage():entriesPage();$('#foot').innerHTML=view==='editor'?`<button onclick="draft=null;editing=null;view='entries';render()">放弃修改</button><button class="primary" onclick="saveEntry()">保存条目</button>`:`<button ${!history.length?'disabled':''} onclick="undo()">撤销</button>${view==='entries'?`<button class="primary" onclick="view='batch';batchScope=selected.size?'selected':'book';render()">${selected.size?'批量处理 '+selected.size+' 条':'打开操作台'}</button>`:`<button class="primary" onclick="say('当前为独立样稿，修改仅保留在本次打开期间')">${dirty?'修改在样稿中':'示例数据'}</button>`}`}
+// Independent in-memory design preview. No host writes or external services.
+let editorTab='content',editorOrigin=null,editorSequence=[],pendingNav=null,tagReturn='entries',tagKind='prefix',settingQuery='',listPage=0,expanded=new Set(),sheet=null,fullEditor=false,keywordText={key:false,keysecondary:false};
+let tags={prefix:['[世界]','[规则]','[人物]','[剧情]'],suffix:['【常用】','【待补】']};
+let globalSettings={world_info_depth:2,world_info_budget:25,world_info_budget_cap:0,world_info_min_activations:0,world_info_min_activations_depth_max:0,world_info_max_recursion_steps:0,world_info_character_strategy:0,world_info_include_names:false,world_info_recursive:true,world_info_case_sensitive:false,world_info_match_whole_words:false,world_info_use_group_scoring:false,world_info_overflow_alert:true,pin:false};
+let bindings={primary:'b2',extra:[],chat:'',persona:''};
+const dragDots='<svg viewBox="0 0 16 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="1.3"/><circle cx="11" cy="5" r="1.3"/><circle cx="5" cy="10" r="1.3"/><circle cx="11" cy="10" r="1.3"/><circle cx="5" cy="15" r="1.3"/><circle cx="11" cy="15" r="1.3"/></svg>';
+const native=(...keys)=>`data-native="${keys.join(' ')}"`;
+const WI=(...nums)=>native(...nums.map(n=>'WorldInfo:'+n)),ET=(...nums)=>native(...nums.map(n=>'entry_edit_template:'+n));
+const fieldNative={key:[0,1,2],keysecondary:[4,5,6],selectiveLogic:[3],outletName:[7],scanDepth:[8],caseSensitive:[9],matchWholeWords:[10],useGroupScoring:[11],automationId:[12],delayUntilRecursion:[13,17],excludeRecursion:[15],preventRecursion:[16],ignoreBudget:[18],content:[19],groupOverride:[20],group:[21],groupWeight:[22],sticky:[23],cooldown:[24],delay:[25],characterFilterExclude:[26],characterFilterNames:[27],characterFilterTags:[27],triggers:[29],selective:[30],useProbability:[31],addMemo:[32],matchCharacterDescription:[34],matchCharacterPersonality:[35],matchScenario:[36],matchPersonaDescription:[37],matchCharacterDepthPrompt:[38],matchCreatorNotes:[39],disable:[42],comment:[43],constant:[44],vectorized:[44],position:[45],depth:[46],order:[47],probability:[48]};
+const fieldTab={key:'activation',keysecondary:'activation',selectiveLogic:'activation',constant:'activation',vectorized:'activation',probability:'activation',comment:'content',content:'content',disable:'content',position:'injection',depth:'injection',role:'injection',outletName:'injection',order:'injection'};
+const tabNames={content:'内容',activation:'激活',injection:'注入',advanced:'高级'};
+const tabFor=k=>fieldTab[k]||'advanced';
+const help={order:'原生扫描优先级；最终注入顺序需要宿主装配层一起核对。',depth:'0 表示最靠近当前消息。',outletName:'通过出口宏引用，不会因填写名称而自动注入。',scanDepth:'留空沿用全局；0 是明确数值。',sticky:'激活后持续的消息数；留空表示未设置。',cooldown:'激活后暂不再激活的消息数。',delay:'到达指定消息数后才允许激活。',group:'同组条目参与互斥选择；与标题前后缀标签独立。',groupWeight:'组内随机选取权重。',automationId:'与自动化联动的原生标识，重命名不会改动。',selective:'原生兼容字段，保留原值；不自动重置旧条目。',useProbability:'保留原生兼容开关；关闭时不应把概率显示当成实际抽签。',addMemo:'原生兼容字段，仅按用户修改保存。',characterFilterNames:'每行一项，保留名称中的逗号。',characterFilterTags:'角色分类标签，与名称前后缀标签互不替代。'};
+// Seed records use arrays and native defaults, with visible sample mode mirrored to native flags.
+entries.forEach(e=>{if(typeof e.key==='string')e.key=e.key?e.key.split(','):[];if(typeof e.keysecondary==='string')e.keysecondary=e.keysecondary?e.keysecondary.split(','):[];e.constant=e.mode==='constant';e.vectorized=e.mode==='vector';e.selective=true;e.groupWeight=100;});
+function snapshot(){return JSON.stringify({books,entries,tags,globalSettings,bindings,auto})}
+remember=function(){history.push(snapshot());if(history.length>30)history.shift();dirty=true;plan=null};
+undo=function(){if(!history.length)return;const s=JSON.parse(history.pop());books=s.books;entries=s.entries;tags=s.tags||tags;globalSettings=s.globalSettings||globalSettings;bindings=s.bindings||bindings;auto=s.auto??auto;plan=null;selected=new Set([...selected].filter(id=>entries.some(e=>e.uid===id)));if(!books.some(b=>b.id===book))book=books[0]?.id||'';dirty=history.length>0;render();say('已撤销上一步')};
+function collectTags(){for(const e of entries){const pre=e.comment.match(/^(\[[^\]\n]+\]|【[^】\n]+】)/)?.[0],suf=e.comment.match(/(\[[^\]\n]+\]|【[^】\n]+】)$/)?.[0];if(pre&&!tags.prefix.includes(pre))tags.prefix.push(pre);if(suf&&suf!==pre&&!tags.suffix.includes(suf))tags.suffix.push(suf)}}
+function titleGroup(n){return tags.prefix.filter(t=>n.startsWith(t)).sort((a,b)=>b.length-a.length)[0]||(n.match(/^(\[[^\]]+\]|【[^】]+】)/)||['未分组'])[0]}
+function groupRank(g){const i=tags.prefix.indexOf(g);return i<0?tags.prefix.length:i}
+groupSort=function(){remember();collectTags();const own=entries.filter(e=>e.book===book).sort((a,b)=>groupRank(titleGroup(a.comment))-groupRank(titleGroup(b.comment)));let i=0;entries=entries.map(e=>e.book===book?own[i++]:e);displaySort='custom';listPage=0;render();say('已按标签顺序归组，组内手动顺序保留')};
+autogroup=function(id){if(!auto)return;collectTags();const e=entries.find(e=>e.uid===id);if(!e)return;const rest=entries.filter(e=>e.uid!==id),g=titleGroup(e.comment),indices=rest.map((x,i)=>x.book===e.book&&titleGroup(x.comment)===g?i:-1).filter(i=>i>=0);let at=indices.length?indices.at(-1)+1:rest.findIndex(x=>x.book===e.book&&groupRank(titleGroup(x.comment))>groupRank(g));if(at<0){const end=rest.map((x,i)=>x.book===e.book?i:-1).filter(i=>i>=0).at(-1);at=end===undefined?rest.length:end+1}rest.splice(at,0,e);entries=rest};
+shown=function(){let a=entries.filter(e=>e.book===book&&(!query||(e.comment+'\n'+e.content+'\n'+(e.key||[]).join(' ')).toLowerCase().includes(query.toLowerCase())));const n=k=>(x,y)=>(Number(x[k])||0)-(Number(y[k])||0),lex=(x,y)=>String(x.comment).localeCompare(String(y.comment),'zh');const sorts={title:lex,titleDesc:(a,b)=>lex(b,a),length:(a,b)=>a.content.length-b.content.length,lengthDesc:(a,b)=>b.content.length-a.content.length,depth:n('depth'),depthDesc:(a,b)=>n('depth')(b,a),order:n('order'),orderDesc:(a,b)=>n('order')(b,a),uid:(a,b)=>String(a.uid).localeCompare(String(b.uid),undefined,{numeric:true}),uidDesc:(a,b)=>String(b.uid).localeCompare(String(a.uid),undefined,{numeric:true}),probabilityAsc:n('probability'),probability:(a,b)=>n('probability')(b,a),priority:(a,b)=>Number(a.disable)-Number(b.disable)||Number(b.mode==='constant')-Number(a.mode==='constant')||n('order')(b,a),search:(a,b)=>Number(b.comment.includes(query))-Number(a.comment.includes(query))};if(sorts[displaySort])a.sort(sorts[displaySort]);return a};
+function syncDraft(){if(!draft)return;const n=$('#entry-name'),c=$('#entry-content');if(n)draft.comment=n.value;if(c)draft.content=c.value;}
+function draftChanged(){syncDraft();return JSON.stringify(draft)!==editorOrigin}
+function captureEditorSequence(){editorSequence=shown().map(e=>e.uid)}
+edit=function(id){captureEditorSequence();editing=id;draft=structuredClone(entries.find(e=>e.uid===id));editorOrigin=JSON.stringify(draft);editorTab='content';pendingNav=null;view='editor';render();window.scrollTo(0,0)};
+newEntry=function(){captureEditorSequence();editing='e'+Date.now();draft={...Object.fromEntries(catalog.fields.map(f=>[f.key,f.type==='array'?[]:f.type==='boolean'?false:f.type.endsWith('?')?null:f.type==='number'?0:''])),uid:editing,book,comment:'[世界] 新条目',content:'',mode:'keyword',probability:100,useProbability:true,selective:true,disable:false,position:0,key:[],keysecondary:[],depth:4,role:0,order:100,groupWeight:100,selectiveLogic:0};editorOrigin=null;editorTab='content';pendingNav=null;view='editor';render();window.scrollTo(0,0)};
+function validateDraft(){syncDraft();if(!draft.comment.trim())return '请填写条目名称';for(const f of catalog.fields.filter(f=>f.type.startsWith('number'))){const v=draft[f.key];if(v==null){if(f.type==='number')return f.label+'不能为空';continue}if(!Number.isFinite(v)||!Number.isInteger(v)||v<0)return f.label+'必须是非负整数';if(f.key==='probability'&&v>100)return '概率必须在 0–100 之间'}return ''}
+function commitDraft(){const error=validateDraft();if(error){say(error);return false}const prior=entries.find(e=>e.uid===editing),regroup=!prior||titleGroup(prior.comment)!==titleGroup(draft.comment)||prior.book!==draft.book;remember();draft.comment=draft.comment.trim();draft.constant=draft.mode==='constant';draft.vectorized=draft.mode==='vector';const saved=structuredClone(draft);if(prior)entries[entries.indexOf(prior)]=saved;else entries.push(saved);collectTags();if(regroup)autogroup(editing);editorOrigin=JSON.stringify(draft);return true}
+saveEntry=function(){if(!commitDraft())return;draft=null;editing=null;pendingNav=null;view='entries';render();say('条目已保存在当前样稿中')};
+function performNav(target){pendingNav=null;if(target.id){const e=entries.find(e=>e.uid===target.id);if(!e){say('该条目已不存在');return}editing=e.uid;draft=structuredClone(e);editorOrigin=JSON.stringify(draft);view='editor';render();window.scrollTo(0,0)}else{draft=null;editing=null;view=target.view||'entries';plan=null;render();window.scrollTo(0,0)}}
+function requestNav(target){syncDraft();if(draft&&draftChanged()){pendingNav=target;render();$('#nav-guard')?.scrollIntoView({block:'nearest',behavior:'instant'});return}performNav(target)}
+function resolveNav(action){const t=pendingNav;if(action==='cancel'){pendingNav=null;render();return}if(action==='save'&&!commitDraft())return;performNav(t)}
+function stepEntry(d){if(pendingNav)return;const i=editorSequence.indexOf(editing);const id=editorSequence[i+d];if(i<0||!id){say(d<0?'已经是第一条':'已经是最后一条');return}requestNav({id})}
+switchPage=function(v){if(view==='editor'){requestNav({view:v});return}if(view==='tags'&&draft&&v!=='tags'){view='editor';requestNav({view:v});return}view=v;plan=null;menu=null;render();window.scrollTo(0,0)};
+function switchEditorTab(t){syncDraft();editorTab=t;settingQuery='';render();window.scrollTo(0,0)}
+move=function(id,d){const e=entries.find(x=>x.uid===id),own=entries.filter(x=>x.book===e.book),index=own.indexOf(e),other=own[index+d];if(!other)return;syncDraft();remember();const a=entries.indexOf(e),b=entries.indexOf(other);[entries[a],entries[b]]=[entries[b],entries[a]];displaySort='custom';editorSequence=entries.filter(x=>x.book===book).map(x=>x.uid);render();say('已'+(d<0?'上移':'下移')+'；保留你的手动顺序')};
+function reorderEntry(id,target){if(id===target)return;const e=entries.find(e=>e.uid===id),t=entries.find(e=>e.uid===target);if(!e||!t||e.book!==t.book)return;remember();const a=entries.indexOf(e),b=entries.indexOf(t);entries.splice(a,1);entries.splice(b,0,e);displaySort='custom';render();say('已调整条目顺序')}
+function capsuleHTML(kind,i,apply=true){const t=tags[kind][i];return `<span class="capsule ${kind==='suffix'?'suffix':''}"><button aria-label="${apply?'插入':'选择'}${kind==='prefix'?'前缀':'后缀'} ${esc(t)}" onclick="${apply?`applyTag('${kind}',${i})`:`copyTag('${kind}',${i})`}">${esc(t)}</button><button class="copy" aria-label="复制标签 ${esc(t)}" onclick="copyTag('${kind}',${i})"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="7" y="3" width="10" height="11" rx="2"/><path d="M13 15v2H3V7h2"/></svg></button></span>`}
+function suggestionsHTML(){collectTags();return ['prefix','suffix'].map(k=>`<div class="tag-caption"><span>${k==='prefix'?'常用前缀':'常用后缀'}</span>${k==='prefix'?'<button class="text-button" onclick="openTags()">管理与排序 ›</button>':'<small>点文字插入 · ⧉ 复制</small>'}</div><div class="capsules">${tags[k].slice(0,k==='prefix'?6:4).map((_,i)=>capsuleHTML(k,i)).join('')||'<span class="empty">暂无标签，可在管理中新增</span>'}${tags[k].length>(k==='prefix'?6:4)?`<button class="chip-more" onclick="tagKind='${k}';openTags()">全部 ${tags[k].length} 个 ›</button>`:''}</div>`).join('')}
+function applyTag(kind,i){syncDraft();if(!draft)return;const t=tags[kind][i];if(kind==='prefix'){const old=titleGroup(draft.comment);draft.comment=(old!=='未分组'?draft.comment.slice(old.length):draft.comment).trimStart();draft.comment=t+' '+draft.comment;}else{const old=tags.suffix.filter(x=>draft.comment.endsWith(x)).sort((a,b)=>b.length-a.length)[0];draft.comment=(old?draft.comment.slice(0,-old.length):draft.comment).trimEnd()+' '+t;}$('#entry-name').value=draft.comment;$('#title-status').textContent='标签已插入，保存条目后生效';}
+async function copyTag(kind,i){const t=tags[kind][i];try{if(!navigator.clipboard?.writeText)throw Error('clipboard unavailable');await navigator.clipboard.writeText(t);say('已复制 '+t)}catch(e){sheet={type:'copy',text:t};renderSheet()}}
+function openTags(){syncDraft();tagReturn=view;view='tags';render();window.scrollTo(0,0)}
+function filterTags(value){document.querySelectorAll('.tag-row').forEach(el=>{el.classList.toggle('hidden',!tags[el.dataset.tagKind][Number(el.dataset.tagIndex)].toLowerCase().includes(value.toLowerCase()))})}
+function closeTags(){view=tagReturn;render()}
+function moveTag(kind,i,d){if(i+d<0||i+d>=tags[kind].length)return;remember();[tags[kind][i],tags[kind][i+d]]=[tags[kind][i+d],tags[kind][i]];render();say('标签顺序已更新；已有条目顺序保持')}
+function addTag(){const v=$('#new-tag').value.trim();if(!v){say('请输入标签文字');return}if(tags[tagKind].includes(v)){say('该标签已经存在');return}remember();tags[tagKind].push(v);render();say('标签已加入建议库')}
+function tagsPage(){collectTags();return `<div class="page-intro"><div><div class="eyebrow">NAME LABELS</div><h2>前后缀标签</h2><p class="hint">排成你习惯的顺序。调整标签库不会改写现有标题。</p></div><button class="ghost" onclick="closeTags()">返回</button></div><div class="panel"><div class="editor-tabs" style="grid-template-columns:1fr 1fr;position:static"><button class="${tagKind==='prefix'?'active':''}" onclick="tagKind='prefix';render()">前缀</button><button class="${tagKind==='suffix'?'active':''}" onclick="tagKind='suffix';render()">后缀</button></div><input class="tag-search" aria-label="搜索标签" placeholder="搜索已有标签" oninput="filterTags(this.value)"><div class="tags-list">${tags[tagKind].map((t,i)=>`<div class="tag-row" data-tag-kind="${tagKind}" data-tag-index="${i}"><button class="drag-handle icon ghost" aria-label="拖动标签 ${esc(t)}" data-drag-tag="${i}" data-kind="${tagKind}">${dragDots}</button>${capsuleHTML(tagKind,i,false)}<button class="icon ghost" aria-label="上移标签 ${esc(t)}" ${i===0?'disabled':''} onclick="moveTag('${tagKind}',${i},-1)">↑</button><button class="icon ghost" aria-label="下移标签 ${esc(t)}" ${i===tags[tagKind].length-1?'disabled':''} onclick="moveTag('${tagKind}',${i},1)">↓</button></div>`).join('')}</div><div class="divider"></div><label class="field"><span>新增${tagKind==='prefix'?'前缀':'后缀'}</span><input id="new-tag" placeholder="例如：${tagKind==='prefix'?'[地点]':'【待完善】'}" onkeydown="if(event.key==='Enter')addTag()"></label><button class="primary" onclick="addTag()">加入标签库</button><p class="hint">拖住左侧圆点排序，或使用上下箭头。点胶囊可复制；在标题下点文字可插入。自动归组沿用前缀库顺序。</p></div>`}
+function fieldHelp(key){return help[key]?`<p class="field-help">${help[key]}</p>`:''}
+function keywordEditor(key,label){const a=Array.isArray(draft[key])?draft[key]:[String(draft[key]||'')];return `<div class="field wide" data-field-wrap="${key}" ${ET(...fieldNative[key])}><span>${label}</span><div class="keyword-mode"><small>正则可用 /表达式/标志；每项独立保留</small><button class="text-button" onclick="syncDraft();keywordText['${key}']=!keywordText['${key}'];render()">${keywordText[key]?'切换标签输入':'切换纯文本'}</button></div>${keywordText[key]?`<textarea data-field="${key}" style="min-height:110px" placeholder="每行一个关键词或正则" oninput="draft['${key}']=this.value.split('\n').filter(x=>x!=='')">${esc(a.join('\n'))}</textarea>`:`${(a.length?a:['']).map((v,i)=>`<div class="keyword-row"><input data-field="${key}" aria-label="${label} ${i+1}" value="${esc(v)}" oninput="draft['${key}'][${i}]=this.value"><button class="icon ghost" aria-label="删除${label} ${i+1}" onclick="syncDraft();draft['${key}'].splice(${i},1);render()">×</button></div>`).join('')}<button class="text-button" onclick="syncDraft();draft['${key}'].push('');render()">＋ 添加关键词</button>`}</div>`}
+fieldHTML=function(f){const key=f.key,v=draft[key],attrs=`data-field="${key}"`,wrap=`data-field-wrap="${key}" ${ET(...(fieldNative[key]||[]))}`;let control='';if(['key','keysecondary'].includes(key))return keywordEditor(key,f.label);if(key==='triggers'){const opts=catalog.controls.find(c=>c.id==='triggers').options;return `<div class="field wide" ${wrap}><span>适用生成类型</span><div class="trigger-grid">${opts.map(o=>`<label class="checkfield"><input ${attrs} type="checkbox" value="${o.value}" ${(v||[]).includes(o.value)?'checked':''} onchange="draft.triggers=this.checked?[...new Set([...draft.triggers,this.value])]:draft.triggers.filter(x=>x!==this.value)">${o.label}</label>`).join('')}</div><p class="field-help">不选表示不限生成类型。</p></div>`}if(key==='delayUntilRecursion')return `<div class="field" ${wrap}><label class="checkfield"><input type="checkbox" ${v>0?'checked':''} onchange="syncDraft();draft.delayUntilRecursion=this.checked?1:0;render()">延迟到递归激活</label><label class="field" style="margin-top:8px"><span>递归等级</span><input ${attrs} type="number" min="1" ${!v?'disabled':''} value="${v||1}" oninput="draft.delayUntilRecursion=this.value===''?null:Number(this.value)"></label></div>`;if(fieldOptions[key])control=`<select ${attrs} onchange="syncDraft();draft['${key}']=Number(this.value);${key==='position'?'render()':''}">${fieldOptions[key].map(([n,t])=>`<option value="${n}" ${String(v??0)===n?'selected':''}>${t}</option>`).join('')}</select>`;else if(f.type==='boolean')return `<div data-field-wrap="${key}" ${ET(...(fieldNative[key]||[]))}><label class="checkfield"><input ${attrs} type="checkbox" ${v?'checked':''} onchange="draft['${key}']=this.checked">${f.label}</label>${fieldHelp(key)}</div>`;else if(f.type==='boolean?')control=`<select ${attrs} onchange="draft['${key}']=this.value==='null'?null:this.value==='true'"><option value="null" ${v==null?'selected':''}>沿用全局</option><option value="true" ${v===true?'selected':''}>是</option><option value="false" ${v===false?'selected':''}>否</option></select>`;else if(f.type==='array')control=`<textarea ${attrs} style="min-height:90px" placeholder="每行一项" oninput="draft['${key}']=this.value.split('\n').filter(x=>x!=='')">${esc((v||[]).join('\n'))}</textarea>`;else control=`<input ${attrs} ${f.type.startsWith('number')?'type="number" min="0" step="1"':''} value="${esc(v??'')}" placeholder="${f.type.endsWith('?')?'留空沿用／未设置':''}" oninput="draft['${key}']=${f.type.startsWith('number')?"this.value===''?null:Number(this.value)":"this.value"}">`;return `<label class="field" ${wrap}><span>${f.label}</span>${control}${fieldHelp(key)}</label>`};
+function fields(keys){return keys.map(k=>fieldHTML(catalog.fields.find(f=>f.key===k))).join('')}
+function editorGuard(){return pendingNav?`<div class="guard" id="nav-guard" role="alert"><b>这条还有未保存修改</b><p class="hint">先处理当前草稿，再${pendingNav.id?'切换条目':'离开编辑页'}。</p><div class="flex"><button class="primary" onclick="resolveNav('save')">保存并继续</button><button onclick="resolveNav('discard')">放弃并继续</button><button class="ghost" onclick="resolveNav('cancel')">留在本条</button></div></div>`:''}
+function editorContent(){return `<div class="panel content-pane"><div class="title-tools"><h2>名称与正文</h2><label class="checkfield" ${ET(42)}><input data-field="disable" type="checkbox" ${!draft.disable?'checked':''} onchange="draft.disable=!this.checked">启用</label></div><label class="field" style="margin-top:16px" data-field-wrap="comment" ${ET(43)}><span>条目名称</span><input id="entry-name" data-field="comment" value="${esc(draft.comment)}" oninput="draft.comment=this.value;document.querySelector('#title-status').textContent='标题修改后，保存才生效'"></label><div class="suggestions" id="title-suggestions">${suggestionsHTML()}</div><div class="hint" id="title-status" aria-live="polite" style="margin-top:8px">已有标签自动收集；前后缀可分别调整。</div><div class="divider"></div><div class="title-tools"><label for="entry-content">正文</label><button class="text-button" ${ET(14)} onclick="syncDraft();fullEditor=true;renderOverlay()">展开编辑器 ↗</button></div><textarea id="entry-content" class="main-content-area" data-field="content" ${ET(19)} oninput="draft.content=this.value;document.querySelector('#char-count').textContent=this.value.length+' 字符'">${esc(draft.content)}</textarea><div class="row hint" style="margin-top:8px"><span id="char-count">${draft.content.length} 字符</span><span>Token 计数待接宿主</span></div><div class="divider"></div><label class="checkfield"><input type="checkbox" ${auto?'checked':''} onchange="auto=this.checked">新建／更换前缀后自动归组</label><p class="field-help">普通保存保留手动位置。手动跨组移动允许，点击“按标签归组”时再统一整理。</p></div>`}
+function editorActivation(){return `<div class="panel"><h2>激活方式</h2><label class="field" data-field-wrap="constant" ${ET(44)}><span>触发策略</span><select id="mode" data-field="constant" onchange="syncDraft();draft.mode=this.value;draft.constant=this.value==='constant';draft.vectorized=this.value==='vector';render()">${Object.entries(modes).map(([k,v])=>`<option value="${k}" ${draft.mode===k?'selected':''}>${k==='constant'?'常驻':'条件 · '+v}</option>`).join('')}</select></label><div data-field-wrap="vectorized" data-field="vectorized"></div>${draft.mode==='condition'?`<div class="native-state">条件接口待接入 · 暂不注入</div><label class="field"><span>条件集合引用</span><input value="${esc(draft.ruleRef||'')}" placeholder="选择或填写规则引用" oninput="draft.ruleRef=this.value"></label><p class="hint">复杂条件由条件引擎提供。通过后仍检查概率、延时、互斥和预算。</p>`:draft.mode==='vector'?'<div class="native-state">向量触发已保留 · 服务状态待接宿主</div>':draft.mode==='constant'?'<p class="hint">不依赖关键词，仍遵守启用状态、适用范围、概率、延时和预算。</p>':'<p class="hint">以关键词或正则匹配扫描文本，再应用辅助逻辑。</p>'}<div class="settings-group"><label class="field" data-field-wrap="probability" ${ET(48)}><span>激活概率 %</span><div class="setting-range"><input type="range" min="0" max="100" value="${draft.probability??100}" aria-label="激活概率滑块" oninput="draft.probability=Number(this.value);document.querySelector('#prob').value=this.value"><input id="prob" data-field="probability" type="number" min="0" max="100" value="${draft.probability??100}" oninput="draft.probability=this.value===''?null:Number(this.value)"></div></label></div></div><div class="panel"><h2>关键词与辅助逻辑</h2><p class="hint">各策略切换时保留原关键词，未使用也不清空。</p><div class="controls-grid">${fields(['key','selectiveLogic','keysecondary'])}</div></div>`}
+function editorInjection(){return `<div class="panel"><h2>注入位置</h2><p class="hint">选择条目放入提示词的位置；指定深度时再设置消息角色。</p><div class="controls-grid">${fields(['position'])}${draft.position===4?fields(['role','depth']):draft.position===7?fields(['outletName']):''}</div><details><summary>其他位置参数 <span class="details-caption">保留未使用的值</span></summary><div class="controls-grid">${fields(['role','depth','outletName'].filter(k=>draft.position===4?!['role','depth'].includes(k):draft.position===7?k!=='outletName':true))}</div></details></div><div class="panel"><h2>排布与优先级</h2><p class="hint">列表上移下移改变显示队列。正式版将核对同位置的扫描和最终注入顺序。</p>${fields(['order'])}<div class="editor-tools">${entryMoveButtons(editing)}</div></div>`}
+function editorAdvanced(){const sections=[['扫描与递归',['scanDepth','caseSensitive','matchWholeWords','ignoreBudget','excludeRecursion','preventRecursion','delayUntilRecursion'],'沿用全局的设置保持三态，不把留空当作关闭。'],['互斥与延时',['group','groupOverride','groupWeight','useGroupScoring','sticky','cooldown','delay'],'决定同组选择及条目持续、生效和冷却时间。'],['适用范围',['characterFilterNames','characterFilterTags','characterFilterExclude','triggers'],'限定角色、角色标签和生成类型。'],['额外匹配来源',['matchCharacterDescription','matchCharacterPersonality','matchScenario','matchPersonaDescription','matchCharacterDepthPrompt','matchCreatorNotes'],'选择聊天正文之外参与扫描的内容。'],['自动化联动',['automationId'],'保留原生自动化标识。'],['兼容设置',['selective','useProbability','addMemo'],'旧条目字段保持原值，不因换界面自动重置。']];return `<div class="panel"><h2>高级设置</h2>${sections.map(([name,ks,desc],i)=>`<details class="advanced-section" data-section="${name}" ${i===0?'open':''} ${ET(i===3?33:41)}><summary>${name}<span class="details-caption">${ks.length} 项</span></summary><div><p class="hint">${desc}</p><div class="controls-grid">${fields(ks)}</div></div></details>`).join('')}<p class="hint">UID：${esc(draft.uid)} · 原生扩展字段在正式接线时原样保留。</p></div>`}
+function entryMoveButtons(id){const own=entries.filter(e=>e.book===book),idx=own.findIndex(e=>e.uid===id);return `<button ${idx<=0?'disabled':''} onclick="move('${id}',-1)">↑ 上移</button><button ${idx<0||idx===own.length-1?'disabled':''} onclick="move('${id}',1)">↓ 下移</button>`}
+function editorPageV2(){const ix=editorSequence.indexOf(editing);return `<div class="editor-top swipe-surface"><button class="ghost" onclick="requestNav({view:'entries'})">‹ 返回条目</button><div class="editor-counter"><b>${ix<0?'新条目':`${ix+1} / ${editorSequence.length}`}</b>${esc(books.find(b=>b.id===draft.book)?.name||'世界书')}</div></div><div class="editor-meta swipe-surface"><span class="pill gold">${modes[draft.mode]} · ${draft.probability??100}%</span><div class="editor-tools">${entryMoveButtons(editing)}</div></div>${editorGuard()}<div class="nav-entries swipe-surface compact-nav"><button id="prev-entry" ${ix<=0?'disabled':''} onclick="stepEntry(-1)">‹ 上一条</button><button id="next-entry" ${ix<0||ix>=editorSequence.length-1?'disabled':''} onclick="stepEntry(1)">下一条 ›</button></div><div class="help-line swipe-surface">左右轻扫页面空白区域可切条 · 编辑框内保留文字操作</div><div class="editor-tabs">${Object.entries(tabNames).map(([k,t])=>`<button class="${editorTab===k?'active':''}" onclick="switchEditorTab('${k}')">${t}</button>`).join('')}</div><div class="toolbar"><input id="setting-search" placeholder="查找设置：粘性、角色、深度…" aria-label="查找条目设置" value="${esc(settingQuery)}" oninput="settingQuery=this.value;renderSettingResults()"></div><div id="setting-results"></div><div class="editor-layout"><section class="editor-form swipe-surface">${editorTab==='content'?editorContent():editorTab==='activation'?editorActivation():editorTab==='injection'?editorInjection():editorAdvanced()}</section><aside class="editor-aside panel"><div class="eyebrow">ENTRY SUMMARY</div><h3>${esc(draft.comment)}</h3><div class="divider"></div><p class="hint">${draft.disable?'条目已关闭':'条目已启用'} · ${positionText(draft)}</p><p class="hint">${modes[draft.mode]} · ${draft.probability??100}%</p><p class="hint">${draft.content.length} 字符</p><div class="divider"></div><p class="hint">修改仅保存在本次样稿。条件结果、Token和实际注入状态待接宿主。</p><button class="text-button" onclick="openTags()">管理前后缀标签 ›</button></aside></div>`}
+function renderSettingResults(){const el=$('#setting-results');if(!el)return;if(!settingQuery.trim()){el.innerHTML='';return}const q=settingQuery.toLowerCase();const matches=catalog.fields.filter(f=>(f.label+' '+f.key).toLowerCase().includes(q));el.innerHTML=`<div class="panel search-results">${matches.map(f=>`<button onclick="locateField('${f.key}')">${f.label}<small>${tabNames[tabFor(f.key)]} › ${f.section}</small></button>`).join('')||'<p class="hint">没有匹配设置。</p>'}</div>`}
+function locateField(k){syncDraft();editorTab=tabFor(k);settingQuery='';render();const el=document.querySelector(`[data-field-wrap="${k}"]`)||document.querySelector(`[data-field="${k}"]`);if(el){let p=el.parentElement;while(p){if(p.tagName==='DETAILS')p.open=true;p=p.parentElement}el.scrollIntoView({block:'center',behavior:'instant'});el.classList.add('field-flash');setTimeout(()=>el.classList.remove('field-flash'),1300)}}
+const sortsList=[['search','搜索相关'],['priority','优先级'],['custom','我的排布'],['title','标题 A → Z'],['titleDesc','标题 Z → A'],['length','正文长度 ↑'],['lengthDesc','正文长度 ↓'],['depth','深度 ↑'],['depthDesc','深度 ↓'],['order','原生优先级 ↑'],['orderDesc','原生优先级 ↓'],['uid','UID ↑'],['uidDesc','UID ↓'],['probabilityAsc','概率 ↑'],['probability','概率 ↓']];
+entryHTML=function(e){const own=entries.filter(x=>x.book===e.book),i=own.indexOf(e);return `<article class="entry ${e.disable?'off':''} ${selected.has(e.uid)?'selected':''}" data-entry-id="${e.uid}"><div class="entry-head">${batchMode?`<input type="checkbox" aria-label="选择 ${esc(e.comment)}" ${selected.has(e.uid)?'checked':''} onchange="selectOne('${e.uid}',this.checked)">`:''}<div class="grow"><button class="open-title" onclick="edit('${e.uid}')"><div class="title">${esc(e.comment)||'未命名条目'}</div></button><div class="sub"><span class="pill ${e.mode==='constant'?'gold':''}">${modes[e.mode]}</span><span class="pill gray">${e.probability??100}%</span><span class="pill gray">${positionText(e)}</span></div></div><div><button class="switch" role="switch" ${ET(42)} aria-label="启用 ${esc(e.comment)}" aria-checked="${!e.disable}" onclick="toggle('${e.uid}')"></button></div></div><div class="entry-bottom"><div class="reorder-rail"><span class="rank">${String(i+1).padStart(2,'0')}</span><button class="drag-handle" data-drag-entry="${e.uid}" ${ET(40)} aria-label="拖动 ${esc(e.comment)}">${dragDots}</button><button aria-label="上移 ${esc(e.comment)}" ${i===0?'disabled':''} onclick="move('${e.uid}',-1)">↑</button><button aria-label="下移 ${esc(e.comment)}" ${i===own.length-1?'disabled':''} onclick="move('${e.uid}',1)">↓</button></div><div class="quick-tools"><button ${ET(41)} aria-label="展开正文 ${esc(e.comment)}" aria-expanded="${expandAll||expanded.has(e.uid)}" onclick="expanded.has('${e.uid}')?expanded.delete('${e.uid}'):expanded.add('${e.uid}');render()">${expandAll||expanded.has(e.uid)?'收起':'正文'}</button><button aria-label="${esc(e.comment)} 操作" onclick="menu=menu==='${e.uid}'?null:'${e.uid}';render()">更多 ⋯</button></div></div>${expandAll||expanded.has(e.uid)?`<div class="entry-summary">${esc(e.content)}</div><p class="hint">UID ${esc(e.uid)} · ${e.content.length} 字符 · Token 待接</p>`:''}${menu===e.uid?`<div class="entry-actions"><button onclick="edit('${e.uid}')">编辑</button><button ${ET(50)} onclick="duplicate('${e.uid}')">复制</button><button ${ET(49)} onclick="sheet={type:'transfer',id:'${e.uid}'};renderSheet()">移动／复制到书</button><button class="danger" ${ET(51)} onclick="sheet={type:'deleteEntry',id:'${e.uid}'};renderSheet()">删除</button></div>`:''}</article>`};
+function entriesPageV2(){const all=shown(),pages=Math.max(1,Math.ceil(all.length/pageSize));listPage=Math.min(listPage,pages-1);return `<div class="page-intro"><div><div class="eyebrow">LOREBOOK WORKSPACE</div><h2>条目工作区</h2><p class="hint">随手编辑，按你的顺序排列。</p></div><div class="count-line"><strong>${all.length}</strong>条目</div></div><div class="toolbar"><select class="list-book-select" aria-label="当前世界书" ${WI(24)} onchange="book=this.value;query='';listPage=0;render()">${books.map(b=>`<option value="${b.id}" ${b.id===book?'selected':''}>${esc(b.name)}</option>`).join('')}</select><button class="primary" ${WI(30)} ${!book?'disabled':''} onclick="newEntry()">＋ 新增</button></div><div class="toolbar"><input ${WI(35)} aria-label="搜索条目" placeholder="搜索名称、正文、关键词" value="${esc(query)}" oninput="query=this.value;listPage=0;renderEntriesOnly()"><button onclick="batchMode=!batchMode;render()">${batchMode?'完成多选':'多选'}</button><button onclick="openTags()">标签</button></div><div class="toolbar"><select aria-label="浏览排序" ${WI(36)} onchange="displaySort=this.value;listPage=0;render()">${sortsList.map(([k,t])=>`<option value="${k}" ${displaySort===k?'selected':''}>${t}</option>`).join('')}</select></div><details class="panel"><summary>整理工具 <span class="details-caption">排序、回填与显示</span></summary><div class="list-tools"><button onclick="groupSort()">按标签归组</button><button ${WI(31)} onclick="expandAll=true;render()">展开全部正文</button><button ${WI(32)} onclick="expandAll=false;expanded.clear();render()">收起全部正文</button><button ${WI(33)} onclick="utilityPreview('backfill')">关键词回填空标题</button><button ${WI(34)} onclick="utilityPreview('order')">当前排序写入 Order</button><button ${WI(37)} onclick="render();say('已刷新当前样稿数据')">刷新列表</button></div><p class="field-help">长度排序按字符长度，不是精确 Token。浏览排序不会自动覆盖手动排布。</p></details>${batchMode?`<div class="toolbar"><button onclick="shown().forEach(e=>selected.add(e.uid));render()">选择全部结果</button><button onclick="selected.clear();render()">清空</button><small>已选 ${selected.size} 条</small></div>`:''}<div id="entry-list">${all.slice(listPage*pageSize,(listPage+1)*pageSize).map(entryHTML).join('')||'<div class="empty-state">没有匹配条目</div>'}</div><div id="pagination">${pagerHTML(all.length)}</div><p class="help-line">拖动圆点或使用 ↑ ↓ 调整排布。实际提示词顺序及注入状态待接宿主。</p>`}
+function pagerHTML(n){const pages=Math.max(1,Math.ceil(n/pageSize));return `<div class="pager"><button ${listPage===0?'disabled':''} onclick="listPage--;render()">‹</button><small>${listPage+1} / ${pages}</small><button ${listPage>=pages-1?'disabled':''} onclick="listPage++;render()">›</button><select aria-label="每页条目数" onchange="pageSize=Number(this.value);listPage=0;render()">${[5,10,20,50,100].map(n=>`<option ${n===pageSize?'selected':''} value="${n}">${n} 条/页</option>`).join('')}</select></div>`}
+renderEntriesOnly=function(){const a=shown();$('#entry-list').innerHTML=a.slice(listPage*pageSize,(listPage+1)*pageSize).map(entryHTML).join('')||'<div class="empty-state">没有匹配条目</div>';$('#pagination').innerHTML=pagerHTML(a.length)};
+function bookOptions(current,empty=true){return (empty?'<option value="">未绑定</option>':'')+books.map(b=>`<option value="${b.id}" ${b.id===current?'selected':''}>${esc(b.name)}</option>`).join('')}
+function booksPageV2(){return `<div class="page-intro"><div><div class="eyebrow">COLLECTIONS</div><h2>世界书队列</h2><p class="hint">全局与角色并列排布，来源始终清楚。</p></div><strong style="color:var(--gold);font-weight:400">${books.length} 本</strong></div><div class="shortcut-row"><button class="primary" ${WI(23)} onclick="sheet={type:'newBook'};renderSheet()">＋ 新建世界书</button><button ${WI(25)} onclick="sheet={type:'import'};renderSheet()">导入</button><label class="checkfield" ${WI(0)}><input type="checkbox" ${globalSettings.pin?'checked':''} onchange="remember();globalSettings.pin=this.checked">固定面板</label></div>${books.map((b,i)=>`<article class="entry book-card" data-book-id="${b.id}"><div class="row"><span class="book-rank">${String(i+1).padStart(2,'0')}</span><button class="grow open-title" onclick="book='${b.id}';view='entries';query='';listPage=0;render()"><div class="title">${esc(b.name)}</div><div class="sub"><span class="pill">${b.scope}</span><small>${entries.filter(e=>e.book===b.id).length} 条</small></div></button><button class="switch" ${WI(1)} role="switch" aria-label="启用世界书 ${esc(b.name)}" aria-checked="${b.enabled}" onclick="remember();books.find(b=>b.id==='${b.id}').enabled=!books.find(b=>b.id==='${b.id}').enabled;render()"></button></div><div class="book-actions"><button ${i===0?'disabled':''} onclick="moveBook(${i},-1)">↑ 上移</button><button ${i===books.length-1?'disabled':''} onclick="moveBook(${i},1)">↓ 下移</button><button ${WI(27)} onclick="sheet={type:'editBook',id:'${b.id}'};renderSheet()">改名／归属</button><button ${WI(28)} onclick="copyBook('${b.id}')">复制</button><button ${WI(26)} onclick="exportBook('${b.id}')">导出</button><button ${WI(29)} class="danger" onclick="sheet={type:'deleteBook',id:'${b.id}'};renderSheet()">删除</button></div></article>`).join('')}<div class="panel bindings"><h2>角色与对话绑定</h2><p class="hint">以下为示例绑定；正式版读取当前角色、聊天和用户人格。</p><div class="binding-row" ${native('extra:0','extra:1','extra:2')}><label for="primary-binding">角色主世界书</label><select id="primary-binding" onchange="remember();bindings.primary=this.value;render()">${bookOptions(bindings.primary)}</select></div><button class="text-button" ${!bindings.primary?'disabled':''} onclick="book=bindings.primary;view='entries';render()">打开角色主书 ›</button><details ${native('extra:3')}><summary>角色附加世界书 <span class="details-caption">${bindings.extra.length} 本</span></summary><div>${books.map(b=>`<label class="checkfield"><input type="checkbox" ${bindings.extra.includes(b.id)?'checked':''} onchange="remember();bindings.extra=this.checked?[...bindings.extra,'${b.id}']:bindings.extra.filter(x=>x!=='${b.id}')">${esc(b.name)}</label>`).join('')}</div></details>${[['chat','当前聊天'],['persona','用户人格']].map(([k,t])=>`<div class="binding-row"><label for="binding-${k}">${t}</label><select id="binding-${k}" onchange="remember();bindings['${k}']=this.value">${bookOptions(bindings[k])}</select></div>`).join('')}<p class="field-help">书籍排布不会将聊天或用户人格资料扩大为全局可见。</p></div>`}
+function moveBook(i,d){if(!books[i+d])return;remember();[books[i],books[i+d]]=[books[i+d],books[i]];render()}
+function copyBook(id){remember();const src=books.find(b=>b.id===id),newId='b'+Date.now();books.push({...src,id:newId,name:src.name+' 副本'});entries.filter(e=>e.book===id).forEach((e,i)=>entries.push({...structuredClone(e),uid:newId+'e'+i,book:newId}));render();say('已复制世界书及其条目，可撤销')}
+function exportBook(id){const b=books.find(b=>b.id===id);const payload={format:'tisya-worldbook-preview/2',book:b,entries:entries.filter(e=>e.book===id)};const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='世界书样稿-'+b.name.replace(/[\\/:*?"<>|]/g,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);say('已导出样稿 JSON；正式宿主格式待接')}
+async function importPreview(file){if(!file)return;try{if(file.size>5*1024*1024)throw Error('样稿导入上限 5 MB');const x=JSON.parse(await file.text());if(x.format!=='tisya-worldbook-preview/2'||!x.book||typeof x.book.name!=='string'||!Array.isArray(x.entries))throw Error('请选择本样稿导出的 JSON；原生格式需宿主适配');if(x.entries.length>2000)throw Error('样稿最多导入 2000 条');for(const e of x.entries){if(typeof e.comment!=='string'||typeof e.content!=='string'||!modes[e.mode]||!Array.isArray(e.key)||!Array.isArray(e.keysecondary))throw Error('条目结构不完整，未导入')}remember();const id='b'+Date.now();books.push({id,name:x.book.name,scope:['全局','角色'].includes(x.book.scope)?x.book.scope:'全局',enabled:false});x.entries.forEach((e,i)=>entries.push({...structuredClone(e),uid:id+'e'+i,book:id}));collectTags();sheet=null;render();say('已导入样稿世界书，默认未启用，可撤销')}catch(e){$('#import-error').textContent=e.message}}
+function utilityPreview(type){const own=type==='order'?shown():entries.filter(e=>e.book===book);const rows=own.map((e,i)=>({uid:e.uid,name:e.comment,before:type==='order'?e.order:e.comment,after:type==='order'?own.length-i:(e.comment.trim()?e.comment:(e.key||[]).find(k=>k.trim())||'')})).filter(r=>r.before!==r.after);sheet={type:'utility',operation:type,rows,snapshot:JSON.stringify(entries)};renderSheet()}
+function applyUtility(){if(sheet.snapshot!==JSON.stringify(entries)){say('数据已变化，请重新预览');return}const s=sheet;remember();s.rows.forEach(r=>{entries.find(e=>e.uid===r.uid)[s.operation==='order'?'order':'comment']=r.after});sheet=null;render();say('已应用样稿修改，可撤销')}
+const globalRanges=[['world_info_depth',0,1000,3,4,'扫描最近多少层聊天'],['world_info_budget',1,100,5,6,'允许世界书使用的上下文百分比'],['world_info_budget_cap',0,65536,7,8,'0 表示不设置额外上限'],['world_info_min_activations',0,100,9,10,'与最大递归次数互斥，0 表示不启用'],['world_info_min_activations_depth_max',0,100,11,12,'0 表示不限制最大扫描深度'],['world_info_max_recursion_steps',0,10,13,14,'0 不限，1 仅扫描一次；与最少激活互斥']];
+function globalRange(def){const [k,min,max,a,b,h]=def;return `<label class="field" ${WI(a,b)}><span>${globalLabel(k)}</span><div class="setting-range"><input type="range" aria-label="${globalLabel(k)}滑块" data-global-range="${k}" min="${min}" max="${max}" value="${globalSettings[k]}" oninput="changeGlobal('${k}',this.value)"><input aria-label="${globalLabel(k)}数值" data-global-number="${k}" type="number" min="${min}" max="${max}" value="${globalSettings[k]}" onchange="changeGlobal('${k}',this.value)"></div><p class="field-help">${h}</p></label>`}
+function changeGlobal(k,v){const spec=globalRanges.find(d=>d[0]===k),n=Number(v);if(v===''||!Number.isInteger(n)||n<spec[1]||n>spec[2]){say(`请输入 ${spec[1]}–${spec[2]} 之间的整数`);render();return}const opposite=k==='world_info_min_activations'?'world_info_max_recursion_steps':k==='world_info_max_recursion_steps'?'world_info_min_activations':null;if(opposite&&n>0&&globalSettings[opposite]>0){sheet={type:'globalConflict',key:k,value:n,other:opposite};renderSheet();return}remember();globalSettings[k]=n;document.querySelector(`[data-global-range="${k}"]`).value=n;document.querySelector(`[data-global-number="${k}"]`).value=n}
+function globalPageV2(){return `<div class="page-intro"><div><div class="eyebrow">GLOBAL PREFERENCES</div><h2>全局扫描设置</h2><p class="hint">本页修改作用于示例。条目单独设置优先于“沿用全局”。</p></div></div><div class="panel"><details open ${WI(2)}><summary>扫描与预算</summary><div class="settings-grid">${globalRanges.slice(0,3).map(globalRange).join('')}</div></details><details open><summary>激活与递归限制</summary><div class="settings-grid">${globalRanges.slice(3).map(globalRange).join('')}</div></details><div class="global-section"><h3>扫描规则</h3><div class="controls-grid">${['world_info_include_names','world_info_recursive','world_info_case_sensitive','world_info_match_whole_words','world_info_use_group_scoring','world_info_overflow_alert'].map((k,i)=>`<label class="checkfield" ${WI(i+16)}><input type="checkbox" ${globalSettings[k]?'checked':''} onchange="remember();globalSettings['${k}']=this.checked">${globalLabel(k)}</label>`).join('')}</div></div><div class="global-section"><h3>原生来源优先策略</h3><select aria-label="原生角色／全局优先策略" ${WI(15)} onchange="remember();globalSettings.world_info_character_strategy=Number(this.value)">${catalog.controls.find(c=>c.id==='world_info_character_strategy').options.map(o=>`<option value="${o.value}" ${globalSettings.world_info_character_strategy==o.value?'selected':''}>${o.label}</option>`).join('')}</select><p class="field-help">正式接线将协调来源策略与可视排布，不能只调整界面顺序就宣称提示词顺序改变。</p></div></div>`}
+function closeSheet(){sheet=null;renderSheet()}
+function sheetContent(){const s=sheet,b=s.id?books.find(b=>b.id===s.id):null,e=s.id?entries.find(e=>e.uid===s.id):null;if(s.type==='copy')return `<h2>复制标签</h2><p class="hint">当前浏览器不允许自动写剪贴板，请长按选中文字复制。</p><input class="copy-manual" readonly value="${esc(s.text)}" onclick="this.select()"><button class="text-button" onclick="document.querySelector('.copy-manual').select()">全选文字</button>`;
+if(s.type==='newBook'||s.type==='editBook')return `<h2>${b?'管理世界书':'新建世界书'}</h2><label class="field"><span>名称</span><input id="book-name" value="${esc(b?.name||'')}" placeholder="为这本世界书命名"></label><label class="field"><span>归属</span><select id="book-scope"><option ${b?.scope==='全局'?'selected':''}>全局</option><option ${b?.scope==='角色'?'selected':''}>角色</option></select></label><div class="sheet-footer"><button class="primary" onclick="saveBook()">${b?'保存':'创建'}</button></div>`;
+if(s.type==='deleteBook'||s.type==='deleteEntry')return `<h2>删除${b?'世界书':'条目'}</h2><p>${esc(b?.name||e?.comment)}</p><p class="hint">${b?'同时删除本书中的 '+entries.filter(e=>e.book===b.id).length+' 条示例条目并解除示例绑定。':'删除后可以撤销。'}</p><div class="sheet-footer"><button onclick="closeSheet()">取消</button><button class="danger" onclick="confirmDelete()">确认删除</button></div>`;
+if(s.type==='transfer')return `<h2>移动或复制条目</h2><p class="hint">${esc(e.comment)}</p><label class="field"><span>目标世界书</span><select id="transfer-target">${bookOptions('',false)}</select></label><label class="field"><span>处理方式</span><select id="transfer-mode"><option value="move">移动</option><option value="copy">复制，分配新 UID</option></select></label><div class="sheet-footer"><button class="primary" onclick="transferEntry()">应用到样稿</button></div>`;
+if(s.type==='import')return `<h2>导入世界书</h2><p class="hint">这里可往返本样稿导出的 JSON。原生 JSON、PNG、lorebook 格式的正式导入入口保留，转换与保存待接宿主。</p><label class="field" ${WI(22)}><span>选择样稿 JSON</span><input type="file" accept=".json,application/json" onchange="importPreview(this.files[0])"></label><p id="import-error" class="error" role="alert"></p><div class="native-state">原生 JSON / PNG / lorebook：宿主适配待接，不会尝试覆盖正式数据。</div>`;
+if(s.type==='utility')return `<h2>${s.operation==='order'?'当前排序写入 Order':'关键词回填空标题'}</h2><p class="hint">${s.operation==='order'?'将当前筛选结果的浏览顺序映射为递减的原生优先级；不会改变其他条目。不能据此证明实际提示词顺序。':'只处理当前书名称为空且有关键词的条目，已有名称保持。'}</p>${s.rows.map(r=>`<div class="review-row"><b>${esc(r.name)||'未命名'}</b><del>${esc(r.before)}</del><ins>${esc(r.after)}</ins></div>`).join('')||'<p class="hint">没有需要修改的条目。</p>'}<div class="sheet-footer"><button class="primary" ${!s.rows.length?'disabled':''} onclick="applyUtility()">应用 ${s.rows.length} 项</button></div>`;
+if(s.type==='globalConflict')return `<h2>两项限制不能同时启用</h2><p>启用“${globalLabel(s.key)}”将把“${globalLabel(s.other)}”设为 0。</p><div class="sheet-footer"><button onclick="sheet=null;render()">保留原设置</button><button class="primary" onclick="remember();globalSettings[sheet.key]=sheet.value;globalSettings[sheet.other]=0;sheet=null;render()">确认切换</button></div>`;return ''}
+function renderSheet(){let el=$('#sheet-root');if(!el){el=document.createElement('div');el.id='sheet-root';document.body.append(el)}el.innerHTML=sheet?`<div class="overlay" onclick="if(event.target===this)closeSheet()"><section class="sheet" role="dialog" aria-modal="true" aria-label="${sheet.type==='copy'?'复制标签':'世界书操作'}"><div class="row"><span class="caption">世界书操作台</span><button class="icon ghost" aria-label="关闭弹层" onclick="closeSheet()">×</button></div>${sheetContent()}</section></div>`:'';setModalState()}
+function setModalState(){const modal=!!sheet||fullEditor;for(const id of ['app','nav','foot']){const el=$('#'+id);if(el)el.inert=modal}document.body.style.overflow=modal?'hidden':''}
+function saveBook(){const name=$('#book-name').value.trim(),scope=$('#book-scope').value;if(!name){say('请填写世界书名称');return}remember();if(sheet.type==='newBook'){const id='b'+Date.now();books.push({id,name,scope,enabled:false});if(!book)book=id}else Object.assign(books.find(b=>b.id===sheet.id),{name,scope});sheet=null;render();say('已保存示例世界书')}
+function confirmDelete(){const s=sheet;remember();if(s.type==='deleteBook'){books=books.filter(b=>b.id!==s.id);entries=entries.filter(e=>e.book!==s.id);for(const k of ['primary','chat','persona'])if(bindings[k]===s.id)bindings[k]='';bindings.extra=bindings.extra.filter(id=>id!==s.id);if(book===s.id)book=books[0]?.id||'';}else entries=entries.filter(e=>e.uid!==s.id);selected=new Set([...selected].filter(id=>entries.some(e=>e.uid===id)));sheet=null;render();say('已删除，可撤销')}
+function transferEntry(){const target=$('#transfer-target').value,mode=$('#transfer-mode').value,e=entries.find(e=>e.uid===sheet.id);if(!target){say('请选择目标世界书');return}remember();let id=e.uid;if(mode==='copy'){const copy={...structuredClone(e),uid:'e'+Date.now(),book:target};entries.push(copy);id=copy.uid;}else e.book=target;autogroup(id);sheet=null;menu=null;render();say('已'+(mode==='copy'?'复制':'移动')+'到目标世界书')}
+function renderOverlay(){let el=$('#fullscreen-root');if(!el){el=document.createElement('div');el.id='fullscreen-root';document.body.append(el)}el.innerHTML=fullEditor?`<div class="fullscreen-editor" role="dialog" aria-modal="true" aria-label="展开正文编辑器"><div class="row"><h2 style="margin:0">正文编辑</h2><button class="primary" onclick="draft.content=document.querySelector('#full-content').value;fullEditor=false;render()">完成</button></div><p class="hint">${esc(draft.comment)} · 完成后仍需保存条目</p><textarea id="full-content">${esc(draft.content)}</textarea></div>`:'';setModalState()}
+let bulkField='position',bulkValue='0';
+const bulkKeys=['position','role','depth','order','outletName','scanDepth','caseSensitive','matchWholeWords','ignoreBudget','excludeRecursion','preventRecursion','delayUntilRecursion','group','groupOverride','groupWeight','useGroupScoring','sticky','cooldown','delay','characterFilterNames','characterFilterTags','characterFilterExclude','triggers','matchCharacterDescription','matchCharacterPersonality','matchScenario','matchPersonaDescription','matchCharacterDepthPrompt','matchCreatorNotes','automationId','selective','useProbability','addMemo'];
+function bulkInput(){const f=catalog.fields.find(f=>f.key===bulkField);if(fieldOptions[f.key])return `<select id="bulk-value" onchange="bulkValue=this.value;plan=null">${fieldOptions[f.key].map(([k,t])=>`<option value="${k}" ${bulkValue===k?'selected':''}>${t}</option>`).join('')}</select>`;if(f.type.startsWith('boolean'))return `<select id="bulk-value" onchange="bulkValue=this.value;plan=null">${(f.type.endsWith('?')?[['null','沿用全局']]:[]).concat([['true','是'],['false','否']]).map(([k,t])=>`<option value="${k}" ${bulkValue===k?'selected':''}>${t}</option>`).join('')}</select>`;if(f.type==='array')return `<textarea id="bulk-value" placeholder="每行一项，留空清空该字段" oninput="bulkValue=this.value;plan=null">${esc(bulkValue)}</textarea>`;return `<input id="bulk-value" ${f.type.startsWith('number')?'type="number" min="0"':''} placeholder="${f.type.endsWith('?')?'留空沿用／未设置':'字段值'}" value="${esc(bulkValue)}" oninput="bulkValue=this.value;plan=null">`}
+function changeBulkField(k){bulkField=k;const f=catalog.fields.find(f=>f.key===k);bulkValue=f.type.endsWith('?')?(f.type.startsWith('boolean')?'null':''):f.type==='boolean'?'false':fieldOptions[k]?fieldOptions[k][0][0]:f.type==='number'?'0':'';plan=null;render()}
+function advancedBulkPlan(){const f=catalog.fields.find(f=>f.key===bulkField);let value=bulkValue;try{if(!targets().length)throw Error('请先选择条目或修改操作范围');if(f.type.startsWith('number')){value=value===''&&f.type.endsWith('?')?null:Number(value);if(bulkValue===''&&!f.type.endsWith('?')||value!==null&&(!Number.isInteger(value)||value<0))throw Error('请输入非负整数');}else if(f.type.startsWith('boolean'))value=value==='null'?null:value==='true';else if(f.type==='array')value=value.split('\n').filter(Boolean);else if(fieldOptions[f.key])value=Number(value);if(f.key==='triggers'&&value.some(v=>!['normal','continue','impersonate','swipe','regenerate','quiet'].includes(v)))throw Error('生成类型使用 normal、continue、impersonate、swipe、regenerate、quiet，每行一个');plan={snapshot:JSON.stringify(entries),total:targets().length,field:bulkField,rows:targets().map(e=>({uid:e.uid,name:e.comment,before:e[bulkField]??'',after:value})).filter(r=>JSON.stringify(r.before)!==JSON.stringify(r.after))};$('#diffs').innerHTML=planHTML();$('#bulk-error').textContent='';$('#diffs').scrollIntoView({block:'center',behavior:'instant'});}catch(e){$('#bulk-error').textContent=e.message}}
+function batchPageV2(){return `<div class="shortcut-row"><button onclick="openTags()">前后缀标签库 ›</button><button ${WI(33)} onclick="utilityPreview('backfill')">空标题回填</button><button ${WI(34)} onclick="utilityPreview('order')">浏览序写入优先级</button></div>`+batchPage()+`<div class="panel"><details><summary>更多批量字段 <span class="details-caption">注入、扫描、延时与过滤</span></summary><div><p class="hint">沿用上方操作范围（${targets().length} 条），同样先预览再应用。</p><label class="field"><span>目标字段</span><select id="bulk-field" onchange="changeBulkField(this.value)">${bulkKeys.map(k=>`<option value="${k}" ${bulkField===k?'selected':''}>${catalog.fields.find(f=>f.key===k).label}</option>`).join('')}</select></label><label class="field"><span>统一设为</span>${bulkInput()}</label><button class="primary" onclick="advancedBulkPlan()">预览该字段修改</button><p id="bulk-error" class="error" role="alert"></p></div></details></div>`}
+
+render=function(){const tabs=[['books','世界书'],['entries','条目'],['batch','操作台'],['global','全局设置']];$('#nav').innerHTML=tabs.map(([k,v])=>`<button class="${view===k||(view==='editor'&&k==='entries')?'active':''}" onclick="switchPage('${k}')">${v}</button>`).join('');document.body.classList.toggle('editing-screen',view==='editor');$('#page-title').textContent=view==='editor'?'编辑条目':view==='tags'?'标签管理':'世界书';$('#app').innerHTML=view==='books'?booksPageV2():view==='editor'?editorPageV2():view==='batch'?batchPageV2():view==='global'?globalPageV2():view==='tags'?tagsPage():entriesPageV2();$('#foot').innerHTML=view==='editor'?`<div class="foot-inner"><button onclick="requestNav({view:'entries'})">返回列表</button><button class="primary" onclick="saveEntry()">保存条目</button></div>`:view==='tags'?`<div class="foot-inner"><button ${!history.length?'disabled':''} onclick="undo()">撤销</button><button class="primary" onclick="closeTags()">完成排序</button></div>`:`<div class="foot-inner"><button ${!history.length?'disabled':''} onclick="undo()">撤销</button>${view==='entries'?`<button class="primary" onclick="view='batch';batchScope=selected.size?'selected':'book';render()">${selected.size?'批量处理 '+selected.size+' 条':'打开操作台'}</button>`:`<button class="primary" onclick="say('当前为独立样稿，修改仅保留在本次打开期间')">示例数据</button>`}</div>`;renderSettingResults();renderSheet();renderOverlay()};
+// Pointer gestures: axis-lock, input/selection exclusion, cancellation and explicit drag handles.
+let gesture=null,dragState=null;
+document.addEventListener('pointerdown',ev=>{if(!ev.isPrimary){gesture=null;return}if(ev.button!==0)return;const h=ev.target.closest('[data-drag-entry],[data-drag-tag]');if(h){if(h.disabled)return;const row=h.closest('[data-entry-id],[data-tag-index]');dragState={id:ev.pointerId,handle:h,row,entry:h.dataset.dragEntry,kind:h.dataset.kind,index:Number(h.dataset.dragTag),target:null,startY:ev.clientY,moved:false};h.setPointerCapture(ev.pointerId);return}if(view!=='editor'||pendingNav||sheet||fullEditor||ev.target.closest('input,textarea,select,button,a,summary,label,[contenteditable]')||String(window.getSelection()).length)return;if(!ev.target.closest('.swipe-surface'))return;gesture={id:ev.pointerId,x:ev.clientX,y:ev.clientY,blocked:false};});
+document.addEventListener('pointermove',ev=>{if(dragState&&ev.pointerId===dragState.id){const d=dragState;if(Math.abs(ev.clientY-d.startY)>7)d.moved=true;if(!d.moved)return;ev.preventDefault();d.row.classList.add('drag-active');document.querySelectorAll('.drag-target').forEach(e=>e.classList.remove('drag-target'));const hit=document.elementFromPoint(ev.clientX,ev.clientY)?.closest(d.entry?'[data-entry-id]':'[data-tag-index]');if(hit&&hit!==d.row&&(!d.kind||hit.dataset.tagKind===d.kind)){hit.classList.add('drag-target');d.target=d.entry?hit.dataset.entryId:Number(hit.dataset.tagIndex)}else d.target=null;return}if(gesture&&gesture.id===ev.pointerId&&Math.abs(ev.clientY-gesture.y)>30&&Math.abs(ev.clientY-gesture.y)>Math.abs(ev.clientX-gesture.x))gesture.blocked=true;},{passive:false});
+function clearDrag(){document.querySelectorAll('.drag-active,.drag-target').forEach(e=>e.classList.remove('drag-active','drag-target'));dragState=null}
+document.addEventListener('pointerup',ev=>{if(dragState&&ev.pointerId===dragState.id){const d=dragState;clearDrag();if(d.moved&&d.target!==null){if(d.entry)reorderEntry(d.entry,d.target);else{remember();const t=tags[d.kind].splice(d.index,1)[0];tags[d.kind].splice(d.target,0,t);render();say('标签顺序已更新')}}return}if(!gesture||gesture.id!==ev.pointerId)return;const g=gesture;gesture=null;const dx=ev.clientX-g.x,dy=ev.clientY-g.y;if(!g.blocked&&Math.abs(dx)>=70&&Math.abs(dx)>Math.abs(dy)*1.6&&!String(window.getSelection()).length)stepEntry(dx<0?1:-1)});
+document.addEventListener('pointercancel',()=>{gesture=null;clearDrag()});document.addEventListener('lostpointercapture',()=>{if(dragState)clearDrag()});window.addEventListener('blur',()=>{gesture=null;clearDrag()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&sheet){closeSheet();return}if(ev.key==='Tab'&&(sheet||fullEditor)){const root=document.querySelector(fullEditor?'.fullscreen-editor':'.sheet'),items=[...root.querySelectorAll('button,input,textarea,select,[tabindex]')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!items.length)return;const first=items[0],last=items.at(-1);if(ev.shiftKey&&(document.activeElement===first||!root.contains(document.activeElement))){last.focus();ev.preventDefault()}else if(!ev.shiftKey&&(document.activeElement===last||!root.contains(document.activeElement))){first.focus();ev.preventDefault()}}});
+window.addEventListener('beforeunload',ev=>{if(dirty||(draft&&draftChanged())){ev.preventDefault();ev.returnValue=''}});
+document.querySelector('header .caption').innerHTML='第二轮样稿<br>示例数据';
+collectTags();render();
+
+// Shared approved UI: standalone preview and production use the same dock.
+const HOST_MODE=window.__TISYA_WORLDBOOK_HOST__===true;
+if(HOST_MODE){help.characterFilterNames='角色文件名（不含扩展名），每行一项；与角色显示名可能不同。';}
+let consoleOpen=false,consoleCollapsed=false,detached=false,hostReady=!HOST_MODE,hostBusy=false,hostVersion=0,hostError='',hostSaved='',hostPort=null,hostSeq=0,hostStateBaseline='',hostRequests=new Map();
+const renderV2=render,switchV2=switchPage,sayV2=say,sheetV2=sheetContent,commitV2=commitDraft;
+const validateV2=validateDraft;
+validateDraft=function(){if(!HOST_MODE)return validateV2();syncDraft();const before=entries.find(e=>e.uid===editing);if(!draft.comment.trim()&&(!before||before.comment.trim()))return '请填写条目名称';for(const f of catalog.fields.filter(f=>f.type.startsWith('number'))){const v=draft[f.key];if(before&&JSON.stringify(v)===JSON.stringify(before[f.key]))continue;if(v==null){if(f.type==='number')return f.label+'不能为空';continue}if(!Number.isFinite(v)||!Number.isInteger(v)||v<0)return f.label+'必须是非负整数';if(f.key==='probability'&&v>100)return '概率必须在 0–100 之间'}return ''};
+const stateV2=state,targetsV2=targets;
+state=function(e){if(!HOST_MODE)return stateV2(e);if(e.disable)return '已关闭';if(e.mode==='condition')return '条件接口未连接';const b=books.find(b=>b.id===e.book);return b?.enabled||b?.sources?.some(s=>['角色','聊天','人格'].includes(s))?'配置已启用 · 待扫描':'未绑定当前上下文'};
+targets=function(){if(!HOST_MODE||!['global','character'].includes(batchScope))return targetsV2();return entries.filter(e=>{const b=books.find(b=>b.id===e.book);return batchScope==='global'?b?.enabled:b?.sources?.includes('角色')})};
+let planContext=null,hostCapabilities={};
+const planScope=()=>JSON.stringify({book,books:books.map(b=>[b.id,b.scope,b.enabled,b.sources]),auto,tags,selected:[...selected].sort(),batchScope,batchAction,targetField,batchValue,batchOther,regexFlags,bulkField,bulkValue,entries});
+const makePlanV2=makePlan,advancedPlanV2=advancedBulkPlan,applyPlanV2=applyPlan,undoV2=undo;
+makePlan=async function(){const scope=planScope();await makePlanV2();if(plan&&scope===planScope())planContext=scope;else plan=null;};
+advancedBulkPlan=function(){advancedPlanV2();planContext=plan?planScope():null};
+applyPlan=function(){if(!plan||planContext!==planScope()){plan=null;say('范围或条目已变化，请重新预览');render();return}if(draft&&draftChanged()&&plan.rows.some(r=>r.uid===editing)){say('当前编辑草稿也在批量范围内，请先暂存条目再重新预览');return}const current=editing;applyPlanV2();if(current&&draft){draft=structuredClone(entries.find(e=>e.uid===current));editorOrigin=JSON.stringify(draft);render()}};
+undo=function(){if(draft&&draftChanged()){say('请先暂存当前条目，或放弃编辑后再撤销');return}undoV2();if(draft){draft=structuredClone(entries.find(e=>e.uid===editing));if(!draft){editing=null;view='entries'}editorOrigin=JSON.stringify(draft);render()}};
+function hostSnapshot(){return {version:hostVersion,books,entries,tags,globalSettings,auto}}
+function hasUnsaved(){if(HOST_MODE&&!hostReady)return false;return HOST_MODE?hostStateBaseline!==JSON.stringify(hostSnapshot())||!!(draft&&draftChanged()):dirty||!!(draft&&draftChanged())}
+function hostCall(method,payload){if(!hostPort)return Promise.reject(Error('尚未连接宿主'));const id=++hostSeq;return new Promise((resolve,reject)=>{hostRequests.set(id,{resolve,reject});hostPort.postMessage({id,method,payload})})}
+function notifyHost(){if(hostPort)hostPort.postMessage({method:'state',payload:{dirty:hasUnsaved(),busy:hostBusy}})}
+function setHostData(data){const currentBookName=books.find(b=>b.id===book)?.name;hostCapabilities=data.capabilities??{};hostVersion=data.version;books=data.books;entries=data.entries;tags=data.tags;globalSettings=data.globalSettings;bindings=data.bindings;auto=data.auto;book=books.find(b=>b.name===currentBookName)?.id??books[0]?.id??'';selected.clear();draft=null;editing=null;history=[];plan=null;dirty=false;hostReady=true;if(globalSettings.pin)consoleOpen=true;collectTags();hostStateBaseline=JSON.stringify(hostSnapshot());notifyHost()}
+async function refreshHost(){if(!HOST_MODE){render();say('已刷新样稿');return}if(hasUnsaved()){hostError='还有未保存的修改。请先保存，或导出草稿后选择放弃并重新载入。';render();return}await reloadHost(false)}
+async function reloadHost(discard){if(hostBusy)return;if(discard){sheet={type:'reloadHost'};renderSheet();return}hostBusy=true;hostError='';render();try{setHostData(await hostCall('load'));hostSaved='已读取宿主世界书'}catch(e){hostError=e.message}finally{hostBusy=false;render()}}
+async function confirmReload(){sheet=null;hostStateBaseline=JSON.stringify(hostSnapshot());draft=null;editing=null;view='entries';await reloadHost(false)}
+async function saveHost(){if(!HOST_MODE){say('样稿内已暂存；正式版统一保存到宿主');return}if(hostBusy||!hostReady)return;if(draft&&!commitDraft())return;hostBusy=true;hostError='';hostSaved='';render();notifyHost();try{const result=await hostCall('save',structuredClone(hostSnapshot()));const data=await hostCall('load');setHostData(data);view=view==='editor'?'entries':view;hostSaved=`已保存到宿主 · ${result.saved.length} 本世界书更新`;say(hostSaved)}catch(e){hostError=e.message+(e.savedBooks?.length?'\n已完成：'+e.savedBooks.join('、')+'。其余修改仍留在草稿中。':'\n草稿已保留；未收到完整保存确认。')}finally{hostBusy=false;render();notifyHost()}}
+function exportDraft(){syncDraft();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({format:'tisya-worldbook-recovery/1',state:hostSnapshot(),editorDraft:draft},null,2)],{type:'application/json'}));a.download='世界书-未保存草稿.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+async function countTokens(){if(!HOST_MODE){say('正式版调用宿主 Token 计数');return}syncDraft();const text=draft?.content,id=editing,button=$('#token-count');if(button)button.textContent='计数中…';try{const count=await hostCall('tokens',{text});if(editing!==id||draft?.content!==text)return;const current=$('#token-count');if(current)current.textContent=count+' Token · 重新计数';}catch(e){say('Token 计数失败：'+e.message);if(button?.isConnected)button.textContent='重试 Token 计数'}}
+const contentV2=editorContent,advancedV2=editorAdvanced,globalV2=globalPageV2;
+editorContent=function(){return contentV2().replace('Token 计数待接宿主','<button class="text-button" id="token-count" onclick="countTokens()">计算 Token</button>')};
+editorAdvanced=function(){return advancedV2().replace(esc(draft.uid)+' · 原生扩展字段在正式接线时原样保留。',esc(draft.nativeUid??'保存后分配')+' · 原生扩展字段原样保留。')};
+globalPageV2=function(){return `<div class="panel"><h2>排布与注入顺序</h2><label class="checkfield"><input type="checkbox" ${globalSettings.layoutOrder?'checked':''} ${HOST_MODE&&!hostCapabilities.promptOrder&&!globalSettings.layoutOrder?'disabled':''} onchange="remember();globalSettings.layoutOrder=this.checked;render()">按队列顺序扫描与注入</label><p class="field-help">开启并保存后，全局书与当前角色书按队列从上到下，同书按手动排布；同一注入位置中上方先出现。保留原生 Order，关闭后恢复原生优先策略。聊天／人格书保留各自作用域。</p><p class="field-help">切换或重排可能使原生粘性、冷却等状态重新计算；不同注入位置不合并，概率与预算仍由宿主处理。</p><p class="hint">当前队列：${books.map(b=>esc(b.name)).join(' → ')||'暂无世界书'}</p></div>`+globalV2()};
+async function nativeManage(id=book,action='manage'){if(hasUnsaved()){hostError='请先保存或导出当前草稿，再打开原生管理，以免覆盖同一本书。';render();return}try{await hostCall('native',{id,action});detached=false;consoleOpen=false;render()}catch(e){hostError=e.message;render()}}
+function openConsole(){syncDraft();consoleOpen=true;consoleCollapsed=false;plan=null;if(batchScope==='selected'&&!selected.size)batchScope='book';render()}
+function closeConsole(){consoleOpen=false;consoleCollapsed=false;if(detached){detached=false;hostCall('display','hidden').catch(e=>say(e.message))}render()}
+function toggleConsole(){if(consoleOpen)closeConsole();else openConsole()}
+function floatConsole(){if(!HOST_MODE){say('正式接入后可浮在宿主页下方；这里演示半屏布局');return}consoleOpen=true;consoleCollapsed=false;detached=true;render();hostCall('display','float').catch(e=>say(e.message))}
+function expandWorldbook(){detached=false;consoleOpen=false;render();hostCall('display','full').catch(e=>say(e.message))}
+function leaveWorldbook(){if(hostBusy)return;if(consoleOpen)floatConsole();else hostCall('display','hidden').catch(e=>say(e.message))}
+switchPage=function(v){if(v==='batch'){toggleConsole();return}switchV2(v)};
+say=function(s){if(HOST_MODE)s=s.replaceAll('当前样稿中','工作区草稿中，尚未写入宿主').replaceAll('示例世界书','世界书草稿').replaceAll('样稿修改','草稿修改').replaceAll('当前样稿','当前草稿').replaceAll('已应用','已暂存');sayV2(s);notifyHost()};
+commitDraft=function(){const current=entries.find(e=>e.uid===editing);if(current&&editorOrigin!==null&&JSON.stringify(current)!==editorOrigin){say('此条目已被批量操作修改，请先保留正文并重新打开条目');return false}if(HOST_MODE&&draft?.mode==='condition'&&!draft.disable){say('条件引擎尚未连接，请先关闭该条目再保存接口配置');return false}const unchangedMode=current&&current.mode===draft.mode;const ok=commitV2();if(ok&&HOST_MODE&&unchangedMode){const saved=entries.find(e=>e.uid===editing);for(const k of ['constant','vectorized']){saved[k]=current[k];draft[k]=current[k]}editorOrigin=JSON.stringify(draft)}return ok};
+function hostStatusHTML(){return `<div class="host-status" role="status">${hostError?`<div class="save-error-panel"><div class="save-error">${esc(hostError)}</div><button onclick="exportDraft()">导出草稿</button> <button onclick="reloadHost(true)">放弃并重新载入</button></div>`:''}${hostSaved?`<div class="host-saved-banner">${esc(hostSaved)}</div>`:''}<div class="save-state">${hostBusy?'正在保存／读取，请稍候…':!hostReady?'尚未连接宿主':hasUnsaved()?'有修改尚未写入宿主':'已与宿主同步'}</div></div>`}
+function dockHTML(){return `<section class="console-dock ${consoleCollapsed?'collapsed':''}" role="region" aria-label="世界书半屏操作台"><div class="console-head"><div><h2>世界书操作台 <small>${selected.size?`已选 ${selected.size} 条`:'范围 '+targets().length+' 条'} · 上方页面仍可操作</small></h2></div><div class="flex">${detached?'<button onclick="expandWorldbook()">全屏世界书</button>':`<button title="浮在宿主页下方" onclick="floatConsole()">浮动</button><button aria-label="${consoleCollapsed?'展开':'折叠'}操作台" onclick="consoleCollapsed=!consoleCollapsed;render()">${consoleCollapsed?'展开':'收起'}</button>`}<button aria-label="关闭操作台" onclick="closeConsole()">×</button></div></div>${consoleCollapsed?'':`<div class="console-scroll">${HOST_MODE?hostStatusHTML():''}${batchPageV2()}</div><div class="console-foot"><button ${!history.length||hostBusy?'disabled':''} onclick="undo()">撤销</button><button ${hostBusy?'disabled':''} onclick="exportDraft()">导出草稿</button><button class="primary" ${hostBusy||!hostReady?'disabled':''} onclick="saveHost()">${HOST_MODE?'保存全部':'暂存修改'}</button></div>`}</section>`}
+function reservedBindingsHTML(){return `<div class="panel reserved-bindings bindings"><h2>角色卡联动 <span class="host-readonly">接口预留</span></h2><p class="hint">读取当前绑定，不在这里修改角色卡、聊天或人格资料。</p>${[['primary','角色主书'],['chat','聊天世界书'],['persona','人格世界书']].map(([k,t])=>`<div class="binding-row"><span>${t}</span><select disabled>${bookOptions(bindings[k])}</select></div>`).join('')}<p class="hint">附加书：${bindings.extra.map(id=>esc(books.find(b=>b.id===id)?.name||id)).join('、')||'无'}</p><p class="field-help">角色卡页面接入后复用同一身份与作用域接口。</p></div>`}
+const booksV2=booksPageV2;booksPageV2=function(){let html=booksV2();if(HOST_MODE){const i=html.indexOf('<div class="panel bindings">');html=html.slice(0,i)+reservedBindingsHTML();html=html.replaceAll('改名／归属','重命名…').replaceAll(/onclick="sheet=\{type:'editBook',id:'([^']+)'\};renderSheet\(\)"/g,'onclick="nativeManage(\'$1\',\'rename\')"').replaceAll(/onclick="sheet=\{type:'deleteBook',id:'([^']+)'\};renderSheet\(\)"/g,'onclick="nativeManage(\'$1\',\'delete\')"').replaceAll('>删除</button>','>删除…</button>').replace('>导入</button>','>原生导入…</button>').replace('onclick="sheet={type:\'import\'};renderSheet()"','onclick="nativeManage()"').replaceAll('启用世界书','全局启用世界书').replace('全局与角色并列排布，来源始终清楚。','队列保存为浏览顺序；开关仅控制全局启用，不修改角色绑定。');}return html};
+const booksV3=booksPageV2;booksPageV2=function(){return booksV3().replace('固定面板','固定操作台').replace('remember();globalSettings.pin=this.checked','remember();globalSettings.pin=this.checked;if(this.checked)openConsole();render()')};
+const copyBookV2=copyBook;copyBook=function(id){copyBookV2(id);if(HOST_MODE){const b=books.at(-1);b.enabled=false;b.sources=[];b.scope='未绑定';render()}};
+sheetContent=function(){if(sheet?.type==='reloadHost')return '<h2>放弃未保存修改？</h2><p class="hint">将先完成宿主已有的待保存任务，再读取当前状态；已提交部分不会撤销。当前工作区草稿将丢弃，可先导出保留。</p><div class="sheet-footer"><button onclick="exportDraft()">导出草稿</button><button onclick="closeSheet()">继续编辑</button><button class="danger" onclick="confirmReload()">放弃并载入</button></div>';let html=sheetV2();if(HOST_MODE){html=html.replaceAll('应用到样稿','暂存修改');if(sheet?.type==='newBook')html=html.replace(/<label class="field"><span>归属<\/span>[\s\S]*?<\/label>/,'<input id="book-scope" type="hidden" value="全局"><p class="hint">新书默认未全局启用；角色绑定另行接入。</p>');}return html};
+const exportV2=exportBook;exportBook=async function(id){if(!HOST_MODE)return exportV2(id);if(hasUnsaved()){say('请先保存；未保存内容可用“导出草稿”保留');return}try{const {name,data}=await hostCall('export',{id});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}catch(e){say(e.message)}};
+render=function(){if(view==='batch'){view='entries';consoleOpen=true}renderV2();document.body.classList.toggle('console-open',consoleOpen);document.body.classList.toggle('console-collapsed',consoleOpen&&consoleCollapsed);document.body.classList.toggle('detached-console',detached);$('#nav').innerHTML=[['books','世界书'],['entries','条目'],['batch','操作台'],['global','全局设置']].map(([k,t])=>`<button class="${k==='batch'?consoleOpen?'active':'':view===k?'active':''}" onclick="switchPage('${k}')">${t}</button>`).join('');
+ if(HOST_MODE){document.querySelector('header .caption').innerHTML=`<div class="header-tools"><button class="native-link" onclick="nativeManage()">原生控件</button><button onclick="leaveWorldbook()">${consoleOpen?'浮到宿主页':'收起'}</button></div>`;if(!hostReady)$('#app').innerHTML='<div class="host-loading">正在读取宿主世界书…</div>';$('#app').insertAdjacentHTML('afterbegin',hostStatusHTML());$('#foot').innerHTML=`<div class="foot-inner"><button ${!history.length||hostBusy?'disabled':''} onclick="undo()">撤销</button>${view==='editor'?'<button onclick="saveEntry()">暂存条目</button>':'<button onclick="openConsole()">操作台</button>'}<button class="primary" ${hostBusy||!hostReady?'disabled':''} onclick="saveHost()">保存全部</button></div>`;
+ for(const n of document.querySelectorAll('.hint,.field-help,.help-line')){n.innerHTML=n.innerHTML.replaceAll('本页修改作用于示例。','全局修改暂存，点击“保存全部”后生效。').replaceAll('修改仅保存在本次样稿。条件结果、Token和实际注入状态待接宿主。','修改先暂存，保存后写入宿主。实际注入结果不由编辑器推测。').replaceAll('实际提示词顺序及注入状态待接宿主。',globalSettings.layoutOrder?'已选择队列控制顺序，保存后生效；最终是否激活仍由宿主扫描判定。':'当前保存浏览排布；可在全局设置启用“按队列顺序扫描与注入”。').replaceAll('角色分类标签，与名称前后缀标签互不替代。','角色标签 ID，每行一个；与名称前后缀标签独立。');}
+ for(const b of document.querySelectorAll('[data-native~="WorldInfo:37"]'))b.setAttribute('onclick','refreshHost()');
+ }else document.querySelector('header .caption').innerHTML='半屏操作台<br>示例数据';
+ let dock=$('#console-root');if(!dock){dock=document.createElement('div');dock.id='console-root';document.body.append(dock)}dock.innerHTML=consoleOpen?dockHTML():'';if(['enabled','mode'].includes(batchAction)&&$('#batch-value'))$('#batch-value').value=batchValue;if($('#regex-flags'))$('#regex-flags').value=regexFlags;for(const el of [$('#app'),$('#nav'),$('#console-root'),$('#foot')])if(el)el.classList.toggle('host-busy',hostBusy);notifyHost();
+};
+document.addEventListener('input',()=>{if(HOST_MODE)notifyHost()});document.addEventListener('change',()=>{if(HOST_MODE)notifyHost()});
+window.addEventListener('message',ev=>{if(!HOST_MODE||ev.source!==parent||ev.origin!==location.origin||ev.data?.type!=='tisya-worldbook-connect'||hostPort)return;hostPort=ev.ports[0];if(!hostPort)return;hostPort.onmessage=e=>{const m=e.data;if(m.method==='contextChanged'){if(hasUnsaved()||hostBusy){hostError='角色或聊天已切换。当前草稿保留在原作用域，请先导出草稿，再重新载入。';render()}else void reloadHost(false);return}if(m.method==='refresh'){void reloadHost(false);return}if(m.method==='show'){detached=m.payload==='float';if(detached)consoleOpen=true;render();return}const p=hostRequests.get(m.id);if(!p)return;hostRequests.delete(m.id);if(m.error){const error=Error(m.error);error.savedBooks=m.savedBooks;p.reject(error)}else p.resolve(m.result)};hostPort.start();void reloadHost(false)});
+if(HOST_MODE){books=[];entries=[];tags={prefix:[],suffix:[]};bindings={primary:'',extra:[],chat:'',persona:''};book='';dirty=false;history=[];setTimeout(()=>{if(!hostPort){hostError='宿主连接未建立，请关闭后重新打开世界书。';render()}},15000)}
+render();
+
+</script></body></html>

@@ -1,5 +1,5 @@
 /* Native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.27";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.28";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -586,3 +586,21 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content hr{border-color:#
 #tisya-panel-controls{font-family:TisyaReading,serif;background:#061b17f5;border-bottom-color:#bca56b44}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.range-block-title,.standoutHeader,.title_restorable){background:transparent!important;box-shadow:none!important;border-bottom:1px solid #b5a16d33;color:#d7c48b}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_icon,button:not(.fa-solid)):not(.inline-drawer-toggle){min-height:36px}
+
+/* Play-first navigation: one searchable destination, advanced tools at rest. */
+.tisya-play-menu .tisya-play-intro{margin:6px 0 18px;color:#a6b5a7;font:15px/1.7 TisyaReading,serif}
+.tisya-play-menu .tisya-settings-search{display:flex;align-items:center;gap:12px;border-bottom:1px solid #b9a67644;margin:20px 0;padding:6px 0}
+.tisya-play-menu .tisya-settings-search svg{width:20px;height:20px;flex-shrink:0;color:#c9b680}
+.tisya-play-menu .tisya-settings-search input{min-width:0;width:100%;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;font:16px/1.5 TisyaReading,serif;color:#ddd8bf}
+.tisya-play-menu .tisya-settings-search:focus-within{border-bottom-color:#d1b775}
+.tisya-play-menu .tisya-play-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 24px}
+.tisya-play-menu .tisya-settings-links .tisya-setting-destination{display:flex;align-items:center;gap:12px;text-align:left;min-width:0;margin:0;padding:15px 12px;border:1px solid #b6a16d24;border-radius:12px;background:#02100cb8;box-shadow:none;font:inherit}
+.tisya-play-menu .tisya-setting-destination>svg{width:23px;height:23px;flex:0 0 23px;color:#cbb77e}
+.tisya-play-menu .tisya-setting-destination>svg:last-child{width:12px;flex-basis:12px;opacity:.4;margin-left:auto}
+.tisya-play-menu .tisya-setting-destination span{min-width:0}.tisya-play-menu .tisya-setting-destination strong{display:block;color:#d9c790;font:17px/1.5 TisyaReading,serif;font-weight:400}
+.tisya-play-menu .tisya-setting-destination small,.tisya-play-menu .tisya-settings-section summary small{display:block;color:#8fa497;font:12px/1.6 TisyaReading,serif;margin-top:4px;overflow-wrap:anywhere}
+.tisya-play-menu .tisya-settings-section{background:transparent;border:0;border-top:1px solid #ad9c6730;border-radius:0;margin:0;padding:17px 0}
+.tisya-play-menu .tisya-settings-section summary{display:flex;justify-content:space-between;gap:12px;list-style:none}.tisya-play-menu .tisya-settings-section summary strong{font-weight:400}
+.tisya-play-menu .tisya-settings-section .tisya-settings-links{display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px}.tisya-play-menu [hidden]{display:none!important}
+.tisya-play-menu .tisya-settings-result{color:#a8b99e;font-size:13px}.tisya-play-menu .tisya-version{opacity:.5}
+@media(max-width:380px){.tisya-play-menu .tisya-play-grid{grid-template-columns:1fr}.tisya-play-menu .tisya-setting-destination strong{font-size:16px}}

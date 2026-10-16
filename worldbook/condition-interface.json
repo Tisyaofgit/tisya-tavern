@@ -1,0 +1,19 @@
+{
+  "schema": "tisya.worldbook-condition-proposal/1",
+  "status": "候选契约，待与隔壁条件引擎核对；未接入运行时",
+  "registration": {"providerId": "由条件引擎注册", "contractVersion": "1", "capabilities": ["evaluateBatch", "describeRules"]},
+  "request": {"requestId": "本次生成唯一身份", "contextRevision": "冻结的作用域与状态版本", "entryRefs": [{"bookRef": "稳定世界书映射身份", "uid": "原生条目uid", "ruleRef": "条件集合引用", "ruleVersion": "规则版本"}], "scope": {"characterId": "当前角色", "chatId": "当前会话", "branchId": "当前分支"}, "trigger": "normal|continue|impersonate|swipe|regenerate|quiet", "dryRun": true, "context": "只给声明依赖的只读状态，不默认发送完整资料或联网", "signal": "可取消作业信号"},
+  "response": {"requestId": "必须匹配请求", "contextRevision": "必须匹配快照", "results": [{"bookRef": "请求目标", "uid": "请求目标", "ruleVersion": "请求规则版本", "state": "matched|not_matched|unknown|error", "reasonCode": "可解释状态码", "reason": "供用户查看的简短原因"}]},
+  "policies": [
+    "启用开关与激活方式分离；disable=true一律排除。",
+    "常驻、关键词、向量保留原生语义；条件接口作为明确新增的模式或硬门禁配置，不把已有绿灯改写成未知接口。",
+    "接口模式只在matched且身份/版本/作用域一致时进入原生概率/过滤/预算流程。",
+    "未连接、超时、错误、未知或漏结果均不注入，并显示原因；不能降为常驻、重用上次成功或吞错。",
+    "候选硬门禁在每次请求重新确认；外部激活、递归、粘性、装饰器不得绕过未满足的条件。原有不使用硬门禁的条目保持原行为。",
+    "同一请求同一条目的概率只求值一次；预览、刷新与排序不重新抽签。",
+    "取消/切聊/分支/状态版本变化后丢弃迟到结果；不写回用户条目或状态来凑命中。",
+    "仪表盘区分配置、最近一次扫描结果与最终发出的提示词证据；没有真实结果时不显示已注入。"
+  ],
+  "host_points_observed": ["WORLDINFO_ENTRIES_LOADED", "WORLDINFO_FORCE_ACTIVATE", "WORLDINFO_SCAN_DONE", "getWorldInfoPrompt", "saveWorldInfo(immediately=true)"],
+  "unverified": ["正式条件引擎方法名与版本", "多来源合并和最终注入硬门禁适配", "真实宿主后端事务", "Android"]
+}

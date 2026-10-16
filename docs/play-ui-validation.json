@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0-alpha.31.28",
+  "build_checks": 10,
+  "node_tests": 638,
+  "browser": {
+    "engine": "Chromium 153",
+    "runtime": "production runtime.js and assets",
+    "viewports": [
+      320,
+      430,
+      900
+    ],
+    "checks": [
+      "six visible play destinations",
+      "advanced search on original nodes and collapse restoration",
+      "unique settings actions",
+      "custom language + dialogue save",
+      "no horizontal overflow"
+    ]
+  },
+  "native_preservation": {
+    "extracted_target_host": true,
+    "controls": 906,
+    "drawers": 9,
+    "viewports": [
+      320,
+      430
+    ],
+    "same_nodes_and_parents": true,
+    "limitation": "Host API fixture; optional extracted CSS/assets absent in fixture; no Android or host disk saves"
+  },
+  "prompt_checks": [
+    "complete assembled requests for full/compact/format",
+    "native observed payload unchanged",
+    "plain prose mode",
+    "single @LANG owner",
+    "bilingual off preserves default",
+    "legacy unchanged until explicit language edit"
+  ],
+  "not_tested": [
+    "Android",
+    "real model language quality",
+    "all third-party runtime plugins"
+  ],
+  "scope": "First page only: settings navigation + play preferences. Other native pages remain delegated."
+}

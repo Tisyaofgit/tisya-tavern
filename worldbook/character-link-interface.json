@@ -1,0 +1,22 @@
+{
+  "schema": "tisya.worldbook-character-link/1",
+  "status": "read-only; write integration reserved by user",
+  "implemented": {
+    "read": "createWorldbookConsole().characterLinkInterface.read() returns current primary/extra/chat/persona book names"
+  },
+  "identity": {
+    "character": "getContext().characterId + avatar",
+    "chat": "chatId + groupId + characterId",
+    "book": "native world info name; entry UID is local to each book"
+  },
+  "reserved": [
+    "subscribe to identity and bindings changes",
+    "request a binding change with expected scope revision and explicit user action"
+  ],
+  "rules": [
+    "No character-card writes in this release",
+    "No implied global activation when reading a character book",
+    "Save rejects changes to character/chat during an open draft",
+    "No fabricated success for unimplemented write methods"
+  ]
+}
