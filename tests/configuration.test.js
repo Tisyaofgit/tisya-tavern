@@ -1,3 +1,4 @@
+import {createUserEditHistory} from '../user-revision.js';
 import {contractorMessages} from '../communication.js';
 import {EMOTIONS} from '../emotion-catalog.js';
 const MOODS=EMOTIONS.map(r=>r.name);
@@ -284,4 +285,20 @@ test('display page exposes canonical loading settings and protects unsaved loadi
 test('parent settled and leave reason include a pending cache subpage operation',async()=>{
  const {createChatLoadingController}=await import('../chat-loading.js'),f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div');doc.body.append(container);let finish;
  const ui=mountConfiguration(doc,container,{store:f.store,host:f.host,getSettings:()=>({}),initialTab:'theme',chatLoading:createChatLoadingController({powerUser:{chat_truncation:10},persist:async()=>true,clearCache:()=>new Promise(r=>finish=r)}),onClose(){},onNative(){}});await ui.ready;const root=ui.root.shadowRoot,click=text=>[...root.querySelectorAll('button')].find(n=>n.textContent===text).click();click('首批条数与清理缓存');await ui.settled();click('清理显示缓存');let settled=false;const promise=ui.settled().then(()=>settled=true);await new Promise(r=>setTimeout(r,5));assert.equal(settled,false);assert.equal(ui.requestLeave().allowed,false);assert.match(ui.requestLeave().reason,/处理/);finish();await promise;assert.equal(ui.requestLeave().allowed,true);ui.dispose();await win.happyDOM.abort();
+});
+
+
+test('edited user comparison reaches full native and controlled requests then clears for ordinary send',async()=>{
+ for(const owner of ['native','tisya']){const f=fixture();f.w.context.owner=owner;f.c.chat[0].mes='我留下等他解释。';await f.host.before('swipe');const baseline={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(baseline);f.host.clear();f.host.setUserRevision({messageId:0,previous:'我离开。',current:f.c.chat[0].mes});await f.host.before('swipe');const payload={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(payload);
+ const material=JSON.parse(payload.messages.at(-1).content);assert.deepEqual(material,{kind:'user-rewrite-material',previous:'我离开。',current:f.c.chat[0].mes});assert.equal(JSON.stringify(payload.messages).split('user-rewrite-material').length-1,2);assert.deepEqual(f.host.preview().messages,payload.messages);assert.deepEqual(payload.messages.slice(0,-2),baseline.messages);
+ if(process.env.TISYA_REQUEST_EVIDENCE){fs.mkdirSync(process.env.TISYA_REQUEST_EVIDENCE,{recursive:true});fs.writeFileSync(process.env.TISYA_REQUEST_EVIDENCE+'/'+owner+'-request.json',JSON.stringify({environment:'production createHost, isolated host fixture; no model call',baseline,reroll:payload},null,2));}
+ f.host.clear();await f.host.before('normal');const clean={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean.messages),/user-rewrite-material|我离开/);
+ }
+});
+test('late user edit invalidates comparison before request serialization',async()=>{
+ const f=fixture();f.w.context.owner='native';f.host.setUserRevision({messageId:0,previous:'OLD',current:f.c.chat[0].mes});await f.host.before('swipe');f.c.chat[0].mes='LATE';const payload={messages:[]};await assert.rejects(f.host.payloadReady(payload),/改写依据已变化/);assert.throws(()=>JSON.stringify(payload));f.host.clear();
+});
+
+test('native swipe and regenerate also use the edited user pair, with no leakage into ordinary send after missing end event',async()=>{
+ for(const type of ['swipe','regenerate']){const f=fixture();f.w.context.owner='native';const user=f.c.chat[0],h=createUserEditHistory();h.begin(user);user.mes='本次方向';h.commit(user);f.c.chat.push({mes:'旧角色回复'});await f.host.before(type);const p={messages:[{role:'user',content:user.mes}]};await f.host.payloadReady(p);assert.equal(JSON.parse(p.messages.at(-1).content).previous,'继续');await f.host.before('normal');const clean={messages:[]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean),/user-rewrite-material/);}
 });

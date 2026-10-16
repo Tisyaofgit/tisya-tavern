@@ -1,3 +1,4 @@
+import {createUserEditHistory} from '../user-revision.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {capture} from '../model.js';
@@ -5,13 +6,13 @@ import {revisionParagraphs,makeRevision,validateRevision,revisionMessages,candid
 function fixture(){
  const original={mes:'保留这一段。\n\n改这一段。\n\n也保留。',swipe_id:0,swipes:['保留这一段。\n\n改这一段。\n\n也保留。'],extra:{stat_data:{promise:'旧约定'}},swipe_info:[{extra:{stat_data:{promise:'旧约定'}}}]};
  const c={chatId:'one',chat:[original],onlineStatus:'connected',getCurrentChatId(){return this.chatId;},async saveChat(){}};
- const requests=[],feedback=[],branches=[],archives=[];let output='保留这一段。\n\n新的一段。\n\n也保留。',stopped=false,fail=false,control;
- control=createRevisionController({getContext:()=>c,assertIdle(){},hydrate:async()=>true,canSwipe:()=>true,overswipe:()=>'regenerate',stageFork:async(...args)=>branches.push(args),cancelFork(){},activateFork:async()=>{},branch:async id=>{c.chat=structuredClone(c.chat.slice(0,id+1));c.chatId='branch';return 'branch';},setRevision:r=>requests.push(r),archive:async()=>archives.push(c.chat.at(-1).mes),feedback:async f=>feedback.push(f),swipe:async(_,direction,{forceSwipeId:i})=>{
+ const requests=[],userRequests=[],feedback=[],branches=[],archives=[];let output='保留这一段。\n\n新的一段。\n\n也保留。',stopped=false,fail=false,control;
+ control=createRevisionController({getContext:()=>c,assertIdle(){},hydrate:async()=>true,canSwipe:()=>true,overswipe:()=>'regenerate',stageFork:async(...args)=>branches.push(args),cancelFork(){},activateFork:async()=>{},branch:async id=>{c.chat=structuredClone(c.chat.slice(0,id+1));c.chatId='branch';return 'branch';},setRevision:r=>requests.push(r),setUserRevision:r=>userRequests.push(r),archive:async()=>archives.push(c.chat.at(-1).mes),feedback:async f=>feedback.push(f),swipe:async(_,direction,{forceMesId:id,forceSwipeId:i})=>{
   const m=c.chat.at(-1);m.swipe_info[m.swipe_id]={extra:structuredClone(m.extra)};
-  if(i===m.swipes.length){if(fail)return;m.swipes.push(output);m.swipe_info.push({extra:{stat_data:{promise:'新约定'}}});if(stopped)control.stopped();control.received(0,'swipe');control.ended(true);}
+  if(i===m.swipes.length){if(fail)return;m.swipes.push(output);m.swipe_info.push({extra:{stat_data:{promise:'新约定'}}});if(stopped)control.stopped();control.received(id,'swipe');control.ended(true);}
   m.swipe_id=i;m.mes=m.swipes[i];m.extra=structuredClone(m.swipe_info[i].extra);
  }});
- return {c,control,requests,feedback,branches,archives,setOutput:v=>output=v,setStop:()=>stopped=true,setFail:()=>fail=true,token:()=>capture(c,0)};
+ return {c,control,requests,userRequests,feedback,branches,archives,setOutput:v=>output=v,setStop:()=>stopped=true,setFail:()=>fail=true,token:()=>capture(c,0)};
 }
 test('partial selection preserves fenced paragraphs and exact unchanged bytes',()=>{
  const source='第一段。\n\n```txt\n代码\n\n仍在代码里\n```\n\n尾段。';assert.equal(revisionParagraphs(source).length,3);
@@ -36,3 +37,12 @@ test('ordinary reroll requests a new native candidate without injecting advanced
 test('candidate navigation delegates exact target and does not duplicate native persistence',async()=>{const f=fixture();await f.control.generate(f.token(),null);let saves=0;f.c.saveChat=async()=>{saves++;throw Error('duplicate save');};await f.control.select(f.token(),0);assert.equal(saves,0);assert.equal(f.token().text,f.c.chat[0].swipes[0]);});
 test('native candidate deletion retains other bodies and extras and protects final version',async()=>{const c={chat:[{mes:'B',swipe_id:1,swipes:['A','B','C'],swipe_info:[{extra:{v:1}},{extra:{v:2}},{extra:{v:3}}]}],getCurrentChatId:()=> 'one'};let calls=0;const control=createRevisionController({getContext:()=>c,assertIdle(){},hydrate:async()=>true,deleteSwipe:async(index,id)=>{calls++;const m=c.chat[id];m.swipes.splice(index,1);m.swipe_info.splice(index,1);m.swipe_id=Math.min(index,m.swipes.length-1);m.mes=m.swipes[m.swipe_id];m.extra=m.swipe_info[m.swipe_id].extra;return m.swipe_id;}});await control.remove(capture(c,0),1);assert.deepEqual(c.chat[0].swipes,['A','C']);assert.deepEqual(c.chat[0].extra,{v:3});assert.equal(control.navigating(),false);await control.remove(capture(c,0),1);await assert.rejects(control.remove(capture(c,0),0),/至少保留/);assert.equal(calls,2);});
 test('navigation locks only until native completion and rejects stale unsynchronized body',async()=>{let resolve;const c={chat:[{mes:'A',swipe_id:0,swipes:['A','B']}],getCurrentChatId:()=> 'one'};const control=createRevisionController({getContext:()=>c,assertIdle(){},hydrate:async()=>true,canSwipe:()=>true,swipe:async()=>{await new Promise(r=>resolve=r);c.chat[0].swipe_id=1;}});const run=control.select(capture(c,0),1);while(!resolve)await new Promise(r=>setTimeout(r,0));assert.equal(control.navigating(),true);await assert.rejects(control.select(capture(c,0),1),/正在切换/);resolve();await assert.rejects(run,/正文同步/);assert.equal(control.navigating(),false);});
+
+
+test('reroll after edited user carries only its immediately previous input through a preserved historical branch',async()=>{
+ const f=fixture(),user={is_user:true,mes:'旧输入'},edits=createUserEditHistory();edits.begin(user);user.mes='新的剧情方向';edits.commit(user);f.c.chat.unshift(user);f.c.chat.push({is_user:true,mes:'保留的后文'});
+ const old=f.c.chat,before=structuredClone(old);await f.control.generate(capture(f.c,1),null);assert.deepEqual(old,before);assert.equal(f.c.chat.length,2);assert.equal(f.c.chat[1].swipes.length,2);assert.deepEqual(f.userRequests.filter(Boolean),[{messageId:0,previous:'旧输入',current:'新的剧情方向'}]);assert.equal(f.userRequests.at(-1),null);assert.equal(f.requests.filter(Boolean).length,0);
+});
+test('failed edited-user reroll clears one-shot comparison and keeps original candidate',async()=>{
+ const f=fixture(),u={is_user:true,mes:'A'},h=createUserEditHistory();h.begin(u);u.mes='B';h.commit(u);f.c.chat.unshift(u);f.setFail();await assert.rejects(f.control.generate(capture(f.c,1),null),/生成未完成/);assert.equal(f.userRequests.at(-1),null);assert.equal(f.c.chat[1].swipe_id,0);assert.equal(f.control.active(),null);
+});

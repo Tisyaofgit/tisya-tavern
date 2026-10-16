@@ -81,7 +81,7 @@ export function mountParagraphActions(document,{capture,validate,assertIdle,form
   };
   const visible=longPressSlots(getSettings());
   const ids=more?LONG_PRESS_TOOLS.map(t=>t[0]).filter(id=>id!=='more'&&!visible.includes(id)):visible;
-  for(const id of ids){if(user&&['select','revision','regen','versions'].includes(id))continue;if(id==='read'&&!onRead||id==='message'&&!onMessage||['regen','next','versions','branch','delete','rollback'].includes(id)&&!onAction)continue;const tool=LONG_PRESS_TOOLS.find(t=>t[0]===id);add(tool[1],actions[id],tool[2]);}
+  for(const id of ids){if(user&&['select','revision','versions'].includes(id)||id==='regen'&&(item.token.message.is_system||item.token.message.role==='tool'))continue;if(id==='read'&&!onRead||id==='message'&&!onMessage||['regen','next','versions','branch','delete','rollback'].includes(id)&&!onAction)continue;const tool=LONG_PRESS_TOOLS.find(t=>t[0]===id);add(id==='regen'&&item.token.message.is_user?'重投下一条':tool[1],actions[id],tool[2]);}
   if(more){if(onConfigure)add('配置长按菜单',()=>{finish();return onConfigure(item.token);},'sliders');add('返回',()=>show(item,x,y),'left');}
   const dismiss=add('关闭',finish,'close');document.body.append(current);
   const viewport=win.visualViewport,left=viewport?.offsetLeft??0,top=viewport?.offsetTop??0,width=viewport?.width??win.innerWidth,height=viewport?.height??win.innerHeight;

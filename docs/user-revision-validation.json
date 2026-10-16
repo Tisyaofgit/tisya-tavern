@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0-alpha.31.27",
+  "task": "RT24 用户消息重投与改写对照",
+  "build_checks": 10,
+  "tests": {
+    "passed": 632,
+    "failed": 0
+  },
+  "browser": {
+    "engine": "Chromium 153",
+    "production_runtime": true,
+    "host_fixture": true,
+    "edit_save_reroll_preserves_candidate": true,
+    "ordinary_request_clean": true
+  },
+  "payload": {
+    "native_and_controlled": true,
+    "existing_messages_unchanged": true,
+    "single_use_user_rewrite_material": true
+  },
+  "not_tested": [
+    "Android 实机",
+    "真实模型叙事效果",
+    "真实用户聊天服务器保存"
+  ],
+  "host_source_sha256": "3d12fa1991ee5f76c27630ca459fa9ff80dede081b5a22a398c25964fe4c43eb",
+  "initial_browser_failure": "隔离夹具缺少 character.chat 导致反馈保存目标校验失败；补齐夹具后生产流程通过，原失败记录保留。"
+}

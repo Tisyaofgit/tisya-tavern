@@ -52,3 +52,8 @@ test('round long-press menu directly dispatches message operations and is absent
  for(const [label,id]of [['重骰','regen'],['继续','next'],['创建分支','branch'],['删除本条','delete']]){await f.press(f.root.children[0]);const menu=f.d.querySelector('#tisya-paragraph-menu');const button=[...menu.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===label);assert(button.classList.contains('tisya-orb-button'));assert(button.querySelector('svg'));button.click();await wait();assert.equal(f.d.querySelector('#tisya-paragraph-menu'),null);assert.deepEqual(calls.at(-1),[0,id]);}
  ui.dispose();await f.w.happyDOM.abort();
 });
+
+
+test('user long press has reroll-next without assistant-only paragraph or candidate tools',async()=>{
+ const f=fixture();f.ui.dispose();f.c.chat[0].is_user=true;const calls=[];const ui=mountParagraphActions(f.d,{capture:()=>capture(f.c,0),validate:t=>validate(f.c,t),assertIdle(){},onAction:(t,id)=>calls.push(id),onRevise(){},onEdit(){},holdMs:5});await f.press(f.root.children[0]);const button=f.d.querySelector('[aria-label="重投下一条"]');assert(button);assert.equal(f.d.querySelector('[aria-label="选段修改"]'),null);button.click();await wait();assert.deepEqual(calls,['regen']);ui.dispose();await f.w.happyDOM.abort();
+});
