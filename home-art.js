@@ -19,7 +19,7 @@ export function mountHomeArt(document, container, {gender, playing=true, onError
         function finish(error){window.clearTimeout(timeout);image.onload=null;image.onerror=null;pending.delete(entry);error?reject(error):resolve(image);}
         image.onload=()=>finish(image.naturalWidth!==853||image.naturalHeight!==1844?new Error(`水相素材尺寸不匹配：${name}，请更新完整扩展`):null);image.onerror=()=>finish(new Error(`水相素材缺失：${name}，请更新完整扩展`));image.src=homeAsset(name);
     });
-    const ready=Promise.all([load(`${gender}-water.webp`),load(`${gender}-glint.webp`),load('quiet-water.webp')]).then(([water,glint])=>{
+    const ready=Promise.all([load(`${gender}-water.webp`),load(`${gender}-glint.webp`)]).then(([water,glint])=>{
         if(disposed)return;
         renderer=controller(canvas,{[gender]:water,[gender+'Glint']:glint},{gender});
         renderer.setPlaying(playing);

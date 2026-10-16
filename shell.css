@@ -1,5 +1,5 @@
 /* Tisya 0.2.0-alpha.22 — native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.21";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.22";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
@@ -428,7 +428,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-home-search>.tisya-home-icon{width:18px;height:18px;opacity:.65}
 #tisya-shell .tisya-home-search input{font-family:inherit;font-size:clamp(14px,3cqw,21px);border:0;border-radius:0;background:transparent;padding:9px 0;min-height:44px;outline-offset:4px;color:#ede3c0}
 #tisya-shell .tisya-home-search input::placeholder{color:#aebeb0;opacity:1}
-#tisya-shell .tisya-home-panel{padding:clamp(10px,2.5cqw,21px);border:1px solid #cbbb818c;border-radius:clamp(16px,3cqw,26px);background:linear-gradient(120deg,#06271f8c,#001e17ac);box-shadow:inset 0 0 30px #000e101f;min-width:0;display:flex;flex-direction:column;flex:1;min-height:200px}
+#tisya-shell .tisya-home-panel{padding:clamp(10px,2.5cqw,21px);border:1px solid #cbbb818c;border-radius:clamp(16px,3cqw,26px);background:rgba(0,0,0,.60);box-shadow:inset 0 0 30px #00000026;min-width:0;display:flex;flex-direction:column;flex:1;min-height:200px}
 #tisya-shell .tisya-home-panel>header{margin:0;gap:10px;display:flex;align-items:center}
 #tisya-shell .tisya-home-panel h2{flex:none;font:400 clamp(19px,4.1cqw,31px)/1.5 "TisyaReading","Noto Serif SC",serif;letter-spacing:.12em;color:#eee1b7}
 #tisya-shell .tisya-home-rule{height:1px;background:linear-gradient(90deg,#d4c69490,#d4c69410);flex:1}
@@ -466,3 +466,18 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 
 #tisya-shell .tisya-home-date{font:10px/1.5 var(--tisya-ui);color:#aab095;text-align:right;flex:none;margin-left:3px}
 #tisya-shell .tisya-home-date small{font-size:10px;color:inherit;line-height:1.5}
+
+/* Directory rows: the row opens content; the separate chevron opens its menu. */
+#tisya-shell .tisya-home-role-open{display:flex;align-items:center;gap:clamp(8px,2.4cqw,18px);flex:1;min-width:0;text-align:left;padding:0}
+#tisya-shell .tisya-home-chat-row{display:flex;align-items:stretch;border-bottom:1px solid #c6b17d22;min-width:0}
+#tisya-shell .tisya-home-chat-row .tisya-home-chat{flex:1;min-width:0;border:0}
+#tisya-shell .tisya-home-menu{flex:none;display:flex;align-items:center;justify-content:center;width:34px;padding:4px;min-height:44px}
+#tisya-shell .tisya-home-menu img{width:16px;height:16px}
+#tisya-shell .tisya-home-role-count{min-height:44px;max-width:55px;white-space:normal;border:0;padding:2px}
+#tisya-shell .tisya-home-pin{font-size:10px;color:#d8ba6e;letter-spacing:.1em;font-weight:400}
+#tisya-shell .tisya-home-role-name>.tisya-home-pin{display:block}
+#tisya-shell .tisya-home-portrait{display:block;flex:none;position:relative;width:clamp(48px,14cqw,108px);height:clamp(52px,14cqw,108px);overflow:hidden;border-radius:8px;border:1px solid #cabb8740}
+#tisya-shell [data-directory]{-webkit-touch-callout:none;user-select:none}
+#tisya-shell .tisya-directory-row{display:flex;align-items:stretch;min-width:0;border-bottom:1px solid var(--tisya-line)}
+#tisya-shell .tisya-directory-row>.tisya-chat-row{flex:1;min-width:0;border:0}
+#tisya-shell .tisya-directory-row>.tisya-directory-menu{flex:none;width:44px;border:0;background:none}

@@ -1,3 +1,4 @@
+import {directoryState} from '../home-directory.js';
 import {LONG_PRESS_TOOLS,longPressSlots} from '../paragraph-actions.js';
 import {ACTION_MODES} from '../actions.js';
 import {check,copy,object} from './schema.js';
@@ -7,9 +8,10 @@ const messageTools=['regen','next','msg-read','msg-edit','msg-rollback','msg-del
 export function interfaceSnapshot(source){
  check(object(source)&&object(source.联系人分组),'界面配置损坏，停止助手改写');
  const display=Object.fromEntries(Object.keys(APPEARANCE_OWNERS).map(owner=>[owner,Object.fromEntries(Object.keys(appearanceFields(owner)).map(k=>[k,appearanceOverrides(source,owner)[k]??'__inherit__']))]));
- return {source:copy(source),stamp:JSON.stringify(source),value:{继续用户消息:source.继续用户消息??'',动态效果:source.动态效果??true,显示桌宠:source.显示桌宠??true,行动建议:{写入方式:source.行动建议?.写入方式??'续接输入框'},消息快捷栏:source.消息快捷栏??['regen','next','more'],长按菜单:longPressSlots(source),输入快捷栏:shortcutPreferences(source),联系人分组:copy(source.联系人分组),显示区块:display,...(source.外观方案?{外观方案:copy(source.外观方案)}:{})},choices:{appearance:Object.fromEntries(Object.keys(APPEARANCE_OWNERS).map(owner=>[owner,{name:APPEARANCE_OWNERS[owner],fields:appearanceFields(owner),effective:appearanceValues(source,owner)}])),inherit:'__inherit__ 表示移除外观覆盖并继承',messageTools,longPressTools:LONG_PRESS_TOOLS,inputSlots:'7 个位置；null 表示收起；更多由界面保留',actionModes:ACTION_MODES.map(x=>x.label)}};
+ return {source:copy(source),stamp:JSON.stringify(source),value:{继续用户消息:source.继续用户消息??'',动态效果:source.动态效果??true,显示桌宠:source.显示桌宠??true,行动建议:{写入方式:source.行动建议?.写入方式??'续接输入框'},消息快捷栏:source.消息快捷栏??['regen','next','more'],长按菜单:longPressSlots(source),输入快捷栏:shortcutPreferences(source),联系人分组:copy(source.联系人分组),会话目录:copy(directoryState(source)),显示区块:display,...(source.外观方案?{外观方案:copy(source.外观方案)}:{})},choices:{appearance:Object.fromEntries(Object.keys(APPEARANCE_OWNERS).map(owner=>[owner,{name:APPEARANCE_OWNERS[owner],fields:appearanceFields(owner),effective:appearanceValues(source,owner)}])),inherit:'__inherit__ 表示移除外观覆盖并继承',messageTools,longPressTools:LONG_PRESS_TOOLS,inputSlots:'7 个位置；null 表示收起；更多由界面保留',actionModes:ACTION_MODES.map(x=>x.label)}};
 }
 export function validateInterfaceSettings(value){
+ directoryState(value);
  check(object(value)&&object(value.联系人分组)&&Object.values(value.联系人分组).every(v=>typeof v==='string'),'联系人分组配置无效');
  for(const k of ['动态效果','显示桌宠'])if(value[k]!==undefined)check(typeof value[k]==='boolean','界面开关无效：'+k);
  if(value.继续用户消息!==undefined)check(typeof value.继续用户消息==='string','继续消息必须为文本');

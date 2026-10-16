@@ -1,13 +1,15 @@
 {
   "name": "tisya-tavern",
-  "version": "0.2.0-alpha.31.21",
+  "version": "0.2.0-alpha.31.22",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node --test tests/*.test.js",
-    "build:reader": "node tools/build-reader.mjs"
+    "test": "node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node --test tests/*.test.js",
+    "build:reader": "node tools/build-reader.mjs",
+    "build:extension": "node tools/build-extension.mjs"
   },
   "devDependencies": {
+    "esbuild": "0.25.12",
     "fake-indexeddb": "^6.2.4",
     "happy-dom": "20.14.5",
     "yaml": "2.8.3"

@@ -1,11 +1,11 @@
 {
   "display_name": "缇斯亚 · 月潮",
-  "version": "0.2.0-alpha.31.21",
+  "version": "0.2.0-alpha.31.22",
   "author": "Tisya Project",
   "loading_order": 100,
   "requires": [],
   "optional": [],
-  "js": "index.js",
+  "js": "runtime.js",
   "css": "shell.css",
   "hooks": {
     "chatSurface": "registerChatSurface"
