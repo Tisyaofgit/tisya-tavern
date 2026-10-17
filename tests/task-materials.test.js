@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TASK_MATERIALS,selectTaskMaterials} from '../tables/task-materials.js';
 import {taskRegistry} from '../tables/task-registry.js';
-import {archivalText} from '../tables/ledger.js';
+import {archivalText,historyEvidence} from '../tables/ledger.js';
 const raw='<reply><body>门开了。</body><next>AUDIT_ONLY</next><extra>AUTHOR_ONLY</extra><status>STATUS_ONLY</status><memory>SUMMARY_ONLY</memory></reply>';
 test('every registered task declares its material selection and archive never receives auxiliary blocks',()=>{
  for(const d of taskRegistry.definitions)assert(d.materials,d.task);
  const input={sourceCardRaw:{fields:{description:'CARD_ONLY'}},sourceBooks:[{content:'BOOK_ONLY'}],sourceHistory:[{role:'assistant',text:raw},{role:'user',text:'USER_ONLY'}],archiveSource:{key:'stable-original-hash',text:raw},styleRules:[{pattern:'原句禁词'}],nativeState:{value:0},eventResults:[{value:false}]},before=structuredClone(input);
  for(const task of ['tableArchive','historyImport','objectArchive']){const result=selectTaskMaterials(TASK_MATERIALS[task],input),text=JSON.stringify(result);assert.equal(result.archiveSource.text,'门开了。');assert.equal(result.archiveSource.key,'stable-original-hash');assert.doesNotMatch(text,/AUDIT_ONLY|AUTHOR_ONLY|STATUS_ONLY|SUMMARY_ONLY|原句禁词/);assert.deepEqual(result.eventResults,[{value:false}]);}
+ assert.deepEqual(selectTaskMaterials(TASK_MATERIALS.plotAdvance,input).styleRules,input.styleRules);
  assert.deepEqual(input,before);
  const preference=selectTaskMaterials(TASK_MATERIALS.preferenceAnalysis,input);assert.deepEqual(preference.sourceHistory,[{role:'user',text:'USER_ONLY'}]);assert.equal(preference.archiveSource,undefined);assert.equal(preference.sourceCardRaw,undefined);
  const native=selectTaskMaterials(TASK_MATERIALS.nativeFill,input);assert.deepEqual(native.nativeState,{value:0});assert.equal(native.sourceHistory,undefined);assert.equal(native.sourceBooks,undefined);
@@ -15,4 +16,10 @@ test('every registered task declares its material selection and archive never re
 });
 test('malformed structured replies never fall back to whole-reply evidence',()=>{
  for(const text of ['<reply><extra>非剧情</extra></reply>','<reply><body>截断','<reply><body>一</body><body>二</body></reply>'])assert.throws(()=>archivalText(text),/唯一完整正文区/);
+});
+
+test('manual history rejects truncated wrappers and auxiliary fragments without losing valid interleaved prose',()=>{
+ for(const text of ['<reply><body>正文</body><extra>未闭合', '<reply><body>正文</body>', '<body>一</body><body>二</body>', '<extra>非剧情', '<reply><body>正文</body></reply><reply><body>截断'])assert.throws(()=>historyEvidence(text),/未回退/);
+ assert.equal(historyEvidence('用户甲\n<reply><body>第一幕</body><extra>秘密</extra></reply>\n用户乙\n<reply><body>第二幕</body></reply>'),'用户甲\n第一幕\n用户乙\n第二幕');
+ assert.equal(historyEvidence('<body>正文</body><extra>辅助</extra>'),'正文');
 });

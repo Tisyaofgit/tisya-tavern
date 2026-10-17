@@ -3,7 +3,7 @@
   "files": {
     "src/narrative.cjs": "ac855420cb18bd96d82b3e25087e6b5549fd65412c2529efc4006d52103cdff9",
     "src/narrative-settings.cjs": "66d74be4c0f9c58e2af443f897d4d8f6fc32dbc6e0f6328373e03c9244185f5d",
-    "src/tisya-protocol.cjs": "320b433523c295d1660181cc8cdf147b87d9469d9f031d91ca4dba96327717db",
+    "src/tisya-protocol.cjs": "ff6e7dabcf4cef829add1d8c0494defa70583e6859383720e8d3f00b0efda0e5",
     "src/settings-injection.cjs": "b68395b92b16c8de56fd195d37ba66d4f1aabd562efcfe51d2d5f0ee4927c068",
     "src/unified-settings.cjs": "cf694c89f24bb5a0f0ccbe17cbcc8cbe1d5c2e09a2968517a5bd3caff6b1cccf",
     "src/unified-settings-style.json": "5f52c0cb0ddfe186e15943b0ab38a588b3b87e01b8ea375b2c1a6ec22fd528af",
@@ -50,7 +50,7 @@
   "localPatches": [
     {
       "id": "W55-prompt-semantics",
-      "reason": "User-authorized full preset review: dependency order and live author-note consumer; original bytes retained at parent Git commit 4c933df5be830e503dca748951c436ae07b1966e",
+      "reason": "User-authorized full preset review: dependency order and live author-note consumer; original bytes retained at parent Git commit 4c933df5be830e503dca748951c436ae07b1966e; W56 records resolved option clauses once for the shared preference layer without changing source semantics.",
       "files": [
         {
           "path": "src/narrative-settings.cjs",
@@ -60,7 +60,7 @@
         {
           "path": "src/tisya-protocol.cjs",
           "upstream_sha256": "1a900dcfce448c325e067b2668d41da2e096cb1ecbfc01213e3bd067dc6981ea",
-          "sha256": "320b433523c295d1660181cc8cdf147b87d9469d9f031d91ca4dba96327717db"
+          "sha256": "ff6e7dabcf4cef829add1d8c0494defa70583e6859383720e8d3f00b0efda0e5"
         },
         {
           "path": "src/narrative-data.cjs",

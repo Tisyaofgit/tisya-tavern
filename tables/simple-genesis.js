@@ -4,7 +4,7 @@ import {formSections,formTextFields,serializeFormSection} from './foundation/for
 // A model fills business forms; the host owns definitions, identities and application order.
 import {prepareCompactFill,parseCompactFill} from './compact-fill.js';
 import {foundationTemplatePlan} from './foundation-templates.js';
-import {simpleFillMessages} from './simple-fill-messages.js';
+import {simpleFillMessages,simpleTaskConstraints} from './simple-fill-messages.js';
 import {check,copy,object} from './schema.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 
@@ -32,6 +32,7 @@ export function prepareSimpleGenesis(input){
  const modelInput=allowedForms(compactPlan,creationOnly);
  const messages=simpleFillMessages({task:'templateInit',input:{...captured,compactFill:{contract:compactPlan.contract,modelInput,modelState:compactPlan.modelState}}});
  messages[0].content=[
+  '【本次适用偏好与约束】\n'+simpleTaskConstraints(captured).join('\n\n'),
   '根据本次设计要求填写创世草稿：人物、物品、地点、组织、规则及其有依据的基础设定。'+(creationOnly?'本次仅新建基础档案，不修改已有档案，不创建或改变当前开局进度。':'同时可填写用户要求或新设计明确设定的开局场景、状态、关系、归属、认知、事务与线索。'),
   '已有材料里的事实保留原意、限定、数量、因果与否定。允许围绕用户要求提出新设计；新内容先写在独立的设计说明里，再把具体内容填到相应格。设计说明不是已经发生的历史。',
   '来源依据须逐字摘自用户要求、原卡资料或某一条设计说明中的连续原句。不能拼接几处文字、改写原句后当作证据，也不能用新设计冒充旧历史。',

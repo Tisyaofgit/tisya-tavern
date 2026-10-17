@@ -10,7 +10,7 @@ export const TASK_MATERIALS=Object.freeze({
  tableArchive:{archive:true,history:'body',user:true},
  objectArchive:{definitions:true,archive:true,history:'body',user:true},
  preferenceAnalysis:{history:'user'},
- plotAdvance:{},
+ plotAdvance:{style:true},
  historyImport:{archive:true,history:'body',import:true,user:true},
  tableGenesis:{definitions:true,history:'body',user:true},
 });
@@ -18,7 +18,7 @@ export function selectTaskMaterials(policy,input){
  if(!policy)throw Error('任务没有登记输入区块');
  const out=structuredClone(input);
  // Prose bans are not permissions to rewrite quotations or factual fields.
- delete out.styleRules;
+ if(!policy.style)delete out.styleRules;
  if(!policy.definitions)for(const key of ['sourceCard','sourceCardRaw','sourceBooks'])delete out[key];
  if(!policy.user)delete out.userSource;
  if(!policy.archive)delete out.archiveSource;

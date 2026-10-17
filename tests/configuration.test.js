@@ -367,3 +367,13 @@ test('actual assembled request injects one preference layer before preprocessing
   const compiled=compileNarrative(f.c,f.source,MOODS);assert.match(compiled.rest.entries.tisya_registry,/@F.02/);assert.doesNotMatch(compiled.rest.entries.tisya_registry,/@F.10 LANG_BAN/);
  }
 });
+
+test('selected actor and enhancement constraints live once in preferences across all workflow detail levels',()=>{
+ const f=fixture(),m=f.w.modes.narrative;
+ for(const detail of ['full','compact','format']){
+  m.workflowDetail=detail;const c=compileNarrative(f.c,f.source,MOODS),e=c.rest.entries,prefs=e.tisya_material_rule_material,inner=e.tisya_inner_chain;
+  const selected=Object.values(c.resolvedPreferences).filter(value=>prefs.includes(value));assert(selected.length>0);
+  for(const value of selected){assert.equal(prefs.split(value).length-1,1);assert(!inner.includes(value),detail+': '+value);}
+  assert.doesNotMatch(inner,/中心化：|行动难度：|常规难度；|perform targeted cliché review;|删除套话、/);
+ }
+});

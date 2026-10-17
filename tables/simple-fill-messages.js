@@ -111,7 +111,7 @@ function retryFeedback(input){
 
 // Shared business constraints only; no source replacement or host operation metadata.
 export function simpleTaskConstraints(input){
- const constraints=[];
+ const constraints=['表达偏好与禁词仅约束可自由措辞的说明，不改引用原句、名称、数值或既定字段；确有无法兼容的明确要求时列入待处理，不擅改资料或跳过必要事实。'];
  if(input.explicitRules)constraints.push(block('用户明确要求',show(input.explicitRules)));
  for(const rule of input.styleRules??[])if(rule.enabled!==false)constraints.push(block('表达要求'+(rule.name?' · '+rule.name:''),[text(rule.pattern),text(rule.instruction)].filter(Boolean).join('\n')));
  for(const preference of input.preferences??[])if(preference.values){const {作用域,...values}=preference.values;constraints.push(block('已确认的适用偏好',JSON.stringify(values)));if(作用域)constraints.push('适用范围已由当前会话核对：'+(作用域.全局?'全局':Object.keys(作用域).filter(k=>k!=='全局').join('、')||'当前会话')+'。');}

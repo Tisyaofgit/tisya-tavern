@@ -95,3 +95,8 @@ test('unknown bare host identifiers in reference failures become related records
 test('shared task constraints preserve business rules without expanding source macros or exposing scope ids',()=>{
  const input={explicitRules:['按 {{user}} 的明确要求'],styleRules:[{name:'具体',instruction:'保留事实力度',enabled:true},{instruction:'SECRET_DISABLED',enabled:false}],preferences:[{id:'SECRET_PREF_ID',values:{名称:'短句',内容:'表达简洁',作用域:{世界:['SECRET_SCOPE_ID']}}}],rulePolicy:{decisions:[{action:'keep',original:[{sourceId:'SECRET_SOURCE_ID',quote:'确认保留的原句'}]}]}};const before=structuredClone(input),parts=simpleTaskConstraints(input),all=parts.join('\n\n');assert(Array.isArray(parts));for(const expected of ['{{user}}','保留事实力度','表达简洁','确认保留的原句'])assert(all.includes(expected));assert(!all.includes('SECRET_'));assert.deepEqual(input,before);
 });
+
+test('form preferences cannot rewrite verbatim evidence, names or factual fields',()=>{
+ const rules=simpleTaskConstraints({explicitRules:['禁止使用雨字'],preferences:[{values:{名称:'用词限制',内容:'不写雨字'}}]}).join('\n');
+ assert.match(rules,/表达偏好与禁词仅约束可自由措辞的说明/);assert.match(rules,/不改引用原句、名称、数值或既定字段/);assert.match(rules,/列入待处理/);assert.match(rules,/禁止使用雨字/);
+});

@@ -79,10 +79,11 @@ export function condenseWorkflow(text,c,mode,actor,detail){
  add('正文组织',r.C02.split('场外的缇斯亚')[0]+join(['C05','C06','C09'])+'依已发生事件展开动作、对白和过程，完成完整自然段落。');
  add('成稿总检','复核草稿的身份、事实、知情、授权、篇幅及输出格式，修正后一次交付；只展示结论。');
  const activeFeatures={角色自主:c.checks.initiative,防绝望:c.checks.resilience,防神化:c.checks.regard,防八股:c.checks.cliche,防名词堆砌:c.checks.plain_language,文风鲜活:c.checks.vivid,角色鲜活:c.checks.voice};
- const features=Object.entries(featureRules).filter(([name])=>activeFeatures[name]).map(([,value])=>value);
+ const features=Object.entries(featureRules).filter(([name])=>activeFeatures[name]).map(([name,value])=>{c.resolvedPreferences['FEATURE.'+name]=value;return value;});
  const auth=join(['A01','A02','A03','A04','A05','B01','B02','B03','B04','B05','B06']);
  const start='[INNER]\n@USE [REGISTRY]\n@INPUT actual current input and supplied materials;source knowledge and public-release boundaries remain binding\n@AUTH '+auth+'\n';
  const actorRules='中心化：'+actor.中心化+'；行动难度：'+actor.难度+'，不改动既定事实与规则。';
+ c.resolvedPreferences.ACTOR=actorRules;
  if(detail==='compact'){
   const workflow='[WORKFLOW]\n'+[...lines,...features,actorRules].join('\n')+'\n@RESULT '+conclusions+'\n@DONE WORKFLOW after applicable work is complete\n[/WORKFLOW]\n';
   return start+workflow+remap(extract(text,'C.2')+'\n'+extract(text,'D'))+'\n[/INNER]\n'+extract(text,'DELIVER');

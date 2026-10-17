@@ -138,22 +138,29 @@ export function dueChecks(view,chain){
 }
 
 const withoutAuthorNote=text=>String(text??'').replace(/<aside\b[^>]*\bdata-tisya-author-note(?:=[\"'][^\"']*[\"'])?[^>]*>[\s\S]*?<\/aside\s*>/gi,'');
-export function archivalText(text){
- text=withoutAuthorNote(text);const bodies=[...text.matchAll(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/gi)];if(/<\/?(?:reply|body)(?:\s|>)/i.test(text))check(bodies.length===1&&(text.match(/<body(?:\s[^>]*)?>/gi)??[]).length===1,'结构化回复缺少唯一完整正文区，未回退到整篇归档');let prose=bodies.length?bodies[0][1]:text;
- const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
- // Nested control blocks can appear inside a body as well; neither path may
- // turn old summaries, task labels or native commands into narrative evidence.
- let prior;do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
- return prose.replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
+const auxiliaryBlock=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+const auxiliaryTag=/<\/?(?:task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s|>)/i;
+function stripAuxiliary(text){
+ let prior;do{prior=text;text=text.replace(auxiliaryBlock,'');}while(prior!==text);
+ check(!auxiliaryTag.test(text),'历史含未闭合或不配对的辅助区块，未回退到整篇归档');return text.trim();
 }
-// Handwritten history can contain several complete replies plus user prose
-// between them. Preserve all body segments; the single-reply reader above is
-// deliberately not applied to the entire concatenation.
+export function archivalText(text){
+ text=withoutAuthorNote(text);const structuredReply=/<\/?reply(?:\s|>)/i.test(text);
+ if(/<\/?reply(?:\s|>)/i.test(text)){
+  const replies=[...text.matchAll(/<reply(?:\s[^>]*)?>([\s\S]*?)<\/reply\s*>/gi)];
+  check(replies.length===1&&(text.match(/<\/?reply(?:\s[^>]*)?>/gi)??[]).length===2,'结构化回复缺少唯一完整正文区，未回退到整篇归档');text=replies[0][1];
+ }
+ const bodies=[...text.matchAll(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body\s*>/gi)];
+ if(structuredReply||/<\/?body(?:\s|>)/i.test(text))check(bodies.length===1&&(text.match(/<\/?body(?:\s[^>]*)?>/gi)??[]).length===2,'结构化回复缺少唯一完整正文区，未回退到整篇归档');
+ return stripAuxiliary(bodies.length?bodies[0][1]:text);
+}
+// Handwritten history preserves complete replies and interleaved user prose.
+// Any leftover structural marker is an error, never whole-reply evidence.
 export function historyEvidence(text){
- let prose=withoutAuthorNote(text).replace(/<reply(?:\s[^>]*)?>[\s\S]*?<\/reply\s*>/gi,reply=>archivalText(reply)),prior;
- const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
- do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
- return prose.replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();
+ text=withoutAuthorNote(text);const parts=[];let at=0;
+ const plain=part=>{check(!/<\/?reply(?:\s|>)/i.test(part),'历史含未闭合或不配对的回复，未回退到整篇归档');return archivalText(part);};
+ for(const match of text.matchAll(/<reply(?:\s[^>]*)?>[\s\S]*?<\/reply\s*>/gi)){parts.push(plain(text.slice(at,match.index)),archivalText(match[0]));at=match.index+match[0].length;}
+ parts.push(plain(text.slice(at)));return parts.filter(Boolean).join('\n').trim();
 }
 // A bad independent record must not discard valid records or mark the floor complete.
 export function prepareRecoverable(view,proposal,options){

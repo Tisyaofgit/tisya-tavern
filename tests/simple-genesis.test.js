@@ -99,3 +99,9 @@ test('raw card fields and active book entries retain separate boundaries and ina
  const description='甲是一名守卫。',personality='甲十分谨慎。',book='北门用木材建造。',p=setup({sourceCard:description+'\n\n'+personality,sourceCardRaw:{fields:{description,personality,mes_example:'示例中甲已离城。'},entries:[{content:book}],inactiveEntries:[{content:'停用旧设定。'}]},sourceBooks:[{enabled:false,content:'关闭书的旧设定。'}]});
  assert.throws(()=>parse(p,group(p,'objects','character','甲',{},JSON.stringify(description+'\n\n'+personality))),/连续原句/);assert.throws(()=>parse(p,group(p,'objects','character','甲',{},'示例中甲已离城。')),/连续原句/);assert.throws(()=>parse(p,group(p,'objects','character','甲',{},'关闭书的旧设定。')),/连续原句/);assert.equal(parse(p,group(p,'objects','place','北门',{},book)).artifacts.base.changes[0].evidence,book);
 });
+
+test('genesis preserves applicable preferences before its specialist instructions',()=>{
+ const plan=setup({explicitRules:['保留用户指定的用词'],preferences:[{values:{名称:'简洁',内容:'说明简洁'}}]});
+ const first=plan.messages[0].content;assert(first.indexOf('本次适用偏好与约束')<first.indexOf('根据本次设计要求'));
+ assert.equal(first.split('保留用户指定的用词').length-1,1);assert.match(first,/不改引用原句、名称、数值或既定字段/);assert.match(first,/说明简洁/);
+});

@@ -5,7 +5,7 @@ import {addSlotRouting} from '../tables/modes.js';
 import {renderProtocol} from '../settings-core.js';
 import {selectWorkflow,condenseWorkflow} from './workflow.js';
 import {applyWireContract} from './wire-contract.js';
-import {prepareInitiative,applyInitiative} from './initiative.js';
+import {prepareInitiative,applyInitiative,initiativeRule} from './initiative.js';
 import {KEY,registry,worldKey,defaultWorld,emptyConfig,compileSelected,validateConfig,workflowDetail} from './core.js';
 export function modularSource(source){return source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));}
 export function currentConfiguration(context,legacy={}){const d=context.extensionSettings[KEY]===undefined?emptyConfig():validateConfig(context.extensionSettings[KEY]);return {data:d,world:d.worlds[worldKey(context)]??defaultWorld(typeof legacy==='function'?legacy():legacy)};}
@@ -26,6 +26,7 @@ export function refineCompiled(c,{data,world},source){
  if(detail!=='full')entries.tisya_inner_chain=condenseWorkflow(entries.tisya_inner_chain,c,m,actor,detail);
  entries.tisya_inner_chain=deduplicateLanguageDelivery(entries.tisya_inner_chain,c);
  entries.tisya_inner_chain=applyInitiative(entries.tisya_inner_chain,initiative,detail);
+ if(initiative)c.resolvedPreferences.INITIATIVE=initiativeRule(initiative);
  entries.tisya_internal_login=entries.tisya_internal_login.replace('narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;utility:T.1→D.4;then','narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;then');
  if(detail!=='full')entries.tisya_internal_login=entries.tisya_internal_login.replace(/^@FLOW .*$/m,'@FLOW narrative:'+(detail==='compact'?'WORKFLOW→C.2→D.1..D.4':'C.2→INNER_END')+'→COMMIT.READY→PREPARE_STEP');
  c.workflowDetail=detail;if(world.tables?.enabled&&world.tables.archive!==false)applyTableArchiveMemory(entries);pruneRegistry(entries,c.checks);c.selectedIds=selected.ids;return c;
