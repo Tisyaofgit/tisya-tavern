@@ -1,6 +1,5 @@
 /* Native shells own geometry; this sheet owns their contents. */
 body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.32";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
-body.tisya-active #bg1{background:linear-gradient(#03251b99,#032319b8),url(assets/water.png) center/cover!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
 body.tisya-active #top-settings-holder>.drawer>.drawer-toggle{visibility:hidden!important;pointer-events:none!important}
@@ -119,7 +118,7 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content.openDrawer{paddin
 /* Moon Tide material layer. Paint only: no viewport, safe-area, IME, text
    sizing or page geometry overrides. Adapted from the original THM 0.2.6. */
 body.tisya-active{--tisya-gold:#e0ca92;--tisya-ink:#e1e8dc;--tisya-muted:#acc3b4;--tisya-line:#cfbd8252;--tisya-glass:radial-gradient(ellipse at 12% 0,#a2c1a925,transparent 68%),linear-gradient(150deg,#2c5144,#0b302b);--tisya-inlay:inset 0 0 0 2px #79907820,inset 0 1px 1px #f3e1b451,inset 0 -2px 5px #001e2466}
-body.tisya-active #bg1{background:linear-gradient(#03251b55,#03231988),url(assets/water.png) center/cover!important}
+body.tisya-active #bg1{background:#041c20!important}
 #tisya-panel-controls button,#tisya-shell button,#tisya-overlay button,.tisya-actions button{background:var(--tisya-glass);border-color:#cdb98475;box-shadow:var(--tisya-inlay);color:var(--tisya-gold)}
 #tisya-panel-controls button:active,#tisya-shell button:active,#tisya-overlay button:active,.tisya-actions button:active{background:linear-gradient(150deg,#345c49,#173e32);box-shadow:inset 0 1px 4px #001c2670}
 #tisya-shell.tisya-page-open .tisya-page{background:linear-gradient(#05281feb,#062a20ed),url(assets/water.png) center/cover}
@@ -213,7 +212,7 @@ body.tisya-active #nonQRFormItems .tisya-nav-button:focus-visible{outline:2px so
 body.tisya-active .tisya-source-concealed{display:none!important}
 body.tisya-active .tisya-projected{background:transparent!important}
 body.tisya-active .tisya-projected .mes_block{min-width:0;overflow:visible}
-body.tisya-active #tisya-chat-effects{position:absolute;pointer-events:none;overflow:hidden;z-index:0;opacity:.75}
+body.tisya-active #tisya-chat-effects{position:absolute;pointer-events:none;overflow:hidden;z-index:0;opacity:1}
 body.tisya-active #tisya-chat-effects canvas{display:block;pointer-events:none}
 body.tisya-active #chat{position:relative;z-index:1}
 body.tisya-active .tisya-message-visual{min-width:0;max-width:100%}
@@ -400,7 +399,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 
 /* Approved water homepage v1. Real controls occupy the artwork's clear area. */
 #tisya-shell.tisya-page-open .tisya-page.tisya-home-page{padding:0;background:#03251d;scrollbar-color:#b8a77366 transparent}
-#tisya-shell .tisya-home{position:relative;isolation:isolate;container-type:inline-size;max-width:853px;min-height:100%;margin:0 auto;background:#03251d url(assets/home-v1/quiet-water.webp) top center/100% auto repeat-y;color:#e7ddbb;font-family:"TisyaReading","Noto Serif SC",serif}
+#tisya-shell .tisya-home{position:relative;isolation:isolate;container-type:inline-size;max-width:853px;min-height:100%;margin:0 auto;background:#041c20;color:#e7ddbb;font-family:"TisyaReading","Noto Serif SC",serif}
 #tisya-shell .tisya-home-art{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
 #tisya-shell .tisya-home-water{display:block;position:absolute;top:0;left:0;width:100%;height:auto;pointer-events:none}
 #tisya-shell .tisya-home-body{display:grid;grid-template-columns:24% minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:max(620px,var(--tisya-home-height,100dvh));min-height:620px;padding:0 3.6% max(8px,env(safe-area-inset-bottom,0px)) 0}

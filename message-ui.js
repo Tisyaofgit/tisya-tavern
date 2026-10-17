@@ -1,3 +1,5 @@
+import {mountAtmosphere} from './atmosphere-scene.js';
+import {createBubbleAudio} from './bubble-audio.js';
 import {paragraphInteractionCSS} from './paragraph-actions.js';
 import {preserveNativePanels,captureNativePanelSources} from './native-panels.js';
 import {mountScrollChain} from './scroll-chain.js';
@@ -124,9 +126,25 @@ function mountUserProse(document,container,{source,formatBody,onError,getAppeara
  stamp=key;}refresh();shadow.append(style,body);container.append(host);return {host,refresh,dispose(){host.remove();}};
 }
 export function mountChatEffects(document,{getMotion=()=>true,getDisplay=()=>DISPLAY_DEFAULTS,onError=()=>{}}={}){
- const win=document.defaultView,sheld=document.querySelector('#sheld'),chat=document.querySelector('#chat'),host=document.createElement('div'),canvas=document.createElement('canvas');host.id='tisya-chat-effects';host.setAttribute('aria-hidden','true');host.append(canvas);sheld.prepend(host);let effect=null,alive=true;
+ const win=document.defaultView,sheld=document.querySelector('#sheld'),chat=document.querySelector('#chat');
+ if(document.querySelector('#tisya-chat-effects'))throw Error('聊天背景已挂载');
+ const host=document.createElement('div');host.id='tisya-chat-effects';host.setAttribute('aria-hidden','true');sheld.prepend(host);
+ let effect=null,alive=true,pointer=null;
+ const sound=createBubbleAudio(document,{onError});
+ const covered=()=>sheld.classList.contains('tisya-page-open')||document.body.querySelector('#tisya-shell.tisya-page-open')!==null;
  const resize=()=>{if(!alive)return;const s=sheld.getBoundingClientRect(),c=chat.getBoundingClientRect();Object.assign(host.style,{left:c.left-s.left+'px',top:c.top-s.top+'px',width:c.width+'px',height:c.height+'px'});effect?.resize();};resize();
- try{effect=createWaterMotion({root:host,canvas,assets:visualAssets,manifest:{},onError});effect.setEffects(getDisplay());effect.ready.catch(()=>{});}catch(e){onError(e);}
- let pointer=null;const down=e=>{if(e.button===0&&e.isPrimary!==false)pointer={id:e.pointerId,x:e.clientX,y:e.clientY,time:win.performance.now()};},cancel=()=>{pointer=null;},tap=e=>{if(pointer?.id===e.pointerId&&win.performance.now()-pointer.time<450&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)<9&&getDisplay().点触涟漪&&getMotion()&&!document.getSelection()?.toString()&&!e.composedPath().some(n=>n.matches?.('button,input,textarea,select,a,summary,dialog')))effect?.tap(e.clientX,e.clientY);pointer=null;};chat.addEventListener('pointerdown',down,{passive:true});chat.addEventListener('pointercancel',cancel);chat.addEventListener('scroll',cancel,{passive:true});chat.addEventListener('pointerup',tap,{passive:true});const observer=win.ResizeObserver?new win.ResizeObserver(resize):null;observer?.observe(chat);win.addEventListener('resize',resize);
- const refresh=()=>{effect?.setEffects(getDisplay());effect?.pause(!getMotion()||sheld.classList.contains('tisya-page-open')||document.body.querySelector('#tisya-shell.tisya-page-open')!==null);};refresh();return {refresh,report:()=>effect?.report(),dispose(){alive=false;effect?.dispose();observer?.disconnect();win.removeEventListener('resize',resize);chat.removeEventListener('pointerdown',down);chat.removeEventListener('pointercancel',cancel);chat.removeEventListener('scroll',cancel);chat.removeEventListener('pointerup',tap);host.remove();}};
+ try{effect=mountAtmosphere(document,host,{playing:getMotion()&&!covered(),effects:getDisplay(),onError});}catch(e){onError(e);}
+ const controls='button,input,textarea,select,a,summary,dialog,[role=button],[contenteditable=true],audio,video';
+ const down=e=>{if(e.button===0&&e.isPrimary!==false&&!e.composedPath().some(n=>n.matches?.(controls)))pointer={id:e.pointerId,x:e.clientX,y:e.clientY,time:win.performance.now()};};
+ const cancel=()=>{pointer=null;};
+ const tap=e=>{
+  const eligible=pointer?.id===e.pointerId&&win.performance.now()-pointer.time<450&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)<9&&!document.hidden&&!covered()&&!document.getSelection()?.toString()&&!e.composedPath().some(n=>n.matches?.(controls));pointer=null;
+  if(!eligible)return;const display=getDisplay();
+  if(display.点触涟漪&&getMotion())effect?.tap(e.clientX,e.clientY);
+  if(display.点触音效)void sound.play();
+ };
+ chat.addEventListener('pointerdown',down,{passive:true});chat.addEventListener('pointercancel',cancel);chat.addEventListener('scroll',cancel,{passive:true});chat.addEventListener('pointerup',tap,{passive:true});
+ const observer=win.ResizeObserver?new win.ResizeObserver(resize):null;observer?.observe(chat);win.addEventListener('resize',resize);
+ const refresh=()=>{const display=getDisplay();effect?.setEffects(display);effect?.setPlaying(getMotion()&&!covered());sound.setEnabled(display.点触音效&&!covered());if(covered())cancel();};refresh();
+ return {refresh,report:()=>effect?.report(),dispose(){if(!alive)return;alive=false;effect?.dispose();sound.dispose();observer?.disconnect();win.removeEventListener('resize',resize);chat.removeEventListener('pointerdown',down);chat.removeEventListener('pointercancel',cancel);chat.removeEventListener('scroll',cancel);chat.removeEventListener('pointerup',tap);host.remove();}};
 }
