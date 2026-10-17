@@ -1,3 +1,4 @@
+import {coreSourceContains} from './source-text.js';
 import {check,copy,isObjectType,references,registryIndex,normalized} from './schema.js';
 
 const kinds=['character','item','place','rule','organization'];
@@ -27,21 +28,21 @@ export function coreSelection(view,objectIds,{linkIds=[],growthIds=[],instructio
   source:{format:'tisya.core-selection/1',objects:objects.map(row=>({row:copy(row),kind:coreKind(row,view.registry),growth:growth.filter(x=>growthIds.includes(x.id)&&x.values.主体===row.id).map(copy)})),links:links.filter(x=>linkIds.includes(x.row.id)).map(x=>({row:copy(x.row),members:x.members})),instructions}};
 }
 
-function itemValid(item,basis){check(text(item?.name)&&text(item.value)&&text(item.evidence)&&basis.includes(item.evidence),'基点项缺少本对象的连续原文依据');}
+function itemValid(item,basis){check(text(item?.name)&&text(item.value)&&text(item.evidence)&&coreSourceContains(basis,item.evidence),'基点项缺少本对象的连续原文依据');}
 export function validateBundle(bundle,source,{assignIds=false}={}){
  check(text(bundle?.name)&&Array.isArray(bundle.members)&&Array.isArray(bundle.links),'整组基点草稿格式无效');
  check(equalSet(bundle.members.map(x=>x.sourceObject),source.objects.map(x=>x.row.id)),'基点成员与已选对象不一致');
  const result=copy(bundle);
  for(const member of result.members){
-  const origin=source.objects.find(x=>x.row.id===member.sourceObject),basis=JSON.stringify(origin.row)+'\n'+source.instructions;
+  const origin=source.objects.find(x=>x.row.id===member.sourceObject),basis=[origin.row.values,source.instructions];
   check(text(member.name)&&Array.isArray(member.traits)&&member.traits.length>0&&Array.isArray(member.growth),'每个基点成员须有核心项及成长列表');
   for(const item of member.traits)itemValid(item,basis);
-  for(const item of member.growth){check(origin.growth.length,'未选择携带这个对象的成长');itemValid(item,JSON.stringify(origin.growth)+'\n'+source.instructions);}
+  for(const item of member.growth){check(origin.growth.length,'未选择携带这个对象的成长');itemValid(item,[origin.growth.map(row=>row.values),source.instructions]);}
   for(const item of [...member.traits,...member.growth])if(assignIds)item.id=crypto.randomUUID();
   check(distinct([...member.traits,...member.growth].map(x=>x.id)),'核心项编号缺失或重复');
  }
  check(equalSet(result.links.map(x=>x.sourceRow),source.links.map(x=>x.row.id)),'基点关联与已选关联不一致');
- for(const link of result.links){const origin=source.links.find(x=>x.row.id===link.sourceRow);check(equalSet(link.members,origin.members),'基点关联不能更换对象');itemValid(link,JSON.stringify(origin.row)+'\n'+source.instructions);if(assignIds)link.id=crypto.randomUUID();}
+ for(const link of result.links){const origin=source.links.find(x=>x.row.id===link.sourceRow);check(equalSet(link.members,origin.members),'基点关联不能更换对象');itemValid(link,[origin.row.values,source.instructions]);if(assignIds)link.id=crypto.randomUUID();}
  check(distinct(result.links.map(x=>x.id)),'关联编号缺失或重复');return result;
 }
 
@@ -52,7 +53,8 @@ function expressionAt(op,entry){
  let value=op.values;for(const key of entry.path){check(value&&typeof value==='object'&&Object.hasOwn(value,key),'映射字段不存在：'+entry.path.join('.'));value=value[key];}
  check(typeof value==='string'&&text(entry.expression)&&value.includes(entry.expression),'映射表达必须逐字存在于目标档案字段');
 }
-export function validateCoreMapping(proposal,bundle,book){
+export function validateCoreMapping(proposal,bundle,book,{singleReference=null}={}){
+ check(!singleReference||bundle.members.length===1,'单体映射只允许一个成员');
  const mapping=proposal.coreMapping,base=proposal.artifacts.base.changes;
  check(mapping&&Array.isArray(mapping.members)&&Array.isArray(mapping.links),'缺少逐项基点适配映射');
  check(base.every(op=>op.id.startsWith('new:'))&&proposal.artifacts.initial.changes.length===0,'整组适配只创建新原点；会话持有、知情和关系须另行确认开局');
@@ -60,9 +62,9 @@ export function validateCoreMapping(proposal,bundle,book){
  check(distinct(mapping.members.map(x=>x.object)),'一个原点对象不能混作多个基点成员');
  const objects=new Map(base.filter(op=>op.table==='objects').map(op=>[op.id,op]));
  const ids=new Set(base.map(op=>op.id));for(const op of base){check(['objects','facts'].includes(op.table),'整组适配只能创建原点档案');const row={table:op.table,values:copy(op.values)};if(op.table==='objects')row.values.类型=registryIndex(proposal.artifacts.registry).types.get(normalized(row.values.类型))?.id;check(references(row,proposal.artifacts.registry).every(id=>ids.has(id)),'整组原点不得自动关联当前会话或旧世界的既有记录');check(Array.isArray(op.access?.knowers)&&!op.access.knowers.length,'新原点不自动授予当前人物知情');}
- const prefix=book+' / '+bundle.id+'@'+bundle.version+'/';for(const op of objects.values())if(op.values.核心引用?.startsWith(prefix))check(mapping.members.some(x=>x.object===op.id),'陪衬对象不得冒用基点成员引用');
+ const prefix=singleReference??(book+' / '+bundle.id+'@'+bundle.version+'/');for(const op of objects.values())if(op.values.核心引用?.startsWith(prefix))check(mapping.members.some(x=>x.object===op.id),'陪衬对象不得冒用基点成员引用');
  for(const member of bundle.members){
-  const row=mapping.members.find(x=>x.member===member.sourceObject),op=objects.get(row.object),ref=bundleReference(book,bundle,member);
+  const row=mapping.members.find(x=>x.member===member.sourceObject),op=objects.get(row.object),ref=singleReference??bundleReference(book,bundle,member);
   check(op,'适配成员指向的原点对象不存在');
   const type=registryIndex(proposal.artifacts.registry).types.get(normalized(op.values.类型));
   check(!member.kind||isObjectType(proposal.artifacts.registry,{table:'objects',values:{...op.values,类型:type?.id}},member.kind),'适配成员对象类别不符');

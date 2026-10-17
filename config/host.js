@@ -2,7 +2,6 @@ import {TEXT_TASKS,textTaskPreset,textTaskMessages,validateTaskPreset} from '../
 import {userRevisionMessages,userRevisionMaterial} from '../user-revision.js';
 import {communicationMessages,appendContractorMessages} from '../communication.js';
 import {revisionMessages} from '../revision.js';
-import {archiveInstructions} from '../tables/prompts.js';
 import {runArchiveToolLoop} from './tool-loop.js';
 import {archiveToolBudget} from '../tables/tool-budget.js';
 import {continuityWorld,isTableContinuity} from '../tables/continuity.js';

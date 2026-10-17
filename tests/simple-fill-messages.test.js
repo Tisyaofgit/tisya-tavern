@@ -2,7 +2,7 @@ import {prepareCompactFill} from '../tables/compact-fill.js';
 import {defaultRegistry} from '../tables/schema.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {simpleFillMessages} from '../tables/simple-fill-messages.js';
+import {simpleFillMessages,simpleTaskConstraints} from '../tables/simple-fill-messages.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 const configuration={data:emptyConfig(),world:defaultWorld()};
@@ -57,4 +57,41 @@ test('paired compact path preserves the selected task supplement and expands onl
  const input={compactFill:compact(),archiveSource:{text:'原文{{user}}'}},calls=[];
  const messages=taskMessages({preset:pairedPreset({task:'objectArchive',configuration:custom}),task:'objectArchive',input,selected:'选择说明{{user}}',substitute:s=>{calls.push(s);return s.replaceAll('{{user}}','甲');}});
  assert.deepEqual(calls,['用户任务补充{{user}}','选择说明{{user}}']);const all=joined(messages);assert(all.includes('用户任务补充甲'));assert(all.includes('选择说明甲'));assert(all.includes('原文{{user}}'));
+});
+
+function retryInput(extra={}){
+ const registry=defaultRegistry(),currentRows=[{id:'row-private-77',table:'objects',rev:8,values:{名称:'甲',类型:'character',描述:'补读后实际完整资料。'},access:{readers:[],knowers:[]},source:'source-private-1'}];
+ const input={registry,currentRows,archiveSource:{text:'  本次原文 {{user}}\n原句含"引号"。  '},...extra};const plan=prepareCompactFill('tableArchive',input);input.compactFill={contract:plan.contract,modelInput:plan.modelInput,modelState:plan.modelState};return input;
+}
+test('actual task assembly exposes actionable retry fields without prior operation envelopes or host paths',()=>{
+ const input=retryInput({repair:{error:'字段类型不符：objects.属性.形貌细目.头发.发长；记录版本冲突：row-private-77；expected=2\n at parse (/workspace/private/source.js:4:9)',previous:{changes:[{id:'new:previous-id',expected:0,values:{SECRET_OLD_OPERATION:'不能回传上一份操作对象'}}],schemaChanges:[{id:'SECRET_OLD_SCHEMA'}]},instruction:'保持 discovery ID 与 expected 结构'} }),before=structuredClone(input);
+ const messages=assemble('tableArchive',input),all=joined(messages);assert.equal(messages.length,4);assert.match(all,/本次需修正/);assert.match(all,/形貌细目·头发·发长/);assert.match(all,/字段类型不符/);assert.match(all,/人物／甲/);assert.match(all,/记录已更新/);assert.match(all,/重新填写完整的本次结果/);
+ for(const absent of ['row-private-77','new:previous-id','SECRET_OLD_OPERATION','SECRET_OLD_SCHEMA','discovery','expected','/workspace/private','objects.属性','source.js'])assert(!all.includes(absent),absent);
+ assert(all.includes(input.archiveSource.text));assert.equal(all.split(input.compactFill.contract).length-1,1);assert.deepEqual(input,before);
+});
+test('pending reasons retain business meaning and known record labels while old proposals remain private',()=>{
+ const input=retryInput({pending:['旧楼层不能覆盖更晚的当前状态；请按楼层从早到晚补录',{ids:['row-private-77','new:unknown-record'],reason:'缺少必填字段：对象',proposals:[{id:'SECRET_PREVIOUS_ID',values:{SECRET_PREVIOUS_VALUE:'旧操作不是原料'}}]},{reason:'关联对象不存在：new:unavailable-target',proposal:{schemaChanges:[{kind:'type',id:'SECRET_SCHEMA'}]}}],repair:{error:'本次填写存在待核对项',previous:{pending:['身份尚未明确'],changes:[]}}}),all=joined(assemble('historyImport',input));
+ for(const expected of ['尚待核对的问题','旧楼层不能覆盖更晚的当前状态','缺少必填字段：对象','人物／甲','相关记录','关联对象不存在','身份尚未明确'])assert(all.includes(expected),expected);
+ for(const absent of ['SECRET_','new:unknown-record','new:unavailable-target','schemaChanges','proposals','expected'])assert(!all.includes(absent),absent);
+});
+test('expanded full records are named and available once without replaying the previous answer',()=>{
+ const input=retryInput({readMore:{expandedIds:['row-private-77'],previous:{changes:[{id:'new:old-proposal',values:{描述:'SECRET_PRIOR_GUESS'}}],needsRows:['row-private-77'],pending:['亲属关系仍需核对']},note:'previous expandedIds runtime instruction'}}),all=joined(assemble('objectArchive',input));
+ assert.match(all,/补读结果/);assert.match(all,/全文已经提供.*人物／甲/);assert.match(all,/补读前尚未确认的修改不能直接沿用/);assert.match(all,/补读前提出，请按当前全文重新核对：亲属关系仍需核对/);assert.equal(all.split('补读后实际完整资料。').length-1,1);
+ for(const absent of ['SECRET_PRIOR_GUESS','row-private-77','expandedIds','new:old-proposal'])assert(!all.includes(absent));
+});
+test('missing and still thin read-more records are not falsely announced as full',()=>{
+ const input=retryInput({readMore:{expandedIds:['row-private-77','missing-private-id']}});input.currentRows[0].referenceOnly=true;input.compactFill.modelState[0].仅读取身份=true;const all=joined(assemble('tableArchive',input));
+ assert.match(all,/仍未取得可用全文.*人物／甲；相关记录/);assert(!all.includes('全文已经提供'));assert(!all.includes('missing-private-id'));assert.match(all,/继续列入补读/);
+});
+test('technical-only and body-bearing errors remain visible without copying runtime JSON',()=>{
+ for(const error of ['TypeError: Cannot read properties of undefined at /root/private.js','JSON parse failed with token at expected value']){const all=joined(assemble('tableArchive',retryInput({repair:{error,previous:{changes:[]}}})));assert.match(all,/上次填写.*(?:读取异常|格式无法读取)/);assert(!all.includes('TypeError'));assert(!all.includes('/root/private.js'));assert(!all.includes('expected'));}
+ const all=joined(assemble('tableArchive',retryInput({repair:{error:'来源依据不匹配：{"values":{"SECRET_VALUE":"不应回传"},"expected":6}',previous:{changes:[]}}})));assert(all.includes('来源依据不匹配'));assert(!all.includes('SECRET_VALUE'));assert(!all.includes('不应回传'));assert(!all.includes('expected'));
+});
+
+test('unknown bare host identifiers in reference failures become related records',()=>{
+ const all=joined(assemble('tableArchive',retryInput({repair:{error:'关联对象不存在：opaque-unlisted-77',previous:{changes:[]}}})));assert(all.includes('关联对象不存在：相关记录'));assert(!all.includes('opaque-unlisted-77'));
+});
+
+test('shared task constraints preserve business rules without expanding source macros or exposing scope ids',()=>{
+ const input={explicitRules:['按 {{user}} 的明确要求'],styleRules:[{name:'具体',instruction:'保留事实力度',enabled:true},{instruction:'SECRET_DISABLED',enabled:false}],preferences:[{id:'SECRET_PREF_ID',values:{名称:'短句',内容:'表达简洁',作用域:{世界:['SECRET_SCOPE_ID']}}}],rulePolicy:{decisions:[{action:'keep',original:[{sourceId:'SECRET_SOURCE_ID',quote:'确认保留的原句'}]}]}};const before=structuredClone(input),parts=simpleTaskConstraints(input),all=parts.join('\n\n');assert(Array.isArray(parts));for(const expected of ['{{user}}','保留事实力度','表达简洁','确认保留的原句'])assert(all.includes(expected));assert(!all.includes('SECRET_'));assert.deepEqual(input,before);
 });

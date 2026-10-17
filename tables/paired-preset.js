@@ -17,7 +17,16 @@ export function pairedPreset({task,configuration,archiveProposal=false}){
 }
 export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
  if(preset.task!==task)throw Error('专用预设与任务不匹配');
+ if(input.simpleForm){
+  if(!['tableGenesis','assetAdapt'].includes(task)||!Array.isArray(input.simpleForm.messages)||!input.simpleForm.messages.length)throw Error('极简表格任务无效');
+  const messages=structuredClone(input.simpleForm.messages);
+  if(!messages.every(m=>['system','user'].includes(m.role)&&typeof m.content==='string'))throw Error('极简表格消息无效');
+  const extra=[preset.supplement&&'用户对本任务的补充要求：\n'+substitute(preset.supplement),selected&&'用户选用的补充说明：\n'+substitute(selected)].filter(Boolean);
+  if(extra.length)messages.push({role:'user',content:extra.join('\n\n')});
+  return messages;
+ }
  if(input.compactFill)return simpleFillMessages({task,input,supplement:preset.supplement,selected,substitute});
+ if(['templateInit','objectArchive','historyImport','tableArchive','tableGenesis','assetAdapt'].includes(task))throw Error('此任务需要由档案、创世或基点入口准备可填写的表格，未发送旧格式请求');
  const slots=taskSlots(task,input),messages=[],seen=new Set(),byId=new Map(preset.prompts.map(p=>[p.identifier,p]));
  for(const order of preset.prompt_order[0].order){
   if(seen.has(order.identifier))throw Error('专用预设条目重复：'+order.identifier);seen.add(order.identifier);

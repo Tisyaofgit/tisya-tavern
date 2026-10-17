@@ -1,22 +1,66 @@
-import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {pathToFileURL} from 'node:url';
-const root=path.resolve(import.meta.dirname,'..'),out=path.resolve(process.argv[2]??root+'/../evidence/window5');const mod=n=>import(pathToFileURL(root+'/'+n));
-const {KEY,registry,emptyConfig,defaultWorld,createStore,worldKey}=await mod('config/core.js');const {createHost}=await mod('config/host.js');const {pairedPreset,taskMessages}=await mod('tables/paired-preset.js');const {TABLE_MODES}=await mod('tables/modes.js');const {NARRATIVE:N}=await mod('settings-core.js');const {defaultRegistry}=await mod('tables/schema.js');const {registerLivePreset,isLivePreset}=await mod('narrative-bridge.js');const {registerPresetProtocol}=await mod('preset.js');const {EMOTIONS}=await mod('emotion-catalog.js');
-const preset=JSON.parse(fs.readFileSync(root+'/presets/Tisya-TauriTavern-0.2.0-alpha.13.json'));const data=emptyConfig(),context={chatId:'audit-only',characterId:0,characters:[{avatar:'fixture.png',name:'示例角色',description:'只用于隔离装配',data:{description:'示例定义',personality:'谨慎'}}],chatMetadata:{},chat:[{is_user:true,mes:'设计一名守灯人'}],powerUserSettings:{persona_description:'示例身份'},extensionSettings:{[KEY]:data,connectionManager:{}},chatCompletionSettings:{model:'fixture-only',chat_completion_source:'openai',prompts:[],function_calling:false},getChatCompletionModel:s=>s.model,getRequestHeaders:()=>({}),getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>['r13'],getSelectedPresetName:()=> 'r13',getCompletionPresetByName:()=>preset})};const key=worldKey(context);data.worlds[key]=defaultWorld();data.worlds[key].context.owner='tisya';const source={prompts:structuredClone(preset.prompts),order:structuredClone(preset.prompt_order[0].order)};
-const macros=new Map();context.registerMacro=(n,f)=>macros.set(n,f);context.unregisterMacro=n=>macros.delete(n);context.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,n)=>{assert(macros.has(n),'Missing '+n);return macros.get(n)()});const store=createStore({getContext:()=>context,persist:async()=>true});const moods=EMOTIONS.map(r=>r.name);let sent;
-const host=createHost({getContext:()=>context,getSource:()=>source,getBaseSource:()=>({prompts:[{identifier:'main',content:N.previewSettings(N.suggestions(),{summary:false,directions:[]}).rest.entries.main}]}),getMoods:()=>moods,store,createParameters:async(s,model,type,messages)=>({generate_data:{model,messages,stream:false}})});const live=registerLivePreset(context,()=>source,()=>context,()=>moods);registerPresetProtocol(context,()=>source,()=>{},()=>moods,s=>!isLivePreset(s)||live.execution().prose);context.registerMacro('tisya_config_selected',()=>host.selectedText());
-const originalFetch=globalThis.fetch;globalThis.fetch=async(url,options)=>{assert.equal(url,'/api/backends/chat-completions/generate');sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'{}'},finish_reason:'stop'}]})};};
-const input={goal:'示例角色设计；保留核心',question:'检查示例配置',sourceCardRaw:{fields:{name:'示例卡',description:'定义原文 {{user}} <tag> 0 false null'}},sourceBooks:[],registry:defaultRegistry(),currentRows:[],storage:{ready:false},sourceHistory:[{floor:1,role:'user',text:'仅用于隔离装配'}]};const markers=['[ID]','[TASK.START]','[MATERIALS]','[REGISTRY]','[INNER.LOGIN]','[MODE.ANALYZE]','[COMMIT.READY]','[PREPARE_STEP]'];const results=[];fs.mkdirSync(out+'/requests',{recursive:true});
+// Local neutral-fixture request audit. No real model, private source or canonical storage access.
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {KEY,registry,emptyConfig,defaultWorld,createStore,worldKey} from '../config/core.js';
+import {createHost} from '../config/host.js';
+import {NARRATIVE as N} from '../settings-core.js';
+import {defaultRegistry} from '../tables/schema.js';
+import {prepareCompactFill} from '../tables/compact-fill.js';
+import {prepareSimpleGenesis} from '../tables/simple-genesis.js';
+import {prepareSimpleCore} from '../tables/simple-core.js';
+import {registerLivePreset,isLivePreset} from '../narrative-bridge.js';
+import {registerPresetProtocol} from '../preset.js';
+import {EMOTIONS} from '../emotion-catalog.js';
+
+const root=fileURLToPath(new URL('../',import.meta.url));
+const out=path.resolve(process.argv[2]??path.join(root,'../evidence/prepared-task-forms'));
+const tasks=['templateInit','objectArchive','historyImport','tableArchive','tableGenesis','assetAdapt'];
+const preset=JSON.parse(fs.readFileSync(path.join(root,'presets/Tisya-TauriTavern-0.2.0-alpha.13.json')));
+const data=emptyConfig(),context={chatId:'neutral-audit',characterId:0,characters:[{avatar:'fixture.png',name:'示例人物',description:'中性诊断夹具',data:{description:'中性诊断夹具',personality:'未指定'}}],chatMetadata:{},chat:[{is_user:true,mes:'整理中性诊断资料。'}],powerUserSettings:{persona_description:'中性诊断身份'},extensionSettings:{[KEY]:data,connectionManager:{}},chatCompletionSettings:{model:'fixture-only',chat_completion_source:'openai',prompts:[],function_calling:false},getChatCompletionModel:s=>s.model,getRequestHeaders:()=>({}),getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>['r13'],getSelectedPresetName:()=> 'r13',getCompletionPresetByName:()=>preset})};
+const key=worldKey(context);data.worlds[key]=defaultWorld();data.worlds[key].context.owner='tisya';data.worlds[key].tables={taskInstructions:Object.fromEntries(tasks.map(task=>[task,'中性任务补充／'+task]))};
+const source={prompts:structuredClone(preset.prompts),order:structuredClone(preset.prompt_order[0].order)},macros=new Map();
+context.registerMacro=(n,f)=>macros.set(n,f);context.unregisterMacro=n=>macros.delete(n);
+context.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,n)=>{assert(macros.has(n),'Missing '+n);return macros.get(n)()}).replaceAll('{{user}}','不应替换来源正文');
+let persistenceCalls=0,transportCalls=0,sent;
+const store=createStore({getContext:()=>context,persist:async()=>{persistenceCalls++;throw Error('诊断禁止写入配置');}}),moods=EMOTIONS.map(r=>r.name);
+const host=createHost({getContext:()=>context,getSource:()=>source,getBaseSource:()=>({prompts:[{identifier:'main',content:N.previewSettings(N.suggestions(),{summary:false,directions:[]}).rest.entries.main}]}),getMoods:()=>moods,store,createParameters:async(s,model,type,messages)=>({generate_data:{model,messages,stream:false}})});
+const live=registerLivePreset(context,()=>source,()=>context,()=>moods);registerPresetProtocol(context,()=>source,()=>{},()=>moods,s=>!isLivePreset(s)||live.execution().prose);context.registerMacro('tisya_config_selected',()=>host.selectedText());
+const card='  中性原卡：示例人物看管普通灯。"引号"\r\n{{user}} <tag> 0 false null  ',body='示例人物把普通灯放在桌上。',user='请整理已经发生的放灯动作。';
+function prepare(task){
+ const input={goal:'整理示例人物和普通灯；设计内容留待确认。',sourceCardRaw:{fields:{name:'示例人物',description:card}},sourceBooks:[],registry:defaultRegistry(),currentRows:[],archiveSource:{key:'host-only-floor-key',floor:2,text:body},userSource:{sources:[{floor:1,role:'user',text:user}]}};
+ if(task==='assetAdapt'){
+  input.mode='single';input.source={format:'tisya.core-selection/1',objects:[{kind:'character',row:{id:'host-only-object-key',table:'objects',values:{名称:'示例人物',类型:'character',描述:card},access:{readers:['读者'],knowers:[]}},growth:[]}],links:[],instructions:'仅提炼资料已经明确的意义。'};
+  input.simpleForm={messages:prepareSimpleCore(input).messages};
+ }else if(task==='tableGenesis')input.simpleForm={messages:prepareSimpleGenesis(input).messages};
+ else {const plan=prepareCompactFill(task,input);input.compactFill={contract:plan.contract,modelInput:plan.modelInput,modelState:plan.modelState};}
+ return input;
+}
+const hash=s=>createHash('sha256').update(s).digest('hex'),save=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
+fs.mkdirSync(path.join(out,'requests'),{recursive:true});
+const originalFetch=globalThis.fetch,results=[];
+globalThis.fetch=async(url,options)=>{assert.equal(url,'/api/backends/chat-completions/generate');transportCalls++;sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'【完成】\n1 待处理：中性运输诊断不填答'},finish_reason:'stop'}]})};};
 try{
- for(const [id,t]of registry.tasks){if(t.aliasOf)continue;if(t.capability!=='chat'){results.push({id,name:t.name,status:'reserved-not-chat',capability:t.capability});continue;}if(id==='main'){await host.before('normal');const p={messages:[],stream:false};await host.payloadReady(p);sent=p;}else await host.request(id,id==='communication'?{format:'tisya.communication-input/1',text:'如何完善这个角色？',history:[],reference:''}:JSON.stringify(input));
- const text=sent.messages.map(m=>m.content).join('\n');const coverage=Object.fromEntries(markers.map(m=>[m,text.includes(m)]));const r={id,name:t.name,status:TABLE_MODES[id]?'paired-complete':id==='main'?'narrative-full':id==='communication'?'communication-complete':'text-task-complete',messages:sent.messages.length,characters:text.length,coverage,lastRole:sent.messages.at(-1)?.role};results.push(r);fs.writeFileSync(out+'/requests/'+id+'.json',JSON.stringify({environment:'production createHost, isolated host/transport fixture; 0 real calls; complete messages',...r,body:sent},null,2));
- if(id!=='main')assert(Object.values(coverage).every(Boolean),id+' missing complete envelope');
+ for(const task of tasks){
+  assert(registry.tasks.has(task),'未注册任务 '+task);
+  const input=prepare(task),before=JSON.stringify(input),baseCalls=transportCalls;
+  await host.request(task,JSON.stringify(input));assert.equal(transportCalls,baseCalls+1);assert.equal(JSON.stringify(input),before);
+  const text=sent.messages.map(m=>m.content).join('\n'),supplement='中性任务补充／'+task;
+  assert(text.includes(card),task+' 原卡正文丢失或被替换');
+  if(task!=='assetAdapt'){assert(text.includes(body),task+' 归档正文丢失');assert(text.includes(user),task+' 连续用户输入丢失');}
+  assert.equal(text.split(supplement).length-1,1,task+' 补充要求须恰好出现一次');
+  assert(text.includes('【完成】'),task+' 缺少业务完成格');assert(sent.messages.every(m=>['system','user'].includes(m.role)));
+  assert.doesNotMatch(text,/\[INNER.LOGIN\]|\[MODE.ANALYZE\]|\[PREPARE_STEP\]|host-only-floor-key|host-only-object-key|schemaChanges|不应替换来源正文/);
+  if(input.compactFill)assert(text.includes(input.compactFill.modelInput));else for(const message of input.simpleForm.messages)assert(sent.messages.some(m=>m.role===message.role&&m.content===message.content));
+  const request={task,status:'prepared-business-form',fixture:'neutral-only',sourceBytesPreserved:true,supplementOccurrences:1,body:sent};save('requests/'+task+'.json',request);
+  const missing=structuredClone(input);delete missing.compactFill;delete missing.simpleForm;const beforeRejected=transportCalls;
+  await assert.rejects(()=>host.request(task,JSON.stringify(missing)),/需要.*准备.*表格/);assert.equal(transportCalls,beforeRejected,task+' 缺表请求不得到达运输层');
+  results.push({task,status:request.status,messages:sent.messages.length,characters:text.length,requestSha256:hash(JSON.stringify(sent)),missingFormRejectedBeforeTransport:true,sourceBytesPreserved:true,supplementOccurrences:1});
  }
- // Incompatible explicit overrides are retained, never sent as a partial request.
- data.routes.tasks.tableGenesis={preset:'native'};const before=JSON.stringify(data);let error;
- try{await host.request('tableGenesis',JSON.stringify(input));}catch(e){error=e.message;}
- assert(error?.includes('任务预设不完整或冲突'));assert.equal(JSON.stringify(data),before);
- fs.writeFileSync(out+'/requests/tableGenesis-native-override.json',JSON.stringify({environment:'isolated fixture, explicit native override',sent:false,error,configurationUnchanged:true},null,2));results.push({id:'tableGenesis-native-override',status:'blocked-incompatible-preset',sent:false});
-}finally{globalThis.fetch=originalFetch;}
-const {createFoundationInput}=await mod('tables/foundation-intake.js');const foundation=createFoundationInput({registry:defaultRegistry(),rows:[]},{source:'林汀是一名看守灯塔的青年，他每天校验潮汐。',ownerName:'林汀',model:'fixture-only'});fs.writeFileSync(out+'/requests/foundation-extraction.json',JSON.stringify({environment:'production export builder, no model call',body:foundation.context.body},null,2));const ftext=foundation.context.body.messages.map(m=>m.content).join('\n');results.push({id:'foundation-extraction',status:'extraction-complete',messages:foundation.context.body.messages.length,coverage:Object.fromEntries(markers.map(m=>[m,ftext.includes(m)]))});
-assert(markers.every(m=>ftext.includes(m)),'foundation complete envelope');
-fs.writeFileSync(out+'/preset-audit.json',JSON.stringify({base:'alpha31.31 candidate based on 6e34923',realModelCalls:0,productionWrites:0,results},null,2));console.log(JSON.stringify(results.map(({id,status,messages,coverage})=>({id,status,messages,missing:coverage?Object.entries(coverage).filter(([,v])=>!v).map(([k])=>k):[]})),null,2));
+ assert.equal(persistenceCalls,0);assert.equal(transportCalls,tasks.length);
+ const report={format:'tisya.prepared-task-audit/1',environment:'production createHost and production form builders; isolated neutral fixture and intercepted local transport',realModelCalls:0,canonicalWrites:0,persistenceCalls,fixtureTransportCalls:transportCalls,results,limits:['Request assembly and missing-form rejection only; no claim of model output quality, application correctness or live network compatibility.','No private input file is accepted; all material is the neutral inline fixture.']};
+ save('preset-audit.json',report);console.log(JSON.stringify(report,null,2));
+}catch(error){save('failure.json',{error:error.stack,fixtureTransportCalls:transportCalls,persistenceCalls,results});throw error;}
+finally{globalThis.fetch=originalFetch;}

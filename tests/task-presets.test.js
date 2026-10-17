@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
-import {TABLE_MODES} from '../tables/modes.js';
+import {TABLE_MODES,SIMPLE_TABLE_TASKS,compileTaskMode} from '../tables/modes.js';
+import {AUX_TASKS} from '../tables/prompts.js';
+import {prepareCompactFill} from '../tables/compact-fill.js';
 import {TASK_PROFILES} from '../tables/task-profiles.js';
 import {SLOT_NAMES,SLOT_TARGETS} from '../tables/slots.js';
 import {cardAIMaterials,cardDefinitionSource,bookAIMaterials} from '../tables/card-source.js';
@@ -11,34 +13,47 @@ import {defaultRegistry} from '../tables/schema.js';
 
 const configuration={data:emptyConfig(),world:defaultWorld()};
 const input={goal:'核对原始定义',sourceCardRaw:{fields:{name:'源卡',description:'原始定义 {{user}} <not-a-macro> 0 false null'},entries:[{id:7,content:'格式：<receipt>完整值</receipt>'}]},sourceHistory:[{floor:1,role:'user',text:'原始用户 {{user}}'},{floor:2,role:'assistant',text:'<body>实际事件</body><memory>旧摘要</memory>'}],sourceBooks:[],registry:defaultRegistry(),currentRows:[]};
+function compact(task,value){const plan=prepareCompactFill(task,value);return {...value,compactFill:{contract:plan.contract,modelInput:plan.modelInput,modelState:plan.modelState}};}
 function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return JSON.parse(text.split('\n').slice(2,-1).join('\n'));}
 
-test('all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order',()=>{
+test('remaining legacy operations retain their own authorization and material routing',()=>{
  assert.deepEqual(Object.keys(TABLE_MODES).sort(),Object.keys(TASK_PROFILES).sort());
- const authorizations=new Set(),routes=new Set(),workflows=new Set();
- for(const task of Object.keys(TABLE_MODES)){
+ const tasks=Object.keys(TABLE_MODES).filter(task=>!SIMPLE_TABLE_TASKS.includes(task)),authorizations=new Set();
+ for(const task of tasks){
   const p=pairedPreset({task,configuration}),messages=taskMessages({preset:p,task,input:{registry:{tables:[],types:[]},currentRows:[]}});
-  authorizations.add(p.entries.tisya_user_relation);routes.add(p.entries.tisya_task_start);workflows.add(p.entries.tisya_inner_chain);
-  assert.match(p.entries.tisya_user_relation,/\[MODE.AUTHORIZE\]/);assert.match(p.entries.tisya_task_start,/@DESTINATIONS/);assert.match(p.entries.tisya_registry,/@NORMS/);assert.match(p.entries.tisya_inner_chain,/\[FILL.1\]/);
-  const content=messages.map(m=>m.content).join('\n');assert(content.indexOf('[MATERIALS]')<content.indexOf('[REGISTRY]'));assert(content.indexOf('[REGISTRY]')<content.indexOf('[INNER.LOGIN]'));assert.equal(messages.at(-1).role,'system');
+  authorizations.add(p.entries.tisya_user_relation);
+  assert.match(p.entries.tisya_user_relation,/\[MODE.AUTHORIZE\]/);assert.match(p.entries.tisya_registry,/@NORMS/);assert.match(p.entries.tisya_inner_chain,/\[FILL.1\]/);
+  const content=messages.map(m=>m.content).join('\n');assert(content.indexOf('[MATERIALS]')<content.indexOf('[REGISTRY]'));assert(content.indexOf('[REGISTRY]')<content.indexOf('[INNER.LOGIN]'));
   assert.equal(new Set(p.prompts.map(x=>x.identifier)).size,p.prompts.length);assert.equal(p.prompts.filter(x=>x.tisyaMaterialSlot).length,Object.keys(SLOT_NAMES).length);
  }
- assert.equal(authorizations.size,11);assert.equal(routes.size,11);assert.equal(workflows.size,11);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);
+ assert.equal(authorizations.size,tasks.length);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);
 });
 
-test('material values survive actual paired message assembly without source macro expansion',()=>{
+test('six migrated modes contain business instructions only and retain task supplements',()=>{
+ for(const task of SIMPLE_TABLE_TASKS){
+  const cfg=structuredClone(configuration);cfg.world.tables={taskInstructions:{[task]:'用户补充：保留海岛称谓。'}};
+  const built=pairedPreset({task,configuration:cfg});
+  const compiled=compileTaskMode({compiledBase:{rest:{entries:{main:'旧正文',tisya_inner_chain:'旧流程',tisya_registry:'旧结构'}}},configuration:cfg},task,AUX_TASKS[task].instructions);
+  for(const content of [Object.values(built.entries).join('\n'),Object.values(compiled.rest.entries).join('\n')]){
+   assert.match(content,/保留海岛称谓/);assert.match(content,/表格/);
+   assert.doesNotMatch(content,/strict JSON|schemaChanges|templates:|artifacts|new:|expected:|FILL\.1|MODE\.ANALYZE|旧流程|旧结构/);
+  }
+  assert.throws(()=>taskMessages({preset:built,task,input}),/需要.*准备.*表格/);
+ }
+});
+
+test('material values survive prepared fill messages without source macro expansion',()=>{
  const before=structuredClone(input),p=pairedPreset({task:'templateInit',configuration});
- const messages=taskMessages({preset:p,task:'templateInit',input,substitute:s=>s.replaceAll('{{user}}','MUST_NOT_REPLACE_SOURCE')});
- assert.deepEqual(slot(messages,'card'),input.sourceCardRaw);assert.deepEqual(slot(messages,'history'),input.sourceHistory);assert.deepEqual(input,before);
+ const messages=taskMessages({preset:p,task:'templateInit',input:compact('templateInit',input),substitute:s=>s.replaceAll('{{user}}','MUST_NOT_REPLACE_SOURCE')}),text=messages.map(m=>m.content).join('\n');
+ for(const value of [input.sourceCardRaw.fields.description,...input.sourceHistory.map(x=>x.text)])assert(text.includes(value));
+ assert.deepEqual(input,before);assert.doesNotMatch(text,/MUST_NOT_REPLACE_SOURCE|\[REGISTRY\]|FILL\.1/);
  assert.throws(()=>taskMessages({preset:p,task:'historyImport',input}),/任务不匹配/);
- p.prompt_order[0].order.find(x=>x.identifier===SLOT_TARGETS.history).enabled=false;
- assert.throws(()=>taskMessages({preset:p,task:'templateInit',input}),/缺少来源资料槽/);
 });
 
 test('large source layers retain every record, Unicode and final sentinel without a summarizing substitute',()=>{
  const full=structuredClone(input);full.sourceHistory=Array.from({length:100},(_,i)=>({floor:i+1,role:i%2?'assistant':'user',text:`楼层${i+1}：`+'甲🙂𠮷\n'.repeat(1000)+`完整尾哨${i+1}`}));
- const messages=taskMessages({preset:pairedPreset({task:'templateInit',configuration}),task:'templateInit',input:full});
- assert.deepEqual(slot(messages,'history'),full.sourceHistory);assert(slot(messages,'history')[99].text.endsWith('完整尾哨100'));
+ const messages=taskMessages({preset:pairedPreset({task:'templateInit',configuration}),task:'templateInit',input:compact('templateInit',full)}),text=messages.map(m=>m.content).join('\n');
+ for(const record of full.sourceHistory)assert(text.includes(record.text));assert(text.includes('完整尾哨100'));
 });
 
 test('AI notices retain complete rules and format examples while scripts remain only in the original card',()=>{
@@ -64,45 +79,33 @@ test('manual old or undated history cannot overwrite current sourced state, late
 });
 
 
-test('actual archive request separates operational blockers and inaccessible corrections from source data',()=>{
+test('prepared archive messages preserve source boundaries and put missing requirements in pending',()=>{
  const material={archiveSource:{text:'客人说稍后回来。'},userSource:{text:'旧余额为NaN；绝对钟点未知。'},registry:defaultRegistry(),currentRows:[]};
  for(const task of ['objectArchive','historyImport','tableArchive']){
-  const messages=taskMessages({preset:pairedPreset({task,configuration}),task,input:material});
-  const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
-  assert.equal(norms.split('pending is an operational blocker').length-1,1);
-  assert.match(norms,/required write in this task that cannot be represented faithfully/);
-  assert.match(norms,/invalid or missing native values outside the required write are not archival blockers/);
-  assert.match(norms,/Do not silently drop a genuine required-write conflict/);
-  assert.match(norms,/Do not embed concealed objective facts in that record/);
-  assert.match(norms,/mistaken belief must not carry the hidden correction as character knowledge/);
-  assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
+  const messages=taskMessages({preset:pairedPreset({task,configuration}),task,input:compact(task,material)}),text=messages.map(m=>m.content).join('\n');
+  assert(text.includes(material.archiveSource.text));assert(text.includes(material.userSource.text));
+  assert.match(messages[0].content,/必要内容写入待处理/);assert.match(messages[0].content,/未知留空/);assert.match(messages[0].content,/推测、转述与客观事实分开/);
+  assert.doesNotMatch(text,/schemaChanges|new:|expected:|FILL\.1/);
  }
 });
 
 
-test('ordinary and review archive wires share whole-row knowledge scope without altering original sources',()=>{
- const material={archiveSource:{text:'乙感到屋内更暖。甲背着乙把暖气旋钮调到三档。'},userSource:{text:'乙知道暖气变热，但没看见旋钮。'},registry:defaultRegistry(),currentRows:[]};
- const before=structuredClone(material);let shared;
+test('ordinary and review forms retain knowledge boundaries without altering source bytes',()=>{
+ const material={archiveSource:{text:'乙感到屋内更暖。甲背着乙把暖气旋钮调到三档。'},userSource:{text:'乙知道暖气变热，但没看见旋钮。'},registry:defaultRegistry(),currentRows:[]},before=structuredClone(material);
  for(const [task,archiveProposal]of [['objectArchive',false],['historyImport',false],['tableArchive',false],['tableArchive',true]]){
-  const messages=taskMessages({preset:pairedPreset({task,configuration,archiveProposal}),task,input:material});
-  const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
-  assert.equal(norms.split('@KNOWLEDGE ').length-1,1,task+' knowledge contract must occur exactly once');
-  assert.equal(norms.split('@COVERAGE ').length-1,1,task+' coverage contract must occur exactly once');
-  assert.match(norms,/objectArchive owns objects\/facts/);
-  assert.match(norms,/historyImport reuses the preceding object proposal/);
-  assert.match(norms,/objects introduced, used, moved or transferred/);
-  assert.match(norms,/Do not split every incidental noun/);
-  const knowledge=norms.slice(norms.indexOf('@KNOWLEDGE '),norms.indexOf('\n@EVIDENCE '));
-  if(shared===undefined)shared=knowledge;else assert.equal(knowledge,shared);
-  assert.match(norms,/each ID grants knowledge of the whole row, not selected fields/);
-  assert.match(norms,/Presence, being affected, being the subject or being a participant is not sufficient/);
-  assert.match(knowledge,/EACH listed knower actually perceived or learned/);
-  assert.match(knowledge,/title and every values field/);
-  assert.match(knowledge,/Perceiving an effect does not establish knowledge of its concealed cause, operator action, mechanism, identity or exact setting\/quantity/);
-  assert.match(knowledge,/split the claims into separately permissioned records/);
-  assert.match(knowledge,/adding a disclaimer never narrows row-wide access/);
-  assert.match(knowledge,/Do not suppress the character's evidenced memory/);
-  assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
-  assert.deepEqual(material,before);
+  const messages=taskMessages({preset:pairedPreset({task,configuration,archiveProposal}),task,input:compact(task,material)}),norms=messages[0].content;
+  assert.match(norms,/读者可见与人物知情分别核对/);assert.match(norms,/混合秘密与公开内容时拆开记录/);assert.match(norms,/感受到结果不等于知道隐蔽原因/);
+  const text=messages.map(m=>m.content).join('\n');assert(text.includes(material.archiveSource.text));assert(text.includes(material.userSource.text));assert.deepEqual(material,before);
+ }
+});
+
+
+test('prepared creation forms preserve source bytes and append only their own supplement once',()=>{
+ for(const task of ['tableGenesis','assetAdapt']){
+  const cfg=structuredClone(configuration);cfg.world.tables={taskInstructions:{[task]:'本任务补充 {{user}}',tableArchive:'OTHER_TASK_ONLY'}};
+  const messages=[{role:'system',content:'填写给定的表格。'},{role:'user',content:'原始资料 {{user}}\n完整尾哨。'}],before=structuredClone(messages);
+  const result=taskMessages({preset:pairedPreset({task,configuration:cfg}),task,input:{simpleForm:{messages}},selected:'选用说明 {{user}}',substitute:s=>s.replaceAll('{{user}}','测试用户')});
+  assert.deepEqual(result.slice(0,messages.length),messages);assert.deepEqual(messages,before);const text=result.map(m=>m.content).join('\n');
+  assert.equal(text.split('本任务补充 测试用户').length-1,1);assert.equal(text.split('选用说明 测试用户').length-1,1);assert.doesNotMatch(text,/OTHER_TASK_ONLY|schemaChanges|FILL\.1|strict JSON/);
  }
 });

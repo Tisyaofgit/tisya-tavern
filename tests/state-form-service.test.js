@@ -1,4 +1,4 @@
-import {preprocessTask} from '../tables/slots.js';
+import {taskMessages} from '../tables/paired-preset.js';
 import {Window} from 'happy-dom';
 import {mountTablePanel} from '../tables/panel.js';
 import {defaultRegistry} from '../tables/schema.js';
@@ -6,10 +6,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey} from '../config/core.js';
 import {createTableService} from '../tables/service.js';
+import {simpleGenesisAnswer} from './helpers/simple-answers.js';
 import {createBookGateway} from '../tables/books.js';
 import {projectStateVocabulary} from '../tables/state-registry.js';
 import {compileConditionRule,evaluateConditionRule} from '../tables/condition-rules.js';
 const clone=structuredClone,header='项目｜是否开启｜等级｜额外效果';
+const provideNativeUser=context=>Object.assign(context,{name1:'用户',userAvatar:'user.png',powerUserSettings:{personas:{'user.png':'用户'},persona_descriptions:{'user.png':{description:''}},persona_description:''}});
 async function fixture(){
  const data=emptyConfig(),context={chatId:'state-test',characterId:0,characters:[{avatar:'test.png',name:'测试'}],chat:[{is_user:false,mes:'已确认开场'}],extensionSettings:{[KEY]:data}};data.worlds[worldKey(context)]=defaultWorld();data.worlds[worldKey(context)].tables={injection:'direct'};
  const store=createStore({getContext:()=>context,persist:async()=>true}),saved=new Map();let uid=1,writes=0,beforeWrite=null,afterWrite=null,failRead=false,responder=null;
@@ -85,14 +87,14 @@ test('growth conflict and information boundary reject the whole batch; stale for
  const g=await numericFixture();let row=(await g.service.inspect()).rows.find(r=>r.table==='state'&&r.values.名称==='经验[基础]');await g.service.edit({changes:[{id:row.id,table:'state',expected:row.rev,values:{值:250},access:{readers:[],knowers:[g.owner]},evidence:'用户手动修改表单'}]});const n3=g.writes();await assert.rejects(g.service.previewStateGrowth({ownerId:g.owner}),/知情范围/);assert.equal(g.writes(),n3);
 });
 test('genesis request registers world numeric system and explicit initial values with stable new-character binding',async()=>{
- const f=await fixture(),claim='新人物乙开局有250点经验，修船为第1级。',spec={...systemSpec(),initial:[{owner:'new:乙',values:'经验[基础]：250\n技能水平[修船]：1',evidence:claim}]};let actualInput;
- f.respond((task,input)=>{assert.equal(task,'tableGenesis');actualInput=input;return {blueprint:{name:'数字世界',goal:'登记等级',decisions:[claim],unresolved:[]},checklist:['核数值'],artifacts:{registry:input.registry,base:{changes:[{id:'new:乙',table:'objects',expected:0,values:{名称:'乙',类型:'character'},access:{readers:['读者'],knowers:[]},evidence:claim}]},initial:{changes:[]},stateSystem:spec},workflow:{id:'numeric',name:'数值',version:1,steps:[]}};});
- const d=await f.service.genesis('创世数值'),n=f.writes();assert.match(actualInput.stateSystem.contract,/stored ranks 1,2,3,4/);assert.match(preprocessTask('tableGenesis',actualInput),/stored ranks 1,2,3,4/);assert.equal((await f.service.stateCatalog()).catalog,null);
+ const f=await fixture(),claim='新人物乙开局有250点经验，修船为第1级。',spec={...systemSpec(),initial:[{owner:'new:乙',values:'经验[基础]：250\n技能水平[修船]：1',evidence:claim}]};provideNativeUser(f.context);let actualInput;
+ f.respond((task,input)=>{assert.equal(task,'tableGenesis');actualInput=input;return simpleGenesisAnswer(input,{name:'数字世界',decisions:[claim],records:[{form:'人物',name:'乙',evidence:claim}]});});
+ const d=await f.service.genesis('创世数值'),n=f.writes(),personDraft=d.proposal.artifacts.base.changes.find(x=>x.values.名称==='乙');d.proposal.artifacts.stateSystem={...spec,initial:[{...spec.initial[0],owner:personDraft.id}]};assert.equal(actualInput.stateSystem,undefined);const sent=taskMessages({preset:{task:'tableGenesis',supplement:''},task:'tableGenesis',input:actualInput});assert.deepEqual(sent,actualInput.simpleForm.messages);assert.doesNotMatch(sent.map(x=>x.content).join('\n'),/stored ranks|new:乙|"schema"|"workflow"/);assert.equal((await f.service.stateCatalog()).catalog,null);
  await f.service.saveGenesis(d);assert.equal(f.writes(),n+2);const info=await f.service.inspect(),person=info.rows.find(r=>r.values.名称==='乙');assert(person);assert.match((await f.make().readNumericState(person.id)).text,/技能水平\[修船\]：1 级/);assert.equal((await f.service.previewStateGrowth({ownerId:person.id})).changes,2);
 });
 test('invalid genesis numeric initial values reject before either book; existing values cannot be reinitialized',async()=>{
- const f=await numericFixture(),claim='指定开局值。';f.respond((task,input)=>({blueprint:{name:'数值',goal:'数值',decisions:[claim],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[]},initial:{changes:[]},stateSystem:{...systemSpec(),initial:[{owner:f.owner,values:'技能水平[修船]：4',evidence:claim}]}},workflow:{id:'num',name:'数值',version:1,steps:[]}}));
- let d=await f.service.genesis('数值'),before=JSON.stringify([...f.saved]);await assert.rejects(f.service.saveGenesis(d),/范围/);assert.equal(JSON.stringify([...f.saved]),before);
+ const f=await numericFixture(),claim='指定开局值。';provideNativeUser(f.context);f.respond((task,input)=>simpleGenesisAnswer(input,{name:'数值',decisions:[claim]}));
+ let d=await f.service.genesis('数值'),before=JSON.stringify([...f.saved]);d.proposal.artifacts.stateSystem={...systemSpec(),initial:[{owner:f.owner,values:'技能水平[修船]：4',evidence:claim}]};await assert.rejects(f.service.saveGenesis(d),/范围/);assert.equal(JSON.stringify([...f.saved]),before);
  d.proposal.artifacts.stateSystem.initial[0].values='技能水平[修船]：2';await assert.rejects(f.service.saveGenesis(d),/重新初始化/);assert.equal(JSON.stringify([...f.saved]),before);
 });
 test('actual panel state page edits numeric cells, previews growth, saves and reopens with shared level labels',async()=>{
@@ -103,8 +105,9 @@ test('actual panel state page edits numeric cells, previews growth, saves and re
  const cell=doc.querySelector('[aria-label="经验[基础] · 当前值"]');cell.value='300';cell.dispatchEvent(new win.Event('input',{bubbles:true}));await button('预览填写变化');await button('确认保存状态变化');p.dispose();p=mount();await p.ready;await navigate();assert.equal(doc.querySelector('[aria-label="经验[基础] · 当前值"]').value,'300 点');p.dispose();await win.happyDOM.close();
 });
 test('actual genesis panel retains the generated numeric definition, growth rules and initial values through confirmation',async()=>{
- const f=await fixture(),claim='方鹿初始经验为100点，修船等级为1。';f.respond((task,input)=>({blueprint:{name:'数值世界',goal:'数值体系',decisions:[claim],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[]},initial:{changes:[]},stateSystem:{...systemSpec(),initial:[{owner:f.owner,values:'经验[基础]：100\n技能水平[修船]：1',evidence:claim}]}},workflow:{id:'numeric-ui',name:'数值创世',version:1,steps:[]}}));
- const win=new Window(),doc=win.document,p=mountTablePanel(doc,doc.body,{service:f.service,store:f.store});await p.ready;const pick=doc.querySelector('[aria-label="表单功能"]');pick.value='genesis';pick.dispatchEvent(new win.Event('change'));await p.settled();const goal=doc.querySelector('[aria-label="创世要求"]');goal.value='创世数值体系';goal.dispatchEvent(new win.Event('input',{bubbles:true}));
+ const f=await fixture(),claim='方鹿初始经验为100点，修船等级为1。';f.respond((task,input)=>simpleGenesisAnswer(input,{name:'数值世界',decisions:[claim]}));
+ const service={...f.service,genesis:async goal=>{const draft=await f.service.genesis(goal);draft.proposal.artifacts.stateSystem={...systemSpec(),initial:[{owner:f.owner,values:'经验[基础]：100\n技能水平[修船]：1',evidence:claim}]};return draft;}};
+ const win=new Window(),doc=win.document,p=mountTablePanel(doc,doc.body,{service,store:f.store});await p.ready;const pick=doc.querySelector('[aria-label="表单功能"]');pick.value='genesis';pick.dispatchEvent(new win.Event('change'));await p.settled();const goal=doc.querySelector('[aria-label="创世要求"]');goal.value='创世数值体系';goal.dispatchEvent(new win.Event('input',{bubbles:true}));
  const click=async label=>{const b=[...doc.querySelectorAll('button')].find(x=>x.textContent===label);assert(b,label);b.click();await p.settled();assert.equal(doc.querySelector('[role="alert"]'),null,doc.querySelector('[role="alert"]')?.textContent);};await click('生成可编辑创世蓝图');assert.equal(doc.querySelector('[aria-label="登记数值体系"]').checked,true);await click('确认应用创世蓝图');assert.match((await f.service.readNumericState(f.owner)).text,/技能水平\[修船\]：1 级/);assert((await f.service.stateCatalog()).catalog.growth.includes('晋级'));p.dispose();await win.happyDOM.close();
 });
 test('state panel does not save a preview under a changed character selector',async()=>{
@@ -176,8 +179,8 @@ test('an event with no final state changes still saves exactly one durable recei
  await f.service.edit({changes:[{id:'new:inspect',table:'events',expected:0,values:{名称:'重复检查',参与者:[f.owner]},access:{readers:['读者'],knowers:[]},evidence:'用户手动修改表单'}]});const event=(await f.service.inspect()).rows.find(r=>r.values.名称==='重复检查'),args={ownerId:f.owner,eventId:event.id,name:'重复检查'},n=f.writes(),p=await f.service.previewStateEvent(args);assert.equal(p.changes,0);await f.service.saveStateForm(p.id);assert.equal(f.writes(),n+1);assert.equal((await f.make().previewStateEvent(args)).recorded,true);await f.make().saveStateForm(p.id);assert.equal(f.writes(),n+1);
 });
 test('Genesis confirms event registration without marking occurrence or executing narrative text',async()=>{
- const f=await fixture(),spec={...systemSpec(),events:'完成修船｜奖励｜只在确认结算后叙述，不能执行这段文字。'};f.respond((task,input)=>({blueprint:{name:'事件世界',goal:'注册事件',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[]},initial:{changes:[]},stateSystem:spec},workflow:{id:'events',name:'事件',version:1,steps:[]}}));
- const d=await f.service.genesis('登记事件');await f.service.saveGenesis(d);assert.match((await f.service.stateCatalog()).catalog.events,/完成修船/);assert.match((await f.service.readNumericState(f.owner)).text,/已触发\[完成修船\]：？/);assert.deepEqual(await f.service.readStateEventResults(),[]);assert.equal((await f.service.inspect()).rows.filter(r=>r.table==='state').length,0);
+ const f=await fixture(),spec={...systemSpec(),events:'完成修船｜奖励｜只在确认结算后叙述，不能执行这段文字。'};f.respond((task,input)=>simpleGenesisAnswer(input,{name:'事件世界'}));
+ const d=await f.service.genesis('登记事件');d.proposal.artifacts.stateSystem=spec;await f.service.saveGenesis(d);assert.match((await f.service.stateCatalog()).catalog.events,/完成修船/);assert.match((await f.service.readNumericState(f.owner)).text,/已触发\[完成修船\]：？/);assert.deepEqual(await f.service.readStateEventResults(),[]);assert.equal((await f.service.inspect()).rows.filter(r=>r.table==='state').length,0);
 });
 test('unmatched private growth conditions do not leak through a zero-change event receipt',async()=>{
  const f=await eventFixture();await f.service.saveStateCatalog({definitions:'人物／隐秘经验：数值 = 点 [0,1000]',formulas:'检查不变：变动：经验[基础] + 0 点',growth:'隐秘晋级：true：隐秘经验[基础] >= 900 点 → 变更：技能水平[修船] = 3 级',events:'检查进展｜检查不变｜不能借这条文本泄露隐秘条件'},(await f.service.stateCatalog()).originRevision);
