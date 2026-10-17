@@ -57,3 +57,24 @@ export function parseSimpleCore(raw,plan){
  if(plan.mode==='single'){const strip=items=>items.map(({id,...item})=>item);return {core:{name,traits:strip(members[0].traits),growth:strip(members[0].growth)},notes};}
  check(seenMemberNames.size===members.length&&seenLinks.size===source.links.length,'基点成员或已选关联遗漏');return {bundle:{name,members,links},notes};
 }
+
+export const CORE_TASK={
+ ...{
+  "task": "assetAdapt",
+  "order": 2,
+  "rulePolicy": true,
+  "kind": "core",
+  "surface": "form",
+  "name": "表单 · 无画风基点提取",
+  "instructions": "按本次表格提取所选对象的核心设定、已有叙事意义及明确勾选的成长和关联。保留用途、限制、代价与来源；未知不补，旧世界的持有、关系、已完成事件和人物知识不自动迁移。只填给出的项目，不适配目标世界。",
+  "mode": {
+    "id": "asset-adapt",
+    "name": "无画风基点提取",
+    "steps": "读取选择的对象及成长来源→分开世界表达、核心设定与叙事意义→保留来源与可选成长→提交确认草稿"
+  }
+},
+ prepare(input){
+  const plan=prepareSimpleCore(input);
+  return {payload:{...input,simpleForm:{messages:plan.messages}},format:'simple-form',parse:response=>parseSimpleCore(response,plan.privateplan)};
+ }
+};

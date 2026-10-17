@@ -5,7 +5,7 @@ import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {TABLE_MODES,SIMPLE_TABLE_TASKS,compileTaskMode} from '../tables/modes.js';
 import {AUX_TASKS} from '../tables/prompts.js';
 import {prepareCompactFill} from '../tables/compact-fill.js';
-import {TASK_PROFILES} from '../tables/task-profiles.js';
+import {TASK_PROFILES} from '../tables/task-registry.js';
 import {SLOT_NAMES,SLOT_TARGETS} from '../tables/slots.js';
 import {cardAIMaterials,cardDefinitionSource,bookAIMaterials} from '../tables/card-source.js';
 import {historyEvidence,prepareCommit} from '../tables/ledger.js';

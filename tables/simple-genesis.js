@@ -1,3 +1,4 @@
+import {splitSimpleAdaptation,applySimpleAdaptation} from './simple-core-adaptation.js';
 import {definitionEvidenceSources} from './source-text.js';
 import {formSections,formTextFields,serializeFormSection} from './foundation/form-text.js';
 // A model fills business forms; the host owns definitions, identities and application order.
@@ -63,3 +64,30 @@ export function parseSimpleGenesis(raw,plan){
  const proposal={blueprint:{name,goal:plan.displayGoal,decisions:copy(decisions),unresolved:[...new Set(unresolved)]},checklist:[],artifacts:{registry:copy(result.registry),base:{templates:[],changes:copy(result.base.changes),pending:copy(unresolved)},initial:{templates:[],changes:copy(result.initial.changes),pending:copy(unresolved)}},workflow:workflow()};
  validateGeneratedTask('genesis',proposal);validateGeneratedTask('workflow',proposal.workflow);return proposal;
 }
+
+export const GENESIS_TASK={
+ ...{
+  "task": "tableGenesis",
+  "order": 10,
+  "rulePolicy": true,
+  "kind": "genesis",
+  "surface": "form",
+  "name": "表单 · 创世建档",
+  "instructions": "根据用户要求及已确认的适用偏好填写世界、人物和明确开局的设计表。保留指定要求，区分新设计与既有事实；新人物的动机、经历、表达和限制须具体且有区别，不复制已有角色内核。只填写本次给出的项目，确认后由程序保存。",
+  "mode": {
+    "id": "genesis",
+    "name": "创世设计",
+    "steps": "接续设计要求→填写基础档案和开局资料→核来源与关联→交用户确认"
+  }
+},
+ prepare(input){
+  const plan=prepareSimpleGenesis(input);
+  if(input.adaptation)plan.messages.push({role:'user',content:input.adaptation.material+'\n\n'+input.adaptation.instructions});
+  return {payload:{...input,simpleForm:{messages:plan.messages}},format:'simple-form',parse(response){
+   const answer=input.adaptation?splitSimpleAdaptation(response):{text:response};
+   const result=parseSimpleGenesis(answer.text,plan);
+   if(input.adaptation)applySimpleAdaptation(result,input.adaptation,answer.entries);
+   return result;
+  }};
+ }
+};

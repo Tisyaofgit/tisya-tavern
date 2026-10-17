@@ -1,10 +1,6 @@
+import {ARCHIVE_TASKS} from './compact-fill.js';
 // Model-facing text only. Source prose is never macro-expanded or executed.
-const taskGoals={
- templateInit:'整理当前角色卡、用户定义与开局资料，填写人物等基础档案及明确的开局初值。后来的剧情保留在历史中，不倒填为开局；示例、备选开场和停用资料不是已发生事实。',
- objectArchive:'为本次正文和它之前连续的用户输入补齐人物、物品、地点、组织与规则等对象档案及稳定事实；当前位置、伤势、关系变化和事件过程交给后续历史表。',
- historyImport:'按原始次序补录本次已发生事件及相应业务记录，保留来源、时间、主观理解与不确定性；较早记录不能覆盖已确认的较晚状态。',
- tableArchive:'整理本次已确认正文及此前连续用户输入，填写事件、当前状态与有依据的档案增量，不续写故事。'
-};
+const taskGoals=Object.fromEntries(ARCHIVE_TASKS.map(task=>[task.task,task.modelGoal]));
 const text=value=>typeof value==='string'?value:'';
 const show=value=>typeof value==='string'?value:JSON.stringify(value);
 const fieldNames={name:'名称',description:'描述',personality:'性格',scenario:'场景',system_prompt:'原卡要求',post_history_instructions:'原卡后置要求',mes_example:'示例对话（不是已发生历史）',first_mes:'开场示例（是否发生以历史为准）',alternate_greetings:'备选开场（不是已发生历史）'};

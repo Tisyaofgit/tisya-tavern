@@ -1,24 +1,20 @@
-import {ARCHIVE_TABLE_TASKS} from './task-kinds.js';
-import {prepareSimpleGenesis,parseSimpleGenesis,simpleGenesisEvidenceSources} from './simple-genesis.js';
-import {prepareSimpleCore,parseSimpleCore} from './simple-core.js';
+import {createStateService} from './state-service.js';
+import {taskRegistry} from './task-registry.js';
+import {simpleGenesisEvidenceSources} from './simple-genesis.js';
 import {coreSourceText,coreSourceContains} from './source-text.js';
-import {prepareSimpleAdaptation,splitSimpleAdaptation,applySimpleAdaptation,adaptationBundle} from './simple-core-adaptation.js';
-import {prepareCompactFill,parseCompactFill} from './compact-fill.js';
-import {foundationTemplatePlan} from './foundation-templates.js';
+import {prepareSimpleAdaptation,adaptationBundle} from './simple-core-adaptation.js';
 import {archivePending,planArchiveRun,archiveRunReceipt,archiveRunMessage,assertArchiveRunComplete} from './archive-run.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
 import {assembleArchiveBook} from './archive-book.js';
 import {createArchiveSystem} from './archive-system.js';
 import {createConditionService,conditionNarrative} from './condition-service.js';
 import {createFoundationService} from './foundation-service.js';
-import {parseStateEvents} from './state-event-rules.js';
-import {stateEventInput,stateEventProposal,stateEventNarrative} from './state-events.js';
-import {compileStateFormulas} from './state-formulas.js';
+import {stateEventNarrative} from './state-events.js';
 import {historyGroups} from '../config/tool-history.js';
 import {historySignature} from '../config/history-context.js';
 import {storySources,assertStoryLedger} from './story-sources.js';
 import {coreSelection,validateBundle,validateCoreMapping,coreKind} from './core-assets.js';
-import {validateStateCatalog,registerStateCatalog,readStateGrid,stateGridProposal,readStateValues,stateValuesProposal,stateFormulaProposal,stateGrowthProposal} from './state-form.js';
+import {registerStateCatalog,stateValuesProposal} from './state-form.js';
 import {ruleSources,validateRuleReview,rulePolicy,chooseRule,policyEvidence} from './rule-review.js';
 import {safeDiagnostic} from '../config/stream-response.js';
 import {personaSnapshot,personaStamp,personaDefinition,personaObjectChange,personaProjection,personaDraft} from './persona.js';
@@ -42,7 +38,7 @@ import {styleRules,stylePrompt,scanStyle} from './style-rules.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 import {tableSettings,copy,check,isObjectType,sameDefinition,derive,normalized,registryIndex,validateRow,defaultRegistry,upgradeRegistry,mapRowReferences,references} from './schema.js';
 import {createBookGateway,digest} from './books.js';
-import {precedingUserSource,memoryBlock,taskTags,project,originPinsAtStart,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
+import {precedingUserSource,memoryBlock,taskTags,project,originPinsAtStart,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
 import {worldbookEntries,createWorldbookProjection} from './worldbook-context.js';
 import {NARRATIVE_TAGS} from './prompts.js';
 const fields=['objects','facts','scene','state','relations','cognition','holdings','tasks','timers','clues','events'];
@@ -62,7 +58,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const result=await rawBookWrite(snapshot,decorated,guard);archiveChanged=true;worldbook.clear();setPrompt('');latest=null;guard();check((await books.read(next.origin)).stamp===origin.stamp,'存档已写入，但原点同时发生变化，请重新载入核对');return result;
  }};
  const readPersona=()=>persona?.read()??personaSnapshot(getContext());
- const archiveDrafts=new Map(),archiveReviews=new Map(),stateFormDrafts=new Map(),genesisDrafts=new Map();
+ const archiveDrafts=new Map(),archiveReviews=new Map(),genesisDrafts=new Map();
  const state=()=>({busy,jobScope,jobs:copy(jobs),latest:copy(latest),styleAudit:copy(lastStyleAudit),progress:copy(progress),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='',error=null)=>{jobs.push({task,status,detail:safeDiagnostic(detail),...(error?{code:error.code??error.name,cause:error.cause?safeDiagnostic(error.cause.message??String(error.cause)):undefined,stack:error.stack?safeDiagnostic(error.stack):undefined}:{}),at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail:safeDiagnostic(detail)});};
  async function exclusive(fn,{scope='manual'}={}){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;jobScope=scope;progress={task:scope==='generation'?'表单推进':'表单操作',stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};controller=new AbortController();const signal=controller.signal;try{const result=await fn(signal);signal.throwIfAborted();if(progress&&!['error','stopped','blocked'].includes(progress.stage))progress={...progress,stage:'complete',updatedAt:Date.now(),finishedAt:Date.now()};return result;}catch(e){const error=requestError(e,signal);worldbook.clear();setPrompt('');latest=null;const last=jobs.at(-1),label=signal.aborted?'已停止':'失败';if(last?.status!==label||last.detail!==safeDiagnostic(error.message))status(progress?.task??'表单操作',label,error.message,error);if(progress)progress={...progress,stage:signal.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};throw error;}finally{busy=false;controller=null;jobScope=null;if(archiveChanged){archiveChanged=false;for(const notify of archiveListeners)try{notify();}catch(e){status('图鉴刷新','失败',e.message);}}}}
@@ -80,41 +76,18 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function invoke(task,input,c,signal){
   status(task,'运行中');progress={task,stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
   try{
-   signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);
+   signal?.throwIfAborted();const policy=taskRegistry.get(task).rulePolicy?await selectedRulePolicy(c):null;
    const payload={...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]};
-   let compact=null,genesisPlan=null,corePlan=null,formExtensions=[];
-   if(ARCHIVE_TABLE_TASKS.includes(task)){
-    // Compile optional fields for this request only. Reading/compiling never mutates a saved registry.
-    let registry=payload.registry;for(const kind of ['character','item','place','organization','rule']){const plan=foundationTemplatePlan(kind,{registry});registry=plan.registry;formExtensions.push(...plan.schemaChanges);}
-    payload.registry=registry;compact=prepareCompactFill(task,payload);
-    payload.compactFill={contract:compact.contract,modelInput:compact.modelInput,modelState:compact.modelState};
-   }
-   if(task==='tableGenesis'){
-    genesisPlan=prepareSimpleGenesis(payload);
-    if(payload.adaptation){
-     genesisPlan.messages.push({role:'user',content:payload.adaptation.material+'\n\n'+payload.adaptation.instructions});
-    }
-    payload.simpleForm={messages:genesisPlan.messages};
-   }else if(task==='assetAdapt'){
-    corePlan=prepareSimpleCore(payload);payload.simpleForm={messages:corePlan.messages};
-   }
-   const response=await request(task,JSON.stringify(payload),{signal,onProgress:update=>{
+   const plan=taskRegistry.prepare(task,payload);
+   const response=await request(task,JSON.stringify(plan.payload),{signal,onProgress:update=>{
     if(signal?.aborted||!update||!['preparing','prepared','waiting','connected','thinking','receiving','buffered','received'].includes(update.stage))return;
     // Reader delivers cumulative visible content; reasoning fields are never
     // accepted as a progress payload or appended to task data.
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};
    }});
    if(typeof response==='string')progress={...progress,text:response,characters:response.length};progress={...progress,stage:'validating',updatedAt:Date.now()};
-   let parsed;
-   if(genesisPlan){
-    const answer=payload.adaptation?splitSimpleAdaptation(response):{text:response};
-    parsed=parseSimpleGenesis(answer.text,genesisPlan);
-    if(payload.adaptation)applySimpleAdaptation(parsed,payload.adaptation,answer.entries);
-   }else if(corePlan)parsed=parseSimpleCore(response,corePlan.privateplan);
-   else parsed=compact?parseCompactFill(compact,response):parseJSONResponse(response);
-   const result=copy(parsed);
-   if(genesisPlan||corePlan)progress={...progress,format:'simple-form'};
-   if(compact){result.schemaChanges=[...formExtensions,...(result.schemaChanges??[])];progress={...progress,format:'compact-fill'};}
+   const result=copy(plan.parse(response));
+   if(plan.format)progress={...progress,format:plan.format};
    c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }
@@ -615,65 +588,6 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   status('创世','已保存',origin.name);return prepared.commit.changes.length+init.commit.changes.length;}).then(async count=>{try{await applyNative(draft.world);}catch(e){e.blueprintSaved=true;throw e;}return count;});}
  async function applyNative(expectedWorld){check(!busy,'请等待表单任务完成');const c=capture();check(!expectedWorld||c.key===expectedWorld,'蓝图已保存，但聊天已切换，原生配置尚未创建');const loaded=await load(c),spec=loaded.session.data.blueprint?.native;if(!spec||!Object.values(spec).some(x=>Array.isArray(x)&&x.length))return [];check(nativeConfig,'原生配置接口尚未接入；表单已保存');try{const receipts=await nativeConfig.apply(spec);status('原生配置','已核对',receipts.length+' 项');return receipts;}catch(e){status('原生配置','待补建',e.message);throw e;}}
  async function reviewPreference(id,proposal=null){return exclusive(async()=>{const c=capture(),loaded=await load(c),draft=loaded.session.data.preferenceDrafts?.map(d=>confirmedPreferenceDraft(d,c.data.全局偏好,c.key)).find(x=>x.id===id);check(draft&&draft.status==='pending'&&livePreferenceDraft(loaded,draft),'偏好候选不存在、已处理或来源已变化');if(proposal){check(!(proposal.templates??[]).length,'偏好确认不能新增类型');await commit(c,loaded,proposal,{source:draft.source,kind:'preferences',evidence:draft.text,allowedTables:['preferences'],reviewId:id,independentPreference:!!draft.feedbackId});}else{const next=copy(loaded.session.data);next.revision++;next.preferenceDrafts.find(x=>x.id===id).status='rejected';await books.write(loaded.session,next,c.guard);}return true;});}
- // Compact state forms share this service's serialization, source projection and book writer.
- async function stateFormContext(){const c=capture();check(c.settings.originBook&&c.settings.sessionBook,'请先建立当前会话的表单存档');const loaded=await load(c),catalog=loaded.origin.data.状态目录;if(catalog)validateStateCatalog(catalog,loaded.origin.data.id);return {c,loaded,catalog};}
- async function stateCatalog(){const {loaded,catalog}=await stateFormContext();return {catalog:copy(catalog??null),originRevision:loaded.origin.data.revision};}
- async function saveStateCatalog(registration,expectedOriginRevision){const input=copy(registration);return exclusive(async()=>{
-  const {c,loaded,catalog}=await stateFormContext();check(loaded.origin.data.revision===expectedOriginRevision,'状态定义已改变，请重新载入');
-  const nextCatalog=registerStateCatalog(catalog,loaded.origin.data.id,input);if(catalog&&JSON.stringify(catalog)===JSON.stringify(nextCatalog))return {catalog:copy(catalog),originRevision:loaded.origin.data.revision,unchanged:true};
-  const next=copy(loaded.origin.data);next.revision++;next.状态目录=nextCatalog;const saved=await books.write(loaded.origin,next,c.guard);c.guard();
-  status('状态定义','已保存',nextCatalog.items.length+' 个条目；没有初始化人物状态');return {catalog:copy(saved.data.状态目录),originRevision:saved.data.revision,unchanged:false};
- });}
- async function readStateForm(ownerId,itemIds){const selected=copy(itemIds);const {loaded,catalog}=await stateFormContext();check(catalog,'尚未登记状态定义');return {text:readStateGrid(loaded.view,catalog,ownerId,selected),ownerId,itemIds:selected,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};}
- async function readNumericState(ownerId){const {loaded,catalog}=await stateFormContext();check(catalog,'尚未登记状态定义');return {text:readStateValues(loaded.view,catalog,ownerId,catalog.items.map(i=>i.id)),ownerId,actions:compileStateFormulas(catalog).actions.filter(a=>!parseStateEvents(catalog.events??'').some(e=>e.action===a.name)).map(a=>({name:a.name,automatic:a.automatic}))};}
- async function stageStatePreview(input,kind){const captured=copy(input);return exclusive(async()=>{
-  const {c,loaded,catalog}=await stateFormContext();check(catalog,'尚未登记状态定义');
-  if(kind==='formula')check(!parseStateEvents(catalog.events??'').some(e=>e.action===captured.name),'此公式由事件结算调用，请选择已确认事件');
-  const itemIds=captured.itemIds??catalog.items.map(i=>i.id),args={...captured,itemIds};
-  const planned=(kind==='grid'?stateGridProposal:kind==='values'?stateValuesProposal:kind==='formula'?stateFormulaProposal:stateGrowthProposal)(loaded.view,catalog,args);
-  const options={source:loaded.chain.at(-1)?.key??null,kind:'manual',evidence:planned.raw,allowedTables:['state'],allowSchemaExtensions:false,inferSchemaFields:false};
-  prepareCommit(loaded.view,planned.proposal,options);c.guard();
-  const id='state-form:'+crypto.randomUUID(),draft={id,world:c.key,chat:c.chat,ownerId:captured.ownerId,itemIds:copy(itemIds),originStamp:loaded.origin.stamp,sessionStamp:loaded.session.stamp,catalogRevision:catalog.revision,...planned,options};
-  check(stateFormDrafts.size<100,'待保存状态简表过多，请先保存或取消');stateFormDrafts.set(id,draft);
-  return {id,ownerId:draft.ownerId,diff:copy(planned.diff),changes:planned.diff.length,written:false,...(planned.growth?{growth:copy(planned.growth)}:{})};
- });}
- async function stateEventReceipt(loaded,catalog,entry){
-  const inherited=(loaded.session.data.branchSeed?.stateEventReceipts??[]).some(c=>c.id===entry.id);
-  check(inherited||loaded.view.commits.some(c=>c.id===entry.id),'事件回执不在当前分支，不能重新结算旧事件');
-  const record=entry.stateEvent,spec=stateEventInput(loaded.view,catalog,record);
-  check(inherited?JSON.stringify(spec.event)===JSON.stringify(record.eventSnapshot)&&JSON.stringify(spec.rule)===JSON.stringify(record.rule):await digest(spec.payload)===record.inputHash,'已结算事件或规则发生变化，未再次扣费或发放奖励');
-  return {id:entry.stateForm.id,ownerId:record.ownerId,eventId:record.eventId,name:record.name,recorded:true,diff:copy(record.diff),changes:record.diff.length,growth:copy(record.growth),written:false};
- }
- async function previewStateEvent(input){const captured=copy(input);return exclusive(async()=>{
-  const {c,loaded,catalog}=await stateFormContext();check(catalog,'尚未登记状态定义');
-  const spec=stateEventInput(loaded.view,catalog,captured),prior=[...(loaded.session.data.branchSeed?.stateEventReceipts??[]),...loaded.session.data.commits].filter(x=>x.stateEvent?.identity===spec.identity);
-  check(prior.length<=1,'同一事件存在重复结算回执');if(prior.length)return stateEventReceipt(loaded,catalog,prior[0]);
-  const planned=stateEventProposal(loaded.view,catalog,captured),options={source:loaded.chain.at(-1)?.key??null,kind:'manual',evidence:planned.raw,allowedTables:['state'],allowSchemaExtensions:false,inferSchemaFields:false};
-  prepareCommit(loaded.view,planned.proposal,options);c.guard();
-  const id='state-event:'+crypto.randomUUID(),event={identity:spec.identity,eventId:captured.eventId,ownerId:captured.ownerId,name:captured.name,action:spec.rule.action,narrative:spec.rule.narrative,inputHash:await digest(spec.payload),eventRevision:spec.event.rev,rule:copy(spec.rule),eventSnapshot:spec.event,deliveryAfter:loaded.chain.findLast(x=>x.role==='assistant')?.key??null,diff:copy(planned.diff),growth:copy(planned.growth),access:copy(planned.access)};
-  c.guard();check(stateFormDrafts.size<100,'待保存状态简表过多，请先保存或取消');
-  stateFormDrafts.set(id,{id,world:c.key,chat:c.chat,ownerId:captured.ownerId,itemIds:catalog.items.map(i=>i.id),originStamp:loaded.origin.stamp,sessionStamp:loaded.session.stamp,catalogRevision:catalog.revision,...planned,options,event});
-  return {id,ownerId:captured.ownerId,eventId:captured.eventId,name:captured.name,diff:copy(planned.diff),changes:planned.diff.length,growth:copy(planned.growth),recorded:false,written:false};
- });}
- async function readStateEventResults(){const {loaded}=await stateFormContext();return stateEventNarrative(loaded.view,loaded.chain.findLast(x=>x.role==='assistant')?.key??null);}
- const previewStateForm=input=>stageStatePreview(input,'grid'),previewNumericState=input=>stageStatePreview(input,'values'),previewStateFormula=input=>stageStatePreview(input,'formula'),previewStateGrowth=input=>stageStatePreview(input,'growth');
- async function saveStateForm(id){return exclusive(async()=>{
-  const {c,loaded,catalog}=await stateFormContext(),recorded=[...(loaded.session.data.branchSeed?.stateEventReceipts??[]),...loaded.view.commits].find(x=>x.stateForm?.id===id);
-  if(recorded){if(recorded.stateEvent)await stateEventReceipt(loaded,catalog,recorded);stateFormDrafts.delete(id);return {id,recorded:true,changes:recorded.stateEvent?.diff.length??recorded.changes.length,sessionRevision:loaded.session.data.revision};}
-  const draft=stateFormDrafts.get(id);check(draft&&draft.world===c.key&&draft.chat===c.chat,'状态简表不存在或聊天已改变，请重新预览');
-  check(catalog&&loaded.origin.stamp===draft.originStamp&&loaded.session.stamp===draft.sessionStamp,'状态定义或档案已改变，旧简表未覆盖新值');
-  if(!draft.proposal.changes.length&&!draft.event){stateFormDrafts.delete(id);return {id,recorded:false,unchanged:true,changes:0,sessionRevision:loaded.session.data.revision};}
-  if(draft.event)check(!loaded.session.data.commits.some(x=>x.stateEvent?.identity===draft.event.identity),'事件已结算，请重新载入回执');
-  const prepared=prepareCommit(loaded.view,draft.proposal,draft.options);check(JSON.stringify(prepared.registry)===JSON.stringify(loaded.view.registry),'状态简表不能改变档案模板');
-  prepared.commit.stateForm={id,ownerId:draft.ownerId,itemIds:copy(draft.itemIds),catalogRevision:draft.catalogRevision};
-  if(draft.event)prepared.commit.stateEvent=copy(draft.event);
-  const next=copy(loaded.session.data);next.revision++;next.commits.push(prepared.commit);
-  // Only one session book is written. Shared definitions were registered separately.
-  const saved=await books.write(loaded.session,next,c.guard);c.guard();
-  stateFormDrafts.delete(id);worldbook.clear();setPrompt('');latest=null;
-  status('状态简表','已保存',prepared.commit.changes.length+' 项');return {id,recorded:true,changes:prepared.commit.changes.length,sessionRevision:saved.data.revision};
- });}
- function discardStateForm(id){return stateFormDrafts.delete(id);}
  async function edit(proposal){return exclusive(async()=>{const c=capture(),loaded=await load(c),source=loaded.chain.at(-1)?.key??null;const evidence='用户手动修改表单';const result=await commit(c,loaded,proposal,{source,kind:'manual',evidence,allowedTables:loaded.view.registry.tables.map(t=>t.id)});return result.configurationRevision??result.session.data.revision;});}
  function resolveOriginPins(loaded,pins){const bases=loaded.origin.data.bases;check(Array.isArray(pins)&&pins.every(p=>bases.some(b=>b.id+'@'+b.rev===p)),'所选原点版本不存在');check(new Set(pins.map(p=>p.slice(0,p.lastIndexOf('@')))).size===pins.length,'同一档案只能选择一个版本');
   const selected=new Map(pins.map(pin=>{const row=bases.find(b=>b.id+'@'+b.rev===pin);return [row.id,row];})),queue=[...selected.values()];
@@ -684,10 +598,13 @@ return [...selected.values()].map(b=>b.id+'@'+b.rev);}
 
  async function saveTemplates(nextRegistry,expectedRevision){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(loaded.origin.data.revision===expectedRevision,'模板版本已变化，请重新载入');compatibleRegistry(nextRegistry,loaded.origin.data.registry);for(const row of loaded.view.rows)validateRow(nextRegistry,row);
   const next=copy(loaded.origin.data);next.revision++;next.registry=copy(nextRegistry);next.schemaHistory??=[];next.schemaHistory.push({at:new Date().toISOString(),before:loaded.origin.data.registry,after:copy(nextRegistry),source:'用户编辑模板'});await books.write(loaded.origin,next,c.guard);const session=copy(loaded.session.data);session.revision++;session.registry=copy(nextRegistry);session.schemaPinned=true;session.commits.push({id:crypto.randomUUID(),source:null,depends:loaded.view.last,kind:'schema',changes:[],anchors:[],registry:copy(nextRegistry)});await books.write(loaded.session,session,c.guard);status('模板','已保存','新字段和别名已登记');return next.revision;});}
- const archives=createArchiveSystem({run:exclusive,capture,load,books,readerPolicy:archiveQueryPolicy,onCommitted(){worldbook.clear();setPrompt('');latest=null;}});
- const conditionService=createConditionService({run:exclusive,capture,load,books,onCommitted(){worldbook.clear();setPrompt('');latest=null;}});
- const foundation=createFoundationService({run:exclusive,capture,load,books,onCommitted(){worldbook.clear();setPrompt('');latest=null;}});
- const api={identityCores,bindIdentitySelection,assertIdentityCompatible,identityOrigins,previewIdentityOrigin,saveIdentityOrigin,createIdentityDraft,saveIdentityDraft,lifecycle,subscribeArchive(fn){check(typeof fn==='function','需要刷新函数');archiveListeners.add(fn);return ()=>archiveListeners.delete(fn);},...archives,...conditionService,...foundation,previewStateEvent,readStateEventResults,readNumericState,previewNumericState,previewStateFormula,previewStateGrowth,stateCatalog,saveStateCatalog,readStateForm,previewStateForm,saveStateForm,discardStateForm,recordRevisionFeedback,reviewCardRules,ruleReviewStatus,saveRuleChoice,previewUserBinding,saveUserBinding,resumeUserBinding,analysePreferences,stageFork,activateFork,cancelFork(){pendingFork=null;},enableNativeBridge,syncNative,coreDraft,saveCore,listCores,adaptCore,previewCoreBundle,coreBundleDraft,saveCoreBundle,adaptCoreBundle,advance,saveAnchor,freezeCanon,readCanon,openArchiveProposal,saveArchiveProposal,previewArchiveChanges,acceptArchiveReview,discardArchiveReview,openArchiveQuery,openAssistantArchiveQuery,useAnchor,autoInitialize,cardTemplate,saveCardTemplate,review,state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){const settings=tableSettings(store.read().world);return settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[];},auditStyle(text){const settings=tableSettings(store.read().world);lastStyleAudit={enabled:settings.styleEnabled,hits:settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[],at:new Date().toISOString()};return copy(lastStyleAudit);},reportError(task,error){if(error===undefined){error=task;task='表单操作';}status(task,'失败',error?.message??String(error),error);if(progress)progress={...progress,stage:'error',updatedAt:Date.now(),finishedAt:Date.now()};},edit,pinOrigins,books,clear,contextChanged,preview:()=>copy(latest)};
+ const onCommitted=()=>{worldbook.clear();setPrompt('');latest=null;};
+ const serviceContext={run:exclusive,capture,load,books,onCommitted};
+ const archives=createArchiveSystem({...serviceContext,readerPolicy:archiveQueryPolicy});
+ const stateService=createStateService({...serviceContext,status});
+ const conditionService=createConditionService(serviceContext);
+ const foundation=createFoundationService(serviceContext);
+ const api={...stateService,identityCores,bindIdentitySelection,assertIdentityCompatible,identityOrigins,previewIdentityOrigin,saveIdentityOrigin,createIdentityDraft,saveIdentityDraft,lifecycle,subscribeArchive(fn){check(typeof fn==='function','需要刷新函数');archiveListeners.add(fn);return ()=>archiveListeners.delete(fn);},...archives,...conditionService,...foundation,recordRevisionFeedback,reviewCardRules,ruleReviewStatus,saveRuleChoice,previewUserBinding,saveUserBinding,resumeUserBinding,analysePreferences,stageFork,activateFork,cancelFork(){pendingFork=null;},enableNativeBridge,syncNative,coreDraft,saveCore,listCores,adaptCore,previewCoreBundle,coreBundleDraft,saveCoreBundle,adaptCoreBundle,advance,saveAnchor,freezeCanon,readCanon,openArchiveProposal,saveArchiveProposal,previewArchiveChanges,acceptArchiveReview,discardArchiveReview,openArchiveQuery,openAssistantArchiveQuery,useAnchor,autoInitialize,cardTemplate,saveCardTemplate,review,state,worldbook,nativeConfiguration:nativeConfig,applyNative,prepare,rulesContext,initialize,ensureInitialized,inspect,scan,archive,importHistory,saveHistory,saveTemplates,genesis,saveGenesis,reviewPreference,checkStyle(text){const settings=tableSettings(store.read().world);return settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[];},auditStyle(text){const settings=tableSettings(store.read().world);lastStyleAudit={enabled:settings.styleEnabled,hits:settings.styleEnabled?scanStyle(archivalText(text),styleRules(settings)):[],at:new Date().toISOString()};return copy(lastStyleAudit);},reportError(task,error){if(error===undefined){error=task;task='表单操作';}status(task,'失败',error?.message??String(error),error);if(progress)progress={...progress,stage:'error',updatedAt:Date.now(),finishedAt:Date.now()};},edit,pinOrigins,books,clear,contextChanged,preview:()=>copy(latest)};
  api.assistant=createTableAssistant({store,getContext,review,run:exclusive,call:(input,signal)=>invoke('tableAssistant',input,capture(),signal),getChoices:getConfigurationChoices,interfaceConfig});return api;
 }
 

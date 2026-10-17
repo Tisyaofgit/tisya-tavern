@@ -1,11 +1,12 @@
+import {createPreviewStore,createBoundArchiveContext} from './preview-store.js';
 import {check,copy} from './schema.js';
 import {digest} from './books.js';
 import {prepareCommit} from './ledger.js';
 import {createFoundationInput,assertFoundationInput,inspectFoundationInput,foundationInputProposal} from './foundation-intake.js';
 
 export function createFoundationService({run,capture,load,books,onCommitted=()=>{}}){
- const previews=new Map();
- async function current(){const c=capture();check(c.settings.originBook&&c.settings.sessionBook,'请先建立当前会话的表单存档');return {c,loaded:await load(c)};}
+ const previews=createPreviewStore({prefix:'foundation-preview',missing:'预览不存在或会话已变化，请重新预览',stale:'档案或草稿已改变，请重新预览',full:'待确认提炼过多，请先保存或关闭页面'});
+ const current=createBoundArchiveContext({capture,load});
  const records=loaded=>loaded.session.data.foundationDrafts??[];
  const get=(loaded,id)=>{const d=records(loaded).find(d=>d.id===id);check(d,'提炼草稿不存在于当前会话');return d;};
  const raw=d=>d.responses.at(-1)?.text??'';
@@ -33,26 +34,23 @@ export function createFoundationService({run,capture,load,books,onCommitted=()=>
   const {c,loaded}=await current(),d=get(loaded,id);check(!d.published,'此草稿已经入档');check(raw(d),'草稿尚无回答');
   const result=foundationInputProposal(d.input,raw(d),loaded.view);
   const options={source:loaded.chain.at(-1)?.key??null,kind:'manual',evidence:result.evidence,allowedTables:['objects','facts'],allowSchemaExtensions:true,inferSchemaFields:false};
-  const prepared=prepareCommit(loaded.view,result.proposal,options),token='foundation-preview:'+crypto.randomUUID();
-  for(const [key,p]of previews)if(p.id===id&&p.world===c.key&&p.chat===c.chat)previews.delete(key);
-  check(previews.size<100,'待确认提炼过多，请先保存或关闭页面');
-  previews.set(token,{id,revision:d.revision,world:c.key,chat:c.chat,originStamp:loaded.origin.stamp,sessionStamp:loaded.session.stamp,prepared});
+  const prepared=prepareCommit(loaded.view,result.proposal,options);
+  const token=previews.create(c,loaded,{id,revision:d.revision,prepared},{replace:previous=>previous.id===id});
   return {token,id,revision:d.revision,changes:copy(prepared.commit.changes.map(x=>x.after)),counts:result.counts,semantic:'pending-author-review',runtime:'conditions-not-bound',written:false};
  });}
  async function commitFoundationDraft(token,{reviewed=false}={}){return run(async()=>{
   check(reviewed===true,'请先核对语义、漏项与隐情归属，再确认入档');const {c,loaded}=await current();
   const previous=loaded.session.data.commits.filter(x=>x.foundationImport?.previewId===token);check(previous.length<=1,'提炼保存回执重复');
-  if(previous.length){check(loaded.view.commits.some(x=>x.id===previous[0].id),'此回执不在当前分支，未重新入档');previews.delete(token);return {recorded:true,repeated:true,changes:previous[0].changes.length};}
-  const p=previews.get(token);check(p&&p.world===c.key&&p.chat===c.chat,'预览不存在或会话已变化，请重新预览');
-  check(p.originStamp===loaded.origin.stamp&&p.sessionStamp===loaded.session.stamp,'档案或草稿已改变，请重新预览');
+  if(previous.length){check(loaded.view.commits.some(x=>x.id===previous[0].id),'此回执不在当前分支，未重新入档');previews.discard(token);return {recorded:true,repeated:true,changes:previous[0].changes.length};}
+  const p=previews.read(token,c,loaded);
   const d=get(loaded,p.id);check(!d.published&&d.revision===p.revision,'提炼稿已变化或已入档');assertFoundationInput(d.input,loaded.view);
   const next=copy(loaded.session.data),target=next.foundationDrafts.find(x=>x.id===p.id),commit=copy(p.prepared.commit);next.revision++;
   commit.foundationImport={draftId:d.id,draftRevision:d.revision,previewId:token,sourceHash:await digest(d.input.context.source),responseHash:await digest(raw(d)),semantic:'author-confirmed',runtime:'conditions-not-bound'};
   next.commits.push(commit);target.published={commitId:commit.id,previewId:token,revision:d.revision,at:commit.at};
   // Schema and records become visible in this one session commit, never a partial origin write.
-  const saved=await books.write(loaded.session,next,c.guard);c.guard();previews.delete(token);onCommitted();
+  const saved=await books.write(loaded.session,next,c.guard);c.guard();previews.discard(token);onCommitted();
   return {recorded:true,repeated:false,changes:commit.changes.length,sessionRevision:saved.data.revision};
  });}
- const discardFoundationPreview=token=>previews.delete(token);
+ const discardFoundationPreview=token=>previews.discard(token);
  return {readFoundationDrafts,readFoundationDraft,createFoundationDraft,saveFoundationResponse,previewFoundationDraft,commitFoundationDraft,discardFoundationPreview};
 }

@@ -1,8 +1,6 @@
-import {SIMPLE_TABLE_TASKS} from './task-kinds.js';
-export {SIMPLE_TABLE_TASKS} from './task-kinds.js';
+import {SIMPLE_TABLE_TASKS,TABLE_MODES,taskProfile} from './task-registry.js';
+export {SIMPLE_TABLE_TASKS,TABLE_MODES} from './task-registry.js';
 import {SLOT_ROUTER} from './slots.js';
-import {taskProfile} from './task-profiles.js';
-export const TABLE_MODES=Object.freeze({ruleReview:{id:'rule-review',name:'原卡规则校对',steps:'核原文与作用域→定位规则缺陷→提出可对照的优化方案→交玩家选择'},nativeFill:{id:'native-fill',name:'原生变量填表',steps:'Read confirmed native mappings and current reply→fill value deltas only→return table data for native-parser validation'},assetAdapt:{id:'asset-adapt',name:'无画风基点提取',steps:'读取选择的对象及成长来源→分开世界表达、核心设定与叙事意义→保留来源与可选成长→提交确认草稿'},templateInit:{id:'template-init',name:'角色卡模板初始化',steps:'读取当前角色卡及绑定定义→复用字段与类型→提取可复用底档及开局初值→返回可修改草稿；不采纳示例为已发生历史'},tableAssistant:{id:'assistant',name:'配置助手',steps:'读取实际配置、模板与诊断→理解用户希望→提出完整批量修改→交给用户一次确认；需要新配置转交创世'},tableArchive:{id:'archive',name:'记忆归档',steps:'核来源与归档边界→比对当前表→按模板提出有证据的变更→校验版本、权限和关联；不推进剧情'},plotAdvance:{id:'plot',name:'剧情推进',steps:'按 phase 分派：world 核已确认时段、场外人物知识和事务→结算场外事件提案；plan 读取用户输入和进度→设计条件节拍和主支线延伸；保留玩家选择' },preferenceAnalysis:{id:'preferences',name:'偏好确认',steps:'识别用户明确要求→分析候选表现偏好→逐项绑定用户原句→标注推测与作用域→交给用户确认；重投本身不证明原因'},tableGenesis:{id:'genesis',name:'创世设计',steps:'接续设计要求→填写基础档案和开局资料→核来源与关联→交用户确认'},objectArchive:{id:'objects',name:'新发现建档',steps:'区分新对象与已有对象的新事实→复用类型及别名→补齐有依据字段→形成档案提案'},historyImport:{id:'history',name:'历史补录',steps:'按来源楼层和已知时间整理→保留事件经过→核对象与当时状态→防止旧状态覆盖新进度→形成补录提案'}});
 export function addSlotRouting(entries){const route=SLOT_ROUTER.split('\n').slice(1,-1).join('\n');if(!entries.tisya_task_start.includes('@ROUTE TISYA.DATA.SOURCE'))entries.tisya_task_start=entries.tisya_task_start.replace('[/TASK.START]',route+'\n[/TASK.START]');return entries;}
 export const IDENTITY_ENTRIES=['main','tisya_identity_attestation','tisya_user_relation'];
 export const auxiliaryWire='Return one strict JSON object under the selected contract. No fences,XML wrapper,reports or hearts. Data awaits validation; it is not a write receipt.';

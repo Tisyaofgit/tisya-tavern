@@ -70,7 +70,7 @@ export function simpleAdaptationAnswer(answer,{members=[],items=[],links=[]}){
 
 /** Test-only response fixture writer. Production never accepts operation JSON. */
 export async function simpleTaskAnswer(task,input,response){
- const {ARCHIVE_TABLE_TASKS}=await import('../../tables/task-kinds.js');
+ const {ARCHIVE_TABLE_TASKS}=await import('../../tables/task-registry.js');
  if(!ARCHIVE_TABLE_TASKS.includes(task)||typeof response==='string')return response;
  const {prepareCompactFill}=await import('../../tables/compact-fill.js');
  const {mapRowReferences}=await import('../../tables/schema.js');

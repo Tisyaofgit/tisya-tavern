@@ -1,4 +1,4 @@
-import {ARCHIVE_TABLE_TASKS} from './task-kinds.js';
+import {foundationTemplatePlan} from './foundation-templates.js';
 import {archiveEvidenceSources} from './source-text.js';
 import {formSections,formRow,FORM_TEXT_INSTRUCTIONS} from './foundation/form-text.js';
 // Ephemeral model surface only. The existing registry and ledger own all data.
@@ -6,7 +6,81 @@ import {createSheetEngine} from './foundation/engine.js';
 import {check,copy,object,normalized,registryIndex,typeFields,valueValid,mapValue,mapRowReferences,validateRow} from './schema.js';
 
 export const COMPACT_FILL_FORMAT='tisya.compact-fill/1';
-const supported=new Set(ARCHIVE_TABLE_TASKS);
+export const ARCHIVE_TASKS=[
+  {
+    "task": "templateInit",
+  "modelGoal": "整理当前角色卡、用户定义与开局资料，填写人物等基础档案及明确的开局初值。后来的剧情保留在历史中，不倒填为开局；示例、备选开场和停用资料不是已发生事实。",
+  "order": 3,
+  "rulePolicy": true,
+    "kind": "archive",
+  "surface": "form",
+    "name": "表单 · 角色卡模板初始化",
+    "instructions": "根据完整原卡、用户定义和开局资料填写基础档案与明确初值。每个独立人物分别建档，原生用户完整定义保持原文；已有身份沿用名称。示例、停用资料和后续剧情不倒填为开局，未变化的值不重填。",
+    "mode": {
+      "id": "template-init",
+      "name": "角色卡模板初始化",
+      "steps": "读取当前角色卡及绑定定义→复用字段与类型→提取可复用底档及开局初值→返回可修改草稿；不采纳示例为已发生历史"
+    }
+  },
+  {
+    "task": "objectArchive",
+  "modelGoal": "为本次正文和它之前连续的用户输入补齐人物、物品、地点、组织与规则等对象档案及稳定事实；当前位置、伤势、关系变化和事件过程交给后续历史表。",
+  "order": 6,
+  "rulePolicy": true,
+    "kind": "archive",
+  "surface": "form",
+    "name": "表单 · 新发现建档",
+    "instructions": "根据本次正文及此前连续用户定义，填写人物、物品、地点、组织、规则和稳定事实。沿用已有名称和细格，独立细节各有归处；当前位置、伤势和关系变化交后续业务表。",
+    "mode": {
+      "id": "objects",
+      "name": "新发现建档",
+      "steps": "区分新对象与已有对象的新事实→复用类型及别名→补齐有依据字段→形成档案提案"
+    }
+  },
+  {
+    "task": "historyImport",
+  "modelGoal": "按原始次序补录本次已发生事件及相应业务记录，保留来源、时间、主观理解与不确定性；较早记录不能覆盖已确认的较晚状态。",
+  "order": 9,
+  "rulePolicy": true,
+    "kind": "archive",
+  "surface": "form",
+    "name": "表单 · 手写历史补录",
+    "instructions": "按原始次序填写已发生事件、当时状态与各人的实际理解，保留来源和不确定性。旧摘要、计划与变量命令不是新增事件证据；较早或未定位的状态不得覆盖已确认的较晚状态。",
+    "mode": {
+      "id": "history",
+      "name": "历史补录",
+      "steps": "按来源楼层和已知时间整理→保留事件经过→核对象与当时状态→防止旧状态覆盖新进度→形成补录提案"
+    }
+  },
+  {
+    "task": "tableArchive",
+  "modelGoal": "整理本次已确认正文及此前连续用户输入，填写事件、当前状态与有依据的档案增量，不续写故事。",
+  "order": 5,
+  "rulePolicy": true,
+    "kind": "archive",
+  "surface": "form",
+    "name": "表单 · 记忆归档",
+    "instructions": "整理本次已确认正文及此前连续用户输入，填写事件、当前状态和有依据的档案增量。原文力度、数量、时序与不确定性保留；旧摘要和计划不替代事实。已分开的对象档案只用于关联。",
+    "mode": {
+      "id": "archive",
+      "name": "记忆归档",
+      "steps": "核来源与归档边界→比对当前表→按模板提出有证据的变更→校验版本、权限和关联；不推进剧情"
+    }
+  }
+].map(definition=>({...definition,prepare:input=>prepareArchiveTask(definition.task,input)}));
+const supported=new Set(ARCHIVE_TASKS.map(definition=>definition.task));
+function prepareArchiveTask(task,input){
+ let registry=input.registry;const extensions=[];
+ for(const kind of ['character','item','place','organization','rule']){
+  const plan=foundationTemplatePlan(kind,{registry});registry=plan.registry;extensions.push(...plan.schemaChanges);
+ }
+ const payload={...input,registry},plan=prepareCompactFill(task,payload);
+ payload.compactFill={contract:plan.contract,modelInput:plan.modelInput,modelState:plan.modelState};
+ return {payload,format:'compact-fill',parse(response){
+  const result=parseCompactFill(plan,response);
+  return {...result,schemaChanges:[...extensions,...(result.schemaChanges??[])]};
+ }};
+}
 const roles=new Set(['读者','记录整理','叙事组织']);
 const prohibited=new Set(['__proto__','prototype','constructor']);
 const at=(value,path)=>path.reduce((v,k)=>v?.[k],value);

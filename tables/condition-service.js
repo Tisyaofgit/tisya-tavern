@@ -1,3 +1,4 @@
+import {createPreviewStore,createBoundArchiveContext} from './preview-store.js';
 import {check,copy} from './schema.js';
 import {digest} from './books.js';
 import {prepareCommit} from './ledger.js';
@@ -5,8 +6,9 @@ import {projectStateVocabulary} from './state-registry.js';
 import {CONDITION_PROVIDER,compileBoundRule,validateBoundRule,planCondition,conditionActionProposal,conditionReceipts,conditionReadAccess} from './condition-runtime.js';
 const random=()=>crypto.getRandomValues(new Uint32Array(1))[0]/4294967296;
 export function createConditionService({run,capture,load,books,onCommitted=()=>{},draw=random}){
- const previews=new Map();
- async function current(){const c=capture();check(c.settings.originBook&&c.settings.sessionBook,'请先建立当前会话的表单存档');const loaded=await load(c);return {c,loaded,catalog:loaded.origin.data.状态目录};}
+ const previews=createPreviewStore({prefix:'condition-preview',missing:'条件预览失效',stale:'条件或状态已改变，请重新预览',full:'待确认条件超过100项'});
+ const boundContext=createBoundArchiveContext({capture,load});
+ async function current(){const context=await boundContext();return {...context,catalog:context.loaded.origin.data.状态目录};}
  const rules=l=>l.session.data.conditionRules??l.session.data.branchSeed?.conditionRules??[];
  const find=(l,id)=>{const r=rules(l).find(r=>r.id===id);check(r,'条件规则未登记在当前会话');return r;};
  const turn=l=>new Set([...(l.session.data.branchSeed?.conditionTurns??[]),...l.chain.filter(s=>s.role==='assistant').map(s=>s.key)]).size;
@@ -22,15 +24,15 @@ export function createConditionService({run,capture,load,books,onCommitted=()=>{
   const {c,loaded,catalog}=await current(),rule=validateBoundRule(find(loaded,ruleId),catalog,loaded.view),event=actionInput(loaded,eventId);check(rule.mode==='action','门禁不执行状态变更');
   const opportunity='event:'+event.id,receipt=conditionReceipts(loaded).find(r=>r.ruleId===rule.id&&r.opportunity===opportunity);
   if(receipt){check(JSON.stringify({...receipt.event,source:null})===JSON.stringify({...event,source:null}),'已结算事件被改写，不能重复结算');return {recorded:true,receipt:copy(receipt)};}
-  const plan=planCondition(rule,loaded.view.rows,{opportunity,turn:turn(loaded),receipts:conditionReceipts(loaded)}),token='condition-preview:'+crypto.randomUUID();
-  check(previews.size<100,'待确认条件超过100项');previews.set(token,{ruleId,eventId,originStamp:loaded.origin.stamp,sessionStamp:loaded.session.stamp,world:c.key,chat:c.chat});
+  const plan=planCondition(rule,loaded.view.rows,{opportunity,turn:turn(loaded),receipts:conditionReceipts(loaded)});
+  const token=previews.create(c,loaded,{ruleId,eventId});
   return {token,status:plan.status,chance:plan.chance??null,changes:copy(plan.changes),written:false};
  });}
  async function commitConditionAction(token){return run(async()=>{
   const {c,loaded,catalog}=await current(),recorded=conditionReceipts(loaded).find(r=>r.token===token);if(recorded){const e=actionInput(loaded,recorded.event.id);check(JSON.stringify({...e,source:null})===JSON.stringify({...recorded.event,source:null}),'已结算事件被改写');return {recorded:true,receipt:copy(recorded)};}
   // Receipts on a withdrawn branch never silently cause a new settlement.
   check(!loaded.session.data.commits.some(x=>x.conditionReceipt?.token===token),'回执已退出当前分支');
-  const p=previews.get(token);check(p&&p.world===c.key&&p.chat===c.chat,'条件预览失效');check(p.originStamp===loaded.origin.stamp&&p.sessionStamp===loaded.session.stamp,'条件或状态已改变，请重新预览');
+  const p=previews.read(token,c,loaded);
   const rule=validateBoundRule(find(loaded,p.ruleId),catalog,loaded.view),event=actionInput(loaded,p.eventId),opportunity='event:'+event.id;
   check(!conditionReceipts(loaded).some(r=>r.ruleId===rule.id&&r.opportunity===opportunity),'此机会已经结算');
   const options={opportunity,turn:turn(loaded),receipts:conditionReceipts(loaded)},eligible=planCondition(rule,loaded.view.rows,options);check(eligible.status==='eligible','条件不满足、未知或仍在冷却');
@@ -42,7 +44,7 @@ export function createConditionService({run,capture,load,books,onCommitted=()=>{
   const access=Object.fromEntries(['readers','knowers'].map(k=>[k,proposal.access[k].filter(x=>eventAccess[k].includes(x))]));
   const receipt={...plan,changes:undefined,basis:undefined,token,event:copy(event),narrative:plan.matched?rule.narrative:'',access,deliveryAfter:loaded.chain.findLast(s=>s.role==='assistant')?.key??null};
   delete receipt.changes;delete receipt.basis;commit.conditionReceipt=receipt;commit.contextSource=loaded.chain.at(-1)?.key??null;
-  const next=copy(loaded.session.data);next.revision++;next.commits.push(commit);await books.write(loaded.session,next,c.guard);previews.delete(token);onCommitted();return {recorded:true,receipt:copy(receipt),changes:commit.changes.length};
+  const next=copy(loaded.session.data);next.revision++;next.commits.push(commit);await books.write(loaded.session,next,c.guard);previews.discard(token);onCommitted();return {recorded:true,receipt:copy(receipt),changes:commit.changes.length};
  });}
  async function evaluateConditionEntries({requestId,entryRefs,trigger='normal',dryRun=true,signal}={}){return run(async()=>{
   check(typeof requestId==='string'&&requestId&&Array.isArray(entryRefs)&&entryRefs.length<=512,'世界书条件请求无效');
@@ -72,6 +74,6 @@ export function createConditionService({run,capture,load,books,onCommitted=()=>{
    async assertCurrent(){guard();const [o,s]=await Promise.all([books.read(c.settings.originBook),books.read(c.settings.sessionBook)]);guard();check(o.stamp===originStamp&&s.stamp===sessionStamp,'条件扫描后档案发生变化，已停止发送');}};
  });}
  async function describeConditionRules(){const c=capture();if(!c.settings.originBook||!c.settings.sessionBook)return [];const {loaded,catalog}=await current();return rules(loaded).filter(r=>r.mode==='gate').map(r=>{const item={id:r.id,name:r.name,revision:r.revision,provider:CONDITION_PROVIDER};try{validateBoundRule(r,catalog,loaded.view);return {...item,valid:true};}catch(e){return {...item,valid:false,diagnostic:e.message};}});}
- return {describeConditionRules,listConditionRules,saveConditionRule,previewConditionAction,commitConditionAction,discardConditionPreview:id=>previews.delete(id),evaluateConditionEntries};
+ return {describeConditionRules,listConditionRules,saveConditionRule,previewConditionAction,commitConditionAction,discardConditionPreview:id=>previews.discard(id),evaluateConditionEntries};
 }
 export function conditionNarrative(loaded,source){return loaded.view.commits.flatMap(c=>c.conditionReceipt?[c.conditionReceipt]:[]).filter(r=>{const e=loaded.view.rows.find(e=>e.table==='events'&&e.id===r.event?.id);return e&&JSON.stringify({...e,source:null})===JSON.stringify({...r.event,source:null});}).filter(r=>r.matched&&r.narrative&&r.deliveryAfter===source&&r.access?.readers.includes('读者')).map(r=>({ruleId:r.ruleId,text:r.narrative,note:'条件结果已经结算，只叙述已确认变化，不重复执行或扩大知情。'}));}

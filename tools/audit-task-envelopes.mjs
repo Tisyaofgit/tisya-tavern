@@ -8,16 +8,14 @@ import {KEY,registry,emptyConfig,defaultWorld,createStore,worldKey} from '../con
 import {createHost} from '../config/host.js';
 import {NARRATIVE as N} from '../settings-core.js';
 import {defaultRegistry} from '../tables/schema.js';
-import {prepareCompactFill} from '../tables/compact-fill.js';
-import {prepareSimpleGenesis} from '../tables/simple-genesis.js';
-import {prepareSimpleCore} from '../tables/simple-core.js';
+import {taskRegistry,SIMPLE_TABLE_TASKS} from '../tables/task-registry.js';
 import {registerLivePreset,isLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
 import {EMOTIONS} from '../emotion-catalog.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=path.resolve(process.argv[2]??path.join(root,'../evidence/prepared-task-forms'));
-const tasks=['templateInit','objectArchive','historyImport','tableArchive','tableGenesis','assetAdapt'];
+const tasks=SIMPLE_TABLE_TASKS;
 const preset=JSON.parse(fs.readFileSync(path.join(root,'presets/Tisya-TauriTavern-0.2.0-alpha.13.json')));
 const data=emptyConfig(),context={chatId:'neutral-audit',characterId:0,characters:[{avatar:'fixture.png',name:'示例人物',description:'中性诊断夹具',data:{description:'中性诊断夹具',personality:'未指定'}}],chatMetadata:{},chat:[{is_user:true,mes:'整理中性诊断资料。'}],powerUserSettings:{persona_description:'中性诊断身份'},extensionSettings:{[KEY]:data,connectionManager:{}},chatCompletionSettings:{model:'fixture-only',chat_completion_source:'openai',prompts:[],function_calling:false},getChatCompletionModel:s=>s.model,getRequestHeaders:()=>({}),getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>['r13'],getSelectedPresetName:()=> 'r13',getCompletionPresetByName:()=>preset})};
 const key=worldKey(context);data.worlds[key]=defaultWorld();data.worlds[key].context.owner='tisya';data.worlds[key].tables={taskInstructions:Object.fromEntries(tasks.map(task=>[task,'中性任务补充／'+task]))};
@@ -33,10 +31,8 @@ function prepare(task){
  const input={goal:'整理示例人物和普通灯；设计内容留待确认。',sourceCardRaw:{fields:{name:'示例人物',description:card}},sourceBooks:[],registry:defaultRegistry(),currentRows:[],archiveSource:{key:'host-only-floor-key',floor:2,text:body},userSource:{sources:[{floor:1,role:'user',text:user}]}};
  if(task==='assetAdapt'){
   input.mode='single';input.source={format:'tisya.core-selection/1',objects:[{kind:'character',row:{id:'host-only-object-key',table:'objects',values:{名称:'示例人物',类型:'character',描述:card},access:{readers:['读者'],knowers:[]}},growth:[]}],links:[],instructions:'仅提炼资料已经明确的意义。'};
-  input.simpleForm={messages:prepareSimpleCore(input).messages};
- }else if(task==='tableGenesis')input.simpleForm={messages:prepareSimpleGenesis(input).messages};
- else {const plan=prepareCompactFill(task,input);input.compactFill={contract:plan.contract,modelInput:plan.modelInput,modelState:plan.modelState};}
- return input;
+ }
+ return taskRegistry.prepare(task,input).payload;
 }
 const hash=s=>createHash('sha256').update(s).digest('hex'),save=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
 fs.mkdirSync(path.join(out,'requests'),{recursive:true});
