@@ -20,7 +20,7 @@ export function fieldMerge(a,b,path){
  const shape=d=>{const {fields,items,description,aliases,additionalProperties,capture,include,follow,...rest}=d;return rest;};
  check(sameDefinition(shape(a),shape(b)),'模板字段类型或约束冲突：'+path);
  for(const key of ['capture','include','follow'])check(b[key]===undefined||a[key]===undefined||sameDefinition(a[key],b[key]),'自动归档不能改写已有字段条件：'+path+'.'+key);
- const out={...a,...(a.follow===undefined&&b.follow!==undefined?{follow:b.follow}:{}),...(a.capture===undefined&&b.capture!==undefined?{capture:b.capture}:{}),...(a.include===undefined&&b.include!==undefined?{include:b.include}:{}),aliases:[...new Set([...(a.aliases??[]),...(b.aliases??[])])]};
+ const out={...a,...(a.follow===undefined&&b.follow!==undefined?{follow:b.follow}:{}),...(a.capture===undefined&&b.capture!==undefined?{capture:b.capture}:{}),...(a.include===undefined&&b.include!==undefined?{include:b.include}:{}),...(a.aliases||b.aliases?{aliases:[...new Set([...(a.aliases??[]),...(b.aliases??[])])]}:{})};
  if(a.fields||b.fields){check(a.type==='object','仅对象可以扩展子字段：'+path);const fields=copy(a.fields??{});for(const [k,d]of Object.entries(b.fields??{})){if(fields[k])fields[k]=fieldMerge(fields[k],d,path+'.'+k);else {check(!d.required,'自动新增子字段须为可选：'+path+'.'+k);fields[k]=copy(d);}}out.fields=fields;if(!a.fields||!b.fields||a.additionalProperties||b.additionalProperties)out.additionalProperties=true;}
  if(a.items||b.items){check(a.items&&b.items,'集合缺少 items：'+path);out.items=fieldMerge(a.items,b.items,path+'[]');}
  return out;

@@ -5,11 +5,14 @@ import {Window} from 'happy-dom';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey} from '../config/core.js';
 import {createTableService} from '../tables/service.js';
 import {createBookGateway} from '../tables/books.js';
+import {sheetCatalog} from '../tables/foundation/catalog.js';
 import {mountTablePanel} from '../tables/panel.js';
 const source=readFileSync(new URL('./fixtures/foundation-sheet/fanglu-narrative-r4.txt',import.meta.url),'utf8');
 const raw=readFileSync(new URL('./fixtures/foundation-sheet/fanglu-r10-user.raw.txt',import.meta.url),'utf8');
 // Explicit authored revision used only in this test; original response stays immutable.
-const revised=raw.replace('7 参与者：方鹿；阿禾；乘客','7 参与者：方鹿；阿禾').replace('听木辨裂适用 = 是\n','听木辨裂适用 = 是；听木辨裂不能听人心或探测北峡水底\n');
+const appearanceBlank='\n【人物／形貌细目】\n'+sheetCatalog().templates.find(t=>t.id==='origin.character').fields.map((f,i)=>({...f,row:i+1})).filter(f=>f.group==='形貌细目').map(f=>f.row+' '+f.label+'：').join('\n');
+// New-revision test fixture adds only blank cells required by this catalog; frozen raw is untouched.
+const revised=raw.replace('7 参与者：方鹿；阿禾；乘客','7 参与者：方鹿；阿禾').replace('听木辨裂适用 = 是\n','听木辨裂适用 = 是；听木辨裂不能听人心或探测北峡水底\n')+appearanceBlank;
 async function fixture(){
  const data=emptyConfig(),context={chatId:'intake-test',characterId:0,characters:[{avatar:'test.png',name:'测试'}],chat:[{is_user:false,mes:'开场'}],extensionSettings:{[KEY]:data}};
  data.worlds[worldKey(context)]=defaultWorld();const store=createStore({getContext:()=>context,persist:async()=>true}),saved=new Map(),binding={primary:'',additional:[]};let uid=1,writes=0,before=null,after=null,readFailure=false;

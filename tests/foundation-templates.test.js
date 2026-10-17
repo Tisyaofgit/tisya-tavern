@@ -24,7 +24,7 @@ test('conflicting installed fields are rejected without silently changing type o
  assert.throws(()=>foundationTemplatePlan('unknown'),/未登记/);
 });
 test('character core and mask plus nine groups use shared identity and separate permission-bearing facts; nonhumans do not gain person groups',()=>{
- const person=foundationTemplatePlan('character');assert.equal(person.groups.length,11);
+ const person=foundationTemplatePlan('character');assert.equal(person.groups.length,12);
  assert.deepEqual(person.groups.filter(g=>['history','relationships','secrets'].includes(g.id)).map(g=>g.table),['facts','facts','facts']);
  assert(person.fieldIndex.some(f=>f.table==='objects'&&f.path.join('.')==='名称'));
  assert(!person.fieldIndex.some(f=>f.path.at(-1)==='姓名'));
@@ -34,7 +34,7 @@ test('character core and mask plus nine groups use shared identity and separate 
  }
  const sessions=foundationSessionTemplates();assert.equal(sessions.length,12);assert(sessions.every(s=>s.writes===0&&Object.keys(s.values).length===0));
 });
-test('unfilled template remains a draft without defaults or legacy migration fields',()=>{const plan=foundationTemplatePlan('character');assert.deepEqual(plan.draft.values,{});assert.equal(plan.draft.confirmed,false);assert(plan.draft.groups.every(g=>g.status==='未讨论'));assert.equal(plan.legacyReview,undefined);assert.equal(foundationCatalog().legacy,undefined);const catalog=foundationCatalog();catalog.originViews.character.length=0;assert.equal(foundationTemplatePlan('character').groups.length,11);});
+test('unfilled template remains a draft without defaults or legacy migration fields',()=>{const plan=foundationTemplatePlan('character');assert.deepEqual(plan.draft.values,{});assert.equal(plan.draft.confirmed,false);assert(plan.draft.groups.every(g=>g.status==='未讨论'));assert.equal(plan.legacyReview,undefined);assert.equal(foundationCatalog().legacy,undefined);const catalog=foundationCatalog();catalog.originViews.character.length=0;assert.equal(foundationTemplatePlan('character').groups.length,12);});
 test('existing form renderer consumes a compiled group while an untouched optional group stays absent',()=>{
  const w=new Window(),plan=foundationTemplatePlan('character'),ui=formUI(w.document),def=plan.groups.find(g=>g.id==='appearance').fields[0].definition;
  const read=ui.value(w.document.body,'形貌',def,undefined,{registry:plan.registry});assert.equal(read(),undefined);

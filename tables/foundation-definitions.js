@@ -2,7 +2,7 @@
 export const FOUNDATION_DEFINITIONS = {
   "format": "tisya.foundation-template-catalog/1",
   "status": "candidate-not-installed",
-  "version": 3,
+  "version": 4,
   "principle": "九组为视图；基点、原点、会话为来源与时间层，独立权限事实另分行。",
   "schemaChanges": [
     {
@@ -218,6 +218,57 @@ export const FOUNDATION_DEFINITIONS = {
             "面具裂隙": {
               "type": "text",
               "description": "哪些有依据的情境下，外在呈现与真实反应出现差异、松动或切换，旁人具体能看见什么；不是必然崩溃或已发生揭示，观察到征象不等于知道其原因。"
+            }
+          }
+        },
+        "形貌细目": {
+          "type": "object",
+          "fields": {
+            "头发": {
+              "type": "object",
+              "fields": {
+                "发色": {
+                  "type": "text",
+                  "description": "只收来源明确的稳定头发颜色；染色等后来变化归会话状态，未知留空。"
+                },
+                "发长": {
+                  "type": "text",
+                  "description": "只收来源明确的稳定头发长度，保留原文尺度；不从发色、发式或性别推断，未知留空。"
+                },
+                "发质形态": {
+                  "type": "text",
+                  "description": "只收来源明确的稳定直曲、质地等头发形态；当场湿乱、临时梳理或造型归会话状态，未知留空。"
+                }
+              }
+            },
+            "眼部": {
+              "type": "object",
+              "fields": {
+                "眼形": {
+                  "type": "text",
+                  "description": "只收来源明确的稳定眼部形状；动物比喻、当前眼神、泛红和情绪不能补成眼形，未知留空。"
+                },
+                "瞳色": {
+                  "type": "text",
+                  "description": "只收来源明确的稳定瞳孔或虹膜颜色；不从发色或族属推断，临时光照不变成底色，未知留空。"
+                }
+              }
+            },
+            "肤色": {
+              "type": "text",
+              "description": "只收来源明确的稳定肤色；暂时潮红、苍白、光照和伤势归会话状态，未知留空。"
+            },
+            "体型": {
+              "type": "text",
+              "description": "只收来源明确的稳定体格、比例与体型，保留程度和近似限定；不从职业、性别或单次姿势推断，未知留空。"
+            },
+            "身高": {
+              "type": "text",
+              "description": "只收来源明确的身高，保留世界单位、区间及近似限定，不换算补精确值；未知留空。"
+            },
+            "面部特征": {
+              "type": "text",
+              "description": "只收来源明确且未由眼形等细格承载的稳定面部特征；情绪表情、当前伤势不入底档，未知留空。"
             }
           }
         }
@@ -569,6 +620,18 @@ export const FOUNDATION_DEFINITIONS = {
           ]
         ],
         "source": "Luc entry 0 / FT10-W28"
+      },
+      {
+        "id": "appearanceDetails",
+        "label": "形貌细目",
+        "table": "objects",
+        "paths": [
+          [
+            "属性",
+            "形貌细目"
+          ]
+        ],
+        "source": "MOD-P03 / W50"
       }
     ],
     "item": [

@@ -1,3 +1,5 @@
+import {prepareCompactFill,parseCompactFill} from './compact-fill.js';
+import {foundationTemplatePlan} from './foundation-templates.js';
 import {archivePending,planArchiveRun,archiveRunReceipt,archiveRunMessage,assertArchiveRunComplete} from './archive-run.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
 import {assembleArchiveBook} from './archive-book.js';
@@ -73,14 +75,28 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function invoke(task,input,c,signal,{archiveToolSession=null}={}){
   status(task,'运行中');progress={task,stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
   try{
-   signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);const response=await request(task,JSON.stringify({...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]}),{signal,...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
+   signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);
+   const payload={...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]};
+   let compact=null,formExtensions=[];
+   if(['templateInit','objectArchive','historyImport','tableArchive'].includes(task)&&!archiveToolSession&&!input.repair?.nameConflicts){
+    // Compile optional fields for this request only. Reading/compiling never mutates a saved registry.
+    let registry=payload.registry;for(const kind of ['character','item','place','organization','rule']){const plan=foundationTemplatePlan(kind,{registry});registry=plan.registry;formExtensions.push(...plan.schemaChanges);}
+    payload.registry=registry;compact=prepareCompactFill(task,payload);
+    payload.compactFill={contract:compact.contract,modelInput:compact.modelInput,modelState:compact.modelState};
+   }
+   const response=await request(task,JSON.stringify(payload),{signal,...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
     if(signal?.aborted||!update||!['preparing','prepared','waiting','connected','thinking','receiving','buffered','received'].includes(update.stage))return;
     // Reader delivers cumulative visible content; reasoning fields are never
     // accepted as a progress payload or appended to task data.
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};
    }});
    if(typeof response==='string')progress={...progress,text:response,characters:response.length};progress={...progress,stage:'validating',updatedAt:Date.now()};
-   const result=copy(parseJSONResponse(response));c.guard();status(task,'返回待校验');return result;
+   // Format is selected from the actual envelope, never retried through another parser after failure.
+   const compactReply=compact&&typeof response==='string'&&!/^\s*(?:```json\s*)?\{/.test(response);
+   const result=copy(compactReply?parseCompactFill(compact,response):parseJSONResponse(response));
+   if(compactReply){result.schemaChanges=[...formExtensions,...(result.schemaChanges??[])];progress={...progress,format:'compact-fill'};}
+   else if(compact)progress={...progress,format:'legacy-json'};
+   c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }
  async function commit(c,loaded,proposal,options){
@@ -426,8 +442,19 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   check(['card','generic','reuse'].includes(mode),'初始化方式无效');const c=capture(),loaded=await load(c);let material='',userSource=null,userChange=null,sourceMaterials=null;
   if(mode==='card'){const context=getContext(),card=context.characters?.[context.characterId];material=cardBasis(context);const entries=bookAIMaterials(await books.materials(card.avatar,{includeDisabled:true}));c.guard();sourceMaterials={card:cardAIMaterials(card),books:copy(entries),history:copy(loaded.chain)};material+='\n\n'+entries.filter(x=>x.enabled!==false).map(x=>'来源：'+x.book+' / '+x.entry+'\n'+x.content).join('\n\n');userSource=readPersona();if(userSource){check(userSource.id,'当前用户人设缺少稳定标识，请先选择原生用户人设');userChange={...personaObjectChange(userSource,loaded.view.rows,loaded.session.data.personaBinding),evidence:personaDefinition(userSource)};material+='\n\n'+personaDefinition(userSource);}}
   const originalBasis=material,ruleVersion=mode==='card'?await selectedRulePolicy(c):null;material+=policyEvidence(ruleVersion);
-  const result=mode==='card'?await invoke('templateInit',{sourceCard:material,sourceCardRaw:sourceMaterials.card,sourceBooks:sourceMaterials.books,sourceHistory:sourceMaterials.history,sourceUser:userSource?{id:userSource.id,name:userSource.name,description:userSource.description,objectId:userChange.id}:null,registry:loaded.view.registry,currentRows:loaded.view.rows,goal:'按当前角色卡和原生用户定义补齐模板与底档。已有 ID、名称及当前会话进度保持；已有字段只有原文支持的修正才提交，未变化项省略。定义、职责和硬性约束须完整且强度不变；只有 rulePolicy 中玩家已确认的 optimize 差异使用 after，其余原文保留；keep 的原始冲突并存且不再反复提醒。逐项读取完整原卡 AI 须知、绑定资料和历史原文，先路由再填表。原卡、原生用户及历史中用户明确给出的开局定义先建立 user 与每个独立人物的原点档案，并填写有依据的初始关系、状态和知情。启动提示不是剧情，不能把其后的开局设定全部推迟到补录。后续历史事件、关系变化和成长由 historyImport 按楼层补录，不倒灌成开局；全文保留。关闭资料与示例保持原文但不作为生效定义或已发生事件；不用定义初值重置当前状态。'},c,signal):{registry:mode==='reuse'?copy(loaded.origin.data.registry):copy(loaded.view.registry),base:{changes:[]},initial:{changes:[]},notes:[mode==='reuse'?'复用卡模板；原点对象版本在设置与绑定中选择':'使用通用模板；后续归档按来源扩展']};
-  if(userChange){check(Array.isArray(result.base?.changes),'初始化草稿缺少原点档案');check(!result.base.changes.some(x=>x.id===userChange.id||x.table==='objects'&&x.values?.名称===userSource.name),'模型重复生成了原生 user 档案，请修正草稿来源后重试');result.base.changes.unshift(userChange);}
+  const result=mode==='card'?await invoke('templateInit',{sourceCard:material,sourceCardRaw:sourceMaterials.card,sourceBooks:sourceMaterials.books,sourceHistory:sourceMaterials.history,sourceUser:userSource?{id:userSource.id,name:userSource.name,description:userSource.description,objectId:userChange.id,access:copy(userChange.access)}:null,registry:loaded.view.registry,currentRows:loaded.view.rows,goal:'按当前角色卡和原生用户定义补齐模板与底档。已有 ID、名称及当前会话进度保持；已有字段只有原文支持的修正才提交，未变化项省略。定义、职责和硬性约束须完整且强度不变；只有 rulePolicy 中玩家已确认的 optimize 差异使用 after，其余原文保留；keep 的原始冲突并存且不再反复提醒。逐项读取完整原卡 AI 须知、绑定资料和历史原文，先路由再填表。原卡、原生用户及历史中用户明确给出的开局定义先建立 user 与每个独立人物的原点档案，并填写有依据的初始关系、状态和知情。启动提示不是剧情，不能把其后的开局设定全部推迟到补录。后续历史事件、关系变化和成长由 historyImport 按楼层补录，不倒灌成开局；全文保留。关闭资料与示例保持原文但不作为生效定义或已发生事件；不用定义初值重置当前状态。'},c,signal):{registry:mode==='reuse'?copy(loaded.origin.data.registry):copy(loaded.view.registry),base:{changes:[]},initial:{changes:[]},notes:[mode==='reuse'?'复用卡模板；原点对象版本在设置与绑定中选择':'使用通用模板；后续归档按来源扩展']};
+  if(userChange){
+   check(Array.isArray(result.base?.changes),'初始化草稿缺少原点档案');
+   const matching=result.base.changes.filter(x=>x.id===userChange.id||x.table==='objects'&&x.values?.名称===userSource.name);
+   if(result.semantic==='pending-independent-review'&&matching.length){
+    check(matching.length===1&&matching[0].id===userChange.id,'原生 user 填格身份冲突');const extra=matching[0];
+    check(Object.keys(extra.values).every(k=>k==='属性'),'原生用户的名称、描述及来源由程序维护；仅可在本次填格补充类型属性');
+    check(sameDefinition(extra.access,userChange.access),'原生用户补充字段不得扩大整段原文权限，请将独立知情另存认知');
+    userChange.values.属性={...(userChange.values.属性??{}),...(extra.values.属性??{})};userChange.evidence=extra.evidence;result.base.changes=result.base.changes.filter(x=>x!==extra);
+   }
+   else check(!matching.length,'模型重复生成了原生 user 档案，请修正草稿来源后重试');
+   result.base.changes.unshift(userChange);
+  }
   result.registry??=reconcileProposal(loaded.view.registry,{templates:result.templates??[],schemaChanges:result.schemaChanges??[],changes:result.base?.changes??[],currentRows:loaded.view.rows}).registry;compatibleRegistry(result.registry,loaded.view.registry);await repairInitializationNames(result,loaded.view.rows,userChange?.id,[material,...(sourceMaterials?.history??[]).filter(x=>x.role==='user').map(x=>x.text)].join('\n\n'),c,signal);check(result.base&&result.initial&&Array.isArray(result.notes),'初始化草稿不完整');return {format:'tisya.card-template/1',world:c.key,chat:c.chat,basis:material,originalBasis,rulePolicy:ruleVersion,sourceMaterials,mode,userSource,userObjectId:userChange?.id??null,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,proposal:result};
  });}
  async function saveCardTemplate(draft){return exclusive(async()=>{
@@ -588,7 +615,7 @@ return [...selected.values()].map(b=>b.id+'@'+b.rev);}
  api.assistant=createTableAssistant({store,getContext,review,run:exclusive,call:(input,signal)=>invoke('tableAssistant',input,capture(),signal),getChoices:getConfigurationChoices,interfaceConfig});return api;
 }
 
-function compatibleRegistry(nextRegistry,previous){previous=upgradeRegistry(previous);registryIndex(nextRegistry);for(const kind of ['tables','types'])for(const old of previous[kind]){const next=nextRegistry[kind].find(x=>x.id===old.id);check(next&&next.name===old.name&&(old.aliases??[]).every(x=>next.aliases.includes(x)),'现有名称不可删除或改名；请添加别名');for(const [key,field]of Object.entries(old.fields))check(sameDefinition(next.fields[key],field),'已有字段不可改变类型／公式');check(next.parent===old.parent&&next.owner===old.owner,'不能改变模板继承或职责');for(const [key,field]of Object.entries(next.fields))if(!old.fields[key])check(!field.required,'已有模板只能增加可选字段');next.version=sameDefinition({...next,version:old.version},old)?old.version:old.version+1;}for(const t of nextRegistry.tables)check(t.owner==='archive'||t.id==='preferences'&&t.owner==='preferences','新增业务表由记忆归档填录，偏好使用共用确认表');return nextRegistry;}
+function compatibleRegistry(nextRegistry,previous){previous=upgradeRegistry(previous);registryIndex(nextRegistry);for(const kind of ['tables','types'])for(const old of previous[kind]){const next=nextRegistry[kind].find(x=>x.id===old.id);check(next&&next.name===old.name&&(old.aliases??[]).every(x=>next.aliases.includes(x)),'现有名称不可删除或改名；请添加别名');for(const [key,field]of Object.entries(old.fields))check(sameDefinition(next.fields[key],field),'已有字段不可改变类型／公式：'+kind+'.'+old.id+'.'+key);check(next.parent===old.parent&&next.owner===old.owner,'不能改变模板继承或职责');for(const [key,field]of Object.entries(next.fields))if(!old.fields[key])check(!field.required,'已有模板只能增加可选字段');next.version=sameDefinition({...next,version:old.version},old)?old.version:old.version+1;}for(const t of nextRegistry.tables)check(t.owner==='archive'||t.id==='preferences'&&t.owner==='preferences','新增业务表由记忆归档填录，偏好使用共用确认表');return nextRegistry;}
 function validateBlueprint(value,previous){const p=validateGeneratedTask('genesis',value);check(p.blueprint&&typeof p.blueprint.name==='string'&&typeof p.blueprint.goal==='string'&&Array.isArray(p.blueprint.decisions)&&p.blueprint.decisions.every(x=>typeof x==='string')&&Array.isArray(p.blueprint.unresolved)&&p.blueprint.unresolved.every(x=>typeof x==='string'),'蓝图字段不完整');check(Array.isArray(p.checklist)&&p.checklist.every(x=>typeof x==='string'),'蓝图核对清单无效');validateGeneratedTask('workflow',p.workflow);check(p.artifacts?.base&&p.artifacts?.initial,'蓝图缺少原点档案或会话初值');compatibleRegistry(p.artifacts.registry,previous);if(p.artifacts.native!==undefined)validateNativeConfig(p.artifacts.native);return p;}
 
 function validateGenesisStateSystem(spec,origin){

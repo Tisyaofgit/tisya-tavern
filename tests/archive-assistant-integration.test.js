@@ -1,3 +1,5 @@
+import {prepareCompactFill} from '../tables/compact-fill.js';
+import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey} from '../config/core.js';
@@ -47,4 +49,37 @@ test('two-phase archive reload is discoverable through all four controlled assis
  };
  try{const draft=await service.assistant.ask('查阅刚归档的新城门及开闭状态');assert.equal(draft.changes.length,0);assert.equal(requests,2);assert.equal(host.preview().response.totalCalls,4);assert.equal(JSON.stringify([...f.saved]),prior);assert.equal((await f.makeService().inspect()).rows.find(r=>r.table==='state').values.对象,gate.id);}
  finally{globalThis.fetch=oldFetch;}
+});
+
+function filled(input,task,records){
+ const plan=prepareCompactFill(task,input);
+ return records.map(({phase='archive',table,kind='—',name,values})=>{
+  const form=plan.schema.find(t=>t.table===table&&t.type===kind);assert(form);for(const key of Object.keys(values))assert(form.fields.some(f=>f.label===key),'fixture uses unknown cell '+key);
+  return '【'+[phase,table,kind,name].join(' | ')+'】\n'+form.fields.map(f=>f.row+' '+f.label+'：'+(values[f.label]??'')).join('\n');
+ }).join('\n')+'\n【完成】\n1 状态：完成\n2 待处理：无\n3 补读记录：无';
+}
+test('actual compact two-phase request fills nested appearance, commits once and reloads',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({objectsSeparate:true});
+ f.c.chat=[{is_user:false,name:'甲',mes:'旅人有长发和狭长眼形。旅人来到城门。'},{is_user:true,name:'用户',mes:'继续'}];
+ const formats=[];
+ f.responder((task,input)=>{
+  assert(input.compactFill);const messages=taskMessages({preset:pairedPreset({task,configuration:f.store.read()}),task,input});
+  const instructions=messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');assert(!instructions.includes('Return one strict JSON object'));assert(!instructions.includes('从左花括号开始'));
+  if(task==='objectArchive')assert(messages.some(m=>m.content.includes('形貌细目·头发·发长')));formats.push(task);
+  const meta={'来源依据':'旅人有长发和狭长眼形。','读者':'读者','知情者':'无'};
+  if(task==='objectArchive')return filled(input,task,[{table:'objects',kind:'character',name:'旅人',values:{...meta,'属性·形貌细目·头发·发长':'长发','属性·形貌细目·眼部·眼形':'狭长'}}]);
+  return filled(input,task,[{table:'state',name:'旅人所在',values:{'来源依据':'旅人来到城门。','读者':'读者','知情者':'无','对象':'objects／character／旅人','字段':'所在','值':'"城门"'}}]);
+ });
+ const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(result.archived,1,JSON.stringify(result));
+ assert.deepEqual(formats,['objectArchive','historyImport']);const info=await f.makeService().inspect();
+ const person=info.rows.find(r=>r.table==='objects');assert.equal(person.values.属性.形貌细目.头发.发长,'长发');assert.equal(person.values.属性.形貌细目.眼部.眼形,'狭长');assert.equal(person.values.属性.形貌细目.头发.发色,undefined);
+ assert.equal(info.rows.find(r=>r.table==='state').values.对象,person.id);assert.equal(info.session.commits.filter(c=>c.kind==='history').length,1);
+});
+
+test('compact card initialization keeps exact native persona while filling its typed traits',async()=>{
+ const f=fixture();Object.assign(f.c,{name1:'旅人',userAvatar:'u.png',powerUserSettings:{persona_description:'旅人留有长发。',personas:{'u.png':'旅人'},persona_descriptions:{}}});
+ f.saved.set('角色原书',[]);f.saved.set('数据库资料',[]);await f.service.initialize();
+ f.responder((task,input)=>{assert.equal(task,'templateInit');return filled(input,task,[{phase:'base',table:'objects',kind:'character',name:'旅人',values:{'来源依据':'旅人留有长发。','读者':'读者','知情者':'无','属性·形貌细目·头发·发长':'长发'}}]);});
+ const draft=await f.service.cardTemplate();assert.equal(draft.proposal.base.changes.length,1);assert.equal(draft.proposal.base.changes[0].values.描述,'旅人留有长发。');
+ await f.service.saveCardTemplate(draft);const info=await f.makeService().inspect();const person=info.rows.find(r=>r.table==='objects');assert.equal(person.values.描述,'旅人留有长发。');assert.equal(person.values.属性.形貌细目.头发.发长,'长发');assert.equal(f.c.powerUserSettings.persona_description,'旅人留有长发。');
 });
