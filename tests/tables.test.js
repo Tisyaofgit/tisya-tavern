@@ -23,6 +23,110 @@ function fixture(nativeConfig=null){
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('archive retry uses only the current unresolved items while preserving earlier receipts',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];
+ const first={reason:'门锁来源待核'},second={reason:'门外人物待核'};
+ f.responder(()=>({changes:[],pending:[first,second]}));await f.service.archive();
+ f.responder((task,input)=>{assert.deepEqual(input.pending,[first,second]);return {changes:[],pending:[second]};});
+ const partial=await f.makeService().archive();assert.deepEqual(partial.pending,[second]);
+ assert.deepEqual((await f.service.scan())[0].pending,[second]);assert.deepEqual((await f.service.review()).history[0].pending,[second]);
+ f.responder((task,input)=>{assert.deepEqual(input.pending,[second]);return {changes:[]};});
+ await f.makeService().archive();const saved=await f.service.inspect();assert.equal(saved.archived,1);
+ assert.deepEqual(saved.session.commits.filter(c=>c.kind==='archive').map(c=>c.pending),[[first,second],[second],[]]);
+});
+test('failed retry retains unresolved proposal details without duplicating an identical failure',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('门关了。'),user('继续')];
+ const unresolved={reason:'门锁待核',proposals:[{id:'new:lock',values:{名称:'门锁'}}]};
+ f.responder(()=>({changes:[],pending:[unresolved]}));await f.service.archive();
+ f.responder(()=>{throw Error('连接中断');});await f.makeService().archive();await f.makeService().archive();
+ const pending=(await f.service.scan())[0].pending;assert.equal(pending.length,2);assert.deepEqual(pending[0],unresolved);assert.equal(pending[1].reason,'连接中断');
+ assert.equal((await f.service.inspect()).session.commits.filter(c=>c.kind==='archive').length,3);
+});
+test('manual offstage advancement cannot bypass incomplete confirmed memory',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];
+ await f.service.edit({changes:[op('new:player','objects',{名称:'玩家',类型:'character'},'用户手动修改表单'),op('new:scene','scene',{名称:'现状',当前时间:'2001-10-12 10:00'},'用户手动修改表单')]});
+ const view=await f.service.inspect(),scene=view.rows.find(r=>r.table==='scene'),player=view.rows.find(r=>r.table==='objects');
+ await f.service.edit({changes:[op(scene.id,'scene',{当前时间:'2001-10-12 11:00'},'用户手动修改表单',scene.rev)]});await f.set({offstage:true,playerObjects:[player.id]});
+ f.responder((task,input)=>task==='plotAdvance'?{from:input.window.from,to:input.window.to,events:[]}:{changes:[],pending:[{reason:'门锁待核'}]});await f.service.archive();const before=JSON.stringify([...f.saved]),calls=f.calls.length;
+ await assert.rejects(f.makeService().advance(),e=>e.code==='ARCHIVE_INCOMPLETE');
+ assert.equal(f.calls.length,calls);assert.equal(JSON.stringify([...f.saved]),before);
+ await f.set({archive:false});const result=await f.makeService().advance();assert.equal(f.calls.length,calls+1);assert.equal(result.receipt.to,'2001-10-12 11:00');
+});
+test('turning automatic archive off still permits explicit manual archival',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({archive:false});f.c.chat=[ai('甲关上门。'),user('继续')];
+ f.responder(()=>({changes:[]}));const automatic=await f.service.archive({scope:'generation'});assert.equal(automatic.run.status,'disabled');assert.equal(f.calls.length,0);
+ const result=await f.service.archive({includeLatest:true});
+ assert.equal(result.run.status,'complete');assert.equal(result.archived,1);assert.equal(f.calls.length,1);
+});
+test('incomplete archive blocks generation before plot planning or context installation',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true});f.c.chat=[ai('门仍未打开。'),user('继续')];
+ f.responder(task=>task==='tableArchive'?{changes:[],pending:[{reason:'门锁来源待核'}]}:{changes:[],plan:'不应调用'});
+ await assert.rejects(f.service.prepare(),/第 1 层.*归档.*未完成/);
+ assert.deepEqual(f.calls.filter(x=>x.task!=='ruleReview').map(x=>x.task),['tableArchive']);
+ assert.equal(f.service.preview(),null);assert.equal(f.prompts.at(-1).text,'');
+ const info=await f.makeService().inspect();assert.equal(info.archived,0);assert.equal(info.session.commits.at(-1).pending[0].reason,'门锁来源待核');
+});
+test('archive request failure cannot become a successful generation and retains the original cause',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true});f.c.chat=[ai('甲关上门。'),user('继续')];
+ const failure=Object.assign(Error('归档连接中断'),{code:'TEST_CONNECTION'});f.responder(()=>{throw failure;});
+ await assert.rejects(f.service.prepare(),e=>e.code==='ARCHIVE_INCOMPLETE'&&e.cause===failure);
+ assert.equal(f.service.preview(),null);assert.equal(f.calls.length,1);assert.equal((await f.makeService().scan())[0].archived,false);
+ assert(f.service.state().jobs.some(j=>j.code==='TEST_CONNECTION'));
+});
+test('archive run receipts retain partial records across restart and retries do not duplicate completed floors',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续'),ai('雨停了。'),user('继续')];
+ f.responder(()=>({changes:[op('new:door','events',{名称:'关门',经过:'甲关上门。'},'甲关上门。')],pending:[{reason:'门锁来源待核'}]}));
+ const first=await f.service.archive();assert.equal(first.run.status,'blocked');assert.equal(first.run.processed,1);assert.equal(first.run.remaining.length,2);assert.equal(first.run.blocked[0].floor,1);assert.equal(f.calls.length,1);assert.equal(f.service.state().progress.stage,'blocked');
+ const restarted=f.makeService(),partial=await restarted.inspect();assert.equal(partial.rows.length,1);assert.equal(partial.archived,0);
+ const rowId=partial.rows[0].id;f.responder((task,input)=>input.archiveSource.floor===1?{changes:[]}:{changes:[op('new:rain','events',{名称:'雨停',经过:'雨停了。'},'雨停了。')]});
+ const second=await restarted.archive();assert.equal(second.run.status,'complete');assert.equal(second.run.completed,2);assert.equal(second.pending.length,0);
+ const done=await f.makeService().inspect();assert.equal(done.rows.length,2);assert(done.rows.some(r=>r.id===rowId));assert.equal(done.archived,2);
+ const saved=JSON.stringify([...f.saved]),count=f.calls.length,noop=await restarted.archive();assert.equal(noop.run.processed,0);assert.equal(f.calls.length,count);assert.equal(JSON.stringify([...f.saved]),saved);
+});
+test('bounded archive receipt separates batch limit and latest confirmation and reroll drops the old lineage',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[{...ai('甲关上门。'),swipe_id:0,swipes:['甲关上门。','甲把门打开。']},user('继续'),ai('雨停了。'),user('继续'),ai('天亮了。')];
+ f.responder((task,input)=>({changes:[op('new:event','events',{名称:input.archiveSource.text,经过:input.archiveSource.text},input.archiveSource.text)]}));
+ const range={from:1,to:5,limit:1},first=await f.service.archive({range});assert.equal(first.run.status,'partial');assert.equal(first.run.remaining.length,1);assert.equal(first.run.waiting.length,1);
+ const second=await f.service.archive({range});assert.equal(second.run.status,'complete');assert.equal(second.run.waiting.length,1);assert.equal(second.archived,2);
+ const last=await f.service.archive({range,includeLatest:true});assert.equal(last.run.status,'complete');assert.equal(last.run.completed,1);assert.equal(last.run.waiting.length,0);assert.equal(last.archived,3);assert.equal((await f.makeService().scan()).at(-1).archived,true);
+ const originalCommits=(await f.service.inspect()).session.commits.length;f.c.chat[0].swipe_id=1;f.c.chat[0].mes='甲把门打开。';
+ const changed=await f.makeService().inspect();assert.equal(changed.archived,0);assert.equal(changed.rows.length,0);assert.equal(changed.session.commits.length,originalCommits);
+ const rerun=await f.makeService().archive({range});assert.equal(rerun.run.completed,1);assert.equal((await f.service.inspect()).rows[0].values.经过,'甲把门打开。');
+});
+test('archive storage failure attempts one write and keeps its uncertain outcome visible',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];const before=JSON.stringify([...f.saved]);let writes=0;
+ f.responder(()=>({changes:[op('new:event','events',{名称:'关门',经过:'甲关上门。'},'甲关上门。')]}));f.writeHook(()=>{writes++;throw Error('写入尚未确认');});
+ await assert.rejects(f.service.archive(),/写入尚未确认/);assert.equal(writes,1);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(f.service.state().progress.stage,'error');
+});
+test('explicitly disabled auto archive and unconfirmed latest reply do not trigger the generation barrier',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:false});f.c.chat=[ai('甲关上门。'),user('继续')];
+ await f.service.prepare();assert.equal(f.calls.length,0);assert(f.service.preview());
+ await f.set({archive:true});f.c.chat=[ai('尚未确认的候选')];await f.service.prepare();assert.equal(f.calls.length,0);
+});
+test('malformed pending cannot silently mark a source as completely archived',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];f.responder(()=>({changes:[],pending:{reason:'来源待核'}}));
+ const result=await f.service.archive();assert.equal(result.run.status,'blocked');assert.equal(result.archived,0);assert.equal((await f.makeService().scan())[0].archived,false);
+ assert.equal(f.service.state().progress.stage,'error');
+});
+test('latest archive button shows actual pending outcome and confirmed latest rows display archived',async()=>{
+ const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。')];f.responder(()=>({changes:[],pending:[{reason:'门锁来源待核'}]}));
+ const w=new Window(),panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store,initialPage:'history'});await panel.ready;
+ const click=async()=>{await [...panel.root.querySelectorAll('button')].find(b=>b.textContent==='确认保留并归档最新回复').onclick();};
+ try{
+  await click();assert.match(panel.root.textContent,/第 1 层仍待处理/);assert.doesNotMatch(panel.root.textContent,/已归档当前保留回复/);assert.equal((await f.service.scan())[0].archived,false);
+  f.responder(()=>({changes:[]}));await click();assert.match(panel.root.textContent,/所选范围已归档/);
+  const row=[...panel.root.querySelectorAll('tr')].find(r=>r.textContent.includes('甲关上门。'));assert(row);assert.match(row.textContent,/已归档/);assert.doesNotMatch(row.textContent,/最新暂存/);
+ }finally{panel.dispose();await w.happyDOM.abort();}
+});
+test('history batch includes the latest AI when a following user reply already confirmed it',async()=>{
+ const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');const f=fixture();await f.service.initialize();
+ f.c.chat=[ai('门开了。'),user('继续'),ai('雨停了。'),user('继续')];
+ const w=new Window(),panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store,initialPage:'history'});await panel.ready;
+ try{assert.match(panel.root.textContent,/待补录 2 条/);assert.equal(panel.root.querySelector('[aria-label="结束楼层"]').value,'3');
+  const row=[...panel.root.querySelectorAll('tr')].find(r=>r.textContent.includes('雨停了。'));assert.match(row.textContent,/待归档/);assert.doesNotMatch(row.textContent,/最新暂存/);
+ }finally{panel.dispose();await w.happyDOM.abort();}
+});
 test('archive and review exclude intermediate tool owners while final prose keeps its original source key',async()=>{
  const f=fixture();f.c.chat=[user('去城门'),{...ai('OPERATION_NOT_STORY'),tool_calls:[{id:'a',name:'lookup',parameters:'{}'}]},{role:'tool',is_system:true,tool_call_id:'a',mes:'TOOL_RESULT_NOT_STORY'},ai('他推开城门。'),user('继续')];
  const before=structuredClone(f.c.chat),raw=await sources(f.c.chat),projectToolTurns=chat=>[{type:'message',sourceIndex:0,message:chat[0]},{type:'tool-turn',sourceIndices:[1,2]},...chat.slice(3).map((message,index)=>({type:'message',sourceIndex:index+3,message}))];

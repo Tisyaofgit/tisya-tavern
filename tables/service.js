@@ -1,3 +1,4 @@
+import {archivePending,planArchiveRun,archiveRunReceipt,archiveRunMessage,assertArchiveRunComplete} from './archive-run.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
 import {assembleArchiveBook} from './archive-book.js';
 import {createArchiveSystem} from './archive-system.js';
@@ -57,7 +58,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  const archiveDrafts=new Map(),archiveReviews=new Map(),stateFormDrafts=new Map();
  const state=()=>({busy,jobScope,jobs:copy(jobs),latest:copy(latest),styleAudit:copy(lastStyleAudit),progress:copy(progress),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='',error=null)=>{jobs.push({task,status,detail:safeDiagnostic(detail),...(error?{code:error.code??error.name,cause:error.cause?safeDiagnostic(error.cause.message??String(error.cause)):undefined,stack:error.stack?safeDiagnostic(error.stack):undefined}:{}),at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail:safeDiagnostic(detail)});};
- async function exclusive(fn,{scope='manual'}={}){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;jobScope=scope;progress={task:scope==='generation'?'表单推进':'表单操作',stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};controller=new AbortController();const signal=controller.signal;try{const result=await fn(signal);signal.throwIfAborted();if(progress&&!['error','stopped'].includes(progress.stage))progress={...progress,stage:'complete',updatedAt:Date.now(),finishedAt:Date.now()};return result;}catch(e){const error=requestError(e,signal);worldbook.clear();setPrompt('');latest=null;const last=jobs.at(-1),label=signal.aborted?'已停止':'失败';if(last?.status!==label||last.detail!==safeDiagnostic(error.message))status(progress?.task??'表单操作',label,error.message,error);if(progress)progress={...progress,stage:signal.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};throw error;}finally{busy=false;controller=null;jobScope=null;if(archiveChanged){archiveChanged=false;for(const notify of archiveListeners)try{notify();}catch(e){status('图鉴刷新','失败',e.message);}}}}
+ async function exclusive(fn,{scope='manual'}={}){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;jobScope=scope;progress={task:scope==='generation'?'表单推进':'表单操作',stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};controller=new AbortController();const signal=controller.signal;try{const result=await fn(signal);signal.throwIfAborted();if(progress&&!['error','stopped','blocked'].includes(progress.stage))progress={...progress,stage:'complete',updatedAt:Date.now(),finishedAt:Date.now()};return result;}catch(e){const error=requestError(e,signal);worldbook.clear();setPrompt('');latest=null;const last=jobs.at(-1),label=signal.aborted?'已停止':'失败';if(last?.status!==label||last.detail!==safeDiagnostic(error.message))status(progress?.task??'表单操作',label,error.message,error);if(progress)progress={...progress,stage:signal.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};throw error;}finally{busy=false;controller=null;jobScope=null;if(archiveChanged){archiveChanged=false;for(const notify of archiveListeners)try{notify();}catch(e){status('图鉴刷新','失败',e.message);}}}}
  function requestError(error,signal){if(signal?.aborted)return signal.reason instanceof Error?signal.reason:Error('当前表单任务已停止');if(error?.name==='AbortError')return Error('辅助请求被宿主或 API 中止，请检查连接后重试；已保存的记录仍保留。',{cause:error});return error;}
  function clear({scope=null,reason='已停止当前表单任务；已保存的记录仍保留'}={}){if(controller&&(!scope||jobScope===scope)){controller.abort(Error(reason));if(progress)progress={...progress,stage:'stopped',updatedAt:Date.now(),finishedAt:Date.now()};}worldbook.clear();setPrompt('');latest=null;}
  function contextChanged(){const next=getContext().chatId?store.read().key:null;if(next===boundWorld)return false;boundWorld=next;clear({reason:'会话已切换，旧表单任务已停止'});return true;}
@@ -101,7 +102,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   // Plot changes are overlays of this save. Only explicit init/genesis writes
   // origin assets; ordinary archive/manual changes never rewrite the beginning.
   const next=copy(loaded.session.data);next.revision++;if(options.importSource)prepared.commit.importSource=copy(options.importSource);if(options.nativeReceipt)prepared.commit.nativeReceipt=copy(options.nativeReceipt);if(options.progression)prepared.commit.progression=copy(options.progression);next.commits.push(prepared.commit);if(options.reviewId){const draft=next.preferenceDrafts?.find(x=>x.id===options.reviewId);check(draft&&draft.status==='pending','偏好候选已处理');draft.status='accepted';draft.reviewedAt=new Date().toISOString();}
-  try{const session=await books.write(loaded.session,next,c.guard);status(options.kind,prepared.commit.complete===false?'部分待处理':'已保存',prepared.commit.changes.length+' 项修改'+(prepared.commit.pending?.length?'，'+prepared.commit.pending.length+' 项待修正':''));return {...loaded,origin,session,view:withGlobalPreferences(project(origin.data,session.data,loaded.chain.map(s=>s.key)),c.data.全局偏好)};}
+  try{options.onWriteStart?.();const session=await books.write(loaded.session,next,c.guard);status(options.kind,prepared.commit.complete===false?'部分待处理':'已保存',prepared.commit.changes.length+' 项修改'+(prepared.commit.pending?.length?'，'+prepared.commit.pending.length+' 项待修正':''));return {...loaded,origin,session,view:withGlobalPreferences(project(origin.data,session.data,loaded.chain.map(s=>s.key)),c.data.全局偏好)};}
   catch(e){if(origin.stamp!==loaded.origin.stamp)throw Error('原点候选版本已保存，但会话提交未确认；未绑定版本不会注入。'+e.message);throw e;}
  }
  async function archiveProposal(task,input,view,c,signal,reading){
@@ -125,15 +126,16 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const distinct=(a,b)=>[...a,...b.filter(item=>!a.some(prior=>JSON.stringify(prior)===JSON.stringify(item)))];
   return {...history,templates:distinct(discovery.templates??[],history.templates??[]),schemaChanges:distinct(discovery.schemaChanges??[],history.schemaChanges??[]),changes:[...discovery.changes,...history.changes],pending:[...(discovery.pending??[]),...(history.pending??[])]};
  }
- async function archiveLoaded(c,loaded,signal,includeLatest=false,range=null){
-  if(!c.settings.archive&&!range)return loaded;
-  const ai=loaded.chain.filter(s=>s.role==='assistant'),eligible=(includeLatest?ai:ai.filter(s=>loaded.chain.some(u=>u.role==='user'&&u.index>s.index))).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)).slice(0,range?.limit??Infinity);
-  for(const source of eligible){
+ async function archiveLoaded(c,loaded,signal,{includeLatest=false,range=null,automatic=false}={}){
+  if(automatic&&!c.settings.archive)return {...loaded,archiveRun:{status:'disabled'}};
+  const plan=planArchiveRun(loaded,{includeLatest,range}),attempted=[];let failure=null;
+  for(const source of plan.selected){
    if(loaded.view.archived.has(source.key))continue;
-   c.guard();status('楼层归档','运行中','第 '+source.floor+' 层');
+   c.guard();attempted.push(source);status('楼层归档','运行中','第 '+source.floor+' 层');
    const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n'),view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))};
-   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
+   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:archivePending(loaded.view,source.key),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
    const isHistory=!!range,task=isHistory?'historyImport':'tableArchive',options={source:source.key,kind:isHistory?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
+   let writing=false;
    try{
     let discovery=null,working=view;
     if(c.settings.objectsSeparate){
@@ -151,11 +153,22 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
     }
     // Discovery and historical state share one commit. No discovery is visible
     // while the second request is in flight or if either request is cancelled.
-    loaded=await commit(c,loaded,proposal,{...options,recover:!discovery});
+    loaded=await commit(c,loaded,proposal,{...options,recover:!discovery,onWriteStart:()=>{writing=true;}});
     if(!loaded.view.archived.has(source.key)){status('楼层归档','待处理','第 '+source.floor+' 层仍有未解决项目，后续楼层暂停');break;}
-   }catch(e){c.guard();if(signal.aborted)throw e;status('楼层归档','待重试','第 '+source.floor+' 层：'+e.message);loaded=await commit(c,loaded,{changes:[],pending:[{reason:e.message,source:source.key,floor:source.floor}]},{...options});break;}
+   }catch(e){
+    c.guard();if(signal.aborted||writing)throw e;
+    failure=e;status('楼层归档','待重试','第 '+source.floor+' 层：'+e.message,e);
+    // Request/validation failures can record a pending floor. A failed write
+    // must never start a second write against an uncertain first outcome.
+    const pending=archivePending(loaded.view,source.key),diagnostic={reason:e.message,source:source.key,floor:source.floor};
+    if(!pending.some(item=>JSON.stringify(item)===JSON.stringify(diagnostic)))pending.push(diagnostic);
+    loaded=await commit(c,loaded,{changes:[],pending},{...options});break;
+   }
   }
-  return loaded;
+  const run=archiveRunReceipt(loaded,plan,attempted);
+  status('记忆归档',run.status==='blocked'?'待处理':run.status==='partial'?'本批已保存':'已核对',archiveRunMessage(run),failure);
+  if(progress&&run.status==='blocked')progress={...progress,stage:failure?'error':'blocked',updatedAt:Date.now(),finishedAt:Date.now()};
+  return {...loaded,archiveRun:run,archiveFailure:failure};
  }
  async function nativeMapLoaded(c,loaded,data,source,index){
   const prior=loaded.view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
@@ -217,7 +230,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const key=await progressionKey(window);if(loaded.view.commits.some(x=>x.progression?.key===key))return loaded;
   try{const result=await invoke('plotAdvance',{phase:'world',window,registry:loaded.view.registry,currentRows:loaded.view.rows,nativeState:nativeSnapshot(loaded.view.rows,{context:getContext(),messageIndex:(loaded.chain.find(x=>x.key===window.source)?.floor??0)-1}),...planContext(loaded,playerSettings(c,loaded))},c,signal);const settled=validateWorldProposal(loaded.view,result,window);return await commit(c,loaded,settled.proposal,{source:window.source??null,kind:'simulation',evidence:settled.evidence,worldTime:window.to,allowedTables:['events','activities','state','relations','growth','tasks','timers','clues'],progression:{...settled.receipt,key}});}catch(e){c.guard();if(signal.aborted)throw e;status('场外推进','待重试',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}
  }
- async function advance(){return exclusive(async signal=>{const c=capture();let loaded=await load(c);loaded=await progressLoaded(c,loaded,signal);return {rows:loaded.view.rows,receipt:loaded.view.commits.findLast(x=>x.progression)?.progression??null};});}
+ async function advance(){return exclusive(async signal=>{const c=capture();let loaded=await load(c);if(c.settings.offstage&&c.settings.archive)assertArchiveRunComplete(archiveRunReceipt(loaded,planArchiveRun(loaded),[]));loaded=await progressLoaded(c,loaded,signal);return {rows:loaded.view.rows,receipt:loaded.view.commits.findLast(x=>x.progression)?.progression??null};});}
  // Only the host archive task receives this handle. Neither the read-only
  // assistant nor the main-chat global dispatcher can acquire it implicitly.
  async function openArchiveProposal({sourceKey,includeLatest=false,signal}={}){
@@ -372,7 +385,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  }
  async function prepare(type='normal'){
   worldbook.clear();setPrompt('');const current=store.read();if(!tableSettings(current.world).enabled||['quiet','impersonate'].includes(type))return null;
-  return exclusive(async signal=>{const c=capture();try{requireNativeBridge(c);if(c.settings.injection==='worldbook')check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');let loaded=await load(c,type);loaded=await archiveLoaded(c,loaded,signal);loaded=await progressLoaded(c,loaded,signal);const result=await assemble(c,loaded,type,signal);c.guard();setPrompt(result.text,()=>{try{c.guard();return true;}catch{return false;}});return result;}catch(e){status('表单推进','失败',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}},{scope:'generation'});
+  return exclusive(async signal=>{const c=capture();try{requireNativeBridge(c);if(c.settings.injection==='worldbook')check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');let loaded=await load(c,type);loaded=await archiveLoaded(c,loaded,signal,{automatic:true});assertArchiveRunComplete(loaded.archiveRun,loaded.archiveFailure);loaded=await progressLoaded(c,loaded,signal);const result=await assemble(c,loaded,type,signal);c.guard();setPrompt(result.text,()=>{try{c.guard();return true;}catch{return false;}});return result;}catch(e){status('表单推进','失败',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}},{scope:'generation'});
  }
  async function initializeCaptured(c,{originBook=c.settings.originBook,sessionBook=c.settings.sessionBook}={}){
   const context=getContext(),card=context.characters?.[context.characterId]?.avatar;check(card&&!context.groupId,'请先在单角色卡会话中建立原点档案；群组复用需明确选择角色来源');
@@ -397,16 +410,16 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const c=capture(),projection=await storySources(getContext().chat,'normal',projectToolTurns),chain=projection.chain;c.guard();let view=null,origin=null,session=null,error='';
   if(c.settings.originBook&&c.settings.sessionBook){try{origin=await books.read(c.settings.originBook);session=await books.read(c.settings.sessionBook);check(origin.data.kind==='origin'&&session.data.kind==='session'&&session.data.owner===c.key,'当前会话存档绑定不匹配');assertStoryLedger(origin.data,session.data,projection);view=project(origin.data,session.data,chain.map(s=>s.key));}catch(e){error=e.message;}}
   else error='尚未建立完整存档；开始补录时会自动创建／复用。';
-  c.guard();const last=chain.findLast(s=>s.role==='assistant');return {world:c.key,chatStamp:c.chat,settings:c.settings,registry:view?.registry??defaultRegistry(),rows:view?.rows??[],blueprint:session?.data.blueprint??null,storageReady:!!view,storageError:error,jobs:copy(jobs),persona:readPersona(),personaBinding:copy(session?.data.personaBinding??null),history:chain.map(s=>({key:s.key,floor:s.floor,role:s.role,confirmed:chain.some(u=>u.role==='user'&&u.index>s.index),preview:s.text.slice(0,100),archived:view?view.archived.has(s.key):null,pending:view?.archived.has(s.key)?[]:view?.commits.filter(c=>c.source===s.key).flatMap(c=>c.pending??[])??[],latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}))};
+  c.guard();const last=chain.findLast(s=>s.role==='assistant');return {world:c.key,chatStamp:c.chat,settings:c.settings,registry:view?.registry??defaultRegistry(),rows:view?.rows??[],blueprint:session?.data.blueprint??null,storageReady:!!view,storageError:error,jobs:copy(jobs),persona:readPersona(),personaBinding:copy(session?.data.personaBinding??null),history:chain.map(s=>({key:s.key,floor:s.floor,role:s.role,confirmed:chain.some(u=>u.role==='user'&&u.index>s.index),preview:s.text.slice(0,100),archived:view?view.archived.has(s.key):null,pending:archivePending(view,s.key),latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}))};
  }
  async function lifecycle(){
   const data=await review(),c=capture(),card=getContext().characters?.[getContext().characterId];
   let opening=null,cores=0;
   if(data.storageReady){const origin=await books.read(c.settings.originBook);c.guard();opening=matchingOpening(origin.data,card?.avatar,readPersona(),cardAIMaterials(card));cores=(origin.data.coreAssets??[]).length;}
-  return {avatar:card?.avatar??null,character:card?.name??null,persona:data.persona,binding:data.personaBinding,originBook:c.settings.originBook,sessionBook:c.settings.sessionBook,storageReady:data.storageReady,storageError:data.storageError,opening:opening?{id:opening.id,revision:opening.revision}:null,cores,rows:data.rows.length,confirmed:data.history.filter(x=>x.role==='assistant'&&x.confirmed).length,archived:data.history.filter(x=>x.role==='assistant'&&x.archived).length,enabled:c.settings.enabled,archive:c.settings.archive};
+  return {avatar:card?.avatar??null,character:card?.name??null,persona:data.persona,binding:data.personaBinding,originBook:c.settings.originBook,sessionBook:c.settings.sessionBook,storageReady:data.storageReady,storageError:data.storageError,opening:opening?{id:opening.id,revision:opening.revision}:null,cores,rows:data.rows.length,confirmed:data.history.filter(x=>x.role==='assistant'&&(x.confirmed||x.archived)).length,archived:data.history.filter(x=>x.role==='assistant'&&x.archived).length,enabled:c.settings.enabled,archive:c.settings.archive};
  }
- async function archive({includeLatest=false,range=null,scope='manual'}={}){return exclusive(async signal=>{const c=capture();if(range)check(Number.isSafeInteger(range.from)&&Number.isSafeInteger(range.to)&&range.from>=1&&range.to>=range.from&&Number.isSafeInteger(range.limit)&&range.limit>=1&&range.limit<=100,'楼层范围或批量数无效');let loaded=await load(c);loaded=await archiveLoaded(c,loaded,signal,includeLatest,range);return {archived:loaded.view.archived.size,pending:loaded.view.commits.filter(x=>x.complete===false&&!loaded.view.archived.has(x.source)).flatMap(x=>x.pending??[]),revision:loaded.session.data.revision};},{scope});}
- async function scan(){const c=capture(),loaded=await load(c),last=loaded.chain.findLast(s=>s.role==='assistant');return loaded.chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:loaded.view.archived.has(s.key),pending:loaded.view.archived.has(s.key)?[]:loaded.view.commits.filter(c=>c.source===s.key).flatMap(c=>c.pending??[]),latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}));}
+ async function archive({includeLatest=false,range=null,scope='manual'}={}){return exclusive(async signal=>{const c=capture();if(range)check(Number.isSafeInteger(range.from)&&Number.isSafeInteger(range.to)&&range.from>=1&&range.to>=range.from&&Number.isSafeInteger(range.limit)&&range.limit>=1&&range.limit<=100,'楼层范围或批量数无效');let loaded=await load(c);loaded=await archiveLoaded(c,loaded,signal,{includeLatest,range,automatic:scope==='generation'});return {archived:loaded.view.archived.size,pending:archivePending(loaded.view),revision:loaded.session.data.revision,run:copy(loaded.archiveRun)};},{scope});}
+ async function scan(){const c=capture(),loaded=await load(c),last=loaded.chain.findLast(s=>s.role==='assistant');return loaded.chain.map(s=>({floor:s.floor,role:s.role,preview:s.text.slice(0,100),archived:loaded.view.archived.has(s.key),pending:archivePending(loaded.view,s.key),latest:s.key===last?.key,hasMemory:!!memoryBlock(s.text)}));}
  async function importHistory(text,{label='手写历史',worldTime=null}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c);check(typeof text==='string'&&text.trim(),'请填写历史原文');const hash=await digest(text);check(!loaded.session.data.commits.some(x=>x.importSource?.hash===hash),'这份历史已导入，不能重复入账');const proposal=await invoke('historyImport',{registry:loaded.view.registry,currentRows:loaded.view.rows,historyText:historyEvidence(text),sourceHistory:{text,label,worldTime},label,worldTime},c,signal);return {format:'tisya.history-draft/1',text,label,worldTime,hash,proposal,world:c.key,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};});}
  async function saveHistory(draft){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.history-draft/1'&&draft.world===c.key&&draft.originRevision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'历史草稿依据已变化，请重新核对');check(await digest(draft.text)===draft.hash,'历史原文已改变，请重新生成草稿');check(!loaded.session.data.commits.some(x=>x.importSource?.hash===draft.hash),'这份历史已经导入');const result=await commit(c,loaded,draft.proposal,{source:null,kind:'import',evidence:historyEvidence(draft.text),worldTime:draft.worldTime,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),importSource:{label:draft.label,text:draft.text,hash:draft.hash,worldTime:draft.worldTime}});return result.session.data.revision;});}
  async function cardTemplate(mode='card'){if(mode==='card')await reviewCardRules();return exclusive(async signal=>{

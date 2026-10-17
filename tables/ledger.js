@@ -52,6 +52,7 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
  const limit=['init','genesis'].includes(kind)?2000:200;
  check(object(proposal)&&Array.isArray(proposal.changes)&&proposal.changes.length<=limit,'辅助填表产物缺少 changes 或修改超过 '+limit+' 项');
  check(Array.isArray(proposal.templates??[]),'templates 必须是数组');
+ check(Array.isArray(proposal.pending??[]),'pending 必须是待处理事项数组，不能据无效结果标记整楼完成');
  const reconciled=reconcileProposal(view.registry,{...proposal,currentRows:view.rows},{allowSchemaExtensions,inferSchemaFields});proposal=reconciled.proposal;const registry=reconciled.registry,index=registryIndex(registry),rows=new Map(view.rows.map(r=>[r.id,copy(r)])),ids=new Map(),seen=new Set();
  for(const op of proposal.changes){check(object(op)&&typeof op.id==='string'&&op.id&&!seen.has(op.id),'修改 ID 缺失或重复');seen.add(op.id);if(op.id.startsWith('new:'))ids.set(op.id,uuid('row'));}
  const times=[...new Set(proposal.changes.flatMap(op=>op.table==='scene'?[op.values?.当前时间]:op.table==='events'?[op.values?.时间]:[]).filter(t=>typeof t==='string'&&t&&evidence.includes(t)))];if(worldTime===null&&times.length===1)worldTime=times[0];
@@ -152,6 +153,7 @@ export function historyEvidence(text){
 export function prepareRecoverable(view,proposal,options){
  try{return prepareCommit(view,proposal,options);}catch(first){
   check(Array.isArray(proposal?.changes),'辅助填表产物缺少 changes');
+  if(!Array.isArray(proposal.pending??[]))throw first;
   if(proposal.changes.some(op=>op.delete===true))throw first; // Deletion and reference cleanup are one atomic batch.
   const groups=proposal.changes.map(op=>[op]);const linked=(a,b)=>a.some(x=>b.some(y=>JSON.stringify(x.values).includes(JSON.stringify(y.id))||JSON.stringify(y.values).includes(JSON.stringify(x.id))));
   for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;)if(linked(groups[i],groups[j])){groups[i].push(...groups.splice(j,1)[0]);i=-1;break;}else j++;
