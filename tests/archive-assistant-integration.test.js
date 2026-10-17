@@ -55,7 +55,7 @@ function filled(input,task,records){
  const plan=prepareCompactFill(task,input);
  return records.map(({phase='archive',table,kind='—',name,values})=>{
   const form=plan.schema.find(t=>t.table===table&&t.type===kind);assert(form);for(const key of Object.keys(values))assert(form.fields.some(f=>f.label===key),'fixture uses unknown cell '+key);
-  return '【'+[phase,table,kind,name].join(' | ')+'】\n'+form.fields.map(f=>f.row+' '+f.label+'：'+(values[f.label]??'')).join('\n');
+  return '【'+form.form+'：'+name+'】\n'+form.fields.filter(f=>Object.hasOwn(values,f.label)).map(f=>f.row+' '+({'读者':'谁可看到','知情者':'故事里谁已知'}[f.label]??f.label.replace(/^属性·/,''))+'：'+values[f.label]).join('\n');
  }).join('\n')+'\n【完成】\n1 状态：完成\n2 待处理：无\n3 补读记录：无';
 }
 test('actual compact two-phase request fills nested appearance, commits once and reloads',async()=>{
@@ -68,7 +68,7 @@ test('actual compact two-phase request fills nested appearance, commits once and
   if(task==='objectArchive')assert(messages.some(m=>m.content.includes('形貌细目·头发·发长')));formats.push(task);
   const meta={'来源依据':'旅人有长发和狭长眼形。','读者':'读者','知情者':'无'};
   if(task==='objectArchive')return filled(input,task,[{table:'objects',kind:'character',name:'旅人',values:{...meta,'属性·形貌细目·头发·发长':'长发','属性·形貌细目·眼部·眼形':'狭长'}}]);
-  return filled(input,task,[{table:'state',name:'旅人所在',values:{'来源依据':'旅人来到城门。','读者':'读者','知情者':'无','对象':'objects／character／旅人','字段':'所在','值':'"城门"'}}]);
+  return filled(input,task,[{table:'state',name:'旅人所在',values:{'来源依据':'旅人来到城门。','读者':'读者','知情者':'无','对象':'人物／旅人','字段':'所在','值':'"城门"'}}]);
  });
  const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(result.archived,1,JSON.stringify(result));
  assert.deepEqual(formats,['objectArchive','historyImport']);const info=await f.makeService().inspect();

@@ -63,7 +63,7 @@ test('ambiguous identities and aliases cannot be turned into silent creates or m
  a.values.别名=['船匠'];const q=setup('objectArchive',{currentRows:[a]});assert.throws(()=>parseCompactFill(q,group(q,'objects','character','船匠')+'\n'+done()),/别名冲突/);
 });
 test('unrelated delimiter names do not block preparation; encoded identities are exact',()=>{
- const a=character('a','甲；乙|丙%'),p=setup('objectArchive',{currentRows:[a]});assert.match(p.modelState[0].记录,/%EF%BC%9B/);const encoded=p.modelState[0].记录.split('／').slice(2).join('／');const out=parseCompactFill(p,group(p,'objects','character',encoded,{'属性·身份细目·社会身份':'船匠'})+'\n'+done());assert.equal(out.changes[0].id,'a');assert(!Object.hasOwn(out.changes[0].values,'名称'));
+ const a=character('a','甲；乙|丙%'),p=setup('objectArchive',{currentRows:[a]});assert.match(p.modelState[0].记录,/%EF%BC%9B/);const encoded=p.modelState[0].记录.split('／').slice(1).join('／');const out=parseCompactFill(p,group(p,'objects','character',encoded,{'属性·身份细目·社会身份':'船匠'})+'\n'+done());assert.equal(out.changes[0].id,'a');assert(!Object.hasOwn(out.changes[0].values,'名称'));
 });
 test('thin records explicitly request full reading and cannot be modified without it',()=>{
  const a=character('a','甲',{}, {referenceOnly:true}),p=setup('objectArchive',{currentRows:[a]});assert.deepEqual(parseCompactFill(p,done('无','objects／character／甲')).needsRows,['a']);assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲')+'\n'+done()),/薄档/);assert.throws(()=>parseCompactFill(p,done('无','objects／character／外人')),/授权身份/);
@@ -77,13 +77,14 @@ test('virtual native user is referenceable, attributes are deltas and protected 
  assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲',{描述:'别的原文'})+'\n'+done()),/逐字维护/);assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲',{'读者':'读者'})+'\n'+done()),/权限由程序/);
 });
 test('complex map and array references use display names without changing canonical field types',()=>{
- const r=defaultRegistry();r.tables.find(t=>t.id==='facts').fields.细节={type:'map',items:{type:'object',fields:{对象:{type:'ref'},强度:{type:'number'}}}};const p=setup('tableArchive',{registry:r,currentRows:[character('a','甲')]});const op=parseCompactFill(p,group(p,'facts',null,'复杂关联',{细节:'{"线索":{"对象":"objects／character／甲","强度":0}}'})+'\n'+done()).changes[0];assert.deepEqual(op.values.细节,{线索:{对象:'a',强度:0}});assert.equal(p.registry.tables.find(t=>t.id==='facts').fields.细节.type,'map');assert.match(p.modelInput,/结构/);
+ const r=defaultRegistry();r.tables.find(t=>t.id==='facts').fields.细节={type:'map',items:{type:'object',fields:{对象:{type:'ref'},强度:{type:'number'}}}};const p=setup('tableArchive',{registry:r,currentRows:[character('a','甲')]});const op=parseCompactFill(p,group(p,'facts',null,'复杂关联',{细节:'{"线索":{"对象":"objects／character／甲","强度":0}}'})+'\n'+done()).changes[0];assert.deepEqual(op.values.细节,{线索:{对象:'a',强度:0}});assert.equal(p.registry.tables.find(t=>t.id==='facts').fields.细节.type,'map');assert.match(p.modelInput,/完整对应项/);
 });
-test('explicit compatible structural additions reuse the current validator; type changes reject',()=>{
- const p=setup('objectArchive'),ext={templates:[],schemaChanges:[{kind:'type',id:'item',fields:{纪念意义:{type:'text'}},evidence:source}]},extended=structuredClone(p.registry);extended.types.find(t=>t.id==='item').fields.纪念意义={type:'text'};const q=setup('objectArchive',{registry:extended});const body='【结构扩展】\n1 提案：'+JSON.stringify(ext)+'\n'+group(q,'objects','item','旧铜铃',{'属性·纪念意义':'来自乙'})+'\n'+done(),out=parseCompactFill(p,body);assert.equal(out.changes[0].values.属性.纪念意义,'来自乙');assert.equal(out.schemaChanges.length,1);
- ext.schemaChanges[0].fields={规则:{type:'object',fields:{内容:{type:'text'}}}};assert.throws(()=>parseCompactFill(p,'【结构扩展】\n1 提案：'+JSON.stringify(ext)+'\n'+done()),/类型/);
- const restricted=setup('historyImport',{objectsSeparate:true});assert.throws(()=>parseCompactFill(restricted,body),/超出本任务/);
+test('model filling cannot design structures; original registry stays unchanged',()=>{
+ const p=setup('objectArchive'),before=JSON.stringify(p.registry),ext={templates:[],schemaChanges:[{kind:'type',id:'item',fields:{纪念意义:{type:'text'}},evidence:source}]};
+ assert.throws(()=>parseCompactFill(p,'【结构扩展】\n1 提案：'+JSON.stringify(ext)+'\n'+done()),/不设计字段/);assert.equal(JSON.stringify(p.registry),before);
+ const result=parseCompactFill(p,done('原料有纪念意义，当前表格缺少专格'));assert.equal(result.changes.length,0);assert.equal(result.pending.length,1);
 });
+
 test('non-JSON and absent sources fail closed without any plan mutation',()=>{
  const p=prepareCompactFill('tableArchive',{registry:defaultRegistry(),rows:[]}),snapshot=structuredClone(p);assert.deepEqual(parseCompactFill(p,done()).changes,[]);assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲')+'\n'+done()),/来源/);assert.deepEqual(p,snapshot);
 });
@@ -92,5 +93,45 @@ test('discovery temporary IDs remain unique when the subsequent history phase ad
 });
 test('native user evidence keeps original quotes independently of escaped card serialization',()=>{
  const description='甲说："我只修船，不碰机关。"',access={readers:[],knowers:[]},p=setup('templateInit',{sourceCard:JSON.stringify({user:description}),archiveSource:undefined,sourceUser:{objectId:'new:persona',name:'甲',description,access}});
- const out=parseCompactFill(p,group(p,'objects','character','甲',{'来源依据':description,'属性·本领·擅长':'修船'})+'\n'+done());assert.equal(out.base.changes[0].evidence,description);assert(!p.modelInput.includes(p.contract));assert(p.modelInput.startsWith('字段定义：'));
+ const out=parseCompactFill(p,group(p,'objects','character','甲',{'来源依据':description,'属性·本领·擅长':'修船'})+'\n'+done());assert.equal(out.base.changes[0].evidence,description);assert(!p.modelInput.includes(p.contract));assert(p.modelInput.startsWith('本次可填表格：'));
+});
+
+test('natural sparse forms infer phase and resolve named references without runtime syntax',()=>{
+ const p=setup('templateInit',{sourceCard:source}),form=p.schema.find(t=>t.type==='character'),f=form.fields.find(f=>f.label==='属性·本领·擅长');
+ const raw='【人物：甲】\n1 来源依据：'+source+'\n2 谁可看到：无\n3 故事里谁已知：无\n'+f.row+' 本领·擅长：修船\n'+done();const result=parseCompactFill(p,raw);assert.equal(result.base.changes.length,1);assert.equal(result.initial.changes.length,0);assert.deepEqual(result.base.changes[0].values.属性.本领.擅长,['修船']);assert(!Object.hasOwn(result.base.changes[0].values,'描述'));
+ for(const word of ['schemaChanges','capture','additionalProperties','objects /','base（','archive |','结构扩展'])assert(!p.modelInput.includes(word)&&!p.contract.includes(word),word);
+ assert.throws(()=>parseCompactFill(p,raw.replace('本领·擅长','本领·伪造')),/字段名/);assert.throws(()=>parseCompactFill(p,raw.replace('【完成】','1 来源依据：'+source+'\n【完成】')),/重复/);
+ const q=setup('tableArchive',{currentRows:[character('a','甲')]}),sf=q.schema.find(t=>t.table==='state'),lines=['【'+sf.form+'：修船】','1 来源依据：'+source,'2 谁可看到：读者','3 故事里谁已知：人物／甲'];for(const [label,value]of [['对象','人物／甲'],['字段','工作'],['值','修船']]){const f=sf.fields.find(f=>f.label===label);lines.push(f.row+' '+label+'：'+value);}const out=parseCompactFill(q,lines.join('\n')+'\n'+done()).changes[0];assert.equal(out.values.对象,'a');assert.equal(out.values.值,'修船');assert.deepEqual(out.access.knowers,['a']);
+});
+
+test('encoded multiline evidence matches its exact original, including CRLF and outer spaces',()=>{
+ const evidence='  登记人：甲\r\n职业：修船匠\n备注："只修船"。  ',p=setup('objectArchive',{archiveSource:undefined,userSource:{text:evidence}}),result=parseCompactFill(p,group(p,'objects','character','甲',{'来源依据':JSON.stringify(evidence),'属性·身份细目·社会身份':'修船匠'})+'\n'+done());
+ assert.equal(result.changes[0].evidence,evidence);assert.match(p.contract,/只解码一次/);
+});
+test('encoded text preserves whitespace, quotes, escapes and literal escape sequences once',()=>{
+ const values=['  原文前后空白  ','甲\n乙','甲\r\n乙','"原文引号"','字面\\n不会换行','反斜线\\与引号"','""','【完成】\n999 未开放字段：不会创建新字段'];
+ for(const value of values){const p=setup('objectArchive'),op=parseCompactFill(p,group(p,'objects','character','甲',{描述:JSON.stringify(value)})+'\n'+done()).changes[0];assert.equal(op.values.描述,value);assert.equal(Object.keys(op.values).length,3);}
+ const p=setup('objectArchive'),op=parseCompactFill(p,group(p,'objects','character','甲',{描述:'"\\u7532\\t\\u4e59"'})+'\n'+done()).changes[0];assert.equal(op.values.描述,'甲\t乙');
+});
+test('plain text and explicit empty text remain distinct from an unfilled cell',()=>{
+ for(const value of ['普通文字','“中文引号”','字面\\n','false','0','null','{"正文":"字面JSON"}']){const p=setup('objectArchive');assert.equal(parseCompactFill(p,group(p,'objects','character','甲',{描述:value})+'\n'+done()).changes[0].values.描述,value);}
+ const existing=character('a','甲');existing.values.描述='原描述';const p=setup('objectArchive',{currentRows:[existing]});
+ const empty=parseCompactFill(p,group(p,'objects','character','甲',{描述:'""'})+'\n'+done()).changes[0];assert.equal(empty.values.描述,'');
+ const untouched=parseCompactFill(p,group(p,'objects','character','甲',{描述:''})+'\n'+done()).changes[0];assert(!Object.hasOwn(untouched.values,'描述'));
+});
+test('bad string encodings and forged decoded evidence reject without fallback or plan mutation',()=>{
+ const p=setup('objectArchive'),before=structuredClone(p);
+ for(const raw of ['"坏\\q转义"','"未闭合','"正文" trailing','"\\uZZZZ"','"两段" "字符串"'])assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲',{描述:raw})+'\n'+done()),/编码无效/);
+ assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲',{'来源依据':JSON.stringify('伪造\n来源')})+'\n'+done()),/来源依据/);assert.deepEqual(p,before);
+});
+test('encoded time text is decoded while enum, list and complex JSON semantics stay unchanged',()=>{
+ const r=registry();r.tables.find(t=>t.id==='events').fields.登记时间={type:'time'};const p=setup('tableArchive',{registry:r});
+ const op=parseCompactFill(p,group(p,'events',null,'中性事件',{登记时间:JSON.stringify('  第一天\n清晨  '),原文段落:'"仍是列表中的字面引号"'})+'\n'+done()).changes[0];assert.equal(op.values.登记时间,'  第一天\n清晨  ');assert.deepEqual(op.values.原文段落,['"仍是列表中的字面引号"']);
+ const state=setup('tableArchive',{currentRows:[character('a','甲')]});assert.equal(parseCompactFill(state,group(state,'state',null,'测试状态',{对象:'objects／character／甲',字段:'正文',值:JSON.stringify('"JSON格的字面引号"')})+'\n'+done()).changes[0].values.值,'"JSON格的字面引号"');
+ assert.throws(()=>parseCompactFill(state,group(state,'state',null,'测试状态',{对象:'objects／character／甲',字段:'正文',值:'0',有效性:'"有效"'})+'\n'+done()));
+});
+test('native user original stays protected when quoted descriptions or explicit empty values are submitted',()=>{
+ const description='  甲说："只修船。"\n这是本人原文。  ',p=setup('templateInit',{sourceCard:JSON.stringify({user:description}),archiveSource:undefined,sourceUser:{objectId:'new:persona',name:'甲',description,access:{readers:[],knowers:[]}}}),before=structuredClone(p);
+ const values={'来源依据':JSON.stringify(description),'属性·身份细目·社会身份':JSON.stringify('修船匠\n兼任木工')},op=parseCompactFill(p,group(p,'objects','character','甲',values)+'\n'+done()).base.changes[0];assert.equal(op.evidence,description);assert.equal(op.values.属性.身份细目.社会身份,'修船匠\n兼任木工');assert(!Object.hasOwn(op.values,'描述'));
+ for(const raw of [JSON.stringify(description),'""'])assert.throws(()=>parseCompactFill(p,group(p,'objects','character','甲',{...values,描述:raw})+'\n'+done()),/逐字维护/);assert.deepEqual(p,before);
 });

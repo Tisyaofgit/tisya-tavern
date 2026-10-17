@@ -621,10 +621,10 @@ test('recovery persona initialization preserves exact text once and binding resu
  const draft=await service.previewUserBinding(info.rows.find(row=>row.values.名称==='岚').id);persist=false;await assert.rejects(service.saveUserBinding(draft),/持久保存/);assert.equal((await service.inspect()).session.personaBinding.state,'writing');persist=true;const fresh=f.makeService({persona});await fresh.resumeUserBinding();assert.equal(f.c.name1,'岚');assert.equal(f.c.powerUserSettings.persona_description,'负责值守。');assert.equal((await fresh.inspect()).session.personaBinding.state,'bound');assert.equal((await fresh.prepare()).text.split('负责值守。').length-1,1);
 });
 
-test('recovery incremental names use existing values and repair only editable conflicting names',async()=>{
- const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();f.c.characters[0].description='内门规则。外门规则。更正内门规则。';f.responder(()=>({base:{changes:[op('new:inner','objects',{名称:'门规',类型:'rule',描述:'内门规则。'},'内门规则。')]},initial:{changes:[]},notes:[]}));await f.service.saveCardTemplate(await f.service.cardTemplate('card'));const row=(await f.service.inspect()).rows[0];let repairs=0;
- f.responder((task,input)=>{if(input.repair?.nameConflicts){repairs++;assert.deepEqual(input.repair.editableIds.sort(),[row.id,'new:outer'].sort());return {renames:[{id:'new:outer',name:'外门门规'}]};}return {base:{changes:[op(row.id,'objects',{描述:'更正内门规则。'},'更正内门规则。',row.rev),op('new:outer','objects',{名称:'门规',类型:'rule',描述:'外门规则。'},'外门规则。')]},initial:{changes:[]},notes:[]};});
- const draft=await f.service.cardTemplate('card');assert.equal(draft.proposal.base.changes[0].values.名称,undefined);await f.service.saveCardTemplate(draft);const rows=(await f.service.inspect()).rows;assert.equal(rows.find(x=>x.id===row.id).values.名称,'门规');assert(rows.some(x=>x.values.名称==='外门门规'));assert.equal(repairs,1);
+test('recovery name conflicts become explicit pending without model rename or writes',async()=>{
+ const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();f.c.characters[0].description='内门规则。外门规则。';f.responder(()=>({base:{changes:[op('new:inner','objects',{名称:'门规',类型:'rule',描述:'内门规则。'},'内门规则。')]},initial:{changes:[]},notes:[]}));await f.service.saveCardTemplate(await f.service.cardTemplate('card'));let calls=0;const before=JSON.stringify([...f.saved]);
+ f.responder((task,input)=>{calls++;assert(!input.repair);return {base:{changes:[op('new:outer','objects',{名称:'门规',类型:'rule',描述:'外门规则。'},'外门规则。')]},initial:{changes:[]},notes:[]};});
+ await assert.rejects(f.service.cardTemplate('card'),/名称冲突，待处理/);assert.equal(calls,1);assert.equal(JSON.stringify([...f.saved]),before);
 });
 
 test('recovery rejected native parse persists across service recreation with zero native writes',async()=>{
@@ -870,52 +870,28 @@ test('external abort at the single session write prevents schema and active prop
  await assert.rejects(f.service.saveArchiveProposal(handle,f.payload.requestId),/cancel at session write/);const result=await f.service.inspect();assert.equal(result.rows.length,0);assert.equal(result.session.commits.length,0);assert.equal(result.origin.bases.length,0);assert.equal(count,1);
 });
 
-async function archiveReviewHost(f,provider='openai'){
- const {createHost}=await import('../config/host.js');Object.assign(f.c,{chatCompletionSettings:{function_calling:true,model:'fixture-model',chat_completion_source:'custom',custom_api_format:provider==='gemini'?'gemini_generate_content':'openai_compat'},getChatCompletionModel:s=>s.model,isToolCallingSupported:()=>true,substituteParams:s=>s,getPresetManager:()=>({getAllPresets:()=>[]})});let seed;
- const host=createHost({store:f.store,getContext:()=>f.c,getSource:()=>({prompts:[]}),createParameters:async(s,model,type,messages,o)=>({generate_data:{messages,model,...o.toolData}})}),service=f.makeService({request:(task,input,options)=>{seed=JSON.parse(input);assert.equal(task,'tableArchive');assert(options.archiveToolSession);assert.equal(options.archiveToolSession.saveArchiveProposal,undefined);return host.request(task,input,options);}});
- return {service,host,seed:()=>seed};
-}
-function archiveToolReply(provider,name,args,id='call'){
- return provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{functionCall:{name,args},thoughtSignature:'kept-signature'}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:[{id,type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]});
-}
-const archiveFinalReply=(provider,body)=>provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{text:JSON.stringify(body)}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'stop',message:{role:'assistant',content:JSON.stringify(body)}}]});
-test('archive host honors configured recursion above five and reserves the final no-tools response',async()=>{
- const f=await proposalFixture(),h=await archiveReviewHost(f),old=globalThis.fetch;f.c.ToolManager={RECURSE_LIMIT:6};let count=0;
- globalThis.fetch=async(_url,options)=>{count++;const p=JSON.parse(options.body);assert.equal(p.tools.length,count<=6?5:0);if(count>1)assert.equal(p.messages.slice(-5).filter(m=>m.role==='tool'&&JSON.parse(m.content).status==='ok').length,5);if(count<=6)return Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:Array.from({length:5},(_,i)=>({id:'round-'+count+'-'+i,type:'function',function:{name:'tisya_list_archive',arguments:'{}'}}))}}]});assert.equal(p.tool_choice,'none');return archiveFinalReply('openai',{changes:[],archiveRequestId:null,notes:['本例验证超过24次工具调用及配置续轮上限']});};
- try{const before=JSON.stringify([...f.saved]);await h.service.previewArchiveChanges({sourceKey:f.source});assert.equal(count,7);assert.equal(JSON.stringify([...f.saved]),before);}finally{globalThis.fetch=old;}
+const compactReviewEmpty='【完成】\n1 状态：完成\n2 待处理：无\n3 补读记录：无';
+async function reviewFill(input){const {prepareCompactFill}=await import('../tables/compact-fill.js');const plan=prepareCompactFill('tableArchive',JSON.parse(input)),schema=plan.schema.find(t=>t.table==='objects'&&t.type==='character');return '【人物：岚】\n'+schema.fields.filter(f=>['来源依据','读者','知情者','描述'].includes(f.label)).map(f=>f.row+' '+f.label+'：'+({'来源依据':'岚在城门。','读者':'无','知情者':'无','描述':'岚在城门。'}[f.label])).join('\n')+'\n'+compactReviewEmpty;}
+test('archive review fills one simple form without model tools and waits for separate confirmation',async()=>{
+ const f=await proposalFixture(),before=JSON.stringify([...f.saved]);let calls=0;const service=f.makeService({request:async(task,input,options)=>{calls++;assert.equal(task,'tableArchive');assert.equal(options.archiveToolSession,undefined);const value=JSON.parse(input);assert(value.compactFill);assert.equal(value.archiveRequestId,undefined);return reviewFill(input);}});
+ const review=await service.previewArchiveChanges({sourceKey:f.source});assert.equal(calls,1);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(review.changes.length,1);assert.equal(review.changes[0].before,null);const receipt=await service.acceptArchiveReview(review.id);assert(receipt.active);assert.equal((await service.inspect()).rows.length,1);assert((await service.acceptArchiveReview(review.id)).replayed);service.discardArchiveReview(review.id);await assert.rejects(service.acceptArchiveReview(review.id),/不存在或已关闭/);
 });
-test('production archive review roundtrip uses five bounded tools and waits for separate confirmation before writes',async()=>{
- for(const provider of ['openai','gemini']){const f=await proposalFixture(),h=await archiveReviewHost(f,provider),oldFetch=globalThis.fetch,before=JSON.stringify([...f.saved]);let count=0;
-  globalThis.fetch=async(_url,options)=>{const payload=JSON.parse(options.body);assert.equal(payload.tools.length,5);assert.equal(payload.tools.some(t=>/save|write/.test(t.function.name)),false);count++;
-   if(count===1){const wire=JSON.stringify(payload.messages);assert(wire.includes(h.seed().archiveRequestId));assert.equal(wire.split(h.seed().archiveRequestId).length-1,1);assert.match(payload.messages.at(-1).content,/^\[PREPARE_STEP\]/);assert(payload.messages.findIndex(m=>m.content.includes('本轮是归档草案审核流程'))<payload.messages.findIndex(m=>m.content==='[/MATERIALS]'));return archiveToolReply(provider,'tisya_list_archive',{},'list');}
-   if(count===2){assert.equal(JSON.parse(payload.messages.at(-1).content).status,'ok');return archiveToolReply(provider,'tisya_propose_archive_change',{...f.payload,requestId:h.seed().archiveRequestId},'draft');}
-   assert.equal(count,3);const receipt=JSON.parse(payload.messages.at(-1).content);assert.equal(receipt.written,false);assert.deepEqual(receipt.completion,{changes:[],archiveRequestId:h.seed().archiveRequestId,notes:[]});if(provider==='gemini')assert.equal(payload.messages.at(-2).tool_calls[0].extra_content.google.thought_signature,'kept-signature');return archiveFinalReply(provider,{...receipt.completion,notes:['核对来源']});
-  };
-  try{const review=await h.service.previewArchiveChanges({sourceKey:f.source});assert.equal(count,3);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(review.changes.length,1);assert.equal(review.changes[0].before,null);assert.equal(review.source.text,'岚在城门。');assert.equal(h.seed().currentRows.length,0);
-   const saved=await h.service.acceptArchiveReview(review.id);assert(saved.active);assert.equal((await h.service.inspect()).rows.length,1);assert((await h.service.acceptArchiveReview(review.id)).replayed);h.service.discardArchiveReview(review.id);await assert.rejects(h.service.acceptArchiveReview(review.id),/不存在或已关闭/);
-  }finally{globalThis.fetch=oldFetch;}
- }
+test('empty simple review writes nothing and staged review rejects source mutation',async()=>{
+ const f=await proposalFixture();let empty=true;const service=f.makeService({request:async(_task,input)=>empty?compactReviewEmpty:reviewFill(input)}),before=JSON.stringify([...f.saved]);assert.equal((await service.previewArchiveChanges({sourceKey:f.source})).id,null);empty=false;const review=await service.previewArchiveChanges({sourceKey:f.source});f.c.chat[0].mes='改了';await assert.rejects(service.acceptArchiveReview(review.id),/已改变/);service.discardArchiveReview(review.id);assert.equal(JSON.stringify([...f.saved]),before);
 });
-test('inline changes, invented receipt IDs and hidden accepted drafts cannot bypass review validation',async()=>{
- for(const mode of ['inline','invented','hidden']){const f=await proposalFixture(),h=await archiveReviewHost(f),old=globalThis.fetch,before=JSON.stringify([...f.saved]);let count=0;globalThis.fetch=async()=>{count++;if(mode==='hidden'&&count===1)return archiveToolReply('openai','tisya_propose_archive_change',{...f.payload,requestId:h.seed().archiveRequestId});return archiveFinalReply('openai',{changes:mode==='inline'?f.payload.changes:[],archiveRequestId:mode==='hidden'?null:'invented',notes:[]});};
-  try{await assert.rejects(h.service.previewArchiveChanges({sourceKey:f.source}),/绕过校验|没有引用|不能在最终结果中隐去/);assert.equal(JSON.stringify([...f.saved]),before);}finally{globalThis.fetch=old;}
- }
+test('review rejects legacy model operation structures before creating any draft',async()=>{
+ const f=await proposalFixture(),service=f.makeService({request:async()=>({changes:f.payload.changes})}),before=JSON.stringify([...f.saved]);await assert.rejects(service.previewArchiveChanges({sourceKey:f.source}),/仅接收极简表格/);assert.equal(JSON.stringify([...f.saved]),before);
 });
-test('archive draft request requires explicit function support and cannot be granted to configuration assistant',async()=>{
- const f=await proposalFixture(),h=await archiveReviewHost(f),old=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('must not send');};f.c.chatCompletionSettings.function_calling=false;
- try{await assert.rejects(h.service.previewArchiveChanges({sourceKey:f.source}),/启用函数调用/);assert.equal(calls,0);await assert.rejects(h.host.request('tableAssistant','{}',{archiveToolSession:{}}),/只能用于独立记忆归档/);assert.equal(calls,0);}finally{globalThis.fetch=old;}
+test('pending simple review cannot create a saveable draft',async()=>{
+ const f=await proposalFixture(),service=f.makeService({request:async()=>compactReviewEmpty.replace('2 待处理：无','2 待处理：身份不明')}),before=JSON.stringify([...f.saved]);await assert.rejects(service.previewArchiveChanges({sourceKey:f.source}),/待处理/);assert.equal(JSON.stringify([...f.saved]),before);
 });
-test('review without changes writes nothing and a staged review rejects chat mutation or discard',async()=>{
- const f=await proposalFixture();let mode='empty';const service=f.makeService({request:async(_task,input,options)=>{const seed=JSON.parse(input);if(mode==='empty')return {changes:[],archiveRequestId:null,notes:['无新事实']};await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}});
- const before=JSON.stringify([...f.saved]);assert.equal((await service.previewArchiveChanges({sourceKey:f.source})).id,null);mode='draft';const review=await service.previewArchiveChanges({sourceKey:f.source});f.c.chat[0].mes='改了';await assert.rejects(service.acceptArchiveReview(review.id),/已改变/);service.discardArchiveReview(review.id);await assert.rejects(service.acceptArchiveReview(review.id),/不存在或已关闭/);assert.equal(JSON.stringify([...f.saved]),before);
-});
-test('stopping review generation after staging a proposal prevents any review handle or write',async()=>{
- const f=await proposalFixture();let entered,release;const staged=new Promise(r=>entered=r);const service=f.makeService({request:async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]),running=service.previewArchiveChanges({sourceKey:f.source});await staged;service.clear({scope:'archive-review',reason:'cancel review'});release();await assert.rejects(running,/cancel review/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(service.state().busy,false);
+test('stopping simple review generation prevents staging or write',async()=>{
+ const f=await proposalFixture();let entered,release;const started=new Promise(r=>entered=r),service=f.makeService({request:async(_task,input)=>{entered();await new Promise(r=>release=r);return reviewFill(input);}}),before=JSON.stringify([...f.saved]),running=service.previewArchiveChanges({sourceKey:f.source});await started;service.clear({scope:'archive-review',reason:'cancel review'});release();await assert.rejects(running,/cancel review/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(service.state().busy,false);
 });
 
 async function archiveReviewPanel(f,{request,wrap}={}){
  const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');let review;
- const base=f.makeService({request:request??(async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:['界面核对']};})});
+ const base=f.makeService({request:request??(async(_task,input)=>reviewFill(input))});
  const service={...base,previewArchiveChanges:async options=>{review=await base.previewArchiveChanges(options);return review;},...wrap?.(base)};
  const w=new Window(),panel=mountTablePanel(w.document,w.document.body,{service,store:f.store});await panel.ready;const select=panel.root.querySelector('[aria-label="表单功能"]');const page=async name=>{select.value=name;await select.onchange();};await page('history');
  const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(n=>n.textContent===text);assert(button,text);await button.onclick();};return {w,panel,service,base,click,page,review:()=>review,close:async()=>{panel.dispose();await w.happyDOM.abort();}};
@@ -935,7 +911,7 @@ test('archive review UI requires latest-source confirmation and closes drafts wi
  }finally{await p.close();}
 });
 test('archive review UI disposal cancels staged and in-flight reviews without writes',async()=>{
- for(const inFlight of [false,true]){const f=await proposalFixture();let entered,release;const started=new Promise(r=>entered=r);const p=await archiveReviewPanel(f,{request:async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();if(inFlight)await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]);
+ for(const inFlight of [false,true]){const f=await proposalFixture();let entered,release;const started=new Promise(r=>entered=r);const p=await archiveReviewPanel(f,{request:async(_task,input)=>{entered();if(inFlight)await new Promise(r=>release=r);return reviewFill(input);}}),before=JSON.stringify([...f.saved]);
   const running=p.click('生成所选楼层草案');await started;if(!inFlight)await running;p.panel.dispose();if(inFlight){release();await running;}else await assert.rejects(p.base.acceptArchiveReview(p.review().id),/不存在或已关闭/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(p.base.state().busy,false);await p.w.happyDOM.abort();
  }
 });
@@ -956,10 +932,8 @@ test('explicit schema and rows save in one session commit, reload and withdraw t
  f.c.chat[0].mes='另一条回复。';f.c.chat[0].swipe_id=1;const changed=await service.inspect();assert.equal(changed.rows.length,0);assert(!changed.registry.types.some(t=>t.id==='gate-keeper'));assert(!changed.registry.tables.some(t=>t.id==='gate-log'));assert.equal(changed.registry.tables.find(t=>t.id==='objects').fields.出现记录,undefined);assert.equal(writes,1);
 });
 
-test('schema-bearing preview exposes full definitions and evidence and only confirmation performs the one write',async()=>{
- const f=await proposalFixture(),payload=structurePayload(f),before=JSON.stringify([...f.saved]);const service=f.makeService({request:async(_task,text,options)=>{const input=JSON.parse(text);await options.archiveToolSession.propose_archive_change({...payload,requestId:input.archiveRequestId});return {changes:[],archiveRequestId:input.archiveRequestId,notes:[]};}});
- const review=await service.previewArchiveChanges({sourceKey:f.source});assert.equal(JSON.stringify([...f.saved]),before);assert(review.extensions.includes('gate-keeper'));assert(review.extensions.includes('gate-log'));assert(review.extensions.includes('objects.出现记录'));assert.equal(review.structure.evidence.length,3);assert.equal(review.structure.templates[0].fields.执勤门.type,'text');review.structure.templates[0].fields.执勤门.type='number';
- let writes=0;f.writeHook(()=>writes++);await service.acceptArchiveReview(review.id);assert.equal(writes,1);assert.equal((await service.inspect()).registry.types.find(t=>t.id==='gate-keeper').fields.执勤门.type,'text');
+test('simple preview internally compiles optional definitions and confirmation performs one write',async()=>{
+ const f=await proposalFixture(),before=JSON.stringify([...f.saved]),service=f.makeService({request:async(_task,input)=>reviewFill(input)});const review=await service.previewArchiveChanges({sourceKey:f.source});assert.equal(JSON.stringify([...f.saved]),before);assert(review.structure.schemaChanges.length>0);let writes=0;f.writeHook(()=>writes++);await service.acceptArchiveReview(review.id);assert.equal(writes,1);assert.equal((await service.inspect()).rows.length,1);
 });
 
 test('structure failure and unauthorized reserved tables never leave a partial registry',async()=>{
@@ -974,8 +948,8 @@ test('schema commit with a lost acknowledgement is recovered by receipt without 
  await assert.rejects(service.saveArchiveProposal(handle,payload.requestId),/acknowledgement lost/);assert.equal(writes,1);assert.equal((await service.inspect()).rows.length,2);const replay=await service.saveArchiveProposal(handle,payload.requestId);assert(replay.replayed);assert.equal(writes,1);
 });
 
-test('archive UI shows the complete proposed schema with evidence before confirmation',async()=>{
- const f=await proposalFixture();f.payload=structurePayload(f);const p=await archiveReviewPanel(f);try{const before=JSON.stringify([...f.saved]);await p.click('生成所选楼层草案');const details=[...p.panel.root.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='核对结构定义与原文依据');assert(details);assert.match(details.textContent,/执勤门/);assert.match(details.textContent,/gate-log/);assert.match(details.textContent,/岚在城门。/);assert.equal(JSON.stringify([...f.saved]),before);await p.click('确认保存这批草案');assert.equal(p.panel.root.querySelector('[role=alert]'),null);assert.equal((await p.base.inspect()).rows.length,2);}finally{await p.close();}
+test('archive UI shows host supplied optional fields and evidence before confirmation',async()=>{
+ const f=await proposalFixture();const p=await archiveReviewPanel(f);try{const before=JSON.stringify([...f.saved]);await p.click('生成所选楼层草案');const details=[...p.panel.root.querySelectorAll('details')].find(d=>d.querySelector('summary')?.textContent==='核对结构定义与原文依据');assert(details);assert.match(details.textContent,/形貌细目/);assert.match(details.textContent,/发长/);assert.match(details.textContent,/岚在城门。/);assert.equal(JSON.stringify([...f.saved]),before);await p.click('确认保存这批草案');assert.equal(p.panel.root.querySelector('[role=alert]'),null);assert.equal((await p.base.inspect()).rows.length,1);}finally{await p.close();}
 });
 
 test('card opening binds exact user and reuses only initial rows in a new independent save',async()=>{

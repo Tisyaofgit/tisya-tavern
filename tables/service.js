@@ -72,19 +72,19 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function ruleReviewStatus(){const c=capture();if(!c.settings.sessionBook)return {review:null,sessionRevision:null,stale:false};const session=await books.read(c.settings.sessionBook);c.guard();check(session.data.kind==='session'&&session.data.owner===c.key,'规则选择属于另一会话，请重新绑定当前存档');const review=session.data.ruleReview??null;return {review:copy(review),sessionRevision:session.data.revision,stale:!!review&&review.fingerprint!==(await currentRuleSources(c)).fingerprint};}
  async function saveRuleChoice(choice,expected){return exclusive(async()=>{const c=capture(),loaded=await load(c),review=loaded.session.data.ruleReview;check(review&&expected?.fingerprint===review.fingerprint&&expected?.sessionRevision===loaded.session.data.revision,'规则选择依据已变化，请重新载入');const next=copy(loaded.session.data);next.revision++;next.ruleReview=chooseRule(review,await currentRuleSources(c),choice);next.ruleChoiceHistory??=[];next.ruleChoiceHistory.push({...copy(choice),fingerprint:review.fingerprint,at:new Date().toISOString()});await books.write(loaded.session,next,c.guard);worldbook.clear();setPrompt('');latest=null;return {review:copy(next.ruleReview),sessionRevision:next.revision,stale:false};});}
  function activePreferences(rows,c,binding=null){return rows.filter(row=>row.table==='preferences'&&row.preferenceConfirmed===true&&row.values.启用!==false&&preferenceMatches(row,{context:getContext(),world:c,persona:readPersona(),binding}));}
- async function invoke(task,input,c,signal,{archiveToolSession=null}={}){
+ async function invoke(task,input,c,signal){
   status(task,'运行中');progress={task,stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
   try{
    signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);
    const payload={...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]};
    let compact=null,formExtensions=[];
-   if(['templateInit','objectArchive','historyImport','tableArchive'].includes(task)&&!archiveToolSession&&!input.repair?.nameConflicts){
+   if(['templateInit','objectArchive','historyImport','tableArchive'].includes(task)){
     // Compile optional fields for this request only. Reading/compiling never mutates a saved registry.
     let registry=payload.registry;for(const kind of ['character','item','place','organization','rule']){const plan=foundationTemplatePlan(kind,{registry});registry=plan.registry;formExtensions.push(...plan.schemaChanges);}
     payload.registry=registry;compact=prepareCompactFill(task,payload);
     payload.compactFill={contract:compact.contract,modelInput:compact.modelInput,modelState:compact.modelState};
    }
-   const response=await request(task,JSON.stringify(payload),{signal,...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
+   const response=await request(task,JSON.stringify(payload),{signal,onProgress:update=>{
     if(signal?.aborted||!update||!['preparing','prepared','waiting','connected','thinking','receiving','buffered','received'].includes(update.stage))return;
     // Reader delivers cumulative visible content; reasoning fields are never
     // accepted as a progress payload or appended to task data.
@@ -278,24 +278,24 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function acceptArchiveReview(id){const record=archiveReviews.get(id);check(record,'归档审核草案不存在或已关闭');return saveArchiveProposal(record.handle,record.requestId);}
  async function previewArchiveChanges({sourceKey,includeLatest=false}={}){return exclusive(async signal=>{
   for(const [id,r]of archiveReviews)if(Date.now()>r.expiresAt)discardArchiveReview(id);
-  const lifetime=new AbortController(),abort=()=>lifetime.abort(signal.reason??Error('归档草案生成已停止'));signal.addEventListener('abort',abort,{once:true});let handle=null,query=null,keep=false;
+  const lifetime=new AbortController(),abort=()=>lifetime.abort(signal.reason??Error('归档草案生成已停止'));signal.addEventListener('abort',abort,{once:true});let handle=null,keep=false;
   try{
    signal.throwIfAborted();handle=await openArchiveProposal({sourceKey,includeLatest,signal:lifetime.signal});const record=archiveDrafts.get(handle),{c,loaded,source,allowedTables}=record;
    check(includeLatest||loaded.chain.some(s=>s.role==='user'&&s.index>source.index),'当前候选尚未确认；请先确认保留最新回复');
-   const requestId=crypto.randomUUID(),id=crypto.randomUUID(),context={...handle.context,source:source.key,requestId,storyPoint:sourceTime(source.text)};
-   query=createArchiveQuerySession({view:loaded.view,context,sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index])),authorizeRow:row=>allowedTables.includes(row.table),authorizeField:row=>allowedTables.includes(row.table),authorizeMetadata:row=>allowedTables.includes(row.table),guard:()=>handle.assertFresh(),limits:{ttlMs:record.toolBudget.timeoutMs,maxCalls:record.toolBudget.maxCalls}});
-   let staged=false;const toolSession={context:copy(context),assertFresh:()=>handle.assertFresh(),dispose:()=>query.dispose()};
-   for(const method of ['list_archive','describe_fields','search_archive','read_archive'])toolSession[method]=input=>query[method](input);
-   toolSession.propose_archive_change=async input=>{check(input?.requestId===requestId,'草案请求编号与本轮不匹配');const result=await handle.propose_archive_change(input);staged=true;return {...result,completion:{changes:[],archiveRequestId:requestId,notes:[]}};};
-   const userSource=precedingUserSource(loaded.chain,source),input={archiveRequestId:requestId,archiveSource:{key:source.key,floor:source.floor,text:archivalText(source.text),time:sourceTime(source.text)},userSource,currentRows:[],registry:{...copy(loaded.view.registry),tables:loaded.view.registry.tables.filter(t=>allowedTables.includes(t.id)).map(copy)},preferences:loaded.view.rows.filter(r=>r.table==='preferences'),objectsSeparate:false,instruction:'独立单楼审核：当前来源支持的完整一批修改先通过工具提交，等用户审核，不直接保存。使用给定archiveRequestId；空内联记录不是空库。'};
-   const final=await invoke('tableArchive',input,c,signal,{archiveToolSession:toolSession});await handle.assertFresh();
-   check(Array.isArray(final.changes)&&final.changes.length===0&&Object.keys(final).every(k=>['changes','archiveRequestId','notes'].includes(k))&&Array.isArray(final.notes??[])&&(final.notes??[]).length<=20&&(final.notes??[]).every(n=>typeof n==='string'&&n.length<=2000),'归档审核最终结果须只引用工具草案，不得绕过校验填写changes');
-   if(final.archiveRequestId===null){check(!staged,'已提交草案不能在最终结果中隐去');status('归档草案','无新修改');return {id:null,source:{key:source.key,floor:source.floor},notes:copy(final.notes??[]),changes:[]};}
-   check(final.archiveRequestId===requestId&&staged,'最终结果没有引用本轮已接纳的草案');const draft=handle.getDraft(requestId);check(!draft.recorded&&draft.proposal,'本轮应生成待审新草案');
+   const requestId=crypto.randomUUID(),id=crypto.randomUUID();
+   const userSource=precedingUserSource(loaded.chain,source),input={archiveSource:{key:source.key,floor:source.floor,text:archivalText(source.text),time:sourceTime(source.text)},userSource,currentRows:loaded.view.rows.filter(row=>allowedTables.includes(row.table)).map(copy),registry:{...copy(loaded.view.registry),tables:loaded.view.registry.tables.filter(t=>allowedTables.includes(t.id)).map(copy)},preferences:loaded.view.rows.filter(r=>r.table==='preferences'),objectsSeparate:false,instruction:'填写当前来源支持的新增或更新内容；依据不足的项目留空并列入待处理。结果先供审核，确认后才保存。'};
+   const final=await invoke('tableArchive',input,c,signal);await handle.assertFresh();
+   check(progress?.format==='compact-fill','归档审核仅接收极简表格填写，不接收模型提交的运行结构');
+   check(Array.isArray(final.changes)&&!final.pending?.length&&!final.needsRows?.length,'归档审核仍有待处理或待补读项目，未建立可保存草案');
+   if(!final.changes.length){status('归档草案','无新修改');return {id:null,source:{key:source.key,floor:source.floor},notes:copy(final.notes??[]),changes:[]};}
+   // Model fills cells only. IDs, revisions, intents, request receipts and staging stay inside the host.
+   const proposal={requestId,changes:final.changes.map(op=>({...copy(op),intent:op.delete?'delete':op.id.startsWith('new:')?'create':'update'})),templates:(final.templates??[]).map(item=>({...copy(item),evidence:item.evidence??record.evidence})),schemaChanges:(final.schemaChanges??[]).map(item=>({...copy(item),evidence:item.evidence??record.evidence}))};
+   for(const op of proposal.changes)delete op.delete;
+   await handle.propose_archive_change(proposal);const draft=handle.getDraft(requestId);check(!draft.recorded&&draft.proposal,'本轮应生成待审新草案');
    const preflight=prepareCommit(loaded.view,draft.proposal,{source:source.key,kind:'archive',evidence:record.evidence,allowedTables,sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index])),...ARCHIVE_SCHEMA_OPTIONS});
    const review={id,requestId,source:{key:source.key,floor:source.floor,text:input.archiveSource.text,userText:userSource?.text??''},changes:draft.proposal.changes.map(op=>({...copy(op),intent:op.delete?'delete':op.id.startsWith('new:')?'create':'update',before:copy(loaded.view.rows.find(r=>r.id===op.id)??null)})),extensions:copy(preflight.extensions??[]),structure:{templates:copy(draft.proposal.templates??[]),schemaChanges:copy(draft.proposal.schemaChanges??[]),evidence:copy(draft.proposal.schemaEvidence??[])},notes:copy(final.notes??[]),expiresAt:record.started+record.toolBudget.timeoutMs};
    archiveReviews.set(id,{handle,requestId,lifetime,expiresAt:review.expiresAt});keep=true;status('归档草案','待确认',review.changes.length+' 项；尚未写入档案');return review;
-  }finally{signal.removeEventListener('abort',abort);query?.dispose();if(!keep){lifetime.abort(Error('归档草案任务已结束'));handle?.dispose();}}
+  }finally{signal.removeEventListener('abort',abort);if(!keep){lifetime.abort(Error('归档草案任务已结束'));handle?.dispose();}}
  },{scope:'archive-review'});}
  async function openArchiveQuery(){
   check(typeof archiveQueryPolicy==='function','档案查询尚未绑定本任务的宿主读取授权');const c=capture();check(c.settings.originBook&&c.settings.sessionBook,'尚未绑定可查询的表单存档');const loaded=await load(c),policy=await archiveQueryPolicy({world:c.key,session:copy(loaded.session.data),view:copy(loaded.view)});c.guard();check(policy&&typeof policy.task==='string'&&policy.task&&typeof policy.guard==='function','档案查询任务授权及在途检查无效');
@@ -506,10 +506,8 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const current=new Map(currentRows.filter(row=>row.table==='objects').map(row=>[row.id,row])),proposed=new Map(changes.filter(op=>op.table==='objects').map(op=>[op.id,op]));
   function collisions(){const names=new Map();for(const id of new Set([...current.keys(),...proposed.keys()])){const value={...current.get(id)?.values,...proposed.get(id)?.values},name=value.名称;check(typeof name==='string'&&name.trim(),'对象名称缺失：'+id);const key=name.trim().normalize('NFKC').toLocaleLowerCase();if(!names.has(key))names.set(key,[]);names.get(key).push({id,name,editable:proposed.has(id)&&id!==userId});}return [...names.values()].filter(rows=>rows.length>1);}
   const conflicts=collisions();if(!conflicts.length)return;
-  const editable=new Set(conflicts.flat().filter(row=>row.editable).map(row=>row.id));check(editable.size,'现有对象名称冲突，初始化不能改写未提交档案或原生用户名称');
-  const repair=await invoke('templateInit',{sourceCard,registry:result.registry,currentRows,repair:{instruction:'仅修复所列新提案对象的显示名称冲突。返回 {renames:[{id,name}]}，保持 ID、引用、事实、用户原生名称以及不可编辑档案不变。依据来源用身份限定名称；不可确定放 notes，不合并同名不同人。',nameConflicts:conflicts,editableIds:[...editable]}},c,signal);
-  check(Array.isArray(repair.renames)&&repair.renames.length<=editable.size,'名称修复格式无效');const seen=new Set();for(const rename of repair.renames){check(editable.has(rename.id)&&!seen.has(rename.id)&&typeof rename.name==='string'&&rename.name.trim(),'名称修复越界或重复');seen.add(rename.id);proposed.get(rename.id).values.名称=rename.name;}
-  check(!collisions().length,'对象显示名称仍冲突，请在草稿中区分身份');
+  // Ambiguous identity is a user-visible pending item, never a second model API-design task.
+  throw Error('对象显示名称冲突，待处理：'+conflicts.map(group=>group.map(row=>row.name).join('／')).join('；')+'。请在来源或草稿中明确身份后重新建档；未保存，也未自动改名或合并。');
  }
  async function genesisLoaded(goal,c,loaded,signal){check(typeof goal==='string'&&goal.trim(),'请填写创世要求');const basisCard=cardBasis(getContext());const proposal=await invoke('tableGenesis',{goal,sourceCard:basisCard,registry:loaded.view.registry,currentRows:loaded.view.rows,stateSystem:{contract:STATE_SYSTEM_CONTRACT,catalog:copy(loaded.origin.data.状态目录??null)}},c,signal);validateBlueprint(proposal,loaded.origin.data.registry);if(proposal.artifacts.stateSystem)validateGenesisStateSystem(proposal.artifacts.stateSystem,loaded.origin);return {format:'tisya.genesis-draft/2',goal,basisCard,proposal,world:c.key,originRevision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision};}
  async function genesis(goal){return exclusive(async signal=>{const c=capture(),loaded=await load(c);return genesisLoaded(goal,c,loaded,signal);});}

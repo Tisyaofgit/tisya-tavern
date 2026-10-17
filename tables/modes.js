@@ -53,14 +53,7 @@ export function auxiliaryEntries(base,task,instructions='',options={}){
  entries.tisya_think_commit='[COMMIT.READY] Deliver the complete selected JSON artifact for validation; no claim that it is already saved. [/COMMIT.READY]';
  entries.tisya_delivery_warning=review?'Verify exact source excerpts, IDs/revisions, access and references. Submit row and required schema changes through the proposal tool; final JSON references only the accepted draft, with unresolved required changes in notes. No save receipt.':'Verify exact archive source excerpts, or real basis IDs/revisions in world mode. Existing rows use id/rev, references resolve, blocking gaps stay pending. Return JSON only, no reasoning or save receipt.';
  entries.tisya_prepare_trigger='[PREPARE_STEP] 现在执行本次'+TABLE_MODES[task].name+'，一次性交付完整任务 JSON 对象；从左花括号开始，到对应右花括号结束。[/PREPARE_STEP]';
- if(options.compactFill){
-  entries.tisya_task_start=entries.tisya_task_start.replace(/@SCHEMA [^\n]+/,'@SCHEMA 按程序编译的表格填写；对象与引用使用给定完整名称，程序保管编号、修订和路径。结构扩展仅走表格定义的显式扩展区。');
-  entries.tisya_registry='[REGISTRY]\n@MODE '+TABLE_MODES[task].id+'\n@SINGLE 每项事实只填实际归属字段；未知、空值、0与false不同。\n@NORMS\n'+instructions+'\n[/REGISTRY]';
-  entries.tisya_inner_chain=entries.tisya_inner_chain.replace(auxiliaryWire,'只交付完整分组填表结果，内部编号、版本和存储结构由程序处理，不输出JSON变更提案。');
-  entries.tisya_think_commit='[COMMIT.READY] 交付完整分组表格供验证；不声称已经保存。[/COMMIT.READY]';
-  entries.tisya_delivery_warning='核来源、细格覆盖、权限和同名身份。必要缺项列入待处理，未知不得编造。只输出本次分组表格。';
-  entries.tisya_prepare_trigger='[PREPARE_STEP] 现在执行本次'+TABLE_MODES[task].name+'；按给定表格填写，一次交付完整分组文本。[/PREPARE_STEP]';
- }
+
  return entries;
 }
 export function compileTaskMode({compiledBase:c,configuration},task,instructions=''){
