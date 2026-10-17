@@ -88,7 +88,7 @@ const getPlayerName=()=>context().name1??null;
 let displaySaving=false;
 async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}
 const visualError=err=>console.warn('[Tisya visual]',err);
-function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled);}
+function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 const FONT_URLS=Array.from({length:4},(_,i)=>new URL(`./font/reading.part${i+1}.bin`,import.meta.url).href);
@@ -382,7 +382,7 @@ async function home() {
     const owner=context();
     homeView=mountHome(document,root.querySelector('.tisya-page'),{
         cards,preferences:settings(),profile:{name:owner.name1,description:owner.powerUserSettings?.persona_description},
-        current:()=>enabled&&epoch===renderEpoch,playing:motionEnabled,
+        current:()=>enabled&&epoch===renderEpoch,playing:motionEnabled&&getAppearance('extensions').动画效果,effects:getDisplay(),
         thumbnail:avatar=>getThumbnailUrl('avatar',avatar),onError:error,
         chatDate:value=>{if(value===undefined||value===null||value==='')return null;const date=timestampToMoment(value);return date.isValid()?{timestamp:date.valueOf(),day:date.format('MM/DD'),time:date.format('HH:mm')}:null;},
         listChats:async(card,signal)=>{

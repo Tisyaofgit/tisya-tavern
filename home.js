@@ -15,7 +15,7 @@ export function waterForm(description='') {
     return forms.size===1?{gender:values[0],explicit:true}:{gender:'female',explicit:false};
 }
 
-export function mountHome(document,container,{cards,profile={},listChats,thumbnail,chatDate=()=>null,onSelect,onError,current=()=>true,playing=true,mountArt=mountHomeArt,requestTimeout=15000,preferences={}}={}) {
+export function mountHome(document,container,{cards,profile={},listChats,thumbnail,chatDate=()=>null,onSelect,onError,current=()=>true,playing=true,effects,mountArt=mountHomeArt,requestTimeout=15000,preferences={}}={}) {
     directoryState(preferences);
     const window=document.defaultView, form=waterForm(profile.description);
     let disposed=false,cursor=0,loaded=0,query='',searchTimer=0,roleLimit=ROLE_BATCH,selecting=false;
@@ -43,7 +43,7 @@ export function mountHome(document,container,{cards,profile={},listChats,thumbna
     const size=()=>{if(alive())find('.tisya-home').style.setProperty('--tisya-home-height',`${container.clientHeight||window.innerHeight||700}px`);};
     const resize=typeof window.ResizeObserver==='function'?new window.ResizeObserver(size):null;resize?.observe(container);size();
     const artStatus=find('.tisya-home-art-status');
-    const art=mountArt(document,find('.tisya-home-art'),{gender:form.gender,playing,onError:error=>{if(alive()){artStatus.hidden=false;artStatus.textContent=error.message;}}});
+    const art=mountArt(document,find('.tisya-home-art'),{gender:form.gender,playing,effects,onError:error=>{if(alive()){artStatus.hidden=false;artStatus.textContent=error.message;}}});
     find('.tisya-home-dedication img').addEventListener('error',()=>{if(alive()){artStatus.hidden=false;artStatus.textContent='寄语素材未能读取，请更新完整扩展。';}});
     find('.tisya-home-dedication img').addEventListener('load',event=>{const image=event.target;if(alive()&&(image.naturalWidth!==585||image.naturalHeight!==210)){artStatus.hidden=false;artStatus.textContent='寄语素材尺寸不匹配，请更新完整扩展。';image.hidden=true;}});
     function matches(state){return !query||[state.card.name,state.card.displayName].some(name=>name.toLocaleLowerCase().includes(query))||(state.chats??[]).some(c=>c.search.includes(query));}
@@ -109,5 +109,5 @@ export function mountHome(document,container,{cards,profile={},listChats,thumbna
             loaded++;renderRole(state,index);renderRoles();
         }
     }));
-    return {ready,artReady:art.ready,refreshMotion(value){art.setPlaying(value);},dispose(){if(disposed)return;disposed=true;resize?.disconnect();window.clearTimeout(searchTimer);for(const request of requests)request.abort();requests.clear();art.dispose();roles.removeEventListener('click',click);container.classList.remove('tisya-home-page');}};
+    return {ready,artReady:art.ready,refreshMotion(value,effects){art.setPlaying(value);if(effects)art.setEffects?.(effects);},dispose(){if(disposed)return;disposed=true;resize?.disconnect();window.clearTimeout(searchTimer);for(const request of requests)request.abort();requests.clear();art.dispose();roles.removeEventListener('click',click);container.classList.remove('tisya-home-page');}};
 }

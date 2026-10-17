@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {verifiedVendorSource} from './vendor-source.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const originals=['settings','visual'].map(name=>{const directory=path.join(root,'vendor',name);return verifiedVendorSource(directory,JSON.parse(fs.readFileSync(path.join(directory,'provenance.json'),'utf8')),'src/chat-effects-options.cjs');});
+if(originals[0]!==originals[1])throw Error('Shared chat effects provenance diverged');
+for(const anchor of ['点触涟漪:[true,false]','点触涟漪:true'])if(originals[0].split(anchor).length!==2)throw Error('Chat effect setting anchor changed');
+const approved=originals[0].replace('点触涟漪:[true,false]','点触涟漪:[true,false],点触音效:[true,false]').replace('点触涟漪:true','点触涟漪:true,点触音效:true');
+const output='// Generated once from hash-checked vendor/shared/chat-effects-options.cjs.\n'+approved.replace("'use strict';\n",'').replace('module.exports=','export ');
+const dest=path.join(root,'chat-effects-core.js');
+if(process.argv.includes('--check')){if(fs.readFileSync(dest,'utf8')!==output)throw Error('Shared chat effects bundle stale');}else fs.writeFileSync(dest,output);
+console.log('Shared chat effects verified for both consumers');

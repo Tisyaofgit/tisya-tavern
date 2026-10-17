@@ -1,0 +1,51 @@
+{
+  "revision": "R5",
+  "authorization": "2026-10-17 用户要求优化男相眼球模糊；保持眼型与身份",
+  "generator": "built-in imagegen / precise-object-edit",
+  "source": "tools/art-sources/male-eyes-r5.png",
+  "source_sha256": "c4e541ed5b9830412091ba3471d3a363fbf0aaf080b0d76e49fd187ea7fa66c8",
+  "source_reference": "male-water.webp crop (245,115,355,180), enlarged 8x; original art unchanged",
+  "prompt": "Improve only two amber-gold irises and dark pupils, tiny crisp corneal highlights; preserve narrow half-lidded eyes, gaze, bronze-gold colour, eyelids, face and surrounding crop. No glow, enlargement or whole-image brightening.",
+  "output": "male-eye-detail.webp",
+  "decoded_dimensions": [
+    440,
+    260
+  ],
+  "bounds": [
+    245,
+    115,
+    110,
+    65
+  ],
+  "sha256": "2d62a89ac8ff3d5c4f2d2672c467050480256602a04c3cde2856ff61f5000465",
+  "masks": [
+    {
+      "ellipse": [
+        292.8,
+        146.9,
+        8.1,
+        6.25,
+        0.43
+      ],
+      "offset": [
+        0,
+        0
+      ]
+    },
+    {
+      "ellipse": [
+        330.4,
+        165.3,
+        3.05,
+        5.4,
+        0.37
+      ],
+      "offset": [
+        5.6,
+        -1
+      ]
+    }
+  ],
+  "alignment": "far iris re-registered +5.6,-1 artwork pixels; preserve original eye position",
+  "rebuild": "tools/prepare-home-eyes.mjs; native Canvas2D placement only; imagegen authors the edited pixels"
+}
