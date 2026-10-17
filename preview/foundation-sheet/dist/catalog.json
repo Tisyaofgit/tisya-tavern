@@ -1,5 +1,5 @@
 {
-  "version": "FT21-W50-appearance/1",
+  "version": "FT35-W55-fields/1",
   "templates": [
     {
       "id": "core",
@@ -288,7 +288,7 @@
           "group": "形貌",
           "definition": {
             "type": "text",
-            "description": "仅补充来源明确且未由形貌细目或辨识特征承载的稳定整体印象，不重复已填细格；当前衣着、伤势与情绪归会话状态，未知留空。"
+            "description": "仅补充明确且未由形貌细目或辨识特征承载的稳定整体印象；不重复已填细格，当前衣着、伤势与情绪归会话状态。"
           }
         },
         {
@@ -344,7 +344,7 @@
           "group": "形貌",
           "definition": {
             "type": "text",
-            "description": "可感知的稳定印象，不给观察者无依据的秘密知识。"
+            "description": "除已填外貌与声音细格外，来源明确的稳定感官印象；不能从修辞推断生理机制或观察者知识。"
           }
         },
         {
@@ -512,7 +512,7 @@
           "group": "生活",
           "definition": {
             "type": "texts",
-            "description": "已确认的日常反复行为；不复抄作息时间或性情判断原则。"
+            "description": "未由作息、饮食、居住、表达或仪态细格承载的稳定习惯；不重复细格，不把单次行为升格为习惯。"
           }
         },
         {
@@ -852,7 +852,7 @@
           "group": "形貌细目",
           "definition": {
             "type": "text",
-            "description": "只收来源明确的稳定眼部形状；动物比喻、当前眼神、泛红和情绪不能补成眼形，未知留空。"
+            "description": "来源明确的眼形描述；明确形容眼形的比喻可照录，但目光、眼神或神态不能推成眼形，也不据此推定物种。"
           }
         },
         {
@@ -924,6 +924,188 @@
           "definition": {
             "type": "text",
             "description": "只收来源明确且未由眼形等细格承载的稳定面部特征；情绪表情、当前伤势不入底档，未知留空。"
+          }
+        },
+        {
+          "key": "性情·自我认知",
+          "label": "自我认知",
+          "path": [
+            "属性",
+            "性情",
+            "自我认知"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "人物明确持有的稳定自我看法，可能与客观事实不同；不把叙述者评价冒充自述。与人物行权限不同则留空，本人的理解转认知表；相应客观命题另记事实表。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "性情·信任建立",
+          "label": "信任建立",
+          "path": [
+            "属性",
+            "性情",
+            "信任建立"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "已确立的信任形成方式与观察标准；某段具体关系的信任变化归关系记录。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "性情·压力反应",
+          "label": "压力反应",
+          "path": [
+            "属性",
+            "性情",
+            "压力反应"
+          ],
+          "group": "性情",
+          "definition": {
+            "type": "text",
+            "description": "已确立的高压情况下惯常行为及触发情境；非眼前一次惊慌，不强造创伤或崩溃。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "生活·饮食偏好",
+          "label": "饮食偏好",
+          "path": [
+            "属性",
+            "生活",
+            "饮食偏好"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "有依据的日常饮食喜恶及例外；单次选择不是稳定偏好，剧情中新变化归喜好与回忆。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "生活·居住习惯",
+          "label": "居住习惯",
+          "path": [
+            "属性",
+            "生活",
+            "居住习惯"
+          ],
+          "group": "生活",
+          "definition": {
+            "type": "text",
+            "description": "已确立的居住、整理或私人空间使用习惯；地址归地点，当前位置归状态。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "表达·词汇偏好",
+          "label": "词汇偏好",
+          "path": [
+            "属性",
+            "表达",
+            "词汇偏好"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "明确惯用的词汇、口头禅或回避表达；偶然说过一句不构成习惯，不重复措辞总述。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "表达·称谓方式",
+          "label": "称谓方式",
+          "path": [
+            "属性",
+            "表达",
+            "称谓方式"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "对不同关系对象惯用的称呼方式；某次称呼或暗语的来历归相应事件或回忆。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "表达·语域切换",
+          "label": "语域切换",
+          "path": [
+            "属性",
+            "表达",
+            "语域切换"
+          ],
+          "group": "表达",
+          "definition": {
+            "type": "text",
+            "description": "明确在何种场合或面对何种对象改变用语风格；只记已成立规律，不由职业刻板推定。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "形貌细目·声音·音色",
+          "label": "音色",
+          "path": [
+            "属性",
+            "形貌细目",
+            "声音",
+            "音色"
+          ],
+          "group": "形貌细目",
+          "definition": {
+            "type": "text",
+            "description": "明确稳定的声音质感；低声、喊叫等当下发声状态不据此固定为音色。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "形貌细目·声音·口音",
+          "label": "口音",
+          "path": [
+            "属性",
+            "形貌细目",
+            "声音",
+            "口音"
+          ],
+          "group": "形貌细目",
+          "definition": {
+            "type": "text",
+            "description": "明确口音及稳定发音特点；不凭出生地或身份推定。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "形貌细目·体表标记",
+          "label": "体表标记",
+          "path": [
+            "属性",
+            "形貌细目",
+            "体表标记"
+          ],
+          "group": "形貌细目",
+          "definition": {
+            "type": "texts",
+            "description": "有依据的长期疤痕、胎记、纹饰等；逐项写位置与特征。来历确有材料则记前史，不由痕迹反推经历。",
+            "displayOrder": 1
+          }
+        },
+        {
+          "key": "形貌细目·生理特征",
+          "label": "生理特征",
+          "path": [
+            "属性",
+            "形貌细目",
+            "生理特征"
+          ],
+          "group": "形貌细目",
+          "definition": {
+            "type": "texts",
+            "description": "来源明确且未在体貌细格表达的稳定生理特点；保留适用条件与限制，不以物种常识补写。",
+            "displayOrder": 1
           }
         }
       ]
@@ -1334,7 +1516,7 @@
           "group": "隐情",
           "definition": {
             "type": "refs",
-            "description": "秘密涉及的对象。"
+            "description": "真相直接涉及的已登记对象；物品的来源人物不自动加入，也不因此知情。"
           }
         },
         {
@@ -3136,6 +3318,22 @@
           }
         },
         {
+          "key": "锚点事件",
+          "label": "锚点事件",
+          "path": [
+            "锚点事件"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "refs",
+            "capture": "reference",
+            "include": {
+              "op": "selected"
+            },
+            "follow": "record"
+          }
+        },
+        {
           "key": "获知途径",
           "label": "获知途径",
           "path": [
@@ -3144,6 +3342,23 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "人物实际通过谁、何种观察、交谈或文书接触此内容；被提及、同场或读者可见不是获知依据。",
+            "capture": "knowledge",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "获知时间",
+          "label": "获知时间",
+          "path": [
+            "获知时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "description": "原文明示的获知时点，保留世界历法或相对时间；不是事件发生时间或程序保存时间，未知留空。",
             "capture": "knowledge",
             "include": {
               "op": "selected"
@@ -3159,6 +3374,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "明确区分亲见、听闻、推测、误信与未确认；人物确信不等于客观真实。",
             "capture": "knowledge",
             "include": {
               "op": "selected"
@@ -3174,6 +3390,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "该主体对所关联事实的具体理解；错误认识也标明为他的理解，不改写客观事件。",
             "capture": "knowledge",
             "include": {
               "op": "selected"
@@ -3189,6 +3406,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "此时该主体有依据的感受、判断或动机；不得替未授权的用户角色补内心。",
             "capture": "knowledge",
             "include": {
               "op": "selected"
@@ -3204,6 +3422,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "允许记录该主体内心的明确来源或授权；动作和外貌不能自动授权心理推断。",
             "capture": "knowledge",
             "include": {
               "op": "selected"
@@ -3681,6 +3900,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "任务实际提出、接受或启动的来源；人物意图不自动成为已接受任务。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3696,6 +3916,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源明确的发布主体。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3711,6 +3932,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "尚待实现的明确目标，不写作既成事实。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3726,6 +3948,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "完成或继续所需条件的业务说明；不是可执行脚本，不能用目标本身证明已完成。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3741,6 +3964,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "已有依据的待执行步骤；不替玩家决定未授权选择。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3756,6 +3980,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源明确的世界时间或相对期限；到期不等于任务完成。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3952,6 +4177,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源明确的世界时间基准；按保留回复计数时填轮。未知不借用现实日期。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3967,6 +4193,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "计时开始的已确认时点，不从未发生计划推定已经启动。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3982,6 +4209,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "明确的到期时点；没有完整依据时保留相对表达，不编造绝对时间。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -3997,6 +4225,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "到期之外仍须核对的业务条件。此格为条件描述；是否触发及结算以已登记条件系统的回执为准。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -4012,6 +4241,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源明确的取消或失效条件，条件可能成立不等于已经失效。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -4027,6 +4257,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "明确的重复周期和终止限制；仅记规则，不自行补写下一次执行或多次结果。",
             "capture": "pending",
             "include": {
               "op": "selected"
@@ -4233,6 +4464,38 @@
           }
         },
         {
+          "key": "世界",
+          "label": "世界",
+          "path": [
+            "世界"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "description": "事件实际所属世界；不以当前分支所在世界替代旧事件背景。",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "时代",
+          "label": "时代",
+          "path": [
+            "时代"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "description": "事件所属时代或历法背景；原文未说明则留空，不换算或补现实年份。",
+            "capture": "event",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
           "key": "时间",
           "label": "时间",
           "path": [
@@ -4241,6 +4504,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "本事件发生的明确时点，照录世界历法或相对表达；不是记录保存时间，不用当前时间补旧事。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4256,6 +4520,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "仅在事件跨时段且来源支持时填起止或持续区间；不得从相邻楼层猜时长。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4271,6 +4536,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "本事件发生地点，保留来源的范围与精度；后来移动后的地点归当前状态。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4286,6 +4552,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "已经发生的过程与顺序，保留行为强度、数量、否定和限制；计划、尝试与结果分别表述。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4301,6 +4568,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "本事件已经实现的直接结果；未决后果归后续，不因威胁或约定推定完成。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4316,6 +4584,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "影响理解的动作、感官或位置关系；只写证据支持且未在经过重复的细节。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4331,6 +4600,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "具有后续作用的原话及明确说话者；引语逐字保留，概括不得冒充原话。",
             "capture": "dialogue",
             "include": {
               "op": "selected"
@@ -4346,6 +4616,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源中有实际呼应或转折意义的细节；不为普通物件或动作杜撰象征。",
             "capture": "motif",
             "include": {
               "op": "selected"
@@ -4361,6 +4632,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "已经明确的原因或触发，不把先后相邻当成因果；有关旧事件用关联格。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4376,6 +4648,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "已经显现的持续后果，避免重述直接结果；当前值由相应状态表维护。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4391,6 +4664,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "事件留下的未决问题、明确承诺或可能后果，注明尚未发生；可执行待办另填任务，不替它结算。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4406,6 +4680,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "来源明确的情感后效及所属人物；私人心理须与公开内容分开记录，并保留对应知情范围。",
             "capture": "event",
             "include": {
               "op": "selected"
@@ -4629,6 +4904,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "本条喜好或回忆成立的具体场合和关系对象；不扩为无条件普遍规律。",
             "capture": "meaning",
             "include": {
               "op": "selected"
@@ -4644,6 +4920,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "实际经历、偏好或习惯的独立内容；一次观察保留单次确定性，不自动升级为永久人格。",
             "capture": "meaning",
             "include": {
               "op": "selected"
@@ -4659,6 +4936,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "该主体实际表达或获授权记录的感受；不得借共同经历推定双方同感。",
             "capture": "meaning",
             "include": {
               "op": "selected"
@@ -4674,6 +4952,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "明确不适用的对象、场合或反例；未知留空。",
             "capture": "meaning",
             "include": {
               "op": "selected"
@@ -4689,6 +4968,7 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "有来源的外显表达或行为；不能由私人联想编造已共享的暗语。",
             "capture": "meaning",
             "include": {
               "op": "selected"
@@ -4704,6 +4984,23 @@
           "group": "字段",
           "definition": {
             "type": "text",
+            "description": "明确可接受与拒绝的回应范围；沉默、愿望或一次许可不是持续同意。",
+            "capture": "meaning",
+            "include": {
+              "op": "selected"
+            }
+          }
+        },
+        {
+          "key": "生效时间",
+          "label": "生效时间",
+          "path": [
+            "生效时间"
+          ],
+          "group": "字段",
+          "definition": {
+            "type": "text",
+            "description": "本条经历、偏好或改变已经成立的时点；不以记档日期代替。",
             "capture": "meaning",
             "include": {
               "op": "selected"

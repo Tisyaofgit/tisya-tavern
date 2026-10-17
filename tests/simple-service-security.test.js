@@ -1,3 +1,4 @@
+import {storyMessage} from './fixtures/story-message.js';
 import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import {simpleGenesisAnswer,simpleCoreAnswer,simpleAdaptationAnswer} from './hel
 const access={readers:['读者'],knowers:[]};
 const op=(id,table,values,evidence='源',expected=0)=>({id,table,expected,values,access,evidence});
 function fixture(nativeConfig=null){
- const d=emptyConfig(),c={chatId:'one',characterId:0,characters:[{avatar:'a.png',name:'甲'}],chat:[{is_user:false,mes:'开场白'}],extensionSettings:{[KEY]:d},getRequestHeaders:()=>({csrf:'test'})};d.worlds[worldKey(c)]=defaultWorld();d.worlds[worldKey(c)].tables={injection:'direct'};
+ const d=emptyConfig(),c={chatId:'one',characterId:0,characters:[{avatar:'a.png',name:'甲'}],chat:[storyMessage('开场白','')],extensionSettings:{[KEY]:d},getRequestHeaders:()=>({csrf:'test'})};d.worlds[worldKey(c)]=defaultWorld();d.worlds[worldKey(c)].tables={injection:'direct'};
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async n=>{assert.equal(n,'current');return structuredClone(binding);},rebindCharWorldbooks:async(n,b)=>{assert.equal(n,'current');Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
@@ -19,7 +20,7 @@ function fixture(nativeConfig=null){
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
 async function initializeBase(f,changes){return f.service.edit({changes});}
-const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+const ai=storyMessage;const user=text=>({is_user:true,name:'用户',mes:text});
 
 
 async function scenario(name,fn){return test(name,async()=>{

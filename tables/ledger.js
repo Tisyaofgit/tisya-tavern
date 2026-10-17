@@ -104,6 +104,11 @@ export function retrieval(view,{tags=[],query='',topK=8}={}){
  return {mandatory:[...mandatory].map(id=>byId.get(id)),optional:scored.slice(0,topK).map(x=>x.row),unresolved:tags.filter(tag=>!view.rows.some(r=>r.table==='objects'&&tag.includes(r.values.名称)))};
 }
 
+// Story times are evidence, never the host clock or a request to advance history.
+export function timelineContext(view){
+ const scenes=view.rows.filter(row=>row.table==='scene'),time=scenes.length===1?scenes[0].values.当前时间:null;
+ return {currentTime:typeof time==='string'&&time?time:null,branchStartTime:view.baseTime??null};
+}
 export function sourceTime(text){
  const title=text.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)?.[1]??'';
  // Accept only an explicit canonical date/time cell; unknown eras stay unknown.
@@ -132,8 +137,9 @@ export function dueChecks(view,chain){
  });
 }
 
+const withoutAuthorNote=text=>String(text??'').replace(/<aside\b[^>]*\bdata-tisya-author-note(?:=[\"'][^\"']*[\"'])?[^>]*>[\s\S]*?<\/aside\s*>/gi,'');
 export function archivalText(text){
- text=String(text??'');const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);let prose=body?body[1]:text;
+ text=withoutAuthorNote(text);const bodies=[...text.matchAll(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/gi)];if(/<\/?(?:reply|body)(?:\s|>)/i.test(text))check(bodies.length===1&&(text.match(/<body(?:\s[^>]*)?>/gi)??[]).length===1,'结构化回复缺少唯一完整正文区，未回退到整篇归档');let prose=bodies.length?bodies[0][1]:text;
  const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
  // Nested control blocks can appear inside a body as well; neither path may
  // turn old summaries, task labels or native commands into narrative evidence.
@@ -144,7 +150,7 @@ export function archivalText(text){
 // between them. Preserve all body segments; the single-reply reader above is
 // deliberately not applied to the entire concatenation.
 export function historyEvidence(text){
- let prose=String(text??''),prior;
+ let prose=withoutAuthorNote(text).replace(/<reply(?:\s[^>]*)?>[\s\S]*?<\/reply\s*>/gi,reply=>archivalText(reply)),prior;
  const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
  do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
  return prose.replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();

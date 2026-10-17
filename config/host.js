@@ -1,3 +1,5 @@
+import {recordSourceKind} from '../tables/source-provenance.js';
+import {preferenceFirst} from './preference-layer.js';
 import {TEXT_TASKS,textTaskPreset,textTaskMessages,validateTaskPreset} from '../task-envelope.js';
 import {userRevisionMessages,userRevisionMaterial} from '../user-revision.js';
 import {communicationMessages,appendContractorMessages} from '../communication.js';
@@ -16,7 +18,7 @@ import {clone,fail,plain,worldKey,registry,resolveRoute,compileSelected,resource
 // Host APIs remain at this boundary. No credential value enters a prompt or backup.
 const list=value=>Array.isArray(value)?value:Array.isArray(value?.items)?value.items:Array.isArray(value?.connections)?value.connections:Array.isArray(value?.profiles)?value.profiles:[];
 export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.api,getSource,prepareMessage=async m=>String(m.mes??''),parseRequestBody=JSON.parse,getBaseSource=async()=>getSource(),store,createParameters,projectToolTurns,openArchiveQuery=null,isAgentEnabled=async()=>false,getProxies=()=>[],getMoods=()=>[],onError=()=>{},onSnapshot=()=>{},transport=null,getContractorMessages=()=>[]}){
- let last=null,generation=null,pendingRevision=null,pendingUserRevision=null;const snapshots=[];
+ let last=null,generation=null,pendingSource=null,pendingRevision=null,pendingUserRevision=null;const snapshots=[];
  function userDirectives(){
   const pending=pendingUserRevision;if(!pending)return [];
   if(ctx().chat!==pending.chat||ctx().chat[pending.material.messageId]!==pending.user||pending.user.mes!==pending.material.current)fail('改写依据已变化，本次重投未发送');
@@ -83,6 +85,16 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const report=limitNativeHistory(chat,current.world.context.history,type,projectToolTurns);
   if(generation)generation.historyWindow=report;
   return report;
+ }
+ async function receivedSource(id){
+  const g=generation,c=ctx(),message=c.chat?.[id];
+  // Native/unmanaged generations have no authoritative task declaration.
+  if(!g?.modular||g.error||!message||message.is_user||message.is_system)return;
+  const n=g.world.modes[g.world.mode].narrative;
+  const kind=g.world.mode==='narrative'&&n.缇斯亚当前任务==='叙事'&&['互动叙事','大纲扩写'].includes(n.缇斯亚叙事创作模式)?'story':'utility';
+  const guard=()=>{if(generation!==g||ctx().chat!==c.chat||c.chat[id]!==message||worldKey(ctx())!==g.key)fail('回复来源所属会话已变化，未继续归档');};
+  if(typeof c.saveChat!=='function')fail('宿主缺少回复来源保存接口，未继续归档');
+  await recordSourceKind(message,{kind,mode:g.world.mode+':'+n.缇斯亚叙事创作模式},guard);guard();await c.saveChat();guard();
  }
  function selectedText(){return generation?.materials?.text??'';}
  async function payloadReady(payload){if(!generation)return;if(generation.passthrough){
@@ -166,11 +178,11 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const response=await fetch('/api/backends/chat-completions/generate',{method:'POST',headers:ctx().getRequestHeaders(),body:JSON.stringify(payload),signal});return await readTaskResponse(response,{signal,onProgress});
   }finally{query?.dispose();}
  }
- return {setUserRevision(value){if(value&&ctx().mainApi&&ctx().mainApi!=='openai')fail('当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');pendingUserRevision=value?{material:clone(value),chat:ctx().chat,user:ctx().chat[value.messageId]}:null;},setRevision(value){pendingRevision=value?clone(value):null;},attachTableActivation(result){if(generation?.key===result.world&&generation.modular)generation.tableActivation=result.text;},attachTableContext(result){if(!result)return;if(!generation||generation.key!==result.world)fail('表单上下文没有对应的当前生成');if(generation.modular){generation.tableSlots={...generation.tableSlots,...result.slots};generation.materials.text=[generation.materials.text,result.slots?result.instructions:result.text].filter(Boolean).join('\n\n');}},taskPreset,presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){pendingUserRevision=null;generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){pendingUserRevision=null;blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),transportStatus:()=>transport?.status()??null,generationAccepted:()=>!generation?.transport||['off','bypassed','complete'].includes(generation.transport.state),clear(){transport?.invalidate('main');generation=null;pendingUserRevision=null;},cancelTransport:()=>transport?.invalidate(null),api};
+ return {receivedSource:id=>{pendingSource=receivedSource(id).catch(e=>{generation={error:e};onError(e);throw e;});return pendingSource;},finishSource:()=>pendingSource??Promise.resolve(),setUserRevision(value){if(value&&ctx().mainApi&&ctx().mainApi!=='openai')fail('当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');pendingUserRevision=value?{material:clone(value),chat:ctx().chat,user:ctx().chat[value.messageId]}:null;},setRevision(value){pendingRevision=value?clone(value):null;},attachTableActivation(result){if(generation?.key===result.world&&generation.modular)generation.tableActivation=result.text;},attachTableContext(result){if(!result)return;if(!generation||generation.key!==result.world)fail('表单上下文没有对应的当前生成');if(generation.modular){generation.tableSlots={...generation.tableSlots,...result.slots};generation.materials.text=[generation.materials.text,result.slots?result.instructions:result.text].filter(Boolean).join('\n\n');}},taskPreset,presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){pendingUserRevision=null;generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){pendingUserRevision=null;blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),transportStatus:()=>transport?.status()??null,generationAccepted:()=>!generation?.error&&(!generation?.transport||['off','bypassed','complete'].includes(generation.transport.state)),clear(){transport?.invalidate('main');generation=null;pendingSource=null;pendingUserRevision=null;},cancelTransport:()=>transport?.invalidate(null),api};
 }
 export function buildMessages({source,context:c,world:w,materials,slots={},substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map()}){w=continuityWorld(w);const suppliedSubstitute=substitute;substitute=s=>suppliedSubstitute(withoutRawMacros(s,w));const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
  let historyInserted=false;const usedSlots=new Set();
- for(const p of enabledPrompts(source)){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
+ for(const p of preferenceFirst(enabledPrompts(source))){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
   if(p.identifier==='chatHistory'){
    if(historyInserted)fail('聊天历史槽重复，请在预设中只保留一个已启用的 chatHistory');historyInserted=true;
    const chat=selectedHistory(c,w,type);for(const [i,m]of chat.entries()){

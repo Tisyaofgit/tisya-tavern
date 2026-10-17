@@ -12,9 +12,9 @@ function main(values={}){const tid='origin.character',fs=view(tid);return [...ne
 const context=()=>prepareExtraction(c,valueValid,{source:'方鹿拜沈砚为师，后来得到旧铜铃。',ownerName:'方鹿',references:[{name:'沈砚〔船匠〕',kind:'character'},{name:'旧铜铃',kind:'item'}],model:'test',layout:'compact-v2',conditionVocabulary:v});
 const child=(label,kind,values)=>'【'+label+'／1】\n'+lines('origin.character.'+kind,{名称:label,...values}).join('\n');
 test('compact projection reduces requested cells without renumbering or changing canonical catalog',()=>{
- assert.deepEqual(['origin.character','origin.character.history','origin.character.relationships','origin.character.secrets'].map(t=>view(t).length),[49,8,6,6]);
+ assert.deepEqual(['origin.character','origin.character.history','origin.character.relationships','origin.character.secrets'].map(t=>view(t).length),[61,8,6,6]);
  const ctx=context();assert.equal(ctx.layout,'compact-v2');assert(!extractionSource(ctx.body).includes('11 原文（'));assert(!extractionSource(ctx.body).includes('10 成立条件（'));assert(extractionSource(ctx.body).includes('25 日常习惯（'));assert(extractionSource(ctx.body).includes('数值格的裸数值沿用'));
- assert.equal(c.templates.find(t=>t.id==='origin.character').fields.length,54);
+ assert.equal(c.templates.find(t=>t.id==='origin.character').fields.length,66);
 });
 test('canonical sparse fields retain actual values, omitted duplicates remain absent and source is kept once',()=>{
  const ctx=context(),before=structuredClone(ctx),raw=main({'日常习惯':'ignored wrong key','生活·习惯':'清晨开工；收工清点工具','本领·做事方式':'轻敲木料，再听回声'})+'\n'+child('前史','history',{命题:'得到旧铜铃。','前史·涉及对象':'旧铜铃'})+'\n'+child('关系','relationships',{'关系底稿·对象':'沈砚〔船匠〕','关系底稿·性质':'师徒','关系底稿·形成经过':'拜师'});

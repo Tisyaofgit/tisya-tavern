@@ -1,3 +1,5 @@
+import {recordSourceKind} from '../tables/source-provenance.js';
+import {storyMessage} from './fixtures/story-message.js';
 import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import {createPersonaGateway,personaProjection} from '../tables/persona.js';
 import {assembleArchiveBook} from '../tables/archive-book.js';
@@ -15,7 +17,7 @@ const provideNativeUser=context=>Object.assign(context,{name1:'用户',userAvata
 const blank=()=>({registry:defaultRegistry(),rows:[],last:null});
 const op=(id,table,values,evidence='源',expected=0)=>({id,table,expected,values,access,evidence});
 function fixture(nativeConfig=null){
- const d=emptyConfig(),c={chatId:'one',characterId:0,characters:[{avatar:'a.png',name:'甲'}],chat:[{is_user:false,mes:'开场白'}],extensionSettings:{[KEY]:d},getRequestHeaders:()=>({csrf:'test'})};d.worlds[worldKey(c)]=defaultWorld();d.worlds[worldKey(c)].tables={injection:'direct'};
+ const d=emptyConfig(),c={chatId:'one',characterId:0,characters:[{avatar:'a.png',name:'甲'}],chat:[storyMessage('开场白','')],extensionSettings:{[KEY]:d},getRequestHeaders:()=>({csrf:'test'})};d.worlds[worldKey(c)]=defaultWorld();d.worlds[worldKey(c)].tables={injection:'direct'};
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async n=>{assert.equal(n,'current');return structuredClone(binding);},rebindCharWorldbooks:async(n,b)=>{assert.equal(n,'current');Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
@@ -25,7 +27,7 @@ function fixture(nativeConfig=null){
 }
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){f.responder((task,input)=>{assert.equal(task,'tableGenesis');return simpleGenesisChangesAnswer(input,changes,{name:'测试原点',decisions:[...new Set(changes.map(change=>change.evidence))]});});return f.service.saveGenesis(await f.service.genesis('用户手动修改表单'));}
-const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+const ai=storyMessage;const user=text=>({is_user:true,name:'用户',mes:text});
 test('archive retry uses only the current unresolved items while preserving earlier receipts',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];
  const first='门锁来源待核',second='门外人物待核';
@@ -92,7 +94,7 @@ test('bounded archive receipt separates batch limit and latest confirmation and 
  const range={from:1,to:5,limit:1},first=await f.service.archive({range});assert.equal(first.run.status,'partial');assert.equal(first.run.remaining.length,1);assert.equal(first.run.waiting.length,1);
  const second=await f.service.archive({range});assert.equal(second.run.status,'complete');assert.equal(second.run.waiting.length,1);assert.equal(second.archived,2);
  const last=await f.service.archive({range,includeLatest:true});assert.equal(last.run.status,'complete');assert.equal(last.run.completed,1);assert.equal(last.run.waiting.length,0);assert.equal(last.archived,3);assert.equal((await f.makeService().scan()).at(-1).archived,true);
- const originalCommits=(await f.service.inspect()).session.commits.length;f.c.chat[0].swipe_id=1;f.c.chat[0].mes='甲把门打开。';
+ const originalCommits=(await f.service.inspect()).session.commits.length;f.c.chat[0].swipe_id=1;f.c.chat[0].mes='甲把门打开。';await recordSourceKind(f.c.chat[0],{kind:'story',mode:'test-new-generation'});
  const changed=await f.makeService().inspect();assert.equal(changed.archived,0);assert.equal(changed.rows.length,0);assert.equal(changed.session.commits.length,originalCommits);
  const rerun=await f.makeService().archive({range});assert.equal(rerun.run.completed,1);assert.equal((await f.service.inspect()).rows[0].values.经过,'甲把门打开。');
 });
@@ -202,7 +204,7 @@ test('task cancellation is scoped, same-chat notifications are harmless and actu
  f.responder(()=>new Promise(r=>release=r));
  let pending=f.service.archive({range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));
  assert.equal(f.service.contextChanged(),false);f.service.clear({scope:'generation'});assert.equal(f.calls.at(-1).signal.aborted,false);release({changes:[]});await pending;assert.equal((await f.service.scan())[0].archived,true);
- f.c.chat[0].mes='新来源';release=null;pending=f.service.archive({scope:'generation',range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));f.service.clear({scope:'generation',reason:'主聊天停止'});release({changes:[]});await assert.rejects(pending,/主聊天停止/);assert.equal(f.service.state().busy,false);
+ f.c.chat[0].mes='新来源';await recordSourceKind(f.c.chat[0],{kind:'story',mode:'test-new-generation'});release=null;pending=f.service.archive({scope:'generation',range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));f.service.clear({scope:'generation',reason:'主聊天停止'});release({changes:[]});await assert.rejects(pending,/主聊天停止/);assert.equal(f.service.state().busy,false);
  release=null;pending=f.service.archive({range:{from:1,to:3,limit:1}});while(!release)await new Promise(r=>setTimeout(r,1));f.c.chatId='another';assert.equal(f.service.contextChanged(),true);assert.equal(f.calls.at(-1).signal.aborted,true);release({changes:[]});await assert.rejects(pending,/会话已切换/);
  f.c.chatId='one';f.service.contextChanged();assert.equal((await f.service.scan())[0].archived,false);
 });
@@ -393,7 +395,7 @@ test('native-mode auxiliary default follows the actual native main connection',(
 test('configuration UI can bind books, scan floors and backfill without memory blocks',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),container=w.document.createElement('div');w.document.body.append(container);const f=fixture();f.c.chat=[ai('旧正文'),user('继续'),ai('暂存')];
  const panel=mountTablePanel(w.document,container,{service:f.service,store:f.store});await panel.ready;const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(button)return button.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};
- await click('创建／绑定世界书');assert.equal(f.saved.size,2);await click('初始化与历史');assert.match(panel.root.textContent,/待补录 1 条/);await click('开始／继续补录所选楼层');assert.equal(f.calls[0].task,'historyImport');assert.match(panel.root.textContent,/待补录 0 条/);assert.equal(panel.requestLeave().allowed,true);panel.dispose();await w.happyDOM.abort();
+ await click('创建／绑定世界书');assert.equal(f.saved.size,2);await click('初始化与历史');assert.match(panel.root.textContent,/待补录 1 条/);await click('确认所选为剧情并补录');assert.equal(f.calls[0].task,'historyImport');assert.match(panel.root.textContent,/待补录 0 条/);assert.equal(panel.requestLeave().allowed,true);panel.dispose();await w.happyDOM.abort();
 });
 test('older floor cannot overwrite a field whose current source is later',()=>{
  const view=blank();view.rows=[{id:'x',table:'scene',rev:1,source:'later',values:{名称:'场面',地点:'北门'},access}];assert.throws(()=>prepareCommit(view,{changes:[op('x','scene',{地点:'南门'},'源',1)]},{source:'earlier',kind:'history',evidence:'源',sourceOrder:{later:20,earlier:2},allowedTables:['scene']}),/旧楼层不能覆盖/);
@@ -480,7 +482,7 @@ test('assistant unrelated configuration edit retains old alias routing and secre
 });
 test('preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),d=w.document;Object.defineProperty(w.HTMLTextAreaElement.prototype,'type',{get(){return 'textarea';},configurable:true});const f=fixture();delete f.helper.getWorldbook;f.c.chat=[ai('旧正文'),user('继续'),ai('最新')];const panel=mountTablePanel(d,d.body,{service:f.service,store:f.store});await panel.ready;
- const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};await click('初始化与历史');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
+ const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};await click('初始化与历史');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('确认所选为剧情并补录');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
  await click('缇斯亚助手');f.responder(async()=>({answer:'把历史条数改为10',changes:[{path:'/world/context/history',value:10,reason:'用户要求'}],backfill:null,genesisGoal:''}));const q=panel.root.querySelector('[aria-label="想让缇斯亚帮你做什么"]');q.value='保留10条历史';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.match(panel.root.textContent,/修改前/);await click('应用全部更改');assert.equal(f.store.read().world.context.history,10);assert.match(panel.root.textContent,/已保存 1 项/);panel.dispose();await w.happyDOM.abort();
 });
 
@@ -575,7 +577,7 @@ test('rollback and native branch preserve a chosen future blueprint without rear
 test('reroll branch keeps candidate commits switchable rather than freezing discarded facts into its baseline',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[{...ai('旧候选事实'),swipes:['旧候选事实','另一候选事实'],swipe_id:0},user('继续'),ai('后文事实')];
  f.responder(async(_,input)=>({changes:[op('new:event','events',{名称:input.archiveSource.text,经过:input.archiveSource.text},input.archiveSource.text)]}));await f.service.archive({range:{from:1,to:3,limit:3}});const original=(await f.service.inspect()).session.id;
- f.c.chat[0].mes='另一候选事实';f.c.chat[0].swipe_id=1;await f.service.archive({range:{from:1,to:1,limit:1}});await f.service.stageFork(1,false,{preserveCandidates:true});f.c.chatId='reroll-branch';f.c.chat=f.c.chat.slice(0,1);await Promise.all([f.service.activateFork(),f.service.activateFork()]);
+ f.c.chat[0].mes='另一候选事实';f.c.chat[0].swipe_id=1;await recordSourceKind(f.c.chat[0],{kind:'story',mode:'test-new-generation'});await f.service.archive({range:{from:1,to:1,limit:1}});await f.service.stageFork(1,false,{preserveCandidates:true});f.c.chatId='reroll-branch';f.c.chat=f.c.chat.slice(0,1);await Promise.all([f.service.activateFork(),f.service.activateFork()]);
  const branched=await f.service.inspect();assert.notEqual(branched.session.id,original);assert.equal(branched.session.branchSeed,undefined);assert.deepEqual(branched.rows.filter(r=>r.table==='events').map(r=>r.values.名称),['另一候选事实']);
  f.c.chat[0].mes='旧候选事实';f.c.chat[0].swipe_id=0;assert.deepEqual((await f.service.inspect()).rows.filter(r=>r.table==='events').map(r=>r.values.名称),['旧候选事实']);
  f.c.chat[0].swipes.push('新生成未归档');f.c.chat[0].mes='新生成未归档';f.c.chat[0].swipe_id=2;assert.deepEqual((await f.service.inspect()).rows.filter(r=>r.table==='events'),[]);
@@ -586,7 +588,7 @@ test('recovery archive strips auxiliary poison inside body and preserves every c
  const text='<reply><title>旧标题</title><body>抵达门前。<memory>旧摘要污染</memory><task>引用：任务标签污染</task><vars>变量污染</vars></body><status>状态污染</status></reply>';
  assert.equal(archivalText(text),'抵达门前。');const f=fixture();await f.service.initialize();f.c.chat=[ai('序幕'),user('身份定义甲'),user('已确认设定乙'),ai(text),user('继续')];
  const chain=await sources(f.c.chat),prior=precedingUserSource(chain,chain[3]);assert.deepEqual(prior.sources.map(x=>x.floor),[2,3]);assert.equal(prior.text,'身份定义甲\n\n已确认设定乙'.replaceAll('\\n','\n'));
- f.responder((task,input)=>{assert.equal(task,'historyImport');assert.equal(input.archiveSource.floor,4);assert.equal(input.archiveSource.text,'抵达门前。');assert(!Object.hasOwn(input.archiveSource,'tags'));assert.deepEqual(input.userSource.sources.map(x=>x.floor),[2,3]);assert.equal(input.sourceHistory[0].text,text);assert(!JSON.stringify({archiveSource:input.archiveSource,userSource:input.userSource}).includes('污染'));return {changes:[]};});
+ f.responder((task,input)=>{assert.equal(task,'historyImport');assert.equal(input.archiveSource.floor,4);assert.equal(input.archiveSource.text,'抵达门前。');assert(!Object.hasOwn(input.archiveSource,'tags'));assert.deepEqual(input.userSource.sources.map(x=>x.floor),[2,3]);assert.equal(input.sourceHistory[0].text,'抵达门前。');assert(!JSON.stringify(input.sourceHistory).includes('污染'));assert(!JSON.stringify({archiveSource:input.archiveSource,userSource:input.userSource}).includes('污染'));return {changes:[]};});
  await f.service.archive({includeLatest:true,range:{from:4,to:4,limit:1}});assert.equal(f.calls.length,1);assert.equal((await f.service.scan())[3].archived,true);
 });
 
@@ -667,7 +669,7 @@ test('recovery task progress carries visible cumulative text and never completes
  const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];let release;const answer='【完成】\n1 状态：完成\n2 待处理：无\n3 补读记录：无';
  const service=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'thinking',text:'',characters:0,reasoning:'PRIVATE_REASONING'});onProgress({stage:'receiving',text:'【完成】',characters:4});return new Promise(resolve=>release=resolve);}});
  const job=service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});while(!release)await new Promise(resolve=>setTimeout(resolve,1));assert.equal(service.state().progress.text,'【完成】');assert.equal(service.state().progress.stage,'receiving');assert(!JSON.stringify(service.state()).includes('PRIVATE_REASONING'));release(answer);await job;assert.equal(service.state().progress.stage,'complete');assert.equal(service.state().progress.characters,answer.length);
- f.c.chat[0].mes='门已关闭。';const broken=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'receiving',text:'broken'});return 'broken';}});const failed=await broken.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(failed.archived,0);assert.equal(broken.state().progress.stage,'error');assert(!JSON.stringify(broken.state().jobs).includes('PRIVATE_REASONING'));
+ f.c.chat[0].mes='门已关闭。';await recordSourceKind(f.c.chat[0],{kind:'story',mode:'test-new-generation'});const broken=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'receiving',text:'broken'});return 'broken';}});const failed=await broken.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(failed.archived,0);assert.equal(broken.state().progress.stage,'error');assert(!JSON.stringify(broken.state().jobs).includes('PRIVATE_REASONING'));
 });
 
 test('recovery strict persona requires explicit initialization before table-only assembly',async()=>{
@@ -683,18 +685,18 @@ test('dedicated initialization preserves AI notices and raw history through the 
  const {cardAIMaterials}=await import('../tables/card-source.js');const f=fixture();f.binding.primary='';f.binding.additional=[];
  f.c.characters[0].data={name:'甲',description:'完整规则正文',mes_example:'完整格式范例',extensions:{tavern_helper:{scripts:[{type:'script',content:'DO_NOT_SEND_RUNTIME()'}]},regex_scripts:[{replaceString:'DO_NOT_SEND_DISPLAY'}]},character_book:{entries:[{id:9,enabled:true,content:'必须输出 <notice>名称|结果</notice>'}]}};
  f.c.chat=[user('原始用户定义'),ai('<reply><body>第一次抵达。</body><memory>原样保留的旧汇总</memory></reply>')];
- const original=structuredClone(f.c.characters[0]);f.responder((task,input)=>{assert.equal(task,'templateInit');assert.deepEqual(input.sourceCardRaw,cardAIMaterials(original));assert.deepEqual(input.sourceHistory.map(x=>x.text),f.c.chat.map(x=>x.mes));assert.doesNotMatch(JSON.stringify(input),/DO_NOT_SEND_RUNTIME|DO_NOT_SEND_DISPLAY/);return {base:{changes:[]},initial:{changes:[]},notes:[]};});
+ const original=structuredClone(f.c.characters[0]);f.responder((task,input)=>{assert.equal(task,'templateInit');assert.deepEqual(input.sourceCardRaw,cardAIMaterials(original));assert.deepEqual(input.sourceHistory.map(x=>x.text),['原始用户定义','第一次抵达。']);assert.doesNotMatch(JSON.stringify(input.sourceHistory),/旧汇总/);assert.doesNotMatch(JSON.stringify(input),/DO_NOT_SEND_RUNTIME|DO_NOT_SEND_DISPLAY/);return {base:{changes:[]},initial:{changes:[]},notes:[]};});
  const draft=await f.service.cardTemplate();assert.deepEqual(f.c.characters[0],original);await f.service.saveCardTemplate(draft);
  const next=await f.service.cardTemplate();f.c.characters[0].data.description+=' 新定义';await assert.rejects(f.service.saveCardTemplate(next),/角色卡或绑定定义已改变/);
 });
 test('manual import preserves raw multi-reply source but rejects auxiliary-only evidence before writing',async()=>{
  const f=fixture();await f.service.initialize();const raw='设定甲\n<reply><body>曾到过城门。</body><memory>假事件已经完成</memory></reply>\n设定乙\n<reply><body>随后归还钥匙。</body><vars>假变量命令</vars></reply>',before=JSON.stringify([...f.saved]);
- f.responder((task,input)=>{assert.equal(task,'historyImport');assert.equal(input.sourceHistory.text,raw);assert.match(input.historyText,/曾到过城门/);assert.match(input.historyText,/随后归还钥匙/);assert.match(input.historyText,/设定乙/);assert.doesNotMatch(input.historyText,/假事件|假变量/);return {changes:[op('new:bad','events',{名称:'假的完成',经过:'假事件已经完成'},'假事件已经完成')]};});
+ f.responder((task,input)=>{assert.equal(task,'historyImport');assert.equal(input.sourceHistory.text,input.historyText);assert.doesNotMatch(input.sourceHistory.text,/假事件|假变量/);assert.match(input.historyText,/曾到过城门/);assert.match(input.historyText,/随后归还钥匙/);assert.match(input.historyText,/设定乙/);assert.doesNotMatch(input.historyText,/假事件|假变量/);return {changes:[op('new:bad','events',{名称:'假的完成',经过:'假事件已经完成'},'假事件已经完成')]};});
  await assert.rejects(async()=>f.service.saveHistory(await f.service.importHistory(raw)),/来源依据|真实存在/);assert.equal(JSON.stringify([...f.saved]),before);
  f.responder(()=>({changes:[op('new:gate','events',{名称:'到达城门',经过:'曾到过城门。'},'曾到过城门。'),op('new:key','events',{名称:'归还钥匙',经过:'随后归还钥匙。'},'随后归还钥匙。')]}));await f.service.saveHistory(await f.service.importHistory(raw));const info=await f.service.inspect();assert.equal(info.rows.length,2);assert.equal(info.session.commits[0].importSource.text,raw);await assert.rejects(f.service.importHistory(raw),/已导入/);
 });
 test('preserved raw auxiliary text cannot acquire archival evidence authority',async()=>{
- const f=fixture();await f.service.initialize();f.c.chat=[ai('<body>门仍关闭。</body><memory>门已经打开。</memory>'),user('继续')];f.responder((task,input)=>{assert.equal(input.sourceHistory[0].text,f.c.chat[0].mes);return {changes:[op('new:bad','events',{名称:'开门',经过:'门已经打开。'},'门已经打开。')]};});
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('<body>门仍关闭。</body><memory>门已经打开。</memory>'),user('继续')];f.responder((task,input)=>{assert.equal(input.sourceHistory[0].text,'门仍关闭。');return {changes:[op('new:bad','events',{名称:'开门',经过:'门已经打开。'},'门已经打开。')]};});
  const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert(result.pending.length);assert.equal((await f.service.inspect()).rows.length,0);assert.equal((await f.service.scan())[0].archived,false);
 });
 
@@ -910,7 +912,7 @@ test('archive review UI preserves draft across pages, blocks competing history a
  const f=await proposalFixture(),p=await archiveReviewPanel(f),before=JSON.stringify([...f.saved]);try{
   await p.click('生成所选楼层草案');assert.equal(p.panel.root.querySelector('[role=alert]'),null);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(p.panel.requestLeave().allowed,false);
   const box=[...p.panel.root.querySelectorAll('fieldset')].find(x=>x.querySelector('legend')?.textContent.startsWith('待审修改'));assert(box);assert.match(box.textContent,/岚在城门。/);assert.match(box.textContent,/拟写入/);assert.equal(box.querySelectorAll('input,textarea,select').length,0);
-  await p.click('开始／继续补录所选楼层');assert.match(p.panel.root.querySelector('[role=alert]').textContent,/先保存或放弃/);assert.equal(JSON.stringify([...f.saved]),before);
+  await p.click('确认所选为剧情并补录');assert.match(p.panel.root.querySelector('[role=alert]').textContent,/先保存或放弃/);assert.equal(JSON.stringify([...f.saved]),before);
   await p.page('forms');await p.page('history');assert(p.panel.root.contains(box));await p.click('确认保存这批草案');assert.equal(p.panel.root.querySelector('[role=alert]'),null);assert.equal((await p.base.inspect()).rows.length,1);assert.equal((await p.base.inspect()).archived,0);assert.equal(p.panel.requestLeave().allowed,true);
  }finally{await p.close();}
 });
@@ -996,3 +998,10 @@ test('fixed origin preview refuses altered source bytes without writing native p
 test('idea creation produces an immutable new origin while leaving session progress unchanged',async()=>{const f=identityFixture();await f.service.initialize();const info=await f.service.inspect();f.responder((task,input)=>simpleGenesisAnswer(input,{name:'新人物',decisions:['新设计：守灯人'],records:[{form:'人物',name:'守灯人',evidence:'新设计：守灯人',fields:{描述:'新设计：守灯人','属性·身份':'守灯人','属性·外貌':'灰衣','属性·性格':'谨慎','属性·背景':'生于海边'}}]}));const before=await f.books.read(info.settings.sessionBook),draft=await f.identity.createIdentityDraft({goal:'设计守灯人'});assert.equal(draft.format,'tisya.identity-creation/1');const rows=await f.identity.saveIdentityDraft(draft);assert.equal(rows.length,1);assert.deepEqual((await f.books.read(info.settings.sessionBook)).data,before.data);assert.equal(f.persona.read().name,'用户');await assert.rejects(f.identity.saveIdentityDraft(draft),/依据已变化/);});
 
 test('selecting an origin persona updates the same session binding idempotently without resetting progress',async()=>{const f=identityFixture();await initializeBase(f,[op('new:person','objects',{名称:'原点人物',类型:'character',描述:'原文'},'用户手动修改表单')]);let info=await f.service.inspect();const row=info.origin.bases[0];f.c.powerUserSettings.persona_descriptions['user.png'].tisyaOrigin={book:info.settings.originBook,originId:info.origin.id,id:row.id,rev:row.rev};const before=await f.identity.inspect();await f.identity.bindIdentitySelection('user.png');const after=await f.identity.inspect();assert.equal(after.session.personaBinding.objectId,row.id);assert.deepEqual(after.session.branchSeed,before.session.branchSeed);assert.deepEqual(after.origin,before.origin);const revision=after.session.revision;await f.identity.bindIdentitySelection('user.png');assert.equal((await f.identity.inspect()).session.revision,revision);});
+
+test('unclassified plain replies stop unattended archival; explicit source confirmation persists or rolls back on failure',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:true});f.c.chat=[{mes:'旧场外建议'},user('继续')];f.c.saveChat=async()=>{};
+ await assert.rejects(f.service.archive({scope:'generation'}),/类型尚未核对/);assert.equal(f.calls.length,0);
+ f.c.saveChat=async()=>{throw Error('save failed');};const before=structuredClone(f.c.chat);await assert.rejects(f.service.classifySources({from:1,to:1,kind:'utility'}),/save failed/);assert.deepEqual(f.c.chat,before);
+ f.c.saveChat=async()=>{};await f.service.classifySources({from:1,to:1,kind:'utility'});const result=await f.service.archive({scope:'generation'});assert.equal(result.run.processed,0);assert.equal(f.calls.length,0);
+});

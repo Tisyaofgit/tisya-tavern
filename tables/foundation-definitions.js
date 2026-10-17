@@ -1,8 +1,8 @@
-// FT01 candidate definitions. Not imported by the production service; no stored registry changes.
+// Canonical optional field definitions shared by production forms and the editor. Registration does not write story facts.
 export const FOUNDATION_DEFINITIONS = {
   "format": "tisya.foundation-template-catalog/1",
-  "status": "candidate-not-installed",
-  "version": 4,
+  "status": "registered-on-demand",
+  "version": 5,
   "principle": "九组为视图；基点、原点、会话为来源与时间层，独立权限事实另分行。",
   "schemaChanges": [
     {
@@ -43,7 +43,7 @@ export const FOUNDATION_DEFINITIONS = {
           "fields": {
             "整体": {
               "type": "text",
-              "description": "原点稳定体貌。"
+              "description": "仅补充明确且未由形貌细目或辨识特征承载的稳定整体印象；不重复已填细格，当前衣着、伤势与情绪归会话状态。"
             },
             "辨识特征": {
               "type": "texts",
@@ -59,7 +59,7 @@ export const FOUNDATION_DEFINITIONS = {
             },
             "感官印象": {
               "type": "text",
-              "description": "可感知的稳定印象，不给观察者无依据的秘密知识。"
+              "description": "除已填外貌与声音细格外，来源明确的稳定感官印象；不能从修辞推断生理机制或观察者知识。"
             }
           }
         },
@@ -97,6 +97,21 @@ export const FOUNDATION_DEFINITIONS = {
             "改变条件": {
               "type": "text",
               "description": "材料明确说明的可能促成性情变化的条件；期待、尚未改变不算条件，未说明留空。"
+            },
+            "自我认知": {
+              "type": "text",
+              "description": "人物明确持有的稳定自我看法，可能与客观事实不同；不把叙述者评价冒充自述。与人物行权限不同则留空，本人的理解转认知表；相应客观命题另记事实表。",
+              "displayOrder": 1
+            },
+            "信任建立": {
+              "type": "text",
+              "description": "已确立的信任形成方式与观察标准；某段具体关系的信任变化归关系记录。",
+              "displayOrder": 1
+            },
+            "压力反应": {
+              "type": "text",
+              "description": "已确立的高压情况下惯常行为及触发情境；非眼前一次惊慌，不强造创伤或崩溃。",
+              "displayOrder": 1
             }
           }
         },
@@ -117,7 +132,7 @@ export const FOUNDATION_DEFINITIONS = {
             },
             "习惯": {
               "type": "texts",
-              "description": "已确认的日常反复行为；不复抄作息时间或性情判断原则。"
+              "description": "未由作息、饮食、居住、表达或仪态细格承载的稳定习惯；不重复细格，不把单次行为升格为习惯。"
             },
             "长期目标": {
               "type": "text",
@@ -126,6 +141,16 @@ export const FOUNDATION_DEFINITIONS = {
             "社会责任": {
               "type": "text",
               "description": "稳定承担的职责范围；对象间持续联系另见关系，不复抄互动经过。"
+            },
+            "饮食偏好": {
+              "type": "text",
+              "description": "有依据的日常饮食喜恶及例外；单次选择不是稳定偏好，剧情中新变化归喜好与回忆。",
+              "displayOrder": 1
+            },
+            "居住习惯": {
+              "type": "text",
+              "description": "已确立的居住、整理或私人空间使用习惯；地址归地点，当前位置归状态。",
+              "displayOrder": 1
             }
           }
         },
@@ -155,6 +180,21 @@ export const FOUNDATION_DEFINITIONS = {
             "禁用套路": {
               "type": "texts",
               "description": "防止机械复读的边界，不要求每轮套例句。"
+            },
+            "词汇偏好": {
+              "type": "text",
+              "description": "明确惯用的词汇、口头禅或回避表达；偶然说过一句不构成习惯，不重复措辞总述。",
+              "displayOrder": 1
+            },
+            "称谓方式": {
+              "type": "text",
+              "description": "对不同关系对象惯用的称呼方式；某次称呼或暗语的来历归相应事件或回忆。",
+              "displayOrder": 1
+            },
+            "语域切换": {
+              "type": "text",
+              "description": "明确在何种场合或面对何种对象改变用语风格；只记已成立规律，不由职业刻板推定。",
+              "displayOrder": 1
             }
           }
         },
@@ -246,7 +286,7 @@ export const FOUNDATION_DEFINITIONS = {
               "fields": {
                 "眼形": {
                   "type": "text",
-                  "description": "只收来源明确的稳定眼部形状；动物比喻、当前眼神、泛红和情绪不能补成眼形，未知留空。"
+                  "description": "来源明确的眼形描述；明确形容眼形的比喻可照录，但目光、眼神或神态不能推成眼形，也不据此推定物种。"
                 },
                 "瞳色": {
                   "type": "text",
@@ -269,6 +309,31 @@ export const FOUNDATION_DEFINITIONS = {
             "面部特征": {
               "type": "text",
               "description": "只收来源明确且未由眼形等细格承载的稳定面部特征；情绪表情、当前伤势不入底档，未知留空。"
+            },
+            "声音": {
+              "type": "object",
+              "fields": {
+                "音色": {
+                  "type": "text",
+                  "description": "明确稳定的声音质感；低声、喊叫等当下发声状态不据此固定为音色。",
+                  "displayOrder": 1
+                },
+                "口音": {
+                  "type": "text",
+                  "description": "明确口音及稳定发音特点；不凭出生地或身份推定。",
+                  "displayOrder": 1
+                }
+              }
+            },
+            "体表标记": {
+              "type": "texts",
+              "description": "有依据的长期疤痕、胎记、纹饰等；逐项写位置与特征。来历确有材料则记前史，不由痕迹反推经历。",
+              "displayOrder": 1
+            },
+            "生理特征": {
+              "type": "texts",
+              "description": "来源明确且未在体貌细格表达的稳定生理特点；保留适用条件与限制，不以物种常识补写。",
+              "displayOrder": 1
             }
           }
         }
@@ -412,7 +477,7 @@ export const FOUNDATION_DEFINITIONS = {
           "fields": {
             "关联对象": {
               "type": "refs",
-              "description": "秘密涉及的对象。"
+              "description": "真相直接涉及的已登记对象；物品的来源人物不自动加入，也不因此知情。"
             },
             "可观察线索": {
               "type": "texts",

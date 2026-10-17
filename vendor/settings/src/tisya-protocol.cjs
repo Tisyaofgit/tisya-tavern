@@ -41,8 +41,9 @@ function render(c,{task={name:'叙事',goal:'承接本轮输入'},actor={},exten
  line(I,'@DEFINE @OUT:={kind:structured','@DEFINE @OUT:='+JSON.stringify(limits));
  line(I,'@CONFIG apply',null);line(I,'@RANGE selected',null);
  line(I,'@LANG selected','@LANG '+rule('C08'));
+ if(c.authorNote)entries[I]=entries[I].replace('@LANG '+rule('C08'),'@LANG '+rule('C08')+'\n@AUTHOR_NOTE '+c.authorNote+(c.outputEnabled?'Use exactly one <aside data-tisya-author-note>public short note</aside> in extra;this is a registered display component,not story dialogue or a new fact.':'Generate the separate author-note aside only in D.3 after @BLOCK.body;exclude it from body length,paragraph refs,memory,archive and status.')+'Do not duplicate heart comments or expand any source permission.');
  line(I,'@SUMMARY ','@SUMMARY task 任务 cell 2 '+(c.outputSummary?'carries only a public source-supported conclusion;'+rule('D03'):'is empty (write adjacent separators)')+';!private reasoning/!duplicate character intentions');
- line(I,'@EXTENSION actual','@EXTENSION '+[extensions.E05,extensions.E06,extensions.E07].filter(Boolean).join('\n')+'Only supplied triggered components may be displayed;display grants no state write');
+ line(I,'@EXTENSION actual','@EXTENSION '+[extensions.E05,extensions.E06,extensions.E07,c.authorNote&&c.outputEnabled?'The selected author-note aside is a supplied display component;emit it once in extra.':''].filter(Boolean).join('\n')+'Only supplied triggered components may be displayed;display grants no state write');
  line(I,'selected @CFG.hearts',c.heartActive?'Follow @S.voice+@S.known;'+rule('D04')+((rule('C02').split('场外的缇斯亚')[1])?'场外的缇斯亚'+rule('C02').split('场外的缇斯亚')[1]:''):'Heart comments are disabled;emit 心声：关闭 at both positions');
  const directions=c.outputValues?JSON.parse(c.outputValues).heart_type:[];
  line(I,'apply only each selected direction:',c.heartActive?directions.map(x=>x+'：'+HEART_RULES[x]).join('\n'):null);
@@ -61,10 +62,15 @@ function render(c,{task={name:'叙事',goal:'承接本轮输入'},actor={},exten
  entries[I]=entries[I].replace('each supplied selected config ref→its declared consumer/effect;disabled subitem produced no new simulation;required dependency gaps remain marked;unselected alternatives absent;public summary/heart/MVU/language/count/action settings agree with their source;','each compiled requirement agrees with its responsible stage;disabled work produced no new simulation;necessary dependency gaps remain marked;');
  for(const [key,value]of Object.entries({min:c.range.下限,max:c.range.上限,unit:c.range.单位}))entries[I]=entries[I].replaceAll('{@OUT.body.'+key+'}',String(value));
  for(const [key,value]of Object.entries({min:c.actionRange.下限,max:c.actionRange.上限}))entries[I]=entries[I].replaceAll('{@OUT.actions.'+key+'}',String(value));
+ if(c.prose&&c.authorNote&&!c.outputEnabled){
+  replace(I,'omit structural wrappers,paragraph index labels and all ancillary blocks','omit reply/block wrappers and paragraph index labels;the enabled author-note aside is the sole exception,stays outside @BODY and is not an ancillary record');
+  replace(I,'@CHECK ordinary paragraphs only,no wrappers/index labels/auxiliary records','@CHECK @BLOCK.body contains ordinary story paragraphs only,no wrappers/index labels/auxiliary records');
+  replace(I,'@RESULT @DRAFT:=@BLOCK.body','@AUTHOR_NOTE produce one separate public short note as <aside data-tisya-author-note>note</aside>;obey source permissions and D04,do not duplicate heart or body;this marked aside is the only non-story display after plain body and never enters body length,paragraph refs,memory,archive or status\n@RESULT @DRAFT:=@BLOCK.body+blank line+author-note aside');
+ }
  if(!c.prose){
   const deliver=entries[I].match(/\[DELIVER\][\s\S]*?\[\/DELIVER\]/)[0];
   const t=entries[I].match(/\[T\.1\][\s\S]*?\[\/T\.1\]/)[0],d=entries[I].match(/\[D\.4\][\s\S]*?\[\/D\.4\]/)[0];
-  entries[I]='[INNER]\n'+t.replace('@TASK complete the requested discussion,summary or other creative work;apply its selected rules and source bounds;summary retains fact/rumor/plan distinctions,creative proposals remain unadopted','@TASK '+(task.name==='世界生成'?c.utility:task.name==='叙事'?rule('A06'):task.steps||task.goal)+'\n'+rule('D04')+'\n@FORMAT '+task.output)+'\n'+d+'\n[/INNER]\n'+deliver;
+  entries[I]='[INNER]\n'+t.replace('@TASK complete the requested discussion,summary or other creative work;apply its selected rules and source bounds;summary retains fact/rumor/plan distinctions,creative proposals remain unadopted','@TASK '+(task.name==='世界生成'?c.utility:task.name==='叙事'?rule('A06'):task.steps||task.goal)+'\n'+rule('D04')+(rule('C02').includes('场外的缇斯亚')?'场外的缇斯亚'+rule('C02').split('场外的缇斯亚')[1]:'')+(c.authorNote?'\n@AUTHOR_NOTE '+c.authorNote+' Append one short author-note paragraph after the requested content,without duplicating the answer or expanding permissions.':'')+'\n@FORMAT '+task.output)+'\n'+d+'\n[/INNER]\n'+deliver;
  }
  for(const [id,text]of Object.entries(entries))if(/@CFG(?:\.|\b)|@CONFIG(?:_|\b)/.test(text))fail('UNRESOLVED_CONFIG_'+id);
  return {version:1,entries,optional:[],protocol:'tisya-r238'};

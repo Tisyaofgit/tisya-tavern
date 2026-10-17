@@ -1,3 +1,4 @@
+import {NARRATIVE as N} from '../settings-core.js';
 import {prepareCompactFill} from '../tables/compact-fill.js';
 import {textTaskPreset} from '../task-envelope.js';
 import {createUserEditHistory} from '../user-revision.js';
@@ -34,7 +35,7 @@ test('three workflow detail levels change actual compiled requests and preserve 
   assert.match(request,/never invent a scope or treat unresolved as public/);
   assert.doesNotMatch(request,/PERM_SHAPE|never bare null\/~/);
   assert.doesNotMatch(inner,/权限：vars\||valid variable operations replace/);
-  assert.match(inner,/采用诙谐基调/);assert.match(inner,/围绕玩家已经确定的意图/);assert.match(inner,/重大选择保留给玩家/);
+  assert.match(request,/采用诙谐基调/);assert.match(request,/围绕玩家已经确定的意图/);assert.match(request,/重大选择保留给玩家/);assert.doesNotMatch(inner,/采用诙谐基调|重大选择保留给玩家/);
   assert.match(inner,/"min":2000,"max":5000/);assert.doesNotMatch(inner,/MVU is disabled/);assert.match(inner,/自有状态执行器停用不禁用其他来源/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
   for(const name of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(inner.includes('<'+name),detail+' '+name);
   assert.doesNotMatch(inner,/自然小说|缇斯亚叙事基调|T\.1|<think>/);
@@ -132,7 +133,7 @@ test('compact workflow states authorization once and keeps its selected constrai
  const f=fixture();f.w.modes.narrative.workflowDetail='compact';
  const c=compileNarrative(f.c,f.source,MOODS),text=c.rest.entries.tisya_inner_chain;
  for(const id of ['A01','A02','A03','A04','A05','B01','B02','B03','B04','B05','B06']){
-  const rule=c.stepwiseRules[id];if(rule)assert.equal(text.split(rule).length-1,1,id);
+  const rule=c.stepwiseRules[id];if(rule){assert.equal(text.split(rule).length-1,0,id);assert.equal(c.rest.entries.tisya_material_rule_material.split(rule).length-1,1,id);}
  }
  assert.match(text,/按 @AUTH 核对主镜头/);
 });
@@ -330,7 +331,7 @@ test('custom language and optional dialogue reach complete actual requests for a
  for(const detail of ['full','compact','format'])for(const source of ['角色与环境','指定语言']){
   const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.narrative.缇斯亚叙事语言='指定单语';m.narrative.缇斯亚叙事语言配置=['日本語'];m.角色对白={启用:true,来源:source,语言:'Italiano'};
   await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);const text=JSON.stringify(payload.messages),inner=f.macros.get('tisya_live_tisya_inner_chain')();
-  assert.match(text,/默认语言/);assert.match(text,/日本語/);assert.match(text,/角色对白双语对照/);assert.match(text,/旁白不做双语复制/);assert.match(text,/译文服务读者/);assert.match(text,/情话、称呼、祷词与咒语/);assert.equal(inner.split('角色对白双语对照：').length-1,1,detail);
+  assert.match(text,/默认语言/);assert.match(text,/日本語/);assert.match(text,/角色对白双语对照/);assert.match(text,/旁白不做双语复制/);assert.match(text,/译文服务读者/);assert.match(text,/情话、称呼、祷词与咒语/);assert.equal(inner.split('角色对白双语对照：').length-1,0,detail);assert.equal(text.split('角色对白双语对照：').length-1,1,detail);
   assert.doesNotMatch(text,/\{语言\}|\{语言一\}|\{语言二\}/);if(source==='指定语言')assert.match(text,/Italiano/);else{assert.match(text,/不凭姓名、外貌或族裔猜测母语/);assert.doesNotMatch(text,/Italiano/);}
   m.角色对白.启用=false;await f.host.before('normal');const off={messages:[]};await f.host.payloadReady(off);assert.doesNotMatch(JSON.stringify(off),/角色对白双语对照：|Italiano/);assert.match(JSON.stringify(off),/不自动增加逐句双语/);
  }
@@ -344,7 +345,7 @@ test('language changes validate missing names and do not mutate legacy bilingual
 
 test('bilingual language survives native request observation and plain prose without replacing native history',async()=>{
  for(const plain of [false,true]){const f=fixture(),m=f.w.modes.narrative;f.w.context.owner='native';m.narrative.缇斯亚叙事语言='繁体中文';m.角色对白={启用:true,来源:'角色与环境',语言:''};if(plain)f.source.order.find(e=>e.identifier==='tisya_output').enabled=false;
- await f.host.before('normal');const inner=f.macros.get('tisya_live_tisya_inner_chain')(),payload={messages:[{role:'system',content:inner},{role:'user',content:'原生历史和本轮输入'}],model:'native-model',stream:true};const before=structuredClone(payload);await f.host.payloadReady(payload);assert.deepEqual(payload,before);assert.match(inner,/繁体中文/);assert.match(inner,/角色对白双语对照/);assert.equal(inner.split('角色对白双语对照：').length-1,1);if(plain)assert.match(inner,/ordinary public prose only/);
+ await f.host.before('normal');const inner=f.macros.get('tisya_live_tisya_inner_chain')(),preferences=f.macros.get('tisya_live_tisya_material_rule_material')(),payload={messages:[{role:'system',content:preferences},{role:'system',content:inner},{role:'user',content:'原生历史和本轮输入'}],model:'native-model',stream:true};const before=structuredClone(payload);await f.host.payloadReady(payload);assert.deepEqual(payload,before);assert.match(preferences,/繁体中文/);assert.match(preferences,/角色对白双语对照/);assert.equal(preferences.split('角色对白双语对照：').length-1,1);assert.doesNotMatch(inner,/角色对白双语对照/);if(plain)assert.match(inner,/ordinary story prose/);
  if(process.env.TISYA_LANGUAGE_EVIDENCE)fs.writeFileSync(process.env.TISYA_LANGUAGE_EVIDENCE+(plain?'/native-plain-request.json':'/native-structured-request.json'),JSON.stringify(payload,null,2));
  }
 });
@@ -353,4 +354,16 @@ test('bilingual language survives native request observation and plain prose wit
 test('migrated public task request without prepared form is rejected before a paid call',async()=>{
  const f=fixture(),prior=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('must not call');};
  try{for(const task of ['templateInit','objectArchive','historyImport','tableArchive','tableGenesis','assetAdapt'])await assert.rejects(f.host.request(task,JSON.stringify({registry:{tables:[],types:[]},currentRows:[]})),/需要.*准备.*表格/);assert.equal(calls,0);}finally{globalThis.fetch=prior;}
+});
+
+test('actual assembled request injects one preference layer before preprocessing and retains author notes in all detail levels',async()=>{
+ for(const detail of ['full','compact','format'])for(const structured of [true,false]){
+  const f=fixture();f.w.modes.narrative.workflowDetail=detail;const field=N.rows.find(r=>r.id==='D05');f.w.modes.narrative.narrative[field.variable]='每轮短评';
+  if(!structured)f.source.order.find(x=>x.identifier==='tisya_output').enabled=false;
+  await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
+  const parts=payload.messages.map(m=>m.content),all=parts.join('\n');
+  assert.equal(all.split('[USER.PREFERENCES]').length-1,1);assert.ok(parts.findIndex(s=>s.includes('[USER.PREFERENCES]'))<parts.findIndex(s=>/^\[TASK.START\]/.test(s)));
+  assert.match(all,/data-tisya-author-note/);assert.match(all,/AUTHOR_NOTE/);assert.match(all,/到期|being due|due/);
+  const compiled=compileNarrative(f.c,f.source,MOODS);assert.match(compiled.rest.entries.tisya_registry,/@F.02/);assert.doesNotMatch(compiled.rest.entries.tisya_registry,/@F.10 LANG_BAN/);
+ }
 });

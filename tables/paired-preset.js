@@ -1,11 +1,10 @@
+import {framePrompts} from '../prompt-envelope.js';
+import {preferenceFirst} from '../config/preference-layer.js';
 import {simpleFillMessages} from './simple-fill-messages.js';
 import {NARRATIVE as N} from '../settings-core.js';
 import {TABLE_MODES,SIMPLE_TABLE_TASKS,auxiliaryEntries} from './modes.js';
 import {AUX_TASKS} from './prompts.js';
 import {taskSlots,slotText,SLOT_TARGETS,SLOT_NAMES} from './slots.js';
-const HEAD=['tisya_new_chat','tisya_session_reset','main','tisya_identity_attestation','tisya_user_relation','tisya_task_start','tisya_material_boundary_open'];
-const TAIL=['tisya_material_boundary_close','tisya_registry','tisya_internal_login','tisya_inner_chain','tisya_think_commit','tisya_delivery_warning','tisya_prepare_trigger'];
-const role=id=>id==='tisya_identity_attestation'||id==='tisya_think_commit'?'assistant':id==='tisya_user_relation'?'user':'system';
 // Auxiliary transport owns a data contract, independent of narrative UI output.
 export function pairedPreset({task,configuration,archiveProposal=false}){
  const mode=TABLE_MODES[task];if(!mode)throw Error('未登记配套模式：'+task);
@@ -13,8 +12,8 @@ export function pairedPreset({task,configuration,archiveProposal=false}){
  const settings=configuration.world.modes[configuration.world.mode].narrative;
  const base=N.previewSettings(settings,{summary:false,directions:[]}).rest.entries;
  const entries=auxiliaryEntries(base,task,AUX_TASKS[task].instructions+(configuration.world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''));
- const prompts=[...HEAD.map(id=>({identifier:id,role:role(id),content:entries[id]})),{identifier:'tisya_selected_resources',role:'user',content:'',tisyaSelectedResources:true},...Object.entries(SLOT_TARGETS).map(([slot,identifier])=>({identifier,name:SLOT_NAMES[slot],role:'user',content:'',tisyaMaterialSlot:slot})),...TAIL.map(id=>({identifier:id,role:role(id),content:entries[id]}))].map(p=>({name:p.identifier,enabled:true,marker:false,system_prompt:false,injection_position:0,...p}));
- return {name:AUX_TASKS[task].name,task,entries,supplement:configuration.world.tables?.taskInstructions?.[task]??'',mode:mode.id,prompts,prompt_order:[{character_id:100001,order:prompts.map(p=>({identifier:p.identifier,enabled:true}))}]};
+ const prompts=framePrompts(entries,[{identifier:'tisya_selected_resources',role:'user',content:'',tisyaSelectedResources:true},...Object.entries(SLOT_TARGETS).map(([slot,identifier])=>({identifier,name:SLOT_NAMES[slot],role:'user',content:'',tisyaMaterialSlot:slot}))]).map(p=>({name:p.identifier,enabled:true,marker:false,system_prompt:false,injection_position:0,...p}));
+ return {name:AUX_TASKS[task].name,task,entries,supplement:configuration.world.tables?.taskInstructions?.[task]??'',mode:mode.id,prompts,prompt_order:[{character_id:100001,order:preferenceFirst(prompts.map(p=>({identifier:p.identifier,enabled:true})))}]};
 }
 export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
  if(preset.task!==task)throw Error('专用预设与任务不匹配');
@@ -23,7 +22,7 @@ export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
   const messages=structuredClone(input.simpleForm.messages);
   if(!messages.every(m=>['system','user'].includes(m.role)&&typeof m.content==='string'))throw Error('极简表格消息无效');
   const extra=[preset.supplement&&'用户对本任务的补充要求：\n'+substitute(preset.supplement),selected&&'用户选用的补充说明：\n'+substitute(selected)].filter(Boolean);
-  if(extra.length)messages.push({role:'user',content:extra.join('\n\n')});
+  if(extra.length){const first=messages.find(m=>m.role==='system');if(first)first.content=extra.join('\n\n')+'\n\n'+first.content;else messages.unshift({role:'system',content:extra.join('\n\n')});}
   return messages;
  }
  if(input.compactFill)return simpleFillMessages({task,input,supplement:preset.supplement,selected,substitute});

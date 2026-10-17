@@ -1,8 +1,8 @@
 {
   "format": "tisya.foundation-sheet-build/1",
   "templates": 22,
-  "fields": 305,
-  "htmlSha256": "24f9741c1df0ed48d450e3db0370366b2912848d24e640c1073f3b4b5141e001",
+  "fields": 322,
+  "htmlSha256": "fefd204bea88740a3091a4df7e7416cc0146fbec57cacc8d6b0f126ba94b2289",
   "status": "isolated-preview-not-installed",
   "remoteResources": 0
 }

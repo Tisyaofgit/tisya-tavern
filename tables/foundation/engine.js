@@ -66,7 +66,7 @@ export function createSheetEngine(catalog, validateValue) {
    const groups=[...new Set(p.cells.map(c=>c.group))];
    for(const g of groups){const title=p.tid==='origin.character'?'人物／'+g:p.heading;form.push('【'+title+'】');const hints=[];
     for(const c of p.cells.filter(c=>c.group===g)){
-     const d=c.definition;let hint=d.description??'';if(p.tid==='origin.character.secrets'&&c.label==='关联对象')hint='真相直接涉及的对象；物品来源人物不自动纳入，不据此推定知情。';
+     const d=c.definition;let hint=d.description??'';
      if(listType(d))hint=(hint?hint+' ':'')+'多项';
      if(d.values)hint+=' 可选：'+d.values.join('／');
      if(['number','duration'].includes(d.type))hint+=' 数值'+(d.min!==undefined?'，最小'+d.min:'')+(d.max!==undefined?'，最大'+d.max:'');

@@ -187,7 +187,7 @@
       "injection_depth": 4,
       "forbid_overrides": false,
       "enabled": true,
-      "content": ""
+      "content": "{{tisya_live_tisya_material_rule_material}}"
     },
     {
       "identifier": "tisya_material_location_context",
@@ -732,6 +732,10 @@
           "enabled": true
         },
         {
+          "identifier": "tisya_material_rule_material",
+          "enabled": true
+        },
+        {
           "identifier": "tisya_task_start",
           "enabled": true
         },
@@ -761,10 +765,6 @@
         },
         {
           "identifier": "tisya_material_world_context",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_rule_material",
           "enabled": true
         },
         {

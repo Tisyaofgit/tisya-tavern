@@ -105,7 +105,11 @@ test('prepared creation forms preserve source bytes and append only their own su
   const cfg=structuredClone(configuration);cfg.world.tables={taskInstructions:{[task]:'本任务补充 {{user}}',tableArchive:'OTHER_TASK_ONLY'}};
   const messages=[{role:'system',content:'填写给定的表格。'},{role:'user',content:'原始资料 {{user}}\n完整尾哨。'}],before=structuredClone(messages);
   const result=taskMessages({preset:pairedPreset({task,configuration:cfg}),task,input:{simpleForm:{messages}},selected:'选用说明 {{user}}',substitute:s=>s.replaceAll('{{user}}','测试用户')});
-  assert.deepEqual(result.slice(0,messages.length),messages);assert.deepEqual(messages,before);const text=result.map(m=>m.content).join('\n');
+  assert.deepEqual(result.slice(1),messages.slice(1));assert(result[0].content.endsWith(messages[0].content));assert.deepEqual(messages,before);const text=result.map(m=>m.content).join('\n');
   assert.equal(text.split('本任务补充 测试用户').length-1,1);assert.equal(text.split('选用说明 测试用户').length-1,1);assert.doesNotMatch(text,/OTHER_TASK_ONLY|schemaChanges|FILL\.1|strict JSON/);
  }
+});
+test('marked author commentary is excluded from fresh narrative and multi-reply history evidence',async()=>{
+ const {archivalText}=await import('../tables/ledger.js'),raw='人物推开门。\n<aside data-tisya-author-note>这次叙事节奏很紧。</aside>';
+ assert.equal(archivalText(raw),'人物推开门。');assert.equal(historyEvidence(raw),'人物推开门。');assert.equal(archivalText('<body>人物推开门。</body><extra><aside data-tisya-author-note>场外话。</aside></extra>'),'人物推开门。');
 });

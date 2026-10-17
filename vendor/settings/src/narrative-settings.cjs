@@ -116,7 +116,7 @@ function mountNarrativeSettings(container,{controller,onNotice=()=>{},onStateCha
       form.append(features);
     }else form.append(make('p','原有选值已保留。点“补充步序配置”后可调整新增选项，再保存。'));
     let group='';
-    for(const row of N.rows.filter(r=>!r.id.startsWith('E')&&r.id!=='D05')){
+    for(const row of N.rows.filter(r=>!r.id.startsWith('E'))){
       if(group!==row.id[0]){group=row.id[0];form.append(make('h4',({A:'互动权限',B:'视角与知情',C:'文风与节奏',D:'创作与交流'})[group]));}
       const key=row.variable;
       if(row.type==='string')select(row.id==='D04'?'缇斯亚交流口吻':row.label,row.allowed,draft[key],v=>draft[key]=v,['指定 NPC','选文风卡']);

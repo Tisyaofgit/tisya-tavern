@@ -31,7 +31,7 @@ export function assembleTableRows(view,{previousText='',userText='',tags=[],stri
   const named=[v.名称,...(v.别名??[])].some(name=>phraseMatch(previousText,name)||phraseMatch(userText,name));
   const context={row,previousText,userText,strict,selected:retrievedIds.has(row.id),retrieved:retrievedIds.has(row.id),context:actors.has(row.id)||[v.主体,v.对象,...(v.相关对象??[])].some(id=>actors.has(id)),cue:named||(v.触发线索??[]).some(cue=>phraseMatch(previousText,cue)||phraseMatch(userText,cue)),tagged:[v.名称,...(v.别名??[])].some(name=>name&&tags.some(tag=>String(tag).includes(name)))};
   context.rule=row.table==='objects'&&isObjectType(view.registry,row,'rule');context.focused=context.context||context.cue||context.tagged||recalled.has(row.id)||context.retrieved;contexts.set(row.id,context);
-  if(conditionMatches(definition?.assemble??tableCondition(row.table),context))roots.push(row.id);
+  if(row.table==='activities'&&['计划','进行','等待'].includes(v.状态)||conditionMatches(definition?.assemble??tableCondition(row.table),context))roots.push(row.id);
  }
  // References carry their own permissions; selecting a child never changes parent ACL.
  const derived=derive(view.rows,view.registry),omitted=[],trace=[],omittedFields=new Map();

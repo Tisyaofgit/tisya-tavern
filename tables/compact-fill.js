@@ -1,4 +1,4 @@
-import {foundationTemplatePlan} from './foundation-templates.js';
+import {foundationTemplatePlan,orderedFields} from './foundation-templates.js';
 import {archiveEvidenceSources} from './source-text.js';
 import {formSections,formRow,FORM_TEXT_INSTRUCTIONS} from './foundation/form-text.js';
 // Ephemeral model surface only. The existing registry and ledger own all data.
@@ -9,13 +9,12 @@ export const COMPACT_FILL_FORMAT='tisya.compact-fill/1';
 export const ARCHIVE_TASKS=[
   {
     "task": "templateInit",
-  "modelGoal": "整理当前角色卡、用户定义与开局资料，填写人物等基础档案及明确的开局初值。后来的剧情保留在历史中，不倒填为开局；示例、备选开场和停用资料不是已发生事实。",
   "order": 3,
   "rulePolicy": true,
     "kind": "archive",
   "surface": "form",
     "name": "表单 · 角色卡模板初始化",
-    "instructions": "根据完整原卡、用户定义和开局资料填写基础档案与明确初值。每个独立人物分别建档，原生用户完整定义保持原文；已有身份沿用名称。示例、停用资料和后续剧情不倒填为开局，未变化的值不重填。",
+    "instructions": "根据完整原卡、用户定义和开局资料填写基础档案与明确初值。每个独立人物分别建档，原生用户完整定义保持原文；已有身份沿用名称。示例、停用资料和后来的剧情不倒填为开局，未变化的值不重填。",
     "mode": {
       "id": "template-init",
       "name": "角色卡模板初始化",
@@ -24,13 +23,12 @@ export const ARCHIVE_TASKS=[
   },
   {
     "task": "objectArchive",
-  "modelGoal": "为本次正文和它之前连续的用户输入补齐人物、物品、地点、组织与规则等对象档案及稳定事实；当前位置、伤势、关系变化和事件过程交给后续历史表。",
   "order": 6,
   "rulePolicy": true,
     "kind": "archive",
   "surface": "form",
     "name": "表单 · 新发现建档",
-    "instructions": "根据本次正文及此前连续用户定义，填写人物、物品、地点、组织、规则和稳定事实。沿用已有名称和细格，独立细节各有归处；当前位置、伤势和关系变化交后续业务表。",
+    "instructions": "根据本次正文及此前连续用户定义，填写人物、物品、地点、组织、规则等对象档案和稳定事实。沿用已有名称和细格，独立细节各有归处；当前位置、伤势、关系变化和事件过程交后续历史表。",
     "mode": {
       "id": "objects",
       "name": "新发现建档",
@@ -39,7 +37,6 @@ export const ARCHIVE_TASKS=[
   },
   {
     "task": "historyImport",
-  "modelGoal": "按原始次序补录本次已发生事件及相应业务记录，保留来源、时间、主观理解与不确定性；较早记录不能覆盖已确认的较晚状态。",
   "order": 9,
   "rulePolicy": true,
     "kind": "archive",
@@ -54,7 +51,6 @@ export const ARCHIVE_TASKS=[
   },
   {
     "task": "tableArchive",
-  "modelGoal": "整理本次已确认正文及此前连续用户输入，填写事件、当前状态与有依据的档案增量，不续写故事。",
   "order": 5,
   "rulePolicy": true,
     "kind": "archive",
@@ -92,7 +88,7 @@ function locator(table,kind,name){return table+'／'+(kind||'—')+'／'+encodeN
 function formName(registry,table,kind){return (kind?registry.types.find(t=>t.id===kind):registry.tables.find(t=>t.id===table))?.name??table;}
 function publicLocator(registry,table,kind,name){return formName(registry,table,kind)+'／'+encodeName(name);}
 function publicField(field){return field.key==='$readers'?'谁可看到':field.key==='$knowers'?'故事里谁已知':field.label.replace(/^属性·/,'');}
-function fillHint(d){const type={text:'填原文或有依据的简短描述',time:'填明确时间',number:'填数字',duration:'填数字',boolean:'填是或否',enum:'从这些值中选：'+(d.values??[]).join('、'),ref:'填目录中的档案名称',refs:'填档案名称，多项用；分开',texts:'多项用；分开',json:'填来源中的值，文字可直接写',array:'填来源中的完整列表',map:'填来源中的完整对应项',object:'填来源中的完整组合值',type:'填类别名称'};return [type[d.type]??'按来源填写',d.description?.replace(/稳定ID|稳定 ID|对象ID|对象 ID/g,'档案名称')].filter(Boolean).join('；');}
+function fillHint(d){if(d.type==='text'&&d.description)return d.description.replace(/稳定ID|稳定 ID|对象ID|对象 ID/g,'档案名称');const type={text:'填原文或有依据的简短描述',time:'填明确时间',number:'填数字',duration:'填数字',boolean:'填是或否',enum:'从这些值中选：'+(d.values??[]).join('、'),ref:'填目录中的档案名称',refs:'填档案名称，多项用；分开',texts:'多项用；分开',json:'填来源中的值，文字可直接写',array:'填来源中的完整列表',map:'填来源中的完整对应项',object:'填来源中的完整组合值',type:'填类别名称'};return [type[d.type]??'按来源填写',d.description?.replace(/稳定ID|稳定 ID|对象ID|对象 ID/g,'档案名称')].filter(Boolean).join('；');}
 // Sparse public answers expand only inside the adapter; unknown cells stay absent.
 function fillLines(template,lines){const values=new Map();for(const line of lines){const {number,field,raw}=formRow(line,template.fields,{labels:f=>[f.label,publicField(f)]});check(!values.has(number),'行号重复：'+number);let value=raw;if(value&&field.definition.type==='json'){try{JSON.parse(value);}catch{check(!/^[\[{"]/.test(value),'组合值格式不完整：'+field.label);value=JSON.stringify(value);}}values.set(number,value);}
  return template.fields.map((f,i)=>(i+1)+' '+f.label+'：'+(values.get(i+1)??''));}
@@ -100,7 +96,7 @@ function fillLines(template,lines){const values=new Map();for(const line of line
 function merge(before,patch){const out=copy(before??{});for(const [key,value]of Object.entries(patch)){check(!prohibited.has(key),'字段路径无效');out[key]=object(value)&&object(out[key])?merge(out[key],value):copy(value);}return out;}
 function jsonReferenceSurface(def){const next=copy(def);if(next.type==='ref')next.type='text';else if(next.type==='refs')next.type='texts';if(next.fields)next.fields=Object.fromEntries(Object.entries(next.fields).map(([k,d])=>[k,jsonReferenceSurface(d)]));if(next.items)next.items=jsonReferenceSurface(next.items);return next;}
 function flatten(fields,path=[],result=[]){for(const [key,definition]of Object.entries(fields)){check(!prohibited.has(key),'字段路径无效');if(definition.formula)continue;const next=[...path,key];if(definition.type==='object'&&definition.fields&&Object.keys(definition.fields).length)flatten(definition.fields,next,result);else result.push({key:next.join('·'),label:next.join('·'),path:next,definition:copy(definition)});}return result;}
-function templatesFor(registry){const templates=[];for(const table of registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells')){for(const type of table.id==='objects'?registry.types:[null]){const fields=copy(table.fields);delete fields.名称;delete fields.类型;delete fields.核心引用;if(type){fields.属性={type:'object',fields:typeFields(registry,type.id)};delete fields.属性.fields.原生能力引用;}const values=flatten(fields);const meta=[{key:'$evidence',label:'来源依据',path:['meta','evidence'],definition:{type:'text',required:true}},{key:'$readers',label:'读者',path:['meta','readers'],definition:{type:'texts'}},{key:'$knowers',label:'知情者',path:['meta','knowers'],definition:{type:'refs'}}];const mapped=values.map(f=>({...f,path:['values',...f.path],definition:['json','array','map','object'].includes(f.definition.type)?jsonReferenceSurface(f.definition):f.definition}));const combined=[...meta,...mapped,{key:'$operation',label:'处理方式',path:['meta','operation'],definition:{type:'enum',values:['更新','新建','撤销']}},{key:'$unset',label:'清空字段',path:['meta','unset'],definition:{type:'texts'}}];check(new Set(combined.map(f=>f.label)).size===combined.length,'字段标签与归档元数据冲突：'+table.id);templates.push({id:table.id+':'+(type?.id??'—'),table:table.id,kind:type?.id??null,label:table.name+(type?'／'+type.name:''),fields:combined.map(f=>({...f,group:'填写'})),valueFields:values});}}return templates;}
+function templatesFor(registry){const templates=[];for(const table of registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells')){for(const type of table.id==='objects'?registry.types:[null]){const fields=copy(table.fields);delete fields.名称;delete fields.类型;delete fields.核心引用;if(type){fields.属性={type:'object',fields:typeFields(registry,type.id)};delete fields.属性.fields.原生能力引用;}const values=orderedFields(flatten(fields));const meta=[{key:'$evidence',label:'来源依据',path:['meta','evidence'],definition:{type:'text',required:true,description:'逐字摘录本次允许原料中的一段连续原句；不简述，不改字，不拼接标题、不同句段或自加说明。'}},{key:'$readers',label:'读者',path:['meta','readers'],definition:{type:'texts'}},{key:'$knowers',label:'知情者',path:['meta','knowers'],definition:{type:'refs'}}];const mapped=values.map(f=>({...f,path:['values',...f.path],definition:['json','array','map','object'].includes(f.definition.type)?jsonReferenceSurface(f.definition):f.definition}));const combined=[...meta,...mapped,{key:'$operation',label:'处理方式',path:['meta','operation'],definition:{type:'enum',values:['更新','新建','撤销']}},{key:'$unset',label:'清空字段',path:['meta','unset'],definition:{type:'texts'}}];check(new Set(combined.map(f=>f.label)).size===combined.length,'字段标签与归档元数据冲突：'+table.id);templates.push({id:table.id+':'+(type?.id??'—'),table:table.id,kind:type?.id??null,label:table.name+(type?'／'+type.name:''),fields:combined.map(f=>({...f,group:'填写'})),valueFields:values});}}return templates;}
 function allowed(task,table,phase,separate,registry){const def=registry.tables.find(t=>t.id===table);if(!def||def.owner!=='archive'||table==='native_cells')return false;const origin=['objects','facts'].includes(table);if(task==='templateInit')return phase==='base'?origin:phase==='initial'&&!origin&&table!=='events';if(phase!=='archive')return false;if(task==='objectArchive')return origin;return !separate||!origin;}
 function control(heading,definitions,section){const template={id:'control',table:'core-draft',label:heading,fields:definitions.map(([key,definition])=>({key,label:key,path:[key],group:'控制',definition}))};const engine=createSheetEngine({version:COMPACT_FILL_FORMAT,templates:[template]},valueValid),row=engine.create('control'),task=engine.request(row.id,{heading});engine.accept(task.token,'【'+heading+'】\n'+section.lines.join('\n'));return engine.values(row.id).values;}
 
@@ -117,7 +113,8 @@ export function prepareCompactFill(task,input){
   '来源依据填连续原句。谁可看到、故事里谁已知分别核对；人物被提及不等于他知道。确实没有填无；不同知情范围的事实分开记录。',
   '需要关联时抄目录中的“类别／名称”；多项用；分开，没有填无。数字0和否都应如实填写。',
   FORM_TEXT_INSTRUCTIONS,
-  '固定原文不能改写。只列出名称的档案需先补读；表中没有合适位置或来源冲突的内容写待处理，不自行增加字段。',
+  '固定原文不能改写。只列出名称的档案需先补读；属于本任务但表中没有合适位置、来源冲突或证据不足以解决的必要内容写待处理，不自行增加字段。未知的可选格留空即可。',
+  ...(task==='objectArchive'?['本次只建立对象与稳定事实；当下事件、状态、关系变化由下一步历史表处理，正常交接不写待处理。本次职责内的遗漏、冲突或补读仍须如实列出。']:[]),
   '最后填写【完成】三行：1 状态：完成；2 待处理：无或具体问题；3 补读记录：无或目录名称。待处理或补读不为空时，保留问题等待解决。',
   '默认补充或更新。明确要建立新记录时，处理方式填新建；已有同名档案则停止并核对。只有原文明示误登记或撤回时才把处理方式填撤销，其他内容格留空；死亡、离场或失去物品不撤销档案。需删除一个可选字段时在清空字段列出字段名，空白格本身不删除。',
   '只交表格，不附解释或推理。'

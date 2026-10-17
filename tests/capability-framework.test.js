@@ -20,7 +20,7 @@ test('capability registration copies metadata, rejects duplicates and has no unk
 
 test('a newly registered model capability supplies entry and execution without another dispatcher',()=>{
  let accepted;
- const definition={task:'new-kind',kind:'specialized',surface:'form',rulePolicy:true,name:'新能力',instructions:'只填字段',mode:{id:'new-kind'},prepare(input){accepted=input;return {payload:input,parse:answer=>({answer,precision:input.policy.precision})};}};
+ const definition={materials:{},task:'new-kind',kind:'specialized',surface:'form',rulePolicy:true,name:'新能力',instructions:'只填字段',mode:{id:'new-kind'},prepare(input){accepted=input;return {payload:input,parse:answer=>({answer,precision:input.policy.precision})};}};
  const registry=createTaskRegistry([definition]),input={policy:{precision:3}};
  const plan=registry.prepare('new-kind',input);input.policy.precision=8;
  assert.equal(accepted.policy.precision,3);assert.deepEqual(plan.parse('原句'),{answer:'原句',precision:3});

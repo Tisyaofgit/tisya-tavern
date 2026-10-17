@@ -15,14 +15,15 @@ function form(values={}){
 }
 test('appearance leaves append after all45 stable rows; old definitions and optional values stay readable',()=>{
  assert.deepEqual(template.fields.slice(0,45).map(f=>f.path.join('.')),oldPaths);
- assert.equal(template.fields.length,54);
- assert.deepEqual(template.fields.slice(45).map(f=>f.label),['发色','发长','发质形态','眼形','瞳色','肤色','体型','身高','面部特征']);
- assert(template.fields.slice(45).every(f=>f.group==='形貌细目'&&f.definition.type==='text'&&!f.definition.required));
+ assert.equal(template.fields.length,66);
+ assert.deepEqual(template.fields.slice(45,54).map(f=>f.label),['发色','发长','发质形态','眼形','瞳色','肤色','体型','身高','面部特征']);
+ assert(template.fields.slice(45,54).every(f=>f.group==='形貌细目'&&f.definition.type==='text'&&!f.definition.required));
  assert.equal(template.fields[45].path.join('.'),'属性.形貌细目.头发.发色');
  const plan=foundationTemplatePlan('character'),old={id:'row:old',rev:1,table:'objects',values:{名称:'旧档',类型:'character',属性:{外貌:'旧版完整描述',形貌:{整体:'原有整体内容',辨识特征:['原有特征']}}},access:{readers:['读者'],knowers:[]},source:null},before=structuredClone(old);
  validateRow(plan.registry,old);assert.deepEqual(old,before);assert.equal(old.values.属性.形貌细目,undefined);
  assert.equal(plan.registry.types.find(t=>t.id==='character').fields.外貌.type,'text');
- assert.equal(plan.registry.types.find(t=>t.id==='character').fields.形貌.fields.整体.description,'原点稳定体貌。');
+ assert.match(plan.registry.types.find(t=>t.id==='character').fields.形貌.fields.整体.description,/未由形貌细目/);
+ assert(template.fields.slice(54).every(f=>f.definition.displayOrder===1&&!f.definition.required));
  assert.match(template.fields[8].definition.description,/未由形貌细目/);
 });
 test('unknown appearance cells stay absent and explicit nested leaves parse without mutating source or context',()=>{
@@ -34,7 +35,7 @@ test('unknown appearance cells stay absent and explicit nested leaves parse with
  assert.equal((parsed.conditions??[]).length,0);assert.equal(parsed.validation.semantic,'pending-review');assert.deepEqual(ctx,before);
 });
 test('catalog identity expires old model tasks explicitly; new sparse templates do not migrate prior records',()=>{
- assert.equal(catalog.version,'FT21-W50-appearance/1');
+ assert.equal(catalog.version,'FT35-W55-fields/1');
  const ctx=context(),old=structuredClone(ctx);old.before.catalogVersion='FT21';
  assert.throws(()=>acceptExtraction(catalog,valueValid,old,form()),/兼容的表单草稿/);
  const view={registry:foundationTemplatePlan('character').registry,rows:[]};

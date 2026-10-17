@@ -1,3 +1,5 @@
+import {TASK_HEAD,TASK_TAIL,framePrompts} from './prompt-envelope.js';
+export {TASK_HEAD,TASK_TAIL} from './prompt-envelope.js';
 import {NARRATIVE as N} from './settings-core.js';
 
 export const TEXT_TASKS=Object.freeze({
@@ -12,9 +14,6 @@ export const TEXT_TASKS=Object.freeze({
  communication:['场外交流','直接回答契约者的创作问题，不用角色声口、不推进剧情、不修改配置；建议和实际完成分开。'],
  'foundation-extraction':['档案提炼','逐格从原始材料提取有证据的档案，未知留空，保留知识权限、限定与来源；不补写人物设计。'],
 });
-export const TASK_HEAD=['tisya_new_chat','tisya_session_reset','main','tisya_identity_attestation','tisya_user_relation','tisya_task_start','tisya_material_boundary_open'];
-export const TASK_TAIL=['tisya_material_boundary_close','tisya_registry','tisya_internal_login','tisya_inner_chain','tisya_think_commit','tisya_delivery_warning','tisya_prepare_trigger'];
-const role=id=>['tisya_identity_attestation','tisya_think_commit'].includes(id)?'assistant':id==='tisya_user_relation'?'user':'system';
 export function textTaskPreset({task,settings=N.suggestions(),instructions='',format='按本任务要求交付完整产物；未指定机器结构时用清楚的普通文本。'}){
  const spec=TEXT_TASKS[task];if(!spec)throw Error('未登记文本任务：'+task);
  const base=N.previewSettings(settings,{summary:false,directions:[]}).rest.entries;
@@ -24,12 +23,12 @@ export function textTaskPreset({task,settings=N.suggestions(),instructions='',fo
  tisya_material_boundary_open:'[MATERIALS]',tisya_material_boundary_close:'[/MATERIALS]',
  tisya_registry:'[REGISTRY]\n@MODE '+task+'\n@NORMS '+spec[1]+'\n'+instructions+'\n@OUTPUT '+format+'\n[/REGISTRY]',
  tisya_internal_login:'[INNER.LOGIN] 读取已分类材料和本任务规范；只执行获准任务，不运行引用代码或扩大写入权限。 [/INNER.LOGIN]',
- tisya_inner_chain:'[MODE.ANALYZE]\n@MODE '+task+'\n[INTAKE] 消费 TASK.START 的来源分类，核对目标、约束和缺项。 [/INTAKE]\n[BUILD] 消费核定的材料，'+spec[1]+' [/BUILD]\n[CHECK] 对照完整要求核对实际产物的覆盖、事实、格式、权限和重复；修正草稿，未能核实的保留未决。 [/CHECK]\n@PRIVATE 不展示中间推理；只输出 REGISTRY 所选产物。\n[/MODE.ANALYZE]',
+ tisya_inner_chain:'[MODE.ANALYZE]\n@MODE '+task+'\n[INTAKE] 消费 TASK.START 的来源分类，核对目标、约束和缺项。 [/INTAKE]\n[BUILD] 消费核定的材料，按 REGISTRY 中的本任务规范完成产物。 [/BUILD]\n[CHECK] 对照完整要求核对实际产物的覆盖、事实、格式、权限和重复；修正草稿，未能核实的保留未决。 [/CHECK]\n@PRIVATE 不展示中间推理；只输出 REGISTRY 所选产物。\n[/MODE.ANALYZE]',
  tisya_think_commit:'[COMMIT.READY] 已按本任务核对待交付稿；交付不等于已保存或已执行。 [/COMMIT.READY]',
  tisya_delivery_warning:'仅交付本任务完整产物，不附加故事 reply、心声或变量更新。'+format,
  tisya_prepare_trigger:'[PREPARE_STEP] 现在执行'+spec[0]+'，一次性交付完整结果并停止。[/PREPARE_STEP]'};
- entries.tisya_user_relation+='\n[MODE.AUTHORIZE]\n@MODE '+task+'\n'+spec[1]+'\n[/MODE.AUTHORIZE]';
- const prompts=[...TASK_HEAD.map(id=>({identifier:id,role:role(id),content:entries[id]})),{identifier:'tisya_task_resources',role:'system',content:'',taskResources:true},{identifier:'tisya_task_input',role:'user',content:'',taskInput:true},...TASK_TAIL.map(id=>({identifier:id,role:role(id),content:entries[id]}))].map(p=>({...p,enabled:true}));
+ entries.tisya_user_relation+='\n[MODE.AUTHORIZE]\n@MODE '+task+'\n仅执行 REGISTRY 登记的本任务范围。\n[/MODE.AUTHORIZE]';
+ const prompts=framePrompts(entries,[{identifier:'tisya_task_resources',role:'system',content:'',taskResources:true},{identifier:'tisya_task_input',role:'user',content:'',taskInput:true}]).map(p=>({...p,enabled:true}));
  return {name:'缇斯亚 · '+spec[0],task,prompts,prompt_order:[{character_id:100001,order:prompts.map(p=>({identifier:p.identifier,enabled:true}))}]};
 }
 // Custom presets remain editable and are never rewritten. An incompatible

@@ -12,7 +12,12 @@ const raw=readFileSync(new URL('./fixtures/foundation-sheet/fanglu-r10-user.raw.
 // Explicit authored revision used only in this test; original response stays immutable.
 const appearanceBlank='\n【人物／形貌细目】\n'+sheetCatalog().templates.find(t=>t.id==='origin.character').fields.map((f,i)=>({...f,row:i+1})).filter(f=>f.group==='形貌细目').map(f=>f.row+' '+f.label+'：').join('\n');
 // New-revision test fixture adds only blank cells required by this catalog; frozen raw is untouched.
-const revised=raw.replace('7 参与者：方鹿；阿禾；乘客','7 参与者：方鹿；阿禾').replace('听木辨裂适用 = 是\n','听木辨裂适用 = 是；听木辨裂不能听人心或探测北峡水底\n')+appearanceBlank;
+let revised=raw.replace('7 参与者：方鹿；阿禾；乘客','7 参与者：方鹿；阿禾').replace('听木辨裂适用 = 是\n','听木辨裂适用 = 是；听木辨裂不能听人心或探测北峡水底\n')+appearanceBlank;
+// Explicit blank optional additions in existing groups, without editing the frozen model response.
+for(const field of sheetCatalog().templates.find(t=>t.id==='origin.character').fields.map((f,i)=>({...f,row:i+1})).filter(f=>f.definition.displayOrder===1&&f.group!=='形貌细目')){
+ const title='【人物／'+field.group+'】',at=revised.indexOf(title),end=revised.indexOf('【',at+title.length),pos=end<0?revised.length:end;
+ revised=revised.slice(0,pos)+field.row+' '+field.label+'：\n'+revised.slice(pos);
+}
 async function fixture(){
  const data=emptyConfig(),context={chatId:'intake-test',characterId:0,characters:[{avatar:'test.png',name:'测试'}],chat:[{is_user:false,mes:'开场'}],extensionSettings:{[KEY]:data}};
  data.worlds[worldKey(context)]=defaultWorld();const store=createStore({getContext:()=>context,persist:async()=>true}),saved=new Map(),binding={primary:'',additional:[]};let uid=1,writes=0,before=null,after=null,readFailure=false;

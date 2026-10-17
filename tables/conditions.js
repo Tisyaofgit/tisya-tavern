@@ -50,6 +50,7 @@ export function conditionMatches(node,c){
 const any=(...ops)=>({op:'any',args:ops.map(op=>typeof op==='string'?{op}:op)});
 export function tableCondition(id){
  if(['scene','facts','tasks','timers','clues','preferences','holdings'].includes(id))return {op:'always'};
+ if(id==='activities')return any({op:'oneOf',field:'状态',value:['计划','进行','等待']},'context','cue','tagged','retrieved');
  if(id==='state')return {op:'not',arg:{op:'eq',field:'有效性',value:'失效'}};
  if(id==='objects')return any('context','cue','tagged','retrieved','rule');
  if(id==='events')return any('cue','tagged','retrieved');if(id==='native_cells')return {op:'not',arg:{op:'always'}};

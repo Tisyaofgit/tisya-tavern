@@ -4,6 +4,8 @@ import {reconcileProposal} from './reconcile.js';
 
 // A read-only compiler. It never initializes storage, guesses values or writes rows.
 export const foundationCatalog=()=>copy(FOUNDATION_DEFINITIONS);
+// Stable default rows precede optional additions; groups and storage paths stay unchanged.
+export const orderedFields=fields=>fields.sort((a,b)=>(a.definition.displayOrder??0)-(b.definition.displayOrder??0));
 export function foundationDefinition(registry,kind,table,path){
  let fields=registry.tables.find(t=>t.id===table)?.fields,def;
  check(fields&&Array.isArray(path)&&path.length,'模板字段路径无效');
@@ -32,11 +34,11 @@ export function foundationTemplatePlan(kind,{registry=defaultRegistry()}={}){
  });
  const prepared=reconcileProposal(registry,{changes:[],schemaChanges},{inferSchemaFields:false});
  const groups=views.map(view=>({...copy(view),fields:view.paths.map(path=>({path,definition:foundationDefinition(prepared.registry,kind,view.table,path)}))}));
- const fieldIndex=groups.flatMap(g=>g.fields.flatMap(({path,definition})=>{
+ const fieldIndex=orderedFields(groups.flatMap(g=>g.fields.flatMap(({path,definition})=>{
   const out=[];leaves(definition,path,out);
   return out.map(x=>({...x,group:g.id,groupLabel:g.label,table:g.table,layer:'原点',
    inheritance:g.id==='secrets'?'事实单独存档；人物认知另有接触依据':g.id==='relationships'?'保留前史关系；新U当前关系须重新核对':'引用已确认原点版本；不覆盖当前会话增量'}));
- }));
+ })));
  return {format:'tisya.foundation-template-plan/1',kind,status:catalog.status,registry:prepared.registry,
   schemaChanges,extensions:prepared.extensions,groups,fieldIndex,
   expressionTemplate:{format:'tisya.foundation-expression-template/1',kind,status:'未填写',

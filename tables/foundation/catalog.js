@@ -1,7 +1,7 @@
 import {foundationCatalog,foundationTemplatePlan,foundationSessionTemplates} from '../foundation-templates.js';
 export function sheetCatalog(){
  const c=foundationCatalog(),templates=[];
- const fields=fs=>fs.filter(f=>!f.definition.formula).map(f=>({key:f.path.filter(p=>p!=='属性').join('·'),label:f.path.at(-1),path:f.path,group:f.groupLabel??'字段',definition:f.path.join('.')==='属性.形貌.整体'?{...f.definition,description:'仅补充来源明确且未由形貌细目或辨识特征承载的稳定整体印象，不重复已填细格；当前衣着、伤势与情绪归会话状态，未知留空。'}:f.definition}));
+ const fields=fs=>fs.filter(f=>!f.definition.formula).map(f=>({key:f.path.filter(p=>p!=='属性').join('·'),label:f.path.at(-1),path:f.path,group:f.groupLabel??'字段',definition:f.definition}));
  templates.push({id:'core',layer:'基点',label:'基点',table:'core-draft',groups:['核心'],fields:c.coreSlots.map(s=>({key:s.label,label:s.label,path:[s.id],group:'核心',definition:{type:'text',description:s.prompt}}))});
  for(const kind of Object.keys(c.originViews)){
   const p=foundationTemplatePlan(kind),objectFields=p.fieldIndex.filter(f=>f.table==='objects'),factFields=p.fieldIndex.filter(f=>f.table==='facts');
@@ -10,5 +10,5 @@ export function sheetCatalog(){
  }
  for(const s of foundationSessionTemplates())templates.push({id:'session.'+s.table,layer:'会话',label:s.label,table:s.table,groups:['字段'],fields:fields(s.fields)});
  for(const t of templates)if(new Set(t.fields.map(f=>f.key)).size!==t.fields.length)throw Error('字段名重复：'+t.id);
- return {version:'FT21-W50-appearance/1',templates};
+ return {version:'FT35-W55-fields/1',templates};
 }

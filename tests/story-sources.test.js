@@ -1,3 +1,4 @@
+import {recordSourceKind,sourceKind} from '../tables/source-provenance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sources,precedingUserSource} from '../tables/ledger.js';
@@ -32,4 +33,16 @@ test('new frozen canon keeps full raw tool history but only story sources; legac
  const legacy=structuredClone(anchor);delete legacy.canon.snapshot.sourcePolicy;legacy.canon.snapshot.chain=await sources(rows);legacy.canon.coverage.unarchivedSources=legacy.canon.snapshot.chain.filter(s=>s.role==='assistant').map(({key,floor})=>({key,floor}));
  legacy.canon.sha256=await digest({...legacy,canon:{...legacy.canon,sha256:undefined}});
  assert.equal((await validateFrozenCanon(legacy)).selectedSources,3);
+});
+
+test('mode provenance excludes utility and its input while preserving raw hashes and separate swipe identities',async()=>{
+ const rows=[{is_user:true,mes:'讨论一下'},{mes:'他可能会离开。'},{is_user:true,mes:'继续剧情'},{mes:'他关上门。'}];
+ await recordSourceKind(rows[1],{kind:'utility',mode:'discussion'});await recordSourceKind(rows[3],{kind:'story',mode:'narrative'});
+ const raw=await sources(rows),projection=await storySources(rows);
+ assert.deepEqual(projection.chain,raw.slice(2));assert.deepEqual(projection.operationalKeys,raw.slice(0,2).map(s=>s.key));
+ rows[1].mes='另一候选';rows[1].swipe_id=1;assert.equal(await sourceKind(rows[1]),'unknown');
+ assert.equal((await storySources(rows)).unclassified[0].kind,'unknown');
+ await recordSourceKind(rows[1],{kind:'story',mode:'manual-confirmation'});assert.equal(await sourceKind(rows[1]),'story');
+ rows[1].mes='他可能会离开。';rows[1].swipe_id=0;assert.equal(await sourceKind(rows[1]),'utility');
+ const clone=structuredClone(rows);assert.deepEqual((await storySources(clone)).chain,(await storySources(rows)).chain);
 });
