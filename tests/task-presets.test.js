@@ -87,6 +87,11 @@ test('ordinary and review archive wires share whole-row knowledge scope without 
   const messages=taskMessages({preset:pairedPreset({task,configuration,archiveProposal}),task,input:material});
   const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
   assert.equal(norms.split('@KNOWLEDGE ').length-1,1,task+' knowledge contract must occur exactly once');
+  assert.equal(norms.split('@COVERAGE ').length-1,1,task+' coverage contract must occur exactly once');
+  assert.match(norms,/objectArchive owns objects\/facts/);
+  assert.match(norms,/historyImport reuses the preceding object proposal/);
+  assert.match(norms,/objects introduced, used, moved or transferred/);
+  assert.match(norms,/Do not split every incidental noun/);
   const knowledge=norms.slice(norms.indexOf('@KNOWLEDGE '),norms.indexOf('\n@EVIDENCE '));
   if(shared===undefined)shared=knowledge;else assert.equal(knowledge,shared);
   assert.match(norms,/each ID grants knowledge of the whole row, not selected fields/);
