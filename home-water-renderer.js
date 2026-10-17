@@ -3,6 +3,7 @@ import {prepareHair} from './home-hair-motion.js';
    The shared atmosphere owns the background; eyelids keep their own masks.
    Coordinate space is the actual 853 x 1844 artwork. */
 const W=853,H=1844,TAU=Math.PI*2;
+const MALE_LIDS=[[288,144.8,21,11,.44],[331,164,11,8,-.65]];
 const smooth=x=>{const t=Math.max(0,Math.min(1,x));return t*t*(3-2*t);};
 // Kept for the existing independent material-inspection interface.
 const shift=()=>0,shiftY=()=>0;
@@ -68,7 +69,21 @@ function draw(ctx,assets,time=0,options={}){
     }else if(backdrop!=='transparent'){ctx.fillStyle=backdrop;ctx.fillRect(0,0,W,H);}
     const art=assets[gender];ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     if(options.hair)options.hair.draw(ctx,options.hairEnabled===false?0:time);else ctx.drawImage(art,0,0,W,H);
-    if(options.blink!==false&&assets[gender+'Blink']){const amount=blinkAmount(time,gender);if(amount>0){ctx.save();ctx.globalAlpha=amount;ctx.drawImage(assets[gender+'Blink'],240,110,110,120);ctx.restore();}}
+    const amount=options.blink===false?0:blinkAmount(time,gender);
+    if(gender==='male'&&assets.maleEyes&&amount<1){
+        for(const [x,y,rx,ry,angle]of MALE_LIDS){
+            ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.rect(-rx,-ry+ry*2*amount,rx*2,ry*2*(1-amount));ctx.clip();ctx.rotate(-angle);ctx.translate(-x,-y);ctx.drawImage(assets.maleEyes,245,115,110,65);ctx.restore();
+        }
+    }
+    if(options.blink!==false&&assets[gender+'Blink']){if(amount>0){
+        if(gender==='male'){
+            // Reveal the lid over the iris rather than cross-fading two eye
+            // states: the still-visible iris remains sharp during a blink.
+            for(const [x,y,rx,ry,angle]of MALE_LIDS){
+                ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.rect(-rx,-ry,rx*2,ry*2*amount);ctx.clip();ctx.rotate(-angle);ctx.translate(-x,-y);ctx.drawImage(assets.maleBlink,240,110,110,120);ctx.restore();
+            }
+        }else{ctx.save();ctx.globalAlpha=amount;ctx.drawImage(assets[gender+'Blink'],240,110,110,120);ctx.restore();}
+    }}
     if(options.layout&&assets.layout)ctx.drawImage(assets.layout,0,0,W,H);
     if(options.footer!==false)ctx.drawImage(assets.footer,245,1600,585,210);
     ctx.restore();
@@ -77,11 +92,11 @@ function controller(canvas,assets,options={}){
     const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)throw Error('Canvas 2D is unavailable.');
     const document=canvas.ownerDocument,window=document.defaultView,media=window.matchMedia('(prefers-reduced-motion: reduce)');
     const makeCanvas=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
-    const hair=prepareHair(assets[options.gender||'female'],options.gender||'female',makeCanvas,options.seed);
+    const hair=prepareHair(assets[options.gender||'female'],options.gender||'female',makeCanvas,options.seed,canvas.getBoundingClientRect?.().width||430);
     const requestAnimationFrame=window.requestAnimationFrame.bind(window),cancelAnimationFrame=window.cancelAnimationFrame.bind(window);
     let config={gender:'female',layout:false,backdrop:'transparent',footer:false,bubbleField:createBubbleField(options.seed),hair,...options};
     let enabled=true,destroyed=false,frame=0,elapsed=0,last=null,lastDraw=0;
-    function paint(){draw(ctx,assets,elapsed,{...config,blink:enabled&&!media.matches,hairEnabled:enabled&&!media.matches});}
+    function paint(){hair.setDisplayWidth(canvas.getBoundingClientRect?.().width||430);draw(ctx,assets,elapsed,{...config,blink:enabled&&!media.matches,hairEnabled:enabled&&!media.matches});}
     function tick(now){if(destroyed)return;if(!enabled||document.hidden||media.matches){frame=0;last=null;paint();return;}if(last!==null)elapsed+=(now-last)/1000;last=now;if(now-lastDraw>=1000/30){paint();lastDraw=now;}frame=requestAnimationFrame(tick);}
     function sync(){cancelAnimationFrame(frame);last=null;if(enabled&&!document.hidden&&!media.matches)frame=requestAnimationFrame(tick);else paint();}
     const blur=()=>sync(),focus=()=>sync();

@@ -21,9 +21,9 @@ export function mountHomeArt(document, container, {gender, playing=true, effects
         function finish(error){window.clearTimeout(timeout);image.onload=null;image.onerror=null;pending.delete(entry);error?reject(error):resolve(image);}
         image.onload=()=>finish(image.naturalWidth!==width||image.naturalHeight!==height?new Error(`水相素材尺寸不匹配：${name}，请更新完整扩展`):null);image.onerror=()=>finish(new Error(`水相素材缺失：${name}，请更新完整扩展`));image.src=homeAsset(name);
     });
-    const ready=Promise.all([load(`${gender}-water.webp`),load(`${gender}-blink.webp`,110,120)]).then(([water,blink])=>{
+    const ready=Promise.all([load(`${gender}-water.webp`),load(`${gender}-blink.webp`,110,120),...(gender==='male'?[load('male-eye-detail.webp',440,260)]:[])]).then(([water,blink,eyes])=>{
         if(disposed)return;
-        renderer=controller(canvas,{[gender]:water,[gender+'Blink']:blink},{gender,backdrop:'transparent'});
+        renderer=controller(canvas,{[gender]:water,[gender+'Blink']:blink,maleEyes:eyes},{gender,backdrop:'transparent'});
         renderer.setPlaying(playing);
     }).catch(error=>{if(!disposed)onError?.(error);});
     return {ready,setPlaying(value){playing=!!value;renderer?.setPlaying(playing);atmosphere?.setPlaying(playing);},setEffects(value){atmosphere?.setEffects(value);},dispose(){

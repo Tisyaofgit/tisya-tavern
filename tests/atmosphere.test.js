@@ -63,9 +63,9 @@ test('disabled or disposed audio cannot revive after a delayed unlock',async()=>
  const f=setup();let unlock,starts=0;f.w.AudioContext=class{state='suspended';resume(){return new Promise(resolve=>{unlock=resolve;});}createOscillator(){starts++;throw Error('must not reach');}close(){return Promise.resolve();}};
  const sound=createBubbleAudio(f.d,{onError:e=>f.errors.push(e)}),pending=sound.play();sound.setEnabled(false);unlock();assert.equal(await pending,false);assert.equal(starts,0);sound.dispose();assert.equal(await sound.play(),false);assert.deepEqual(f.errors,[]);await f.close();
 });
-test('hair group rotation is rooted, bounded and continuous across random targets, and neutral is exact',()=>{
- for(const gender of ['female','male']){assert.deepEqual(hairPose(0,gender,42),[0,0,0]);let previous=hairPose(0,gender,42);
-  for(let t=.016;t<150;t+=.016){const pose=hairPose(t,gender,42);for(let i=0;i<pose.length;i++){assert(Math.abs(pose[i])<=HAIR_GROUPS[gender][i].limit);assert(Math.abs(pose[i]-previous[i])<.0001);}previous=pose;}
+test('hair targets are smooth and bounded to a five CSS-mm total envelope across viewport sizes',()=>{
+ for(const gender of ['female','male'])for(const width of [320,430,768]){assert.deepEqual(hairPose(0,gender,42,width),[0,0,0]);let previous=hairPose(0,gender,42,width);
+  for(let t=.016;t<150;t+=.016){const pose=hairPose(t,gender,42,width);for(let i=0;i<pose.length;i++){const group=HAIR_GROUPS[gender][i],radius=Math.max(...group.points.map(([x,y])=>Math.hypot(x-group.pivot[0],y-group.pivot[1]))),scale=width/853;assert(Math.abs(pose[i])<=group.limit);assert(2*radius*Math.sin(Math.abs(pose[i])/2)*scale<=2.5*96/25.4+1e-8);assert(Math.abs(pose[i]-previous[i])*radius*scale<=12*.016);}previous=pose;}
   assert.notDeepEqual(hairPose(20,gender,42),hairPose(20,gender,43));assert.deepEqual(hairPose(20,gender,42),hairPose(20,gender,42));
  }
 });
