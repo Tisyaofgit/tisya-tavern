@@ -1,3 +1,4 @@
+import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey} from '../config/core.js';
@@ -15,7 +16,7 @@ function fixture(nativeConfig=null){
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async n=>{assert.equal(n,'current');return structuredClone(binding);},rebindCharWorldbooks:async(n,b)=>{assert.equal(n,'current');Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
- const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return task==='ruleReview'?{issues:[]}:responder(task,JSON.parse(text));},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
+ const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return task==='ruleReview'?{issues:[]}:simpleTaskAnswer(task,JSON.parse(text),await responder(task,JSON.parse(text)));},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
  const set=async fields=>{const snap=store.read();snap.data.worlds[snap.key].tables={...snap.world.tables,...fields};await store.save(snap.data,snap.revision,snap.key);};
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }

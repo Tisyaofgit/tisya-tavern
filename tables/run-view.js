@@ -1,6 +1,7 @@
+import {elements} from '../ui/dom.js';
 import {safeDiagnostic} from '../config/stream-response.js';
 export function mountRunView(document,parent,{service,onMinimize=()=>{}}){
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  const root=el('details');root.className='tisya-run-view';root.setAttribute('aria-label','辅助任务进度');
  const summary=el('summary','尚无运行中的任务'),help=el('small','可收起返回聊天；重新打开缇斯亚助手即可查看结果。切换会话会停止旧任务，关闭应用不能继续运行。'),actions=el('div'),stop=el('button','停止当前任务'),minimize=el('button','收起并返回聊天');
  summary.setAttribute('role','status');summary.setAttribute('aria-live','polite');actions.className='tisya-run-actions';stop.type=minimize.type='button';actions.append(stop,minimize);root.append(summary,help);

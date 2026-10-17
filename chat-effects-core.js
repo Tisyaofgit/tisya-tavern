@@ -1,4 +1,4 @@
-'use strict';
+// Generated once from hash-checked vendor/shared/chat-effects-options.cjs.
 // Optional fields on the existing extensions display record. Resolving a
 // registered default never writes it into an existing chat or saved profile.
 const EFFECTS=Object.freeze({水纹:'water',涟漪:'ripples',斜雨:'rain',落雪:'snow',萤火:'fireflies'});
@@ -13,4 +13,4 @@ function selectedEffects(values,time){
  if(values.背景特效模式!=='自选组合')throw Error('TISYA_EFFECT_MODE');
  return Object.entries(EFFECTS).filter(([key])=>values[key]===true).map(([,id])=>id);
 }
-module.exports={EFFECTS,CHAT_FIELDS,CHAT_DEFAULTS,selectedEffects};
+export {EFFECTS,CHAT_FIELDS,CHAT_DEFAULTS,selectedEffects};

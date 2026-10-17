@@ -1,8 +1,9 @@
+import {failTransport as fail} from './transport-error.js';
 import {prepareToolTextMode} from './tool-text-mode.js';
 import {nativeRequestBody} from '../vendor/vertex-transport/vertex-native.mjs';
 import {detectNativeProtocol} from './native-protocol-guard.js';
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
-const fail=(code,message)=>{throw Object.assign(new Error(message),{code:'TISYA_TRANSPORT_'+code});};
+
 // Decide once before sending. Native modes retain their search/media/schema and
 // tool choice; a response failure never starts a replacement request.
 export function prepareUniversalTransport(payload,{isTauri=true}={}){

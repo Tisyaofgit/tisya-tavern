@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 import {CHAT_DEFAULTS,CHAT_FIELDS,JOURNEY_DEFAULTS,JOURNEY_FIELDS} from './visual-core.js';
 
 // Global display preferences belong to the existing native extension settings.
@@ -19,7 +20,7 @@ export function withDisplayOverrides(settings,custom){
 }
 export function mountDisplaySettings(document,container,{getSettings,save,onApplied=()=>{}}){
  let alive=true,busy=false,base=JSON.stringify(displayOverrides(getSettings()));
- const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const make=elements(document);
  const form=make('form'),fields=new Map(),status=make('p');status.setAttribute('role','status');form.className='tisya-display-settings';
  const initial=JSON.parse(base);
  for(const [key,values]of Object.entries(DISPLAY_FIELDS)){

@@ -67,3 +67,31 @@ export function simpleAdaptationAnswer(answer,{members=[],items=[],links=[]}){
  links.forEach(({link,target=1,archive,expression})=>rows.push('【关联表现：'+link+'：'+target+'】','1 档案：'+archive,'2 原句：'+expression));
  return answer.slice(0,at)+rows.join('\n')+'\n'+answer.slice(at);
 }
+
+/** Test-only response fixture writer. Production never accepts operation JSON. */
+export async function simpleTaskAnswer(task,input,response){
+ const {ARCHIVE_TABLE_TASKS}=await import('../../tables/task-kinds.js');
+ if(!ARCHIVE_TABLE_TASKS.includes(task)||typeof response==='string')return response;
+ const {prepareCompactFill}=await import('../../tables/compact-fill.js');
+ const {mapRowReferences}=await import('../../tables/schema.js');
+ const plan=prepareCompactFill(task,input),changes=task==='templateInit'?[...(response.base?.changes??[]),...(response.initial?.changes??[])]:response.changes??[];
+ const rows=[...plan.rows,...changes.filter(op=>!(input.currentRows??input.rows??[]).some(row=>row.id===op.id)).map(op=>({id:op.id,table:op.table,values:op.values}))];
+ const label=id=>{if(['读者','记录整理','叙事组织'].includes(id))return id;const row=rows.find(row=>row.id===id);if(!row)return '未登记／'+id;const schema=plan.schema.find(s=>s.table===row.table&&(row.table!=='objects'||s.type===row.values.类型));return (schema?.form??(row.table==='objects'?plan.registry.types.find(t=>t.id===row.values.类型)?.name:plan.registry.tables.find(t=>t.id===row.table)?.name)??row.table)+'／'+row.values.名称;};
+ const parts=[];
+ for(const change of changes){
+  const prior=rows.find(row=>row.id===change.id),values={...(prior?.values??{}),...change.values},schema=plan.schema.find(s=>s.table===change.table&&(change.table!=='objects'||s.type===values.类型));
+  if(!schema)throw Error('夹具没有对应业务表：'+change.table);
+  const patch=structuredClone({...change.values,...(change.table==='objects'?{类型:values.类型}:{})});mapRowReferences({table:change.table,values:patch},plan.registry,label);
+  const fields=flatten(patch);delete fields.名称;delete fields.类型;
+  const valuesByLabel={来源依据:change.evidence,读者:(change.access?.readers??prior?.access?.readers??[]).map(label),知情者:(change.access?.knowers??prior?.access?.knowers??[]).map(label),...fields,...(change.delete?{处理方式:'撤销'}:change.id?.startsWith('new:')&&!plan.rows.some(row=>row.id===change.id)?{处理方式:'新建'}:{}),...(change.unset?{清空字段:change.unset}:{})};
+  parts.push('【'+schema.form+'：'+values.名称+'】');
+  for(const [field,value]of Object.entries(valuesByLabel)){
+   const cell=schema.fields.find(f=>f.label===field);if(!cell){parts.push('999 '+field+'：'+text(value));continue;}
+   parts.push(cell.row+' '+field+'：'+(['json','array','map','object'].includes(cell.definition.type)?JSON.stringify(value):text(value)));
+  }
+ }
+ const pending=task==='templateInit'?[...(response.base?.pending??[]),...(response.initial?.pending??[])]:response.pending??[];
+ if(!Array.isArray(pending))return '不合法的待处理填写';
+ parts.push('【完成】','1 状态：完成','2 待处理：'+(pending.length?pending.map(x=>typeof x==='string'?x:x.reason??x.error??JSON.stringify(x)).join('；'):'无'),'3 补读记录：'+(response.needsRows?.length?response.needsRows.map(label).join('；'):'无'));
+ return parts.join('\n');
+}

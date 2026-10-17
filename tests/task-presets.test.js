@@ -17,7 +17,7 @@ function compact(task,value){const plan=prepareCompactFill(task,value);return {.
 function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return JSON.parse(text.split('\n').slice(2,-1).join('\n'));}
 
 test('remaining legacy operations retain their own authorization and material routing',()=>{
- assert.deepEqual(Object.keys(TABLE_MODES).sort(),Object.keys(TASK_PROFILES).sort());
+ assert.deepEqual(Object.keys(TABLE_MODES).sort(),[...Object.keys(TASK_PROFILES),...SIMPLE_TABLE_TASKS].sort());
  const tasks=Object.keys(TABLE_MODES).filter(task=>!SIMPLE_TABLE_TASKS.includes(task)),authorizations=new Set();
  for(const task of tasks){
   const p=pairedPreset({task,configuration}),messages=taskMessages({preset:p,task,input:{registry:{tables:[],types:[]},currentRows:[]}});

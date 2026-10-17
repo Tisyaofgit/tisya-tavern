@@ -1,10 +1,11 @@
+import {elements} from './ui/dom.js';
 export const ACTION_MODES=Object.freeze([{id:'append',label:'续接输入框',short:'续接'},{id:'replace',label:'替换输入框',short:'替换'},{id:'send',label:'直接发送',short:'直发'}]);
 const modeFor=id=>{const mode=ACTION_MODES.find(row=>row.id===id);if(!mode)throw Error('行动写入方式无效');return mode;};
 
 // One explicit mode applies to a subsequent action click. Opening or changing
 // the menu never changes the draft or sends anything.
 export function mountActionChoice(document,container,{rows,onChoose,getMode,setMode=()=>{},quill,onError=()=>{}}){
- const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+ const make=elements(document);
  let alive=true,busy=false,mode=getMode?getMode():'append';const readMode=()=>getMode?getMode():mode;modeFor(mode);
  const controls=make('div',undefined,'action-mode-control'),toggle=make('button',undefined,'action-mode-toggle'),current=make('span'),menu=make('div',undefined,'action-mode-menu'),list=make('div',undefined,'actions tisya-reader-actions'),feedback=make('p','点击行动，按羽毛笔旁的当前模式执行。','action-feedback');
  toggle.type='button';toggle.setAttribute('aria-label','选择行动写入方式');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-haspopup','menu');

@@ -43,8 +43,8 @@ test('text cells decode exactly once preserving CRLF, leading quotes, edge white
   assert.ok(messages[1].content.includes(evidence));assert.ok(!messages[2].content.includes('续行'));assert.ok(messages[2].content.includes('只解码一次'));
  }
  const {privateplan}=single();assert.throws(()=>parseSimpleCore(singleAnswer().replace(field(3,'依据',quote),'3 依据："未闭合'),privateplan),/转义/);
- // Compatibility with already generated indented forms; never taught to new requests.
- assert.equal(parseSimpleCore(singleAnswer().replace(field(3,'依据',quote),'3 依据：'+quote.replaceAll('\n','\n  ')),privateplan).core.traits[0].evidence,quote);
+ // Explicit literal block uses the same grammar as archive and genesis forms.
+ assert.equal(parseSimpleCore(singleAnswer().replace(field(3,'依据',quote),'3 依据：|\n  '+quote.replaceAll('\n','\n  ')),privateplan).core.traits[0].evidence,quote);
 });
 
 test('three business messages preserve all selected prose and map recursive references without internal IDs',()=>{

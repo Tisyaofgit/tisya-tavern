@@ -1,9 +1,12 @@
+import {readResponseText} from './response-reader.js';
+import {transportError} from './transport-error.js';
+import {failTransport as fail} from './transport-error.js';
 // Explicit opt-in text transport alongside host-owned function tools.
 // No executor, provider request, retry or history mutation lives here.
 import {prepareAntiTruncation,CONTINUATION_INSTRUCTION} from '../vendor/vertex-transport/anti-truncation.mjs';
 import {createSseParser} from '../vendor/vertex-transport/wire.mjs';
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
-const fail=(code,message)=>{throw Object.assign(new Error(message),{code:'TISYA_TRANSPORT_'+code});};
+
 
 export function prepareToolTextMode(payload,included,{continuation=false}={}){
  if(payload.functions?.length||payload.function_call!=null)fail('WRAP_LEGACY','正文工具包装不支持旧式 functions；请使用标准函数工具');
@@ -64,14 +67,7 @@ export function verifyBufferedToolMirrors(value,plan){
 // A mixed-tool stream is collected once so no synthetic call can escape to the
 // host executor. The selected original bytes are then checked by existing parsers.
 export async function selectToolTextStream(response,plan,status,{signal,guard,limit}){
- const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true}),chunks=[];
- let size=0,rejectAbort,raw='';
- const interrupted=new Promise((_,reject)=>{rejectAbort=reject;});interrupted.catch(()=>{});
- const abort=()=>{rejectAbort(signal.reason);reader.cancel(signal.reason).catch(()=>{});};
- signal.addEventListener('abort',abort,{once:true});
- try{
-  for(;;){guard();signal.throwIfAborted();const r=await Promise.race([reader.read(),interrupted]);guard();signal.throwIfAborted();if(r.done)break;size+=r.value.byteLength;if(size>limit)fail('OUTPUT_LIMIT','正文工具响应超过本地读取限制');chunks.push(r.value);raw+=decoder.decode(r.value,{stream:true});}
-  raw+=decoder.decode();
+ const {text:raw,chunks}=await readResponseText(response,{signal,guard,limit,captureBytes:true,limitError:()=>transportError('OUTPUT_LIMIT','正文工具响应超过本地读取限制')});
   const names=[],calls=new Map();let plainText=false;
   const parser=createSseParser(({data})=>{
    if(!data||data.trim()==='[DONE]')return;
@@ -99,5 +95,4 @@ export async function selectToolTextStream(response,plan,status,{signal,guard,li
   if(selected==='synthetic'&&plainText)fail('WRAP_MIXED_TEXT','正文同时出现在工具内外，回复未被接纳');
   status.toolTextTurn=selected;status.bufferedToolStream=true;
   return {response:new Response(new Blob(chunks),{status:response.status,headers:response.headers}),selected};
- }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
 }

@@ -1,3 +1,5 @@
+import {readResponseText} from './response-reader.js';
+import {transportError} from './transport-error.js';
 import {classifyToolTurn,hasOutsideToolText,verifyBufferedToolMirrors} from './tool-text-mode.js';
 import {createSseParser,sseData,transformSse} from '../vendor/vertex-transport/wire.mjs';
 import {inspectCompletion} from '../vendor/vertex-transport/completion-integrity.mjs';
@@ -30,7 +32,7 @@ export function transportFailure(value){
  else if(/incomplete|interrupted|missing_finish/i.test(code))message='回复中途结束，缺少完整完成信息；已显示片段未作为完整结果归档';
  else if(/data_after|duplicate_finish/i.test(code))message='完成信息之后仍有异常数据，回复未被接纳';
  else if(/invalid|malformed/i.test(code))message='上游响应格式损坏，回复未被接纳';
- return Object.assign(new Error(message),{code:code.startsWith('TISYA_')?code:'TISYA_TRANSPORT_'+code.toUpperCase()});
+ return transportError(code.startsWith('TISYA_')?code:code.toUpperCase(),message);
 }
 
 // Count wire bytes and fixed terminal metadata only. Never retain response text
@@ -181,13 +183,8 @@ function normalizeCohere(value,status,{hostReader=false}={}){
 
 export async function bufferedResponse(response,plan,status,{signal,guard,limit}){
  if(/text\/event-stream/i.test(response.headers.get('content-type')??''))throw transportFailure('invalid_buffered_response');
- const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true});let raw='',size=0,rejectAbort;
- const interrupted=new Promise((_,reject)=>{rejectAbort=reject;});interrupted.catch(()=>{});
- const abort=()=>{rejectAbort(signal.reason??transportFailure('cancelled'));reader.cancel(signal.reason).catch(()=>{});};
- signal.addEventListener('abort',abort,{once:true});
- try{
-  for(;;){guard();signal.throwIfAborted();const r=await Promise.race([reader.read(),interrupted]);guard();signal.throwIfAborted();if(r.done)break;size+=r.value.byteLength;if(size>limit)throw transportFailure('output_limit');raw+=decoder.decode(r.value,{stream:true});}
-  raw+=decoder.decode();let value;try{value=JSON.parse(raw);}catch{throw transportFailure('invalid_json');}
+ const {text:raw}=await readResponseText(response,{signal,guard,limit,limitError:()=>transportFailure('output_limit')});
+  let value;try{value=JSON.parse(raw);}catch{throw transportFailure('invalid_json');}
   if(Number.isInteger(value?.error?.code))status.upstreamStatus=value.error.code;
   if(!object(value)||value.error)throw transportFailure('upstream_error');
   const original=value;
@@ -240,5 +237,4 @@ export async function bufferedResponse(response,plan,status,{signal,guard,limit}
   }
   Object.assign(status,{delivery:toolTurn?'tools':toolName?'wrapped':'direct',outcome:checked.integrity.outcome,toolTurn:!!toolTurn,finishReason:checked.integrity.finishReason});
   return new Response(JSON.stringify(plan.protocol==='cohere'&&plan.hostReader||plan.mode==='verify-tools'||['tool-text-tools','universal'].includes(plan.mode)&&toolTurn?original:value),{headers:{'content-type':'application/json'}});
- }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
 }

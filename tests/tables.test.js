@@ -1,3 +1,4 @@
+import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import {createPersonaGateway,personaProjection} from '../tables/persona.js';
 import {assembleArchiveBook} from '../tables/archive-book.js';
 import {test} from 'node:test';
@@ -18,7 +19,7 @@ function fixture(nativeConfig=null){
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async n=>{assert.equal(n,'current');return structuredClone(binding);},rebindCharWorldbooks:async(n,b)=>{assert.equal(n,'current');Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
- const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return task==='ruleReview'?{issues:[]}:responder(task,JSON.parse(text));},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
+ const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return task==='ruleReview'?{issues:[]}:simpleTaskAnswer(task,JSON.parse(text),await responder(task,JSON.parse(text)));},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
  const set=async fields=>{const snap=store.read();snap.data.worlds[snap.key].tables={...snap.world.tables,...fields};await store.save(snap.data,snap.revision,snap.key);};
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
@@ -27,7 +28,7 @@ async function initializeBase(f,changes){f.responder((task,input)=>{assert.equal
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
 test('archive retry uses only the current unresolved items while preserving earlier receipts',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('甲关上门。'),user('继续')];
- const first={reason:'门锁来源待核'},second={reason:'门外人物待核'};
+ const first='门锁来源待核',second='门外人物待核';
  f.responder(()=>({changes:[],pending:[first,second]}));await f.service.archive();
  f.responder((task,input)=>{assert.deepEqual(input.pending,[first,second]);return {changes:[],pending:[second]};});
  const partial=await f.makeService().archive();assert.deepEqual(partial.pending,[second]);
@@ -38,7 +39,7 @@ test('archive retry uses only the current unresolved items while preserving earl
 });
 test('failed retry retains unresolved proposal details without duplicating an identical failure',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('门关了。'),user('继续')];
- const unresolved={reason:'门锁待核',proposals:[{id:'new:lock',values:{名称:'门锁'}}]};
+ const unresolved='门锁待核（拟建档案：门锁，尚未确认）';
  f.responder(()=>({changes:[],pending:[unresolved]}));await f.service.archive();
  f.responder(()=>{throw Error('连接中断');});await f.makeService().archive();await f.makeService().archive();
  const pending=(await f.service.scan())[0].pending;assert.equal(pending.length,2);assert.deepEqual(pending[0],unresolved);assert.equal(pending[1].reason,'连接中断');
@@ -58,7 +59,7 @@ test('turning automatic archive off still permits explicit manual archival',asyn
  const f=fixture();await f.service.initialize();await f.set({archive:false});f.c.chat=[ai('甲关上门。'),user('继续')];
  f.responder(()=>({changes:[]}));const automatic=await f.service.archive({scope:'generation'});assert.equal(automatic.run.status,'disabled');assert.equal(f.calls.length,0);
  const result=await f.service.archive({includeLatest:true});
- assert.equal(result.run.status,'complete');assert.equal(result.archived,1);assert.equal(f.calls.length,1);
+ assert.equal(result.run.status,'complete');assert.equal(result.archived,1,JSON.stringify(result));assert.equal(f.calls.length,1);
 });
 test('incomplete archive blocks generation before plot planning or context installation',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true});f.c.chat=[ai('门仍未打开。'),user('继续')];
@@ -66,7 +67,7 @@ test('incomplete archive blocks generation before plot planning or context insta
  await assert.rejects(f.service.prepare(),/第 1 层.*归档.*未完成/);
  assert.deepEqual(f.calls.filter(x=>x.task!=='ruleReview').map(x=>x.task),['tableArchive']);
  assert.equal(f.service.preview(),null);assert.equal(f.prompts.at(-1).text,'');
- const info=await f.makeService().inspect();assert.equal(info.archived,0);assert.equal(info.session.commits.at(-1).pending[0].reason,'门锁来源待核');
+ const info=await f.makeService().inspect();assert.equal(info.archived,0);assert.equal(info.session.commits.at(-1).pending[0],'门锁来源待核');
 });
 test('archive request failure cannot become a successful generation and retains the original cause',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true});f.c.chat=[ai('甲关上门。'),user('继续')];
@@ -162,7 +163,7 @@ test('opening user definitions initialize separate companions, relations and kno
  const draft=await service.cardTemplate();assert.equal((await service.inspect()).rows.length,0);await service.saveCardTemplate(draft);
  const after=await f.makeService({persona}).inspect(),player=after.rows.find(r=>r.values.名称==='阿青'),lan=after.rows.find(r=>r.values.名称==='岚'),relation=after.rows.find(r=>r.table==='relations'),known=after.rows.find(r=>r.table==='cognition');
  assert.equal(player.values.描述,original);assert.equal(after.rows.filter(r=>r.table==='objects').length,2);assert.equal(relation.values.主体,player.id);assert.equal(relation.values.对象,lan.id);assert.equal(known.values.主体,lan.id);assert.deepEqual(known.access.knowers,[lan.id]);assert.equal(after.rows.some(r=>r.table==='events'),false);assert.deepEqual(f.c.chat,sourceChat);
- mode='late-ai';const late=await service.cardTemplate(),before=JSON.stringify([...f.saved]);await assert.rejects(service.saveCardTemplate(late),/连续原文证据/);assert.equal(JSON.stringify([...f.saved]),before);
+ mode='late-ai';const before=JSON.stringify([...f.saved]);await assert.rejects(async()=>service.saveCardTemplate(await service.cardTemplate()),/连续原文证据|来源依据/);assert.equal(JSON.stringify([...f.saved]),before);
 });
 test('initialization blockers leave all proposed origin and session writes unsaved',async()=>{
  const f=fixture();f.binding.primary='';f.binding.additional=[];f.c.characters[0].description='岚是守门人。';f.responder(()=>({base:{changes:[op('new:lan','objects',{名称:'岚',类型:'character'},'岚是守门人。')]},initial:{changes:[],pending:['必需定义有冲突']},notes:[]}));
@@ -498,8 +499,13 @@ test('card initialization reuses pinned initial state and discovery context in i
  const draft=await f.service.cardTemplate();assert.equal((await f.service.inspect()).rows.length,0);await f.service.saveCardTemplate(draft);const first=await f.service.inspect();assert.equal(first.origin.bases.length,2);assert.equal(first.rows.filter(x=>x.table==='state').length,1);const gu=first.rows.find(x=>x.values.名称==='顾青');assert(!gu.values.发现环境.地点[0].startsWith('new:'));
  f.c.chatId='new-save';await f.service.initialize();const second=await f.service.inspect();assert.equal(second.rows.length,3);assert.equal(second.rows.find(x=>x.table==='state').values.值,'白鹭驿站');assert.notEqual(second.session.id,first.session.id);assert(second.rows.find(x=>x.values.名称==='顾青').values.发现环境);
 });
-test('valid independent archive items persist while malformed items leave floor pending',async()=>{
- const f=fixture();await f.service.initialize();f.c.chat=[ai('收到信件。'),user('继续'),ai('最新')];f.responder(()=>({changes:[op('new:event','events',{名称:'收信',经过:'收到信件。'},'收到信件。'),op('new:bad','state',{名称:'错误引用',对象:'missing',字段:'伤势',值:'无'},'收到信件。')]}));const result=await f.service.archive({range:{from:1,to:1,limit:1}});const data=await f.service.inspect();assert.equal(data.rows.length,1);assert.equal(result.archived,0);assert(result.pending.length);assert.equal(f.calls.length,2);assert.equal((await f.service.scan())[0].archived,false);
+test('malformed form is atomic while valid records can retain explicit pending work',async()=>{
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('收到信件。'),user('继续'),ai('最新')];
+ const event=op('new:event','events',{名称:'收信',经过:'收到信件。'},'收到信件。');
+ f.responder(()=>({changes:[event,op('new:bad','state',{名称:'错误引用',对象:'missing',字段:'伤势',值:'无'},'收到信件。')]}));
+ const result=await f.service.archive({range:{from:1,to:1,limit:1}});assert.equal((await f.service.inspect()).rows.length,0);assert.equal(result.archived,0);assert(result.pending.length);assert.equal(f.calls.length,1);assert.equal((await f.service.scan())[0].archived,false);
+ f.responder(()=>({changes:[event],pending:['伤势对象待核']}));const partial=await f.service.archive({range:{from:1,to:1,limit:1}});assert.equal(partial.archived,0);assert.equal((await f.service.inspect()).rows.length,1);
+ f.responder(()=>({changes:[]}));await f.service.archive({range:{from:1,to:1,limit:1}});assert.equal((await f.service.inspect()).rows.length,1);assert.equal((await f.service.scan())[0].archived,true);
 });
 test('plot object remains a session overlay and source removal never pollutes origin',async()=>{
  const f=fixture();await f.service.initialize();f.c.chat=[ai('岚在北门。'),user('继续'),ai('最新')];f.responder(()=>({changes:[op('new:lan','objects',{名称:'岚',类型:'character'},'岚'),op('new:where','state',{名称:'岚位置',对象:'new:lan',字段:'当前位置',值:'北门'},'岚在北门。')]}));await f.service.archive({range:{from:1,to:1,limit:1}});let data=await f.service.inspect();assert.equal(data.origin.bases.length,0);assert.equal(data.rows.length,2);f.c.chat[0].mes='此段被重投替换';data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(data.origin.bases.length,0);
@@ -588,10 +594,10 @@ test('recovery object discovery and history reference one uncommitted identity a
  const f=fixture();await f.service.initialize();await f.set({objectsSeparate:true});f.c.chat=[ai('新城门已开启。'),user('继续')];const before=JSON.stringify([...f.saved]);
  f.responder(async(task,input)=>{
   if(task==='objectArchive'){assert.equal(JSON.stringify([...f.saved]),before);return {changes:[op('new:gate','objects',{名称:'新城门',类型:'place'},'新城门')]};}
-  assert.equal(task,'historyImport');assert.equal(JSON.stringify([...f.saved]),before);const gate=input.currentRows.find(row=>row.id==='new:gate');assert(gate&&!gate.referenceOnly);assert.equal(gate.values.名称,'新城门');
+  assert.equal(task,'historyImport');assert.equal(JSON.stringify([...f.saved]),before);const gate=input.currentRows.find(row=>row.values.名称==='新城门');assert(gate&&!gate.referenceOnly);assert.equal(gate.values.名称,'新城门');
   return {changes:[op('new:open','state',{名称:'新城门开闭',对象:gate.id,字段:'开闭',值:'开启'},'新城门已开启。')]};
  });
- const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}}),info=await f.service.inspect();assert.equal(result.archived,1);assert.equal(info.session.commits.filter(x=>x.kind==='history').length,1);assert.equal(info.rows.length,2);assert.equal(info.rows.find(x=>x.table==='state').values.对象,info.rows.find(x=>x.table==='objects').id);assert.deepEqual(f.calls.map(x=>x.task),['objectArchive','historyImport']);
+ const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}}),info=await f.service.inspect();assert.equal(result.archived,1,JSON.stringify(result));assert.equal(info.session.commits.filter(x=>x.kind==='history').length,1);assert.equal(info.rows.length,2);assert.equal(info.rows.find(x=>x.table==='state').values.对象,info.rows.find(x=>x.table==='objects').id);assert.deepEqual(f.calls.map(x=>x.task),['objectArchive','historyImport']);
 });
 
 test('recovery discovery stays invisible when history remains invalid or is cancelled',async()=>{
@@ -605,9 +611,9 @@ test('recovery discovery stays invisible when history remains invalid or is canc
 test('recovery archive rereads a thin target before considering its modification',async()=>{
  const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();f.c.characters[0].description='远方门规：旧规则。';f.responder(()=>({base:{changes:[op('new:rule','objects',{名称:'远方门规',类型:'rule',描述:'旧规则。'},'旧规则。')]},initial:{changes:[]},notes:[]}));await f.service.saveCardTemplate(await f.service.cardTemplate('card'));
  const row=(await f.service.inspect()).rows[0];f.calls.length=0;f.c.chat=[ai('告示现已修订。'),user('继续')];let attempt=0;
- f.responder((task,input)=>{assert.equal(task,'historyImport');const current=input.currentRows.find(x=>x.id===row.id);attempt++;if(attempt===1){assert.equal(current.referenceOnly,true);assert(!Object.hasOwn(current.values,'描述'));}else{assert.equal(current.referenceOnly,undefined);assert.equal(current.values.描述,'旧规则。');assert(input.readMore);}
+ f.responder((task,input)=>{assert.equal(task,'historyImport');const current=input.currentRows.find(x=>x.id===row.id);attempt++;if(attempt===1){assert.equal(current.referenceOnly,true);assert(!Object.hasOwn(current.values,'描述'));return {needsRows:[row.id]};}else{assert.equal(current.referenceOnly,undefined);assert.equal(current.values.描述,'旧规则。');assert(input.readMore);}
  return {changes:[op(row.id,'objects',{描述:'告示现已修订。'},'告示现已修订。',row.rev)]};});
- const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(result.archived,1);assert.equal(attempt,2);assert.equal((await f.service.inspect()).rows[0].values.描述,'告示现已修订。');
+ const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(result.archived,1,JSON.stringify(result));assert.equal(attempt,2);assert.equal((await f.service.inspect()).rows[0].values.描述,'告示现已修订。');
 });
 
 test('recovery historical preference candidates require review and exact active scope',async()=>{
@@ -658,9 +664,9 @@ test('recovery failed plot clears previously assembled main context and strict M
 });
 
 test('recovery task progress carries visible cumulative text and never completes malformed output',async()=>{
- const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];let release;
- const service=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'thinking',text:'',characters:0,reasoning:'PRIVATE_REASONING'});onProgress({stage:'receiving',text:'{"changes":',characters:11});return new Promise(resolve=>release=resolve);}});
- const job=service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});while(!release)await new Promise(resolve=>setTimeout(resolve,1));assert.equal(service.state().progress.text,'{"changes":');assert.equal(service.state().progress.stage,'receiving');assert(!JSON.stringify(service.state()).includes('PRIVATE_REASONING'));release('{"changes":[]}');await job;assert.equal(service.state().progress.stage,'complete');assert.equal(service.state().progress.characters,14);
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];let release;const answer='【完成】\n1 状态：完成\n2 待处理：无\n3 补读记录：无';
+ const service=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'thinking',text:'',characters:0,reasoning:'PRIVATE_REASONING'});onProgress({stage:'receiving',text:'【完成】',characters:4});return new Promise(resolve=>release=resolve);}});
+ const job=service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});while(!release)await new Promise(resolve=>setTimeout(resolve,1));assert.equal(service.state().progress.text,'【完成】');assert.equal(service.state().progress.stage,'receiving');assert(!JSON.stringify(service.state()).includes('PRIVATE_REASONING'));release(answer);await job;assert.equal(service.state().progress.stage,'complete');assert.equal(service.state().progress.characters,answer.length);
  f.c.chat[0].mes='门已关闭。';const broken=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'receiving',text:'broken'});return 'broken';}});const failed=await broken.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(failed.archived,0);assert.equal(broken.state().progress.stage,'error');assert(!JSON.stringify(broken.state().jobs).includes('PRIVATE_REASONING'));
 });
 
@@ -684,7 +690,7 @@ test('dedicated initialization preserves AI notices and raw history through the 
 test('manual import preserves raw multi-reply source but rejects auxiliary-only evidence before writing',async()=>{
  const f=fixture();await f.service.initialize();const raw='设定甲\n<reply><body>曾到过城门。</body><memory>假事件已经完成</memory></reply>\n设定乙\n<reply><body>随后归还钥匙。</body><vars>假变量命令</vars></reply>',before=JSON.stringify([...f.saved]);
  f.responder((task,input)=>{assert.equal(task,'historyImport');assert.equal(input.sourceHistory.text,raw);assert.match(input.historyText,/曾到过城门/);assert.match(input.historyText,/随后归还钥匙/);assert.match(input.historyText,/设定乙/);assert.doesNotMatch(input.historyText,/假事件|假变量/);return {changes:[op('new:bad','events',{名称:'假的完成',经过:'假事件已经完成'},'假事件已经完成')]};});
- await assert.rejects(f.service.saveHistory(await f.service.importHistory(raw)),/真实存在/);assert.equal(JSON.stringify([...f.saved]),before);
+ await assert.rejects(async()=>f.service.saveHistory(await f.service.importHistory(raw)),/来源依据|真实存在/);assert.equal(JSON.stringify([...f.saved]),before);
  f.responder(()=>({changes:[op('new:gate','events',{名称:'到达城门',经过:'曾到过城门。'},'曾到过城门。'),op('new:key','events',{名称:'归还钥匙',经过:'随后归还钥匙。'},'随后归还钥匙。')]}));await f.service.saveHistory(await f.service.importHistory(raw));const info=await f.service.inspect();assert.equal(info.rows.length,2);assert.equal(info.session.commits[0].importSource.text,raw);await assert.rejects(f.service.importHistory(raw),/已导入/);
 });
 test('preserved raw auxiliary text cannot acquire archival evidence authority',async()=>{

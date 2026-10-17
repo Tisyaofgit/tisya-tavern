@@ -1,3 +1,4 @@
+import {ARCHIVE_TABLE_TASKS} from './task-kinds.js';
 import {prepareSimpleGenesis,parseSimpleGenesis,simpleGenesisEvidenceSources} from './simple-genesis.js';
 import {prepareSimpleCore,parseSimpleCore} from './simple-core.js';
 import {coreSourceText,coreSourceContains} from './source-text.js';
@@ -82,7 +83,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
    signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);
    const payload={...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]};
    let compact=null,genesisPlan=null,corePlan=null,formExtensions=[];
-   if(['templateInit','objectArchive','historyImport','tableArchive'].includes(task)){
+   if(ARCHIVE_TABLE_TASKS.includes(task)){
     // Compile optional fields for this request only. Reading/compiling never mutates a saved registry.
     let registry=payload.registry;for(const kind of ['character','item','place','organization','rule']){const plan=foundationTemplatePlan(kind,{registry});registry=plan.registry;formExtensions.push(...plan.schemaChanges);}
     payload.registry=registry;compact=prepareCompactFill(task,payload);
@@ -104,19 +105,16 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};
    }});
    if(typeof response==='string')progress={...progress,text:response,characters:response.length};progress={...progress,stage:'validating',updatedAt:Date.now()};
-   // Format is selected from the actual envelope, never retried through another parser after failure.
-   const compactReply=compact&&typeof response==='string'&&!/^\s*(?:```json\s*)?\{/.test(response);
    let parsed;
    if(genesisPlan){
     const answer=payload.adaptation?splitSimpleAdaptation(response):{text:response};
     parsed=parseSimpleGenesis(answer.text,genesisPlan);
     if(payload.adaptation)applySimpleAdaptation(parsed,payload.adaptation,answer.entries);
    }else if(corePlan)parsed=parseSimpleCore(response,corePlan.privateplan);
-   else parsed=compactReply?parseCompactFill(compact,response):parseJSONResponse(response);
+   else parsed=compact?parseCompactFill(compact,response):parseJSONResponse(response);
    const result=copy(parsed);
    if(genesisPlan||corePlan)progress={...progress,format:'simple-form'};
-   if(compactReply){result.schemaChanges=[...formExtensions,...(result.schemaChanges??[])];progress={...progress,format:'compact-fill'};}
-   else if(compact)progress={...progress,format:'legacy-json'};
+   if(compact){result.schemaChanges=[...formExtensions,...(result.schemaChanges??[])];progress={...progress,format:'compact-fill'};}
    c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }

@@ -1,7 +1,8 @@
+import {elements} from '../ui/dom.js';
 import {reconcileProposal} from './reconcile.js';
 import {copy,check,typeFields,registryIndex} from './schema.js';
 export function formUI(document,{changed=()=>{}}={}){
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  function button(parent,label,fn){const b=el('button',label);b.type='button';b.onclick=fn;parent.append(b);return b;}
  function input(parent,label,value,{type='text',choices,disabled=false,onChange=changed}={}){const l=el('label'),n=el(choices?'select':type==='textarea'?'textarea':'input');l.append(el('span',label),n);parent.append(l);n.setAttribute('aria-label',label);n.disabled=disabled;if(choices){for(const [id,name]of choices){const o=el('option',name);o.value=String(id);n.append(o);}n.value=value??'';}else{// textarea.type is read-only in browsers.
 if(n.tagName==='INPUT')n.type=type;if(type==='checkbox')n.checked=!!value;else n.value=value??'';}n.oninput=()=>onChange();return n;}

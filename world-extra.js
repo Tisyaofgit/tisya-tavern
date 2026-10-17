@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 import {mountIsolatedCard} from './card-runtime.js';
 import {runDisplay} from './reader-core.js';
 import {observeDisplaySize,CARD_MOTION_CSS} from './visual-core.js';
@@ -57,7 +58,7 @@ function mountDocument(document,container,html,label,{formatBody,onError}){
  return {source:html,capture:()=>pending??folds().map(n=>n.open),restore,refresh(value){const changed=paused!==value;paused=value;if(ready)syncFonts();frame.contentDocument?.documentElement?.toggleAttribute('data-tisya-card-paused',paused);if(changed&&!paused)sizing?.refresh();},dispose(){alive=false;clearTimeout(timer);sizing?.dispose();frame.contentDocument?.removeEventListener('error',resourceError,true);for(const face of added)frame.contentDocument?.fonts?.delete(face);frame.onload=null;frame.remove();}};
 }
 export function mountWorldExtra(document,container,{source,structured,formatBody,display=null,displayError=null,lazy=false,getNativePanelStatus,onError=()=>{}}){
- const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+ const make=elements(document);
  let alive=true,children=[],active=null,paused=false,shown=!lazy,savedDocuments=[];const pages=[],nav=make('nav',undefined,'extra-tabs');nav.setAttribute('aria-label','世界扩展页面');
  container.replaceChildren();
  let rows;try{rows=structured?(display?.extraPanels??readWorldExtra(source)):[];}catch(error){container.append(make('p','本条扩展未通过结构或公开权限校验，原消息仍保留。','public-note'));onError(error);return {hasContent:true,refresh(){},capture(){},restore(){},dispose(){alive=false;container.replaceChildren();}};}

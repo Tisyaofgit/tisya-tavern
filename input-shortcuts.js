@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 import {iconMarkup} from './icons.js';
 export const DEFAULT_SLOTS=['tisya-attach','tisya-previous-message','tisya-next-message','tisya-top-message','options_button','extensionsMenuButton','tisya-phrases'];
 export function shortcutPreferences(settings){
@@ -12,7 +13,7 @@ export function appendPhrase(document,text){
 export function mountInputShortcuts(document,{getSettings,save,onError=()=>{}}){
  const win=document.defaultView,composer=document.querySelector('#nonQRFormItems'),left=document.querySelector('#leftSendForm'),right=document.querySelector('#rightSendForm');
  if(!composer||!left||!right)throw Error('输入快捷栏尚未就绪');
- const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const make=elements(document);
  let alive=true,busy=false,view='more',serial=0,preferences=shortcutPreferences(getSettings());const entries=new Map();
  const root=make('section');root.id='tisya-shortcuts';root.setAttribute('aria-label','输入快捷栏');const bar=make('div');bar.className='tisya-shortcut-bar';const slots=Array.from({length:7},()=>{const n=make('div');n.className='tisya-shortcut-slot';bar.append(n);return n;});
  const more=make('button','更多');more.type='button';more.id='tisya-shortcut-more';more.setAttribute('aria-expanded','false');bar.append(more);

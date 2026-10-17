@@ -1,30 +1,15 @@
+import {definitionEvidenceSources} from './source-text.js';
+import {formSections,formTextFields,serializeFormSection} from './foundation/form-text.js';
 // A model fills business forms; the host owns definitions, identities and application order.
 import {prepareCompactFill,parseCompactFill} from './compact-fill.js';
 import {foundationTemplatePlan} from './foundation-templates.js';
-import {createSheetEngine} from './foundation/engine.js';
 import {simpleFillMessages} from './simple-fill-messages.js';
-import {check,copy,object,valueValid} from './schema.js';
+import {check,copy,object} from './schema.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 
 export const SIMPLE_GENESIS_FORMAT='tisya.simple-genesis/1';
 const workflow=()=>({id:'tisya-confirmed-genesis',name:'核对创世草稿后确认应用',version:1,steps:[]});
 const own=(value,key)=>Object.hasOwn(value,key);
-function sections(raw){
- check(typeof raw==='string'&&raw.trim()&&raw.length<=1000000,'创世填表回答为空或过长');
- let text=raw.replace(/^\uFEFF/,'').trim();if(text.startsWith('```')){const match=text.match(/^```(?:text|txt)?\n([\s\S]*)\n```$/);check(match,'创世文本代码块格式无效');text=match[1];}
- const out=[];let current;
- for(const line of text.split(/\r?\n/)){if(!line.trim())continue;const heading=line.trim().match(/^【([^】]+)】$/);if(heading){check(!out.some(s=>s.heading===heading[1]),'创世分组重复：'+heading[1]);current={heading:heading[1],lines:[]};out.push(current);}else{check(current,'创世回答须从分组标题开始');current.lines.push(line);}}
- check(out.at(-1)?.heading==='完成','缺少最后的显式完成组');return out;
-}
-function control(section,labels){
- const template={id:'genesis-control',table:'core-draft',label:section.heading,fields:labels.map(label=>({key:label,label,path:[label],group:'填写',definition:{type:'text',required:true}}))};
- const engine=createSheetEngine({version:SIMPLE_GENESIS_FORMAT,templates:[template]},valueValid),record=engine.create(template.id),ticket=engine.request(record.id,{heading:section.heading});
- engine.accept(ticket.token,'【'+section.heading+'】\n'+section.lines.join('\n'));
- const values=engine.values(record.id).values;
- for(const label of labels){let value=values[label];if(typeof value==='string'&&value.startsWith('"')){try{value=JSON.parse(value);}catch{throw Error('创世文字转义无效：'+label);}check(typeof value==='string','创世文字格须为文字：'+label);}check(typeof value==='string'&&value.trim(),'创世文字格不能为空：'+label);values[label]=value;}
- return values;
-}
-const serialize=section=>'【'+section.heading+'】\n'+section.lines.join('\n');
 function allowedForms(compact,creationOnly){
  const allowed=compact.schema.filter(item=>item.table!=='events'&&(!creationOnly||['objects','facts'].includes(item.table)));
  const titles=new Set(allowed.map(item=>item.form));
@@ -33,20 +18,7 @@ function allowedForms(compact,creationOnly){
  return parts.filter((part,index)=>index===0||titles.has(part.match(/^【([^：]+)：/u)?.[1])).join('');
 }
 
-export function simpleGenesisEvidenceSources(input,displayGoal=input.displayGoal??input.goal){
- const sources=[],add=value=>{if(typeof value==='string'&&value.length)sources.push(value);};
- add(displayGoal);
- if(input.sourceCardRaw){
-  for(const key of ['name','description','personality','scenario','system_prompt','post_history_instructions'])add(input.sourceCardRaw.fields?.[key]);
-  for(const entry of input.sourceCardRaw.entries??[])if(entry.enabled!==false&&!entry.runtimeSource)add(entry.content);
- }else add(input.sourceCard);
- for(const entry of input.sourceBooks??[])if(entry.enabled!==false&&!entry.runtimeSource)add(entry.content);
- add(input.sourceUser?.description);
- for(const record of Array.isArray(input.sourceHistory)?input.sourceHistory:[])if(record.role==='user')add(record.text);
- add(input.archiveSource?.text);add(input.historyText);
- if(input.userSource?.sources?.length){for(const record of input.userSource.sources)add(record.text);}else add(input.userSource?.text);
- return [...new Set(sources)];
-}
+export function simpleGenesisEvidenceSources(input,displayGoal=input.displayGoal??input.goal){return definitionEvidenceSources(input,{goal:displayGoal});}
 
 export function prepareSimpleGenesis(input){
  check(object(input)&&object(input.registry),'创世任务缺少现有字段定义');check(typeof input.goal==='string'&&input.goal.trim(),'创世任务缺少设计要求');
@@ -75,13 +47,13 @@ export function prepareSimpleGenesis(input){
 }
 
 export function parseSimpleGenesis(raw,plan){
- check(plan?.format===SIMPLE_GENESIS_FORMAT,'创世填表任务版本无效');const groups=sections(raw),design=groups.filter(s=>s.heading==='设计');check(design.length===1,'创世草稿须有一个设计名称');
- const {名称:name}=control(design[0],['名称']);const decisions=groups.filter(s=>s.heading.startsWith('设计说明：')).map(s=>{check(s.heading.slice('设计说明：'.length).trim(),'设计说明标题不能为空');return control(s,['内容']).内容;});
+ check(plan?.format===SIMPLE_GENESIS_FORMAT,'创世填表任务版本无效');const groups=formSections(raw),design=groups.filter(s=>s.heading==='设计');check(groups.at(-1)?.heading==='完成','缺少最后的显式完成组');check(design.length===1,'创世草稿须有一个设计名称');
+ const {名称:name}=formTextFields(design[0],['名称']);const decisions=groups.filter(s=>s.heading.startsWith('设计说明：')).map(s=>{check(s.heading.slice('设计说明：'.length).trim(),'设计说明标题不能为空');return formTextFields(s,['内容']).内容;});
  check(decisions.length<=200,'设计说明过多');
  check(Array.isArray(plan.evidenceSources)&&plan.evidenceSources.every(value=>typeof value==='string'),'创世草稿缺少独立来源边界，请重新准备');
  const evidenceParts=[...plan.evidenceSources,...decisions];
- const compact=copy(plan.compactPlan);compact.source=evidenceParts.join('\n\n');
- const answer=groups.filter(s=>s.heading!=='设计'&&!s.heading.startsWith('设计说明：')).map(serialize).join('\n');
+ const compact=copy(plan.compactPlan);compact.source=evidenceParts.join('\n\n');compact.evidenceSources=evidenceParts;
+ const answer=groups.filter(s=>s.heading!=='设计'&&!s.heading.startsWith('设计说明：')).map(serializeFormSection).join('\n');
  const result=parseCompactFill(compact,answer);
  check([...result.base.changes,...result.initial.changes].every(op=>evidenceParts.some(part=>part.includes(op.evidence))),'来源依据必须来自一份材料或一条设计说明中的连续原句，不能拼接说明');
  if(plan.creationOnly){check(result.initial.changes.length===0,'本次只新建基础档案，开局状态仍待单独确认');check(result.base.changes.every(op=>op.expected===0&&!plan.compactPlan.rows.some(row=>row.id===op.id)),'本次只新建基础档案，不能改写已有对象');}

@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 // The host's chat_truncation is the single source of truth. This module never
 // writes chat arrays, message bodies, candidates or a second history snapshot.
 export function messageLimit(value){
@@ -18,7 +19,7 @@ export function createChatLoadingController({powerUser,persist,assertIdle=()=>{}
 }
 export function mountChatLoadingSettings(document,container,{controller}){
  let alive=true,busy=false,base=controller.inspect(),job=Promise.resolve();
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  const root=el('section'),title=el('h3','聊天加载与缓存'),label=el('label','进入会话先显示底部多少条'),input=el('input'),status=el('p'),apply=el('button','保存条数'),ten=el('button','设为 10 条'),discard=el('button','放弃草稿'),clear=el('button','清理显示缓存');
  input.type='number';input.min='0';input.step='1';input.value=String(base.count);input.setAttribute('aria-label','首批消息条数');label.append(input);status.setAttribute('role','status');
  for(const b of [apply,ten,discard,clear])b.type='button';

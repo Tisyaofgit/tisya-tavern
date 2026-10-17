@@ -1,6 +1,7 @@
+import {elements} from '../ui/dom.js';
 // Text-only source rendering: card markup and proposed rules are never executed.
 export function renderRuleReview(document,parent,{review,stale=false,onChoose}){
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  parent.replaceChildren();
  if(!review){parent.append(el('p','尚未校对。按原卡初始化前会检查规则冲突、缺口和不可执行条件。'));return;}
  if(stale){const n=el('p','原始规则已改变，请重新校对；此前选择暂不适用。');n.style.color='#c62828';n.setAttribute('role','alert');parent.append(n);return;}

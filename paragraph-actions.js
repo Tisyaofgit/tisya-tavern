@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 import {revisionParagraphs} from './revision.js';
 import {iconMarkup} from './icons.js';
 
@@ -33,7 +34,7 @@ export function paragraphTargets(document,root,source,format=x=>x){
 
 export function mountParagraphActions(document,{capture,validate,assertIdle,format=x=>x,onRevise,onEdit,onRead,onMessage,onAction,onConfigure,getSettings=()=>({}),onError=()=>{},holdMs=550}){
  const win=document.defaultView,chat=document.querySelector('#chat');let hold=null,menu=null,selection=null,suppressed=null,alive=true;
- const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const make=elements(document);
  const guard=fn=>{try{return fn();}catch(e){reset();onError(e);}};
  function cancelHold(){if(hold)win.clearTimeout(hold.timer);hold=null;}
  function closeMenu(){menu?.remove();menu=null;}

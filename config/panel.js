@@ -1,3 +1,4 @@
+import {elements} from '../ui/dom.js';
 import {UTILITY_STYLE} from '../utility-style.js';
 import {languageView,setDefaultLanguage,setDialogueLanguage} from './language.js';
 import {mountChatLoadingSettings} from '../chat-loading.js';
@@ -11,7 +12,7 @@ import {clone,registry,register,resources,KINDS,TASKS,FEATURES,WORKFLOW_DETAILS,
 import {mountAppearanceSettings,APPEARANCE_OWNERS} from '../appearance-settings.js';
 export function mountConfiguration(document,container,{store,host,tableService,getSettings,saveAppearance,saveAppearanceProfiles,chatLoading,onClose,onNative,onIdentity,onAssistant,initialTab='mode',initialView='',onApplied=()=>{},contextIO={},version='',onTitle=()=>{},embedded=false}){
  let snapshot=store.read(),draft=clone(snapshot.data),w=draft.worlds[snapshot.key],tab=['play','mode','theme','world','api','data','tables'].includes(initialTab)?initialTab:'mode',alive=true,busy=false,dirty=false,child=null,ticket=0,pendingWork=Promise.resolve();
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  const root=el('div');container.append(root);root.className='tisya-config';if(embedded)root.dataset.embedded='';const dom=root.attachShadow({mode:'open'}),style=el('style');style.textContent=CSS+SUBPAGE_CSS+COMPACT_CSS+UTILITY_STYLE;dom.append(style);
  const bar=el('header'),modeSelect=el('select'),agent=el('button','Agent 配置'),context=el('button','上下文一览'),close=el('button','返回设置');for(const m of registry.modes.values()){const o=el('option',m.name);o.value=m.id;if(m.id!=='narrative'&&typeof m.compile!=='function'){o.disabled=true;o.textContent+='（尚未接入）';}modeSelect.append(o);}modeSelect.value=w.mode;modeSelect.setAttribute('aria-label','模式切换');bar.append(modeSelect,agent,context,close);dom.append(bar);
  const where=el('p','当前世界／分支：'+(snapshot.label??snapshot.key));where.className='note';dom.append(where);const tabs=el('nav'),tabLabel=el('label'),tabSelect=el('select');tabLabel.append(el('strong','配置分类'),tabSelect);tabSelect.setAttribute('aria-label','配置分类');tabs.append(tabLabel);const categories=el('details'),categoryTitle=el('summary','更多设置与创作工具');categories.className='tisya-config-categories';categories.append(categoryTitle,tabs);dom.append(categories);const content=el('main'),notice=el('p'),footer=el('footer'),save=el('button','保存配置'),discard=el('button','放弃修改');notice.setAttribute('role','status');footer.append(notice,discard,save);dom.append(content,footer);

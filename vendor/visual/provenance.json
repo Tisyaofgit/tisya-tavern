@@ -16,5 +16,8 @@
     "src/journey-options.cjs": "6df12290b5fa6e5d364c1d1f4f215140857aff35573524d669b5ecb5c479b8fe",
     "src/display-size.cjs": "32157729f76eced2237e1bf97e038bbcc9185d469faed2cf476044c4165e1c62",
     "src/display-card-state.cjs": "ee6a6eda3bb6ab285d868c929954675ae1377d09fd8fcce719fff515bb3fc979"
+  },
+  "sourcePaths": {
+    "src/chat-effects-options.cjs": "../shared/chat-effects-options.cjs"
   }
 }

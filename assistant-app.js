@@ -1,3 +1,4 @@
+import {elements} from './ui/dom.js';
 import {mountIdentityPage} from './user-identity-page.js';
 import {mountTablePanel} from './tables/panel.js';
 import {mountRunView} from './tables/run-view.js';
@@ -6,7 +7,7 @@ import {UTILITY_STYLE} from './utility-style.js';
 
 export function mountAssistantApp(document,container,{service,identity,store,onClose,onNative,onWorldbook,onAtlas,onIdentity,onSaved=()=>{}}){
  const root=document.createElement('section');root.className='tisya-assistant-app';container.append(root);const dom=root.attachShadow({mode:'open'});
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  const style=el('style',PANEL_CSS+UTILITY_STYLE+'main{padding:0}.assistant-tasks{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:transparent;border:0;padding:0}.assistant-tasks button{text-align:left}.assistant-tasks button[aria-pressed=true]{background:#c8b57e;color:#172b20}.assistant-intro{border-left:1px solid #c8b57e;padding:4px 0 4px 18px;margin:20px 0}.tisya-tables>nav{display:none}.tisya-user>header{display:none}.assistant-task-body{min-width:0}.assistant-task-body:empty{display:none}@media(max-width:350px){.assistant-tasks{grid-template-columns:1fr}}');dom.append(style);
  const header=el('header'),title=el('h1','缇斯亚助手'),close=el('button','聊天 ›');close.type='button';close.onclick=onClose;header.append(title,close);dom.append(header);
  const intro=el('p','把想法交给小缇。先生成可修改的草稿，核对后再保存；已有档案和当前故事各自保留。');intro.className='assistant-intro';dom.append(intro);

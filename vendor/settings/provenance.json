@@ -43,5 +43,8 @@
     "Original narrative renderer exposes refresh and includes its viewed profile revision when saving a new named profile",
     "Original appearance renderer; display registry exposes only connected decoration and motion fields; original unsupported automatic-reference controls are withheld",
     "Native Tauri storage adapters replace original Tavo service calls; no original UI source bytes changed"
-  ]
+  ],
+  "sourcePaths": {
+    "src/chat-effects-options.cjs": "../shared/chat-effects-options.cjs"
+  }
 }

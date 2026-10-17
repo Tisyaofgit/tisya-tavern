@@ -1,3 +1,4 @@
+import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import {prepareCompactFill} from '../tables/compact-fill.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {test} from 'node:test';
@@ -15,7 +16,7 @@ function fixture(){
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(entry=>({...structuredClone(entry),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async name=>{assert.equal(name,'current');return structuredClone(binding);},rebindCharWorldbooks:async(name,value)=>{assert.equal(name,'current');Object.assign(binding,value);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[];let responder=async()=>({changes:[],templates:[]});
- const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,request:async(task,text)=>{calls.push({task});return task==='ruleReview'?{issues:[]}:responder(task,JSON.parse(text));},...overrides});
+ const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,request:async(task,text)=>{calls.push({task});return task==='ruleReview'?{issues:[]}:simpleTaskAnswer(task,JSON.parse(text),await responder(task,JSON.parse(text)));},...overrides});
  const set=async fields=>{const snapshot=store.read();snapshot.data.worlds[snapshot.key].tables={...snapshot.world.tables,...fields};await store.save(snapshot.data,snapshot.revision,snapshot.key);};
  return {c,store,saved,calls,service:makeService(),makeService,set,responder:value=>responder=value};
 }
@@ -25,9 +26,9 @@ function fixture(){
 test('two-phase archive reload is discoverable through all four controlled assistant tools without writes',async()=>{
  const f=fixture();await f.service.initialize();await f.set({objectsSeparate:true});
  f.c.chat=[{is_user:false,name:'甲',mes:'新城门已开启。'},{is_user:true,name:'用户',mes:'继续'}];
- f.responder((task,input)=>task==='objectArchive'?{changes:[op('new:gate','objects',{名称:'新城门',类型:'place'},'新城门')]}:{changes:[op('new:open','state',{名称:'新城门开闭',对象:input.currentRows.find(r=>r.id==='new:gate').id,字段:'开闭',值:'开启'},'新城门已开启。')]});
+ f.responder((task,input)=>task==='objectArchive'?{changes:[op('new:gate','objects',{名称:'新城门',类型:'place'},'新城门')]}:{changes:[op('new:open','state',{名称:'新城门开闭',对象:input.currentRows.find(r=>r.values.名称==='新城门').id,字段:'开闭',值:'开启'},'新城门已开启。')]});
  const result=await f.service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});
- assert.equal(result.archived,1);assert.deepEqual(f.calls.map(x=>x.task),['objectArchive','historyImport']);
+ assert.equal(result.archived,1,JSON.stringify(result));assert.deepEqual(f.calls.map(x=>x.task),['objectArchive','historyImport']);
  const restored=f.makeService(),info=await restored.inspect(),gate=info.rows.find(r=>r.table==='objects'),state=info.rows.find(r=>r.table==='state');
  assert.equal(info.session.commits.filter(x=>x.kind==='history').length,1);assert.equal(state.values.对象,gate.id);
  Object.assign(f.c,{chatCompletionSettings:{function_calling:true,model:'fixture-model',chat_completion_source:'custom',custom_api_format:'openai_compat'},getChatCompletionModel:s=>s.model,isToolCallingSupported:()=>true,substituteParams:s=>s,getPresetManager:()=>({getAllPresets:()=>[]})});

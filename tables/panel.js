@@ -1,3 +1,4 @@
+import {elements} from '../ui/dom.js';
 import {archiveRunMessage} from './archive-run.js';
 import {mountArchiveAtlas} from './atlas-ui.js';
 import {ATLAS_STYLE} from './atlas-style.js';
@@ -13,7 +14,7 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  let alive=true,busy=false,dirty=false,draft=null,info=null,page='settings',currentTable='',pending=Promise.resolve();const assistantConversation=[],pageDrafts=new Map(),archiveReviewIds=new Set(),statePreviewIds=new Set(),foundationPreviewIds=new Set(),conditionPreviewIds=new Set();let ownsArchivePreview=false;const ui=formUI(document,{changed:()=>{dirty=true;}});const root=document.createElement('section');root.className='tisya-tables';container.append(root);
  const initialConfig=store.read();let notifiedRevision=initialConfig.revision;
  function onSaved(){if(!alive)return;const now=store.read();if(now.key!==initialConfig.key)return;notifiedRevision=now.revision;notifySaved();}
- const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+ const el=elements(document);
  const notice=el('p','表单推进与历史消息范围独立。未发送的聊天输入和本页草稿不会自动入档；切页会保留草稿，保存后才生效。');notice.setAttribute('role','status');root.append(notice);
  const nav=el('nav'),main=el('div'),navLabel=el('label'),pageSelect=el('select');navLabel.append(el('strong','表单功能'),pageSelect);pageSelect.setAttribute('aria-label','表单功能');nav.append(navLabel);root.append(nav,main);
  function assertActive(){check(alive,'表单页面已关闭');check(store.read().key===initialConfig.key,'当前会话已切换，请重新打开表单推进');}

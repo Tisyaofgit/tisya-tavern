@@ -18,7 +18,8 @@ import * as revision from '../revision.js';
 import * as revisionUI from '../revision-ui.js';
 import {createTextTransport} from '../config/text-transport.js';
 import {createBookGateway} from '../tables/books.js';
-import {defaultRegistry} from '../tables/schema.js';
+import {foundationTemplatePlan} from '../tables/foundation-templates.js';
+import {simpleTaskAnswer} from './helpers/simple-answers.js';
 import {interfaceSnapshot,validateInterfaceSettings} from '../tables/interface-config.js';
 import {createNativeConfiguration,createRegexGate} from '../tables/native-config.js';
 import {createTableService} from '../tables/service.js';
@@ -40,8 +41,8 @@ test('mounted initializer survives unrelated generation cleanup, saves usable fo
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>structuredClone(saved.get(name)),createWorldbook:async(name,entries)=>{saved.set(name,entries.map(e=>({...structuredClone(e),uid:++uid})));return true;},updateWorldbookWith:async(name,fn)=>{const result=fn(structuredClone(saved.get(name)));saved.set(name,result);return result;},getCharWorldbookNames:async()=>structuredClone(binding),rebindCharWorldbooks:async(_,next)=>Object.assign(binding,next)};
  const f=await setup({bookHelper:helper}),previous=globalThis.fetch;let release,signal,payload,calls=0,ruleReviews=0;
  f.ctx.characters[0].description='北门是一座石门。';
- const reply={registry:defaultRegistry(),base:{changes:[{id:'new:gate',table:'objects',expected:0,values:{名称:'北门',类型:'place',属性:{外观:'石门'}},access:{readers:['读者'],knowers:[]},evidence:'北门是一座石门。'}]},initial:{changes:[]},notes:[]};
- globalThis.fetch=async(_,options)=>{const wire=JSON.parse(options.body);if(wire.messages.some(m=>m.content.includes('@MODE rule-review'))){ruleReviews++;return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({issues:[]})}}]})};}calls++;signal=options.signal;payload=wire;await new Promise((resolve,reject)=>{release=resolve;signal.addEventListener('abort',()=>reject(new DOMException('The operation was aborted.','AbortError')),{once:true});});return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(reply)}}]})};};
+ const reply=await simpleTaskAnswer('templateInit',{registry:foundationTemplatePlan('place').registry,currentRows:[],sourceCard:f.ctx.characters[0].description},{base:{changes:[{id:'new:gate',table:'objects',expected:0,values:{名称:'北门',类型:'place',描述:'石门'},access:{readers:['读者'],knowers:[]},evidence:'北门是一座石门。'}]},initial:{changes:[]},notes:[]});
+ globalThis.fetch=async(_,options)=>{const wire=JSON.parse(options.body);if(wire.messages.some(m=>m.content.includes('@MODE rule-review'))){ruleReviews++;return {ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({issues:[]})}}]})};}calls++;signal=options.signal;payload=wire;await new Promise((resolve,reject)=>{release=resolve;signal.addEventListener('abort',()=>reject(new DOMException('The operation was aborted.','AbortError')),{once:true});});return {ok:true,json:async()=>({choices:[{message:{content:reply}}]})};};
  try{
   f.w.phoneOptions.onOpenApp('设置');await f.w.happyDOM.whenAsyncComplete();await click(f,'settings-app');const root=f.w.document.querySelector('.tisya-config').shadowRoot,category=root.querySelector('[aria-label="配置分类"]');category.value='tables';await category.onchange();
   const page=root.querySelector('[aria-label="表单功能"]');assert.equal(page.options.length,17);assert.equal(root.querySelectorAll('nav button').length,0);page.value='history';await page.onchange();
@@ -49,7 +50,7 @@ test('mounted initializer survives unrelated generation cleanup, saves usable fo
   const pending=button('按所选来源建立表单').onclick();for(let i=0;!release&&i<100;i++)await new Promise(r=>setTimeout(r,5));assert(release);assert.equal(page.disabled,true);
   await f.emit('generation-stop');await f.emit('generation-end');await f.emit('chat');assert(root.host.isConnected);assert.equal(signal.aborted,false);assert.match(JSON.stringify(payload.messages),/北门是一座石门/);assert.equal(payload.stream,true);assert.equal(calls,1);assert.equal(ruleReviews,1);
   category.value='world';await category.onchange();assert.equal(category.value,'tables');assert(root.querySelector('footer').textContent.includes('请先保存或放弃'));assert.equal(root.querySelector('footer').hidden,false);button('放弃修改').click();assert(page.isConnected);assert.equal(page.disabled,true);
-  release();await pending;assert.match(root.querySelector('.tisya-tables [role=status]').textContent,/建表完成/);assert.equal(f.w.Tisya.tables.state().busy,false);assert.equal((await f.w.Tisya.tables.inspect()).rows[0].values.名称,'北门');
+  release();await pending;assert(root.querySelector('.tisya-tables [role=status]'),JSON.stringify(f.w.Tisya.tables.state().jobs));assert.match(root.querySelector('.tisya-tables [role=status]').textContent,/建表完成/);assert.equal(f.w.Tisya.tables.state().busy,false);assert.equal((await f.w.Tisya.tables.inspect()).rows[0].values.名称,'北门');
   page.value='forms';await page.onchange();assert.equal(root.querySelectorAll('.tisya-tables fieldset').length,1);const table=root.querySelector('[aria-label="选择表格"]');assert.equal(table.options.length,16);
   await button('编辑此表单').onclick();const input=[...root.querySelectorAll('.tisya-tables input,.tisya-tables textarea')].find(n=>n.value==='北门');assert(input);input.value='北门修订';input.dispatchEvent(new f.w.Event('input'));
   table.value='events';await table.onchange();assert.equal(table.value,'objects');assert.equal(input.value,'北门修订');page.value='history';await page.onchange();assert.equal(page.value,'history');assert.equal(input.isConnected,false);assert.equal((await f.w.Tisya.tables.inspect()).rows[0].values.名称,'北门');page.value='forms';await page.onchange();assert.equal(input.isConnected,true);assert.equal(input.value,'北门修订');

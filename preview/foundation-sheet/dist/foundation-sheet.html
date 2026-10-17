@@ -4,310 +4,2401 @@
 thead th:first-child{width:42px;border-right:1px solid #d6dfd1}thead th:nth-child(2){width:29%;border-right:1px solid #d6dfd1}tbody th.row-number{width:42px;padding:14px 6px;text-align:center;font-size:11px;color:#98a68f;background:#f0f4eb;font-weight:400}@media(max-width:600px){thead th:first-child{width:30px}thead th:nth-child(2){width:32%}tbody th.row-number{width:30px;padding:12px 4px}}
 
 .child-panel{margin:12px 0;padding:12px;border:1px solid #cbd8ce;border-radius:12px}.child-choice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0}.child-choice input{width:auto;margin-right:8px}.child-panel summary{cursor:pointer}
-</style></head><body><main></main><script>const catalog={"version":"FT21","templates":[{"id":"core","layer":"基点","label":"基点","table":"core-draft","groups":["核心"],"fields":[{"key":"核心与不可替代性","label":"核心与不可替代性","path":["essence"],"group":"核心","definition":{"type":"text","description":"去掉世界外壳后必须保留什么；不要只提取标签。"}},{"key":"价值与选择","label":"价值与选择","path":["choice"],"group":"核心","definition":{"type":"text","description":"价值冲突、判断及拒绝边界，有原文才保留。"}},{"key":"愿望与形成因果","label":"愿望与形成因果","path":["motive"],"group":"核心","definition":{"type":"text","description":"这里只保留经历如何形成或改变核心的依据；欲望本身归欲望双螺旋，不重复抄写，不复制旧世界人名和已完成事件。"}},{"key":"用途、能力与代价","label":"用途、能力与代价","path":["ability"],"group":"核心","definition":{"type":"text","description":"能力/物品用途的意义、限制与代价；数值另由目标世界定义。"}},{"key":"辨识与象征","label":"辨识与象征","path":["anchor"],"group":"核心","definition":{"type":"text","description":"只有核心必需的外形/象征才保留；其余允许世界化。"}},{"key":"选择携带的成长","label":"选择携带的成长","path":["growth"],"group":"核心","definition":{"type":"text","description":"仅用户明确选择；作为待适配的经历意义，不冒充新会话已经发生。"}},{"key":"所选对象的关联意义","label":"所选对象的关联意义","path":["links"],"group":"核心","definition":{"type":"text","description":"对象齐全且明确选择才保留；不自动扩大选取或携带旧关系、背包。"}},{"key":"性格核心标签","label":"性格核心标签","path":["personality-tags"],"group":"核心","definition":{"type":"text","description":"人物核心的少量辨识词；与欲望、矛盾共同保留，不以同标签替换其具体意义。"}},{"key":"欲望双螺旋","label":"欲望双螺旋","path":["desire-axis"],"group":"核心","definition":{"type":"text","description":"保留多股同时成立的核心欲望及优先关系，不简化为目标对障碍；原点分别映射具体表达，不复制旧任务进度。"}},{"key":"核心矛盾","label":"核心矛盾","path":["tension-axis"],"group":"核心","definition":{"type":"text","description":"保留多股欲望的冲突、依赖与强化，以及它们与信念、恐惧、现实限制的拉扯和取舍代价；不强造创伤或预设成长。"}},{"key":"面具及真实落差","label":"面具及真实落差","path":["persona-mask"],"group":"核心","definition":{"type":"text","description":"有依据才携带表层呈现的用途及与真实反应的落差；核心意义适配到原点面具层，旧世界场合、人名和已揭露状态不直接迁移。"}}]},{"id":"origin.character","layer":"原点","label":"人物","table":"objects","kind":"character","groups":["身份","形貌","性情","生活","表达","本领","核心","面具"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"身份","definition":{"type":"text","required":true,"capture":"identity","include":{"op":"selected"}}},{"key":"别名","label":"别名","path":["别名"],"group":"身份","definition":{"type":"texts","capture":"identity","include":{"op":"selected"}}},{"key":"身份细目·物种","label":"物种","path":["属性","身份细目","物种"],"group":"身份","definition":{"type":"refs","description":"已登记物种定义的稳定引用；未知不补人类。"}},{"key":"身份细目·生命阶段","label":"生命阶段","path":["属性","身份细目","生命阶段"],"group":"身份","definition":{"type":"text","description":"按世界物种和历法表述；不把现实年龄默认给人物。"}},{"key":"身份细目·出生时期","label":"出生时期","path":["属性","身份细目","出生时期"],"group":"身份","definition":{"type":"text","description":"有来源的世界时间表达；不强制公历日期。"}},{"key":"身份细目·出身地","label":"出身地","path":["属性","身份细目","出身地"],"group":"身份","definition":{"type":"refs","description":"出生/成长来源地，不是当前位置。"}},{"key":"身份细目·语言","label":"语言","path":["属性","身份细目","语言"],"group":"身份","definition":{"type":"texts","description":"已确认可用语言；不因此自动懂秘密或暗语。"}},{"key":"身份细目·社会身份","label":"社会身份","path":["属性","身份细目","社会身份"],"group":"身份","definition":{"type":"text","description":"原点的社会位置、责任与限制；当前任职另由状态/关系维护。"}},{"key":"形貌·整体","label":"整体","path":["属性","形貌","整体"],"group":"形貌","definition":{"type":"text","description":"原点稳定体貌。"}},{"key":"形貌·辨识特征","label":"辨识特征","path":["属性","形貌","辨识特征"],"group":"形貌","definition":{"type":"texts","description":"有依据的独特外观锚点。"}},{"key":"形貌·仪态","label":"仪态","path":["属性","形貌","仪态"],"group":"形貌","definition":{"type":"text","description":"已确立的惯常动作、姿态和身体表达；语速归节奏，单次动作不算惯常。"}},{"key":"形貌·惯常装束","label":"惯常装束","path":["属性","形貌","惯常装束"],"group":"形貌","definition":{"type":"text","description":"衣着习惯，非当前穿戴或库存。"}},{"key":"形貌·感官印象","label":"感官印象","path":["属性","形貌","感官印象"],"group":"形貌","definition":{"type":"text","description":"可感知的稳定印象，不给观察者无依据的秘密知识。"}},{"key":"性情·价值取舍","label":"价值取舍","path":["属性","性情","价值取舍"],"group":"性情","definition":{"type":"text","description":"选择之间的优先与代价。"}},{"key":"性情·判断方式","label":"判断方式","path":["属性","性情","判断方式"],"group":"性情","definition":{"type":"text","description":"形成判断、核验证据和处理分歧的方法；具体操作流程归做事方式。"}},{"key":"性情·情绪处理","label":"情绪处理","path":["属性","性情","情绪处理"],"group":"性情","definition":{"type":"text","description":"稳定应对方式，非当前心情。"}},{"key":"性情·长处","label":"长处","path":["属性","性情","长处"],"group":"性情","definition":{"type":"texts","description":"性情上的优点及具体表现；技艺归擅长。"}},{"key":"性情·短处","label":"短处","path":["属性","性情","短处"],"group":"性情","definition":{"type":"texts","description":"性情上的弱点及后果；未掌握技能归不足，伤势限制归代价限制。"}},{"key":"性情·拒绝边界","label":"拒绝边界","path":["属性","性情","拒绝边界"],"group":"性情","definition":{"type":"text","description":"已确立的稳定拒绝原则；单次拒绝、未答应或尚未发生不构成原则。"}},{"key":"性情·协商条件","label":"协商条件","path":["属性","性情","协商条件"],"group":"性情","definition":{"type":"text","description":"哪些新依据可能改变决定。"}},{"key":"性情·改变条件","label":"改变条件","path":["属性","性情","改变条件"],"group":"性情","definition":{"type":"text","description":"材料明确说明的可能促成性情变化的条件；期待、尚未改变不算条件，未说明留空。"}},{"key":"生活·生计","label":"生计","path":["属性","生活","生计"],"group":"生活","definition":{"type":"text","description":"日常谋生方式。"}},{"key":"生活·作息","label":"作息","path":["属性","生活","作息"],"group":"生活","definition":{"type":"text","description":"日常起居、工作和休息的时间安排；反复小动作归习惯。"}},{"key":"生活·兴趣","label":"兴趣","path":["属性","生活","兴趣"],"group":"生活","definition":{"type":"texts","description":"稳定兴趣；单次行为不能自动确立。"}},{"key":"生活·习惯","label":"习惯","path":["属性","生活","习惯"],"group":"生活","definition":{"type":"texts","description":"已确认的日常反复行为；不复抄作息时间或性情判断原则。"}},{"key":"生活·长期目标","label":"长期目标","path":["属性","生活","长期目标"],"group":"生活","definition":{"type":"text","description":"长期自主愿望及已知进展；不改成已成功或已接受的任务。"}},{"key":"生活·社会责任","label":"社会责任","path":["属性","生活","社会责任"],"group":"生活","definition":{"type":"text","description":"稳定承担的职责范围；对象间持续联系另见关系，不复抄互动经过。"}},{"key":"表达·措辞","label":"措辞","path":["属性","表达","措辞"],"group":"表达","definition":{"type":"text","description":"用词、比喻和话题选择；语速、长短及讲述次序归节奏。"}},{"key":"表达·节奏","label":"节奏","path":["属性","表达","节奏"],"group":"表达","definition":{"type":"text","description":"句式与表达节奏。"}},{"key":"表达·幽默","label":"幽默","path":["属性","表达","幽默"],"group":"表达","definition":{"type":"text","description":"适用的幽默方式，可没有。"}},{"key":"表达·沉默条件","label":"沉默条件","path":["属性","表达","沉默条件"],"group":"表达","definition":{"type":"text","description":"何时不说及原因。"}},{"key":"表达·关系差异","label":"关系差异","path":["属性","表达","关系差异"],"group":"表达","definition":{"type":"text","description":"对不同对象的表达差异；具体关系经过与协作分工留在关系表。"}},{"key":"表达·禁用套路","label":"禁用套路","path":["属性","表达","禁用套路"],"group":"表达","definition":{"type":"texts","description":"防止机械复读的边界，不要求每轮套例句。"}},{"key":"本领·擅长","label":"擅长","path":["属性","本领","擅长"],"group":"本领","definition":{"type":"texts","description":"有来源的稳定能力。"}},{"key":"本领·不足","label":"不足","path":["属性","本领","不足"],"group":"本领","definition":{"type":"texts","description":"明确不会或未受训练的技能；没提及不等于不会，已会技能的限制另填。"}},{"key":"本领·做事方式","label":"做事方式","path":["属性","本领","做事方式"],"group":"本领","definition":{"type":"text","description":"运用本领的惯常操作流程；不复抄一般性情原则。"}},{"key":"本领·代价限制","label":"代价限制","path":["属性","本领","代价限制"],"group":"本领","definition":{"type":"texts","description":"已掌握本领的适用条件、使用代价和身体限制；不会的技能归不足。"}},{"key":"本领·定义引用","label":"定义引用","path":["属性","本领","定义引用"],"group":"本领","definition":{"type":"refs","description":"引用已登记能力/规则，不复制公式与资源当前值。"}},{"key":"本领·叙事表现","label":"叙事表现","path":["属性","本领","叙事表现"],"group":"本领","definition":{"type":"text","description":"使用本领时旁人可感知的动作或现象；不复抄通用流程，不代表本轮已成功。"}},{"key":"人物核心·性格核心标签","label":"性格核心标签","path":["属性","人物核心","性格核心标签"],"group":"核心","definition":{"type":"texts","description":"少量有依据的性格辨识词；概括稳定底色，不用职业、能力或单次心情代替人格，不用标签取代欲望与矛盾。"}},{"key":"人物核心·欲望双螺旋","label":"欲望双螺旋","path":["属性","人物核心","欲望双螺旋"],"group":"核心","definition":{"type":"texts","description":"彼此同时成立的核心欲望，每股各一项：想得到、守住或避免失去什么。双螺旋指多股驱动力并行，不是欲望对障碍；有几股写几股，不为凑两股捏造动机。具体计划和进度归长期目标。"}},{"key":"人物核心·核心矛盾","label":"核心矛盾","path":["属性","人物核心","核心矛盾"],"group":"核心","definition":{"type":"text","description":"上述欲望怎样冲突、互相依赖或强化；它们与信念、恐惧、现实限制怎样拉扯，每次取舍付出什么代价，其应对如何反过来影响追求。只写有依据的联系和代价，不堆砌反义词，不强造创伤或预设成长。"}},{"key":"面具层·面具呈现","label":"面具呈现","path":["属性","面具层","面具呈现"],"group":"面具","definition":{"type":"text","description":"在什么对象或场合前，主动或习惯性维持什么外在形象；资料未说明伪装时留空，不把礼貌或一般表达自动判作虚假。"}},{"key":"面具层·面具作用","label":"面具作用","path":["属性","面具层","面具作用"],"group":"面具","definition":{"type":"text","description":"这层呈现用于保护、获得或回避什么，与真实欲望或反应有何落差；不复抄欲望全文，不泄露隐情内容。"}},{"key":"面具层·面具裂隙","label":"面具裂隙","path":["属性","面具层","面具裂隙"],"group":"面具","definition":{"type":"text","description":"哪些有依据的情境下，外在呈现与真实反应出现差异、松动或切换，旁人具体能看见什么；不是必然崩溃或已发生揭示，观察到征象不等于知道其原因。"}}]},{"id":"origin.character.history","layer":"原点","label":"人物前史","table":"facts","kind":"character","groups":["经历"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"经历","definition":{"type":"text","required":true,"capture":"evidence","include":{"op":"selected"}}},{"key":"命题","label":"命题","path":["命题"],"group":"经历","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"对象","label":"对象","path":["对象"],"group":"经历","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"前史·主体","label":"主体","path":["前史","主体"],"group":"经历","definition":{"type":"ref","description":"所属对象的稳定ID。"}},{"key":"前史·时期","label":"时期","path":["前史","时期"],"group":"经历","definition":{"type":"text","description":"明确早于当前开局的世界时期。"}},{"key":"前史·地点","label":"地点","path":["前史","地点"],"group":"经历","definition":{"type":"refs","description":"已确认地点，不用文字邻接推导包含关系。"}},{"key":"前史·参与者","label":"参与者","path":["前史","参与者"],"group":"经历","definition":{"type":"refs","description":"实际参与者不等于全体知情者。"}},{"key":"前史·选择","label":"选择","path":["前史","选择"],"group":"经历","definition":{"type":"text","description":"材料明确的主动抉择；不能从获赠、持有或结果倒推自愿选择。"}},{"key":"前史·后果","label":"后果","path":["前史","后果"],"group":"经历","definition":{"type":"text","description":"材料明确的事件结果；不把相邻叙述补成先后或因果。"}},{"key":"前史·当下影响","label":"当下影响","path":["前史","当下影响"],"group":"经历","definition":{"type":"text","description":"明确由此事造成且仍持续的影响；不把别处已知事实当作此事后果。"}},{"key":"前史·原文","label":"原文","path":["前史","原文"],"group":"经历","definition":{"type":"text","description":"已确认前史的原文；讨论示例不得升为事实。"}},{"key":"前史·涉及对象","label":"涉及对象","path":["前史","涉及对象"],"group":"经历","definition":{"type":"refs","description":"本条明确涉及的其他已登记物品、组织或规则等；参与者与地点已有专格，不重复填；关联不代表参与或知情。"}},{"key":"前史·当时理解","label":"当时理解","path":["前史","当时理解"],"group":"经历","definition":{"type":"text","description":"所属人物在此事当时怎样理解、相信或误解，限资料明确给出的心理或话语；不是客观定论或他人也知道，不用后来的认识倒灌。不明留空，受保护隐情仍归独立隐情。"}}]},{"id":"origin.character.relationships","layer":"原点","label":"关系底稿","table":"facts","kind":"character","groups":["关系"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"关系","definition":{"type":"text","required":true,"capture":"evidence","include":{"op":"selected"}}},{"key":"命题","label":"命题","path":["命题"],"group":"关系","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"对象","label":"对象","path":["对象"],"group":"关系","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"关系底稿·主体","label":"主体","path":["关系底稿","主体"],"group":"关系","definition":{"type":"ref","description":"关系方向的主体。"}},{"key":"关系底稿·对象","label":"对象","path":["关系底稿","对象"],"group":"关系","definition":{"type":"ref","description":"持续联系另一端的稳定ID，可为人物、组织、地点或物品等；仅被提到不构成关系，同名不合并。"}},{"key":"关系底稿·性质","label":"性质","path":["关系底稿","性质"],"group":"关系","definition":{"type":"text","description":"已确立的联系性质，如师徒、协作、长期责任或归属；责任和协作不自动成为私交。"}},{"key":"关系底稿·形成经过","label":"形成经过","path":["关系底稿","形成经过"],"group":"关系","definition":{"type":"text","description":"该联系形成的已确认经过；不将仅同场或单次提及写成长期联系。"}},{"key":"关系底稿·相处方式","label":"相处方式","path":["关系底稿","相处方式"],"group":"关系","definition":{"type":"text","description":"主体与本条对象的惯常互动或分工；不混入其他关系，不推断双向对称。"}},{"key":"关系底稿·主体边界","label":"主体边界","path":["关系底稿","主体边界"],"group":"关系","definition":{"type":"text","description":"主体自己的边界与理由。"}},{"key":"关系底稿·成立条件","label":"成立条件","path":["关系底稿","成立条件"],"group":"关系","definition":{"type":"text","description":"哪些前提使该关系成立；换U不能只改ID照搬。"}}]},{"id":"origin.character.secrets","layer":"原点","label":"隐情","table":"facts","kind":"character","groups":["隐情"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"隐情","definition":{"type":"text","required":true,"capture":"evidence","include":{"op":"selected"}}},{"key":"命题","label":"命题","path":["命题"],"group":"隐情","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"对象","label":"对象","path":["对象"],"group":"隐情","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"隐情·关联对象","label":"关联对象","path":["隐情","关联对象"],"group":"隐情","definition":{"type":"refs","description":"秘密涉及的对象。"}},{"key":"隐情·可观察线索","label":"可观察线索","path":["隐情","可观察线索"],"group":"隐情","definition":{"type":"texts","description":"有依据的线索，不自动授予事实全貌。"}},{"key":"隐情·揭示条件","label":"揭示条件","path":["隐情","揭示条件"],"group":"隐情","definition":{"type":"text","description":"允许揭示的条件或永不揭示的约束，不等于已经公开。"}},{"key":"隐情·影响范围","label":"影响范围","path":["隐情","影响范围"],"group":"隐情","definition":{"type":"text","description":"秘密的影响，不作为人物已知信息。"}}]},{"id":"origin.item","layer":"原点","label":"物品","table":"objects","kind":"item","groups":["物品原点"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"物品原点","definition":{"type":"text","required":true,"capture":"identity","include":{"op":"selected"}}},{"key":"别名","label":"别名","path":["别名"],"group":"物品原点","definition":{"type":"texts","capture":"identity","include":{"op":"selected"}}},{"key":"描述","label":"描述","path":["描述"],"group":"物品原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"形态","label":"形态","path":["属性","形态"],"group":"物品原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"用途","label":"用途","path":["属性","用途"],"group":"物品原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"材质","label":"材质","path":["属性","材质"],"group":"物品原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"规则","label":"规则","path":["属性","规则"],"group":"物品原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"独有意义","label":"独有意义","path":["属性","独有意义"],"group":"物品原点","definition":{"type":"text","description":"在目标世界中的具体意义；保留基点意义但不照搬旧世界事实。"}},{"key":"使用限制","label":"使用限制","path":["属性","使用限制"],"group":"物品原点","definition":{"type":"text","description":"来源明确的使用边界，不凭描述赋予可执行机制。"}}]},{"id":"origin.place","layer":"原点","label":"地点","table":"objects","kind":"place","groups":["地点原点"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"地点原点","definition":{"type":"text","required":true,"capture":"identity","include":{"op":"selected"}}},{"key":"别名","label":"别名","path":["别名"],"group":"地点原点","definition":{"type":"texts","capture":"identity","include":{"op":"selected"}}},{"key":"描述","label":"描述","path":["描述"],"group":"地点原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"环境","label":"环境","path":["属性","环境"],"group":"地点原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"位置","label":"位置","path":["属性","位置"],"group":"地点原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"特征","label":"特征","path":["属性","特征"],"group":"地点原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"出入条件","label":"出入条件","path":["属性","出入条件"],"group":"地点原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"空间关系·上级地点","label":"上级地点","path":["属性","空间关系","上级地点"],"group":"地点原点","definition":{"type":"ref","description":"仅明确包含关系；提到或朝向不构成包含。"}},{"key":"空间关系·连接地点","label":"连接地点","path":["属性","空间关系","连接地点"],"group":"地点原点","definition":{"type":"refs","description":"明确可达连接；单向/许可细则由世界规则补定义。"}},{"key":"空间关系·有效范围","label":"有效范围","path":["属性","空间关系","有效范围"],"group":"地点原点","definition":{"type":"text","description":"地点边界与尺度，不由临近文字猜测。"}}]},{"id":"origin.organization","layer":"原点","label":"组织","table":"objects","kind":"organization","groups":["组织原点"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"组织原点","definition":{"type":"text","required":true,"capture":"identity","include":{"op":"selected"}}},{"key":"别名","label":"别名","path":["别名"],"group":"组织原点","definition":{"type":"texts","capture":"identity","include":{"op":"selected"}}},{"key":"描述","label":"描述","path":["描述"],"group":"组织原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"职责","label":"职责","path":["属性","职责"],"group":"组织原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"结构","label":"结构","path":["属性","结构"],"group":"组织原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"立场","label":"立场","path":["属性","立场"],"group":"组织原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"历史","label":"历史","path":["属性","历史"],"group":"组织原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"组织目的","label":"组织目的","path":["属性","组织目的"],"group":"组织原点","definition":{"type":"text","description":"组织存在理由与目标。"}},{"key":"活动范围","label":"活动范围","path":["属性","活动范围"],"group":"组织原点","definition":{"type":"refs","description":"已确认的地点范围；不因此继承成员所在地。"}}]},{"id":"origin.rule","layer":"原点","label":"规则","table":"objects","kind":"rule","groups":["规则原点"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"规则原点","definition":{"type":"text","required":true,"capture":"identity","include":{"op":"selected"}}},{"key":"描述","label":"描述","path":["描述"],"group":"规则原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"适用范围","label":"适用范围","path":["属性","适用范围"],"group":"规则原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"条件","label":"条件","path":["属性","条件"],"group":"规则原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"效果","label":"效果","path":["属性","效果"],"group":"规则原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}},{"key":"例外","label":"例外","path":["属性","例外"],"group":"规则原点","definition":{"type":"text","capture":"identity","include":{"op":"selected"}}}]},{"id":"origin.world.world","layer":"原点","label":"世界定义","table":"facts","kind":"world","groups":["世界定义"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"世界定义","definition":{"type":"text","required":true,"capture":"evidence","include":{"op":"selected"}}},{"key":"命题","label":"命题","path":["命题"],"group":"世界定义","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"条件","label":"条件","path":["条件"],"group":"世界定义","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"生效时间","label":"生效时间","path":["生效时间"],"group":"世界定义","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"对象","label":"对象","path":["对象"],"group":"世界定义","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"世界设定·领域","label":"领域","path":["世界设定","领域"],"group":"世界定义","definition":{"type":"enum","values":["方向","法则","空间","生态","社会","生活","文化","时间"]}},{"key":"世界设定·相关对象","label":"相关对象","path":["世界设定","相关对象"],"group":"世界定义","definition":{"type":"refs","description":"关联的真实实体/规则ID。"}},{"key":"世界设定·适用范围","label":"适用范围","path":["世界设定","适用范围"],"group":"世界定义","definition":{"type":"text","description":"设定适用的世界、时代和范围。"}}]},{"id":"session.scene","layer":"会话","label":"场景","table":"scene","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"state","include":{"op":"selected"}}},{"key":"世界","label":"世界","path":["世界"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"时代","label":"时代","path":["时代"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"场景","label":"场景","path":["场景"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"地点","label":"地点","path":["地点"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"当前时间","label":"当前时间","path":["当前时间"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"阶段","label":"阶段","path":["阶段"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"参与者","label":"参与者","path":["参与者"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"标志","label":"标志","path":["标志"],"group":"字段","definition":{"type":"object","capture":"state","include":{"op":"selected"}}}]},{"id":"session.state","layer":"会话","label":"当前状态","table":"state","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"state","include":{"op":"selected"}}},{"key":"对象","label":"对象","path":["对象"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"字段","label":"字段","path":["字段"],"group":"字段","definition":{"type":"text","required":true,"capture":"state","include":{"op":"selected"}}},{"key":"有效性","label":"有效性","path":["有效性"],"group":"字段","definition":{"type":"enum","values":["有效","失效","待确认"],"capture":"state","include":{"op":"selected"}}},{"key":"值","label":"值","path":["值"],"group":"字段","definition":{"type":"json","capture":"state","include":{"op":"selected"}}},{"key":"值引用","label":"值引用","path":["值引用"],"group":"字段","definition":{"type":"ref","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"生效时间","label":"生效时间","path":["生效时间"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"失效时间","label":"失效时间","path":["失效时间"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"变动原因","label":"变动原因","path":["变动原因"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"原生引用","label":"原生引用","path":["原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}}]},{"id":"session.relations","layer":"会话","label":"当前关系","table":"relations","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"relation","include":{"op":"selected"}}},{"key":"主体","label":"主体","path":["主体"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"对象","label":"对象","path":["对象"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"维度","label":"维度","path":["维度"],"group":"字段","definition":{"type":"object","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·值","label":"值","path":["好感","正面","值"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·最小","label":"最小","path":["好感","正面","最小"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·最大","label":"最大","path":["好感","正面","最大"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·低端","label":"低端","path":["好感","正面","低端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·高端","label":"高端","path":["好感","正面","高端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"好感·正面·依据","label":"依据","path":["好感","正面","依据"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"好感·正面·原生引用","label":"原生引用","path":["好感","正面","原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}},{"key":"好感·负面·值","label":"值","path":["好感","负面","值"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·负面·最小","label":"最小","path":["好感","负面","最小"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·负面·最大","label":"最大","path":["好感","负面","最大"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"好感·负面·低端","label":"低端","path":["好感","负面","低端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"好感·负面·高端","label":"高端","path":["好感","负面","高端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"好感·负面·依据","label":"依据","path":["好感","负面","依据"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"好感·负面·原生引用","label":"原生引用","path":["好感","负面","原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}},{"key":"声望·正面·值","label":"值","path":["声望","正面","值"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·正面·最小","label":"最小","path":["声望","正面","最小"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·正面·最大","label":"最大","path":["声望","正面","最大"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·正面·低端","label":"低端","path":["声望","正面","低端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"声望·正面·高端","label":"高端","path":["声望","正面","高端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"声望·正面·依据","label":"依据","path":["声望","正面","依据"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"声望·正面·原生引用","label":"原生引用","path":["声望","正面","原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}},{"key":"声望·负面·值","label":"值","path":["声望","负面","值"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·负面·最小","label":"最小","path":["声望","负面","最小"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·负面·最大","label":"最大","path":["声望","负面","最大"],"group":"字段","definition":{"type":"number","capture":"relation","include":{"op":"selected"}}},{"key":"声望·负面·低端","label":"低端","path":["声望","负面","低端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"声望·负面·高端","label":"高端","path":["声望","负面","高端"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"声望·负面·依据","label":"依据","path":["声望","负面","依据"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"声望·负面·原生引用","label":"原生引用","path":["声望","负面","原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}},{"key":"印象","label":"印象","path":["印象"],"group":"字段","definition":{"type":"map","items":{"type":"object","fields":{"值":{"type":"number","capture":"relation","include":{"op":"selected"}},"最小":{"type":"number","capture":"relation","include":{"op":"selected"}},"最大":{"type":"number","capture":"relation","include":{"op":"selected"}},"低端":{"type":"text","capture":"relation","include":{"op":"selected"}},"高端":{"type":"text","capture":"relation","include":{"op":"selected"}},"依据":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"},"原生引用":{"type":"text","capture":"native","include":{"op":"selected"}}},"capture":"relation","include":{"op":"selected"}},"capture":"relation","include":{"op":"selected"}}},{"key":"锚点事件","label":"锚点事件","path":["锚点事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"证据","label":"证据","path":["证据"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"生效时间","label":"生效时间","path":["生效时间"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}}]},{"id":"session.cognition","layer":"会话","label":"人物认知","table":"cognition","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"knowledge","include":{"op":"selected"}}},{"key":"主体","label":"主体","path":["主体"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"事实","label":"事实","path":["事实"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"获知途径","label":"获知途径","path":["获知途径"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}},{"key":"确认程度","label":"确认程度","path":["确认程度"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}},{"key":"认识","label":"认识","path":["认识"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}},{"key":"心理","label":"心理","path":["心理"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}},{"key":"授权依据","label":"授权依据","path":["授权依据"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}}]},{"id":"session.holdings","layer":"会话","label":"持有流转","table":"holdings","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"state","include":{"op":"selected"}}},{"key":"物品","label":"物品","path":["物品"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"所有者","label":"所有者","path":["所有者"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"保管者","label":"保管者","path":["保管者"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"地点","label":"地点","path":["地点"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"容器","label":"容器","path":["容器"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"数量","label":"数量","path":["数量"],"group":"字段","definition":{"type":"number","capture":"state","include":{"op":"selected"}}},{"key":"单位","label":"单位","path":["单位"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"流转原因","label":"流转原因","path":["流转原因"],"group":"字段","definition":{"type":"text","capture":"state","include":{"op":"selected"}}},{"key":"原生引用","label":"原生引用","path":["原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}}]},{"id":"session.activities","layer":"会话","label":"行动计划","table":"activities","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"pending","include":{"op":"selected"}}},{"key":"主体","label":"主体","path":["主体"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"目标","label":"目标","path":["目标"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"行动","label":"行动","path":["行动"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"开始时间","label":"开始时间","path":["开始时间"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"推进至","label":"推进至","path":["推进至"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"预计结束","label":"预计结束","path":["预计结束"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"阻力","label":"阻力","path":["阻力"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"下一步","label":"下一步","path":["下一步"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"进度","label":"进度","path":["进度"],"group":"字段","definition":{"type":"number","min":0,"max":100,"capture":"pending","include":{"op":"selected"}}},{"key":"状态","label":"状态","path":["状态"],"group":"字段","definition":{"type":"enum","values":["计划","进行","等待","完成","取消"],"capture":"pending","include":{"op":"selected"}}},{"key":"任务","label":"任务","path":["任务"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"地点","label":"地点","path":["地点"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"知情依据","label":"知情依据","path":["知情依据"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"锚点事件","label":"锚点事件","path":["锚点事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"资源","label":"资源","path":["资源"],"group":"字段","definition":{"type":"object","capture":"pending","include":{"op":"selected"}}}]},{"id":"session.tasks","layer":"会话","label":"任务","table":"tasks","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"pending","include":{"op":"selected"}}},{"key":"来源","label":"来源","path":["来源"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"发布者","label":"发布者","path":["发布者"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"目标","label":"目标","path":["目标"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"条件","label":"条件","path":["条件"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"下一步","label":"下一步","path":["下一步"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"截止时间","label":"截止时间","path":["截止时间"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"类别","label":"类别","path":["类别"],"group":"字段","definition":{"type":"enum","values":["主线","支线","日常","个人"],"capture":"pending","include":{"op":"selected"}}},{"key":"进度·当前","label":"当前","path":["进度","当前"],"group":"字段","definition":{"type":"number","capture":"pending","include":{"op":"selected"}}},{"key":"进度·目标","label":"目标","path":["进度","目标"],"group":"字段","definition":{"type":"number","capture":"pending","include":{"op":"selected"}}},{"key":"进度·单位","label":"单位","path":["进度","单位"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"负责人","label":"负责人","path":["负责人"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"前置任务","label":"前置任务","path":["前置任务"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"锚点事件","label":"锚点事件","path":["锚点事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"蓝本节点","label":"蓝本节点","path":["蓝本节点"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"状态","label":"状态","path":["状态"],"group":"字段","definition":{"type":"enum","values":["发布","接受","进行","完成","取消"],"capture":"pending","include":{"op":"selected"}}}]},{"id":"session.timers","layer":"会话","label":"日程","table":"timers","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"pending","include":{"op":"selected"}}},{"key":"时间基准","label":"时间基准","path":["时间基准"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"起点","label":"起点","path":["起点"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"到期时间","label":"到期时间","path":["到期时间"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"触发条件","label":"触发条件","path":["触发条件"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"失效条件","label":"失效条件","path":["失效条件"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"重复规则","label":"重复规则","path":["重复规则"],"group":"字段","definition":{"type":"text","capture":"pending","include":{"op":"selected"}}},{"key":"到期轮次","label":"到期轮次","path":["到期轮次"],"group":"字段","definition":{"type":"number","description":"绝对已保留AI回复数；重投不新增轮次，非相对延后数","capture":"pending","include":{"op":"selected"}}},{"key":"任务","label":"任务","path":["任务"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"状态","label":"状态","path":["状态"],"group":"字段","definition":{"type":"enum","values":["等待","到期","完成","取消"],"capture":"pending","include":{"op":"selected"}}}]},{"id":"session.clues","layer":"会话","label":"线索","table":"clues","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"evidence","include":{"op":"selected"}}},{"key":"已出现内容","label":"已出现内容","path":["已出现内容"],"group":"字段","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"阶段","label":"阶段","path":["阶段"],"group":"字段","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"公开范围","label":"公开范围","path":["公开范围"],"group":"字段","definition":{"type":"text","capture":"knowledge","include":{"op":"selected"}}},{"key":"推进条件","label":"推进条件","path":["推进条件"],"group":"字段","definition":{"type":"text","capture":"evidence","include":{"op":"selected"}}},{"key":"事件","label":"事件","path":["事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"对象","label":"对象","path":["对象"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}}]},{"id":"session.events","layer":"会话","label":"事件","table":"events","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"event","include":{"op":"selected"}}},{"key":"时间","label":"时间","path":["时间"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"时间范围","label":"时间范围","path":["时间范围"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"地点","label":"地点","path":["地点"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"经过","label":"经过","path":["经过"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"结果","label":"结果","path":["结果"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"场面","label":"场面","path":["场面"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"台词","label":"台词","path":["台词"],"group":"字段","definition":{"type":"text","capture":"dialogue","include":{"op":"selected"}}},{"key":"意象","label":"意象","path":["意象"],"group":"字段","definition":{"type":"text","capture":"motif","include":{"op":"selected"}}},{"key":"前因","label":"前因","path":["前因"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"影响","label":"影响","path":["影响"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"后续","label":"后续","path":["后续"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"情感余波","label":"情感余波","path":["情感余波"],"group":"字段","definition":{"type":"text","capture":"event","include":{"op":"selected"}}},{"key":"触发线索","label":"触发线索","path":["触发线索"],"group":"字段","definition":{"type":"texts","capture":"motif","include":{"op":"selected"}}},{"key":"参与者","label":"参与者","path":["参与者"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"关联事件","label":"关联事件","path":["关联事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"identity"}},{"key":"前置事件","label":"前置事件","path":["前置事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"后续事件","label":"后续事件","path":["后续事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"标签","label":"标签","path":["标签"],"group":"字段","definition":{"type":"texts","capture":"event","include":{"op":"selected"}}},{"key":"原文段落","label":"原文段落","path":["原文段落"],"group":"字段","definition":{"type":"texts","capture":"dialogue","include":{"op":"selected"}}}]},{"id":"session.experiences","layer":"会话","label":"习惯与回忆","table":"experiences","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"meaning","include":{"op":"selected"}}},{"key":"主体","label":"主体","path":["主体"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"相关对象","label":"相关对象","path":["相关对象"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"锚点事件","label":"锚点事件","path":["锚点事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"类别","label":"类别","path":["类别"],"group":"字段","definition":{"type":"enum","values":["喜好","厌恶","习惯","回忆","安心方式","边界"],"capture":"meaning","include":{"op":"selected"}}},{"key":"情境","label":"情境","path":["情境"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"内容","label":"内容","path":["内容"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"感受","label":"感受","path":["感受"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"例外","label":"例外","path":["例外"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"表现方式","label":"表现方式","path":["表现方式"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"回应边界","label":"回应边界","path":["回应边界"],"group":"字段","definition":{"type":"text","capture":"meaning","include":{"op":"selected"}}},{"key":"触发线索","label":"触发线索","path":["触发线索"],"group":"字段","definition":{"type":"texts","capture":"motif","include":{"op":"selected"}}},{"key":"默契层次","label":"默契层次","path":["默契层次"],"group":"字段","definition":{"type":"enum","values":["共同经历","明确约定","单方联想","待确认"],"capture":"meaning","include":{"op":"selected"}}},{"key":"确定性","label":"确定性","path":["确定性"],"group":"字段","definition":{"type":"enum","values":["明确自述","反复表现","单次观察","暂定"],"capture":"meaning","include":{"op":"selected"}}},{"key":"有效性","label":"有效性","path":["有效性"],"group":"字段","definition":{"type":"enum","values":["有效","已改变","待确认"],"capture":"meaning","include":{"op":"selected"}}}]},{"id":"session.growth","layer":"会话","label":"成长","table":"growth","groups":["字段"],"fields":[{"key":"名称","label":"名称","path":["名称"],"group":"字段","definition":{"type":"text","required":true,"capture":"relation","include":{"op":"selected"}}},{"key":"主体","label":"主体","path":["主体"],"group":"字段","definition":{"type":"ref","required":true,"capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"方面","label":"方面","path":["方面"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"原有倾向","label":"原有倾向","path":["原有倾向"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"当前倾向","label":"当前倾向","path":["当前倾向"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"变化依据","label":"变化依据","path":["变化依据"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"反例","label":"反例","path":["反例"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"生效时间","label":"生效时间","path":["生效时间"],"group":"字段","definition":{"type":"text","capture":"relation","include":{"op":"selected"}}},{"key":"锚点事件","label":"锚点事件","path":["锚点事件"],"group":"字段","definition":{"type":"refs","capture":"reference","include":{"op":"selected"},"follow":"record"}},{"key":"阶段","label":"阶段","path":["阶段"],"group":"字段","definition":{"type":"enum","values":["萌芽","积累","稳定","回退"],"capture":"relation","include":{"op":"selected"}}},{"key":"原生引用","label":"原生引用","path":["原生引用"],"group":"字段","definition":{"type":"text","capture":"native","include":{"op":"selected"}}}]}]};const object=v=>!!v&&typeof v==='object'&&!Array.isArray(v),denied=new Set(['__proto__','prototype','constructor']);
-function valueValid(v,def,depth=0){
- if(depth>12)return false;if(v===null)return def.nullable===true||def.type==='json';
- switch(def.type){
- case'text':case'time':case'ref':case'type':return typeof v==='string'&&(!def.required||!!v.trim());
- case'texts':case'refs':return Array.isArray(v)&&v.every(x=>typeof x==='string'&&!!x.trim())&&new Set(v).size===v.length;
- case'number':case'duration':return typeof v==='number'&&Number.isFinite(v)&&(def.min===undefined||v>=def.min)&&(def.max===undefined||v<=def.max);
- case'boolean':return typeof v==='boolean';case'enum':return def.values.includes(v);
- case'array':return Array.isArray(v)&&v.every(x=>valueValid(x,def.items,depth+1))&&(!def.idKey||v.every(x=>object(x)&&typeof x[def.idKey]==='string')&&new Set(v.map(x=>x[def.idKey])).size===v.length);
- case'map':return object(v)&&Object.entries(v).every(([k,x])=>!denied.has(k)&&valueValid(x,def.items,depth+1));
- case'object':return object(v)&&(!def.fields||Object.entries(v).every(([k,x])=>!denied.has(k)&&(def.fields[k]?valueValid(x,def.fields[k],depth+1):def.additionalProperties===true))&&Object.entries(def.fields).every(([k,d])=>!d.required||Object.hasOwn(v,k)));
- case'json':return v!==undefined;default:return false;
- }
-}
-function createSheetEngine(catalog, validateValue) {
- const clone=x=>structuredClone(x),own=(o,k)=>Object.hasOwn(o,k),check=(ok,m)=>{if(!ok)throw Error(m);};
- const bad=new Set(['__proto__','prototype','constructor']);
- const templates=new Map(catalog.templates.map(t=>[t.id,t]));
- let state={format:'tisya.foundation-workbook/1',catalogVersion:catalog.version,records:[],revision:0},serial=0;
- const pending=new Map();
- const at=(o,path)=>path.reduce((v,k)=>v&&own(v,k)?v[k]:undefined,o);
- const put=(o,path,value)=>{let p=o;for(const key of path.slice(0,-1)){check(!bad.has(key),'字段路径无效');p=p[key]??={};}const key=path.at(-1);check(!bad.has(key),'字段路径无效');if(value===undefined)delete p[key];else p[key]=clone(value);};
- const template=id=>{const t=templates.get(id);check(t,'表单不存在');return t;};
- const record=id=>{const r=state.records.find(r=>r.id===id);check(r,'档案不存在');return r;};
- const field=(t,key)=>{const f=t.fields.find(f=>f.key===key);check(f,'未开放字段：'+key);return f;};
- function validate(v,def,refs){
-  check(validateValue(v,def),'值类型或范围不符');
-  if(v===null)return;
-  if(def.type==='ref')check(refs.has(v),'引用对象不存在或未获授权');
-  if(def.type==='refs')for(const id of v)check(refs.has(id),'引用对象不存在或未获授权');
-  if(def.type==='array')for(const x of v)validate(x,def.items,refs);
-  if(def.type==='map')for(const x of Object.values(v))validate(x,def.items,refs);
-  if(def.type==='object'&&def.fields)for(const [k,x]of Object.entries(v))if(def.fields[k])validate(x,def.fields[k],refs);
- }
- const allowedRefs=()=>new Set(state.records.filter(r=>template(r.template).table!=='core-draft').map(r=>r.id));
- function validateRecordValues(values,t,refs){
-  check(values&&typeof values==='object'&&!Array.isArray(values),'档案值无效');
-  function walk(o,path=[]){for(const [key,v]of Object.entries(o)){check(!bad.has(key),'字段名称无效');const p=[...path,key],f=t.fields.find(f=>JSON.stringify(f.path)===JSON.stringify(p));if(f){validate(v,f.definition,refs);continue;}check(t.fields.some(f=>p.every((k,i)=>f.path[i]===k))&&v&&typeof v==='object'&&!Array.isArray(v),'未登记字段：'+p.join('.'));walk(v,p);}}
-  walk(values);
- }
- const refsFor=ids=>state.records.filter(r=>ids.has(r.id)).map(r=>({值:r.id,名称:at(r.values,['名称'])||r.title}));
- function create(templateId){const t=template(templateId),id='draft-'+(++serial);const r={id,template:templateId,title:t.label+' '+(state.records.filter(r=>r.template===templateId).length+1),revision:0,values:{},manual:[]};state.records.push(r);state.revision++;return clone(r);}
- function edit(id,key,value){const r=record(id),f=field(template(r.template),key);if(value!==undefined){validate(value,f.definition,allowedRefs());if(r.parentId&&f.label==='主体')check(value===r.parentId,'主体必须属于当前人物');}put(r.values,f.path,value);if(!r.manual.includes(key))r.manual.push(key);syncObjects(r);r.revision++;state.revision++;return clone(r);}
- function markdownRequest(id,{keys,source='',referenceIds=[],rules={}}={}){
-  const r=record(id),t=template(r.template);check(typeof source==='string','填写依据须为文本');
-  const selected=keys??t.fields.filter(f=>at(r.values,f.path)===undefined).map(f=>f.key);check(Array.isArray(selected)&&selected.length&&new Set(selected).size===selected.length,'没有可填写的字段或字段重复');
-  const fields=selected.map(key=>field(t,key));for(const f of fields)check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);
-  const known=allowedRefs();check(referenceIds.every(id=>known.has(id)),'引用对象未获授权');const refs=new Set(referenceIds);
-  const types={text:'文字',time:'时间文字',duration:'数值',number:'数值',boolean:'true或false',enum:'单选',texts:'文字列表',ref:'对象编号',refs:'对象编号列表',json:'JSON值',array:'列表',map:'键值对象',object:'对象',type:'类型编号'};
-  const shape=d=>({类型:types[d.type]??d.type,...(d.values?{选项:clone(d.values)}:{}),...(d.fields?{字段:Object.fromEntries(Object.entries(d.fields).map(([k,v])=>[k,shape(v)]))}:{}),...(d.items?{条目:shape(d.items)}:{}),...(d.required?{必填:true}:{}),...(d.min!==undefined?{最小:d.min}:{}),...(d.max!==undefined?{最大:d.max}:{})});
-  const hasRef=d=>['ref','refs'].includes(d.type)||Object.values(d.fields??{}).some(hasRef)||(d.items&&hasRef(d.items));
-  const encode=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\','\\\\').replaceAll('|','\\|').replaceAll('\n','<br>');
-  const cells=fields.map(f=>({row:t.fields.indexOf(f)+1,key:f.key,label:f.label,definition:f.definition}));
-  const token='fill-'+(++serial),ticket={record:id,revision:r.revision,workbookRevision:state.revision,keys:selected,refs:[...refs],cells};pending.set(token,ticket);
-  const typeRule=f=>{const def=f.definition;let text=types[def.type]??def.type;if(def.values)text+='，可选：'+def.values.join('／');if(def.min!==undefined)text+='，最小'+def.min;if(def.max!==undefined)text+='，最大'+def.max;if(['texts','refs'].includes(def.type))text+='，每项用<br>分行，无条目填[]';if(def.type==='text'&&!def.required)text+='，明确空文本填""';if(['object','array','map'].includes(def.type))text+='，结构：'+JSON.stringify(shape(def));return text;};
-  const instructions=['表单：'+t.label,'档案：'+(at(r.values,['名称'])||r.title),'表级要求：根据资料填回下表；保留行号、A列和表头，只填B列。未知格留空，不拿0或否代替未知。只返回填好的表格。','列级要求：A为字段名，不修改；B为内容。文字中的竖线写\\|，换行写<br>，字面<br>写&lt;br&gt;。',...(rules.table?['本表补充：'+rules.table]:[]),...(rules.columns?.B?['B列补充：'+rules.columns.B]:[])];
-  for(const type of new Set(cells.map(c=>c.definition.type)))if(rules.types?.[type])instructions.push('类型'+types[type]+'：'+rules.types[type]);
-  for(const c of cells){instructions.push('B'+c.row+'：'+typeRule(c));if(rules.rows?.[c.row])instructions.push('第'+c.row+'行：'+rules.rows[c.row]);if(rules.cells?.['B'+c.row])instructions.push('B'+c.row+'补充：'+rules.cells['B'+c.row]);}
-  if(fields.some(f=>hasRef(f.definition)))instructions.push('可引用对象（格内填编号；多个编号分行）：'+refsFor(refs).map(r=>r.值+'＝'+r.名称).join('；'));
-  const grid='| 行 | A | B |\n| --- | --- | --- |\n'+cells.map(c=>'| '+c.row+' | '+encode(c.label)+' |  |').join('\n');
-  const modelInput=instructions.join('\n')+'\n\n资料：\n'+source+'\n\n'+grid;
-  return {token,recordId:id,modelInput};
- }
- function parseTable(ticket,text){
-  check(typeof text==='string','请粘贴AI填好的表格');let input=text.trim();if(/^```(?:markdown|md)?\s*\n/.test(input))input=input.replace(/^```(?:markdown|md)?\s*\n/,'').replace(/\n```$/,'');
-  const split=line=>{check(line.startsWith('|')&&line.endsWith('|'),'表格每行须以竖线开始和结束');const parts=[];let cell='';for(let i=1;i<line.length;i++){const c=line[i];if(c==='\\'){check(i+1<line.length,'表格转义不完整');cell+=line[++i];}else if(c==='|'){parts.push(cell.trim());cell='';}else cell+=c;}check(!cell,'表格结尾无效');return parts;};
-  const decode=v=>v.replaceAll('<br>','\n').replaceAll('&lt;','<').replaceAll('&gt;','>').replaceAll('&amp;','&');
-  const lines=input.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.trim());check(lines.length>=2,'未找到完整表格');const header=split(lines[0]);check(JSON.stringify(header)===JSON.stringify(['行','A','B']),'请保留“行 / A / B”表头');check(split(lines[1]).length===3&&split(lines[1]).every(c=>/^:?-{3,}:?$/.test(c)),'表格分隔行无效');
-  const result={},seen=new Set();for(const line of lines.slice(2)){const row=split(line);check(row.length===3,'每行只能有行号、A、B三格');check(/^\d+$/.test(row[0]),'行号无效');const number=Number(row[0]),c=ticket.cells.find(c=>c.row===number);check(c&&!seen.has(number),'行号未开放或重复：'+row[0]);seen.add(number);check(decode(row[1])===c.label,'A列字段名被修改：A'+number);const raw=decode(row[2]);if(raw==='')continue;const d=c.definition;let value;
-   if(['text','time','ref','type'].includes(d.type))value=raw==='""'&&d.type==='text'?'':raw;
-   else if(['number','duration'].includes(d.type)){check(raw.trim()!==''&&Number.isFinite(Number(raw)),'数值无效：B'+number);value=Number(raw);}
-   else if(d.type==='boolean'){check(['是','否','true','false'].includes(raw),'请填是/否：B'+number);value=['是','true'].includes(raw);}
-   else if(d.type==='enum')value=raw;
-   else if(['texts','refs'].includes(d.type))value=raw==='[]'?[]:raw.split('\n');
-   else if(['array','map','object'].includes(d.type))value=JSON.parse(raw);
-   else if(d.type==='json'){if(/^(?:[\[{"]|true$|false$|null$|-?\d)/.test(raw))value=JSON.parse(raw);else value=raw;}
-   else throw Error('未支持的单元格类型');
-   result[c.key]=value;
-  }
-  check(seen.size===ticket.cells.length,'请保留本次表格全部行；未知格留空');return result;
- }
+</style></head><body><main></main><script>(() => {
+  // tables/foundation-definitions.js
+  var FOUNDATION_DEFINITIONS = {
+    "format": "tisya.foundation-template-catalog/1",
+    "status": "candidate-not-installed",
+    "version": 4,
+    "principle": "九组为视图；基点、原点、会话为来源与时间层，独立权限事实另分行。",
+    "schemaChanges": [
+      {
+        "kind": "type",
+        "id": "character",
+        "fields": {
+          "身份细目": {
+            "type": "object",
+            "fields": {
+              "物种": {
+                "type": "refs",
+                "description": "已登记物种定义的稳定引用；未知不补人类。"
+              },
+              "生命阶段": {
+                "type": "text",
+                "description": "按世界物种和历法表述；不把现实年龄默认给人物。"
+              },
+              "出生时期": {
+                "type": "text",
+                "description": "有来源的世界时间表达；不强制公历日期。"
+              },
+              "出身地": {
+                "type": "refs",
+                "description": "出生/成长来源地，不是当前位置。"
+              },
+              "语言": {
+                "type": "texts",
+                "description": "已确认可用语言；不因此自动懂秘密或暗语。"
+              },
+              "社会身份": {
+                "type": "text",
+                "description": "原点的社会位置、责任与限制；当前任职另由状态/关系维护。"
+              }
+            }
+          },
+          "形貌": {
+            "type": "object",
+            "fields": {
+              "整体": {
+                "type": "text",
+                "description": "原点稳定体貌。"
+              },
+              "辨识特征": {
+                "type": "texts",
+                "description": "有依据的独特外观锚点。"
+              },
+              "仪态": {
+                "type": "text",
+                "description": "已确立的惯常动作、姿态和身体表达；语速归节奏，单次动作不算惯常。"
+              },
+              "惯常装束": {
+                "type": "text",
+                "description": "衣着习惯，非当前穿戴或库存。"
+              },
+              "感官印象": {
+                "type": "text",
+                "description": "可感知的稳定印象，不给观察者无依据的秘密知识。"
+              }
+            }
+          },
+          "性情": {
+            "type": "object",
+            "fields": {
+              "价值取舍": {
+                "type": "text",
+                "description": "选择之间的优先与代价。"
+              },
+              "判断方式": {
+                "type": "text",
+                "description": "形成判断、核验证据和处理分歧的方法；具体操作流程归做事方式。"
+              },
+              "情绪处理": {
+                "type": "text",
+                "description": "稳定应对方式，非当前心情。"
+              },
+              "长处": {
+                "type": "texts",
+                "description": "性情上的优点及具体表现；技艺归擅长。"
+              },
+              "短处": {
+                "type": "texts",
+                "description": "性情上的弱点及后果；未掌握技能归不足，伤势限制归代价限制。"
+              },
+              "拒绝边界": {
+                "type": "text",
+                "description": "已确立的稳定拒绝原则；单次拒绝、未答应或尚未发生不构成原则。"
+              },
+              "协商条件": {
+                "type": "text",
+                "description": "哪些新依据可能改变决定。"
+              },
+              "改变条件": {
+                "type": "text",
+                "description": "材料明确说明的可能促成性情变化的条件；期待、尚未改变不算条件，未说明留空。"
+              }
+            }
+          },
+          "生活": {
+            "type": "object",
+            "fields": {
+              "生计": {
+                "type": "text",
+                "description": "日常谋生方式。"
+              },
+              "作息": {
+                "type": "text",
+                "description": "日常起居、工作和休息的时间安排；反复小动作归习惯。"
+              },
+              "兴趣": {
+                "type": "texts",
+                "description": "稳定兴趣；单次行为不能自动确立。"
+              },
+              "习惯": {
+                "type": "texts",
+                "description": "已确认的日常反复行为；不复抄作息时间或性情判断原则。"
+              },
+              "长期目标": {
+                "type": "text",
+                "description": "长期自主愿望及已知进展；不改成已成功或已接受的任务。"
+              },
+              "社会责任": {
+                "type": "text",
+                "description": "稳定承担的职责范围；对象间持续联系另见关系，不复抄互动经过。"
+              }
+            }
+          },
+          "表达": {
+            "type": "object",
+            "fields": {
+              "措辞": {
+                "type": "text",
+                "description": "用词、比喻和话题选择；语速、长短及讲述次序归节奏。"
+              },
+              "节奏": {
+                "type": "text",
+                "description": "句式与表达节奏。"
+              },
+              "幽默": {
+                "type": "text",
+                "description": "适用的幽默方式，可没有。"
+              },
+              "沉默条件": {
+                "type": "text",
+                "description": "何时不说及原因。"
+              },
+              "关系差异": {
+                "type": "text",
+                "description": "对不同对象的表达差异；具体关系经过与协作分工留在关系表。"
+              },
+              "禁用套路": {
+                "type": "texts",
+                "description": "防止机械复读的边界，不要求每轮套例句。"
+              }
+            }
+          },
+          "本领": {
+            "type": "object",
+            "fields": {
+              "擅长": {
+                "type": "texts",
+                "description": "有来源的稳定能力。"
+              },
+              "不足": {
+                "type": "texts",
+                "description": "明确不会或未受训练的技能；没提及不等于不会，已会技能的限制另填。"
+              },
+              "做事方式": {
+                "type": "text",
+                "description": "运用本领的惯常操作流程；不复抄一般性情原则。"
+              },
+              "代价限制": {
+                "type": "texts",
+                "description": "已掌握本领的适用条件、使用代价和身体限制；不会的技能归不足。"
+              },
+              "定义引用": {
+                "type": "refs",
+                "description": "引用已登记能力/规则，不复制公式与资源当前值。"
+              },
+              "叙事表现": {
+                "type": "text",
+                "description": "使用本领时旁人可感知的动作或现象；不复抄通用流程，不代表本轮已成功。"
+              }
+            }
+          },
+          "人物核心": {
+            "type": "object",
+            "fields": {
+              "性格核心标签": {
+                "type": "texts",
+                "description": "少量有依据的性格辨识词；概括稳定底色，不用职业、能力或单次心情代替人格，不用标签取代欲望与矛盾。"
+              },
+              "欲望双螺旋": {
+                "type": "texts",
+                "description": "彼此同时成立的核心欲望，每股各一项：想得到、守住或避免失去什么。双螺旋指多股驱动力并行，不是欲望对障碍；有几股写几股，不为凑两股捏造动机。具体计划和进度归长期目标。"
+              },
+              "核心矛盾": {
+                "type": "text",
+                "description": "上述欲望怎样冲突、互相依赖或强化；它们与信念、恐惧、现实限制怎样拉扯，每次取舍付出什么代价，其应对如何反过来影响追求。只写有依据的联系和代价，不堆砌反义词，不强造创伤或预设成长。"
+              }
+            }
+          },
+          "面具层": {
+            "type": "object",
+            "fields": {
+              "面具呈现": {
+                "type": "text",
+                "description": "在什么对象或场合前，主动或习惯性维持什么外在形象；资料未说明伪装时留空，不把礼貌或一般表达自动判作虚假。"
+              },
+              "面具作用": {
+                "type": "text",
+                "description": "这层呈现用于保护、获得或回避什么，与真实欲望或反应有何落差；不复抄欲望全文，不泄露隐情内容。"
+              },
+              "面具裂隙": {
+                "type": "text",
+                "description": "哪些有依据的情境下，外在呈现与真实反应出现差异、松动或切换，旁人具体能看见什么；不是必然崩溃或已发生揭示，观察到征象不等于知道其原因。"
+              }
+            }
+          },
+          "形貌细目": {
+            "type": "object",
+            "fields": {
+              "头发": {
+                "type": "object",
+                "fields": {
+                  "发色": {
+                    "type": "text",
+                    "description": "只收来源明确的稳定头发颜色；染色等后来变化归会话状态，未知留空。"
+                  },
+                  "发长": {
+                    "type": "text",
+                    "description": "只收来源明确的稳定头发长度，保留原文尺度；不从发色、发式或性别推断，未知留空。"
+                  },
+                  "发质形态": {
+                    "type": "text",
+                    "description": "只收来源明确的稳定直曲、质地等头发形态；当场湿乱、临时梳理或造型归会话状态，未知留空。"
+                  }
+                }
+              },
+              "眼部": {
+                "type": "object",
+                "fields": {
+                  "眼形": {
+                    "type": "text",
+                    "description": "只收来源明确的稳定眼部形状；动物比喻、当前眼神、泛红和情绪不能补成眼形，未知留空。"
+                  },
+                  "瞳色": {
+                    "type": "text",
+                    "description": "只收来源明确的稳定瞳孔或虹膜颜色；不从发色或族属推断，临时光照不变成底色，未知留空。"
+                  }
+                }
+              },
+              "肤色": {
+                "type": "text",
+                "description": "只收来源明确的稳定肤色；暂时潮红、苍白、光照和伤势归会话状态，未知留空。"
+              },
+              "体型": {
+                "type": "text",
+                "description": "只收来源明确的稳定体格、比例与体型，保留程度和近似限定；不从职业、性别或单次姿势推断，未知留空。"
+              },
+              "身高": {
+                "type": "text",
+                "description": "只收来源明确的身高，保留世界单位、区间及近似限定，不换算补精确值；未知留空。"
+              },
+              "面部特征": {
+                "type": "text",
+                "description": "只收来源明确且未由眼形等细格承载的稳定面部特征；情绪表情、当前伤势不入底档，未知留空。"
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": "type",
+        "id": "item",
+        "fields": {
+          "独有意义": {
+            "type": "text",
+            "description": "在目标世界中的具体意义；保留基点意义但不照搬旧世界事实。"
+          },
+          "使用限制": {
+            "type": "text",
+            "description": "来源明确的使用边界，不凭描述赋予可执行机制。"
+          }
+        }
+      },
+      {
+        "kind": "type",
+        "id": "place",
+        "fields": {
+          "空间关系": {
+            "type": "object",
+            "fields": {
+              "上级地点": {
+                "type": "ref",
+                "description": "仅明确包含关系；提到或朝向不构成包含。"
+              },
+              "连接地点": {
+                "type": "refs",
+                "description": "明确可达连接；单向/许可细则由世界规则补定义。"
+              },
+              "有效范围": {
+                "type": "text",
+                "description": "地点边界与尺度，不由临近文字猜测。"
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": "type",
+        "id": "organization",
+        "fields": {
+          "组织目的": {
+            "type": "text",
+            "description": "组织存在理由与目标。"
+          },
+          "活动范围": {
+            "type": "refs",
+            "description": "已确认的地点范围；不因此继承成员所在地。"
+          }
+        }
+      },
+      {
+        "kind": "table",
+        "id": "facts",
+        "fields": {
+          "前史": {
+            "type": "object",
+            "fields": {
+              "主体": {
+                "type": "ref",
+                "description": "所属对象的稳定ID。"
+              },
+              "时期": {
+                "type": "text",
+                "description": "明确早于当前开局的世界时期。"
+              },
+              "地点": {
+                "type": "refs",
+                "description": "已确认地点，不用文字邻接推导包含关系。"
+              },
+              "参与者": {
+                "type": "refs",
+                "description": "实际参与者不等于全体知情者。"
+              },
+              "选择": {
+                "type": "text",
+                "description": "材料明确的主动抉择；不能从获赠、持有或结果倒推自愿选择。"
+              },
+              "后果": {
+                "type": "text",
+                "description": "材料明确的事件结果；不把相邻叙述补成先后或因果。"
+              },
+              "当下影响": {
+                "type": "text",
+                "description": "明确由此事造成且仍持续的影响；不把别处已知事实当作此事后果。"
+              },
+              "原文": {
+                "type": "text",
+                "description": "已确认前史的原文；讨论示例不得升为事实。"
+              },
+              "涉及对象": {
+                "type": "refs",
+                "description": "本条明确涉及的其他已登记物品、组织或规则等；参与者与地点已有专格，不重复填；关联不代表参与或知情。"
+              },
+              "当时理解": {
+                "type": "text",
+                "description": "所属人物在此事当时怎样理解、相信或误解，限资料明确给出的心理或话语；不是客观定论或他人也知道，不用后来的认识倒灌。不明留空，受保护隐情仍归独立隐情。"
+              }
+            }
+          },
+          "关系底稿": {
+            "type": "object",
+            "fields": {
+              "主体": {
+                "type": "ref",
+                "description": "关系方向的主体。"
+              },
+              "对象": {
+                "type": "ref",
+                "description": "持续联系另一端的稳定ID，可为人物、组织、地点或物品等；仅被提到不构成关系，同名不合并。"
+              },
+              "性质": {
+                "type": "text",
+                "description": "已确立的联系性质，如师徒、协作、长期责任或归属；责任和协作不自动成为私交。"
+              },
+              "形成经过": {
+                "type": "text",
+                "description": "该联系形成的已确认经过；不将仅同场或单次提及写成长期联系。"
+              },
+              "相处方式": {
+                "type": "text",
+                "description": "主体与本条对象的惯常互动或分工；不混入其他关系，不推断双向对称。"
+              },
+              "主体边界": {
+                "type": "text",
+                "description": "主体自己的边界与理由。"
+              },
+              "成立条件": {
+                "type": "text",
+                "description": "哪些前提使该关系成立；换U不能只改ID照搬。"
+              }
+            }
+          },
+          "隐情": {
+            "type": "object",
+            "fields": {
+              "关联对象": {
+                "type": "refs",
+                "description": "秘密涉及的对象。"
+              },
+              "可观察线索": {
+                "type": "texts",
+                "description": "有依据的线索，不自动授予事实全貌。"
+              },
+              "揭示条件": {
+                "type": "text",
+                "description": "允许揭示的条件或永不揭示的约束，不等于已经公开。"
+              },
+              "影响范围": {
+                "type": "text",
+                "description": "秘密的影响，不作为人物已知信息。"
+              }
+            }
+          },
+          "世界设定": {
+            "type": "object",
+            "fields": {
+              "领域": {
+                "type": "enum",
+                "values": [
+                  "方向",
+                  "法则",
+                  "空间",
+                  "生态",
+                  "社会",
+                  "生活",
+                  "文化",
+                  "时间"
+                ]
+              },
+              "相关对象": {
+                "type": "refs",
+                "description": "关联的真实实体/规则ID。"
+              },
+              "适用范围": {
+                "type": "text",
+                "description": "设定适用的世界、时代和范围。"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "originViews": {
+      "character": [
+        {
+          "id": "identity",
+          "label": "身份",
+          "table": "objects",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "别名"
+            ],
+            [
+              "属性",
+              "身份细目"
+            ]
+          ],
+          "source": "MOD-P02"
+        },
+        {
+          "id": "appearance",
+          "label": "形貌",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "形貌"
+            ]
+          ],
+          "source": "MOD-P03"
+        },
+        {
+          "id": "disposition",
+          "label": "性情",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "性情"
+            ]
+          ],
+          "source": "MOD-P04"
+        },
+        {
+          "id": "life",
+          "label": "生活",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "生活"
+            ]
+          ],
+          "source": "MOD-P05"
+        },
+        {
+          "id": "expression",
+          "label": "表达",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "表达"
+            ]
+          ],
+          "source": "MOD-P06"
+        },
+        {
+          "id": "skills",
+          "label": "本领",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "本领"
+            ]
+          ],
+          "source": "MOD-P07"
+        },
+        {
+          "id": "history",
+          "label": "经历",
+          "table": "facts",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "命题"
+            ],
+            [
+              "对象"
+            ],
+            [
+              "前史"
+            ]
+          ],
+          "source": "MOD-P08"
+        },
+        {
+          "id": "relationships",
+          "label": "关系",
+          "table": "facts",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "命题"
+            ],
+            [
+              "对象"
+            ],
+            [
+              "关系底稿"
+            ]
+          ],
+          "source": "MOD-P09"
+        },
+        {
+          "id": "secrets",
+          "label": "隐情",
+          "table": "facts",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "命题"
+            ],
+            [
+              "对象"
+            ],
+            [
+              "隐情"
+            ]
+          ],
+          "source": "MOD-P10"
+        },
+        {
+          "id": "characterCore",
+          "label": "核心",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "人物核心"
+            ]
+          ],
+          "source": "MOD-P01 / FT10-W28"
+        },
+        {
+          "id": "personaMask",
+          "label": "面具",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "面具层"
+            ]
+          ],
+          "source": "Luc entry 0 / FT10-W28"
+        },
+        {
+          "id": "appearanceDetails",
+          "label": "形貌细目",
+          "table": "objects",
+          "paths": [
+            [
+              "属性",
+              "形貌细目"
+            ]
+          ],
+          "source": "MOD-P03 / W50"
+        }
+      ],
+      "item": [
+        {
+          "id": "item",
+          "label": "物品原点",
+          "table": "objects",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "别名"
+            ],
+            [
+              "描述"
+            ],
+            [
+              "属性",
+              "形态"
+            ],
+            [
+              "属性",
+              "用途"
+            ],
+            [
+              "属性",
+              "材质"
+            ],
+            [
+              "属性",
+              "规则"
+            ],
+            [
+              "属性",
+              "独有意义"
+            ],
+            [
+              "属性",
+              "使用限制"
+            ]
+          ],
+          "source": "MOD-O04"
+        }
+      ],
+      "place": [
+        {
+          "id": "place",
+          "label": "地点原点",
+          "table": "objects",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "别名"
+            ],
+            [
+              "描述"
+            ],
+            [
+              "属性",
+              "环境"
+            ],
+            [
+              "属性",
+              "位置"
+            ],
+            [
+              "属性",
+              "特征"
+            ],
+            [
+              "属性",
+              "出入条件"
+            ],
+            [
+              "属性",
+              "空间关系"
+            ]
+          ],
+          "source": "MOD-O03"
+        }
+      ],
+      "organization": [
+        {
+          "id": "organization",
+          "label": "组织原点",
+          "table": "objects",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "别名"
+            ],
+            [
+              "描述"
+            ],
+            [
+              "属性",
+              "职责"
+            ],
+            [
+              "属性",
+              "结构"
+            ],
+            [
+              "属性",
+              "立场"
+            ],
+            [
+              "属性",
+              "历史"
+            ],
+            [
+              "属性",
+              "组织目的"
+            ],
+            [
+              "属性",
+              "活动范围"
+            ]
+          ],
+          "source": "MOD-O02"
+        }
+      ],
+      "rule": [
+        {
+          "id": "rule",
+          "label": "规则原点",
+          "table": "objects",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "描述"
+            ],
+            [
+              "属性",
+              "适用范围"
+            ],
+            [
+              "属性",
+              "条件"
+            ],
+            [
+              "属性",
+              "效果"
+            ],
+            [
+              "属性",
+              "例外"
+            ]
+          ],
+          "source": "MOD-W02/R03"
+        }
+      ],
+      "world": [
+        {
+          "id": "world",
+          "label": "世界定义",
+          "table": "facts",
+          "paths": [
+            [
+              "名称"
+            ],
+            [
+              "命题"
+            ],
+            [
+              "条件"
+            ],
+            [
+              "生效时间"
+            ],
+            [
+              "对象"
+            ],
+            [
+              "世界设定"
+            ]
+          ],
+          "source": "MOD-W01—W08"
+        }
+      ]
+    },
+    "coreSlots": [
+      {
+        "id": "essence",
+        "label": "核心与不可替代性",
+        "target": "traits",
+        "prompt": "去掉世界外壳后必须保留什么；不要只提取标签。"
+      },
+      {
+        "id": "choice",
+        "label": "价值与选择",
+        "target": "traits",
+        "prompt": "价值冲突、判断及拒绝边界，有原文才保留。"
+      },
+      {
+        "id": "motive",
+        "label": "愿望与形成因果",
+        "target": "traits",
+        "prompt": "这里只保留经历如何形成或改变核心的依据；欲望本身归欲望双螺旋，不重复抄写，不复制旧世界人名和已完成事件。"
+      },
+      {
+        "id": "ability",
+        "label": "用途、能力与代价",
+        "target": "traits",
+        "prompt": "能力/物品用途的意义、限制与代价；数值另由目标世界定义。"
+      },
+      {
+        "id": "anchor",
+        "label": "辨识与象征",
+        "target": "traits",
+        "prompt": "只有核心必需的外形/象征才保留；其余允许世界化。"
+      },
+      {
+        "id": "growth",
+        "label": "选择携带的成长",
+        "target": "growth",
+        "prompt": "仅用户明确选择；作为待适配的经历意义，不冒充新会话已经发生。"
+      },
+      {
+        "id": "links",
+        "label": "所选对象的关联意义",
+        "target": "links",
+        "prompt": "对象齐全且明确选择才保留；不自动扩大选取或携带旧关系、背包。"
+      },
+      {
+        "id": "personality-tags",
+        "label": "性格核心标签",
+        "target": "traits",
+        "prompt": "人物核心的少量辨识词；与欲望、矛盾共同保留，不以同标签替换其具体意义。"
+      },
+      {
+        "id": "desire-axis",
+        "label": "欲望双螺旋",
+        "target": "traits",
+        "prompt": "保留多股同时成立的核心欲望及优先关系，不简化为目标对障碍；原点分别映射具体表达，不复制旧任务进度。"
+      },
+      {
+        "id": "tension-axis",
+        "label": "核心矛盾",
+        "target": "traits",
+        "prompt": "保留多股欲望的冲突、依赖与强化，以及它们与信念、恐惧、现实限制的拉扯和取舍代价；不强造创伤或预设成长。"
+      },
+      {
+        "id": "persona-mask",
+        "label": "面具及真实落差",
+        "target": "traits",
+        "prompt": "有依据才携带表层呈现的用途及与真实反应的落差；核心意义适配到原点面具层，旧世界场合、人名和已揭露状态不直接迁移。"
+      }
+    ],
+    "sessionViews": [
+      {
+        "table": "scene",
+        "label": "场景",
+        "inheritance": "仅以明确开局场景建立；随后按来源更新，不能复制旧会话在场者。"
+      },
+      {
+        "table": "state",
+        "label": "当前状态",
+        "inheritance": "明确开局值或锚点时值；逐对象/字段唯一，当前位置不能从出身地复制。"
+      },
+      {
+        "table": "relations",
+        "label": "当前关系",
+        "inheritance": "逐方向、双方实体与成立前提核对；换U不自动继承旧关系。"
+      },
+      {
+        "table": "cognition",
+        "label": "人物认知",
+        "inheritance": "仅明确开局知识/真实接触；原点秘密存在不等于人物知道。"
+      },
+      {
+        "table": "holdings",
+        "label": "持有流转",
+        "inheritance": "明确开局归属、保管或锚点值；模板物品存在不等于拥有。"
+      },
+      {
+        "table": "activities",
+        "label": "行动计划",
+        "inheritance": "有主体和依据的计划/行动，意图不是完成。"
+      },
+      {
+        "table": "tasks",
+        "label": "任务",
+        "inheritance": "明确发布/接受等真实阶段；愿望不是自动接受。"
+      },
+      {
+        "table": "timers",
+        "label": "日程",
+        "inheritance": "有时间基准与触发条件；到期不等于事件发生。"
+      },
+      {
+        "table": "clues",
+        "label": "线索",
+        "inheritance": "已出现内容和公开范围；未揭示真相不先给人物。"
+      },
+      {
+        "table": "events",
+        "label": "事件",
+        "inheritance": "当前线真实发生的过程；前史事实不伪装本轮事件。"
+      },
+      {
+        "table": "experiences",
+        "label": "习惯与回忆",
+        "inheritance": "按主体和形成依据记录；开局已有与后生变化分别注明来源。"
+      },
+      {
+        "table": "growth",
+        "label": "成长",
+        "inheritance": "变化及其证据，不能覆盖原点底档或默认跨世界继承。"
+      }
+    ],
+    "inheritance": [
+      {
+        "id": "core-to-origin",
+        "from": "基点",
+        "to": "原点",
+        "rule": "逐项意义适配与表达映射；不直接复制旧身份、数值、关系、持有、知情。",
+        "evidence": "已选基点版本＋目标世界定义＋用户确认",
+        "writes": "确认后origin.bases及coreAdaptations；模板预览零写"
+      },
+      {
+        "id": "origin-to-session",
+        "from": "原点",
+        "to": "新会话",
+        "rule": "固定原点版本引用；仅明确开局事实建立业务行；原点记录不自动授予知情。",
+        "evidence": "所选原点版本＋开局设计/原卡明确依据",
+        "writes": "session.pins及初始提交；不重置已有会话"
+      },
+      {
+        "id": "session-delta",
+        "from": "会话前态",
+        "to": "会话后态",
+        "rule": "真实来源驱动字段增量；前史与稳定底档不被后生变化覆盖。",
+        "evidence": "本线已保留正文/授权输入/宿主结算",
+        "writes": "session.commits，按修订/锁定/来源校验"
+      },
+      {
+        "id": "session-to-core",
+        "from": "会话",
+        "to": "基点提取",
+        "rule": "用户明确选择对象、关联、成长后提取可复用意义；不自动回流。",
+        "evidence": "所选来源快照与稳定项ID",
+        "writes": "origin.coreAssets新的基点版本"
+      },
+      {
+        "id": "anchor-to-branch",
+        "from": "冻结原著锚点",
+        "to": "新分支",
+        "rule": "只继承锚点已成立状态；新U的关系/持有/知情须逐项核对，未来不倒灌。",
+        "evidence": "冻结版本＋锚点＋主体映射与干预依据",
+        "writes": "分支种子及分歧记录；完整新U因果引擎仍待实现"
+      }
+    ],
+    "unknown": "缺失保持缺失；空数组/false/0仅在明确填写时保留；不由模板补默认值。",
+    "privacy": "access.readers与access.knowers按每条记录独立；同一行内不同秘密/知情范围拆成facts/cognition，不靠折叠或显示分组授权。",
+    "bindings": [
+      {
+        "label": "基点身份",
+        "path": "origin.coreAssets[].id / version",
+        "type": "string / number",
+        "owner": "保存基点时分配",
+        "rule": "定位被选基点；版本相同还须核内容指纹"
+      },
+      {
+        "label": "提取来源",
+        "path": "origin.coreAssets[].sourceSession / source",
+        "type": "string / object（整组）",
+        "owner": "明确选择后提取",
+        "rule": "整组source保存获选对象、成长、关联及说明；不得扩大选择集"
+      },
+      {
+        "label": "成员来源",
+        "path": "origin.coreAssets[].members[].sourceObject / sourceRevision / sourceType / kind",
+        "type": "string / number / string / string",
+        "owner": "整组基点保存",
+        "rule": "保留源对象与修订；不是目标世界对象ID"
+      },
+      {
+        "label": "核心与成长",
+        "path": "origin.coreAssets[].members[].traits[] / growth[]",
+        "type": "{id,name,value,evidence}[]",
+        "owner": "逐项提取并核证据",
+        "rule": "成长必须已选择；evidence对应被选来源中的连续原文"
+      },
+      {
+        "label": "关联闭包",
+        "path": "origin.coreAssets[].links[]",
+        "type": "{id,sourceRow,members,name,value,evidence}[]",
+        "owner": "整组基点保存",
+        "rule": "members必须属于已选成员；关联意义需显式适配"
+      },
+      {
+        "label": "目标底档",
+        "path": "origin.bases[].id / rev / values",
+        "type": "string / number / object",
+        "owner": "确认创世或原点编辑",
+        "rule": "固定修订，不以当前进度覆盖原点"
+      },
+      {
+        "label": "适配依据",
+        "path": "origin.coreAdaptations[].core",
+        "type": "{book,id,version,fingerprint}",
+        "owner": "确认整组适配",
+        "rule": "核相同基点版本及内容后保存；不是靠名字匹配"
+      },
+      {
+        "label": "成员映射",
+        "path": "origin.coreAdaptations[].members[].member / object",
+        "type": "源成员ID / 目标ID@rev",
+        "owner": "确认整组适配",
+        "rule": "明确哪位成员变成哪个世界版本"
+      },
+      {
+        "label": "逐项表达",
+        "path": "origin.coreAdaptations[].members[].items[]",
+        "type": "{item,path,expression}[]",
+        "owner": "确认整组适配",
+        "rule": "每个核心/成长项均须映射；expression逐字存在于目标字段文本"
+      },
+      {
+        "label": "关联表达",
+        "path": "origin.coreAdaptations[].links[].link / targets[]",
+        "type": "基点关联ID / {object,path,expression}[]",
+        "owner": "确认整组适配",
+        "rule": "关联成员的具体世界表达；不自动建立会话关系"
+      },
+      {
+        "label": "会话绑定",
+        "path": "session.origin / pins[]",
+        "type": "原点书名 / ID@rev[]",
+        "owner": "显式绑定与版本选择",
+        "rule": "每个对象只选一个修订；原点更新不自动替换已选版本"
+      },
+      {
+        "label": "版本选择历史",
+        "path": "session.commits[].originSelection",
+        "type": "{before,after}",
+        "owner": "显式重选原点版本",
+        "rule": "保留前后pins并按来源投影，不能只看当前pins还原过去"
+      },
+      {
+        "label": "剧情来源",
+        "path": "session.commits[].source / contextSource / depends",
+        "type": "string或null",
+        "owner": "受控提交",
+        "rule": "仅应用当前故事来源链及依赖均成立的提交；contextSource为按需字段"
+      },
+      {
+        "label": "变更前后",
+        "path": "session.commits[].changes[]",
+        "type": "{id,before,after} 或 {id,before,origin}",
+        "owner": "受控提交",
+        "rule": "after为会话行；origin指向固定原点修订，不能混为可变复制件"
+      },
+      {
+        "label": "逐条依据",
+        "path": "session.commits[].anchors[]",
+        "type": "{source,row,worldTime,recordedAt,evidence,…}[]",
+        "owner": "受控提交",
+        "rule": "世界时间和记录时间分开；每项须有来源证据"
+      },
+      {
+        "label": "行权限与人工值",
+        "path": "row.access.readers / access.knowers / lockedFields",
+        "type": "string[] / string[] / string[]",
+        "owner": "逐行确认",
+        "rule": "读者可见与角色知情分开；继承pins时清空knowers；人工锁保护原字段"
+      },
+      {
+        "label": "分支时点",
+        "path": "session.branchSeed / branchSeed.anchor",
+        "type": "object / object",
+        "owner": "显式选时间锚或分叉",
+        "rule": "已有锚点投影能力；完整新U映射、因果分歧与新模板接线待验"
+      }
+    ]
+  };
 
- // Plain text is the default model surface; stable paths remain host-only.
- const childTypes={history:'前史',relationships:'关系',secrets:'隐情'};
- const childTemplate=t=>t.id.startsWith('origin.character.');
- function syncObjects(r){
-  const t=template(r.template);if(!childTemplate(t)||r.manual.includes('对象'))return;
-  if(at(r.values,['对象'])!==undefined&&!r.derived?.includes('对象'))return;
-  const values=[];if(r.parentId)values.push(r.parentId);
-  for(const f of t.fields)if(f.key!=='对象'&&['ref','refs'].includes(f.definition.type)){const v=at(r.values,f.path);if(v!==undefined&&v!==null)values.push(...(Array.isArray(v)?v:[v]));}
-  if(!values.length){if(r.derived?.includes('对象'))put(r.values,['对象'],undefined);return;}
-  put(r.values,['对象'],[...new Set(values)]);r.derived=[...new Set([...(r.derived??[]),'对象'])];
- }
- function createChild(parentId,kind){
-  const parent=record(parentId);check(parent.template==='origin.character'&&childTypes[kind],'子表归属或类型无效');
-  const made=create('origin.character.'+kind),r=record(made.id);r.parentId=parentId;
-  const subject=template(r.template).fields.find(f=>f.label==='主体');if(subject)put(r.values,subject.path,parentId);
-  syncObjects(r);return clone(r);
- }
- function selectedKeys(r,keys,deriveObjects){
-  const t=template(r.template),selected=keys??t.fields.filter(f=>at(r.values,f.path)===undefined).map(f=>f.key);
-  return selected.filter(k=>!(deriveObjects&&childTemplate(t)&&k==='对象'));
- }
- function makeAliases(refs){
-  const items=refsFor(new Set(refs)),counts=new Map();for(const x of items)counts.set(x.名称,(counts.get(x.名称)??0)+1);
-  return items.map(x=>({...x,显示:counts.get(x.名称)>1?x.名称+'〔'+x.值+'〕':x.名称}));
- }
- const listType=d=>['texts','refs'].includes(d.type);
- function plainInput(parts,source,refs,rules={}){
-  const out=['档案：'+parts[0].ownerName,'按资料填写，保留分组、行号和字段名，每行填一个字段。字段名后可用冒号；未知留空，只返回填好的内容。'];
-  if(parts.some(p=>p.cells.some(c=>listType(c.definition))))out.push('列表格多项用“；”分隔，明确没有条目填“无”；普通文字中的标点原样保留。');
-  if(rules.table)out.push(rules.table);if(rules.columns?.B)out.push(rules.columns.B);
-  const all=parts.flatMap(p=>p.cells);for(const type of new Set(all.map(c=>c.definition.type)))if(rules.types?.[type])out.push(rules.types[type]);
-  if(all.some(c=>['ref','refs'].includes(c.definition.type)))out.push('关联格填写已登记名称：'+refs.map(x=>x.显示).join('；')+'。同名对象使用所列完整名称。');
-  const form=[];
-  for(const p of parts){
-   const groups=[...new Set(p.cells.map(c=>c.group))];
-   for(const g of groups){const title=p.tid==='origin.character'?'人物／'+g:p.heading;form.push('【'+title+'】');const hints=[];
-    for(const c of p.cells.filter(c=>c.group===g)){
-     const d=c.definition;let hint=d.description??'';if(p.tid==='origin.character.secrets'&&c.label==='关联对象')hint='真相直接涉及的对象；物品来源人物不自动纳入，不据此推定知情。';
-     if(listType(d))hint=(hint?hint+' ':'')+'多项';
-     if(d.values)hint+=' 可选：'+d.values.join('／');
-     if(['number','duration'].includes(d.type))hint+=' 数值'+(d.min!==undefined?'，最小'+d.min:'')+(d.max!==undefined?'，最大'+d.max:'');
-     if(d.type==='boolean')hint+=' 是或否';
-     if(['array','map','object','json'].includes(d.type))hint+=' 此复杂值仍须JSON；尚未展开为子格';
-     if(rules.rows?.[c.row])hint+=' '+rules.rows[c.row];if(rules.cells?.['B'+c.row])hint+=' '+rules.cells['B'+c.row];
-     if(hint)hints.push(c.row+' '+hint.trim());
-     form.push(c.row+' '+c.label);
+  // tables/conditions.js
+  var CAPTURE_RULES = Object.freeze({
+    evidence: "来源支持该字段时录入；未知省略，0/false/空值按类型保留。",
+    identity: "初始化设定或新发现的稳定事实；既有常量仅凭明确用户纠正修改，当前变化另记。",
+    event: "正文实际发生的独立事件；保留顺序、因果、结果与未完后果，计划和未实施威胁不算发生。",
+    dialogue: "有后续作用的原句及说话者/场面；不把输入台词冒充AI正文，不改写暗语。",
+    motif: "有证据的重复或转折细节；不为普通动作虚构象征或默契。",
+    meaning: "依主体知识记录含义、前后变化及例外；共同经历可自然形成暗语，无须事先约定；私人解释与共同记忆分别保存。",
+    knowledge: "接触依据才改变知情；听闻/推测/误信与事实分开，同场和读者可见不授予人物知识。",
+    state: "实际变化才更新唯一当前行；未知去向使旧状态失效，回顾矛盾不算新变化。",
+    pending: "已接受约定、已启动事务或真实待答问题；拒绝、意图或到期不等于完成。",
+    relation: "关系各维独立，变化须锚点依据；一次表现不升级为永久习惯或人格替换。",
+    preference: "仅从用户要求或待确认候选提取；限定作用域，角色偏好不等于真实用户偏好。",
+    reference: "引用已登记或同批新ID；不以同名合并，不复制整份关联资料。",
+    native: "宿主唯一写入；表单保存原生路径引用，不复制数值或再次生成更新命令。",
+    derived: "程序派生，模型不填录。"
+  });
+  var fail = (m) => {
+    throw Error("表单条件：" + m);
+  };
+  var object = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+  var simple = /* @__PURE__ */ new Set(["always", "selected", "strict", "context", "cue", "tagged", "retrieved", "focused", "rule"]);
+  function validateCondition(node, depth = 0) {
+    if (depth > 8 || !object(node) || typeof node.op !== "string") fail("结构无效或嵌套过深");
+    let keys = ["op"];
+    if (simple.has(node.op)) {
+    } else if (["any", "all"].includes(node.op)) {
+      keys.push("args");
+      if (!Array.isArray(node.args) || !node.args.length || node.args.length > 20) fail("组合条件须有1—20项");
+      for (const x of node.args) validateCondition(x, depth + 1);
+    } else if (node.op === "not") {
+      keys.push("arg");
+      validateCondition(node.arg, depth + 1);
+    } else if (["eq", "oneOf", "has"].includes(node.op)) {
+      keys.push("field");
+      if (typeof node.field !== "string" || !node.field || ["__proto__", "prototype", "constructor"].includes(node.field)) fail("字段名无效");
+      if (node.op !== "has") {
+        keys.push("value");
+        if (node.op === "oneOf" && (!Array.isArray(node.value) || !node.value.length)) fail("匹配值须为非空数组");
+        if (node.value === void 0) fail("缺少匹配值");
+      }
+    } else if (node.op === "text") {
+      keys.push("source", "terms");
+      if (!["previous", "user", "either"].includes(node.source) || !Array.isArray(node.terms) || !node.terms.length || node.terms.length > 100 || !node.terms.every((x) => typeof x === "string" && x.trim().length >= 2)) fail("文本条件缺少来源或有效短语");
+    } else fail("未登记操作 " + node.op);
+    if (Object.keys(node).some((k) => !keys.includes(k))) fail("含未登记参数");
+    return node;
+  }
+  var any = (...ops) => ({ op: "any", args: ops.map((op) => typeof op === "string" ? { op } : op) });
+  function tableCondition(id) {
+    if (["scene", "facts", "tasks", "timers", "clues", "preferences", "holdings"].includes(id)) return { op: "always" };
+    if (id === "state") return { op: "not", arg: { op: "eq", field: "有效性", value: "失效" } };
+    if (id === "objects") return any("context", "cue", "tagged", "retrieved", "rule");
+    if (id === "events") return any("cue", "tagged", "retrieved");
+    if (id === "native_cells") return { op: "not", arg: { op: "always" } };
+    return any("context", "cue", "tagged", "retrieved");
+  }
+  function captureRule(table2, key, def) {
+    if (def.formula) return "derived";
+    if (key === "原生引用" || table2 === "native_cells") return "native";
+    if (table2 === "preferences") return "preference";
+    if (["ref", "refs"].includes(def.type)) return "reference";
+    if (["台词", "原文段落"].includes(key)) return "dialogue";
+    if (["意象", "触发线索"].includes(key)) return "motif";
+    if (table2 === "experiences") return "meaning";
+    if (table2 === "cognition" || key === "公开范围") return "knowledge";
+    if (["relations", "growth"].includes(table2)) return "relation";
+    if (["tasks", "timers", "activities"].includes(table2)) return "pending";
+    if (["state", "scene", "holdings"].includes(table2)) return "state";
+    if (table2 === "objects" || table2 === "type") return "identity";
+    if (table2 === "events") return "event";
+    return "evidence";
+  }
+  function applyConditionTemplates(registry) {
+    const fields = (defs, table2) => {
+      for (const [key, def] of Object.entries(defs)) {
+        def.capture ??= captureRule(table2, key, def);
+        def.include ??= { op: "selected" };
+        if (["ref", "refs"].includes(def.type)) def.follow ??= table2 === "objects" || table2 === "type" || key === "关联事件" ? "identity" : "record";
+        if (def.fields) fields(def.fields, table2);
+        if (def.items) fields({ item: def.items }, table2);
+      }
+    };
+    for (const item of registry.tables) {
+      item.assemble ??= tableCondition(item.id);
+      fields(item.fields, item.id);
     }
-    if(hints.length)out.push('【'+title+'】填写要求：',...hints);
-   }
+    for (const item of registry.types) fields(item.fields, "type");
+    return registry;
   }
-  return out.join('\n')+'\n\n资料：\n'+source+'\n\n待填写：\n'+form.join('\n');
- }
- function partFor(r,cells,heading){const t=template(r.template);return {record:r.id,tid:t.id,ownerName:at(record(r.parentId??r.id).values,['名称'])||record(r.parentId??r.id).title,heading:heading??t.label,cells:cells.map(c=>({...c,label:t.id==='origin.character.relationships'&&c.key==='关系底稿·对象'?'关系对象':c.label,group:field(t,c.key).group}))};}
- function request(id,options={}){
-  if(options.format==='markdown')return markdownRequest(id,options);
-  const r=record(id),keys=selectedKeys(r,options.keys,options.deriveObjects!==false);
-  const task=markdownRequest(id,{...options,keys}),ticket=pending.get(task.token);
-  ticket.deriveObjects=options.deriveObjects!==false;ticket.aliases=makeAliases(ticket.refs);ticket.parts=[partFor(r,ticket.cells,options.heading)];
-  task.modelInput=plainInput(ticket.parts,options.source??'',ticket.aliases,options.rules);return task;
- }
- function requestDossier(id,{source='',referenceIds=[],recordIds,...options}={}){
-  const root=record(id);check(root.template==='origin.character','请选择人物档案');check(typeof source==='string','填写依据须为文本');
-  const chosen=recordIds??[id];check(Array.isArray(chosen)&&chosen.length&&chosen.includes(id)&&new Set(chosen).size===chosen.length,'请明确选择本次人物及子表');
-  const records=chosen.map(record);check(records.every(r=>r.id===id||r.parentId===id),'不能混入其他人物子表');
-  const known=allowedRefs();check(referenceIds.every(x=>known.has(x)),'引用对象未获授权');
-  const counts={},parts=[];
-  for(const r of records){const t=template(r.template),keys=selectedKeys(r,undefined,options.deriveObjects!==false),cells=keys.map(k=>{const f=field(t,k);return {row:t.fields.indexOf(f)+1,key:k,label:f.label,definition:f.definition};});
-   if(!cells.length)continue;const kind=r.template.split('.').at(-1),n=(counts[kind]??0)+1;counts[kind]=n;
-   const num=['一','二','三','四','五','六','七','八','九','十'][n-1]??String(n);
-   parts.push(partFor(r,cells,r.id===id?'人物':childTypes[kind]+'／'+num));
+
+  // tables/schema.js
+  var copy = (value) => structuredClone(value);
+  var object2 = (value) => !!value && typeof value === "object" && !Array.isArray(value);
+  var check = (ok, message) => {
+    if (!ok) throw Error(message);
+  };
+  function sameDefinition(a, b) {
+    if (a === b) return true;
+    if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+    if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((value, i) => sameDefinition(value, b[i]));
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && sameDefinition(a[key], b[key]));
   }
-  check(parts.length,'没有可填写的字段');const aliases=makeAliases(referenceIds),token='fill-'+(++serial);
-  const ticket={record:id,workbookRevision:state.revision,parts,refs:[...referenceIds],aliases,deriveObjects:options.deriveObjects!==false};pending.set(token,ticket);
-  return {token,recordId:id,modelInput:plainInput(parts,source,aliases,options.rules)};
- }
- function resolveReference(raw,ticket){
-  const matches=(ticket.aliases??[]).filter(x=>x.显示===raw||x.值===raw);check(matches.length===1,'引用名称不存在、重名或未获授权：'+raw);return matches[0].值;
- }
- function plainValue(raw,c,ticket){
-  const d=c.definition;let value;
-  if(['text','time','type'].includes(d.type))value=raw==='""'&&d.type==='text'?'':raw;
-  else if(d.type==='ref')value=resolveReference(raw,ticket);
-  else if(listType(d)){
-   const items=['无','[]'].includes(raw)?[]:raw.split(/[；;\n]/).map(x=>x.trim());check(items.every(x=>x.length),'列表含空条目：'+c.label);
-   value=d.type==='refs'?items.map(x=>resolveReference(x,ticket)):items;
-  }else if(['number','duration'].includes(d.type)){check(Number.isFinite(Number(raw)),'数值无效：'+c.label);value=Number(raw);}
-  else if(d.type==='boolean'){check(['是','否','true','false'].includes(raw),'请填是或否：'+c.label);value=['是','true'].includes(raw);}
-  else if(d.type==='enum')value=raw;
-  else if(['json','array','map','object'].includes(d.type)){value=JSON.parse(raw);}
-  else throw Error('未支持的单元格类型');return value;
- }
- function parsePlain(ticket,text){
-  check(typeof text==='string','请粘贴填好的文本');let input=text.trim();
-  if(/^```(?:text|txt)?\s*\n/.test(input))input=input.replace(/^```(?:text|txt)?\s*\n/,'').replace(/\n```$/,'');
-  const sections=new Map();for(const p of ticket.parts)for(const g of new Set(p.cells.map(c=>c.group))){const title=p.tid==='origin.character'?'人物／'+g:p.heading;check(!sections.has(title),'任务分组重复');sections.set(title,{part:p,cells:p.cells.filter(c=>c.group===g)});}
-  let current=ticket.parts.length===1?{part:ticket.parts[0],cells:ticket.parts[0].cells}:null;const seenSections=new Set(),seen=new Set(),rawCells=[],result=new Map(ticket.parts.map(p=>[p.record,{}]));
-  for(const rawLine of input.split(/\r?\n/)){
-   const line=rawLine.trim();if(!line)continue;
-   const heading=line.match(/^【([^】]+)】$/);if(heading){check(sections.has(heading[1])&&!seenSections.has(heading[1]),'分组未开放或重复：'+heading[1]);current=sections.get(heading[1]);seenSections.add(heading[1]);continue;}
-   if(ticket.parts.length===1&&/^行\s+A\s+B$/.test(line)&&!seen.size)continue;
-   check(current,'请保留分组标题');const match=line.match(/^(\d+)\s+(.+)$/);check(match,'无法识别字段行：'+line);
-   const number=Number(match[1]),c=current.cells.find(c=>c.row===number);check(c,'行号未开放：'+match[1]);
-   const identity=current.part.record+':'+number;check(!seen.has(identity),'行号重复：'+number);seen.add(identity);
-   const body=match[2];check(body.startsWith(c.label),'字段名被修改：'+number);
-   let rest=body.slice(c.label.length);check(!rest||/^[\s：:]/.test(rest),'字段名被修改：'+number);rest=rest.trimStart();if(/^[：:]/.test(rest))rest=rest.slice(1).trimStart();
-   if(rest)rawCells.push({record:current.part.record,cell:c,raw:rest});
+  var normalized = (text2) => String(text2).normalize("NFKC").trim().toLocaleLowerCase().replace(/[\s_·・-]+/gu, "");
+  var f = (type = "text", extra = {}) => ({ type, ...extra });
+  var text = (names) => Object.fromEntries(names.split(" ").map((n) => [n, f()]));
+  var refs = (names) => Object.fromEntries(names.split(" ").map((n) => [n, f("refs")]));
+  var scale = () => f("object", { fields: { 值: f("number"), 最小: f("number"), 最大: f("number"), 低端: f(), 高端: f(), 依据: f("refs"), 原生引用: f() } });
+  var preferenceInterval = () => f("object", { ui: "bipolar-interval", fields: { 左端: f("text", { required: true }), 右端: f("text", { required: true }), 下限: f("number", { required: true, min: -100, max: 100 }), 上限: f("number", { required: true, min: -100, max: 100 }), 依据: f("text", { required: true }), 说明: f("text") } });
+  var pair = () => f("object", { fields: { 正面: scale(), 负面: scale() } });
+  var table = (id, name, fields, owner = "archive") => ({ id, name, aliases: [], version: 1, owner, fields: { 名称: f("text", { required: true }), ...fields } });
+  var TABLES = [
+    table("objects", "常量档案", { 类型: f("type", { required: true }), 别名: f("texts"), ...text("世界 描述 核心引用"), ...refs("关联"), 标签: f("texts"), 发现环境: f("object", { fields: { 地点: f("refs"), 时段: f(), 出现条件: f(), 来源依据: f(), 确认程度: f("enum", { values: ["设定明确", "当事人陈述", "一次观察"] }), 可复用: f("boolean") } }), 属性: f("object") }),
+    table("facts", "事实与发现", { ...text("命题 条件 生效时间 验证状态"), ...refs("对象 替代事实"), 证据: f("texts") }),
+    table("scene", "场景与全局进度", { ...text("世界 时代 场景 地点 当前时间 阶段"), ...refs("参与者"), 标志: f("object") }),
+    table("state", "对象当前状态", { 对象: f("ref", { required: true }), 字段: f("text", { required: true }), 有效性: f("enum", { values: ["有效", "失效", "待确认"] }), 值: f("json"), 值引用: f("ref"), ...text("生效时间 失效时间 变动原因"), 原生引用: f("text") }),
+    table("relations", "关系", { 主体: f("ref", { required: true }), 对象: f("ref", { required: true }), 维度: f("object"), 好感: pair(), 声望: pair(), 印象: f("map", { items: scale() }), ...refs("锚点事件"), ...text("证据 生效时间") }),
+    table("cognition", "认知与心理", { 主体: f("ref", { required: true }), ...refs("事实"), ...text("获知途径 确认程度 认识 心理 授权依据") }),
+    table("holdings", "持有与流转", { 物品: f("ref", { required: true }), ...refs("所有者 保管者 地点 容器"), 数量: f("number"), ...text("单位 流转原因 原生引用") }),
+    table("tasks", "任务待办", { ...text("来源 发布者 目标 条件 下一步 截止时间"), 类别: f("enum", { values: ["主线", "支线", "日常", "个人"] }), 进度: f("object", { fields: { 当前: f("number"), 目标: f("number"), 单位: f() } }), ...refs("负责人 前置任务 锚点事件"), 蓝本节点: f(), 状态: f("enum", { values: ["发布", "接受", "进行", "完成", "取消"] }) }),
+    table("timers", "日程倒计时", { ...text("时间基准 起点 到期时间 触发条件 失效条件 重复规则"), 到期轮次: f("number", { description: "绝对已保留AI回复数；重投不新增轮次，非相对延后数" }), ...refs("任务"), 状态: f("enum", { values: ["等待", "到期", "完成", "取消"] }) }),
+    table("clues", "伏笔线索", { ...text("已出现内容 阶段 公开范围 推进条件"), ...refs("事件 对象") }),
+    table("events", "历史事件记忆", { ...text("时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波"), 触发线索: f("texts"), ...refs("参与者 关联事件 前置事件 后续事件"), 标签: f("texts"), 原文段落: f("texts") }),
+    table("activities", "进行中事务", { 主体: f("ref", { required: true }), ...text("目标 行动 开始时间 推进至 预计结束 阻力 下一步"), 进度: f("number", { min: 0, max: 100 }), 状态: f("enum", { values: ["计划", "进行", "等待", "完成", "取消"] }), ...refs("任务 地点 知情依据 锚点事件"), 资源: f("object") }),
+    table("experiences", "习惯喜好与回忆", { 主体: f("ref", { required: true }), ...refs("相关对象 锚点事件"), 类别: f("enum", { values: ["喜好", "厌恶", "习惯", "回忆", "安心方式", "边界"] }), ...text("情境 内容 感受 例外 表现方式 回应边界"), 触发线索: f("texts"), 默契层次: f("enum", { values: ["共同经历", "明确约定", "单方联想", "待确认"] }), 确定性: f("enum", { values: ["明确自述", "反复表现", "单次观察", "暂定"] }), 有效性: f("enum", { values: ["有效", "已改变", "待确认"] }) }),
+    table("growth", "角色成长", { 主体: f("ref", { required: true }), ...text("方面 原有倾向 当前倾向 变化依据 反例 生效时间"), ...refs("锚点事件"), 阶段: f("enum", { values: ["萌芽", "积累", "稳定", "回退"] }), 原生引用: f() }),
+    table("native_cells", "原生变量映射", { 路径: f("text", { required: true }), 值: f("json", { required: true }), 启用: f("boolean") }),
+    table("preferences", "用户叙事偏好", { ...text("内容 范围 证据 修订原因"), 性质: f("enum", { values: ["明确要求", "推测偏好"] }), 强度: f("enum", { values: ["必须", "喜爱", "厌恶", "禁止", "偏好"] }), 类别: f("enum", { values: ["用词", "NSFW题材", "SFW角色表现", "剧情走向", "文风", "特定情节"] }), 标签: f("texts"), 倾向区间: f("map", { items: preferenceInterval() }), 作用域: f("object", { fields: { 全局: f("boolean"), 用户角色: f("texts"), 角色卡: f("texts"), 世界: f("texts"), 会话: f("texts") } }), 置信度: f("number"), 例外: f("texts"), 启用: f("boolean") }, "preferences")
+  ];
+  var TYPES = [
+    { id: "character", name: "人物", aliases: ["角色", "人类", "NPC", "角色档案"], fields: { ...text("身份 外貌 性格 背景") } },
+    { id: "item", name: "物品", aliases: ["道具", "物件", "装备"], fields: { ...text("形态 用途 材质 规则") } },
+    { id: "place", name: "地点", aliases: ["场所", "位置", "地区"], fields: { ...text("环境 位置 特征 出入条件") } },
+    { id: "rule", name: "规则", aliases: ["法则", "机制", "制度"], fields: { ...text("适用范围 条件 效果 例外") } },
+    { id: "organization", name: "组织", aliases: ["势力", "团体"], fields: { ...text("职责 结构 立场 历史") } }
+  ].map((t) => ({ ...t, version: 1, parent: null }));
+  var defaultRegistry = () => applyConditionTemplates({ tables: copy(TABLES), types: copy(TYPES) });
+  var ID = /^[a-z][a-z0-9._-]{0,79}$/;
+  var denied = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+  function registryIndex(registry) {
+    check(object2(registry) && Array.isArray(registry.tables) && Array.isArray(registry.types), "模板注册表损坏");
+    const result = {};
+    for (const kind of ["tables", "types"]) {
+      const names = /* @__PURE__ */ new Map(), ids = /* @__PURE__ */ new Set();
+      for (const item of registry[kind]) {
+        check(ID.test(item.id) && !ids.has(item.id), "模板 ID 无效或重复：" + item.id);
+        ids.add(item.id);
+        check(typeof item.name === "string" && item.name.trim() && Array.isArray(item.aliases) && Number.isSafeInteger(item.version) && item.version > 0, "模板名称或版本无效");
+        for (const label of [item.id, item.name, ...item.aliases]) {
+          check(typeof label === "string" && label.trim(), "模板别名不能为空");
+          const key = normalized(label);
+          check(!names.has(key) || names.get(key).id === item.id, "同义名称已属于 " + names.get(key)?.name + "：" + label);
+          names.set(key, item);
+        }
+        check(object2(item.fields) && Object.keys(item.fields).length > 0, "模板必须定义字段");
+        validateFields(item.fields);
+        if (item.assemble) validateCondition(item.assemble);
+      }
+      result[kind] = names;
+    }
+    for (const type of registry.types) {
+      const seen = /* @__PURE__ */ new Set([type.id]);
+      let parent = type.parent;
+      while (parent) {
+        const next = registry.types.find((t) => t.id === parent);
+        check(next && !seen.has(parent), "父模板不存在或循环");
+        seen.add(parent);
+        parent = next.parent;
+      }
+    }
+    return result;
   }
-  check(seen.size===ticket.parts.reduce((n,p)=>n+p.cells.length,0),'请保留本次全部字段行；未知值留空');
-  const aliases=clone(ticket.aliases??[]);for(const x of rawCells)if(x.cell.key==='名称'&&ticket.refs.includes(x.record)&&!aliases.some(a=>a.值===x.record&&a.显示===x.raw))aliases.push({值:x.record,名称:x.raw,显示:x.raw});
-  for(const x of rawCells)result.get(x.record)[x.cell.key]=plainValue(x.raw,x.cell,{...ticket,aliases});return result;
- }
- function accept(token,text){
-  const ticket=pending.get(token);check(ticket,'填值任务已失效或已使用');
-  check(state.revision===ticket.workbookRevision,'表单或引用对象已变化，请重新生成填值任务');
-  let answers;
-  if(!ticket.parts||/^\s*(?:```(?:markdown|md)?\s*\n)?\|/.test(text)){
-   check(!ticket.parts||ticket.parts.length===1,'多子表请使用分组文本');
-   const part=ticket.parts?.[0];answers=new Map([[ticket.record,parseTable(part?{...ticket,cells:part.cells}:ticket,text)]]);
-  }else answers=parsePlain(ticket,text);
-  const changed=[],refs=new Set(ticket.refs);let count=0;
-  for(const [id,answer]of answers){const r=record(id),t=template(r.template),next=clone(r),keys=ticket.parts?.find(p=>p.record===id)?.cells.map(c=>c.key)??ticket.keys;
-   for(const [key,value]of Object.entries(answer)){check(keys.includes(key)&&!bad.has(key),'结果含本次未开放字段：'+key);const f=field(t,key);check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);validate(value,f.definition,refs);put(next.values,f.path,value);count++;}
-   if(next.parentId){const subject=t.fields.find(f=>f.label==='主体');if(subject&&at(next.values,subject.path)!==undefined)check(at(next.values,subject.path)===next.parentId,'主体必须属于当前人物');}if(ticket.deriveObjects)syncObjects(next);validateRecordValues(next.values,t,allowedRefs());changed.push(next);
+  function addTypes(registry, proposals = []) {
+    check(Array.isArray(proposals) && proposals.length <= 20, "新模板数量无效");
+    const next = copy(registry);
+    for (const p of proposals) {
+      check(object2(p), "新模板无效");
+      const index = registryIndex(next).types;
+      const same = index.get(normalized(p.name));
+      if (same) {
+        check(same.id === p.id, "请复用已有模板 " + same.id + "，不能另建同义类名");
+        check(JSON.stringify(same) === JSON.stringify(p), "已有模板不能由自动归档覆盖");
+        continue;
+      }
+      check(p.parent && next.types.some((t) => t.id === p.parent), "新模板必须扩展已登记父模板");
+      next.types.push(copy(p));
+      registryIndex(next);
+    }
+    return next;
   }
-  check(count>0,'没有可回填的字段；原内容未改');
-  for(const next of changed){next.revision++;state.records[state.records.findIndex(r=>r.id===next.id)]=next;}
-  state.revision++;pending.delete(token);return clone(record(ticket.record));
- }
- function restore(input){
-  check(input?.format===state.format&&input.catalogVersion===catalog.version&&Array.isArray(input.records),'不是兼容的表单草稿');check(input.records.length<=500,'草稿档案过多');
-  const ids=new Set();for(const r of input.records){check(typeof r.id==='string'&&/^draft-\d+$/.test(r.id)&&!ids.has(r.id),'档案编号无效或重复');ids.add(r.id);template(r.template);check(typeof r.title==='string'&&Number.isSafeInteger(r.revision)&&r.revision>=0&&Array.isArray(r.manual),'草稿元数据无效');}
-  for(const r of input.records){if(r.parentId!==undefined)check(childTemplate(template(r.template))&&input.records.some(p=>p.id===r.parentId&&p.template==='origin.character'),'子表归属无效');if(r.derived!==undefined)check(Array.isArray(r.derived)&&r.derived.every(k=>k==='对象')&&childTemplate(template(r.template)),'派生标记无效');}
-  const refs=new Set(input.records.filter(r=>template(r.template).table!=='core-draft').map(r=>r.id));
-  for(const r of input.records){const t=template(r.template);check(r.manual.every(key=>t.fields.some(f=>f.key===key)),'人工字段标记无效');validateRecordValues(r.values,t,refs);const subject=t.fields.find(f=>f.label==='主体');if(r.parentId&&subject&&at(r.values,subject.path)!==undefined)check(at(r.values,subject.path)===r.parentId,'主体必须属于当前人物');}
-  const next={format:state.format,catalogVersion:catalog.version,records:clone(input.records),revision:state.revision+1};state=next;serial=Math.max(serial,...input.records.map(r=>Number(r.id.slice(6))),0);pending.clear();return snapshot();
- }
- function snapshot(){return clone(state);}
- function values(id){const r=record(id),t=template(r.template);return {template:r.template,table:t.table,kind:t.kind??null,values:clone(r.values),status:'draft-only',canonicalWrites:0};}
- return {create,createChild,edit,request,requestDossier,accept,restore,snapshot,values,read:id=>clone(record(id)),template:id=>clone(template(id)),references:()=>refsFor(new Set(state.records.filter(r=>template(r.template).table==='objects').map(r=>r.id))),get:(id,key)=>clone(at(record(id).values,field(template(record(id).template),key).path))};
-}
-function mountFoundationSheet(root,engine,catalog,{download}={}){
- const d=root.ownerDocument,el=(tag,text,cls)=>{const e=d.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
- const invalid=new Map(),includedChildren=new Set();
- const action=(text,fn,cls,allowInvalid=false)=>{const b=el('button',text,cls);b.type='button';b.addEventListener('click',()=>run(()=>{if(invalid.size&&!allowInvalid)throw Error('请先修正红色单元格，或将它留待填写。');return fn();}));return b;};
- let selectedTemplate='origin.character',selectedRecord=null,group=null,dirty=false,currentTicket=null;
- const header=el('header'),brand=el('div'),badge=el('span','可编辑预览','badge');brand.append(el('p','缇斯亚 · 档案工作台','eyebrow'),el('h1','把设定填进格子里'),badge);header.append(brand);root.append(header);
- const tools=el('div',undefined,'toolbar'),picker=el('select');picker.setAttribute('aria-label','选择表单');
- for(const layer of ['基点','原点','会话']){const opt=el('optgroup');opt.label=layer;for(const t of catalog.templates.filter(t=>t.layer===layer)){const o=el('option',t.label);o.value=t.id;opt.append(o);}picker.append(opt);}picker.value=selectedTemplate;
- const records=el('select');records.setAttribute('aria-label','选择档案');tools.append(picker,records,action('＋ 新档案',()=>{const r=engine.create(selectedTemplate);selectedRecord=r.id;dirty=true;draw();}));
- const file=el('input');file.type='file';file.accept='.json,application/json';file.hidden=true;
- tools.append(action('保存草稿',()=>{if(typeof download!=='function')throw Error('当前环境不支持导出');download('缇斯亚__草稿__基础表单.json',JSON.stringify(engine.snapshot(),null,2));dirty=false;message('草稿已交给浏览器下载。重新打开页面时可导入继续。');}),action('导入草稿',()=>file.click()),file);root.append(tools);
- const notice=el('p','填写会留在当前页面；可保存草稿文件，下次导入继续。','notice');root.append(notice);
- const childrenPanel=el('details',undefined,'child-panel');childrenPanel.append(el('summary','人物子表'));const childTools=el('div',undefined,'actions'),childList=el('div');childrenPanel.append(childTools,childList);root.append(childrenPanel);
- const tabs=el('nav',undefined,'tabs');tabs.setAttribute('aria-label','字段分组');root.append(tabs);
- const sheet=el('section',undefined,'sheet'),caption=el('div',undefined,'sheet-caption'),table=el('table'),thead=el('thead'),hr=el('tr');hr.append(el('th',''),el('th','A · 字段'),el('th','B · 待填写'));thead.append(hr);const tbody=el('tbody');table.append(thead,tbody);sheet.append(caption,table);root.append(sheet);
- const status=el('p','', 'status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');root.append(status);
- const ai=el('details',undefined,'ai-panel'),sum=el('summary','AI 填表');ai.append(sum,el('p','这里只准备填表任务、检查并回填结果；预览未连接模型。'));
- const source=el('textarea');source.placeholder='粘贴本次填写依据或设计要求';source.setAttribute('aria-label','填写依据');ai.append(source);
- const aiTools=el('div',undefined,'actions'),requestText=el('textarea');requestText.readOnly=true;requestText.setAttribute('aria-label','发给AI的任务');requestText.placeholder='准备任务后，这里只显示需要填写的字段';
- aiTools.append(action('准备当前组的空白格',()=>{
-  const t=engine.template(selectedTemplate),keys=t.fields.filter(f=>f.group===group&&engine.get(selectedRecord,f.key)===undefined).map(f=>f.key);
-  currentTicket=engine.request(selectedRecord,{keys,source:source.value,referenceIds:engine.references().map(r=>r.值)});
-  requestText.value=currentTicket.modelInput;answer.value='';message('任务已准备，只含本组空白格。已有值不会交给 AI 覆盖。');
- }),action('导出任务',()=>{if(!currentTicket)throw Error('请先准备填表任务');if(typeof download!=='function')throw Error('当前环境不支持导出');download('缇斯亚__填表__任务.txt',requestText.value);}));
- const answer=el('textarea');answer.setAttribute('aria-label','AI回填结果');answer.placeholder='粘贴 D 老师填好的分组文本';
- aiTools.append(action('准备整份人物（含勾选子表）',()=>{const r=engine.read(selectedRecord),parentId=r.parentId??r.id;if(engine.read(parentId).template!=='origin.character')throw Error('请先选择人物档案');const recordIds=[parentId,...engine.snapshot().records.filter(x=>x.parentId===parentId&&includedChildren.has(x.id)).map(x=>x.id)];currentTicket=engine.requestDossier(parentId,{recordIds,source:source.value,referenceIds:engine.references().map(x=>x.值)});requestText.value=currentTicket.modelInput;answer.value='';message('已准备人物和勾选的子表；填写依据按你粘贴的原文导出。');}));
- ai.append(aiTools,requestText,answer,action('检查并回填',()=>{if(!currentTicket)throw Error('请先准备填表任务');if(currentTicket.recordId!==selectedRecord&&currentTicket.recordId!==engine.read(selectedRecord).parentId)throw Error('当前档案与填值任务不一致，请重新准备任务');engine.accept(currentTicket.token,answer.value);currentTicket=null;dirty=true;draw();message('已回填到草稿。结构检查通过；事实和知情范围仍需核对。');},'primary'));
- root.append(ai,el('footer','草稿预览 · 不写入聊天存档'));
- source.addEventListener('input',()=>{if(currentTicket){currentTicket=null;requestText.value='';message('填写依据已变化，请重新准备任务。');}});
- function message(text,error=false){status.textContent=text;status.classList.toggle('error',error);}
- function run(fn){try{const p=fn();if(p?.catch)p.catch(e=>message(e.message,true));}catch(e){message(e.message,true);}}
- function saveCell(f,value,input){try{engine.edit(selectedRecord,f.key,value);dirty=true;invalid.delete(f.key);input.removeAttribute('aria-invalid');message('已修改 · '+f.label);}catch(e){dirty=true;invalid.set(f.key,input.value);input.setAttribute('aria-invalid','true');message(f.label+'：'+e.message+'；有效草稿未改变。',true);}}
- function editor(f,current){
-  const def=f.definition,box=el('div',undefined,'cell-editor');let input;
-  if(['enum','boolean','ref','refs'].includes(def.type)){
-   input=el('select');if(def.type==='refs'){input.multiple=true;input.size=3;}
-   else{const blank=el('option','待填写');blank.value='';input.append(blank);}
-   const choices=def.type==='boolean'?[[false,'否'],[true,'是']]:def.type==='enum'?def.values.map(v=>[v,v]):engine.references().map(r=>[r.值,r.名称]);
-   choices.forEach(([v,label],i)=>{const op=el('option',label);op.value=String(i+1);op.selected=def.type==='refs'?(current??[]).includes(v):current===v;input.append(op);});
-   if(def.type!=='refs'&&current===undefined)input.value='';
-   input.addEventListener('change',()=>{let value;if(def.type==='refs')value=[...input.selectedOptions].map(o=>choices[Number(o.value)-1][0]);else value=input.value===''?undefined:choices[Number(input.value)-1][0];saveCell(f,value,input);});
-  }else{
-   input=el('textarea');input.rows=1;input.spellcheck=false;input.placeholder='待填写';
-   input.value=current===undefined?'':def.type==='texts'?current.join('\n'):['json','array','map','object'].includes(def.type)?JSON.stringify(current,null,2):String(current);
-   if(['number','duration'].includes(def.type))input.inputMode='decimal';
-   const resize=()=>{input.style.height='auto';input.style.height=Math.max(44,input.scrollHeight)+'px';};
-   input.addEventListener('input',()=>{resize();let value;try{const raw=input.value;if(raw==='')value=undefined;else if(['number','duration'].includes(def.type)){if(!raw.trim())throw Error('请填写数值');value=Number(raw);}else if(def.type==='texts')value=raw.split('\n').filter(x=>x.trim());else if(['json','array','map','object'].includes(def.type))value=JSON.parse(raw);else value=raw;saveCell(f,value,input);}catch(e){dirty=true;invalid.set(f.key,input.value);input.setAttribute('aria-invalid','true');message(f.label+'：'+e.message+'；有效草稿未改变。',true);}});
+  function typeFields(registry, id) {
+    const t = registry.types.find((t2) => t2.id === id);
+    check(t, "未登记类型：" + id);
+    return { ...t.parent ? typeFields(registry, t.parent) : {}, ...t.fields };
   }
-  input.setAttribute('aria-label',f.key);input.dataset.key=f.key;box.append(input);return {box,input};
- }
- function drawChildren(r){
-  const parentId=r.parentId??(r.template==='origin.character'?r.id:null);childrenPanel.hidden=!parentId;if(!parentId)return;
-  childTools.replaceChildren();childList.replaceChildren();
-  const go=id=>{const row=engine.read(id);selectedRecord=id;selectedTemplate=row.template;picker.value=selectedTemplate;group=null;draw();};
-  childTools.append(action('回人物主表',()=>go(parentId)));
-  for(const [kind,label]of [['history','前史'],['relationships','关系'],['secrets','隐情']])childTools.append(action('＋ '+label,()=>{const child=engine.createChild(parentId,kind);dirty=true;go(child.id);}));
-  childList.append(el('p','勾选本次交给 AI 填写的子表；可反复添加同类记录。'));
-  for(const child of engine.snapshot().records.filter(x=>x.parentId===parentId)){
-   const line=el('div',undefined,'child-choice'),label=el('label'),checkbox=el('input');checkbox.type='checkbox';checkbox.checked=includedChildren.has(child.id);checkbox.setAttribute('aria-label','包含'+child.title);
-   checkbox.addEventListener('change',()=>{if(checkbox.checked)includedChildren.add(child.id);else includedChildren.delete(child.id);currentTicket=null;requestText.value='';message('子表选择已变更，请重新准备任务。');});
-   label.append(checkbox,d.createTextNode(child.values.名称||child.title));line.append(label,action('编辑',()=>go(child.id)));childList.append(line);
+  var FIELD_TYPES = ["text", "texts", "number", "boolean", "enum", "ref", "refs", "json", "object", "map", "array", "type", "time", "duration"];
+  function validateFields(fields, depth = 0) {
+    check(object2(fields) && depth < 12, "字段嵌套过深或无效");
+    const names = /* @__PURE__ */ new Map();
+    for (const [key, def] of Object.entries(fields)) {
+      check(!denied.has(key) && object2(def) && FIELD_TYPES.includes(def.type), "字段定义无效：" + key);
+      for (const name of [key, ...def.aliases ?? []]) {
+        check(typeof name === "string" && name.trim(), "字段别名无效");
+        const n = normalized(name);
+        check(!names.has(n) || names.get(n) === key, "字段同义名冲突：" + name);
+        names.set(n, key);
+      }
+      if (def.capture !== void 0) check(Object.hasOwn(CAPTURE_RULES, def.capture), "录入条件模板不存在：" + def.capture);
+      if (def.include) validateCondition(def.include);
+      if (def.follow !== void 0) check(["ref", "refs"].includes(def.type) && ["identity", "record"].includes(def.follow), "引用展开条件无效：" + key);
+      if (def.type === "enum") check(Array.isArray(def.values) && def.values.length && def.values.every((x) => typeof x === "string"), "枚举未定义：" + key);
+      if (def.fields) validateFields(def.fields, depth + 1);
+      if (["array", "map"].includes(def.type)) {
+        check(object2(def.items), "集合必须定义 items：" + key);
+        validateFields({ item: def.items }, depth + 1);
+      }
+      if (def.formula) validateFormula(def.formula);
+    }
   }
- }
- function draw(){
-  const t=engine.template(selectedTemplate),all=engine.snapshot().records.filter(r=>r.template===selectedTemplate);
-  if(!all.some(r=>r.id===selectedRecord)){const r=all[0]??engine.create(selectedTemplate);selectedRecord=r.id;}
-  const r=engine.read(selectedRecord);drawChildren(r);records.replaceChildren();for(const row of engine.snapshot().records.filter(r=>r.template===selectedTemplate)){const o=el('option',row.values.名称||row.title);o.value=row.id;records.append(o);}records.value=r.id;
-  if(!t.groups.includes(group))group=t.groups[0];tabs.replaceChildren();for(const g of t.groups){const b=action(g,()=>{group=g;draw();});b.setAttribute('aria-pressed',String(g===group));tabs.append(b);}
-  const fs=t.fields.filter(f=>f.group===group);caption.textContent=t.label+' / '+group;tbody.replaceChildren();
-  for(const f of fs){const tr=el('tr'),key=el('th'),cell=el('td');key.scope='row';key.append(el('span',f.label));
-   const more=el('details',undefined,'field-help');more.append(el('summary','· · ·'));const text=el('p',f.definition.description||({texts:'每行一项',refs:'可选择多个已建对象',ref:'选择已建对象',json:'填写JSON值，保留实际类型'}[f.definition.type]??'按资料填写；未知可留空。'));more.append(text);
-   more.append(action('留待填写',()=>{engine.edit(selectedRecord,f.key,undefined);invalid.delete(f.key);dirty=true;draw();message('已留空 · '+f.label);},undefined,true));
-   if(['texts','refs','array'].includes(f.definition.type))more.append(action('明确无条目',()=>{engine.edit(selectedRecord,f.key,[]);dirty=true;draw();message('已明确记录空列表 · '+f.label);}));
-   if(f.definition.type==='text'&&!f.definition.required)more.append(action('明确空文本',()=>{engine.edit(selectedRecord,f.key,'');dirty=true;draw();message('已明确记录空文本 · '+f.label);}));
-   if(f.definition.nullable||f.definition.type==='json')more.append(action('明确空值',()=>{engine.edit(selectedRecord,f.key,null);dirty=true;draw();message('已明确记录null · '+f.label);}));
-   if(r.derived?.includes(f.key)&&!r.manual.includes(f.key))more.append(el('p','由本表明确关联自动汇总；手动修改后保留你的值。'));key.append(more);const current=engine.get(selectedRecord,f.key),control=editor(f,current);if(invalid.has(f.key)){control.input.value=invalid.get(f.key);control.input.setAttribute('aria-invalid','true');}cell.append(control.box);
-   if(current!==undefined&&(current===''||current===null||Array.isArray(current)&&!current.length))cell.append(el('small',current===null?'已明确为空':Array.isArray(current)?'已明确无条目':'已明确为空文本','empty-marker'));
-   const number=el('th',String(t.fields.indexOf(f)+1),'row-number');number.scope='row';tr.append(number,key,cell);tbody.append(tr);
+  function valueValid(v, def, depth = 0) {
+    if (depth > 12) return false;
+    if (v === null) return def.nullable === true || def.type === "json";
+    switch (def.type) {
+      case "text":
+      case "time":
+      case "ref":
+      case "type":
+        return typeof v === "string" && (!def.required || !!v.trim());
+      case "texts":
+      case "refs":
+        return Array.isArray(v) && v.every((x) => typeof x === "string" && !!x.trim()) && new Set(v).size === v.length;
+      case "number":
+      case "duration":
+        return typeof v === "number" && Number.isFinite(v) && (def.min === void 0 || v >= def.min) && (def.max === void 0 || v <= def.max);
+      case "boolean":
+        return typeof v === "boolean";
+      case "enum":
+        return def.values.includes(v);
+      case "array":
+        return Array.isArray(v) && v.every((x) => valueValid(x, def.items, depth + 1)) && (!def.idKey || v.every((x) => object2(x) && typeof x[def.idKey] === "string") && new Set(v.map((x) => x[def.idKey])).size === v.length);
+      case "map":
+        return object2(v) && Object.entries(v).every(([k, x]) => !denied.has(k) && valueValid(x, def.items, depth + 1));
+      case "object":
+        return object2(v) && (!def.fields || Object.entries(v).every(([k, x]) => !denied.has(k) && (def.fields[k] ? valueValid(x, def.fields[k], depth + 1) : def.additionalProperties === true)) && Object.entries(def.fields).every(([k, d]) => !d.required || Object.hasOwn(v, k)));
+      case "json":
+        return v !== void 0;
+      default:
+        return false;
+    }
   }
- }
- picker.addEventListener('change',()=>{if(invalid.size){picker.value=selectedTemplate;message('请先修正红色单元格。',true);return;}selectedTemplate=picker.value;selectedRecord=null;group=null;draw();});records.addEventListener('change',()=>{if(invalid.size){records.value=selectedRecord;message('请先修正红色单元格。',true);return;}selectedRecord=records.value;draw();});
- file.addEventListener('change',()=>run(async()=>{const f=file.files?.[0];if(!f)return;try{if(f.size>5000000)throw Error('草稿文件超过5MB');const input=JSON.parse(await f.text());engine.restore(input);includedChildren.clear();const r=engine.snapshot().records[0];selectedTemplate=r?.template??'origin.character';selectedRecord=r?.id??null;picker.value=selectedTemplate;group=null;currentTicket=null;requestText.value='';answer.value='';dirty=false;draw();message('草稿已导入。');}finally{file.value='';}}));
- draw();return {engine,draw,isDirty:()=>dirty,dispose:()=>root.replaceChildren()};
-}
-const engine=createSheetEngine(catalog,valueValid);const controller=mountFoundationSheet(document.querySelector('main'),engine,catalog,{download(name,text){const url=URL.createObjectURL(new Blob([text],{type:name.endsWith('.txt')?'text/plain;charset=utf-8':'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}});window.addEventListener('beforeunload',event=>{if(controller.isDirty()){event.preventDefault();event.returnValue='';}});</script></body></html>
+  var OPS = /* @__PURE__ */ new Set(["field", "lookup", "count", "unique", "join", "add", "subtract"]);
+  function validateFormula(node, depth = 0) {
+    check(depth < 12 && object2(node) && OPS.has(node.op), "公式无效或过深");
+    check(!Object.keys(node).some((k) => denied.has(k)), "公式键名无效");
+    for (const key of ["field", "match"]) if (node[key]) check(typeof node[key] === "string" && !denied.has(node[key]), "公式字段无效");
+    if (node.args) {
+      check(Array.isArray(node.args) && node.args.length <= 30, "公式参数过多");
+      for (const n of node.args) if (object2(n)) validateFormula(n, depth + 1);
+    }
+    return node;
+  }
+  var TABLE_SETTINGS = Object.freeze({ enabled: false, continuity: "hybrid", styleEnabled: true, archive: true, plot: false, preferences: false, offstage: false, nativeBridge: false, focusObjects: [], focusText: "", playerObjects: [], objectsSeparate: false, injection: "worldbook", retrieval: "keywords", topK: 8, originBook: "", sessionBook: "", originPins: [], hardRules: [], taskInstructions: {}, contextChars: 4e4 });
+  var FORM_GROUPS = Object.freeze([{ id: "definitions", name: "世界定义", tables: ["facts"] }, { id: "archives", name: "对象底档", tables: ["objects"] }, { id: "current", name: "当前状态", tables: ["scene", "state"] }, { id: "relationships", name: "关系与归属", tables: ["relations", "holdings"] }, { id: "knowledge", name: "认知与信息", tables: ["cognition", "experiences", "growth"] }, { id: "affairs", name: "事务与日程", tables: ["tasks", "timers", "activities"] }, { id: "history", name: "事件与修改历史", tables: ["events"] }, { id: "threads", name: "线索与未解事项", tables: ["clues"] }]);
+
+  // tables/reconcile.js
+  function inferred(value) {
+    if (value === null) return { type: "json" };
+    if (Array.isArray(value)) {
+      check(value.length, "空数组的新字段须提供 items 定义");
+      const defs = value.map(inferred);
+      check(defs.every((d) => sameDefinition(d, defs[0])), "异构数组须提供明确模板");
+      return { type: "array", items: defs[0] };
+    }
+    if (object2(value)) return { type: "object", fields: Object.fromEntries(Object.entries(value).map(([k, v]) => [k, inferred(v)])) };
+    const type = { string: "text", number: "number", boolean: "boolean" }[typeof value];
+    check(type, "未知值不能创建字段");
+    return { type };
+  }
+  function align(values, fields, additions, path, { allowSchemaExtensions = true, allowAdditionalProperties = false } = {}) {
+    const out = {};
+    for (const [key, value] of Object.entries(values)) {
+      const name = Object.keys(fields).find((k) => [k, ...fields[k].aliases ?? []].some((n) => normalized(n) === normalized(key))) ?? key;
+      check(!Object.hasOwn(out, name), "同一字段重复提交不同名称：" + path + name);
+      if (!fields[name]) {
+        check(!["__proto__", "constructor", "prototype"].includes(name), "非法字段名");
+        if (allowAdditionalProperties) {
+          out[key] = copy(value);
+          continue;
+        }
+        check(allowSchemaExtensions, "未登记字段：" + path + name);
+        fields[name] = { ...inferred(value), description: "归档依据发现的新字段" };
+        additions.push(path + name);
+      }
+      const d = fields[name];
+      out[name] = d.type === "object" && d.fields && object2(value) ? align(value, d.fields, additions, path + name + ".", { allowSchemaExtensions, allowAdditionalProperties: !allowSchemaExtensions && d.additionalProperties === true }) : copy(value);
+    }
+    return out;
+  }
+  function fieldMerge(a, b, path) {
+    if (sameDefinition(a, b)) return copy(a);
+    const shape = (d) => {
+      const { fields, items, description, aliases, additionalProperties, capture, include, follow, ...rest } = d;
+      return rest;
+    };
+    check(sameDefinition(shape(a), shape(b)), "模板字段类型或约束冲突：" + path);
+    for (const key of ["capture", "include", "follow"]) check(b[key] === void 0 || a[key] === void 0 || sameDefinition(a[key], b[key]), "自动归档不能改写已有字段条件：" + path + "." + key);
+    const out = { ...a, ...a.follow === void 0 && b.follow !== void 0 ? { follow: b.follow } : {}, ...a.capture === void 0 && b.capture !== void 0 ? { capture: b.capture } : {}, ...a.include === void 0 && b.include !== void 0 ? { include: b.include } : {}, ...a.aliases || b.aliases ? { aliases: [.../* @__PURE__ */ new Set([...a.aliases ?? [], ...b.aliases ?? []])] } : {} };
+    if (a.fields || b.fields) {
+      check(a.type === "object", "仅对象可以扩展子字段：" + path);
+      const fields = copy(a.fields ?? {});
+      for (const [k, d] of Object.entries(b.fields ?? {})) {
+        if (fields[k]) fields[k] = fieldMerge(fields[k], d, path + "." + k);
+        else {
+          check(!d.required, "自动新增子字段须为可选：" + path + "." + k);
+          fields[k] = copy(d);
+        }
+      }
+      out.fields = fields;
+      if (!a.fields || !b.fields || a.additionalProperties || b.additionalProperties) out.additionalProperties = true;
+    }
+    if (a.items || b.items) {
+      check(a.items && b.items, "集合缺少 items：" + path);
+      out.items = fieldMerge(a.items, b.items, path + "[]");
+    }
+    return out;
+  }
+  function reconcileProposal(previous, raw, { allowSchemaExtensions = true, inferSchemaFields = allowSchemaExtensions } = {}) {
+    const proposal = copy(raw);
+    check(allowSchemaExtensions || !proposal.templates?.length, "本任务不能扩展模板");
+    check(allowSchemaExtensions || !proposal.schemaChanges?.length, "本任务不能扩展模板");
+    const registry = addTypes(previous, proposal.templates ?? []), extensions = registry.types.filter((t) => !previous.types.some((old) => old.id === t.id)).map((t) => t.id);
+    for (const change of proposal.schemaChanges ?? []) {
+      check(object2(change) && ["table", "type"].includes(change.kind), "模板扩展缺少 kind");
+      const list = registry[change.kind === "table" ? "tables" : "types"];
+      if (change.definition) {
+        const def = copy(change.definition);
+        check(!list.some((x) => x.id === def.id), "新增模板 ID 已存在");
+        if (change.kind === "table") check(def.owner === "archive", "新业务表只能由归档填写");
+        else check(def.parent && registry.types.some((t) => t.id === def.parent), "新类型须引用父模板");
+        list.push(def);
+        extensions.push(def.id);
+      } else {
+        const item = list.find((x) => x.id === change.id);
+        check(item && object2(change.fields), "扩展目标不存在");
+        for (const [key, def] of Object.entries(change.fields)) {
+          check(!def.required, "自动新增字段须为可选");
+          if (item.fields[key]) {
+            const merged = fieldMerge(item.fields[key], def, item.id + "." + key);
+            if (!sameDefinition(merged, item.fields[key])) extensions.push(item.id + "." + key);
+            item.fields[key] = merged;
+          } else {
+            item.fields[key] = copy(def);
+            extensions.push(item.id + "." + key);
+          }
+        }
+      }
+    }
+    let index = registryIndex(registry);
+    for (const op of proposal.changes ?? []) {
+      const table2 = index.tables.get(normalized(op.table));
+      check(table2, "未知表须提供 schemaChanges 定义：" + op.table);
+      op.table = table2.id;
+      check(object2(op.values), "修改缺少 values");
+      const attrs = op.table === "objects" ? op.values.属性 : void 0;
+      const values = { ...op.values };
+      if (attrs !== void 0) delete values.属性;
+      op.values = align(values, table2.fields, extensions, table2.id + ".", { allowSchemaExtensions: allowSchemaExtensions && inferSchemaFields });
+      if (attrs !== void 0) {
+        const old = raw.currentRows?.find((r) => r.id === op.id), submittedType = Object.hasOwn(op.values, "类型"), typeId = op.values.类型 ?? old?.values.类型;
+        const type = index.types.get(normalized(typeId ?? ""));
+        check(type, "对象属性必须指定已登记类型");
+        if (submittedType || !old) op.values.类型 = type.id;
+        const inherited = typeFields(registry, type.id);
+        const before = new Set(Object.keys(inherited));
+        op.values.属性 = align(attrs, inherited, extensions, type.id + ".", { allowSchemaExtensions: allowSchemaExtensions && inferSchemaFields });
+        for (const [k, d] of Object.entries(inherited)) if (!before.has(k) || Object.hasOwn(type.fields, k)) type.fields[k] = d;
+      }
+    }
+    for (const kind of ["tables", "types"]) for (const item of registry[kind]) {
+      const old = previous[kind].find((x) => x.id === item.id);
+      if (old && !sameDefinition({ ...item, version: old.version }, old)) item.version = old.version + 1;
+    }
+    registryIndex(registry);
+    return { registry, proposal, extensions };
+  }
+
+  // tables/foundation-templates.js
+  var foundationCatalog = () => copy(FOUNDATION_DEFINITIONS);
+  function foundationDefinition(registry, kind, table2, path) {
+    let fields = registry.tables.find((t) => t.id === table2)?.fields, def;
+    check(fields && Array.isArray(path) && path.length, "模板字段路径无效");
+    for (let i = 0; i < path.length; i++) {
+      const key = path[i];
+      if (table2 === "objects" && i === 0 && key === "属性") {
+        def = { type: "object", fields: typeFields(registry, kind) };
+      } else def = fields?.[key];
+      check(def, "模板引用了未登记字段：" + table2 + "." + path.slice(0, i + 1).join("."));
+      fields = def.fields;
+    }
+    return copy(def);
+  }
+  function leaves(def, path, out) {
+    if (def.type === "object" && def.fields) {
+      for (const [key, child] of Object.entries(def.fields)) leaves(child, [...path, key], out);
+    } else out.push({ path, definition: copy(def) });
+  }
+  function foundationTemplatePlan(kind, { registry = defaultRegistry() } = {}) {
+    const catalog2 = foundationCatalog(), views = catalog2.originViews[kind];
+    check(views, "未登记的基础模板类别：" + kind);
+    const factKeys = new Set(views.filter((v) => v.table === "facts").flatMap((v) => v.paths.map((p) => p[0])));
+    const schemaChanges = catalog2.schemaChanges.flatMap((change) => {
+      if (change.kind === "type") return change.id === kind ? [change] : [];
+      const fields = Object.fromEntries(Object.entries(change.fields).filter(([key]) => factKeys.has(key)));
+      return Object.keys(fields).length ? [{ ...change, fields }] : [];
+    });
+    const prepared = reconcileProposal(registry, { changes: [], schemaChanges }, { inferSchemaFields: false });
+    const groups = views.map((view) => ({ ...copy(view), fields: view.paths.map((path) => ({ path, definition: foundationDefinition(prepared.registry, kind, view.table, path) })) }));
+    const fieldIndex = groups.flatMap((g) => g.fields.flatMap(({ path, definition }) => {
+      const out = [];
+      leaves(definition, path, out);
+      return out.map((x) => ({
+        ...x,
+        group: g.id,
+        groupLabel: g.label,
+        table: g.table,
+        layer: "原点",
+        inheritance: g.id === "secrets" ? "事实单独存档；人物认知另有接触依据" : g.id === "relationships" ? "保留前史关系；新U当前关系须重新核对" : "引用已确认原点版本；不覆盖当前会话增量"
+      }));
+    }));
+    return {
+      format: "tisya.foundation-template-plan/1",
+      kind,
+      status: catalog2.status,
+      registry: prepared.registry,
+      schemaChanges,
+      extensions: prepared.extensions,
+      groups,
+      fieldIndex,
+      expressionTemplate: {
+        format: "tisya.foundation-expression-template/1",
+        kind,
+        status: "未填写",
+        slots: fieldIndex.filter((f2) => f2.definition.type === "text").map((f2) => ({
+          group: f2.group,
+          table: f2.table,
+          path: copy(f2.path),
+          instruction: f2.definition.description ?? "按明确来源表达；未提供不补默认；不扩大角色知情",
+          sourceRequired: true,
+          scope: "仅改明确选中的字段；保存依据和具体表达的对应关系"
+        })),
+        rules: ["保留核心意义与代价，世界化措辞不得替换因果", "表达须落在实际字段，不能只写适配完成", "引用、数字、枚举、列表仍按字段类型填值，不塞进叙事文本", "表达模板是待填写候选，不是事实或人物知识"]
+      },
+      draft: { format: "tisya.foundation-authoring-draft/1", kind, values: {}, groups: groups.map((g) => ({ id: g.id, status: "未讨论" })), confirmed: false },
+      writes: 0
+    };
+  }
+  function foundationSessionTemplates(registry = defaultRegistry()) {
+    return foundationCatalog().sessionViews.map((v) => {
+      const table2 = registry.tables.find((t) => t.id === v.table);
+      check(table2, "会话表缺失：" + v.table);
+      const out = [];
+      for (const [key, def] of Object.entries(table2.fields)) leaves(def, [key], out);
+      return { ...v, fields: out, values: {}, writes: 0 };
+    });
+  }
+
+  // tables/foundation/catalog.js
+  function sheetCatalog() {
+    const c = foundationCatalog(), templates = [];
+    const fields = (fs) => fs.filter((f2) => !f2.definition.formula).map((f2) => ({ key: f2.path.filter((p) => p !== "属性").join("·"), label: f2.path.at(-1), path: f2.path, group: f2.groupLabel ?? "字段", definition: f2.path.join(".") === "属性.形貌.整体" ? { ...f2.definition, description: "仅补充来源明确且未由形貌细目或辨识特征承载的稳定整体印象，不重复已填细格；当前衣着、伤势与情绪归会话状态，未知留空。" } : f2.definition }));
+    templates.push({ id: "core", layer: "基点", label: "基点", table: "core-draft", groups: ["核心"], fields: c.coreSlots.map((s) => ({ key: s.label, label: s.label, path: [s.id], group: "核心", definition: { type: "text", description: s.prompt } })) });
+    for (const kind of Object.keys(c.originViews)) {
+      const p = foundationTemplatePlan(kind), objectFields = p.fieldIndex.filter((f2) => f2.table === "objects"), factFields = p.fieldIndex.filter((f2) => f2.table === "facts");
+      if (objectFields.length) templates.push({ id: "origin." + kind, layer: "原点", label: { character: "人物", item: "物品", place: "地点", organization: "组织", rule: "规则" }[kind], table: "objects", kind, groups: [...new Set(objectFields.map((f2) => f2.groupLabel))], fields: fields(objectFields) });
+      for (const group of [...new Set(factFields.map((f2) => f2.group))]) {
+        const fs = factFields.filter((f2) => f2.group === group);
+        templates.push({ id: "origin." + kind + "." + group, layer: "原点", label: { history: "人物前史", relationships: "关系底稿", secrets: "隐情" }[group] ?? "世界定义", table: "facts", kind, groups: [fs[0].groupLabel], fields: fields(fs) });
+      }
+    }
+    for (const s of foundationSessionTemplates()) templates.push({ id: "session." + s.table, layer: "会话", label: s.label, table: s.table, groups: ["字段"], fields: fields(s.fields) });
+    for (const t of templates) if (new Set(t.fields.map((f2) => f2.key)).size !== t.fields.length) throw Error("字段名重复：" + t.id);
+    return { version: "FT21-W50-appearance/1", templates };
+  }
+
+  // tables/foundation/form-text.js
+  var check2 = (ok, message) => {
+    if (!ok) throw Error(message);
+  };
+  var FORM_TEXT_INSTRUCTIONS = "每格按“行号 字段名：值”填写。多行原文可在冒号后写 |，随后每一行缩进两个空格；只去掉这两个空格，内容原样保留。也可用完整双引号字符串表示文字，\\n表示换行，只解码一次。其他文字直接写；不要把实际换行放在双引号字符串内。";
+  function formSections(raw, { defaultHeading = null } = {}) {
+    check2(typeof raw === "string", "仅接收极简表格文本");
+    check2(raw.trim() && raw.length <= 1e6, "填表回答为空或过长");
+    let text2 = raw.replace(/^\uFEFF/, "");
+    if (text2.trimStart().startsWith("```")) {
+      const fence = text2.match(/^\s*```(?:text|txt)?\r?\n([\s\S]*)\r?\n```\s*$/);
+      check2(fence, "文本代码块格式无效");
+      text2 = fence[1];
+    }
+    const lines = [...text2.matchAll(/([^\r\n]*)(\r\n|\n|\r|$)/g)].filter((x) => x[0]);
+    const sections = [], seen = /* @__PURE__ */ new Set();
+    let current = null;
+    for (let i = 0; i < lines.length; i++) {
+      const rawLine = lines[i][1], line = rawLine.trim();
+      if (!line) continue;
+      const heading = line.match(/^【([^】]+)】$/);
+      if (heading) {
+        check2(!seen.has(heading[1]), "分组重复：" + heading[1]);
+        seen.add(heading[1]);
+        current = { heading: heading[1], lines: [] };
+        sections.push(current);
+        continue;
+      }
+      if (!current && defaultHeading !== null) {
+        current = { heading: defaultHeading, lines: [] };
+        sections.push(current);
+      }
+      check2(current, "填表回答须从分组标题开始");
+      const block = line.match(/^(\d+\s+.+?[：:]\s*)\|$/);
+      if (block) {
+        const parts = [];
+        while (i + 1 < lines.length && lines[i + 1][1].startsWith("  ")) {
+          i++;
+          parts.push({ text: lines[i][1].slice(2), eol: lines[i][2] });
+        }
+        check2(parts.length, "多行文字格缺少缩进内容");
+        const value = parts.map((p, j) => p.text + (j < parts.length - 1 ? p.eol : "")).join("");
+        current.lines.push(block[1] + JSON.stringify(value));
+      } else current.lines.push(line);
+    }
+    return sections;
+  }
+  function formRow(line, fields, { labels = (field) => [field.label] } = {}) {
+    const match = line.trim().match(/^(\d+)\s+(.+)$/);
+    check2(match, "无法识别字段行");
+    const number = Number(match[1]), field = fields.find((f2, i) => (f2.row ?? i + 1) === number);
+    check2(field, "行号未开放：" + number);
+    const label = [...new Set(labels(field))].sort((a, b) => b.length - a.length).find((value2) => match[2].startsWith(value2) && /^[\s：:]|^$/.test(match[2].slice(value2.length)));
+    check2(label, "字段名被修改：" + number);
+    let value = match[2].slice(label.length).trimStart();
+    if (/^[：:]/.test(value)) value = value.slice(1).trimStart();
+    return { number, field, raw: value };
+  }
+  function decodeFormText(raw, label = "文字") {
+    if (!raw.startsWith('"')) return raw;
+    let value;
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      throw Error("文字格转义无效：" + label);
+    }
+    check2(typeof value === "string", "文字格须为文字：" + label);
+    return value;
+  }
+
+  // tables/foundation/engine.js
+  function createSheetEngine(catalog2, validateValue) {
+    const clone = (x) => structuredClone(x), own = (o, k) => Object.hasOwn(o, k), check3 = (ok, m) => {
+      if (!ok) throw Error(m);
+    };
+    const bad = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
+    const templates = new Map(catalog2.templates.map((t) => [t.id, t]));
+    let state = { format: "tisya.foundation-workbook/1", catalogVersion: catalog2.version, records: [], revision: 0 }, serial = 0;
+    const pending = /* @__PURE__ */ new Map();
+    const at = (o, path) => path.reduce((v, k) => v && own(v, k) ? v[k] : void 0, o);
+    const put = (o, path, value) => {
+      let p = o;
+      for (const key2 of path.slice(0, -1)) {
+        check3(!bad.has(key2), "字段路径无效");
+        p = p[key2] ??= {};
+      }
+      const key = path.at(-1);
+      check3(!bad.has(key), "字段路径无效");
+      if (value === void 0) delete p[key];
+      else p[key] = clone(value);
+    };
+    const template = (id) => {
+      const t = templates.get(id);
+      check3(t, "表单不存在");
+      return t;
+    };
+    const record = (id) => {
+      const r = state.records.find((r2) => r2.id === id);
+      check3(r, "档案不存在");
+      return r;
+    };
+    const field = (t, key) => {
+      const f2 = t.fields.find((f3) => f3.key === key);
+      check3(f2, "未开放字段：" + key);
+      return f2;
+    };
+    function validate(v, def, refs2) {
+      check3(validateValue(v, def), "值类型或范围不符");
+      if (v === null) return;
+      if (def.type === "ref") check3(refs2.has(v), "引用对象不存在或未获授权");
+      if (def.type === "refs") for (const id of v) check3(refs2.has(id), "引用对象不存在或未获授权");
+      if (def.type === "array") for (const x of v) validate(x, def.items, refs2);
+      if (def.type === "map") for (const x of Object.values(v)) validate(x, def.items, refs2);
+      if (def.type === "object" && def.fields) {
+        for (const [k, x] of Object.entries(v)) if (def.fields[k]) validate(x, def.fields[k], refs2);
+      }
+    }
+    const allowedRefs = () => new Set(state.records.filter((r) => template(r.template).table !== "core-draft").map((r) => r.id));
+    function validateRecordValues(values2, t, refs2) {
+      check3(values2 && typeof values2 === "object" && !Array.isArray(values2), "档案值无效");
+      function walk(o, path = []) {
+        for (const [key, v] of Object.entries(o)) {
+          check3(!bad.has(key), "字段名称无效");
+          const p = [...path, key], f2 = t.fields.find((f3) => JSON.stringify(f3.path) === JSON.stringify(p));
+          if (f2) {
+            validate(v, f2.definition, refs2);
+            continue;
+          }
+          check3(t.fields.some((f3) => p.every((k, i) => f3.path[i] === k)) && v && typeof v === "object" && !Array.isArray(v), "未登记字段：" + p.join("."));
+          walk(v, p);
+        }
+      }
+      walk(values2);
+    }
+    const refsFor = (ids) => state.records.filter((r) => ids.has(r.id)).map((r) => ({ 值: r.id, 名称: at(r.values, ["名称"]) || r.title }));
+    function create(templateId) {
+      const t = template(templateId), id = "draft-" + ++serial;
+      const r = { id, template: templateId, title: t.label + " " + (state.records.filter((r2) => r2.template === templateId).length + 1), revision: 0, values: {}, manual: [] };
+      state.records.push(r);
+      state.revision++;
+      return clone(r);
+    }
+    function edit(id, key, value) {
+      const r = record(id), f2 = field(template(r.template), key);
+      if (value !== void 0) {
+        validate(value, f2.definition, allowedRefs());
+        if (r.parentId && f2.label === "主体") check3(value === r.parentId, "主体必须属于当前人物");
+      }
+      put(r.values, f2.path, value);
+      if (!r.manual.includes(key)) r.manual.push(key);
+      syncObjects(r);
+      r.revision++;
+      state.revision++;
+      return clone(r);
+    }
+    const childTypes = { history: "前史", relationships: "关系", secrets: "隐情" };
+    const childTemplate = (t) => t.id.startsWith("origin.character.");
+    function syncObjects(r) {
+      const t = template(r.template);
+      if (!childTemplate(t) || r.manual.includes("对象")) return;
+      if (at(r.values, ["对象"]) !== void 0 && !r.derived?.includes("对象")) return;
+      const values2 = [];
+      if (r.parentId) values2.push(r.parentId);
+      for (const f2 of t.fields) if (f2.key !== "对象" && ["ref", "refs"].includes(f2.definition.type)) {
+        const v = at(r.values, f2.path);
+        if (v !== void 0 && v !== null) values2.push(...Array.isArray(v) ? v : [v]);
+      }
+      if (!values2.length) {
+        if (r.derived?.includes("对象")) put(r.values, ["对象"], void 0);
+        return;
+      }
+      put(r.values, ["对象"], [...new Set(values2)]);
+      r.derived = [.../* @__PURE__ */ new Set([...r.derived ?? [], "对象"])];
+    }
+    function createChild(parentId, kind) {
+      const parent = record(parentId);
+      check3(parent.template === "origin.character" && childTypes[kind], "子表归属或类型无效");
+      const made = create("origin.character." + kind), r = record(made.id);
+      r.parentId = parentId;
+      const subject = template(r.template).fields.find((f2) => f2.label === "主体");
+      if (subject) put(r.values, subject.path, parentId);
+      syncObjects(r);
+      return clone(r);
+    }
+    function selectedKeys(r, keys, deriveObjects) {
+      const t = template(r.template), selected = keys ?? t.fields.filter((f2) => at(r.values, f2.path) === void 0).map((f2) => f2.key);
+      return selected.filter((k) => !(deriveObjects && childTemplate(t) && k === "对象"));
+    }
+    function makeAliases(refs2) {
+      const items = refsFor(new Set(refs2)), counts = /* @__PURE__ */ new Map();
+      for (const x of items) counts.set(x.名称, (counts.get(x.名称) ?? 0) + 1);
+      return items.map((x) => ({ ...x, 显示: counts.get(x.名称) > 1 ? x.名称 + "〔" + x.值 + "〕" : x.名称 }));
+    }
+    const listType = (d) => ["texts", "refs"].includes(d.type);
+    function plainInput(parts, source, refs2, rules = {}) {
+      const out = [FORM_TEXT_INSTRUCTIONS, "档案：" + parts[0].ownerName, "按资料填写，保留分组、行号和字段名，每行填一个字段。字段名后可用冒号；未知留空，只返回填好的内容。"];
+      if (parts.some((p) => p.cells.some((c) => listType(c.definition)))) out.push("列表格多项用“；”分隔，明确没有条目填“无”；普通文字中的标点原样保留。");
+      if (rules.table) out.push(rules.table);
+      if (rules.columns?.B) out.push(rules.columns.B);
+      const all = parts.flatMap((p) => p.cells);
+      for (const type of new Set(all.map((c) => c.definition.type))) if (rules.types?.[type]) out.push(rules.types[type]);
+      if (all.some((c) => ["ref", "refs"].includes(c.definition.type))) out.push("关联格填写已登记名称：" + refs2.map((x) => x.显示).join("；") + "。同名对象使用所列完整名称。");
+      const form = [];
+      for (const p of parts) {
+        const groups = [...new Set(p.cells.map((c) => c.group))];
+        for (const g of groups) {
+          const title = p.tid === "origin.character" ? "人物／" + g : p.heading;
+          form.push("【" + title + "】");
+          const hints = [];
+          for (const c of p.cells.filter((c2) => c2.group === g)) {
+            const d = c.definition;
+            let hint = d.description ?? "";
+            if (p.tid === "origin.character.secrets" && c.label === "关联对象") hint = "真相直接涉及的对象；物品来源人物不自动纳入，不据此推定知情。";
+            if (listType(d)) hint = (hint ? hint + " " : "") + "多项";
+            if (d.values) hint += " 可选：" + d.values.join("／");
+            if (["number", "duration"].includes(d.type)) hint += " 数值" + (d.min !== void 0 ? "，最小" + d.min : "") + (d.max !== void 0 ? "，最大" + d.max : "");
+            if (d.type === "boolean") hint += " 是或否";
+            if (["array", "map", "object", "json"].includes(d.type)) hint += " 此复杂值仍须JSON；尚未展开为子格";
+            if (rules.rows?.[c.row]) hint += " " + rules.rows[c.row];
+            if (rules.cells?.["B" + c.row]) hint += " " + rules.cells["B" + c.row];
+            if (hint) hints.push(c.row + " " + hint.trim());
+            form.push(c.row + " " + c.label);
+          }
+          if (hints.length) out.push("【" + title + "】填写要求：", ...hints);
+        }
+      }
+      return out.join("\n") + "\n\n资料：\n" + source + "\n\n待填写：\n" + form.join("\n");
+    }
+    function partFor(r, cells, heading) {
+      const t = template(r.template);
+      return { record: r.id, tid: t.id, ownerName: at(record(r.parentId ?? r.id).values, ["名称"]) || record(r.parentId ?? r.id).title, heading: heading ?? t.label, cells: cells.map((c) => ({ ...c, label: t.id === "origin.character.relationships" && c.key === "关系底稿·对象" ? "关系对象" : c.label, group: field(t, c.key).group })) };
+    }
+    function request(id, options = {}) {
+      check3(options.format === void 0 || options.format === "plain", "只支持当前极简填表格式");
+      const r = record(id), t = template(r.template), keys = selectedKeys(r, options.keys, options.deriveObjects !== false);
+      check3(typeof (options.source ?? "") === "string", "填写依据须为文本");
+      check3(keys.length && new Set(keys).size === keys.length, "没有可填写的字段或字段重复");
+      const fields = keys.map((key) => field(t, key));
+      for (const f2 of fields) check3(at(r.values, f2.path) === void 0, "已填字段受保护：" + f2.label);
+      const refs2 = options.referenceIds ?? [], known = allowedRefs();
+      check3(refs2.every((id2) => known.has(id2)), "引用对象未获授权");
+      const cells = fields.map((f2) => ({ row: t.fields.indexOf(f2) + 1, key: f2.key, label: f2.label, definition: f2.definition })), token = "fill-" + ++serial;
+      const ticket = { record: id, revision: r.revision, workbookRevision: state.revision, keys, refs: [...refs2], cells, deriveObjects: options.deriveObjects !== false, aliases: makeAliases(refs2), parts: [partFor(r, cells, options.heading)] };
+      pending.set(token, ticket);
+      return { token, recordId: id, modelInput: plainInput(ticket.parts, options.source ?? "", ticket.aliases, options.rules) };
+    }
+    function requestDossier(id, { source = "", referenceIds = [], recordIds, ...options } = {}) {
+      const root = record(id);
+      check3(root.template === "origin.character", "请选择人物档案");
+      check3(typeof source === "string", "填写依据须为文本");
+      const chosen = recordIds ?? [id];
+      check3(Array.isArray(chosen) && chosen.length && chosen.includes(id) && new Set(chosen).size === chosen.length, "请明确选择本次人物及子表");
+      const records = chosen.map(record);
+      check3(records.every((r) => r.id === id || r.parentId === id), "不能混入其他人物子表");
+      const known = allowedRefs();
+      check3(referenceIds.every((x) => known.has(x)), "引用对象未获授权");
+      const counts = {}, parts = [];
+      for (const r of records) {
+        const t = template(r.template), keys = selectedKeys(r, void 0, options.deriveObjects !== false), cells = keys.map((k) => {
+          const f2 = field(t, k);
+          return { row: t.fields.indexOf(f2) + 1, key: k, label: f2.label, definition: f2.definition };
+        });
+        if (!cells.length) continue;
+        const kind = r.template.split(".").at(-1), n = (counts[kind] ?? 0) + 1;
+        counts[kind] = n;
+        const num = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][n - 1] ?? String(n);
+        parts.push(partFor(r, cells, r.id === id ? "人物" : childTypes[kind] + "／" + num));
+      }
+      check3(parts.length, "没有可填写的字段");
+      const aliases = makeAliases(referenceIds), token = "fill-" + ++serial;
+      const ticket = { record: id, workbookRevision: state.revision, parts, refs: [...referenceIds], aliases, deriveObjects: options.deriveObjects !== false };
+      pending.set(token, ticket);
+      return { token, recordId: id, modelInput: plainInput(parts, source, aliases, options.rules) };
+    }
+    function resolveReference(raw, ticket) {
+      const matches = (ticket.aliases ?? []).filter((x) => x.显示 === raw || x.值 === raw);
+      check3(matches.length === 1, "引用名称不存在、重名或未获授权：" + raw);
+      return matches[0].值;
+    }
+    function plainValue(raw, c, ticket) {
+      const d = c.definition;
+      let value;
+      if (["text", "time"].includes(d.type)) value = decodeFormText(raw, c.label);
+      else if (d.type === "type") value = raw;
+      else if (d.type === "ref") value = resolveReference(raw, ticket);
+      else if (listType(d)) {
+        const items = ["无", "[]"].includes(raw) ? [] : raw.split(/[；;\n]/).map((x) => x.trim());
+        check3(items.every((x) => x.length), "列表含空条目：" + c.label);
+        value = d.type === "refs" ? items.map((x) => resolveReference(x, ticket)) : items;
+      } else if (["number", "duration"].includes(d.type)) {
+        check3(Number.isFinite(Number(raw)), "数值无效：" + c.label);
+        value = Number(raw);
+      } else if (d.type === "boolean") {
+        check3(["是", "否", "true", "false"].includes(raw), "请填是或否：" + c.label);
+        value = ["是", "true"].includes(raw);
+      } else if (d.type === "enum") value = raw;
+      else if (["json", "array", "map", "object"].includes(d.type)) {
+        value = JSON.parse(raw);
+      } else throw Error("未支持的单元格类型");
+      return value;
+    }
+    function parsePlain(ticket, text2) {
+      const sections = /* @__PURE__ */ new Map();
+      for (const p of ticket.parts) for (const g of new Set(p.cells.map((c) => c.group))) {
+        const title = p.tid === "origin.character" ? "人物／" + g : p.heading;
+        check3(!sections.has(title), "任务分组重复");
+        sections.set(title, { part: p, cells: p.cells.filter((c) => c.group === g) });
+      }
+      const seen = /* @__PURE__ */ new Set(), rawCells = [], result = new Map(ticket.parts.map((p) => [p.record, {}]));
+      for (const section of formSections(text2, { defaultHeading: ticket.parts.length === 1 ? "" : null })) {
+        const current = section.heading === "" ? { part: ticket.parts[0], cells: ticket.parts[0].cells } : sections.get(section.heading);
+        check3(current, "分组未开放：" + section.heading);
+        for (const line of section.lines) {
+          const { number, field: c, raw } = formRow(line, current.cells), identity = current.part.record + ":" + number;
+          check3(!seen.has(identity), "行号重复：" + number);
+          seen.add(identity);
+          if (raw) rawCells.push({ record: current.part.record, cell: c, raw });
+        }
+      }
+      check3(seen.size === ticket.parts.reduce((n, p) => n + p.cells.length, 0), "请保留本次全部字段行；未知值留空");
+      const aliases = clone(ticket.aliases ?? []);
+      for (const x of rawCells) if (x.cell.key === "名称" && ticket.refs.includes(x.record) && !aliases.some((a) => a.值 === x.record && a.显示 === decodeFormText(x.raw))) aliases.push({ 值: x.record, 名称: decodeFormText(x.raw), 显示: decodeFormText(x.raw) });
+      for (const x of rawCells) result.get(x.record)[x.cell.key] = plainValue(x.raw, x.cell, { ...ticket, aliases });
+      return result;
+    }
+    function accept(token, text2) {
+      const ticket = pending.get(token);
+      check3(ticket, "填值任务已失效或已使用");
+      check3(state.revision === ticket.workbookRevision, "表单或引用对象已变化，请重新生成填值任务");
+      const answers = parsePlain(ticket, text2);
+      const changed = [], refs2 = new Set(ticket.refs);
+      let count = 0;
+      for (const [id, answer] of answers) {
+        const r = record(id), t = template(r.template), next = clone(r), keys = ticket.parts?.find((p) => p.record === id)?.cells.map((c) => c.key) ?? ticket.keys;
+        for (const [key, value] of Object.entries(answer)) {
+          check3(keys.includes(key) && !bad.has(key), "结果含本次未开放字段：" + key);
+          const f2 = field(t, key);
+          check3(at(r.values, f2.path) === void 0, "已填字段受保护：" + f2.label);
+          validate(value, f2.definition, refs2);
+          put(next.values, f2.path, value);
+          count++;
+        }
+        if (next.parentId) {
+          const subject = t.fields.find((f2) => f2.label === "主体");
+          if (subject && at(next.values, subject.path) !== void 0) check3(at(next.values, subject.path) === next.parentId, "主体必须属于当前人物");
+        }
+        if (ticket.deriveObjects) syncObjects(next);
+        validateRecordValues(next.values, t, allowedRefs());
+        changed.push(next);
+      }
+      check3(count > 0, "没有可回填的字段；原内容未改");
+      for (const next of changed) {
+        next.revision++;
+        state.records[state.records.findIndex((r) => r.id === next.id)] = next;
+      }
+      state.revision++;
+      pending.delete(token);
+      return clone(record(ticket.record));
+    }
+    function restore(input) {
+      check3(input?.format === state.format && input.catalogVersion === catalog2.version && Array.isArray(input.records), "不是兼容的表单草稿");
+      check3(input.records.length <= 500, "草稿档案过多");
+      const ids = /* @__PURE__ */ new Set();
+      for (const r of input.records) {
+        check3(typeof r.id === "string" && /^draft-\d+$/.test(r.id) && !ids.has(r.id), "档案编号无效或重复");
+        ids.add(r.id);
+        template(r.template);
+        check3(typeof r.title === "string" && Number.isSafeInteger(r.revision) && r.revision >= 0 && Array.isArray(r.manual), "草稿元数据无效");
+      }
+      for (const r of input.records) {
+        if (r.parentId !== void 0) check3(childTemplate(template(r.template)) && input.records.some((p) => p.id === r.parentId && p.template === "origin.character"), "子表归属无效");
+        if (r.derived !== void 0) check3(Array.isArray(r.derived) && r.derived.every((k) => k === "对象") && childTemplate(template(r.template)), "派生标记无效");
+      }
+      const refs2 = new Set(input.records.filter((r) => template(r.template).table !== "core-draft").map((r) => r.id));
+      for (const r of input.records) {
+        const t = template(r.template);
+        check3(r.manual.every((key) => t.fields.some((f2) => f2.key === key)), "人工字段标记无效");
+        validateRecordValues(r.values, t, refs2);
+        const subject = t.fields.find((f2) => f2.label === "主体");
+        if (r.parentId && subject && at(r.values, subject.path) !== void 0) check3(at(r.values, subject.path) === r.parentId, "主体必须属于当前人物");
+      }
+      const next = { format: state.format, catalogVersion: catalog2.version, records: clone(input.records), revision: state.revision + 1 };
+      state = next;
+      serial = Math.max(serial, ...input.records.map((r) => Number(r.id.slice(6))), 0);
+      pending.clear();
+      return snapshot();
+    }
+    function snapshot() {
+      return clone(state);
+    }
+    function values(id) {
+      const r = record(id), t = template(r.template);
+      return { template: r.template, table: t.table, kind: t.kind ?? null, values: clone(r.values), status: "draft-only", canonicalWrites: 0 };
+    }
+    return { create, createChild, edit, request, requestDossier, accept, restore, snapshot, values, read: (id) => clone(record(id)), template: (id) => clone(template(id)), references: () => refsFor(new Set(state.records.filter((r) => template(r.template).table === "objects").map((r) => r.id))), get: (id, key) => clone(at(record(id).values, field(template(record(id).template), key).path)) };
+  }
+
+  // preview/foundation-sheet/ui.js
+  function mountFoundationSheet(root, engine2, catalog2, { download } = {}) {
+    const d = root.ownerDocument, el = (tag, text2, cls) => {
+      const e = d.createElement(tag);
+      if (text2 !== void 0) e.textContent = text2;
+      if (cls) e.className = cls;
+      return e;
+    };
+    const invalid = /* @__PURE__ */ new Map(), includedChildren = /* @__PURE__ */ new Set();
+    const action = (text2, fn, cls, allowInvalid = false) => {
+      const b = el("button", text2, cls);
+      b.type = "button";
+      b.addEventListener("click", () => run(() => {
+        if (invalid.size && !allowInvalid) throw Error("请先修正红色单元格，或将它留待填写。");
+        return fn();
+      }));
+      return b;
+    };
+    let selectedTemplate = "origin.character", selectedRecord = null, group = null, dirty = false, currentTicket = null;
+    const header = el("header"), brand = el("div"), badge = el("span", "可编辑预览", "badge");
+    brand.append(el("p", "缇斯亚 · 档案工作台", "eyebrow"), el("h1", "把设定填进格子里"), badge);
+    header.append(brand);
+    root.append(header);
+    const tools = el("div", void 0, "toolbar"), picker = el("select");
+    picker.setAttribute("aria-label", "选择表单");
+    for (const layer of ["基点", "原点", "会话"]) {
+      const opt = el("optgroup");
+      opt.label = layer;
+      for (const t of catalog2.templates.filter((t2) => t2.layer === layer)) {
+        const o = el("option", t.label);
+        o.value = t.id;
+        opt.append(o);
+      }
+      picker.append(opt);
+    }
+    picker.value = selectedTemplate;
+    const records = el("select");
+    records.setAttribute("aria-label", "选择档案");
+    tools.append(picker, records, action("＋ 新档案", () => {
+      const r = engine2.create(selectedTemplate);
+      selectedRecord = r.id;
+      dirty = true;
+      draw();
+    }));
+    const file = el("input");
+    file.type = "file";
+    file.accept = ".json,application/json";
+    file.hidden = true;
+    tools.append(action("保存草稿", () => {
+      if (typeof download !== "function") throw Error("当前环境不支持导出");
+      download("缇斯亚__草稿__基础表单.json", JSON.stringify(engine2.snapshot(), null, 2));
+      dirty = false;
+      message("草稿已交给浏览器下载。重新打开页面时可导入继续。");
+    }), action("导入草稿", () => file.click()), file);
+    root.append(tools);
+    const notice = el("p", "填写会留在当前页面；可保存草稿文件，下次导入继续。", "notice");
+    root.append(notice);
+    const childrenPanel = el("details", void 0, "child-panel");
+    childrenPanel.append(el("summary", "人物子表"));
+    const childTools = el("div", void 0, "actions"), childList = el("div");
+    childrenPanel.append(childTools, childList);
+    root.append(childrenPanel);
+    const tabs = el("nav", void 0, "tabs");
+    tabs.setAttribute("aria-label", "字段分组");
+    root.append(tabs);
+    const sheet = el("section", void 0, "sheet"), caption = el("div", void 0, "sheet-caption"), table2 = el("table"), thead = el("thead"), hr = el("tr");
+    hr.append(el("th", ""), el("th", "A · 字段"), el("th", "B · 待填写"));
+    thead.append(hr);
+    const tbody = el("tbody");
+    table2.append(thead, tbody);
+    sheet.append(caption, table2);
+    root.append(sheet);
+    const status = el("p", "", "status");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    root.append(status);
+    const ai = el("details", void 0, "ai-panel"), sum = el("summary", "AI 填表");
+    ai.append(sum, el("p", "这里只准备填表任务、检查并回填结果；预览未连接模型。"));
+    const source = el("textarea");
+    source.placeholder = "粘贴本次填写依据或设计要求";
+    source.setAttribute("aria-label", "填写依据");
+    ai.append(source);
+    const aiTools = el("div", void 0, "actions"), requestText = el("textarea");
+    requestText.readOnly = true;
+    requestText.setAttribute("aria-label", "发给AI的任务");
+    requestText.placeholder = "准备任务后，这里只显示需要填写的字段";
+    aiTools.append(action("准备当前组的空白格", () => {
+      const t = engine2.template(selectedTemplate), keys = t.fields.filter((f2) => f2.group === group && engine2.get(selectedRecord, f2.key) === void 0).map((f2) => f2.key);
+      currentTicket = engine2.request(selectedRecord, { keys, source: source.value, referenceIds: engine2.references().map((r) => r.值) });
+      requestText.value = currentTicket.modelInput;
+      answer.value = "";
+      message("任务已准备，只含本组空白格。已有值不会交给 AI 覆盖。");
+    }), action("导出任务", () => {
+      if (!currentTicket) throw Error("请先准备填表任务");
+      if (typeof download !== "function") throw Error("当前环境不支持导出");
+      download("缇斯亚__填表__任务.txt", requestText.value);
+    }));
+    const answer = el("textarea");
+    answer.setAttribute("aria-label", "AI回填结果");
+    answer.placeholder = "粘贴 D 老师填好的分组文本";
+    aiTools.append(action("准备整份人物（含勾选子表）", () => {
+      const r = engine2.read(selectedRecord), parentId = r.parentId ?? r.id;
+      if (engine2.read(parentId).template !== "origin.character") throw Error("请先选择人物档案");
+      const recordIds = [parentId, ...engine2.snapshot().records.filter((x) => x.parentId === parentId && includedChildren.has(x.id)).map((x) => x.id)];
+      currentTicket = engine2.requestDossier(parentId, { recordIds, source: source.value, referenceIds: engine2.references().map((x) => x.值) });
+      requestText.value = currentTicket.modelInput;
+      answer.value = "";
+      message("已准备人物和勾选的子表；填写依据按你粘贴的原文导出。");
+    }));
+    ai.append(aiTools, requestText, answer, action("检查并回填", () => {
+      if (!currentTicket) throw Error("请先准备填表任务");
+      if (currentTicket.recordId !== selectedRecord && currentTicket.recordId !== engine2.read(selectedRecord).parentId) throw Error("当前档案与填值任务不一致，请重新准备任务");
+      engine2.accept(currentTicket.token, answer.value);
+      currentTicket = null;
+      dirty = true;
+      draw();
+      message("已回填到草稿。结构检查通过；事实和知情范围仍需核对。");
+    }, "primary"));
+    root.append(ai, el("footer", "草稿预览 · 不写入聊天存档"));
+    source.addEventListener("input", () => {
+      if (currentTicket) {
+        currentTicket = null;
+        requestText.value = "";
+        message("填写依据已变化，请重新准备任务。");
+      }
+    });
+    function message(text2, error = false) {
+      status.textContent = text2;
+      status.classList.toggle("error", error);
+    }
+    function run(fn) {
+      try {
+        const p = fn();
+        if (p?.catch) p.catch((e) => message(e.message, true));
+      } catch (e) {
+        message(e.message, true);
+      }
+    }
+    function saveCell(f2, value, input) {
+      try {
+        engine2.edit(selectedRecord, f2.key, value);
+        dirty = true;
+        invalid.delete(f2.key);
+        input.removeAttribute("aria-invalid");
+        message("已修改 · " + f2.label);
+      } catch (e) {
+        dirty = true;
+        invalid.set(f2.key, input.value);
+        input.setAttribute("aria-invalid", "true");
+        message(f2.label + "：" + e.message + "；有效草稿未改变。", true);
+      }
+    }
+    function editor(f2, current) {
+      const def = f2.definition, box = el("div", void 0, "cell-editor");
+      let input;
+      if (["enum", "boolean", "ref", "refs"].includes(def.type)) {
+        input = el("select");
+        if (def.type === "refs") {
+          input.multiple = true;
+          input.size = 3;
+        } else {
+          const blank = el("option", "待填写");
+          blank.value = "";
+          input.append(blank);
+        }
+        const choices = def.type === "boolean" ? [[false, "否"], [true, "是"]] : def.type === "enum" ? def.values.map((v) => [v, v]) : engine2.references().map((r) => [r.值, r.名称]);
+        choices.forEach(([v, label], i) => {
+          const op = el("option", label);
+          op.value = String(i + 1);
+          op.selected = def.type === "refs" ? (current ?? []).includes(v) : current === v;
+          input.append(op);
+        });
+        if (def.type !== "refs" && current === void 0) input.value = "";
+        input.addEventListener("change", () => {
+          let value;
+          if (def.type === "refs") value = [...input.selectedOptions].map((o) => choices[Number(o.value) - 1][0]);
+          else value = input.value === "" ? void 0 : choices[Number(input.value) - 1][0];
+          saveCell(f2, value, input);
+        });
+      } else {
+        input = el("textarea");
+        input.rows = 1;
+        input.spellcheck = false;
+        input.placeholder = "待填写";
+        input.value = current === void 0 ? "" : def.type === "texts" ? current.join("\n") : ["json", "array", "map", "object"].includes(def.type) ? JSON.stringify(current, null, 2) : String(current);
+        if (["number", "duration"].includes(def.type)) input.inputMode = "decimal";
+        const resize = () => {
+          input.style.height = "auto";
+          input.style.height = Math.max(44, input.scrollHeight) + "px";
+        };
+        input.addEventListener("input", () => {
+          resize();
+          let value;
+          try {
+            const raw = input.value;
+            if (raw === "") value = void 0;
+            else if (["number", "duration"].includes(def.type)) {
+              if (!raw.trim()) throw Error("请填写数值");
+              value = Number(raw);
+            } else if (def.type === "texts") value = raw.split("\n").filter((x) => x.trim());
+            else if (["json", "array", "map", "object"].includes(def.type)) value = JSON.parse(raw);
+            else value = raw;
+            saveCell(f2, value, input);
+          } catch (e) {
+            dirty = true;
+            invalid.set(f2.key, input.value);
+            input.setAttribute("aria-invalid", "true");
+            message(f2.label + "：" + e.message + "；有效草稿未改变。", true);
+          }
+        });
+      }
+      input.setAttribute("aria-label", f2.key);
+      input.dataset.key = f2.key;
+      box.append(input);
+      return { box, input };
+    }
+    function drawChildren(r) {
+      const parentId = r.parentId ?? (r.template === "origin.character" ? r.id : null);
+      childrenPanel.hidden = !parentId;
+      if (!parentId) return;
+      childTools.replaceChildren();
+      childList.replaceChildren();
+      const go = (id) => {
+        const row = engine2.read(id);
+        selectedRecord = id;
+        selectedTemplate = row.template;
+        picker.value = selectedTemplate;
+        group = null;
+        draw();
+      };
+      childTools.append(action("回人物主表", () => go(parentId)));
+      for (const [kind, label] of [["history", "前史"], ["relationships", "关系"], ["secrets", "隐情"]]) childTools.append(action("＋ " + label, () => {
+        const child = engine2.createChild(parentId, kind);
+        dirty = true;
+        go(child.id);
+      }));
+      childList.append(el("p", "勾选本次交给 AI 填写的子表；可反复添加同类记录。"));
+      for (const child of engine2.snapshot().records.filter((x) => x.parentId === parentId)) {
+        const line = el("div", void 0, "child-choice"), label = el("label"), checkbox = el("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = includedChildren.has(child.id);
+        checkbox.setAttribute("aria-label", "包含" + child.title);
+        checkbox.addEventListener("change", () => {
+          if (checkbox.checked) includedChildren.add(child.id);
+          else includedChildren.delete(child.id);
+          currentTicket = null;
+          requestText.value = "";
+          message("子表选择已变更，请重新准备任务。");
+        });
+        label.append(checkbox, d.createTextNode(child.values.名称 || child.title));
+        line.append(label, action("编辑", () => go(child.id)));
+        childList.append(line);
+      }
+    }
+    function draw() {
+      const t = engine2.template(selectedTemplate), all = engine2.snapshot().records.filter((r2) => r2.template === selectedTemplate);
+      if (!all.some((r2) => r2.id === selectedRecord)) {
+        const r2 = all[0] ?? engine2.create(selectedTemplate);
+        selectedRecord = r2.id;
+      }
+      const r = engine2.read(selectedRecord);
+      drawChildren(r);
+      records.replaceChildren();
+      for (const row of engine2.snapshot().records.filter((r2) => r2.template === selectedTemplate)) {
+        const o = el("option", row.values.名称 || row.title);
+        o.value = row.id;
+        records.append(o);
+      }
+      records.value = r.id;
+      if (!t.groups.includes(group)) group = t.groups[0];
+      tabs.replaceChildren();
+      for (const g of t.groups) {
+        const b = action(g, () => {
+          group = g;
+          draw();
+        });
+        b.setAttribute("aria-pressed", String(g === group));
+        tabs.append(b);
+      }
+      const fs = t.fields.filter((f2) => f2.group === group);
+      caption.textContent = t.label + " / " + group;
+      tbody.replaceChildren();
+      for (const f2 of fs) {
+        const tr = el("tr"), key = el("th"), cell = el("td");
+        key.scope = "row";
+        key.append(el("span", f2.label));
+        const more = el("details", void 0, "field-help");
+        more.append(el("summary", "· · ·"));
+        const text2 = el("p", f2.definition.description || ({ texts: "每行一项", refs: "可选择多个已建对象", ref: "选择已建对象", json: "填写JSON值，保留实际类型" }[f2.definition.type] ?? "按资料填写；未知可留空。"));
+        more.append(text2);
+        more.append(action("留待填写", () => {
+          engine2.edit(selectedRecord, f2.key, void 0);
+          invalid.delete(f2.key);
+          dirty = true;
+          draw();
+          message("已留空 · " + f2.label);
+        }, void 0, true));
+        if (["texts", "refs", "array"].includes(f2.definition.type)) more.append(action("明确无条目", () => {
+          engine2.edit(selectedRecord, f2.key, []);
+          dirty = true;
+          draw();
+          message("已明确记录空列表 · " + f2.label);
+        }));
+        if (f2.definition.type === "text" && !f2.definition.required) more.append(action("明确空文本", () => {
+          engine2.edit(selectedRecord, f2.key, "");
+          dirty = true;
+          draw();
+          message("已明确记录空文本 · " + f2.label);
+        }));
+        if (f2.definition.nullable || f2.definition.type === "json") more.append(action("明确空值", () => {
+          engine2.edit(selectedRecord, f2.key, null);
+          dirty = true;
+          draw();
+          message("已明确记录null · " + f2.label);
+        }));
+        if (r.derived?.includes(f2.key) && !r.manual.includes(f2.key)) more.append(el("p", "由本表明确关联自动汇总；手动修改后保留你的值。"));
+        key.append(more);
+        const current = engine2.get(selectedRecord, f2.key), control = editor(f2, current);
+        if (invalid.has(f2.key)) {
+          control.input.value = invalid.get(f2.key);
+          control.input.setAttribute("aria-invalid", "true");
+        }
+        cell.append(control.box);
+        if (current !== void 0 && (current === "" || current === null || Array.isArray(current) && !current.length)) cell.append(el("small", current === null ? "已明确为空" : Array.isArray(current) ? "已明确无条目" : "已明确为空文本", "empty-marker"));
+        const number = el("th", String(t.fields.indexOf(f2) + 1), "row-number");
+        number.scope = "row";
+        tr.append(number, key, cell);
+        tbody.append(tr);
+      }
+    }
+    picker.addEventListener("change", () => {
+      if (invalid.size) {
+        picker.value = selectedTemplate;
+        message("请先修正红色单元格。", true);
+        return;
+      }
+      selectedTemplate = picker.value;
+      selectedRecord = null;
+      group = null;
+      draw();
+    });
+    records.addEventListener("change", () => {
+      if (invalid.size) {
+        records.value = selectedRecord;
+        message("请先修正红色单元格。", true);
+        return;
+      }
+      selectedRecord = records.value;
+      draw();
+    });
+    file.addEventListener("change", () => run(async () => {
+      const f2 = file.files?.[0];
+      if (!f2) return;
+      try {
+        if (f2.size > 5e6) throw Error("草稿文件超过5MB");
+        const input = JSON.parse(await f2.text());
+        engine2.restore(input);
+        includedChildren.clear();
+        const r = engine2.snapshot().records[0];
+        selectedTemplate = r?.template ?? "origin.character";
+        selectedRecord = r?.id ?? null;
+        picker.value = selectedTemplate;
+        group = null;
+        currentTicket = null;
+        requestText.value = "";
+        answer.value = "";
+        dirty = false;
+        draw();
+        message("草稿已导入。");
+      } finally {
+        file.value = "";
+      }
+    }));
+    draw();
+    return { engine: engine2, draw, isDirty: () => dirty, dispose: () => root.replaceChildren() };
+  }
+
+  // foundation-preview-entry.js
+  var catalog = sheetCatalog();
+  var engine = createSheetEngine(catalog, valueValid);
+  var controller = mountFoundationSheet(document.querySelector("main"), engine, catalog, { download(name, text2) {
+    const url = URL.createObjectURL(new Blob([text2], { type: name.endsWith(".txt") ? "text/plain;charset=utf-8" : "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  } });
+  window.addEventListener("beforeunload", (event) => {
+    if (controller.isDirty()) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  });
+})();
+</script></body></html>

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node --test tests/*.test.js",
+    "test": "node preview/foundation-sheet/build.mjs --check && node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node --test tests/*.test.js",
     "build:reader": "node tools/build-reader.mjs",
     "build:extension": "node tools/build-extension.mjs",
     "build:worldbook": "node tools/build-worldbook.mjs"
