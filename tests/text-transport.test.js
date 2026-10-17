@@ -222,7 +222,7 @@ test('production host audits added instructions and tools, budgets after wrappin
 
 test('production auxiliary task consumes restored streaming and buffered responses without changing saved configuration',async()=>{
  const f=fixture(),original=globalThis.fetch;globalThis.fetch=f.target.fetch;const before=JSON.stringify(f.d);
- try{for(const onProgress of [undefined,()=>{}]){assert.equal(await f.host.request('summary','摘要',{onProgress}),'完整🙂\n"引号"\\');assert.equal(f.host.preview().transport.state,'complete');assert.equal(f.host.preview().messages.at(-1).role,'user');}assert.equal(f.calls.length,2);assert.equal(JSON.stringify(f.d),before);}finally{globalThis.fetch=original;f.transport.dispose();}
+ try{for(const onProgress of [undefined,()=>{}]){assert.equal(await f.host.request('summary','摘要',{onProgress}),'完整🙂\n"引号"\\');assert.equal(f.host.preview().transport.state,'complete');assert.equal(f.host.preview().messages.at(-1).role,'user');assert.match(JSON.stringify(f.host.preview().messages),/PREPARE_STEP/);assert.match(JSON.stringify(f.host.preview().messages),/TASK.START/);}assert.equal(f.calls.length,2);assert.equal(JSON.stringify(f.d),before);}finally{globalThis.fetch=original;f.transport.dispose();}
 });
 
 test('configuration UI exposes route-specific choice and preserves explicit off without enabling other tasks',async()=>{

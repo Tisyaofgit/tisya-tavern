@@ -1,3 +1,4 @@
+import {textTaskPreset,textTaskMessages} from '../../task-envelope.js';
 // Local extraction adapter. Dynamic child proposals are validated in a cloned workbook.
 // It does not publish, call a model, or modify the caller's existing workbook/context.
 import {createSheetEngine} from './engine.js';
@@ -69,7 +70,7 @@ export function prepareExtraction(catalog,validateValue,{source,ownerName,refere
  const renderedConditions=conditionVocabulary?conditionInstructions(conditionVocabulary):'';
  const scopedConditions=conditionVocabulary?renderedConditions.replace(/已登记数值：[^\n]*/, '已登记数值（字段名与单位分列；比较时只用字段名）：\n'+conditionVocabulary.fields.filter(f=>f.type==='number').map(f=>f.name+'｜单位：'+f.unit).join('\n')):renderedConditions;
  const user='本次人物：'+ownerName+'\n已登记名称：'+[ownerName,...references.map(r=>r.name)].join('；')+'\n\n字段定义（每种子表仅定义一次，条目数不预设）：\n'+definitions.join('\n')+(conditionVocabulary?'\n\n条件填写：\n'+scopedConditions.replace('关系的成立条件是既有联系依据，继续用原文描述。',''):'')+'\n\n叙事材料：\n'+source.trim()+('\n\n交付核对（不输出核对过程）：按全局限定双向核对命题与限定，去重不得漏义。定义引用只收已登记档案名。数值条件写true：字段名 > 数值，单位不得拼入字段名；检查已登记键名及箭头。只交付表格。');
- const body={model,messages:[{role:'system',content:system},{role:'user',content:user}],stream:false};
+ const body={model,messages:textTaskMessages({preset:textTaskPreset({task:'foundation-extraction',instructions:system,format:'只输出所定义的完整分组表格；行号与字段名原样保留，不写JSON、解释或推理过程。'}),input:user}),stream:false};
  return {format:'tisya.narrative-extraction/1',rootId:root.id,before:e.snapshot(),referenceIds:e.references().map(r=>r.值),body,source,ownerName,...(layout?{layout}:{}),...(conditionVocabulary?{conditionVocabulary:clone(conditionVocabulary)}:{})};
 }
 export function acceptExtraction(catalog,validateValue,context,raw){

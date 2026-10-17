@@ -1,3 +1,4 @@
+import {TEXT_TASKS} from '../task-envelope.js';
 import {validateDialogueLanguage,validateDefaultLanguage} from './language.js';
 import {normalizeTransportMode} from './transport-modes.js';
 import {INITIATIVE_LEVELS} from './initiative.js';
@@ -20,7 +21,8 @@ export const contextOwner=w=>isTableContinuity(w)?'tisya':w.context.owner===unde
 export const FEATURES=N.protocol.P.features.map(([name,key])=>({id:'feature:'+name,name,key}));
 export const registry={modes:new Map([['narrative',{id:'narrative',name:'叙事',version:1,task:'main'}]]),tasks:new Map(Object.entries(TASKS).map(([id,name])=>[id,{id,name,capability:['agent','embedding','rerank','image','tts','stt'].includes(id)?id:'chat'}])),resources:new Map(),archives:new Map(),executors:new Map(),themes:new Map()};
 registerTableTasks(registry);
-registry.tasks.set('communication',{id:'communication',name:'场外交流',capability:'chat',isolated:true,inheritMain:true,preset:null});
+registry.tasks.set('communication',{id:'communication',name:'场外交流',capability:'chat',isolated:true,inheritMain:true});
+for(const id of Object.keys(TEXT_TASKS))if(registry.tasks.has(id))Object.assign(registry.tasks.get(id),{preset:'tisya:'+id});
 export function register(kind,row){const bank=registry[kind];if(!(bank instanceof Map)||!row||typeof row.id!=='string'||!row.id.trim())fail('登记类型或编号无效');if(bank.has(row.id))fail('编号已登记：'+row.id);bank.set(row.id,row);return ()=>bank.delete(row.id);}
 export function worldKey(c){if(!c.chatId)fail('请先打开一个世界的聊天');const card=c.characters?.[c.characterId];return JSON.stringify([c.groupId?'group':'card',c.groupId||card?.avatar||c.characterId,c.chatId]);}
 export function defaultMode(legacy={}){return {narrative:{...N.suggestions(),缇斯亚MVU兼容:false,...legacy},selected:[],routes:{},summary:true,actions:true,workflowDetail:'compact'};}
@@ -35,8 +37,8 @@ export function resolveRoute(d,w,task='main'){
  const parent=definition.inheritMain?(contextOwner(w)==='native'?{connection:'native',preset:null,model:'',parameters:{},sources:{connection:'原生主聊天'}}:resolveRoute(d,w,'main')):null;
  const aliases=[...registry.tasks.values()].filter(t=>t.aliasOf===task).map(t=>t.id),legacyTask=aliases.find(id=>d.routes.tasks[id]),legacyMode=aliases.find(id=>w.modes[w.mode].routes[id]);
  const base=d.routes.global,mode=w.modes[w.mode].routes[task]??w.modes[w.mode].routes[legacyMode]??{},specific=d.routes.tasks[task]??d.routes.tasks[legacyTask]??{},route=parent?{...parent,parameters:{...parent.parameters}}:{},sources={...parent?.sources};delete route.sources;
- if(definition.isolated){route.preset=definition.preset??null;sources.preset='模式配套预设';}
- for(const [scope,row]of [...(parent?[]:[['通用',base]]),['模式',mode],['任务',specific]])for(const [k,v]of Object.entries(row))if(v!==undefined){if(k==='parameters'){route.parameters={...route.parameters,...clone(v)};continue;}route[k]=clone(v);sources[k]=scope;}
+ if(definition.isolated||definition.preset){route.preset=definition.preset??null;sources.preset='模式配套预设';}
+ for(const [scope,row]of [...(parent?[]:[['通用',base]]),['模式',mode],['任务',specific]])for(const [k,v]of Object.entries(row))if(v!==undefined){if(k==='preset'&&scope==='通用'&&definition.preset)continue;if(k==='parameters'){route.parameters={...route.parameters,...clone(v)};continue;}route[k]=clone(v);sources[k]=scope;}
  return {connection:'native',preset:'native',model:'',transport:'off',...route,...(route.transport?{transport:normalizeTransportMode(route.transport)}:{}),sources};
 }
 export function resourceText(r,w){let text=r.content;const values={...r.defaults,...w.parameters?.[r.id]};for(const f of r.fields??[]){const v=values[f.key];if(v===undefined){if(f.required)fail(r.name+' 缺少 '+f.label);continue;}if(f.type==='number'&&!Number.isFinite(v)||f.type==='boolean'&&typeof v!=='boolean'||f.type==='select'&&!f.options.includes(v))fail(r.name+' 参数无效：'+f.key);text=text.split('${'+f.key+'}').join(String(v));}if(/\$\{[^}]+\}/.test(text))fail(r.name+' 有未填写参数');return text.trim();}

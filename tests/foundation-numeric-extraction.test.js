@@ -1,3 +1,4 @@
+const extractionSource=body=>JSON.parse(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -26,6 +27,6 @@ test('numeric extraction accepts the Chinese boolean shorthand advertised to the
  assert.equal(rank.type,'number');assert.equal(rank.min,1);assert.equal(rank.integer,true);
  assert.equal(context.body.stream,false);
  assert.deepEqual(Object.keys(context.body).sort(),['messages','model','stream']);
- assert.match(context.body.messages[1].content,/连续用力时长｜单位：时辰/);
+ assert.match(extractionSource(context.body),/连续用力时长｜单位：时辰/);
 }));
 test('removed legacy preparation mode is rejected rather than silently interpreted',()=>{assert.throws(()=>prepared('prepare-registered',()=>{}),/Expected prepare or replay/);});

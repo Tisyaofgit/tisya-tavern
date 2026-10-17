@@ -1,5 +1,13 @@
+export const SETTINGS_GROUP=Object.freeze({
+'user-identity':'identity','role-library':'world','group-library':'world','drawer:WI-SP-button':'world','notes':'world','settings-tab:tables':'world','settings-tab:world':'world',
+'settings-app':'play','settings-tab:mode':'play','continue-settings':'play','input-tools':'play',
+'display-settings':'reading','drawer:backgrounds-button':'reading','emotion-atlas':'reading','pet-toggle':'reading','motion-toggle':'reading','fullscreen':'reading',
+'drawer:ai-config-button':'model','drawer:sys-settings-button':'model','settings-tab:api':'model','drawer:advanced-formatting-button':'model',
+'display-cache':'data','settings-tab:data':'data','context-overview':'data','font-retry':'data',
+'drawer:extensions-settings-button':'native','drawer:user-settings-button':'native','disable':'native'});
 // One canonical destination per item. Presentation never writes story settings.
 export const SETTINGS_DESTINATIONS=Object.freeze([
+ ['assistant','缇斯亚助手','设计人物、世界与基点，提炼档案、调整配置','assistant','sparkles'],
  ['user-identity','用户身份','原点档案、角色和会话绑定','library','user'],
  ['role-library','角色卡','资料、会话与导入导出','library','user'],
  ['drawer:ai-config-button','预设','生成参数与预设管理','library','sliders'],
@@ -28,11 +36,11 @@ export const SETTINGS_DESTINATIONS=Object.freeze([
  ['drawer:user-settings-button','酒馆与系统','语言、原生设置与数据整理','advanced','settings'],
  ['font-retry','字体状态与重试','检查阅读字体的加载状态','advanced','refresh'],
  ['disable','返回原生界面','保留数据，关闭缇斯亚界面','advanced','left'],
-].map(([action,label,description,group,icon])=>Object.freeze({action,label,description,group,icon})));
+].map(([action,label,description,group,icon])=>Object.freeze({action,label,description,group:SETTINGS_GROUP[action]??group,icon})));
 export const KNOWN_DRAWERS=Object.freeze(['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','persona-management-button','rightNavHolder','extensions-settings-button','user-settings-button','backgrounds-button']);
 export function settingsDestinations({fullscreen=false,fullscreenLabel='沉浸全屏',pet=true,motion=true,extra=[]}={}){
  const rows=SETTINGS_DESTINATIONS.filter(r=>r.action!=='fullscreen'||fullscreen).map(r=>({...r,label:r.action==='pet-toggle'?(pet?'隐藏桌宠':'显示桌宠'):r.action==='motion-toggle'?(motion?'暂停动态效果':'开启动态效果'):r.action==='fullscreen'?fullscreenLabel:r.label}));
- const seen=new Set(rows.map(r=>r.action));for(const item of extra){if(KNOWN_DRAWERS.includes(item.key))continue;const action='drawer:'+item.key;if(seen.has(action))continue;seen.add(action);rows.push({action,label:item.label,description:'已安装扩展提供的设置',group:'advanced',icon:'tools'});}
+ const seen=new Set(rows.map(r=>r.action));for(const item of extra){if(KNOWN_DRAWERS.includes(item.key))continue;const action='drawer:'+item.key;if(seen.has(action))continue;seen.add(action);rows.push({action,label:item.label,description:'已安装扩展提供的设置',group:'native',icon:'tools'});}
  return rows;
 }
 export function filterSettingsDestinations(rows,query){const words=String(query).trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);return rows.filter(r=>words.every(w=>(r.label+' '+r.description+' '+r.action).toLocaleLowerCase().includes(w)));}

@@ -70,10 +70,10 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function saveRuleChoice(choice,expected){return exclusive(async()=>{const c=capture(),loaded=await load(c),review=loaded.session.data.ruleReview;check(review&&expected?.fingerprint===review.fingerprint&&expected?.sessionRevision===loaded.session.data.revision,'规则选择依据已变化，请重新载入');const next=copy(loaded.session.data);next.revision++;next.ruleReview=chooseRule(review,await currentRuleSources(c),choice);next.ruleChoiceHistory??=[];next.ruleChoiceHistory.push({...copy(choice),fingerprint:review.fingerprint,at:new Date().toISOString()});await books.write(loaded.session,next,c.guard);worldbook.clear();setPrompt('');latest=null;return {review:copy(next.ruleReview),sessionRevision:next.revision,stale:false};});}
  function activePreferences(rows,c,binding=null){return rows.filter(row=>row.table==='preferences'&&row.preferenceConfirmed===true&&row.values.启用!==false&&preferenceMatches(row,{context:getContext(),world:c,persona:readPersona(),binding}));}
  async function invoke(task,input,c,signal,{archiveToolSession=null}={}){
-  status(task,'运行中');progress={task,stage:'waiting',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
+  status(task,'运行中');progress={task,stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
   try{
    signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);const response=await request(task,JSON.stringify({...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]}),{signal,...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
-    if(signal?.aborted||!update||!['connected','thinking','receiving','buffered','received'].includes(update.stage))return;
+    if(signal?.aborted||!update||!['preparing','prepared','waiting','connected','thinking','receiving','buffered','received'].includes(update.stage))return;
     // Reader delivers cumulative visible content; reasoning fields are never
     // accepted as a progress payload or appended to task data.
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};

@@ -1,3 +1,4 @@
+const extractionSource=body=>JSON.parse(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {sheetCatalog} from '../tables/foundation/catalog.js';import {valueValid} from '../tables/schema.js';
 import {prepareExtraction,acceptExtraction} from '../tables/foundation/extraction.js';
@@ -12,7 +13,7 @@ const context=()=>prepareExtraction(c,valueValid,{source:'方鹿拜沈砚为师�
 const child=(label,kind,values)=>'【'+label+'／1】\n'+lines('origin.character.'+kind,{名称:label,...values}).join('\n');
 test('compact projection reduces requested cells without renumbering or changing canonical catalog',()=>{
  assert.deepEqual(['origin.character','origin.character.history','origin.character.relationships','origin.character.secrets'].map(t=>view(t).length),[40,8,6,6]);
- const ctx=context();assert.equal(ctx.layout,'compact-v2');assert(!ctx.body.messages[1].content.includes('11 原文（'));assert(!ctx.body.messages[1].content.includes('10 成立条件（'));assert(ctx.body.messages[1].content.includes('25 日常习惯（'));assert(ctx.body.messages[1].content.includes('数值格的裸数值沿用'));
+ const ctx=context();assert.equal(ctx.layout,'compact-v2');assert(!extractionSource(ctx.body).includes('11 原文（'));assert(!extractionSource(ctx.body).includes('10 成立条件（'));assert(extractionSource(ctx.body).includes('25 日常习惯（'));assert(extractionSource(ctx.body).includes('数值格的裸数值沿用'));
  assert.equal(c.templates.find(t=>t.id==='origin.character').fields.length,45);
 });
 test('canonical sparse fields retain actual values, omitted duplicates remain absent and source is kept once',()=>{
@@ -43,7 +44,7 @@ test('bare numbers inherit only explicitly registered units; wrong explicit unit
 });
 
 test('character soul is optional, separately typed, first in compact request, and never auto-promoted to base assets or runtime',()=>{
- const ctx=context(),before=structuredClone(ctx),prompt=ctx.body.messages[1].content;
+ const ctx=context(),before=structuredClone(ctx),prompt=extractionSource(ctx.body);
  assert(prompt.indexOf('【人物／核心】')<prompt.indexOf('【人物／身份】'));
  const r=acceptExtraction(c,valueValid,ctx,main({'人物核心·性格核心标签':'坦诚；执拗','人物核心·欲望双螺旋':'希望守住自主选择','人物核心·核心矛盾':'想与人合作，却不愿让出判断；迟疑使合作更难'}));
  assert.deepEqual(r.snapshot.records[0].values.属性.人物核心,{性格核心标签:['坦诚','执拗'],欲望双螺旋:['希望守住自主选择'],核心矛盾:'想与人合作，却不愿让出判断；迟疑使合作更难'});
@@ -56,11 +57,11 @@ test('mask purpose and visible cracks remain descriptive, absent when unknown, w
  const ctx=context(),raw=main({'面具层·面具呈现':'社交时亲昵随和','面具层·面具作用':'保持可接近的形象，与平静语调有温差','面具层·面具裂隙':'真心高兴时短暂安静'}),r=acceptExtraction(c,valueValid,ctx,raw),actor=r.snapshot.records[0];
  assert.equal(actor.values.属性.面具层.面具裂隙,'真心高兴时短暂安静');assert.equal(actor.values.知情者,undefined);assert.equal(r.conditions.length,0);
  assert.equal(acceptExtraction(c,valueValid,ctx,main()).snapshot.records[0].values.属性?.面具层,undefined);
- assert(ctx.body.messages[1].content.includes('平静、礼貌、教学或一次情绪不自动构成面具'));
+ assert(extractionSource(ctx.body).includes('平静、礼貌、教学或一次情绪不自动构成面具'));
 });
 
 test('history keeps subjective then-understanding distinct from factual events and ongoing effect without granting knowledge',()=>{
  const ctx=context(),r=acceptExtraction(c,valueValid,ctx,main()+'\n'+child('前史','history',{命题:'老师要求重做。','前史·当时理解':'当时以为老师不信任自己','前史·当下影响':'此后反复检查木料'})),h=r.snapshot.records.find(x=>x.id===r.children[0].id);
  assert.equal(h.values.前史.当时理解,'当时以为老师不信任自己');assert.equal(h.values.命题,'老师要求重做。');assert.equal(h.values.前史.当下影响,'此后反复检查木料');assert.equal(h.values.知情者,undefined);assert.equal(r.validation.semantic,'pending-review');assert.equal(r.conditions.length,0);
- assert(ctx.body.messages[1].content.includes('13 当时理解'));assert(ctx.body.messages[1].content.includes('10 延续影响'));
+ assert(extractionSource(ctx.body).includes('13 当时理解'));assert(extractionSource(ctx.body).includes('10 延续影响'));
 });
