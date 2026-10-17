@@ -78,3 +78,26 @@ test('actual archive request separates operational blockers and inaccessible cor
   assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
  }
 });
+
+
+test('ordinary and review archive wires share whole-row knowledge scope without altering original sources',()=>{
+ const material={archiveSource:{text:'乙感到屋内更暖。甲背着乙把暖气旋钮调到三档。'},userSource:{text:'乙知道暖气变热，但没看见旋钮。'},registry:defaultRegistry(),currentRows:[]};
+ const before=structuredClone(material);let shared;
+ for(const [task,archiveProposal]of [['objectArchive',false],['historyImport',false],['tableArchive',false],['tableArchive',true]]){
+  const messages=taskMessages({preset:pairedPreset({task,configuration,archiveProposal}),task,input:material});
+  const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
+  assert.equal(norms.split('@KNOWLEDGE ').length-1,1,task+' knowledge contract must occur exactly once');
+  const knowledge=norms.slice(norms.indexOf('@KNOWLEDGE '),norms.indexOf('\n@EVIDENCE '));
+  if(shared===undefined)shared=knowledge;else assert.equal(knowledge,shared);
+  assert.match(norms,/each ID grants knowledge of the whole row, not selected fields/);
+  assert.match(norms,/Presence, being affected, being the subject or being a participant is not sufficient/);
+  assert.match(knowledge,/EACH listed knower actually perceived or learned/);
+  assert.match(knowledge,/title and every values field/);
+  assert.match(knowledge,/Perceiving an effect does not establish knowledge of its concealed cause, operator action, mechanism, identity or exact setting\/quantity/);
+  assert.match(knowledge,/split the claims into separately permissioned records/);
+  assert.match(knowledge,/adding a disclaimer never narrows row-wide access/);
+  assert.match(knowledge,/Do not suppress the character's evidenced memory/);
+  assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
+  assert.deepEqual(material,before);
+ }
+});
