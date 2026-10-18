@@ -6,7 +6,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const originals=['settings','visual'].map(name=>{const directory=path.join(root,'vendor',name);return verifiedVendorSource(directory,JSON.parse(fs.readFileSync(path.join(directory,'provenance.json'),'utf8')),'src/chat-effects-options.cjs');});
 if(originals[0]!==originals[1])throw Error('Shared chat effects provenance diverged');
 for(const anchor of ['点触涟漪:[true,false]','点触涟漪:true'])if(originals[0].split(anchor).length!==2)throw Error('Chat effect setting anchor changed');
-const approved=originals[0].replace('点触涟漪:[true,false]','点触涟漪:[true,false],点触音效:[true,false],底图色调:[\"旧版墨绿\",\"明潮\"],音效类型:[\"bubble\",\"drop\",\"splash\",\"piano\"],音效音量:[0,10,20,30,40,50,55,60,70,80,90,100],人物水流:[true,false],水流摆幅:[5,7.5,10]').replace('点触涟漪:true','点触涟漪:true,点触音效:true,底图色调:\"旧版墨绿\",音效类型:\"drop\",音效音量:55,人物水流:true,水流摆幅:7.5');
+const approved=originals[0].replace('点触涟漪:[true,false]','点触涟漪:[true,false],点触音效:[true,false],底图色调:[\"墨绿水域\",\"旧版墨绿\",\"明潮\"],音效类型:[\"bubble\",\"drop\",\"splash\",\"piano\"],音效音量:[0,10,20,30,40,50,55,60,70,80,90,100],人物水流:[true,false],水流摆幅:[5,7.5,10]').replace('点触涟漪:true','点触涟漪:true,点触音效:true,底图色调:\"墨绿水域\",音效类型:\"drop\",音效音量:55,人物水流:true,水流摆幅:7.5');
 const output='// Generated once from hash-checked vendor/shared/chat-effects-options.cjs.\n'+approved.replace("'use strict';\n",'').replace('module.exports=','export ');
 const dest=path.join(root,'chat-effects-core.js');
 if(process.argv.includes('--check')){if(fs.readFileSync(dest,'utf8')!==output)throw Error('Shared chat effects bundle stale');}else fs.writeFileSync(dest,output);

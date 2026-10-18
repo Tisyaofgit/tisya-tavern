@@ -28,6 +28,7 @@ test('three workflow detail levels change actual compiled requests and preserve 
   assert.ok(JSON.stringify(payload.messages).includes(JSON.stringify(inner).slice(1,-1)));
   const request=JSON.stringify(payload.messages);
   assert.match(request,/one compact grade A\/B\/C\/D\/E or ~/);
+  assert.match(inner,/标题最多8字/);assert.match(inner,/意象、梗或典故化用/);assert.match(inner,/上下两块心声的内容、观点与笑点不得重复/);
   assert.match(request,/~ means public only in a permission cell/);
   assert.match(request,/never invent a scope or treat unresolved as public/);
   assert.doesNotMatch(request,/PERM_SHAPE|never bare null\/~/);

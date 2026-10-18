@@ -4,5 +4,7 @@ export function requireMoodNames(names){
  return [...names];
 }
 export function heartRule(count,moods){
- return '首尾各按所选方向写'+count+'条心声：开篇接输入，收篇每条都评正文新增的具体变化，观点不得与开篇重复。每条1—80字，只评可公开事实，不编造用户言行。每条mood必选一个表情：'+JSON.stringify(requireMoodNames(moods))+'。';
+ return '首尾各按所选方向写'+count+'条心声：开篇接输入，收篇每条都评正文新增的具体变化，观点不得与开篇重复。上下两块心声的内容、观点与笑点不得重复，换词复述也算重复；收篇须以正文新增变化形成不同观察，不重复开篇吐槽。每条1—80字，只评可公开事实，不编造用户言行。每条mood必选一个表情：'+JSON.stringify(requireMoodNames(moods))+'。';
 }
+
+export const titleRule='标题最多8字（含标点；title.text≤8个字符），优先使用贴合本轮情境的意象、梗或典故化用，避免长句概述与直白剧透；地点、时间、世界放在各自字段，不塞进标题。';

@@ -1,5 +1,5 @@
 import {applyMemoryOutputContract} from './memory-output.js';
-import {heartRule} from '../heart-contract.js';
+import {heartRule,titleRule} from '../heart-contract.js';
 // The compact permission spelling is user-facing wire syntax. Scoped policies
 // remain supported for explicit audience/field overrides, never required merely
 // to make a compact record parse. Keep the frozen upstream source unchanged.
@@ -16,6 +16,7 @@ export function applyWireContract(entries){
  registry=once(registry,'internal stage requires its purpose in read_auth','internal stage requires compact-grade internal-purpose access or its purpose in explicit read_auth');
  entries.tisya_registry=registry;
  let inner=entries.tisya_inner_chain;
+ inner=once(inner,'@EXTENSION Only supplied triggered components may be displayed;display grants no state write','@TITLE '+titleRule+'\n@EXTENSION Only supplied triggered components may be displayed;display grants no state write');
  inner=once(inner,'D record organization never grants reader access','D records follow the separately authorized reader layer;record organization never grants character knowledge');
  inner=once(inner,'status/memory:serialize authorized records with full permissions;public presentation excludes unauthorized fields;character reuse rechecks read permission+contact+understanding','status/memory:serialize actual records with story permissions;reader presentation follows @READER_LAYER and the psychology display switch;character reuse independently rechecks source permission+actual contact+understanding');
  inner=inner.replace('reader visibility follows C.1','reader presentation follows @READER_LAYER;new narrative writing follows C.1');

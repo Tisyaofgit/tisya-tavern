@@ -90,3 +90,12 @@ test('chat backdrop covers the composer gutter and follows shell-only resizing w
  shellHeight=500;resize();assert.equal(backdrop.style.height,'600px');
  scene.dispose();assert.equal(f.d.querySelector('#tisya-chat-effects'),null);assert.equal(form.outerHTML,before);await f.close();
 });
+
+test('emerald and bright water stay dynamic while the old picture remains an explicit static choice',async()=>{
+ const f=setup(),node=f.d.querySelector('#chat'),scene=mountAtmosphere(f.d,node);const canvas=node.querySelector('canvas');
+ assert.equal(CHAT_DEFAULTS.底图色调,'墨绿水域');assert.equal(canvas.style.opacity,'1');
+ for(let i=0;i<30;i++)f.step();const first=scene.report().materialTime;for(let i=0;i<30;i++)f.step();assert(scene.report().materialTime>first);
+ scene.setEffects({...CHAT_DEFAULTS,底图色调:'旧版墨绿'});assert.equal(canvas.style.opacity,'0');assert.match(canvas.parentElement.style.background,/quiet-water/);
+ scene.setEffects({...CHAT_DEFAULTS,底图色调:'明潮'});assert.equal(canvas.style.opacity,'1');assert.equal(canvas.parentElement.style.background,'');
+ scene.dispose();await f.close();
+});

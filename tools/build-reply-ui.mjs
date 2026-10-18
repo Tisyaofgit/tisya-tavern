@@ -7,7 +7,7 @@ const task=layout.slice(layout.indexOf('<section class="task-region"'),layout.in
 if(!task.includes('task-toggle')||!next.includes('next-toggle'))throw Error('Original layout boundary changed');
 const section=view.slice(view.indexOf('function section(parent,'),view.indexOf("section($('#task-content')"));
 if(!section.endsWith('}\n'))throw Error('Original ledger boundary changed');
-const css=controls.split('const WATER_CONTROL_CSS=`')[1].split('`;')[0].replaceAll('LXGW WenKai','var(--tisya-global-font,TisyaReading)');
+const css=controls.split('const WATER_CONTROL_CSS=`')[1].split('`;')[0].replaceAll('\"LXGW WenKai\"','var(--tisya-global-font,TisyaReading),TisyaReading,serif');
 const decorate=controls.slice(controls.indexOf('function decorateWaterControl('),controls.indexOf('module.exports='));
 const output='// Generated from byte-preserved r243 water UI. Do not edit.\n'+
  'export const TASK_TEMPLATE='+JSON.stringify(task)+';\nexport const NEXT_TEMPLATE='+JSON.stringify(next)+';\nexport const WATER_CONTROL_CSS='+JSON.stringify(css)+';\n'+decorate+'export {decorateWaterControl};\n'+

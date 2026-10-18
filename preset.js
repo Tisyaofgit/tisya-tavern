@@ -1,5 +1,5 @@
 import {HEART_CONTROLS,HEART_VARIANTS} from './preset-heart-variants.js';
-import {requireMoodNames,heartRule} from './heart-contract.js';
+import {requireMoodNames,heartRule,titleRule} from './heart-contract.js';
 import {MEMORY_DELIVERY} from './config/memory-output.js';
 import {HEART_DIRECTIONS,HEART_ROWS} from './preset-hearts.js';
 // The native preset owns prompt text, order and switches. This adapter only
@@ -29,7 +29,7 @@ export function heartSelection(source){
  });
  return mask;
 }
-export const DELIVERY_WARNING='【特别警告】\n内部规划与检查完成后，立即按既定格式输出完整的 <reply> 正文；不复述任何思考过程，回复在 </reply> 处结束。';
+export const DELIVERY_WARNING=titleRule+'\n【特别警告】\n内部规划与检查完成后，立即按既定格式输出完整的 <reply> 正文；不复述任何思考过程，回复在 </reply> 处结束。';
 export function registerPresetProtocol(context,getSource,onError=()=>{},getEmotionNames=()=>[],isProse=()=>true,getExecution=()=>null){
  const names=['tisya_output_kind','tisya_delivery_warning','tisya_heart_directions','tisya_heart_rows','tisya_heart_moods','tisya_heart_protocol','tisya_memory_delivery'];
  if(typeof context.registerMacro!=='function'||typeof context.unregisterMacro!=='function')throw Error('TISYA_PRESET_MACROS_UNAVAILABLE');
