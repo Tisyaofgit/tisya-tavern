@@ -19,7 +19,7 @@ const {DISPLAY_FIELDS}=require('./display-registry.cjs');
 const {EFFECTS,selectedEffects}=require('./chat-effects-options.cjs');
 // Appearance editor consumes the existing display/profile services. No Codex
 // records, new preference keys, auto-saves or replacement configuration store.
-function mountAppearance({container,controller,initialOwner='extensions',waterURL,onApplied=()=>{},onError=()=>{},onStateChange=()=>{},fixedOwner=false}){
+function mountAppearance({container,controller,initialOwner='extensions',waterURL,onApplied=()=>{},onError=()=>{},onStateChange=()=>{},fixedOwner=false,externalActions=false}){
  const doc=container.ownerDocument,root=doc.createElement('section');root.className='tisya-appearance';container.append(root);
  let alive=true,busy=false,dirty=false,owner=initialOwner,defs=[],config=null,general=null,profiles={rows:[],revision:null},profileId='',name='',deleteArmed=null;
  const el=(tag,text,cls='')=>{const n=doc.createElement(tag);if(text!==undefined)n.textContent=text;n.className=cls;return n;};
@@ -58,7 +58,7 @@ function mountAppearance({container,controller,initialOwner='extensions',waterUR
   for(const [key,rule]of Object.entries(fields)){
    if(owner==='extensions'&&effectKeys.includes(key))continue;
    const group=el('fieldset');group.append(el('legend',key));grid.append(group);
-   const set=v=>{if(v===undefined)delete config.value[key];else config.value[key]=v;dirty=true;draw();hint('预览草稿；点击“应用到当前分项”保存。');};
+   const set=v=>{if(v===undefined)delete config.value[key];else config.value[key]=v;dirty=true;draw();hint('预览草稿；点击底部保存后应用。');};
    if(owner!=='general'){const b=button('继承',()=>set(undefined),group);b.setAttribute('aria-pressed',String(!Object.hasOwn(config.value,key)));}
    if(Array.isArray(rule))for(const v of rule){const b=button(typeof v==='boolean'?(v?'开启':'关闭'):String(v),()=>set(v),group);b.setAttribute('aria-pressed',String(Object.hasOwn(config.value,key)&&config.value[key]===v));}
    else{const n=el('input');n.type='number';n.min=rule.min;n.max=rule.max;n.value=config.value[key]??'';n.placeholder=String(config.effective.values[key]);n.setAttribute('aria-label',key);n.oninput=()=>{if(n.value==='')delete config.value[key];else config.value[key]=Number(n.value);dirty=true;controls();};group.append(n);}
@@ -73,11 +73,12 @@ function mountAppearance({container,controller,initialOwner='extensions',waterUR
   async function change(op){profiles=await controller.call('profiles.'+op,{id:profileId,owner,name:name.trim(),value:config.value,expected:profiles.revision,confirm:rows.find(p=>p.id===profileId)?.name});if(alive){draw();hint('方案已保存；未自动改动当前聊天。');}}
   button('另存方案',()=>run(()=>change('save')),saved);
   if(profileId){button('更新方案',()=>run(()=>change('update')),saved);button('改名',()=>run(()=>change('rename')),saved);button('删除方案',()=>{if(deleteArmed!==profileId){deleteArmed=profileId;hint('再点一次删除所选方案；已应用配置保留。');return;}run(()=>change('delete'));},saved);}
-  const apply=button(owner==='general'?'保存通用设置':'应用到当前分项',()=>run(async()=>{const c=await controller.call('display.save',{owner,value:config.value,expected:config.revision});if(!alive)return;config=c;dirty=false;draw();await onApplied();hint('已保存并应用；其他分项未覆盖。');}),footer);apply.dataset.apply='';
-  button('放弃草稿',()=>run(async()=>{await load();hint('已恢复保存值。');}),footer);controls();
+  if(!externalActions){const apply=button(owner==='general'?'保存通用设置':'应用到当前分项',()=>run(saveDraft),footer);apply.dataset.apply='';button('放弃草稿',()=>run(discardDraft),footer);}controls();
  }
+ async function saveDraft(){if(!dirty)return;const c=await controller.call('display.save',{owner,value:config.value,expected:config.revision});if(!alive)return;config=c;dirty=false;draw();await onApplied();hint('修改已交给保存操作。');}
+ async function discardDraft(){await load();hint('已恢复保存值。');}
  const ready=run(async()=>{defs=await controller.call('components');await load();hint('主题 · 分项选择、预览与保存');});
- return {root,ready,requestLeave:()=>({allowed:!busy&&!dirty,reason:busy?'saving':dirty?'unsaved':null}),dispose(){alive=false;root.remove();}};
+ return {root,ready,saveDraft:async()=>{await run(saveDraft);if(dirty)throw Error(status.textContent);},discardDraft:async()=>{await run(discardDraft);if(dirty)throw Error(status.textContent);},requestLeave:()=>({allowed:!busy&&!dirty,reason:busy?'saving':dirty?'unsaved':null}),dispose(){alive=false;root.remove();}};
 }
 module.exports={mountAppearance};
 

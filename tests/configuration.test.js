@@ -291,7 +291,7 @@ test('both context owners await saved turn directions and block a failed binding
 test('display page exposes canonical loading settings and protects unsaved loading drafts',async()=>{
  const {createChatLoadingController}=await import('../chat-loading.js'),f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div'),native={chat_truncation:100};doc.body.append(container);
  const ui=mountConfiguration(doc,container,{store:f.store,host:f.host,getSettings:()=>({}),initialTab:'theme',chatLoading:createChatLoadingController({powerUser:native,persist:async()=>true,clearCache:async()=>{}}),onClose(){},onNative(){}});await ui.ready;const root=ui.root.shadowRoot,click=text=>[...root.querySelectorAll('button')].find(n=>n.textContent===text).click(),settle=()=>new Promise(r=>setTimeout(r,10));
- click('聊天首批条数与缓存');await settle();click('设为 10 条');const select=root.querySelector('[aria-label="配置分类"]');select.value='mode';select.onchange();await settle();assert.equal(root.querySelector('[aria-label="首批消息条数"]').value,'10');assert.equal(ui.requestLeave().allowed,false);assert.match(root.textContent,/保存或放弃当前/);click('保存条数');await settle();assert.equal(native.chat_truncation,10);assert.equal(ui.requestLeave().allowed,true);ui.dispose();await win.happyDOM.abort();
+ click('聊天首批条数与缓存');await settle();click('设为 10 条');const select=root.querySelector('[aria-label="配置分类"]');select.value='mode';select.onchange();await settle();assert.equal(root.querySelector('[aria-label="首批消息条数"]').value,'10');assert.equal(ui.requestLeave().allowed,false);assert.match(root.textContent,/保存或放弃当前/);click('保存配置');await settle();assert.equal(native.chat_truncation,10);assert.equal(ui.requestLeave().allowed,true);ui.dispose();await win.happyDOM.abort();
 });
 test('parent settled and leave reason include a pending cache subpage operation',async()=>{
  const {createChatLoadingController}=await import('../chat-loading.js'),f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div');doc.body.append(container);let finish;
@@ -346,4 +346,18 @@ test('bilingual language survives native request observation and plain prose wit
  await f.host.before('normal');const inner=f.macros.get('tisya_live_tisya_inner_chain')(),payload={messages:[{role:'system',content:inner},{role:'user',content:'原生历史和本轮输入'}],model:'native-model',stream:true};const before=structuredClone(payload);await f.host.payloadReady(payload);assert.deepEqual(payload,before);assert.match(inner,/繁体中文/);assert.match(inner,/角色对白双语对照/);assert.equal(inner.split('角色对白双语对照：').length-1,1);if(plain)assert.match(inner,/ordinary public prose only/);
  if(process.env.TISYA_LANGUAGE_EVIDENCE)fs.writeFileSync(process.env.TISYA_LANGUAGE_EVIDENCE+(plain?'/native-plain-request.json':'/native-structured-request.json'),JSON.stringify(payload,null,2));
  }
+});
+
+test('one configuration footer saves or discards cached theme drafts across pages and retains failed saves',async()=>{
+ const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);let settings={},fail=false,writes=0;
+ const ui=mountConfiguration(doc,box,{store:f.store,host:f.host,getSettings:()=>settings,saveAppearance:async(id,value)=>{if(fail)throw Error('host save failed');writes++;settings={...settings,显示区块:{...settings.显示区块,[id]:value}};},initialTab:'theme'});await ui.ready;const root=ui.root.shadowRoot,theme=()=>root.querySelector('.tisya-theme-workbench')?.shadowRoot;
+ assert.equal(theme().querySelectorAll('footer button').length,1); // download cancellation only, no duplicate save/discard
+ const choose=async(name)=>{[...theme().querySelectorAll('.theme-card')].find(n=>n.textContent.includes(name)).click();await ui.settled();};
+ const page=async(name)=>{const n=root.querySelector('[aria-label="配置分类"]');n.value=name;n.onchange();await ui.settled();};
+ await choose('明潮');assert.equal(settings.显示区块,undefined);await page('mode');assert.equal(ui.requestLeave().allowed,false);await page('theme');assert.equal(theme().querySelector('.theme-card[aria-pressed=true]').textContent.includes('明潮'),true);
+ root.querySelector('footer button:last-child').click();await ui.settled();assert.equal(settings.显示区块.extensions.底图色调,'明潮');assert.equal(writes,1);assert.equal(ui.requestLeave().allowed,true);
+ await choose('墨绿 · 动态');fail=true;root.querySelector('footer button:last-child').click();await ui.settled();assert.equal(settings.显示区块.extensions.底图色调,'明潮');assert.equal(ui.requestLeave().allowed,false);assert.match(root.textContent,/保存未完成/);
+ fail=false;root.querySelector('footer button:last-child').click();await ui.settled();assert.equal(settings.显示区块.extensions.底图色调,'墨绿水域');assert.equal(ui.requestLeave().allowed,true);
+ await choose('明潮');await page('mode');root.querySelector('footer button:nth-of-type(1)').click();await ui.settled();await page('theme');assert.equal(theme().querySelector('.theme-card[aria-pressed=true]').textContent.includes('墨绿 · 动态'),true);assert.equal(ui.requestLeave().allowed,true);
+ ui.dispose();await win.happyDOM.abort();
 });

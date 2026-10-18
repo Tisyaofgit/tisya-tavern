@@ -24,3 +24,11 @@ test('title font persists independently, inherits global, protects used files an
  f.fail();await assert.rejects(f.service.select('inherit','title'),/保存失败/);assert.equal(f.service.list().title,row.id);
  f.service.dispose();assert.equal(f.w.document.documentElement.style.getPropertyValue('--tisya-title-font'),'');await f.w.happyDOM.abort();
 });
+
+test('workbench stages title fonts until shared save, discards and keeps failed font changes retryable',async()=>{
+ const {mountThemeWorkbench}=await import('../theme-workbench.js'),f=await fixture();const row=await f.service.importFile({name:'标题.ttf',size:bytes.length,arrayBuffer:async()=>bytes.buffer});const box=f.w.document.createElement('div');f.w.document.body.append(box);const view=mountThemeWorkbench(f.w.document,box,{getSettings:f.settings,fontService:f.service,saveAppearance:async()=>{},externalActions:true});const root=box.firstElementChild.shadowRoot;root.querySelector('[data-page=fonts]').click();await view.settled();
+ const pick=async()=>{const select=root.querySelector('[aria-label="标题单独字体"]');select.value=JSON.stringify(row.id);select.onchange();await view.settled();};
+ await pick();assert.equal(f.service.list().title,'inherit');assert.equal(view.requestLeave().allowed,false);await view.discardDraft();assert.equal(view.requestLeave().allowed,true);assert.equal(root.querySelector('[aria-label="标题单独字体"]').value,'"inherit"');
+ await pick();assert.equal(await view.saveDraft(),true);assert.equal(f.service.list().title,row.id);
+ const select=root.querySelector('[aria-label="标题单独字体"]');select.value='"default"';select.onchange();await view.settled();f.fail();assert.equal(await view.saveDraft(),false);assert.equal(f.service.list().title,row.id);assert.equal(view.requestLeave().allowed,false);view.dispose();f.service.dispose();await f.w.happyDOM.abort();
+});

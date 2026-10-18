@@ -12,10 +12,13 @@ export function waterOffset(time, y, width, millimeters=7.5, seed=91027) {
 export function warpLowerWater(ctx,source,time,{width,height,millimeters=7.5,seed=91027,referenceWidth=width}={}) {
   const sw=source.width,sh=source.height;ctx.clearRect(0,0,width,height);
   const seam=Math.floor(sh*.43);ctx.drawImage(source,0,0,sw,seam,0,0,width,seam/sh*height);
-  // One destination pixel row per strip preserves a continuous silhouette.
+  // Anchor both image edges. Stretch the two halves around a moving interior
+  // pivot instead of translating the whole row and exposing a transparent gap.
   const start=seam/sh*height;
   for(let dy=start;dy<height;dy+=1){
     const h=Math.min(1,height-dy),sy=dy/height*sh,offset=waterOffset(time,dy/height,width,millimeters,seed)*width/referenceWidth;
-    ctx.drawImage(source,0,sy,sw,h/height*sh,offset,dy,width,h+.12);
+    const pivot=width*.35,middle=Math.max(1,Math.min(width-1,pivot+offset)),sourcePivot=sw*.35;
+    ctx.drawImage(source,0,sy,sourcePivot,h/height*sh,0,dy,middle,h+.12);
+    ctx.drawImage(source,sourcePivot,sy,sw-sourcePivot,h/height*sh,middle,dy,width-middle,h+.12);
   }
 }

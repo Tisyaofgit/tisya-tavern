@@ -24,3 +24,22 @@ test('birth positions, dimensions, shapes, and timing vary, without resetting al
  assert.notDeepEqual(f.sample(60),createBubbleField(457).sample(60));
  for(let t=0;t<600;t+=.5){const items=f.sample(t);assert(items.length<=45);for(const p of items){assert(Number.isFinite(p.x)&&Number.isFinite(p.y));assert(p.alpha>=0&&p.alpha<=.45);assert(p.rx>=1.1&&p.rx<=2.5);}}
 });
+
+test('lower-water liquify keeps both cropped image edges covered throughout random travel',async()=>{
+ const {warpLowerWater}=await import('../lower-water-motion.js');
+ const source={width:853,height:1844},width=390,height=843;
+ let leftMoving=false,rightMoving=false;
+ for(const time of [0,4,8,16,32,48,64,96,128,256]){
+  const strips=[];const ctx={clearRect(){},drawImage(...args){strips.push(args);}};
+  warpLowerWater(ctx,source,time,{width,height,millimeters:10});
+  assert.deepEqual(strips[0].slice(1),[0,0,853,Math.floor(1844*.43),0,0,width,Math.floor(1844*.43)/1844*height]);
+  const rows=new Map();for(const a of strips.slice(1)){const row=rows.get(a[6])||[];row.push(a);rows.set(a[6],row);}
+  for(const row of rows.values()){
+   row.sort((a,b)=>a[5]-b[5]);let edge=0,sourceEdge=0;
+   for(const a of row){assert(Math.abs(a[5]-edge)<1e-9,'destination strips meet without a hole');assert(Math.abs(a[1]-sourceEdge)<1e-9,'source content is continuous');assert(a[7]>0);edge+=a[7];sourceEdge+=a[3];}
+   assert.equal(row[0][5],0,'left edge stays anchored');assert(Math.abs(edge-width)<1e-9,'right edge stays anchored');assert(Math.abs(sourceEdge-source.width)<1e-9,'all source content remains represented');
+   leftMoving||=row[0][7]<width*.35;rightMoving||=row[0][7]>width*.35;
+  }
+ }
+ assert(leftMoving&&rightMoving,'interior water still moves in both directions');
+});

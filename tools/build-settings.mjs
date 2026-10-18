@@ -3,6 +3,14 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 const root=fileURLToPath(new URL('../',import.meta.url)),vendor=path.join(root,'vendor/settings'),meta=JSON.parse(fs.readFileSync(path.join(vendor,'provenance.json'),'utf8'));
 const cut=(s,a,b)=>{if(!s.includes(a)||!s.includes(b))throw Error('Settings source boundary changed');return s.slice(s.indexOf(a),s.indexOf(b));};
 function adapt(id,s){
+ if(id==='src/appearance-view.cjs'){
+  s=s.replace('fixedOwner=false})','fixedOwner=false,externalActions=false})');
+  const start=s.indexOf("  const apply=button(owner==='general'"),end=s.indexOf('footer);controls();',start)+'footer);controls();'.length;
+  s=s.slice(0,start)+"  if(!externalActions){const apply=button(owner==='general'?'保存通用设置':'应用到当前分项',()=>run(saveDraft),footer);apply.dataset.apply='';button('放弃草稿',()=>run(discardDraft),footer);}controls();"+s.slice(end);
+  s=s.replace(' const ready=run('," async function saveDraft(){if(!dirty)return;const c=await controller.call('display.save',{owner,value:config.value,expected:config.revision});if(!alive)return;config=c;dirty=false;draw();await onApplied();hint('修改已交给保存操作。');}\n async function discardDraft(){await load();hint('已恢复保存值。');}\n const ready=run(");
+  s=s.replace('return {root,ready,requestLeave:',"return {root,ready,saveDraft:async()=>{await run(saveDraft);if(dirty)throw Error(status.textContent);},discardDraft:async()=>{await run(discardDraft);if(dirty)throw Error(status.textContent);},requestLeave:");
+  return s.replace('预览草稿；点击“应用到当前分项”保存。','预览草稿；点击底部保存后应用。');
+ }
  if(id==='src/display-registry.cjs')return cut(s,'const DISPLAY_FIELDS=','function validateDisplay(')+'\nmodule.exports={DISPLAY_FIELDS:Object.fromEntries(Object.entries(DISPLAY_FIELDS).filter(([k])=>[\'装饰程度\',\'动画效果\'].includes(k)))};';
  if(id==='src/narrative-settings.cjs')return s.replace('return {root,setPage(page)', 'return {root,refresh,setPage(page)').replace('name:profileName.value.trim(),settings:draft,output:outputDraft','name:profileName.value.trim(),settings:draft,output:outputDraft,revision:library.修订');
  if(id==='src/narrative.cjs')return s.slice(0,s.indexOf('const SHAPE_FIELDS='))+cut(s,'function snapshot(','const PROFILE_INDEX=')+cut(s,'function message(','async function read(io)')+cut(s,'function previewSettings(','module.exports=')+'\nmodule.exports={NARRATIVE:{validate,suggestions,previewSettings,message,rows:D.contract.configurations,tasks:Object.keys(D.tasks),protocol:Protocol}};';

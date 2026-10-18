@@ -10,7 +10,7 @@ const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 export function appearanceOverrides(settings,owner){const blocks=settings.显示区块;if(blocks!==undefined&&!plain(blocks))throw Error('显示区块配置损坏');const values=blocks?.[owner]??{};if(!plain(values)||Object.entries(values).some(([k,v])=>!appearanceFields(owner)[k]?.includes(v)))throw Error(APPEARANCE_OWNERS[owner]+'配置损坏');return {...values};}
 export function appearanceValues(settings,owner){return {...base,...appearanceOverrides(settings,'general'),...defaults[owner],...appearanceOverrides(settings,owner)};}
 export function withAppearanceOverrides(settings,owner,value){appearanceOverrides({显示区块:{[owner]:value}},owner);return {...settings,显示区块:{...settings.显示区块,[owner]:{...value}}};}
-export function mountAppearanceSettings(document,container,{owner,getSettings,save,saveProfiles=async()=>{throw Error('外观方案保存接口未连接');},onStateChange=()=>{}}){
+export function mountAppearanceSettings(document,container,{owner,getSettings,save,saveProfiles=async()=>{throw Error('外观方案保存接口未连接');},onStateChange=()=>{},externalActions=false}){
  let alive=true;
  const inspect=id=>({value:id==='general'?appearanceValues(getSettings(),id):appearanceOverrides(getSettings(),id),revision:JSON.stringify(appearanceOverrides(getSettings(),id)),effective:{values:appearanceValues(getSettings(),id)}});
  function bank(){const raw=getSettings().外观方案;if(raw===undefined)return {revision:null,rows:[]};if(!plain(raw)||raw.version!==1||typeof raw.revision!=='string'||!Array.isArray(raw.rows)||raw.rows.length>100||raw.rows.some(r=>!plain(r)||typeof r.id!=='string'||!APPEARANCE_OWNERS[r.owner]||typeof r.name!=='string'))throw Error('外观方案目录损坏');for(const row of raw.rows)appearanceOverrides({显示区块:{[row.owner]:row.value}},row.owner);return structuredClone(raw);}
@@ -20,6 +20,6 @@ export function mountAppearanceSettings(document,container,{owner,getSettings,sa
  if(verb==='save'||verb==='update'){appearanceOverrides({显示区块:{[id]:args.value}},id);if(verb==='save'){if(list.rows.length>=100)throw Error('外观方案数量已达上限');list.rows.push({id:crypto.randomUUID().replaceAll('-',''),name,owner:id,value:structuredClone(args.value)});}else row.value=structuredClone(args.value);}
  else if(verb==='rename')row.name=name;else if(verb==='delete'){if(args.confirm!==row.name)throw Error('删除确认不符');list.rows=list.rows.filter(r=>r!==row);}else throw Error('外观方案操作无效');list.version=1;list.revision=crypto.randomUUID().replaceAll('-','');await saveProfiles(list);return {revision:list.revision,rows:list.rows.map(({value,...row})=>row)};
  }
- const view=mountAppearance({container,controller:{call},initialOwner:owner,fixedOwner:true,waterURL:visualAssets['water.png'],onStateChange});
- return {...view,discardDraft(){const button=[...view.root.querySelectorAll('footer button')].find(n=>n.textContent==='放弃草稿');if(button&&!button.disabled)button.click();},dispose(){alive=false;view.dispose();}};
+ const view=mountAppearance({container,controller:{call},initialOwner:owner,fixedOwner:true,externalActions,waterURL:visualAssets['water.png'],onStateChange});
+ return {...view,dispose(){alive=false;view.dispose();}};
 }
