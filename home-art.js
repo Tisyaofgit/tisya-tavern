@@ -14,7 +14,7 @@ export function mountHomeArt(document, container, {gender, playing=true, effects
     container.append(canvas);
     let disposed=false, renderer=null,atmosphere=null;
     try{atmosphere=mountScene(document,container,{playing,effects,onError});}catch(error){onError?.(error);}
-    const touch=mountTouchFeedback(document,container,{getDisplay:()=>effects??{},getMotion:()=>playing,onTap:(x,y)=>atmosphere?.tap(x,y),onError});
+    const touch=mountTouchFeedback(document,container,{getDisplay:()=>effects??{},getMotion:()=>playing,onTap:(x,y,options)=>atmosphere?.tap(x,y,options),onError});
     const pending=new Set();
     const load=(name,width=853,height=1844)=>new Promise((resolve,reject)=>{
         const image=new window.Image();

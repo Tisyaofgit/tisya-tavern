@@ -79,3 +79,16 @@ test('card portraits share both slots, update in place, and missing or failed im
  assert.equal(root.querySelector('#journey-toggle img').src,journey);assert.equal(message.mes,fixture());
  ui.dispose();await w.happyDOM.abort();
 });
+
+test('ordinary user prose inherits shared paragraphs and dialogue without adding assistant UI or touching source',async()=>{
+ const {w,d,node}=setup(),native=node.querySelector('.mes_text');node.setAttribute('is_user','true');
+ const message={mes:'我推开门。\n\n“有人在吗？”',name:'User',is_user:true},original=message.mes;let clicks=0;native.addEventListener('click',()=>clicks++);
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,formatBody:t=>t.split(/\n\n/).map(p=>'<p>'+p+'</p>').join(''),getMotion:()=>false,onChooseAction(){throw Error('user is not assistant');}});ui.sync(node);
+ const root=node.querySelector('.tisya-message-visual').shadowRoot;assert.equal(root.querySelectorAll('[data-tisya-prose=paragraph]').length,2);assert(root.querySelector('[data-tisya-prose=dialogue]'));assert.equal(root.querySelectorAll('.pendant-pearl,.task-region,.action').length,0);assert.equal(message.mes,original);
+ node.classList.add('editing');ui.sync(node);assert.equal(ui.size(),0);assert.equal(native.classList.contains('tisya-source-concealed'),false);native.click();assert.equal(clicks,1);
+ node.classList.remove('editing');ui.sync(node);assert.equal(ui.size(),1);ui.dispose();assert.equal(native.classList.contains('tisya-source-concealed'),false);assert.equal(message.mes,original);await w.happyDOM.abort();
+});
+test('user interactive native cards keep their node and listeners',async()=>{
+ const {w,d,node}=setup(),native=node.querySelector('.mes_text');native.innerHTML='<button>原卡按钮</button>';const button=native.firstChild;let clicks=0;button.onclick=()=>clicks++;
+ const ui=mountMessageAppearance(d,{getMessage:()=>({mes:'原卡',is_user:true}),formatBody:t=>t,getMotion:()=>false});ui.sync(node);assert.equal(ui.size(),0);assert.equal(native.firstChild,button);button.click();assert.equal(clicks,1);ui.dispose();await w.happyDOM.abort();
+});

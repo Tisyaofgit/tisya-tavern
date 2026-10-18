@@ -87,6 +87,7 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
   function setPreset(name){if(dead||failed)throw Error('Atmosphere is not active');if(!shaders[name])throw Error('Unknown atmosphere preset: '+name);programFor(name);preset=name;draw(0);emit();}
   function setPaused(value){if(dead)return;requestedPause=Boolean(value);paused=requestedPause||media.matches;if(paused){stop();ctx.clearRect(0,0,W,H);}else schedule();emit();}
   function rippleAt(x,y){if(dead||failed||paused||!visible||doc.hidden)return false;if(tapRings.length>=8)tapRings.shift();tapRings.push({x,y,age:0});tapBursts++;schedule();emit();return true;}
+  function popAt(x,y){if(dead||failed||paused||!visible||doc.hidden)return false;let found=-1,best=Infinity;for(let i=0;i<bubbles.length;i++){const b=bubbles[i];if(b.r<2)continue;const distance=Math.hypot(b.x-x,b.y-y),radius=Math.max(10,b.r+5);if(distance<=radius&&distance<best){best=distance;found=i;}}if(found<0)return false;breakBubble(bubbles[found]);bubbles.splice(found,1);schedule();emit();return true;}
   function burstAt(x,y){if(dead||failed||paused||!visible||doc.hidden)return false;tapBursts++;let found=-1,best=44;for(let i=0;i<bubbles.length;i++){const d=Math.hypot(bubbles[i].x-x,bubbles[i].y-y);if(d<best){best=d;found=i;}}if(found<0){breakBubble({x,y,r:7,phase:rand(0,6.28)});schedule();emit();return true;}breakBubble(bubbles[found]);bubbles.splice(found,1);schedule();emit();return true;}
   function demonstrateBurst(){if(dead||failed||paused)return false;if(bubbles.length>=95)bubbles.shift();bubbles.push({x:W*.52,y:H*.46,r:15,z:1,phase:rand(0,6.28),speed:12,alpha:.8,age:1,life:1.75});return true;}
   function demonstrateRain(){if(dead||failed||paused)return false;return rainEpisode(true);}
@@ -97,7 +98,7 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
   // The shell owns disposal, never observe every message mutation.
   function destroy(){if(dead)return;dead=true;stop();ro?.disconnect();io?.disconnect();win.removeEventListener('resize',resize);doc.removeEventListener('visibilitychange',onVisibility);media.removeEventListener('change',onMotion);canvas.removeEventListener('webglcontextlost',onContextLost);for(const p of programs.values())gl.deleteProgram(p.program);for(const s of compiled)gl.deleteShader(s);gl.deleteBuffer(buffer);gl.getExtension('WEBGL_lose_context')?.loseContext?.();bubbles.length=0;bursts.length=0;tapRings.length=0;raindrops.length=0;instances.delete(container);emit();}
   function setEffects(next){settings={...CHAT_DEFAULTS,...next};selectedEffects(settings,time);if(!dead&&!failed){draw(0);if(animated())schedule();else stop();}}
-  const api={setPreset,setPaused,setEffects,resize,burstAt,rippleAt,demonstrateBurst,demonstrateRain,getStats:stats,destroy};instances.set(container,api);
+  const api={setPreset,setPaused,setEffects,resize,burstAt,popAt,rippleAt,demonstrateBurst,demonstrateRain,getStats:stats,destroy};instances.set(container,api);
   try{programFor(preset);resize();for(let i=0;i<48;i++)addBubble(true);draw(0);}catch(e){destroy();throw e;}
   ro?.observe(container);io?.observe(container);win.addEventListener('resize',resize);doc.addEventListener('visibilitychange',onVisibility);media.addEventListener('change',onMotion);canvas.addEventListener('webglcontextlost',onContextLost);emit();schedule();return api;
  }

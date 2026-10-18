@@ -121,9 +121,9 @@ const editing=n=>n.classList.contains('editing')||!!n.querySelector('.edit_texta
   }if(packet?.pending)return;const candidate=packet?.result?.inspection??inspectMessage(msg.mes);if(preferNative?.(msg,native,candidate)){restore(node);if(native.classList.contains('tisya-source-concealed'))native.classList.remove('tisya-source-concealed');if(!native.classList.contains('tisya-native-beauty'))native.classList.add('tisya-native-beauty');return;}if(native.classList.contains('tisya-native-beauty'))native.classList.remove('tisya-native-beauty');restore(node);
   // Embedded native interactive content keeps its host-owned document and listeners.
   if(!preferNative&&!candidate.structured&&native.querySelector('iframe,custom-style,style,script'))return;
-  // User-authored prose marks are a formatting preview, never an AI reply or a
-  // state/action envelope. Unmarked input and literal protocol examples stay native.
-  if(msg.is_user&&(candidate.structured||!msg.mes.includes('〔')))return;
+  // User text shares body typography, never an AI reply/state/action envelope.
+  // Literal protocol examples and native interactive content keep their live nodes.
+  if(msg.is_user&&(candidate.structured||native.querySelector('iframe,custom-style,style,script,button,input,textarea,select,audio,video,[contenteditable=true]')))return;
   let panels=null,panelError=null;try{if(candidate.structured&&getNativeDisplay){try{panels=preserveNativePanels(document,native,getNativeDisplay(msg.mes,msg,node));}catch(error){panelError=error;}}const source=msg.mes,block=node.querySelector('.mes_block')??node,options={source,name:msg.name,cover:getCover(msg,node),inspection:candidate,onNativeExpand:value=>panels?.setExpanded?.(value),getNativePanelStatus:()=>panels?.status?.(),formatPreparedBody:formatPreparedBody?text=>formatPreparedBody(text,msg,node):undefined,getNativeDisplay:candidate.structured&&getNativeDisplay?()=>{if(panelError)throw panelError;return panels?.display??getNativeDisplay(source,msg,node);}:undefined,formatBody:text=>formatBody(text,msg,node),formatNativeBody:formatNativeBody?text=>formatNativeBody(text,msg,node):undefined,onChooseAction:(text,mode)=>onChooseAction(node,source,text,mode),getActionMode,setActionMode,getMotion,getDisplay,getAppearance,getPlayerName,saveDisplayPreference,onError},view=msg.is_user?mountUserProse(document,block,options):mountMessageVisual(document,block,options);view.restore?.(states.get(msg)?.get(stateKey)??packet?.result?.viewState);native.after(view.host);native.classList.add('tisya-source-concealed');node.classList.add('tisya-projected');const row={view,panels,native,source:msg.mes,role,name:msg.name,key:renderKey,cacheKey,stateKey,message:msg,save:packet?.result?.save};views.set(node,row);if(row.save)persistInteractions(row);}catch(e){panels?.dispose();native.classList.remove('tisya-source-concealed');node.querySelectorAll('.tisya-message-visual').forEach(n=>n.remove());onError(e);}
  }
  const pendingNodes=new Set();let syncTimer=null;
@@ -156,7 +156,7 @@ export function mountChatEffects(document,{getMotion=()=>true,getDisplay=()=>DIS
  const tap=e=>{
   const eligible=pointer?.id===e.pointerId&&win.performance.now()-pointer.time<450&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)<9&&!document.hidden&&!covered()&&!document.getSelection()?.toString()&&!e.composedPath().some(n=>n.matches?.(controls));pointer=null;
   if(!eligible)return;const display=getDisplay();
-  if(display.点触涟漪&&getMotion())effect?.tap(e.clientX,e.clientY);
+  if(getMotion())effect?.tap(e.clientX,e.clientY,{ripple:display.点触涟漪!==false});
   if(display.点触音效)void sound.play(display.音效类型??'drop',(display.音效音量??55)/100);
  };
  chat.addEventListener('pointerdown',down,{passive:true});chat.addEventListener('pointercancel',cancel);chat.addEventListener('scroll',cancel,{passive:true});chat.addEventListener('pointerup',tap,{passive:true});

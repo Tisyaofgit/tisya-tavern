@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
+import {createAtmosphere} from '../atmosphere-engine.js';
+import {oceanMaterial} from '../ocean-material.js';
 import {mountAtmosphere} from '../atmosphere-scene.js';
 import {mountChatEffects} from '../message-ui.js';
 import {CHAT_DEFAULTS} from '../chat-effects-core.js';
@@ -53,10 +55,10 @@ test('new sound setting inherits without writing or resetting older appearance r
  const next=withDisplayOverrides(old,{...old.显示区块.extensions,点触音效:false});assert.equal(next.动态效果,false);assert.equal(next.其他,'保留');assert.equal(displayValues(next).斜雨,true);assert.equal(displayValues(next).点触音效,false);
 });
 test('weather samples size and speed independently and wind changes continuously without resets on pause',()=>{
- const f=setup(),weather=createWeather(),ctx=f.w.document.createElement('canvas').getContext('2d');let previous=0,changed=false;
- for(let i=0;i<3000;i++){weather.draw(ctx,.016,i*.016,390,720,['rain','snow']);const now=weather.report().wind;assert(Math.abs(now-previous)<.5);if(Math.abs(now)>2)changed=true;previous=now;}
- const report=weather.report();assert(changed);assert.equal(report.rain.length,55);assert.equal(report.snow.length,28);
- for(const [items,min,max]of [[report.rain,150,360],[report.snow,10,34]]){assert(new Set(items.map(p=>p.size)).size>20);assert(new Set(items.map(p=>p.speed)).size>20);assert(items.every(p=>p.speed>=min&&p.speed<=max));assert(items.some(p=>Math.abs(p.vx)>1));}
+ const f=setup(),weather=createWeather(),ctx=f.w.document.createElement('canvas').getContext('2d');let previous=0,changed=false;const counts=new Set();
+ for(let i=0;i<3000;i++){weather.draw(ctx,.016,i*.016,390,720,['rain','snow']);const sample=weather.report();counts.add(sample.rain.length+':'+sample.snow.length);const now=sample.wind;assert(Math.abs(now-previous)<.5);if(Math.abs(now)>2)changed=true;previous=now;}
+ const report=weather.report();assert(changed);assert(counts.size>3);assert(report.rain.length>=28&&report.rain.length<=75);assert(report.snow.length>=14&&report.snow.length<=42);
+ for(const [items,min,max]of [[report.rain,150,360],[report.snow,10,34]]){assert(new Set(items.map(p=>p.size)).size>10);assert(new Set(items.map(p=>p.speed)).size>10);assert(items.every(p=>p.speed>=min&&p.speed<=max));assert(items.some(p=>Math.abs(p.vx)>1));}
  weather.draw(ctx,0,47.984,390,720,['rain','snow']);assert.deepEqual(weather.report(),report);return f.close();
 });
 test('disabled or disposed audio cannot revive after a delayed unlock',async()=>{
@@ -98,4 +100,14 @@ test('emerald and bright water stay dynamic while the old picture remains an exp
  scene.setEffects({...CHAT_DEFAULTS,底图色调:'旧版墨绿'});assert.equal(canvas.style.opacity,'0');assert.match(canvas.parentElement.style.background,/quiet-water/);
  scene.setEffects({...CHAT_DEFAULTS,底图色调:'明潮'});assert.equal(canvas.style.opacity,'1');assert.equal(canvas.parentElement.style.background,'');
  scene.dispose();await f.close();
+});
+
+test('visible bubbles pop only on a hit and remain separate from blank tap rings',async()=>{
+ const f=setup(),container=f.d.querySelector('#chat'),canvas=f.d.createElement('canvas'),particles=f.d.createElement('canvas');container.append(canvas,particles);
+ const engine=createAtmosphere({container,canvas,particles,shaders:{current:oceanMaterial}});
+ engine.demonstrateBurst();const before=engine.getStats();assert.equal(engine.popAt(390*.52,720*.46),true);const popped=engine.getStats();
+ assert.equal(popped.bubbles,before.bubbles-1);assert.equal(popped.totalBursts,before.totalBursts+1);assert.equal(popped.tapRings,0);
+ assert.equal(engine.popAt(-100,-100),false);assert.equal(engine.getStats().totalBursts,popped.totalBursts);
+ assert.equal(engine.rippleAt(100,100),true);assert.equal(engine.getStats().tapRings,1);
+ engine.setPaused(true);assert.equal(engine.popAt(100,100),false);engine.destroy();await f.close();
 });

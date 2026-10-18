@@ -15,6 +15,6 @@ export function mountAtmosphere(document,container,{playing=true,effects=CHAT_DE
  try{engine=createAtmosphere({container:surface,canvas,particles,shaders:{current:oceanMaterial},playing,effects,onError});}
  catch(error){surface.remove();throw error;}
  return {setPlaying:value=>engine.setPaused(!value),setEffects:value=>{palette(value);engine.setEffects(value);},resize:()=>engine.resize(),
-  tap(x,y){const r=surface.getBoundingClientRect();if(x<r.left||x>r.right||y<r.top||y>r.bottom)return false;return engine.rippleAt(x-r.left,y-r.top);},
+  tap(x,y,{ripple=true}={}){const r=surface.getBoundingClientRect();if(x<r.left||x>r.right||y<r.top||y>r.bottom)return false;const popped=engine.popAt(x-r.left,y-r.top);const ring=ripple&&engine.rippleAt(x-r.left,y-r.top);return popped||ring;},
   report:()=>engine.getStats(),dispose(){engine.destroy();surface.remove();}};
 }
