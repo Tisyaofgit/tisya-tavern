@@ -516,13 +516,13 @@ function mountPendantRack({root,assets}){
   row.velocity=Math.max(-75,Math.min(75,row.velocity+row.side*52));
   row.tailVelocity-=row.side*24;sync();
  }
- function register({id,title,region,panel,landing,cover,onToggle}){
+ function register({id,title,region,panel,landing,cover,emptyCover=false,onToggle}){
   if(rows.has(id))throw Error('TISYA_PENDANT_DUPLICATE');
   const hook=element('div','pendant-hook'),node=element('div','moon-pendant'),sway=element('div','pendant-sway'),moon=element('div','pendant-moon'),button=element('button','pendant-pearl');
   hook.dataset.pendant=id;node.dataset.pendant=id;button.id=id+'-toggle';button.type='button';button.setAttribute('aria-controls',panel.id);
   sway.append(image('pendant-chain.png','pendant-chain'));moon.append(image('pendant-moon.png','pendant-crescent'));
   if(cover){const im=element('img','pendant-cover');im.src=cover;im.alt='';im.draggable=false;button.append(im);}
-  else button.append(image('journey.svg','pendant-globe'));
+  else if(!emptyCover)button.append(image('journey.svg','pendant-globe'));
   const tasselButton=element('button','pendant-tassel-touch'),tassel=image('pendant-tassel.png','pendant-tassel');tasselButton.type='button';tasselButton.setAttribute('aria-label','轻摇'+title+'流苏');tasselButton.append(tassel);
   moon.append(button);sway.append(moon,tasselButton);node.append(sway);hook.append(node);rail.append(hook);
   const row={hook,node,sway,moon,button,tassel,tasselButton,region,panel,landing,title,available:true,expanded:false,motion:true,side:id==='journey'?-1:1,angle:0,velocity:0,tail:0,tailVelocity:0,pokedAt:null};rows.set(id,row);layout();

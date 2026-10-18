@@ -1,6 +1,14 @@
 // Vendored r243 files remain byte-preserved. These narrow host adaptations are
 // applied only to the generated browser bundle and fail if source anchors drift.
 export function adaptVisualSource(id,source){
+ if(id==='src/pendant-rack.cjs'){
+  const patches=[
+   ['function register({id,title,region,panel,landing,cover,onToggle})','function register({id,title,region,panel,landing,cover,emptyCover=false,onToggle})'],
+   ["else button.append(image('journey.svg','pendant-globe'));","else if(!emptyCover)button.append(image('journey.svg','pendant-globe'));"]
+  ];
+  for(const [from,to]of patches){if(source.split(from).length!==2)throw Error('Visual adaptation anchor changed: '+id);source=source.replace(from,to);}return source;
+ }
+
  if(id==='src/water-motion.cjs'){
   const from="listen(win,'focus',()=>{blurred=false;sync();});";
   const to=from+"listen(doc,'focusin',()=>{if(blurred&&doc.hasFocus()){blurred=false;sync();}});";

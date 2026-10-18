@@ -1,3 +1,4 @@
+import {messageCardCover} from './message-cover.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
 import {mountIdentityPage} from './user-identity-page.js';
@@ -641,6 +642,7 @@ function init() {
     nativeDisplay=createNativeDisplayPipeline({enabled:()=>!!context().chatId&&configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
+        getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar)),
         getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
         getCacheKey:msg=>JSON.stringify([context().chatId?worldKey(context()):null,messageCacheOwner(msg),msg.mes,getDisplay().显示角色心理===true,getPlayerName(),readerCacheGeneration(),isGenerating()]),
         getStateKey:msg=>JSON.stringify([context().chatId?worldKey(context()):null,messageCacheOwner(msg),msg.mes]),

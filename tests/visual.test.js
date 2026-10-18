@@ -64,3 +64,18 @@ test('ancillary parse failure cannot uncover raw protocol or suppress valid publ
  const root=node.querySelector('.tisya-message-visual').shadowRoot;assert.ok(root.querySelector('.story').textContent.length);assert.equal(root.querySelectorAll('.action').length,4);assert.doesNotMatch(root.querySelector('.story').textContent,/<memory|<task|<actions/);
  ui.dispose();await w.happyDOM.abort();
 });
+
+test('card portraits share both slots, update in place, and missing or failed images never use built-in covers',async()=>{
+ const {w,d,node}=setup(),message={name:'角色',mes:fixture()},errors=[];let cover='/card-a.png';
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getCover:()=>cover,formatBody:format,onChooseAction(){},getMotion:()=>false,onError:e=>errors.push(e.message)});
+ ui.sync(node);const host=node.querySelector('.tisya-message-visual'),root=host.shadowRoot,title=root.querySelector('#cover'),pearl=root.querySelector('#world-extension-toggle');
+ const body=root.querySelector('.story'),journey=root.querySelector('#journey-toggle img').src;
+ assert.equal(title.getAttribute('src'),cover);assert.equal(pearl.querySelector('img').getAttribute('src'),cover);
+ pearl.click();const folded=pearl.getAttribute('aria-expanded');cover='/card-b.png';ui.sync(node);
+ assert.equal(node.querySelector('.tisya-message-visual'),host);assert.equal(root.querySelector('.story'),body);assert.equal(pearl.getAttribute('aria-expanded'),folded);
+ assert.equal(title.getAttribute('src'),cover);assert.equal(pearl.querySelector('img').getAttribute('src'),cover);
+ pearl.querySelector('img').dispatchEvent(new w.Event('error'));assert.equal(pearl.querySelector('img').hidden,true);assert.match(errors[0],/角色卡图片加载失败/);
+ cover=null;ui.sync(node);assert.equal(title.hasAttribute('src'),false);assert.equal(title.hidden,true);assert.equal(pearl.querySelector('img'),null);
+ assert.equal(root.querySelector('#journey-toggle img').src,journey);assert.equal(message.mes,fixture());
+ ui.dispose();await w.happyDOM.abort();
+});
