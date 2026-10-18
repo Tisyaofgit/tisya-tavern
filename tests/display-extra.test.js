@@ -39,11 +39,11 @@ test('a guarded host send call has an explicit capability note without blocking 
  assert.match(root.querySelector('.card-capability-note').textContent,/按钮暂不可用/);assert.equal(root.querySelectorAll('iframe').length,1);assert.deepEqual(errors,[]);
  view.dispose();await w.happyDOM.abort();
 });
-function decodedImages(w,{missing=null,wait={}}={}){w.Image=class{set src(value){this.url=value;}async decode(){const row=EMOTIONS.find(x=>x.url===this.url);if(row.name===missing)throw Error('missing');if(wait[row.name])await wait[row.name];this.naturalWidth=row.size[0];this.naturalHeight=row.size[1];}};}
-test('one decoded six-emotion catalog feeds the atlas, every heart image and actual preset mood macro',async()=>{
- const {w,d,root}=ui();decodedImages(w);const catalog=emotionCatalog(d);assert.throws(()=>catalog.names(),/仍在加载/);await catalog.ready;assert.equal(emotionCatalog(d),catalog);assert.deepEqual(catalog.names(),['困倦','好奇','开心','怀疑','惊讶','闹别扭']);
+function decodedImages(w,{missing=null,wait={}}={}){w.Image=class{set src(value){this.url=value;}async decode(){const row=EMOTIONS.find(x=>x.url===this.url);if(row.name===missing)throw Error('missing');if(wait[row.name])await wait[row.name];const bytes=fs.readFileSync(new URL(row.url));this.naturalWidth=bytes.readUInt32BE(16);this.naturalHeight=bytes.readUInt32BE(20);}};}
+test('one decoded ten-emotion catalog feeds the atlas, every heart image and actual preset mood macro',async()=>{
+ const {w,d,root}=ui();decodedImages(w);const catalog=emotionCatalog(d);assert.throws(()=>catalog.names(),/仍在加载/);await catalog.ready;assert.equal(emotionCatalog(d),catalog);assert.deepEqual(catalog.names(),['困倦','好奇','开心','怀疑','惊讶','闹别扭','促狭','憋笑','装无辜','小得意']);
  for(const row of EMOTIONS){const bytes=fs.readFileSync(new URL(row.url));assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);assert.equal((await catalog.resolve(row.name)).url,row.url);}
- const view=mountEmotionAtlas(d,root);assert.equal(root.querySelectorAll('img').length,6);await tick();assert.match(root.textContent,/六张表情已就绪/);view.dispose();
+ const view=mountEmotionAtlas(d,root);assert.equal(root.querySelectorAll('img').length,10);await tick();assert.match(root.textContent,/10 张表情已就绪/);view.dispose();
  const heart=mountHeartBlock(d,root,{status:'有内容',items:EMOTIONS.map(r=>({type:'剧情吐槽',text:r.name,mood:r.name}))});for(const row of EMOTIONS){await tick();assert.equal(heart.querySelector('img').src,row.url);heart.querySelector('button').click();}
  const macros=new Map(),source={prompts:[{identifier:'tisya_output'}],order:[{identifier:'tisya_output',enabled:true}]};const release=registerPresetProtocol({registerMacro:(n,f)=>macros.set(n,f),unregisterMacro:n=>macros.delete(n)},()=>source,()=>{},()=>catalog.names());assert.deepEqual(JSON.parse(macros.get('tisya_heart_moods')()),catalog.names());source.order[0].enabled=false;assert.equal(macros.get('tisya_heart_moods')(),'[]');release();await w.happyDOM.abort();
 });
