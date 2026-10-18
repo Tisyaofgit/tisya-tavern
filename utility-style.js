@@ -1,6 +1,6 @@
 // Shared approved water / old-gold treatment for settings and task surfaces.
 export const UTILITY_STYLE=`
-:host{display:block;font:15px/1.75 TisyaReading,serif;color:#e2ddc8;min-width:0}
+:host{display:block;font:15px/1.75 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#e2ddc8;min-width:0}
 *{box-sizing:border-box}[hidden]{display:none!important}
 button,input,select,textarea{font:inherit;color:inherit;max-width:100%;min-width:0}
 button{min-height:44px;padding:10px 16px;background:#102d24;border:1px solid #b7a46f55;border-radius:8px;cursor:pointer}

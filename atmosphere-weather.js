@@ -24,8 +24,8 @@ export function createWeather(random=Math.random) {
    }
   }
   if(active.includes('fireflies')){
-   while(lights.length<15)lights.push({x:random(),y:random(),phase:rand(0,6.28),size:rand(2,5)});
-   for(const p of lights){const x=p.x*w+Math.sin(time*.3+p.phase)*12,y=p.y*h+Math.sin(time*.22+p.phase)*20,a=.16+.12*Math.sin(time*.8+p.phase),g=ctx.createRadialGradient(x,y,0,x,y,p.size);g.addColorStop(0,`rgba(236,220,154,${a})`);g.addColorStop(1,'rgba(180,215,160,0)');ctx.fillStyle=g;ctx.fillRect(x-p.size,y-p.size,p.size*2,p.size*2);}
+   while(lights.length<15)lights.push({x:random(),y:random(),phase:rand(0,6.28),size:rand(3.5,7)});
+   for(const p of lights){const x=p.x*w+Math.sin(time*.3+p.phase)*12,y=p.y*h+Math.sin(time*.22+p.phase)*20,a=.43+.23*Math.sin(time*.65+p.phase),g=ctx.createRadialGradient(x,y,0,x,y,p.size);g.addColorStop(0,`rgba(236,220,154,${a})`);g.addColorStop(.22,`rgba(236,220,154,${a*.56})`);g.addColorStop(1,'rgba(180,215,160,0)');ctx.fillStyle=g;ctx.fillRect(x-p.size,y-p.size,p.size*2,p.size*2);}
   }
  }
  return {draw,report:()=>({wind,target,rain:rain.map(p=>({...p})),snow:snow.map(p=>({...p}))})};

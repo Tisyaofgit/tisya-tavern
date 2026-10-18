@@ -14,7 +14,7 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
   let W=1,H=1,time=17,materialTime=17,last=0,raf=0,paused=!playing||media.matches,visible=true,dead=false,failed=false,spawn=0,frames=0,burstCount=0,tapBursts=0,flowChanges=0,rainEpisodes=0,rainImpacts=0;
   let requestedPause=!playing;
   let settings={...CHAT_DEFAULTS,...effects};const weather=createWeather(random);
-  const bubbles=[],bursts=[],raindrops=[],programs=new Map(),compiled=[],rippleUniforms=new Float32Array(24);
+  const bubbles=[],bursts=[],tapRings=[],raindrops=[],programs=new Map(),compiled=[],rippleUniforms=new Float32Array(24);
   const rand=(a,b)=>a+random()*(b-a);
   const profile=()=>({vx:rand(-.023,.023),vy:rand(-.018,.018),shear:rand(-.10,.10),spin:rand(-.7,.7),cx:rand(-.18,.18),cy:rand(-.32,.32),reach:rand(.20,.52),pace:rand(.55,1.65),power:rand(.55,1.35)});
   let flowFrom=profile(),flowTo=profile(),flowNow={...flowFrom},flowAge=0,flowDuration=rand(5,13),driftX=0,driftY=0,nextRain=rand(5,10);
@@ -41,7 +41,7 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
   function compile(type,source){const s=gl.createShader(type);compiled.push(s);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s)||'Shader compilation failed');return s;}
   function programFor(name){if(programs.has(name))return programs.get(name);const p=gl.createProgram();try{gl.attachShader(p,compile(gl.VERTEX_SHADER,vertex));gl.attachShader(p,compile(gl.FRAGMENT_SHADER,shaders[name]));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p)||'Shader linking failed');const item={program:p,a:gl.getAttribLocation(p,'a'),res:gl.getUniformLocation(p,'res'),t:gl.getUniformLocation(p,'t'),current:gl.getUniformLocation(p,'uCurrent'),eddy:gl.getUniformLocation(p,'uEddy'),ripples:gl.getUniformLocation(p,'uRipples[0]')};programs.set(name,item);return item;}catch(e){gl.deleteProgram(p);throw e;}}
-  function stats(){return {preset,paused,visible,time,materialTime,frames,bubbles:bubbles.length,bursts:bursts.length,totalBursts:burstCount,tapBursts,rainDrops:raindrops.length,pendingDrops:raindrops.filter(r=>r.age<0).length,rainEpisodes,rainImpacts,nextRain,flowChanges,flow:{...flowNow},drift:[driftX,driftY],dead,failed,width:W,height:H,effects:selectedEffects(settings,time),weather:weather.report()};}
+  function stats(){return {preset,paused,visible,time,materialTime,frames,bubbles:bubbles.length,bursts:bursts.length,totalBursts:burstCount,tapBursts,tapRings:tapRings.length,rainDrops:raindrops.length,pendingDrops:raindrops.filter(r=>r.age<0).length,rainEpisodes,rainImpacts,nextRain,flowChanges,flow:{...flowNow},drift:[driftX,driftY],dead,failed,width:W,height:H,effects:selectedEffects(settings,time),weather:weather.report()};}
   function emit(){onState(stats());}
   function stop(){win.cancelAnimationFrame(raf);raf=0;last=0;}
   function fail(e){failed=true;stop();onError(e instanceof Error?e:Error(String(e)));emit();}
@@ -53,7 +53,7 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
    if(active.includes('water'))updateFlow(dt);
    if(active.includes('ripples'))updateRain(dt);else {raindrops.length=0;rippleUniforms.fill(0);}
    if(!active.includes('water'))bubbles.length=0;
-   const p=programFor(preset);gl.useProgram(p.program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(p.a);gl.vertexAttribPointer(p.a,2,gl.FLOAT,false,0,0);gl.uniform2f(p.res,canvas.width,canvas.height);gl.uniform1f(p.t,materialTime);gl.uniform4f(p.current,driftX,driftY,flowNow.shear,flowNow.power-.35);gl.uniform4f(p.eddy,flowNow.cx,flowNow.cy,flowNow.spin,flowNow.reach);gl.uniform4fv(p.ripples,rippleUniforms);gl.drawArrays(gl.TRIANGLES,0,6);ctx.clearRect(0,0,W,H);
+   if(settings.底图色调==='明潮'){const p=programFor(preset);gl.useProgram(p.program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(p.a);gl.vertexAttribPointer(p.a,2,gl.FLOAT,false,0,0);gl.uniform2f(p.res,canvas.width,canvas.height);gl.uniform1f(p.t,materialTime);gl.uniform4f(p.current,driftX,driftY,flowNow.shear,flowNow.power-.35);gl.uniform4f(p.eddy,flowNow.cx,flowNow.cy,flowNow.spin,flowNow.reach);gl.uniform4fv(p.ripples,rippleUniforms);gl.drawArrays(gl.TRIANGLES,0,6);}ctx.clearRect(0,0,W,H);
    if(dt>0&&active.includes('water')){spawn-=dt;if(spawn<=0){spawn=rand(.12,.65);const clustered=random()<.13,x=rand(0,W),count=Math.min(clustered?5:1,95-bubbles.length);for(let i=0;i<count;i++)addBubble(false,clustered?x:null);}}
    for(let i=bubbles.length-1;i>=0;i--){const b=bubbles[i],f=flow(b.x,b.y);b.age+=dt;b.x+=(f.x+Math.sin(time*1.3+b.phase)*3)*dt;b.y-=Math.max(4,b.speed*f.y+f.lift)*dt;
     if(dt>0&&(b.age>=b.life||b.y<24)){if(b.x>0&&b.x<W&&b.y>0&&b.y<H)breakBubble(b);bubbles.splice(i,1);continue;}
@@ -71,17 +71,22 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
     if(r.age<r.fall){const fall=r.age/r.fall,y=-20*(1-fall);ctx.globalAlpha=.28*fall;ctx.strokeStyle='#c5ece3';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-1,y-5);ctx.lineTo(0,y);ctx.stroke();ctx.fillStyle='#e1eee0';ctx.beginPath();ctx.ellipse(0,y,1.2,1.8,0,0,Math.PI*2);ctx.fill();}
     else{const q=(r.age-r.fall)/r.duration;for(let ring=0;ring<3;ring++){const v=q-ring*.12;if(v<0)continue;const radius=r.radius*(.18+.82*(1-Math.exp(-v*3))),fade=Math.pow(1-q,1.6)*(ring===0?.35:.18);ctx.globalAlpha=fade;ctx.lineWidth=ring===0?.75:.55;ctx.strokeStyle='#bce9df';ctx.beginPath();ctx.ellipse(0,0,radius,radius*.52,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=fade*.35;ctx.lineWidth=1.6;ctx.strokeStyle='#2e7b80';ctx.beginPath();ctx.ellipse(0,1,radius+1,(radius+1)*.52,0,0,Math.PI*2);ctx.stroke();}if(q<.12){ctx.globalAlpha=(1-q/.12)*.5;ctx.fillStyle='#d7ece0';ctx.beginPath();ctx.ellipse(0,-3*Math.sin(q/.12*Math.PI),1.6*(1-q/.12),1.1,0,0,Math.PI*2);ctx.fill();}}
     ctx.restore();}
+   for(let i=tapRings.length-1;i>=0;i--){
+    const r=tapRings[i];r.age+=dt;if(r.age>1.5){tapRings.splice(i,1);continue;}
+    for(let ring=0;ring<3;ring++){const age=r.age-ring*.13;if(age<0)continue;const q=age/1.5,rad=5+60*(1-Math.exp(-q*2.5));ctx.save();ctx.strokeStyle='#d7e7b9';ctx.lineWidth=1.05-ring*.16;ctx.globalAlpha=Math.pow(1-q,2)*(.64-ring*.1);ctx.beginPath();ctx.ellipse(r.x,r.y,rad,rad*.62,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
+   }
    ctx.save();if(settings.背景特效模式==='自动轮换'){const phase=time%22;ctx.globalAlpha=Math.min(1,phase/2,(22-phase)/2);}
    weather.draw(ctx,dt,time,W,H,active);ctx.restore();
    if(paused)ctx.clearRect(0,0,W,H);
    frames++;
   }
-  function animated(){return selectedEffects(settings,time).length>0||bursts.length>0;}
+  function animated(){return selectedEffects(settings,time).length>0||bursts.length>0||tapRings.length>0;}
   function tick(now){raf=0;if(dead||failed)return;if(!container.isConnected){destroy();return;}if(!paused&&visible&&!doc.hidden){const dt=last?Math.min((now-last)/1000,.05):0;time+=dt;last=now;try{draw(dt);}catch(e){fail(e);return;}if(animated())raf=win.requestAnimationFrame(tick);else last=0;}else last=0;}
   function schedule(){if(!raf&&!dead&&!failed&&!paused&&visible&&!doc.hidden&&animated()){last=0;raf=win.requestAnimationFrame(tick);}}
-  function resize(){if(dead||failed)return;const r=container.getBoundingClientRect();if(r.width<=0||r.height<=0)return;if(W===r.width&&H===r.height&&canvas.width>1)return;const oldW=W,oldH=H;W=r.width;H=r.height;const d=Math.min(win.devicePixelRatio||1,1.65);canvas.width=Math.round(W*.8);canvas.height=Math.round(H*.8);particles.width=Math.round(W*d);particles.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);gl.viewport(0,0,canvas.width,canvas.height);for(const b of [...bubbles,...bursts,...raindrops]){b.x*=W/oldW;b.y*=H/oldH;}try{draw(0);}catch(e){fail(e);}}
+  function resize(){if(dead||failed)return;const r=container.getBoundingClientRect();if(r.width<=0||r.height<=0)return;if(W===r.width&&H===r.height&&canvas.width>1)return;const oldW=W,oldH=H;W=r.width;H=r.height;const d=Math.min(win.devicePixelRatio||1,1.65);canvas.width=Math.round(W*.8);canvas.height=Math.round(H*.8);particles.width=Math.round(W*d);particles.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);gl.viewport(0,0,canvas.width,canvas.height);for(const b of [...bubbles,...bursts,...raindrops,...tapRings]){b.x*=W/oldW;b.y*=H/oldH;}try{draw(0);}catch(e){fail(e);}}
   function setPreset(name){if(dead||failed)throw Error('Atmosphere is not active');if(!shaders[name])throw Error('Unknown atmosphere preset: '+name);programFor(name);preset=name;draw(0);emit();}
   function setPaused(value){if(dead)return;requestedPause=Boolean(value);paused=requestedPause||media.matches;if(paused){stop();ctx.clearRect(0,0,W,H);}else schedule();emit();}
+  function rippleAt(x,y){if(dead||failed||paused||!visible||doc.hidden)return false;if(tapRings.length>=8)tapRings.shift();tapRings.push({x,y,age:0});tapBursts++;schedule();emit();return true;}
   function burstAt(x,y){if(dead||failed||paused||!visible||doc.hidden)return false;tapBursts++;let found=-1,best=44;for(let i=0;i<bubbles.length;i++){const d=Math.hypot(bubbles[i].x-x,bubbles[i].y-y);if(d<best){best=d;found=i;}}if(found<0){breakBubble({x,y,r:7,phase:rand(0,6.28)});schedule();emit();return true;}breakBubble(bubbles[found]);bubbles.splice(found,1);schedule();emit();return true;}
   function demonstrateBurst(){if(dead||failed||paused)return false;if(bubbles.length>=95)bubbles.shift();bubbles.push({x:W*.52,y:H*.46,r:15,z:1,phase:rand(0,6.28),speed:12,alpha:.8,age:1,life:1.75});return true;}
   function demonstrateRain(){if(dead||failed||paused)return false;return rainEpisode(true);}
@@ -90,9 +95,9 @@ import {selectedEffects,CHAT_DEFAULTS} from './chat-effects-core.js';
   const onContextLost=e=>{e.preventDefault();fail(Error('背景绘制已中断，请重新打开页面'));};
   const ro=win.ResizeObserver?new win.ResizeObserver(resize):null,io=win.IntersectionObserver?new win.IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(!visible)stop();else schedule();emit();}):null;
   // The shell owns disposal, never observe every message mutation.
-  function destroy(){if(dead)return;dead=true;stop();ro?.disconnect();io?.disconnect();win.removeEventListener('resize',resize);doc.removeEventListener('visibilitychange',onVisibility);media.removeEventListener('change',onMotion);canvas.removeEventListener('webglcontextlost',onContextLost);for(const p of programs.values())gl.deleteProgram(p.program);for(const s of compiled)gl.deleteShader(s);gl.deleteBuffer(buffer);gl.getExtension('WEBGL_lose_context')?.loseContext?.();bubbles.length=0;bursts.length=0;raindrops.length=0;instances.delete(container);emit();}
+  function destroy(){if(dead)return;dead=true;stop();ro?.disconnect();io?.disconnect();win.removeEventListener('resize',resize);doc.removeEventListener('visibilitychange',onVisibility);media.removeEventListener('change',onMotion);canvas.removeEventListener('webglcontextlost',onContextLost);for(const p of programs.values())gl.deleteProgram(p.program);for(const s of compiled)gl.deleteShader(s);gl.deleteBuffer(buffer);gl.getExtension('WEBGL_lose_context')?.loseContext?.();bubbles.length=0;bursts.length=0;tapRings.length=0;raindrops.length=0;instances.delete(container);emit();}
   function setEffects(next){settings={...CHAT_DEFAULTS,...next};selectedEffects(settings,time);if(!dead&&!failed){draw(0);if(animated())schedule();else stop();}}
-  const api={setPreset,setPaused,setEffects,resize,burstAt,demonstrateBurst,demonstrateRain,getStats:stats,destroy};instances.set(container,api);
+  const api={setPreset,setPaused,setEffects,resize,burstAt,rippleAt,demonstrateBurst,demonstrateRain,getStats:stats,destroy};instances.set(container,api);
   try{programFor(preset);resize();for(let i=0;i<48;i++)addBubble(true);draw(0);}catch(e){destroy();throw e;}
   ro?.observe(container);io?.observe(container);win.addEventListener('resize',resize);doc.addEventListener('visibilitychange',onVisibility);media.addEventListener('change',onMotion);canvas.addEventListener('webglcontextlost',onContextLost);emit();schedule();return api;
  }

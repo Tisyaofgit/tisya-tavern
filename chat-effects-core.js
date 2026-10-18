@@ -2,8 +2,8 @@
 // Optional fields on the existing extensions display record. Resolving a
 // registered default never writes it into an existing chat or saved profile.
 const EFFECTS=Object.freeze({水纹:'water',涟漪:'ripples',斜雨:'rain',落雪:'snow',萤火:'fireflies'});
-const CHAT_FIELDS=Object.freeze({背景特效模式:['自动轮换','自选组合','关闭'],水纹:[true,false],涟漪:[true,false],斜雨:[true,false],落雪:[true,false],萤火:[true,false],点触涟漪:[true,false],点触音效:[true,false],上条落点:['顶部','底部']});
-const CHAT_DEFAULTS=Object.freeze({背景特效模式:'自选组合',水纹:true,涟漪:true,斜雨:false,落雪:false,萤火:true,点触涟漪:true,点触音效:true,上条落点:'底部'});
+const CHAT_FIELDS=Object.freeze({背景特效模式:['自动轮换','自选组合','关闭'],水纹:[true,false],涟漪:[true,false],斜雨:[true,false],落雪:[true,false],萤火:[true,false],点触涟漪:[true,false],点触音效:[true,false],底图色调:["旧版墨绿","明潮"],音效类型:["bubble","drop","splash","piano"],音效音量:[0,10,20,30,40,50,55,60,70,80,90,100],人物水流:[true,false],水流摆幅:[5,7.5,10],上条落点:['顶部','底部']});
+const CHAT_DEFAULTS=Object.freeze({背景特效模式:'自选组合',水纹:true,涟漪:true,斜雨:false,落雪:false,萤火:true,点触涟漪:true,点触音效:true,底图色调:"旧版墨绿",音效类型:"drop",音效音量:55,人物水流:true,水流摆幅:7.5,上条落点:'底部'});
 function selectedEffects(values,time){
  if(values.背景特效模式==='关闭')return [];
  if(values.背景特效模式==='自动轮换'){

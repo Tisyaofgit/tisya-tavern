@@ -1,3 +1,4 @@
+import {refreshFontDocuments} from './global-fonts.js';
 // One viewport owner for the two persistent management documents. Keep sizing
 // in a stylesheet as well as HTML dimensions: host iframe resets must not turn
 // a console back into the browser's intrinsic 300 x 150 rectangle.
@@ -25,4 +26,4 @@ export function createPanelSurface(document,frame,{onMode=()=>{}}={}){
 export function hideFullPanels(document){for(const panel of owners.get(document)?.panels??[])if(panel.getMode()==='full')panel.show('hidden');}
 export function hideAllPanels(document){for(const panel of owners.get(document)?.panels??[])panel.show('hidden');}
 
-export function refreshPanelFonts(document){for(const {frame} of owners.get(document)?.panels??[])for(const face of document.fonts??[])if(face.family==='TisyaReading'&&face.status==='loaded')frame.contentDocument?.fonts?.add(face);}
+export function refreshPanelFonts(document){refreshFontDocuments(document);for(const {frame} of owners.get(document)?.panels??[])for(const face of document.fonts??[])if(face.family==='TisyaReading'&&face.status==='loaded')frame.contentDocument?.fonts?.add(face);}

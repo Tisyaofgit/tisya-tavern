@@ -1,5 +1,5 @@
 /* Native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.31.6";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:system-ui,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.31.7";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:var(--tisya-global-font,system-ui),TisyaReading,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
 body.tisya-active #top-settings-holder>.drawer>.drawer-toggle{visibility:hidden!important;pointer-events:none!important}
@@ -52,7 +52,7 @@ body.tisya-active #top-bar{display:none!important}
 #tisya-overlay .tisya-navigation .tisya-list>button:hover{background:#244b37}
 .tisya-version{color:var(--tisya-muted);font-size:11px;margin:12px 8px}
 /* Reading layout keeps rich message contents intact. */
-body.tisya-active #chat{background:transparent!important;box-shadow:none!important;border:0!important;padding:12px 16px!important;min-height:0;font-family:TisyaReading,serif;scroll-padding-bottom:16px}
+body.tisya-active #chat{background:transparent!important;box-shadow:none!important;border:0!important;padding:12px 16px!important;min-height:0;font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif;scroll-padding-bottom:16px}
 body.tisya-active #chat .mes{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 0 16px!important;gap:0!important}
 body.tisya-active #chat .mesAvatarWrapper,body.tisya-active #chat .mes_header_info{display:none!important}
 body.tisya-active #chat .mes_block{width:100%;min-width:0;margin:0!important;padding:0!important}
@@ -188,7 +188,7 @@ body.tisya-active #nonQRFormItems .tisya-nav-button:focus-visible{outline:2px so
 #tisya-overlay .tisya-reader-tabs button{flex:1;min-width:70px}
 #tisya-overlay .tisya-reader-tabs button[aria-pressed=true]{border-color:var(--tisya-gold);background:#355544;box-shadow:inset 0 -2px var(--tisya-gold)}
 #tisya-overlay .tisya-reader-panel{min-width:0;overflow-wrap:anywhere}
-#tisya-overlay .tisya-reader-body{font:17px/1.85 TisyaReading,serif;color:var(--tisya-ink)}
+#tisya-overlay .tisya-reader-body{font:17px/1.85 var(--tisya-body-font,var(--tisya-global-font,TisyaReading)),TisyaReading,serif;color:var(--tisya-ink)}
 #tisya-overlay .tisya-reader-body p:not([data-tisya-prose]){font:inherit;line-height:inherit;margin:0 0 1em}
 #tisya-overlay .tisya-reader-body img,#tisya-overlay .tisya-reader-body video{max-width:100%;height:auto}
 #tisya-overlay .tisya-reader-body pre{white-space:pre-wrap;overflow-wrap:anywhere}
@@ -254,7 +254,7 @@ body.tisya-active #chat .tisya-source-concealed:has(.edit_textarea){display:bloc
 #tisya-shell .tisya-emotion-grid img{display:block;margin:auto;width:100%;max-width:140px;height:120px;object-fit:contain}
 #tisya-shell .tisya-emotion-grid figcaption{padding-top:8px;color:#e1cb91}
 
-#tisya-shell .tisya-display-settings,#tisya-shell .tisya-emotion-grid{font-family:TisyaReading,serif}
+#tisya-shell .tisya-display-settings,#tisya-shell .tisya-emotion-grid{font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif}
 /* Seven configurable shortcut positions, plus a fixed overflow entry. */
 body.tisya-active #tisya-shortcuts{grid-column:1/-1;position:relative;min-width:0;width:100%;order:-10}
 body.tisya-active .tisya-shortcut-bar{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
@@ -401,7 +401,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 
 /* Approved water homepage v1. Real controls occupy the artwork's clear area. */
 #tisya-shell.tisya-page-open .tisya-page.tisya-home-page{padding:0;background:#03251d;scrollbar-color:#b8a77366 transparent}
-#tisya-shell .tisya-home{position:relative;isolation:isolate;container-type:inline-size;max-width:853px;min-height:100%;margin:0 auto;background:#041c20;color:#e7ddbb;font-family:"TisyaReading","Noto Serif SC",serif}
+#tisya-shell .tisya-home{position:relative;isolation:isolate;container-type:inline-size;max-width:853px;min-height:100%;margin:0 auto;background:#041c20;color:#e7ddbb;font-family:var(--tisya-global-font,TisyaReading),TisyaReading,"Noto Serif SC",serif}
 #tisya-shell .tisya-home-art{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
 #tisya-shell .tisya-home-water{display:block;position:absolute;top:0;left:0;width:100%;height:auto;pointer-events:none}
 #tisya-shell .tisya-home-body{display:grid;grid-template-columns:24% minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:max(620px,var(--tisya-home-height,100dvh));min-height:620px;padding:0 3.6% max(8px,env(safe-area-inset-bottom,0px)) 0}
@@ -424,7 +424,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-home-hero .tisya-home-back{position:absolute;right:-3px;top:18px;display:flex;align-items:center;gap:2px;font-size:clamp(12px,2.8cqw,20px);white-space:nowrap;padding:6px 0}
 #tisya-shell .tisya-home-back .tisya-home-icon{width:20px;height:20px}
 #tisya-shell .tisya-home-brand{font-size:clamp(15px,3.6cqw,29px);letter-spacing:.2em;margin:0 0 12px;white-space:nowrap}
-#tisya-shell .tisya-home h1{font:400 clamp(37px,9.4cqw,75px)/1.25 "TisyaReading","Noto Serif SC",serif;letter-spacing:.1em;margin:0 0 6px;color:#f2e8c6}
+#tisya-shell .tisya-home h1{font:400 clamp(37px,9.4cqw,75px)/1.25 var(--tisya-global-font,TisyaReading),TisyaReading,"Noto Serif SC",serif;letter-spacing:.1em;margin:0 0 6px;color:#f2e8c6}
 #tisya-shell .tisya-home-subtitle{font-size:clamp(13px,3.2cqw,25px);letter-spacing:.08em;margin:0;white-space:nowrap}
 #tisya-shell .tisya-home-search{display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid #cbbb815f;border-radius:100px;background:#031f1880;box-shadow:inset 0 1px 8px #00171038;margin-bottom:14px;min-width:0}
 #tisya-shell .tisya-home-search>.tisya-home-icon{width:18px;height:18px;opacity:.65}
@@ -432,7 +432,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-home-search input::placeholder{color:#aebeb0;opacity:1}
 #tisya-shell .tisya-home-panel{padding:clamp(10px,2.5cqw,21px);border:1px solid #cbbb818c;border-radius:clamp(16px,3cqw,26px);background:rgba(0,0,0,.60);box-shadow:inset 0 0 30px #00000026;min-width:0;display:flex;flex-direction:column;flex:1;min-height:200px}
 #tisya-shell .tisya-home-panel>header{margin:0;gap:10px;display:flex;align-items:center}
-#tisya-shell .tisya-home-panel h2{flex:none;font:400 clamp(19px,4.1cqw,31px)/1.5 "TisyaReading","Noto Serif SC",serif;letter-spacing:.12em;color:#eee1b7}
+#tisya-shell .tisya-home-panel h2{flex:none;font:400 clamp(19px,4.1cqw,31px)/1.5 var(--tisya-global-font,TisyaReading),TisyaReading,"Noto Serif SC",serif;letter-spacing:.12em;color:#eee1b7}
 #tisya-shell .tisya-home-rule{height:1px;background:linear-gradient(90deg,#d4c69490,#d4c69410);flex:1}
 #tisya-shell .tisya-home-refresh{display:flex;align-items:center;justify-content:center;width:44px;flex:none}
 #tisya-shell .tisya-home-refresh span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
@@ -446,7 +446,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-home button.tisya-home-portrait{padding:0;display:block;width:clamp(46px,14cqw,102px);height:clamp(50px,14cqw,102px);flex:none;border:1px solid #c9b8865c;border-radius:7px;overflow:hidden;background:#11372d}
 #tisya-shell .tisya-home-portrait img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 25%}
 #tisya-shell .tisya-home-portrait>span{font:10px/1.4 var(--tisya-ui);padding:6px;display:block}
-#tisya-shell .tisya-home-role-name{font:400 clamp(17px,3.9cqw,30px)/1.4 "TisyaReading","Noto Serif SC",serif;color:#e8dec3;overflow-wrap:anywhere;min-width:0;flex:1;text-shadow:0 1px 0 #000c,-.2px -.2px 0 #efd28b60}
+#tisya-shell .tisya-home-role-name{font:400 clamp(17px,3.9cqw,30px)/1.4 var(--tisya-global-font,TisyaReading),TisyaReading,"Noto Serif SC",serif;color:#e8dec3;overflow-wrap:anywhere;min-width:0;flex:1;text-shadow:0 1px 0 #000c,-.2px -.2px 0 #efd28b60}
 #tisya-shell .tisya-home-role-count{font-size:clamp(10px,2.4cqw,17px);line-height:1.4;border:1px solid #c8b47b55;border-radius:100px;padding:2px 6px;white-space:nowrap;color:#c9bd8d;flex:none}
 #tisya-shell .tisya-home-timeline{position:relative;margin:5px 0 0 7px;padding-left:12px}
 #tisya-shell .tisya-home-timeline:before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:1px;background:linear-gradient(transparent,#d8b96899 15%,#b39c624d 85%,transparent)}
@@ -485,14 +485,14 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-directory-row>.tisya-directory-menu{flex:none;width:44px;border:0;background:none}
 
 /* Row-local actions: compact groups in normal document flow, no modal veil. */
-#tisya-shell .tisya-directory-inline{flex:0 0 100%;grid-column:1/-1;min-width:0;padding:7px 0 9px;color:#b9c6b3;cursor:default;font:12px/1.7 "TisyaReading",serif;animation:tisya-inline-reveal .16s ease-out}
+#tisya-shell .tisya-directory-inline{flex:0 0 100%;grid-column:1/-1;min-width:0;padding:7px 0 9px;color:#b9c6b3;cursor:default;font:12px/1.7 var(--tisya-global-font,TisyaReading),TisyaReading,serif;animation:tisya-inline-reveal .16s ease-out}
 #tisya-shell .tisya-directory-buttons{display:flex;flex-wrap:wrap;gap:3px 5px;align-items:center}
-#tisya-shell .tisya-directory-inline button{min-height:40px;padding:5px 10px;font:12px/1.5 "TisyaReading",serif;border:0;border-radius:6px;background:#a9bd9d0c;color:#d9c695;box-shadow:none}
+#tisya-shell .tisya-directory-inline button{min-height:40px;padding:5px 10px;font:12px/1.5 var(--tisya-global-font,TisyaReading),TisyaReading,serif;border:0;border-radius:6px;background:#a9bd9d0c;color:#d9c695;box-shadow:none}
 #tisya-shell .tisya-directory-inline button:hover,#tisya-shell .tisya-directory-inline button:active{background:#c0cda31a}
 #tisya-shell .tisya-directory-inline button[data-tisya-action="directory-delete"],#tisya-shell .tisya-directory-inline button[data-tisya-action="directory-delete-confirm"]{color:#d5a28b}
 #tisya-shell .tisya-directory-inline label{display:block;font-size:11px;letter-spacing:.06em;color:#c7c6a7;margin-bottom:2px}
 #tisya-shell .tisya-directory-inline input{font-family:inherit;font-size:16px;line-height:1.5;background:#0003;border:0;border-bottom:1px solid #b9ad6e55;border-radius:0;min-height:44px;padding:7px 4px;outline:none;box-shadow:none}
-#tisya-shell .tisya-directory-inline p{font:11px/1.7 "TisyaReading",serif;margin:5px 0 7px;color:#a9b7a1}
+#tisya-shell .tisya-directory-inline p{font:11px/1.7 var(--tisya-global-font,TisyaReading),TisyaReading,serif;margin:5px 0 7px;color:#a9b7a1}
 #tisya-shell .tisya-directory-inline p.tisya-directory-warning{color:#d5b09c}
 #tisya-shell .tisya-home-role>summary.tisya-directory-expanded,#tisya-shell .tisya-home-chat-row.tisya-directory-expanded,#tisya-shell .tisya-directory-row.tisya-directory-expanded{flex-wrap:wrap}
 #tisya-shell .tisya-home-chat-row.tisya-directory-expanded>.tisya-home-chat{flex-basis:calc(100% - 34px)}
@@ -506,11 +506,11 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 @media(prefers-reduced-motion:reduce){#tisya-shell .tisya-directory-inline{animation:none}}
 
 /* Approved subpages: original controls, quiet water, restrained gold. */
-#tisya-shell.tisya-page-open .tisya-page:not(.tisya-home-page){font:14px/1.7 TisyaReading,serif;padding:18px max(20px,calc((100% - 720px)/2)) 32px;background:radial-gradient(ellipse at 25% 0,#0d483c99,transparent 44%),linear-gradient(#021b17f0,#020e0cee),url(assets/home-v1/quiet-water.webp) center/cover;color:#e5dfc4}
+#tisya-shell.tisya-page-open .tisya-page:not(.tisya-home-page){font:14px/1.7 var(--tisya-global-font,TisyaReading),TisyaReading,serif;padding:18px max(20px,calc((100% - 720px)/2)) 32px;background:radial-gradient(ellipse at 25% 0,#0d483c99,transparent 44%),linear-gradient(#021b17f0,#020e0cee),url(assets/home-v1/quiet-water.webp) center/cover;color:#e5dfc4}
 #tisya-shell .tisya-sub-header{display:flex;justify-content:space-between;align-items:center;margin:0 0 25px;border:0;gap:8px}
 #tisya-shell .tisya-sub-header>span{font:10px/1.5 Georgia,serif;letter-spacing:.25em;color:#b5aa7d}
 #tisya-shell .tisya-sub-header button{background:transparent;border:0;padding:8px 0;min-width:54px;font-size:13px}
-#tisya-shell h2.tisya-sub-title{font:normal 34px/1.3 TisyaReading,serif;letter-spacing:.1em;margin:0 0 10px;color:#e8d9a5}
+#tisya-shell h2.tisya-sub-title{font:normal 34px/1.3 var(--tisya-global-font,TisyaReading),TisyaReading,serif;letter-spacing:.1em;margin:0 0 10px;color:#e8d9a5}
 #tisya-shell .tisya-page-intro{color:#a2b3a8;font-size:13px;margin:0 0 24px;letter-spacing:.06em}
 #tisya-shell .tisya-sub-search{display:flex;align-items:center;gap:10px;border:1px solid #d4be7e55;border-radius:40px;background:#00140f55;padding:0 15px;margin:20px 0}
 #tisya-shell .tisya-sub-search svg{width:20px;height:20px;flex-shrink:0;color:#c7b77f}
@@ -526,7 +526,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell .tisya-role-library .tisya-role-open,#tisya-shell .tisya-group-open{display:flex;align-items:center;gap:14px;grid-row:auto;padding:0;background:transparent;border:0;min-width:0;text-align:left;box-shadow:none}
 #tisya-shell .tisya-role-open img{width:62px;height:76px;flex-shrink:0;object-fit:cover;border-radius:10px;border:1px solid #c9b57c66}
 #tisya-shell .tisya-role-open>span,#tisya-shell .tisya-group-open>span:last-child{display:grid;gap:6px;min-width:0}
-#tisya-shell .tisya-role-open strong,#tisya-shell .tisya-group-open strong{font:normal 20px/1.45 TisyaReading,serif;color:#e4d8b1;overflow-wrap:anywhere}
+#tisya-shell .tisya-role-open strong,#tisya-shell .tisya-group-open strong{font:normal 20px/1.45 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#e4d8b1;overflow-wrap:anywhere}
 #tisya-shell .tisya-role-library .tisya-contact small,#tisya-shell .tisya-group-open small{font-size:11px;color:#95a497;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #tisya-shell .tisya-page:not(.tisya-home-page) .tisya-directory-menu{padding:0;min-width:36px;min-height:44px;align-self:center;border:0;background:transparent;font-size:22px;font-weight:300;border-radius:8px;box-shadow:none;color:#d1bc80}
 #tisya-shell .tisya-role-hero{display:flex;align-items:center;gap:20px;margin:22px 0 26px;min-width:0}
@@ -552,7 +552,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-shell #tisya-chat-loading{padding:18px;border:1px solid #b5a16d55;border-radius:18px;background:#000b09b8}
 #tisya-shell #tisya-chat-loading h3{font-weight:400;font-size:20px;color:#dac793}
 #tisya-shell #tisya-chat-loading button{margin:8px 8px 8px 0;background:#17382b66}
-#tisya-overlay .tisya-navigation .tisya-sheet{width:min(390px,94vw);background:radial-gradient(ellipse at 0 0,#164d3e88,transparent 50%),#030f0ef7;border:1px solid #c0ac6b66;border-radius:0 22px 22px 0;padding:24px 22px;font-family:TisyaReading,serif;box-shadow:15px 0 80px #0008}
+#tisya-overlay .tisya-navigation .tisya-sheet{width:min(390px,94vw);background:radial-gradient(ellipse at 0 0,#164d3e88,transparent 50%),#030f0ef7;border:1px solid #c0ac6b66;border-radius:0 22px 22px 0;padding:24px 22px;font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif;box-shadow:15px 0 80px #0008}
 #tisya-overlay .tisya-navigation header{border:0;margin-bottom:0}
 #tisya-overlay .tisya-navigation header h2{font-size:30px;font-weight:400;letter-spacing:.12em;color:#e1d09a}
 #tisya-overlay .tisya-navigation header button{background:transparent;border:0;font-size:12px}
@@ -570,7 +570,7 @@ body.tisya-active .tisya-turn-direction{margin:8px 0;padding:7px 10px;border-lef
 #tisya-overlay .tisya-navigation .tisya-note{font-size:11px;color:#82958b;margin-top:24px}
 #tisya-overlay .tisya-navigation .tisya-version{font-size:10px;letter-spacing:.08em;color:#667b70}
 /* Preserve the host drawer's size, placement, DOM, event handlers and visibility. */
-body.tisya-active #top-settings-holder>.drawer>.drawer-content{background:radial-gradient(ellipse at 10% 0,#184b3b88,transparent 40%),linear-gradient(#031812f5,#010c0bf7)!important;border-color:#c2ad6b66!important;border-radius:0 0 20px 20px!important;color:#dbdcc8;font-family:TisyaReading,serif!important;box-shadow:0 15px 60px #0005!important}
+body.tisya-active #top-settings-holder>.drawer>.drawer-content{background:radial-gradient(ellipse at 10% 0,#184b3b88,transparent 40%),linear-gradient(#031812f5,#010c0bf7)!important;border-color:#c2ad6b66!important;border-radius:0 0 20px 20px!important;color:#dbdcc8;font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif!important;box-shadow:0 15px 60px #0005!important}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(h2,h3,h4){color:#d8c58e;text-shadow:0 1px 0 #000;font-weight:400;letter-spacing:.05em}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),textarea,select){background:#000c0999!important;border:1px solid #b5a16d45!important;border-radius:9px!important;box-shadow:none!important;color:#dedbc6!important}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(textarea,select,input):focus-visible{outline:1px solid #c8b476;outline-offset:2px}
@@ -582,25 +582,25 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content hr{border-color:#
 #tisya-shell .tisya-chat-timeline .tisya-chat-row{box-shadow:none;border-radius:0}
 #tisya-shell .tisya-page:not(.tisya-home-page)>footer button{box-shadow:inset 0 1px #ddc88715}
 #tisya-overlay .tisya-navigation header{position:static;padding:0;background:transparent}
-#tisya-overlay .tisya-navigation header h2{font:400 30px/1.4 TisyaReading,serif}
-#tisya-overlay .tisya-navigation .tisya-menu-kicker{font-family:TisyaReading,serif}
+#tisya-overlay .tisya-navigation header h2{font:400 30px/1.4 var(--tisya-global-font,TisyaReading),TisyaReading,serif}
+#tisya-overlay .tisya-navigation .tisya-menu-kicker{font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif}
 #tisya-overlay .tisya-navigation button{box-shadow:none}
-#tisya-panel-controls{font-family:TisyaReading,serif;background:#061b17f5;border-bottom-color:#bca56b44}
+#tisya-panel-controls{font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif;background:#061b17f5;border-bottom-color:#bca56b44}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.range-block-title,.standoutHeader,.title_restorable){background:transparent!important;box-shadow:none!important;border-bottom:1px solid #b5a16d33;color:#d7c48b}
 body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_icon,button:not(.fa-solid)):not(.inline-drawer-toggle){min-height:36px}
 
 /* Play-first navigation: one searchable destination, advanced tools at rest. */
-.tisya-play-menu .tisya-play-intro{margin:6px 0 18px;color:#a6b5a7;font:15px/1.7 TisyaReading,serif}
+.tisya-play-menu .tisya-play-intro{margin:6px 0 18px;color:#a6b5a7;font:15px/1.7 var(--tisya-global-font,TisyaReading),TisyaReading,serif}
 .tisya-play-menu .tisya-settings-search{display:flex;align-items:center;gap:12px;border-bottom:1px solid #b9a67644;margin:20px 0;padding:6px 0}
 .tisya-play-menu .tisya-settings-search svg{width:20px;height:20px;flex-shrink:0;color:#c9b680}
-.tisya-play-menu .tisya-settings-search input{min-width:0;width:100%;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;font:16px/1.5 TisyaReading,serif;color:#ddd8bf}
+.tisya-play-menu .tisya-settings-search input{min-width:0;width:100%;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;font:16px/1.5 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#ddd8bf}
 .tisya-play-menu .tisya-settings-search:focus-within{border-bottom-color:#d1b775}
 .tisya-play-menu .tisya-play-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 24px}
 .tisya-play-menu .tisya-settings-links .tisya-setting-destination{display:flex;align-items:center;gap:12px;text-align:left;min-width:0;margin:0;padding:15px 12px;border:1px solid #b6a16d24;border-radius:12px;background:#02100cb8;box-shadow:none;font:inherit}
 .tisya-play-menu .tisya-setting-destination>svg{width:23px;height:23px;flex:0 0 23px;color:#cbb77e}
 .tisya-play-menu .tisya-setting-destination>svg:last-child{width:12px;flex-basis:12px;opacity:.4;margin-left:auto}
-.tisya-play-menu .tisya-setting-destination span{min-width:0}.tisya-play-menu .tisya-setting-destination strong{display:block;color:#d9c790;font:17px/1.5 TisyaReading,serif;font-weight:400}
-.tisya-play-menu .tisya-setting-destination small,.tisya-play-menu .tisya-settings-section summary small{display:block;color:#8fa497;font:12px/1.6 TisyaReading,serif;margin-top:4px;overflow-wrap:anywhere}
+.tisya-play-menu .tisya-setting-destination span{min-width:0}.tisya-play-menu .tisya-setting-destination strong{display:block;color:#d9c790;font:17px/1.5 var(--tisya-global-font,TisyaReading),TisyaReading,serif;font-weight:400}
+.tisya-play-menu .tisya-setting-destination small,.tisya-play-menu .tisya-settings-section summary small{display:block;color:#8fa497;font:12px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;margin-top:4px;overflow-wrap:anywhere}
 .tisya-play-menu .tisya-settings-section{background:transparent;border:0;border-top:1px solid #ad9c6730;border-radius:0;margin:0;padding:17px 0}
 .tisya-play-menu .tisya-settings-section summary{display:flex;justify-content:space-between;gap:12px;list-style:none}.tisya-play-menu .tisya-settings-section summary strong{font-weight:400}
 .tisya-play-menu .tisya-settings-section .tisya-settings-links{display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px}.tisya-play-menu [hidden]{display:none!important}
@@ -611,7 +611,7 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_
 #tisya-shell .tisya-settings-home .tisya-settings-search{margin:0 0 14px;padding:8px 0}
 #tisya-shell .tisya-settings-home .tisya-settings-section{padding:14px 0;margin:0}
 #tisya-shell .tisya-settings-home .tisya-settings-section:first-of-type{border-top:0;padding-top:0}
-#tisya-shell .tisya-settings-home .tisya-settings-section h3{font:14px/1.5 TisyaReading,serif;color:#b9c6b7;letter-spacing:.08em;margin:0 0 10px}
+#tisya-shell .tisya-settings-home .tisya-settings-section h3{font:14px/1.5 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#b9c6b7;letter-spacing:.08em;margin:0 0 10px}
 #tisya-shell .tisya-settings-home .tisya-settings-links{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 0}
 #tisya-shell .tisya-settings-home .tisya-library-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #tisya-shell .tisya-settings-home .tisya-setting-destination{padding:10px 11px;gap:10px;min-height:54px;border-radius:11px}
@@ -629,5 +629,5 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_
 #tisya-shell .tisya-sub-header{margin-bottom:14px}
 #tisya-shell h2.tisya-sub-title{font-size:30px}
 
-#tisya-shell .tisya-settings-home .tisya-settings-search input,#tisya-shell .tisya-settings-home .tisya-settings-search input::placeholder{font-family:TisyaReading,serif!important}
+#tisya-shell .tisya-settings-home .tisya-settings-search input,#tisya-shell .tisya-settings-home .tisya-settings-search input::placeholder{font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif!important}
 #tisya-shell .tisya-settings-home .tisya-setting-destination small{color:#aebdaf}

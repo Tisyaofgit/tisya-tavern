@@ -1,3 +1,4 @@
+import {warpLowerWater} from './lower-water-motion.js';
 import {prepareHair} from './home-hair-motion.js';
 /* Quiet water: rooted hair groups rotate subtly; face/body remain rigid.
    The shared atmosphere owns the background; eyelids keep their own masks.
@@ -95,13 +96,14 @@ function controller(canvas,assets,options={}){
     const hair=prepareHair(assets[options.gender||'female'],options.gender||'female',makeCanvas,options.seed,canvas.getBoundingClientRect?.().width||430);
     const requestAnimationFrame=window.requestAnimationFrame.bind(window),cancelAnimationFrame=window.cancelAnimationFrame.bind(window);
     let config={gender:'female',layout:false,backdrop:'transparent',footer:false,bubbleField:createBubbleField(options.seed),hair,...options};
+    const waterCanvas=makeCanvas(canvas.width,canvas.height),waterContext=waterCanvas.getContext('2d',{alpha:true});
     let enabled=true,destroyed=false,frame=0,elapsed=0,last=null,lastDraw=0;
-    function paint(){hair.setDisplayWidth(canvas.getBoundingClientRect?.().width||430);draw(ctx,assets,elapsed,{...config,blink:enabled&&!media.matches,hairEnabled:enabled&&!media.matches});}
+    function paint(){const displayWidth=canvas.getBoundingClientRect?.().width||430;hair.setDisplayWidth(displayWidth);const moving=enabled&&!media.matches;const lower=moving&&config.lowerWater!==false&&waterContext;draw(lower?waterContext:ctx,assets,elapsed,{...config,blink:moving,hairEnabled:moving});if(lower)warpLowerWater(ctx,waterCanvas,elapsed,{width:canvas.width,height:canvas.height,referenceWidth:displayWidth,millimeters:config.waterAmplitude??7.5,seed:config.seed??91027});}
     function tick(now){if(destroyed)return;if(!enabled||document.hidden||media.matches){frame=0;last=null;paint();return;}if(last!==null)elapsed+=(now-last)/1000;last=now;if(now-lastDraw>=1000/30){paint();lastDraw=now;}frame=requestAnimationFrame(tick);}
     function sync(){cancelAnimationFrame(frame);last=null;if(enabled&&!document.hidden&&!media.matches)frame=requestAnimationFrame(tick);else paint();}
     const blur=()=>sync(),focus=()=>sync();
     document.addEventListener('visibilitychange',sync);media.addEventListener('change',sync);window.addEventListener('blur',blur);window.addEventListener('focus',focus);
     paint();sync();
-    return {update(next){if(destroyed)throw Error('Renderer destroyed');if(next.gender&&!FORMS.includes(next.gender))throw Error('Unknown water form');config={...config,...next};paint();},setPlaying(value){if(destroyed)throw Error('Renderer destroyed');enabled=!!value;sync();},isPlaying(){return !destroyed&&enabled&&!document.hidden&&!media.matches;},seek(seconds){if(destroyed)throw Error('Renderer destroyed');if(!Number.isFinite(seconds)||seconds<0)throw Error('Invalid time');elapsed=seconds;last=null;paint();},destroy(){if(destroyed)return;destroyed=true;hair.dispose();cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);window.removeEventListener('blur',blur);window.removeEventListener('focus',focus);ctx.clearRect(0,0,canvas.width,canvas.height);}};
+    return {update(next){if(destroyed)throw Error('Renderer destroyed');if(next.gender&&!FORMS.includes(next.gender))throw Error('Unknown water form');config={...config,...next};paint();},setPlaying(value){if(destroyed)throw Error('Renderer destroyed');enabled=!!value;sync();},isPlaying(){return !destroyed&&enabled&&!document.hidden&&!media.matches;},seek(seconds){if(destroyed)throw Error('Renderer destroyed');if(!Number.isFinite(seconds)||seconds<0)throw Error('Invalid time');elapsed=seconds;last=null;paint();},destroy(){if(destroyed)return;destroyed=true;hair.dispose();waterCanvas.width=waterCanvas.height=1;cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',sync);media.removeEventListener('change',sync);window.removeEventListener('blur',blur);window.removeEventListener('focus',focus);ctx.clearRect(0,0,canvas.width,canvas.height);}};
 }
 export {draw,shift,shiftY,controller};

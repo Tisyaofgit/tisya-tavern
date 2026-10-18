@@ -1,4 +1,5 @@
 import {mountAtmosphere} from './atmosphere-scene.js';
+import {mountTouchFeedback} from './touch-feedback.js';
 import {controller} from './home-water-renderer.js';
 
 export const homeAsset = name => new URL(`./assets/home-v1/${name}`, import.meta.url).href;
@@ -13,6 +14,7 @@ export function mountHomeArt(document, container, {gender, playing=true, effects
     container.append(canvas);
     let disposed=false, renderer=null,atmosphere=null;
     try{atmosphere=mountScene(document,container,{playing,effects,onError});}catch(error){onError?.(error);}
+    const touch=mountTouchFeedback(document,container,{getDisplay:()=>effects??{},getMotion:()=>playing,onTap:(x,y)=>atmosphere?.tap(x,y),onError});
     const pending=new Set();
     const load=(name,width=853,height=1844)=>new Promise((resolve,reject)=>{
         const image=new window.Image();
@@ -23,11 +25,11 @@ export function mountHomeArt(document, container, {gender, playing=true, effects
     });
     const ready=Promise.all([load(`${gender}-water.webp`),load(`${gender}-blink.webp`,110,120),...(gender==='male'?[load('male-eye-detail.webp',440,260)]:[])]).then(([water,blink,eyes])=>{
         if(disposed)return;
-        renderer=controller(canvas,{[gender]:water,[gender+'Blink']:blink,maleEyes:eyes},{gender,backdrop:'transparent'});
+        renderer=controller(canvas,{[gender]:water,[gender+'Blink']:blink,maleEyes:eyes},{gender,backdrop:'transparent',lowerWater:effects?.人物水流!==false,waterAmplitude:effects?.水流摆幅??7.5});
         renderer.setPlaying(playing);
     }).catch(error=>{if(!disposed)onError?.(error);});
-    return {ready,setPlaying(value){playing=!!value;renderer?.setPlaying(playing);atmosphere?.setPlaying(playing);},setEffects(value){atmosphere?.setEffects(value);},dispose(){
-        if(disposed)return;disposed=true;atmosphere?.dispose();renderer?.destroy();renderer=null;
+    return {ready,setPlaying(value){playing=!!value;renderer?.setPlaying(playing);atmosphere?.setPlaying(playing);},setEffects(value){effects=value;atmosphere?.setEffects(value);renderer?.update({lowerWater:value?.人物水流!==false,waterAmplitude:value?.水流摆幅??7.5});touch.refresh();},dispose(){
+        if(disposed)return;disposed=true;touch.dispose();atmosphere?.dispose();renderer?.destroy();renderer=null;
         for(const entry of [...pending]){entry.cancel();entry.image.src='';}
         canvas.remove();canvas.width=canvas.height=1;
     }};

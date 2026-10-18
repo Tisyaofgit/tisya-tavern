@@ -31,7 +31,7 @@ test('one scene clock freezes on pause, hidden and reduced motion; disabled rema
  scene.dispose();assert.equal(f.frames.size,0);assert.equal(f.d.querySelectorAll('canvas').length,0);f.hide(false);assert.equal(f.frames.size,0);await f.close();
 });
 test('chat singleton survives message deletion and rejects controls, scrolls, long presses; sound is independent of motion',async()=>{
- const f=setup(),chat=f.d.querySelector('#chat');let motion=true,display={...CHAT_DEFAULTS},starts=0,stops=0;
+ const f=setup(),chat=f.d.querySelector('#chat');let motion=true,display={...CHAT_DEFAULTS,音效类型:'bubble'},starts=0,stops=0;
  f.w.AudioContext=class{state='running';currentTime=0;destination={};resume(){return Promise.resolve();}createOscillator(){return {frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){},start(){starts++;},stop(){stops++;}};}createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}close(){return Promise.resolve();}};
  const scene=mountChatEffects(f.d,{getMotion:()=>motion,getDisplay:()=>display,onError:e=>f.errors.push(e)});
  assert.throws(()=>mountChatEffects(f.d),/已挂载/);const canvas=f.d.querySelector('#tisya-chat-effects canvas');chat.querySelector('p').remove();assert.equal(f.d.querySelector('#tisya-chat-effects canvas'),canvas);
@@ -70,9 +70,9 @@ test('hair targets are smooth and bounded to a five CSS-mm total envelope across
  }
 });
 
-test('background off leaves a static frame with no RAF and a tap runs only until its fragments fade',async()=>{
+test('background off leaves a static frame with no RAF and a tap runs only until its concentric rings fade',async()=>{
  const f=setup(),scene=mountAtmosphere(f.d,f.d.querySelector('#chat'),{effects:{...CHAT_DEFAULTS,背景特效模式:'关闭'}});
- assert.equal(f.frames.size,0);assert.equal(scene.tap(100,100),true);assert.equal(f.frames.size,1);for(let i=0;i<70;i++)f.step();assert.equal(f.frames.size,0);
+ assert.equal(f.frames.size,0);assert.equal(scene.tap(100,100),true);assert.equal(f.frames.size,1);for(let i=0;i<120;i++)f.step();assert.equal(f.frames.size,0);
  scene.setEffects(CHAT_DEFAULTS);assert.equal(f.frames.size,1);scene.setEffects({...CHAT_DEFAULTS,背景特效模式:'关闭'});assert.equal(f.frames.size,0);scene.dispose();await f.close();
 });
 

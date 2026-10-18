@@ -1,3 +1,5 @@
+import {createGlobalFonts} from './global-fonts.js';
+import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
@@ -92,11 +94,13 @@ const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
+let globalFonts=null;
+function fontsService(){return globalFonts??=createGlobalFonts(document,{getSettings:settings,saveSettings:saveInterfaceSettings,headers:()=>context().getRequestHeaders(),onError:error});}
 const FONT_URLS=Array.from({length:4},(_,i)=>new URL(`./font/reading.part${i+1}.bin`,import.meta.url).href);
 async function startFont(){
  if(fontController)return;const controller=new AbortController();fontController=controller;
  const timer=setTimeout(()=>controller.abort(),120000);
- try{releaseFont=await loadReadingFont({urls:FONT_URLS,headers:()=>context().getRequestHeaders(),signal:controller.signal,onState:text=>{fontState=text;const el=query('#tisya-font-state');if(el)el.textContent=text;}});refreshPanelFonts(document);appearance?.refresh();}
+ try{releaseFont=await loadReadingFont({urls:FONT_URLS,headers:()=>context().getRequestHeaders(),signal:controller.signal,onState:text=>{fontState=text;const el=query('#tisya-font-state');if(el)el.textContent=text;}});await fontsService().refresh();refreshPanelFonts(document);appearance?.refresh();}
  catch(err){if(enabled){fontState='使用默认字体 · '+String(err.message??err);error(err);const el=query('#tisya-font-state');if(el)el.textContent=fontState;}}
  finally{clearTimeout(timer);if(fontController===controller)fontController=null;}
 }
@@ -262,11 +266,12 @@ async function saveInterfaceSettings(next){assertIdle();const previous=settings(
 const chatLoading=createChatLoadingController({powerUser:power_user,persist:saveSettings,assertIdle,isBounded:isBoundedChatSurfaceView,clearCache:async()=>{await clearReaderCache();nativeDisplay?.clear();},onApplied:count=>{for(const id of ['chat_truncation','chat_truncation_counter']){const input=document.getElementById(id);if(input)input.value=String(count);}}});
 function openSettings(tab='play',initialView=''){
  if(tab==='tables'&&['assistant','genesis','foundation','core','style'].includes(initialView))return openAssistant(initialView==='core'?'core-assets':initialView);
+ if(tab==='theme'&&!context().chatId){if(!mayLeaveUtility())return;renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
  if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
  renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
  utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,initialView,version:VERSION,embedded:true,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
- saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),onApplied:()=>{appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
+ saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onApplied:()=>{appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
  onIdentity:ref=>openIdentity(ref),onAssistant:task=>openAssistant(task),onNative:kind=>{if(kind==='agent')extensionSection('agent');else nativeDrawer(kind==='api'?'sys-settings-button':'ai-config-button');}
  });utility.ready.catch(error);
 }
@@ -620,7 +625,7 @@ function stopUI() {
     if(characterGroup?.isBusy()||characterGroup?.hasDraft())throw Error('角色页面还有未保存的修改');characterGroup?.dispose();characterGroup=null;
     if(worldbookConsole?.isBusy()||worldbookConsole?.hasDraft())throw Error('世界书还有未保存的修改，请先保存或放弃');worldbookConsole?.dispose();worldbookConsole=null;
     if(busy||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
-    clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
+    clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;globalFonts?.dispose();globalFonts=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
     document.querySelectorAll('.tisya-actions,.tisya-turn-direction').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
@@ -717,7 +722,7 @@ function init() {
     }
     cleanups.push(()=>clearTimeout(refreshTimer));
     let visibleWorld=context().chatId?configStore.read().key:null;const onChange=()=>{const current=context().chatId?configStore.read().key:null;if(current===visibleWorld)return;visibleWorld=current;if(notebook||utility){close();hidePage();}else if(readerToken||revisionEditor||!root.classList.contains('tisya-page-open'))close();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
-    home().catch(error);decorate();startFont();
+    home().catch(error);decorate();startFont();void fontsService().refresh().catch(error);
 }
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
