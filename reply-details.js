@@ -48,12 +48,12 @@ export const replyControlsCSS=`
 .round-empty{box-sizing:border-box;align-self:start;margin:0;padding:14px 18px;border:1px solid #a8c7ad80;border-radius:30px 25px 32px 24px;background:linear-gradient(145deg,#456b5660,#0b342c9c);box-shadow:inset 0 2px 3px #e5e8be25,0 5px 12px #001c1830;color:#cbdac7;font:14px/1.8 TisyaReading,serif;overflow-wrap:anywhere;min-width:0}
 
 .action-mode-control{position:relative;display:flex;justify-content:flex-end;margin:-44px 0 12px;min-height:44px}
-.action-mode-toggle{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#dfc88d;font:13px/1.6 TisyaReading,serif;padding:3px 6px;min-height:44px}
+.action-mode-toggle{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--gold,#ffedbf);font:13px/1.6 TisyaReading,serif;padding:3px 6px;min-height:44px}
 .action-mode-toggle img{width:27px;height:35px;object-fit:contain}
 .action-mode-menu{position:absolute;right:0;top:100%;z-index:10;width:175px;padding:7px;background:#092b26;border:1px solid #c9bb87;border-radius:12px;box-shadow:0 12px 28px #001818b0}
 .action-mode-menu[hidden]{display:none!important}.action-mode-menu button{display:block;width:100%;text-align:left;border:0;background:none;color:inherit;font:15px/1.6 TisyaReading,serif;min-height:46px;padding:8px}
 .action-mode-menu [aria-checked=true]{color:#f5dca0;background:#a5b18822;border-radius:8px}
-.action-feedback{margin:8px 2px 0;font:12px/1.65 TisyaReading,serif;min-height:18px;color:#a8baa0}
+.action-feedback{margin:8px 2px 0;font:12px/1.65 TisyaReading,serif;min-height:18px;color:var(--muted,#e8f0ea)}
 .action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}
 .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;

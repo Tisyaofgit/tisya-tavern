@@ -75,3 +75,18 @@ test('background off leaves a static frame with no RAF and a tap runs only until
  assert.equal(f.frames.size,0);assert.equal(scene.tap(100,100),true);assert.equal(f.frames.size,1);for(let i=0;i<70;i++)f.step();assert.equal(f.frames.size,0);
  scene.setEffects(CHAT_DEFAULTS);assert.equal(f.frames.size,1);scene.setEffects({...CHAT_DEFAULTS,背景特效模式:'关闭'});assert.equal(f.frames.size,0);scene.dispose();await f.close();
 });
+
+// Distinct chat/composer bounds reproduce the uncovered strip from Android.
+test('chat backdrop covers the composer gutter and follows shell-only resizing without moving controls',async()=>{
+ const f=setup(),sheld=f.d.querySelector('#sheld'),chat=f.d.querySelector('#chat');let shellHeight=900,resize;const observed=[];
+ const form=f.d.createElement('form');form.id='send_form';form.style.cssText='margin-top:14px;position:relative';form.innerHTML='<textarea></textarea><button>发送</button>';sheld.append(form);const before=form.outerHTML;
+ sheld.getBoundingClientRect=()=>({left:20,top:30,width:390,height:shellHeight});
+ chat.getBoundingClientRect=()=>({left:28,top:50,width:374,height:600});
+ f.w.ResizeObserver=class{constructor(cb){resize=cb;}observe(node){observed.push(node);}disconnect(){}};
+ const scene=mountChatEffects(f.d,{getMotion:()=>false}),backdrop=f.d.querySelector('#tisya-chat-effects');
+ assert.equal(backdrop.style.top,'20px');assert.equal(backdrop.style.left,'8px');assert.equal(backdrop.style.width,'374px');assert.equal(backdrop.style.height,'880px');
+ assert.ok(observed.includes(chat));assert.ok(observed.includes(sheld));assert.equal(form.outerHTML,before);assert.equal(form.parentNode,sheld);
+ shellHeight=700;resize();assert.equal(backdrop.style.height,'680px');
+ shellHeight=500;resize();assert.equal(backdrop.style.height,'600px');
+ scene.dispose();assert.equal(f.d.querySelector('#tisya-chat-effects'),null);assert.equal(form.outerHTML,before);await f.close();
+});

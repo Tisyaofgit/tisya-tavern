@@ -26,3 +26,10 @@ test('broken prose formatting has an explicit local notice without exposing the 
  const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const errors=[],source=fixture({body:'〔信笺〕未闭合',taskExtra:'PRIVATE_CANARY'}),view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,formatBody:x=>x,onChooseAction(){},getMotion:()=>false,onError:e=>errors.push(e.code)});
  assert.match(view.host.shadowRoot.querySelector('.story [role=status]').textContent,/TISYA_MARK_UNCLOSED/);assert.ok(!view.host.shadowRoot.textContent.includes('PRIVATE_CANARY'));assert.deepEqual(errors,['TISYA_MARK_UNCLOSED','TISYA_PIPES_LABEL']);view.dispose();await w.happyDOM.abort();
 });
+
+test('reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables',async()=>{
+ const {w,d,parse}=setup();const root=parse(formatProse(d,'“潮声。”',x=>'<p>'+x+'</p>'));
+ assert.ok(root.querySelector('[data-tisya-prose="dialogue"]'));
+ assert.match(proseCSS,/var\(--tisya-dialogue-color,#ffedbf\)/);assert.match(proseCSS,/var\(--tisya-punctuation-color,#e8f0ea\)/);
+ const custom='<section style="color:#123456"><p>“卡片自己的颜色。”</p></section>';assert.equal(parse(formatProse(d,custom,x=>x)).querySelector('section').outerHTML,parse(custom).querySelector('section').outerHTML);await w.happyDOM.abort();
+});

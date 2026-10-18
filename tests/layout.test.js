@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
+import {readFileSync} from 'node:fs';
 import { drawerEntries, mountLayout, installComposer, chatPreview, chatTitle } from '../layout.js';
 
 function fixture() {
@@ -98,4 +99,13 @@ test('extension state, long press, visible text and complex widgets remain nativ
     agent.dispatchEvent(new w.Event('pointerdown'));assert.equal(presses,1);assert.equal(agent.parentElement,parent);assert.equal(agent.getAttribute('aria-pressed'),'false');assert.equal(agent.classList.contains('displayNone'),true);
     assert.equal(named.classList.contains('tisya-tool-caption'),false);assert.equal(widget.classList.contains('tisya-tool-compact'),false);assert.equal(widget.querySelector('select').value,'原生设置');
     agent.classList.remove('displayNone');agent.setAttribute('aria-pressed','true');stop();assert.equal(agent.getAttribute('aria-pressed'),'true');assert.equal(agent.parentElement,parent);assert.equal(agent.classList.contains('tisya-composer-tool'),false);w.happyDOM.abort();
+});
+
+test('composer surround is transparent only while active; its framed input and native controls remain',async()=>{
+ const w=new Window(),d=w.document;d.body.innerHTML='<div id="form_sheld"><form id="send_form"><textarea id="send_textarea"></textarea><button id="send_but">发送</button></form></div>';
+ const native=d.createElement('style');native.textContent='#form_sheld{background:#061d1d;box-shadow:0 -10px 0 #061d1d}#send_form{background:#135544}';d.head.append(native);
+ const wrapper=d.querySelector('#form_sheld'),form=d.querySelector('#send_form'),button=d.querySelector('#send_but'),before=w.getComputedStyle(wrapper).backgroundColor;let clicks=0;button.addEventListener('click',e=>{e.preventDefault();clicks++;});
+ const skin=d.createElement('style');skin.textContent=readFileSync(new URL('../shell.css',import.meta.url),'utf8');d.head.append(skin);d.body.classList.add('tisya-active');
+ assert.equal(w.getComputedStyle(wrapper).backgroundColor,'transparent');assert.equal(w.getComputedStyle(wrapper).boxShadow,'none');assert.notEqual(w.getComputedStyle(form).backgroundImage,'none');assert.equal(button.parentElement,form);button.click();assert.equal(clicks,1);
+ d.body.classList.remove('tisya-active');assert.equal(w.getComputedStyle(wrapper).backgroundColor,before);assert.equal(d.querySelector('#send_but'),button);await w.happyDOM.abort();
 });

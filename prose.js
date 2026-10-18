@@ -1,6 +1,6 @@
 import {decorateBody,bodyCSS,formatMarks,MARK_CSS} from './typography-core.js';
 
-export const proseStyles=(options={})=>bodyCSS(options)+MARK_CSS;
+export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS;
 export const proseCSS=proseStyles();
 
 // Only receives the public body selected by inspectMessage. Host sanitization
