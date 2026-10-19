@@ -1,3 +1,4 @@
+import {initializePresetConnection} from './preset-connection.js';
 import {createGlobalFonts} from './global-fonts.js';
 import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
@@ -16,7 +17,7 @@ import {mountSettingsHome} from './settings-home.js';
 import {hideFullPanels,hideAllPanels,refreshPanelFonts} from './panel-surface.js';
 import {createUserEditHistory,installUserEditHistory,userRevisionMaterial,userRerollTarget} from './user-revision.js';
 import {directoryState,directoryEntry,directoryToken,changeDirectory,mountDirectoryHold} from './home-directory.js';
-import {deleteCharacter,deleteCharacterChatByName,closeCurrentChat} from '/script.js';
+import {deleteCharacterChatByName,closeCurrentChat} from '/script.js';
 import {createChatLoadingController,mountChatLoadingSettings} from './chat-loading.js';
 import {select_group_chats} from '/scripts/group-chats.js';
 import {power_user} from '/scripts/power-user.js';
@@ -353,7 +354,7 @@ async function directoryDelete(){
         if(String(context().characterId)===String(d.card.id)&&context().chatId===d.target.file){if(!await closeCurrentChat())throw Error('当前聊天未能关闭，未删除');}
         const live=resolveDirectory(d.token);await deleteCharacterChatByName(live.card.id,d.target.file);
         if((await listChats(live.card.id)).some(c=>c.file_name.replace(/\.jsonl$/i,'')===d.target.file))throw Error('宿主未确认删除，会话仍在');
-    }else{if(await deleteCharacter(d.target.avatar,{deleteChats:false})!==true||context().characters.some(c=>c.avatar===d.target.avatar))throw Error('宿主未确认角色已删除');}
+    }else{const manager=ensureCharacterGroup(),card=await manager.dispatch('read',{id:d.target.avatar});await manager.dispatch('delete',{type:'character',id:d.target.avatar,revision:card.revision,confirm:d.target.avatar,deleteChats:false});if(context().characters.some(c=>c.avatar===d.target.avatar))throw Error('宿主未确认角色已删除');}
     // The host has committed deletion; a failed preference save must not pretend rollback.
     const current=settings(),next=changeDirectory(current,d.token,{名称:null,置顶:null});
     try{await saveInterfaceSettings(next);}catch(e){error(new Error('内容已删除，但目录偏好清理未完成：'+e.message));}
@@ -730,6 +731,7 @@ export function registerChatSurface() {
     if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content}){resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,async()=>{
+    initializePresetConnection(context(),document);
     installUserEditHistory(document,context,userEditHistory);
     const readerCache=startReaderCache(window,error);
     try{init();}catch(err){error(err);}
