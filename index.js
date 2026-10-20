@@ -1,3 +1,4 @@
+import {selectChatReady} from './chat-selection.js';
 import {createUiOperations,messageActionExclusive} from './ui-operation.js';
 import {createGenerationOperations} from './generation-operation.js';
 import {initializePresetConnection} from './preset-connection.js';
@@ -385,7 +386,7 @@ async function showCard(id) {
     const prefs=settings();directoryState(prefs);const label=directoryEntry(prefs,card).名称||card.name;
     chats.sort((a,b)=>(directoryEntry(prefs,card,b).置顶||0)-(directoryEntry(prefs,card,a).置顶||0));
     page(label,`<div class="tisya-role-hero"><img src="${esc(getThumbnailUrl('avatar',card.avatar))}" alt=""><p>${esc(chatPreview(card.description||card.data?.description||'故事，仍在继续。'))}</p></div><section class="tisya-sub-card"><h3>会话 <small>${chats.length} 段</small></h3><div class="tisya-list tisya-chat-timeline">${chats.map((chat,i)=>{const entry=directoryEntry(prefs,card,chat);return `<div class="tisya-directory-row" data-directory="${esc(directoryToken(card,chat))}"><button type="button" class="tisya-chat-row" data-chat-index="${i}"><strong>${entry.置顶?'置顶 · ':''}${esc(entry.名称||chatTitle(chat.file_name,card.name))}</strong><small>${esc(chatPreview(chat.mes))}</small></button><button type="button" class="tisya-directory-menu" data-tisya-action="directory-menu:${encodeURIComponent(directoryToken(card,chat))}" aria-label="会话操作菜单">&gt;</button></div>`;}).join('') || '<p>还没有会话</p>'}</div></section><footer>${button('角色资料与会话管理',`select:${id}`)}</footer>`);
-    root.querySelectorAll('[data-chat-index]').forEach(el=>el.addEventListener('click',()=>run(async()=>{assertIdle();if(context().characters[id]?.avatar!==card.avatar)throw Error('角色列表已变化，请重新打开');const file=chats[Number(el.dataset.chatIndex)].file_name.replace(/\.jsonl$/,'');await context().selectCharacterById(id,{switchMenu:false,chatFile:file});if(String(context().characterId)!==String(id)||context().chatId!==file)throw new Error('宿主未切换到目标会话');if(epoch===renderEpoch)hidePage();},{label:'打开所选会话'})));
+    root.querySelectorAll('[data-chat-index]').forEach(el=>el.addEventListener('click',()=>run(async()=>{assertIdle();if(context().characters[id]?.avatar!==card.avatar)throw Error('角色列表已变化，请重新打开');const file=chats[Number(el.dataset.chatIndex)].file_name.replace(/\.jsonl$/,'');await selectChatReady({getContext:context,id,file,onLateError:error});if(String(context().characterId)!==String(id)||context().chatId!==file)throw new Error('宿主未切换到目标会话');if(epoch===renderEpoch)hidePage();},{label:'打开所选会话'})));
 }
 async function home() {
     const epoch=++renderEpoch;
@@ -408,7 +409,7 @@ async function home() {
             if(!enabled||epoch!==renderEpoch)throw Error('会话主页已关闭，请重新打开');
             if(context().characters[card.id]?.avatar!==card.avatar)throw Error('角色列表已变化，请刷新');
             const file=chat.file_name.replace(/\.jsonl$/,'');
-            await context().selectCharacterById(card.id,{switchMenu:false,chatFile:file});
+            await selectChatReady({getContext:context,id:card.id,file,onLateError:error});
             if(String(context().characterId)!==String(card.id)||context().chatId!==file)throw Error('宿主未切换到目标会话');
             if(enabled&&epoch===renderEpoch)hidePage();
         },{label:'打开所选会话'})
