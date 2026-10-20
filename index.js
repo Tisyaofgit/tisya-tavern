@@ -1,3 +1,4 @@
+import {createGenerationOperations} from './generation-operation.js';
 import {initializePresetConnection} from './preset-connection.js';
 import {createGlobalFonts} from './global-fonts.js';
 import {mountThemeWorkbench} from './theme-workbench.js';
@@ -70,7 +71,7 @@ import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';
 import { registerPresetProtocol } from './preset.js';
-import { setUserName, setExtensionPrompt, isGenerating, Generate, swipe, deleteSwipe, messageEdit, hydrateChatMessageSwipes, isMessageSwipeable, getOverswipeBehavior, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata } from '/script.js';
+import { setUserName, setExtensionPrompt, isGenerating, Generate, swipe, deleteSwipe, messageEdit, hydrateChatMessageSwipes, isMessageSwipeable, getOverswipeBehavior, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata, waitForGenerationIdle } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
 import { capture, validate, groupContacts } from './model.js';
@@ -93,6 +94,7 @@ let displaySaving=false;
 async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
+let nativeGenerationEpoch=0;
 let root, overlay, observer, enabled = true, busy = false, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 let globalFonts=null;
@@ -128,9 +130,10 @@ function settings() {
 }
 function getActionMode(){const value=settings().行动建议?.写入方式??'续接输入框';const row=ACTION_MODES.find(row=>row.label===value);if(!row)throw Error('行动写入方式配置损坏');return row.id;}
 function setActionMode(mode){const row=ACTION_MODES.find(row=>row.id===mode);if(!row)throw Error('行动写入方式无效');const next=structuredClone(settings());next.行动建议={...(next.行动建议??{}),写入方式:row.label};context().extensionSettings[KEY]=next;context().saveSettingsDebounced();appearance?.refresh();}
+const generationOperations=createGenerationOperations({waitForIdle:()=>waitForGenerationIdle()});
 const communication=createCommunication({getContext:context,persist:persistConversationMetadata,request:(...args)=>configHost.request(...args),assertIdle,onChange:()=>communicationUI?.refresh()});
 const userEditHistory=createUserEditHistory();
-const revisionController=createRevisionController({getContext:context,assertIdle,hydrate:hydrateChatMessageSwipes,swipe,deleteSwipe,branch:branchChat,
+const revisionController=createRevisionController({getContext:context,assertIdle,runGeneration:fn=>generationOperations.run(fn),hydrate:hydrateChatMessageSwipes,swipe,deleteSwipe,branch:branchChat,
  stageFork:(...args)=>tableService.stageFork(...args),activateFork:()=>tableService.activateFork(),cancelFork:()=>tableService.cancelFork(),prepare:()=>tableService.ensureInitialized({scope:'manual'}),canSwipe:isMessageSwipeable,overswipe:getOverswipeBehavior,setRevision:value=>configHost.setRevision(value),setUserRevision:value=>configHost.setUserRevision(value),archive:()=>tableService.archive({scope:'generation'}),feedback:value=>communication.recordFeedback(value),onState:()=>decorate()});
 function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy || revisionController.active() || communication.busy()) throw new Error('请先等待或停止正在进行的生成');
@@ -172,7 +175,7 @@ function returnToSettings(){if(!mayLeaveUtility())return false;nav();return true
 function ensureCharacterGroup(){characterGroup??=createCharacterGroupHost({document,pins:{read:(type,id)=>directoryEntry(settings(),{avatar:type==='group'?'group:'+id:id}).置顶,write:async(type,id,enabled)=>saveInterfaceSettings(changeDirectory(settings(),directoryToken({avatar:type==='group'?'group:'+id:id}),{置顶:enabled?Date.now():null}))},getContext:context,assertIdle,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,worldbookBlocked:()=>!!worldbookConsole?.hasDraft()||!!worldbookConsole?.isBusy(),openWorldbook:async id=>openWorldbook(id)});characterGroup.identity.connect(identityService);return characterGroup;}
 function openCharacterGroup(type='character',id){close();closeNativeDrawers();ensureCharacterGroup().open({type,id});}
 
-function openWorldbook(characterId){close();closeNativeDrawers();worldbookConsole??=createWorldbookConsole({conditionEngine:worldbookConditions,document,getContext:context,assertIdle,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,openNative:()=>nativeDrawerOriginal('WI-SP-button'),characterLinks:ensureCharacterGroup().bindings});worldbookConsole.open(characterId);}
+function openWorldbook(characterId){close();closeNativeDrawers();worldbookConsole??=createWorldbookConsole({conditionEngine:worldbookConditions,document,getContext:context,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,openNative:()=>nativeDrawerOriginal('WI-SP-button'),characterLinks:ensureCharacterGroup().bindings});worldbookConsole.open(characterId);}
 function nativeDrawer(key){if(key==='persona-management-button')return openIdentity();if(key==='WI-SP-button')return openWorldbook();return nativeDrawerOriginal(key)}
 function nativeDrawerOriginal(key) {
     const entry=drawerEntries(document).find(entry=>entry.key===key);
@@ -537,27 +540,28 @@ function openRevision(token,selection){
   close();closeNativeDrawers();hidePage();try{await revisionController.generate(token,options);}finally{tableService.clear({scope:'generation'});decorate();}
  }});
 }
-async function rerollAfterUser(token){
+async function rerollAfterUser(token,operation){
     const target=userRerollTarget(context(),token);
     if(target)return revisionController.generate(target,null);
     if(context().onlineStatus==='no_connection')throw Error('模型尚未连接，未改动消息');
     userRevisionMaterial(token.message);
-    const options=await getAgentGenerationOptions({generationType:'normal',mainApi:context().mainApi,selectedGroup:context().groupId});
-    await tableService.ensureInitialized({scope:'manual'});assertIdle();validate(context(),token,{tail:true});
+    const options=await operation.wait(()=>getAgentGenerationOptions({generationType:'normal',mainApi:context().mainApi,selectedGroup:context().groupId}));
+    await tableService.ensureInitialized({scope:'manual'});operation.check();assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw Error('输入框新增了草稿，未发送重投');
     const material=userRevisionMaterial(token.message);generationBusy=true;
-    try{configHost.setUserRevision(material?{...material,messageId:token.id}:null);decorate();await Generate('normal',{...options,automatic_trigger:true});}
+    try{configHost.setUserRevision(material?{...material,messageId:token.id}:null);decorate();await operation.host(()=>Generate('normal',{...options,automatic_trigger:true}));}
     finally{configHost.setUserRevision(null);generationBusy=false;decorate();}
 }
-async function generateAt(token, reroll = false) {
-    if(reroll){assertIdle();validate(context(),token,{tail:true});if(String(query('#send_textarea')?.value??'').trim())throw Error('剧情输入框有草稿，请先发送或暂存后再重骰');closeNativeDrawers();hidePage();try{if(token.message.is_user)await rerollAfterUser(token);else await revisionController.generate(token,null);}finally{tableService.clear({scope:'generation'});decorate();}return;}
+function generateAt(token,reroll=false){return generationOperations.run(operation=>generateAtOperation(token,reroll,operation));}
+async function generateAtOperation(token, reroll, operation) {
+    if(reroll){assertIdle();validate(context(),token,{tail:true});if(String(query('#send_textarea')?.value??'').trim())throw Error('剧情输入框有草稿，请先发送或暂存后再重骰');closeNativeDrawers();hidePage();try{if(token.message.is_user)await rerollAfterUser(token,operation);else await revisionController.generate(token,null);}finally{tableService.clear({scope:'generation'});decorate();}return;}
     assertIdle();const selected=validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim()) throw new Error('输入框有草稿，请先发送或清空后操作');
     if(context().onlineStatus==='no_connection')throw new Error('模型尚未连接，未回溯消息');
     const continueText=reroll?'':String(settings().继续用户消息??'').trim();
     const type=reroll&&!selected.is_user&&!selected.is_system?'regenerate':'normal';
     const ctx=context();
-    const options=await getAgentGenerationOptions({generationType:type,mainApi:ctx.mainApi,selectedGroup:ctx.groupId});
+    const options=await operation.wait(()=>getAgentGenerationOptions({generationType:type,mainApi:ctx.mainApi,selectedGroup:ctx.groupId}));
     assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
     const following=context().chat.slice(token.id+1);
@@ -566,19 +570,20 @@ async function generateAt(token, reroll = false) {
     generationBusy=true;decorate();let deleted=0;
     try {
         for(let id=token.length-1;id>token.id;id--) {
-            validate(context(),token);
+            operation.check();validate(context(),token);
             if(context().chat.length!==token.length-deleted||context().chat[id]!==following[id-token.id-1]||JSON.stringify(context().chat[id])!==snapshots[id-token.id-1])throw new Error('回溯期间历史已变化');
             await context().deleteMessage(id,undefined,false);
             if(context().chat.length!==token.length-deleted-1)throw new Error('宿主未完成消息删除');
             deleted++;
+            if(operation.signal.aborted){await context().saveChat();operation.check();}
         }
         validate(context(),token);
-        if(deleted)await context().saveChat();
+        if(deleted)await context().saveChat();operation.check();
         validate(context(),token);
         if(context().chat.length!==token.id+1)throw new Error('回溯后消息数量不符');
         if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未发送继续信息');
         if(continueText){const input=query('#send_textarea');if(!input)throw new Error('宿主输入框不存在');input.value=continueText;input.dispatchEvent(new Event('input',{bubbles:true}));}
-        await Generate(type,{...options,automatic_trigger:!continueText});
+        await operation.host(()=>Generate(type,{...options,automatic_trigger:!continueText}));
     } catch(err) {
         throw new Error(`${deleted?'已删除后续 '+deleted+' 条消息；':''}生成未完成：${err.message}`);
     } finally { generationBusy=false;decorate(); }
@@ -742,7 +747,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
      worldbookOrder=installWorldbookOrder({getContext:context,onError:error});
-     bind('WORLDINFO_SCAN_DONE',p=>worldbookConditions.scanDone(p));bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));bind('GENERATION_AFTER_COMMANDS',async(...args)=>{worldbookOrder?.clear();worldbookConditions.begin(args[0],{...args[1],dryRun:args[2]===true||args[1]?.dryRun===true});tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天开始新一轮，旧推进任务已停止'});nativeConfiguration.clearScan();preparationError=null;try{if(identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('世界书保存尚未完成，请先等待或重试保存');await tableService.assertIdentityCompatible(user_avatar);if(!['quiet','impersonate'].includes(args[0])){await tableService.ensureInitialized({scope:'generation'});await tableService.syncNative({scope:'generation'});}await communication.beginNative(String(query('#send_textarea')?.value??''),...args);return await configHost.before(...args);}catch(e){await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}});bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);await worldbookConditions.entriesLoaded(p);});if(tableService.worldbook.available())bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{try{await worldbookConditions.assertReady();if(preparationError)throw preparationError;worldbookOrder?.assertReady();nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{worldbookConditions.end();const configHostAccepted=configHost.generationAccepted();communication.ended(configHost.generationAccepted());await communication.finishNative(configHost.generationAccepted()).catch(error);const runTables=tableGeneration&&configHost.generationAccepted();configHost.clear();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已结束'});if(!configHostAccepted)revisionController.stopped();if(revisionController.ended(runTables))return;if(runTables&&!tableService.state().busy)try{await tableService.archive({scope:'generation'});}catch(e){error(e);}});bind('GENERATION_STOPPED',async()=>{worldbookConditions.end();await communication.stopped().catch(error);revisionController.stopped();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已停止，附属推进任务已停止'});configHost.clear();});bind('CHAT_CHANGED',()=>{worldbookConditions.end();configHost.setUserRevision(null);communication.contextChanged();configHost.cancelTransport();if(!tableService.contextChanged())return;tableGeneration=false;configHost.clear();tableService.activateFork().catch(error);});
+     bind('WORLDINFO_SCAN_DONE',p=>worldbookConditions.scanDone(p));bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));bind('GENERATION_AFTER_COMMANDS',async(...args)=>{nativeGenerationEpoch++;worldbookOrder?.clear();worldbookConditions.begin(args[0],{...args[1],dryRun:args[2]===true||args[1]?.dryRun===true});tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天开始新一轮，旧推进任务已停止'});nativeConfiguration.clearScan();preparationError=null;try{if(identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('世界书保存尚未完成，请先等待或重试保存');await tableService.assertIdentityCompatible(user_avatar);if(!['quiet','impersonate'].includes(args[0])){await tableService.ensureInitialized({scope:'generation'});await tableService.syncNative({scope:'generation'});}await communication.beginNative(String(query('#send_textarea')?.value??''),...args);return await configHost.before(...args);}catch(e){await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}});bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);await worldbookConditions.entriesLoaded(p);});if(tableService.worldbook.available())bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{try{await worldbookConditions.assertReady();if(preparationError)throw preparationError;worldbookOrder?.assertReady();nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{const endingEpoch=nativeGenerationEpoch;worldbookConditions.end();const configHostAccepted=configHost.generationAccepted();communication.ended(configHost.generationAccepted());await communication.finishNative(configHostAccepted).catch(error);if(endingEpoch!==nativeGenerationEpoch)return;const runTables=tableGeneration&&configHostAccepted;configHost.clear();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已结束'});if(!configHostAccepted)revisionController.stopped();if(revisionController.ended(runTables))return;if(runTables&&!tableService.state().busy)try{await tableService.archive({scope:'generation'});}catch(e){error(e);}});bind('GENERATION_STOPPED',async()=>{nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();worldbookConditions.end();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已停止，附属推进任务已停止'});configHost.clear();await communication.stopped().catch(error);});bind('CHAT_CHANGED',()=>{nativeGenerationEpoch++;worldbookConditions.end();configHost.setUserRevision(null);communication.contextChanged();configHost.cancelTransport();if(!tableService.contextChanged())return;tableGeneration=false;configHost.clear();tableService.activateFork().catch(error);});
      window.Tisya=Object.freeze({version:VERSION,register,registry,communication:{read:()=>communication.view()},tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      const activeSource=()=>configHost.activeSource()??presetSource();const live=registerLivePreset(context(),activeSource,context,()=>emotionCatalog(document).names(),error);registerPresetProtocol(context(),activeSource,error,()=>emotionCatalog(document).names(),source=>!isLivePreset(source)||live.execution().prose,()=>isLivePreset(activeSource())?live.execution():null);
      const initialize=async()=>{if(context().chatId&&configStore.read().revision!==null)return;const bridge=narrativeController();try{await bridge.initialize();}catch(e){error(e);}finally{bridge.dispose();}};

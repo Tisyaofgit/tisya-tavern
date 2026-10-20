@@ -78,7 +78,7 @@ export function createCommunication({getContext,persist,persistMessage=async c=>
  }
 
  async function recordFeedback(value){const s=scope();read(s).data.feedback.push({...clone(value),kind:'revision-feedback'});await save(s);}
- return {view,setDraft,talk,withStory,beginNative,finishNative,directions,recordFeedback,flush:()=>save(scope()),busy:()=>!!active||!!staged,ended(accepted){if(staged){staged.finished=true;staged.accepted=!!accepted;}},async stopped(){replay=null;const r=staged;if(r)r.stopped=true;try{await restoreDraft(r);}finally{if(r?.native&&staged===r)staged=null;else if(staged){staged.finished=true;staged.accepted=false;}onChange();}},cancel(){active?.controller.abort();},contextChanged(){replay=null;if(active&&!same(active.s))active.controller.abort();onChange();},dispose(){replay=null;active?.controller.abort();},};
+ return {view,setDraft,talk,withStory,beginNative,finishNative,directions,recordFeedback,flush:()=>save(scope()),busy:()=>!!active||!!staged,ended(accepted){if(staged){staged.finished=true;staged.accepted=!!accepted;}},async stopped(){replay=null;const r=staged;if(r)r.stopped=true;try{await restoreDraft(r);}finally{if(r&&staged===r){if(r.native)staged=null;else{r.finished=true;r.accepted=false;}}onChange();}},cancel(){active?.controller.abort();},contextChanged(){replay=null;if(active&&!same(active.s))active.controller.abort();onChange();},dispose(){replay=null;active?.controller.abort();},};
 }
 export function mountCommunication(document,{controller,onError=()=>{}}){
  const parent=document.querySelector('#nonQRFormItems');check(parent,'宿主输入框尚未就绪');const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
