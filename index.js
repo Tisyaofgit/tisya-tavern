@@ -1,3 +1,4 @@
+import {createUiOperations,messageActionExclusive} from './ui-operation.js';
 import {createGenerationOperations} from './generation-operation.js';
 import {initializePresetConnection} from './preset-connection.js';
 import {createGlobalFonts} from './global-fonts.js';
@@ -94,8 +95,9 @@ let displaySaving=false;
 async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
+const uiOperations=createUiOperations();
 let nativeGenerationEpoch=0;
-let root, overlay, observer, enabled = true, busy = false, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
+let root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 let globalFonts=null;
 function fontsService(){return globalFonts??=createGlobalFonts(document,{getSettings:settings,saveSettings:saveInterfaceSettings,headers:()=>context().getRequestHeaders(),onError:error});}
@@ -383,7 +385,7 @@ async function showCard(id) {
     const prefs=settings();directoryState(prefs);const label=directoryEntry(prefs,card).名称||card.name;
     chats.sort((a,b)=>(directoryEntry(prefs,card,b).置顶||0)-(directoryEntry(prefs,card,a).置顶||0));
     page(label,`<div class="tisya-role-hero"><img src="${esc(getThumbnailUrl('avatar',card.avatar))}" alt=""><p>${esc(chatPreview(card.description||card.data?.description||'故事，仍在继续。'))}</p></div><section class="tisya-sub-card"><h3>会话 <small>${chats.length} 段</small></h3><div class="tisya-list tisya-chat-timeline">${chats.map((chat,i)=>{const entry=directoryEntry(prefs,card,chat);return `<div class="tisya-directory-row" data-directory="${esc(directoryToken(card,chat))}"><button type="button" class="tisya-chat-row" data-chat-index="${i}"><strong>${entry.置顶?'置顶 · ':''}${esc(entry.名称||chatTitle(chat.file_name,card.name))}</strong><small>${esc(chatPreview(chat.mes))}</small></button><button type="button" class="tisya-directory-menu" data-tisya-action="directory-menu:${encodeURIComponent(directoryToken(card,chat))}" aria-label="会话操作菜单">&gt;</button></div>`;}).join('') || '<p>还没有会话</p>'}</div></section><footer>${button('角色资料与会话管理',`select:${id}`)}</footer>`);
-    root.querySelectorAll('[data-chat-index]').forEach(el=>el.addEventListener('click',()=>run(async()=>{assertIdle();if(context().characters[id]?.avatar!==card.avatar)throw Error('角色列表已变化，请重新打开');const file=chats[Number(el.dataset.chatIndex)].file_name.replace(/\.jsonl$/,'');await context().selectCharacterById(id,{switchMenu:false,chatFile:file});if(String(context().characterId)!==String(id)||context().chatId!==file)throw new Error('宿主未切换到目标会话');if(epoch===renderEpoch)hidePage();})));
+    root.querySelectorAll('[data-chat-index]').forEach(el=>el.addEventListener('click',()=>run(async()=>{assertIdle();if(context().characters[id]?.avatar!==card.avatar)throw Error('角色列表已变化，请重新打开');const file=chats[Number(el.dataset.chatIndex)].file_name.replace(/\.jsonl$/,'');await context().selectCharacterById(id,{switchMenu:false,chatFile:file});if(String(context().characterId)!==String(id)||context().chatId!==file)throw new Error('宿主未切换到目标会话');if(epoch===renderEpoch)hidePage();},{label:'打开所选会话'})));
 }
 async function home() {
     const epoch=++renderEpoch;
@@ -409,7 +411,7 @@ async function home() {
             await context().selectCharacterById(card.id,{switchMenu:false,chatFile:file});
             if(String(context().characterId)!==String(card.id)||context().chatId!==file)throw Error('宿主未切换到目标会话');
             if(enabled&&epoch===renderEpoch)hidePage();
-        })
+        },{label:'打开所选会话'})
     });
     await homeView.ready;
 }
@@ -507,12 +509,12 @@ function openReader(token,initialTab='body') {
     readerToken=token;
 }
 async function chooseReaderAction(token,text,mode) {
-    if(busy)throw new Error('当前聊天操作尚未完成，请稍后再选行动');
-    assertIdle();nodeFor(token);busy=true;
-    try{
+    if(uiOperations.busy())throw new Error('当前聊天操作尚未完成，请稍后再选行动');
+    assertIdle();nodeFor(token);
+    try{return await uiOperations.run(async()=>{
         const result=await executeAction({document,text,mode,validate:()=>{assertIdle();nodeFor(token);},send:async()=>{close();closeNativeDrawers();hidePage();try{await sendTextareaMessage();}catch(e){error(e);throw e;}}});
         close();closeNativeDrawers();hidePage();query('#send_textarea')?.focus({preventScroll:true});return result;
-    }finally{busy=false;decorate();}
+    },{label:'执行所选行动'});}finally{decorate();}
 }
 async function removeMessages(rollback) {
     const token=overlay._messageToken,epoch=sheetEpoch;assertIdle();validate(context(),token,{tail:true});
@@ -605,7 +607,7 @@ function decorate(element = null) {
                 if(b.dataset.tisyaAction.startsWith('msg-')){overlay._messageToken=token;return messageAction(b.dataset.tisyaAction);}
                 if(b.dataset.tisyaAction==='next')return generateAt(token);
                 return generateAt(token,true);
-            },{exclusive:!['more','candidate-prev','candidate-next','candidate-picker'].includes(b.dataset.tisyaAction)});});
+            },{exclusive:messageActionExclusive(b.dataset.tisyaAction),label:b.getAttribute('aria-label')||b.textContent.trim()||b.dataset.tisyaAction});});
         }
         const id=Number(node.getAttribute('mesid')),msg=context().chat[id],pos=candidatePosition(msg),candidates=msg&&!msg.is_user&&!msg.is_system&&pos.total>1;
         let note='';try{note=msg?.is_user?readTurnDirection(msg):'';}catch(e){note='无法读取本轮要求：'+e.message;}let noteView=node.querySelector('.tisya-turn-direction');
@@ -615,22 +617,20 @@ function decorate(element = null) {
         appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy)});
         const actionBlock=node.querySelector('.mes_block')??node;if(row.parentElement!==actionBlock||actionBlock.lastElementChild!==row)actionBlock.append(row);
         editToolbarPlacement?.sync(node);
-        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':isGenerating()||hasActiveAgentRun()||generationBusy||revisionController.active()||revisionController.navigating()||communication.busy()?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
+        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':messageActionExclusive(b.dataset.tisyaAction)&&(isGenerating()||hasActiveAgentRun()||generationBusy||revisionController.active()||revisionController.navigating()||communication.busy())?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
             if(title)el.dataset.tisyaLabel=title;
         });
     });
 }
-async function run(fn,{exclusive=true}={}) {
-    if(exclusive&&busy){error(new Error('正在生成或修改聊天，请等待完成后再修改历史'));return;}
-    if(exclusive)busy=true;
-    try{await fn();}catch(err){error(err);}finally{if(exclusive){busy=false;decorate();}}
+async function run(fn,options={}) {
+    try{return await uiOperations.run(fn,options);}catch(err){error(err);}finally{if(options.exclusive!==false)decorate();}
 }
 function stopUI() {
     if(characterGroup?.isBusy()||characterGroup?.hasDraft())throw Error('角色页面还有未保存的修改');characterGroup?.dispose();characterGroup=null;
     if(worldbookConsole?.isBusy()||worldbookConsole?.hasDraft())throw Error('世界书还有未保存的修改，请先保存或放弃');worldbookConsole?.dispose();worldbookConsole=null;
-    if(busy||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
+    if(uiOperations.busy()||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
     clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;globalFonts?.dispose();globalFonts=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
     document.querySelectorAll('.tisya-actions,.tisya-turn-direction').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
@@ -695,7 +695,7 @@ function init() {
             const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
         } else if(action==='branch-keep'||action==='branch-clear'){const token=overlay._messageToken;validate(context(),token,{tail:true});await tableService.stageFork(token.id+1,action==='branch-keep');const target=nodeFor(token).querySelector('.mes_create_branch');if(!target)throw Error('原生分支操作未挂载');close();target.click();} else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
-    },{exclusive:['directory-group-save','directory-save','directory-pin','directory-delete-confirm','select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action)});};
+    },{exclusive:['directory-group-save','directory-save','directory-pin','directory-delete-confirm','select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action),label:b.getAttribute('aria-label')||b.textContent.trim()||action});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
     const escape=e=>{if(e.key==='Escape'){closeDirectoryMenu();close();}};document.addEventListener('keydown',escape);cleanups.push(()=>document.removeEventListener('keydown',escape));
     const input=e=>{if(!e.target.classList.contains('tisya-search'))return;const q=e.target.value.toLowerCase();root.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q));};root.addEventListener('input',input);
@@ -748,7 +748,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
      worldbookOrder=installWorldbookOrder({getContext:context,onError:error});
      bind('WORLDINFO_SCAN_DONE',p=>worldbookConditions.scanDone(p));bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));bind('GENERATION_AFTER_COMMANDS',async(...args)=>{nativeGenerationEpoch++;worldbookOrder?.clear();worldbookConditions.begin(args[0],{...args[1],dryRun:args[2]===true||args[1]?.dryRun===true});tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天开始新一轮，旧推进任务已停止'});nativeConfiguration.clearScan();preparationError=null;try{if(identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('世界书保存尚未完成，请先等待或重试保存');await tableService.assertIdentityCompatible(user_avatar);if(!['quiet','impersonate'].includes(args[0])){await tableService.ensureInitialized({scope:'generation'});await tableService.syncNative({scope:'generation'});}await communication.beginNative(String(query('#send_textarea')?.value??''),...args);return await configHost.before(...args);}catch(e){await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}});bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);await worldbookConditions.entriesLoaded(p);});if(tableService.worldbook.available())bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{try{await worldbookConditions.assertReady();if(preparationError)throw preparationError;worldbookOrder?.assertReady();nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{const endingEpoch=nativeGenerationEpoch;worldbookConditions.end();const configHostAccepted=configHost.generationAccepted();communication.ended(configHost.generationAccepted());await communication.finishNative(configHostAccepted).catch(error);if(endingEpoch!==nativeGenerationEpoch)return;const runTables=tableGeneration&&configHostAccepted;configHost.clear();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已结束'});if(!configHostAccepted)revisionController.stopped();if(revisionController.ended(runTables))return;if(runTables&&!tableService.state().busy)try{await tableService.archive({scope:'generation'});}catch(e){error(e);}});bind('GENERATION_STOPPED',async()=>{nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();worldbookConditions.end();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已停止，附属推进任务已停止'});configHost.clear();await communication.stopped().catch(error);});bind('CHAT_CHANGED',()=>{nativeGenerationEpoch++;worldbookConditions.end();configHost.setUserRevision(null);communication.contextChanged();configHost.cancelTransport();if(!tableService.contextChanged())return;tableGeneration=false;configHost.clear();tableService.activateFork().catch(error);});
-     window.Tisya=Object.freeze({version:VERSION,register,registry,communication:{read:()=>communication.view()},tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     window.Tisya=Object.freeze({version:VERSION,operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      const activeSource=()=>configHost.activeSource()??presetSource();const live=registerLivePreset(context(),activeSource,context,()=>emotionCatalog(document).names(),error);registerPresetProtocol(context(),activeSource,error,()=>emotionCatalog(document).names(),source=>!isLivePreset(source)||live.execution().prose,()=>isLivePreset(activeSource())?live.execution():null);
      const initialize=async()=>{if(context().chatId&&configStore.read().revision!==null)return;const bridge=narrativeController();try{await bridge.initialize();}catch(e){error(e);}finally{bridge.dispose();}};
      context().eventSource.on(context().eventTypes.CHAT_CHANGED,initialize);void initialize().catch(error);
