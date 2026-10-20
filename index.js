@@ -1,4 +1,4 @@
-import {selectChatReady} from './chat-selection.js';
+import {selectChatReady,notifySelectedChatContent} from './chat-selection.js';
 import {createUiOperations,messageActionExclusive} from './ui-operation.js';
 import {createGenerationOperations} from './generation-operation.js';
 import {initializePresetConnection} from './preset-connection.js';
@@ -734,7 +734,7 @@ function init() {
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
     managed=api?.isManagedOwnershipRequired?.()===true;
-    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content}){resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
+    if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content,mesid,signal}){notifySelectedChatContent({element,content,mesid,signal});resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     initializePresetConnection(context(),document);
