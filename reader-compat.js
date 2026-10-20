@@ -1,4 +1,4 @@
-import {sourceVarsJSON,nativeStatusTail,nativeUpdateTail} from './native-mvu-wire.js';
+import {sourceVarsJSON,nativeStatusTail,nativeUpdateTail,nativeStatusInVars} from './native-mvu-wire.js';
 // Read-only wire compatibility. Original messages and vendor sources are never
 // rewritten. Compact grades carry no inferred character/participant knowledge.
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -56,7 +56,10 @@ function validateLocator(row,blocks,load){
 
 export function adaptReaderModule(id,original,load){
  if(id==='xml-envelope.cjs'){
-  const normalize=source=>nativeStatusTail(nativeUpdateTail(source,original.xmlTokens,load('strict-json.cjs').strictJSON),original.xmlTokens);
+  const normalize=source=>{
+   const parse=load('strict-json.cjs').strictJSON;
+   return nativeStatusTail(nativeUpdateTail(nativeStatusInVars(source,original.xmlTokens,parse),original.xmlTokens,parse),original.xmlTokens);
+  };
   const envelope=source=>{
    const e=original.parseDisplayEnvelope(normalize(source));
    e.blocks.vars=sourceVarsJSON(e.blocks.vars,load('strict-json.cjs').strictJSON);

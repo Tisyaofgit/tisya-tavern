@@ -62,6 +62,8 @@ export function applySourceOutputRoutes(entries){
 消费 TASK.START 的 @OUTPUT.vars；按原卡或外部组件提供的协议生成有依据的操作，保留字段、类型、根路径、运算语法、次序和原生更新标签，不转换成另一种 MVU 方言。
 所有变量更新只放在 reply 的 vars 内（extra 后、archive 前），不混进 extra/status，不在 </reply> 后追加；原生脚本为唯一结算者，不声称已执行。
 原协议的 Analysis/思考/更新说明不输出。XML 或脚本协议用 <vars format="xml"> 原生更新块 </vars>；必要时以 CDATA 包住原生块而不改内容。JSON 字符串的 &/< 用 JSON unicode 转义，不用 XML 实体改值。
+原卡显示占位符（如 <StatusPlaceHolderImpl/>）按 @COMPONENT_ROUTE 单独放入 extra，并独占一行，前后各留换行（不得紧贴 extra 标签）；它不是变量操作，不得与 UpdateVariable 一起包入 vars 或其 CDATA。保留原生更新块完整且唯一，JSONPatch 内只写严格 JSON 数组，不附代码围栏或解释。
+操作须对照本轮 status_current_variables 的真实路径和原卡 Schema：replace 指向已有字段；新增动态字典条目使用 add/insert 并提供符合 Schema 的对象；不要把数字、布尔值或枚举写成说明文字，严格沿用原卡声明的根路径，不因读取包装中有 stat_data 就自行添加该前缀。
 未知写入目标或缺依据→待办；无协议、明确关闭该原卡协议或无操作→<vars/>。缇斯亚自有状态执行器停用不禁用其他来源的变量协议。
 }`);
  text=text.replace('@OPTION MVU disabled→only <vars/>;omit vars permission rows;do not move disabled operations to another block','@OPTION vars 有操作→替换模板的 <vars/> 为唯一 vars 块；可准确定位的 JSONPatch 目标记录 vars 权限；其他原生语法保留，不伪造 JSON Pointer。无操作→<vars/>。');

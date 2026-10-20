@@ -1,0 +1,71 @@
+{
+  "version": "0.2.0-alpha.31.31.17",
+  "scope": "generic reader compatibility; neutral fixtures only",
+  "changes": [
+    "validated terminal marker is moved into extra in the read-only projection",
+    "display regex sees one relocated marker; stored message and variable payload unchanged",
+    "all three live prompt detail levels split display marker from vars",
+    "persistent reading-cache version advanced",
+    "native-format error text distinguishes reading from state execution",
+    "host content processor prepares missing approved full HTML code sources before native runtime claims; no duplicate/foreign frame execution",
+    "future prompts require standalone display marker lines and actual variable paths/types"
+  ],
+  "validation": {
+    "targeted": {
+      "passed": 53,
+      "failed": 0
+    },
+    "initialFull": {
+      "passed": 1193,
+      "failed": 1,
+      "failure": "release version mismatch in layout.js/shell.css",
+      "resolved": "both version labels fixed; release test and 52 related tests passed"
+    },
+    "finalFull": {
+      "passed": 1198,
+      "failed": 0,
+      "generatedChecks": 13
+    },
+    "Android": false,
+    "realModel": false,
+    "nativeMvuWrite": false,
+    "panelTargeted": {
+      "passed": 41,
+      "failed": 0
+    },
+    "shellAndNativeTargeted": {
+      "passed": 95,
+      "failed": 0
+    },
+    "officialParserAndZod": {
+      "rounds": 10,
+      "operationsPerRound": 4,
+      "invalidEnumRejected": true,
+      "schema": "uploaded card; neutral values only",
+      "storageWrites": 0
+    },
+    "Chromium": {
+      "rounds": 10,
+      "tabClicks": 50,
+      "scriptErrors": 0,
+      "frameIdentityPreserved": true,
+      "actualPanelScript": true,
+      "helperHostAPIs": "simulated"
+    }
+  },
+  "unknown": [
+    "Original native-MVU exception detail was not supplied; the screenshot only exposes reader error",
+    "Actual installed helper/MVU execution state on Android is unavailable"
+  ],
+  "inputPolicy": "Uploaded card extracted read-only for metadata; no narrative content, raw card or private state included in candidate or tests",
+  "atUTC": "2026-10-20T19:02:37.688538+00:00",
+  "rootCauses": [
+    "A display-only StatusPlaceHolderImpl was included after UpdateVariable inside vars/CDATA. Native update reader required the update alone.",
+    "A fenced HTML replacement glued to an XML tag or CDATA is not recognized as a code block by Showdown; the helper has no pre source to claim."
+  ],
+  "compatibility": {
+    "hostContentProcessor": "required for missing source repair",
+    "originalScripts": "remain enabled and sole runtime owner",
+    "unidentifiedExistingSource": "preserved; not duplicated"
+  }
+}

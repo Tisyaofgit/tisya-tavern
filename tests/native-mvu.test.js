@@ -6,7 +6,7 @@ import {emptyConfig,defaultWorld,worldKey,KEY,createStore} from '../config/core.
 import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
 import {createHost} from '../config/host.js';
-import {inspectMessage} from '../reader.js';import {parseDisplayEnvelope} from '../reader-core.js';
+import {inspectMessage,readerErrorText} from '../reader.js';import {parseDisplayEnvelope,runDisplay} from '../reader-core.js';
 import {fixture} from './fixtures/journey-r4.cjs';
 function setup(){
  const card={avatar:'native.png',name:'变量卡',data:{extensions:{tavern_helper:{scripts:[{type:'script',enabled:true,id:'native-mvu',content:"import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@master/artifact/bundle.js'"}]}},character_book:{entries:[{comment:'变量格式',enabled:true,content:'<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>'},{comment:'[mvu_update]计数规则',enabled:true,content:'只按实际事件修改计数。'},{comment:'[mvu_update]禁用规则',enabled:false,content:'DISABLED_RULE'},{comment:'无关条目',enabled:true,content:'UNRELATED_BOOK'}]}}};
@@ -104,3 +104,41 @@ test('legacy appended native update is readable once without source writes or pr
  for(const source of [fixture()+'\n'+block+'\n'+block,fixture()+'\n'+block+'\nARBITRARY_TAIL',fixture().replace('<vars/>','<vars format="xml">'+block+'</vars>')+'\n'+block,fixture()+'\n<UpdateVariable><JSONPatch>[bad]</JSONPatch></UpdateVariable>'])assert.throws(()=>parseDisplayEnvelope(source));
 });
 test('native RFC add operation is retained without changing its dialect',()=>{const source=fixture().replace('<vars/>','<vars format="xml"><UpdateVariable><JSONPatch>[{"op":"add","path":"/items/-","value":"新增"}]</JSONPatch></UpdateVariable></vars>');assert.deepEqual(JSON.parse(parseDisplayEnvelope(source).blocks.vars).operations,[{op:'add',path:'/items/-',value:'新增'}]);});
+
+const stockOps=[{op:'replace',path:'/库存',value:0},{op:'replace',path:'/启用',value:false},{op:'add',path:'/备注',value:'literal <StatusPlaceHolderImpl/> & </JSONPatch>'}];
+const stockUpdate='<UpdateVariable><Analysis>PRIVATE_ANALYSIS</Analysis><JSONPatch>'+JSON.stringify(stockOps)+'</JSONPatch></UpdateVariable>';
+const stockFixture=()=>fixture({memory:stockOps.map(op=>'权限：vars|'+op.path+'|A').join('\n')+'\n事件：管理员|A|完成库存核对。'});
+test('native status inside vars is projected to extra from raw XML, CDATA and mixed wrappers',()=>{
+ for(const payload of [stockUpdate+'\n<StatusPlaceHolderImpl/>','<![CDATA['+stockUpdate+'\n<StatusPlaceHolderImpl/>]]>','<![CDATA['+stockUpdate+']]><StatusPlaceHolderImpl />',stockUpdate+'<![CDATA[<StatusPlaceHolderImpl/>]]>'])for(const empty of [false,true]){
+  const source=stockFixture().replace('<vars/>','<vars format="xml">'+payload+'</vars>').replace('<extra></extra>',empty?'<extra/>':'<extra><panel>保留显示</panel></extra>'),before=source;
+  const e=parseDisplayEnvelope(source),view=inspectMessage(source);
+  assert.deepEqual(JSON.parse(e.blocks.vars).operations,stockOps);assert.match(e.blocks.extra,/<StatusPlaceHolderImpl\/>/);
+  for(const key of ['body','journey','details','actions'])assert.equal(view[key].error,undefined,key);
+  assert.equal(view.actions.value.length,4);assert.equal(source,before);assert.doesNotMatch(JSON.stringify(view),/PRIVATE_ANALYSIS|literal|operations/);
+  const display=runDisplay({source,groups:[]});assert.match(display.extra,/<StatusPlaceHolderImpl\/>/);assert.doesNotMatch(display.extra,/UpdateVariable|PRIVATE_ANALYSIS|JSONPatch/);
+  if(!empty)assert.match(display.extra,/保留显示/);
+ }
+});
+test('native marker relocation feeds the ordinary display regex once, with variables unchanged',()=>{
+ const source=stockFixture().replace('<vars/>','<vars format="xml"><![CDATA['+stockUpdate+'<StatusPlaceHolderImpl/>]]></vars>');
+ const entry={enabled:true,placements:['char'],timing:'display',findRegex:'<StatusPlaceHolderImpl/>',replaceString:'<div>库存面板</div>',trimStrings:[],substitution:'none'};
+ const display=runDisplay({source,groups:[{id:'native',entries:[entry]}]});
+ assert.equal(display.rules[0].matches,1);assert.match(display.extra,/库存面板/);assert.doesNotMatch(display.body,/库存面板/);
+ assert.deepEqual(JSON.parse(parseDisplayEnvelope(source).blocks.vars).operations,stockOps);
+});
+test('native marker compatibility still refuses duplicate updates, duplicate markers, junk and bad JSON',()=>{
+ for(const payload of [stockUpdate+'<StatusPlaceHolderImpl/><StatusPlaceHolderImpl/>',stockUpdate+stockUpdate+'<StatusPlaceHolderImpl/>',stockUpdate+'JUNK<StatusPlaceHolderImpl/>',stockUpdate+'<StatusPlaceHolderImpl/>JUNK','<UpdateVariable><JSONPatch>[bad]</JSONPatch></UpdateVariable><StatusPlaceHolderImpl/>',stockUpdate+'<StatusPlaceHolderImpl unexpected="yes"/>']){
+  const source=stockFixture().replace('<vars/>','<vars format="xml"><![CDATA['+payload+']]></vars>');
+  assert.throws(()=>parseDisplayEnvelope(source));
+ }
+});
+test('native marker literal alone never becomes a display component, and incomplete XML is not repaired',()=>{
+ const source=stockFixture().replace('<vars/>','<vars format="xml"><![CDATA['+stockUpdate+']]></vars>');
+ assert.equal(parseDisplayEnvelope(source).blocks.extra,'');
+ assert.throws(()=>parseDisplayEnvelope(source.replace('</vars>','')));
+ assert.throws(()=>parseDisplayEnvelope(source.replace('<extra></extra>','')));
+ assert.match(readerErrorText('TISYA_NATIVE_MVU_FORMAT'),/不代表原生变量/);
+});
+test('all live output detail levels explicitly separate native display markers from updates',()=>{
+ const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.match(text,/显示占位符.*单独放入 extra/);assert.match(text,/不得与 UpdateVariable 一起包入 vars/);}
+});

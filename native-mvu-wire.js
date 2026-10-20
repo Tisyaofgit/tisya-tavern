@@ -58,3 +58,44 @@ export function sourceVarsJSON(text,parse){
  if(value.startsWith('<')||/^_\.[a-zA-Z]+\(/.test(value))return JSON.stringify({protocol:'external-native',opaque:true,source:value});
  return text;
 }
+
+// Some native templates append their display marker to the update component,
+// including inside CDATA. Move only that exact terminal marker in the reading
+// copy. Validate the complete update first; JSON string literals, arbitrary
+// tails, duplicate updates and malformed payloads are never repaired here.
+export function nativeStatusInVars(source,xmlTokens,parse){
+ if(typeof source!=='string'||!/^\s*<reply\b/.test(source)||!source.includes('StatusPlaceHolderImpl'))return source;
+ const stack=[],slots=[];let slot=null,extra=null;
+ for(const t of xmlTokens(source)){
+  if(t.kind==='open'){
+   if(stack.length===1&&t.name==='vars'){slot={text:'',marker:null};slots.push(slot);}
+   else if(slot){
+    const raw=source.slice(t.start,t.end),offset=slot.text.length;slot.text+=raw;
+    if(stack.length===2&&t.name==='StatusPlaceHolderImpl'&&t.selfClose&&Object.keys(t.attrs).length===0)slot.marker={start:t.start,end:t.end,offset};
+   }
+   if(stack.length===1&&t.name==='extra')extra={start:t.start,end:t.end,selfClose:t.selfClose};
+   if(!t.selfClose)stack.push(t.name);else if(stack.length===1&&t.name==='vars')slot=null;
+  }else if(t.kind==='close'){
+   if(stack.length===2&&t.name==='extra'&&extra)extra.close=t.start;
+   if(stack.length===2&&t.name==='vars')slot=null;
+   else if(slot)slot.text+=source.slice(t.start,t.end);
+   stack.pop();
+  }else if(slot){
+   const offset=slot.text.length;slot.text+=t.kind==='text'?t.value:source.slice(t.start,t.end);
+   if(t.kind==='text'&&t.cdata&&stack.length===2){
+    const m=/<StatusPlaceHolderImpl\s*\/>\s*$/.exec(t.value);
+    if(m)slot.marker={start:t.start+9+m.index,end:t.start+9+m.index+m[0].trimEnd().length,offset:offset+m.index};
+   }
+  }
+ }
+ if(slots.length!==1||!extra||!slots[0].marker)return source;
+ const {text,marker}=slots[0];
+ if(!/^<StatusPlaceHolderImpl\s*\/>\s*$/.test(text.slice(marker.offset)))return source;
+ const update=text.slice(0,marker.offset);
+ if(!update.trim().startsWith('<UpdateVariable>'))return source;
+ nativeVarsJSON(update,parse);
+ const replacement=extra.selfClose?'<extra><StatusPlaceHolderImpl/></extra>':'<StatusPlaceHolderImpl/>';
+ const edits=[[marker.start,marker.end,''],[extra.selfClose?extra.start:extra.close,extra.selfClose?extra.end:extra.close,replacement]];
+ for(const [start,end,value]of edits.sort((a,b)=>b[0]-a[0]))source=source.slice(0,start)+value+source.slice(end);
+ return source;
+}

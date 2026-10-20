@@ -1,3 +1,4 @@
+import {nativePanelContentProcessor} from './native-panel-source.js';
 import {selectChatReady,notifySelectedChatContent,chatSelectionDiagnostic,chatSelectionSummary} from './chat-selection.js';
 import {createUiOperations,messageActionExclusive} from './ui-operation.js';
 import {createGenerationOperations} from './generation-operation.js';
@@ -640,6 +641,10 @@ function stopUI() {
     document.querySelectorAll('.tisya-actions,.tisya-turn-direction').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
+function ensureNativeDisplay(){
+ if(!nativeDisplay)nativeDisplay=createNativeDisplayPipeline({enabled:()=>!!context().chatId&&configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
+ return nativeDisplay;
+}
 function init() {
     if(query('#tisya-shell'))return;
     if(!query('#chat')||!query('#sheld')||!query('#top-settings-holder'))throw new Error('当前宿主布局不匹配，未启用界面');
@@ -655,7 +660,7 @@ function init() {
     document.addEventListener('focusin',placeEditor);
     cleanups.push(()=>{document.removeEventListener('focusin',placeEditor);editToolbarPlacement.dispose();editToolbarPlacement=null;});
     motionEnabled=settings().动态效果!==false;
-    nativeDisplay=createNativeDisplayPipeline({enabled:()=>!!context().chatId&&configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
+    ensureNativeDisplay();
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
         getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar)),
@@ -740,6 +745,7 @@ function init() {
 export function registerChatSurface() {
     const api=window.__TAURITAVERN__?.api?.chatSurface;
     managed=api?.isManagedOwnershipRequired?.()===true;
+    if(managed&&typeof api.registerContentProcessor==='function')api.registerContentProcessor(nativePanelContentProcessor({document,current:(message,id)=>context().chat[id]===message,project:(source,message,id)=>{const pipeline=ensureNativeDisplay();pipeline.refresh();return pipeline.project(source,message,{getAttribute:()=>String(id)});},onError:visualError}));
     if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content,mesid,signal}){notifySelectedChatContent({element,content,mesid,signal});resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
 }
 context().eventSource.on(context().eventTypes.APP_READY,async()=>{
