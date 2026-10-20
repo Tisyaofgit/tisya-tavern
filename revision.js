@@ -1,3 +1,4 @@
+import {createGenerationOperations} from './generation-operation.js';
 import {userRevisionMaterial} from './user-revision.js';
 import {displayReplySource} from './display-repair.js';
 import {isReplyMessage,parseDisplayEnvelope,readParagraphs,extractXMLBody} from './reader-core.js';
@@ -42,15 +43,17 @@ export function validateRevision(revision,source){
 export function candidatePosition(message){const total=Array.isArray(message?.swipes)&&message.swipes.length?message.swipes.length:1,index=message?.swipe_id??0;return {index,total,label:(index+1)+'/'+total};}
 // The host owns candidate bodies, extras, persistence and swipe events. Never
 // synthesize a swipe array or bypass the native swipe guards.
-export function createRevisionController({getContext,assertIdle,hydrate,swipe,deleteSwipe,branch,stageFork,activateFork,cancelFork,prepare=async()=>{},canSwipe,overswipe,setRevision,setUserRevision=()=>{},archive,feedback,onState=()=>{}}){
+export function createRevisionController({getContext,assertIdle,hydrate,swipe,deleteSwipe,branch,stageFork,activateFork,cancelFork,prepare=async()=>{},canSwipe,overswipe,setRevision,setUserRevision=()=>{},archive,feedback,onState=()=>{},runGeneration=null}){
  let active=null,navigating=false;
+ const operations=createGenerationOperations({waitForIdle:async()=>{}});
+ const execute=runGeneration??operations.run;
  const same=run=>getContext().getCurrentChatId()===run.chatId&&getContext().chat[run.id]===run.message;
- async function tail(token){
+ async function tail(token,checkCurrent=()=>{}){
   assertIdle();validate(getContext(),token,{tail:true});
   if(token.id===getContext().chat.length-1)return token;
-  await hydrate(token.id);validate(getContext(),token,{tail:true});
-  await stageFork(token.id+1,false,{preserveCandidates:true});validate(getContext(),token,{tail:true});
-  let name;try{name=await branch(token.id,{swipeId:token.swipe??0});check(name,'原生分支未建立，原聊天保持不变');await activateFork();}catch(e){cancelFork();throw e;}
+  await hydrate(token.id);checkCurrent();validate(getContext(),token,{tail:true});
+  await stageFork(token.id+1,false,{preserveCandidates:true});
+  let name;try{checkCurrent();validate(getContext(),token,{tail:true});name=await branch(token.id,{swipeId:token.swipe??0});check(name,'原生分支未建立，原聊天保持不变');await activateFork();}catch(e){cancelFork();throw e;}
   check(getContext().getCurrentChatId()!==token.chatId,'宿主尚未切换到新分支');
   const next=capture(getContext(),token.id);check(next.length===token.id+1&&next.text===token.text&&(next.swipe??0)===(token.swipe??0),'分支内容与重骰依据不一致');return next;
  }
@@ -72,28 +75,29 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
   const before=candidatePosition(message);check(before.total>1,'至少保留一个版本');check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');
   navigating=true;onState();try{const selected=await deleteSwipe(index,token.id);check(getContext().getCurrentChatId()===token.chatId&&getContext().chat[token.id]===message,'聊天已切换');check(Number.isInteger(selected)&&message.swipes.length===before.total-1&&message.swipe_id===selected&&message.mes===message.swipes[selected],'宿主未确认版本删除');}finally{navigating=false;onState();}
  }
- async function generate(token,options){
+ function generate(token,options){return execute(operation=>generateOperation(token,options,operation));}
+ async function generateOperation(token,options,operation){
   check(!active&&!navigating,'版本操作尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
   check(!token.message.is_user&&!token.message.is_system&&token.message.role!=='tool','请选择角色回复进行重骰');
   check(getContext().onlineStatus!=='no_connection','模型尚未连接，未改动消息');
   const priorMessage=getContext().chat[token.id-1],priorText=priorMessage?.is_user?priorMessage.mes:null,prior=userRevisionMaterial(priorMessage);check(!prior||!getContext().mainApi||getContext().mainApi==='openai','当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');
-  token=await tail(token);await prepare();validate(getContext(),token,{tail:true});await hydrate(token.id);validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生重骰当前不可用');check(overswipe(token.id,token.message)==='regenerate','此消息的原生入口只允许切换候选，不能重骰');
+  token=await tail(token,operation.check);operation.check();await prepare();operation.check();validate(getContext(),token,{tail:true});await hydrate(token.id);operation.check();validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生重骰当前不可用');check(overswipe(token.id,token.message)==='regenerate','此消息的原生入口只允许切换候选，不能重骰');
   const before=candidatePosition(token.message);request=makeRevision(token,options??{});
   const run={id:token.id,chatId:token.chatId,message:token.message,request,finished:false,received:false,stopped:false,tables:false};const userMaterial=userRevisionMaterial(getContext().chat[token.id-1]);if(priorText!==null)check(getContext().chat[token.id-1]?.mes===priorText&&JSON.stringify(userMaterial)===JSON.stringify(prior),'用户改写依据在准备期间变化，未发送重投');active=run;
   let accepted=false,failure=null;
   try{setRevision(options===null?null:request);setUserRevision(userMaterial?{...userMaterial,messageId:token.id-1}:null);onState();
-   await swipe(null,'right',{message:token.message,forceMesId:token.id,forceSwipeId:before.total,forceDuration:0});
+   await operation.host(()=>swipe(null,'right',{message:token.message,forceMesId:token.id,forceSwipeId:before.total,forceDuration:0}));
    check(same(run),'聊天已切换，未将旧重骰结果写入当前聊天');
    const after=candidatePosition(run.message);check(!run.stopped&&run.finished&&run.received&&after.total>before.total&&after.index>=before.total,'生成未完成，旧版本仍保留');
-   validateRevision(request,run.message.mes);accepted=true;await getContext().saveChat();
+   validateRevision(request,run.message.mes);accepted=true;await getContext().saveChat();operation.check();
   }catch(e){failure=e;
-   if(same(run)&&candidatePosition(run.message).index!==before.index){await swipe(null,'left',{message:run.message,forceMesId:run.id,forceSwipeId:before.index,forceDuration:0});check(run.message.swipe_id===before.index,'自动退回旧版失败，请从候选列表恢复');await getContext().saveChat();}
+   if((e.name!=='AbortError'||e.hostSettled)&&same(run)&&candidatePosition(run.message).index!==before.index){await swipe(null,'left',{message:run.message,forceMesId:run.id,forceSwipeId:before.index,forceDuration:0});check(run.message.swipe_id===before.index,'自动退回旧版失败，请从候选列表恢复');await getContext().saveChat();}
   }finally{setRevision(null);setUserRevision(null);active=null;onState();}
   if(same(run)&&run.finished&&run.received&&!run.stopped&&candidatePosition(run.message).total>before.total){
    try{await feedback({...request,id:crypto.randomUUID(),accepted,result:accepted?'accepted':'rejected',reason:failure?.message??'',createdAt:new Date().toISOString()});}catch(e){failure??=Error('候选已保留，但反馈记录未保存：'+e.message);}
   }
-  if(accepted&&run.tables&&same(run))await archive();
+  if(accepted&&!run.stopped&&!operation.signal.aborted&&run.tables&&same(run))await archive();
   if(failure)throw failure;return {accepted};
  }
- return {generate,select,remove,navigating:()=>navigating,active:()=>active,received(id,type){if(active&&active.id===id&&type==='swipe'&&same(active))active.received=true;},ended(tables){if(!active)return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;}};
+ return {generate,select,remove,navigating:()=>navigating,active:()=>active,received(id,type){if(active&&active.id===id&&type==='swipe'&&same(active))active.received=true;},ended(tables){if(!active)return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;operations.stop();}};
 }
