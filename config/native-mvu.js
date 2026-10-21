@@ -3,6 +3,8 @@ import {isTableContinuity} from '../tables/continuity.js';
 // and an immutable read of the selected message; it never runs card scripts.
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const fail=text=>{throw Error(text);};
+export const NATIVE_DISPLAY_ROUTE='最终区块定位：状态栏显示占位符只输出一次，单独放在 extra 中；vars 仅含原生更新块。即使来源示例把占位符接在 UpdateVariable 后面，也要将两者拆开；不要照抄历史回复的混排位置。';
+export const NATIVE_DISPLAY_EXAMPLE='<extra>\n<StatusPlaceHolderImpl/>\n</extra>\n<vars format="xml">\n<![CDATA[<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>]]>\n</vars>';
 function scripts(rows){return (Array.isArray(rows)?rows:[]).flatMap(row=>row?.type==='folder'?scripts(row.value??row.scripts):[row]);}
 export function nativeMvuDeclaration(context,world){
  if(!world||!isTableContinuity(world)&&world.context.owner==='tisya'&&!world.context.card||world.modes[world.mode].nativeMvu==='off')return null;
@@ -50,13 +52,16 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
   '<status_current_variables>\n'+JSON.stringify(stat)+'\n</status_current_variables>',
   ...rules,
   ...declaration.formats,
-  '原卡变量规则与格式按来源原样提供；由预设 TASK.START 分类、C.2 与 blk.vars 路由输出，原卡脚本负责结算。'
+  '原卡变量规则与格式按来源原样提供；由预设 TASK.START 分类、C.2 与 blk.vars 路由输出，原卡脚本负责结算。',
+  ...(structured?[NATIVE_DISPLAY_ROUTE,
+  '仅当原卡提供 StatusPlaceHolderImpl 时，以下示例表示两个相邻区块的位置；JSONPatch 数组填写本轮真实操作，无操作时使用 <vars/>。不要输出第二份示例：\n'+NATIVE_DISPLAY_EXAMPLE]:[])
  ].join('\n\n')};
 }
 export function applySourceOutputRoutes(entries){
  const routes=`@COMPONENT_ROUTE 将已提供的组件按作用拆分：展示内容→@OUTPUT.extra；变量更新协议及操作→@OUTPUT.vars；当前状态记录→@OUTPUT.status。同一数据仅一个所有者，其余引用。混合组件拆开独立部分，保留源字段、类型、操作语法、标签与执行条件，不按卡名或脚本品牌筛选。
-@VARIABLE_ROUTE 任何已启用且有写入依据的外部变量协议均可进入 vars。来源的“文末／回复末尾”只表示 vars 内的更新位置，不新增 reply 外输出；Analysis、推演及解释留在内部。缇斯亚自有状态执行器关闭不关闭原卡变量协议；无协议或无合法操作则为空。`;
- if(entries.tisya_task_start)entries.tisya_task_start=entries.tisya_task_start.replace(/^@(?:COMPONENT_ROUTE|VARIABLE_ROUTE) .*\n?/gm,'').replace('@HISTORY ',routes+'\n@HISTORY ');
+@VARIABLE_ROUTE 任何已启用且有写入依据的外部变量协议均可进入 vars。来源的“文末／回复末尾”只表示 vars 内的更新位置，不新增 reply 外输出；Analysis、推演及解释留在内部。缇斯亚自有状态执行器关闭不关闭原卡变量协议；无协议或无合法操作则为空。
+@DISPLAY_ROUTE ${NATIVE_DISPLAY_ROUTE}`;
+ if(entries.tisya_task_start)entries.tisya_task_start=entries.tisya_task_start.replace(/^@(?:COMPONENT_ROUTE|VARIABLE_ROUTE|DISPLAY_ROUTE) .*\n?/gm,'').replace('@HISTORY ',routes+'\n@HISTORY ');
  let text=entries.tisya_inner_chain;
  text=text.replace(/@VARS \{[\s\S]*?\n\}/,`@VARS {
 消费 TASK.START 的 @OUTPUT.vars；按原卡或外部组件提供的协议生成有依据的操作，保留字段、类型、根路径、运算语法、次序和原生更新标签，不转换成另一种 MVU 方言。
@@ -67,6 +72,7 @@ export function applySourceOutputRoutes(entries){
 未知写入目标或缺依据→待办；无协议、明确关闭该原卡协议或无操作→<vars/>。缇斯亚自有状态执行器停用不禁用其他来源的变量协议。
 }`);
  text=text.replace('@OPTION MVU disabled→only <vars/>;omit vars permission rows;do not move disabled operations to another block','@OPTION vars 有操作→替换模板的 <vars/> 为唯一 vars 块；可准确定位的 JSONPatch 目标记录 vars 权限；其他原生语法保留，不伪造 JSON Pointer。无操作→<vars/>。');
+ text=text.replace(/\n@FINAL_COMPONENT_CHECK [^\n]*/g,'')+'\n@FINAL_COMPONENT_CHECK '+NATIVE_DISPLAY_ROUTE;
  text=text.replace('@INPUT source operation refs+blk.status write-owner refs+blk.extra operation refs','@INPUT @IN.output_refs.vars+source operation refs+blk.status write-owner refs+blk.extra operation refs');
  text=text.replace('@INPUT triggered source-component refs+@POV','@INPUT @IN.output_refs.extra+triggered source-component refs+@POV');
  text=text.replace('@INPUT applicable @SOURCE+registered native-state refs+source output-route refs','@INPUT @IN.output_refs.status+applicable @SOURCE+registered native-state refs+source output-route refs');

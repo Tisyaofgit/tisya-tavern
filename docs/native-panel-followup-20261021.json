@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0-alpha.31.31.18",
+  "atUTC": "2026-10-21T05:24:29.735275+00:00",
+  "scope": "Generic preset and read-only display compatibility; neutral fixtures only",
+  "userClarification": "The original model emitted one marker in vars. A second marker in extra was manually copied for diagnosis, not a second generated marker.",
+  "rootCause": "Display regex partition called full memory/status decoding. Unrelated invalid record order/columns could block the original native card panel even with a correctly placed display marker.",
+  "changes": [
+    "Late native material includes a concrete display/update split after original card examples, only when structured output is active.",
+    "Live preset routes and final check explicitly place display marker in extra; memory guidance clarifies event children, one association row and psychology columns.",
+    "Read-only display projection validates permission rows independently and still rejects unknown/malformed/misplaced permissions. Original invalid narrative records remain visible as errors in the journey reader.",
+    "Existing terminal vars/CDATA marker remains supported; direct duplicate extra marker is not inserted again.",
+    "No original message edits, MVU writes, schema changes or variable resets."
+  ],
+  "validation": {
+    "initialFull": {
+      "pass": 1203,
+      "fail": 0,
+      "generatedChecks": 13
+    },
+    "finalTargeted": {
+      "pass": 49,
+      "fail": 0
+    },
+    "originalCardDOM": {
+      "atUTC": "2026-10-21T05:23:51.902Z",
+      "environment": "happy-dom simulation; original card regex and original inline scripts; neutral mocked getVariables; no browser, Android, model or MVU writes",
+      "pass": true,
+      "cases": [
+        {
+          "duplicate": false,
+          "panels": 1,
+          "originalSourcePreserved": true,
+          "rounds": 3,
+          "domClicks": 12
+        },
+        {
+          "duplicate": true,
+          "panels": 1,
+          "originalSourcePreserved": true,
+          "rounds": 3,
+          "domClicks": 12
+        }
+      ]
+    },
+    "browser": {
+      "pass": false,
+      "attempted": true,
+      "reason": "Chromium binary unavailable; official Playwright download returned invalid archives. No browser pass claimed."
+    },
+    "Android": false,
+    "realModel": false,
+    "nativeMvuWrite": false,
+    "finalFull": {
+      "pass": 1203,
+      "fail": 0,
+      "generatedChecks": 13,
+      "durationMs": 95633.730787
+    }
+  },
+  "inputPolicy": "No user narrative, original card file, private data or original card scripts are included in the public repository."
+}

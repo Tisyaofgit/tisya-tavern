@@ -1,7 +1,7 @@
 import {EMOTIONS} from '../emotion-catalog.js';
 const MOODS=EMOTIONS.map(r=>r.name);
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
-import {nativeMvuDeclaration,prepareNativeMvu} from '../config/native-mvu.js';
+import {nativeMvuDeclaration,prepareNativeMvu,NATIVE_DISPLAY_ROUTE,NATIVE_DISPLAY_EXAMPLE} from '../config/native-mvu.js';
 import {emptyConfig,defaultWorld,worldKey,KEY,createStore} from '../config/core.js';
 import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
@@ -140,5 +140,14 @@ test('native marker literal alone never becomes a display component, and incompl
  assert.match(readerErrorText('TISYA_NATIVE_MVU_FORMAT'),/不代表原生变量/);
 });
 test('all live output detail levels explicitly separate native display markers from updates',()=>{
- const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.match(text,/显示占位符.*单独放入 extra/);assert.match(text,/不得与 UpdateVariable 一起包入 vars/);}
+ const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.match(text,/显示占位符.*单独放入 extra/);assert.match(text,/不得与 UpdateVariable 一起包入 vars/);assert.ok(text.endsWith('@FINAL_COMPONENT_CHECK '+NATIVE_DISPLAY_ROUTE));}
+});
+test('late native input routes a source-provided mixed example into separate display and update components',async()=>{
+ const f=setup(),entry=f.c.characters[0].data.character_book.entries[0];
+ entry.content='<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>\n<StatusPlaceHolderImpl/>';
+ const result=await prepareNativeMvu(f.c,f.w,'normal',f.runtime);
+ assert.ok(result.text.includes(entry.content));assert.ok(result.text.lastIndexOf(NATIVE_DISPLAY_ROUTE)>result.text.indexOf(entry.content));assert.ok(result.text.endsWith(NATIVE_DISPLAY_EXAMPLE));
+ const prose=await prepareNativeMvu(f.c,f.w,'normal',f.runtime,false);assert.ok(prose.text.includes(entry.content));assert.ok(!prose.text.includes(NATIVE_DISPLAY_EXAMPLE));
+ const example=fixture().replace('<extra></extra>\n<vars/>',NATIVE_DISPLAY_EXAMPLE),e=parseDisplayEnvelope(example);
+ assert.deepEqual(JSON.parse(e.blocks.vars).operations,[]);assert.equal((e.blocks.extra.match(/StatusPlaceHolderImpl/g)||[]).length,1);
 });

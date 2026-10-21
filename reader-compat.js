@@ -1,4 +1,5 @@
 import {sourceVarsJSON,nativeStatusTail,nativeUpdateTail,nativeStatusInVars} from './native-mvu-wire.js';
+import {displayRecordSource} from './display-records.js';
 // Read-only wire compatibility. Original messages and vendor sources are never
 // rewritten. Compact grades carry no inferred character/participant knowledge.
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -65,7 +66,8 @@ export function adaptReaderModule(id,original,load){
    e.blocks.vars=sourceVarsJSON(e.blocks.vars,load('strict-json.cjs').strictJSON);
    return e;
   };
-  return {...original,parseDisplayEnvelope:envelope,replyRegion:(source,options)=>original.replyRegion(options?.partial?source:normalize(source),options)};
+  const regexEnvelope=source=>envelope(displayRecordSource(normalize(source),original.xmlTokens,load('pipes-wire.cjs').records));
+  return {...original,parseDisplayEnvelope:envelope,parseRegexEnvelope:regexEnvelope,replyRegion:(source,options)=>original.replyRegion(options?.partial?source:normalize(source),options)};
  }
 
  if(id==='permission-wire.cjs')return {

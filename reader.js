@@ -35,7 +35,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.31.17',onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.31.18',onError});
  return localCache;
 }
 export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}

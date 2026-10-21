@@ -74,6 +74,7 @@ export function nativeStatusInVars(source,xmlTokens,parse){
     if(stack.length===2&&t.name==='StatusPlaceHolderImpl'&&t.selfClose&&Object.keys(t.attrs).length===0)slot.marker={start:t.start,end:t.end,offset};
    }
    if(stack.length===1&&t.name==='extra')extra={start:t.start,end:t.end,selfClose:t.selfClose};
+   if(extra&&stack.length===2&&stack[1]==='extra'&&t.name==='StatusPlaceHolderImpl'&&t.selfClose&&Object.keys(t.attrs).length===0)extra.marker=true;
    if(!t.selfClose)stack.push(t.name);else if(stack.length===1&&t.name==='vars')slot=null;
   }else if(t.kind==='close'){
    if(stack.length===2&&t.name==='extra'&&extra)extra.close=t.start;
@@ -94,8 +95,9 @@ export function nativeStatusInVars(source,xmlTokens,parse){
  const update=text.slice(0,marker.offset);
  if(!update.trim().startsWith('<UpdateVariable>'))return source;
  nativeVarsJSON(update,parse);
- const replacement=extra.selfClose?'<extra><StatusPlaceHolderImpl/></extra>':'<StatusPlaceHolderImpl/>';
- const edits=[[marker.start,marker.end,''],[extra.selfClose?extra.start:extra.close,extra.selfClose?extra.end:extra.close,replacement]];
+ const replacement=extra.selfClose?'<extra>\n<StatusPlaceHolderImpl/>\n</extra>':'\n<StatusPlaceHolderImpl/>\n';
+ const edits=[[marker.start,marker.end,'']];
+ if(!extra.marker)edits.push([extra.selfClose?extra.start:extra.close,extra.selfClose?extra.end:extra.close,replacement]);
  for(const [start,end,value]of edits.sort((a,b)=>b[0]-a[0]))source=source.slice(0,start)+value+source.slice(end);
  return source;
 }

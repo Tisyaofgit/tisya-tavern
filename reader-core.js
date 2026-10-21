@@ -41,12 +41,12 @@ module.exports={visibleText,countBody,extractBody};
 },{"./numbered-paragraphs.cjs":"numbered-paragraphs.cjs","./xml-envelope.cjs":"xml-envelope.cjs"}],
 "display-regex.cjs":[function(module,exports,require){
 'use strict';
-const {xmlTokens,parseDisplayEnvelope,replyRegion}=require('./xml-envelope.cjs');
+const {xmlTokens,parseRegexEnvelope,replyRegion}=require('./xml-envelope.cjs');
 const fail=(code,details={})=>{throw Object.assign(new Error(code),{code,details});};
 const LIMIT=2000000;
 function partition(source){
  source=replyRegion(source).source;
- const envelope=parseDisplayEnvelope(source),hideExtra=envelope.wire&&!require('./reader-projection.cjs').extraAllowed(JSON.parse(envelope.blocks.memory)); // Stored-message structure, not generation identity; never parse rendered HTML as XML.
+ const envelope=parseRegexEnvelope(source),hideExtra=envelope.wire&&!require('./reader-projection.cjs').extraAllowed(JSON.parse(envelope.blocks.memory)); // Stored-message structure, not generation identity; never parse rendered HTML as XML.
  const runs=[];let depth=0,owner='outside',panel=null,panelCount=0;
  for(const t of xmlTokens(source)){
   let boundary=false;

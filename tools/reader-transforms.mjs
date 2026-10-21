@@ -28,6 +28,8 @@ export function adaptReaderSource(id,source){
   source=replaceOnce(source,'module.exports={projectJourney};','module.exports={projectJourney,projectJourneyEnvelope};');
  }
  if(id==='display-regex.cjs'){
+  source=replaceOnce(source,'xmlTokens,parseDisplayEnvelope,replyRegion','xmlTokens,parseRegexEnvelope,replyRegion');
+  source=replaceOnce(source,'const envelope=parseDisplayEnvelope(source),hideExtra=', 'const envelope=parseRegexEnvelope(source),hideExtra=');
   source=replaceOnce(source,'function applyRule(runs,entry){\n const re=compile(entry),input=', 'function applyRule(runs,entry,prepareRule){\n const native=prepareRule?.(entry),re=native?.regex??compile(entry),input=');
   source=replaceOnce(source,'text:expand(entry.replaceString,m,input)','text:native?native.expand(m,input):expand(entry.replaceString,m,input)');
   source=replaceOnce(source,'function runDisplay({source,groups,depth=null,opening=false}){','function runDisplay({source,groups,depth=null,opening=false,prepareRule=null}){');
