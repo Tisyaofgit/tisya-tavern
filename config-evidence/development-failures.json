@@ -1,0 +1,26 @@
+{
+  "scope": "Development failures retained from tool receipts",
+  "items": [
+    {
+      "stage": "workspace setup",
+      "exit_code": 1,
+      "message": "ln: failed to create symbolic link 'config-fix/node_modules': No such file or directory; redirected evidence path did not exist",
+      "resolution": "Corrected working-directory-relative paths; no business writes."
+    },
+    {
+      "stage": "schema projection test assertions",
+      "raw_file": "global-first-test.tap",
+      "resolution": "Tests now inspect global authoritative storage; read view assertions retained."
+    },
+    {
+      "stage": "advanced summary test selector",
+      "message": "Unexpected end of JSON input; expected false, actual true at preference-persistence.test.js:77",
+      "resolution": "Two controls have the same label; boolean helper now explicitly selects checkbox. Product save errors were kept visible."
+    },
+    {
+      "stage": "legacy regression expectations",
+      "raw_file": "related-regression.tap",
+      "resolution": "Only two per-world default expectations changed to user-authorized global behavior; all negative checks retained."
+    }
+  ]
+}

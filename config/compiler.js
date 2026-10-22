@@ -6,9 +6,9 @@ import {renderProtocol} from '../settings-core.js';
 import {selectWorkflow,condenseWorkflow} from './workflow.js';
 import {applyWireContract} from './wire-contract.js';
 import {prepareInitiative,applyInitiative} from './initiative.js';
-import {KEY,registry,worldKey,defaultWorld,emptyConfig,compileSelected,validateConfig,workflowDetail} from './core.js';
+import {KEY,registry,worldKey,configuredWorld,emptyConfig,compileSelected,validateConfig,workflowDetail} from './core.js';
 export function modularSource(source){return source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));}
-export function currentConfiguration(context,legacy={}){const d=context.extensionSettings[KEY]===undefined?emptyConfig():validateConfig(context.extensionSettings[KEY]);return {data:d,world:d.worlds[worldKey(context)]??defaultWorld(typeof legacy==='function'?legacy():legacy)};}
+export function currentConfiguration(context,legacy={}){const d=context.extensionSettings[KEY]===undefined?emptyConfig():validateConfig(context.extensionSettings[KEY]);return {data:d,world:configuredWorld(d,worldKey(context),legacy)};}
 export function refineCompiled(c,{data,world},source){
  addSlotRouting(c.rest.entries);if(world.mode!=='narrative'){const mode=registry.modes.get(world.mode);if(typeof mode?.compile!=='function')throw Error('该模式的编译接口尚未接入');return mode.compile({compiledBase:c,configuration:{data,world},source});}
  const m=world.modes[world.mode],r=c.stepwiseRules;

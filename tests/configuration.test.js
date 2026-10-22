@@ -69,7 +69,7 @@ test('all detail levels honor disabled actions and plain output without running 
  }
 });
 
-test('workflow detail saves through production UI, reopens, stays world-scoped and rejects invalid stored values',async()=>{
+test('workflow detail saves globally through production UI, reopens, and rejects invalid stored values',async()=>{
  const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}})};
  let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
@@ -77,7 +77,7 @@ test('workflow detail saves through production UI, reopens, stays world-scoped a
  select.value='"format"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
  assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');ui.dispose();
  ui=mountConfiguration(doc,box,options);await ui.ready;root=ui.root.shadowRoot;assert.equal(root.querySelector('[aria-label="思维链详细程度"]').value,'"format"');ui.dispose();
- f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.workflowDetail,'compact');f.c.chatId='one';
+ f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');f.c.chatId='one';
  for(const value of [null,false,0,'unknown']){const s=f.store.read();s.data.worlds[f.k].modes.narrative.workflowDetail=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/详细程度无效/);}
  assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');await win.happyDOM.abort();
 });
@@ -247,7 +247,7 @@ test('RP01 native preset expansion uses the same initiative without replacing ho
  await f.host.payloadReady(payload);assert.deepEqual(payload,before);assert.equal(JSON.stringify(payload.messages).split('角色主动性·主动推进：').length-1,1);
 });
 
-test('RP01 UI saves and reopens world-scoped initiative, exposes dependency status and restores legacy without migration',async()=>{
+test('RP01 UI saves and reopens global initiative, exposes dependency status and clears it across cards',async()=>{
  const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),initialTab:'play'};
  let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
@@ -261,7 +261,7 @@ test('RP01 UI saves and reopens world-scoped initiative, exposes dependency stat
  assert.equal(root.querySelector('[aria-label="char 主动性"]').value,'"主动推进"');assert.match(root.textContent,/角色自主未开启/);
  const on=root.querySelector('[aria-label="角色自主"]');on.checked=true;on.dispatchEvent(new win.Event('change'));assert.match(root.querySelector('[data-character-initiative-status]').textContent,/已选择主动推进/);
  await save();const category=root.querySelector('[aria-label="配置分类"]');category.value='mode';await category.onchange();const step=root.querySelector('[aria-label="行动与剧情"]');step.checked=false;step.dispatchEvent(new win.Event('change'));await save();category.value='play';await category.onchange();assert.match(root.querySelector('[data-character-initiative-status]').textContent,/行动与剧情未开启/);
- f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.角色主动性,undefined);f.c.chatId='one';
+ f.c.chatId='other';assert.equal(f.store.read().world.modes.narrative.角色主动性,'主动推进');f.c.chatId='one';
  choose('');await save();assert.equal(Object.hasOwn(f.store.read().world.modes.narrative,'角色主动性'),false);assert.equal(f.store.read().world.modes.narrative.narrative.缇斯亚叙事步序.includes('行动与剧情'),false);
  ui.dispose();await win.happyDOM.abort();
 });

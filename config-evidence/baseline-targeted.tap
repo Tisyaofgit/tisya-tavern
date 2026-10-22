@@ -1,0 +1,12 @@
+✔ workflow detail saves through production UI, reopens, stays world-scoped and rejects invalid stored values (218.215939ms)
+✔ task route edits survive production UI save; false and zero resource parameters remain actual values (235.526692ms)
+✔ selecting a task preset cannot replace the native API or model on later requests (644.027619ms)
+✔ play language controls save exact default and independent dialogue settings without duplicate advanced owners (134.0179ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1672.20827

@@ -1,0 +1,171 @@
+✔ resource save is not selection; world off wins; explicit false/zero survive; disabled resource body never compiles (26.740975ms)
+✔ API/preset/model inherit independently and explicit no additional preset is distinct from inheritance (23.461437ms)
+✔ save conflict, failed persistence and world switch preserve authoritative configuration (109.268178ms)
+✔ any recognizable archive kind can become user, with stable IDs and missing-ref failure (15.167848ms)
+✔ actual settings-ready payload excludes all native worldbook bypasses, option catalogue, off style and tool definitions (341.978742ms)
+✔ late third-party injection and swallowed event errors cannot serialize an unverified request (20.096743ms)
+✔ worldbook resource version drift and exact duplicate sources are detected before send (13.787026ms)
+✔ selected workflow compiles only enabled enhancement text while preserving fixed output block names (43.373352ms)
+✔ three workflow detail levels change actual compiled requests and preserve selected constraints (1034.830732ms)
+✔ full detail keeps source stages while disabled simulation questions and features stay absent (219.152505ms)
+✔ all detail levels honor disabled actions and plain output without running unused output branches (190.878913ms)
+✖ workflow detail saves through production UI, reopens, stays world-scoped and rejects invalid stored values (193.938815ms)
+✔ dropdown production UI saves, reopens, and registers extra theme fields without injecting them (116.49346ms)
+✔ native card beauty keeps original DOM nodes and handlers including late helper iframe mounting (19.631211ms)
+✔ zero history preserves current input, swipe excludes discarded answer, continuation keeps its tail (15.885791ms)
+✔ task route edits survive production UI save; false and zero resource parameters remain actual values (337.707895ms)
+✔ auxiliary custom task envelopes preserve edits and disabled rows, while incomplete presets reject without sending (63.534963ms)
+✔ native public-body formatter does not re-run unchanged display regex and obeys the off switch (0.411761ms)
+✔ native additional body parameters cannot replace the compiled messages or tool catalogue (0.558612ms)
+✔ selected media retains native image parts but strips merged unselected text (11.328006ms)
+✔ selecting a task preset cannot replace the native API or model on later requests (704.727568ms)
+✔ each heart position emits all selected directions in the actual request, for every detail and selection (8446.846806ms)
+✔ compact workflow states authorization once and keeps its selected constraints (29.907921ms)
+✔ native database mode defaults on, preserves external payloads and allows late injection (74.602013ms)
+✔ context owner keeps independent history controls visible and preserves saved selections (185.22051ms)
+✔ paired auxiliary API retains identity and direct JSON while isolating source slots and unselected books (63.405396ms)
+✔ managed table activation is included exactly once and native mode keeps native lore untouched (412.708094ms)
+✔ managed material slots survive an older disabled empty slot without duplicating source content (366.34309ms)
+✔ manual auxiliary modes also omit narrative wrappers while main narration keeps them (10105.370022ms)
+✔ configuration assistant uses paired JSON route and saved per-task instructions reach only that task (89.153689ms)
+✔ RP01 selected initiative reaches the assembled request once across all workflow and output modes (3936.945166ms)
+✔ RP01 missing value and disabled dependencies preserve existing compiled protocol (938.544034ms)
+✔ RP01 initiative does not expand outlines, discussion, summaries or auxiliary task requests (522.542571ms)
+✔ RP01 native preset expansion uses the same initiative without replacing host messages or tools (290.284375ms)
+✖ RP01 UI saves and reopens world-scoped initiative, exposes dependency status and restores legacy without migration (295.349334ms)
+✔ RP01 config backup round-trips explicit levels and invalid stored values fail without replacing settings (240.509372ms)
+✔ OOC uses isolated identity and literal feedback with native API, without narrative instructions or tools (77.563592ms)
+✔ revision directives reach both native and controlled payload without mutating original source (636.01794ms)
+✔ both context owners await saved turn directions and block a failed binding (660.003905ms)
+✔ display page exposes canonical loading settings and protects unsaved loading drafts (66.254212ms)
+✔ parent settled and leave reason include a pending cache subpage operation (42.133149ms)
+✔ edited user comparison reaches full native and controlled requests then clears for ordinary send (973.029994ms)
+✔ late user edit invalidates comparison before request serialization (36.28586ms)
+✔ native swipe and regenerate also use the edited user pair, with no leakage into ordinary send after missing end event (98.888553ms)
+✔ play language controls save exact default and independent dialogue settings without duplicate advanced owners (170.662371ms)
+✔ custom language and optional dialogue reach complete actual requests for all workflow detail levels (3580.867917ms)
+✔ language changes validate missing names and do not mutate legacy bilingual configuration just by opening (35.904866ms)
+✔ bilingual language survives native request observation and plain prose without replacing native history (162.883922ms)
+✔ one configuration footer saves or discards cached theme drafts across pages and retains failed saves (82.291878ms)
+✔ mounted initializer survives unrelated generation cleanup, saves usable forms and retains dropdown drafts (1490.079117ms)
+✔ phone and sidebar open the same read-only notes and public memory pages (71.692361ms)
+✔ native image and voice entries open existing settings without generating or rewriting controls (45.556565ms)
+✔ unavailable native phone actions report failure, never substitute another configuration (42.620796ms)
+✔ phone settings, theme and protocol use original settings routes; applications remain native (106.376236ms)
+✔ phone theme workshop saves live effect choices and preserves atlas destination (72.621321ms)
+✔ editing or swiping invalidates an open reader and notebook without touching messages (48.659064ms)
+✔ notebook lookup works during a pending generation and tears down on return to native UI (68.950756ms)
+✔ contacts, labels, grouping and teardown keep native nodes (54.94491ms)
+✔ continue requests next normal response, never submits composer draft (40.14721ms)
+✔ message menu refuses edited source and generation blocks editing (34.91967ms)
+✔ home lists every persisted chat and keeps same-name contacts separate (38.791786ms)
+✔ production home checks avatar identity and selects the exact persisted chat before closing (34.214077ms)
+✔ homepage USER opens the unified identity page and retains a real native-controls exit (52.636683ms)
+✔ worldbook entry stays accessible during streaming and chat editing stays locked (30.830212ms)
+✔ streaming disables actions and generation end re-enables both on same mounted message (59.720828ms)
+✔ old AI advanced reroll opens review without deleting history (28.667279ms)
+✔ old user continue returns to that turn and requests next reply (40.124021ms)
+✔ rollback save failure prevents generation and reports partial deletion (34.663303ms)
+✔ draft and disconnected model prevent any history deletion (75.538487ms)
+✔ custom continue text persists and reaches native normal generation as user input (49.521565ms)
+✔ typing a draft during rollback preserves it and stops generation (30.868359ms)
+✔ unloaded sparse history is rejected without deletion (39.00365ms)
+✔ workflow navigation retains the original expansion control without duplicate shortcuts (37.052166ms)
+✔ chat menu keeps the native anchor and removes the duplicated settings entry (56.694904ms)
+✔ sidebar shortcut entry closes the page and opens seven position selectors (64.443532ms)
+✔ supported system fullscreen routes to native action while app header stays removed (41.592144ms)
+✔ message and bottom menu icons retain accessible names and native source nodes (67.445651ms)
+✔ reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds (53.360195ms)
+✔ inline action mode append changes draft without a confirmation modal (64.115102ms)
+✔ inline action mode replace changes draft without a confirmation modal (54.100062ms)
+✔ action refuses changed message after opening inline mode menu (55.810461ms)
+✔ action refuses changed chat after opening inline mode menu (49.71721ms)
+✔ direct send is an explicit mode and native submission occurs only after an action click (57.521832ms)
+✔ direct send preserves a nonempty draft with inline feedback (49.851793ms)
+✔ chat change closes reader and stale actions cannot write into the next conversation (45.221339ms)
+✔ holding a shadow UI button never opens the native long-press message menu (742.021288ms)
+✔ stopping a hung native generation releases history after host idle and a late result cannot unlock a new run (49.560884ms)
+✔ stopping generation options cancels the pending action without a late send (43.359365ms)
+✔ stop during rollback persists the completed deletion before unlocking and reports the actual count (49.744872ms)
+✔ a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation (103.812744ms)
+✔ UI completions cannot release the history lock while generation options are pending (56.180959ms)
+✔ late clipboard completion leaves a newly opened menu intact (43.223315ms)
+✔ pending history save allows menu dismissal and does not close a later panel (52.465806ms)
+✔ message toolbar supports only more, custom order, full expansion, and persists independently (64.11736ms)
+✔ failed automatic table initialization is latched before the payload can be sent (72.992546ms)
+✔ native edit focus places confirmation controls below the editor and exit restores them (53.64215ms)
+✔ welcome startup mounts the pet and functional sidebar without a world or persistence (114.1063ms)
+✔ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (177.020796ms)
+✔ native composer persists requirements separately and clears the draft before awaiting the reply (36.955696ms)
+✔ Android immersive entry remains discoverable and invokes the persistent native toggle (59.557037ms)
+✔ legacy native shortcut is hidden without overwriting settings; advanced revision remains in More (42.1227ms)
+✔ candidate navigation has its own final row after message tools (41.833172ms)
+✔ direct candidate jump edits the selected native text and deletes only selected version (57.996362ms)
+✔ production initializer wires asynchronous message cache without disabling the shell (133.889024ms)
+✔ production long-press More saves manual order and keeps copy reachable (1250.867597ms)
+✔ production display route saves the real host loading field without replacing history (56.142061ms)
+✔ settings has one destination per entry and discovers later native drawers (48.767157ms)
+✔ groups use stable native IDs; inline management does not load a chat (37.652393ms)
+✔ cache drafts block page and phone navigation until saved or discarded (65.338109ms)
+✔ native API editor opens from clean config but never discards an edited route (238.747877ms)
+✔ home settings invokes the menu; menu rename and pin persist with native names unchanged (105.303339ms)
+✔ late host autoload leaves home visible, while choosing a row still opens exact chat (40.745008ms)
+✔ deletion requires confirmation and checks the native result instead of assuming success (59.939127ms)
+✔ directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape (60.735645ms)
+✔ detached inline edit is rejected instead of saving against a stale row (50.243468ms)
+✔ user message exposes reroll-next, preserves draft guard and sends edited comparison only once (85.305105ms)
+✔ all settings entry points reuse one page, preserve search and discover a drawer installed while open (77.803256ms)
+✔ settings and identity headers return directly to current chat without changing its contents (93.006391ms)
+✔ pending native clipboard on the actual message toolbar never blocks a new chat action (43.435376ms)
+✔ rendered target chat releases actual home navigation lock while native selection promise stays pending (75.978758ms)
+✔ managed committed tail releases home lock even when host never emits CHAT_CHANGED (44.075212ms)
+✔ pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock (59.904445ms)
+✔ target data loaded without completion events closes the directory and releases chat operations (92.412745ms)
+ℹ tests 123
+ℹ suites 0
+ℹ pass 121
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36507.343747
+
+✖ failing tests:
+
+test at tests/configuration.test.js:72:1
+✖ workflow detail saves through production UI, reopens, stays world-scoped and rejects invalid stored values (193.938815ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'format'
+  - 'compact'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/01ad69d50fd6/config-fix/tests/configuration.test.js:80:28)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'format',
+    expected: 'compact',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/configuration.test.js:250:1
+✖ RP01 UI saves and reopens world-scoped initiative, exposes dependency status and restores legacy without migration (295.349334ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '主动推进'
+  - undefined
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/01ad69d50fd6/config-fix/tests/configuration.test.js:264:28)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '主动推进',
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

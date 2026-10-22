@@ -1,0 +1,31 @@
+{
+  "atUTC": "2026-10-22T09:18:49.884300+00:00",
+  "baseline": "33b7256c88687e45a845e20eb9819143f4645235",
+  "version": "0.2.0-alpha.31.31.19-prefs.1",
+  "rootCause": "preferences scoped per character/chat, new world uses defaults",
+  "fullRegressionBeforeFinalFormatTag": {
+    "pass": 1211,
+    "fail": 0,
+    "generatedChecks": 13
+  },
+  "finalSchemaTargeted": {
+    "pass": 57,
+    "fail": 0
+  },
+  "shellAndConfiguration": {
+    "pass": 131,
+    "fail": 0
+  },
+  "finalBuild": {
+    "file": "runtime.js",
+    "localModules": 200,
+    "bytes": 3074913,
+    "externalImports": 38,
+    "checked": true
+  },
+  "realModel": false,
+  "Android": false,
+  "realHost": false,
+  "installedToUser": false,
+  "parallelFlowCandidateModified": false
+}

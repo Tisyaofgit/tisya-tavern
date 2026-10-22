@@ -1,0 +1,29 @@
+✔ play preference changes persist without a separate save, through model/preset changes and a new process (405.178598ms)
+✖ failed preference save keeps visible draft and previous persistent values, then explicit retry succeeds (108.777519ms)
+✖ incomplete language drafts do not overwrite saved preference and can be completed (81.533923ms)
+✔ transient missing configuration, world or card identity cannot turn into initial values or be saved over (42.991512ms)
+✔ automatic preference save does not commit unfinished edits from another settings page (97.78676ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1105.030202
+
+✖ failing tests:
+
+test at tests/preference-persistence.test.js:34:1
+✖ failed preference save keeps visible draft and previous persistent values, then explicit retry succeeds (108.777519ms)
+  TypeError: Cannot read properties of undefined (reading '缇斯亚叙事角色自主')
+      at TestContext.<anonymous> (file:///workspace/scratch/01ad69d50fd6/config-fix/tests/preference-persistence.test.js:37:206)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/preference-persistence.test.js:40:1
+✖ incomplete language drafts do not overwrite saved preference and can be completed (81.533923ms)
+  TypeError: Cannot read properties of undefined (reading '缇斯亚叙事语言配置')
+      at TestContext.<anonymous> (file:///workspace/scratch/01ad69d50fd6/config-fix/tests/preference-persistence.test.js:42:279)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

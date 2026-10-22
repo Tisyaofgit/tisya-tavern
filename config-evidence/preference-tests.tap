@@ -1,0 +1,13 @@
+✔ play preference changes persist without a separate save, through model/preset changes and a new process (276.251506ms)
+✔ failed preference save keeps visible draft and previous persistent values, then explicit retry succeeds (71.901782ms)
+✔ incomplete language drafts do not overwrite saved preference and can be completed (51.074535ms)
+✔ transient missing configuration, world or card identity cannot turn into initial values or be saved over (57.930938ms)
+✔ automatic preference save does not commit unfinished edits from another settings page (131.010122ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 948.348221
