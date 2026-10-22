@@ -434,7 +434,7 @@ test('native bridge defers latest candidate, fills after user continuation and c
  globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const patch=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);for(const op of patch){assert.equal(op.op,'replace');before.stat_data[op.path.slice(1)]=op.value;}return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
  try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降到8。')];await f.service.enableNativeBridge();assert.equal((await f.service.syncNative()).deferred,true);assert.equal(f.calls.length,0);
  f.c.chat.push(user('去吃饭'));values.set(1,structuredClone(values.get(0)));
- f.responder(async(task,input)=>{assert.equal(task,'nativeFill');assert(!input.archiveSource.text.includes('去吃饭'));const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}],pending:[]};});
+ f.responder(async(task,input)=>{assert.equal(task,'tableArchive');assert(!input.archiveSource.text.includes('去吃饭'));const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}],pending:[]};});
  const result=await f.service.syncNative();assert.equal(result.updated,1);assert.equal(parses,1);assert.equal(values.get(0).stat_data.energy,8);assert.equal(values.get(1).stat_data.energy,8);assert.deepEqual(values.get(1).stat_data.bag,['钥匙']);assert.equal((await f.service.syncNative()).already,true);assert.equal(parses,1);assert.equal(f.calls.length,1);
  }finally{globalThis.Mvu=previous;}
 });
@@ -913,3 +913,104 @@ test('deleted origin recovery creates an independent pair and preserves the surv
 test('restored book or changed configuration invalidates a recovery preview without writes',async()=>{const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();const prior=f.store.read().world.tables,original=f.saved.get(prior.originBook);f.saved.delete(prior.originBook);const preview=await f.service.storageRecovery();f.saved.set(prior.originBook,original);const before=JSON.stringify([...f.saved]);await assert.rejects(f.service.recoverMissingStorage(preview),/缺失状态已变化/);assert.equal(JSON.stringify([...f.saved]),before);f.saved.delete(prior.originBook);const preview2=await f.service.storageRecovery();await f.set({plot:true});await assert.rejects(f.service.recoverMissingStorage(preview2),/缺失状态已变化/);});
 
 test('missing-storage settings entry remains usable and rebuilds from its reviewed snapshot',async()=>{const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');const w=new Window(),f=fixture();try{f.binding.primary='';f.binding.additional=[];await f.service.initialize();const old=f.store.read().world.tables;f.saved.delete(old.originBook);const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;assert.equal(panel.root.querySelector('[role=alert]'),null);const recovery=[...panel.root.querySelectorAll('button')].find(b=>b.textContent==='另建原点与新档（保留旧书）');assert(recovery);await recovery.onclick();assert.equal(panel.root.querySelector('[role=alert]'),null);assert.match(panel.root.textContent,/已另建原点与独立新档/);assert(f.saved.has(old.sessionBook));assert.notEqual(f.store.read().world.tables.sessionBook,old.sessionBook);panel.dispose();}finally{await w.happyDOM.abort();w.close();}});
+
+test('unified archive settles native and business in one request and records the actual adjusted value',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10,flag:false,optional:null}}]]);let parses=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=7;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练使体能下降。'),user('继续')];const original=structuredClone(f.c.chat);await f.service.enableNativeBridge();
+ f.responder((task,input)=>{assert.equal(task,'tableArchive');assert.equal(input.nativeBridge.writer,'native-mvu');assert.equal(input.nativeState.stat_data,undefined);assert.equal(input.nativeState.valuesFrom,'currentRows.native_cells');const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练使体能下降'},op('new:training','events',{名称:'训练',内容:'训练使体能下降。'},'训练使体能下降')]};});
+ const result=await f.service.syncNative(),view=await f.service.inspect(),commit=view.session.commits.find(x=>x.kind==='archive');assert.equal(result.updated,1);assert.equal(result.outcome.adjusted.length,1);assert.equal(parses,1);assert.equal(f.calls.length,1);assert(commit.nativeReceipt.unifiedArchive);assert.equal(commit.complete,true);assert.equal(view.rows.find(r=>r.values.路径==='/energy').values.值,7);assert.equal(view.rows.find(r=>r.values.路径==='/flag').values.值,false);assert.equal(view.rows.find(r=>r.values.路径==='/optional').values.值,null);assert.equal(view.rows.filter(r=>r.table==='events').length,1);assert.deepEqual(f.c.chat,original);await f.service.archive();assert.equal(f.calls.length,1);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive commit interruption resumes journal without another model or native callback',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,fail=true;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:event','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]};});
+ f.writeHook(()=>{if(fail&&values.get(0).stat_data.energy===8){fail=false;throw Error('archive disk interrupted');}});
+ await assert.rejects(f.service.syncNative(),/archive disk interrupted/);const failed=await f.service.inspect();assert.equal(failed.session.nativeIntents[0].phase,'parsed');assert.equal(failed.session.commits.some(x=>x.kind==='archive'),false);assert.equal(failed.rows.some(x=>x.table==='events'),false);assert.equal(failed.rows.find(x=>x.values.路径==='/energy').values.值,10);
+ const fresh=f.makeService();await fresh.syncNative();assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal((await fresh.inspect()).rows.filter(x=>x.table==='events').length,1);assert.equal((await fresh.syncNative()).already,true);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive validates business evidence before any native callback or write',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async()=>{writes++;}};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:event','events',{名称:'臆造',内容:'外人进入。'},'无来源的证据')]};});
+ await assert.rejects(f.service.syncNative(),/连续原文证据/);assert.equal(parses,0);assert.equal(writes,0);assert.equal((await f.service.inspect()).session.commits.some(x=>x.kind==='archive'),false);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive honors archive gate after reload without changing settings or calling model',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({nativeBridge:true,archive:false});const before=JSON.stringify([...f.saved]),settings=structuredClone(f.store.read().world.tables);await assert.rejects(f.makeService().syncNative(),/请先启用自动归档历史/);await assert.rejects(f.makeService().archive(),/请先启用自动归档历史/);assert.equal(f.calls.length,0);assert.equal(JSON.stringify([...f.saved]),before);assert.deepEqual(f.store.read().world.tables,settings);
+});
+
+test('unified archive processes confirmed floors in order without reading a future snapshot',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}],[4,{stat_data:{energy:999}}]]);let parses=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const operations=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);before.stat_data.energy=operations[0].value;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('第一次训练。'),user('继续'),ai('第二次训练。'),user('继续'),ai('未确认候选。')];await f.service.initialize();await f.set({nativeBridge:true});
+ const floors=[];f.responder((task,input)=>{floors.push(input.archiveSource.floor);const row=input.currentRows.find(r=>r.values.路径==='/energy');assert.equal(row.values.值,input.archiveSource.floor===1?10:9);assert(input.nativeBridge.snapshotFloor<=input.nativeBridge.sourceFloor);return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:row.values.值-1},evidence:input.archiveSource.text}]};});
+ await f.service.syncNative();assert.deepEqual(floors,[1,3]);assert.equal(parses,2);assert.equal(values.get(0).stat_data.energy,9);assert.equal(values.get(2).stat_data.energy,8);assert.equal(values.get(4).stat_data.energy,999);await f.service.archive({includeLatest:true});assert.equal(f.calls.length,2);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive upgrades an already archived floor with only its missing native settlement',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.initialize();f.responder(()=>({changes:[op('new:event','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]}));await f.service.archive();await f.service.enableNativeBridge();
+ f.responder((task,input)=>{assert(input.nativeBridge.archiveAlready);const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'}]};});await f.service.syncNative();const view=await f.service.inspect();assert.equal(parses,1);assert.equal(view.rows.filter(x=>x.table==='events').length,1);assert.equal(view.session.commits.filter(x=>x.kind==='archive').length,1);assert.equal(view.session.commits.findLast(x=>x.nativeReceipt?.phase==='applied').kind,'native-fill');
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive rejects a stale preceding native snapshot before parsing',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async()=>{writes++;}};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[user('开场'),ai('体能下降。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder((task,input)=>{assert.equal(input.nativeBridge.snapshotFloor,1);const row=input.currentRows.find(r=>r.values.路径==='/energy');values.set(0,{stat_data:{energy:9}});return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降'}]};});
+ await assert.rejects(f.service.syncNative(),/原生来源快照已改变/);assert.equal(parses,0);assert.equal(writes,0);assert.equal(values.has(1),false);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive rechecks preceding native snapshot after callback before first target write',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;values.set(0,{stat_data:{energy:9}});return before;},replaceMvuData:async()=>{writes++;}};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[user('开场'),ai('体能下降。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降'}]};});
+ await assert.rejects(f.service.syncNative(),/原生来源快照已改变/);assert.equal(parses,1);assert.equal(writes,0);await assert.rejects(f.makeService().syncNative(),/原生来源快照已改变/);assert.equal(parses,1);assert.equal(f.calls.length,1);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive refuses older pending history after a later native receipt instead of rolling mirrors back',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}],[2,{stat_data:{energy:8}}]]);
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>before,replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('早期训练。'),user('继续'),ai('后期训练。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder(()=>({changes:[]}));await f.service.archive({range:{from:3,to:3,limit:1}});const before=await f.service.inspect();assert.equal(before.rows.find(x=>x.values.路径==='/energy').values.值,8);const calls=f.calls.length;
+ await assert.rejects(f.service.syncNative(),/后续楼层已有原生结算/);const after=await f.service.inspect();assert.equal(after.rows.find(x=>x.values.路径==='/energy').values.值,8);assert.equal(f.calls.length,calls);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive keeps legacy nonempty native updates owned by the original runtime',async()=>{
+ const {hasNativeUpdate}=await import('../tables/native-bridge.js');assert.equal(hasNativeUpdate('<UpdateVariable><Analysis>无变化</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>'),false);assert.equal(hasNativeUpdate('<UpdateVariable>_.set("energy", 8);</UpdateVariable>'),true);
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:8}}]]);let parses=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练。<UpdateVariable>_.set("energy", 8);</UpdateVariable>'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{assert(input.nativeBridge.nativeOwned);return {changes:[op('new:event','events',{名称:'训练',内容:'训练。'},'训练')]};});await f.service.syncNative();assert.equal(parses,0);assert.equal(f.calls.length,1);const view=await f.service.inspect();assert.equal(view.rows.filter(x=>x.table==='events').length,1);assert.equal(view.session.commits.findLast(x=>x.nativeReceipt?.phase==='applied').nativeReceipt.legacyNative,true);
+ }finally{globalThis.Mvu=previous;}
+});
+
+test('unified archive keeps callback-created native roots distinct from business temporary IDs',async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{before.stat_data.energy=8;before.stat_data.derived=42;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+ try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:native-1','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]};});
+ await f.service.syncNative();const view=await f.service.inspect(),event=view.rows.find(x=>x.table==='events'),derived=view.rows.find(x=>x.values.路径==='/derived');assert.equal(event.values.名称,'训练');assert.equal(derived.values.值,42);assert.notEqual(event.id,derived.id);
+ }finally{globalThis.Mvu=previous;}
+});
+
+for(const completed of [true,false])test('unified archive candidate switch '+(completed?'accepts a completed old journal without inheriting its settlement':'blocks a truly pending old journal without touching the new snapshot'),async()=>{
+ const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
+ globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const operations=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);before.stat_data.energy=operations[0].value;return before;},replaceMvuData:async(data,{message_id})=>{writes++;if(!completed)throw Error('first candidate write interrupted');values.set(message_id,structuredClone(data));}};
+ try{f.binding.primary='';f.binding.additional=[];const alternatives=['训练后体能下降。','另一候选训练后体能下降。'];f.c.chat=[{...ai(alternatives[0]),swipes:alternatives,swipe_id:0},user('继续')];await f.service.enableNativeBridge();
+ f.responder((task,input)=>{assert.equal(task,'tableArchive');assert.equal(input.nativeBridge.nativeOwned,false);const row=input.currentRows.find(r=>r.values.路径==='/energy');assert.equal(row.values.值,parses===0?10:20);return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:row.values.值-2},evidence:'训练后体能下降'}]};});
+ if(completed)await f.service.syncNative();else await assert.rejects(f.service.syncNative(),/first candidate write interrupted/);
+ const old=await f.service.inspect(),oldSource=old.session.nativeIntents[0].source;assert.equal(old.session.commits.some(x=>x.source===oldSource&&x.nativeReceipt?.phase==='applied'),completed);
+ f.c.chat[0].mes=alternatives[1];f.c.chat[0].swipe_id=1;values.set(0,{stat_data:{energy:20}});values.delete(1);const fresh=f.makeService(),beforeWrites=writes;
+ if(completed){const result=await fresh.syncNative();assert.equal(result.updated,1);assert.equal(result.already,undefined);assert.equal(parses,2);assert.equal(f.calls.length,2);assert.equal(values.get(0).stat_data.energy,18);const current=await fresh.inspect();assert.equal(current.archived,1);assert.equal(current.rows.find(x=>x.values.路径==='/energy').values.值,18);assert.equal(current.session.commits.filter(x=>x.nativeReceipt?.phase==='applied').length,2);}
+ else{await assert.rejects(fresh.syncNative(),/正文已改变且存在未完成的原生结算/);assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal(writes,beforeWrites);assert.equal(values.get(0).stat_data.energy,20);assert.equal(values.has(1),false);}
+ }finally{globalThis.Mvu=previous;}
+});

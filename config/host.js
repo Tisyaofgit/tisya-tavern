@@ -110,9 +110,9 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const {generate_data:next}=await createParameters(settings,model,g.type,messages,{allowToolCalls:!g.modular,toolData:g.modular?{}:undefined});if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');if(g.modular&&historySignature(ctx())!==historyStamp)fail('聊天记录已变化，请重新生成');next.stream=payload.stream;if(g.modular)validateBodyOverrides(next,parseRequestBody);const prepared=await prepareTransport(next,g.route.transport,g);for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared?.payload??next);
   const snap={at:new Date().toISOString(),world:g.key,revision:g.data.revision,task:'main',route:{connection:g.route.connection,preset:g.route.preset,model,sources:g.route.sources},selected:g.materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();sealPayload(payload);onSnapshot(snap);
  }
- function taskPreset(task,{archiveProposal=false}={}){
+ function taskPreset(task,{archiveProposal=false,nativeBridge=null}={}){
   const {data,world}=store.read(),definition=registry.tasks.get(task);if(!definition?.preset)fail('此任务没有配套文本预设');
-  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal});
+  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal,nativeBridge});
   const instructions=task==='communication'?communicationMessages({format:'tisya.communication-input/1',text:''})[0].content:(definition.instructions??'');
   return textTaskPreset({task,settings:world.modes[world.mode].narrative,instructions:instructions+(world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+world.tables.taskInstructions[task]:'')});
  }
@@ -138,7 +138,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
 
   onProgress?.({stage:'preparing'});
   let built;
-  if(paired)built=taskPreset(task,{archiveProposal:!!archiveToolSession});
+  if(paired)built=taskPreset(task,{archiveProposal:!!archiveToolSession,nativeBridge:parsedInput?.nativeBridge});
   else built=validateTaskPreset(preset??getSource(),task);
   if(TEXT_TASKS[task]){
    if(task==='communication')communicationMessages(input);

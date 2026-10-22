@@ -109,8 +109,14 @@ export function auditNativeOutcome(operations,beforeStat,afterStat){
  }
  return outcome;
 }
+// Conservatively preserve nonempty legacy blocks: the original runtime owns
+// their effects. Empty JSONPatch/Analysis wrappers do not claim a settlement.
+export function hasNativeUpdate(text){
+ if(/<JSONPatch>\s*\[(?!\s*\])/i.test(String(text)))return true;
+ return [...String(text).matchAll(/<UpdateVariable\b[^>]*>([\s\S]*?)<\/UpdateVariable>/gi)].some(match=>match[1].replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi,'').replace(/<JSONPatch>\s*\[\s*\]\s*<\/JSONPatch>/gi,'').trim().length>0);
+}
 export function bridgeRuntime(runtime=globalThis.Mvu){check(typeof runtime?.getMvuData==='function'&&typeof runtime?.parseMessage==='function'&&typeof runtime?.replaceMvuData==='function','自动更新块需要原生 MVU 的读取、解析和写入接口；脚本保持开启');return runtime;}
-export function bridgeInput(context,runtime=globalThis.Mvu,index=context.chat.findLastIndex(m=>!m.is_user&&!m.is_system&&m.role!=='tool')){bridgeRuntime(runtime);check(Number.isSafeInteger(index)&&index>=0&&index<context.chat.length&&!context.chat[index]?.is_user&&!context.chat[index]?.is_system&&context.chat[index]?.role!=='tool','请选择完整 AI 回复后同步变量');let data;for(let i=index;i>=0;i--){if(context.chat[i]?.is_system||context.chat[i]?.role==='tool')continue;const candidate=runtime.getMvuData({type:'message',message_id:i});if(object(candidate?.stat_data)){data=copy(candidate);break;}}check(data,'原卡尚未初始化变量；先运行原卡开场');return {index,data};}
+export function bridgeInput(context,runtime=globalThis.Mvu,index=context.chat.findLastIndex(m=>!m.is_user&&!m.is_system&&m.role!=='tool')){bridgeRuntime(runtime);check(Number.isSafeInteger(index)&&index>=0&&index<context.chat.length&&!context.chat[index]?.is_user&&!context.chat[index]?.is_system&&context.chat[index]?.role!=='tool','请选择完整 AI 回复后同步变量');let data,snapshotIndex;for(let i=index;i>=0;i--){if(context.chat[i]?.is_system||context.chat[i]?.role==='tool')continue;const candidate=runtime.getMvuData({type:'message',message_id:i});if(object(candidate?.stat_data)){data=copy(candidate);snapshotIndex=i;break;}}check(data,'原卡尚未初始化变量；先运行原卡开场');return {index,snapshotIndex,data};}
 export async function applyBridge({runtime=globalThis.Mvu,index,before,block,guard}){const r=bridgeRuntime(runtime);guard();const current=r.getMvuData({type:'message',message_id:index});if(current?.stat_data)check(JSON.stringify(current.stat_data)===JSON.stringify(before.stat_data),'原生变量已被其他写入器改变');if(!block)return copy(before);const after=await r.parseMessage(block,copy(before));guard();check(object(after?.stat_data),'原生 MVU 未返回有效更新结果');const again=r.getMvuData({type:'message',message_id:index});if(again?.stat_data)check(JSON.stringify(again.stat_data)===JSON.stringify(before.stat_data),'解析期间原生值变化，未写入');await r.replaceMvuData(after,{type:'message',message_id:index});guard();const actual=r.getMvuData({type:'message',message_id:index});check(JSON.stringify(actual?.stat_data)===JSON.stringify(after.stat_data),'原生写回未确认，请重试核对');return copy(actual);}
 
 // A user floor may already contain a copy of the old AI snapshot. Refresh only unchanged copies.

@@ -18,7 +18,7 @@ import {preferenceMatches,withGlobalPreferences,confirmedPreferenceDraft,prefere
 import {prepareArchiveInput,validateArchiveNeedsRows,archiveProposalNeedsRows} from './archive-input.js';
 import {assembleTableRows} from './assembly.js';
 import {cardDefinitionSource,cardMechanisms,cardAIMaterials,bookAIMaterials} from './card-source.js';
-import {nativeBranches,bridgeInput,bridgePatch,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
+import {nativeBranches,bridgeInput,bridgePatch,hasNativeUpdate,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
 import {nativeSnapshot} from './native-state.js';
 import {progressionWindow,validateWorldProposal,progressionKey,planContext} from './progression.js';
 import {snapshotAnchor,branchSeed,forkCommits} from './branches.js';
@@ -126,6 +126,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   return {...history,templates:distinct(discovery.templates??[],history.templates??[]),schemaChanges:distinct(discovery.schemaChanges??[],history.schemaChanges??[]),changes:[...discovery.changes,...history.changes],pending:[...(discovery.pending??[]),...(history.pending??[])]};
  }
  async function archiveLoaded(c,loaded,signal,includeLatest=false,range=null){
+  if(c.settings.nativeBridge)return archiveNativeLoaded(c,loaded,signal,range);
   if(!c.settings.archive&&!range)return loaded;
   const ai=loaded.chain.filter(s=>s.role==='assistant'),eligible=(includeLatest?ai:ai.filter(s=>loaded.chain.some(u=>u.role==='user'&&u.index>s.index))).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)).slice(0,range?.limit??Infinity);
   for(const source of eligible){
@@ -157,41 +158,106 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   }
   return loaded;
  }
- async function nativeMapLoaded(c,loaded,data,source,index){
-  const prior=loaded.view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
-  for(const [i,leaf] of leaves.entries()){const before=byPath.get(leaf.path);if(before&&before.values.启用!==false&&JSON.stringify(before.values.值)===JSON.stringify(leaf.value))continue;changes.push({id:before?.id??'new:native-'+i,table:'native_cells',expected:before?.rev??0,values:{名称:leaf.path,路径:leaf.path,值:leaf.value,启用:true},access:{readers:[],knowers:[]},evidence:'原生变量快照'});}
+ function nativeMapChanges(view,data,reserved=[]){
+  const prior=view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
+  const ids=new Set(reserved);
+  const newId=index=>{let id='new:native-'+index;while(ids.has(id))id+='-snapshot';ids.add(id);return id;};
+  for(const [i,leaf] of leaves.entries()){const before=byPath.get(leaf.path);if(before&&before.values.启用!==false&&JSON.stringify(before.values.值)===JSON.stringify(leaf.value))continue;changes.push({id:before?.id??newId(i),table:'native_cells',expected:before?.rev??0,values:{名称:leaf.path,路径:leaf.path,值:leaf.value,启用:true},access:{readers:[],knowers:[]},evidence:'原生变量快照'});}
   const paths=new Set(leaves.map(l=>l.path));for(const old of prior)if(old.values.启用!==false&&!paths.has(old.values.路径))changes.push({id:old.id,table:'native_cells',expected:old.rev,values:{启用:false},access:{readers:[],knowers:[]},evidence:'原生变量快照'});
+  return changes;
+ }
+ async function nativeMapLoaded(c,loaded,data,source,index){
+  const changes=nativeMapChanges(loaded.view,data);
   for(let offset=0;offset<changes.length;offset+=100)loaded=await commit(c,loaded,{changes:changes.slice(offset,offset+100)},{source,kind:'native-snapshot',evidence:'原生变量快照',allowedTables:['native_cells'],nativeReceipt:{phase:'snapshot',index}});
   return loaded;
  }
- async function enableNativeBridge(enabled=true){return exclusive(async()=>{const c=capture();if(enabled){const settings=getContext().extensionSettings?.mvu_settings;check(!(settings?.更新方式==='额外模型解析'&&settings?.额外模型解析配置?.启用自动请求!==false),'原 MVU 额外模型自动更新正在启用，请先关闭该重复计算来源，脚本保持开启');let loaded=await load(c);const native=bridgeInput(getContext());loaded=await nativeMapLoaded(c,loaded,native.data,loaded.chain.at(-1)?.key??null,native.index);}
+ async function enableNativeBridge(enabled=true){return exclusive(async()=>{const c=capture();if(enabled){check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');const settings=getContext().extensionSettings?.mvu_settings;check(!(settings?.更新方式==='额外模型解析'&&settings?.额外模型解析配置?.启用自动请求!==false),'原 MVU 额外模型自动更新正在启用，请先关闭该重复计算来源，脚本保持开启');let loaded=await load(c);const native=bridgeInput(getContext());loaded=await nativeMapLoaded(c,loaded,native.data,loaded.chain.at(-1)?.key??null,native.index);}
   const fresh=capture(),data=copy(fresh.data);data.worlds[fresh.key].tables={...fresh.settings,nativeBridge:enabled,enabled:enabled||fresh.settings.enabled};await store.save(data,fresh.revision,fresh.key);status('原生变量桥',enabled?'已启用':'已关闭','原 MVU 脚本保持开启；更新块由插件生成');return enabled;});}
- async function syncNative({scope='manual'}={}){return exclusive(async signal=>{
-  const c=capture();if(!c.settings.nativeBridge)return null;let loaded=await load(c);const source=loaded.chain.findLast(x=>x.role==='assistant');if(!source||!loaded.chain.some(x=>x.role==='user'&&x.index>source.index))return {deferred:true,reason:'最新回复暂不结算；等用户继续后生成更新块'};const index=source.floor-1;
-  if(loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.source===source.key))return {already:true};
-  if(/<JSONPatch>\s*\[(?!\s*\])/i.test(source.text)){const existing=globalThis.Mvu?.getMvuData?.({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');loaded=await nativeMapLoaded(c,loaded,existing,source.key,index);await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence:'沿用原回复已保存的原生变量',allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,legacyNative:true}});return {updated:0,already:true,nativeOwned:true};}
-  const native=bridgeInput(getContext(),undefined,index);const evidence=[archivalText(source.text),precedingUserSource(loaded.chain,source)?.text??''].join('\n\n');
-  let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
-  if(waiting){
-   if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
-   return finishNative(c,loaded,source,waiting);
+ // A confirmed floor has one proposal and one persisted native settlement.
+ // The journal bridges the native message store and the archive worldbook;
+ // neither a retry nor a service recreation replays an adjudication callback.
+ async function archiveNativeLoaded(c,loaded,signal,range=null){
+  check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');
+  const applied=(state,key)=>state.view.commits.some(x=>x.source===key&&x.nativeReceipt?.phase==='applied');
+  const eligible=loaded.chain.filter(s=>s.role==='assistant'&&loaded.chain.some(u=>u.role==='user'&&u.index>s.index)).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)||!applied(loaded,s.key)).slice(0,range?.limit??Infinity);
+  for(const source of eligible){
+   c.guard();const index=source.floor-1;
+   check(!loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.nativeReceipt.index>index),'后续楼层已有原生结算；请恢复到本楼对应时间锚再补录，未回退当前变量映射');
+   // A completed old candidate is absent from the current projection but its
+   // journal is complete in the raw session. This does not settle the new source.
+   check(!(loaded.session.data.nativeIntents??[]).some(x=>x.index===index&&x.source!==source.key&&!loaded.session.data.commits.some(commit=>commit.source===x.source&&commit.nativeReceipt?.phase==='applied')),'该楼层正文已改变且存在未完成的原生结算；请先恢复对应来源，未重复执行模型或回调');
+   let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
+   if(waiting&&!applied(loaded,source.key)){
+    if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
+    if(waiting.unifiedArchive){loaded=await finishArchiveNative(c,loaded,source,waiting);continue;}
+    // Resume a pre-upgrade native-only journal before requesting its missing archive.
+    await finishNative(c,loaded,source,waiting);loaded=await load(c);
+   }
+   const archiveAlready=loaded.view.archived.has(source.key),legacyNative=hasNativeUpdate(source.text),nativeOwned=legacyNative||applied(loaded,source.key);
+   const native=bridgeInput(getContext(),undefined,index);
+   if(nativeOwned){const existing=globalThis.Mvu.getMvuData({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');native.data=copy(existing);native.snapshotIndex=index;}
+   loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
+   const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n');
+   const view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))},entries=bookAIMaterials(await books.materials(getContext().characters[getContext().characterId].avatar));c.guard();
+   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:[],objectsSeparate:c.settings.objectsSeparate&&!archiveAlready,
+    nativeBridge:{enabled:true,writer:'native-mvu',sourceFloor:source.floor,index,snapshotFloor:native.snapshotIndex+1,nativeOwned,archiveAlready},nativeState:{readOnly:true,sourceFloor:source.floor,snapshotFloor:native.snapshotIndex+1,valuesFrom:'currentRows.native_cells'},nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n'),instruction:'同一次归档提出记忆与变量变更。native_cells 仅为原生映射；程序交原 MVU 结算后保存实际值。业务状态引用原生路径，不复制变量值。仅处理当前正文及此前连续用户输入，不授予人物未获知的事实。'};
+   const options={source:source.key,kind:archiveAlready?'native-fill':range?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
+   let discovery=null,working=view;
+   if(input.objectsSeparate){discovery=await archiveProposal('objectArchive',{...input,nativeBridge:undefined,nativeState:undefined,nativeRules:undefined},view,c,signal,reading);working=proposalView(view,discovery,{...options,allowedTables:['objects','facts']});}
+   const task=range?'historyImport':'tableArchive';let history=await archiveProposal(task,input,working,c,signal,reading);
+   function splitAndValidate(history){
+    if(discovery)onlyArchiveObjects(history,working,false);
+    const proposal=discovery?mergeArchiveProposals(discovery,history):history;
+    check(!proposal.pending?.length,'统一归档仍有未解决项目；未结算变量或完成归档');
+    const tables=registryIndex(loaded.view.registry),nativeChanges=[],changes=[];
+    for(const op of proposal.changes)(tables.tables.get(normalized(op.table))?.id==='native_cells'?nativeChanges:changes).push(copy(op));
+    check(!nativeOwned||!nativeChanges.length,'原回复已有原生更新，native_cells 本轮只读');
+    check(!archiveAlready||(!changes.length&&!proposal.templates?.length&&!proposal.schemaChanges?.length),'此楼层记忆已归档；补结算只能提出 native_cells 变更');
+    const business={...proposal,changes},nativeProposal={changes:nativeChanges.map(op=>({...op,table:'native_cells'}))};
+    prepareCommit(loaded.view,business,options);
+    const wire=bridgePatch(loaded.view.rows.filter(r=>r.table==='native_cells'&&r.values.启用!==false),nativeProposal,native.data,evidence);
+    return {business,nativeProposal,wire};
+   }
+   let validated;
+   try{validated=splitAndValidate(history);}catch(e){status('统一归档','修正格式',e.message);history=await archiveProposal(task,{...input,repair:{error:e.message,previous:history,instruction:'只修正同一归档提案，保留正确业务与变量项、来源和 discovery ID；不能解决的项目保留 pending。'}},working,c,signal,reading);validated=splitAndValidate(history);}
+   const {business,nativeProposal,wire}=validated;
+   const intent={unifiedArchive:true,source:source.key,index,snapshotIndex:native.snapshotIndex,phase:'parsing',before:JSON.stringify(native.data.stat_data),originalMissing:!globalThis.Mvu.getMvuData({type:'message',message_id:index})?.stat_data,proposal:nativeProposal,archiveProposal:business,archiveOptions:options,evidence,operations:copy(wire.operations),block:wire.block,legacyNative,nativeOwned};
+   assertNativeBaseline(intent);loaded=await saveNativeIntent(c,loaded,intent);assertNativeBaseline(intent);
+   const parsed=wire.operations.length?await parseNativeTransaction({runtime:globalThis.Mvu,eventSource:getContext().eventSource,index,before:native.data,block:wire.block,guard:c.guard}):{after:copy(native.data),stagedWrites:0};
+   const ready={phase:'parsed',after:JSON.stringify(parsed.after.stat_data),afterData:copy(parsed.after),stagedWrites:parsed.stagedWrites,outcome:auditNativeOutcome(wire.operations,native.data.stat_data,parsed.after.stat_data)};
+   parsedNative.set(c.key+':'+source.key,ready);Object.assign(intent,ready);loaded=await saveNativeIntent(c,loaded,intent);
+   loaded=await finishArchiveNative(c,loaded,source,intent);
   }
-  loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
-  const rows=loaded.view.rows.filter(r=>r.table==='native_cells'&&r.values.启用!==false),entries=bookAIMaterials(await books.materials(getContext().characters[getContext().characterId].avatar));c.guard();
-  const proposal=await invoke('nativeFill',{archiveSource:{text:evidence},registry:loaded.view.registry,currentRows:rows,nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n')},c,signal);check(!proposal.pending?.length,'变量填录仍有未定条件，未生成更新块');
-  const wire=bridgePatch(rows,proposal,native.data,evidence);if(!wire.operations.length){await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:''}});return {updated:0};}
-  const intent={source:source.key,index,phase:'parsing',before:JSON.stringify(native.data.stat_data),originalMissing:!globalThis.Mvu.getMvuData({type:'message',message_id:index})?.stat_data,proposal,evidence,operations:copy(wire.operations),block:wire.block};
-  // Journal before invoking callbacks, including random adjudication. An interrupted parse is not replayed.
-  loaded=await saveNativeIntent(c,loaded,intent);
-  const {after,stagedWrites}=await parseNativeTransaction({runtime:globalThis.Mvu,eventSource:getContext().eventSource,index,before:native.data,block:wire.block,guard:c.guard});
-  const outcome=auditNativeOutcome(wire.operations,native.data.stat_data,after.stat_data);
-  const ready={phase:'parsed',after:JSON.stringify(after.stat_data),afterData:copy(after),proposal:copy(proposal),stagedWrites,outcome};
-  // Persist the actual parse result before evaluating acceptance or attempting
-  // writes. Recreated services resume this journal instead of rerunning random
-  // callbacks, including a rejected or adjusted result.
-  parsedNative.set(c.key+':'+source.key,ready);
-  Object.assign(intent,ready);loaded=await saveNativeIntent(c,loaded,intent);
-  return finishNative(c,loaded,source,intent);
+  return loaded;
+ }
+ function assertNativeBaseline(intent){
+  const snapshot=globalThis.Mvu?.getMvuData?.({type:'message',message_id:intent.snapshotIndex});
+  check(JSON.stringify(snapshot?.stat_data)===intent.before,'原生来源快照已改变；未使用过期前值结算，请恢复到已确认时间锚后重试');
+ }
+ async function finishArchiveNative(c,loaded,source,intent){
+  check(intent.phase==='parsed'&&intent.source===source.key&&intent.index===source.floor-1,'原生归档日志与当前来源不匹配');
+  const outcome=intent.outcome;
+  if(outcome?.rejected.length){status('统一归档','原生规则拒绝',outcome.rejected.length+' 项未生效；已保存实际回执，不重复回调');throw Error('原生规则拒绝了 '+outcome.rejected.length+' 项更新；未写入变量或完成归档，解析结果已保存');}
+  // Validate both destinations before the first native write. Native cells are
+  // constructed only from the actual callback result, never from the proposal.
+  prepareCommit(loaded.view,intent.archiveProposal,intent.archiveOptions);
+  const proposal={...copy(intent.archiveProposal),changes:[...copy(intent.archiveProposal.changes),...nativeMapChanges(loaded.view,intent.afterData,intent.archiveProposal.changes.map(op=>op.id))]},options={...intent.archiveOptions,evidence:intent.evidence+'\n原生变量快照',allowedTables:[...intent.archiveOptions.allowedTables,'native_cells'],nativeReceipt:{phase:'applied',unifiedArchive:true,index:intent.index,block:intent.block,legacyNative:intent.legacyNative,stagedWrites:intent.stagedWrites??0,outcome:copy(outcome),updated:intent.proposal.changes.length}};
+  prepareCommit(loaded.view,proposal,options);
+  const runtime=globalThis.Mvu,index=intent.index,current=runtime.getMvuData({type:'message',message_id:index}),currentText=JSON.stringify(current?.stat_data);
+  check(currentText===intent.after||currentText===intent.before||intent.originalMissing&&!current?.stat_data,'变量已被其他来源修改，未覆盖');
+  if(currentText!==intent.after){assertNativeBaseline(intent);c.guard();await runtime.replaceMvuData(intent.afterData,{type:'message',message_id:index});c.guard();check(JSON.stringify(runtime.getMvuData({type:'message',message_id:index})?.stat_data)===intent.after,'原生写回未确认；已保存结果可重试，随机判定不会重跑');}
+  await carryNativeForward({context:getContext(),runtime,index,before:{stat_data:JSON.parse(intent.before)},after:intent.afterData,guard:c.guard});
+  loaded=await commit(c,loaded,proposal,options);
+  parsedNative.delete(c.key+':'+source.key);
+  if(typeof globalThis.TavernHelper?.refreshOneMessage==='function')try{await globalThis.TavernHelper.refreshOneMessage(index);}catch(e){status('原卡显示','待刷新','变量与记忆已保存；'+e.message);}
+  loaded.nativeResult={updated:intent.proposal.changes.length,block:intent.block,outcome:copy(outcome),...(intent.nativeOwned?{nativeOwned:true}:{})};return loaded;
+ }
+ async function syncNative({scope='manual'}={}){return exclusive(async signal=>{
+  const c=capture();if(!c.settings.nativeBridge)return null;
+  check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');
+  let loaded=await load(c);const confirmed=loaded.chain.some(s=>s.role==='assistant'&&loaded.chain.some(u=>u.role==='user'&&u.index>s.index));
+  if(!confirmed)return {deferred:true,reason:'最新回复暂不结算；等用户继续后统一归档变量与记忆'};
+  loaded=await archiveNativeLoaded(c,loaded,signal);return loaded.nativeResult??{already:true};
  },{scope});}
  async function saveNativeIntent(c,loaded,intent){const next=copy(loaded.session.data);next.revision++;next.nativeIntents=(next.nativeIntents??[]).filter(x=>x.source!==intent.source);next.nativeIntents.push(copy(intent));return {...loaded,session:await books.write(loaded.session,next,c.guard)};}
  async function finishNative(c,loaded,source,intent){
