@@ -1,3 +1,4 @@
+import {parseSimpleSheet} from '../tables/simple-sheet.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyConditionTemplates} from '../tables/conditions.js';
@@ -52,12 +53,9 @@ test('registry roundtrip retains nested templates, inherited types, conditions a
  const inherited=registryFromPipes(encoded).types[1];assert.equal(inherited.parent,'rule');assert.equal(inherited.fields.条文.items.fields.关联.follow,'identity');
 });
 
-test('compact material keeps mixed rows tabular and preserves empty rows, metadata and generic row payloads',()=>{
- const rows=[row('a','facts',{名称:'事实'}),thin('r')],material=compactMaterial({rows,pending:[],phase:'archive'});
- assert(material.includes('[PIPES.ROWS/1]'));assert.deepEqual(rowsFromPipes(material.slice(material.indexOf('[PIPES.ROWS/1]'))),rows);
- const empty=compactMaterial({rows:[],pending:[]});assert(empty.includes('[PIPES.ROWS/1]'));assert.deepEqual(rowsFromPipes(empty.slice(empty.indexOf('[PIPES.ROWS/1]'))),[]);
- const registry={tables:[],types:[]};assert(compactMaterial({rows:null,registry}).includes('"rows":null'));
- assert.equal(compactMaterial({rows:[{message:'ordinary data'}]}),JSON.stringify({rows:[{message:'ordinary data'}]}));
+test('model material expands complex values into sub-sheets without changing legacy PIPES storage readers',()=>{
+ const samples=[{rows:[row('a','facts',{名称:'事实'}),thin('r')],pending:[],phase:'archive'},{rows:[],pending:[]},{rows:null,registry:{tables:[],types:[]}},{rows:[{message:'ordinary data',nested:{zero:0,no:false,nil:null}}]}];
+ for(const value of samples){const material=compactMaterial(value);assert(!material.includes('[PIPES.'));assert.deepEqual(parseSimpleSheet(material),value);}
 });
 
 test('repeated mixed identities and full rows reduce transport size without loss',()=>{

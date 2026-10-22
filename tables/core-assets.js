@@ -27,21 +27,28 @@ export function coreSelection(view,objectIds,{linkIds=[],growthIds=[],instructio
   source:{format:'tisya.core-selection/1',objects:objects.map(row=>({row:copy(row),kind:coreKind(row,view.registry),growth:growth.filter(x=>growthIds.includes(x.id)&&x.values.主体===row.id).map(copy)})),links:links.filter(x=>linkIds.includes(x.row.id)).map(x=>({row:copy(x.row),members:x.members})),instructions}};
 }
 
-function itemValid(item,basis){check(text(item?.name)&&text(item.value)&&text(item.evidence)&&basis.includes(item.evidence),'基点项缺少本对象的连续原文依据');}
+// Match a continuous original text value, never JSON punctuation, property
+// names, row IDs/revisions/ACL metadata, or a concatenation of separate fields.
+export function hasCoreEvidence(rows,evidence,instructions=''){
+ if(!text(evidence))return false;
+ const contains=value=>typeof value==='string'?value.includes(evidence):Array.isArray(value)?value.some(contains):value&&typeof value==='object'?Object.values(value).some(contains):false;
+ return rows.some(row=>contains(row?.values))||(typeof instructions==='string'&&instructions.includes(evidence));
+}
+function itemValid(item,rows,instructions){check(text(item?.name)&&text(item.value)&&hasCoreEvidence(rows,item.evidence,instructions),'基点项缺少本对象的连续原文依据');}
 export function validateBundle(bundle,source,{assignIds=false}={}){
  check(text(bundle?.name)&&Array.isArray(bundle.members)&&Array.isArray(bundle.links),'整组基点草稿格式无效');
  check(equalSet(bundle.members.map(x=>x.sourceObject),source.objects.map(x=>x.row.id)),'基点成员与已选对象不一致');
  const result=copy(bundle);
  for(const member of result.members){
-  const origin=source.objects.find(x=>x.row.id===member.sourceObject),basis=JSON.stringify(origin.row)+'\n'+source.instructions;
+  const origin=source.objects.find(x=>x.row.id===member.sourceObject);
   check(text(member.name)&&Array.isArray(member.traits)&&member.traits.length>0&&Array.isArray(member.growth),'每个基点成员须有核心项及成长列表');
-  for(const item of member.traits)itemValid(item,basis);
-  for(const item of member.growth){check(origin.growth.length,'未选择携带这个对象的成长');itemValid(item,JSON.stringify(origin.growth)+'\n'+source.instructions);}
+  for(const item of member.traits)itemValid(item,[origin.row],source.instructions);
+  for(const item of member.growth){check(origin.growth.length,'未选择携带这个对象的成长');itemValid(item,origin.growth,source.instructions);}
   for(const item of [...member.traits,...member.growth])if(assignIds)item.id=crypto.randomUUID();
   check(distinct([...member.traits,...member.growth].map(x=>x.id)),'核心项编号缺失或重复');
  }
  check(equalSet(result.links.map(x=>x.sourceRow),source.links.map(x=>x.row.id)),'基点关联与已选关联不一致');
- for(const link of result.links){const origin=source.links.find(x=>x.row.id===link.sourceRow);check(equalSet(link.members,origin.members),'基点关联不能更换对象');itemValid(link,JSON.stringify(origin.row)+'\n'+source.instructions);if(assignIds)link.id=crypto.randomUUID();}
+ for(const link of result.links){const origin=source.links.find(x=>x.row.id===link.sourceRow);check(equalSet(link.members,origin.members),'基点关联不能更换对象');itemValid(link,[origin.row],source.instructions);if(assignIds)link.id=crypto.randomUUID();}
  check(distinct(result.links.map(x=>x.id)),'关联编号缺失或重复');return result;
 }
 

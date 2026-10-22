@@ -1,4 +1,5 @@
 import {LEGACY_INITIATIVE} from './initiative.js';
+import {renderModelMaterial} from '../tables/simple-sheet.js';
 // Preserve the rendered source protocol, including its stage inputs, results,
 // dependencies and repair routes. Selection removes only inactive work; it must
 // never replace the narrative stages with a summary of their configuration.
@@ -54,7 +55,7 @@ export function selectWorkflow(text,c,mode){
 
 function plainDelivery(text,c){
  const out={kind:'plain',language:c.stepwiseRules.C08,body:{min:c.range.下限,max:c.range.上限,unit:c.range.单位,max_rule:'preferred'}};
- text=block(text,'C.2',()=> '[C.2]\n@REQUIRE DONE(C.1)\n@DEFINE @OUT:='+JSON.stringify(out)+'\n@LANG '+c.stepwiseRules.C08+'\n@FORMAT ordinary public prose only;no wrappers,paragraph labels,summary,hearts,records,actions or state updates\n@BODY count only visible body text per @M.11\n@RESULT @OUT\n@DONE C.2\n[/C.2]');
+ text=block(text,'C.2',()=> '[C.2]\n@REQUIRE DONE(C.1)\n@DEFINE @OUT:=\n'+renderModelMaterial(out)+'\n@LANG @OUT.language\n@FORMAT ordinary public prose only;no wrappers,paragraph labels,summary,hearts,records,actions or state updates\n@BODY count only visible body text per @M.11\n@RESULT @OUT\n@DONE C.2\n[/C.2]');
  text=block(text,'D.1',()=> '[D.1]\n@REQUIRE DONE(C)\n[CALL blk.body]\n@INPUT final @BODY+@OUT\n@TASK render the completed public prose unchanged,without labels or wrappers;do not regenerate the story\n@RESULT @BLOCK.body\n@DONE blk.body\n@RETURN @BLOCK.body\n[/CALL blk.body]\n@RESULT @BLOCK.body\n@DONE D.1\n[/D.1]');
  text=block(text,'D.2',()=> '[D.2]\n@REQUIRE DONE(D.1)\n@CHECK final body identity,reader permissions,source and authorization consistency\n@REJECT extraction error→blk.body;prose inconsistency→responsible P/E/C stage\n@RESULT content findings+actual corrections\n@DONE D.2 after blocking errors are corrected\n[/D.2]');
  text=block(text,'D.3',()=> '[D.3]\n@REQUIRE DONE(D.2)\n@CHECK ordinary paragraphs only;no wrappers,index labels,auxiliary records or process leakage\n@REJECT rendering error→blk.body;content error→owning stage\n@RESULT @DRAFT:=@BLOCK.body+checks tied to this revision\n@DONE D.3 after blocking errors are corrected\n[/D.3]');

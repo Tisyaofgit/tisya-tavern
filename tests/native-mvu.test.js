@@ -2,6 +2,7 @@ import {EMOTIONS} from '../emotion-catalog.js';
 const MOODS=EMOTIONS.map(r=>r.name);
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {nativeMvuDeclaration,prepareNativeMvu,NATIVE_DISPLAY_ROUTE,NATIVE_DISPLAY_EXAMPLE} from '../config/native-mvu.js';
+import {parseSimpleSheet} from '../tables/simple-sheet.js';
 import {emptyConfig,defaultWorld,worldKey,KEY,createStore} from '../config/core.js';
 import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
@@ -23,7 +24,7 @@ test('native card declaration is separate from the Tisya executor flag and respe
 });
 test('native preparation preserves 0/false/empty values, excludes unrelated/disabled entries, never writes',async()=>{
  const f=setup(),before=JSON.stringify(f.c),result=await prepareNativeMvu(f.c,f.w,'normal',f.runtime);
- assert.match(result.text,/"计数":0,"开启":false,"文本":""/);assert.match(result.text,/只按实际事件/);assert.doesNotMatch(result.text,/DISABLED_RULE|UNRELATED_BOOK/);
+ assert.deepEqual(parseSimpleSheet(result.text.match(/<status_current_variables>\n([\s\S]*?)\n<\/status_current_variables>/)[1]),{计数:0,开启:false,文本:''});assert.match(result.text,/只按实际事件/);assert.doesNotMatch(result.text,/DISABLED_RULE|UNRELATED_BOOK/);
  assert.equal(JSON.stringify(f.c),before);assert.deepEqual(f.reads.map(r=>r.message_id),[1,0]);
  await assert.rejects(prepareNativeMvu(f.c,f.w,'normal',{}),/已启用.*尚未就绪/);
  f.setState(null);await assert.rejects(prepareNativeMvu(f.c,f.w,'normal',f.runtime),/损坏/);
@@ -33,6 +34,15 @@ test('native MVU uses selected branch pre-swipe state and current user snapshot 
  const runtime={parseMessage(){},getMvuData:({message_id})=>({stat_data:{floor:message_id}})};
  assert.equal((await prepareNativeMvu(f.c,f.w,'swipe',runtime)).messageIndex,1);
  assert.equal((await prepareNativeMvu(f.c,f.w,'normal',runtime)).messageIndex,2);
+});
+test('unified archive bridge leaves snapshot selection to activated material and keeps local drift checks',async()=>{
+ const f=setup();f.w.tables={...f.w.tables,nativeBridge:true};
+ const state={计数:0,开启:false,文本:'',条件:{a:[null,0,false,'0']},未激活秘密:'UNACTIVATED_NATIVE_SECRET'};f.setState(state);
+ const result=await prepareNativeMvu(f.c,f.w,'normal',f.runtime);
+ assert.equal(result.nativeBridge,true);assert.equal(result.stateDigest,JSON.stringify(state));
+ assert.doesNotMatch(result.text,/status_current_variables|UNACTIVATED_NATIVE_SECRET|未激活秘密|1 计数：/);
+ assert.match(result.text,/当前已激活且获准读取的资料/);assert.deepEqual(f.reads.map(r=>r.message_id),[1,0]);
+ assert.match(result.text,/vars 必须为 <vars\/>/);
 });
 test('all compiled detail levels retain native JSONPatch format without disabled MVU wording',()=>{
  const f=setup();for(const detail of ['full','compact','format']){f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/MVU is disabled|MVU disabled→/);assert.match(text,/原生更新标签/);assert.match(text,/原生脚本为唯一结算者/);}

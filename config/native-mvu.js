@@ -1,4 +1,5 @@
 import {isTableContinuity} from '../tables/continuity.js';
+import {renderModelMaterial} from '../tables/simple-sheet.js';
 // Native card MVU remains the sole writer. This adapter supplies its contract
 // and an immutable read of the selected message; it never runs card scripts.
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -48,8 +49,7 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
   const markers=[...new Set(declaration.enabled.flatMap(entry=>[...String(entry.content??'').matchAll(/<([A-Za-z][\w:-]*PlaceHolder[\w:-]*)\s*\/>/g)].map(match=>'<'+match[1]+'/>')))];
   return {...declaration,messageIndex:index,stateDigest:JSON.stringify(stat),nativeBridge:true,text:[
    '[NATIVE.ARCHIVE 主文契约：本轮正文只叙事，vars 必须为 <vars/>；业务归档与原生变量值提案由同一次表单归档处理，程序生成差异交原 MVU 校验并读取实际结果。此已启用桥接契约优先于来源中要求正文生成 UpdateVariable/JSONPatch 的示例；不再独立生成或重复结算变量。]',
-   '[以下是所选消息 '+index+' 的实际原生只读快照，仅供叙事参考；原生字段不在 status/表单业务值中再建一份可编辑镜像。]',
-   '<status_current_variables>\n'+JSON.stringify(stat)+'\n</status_current_variables>',
+   '[本轮实际原生状态由当前已激活且获准读取的资料提供；未激活字段不补读、不猜测。所选消息 '+index+' 的完整快照仅供本地版本核验，不额外注入。原生字段不在 status/表单业务值中再建一份可编辑镜像。]',
    ...(structured&&markers.length?['原卡已启用条目声明的显示占位符，按对应条目的触发条件只在 extra 内各输出一次、独占一行，标签前后换行；条目关闭时不得输出。它们不是变量命令。保留原生前端渲染，不生成 HTML 实现：\n'+markers.join('\n')]:[])
   ].join('\n\n')};
  }
@@ -59,7 +59,7 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
  const rules=enabled.filter(e=>/\[mvu_update\]/i.test(e.comment??'')&&!/<JSONPatch>/i.test(e.content??'')).map(e=>String(e.content??'').trim()).filter(Boolean);
  return {...declaration,messageIndex:index,stateDigest:JSON.stringify(stat),text:[
   '[原卡 MVU：变量由原生脚本更新，缇斯亚只传递本轮提案；不得在 status 再写相同字段。]',
-  '<status_current_variables>\n'+JSON.stringify(stat)+'\n</status_current_variables>',
+  '<status_current_variables>\n'+renderModelMaterial(stat)+'\n</status_current_variables>',
   ...rules,
   ...declaration.formats,
   '原卡变量规则与格式按来源原样提供；由预设 TASK.START 分类、C.2 与 blk.vars 路由输出，原卡脚本负责结算。',

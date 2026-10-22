@@ -1,7 +1,9 @@
 import {archiveLayer} from './archive-book.js';
+import {storyMaterial,storyContext} from './story-material.js';
+import {nativeReferences} from './native-state.js';
 import {copy,check,normalized,references} from './schema.js';
 // Read-only generation projection. Storage journals never become active lore.
-export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forcedIds=[],temporary=null,due=[]}){
+export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forcedIds=[],temporary=null,due=[],userId=null,focusObjects=[],nativeState=null}){
  const byId=new Map(rows.map(r=>[r.id,r])),forced=new Set(forcedIds),dueIds=new Set(due.filter(x=>x.due===true).map(x=>x.id));
  const names=r=>[r?.values.名称,...(r?.values.别名??[])].filter(x=>typeof x==='string'&&x.trim());
  const entries=[];
@@ -15,7 +17,9 @@ export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forc
   const constant=reason!=='关键词';
   // Native syntax can interpret /name/ as a regular expression; escape literal names.
   const safeKeys=keys.map(key=>key.startsWith('/')?'/'+key.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')+'/i':key);
-  entry(row.id,row.values.名称,'表单资料；access 分别限定读者与人物知情；失效或待确认的状态值不是当前确证：\n'+JSON.stringify({id:row.id,table:row.table,values:row.values,access:row.access}),safeKeys,constant,reason);
+  const paths=new Set(nativeReferences([row]));
+  const snapshot=nativeState&&paths.size?{...nativeState,values:(nativeState.values??[]).filter(v=>paths.has(v.path)),missing:(nativeState.missing??[]).filter(p=>paths.has(p))}:null;
+  entry(row.id,row.values.名称,'资料中的知情范围分别约束读者展示与人物知识；失效或待确认的状态不是当前确证。\n'+storyMaterial({rows,selectedRows:[row],registry,userId,focusObjects,due})+(snapshot?'\n'+storyContext({nativeState:snapshot},[row]):''),safeKeys,constant,reason);
  }
  if(temporary?.text)entry('latest-temporary','最新回复暂存','最新回复接续资料（尚未确认归档）：\n'+temporary.text,[],true,'最新回复暂存');
  return entries;

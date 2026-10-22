@@ -1,4 +1,5 @@
 import {check,copy,isObjectType} from './schema.js';
+import {renderModelMaterial} from './simple-sheet.js';
 
 // Native persona remains the only live description owner. Stored snapshots are
 // import evidence and conflict guards, not a second prompt injection source.
@@ -10,7 +11,7 @@ export function personaSnapshot(context,avatar=context.userAvatar??context.chatM
   descriptor:copy(p.persona_descriptions?.[avatar]??{}),storedName:p.personas?.[avatar]??null};
 }
 export const personaStamp=value=>JSON.stringify(value);
-export function personaDefinition(value){return value?'NATIVE.USER.DEFINITION\n'+JSON.stringify({id:value.id,name:value.name,description:value.description}):'';}
+export function personaDefinition(value){return value?'NATIVE.USER.DEFINITION\n'+renderModelMaterial({id:value.id,name:value.name,description:value.description}):'';}
 export function personaObjectChange(value,rows,binding){
  const prior=binding?.personaId===value.id?rows.find(r=>r.id===binding.objectId&&r.table==='objects'):null;
  check(prior||!rows.some(r=>r.table==='objects'&&r.values.名称===value.name),'已有同名人物但尚未绑定 user；请先在“用户身份”选择该档案绑定，避免合并错人');
@@ -29,7 +30,7 @@ export function personaProjection(rows,binding,current,{nativeInjected=true}={})
 export function personaDraft(row,registry,current){
  check(current?.id,'请先在原生“我扮演谁”中选择用户人设');
  check(row?.table==='objects'&&isObjectType(registry,row,'character'),'请选择人物档案绑定为 user');
- const v=row.values,parts=[v.描述,...Object.entries(v.属性??{}).map(([k,x])=>k+'：'+(typeof x==='string'?x:JSON.stringify(x)))].filter(x=>typeof x==='string'&&x);
+ const v=row.values,parts=[v.描述,...Object.entries(v.属性??{}).map(([k,x])=>k+'：'+(typeof x==='string'?x:'\n'+renderModelMaterial(x)))].filter(x=>typeof x==='string'&&x);
  return {name:v.名称,description:parts.join('\n'),objectId:row.id,rowRevision:row.rev,personaId:current.id,before:copy(current)};
 }
 export function createPersonaGateway({getContext,getAvatar,applyActive,persist}){

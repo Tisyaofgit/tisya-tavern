@@ -1,0 +1,11 @@
+{
+  "model": "isolated assistant simulation",
+  "attempt": 2,
+  "parsed": true,
+  "validated": true,
+  "writePerformed": false,
+  "proposedRows": 0,
+  "inputComplete": false,
+  "complete": false,
+  "reason": "isolated reader tool truncated material; response correctly withheld a write, excluded from full-input format pass count"
+}

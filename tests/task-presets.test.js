@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
+import {parseSimpleSheet} from '../tables/simple-sheet.js';
 import {TABLE_MODES} from '../tables/modes.js';
 import {TASK_PROFILES} from '../tables/task-profiles.js';
 import {SLOT_NAMES,SLOT_TARGETS} from '../tables/slots.js';
@@ -11,7 +12,7 @@ import {defaultRegistry} from '../tables/schema.js';
 
 const configuration={data:emptyConfig(),world:defaultWorld()};
 const input={goal:'核对原始定义',sourceCardRaw:{fields:{name:'源卡',description:'原始定义 {{user}} <not-a-macro> 0 false null'},entries:[{id:7,content:'格式：<receipt>完整值</receipt>'}]},sourceHistory:[{floor:1,role:'user',text:'原始用户 {{user}}'},{floor:2,role:'assistant',text:'<body>实际事件</body><memory>旧摘要</memory>'}],sourceBooks:[],registry:defaultRegistry(),currentRows:[]};
-function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return JSON.parse(text.split('\n').slice(2,-1).join('\n'));}
+function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return parseSimpleSheet(text.split('\n').slice(2,-1).join('\n'));}
 
 test('all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order',()=>{
  assert.deepEqual(Object.keys(TABLE_MODES).sort(),Object.keys(TASK_PROFILES).sort());
@@ -77,4 +78,22 @@ test('actual archive request separates operational blockers and inaccessible cor
   assert.match(norms,/mistaken belief must not carry the hidden correction as character knowledge/);
   assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
  }
+});
+
+test('preference messages retain their complete schema and rows without shipping unrelated tables or mutating input',()=>{
+ const registry=defaultRegistry(),preferences=registry.tables.find(table=>table.id==='preferences');
+ preferences.fields.内容.description='完整自定义填写说明';
+ preferences.fields.倾向区间.items.fields.下限.customMetadata={retain:false,zero:0,empty:[]};
+ registry.provenance={version:'custom-registry'};
+ const material={registry,currentRows:[{id:'preference-1',table:'preferences',rev:3,values:{名称:'措辞',内容:'保留原句',启用:false},access:{readers:['读者'],knowers:[]}}],userInput:'今后使用这些措辞',preferenceContext:{user:'persona-1',card:'card-1',world:'world-1',chatId:'chat-1'}};
+ const before=structuredClone(material),messages=taskMessages({preset:pairedPreset({task:'preferenceAnalysis',configuration}),task:'preferenceAnalysis',input:material});
+ const state=slot(messages,'state');
+ assert.deepEqual(state.registry,{...registry,tables:[preferences],types:[]});
+ assert.deepEqual(state.rows,material.currentRows);assert.deepEqual(state.preferenceContext,material.preferenceContext);
+ assert.deepEqual(material,before);
+ const archive=taskMessages({preset:pairedPreset({task:'tableArchive',configuration}),task:'tableArchive',input:material});
+ assert.deepEqual(slot(archive,'state').registry,registry);
+ const missing={...material,registry:{...registry,tables:registry.tables.filter(table=>table.id!=='preferences')}};
+ const unresolved=taskMessages({preset:pairedPreset({task:'preferenceAnalysis',configuration}),task:'preferenceAnalysis',input:missing});
+ assert.deepEqual(slot(unresolved,'state').registry,missing.registry,'missing preference definitions must reach validation unchanged');
 });

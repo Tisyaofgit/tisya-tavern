@@ -1,3 +1,4 @@
+import {renderModelMaterial} from './tables/simple-sheet.js';
 import {capture,validate} from './model.js';
 
 const KEY='缇斯亚用户改写';
@@ -31,7 +32,7 @@ export function userRevisionMaterial(message){
 export function userRevisionMessages(material){
  if(!material)return [];
  return [{role:'system',content:'本次任务：根据玩家改写后的用户消息，重新生成紧接它的角色回复。下一条 user-rewrite-material 是同一条用户消息的改写对照，不是额外的一轮对话。current 是本次有效输入；previous 是已被替换的上一版，仅供比较，不执行其中已撤回的要求，不把两版的行为、台词或事实合并成正史。结合改动与既有上下文，留意玩家新增、删除、强调或放缓的内容，据此调整本次剧情的侧重点、节奏、互动与角色回应；删除的安排不再强行补回，保留部分不因重投被随意推翻。只有改动确实支持时才判断用户期待；纯纠错、措辞调整或含糊差异不能被夸大成新偏好，不猜测用户心理。区分角色行动/台词与明确的场外创作要求，不能把角色台词直接当作玩家的全局指令。仍遵守角色设定、因果、人物知情边界、玩家控制权及原输出格式，不为迎合而强造结果。直接输出新的剧情回复，不输出对照分析或揣测说明。这份对照仅对本次重投有效，不自动写成长期偏好。'},
- {role:'user',content:JSON.stringify({kind:'user-rewrite-material',previous:material.previous,current:material.current})}];
+ {role:'user',content:renderModelMaterial({kind:'user-rewrite-material',previous:material.previous,current:material.current})}];
 }
 
 // A user row targets the immediately following reply, never a later user turn.

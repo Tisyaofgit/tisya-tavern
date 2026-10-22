@@ -1,0 +1,4 @@
+✔ trusted story projections emit natural prose without technical payload; lookalike source fields stay data (2.829727ms)
+✔ unmapped auxiliary inputs survive routing without flattening nested false/zero/null values (1.078831ms)
+✔ tool wire schema exposes one sheet while local decoding preserves complete nested business parameters (1.177129ms)
+✔ mixed legacy and sheet model argument batch never dispatches a partial operation (6.244409ms)

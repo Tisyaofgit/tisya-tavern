@@ -1,3 +1,4 @@
+import {renderModelMaterial} from './simple-sheet.js';
 import {CAPTURE_RULES} from './conditions.js';
 const own=(o,k)=>Object.hasOwn(o,k),missing=Symbol('missing');
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
@@ -67,8 +68,5 @@ export function registryFromPipes(text){
   }else throw Error('PIPES未知模板记录 '+label);
  }return registry;
 }
-export function compactMaterial(value){
- if(!value||typeof value!=='object'||Array.isArray(value))return typeof value==='string'?value:JSON.stringify(value);
- const {rows,registry,...meta}=value;const tabular=Array.isArray(rows)&&rows.every(r=>object(r)&&typeof r.table==='string'&&object(r.values));if(!tabular&&!registry)return JSON.stringify(value);if(own(value,'rows')&&!tabular)meta.rows=rows;
- const blocks=[];if(Object.keys(meta).length)blocks.push(JSON.stringify(meta));if(registry)blocks.push(registryToPipes(registry));if(tabular)blocks.push(rowsToPipes(rows));return blocks.join('\n');
-}
+// PIPES/1 readers remain for stored/interchange compatibility; model material uses expanded sheets.
+export function compactMaterial(value){return renderModelMaterial(value);}

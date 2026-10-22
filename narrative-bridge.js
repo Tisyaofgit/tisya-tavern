@@ -1,7 +1,8 @@
 import {applyNarrativeRules} from './config/rule-text.js';
 import {renderProtocol} from './settings-core.js';
 import {nativeMvuDeclaration,applySourceOutputRoutes} from './config/native-mvu.js';
-import {requireMoodNames} from './heart-contract.js';
+import {requireMoodNames,moodSelectionRule} from './heart-contract.js';
+import {applyEscapedPipeOutput} from './config/reply-pipes-output.js';
 import {modularSource,currentConfiguration,refineCompiled} from './config/compiler.js';
 import {NARRATIVE as N} from './settings-core.js';
 import {outputEnabled,heartSelection} from './preset.js';
@@ -27,8 +28,8 @@ export function compileNarrative(context,source,moods=[],configuration=null){
  const modular=modularSource(source),current=modular?(configuration??currentConfiguration(context,()=>readNarrative(context).settings)):null,config=modular?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:readNarrative(context),selection=modular&&current.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});
  if(!modular&&c.prose){applyNarrativeRules(c,{narrative:config.settings,叙事指令:context.extensionSettings?.缇斯亚配置?.叙事指令});c.rest=renderProtocol(c);}
- if((!current||current.world.mode==='narrative')&&c.prose&&c.outputEnabled&&c.heartActive){const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=requireMoodNames(moods);c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,'mood must be one of '+JSON.stringify(values.mood)).replaceAll('{mood或null}','{mood}');}
- const result=modular?refineCompiled(c,current,source):c;if(!result.taskMode&&c.prose&&c.outputEnabled)applySourceOutputRoutes(result.rest.entries);return result;
+ if((!current||current.world.mode==='narrative')&&c.prose&&c.outputEnabled&&c.heartActive){const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=requireMoodNames(moods);c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,moodSelectionRule(values.mood)).replaceAll('{mood或null}','{mood}');}
+ const result=modular?refineCompiled(c,current,source):c;if(!result.taskMode&&c.prose&&c.outputEnabled){applySourceOutputRoutes(result.rest.entries);applyEscapedPipeOutput(result.rest.entries);}return result;
 }
 export function registerLivePreset(context,getSource,getContext,getMoods,onError=()=>{}){
  const ids=Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries);let cacheKey=null,cached=null;

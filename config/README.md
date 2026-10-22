@@ -31,7 +31,7 @@
 
 `context()`：最近一次本应用发往宿主后端的装配快照，不含凭据或完整连接对象。配置页面提供最多十次记录选择。
 
-`contracts.generation`、`contracts.mode`、`contracts.archive` 和 `contracts.validateGeneratedTask(kind, result)`：工作流／美化标记／创世任务流预留。工作流验证稳定步骤编号、缺失引用和循环依赖；实际执行、预算和领域验收属于未来驱动。
+`contracts.generation`、`contracts.mode`、`contracts.archive` 和 `contracts.validateGeneratedTask(kind, result)`：工作流／美化标记／创世任务流预留。工作流验证稳定步骤编号、缺失引用和循环依赖；实际执行、预算和领域验收属于未来驱动。 模型面使用任务简表；解码得到内部对象后才调用本验证器。对象结构与 JSON 持久化并未取消，不能跳过工作流依赖及下游领域验证。
 
 ## 通用资源
 

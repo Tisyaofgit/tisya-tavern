@@ -21,7 +21,7 @@ function setup({createParameters,prepareMessage,projectToolTurns}={}){
 test('every live heart has a required real mood; empty catalogs fail and non-heart null remains valid',()=>{
  const f=setup();for(const detail of ['full','compact','format']){
   f.w.modes.narrative.workflowDetail=detail;const text=compileNarrative(f.c,f.source,moods).rest.entries.tisya_inner_chain;
-  assert.match(text,/每条mood必选一个表情/);assert.doesNotMatch(text,/{mood或null}/);assert.ok(text.includes(JSON.stringify(moods)));assert.match(text,/null/);
+  assert.match(text,/每条mood 从以下表情名中原样选择一个/);assert.doesNotMatch(text,/{mood或null}/);assert.ok(text.includes(moods.map(name=>'- '+name).join('\n')));assert.ok(!text.includes(JSON.stringify(moods)));assert.match(text,/null/);
   if(detail!=='format')assert.match(text,/\[CALL blk\.next\]\n@INPUT [^\n]*@BLOCK\.body\+@BLOCK\.task\.heart/);
  }
  assert.throws(()=>compileNarrative(f.c,f.source,[]),/表情目录为空/);

@@ -1,3 +1,4 @@
+import {complexCell} from './complex-cell.js';
 // One model-facing form, projected from the shared archive schema.
 // Unrequested schema fields stay absent, never inferred or copied.
 const excluded={
@@ -74,14 +75,16 @@ const groundedHints={
 export function extractionHint(f,tid,layout){checkExtractionLayout(layout);return groundedHints[tid]?.[f.row]??hints[tid]?.[f.row];}
 // Compile the visible form into the shared engine input; hidden fields are blank.
 export function expandExtractionSection(lines,fields,tid,layout){
- const visible=visibleExtractionFields(fields,tid,layout),allowed=new Map(visible.map(f=>[f.row,f])),seen=new Map();
+ const visible=visibleExtractionFields(fields,tid,layout),allowed=new Map(visible.map(f=>[f.row,f])),seen=new Map();let current=null;
  for(const line of lines){
+  if(line.startsWith('  ')&&current&&complexCell(current.definition)&&seen.get(current.row).startsWith('\n')){seen.set(current.row,seen.get(current.row)+'\n'+line);continue;}
+  if(line.startsWith('  ')&&current&&complexCell(current.definition)&&seen.get(current.row)===''){seen.set(current.row,'\n'+line);continue;}
   const n=line.trim().match(/^(\d+)\s+/),f=n&&allowed.get(Number(n[1]));if(!f)throw Error('未开放的精简表行：'+line.trim());
   if(seen.has(f.row))throw Error('精简表行重复：'+f.row);
   const label=extractionLabel(f,tid,layout).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const match=line.trim().match(new RegExp('^'+f.row+'\\s+'+label+'(?:\\s*[：:]\\s*|\\s+)(.*)$'));
   if(!match)throw Error('精简表字段名或格式不符：'+f.row);
-  seen.set(f.row,match[1]);
+  seen.set(f.row,match[1]);current=f;
  }
  for(const f of visible)if(!seen.has(f.row))throw Error('精简表缺行：'+f.row+' '+extractionLabel(f,tid,layout));
  return fields.map(f=>f.row+' '+(f.key==='关系底稿·对象'?'关系对象':f.label)+'：'+(seen.get(f.row)??''));

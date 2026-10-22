@@ -9,11 +9,12 @@ import {compileNarrative,registerLivePreset} from '../narrative-bridge.js';
 import {registerPresetProtocol} from '../preset.js';
 import {KEY,emptyConfig,defaultWorld,worldKey,createStore} from '../config/core.js';
 import {createHost} from '../config/host.js';
+import {escapePipeText} from '../reply-pipes-text.js';
 
 test('the prescribed string-cell syntax preserves literal separators and newlines',()=>{
- assert.match(MEMORY_RULES,/整格写成严格 JSON 字符串/);
+ assert.match(MEMORY_RULES,/text="escaped"/);assert.doesNotMatch(MEMORY_RULES,/整格写成严格 JSON 字符串/);
  for(const value of ['甲|乙','第一行\n第二行','引号"与反斜杠\\','原字面 ~']){
-  const raw=fixture({memory:'事件：玩家|A|'+JSON.stringify(value)});
+  const raw=fixture({memory:'事件：玩家|A|'+escapePipeText(value)}).replace('<memory format="pipes">','<memory format="pipes" text="escaped">');
   assert.equal(JSON.parse(parseDisplayEnvelope(raw).blocks.memory).事件[0].梗概,value);
  }
  assert.throws(()=>parseDisplayEnvelope(fixture({memory:'事件：玩家|A|甲\\|乙'})),{code:'TISYA_PIPES_COLUMNS'});
@@ -36,7 +37,8 @@ test('imported alpha20 preset emits the new minimal memory skeleton and final re
   w.modes.narrative.workflowDetail=detail;await host.before('normal');const payload={messages:[]};await host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');
   if(process.env.TISYA_REQUEST_EVIDENCE){fs.mkdirSync(process.env.TISYA_REQUEST_EVIDENCE,{recursive:true});fs.writeFileSync(process.env.TISYA_REQUEST_EVIDENCE+'/request-'+detail+'.json',JSON.stringify({evidence:'Production preset + production host; neutral fixture context, no provider API call',payload},null,2));}
   assert.ok(text.includes(MEMORY_DELIVERY));assert.doesNotMatch(text,/\{\{tisya_memory_delivery\}\}/);
-  const block=text.match(/<memory format="pipes">([\s\S]*?)<\/memory>/)[1].trim().split('\n');
+  assert.match(text,/@DEFINE @OUT:=\n【结果】\n1 kind：structured/);assert.doesNotMatch(text,/@DEFINE @OUT:=\{/);
+  const block=text.match(/<memory format="pipes" text="escaped">([\s\S]*?)<\/memory>/)[1].trim().split('\n');
   assert.equal(block.length,2);assert.match(block[0],/^事件：/);assert.match(block[1],/^原文：/);assert.doesNotMatch(block.join('\n'),/倒计时：|权限：|关联：/);
   assert.match(text,/读者可见不等于所有人物知情/);assert.match(text,/固定列数/);
  }

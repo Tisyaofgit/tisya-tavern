@@ -1,5 +1,5 @@
 import {HEART_CONTROLS,HEART_VARIANTS} from './preset-heart-variants.js';
-import {requireMoodNames,heartRule,titleRule} from './heart-contract.js';
+import {requireMoodNames,moodOptions,heartRule,titleRule} from './heart-contract.js';
 import {MEMORY_DELIVERY} from './config/memory-output.js';
 import {HEART_DIRECTIONS,HEART_ROWS} from './preset-hearts.js';
 // The native preset owns prompt text, order and switches. This adapter only
@@ -40,7 +40,7 @@ export function registerPresetProtocol(context,getSource,onError=()=>{},getEmoti
  context.registerMacro(names[2],wrap((on,mask)=>on?HEART_DIRECTIONS.split('\n').filter((_,i)=>mask&(1<<i)).join('\n'):''),'缇斯亚配套预设：首尾心声方向');
  context.registerMacro(names[3],wrap((on,mask)=>HEART_VARIANTS[mask][on?'on':'off'].rows.replaceAll('{mood或null}','{mood}')),'缇斯亚配套预设：首尾心声格式');
  const moodList=()=>requireMoodNames(getEmotionNames());
- context.registerMacro(names[4],wrap((on,mask)=>on&&mask?JSON.stringify(moodList()):'[]'),'缇斯亚配套预设：实际可用心声表情');
+ context.registerMacro(names[4],wrap((on,mask)=>on&&mask?moodOptions(moodList()):'无'),'缇斯亚配套预设：实际可用心声表情');
  context.registerMacro(names[5],wrap((on,mask)=>{if(!on||!mask)return '@HEART {\n心声关闭。\n}';const protocol=HEART_VARIANTS[mask].on.protocol;const voice=protocol.split('\n')[1],directions=HEART_DIRECTIONS.split('\n').filter((_,i)=>mask&(1<<i));return '@HEART {\n'+voice+'\n'+directions.join('\n')+'\n'+heartRule(directions.length,moodList())+'\n}';}),'缇斯亚配套预设：跟随三个原生心声方向开关');
  return ()=>names.forEach(name=>context.unregisterMacro(name));
 }

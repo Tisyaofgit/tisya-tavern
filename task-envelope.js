@@ -1,3 +1,4 @@
+import {renderModelMaterial} from './tables/simple-sheet.js';
 import {NARRATIVE as N} from './settings-core.js';
 
 export const TEXT_TASKS=Object.freeze({
@@ -49,5 +50,5 @@ export function textTaskMessages({preset,input,selected='',substitute=s=>s}){
  validateTaskPreset(preset,preset.task);const byId=new Map(preset.prompts.map(p=>[p.identifier,p]));
  const enabled=preset.prompt_order[0].order.filter(o=>o.enabled&&byId.get(o.identifier)?.enabled).map(o=>byId.get(o.identifier));
  if(enabled.filter(p=>p.taskInput).length!==1||selected&&!enabled.some(p=>p.taskResources))throw Error('专用预设缺少或重复来源资料槽；请保留当前输入与已选资源');
- return preset.prompt_order[0].order.filter(o=>o.enabled&&byId.get(o.identifier)?.enabled).map(o=>{const p=byId.get(o.identifier);return {role:p.role,content:p.taskInput?'[SOURCE]\n'+JSON.stringify(input)+'\n[/SOURCE]':p.taskResources?(selected?'[SELECTED_RESOURCE]\n'+selected+'\n[/SELECTED_RESOURCE]':''):substitute(p.content)};}).filter(m=>m.content);
+ return preset.prompt_order[0].order.filter(o=>o.enabled&&byId.get(o.identifier)?.enabled).map(o=>{const p=byId.get(o.identifier);return {role:p.role,content:p.taskInput?'[SOURCE]\n'+renderModelMaterial(input)+'\n[/SOURCE]':p.taskResources?(selected?'[SELECTED_RESOURCE]\n'+selected+'\n[/SELECTED_RESOURCE]':''):substitute(p.content)};}).filter(m=>m.content);
 }

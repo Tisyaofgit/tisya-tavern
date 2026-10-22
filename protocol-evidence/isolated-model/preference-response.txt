@@ -1,0 +1,34 @@
+【结果】
+1 templates：〈列表〉
+2 schemaChanges：〈列表〉
+3 changes：〈列表〉子表1
+4 pending：〈列表〉
+
+【子表1】
+1 项：〈对象〉子表2
+
+【子表2】
+1 id：new:preference-natural-narration
+2 table：preferences
+3 expected：〈数值〉0
+4 values：〈对象〉子表3
+5 access：〈对象〉子表5
+6 evidence：从现在开始，正文不要用【人物名】作段首标题，用自然叙述交代人物与场景。这个偏好只用于当前会话。
+
+【子表3】
+1 名称：正文自然叙述人物与场景
+2 类别：文风
+3 内容：正文不要用【人物名】作段首标题，用自然叙述交代人物与场景。
+4 强度：必须
+5 启用：〈布尔〉true
+6 作用域：〈对象〉子表4
+
+【子表4】
+1 会话：isolated-chat
+
+【子表5】
+1 readers：〈列表〉子表6
+2 knowers：〈列表〉
+
+【子表6】
+1 项：读者

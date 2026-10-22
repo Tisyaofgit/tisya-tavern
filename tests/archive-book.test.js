@@ -1,3 +1,4 @@
+import {formatSimpleSheet} from '../tables/simple-sheet.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './fixtures/condition-service-host.js';
@@ -65,7 +66,7 @@ test('prefix routing is anchored, entry-specific and never grants ledger authori
 });
 test('automatic model fill sees the latest save, commits once and deletes only this branch without changing origin',async()=>{
  const f=await fixture(),ai=mes=>({is_user:false,mes}),user=mes=>({is_user:true,mes});f.context.chat=[ai('旅人到了。'),user('继续')];let requests=0;
- f.respond((task,input)=>{requests++;const existing=input.currentRows.find(r=>r.values.名称==='旅人');if(input.archiveSource.text==='旅人到了。')return {changes:[{...edit('new:visitor',{名称:'旅人',类型:'character',描述:'刚到渡口'}),evidence:'旅人到了。'}]};assert(existing);assert.equal(existing.values.描述,'刚到渡口');return {changes:[{...edit(existing.id,{},existing.rev),delete:true,evidence:'撤回旅人这个误登记的档案。'}]};});
+ f.respond((task,input)=>{requests++;const existing=input.currentRows.find(r=>r.values.名称==='旅人');if(input.archiveSource.text==='旅人到了。')return formatSimpleSheet({changes:[{...edit('new:visitor',{名称:'旅人',类型:'character',描述:'刚到渡口'}),evidence:'旅人到了。'}]});assert(existing);assert.equal(existing.values.描述,'刚到渡口');return formatSimpleSheet({changes:[{...edit(existing.id,{},existing.rev),delete:true,evidence:'撤回旅人这个误登记的档案。'}]});});
  const origin=(await f.service.inspect()).origin;await f.service.archive();assert((await f.service.inspect()).rows.some(r=>r.values.名称==='旅人'));const n=requests;await f.service.archive();assert.equal(requests,n);
  f.context.chat.push(ai('撤回旅人这个误登记的档案。'),user('继续'));await f.service.archive();const result=await f.make().inspect();assert(!result.rows.some(r=>r.values.名称==='旅人'));assert.deepEqual(result.origin,origin);assert.equal(result.session.archiveView.trace.at(-1).operation,'delete');
 });
