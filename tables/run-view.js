@@ -1,8 +1,9 @@
 import {safeDiagnostic} from '../config/stream-response.js';
-export function mountRunView(document,parent,{service,onMinimize=()=>{}}){
+export function mountRunView(document,parent,{service,onMinimize=()=>{},allowMinimize=true}){
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
  const root=el('details');root.className='tisya-run-view';root.setAttribute('aria-label','辅助任务进度');
  const summary=el('summary','尚无运行中的任务'),help=el('small','可收起返回聊天；重新打开缇斯亚助手即可查看结果。切换会话会停止旧任务，关闭应用不能继续运行。'),actions=el('div'),stop=el('button','停止当前任务'),minimize=el('button','收起并返回聊天');
+ if(!allowMinimize){minimize.hidden=true;help.textContent='本页显示实际阶段、耗时与已接收字符；未完成内容尚未保存。';}
  summary.setAttribute('role','status');summary.setAttribute('aria-live','polite');actions.className='tisya-run-actions';stop.type=minimize.type='button';actions.append(stop,minimize);root.append(summary,help);
  const track=el('div'),stageLabels=el('div');track.className='tisya-stage-track';track.setAttribute('role','progressbar');track.setAttribute('aria-label','任务阶段（不是模型完成百分比）');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','5');stageLabels.className='tisya-stage-labels';
  for(const name of ['准备材料','完整请求','生成档案','核对格式','审阅保存']){track.append(el('span'));stageLabels.append(el('span',name));}root.append(track,stageLabels,actions);

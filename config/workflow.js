@@ -80,14 +80,14 @@ export function condenseWorkflow(text,c,mode,actor,detail){
  const activeFeatures={角色自主:c.checks.initiative,防绝望:c.checks.resilience,防神化:c.checks.regard,防八股:c.checks.cliche,防名词堆砌:c.checks.plain_language,文风鲜活:c.checks.vivid,角色鲜活:c.checks.voice};
  const features=Object.entries(featureRules).filter(([name])=>activeFeatures[name]).map(([,value])=>value);
  const auth=join(['A01','A02','A03','A04','A05','B01','B02','B03','B04','B05','B06']);
- const start='[INNER]\n@USE [REGISTRY]\n@INPUT actual current input and supplied materials;source knowledge and public-release boundaries remain binding\n@AUTH '+auth+'\n';
+ const start='[INNER]\n@USE [REGISTRY]\n@INPUT actual current input and supplied materials;source knowledge and public-release boundaries remain binding\n@PLANNING '+r.D01+'\n@AUTH '+auth+'\n';
  const actorRules='中心化：'+actor.中心化+'；行动难度：'+actor.难度+'，不改动既定事实与规则。';
  if(detail==='compact'){
   const workflow='[WORKFLOW]\n'+[...lines,...features,actorRules].join('\n')+'\n@RESULT '+conclusions+'\n@DONE WORKFLOW after applicable work is complete\n[/WORKFLOW]\n';
   return start+workflow+remap(extract(text,'C.2')+'\n'+extract(text,'D'))+'\n[/INNER]\n'+extract(text,'DELIVER');
  }
  if(detail!=='format')fail('detail');
- const config=join(['D01','D02'])+r.C02.split('场外的缇斯亚')[0]+join(['C03','C04','C05','C06','C09','C10'])+actorRules;
+ const config=join(['D02'])+r.C02.split('场外的缇斯亚')[0]+join(['C03','C04','C05','C06','C09','C10'])+actorRules;
  const output=extract(text,'C.2').replace(/^@REQUIRE .*\n/m,'');
  return start+'@CONFIGURATION '+config+'\n'+features.join('\n')+'\n@BIND '+conclusions+'\n'+output+
   '\n@DELIVERY write the complete selected reply directly from actual input,source facts and selected configuration;no stage-by-stage narrative workflow or private reasoning in output\n@AUDIT only checks actually performed support a verdict;unperformed or unsupported checks→待确认;no actual body count→篇幅待程序计数;never invent completion,receipts or state changes\n@CHECK actual sources,authorization,body limits and selected output format;repair errors before delivery\n@RESULT @DRAFT:=complete selected deliverable\n@FREEZE the entire assembled output text as @DRAFT\n@SET @LOCK:=READY\n@DONE INNER_END\n[/INNER]\n'+extract(text,'DELIVER');

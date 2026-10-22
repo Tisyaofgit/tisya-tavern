@@ -33,7 +33,7 @@ test('standalone table application preserves all original pages and adds checked
  const root=app.root.shadowRoot,picker=find(root,'表单功能');assert([...picker.options].some(o=>o.value==='foundation'));assert([...picker.options].some(o=>o.value==='states'));assert.equal(app.kind,'tables');assert.equal(app.keepAlive,true);
  const ids=[...picker.options].map(x=>x.value);for(const id of ['settings','forms','history','identity','genesis','preferences','style','progression','parallel','core','timeline','preview','assistant'])assert(ids.includes(id));
  assert.equal(root.querySelectorAll('nav button').length,0);assert(find(root,'辅助任务进度'));assert.deepEqual([...find(root,'接续依据').options].map(x=>x.value),['hybrid','tables']);
- for(const id of ids){picker.value=id;await picker.onchange();assert.equal(picker.value,id);assert.equal(root.querySelector('[role=alert]'),null,'page '+id+' should render');}
+ for(const id of ids){picker.value=id;await picker.onchange();assert.equal(picker.value,id==='forms'?'atlas':id);assert.equal(root.querySelector('[role=alert]'),null,'page '+id+' should render');}
  app.dispose();await f.close();
 });
 
@@ -49,9 +49,9 @@ test('settings and identity drafts survive page switching and parking, failed bi
 
 test('table search preserves record identity and unsaved row editing has an explicit discard',async()=>{
  const f=fixture(),panel=mountTablePanel(f.document,f.document.body,{service:f.service,store:f.store});await panel.ready;await page(panel,'forms');
- input(f.window,find(panel.root,'搜索当前表格（名称、别名或内容）'),'旧称甲');assert.equal(panel.root.querySelector('[data-record="person-a"]').hidden,false);assert.equal(panel.root.querySelector('[data-record="person-b"]').hidden,true);
- const row=panel.root.querySelector('[data-record="person-a"]');await click(row,'编辑此表单');input(f.window,find(row,'名称 · 值'),'草稿名称');await page(panel,'identity');await page(panel,'forms');assert.equal(find(panel.root,'名称 · 值').value,'草稿名称');
- await click(panel.root,'放弃此记录修改');assert.equal(find(panel.root,'名称 · 值'),null);assert.equal(f.calls.edits.length,0);assert.equal(panel.requestLeave().allowed,true);
+ input(f.window,find(panel.root,'搜索档案'),'旧称甲');await panel.settled();assert.equal(panel.root.querySelector('[data-record="person-a"]').hidden,false);assert.equal(panel.root.querySelector('[data-record="person-b"]').hidden,true);
+ await click(panel.root,'编辑');await click(panel.root,'进入内容编辑');input(f.window,find(panel.root,'名称 · 值'),'草稿名称');await page(panel,'identity');await page(panel,'forms');await click(panel.root,'编辑');assert.equal(find(panel.root,'名称 · 值').value,'草稿名称');
+ await click(panel.root,'放弃这次修改');assert.equal(find(panel.root,'名称 · 值'),null);assert.equal(f.calls.edits.length,0);assert.equal(panel.requestLeave().allowed,true);
  panel.dispose();await f.close();
 });
 
@@ -78,7 +78,7 @@ test('production configuration retains seven categories and guards dirty drafts 
 });
 
 test('busy table view can be parked, but destruction is guarded and late completion cannot notify',async()=>{
- const f=fixture();let resolve,saved=0;const original=f.service.inspect;f.service.inspect=()=>new Promise(r=>resolve=r);
+ const f=fixture();let resolve,saved=0;const original=f.service.readAtlasSnapshot;f.service.readAtlasSnapshot=()=>new Promise(r=>resolve=r);
  const panel=mountTablePanel(f.document,f.document.body,{service:f.service,store:f.store,onSaved:()=>saved++});await panel.ready;const navigating=page(panel,'forms');assert.equal(panel.requestLeave().allowed,false);assert.match(panel.requestLeave().reason,/任务/);assert.equal(panel.requestLeave({preserve:true}).allowed,true);
  panel.dispose();resolve(await original());await navigating;assert.equal(f.document.querySelector('.tisya-tables'),null);assert.equal(saved,0);await f.close();
 });
@@ -106,4 +106,9 @@ test('bundle UI keeps explicit selection, edited draft and mapping across page c
  assert.deepEqual(calls[0],['preview',['person-a','person-b']]);assert.equal(calls[1][2].instructions,'保留耐心，但两人的表达各不相同。');assert.equal(calls[2][1].bundle.members[0].traits[0].value,'用户改过的核心');assert.equal(calls[2][1].bundle.members[0].traits[0].id,'trait-0');
  input(f.window,find(panel.root,'核心所在原点书'),'已保存原点');await click(panel.root,'读取此书可用核心');await click(panel.root,'适配 · 双人组');assert.match(panel.root.textContent,/基点意义与世界表达对照/);await page(panel,'style');await page(panel,'core');await click(panel.root,'确认应用创世蓝图');
  const saved=calls.find(x=>x[0]==='save-genesis')[1];assert.deepEqual(saved.proposal.coreMapping,expectedMapping);assert.equal(saved.coreBinding.id,'bundle-one');assert.equal(saved.coreBinding.fingerprint,'retained');panel.dispose();await f.close();
+});
+
+test('cached clean atlas refreshes its snapshot after another configuration page saves',async()=>{
+ const f=fixture(),read=f.service.readAtlasSnapshot;f.service.readAtlasSnapshot=async()=>{const snapshot=await read(),revision=f.store.read().revision;return {...snapshot,verify:async()=>{if(f.store.read().revision!==revision)throw Error('档案快照配置已变化');}};};
+ const config=mountConfiguration(f.document,f.document.body,{store:f.store,host:f.host,tableService:f.service,getSettings:()=>({}),initialTab:'tables',initialView:'atlas',preserveOnClose:true});try{await config.ready;const root=config.root.shadowRoot;await config.navigate('data');const count=find(root,'历史聊天条数（当前输入始终保留）');count.value='7';count.dispatchEvent(new f.window.Event('change'));await click(root,'保存配置');await config.navigate('tables');await click(root,'编辑');assert(!root.querySelector('[role=alert]'),root.querySelector('[role=alert]')?.textContent);assert(find(root,'编辑哪一类'));assert.equal(f.store.read().world.context.history,7);}finally{config.dispose();await f.close();}
 });

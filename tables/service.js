@@ -1,3 +1,4 @@
+import {parseRuleReviewSheet} from './rule-review-sheet.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
 import {assembleArchiveBook} from './archive-book.js';
 import {createArchiveSystem} from './archive-system.js';
@@ -58,6 +59,13 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  const state=()=>({busy,jobScope,jobs:copy(jobs),latest:copy(latest),styleAudit:copy(lastStyleAudit),progress:copy(progress),available:books.available(),worldbook:worldbook.preview()});
  const status=(task,status,detail='',error=null)=>{jobs.push({task,status,detail:safeDiagnostic(detail),...(error?{code:error.code??error.name,cause:error.cause?safeDiagnostic(error.cause.message??String(error.cause)):undefined,stack:error.stack?safeDiagnostic(error.stack):undefined}:{}),at:new Date().toISOString()});if(jobs.length>50)jobs.shift();onNotice({task,status,detail:safeDiagnostic(detail)});};
  async function exclusive(fn,{scope='manual'}={}){check(!busy,'表单任务正在处理，请等待完成或停止');busy=true;jobScope=scope;progress={task:scope==='generation'?'表单推进':'表单操作',stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};controller=new AbortController();const signal=controller.signal;try{const result=await fn(signal);signal.throwIfAborted();if(progress&&!['error','stopped'].includes(progress.stage))progress={...progress,stage:'complete',updatedAt:Date.now(),finishedAt:Date.now()};return result;}catch(e){const error=requestError(e,signal);worldbook.clear();setPrompt('');latest=null;const last=jobs.at(-1),label=signal.aborted?'已停止':'失败';if(last?.status!==label||last.detail!==safeDiagnostic(error.message))status(progress?.task??'表单操作',label,error.message,error);if(progress)progress={...progress,stage:signal.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};throw error;}finally{busy=false;controller=null;jobScope=null;if(archiveChanged){archiveChanged=false;for(const notify of archiveListeners)try{notify();}catch(e){status('图鉴刷新','失败',e.message);}}}}
+ // Registered in-process executors may return validated-domain candidates as
+ // objects. Network/model text uses the sheet parser only, with no JSON fallback.
+ function parseRuleReviewResponse(response){
+  if(response&&typeof response==='object'&&!Array.isArray(response)&&Array.isArray(response.issues))return response;
+  const text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.filter(x=>x.thought!==true).map(x=>x.text??'').join('');
+  check(typeof text==='string'&&text.trim(),'规则校对 API 没有返回简表文本');return parseRuleReviewSheet(text);
+ }
  function requestError(error,signal){if(signal?.aborted)return signal.reason instanceof Error?signal.reason:Error('当前表单任务已停止');if(error?.name==='AbortError')return Error('辅助请求被宿主或 API 中止，请检查连接后重试；已保存的记录仍保留。',{cause:error});return error;}
  function clear({scope=null,reason='已停止当前表单任务；已保存的记录仍保留'}={}){if(controller&&(!scope||jobScope===scope)){controller.abort(Error(reason));if(progress)progress={...progress,stage:'stopped',updatedAt:Date.now(),finishedAt:Date.now()};}worldbook.clear();setPrompt('');latest=null;}
  function contextChanged(){const next=getContext().chatId?store.read().key:null;if(next===boundWorld)return false;boundWorld=next;clear({reason:'会话已切换，旧表单任务已停止'});return true;}
@@ -79,7 +87,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};
    }});
    if(typeof response==='string')progress={...progress,text:response,characters:response.length};progress={...progress,stage:'validating',updatedAt:Date.now()};
-   const result=copy(parseJSONResponse(response));c.guard();status(task,'返回待校验');return result;
+   const result=copy(task==='ruleReview'?parseRuleReviewResponse(response):parseJSONResponse(response));c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }
  async function commit(c,loaded,proposal,options){

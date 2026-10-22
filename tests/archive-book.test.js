@@ -52,10 +52,10 @@ test('real service restarts with latest rows, deletion persists and stale atlas 
 test('host atlas uses actual current save, switches origin and refreshes after writes; read-only actions never write',async()=>{
  const f=await fixture(),window=new Window(),doc=window.document,panel=mountTablePanel(doc,doc.body,{service:f.service,store:f.store});await panel.ready;
  const select=panel.root.querySelector('[aria-label="表单功能"]');select.value='atlas';await select.onchange();
- let app=panel.root.querySelector('div div')?.shadowRoot;const shadow=()=>[...panel.root.querySelectorAll('div')].find(e=>e.shadowRoot)?.shadowRoot;
- assert(shadow().textContent.includes('方鹿'));assert(!shadow().textContent.includes('渡口清晨'));const writes=f.writes();
- const layer=shadow().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));for(let i=0;i<100&&!shadow().textContent.includes('0 份可读档案');i++)await new Promise(r=>setTimeout(r,10));assert.equal(shadow().querySelector('.result-count')?.textContent,'0 份可读档案');assert.equal(f.writes(),writes);
- await f.service.edit({changes:[op(f.owner,{描述:'即时更新'},1)]});await panel.settled();assert(shadow().textContent.includes('即时更新'));
+ const archive=()=>panel.root.querySelector('.tisya-compact-atlas');
+ assert(archive().textContent.includes('方鹿'));assert(!archive().textContent.includes('渡口清晨'));assert.equal(archive().querySelector('textarea'),null);const writes=f.writes();
+ const layer=archive().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));await panel.settled();assert.equal(archive().querySelector('.atlas-result')?.textContent,'共 0 条');assert.equal(archive().querySelector('[aria-label="资料层"]').value,'origin');assert.equal(archive().querySelector('textarea'),null);assert.equal(f.writes(),writes);
+ await f.service.edit({changes:[op(f.owner,{描述:'即时更新'},1)]});const afterEdit=f.writes();await panel.settled();assert(archive().textContent.includes('即时更新'));assert.equal(archive().querySelector('textarea'),null);assert.equal(f.writes(),afterEdit);
  panel.dispose();await window.happyDOM.abort();
 });
 test('prefix routing is anchored, entry-specific and never grants ledger authority',async()=>{
