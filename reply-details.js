@@ -8,8 +8,9 @@ function heart(value){
  const items=value.items.map(row=>{if(!row||typeof row.type!=='string'||!row.type.trim()||typeof row.text!=='string'||row.text.length>1000||!(row.mood===null||typeof row.mood==='string'))fail();return {type:row.type,text:row.text,mood:row.mood};});
  return {status:value.status,items};
 }
-// Public summaries retain the original task.plan field. Internal input, stop,
-// references, unlocks and next planning never become presentation data.
+// Public summaries retain task.plan. Internal input, stop, references, unlocks
+// and candidates never become presentation data. Edition 6 next.tasks are the
+// public unfinished-work contract; legacy next planning remains private.
 export function readReplyDetails(source){
  const envelope=readPublicReplyEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
  if(!Array.isArray(task.audit))fail();
@@ -19,7 +20,8 @@ export function readReplyDetails(source){
   const tasks=(envelope.wire?task.tasks:[]).flatMap((row,i)=>{if(!row||typeof row.plan!=='string')fail();return row.plan.trim()?[{label:'任务 '+String(i+1).padStart(2,'0'),text:row.plan}]:[];});
   const delivered=next.delivered.map(text=>{if(typeof text!=='string')fail();return {text};});
   let pending=[],pendingError=false;
-  try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});pending=[];}}catch{pendingError=true;}
+  if(envelope.wire?.version===6)pending=next.tasks.map(row=>({label:row.type,status:row.trigger,text:row.text}));
+  else try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});pending=[];}}catch{pendingError=true;}
   rounds={tasks,delivered,pending,pendingError};
  }catch{rounds={error:true,tasks:[],delivered:[],pending:[]};}
  const taskHeart=heart(task.heart),nextHeart=heart(next.heart);

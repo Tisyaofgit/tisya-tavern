@@ -1,3 +1,4 @@
+import {formJourneyView} from './reply-form-wire.js';
 import {parseDisplayEnvelope,strictJSON,validateMemoryProjection,validateMemoryLocator,validateMemoryLocators} from './reader-core.js';
 import {projectReaderLayer} from './reader-layer.js';
 
@@ -5,7 +6,9 @@ import {projectReaderLayer} from './reader-layer.js';
 // sidecars do not invalidate independently permissioned narrative records.
 // This ephemeral projection is exclusively for display, never state or recall.
 export function readJourney(source,options){
- const envelope=parseDisplayEnvelope(source),memory=envelope.blocks.memory.trim()?strictJSON(envelope.blocks.memory):null;
+ const envelope=parseDisplayEnvelope(source);
+ if(envelope.wire?.version===6)return formJourneyView();
+ const memory=envelope.blocks.memory.trim()?strictJSON(envelope.blocks.memory):null;
  if(memory?.protocol!=='tisya.lab.memory/5')throw Object.assign(Error('TISYA_JOURNEY_MEMORY_UNSUPPORTED'),{code:'TISYA_JOURNEY_MEMORY_UNSUPPORTED'});
  validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});
  if(!Array.isArray(memory.权限)||memory.权限.length>256)throw Object.assign(Error('TISYA_MEMORY5_LIST'),{code:'TISYA_MEMORY5_LIST'});

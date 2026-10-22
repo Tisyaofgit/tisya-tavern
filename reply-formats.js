@@ -41,6 +41,7 @@ function publicEnvelope(source){
 export function readReplyMemory(source){return memoryCache.read(source,()=>replyMemory(source));}
 function replyMemory(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status'])));
+ if(e.wire?.version===6)return null;
  return e.blocks.memory.trim()?strictJSON(e.blocks.memory):null;
 }
 

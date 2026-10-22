@@ -1026,3 +1026,33 @@ for(const completed of [true,false])test('unified archive candidate switch '+(co
  else{await assert.rejects(fresh.syncNative(),/正文已改变且存在未完成的原生结算/);assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal(writes,beforeWrites);assert.equal(values.get(0).stat_data.energy,20);assert.equal(values.has(1),false);}
  }finally{globalThis.Mvu=previous;}
 });
+
+test('same-source archive view reaches normal, numbered, separate-object and native requests without changing raw history',async()=>{
+ const {restoreArchiveSource}=await import('../tables/archive-source-view.js'),{pairedPreset,taskMessages}=await import('../tables/paired-preset.js');
+ const prose='城门仍然关闭。'+('守门人在檐下等待，雨落在青石路上。'.repeat(100))+'归档正文唯一尾哨。';
+ const raw='<reply><title>场景：城门 | 2026-10-22 12:00 | 雨</title><body>'+prose+'</body><memory>假门已开。</memory><extra>独有面板哨兵</extra><unknown>保留未知块。</unknown></reply>';
+ const previous=globalThis.Mvu;
+ try{for(const native of [false,true])for(const numbered of [false,true])for(const objectsSeparate of [false,true]){
+  const f=fixture(),values=new Map([[0,{stat_data:{energy:10}}]]);globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>before,replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
+  f.binding.primary='';f.binding.additional=[];f.c.chat=[{...ai(raw),swipe_id:2},user('继续')];const original=structuredClone(f.c.chat),chain=await sources(f.c.chat);
+  await f.service.initialize();await f.set({nativeBridge:native,objectsSeparate});let observed=0;
+  f.responder((task,input)=>{
+   observed++;assert.equal(task,objectsSeparate&&observed===1?'objectArchive':numbered?'historyImport':'tableArchive');
+   const history=input.sourceHistory[0];assert.equal(history.projection,'source-reference');assert.equal(history.key,chain[0].key);assert.equal(history.parent,chain[0].parent);assert.equal(history.candidate,2);assert.equal(input.archiveSource.text,prose);assert.equal(input.archiveSource.time,'2026-10-22 12:00');assert.equal(restoreArchiveSource(history,input.archiveSource),raw);
+   const configuration=f.store.read(),messages=taskMessages({preset:pairedPreset({task,configuration,nativeBridge:input.nativeBridge}),task,input}),sent=messages.map(m=>m.content).join('\n');
+   assert.equal(sent.split('归档正文唯一尾哨。').length-1,1);assert.equal(sent.split('独有面板哨兵').length-1,1);assert.equal(sent.split('保留未知块。').length-1,1);
+   return {changes:task==='objectArchive'?[]:[op('new:closed','events',{名称:'城门关闭',经过:'城门仍然关闭。'},'城门仍然关闭。')]};
+  });
+  const result=await f.service.archive(numbered?{range:{from:1,to:1,limit:1}}:{});assert.equal(result.archived,1);assert.equal(observed,objectsSeparate?2:1);assert.deepEqual(f.c.chat,original);assert.deepEqual(await sources(f.c.chat),chain);assert.equal((await f.service.inspect()).rows.filter(r=>r.table==='events').length,1);
+ }}finally{globalThis.Mvu=previous;}
+});
+
+test('same-source repair keeps the exact view and rejects auxiliary-only evidence before completing the floor',async()=>{
+ const {restoreArchiveSource}=await import('../tables/archive-source-view.js'),f=fixture();await f.service.initialize();
+ const prose='门仍然关闭。'+('守卫保持原来的站位。'.repeat(100)),raw='<body>'+prose+'</body><memory>门已经打开。</memory>';f.c.chat=[ai(raw),user('继续')];let attempts=0,first;
+ f.responder((task,input)=>{attempts++;assert.equal(task,'tableArchive');assert.equal(input.sourceHistory[0].projection,'source-reference');assert.equal(restoreArchiveSource(input.sourceHistory[0],input.archiveSource),raw);
+  if(!first)first=structuredClone({archiveSource:input.archiveSource,sourceHistory:input.sourceHistory});else assert.deepEqual({archiveSource:input.archiveSource,sourceHistory:input.sourceHistory},first);
+  return {changes:[op('new:event','events',{名称:'错误事件',经过:'门已经打开。'},'门已经打开。')]};
+ });
+ const result=await f.service.archive();assert.equal(attempts,2);assert(result.pending.length);assert.equal(result.archived,0);assert.equal((await f.service.inspect()).rows.length,0);assert.equal(f.c.chat[0].mes,raw);
+});

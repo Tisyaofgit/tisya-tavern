@@ -13,7 +13,7 @@ import {mountActionChoice} from './actions.js';
 import {replyControlsCSS} from './reply-details.js';
 import {appearanceValues} from './appearance-settings.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
-import {inspectMessage,readerErrorText,readerErrorCode,journeyCompatibilityText,journeyEmptyText} from './reader.js';
+import {inspectMessage,readerErrorText,readerErrorCode,journeyCompatibilityText,journeyEmptyText,formJourneyText} from './reader.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {waterStyle} from './visual-theme.js';
 import {visualAssets,motionManifest,journeyArt,journeyIcons} from './visual-assets.js';
@@ -33,7 +33,8 @@ function mountJourney(document,container,data,{source,getDisplay,getPlayerName,s
  function update(values){if(!manualTheme)root.dataset.theme=values.旅程外观==='日间'?'day':'night';const options={showPsychology:values.显示角色心理===true,playerName:getPlayerName()},stamp=JSON.stringify(options);if(viewStamp!==stamp){viewStamp=stamp;journey=inspectMessage(source,options).journey;if(active)go(active);}}
  const positions=new Map();let active=null;
  function go(id){if(active)positions.set(active,viewport.scrollTop);active=id;title.textContent=tabs.find(t=>t[0]===id)[1];viewport.replaceChildren();for(const [key,b]of buttons)b.setAttribute('aria-current',key===id?'page':'false');const model=journey.value;
-  if(id==='player'){if(model?.player)person(model.player);else empty('本条尚未匹配玩家身份，已有的人物记录保留在角色页。','backpack');}
+  if(model?.recordSource==='forms'&&id!=='more'){empty(formJourneyText,id==='memory'?'memory-letter':null);}
+  else if(id==='player'){if(model?.player)person(model.player);else empty('本条尚未匹配玩家身份，已有的人物记录保留在角色页。','backpack');}
   else if(id==='tasks'){empty('任务页面已就位，任务功能待接入。','task-scroll');}
   else if(id==='more'){const c=card('日夜之间','选择旅程的纸色与灯光');const options=make('div',null,'jr-theme-options');for(const [k,text]of [['day','日间'],['night','夜间']]){const b=make('button',text,'jr-theme-choice');b.type='button';b.setAttribute('aria-pressed',String(root.dataset.theme===k));b.onclick=()=>{manualTheme=true;root.dataset.theme=k;options.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));};options.append(b);}c.append(options);const psych=card('角色心理'),toggle=make('button','显示角色心理','jr-switch-row');toggle.type='button';toggle.setAttribute('role','switch');toggle.setAttribute('aria-label','显示角色心理');toggle.setAttribute('aria-checked',String(getDisplay().显示角色心理===true));toggle.disabled=busy;const mark=make('i',null,'jr-switch');toggle.append(mark);const feedback=make('p','开启后，显示本条已记录的角色心理。','jr-meta');psych.append(toggle,feedback);toggle.onclick=async()=>{if(busy||!alive)return;busy=true;toggle.disabled=true;const expected=getDisplay().显示角色心理===true;try{if(!saveDisplayPreference)throw Error('阅读设置保存接口未连接');await saveDisplayPreference('显示角色心理',!expected,expected);if(!alive)return;update(getDisplay());feedback.textContent='阅读设置已保存。';}catch(e){if(alive){feedback.textContent=e.message;feedback.setAttribute('role','alert');onError(e);}}finally{busy=false;if(alive){toggle.disabled=false;toggle.setAttribute('aria-checked',String(getDisplay().显示角色心理===true));root.querySelectorAll('[role=switch]').forEach(n=>{n.disabled=false;n.setAttribute('aria-checked',String(getDisplay().显示角色心理===true));});}}};}
   else if(!model){empty(journey.error?readerErrorText(journey.error):'本条记录暂未就绪，原消息保留。',id==='memory'?'memory-letter':null);}

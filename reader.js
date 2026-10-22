@@ -11,6 +11,7 @@ import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-c
 import {readJourney} from './reply-records.js';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
+export const formJourneyText='人物资料与本回合记录，请在图鉴和历史中查看。';
 export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
@@ -35,7 +36,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.31.18',onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-seven-block-1',onError});
  return localCache;
 }
 export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}
@@ -116,6 +117,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
     function renderJourney(){
         if(data.journey.error){failure(panel,'回合记录',data.journey.error);return;}
         const view=data.journey.value;
+        if(view?.recordSource==='forms'){panel.append(note(formJourneyText));return;}
         panel.append(note('记录对应所选消息这一回合。'));
         for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
         const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}

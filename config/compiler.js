@@ -1,5 +1,6 @@
 import {applyNarrativeRules} from './rule-text.js';
 import {applyDialogueLanguage,deduplicateLanguageDelivery} from './language.js';
+import {applyUserVoiceGuidance} from './user-voice.js';
 import {applyTableArchiveMemory} from './memory-output.js';
 import {routeStyleRules} from '../tables/style-rules.js';
 import {addSlotRouting} from '../tables/modes.js';
@@ -27,6 +28,7 @@ export function refineCompiled(c,{data,world},source){
  if(detail!=='full')entries.tisya_inner_chain=condenseWorkflow(entries.tisya_inner_chain,c,m,actor,detail);
  entries.tisya_inner_chain=deduplicateLanguageDelivery(entries.tisya_inner_chain,c);
  entries.tisya_inner_chain=applyInitiative(entries.tisya_inner_chain,initiative,detail);
+ entries.tisya_inner_chain=applyUserVoiceGuidance(entries.tisya_inner_chain,c,m);
  entries.tisya_internal_login=entries.tisya_internal_login.replace('narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;utility:T.1→D.4;then','narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;then');
  if(detail!=='full')entries.tisya_internal_login=entries.tisya_internal_login.replace(/^@FLOW .*$/m,'@FLOW narrative:'+(detail==='compact'?'WORKFLOW→C.2→D.1..D.4':'C.2→INNER_END')+'→COMMIT.READY→PREPARE_STEP');
  c.workflowDetail=detail;if(world.tables?.enabled&&world.tables.archive!==false)applyTableArchiveMemory(entries);pruneRegistry(entries,c.checks);c.selectedIds=selected.ids;return c;

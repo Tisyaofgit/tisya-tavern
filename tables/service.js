@@ -1,4 +1,5 @@
 import {storyMaterial,storyPreferences,storyContext,storyBlueprint} from './story-material.js';
+import {archiveSourceView} from './archive-source-view.js';
 import {parseSimpleSheet,renderModelMaterial} from './simple-sheet.js';
 import {parseRuleReviewSheet} from './rule-review-sheet.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
@@ -144,7 +145,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
    if(loaded.view.archived.has(source.key))continue;
    c.guard();status('楼层归档','运行中','第 '+source.floor+' 层');
    const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n'),view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))};
-   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
+   const input={...archiveSourceView(source),userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
    const isHistory=!!range,task=isHistory?'historyImport':'tableArchive',options={source:source.key,kind:isHistory?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
    try{
     let discovery=null,working=view;
@@ -210,7 +211,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
    loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
    const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n');
    const view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))},entries=bookAIMaterials(await books.materials(getContext().characters[getContext().characterId].avatar));c.guard();
-   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:[],objectsSeparate:c.settings.objectsSeparate&&!archiveAlready,
+   const input={...archiveSourceView(source),userSource,pending:[],objectsSeparate:c.settings.objectsSeparate&&!archiveAlready,
     nativeBridge:{enabled:true,writer:'native-mvu',sourceFloor:source.floor,index,snapshotFloor:native.snapshotIndex+1,nativeOwned,archiveAlready},nativeState:{readOnly:true,sourceFloor:source.floor,snapshotFloor:native.snapshotIndex+1,valuesFrom:'currentRows.native_cells'},nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n'),instruction:'同一次归档提出记忆与变量变更。native_cells 仅为原生映射；程序交原 MVU 结算后保存实际值。业务状态引用原生路径，不复制变量值。仅处理当前正文及此前连续用户输入，不授予人物未获知的事实。'};
    const options={source:source.key,kind:archiveAlready?'native-fill':range?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
    let discovery=null,working=view;

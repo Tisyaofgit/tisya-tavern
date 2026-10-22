@@ -1,0 +1,79 @@
+{
+  "utc": "2026-10-22T21:53:25.112187+00:00",
+  "beijing": "2026-10-23T05:53:25.112187+08:00",
+  "base": "ce63e5a7258f9782cbde7d54cb49837404091dad",
+  "branch": "candidate/review-ui-controls-20261023",
+  "status": "isolated candidate, no publish, no external model or Android test",
+  "tests": {
+    "command": "TISYA_USER_VOICE_EVIDENCE=ui-evidence node --test tests/user-voice.test.js tests/preference-persistence.test.js tests/configuration.test.js",
+    "pass": 66,
+    "fail": 0,
+    "skipped": 0,
+    "new_request_matrix_cases": 48,
+    "semantic_final": {
+      "command": "TISYA_USER_VOICE_EVIDENCE=ui-evidence node --test tests/user-voice.test.js",
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0,
+      "assertion": "Actual outgoing messages use independent semantic markers and authority checks, each exactly once; other selected narrative options preserved."
+    }
+  },
+  "files": [
+    {
+      "path": "config/user-voice.js",
+      "bytes": 1798,
+      "sha256": "35db12c6d7a6da80beb9c353e41b6af8146ceb53a46713a1679033db37d2dbad"
+    },
+    {
+      "path": "config/compiler.js",
+      "bytes": 4112,
+      "sha256": "4882a74cedb5f6675163202e11f167adaed1314bf5299afcb5cdf371e36219f4"
+    },
+    {
+      "path": "config/core.js",
+      "bytes": 16398,
+      "sha256": "cf0b28dab421a3a92a96fcd308a5d4a251cbca4e17a7defc68dc8b86dc086f2a"
+    },
+    {
+      "path": "config/panel.js",
+      "bytes": 51500,
+      "sha256": "2b7a3bbb60281ad0d91d169c2b78a46b3f210b1b52ac34065da2e508547e2a42"
+    },
+    {
+      "path": "config/README.md",
+      "bytes": 13738,
+      "sha256": "dcc47eb4b1d4d7971b570993c652473afe90cead4429165494a534eb11594437"
+    },
+    {
+      "path": "tests/user-voice.test.js",
+      "bytes": 12368,
+      "sha256": "b89ed7f9fe9683f2efbff9bca66d508d9d9ce8462cdb0b94ce80e68ebec70c21"
+    },
+    {
+      "path": "ui-evidence/user-voice-target-first.tap",
+      "bytes": 7623,
+      "sha256": "170d68b4c143a16e62e08a7b04e9466fe9c4103c250f0e129a5966e771fa9d18"
+    },
+    {
+      "path": "ui-evidence/native-user-voice-request.json",
+      "bytes": 53458,
+      "sha256": "89ac078703dce696a544b91c76d5c3dcd6c689c451b078545c2a14f3cc266e86"
+    },
+    {
+      "path": "ui-evidence/tisya-user-voice-request.json",
+      "bytes": 81795,
+      "sha256": "6bbf26e8a9700331f5e46bfe9be443acdae6216fba778574f1b80a790b0052cd"
+    },
+    {
+      "path": "ui-evidence/user-voice-semantic-final.tap",
+      "bytes": 838,
+      "sha256": "f46b5b0c594c52f80d3c12dcaf571be816f9b22903dedc885976c03c236f22b2"
+    }
+  ],
+  "integration": "English assembler consumes userVoiceRules(mode) into SpeechHabits and DictionAndStyle once. Do not additionally apply legacy applyUserVoiceGuidance to that assembled INNER.",
+  "limits": [
+    "Current candidate connects modular paired presets. Parent assembly agent must explicitly reject enabled voice preferences on unsupported non-modular sources; false must remain permitted. narrative-bridge.js was intentionally not changed.",
+    "No actual user settings or conversations written.",
+    "Root owns final artifact build, integration and persistent snapshot."
+  ]
+}

@@ -46,6 +46,8 @@ export function mountConfiguration(document,container,{store,host,tableService,g
   field(dialogue,'对白原语',view.dialogue.来源,v=>{setDialogueLanguage(m(),{来源:v});specific.closest('label').hidden=v!=='指定语言';},{choices:[['角色与环境','跟随角色母语／场景语言'],['指定语言','指定语言…']]});
   const specific=field(dialogue,'填写对白语言',view.dialogue.语言,v=>setDialogueLanguage(m(),{语言:v}),{help:'在角色会说这种语言的前提下使用；每句原语后附默认语言译文。'});specific.placeholder='例如：Italiano、拉丁语';specific.closest('label').hidden=view.dialogue.来源!=='指定语言';
   parent.append(el('small','只让对白双语呈现，旁白保持默认语言。情话、咒语和称呼可保留原语韵味；译文不会让角色获得本来不知道的信息。'));
+  check(parent,'保留我的说话习惯',m().用户口癖保留===true,v=>m().用户口癖保留=v,{help:'润色我已给出的对白时，保留称呼、用词和语气。'});
+  check(parent,'沿用我的叙事口吻',m().用户叙事口吻延续===true,v=>m().用户叙事口吻延续=v,{help:'跟随我本轮叙述的节奏与措辞，人物对白仍各用自己的声口。'});
  }
  function choicesResources(kind){return resources(draft).filter(r=>r.kind===kind).map(r=>[r.id,r.name+(r.description?' · '+r.description:'')]);}
  function resourceEditor(parent,kind){const box=el('details');box.append(el('summary','新增／保存'+KINDS[kind]));parent.append(box);const form={name:'',content:'',kind,fields:[],tasks:['main']};field(box,'资源名称','',v=>form.name=v);field(box,'内容输入框','',v=>form.content=v,{type:'textarea'});field(box,'说明','',v=>form.description=v);const tasks=el('details');tasks.append(el('summary','适用任务'));box.append(tasks);for(const [id,name]of [...registry.tasks].filter(([,t])=>!t.aliasOf).map(([id,t])=>[id,t.name]))check(tasks,name,form.tasks.includes(id),on=>form.tasks=on?[...form.tasks.filter(x=>x!==id),id]:form.tasks.filter(x=>x!==id));field(box,'自动扩展字段（JSON，可留空）','',v=>form.fields=v.trim()?JSON.parse(v):[],{type:'textarea',help:'每项提供 key、label、type；select 项另填 options。正文以 ${key} 引用参数。'});
