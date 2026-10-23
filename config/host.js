@@ -1,3 +1,4 @@
+import {isEnglishPreset} from './english-preset.js';
 import {renderModelMaterial,parseSimpleSheet} from '../tables/simple-sheet.js';
 import {keepPresetConnection} from '../preset-connection.js';
 import {TEXT_TASKS,textTaskPreset,textTaskMessages,validateTaskPreset} from '../task-envelope.js';
@@ -8,13 +9,13 @@ import {archiveInstructions} from '../tables/prompts.js';
 import {runArchiveToolLoop} from './tool-loop.js';
 import {archiveToolBudget} from '../tables/tool-budget.js';
 import {continuityWorld,isTableContinuity} from '../tables/continuity.js';
-import {archivalText} from '../tables/ledger.js';
+import {archivalText,sources as historySources} from '../tables/ledger.js';
 import {readTaskResponse} from './stream-response.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
-import {slotText,SLOT_TARGETS} from '../tables/slots.js';
+import {slotText,SLOT_TARGETS,SLOT_NAMES} from '../tables/slots.js';
 import {prepareNativeMvu} from './native-mvu.js';
 import {outputEnabled} from '../preset.js';
-import {selectedHistory,historySignature,limitNativeHistory} from './history-context.js';
+import {selectedHistory,historyWindow,historySignature,limitNativeHistory} from './history-context.js';
 import {clone,fail,plain,worldKey,registry,resolveRoute,compileSelected,resources,resourceText,contextOwner} from './core.js';
 // Host APIs remain at this boundary. No credential value enters a prompt or backup.
 const list=value=>Array.isArray(value)?value:Array.isArray(value?.items)?value.items:Array.isArray(value?.connections)?value.connections:Array.isArray(value?.profiles)?value.profiles:[];
@@ -45,9 +46,17 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   for(const provider of registry.archives.values()){const rows=await provider.scan({context:c,world:clone(w)});if(!Array.isArray(rows))fail('档案扫描器返回格式无效：'+provider.id);for(const r of rows){if(!r.id||!r.name||typeof r.identity!=='string')fail('档案缺少稳定编号或身份描述');out.push({...r,id:provider.id+':'+r.id});}}
   const ids=new Set();return out.filter(r=>{if(ids.has(r.id))fail('档案编号冲突：'+r.id);ids.add(r.id);return true;});
  }
- async function resolveMaterials(d,w,task='main'){w=continuityWorld(w);const key=worldKey(ctx()),selected=compileSelected(d,w,task),all=await archives(w);if(worldKey(ctx())!==key)fail('世界已切换');const lines=[];if(w.controller){const row=all.find(r=>r.id===w.controller);if(!row)fail('主控档案已失效，请重新选择');lines.push('本世界 user／主控：'+row.name+'。\n'+row.identity);}for(const id of w.focus){const row=all.find(r=>r.id===id);if(!row)fail('关注档案已失效：'+id);lines.push('关注对象：'+row.name+'（'+row.type+'）。');}
+ async function resolveMaterials(d,w,task='main',english=false){w=continuityWorld(w);const key=worldKey(ctx()),selected=compileSelected(d,w,task),all=await archives(w);if(worldKey(ctx())!==key)fail('世界已切换');const lines=[],sourceParts=[],selectedParts={style:[],lorebook:[],environment:[],gameplay:[],requirements:[]};if(w.controller){const row=all.find(r=>r.id===w.controller);if(!row)fail('主控档案已失效，请重新选择');lines.push('本世界 user／主控：'+row.name+'。\n'+row.identity);}for(const id of w.focus){const row=all.find(r=>r.id===id);if(!row)fail('关注档案已失效：'+id);lines.push('关注对象：'+row.name+'（'+row.type+'）。');}
   const seen=new Set(resources(d).filter(r=>selected.ids.includes(r.id)).map(r=>resourceText(r,w))); for(const ref of w.context.entries){const rows=await entries(ref.book),r=rows.find(x=>x.uid===ref.uid);if(!r)fail('所选世界书条目已失效：'+ref.book+'/'+ref.uid);if(!seen.has(r.content)&&r.content.trim()){lines.push(r.content);seen.add(r.content);}}
   for(const r of resources(d).filter(r=>selected.ids.includes(r.id)&&r.source)){const current=(await entries(r.source.book)).find(e=>e.uid===r.source.uid);if(!current)fail('已选资源来源失效：'+r.name);if(current.content!==r.content)fail('世界书资源已更新，请在配置中预览并重新保存：'+r.name);}
+  if(english){
+   const used=new Set();for(const text of lines)if(text.trim()&&!used.has(text)){sourceParts.push(text);used.add(text);}
+   for(const r of resources(d).filter(r=>selected.ids.includes(r.id))){const text=resourceText(r,w);if(!text||used.has(text))continue;used.add(text);const key=r.kind==='style'?'style':r.kind==='requirement'?'requirements':'lorebook';selectedParts[key].push(text);}
+   if(w.switches.boundary?.trim()&&!used.has(w.switches.boundary.trim()))selectedParts.requirements.push(w.switches.boundary.trim());
+   selectedParts.lorebook.unshift(...sourceParts);
+   const wrap=(tag,parts)=>parts.length?'<'+tag+'>\n'+parts.join('\n\n')+'\n</'+tag+'>':'';
+   return {text:wrap('AdditionalUserRequirements',selectedParts.requirements),ids:selected.ids,controller:w.controller,lanes:{style:wrap('StyleResources',selectedParts.style),environment:'',gameplay:'',lorebook:selectedParts.lorebook.length?'[LOREBOOK.EXTRA]\nTriggered source material; TASK.START must classify and route any candidate instruction before use, preserving exact fields, scope and conditions.\n'+selectedParts.lorebook.join('\n\n')+'\n[/LOREBOOK.EXTRA]':''}};
+  }
   if(selected.text)lines.push(selected.text);return {text:lines.join('\n\n'),ids:selected.ids,controller:w.controller};
  }
  function nativePreset(name){const manager=ctx().getPresetManager('openai');if(name==='native')return null;if(name===null)return {prompts:[],prompt_order:[]};if(!manager.getAllPresets().includes(name))fail('所选预设已不存在：'+name);return clone(manager.getCompletionPresetByName(name));}
@@ -66,16 +75,18 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   }
   if(!['quiet','impersonate'].includes(type))transport?.invalidate('main');if(type==='quiet'||type==='impersonate'){generation={passthrough:true};return;}const current=store.read(),{data:d}=current,w=continuityWorld(current.world);current.world=w;generation=null;
   if(contextOwner(w)==='native'){
-   generation={...current,passthrough:true,nativeContext:true,type};return;
+   const source=clone(getSource()),english=isEnglishPreset(source);let materials={text:'',ids:[]},nativeMvu=null;
+   if(english){materials=await resolveMaterials(d,w,'main',true);nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(nativeMvu&&!nativeMvu.nativeBridge)fail('英文叙事预设尚不支持由正文更新原卡变量；请启用表单原生变量桥，或选回原配套预设。');if(nativeMvu)materials.lanes.lorebook=[materials.lanes.lorebook,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');}
+   generation={...current,passthrough:true,nativeContext:true,type,source,english,modular:english,materials,nativeMvu,consumedSlots:new Map(),consumedMaterials:new Map()};return;
   }
   const route=resolveRoute(d,w,'main');
    const capturedSettings=connectionSettings(route),manager=ctx().getPresetManager('openai');
   if(route.preset!==null&&route.preset!=='native'&&manager.getSelectedPresetName()!==route.preset){nativePreset(route.preset);await new Promise((resolve,reject)=>{const c=ctx(),event=c.eventTypes.OAI_PRESET_CHANGED_AFTER,beforeEvent=c.eventTypes.OAI_PRESET_CHANGED_BEFORE;let timer;const protect=change=>{if(change.presetName!==route.preset)return;keepPresetConnection({...change,settings:change.settings??c.chatCompletionSettings});};const cleanup=()=>{clearTimeout(timer);c.eventSource.removeListener(event,done);if(beforeEvent)c.eventSource.removeListener(beforeEvent,protect);};const done=()=>{cleanup();manager.getSelectedPresetName()===route.preset?resolve():reject(Error('原生预设切换目标不一致'));};if(beforeEvent)c.eventSource.on(beforeEvent,protect);c.eventSource.on(event,done);timer=setTimeout(()=>{cleanup();reject(Error('原生预设切换超时'));},5000);try{manager.selectPreset(manager.findPreset(route.preset));}catch(e){cleanup();reject(e);}});}
-  const source=route.preset===null?clone(await getBaseSource()):clone(getSource()),modular=route.preset===null||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));
+  const source=route.preset===null?clone(await getBaseSource()):clone(getSource()),modular=route.preset===null||(isEnglishPreset(source)||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}')));
   if(isTableContinuity(w)&&!modular)fail('仅表单接续需要缇斯亚配套预设，当前预设无法保证资料单一来源');
   if(!modular){if(compileSelected(d,w).ids.length||w.controller||w.context.entries.length)fail('当前预设尚未适配选中项装配，请选用 alpha.13 配套预设');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials:{text:'',ids:[]},settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:false};return;}
   if(options.agentMode||await isAgentEnabled())fail('本版选中项编译使用普通生成；Agent 执行适配接口已预留，请先关闭原生 Agent 模式');
-  const materials=await resolveMaterials(d,w),nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(nativeMvu)materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu};
+  const english=isEnglishPreset(source),materials=await resolveMaterials(d,w,'main',english),nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(english&&nativeMvu&&!nativeMvu.nativeBridge)fail('英文叙事预设尚不支持由正文更新原卡变量；请启用表单原生变量桥，或选回原配套预设。');if(nativeMvu){if(english)materials.lanes.lorebook=[materials.lanes.lorebook,nativeMvu.text].filter(Boolean).join('\n\n');else materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');}if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu,english,consumedSlots:new Map(),consumedMaterials:new Map()};
  }
  function historyInput(chat,type='normal'){
   if(type==='quiet'||type==='impersonate')return null;
@@ -84,13 +95,24 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(chat===ctx().chat)fail('历史范围必须作用于宿主发送副本，原始聊天未改动。');
   if(generation&&(generation.key!==current.key||generation.revision!==current.revision))fail('生成期间聊天或配置已变化，请重试');
   const report=limitNativeHistory(chat,current.world.context.history,type,projectToolTurns);
-  if(generation)generation.historyWindow=report;
+  if(generation){generation.historyWindow=report;if(generation.english)generation.currentSourceIndex=chat.findLast(m=>!m.is_system&&(m.is_user===true||m.role==='user'))?.index??null;}
   return report;
  }
- function selectedText(){return generation?.materials?.text??'';}
+ function selectedText(){const text=generation?.materials?.text??'';generation?.consumedMaterials?.set('requirements',text);return text;}
+ function materialText(key){const text=generation?.materials?.lanes?.[key]??'';generation?.consumedMaterials?.set(key,text);return text;}
+ function tableSlotText(key){const text=slotText(key,generation?.tableSlots?.[key],generation?.english?{layout:'dossier'}:undefined);generation?.consumedSlots?.set(key,text);return text;}
+ function englishSlotsActive(){return !!generation?.english;}
+ function verifyNativeMaterials(g,payload){
+  assertSlotsConsumed(g.source,g.tableSlots??{},new Set(Object.entries(g.tableSlots??{}).filter(([key,value])=>g.consumedSlots?.get(key)===slotText(key,value,{layout:'dossier'})).map(([key])=>key)));
+  assertMaterialLanesConsumed(g.source,g.materials?.lanes,g.materials?.text,g.consumedMaterials??new Map());
+  const messages=(payload.messages??[]).map(m=>typeof m.content==='string'?m.content:Array.isArray(m.content)?m.content.filter(p=>p.type==='text').map(p=>p.text??'').join('\n'):'');
+  for(const [key,value]of [...(g.consumedSlots??[]),...(g.consumedMaterials??[])])if(value&&!suppressedSlot(g.source,SLOT_TARGETS[key]??(key==='requirements'?'tisya_material_rule_material':'tisya_material_'+key))){const count=messages.reduce((n,text)=>n+text.split(value).length-1,0);if(count!==1)throw Object.assign(Error('资料“'+(SLOT_NAMES[key]??MATERIAL_NAMES[key]??'所选资料')+'”未唯一进入最终请求；请检查对应资料槽与其他扩展的注入。'),{missingMaterialSlots:count===0?[key]:[],duplicateMaterialSlots:count>1?[key]:[]});}
+ }
+
  async function payloadReady(payload){if(!generation)return;if(generation.passthrough){
   if(generation.nativeContext){
    if(worldKey(ctx())!==generation.key||store.read().revision!==generation.revision)fail('生成期间聊天或配置已变化，请重试');
+   if(generation.english){verifyNativeMaterials(generation,payload);verifyNativeCurrent(generation,payload,ctx());}
    const directions=await getContractorMessages();appendContractorMessages(payload.messages,directions);const directives=[...revisionMessages(pendingRevision),...userDirectives()];if(directions.length||directives.length){payload.messages.push(...directives);await checkBudget(payload.messages,generation.world.context.maxInputTokens,ctx());}
    const prepared=await prepareTransport(payload,resolveRoute(generation.data,generation.world,'main').transport,generation);if(prepared?.plan){for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared.payload);sealPayload(payload);}
    const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,historyWindow:generation.historyWindow??null,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
@@ -104,7 +126,8 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(g.nativeMvu){const now=await prepareNativeMvu(c,w,g.type,undefined,outputEnabled(source));if(!now||now.signature!==g.nativeMvu.signature||now.messageIndex!==g.nativeMvu.messageIndex||now.stateDigest!==g.nativeMvu.stateDigest||now.text!==g.nativeMvu.text)fail('原卡 MVU 来源或变量已变化，请重新生成');}
   if(g.modular)for(const m of selectedHistory(c,w,g.type))preparedHistory.set(m,await prepareMessage(clone(m)));
   if(g.modular&&historySignature(c)!==historyStamp)fail('聊天记录已变化，请重新生成');
-  const messages=g.modular?buildMessages({source,context:c,world:w,materials:[g.materials.text,isTableContinuity(w)?'':g.tableActivation].filter(Boolean).join('\n\n'),slots:g.tableSlots,substitute:s=>substituteContext(s,c,w),nativeMessages:payload.messages,type:g.type,options:g.options,preparedHistory}):clone(payload.messages);
+  const slotLayouts=g.english?await coveredTemporaryLayouts(c,w,g.type,g.source,g.tableSlots,preparedHistory):{};
+  const messages=g.modular?buildMessages({source,context:c,world:w,materials:[g.materials.text,isTableContinuity(w)?'':g.tableActivation].filter(Boolean).join('\n\n'),slots:g.tableSlots,slotLayouts,materialLanes:g.materials.lanes,substitute:s=>substituteContext(s,c,w),nativeMessages:payload.messages,type:g.type,options:g.options,preparedHistory}):clone(payload.messages);
   appendContractorMessages(messages,await getContractorMessages());messages.push(...revisionMessages(pendingRevision),...userDirectives());
   const settings={...g.settings,...g.route.parameters};const model=g.route.model||settings.__tisyaModel||c.getChatCompletionModel(settings);delete settings.__tisyaModel;
   await checkBudget(messages,g.world.context.maxInputTokens,c);
@@ -168,10 +191,11 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const response=await fetch('/api/backends/chat-completions/generate',{method:'POST',headers:ctx().getRequestHeaders(),body:JSON.stringify(payload),signal});return await readTaskResponse(response,{signal,onProgress});
   }finally{query?.dispose();}
  }
- return {setUserRevision(value){if(value&&ctx().mainApi&&ctx().mainApi!=='openai')fail('当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');pendingUserRevision=value?{material:clone(value),chat:ctx().chat,user:ctx().chat[value.messageId]}:null;},setRevision(value){pendingRevision=value?clone(value):null;},attachTableActivation(result){if(generation?.key===result.world&&generation.modular)generation.tableActivation=result.text;},attachTableContext(result){if(!result)return;if(!generation||generation.key!==result.world)fail('表单上下文没有对应的当前生成');if(generation.modular){generation.tableSlots={...generation.tableSlots,...result.slots};generation.materials.text=[generation.materials.text,result.slots?result.instructions:result.text].filter(Boolean).join('\n\n');}},taskPreset,presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){pendingUserRevision=null;generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){pendingUserRevision=null;blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),transportStatus:()=>transport?.status()??null,generationAccepted:()=>!generation?.transport||['off','bypassed','complete'].includes(generation.transport.state),clear(){transport?.invalidate('main');generation=null;pendingUserRevision=null;},cancelTransport:()=>transport?.invalidate(null),api};
+ return {setUserRevision(value){if(value&&ctx().mainApi&&ctx().mainApi!=='openai')fail('当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');pendingUserRevision=value?{material:clone(value),chat:ctx().chat,user:ctx().chat[value.messageId]}:null;},setRevision(value){pendingRevision=value?clone(value):null;},attachTableActivation(result){if(generation?.key===result.world&&generation.modular)generation.tableActivation=result.text;},attachTableContext(result){if(!result)return;if(!generation||generation.key!==result.world)fail('表单上下文没有对应的当前生成');if(generation.modular){generation.tableSlots={...generation.tableSlots,...result.slots};generation.materials.text=[generation.materials.text,result.slots?result.instructions:result.text].filter(Boolean).join('\n\n');}},taskPreset,presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){pendingUserRevision=null;generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native'&&!isEnglishPreset(getSource()))return;if(!generation&&(isEnglishPreset(getSource())||getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}'))))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){pendingUserRevision=null;blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,materialText,tableSlotText,englishSlotsActive,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),transportStatus:()=>transport?.status()??null,generationAccepted:()=>!generation?.transport||['off','bypassed','complete'].includes(generation.transport.state),clear(){transport?.invalidate('main');generation=null;pendingUserRevision=null;},cancelTransport:()=>transport?.invalidate(null),api};
 }
-export function buildMessages({source,context:c,world:w,materials,slots={},substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map()}){w=continuityWorld(w);const suppliedSubstitute=substitute;substitute=s=>suppliedSubstitute(withoutRawMacros(s,w));const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
- let historyInserted=false;const usedSlots=new Set();
+export function buildMessages({source,context:c,world:w,materials,slots={},slotLayouts={},materialLanes={},substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map()}){w=continuityWorld(w);const suppliedSubstitute=substitute;substitute=s=>suppliedSubstitute(withoutRawMacros(s,w));const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
+ let historyInserted=false;const usedSlots=new Set(),usedMaterials=new Map(),english=isEnglishPreset(source),slotOptions=key=>({layout:slotLayouts[key]??(english?'dossier':undefined)});const readSlot=key=>slotText(key,slots[key],slotOptions(key));
+ const render=text=>String(text??'').split(/(\{\{tisya_config_selected\}\}|\{\{tisya_material_(?:style|environment|gameplay|lorebook)\}\}|\{\{tisya_slot_[A-Za-z]+\}\})/g).map(part=>{if(part==='{{tisya_config_selected}}'){if(english&&materials&&usedMaterials.has('requirements'))fail('用户要求资料重复发送，请只保留一个资料宏入口。');usedMaterials.set('requirements',materials??'');return materials??'';}if(/^\{\{tisya_slot_/.test(part)){const key=part.slice(13,-2);if(english){const text=readSlot(key);if(text&&usedSlots.has(key))fail('同一资料槽重复发送：'+(SLOT_NAMES[key]??key));usedSlots.add(key);return text;}return '';}if(/^\{\{tisya_material_/.test(part)){const key=part.slice(17,-2),value=materialLanes[key]??'';if(english&&value&&usedMaterials.has(key))fail('所选资料重复发送：'+(MATERIAL_NAMES[key]??key));usedMaterials.set(key,value);return value;}return substitute(part);}).join('');
  for(const p of enabledPrompts(source)){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
   if(p.identifier==='chatHistory'){
    if(historyInserted)fail('聊天历史槽重复，请在预设中只保留一个已启用的 chatHistory');historyInserted=true;
@@ -180,9 +204,32 @@ export function buildMessages({source,context:c,world:w,materials,slots={},subst
     let media=nativeMessages.filter(n=>n.role===role&&Array.isArray(n.content)&&n.content.some(p=>p.type==='text'&&m.mes&&p.text.includes(m.mes)));if(!m.mes&&hasMedia&&i===chat.length-1)media=nativeMessages.filter(n=>n.role===role&&Array.isArray(n.content)).slice(-1);if(media.length>1)fail('多媒体消息无法唯一对应，请缩小历史范围');if(hasMedia&&!media.length)fail('宿主未提供该消息的多媒体内容，请检查模型能力或历史范围');if(text||media.length)out.push({role,content:media.length?[...(text?[{type:'text',text}]:[]),...clone(media[0].content.filter(p=>p.type!=='text'))]:text});
    }if(type==='continue')out.push({role:'system',content:'继续上一条 assistant 回复中尚未完成的部分，不重复已经输出的文本。'});if(options.quiet_prompt)out.push({role:'system',content:substitute(options.quiet_prompt)});continue;
   }
-  let content;const slot=Object.keys(SLOT_TARGETS).find(k=>SLOT_TARGETS[k]===p.identifier);if(p.identifier==='tisya_material_boundary_close')for(const [key,value]of Object.entries(slots))if(!usedSlots.has(key)&&slotText(key,value))out.push({role:'system',content:slotText(key,value)});if(slot&&slots[slot]!==undefined){usedSlots.add(slot);content=[substitute(p.content??''),slotText(slot,slots[slot])].filter(Boolean).join('\n\n');}else if(p.marker)content=markers[p.identifier]??'';else content=p.content?.includes('{{tisya_config_selected}}')?p.content.replaceAll('{{tisya_config_selected}}',materials):substitute(p.content??'');
+  let content;const slot=Object.keys(SLOT_TARGETS).find(k=>SLOT_TARGETS[k]===p.identifier);if(!english&&p.identifier==='tisya_material_boundary_close')for(const [key,value]of Object.entries(slots))if(!usedSlots.has(key)&&!suppressedSlot(source,SLOT_TARGETS[key])&&slotText(key,value,slotOptions(key))){out.push({role:'system',content:slotText(key,value,slotOptions(key))});usedSlots.add(key);}if(!english&&slot&&slots[slot]!==undefined){usedSlots.add(slot);content=[render(p.content),slotText(slot,slots[slot],slotOptions(slot))].filter(Boolean).join('\n\n');}else if(p.marker)content=markers[p.identifier]??'';else content=render(p.content);
   if(typeof content==='string'&&content.trim())out.push({role:p.role??'system',content});
- }return out;}
+ }if(english&&!historyInserted&&selectedHistory(c,w,type).length)fail('当前输入没有发送入口；请恢复聊天记录槽，历史条数可以设为 0。');assertSlotsConsumed(source,slots,usedSlots);if(english)assertMaterialLanesConsumed(source,materialLanes,materials,usedMaterials);return out;}
+
+function verifyNativeCurrent(g,payload,context){
+ if(g.type==='continue')return;const current=historyWindow(context,g.world,g.type).recent.at(-1)?.message;if(!current?.is_user)return;
+ if(g.historyWindow&&g.currentSourceIndex!==context.chat.indexOf(current))fail('当前输入未保留在本轮历史来源中；请检查聊天记录槽与历史过滤扩展。');
+ const lastUser=payload.messages?.findLast(m=>m.role==='user'),content=lastUser?.content,text=typeof content==='string'?content:Array.isArray(content)?content.filter(p=>p.type==='text').map(p=>p.text??'').join('\n'):'';
+ if(String(current.mes??'')&&!text.includes(current.mes))fail('当前输入没有进入最终用户消息；请恢复聊天记录槽，历史条数可以设为 0。');
+ if(current.extra?.media?.length&&(!Array.isArray(content)||!content.some(p=>p.type!=='text')))fail('当前输入的媒体内容没有进入最终用户消息，请检查宿主多媒体装配。');
+}
+
+export async function coveredTemporaryLayouts(context,world,type,source,slots={},preparedHistory=new Map()){
+ const temporary=slots.archive?.latestTemporary;if(!temporary?.source||!temporary.text||!enabledPrompts(source).some(p=>p.identifier==='chatHistory'))return {};
+ const chain=await historySources(context.chat,type==='regenerate'?'swipe':type),original=chain.find(row=>row.key===temporary.source);if(!original||original.role!=='assistant'||archivalText(original.text)!==temporary.text)return {};
+ const message=context.chat[original.floor-1];if(!selectedHistory(context,world,type).includes(message))return {};
+ const raw=preparedHistory.get(message)??String(message.mes??''),sent=isTableContinuity(world)?archivalText(raw):raw;if(typeof sent!=='string'||!sent.includes(temporary.text))return {};
+ // This alternate projection is authored by the same trusted table composer.
+ // An absent alternate safely leaves the temporary source intact.
+ return {archive:'withoutTemporary'};
+}
+
+const MATERIAL_NAMES={style:'文风',environment:'环境',gameplay:'玩法',lorebook:'世界书与扩展',requirements:'用户要求'};
+export function assertMaterialLanesConsumed(source,lanes={},requirements='',used=new Map()){const missing=Object.entries({...lanes,requirements}).filter(([key,value])=>value&&used.get(key)!==value&&!suppressedSlot(source,key==='requirements'?'tisya_material_rule_material':'tisya_material_'+key)).map(([key])=>key);if(missing.length)throw Object.assign(Error('所选资料没有发送入口（'+missing.map(k=>MATERIAL_NAMES[k]??k).join('、')+'）；请恢复对应资料槽及其动态宏。'),{missingMaterialSlots:missing});}
+function suppressedSlot(source,id){if(!id)return false;const p=source.prompts?.find(p=>p.identifier===id),order=source.order??source.prompt_order?.find(r=>r.character_id===100001)?.order??source.prompt_order?.[0]?.order,o=order?.find(p=>p.identifier===id);return !!p&&(p.enabled===false||!!o&&o.enabled===false);}
+export function assertSlotsConsumed(source,slots,used){const missing=Object.entries(slots).filter(([key,value])=>value!==undefined&&value!==null&&!(Array.isArray(value)&&value.length===0)&&!used.has(key)&&!suppressedSlot(source,SLOT_TARGETS[key])&&(!SLOT_NAMES[key]||slotText(key,value))).map(([key])=>key);if(missing.length)throw Object.assign(Error('资料没有发送入口（'+missing.map(k=>SLOT_NAMES[k]??'扩展资料').join('、')+'）；请恢复或启用对应资料槽后重试。'),{missingMaterialSlots:missing});}
 
 function withoutRawMacros(text,world){return isTableContinuity(world)?String(text).replace(/\{\{\s*(?:description|charDescription|personality|charPersonality|scenario|persona|personaDescription|mesExamples|exampleDialogue|wiBefore|wiAfter|history|lastMessage|lastCharMessage|lastUserMessage)\s*\}\}/gi,''):text;}
 function substituteContext(text,context,world){return context.substituteParams(withoutRawMacros(text,world));}

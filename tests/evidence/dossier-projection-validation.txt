@@ -1,0 +1,25 @@
+✔ dossier joins each selected record by stable owner ID once without name matching or mutation (3.919415ms)
+✔ selected rows alone determine membership and values; a thin or omitted owner is never expanded (0.579194ms)
+✔ each child retains its own access, evidence and effective time instead of inheriting owner authority (0.555629ms)
+✔ multi-owner, absent owner and custom records remain once with explicit projection diagnostics (0.515578ms)
+✔ typed empty values, false, zero and explicit unknown stay distinct in dossier material (0.420505ms)
+✔ history stays separate, one object cannot be joined across versions, and calls retain no branch cache (0.77518ms)
+✔ holdings belong to the explicitly identified item, never an arbitrarily chosen holder (0.366583ms)
+✔ unavailable access is explicitly unknown and auxiliary records keep their separate destination (0.372873ms)
+✔ direct service history keeps participant and knower names without copying their complete dossiers (548.771993ms)
+✔ direct service does not restore a conditionally omitted native reference through global snapshots (809.72867ms)
+✔ worldbook service activates only requested record body while preserving user/focus groups (733.305565ms)
+✔ nested native references do not become technical path prose (1.016154ms)
+✔ natural material separates identity, focus, scene, history and pending without storage metadata (3.005185ms)
+✔ projection never expands identity-only references or silently grants knowledge (0.169465ms)
+✔ only confirmed enabled preferences appear and current explicit instruction remains separate (0.330449ms)
+✔ current snapshot values and settled event knowledge survive natural rendering (0.486785ms)
+✔ native worldbook projection uses natural fields while retaining activation metadata (1.478832ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2476.711626

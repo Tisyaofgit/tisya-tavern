@@ -1,0 +1,43 @@
+✔ new factory consumes final English guide, retains live controls, and never sends review material placeholders (51.86493ms)
+✔ all accepted English selectors use actual values and preserve exact custom/empty wording (1536.286108ms)
+✔ actual language, optional user voice, lengths, actions, summary, hearts and guide detail reach their sole owners (89.224531ms)
+✔ manual request preserves edited order/text, routes actual selected materials once and uses trusted dossier layout (527.318333ms)
+✔ native host macros consume prepared data without rebuilding host messages or generic duplicate injection (547.708585ms)
+✔ nonempty unmapped materials fail visibly after all consumers, while explicit disabled slots stay disabled (12.767407ms)
+✔ native material macro evaluated before preparation cannot falsely mark later data delivered (32.538895ms)
+✔ trusted layout cannot be supplied by untrusted objects and auxiliary/old slots retain their representation (0.278811ms)
+✔ unsupported main writer/task and nonmodular voice settings fail before generation without migrating a preset (29.165715ms)
+✔ manual material macros respect actual placement and reject missing or duplicated nonempty consumers (11.964706ms)
+✔ native macro reads alone are not delivery evidence and duplicate final material is rejected (68.18525ms)
+✔ temporary archive copy is removed only after exact branch source and complete selected prepared history coverage (25.919545ms)
+✔ every live heart has a required real mood; empty catalogs fail and non-heart null remains valid (175.24029ms)
+✔ removed memory never parses openings or malformed historical memory (1051.137388ms)
+✔ managed 15-message window preserves each raw recent message plus current input (290.013883ms)
+✔ native final request leaves the preselected history and external material unchanged (28.371225ms)
+✔ selected branch, attachments and context switches retain existing history guards (682.980326ms)
+✔ native history input limits only the prepared copy before material assembly, independent of memory (204.876483ms)
+✔ native history hook preserves selected swipe and continuation and skips helper jobs (64.732249ms)
+✔ history input retains extension-added material that has no native message index (40.219226ms)
+✔ host passes the original prepared history to native projection and blocks a projection error (60.211426ms)
+✔ tool metadata changed outside selected prose still invalidates an in-flight managed request (246.892656ms)
+✔ dossier joins each selected record by stable owner ID once without name matching or mutation (2.502504ms)
+✔ selected rows alone determine membership and values; a thin or omitted owner is never expanded (0.43148ms)
+✔ each child retains its own access, evidence and effective time instead of inheriting owner authority (0.36432ms)
+✔ multi-owner, absent owner and custom records remain once with explicit projection diagnostics (0.33124ms)
+✔ typed empty values, false, zero and explicit unknown stay distinct in dossier material (0.298801ms)
+✔ history stays separate, one object cannot be joined across versions, and calls retain no branch cache (0.536599ms)
+✔ holdings belong to the explicitly identified item, never an arbitrarily chosen holder (0.272852ms)
+✔ unavailable access is explicitly unknown and auxiliary records keep their separate destination (0.226682ms)
+✔ natural material separates identity, focus, scene, history and pending without storage metadata (2.756288ms)
+✔ projection never expands identity-only references or silently grants knowledge (0.298039ms)
+✔ only confirmed enabled preferences appear and current explicit instruction remains separate (0.27164ms)
+✔ current snapshot values and settled event knowledge survive natural rendering (0.635028ms)
+✔ native worldbook projection uses natural fields while retaining activation metadata (1.094962ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3106.65467

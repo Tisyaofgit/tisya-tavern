@@ -436,9 +436,10 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   }
   const ruleVersion=await selectedRulePolicy(c);const slots={state:{rulePolicy:ruleVersion,source:data.source,revision:data.revision,eventResults:data.eventResults,conditionResults:data.conditionResults,rows:c.settings.injection==='direct'?data.rows.filter(r=>r.table!=='events'&&r.table!=='preferences'):[],nativeState:c.settings.injection==='direct'?nativeSnapshot(assembled.rows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}):null,dueChecks:data.dueChecks,unresolvedTags:data.unresolvedTags},preferences:{explicit:data.explicitRules,style:stylePrompt(data.styleRules),rows:data.preferences},plan:data.plot,genesis:loaded.session.data.blueprint??null};
   if(c.settings.injection==='direct')slots.archive={rows:data.rows.filter(r=>r.table==='events'),latestTemporary:data.latestTemporary};
-  slots.state=narrativeSlot(slots.state,storyMaterial({rows:slots.state.rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks})+'\n'+storyContext(slots.state,allowedRows));
+  const stateProjection={rows:slots.state.rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks},stateContext=storyContext(slots.state,allowedRows);
+  slots.state=narrativeSlot(slots.state,storyMaterial(stateProjection)+'\n'+stateContext,{dossier:storyMaterial({...stateProjection,layout:'dossier'})+'\n'+stateContext});
   slots.preferences=narrativeSlot(slots.preferences,storyPreferences(slots.preferences));
-  if(slots.archive)slots.archive=narrativeSlot(slots.archive,storyMaterial({rows:data.rows,selectedRows:slots.archive.rows,registry:loaded.view.registry,latestTemporary:data.latestTemporary}));
+  if(slots.archive){const archiveProjection={rows:data.rows,selectedRows:slots.archive.rows,registry:loaded.view.registry};slots.archive=narrativeSlot(slots.archive,storyMaterial({...archiveProjection,latestTemporary:data.latestTemporary}),{withoutTemporary:storyMaterial(archiveProjection)});}
   if(slots.plan)slots.plan=narrativeSlot(slots.plan,storyMaterial({plot:data.plot,registry:loaded.view.registry}));
   if(slots.genesis)slots.genesis=narrativeSlot(slots.genesis,storyBlueprint(slots.genesis));
   const instructions=narrativeInstructions(c.settings);text=instructions+'\n\n'+materialSlots(slots);

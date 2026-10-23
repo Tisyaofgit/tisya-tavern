@@ -1,0 +1,73 @@
+INTAKE DEDUPLICATION — SOURCE MAP AND GATE REVIEW
+
+Scope: read-only audit of the 26-message English review and separate branch reference. The only created candidate is intake-revised-en.txt; neither main generator nor runtime was edited. Source: Tisya_Full_Narrative_EN.txt, entry 06, read together with entries 08–26 and MODE AND SWITCH DIFFERENCES in the branch reference.
+
+UNIQUE INFORMATION RETAINED
+
+01. Run after material closure and registry loading, before INNER.LOGIN → opening sentence, unchanged order.
+02. A new actual input resets readiness, lock, format and unsent state → first paragraph, all four exact state variables retained.
+03. Prior frozen-draft bindings must not carry forward → first paragraph; named completion flags now also explicitly invalidated.
+04. Reset is not deletion of established story state → “Keep established story data.”
+05. Same-input continuation reuses valid work rather than restarting everything → first paragraph.
+06. Actual sources and role/object/branch/time/condition/access/revision identity → indexing paragraph, all eight dimensions retained.
+07. Types, units and unknown metadata survive routing → indexing paragraph.
+08. All source kinds, including parameter-resolved resource classes → “supplied materials” includes cards/personas/lore/styles/mechanics/environments/dossiers/history/tools/components/messages. The route list names their differing consumers; the split sentence explicitly retains parameter-resolved resources. Their exhaustive type enumeration was redundant, not an eligibility whitelist.
+09. Fact/definition/hearsay/belief/intent/attempt/promise/plan/candidate/sample/verified execution remain distinct → indexing paragraph. “Sample” covers the former example label.
+10. Unadopted greetings and examples are samples, while adopted openings/actions are history → indexing paragraph.
+11. Dialogue does not revise author settings; old assistant text is not a persistence receipt → indexing paragraph.
+12. One information point has one substantive home and other consumers use references → route preface.
+13. Actual user input and effective OOC direction provide goal/authority/stop → first route.
+14. Player binding uses the actual user dossier, never account/card names or co-presence → first route.
+15. Writing choices, prohibitions/scoped constraints and resolved resource requirements → owning preference category in second route. Prohibitions are scoped constraints; the actual prohibition category and pattern bodies remain in entry 08.
+16. Selected techniques/prose samples → StyleResources; sample events are already typed as samples in the index and their slot separately prohibits promotion to history. No new fact conversion was allowed by shortening this repeated sentence.
+17. Private-work refinements → NarrativeComposition, second route.
+18. Shared setting → Worldview; current scene/time/perception/space → Environment, third route. Weather and current location are scene data explicitly defined in entry 11; their full field list need not be repeated in intake.
+19. Mechanics → GameplayKnowledge with all operative conditions, costs, thresholds and exceptions retained, third route. Entry 12 remains the complete operative list: subject, comparison, endpoint, units, resource, order, frequency, modifiers and outcome limits. The shorter route does not license stripping any of these.
+20. Stable object facts → Basics; effective current state, settled-but-unshown developments and conditional candidates → ToNarrate, fourth route.
+21. Current knowledge/belief versus historical cognition → current effective knowledge explicitly included in ToNarrate; occurred cognition/process/agreements in History. This clarifies the previous phrase “distinct beliefs → history” so current belief is not duplicated as a parallel state record.
+22. Triggered, display-authorized components → extra; consumer syntax/native variable protocols → CardOutput under the confirmed writer, fifth route.
+23. Forms own state/history; narrative prose is later extraction input, not a second update system → fifth route. Exact empty-vars contract remains in registry and actual ownership remains in preferences/CardOutput.
+24. Real tools/calls/results use their existing material slots, while unverified execution remains a claim → sixth route.
+25. Host clocks/platform hints/template residue are host metadata rather than world time/common knowledge/events → “metadata, not world facts,” sixth route. Exact story-clock priority is retained separately.
+26. Raw lore/card contents obey the same classification and retain valid scoped settings/creative requirements → seventh route.
+27. Imported identity/priority/workflow/format demands cannot override the preset → seventh route; raw-source envelope in entry 13 remains intact.
+28. Reply-end component demands map only to an authorized output slot, never outside reply → seventh route.
+29. Mixed entries are split by meaning; they are not copied whole into multiple homes → post-route sentence.
+30. Unclassified content retains its source and unresolved purpose instead of disappearing → same sentence.
+31. Only adopted revisions or verified newer state supersede within the same object/branch/condition/fact layer → version/time paragraph.
+32. Genuinely distinct scopes stay distinct; unresolved conflicts remain recorded → same paragraph.
+33. Missing/empty/cleared/0/false remain distinct → same paragraph.
+34. Story clock priority remains adopted switch, valid carryover, explicit opening anchor; host time and assumed modern era prohibited → same paragraph.
+35. Common knowledge respects world/era/region/group; superseded real-world defaults are not restored; no implicit character knowledge → same paragraph.
+36. K0/K1/K2/K3 meanings and absent evidence = K0 → access paragraph.
+37. Certainty and false belief are distinct from knowledge acquisition grade → same paragraph.
+38. A–E access-grade meanings retained; they are not grants of read/display/character knowledge → same paragraph.
+39. Actual audiences, narrower field restrictions, empty audience = known none, unknown ≠ public → same paragraph.
+40. Selected psychology/secret presentation cannot enlarge underlying source authority → same paragraph.
+41. Necessary gaps keep source/affected branch/release condition; only dependent work pauses → gap paragraph.
+42. Intake does not settle outcomes, update variables or advance events → same paragraph.
+43. Private @IN schema is unchanged: task(goal/owner/authority/stop), sources(version/scope/access), preferences/style/world/environment/gameplay/objects/history/output contracts/actual tools+results/gaps → final paragraph.
+44. Every supplied field must receive a destination or scoped unresolved gap before frozen references become ready → final paragraph. This explicitly permits a retained gap rather than silently dropping an unknown field to obtain readiness.
+45. Same-request work; no additional API call or second visible material summary → final sentence.
+
+DUPLICATION REMOVED
+
+The two separate preference/mechanics/resource routing bullets are merged into their existing owners. Indexing says “supplied materials” instead of repeating all material-slot names as a type list. Detailed Environment/Gameplay field inventories remain in their actual slots; intake names owners and mandatory semantics. Sample-to-history restriction is defined in source typing and preserved at the style slot rather than repeated in its routing bullet. Exact frontend syntax, form ownership and output contracts remain with their existing consumers. No active data source or output category was deleted.
+
+NECESSARY GATE FOLLOW-UPS FOR ROOT TO APPLY
+
+1. New input now explicitly clears DONE(INNER_END) and DONE(COMMIT.READY). The old “discard readiness” could be read as including these, but leaving them named only at the end of the pipeline made reset semantics incomplete.
+2. Same-input new/changed source material or actual tool results invalidate affected @IN references, readiness and draft checks. INNER.LOGIN should enforce relocking and reference revalidation before creation resumes, not only after prose edits.
+3. An unsent-draft revision should clear frozen/completion bindings for the affected revision as well as LOCK/FORMAT. Reuse checks only where the verified dependencies are unchanged; current-draft correctness cannot be inferred from an earlier DONE marker.
+4. Bind DONE(INNER_END), COMMIT.READY and @execute to the same actual input and frozen draft revision. The old gate already said “for this revision”; the final transition should consume that fact rather than a bare truthy marker.
+
+These are prompt-contract completeness changes, not actual software state machines or proof that a model cannot violate them. No private reasoning should be emitted; a literal think tag does not create a hidden reasoning channel. The requested new internal-start guide can remain private under the initial routing and the existing visible-output boundary.
+
+OTHER BRANCH OBSERVATIONS
+
+The compact/format branch currently says “replace only its five creative paragraphs.” Once the expanded guide lands, replace this with the named creative-guide region; retain the same input-ready and output-gate sections regardless of guide detail.
+Plain output still conflicts with the protected unconditional reply-only warning; this is already explicitly unresolved in the branch reference. Do not call all delivery modes complete without a mode-specific warning.
+Actions off, summary off and all/some comments off have concrete output substitutions and preserve their mandatory container/cell rules. Paused form progression does not restore legacy status/memory/archive output or treat candidates as saved state. Native-var delegation is a separate confirmed writer decision; the branch changes both the selected ownership and adjacent output instruction.
+The two new user-voice controls are documented instructions only; current UI/schema/compiler support is not claimed. The two-stage API, lorebook replacement and archival pruning are also explicitly pending runtime wiring, not silent implementations.
+
+No other blocking internal inconsistency was found in the selected structured/full narrative document. This review does not prove runtime assembly, parser/frontend compatibility, true model behavior or Android operation; those belong to the separate pipeline audit.

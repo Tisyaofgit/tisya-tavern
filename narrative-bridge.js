@@ -1,3 +1,5 @@
+import {isEnglishPreset,ENGLISH_LIVE_IDS} from './config/english-preset.js';
+import {USER_VOICE_FIELDS,validateUserVoice} from './config/user-voice.js';
 import {applyNarrativeRules} from './config/rule-text.js';
 import {renderProtocol} from './settings-core.js';
 import {nativeMvuDeclaration,applySourceOutputRoutes} from './config/native-mvu.js';
@@ -26,13 +28,15 @@ export function readNarrative(context,scope='chat'){
 }
 export function compileNarrative(context,source,moods=[],configuration=null){
  const modular=modularSource(source),current=modular?(configuration??currentConfiguration(context,()=>readNarrative(context).settings)):null,config=modular?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:readNarrative(context),selection=modular&&current.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
+ if(!modular&&context.extensionSettings?.['缇斯亚配置']!==undefined){const mode=currentConfiguration(context,()=>readNarrative(context).settings).world.modes.narrative;validateUserVoice(mode);if(USER_VOICE_FIELDS.some(k=>mode[k]===true))fail('当前旧版预设不支持用户口癖保留与叙事口吻延续；请选择模块化配套预设，或关闭这两项后生成。');}
+ if(isEnglishPreset(source)&&current&&nativeMvuDeclaration(context,current.world)&&!current.world.tables?.nativeBridge)fail('英文叙事预设尚不支持由正文更新原卡变量；请启用表单原生变量桥，或选回原配套预设。');
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});
  if(!modular&&c.prose){applyNarrativeRules(c,{narrative:config.settings,叙事指令:context.extensionSettings?.缇斯亚配置?.叙事指令});c.rest=renderProtocol(c);}
  if((!current||current.world.mode==='narrative')&&c.prose&&c.outputEnabled&&c.heartActive){const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=requireMoodNames(moods);c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,moodSelectionRule(values.mood)).replaceAll('{mood或null}','{mood}');}
- const result=modular?refineCompiled(c,current,source):c;if(!result.taskMode&&c.prose&&c.outputEnabled){applySourceOutputRoutes(result.rest.entries);applyEscapedPipeOutput(result.rest.entries);}return result;
+ const result=modular?refineCompiled(c,current,source):c;if(!result.englishEdition&&!result.taskMode&&c.prose&&c.outputEnabled){applySourceOutputRoutes(result.rest.entries);applyEscapedPipeOutput(result.rest.entries);}return result;
 }
 export function registerLivePreset(context,getSource,getContext,getMoods,onError=()=>{}){
- const ids=Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries);let cacheKey=null,cached=null;
+ const ids=[...new Set([...Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries),...ENGLISH_LIVE_IDS])];let cacheKey=null,cached=null;
  const execution=()=>{const source=getSource(),ctx=getContext(),current=modularSource(source)?currentConfiguration(ctx,()=>readNarrative(ctx).settings):null,legacy=current?null:readNarrative(ctx),config=current?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:legacy,selection=current?.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source);const enabled=outputEnabled(source);const moods=(!current||current.world.mode==='narrative')&&enabled&&selection.directions.length&&config.settings.缇斯亚当前任务==='叙事'&&['互动叙事','大纲扩写'].includes(config.settings.缇斯亚叙事创作模式)?getMoods():[];
   const next=stamp([ctx.extensionSettings?.缇斯亚配置?.叙事指令,current?nativeMvuDeclaration(ctx,current.world)?.signature??null:null,modularSource(source)?currentConfiguration(ctx):null,config.settings,config.summary,source.order,source.prompts.map(p=>[p.identifier,p.enabled]),moods]);if(next!==cacheKey){cacheKey=null;cached=null;cached=compileNarrative(ctx,source,moods);cacheKey=next;}return cached;};
  for(const id of ids)context.registerMacro(LIVE_PREFIX+id,()=>{try{return execution().rest.entries[id]??'';}catch(e){cacheKey=null;cached=null;onError(e);throw e;}},'缇斯亚：当前聊天配置 · '+id);

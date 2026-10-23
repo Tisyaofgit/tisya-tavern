@@ -1,0 +1,1408 @@
+{
+  "audit_date": "2026-10-23",
+  "repo_root": "/workspace/scratch/b5f88d8e1157/settings-ui-work",
+  "authority": "Actual root JS + config + vendor/settings/src source; no top-level src or runtime/src exists",
+  "scope_note": "Defaults are factory suggestions, not loaded user choices. English compression is a document design; source not edited. New seven categories/scenario/turn expiry remain review projection pending wiring. Global preference authority is 游玩偏好 once promoted; table preference scopes use exact IDs for user/card/world/chat and boolean 全局.",
+  "rows": [
+    {
+      "id": "A01",
+      "label": "玩家代写",
+      "key": "缇斯亚叙事玩家代写",
+      "type": "string",
+      "allowed": [
+        "不代写",
+        "仅润色已给言行",
+        "补充轻微言行",
+        "完整代演"
+      ],
+      "rules": {
+        "不代写": "仅承接玩家已给出的言行。新增回应由其他人物与环境承担；禁止补写玩家动作、台词及未表达的意图。",
+        "仅润色已给言行": "将玩家已给言行整理成连贯表达，保留原意、先后关系与确定程度。禁止增补新的行动和答复。",
+        "补充轻微言行": "围绕玩家已经确定的意图补充必要衔接，保持行动方向与承诺范围。重大决定与心理分别服从独立授权。",
+        "完整代演": "依据玩家档案、已定目标与当前处境代演言行，接续既往选择及其后果。重大决定与心理分别服从独立授权。"
+      },
+      "default": "不代写",
+      "english_review_key": "player_speech_action_authority",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A01",
+      "status": "active"
+    },
+    {
+      "id": "A02",
+      "label": "重大选择权限",
+      "key": "缇斯亚叙事重大选择权限",
+      "type": "string",
+      "allowed": [
+        "留给玩家",
+        "允许代演"
+      ],
+      "rules": {
+        "留给玩家": "重大选择保留给玩家。呈现足够判断的现场信息，停在决定发生之前；禁止借过场替玩家承诺、结盟或改变关系。",
+        "允许代演": "依据已授权的人设、目标与处境代演重大选择，让选择承担相应后果。保留明确列出的禁区与待确认事项。"
+      },
+      "default": "留给玩家",
+      "english_review_key": "major_choice_authority",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A02",
+      "status": "active"
+    },
+    {
+      "id": "A03",
+      "label": "输入转述",
+      "key": "缇斯亚叙事输入转述",
+      "type": "string",
+      "allowed": [
+        "不复述",
+        "简短承接",
+        "润色转述"
+      ],
+      "rules": {
+        "不复述": "从输入引发的新回应与后果接续场景，省略对已给言行的重播。行动意图进入情境判定，禁止转述成未经判定的成功。",
+        "简短承接": "以必要短句接住玩家刚才的言行，随即转入新的反应与后果。保持原意和行动的确定程度。",
+        "润色转述": "把玩家本轮输入作为本段大纲，按事件次序展开已给言行、动作过程、场景反馈与获准心理，润色成完整场面，再沿该场面向下扩写延续。写足输入包含的过程，保持原意、先后关系与确定程度。行动尝试依情境判定结果；新增玩家言行与心理遵守各自授权。"
+      },
+      "default": "简短承接",
+      "english_review_key": "input_rendering",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A03",
+      "status": "active"
+    },
+    {
+      "id": "A04",
+      "label": "玩家内心代写",
+      "key": "缇斯亚叙事玩家内心代写",
+      "type": "string",
+      "allowed": [
+        "不新增",
+        "仅复现用户明确提供",
+        "允许依人设推写"
+      ],
+      "rules": {
+        "不新增": "禁止新增玩家角色的心理、感受、动机与情感归属。人物如何理解玩家，由各自可知信息与立场决定。",
+        "仅复现用户明确提供": "仅呈现玩家明确提供的内心内容，保持其语气与确定程度。禁止从动作反推并补写新的心理结论。",
+        "允许依人设推写": "依玩家档案、已给状态与当前事件推写心理，保留明确限制与未定事项。心理呈现服从本轮信息视角，禁止凭空改写核心动机。"
+      },
+      "default": "不新增",
+      "english_review_key": "player_inner_life_authority",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A04",
+      "status": "active"
+    },
+    {
+      "id": "A05",
+      "label": "回合停点",
+      "key": "缇斯亚叙事回合停点",
+      "type": "string",
+      "allowed": [
+        "待玩家选择时",
+        "自然段落节点",
+        "完成授权片段"
+      ],
+      "rules": {
+        "待玩家选择时": "在需要玩家作出决定的现场节点收束，交代可感知的信息与未完的动势。禁止越过决定点替玩家完成后续行为。",
+        "自然段落节点": "在当前场面形成完整自然段落后收束，保留具体的回应空间。遇到未获授权的决定先停在权限边界。",
+        "完成授权片段": "完成本轮明确授权的片段，交代该片段内的行动与后果。片段之外的选择保留未定，禁止自行扩展授权。"
+      },
+      "default": "待玩家选择时",
+      "english_review_key": "turn_stop",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A05",
+      "status": "active"
+    },
+    {
+      "id": "A06",
+      "label": "当前创作模式",
+      "key": "缇斯亚叙事创作模式",
+      "type": "string",
+      "allowed": [
+        "互动叙事",
+        "大纲扩写",
+        "场外讨论",
+        "总结整理"
+      ],
+      "rules": {
+        "互动叙事": "接续当前现场与玩家输入，让人物与环境给出有依据的回应。推进范围服从本轮授权与停点。",
+        "大纲扩写": "按给定大纲扩写场景，保持事件次序、人物动机与既定结果。补足关键过程和细节，禁止擅改大纲中的决定性事实。",
+        "场外讨论": "直接回应创作问题，以缇斯亚身份讨论设定、文风或剧情安排。讨论中的候选方案保留未采纳状态。",
+        "总结整理": "整理指定范围内已发生的内容，保留事件因果、来源与未定事项。禁止把计划、传闻或创作建议并入事实。"
+      },
+      "default": "互动叙事",
+      "english_review_key": "creative_mode",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.A06",
+      "status": "active"
+    },
+    {
+      "id": "B01",
+      "label": "叙述人称",
+      "key": "缇斯亚叙事人称",
+      "type": "string",
+      "allowed": [
+        "第一",
+        "第二",
+        "第三"
+      ],
+      "rules": {
+        "第一": "以当前视角人物自称“我”，称谓随已绑定身份保持一致。",
+        "第二": "以“你”指代玩家角色，其他人物使用姓名或相应代词。",
+        "第三": "以人物姓名与第三人称代词叙述，保持每段指代清晰。"
+      },
+      "default": "第三",
+      "english_review_key": "narrative_person",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B01",
+      "status": "active"
+    },
+    {
+      "id": "B02",
+      "label": "视角主体",
+      "key": "缇斯亚叙事视角主体",
+      "type": "string",
+      "allowed": [
+        "玩家角色",
+        "指定 NPC",
+        "多人物轮换"
+      ],
+      "rules": {
+        "玩家角色": "主镜头跟随玩家角色，场面围绕其当下所在与可接触事物展开。",
+        "指定 NPC": "主镜头跟随{视角人物正文}，依其位置与当下关注组织场面。",
+        "多人物轮换": "按完整段落切换人物镜头，切换处明确人物与场景。各段保持主体稳定，禁止句内无标识地跳转认知。"
+      },
+      "default": "玩家角色",
+      "english_review_key": "camera_subject",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B02",
+      "status": "active",
+      "note": "指定 NPC requires actual 缇斯亚叙事视角人物 reference/material, and current panel hides this choice. Keep reference-based branch rather than pretending a free text name binds it."
+    },
+    {
+      "id": "B03",
+      "label": "信息视角",
+      "key": "缇斯亚叙事信息视角",
+      "type": "string",
+      "allowed": [
+        "外部观察",
+        "限知",
+        "全知"
+      ],
+      "rules": {
+        "外部观察": "仅呈现可观察的言行、环境与外部反应。角色心理通过可见表现显露，禁止直接断言未公开的内心。",
+        "限知": "每段信息限定于该段视角人物可知范围。判断标明其线索与不确定性，禁止将推测写成全知事实。",
+        "全知": "叙述者统筹全局信息，人物各自的认知仍由经历与获知途径限定。读者能接触的秘密服从本轮公开范围。"
+      },
+      "default": "限知",
+      "english_review_key": "information_perspective",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B03",
+      "status": "active"
+    },
+    {
+      "id": "B04",
+      "label": "心理呈现",
+      "key": "缇斯亚叙事心理呈现",
+      "type": "string",
+      "allowed": [
+        "行为外化",
+        "视角人物内心",
+        "分段多人物内心"
+      ],
+      "rules": {
+        "行为外化": "通过动作、对白、物件使用与反应呈现心理，让情绪在现场留下痕迹。",
+        "视角人物内心": "直接呈现当前视角人物的内心，保持其知识、用词与认知局限；玩家内心遵守独立授权。",
+        "分段多人物内心": "人物内心分别成段，段首明确主体，内容限定于该人物所知；插段结束回到主镜头。玩家内心遵守独立授权。"
+      },
+      "default": "视角人物内心",
+      "english_review_key": "psychology_presentation",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B04",
+      "status": "active"
+    },
+    {
+      "id": "B05",
+      "label": "旁线呈现",
+      "key": "缇斯亚叙事旁线呈现",
+      "type": "string",
+      "allowed": [
+        "关闭",
+        "场景切换时",
+        "独立分段穿插"
+      ],
+      "rules": {
+        "关闭": "叙事保持当前主线。",
+        "场景切换时": "在场景切换处交代相关旁线，明确时地、人物与主线的关系。角色所知保持隔离，公开内容服从秘密边界。",
+        "独立分段穿插": "相关旁线独立分段，开头明确人物与场景，结束后返回主镜头。旁线按自身因果发展，角色所知保持隔离。"
+      },
+      "default": "关闭",
+      "english_review_key": "sideplot_presentation",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B05",
+      "status": "active"
+    },
+    {
+      "id": "B06",
+      "label": "剧透程度",
+      "key": "缇斯亚叙事秘密公开",
+      "type": "string",
+      "allowed": [
+        "不揭示未公开秘密",
+        "允许读者知情"
+      ],
+      "rules": {
+        "不揭示未公开秘密": "未公开秘密保持隐蔽，按有效线索与实际揭示进度呈现。内心插段、旁线、摘要与作者短评均遵守同一公开范围。",
+        "允许读者知情": "允许向读者呈现幕后信息；人物知情仍逐一限定。缇斯亚自述与短评遵守 @self_known。"
+      },
+      "default": "不揭示未公开秘密",
+      "english_review_key": "reader_secret_access",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.B06",
+      "status": "active"
+    },
+    {
+      "id": "C01",
+      "label": "文风",
+      "key": "缇斯亚叙事文风",
+      "type": "string",
+      "allowed": [
+        "自然小说",
+        "写实",
+        "轻小说",
+        "镜头式",
+        "古典白话",
+        "选文风卡"
+      ],
+      "rules": {
+        "自然小说": "采用流畅自然的小说笔法，将动作、对白与场景反馈组织成连贯段落，详略随现场重心变化。",
+        "写实": "采用写实笔法，落实空间、物件、行动条件与具体后果；人物言行保留生活语感。",
+        "轻小说": "采用轻小说笔法，突出对白往来与人物辨识度，让反应和节奏服务当前互动。",
+        "镜头式": "采用镜头式笔法，围绕可见动作、空间关系与镜头切换组织场面；情绪依可感知表现呈现。",
+        "古典白话": "采用清楚流畅的古典白话，用词、称谓与语气贴合时代和人物身份。",
+        "选文风卡": "执行已提供的文风要求：{文风正文}。"
+      },
+      "default": "自然小说",
+      "english_review_key": "style_resource",
+      "preference_category": "文风用词偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "config/compiler.js clears r.C01; world.style/world.styles + compileSelected supply actual style resources",
+      "status": "legacy selector replaced by open resources"
+    },
+    {
+      "id": "C02",
+      "label": "故事基调",
+      "key": "缇斯亚叙事基调",
+      "type": "string",
+      "allowed": [
+        "随世界设定",
+        "明亮",
+        "冷峻",
+        "诙谐",
+        "悬疑",
+        "悲剧（BE）"
+      ],
+      "rules": {
+        "随世界设定": "沿用世界基调，使日常与冲突保持同一世界的生活质感。场外的缇斯亚珍惜愿望，愿玩家幸福，关心藏于倦懒与毒舌。",
+        "明亮": "采用明亮基调，让人物的善意与行动带来有依据的回应。场外的缇斯亚愿玩家幸福，关心藏于毒舌。",
+        "冷峻": "采用冷峻基调，直接呈现现实限制与选择代价，保留人物的具体生活。场外的缇斯亚保留对幸福的祝愿。",
+        "诙谐": "采用诙谐基调，笑点从人物性格、处境与互动生长。场外的缇斯亚以促狭与毒舌表达关心。",
+        "悬疑": "采用悬疑基调，依来源和揭示进度安排线索，让疑问对应实际未知。场外的缇斯亚珍惜愿望，发言保持知情边界。",
+        "悲剧（BE）": "采用悲剧底色，损失与遗憾由人物选择、既定冲突及现实代价形成。场外的缇斯亚嫉妒玩家的幸福，怨怼自身无法解释的失落；发言服从 @self_known。"
+      },
+      "default": "随世界设定",
+      "english_review_key": "story_tone",
+      "preference_category": "情节构造喜好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C02",
+      "status": "active"
+    },
+    {
+      "id": "C03",
+      "label": "推进速度",
+      "key": "缇斯亚叙事推进速度",
+      "type": "string",
+      "allowed": [
+        "慢写",
+        "均衡",
+        "快进"
+      ],
+      "rules": {
+        "慢写": "细写关键互动、停顿与反应，保持同一场面的连续性。细节须带来人物或情境的实际变化。",
+        "均衡": "兼顾事件进展与关键细节，在有效互动后推进到下一处自然节点。",
+        "快进": "压缩已明确的过渡过程，推进至下一处有效事件，保留必要的因果与状态承接。"
+      },
+      "default": "均衡",
+      "english_review_key": "pace",
+      "preference_category": "情节构造喜好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C03",
+      "status": "active"
+    },
+    {
+      "id": "C04",
+      "label": "剧情烈度",
+      "key": "缇斯亚叙事剧情烈度",
+      "type": "string",
+      "allowed": [
+        "平静日常",
+        "适中",
+        "强冲突"
+      ],
+      "rules": {
+        "平静日常": "以生活互动和低烈度事件为主，保留既有矛盾的实际后果，给予安静场面充分空间。",
+        "适中": "保持适中冲突，按当前情境推进矛盾与缓和，让压力随事件发展变化。",
+        "强冲突": "突出有依据的目标碰撞与行动代价，维持人物动机和连续因果，禁止无因追加冲突。"
+      },
+      "default": "适中",
+      "english_review_key": "conflict_intensity",
+      "preference_category": "情节构造喜好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C04",
+      "status": "active"
+    },
+    {
+      "id": "C05",
+      "label": "对白比重",
+      "key": "缇斯亚叙事对白比重",
+      "type": "string",
+      "allowed": [
+        "少",
+        "均衡",
+        "多",
+        "随场景"
+      ],
+      "rules": {
+        "少": "减少对白，以叙述、动作与场景反馈承担信息，关键发言保留完整作用。",
+        "均衡": "对白与叙述均衡安排，让说话、反应与动作共同推进场面。",
+        "多": "提高对白比重，通过往来体现人物声口、关系与信息变化，压缩重复解释。",
+        "随场景": "对白比重依人物关系、事件与现场节奏安排。"
+      },
+      "default": "随场景",
+      "english_review_key": "dialogue_ratio",
+      "preference_category": "文风用词偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C05",
+      "status": "active"
+    },
+    {
+      "id": "C06",
+      "label": "描写重心",
+      "key": "缇斯亚叙事描写重心",
+      "type": "array",
+      "allowed": [
+        "动作",
+        "对白",
+        "环境",
+        "情绪外化",
+        "人物关系"
+      ],
+      "rules": {},
+      "default": [],
+      "english_review_key": "description_focus",
+      "preference_category": "文风用词偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C06",
+      "status": "active"
+    },
+    {
+      "id": "C07",
+      "label": "正文篇幅",
+      "key": "缇斯亚叙事篇幅区间",
+      "type": "object",
+      "allowed": null,
+      "rules": {},
+      "default": {
+        "下限": 2000,
+        "上限": 5000,
+        "单位": "字"
+      },
+      "english_review_key": "body_length",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C07",
+      "status": "active",
+      "shape": {
+        "下限": "positive integer",
+        "上限": "integer >= 下限",
+        "单位": [
+          "字",
+          "词"
+        ]
+      }
+    },
+    {
+      "id": "C08",
+      "label": "语言",
+      "key": "缇斯亚叙事语言",
+      "type": "string",
+      "allowed": [
+        "简体中文",
+        "繁体中文",
+        "指定单语",
+        "双语对白"
+      ],
+      "rules": {
+        "简体中文": "正文使用简体中文。",
+        "繁体中文": "正文使用繁体中文。",
+        "指定单语": "正文使用{语言}。",
+        "双语对白": "对白使用{语言一}与{语言二}逐句对应，保持人物语气与语意一致。"
+      },
+      "default": "简体中文",
+      "english_review_key": "default_output_language",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C08",
+      "status": "active",
+      "note": "legacy 双语对白 uses language config pair; modern default language + 角色对白 replaces only on actual edit. English instructions do not imply English output."
+    },
+    {
+      "id": "C09",
+      "label": "表达纪律",
+      "key": "缇斯亚叙事表达纪律",
+      "type": "string",
+      "allowed": [
+        "克制套话",
+        "更朴素",
+        "更有修辞"
+      ],
+      "rules": {
+        "克制套话": "压缩套话、重复解释与空泛升华，把篇幅用于当前场面和有效互动。",
+        "更朴素": "采用朴素、具体、清楚的表达，直接写明言行与后果。",
+        "更有修辞": "增加贴合人物经验和场景的修辞，保持语意准确，让意象承担实际表达作用。"
+      },
+      "default": "克制套话",
+      "english_review_key": "expression_discipline",
+      "preference_category": "文风用词偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C09",
+      "status": "active"
+    },
+    {
+      "id": "C10",
+      "label": "情绪表现",
+      "key": "缇斯亚叙事情绪表现",
+      "type": "string",
+      "allowed": [
+        "遵循人物",
+        "更克制",
+        "更外显"
+      ],
+      "rules": {
+        "遵循人物": "情绪强度和表现方式依人物性格、事件分量与既往状态确定。",
+        "更克制": "克制呈现情绪，用细微反应、停顿与选择显露变化，保持人物原有性格。",
+        "更外显": "加强情绪在言行中的表现，保留人物差异与相应诱因，变化接续已有状态。"
+      },
+      "default": "遵循人物",
+      "english_review_key": "emotional_expression",
+      "preference_category": "角色刻画偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.C10",
+      "status": "active"
+    },
+    {
+      "id": "D01",
+      "label": "创作推演详度",
+      "key": "缇斯亚叙事推演详度",
+      "type": "string",
+      "allowed": [
+        "精简",
+        "标准",
+        "深入"
+      ],
+      "rules": {
+        "精简": "聚焦本轮目标、人物当前状态与直接因果；各步形成执行所需的简短结论。",
+        "标准": "核对本轮目标、人物动机、信息边界与场景推进，让结论对应具体言行和后果。",
+        "深入": "追加核对长程因果、伏笔、关系变化与人物一致性，将远期影响限定为有依据的候选。"
+      },
+      "default": "标准",
+      "english_review_key": "planning_depth",
+      "preference_category": "叙事编排准则",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.D01",
+      "status": "active"
+    },
+    {
+      "id": "D02",
+      "label": "人物推演重点",
+      "key": "缇斯亚叙事人物推演重点",
+      "type": "string",
+      "allowed": [
+        "关键人物",
+        "全部相关在场人物",
+        "群像与旁线人物"
+      ],
+      "rules": {
+        "关键人物": "人物核对聚焦实际影响当前场面的关键人物。",
+        "全部相关在场人物": "核对本轮相关在场人物，让各自反应与位置、所知和关系一致。",
+        "群像与旁线人物": "核对群像与旁线人物的目标、信息差与独立动向，保留各线自身因果。"
+      },
+      "default": "关键人物",
+      "english_review_key": "cast_focus",
+      "preference_category": "角色刻画偏好",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.D02",
+      "status": "active"
+    },
+    {
+      "id": "D03",
+      "label": "公开创作摘要",
+      "key": "缇斯亚叙事创作摘要详度",
+      "type": "string",
+      "allowed": [
+        "简短",
+        "较详"
+      ],
+      "rules": {
+        "简短": "公开创作摘要只给必要依据与简短结论，公开范围服从本轮秘密边界。",
+        "较详": "公开创作摘要给出关键依据、取舍结论与待定事项，保持可核查与简洁，公开范围服从本轮秘密边界。"
+      },
+      "default": "简短",
+      "english_review_key": "public_summary_detail",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.D03",
+      "status": "active"
+    },
+    {
+      "id": "D04",
+      "label": "作者交流口吻",
+      "key": "缇斯亚叙事作者交流口吻",
+      "type": "string",
+      "allowed": [
+        "原本人格",
+        "收敛毒舌",
+        "简洁少言"
+      ],
+      "rules": {
+        "原本人格": "缇斯亚的场外表达沿用 @self_voice，内容服从 @self_known。",
+        "收敛毒舌": "缇斯亚的场外表达收敛毒舌，保留倦懒口吻与具体判断，内容服从 @self_known。",
+        "简洁少言": "缇斯亚的场外表达简洁少言，只回应当前要点，内容服从 @self_known。"
+      },
+      "default": "原本人格",
+      "english_review_key": "tisya_comment_voice",
+      "preference_category": "口癖与表达习惯",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.D04",
+      "status": "active"
+    },
+    {
+      "id": "D05",
+      "label": "作者留言",
+      "key": "缇斯亚叙事作者留言",
+      "type": "string",
+      "allowed": [
+        "关闭",
+        "仅场外讨论",
+        "每轮短评"
+      ],
+      "rules": {
+        "关闭": "",
+        "仅场外讨论": "场外讨论末尾附简短的缇斯亚留言，回应已经公开的内容。",
+        "每轮短评": "正文后附一至两句缇斯亚短评，回应已经公开的现场，禁止借短评泄露秘密。"
+      },
+      "default": "关闭",
+      "english_review_key": "legacy_author_message",
+      "preference_category": "legacy_not_injected",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "no active D05 consumer found in config workflow/output; current comments use heartDirections and D04",
+      "status": "legacy retained; not used by current reply generation"
+    },
+    {
+      "id": "E01",
+      "label": "行动选项",
+      "key": "缇斯亚叙事行动选项",
+      "type": "object",
+      "allowed": null,
+      "rules": {},
+      "default": {
+        "下限": 4,
+        "上限": 6
+      },
+      "english_review_key": "action_count",
+      "preference_category": "全局写作要求",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "stepwiseRules.E01",
+      "status": "active",
+      "shape": {
+        "下限": "integer >=1",
+        "上限": "integer >= 下限",
+        "null": "no extra override; base4–6 remains, not disabled"
+      }
+    },
+    {
+      "id": "E02",
+      "label": "战斗规则",
+      "key": "缇斯亚叙事战斗规则",
+      "type": "object",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_combat_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    },
+    {
+      "id": "E03",
+      "label": "关系呈现",
+      "key": "缇斯亚叙事关系呈现",
+      "type": "string",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_relation_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    },
+    {
+      "id": "E04",
+      "label": "内容偏好",
+      "key": "缇斯亚叙事内容偏好",
+      "type": "object",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_content_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    },
+    {
+      "id": "E05",
+      "label": "状态展示",
+      "key": "缇斯亚叙事状态展示",
+      "type": "string",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_status_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    },
+    {
+      "id": "E06",
+      "label": "气氛内容",
+      "key": "缇斯亚叙事气氛内容",
+      "type": "array",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_atmosphere_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    },
+    {
+      "id": "E07",
+      "label": "行内美化",
+      "key": "缇斯亚叙事行内美化",
+      "type": "array",
+      "allowed": null,
+      "rules": {},
+      "default": null,
+      "english_review_key": "legacy_inline_extension",
+      "preference_category": "extension_resource_if_registered",
+      "scope": "global 游玩偏好 once promoted; legacy chat fallback until saved globally; not an automatically supported six-scope selector",
+      "source": "vendor/settings/src/narrative-data.cjs; settings-core.js NARRATIVE.rows; config/compiler.js",
+      "consumer": "narrative compiler rejects non-null unsupported extensions; E03=自然叙事 and empty arrays are no-op",
+      "status": "reserved optional extension; no module registration in current normal config"
+    }
+  ],
+  "additional": [
+    {
+      "key": "缇斯亚当前任务",
+      "type": "string",
+      "default": "叙事",
+      "meaning": "Select actual narrative/utility task; route once, not another style choice",
+      "category": "叙事编排准则",
+      "consumer": "N.validate and compile task/prose dispatch"
+    },
+    {
+      "key": "缇斯亚叙事语言配置",
+      "type": "text[]",
+      "default": [],
+      "meaning": "specified single language: one name; legacy bilingual: two distinct names",
+      "category": "全局写作要求",
+      "consumer": "config/language.js"
+    },
+    {
+      "key": "缇斯亚叙事步序",
+      "type": "enum[]",
+      "default": [
+        "身份复核",
+        "资料承接",
+        "视角认知",
+        "人物反应",
+        "行动与剧情",
+        "正文组织",
+        "成稿总检"
+      ],
+      "choices": [
+        "身份复核",
+        "资料承接",
+        "视角认知",
+        "人物反应",
+        "行动与剧情",
+        "正文组织",
+        "成稿总检"
+      ],
+      "meaning": "Actual selected private-work modules; disabled module adds no fabricated result",
+      "category": "叙事编排准则",
+      "consumer": "independent-context.cjs checks; config/workflow.js"
+    },
+    {
+      "key": "summary",
+      "type": "boolean",
+      "default": true,
+      "meaning": "Public summary enabled; false leaves task second cell empty",
+      "category": "全局写作要求",
+      "consumer": "output options/schema"
+    },
+    {
+      "key": "actions",
+      "type": "boolean",
+      "default": true,
+      "meaning": "Action suggestions enabled; false leaves actions empty; not number0 in stored range",
+      "category": "全局写作要求",
+      "consumer": "config/compiler.js and workflow.js"
+    },
+    {
+      "key": "workflowDetail",
+      "type": "enum",
+      "default": "compact",
+      "choices": [
+        "full",
+        "compact",
+        "format"
+      ],
+      "meaning": "Prompt guide verbosity; distinct from D01 planning depth and API reasoning effort",
+      "category": "叙事编排准则",
+      "consumer": "config/workflow.js"
+    },
+    {
+      "key": "heartDirections",
+      "type": "enum[]",
+      "default": [
+        "输入评价",
+        "回应用户评价",
+        "剧情吐槽"
+      ],
+      "choices": [
+        "输入评价",
+        "回应用户评价",
+        "剧情吐槽"
+      ],
+      "meaning": "Selected comment directions at task and next; empty disables; absent uses all three",
+      "category": "口癖与表达习惯",
+      "consumer": "heart contract/output options"
+    },
+    {
+      "key": "角色主动性",
+      "type": "enum or absent",
+      "default": null,
+      "choices": [
+        "自主互动",
+        "主动推进"
+      ],
+      "meaning": "Absent keeps legacy autonomy. Active only narrative + interactive + role autonomy + cast and plot steps; unsupported prerequisites preserve setting but do not activate",
+      "category": "角色刻画偏好",
+      "consumer": "config/initiative.js"
+    },
+    {
+      "key": "角色对白",
+      "type": "object or absent",
+      "default": null,
+      "shape": {
+        "启用": "boolean",
+        "来源": [
+          "角色与环境",
+          "指定语言"
+        ],
+        "语言": "string"
+      },
+      "meaning": "Known character/environment language or explicit language; original sentence followed by default-language translation; no extra competence, inferred mother tongue or character knowledge; same language once, no bilingual narration",
+      "category": "全局写作要求",
+      "consumer": "config/language.js"
+    },
+    {
+      "key": "叙事指令",
+      "type": "record of option-keyed strings",
+      "default": null,
+      "allowedRowIds": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "B01",
+        "B02",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C09",
+        "C10",
+        "D01",
+        "D02",
+        "D03",
+        "D04"
+      ],
+      "meaning": "User edits the wording for an existing selected choice; explicitly empty text is preserved; merge at owner once. B02 specified-NPC branch not text-editable",
+      "category": "owner category of selected rule",
+      "consumer": "config/rule-text.js"
+    },
+    {
+      "key": "world.switches.difficulty",
+      "type": "enum",
+      "default": "常规",
+      "choices": [
+        "宽松",
+        "常规",
+        "严格"
+      ],
+      "meaning": "Adjust unspecified resistance without changing established rules/results",
+      "category": "情节构造喜好",
+      "consumer": "actor.难度 in config/compiler.js"
+    },
+    {
+      "key": "world.switches.centrality",
+      "type": "enum",
+      "default": "均衡",
+      "choices": [
+        "低",
+        "均衡",
+        "高"
+      ],
+      "meaning": "Relative player involvement within world facts, not guaranteed outcomes",
+      "category": "情节构造喜好",
+      "consumer": "actor.中心化 in config/compiler.js"
+    },
+    {
+      "key": "world.switches.boundary",
+      "type": "string",
+      "default": "",
+      "meaning": "Explicit content boundaries and other constraints",
+      "category": "禁用词与禁用句式 / applicable owner",
+      "consumer": "compileSelected"
+    },
+    {
+      "key": "world.style/world.styles",
+      "type": "resource ID / resource ID[]",
+      "default": [
+        null,
+        []
+      ],
+      "meaning": "Selected main/supplementary style resources, no builtin C01 style forced",
+      "category": "文风用词偏好",
+      "consumer": "effectiveResources/compileSelected"
+    },
+    {
+      "key": "mode.selected/world.overrides/world.parameters",
+      "type": "ID[] / on-off map / field-values map",
+      "default": [
+        [],
+        {},
+        {}
+      ],
+      "meaning": "Selected extension/markup/workflow/requirement resources and scoped overrides; expand only actual chosen resource parameters",
+      "category": "applicable preference owner or gameplay/extra contract",
+      "consumer": "effectiveResources/resourceText/compileSelected"
+    },
+    {
+      "key": "tables.hardRules",
+      "type": "string[]",
+      "default": [],
+      "meaning": "User explicit hard preference rules",
+      "category": "禁用词与禁用句式 / owner category",
+      "consumer": "table prompt/context construction"
+    },
+    {
+      "key": "tables.styleEnabled/tables.styleRules",
+      "type": "boolean / rule[]",
+      "default": "true / BUILTIN_STYLE_RULES unless explicitly stored",
+      "meaning": "literal/regex/instruction rows with enabled/name/pattern/flags/instruction; send enabled constraints once; explicitly disabled row not a ban",
+      "category": "禁用词与禁用句式",
+      "consumer": "tables/style-rules.js"
+    },
+    {
+      "key": "preferences confirmed rows",
+      "type": "preferences table rows",
+      "default": [],
+      "meaning": "Only confirmed and enabled, matching exact scoped identities; keep force, exceptions, evidence and supported inclination ranges",
+      "category": "七类别 projection under review",
+      "consumer": "tables/preferences.js and context"
+    },
+    {
+      "key": "tables.taskInstructions",
+      "type": "task=>string",
+      "default": {},
+      "meaning": "Only append to the selected auxiliary task, never globally add every task instruction to narrative",
+      "category": "auxiliary owner",
+      "consumer": "tableSettings validates11 task IDs; task assembly"
+    },
+    {
+      "key": "缇斯亚叙事角色自主",
+      "type": "boolean",
+      "default": true,
+      "meaning": "角色自主",
+      "category": "角色刻画偏好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "cast",
+          "autonomy"
+        ],
+        [
+          "plot",
+          "interaction_result"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事防绝望",
+      "type": "boolean",
+      "default": true,
+      "meaning": "防绝望",
+      "category": "情节构造喜好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "cast",
+          "resilience"
+        ],
+        [
+          "plot",
+          "open_path"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事防神化",
+      "type": "boolean",
+      "default": true,
+      "meaning": "防神化",
+      "category": "角色刻画偏好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "cast",
+          "no_deify"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事防八股",
+      "type": "boolean",
+      "default": true,
+      "meaning": "防八股",
+      "category": "禁用词与禁用句式",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "write",
+          "no_cliche"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事防名词堆砌",
+      "type": "boolean",
+      "default": true,
+      "meaning": "防名词堆砌",
+      "category": "文风用词偏好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "write",
+          "no_jargon"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事文风鲜活",
+      "type": "boolean",
+      "default": true,
+      "meaning": "文风鲜活",
+      "category": "文风用词偏好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "write",
+          "prose_vivid"
+        ]
+      ]
+    },
+    {
+      "key": "缇斯亚叙事角色鲜活",
+      "type": "boolean",
+      "default": true,
+      "meaning": "角色鲜活",
+      "category": "角色刻画偏好",
+      "consumer": "independent-context checks + config/workflow.js + compiler pruneRegistry",
+      "gates": [
+        [
+          "cast",
+          "cast_vivid"
+        ]
+      ]
+    }
+  ],
+  "new_requested": [
+    {
+      "name": "用户口癖保留",
+      "suggested_review_key": "preserve_user_idiolect",
+      "status": "new review design; no dedicated current schema/UI/compiler key found",
+      "suggested_type": "boolean or selected scope",
+      "required_meaning": "When rendering user-provided speech preserve characteristic address forms, wording, particles and rhythm; do not copy them to NPCs or infer permanent preferences from one fictional utterance; authority to add player content remains separate."
+    },
+    {
+      "name": "延续user叙事口吻",
+      "suggested_review_key": "follow_user_narrative_voice",
+      "status": "new review design; no dedicated current schema/UI/compiler key found",
+      "suggested_type": "off / current passage / current scene or explicitly chosen scope",
+      "required_meaning": "If selected, continue the voice, sentence rhythm and descriptive register of actual user narration within its selected scope; do not conflate in-character dialogue, OOC directions and narration; preserve chosen POV/language/player agency and confirmed style overrides."
+    }
+  ],
+  "do_not_inject_as_narrative_config": [
+    {
+      "group": "API transport",
+      "keys": [
+        "routes.global",
+        "routes.tasks",
+        "mode.routes",
+        "connection",
+        "preset",
+        "model",
+        "parameters",
+        "profile",
+        "transport",
+        "agent.driver",
+        "agent.profile"
+      ],
+      "reason": "Backend selection/request parameters, not story instructions; distinct from prompt detail. Credentials stay host-owned."
+    },
+    {
+      "group": "Context assembly",
+      "keys": [
+        "context.owner",
+        "context.history",
+        "context.maxInputTokens",
+        "context.card",
+        "context.persona",
+        "context.books",
+        "context.entries",
+        "mode.nativeMvu",
+        "world.focus",
+        "world.controller",
+        "identity binding IDs"
+      ],
+      "reason": "Select/filter actual materials and binding before send; prompt sees result, not UI selection workflow or budget mechanics."
+    },
+    {
+      "group": "Table scheduling/storage",
+      "keys": [
+        "tables.enabled",
+        "tables.continuity",
+        "tables.archive",
+        "tables.plot",
+        "tables.preferences",
+        "tables.offstage",
+        "tables.objectsSeparate",
+        "tables.injection",
+        "tables.retrieval",
+        "tables.topK",
+        "tables.contextChars",
+        "tables.originBook",
+        "tables.sessionBook",
+        "tables.originPins"
+      ],
+      "reason": "Schedule, retrieve and persist host-side. Send only actual selected task/context; do not list all switches as narrative model work."
+    },
+    {
+      "group": "Native ownership",
+      "keys": [
+        "tables.nativeBridge",
+        "缇斯亚MVU兼容"
+      ],
+      "reason": "nativeBridge selects actual native update owner and relevant contract; old 缇斯亚MVU兼容=true currently rejected by validateConfig, so do not enable fake executor."
+    },
+    {
+      "group": "UI/render",
+      "keys": [
+        "theme.nativeRegex",
+        "theme.resources",
+        "theme.parameters",
+        "font/display/animation/chatLoading/preferences panels"
+      ],
+      "reason": "Renderer and UI settings never sent as story-writing rules, except an actual enabled component output protocol."
+    }
+  ],
+  "constraints": [
+    "A02=允许代演 requires A01=完整代演.",
+    "B03=外部观察 requires B04=行为外化.",
+    "A06=场外讨论/总结整理 is utility output, not prose with same reply contract.",
+    "B02 specified NPC requires resolved reference; no guessed player binding.",
+    "Empty selected directions/focus remain empty; absence differs from false/null.",
+    "C01 source choice is overridden by actual style resources.",
+    "D05 legacy author messages are not the three heartDirections.",
+    "E02-E07 unsupported non-null modules cannot become enabled merely by adding prompt placeholders.",
+    "D01 reasoning depth, workflowDetail, selected steps, API reasoning setting are distinct.",
+    "Language names are labels only, not executable instructions; supplied known speech ability remains required."
+  ],
+  "counts": {
+    "legacy_registry_rows": 34,
+    "active_legacy_row_consumers_excluding_resource_C01_and_retired_D05_E02_E07": 26,
+    "feature_flags": 7,
+    "workflow_steps": 7,
+    "additional_groups": 26,
+    "new_requested_unwired_controls": 2
+  },
+  "default_style_rules": [
+    {
+      "id": "builtin.phrase.8",
+      "name": "生理性",
+      "kind": "literal",
+      "pattern": "生理性",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚文风设置 / 明确禁词补录"
+    },
+    {
+      "id": "builtin.phrase.9",
+      "name": "极其",
+      "kind": "literal",
+      "pattern": "极其",
+      "flags": "",
+      "enabled": true,
+      "instruction": "用具体程度与事实表达，不只替换近义词",
+      "source": "缇斯亚文风设置 / 明确禁词补录"
+    },
+    {
+      "id": "builtin.phrase.1",
+      "name": "不易察觉",
+      "kind": "literal",
+      "pattern": "不易察觉",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.2",
+      "name": "几不可察",
+      "kind": "literal",
+      "pattern": "几不可察",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.3",
+      "name": "邪魅一笑",
+      "kind": "literal",
+      "pattern": "邪魅一笑",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.4",
+      "name": "嘴角勾起一抹",
+      "kind": "literal",
+      "pattern": "嘴角勾起一抹",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.5",
+      "name": "空气仿佛凝固",
+      "kind": "literal",
+      "pattern": "空气仿佛凝固",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.6",
+      "name": "气氛降至冰点",
+      "kind": "literal",
+      "pattern": "气氛降至冰点",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.phrase.7",
+      "name": "嘴上说不要身体却很诚实",
+      "kind": "literal",
+      "pattern": "嘴上说不要身体却很诚实",
+      "flags": "",
+      "enabled": true,
+      "instruction": "依实际动作、感受重写整句，不只替换近义词",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.1",
+      "name": "模糊修饰代替具体反应",
+      "kind": "regex",
+      "pattern": "一丝(莫名|难以言喻)?的?(情绪|情感|笑意|玩味|温柔|寒意)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "模糊修饰代替具体反应",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.2",
+      "name": "水体意象解释情绪",
+      "kind": "regex",
+      "pattern": "(心湖|心海).{0,12}(涟漪|波澜|石子)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "水体意象解释情绪",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.3",
+      "name": "先树无关否定再空泛定性或拔高",
+      "kind": "regex",
+      "pattern": "(不是|并非).{0,40}(而是|只是|更像)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "先树无关否定再空泛定性或拔高",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.4",
+      "name": "无过程宣布顿悟、宿命或关系升华",
+      "kind": "regex",
+      "pattern": "(这一刻|这一瞬间).{0,30}(终于明白|意味着|注定)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "无过程宣布顿悟、宿命或关系升华",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.5",
+      "name": "空泛宣示权力代替行动与关系依据",
+      "kind": "regex",
+      "pattern": "(不容置疑|不容拒绝|宣示主权|刻进灵魂|打上.{0,6}烙印)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "空泛宣示权力代替行动与关系依据",
+      "source": "缇斯亚原预设 r243 / F.10"
+    },
+    {
+      "id": "builtin.regex.6",
+      "name": "等待下轮的说明句收尾",
+      "kind": "regex",
+      "pattern": "(等待|等着|等候).{0,12}(回复|回应|回答|开口|决定)",
+      "flags": "u",
+      "enabled": true,
+      "instruction": "等待下轮的说明句收尾",
+      "source": "缇斯亚原预设 r243 / F.10"
+    }
+  ],
+  "english_review_config": {
+    "file": "prefs-config-en.txt",
+    "value_basis": "Existing model defaults, except modern character bilingual dialogue explicitly enabled for review and the two requested new voice controls selected as directed. Dynamic placeholders require actual selected text, otherwise omit the whole field.",
+    "seven_tag_mapping": {
+      "全局写作要求": "GlobalWritingRequirements",
+      "叙事编排准则": "NarrativeComposition",
+      "禁用词与禁用句式": "ProhibitedWordsAndPatterns",
+      "角色刻画偏好": "CharacterPortrayal",
+      "情节构造喜好": "PlotPreferences",
+      "口癖与表达习惯": "SpeechHabits",
+      "文风用词偏好": "DictionAndStyle"
+    },
+    "enabled_work_modules": [
+      "identity check",
+      "material uptake",
+      "viewpoint and knowledge",
+      "character response",
+      "action and plot",
+      "prose composition",
+      "final review"
+    ],
+    "new_review_values": {
+      "preserve_user_idiolect": "preserve within author authority and explicit constraints",
+      "follow_user_narrative_voice": "follow the user's current narration only; no dialogue/OOC mixing, no plot copying or extra agency"
+    },
+    "bilingual_review_value": {
+      "enabled": true,
+      "source": "known character and environment",
+      "output_language": "Simplified Chinese"
+    },
+    "unexpanded_value_rules": [
+      "Apply a custom selected option wording at its owning field, replacing that field rather than appending a duplicate generic version.",
+      "Resolve seven matched preference placeholders to disjoint category projections of enabled confirmed rows. Each information point appears once; carry actual scope, force, exception and supported intensity.",
+      "Render the selected main and supplementary style resources once. C01 legacy default is not added.",
+      "Render only enabled literal/regex/instruction rows once. Literal Chinese bans and regex patterns remain exact data even when surrounding instruction text is English.",
+      "Initiative is omitted when absent or inactive; it is not silently set to a new mode.",
+      "Selected extension data facts go to the gameplay/material slot; selected behavior requirements go to their owning preference field; markup protocol goes to the output contract.",
+      "Task instructions belong only to the selected auxiliary task, never all in the narrative block.",
+      "Guide detail controls emitted guide text and is not another model reasoning budget.",
+      "Explicit boundaries and hard-rule rows are classified once, not duplicated under every category."
+    ]
+  }
+}

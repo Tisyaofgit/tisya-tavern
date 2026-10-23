@@ -1,0 +1,19 @@
+English narrative wiring candidate, isolated worktree.
+Dependencies: UI controls commit 450fb8d (config/user-voice.js and preference fields); root has already integrated it. Dossier projection e5c16cf is cherry-picked here as a9aa743.
+
+Implemented:
+- Explicit new EN factory; no saved preset mutation or automatic installation.
+- Final reviewed 26-message source frozen; actual current user comes from native chatHistory once, not the review placeholder.
+- Actual selected options, custom text including explicit empty, language/dialogue, user-voice flags, summary/actions/hearts/ranges and full/compact/format guide.
+- Controlled and native material macro paths, trusted alternate dossier layout, actionable missing/duplicate final-consumer checks; explicit disabled entries remain off.
+- Direct temporary excerpt deduplication requires exact branch source key, same original archival text, selected message identity and full prepared-message coverage.
+- Native final payload verifies each consumed nonempty material exactly once; an early macro read does not prove a later payload retained that material.
+
+Limits:
+- Native host temporary excerpt deduplication is intentionally not inferred before final history assembly.
+- Worldbook material remains native activated entries; no global object merge across unactivated entries.
+- No A/B call consolidation, source-book replacement, general history pruning or external model/API call.
+- New EN main-task factory supports narrative prose; incompatible utility tasks and recognized main-response MVU ownership fail before generation.
+- Environment/gameplay slots exist; unclassified source content is retained under LoreExtra rather than guessed from keywords.
+
+english-actual-full-request.json is exported from production createHost.payloadReady in a local isolated fixture, workflowDetail=full. It includes actual fixture materials and an intentional edited scene entry, no review-time dynamic placeholders. It is not a model completion or evidence of real-device APK execution.

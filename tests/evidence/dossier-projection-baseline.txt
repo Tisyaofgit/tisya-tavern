@@ -1,0 +1,25 @@
+file:///workspace/scratch/b5f88d8e1157/wiring-worktrees/dossier-projection/tests/story-dossiers.test.js:4
+import {storyMaterial,projectStoryDossiers} from '../tables/story-material.js';
+                      ^^^^^^^^^^^^^^^^^^^^
+SyntaxError: The requested module '../tables/story-material.js' does not provide an export named 'projectStoryDossiers'
+    at #asyncInstantiate (node:internal/modules/esm/module_job:327:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:431:5)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.19.0
+✖ tests/story-dossiers.test.js (64.159283ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 71.294188
+
+✖ failing tests:
+
+test at tests/story-dossiers.test.js:1:1
+✖ tests/story-dossiers.test.js (64.159283ms)
+  'test failed'

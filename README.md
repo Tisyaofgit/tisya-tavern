@@ -410,3 +410,11 @@ Android 长按系统菜单、全屏和实际流畅度仍待设备验收。此版
 ## alpha31.13 · 启动卡死热修复
 
 修复远处历史的延迟渲染标记重复触发 MutationObserver 的循环。未变化的标记不再重复写入；保留视口延迟渲染及聊天原文。新增异步回归，旧版触发超过40轮仍不收敛，修复后正常收敛。Android设备结果待验证。
+
+### English narrative candidate
+
+`presets/Tisya-TauriTavern-0.2.0-alpha.21-en.json` is an explicitly imported narrative edition. Selecting it uses the current saved play preferences, user-edited rule wording and material choices. It does not install itself, rewrite an existing preset, reorder user entries or reset a conversation. Its seven-block response contract is paired with the seven-block reader; old presets keep their existing contracts.
+
+The full, compact and format guides share the same intake, draft-revision lock and delivery gate. Dynamic preferences are not cut to a guessed token budget. Empty material channels stay empty; a nonempty channel whose consumer has been removed raises an actionable error, while an explicitly disabled channel stays disabled. Materials with no trustworthy classification remain enclosed source material for private routing.
+
+This candidate supports interactive narration, outline expansion and plain-prose delivery. Other main-task modes require their corresponding mode preset. A card using the recognized native MVU writer requires the form-owned native bridge for this edition; the legacy preset remains available for main-response native updates. Combined A/B requests, original lore entry replacement and general history pruning are not introduced by this candidate. Direct dossier projection joins only already selected records through stable references; native worldbook activation remains per entry. A duplicate temporary archive excerpt is removed in controlled assembly only after its exact source and complete prepared-history coverage are verified; native-host coverage is not assumed.
