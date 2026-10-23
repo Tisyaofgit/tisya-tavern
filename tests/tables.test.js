@@ -9,6 +9,8 @@ import {createBookGateway} from '../tables/books.js';
 import {sources,project,prepareCommit,retrieval,taskTags} from '../tables/ledger.js';
 import {createTableService} from '../tables/service.js';
 import {createNativeVectors} from '../tables/vectors.js';
+import {buildMessages} from '../config/host.js';
+import {SLOT_TARGETS} from '../tables/slots.js';
 const access={readers:['读者'],knowers:[]};
 const blank=()=>({registry:defaultRegistry(),rows:[],last:null});
 const op=(id,table,values,evidence='源',expected=0)=>({id,table,expected,values,access,evidence});
@@ -257,7 +259,30 @@ test('equipment baselines retain source type and bind only the adapted item, nev
  const adapted=await f.service.adaptCore(originBook,core.id);const changes=adapted.proposal.artifacts.base.changes;assert.match(changes[0].values.核心引用,new RegExp(core.id));assert.equal(changes[1].values.核心引用,undefined);const unchanged=JSON.stringify([...f.saved]);ambiguous=true;await assert.rejects(f.service.adaptCore(originBook,core.id),/明确的基点主体映射/);assert.equal(JSON.stringify([...f.saved]),unchanged);
 });
 test('plot API remains a proposal and explicit preference constraints reach context',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],due:[],clues:[],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
+});
+test('plan sheet due and clues reach legacy and English final messages once without becoming stored facts',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});f.c.chat.push({is_user:true,mes:'查看门口的情况'});
+ const proposal={goal:'PLAN_GOAL',beats:[{proposal:'PLAN_BEAT',basis:['PLAN_BASIS'],condition:'PLAN_CONDITION'}],pendingChoices:['PLAN_CHOICE'],due:['PLAN_DUE\n核实期限及触发条件'],clues:['PLAN_CLUE\n先核实人物能否知情'],constraints:['PLAN_LIMIT']};
+ const saved=JSON.stringify([...f.saved]),copy=structuredClone(proposal);f.responder(async(task,input)=>{assert.equal(task,'plotAdvance');assert.equal(input.phase,'plan');return formatSimpleSheet(proposal);});
+ const result=await f.service.prepare(),source={prompts:[{identifier:'tisya_english_v1',content:''},...Object.keys(result.slots).map(key=>({identifier:SLOT_TARGETS[key],content:'{{tisya_slot_'+key+'}}'})),{identifier:'chatHistory',marker:true}].map(p=>({...p,enabled:true,role:'system'}))};
+ const text=buildMessages({source,context:f.c,world:f.store.read().world,materials:'',slots:result.slots,substitute:s=>s}).map(m=>m.content).join('\n');
+ for(const payload of [result.text,text])for(const value of ['PLAN_GOAL','PLAN_BEAT','PLAN_BASIS','PLAN_CONDITION','PLAN_CHOICE','PLAN_DUE','PLAN_CLUE','PLAN_LIMIT'])assert.equal(payload.split(value).length-1,1,value);
+ assert.match(text,/<NarrativeAgenda>[\s\S]*PLAN_DUE[\s\S]*PLAN_CLUE[\s\S]*<\/NarrativeAgenda>/);assert.doesNotMatch(text,/<当前叙事待办>/);
+ assert.match(text,/尚未发生的候选，不作为历史事实/);assert.match(text,/不代表已经触发或人物已经知情/);assert(text.includes(proposal.due[0]));assert(text.includes(proposal.clues[0]));
+ assert.equal(JSON.stringify([...f.saved]),saved);assert.equal((await f.service.inspect()).rows.length,0);assert.deepEqual(proposal,copy);assert.equal(f.calls.filter(call=>call.task==='plotAdvance').length,1);
+});
+test('incomplete or incorrectly typed plan lists fail visibly without retaining a stale plan or writing facts',async()=>{
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});
+ const valid={goal:'VALID_PLAN',beats:[],pendingChoices:[],due:[],clues:[],constraints:[]};let proposal=valid;f.responder(async()=>formatSimpleSheet(proposal));
+ await f.service.prepare();assert(f.service.preview());const saved=JSON.stringify([...f.saved]);
+ for(const field of ['due','clues'])for(const value of [undefined,null,0,false,'不是列表',{},[0],[false],[null],[undefined]]){
+  proposal={...valid,[field]:value};if(value===undefined)delete proposal[field];
+  await assert.rejects(f.service.prepare(),new RegExp(field+' 须为文本列表'));
+  assert.equal(f.service.preview(),null);assert.equal(f.prompts.at(-1).text,'');assert.equal(f.service.state().progress.stage,'error');assert.equal(JSON.stringify([...f.saved]),saved);
+ }
+ proposal={...valid,changes:[]};await assert.rejects(f.service.prepare(),/不得产生事实写入/);assert.equal(JSON.stringify([...f.saved]),saved);
+ proposal=valid;const retried=await f.service.prepare();assert.match(retried.text,/VALID_PLAN/);assert.equal((await f.service.inspect()).rows.length,0);
 });
 test('preference task rejects unsupported evidence and inference promoted to hard rule',()=>{
  const v=blank();assert.throws(()=>prepareCommit(v,{changes:[op('new:p','preferences',{名称:'偏好',性质:'推测偏好',强度:'必须'},'源')]},{source:'u',kind:'preferences',evidence:'源',allowedTables:['preferences']}),/推测偏好/);assert.throws(()=>prepareCommit(v,{changes:[op('new:p','preferences',{名称:'偏好'},'没有说过')]},{source:'u',kind:'preferences',evidence:'源',allowedTables:['preferences']}),/连续原文/);

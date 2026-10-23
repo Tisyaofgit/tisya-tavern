@@ -1,0 +1,51 @@
+{
+  "source": "synthetic neutral fixture; no private user corpus",
+  "mockedModel": true,
+  "realParser": true,
+  "realCommitValidator": true,
+  "realBookGateway": true,
+  "memoryHost": true,
+  "externalHostWrites": false,
+  "recreatedService": true,
+  "rows": 7,
+  "zeroPreserved": true,
+  "falsePreserved": true,
+  "placements": [
+    {
+      "name": "林青",
+      "layer": "Basics"
+    },
+    {
+      "name": "北城门",
+      "layer": "Basics"
+    },
+    {
+      "name": "城门外",
+      "layer": "Environment"
+    },
+    {
+      "name": "当前体力",
+      "layer": "ToNarrate"
+    },
+    {
+      "name": "是否已进城",
+      "layer": "ToNarrate"
+    },
+    {
+      "name": "送信任务",
+      "layer": "ToNarrate"
+    },
+    {
+      "name": "抵达北城门",
+      "layer": "History"
+    }
+  ],
+  "preferenceDraftStatus": "pending",
+  "activePreferenceRows": 0,
+  "preferenceInjected": false,
+  "modelRequests": [
+    "historyImport",
+    "preferenceAnalysis"
+  ],
+  "checks": "passed"
+}

@@ -1,6 +1,13 @@
 import {check,copy,object,references,isObjectType} from './schema.js';
 import {calendarTime,prepareCommit} from './ledger.js';
 import {digest} from './books.js';
+export function validatePlanProposal(plan){
+ check(object(plan)&&typeof plan.goal==='string'&&Array.isArray(plan.beats),'剧情推进产物字段不完整');
+ check(!Object.hasOwn(plan,'changes'),'剧情推进不得产生事实写入');
+ for(const name of ['pendingChoices','due','clues','constraints'])check(Array.isArray(plan[name])&&plan[name].every(value=>typeof value==='string'),'剧情设计 '+name+' 须为文本列表');
+ for(const beat of plan.beats)check(object(beat)&&typeof beat.proposal==='string'&&Array.isArray(beat.basis)&&beat.basis.every(value=>typeof value==='string')&&typeof beat.condition==='string','剧情节拍须有提案、依据和触发条件');
+ return plan;
+}
 export function progressionWindow(view,settings={}){
  if(!(settings.playerObjects?.length))return {ready:false,reason:'请在世界推进中标记玩家控制对象，再启用场外行动'};
  const scene=view.rows.find(r=>r.table==='scene'),to=scene?.values.当前时间;

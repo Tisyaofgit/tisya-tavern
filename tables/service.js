@@ -24,7 +24,7 @@ import {assembleTableRows} from './assembly.js';
 import {cardDefinitionSource,cardMechanisms,cardAIMaterials,bookAIMaterials} from './card-source.js';
 import {nativeBranches,bridgeInput,bridgePatch,hasNativeUpdate,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
 import {nativeSnapshot} from './native-state.js';
-import {progressionWindow,validateWorldProposal,progressionKey,planContext} from './progression.js';
+import {progressionWindow,validateWorldProposal,validatePlanProposal,progressionKey,planContext} from './progression.js';
 import {snapshotAnchor,branchSeed,forkCommits} from './branches.js';
 import {freezeCanonSnapshot,validateFrozenCanon} from './canon.js';
 import {createArchiveQuerySession} from './archive-query.js';
@@ -426,7 +426,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()],strict=c.settings.continuity==='tables',assembled=assembleTableRows(readView,{previousText:archivalText(lastAI?.text??''),userText:user?.text??'',tags,strict,retrieved:selected.map(row=>row.id),actorIds:playerSettings(c,loaded).playerObjects});
   const data={format:'tisya.context/1',source:'本轮表单资料。人物知识与读者可见范围仍以每行 access 为准；读者展示开关不授予人物知识。state.有效性为失效或待确认时，所存值只是最后已知，不是当前确证。',originBook:loaded.origin.name,sessionBook:loaded.session.name,revision:loaded.session.data.revision,rows:assembled.rows,latestTemporary:!strict&&lastAI?{source:lastAI.key,text:archivalText(lastAI.text),tags}:null,unresolvedTags:found.unresolved,explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[],preferences:allowedRows.filter(r=>r.table==='preferences'),antiCliche:true,dueChecks:dueChecks(loaded.view,chain),eventResults:stateEventNarrative(loaded.view,lastAI?.key??null),conditionResults:conditionNarrative(loaded,lastAI?.key??null),plot:null};
   if(runPlan&&c.settings.plot)data.plot=await invoke('plotAdvance',{...data,phase:'plan',nativeState:nativeSnapshot(loaded.view.rows,{context:getContext()}),registry:loaded.view.registry,...planContext(loaded,playerSettings(c,loaded)),userInput:user?.text??'',generationType:type},c,signal);
-  if(data.plot){check(typeof data.plot.goal==='string'&&Array.isArray(data.plot.beats)&&Array.isArray(data.plot.pendingChoices)&&Array.isArray(data.plot.constraints),'剧情推进产物字段不完整');check(!Object.hasOwn(data.plot,'changes'),'剧情推进不得产生事实写入');for(const beat of data.plot.beats)check(beat&&typeof beat.proposal==='string'&&Array.isArray(beat.basis)&&beat.basis.every(x=>typeof x==='string')&&typeof beat.condition==='string','剧情节拍须有提案、依据和触发条件');for(const name of ['pendingChoices','constraints'])check(data.plot[name].every(x=>typeof x==='string'),'剧情设计列表内容无效');}
+  if(data.plot)validatePlanProposal(data.plot);
   let entries=[],text;
   if(c.settings.injection==='worldbook'){
    check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');
@@ -440,7 +440,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   slots.state=narrativeSlot(slots.state,storyMaterial(stateProjection)+'\n'+stateContext,{dossier:storyMaterial({...stateProjection,layout:'dossier'})+'\n'+stateContext});
   slots.preferences=narrativeSlot(slots.preferences,storyPreferences(slots.preferences));
   if(slots.archive){const archiveProjection={rows:data.rows,selectedRows:slots.archive.rows,registry:loaded.view.registry};slots.archive=narrativeSlot(slots.archive,storyMaterial({...archiveProjection,latestTemporary:data.latestTemporary}),{withoutTemporary:storyMaterial(archiveProjection)});}
-  if(slots.plan)slots.plan=narrativeSlot(slots.plan,storyMaterial({plot:data.plot,registry:loaded.view.registry}));
+  if(slots.plan){const planProjection={plot:data.plot,registry:loaded.view.registry};slots.plan=narrativeSlot(slots.plan,storyMaterial(planProjection),{dossier:storyMaterial({...planProjection,layout:'dossier'})});}
   if(slots.genesis)slots.genesis=narrativeSlot(slots.genesis,storyBlueprint(slots.genesis));
   const instructions=narrativeInstructions(c.settings);text=instructions+'\n\n'+materialSlots(slots);
   // Required archives, current facts and explicit rules are never silently cut.

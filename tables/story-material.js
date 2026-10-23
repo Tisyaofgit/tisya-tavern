@@ -38,6 +38,13 @@ export function storyRecord(row,{rows=[row],registry={tables:[],types:[]},preser
  return parts.join('\n');
 }
 const block=(label,items)=>items.length?`<${label}>\n${items.join('\n\n')}\n</${label}>`:'';
+function storyPlan(plot){
+ if(!plot)return '';
+ const parts=[];if(plot.goal)parts.push('本轮叙事目标：'+plot.goal);
+ for(const beat of plot.beats??[])parts.push('可采用的进展：'+beat.proposal+'\n成立条件：'+beat.condition+(beat.basis?.length?'\n依据：'+beat.basis.join('；'):''));
+ for(const [field,label]of [['pendingChoices','留给用户的选择'],['due','待检查的到期事项'],['clues','可延展线索'],['constraints','限制']])for(const value of plot[field]??[])parts.push(label+'：'+value);
+ return parts.length?'以下为尚未发生的候选，不作为历史事实。到期与线索不代表已经触发或人物已经知情。\n'+parts.join('\n'):'';
+}
 export function storyMaterial({rows=[],selectedRows=rows,registry={tables:[],types:[]},userId=null,focusObjects=[],due=[],plot=null,latestTemporary=null,layout='legacy'}={}){
  if(layout==='dossier')return projectStoryDossiers({selectedRows,registry,userId,focusObjects,due,plot,latestTemporary}).text;
  if(layout!=='legacy')throw Error('未知资料投射布局：'+layout);
@@ -49,7 +56,7 @@ export function storyMaterial({rows=[],selectedRows=rows,registry={tables:[],typ
   const group=row.id===userId||row.nativePersona?'user':character&&focus.has(row.id)?'关注人物':character&&present.has(row.id)?'在场其他人物':['tasks','timers'].includes(row.table)||dueIds.has(row.id)?'当前叙事待办':archiveLayer(row.table,registry)==='memory'?'历史事件':archiveLayer(row.table,registry)==='static'?'静态图鉴':'当前快照';
   groups[group].push(storyRecord(row,{rows,registry}));
  }
- if(plot){const parts=[];if(plot.goal)parts.push('本轮叙事目标：'+plot.goal);for(const beat of plot.beats??[])parts.push('可采用的进展：'+beat.proposal+'\n成立条件：'+beat.condition);for(const v of plot.pendingChoices??[])parts.push('留给用户的选择：'+v);for(const v of plot.constraints??[])parts.push('限制：'+v);if(parts.length)groups.当前叙事待办.push('以下为尚未发生的候选，不作为历史事实。\n'+parts.join('\n'));}
+ const plan=storyPlan(plot);if(plan)groups.当前叙事待办.push(plan);
  const content=Object.entries(groups).map(([name,items])=>block(name,items)).filter(Boolean);
  if(latestTemporary?.text)content.push(block('最新接续原文',['以下内容尚未确认归档，仅用于接续当前候选。\n'+latestTemporary.text]));
  return content.length?'<资料层开始>\n'+content.join('\n\n')+'\n<资料层结束>':'';
@@ -100,13 +107,7 @@ export function projectStoryDossiers({rows=[],selectedRows=rows,registry={tables
   const group=row.id===userId||row.nativePersona?'user':character&&focus.has(row.id)?'FollowedCharacters':character&&present.has(row.id)?'OtherPresentCharacters':'RelatedObjects';
   groups[group].push('<Object>\n'+block('Basics',[render(row),...basic])+(dynamic.length?'\n'+block('ToNarrate',dynamic):'')+'\n</Object>');
  }
- if(plot){
-  const parts=[];if(plot.goal)parts.push('本轮叙事目标：'+plot.goal);
-  for(const beat of plot.beats??[])parts.push('可采用的进展：'+beat.proposal+'\n成立条件：'+beat.condition);
-  for(const value of plot.pendingChoices??[])parts.push('留给用户的选择：'+value);
-  for(const value of plot.constraints??[])parts.push('限制：'+value);
-  if(parts.length)global.NarrativeAgenda.push('以下为尚未发生的候选，不作为历史事实。\n'+parts.join('\n'));
- }
+ const plan=storyPlan(plot);if(plan)global.NarrativeAgenda.push(plan);
  const dossiers=Object.entries(groups).map(([name,items])=>block(name,items)).filter(Boolean);
  const content=[...(dossiers.length?[block('ObjectDossiers',dossiers)]:[]),...Object.entries(global).map(([name,items])=>block(name,items)).filter(Boolean)];
  if(latestTemporary?.text)content.push(block('RecentProse',['以下内容尚未确认归档，仅用于接续当前候选。\n'+latestTemporary.text]));
