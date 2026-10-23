@@ -1,0 +1,16 @@
+{
+  "branch": "candidate/narrative-en-ui-20261023",
+  "remote_commit": "7f9c4cfcf8e493776d1129498aa424406c291909",
+  "remote_tree": "351d7c9551795a90a23dcbcb4c3ea118ada2c8fc",
+  "local_commit": "0a08797e83f8dd84bb7fc43a463c49e313745c95",
+  "expected_previous": "b2ca0a5a74514b7c2644886e29e7f74aad1094d0",
+  "exact_tree_match": true,
+  "tests": {
+    "passed": 1407,
+    "failed": 0,
+    "skipped": 0
+  },
+  "runtime_blob": "fde97ecc46f4db74e63c2f741b4732e8a79534b6",
+  "status": "Published candidate; fresh remote recovery verified 852/852 recorded files",
+  "recovery_passed": true
+}

@@ -1,0 +1,25 @@
+{
+  "closed_at_utc": "2026-10-23T04:14:16.071403+00:00",
+  "source_commit": "7f9c4cfcf8e493776d1129498aa424406c291909",
+  "source_tree": "351d7c9551795a90a23dcbcb4c3ea118ada2c8fc",
+  "state": "closed; no new feature work after pause",
+  "receipt_only_followup": true,
+  "files": [
+    {
+      "path": "git-final-receipt.json",
+      "sha256": "a53e8ddf197c59536c0719e99081eaaa35c8be2404a9a10dce93b4f7f4c9a8e3"
+    },
+    {
+      "path": "recovery-verification.json",
+      "sha256": "cc9cc5999ed6842635d1cd7afe0f4a788e337ee3b612ac8a4b20cf0b8abcff28"
+    },
+    {
+      "path": "upload-w8-report-blueprint-result.json",
+      "sha256": "5ddf50719f945c3f902b5d6287d0b1b73c3fabf199ac9a9a0f2cbda96714564e"
+    }
+  ],
+  "source_files_manifest": "FILES.sha256",
+  "clock": "work-clock.json",
+  "blueprint_library_version": 224,
+  "english_deliveries_version": 1
+}
