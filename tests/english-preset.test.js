@@ -86,3 +86,59 @@ test('native current input uses the retained source index and requires media for
  const g=fixture('native');g.context.chat=[{is_user:true,mes:'',extra:{media:[{url:'actual-image'}]}}];await g.host.before('normal');await assert.rejects(g.host.payloadReady({messages:[{role:'user',content:''}]}),/媒体内容/);
  const h=fixture('native');h.context.chat=[{is_user:true,mes:'',extra:{media:[{url:'actual-image'}]}}];await h.host.before('normal');const payload={messages:[{role:'user',content:[{type:'image_url',image_url:{url:'actual-image'}}]}]};await h.host.payloadReady(payload);assert.equal(payload.messages[0].content[0].image_url.url,'actual-image');
 });
+
+test('world progression and numbered clues reach distinct optional slots exactly once in both host paths',async()=>{
+ const values={progression:'<WorldProgression>FOLLOWED_ACTIVITY_REF</WorldProgression>',foreshadow:'<Foreshadow>F01 CLUE_FULL_CONTENT</Foreshadow>'};
+ for(const owner of ['tisya','native']){
+  const f=fixture(owner);await f.host.before('normal');f.host.attachTableContext({world:f.key,slots:Object.fromEntries(Object.entries(values).map(([key,text])=>[key,narrativeSlot({},text)]))});
+  let messages=[];
+  if(owner==='native')messages=f.source.order.filter(o=>o.enabled).map(o=>f.source.prompts.find(p=>p.identifier===o.identifier)).filter(p=>p.enabled!==false&&!p.marker).map(p=>({role:p.role,content:f.context.substituteParams(p.content)})).filter(p=>p.content.trim()).concat({role:'user',content:'ACTUAL_CURRENT_INPUT'});
+  const payload={messages};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');
+  for(const value of Object.values(values))assert.equal(text.split(value).length,2,owner);
+  assert.equal(payload.messages.filter(m=>m.content.includes(values.progression)).length,1);assert.equal(payload.messages.filter(m=>m.content.includes(values.foreshadow)).length,1);
+  assert.doesNotMatch(text,/«|summary OR selected full original passages/);
+ }
+});
+test('empty progression and clue slots emit no wrappers and each user-disabled consumer stays silent',async()=>{
+ const f=fixture();await f.host.before('normal');f.host.attachTableContext({world:f.key,slots:{progression:narrativeSlot({},''),foreshadow:narrativeSlot({},'')}});const payload={messages:[]};await f.host.payloadReady(payload);assert.doesNotMatch(payload.messages.map(m=>m.content).join('\n'),/<WorldProgression>|<Foreshadow>/);
+ for(const key of ['progression','foreshadow']){
+  const g=fixture();disable(g,SLOT_TARGETS[key]);await g.host.before('normal');g.host.attachTableContext({world:g.key,slots:{[key]:narrativeSlot({},'DISABLED_MATERIAL')}});const out={messages:[]};await g.host.payloadReady(out);assert.doesNotMatch(out.messages.map(m=>m.content).join('\n'),/DISABLED_MATERIAL/);
+ }
+});
+test('disabling linked material slots selects trusted complete alternatives without dangling references',async()=>{
+ for(const owner of ['tisya','native'])for(let mask=0;mask<8;mask++){
+  const f=fixture(owner),disabled=new Set(['state','archive','foreshadow'].filter((_,i)=>mask&(1<<i)));
+  for(const key of disabled)disable(f,SLOT_TARGETS[key]);await f.host.before('normal');
+  f.host.attachTableContext({world:f.key,slots:{
+   state:narrativeSlot({},'DOSSIER_FULL_CONTENT E01 F01',{withoutHistory:'DOSSIER_FULL_CONTENT F01',withoutForeshadow:'DOSSIER_FULL_CONTENT E01',withoutHistoryAndForeshadow:'DOSSIER_FULL_CONTENT'}),
+   archive:narrativeSlot({},'EVENT_FULL_CONTENT F01',{withoutForeshadow:'EVENT_FULL_CONTENT'}),
+   progression:narrativeSlot({},'WORLD_PENDING_FULL_CONTENT FOLLOWED_DOSSIER_REF E01 F01',{withoutDossiers:'WORLD_PENDING_FULL_CONTENT E01 F01',withoutHistory:'WORLD_PENDING_FULL_CONTENT FOLLOWED_DOSSIER_REF F01',withoutForeshadow:'WORLD_PENDING_FULL_CONTENT FOLLOWED_DOSSIER_REF E01',withoutHistoryAndForeshadow:'WORLD_PENDING_FULL_CONTENT FOLLOWED_DOSSIER_REF',withoutDossiersAndHistory:'WORLD_PENDING_FULL_CONTENT F01',withoutDossiersAndForeshadow:'WORLD_PENDING_FULL_CONTENT E01',withoutDossiersAndHistoryAndForeshadow:'WORLD_PENDING_FULL_CONTENT'}),
+   foreshadow:narrativeSlot({},'F01 CLUE_FULL_CONTENT E01',{withoutHistory:'F01 CLUE_FULL_CONTENT'})
+  }});
+  let messages=[];if(owner==='native')messages=f.source.order.filter(o=>o.enabled).map(o=>f.source.prompts.find(p=>p.identifier===o.identifier)).filter(p=>p.enabled!==false&&!p.marker).map(p=>({role:p.role,content:f.context.substituteParams(p.content)})).filter(p=>p.content.trim()).concat({role:'user',content:'ACTUAL_CURRENT_INPUT'});
+  const payload={messages};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');
+  assert.equal(text.includes('DOSSIER_FULL_CONTENT'),!disabled.has('state'));
+  assert.equal(text.includes('FOLLOWED_DOSSIER_REF'),!disabled.has('state'));
+  assert.equal(text.split('WORLD_PENDING_FULL_CONTENT').length,2);
+  assert.equal(text.includes('EVENT_FULL_CONTENT'),!disabled.has('archive'));
+  assert.equal(text.includes('CLUE_FULL_CONTENT'),!disabled.has('foreshadow'));
+  if(disabled.has('foreshadow'))assert.doesNotMatch(text,/F01/);
+  if(disabled.has('archive'))assert.doesNotMatch(text,/E01/);
+ }
+});
+test('archive reference removal composes with verified recent-raw coverage',async()=>{
+ const f=fixture();disable(f,SLOT_TARGETS.foreshadow);f.context.chat=[{is_user:true,mes:'past'},{is_user:false,mes:'<reply><body>FULL_RECENT_RAW</body></reply>'},{is_user:true,mes:'ACTUAL_CURRENT_INPUT'}];
+ const chain=await historySources(f.context.chat),temporary={source:chain[1].key,text:'FULL_RECENT_RAW'};
+ const slots={archive:narrativeSlot({latestTemporary:temporary},'EVENT F01 FULL_RECENT_RAW',{withoutTemporary:'EVENT F01',withoutForeshadow:'EVENT FULL_RECENT_RAW',withoutTemporaryAndForeshadow:'EVENT'}),foreshadow:narrativeSlot({},'F01 CLUE_FULL')};
+ const layouts=await coveredTemporaryLayouts(f.context,f.world,'normal',f.source,slots);
+ const messages=buildMessages({source:f.source,context:f.context,world:f.world,substitute:s=>s,slots,slotLayouts:layouts});
+ const text=messages.map(m=>m.content).join('\n');assert.doesNotMatch(text,/F01|CLUE_FULL/);assert.equal(text.split('FULL_RECENT_RAW').length,2);assert.ok(text.includes('EVENT'));
+});
+test('controlled worldbook activation uses selected slots and their switches instead of the combined requirements string',async()=>{
+ const f=fixture();disable(f,SLOT_TARGETS.foreshadow);await f.host.before('normal');
+ f.host.attachTableContext({world:f.key,instructions:'ACTUAL_TABLE_INSTRUCTION',slots:{state:narrativeSlot({},'PRE_SCAN_STATE')}});
+ f.host.attachTableActivation({world:f.key,text:'COMBINED_WORLD_BOOK_TEXT F01 CLUE_FULL',slots:{state:narrativeSlot({},'SELECTED_ACTUAL_STATE'),archive:narrativeSlot({},'ACTUAL_EVENT F01',{withoutForeshadow:'ACTUAL_EVENT'}),foreshadow:narrativeSlot({},'F01 CLUE_FULL')}});
+ const payload={messages:[{role:'system',content:'NATIVE_DUPLICATE_WORLD_BOOK_TEXT'}]};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');
+ assert.doesNotMatch(text,/COMBINED_WORLD_BOOK_TEXT|NATIVE_DUPLICATE_WORLD_BOOK_TEXT|PRE_SCAN_STATE|F01|CLUE_FULL/);
+ for(const value of ['SELECTED_ACTUAL_STATE','ACTUAL_EVENT','ACTUAL_TABLE_INSTRUCTION'])assert.equal(text.split(value).length,2);
+});

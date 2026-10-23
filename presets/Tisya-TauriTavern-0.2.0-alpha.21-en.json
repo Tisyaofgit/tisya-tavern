@@ -322,6 +322,30 @@
       "content": "{{tisya_live_tisya_material_memory_archive}}\n{{tisya_slot_archive}}"
     },
     {
+      "identifier": "tisya_material_world_progression",
+      "name": "World progression",
+      "role": "system",
+      "system_prompt": false,
+      "marker": false,
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_tisya_material_world_progression}}\n{{tisya_slot_progression}}"
+    },
+    {
+      "identifier": "tisya_material_foreshadow",
+      "name": "Foreshadow pool",
+      "role": "system",
+      "system_prompt": false,
+      "marker": false,
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_tisya_material_foreshadow}}\n{{tisya_slot_foreshadow}}"
+    },
+    {
       "identifier": "tisya_material_tool_result",
       "name": "Tool material",
       "role": "system",
@@ -656,6 +680,14 @@
         },
         {
           "identifier": "tisya_material_memory_archive",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_world_progression",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_foreshadow",
           "enabled": true
         },
         {

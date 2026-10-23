@@ -1,4 +1,5 @@
-import {storyMaterial,storyPreferences,storyContext,storyBlueprint} from './story-material.js';
+import {buildTimeline} from './timeline.js';
+import {storyMaterial,projectStoryDossiers,storyPreferences,storyContext,storyBlueprint} from './story-material.js';
 import {archiveSourceView} from './archive-source-view.js';
 import {parseSimpleSheet,renderModelMaterial} from './simple-sheet.js';
 import {parseRuleReviewSheet} from './rule-review-sheet.js';
@@ -51,6 +52,20 @@ export function parseTableTaskResponse(task,response){
  const text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.filter(x=>x.thought!==true).map(x=>x.text??'').join('');
  check(typeof text==='string'&&text.trim(),'辅助 API 没有返回完整简表文本');const result=task==='ruleReview'?parseRuleReviewSheet(text):parseSimpleSheet(text);
  check(result&&typeof result==='object'&&!Array.isArray(result),'辅助任务简表根须为对象');return result;
+}
+// Trusted narrative layouts share one selected snapshot and retain alternate
+// references for consumers the user explicitly disables in the preset.
+function projectNarrativeSlots(input,metadata={},stateContext='',extra={}){
+ const append=(text,tag,items=[])=>{if(!items.length)return text;const end='</'+tag+'>';return text?text.replace(end,items.join('\n\n')+'\n'+end):'<'+tag+'>\n'+items.join('\n\n')+'\n'+end;};
+ const project=referenceTables=>{const p=projectStoryDossiers({...input,...(referenceTables?{referenceTables}:{})});p.sections.state=[p.sections.state,...(extra.state??[])].filter(Boolean).join('\n\n');for(const [key,tag]of [['history','History'],['foreshadow','Foreshadow'],['progression','WorldProgression']])p.sections[key]=append(p.sections[key],tag,extra[key]);p.progressionWithoutDossiers=append(p.progressionWithoutDossiers,'WorldProgression',extra.progression);p.sections.recent=[p.sections.recent,...(extra.recent??[])].filter(Boolean).join('\n\n');return p;};
+ const main=project(),alternates={withoutHistory:project(['clues']),withoutForeshadow:project(['events']),withoutHistoryAndForeshadow:project([])},slots={};
+ const state=p=>[p.sections.state,stateContext].filter(Boolean).join('\n\n'),history=(p,temporary=true)=>[p.sections.history,temporary?p.sections.recent:''].filter(Boolean).join('\n\n');
+ slots.state=narrativeSlot(metadata.state??{},state(main),Object.fromEntries(Object.entries(alternates).map(([name,p])=>[name,state(p)])));
+ if(metadata.archive||history(main))slots.archive=narrativeSlot(metadata.archive??{},history(main),{withoutTemporary:history(main,false),withoutForeshadow:history(alternates.withoutForeshadow),withoutTemporaryAndForeshadow:history(alternates.withoutForeshadow,false)});
+ if(main.sections.progression)slots.progression=narrativeSlot({},main.sections.progression,{withoutDossiers:main.progressionWithoutDossiers,...Object.fromEntries(Object.entries(alternates).flatMap(([name,p])=>[[name,p.sections.progression],[name.replace('without','withoutDossiersAnd'),p.progressionWithoutDossiers]]))});
+ if(main.sections.foreshadow)slots.foreshadow=narrativeSlot({},main.sections.foreshadow,{withoutHistory:alternates.withoutHistory.sections.foreshadow});
+ if(input.plot)slots.plan=narrativeSlot(metadata.plan??{},main.sections.plan);
+ return slots;
 }
 export function createTableService({store,getContext,request,projectToolTurns,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,persona=null,archiveQueryPolicy=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
  let busy=false,controller=null,jobScope=null,latest=null,lastStyleAudit=null,progress=null,pendingFork=null,boundWorld=getContext().chatId?store.read().key:null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
@@ -422,8 +437,8 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   if(c.settings.preferences&&user)loaded=await analysePreferenceSource(c,loaded,user,signal,{generationType:type});
   const currentPersona=readPersona(),binding=loaded.session.data.personaBinding;if(c.settings.continuity==='tables'&&currentPersona){check(binding?.state==='bound'&&binding.personaId===currentPersona.id&&loaded.view.rows.some(row=>row.id===binding.objectId&&row.table==='objects'),'当前原生用户身份尚未初始化或绑定，请在用户身份中核对后继续表单接续');}const allowedRows=personaProjection(loaded.view.rows,binding,currentPersona,{nativeInjected:c.settings.continuity!=='tables'&&!!c.world.context.persona&&!c.world.controller}).filter(r=>r.table!=='native_cells').filter(r=>r.table!=='preferences'||r.preferenceConfirmed===true&&r.values.启用!==false&&preferenceMatches(r,{context:getContext(),world:c,persona:currentPersona,binding})),readView={...loaded.view,rows:allowedRows};
   let found=retrieval(readView,{tags,query:user?.text??'',topK:c.settings.topK});
-  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:allowedRows.filter(r=>['objects','facts','events'].includes(r.table)),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
-  const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()],strict=c.settings.continuity==='tables',assembled=assembleTableRows(readView,{previousText:archivalText(lastAI?.text??''),userText:user?.text??'',tags,strict,retrieved:selected.map(row=>row.id),actorIds:playerSettings(c,loaded).playerObjects});
+  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:allowedRows.filter(r=>['objects','facts','events'].includes(r.table)),timeline:buildTimeline(readView,{sessionId:loaded.session.data.id,chain:loaded.chain}),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
+  const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()],strict=c.settings.continuity==='tables',assembled=assembleTableRows(readView,{previousText:archivalText(lastAI?.text??''),userText:user?.text??'',tags,strict,retrieved:selected.map(row=>row.id),actorIds:[...new Set([...playerSettings(c,loaded).playerObjects,...c.settings.focusObjects])]});
   const data={format:'tisya.context/1',source:'本轮表单资料。人物知识与读者可见范围仍以每行 access 为准；读者展示开关不授予人物知识。state.有效性为失效或待确认时，所存值只是最后已知，不是当前确证。',originBook:loaded.origin.name,sessionBook:loaded.session.name,revision:loaded.session.data.revision,rows:assembled.rows,latestTemporary:!strict&&lastAI?{source:lastAI.key,text:archivalText(lastAI.text),tags}:null,unresolvedTags:found.unresolved,explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[],preferences:allowedRows.filter(r=>r.table==='preferences'),antiCliche:true,dueChecks:dueChecks(loaded.view,chain),eventResults:stateEventNarrative(loaded.view,lastAI?.key??null),conditionResults:conditionNarrative(loaded,lastAI?.key??null),plot:null};
   if(runPlan&&c.settings.plot)data.plot=await invoke('plotAdvance',{...data,phase:'plan',nativeState:nativeSnapshot(loaded.view.rows,{context:getContext()}),registry:loaded.view.registry,...planContext(loaded,playerSettings(c,loaded)),userInput:user?.text??'',generationType:type},c,signal);
   if(data.plot)validatePlanProposal(data.plot);
@@ -432,20 +447,33 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
    check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');
    const rows=assembled.candidates.filter(r=>r.table!=='preferences');
    const temporary=!strict&&lastAI?{text:archivalText(lastAI.text)}:null;
-   entries=worldbookEntries({rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,nativeState:nativeSnapshot(assembled.candidates,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}),scope:loaded.session.data.id,bookName:loaded.session.name,tags,forcedIds:found.optional.map(r=>r.id),temporary,due:data.dueChecks});
+   entries=worldbookEntries({rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,nativeState:nativeSnapshot(assembled.candidates,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}),scope:loaded.session.data.id,bookName:loaded.session.name,tags,forcedIds:[...new Set([...found.optional.map(r=>r.id),...assembled.rows.filter(r=>c.settings.focusObjects.includes(r.id)||[r.values.主体,...(Array.isArray(r.values.对象)?r.values.对象:[r.values.对象]),...(r.values.负责人??[])].some(id=>c.settings.focusObjects.includes(id))).map(r=>r.id)])],temporary,due:data.dueChecks});
   }
   const ruleVersion=await selectedRulePolicy(c);const slots={state:{rulePolicy:ruleVersion,source:data.source,revision:data.revision,eventResults:data.eventResults,conditionResults:data.conditionResults,rows:c.settings.injection==='direct'?data.rows.filter(r=>r.table!=='events'&&r.table!=='preferences'):[],nativeState:c.settings.injection==='direct'?nativeSnapshot(assembled.rows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}):null,dueChecks:data.dueChecks,unresolvedTags:data.unresolvedTags},preferences:{explicit:data.explicitRules,style:stylePrompt(data.styleRules),rows:data.preferences},plan:data.plot,genesis:loaded.session.data.blueprint??null};
   if(c.settings.injection==='direct')slots.archive={rows:data.rows.filter(r=>r.table==='events'),latestTemporary:data.latestTemporary};
   const stateProjection={rows:slots.state.rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks},stateContext=storyContext(slots.state,allowedRows);
-  slots.state=narrativeSlot(slots.state,storyMaterial(stateProjection)+'\n'+stateContext,{dossier:storyMaterial({...stateProjection,layout:'dossier'})+'\n'+stateContext});
+  // One selected snapshot owns labels and full-text placement across all slots.
+  // Focus affects recall, never row access or the scene's participant list.
+  const projectionInput={...stateProjection,rows:c.settings.injection==='direct'?data.rows:[],plot:data.plot,latestTemporary:c.settings.injection==='direct'?data.latestTemporary:null};
+  const stateMetadata=slots.state;Object.assign(slots,projectNarrativeSlots(projectionInput,slots,stateContext));
   slots.preferences=narrativeSlot(slots.preferences,storyPreferences(slots.preferences));
-  if(slots.archive){const archiveProjection={rows:data.rows,selectedRows:slots.archive.rows,registry:loaded.view.registry};slots.archive=narrativeSlot(slots.archive,storyMaterial({...archiveProjection,latestTemporary:data.latestTemporary}),{withoutTemporary:storyMaterial(archiveProjection)});}
-  if(slots.plan){const planProjection={plot:data.plot,registry:loaded.view.registry};slots.plan=narrativeSlot(slots.plan,storyMaterial(planProjection),{dossier:storyMaterial({...planProjection,layout:'dossier'})});}
   if(slots.genesis)slots.genesis=narrativeSlot(slots.genesis,storyBlueprint(slots.genesis));
   const instructions=narrativeInstructions(c.settings);text=instructions+'\n\n'+materialSlots(slots);
   // Required archives, current facts and explicit rules are never silently cut.
   check(text.length<=c.settings.contextChars,'表单注入超过 '+c.settings.contextChars+' 字符预算；请提高预算、减少检索数量或整理冗余表行');
-  c.guard();latest={world:c.key,revision:loaded.session.data.revision,source:lastAI?.key??null,rows:assembled.rows.length,tags,unresolved:found.unresolved,assembly:{trace:assembled.trace,omitted:assembled.omitted,recall:assembled.recall},slots,instructions,text,injection:c.settings.injection};if(entries.length)worldbook.install(entries,c.guard);return latest;
+  c.guard();latest={world:c.key,revision:loaded.session.data.revision,source:lastAI?.key??null,rows:assembled.rows.length,tags,unresolved:found.unresolved,assembly:{trace:assembled.trace,omitted:assembled.omitted,recall:assembled.recall},slots,instructions,text,injection:c.settings.injection};if(entries.length)worldbook.install(entries,c.guard,{projectSelection:selected=>{
+   const ids=new Set(selected.map(entry=>entry.tisyaTable.id));
+   // A host may legitimately expand macros or apply its regex to a body. Keep
+   // that actual body once; do not overwrite it with the pre-transform source.
+   const changed=selected.filter(entry=>entry.tisyaTable.id!=='latest-temporary'&&entry.content!==entries.find(original=>original.tisyaTable.id===entry.tisyaTable.id)?.content),changedIds=new Set(changed.map(entry=>entry.tisyaTable.id));
+   const rows=assembled.candidates.filter(row=>ids.has(row.id)).map(row=>changedIds.has(row.id)?{...row,referenceOnly:true,values:Object.fromEntries(Object.entries(row.values).filter(([key])=>['名称','类型','别名'].includes(key)))}:row);
+   const nativeRows=rows.filter(row=>!changedIds.has(row.id)),selectedNative=nativeSnapshot(nativeRows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1});
+   const extras={state:[],history:[],foreshadow:[],recent:[]};for(const entry of changed){const table=assembled.candidates.find(row=>row.id===entry.tisyaTable.id)?.table;extras[table==='events'?'history':table==='clues'?'foreshadow':'state'].push(entry.content);}
+   const temporary=selected.find(entry=>entry.tisyaTable.id==='latest-temporary'),originalTemporary=entries.find(entry=>entry.tisyaTable.id==='latest-temporary');
+   const latestTemporary=temporary&&temporary.content===originalTemporary?.content?data.latestTemporary:null;if(temporary&&!latestTemporary)extras.recent.push(temporary.content);
+   const projectedSlots=projectNarrativeSlots({rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks,latestTemporary},{state:{...stateMetadata,rows},archive:{rows:rows.filter(row=>row.table==='events'),latestTemporary}},[stateContext,storyContext({nativeState:selectedNative},nativeRows)].filter(Boolean).join('\n\n'),extras);
+   return {text:materialSlots(projectedSlots),slots:projectedSlots};
+  }});return latest;
  }
  function rulesContext(){const c=capture(),rules=c.settings.styleEnabled?styleRules(c.settings):[],slots={preferences:narrativeSlot({explicit:c.settings.hardRules,style:stylePrompt(rules)},storyPreferences({explicit:c.settings.hardRules,style:stylePrompt(rules)}))};return {world:c.key,slots,text:materialSlots(slots),instructions:'已启用禁词、写作要求及用户明确限制按硬约束执行。'};}
  function requireNativeBridge(c){

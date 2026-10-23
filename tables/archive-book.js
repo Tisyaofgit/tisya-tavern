@@ -1,5 +1,6 @@
 import {copy,check} from './schema.js';
 import {project} from './ledger.js';
+import {buildTimeline} from './timeline.js';
 const names={static:'静态',data:'数据',snapshot:'动态快照',memory:'记忆'};
 export const ARCHIVE_PREFIX='【图鉴／';
 export const ARCHIVE_VIEW_FORMAT='tisya.archive-view/1';
@@ -28,5 +29,5 @@ export function assembleArchiveBook(origin,session,chain){
  const sourceKeys=chain.map(s=>s.key),view=project(origin.data,session,sourceKeys),layers=Object.fromEntries(Object.keys(names).map(k=>[k,[]]));
  for(const row of view.rows)layers[archiveLayer(row.table,view.registry)].push(copy(row));
  const initial=new Map([...origin.data.bases].sort((a,b)=>a.rev-b.rev).map(row=>[row.id,row]));
- return {format:ARCHIVE_VIEW_FORMAT,basis:{origin:origin.data.id,originRevision:origin.data.revision,session:session.id,sessionRevision:session.revision,sourceKeys,commit:view.last},registry:copy(view.registry),layers,originRows:copy([...initial.values()]),cores:copy(origin.data.coreAssets??[]),trace:archiveTrace(view,session.id,chain)};
+ return {format:ARCHIVE_VIEW_FORMAT,basis:{origin:origin.data.id,originRevision:origin.data.revision,session:session.id,sessionRevision:session.revision,sourceKeys,commit:view.last},registry:copy(view.registry),layers,originRows:copy([...initial.values()]),cores:copy(origin.data.coreAssets??[]),trace:archiveTrace(view,session.id,chain),timeline:buildTimeline(view,{sessionId:session.id,chain})};
 }

@@ -1,0 +1,16 @@
+✔ natural material separates identity, focus, scene, history and pending without storage metadata (3.408961ms)
+✔ projection never expands identity-only references or silently grants knowledge (0.183637ms)
+✔ only confirmed enabled preferences appear and current explicit instruction remains separate (0.74277ms)
+✔ current snapshot values and settled event knowledge survive natural rendering (1.319345ms)
+✔ native worldbook projection uses natural fields while retaining activation metadata (1.892605ms)
+✔ preference projection retains effective scope and exceptions without score or storage switches (0.43787ms)
+✔ empty snapshots emit no empty fields while an actual settled clear keeps its transition (0.436829ms)
+✔ an already negative preference instruction is not inverted by a second ban prefix (0.35162ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.198192

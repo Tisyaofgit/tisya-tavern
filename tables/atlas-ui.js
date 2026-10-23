@@ -1,5 +1,6 @@
 import {isObjectType} from './schema.js';
 import {createAtlas} from './atlas.js';
+import {timelineLines} from './timeline.js';
 // Shared atlas renderer: standalone demo or an explicitly authorized host snapshot.
 export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null,onIdentity=null}={}){
  const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=null,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[];
@@ -60,7 +61,14 @@ export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},o
   for(const [id,label]of choices){const b=button(label,()=>{tab=id;render();},id===tab?'selected':'');b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===tab));tabs.append(b);}panel.append(tabs);
   if(tab==='core'){const core=v.属性?.人物核心;if(core){body.append(tags(core.性格核心标签??[]));const spiral=el('div',undefined,'spiral');spiral.append(el('p','欲望双螺旋','eyebrow'));const desires=core.欲望双螺旋??[];if(desires.length)desires.forEach((s,i)=>spiral.append(field('欲望 '+(i+1),s)));else spiral.append(el('p','尚待提炼','pending-title'),el('p','资料尚不足以确认相互牵引的多股核心欲望。','muted'));body.append(spiral,field('核心矛盾',core.核心矛盾));const mask=v.属性?.面具层;const block=el('div',undefined,'mask');block.append(el('h3','面具层'));if(mask&&Object.values(mask).some(Boolean))Object.entries(mask).forEach(([k,x])=>block.append(field(k,x)));else block.append(el('p','资料尚未给出明确的面具与真实落差。','muted'));body.append(block);}else body.append(field('档案摘要',v.描述));}
   if(tab==='dossier'){for(const s of d.sections){if(s.name==='属性'&&s.value&&typeof s.value==='object'){for(const [key,value]of Object.entries(s.value))body.append(dataField(key,value,['属性',key],d));}else body.append(dataField(s.name,s.value,[s.name],d));}body.append(field('记录版本',r.rev));}
-  if(tab==='history'){const events=d.related.filter(x=>x.table==='events');if(!events.length)body.append(el('p','这一层尚未记录相关履历。','empty'));for(const e of events){const block=el('article',undefined,'timeline-item');block.append(el('p',e.values.时间??'时间待补','eyebrow'),recordLink(e,'record-title'),el('p',e.values.经过??''));if(e.values.影响)block.append(el('p',e.values.影响,'aftermath'));body.append(block);}}
+  if(tab==='history'){
+   const life=data.live&&audience==='author'&&layer==='session'?data.timeline?.lifelines.find(l=>l.object===r.id):null;
+   if(life){
+    body.append(button('导出生命线',()=>download(v.名称+'-生命线.txt',timelineLines(data.timeline,r.id)),'quiet'));
+    const nodes=new Map(data.timeline.entries.map(e=>[e.id,e])),groups=[...life.order.groups.map(g=>({label:g.anchors.length>1?'时间重叠':'已知时间',anchors:g.anchors})),{label:'相对时期与关联锚',anchors:life.order.relative},{label:'时间未定',anchors:life.order.unknown}];
+    for(const group of groups){if(!group.anchors.length)continue;body.append(el('h3',group.label));for(const id of group.anchors){const e=nodes.get(id),block=el('article',undefined,'timeline-item');block.append(el('p',e.occurrence.map(p=>p.value).filter(Boolean).join(' / ')||'时间未知','eyebrow'));try{atlas().detail(e.row);block.append(recordLink({id:e.row,name:e.title||'档案记录'},'record-title'));}catch{block.append(el('h3',e.title||'已移除记录'));}if(e.operation)block.append(el('p',({create:'建立',update:'变更',delete:'移除'})[e.operation],'muted'));for(const ref of e.eventAnchors){const event=nodes.get(ref);if(event)try{atlas().detail(event.row);block.append(recordLink({id:event.row,name:event.title||'关联事件'}));}catch{}}if(e.recorded.source.floor!==null)block.append(el('p','记载于第 '+e.recorded.source.floor+' 楼'+(e.recorded.storyTime.value?' · 当时 '+e.recorded.storyTime.value:''),'muted'));body.append(block);}}
+   }else{const events=d.related.filter(x=>x.table==='events');if(!events.length)body.append(el('p','这一层尚未记录相关履历。','empty'));for(const e of events){const block=el('article',undefined,'timeline-item');block.append(el('p',e.values.时间??'时间待补','eyebrow'),recordLink(e,'record-title'),el('p',e.values.经过??''));if(e.values.影响)block.append(el('p',e.values.影响,'aftermath'));body.append(block);}}
+  }
   if(tab==='links'){
    if(!d.neighbors.length&&!d.related.length)body.append(el('p','尚无可读的关联记录。','empty'));
    if(d.neighbors.length){body.append(el('h3','相关对象'));const grid=el('div',undefined,'linked-grid');for(const target of d.neighbors){const card=el('article',undefined,'linked-object');card.append(recordLink(target),el('p',target.via.map(x=>x.label==='直接关联'?x.label:'共同记录 · '+x.label).join('；'),'muted'));grid.append(card);}body.append(grid);}

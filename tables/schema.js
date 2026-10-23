@@ -18,7 +18,7 @@ export const TABLES = [
  table('objects','常量档案',{类型:f('type',{required:true}),别名:f('texts'),...text('世界 描述 核心引用'),...refs('关联'),标签:f('texts'),发现环境:f('object',{fields:{地点:f('refs'),时段:f(),出现条件:f(),来源依据:f(),确认程度:f('enum',{values:['设定明确','当事人陈述','一次观察']}),可复用:f('boolean')}}),属性:f('object')}),
  table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts')}),
  table('scene','场景与全局进度',{...text('世界 时代 场景 地点 当前时间 阶段'),...refs('参与者'),标志:f('object')}),
- table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
+ table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...refs('锚点事件'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
  table('relations','关系',{主体:f('ref',{required:true}),对象:f('ref',{required:true}),维度:f('object'),好感:pair(),声望:pair(),印象:f('map',{items:scale()}),...refs('锚点事件'),...text('证据 生效时间')}),
  table('cognition','认知与心理',{主体:f('ref',{required:true}),...refs('事实'),...text('获知途径 确认程度 认识 心理 授权依据')}),
  table('holdings','持有与流转',{物品:f('ref',{required:true}),...refs('所有者 保管者 地点 容器'),数量:f('number'),...text('单位 流转原因 原生引用')}),

@@ -1,5 +1,6 @@
 import {canRestoreInto} from './startup.js';
 import {archiveTrace} from './archive-book.js';
+import {buildTimeline} from './timeline.js';
 import {validateBundle} from './core-assets.js';
 import {check,copy,sameDefinition,validateRow,validateReferences} from './schema.js';
 import {digest} from './books.js';
@@ -56,7 +57,7 @@ export function createArchiveSystem({run,capture,load,books,onCommitted=()=>{},r
   // Author UI only; AI/reader APIs keep their independently bound ACL. Never
   // expose this raw snapshot through the model tool dispatcher.
   const initial=originView(loaded.origin.data),overview=archiveOverview(loaded);
-  return {data:{live:true,originBook:loaded.origin.name,world:loaded.origin.name,branch:loaded.session.name,registry:copy(loaded.view.registry),originRegistry:initial.registry,rows:copy(loaded.view.rows),originRows:initial.rows,savedRows:[],cores:[],saves:[],trace:archiveTrace(loaded.view,loaded.session.data.id,loaded.chain),revision:loaded.session.data.revision,overview},verify:()=>fresh(c,loaded)};
+  return {data:{live:true,originBook:loaded.origin.name,world:loaded.origin.name,branch:loaded.session.name,registry:copy(loaded.view.registry),originRegistry:initial.registry,rows:copy(loaded.view.rows),originRows:initial.rows,savedRows:[],cores:[],saves:[],trace:archiveTrace(loaded.view,loaded.session.data.id,loaded.chain),timeline:buildTimeline(loaded.view,{sessionId:loaded.session.data.id,chain:loaded.chain}),revision:loaded.session.data.revision,overview},verify:()=>fresh(c,loaded)};
  }
  async function saveAtlasLayout(input,expectedRevision){const layout=copy(input);return run(async()=>{const {c,loaded}=await current();check(loaded.origin.data.revision===expectedRevision,'分类依据已改变');const next=copy(loaded.origin.data);next.atlasLayout=validateAtlasLayout(layout,loaded.origin.data.registry);next.revision++;await fresh(c,loaded);await books.write(loaded.origin,next,c.guard);return copy(next.atlasLayout);});}
  async function exportArchive(options){const {c,loaded}=await current();const pack=await exportArchivePackage(loaded,copy(options));await fresh(c,loaded);return pack;}
