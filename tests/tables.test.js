@@ -267,7 +267,8 @@ test('plan sheet due and clues reach legacy and English final messages once with
  const saved=JSON.stringify([...f.saved]),copy=structuredClone(proposal);f.responder(async(task,input)=>{assert.equal(task,'plotAdvance');assert.equal(input.phase,'plan');return formatSimpleSheet(proposal);});
  const result=await f.service.prepare(),source={prompts:[{identifier:'tisya_english_v1',content:''},...Object.keys(result.slots).map(key=>({identifier:SLOT_TARGETS[key],content:'{{tisya_slot_'+key+'}}'})),{identifier:'chatHistory',marker:true}].map(p=>({...p,enabled:true,role:'system'}))};
  const text=buildMessages({source,context:f.c,world:f.store.read().world,materials:'',slots:result.slots,substitute:s=>s}).map(m=>m.content).join('\n');
- for(const payload of [result.text,text])for(const value of ['PLAN_GOAL','PLAN_BEAT','PLAN_BASIS','PLAN_CONDITION','PLAN_CHOICE','PLAN_DUE','PLAN_CLUE','PLAN_LIMIT'])assert.equal(payload.split(value).length-1,1,value);
+ for(const payload of [result.text,text])for(const value of ['PLAN_GOAL','PLAN_BEAT','PLAN_CONDITION','PLAN_CHOICE','PLAN_DUE','PLAN_CLUE','PLAN_LIMIT'])assert.equal(payload.split(value).length-1,1,value);
+ assert(!text.includes('PLAN_BASIS'));assert(!result.text.includes('PLAN_BASIS'));
  assert.match(text,/<NarrativeAgenda>[\s\S]*PLAN_DUE[\s\S]*PLAN_CLUE[\s\S]*<\/NarrativeAgenda>/);assert.doesNotMatch(text,/<当前叙事待办>/);
  assert.match(text,/尚未发生的候选，不作为历史事实/);assert.match(text,/不代表已经触发或人物已经知情/);assert(text.includes(proposal.due[0]));assert(text.includes(proposal.clues[0]));
  assert.equal(JSON.stringify([...f.saved]),saved);assert.equal((await f.service.inspect()).rows.length,0);assert.deepEqual(proposal,copy);assert.equal(f.calls.filter(call=>call.task==='plotAdvance').length,1);

@@ -1,0 +1,6 @@
+{
+  "planInternalIdInFinal": true,
+  "finalPlanText": "<NarrativeAgenda>\n以下为尚未发生的候选，不作为历史事实。到期与线索不代表已经触发或人物已经知情。\n本轮叙事目标：询问守门人\n可采用的进展：等待回答\n成立条件：对方愿意回答\n依据：row:INTERNAL-RECORD-ID\n</NarrativeAgenda>",
+  "derivedStory": "市集\n地点：北门\n总价：5\n读者可见范围：读者\n已知情人物：没有已确认知情人物",
+  "definitionMetadataNotSent": true
+}

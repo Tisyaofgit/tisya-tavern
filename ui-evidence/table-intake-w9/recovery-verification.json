@@ -1,0 +1,10 @@
+{
+  "remote_commit": "3cfed4d7b0476db70be8f1d324bbdd0cf5c8747e",
+  "tree": "16e24914e50f5fb23ac1168432476b083e25dfc8",
+  "local_commit": "ea8c23321f27dbd7802b75746c5f3350b479495b",
+  "files": 868,
+  "mismatches": [],
+  "method": "fresh worktree from fetched remote; compare every tracked file SHA256",
+  "checked_at": "2026-10-23T05:17:42.430425+00:00",
+  "passed": true
+}

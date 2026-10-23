@@ -41,7 +41,7 @@ const block=(label,items)=>items.length?`<${label}>\n${items.join('\n\n')}\n</${
 function storyPlan(plot){
  if(!plot)return '';
  const parts=[];if(plot.goal)parts.push('本轮叙事目标：'+plot.goal);
- for(const beat of plot.beats??[])parts.push('可采用的进展：'+beat.proposal+'\n成立条件：'+beat.condition+(beat.basis?.length?'\n依据：'+beat.basis.join('；'):''));
+ for(const beat of plot.beats??[])parts.push('可采用的进展：'+beat.proposal+'\n成立条件：'+beat.condition);
  for(const [field,label]of [['pendingChoices','留给用户的选择'],['due','待检查的到期事项'],['clues','可延展线索'],['constraints','限制']])for(const value of plot[field]??[])parts.push(label+'：'+value);
  return parts.length?'以下为尚未发生的候选，不作为历史事实。到期与线索不代表已经触发或人物已经知情。\n'+parts.join('\n'):'';
 }

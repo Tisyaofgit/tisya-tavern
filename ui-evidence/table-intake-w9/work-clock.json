@@ -1,7 +1,7 @@
 {
   "schema": "long-task-checkpoints/1",
   "task": "initialization-step-ui-20261022",
-  "state": "active",
+  "state": "paused",
   "window": 9,
   "window_seconds": 3600,
   "created_at": "2026-10-22T15:12:16.152186+00:00",
@@ -135,12 +135,22 @@
       "window": 9,
       "at": "2026-10-23T04:19:33.743548+00:00",
       "user_message": "👌🏻，你再审计一轮缺口，然后开始做极简填表的表单推进接入？一步一步来，给我一个全对象和全用户偏好的示例完整档案作为参考。（包含角色状态快照和待办），拿百轮语料那个洛缇斯的最新节点做好了，"
+    },
+    {
+      "event": "paused",
+      "window": 9,
+      "at": "2026-10-23T05:23:01.924569+00:00",
+      "checkpoint": {
+        "path": "/workspace/scratch/b5f88d8e1157/table-intake-w9/integration/ui-evidence/table-intake-w9/CHECKPOINT.md",
+        "sha256": "908b6e0ec107c03306ec84d9c49376e7c316245cf4ac20f5a718bac9f1119cf5",
+        "summary": "窗口9完成第一接入切片；停止新增功能，收尾保存已核语料参考与最终边界修正。"
+      }
     }
   ],
-  "paused_at": "2026-10-23T04:08:30.568867+00:00",
+  "paused_at": "2026-10-23T05:23:01.924569+00:00",
   "checkpoint": {
-    "path": "/workspace/scratch/b5f88d8e1157/settings-ui-work/ui-evidence/narrative-en-w8/CHECKPOINT.md",
-    "sha256": "a2d4c61ddb22f13a8346482818c1499d649a22e2fc86cd156de151db8c03ef9f",
-    "summary": "Full integrated candidate passed 1407 tests; final Git/Library persistence and recovery receipts being closed, no new implementation."
+    "path": "/workspace/scratch/b5f88d8e1157/table-intake-w9/integration/ui-evidence/table-intake-w9/CHECKPOINT.md",
+    "sha256": "908b6e0ec107c03306ec84d9c49376e7c316245cf4ac20f5a718bac9f1119cf5",
+    "summary": "窗口9完成第一接入切片；停止新增功能，收尾保存已核语料参考与最终边界修正。"
   }
 }
