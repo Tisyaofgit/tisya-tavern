@@ -1,0 +1,7 @@
+{
+  "command": "npm run test:v3",
+  "exit_code": 1,
+  "started_utc": "2026-10-24T16:33:51.037595+00:00",
+  "finished_utc": "2026-10-24T16:34:53.087849+00:00",
+  "elapsed_seconds": 62.05029584799922
+}

@@ -1,0 +1,7 @@
+{
+  "command": "npm test",
+  "exit_code": 0,
+  "started_utc": "2026-10-24T16:36:50.607019+00:00",
+  "finished_utc": "2026-10-24T16:41:13.575268+00:00",
+  "elapsed_seconds": 262.96825959000125
+}
