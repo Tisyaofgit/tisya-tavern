@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ensureInstalledPreset,readInstalledPreset} from '../../../v3/preset-install.mjs';
+import {ensureInstalledPreset,readInstalledPreset,inspectInstalledPreset} from '../../../v3/preset-install.mjs';
 import {createRuntimePreset} from '../../../v3/preset-template.mjs';
 function fixture(old){
  const disk=new Map(old?[['Tisya',structuredClone(old)]]:[]),cache=new Map(disk),calls=[],listeners=new Set();let selected=old?'Tisya':'Other';
@@ -14,3 +14,11 @@ test('missing preset installs and selects Tisya without a credential/model chang
 test('same version is a no-op preserving edited text, order, disabled slots and unsaved native edits',async()=>{const p=createRuntimePreset('writer');p.prompts[1].content='custom';p.prompt_order[0].order.reverse();p.prompts[3].enabled=false;const f=fixture(p);const r=await ensureInstalledPreset(f);assert.equal(r.status,'current');assert.equal(f.calls.length,0);assert.deepEqual(readInstalledPreset(f.context),p);f.context.chatCompletionSettings.prompts=structuredClone(p.prompts);f.context.chatCompletionSettings.prompts[1].content='unsaved';assert.equal(readInstalledPreset(f.context).prompts[1].content,'unsaved');});
 test('version upgrade first preserves the full old preset including unsaved prompt edits; parameter zero survives',async()=>{const old=createRuntimePreset('writer');old.extensions.tisya.version='old';old.temperature=0;old.custom_url='OLD_CONNECTION';const f=fixture(old);f.context.chatCompletionSettings.prompts=structuredClone(old.prompts);f.context.chatCompletionSettings.prompts[1].content='待保存的修改';const r=await ensureInstalledPreset(f);assert.equal(r.status,'updated');assert.equal(f.calls[0].name,r.backup);assert.equal(f.disk.get(r.backup).prompts[1].content,'待保存的修改');assert.equal(f.disk.get('Tisya').temperature,0);assert(!('custom_url' in f.disk.get('Tisya')));assert.equal(f.context.chatCompletionSettings.custom_url,'PRIVATE_URL');});
 test('failed backup cannot overwrite the old version; failed target save keeps backup and exposes failure',async()=>{for(const backupFails of [true,false]){const p=createRuntimePreset('writer');p.extensions.tisya.version='old';const f=fixture(p);f.manager.fail=name=>backupFails?name!=='Tisya':name==='Tisya';await assert.rejects(ensureInstalledPreset(f),/disk write failed/);assert.deepEqual(f.disk.get('Tisya'),p);assert.equal(f.disk.size,backupFails?1:2);assert.equal(f.listeners.size,0);}});
+test('visible preset status reads the actual installed version and selection without exposing credentials',async()=>{
+ const f=fixture();assert.equal(inspectInstalledPreset(f.context).status,'missing');
+ await ensureInstalledPreset(f);let status=inspectInstalledPreset(f.context);assert.equal(status.status,'current');assert.equal(status.selectedName,'Tisya');
+ f.manager.getSelectedPresetName=()=> 'Other';assert.equal(inspectInstalledPreset(f.context).selectedName,'Other');
+ f.cache.get('Tisya').extensions.tisya.version='old';assert.equal(inspectInstalledPreset(f.context).status,'outdated');
+ f.cache.delete('Tisya');assert.equal(inspectInstalledPreset(f.context).status,'missing');
+ assert(!JSON.stringify(status).includes('PRIVATE_'));assert.equal(inspectInstalledPreset({}).status,'unavailable');
+});

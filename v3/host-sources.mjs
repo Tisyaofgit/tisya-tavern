@@ -1,4 +1,4 @@
-import {sha256Utf16,extractNumberedBody,projectRetained,prepareCommit} from './host-runtime.mjs';
+import {sha256Utf16,projectRetained,prepareCommit} from './host-runtime.mjs';
 import {parseV3Reply} from './reply.mjs';
 import {openingMaterial,nativeCardMaterial} from './host-materials.mjs';
 import {readTurnDirection} from '../communication.js';
@@ -26,11 +26,28 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
   if(message.is_user){const turnDirection=readTurnDirection(message);return {role:'user',floor,identity,key:`user:${identity.messageId}:${fullHash}`,fullHash,text:String(message.mes??''),turnDirection,directionKey:turnDirection?`direction:${identity.messageId}:${await sha256Utf16(turnDirection)}`:null};}
   const output=meta().outputs[identity.messageId+':'+fullHash];
   const historical=!output&&!/<think\b[^>]*\bphase\s*=/i.test(message.mes);
-  if(!historical)parseV3Reply(message.mes);
-  const body=historical?String(message.mes):extractNumberedBody(message.mes),bodyHash=await sha256Utf16(body),entryId=await system.originals.entryIdFor(identity);
+  // Browsing only computes source identities. Validation and original writes
+  // belong to a requested generation/import or an explicit source mutation.
+  const bodies=historical?[]:[...String(message.mes).matchAll(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/gi)];
+  const body=historical?String(message.mes):bodies.length===1?bodies[0][1]:String(message.mes),bodyHash=await sha256Utf16(body),entryId=await system.originals.entryIdFor(identity);
   let prior;try{prior=await system.originals.metadata({entryId,scope:{chatId:identity.chatId,branchId:identity.branchId},includeDeleted:true});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}
   const revision=prior&&!prior.deleted&&prior.hash===bodyHash?prior.sourceRevision:`host:${fullHash}`;
-  const item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,historical,enableNativeBridge:configuration().nativeBridge===true&&!historical});
+  if(!read){
+   const unchanged=prior&&!prior.deleted&&prior.hash===bodyHash&&prior.format===(historical?'historical':'numbered');
+   const sourceRevision=(prior?.revision??0)+(unchanged?0:1);
+   return {role:'assistant',floor,identity,key:`original:${entryId}:${sourceRevision}`,fullHash,entryId,
+    reference:unchanged?{entryId,revision:prior.revision,hash:prior.hash,paragraphs:[]}:null,
+    requestKey:output?.requestKey??null,time:storyTime(message.mes)};
+  }
+  let item;
+  try{
+   if(!historical)parseV3Reply(message.mes);
+   item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,historical,enableNativeBridge:configuration().nativeBridge===true&&!historical});
+  }catch(error){
+   error.floor=floor;
+   error.message=`聊天第 ${floor+1} 条（楼层 ${floor}）无法作为本轮原文：${error.code==='HISTORY_CONTROL_BLOCK'?'旧回复含有未配对的控制标签':error.message}。原聊天未修改。`;
+   throw error;
+  }
   item.storyTime=storyTime(message.mes);
   return {role:'assistant',floor,identity,key:item.archiveSource.key,fullHash,entryId:item.originalReference.entryId,reference:item.originalReference,requestKey:output?.requestKey??null,time:storyTime(message.mes),...(read?{item}:{})};
  }
@@ -92,7 +109,7 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
   if(!deleted.length&&!changed.length)return null;
   const first=[...deleted,...changed].sort((a,b)=>a.floor-b.floor)[0];return {fromFloor:first.floor,identity:first.identity,deleted,changed};
  }
- return {build,invalidate,recordOutput,scan,refresh,detectChange,activeKeys:()=>[...meta().active],current:()=>clone(current),metadata:meta};
+ return {build,invalidate,recordOutput,scan,refresh,detectChange,materialize:floor=>floor===0&&openingMaterial(getContext())?null:sourceRecord(floor,{read:true}),activeKeys:()=>[...meta().active],current:()=>clone(current),metadata:meta};
 }
 function storyTime(message){const title=String(message).match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];const time=title?.trim().split('|')[1]?.trim();return calendarTime(time)!==null?time:null;}
 function worldWindowFor(view,rows,sources,config){

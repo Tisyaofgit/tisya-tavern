@@ -6,7 +6,29 @@ import {mountWorkbench} from '../../../v3/workbench.mjs';
 import {CAPABILITIES} from '../../../v3/capabilities.mjs';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey} from '../../../config/core.js';
 import {projectRetained} from '../../../v3/host-runtime.mjs';
+import {createRuntimePreset} from '../../../v3/preset-template.mjs';
 const tick=()=>new Promise(r=>setTimeout(r,0));
+test('opening the real workbench with no import task leaves legacy originals untouched and displays preset status',async()=>{
+ const h=await createInstallerHarness({mvu:false});h.api.dispose();h.ctx.chat[2].mes='</think><body>她走进房间。</body>';
+ Object.assign(h.ctx,{chatId:'fixture',characterId:0,characters:[{avatar:'card.png',name:'阿绫'}],extensionSettings:{}});
+ const config=emptyConfig();config.worlds[worldKey(h.ctx)]=defaultWorld();h.ctx.extensionSettings[KEY]=config;
+ const store=createStore({getContext:()=>h.ctx,persist:async()=>true});
+ const configHost={runtimePresetFor:stage=>createRuntimePreset(stage),resolveConnectionFor:async()=>({settings:{},model:'fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async()=>{throw Error('Browsing must not call a model');}};
+ const runtime={pluginVersion:'fixture-version',preset:{status:'current',version:'preset-version',requiredVersion:'preset-version',selectedName:'Other',installation:{status:'updated',backup:'Tisya backup fixture'}}};
+ const app=await createApplication({target:h.target,getContext:()=>h.ctx,store,configHost,books:h.books,native:h.native,worldbookScan:false,onError:e=>h.errors.push(e),readConfiguration:()=>h.config,runtimeStatus:()=>runtime});
+ const win=new Window({url:'http://localhost/'}),view=mountWorkbench(win.document,win.document.body,{capabilities:app.capabilities,stylesheetURL:'http://localhost/workbench.css'});
+ try{
+  await view.ready;const s=await app.getSession();
+  assert.equal(!!view.shadow.querySelector('[role=alert]'),false);
+  assert.deepEqual(await s.system.originals.listMetadata({scope:s.scope}),[]);
+  assert.match(view.shadow.textContent,/主预设 Tisya · 版本一致/);assert.match(view.shadow.textContent,/fixture-version/);assert.match(view.shadow.textContent,/当前原生预设：Other/);assert.match(view.shadow.textContent,/Tisya backup fixture/);
+  for(const page of ['settings','review','archives','home'])await view.navigate(page);
+  assert.equal(!!view.shadow.querySelector('[role=alert]'),false);assert.deepEqual(await s.system.originals.listMetadata({scope:s.scope}),[]);assert.equal(h.requests.length,0);assert.equal(h.errors.length,0);
+  runtime.preset.status='missing';runtime.preset.version=null;
+  await [...view.shadow.querySelectorAll('button')].find(b=>b.textContent==='重新检查版本').onclick();await view.settled();
+  assert.match(view.shadow.textContent,/主预设 Tisya · 尚未安装/);
+ }finally{view.dispose();app.dispose();await win.happyDOM.abort();}
+});
 test('production application capability chain drives real archive, configuration and separate chat through shared UI',async()=>{
  const initial={id:'person',table:'objects',rev:1,values:{名称:'阿绫',类型:'character',描述:'修理铺的店主'},access:{readers:[],knowers:[]},lockedFields:[]};
  const h=await createInstallerHarness({mvu:false,initialRows:[initial],provider:({stage})=>{assert.equal(stage,'companion');return '嗯？你要干什么呀。';}});h.api.dispose();Object.assign(h.ctx.eventTypes,{WORLDINFO_ENTRIES_LOADED:'worldinfo_entries_loaded',WORLDINFO_SCAN_DONE:'worldinfo_scan_done'});

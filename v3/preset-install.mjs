@@ -8,6 +8,19 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 // selection remain with the host connection manager.
 const parameters=['temperature','frequency_penalty','presence_penalty','top_p','top_k','top_a','min_p','repetition_penalty','openai_max_context','openai_max_tokens','max_context_unlocked','stream_openai','seed','reasoning_effort','verbosity','custom_prompt_post_processing'];
 export function portablePresetParameters(value={}){return Object.fromEntries(parameters.filter(k=>Object.hasOwn(value,k)).map(k=>[k,clone(value[k])]));}
+/** Read current host state; an earlier installation receipt is not proof that
+ * the preset still exists or remains selected. Never return connection data. */
+export function inspectInstalledPreset(context){
+ const base={name:'Tisya',requiredVersion:TISYA_PRESET_VERSION};
+ try{
+  const manager=context.getPresetManager?.('openai');
+  if(!manager)throw Error('宿主预设管理器尚未就绪');
+  const selectedName=manager.getSelectedPresetName(),exists=manager.getAllPresets().includes('Tisya');
+  if(!exists)return {...base,status:'missing',version:null,selectedName};
+  const version=manager.getCompletionPresetByName('Tisya')?.extensions?.tisya?.version??null;
+  return {...base,status:version===TISYA_PRESET_VERSION?'current':'outdated',version,selectedName};
+ }catch(error){return {...base,status:'unavailable',error:error.message??String(error)};}
+}
 export function readInstalledPreset(context){
  const manager=context.getPresetManager?.('openai');
  if(!manager?.getAllPresets().includes('Tisya'))fail('缺少 Tisya，请重新载入插件以自动安装');

@@ -6,7 +6,7 @@ const aliases={手记:'notes',记忆:'notes',通信:'role-library',主题:'displ
 
 const groupOwner=destination=>({'drawer:persona-management-button':'user-identity',contacts:'role-library','role-detail':'role-library',groups:'group-library',chat:'input-tools',home:'role-library',phone:'assistant'}[destination]??destination);
 
-export function createCapabilities({routes={},dynamicRoutes=()=>[],capabilityState=()=>({}),progress,review,assistant,books,archives,conditions,journey,tags,getBinding=()=>null}={}){
+export function createCapabilities({routes={},dynamicRoutes=()=>[],capabilityState=()=>({}),runtimeStatus=()=>null,progress,review,assistant,books,archives,conditions,journey,tags,getBinding=()=>null}={}){
  const listeners=new Set();
  const extras=()=>dynamicRoutes().filter((row,index,rows)=>row?.id&&typeof row.run==='function'&&!CAPABILITIES.some(base=>base.id===row.id)&&rows.findIndex(x=>x.id===row.id)===index);
  const route=id=>routes[id]??extras().find(row=>row.id===id)?.run;
@@ -53,7 +53,7 @@ export function createCapabilities({routes={},dynamicRoutes=()=>[],capabilitySta
   try{scoped=review?await review.list(p?.requestKey?{requestKey:p.requestKey}:{}):[];preferences=review&&p?.requestKey?await review.list({category:'preferences'}):scoped.filter(i=>i.category==='preferences');}catch(e){issue={code:e.code??'READ_FAILED',message:e.message??String(e)};}
   const items=[...scoped.filter(i=>i.category!=='preferences'),...new Map(preferences.filter(i=>i.status!=='superseded').map(i=>[i.id,i])).values()],binding=copy(getBinding());check(initial===null||JSON.stringify(initial)===JSON.stringify(binding),'读取档案期间会话已切换');
   try{bookState=books?await books.binding():null;}catch(e){issue??={code:e.code??'READ_FAILED',message:e.message??String(e)};}
-  const result={binding,capabilities:list(),progress:p,review:{items},books:bookState,assistant:assistant?.availability()??{config:false,chat:false},...(issue?{issue}:{})};check(JSON.stringify(binding)===JSON.stringify(getBinding()),'读取页面期间会话已切换');return result;
+  const result={binding,runtime:copy(runtimeStatus()),capabilities:list(),progress:p,review:{items},books:bookState,assistant:assistant?.availability()??{config:false,chat:false},...(issue?{issue}:{})};check(JSON.stringify(binding)===JSON.stringify(getBinding()),'读取页面期间会话已切换');return result;
  }
 
  async function emit(){const snapshot=await getSnapshot();for(const fn of listeners)try{fn(copy(snapshot));}catch{}return snapshot;}
