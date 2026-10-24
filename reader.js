@@ -4,10 +4,13 @@ import {createDisplayCache} from './display-cache.js';
 import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
-import {mountHeartBlock,replyControlsCSS} from './reply-details.js';
+import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
-import {countBody} from './reader-core.js';
+import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-core.js';
+import {usesV3Reply} from './reply-protocol.js';
+import {displayReplySource} from './display-repair.js';
+import {readJourney} from './reply-records.js';
 import {inspectV3Message,isV3ReplyCandidate,readV3Paragraphs} from './v3/reply.mjs';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
@@ -36,7 +39,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(!localCache)localCache=createMessageCache(window,{version:'reader-v3-six-block-1',onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-v3-with-legacy-read-2',onError});
  return localCache;
 }
 export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}
@@ -58,10 +61,22 @@ export async function prepareReaderMessage(identity,options={}){
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
 }
 function inspectUncached(source,options) {
- if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
- if(isV3ReplyCandidate(source))return inspectV3Message(source);
- const body={value:source,count:attempt(()=>countBody(source,'字')),paragraphs:attempt(()=>readV3Paragraphs(source,{required:false}))};
- return {structured:false,body,journey:{value:null},actions:{value:[]}};
+    if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
+    if(usesV3Reply(source))return inspectV3Message(source);
+    const structured=isReplyMessage(source)||candidate(source);
+    const body=structured?attempt(()=>extractXMLBody(displayReplySource(source))):{value:source};
+    if(Object.hasOwn(body,'value')) {
+        body.count=attempt(()=>countBody(body.value,'字'));
+        body.paragraphs=attempt(()=>readParagraphs(body.value));
+    }
+    if(!structured)return {structured:false,body,journey:{value:null},actions:{value:[]}};
+    const journey=attempt(()=>readJourney(source,options));
+    const actions=attempt(()=>{
+        const envelope=readPublicReplyEnvelope(source),next=readReplyBlock(envelope,'next');
+        if(!Array.isArray(next?.actions)||next.actions.some(row=>!row||typeof row.text!=='string'||!row.text.trim()||typeof row.type!=='string'||typeof row.source!=='string'))throw Object.assign(Error(),{code:'TISYA_READER_ACTIONS_INVALID'});
+        return next.actions.map(({text,type})=>({text,type}));
+    });
+    return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
 export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,saveDisplayPreference,getJourney,getJourneyTimeline,getJourneyAnchor,setJourneyFocus,onJourneySource,onError=()=>{}}) {
@@ -105,7 +120,38 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
             panel.append(text);
         } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
     }
+    function renderLegacyJourney(){
+        if(data.journey.error){failure(panel,'回合记录',data.journey.error);return;}
+        const view=data.journey.value;
+        if(view?.recordSource==='forms'){panel.append(note(formJourneyText));return;}
+        panel.append(note('记录对应所选消息这一回合。'));
+        for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
+        const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}
+        if(!view||!view.memories.length&&!view.characters.some(c=>c.cognition.length||c.psychology.length)&&!view.player&&!view.changes.length){panel.append(note(journeyEmptyText));return;}
+        for(const memory of view.memories){
+            const card=make('article',null,'tisya-reader-card');scene(card,memory.scene);
+            field(card,'在场',memory.participants.join('、'));if(memory.summary)card.append(make('p',memory.summary));
+            if(memory.quote){const details=make('details'),summary=make('summary','原文 · '+memory.quote.reference);details.append(summary,make('blockquote',memory.quote.text));card.append(details);}
+            if(memory.results.length){const list=make('ul');memory.results.forEach(result=>list.append(make('li',result)));card.append(list);}
+            field(card,'影响',memory.impact);if(memory.tags.length)card.append(note(memory.tags.join(' · ')));panel.append(card);
+        }
+        for(const character of [...(view.player?[view.player]:[]),...view.characters]){
+            if(!character.cognition.length&&!character.psychology.length)continue;
+            const card=make('article',null,'tisya-reader-card');card.append(make('h3',character.name));
+            for(const record of character.cognition){card.append(make('p',record.content));field(card,record.certainty||'来源',record.source);}
+            for(const record of character.psychology){field(card,'内心',record.content);field(card,'依据',record.evidence);}
+            panel.append(card);
+        }
+        if(view.changes.length){panel.append(make('h3','本回合变动'));for(const change of view.changes){
+            const card=make('article',null,'tisya-reader-card');card.append(make('h4',`${change.object} · ${change.field}`),note(change.kind==='setting'?'设定变动':'状态变动'));
+            if(change.hasOldValue)field(card,'此前',valueText(change.oldValue));
+            if(change.deleted)card.append(make('p','已移除'));
+            else if(change.hasNewValue)field(card,'此后',valueText(change.newValue));
+            field(card,'原因',change.reason);panel.append(card);
+        }}
+    }
     function renderJourney(){
+        if(!data.v3&&typeof getJourney!=='function')return renderLegacyJourney();
         journeyRelease();journeyRelease=()=>{};
         if(!journeyStarted){journeyStarted=true;archive.load({showPsychology:getDisplay().显示角色心理===true});}
         if(archive.error){panel.append(note(archive.error.message));return;}
@@ -124,7 +170,7 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         panel.setAttribute('aria-label',buttons.get(key).textContent);
         if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {
           if(data.details?.error)failure(panel,'创作与心声',data.details.error);
-          else if(data.details?.value){const value=data.details.value;
+          else if(data.details?.value){const value=data.details.value;if(!data.v3)mountAuditBlock(document,panel,value.audit);
             const group=(title,rows)=>{if(!rows.length)return;const section=make('section');section.append(make('h3',title));for(const row of rows){const item=make('div');if(row.label)item.append(make('strong',row.label));if(row.status)item.append(make('small',row.status));item.append(make('p',row.text));section.append(item);}panel.append(section);};
             group('创作摘要',value.rounds.tasks);mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});
             group('本轮落点',value.audit.map(a=>({label:a.kind,text:a.evidence,...a.status==='留白'?{status:'留白'}:{}})));

@@ -11,7 +11,7 @@ const now=()=>new Date().toISOString();
 export function readCompanionReplies(output,expected=[]){return companionSlots(parseV3Reply(output),expected).map(({id,answer})=>({id,answer}));}
 
 /** Chat metadata is the sole owner of companion conversation and pending sends. */
-export function createCompanionService({getContext,getScope,persist,readMode,writeMode,request,assertIdle=()=>{},getSavedReply=async()=>null,onChange=()=>{}}={}){
+export function createCompanionService({getContext,getScope,persist,readMode,writeMode,request,assertIdle=()=>{},getSavedReply=async()=>null,executeCommand=null,onChange=()=>{}}={}){
  for(const [name,fn]of Object.entries({getContext,getScope,persist,readMode,writeMode,request,getSavedReply}))check(typeof fn==='function','COMPANION_DEPENDENCY','小缇聊天缺少'+name);
  let tail=Promise.resolve(),active=null,disposed=false;const listeners=new Set(),storyRuns=new Set();
  const serial=work=>{const job=tail.catch(()=>{}).then(work);tail=job.catch(()=>{});return job;};
@@ -33,7 +33,11 @@ export function createCompanionService({getContext,getScope,persist,readMode,wri
    await serial(async()=>{await guard(c);const data=state(c),current=data.messages.find(m=>m.id===row.id);check(current?.status==='sending','COMPANION_CONFLICT','小缇消息状态已变化');Object.assign(current,{status:'sent',answer:answer.trim(),completedAt:now(),error:null});await save(c,data);});return {id:row.id,answer:answer.trim(),source:'api',mode:'independent'};
   }catch(error){if(run.c&&run.id)await serial(async()=>{try{await guard(run.c);const data=state(run.c),row=data.messages.find(m=>m.id===run.id);if(row?.status==='sending'){row.status=controller.signal.aborted?'cancelled':'failed';row.error=error.message;await save(run.c,data);}}catch{}});throw error;}finally{if(active===run)active=null;notify();}
  }
- async function sendMessage(text,options={}){return mode()==='with-story'?queueWithStory(text):sendIndependent(text,options);}
+ async function sendMessage(text,options={}){
+  if(executeCommand){assertIdle();check(!active&&!storyRuns.size,'COMPANION_BUSY','请先完成正在进行的小缇消息或剧情');const result=await executeCommand(clean(text));if(result){
+   return serial(async()=>{const c=await capture(),data=state(c),row={id:crypto.randomUUID(),text:clean(text),answer:result.answer,mode:'independent',status:'sent',source:'command',createdAt:now(),completedAt:now()};data.messages.push(row);await save(c,data);return {id:row.id,answer:row.answer,source:'command',mode:'independent'};});
+  }}
+  return mode()==='with-story'?queueWithStory(text):sendIndependent(text,options);}
  async function withdrawQueued(id){assertIdle();return serial(async()=>{const c=await capture(),data=state(c),row=data.messages.find(m=>m.id===id);check(row?.mode==='with-story'&&['queued','interrupted'].includes(row.status),'COMPANION_WITHDRAW','消息已发送或正在发送');row.status='withdrawn';row.completedAt=now();await save(c,data);return copy(row);});}
  async function retryMessage(id){assertIdle();const c=await capture(),row=state(c).messages.find(m=>m.id===id);check(row,'COMPANION_MISSING','小缇消息不存在');if(row.mode==='independent')return sendIndependent(row.text,{retryId:id});return serial(async()=>{await guard(c);if(await reconcile(c,row.requestKey))return {reused:true};const data=state(c),fresh=data.messages.find(m=>m.id===id);check(['failed','cancelled','interrupted'].includes(fresh.status),'COMPANION_RETRY','该消息不能重试');fresh.status='queued';delete fresh.requestKey;fresh.error=null;await save(c,data);return copy(fresh);});}
  async function captureStory({requestKey,generationType}){return serial(async()=>{const c=await capture();if(await reconcile(c,requestKey))return null;const data=state(c),sameRequest=data.messages.filter(m=>m.mode==='with-story'&&m.requestKey===requestKey&&['sending','interrupted'].includes(m.status));const selected=sameRequest.length?sameRequest:generationType==='normal'?data.messages.filter(m=>m.mode==='with-story'&&m.status==='queued').slice(0,4):[];if(!selected.length)return null;for(const row of selected){row.status='sending';row.requestKey=requestKey;row.error=null;}await save(c,data);storyRuns.add(requestKey);return {schema:'tisya.companion-batch/1',requestKey,scope:c.scope,requests:selected.map(({id,text})=>({id,text}))};});}

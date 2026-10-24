@@ -232,6 +232,7 @@ function v3Routes(){const routes={};
 async function installV3(){
  if(v3Application)return v3Application;if(v3Installing)return v3Installing;
  v3Installing=(async()=>{
+  await configHost.ensureRuntimePresets();
   v3BookHost=await createNativeBookHost({target:window,getContext:context,getHost:()=>v3Application?.host,getPlayerId:()=>user_avatar,
    assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');},
    readConfiguration:()=>{const data=configStore.cacheSnapshot()??emptyConfig(),key=worldKey(context()),world=configuredWorld(data,key);return resolveRuntimeConfiguration({snapshot:{data,key,world,revision:JSON.stringify(data)},target:window,context:context(),playerId:user_avatar});},
@@ -242,7 +243,7 @@ async function installV3(){
    onApplied:()=>{if(v3Application&&!v3Application.host.busy())v3Application.configurationChanged();}});
   try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['GLOBAL_UNBOUND','UNBOUND','HOST_OWNER','CHAT_IDENTITY','CHAT_UNAVAILABLE','CHAT_REQUIRED','CONFIGURATION_NOT_READY'].includes(err.code))error(err);}
   v3Application=await createApplication({target:window,getContext:context,store:configStore,configHost,books:v3BookHost.manager,readWorldbook:(...args)=>v3BookHost.callbacks.transport.readFresh(...args),communication,getPlayerId:()=>user_avatar,
-   configurationBook:v3ConfigurationBook,
+   configurationBook:v3ConfigurationBook,identityService,
    interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},getChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),
    routes:v3Routes(),onSaved:()=>{appearance?.refresh();decorate();},onError:error,moods:()=>emotionCatalog(document).names(),
    assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');}});

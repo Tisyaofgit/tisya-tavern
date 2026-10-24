@@ -264,7 +264,7 @@ function focusAgenda(input,rows){
   return {id,dossier:object?.table==='objects'?{rowId:id,status:committed.has(id)?'committed':'definition'}:null,relatedRows:related.map(row=>({id:row.id,table:row.table,status:committed.has(row.id)?'committed':'definition'})),presence:onstage.has(id)?'onstage':offstage.has(id)||hasSceneRoster&&object?.table==='objects'?'offstage':'unknown',gaps:[...(!object||object.table!=='objects'?['object dossier unavailable']:[]),...(!related.some(row=>['state','cognition','activities','tasks','events'].includes(row.table))?['current dynamics require source confirmation']:[])]};
  });
 }
-function injectNativeMaterial(messages,card,history){
+function injectNativeMaterial(messages,card,history,includeEmpty=false){
  const native=card.nativeWorldInfo??{},parts={before:[],after:[],exampleBefore:[],exampleAfter:[],anBefore:[],anAfter:[]},depth=[];
  const strings=(value,name)=>{assert(value===undefined||Array.isArray(value)&&value.every(x=>typeof x==='string'),'Invalid native '+name);return value??[];};
  for(const key of ['before','after','anBefore','anAfter'])parts[key].push(...strings(native[key],key));
@@ -293,19 +293,24 @@ function injectNativeMaterial(messages,card,history){
  else assert(!parts.anBefore.length&&!parts.anAfter.length,'Native AN material requires an actual author-note position anchor');
  const timeline=[];for(let i=0;i<=conversation.length;i++){timeline.push(...(atDepth.get(i)??[]));if(i<conversation.length)timeline.push(conversation[i]);}
  const result=[];
+ const group=(identifier,items)=>{if(includeEmpty)result.push({identifier,role:'system',content:''},...items.map(m=>({...m,templateAnchor:identifier})));else result.push(...items);};
  for(const message of messages){
-  if(message.identifier==='tisya_material_task_material')result.push(...beforeStory,...parts.before.map(x=>make(x,'before')));
-  if(message.identifier==='chatHistory')result.push(...parts.exampleBefore.map(x=>make(x,'example-before')),...examples.map(x=>make(x,'example')),...parts.exampleAfter.map(x=>make(x,'example-after')),...timeline);
+  if(message.identifier==='tisya_material_task_material'){group('tisya_author_note_before',beforeStory);group('worldInfoBefore',parts.before.map(x=>make(x,'before')));}
+  if(message.identifier==='chatHistory'){
+   group('dialogueExamples',[...parts.exampleBefore.map(x=>make(x,'example-before')),...examples.map(x=>make(x,'example')),...parts.exampleAfter.map(x=>make(x,'example-after'))]);
+   const currentIndex=timeline.findIndex(m=>m===current);group('chatHistory',timeline.slice(0,currentIndex));result.push(current);group('tisya_after_current',timeline.slice(currentIndex+1));
+  }
   else if(message.identifier!=='chatHistory／当前user')result.push(message);
-  if(message.identifier==='tisya_material_current_state')result.push(...parts.after.map(x=>make(x,'after')),...afterStory);
+  if(message.identifier==='tisya_material_current_state'){group('worldInfoAfter',parts.after.map(x=>make(x,'after')));group('tisya_author_note_after',afterStory);}
  }
- return result.filter(message=>message.content);
+ return includeEmpty?result:result.filter(message=>message.content);
 }
 
-export function compileFullNarrative({snapshot,configurationSnapshot,settings,nativecontext,currentUser,history=[],card={},moods}={}){
+export function compileFullNarrative({snapshot,configurationSnapshot,settings,nativecontext,currentUser,history=[],card={},moods,includeEmpty=false}={}){
  assert(snapshot&&Array.isArray(snapshot.rows)&&snapshot.scope&&snapshot.creativeBrief,'Actual V3 writer snapshot is required');
  assert(typeof currentUser==='string','currentUser must be the exact supplied input');
  const c=context({configurationSnapshot,settings,nativecontext,moods}),entries=clone(W22_ENTRIES),out=Object.fromEntries(entries.map(e=>[e.identifier,e.content]));
+ entries.splice(entries.findIndex(e=>e.identifier==='tisya_material_lorebook')+1,0,{identifier:'tisya_material_character_card',role:'system',content:''},{identifier:'tisya_material_user_identity',role:'system',content:''});
  const rows=snapshot.rows.filter(r=>r.table!=='preferences'&&r.table!=='native_cells').map(cleanRow),by=t=>rows.filter(r=>t.includes(r.table));
  const definitions=definitionMaterials(snapshot,snapshot.rows);
  const focus=focusAgenda(snapshot,snapshot.rows);
@@ -313,6 +318,7 @@ export function compileFullNarrative({snapshot,configurationSnapshot,settings,na
  out.tisya_material_task_material=data('Worldview',by(['facts']).filter(r=>r.values.世界设定!==undefined))+data('SelectedDefinitions',definitions.selected)+data('DefinitionConflicts',definitions.conflicts);
  out.tisya_material_environment=data('Environment',by(['scene']).length?{ToNarrate:by(['scene'])}:undefined);
  out.tisya_material_gameplay=data('GameplayKnowledge',snapshot.gameplayKnowledge);
+ out.tisya_material_character_card=data('CharacterCard',card.nativeCharacter);out.tisya_material_user_identity=data('UserPersona',card.nativePersona);
  out.tisya_material_lorebook=data('ExtraLore',card.lore??[])+data('CardSupplement',card.supplements??[]);
  out.tisya_material_current_state=data('ObjectDossiers',dossiers(rows,snapshot))+data('NativeState',snapshot.nativeValues?.map(v=>({path:v.path,value:v.value})))+data('PlayerBinding',snapshot.playerBinding??snapshot.playerObjects);
  out.tisya_material_memory_archive=data('History',by(['events']));
@@ -320,11 +326,11 @@ export function compileFullNarrative({snapshot,configurationSnapshot,settings,na
  out.tisya_material_foreshadow=data('Foreshadow',by(['clues']));
  out.tisya_material_tool_result=data('Tools',actualToolReceipts(snapshot.toolReceipts));
  out.tisya_material_card_extensions=data('CardOutput',card.output??[]);
- out.chatHistory=data('RecentSummaries',validatedHistory(history));out['chatHistory／当前user']=currentUser;
+ out.chatHistory='';out['chatHistory／当前user']=currentUser;
  out.tisya_registry=output(c,focus);out.tisya_inner_chain=guide(c);
  out.tisya_task_start=out.tisya_task_start.replace('Run after MATERIALS/REGISTRY and before INNER.LOGIN.','Consume the validated V3 snapshot and actual archive-query receipts. The preflight result has already been applied; new prose begins from its effective endpoint. Run after MATERIALS/REGISTRY and before INNER.LOGIN.').replace('• Forms → enabled stages\' registered projections; persistence → independent form writers.','• Forms → the supplied committed snapshot; current-turn scope and creativeBrief → NarrativeAgenda.CurrentTurn; activePool references → NarrativeAgenda.MaterialPool. NativeState contains actual readback values. Persistence is owned by the host and the next preflight.');
  out.tisya_task_start+='\n'+DEFINITION_RULE;
- const messages=injectNativeMaterial(entries.map(e=>({role:e.role==='original roles'?'system':e.role,content:out[e.identifier],identifier:e.identifier})),card,history);
+ const messages=injectNativeMaterial(entries.map(e=>({role:e.role==='original roles'?'system':e.role,content:out[e.identifier],identifier:e.identifier})),card,history,includeEmpty);
  assert(messages.every(e=>!e.content.includes('«')),'Unfilled material placeholder');
  return messages;
 }
@@ -363,7 +369,7 @@ function preflightPreferenceRules(c){
  if(c.world.switches?.boundary?.trim())lines.push(c.world.switches.boundary.trim());
  return lines.join('\n');
 }
-export function compileFullPreflight({input,configurationSnapshot,settings,nativecontext}={}){
+export function compileFullPreflight({input,configurationSnapshot,settings,nativecontext,includeEmpty=false}={}){
  assert(input?.view?.rows&&typeof input.requestKey==='string'&&Array.isArray(input.archiveSources),'Actual prepared preflight input required');
  const c=context({configurationSnapshot,settings,nativecontext}),entries=clone(V2_ENTRIES),out=Object.fromEntries(entries.map(e=>[e.identifier,e.content]));
  const source={currentUser:input.currentUser??'',archiveSources:clone(input.archiveSources),preferenceSources:clone(input.preferenceSources??[])};
@@ -377,7 +383,7 @@ export function compileFullPreflight({input,configurationSnapshot,settings,nativ
  out.tisya_material_memory_archive=data('TISYA.DATA.ARCHIVE',input.latestTemporary===undefined?undefined:{latestTemporary:input.latestTemporary});
  out.tisya_material_tool_result=data('TISYA.DATA.TOOLS',input.toolReceipts);
  out.tisya_registry=fullPreflightRules();out.tisya_think_commit=out.tisya_think_commit.replace(', and an explicitly supplied undefined value as 〈缺失〉','');
- const messages=entries.map(e=>({role:e.role,content:out[e.identifier],identifier:e.identifier})).filter(e=>e.content);
+ const messages=entries.map(e=>({role:e.role,content:out[e.identifier],identifier:e.identifier})).filter(e=>includeEmpty||e.content);
  assert(messages.every(e=>!e.content.includes('«')),'Unfilled preflight placeholder');return messages;
 }
 

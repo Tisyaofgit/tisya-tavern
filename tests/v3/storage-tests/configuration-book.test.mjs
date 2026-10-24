@@ -1,3 +1,4 @@
+import {GLOBAL_WORLD} from '../../../v3/configuration-scope.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setup} from './fixture.mjs';
@@ -22,7 +23,7 @@ test('core configuration is private, versioned, separate from manifest and P, pr
  const x=await serviceFixture(),doc=x.f.docs.get(x.core.physicalName);doc.native={keep:1};doc.entries[99]={uid:99,content:'ordinary lore'};
  const state=await x.service.hydrate({initializeIfMissing:true});assert.equal(state.revision,1);assert.equal(x.store.read().world.switches.difficulty,'细致');
  const saved=x.f.docs.get(x.core.physicalName),wire=Object.values(saved.entries).find(e=>e.extensions?.tisyaConfiguration);assert.ok(wire);assert.ok(isPrivateTisyaEntry(wire));assert.equal(wire.disable,true);assert.equal(wire.constant,false);assert.equal(wire.probability,0);assert.equal(saved.entries[99].content,'ordinary lore');assert.deepEqual(saved.native,{keep:1});
- const r=x.store.read();r.data.worlds[r.key].modes.narrative.缇斯亚聊天模式='with-story';await x.store.save(r.data,r.revision,r.key);assert.equal(x.service.read().revision,2);assert.equal((await x.f.manager.readConfiguration()).domains.configuration.worlds[(await x.f.manager.readConfiguration()).worldBindings[0].key].modes.narrative.缇斯亚聊天模式,'with-story');
+ const r=x.store.read();r.data.worlds[r.key].modes.narrative.缇斯亚聊天模式='with-story';await x.store.save(r.data,r.revision,r.key);assert.equal(x.service.read().revision,2);assert.equal((await x.f.manager.readConfiguration()).domains.configuration.worlds[GLOBAL_WORLD].modes.narrative.缇斯亚聊天模式,'with-story');
  assert.equal(Object.values(saved.entries).filter(e=>e.extensions?.tisyaTableLedger).length,0);
 });
 
@@ -51,13 +52,13 @@ test('restoring old revision needs a current preview and appends history instead
  await assert.rejects(x.service.restore({token:preview.token}),code('CONFIGURATION_PREVIEW'));
 });
 
-test('switching core leaves configuration in its registered owner bank; old bindings cannot write',async()=>{
+test('story core changes preserve global configuration; changing the global core invalidates old saves',async()=>{
  const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const old=x.service.read(),core2=await x.f.manager.create({kind:'core',name:'另一基点',operationId:'new-core'});await x.f.manager.select({core:{bookId:core2.id},expectedBindingRevision:0,operationId:'switch-core'});x.sync();
- await assert.rejects(x.service.saveDomain('interface',{联系人分组:{}},old),code('CONFIGURATION_BINDING'));x.service.discardDraft();await x.service.hydrate();assert.equal(x.service.read().bookId,x.core.id);assert.equal(x.service.read().binding.revision,1);assert.equal(x.store.read().world.switches.difficulty,'细致');
+ await x.service.saveDomain('interface',{联系人分组:{}},old);await x.service.hydrate();assert.equal(x.service.read().bookId,x.core.id);assert.equal(x.service.read().binding.revision,1);assert.equal(x.store.read().world.switches.difficulty,'细致');const beforeGlobalSwitch=x.service.read();await x.f.manager.selectGlobalCore({coreId:core2.id,expectedRevision:1,operationId:'global-switch'});await assert.rejects(x.service.saveDomain('interface',{联系人分组:{}},beforeGlobalSwitch),code('CONFIGURATION_BINDING'));
 });
 
-test('switching player creates isolated defaults and never imports previous player cache',async()=>{
- const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'player'});x.sync();await x.service.hydrate({initializeIfMissing:true});assert.equal(x.service.read().owner.id,'player-2');assert.equal(x.store.read().world.switches.difficulty,'常规');assert.equal(x.ui.value.动态效果,undefined);
+test('switching player retains shared configuration and interface while preference banks remain player-owned',async()=>{
+ const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'player'});x.sync();await x.service.hydrate({initializeIfMissing:true});assert.equal(x.service.read().owner.id,'tisya');assert.equal(x.store.read().world.switches.difficulty,'细致');assert.equal(x.ui.value.动态效果,false);assert.equal((await x.f.manager.binding()).binding.preference.owner.id,'player-2');
 });
 
 test('native secrets and invalid chat modes are rejected before durable mutation',async()=>{
@@ -66,25 +67,25 @@ test('native secrets and invalid chat modes are rejected before durable mutation
 });
 
 test('chat filename changes restore by stable archive identity and update key on next edit',async()=>{
- const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const oldKey=worldKey(x.ctx);x.ctx.chatId='renamed-file';await x.service.hydrate();const r=x.store.read();assert.notEqual(r.key,oldKey);assert.equal(r.world.switches.difficulty,'细致');await x.service.saveDomain('interface',{联系人分组:{renamed:'yes'}},x.service.read());const saved=await x.f.manager.readConfiguration();assert.equal(saved.worldBindings[0].key,JSON.stringify(['tisya-archive',x.archive.id,'player-1']));assert.equal(saved.domains.configuration.worlds[oldKey],undefined);
+ const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const oldKey=worldKey(x.ctx);x.ctx.chatId='renamed-file';await x.service.hydrate();const r=x.store.read();assert.notEqual(r.key,oldKey);assert.equal(r.world.switches.difficulty,'细致');await x.service.saveDomain('interface',{联系人分组:{renamed:'yes'}},x.service.read());const saved=await x.f.manager.readConfiguration();assert.deepEqual(saved.worldBindings,[]);assert.ok(saved.domains.configuration.worlds[GLOBAL_WORLD]);assert.equal(saved.domains.configuration.worlds[oldKey],undefined);
 });
 
 test('combined assistant configuration and interface save create one durable version',async()=>{
  const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const r=x.store.read();r.data.worlds[r.key].context.history=4;await x.service.saveCombined({configuration:r.data,interface:{联系人分组:{u:'友人'}},configurationRevision:r.revision,key:r.key},x.service.read());assert.equal(x.service.read().revision,2);assert.equal(x.store.read().world.context.history,4);assert.equal(x.ui.value.联系人分组.u,'友人');
 });
 
-test('a native fork copies its parent settings once into a stable independent archive key',async()=>{
+test('native forks share global settings without creating another configuration authority',async()=>{
  const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const original=x.service.read();const targetOwner={chatId:x.f.ctx.owner.chatId,branchId:'branch-child'};x.f.ctx={...x.f.ctx,owner:targetOwner,epoch:x.f.ctx.epoch+1};x.ctx.chatId='branch-file';
- const forked=await x.f.manager.fork({source:{archiveId:x.archive.id,bindingRevision:0},targetOwner,operationId:'branch'});x.sync();await x.service.hydrate();assert.equal(x.store.read().world.switches.difficulty,'细致');assert.equal(x.service.read().revision,2);
- const child=x.store.read();child.data.worlds[child.key].switches.difficulty='独立';await x.store.save(child.data,child.revision,child.key);const saved=await x.f.manager.readConfiguration();assert.equal(saved.worldBindings.length,2);const parent=saved.worldBindings.find(r=>r.archiveId===x.archive.id),branch=saved.worldBindings.find(r=>r.archiveId===forked.archive.id);assert.notEqual(parent.key,branch.key);assert.equal(saved.domains.configuration.worlds[parent.key].switches.difficulty,'细致');assert.equal(saved.domains.configuration.worlds[branch.key].switches.difficulty,'独立');assert.equal(original.owner.id,saved.owner.id);
+ const forked=await x.f.manager.fork({source:{archiveId:x.archive.id,bindingRevision:0},targetOwner,operationId:'branch'});x.sync();await x.service.hydrate();assert.equal(x.store.read().world.switches.difficulty,'细致');assert.equal(x.service.read().revision,1);
+ const child=x.store.read();child.data.worlds[child.key].switches.difficulty='独立';await x.store.save(child.data,child.revision,child.key);const saved=await x.f.manager.readConfiguration();assert.deepEqual(saved.worldBindings,[]);assert.notEqual(forked.archive.id,x.archive.id);assert.equal(saved.domains.configuration.worlds[GLOBAL_WORLD].switches.difficulty,'独立');assert.equal(original.owner.id,saved.owner.id);
 });
 
-test('account owner shares global settings but isolates world settings when the selected player changes',async()=>{
- const x=await serviceFixture();await x.f.manager.select({preferenceOwner:{kind:'account',id:'account-1'},expectedBindingRevision:0,operationId:'account'});x.sync();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'account',id:'account-1'},expectedBindingRevision:1,operationId:'account-player'});x.sync();await x.service.hydrate();assert.equal(x.store.read().world.switches.difficulty,'常规');assert.equal(x.service.read().worldBindings.length,2);assert.equal(x.service.read().owner.kind,'account');
+test('account preference ownership does not change the global configuration owner',async()=>{
+ const x=await serviceFixture();await x.f.manager.select({preferenceOwner:{kind:'account',id:'account-1'},expectedBindingRevision:0,operationId:'account'});x.sync();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'account',id:'account-1'},expectedBindingRevision:1,operationId:'account-player'});x.sync();await x.service.hydrate();assert.equal(x.store.read().world.switches.difficulty,'细致');assert.equal(x.service.read().worldBindings.length,0);assert.equal(x.service.read().owner.kind,'global');assert.equal((await x.f.manager.binding()).binding.preference.owner.kind,'account');
 });
 
-test('a cold restart after player selection does not seed the new owner from the previous owner cache',async()=>{
- const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'player2'});x.sync();const fresh=x.make(createBookManager(x.f.opts));await fresh.service.hydrate({initializeIfMissing:true});assert.equal(fresh.store.read().world.switches.difficulty,'常规');assert.equal(x.ui.value.动态效果,undefined);
+test('cold restart after player selection restores the one global configuration from its book',async()=>{
+ const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'player2'});x.sync();const fresh=x.make(createBookManager(x.f.opts));await fresh.service.hydrate({initializeIfMissing:true});assert.equal(fresh.store.read().world.switches.difficulty,'细致');assert.equal(x.ui.value.动态效果,false);assert.equal(fresh.service.read().owner.id,'tisya');
 });
 
 test('reload cannot discard an unsaved draft and committed-but-unpublished save can be retried without duplication',async()=>{
@@ -116,9 +117,9 @@ test('restoring settings preserves later custom tags; explicitly selecting the t
  const tagOnly=await x.service.previewRestore({revision:1,expected:x.service.read(),domains:['tagTemplates']});assert.deepEqual(tagOnly.restoredDomains,['tagTemplates']);assert.ok(tagOnly.changes.some(c=>c.domain==='tagTemplates'&&c.after===undefined));await x.service.restore({token:tagOnly.token});assert.equal(x.service.read().domains.tagTemplates,undefined);
 });
 
-test('worldbook UI preferences also survive losing host settings and reset on a different player owner',async()=>{
+test('worldbook UI preferences survive losing host settings and switching player without resetting',async()=>{
  const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});assert.equal(x.service.read().domains.worldbookInterface.auto,false);x.ctx.extensionSettings={};await x.service.hydrate();assert.deepEqual(x.ctx.extensionSettings.缇斯亚世界书.tags.prefix,['角色']);
- await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'worldbook-player'});x.sync();await x.service.hydrate({initializeIfMissing:true});assert.deepEqual(x.ctx.extensionSettings.缇斯亚世界书,{});
+ await x.f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'worldbook-player'});x.sync();await x.service.hydrate({initializeIfMissing:true});assert.deepEqual(x.ctx.extensionSettings.缇斯亚世界书,{bookOrder:['Alpha','Beta'],tags:{prefix:['角色'],suffix:[]},auto:false});
 });
 
 function nativeWorldbookFixture(x){

@@ -17,14 +17,14 @@ test('unavailable references remain labels, invalid mark boundaries stop explici
  const {w,d,parse}=setup();const root=parse(formatProse(d,'〔引用:record〕公开标签〔/引用〕',text=>text));assert.equal(root.textContent,'公开标签');assert.equal(root.querySelector('button'),null);assert.throws(()=>formatProse(d,'〔信笺〕未结束',x=>x),/TISYA_MARK_UNCLOSED/);await w.happyDOM.abort();
 });
 test('message and reader both mount original prose styles and keep private blocks outside formatter',async()=>{
- const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div><div id="reader"></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const source=fixture({body:'1\n“门开了。”\n\n2\n〔内心〕风很轻。〔/内心〕',taskExtra:'PRIVATE_CANARY'}),seen=[];
+ const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div><div id="reader"></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const source=fixture({body:'1\n“门开了。”\n\n2\n〔内心〕风很轻。〔/内心〕',taskExtra:'资料：人物|PRIVATE_CANARY'}),seen=[];
  const hostFormat=text=>{seen.push(text);return text;};const view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,formatBody:hostFormat,onChooseAction(){},getMotion:()=>false});const reader=mountMessageReader(d,d.querySelector('#reader'),{source,formatBody:hostFormat,onChooseAction(){}});
  for(const root of [view.host.shadowRoot,d.querySelector('#reader')]){assert.ok(root.querySelector('[data-tisya-prose="dialogue"]'));assert.ok(root.querySelector('[data-tisya-mark="内心"]'));assert.match(root.querySelector('style').textContent,/text-indent:2em/);assert.ok(!root.textContent.includes('PRIVATE_CANARY'));}
- assert.ok(seen.every(text=>!text.includes('PRIVATE_CANARY')&&!text.includes('<task')));assert.equal(source,fixture({body:'1\n“门开了。”\n\n2\n〔内心〕风很轻。〔/内心〕',taskExtra:'PRIVATE_CANARY'}));reader.dispose();view.dispose();await w.happyDOM.abort();
+ assert.ok(seen.every(text=>!text.includes('PRIVATE_CANARY')&&!text.includes('<task')));assert.equal(source,fixture({body:'1\n“门开了。”\n\n2\n〔内心〕风很轻。〔/内心〕',taskExtra:'资料：人物|PRIVATE_CANARY'}));reader.dispose();view.dispose();await w.happyDOM.abort();
 });
 test('broken prose formatting has an explicit local notice without exposing the original envelope',async()=>{
- const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const errors=[],source=fixture({body:'〔信笺〕未闭合',taskExtra:'PRIVATE_CANARY'}),view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,formatBody:x=>x,onChooseAction(){},getMotion:()=>false,onError:e=>errors.push(e.code)});
- assert.match(view.host.shadowRoot.querySelector('.story [role=status]').textContent,/TISYA_MARK_UNCLOSED/);assert.ok(!view.host.shadowRoot.textContent.includes('PRIVATE_CANARY'));assert.deepEqual(errors,['TISYA_MARK_UNCLOSED','TISYA_PIPES_LABEL']);view.dispose();await w.happyDOM.abort();
+ const {w,d}=setup();d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';w.IntersectionObserver=class{observe(){}disconnect(){}};const errors=[],source=fixture({body:'〔信笺〕未闭合',taskExtra:'资料：人物|PRIVATE_CANARY'}),view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,formatBody:x=>x,onChooseAction(){},getMotion:()=>false,onError:e=>errors.push(e.code)});
+ assert.match(view.host.shadowRoot.querySelector('.story [role=status]').textContent,/TISYA_MARK_UNCLOSED/);assert.ok(!view.host.shadowRoot.textContent.includes('PRIVATE_CANARY'));assert.deepEqual(errors,['TISYA_MARK_UNCLOSED','TISYA_PARAGRAPH_NUMBERING_REQUIRED']);view.dispose();await w.happyDOM.abort();
 });
 
 test('reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables',async()=>{

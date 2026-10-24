@@ -30,8 +30,8 @@ export function createNativeRequests({getContext,native,resolveConnection,guard,
   const {generate_data:payload}=await native.openai.createGenerationParameters(structuredClone(route.settings),route.model,'quiet',structuredClone(messages),{allowToolCalls:false,toolData:{}});
   guard();payload.stream=true;
   if(!Array.isArray(payload.messages)||payload.messages.length!==messages.length)fail('V3_REQUEST_REWRITE','Host changed the compiled message shape');
-  const abortSignal=signal();abortSignal?.throwIfAborted();progress?.({requestKey,phase:stage==='preflight'?'model-a':'writer',status:'running'});
+  const abortSignal=signal();abortSignal?.throwIfAborted();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running'});
   const response=await native.fetch('/api/backends/chat-completions/generate',{method:'POST',headers:getContext().getRequestHeaders(),body:JSON.stringify(payload),signal:abortSignal});
-  guard();return readTaskResponse(response,{signal:abortSignal,onProgress:update=>{guard();progress?.({requestKey,phase:stage==='preflight'?'model-a':'writer',status:'running',characters:update.characters??update.chars});}});
+  guard();return readTaskResponse(response,{signal:abortSignal,onProgress:update=>{guard();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running',characters:update.characters??update.chars});}});
  };
 }

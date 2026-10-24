@@ -18,7 +18,7 @@ function setup(){
  return {c,w,d,source,runtime,reads,setState:s=>state=s};
 }
 test('native card declaration is separate from the Tisya executor flag and respects card/off/script switches',()=>{
- const f=setup();assert.equal(f.w.modes.narrative.narrative.缇斯亚MVU兼容,false);assert.ok(nativeMvuDeclaration(f.c,f.w));
+ const f=setup();assert.equal(f.w.modes.narrative.narrative.缇斯亚MVU兼容===true,false);assert.ok(nativeMvuDeclaration(f.c,f.w));
  f.w.modes.narrative.nativeMvu='off';assert.equal(nativeMvuDeclaration(f.c,f.w),null);delete f.w.modes.narrative.nativeMvu;
  f.c.characters[0].data.extensions.tavern_helper.scripts[0].enabled=false;assert.equal(nativeMvuDeclaration(f.c,f.w),null);
 });

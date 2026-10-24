@@ -151,6 +151,23 @@ export function parseNumberedBody(source) {
   return Object.freeze(paragraphs.map(Object.freeze));
 }
 
+/** Index eligible historical prose in-place. Store the complete original;
+ * control blocks and wrapper markup never become archival evidence. */
+export function parseHistoricalBody(source){
+ assert(typeof source==='string'&&source.trim(),'EMPTY_BODY','History source is empty');
+ const denied=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+ const removed=[];let masked=source;
+ for(const match of source.matchAll(denied))removed.push([match.index,match.index+match[0].length]);
+ for(const match of source.matchAll(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi))removed.push([match.index,match.index+match[0].length]);
+ const chars=source.split('');for(const [a,b]of removed)for(let i=a;i<b;i++)chars[i]='\u0000';masked=chars.join('');
+ assert(!/<\/?(?:task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)\b/i.test(masked),'HISTORY_CONTROL_BLOCK','Historical control block is incomplete');
+ const result=[];let cursor=0;
+ const add=(a,b)=>{while(a<b&&/\s/.test(source[a]))a++;while(b>a&&/\s/.test(source[b-1]))b--;if(a<b)result.push({number:result.length+1,blockStart:a,blockEnd:b,contentStart:a,contentEnd:b});};
+ // Blank lines and removed control blocks split references without touching raw bytes.
+ for(const split of masked.matchAll(/\u0000+|(?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*(?:\r\n|(?<!\r)\n|\r(?!\n))/g)){add(cursor,split.index);cursor=split.index+split[0].length;}
+ add(cursor,source.length);assert(result.length,'EMPTY_BODY','History contains no eligible prose');return result;
+}
+
 function numbers(value, count) {
   assert(Array.isArray(value), 'INVALID_SELECTION', 'Paragraph selection must be an integer list');
   let previous = 0;
@@ -198,7 +215,7 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
     assert(sameScope(id, requestedScope), 'SCOPE_MISMATCH', 'Original belongs to another chat or branch');
     assert(entry.id === await makeId(id), 'IDENTITY_MISMATCH', 'Original identity does not match its stable entry ID');
     assert(integer(entry.version) && entry.version > 0 && integer(data.revision) && data.revision > 0, 'CORRUPT_RECORD', 'Original revisions are invalid');
-    assert(typeof entry.content === 'string' && data.format === 'numbered' && typeof data.deleted === 'boolean', 'CORRUPT_RECORD', 'Original content metadata is invalid');
+    assert(typeof entry.content === 'string' && ['numbered','historical'].includes(data.format) && typeof data.deleted === 'boolean', 'CORRUPT_RECORD', 'Original content metadata is invalid');
     text(data.sourceRevision, 'stored sourceRevision');
     assert(plain(data.lastMutation) && ['put', 'delete'].includes(data.lastMutation.kind)
       && typeof data.lastMutation.id === 'string' && data.lastMutation.id.length > 0
@@ -207,7 +224,7 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
       && Array.isArray(entry.keysecondary) && entry.keysecondary.length === 0 && entry.probability === 0,
     'AUTOINJECTION_ENABLED', 'Original storage must remain disabled for automatic context injection');
     assert(data.hash === await digest(entry.content), 'CONTENT_HASH_MISMATCH', 'Original content changed without its versioned metadata');
-    const parsed = data.deleted ? [] : parseNumberedBody(entry.content);
+    const parsed = data.deleted ? [] : data.format==='historical'?parseHistoricalBody(entry.content):parseNumberedBody(entry.content);
     assert(!data.deleted || entry.content === '', 'CORRUPT_RECORD', 'Deleted original still has active content');
     assert(sameJson(parsed, data.paragraphs), 'PARAGRAPH_INDEX_MISMATCH', 'Stored paragraph offsets do not match the original');
     return entry;
@@ -247,16 +264,16 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
     return metadata(actual);
   }
 
-  async function put(input) {
+  async function put(input, historical=false) {
     jsonData(input, 'original input');
     const id = identity(input.identity), entryId = await makeId(id);
     text(input.operationId, 'operationId');
     text(input.sourceRevision, 'sourceRevision');
     assert(typeof input.content === 'string' && input.content.length > 0, 'EMPTY_BODY', 'A complete original body is required');
-    const format = 'numbered';
+    const format = historical?'historical':'numbered';
     assert(!own(input, 'format') || input.format === format, 'INVALID_FORMAT', 'Original format must be numbered');
     if (own(input, 'displayFloor')) assert(integer(input.displayFloor), 'INVALID_ARGUMENT', 'displayFloor must be a nonnegative integer');
-    const paragraphs = parseNumberedBody(input.content);
+    const paragraphs = historical?parseHistoricalBody(input.content):parseNumberedBody(input.content);
     const fingerprint = await digest(JSON.stringify(['put', id, input.content, format, input.sourceRevision, input.displayFloor ?? null]));
     const previous = await adapter.read({ bookId, id: entryId });
     if (previous) await inspect(previous, id);
@@ -373,6 +390,11 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
         span: { start: span.contentStart, end: span.contentEnd } };
     });
     const start = selected[0].span.start, end = selected.at(-1).span.end;
+    if(entry.original.format==='historical') {
+      const spans=parseHistoricalBody(entry.content.slice(start,end));
+      assert(spans.length===chosen.length&&spans.every((p,i)=>entry.content.slice(start+p.contentStart,start+p.contentEnd)===selected[i].text),'HISTORY_EVIDENCE','Historical evidence must select consecutive prose paragraphs');
+      for(let i=1;i<selected.length;i++)assert(/^\s*$/.test(entry.content.slice(selected[i-1].span.end,selected[i].span.start)),'HISTORY_EVIDENCE','Historical evidence cannot span a control block');
+    }
     return { reference: { entryId: entry.id, revision: entry.original.revision, hash: entry.original.hash, paragraphs: chosen },
       selected, envelope: { text: entry.content.slice(start, end), start, end } };
   }
@@ -401,7 +423,8 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
   return Object.freeze({
     writeGuarantee,
     entryIdFor: value => { jsonData(value, 'identity'); return makeId(identity(value)); },
-    put: input => serial(() => put(input)), remove: input => serial(() => remove(input)),
+    put: input => serial(() => put(input)),
+    putHistory: input => serial(() => put(input,true)), remove: input => serial(() => remove(input)),
     read: input => serial(() => read(input)), metadata: input => serial(() => getMetadata(input)),
     listMetadata: input => serial(() => listMetadata(input)), reference: input => serial(() => makeReference(input)),
     resolveReference: input => serial(() => resolveReference(input)),

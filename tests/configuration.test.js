@@ -21,8 +21,8 @@ test('selected workflow compiles only enabled enhancement text while preserving 
 test('three workflow detail levels change actual compiled requests and preserve selected constraints',async()=>{
  const f=fixture(),m=f.w.modes.narrative,results={};
  m.narrative.缇斯亚叙事基调='诙谐';m.narrative.缇斯亚叙事玩家代写='补充轻微言行';
- // The legacy default remains compact without writing a new setting.
- delete m.workflowDetail;assert.equal(compileNarrative(f.c,f.source,MOODS).workflowDetail,'compact');assert.equal(m.workflowDetail,undefined);
+ // The full guide is the default without writing a new setting.
+ delete m.workflowDetail;assert.equal(compileNarrative(f.c,f.source,MOODS).workflowDetail,'full');assert.equal(m.workflowDetail,undefined);
  for(const detail of ['full','compact','format']){
   m.workflowDetail=detail;await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
   const inner=f.macros.get('tisya_live_tisya_inner_chain')();results[detail]=inner;
@@ -77,7 +77,7 @@ test('workflow detail saves globally through production UI, reopens, and rejects
  const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}})};
  let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
- const select=root.querySelector('[aria-label="思维链详细程度"]');assert.equal(select.value,'"compact"');assert.equal(select.options.length,3);
+ const select=root.querySelector('[aria-label="思维链详细程度"]');assert.equal(select.value,'"full"');assert.equal(select.options.length,3);
  select.value='"format"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
  assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');ui.dispose();
  ui=mountConfiguration(doc,box,options);await ui.ready;root=ui.root.shadowRoot;assert.equal(root.querySelector('[aria-label="思维链详细程度"]').value,'"format"');ui.dispose();

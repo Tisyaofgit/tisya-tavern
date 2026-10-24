@@ -16,7 +16,7 @@ export {default as taskRules} from './config/task-rules-en.txt';
 export {default as taskPreset} from './config/task-preset.txt';
 export const PROTOCOL='tisya.table-advancement/v3';
 
-export {parseNumberedBody} from './originals/original-store.mjs';
+export {parseNumberedBody,parseHistoricalBody} from './originals/original-store.mjs';
 export {preferenceGroup} from './preferences/service.mjs';
 export {prepareCommit} from '../../tables/ledger.js';
 export {bridgeInput} from '../../tables/native-bridge.js';

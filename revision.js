@@ -1,11 +1,27 @@
+import {usesV3Reply} from './reply-protocol.js';
+import {displayReplySource} from './display-repair.js';
+import {isReplyMessage,parseDisplayEnvelope,readParagraphs,extractXMLBody} from './reader-core.js';
 import {renderModelMaterial} from './tables/simple-sheet.js';
 import {createGenerationOperations} from './generation-operation.js';
 import {userRevisionMaterial} from './user-revision.js';
-import {extractV3Body,isV3ReplyMessage as isReplyMessage,readV3Paragraphs} from './v3/reply.mjs';
+import {extractV3Body,readV3Paragraphs} from './v3/reply.mjs';
 import {capture,validate} from './model.js';
 const check=(ok,message)=>{if(!ok)throw Error(message);};
-export function revisionBody(source){return extractV3Body(source);}
-export function revisionParagraphs(source){return readV3Paragraphs(revisionBody(source));}
+export function revisionBody(source){return usesV3Reply(source)?extractV3Body(source):isReplyMessage(source)?extractXMLBody(displayReplySource(source)):String(source);}
+export function revisionParagraphs(source){
+ if(usesV3Reply(source))return readV3Paragraphs(revisionBody(source));
+ const body=revisionBody(source),numbered=readParagraphs(body);if(numbered)return numbered;
+ const result=[];let start=0,fence=null,pre=false;
+ for(const line of body.matchAll(/[^\r\n]*(?:\r\n|\n|\r|$)/g)){
+  if(!line[0])continue;const text=line[0].replace(/[\r\n]+$/,''),mark=/^\s*(`{3,}|~{3,})/.exec(text);
+  if(!fence&&!pre&&!text.trim()){if(body.slice(start,line.index).trim())result.push({id:result.length+1,raw:body.slice(start,line.index),start,end:line.index});start=line.index+line[0].length;}
+  if(mark){if(fence&&mark[1][0]===fence[0]&&mark[1].length>=fence.length)fence=null;else if(!fence)fence=mark[1];}
+  if(/<pre(?:\s|>)/i.test(text))pre=true;if(/<\/pre\s*>/i.test(text))pre=false;
+ }
+ if(body.slice(start).trim())result.push({id:result.length+1,raw:body.slice(start),start,end:body.length});
+ for(const paragraph of result){const padding=paragraph.raw.match(/[\r\n]+$/)?.[0].length??0;paragraph.end-=padding;paragraph.raw=body.slice(paragraph.start,paragraph.end);}
+ return result;
+}
 export function makeRevision(token,{mode='whole',selected=[],direction='',details='',polish=false,remember=false}={}){
  check(['whole','partial'].includes(mode),'修改范围无效');check(typeof direction==='string'&&typeof details==='string','修改方向无效');
  const paragraphs=revisionParagraphs(token.text),ids=[...new Set(selected)].sort((a,b)=>a-b);

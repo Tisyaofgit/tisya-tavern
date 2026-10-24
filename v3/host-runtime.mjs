@@ -150,6 +150,32 @@ function parseNumberedBody(source) {
   }
   return Object.freeze(paragraphs.map(Object.freeze));
 }
+function parseHistoricalBody(source) {
+  assert(typeof source === "string" && source.trim(), "EMPTY_BODY", "History source is empty");
+  const denied2 = /<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+  const removed = [];
+  let masked = source;
+  for (const match of source.matchAll(denied2)) removed.push([match.index, match.index + match[0].length]);
+  for (const match of source.matchAll(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi)) removed.push([match.index, match.index + match[0].length]);
+  const chars = source.split("");
+  for (const [a, b] of removed) for (let i = a; i < b; i++) chars[i] = "\0";
+  masked = chars.join("");
+  assert(!/<\/?(?:task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)\b/i.test(masked), "HISTORY_CONTROL_BLOCK", "Historical control block is incomplete");
+  const result = [];
+  let cursor = 0;
+  const add = (a, b) => {
+    while (a < b && /\s/.test(source[a])) a++;
+    while (b > a && /\s/.test(source[b - 1])) b--;
+    if (a < b) result.push({ number: result.length + 1, blockStart: a, blockEnd: b, contentStart: a, contentEnd: b });
+  };
+  for (const split of masked.matchAll(/\u0000+|(?:\r\n|(?<!\r)\n|\r(?!\n))[ \t]*(?:\r\n|(?<!\r)\n|\r(?!\n))/g)) {
+    add(cursor, split.index);
+    cursor = split.index + split[0].length;
+  }
+  add(cursor, source.length);
+  assert(result.length, "EMPTY_BODY", "History contains no eligible prose");
+  return result;
+}
 function numbers(value, count) {
   assert(Array.isArray(value), "INVALID_SELECTION", "Paragraph selection must be an integer list");
   let previous = 0;
@@ -208,7 +234,7 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
     assert(sameScope(id, requestedScope), "SCOPE_MISMATCH", "Original belongs to another chat or branch");
     assert(entry.id === await makeId(id), "IDENTITY_MISMATCH", "Original identity does not match its stable entry ID");
     assert(integer(entry.version) && entry.version > 0 && integer(data.revision) && data.revision > 0, "CORRUPT_RECORD", "Original revisions are invalid");
-    assert(typeof entry.content === "string" && data.format === "numbered" && typeof data.deleted === "boolean", "CORRUPT_RECORD", "Original content metadata is invalid");
+    assert(typeof entry.content === "string" && ["numbered", "historical"].includes(data.format) && typeof data.deleted === "boolean", "CORRUPT_RECORD", "Original content metadata is invalid");
     text(data.sourceRevision, "stored sourceRevision");
     assert(plain(data.lastMutation) && ["put", "delete"].includes(data.lastMutation.kind) && typeof data.lastMutation.id === "string" && data.lastMutation.id.length > 0 && /^[a-f0-9]{64}$/.test(data.lastMutation.fingerprint), "CORRUPT_RECORD", "Original mutation receipt is invalid");
     assert(
@@ -217,7 +243,7 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
       "Original storage must remain disabled for automatic context injection"
     );
     assert(data.hash === await digest2(entry.content), "CONTENT_HASH_MISMATCH", "Original content changed without its versioned metadata");
-    const parsed = data.deleted ? [] : parseNumberedBody(entry.content);
+    const parsed = data.deleted ? [] : data.format === "historical" ? parseHistoricalBody(entry.content) : parseNumberedBody(entry.content);
     assert(!data.deleted || entry.content === "", "CORRUPT_RECORD", "Deleted original still has active content");
     assert(sameJson(parsed, data.paragraphs), "PARAGRAPH_INDEX_MISMATCH", "Stored paragraph offsets do not match the original");
     return entry;
@@ -253,16 +279,16 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
     await inspect(actual, next.original.identity);
     return metadata(actual);
   }
-  async function put(input) {
+  async function put(input, historical = false) {
     jsonData(input, "original input");
     const id = identity(input.identity), entryId = await makeId(id);
     text(input.operationId, "operationId");
     text(input.sourceRevision, "sourceRevision");
     assert(typeof input.content === "string" && input.content.length > 0, "EMPTY_BODY", "A complete original body is required");
-    const format = "numbered";
+    const format = historical ? "historical" : "numbered";
     assert(!own(input, "format") || input.format === format, "INVALID_FORMAT", "Original format must be numbered");
     if (own(input, "displayFloor")) assert(integer(input.displayFloor), "INVALID_ARGUMENT", "displayFloor must be a nonnegative integer");
-    const paragraphs = parseNumberedBody(input.content);
+    const paragraphs = historical ? parseHistoricalBody(input.content) : parseNumberedBody(input.content);
     const fingerprint = await digest2(JSON.stringify(["put", id, input.content, format, input.sourceRevision, input.displayFloor ?? null]));
     const previous = await adapter.read({ bookId, id: entryId });
     if (previous) await inspect(previous, id);
@@ -408,6 +434,11 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
       };
     });
     const start = selected[0].span.start, end = selected.at(-1).span.end;
+    if (entry.original.format === "historical") {
+      const spans = parseHistoricalBody(entry.content.slice(start, end));
+      assert(spans.length === chosen.length && spans.every((p, i) => entry.content.slice(start + p.contentStart, start + p.contentEnd) === selected[i].text), "HISTORY_EVIDENCE", "Historical evidence must select consecutive prose paragraphs");
+      for (let i = 1; i < selected.length; i++) assert(/^\s*$/.test(entry.content.slice(selected[i - 1].span.end, selected[i].span.start)), "HISTORY_EVIDENCE", "Historical evidence cannot span a control block");
+    }
     return {
       reference: { entryId: entry.id, revision: entry.original.revision, hash: entry.original.hash, paragraphs: chosen },
       selected,
@@ -440,6 +471,7 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
       return makeId(identity(value));
     },
     put: (input) => serial2(() => put(input)),
+    putHistory: (input) => serial2(() => put(input, true)),
     remove: (input) => serial2(() => remove(input)),
     read: (input) => serial2(() => read(input)),
     metadata: (input) => serial2(() => getMetadata(input)),
@@ -1016,7 +1048,7 @@ function validateFormula(node, depth = 0) {
   }
   return node;
 }
-var TABLE_SETTINGS = Object.freeze({ enabled: true, continuity: "hybrid", styleEnabled: true, archive: true, plot: true, preferences: true, offstage: true, nativeBridge: false, focusObjects: [], focusText: "", playerObjects: [], objectsSeparate: false, injection: "worldbook", retrieval: "keywords", topK: 8, originBook: "", sessionBook: "", originPins: [], hardRules: [], taskInstructions: {}, contextChars: 4e4 });
+var TABLE_SETTINGS = Object.freeze({ enabled: true, preflightMode: "combined", continuity: "hybrid", styleEnabled: true, archive: true, plot: true, preferences: true, offstage: true, nativeBridge: false, focusObjects: [], focusText: "", playerObjects: [], objectsSeparate: false, injection: "worldbook", retrieval: "keywords", topK: 8, originBook: "", sessionBook: "", originPins: [], hardRules: [], taskInstructions: {}, contextChars: 4e4 });
 var FORM_GROUPS = Object.freeze([{ id: "definitions", name: "\u4E16\u754C\u5B9A\u4E49", tables: ["facts"] }, { id: "archives", name: "\u5BF9\u8C61\u5E95\u6863", tables: ["objects"] }, { id: "current", name: "\u5F53\u524D\u72B6\u6001", tables: ["scene", "state"] }, { id: "relationships", name: "\u5173\u7CFB\u4E0E\u5F52\u5C5E", tables: ["relations", "holdings"] }, { id: "knowledge", name: "\u8BA4\u77E5\u4E0E\u4FE1\u606F", tables: ["cognition", "experiences", "growth"] }, { id: "affairs", name: "\u4E8B\u52A1\u4E0E\u65E5\u7A0B", tables: ["tasks", "timers", "activities"] }, { id: "history", name: "\u4E8B\u4EF6\u4E0E\u4FEE\u6539\u5386\u53F2", tables: ["events"] }, { id: "threads", name: "\u7EBF\u7D22\u4E0E\u672A\u89E3\u4E8B\u9879", tables: ["clues"] }]);
 function validateScale(axis) {
   check(!(axis.\u539F\u751F\u5F15\u7528 && Object.hasOwn(axis, "\u503C")), "\u539F\u751F\u523B\u5EA6\u53EA\u4FDD\u5B58\u5F15\u7528\uFF0C\u4E0D\u590D\u5236\u6570\u503C");
@@ -2926,30 +2958,30 @@ function createMessageOriginalBridge({ originals, identities, getContext, native
       throw error;
     }
   }
-  async function saveFloor({ floor, operationId, sourceRevision }) {
+  async function saveFloor({ floor, operationId, sourceRevision, historical = false }) {
     const identity2 = await identities.resolve(floor), context = getContext(), message = context.chat[floor];
     check3(message && !message.is_user && !message.is_system, "SOURCE_ROLE", "Only assistant narrative bodies are archived");
     const fullMessage = message.mes, swipeId = message.swipe_id ?? 0;
-    const content = extractNumberedBody(fullMessage), nativeOwned = hasNativeUpdate(fullMessage);
+    const content = historical ? fullMessage : extractNumberedBody(fullMessage), nativeOwned = hasNativeUpdate(fullMessage);
     const previous = await existing(identity2);
-    const receipt = await originals.put({ identity: identity2, content, operationId, sourceRevision, expectedVersion: previous?.version ?? 0, displayFloor: floor });
+    const receipt = await originals[historical ? "putHistory" : "put"]({ identity: identity2, content, operationId, sourceRevision, expectedVersion: previous?.version ?? 0, displayFloor: floor });
     check3(getContext().chat === context.chat && context.chat[floor] === message && message.mes === fullMessage && (message.swipe_id ?? 0) === swipeId, "SOURCE_CHANGED", "Reply changed while original was being saved");
     return { ...receipt, nativeOwned, candidate: { fullMessageHash: await digest2(fullMessage), swipeId } };
   }
-  async function archiveSource({ floor, sourceRevision, operationId, sourceKey, enableNativeBridge = true }) {
-    const saved = await saveFloor({ floor, sourceRevision, operationId });
+  async function archiveSource({ floor, sourceRevision, operationId, sourceKey, enableNativeBridge = true, historical = false }) {
+    const saved = await saveFloor({ floor, sourceRevision, operationId, historical });
     const context = getContext(), message = context.chat[floor], identity2 = await identities.resolve(floor);
     const scope3 = { chatId: identity2.chatId, branchId: identity2.branchId };
     const reference = { entryId: saved.entryId, revision: saved.revision, hash: saved.hash, paragraphs: [] };
     const source = await originals.read({ entryId: saved.entryId, scope: scope3, purpose: "archive-task", reference });
     const key = sourceKey ?? `original:${saved.entryId}:${saved.revision}`;
     const item = {
-      archiveSource: { key, text: source.content, floor, messageId: identity2.messageId, revision: saved.revision },
+      archiveSource: { key, text: source.content, floor, messageId: identity2.messageId, revision: saved.revision, ...historical ? { format: "historical", paragraphs: parseHistoricalBody(source.content).map((p) => ({ number: p.number, text: source.content.slice(p.contentStart, p.contentEnd) })) } : {} },
       originalReference: reference,
       sourceFreeze: { identity: identity2, fullMessageHash: await digest2(message.mes), swipeId: message.swipe_id ?? 0 },
-      nativeBridge: { nativeOwned: saved.nativeOwned, enabled: Boolean(enableNativeBridge && nativeRuntime), writer: nativeRuntime ? "native-mvu" : null, index: floor }
+      nativeBridge: { nativeOwned: saved.nativeOwned, enabled: Boolean(!historical && enableNativeBridge && nativeRuntime), writer: nativeRuntime ? "native-mvu" : null, index: floor }
     };
-    if (nativeRuntime) {
+    if (nativeRuntime && !historical) {
       if (saved.nativeOwned) {
         const before = nativeRuntime.getMvuData({ type: "message", message_id: floor });
         check3(before && typeof before.stat_data === "object", "MVU_BASELINE", "Original MVU owner has not supplied this floor snapshot");
@@ -6942,6 +6974,7 @@ export {
   formatSimpleSheet,
   loadBrowserWorldbookTransport,
   modelRegistry,
+  parseHistoricalBody,
   parseNumberedBody,
   parseSimpleSheet,
   preferenceGroup,

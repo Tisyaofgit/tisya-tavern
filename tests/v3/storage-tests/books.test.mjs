@@ -49,7 +49,7 @@ test('explicit three-book create leaves binding unset; initial selection has dis
  assert.equal((await f.manager.binding()).pointer,null);await assert.rejects(f.manager.readRuntime(),code('UNBOUND'));
  const archive=await f.manager.create({kind:'archive',name:'存档',origin:{bookId:origin.id},core:{bookId:core.id},player,preferenceOwner,operationId:'a'});
  assert.equal((await f.manager.binding()).pointer,null);
- await f.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'s'});const rt=await f.manager.readRuntime();
+ await f.manager.selectGlobalCore({coreId:core.id,expectedRevision:null,operationId:'global'});await f.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'s'});const rt=await f.manager.readRuntime();
  assert.equal(new Set(Object.values(rt.books)).size,3);assert.equal(f.docs.size,3);assert.deepEqual(rt.initialRows,[]);assert.equal(rt.preferenceBookId,core.id);
 });
 test('new archives require explicit selections and never migrate arbitrary legacy books',async()=>{
@@ -144,7 +144,7 @@ test('concurrent binding requests serialize; stale expected revision cannot over
 });
 test('selected immutable definition versions yield initialRows and reject conflicting IDs',async()=>{
  const f=fixture(),row={id:'actor-1',table:'objects',rev:1,values:{名称:'甲',类型:'character'},access:{readers:[],knowers:[]},source:null,lockedFields:[],updatedAt:'2026-10-24T06:00:00Z'},origin=await f.manager.create({kind:'origin',name:'O',definitions:[{id:'world',revision:1,rows:[row]}],operationId:'o'}),core=await f.manager.create({kind:'core',name:'C',definitions:[{id:'character',revision:2,rows:[row]}],operationId:'c'});
- const archive=await f.manager.create({kind:'archive',name:'A',origin:{bookId:origin.id,definitionId:'world',revision:1},core:{bookId:core.id,definitionId:'character',revision:2},player:{id:player.id,objectId:row.id},preferenceOwner,operationId:'a'});await f.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'s'});assert.deepEqual((await f.manager.readRuntime()).initialRows,[row]);
+ const archive=await f.manager.create({kind:'archive',name:'A',origin:{bookId:origin.id,definitionId:'world',revision:1},core:{bookId:core.id,definitionId:'character',revision:2},player:{id:player.id,objectId:row.id},preferenceOwner,operationId:'a'});await f.manager.selectGlobalCore({coreId:core.id,expectedRevision:null,operationId:'global'});await f.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'s'});assert.deepEqual((await f.manager.readRuntime()).initialRows,[row]);
  await assert.rejects(f.manager.select({origin:{bookId:origin.id,definitionId:'world',revision:999},expectedBindingRevision:0,operationId:'missing-definition'}),code('DEFINITION_MISSING'));
 });
 test('creation retry is idempotent and physical rename is never performed',async()=>{

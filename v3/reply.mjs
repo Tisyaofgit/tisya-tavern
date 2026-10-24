@@ -86,7 +86,7 @@ const heart=rows=>{const items=rows.filter(r=>HEART.has(r.kind)).map(r=>({type:r
 export function readV3Details(source){
  const e=typeof source==='string'?parseV3Reply(source):source;
  const audit=e.after.filter(r=>OUTCOMES.has(r.kind)||r.kind==='留白').map(r=>({kind:r.kind==='留白'?r.cells[0]:r.kind,status:r.kind==='留白'?'留白':'落点',evidence:r.cells.at(-1)}));
- return {taskHeart:heart(e.before),nextHeart:heart(e.after),audit,rounds:{error:false,tasks:e.before.filter(r=>!HEART.has(r.kind)).map(r=>({label:r.kind,text:r.cells.join(' · ')})),delivered:e.after.filter(r=>r.kind==='已交付').map(r=>({text:r.cells[0]})),pending:e.after.filter(r=>TODO.has(r.kind)).map(r=>({label:r.kind,status:r.cells[0],text:r.cells[1]})),pendingError:false,candidates:e.after.filter(r=>r.kind==='候选').map(r=>({text:r.cells[0]}))},before:e.before,after:e.after};
+ return {protocol:3,taskHeart:heart(e.before),nextHeart:heart(e.after),audit,rounds:{error:false,tasks:e.before.filter(r=>!HEART.has(r.kind)).map(r=>({label:r.kind,text:r.cells.join(' · ')})),delivered:e.after.filter(r=>r.kind==='已交付').map(r=>({text:r.cells[0]})),pending:e.after.filter(r=>TODO.has(r.kind)).map(r=>({label:r.kind,status:r.cells[0],text:r.cells[1]})),pendingError:false,candidates:e.after.filter(r=>r.kind==='候选').map(r=>({text:r.cells[0]}))},before:e.before,after:e.after};
 }
 export function readV3Journey(){return {recordSource:'forms',scene:null,associations:[],memories:[],characters:[],changes:[],player:null};}
 export function readV3PublicEnvelope(source){

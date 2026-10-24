@@ -21,7 +21,7 @@ export function resolveRuntimeConfiguration({snapshot,target=globalThis,context,
  const result={
   revision:JSON.stringify([snapshot.key,snapshot.revision,playerId]),
   ...(playerId!==undefined?{playerId}:{}),
-  enabled:tables.enabled,archiveEnabled:tables.archive,plotEnabled:tables.plot,offstageEnabled:tables.offstage,
+  enabled:tables.enabled,preflightMode:tables.preflightMode,archiveEnabled:tables.archive,plotEnabled:tables.plot,offstageEnabled:tables.offstage,
   preferencesEnabled:tables.preferences,nativeMode,nativeBridge,companionMode,
   worldEnabled:tables.offstage,
   focusObjects:ids(tables.focusObjects,'剧情关注对象'),playerObjects:ids(tables.playerObjects,'玩家控制对象'),focusText:tables.focusText,

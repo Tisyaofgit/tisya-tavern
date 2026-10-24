@@ -9,7 +9,7 @@ export function mountRoundPanel(document,container,value,part){
  if(part==='next'){const t=document.createElement('template');t.innerHTML=NEXT_TEMPLATE;container.append(t.content);}
  const button=container.querySelector('#'+part+'-toggle'),content=container.querySelector('#'+part+'-content'),placeholder=container.querySelector('#'+part+'-heart');
  if(!button||!content||!placeholder)throw Error('TISYA_ROUND_TEMPLATE_INVALID');
- let alive=true;button.type='button';button.textContent=part==='task'?'创作摘要':'本轮落点';
+ let alive=true;button.type='button';if(value.protocol===3)button.textContent=part==='task'?'创作摘要':'本轮落点';
  decorateWaterControl(button,new URL('./assets/controls/'+(part==='task'?'task':'pending')+'.svg',import.meta.url).href);
  const toggle=()=>{if(!alive||!container.isConnected)return;content.hidden=!content.hidden;button.setAttribute('aria-expanded',String(!content.hidden));};
  button.addEventListener('click',toggle);
@@ -20,7 +20,8 @@ export function mountRoundPanel(document,container,value,part){
  else if(part==='task'){
   if(value.rounds.tasks.length)mountOriginalLedger(document,content,'任务',value.rounds.tasks,'task-ledger');else empty('暂无公开任务','本条没有可展示的任务摘要。','task-ledger');
  }else{
-  if(value.audit.length)mountOriginalLedger(document,content,'本轮落点',value.audit.map(a=>({label:a.kind,text:a.evidence,...a.status==='留白'?{status:'留白'}:{}})),'outcome-ledger');
+  if(value.protocol!==3)mountOriginalLedger(document,content,'核验',value.audit.map(a=>({label:a.kind,status:a.status,text:a.evidence})),'audit-ledger');
+  else if(value.audit.length)mountOriginalLedger(document,content,'本轮落点',value.audit.map(a=>({label:a.kind,text:a.evidence,...a.status==='留白'?{status:'留白'}:{}})),'outcome-ledger');
   if(value.rounds.pending.length)mountOriginalLedger(document,content,'待办事项',value.rounds.pending,'todo-ledger');else empty('暂无公开待办','本条没有可展示的待办记录。','todo-ledger');
   if(value.rounds.delivered.length)mountOriginalLedger(document,content,'本轮交付',value.rounds.delivered);
   if(value.rounds.candidates?.length)mountOriginalLedger(document,content,'候选走向',value.rounds.candidates);
@@ -28,7 +29,7 @@ export function mountRoundPanel(document,container,value,part){
  }
  if(part==='task'){
   const counters=document.createElement('span');counters.className='top-counters';
-  for(const [label,count]of [['任务',value.rounds.tasks?.length??0],['落点',value.audit.length],['待办',value.rounds.pending?.length??0]]){const bead=document.createElement('span'),n=document.createElement('b');bead.className='count-bead';n.textContent=String(count);bead.append(n,document.createTextNode(label));counters.append(bead);}
+  for(const [label,count]of [['任务',value.rounds.tasks?.length??0],[value.protocol===3?'落点':'核验',value.audit.length],['待办',value.rounds.pending?.length??0]]){const bead=document.createElement('span'),n=document.createElement('b');bead.className='count-bead';n.textContent=String(count);bead.append(n,document.createTextNode(label));counters.append(bead);}
   container.querySelector('.task-line').replaceChildren(counters);
  }
  return {heart,capture(){return {open:!content.hidden,ledgers:[...content.querySelectorAll('details')].map(n=>n.open),heart:heart?.captureHeart?.()};},restore(state){if(!state)return;if(typeof state.open==='boolean'){content.hidden=!state.open;button.setAttribute('aria-expanded',String(state.open));}for(const [i,n]of [...content.querySelectorAll('details')].entries())if(typeof state.ledgers?.[i]==='boolean')n.open=state.ledgers[i];heart?.restoreHeart?.(state.heart);},dispose(){alive=false;button.removeEventListener('click',toggle);heart?.disposeHeart?.();}};

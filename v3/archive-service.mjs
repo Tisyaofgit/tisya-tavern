@@ -19,7 +19,7 @@ export const ARCHIVE_ROUTES=Object.freeze([
  {legacy:'forms',action:'archives.begin',status:'live'},
  {legacy:'templates',action:'archives.inspect',mode:'registry',status:'read-only'},
  {legacy:'states',action:'archives.inspect',mode:'state',status:'live',note:'原生变量映射只读；其它状态使用同一表单事务'},
- {legacy:'history',action:null,status:'unavailable',note:'历史补录尚未接入新版；已有事件和来源仍可在记忆时间轴查看，资料提炼不能代替历史补录'},
+ {legacy:'history',action:'design.generate',mode:'history',status:'live',note:'完整原文保留、来源核验、旧状态时序保护，校对后提交'},
  {legacy:'identity',action:'user-identity',status:'delegated'},
  {legacy:'preferences',action:'review.list',mode:'preferences',status:'live'},
  {legacy:'progression',action:'archives.inspect',mode:'pool',status:'live'},

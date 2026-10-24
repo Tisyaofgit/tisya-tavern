@@ -1,4 +1,5 @@
-import {runV3Display as runDisplay,isV3ReplyCandidate} from './v3/reply.mjs';
+import {runReplyDisplay as runDisplay} from './reply-protocol.js';
+import {isV3ReplyCandidate} from './v3/reply.mjs';
 import {createDisplayCache} from './display-cache.js';
 // TauriTavern engine.js: GLOBAL → PRESET → SCOPED, Markdown placement,
 // capture trimming then macro expansion. Ownership stays in the original reader.

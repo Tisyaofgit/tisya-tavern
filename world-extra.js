@@ -1,5 +1,5 @@
 import {mountIsolatedCard} from './card-runtime.js';
-import {runV3Display as runDisplay} from './v3/reply.mjs';
+import {runReplyDisplay as runDisplay} from './reply-protocol.js';
 import {observeDisplaySize,CARD_MOTION_CSS} from './visual-core.js';
 
 // Original full-envelope partition and reader ACL; no regex rerun on individual

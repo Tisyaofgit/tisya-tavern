@@ -5,24 +5,34 @@ import {mountMemoryTimeline} from './v3/memory-timeline.mjs';
 // This is a disposable view over loaded messages, never a state database.
 // Search the same public fields that the reader displays, never the envelope.
 export function publicJourneyText(view) {
- if(view?.recordSource!=='forms-live')return '';
- return [view.memories??[],view.characters??[],view.pool??[],view.changes??[]].flat().map(row=>JSON.stringify(row)).join('\n');
+    if(!view)return '';
+    const parts=[],add=value=>{if(value!==null&&value!==undefined&&value!=='')parts.push(typeof value==='string'?value:JSON.stringify(value));};
+    for(const m of view.memories){
+        add(m.scene?.title);add(m.scene?.time?.start);add(m.scene?.time?.end);
+        (m.scene?.places??[]).forEach(add);add(m.scene?.world);
+        m.participants.forEach(add);add(m.summary);add(m.quote?.reference);add(m.quote?.text);
+        m.results.forEach(add);add(m.impact);m.tags.forEach(add);
+    }
+    for(const c of [...(view.player?[view.player]:[]),...view.characters]){add(c.name);for(const r of c.cognition){add(r.content);add(r.source);add(r.certainty);}for(const r of c.psychology){add(r.content);add(r.evidence);}}
+    const valueText=value=>typeof value==='string'?value:JSON.stringify(value);
+    for(const c of view.changes){add(c.object);add(c.field);if(c.hasOldValue)add(valueText(c.oldValue));if(c.deleted)add('已移除');else if(c.hasNewValue)add(valueText(c.newValue));add(c.reason);}
+    return parts.join('\n');
 }
 
 export function notebookEntry(context,id,mode,display={}) {
     const message=context.chat[id];
     if(!message||message.is_system||typeof message.mes!=='string')return null;
     const token=capture(context,id),data=inspectMessage(token.text,{showPsychology:display.显示角色心理===true,playerName:context.name1??null});
-    if(mode==='memory')throw Error('记忆必须从当前表单归档读取');
-    const result=data.body;
-    const text=result.error?'':result.value;
+    if(mode==='memory'&&data.v3)return null;
+    const result=mode==='memory'?data.journey:data.body;
+    const text=result.error?'':mode==='memory'?publicJourneyText(result.value):result.value;
     if(!result.error&&!text?.trim())return null;
     return {token,text,error:result.error??null,name:message.is_user?'你':String(message.name??'角色')};
 }
 
 export function mountNotebook(document,container,{getContext,getDisplay=()=>({}),mode='notes',onRead,onLocate,getJourney,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError=()=>{}}) {
     if(!['notes','memory'].includes(mode))throw new Error('未知的阅读页');
-    if(mode==='memory')return mountArchiveNotebook(document,container,{getContext,getDisplay,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError});
+    if(mode==='memory'&&typeof getJourneyTimeline==='function')return mountArchiveNotebook(document,container,{getContext,getDisplay,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError});
     const win=document.defaultView,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
     const note=make('p',mode==='memory'?'读者记录按原消息所属回合展示，不代表当前状态。仅浏览当前会话已载入的内容。':'只读浏览当前会话已载入的对话消息，最近的消息在前。','tisya-note');
     const search=make('input');search.type='search';search.placeholder=mode==='memory'?'搜索读者记录':'搜索正文';search.setAttribute('aria-label',search.placeholder);

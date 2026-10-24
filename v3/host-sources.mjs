@@ -1,4 +1,5 @@
 import {sha256Utf16,extractNumberedBody,projectRetained,prepareCommit} from './host-runtime.mjs';
+import {parseV3Reply} from './reply.mjs';
 import {openingMaterial,nativeCardMaterial} from './host-materials.mjs';
 import {readTurnDirection} from '../communication.js';
 import {calendarTime} from '../tables/ledger.js';
@@ -23,12 +24,14 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
   if(!message||message.is_system||message.role==='tool')return null;
   const fullHash=await sha256Utf16(String(message.mes??''));
   if(message.is_user){const turnDirection=readTurnDirection(message);return {role:'user',floor,identity,key:`user:${identity.messageId}:${fullHash}`,fullHash,text:String(message.mes??''),turnDirection,directionKey:turnDirection?`direction:${identity.messageId}:${await sha256Utf16(turnDirection)}`:null};}
-  const body=extractNumberedBody(message.mes),bodyHash=await sha256Utf16(body),entryId=await system.originals.entryIdFor(identity);
+  const output=meta().outputs[identity.messageId+':'+fullHash];
+  const historical=!output&&!/<think\b[^>]*\bphase\s*=/i.test(message.mes);
+  if(!historical)parseV3Reply(message.mes);
+  const body=historical?String(message.mes):extractNumberedBody(message.mes),bodyHash=await sha256Utf16(body),entryId=await system.originals.entryIdFor(identity);
   let prior;try{prior=await system.originals.metadata({entryId,scope:{chatId:identity.chatId,branchId:identity.branchId},includeDeleted:true});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}
   const revision=prior&&!prior.deleted&&prior.hash===bodyHash?prior.sourceRevision:`host:${fullHash}`;
-  const item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,enableNativeBridge:configuration().nativeBridge===true});
+  const item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,historical,enableNativeBridge:configuration().nativeBridge===true&&!historical});
   item.storyTime=storyTime(message.mes);
-  const output=meta().outputs[identity.messageId+':'+fullHash];
   return {role:'assistant',floor,identity,key:item.archiveSource.key,fullHash,entryId:item.originalReference.entryId,reference:item.originalReference,requestKey:output?.requestKey??null,time:storyTime(message.mes),...(read?{item}:{})};
  }
  async function scan({before=Infinity,read=false}={}){

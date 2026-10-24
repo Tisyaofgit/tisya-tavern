@@ -1,4 +1,4 @@
-import { sha256Utf16 } from '../originals/original-store.mjs';
+import { sha256Utf16,parseHistoricalBody } from '../originals/original-store.mjs';
 import { HostAdapterError } from './worldbook-adapter.mjs';
 import { MESSAGE_MARKER } from './floor-identities.mjs';
 import { hasNativeUpdate, bridgeInput } from '../../../tables/native-bridge.js';
@@ -22,30 +22,30 @@ export function createMessageOriginalBridge({ originals, identities, getContext,
     try { return await originals.metadata({ entryId, scope: { chatId: identity.chatId, branchId: identity.branchId }, includeDeleted: true }); }
     catch (error) { if (error.code === 'SOURCE_NOT_FOUND') return null; throw error; }
   }
-  async function saveFloor({ floor, operationId, sourceRevision }) {
+  async function saveFloor({ floor, operationId, sourceRevision, historical = false }) {
     const identity = await identities.resolve(floor), context = getContext(), message = context.chat[floor];
     check(message && !message.is_user && !message.is_system, 'SOURCE_ROLE', 'Only assistant narrative bodies are archived');
     const fullMessage = message.mes, swipeId = message.swipe_id ?? 0;
-    const content = extractNumberedBody(fullMessage), nativeOwned = hasNativeUpdate(fullMessage);
+    const content = historical ? fullMessage : extractNumberedBody(fullMessage), nativeOwned = hasNativeUpdate(fullMessage);
     const previous = await existing(identity);
-    const receipt = await originals.put({ identity, content, operationId, sourceRevision, expectedVersion: previous?.version ?? 0, displayFloor: floor });
+    const receipt = await originals[historical ? 'putHistory' : 'put']({ identity, content, operationId, sourceRevision, expectedVersion: previous?.version ?? 0, displayFloor: floor });
     check(getContext().chat === context.chat && context.chat[floor] === message && message.mes === fullMessage && (message.swipe_id ?? 0) === swipeId, 'SOURCE_CHANGED', 'Reply changed while original was being saved');
     return { ...receipt, nativeOwned, candidate: { fullMessageHash: await digest(fullMessage), swipeId } };
   }
-  async function archiveSource({ floor, sourceRevision, operationId, sourceKey, enableNativeBridge = true }) {
-    const saved = await saveFloor({ floor, sourceRevision, operationId });
+  async function archiveSource({ floor, sourceRevision, operationId, sourceKey, enableNativeBridge = true, historical = false }) {
+    const saved = await saveFloor({ floor, sourceRevision, operationId, historical });
     const context = getContext(), message = context.chat[floor], identity = await identities.resolve(floor);
     const scope = { chatId: identity.chatId, branchId: identity.branchId };
     const reference = { entryId: saved.entryId, revision: saved.revision, hash: saved.hash, paragraphs: [] };
     const source = await originals.read({ entryId: saved.entryId, scope, purpose: 'archive-task', reference });
     const key = sourceKey ?? `original:${saved.entryId}:${saved.revision}`;
     const item = {
-      archiveSource: { key, text: source.content, floor, messageId: identity.messageId, revision: saved.revision },
+      archiveSource: { key, text: source.content, floor, messageId: identity.messageId, revision: saved.revision, ...(historical ? {format:'historical',paragraphs:parseHistoricalBody(source.content).map(p=>({number:p.number,text:source.content.slice(p.contentStart,p.contentEnd)}))} : {}) },
       originalReference: reference,
       sourceFreeze: { identity, fullMessageHash: await digest(message.mes), swipeId: message.swipe_id ?? 0 },
-      nativeBridge: { nativeOwned: saved.nativeOwned, enabled: Boolean(enableNativeBridge && nativeRuntime), writer: nativeRuntime ? 'native-mvu' : null, index: floor },
+      nativeBridge: { nativeOwned: saved.nativeOwned, enabled: Boolean(!historical && enableNativeBridge && nativeRuntime), writer: nativeRuntime ? 'native-mvu' : null, index: floor },
     };
-    if (nativeRuntime) {
+    if (nativeRuntime && !historical) {
       if (saved.nativeOwned) {
         const before = nativeRuntime.getMvuData({ type: 'message', message_id: floor });
         check(before && typeof before.stat_data === 'object', 'MVU_BASELINE', 'Original MVU owner has not supplied this floor snapshot');
