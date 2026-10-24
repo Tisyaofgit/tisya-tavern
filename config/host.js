@@ -85,7 +85,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
  async function selectedMaterialsFor(task){
   const captured=store.read();const selected=await resolveMaterials(captured.data,captured.world,task,true);
   if(store.read().revision!==captured.revision||worldKey(ctx())!==captured.key)fail('资料选择在读取期间已变化');
-  return {...selected,configurationRevision:captured.revision,world:captured.key};
+  return {...selected,directives:task==='main'?userDirectives():[],configurationRevision:captured.revision,world:captured.key};
  }
  async function before(type,options={},dryRun=false){
   if(pendingUserRevision?.automatic)pendingUserRevision=null;

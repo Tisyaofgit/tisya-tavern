@@ -246,7 +246,7 @@ async function installV3(){
   v3Application=await createApplication({target:window,getContext:context,store:configStore,configHost,books:v3BookHost.manager,readWorldbook:(...args)=>v3BookHost.callbacks.transport.readFresh(...args),communication,getPlayerId:()=>user_avatar,
    configurationBook:v3ConfigurationBook,identityService,
    interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},getChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),
-   routes:v3Routes(),dynamicRoutes:v3NativeRoutes,onSaved:()=>{appearance?.refresh();decorate();},onError:error,moods:()=>emotionCatalog(document).names(),
+   routes:v3Routes(),dynamicRoutes:v3NativeRoutes,capabilityState:()=>({fullscreen:{available:!!query('#option_toggle_fullscreen'),label:immersiveState(window)?'退出沉浸全屏':'沉浸全屏'},'pet-toggle':{label:pet?.isVisible()?'隐藏桌宠':'显示桌宠'},'motion-toggle':{label:motionEnabled?'暂停动态效果':'开启动态效果'}}),onSaved:()=>{appearance?.refresh();decorate();},onError:error,moods:()=>emotionCatalog(document).names(),
    assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');}});
   v3Bubble?.dispose();v3Bubble=mountProgressBubble(document,{pet,progress:v3Application.progress,capabilities:v3Application.capabilities,assistant:v3Application.assistant,
    isPanelOpen:()=>utility?.kind==='v3-workbench'&&utility.root.isConnected,onOpen:page=>openWorkbench(page??'review'),fallbackElement:document.querySelector('[data-tisya-action="assistant"]')});
@@ -648,7 +648,7 @@ function openRevision(token,selection){
 }
 async function rerollAfterUser(token,operation){
     const target=userRerollTarget(context(),token);
-    if(target)return revisionController.generate(target,null);
+    if(target){const material=userRevisionMaterial(token.message);try{configHost.setUserRevision(material?{...material,messageId:token.id}:null);return await revisionController.generate(target,null);}finally{configHost.setUserRevision(null);}}
     if(context().onlineStatus==='no_connection')throw Error('模型尚未连接，未改动消息');
     userRevisionMaterial(token.message);
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:'normal',mainApi:context().mainApi,selectedGroup:context().groupId}));

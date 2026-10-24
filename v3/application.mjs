@@ -18,7 +18,7 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
 /** One composition root for the native writer, books, review and all UI consumers. */
 export async function createApplication({target=globalThis,getContext,store,configHost,books,
-  interfaceConfig,communication,identityService=null,getPlayerId=()=>getContext().userAvatar??getContext().chatMetadata?.persona,routes={},dynamicRoutes=()=>[],getChoices=()=>({}),onSaved=()=>{},onError,native,moods,
+  interfaceConfig,communication,identityService=null,getPlayerId=()=>getContext().userAvatar??getContext().chatMetadata?.persona,routes={},dynamicRoutes=()=>[],capabilityState=()=>({}),getChoices=()=>({}),onSaved=()=>{},onError,native,moods,
   readConfiguration:customConfiguration,readWorldbook,worldbookScan=true,configurationBook=null,assertIdle:externalIdle=()=>{}}={}) {
  let host,reviewOwner=null,reviewService=null,archiveService=null,bindingChanging=false;
  const binding=()=>host?.inspect().scope??null;
@@ -67,7 +67,7 @@ export async function createApplication({target=globalThis,getContext,store,conf
  if(scanner)host.setBeforeWriter(scanner.beforeWriter);
  const journey=createJourneyService({getSession:()=>host.getSession(),store,getContext,books,assertIdle:idle,onSaved:()=>host.configurationChanged()});
  const tags=configurationBook?createTagService({getSession:()=>host.getSession(),configurationBook,review,assertIdle:idle}):null;
- const capabilities=createCapabilities({routes,dynamicRoutes,progress,review,assistant,books:bookFacade,archives:archiveService,conditions,journey,tags,getBinding:binding});
+ const capabilities=createCapabilities({routes,dynamicRoutes,capabilityState,progress,review,assistant,books:bookFacade,archives:archiveService,conditions,journey,tags,getBinding:binding});
  return {host,progress,review,assistant,companion,capabilities,books:bookFacade,archives:archiveService,conditions,scanner,journey,tags,configurationBook,
   getSession:()=>host.getSession(),assertIdle:idle,
   isBindingTransition:()=>bindingChanging||host.bindingTransition?.()===true,

@@ -1,14 +1,14 @@
 {
   "name": "tisya-tavern",
-  "version": "0.3.1-w28.1",
+  "version": "0.3.2-w31.1",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tools/build-v3-host.mjs --check && node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node tools/build-english-preset.mjs --check && node --test tests/*.test.js && npm run test:v3",
+    "test": "node tools/build-v3-host.mjs --check && node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node tools/build-english-preset.mjs --check && node --test --test-concurrency=2 --test-reporter=tap tests/*.test.js && npm run test:v3",
     "build:reader": "node tools/build-reader.mjs",
     "build:extension": "node tools/build-extension.mjs",
     "build:worldbook": "node tools/build-worldbook.mjs",
-    "test:v3": "node --experimental-vm-modules --test tests/v3/*/*.test.mjs tests/v3/*/*.integration.mjs"
+    "test:v3": "node --experimental-vm-modules --test --test-concurrency=2 --test-reporter=tap tests/v3/*/*.test.mjs tests/v3/*/*.integration.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

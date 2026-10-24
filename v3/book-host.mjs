@@ -40,7 +40,11 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
   }
   async function prepare(){
     if(!hasChat())return null;if(preparing)return preparing;
-    preparing=(async()=>{const c=raw(),h=handle();const identity=createFloorIdentityManager({getContext:raw,getStableChatId:()=>h.stableId(),saveChat:()=>need('saveChat',c.saveChat)(),readMetadata:()=>h.metadata.get()});const state=await identity.sync();scopeGuard(c,h);context();return {chatId:state.chatId,branchId:state.branchId};})();
+    preparing=(async()=>{const c=raw(),h=handle(),stableId=await h.stableId();scopeGuard(c,h);const current=c.chatMetadata?.[ID];
+      // Binding reads need the stable owner, not a second floor-marker writer.
+      // The active host owns floor reconciliation, including pending deletions.
+      if(current?.schema==='tisya.floor-identities/1'&&current.chatId&&current.branchId===stableId){context();return {chatId:current.chatId,branchId:current.branchId};}
+      const identity=createFloorIdentityManager({getContext:raw,getStableChatId:()=>h.stableId(),saveChat:()=>need('saveChat',c.saveChat)(),readMetadata:()=>h.metadata.get()});const state=await identity.sync();scopeGuard(c,h);context();return {chatId:state.chatId,branchId:state.branchId};})();
     try{return await preparing;}finally{preparing=null;}
   }
   const transport=createTauriWorldbookTransport({worldInfo:{...worldInfo,discardWorldInfoDocument:persistence?.discardWorldInfoDocument},fetch:fetcher,getRequestHeaders:headers});
