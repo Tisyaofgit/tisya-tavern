@@ -942,7 +942,7 @@ const compile=createCompiler(D.contract,D.tasks);
 const MARK='缇斯亚叙事配置提交记录';
 const LEGACY=[...D.contract.configurations.map(r=>r.variable),'缇斯亚叙事语言配置','缇斯亚当前任务'];
 const BUSINESS=[...LEGACY,...Protocol.KEYS];
-const OPTIONAL=['缇斯亚MVU兼容'];
+const OPTIONAL=['缇斯亚MVU兼容','缇斯亚叙事信息迷雾'];
 const ALL=[MARK,...new Set([...BUSINESS,...OPTIONAL,...D.contract.extra_fields.map(r=>r.variable)])];
 const fail=(code,detail)=>{throw Object.assign(new Error(code),{code,detail});};
 function snapshot(settings,{id='0'.repeat(32),chatId='validation',epoch=0,personaId=0,revision='draft',goal='校验',outputOptions,outputEnabled=true,activeEntries}={}){
@@ -972,7 +972,7 @@ function suggestions(){
     '第三','玩家角色','限知','视角人物内心','关闭','不揭示未公开秘密',
     '自然小说','随世界设定','均衡','适中','随场景',[],{下限:2000,上限:5000,单位:'字'},'简体中文','克制套话','遵循人物',
     '标准','关键人物','简短','原本人格','关闭',{下限:4,上限:6},null,null,null,null,null,null];
-  return {...Object.fromEntries(D.contract.configurations.map((r,i)=>[r.variable,values[i]])),'缇斯亚当前任务':'叙事','缇斯亚叙事语言配置':[],...Protocol.defaults()};
+  return {...Object.fromEntries(D.contract.configurations.map((r,i)=>[r.variable,values[i]])),'缇斯亚当前任务':'叙事','缇斯亚叙事语言配置':[],'缇斯亚叙事信息迷雾':true,...Protocol.defaults()};
 }
 function message(error,settings){
   const code=error?.code||'';

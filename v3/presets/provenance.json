@@ -1,0 +1,56 @@
+{
+  "narrative": {
+    "path": "/workspace/scratch/8af76944f38d/w25/sources/Tisya_Full_Narrative_EN.txt",
+    "library_file_id": "libfile_606282dbefc88191a5998c9aa198fdd0",
+    "version": 8,
+    "bytes": 50410,
+    "sha256": "d65c1a4854b22376ff8db9a538bd0f549f411acd53d737ce08d71675fab7f3b7",
+    "entries": 28
+  },
+  "full_review": {
+    "library_file_id": "libfile_6dc6de526dac81918b3f68a7e70268be",
+    "version": 9,
+    "bytes": 95891,
+    "sha256": "5654af1cf58140c03eb4250432cef0c7022c6ccf6a6b4a9c490729cfa89e9259",
+    "purpose": "reference only; character examples are not default runtime material"
+  },
+  "auxiliary": {
+    "path": "/workspace/scratch/8af76944f38d/w24/recovered/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V2_任务预设_EN.txt",
+    "library_file_id": "libfile_c007c131f3dc81918d767b2d2d1d9a95",
+    "bytes": 31753,
+    "sha256": "dcb6ce5053466ad98f5129d1cf4704ba5aa469b1012fdcf6e6dd8dcecab19aed",
+    "entries": 15
+  },
+  "interface": {
+    "path": "w24/implementation/config/task-rules-en.txt",
+    "sha256": "f9db1470e6881bb9b8ba83116165aafff870f38b4c0af915f8873a2f51279b1b",
+    "version": "V3"
+  },
+  "reference": {
+    "path": "project_sources/03-V19.6-.json",
+    "sha256": "a4b12874631bf94664846c072e5a97a5f1eab1fc3d1d3390d78ecb6ecc0eca65",
+    "use": "configuration modularity only; no authority/identity/format override"
+  },
+  "protected": [
+    {
+      "key": "tisya_new_chat",
+      "role": "system",
+      "sha256": "f3667c104356253d34218dfb8e4ec72d9476250a56ddf6a54eba3401bab2be2a"
+    },
+    {
+      "key": "main",
+      "role": "system",
+      "sha256": "91e5cd15ea57c878658a9ee18efd7b823ba19309fb1b1efda3e017a9a5d47e08"
+    },
+    {
+      "key": "tisya_identity_attestation",
+      "role": "assistant",
+      "sha256": "396cc8ec7aa19bba9233e4059c0f224981d0a1620efe6d83f10beeb1d38df1bf"
+    },
+    {
+      "key": "tisya_user_relation",
+      "role": "user",
+      "sha256": "cb0b28886e5322e2d1a943346583e03fd672cbf1c1532b77e93f2f93c49445cb"
+    }
+  ]
+}

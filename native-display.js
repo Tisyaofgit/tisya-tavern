@@ -1,5 +1,4 @@
-import {displayReplySource} from './display-repair.js';
-import {runDisplay} from './reader-core.js';
+import {runV3Display as runDisplay,isV3ReplyCandidate} from './v3/reply.mjs';
 import {createDisplayCache} from './display-cache.js';
 // TauriTavern engine.js: GLOBAL → PRESET → SCOPED, Markdown placement,
 // capture trimming then macro expansion. Ownership stays in the original reader.
@@ -19,7 +18,7 @@ export function createNativeDisplayPipeline({scripts,enabled,regexProvider,subst
  const key=(message,node)=>revision+':'+(bounded?depth(message,node):'any');
  function project(source,message,node){
   const d=depth(message,node),k=JSON.stringify([source,message?.name,key(message,node)]);
-  return cache.read(k,()=>runDisplay({source:displayReplySource(source),groups:[{id:'host-display',entries}],depth:d,prepareRule:entry=>{
+  return cache.read(k,()=>runDisplay({source,opening:!isV3ReplyCandidate(source),groups:[{id:'host-display',entries}],depth:d,prepareRule:entry=>{
    const compiled=regexProvider.get(entry.findRegex)??/(?!)/;const regex=compiled.hasIndices?compiled:new RegExp(compiled.source,compiled.flags+'d');regex.lastIndex=0;
    return {regex,expand:(match,input)=>substitute(entry.replaceString.replace(/\$(\d+)|\$<([^>]+)>/g,(_,n,name)=>{if(n&&Number(n)>=match.length)throw Error('TISYA_DISPLAY_CAPTURE_RANGE');const range=n?match.indices[Number(n)]:match.indices.groups?.[name];if(range&&(range[0]<match.index||range[1]>match.index+match[0].length))throw Error('TISYA_DISPLAY_CAPTURE_BOUNDARY');let text=n?match[Number(n)]:match.groups?.[name];if(!text)return '';for(const trim of entry.trimStrings)text=text.replaceAll(substitute(trim,{name2Override:message?.name}),'');return text;}))};
   }}));

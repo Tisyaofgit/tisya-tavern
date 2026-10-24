@@ -1,3 +1,4 @@
+import {validateWorldbookPreferences} from './config/worldbook-preferences.js';
 // Native lorebooks remain authoritative. The console edits an explicit draft.
 const clone=v=>structuredClone(v);
 export const stable=v=>JSON.stringify(v,(_k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
@@ -6,19 +7,29 @@ const PREFS='缇斯亚世界书';
 const filterKeys=['characterFilterNames','characterFilterTags','characterFilterExclude'];
 const originalExtra={group:'extensions.group',outletName:'extensions.outlet_name',useProbability:'extensions.use_probability',addMemo:'extensions.add_memo'};
 function ensure(value,message){if(!value)throw Error(message);}
-export function createWorldbookStore({native,getContext,readFresh,listNames,sanitizeName,persistSettings,orderAvailable=()=>true,getBindings=()=>({primary:'',extra:[],chat:'',persona:''}),conditionEngine=null}){
+export function createWorldbookStore({native,getContext,readFresh,listNames,sanitizeName,persistSettings,orderAvailable=()=>true,getBindings=()=>({primary:'',extra:[],chat:'',persona:''}),conditionEngine=null,configurationBook=null}){
  let conditionRules=[],conditionError='',bases=new Map(),origins=new Map(),uiOrigins=new Map(),bookMap=new Map(),allocations=new Map(),settingsBase,prefsBase,activeBase,scopeBase,loaded=false,busy=false,version=0,pendingSettings=null;
  const scope=()=>{const c=getContext();return stable([c.characterId,c.groupId,c.chatId,getBindings()]);};
- const prefs=()=>clone(getContext().extensionSettings[PREFS]??{});
+ const prefs=()=>{const state=configurationBook?.read();return clone(validateWorldbookPreferences(state?.ready?state.domains.worldbookInterface??{}:getContext().extensionSettings[PREFS]??{}));};
  const settings=()=>{const {world_info,...s}=native.getWorldInfoSettings();return clone(s);};
- const settingsMatch=()=>pendingSettings?equal(settings(),pendingSettings.settings)&&equal(native.selected_world_info,pendingSettings.active)&&equal(prefs(),pendingSettings.prefs):equal(settings(),settingsBase)&&equal(native.selected_world_info,activeBase)&&equal(prefs(),prefsBase);
+ const settingsMatch=()=>pendingSettings?equal(settings(),pendingSettings.settings)&&equal(native.selected_world_info,pendingSettings.active)&&(equal(prefs(),prefsBase)||equal(prefs(),pendingSettings.prefs)):equal(settings(),settingsBase)&&equal(native.selected_world_info,activeBase)&&equal(prefs(),prefsBase);
  const defs=()=>native.newWorldInfoEntryDefinition;
  const defaultFields=()=>Object.fromEntries(Object.entries(defs()).map(([k,d])=>[k,clone(d.default)]));
  async function refreshConditionRules(){conditionRules=[];conditionError='';if(!conditionEngine)return;try{const rules=await conditionEngine.describeRules();ensure(Array.isArray(rules),'条件规则列表格式无效');conditionRules=rules;}catch(e){conditionError=String(e.message??e);}}
  function toUI(raw,id,bid){const condition=raw.extensions?.tisyaWorldbook?.condition;return {...defaultFields(),...clone(raw),comment:String(raw.comment??''),content:String(raw.content??''),key:Array.isArray(raw.key)?clone(raw.key):raw.key?[String(raw.key)]:[],keysecondary:Array.isArray(raw.keysecondary)?clone(raw.keysecondary):raw.keysecondary?[String(raw.keysecondary)]:[],uid:id,sourceRef:id,book:bid,nativeUid:raw.uid,mode:condition?.mode==='external'?'condition':raw.constant?'constant':raw.vectorized?'vector':'keyword',provider:condition?.provider??'',ruleRef:condition?.ruleRef??'',ruleVersion:condition?.ruleVersion??null,characterFilterNames:clone(raw.characterFilter?.names??[]),characterFilterTags:clone(raw.characterFilter?.tags??[]),characterFilterExclude:raw.characterFilter?.isExclude??false};}
+ async function completeSettings(){
+  const pending=pendingSettings;ensure(pending,'没有待完成的世界书设置');ensure(scope()===scopeBase,'会话已切换，世界书配置草稿保留');ensure(settingsMatch(),'未完成的设置已被其他页面改变，请保留草稿核对');
+  if(!pending.nativeSaved){ensure(await persistSettings()===true,'宿主尚未确认全局设置保存；请保留草稿并重试');pending.nativeSaved=true;}
+  if(!equal(prefs(),pending.prefs)){
+   const current=configurationBook?.read();ensure(current&&(current.ready||current.draft?.operationId===pending.operationId),'配置书尚未就绪，世界书界面草稿保留');
+   if(current.draft?.operationId===pending.operationId)await configurationBook.retryDraft({expected:current});
+   else await configurationBook.saveDomain('worldbookInterface',pending.prefs,pending.expected,{operationId:pending.operationId});
+  }
+  ensure(scope()===scopeBase&&equal(prefs(),pending.prefs),'世界书界面配置回读未完成');settingsBase=settings();activeBase=clone(pending.active);prefsBase=prefs();pendingSettings=null;
+ }
  async function load(){
-  ensure(!busy,'正在保存，请等待');const loadScope=scope(),loadPrefs=prefs(),loadSettings=settings(),loadActive=clone(native.selected_world_info);busy=true;
-  try{await refreshConditionRules();if(pendingSettings){ensure(settingsMatch(),'未确认的全局设置已被其他页面改变，请先保留草稿并核对宿主设置');ensure(await persistSettings()===true,'宿主仍未确认全局设置保存');pendingSettings=null;}await native.flushWorldInfoSaves('tisya_worldbook_load');const names=await listNames(),p=loadPrefs,binding=getBindings();
+  ensure(!busy,'正在保存，请等待');const loadScope=scope();busy=true;
+  try{await refreshConditionRules();if(pendingSettings)await completeSettings();const loadPrefs=prefs(),loadSettings=settings(),loadActive=clone(native.selected_world_info);await native.flushWorldInfoSaves('tisya_worldbook_load');const names=await listNames(),p=loadPrefs,binding=getBindings();
    ensure(p&&typeof p==='object'&&!Array.isArray(p),'世界书界面配置损坏');ensure(p.bookOrder===undefined||Array.isArray(p.bookOrder)&&p.bookOrder.every(n=>typeof n==='string'),'世界书队列配置损坏');ensure(p.tags===undefined||p.tags&&['prefix','suffix'].every(k=>Array.isArray(p.tags[k])&&p.tags[k].every(t=>typeof t==='string')),'标签配置损坏');const order=p.bookOrder??[];names.sort((a,b)=>{const ai=order.indexOf(a),bi=order.indexOf(b);return (ai<0?order.length:ai)-(bi<0?order.length:bi);});
    const next=new Map();for(const name of names){const data=await readFresh(name);ensure(data?.entries&&!Array.isArray(data.entries),'世界书格式无效：'+name);next.set(name,clone(data));}
    ensure(scope()===loadScope&&equal(prefs(),loadPrefs)&&equal(settings(),loadSettings)&&equal(native.selected_world_info,loadActive),'读取期间作用域或设置发生变化，请重新载入');
@@ -59,6 +70,7 @@ export function createWorldbookStore({native,getContext,readFresh,listNames,sani
   ensure(loaded,'请先载入世界书');ensure(!busy,'已有保存正在进行');ensure(input.version===version,'页面已更新，请重新载入');ensure(scope()===scopeBase,'角色或聊天已切换，请导出草稿后重新载入');busy=true;const saved=[];
   try{
    await refreshConditionRules();ensure(scope()===scopeBase,'条件登记读取期间会话变化');const compiled=compile(input);const active=input.books.filter(b=>b.enabled).map(b=>b.name);const desiredPrefs={...prefsBase,tags:clone(input.tags),auto:!!input.auto,pin:!!input.globalSettings.pin,layoutOrder:!!input.globalSettings.layoutOrder,bookOrder:input.books.map(b=>b.name)};
+   validateWorldbookPreferences(desiredPrefs);if(!equal(desiredPrefs,prefsBase))ensure(configurationBook?.read().ready,'请先绑定并恢复配置书，再保存世界书界面设置');
    ensure(!desiredPrefs.layoutOrder||orderAvailable(),'此宿主缺少排布控制事件，请关闭“按队列顺序扫描与注入”');
    ensure(input.tags&&['prefix','suffix'].every(k=>Array.isArray(input.tags[k])&&input.tags[k].every(t=>typeof t==='string')),'标签格式无效');
    const desiredSettings={};for(const k of Object.keys(settingsBase)){ensure(Object.hasOwn(input.globalSettings,k),'缺少全局设置：'+k);const v=input.globalSettings[k];ensure(typeof v===typeof settingsBase[k]&&(typeof v!=='number'||Number.isInteger(v)&&v>=0),'全局设置无效：'+k);desiredSettings[k]=v;}
@@ -69,7 +81,7 @@ export function createWorldbookStore({native,getContext,readFresh,listNames,sani
    const writes=[];for(const [name,data] of compiled){if(bases.has(name)){ensure(names.includes(name),'世界书已被外部删除：'+name);const fresh=await readFresh(name);ensure(equal(fresh,bases.get(name)),'世界书已被其他页面修改：'+name);if(!equal(data,fresh))writes.push([name,data]);}else{ensure(!names.includes(name),'新书与已有世界书重名：'+name);ensure(await sanitizeName(name)===name,'名称含宿主不支持的字符，请修改：'+name);writes.push([name,data]);}}
    for(const [name,data] of writes){ensure(scope()===scopeBase,'角色或聊天在保存期间切换；已完成的书保留');if(bases.has(name))ensure(equal(await readFresh(name),bases.get(name)),'保存前世界书发生变化：'+name);await native.saveWorldInfo(name,clone(data),true);const actual=await readFresh(name);ensure(equal(actual,data),'宿主回读与提交不同：'+name);bases.set(name,clone(data));saved.push(name);}
    ensure(scope()===scopeBase,'角色或聊天在保存期间切换');ensure(settingsMatch(),'保存期间全局配置发生变化；条目保存结果已保留');
-   if(pendingSettings||!equal(desiredSettings,settingsBase)||!equal(active,activeBase)||!equal(desiredPrefs,prefsBase)){pendingSettings={settings:clone(desiredSettings),active:clone(active),prefs:clone(desiredPrefs)};native.updateWorldInfoSettings(clone(desiredSettings),clone(active));native.flushPendingWorldInfoSettings();getContext().extensionSettings[PREFS]=clone(desiredPrefs);ensure(await persistSettings()===true,'宿主尚未确认全局设置保存；请保留草稿并重试');settingsBase=settings();activeBase=clone(active);prefsBase=prefs();pendingSettings=null;}
+   if(pendingSettings||!equal(desiredSettings,settingsBase)||!equal(active,activeBase)||!equal(desiredPrefs,prefsBase)){if(pendingSettings){ensure(equal(pendingSettings.settings,desiredSettings)&&equal(pendingSettings.active,active)&&equal(pendingSettings.prefs,desiredPrefs),'已有待完成设置，请保持原草稿重试');}else pendingSettings={settings:clone(desiredSettings),active:clone(active),prefs:clone(desiredPrefs),expected:configurationBook?.read(),operationId:'worldbook-interface:'+crypto.randomUUID(),nativeSaved:false};native.updateWorldInfoSettings(clone(desiredSettings),clone(active));native.flushPendingWorldInfoSettings();await completeSettings();}
    await native.updateWorldInfoList();return {ok:true,saved};
   }catch(error){error.savedBooks=saved;throw error;}finally{busy=false;}
  }

@@ -1,6 +1,6 @@
 {
   "display_name": "缇斯亚 · 月潮",
-  "version": "0.2.0-alpha.31.31.19-prefs.1",
+  "version": "0.3.0-w26.1",
   "author": "Tisya Project",
   "loading_order": 100,
   "requires": [],
@@ -10,6 +10,6 @@
   "hooks": {
     "chatSurface": "registerChatSurface"
   },
-  "description": "独立上下文与 API 路由、表单推进、原点档案、楼层补录、创世及偏好辅助任务；保留原生数据库与变量框架。",
+  "description": "完整创作预设、单轮归档与世界推进、双向偏好、三书绑定、统一工作台与桌宠助手。",
   "generate_interceptor": "tisyaHistoryInput"
 }
