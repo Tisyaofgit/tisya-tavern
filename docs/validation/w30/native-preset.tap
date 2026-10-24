@@ -1,0 +1,24 @@
+TAP version 13
+# Preset Tisya backup 2026-10-24T12-52-55-393Z c1611ac5-38b1-4aaa-8be7-704057d2d527 saved, but not updating the list
+# Preset could not be saved { ok: false }
+# Subtest: actual host preset methods install once, preserve connection, and reload the managed data without an auxiliary import
+ok 1 - actual host preset methods install once, preserve connection, and reload the managed data without an auxiliary import
+  ---
+  duration_ms: 10.502817
+  type: 'test'
+  ...
+# Subtest: actual host save rejects failed upgrade after a durable backup without replacing the existing preset
+ok 2 - actual host save rejects failed upgrade after a durable backup without replacing the existing preset
+  ---
+  duration_ms: 7.740701
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.511712

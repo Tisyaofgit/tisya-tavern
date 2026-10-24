@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: rollback marker-save failure prevents deletion and generation
+ok 1 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 323.990957
+  type: 'test'
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+not ok 2 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 1480.874318
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:172:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /已删除后续 2 条消息.*保存失败/. Input:
+    
+    '已删除后续 1 条消息；生成未完成：保存失败'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '已删除后续 1 条消息；生成未完成：保存失败'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:175:159)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+ok 3 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 1534.527143
+  type: 'test'
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 4 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 196.077438
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4122.8518

@@ -1,0 +1,102 @@
+TAP version 13
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: an existing unnumbered chat opens the real session and history import writes an exact original with native worldbook readback
+not ok 1 - an existing unnumbered chat opens the real session and history import writes an exact original with native worldbook readback
+  ---
+  duration_ms: 671.081421
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/historical-session.test.mjs:7:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - '<reply><task>PRIVATE_TASK</task><body>她递来钥匙。\r\n' +
+    -   '\r\n' +
+    -   '她约好明天回来。</body><status>PRIVATE_STATUS</status></reply>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: |-
+    <reply><task>PRIVATE_TASK</task><body>她递来钥匙。
+    
+    她约好明天回来。</body><status>PRIVATE_STATUS</status></reply>
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/historical-session.test.mjs:11:392)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Failed running interceptor for undefined Error: Native writes require the original MVU owner
+#     at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:810:18)
+#     at Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2289:13)
+#     at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20)
+# Subtest: historical sources supply explicit prose paragraph indices, never execute old native patches, and do not enter B as raw text
+not ok 2 - historical sources supply explicit prose paragraph indices, never execute old native patches, and do not enter B as raw text
+  ---
+  duration_ms: 474.942137
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/historical-session.test.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Error: Native writes require the original MVU owner
+        at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:810:18)
+        at Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2289:13)
+        at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20)
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:810:18)
+    Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2289:13)
+    async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/historical-session.test.mjs:16:41)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: a malformed V3 source never falls back to historical import; one CRLF is not a blank line
+ok 3 - a malformed V3 source never falls back to historical import; one CRLF is not a blank line
+  ---
+  duration_ms: 250.997764
+  type: 'test'
+  ...
+# Subtest: history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart
+ok 4 - history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart
+  ---
+  duration_ms: 64.832068
+  type: 'test'
+  ...
+# Subtest: control-block evidence, deletion, fabricated reference and fake date fail before any write
+ok 5 - control-block evidence, deletion, fabricated reference and fake date fail before any write
+  ---
+  duration_ms: 25.437167
+  type: 'test'
+  ...
+# Subtest: unknown historical date cannot overwrite an existing current state
+ok 6 - unknown historical date cannot overwrite an existing current state
+  ---
+  duration_ms: 10.166028
+  type: 'test'
+  ...
+# Subtest: commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save
+ok 7 - commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save
+  ---
+  duration_ms: 46.721563
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 5
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1593.759987

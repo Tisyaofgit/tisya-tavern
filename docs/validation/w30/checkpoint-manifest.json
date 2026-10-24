@@ -1,0 +1,301 @@
+{
+  "utc": "2026-10-24T13:46:09.905744+00:00",
+  "beijing": "2026-10-24T21:46:09.908993+08:00",
+  "source_commit": "bc04af5da2b24e1e9791d09dd813d1a9f0093ae4",
+  "source_tree": "d0cb79c9b77646dcdafe811b789aafe10df16912",
+  "restored_files": 1047,
+  "runtime_state": "Not applicable: no user data touched; synthetic tests only",
+  "next": "Resolve four shell failures, full regression and build, then approved distribution",
+  "files": [
+    {
+      "path": "meta/缇斯亚__蓝图__任务与断点.md",
+      "size": 134326,
+      "sha256": "35be596328f8dce417ddb7b2e3fe0f926fa9f5de1bb8eba99368a97897566c3c"
+    },
+    {
+      "path": "meta/initialization-ui-clock.json",
+      "size": 26518,
+      "sha256": "49236d049c193567059d8be326e9ef315a71adecdd5c84629ecfe95368e70667"
+    },
+    {
+      "path": "source-checksums.json",
+      "size": 174971,
+      "sha256": "a5b5638d6e767c91fa1d6d433878d56e73a4ad2746787759c2f6e6e6b107c12f"
+    },
+    {
+      "path": "comm-final-2.tap",
+      "size": 3528,
+      "sha256": "5f4ff86132bc44161756be6fe8db139d6efedca0a48b6716f7d368b652c77d00"
+    },
+    {
+      "path": "comm-final.tap",
+      "size": 4106,
+      "sha256": "146e61294443244561b005e99bc9ee56ab98107e3d5b8848344058887970f955"
+    },
+    {
+      "path": "comm-recheck.tap",
+      "size": 5872,
+      "sha256": "c7bd757aef3f77f4a826b8dcc26582d3e1e854aa870de8aaf1126f2b44ae84bc"
+    },
+    {
+      "path": "config-ui-final.tap",
+      "size": 13965,
+      "sha256": "5ba78c37b3efc1af4a881d47021871c2649b82695e17f422a4e9086d0613e111"
+    },
+    {
+      "path": "continuation-17.tap",
+      "size": 433,
+      "sha256": "43d7bb5168112c81c30a95e18303f8371ba4e19772c1f084b45a6a2bcf165323"
+    },
+    {
+      "path": "continuation-18.tap",
+      "size": 431,
+      "sha256": "0a561a8d503a819ed9d79c67bd3bd04b48eaf6cc5fbd7bcfb5ce9498dc65219d"
+    },
+    {
+      "path": "continuation-19.tap",
+      "size": 639,
+      "sha256": "0146b42e296be25877e3fd99c39cc07d38059670b7ff3eef0be794c5987e3acf"
+    },
+    {
+      "path": "continuation-20.tap",
+      "size": 640,
+      "sha256": "9c09afb27a4e92700e01a7994c2e3f94662721ed81c73778d2efa65cb3501e03"
+    },
+    {
+      "path": "fixture-repair-1.tap",
+      "size": 4995,
+      "sha256": "5f0754e4f6a393bb26896481883aa06538103e5890d5083470e2e0a48475f460"
+    },
+    {
+      "path": "fixture-repair-2.tap",
+      "size": 19681,
+      "sha256": "5cfc55c4672ad5086b10b342873bd6057079bc743363156250005d6e478f85f2"
+    },
+    {
+      "path": "global-config-tests.tap",
+      "size": 7997,
+      "sha256": "0a84c63294612f8212a62b625bca6494dac0ce851bb694775134a2e0c0186f55"
+    },
+    {
+      "path": "history-native-recheck.tap",
+      "size": 561,
+      "sha256": "bf9a75079084953625be900a9ff67bb358f4816fd160227e5229fcd5eda5cac8"
+    },
+    {
+      "path": "history-native.tap",
+      "size": 4774,
+      "sha256": "e31f3df92d4d640bbe5f156e14dde3b966766d07617a5970f60c09a5391ecacd"
+    },
+    {
+      "path": "history.tap",
+      "size": 592,
+      "sha256": "b2b532cd944bec8ec204b6422c4d1f233fe778bf77d309848a75ee1ef686cdb1"
+    },
+    {
+      "path": "identity-concurrency.tap",
+      "size": 3557,
+      "sha256": "967ececd8016f5e7448ffa33eecda6b20522612716bc38acdd9491339c38f778"
+    },
+    {
+      "path": "legacy-all-2.tap",
+      "size": 542770,
+      "sha256": "9cf329eeff07a1b6dafeeb5aad8d9a8ae7078d4b89d1acb61cead38bea229d42"
+    },
+    {
+      "path": "legacy-bounded-23.tap",
+      "size": 355897,
+      "sha256": "9b6a2772911bd479db4de0d77f4e6893a0dea1caaa3ddf0da65ba64776459fc8"
+    },
+    {
+      "path": "legacy-final-3.tap",
+      "size": 232130,
+      "sha256": "c8c48b40d96c623d65352616a5d147a4d37fd502de2541aa993ec6ea0f014060"
+    },
+    {
+      "path": "legacy-read-recheck.tap",
+      "size": 39028,
+      "sha256": "39fd960281f2a7607d9f533e87e9811045b38d9f876d95095b946053f20c98aa"
+    },
+    {
+      "path": "legacy-resume-16.tap",
+      "size": 280217,
+      "sha256": "9941621db89142d98c3b83fadf021ab3c4e08a3f622c932d05b5942349afdc72"
+    },
+    {
+      "path": "legacy-specific-3.tap",
+      "size": 27324,
+      "sha256": "ef324e397f99cd8bac22e84c5b88db94193168152876ec7648b3059010517dfc"
+    },
+    {
+      "path": "native-preset.tap",
+      "size": 855,
+      "sha256": "93066885d1078ca01c588d2661aa8cf658a902949e9c3090cfff84ae5c4fcd56"
+    },
+    {
+      "path": "preset-host.tap",
+      "size": 15780,
+      "sha256": "42752c6c8f851acc5c2e28be3a227c276c153359cdeb5a6f79095bc1e835ea3c"
+    },
+    {
+      "path": "preset-initial.tap",
+      "size": 4036,
+      "sha256": "13d20edb2ad7f163ba7755aa2a38f1245e309a3dda85e74d23d260a482c0d505"
+    },
+    {
+      "path": "rollback-21.tap",
+      "size": 1672,
+      "sha256": "151da10b9ce21e32c2ef6eb267714230a0fd96cfd663a9b87d14a4f78dc5e6a8"
+    },
+    {
+      "path": "rollback-22.tap",
+      "size": 1166,
+      "sha256": "255c892a13a0546548a705df6d6db2e016bb7e116860afe4ed76f27deb7b6463"
+    },
+    {
+      "path": "runtime-capture.tap",
+      "size": 444,
+      "sha256": "38b7ca9f66107fb636a7a89631b245e8dce06a4f185a28927b4d7fffda483d7b"
+    },
+    {
+      "path": "services-complete.tap",
+      "size": 7674,
+      "sha256": "199bddd5d732e9f46dcff9c9404da96da48b4bdbc0aefb96bca2eebd53853735"
+    },
+    {
+      "path": "shell-adapter-2.tap",
+      "size": 58241,
+      "sha256": "17b94ed94d6309814919c5bd6ac6ad76b35b98e8bccc22961b20688f8be9b0a7"
+    },
+    {
+      "path": "shell-adapter-3.tap",
+      "size": 15,
+      "sha256": "7cb03ab03edf5190a8aa546c78285344395fad3d42d4011cd224f934aef96b3f"
+    },
+    {
+      "path": "shell-adapter-4.tap",
+      "size": 68214,
+      "sha256": "a261a3bda4b04311e04001649333db52a6465fb234040fdabb8c6e733566fcc5"
+    },
+    {
+      "path": "shell-adapter.tap",
+      "size": 57634,
+      "sha256": "ed48e2cca8d8bfd719c61a7774193f82ab3708a6dde45b58893d957c76f8a6c7"
+    },
+    {
+      "path": "shell-bind-8.tap",
+      "size": 2340,
+      "sha256": "9c6231a8fadfad8a6921d195b2203eabce13d1c7a62bdd68de7b112cf3770604"
+    },
+    {
+      "path": "shell-essential-13.tap",
+      "size": 1486,
+      "sha256": "c64321fa0c21722e703a04816ba35b62241ce36e89de66c79e7d1fc342b1ae35"
+    },
+    {
+      "path": "shell-full-12.tap",
+      "size": 4641,
+      "sha256": "e3b27c81428687d36f73c77b976ffa9e5862fbb10ed25bc20a0796a2e72d11b6"
+    },
+    {
+      "path": "shell-full-15.tap",
+      "size": 10878,
+      "sha256": "0eb2f6a7044598794e98b4ff6072b3e97a41d58bedd49561fa806faa7e4338a3"
+    },
+    {
+      "path": "shell-intake-10.tap",
+      "size": 976,
+      "sha256": "be79a4710d8ea0e24727b699909e01af3690dd7e8db2aeb0f181431dba4734d6"
+    },
+    {
+      "path": "shell-roll-intake-11.tap",
+      "size": 2364,
+      "sha256": "46aa84ccba1254d110ceec83fe071d354c68859c1e38bd18655d0e0f2270e9f5"
+    },
+    {
+      "path": "shell-rollback-9.tap",
+      "size": 1193,
+      "sha256": "3ed9bae862535dbaabc52bc515a454569daefbb73a195c43550d2b49db680176"
+    },
+    {
+      "path": "shell-routes-5.tap",
+      "size": 3757,
+      "sha256": "38b66109dd01b0a3a3e6e19879e1b1270cf5e3242651cba122d79ec11e6900aa"
+    },
+    {
+      "path": "shell-routes-6.tap",
+      "size": 3945,
+      "sha256": "66a842ebc3bf18f6867577e599b58c39662ae52193f01401415fd0dcda305db1"
+    },
+    {
+      "path": "shell-routes-7.tap",
+      "size": 1185,
+      "sha256": "28944334d82a263f96ec74b3ee0270246b673d41f14b62eefc6bb590c5018c8e"
+    },
+    {
+      "path": "split.tap",
+      "size": 1920,
+      "sha256": "a32fbe1d96b27b804ab11b45b81d9b2daec1ad259a96a633e653348b5baf71f0"
+    },
+    {
+      "path": "tables-final-4.tap",
+      "size": 41834,
+      "sha256": "c05b50da860d689aa31a0536e522ef6558a2e36e101a7bc2973283c5f07a0a62"
+    },
+    {
+      "path": "ui-compat-14.tap",
+      "size": 6091,
+      "sha256": "bb115aa8f23f25cc85150faa72a4a7b75fb2bda98aa76c17eae845bdf629234b"
+    },
+    {
+      "path": "ui-recheck.tap",
+      "size": 6649,
+      "sha256": "6746041c4d412bc04833a1761adcdab81baa5a706e2e42ea05db5475a0c5285a"
+    },
+    {
+      "path": "v3-all.tap",
+      "size": 88326,
+      "sha256": "94284bd068af3d09fd7b6202e3e5a438a7fd5e003bd4ea02f3205345c109ee4d"
+    },
+    {
+      "path": "v3-complete-3.tap",
+      "size": 106891,
+      "sha256": "c2ad5978bc269be3c4b181cdd9793f8e0ce19bfbc48a55357daf661dda8e19be"
+    },
+    {
+      "path": "v3-final-4.tap",
+      "size": 106077,
+      "sha256": "dd2e3b728292ee40533d76c771b290ae89d8b34b78c1d47a9bf3187d8ddaa775"
+    },
+    {
+      "path": "v3-final-5.tap",
+      "size": 15,
+      "sha256": "7cb03ab03edf5190a8aa546c78285344395fad3d42d4011cd224f934aef96b3f"
+    },
+    {
+      "path": "v3-final-6.tap",
+      "size": 106590,
+      "sha256": "32aed81be2e04815074a31b8ad260b678d00e20e55777e09f34996cf55d1fd21"
+    },
+    {
+      "path": "v3-recheck-2.tap",
+      "size": 102427,
+      "sha256": "4b2ca7558017be57b3cca183607c45faf2c1184dd3a0a9b06db5ac74948bb7e6"
+    },
+    {
+      "path": "v3-recheck.tap",
+      "size": 144779,
+      "sha256": "fbd93753dcc7b85d044df9935457fcb37b0022ea899f3fd4d8fa5da06a01ff1a"
+    },
+    {
+      "path": "workbench-repair.tap",
+      "size": 4434,
+      "sha256": "8fd9c4edc6670da503ef3f585c4f76142673c4c0f64b6b510a9d6e9d6d33fbc0"
+    },
+    {
+      "path": "build-checks.log",
+      "size": 1006,
+      "sha256": "6787c418d9f2b6a7943f1eccfa82ff1ab239e96cef893d67d660bbb953980408"
+    }
+  ]
+}

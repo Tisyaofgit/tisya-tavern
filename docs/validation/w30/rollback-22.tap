@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: continue requests next normal response, never submits composer draft
+ok 1 - continue requests next normal response, never submits composer draft
+  ---
+  duration_ms: 570.531533
+  type: 'test'
+  ...
+# Subtest: rollback marker-save failure prevents deletion and generation
+ok 2 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 233.169011
+  type: 'test'
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+ok 3 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 1466.894831
+  type: 'test'
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+ok 4 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 1567.740477
+  type: 'test'
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 5 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 189.274147
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4492.53883

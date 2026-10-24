@@ -1,0 +1,119 @@
+TAP version 13
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+not ok 1 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 346.557946
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:123:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    undefined !== '世界卡'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '世界卡'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:123:518)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+not ok 2 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 381.2265
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:164:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    -   'delete:2',
+    -   'delete:1',
+        'save'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'delete:2'
+    1: 'delete:1'
+    2: 'save'
+  actual:
+    0: 'save'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:166:9)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: rollback save failure prevents generation and reports partial deletion
+not ok 3 - rollback save failure prevents generation and reports partial deletion
+  ---
+  duration_ms: 244.745586
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:168:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /已删除后续 2 条消息.*保存失败/. Input:
+    
+    '生成未完成：保存失败'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '生成未完成：保存失败'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:170:44)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+not ok 4 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 449.286671
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:175:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - '请从这里继续。'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '请从这里继续。'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:177:39)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: sidebar shortcut entry closes the page and opens seven position selectors
+ok 5 - sidebar shortcut entry closes the page and opens seven position selectors
+  ---
+  duration_ms: 417.473842
+  type: 'test'
+  ...
+# Subtest: canonical identity entry creates through the real gateway and binds only this card/chat
+ok 6 - canonical identity entry creates through the real gateway and binds only this card/chat
+  ---
+  duration_ms: 508.422634
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 2
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2804.487194

@@ -1,0 +1,1444 @@
+TAP version 13
+# Subtest: mounted initializer survives unrelated generation cleanup, saves usable forms and retains dropdown drafts
+not ok 1 - mounted initializer survives unrelated generation cleanup, saves usable forms and retains dropdown drafts
+  ---
+  duration_ms: 87.911585
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:54:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:62:81)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: phone and sidebar open the same read-only notes and public memory pages
+not ok 2 - phone and sidebar open the same read-only notes and public memory pages
+  ---
+  duration_ms: 68.065873
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:76:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface',
+    +   "Cannot read properties of null (reading 'journey')"
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+    1: "Cannot read properties of null (reading 'journey')"
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:81:115)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native image and voice entries open existing settings without generating or rewriting controls
+not ok 3 - native image and voice entries open existing settings without generating or rewriting controls
+  ---
+  duration_ms: 24.944646
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:83:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:90:44)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unavailable native phone actions report failure, never substitute another configuration
+ok 4 - unavailable native phone actions report failure, never substitute another configuration
+  ---
+  duration_ms: 23.305099
+  type: 'test'
+  ...
+# Subtest: phone settings, theme and protocol use original settings routes; applications remain native
+not ok 5 - phone settings, theme and protocol use original settings routes; applications remain native
+  ---
+  duration_ms: 39.205977
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:95:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(d.querySelector('#tisya-settings-home'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:97:185)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: phone theme workshop saves live effect choices and preserves atlas destination
+not ok 6 - phone theme workshop saves live effect choices and preserves atlas destination
+  ---
+  duration_ms: 30.009339
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:100:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'shadowRoot')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:101:193)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: editing or swiping invalidates an open reader and notebook without touching messages
+not ok 7 - editing or swiping invalidates an open reader and notebook without touching messages
+  ---
+  duration_ms: 42.360667
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:103:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:107:98)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: notebook lookup works during a pending generation and tears down on return to native UI
+not ok 8 - notebook lookup works during a pending generation and tears down on return to native UI
+  ---
+  duration_ms: 38.048221
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:109:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:112:226)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+not ok 9 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 29.144492
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:114:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface',
+    +   '配置书尚未就绪'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+    1: '配置书尚未就绪'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:114:488)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: continue requests next normal response, never submits composer draft
+ok 10 - continue requests next normal response, never submits composer draft
+  ---
+  duration_ms: 21.022837
+  type: 'test'
+  ...
+# Subtest: message menu refuses edited source and generation blocks editing
+ok 11 - message menu refuses edited source and generation blocks editing
+  ---
+  duration_ms: 28.090282
+  type: 'test'
+  ...
+# Subtest: home lists every persisted chat and keeps same-name contacts separate
+ok 12 - home lists every persisted chat and keeps same-name contacts separate
+  ---
+  duration_ms: 24.791647
+  type: 'test'
+  ...
+# Subtest: production home checks avatar identity and selects the exact persisted chat before closing
+ok 13 - production home checks avatar identity and selects the exact persisted chat before closing
+  ---
+  duration_ms: 26.117174
+  type: 'test'
+  ...
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+not ok 14 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 51.859818
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:125:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:129:220)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: worldbook entry stays accessible during streaming and chat editing stays locked
+not ok 15 - worldbook entry stays accessible during streaming and chat editing stays locked
+  ---
+  duration_ms: 22.800812
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:132:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:132:226)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: streaming disables actions and generation end re-enables both on same mounted message
+not ok 16 - streaming disables actions and generation end re-enables both on same mounted message
+  ---
+  duration_ms: 36.492469
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:134:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:142:30)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: old AI advanced reroll opens review without deleting history
+not ok 17 - old AI advanced reroll opens review without deleting history
+  ---
+  duration_ms: 37.229905
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:151:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:153:166)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+not ok 18 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 23.49278
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:155:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + []
+    - [
+    -   'delete:2',
+    -   'delete:1',
+    -   'save'
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'delete:2'
+    1: 'delete:1'
+    2: 'save'
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:157:9)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: rollback save failure prevents generation and reports partial deletion
+not ok 19 - rollback save failure prevents generation and reports partial deletion
+  ---
+  duration_ms: 20.285342
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:159:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /已删除后续 2 条消息.*保存失败/. Input:
+    
+    '生成未完成：请先等待当前操作完成'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '生成未完成：请先等待当前操作完成'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:161:44)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: draft and disconnected model prevent any history deletion
+ok 20 - draft and disconnected model prevent any history deletion
+  ---
+  duration_ms: 37.64413
+  type: 'test'
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+not ok 21 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 18.633891
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:166:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:167:52)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: typing a draft during rollback preserves it and stops generation
+not ok 22 - typing a draft during rollback preserves it and stops generation
+  ---
+  duration_ms: 33.536368
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:172:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    '' !== '刚写的草稿'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '刚写的草稿'
+  actual: ''
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:176:66)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 23 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 21.492306
+  type: 'test'
+  ...
+# Subtest: workflow navigation retains the original expansion control without duplicate shortcuts
+not ok 24 - workflow navigation retains the original expansion control without duplicate shortcuts
+  ---
+  duration_ms: 22.582956
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:182:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:185:102)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: chat menu keeps the native anchor and removes the duplicated settings entry
+ok 25 - chat menu keeps the native anchor and removes the duplicated settings entry
+  ---
+  duration_ms: 22.481363
+  type: 'test'
+  ...
+# Subtest: sidebar shortcut entry closes the page and opens seven position selectors
+not ok 26 - sidebar shortcut entry closes the page and opens seven position selectors
+  ---
+  duration_ms: 19.298963
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:194:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:195:52)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: supported system fullscreen routes to native action while app header stays removed
+not ok 27 - supported system fullscreen routes to native action while app header stays removed
+  ---
+  duration_ms: 30.8895
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:201:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:203:30)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: message and bottom menu icons retain accessible names and native source nodes
+not ok 28 - message and bottom menu icons retain accessible names and native source nodes
+  ---
+  duration_ms: 18.89037
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:206:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:210:30)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+not ok 29 - reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+  ---
+  duration_ms: 31.38355
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:213:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:217:374)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: inline action mode append changes draft without a confirmation modal
+not ok 30 - inline action mode append changes draft without a confirmation modal
+  ---
+  duration_ms: 33.432812
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:219:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface',
+    +   '配置书尚未就绪'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+    1: '配置书尚未就绪'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:222:219)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: inline action mode replace changes draft without a confirmation modal
+not ok 31 - inline action mode replace changes draft without a confirmation modal
+  ---
+  duration_ms: 41.499866
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:219:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '已有草稿\n察看门锁'
+    - '察看门锁'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '察看门锁'
+  actual: |-
+    已有草稿
+    察看门锁
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:222:63)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: action refuses changed message after opening inline mode menu
+ok 32 - action refuses changed message after opening inline mode menu
+  ---
+  duration_ms: 29.02855
+  type: 'test'
+  ...
+# Subtest: action refuses changed chat after opening inline mode menu
+ok 33 - action refuses changed chat after opening inline mode menu
+  ---
+  duration_ms: 28.296011
+  type: 'test'
+  ...
+# Subtest: direct send is an explicit mode and native submission occurs only after an action click
+not ok 34 - direct send is an explicit mode and native submission occurs only after an action click
+  ---
+  duration_ms: 33.882691
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:229:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + []
+    - [
+    -   [
+    -     'native-send',
+    -     '察看门锁'
+    -   ]
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      0: 'native-send'
+      1: '察看门锁'
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:231:63)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: direct send preserves a nonempty draft with inline feedback
+not ok 35 - direct send preserves a nonempty draft with inline feedback
+  ---
+  duration_ms: 36.642459
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:233:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '我的草稿\n察看门锁'
+    - '我的草稿'
+           ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '我的草稿'
+  actual: |-
+    我的草稿
+    察看门锁
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:234:307)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: chat change closes reader and stale actions cannot write into the next conversation
+ok 36 - chat change closes reader and stale actions cannot write into the next conversation
+  ---
+  duration_ms: 26.34803
+  type: 'test'
+  ...
+# Subtest: holding a shadow UI button never opens the native long-press message menu
+ok 37 - holding a shadow UI button never opens the native long-press message menu
+  ---
+  duration_ms: 720.28638
+  type: 'test'
+  ...
+# Subtest: stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+not ok 38 - stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+  ---
+  duration_ms: 25.999559
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:246:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:250:144)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: stopping generation options cancels the pending action without a late send
+not ok 39 - stopping generation options cancels the pending action without a late send
+  ---
+  duration_ms: 24.356836
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:256:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:258:286)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+not ok 40 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 31.67683
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:260:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:262:160)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+not ok 41 - a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+  ---
+  duration_ms: 18.912073
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:265:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(d.querySelector('#tisya-settings-home'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:270:26)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: UI completions cannot release the history lock while generation options are pending
+not ok 42 - UI completions cannot release the history lock while generation options are pending
+  ---
+  duration_ms: 24.544237
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:287:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:291:76)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: late clipboard completion leaves a newly opened menu intact
+not ok 43 - late clipboard completion leaves a newly opened menu intact
+  ---
+  duration_ms: 27.032046
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:297:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(d.querySelector('#tisya-settings-home'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:303:62)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: pending history save allows menu dismissal and does not close a later panel
+not ok 44 - pending history save allows menu dismissal and does not close a later panel
+  ---
+  duration_ms: 23.294362
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:307:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    3 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 3
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:310:92)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: message toolbar supports only more, custom order, full expansion, and persists independently
+not ok 45 - message toolbar supports only more, custom order, full expansion, and persists independently
+  ---
+  duration_ms: 41.814977
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:316:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   'regen',
+    +   'next',
+        'more'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'more'
+  actual:
+    0: 'regen'
+    1: 'next'
+    2: 'more'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:316:285)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: failed automatic table initialization is latched before the payload can be sent
+not ok 46 - failed automatic table initialization is latched before the payload can be sent
+  ---
+  duration_ms: 17.246105
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:318:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'configuration')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:319:46)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native edit focus places confirmation controls below the editor and exit restores them
+not ok 47 - native edit focus places confirmation controls below the editor and exit restores them
+  ---
+  duration_ms: 23.130106
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:322:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:329:30)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: welcome startup mounts the pet and functional sidebar without a world or persistence
+not ok 48 - welcome startup mounts the pet and functional sidebar without a world or persistence
+  ---
+  duration_ms: 16.869901
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:333:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:336:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+not ok 49 - welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+  ---
+  duration_ms: 15.131194
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:348:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:351:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native composer persists requirements separately and clears the draft before awaiting the reply
+not ok 50 - native composer persists requirements separately and clears the draft before awaiting the reply
+  ---
+  duration_ms: 29.732534
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:371:1'
+  failureType: 'testCodeFailure'
+  error: '简表格式错误：需要分组标题或稳定行号字段'
+  code: 'SIMPLE_SHEET_INVALID'
+  name: 'SimpleSheetError'
+  stack: |-
+    fail (file:///workspace/scratch/8af76944f38d/w29-fix/tables/simple-sheet.js:12:32)
+    parseSimpleSheet (file:///workspace/scratch/8af76944f38d/w29-fix/tables/simple-sheet.js:164:27)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:374:64)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: Android immersive entry remains discoverable and invokes the persistent native toggle
+not ok 51 - Android immersive entry remains discoverable and invokes the persistent native toggle
+  ---
+  duration_ms: 20.573348
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:379:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'getAttribute')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:379:526)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+ok 52 - legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+  ---
+  duration_ms: 30.578342
+  type: 'test'
+  ...
+# Subtest: candidate navigation has its own final row after message tools
+ok 53 - candidate navigation has its own final row after message tools
+  ---
+  duration_ms: 29.873776
+  type: 'test'
+  ...
+# Subtest: direct candidate jump edits the selected native text and deletes only selected version
+not ok 54 - direct candidate jump edits the selected native text and deletes only selected version
+  ---
+  duration_ms: 45.752461
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:385:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 10
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 10
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:385:435)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: production initializer wires asynchronous message cache without disabling the shell
+not ok 55 - production initializer wires asynchronous message cache without disabling the shell
+  ---
+  duration_ms: 101.919204
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:387:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(f.w.document.querySelector('#tisya-settings-home'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:388:494)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: production long-press More saves manual order and keeps copy reachable
+not ok 56 - production long-press More saves manual order and keeps copy reachable
+  ---
+  duration_ms: 631.202681
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:390:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading '长按菜单')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:396:53)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: production display route saves the real host loading field without replacing history
+not ok 57 - production display route saves the real host loading field without replacing history
+  ---
+  duration_ms: 20.854564
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:398:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:399:90)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: settings has one destination per entry and discovers later native drawers
+not ok 58 - settings has one destination per entry and discovers later native drawers
+  ---
+  duration_ms: 17.316641
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:402:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'querySelectorAll')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:404:92)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: groups use stable native IDs; inline management does not load a chat
+not ok 59 - groups use stable native IDs; inline management does not load a chat
+  ---
+  duration_ms: 25.095873
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:408:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:411:186)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cache drafts block page and phone navigation until saved or discarded
+not ok 60 - cache drafts block page and phone navigation until saved or discarded
+  ---
+  duration_ms: 28.818113
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:413:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:414:67)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native API editor opens from clean config but never discards an edited route
+not ok 61 - native API editor opens from clean config but never discards an edited route
+  ---
+  duration_ms: 18.719404
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:417:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:418:67)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: home settings invokes the menu; menu rename and pin persist with native names unchanged
+not ok 62 - home settings invokes the menu; menu rename and pin persist with native names unchanged
+  ---
+  duration_ms: 18.59399
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:422:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'textContent')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:423:163)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: late host autoload leaves home visible, while choosing a row still opens exact chat
+not ok 63 - late host autoload leaves home visible, while choosing a row still opens exact chat
+  ---
+  duration_ms: 24.087456
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:427:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:429:169)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: deletion requires confirmation and checks the native result instead of assuming success
+ok 64 - deletion requires confirmation and checks the native result instead of assuming success
+  ---
+  duration_ms: 36.222109
+  type: 'test'
+  ...
+# Subtest: directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape
+not ok 65 - directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape
+  ---
+  duration_ms: 38.144485
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:435:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '配置域缓存能力未完整接入：worldbookInterface'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '配置域缓存能力未完整接入：worldbookInterface'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:442:149)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: detached inline edit is rejected instead of saving against a stale row
+ok 66 - detached inline edit is rejected instead of saving against a stale row
+  ---
+  duration_ms: 25.544776
+  type: 'test'
+  ...
+# Subtest: user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+not ok 67 - user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+  ---
+  duration_ms: 37.002733
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:453:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:459:32)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: all settings entry points reuse one page, preserve search and discover a drawer installed while open
+not ok 68 - all settings entry points reuse one page, preserve search and discover a drawer installed while open
+  ---
+  duration_ms: 19.624791
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:463:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'querySelector')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:465:86)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: settings and identity headers return directly to current chat without changing its contents
+not ok 69 - settings and identity headers return directly to current chat without changing its contents
+  ---
+  duration_ms: 32.477359
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:472:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:472:283)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: pending native clipboard on the actual message toolbar never blocks a new chat action
+not ok 70 - pending native clipboard on the actual message toolbar never blocks a new chat action
+  ---
+  duration_ms: 19.233865
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:475:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'operationState')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:480:26)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: rendered target chat releases actual home navigation lock while native selection promise stays pending
+not ok 71 - rendered target chat releases actual home navigation lock while native selection promise stays pending
+  ---
+  duration_ms: 20.264621
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:487:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'operationState')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:492:76)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: managed committed tail releases home lock even when host never emits CHAT_CHANGED
+not ok 72 - managed committed tail releases home lock even when host never emits CHAT_CHANGED
+  ---
+  duration_ms: 22.668855
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:501:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'operationState')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:509:103)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock
+not ok 73 - pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock
+  ---
+  duration_ms: 26.453689
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:518:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'operationState')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:522:103)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: target data loaded without completion events closes the directory and releases chat operations
+not ok 74 - target data loaded without completion events closes the directory and releases chat operations
+  ---
+  duration_ms: 83.976446
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:532:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'operationState')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:537:76)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cached configuration retains drafts across menu and cards, rejects stale save, and prevents shutdown from losing them
+not ok 75 - cached configuration retains drafts across menu and cards, rejects stale save, and prevents shutdown from losing them
+  ---
+  duration_ms: 19.396588
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:542:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:544:31)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cached settings entry resolves request inspection and ordinary mode pages independently
+not ok 76 - cached settings entry resolves request inspection and ordinary mode pages independently
+  ---
+  duration_ms: 18.554597
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:554:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:53:335)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:556:31)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: canonical identity entry creates through the real gateway and binds only this card/chat
+not ok 77 - canonical identity entry creates through the real gateway and binds only this card/chat
+  ---
+  duration_ms: 20.149358
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:563:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(d.querySelector('.tisya-player-setup'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:564:223)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: real new-chat event opens keep/switch prompt without an implicit binding and fires once per scope
+not ok 78 - real new-chat event opens keep/switch prompt without an implicit binding and fires once per scope
+  ---
+  duration_ms: 20.013574
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:568:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'textContent')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:569:164)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: identity onboarding draft survives return to settings and reopening the canonical page
+not ok 79 - identity onboarding draft survives return to settings and reopening the canonical page
+  ---
+  duration_ms: 20.312362
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:572:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    playerClick (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:562:113)
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:573:136)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: new-chat prompt does not displace an edited profile; its notice uses the same identity entry
+not ok 80 - new-chat prompt does not displace an edited profile; its notice uses the same identity entry
+  ---
+  duration_ms: 37.98107
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:576:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'click')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:577:209)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native group-created event prompts and binds the group without adding a character connection
+not ok 81 - native group-created event prompts and binds the group without adding a character connection
+  ---
+  duration_ms: 29.117452
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:580:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert(d.querySelector('.tisya-player-setup'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:581:292)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..81
+# tests 81
+# suites 0
+# pass 16
+# fail 65
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4188.52568

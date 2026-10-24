@@ -1,0 +1,27 @@
+(node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+entering chat update routine for non-swipe post
+✔ split pipeline sends archive/preferences/plan then one writer; each later request receives prior uncommitted result (1526.806998ms)
+Failed running interceptor for undefined Error: preferences failed
+    at provider (file:///workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/split-preflight.test.mjs:8:215)
+    at Object.fetch (file:///workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/installer-harness.mjs:43:633)
+    at request (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-network.mjs:34:31)
+    at async send (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:86:450)
+    at async runSplitPreflight (file:///workspace/scratch/8af76944f38d/w29-fix/v3/preflight-calls.mjs:23:13)
+    at async Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2250:59)
+    at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2877:20)
+✔ failure in the second split call stops all later calls and leaves zero archive commits (408.989002ms)
+Failed running interceptor for undefined Error: 拆分辅助调用：归档调用越过职责
+    at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/preflight-calls.mjs:5:41)
+    at runSplitPreflight (file:///workspace/scratch/8af76944f38d/w29-fix/v3/preflight-calls.mjs:25:25)
+    at async Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2250:59)
+    at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2877:20)
+✔ cross-stage writes are rejected rather than discarded (330.250456ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2423.142602

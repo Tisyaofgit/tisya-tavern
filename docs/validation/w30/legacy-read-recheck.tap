@@ -1,0 +1,628 @@
+TAP version 13
+# Subtest: display inheritance is read-only; false stays false and clearing removes only the explicit custom value
+ok 1 - display inheritance is read-only; false stays false and clearing removes only the explicit custom value
+  ---
+  duration_ms: 2.588461
+  type: 'test'
+  ...
+# Subtest: display settings have a draft, native-save receipt, local retry and stale-draft rejection
+ok 2 - display settings have a draft, native-save receipt, local retry and stale-draft rejection
+  ---
+  duration_ms: 32.330192
+  type: 'test'
+  ...
+# Subtest: world extra uses top-level ownership, decodes CDATA after partition and excludes forbidden contents even on error paths
+ok 3 - world extra uses top-level ownership, decodes CDATA after partition and excludes forbidden contents even on error paths
+  ---
+  duration_ms: 29.277956
+  type: 'test'
+  ...
+# Subtest: extra document fences preserve code, reject incomplete fences, and unsupported pages retain only their own public text
+ok 4 - extra document fences preserve code, reject incomplete fences, and unsupported pages retain only their own public text
+  ---
+  duration_ms: 25.061915
+  type: 'test'
+  ...
+# Subtest: a guarded host send call has an explicit capability note without blocking card display
+ok 5 - a guarded host send call has an explicit capability note without blocking card display
+  ---
+  duration_ms: 7.978051
+  type: 'test'
+  ...
+# Subtest: one decoded ten-emotion catalog feeds the atlas, every heart image and actual preset mood macro
+ok 6 - one decoded ten-emotion catalog feeds the atlas, every heart image and actual preset mood macro
+  ---
+  duration_ms: 25.033532
+  type: 'test'
+  ...
+# Subtest: missing and unknown emotion resources show an error; delayed old bindings cannot replace the current page or detached heart
+ok 7 - missing and unknown emotion resources show an error; delayed old bindings cannot replace the current page or detached heart
+  ---
+  duration_ms: 15.654741
+  type: 'test'
+  ...
+# Subtest: structured projection preserves only matching public native frames without reload or duplication
+ok 8 - structured projection preserves only matching public native frames without reload or duplication
+  ---
+  duration_ms: 34.067767
+  type: 'test'
+  ...
+# Subtest: late helper mounting reveals the matching original frame and never treats private code as public
+ok 9 - late helper mounting reveals the matching original frame and never treats private code as public
+  ---
+  duration_ms: 6.758923
+  type: 'test'
+  ...
+# Subtest: native ordered display rules render card status once on the complete envelope and cache exact input
+ok 10 - native ordered display rules render card status once on the complete envelope and cache exact input
+  ---
+  duration_ms: 22.620514
+  type: 'test'
+  ...
+# Subtest: native display depth changes invalidate only bounded rules and rules cannot reveal restricted extra
+ok 11 - native display depth changes invalidate only bounded rules and rules cannot reveal restricted extra
+  ---
+  duration_ms: 6.128518
+  type: 'test'
+  ...
+# Subtest: complete-key LRU retains failures, evicts old entries, and never aliases equal-length suffix edits
+ok 12 - complete-key LRU retains failures, evicts old entries, and never aliases equal-length suffix edits
+  ---
+  duration_ms: 0.655663
+  type: 'test'
+  ...
+# Subtest: unchanged message DOM updates skip inspection and keep body/card documents; explicit input changes refresh
+ok 13 - unchanged message DOM updates skip inspection and keep body/card documents; explicit input changes refresh
+  ---
+  duration_ms: 91.514106
+  type: 'test'
+  ...
+# Subtest: world documents mount on first visible tab, preserve mounted frames and do not eagerly create all history iframes
+ok 14 - world documents mount on first visible tab, preserve mounted frames and do not eagerly create all history iframes
+  ---
+  duration_ms: 23.552663
+  type: 'test'
+  ...
+# Subtest: native regex cards expand without the moon-tide scroll or paging shell and retain their own documents
+ok 15 - native regex cards expand without the moon-tide scroll or paging shell and retain their own documents
+  ---
+  duration_ms: 26.699319
+  type: 'test'
+  ...
+# Subtest: unused legacy annotations are explained in More while independent public memory remains readable
+not ok 16 - unused legacy annotations are explained in More while independent public memory remains readable
+  ---
+  duration_ms: 33.085766
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/native-display.test.js:61:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /公开记忆保留/. Input:
+    
+    '缇斯亚 · 旅程手记记忆本条记忆 · 当前公开档案请先为故事建立资料绑定。玩家记忆角色待叙更多'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '缇斯亚 · 旅程手记记忆本条记忆 · 当前公开档案请先为故事建立资料绑定。玩家记忆角色待叙更多'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/native-display.test.js:62:567)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: bad capture numbers and lookaround captures cannot insert hidden source context into a public panel; failures are cached
+ok 17 - bad capture numbers and lookaround captures cannot insert hidden source context into a public panel; failures are cached
+  ---
+  duration_ms: 2.606197
+  type: 'test'
+  ...
+# Subtest: world native bridge survives helper source removal, opens and closes without replacing frame
+ok 18 - world native bridge survives helper source removal, opens and closes without replacing frame
+  ---
+  duration_ms: 5.98329
+  type: 'test'
+  ...
+# Subtest: native-hosted content counts as present and actions sit after original panel above message toolbar
+ok 19 - native-hosted content counts as present and actions sit after original panel above message toolbar
+  ---
+  duration_ms: 31.223983
+  type: 'test'
+  ...
+# Subtest: far history is deferred before parsing and mounts when approaching the viewport
+ok 20 - far history is deferred before parsing and mounts when approaching the viewport
+  ---
+  duration_ms: 14.862843
+  type: 'test'
+  ...
+# Subtest: bounded derived cache snapshot restores exact keys without overwriting newly computed values
+ok 21 - bounded derived cache snapshot restores exact keys without overwriting newly computed values
+  ---
+  duration_ms: 0.38057
+  type: 'test'
+  ...
+# Subtest: offscreen deferral settles its MutationObserver and yields to input timers
+ok 22 - offscreen deferral settles its MutationObserver and yields to input timers
+  ---
+  duration_ms: 84.119399
+  type: 'test'
+  ...
+# Subtest: helper source identity is captured before slow cache preparation and survives replacement before first paint
+ok 23 - helper source identity is captured before slow cache preparation and survives replacement before first paint
+  ---
+  duration_ms: 45.50129
+  type: 'test'
+  ...
+# Subtest: a claimed helper container remains identifiable while its iframe is pending or temporarily suspended
+ok 24 - a claimed helper container remains identifiable while its iframe is pending or temporarily suspended
+  ---
+  duration_ms: 2.961331
+  type: 'test'
+  ...
+# Subtest: plain DOM scripts in regex cards stay helper-owned and never get a second isolated runtime
+ok 25 - plain DOM scripts in regex cards stay helper-owned and never get a second isolated runtime
+  ---
+  duration_ms: 53.064249
+  type: 'test'
+  ...
+# Subtest: native content replacement is scheduled once, preserves folds, and cannot resurrect after disposal
+ok 26 - native content replacement is scheduled once, preserves folds, and cannot resurrect after disposal
+  ---
+  duration_ms: 89.562145
+  type: 'test'
+  ...
+# Subtest: mixed regex output preserves static parts while only script documents belong to the helper
+ok 27 - mixed regex output preserves static parts while only script documents belong to the helper
+  ---
+  duration_ms: 3.870383
+  type: 'test'
+  ...
+# Subtest: long press opens own menu; multiple paragraphs stay red and checkmark passes sorted ids
+ok 28 - long press opens own menu; multiple paragraphs stay red and checkmark passes sorted ids
+  ---
+  duration_ms: 64.811221
+  type: 'test'
+  ...
+# Subtest: scroll gesture cancels hold; editors retain native selection; teardown removes handlers
+ok 29 - scroll gesture cancels hold; editors retain native selection; teardown removes handlers
+  ---
+  duration_ms: 44.618913
+  type: 'test'
+  ...
+# Subtest: swipe/edit invalidates selected source and cannot submit stale paragraph references
+ok 30 - swipe/edit invalidates selected source and cannot submit stale paragraph references
+  ---
+  duration_ms: 45.861624
+  type: 'test'
+  ...
+# Subtest: transformed or merged display does not guess paragraph numbers; duplicate paragraphs retain order
+ok 31 - transformed or merged display does not guess paragraph numbers; duplicate paragraphs retain order
+  ---
+  duration_ms: 4.294249
+  type: 'test'
+  ...
+# Subtest: more exposes manual edit and full copy; configurable primary actions survive busy generation
+ok 32 - more exposes manual edit and full copy; configurable primary actions survive busy generation
+  ---
+  duration_ms: 229.196726
+  type: 'test'
+  ...
+# Subtest: an open copy menu rejects a changed source
+ok 33 - an open copy menu rejects a changed source
+  ---
+  duration_ms: 44.629172
+  type: 'test'
+  ...
+# Subtest: round long-press menu directly dispatches message operations and is absent until summoned
+ok 34 - round long-press menu directly dispatches message operations and is absent until summoned
+  ---
+  duration_ms: 167.673972
+  type: 'test'
+  ...
+# Subtest: user long press has reroll-next without assistant-only paragraph or candidate tools
+ok 35 - user long press has reroll-next without assistant-only paragraph or candidate tools
+  ---
+  duration_ms: 45.89874
+  type: 'test'
+  ...
+# Subtest: A–E, lowercase grades and permission-only ~ decode without fabricating character knowledge
+ok 36 - A–E, lowercase grades and permission-only ~ decode without fabricating character knowledge
+  ---
+  duration_ms: 37.586713
+  type: 'test'
+  ...
+# Subtest: public ~ does not replace missing metadata, deletion, JSON Pointer escaping, or literal business values
+ok 37 - public ~ does not replace missing metadata, deletion, JSON Pointer escaping, or literal business values
+  ---
+  duration_ms: 10.147545
+  type: 'test'
+  ...
+# Subtest: compact field overrides and scoped policies keep private nested records out of public projection
+ok 38 - compact field overrides and scoped policies keep private nested records out of public projection
+  ---
+  duration_ms: 9.816097
+  type: 'test'
+  ...
+# Subtest: supplied legacy one-cell status locator resolves only to its exact vars operation without changing the source
+ok 39 - supplied legacy one-cell status locator resolves only to its exact vars operation without changing the source
+  ---
+  duration_ms: 21.909258
+  type: 'test'
+  ...
+# Subtest: locators validate actual operation paths and native card rows, not coincidental text
+ok 40 - locators validate actual operation paths and native card rows, not coincidental text
+  ---
+  duration_ms: 8.126503
+  type: 'test'
+  ...
+# Subtest: an orphan or conflicting native permission never grants access; valid independent records remain readable
+ok 41 - an orphan or conflicting native permission never grants access; valid independent records remain readable
+  ---
+  duration_ms: 13.069596
+  type: 'test'
+  ...
+# Subtest: the supplied empty-vars reply reads without a locator error, does not change E visibility, and retains compatibility provenance
+ok 42 - the supplied empty-vars reply reads without a locator error, does not change E visibility, and retains compatibility provenance
+  ---
+  duration_ms: 12.206821
+  type: 'test'
+  ...
+# Subtest: empty pending shares the original audit and delivery ledger, while both three-item heart carousels remain independent
+not ok 43 - empty pending shares the original audit and delivery ledger, while both three-item heart carousels remain independent
+  ---
+  duration_ms: 99.595052
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/permission-compat.test.js:91:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of null (reading 'textContent')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/permission-compat.test.js:108:107)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: mobile UI presents compact records and a local locator notice with usable public controls
+not ok 44 - mobile UI presents compact records and a local locator notice with usable public controls
+  ---
+  duration_ms: 45.1016
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/permission-compat.test.js:114:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 7
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 7
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/permission-compat.test.js:118:69)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: ordinary messages read unchanged; structured replies expose body and action text without internal payload
+ok 45 - ordinary messages read unchanged; structured replies expose body and action text without internal payload
+  ---
+  duration_ms: 22.850069
+  type: 'test'
+  ...
+# Subtest: closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+ok 46 - closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+  ---
+  duration_ms: 29.148111
+  type: 'test'
+  ...
+# Subtest: reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+ok 47 - reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+  ---
+  duration_ms: 26.297107
+  type: 'test'
+  ...
+# Subtest: turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+not ok 48 - turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+  ---
+  duration_ms: 7.478693
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/reader.test.js:33:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /此前：false此后：0/. Input:
+    
+    '[data-tisya-prose-root] [data-tisya-prose="literal"]{white-space:pre-wrap}[data-tisya-prose-root] p[data-tisya-prose="paragraph"]{white-space:pre-wrap;text-indent:2em;line-height:1.8;margin:0 0 0.8em}[data-tisya-prose-root] p[data-tisya-leading-space]{text-indent:0}[data-tisya-prose-root] [data-tisya-prose="dialogue"]{color:var(--tisya-dialogue-color,#ffedbf)}[data-tisya-prose-root] [data-tisya-prose="punctuation"]{color:var(--tisya-punctuation-color,#e8f0ea)}[data-tisya-mark]{box-sizing:border-box;margin:1em 0;padding:.7em .9em;border:1px solid #bfb48466;border-radius:.25em;background:#b4c49c0b;overflow-wrap:anywhere;line-height:1.8}[data-tisya-mark]>header{font-size:.8em;letter-spacing:.16em;color:#dfc98e;border-bottom:1px solid #bfb48444;margin-bottom:.5em;padding-bottom:.3em}[data-tisya-mark-content]{white-space:pre-wrap}[data-tisya-mark] dl{display:grid;grid-template-columns:minmax(60px,1fr) minmax(0,3fr);gap:.35em .75em}[data-tisya-mark] dt{color:#c4c6a2}[data-tisya-mark] dd{margin:0}[data-tisya-mark=标题]{text-align:center;letter-spacing:.16em;border:0;border-bottom:3px double #bfb48499;font-size:1.25em}[data-tisya-mark=事件],[data-tisya-mark=系统],[data-tisya-mark=场景]{text-align:center;border-width:3px 0 1px;border-style:double}[data-tisya-mark=内心],[data-tisya-mark=梦境]{font-style:italic;border:0;border-left:1px solid #c1b8d080;color:#c8c1d3}[data-tisya-mark=信笺],[data-tisya-mark=便签]{background:#d9ceac12;border-radius:0;border-width:1px 1px 3px}[data-tisya-mark=密档] summary{cursor:pointer;color:#dbb2a0}[data-tisya-mark=终端],[data-tisya-mark=代码]{font-family:monospace;white-space:pre-wrap;background:#001a1b55}[data-tisya-mark=播报]{border-left:3px solid #cab16c}[data-tisya-mark=旁白]{border:0;background:transparent;padding:.25em 0}[data-tisya-mark=引文],[data-tisya-mark=回忆]{border-width:0 0 0 3px;border-radius:0;color:#bdd0c0}[data-tisya-mark=诗歌]{text-align:center;border:0;line-height:2.2}[data-tisya-mark=时间轴] li{margin:.5em 0}[data-tisya-mark=收获]{border-color:#94b99c88}[data-tisya-mark=失去],[data-tisya-mark=警告]{border-color:#c88a7988}[data-tisya-mark=注脚]{display:block;border:0;border-top:1px solid #c2c0a644;opacity:.8;font-size:.8em}[data-tisya-mark=骰子]{border:1px dashed #c6b68788;text-align:center}[data-tisya-mark=消息]{border-radius:1em 1em 1em .2em;margin-left:.5em;background:#789d871a}[data-tisya-mark=档案]{border-left:4px double #c2bc9c88}[data-tisya-mark=鉴定]{box-shadow:inset 0 0 0 3px #c2bc9c0a}\n' +
+      '.round-empty{box-sizing:border-box;align-self:start;margin:0;padding:14px 18px;border:1px solid #a8c7ad80;border-radius:30px 25px 32px 24px;background:linear-gradient(145deg,#456b5660,#0b342c9c);box-shadow:inset 0 2px 3px #e5e8be25,0 5px 12px #001c1830;color:#cbdac7;font:14px/1.8 var(--tisya-global-font,TisyaReading),TisyaReading,serif;overflow-wrap:anywhere;min-width:0}\n' +
+      '\n' +
+      '.action-mode-control{position:relative;display:flex;justify-content:flex-end;margin:-44px 0 12px;min-height:44px}\n' +
+      '.action-mode-toggle{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--gold,#ffedbf);font:13px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;padding:3px 6px;min-height:44px}\n' +
+      '.action-mode-toggle img{width:27px;height:35px;object-fit:contain}\n' +
+      '.action-mode-menu{position:absolute;right:0;top:100%;z-index:10;width:175px;padding:7px;background:#092b26;border:1px solid #c9bb87;border-radius:12px;box-shadow:0 12px 28px #001818b0}\n' +
+      '.action-mode-menu[hidden]{display:none!important}.action-mode-menu button{display:block;width:100%;text-align:left;border:0;background:none;color:inherit;font:15px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;min-height:46px;padding:8px}\n' +
+      '.action-mode-menu [aria-checked=true]{color:#f5dca0;background:#a5b18822;border-radius:8px}\n' +
+      '.action-feedback{margin:8px 2px 0;font:12px/1.65 var(--tisya-global-font,TisyaReading),TisyaReading,serif;min-height:18px;color:var(--muted,#e8f0ea)}\n' +
+      '.action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}\n' +
+      '.heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}\n' +
+      '.native-card-stack,.native-card-content{display:block;min-width:0;width:100%;margin:0;padding:0;border:0;background:none;box-shadow:none}.native-card-content>.extra-page{margin:0;padding:0;max-width:100%}.native-unformatted{font:13px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#adc5b6;margin:8px 0}.native-unformatted summary{cursor:pointer;padding:8px 0;min-height:36px}.native-unformatted pre{margin:0 0 10px}.native-card-content .card-capability-note{font-size:12px}.extra-tabs{display:flex;gap:8px;overflow:auto;padding:2px 0 12px}.extra-tabs[hidden],.extra-page[hidden]{display:none!important}.extra-tabs button{white-space:nowrap;min-height:44px;border:1px solid #a6b98c66;border-radius:20px;padding:6px 14px;color:inherit;background:#103f3580;font:14px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif}.extra-tabs [aria-pressed=true]{color:#efd99a;background:#52796b55}.extra-page{min-width:0}.extra-page pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 monospace} .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-host{margin:16px 0}.tisya-reader .heart-line{display:flex;align-items:center;gap:6px}.tisya-reader .emotion{flex:0 0 48px;width:48px;height:48px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}正文本回合行动创作与心声世界扩展请先为故事建立资料绑定。请先为故事建立资料绑定。'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    [data-tisya-prose-root] [data-tisya-prose="literal"]{white-space:pre-wrap}[data-tisya-prose-root] p[data-tisya-prose="paragraph"]{white-space:pre-wrap;text-indent:2em;line-height:1.8;margin:0 0 0.8em}[data-tisya-prose-root] p[data-tisya-leading-space]{text-indent:0}[data-tisya-prose-root] [data-tisya-prose="dialogue"]{color:var(--tisya-dialogue-color,#ffedbf)}[data-tisya-prose-root] [data-tisya-prose="punctuation"]{color:var(--tisya-punctuation-color,#e8f0ea)}[data-tisya-mark]{box-sizing:border-box;margin:1em 0;padding:.7em .9em;border:1px solid #bfb48466;border-radius:.25em;background:#b4c49c0b;overflow-wrap:anywhere;line-height:1.8}[data-tisya-mark]>header{font-size:.8em;letter-spacing:.16em;color:#dfc98e;border-bottom:1px solid #bfb48444;margin-bottom:.5em;padding-bottom:.3em}[data-tisya-mark-content]{white-space:pre-wrap}[data-tisya-mark] dl{display:grid;grid-template-columns:minmax(60px,1fr) minmax(0,3fr);gap:.35em .75em}[data-tisya-mark] dt{color:#c4c6a2}[data-tisya-mark] dd{margin:0}[data-tisya-mark=标题]{text-align:center;letter-spacing:.16em;border:0;border-bottom:3px double #bfb48499;font-size:1.25em}[data-tisya-mark=事件],[data-tisya-mark=系统],[data-tisya-mark=场景]{text-align:center;border-width:3px 0 1px;border-style:double}[data-tisya-mark=内心],[data-tisya-mark=梦境]{font-style:italic;border:0;border-left:1px solid #c1b8d080;color:#c8c1d3}[data-tisya-mark=信笺],[data-tisya-mark=便签]{background:#d9ceac12;border-radius:0;border-width:1px 1px 3px}[data-tisya-mark=密档] summary{cursor:pointer;color:#dbb2a0}[data-tisya-mark=终端],[data-tisya-mark=代码]{font-family:monospace;white-space:pre-wrap;background:#001a1b55}[data-tisya-mark=播报]{border-left:3px solid #cab16c}[data-tisya-mark=旁白]{border:0;background:transparent;padding:.25em 0}[data-tisya-mark=引文],[data-tisya-mark=回忆]{border-width:0 0 0 3px;border-radius:0;color:#bdd0c0}[data-tisya-mark=诗歌]{text-align:center;border:0;line-height:2.2}[data-tisya-mark=时间轴] li{margin:.5em 0}[data-tisya-mark=收获]{border-color:#94b99c88}[data-tisya-mark=失去],[data-tisya-mark=警告]{border-color:#c88a7988}[data-tisya-mark=注脚]{display:block;border:0;border-top:1px solid #c2c0a644;opacity:.8;font-size:.8em}[data-tisya-mark=骰子]{border:1px dashed #c6b68788;text-align:center}[data-tisya-mark=消息]{border-radius:1em 1em 1em .2em;margin-left:.5em;background:#789d871a}[data-tisya-mark=档案]{border-left:4px double #c2bc9c88}[data-tisya-mark=鉴定]{box-shadow:inset 0 0 0 3px #c2bc9c0a}
+    .round-empty{box-sizing:border-box;align-self:start;margin:0;padding:14px 18px;border:1px solid #a8c7ad80;border-radius:30px 25px 32px 24px;background:linear-gradient(145deg,#456b5660,#0b342c9c);box-shadow:inset 0 2px 3px #e5e8be25,0 5px 12px #001c1830;color:#cbdac7;font:14px/1.8 var(--tisya-global-font,TisyaReading),TisyaReading,serif;overflow-wrap:anywhere;min-width:0}
+    
+    .action-mode-control{position:relative;display:flex;justify-content:flex-end;margin:-44px 0 12px;min-height:44px}
+    .action-mode-toggle{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--gold,#ffedbf);font:13px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;padding:3px 6px;min-height:44px}
+    .action-mode-toggle img{width:27px;height:35px;object-fit:contain}
+    .action-mode-menu{position:absolute;right:0;top:100%;z-index:10;width:175px;padding:7px;background:#092b26;border:1px solid #c9bb87;border-radius:12px;box-shadow:0 12px 28px #001818b0}
+    .action-mode-menu[hidden]{display:none!important}.action-mode-menu button{display:block;width:100%;text-align:left;border:0;background:none;color:inherit;font:15px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;min-height:46px;padding:8px}
+    .action-mode-menu [aria-checked=true]{color:#f5dca0;background:#a5b18822;border-radius:8px}
+    .action-feedback{margin:8px 2px 0;font:12px/1.65 var(--tisya-global-font,TisyaReading),TisyaReading,serif;min-height:18px;color:var(--muted,#e8f0ea)}
+    .action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}
+    .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
+    .native-card-stack,.native-card-content{display:block;min-width:0;width:100%;margin:0;padding:0;border:0;background:none;box-shadow:none}.native-card-content>.extra-page{margin:0;padding:0;max-width:100%}.native-unformatted{font:13px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#adc5b6;margin:8px 0}.native-unformatted summary{cursor:pointer;padding:8px 0;min-height:36px}.native-unformatted pre{margin:0 0 10px}.native-card-content .card-capability-note{font-size:12px}.extra-tabs{display:flex;gap:8px;overflow:auto;padding:2px 0 12px}.extra-tabs[hidden],.extra-page[hidden]{display:none!important}.extra-tabs button{white-space:nowrap;min-height:44px;border:1px solid #a6b98c66;border-radius:20px;padding:6px 14px;color:inherit;background:#103f3580;font:14px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif}.extra-tabs [aria-pressed=true]{color:#efd99a;background:#52796b55}.extra-page{min-width:0}.extra-page pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 monospace} .tisya-reader .action-mode-control{margin:0 0 12px}.tisya-reader .heart-host{margin:16px 0}.tisya-reader .heart-line{display:flex;align-items:center;gap:6px}.tisya-reader .emotion{flex:0 0 48px;width:48px;height:48px}.tisya-reader .heart-bubble{color:inherit;background:#15463c;border:1px solid #a3be9d4b;border-radius:20px}.tisya-reader .heart-dots{display:flex;justify-content:center;gap:4px}.tisya-reader .heart-dots i{width:4px;height:4px;border-radius:50%;background:#a3be9d4b}.tisya-reader .heart-dots .active{background:#dfc88d}.tisya-reader .audit-ledger{padding:8px}.tisya-reader .audit-bead{margin:8px 0}.tisya-reader .status-orb{margin-right:6px}正文本回合行动创作与心声世界扩展请先为故事建立资料绑定。请先为故事建立资料绑定。
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/reader.test.js:36:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: disposing the reader disconnects action effects even when an old button reference survives
+ok 49 - disposing the reader disconnects action effects even when an old button reference survives
+  ---
+  duration_ms: 8.493374
+  type: 'test'
+  ...
+# Subtest: empty optional unlock placeholders do not block other blocks or alter native variable payload
+ok 50 - empty optional unlock placeholders do not block other blocks or alter native variable payload
+  ---
+  duration_ms: 22.529638
+  type: 'test'
+  ...
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 51 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 54.05222
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 52 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 10.237999
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+not ok 53 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 35.379244
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/reply-details.test.js:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 7
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 7
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/reply-details.test.js:15:451)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 54 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 11.621754
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 55 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 7.633835
+  type: 'test'
+  ...
+# Subtest: submitted nine-block YAML/JSON shape restores hearts, audit, title and actions without exposing private fields
+ok 56 - submitted nine-block YAML/JSON shape restores hearts, audit, title and actions without exposing private fields
+  ---
+  duration_ms: 27.837647
+  type: 'test'
+  ...
+# Subtest: YAML scalars preserve null, false, zero, literal text, multiline strings, containers and own keys
+ok 57 - YAML scalars preserve null, false, zero, literal text, multiline strings, containers and own keys
+  ---
+  duration_ms: 0.988312
+  type: 'test'
+  ...
+# Subtest: YAML rejects duplicate keys, aliases, custom tags, directives, extra documents, nonfinite values and deep nesting
+ok 58 - YAML rejects duplicate keys, aliases, custom tags, directives, extra documents, nonfinite values and deep nesting
+  ---
+  duration_ms: 8.326043
+  type: 'test'
+  ...
+# Subtest: declared formats control parsing and errors identify the block without echoing its private input
+ok 59 - declared formats control parsing and errors identify the block without echoing its private input
+  ---
+  duration_ms: 4.830582
+  type: 'test'
+  ...
+# Subtest: missing host YAML does not fall back to JSON or alter modern pipe replies
+ok 60 - missing host YAML does not fall back to JSON or alter modern pipe replies
+  ---
+  duration_ms: 13.17262
+  type: 'test'
+  ...
+# Subtest: legacy JSON and current pipes retain existing display values and field ownership
+ok 61 - legacy JSON and current pipes retain existing display values and field ownership
+  ---
+  duration_ms: 9.687495
+  type: 'test'
+  ...
+# Subtest: message UI mounts legacy hearts and actions; click writes a draft, remount keeps state and never changes the reply
+not ok 62 - message UI mounts legacy hearts and actions; click writes a draft, remount keeps state and never changes the reply
+  ---
+  duration_ms: 72.330299
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/reply-formats.test.js:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 7
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 7
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/reply-formats.test.js:74:128)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: table reference and discovery task rows are recognized without breaking public reader
+ok 63 - table reference and discovery task rows are recognized without breaking public reader
+  ---
+  duration_ms: 6.585929
+  type: 'test'
+  ...
+# Subtest: escaped closing action attributes recover public display without changing stored bytes
+ok 64 - escaped closing action attributes recover public display without changing stored bytes
+  ---
+  duration_ms: 3.828609
+  type: 'test'
+  ...
+# Subtest: partial selection preserves fenced paragraphs and exact unchanged bytes
+ok 65 - partial selection preserves fenced paragraphs and exact unchanged bytes
+  ---
+  duration_ms: 3.557474
+  type: 'test'
+  ...
+# Subtest: feedback data remains literal and never enters system instructions
+ok 66 - feedback data remains literal and never enters system instructions
+  ---
+  duration_ms: 1.910354
+  type: 'test'
+  ...
+# Subtest: successful partial reroll keeps old candidate, then archives once; navigation generates nothing
+ok 67 - successful partial reroll keeps old candidate, then archives once; navigation generates nothing
+  ---
+  duration_ms: 2.355531
+  type: 'test'
+  ...
+# Subtest: out-of-scope partial change preserves rejected draft but restores old candidate and extras without archive
+ok 68 - out-of-scope partial change preserves rejected draft but restores old candidate and extras without archive
+  ---
+  duration_ms: 0.651086
+  type: 'test'
+  ...
+# Subtest: stopped and failed generation do not add dissatisfaction feedback or archive partial output
+ok 69 - stopped and failed generation do not add dissatisfaction feedback or archive partial output
+  ---
+  duration_ms: 1.241832
+  type: 'test'
+  ...
+# Subtest: stop detaches a hung native reroll without late plugin rollback, feedback or archive
+ok 70 - stop detaches a hung native reroll without late plugin rollback, feedback or archive
+  ---
+  duration_ms: 12.88581
+  type: 'test'
+  ...
+# Subtest: stop during branch preparation discards the staged fork and never starts a branch or generation
+ok 71 - stop during branch preparation discards the staged fork and never starts a branch or generation
+  ---
+  duration_ms: 1.257665
+  type: 'test'
+  ...
+# Subtest: old-floor reroll creates independent prefix and preserves original following messages
+ok 72 - old-floor reroll creates independent prefix and preserves original following messages
+  ---
+  duration_ms: 1.4477
+  type: 'test'
+  ...
+# Subtest: stale feedback and out-of-range navigation are rejected before native mutation
+ok 73 - stale feedback and out-of-range navigation are rejected before native mutation
+  ---
+  duration_ms: 0.328863
+  type: 'test'
+  ...
+# Subtest: revision initializes configuration before locking native generation and rechecks source afterward
+ok 74 - revision initializes configuration before locking native generation and rechecks source afterward
+  ---
+  duration_ms: 0.475052
+  type: 'test'
+  ...
+# Subtest: ordinary reroll requests a new native candidate without injecting advanced instructions
+ok 75 - ordinary reroll requests a new native candidate without injecting advanced instructions
+  ---
+  duration_ms: 0.283656
+  type: 'test'
+  ...
+# Subtest: candidate navigation delegates exact target and does not duplicate native persistence
+ok 76 - candidate navigation delegates exact target and does not duplicate native persistence
+  ---
+  duration_ms: 0.310756
+  type: 'test'
+  ...
+# Subtest: native candidate deletion retains other bodies and extras and protects final version
+ok 77 - native candidate deletion retains other bodies and extras and protects final version
+  ---
+  duration_ms: 0.361121
+  type: 'test'
+  ...
+# Subtest: navigation locks only until native completion and rejects stale unsynchronized body
+ok 78 - navigation locks only until native completion and rejects stale unsynchronized body
+  ---
+  duration_ms: 1.470344
+  type: 'test'
+  ...
+# Subtest: reroll after edited user carries only its immediately previous input through a preserved historical branch
+ok 79 - reroll after edited user carries only its immediately previous input through a preserved historical branch
+  ---
+  duration_ms: 0.755583
+  type: 'test'
+  ...
+# Subtest: failed edited-user reroll clears one-shot comparison and keeps original candidate
+ok 80 - failed edited-user reroll clears one-shot comparison and keeps original candidate
+  ---
+  duration_ms: 0.310456
+  type: 'test'
+  ...
+1..80
+# tests 80
+# suites 0
+# pass 74
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1066.581902

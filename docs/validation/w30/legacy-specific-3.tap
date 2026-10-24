@@ -1,0 +1,657 @@
+TAP version 13
+# Subtest: resource save is not selection; world off wins; explicit false/zero survive; disabled resource body never compiles
+ok 1 - resource save is not selection; world off wins; explicit false/zero survive; disabled resource body never compiles
+  ---
+  duration_ms: 24.678208
+  type: 'test'
+  ...
+# Subtest: API/preset/model inherit independently and explicit no additional preset is distinct from inheritance
+ok 2 - API/preset/model inherit independently and explicit no additional preset is distinct from inheritance
+  ---
+  duration_ms: 20.307236
+  type: 'test'
+  ...
+# Subtest: save conflict, failed persistence and world switch preserve authoritative configuration
+ok 3 - save conflict, failed persistence and world switch preserve authoritative configuration
+  ---
+  duration_ms: 81.84084
+  type: 'test'
+  ...
+# Subtest: any recognizable archive kind can become user, with stable IDs and missing-ref failure
+ok 4 - any recognizable archive kind can become user, with stable IDs and missing-ref failure
+  ---
+  duration_ms: 13.767459
+  type: 'test'
+  ...
+# Subtest: actual settings-ready payload excludes all native worldbook bypasses, option catalogue, off style and tool definitions
+ok 5 - actual settings-ready payload excludes all native worldbook bypasses, option catalogue, off style and tool definitions
+  ---
+  duration_ms: 353.650665
+  type: 'test'
+  ...
+# Subtest: late third-party injection and swallowed event errors cannot serialize an unverified request
+ok 6 - late third-party injection and swallowed event errors cannot serialize an unverified request
+  ---
+  duration_ms: 19.889206
+  type: 'test'
+  ...
+# Subtest: worldbook resource version drift and exact duplicate sources are detected before send
+ok 7 - worldbook resource version drift and exact duplicate sources are detected before send
+  ---
+  duration_ms: 13.604265
+  type: 'test'
+  ...
+# Subtest: selected workflow compiles only enabled enhancement text while preserving fixed output block names
+ok 8 - selected workflow compiles only enabled enhancement text while preserving fixed output block names
+  ---
+  duration_ms: 36.322946
+  type: 'test'
+  ...
+# Subtest: three workflow detail levels change actual compiled requests and preserve selected constraints
+ok 9 - three workflow detail levels change actual compiled requests and preserve selected constraints
+  ---
+  duration_ms: 936.09813
+  type: 'test'
+  ...
+# Subtest: full detail keeps source stages while disabled simulation questions and features stay absent
+ok 10 - full detail keeps source stages while disabled simulation questions and features stay absent
+  ---
+  duration_ms: 193.120077
+  type: 'test'
+  ...
+# Subtest: all detail levels honor disabled actions and plain output without running unused output branches
+ok 11 - all detail levels honor disabled actions and plain output without running unused output branches
+  ---
+  duration_ms: 167.528703
+  type: 'test'
+  ...
+# Subtest: workflow detail saves globally through production UI, reopens, and rejects invalid stored values
+not ok 12 - workflow detail saves globally through production UI, reopens, and rejects invalid stored values
+  ---
+  duration_ms: 53.46396
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/configuration.test.js:76:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '"full"'
+    - '"compact"'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '"compact"'
+  actual: '"full"'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/configuration.test.js:80:67)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: dropdown production UI saves, reopens, and registers extra theme fields without injecting them
+ok 13 - dropdown production UI saves, reopens, and registers extra theme fields without injecting them
+  ---
+  duration_ms: 111.812079
+  type: 'test'
+  ...
+# Subtest: native card beauty keeps original DOM nodes and handlers including late helper iframe mounting
+ok 14 - native card beauty keeps original DOM nodes and handlers including late helper iframe mounting
+  ---
+  duration_ms: 16.21538
+  type: 'test'
+  ...
+# Subtest: zero history preserves current input, swipe excludes discarded answer, continuation keeps its tail
+ok 15 - zero history preserves current input, swipe excludes discarded answer, continuation keeps its tail
+  ---
+  duration_ms: 16.573778
+  type: 'test'
+  ...
+# Subtest: task route edits survive production UI save; false and zero resource parameters remain actual values
+ok 16 - task route edits survive production UI save; false and zero resource parameters remain actual values
+  ---
+  duration_ms: 388.870486
+  type: 'test'
+  ...
+# Subtest: auxiliary custom task envelopes preserve edits and disabled rows, while incomplete presets reject without sending
+ok 17 - auxiliary custom task envelopes preserve edits and disabled rows, while incomplete presets reject without sending
+  ---
+  duration_ms: 55.719755
+  type: 'test'
+  ...
+# Subtest: native public-body formatter does not re-run unchanged display regex and obeys the off switch
+ok 18 - native public-body formatter does not re-run unchanged display regex and obeys the off switch
+  ---
+  duration_ms: 0.408282
+  type: 'test'
+  ...
+# Subtest: native additional body parameters cannot replace the compiled messages or tool catalogue
+ok 19 - native additional body parameters cannot replace the compiled messages or tool catalogue
+  ---
+  duration_ms: 0.417897
+  type: 'test'
+  ...
+# Subtest: selected media retains native image parts but strips merged unselected text
+ok 20 - selected media retains native image parts but strips merged unselected text
+  ---
+  duration_ms: 14.20215
+  type: 'test'
+  ...
+# Subtest: selecting a task preset cannot replace the native API or model on later requests
+ok 21 - selecting a task preset cannot replace the native API or model on later requests
+  ---
+  duration_ms: 527.217404
+  type: 'test'
+  ...
+# Subtest: each heart position emits all selected directions in the actual request, for every detail and selection
+ok 22 - each heart position emits all selected directions in the actual request, for every detail and selection
+  ---
+  duration_ms: 7627.0973
+  type: 'test'
+  ...
+# Subtest: compact workflow states authorization once and keeps its selected constraints
+ok 23 - compact workflow states authorization once and keeps its selected constraints
+  ---
+  duration_ms: 40.540024
+  type: 'test'
+  ...
+# Subtest: native database mode defaults on, preserves external payloads and allows late injection
+ok 24 - native database mode defaults on, preserves external payloads and allows late injection
+  ---
+  duration_ms: 100.397997
+  type: 'test'
+  ...
+# Subtest: context owner keeps independent history controls visible and preserves saved selections
+ok 25 - context owner keeps independent history controls visible and preserves saved selections
+  ---
+  duration_ms: 198.770726
+  type: 'test'
+  ...
+# Subtest: paired auxiliary API retains identity and direct sheets while isolating source slots and unselected books
+ok 26 - paired auxiliary API retains identity and direct sheets while isolating source slots and unselected books
+  ---
+  duration_ms: 60.42031
+  type: 'test'
+  ...
+# Subtest: managed table activation is included exactly once and native mode keeps native lore untouched
+ok 27 - managed table activation is included exactly once and native mode keeps native lore untouched
+  ---
+  duration_ms: 410.557681
+  type: 'test'
+  ...
+# Subtest: managed material slots respect an explicitly disabled entry and retain other material once
+ok 28 - managed material slots respect an explicitly disabled entry and retain other material once
+  ---
+  duration_ms: 290.269405
+  type: 'test'
+  ...
+# Subtest: manual auxiliary modes also omit narrative wrappers while main narration keeps them
+ok 29 - manual auxiliary modes also omit narrative wrappers while main narration keeps them
+  ---
+  duration_ms: 10937.634218
+  type: 'test'
+  ...
+# Subtest: configuration assistant uses paired JSON route and saved per-task instructions reach only that task
+ok 30 - configuration assistant uses paired JSON route and saved per-task instructions reach only that task
+  ---
+  duration_ms: 74.429258
+  type: 'test'
+  ...
+# Subtest: RP01 selected initiative reaches the assembled request once across all workflow and output modes
+ok 31 - RP01 selected initiative reaches the assembled request once across all workflow and output modes
+  ---
+  duration_ms: 3688.807178
+  type: 'test'
+  ...
+# Subtest: RP01 missing value and disabled dependencies preserve existing compiled protocol
+ok 32 - RP01 missing value and disabled dependencies preserve existing compiled protocol
+  ---
+  duration_ms: 908.48226
+  type: 'test'
+  ...
+# Subtest: RP01 initiative does not expand outlines, discussion, summaries or auxiliary task requests
+ok 33 - RP01 initiative does not expand outlines, discussion, summaries or auxiliary task requests
+  ---
+  duration_ms: 455.92159
+  type: 'test'
+  ...
+# Subtest: RP01 native preset expansion uses the same initiative without replacing host messages or tools
+ok 34 - RP01 native preset expansion uses the same initiative without replacing host messages or tools
+  ---
+  duration_ms: 255.540417
+  type: 'test'
+  ...
+# Subtest: RP01 UI saves and reopens global initiative, exposes dependency status and clears it across cards
+ok 35 - RP01 UI saves and reopens global initiative, exposes dependency status and clears it across cards
+  ---
+  duration_ms: 307.520993
+  type: 'test'
+  ...
+# Subtest: RP01 config backup round-trips explicit levels and invalid stored values fail without replacing settings
+ok 36 - RP01 config backup round-trips explicit levels and invalid stored values fail without replacing settings
+  ---
+  duration_ms: 195.134135
+  type: 'test'
+  ...
+# Subtest: OOC uses isolated identity and literal feedback with native API, without narrative instructions or tools
+ok 37 - OOC uses isolated identity and literal feedback with native API, without narrative instructions or tools
+  ---
+  duration_ms: 67.497186
+  type: 'test'
+  ...
+# Subtest: revision directives reach both native and controlled payload without mutating original source
+ok 38 - revision directives reach both native and controlled payload without mutating original source
+  ---
+  duration_ms: 546.301991
+  type: 'test'
+  ...
+# Subtest: both context owners await saved turn directions and block a failed binding
+ok 39 - both context owners await saved turn directions and block a failed binding
+  ---
+  duration_ms: 574.178997
+  type: 'test'
+  ...
+# Subtest: display page exposes canonical loading settings and protects unsaved loading drafts
+ok 40 - display page exposes canonical loading settings and protects unsaved loading drafts
+  ---
+  duration_ms: 60.504147
+  type: 'test'
+  ...
+# Subtest: parent settled and leave reason include a pending cache subpage operation
+ok 41 - parent settled and leave reason include a pending cache subpage operation
+  ---
+  duration_ms: 29.802015
+  type: 'test'
+  ...
+# Subtest: edited user comparison reaches full native and controlled requests then clears for ordinary send
+ok 42 - edited user comparison reaches full native and controlled requests then clears for ordinary send
+  ---
+  duration_ms: 897.246589
+  type: 'test'
+  ...
+# Subtest: late user edit invalidates comparison before request serialization
+ok 43 - late user edit invalidates comparison before request serialization
+  ---
+  duration_ms: 28.083555
+  type: 'test'
+  ...
+# Subtest: native swipe and regenerate also use the edited user pair, with no leakage into ordinary send after missing end event
+ok 44 - native swipe and regenerate also use the edited user pair, with no leakage into ordinary send after missing end event
+  ---
+  duration_ms: 96.097898
+  type: 'test'
+  ...
+# Subtest: play language controls save exact default and independent dialogue settings without duplicate advanced owners
+ok 45 - play language controls save exact default and independent dialogue settings without duplicate advanced owners
+  ---
+  duration_ms: 188.385593
+  type: 'test'
+  ...
+# Subtest: custom language and optional dialogue reach complete actual requests for all workflow detail levels
+ok 46 - custom language and optional dialogue reach complete actual requests for all workflow detail levels
+  ---
+  duration_ms: 3436.068923
+  type: 'test'
+  ...
+# Subtest: language changes validate missing names and do not mutate legacy bilingual configuration just by opening
+ok 47 - language changes validate missing names and do not mutate legacy bilingual configuration just by opening
+  ---
+  duration_ms: 30.278086
+  type: 'test'
+  ...
+# Subtest: bilingual language survives native request observation and plain prose without replacing native history
+ok 48 - bilingual language survives native request observation and plain prose without replacing native history
+  ---
+  duration_ms: 111.087328
+  type: 'test'
+  ...
+# Subtest: one configuration footer saves or discards cached theme drafts across pages and retains failed saves
+ok 49 - one configuration footer saves or discards cached theme drafts across pages and retains failed saves
+  ---
+  duration_ms: 89.509147
+  type: 'test'
+  ...
+# Subtest: same-layer configuration retains rule wording drafts, saves them to actual requests, and restores one default
+ok 50 - same-layer configuration retains rule wording drafts, saves them to actual requests, and restores one default
+  ---
+  duration_ms: 651.224474
+  type: 'test'
+  ...
+# Subtest: host accepts typed task input beside rendered text and custom executors receive both contracts
+ok 51 - host accepts typed task input beside rendered text and custom executors receive both contracts
+  ---
+  duration_ms: 62.99125
+  type: 'test'
+  ...
+# Subtest: text task JSON-looking quotations remain literal source text
+ok 52 - text task JSON-looking quotations remain literal source text
+  ---
+  duration_ms: 44.73217
+  type: 'test'
+  ...
+# Subtest: V3 connection resolver applies selected preset parameters with explicit task overrides, without borrowing its prompt
+ok 53 - V3 connection resolver applies selected preset parameters with explicit task overrides, without borrowing its prompt
+  ---
+  duration_ms: 23.125279
+  type: 'test'
+  ...
+# Subtest: native card declaration is separate from the Tisya executor flag and respects card/off/script switches
+ok 54 - native card declaration is separate from the Tisya executor flag and respects card/off/script switches
+  ---
+  duration_ms: 1.807007
+  type: 'test'
+  ...
+# Subtest: native preparation preserves 0/false/empty values, excludes unrelated/disabled entries, never writes
+ok 55 - native preparation preserves 0/false/empty values, excludes unrelated/disabled entries, never writes
+  ---
+  duration_ms: 5.528138
+  type: 'test'
+  ...
+# Subtest: native MVU uses selected branch pre-swipe state and current user snapshot when present
+ok 56 - native MVU uses selected branch pre-swipe state and current user snapshot when present
+  ---
+  duration_ms: 0.665965
+  type: 'test'
+  ...
+# Subtest: unified archive bridge leaves snapshot selection to activated material and keeps local drift checks
+ok 57 - unified archive bridge leaves snapshot selection to activated material and keeps local drift checks
+  ---
+  duration_ms: 1.14018
+  type: 'test'
+  ...
+# Subtest: all compiled detail levels retain native JSONPatch format without disabled MVU wording
+ok 58 - all compiled detail levels retain native JSONPatch format without disabled MVU wording
+  ---
+  duration_ms: 95.669052
+  type: 'test'
+  ...
+# Subtest: actual host request supplies native state and rules, and rejects state drift before send
+ok 59 - actual host request supplies native state and rules, and rejects state drift before send
+  ---
+  duration_ms: 366.148747
+  type: 'test'
+  ...
+# Subtest: native XML updates remain readable without source mutation or public variable leakage
+ok 60 - native XML updates remain readable without source mutation or public variable leakage
+  ---
+  duration_ms: 15.492067
+  type: 'test'
+  ...
+# Subtest: native appended status marker is a read-only extra attachment; arbitrary trailing text still fails
+ok 61 - native appended status marker is a read-only extra attachment; arbitrary trailing text still fails
+  ---
+  duration_ms: 1.137487
+  type: 'test'
+  ...
+# Subtest: native request leaves original variable material, history and tools byte-for-byte unchanged
+ok 62 - native request leaves original variable material, history and tools byte-for-byte unchanged
+  ---
+  duration_ms: 18.87227
+  type: 'test'
+  ...
+# Subtest: preprocessing and all three output consumers are generic without an MVU brand declaration
+ok 63 - preprocessing and all three output consumers are generic without an MVU brand declaration
+  ---
+  duration_ms: 79.618686
+  type: 'test'
+  ...
+# Subtest: different external update syntaxes stay opaque, private and available to their native writer
+ok 64 - different external update syntaxes stay opaque, private and available to their native writer
+  ---
+  duration_ms: 5.742197
+  type: 'test'
+  ...
+# Subtest: legacy appended native update is readable once without source writes or private Analysis leakage
+ok 65 - legacy appended native update is readable once without source writes or private Analysis leakage
+  ---
+  duration_ms: 11.602852
+  type: 'test'
+  ...
+# Subtest: native RFC add operation is retained without changing its dialect
+ok 66 - native RFC add operation is retained without changing its dialect
+  ---
+  duration_ms: 0.668914
+  type: 'test'
+  ...
+# Subtest: native status inside vars is projected to extra from raw XML, CDATA and mixed wrappers
+ok 67 - native status inside vars is projected to extra from raw XML, CDATA and mixed wrappers
+  ---
+  duration_ms: 35.966261
+  type: 'test'
+  ...
+# Subtest: native marker relocation feeds the ordinary display regex once, with variables unchanged
+ok 68 - native marker relocation feeds the ordinary display regex once, with variables unchanged
+  ---
+  duration_ms: 2.60511
+  type: 'test'
+  ...
+# Subtest: native marker compatibility still refuses duplicate updates, duplicate markers, junk and bad JSON
+ok 69 - native marker compatibility still refuses duplicate updates, duplicate markers, junk and bad JSON
+  ---
+  duration_ms: 1.112159
+  type: 'test'
+  ...
+# Subtest: native marker literal alone never becomes a display component, and incomplete XML is not repaired
+ok 70 - native marker literal alone never becomes a display component, and incomplete XML is not repaired
+  ---
+  duration_ms: 1.572159
+  type: 'test'
+  ...
+# Subtest: all live output detail levels explicitly separate native display markers from updates
+ok 71 - all live output detail levels explicitly separate native display markers from updates
+  ---
+  duration_ms: 77.28183
+  type: 'test'
+  ...
+# Subtest: late native input routes a source-provided mixed example into separate display and update components
+ok 72 - late native input routes a source-provided mixed example into separate display and update components
+  ---
+  duration_ms: 1.096165
+  type: 'test'
+  ...
+# Subtest: public memory projection excludes secret rows, task, truth tags, conditions and psychology
+ok 73 - public memory projection excludes secret rows, task, truth tags, conditions and psychology
+  ---
+  duration_ms: 24.661126
+  type: 'test'
+  ...
+# Subtest: reader diagnostics allow only a bounded standalone code, never raw error details
+ok 74 - reader diagnostics allow only a bounded standalone code, never raw error details
+  ---
+  duration_ms: 0.730556
+  type: 'test'
+  ...
+# Subtest: memory search preserves explicit null, zero, false and deletion as historical changes
+ok 75 - memory search preserves explicit null, zero, false and deletion as historical changes
+  ---
+  duration_ms: 3.960313
+  type: 'test'
+  ...
+# Subtest: search only indexes public projected fields and can find text beyond a short preview
+ok 76 - search only indexes public projected fields and can find text beyond a short preview
+  ---
+  duration_ms: 37.733644
+  type: 'test'
+  ...
+# Subtest: plain messages appear in notes, not as invented memory; hidden memory creates no empty result
+ok 77 - plain messages appear in notes, not as invented memory; hidden memory creates no empty result
+  ---
+  duration_ms: 9.337361
+  type: 'test'
+  ...
+# Subtest: recent-first pagination skips unloaded and system messages and keeps original message ids
+ok 78 - recent-first pagination skips unloaded and system messages and keeps original message ids
+  ---
+  duration_ms: 16.20004
+  type: 'test'
+  ...
+# Subtest: a text change invalidates old rows and retained buttons before they act
+ok 79 - a text change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 5.659162
+  type: 'test'
+  ...
+# Subtest: a swipe change invalidates old rows and retained buttons before they act
+ok 80 - a swipe change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 5.079162
+  type: 'test'
+  ...
+# Subtest: a replace change invalidates old rows and retained buttons before they act
+ok 81 - a replace change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 7.387035
+  type: 'test'
+  ...
+# Subtest: a append change invalidates old rows and retained buttons before they act
+ok 82 - a append change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 5.341836
+  type: 'test'
+  ...
+# Subtest: a delete change invalidates old rows and retained buttons before they act
+ok 83 - a delete change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 5.478451
+  type: 'test'
+  ...
+# Subtest: a chat change invalidates old rows and retained buttons before they act
+ok 84 - a chat change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 7.225783
+  type: 'test'
+  ...
+# Subtest: a speaker change invalidates old rows and retained buttons before they act
+ok 85 - a speaker change invalidates old rows and retained buttons before they act
+  ---
+  duration_ms: 4.883878
+  type: 'test'
+  ...
+# Subtest: editing during a batch discards the incomplete index; explicit refresh reads the new source
+ok 86 - editing during a batch discards the incomplete index; explicit refresh reads the new source
+  ---
+  duration_ms: 15.429459
+  type: 'test'
+  ...
+# Subtest: dispose cancels pending work and retained controls, with no writes to messages
+ok 87 - dispose cancels pending work and retained controls, with no writes to messages
+  ---
+  duration_ms: 10.135885
+  type: 'test'
+  ...
+# Subtest: malformed private structure shows a safe diagnostic without making raw content searchable
+ok 88 - malformed private structure shows a safe diagnostic without making raw content searchable
+  ---
+  duration_ms: 3.868715
+  type: 'test'
+  ...
+# Subtest: original paragraph, indent, dialogue and punctuation rules reach sanitized host prose
+ok 89 - original paragraph, indent, dialogue and punctuation rules reach sanitized host prose
+  ---
+  duration_ms: 20.588567
+  type: 'test'
+  ...
+# Subtest: multiline and nested marks are built before Markdown separates their boundaries
+ok 90 - multiline and nested marks are built before Markdown separates their boundaries
+  ---
+  duration_ms: 6.253701
+  type: 'test'
+  ...
+# Subtest: authored cards, code and link targets survive formatting without inner decoration
+ok 91 - authored cards, code and link targets survive formatting without inner decoration
+  ---
+  duration_ms: 5.006162
+  type: 'test'
+  ...
+# Subtest: unavailable references remain labels, invalid mark boundaries stop explicitly
+ok 92 - unavailable references remain labels, invalid mark boundaries stop explicitly
+  ---
+  duration_ms: 9.34621
+  type: 'test'
+  ...
+# Subtest: message and reader both mount original prose styles and keep private blocks outside formatter
+ok 93 - message and reader both mount original prose styles and keep private blocks outside formatter
+  ---
+  duration_ms: 61.321426
+  type: 'test'
+  ...
+# Subtest: broken prose formatting has an explicit local notice without exposing the original envelope
+not ok 94 - broken prose formatting has an explicit local notice without exposing the original envelope
+  ---
+  duration_ms: 14.739788
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/prose.test.js:25:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'TISYA_MARK_UNCLOSED',
+    +   'TISYA_PARAGRAPH_NUMBERING_REQUIRED'
+    -   'TISYA_PIPES_LABEL'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'TISYA_MARK_UNCLOSED'
+    1: 'TISYA_PIPES_LABEL'
+  actual:
+    0: 'TISYA_MARK_UNCLOSED'
+    1: 'TISYA_PARAGRAPH_NUMBERING_REQUIRED'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/prose.test.js:27:188)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables
+ok 95 - reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables
+  ---
+  duration_ms: 4.143087
+  type: 'test'
+  ...
+# Subtest: reader review retains five E characters, five states, own cognition and optional non-verbatim thoughts without changing story ACLs
+ok 96 - reader review retains five E characters, five states, own cognition and optional non-verbatim thoughts without changing story ACLs
+  ---
+  duration_ms: 18.800758
+  type: 'test'
+  ...
+# Subtest: more restores the psychology switch, saves it, survives remount, and exposes save failure without losing records
+ok 97 - more restores the psychology switch, saves it, survives remount, and exposes save failure without losing records
+  ---
+  duration_ms: 90.041882
+  type: 'test'
+  ...
+# Subtest: original task/next folds, owned animals and ledger clicks stay independent; view state survives remount
+ok 98 - original task/next folds, owned animals and ledger clicks stay independent; view state survives remount
+  ---
+  duration_ms: 125.641253
+  type: 'test'
+  ...
+# Subtest: task summary and pending records keep public field ownership, including folded DOM and counters
+ok 99 - task summary and pending records keep public field ownership, including folded DOM and counters
+  ---
+  duration_ms: 42.799375
+  type: 'test'
+  ...
+# Subtest: closed hearts do not become orphan decorations and an empty world scroll starts folded
+ok 100 - closed hearts do not become orphan decorations and an empty world scroll starts folded
+  ---
+  duration_ms: 22.249047
+  type: 'test'
+  ...
+1..100
+# tests 100
+# suites 0
+# pass 98
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35971.376454

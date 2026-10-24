@@ -1,0 +1,184 @@
+TAP version 13
+# Subtest: manual review creates a source-bound real commit, preserves values and old history
+ok 1 - manual review creates a source-bound real commit, preserves values and old history
+  ---
+  duration_ms: 74.082213
+  type: 'test'
+  ...
+# Subtest: historical request receipts distinguish their committed values from later current values
+ok 2 - historical request receipts distinguish their committed values from later current values
+  ---
+  duration_ms: 61.993708
+  type: 'test'
+  ...
+# Subtest: stale row, changed binding and native-owned values cannot be edited
+ok 3 - stale row, changed binding and native-owned values cannot be edited
+  ---
+  duration_ms: 38.704948
+  type: 'test'
+  ...
+# Subtest: per-item preference accept/edit/reject uses shared P, has no duplicate row and retains provenance
+ok 4 - per-item preference accept/edit/reject uses shared P, has no duplicate row and retains provenance
+  ---
+  duration_ms: 115.954282
+  type: 'test'
+  ...
+# Subtest: rejecting one preference leaves sibling pending and cannot alter source evidence
+ok 5 - rejecting one preference leaves sibling pending and cannot alter source evidence
+  ---
+  duration_ms: 52.132636
+  type: 'test'
+  ...
+# Subtest: P saved but acknowledgement failed is displayed as saved and resumes without editing or duplicate confirmation
+ok 6 - P saved but acknowledgement failed is displayed as saved and resumes without editing or duplicate confirmation
+  ---
+  duration_ms: 61.452817
+  type: 'test'
+  ...
+# Subtest: progress counts a saved P contribution as awaiting acknowledgement rather than awaiting review
+ok 7 - progress counts a saved P contribution as awaiting acknowledgement rather than awaiting review
+  ---
+  duration_ms: 41.468751
+  type: 'test'
+  ...
+# Subtest: request-specific accepted preference can be disabled and immediately reflects shared P truth
+ok 8 - request-specific accepted preference can be disabled and immediately reflects shared P truth
+  ---
+  duration_ms: 64.460975
+  type: 'test'
+  ...
+# Subtest: progress uses committed receipts and pending preferences together, and observer errors do not poison state
+ok 9 - progress uses committed receipts and pending preferences together, and observer errors do not poison state
+  ---
+  duration_ms: 13.990582
+  type: 'test'
+  ...
+# Subtest: reopened progress treats unknown model outcomes as blocked and lost branch receipts as superseded
+ok 10 - reopened progress treats unknown model outcomes as blocked and lost branch receipts as superseded
+  ---
+  duration_ms: 12.80185
+  type: 'test'
+  ...
+# Subtest: one assistant instruction validates a full configuration batch and applies with one store save
+ok 11 - one assistant instruction validates a full configuration batch and applies with one store save
+  ---
+  duration_ms: 227.137939
+  type: 'test'
+  ...
+# Subtest: one invalid or unknown configuration leaf rejects the whole batch
+ok 12 - one invalid or unknown configuration leaf rejects the whole batch
+  ---
+  duration_ms: 164.521975
+  type: 'test'
+  ...
+# Subtest: head chat is optional and isolated; no fake API response or config mutation
+ok 13 - head chat is optional and isolated; no fake API response or config mutation
+  ---
+  duration_ms: 132.204412
+  type: 'test'
+  ...
+# Subtest: head request can be aborted without sending to story or accepting a late reply
+ok 14 - head request can be aborted without sending to story or accepting a late reply
+  ---
+  duration_ms: 1.543043
+  type: 'test'
+  ...
+# Subtest: capability catalog covers actual 30 destinations and 46 groups with canonical aliases
+ok 15 - capability catalog covers actual 30 destinations and 46 groups with canonical aliases
+  ---
+  duration_ms: 3.240497
+  type: 'test'
+  ...
+# Subtest: archive migration map names every actual old table page once without inventing old entries
+ok 16 - archive migration map names every actual old table page once without inventing old entries
+  ---
+  duration_ms: 1.64757
+  type: 'test'
+  ...
+# Subtest: first lazy initialization is accepted; later scope changes during snapshot reads are rejected
+ok 17 - first lazy initialization is accepted; later scope changes during snapshot reads are rejected
+  ---
+  duration_ms: 0.911656
+  type: 'test'
+  ...
+# Subtest: archive editor uses one V3 store for complete create/edit/delete and readonly definitions
+ok 18 - archive editor uses one V3 store for complete create/edit/delete and readonly definitions
+  ---
+  duration_ms: 75.218671
+  type: 'test'
+  ...
+# Subtest: archive state editor preserves 0 false null and rejects dangling references and native ownership
+ok 19 - archive state editor preserves 0 false null and rejects dangling references and native ownership
+  ---
+  duration_ms: 68.447701
+  type: 'test'
+  ...
+# Subtest: configuration assistant query adapter reads the actual V3 view, excludes raw source, and closes stale snapshots
+ok 20 - configuration assistant query adapter reads the actual V3 view, excludes raw source, and closes stale snapshots
+  ---
+  duration_ms: 42.059586
+  type: 'test'
+  ...
+# Subtest: manual archive and review retry a persisted commit after acknowledgement loss without double edits
+ok 21 - manual archive and review retry a persisted commit after acknowledgement loss without double edits
+  ---
+  duration_ms: 51.476132
+  type: 'test'
+  ...
+# Subtest: nested native mapping cannot be introduced or changed through generic archive and review forms
+ok 22 - nested native mapping cannot be introduced or changed through generic archive and review forms
+  ---
+  duration_ms: 27.214424
+  type: 'test'
+  ...
+# Subtest: head conversation follows chat and user identity across ordinary story source advances
+ok 23 - head conversation follows chat and user identity across ordinary story source advances
+  ---
+  duration_ms: 1.007701
+  type: 'test'
+  ...
+# Subtest: confirmed preference revision replaces one contribution with full history and never adds its old score
+ok 24 - confirmed preference revision replaces one contribution with full history and never adds its old score
+  ---
+  duration_ms: 54.158422
+  type: 'test'
+  ...
+# Subtest: manual preference revision has a durable P receipt across acknowledgement loss and rejects changed retries
+ok 25 - manual preference revision has a durable P receipt across acknowledgement loss and rejects changed retries
+  ---
+  duration_ms: 61.066468
+  type: 'test'
+  ...
+# Subtest: confirmed preference re-enable restores only the existing source contribution and duplicate group revisions fail atomically
+ok 26 - confirmed preference re-enable restores only the existing source contribution and duplicate group revisions fail atomically
+  ---
+  duration_ms: 98.322192
+  type: 'test'
+  ...
+# Subtest: manual feedback preference revision preserves independent feedback identity and exact selected scope
+ok 27 - manual feedback preference revision preserves independent feedback identity and exact selected scope
+  ---
+  duration_ms: 54.722497
+  type: 'test'
+  ...
+# Subtest: renaming a confirmed preference keeps its old source group reserved and cannot revive a second contribution elsewhere
+ok 28 - renaming a confirmed preference keeps its old source group reserved and cannot revive a second contribution elsewhere
+  ---
+  duration_ms: 55.276639
+  type: 'test'
+  ...
+# Subtest: pending B acknowledgement remains a saved P receipt after another session manually revises that contribution
+ok 29 - pending B acknowledgement remains a saved P receipt after another session manually revises that contribution
+  ---
+  duration_ms: 69.898997
+  type: 'test'
+  ...
+1..29
+# tests 29
+# suites 0
+# pass 29
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1890.609286

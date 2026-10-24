@@ -1,0 +1,1000 @@
+TAP version 13
+# Subtest: service sends sheet material plus isolated typed input and persists only validated sheet replies without automatic repair
+ok 1 - service sends sheet material plus isolated typed input and persists only validated sheet replies without automatic repair
+  ---
+  duration_ms: 507.51159
+  type: 'test'
+  ...
+# Subtest: archive and review exclude intermediate tool owners while final prose keeps its original source key
+ok 2 - archive and review exclude intermediate tool owners while final prose keeps its original source key
+  ---
+  duration_ms: 357.56092
+  type: 'test'
+  ...
+# Subtest: tool metadata mutation while archival request is pending prevents a stale write
+ok 3 - tool metadata mutation while archival request is pending prevents a stale write
+  ---
+  duration_ms: 247.899333
+  type: 'test'
+  ...
+# Subtest: old tool-derived ledger entries stop read/write projections without silently dropping existing facts
+ok 4 - old tool-derived ledger entries stop read/write projections without silently dropping existing facts
+  ---
+  duration_ms: 246.992804
+  type: 'test'
+  ...
+# Subtest: opening user definitions initialize separate companions, relations and knowledge before narrative replay
+ok 5 - opening user definitions initialize separate companions, relations and knowledge before narrative replay
+  ---
+  duration_ms: 795.249262
+  type: 'test'
+  ...
+# Subtest: initialization blockers leave all proposed origin and session writes unsaved
+ok 6 - initialization blockers leave all proposed origin and session writes unsaved
+  ---
+  duration_ms: 416.715723
+  type: 'test'
+  ...
+# Subtest: genesis accepts reordered JSON object keys without schema revisions but rejects real field changes
+ok 7 - genesis accepts reordered JSON object keys without schema revisions but rejects real field changes
+  ---
+  duration_ms: 585.930469
+  type: 'test'
+  ...
+# Subtest: genesis compares an upgraded effective schema with the same upgraded stored baseline
+ok 8 - genesis compares an upgraded effective schema with the same upgraded stored baseline
+  ---
+  duration_ms: 713.004025
+  type: 'test'
+  ...
+# Subtest: initialization retains disabled AI sources without making them operative, and rejects changed raw material
+ok 9 - initialization retains disabled AI sources without making them operative, and rejects changed raw material
+  ---
+  duration_ms: 409.42796
+  type: 'test'
+  ...
+# Subtest: task cancellation is scoped, same-chat notifications are harmless and actual switches cancel
+ok 10 - task cancellation is scoped, same-chat notifications are harmless and actual switches cancel
+  ---
+  duration_ms: 454.268352
+  type: 'test'
+  ...
+# Subtest: external AbortError is actionable and initialization can be retried without duplicate books
+ok 11 - external AbortError is actionable and initialization can be retried without duplicate books
+  ---
+  duration_ms: 784.945502
+  type: 'test'
+  ...
+# Subtest: initializer dropdown uses selected mode and previews stay protected until saved or discarded
+ok 12 - initializer dropdown uses selected mode and previews stay protected until saved or discarded
+  ---
+  duration_ms: 1961.661878
+  type: 'test'
+  ...
+# Subtest: native branch mappings retain dynamic maps and enforce nested read-only/prototype keys
+ok 13 - native branch mappings retain dynamic maps and enforce nested read-only/prototype keys
+  ---
+  duration_ms: 1.556897
+  type: 'test'
+  ...
+# Subtest: native callbacks stage only their own writes and restore runtime hooks after failure
+ok 14 - native callbacks stage only their own writes and restore runtime hooks after failure
+  ---
+  duration_ms: 0.63928
+  type: 'test'
+  ...
+# Subtest: native bridge resumes saved outcome after write failure without repeating model or callback
+ok 15 - native bridge resumes saved outcome after write failure without repeating model or callback
+  ---
+  duration_ms: 667.46728
+  type: 'test'
+  ...
+# Subtest: large card initialization retains over 200 definitions without loosening per-turn limits
+ok 16 - large card initialization retains over 200 definitions without loosening per-turn limits
+  ---
+  duration_ms: 20.463394
+  type: 'test'
+  ...
+# Subtest: shared forms retain zero false null and register new typed fields
+ok 17 - shared forms retain zero false null and register new typed fields
+  ---
+  duration_ms: 3.737811
+  type: 'test'
+  ...
+# Subtest: canonical type registry reuses aliases and rejects synonym and inheritance collisions
+ok 18 - canonical type registry reuses aliases and rejects synonym and inheritance collisions
+  ---
+  duration_ms: 3.958913
+  type: 'test'
+  ...
+# Subtest: form formulas cannot execute arbitrary code or read a more restricted row
+ok 19 - form formulas cannot execute arbitrary code or read a more restricted row
+  ---
+  duration_ms: 1.008514
+  type: 'test'
+  ...
+# Subtest: worldbook binding preserves original and database books, persistence survives service recreation
+ok 20 - worldbook binding preserves original and database books, persistence survives service recreation
+  ---
+  duration_ms: 358.695097
+  type: 'test'
+  ...
+# Subtest: book CAS rejects stale and unknown writes without replacing unrelated entries
+ok 21 - book CAS rejects stale and unknown writes without replacing unrelated entries
+  ---
+  duration_ms: 12.201776
+  type: 'test'
+  ...
+# Subtest: disabled feature and memoryless greeting issue no auxiliary calls
+ok 22 - disabled feature and memoryless greeting issue no auxiliary calls
+  ---
+  duration_ms: 297.858338
+  type: 'test'
+  ...
+# Subtest: archive stays one assistant reply behind and retry discards candidate tags
+ok 23 - archive stays one assistant reply behind and retry discards candidate tags
+  ---
+  duration_ms: 594.081118
+  type: 'test'
+  ...
+# Subtest: source fingerprints invalidate an edited prefix and dependent records
+ok 24 - source fingerprints invalidate an edited prefix and dependent records
+  ---
+  duration_ms: 410.12173
+  type: 'test'
+  ...
+# Subtest: old API completion after chat switch cannot write either worldbook
+ok 25 - old API completion after chat switch cannot write either worldbook
+  ---
+  duration_ms: 250.624955
+  type: 'test'
+  ...
+# Subtest: floor scanner, limited batches and repeat runs skip confirmed rows
+ok 26 - floor scanner, limited batches and repeat runs skip confirmed rows
+  ---
+  duration_ms: 419.778062
+  type: 'test'
+  ...
+# Subtest: handwritten import has review draft, original provenance, unknown time and duplicate guard
+ok 27 - handwritten import has review draft, original provenance, unknown time and duplicate guard
+  ---
+  duration_ms: 311.420703
+  type: 'test'
+  ...
+# Subtest: Genesis uses the same forms, retains base versions and pins only chosen session
+ok 28 - Genesis uses the same forms, retains base versions and pins only chosen session
+  ---
+  duration_ms: 721.260655
+  type: 'test'
+  ...
+# Subtest: historical anchors do not inherit a later genesis pin or its initial relationship
+ok 29 - historical anchors do not inherit a later genesis pin or its initial relationship
+  ---
+  duration_ms: 832.664882
+  type: 'test'
+  ...
+# Subtest: historical anchors restore earlier object values and knowledge, leaving source history intact
+ok 30 - historical anchors restore earlier object values and knowledge, leaving source history intact
+  ---
+  duration_ms: 423.698724
+  type: 'test'
+  ...
+# Subtest: historical anchors keep the selected origin version at that time and omit later imported assets
+ok 31 - historical anchors keep the selected origin version at that time and omit later imported assets
+  ---
+  duration_ms: 1195.680876
+  type: 'test'
+  ...
+# Subtest: forking an early floor excludes later source-less genesis commits
+ok 32 - forking an early floor excludes later source-less genesis commits
+  ---
+  duration_ms: 631.54083
+  type: 'test'
+  ...
+# Subtest: new genesis initial references remain valid after explicit origin selections
+ok 33 - new genesis initial references remain valid after explicit origin selections
+  ---
+  duration_ms: 452.55259
+  type: 'test'
+  ...
+# Subtest: single core service preserves multiline evidence through natural material and validates it again before saving
+ok 34 - single core service preserves multiline evidence through natural material and validates it again before saving
+  ---
+  duration_ms: 405.733609
+  type: 'test'
+  ...
+# Subtest: equipment baselines retain source type and bind only the adapted item, never incidental characters
+ok 35 - equipment baselines retain source type and bind only the adapted item, never incidental characters
+  ---
+  duration_ms: 705.202496
+  type: 'test'
+  ...
+# Subtest: plot API remains a proposal and explicit preference constraints reach context
+ok 36 - plot API remains a proposal and explicit preference constraints reach context
+  ---
+  duration_ms: 260.021133
+  type: 'test'
+  ...
+# Subtest: plan sheet due and clues reach legacy and English final messages once without becoming stored facts
+ok 37 - plan sheet due and clues reach legacy and English final messages once without becoming stored facts
+  ---
+  duration_ms: 303.173945
+  type: 'test'
+  ...
+# Subtest: incomplete or incorrectly typed plan lists fail visibly without retaining a stale plan or writing facts
+ok 38 - incomplete or incorrectly typed plan lists fail visibly without retaining a stale plan or writing facts
+  ---
+  duration_ms: 1411.798696
+  type: 'test'
+  ...
+# Subtest: preference task rejects unsupported evidence and inference promoted to hard rule
+ok 39 - preference task rejects unsupported evidence and inference promoted to hard rule
+  ---
+  duration_ms: 3.030316
+  type: 'test'
+  ...
+# Subtest: auxiliary routes inherit main connection and model without roleplay preset
+ok 40 - auxiliary routes inherit main connection and model without roleplay preset
+  ---
+  duration_ms: 0.456425
+  type: 'test'
+  ...
+# Subtest: keyword retrieval includes last-turn named constants independently of history count
+ok 41 - keyword retrieval includes last-turn named constants independently of history count
+  ---
+  duration_ms: 0.66701
+  type: 'test'
+  ...
+# Subtest: vector index is isolated, removes stale sources and never trusts returned text
+ok 42 - vector index is isolated, removes stale sources and never trusts returned text
+  ---
+  duration_ms: 1.789936
+  type: 'test'
+  ...
+# Subtest: body archives without memory and does not copy contradictory old summary
+ok 43 - body archives without memory and does not copy contradictory old summary
+  ---
+  duration_ms: 336.495598
+  type: 'test'
+  ...
+# Subtest: template editor adds safe columns and tables but cannot mutate an existing field type
+ok 44 - template editor adds safe columns and tables but cannot mutate an existing field type
+  ---
+  duration_ms: 311.240916
+  type: 'test'
+  ...
+# Subtest: pausing an API before it returns leaves source unarchived and retry succeeds
+ok 45 - pausing an API before it returns leaves source unarchived and retry succeeds
+  ---
+  duration_ms: 349.953501
+  type: 'test'
+  ...
+# Subtest: same-size backfill batches advance beyond already processed floors
+ok 46 - same-size backfill batches advance beyond already processed floors
+  ---
+  duration_ms: 374.604634
+  type: 'test'
+  ...
+# Subtest: manual correction guards only changed fields and does not swallow later unrelated changes
+ok 47 - manual correction guards only changed fields and does not swallow later unrelated changes
+  ---
+  duration_ms: 4.744166
+  type: 'test'
+  ...
+# Subtest: native-mode auxiliary default follows the actual native main connection
+ok 48 - native-mode auxiliary default follows the actual native main connection
+  ---
+  duration_ms: 0.454151
+  type: 'test'
+  ...
+# Subtest: configuration UI can bind books, scan floors and backfill without memory blocks
+ok 49 - configuration UI can bind books, scan floors and backfill without memory blocks
+  ---
+  duration_ms: 583.064624
+  type: 'test'
+  ...
+# Subtest: older floor cannot overwrite a field whose current source is later
+ok 50 - older floor cannot overwrite a field whose current source is later
+  ---
+  duration_ms: 2.076825
+  type: 'test'
+  ...
+# Subtest: native blue/green projection keeps journals out, promotes previous names and uses native budget
+ok 51 - native blue/green projection keeps journals out, promotes previous names and uses native budget
+  ---
+  duration_ms: 2.724096
+  type: 'test'
+  ...
+# Subtest: worldbook service injects control once and puts archived rows through native activation
+ok 52 - worldbook service injects control once and puts archived rows through native activation
+  ---
+  duration_ms: 332.699664
+  type: 'test'
+  ...
+# Subtest: worldbook mode has explicit compatibility error instead of silently changing injection
+ok 53 - worldbook mode has explicit compatibility error instead of silently changing injection
+  ---
+  duration_ms: 186.933819
+  type: 'test'
+  ...
+# Subtest: preference analysis creates candidates; only explicit confirmation is injectable
+ok 54 - preference analysis creates candidates; only explicit confirmation is injectable
+  ---
+  duration_ms: 495.876083
+  type: 'test'
+  ...
+# Subtest: rejected preference is not retried or injected, and disabled preferences stay out
+ok 55 - rejected preference is not retried or injected, and disabled preferences stay out
+  ---
+  duration_ms: 447.223529
+  type: 'test'
+  ...
+# Subtest: Genesis validates the entire draft before writes and links base and initial-state time anchors
+ok 56 - Genesis validates the entire draft before writes and links base and initial-state time anchors
+  ---
+  duration_ms: 432.721847
+  type: 'test'
+  ...
+# Subtest: genesis saves explicitly established initial knowledge while rejecting invented historical events atomically
+ok 57 - genesis saves explicitly established initial knowledge while rejecting invented historical events atomically
+  ---
+  duration_ms: 429.126288
+  type: 'test'
+  ...
+# Subtest: explicit style rules remain available without enabled tables, books or auxiliary calls
+ok 58 - explicit style rules remain available without enabled tables, books or auxiliary calls
+  ---
+  duration_ms: 44.2972
+  type: 'test'
+  ...
+# Subtest: new custom table names participate in previous-turn tags and keyword retrieval
+ok 59 - new custom table names participate in previous-turn tags and keyword retrieval
+  ---
+  duration_ms: 0.566051
+  type: 'test'
+  ...
+# Subtest: first table use auto-creates card origin and independent session; repeated initialize is idempotent
+ok 60 - first table use auto-creates card origin and independent session; repeated initialize is idempotent
+  ---
+  duration_ms: 451.716076
+  type: 'test'
+  ...
+# Subtest: manual forms/history work before memory setup without enabling automatic table processing
+ok 61 - manual forms/history work before memory setup without enabling automatic table processing
+  ---
+  duration_ms: 213.692227
+  type: 'test'
+  ...
+# Subtest: Genesis native creation runs after confirmed tables, saves explicit scope targets and supports retry without refilling
+ok 62 - Genesis native creation runs after confirmed tables, saves explicit scope targets and supports retry without refilling
+  ---
+  duration_ms: 439.880918
+  type: 'test'
+  ...
+# Subtest: retry reuses origin left by an old current-only binding failure
+ok 63 - retry reuses origin left by an old current-only binding failure
+  ---
+  duration_ms: 206.82707
+  type: 'test'
+  ...
+# Subtest: current card switch during binding read prevents writing another card
+ok 64 - current card switch during binding read prevents writing another card
+  ---
+  duration_ms: 7.74456
+  type: 'test'
+  ...
+# Subtest: history review reads real floors without creating books and labels unavailable archive status
+ok 65 - history review reads real floors without creating books and labels unavailable archive status
+  ---
+  duration_ms: 209.948971
+  type: 'test'
+  ...
+# Subtest: configuration assistant previews every change, never writes on ask, applies one guarded configuration save
+ok 66 - configuration assistant previews every change, never writes on ask, applies one guarded configuration save
+  ---
+  duration_ms: 302.751056
+  type: 'test'
+  ...
+# Subtest: assistant rejects new unknown paths and invalid ranges, then retains pending Genesis handoff
+ok 67 - assistant rejects new unknown paths and invalid ranges, then retains pending Genesis handoff
+  ---
+  duration_ms: 380.546466
+  type: 'test'
+  ...
+# Subtest: assistant unrelated configuration edit retains old alias routing and secrets never enter input
+ok 68 - assistant unrelated configuration edit retains old alias routing and secrets never enter input
+  ---
+  duration_ms: 229.108979
+  type: 'test'
+  ...
+# Subtest: preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter
+ok 69 - preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter
+  ---
+  duration_ms: 648.782184
+  type: 'test'
+  ...
+# Subtest: assistant edits only requested fields without freezing inherited table or route defaults
+ok 70 - assistant edits only requested fields without freezing inherited table or route defaults
+  ---
+  duration_ms: 232.334448
+  type: 'test'
+  ...
+# Subtest: interface and main configuration share one explicit assistant apply, with validation and stale guard
+ok 71 - interface and main configuration share one explicit assistant apply, with validation and stale guard
+  ---
+  duration_ms: 236.135502
+  type: 'test'
+  ...
+# Subtest: card initialization reuses pinned initial state and discovery context in independent saves
+ok 72 - card initialization reuses pinned initial state and discovery context in independent saves
+  ---
+  duration_ms: 656.233143
+  type: 'test'
+  ...
+# Subtest: valid independent archive items persist while malformed items leave floor pending
+ok 73 - valid independent archive items persist while malformed items leave floor pending
+  ---
+  duration_ms: 317.88085
+  type: 'test'
+  ...
+# Subtest: plot object remains a session overlay and source removal never pollutes origin
+ok 74 - plot object remains a session overlay and source removal never pollutes origin
+  ---
+  duration_ms: 305.307677
+  type: 'test'
+  ...
+# Subtest: assistant apply preserves guarded follow-up actions and UI backfill reaches actual archive
+ok 75 - assistant apply preserves guarded follow-up actions and UI backfill reaches actual archive
+  ---
+  duration_ms: 742.186018
+  type: 'test'
+  ...
+# Subtest: assistant continuation refreshes only its own save and still rejects chat changes
+ok 76 - assistant continuation refreshes only its own save and still rejects chat changes
+  ---
+  duration_ms: 255.863091
+  type: 'test'
+  ...
+# Subtest: due checks compare explicit Chinese and ISO story dates but retain unknown eras and impossible dates
+ok 77 - due checks compare explicit Chinese and ISO story dates but retain unknown eras and impossible dates
+  ---
+  duration_ms: 0.75989
+  type: 'test'
+  ...
+# Subtest: participant tags do not force every past event into narrative context
+ok 78 - participant tags do not force every past event into narrative context
+  ---
+  duration_ms: 1.77976
+  type: 'test'
+  ...
+# Subtest: state validity migrates additively and expired values stay available without mandatory current injection
+ok 79 - state validity migrates additively and expired values stay available without mandatory current injection
+  ---
+  duration_ms: 0.981773
+  type: 'test'
+  ...
+# Subtest: native bridge defers latest candidate, fills after user continuation and carries native state to that input
+ok 80 - native bridge defers latest candidate, fills after user continuation and carries native state to that input
+  ---
+  duration_ms: 595.11112
+  type: 'test'
+  ...
+# Subtest: native bridge leaves independently changed input-floor variables intact
+ok 81 - native bridge leaves independently changed input-floor variables intact
+  ---
+  duration_ms: 0.642484
+  type: 'test'
+  ...
+# Subtest: native bridge guards evidence and paths while native schema owns value types
+ok 82 - native bridge guards evidence and paths while native schema owns value types
+  ---
+  duration_ms: 0.593289
+  type: 'test'
+  ...
+# Subtest: rollback and native branch preserve a chosen future blueprint without rearchiving the frozen prefix
+ok 83 - rollback and native branch preserve a chosen future blueprint without rearchiving the frozen prefix
+  ---
+  duration_ms: 1127.182685
+  type: 'test'
+  ...
+# Subtest: reroll branch keeps candidate commits switchable rather than freezing discarded facts into its baseline
+ok 84 - reroll branch keeps candidate commits switchable rather than freezing discarded facts into its baseline
+  ---
+  duration_ms: 994.250442
+  type: 'test'
+  ...
+# Subtest: recovery archive strips auxiliary poison inside body and preserves every consecutive user input
+ok 85 - recovery archive strips auxiliary poison inside body and preserves every consecutive user input
+  ---
+  duration_ms: 268.783601
+  type: 'test'
+  ...
+# Subtest: recovery object discovery and history reference one uncommitted identity and save together
+ok 86 - recovery object discovery and history reference one uncommitted identity and save together
+  ---
+  duration_ms: 313.643863
+  type: 'test'
+  ...
+# Subtest: recovery discovery stays invisible when history remains invalid or is cancelled
+ok 87 - recovery discovery stays invisible when history remains invalid or is cancelled
+  ---
+  duration_ms: 427.124387
+  type: 'test'
+  ...
+# Subtest: recovery archive rereads a thin target before considering its modification
+ok 88 - recovery archive rereads a thin target before considering its modification
+  ---
+  duration_ms: 696.55312
+  type: 'test'
+  ...
+# Subtest: recovery historical preference candidates require review and exact active scope
+ok 89 - recovery historical preference candidates require review and exact active scope
+  ---
+  duration_ms: 701.411157
+  type: 'test'
+  ...
+# Subtest: recovery persona initialization preserves exact text once and binding resumes durable save
+ok 90 - recovery persona initialization preserves exact text once and binding resumes durable save
+  ---
+  duration_ms: 922.630974
+  type: 'test'
+  ...
+# Subtest: recovery incremental names use existing values and repair only editable conflicting names
+ok 91 - recovery incremental names use existing values and repair only editable conflicting names
+  ---
+  duration_ms: 777.092709
+  type: 'test'
+  ...
+# Subtest: recovery rejected native parse persists across service recreation with zero native writes
+ok 92 - recovery rejected native parse persists across service recreation with zero native writes
+  ---
+  duration_ms: 544.413818
+  type: 'test'
+  ...
+# Subtest: recovery adjusted native result survives a failed write and service recreation
+ok 93 - recovery adjusted native result survives a failed write and service recreation
+  ---
+  duration_ms: 610.130413
+  type: 'test'
+  ...
+# Subtest: recovery ISO time comparison preserves timezone and years zero through ninety-nine
+ok 94 - recovery ISO time comparison preserves timezone and years zero through ninety-nine
+  ---
+  duration_ms: 0.508733
+  type: 'test'
+  ...
+# Subtest: recovery failed plot clears previously assembled main context and strict MVU gate stays visible
+ok 95 - recovery failed plot clears previously assembled main context and strict MVU gate stays visible
+  ---
+  duration_ms: 384.538899
+  type: 'test'
+  ...
+# Subtest: recovery task progress carries visible cumulative text and never completes malformed output
+ok 96 - recovery task progress carries visible cumulative text and never completes malformed output
+  ---
+  duration_ms: 383.30125
+  type: 'test'
+  ...
+# Subtest: recovery strict persona requires explicit initialization before table-only assembly
+ok 97 - recovery strict persona requires explicit initialization before table-only assembly
+  ---
+  duration_ms: 216.258915
+  type: 'test'
+  ...
+# Subtest: recovery old task and memory blocks cannot recall an otherwise unrelated archive
+ok 98 - recovery old task and memory blocks cannot recall an otherwise unrelated archive
+  ---
+  duration_ms: 368.82657
+  type: 'test'
+  ...
+# Subtest: dedicated initialization preserves AI notices and raw history through the service request
+ok 99 - dedicated initialization preserves AI notices and raw history through the service request
+  ---
+  duration_ms: 567.928085
+  type: 'test'
+  ...
+# Subtest: manual import preserves raw multi-reply source but rejects auxiliary-only evidence before writing
+ok 100 - manual import preserves raw multi-reply source but rejects auxiliary-only evidence before writing
+  ---
+  duration_ms: 359.770122
+  type: 'test'
+  ...
+# Subtest: preserved raw auxiliary text cannot acquire archival evidence authority
+ok 101 - preserved raw auxiliary text cannot acquire archival evidence authority
+  ---
+  duration_ms: 312.937831
+  type: 'test'
+  ...
+# Subtest: reroll feedback remains pending across candidate changes and confirmation survives story branch selection
+ok 102 - reroll feedback remains pending across candidate changes and confirmation survives story branch selection
+  ---
+  duration_ms: 604.700216
+  type: 'test'
+  ...
+# Subtest: reroll branch preserves candidate ledger instead of freezing the replaced candidate into seed
+ok 103 - reroll branch preserves candidate ledger instead of freezing the replaced candidate into seed
+  ---
+  duration_ms: 991.386512
+  type: 'test'
+  ...
+# Subtest: global preferences require confirmation, survive reload and reach new origin design while local preferences stay scoped
+ok 104 - global preferences require confirmation, survive reload and reach new origin design while local preferences stay scoped
+  ---
+  duration_ms: 1033.766006
+  type: 'test'
+  ...
+# Subtest: failed global preference persistence keeps the candidate pending without writing a session or applying preferences
+ok 105 - failed global preference persistence keeps the candidate pending without writing a session or applying preferences
+  ---
+  duration_ms: 414.085463
+  type: 'test'
+  ...
+# Subtest: new object archive receives consecutive user definitions and saves a user-only dossier without requiring AI repetition
+ok 106 - new object archive receives consecutive user definitions and saves a user-only dossier without requiring AI repetition
+  ---
+  duration_ms: 311.216675
+  type: 'test'
+  ...
+# Subtest: bundle selection previews closure without importing unselected objects, links or growth
+ok 107 - bundle selection previews closure without importing unselected objects, links or growth
+  ---
+  duration_ms: 306.46609
+  type: 'test'
+  ...
+# Subtest: bundle extract/edit/save/adapt validates each meaning and preserves source worlds on fresh reload
+ok 108 - bundle extract/edit/save/adapt validates each meaning and preserves source worlds on fresh reload
+  ---
+  duration_ms: 1418.050064
+  type: 'test'
+  ...
+# Subtest: canon service freezes exact chat and ledger versions, reads without writes and keeps unarchived boundaries
+ok 109 - canon service freezes exact chat and ledger versions, reads without writes and keeps unarchived boundaries
+  ---
+  duration_ms: 754.200831
+  type: 'test'
+  ...
+# Subtest: canon refuses absent stores and an in-flight raw candidate change without creating a frozen record
+ok 110 - canon refuses absent stores and an in-flight raw candidate change without creating a frozen record
+  ---
+  duration_ms: 216.941379
+  type: 'test'
+  ...
+# Subtest: canon panel freezes from its actual control and shows the unarchived source count
+ok 111 - canon panel freezes from its actual control and shows the unarchived source count
+  ---
+  duration_ms: 460.433132
+  type: 'test'
+  ...
+# Subtest: archive query service requires a trusted policy, never initializes and invalidates after book or chat changes
+ok 112 - archive query service requires a trusted policy, never initializes and invalidates after book or chat changes
+  ---
+  duration_ms: 593.609872
+  type: 'test'
+  ...
+# Subtest: assistant query is bound to the exact reviewed snapshot, does not initialize, and rejects changed books
+ok 113 - assistant query is bound to the exact reviewed snapshot, does not initialize, and rejects changed books
+  ---
+  duration_ms: 440.265181
+  type: 'test'
+  ...
+# Subtest: production assistant and controlled host query archives then return a draft without writing or globally registering tools
+ok 114 - production assistant and controlled host query archives then return a draft without writing or globally registering tools
+  ---
+  duration_ms: 1171.597782
+  type: 'test'
+  ...
+# Subtest: controlled assistant refuses a foreign requested tool and preset changes in flight without another request
+ok 115 - controlled assistant refuses a foreign requested tool and preset changes in flight without another request
+  ---
+  duration_ms: 922.616156
+  type: 'test'
+  ...
+# Subtest: controlled assistant rejects a preset change while opening its archive session before sending stale settings
+ok 116 - controlled assistant rejects a preset change while opening its archive session before sending stale settings
+  ---
+  duration_ms: 407.62656
+  type: 'test'
+  ...
+# Subtest: archive proposal service stages without writes, commits once and durably replays after service restart
+ok 117 - archive proposal service stages without writes, commits once and durably replays after service restart
+  ---
+  duration_ms: 557.922557
+  type: 'test'
+  ...
+# Subtest: archive proposal saves legal open data without persisting a schema extension
+ok 118 - archive proposal saves legal open data without persisting a schema extension
+  ---
+  duration_ms: 429.356482
+  type: 'test'
+  ...
+# Subtest: archive proposal does not initialize missing storage or accept a user source
+ok 119 - archive proposal does not initialize missing storage or accept a user source
+  ---
+  duration_ms: 196.783326
+  type: 'test'
+  ...
+# Subtest: unconfirmed latest candidate remains a draft unless host explicitly authorizes its archive
+ok 120 - unconfirmed latest candidate remains a draft unless host explicitly authorizes its archive
+  ---
+  duration_ms: 500.88131
+  type: 'test'
+  ...
+# Subtest: swiping archived source withdraws its projection and replay reports inactive without reapplying
+ok 121 - swiping archived source withdraws its projection and replay reports inactive without reapplying
+  ---
+  duration_ms: 378.839435
+  type: 'test'
+  ...
+# Subtest: chat, configuration and external book revision changes each block proposal writes
+ok 122 - chat, configuration and external book revision changes each block proposal writes
+  ---
+  duration_ms: 837.355436
+  type: 'test'
+  ...
+# Subtest: independent archive single-book failure leaves neither rows nor schema nor origin candidates
+ok 123 - independent archive single-book failure leaves neither rows nor schema nor origin candidates
+  ---
+  duration_ms: 342.316504
+  type: 'test'
+  ...
+# Subtest: archive proposal batch conflict and hidden alias collision produce zero writes
+ok 124 - archive proposal batch conflict and hidden alias collision produce zero writes
+  ---
+  duration_ms: 286.130857
+  type: 'test'
+  ...
+# Subtest: disposed, foreign and aborted proposal handles cannot commit
+ok 125 - disposed, foreign and aborted proposal handles cannot commit
+  ---
+  duration_ms: 241.19106
+  type: 'test'
+  ...
+# Subtest: external abort at the single session write prevents schema and active proposal facts
+ok 126 - external abort at the single session write prevents schema and active proposal facts
+  ---
+  duration_ms: 358.463876
+  type: 'test'
+  ...
+# Subtest: archive host honors configured recursion above five and reserves the final no-tools response
+ok 127 - archive host honors configured recursion above five and reserves the final no-tools response
+  ---
+  duration_ms: 3640.939821
+  type: 'test'
+  ...
+# Subtest: production archive review roundtrip uses five bounded tools and waits for separate confirmation before writes
+ok 128 - production archive review roundtrip uses five bounded tools and waits for separate confirmation before writes
+  ---
+  duration_ms: 2146.864644
+  type: 'test'
+  ...
+# Subtest: inline changes, invented receipt IDs and hidden accepted drafts cannot bypass review validation
+ok 129 - inline changes, invented receipt IDs and hidden accepted drafts cannot bypass review validation
+  ---
+  duration_ms: 1435.482589
+  type: 'test'
+  ...
+# Subtest: archive draft request requires explicit function support and cannot be granted to configuration assistant
+ok 130 - archive draft request requires explicit function support and cannot be granted to configuration assistant
+  ---
+  duration_ms: 203.208719
+  type: 'test'
+  ...
+# Subtest: review without changes writes nothing and a staged review rejects chat mutation or discard
+ok 131 - review without changes writes nothing and a staged review rejects chat mutation or discard
+  ---
+  duration_ms: 380.443114
+  type: 'test'
+  ...
+# Subtest: stopping review generation after staging a proposal prevents any review handle or write
+ok 132 - stopping review generation after staging a proposal prevents any review handle or write
+  ---
+  duration_ms: 292.73593
+  type: 'test'
+  ...
+# Subtest: archive review UI preserves draft across pages, blocks competing history actions, and saves only after confirmation
+ok 133 - archive review UI preserves draft across pages, blocks competing history actions, and saves only after confirmation
+  ---
+  duration_ms: 827.832372
+  type: 'test'
+  ...
+# Subtest: archive review UI requires latest-source confirmation and closes drafts without writes
+ok 134 - archive review UI requires latest-source confirmation and closes drafts without writes
+  ---
+  duration_ms: 507.160098
+  type: 'test'
+  ...
+# Subtest: archive review UI disposal cancels staged and in-flight reviews without writes
+ok 135 - archive review UI disposal cancels staged and in-flight reviews without writes
+  ---
+  duration_ms: 942.543139
+  type: 'test'
+  ...
+# Subtest: archive review UI closes a returned handle after world changes and reports an unconfirmed save honestly
+ok 136 - archive review UI closes a returned handle after world changes and reports an unconfirmed save honestly
+  ---
+  duration_ms: 1149.304883
+  type: 'test'
+  ...
+# Subtest: explicit schema and rows save in one session commit, reload and withdraw together while origin stays unchanged
+ok 137 - explicit schema and rows save in one session commit, reload and withdraw together while origin stays unchanged
+  ---
+  duration_ms: 584.022322
+  type: 'test'
+  ...
+# Subtest: schema-bearing preview exposes full definitions and evidence and only confirmation performs the one write
+ok 138 - schema-bearing preview exposes full definitions and evidence and only confirmation performs the one write
+  ---
+  duration_ms: 461.089194
+  type: 'test'
+  ...
+# Subtest: structure failure and unauthorized reserved tables never leave a partial registry
+ok 139 - structure failure and unauthorized reserved tables never leave a partial registry
+  ---
+  duration_ms: 1096.23955
+  type: 'test'
+  ...
+# Subtest: schema commit with a lost acknowledgement is recovered by receipt without another write
+ok 140 - schema commit with a lost acknowledgement is recovered by receipt without another write
+  ---
+  duration_ms: 405.80347
+  type: 'test'
+  ...
+# Subtest: archive UI shows the complete proposed schema with evidence before confirmation
+ok 141 - archive UI shows the complete proposed schema with evidence before confirmation
+  ---
+  duration_ms: 681.834451
+  type: 'test'
+  ...
+# Subtest: card opening binds exact user and reuses only initial rows in a new independent save
+ok 142 - card opening binds exact user and reuses only initial rows in a new independent save
+  ---
+  duration_ms: 3263.748313
+  type: 'test'
+  ...
+# Subtest: opening revisions preserve all initial objects, reject changed cards and permit explicit restore only before progression
+ok 143 - opening revisions preserve all initial objects, reject changed cards and permit explicit restore only before progression
+  ---
+  duration_ms: 5038.87344
+  type: 'test'
+  ...
+# Subtest: identity origin binding stores a fixed reference, resumes partial save and avoids duplicate projection
+ok 144 - identity origin binding stores a fixed reference, resumes partial save and avoids duplicate projection
+  ---
+  duration_ms: 817.256353
+  type: 'test'
+  ...
+# Subtest: fixed origin preview refuses altered source bytes without writing native persona
+ok 145 - fixed origin preview refuses altered source bytes without writing native persona
+  ---
+  duration_ms: 464.447904
+  type: 'test'
+  ...
+# Subtest: idea creation produces an immutable new origin while leaving session progress unchanged
+ok 146 - idea creation produces an immutable new origin while leaving session progress unchanged
+  ---
+  duration_ms: 444.749369
+  type: 'test'
+  ...
+# Subtest: selecting an origin persona updates the same session binding idempotently without resetting progress
+ok 147 - selecting an origin persona updates the same session binding idempotently without resetting progress
+  ---
+  duration_ms: 645.624726
+  type: 'test'
+  ...
+# Subtest: deleted origin recovery creates an independent pair and preserves the surviving archive
+ok 148 - deleted origin recovery creates an independent pair and preserves the surviving archive
+  ---
+  duration_ms: 516.110255
+  type: 'test'
+  ...
+# Subtest: restored book or changed configuration invalidates a recovery preview without writes
+ok 149 - restored book or changed configuration invalidates a recovery preview without writes
+  ---
+  duration_ms: 308.293127
+  type: 'test'
+  ...
+# Subtest: missing-storage settings entry remains usable and rebuilds from its reviewed snapshot
+ok 150 - missing-storage settings entry remains usable and rebuilds from its reviewed snapshot
+  ---
+  duration_ms: 704.913209
+  type: 'test'
+  ...
+# Subtest: unified archive settles native and business in one request and records the actual adjusted value
+ok 151 - unified archive settles native and business in one request and records the actual adjusted value
+  ---
+  duration_ms: 694.534097
+  type: 'test'
+  ...
+# Subtest: unified archive commit interruption resumes journal without another model or native callback
+ok 152 - unified archive commit interruption resumes journal without another model or native callback
+  ---
+  duration_ms: 714.605465
+  type: 'test'
+  ...
+# Subtest: unified archive validates business evidence before any native callback or write
+ok 153 - unified archive validates business evidence before any native callback or write
+  ---
+  duration_ms: 501.590317
+  type: 'test'
+  ...
+# Subtest: unified archive honors archive gate after reload without changing settings or calling model
+ok 154 - unified archive honors archive gate after reload without changing settings or calling model
+  ---
+  duration_ms: 321.575886
+  type: 'test'
+  ...
+# Subtest: unified archive processes confirmed floors in order without reading a future snapshot
+ok 155 - unified archive processes confirmed floors in order without reading a future snapshot
+  ---
+  duration_ms: 920.158604
+  type: 'test'
+  ...
+# Subtest: unified archive upgrades an already archived floor with only its missing native settlement
+ok 156 - unified archive upgrades an already archived floor with only its missing native settlement
+  ---
+  duration_ms: 871.837483
+  type: 'test'
+  ...
+# Subtest: unified archive rejects a stale preceding native snapshot before parsing
+ok 157 - unified archive rejects a stale preceding native snapshot before parsing
+  ---
+  duration_ms: 290.933644
+  type: 'test'
+  ...
+# Subtest: unified archive rechecks preceding native snapshot after callback before first target write
+ok 158 - unified archive rechecks preceding native snapshot after callback before first target write
+  ---
+  duration_ms: 547.238003
+  type: 'test'
+  ...
+# Subtest: unified archive refuses older pending history after a later native receipt instead of rolling mirrors back
+ok 159 - unified archive refuses older pending history after a later native receipt instead of rolling mirrors back
+  ---
+  duration_ms: 545.183555
+  type: 'test'
+  ...
+# Subtest: unified archive keeps legacy nonempty native updates owned by the original runtime
+ok 160 - unified archive keeps legacy nonempty native updates owned by the original runtime
+  ---
+  duration_ms: 520.519741
+  type: 'test'
+  ...
+# Subtest: unified archive keeps callback-created native roots distinct from business temporary IDs
+ok 161 - unified archive keeps callback-created native roots distinct from business temporary IDs
+  ---
+  duration_ms: 601.351955
+  type: 'test'
+  ...
+# Subtest: unified archive candidate switch accepts a completed old journal without inheriting its settlement
+ok 162 - unified archive candidate switch accepts a completed old journal without inheriting its settlement
+  ---
+  duration_ms: 910.702415
+  type: 'test'
+  ...
+# Subtest: unified archive candidate switch blocks a truly pending old journal without touching the new snapshot
+ok 163 - unified archive candidate switch blocks a truly pending old journal without touching the new snapshot
+  ---
+  duration_ms: 514.142385
+  type: 'test'
+  ...
+# Subtest: same-source archive view reaches normal, numbered, separate-object and native requests without changing raw history
+ok 164 - same-source archive view reaches normal, numbered, separate-object and native requests without changing raw history
+  ---
+  duration_ms: 3717.3488
+  type: 'test'
+  ...
+# Subtest: same-source repair keeps the exact view and rejects auxiliary-only evidence before completing the floor
+ok 165 - same-source repair keeps the exact view and rejects auxiliary-only evidence before completing the floor
+  ---
+  duration_ms: 295.786763
+  type: 'test'
+  ...
+1..165
+# tests 165
+# suites 0
+# pass 165
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 92300.485124

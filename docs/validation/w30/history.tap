@@ -1,0 +1,12 @@
+✔ history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart (40.817835ms)
+✔ control-block evidence, deletion, fabricated reference and fake date fail before any write (20.165677ms)
+✔ unknown historical date cannot overwrite an existing current state (8.112629ms)
+✔ commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save (36.013811ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 193.950178
