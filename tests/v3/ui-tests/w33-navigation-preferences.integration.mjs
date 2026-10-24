@@ -47,9 +47,9 @@ test('homepage initialization, history import and archive entries execute actual
  }});
  const session=await f.app.getSession(),before=await session.storage.read();
  await f.click('初始化／从资料提炼');assert.equal(f.view.getState().page,'archives');assert.ok(f.shadow.querySelector('[aria-label="待整理的资料"]'));
- f.fill('待整理的资料',source);await f.click('生成设定草案');assert.equal(f.shadow.querySelector('[role="alert"]')?.textContent??'', '');assert.equal((await session.storage.read()).commits.length,before.commits.length);
+ f.fill('资料来源','manual');f.fill('待整理的资料',source);await f.click('生成设定草案');assert.equal(f.shadow.querySelector('[role="alert"]')?.textContent??'', '');assert.equal((await session.storage.read()).commits.length,before.commits.length);
  await f.click('保存已选设定');let rows=projectRetained(await session.storage.read(),session.getScope().activeSourceKeys).rows;assert.ok(rows.some(row=>row.values.名称==='旧灯'));
- await f.view.navigate('home');await f.click('历史补录');assert.ok(f.shadow.querySelector('[aria-label="完整历史原文"]'));f.fill('完整历史原文',history);
+ await f.view.navigate('home');await f.click('历史补录');f.fill('资料来源','manual');assert.ok(f.shadow.querySelector('[aria-label="完整历史原文"]'));f.fill('完整历史原文',history);
  const originalsBefore=await session.system.originals.listMetadata({scope:session.scope});await f.click('生成历史补录草案');assert.deepEqual(await session.system.originals.listMetadata({scope:session.scope}),originalsBefore);
  await f.click('保存已选设定');rows=projectRetained(await session.storage.read(),session.getScope().activeSourceKeys).rows;const event=rows.find(row=>row.values.名称==='桥头交接');assert.ok(event);assert.ok(event.values.原文引用);
  const saved=await session.system.originals.read({entryId:event.values.原文引用.entryId,scope:session.scope,purpose:'archive-task'});assert.equal(saved.content,history);

@@ -10,6 +10,18 @@ const same=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 const check=(ok,code,message,details)=>{if(!ok)throw new BookError(code,message,details);};
 const need=(name,fn)=>{check(typeof fn==='function','CAPABILITY_UNAVAILABLE',`Native capability unavailable: ${name}`,{capability:name});return fn;};
 
+/** Same character scope as TT 2.4 collectCharacterWorldsToSearch/getCharaFilename. */
+export function characterWorldbookNames(context,worldInfo,avatar){
+  const character=context?.characters?.[context.characterId];
+  check(character&&typeof character.avatar==='string'&&character.avatar===avatar,'CHARACTER_SOURCE_CHANGED','当前角色卡已变化，请重新读取初始化来源');
+  check(worldInfo&&typeof worldInfo==='object'&&!Array.isArray(worldInfo),'CHARACTER_BOOK_BINDINGS','宿主角色世界书绑定不可读取');
+  const primary=character.data?.extensions?.world,fileName=avatar.replace(/\.[^/.]+$/,'');
+  const extra=worldInfo.charLore?.find(row=>row.name===fileName)?.extraBooks??[];
+  check(Array.isArray(extra)&&extra.every(name=>typeof name==='string'),'CHARACTER_BOOK_BINDINGS','角色配套世界书列表格式无效');
+  check(primary===undefined||primary===null||typeof primary==='string','CHARACTER_BOOK_BINDINGS','角色主世界书名称格式无效');
+  return [...new Set([primary,...extra].filter(name=>typeof name==='string'&&name.length>0))];
+}
+
 /** Uses the exact 2.4.0 host exports. Inject native modules only for tests or an already-loaded host. */
 export async function loadBookHostModules(){
   const [{worldInfo,persistence},script,personas,groups]=await Promise.all([
@@ -112,6 +124,8 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
   core=createBookManager(callbacks);
   const prepared=fn=>async(...args)=>{await prepare();return fn(...args);};
   const manager=Object.freeze({...core,create:request=>request.kind==='core'?core.create(request):prepared(core.create)(request),rename:prepared(core.rename),saveDefinition:prepared(core.saveDefinition),select:prepared(core.select),fork:prepared(core.fork),resume:prepared(core.resume),readRuntime:prepared(core.readRuntime),binding:prepared(core.binding),readConfiguration:core.readConfiguration,saveConfiguration:core.saveConfiguration,
+    getLinkedWorldbookNames(avatar){return characterWorldbookNames(raw(),worldInfo.world_info,avatar);},
+    async readWorldbook(name){const c=raw(),h=handle(),data=await transport.readFresh(name);scopeGuard(c,h);check(data,'CHARACTER_BOOK_MISSING','角色配套世界书不存在：'+name);return data;},
     async options(){const owner=await prepare(),c=raw(),id=getPlayerId(),players=Object.entries(c.powerUserSettings?.personas??{}).map(([id,name])=>({id,name})),defaultPreferenceOwner=id?{kind:'player',id}:null;const global=await core.globalBinding();return {owner,global,currentPlayer:players.find(p=>p.id===id)??(id?{id,name:c.name1??id}:null),players,defaultPreferenceOwner,accountPreferenceOwner:null,availablePreferenceOwners:defaultPreferenceOwner?[defaultPreferenceOwner]:[]};},
   });
   return Object.freeze({manager,prepare,callbacks,dispose(){disposed=true;}});

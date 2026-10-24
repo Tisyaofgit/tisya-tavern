@@ -1,3 +1,4 @@
+import {createChatHistoryImport} from './history-chat.mjs';
 import {prepareCommit} from '../tables/ledger.js';
 import {parseSimpleSheet} from '../tables/simple-sheet.js';
 import {projectRetained,parseHistoricalBody,sha256Utf16} from './host-runtime.mjs';
@@ -6,8 +7,9 @@ const check=(value,message)=>{if(!value)throw Error('历史补录：'+message);}
 const denied=new Set(['native_cells','preferences']);
 const protectedReference=value=>value&&typeof value==='object'&&Object.entries(value).some(([key,v])=>['原文引用','原文段号','原生引用','原文段落'].includes(key)||protectedReference(v));
 function decode(response){if(response&&typeof response==='object'&&!response.choices)return clone(response);const text=typeof response==='string'?response:response?.choices?.[0]?.message?.content;check(typeof text==='string'&&text.trim(),'API 没有返回完整简表');return parseSimpleSheet(text);}
-export function createHistoryImportService({getSession,requestTask,assertIdle=()=>{}}){
+export function createHistoryImportService({getSession,getContext,requestTask,assertIdle=()=>{}}){
  const drafts=new Map();let busy=false,controller=null;
+ const chat=createChatHistoryImport({getContext,capture,requestTask,assertIdle});
  async function capture(){const session=await getSession();session.guard?.();const owner=clone(session.getScope());check(owner.chatId&&owner.branchId&&owner.bindingId,'请先绑定当前存档');await session.sourceGuard?.(owner);const state=await session.storage.read();check(same(owner,session.getScope()),'读取期间存档已改变');return {session,owner,state,view:projectRetained(state,owner.activeSourceKeys??[])};}
  function prepare(token,c,changes){
   check(Array.isArray(changes)&&changes.length,'至少保留一项变更');const originals=new Map(token.changes.map(x=>[x.id,x]));
@@ -16,7 +18,7 @@ export function createHistoryImportService({getSession,requestTask,assertIdle=()
  }
  async function generate({source,goal='',worldTime=null,target={kind:'current'}}={}){
   check(!busy,'另一项补录正在处理');check(typeof source==='string'&&source.trim(),'请粘贴完整历史原文');check(target.kind==='current','历史只能补录到当前存档');check(worldTime===null||typeof worldTime==='string'&&source.includes(worldTime),'故事时间必须能在原文中逐字核对；未知时请留空');busy=true;controller=new AbortController();
-  try{assertIdle();const c=await capture(),hash=await sha256Utf16(source),spans=parseHistoricalBody(source),evidence=spans.map(p=>source.slice(p.contentStart,p.contentEnd)).join('\n\n');check(!c.view.commits.some(x=>x.historyImport?.sourceHash===hash),'这份原文已补录，请在时间轴中查看，不能重复入档');
+  try{await assertIdle();const c=await capture(),hash=await sha256Utf16(source),spans=parseHistoricalBody(source),evidence=spans.map(p=>source.slice(p.contentStart,p.contentEnd)).join('\n\n');check(!c.view.commits.some(x=>x.historyImport?.sourceHash===hash),'这份原文已补录，请在时间轴中查看，不能重复入档');
    const response=await requestTask('historyImport',{historyText:evidence,sourceHistory:source,label:goal,worldTime,registry:clone(c.view.registry),currentRows:clone(c.view.rows),instruction:'Use only exact continuous prose evidence. No deletes, preferences, native variables, schema changes or model-made source references. Preserve unknown story time as unknown. Return templates:[], changes:[...], pending:[] in the registered simple-sheet format.'},{signal:controller.signal});controller.signal.throwIfAborted();const after=await capture();check(same(c.owner,after.owner)&&c.state.revision===after.state.revision,'生成期间档案已改变');
    const result=decode(response);check(result&&Object.keys(result).every(k=>['templates','schemaChanges','changes','pending'].includes(k)),'结果含未登记字段');check(['templates','schemaChanges','pending'].every(k=>result[k]===undefined||Array.isArray(result[k])&&!result[k].length),'还有未解决事项或结构修改，请重新核对');
    const token={id:crypto.randomUUID(),mode:'history',target:{kind:'current'},source,sourceHash:hash,spans,evidence,worldTime,changes:clone(result.changes),owner:c.owner,revision:c.state.revision,goal};const prepared=prepare(token,c,token.changes);drafts.set(token.id,token);
@@ -24,7 +26,7 @@ export function createHistoryImportService({getSession,requestTask,assertIdle=()
   }finally{busy=false;controller=null;}
  }
  async function preview(draft,{changes=draft.changes}={}){const token=drafts.get(draft.id);check(token&&!token.result,'草稿已失效或已经保存');const c=await capture();check(same(token.owner,c.owner)&&token.revision===c.state.revision,'草稿依据已经变化');const prepared=prepare(token,c,changes);return {...clone(draft),changes:clone(changes),diff:prepared.commit.changes.map(x=>({id:x.id,before:x.before?.values??null,after:x.after?.values??null}))};}
- async function save(draft,{changes=draft.changes}={}){check(!busy,'另一项补录正在处理');const token=drafts.get(draft.id);check(token,'草稿已失效');busy=true;try{assertIdle();let c=await capture();check(same(token.owner,c.owner),'草稿所属存档已改变');if(token.result){check(same(token.savedChanges,changes),'已保存草稿不能用同一编号改写');return {...clone(token.result),reused:true};}
+ async function save(draft,{changes=draft.changes}={}){check(!busy,'另一项补录正在处理');const token=drafts.get(draft.id);check(token,'草稿已失效');busy=true;try{await assertIdle();let c=await capture();check(same(token.owner,c.owner),'草稿所属存档已改变');if(token.result){check(same(token.savedChanges,changes),'已保存草稿不能用同一编号改写');return {...clone(token.result),reused:true};}
    if(!token.intent){check(token.revision===c.state.revision,'草稿依据已改变');const prepared=prepare(token,c,changes);token.savedChanges=clone(changes);token.intent={commit:prepared.commit,expected:c.state.revision,original:null};}
    check(same(token.savedChanges,changes),'保存已开始，请继续同一批次');const originals=c.session.system?.originals??c.session.originals;check(typeof originals?.putHistory==='function','原文保存服务尚未接入');const identity={chatId:c.owner.chatId,branchId:c.owner.branchId,messageId:'history:'+token.sourceHash};
    if(!token.intent.original){const entryId=await originals.entryIdFor(identity);let existing=null;try{existing=await originals.metadata({entryId,scope:c.owner});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}check(!existing||existing.hash===token.sourceHash,'已有历史原文发生冲突');token.intent.original=await originals.putHistory({identity,operationId:'history:'+token.id,sourceRevision:token.sourceHash,content:token.source,expectedVersion:existing?.version??0});}
@@ -37,5 +39,6 @@ export function createHistoryImportService({getSession,requestTask,assertIdle=()
    c=await capture();check(same(token.owner,c.owner),'保存期间存档已改变');const existing=c.state.commits.find(x=>x.id===commit.id);if(existing)check(same(existing,commit),'提交回执不一致');else{check(c.state.revision===token.intent.expected,'原文已保存，档案依据改变；请重新审阅');const next=clone(c.state);next.commits.push(clone(commit));next.revision++;await c.session.storage.compareAndWrite(c.state.revision,next);}
    const actual=await c.session.storage.read();check(same(actual.commits.find(x=>x.id===commit.id),commit),'补录提交读回不一致');token.result={status:'saved',commitId:commit.id,sourceHash:token.sourceHash,original:reference,bound:true};return clone(token.result);
   }finally{busy=false;}}
- return {generate,preview,save,cancel:()=>controller?.abort(),busy:()=>busy};
+ const exclusive=fn=>{check(!busy&&!chat.busy(),'另一项补录正在处理');return fn();};
+ return {inspectSources:chat.inspectSources,generate:args=>exclusive(()=>args?.sourceKind==='chat'?chat.generate(args):generate(args)),preview:(draft,options)=>exclusive(()=>chat.has(draft.id)?chat.preview(draft,options):preview(draft,options)),save:(draft,options)=>exclusive(()=>chat.has(draft.id)?chat.save(draft,options):save(draft,options)),cancel:()=>{controller?.abort();chat.cancel();},busy:()=>busy||chat.busy()};
 }

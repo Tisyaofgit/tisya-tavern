@@ -12,6 +12,8 @@ import {createV3ConditionService,createV3WorldbookScan} from './conditions.mjs';
 import {createArchiveService} from './archive-service.mjs';
 import {createJourneyService} from './journey.mjs';
 import {createTagService} from './tags.mjs';
+import {createInitializationSourceProvider} from './initialization-sources.mjs';
+import {createOpeningService} from './opening-service.mjs';
 
 const clone=structuredClone;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -58,10 +60,19 @@ export async function createApplication({target=globalThis,getContext,store,conf
   if(!['create','rename','select','resume','selectGlobalCore'].includes(key))return fn.bind(object);
   return async(...args)=>{idle();const switching=['select','resume','selectGlobalCore'].includes(key);if(switching&&configurationBook?.read().draft)throw Error('请先保存或放弃配置草稿，再切换资料');if(switching)bindingChanging=true;let value;try{value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}}finally{if(switching)bindingChanging=false;}if(switching)await progress.refresh();return value;};
  }});
- archiveService=createArchiveService({getSession:()=>host.getSession(),getContext,
+ const sourceProvider=createInitializationSourceProvider({getContext,
+  getLinkedWorldbookNames:typeof books.getLinkedWorldbookNames==='function'?avatar=>books.getLinkedWorldbookNames(avatar):undefined,
+  readWorldbook:typeof books.readWorldbook==='function'?name=>books.readWorldbook(name):readWorldbook});
+ archiveService=createArchiveService({getSession:()=>host.getSession(),getContext,sourceProvider,
   getConfigurationWorldKey:()=>store.read().key,assertIdle:idle,books,requestTask:(task,input,{signal}={})=>configHost.request(task,input,{signal,typedInput:input})});
- const historyImport=createHistoryImportService({getSession:()=>host.getSession(),assertIdle:idle,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
- const design=archiveService;archiveService={...design,generateDesign:args=>args.mode==='history'?historyImport.generate(args):design.generateDesign(args),previewDesign:(draft,options)=>draft.mode==='history'?historyImport.preview(draft,options):design.previewDesign(draft,options),saveDesign:(draft,options)=>draft.mode==='history'?historyImport.save(draft,options):design.saveDesign(draft,options),cancelDesign:()=>{historyImport.cancel();design.cancelDesign();},busy:()=>historyImport.busy()||design.busy()};
+ const historyImport=createHistoryImportService({getSession:()=>host.getSession(),getContext,assertIdle:idle,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
+ const opening=createOpeningService({getSession:()=>host.getSession(),getContext,sourceProvider,assertIdle:idle,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
+ const design=archiveService,designOwner=mode=>mode==='history'?historyImport:mode==='opening'?opening:null;
+ archiveService={...design,inspectHistorySources:args=>historyImport.inspectSources(args),inspectOpening:()=>opening.inspect(),
+  generateDesign:args=>designOwner(args.mode)?.generate(args)??design.generateDesign(args),
+  previewDesign:(draft,options)=>designOwner(draft.mode)?.preview(draft,options)??design.previewDesign(draft,options),
+  saveDesign:(draft,options)=>designOwner(draft.mode)?.save(draft,options)??design.saveDesign(draft,options),
+  cancelDesign:()=>{historyImport.cancel();opening.cancel();design.cancelDesign();},busy:()=>historyImport.busy()||opening.busy()||design.busy()};
  const conditions=createV3ConditionService({getSession:()=>host.getSession(),assertIdle:idle,getContext,getNative:()=>target.Mvu});
  const scanner=worldbookScan?createV3WorldbookScan({getContext,service:conditions,getConfigurationSnapshot:()=>store.read(),readWorldbook,prepareAuthorNote:()=>host.prepareAuthorNote(),onError}):null;
  if(scanner)host.setBeforeWriter(scanner.beforeWriter);
@@ -74,6 +85,6 @@ export async function createApplication({target=globalThis,getContext,store,conf
   setArchiveService(value){archiveService=value;},
   openAssistantArchiveQuery(...args){if(!archiveService?.openAssistantArchiveQuery)throw Error('档案查询尚未就绪');return archiveService.openAssistantArchiveQuery(...args);},
   configurationChanged(){host.configurationChanged();},
-  dispose(){assistant.cancel();scanner?.dispose();capabilities.dispose();progress.dispose();host.dispose();}
+  dispose(){assistant.cancel();archiveService?.cancelDesign?.();scanner?.dispose();capabilities.dispose();progress.dispose();host.dispose();}
  };
 }

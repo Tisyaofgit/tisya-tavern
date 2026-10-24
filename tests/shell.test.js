@@ -69,6 +69,7 @@ test('mounted initializer survives unrelated generation cleanup, saves reviewed 
  globalThis.fetch=async(_,options)=>{calls++;payload=JSON.parse(options.body);signal=options.signal;await new Promise((resolve,reject)=>{release=resolve;signal.addEventListener('abort',()=>reject(new DOMException('Stopped','AbortError')),{once:true});});return {ok:true,json:async()=>({choices:[{message:{content:formatSimpleSheet(reply)}}]})};};
  try{
   await click(f,'menu');await workbenchClick(f,'工作台');await workbenchClick(f,'初始化／从资料提炼');const root=workbench(f);
+  const mode=root.querySelector('[aria-label="资料来源"]');mode.value='manual';mode.dispatchEvent(new f.w.Event('change'));
   const field=root.querySelector('[aria-label="待整理的资料"]');assert.ok(field);field.value=source;field.dispatchEvent(new f.w.Event('input'));
   const button=text=>[...root.querySelectorAll('button')].find(n=>n.textContent===text||n.querySelector('strong')?.textContent===text);
   const pending=button('生成设定草案').onclick();for(let i=0;!release&&i<200;i++)await new Promise(r=>setTimeout(r,5));assert.ok(release,root.querySelector('[role=alert]')?.textContent||JSON.stringify(f.errors));
@@ -593,7 +594,7 @@ test('current composition root exposes initialization and history intake from ho
  const f=await setup({bindStory:true,cacheAvailable:true});try{
   await click(f,'menu');await click(f,'assistant');await workbenchClick(f,'工作台');
   assert([...workbench(f).querySelectorAll('button')].some(n=>n.querySelector('strong')?.textContent==='初始化／从资料提炼'));
-  await workbenchClick(f,'历史补录');assert(workbench(f).querySelector('[aria-label="完整历史原文"]'));assert.match(workbench(f).textContent,/旧状态不能覆盖较新的进度/);
+  await workbenchClick(f,'历史补录');const historyMode=workbench(f).querySelector('[aria-label="资料来源"]');assert.equal(historyMode.value,'chat');historyMode.value='manual';historyMode.dispatchEvent(new f.w.Event('change'));assert(workbench(f).querySelector('[aria-label="完整历史原文"]'));assert.match(workbench(f).textContent,/旧状态不能覆盖较新的进度/);
   const source=workbench(f).querySelector('[aria-label="完整历史原文"]');source.value='旧历史原文\n  保留空白';source.dispatchEvent(new f.w.Event('input'));
   await click(f,'menu');await click(f,'assistant');await workbenchClick(f,'工作台');await workbenchClick(f,'世界档案');
   // Parking the workbench retains the pending source; returning from intake is explicit.

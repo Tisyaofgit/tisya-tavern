@@ -13,6 +13,7 @@ import {createCompanionService,readCompanionReplies} from './host-companion.mjs'
 import {compileCompanionMessages,compileSharedCompanionSlot} from './companion-preset.mjs';
 import {languageView} from '../config/language.js';
 import {sameJsonValue} from './runtime-source/host/json-value.mjs';
+import {resolveOpeningPlayer} from './opening-service.mjs';
 
 const clone=structuredClone,ID_META='tisya_w24';
 const error=(code,message)=>Object.assign(Error(message),{code});
@@ -105,7 +106,7 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
      emit({requestKey:snapshot.requestKey,phase:'original-a',status:'running'});return cleaned;
     },acceptWriterOutput:sourceBridge.acceptWriterOutput({resolveFloor:async({input,result})=>{guard();if(operation?.requestKey===input.requestKey)return operation.outputFloor;const floor=ctx.chat.findIndex(m=>m.mes===result.output&&!m.is_user);check(floor>=0,'V3_OUTPUT_MISSING','找不到已提交正文');return floor;}})});
    const system={runner,preferences,originals,sourceBridge,identities:ids,sessionStorage,preferenceStorage,storage};
-   const chain=createSourceChain({getContext,system,getNative:()=>runtime,configuration:()=>{const c=readConfig();return {...c,playerObjects:c.playerObjects?.length?c.playerObjects:binding.player?.objectId?[binding.player.objectId]:[]};},guard,persist});session.chain=chain;
+   const chain=createSourceChain({getContext,system,getNative:()=>runtime,configuration:view=>{const c=readConfig(),playerId=view?resolveOpeningPlayer(view,binding):binding.player?.objectId;return {...c,playerObjects:c.playerObjects?.length?c.playerObjects:playerId?[playerId]:[]};},guard,persist});session.chain=chain;
    const controller=createHostController({identities:ids,invalidate:event=>chain.invalidate(event),run:input=>runner.run({...input,originalScope:owner,preferenceBankId:binding.books.preferences,preferencesEnabled:readConfig().preferencesEnabled!==false,preferenceProjectionOptions:{context:{chatId:owner.chatId}}})});system.controller=controller;session.system=system;
    await chain.refresh();guard();return session;
   })();
@@ -173,7 +174,7 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
  const previous=target[interceptorName];target[interceptorName]=generateInterceptor;
  const api={createCompanion:installCompanion,requestCompanion,initialize,generateInterceptor,advancedReroll,reroll,selectSwipe,deleteFloor,deleteCandidate,branch,cancel,assertIdle,bindingTransition:()=>mutationDepth>0,busy:()=>!!operation||!!initializing||!!companionRequest||mutationDepth>0,
   prepareAuthorNote:()=>prepareNativeAuthorNote({native,getContext,guard}),
-  async getSession(){const s=await initialize();return {system:s.system,storage:s.storage,preferences:s.preferences,scope:s.getScope(),getScope:s.getScope,binding:s.binding,guard,sourceGuard:async captured=>{guard();check(same(captured,s.getScope()),'V3_SOURCE_CHANGED','审校来源已变化');const fresh=await s.chain.scan({read:false});check(same(fresh.map(r=>[r.identity.messageId,r.key]),s.chain.current().map(r=>[r.identity.messageId,r.key])),'V3_SOURCE_CHANGED','正文候选已变化');guard();}};},
+  async getSession(){const s=await initialize();return {system:s.system,storage:s.storage,preferences:s.preferences,scope:s.getScope(),getScope:s.getScope,binding:s.binding,sourceChain:{scan:options=>s.chain.scan(options),materialize:floor=>s.chain.materialize(floor)},guard,sourceGuard:async captured=>{guard();check(same(captured,s.getScope()),'V3_SOURCE_CHANGED','审校来源已变化');const fresh=await s.chain.scan({read:false});check(same(fresh.map(r=>[r.identity.messageId,r.key]),s.chain.current().map(r=>[r.identity.messageId,r.key])),'V3_SOURCE_CHANGED','正文候选已变化');guard();}};},
   inspect(){let enabled=false,configurationReady=true,issue=lastError;const c=getContext();try{if(!c.chatId&&c.characterId===undefined&&!c.groupId)throw error('CHAT_REQUIRED','请先打开聊天');enabled=readConfig().enabled!==false;}catch(e){if(!['CHAT_REQUIRED','CONFIGURATION_NOT_READY','CONFIGURATION_SCOPE','CONFIGURATION_BINDING','CONFIGURATION_PLAYER'].includes(e.code))throw e;configurationReady=false;issue={code:e.code,message:e.message};}return {enabled,configurationReady,busy:!!operation||!!companionRequest||mutationDepth>0,requestKey:operation?.requestKey??null,scope:configurationReady?session?.getScope()??null:null,error:issue};},
   setProgress(value){progress=value;},setBeforeWriter(value){assertIdle();check(value===null||typeof value==='function','V3_DEPENDENCY','beforeWriter必须为函数');beforeWriter=value;},configurationChanged(){assertIdle();session=null;epoch++;},
   dispose(){if(disposed)return;companion?.dispose();cancel('插件已卸载');disposed=true;epoch++;listeners.splice(0).forEach(fn=>fn());if(target[interceptorName]===generateInterceptor){if(previous===undefined)delete target[interceptorName];else target[interceptorName]=previous;}if(target[ownerSymbol]===api)delete target[ownerSymbol];session=null;}
