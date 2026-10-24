@@ -1,0 +1,5 @@
+{
+  "utc": "2026-10-24T19:05:21.056388+00:00",
+  "processes_terminated": 4,
+  "reason": "full-first reached 850 then stalled on always-on workbench timer; first failure retained, fix is pending verified replacement run"
+}

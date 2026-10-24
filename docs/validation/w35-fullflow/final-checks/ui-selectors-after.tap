@@ -1,0 +1,102 @@
+TAP version 13
+# Subtest: initialization reads actual source summary on demand and generates without manual paste
+ok 1 - initialization reads actual source summary on demand and generates without manual paste
+  ---
+  duration_ms: 51.281588
+  type: 'test'
+  ...
+# Subtest: source reread failure clears old source token and keeps native mode instead of falling back to paste
+ok 2 - source reread failure clears old source token and keeps native mode instead of falling back to paste
+  ---
+  duration_ms: 16.291887
+  type: 'test'
+  ...
+# Subtest: opening selects native source and protects the current persona record during review
+ok 3 - opening selects native source and protects the current persona record during review
+  ---
+  duration_ms: 15.534262
+  type: 'test'
+  ...
+# Subtest: history defaults to chat floors, passes explicit frozen range and retains floor metadata
+ok 4 - history defaults to chat floors, passes explicit frozen range and retains floor metadata
+  ---
+  duration_ms: 16.713098
+  type: 'test'
+  ...
+# Subtest: manual history is an explicit alternate source and retains entered text across suspension
+ok 5 - manual history is an explicit alternate source and retains entered text across suspension
+  ---
+  duration_ms: 7.486645
+  type: 'test'
+  ...
+# Subtest: history row editor starts from its own pre-floor values and preserves immutable source metadata
+ok 6 - history row editor starts from its own pre-floor values and preserves immutable source metadata
+  ---
+  duration_ms: 60.77997
+  type: 'test'
+  ...
+# Subtest: one-click candidate confirmation invokes the actual batch service and writes one P revision
+ok 7 - one-click candidate confirmation invokes the actual batch service and writes one P revision
+  ---
+  duration_ms: 168.097224
+  type: 'test'
+  ...
+# Subtest: lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+ok 8 - lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+  ---
+  duration_ms: 124.309332
+  type: 'test'
+  ...
+# Subtest: invalid batch remains reviewable for manual correction without confirming any source
+ok 9 - invalid batch remains reviewable for manual correction without confirming any source
+  ---
+  duration_ms: 30.356159
+  type: 'test'
+  ...
+# Subtest: saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+ok 10 - saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+  ---
+  duration_ms: 367.113102
+  type: 'test'
+  ...
+# Subtest: configuration recovery requires the real preview and appends a new core-book version
+ok 11 - configuration recovery requires the real preview and appends a new core-book version
+  ---
+  duration_ms: 347.940892
+  type: 'test'
+  ...
+# (node:14) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: chat UI uses real companion history, queues without API, withdraws and sends independently
+ok 12 - chat UI uses real companion history, queues without API, withdraws and sends independently
+  ---
+  duration_ms: 550.795169
+  type: 'test'
+  ...
+# Subtest: pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+ok 13 - pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+  ---
+  duration_ms: 151.692758
+  type: 'test'
+  ...
+# Subtest: character tag picker includes registered descendants of character
+ok 14 - character tag picker includes registered descendants of character
+  ---
+  duration_ms: 217.793917
+  type: 'test'
+  ...
+# Subtest: workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+ok 15 - workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+  ---
+  duration_ms: 620.007015
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2998.087379

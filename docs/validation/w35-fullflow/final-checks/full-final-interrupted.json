@@ -1,0 +1,4 @@
+{
+  "utc": "2026-10-24T19:16:23.214009+00:00",
+  "cause": "Previous tool-session processes disappeared after conversation steering; no final exit receipt. Preserve incomplete logs, rerun frozen candidate."
+}

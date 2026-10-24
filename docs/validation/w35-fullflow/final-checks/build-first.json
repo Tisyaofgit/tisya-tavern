@@ -1,0 +1,65 @@
+{
+  "at": "2026-10-24T18:59:25.558006+00:00",
+  "results": [
+    {
+      "tool": "tools/build-v3-host.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-chat-effects.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-character-group.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-worldbook.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-extension.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-reader.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-card-runtime.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-visual.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-typography.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-reply-ui.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-settings.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-live-preset.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-modular-preset.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-memory-preset.mjs",
+      "exit": 0
+    },
+    {
+      "tool": "tools/build-english-preset.mjs",
+      "exit": 0
+    }
+  ]
+}

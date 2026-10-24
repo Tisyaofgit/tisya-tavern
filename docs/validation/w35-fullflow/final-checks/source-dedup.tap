@@ -1,0 +1,18 @@
+✔ automatic initialization forwards actual streaming progress then validates before exposing a draft (40.813645ms)
+✔ automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline (38.764903ms)
+✔ initialization holds separate initial-state candidates visibly and never silently writes them during definition save (38.453235ms)
+✔ native source changes before generation, after response, and before confirmation fail without fallback or writes (38.301949ms)
+✔ a read failure cannot turn automatic initialization into manual or incomplete success (21.403227ms)
+✔ source ownership, disabled state, and cancellation are checked at actual read boundaries (6.679816ms)
+✔ archive prefixes classify genuine material; only a verified generated projection loses initialization authority (2.330645ms)
+✔ native initialization retains a source fingerprint and exact supplement for the separate opening stage (21.809175ms)
+✔ saving a managed ledger in a linked book does not change the effective confirmed card definition (22.169065ms)
+✔ exported primary worldbook duplicates are injected once with exact source provenance and distinct definitions retained (1.88102ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 354.782527
