@@ -37,7 +37,7 @@ export function mountWorkbench(document,container,{capabilities,onNavigate=async
    if(page==='review'&&!batchReceipt)reviewBatch=await readReviewBatch();
    if(page==='preferences')await loadPreferences();
    if(page==='tags'){archiveState=null;archiveState=needsBinding()?null:await action('archives.inspect',{});await loadTags();}
-   if(page==='archives'){archiveState=null;designState=null;conditionState=null;archiveState=needsBinding()?null:await action('archives.inspect',{});if(task&&!needsBinding()){archiveMode='tables';await startArchiveTask(task);}}
+    if(page==='archives'){archiveState=null;archiveState=needsBinding()?null:await action('archives.inspect',{});if(task&&!needsBinding()){archiveMode='tables';await startArchiveTask(task);}}
   }catch(error){navigationIssue={target:next,label:({extract:'初始化／从资料提炼',history:'历史补录',genesis:'创作新设定',conditions:'条件与规则'})[next]??PAGES[page],message:error.message??String(error)};draw();throw error;}
   draw();return true;
  }

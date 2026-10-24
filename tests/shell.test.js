@@ -597,7 +597,7 @@ test('current composition root exposes initialization and history intake from ho
   const source=workbench(f).querySelector('[aria-label="完整历史原文"]');source.value='旧历史原文\n  保留空白';source.dispatchEvent(new f.w.Event('input'));
   await click(f,'menu');await click(f,'assistant');await workbenchClick(f,'工作台');await workbenchClick(f,'世界档案');
   // Parking the workbench retains the pending source; returning from intake is explicit.
-  assert.equal(workbench(f).querySelector('[aria-label="完整历史原文"]').value,'旧历史原文\n  保留空白');
+  const retainedSource=workbench(f).querySelector('[aria-label="完整历史原文"]');assert.ok(retainedSource,'parked intake source must remain visible; actual page: '+workbench(f).textContent);assert.equal(retainedSource.value,'旧历史原文\n  保留空白');
   await workbenchClick(f,'‹ 返回世界档案');await workbenchClick(f,'初始化／从资料提炼');assert(workbench(f).querySelector('[aria-label="待整理的资料"]'));assert(!workbench(f).querySelector('[aria-label="完整历史原文"]'));assert.deepEqual(f.errors,[]);
  }finally{f.w.eval('hidePage()');await f.w.happyDOM.abort();}
 });

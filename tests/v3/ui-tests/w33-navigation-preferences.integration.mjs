@@ -78,10 +78,14 @@ test('archive navigation exposes an actual native read failure and retries from 
 test('unconfirmed preference stays with its player bank across identity switches and rejects a foreign confirmation',async t=>{
  const f=await setup(t),draft=await f.app.capabilities.action('tags.apply',{selections:[{tagId:'plot.offstage',polarity:'avoid',weight:2}],operationId:'pending-owner'});
  const original=copy((await (await f.app.getSession()).storage.read()).preferenceDrafts.find(item=>item.id===draft.draftId));
+ assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,1);
  await f.click('用户偏好');assert.match(f.shadow.querySelector('main').textContent,/场外暗线/);assert.equal((await (await f.app.getSession()).preferences.project()).groups.length,0);
  await f.selectPlayer('another-player');await f.view.navigate('preferences');
+ assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,0);
  const other=await f.app.getSession();await assert.rejects(other.preferences.confirm(draft.draftId),/另一用户身份|归属|bank|owner/i);assert.deepEqual((await other.storage.read()).preferenceDrafts.find(item=>item.id===draft.draftId),original);assert.equal((await other.preferences.project()).groups.length,0);assert.doesNotMatch(f.shadow.querySelector('main').textContent,/场外暗线/);
- await f.selectPlayer('player');await f.view.navigate('preferences');assert.match(f.shadow.querySelector('main').textContent,/场外暗线/);await f.click('场外暗线');await f.click('确认偏好');assert.equal((await (await f.app.getSession()).preferences.project()).groups[0].net,-2);assert.equal(f.h.requests.length,0);
+ await f.selectPlayer('player');await f.view.navigate('preferences');assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,1);assert.match(f.shadow.querySelector('main').textContent,/场外暗线/);
+ f.h.config.preferencesEnabled=false;await f.app.progress.refresh();assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,0);f.h.config.preferencesEnabled=true;await f.app.progress.refresh();assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,1);
+ await f.click('场外暗线');await f.click('确认偏好');assert.equal((await (await f.app.getSession()).preferences.project()).groups[0].net,-2);assert.equal((await f.app.capabilities.getSnapshot()).progress.counts.pending,0);assert.equal(f.h.requests.length,0);
 });
 
 test('an unmarked pre-W33 candidate is preserved with an explicit unresolved ownership notice',async t=>{

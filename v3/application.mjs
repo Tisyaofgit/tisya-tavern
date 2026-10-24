@@ -56,7 +56,7 @@ export async function createApplication({target=globalThis,getContext,store,conf
  });
  const bookFacade=new Proxy({...books},{get(object,key){const fn=object[key];if(typeof fn!=='function')return fn;
   if(!['create','rename','select','resume','selectGlobalCore'].includes(key))return fn.bind(object);
-  return async(...args)=>{idle();const switching=['select','resume','selectGlobalCore'].includes(key);if(switching&&configurationBook?.read().draft)throw Error('请先保存或放弃配置草稿，再切换资料');if(switching)bindingChanging=true;try{const value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}return value;}finally{if(switching)bindingChanging=false;}};
+  return async(...args)=>{idle();const switching=['select','resume','selectGlobalCore'].includes(key);if(switching&&configurationBook?.read().draft)throw Error('请先保存或放弃配置草稿，再切换资料');if(switching)bindingChanging=true;let value;try{value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}}finally{if(switching)bindingChanging=false;}if(switching)await progress.refresh();return value;};
  }});
  archiveService=createArchiveService({getSession:()=>host.getSession(),getContext,
   getConfigurationWorldKey:()=>store.read().key,assertIdle:idle,books,requestTask:(task,input,{signal}={})=>configHost.request(task,input,{signal,typedInput:input})});
