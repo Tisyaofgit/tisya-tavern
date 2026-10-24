@@ -1,0 +1,141 @@
+{
+  "sourceCommit": "b1ed0396e7988c5446b24a55dd6ee4361b067556",
+  "sourceTree": "0f495aa0164e84dcd29fe704c40387f855a3d3a8",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3005,
+      "sha256": "499229b75b45a468356fcc2c6e3f7ee2276ffd15f68cd22c4bb83cc0b6dcc024"
+    },
+    {
+      "path": "blueprint-at-release.md",
+      "bytes": 138449,
+      "sha256": "d13176fa13b025523aa9fd6e65b3da449167c5fac3e022cc87058b46ae8aa1f0"
+    },
+    {
+      "path": "build-19.log",
+      "bytes": 1643,
+      "sha256": "541c046184caf587bc1105313cd2e55dc3133d1389e44c10aaf4ce11f2d23722"
+    },
+    {
+      "path": "clock-at-release.json",
+      "bytes": 27306,
+      "sha256": "dfc7b0aea859bed3d2f64bcf248f2121857d07f4755a917e2dfa3bb5eee00f13"
+    },
+    {
+      "path": "final-verification.json",
+      "bytes": 1009,
+      "sha256": "4371111f9081bee68e406bc9ad790f001d4c4c01956da4a6c1eaf3bf9da83719"
+    },
+    {
+      "path": "full-shell-13.tap",
+      "bytes": 14502,
+      "sha256": "9a25aeebaca2c21b0cf65dd5f24802ce75b8abd0c17ec9ce47c6a7569bfe2a9a"
+    },
+    {
+      "path": "full-shell-15.tap",
+      "bytes": 25081,
+      "sha256": "c4f9d26c4e291a65ad466dba76b4870392bbe483cad12eb76579171fed84946f"
+    },
+    {
+      "path": "identity-18.tap",
+      "bytes": 1458,
+      "sha256": "7cdcca46bd4612c3bcdc8bb2f0b3e7173d2820bc54866e79f3230c5550c60474"
+    },
+    {
+      "path": "index-at-release.txt",
+      "bytes": 7392,
+      "sha256": "48fc710383e11e2f655a5ba92c3cd1d9b1b3bd76113a8034c3010f3e71dc08b7"
+    },
+    {
+      "path": "initializer-chat-6.tap",
+      "bytes": 404,
+      "sha256": "e4301c9aeca2390486f66e35619ae36a5f2cafc855ffe3cf20f41ec8363cef47"
+    },
+    {
+      "path": "initializer-contacts-4.tap",
+      "bytes": 1191,
+      "sha256": "f0430a4951e745c6876f8793c66e33acbbe4f177d90e29dec22f76802412fc22"
+    },
+    {
+      "path": "interaction-7.tap",
+      "bytes": 4647,
+      "sha256": "debaaa7f881fb4ea8516c58deba009420d1f48cd41cfe64366a98a64039cfa9e"
+    },
+    {
+      "path": "interactions-9.tap",
+      "bytes": 6295,
+      "sha256": "279129f45aee76e3c4959f8a65c6adb4357a59183f6001b7997911fcb9f09953"
+    },
+    {
+      "path": "legacy-full-17.tap",
+      "bytes": 367391,
+      "sha256": "a78799147c692e8ef713582925b977416424f6e814d43d4fe17e709fd98acce1"
+    },
+    {
+      "path": "native-request-11.tap",
+      "bytes": 1162,
+      "sha256": "f0a60a9d41ed9a17bfca283b204f7de02256eb31a8c0aff78773bc7bce856acc"
+    },
+    {
+      "path": "navigation-12.tap",
+      "bytes": 2194,
+      "sha256": "0613e116a851d03a0421c7b7f4e9ebf3ad6f53b495a9518132d9a45109fcc677"
+    },
+    {
+      "path": "npm-final-21.tap",
+      "bytes": 476517,
+      "sha256": "b41b3132ba3ccaba3f48991de928c6721c90d72433e45d8b630f8595fde7f414"
+    },
+    {
+      "path": "ownership-10.tap",
+      "bytes": 4097,
+      "sha256": "2cdeb3cf1750fe165ce532f9d078db575491be7ab75c1105eda4c225672f396c"
+    },
+    {
+      "path": "shell-reply-8.tap",
+      "bytes": 49651,
+      "sha256": "ece018d96191576f5ebe723fc5f32b7e70985644647230bcdd2819c864408547"
+    },
+    {
+      "path": "shell-workbench-5.tap",
+      "bytes": 58373,
+      "sha256": "ec15e8a2b7082521a14e34bcec33d57284c42c85d1e6b841dfb52375e5290b04"
+    },
+    {
+      "path": "source-restoration.json",
+      "bytes": 186506,
+      "sha256": "9c7fce5ecfc762f66a32b706ad8fc117a6a20b72bc08def9d288aeda0394987d"
+    },
+    {
+      "path": "streaming-1.tap",
+      "bytes": 1920,
+      "sha256": "c0f3c3234829e4d9afd9107efb59f2753c0a6e5c17b2d79b0108312620229add"
+    },
+    {
+      "path": "streaming-notebook-3.tap",
+      "bytes": 612,
+      "sha256": "bd65801b5e5f5125b34ef5bce2df1a81ce7edadb2e7f1cbcacff9888e5a29b69"
+    },
+    {
+      "path": "streaming-trace-2.tap",
+      "bytes": 2291,
+      "sha256": "6f319f93beb9896717656355d0a863dda089b164e8ac08f6130ed007af7b7356"
+    },
+    {
+      "path": "user-reroll-16.tap",
+      "bytes": 382,
+      "sha256": "002fb189e3da60ad4895b8f22e8b985dc52bc6fecb01c22a3c64bdbe655d4214"
+    },
+    {
+      "path": "v3-14.tap",
+      "bytes": 52344,
+      "sha256": "ba560024156a69d414ff04a5fdd3ab1eab3d451faea23080f9aa1d93053c4a3d"
+    },
+    {
+      "path": "v3-final-20.tap",
+      "bytes": 107054,
+      "sha256": "0b682a4ef4e4d7522c7b076beb108b65b008ca1e4eebcdf19990a55a05e7bf5c"
+    }
+  ]
+}

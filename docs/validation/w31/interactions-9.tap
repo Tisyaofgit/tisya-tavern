@@ -1,0 +1,167 @@
+TAP version 13
+# Subtest: action clicks wait for mode persistence and a failed mode save preserves the prior mode
+ok 1 - action clicks wait for mode persistence and a failed mode save preserves the prior mode
+  ---
+  duration_ms: 16.638739
+  type: 'test'
+  ...
+# Subtest: phone settings, theme and protocol use original settings routes; applications remain native
+ok 2 - phone settings, theme and protocol use original settings routes; applications remain native
+  ---
+  duration_ms: 2118.464039
+  type: 'test'
+  ...
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+ok 3 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 1907.914875
+  type: 'test'
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+ok 4 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 2503.031504
+  type: 'test'
+  ...
+# Subtest: rollback marker-save failure prevents deletion and generation
+not ok 5 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 1089.272524
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:171:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   'delete:2'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: 'delete:2'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:173:44)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+ok 6 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 1729.169676
+  type: 'test'
+  ...
+# Subtest: typing a draft during rollback preserves it and stops generation
+ok 7 - typing a draft during rollback preserves it and stops generation
+  ---
+  duration_ms: 2583.046564
+  type: 'test'
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+not ok 8 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 1171.839675
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:277:1'
+  failureType: 'testCodeFailure'
+  error: 'The "string" argument must be of type string. Received type undefined (undefined)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:279:284)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: pending history save allows menu dismissal and does not close a later panel
+not ok 9 - pending history save allows menu dismissal and does not close a later panel
+  ---
+  duration_ms: 1821.729212
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:324:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '删除未完整完成（已调用删除 1 条）：聊天元数据回读不一致：tisya_w24'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '删除未完整完成（已调用删除 1 条）：聊天元数据回读不一致：tisya_w24'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:329:158)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: message toolbar supports only more, custom order, full expansion, and persists independently
+ok 10 - message toolbar supports only more, custom order, full expansion, and persists independently
+  ---
+  duration_ms: 868.450833
+  type: 'test'
+  ...
+# Subtest: failed automatic table initialization is latched before the payload can be sent
+not ok 11 - failed automatic table initialization is latched before the payload can be sent
+  ---
+  duration_ms: 163.375294
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:335:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:336:140)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native composer persists requirements separately and clears the draft before awaiting the reply
+not ok 12 - native composer persists requirements separately and clears the draft before awaiting the reply
+  ---
+  duration_ms: 361.298157
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:388:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'content')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:391:155)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: production long-press More saves manual order and keeps copy reachable
+ok 13 - production long-press More saves manual order and keeps copy reachable
+  ---
+  duration_ms: 1778.583698
+  type: 'test'
+  ...
+# Subtest: pending native clipboard on the actual message toolbar never blocks a new chat action
+ok 14 - pending native clipboard on the actual message toolbar never blocks a new chat action
+  ---
+  duration_ms: 481.076372
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 9
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19338.819567

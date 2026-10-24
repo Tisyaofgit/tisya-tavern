@@ -1,0 +1,49 @@
+TAP version 13
+# TRACE setup complete
+# TRACE start complete
+# TRACE end complete
+# TRACE before more
+# TRACE before revision
+# TRACE before close
+# TRACE before next
+# TRACE after next [ '当前宿主不支持逐条显示缓存；原聊天未修改。' ]
+# TRACE before menu
+# TRACE before disable
+# TRACE after disable
+# <--- Last few GCs --->
+# [13:0x8947000]     3601 ms: Mark-Compact (reduce) 251.0 (254.6) -> 250.9 (253.6) MB, pooled: 0 MB, 9.00 / 0.00 ms  (average mu = 0.171, current mu = 0.005) last resort; GC in old space requested
+# [13:0x8947000]     3608 ms: Mark-Compact (reduce) 250.9 (253.6) -> 250.9 (253.6) MB, pooled: 0 MB, 7.92 / 0.00 ms  (average mu = 0.098, current mu = 0.003) last resort; GC in old space requested
+# FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+# ----- Native stack trace -----
+#  1: 0x91d810  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  2: 0x75bb1b node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  3: 0xc755c0  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  4: 0xc756bf  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  5: 0xf09b5c  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  6: 0xede634  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  7: 0xec9d18  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  8: 0xca7035  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  9: 0x12c7ae2  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+# 10: 0x142c240  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+# 11: 0x1b59d09  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+# Subtest: tests/shell.test.js
+not ok 1 - tests/shell.test.js
+  ---
+  duration_ms: 3637.714876
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: ~
+  signal: 'SIGABRT'
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3645.312271

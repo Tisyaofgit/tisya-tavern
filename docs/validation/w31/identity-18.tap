@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: cached configuration retains drafts across menu and cards, rejects stale save, and prevents shutdown from losing them
+ok 1 - cached configuration retains drafts across menu and cards, rejects stale save, and prevents shutdown from losing them
+  ---
+  duration_ms: 3831.625999
+  type: 'test'
+  ...
+# Subtest: real new-chat event opens archive and identity selection without implicit binding and fires once per scope
+ok 2 - real new-chat event opens archive and identity selection without implicit binding and fires once per scope
+  ---
+  duration_ms: 370.872915
+  type: 'test'
+  ...
+# Subtest: identity creation draft blocks navigation until explicitly saved or discarded
+ok 3 - identity creation draft blocks navigation until explicitly saved or discarded
+  ---
+  duration_ms: 553.702642
+  type: 'test'
+  ...
+# Subtest: new-chat prompt does not displace an edited profile; its notice uses the same identity entry
+ok 4 - new-chat prompt does not displace an edited profile; its notice uses the same identity entry
+  ---
+  duration_ms: 423.814645
+  type: 'test'
+  ...
+# Subtest: native group-created event opens shared binding UI and identity selection binds only the group
+ok 5 - native group-created event opens shared binding UI and identity selection binds only the group
+  ---
+  duration_ms: 199.873228
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5865.065832

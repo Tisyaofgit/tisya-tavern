@@ -1,0 +1,319 @@
+TAP version 13
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 1 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 38.22441
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 2 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 5.506245
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+ok 3 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 23.38651
+  type: 'test'
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 4 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 3.887031
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 5 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 7.026753
+  type: 'test'
+  ...
+# Subtest: action clicks wait for mode persistence and a failed mode save preserves the prior mode
+ok 6 - action clicks wait for mode persistence and a failed mode save preserves the prior mode
+  ---
+  duration_ms: 4.436864
+  type: 'test'
+  ...
+# Subtest: mounted initializer survives unrelated generation cleanup, saves reviewed forms and retains editor drafts
+not ok 7 - mounted initializer survives unrelated generation cleanup, saves reviewed forms and retains editor drafts
+  ---
+  duration_ms: 1141.542564
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:66:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:71:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: phone and sidebar open the same read-only notes and public memory pages
+ok 8 - phone and sidebar open the same read-only notes and public memory pages
+  ---
+  duration_ms: 758.665991
+  type: 'test'
+  ...
+# Subtest: native image and voice entries open existing settings without generating or rewriting controls
+ok 9 - native image and voice entries open existing settings without generating or rewriting controls
+  ---
+  duration_ms: 441.476143
+  type: 'test'
+  ...
+# Subtest: unavailable native phone actions report failure, never substitute another configuration
+ok 10 - unavailable native phone actions report failure, never substitute another configuration
+  ---
+  duration_ms: 390.785049
+  type: 'test'
+  ...
+# Subtest: phone settings, theme and protocol use original settings routes; applications remain native
+ok 11 - phone settings, theme and protocol use original settings routes; applications remain native
+  ---
+  duration_ms: 1812.264557
+  type: 'test'
+  ...
+# Subtest: phone theme workshop saves live effect choices and preserves atlas destination
+ok 12 - phone theme workshop saves live effect choices and preserves atlas destination
+  ---
+  duration_ms: 581.523706
+  type: 'test'
+  ...
+# Subtest: editing or swiping invalidates an open reader and notebook without touching messages
+ok 13 - editing or swiping invalidates an open reader and notebook without touching messages
+  ---
+  duration_ms: 637.07764
+  type: 'test'
+  ...
+# Subtest: notebook lookup works during a pending generation and tears down on return to native UI
+not ok 14 - notebook lookup works during a pending generation and tears down on return to native UI
+  ---
+  duration_ms: 1087.868928
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:121:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:124:198)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+not ok 15 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 1074.904513
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:126:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:126:708)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: continue requests next normal response, never submits composer draft
+ok 16 - continue requests next normal response, never submits composer draft
+  ---
+  duration_ms: 432.225598
+  type: 'test'
+  ...
+# Subtest: message menu refuses edited source and generation blocks editing
+ok 17 - message menu refuses edited source and generation blocks editing
+  ---
+  duration_ms: 362.820846
+  type: 'test'
+  ...
+# Subtest: home lists every persisted chat and keeps same-name contacts separate
+ok 18 - home lists every persisted chat and keeps same-name contacts separate
+  ---
+  duration_ms: 382.683654
+  type: 'test'
+  ...
+# Subtest: production home checks avatar identity and selects the exact persisted chat before closing
+ok 19 - production home checks avatar identity and selects the exact persisted chat before closing
+  ---
+  duration_ms: 382.26987
+  type: 'test'
+  ...
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+ok 20 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 502.648068
+  type: 'test'
+  ...
+# Subtest: worldbook entry stays accessible during streaming and chat editing stays locked
+ok 21 - worldbook entry stays accessible during streaming and chat editing stays locked
+  ---
+  duration_ms: 393.915071
+  type: 'test'
+  ...
+# Subtest: streaming disables actions and generation end re-enables both on same mounted message
+not ok 22 - streaming disables actions and generation end re-enables both on same mounted message
+  ---
+  duration_ms: 1010.474371
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:146:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:154:2)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: old AI advanced reroll opens review without deleting history
+ok 23 - old AI advanced reroll opens review without deleting history
+  ---
+  duration_ms: 1034.733257
+  type: 'test'
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+ok 24 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 2794.791168
+  type: 'test'
+  ...
+# Subtest: rollback marker-save failure prevents deletion and generation
+ok 25 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 1342.571434
+  type: 'test'
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+ok 26 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 1916.169885
+  type: 'test'
+  ...
+# Subtest: draft and disconnected model prevent any history deletion
+ok 27 - draft and disconnected model prevent any history deletion
+  ---
+  duration_ms: 2103.263453
+  type: 'test'
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+not ok 28 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 848.567596
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:184:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:185:60)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: typing a draft during rollback preserves it and stops generation
+ok 29 - typing a draft during rollback preserves it and stops generation
+  ---
+  duration_ms: 2591.437657
+  type: 'test'
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 30 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 992.362729
+  type: 'test'
+  ...
+# Subtest: workflow navigation retains the original expansion control without duplicate shortcuts
+not ok 31 - workflow navigation retains the original expansion control without duplicate shortcuts
+  ---
+  duration_ms: 591.663431
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:200:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:203:2)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: chat menu keeps the native anchor and removes the duplicated settings entry
+not ok 32 - chat menu keeps the native anchor and removes the duplicated settings entry
+  ---
+  duration_ms: 1353.688809
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:206:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:209:2)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: sidebar shortcut entry closes the page and opens seven position selectors
+not ok 33 - sidebar shortcut entry closes the page and opens seven position selectors
+  ---
+  duration_ms: 949.988411
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:212:1'
+  failureType: 'testCodeFailure'
+  error: 'utility is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    click (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:60:97)
+    runNextTicks (node:internal/process/task_queues:65:5)
+    listOnTimeout (node:internal/timers:644:9)
+    process.processTimers (node:internal/timers:618:7)
+    async TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/shell.test.js:213:24)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
