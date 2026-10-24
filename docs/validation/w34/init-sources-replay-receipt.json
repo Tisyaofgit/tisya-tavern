@@ -1,0 +1,28 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "tests/v3/review-tests/initialization-sources.test.mjs",
+    "tests/v3/review-tests/design.test.mjs"
+  ],
+  "started_at": "2026-10-24T17:22:59.089652+00:00",
+  "finished_at": "2026-10-24T17:22:59.530248+00:00",
+  "exit_code": 0,
+  "bytes": 4643,
+  "sha256": "2b0431cc75021657f504144418affae8ab2cfef32aee8e2517ad30dfe19f49f7",
+  "previous_bytes": 15,
+  "previous_sha256": "7cb03ab03edf5190a8aa546c78285344395fad3d42d4011cd224f934aef96b3f",
+  "previous_status": "truncated after previously observed completed command; no original test process remains; truncating writer unknown",
+  "completed_summary": [
+    "# tests 17",
+    "# suites 0",
+    "# pass 17",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+    "# todo 0",
+    "# duration_ms 382.101985"
+  ],
+  "final_readback_matches": true
+}

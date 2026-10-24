@@ -1,0 +1,124 @@
+TAP version 13
+# Subtest: same-source projection preserves exact raw layout, source metadata and UTF-16 offsets without mutating input
+ok 1 - same-source projection preserves exact raw layout, source metadata and UTF-16 offsets without mutating input
+  ---
+  duration_ms: 2.718666
+  type: 'test'
+  ...
+# Subtest: actual paired archive messages transmit prose once, preserve auxiliary text and keep literal source macros
+ok 2 - actual paired archive messages transmit prose once, preserve auxiliary text and keep literal source macros
+  ---
+  duration_ms: 207.001455
+  type: 'test'
+  ...
+# Subtest: plain prose can be referenced without empty text parts and all unsafe or uneconomic cases retain explicit raw fallback
+ok 3 - plain prose can be referenced without empty text parts and all unsafe or uneconomic cases retain explicit raw fallback
+  ---
+  duration_ms: 1.038187
+  type: 'test'
+  ...
+# Subtest: restoring a reference refuses another source key, wrong source path, discontinuous offsets or changed prose length
+ok 4 - restoring a reference refuses another source key, wrong source path, discontinuous offsets or changed prose length
+  ---
+  duration_ms: 0.677616
+  type: 'test'
+  ...
+# Subtest: auxiliary preservation does not grant quotation evidence while eligible original prose still commits
+ok 5 - auxiliary preservation does not grant quotation evidence while eligible original prose still commits
+  ---
+  duration_ms: 11.695067
+  type: 'test'
+  ...
+# Subtest: manual multi-reply import and template initialization retain their untouched complete-history contract
+ok 6 - manual multi-reply import and template initialization retain their untouched complete-history contract
+  ---
+  duration_ms: 47.263902
+  type: 'test'
+  ...
+# Subtest: native definition request carries card, bound book and optional supplement once with definition-only authorization
+ok 7 - native definition request carries card, bound book and optional supplement once with definition-only authorization
+  ---
+  duration_ms: 36.3116
+  type: 'test'
+  ...
+# Subtest: opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+ok 8 - opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+  ---
+  duration_ms: 27.35613
+  type: 'test'
+  ...
+# Subtest: specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+ok 9 - specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+  ---
+  duration_ms: 25.744694
+  type: 'test'
+  ...
+# Subtest: actual config host request compiles the input phase into the final transport messages
+ok 10 - actual config host request compiles the input phase into the final transport messages
+  ---
+  duration_ms: 91.166936
+  type: 'test'
+  ...
+# Subtest: native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+ok 11 - native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+  ---
+  duration_ms: 39.992359
+  type: 'test'
+  ...
+# Subtest: all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order
+ok 12 - all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order
+  ---
+  duration_ms: 167.793778
+  type: 'test'
+  ...
+# Subtest: material values survive actual paired message assembly without source macro expansion
+ok 13 - material values survive actual paired message assembly without source macro expansion
+  ---
+  duration_ms: 29.326435
+  type: 'test'
+  ...
+# Subtest: large source layers retain every record, Unicode and final sentinel without a summarizing substitute
+ok 14 - large source layers retain every record, Unicode and final sentinel without a summarizing substitute
+  ---
+  duration_ms: 116.557659
+  type: 'test'
+  ...
+# Subtest: AI notices retain complete rules and format examples while scripts remain only in the original card
+ok 15 - AI notices retain complete rules and format examples while scripts remain only in the original card
+  ---
+  duration_ms: 1.149844
+  type: 'test'
+  ...
+# Subtest: manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence
+ok 16 - manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence
+  ---
+  duration_ms: 1.059599
+  type: 'test'
+  ...
+# Subtest: manual old or undated history cannot overwrite current sourced state, later evidenced time can
+ok 17 - manual old or undated history cannot overwrite current sourced state, later evidenced time can
+  ---
+  duration_ms: 14.888816
+  type: 'test'
+  ...
+# Subtest: actual archive request separates operational blockers and inaccessible corrections from source data
+ok 18 - actual archive request separates operational blockers and inaccessible corrections from source data
+  ---
+  duration_ms: 57.402321
+  type: 'test'
+  ...
+# Subtest: preference messages retain their complete schema and rows without shipping unrelated tables or mutating input
+ok 19 - preference messages retain their complete schema and rows without shipping unrelated tables or mutating input
+  ---
+  duration_ms: 52.132678
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 573.087252

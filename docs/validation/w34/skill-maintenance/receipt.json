@@ -1,0 +1,79 @@
+{
+  "at": "2026-10-24T17:24:46.597106+00:00",
+  "baseline": "dc590bcb02aae1c2c356243c858cda6d019abce1",
+  "commit": "2859f737242ec76d2b8086536bfd72bbf82aa78d",
+  "tree": "b98dcd3f1e0bfe55a0907612665612bb50254510",
+  "files": [
+    {
+      "path": "skill-6aaa716dcda88191b3660ccf0b76a519/references/architecture.md",
+      "sha256": "b7de4d3bc05f68e92baf170a274ffc63a495adb71bb921aa03c9f01e193f5c85",
+      "bytes": 5113
+    },
+    {
+      "path": "skill-6aaa716dcda88191b3660ccf0b76a519/references/ui-assets.md",
+      "sha256": "20acbd0f2e1fe99c2108147241967f5db49b363ce4c3edcf297defb7fa3aed67",
+      "bytes": 11996
+    }
+  ],
+  "validation": [
+    {
+      "check": "project-current",
+      "exit": 0,
+      "output": "PASS: 71 main lines, 6872 main bytes; structural checks only\n",
+      "stderr": ""
+    },
+    {
+      "check": "standard",
+      "exit": 0,
+      "output": "Skill is valid!\n",
+      "stderr": ""
+    }
+  ],
+  "scenario": {
+    "agent": "/root/prompt_contract/migration_check",
+    "history": "none",
+    "task": "Read-only assessment of a compact UI/preset migration with injected strings, fake services and 1877 passing checks",
+    "result": "Identified missing automatic-source, template/opening/history phase and complete real button-to-request-to-save-to-reopen/next-turn evidence; did not infer implementation absence merely from evidence absence; named current architecture.md K05 and scoped evidence levels.",
+    "productExecuted": false,
+    "productModified": false
+  },
+  "pushStatus": "success",
+  "notes": [
+    "Loaded local e1 skill source was stale: K05 current owner is architecture.md, not data-kernel.md.",
+    "Preexisting dirty original worktree retained exactly; no reset or unrelated stage.",
+    "Earlier project checker from stale local projects root had retired size-budget behavior. Current source checker and standard validator both exit 0."
+  ],
+  "pushReceipt": "dc590bc..2859f73 HEAD -> master",
+  "sourceValidation": [
+    {
+      "check": "project-current",
+      "exit": 0,
+      "output": "PASS: 71 main lines, 6872 main bytes; structural checks only\n",
+      "stderr": ""
+    },
+    {
+      "check": "standard",
+      "exit": 0,
+      "output": "Skill is valid!\n",
+      "stderr": ""
+    }
+  ],
+  "restoration": [
+    {
+      "path": "skill-6aaa716dcda88191b3660ccf0b76a519/references/architecture.md",
+      "commitBytesMatchWorkingFile": true,
+      "sha256": "b7de4d3bc05f68e92baf170a274ffc63a495adb71bb921aa03c9f01e193f5c85"
+    },
+    {
+      "path": "skill-6aaa716dcda88191b3660ccf0b76a519/references/ui-assets.md",
+      "commitBytesMatchWorkingFile": true,
+      "sha256": "20acbd0f2e1fe99c2108147241967f5db49b363ce4c3edcf297defb7fa3aed67"
+    }
+  ],
+  "remoteReadbackAttempts": [
+    {
+      "status": "failed",
+      "error": "HTTP 503: fetch snapshot persistence unavailable: arcade repo is already being written; retry fetch"
+    }
+  ]
+}

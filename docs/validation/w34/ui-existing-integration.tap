@@ -1,0 +1,15 @@
+(node:15) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ homepage initialization, history import and archive entries execute actual application services with native metadata ordering (1000.765617ms)
+✔ preference UI retries failed native persistence, reopens the same bank and isolates selected player (1651.461702ms)
+✔ archive navigation exposes an actual native read failure and retries from unchanged storage (383.718096ms)
+✔ unconfirmed preference stays with its player bank across identity switches and rejects a foreign confirmation (1446.828688ms)
+✔ an unmarked pre-W33 candidate is preserved with an explicit unresolved ownership notice (520.783531ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5393.734984

@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-24T17:41:36.854335+00:00",
+  "version": "0.3.5-w34.1",
+  "published": true,
+  "remoteSourceCommit": "510d6c4794a04407f7002a6a227f0063ae82894c",
+  "tree": "1fd26043ec055eba548b5210b9787a8e00f64e20",
+  "localSourceCommit": "0564937200d9d97102435af730e927a45735b814",
+  "remoteMainAndManifestReadBack": true,
+  "tests": {
+    "legacy": 1464,
+    "v3": 461,
+    "total": 1925,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "buildChecks": 15,
+    "command": "npm test",
+    "finalExit": {
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exitCode": 0,
+      "startedAt": "2026-10-24T17:24:15.522859+00:00",
+      "finishedAt": "2026-10-24T17:28:42.541279+00:00",
+      "durationSeconds": 267.01842623599805
+    }
+  },
+  "sourceRestoration": {
+    "files": 1222,
+    "emptyDirectory": true,
+    "allBytesAndHashesMatch": true,
+    "remoteTreeMatches": true
+  },
+  "evidenceBoundaries": {
+    "extractedNativeFunctions": true,
+    "actualApplicationServices": true,
+    "dom": "happy-dom",
+    "models": "deterministic fixtures",
+    "nativeStorage": "fixture-backed host API",
+    "android": false,
+    "externalModel": false
+  },
+  "protectedData": "No user chat/worldbook reset; exact native sources, ownership and chronology guards retained.",
+  "next": "Update extension and fully restart host; verify initialization/opening/history on device. Preserve actual first error if any."
+}

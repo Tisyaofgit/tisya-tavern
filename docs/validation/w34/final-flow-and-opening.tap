@@ -1,0 +1,133 @@
+TAP version 13
+# Subtest: opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+ok 1 - opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+  ---
+  duration_ms: 72.152047
+  type: 'test'
+  ...
+# Subtest: opening cannot run without confirmed template or over actual later progress
+ok 2 - opening cannot run without confirmed template or over actual later progress
+  ---
+  duration_ms: 19.680449
+  type: 'test'
+  ...
+# Subtest: opening accepts current-ledger confirmed initialization, not only origin definitions
+ok 3 - opening accepts current-ledger confirmed initialization, not only origin definitions
+  ---
+  duration_ms: 36.581461
+  type: 'test'
+  ...
+# Subtest: opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+ok 4 - opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+  ---
+  duration_ms: 61.852588
+  type: 'test'
+  ...
+# Subtest: native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+ok 5 - native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+  ---
+  duration_ms: 22.950759
+  type: 'test'
+  ...
+# Subtest: changed opener/persona/templates or binding invalidate generation and pending save, without writes
+ok 6 - changed opener/persona/templates or binding invalidate generation and pending save, without writes
+  ---
+  duration_ms: 80.928023
+  type: 'test'
+  ...
+# Subtest: lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+ok 7 - lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+  ---
+  duration_ms: 33.325812
+  type: 'test'
+  ...
+# Subtest: cancelled opening stops before canonical changes
+ok 8 - cancelled opening stops before canonical changes
+  ---
+  duration_ms: 7.974671
+  type: 'test'
+  ...
+# Subtest: existing explicit player binding is reused without overwriting native persona or adding a second player
+ok 9 - existing explicit player binding is reused without overwriting native persona or adding a second player
+  ---
+  duration_ms: 28.0797
+  type: 'test'
+  ...
+# Subtest: an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+ok 10 - an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+  ---
+  duration_ms: 13.039241
+  type: 'test'
+  ...
+# Subtest: saved opening survives a new service instance and player reference never crosses persona selection
+ok 11 - saved opening survives a new service instance and player reference never crosses persona selection
+  ---
+  duration_ms: 28.213811
+  type: 'test'
+  ...
+# Subtest: confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+ok 12 - confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+  ---
+  duration_ms: 34.427873
+  type: 'test'
+  ...
+# Subtest: opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+ok 13 - opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+  ---
+  duration_ms: 27.060808
+  type: 'test'
+  ...
+# Subtest: native initialization saved as a real origin definition retains source provenance for later opening establishment
+ok 14 - native initialization saved as a real origin definition retains source provenance for later opening establishment
+  ---
+  duration_ms: 57.80682
+  type: 'test'
+  ...
+# Subtest: mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+ok 15 - mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+  ---
+  duration_ms: 3.265344
+  type: 'test'
+  ...
+# (node:39) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: actual application UI automatically initializes card/books, establishes the selected opening, imports native floors and reopens the same records
+ok 16 - actual application UI automatically initializes card/books, establishes the selected opening, imports native floors and reopens the same records
+  ---
+  duration_ms: 3304.218334
+  type: 'test'
+  ...
+# Subtest: opening refuses an unconfirmed template before model calls or native archive writes
+ok 17 - opening refuses an unconfirmed template before model calls or native archive writes
+  ---
+  duration_ms: 421.389263
+  type: 'test'
+  ...
+# Subtest: a changed linked worldbook rejects the reviewed initialization before write, retaining the native book and prior archive
+ok 18 - a changed linked worldbook rejects the reviewed initialization before write, retaining the native book and prior archive
+  ---
+  duration_ms: 460.764398
+  type: 'test'
+  ...
+# Subtest: native initialization save failure stays visible and retries the same reviewed draft without rerunning the model
+ok 19 - native initialization save failure stays visible and retries the same reviewed draft without rerunning the model
+  ---
+  duration_ms: 611.105306
+  type: 'test'
+  ...
+# Subtest: editing a native history floor after review rejects save before originals or archive changes
+ok 20 - editing a native history floor after review rejects save before originals or archive changes
+  ---
+  duration_ms: 659.206227
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5889.025971

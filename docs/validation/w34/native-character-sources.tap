@@ -1,0 +1,10 @@
+✔ native character bindings match primary plus per-avatar auxiliary books without global/persona/chat leakage (1.961621ms)
+✔ actual native book manager source reads use saved worldbooks and never write or initialize chat metadata (6.452445ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 114.286743

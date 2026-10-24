@@ -1,0 +1,30 @@
+{
+  "schema": "tisya.independent-flow-verification/1",
+  "recorded_at": "2026-10-24T17:19:35.457032+00:00",
+  "command": "node --experimental-vm-modules --test --test-reporter=tap tests/v3/ui-tests/w34-initialization-opening-history.integration.mjs",
+  "exit_code": 0,
+  "tests": 5,
+  "pass": 5,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "duration_ms": 5664.979993,
+  "boundary": {
+    "product": "actual createApplication, workbench click handlers, initialization/opening/history services, source/provenance guards, persistence adapters, cold app reopen and subsequent normal A+B interceptor",
+    "host": "extracted TauriTavern 2.4.0 worldbook frontend and saveReply source; native storage is an explicit in-memory byte transport fixture",
+    "models": "deterministic SimpleSheet replies; actual registered paired prompt compilation is executed with phase",
+    "ui": "happy-dom; not Android/WebView or browser rendering"
+  },
+  "files": [
+    {
+      "path": "tests/v3/ui-tests/w34-flow-harness.mjs",
+      "size": 6918,
+      "sha256": "7065dfdbd1cd94c4e82db1e27759af7844f0b89de096e83eb05ebb4fc285c2f4"
+    },
+    {
+      "path": "tests/v3/ui-tests/w34-initialization-opening-history.integration.mjs",
+      "size": 13080,
+      "sha256": "4fade4515edcd8f85de0abb24eeba2997c7b6a6133c02aadb62f7dda80edecfb"
+    }
+  ]
+}

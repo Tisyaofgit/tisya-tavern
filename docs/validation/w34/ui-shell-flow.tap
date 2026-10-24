@@ -1,0 +1,10 @@
+✔ mounted initializer survives unrelated generation cleanup, saves reviewed forms and retains editor drafts (6054.4214ms)
+✔ current composition root exposes initialization and history intake from home and world archives (1694.341152ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8259.671497

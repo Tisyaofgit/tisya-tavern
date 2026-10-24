@@ -1,0 +1,19 @@
+✔ native history reads selected floors in source order and persists exact native originals only on save (112.756496ms)
+✔ native source selection excludes unselected floors and stale text or branch stops before materialization (35.789062ms)
+✔ native import rejects auxiliary evidence and immutable per-floor provenance tampering (36.658916ms)
+✔ native history refuses an older floor replacing a later sourced current state (14.635269ms)
+✔ native batch acknowledgement loss retries exact commits without duplicated original or model request (44.719407ms)
+✔ subsequent native floors update a newly created row with stable reviewed identity (39.327588ms)
+✔ only a matching confirmed opening row revision permits later native state progress without a calendar date (42.476108ms)
+✔ history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart (44.866022ms)
+✔ control-block evidence, deletion, fabricated reference and fake date fail before any write (23.848228ms)
+✔ unknown historical date cannot overwrite an existing current state (9.840665ms)
+✔ commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save (34.112088ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 449.552856
