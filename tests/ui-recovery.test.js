@@ -69,12 +69,12 @@ test('latest style check shows real hits and explicitly distinguishes a missing 
 });
 
 test('production configuration retains seven categories and guards dirty drafts before opening tables',async()=>{
- const f=fixture();let closed=0;const config=mountConfiguration(f.document,f.document.body,{store:f.store,host:f.host,tableService:f.service,getSettings:()=>({联系人分组:{}}),initialTab:'data',onClose:()=>{closed++;}});await config.ready;const root=config.root.shadowRoot;
+ const f=fixture();let closed=0,opened=0;const config=mountConfiguration(f.document,f.document.body,{store:f.store,host:f.host,onTables:()=>{opened++;},getSettings:()=>({联系人分组:{}}),initialTab:'data',onClose:()=>{closed++;}});await config.ready;const root=config.root.shadowRoot;
  assert.equal(find(root,'配置分类').options.length,7);assert.equal(find(root,'表单功能'),null);assert.match(root.textContent,/按已发送的用户／AI 消息逐条计数/);
  const count=find(root,'历史聊天条数（当前输入始终保留）');count.value='1';count.dispatchEvent(new f.window.Event('change'));
- const categories=find(root,'配置分类');categories.value='tables';await categories.onchange();assert.equal(find(root,'表单功能'),null);assert.equal(count.value,'1');assert.equal(config.requestLeave().allowed,false);
+ const categories=find(root,'配置分类');categories.value='tables';await categories.onchange();assert.equal(find(root,'表单功能'),null);assert.equal(count.value,'1');assert.equal(opened,0);assert.equal(config.requestLeave().allowed,false);
  await click(root,'返回设置');assert.equal(closed,0);await click(root,'保存配置');assert.equal(f.store.read().world.context.history,1);assert.equal(config.requestLeave().allowed,true);
- categories.value='tables';await categories.onchange();assert(find(root,'表单功能'));config.dispose();await f.close();
+ categories.value='tables';await categories.onchange();assert.equal(opened,1);assert.equal(find(root,'表单功能'),null);config.dispose();await f.close();
 });
 
 test('busy table view can be parked, but destruction is guarded and late completion cannot notify',async()=>{
@@ -110,5 +110,6 @@ test('bundle UI keeps explicit selection, edited draft and mapping across page c
 
 test('cached clean atlas refreshes its snapshot after another configuration page saves',async()=>{
  const f=fixture(),read=f.service.readAtlasSnapshot;f.service.readAtlasSnapshot=async()=>{const snapshot=await read(),revision=f.store.read().revision;return {...snapshot,verify:async()=>{if(f.store.read().revision!==revision)throw Error('档案快照配置已变化');}};};
- const config=mountConfiguration(f.document,f.document.body,{store:f.store,host:f.host,tableService:f.service,getSettings:()=>({}),initialTab:'tables',initialView:'atlas',preserveOnClose:true});try{await config.ready;const root=config.root.shadowRoot;await config.navigate('data');const count=find(root,'历史聊天条数（当前输入始终保留）');count.value='7';count.dispatchEvent(new f.window.Event('change'));await click(root,'保存配置');await config.navigate('tables');await click(root,'编辑');assert(!root.querySelector('[role=alert]'),root.querySelector('[role=alert]')?.textContent);assert(find(root,'编辑哪一类'));assert.equal(f.store.read().world.context.history,7);}finally{config.dispose();await f.close();}
+ const panel=mountTablePanel(f.document,f.document.body,{store:f.store,service:f.service,initialPage:'atlas'}),config=mountConfiguration(f.document,f.document.body,{store:f.store,host:f.host,getSettings:()=>({}),initialTab:'data'});
+ try{await panel.ready;await config.ready;const root=config.root.shadowRoot,count=find(root,'历史聊天条数（当前输入始终保留）');count.value='7';count.dispatchEvent(new f.window.Event('change'));await click(root,'保存配置');await panel.resume();await click(panel.root,'编辑');assert(!panel.root.querySelector('[role=alert]'),panel.root.querySelector('[role=alert]')?.textContent);assert(find(panel.root,'编辑哪一类'));assert.equal(f.store.read().world.context.history,7);}finally{panel.dispose();config.dispose();await f.close();}
 });

@@ -183,7 +183,7 @@ test('book CAS rejects stale and unknown writes without replacing unrelated entr
  const next=structuredClone(snap.data);next.revision++;await f.books.write(snap,next);assert.equal(f.saved.get('book')[1].content,'KEEP');await assert.rejects(f.books.write(snap,next),/其他页面/);
 });
 test('disabled feature and memoryless greeting issue no auxiliary calls',async()=>{
- const f=fixture();assert.equal(await f.service.prepare(),null);assert.equal(f.calls.length,0);await f.service.initialize();await f.set({enabled:true,plot:false});const result=await f.service.prepare();assert.equal(f.calls.length,0);assert.match(result.text,/开场白/);
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});assert.equal(await f.service.prepare(),null);assert.equal(f.calls.length,0);await f.service.initialize();await f.set({enabled:true,plot:false});const result=await f.service.prepare();assert.equal(f.calls.length,0);assert.match(result.text,/开场白/);
 });
 test('archive stays one assistant reply behind and retry discards candidate tags',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('开场'),user('去城门'),ai('<task>引用：城门</task><memory>抵达城门</memory>'),user('继续'),ai('<task>引用：被丢弃的名字</task><memory>最新候选</memory>')];
@@ -191,7 +191,7 @@ test('archive stays one assistant reply behind and retry discards candidate tags
  f.calls.length=0;await f.service.prepare('swipe');assert.equal(f.calls.length,0);
 });
 test('source fingerprints invalidate an edited prefix and dependent records',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('门是红色'),user('继续'),ai('最新')];f.responder(async(_,input)=>({templates:[],changes:[op('new:door','objects',{名称:'城门',类型:'place',描述:'红色'},input.archiveSource.text)]}));
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('门是红色'),user('继续'),ai('最新')];f.responder(async(_,input)=>({templates:[],changes:[op('new:door','objects',{名称:'城门',类型:'place',描述:'红色'},input.archiveSource.text)]}));
  await f.service.prepare();assert.equal((await f.service.inspect()).rows.length,1);f.c.chat[0].mes='门是蓝色';assert.equal((await f.service.inspect()).rows.length,0);assert.equal((await f.service.inspect()).origin.bases.length,0);
 });
 test('old API completion after chat switch cannot write either worldbook',async()=>{
@@ -262,7 +262,7 @@ test('plot API remains a proposal and explicit preference constraints reach cont
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],due:[],clues:[],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
 });
 test('plan sheet due and clues reach legacy and English final messages once without becoming stored facts',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});f.c.chat.push({is_user:true,mes:'查看门口的情况'});
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});f.c.chat.push({is_user:true,mes:'查看门口的情况'});
  const proposal={goal:'PLAN_GOAL',beats:[{proposal:'PLAN_BEAT',basis:['PLAN_BASIS'],condition:'PLAN_CONDITION'}],pendingChoices:['PLAN_CHOICE'],due:['PLAN_DUE\n核实期限及触发条件'],clues:['PLAN_CLUE\n先核实人物能否知情'],constraints:['PLAN_LIMIT']};
  const saved=JSON.stringify([...f.saved]),copy=structuredClone(proposal);f.responder(async(task,input)=>{assert.equal(task,'plotAdvance');assert.equal(input.phase,'plan');return formatSimpleSheet(proposal);});
  const result=await f.service.prepare(),source={prompts:[{identifier:'tisya_english_v1',content:''},...Object.keys(result.slots).map(key=>({identifier:SLOT_TARGETS[key],content:'{{tisya_slot_'+key+'}}'})),{identifier:'chatHistory',marker:true}].map(p=>({...p,enabled:true,role:'system'}))};
@@ -300,7 +300,7 @@ test('vector index is isolated, removes stale sources and never trusts returned 
 });
 
 test('body archives without memory and does not copy contradictory old summary',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><body>抵达门口，尚未进入。</body><memory>已经进入城中</memory>'),user('继续'),ai('暂存')];
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><body>抵达门口，尚未进入。</body><memory>已经进入城中</memory>'),user('继续'),ai('暂存')];
  f.responder((task,input)=>{assert.equal(input.archiveSource.text,'抵达门口，尚未进入。');return {changes:[op('new:event','events',{名称:'抵达北门',经过:'抵达门口，尚未进入。'},'抵达门口，尚未进入。')]};});
  await f.service.prepare();const data=await f.service.inspect();assert.equal(data.rows.find(r=>r.table==='events').values.经过,'抵达门口，尚未进入。');assert.equal(data.anchors[0].worldTime,'2026-10-12 10:00');assert(!JSON.stringify(data.rows).includes('已经进入城中'));
 });
@@ -375,12 +375,12 @@ test('new custom table names participate in previous-turn tags and keyword retri
 });
 
 test('first table use auto-creates card origin and independent session; repeated initialize is idempotent',async()=>{
- const f=fixture();await f.service.ensureInitialized();assert.equal(f.saved.size,0);await f.set({enabled:true,plot:false,archive:false});await f.service.ensureInitialized();assert.equal(f.saved.size,2);const before=f.store.read().revision,refs=f.store.read().world.tables;await f.service.initialize();await f.service.prepare();assert.equal(f.saved.size,2);assert.equal(f.store.read().revision,before);assert.equal(f.binding.primary,'角色原书');assert(f.binding.additional.includes('数据库资料'));assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.ensureInitialized();assert.equal(f.saved.size,0);await f.set({enabled:true,plot:false,archive:false});await f.service.ensureInitialized();assert.equal(f.saved.size,2);const before=f.store.read().revision,refs=f.store.read().world.tables;await f.service.initialize();await f.service.prepare();assert.equal(f.saved.size,2);assert.equal(f.store.read().revision,before);assert.equal(f.binding.primary,'角色原书');assert(f.binding.additional.includes('数据库资料'));assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
  // Lost settings can recover deterministic books without duplicating stored data.
  await f.set({originBook:'',sessionBook:''});await f.service.ensureInitialized();assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
 });
 test('manual forms/history work before memory setup without enabling automatic table processing',async()=>{
- const f=fixture();const data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.enabled,false);assert.equal(await f.service.prepare(),null);
+ const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});const data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.enabled,false);assert.equal(await f.service.prepare(),null);
 });
 
 test('Genesis native creation runs after confirmed tables, saves explicit scope targets and supports retry without refilling',async()=>{

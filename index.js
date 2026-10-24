@@ -198,7 +198,7 @@ function openIdentity(initialOrigin=null,{management=false}={}){if(!mayLeaveUtil
 function promptNewChatIdentity(){const state=identityService.read(),key=JSON.stringify(state.scope);if(!state.scope.chatId||identityPromptSeen.has(key))return;identityNewChats.add(key);refreshIdentityNotice();if(!enabled)return;const gate=utility?.kind==='configuration'?utility.requestSuspend():utility?.requestLeave?.();if(gate?.allowed===false)return;if(openWorkbench('books'))identityPromptSeen.add(key);}
 
 
-function openAssistant(task=null){return openWorkbench(['home','review','books','archives','settings','genesis','extract','conditions','chat'].includes(task)?task:task==='idea'?'genesis':task==='core'?'extract':'assistant');}
+function openAssistant(task=null){return openWorkbench(['home','review','books','archives','settings','genesis','extract','history','conditions','chat'].includes(task)?task:task==='idea'?'genesis':task==='core'?'extract':'assistant');}
 function openWorkbench(initialPage='home'){
  if(!mayLeaveUtility())return false;
 
@@ -224,9 +224,9 @@ function v3Routes(){const routes={};
  contacts:()=>openCharacterGroup(),'role-detail':({id}={})=>openCharacterGroup('character',id??context().characters[context().characterId]?.avatar),groups:()=>openCharacterGroup('group'),chat:()=>{close();hidePage();},home:()=>home(),phone:()=>{pet.setVisible(true);pet.setMode('folded');},'drawer:persona-management-button':()=>openIdentity(null,{management:true}),assistant:()=>openWorkbench('assistant'),'user-identity':()=>openWorkbench('books'),
  'settings-tab:tables':()=>openWorkbench('archives'),'role-library':()=>openCharacterGroup(),'group-library':()=>openCharacterGroup('group'),
  'settings-app':()=>openSettings(),'display-settings':openDisplaySettings,notes:()=>openNotebook('notes'),'display-cache':openChatLoading,
- 'input-tools':()=>inputShortcuts?.open('slots'),'emotion-atlas':openEmotionAtlas,'pet-toggle':()=>{pet.setVisible(!pet.isVisible());},
+ 'input-tools':()=>{close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');},'emotion-atlas':openEmotionAtlas,'pet-toggle':()=>{pet.setVisible(!pet.isVisible());},
  'motion-toggle':async()=>{await saveInterfaceSettings({...settings(),动态效果:!motionEnabled});},
- fullscreen:()=>nativeControl('#option_toggle_fullscreen'),'continue-settings':()=>{sheet('继续设置',`<label for="tisya-continue-text">自动发送的用户消息</label><textarea id="tisya-continue-text">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);},
+ fullscreen:()=>{close();hidePage();nativeControl('#option_toggle_fullscreen');},'continue-settings':()=>{sheet('继续设置',`<label for="tisya-continue-text">自动发送的用户消息</label><textarea id="tisya-continue-text">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);},
  'selection-diagnostic':()=>showSelectionDiagnostic(),'context-overview':()=>openSettings('mode','overview'),'font-retry':startFont,disable:stopUI};
 }
 async function installV3(){
@@ -354,7 +354,7 @@ function applyInterfaceSettings(value){
 async function saveInterfaceSettings(next){assertIdle();validateInterfaceSettings(next);if(!v3ConfigurationBook)throw Error('配置书尚未就绪');return v3ConfigurationBook.saveDomain('interface',next,v3ConfigurationBook.read());}
 const chatLoading=createChatLoadingController({powerUser:power_user,persist:saveSettings,assertIdle,isBounded:isBoundedChatSurfaceView,clearCache:async()=>{await clearReaderCache();nativeDisplay?.clear();},onApplied:count=>{for(const id of ['chat_truncation','chat_truncation_counter']){const input=document.getElementById(id);if(input)input.value=String(count);}}});
 function openSettings(tab='play',initialView=''){
- if(tab==='tables')return openWorkbench(initialView==='assistant'?'assistant':initialView==='genesis'?'genesis':initialView==='foundation'?'extract':initialView==='core'?'books':initialView==='conditions'?'conditions':'archives');
+ if(tab==='tables')return openWorkbench(initialView==='assistant'?'assistant':initialView==='genesis'?'genesis':initialView==='foundation'?'extract':initialView==='history'?'history':initialView==='core'?'books':initialView==='conditions'?'conditions':'archives');
  if(tab==='theme'&&!context().chatId){if(!mayLeaveUtility())return;renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
  if(!v3ConfigurationBook?.read().ready)return openWorkbench('books');
  if(!mayLeaveUtility())return false;
@@ -664,6 +664,11 @@ async function generateAtOperation(token, reroll, operation) {
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:type,mainApi:ctx.mainApi,selectedGroup:ctx.groupId}));
     assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
+    // Establish stable floor markers before comparing the remaining history.
+    // Initializing during the first deletion otherwise looks like a user edit.
+    const v3Host=await requireV3();await v3Host.initialize();operation.check();
+    assertIdle();validate(context(),token,{tail:true});
+    if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
     const following=context().chat.slice(token.id+1);
     if(Array.from(following).some(m=>!m||typeof m.mes!=='string'))throw new Error('后续历史尚未完整加载，未回溯消息');
     const snapshots=following.map(m=>JSON.stringify(m));
@@ -672,7 +677,7 @@ async function generateAtOperation(token, reroll, operation) {
         for(let id=token.length-1;id>token.id;id--) {
             operation.check();validate(context(),token);
             if(context().chat.length!==token.length-deleted||context().chat[id]!==following[id-token.id-1]||JSON.stringify(context().chat[id])!==snapshots[id-token.id-1])throw new Error('回溯期间历史已变化');
-            await (await requireV3()).deleteFloor({floor:id});
+            await v3Host.deleteFloor({floor:id});
             if(context().chat.length!==token.length-deleted-1)throw new Error('宿主未完成消息删除');
             deleted++;
             if(operation.signal.aborted){await context().saveChat();operation.check();}
