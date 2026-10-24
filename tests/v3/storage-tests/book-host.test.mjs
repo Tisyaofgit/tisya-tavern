@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createNativeBookHost,BOOK_POINTER_KEY} from '../../../v3/book-host.mjs';
+import {resolveRuntimeConfiguration} from '../../../v3/configuration.mjs';
+import {defaultWorld,emptyConfig,worldKey} from '../../../config/core.js';
 
 const clone=v=>structuredClone(v),err=code=>e=>e.code===code;
 /** Simulated host exports and disk reads, exercising the production callback adapter. */
@@ -29,6 +31,26 @@ async function prepareFixture({bridge=false}={}){
  const archive=await h.manager.create(request);await h.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'initial'});
  return {f,h,origin,core,archive,options,request};
 }
+async function prepareAutomaticFixture({runtime=false,declared=false}={}){
+ const f=hostFixture();if(!runtime)delete f.target.Mvu;else f.target.Mvu.getMvuData=()=>{throw Error('Ordinary card must not read unrelated native variables');};
+ const ctx=f.getContext();ctx.chat[0].mes='<div>普通美化开场</div>';
+ if(declared)ctx.characters[0].data={extensions:{tavern_helper:{scripts:[{type:'script',enabled:true,content:"import 'https://example.invalid/MagVarUpdate/master/bundle.js'"}]}}};
+ const world=defaultWorld(),data=emptyConfig(),key=worldKey(ctx);data.worlds[key]=world;
+ const h=await createNativeBookHost({target:f.target,native:f.native,getContext:f.getContext,getPlayerId:f.getPlayerId,getHost:()=>({assertIdle(){},configurationChanged(){}}),readConfiguration:()=>resolveRuntimeConfiguration({snapshot:{world,data,key,revision:'audit'},context:f.getContext(),target:f.target})});
+ const origin=await h.manager.create({kind:'origin',name:'O',operationId:'o'}),core=await h.manager.create({kind:'core',name:'C',operationId:'c'});
+ await h.manager.selectGlobalCore({coreId:core.id,expectedRevision:null,operationId:'global'});
+ return {f,h,request:{kind:'archive',name:'A',origin:{bookId:origin.id},core:{bookId:core.id},player:{id:'p1'},preferenceOwner:{kind:'player',id:'p1'},operationId:'a'}};
+}
+for(const runtime of [false,true])test(`automatic ordinary HTML card binds without native variables (global MVU ${runtime})`,async()=>{
+ const {f,h,request}=await prepareAutomaticFixture({runtime});const archive=await h.manager.create(request);await h.manager.select({archiveId:archive.id,expectedBindingRevision:null,operationId:'initial'});
+ assert.equal((await h.manager.readRuntime()).archive.id,archive.id);assert.equal(f.getContext().chat[0].mes,'<div>普通美化开场</div>');
+ const data=JSON.parse(Object.values(f.worlds.get(archive.physicalName).entries).find(e=>e.extensions?.tisyaBook).content);assert.equal(data.nativeCheckpoint.mode,'none');h.dispose();
+});
+test('declared native MVU card clearly reports its missing dependency without creating an archive',async()=>{
+ const {f,h,request}=await prepareAutomaticFixture({declared:true});const size=f.worlds.size;
+ await assert.rejects(h.manager.create(request),error=>error.code==='NATIVE_MVU_UNAVAILABLE'&&/酒馆助手/.test(error.message)&&/MVU/.test(error.message));
+ assert.equal(f.worlds.size,size);assert.equal(f.getContext().chat[0].mes,'<div>普通美化开场</div>');h.dispose();
+});
 test('native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata',async()=>{
  const {f,h,archive}=await prepareFixture();f.getContext().chatMetadata.other={untouched:1};await f.getContext().saveChat();
  assert.deepEqual((await h.manager.options()).owner,{chatId:'stable-1',branchId:'stable-1'});assert.equal((await h.manager.readRuntime()).archive.id,archive.id);assert.deepEqual(f.chatFiles.get('f1').metadata.other,{untouched:1});

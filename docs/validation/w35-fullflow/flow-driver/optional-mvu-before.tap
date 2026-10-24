@@ -1,0 +1,93 @@
+✖ one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields (2.720668ms)
+✖ automatic MVU follows this chat active-swipe variables rather than a global runtime (0.445998ms)
+✔ world controls and the two distinct focus reference types are projected without guessing or overwriting (1.299457ms)
+✔ verified native rules come only from enabled current-card entries with exact source hashes (7.30534ms)
+✔ preflight consumes actual controls and writer receives preference constraints in their proper home (10.48809ms)
+✔ ordinary material APIs exclude every exact private marker while retaining ordinary disabled entries (4.690301ms)
+✔ automatic ordinary HTML card binds without native variables (global MVU false) (32.032783ms)
+✖ automatic ordinary HTML card binds without native variables (global MVU true) (7.536247ms)
+✖ declared native MVU card clearly reports its missing dependency without creating an archive (7.890186ms)
+✔ native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata (11.661439ms)
+✔ actual persona export path saves settings and chat lock with direct readback (15.373081ms)
+✔ native persona persistence failure leaves a recoverable book intent and original pointer (15.456147ms)
+✔ book host with no open chat lists personas without writing identity metadata (0.814201ms)
+✔ real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values (30.439034ms)
+✔ native draft callback saves current unsent text only in its original archive book (14.261406ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 11
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 249.658644
+
+✖ failing tests:
+
+test at tests/v3/preset-tests/configuration.test.mjs:16:1
+✖ one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields (2.720668ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/preset-tests/configuration.test.mjs:19:50)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/v3/preset-tests/configuration.test.mjs:22:1
+✖ automatic MVU follows this chat active-swipe variables rather than a global runtime (0.445998ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/preset-tests/configuration.test.mjs:24:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/v3/storage-tests/book-host.test.mjs:44:35
+✖ automatic ordinary HTML card binds without native variables (global MVU true) (7.536247ms)
+  Error: Ordinary card must not read unrelated native variables
+      at f.target.Mvu.getMvuData (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/book-host.test.mjs:35:96)
+      at nativeCheckpoint (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/book-host.mjs:86:73)
+      at create (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:271:110)
+
+test at tests/v3/storage-tests/book-host.test.mjs:49:1
+✖ declared native MVU card clearly reports its missing dependency without creating an archive (7.890186ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  BookError: Native capability unavailable: Mvu.getMvuData
+      at async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/book-host.test.mjs:51:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: BookError: Native capability unavailable: Mvu.getMvuData
+        at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/book-host.mjs:10:54)
+        at need (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/book-host.mjs:11:24)
+        at nativeCheckpoint (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/book-host.mjs:85:30)
+        at create (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:271:110),
+    operator: 'rejects',
+    diff: 'simple'
+  }

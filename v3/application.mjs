@@ -14,6 +14,7 @@ import {createJourneyService} from './journey.mjs';
 import {createTagService} from './tags.mjs';
 import {createInitializationSourceProvider} from './initialization-sources.mjs';
 import {createOpeningService} from './opening-service.mjs';
+import {createDesignProgress} from './design-progress.mjs';
 
 const clone=structuredClone;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -63,28 +64,30 @@ export async function createApplication({target=globalThis,getContext,store,conf
  const sourceProvider=createInitializationSourceProvider({getContext,
   getLinkedWorldbookNames:typeof books.getLinkedWorldbookNames==='function'?avatar=>books.getLinkedWorldbookNames(avatar):undefined,
   readWorldbook:typeof books.readWorldbook==='function'?name=>books.readWorldbook(name):readWorldbook});
+ const designProgress=createDesignProgress({getBinding:binding});
  archiveService=createArchiveService({getSession:()=>host.getSession(),getContext,sourceProvider,
-  getConfigurationWorldKey:()=>store.read().key,assertIdle:idle,books,requestTask:(task,input,{signal}={})=>configHost.request(task,input,{signal,typedInput:input})});
+  getConfigurationWorldKey:()=>store.read().key,assertIdle:idle,books,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
  const historyImport=createHistoryImportService({getSession:()=>host.getSession(),getContext,assertIdle:idle,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
  const opening=createOpeningService({getSession:()=>host.getSession(),getContext,sourceProvider,assertIdle:idle,requestTask:(task,input,options)=>configHost.request(task,input,{...options,typedInput:input})});
  const design=archiveService,designOwner=mode=>mode==='history'?historyImport:mode==='opening'?opening:null;
  archiveService={...design,inspectHistorySources:args=>historyImport.inspectSources(args),inspectOpening:()=>opening.inspect(),
-  generateDesign:args=>designOwner(args.mode)?.generate(args)??design.generateDesign(args),
+  generateDesign:args=>designProgress.run({kind:args.mode},onProgress=>designOwner(args.mode)?.generate({...args,onProgress})??design.generateDesign({...args,onProgress})),
   previewDesign:(draft,options)=>designOwner(draft.mode)?.preview(draft,options)??design.previewDesign(draft,options),
-  saveDesign:(draft,options)=>designOwner(draft.mode)?.save(draft,options)??design.saveDesign(draft,options),
+  saveDesign:(draft,options={})=>designProgress.run({kind:draft.mode,operation:'save',reviewDraft:{...draft,changes:options.changes??draft.changes}},onProgress=>designOwner(draft.mode)?.save(draft,{...options,onProgress})??design.saveDesign(draft,{...options,onProgress})),
+  designState:()=>designProgress.state(),discardDesign:()=>designProgress.discard(),
   cancelDesign:()=>{historyImport.cancel();opening.cancel();design.cancelDesign();},busy:()=>historyImport.busy()||opening.busy()||design.busy()};
  const conditions=createV3ConditionService({getSession:()=>host.getSession(),assertIdle:idle,getContext,getNative:()=>target.Mvu});
  const scanner=worldbookScan?createV3WorldbookScan({getContext,service:conditions,getConfigurationSnapshot:()=>store.read(),readWorldbook,prepareAuthorNote:()=>host.prepareAuthorNote(),onError}):null;
  if(scanner)host.setBeforeWriter(scanner.beforeWriter);
  const journey=createJourneyService({getSession:()=>host.getSession(),store,getContext,books,assertIdle:idle,onSaved:()=>host.configurationChanged()});
  const tags=configurationBook?createTagService({getSession:()=>host.getSession(),configurationBook,review,assertIdle:idle}):null;
- const capabilities=createCapabilities({routes,dynamicRoutes,capabilityState,runtimeStatus,progress,review,assistant,books:bookFacade,archives:archiveService,conditions,journey,tags,getBinding:binding});
- return {host,progress,review,assistant,companion,capabilities,books:bookFacade,archives:archiveService,conditions,scanner,journey,tags,configurationBook,
+ const capabilities=createCapabilities({routes,dynamicRoutes,capabilityState,runtimeStatus,progress,designProgress,review,assistant,books:bookFacade,archives:archiveService,conditions,journey,tags,getBinding:binding,getSourceDiagnostics:()=>getContext()?.chatMetadata?.tisya_v3_host?.sourceDiagnostics??[]});
+ return {host,progress,designProgress,review,assistant,companion,capabilities,books:bookFacade,archives:archiveService,conditions,scanner,journey,tags,configurationBook,
   getSession:()=>host.getSession(),assertIdle:idle,
   isBindingTransition:()=>bindingChanging||host.bindingTransition?.()===true,
   setArchiveService(value){archiveService=value;},
   openAssistantArchiveQuery(...args){if(!archiveService?.openAssistantArchiveQuery)throw Error('档案查询尚未就绪');return archiveService.openAssistantArchiveQuery(...args);},
   configurationChanged(){host.configurationChanged();},
-  dispose(){assistant.cancel();archiveService?.cancelDesign?.();scanner?.dispose();capabilities.dispose();progress.dispose();host.dispose();}
+  dispose(){assistant.cancel();archiveService?.cancelDesign?.();scanner?.dispose();capabilities.dispose();designProgress.dispose();progress.dispose();host.dispose();}
  };
 }

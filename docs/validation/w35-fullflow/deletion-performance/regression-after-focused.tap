@@ -1,0 +1,35 @@
+TAP version 13
+# Subtest: rollback marker-save failure prevents deletion and generation
+ok 1 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 1696.170168
+  type: 'test'
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+ok 2 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 2373.830099
+  type: 'test'
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+ok 3 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 1767.36953
+  type: 'test'
+  ...
+# Subtest: pending history save allows menu dismissal and does not close a later panel
+not ok 4 - pending history save allows menu dismissal and does not close a later panel
+  ---
+  duration_ms: 25001.634142
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/shell.test.js:326:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 25000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: direct candidate jump edits the selected native text and deletes only selected version
+ok 5 - direct candidate jump edits the selected native text and deletes only selected version
+  ---
+  duration_ms: 2726.309697
+  type: 'test'
+  ...

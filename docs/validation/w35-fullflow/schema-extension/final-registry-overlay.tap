@@ -1,0 +1,350 @@
+TAP version 13
+# Subtest: extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+ok 1 - extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+  ---
+  duration_ms: 54.471266
+  type: 'test'
+  ...
+# Subtest: design refuses ambiguous unknown fields, forged source, native ownership, stale source, and excluded dependency
+ok 2 - design refuses ambiguous unknown fields, forged source, native ownership, stale source, and excluded dependency
+  ---
+  duration_ms: 70.09338
+  type: 'test'
+  ...
+# Subtest: current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+ok 3 - current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+  ---
+  duration_ms: 36.724686
+  type: 'test'
+  ...
+# Subtest: origin definition save uses the real book manager, preserves old versions, and never binds automatically
+ok 4 - origin definition save uses the real book manager, preserves old versions, and never binds automatically
+  ---
+  duration_ms: 86.880416
+  type: 'test'
+  ...
+# Subtest: definition response loss resumes actual operation receipt without adding a second version
+ok 5 - definition response loss resumes actual operation receipt without adding a second version
+  ---
+  duration_ms: 46.532303
+  type: 'test'
+  ...
+# Subtest: genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+ok 6 - genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+  ---
+  duration_ms: 72.931485
+  type: 'test'
+  ...
+# Subtest: design API cancellation and binding switches stop before archive writes
+ok 7 - design API cancellation and binding switches stop before archive writes
+  ---
+  duration_ms: 8.717028
+  type: 'test'
+  ...
+# Subtest: actual host source guard blocks a changed candidate even before cached scope keys update
+ok 8 - actual host source guard blocks a changed candidate even before cached scope keys update
+  ---
+  duration_ms: 10.793841
+  type: 'test'
+  ...
+# Subtest: design updates cannot remove an existing source reference through unset
+ok 9 - design updates cannot remove an existing source reference through unset
+  ---
+  duration_ms: 8.95174
+  type: 'test'
+  ...
+# Subtest: initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+ok 10 - initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+  ---
+  duration_ms: 47.716115
+  type: 'test'
+  ...
+# Subtest: initialization accepts an explicit linked subtable and retains its registry through a definition book
+ok 11 - initialization accepts an explicit linked subtable and retains its registry through a definition book
+  ---
+  duration_ms: 45.946749
+  type: 'test'
+  ...
+# Subtest: ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+ok 12 - ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+  ---
+  duration_ms: 36.536333
+  type: 'test'
+  ...
+# Subtest: uncertain inference, protected schemas, and schema edits after review are refused without writing
+ok 13 - uncertain inference, protected schemas, and schema edits after review are refused without writing
+  ---
+  duration_ms: 56.54522
+  type: 'test'
+  ...
+# Subtest: conflicting reusable registries are rejected before creating a bound archive
+ok 14 - conflicting reusable registries are rejected before creating a bound archive
+  ---
+  duration_ms: 27.54196
+  type: 'test'
+  ...
+# Subtest: Genesis converts a compatible complete registry into the same reviewed extension declarations
+ok 15 - Genesis converts a compatible complete registry into the same reviewed extension declarations
+  ---
+  duration_ms: 73.993176
+  type: 'test'
+  ...
+# Subtest: custom subtable rows require a typed owner reference during generation and final review
+not ok 16 - custom subtable rows require a typed owner reference during generation and final review
+  ---
+  duration_ms: 18.338212
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:19:567)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+ok 17 - native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+  ---
+  duration_ms: 33.056531
+  type: 'test'
+  ...
+# Subtest: actual persona export path saves settings and chat lock with direct readback
+ok 18 - actual persona export path saves settings and chat lock with direct readback
+  ---
+  duration_ms: 22.363747
+  type: 'test'
+  ...
+# Subtest: native persona persistence failure leaves a recoverable book intent and original pointer
+ok 19 - native persona persistence failure leaves a recoverable book intent and original pointer
+  ---
+  duration_ms: 18.620345
+  type: 'test'
+  ...
+# Subtest: book host with no open chat lists personas without writing identity metadata
+ok 20 - book host with no open chat lists personas without writing identity metadata
+  ---
+  duration_ms: 1.146479
+  type: 'test'
+  ...
+# Subtest: real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+ok 21 - real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+  ---
+  duration_ms: 24.065618
+  type: 'test'
+  ...
+# Subtest: native draft callback saves current unsent text only in its original archive book
+ok 22 - native draft callback saves current unsent text only in its original archive book
+  ---
+  duration_ms: 19.509978
+  type: 'test'
+  ...
+# Subtest: explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+ok 23 - explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+  ---
+  duration_ms: 33.6196
+  type: 'test'
+  ...
+# Subtest: new archives require explicit selections and never migrate arbitrary legacy books
+ok 24 - new archives require explicit selections and never migrate arbitrary legacy books
+  ---
+  duration_ms: 1.855452
+  type: 'test'
+  ...
+# Subtest: A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+ok 25 - A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+  ---
+  duration_ms: 15.720497
+  type: 'test'
+  ...
+# Subtest: stale same-namespace whole views are rejected even after a newer view was read
+ok 26 - stale same-namespace whole views are rejected even after a newer view was read
+  ---
+  duration_ms: 10.647968
+  type: 'test'
+  ...
+# Subtest: foreign namespace and activation attempts fail before persistence
+ok 27 - foreign namespace and activation attempts fail before persistence
+  ---
+  duration_ms: 7.834966
+  type: 'test'
+  ...
+# Subtest: real W24 original store and ledger adapter persist together, rename keeps original ID and references
+not ok 28 - real W24 original store and ledger adapter persist together, rename keeps original ID and references
+  ---
+  duration_ms: 27.920046
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/books.test.mjs:79:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'registry')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    materialFor (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:156:189)
+    async Object.readRuntime (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:250:20)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/books.test.mjs:87:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: rename is revision-checked and operation-idempotent
+ok 29 - rename is revision-checked and operation-idempotent
+  ---
+  duration_ms: 16.273136
+  type: 'test'
+  ...
+# Subtest: changed core does not move the fixed preference bank; old runtime cannot write
+ok 30 - changed core does not move the fixed preference bank; old runtime cannot write
+  ---
+  duration_ms: 17.633815
+  type: 'test'
+  ...
+# Subtest: player change requires explicit matching preference owner and isolates P
+ok 31 - player change requires explicit matching preference owner and isolates P
+  ---
+  duration_ms: 18.071101
+  type: 'test'
+  ...
+# Subtest: same account preference owner is explicitly shareable across players
+ok 32 - same account preference owner is explicitly shareable across players
+  ---
+  duration_ms: 27.27231
+  type: 'test'
+  ...
+# Subtest: foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+ok 33 - foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+  ---
+  duration_ms: 14.900958
+  type: 'test'
+  ...
+# Subtest: missing external host capability fails explicitly without committing a pointer
+ok 34 - missing external host capability fails explicitly without committing a pointer
+  ---
+  duration_ms: 13.269513
+  type: 'test'
+  ...
+# Subtest: draft save failure keeps pointer and binding; intent retries after draft is preserved
+ok 35 - draft save failure keeps pointer and binding; intent retries after draft is preserved
+  ---
+  duration_ms: 14.075641
+  type: 'test'
+  ...
+# Subtest: failed foreign activation leaves original pointer and durable retry intent
+ok 36 - failed foreign activation leaves original pointer and durable retry intent
+  ---
+  duration_ms: 13.145497
+  type: 'test'
+  ...
+# Subtest: pointer acknowledgement loss is resolved by direct readback, not a second commit
+ok 37 - pointer acknowledgement loss is resolved by direct readback, not a second commit
+  ---
+  duration_ms: 18.08361
+  type: 'test'
+  ...
+# Subtest: pointer write failure exposes recoverable incomplete binding without default reset
+ok 38 - pointer write failure exposes recoverable incomplete binding without default reset
+  ---
+  duration_ms: 13.993919
+  type: 'test'
+  ...
+# Subtest: concurrent binding requests serialize; stale expected revision cannot overwrite selection
+ok 39 - concurrent binding requests serialize; stale expected revision cannot overwrite selection
+  ---
+  duration_ms: 12.841541
+  type: 'test'
+  ...
+# Subtest: selected immutable definition versions yield initialRows and reject conflicting IDs
+ok 40 - selected immutable definition versions yield initialRows and reject conflicting IDs
+  ---
+  duration_ms: 12.375818
+  type: 'test'
+  ...
+# Subtest: creation retry is idempotent and physical rename is never performed
+ok 41 - creation retry is idempotent and physical rename is never performed
+  ---
+  duration_ms: 1.577065
+  type: 'test'
+  ...
+# Subtest: real direct readback detects a corrupted physical write
+ok 42 - real direct readback detects a corrupted physical write
+  ---
+  duration_ms: 10.555795
+  type: 'test'
+  ...
+# Subtest: fork binds a fresh archive after a real host branch transition without copying raw text or native values
+ok 43 - fork binds a fresh archive after a real host branch transition without copying raw text or native values
+  ---
+  duration_ms: 14.019117
+  type: 'test'
+  ...
+# Subtest: fork rejects an unactivated target and cannot overwrite another archive pointer
+ok 44 - fork rejects an unactivated target and cannot overwrite another archive pointer
+  ---
+  duration_ms: 7.095938
+  type: 'test'
+  ...
+# Subtest: two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+ok 45 - two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+  ---
+  duration_ms: 14.599511
+  type: 'test'
+  ...
+# Subtest: definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+not ok 46 - definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+  ---
+  duration_ms: 12.877385
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/books.test.mjs:174:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'filter')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    materialFor (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:156:240)
+    async select (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/books.mjs:328:20)
+  ...
+# Subtest: binding intents keep only a draft fingerprint, and new competing switches are blocked
+ok 47 - binding intents keep only a draft fingerprint, and new competing switches are blocked
+  ---
+  duration_ms: 10.46591
+  type: 'test'
+  ...
+# Subtest: versioned definition saves validate closure, preserve old revisions, and never move active selection
+ok 48 - versioned definition saves validate closure, preserve old revisions, and never move active selection
+  ---
+  duration_ms: 9.196086
+  type: 'test'
+  ...
+# Subtest: two player preference namespaces in the same core retain separate actual ledgers
+ok 49 - two player preference namespaces in the same core retain separate actual ledgers
+  ---
+  duration_ms: 23.702773
+  type: 'test'
+  ...
+# (node:60) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual initialization UI reviews inferred fields and a linked subtable, edits both, then cold-reopens registered data
+ok 50 - actual initialization UI reviews inferred fields and a linked subtable, edits both, then cold-reopens registered data
+  ---
+  duration_ms: 1638.730706
+  type: 'test'
+  ...
+# (node:68) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: local historical parsing diagnostics remain visible without becoming a global blocker and open history review
+ok 51 - local historical parsing diagnostics remain visible without becoming a global blocker and open history review
+  ---
+  duration_ms: 1071.089553
+  type: 'test'
+  ...
+1..51
+# tests 51
+# suites 0
+# pass 48
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2706.922851

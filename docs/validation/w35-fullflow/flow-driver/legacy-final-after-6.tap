@@ -1,0 +1,51 @@
+(node:37) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an existing unnumbered chat opens the real session and history import writes an exact original with native worldbook readback (567.110996ms)
+entering chat update routine for non-swipe post
+✔ historical sources supply explicit prose paragraph indices, never execute old native patches, and do not enter B as raw text (1335.545567ms)
+entering chat update routine for non-swipe post
+✔ a malformed retained V3 source stays pending without blocking send or being archived as raw thinking; one CRLF is not a blank line (937.485676ms)
+(node:58) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+entering chat update routine for non-swipe post
+entering chat update routine for non-swipe post
+✔ retained unmatched legacy controls remains locally pending while normal A/B send and deletion work (2641.342358ms)
+entering chat update routine for non-swipe post
+entering chat update routine for non-swipe post
+✔ retained incomplete old V3 remains locally pending while normal A/B send and deletion work (2468.005505ms)
+entering chat update routine for non-swipe post
+✔ HTML card opener and unnumbered old prose do not require Tisya control markup (1303.100049ms)
+Failed running interceptor for undefined Error: TISYA_V3_REPLY_ORDER
+    at fail (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:13:39)
+    at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:14:32)
+    at parseV3Reply (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:59:54)
+    at writerB (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:96:6)
+    at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2500:54)
+    at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+  code: 'TISYA_V3_REPLY_ORDER'
+}
+✔ fresh malformed writer output still fails before being saved (876.518775ms)
+Failed running interceptor for undefined Error: World info save failed for "Tisya-archive-58392412-7e0f-44b5-b033-a7e3675b3bac" (500): Injected native save failure
+    at requireSuccess (/scripts/world-info-persistence.js:33:11)
+    at async persist (/scripts/world-info-persistence.js:77:5)
+✔ an original storage failure is not disguised as a legacy parsing notice (278.707264ms)
+✔ source text changed after the scan but before materialization is rejected before original writes (3.297194ms)
+entering chat update routine for non-swipe post
+✔ a branch retains malformed legacy chat without requiring that source to become archived prose (916.086997ms)
+(node:82) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ opening a session does not import old reply with an unmatched control tag (511.145678ms)
+✔ opening a session does not import ordinary old reply (322.872189ms)
+✔ opening a session does not import incomplete V3 reply (263.681236ms)
+✔ an empty bound chat opens without originals or model calls (276.940207ms)
+✔ switching an unstructured opening candidate does not import character setup (241.83059ms)
+entering chat update routine for non-swipe post
+✔ ordinary generation retains an incomplete historical source as a local pending diagnostic (941.600614ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14354.366045

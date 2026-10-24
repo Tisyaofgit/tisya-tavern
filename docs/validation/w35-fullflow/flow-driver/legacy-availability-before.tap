@@ -1,0 +1,80 @@
+(node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Failed running interceptor for undefined OriginalStoreError: 聊天第 3 条（楼层 2）无法作为本轮原文：旧回复含有未配对的控制标签。原聊天未修改。
+    at fail (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:14:9)
+    at assert (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:17:19)
+    at parseHistoricalBody (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:163:3)
+    at put (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:291:37) {
+  code: 'HISTORY_CONTROL_BLOCK',
+  details: {},
+  floor: 2
+}
+✖ retained unmatched legacy controls remains locally pending while normal A/B send and deletion work (552.6257ms)
+Failed running interceptor for undefined Error: 聊天第 3 条（楼层 2）无法作为本轮原文：TISYA_V3_REPLY_ORDER。原聊天未修改。
+    at fail (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:13:39)
+    at check (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:14:32)
+    at parseV3Reply (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:59:54)
+    at sourceRecord (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-sources.mjs:44:19)
+    at async scan (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-sources.mjs:59:14)
+    at async Object.build (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-sources.mjs:64:14)
+    at async perform (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host.mjs:132:16) {
+  code: 'TISYA_V3_REPLY_ORDER',
+  floor: 2
+}
+✖ retained incomplete old V3 remains locally pending while normal A/B send and deletion work (327.97177ms)
+entering chat update routine for non-swipe post
+✔ HTML card opener and unnumbered old prose do not require Tisya control markup (1359.309599ms)
+Failed running interceptor for undefined Error: TISYA_V3_REPLY_ORDER
+    at fail (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:13:39)
+    at check (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:14:32)
+    at parseV3Reply (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/reply.mjs:59:54)
+    at writerB (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host.mjs:96:6)
+    at async Object.run (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:2458:54)
+    at async deliver (file:///workspace/scratch/289ae625ecae/restored-checkpoint-w34/v3/host-runtime.mjs:2944:20) {
+  code: 'TISYA_V3_REPLY_ORDER'
+}
+✔ fresh malformed writer output still fails before being saved (1164.471766ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3579.38767
+
+✖ failing tests:
+
+test at tests/v3/host-tests/legacy-source-availability.test.mjs:7:33
+✖ retained unmatched legacy controls remains locally pending while normal A/B send and deletion work (552.6257ms)
+  AssertionError [ERR_ASSERTION]: Legacy source formatting must not veto ordinary send
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/legacy-source-availability.test.mjs:11:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/v3/host-tests/legacy-source-availability.test.mjs:7:33
+✖ retained incomplete old V3 remains locally pending while normal A/B send and deletion work (327.97177ms)
+  AssertionError [ERR_ASSERTION]: Legacy source formatting must not veto ordinary send
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/legacy-source-availability.test.mjs:11:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

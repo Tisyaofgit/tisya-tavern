@@ -1,0 +1,364 @@
+TAP version 13
+# Subtest: core configuration is private, versioned, separate from manifest and P, preserving unmanaged entries
+ok 1 - core configuration is private, versioned, separate from manifest and P, preserving unmanaged entries
+  ---
+  duration_ms: 372.319487
+  type: 'test'
+  ...
+# Subtest: cold boot restores world, tags and UI after all extension settings disappear, from native metadata and inventory alone
+ok 2 - cold boot restores world, tags and UI after all extension settings disappear, from native metadata and inventory alone
+  ---
+  duration_ms: 338.41718
+  type: 'test'
+  ...
+# Subtest: direct host cache edits are detected instead of becoming a second authority
+ok 3 - direct host cache edits are detected instead of becoming a second authority
+  ---
+  duration_ms: 257.590928
+  type: 'test'
+  ...
+# Subtest: a failed book write retains draft and old runtime, retry writes exactly once
+ok 4 - a failed book write retains draft and old runtime, retry writes exactly once
+  ---
+  duration_ms: 251.121081
+  type: 'test'
+  ...
+# Subtest: concurrent domain edits use one revision guard and retain losing draft without overwriting successful tags
+ok 5 - concurrent domain edits use one revision guard and retain losing draft without overwriting successful tags
+  ---
+  duration_ms: 300.179949
+  type: 'test'
+  ...
+# Subtest: restoring old revision needs a current preview and appends history instead of deleting later versions
+ok 6 - restoring old revision needs a current preview and appends history instead of deleting later versions
+  ---
+  duration_ms: 322.545642
+  type: 'test'
+  ...
+# Subtest: story core changes preserve global configuration; changing the global core invalidates old saves
+ok 7 - story core changes preserve global configuration; changing the global core invalidates old saves
+  ---
+  duration_ms: 273.642154
+  type: 'test'
+  ...
+# Subtest: switching player retains shared configuration and interface while preference banks remain player-owned
+ok 8 - switching player retains shared configuration and interface while preference banks remain player-owned
+  ---
+  duration_ms: 193.803727
+  type: 'test'
+  ...
+# Subtest: native secrets and invalid chat modes are rejected before durable mutation
+ok 9 - native secrets and invalid chat modes are rejected before durable mutation
+  ---
+  duration_ms: 168.780492
+  type: 'test'
+  ...
+# Subtest: chat filename changes restore by stable archive identity and update key on next edit
+ok 10 - chat filename changes restore by stable archive identity and update key on next edit
+  ---
+  duration_ms: 266.371217
+  type: 'test'
+  ...
+# Subtest: combined assistant configuration and interface save create one durable version
+ok 11 - combined assistant configuration and interface save create one durable version
+  ---
+  duration_ms: 287.171013
+  type: 'test'
+  ...
+# Subtest: native forks share global settings without creating another configuration authority
+ok 12 - native forks share global settings without creating another configuration authority
+  ---
+  duration_ms: 377.313479
+  type: 'test'
+  ...
+# Subtest: account preference ownership does not change the global configuration owner
+ok 13 - account preference ownership does not change the global configuration owner
+  ---
+  duration_ms: 183.731837
+  type: 'test'
+  ...
+# Subtest: cold restart after player selection restores the one global configuration from its book
+ok 14 - cold restart after player selection restores the one global configuration from its book
+  ---
+  duration_ms: 194.574021
+  type: 'test'
+  ...
+# Subtest: reload cannot discard an unsaved draft and committed-but-unpublished save can be retried without duplication
+ok 15 - reload cannot discard an unsaved draft and committed-but-unpublished save can be retried without duplication
+  ---
+  duration_ms: 231.542633
+  type: 'test'
+  ...
+# Subtest: configuration writes and P namespace writes share one physical document writer without loss
+ok 16 - configuration writes and P namespace writes share one physical document writer without loss
+  ---
+  duration_ms: 175.734214
+  type: 'test'
+  ...
+# Subtest: valid book restoration repairs a corrupt UI cache instead of requiring it to parse first
+ok 17 - valid book restoration repairs a corrupt UI cache instead of requiring it to parse first
+  ---
+  duration_ms: 154.076905
+  type: 'test'
+  ...
+# Subtest: switching during cache publication cannot mark old configuration ready in the new chat
+ok 18 - switching during cache publication cannot mark old configuration ready in the new chat
+  ---
+  duration_ms: 234.245659
+  type: 'test'
+  ...
+# Subtest: undefined/non-JSON values cannot silently disappear from durable configuration
+ok 19 - undefined/non-JSON values cannot silently disappear from durable configuration
+  ---
+  duration_ms: 128.483559
+  type: 'test'
+  ...
+# Subtest: restoring settings preserves later custom tags; explicitly selecting the tag domain previews its removal
+ok 20 - restoring settings preserves later custom tags; explicitly selecting the tag domain previews its removal
+  ---
+  duration_ms: 311.641146
+  type: 'test'
+  ...
+# Subtest: worldbook UI preferences survive losing host settings and switching player without resetting
+ok 21 - worldbook UI preferences survive losing host settings and switching player without resetting
+  ---
+  duration_ms: 217.305926
+  type: 'test'
+  ...
+# Subtest: production worldbook store writes only plugin ordering/tags through configuration authority
+ok 22 - production worldbook store writes only plugin ordering/tags through configuration authority
+  ---
+  duration_ms: 164.84124
+  type: 'test'
+  ...
+# Subtest: worldbook native-save failure keeps its draft; retry commits native settings then the private configuration domain once
+ok 23 - worldbook native-save failure keeps its draft; retry commits native settings then the private configuration domain once
+  ---
+  duration_ms: 147.285024
+  type: 'test'
+  ...
+# Subtest: worldbook domain-write failure never publishes new cache and load can complete the original operation
+ok 24 - worldbook domain-write failure never publishes new cache and load can complete the original operation
+  ---
+  duration_ms: 147.134559
+  type: 'test'
+  ...
+# Subtest: manual configuration profiles remain stable through automatic edits and update only by explicit save
+ok 25 - manual configuration profiles remain stable through automatic edits and update only by explicit save
+  ---
+  duration_ms: 2206.268076
+  type: 'test'
+  ...
+# Subtest: failed manual profile save keeps original profile and retries the same draft once
+ok 26 - failed manual profile save keeps original profile and retries the same draft once
+  ---
+  duration_ms: 233.344395
+  type: 'test'
+  ...
+# Subtest: profile selection and naming never save; explicit save and update preserve existing schemes
+ok 27 - profile selection and naming never save; explicit save and update preserve existing schemes
+  ---
+  duration_ms: 55.91305
+  type: 'test'
+  ...
+# Subtest: profile save failure retains entered name and original scheme with a visible retry
+ok 28 - profile save failure retains entered name and original scheme with a visible retry
+  ---
+  duration_ms: 13.369071
+  type: 'test'
+  ...
+# Subtest: configuration recovery remains visible when story identity read fails; retry does not create a book
+ok 29 - configuration recovery remains visible when story identity read fails; retry does not create a book
+  ---
+  duration_ms: 17.53725
+  type: 'test'
+  ...
+# Subtest: play preferences provide an accessible scheme entry after current autosave finishes
+ok 30 - play preferences provide an accessible scheme entry after current autosave finishes
+  ---
+  duration_ms: 33.285057
+  type: 'test'
+  ...
+# Subtest: failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+ok 31 - failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 45.574145
+  type: 'test'
+  ...
+# Subtest: failed 世界档案 navigation shows its failure and an explicit fresh retry
+ok 32 - failed 世界档案 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 15.91929
+  type: 'test'
+  ...
+# Subtest: failed 历史补录 navigation shows its failure and an explicit fresh retry
+ok 33 - failed 历史补录 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 15.052374
+  type: 'test'
+  ...
+# Subtest: user preferences home entry uses actual shared contributions, projection and confirmation service
+ok 34 - user preferences home entry uses actual shared contributions, projection and confirmation service
+  ---
+  duration_ms: 152.79854
+  type: 'test'
+  ...
+# Subtest: preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+ok 35 - preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+  ---
+  duration_ms: 94.593264
+  type: 'test'
+  ...
+# Subtest: disabled preference processing remains visible read only without becoming an empty bank or active projection
+ok 36 - disabled preference processing remains visible read only without becoming an empty bank or active projection
+  ---
+  duration_ms: 73.654114
+  type: 'test'
+  ...
+# Subtest: same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+ok 37 - same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+  ---
+  duration_ms: 70.056692
+  type: 'test'
+  ...
+# Subtest: canonical setting search delegates once and internal navigation is usable
+ok 38 - canonical setting search delegates once and internal navigation is usable
+  ---
+  duration_ms: 45.675066
+  type: 'test'
+  ...
+# Subtest: pending preference edit stays pending and uses preference service only
+ok 39 - pending preference edit stays pending and uses preference service only
+  ---
+  duration_ms: 23.869693
+  type: 'test'
+  ...
+# Subtest: same-level nested editor keeps draft across back; close preserves then save commits once
+ok 40 - same-level nested editor keeps draft across back; close preserves then save commits once
+  ---
+  duration_ms: 30.116533
+  type: 'test'
+  ...
+# Subtest: unapplied assistant changes block leaving until explicitly abandoned
+ok 41 - unapplied assistant changes block leaving until explicitly abandoned
+  ---
+  duration_ms: 20.662415
+  type: 'test'
+  ...
+# Subtest: bubble clamps to small keyboard viewport and falls below top head
+ok 42 - bubble clamps to small keyboard viewport and falls below top head
+  ---
+  duration_ms: 0.4068
+  type: 'test'
+  ...
+# Subtest: missing pet adds only badge to existing approved entry
+ok 43 - missing pet adds only badge to existing approved entry
+  ---
+  duration_ms: 3.462601
+  type: 'test'
+  ...
+# Subtest: actual capability facade receives book version guards and stable IDs
+ok 44 - actual capability facade receives book version guards and stable IDs
+  ---
+  duration_ms: 30.734539
+  type: 'test'
+  ...
+# Subtest: actual capability facade supports selective configuration batch without extra save
+ok 45 - actual capability facade supports selective configuration batch without extra save
+  ---
+  duration_ms: 23.141561
+  type: 'test'
+  ...
+# Subtest: P saved receipt recovery is offered as completion, not another edit or approval
+ok 46 - P saved receipt recovery is offered as completion, not another edit or approval
+  ---
+  duration_ms: 11.961481
+  type: 'test'
+  ...
+# Subtest: registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+ok 47 - registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+  ---
+  duration_ms: 145.12458
+  type: 'test'
+  ...
+# Subtest: book definition conflicts require each acknowledgement and retain the same operation ID
+ok 48 - book definition conflicts require each acknowledgement and retain the same operation ID
+  ---
+  duration_ms: 28.167396
+  type: 'test'
+  ...
+# Subtest: UI settled waits for pending action, preserving parent busy lifecycle
+ok 49 - UI settled waits for pending action, preserving parent busy lifecycle
+  ---
+  duration_ms: 9.413442
+  type: 'test'
+  ...
+# Subtest: user switching automatically binds the selected real player preference owner
+ok 50 - user switching automatically binds the selected real player preference owner
+  ---
+  duration_ms: 12.58744
+  type: 'test'
+  ...
+# Subtest: design UI preserves delta metadata and source, selects rows, and saves one validated batch
+ok 51 - design UI preserves delta metadata and source, selects rows, and saves one validated batch
+  ---
+  duration_ms: 52.990718
+  type: 'test'
+  ...
+# Subtest: chat entry opens independent conversation directly and aside bubble routes to chat
+ok 52 - chat entry opens independent conversation directly and aside bubble routes to chat
+  ---
+  duration_ms: 14.557352
+  type: 'test'
+  ...
+# Subtest: first setup creates three explicit books with player preference owner and retries the same creation intent
+ok 53 - first setup creates three explicit books with player preference owner and retries the same creation intent
+  ---
+  duration_ms: 20.842716
+  type: 'test'
+  ...
+# Subtest: condition UI uses actual fields, explicit events and preview-before-commit through one facade
+ok 54 - condition UI uses actual fields, explicit events and preview-before-commit through one facade
+  ---
+  duration_ms: 16.834165
+  type: 'test'
+  ...
+# Subtest: unbound archive entry explains setup and routes to books without attempting ledger access
+ok 55 - unbound archive entry explains setup and routes to books without attempting ledger access
+  ---
+  duration_ms: 5.927616
+  type: 'test'
+  ...
+# Subtest: actual outward navigation passes the host suspend guard only during synchronous route dispatch
+ok 56 - actual outward navigation passes the host suspend guard only during synchronous route dispatch
+  ---
+  duration_ms: 16.454567
+  type: 'test'
+  ...
+# Subtest: condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+ok 57 - condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+  ---
+  duration_ms: 54.304948
+  type: 'test'
+  ...
+# Subtest: confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+ok 58 - confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+  ---
+  duration_ms: 27.848247
+  type: 'test'
+  ...
+# Subtest: gate editor leaves probability to the worldbook entry and action editor retains rule probability
+ok 59 - gate editor leaves probability to the worldbook entry and action editor retains rule probability
+  ---
+  duration_ms: 9.181824
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10583.623105

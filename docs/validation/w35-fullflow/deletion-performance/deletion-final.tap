@@ -1,0 +1,318 @@
+TAP version 13
+# Subtest: a pending clipboard or reader cannot lock history or hide the true write owner
+ok 1 - a pending clipboard or reader cannot lock history or hide the true write owner
+  ---
+  duration_ms: 1.944854
+  type: 'test'
+  ...
+# Subtest: failure releases only its own lock, while all history changes stay exclusive
+ok 2 - failure releases only its own lock, while all history changes stay exclusive
+  ---
+  duration_ms: 0.240761
+  type: 'test'
+  ...
+# Subtest: deleting a trailing source has bounded host I/O as retained history grows
+ok 3 - deleting a trailing source has bounded host I/O as retained history grows
+  ---
+  duration_ms: 251.094487
+  type: 'test'
+  ...
+# Subtest: scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+ok 4 - scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+  ---
+  duration_ms: 8.224012
+  type: 'test'
+  ...
+# (node:44) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+ok 5 - installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+  ---
+  duration_ms: 2184.928212
+  type: 'test'
+  ...
+# Failed running interceptor for undefined SimpleSheetError: 简表格式错误：需要分组标题或稳定行号字段
+#     at fail2 (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:498:9)
+#     at parseSimpleSheet (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:668:27)
+#     at Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2338:22)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2976:20) {
+#   code: 'SIMPLE_SHEET_INVALID'
+# }
+# Subtest: invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+ok 6 - invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+  ---
+  duration_ms: 465.252693
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 请先等待原卡 MVU 脚本初始化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:21:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:22:46)
+#     at file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:71:31
+#     at async initialize (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:116:14)
+#     at async perform (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:119:89) {
+#   code: 'V3_MVU_UNAVAILABLE'
+# }
+# Subtest: missing enabled native runtime aborts before A and before narrative commit
+ok 7 - missing enabled native runtime aborts before A and before narrative commit
+  ---
+  duration_ms: 273.175646
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+ok 8 - advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+  ---
+  duration_ms: 3290.205051
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+ok 9 - partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+  ---
+  duration_ms: 3232.422605
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: out-of-range partial edit fails before native chat mutation
+ok 10 - out-of-range partial edit fails before native chat mutation
+  ---
+  duration_ms: 2721.716391
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+ok 11 - two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+  ---
+  duration_ms: 2164.144193
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+ok 12 - trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+  ---
+  duration_ms: 1774.058782
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+ok 13 - normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+  ---
+  duration_ms: 3124.482138
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update for groups
+# Subtest: real group wrapper lifecycle permits exactly one A+B across drafted members
+ok 14 - real group wrapper lifecycle permits exactly one A+B across drafted members
+  ---
+  duration_ms: 1729.139226
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: external native edit invalidates source lineage and updates A rather than retaining the previous reference
+ok 15 - external native edit invalidates source lineage and updates A rather than retaining the previous reference
+  ---
+  duration_ms: 1769.404891
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 测试取消
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:21:43)
+#     at Object.cancel (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:145:128)
+#     at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer.test.mjs:60:58)
+#     at async Test.run (node:internal/test_runner/test:1409:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+#   code: 'V3_CANCELLED'
+# }
+# Subtest: stopping A prevents B and does not commit a late API response
+ok 16 - stopping A prevents B and does not commit a late API response
+  ---
+  duration_ms: 416.861861
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+ok 17 - turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+  ---
+  duration_ms: 1630.458893
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+ok 18 - explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+  ---
+  duration_ms: 1688.174171
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 用户身份已切换，旧任务停止
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:21:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:22:46)
+#     at guard (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:56:1563)
+#     at request (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:91:450)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2329:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2976:20) {
+#   code: 'V3_PLAYER_CHANGED'
+# }
+# Subtest: persona changed during A prevents B and native save even without a chat switch
+ok 19 - persona changed during A prevents B and native save even without a chat switch
+  ---
+  duration_ms: 394.514704
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: editing an earlier user evidence source removes its dependent archived facts
+ok 20 - editing an earlier user evidence source removes its dependent archived facts
+  ---
+  duration_ms: 1392.338272
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+ok 21 - awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+  ---
+  duration_ms: 1828.335846
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: unnumbered native opening remains untouched as card setup and does not enter numbered archive
+ok 22 - unnumbered native opening remains untouched as card setup and does not enter numbered archive
+  ---
+  duration_ms: 1616.107231
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+ok 23 - disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+  ---
+  duration_ms: 4199.043536
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 生成期间聊天楼层已变化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:21:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:22:46)
+#     at guard (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:56:529)
+#     at request (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:91:450)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2329:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2976:20) {
+#   code: 'V3_CHAT_MUTATED'
+# }
+# Subtest: a new native user appended during A cannot receive the prior request response
+ok 24 - a new native user appended during A cannot receive the prior request response
+  ---
+  duration_ms: 376.32362
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: native mode off permits business archival of an original-owned message without requiring or executing MVU
+ok 25 - native mode off permits business archival of an original-owned message without requiring or executing MVU
+  ---
+  duration_ms: 1222.238378
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turning native mode on creates missing projection rows from actual card data without executing historical variables
+ok 26 - turning native mode on creates missing projection rows from actual card data without executing historical variables
+  ---
+  duration_ms: 1582.564142
+  type: 'test'
+  ...
+# (node:655) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: retained unmatched legacy controls remains locally pending while normal A/B send and deletion work
+ok 27 - retained unmatched legacy controls remains locally pending while normal A/B send and deletion work
+  ---
+  duration_ms: 3114.454786
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: retained incomplete old V3 remains locally pending while normal A/B send and deletion work
+ok 28 - retained incomplete old V3 remains locally pending while normal A/B send and deletion work
+  ---
+  duration_ms: 2364.978425
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: HTML card opener and unnumbered old prose do not require Tisya control markup
+ok 29 - HTML card opener and unnumbered old prose do not require Tisya control markup
+  ---
+  duration_ms: 1329.279989
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: TISYA_V3_REPLY_ORDER
+#     at fail (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:13:39)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:14:32)
+#     at parseV3Reply (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:59:54)
+#     at writerB (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:100:6)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2533:54)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2977:20) {
+#   code: 'TISYA_V3_REPLY_ORDER'
+# }
+# Subtest: fresh malformed writer output still fails before being saved
+ok 30 - fresh malformed writer output still fails before being saved
+  ---
+  duration_ms: 1086.21081
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: World info save failed for "Tisya-archive-f8c105aa-aa1b-40e9-a879-301a70669d84" (500): Injected native save failure
+#     at requireSuccess (/scripts/world-info-persistence.js:33:11)
+#     at async persist (/scripts/world-info-persistence.js:77:5)
+# Subtest: an original storage failure is not disguised as a legacy parsing notice
+ok 31 - an original storage failure is not disguised as a legacy parsing notice
+  ---
+  duration_ms: 304.816648
+  type: 'test'
+  ...
+# Subtest: source text changed after the scan but before materialization is rejected before original writes
+ok 32 - source text changed after the scan but before materialization is rejected before original writes
+  ---
+  duration_ms: 3.353661
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: a branch retains malformed legacy chat without requiring that source to become archived prose
+ok 33 - a branch retains malformed legacy chat without requiring that source to become archived prose
+  ---
+  duration_ms: 953.705453
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: editing a pending legacy source to valid prose clears the diagnostic and archives the actual new source
+ok 34 - editing a pending legacy source to valid prose clears the diagnostic and archives the actual new source
+  ---
+  duration_ms: 3205.199553
+  type: 'test'
+  ...
+# Subtest: unmanaged native deletion works without global configuration and confirms its saved identity
+ok 35 - unmanaged native deletion works without global configuration and confirms its saved identity
+  ---
+  duration_ms: 4.942809
+  type: 'test'
+  ...
+# Subtest: known or damaged managed bindings never fall back to untracked native deletion
+ok 36 - known or damaged managed bindings never fall back to untracked native deletion
+  ---
+  duration_ms: 1.648271
+  type: 'test'
+  ...
+# Subtest: unmanaged deletion still rejects missing native effects and failed persistence
+ok 37 - unmanaged deletion still rejects missing native effects and failed persistence
+  ---
+  duration_ms: 1.263814
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52501.264926

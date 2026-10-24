@@ -1,4 +1,5 @@
 import {toolResponseState} from './tool-response-state.js';
+import {guardNativeProtocolStream} from './native-protocol-guard.js';
 // Response parsing only: the host owns requests and the service owns task validation.
 export function safeDiagnostic(text){
  let value=String(text??'');
@@ -78,8 +79,9 @@ function jsonText(payload,raw){
 
 export function readTaskResponse(response,options={}){return readResponse(response,options,false);}
 export function readToolResponse(response,options={}){return readResponse(response,options,true);}
-async function readResponse(response,{signal,onProgress}={},allowTools=false){
+async function readResponse(response,{signal,onProgress,responseDialect}={},allowTools=false){
  const tools=allowTools?toolResponseState():null;
+ const native=tools??toolResponseState();
  if(!response||typeof response!=='object')throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 响应对象无效');
  let reader=null,ended=false,text='',lastStage='',lastText='',abortReject;
  const interrupted=new Promise((_,reject)=>{abortReject=reject;});
@@ -100,7 +102,11 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
   return null;
  }
  try{
-  checkAbort();if(typeof response.body?.getReader==='function')reader=response.body.getReader();
+  checkAbort();
+  // The same host endpoint preserves Claude/Cohere native SSE when streaming.
+  // Reuse the existing validated projection; no provider request is rewritten.
+  if(!allowTools&&response.ok!==false&&!(Number(response.status)>=400)&&/text\/event-stream/i.test(response.headers?.get?.('content-type')??'')&&['claude','cohere'].includes(responseDialect))response=guardNativeProtocolStream(response,{}, {protocol:responseDialect});
+  if(typeof response.body?.getReader==='function')reader=response.body.getReader();
   if(response.ok===false||Number(response.status)>=400){
    let detail='';const raw=await bodyText();
    if(raw!==null){try{const parsed=JSON.parse(raw);detail=apiError(parsed)||description(parsed);}catch{detail=/^\s*[\[{]/.test(raw)?'服务器错误正文格式无效':raw;}}
@@ -118,7 +124,7 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    text=jsonText(payload,raw);if(typeof text!=='string'||!text.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本结果');
    await progress('received');return tools?tools.final(text):text;
   }
-  await progress('connected');let pending='',data=[],event='',done=false,finished=false;
+  await progress('connected');let pending='',data=[],event='',done=false,finished=false,nativeCandidate=false;
   async function frame(){
    if(!data.length){if(event==='error')throw failure('TISYA_RESPONSE_API','辅助 API 返回了错误事件');event='';return;}
    const raw=data.join('\n'),kind=event;data=[];event='';
@@ -127,7 +133,7 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    let payload;try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效 JSON');}
    const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
    if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效对象');
-   let choice;if(Object.hasOwn(payload,'choices'))choice=firstChoice(payload.choices);else{choice=tools?.nativeFrame(payload);if(choice===null||choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}if(!choice)return;
+   let choice;if(Object.hasOwn(payload,'choices'))choice=firstChoice(payload.choices);else{nativeCandidate ||= Object.hasOwn(payload,'candidates');choice=native.nativeFrame(payload);if(choice===null||choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}if(!choice)return;
    tools?.delta(choice);const terminal=tools&&choice.finish_reason==='tool_calls'?true:checkFinish(choice.finish_reason);
    if(choice.delta!==undefined&&!object(choice.delta))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧 delta 格式无效');
    if(!choice.delta&&!terminal)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 delta');
@@ -156,7 +162,7 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    while(!done&&!finished){const part=await guarded(reader.read());if(part.done){ended=true;await consume(decoder.decode(),true);break;}await consume(decoder.decode(part.value,{stream:true}));}
   }else if(typeof response.text==='function')await consume(await guarded(Promise.resolve().then(()=>response.text())),true);
   else throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流响应缺少正文读取接口');
-  if(!done&&!finished)throw failure('TISYA_RESPONSE_TRUNCATED','辅助 API 流提前结束，缺少完成标记，结果未被接纳');
+  if(!done&&!finished||nativeCandidate&&!finished)throw failure('TISYA_RESPONSE_TRUNCATED','辅助 API 流提前结束，缺少完成标记，结果未被接纳');
   const toolResult=tools?.finish(text);if(!text.trim()&&!toolResult?.toolCalls.length)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 完成但没有返回文本结果');
   await progress('received');return toolResult??text;
  }catch(error){

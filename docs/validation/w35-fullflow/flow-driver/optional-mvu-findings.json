@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-24T18:58:39.801Z",
+  "task": "Optional native MVU for ordinary cards",
+  "sourceFiles": [
+    {
+      "path": "v3/configuration.mjs",
+      "sha256": "d4541527dfea370e987ef8716d8358ff5b1e54691e3dec62afb791b9078d1037"
+    },
+    {
+      "path": "v3/book-host.mjs",
+      "sha256": "3b844a07b012260c3d2e1b633654ddfcbaeaba5872c2bda153e93adf71e27474"
+    },
+    {
+      "path": "tests/v3/preset-tests/configuration.test.mjs",
+      "sha256": "c2cd1bab7045d1539a7fcdfe9f7682864d4dc07a5767a85a01263d2c8ad11d13"
+    },
+    {
+      "path": "tests/v3/storage-tests/book-host.test.mjs",
+      "sha256": "fa1cf1c9b5b3c9cee15bd64d5659d17fc927b2c71883bde56a26f9794994f301"
+    },
+    {
+      "path": "tests/v3/host-tests/native-rules.test.mjs",
+      "sha256": "633e2331a656f36a5f797bff5455073d9a110d7272bb4e3b1d343ece1a7e41fe"
+    }
+  ],
+  "before": {
+    "artifact": "optional-mvu-before.tap",
+    "total": 15,
+    "passed": 11,
+    "failed": 4
+  },
+  "after": {
+    "artifact": "optional-mvu-final-2.tap",
+    "total": 18,
+    "passed": 18,
+    "failed": 0
+  },
+  "failedInvocation": {
+    "artifact": "optional-mvu-final.tap",
+    "reason": "Missing node --experimental-vm-modules; corrected invocation preserved separately"
+  },
+  "dependencyEvidence": {
+    "localSource": "../native-dependencies/JS-Slash-Runner-main/src/function/variables.ts",
+    "route": "get_variables_without_clone({type:message,message_id}) reads chat[message_id].variables[swipe_id ?? 0]",
+    "sha256": "4bb8008e68a6ff7c9e21a6e5e4fc7d08157593c82f562c855e4e3d416fd3c2a4"
+  },
+  "behavior": [
+    "auto uses enabled current-card MagVarUpdate declaration or own stat_data on current-swipe message variables",
+    "global Mvu object alone never enables bridge and is not probed",
+    "off remains explicit suppression; current config has no on enum",
+    "declared card with missing runtime still fails, now named NATIVE_MVU_UNAVAILABLE and Chinese TavernHelper+MVU instructions",
+    "existing or damaged stat_data remains native-owned for strict validation",
+    "ordinary HTML card with unrelated global Mvu binds and makes both A/B requests without native reads"
+  ],
+  "limits": [
+    "Production adapters with simulated host storage and extracted TauriTavern JS used for tests",
+    "Not an Android or Linux UI completion claim",
+    "Existing strict native checkpoint/readback and actual-writer parsing unchanged"
+  ]
+}

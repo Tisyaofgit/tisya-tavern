@@ -1,0 +1,370 @@
+TAP version 13
+# Subtest: native definition request carries card, bound book and optional supplement once with definition-only authorization
+ok 1 - native definition request carries card, bound book and optional supplement once with definition-only authorization
+  ---
+  duration_ms: 45.904041
+  type: 'test'
+  ...
+# Subtest: opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+ok 2 - opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+  ---
+  duration_ms: 42.968691
+  type: 'test'
+  ...
+# Subtest: specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+ok 3 - specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+  ---
+  duration_ms: 29.266717
+  type: 'test'
+  ...
+# Subtest: actual config host request compiles the input phase into the final transport messages
+ok 4 - actual config host request compiles the input phase into the final transport messages
+  ---
+  duration_ms: 151.528838
+  type: 'test'
+  ...
+# Subtest: native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+ok 5 - native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+  ---
+  duration_ms: 64.121311
+  type: 'test'
+  ...
+# Subtest: extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+ok 6 - extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+  ---
+  duration_ms: 68.921897
+  type: 'test'
+  ...
+# Subtest: design refuses ambiguous unknown fields, forged source, native ownership, stale source, and excluded dependency
+ok 7 - design refuses ambiguous unknown fields, forged source, native ownership, stale source, and excluded dependency
+  ---
+  duration_ms: 93.633443
+  type: 'test'
+  ...
+# Subtest: current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+ok 8 - current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+  ---
+  duration_ms: 64.665059
+  type: 'test'
+  ...
+# Subtest: origin definition save uses the real book manager, preserves old versions, and never binds automatically
+ok 9 - origin definition save uses the real book manager, preserves old versions, and never binds automatically
+  ---
+  duration_ms: 127.066987
+  type: 'test'
+  ...
+# Subtest: definition response loss resumes actual operation receipt without adding a second version
+ok 10 - definition response loss resumes actual operation receipt without adding a second version
+  ---
+  duration_ms: 54.002093
+  type: 'test'
+  ...
+# Subtest: genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+ok 11 - genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+  ---
+  duration_ms: 83.872228
+  type: 'test'
+  ...
+# Subtest: design API cancellation and binding switches stop before archive writes
+ok 12 - design API cancellation and binding switches stop before archive writes
+  ---
+  duration_ms: 12.977995
+  type: 'test'
+  ...
+# Subtest: actual host source guard blocks a changed candidate even before cached scope keys update
+ok 13 - actual host source guard blocks a changed candidate even before cached scope keys update
+  ---
+  duration_ms: 16.797276
+  type: 'test'
+  ...
+# Subtest: design updates cannot remove an existing source reference through unset
+ok 14 - design updates cannot remove an existing source reference through unset
+  ---
+  duration_ms: 13.861162
+  type: 'test'
+  ...
+# Subtest: automatic initialization forwards actual streaming progress then validates before exposing a draft
+ok 15 - automatic initialization forwards actual streaming progress then validates before exposing a draft
+  ---
+  duration_ms: 62.752916
+  type: 'test'
+  ...
+# Subtest: automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline
+ok 16 - automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline
+  ---
+  duration_ms: 51.144428
+  type: 'test'
+  ...
+# Subtest: initialization holds separate initial-state candidates visibly and never silently writes them during definition save
+ok 17 - initialization holds separate initial-state candidates visibly and never silently writes them during definition save
+  ---
+  duration_ms: 46.330708
+  type: 'test'
+  ...
+# Subtest: native source changes before generation, after response, and before confirmation fail without fallback or writes
+ok 18 - native source changes before generation, after response, and before confirmation fail without fallback or writes
+  ---
+  duration_ms: 53.562778
+  type: 'test'
+  ...
+# Subtest: a read failure cannot turn automatic initialization into manual or incomplete success
+ok 19 - a read failure cannot turn automatic initialization into manual or incomplete success
+  ---
+  duration_ms: 43.864402
+  type: 'test'
+  ...
+# Subtest: source ownership, disabled state, and cancellation are checked at actual read boundaries
+ok 20 - source ownership, disabled state, and cancellation are checked at actual read boundaries
+  ---
+  duration_ms: 10.174477
+  type: 'test'
+  ...
+# Subtest: archive prefixes classify genuine material; only a verified generated projection loses initialization authority
+ok 21 - archive prefixes classify genuine material; only a verified generated projection loses initialization authority
+  ---
+  duration_ms: 1.761638
+  type: 'test'
+  ...
+# Subtest: native initialization retains a source fingerprint and exact supplement for the separate opening stage
+ok 22 - native initialization retains a source fingerprint and exact supplement for the separate opening stage
+  ---
+  duration_ms: 21.327023
+  type: 'test'
+  ...
+# Subtest: saving a managed ledger in a linked book does not change the effective confirmed card definition
+ok 23 - saving a managed ledger in a linked book does not change the effective confirmed card definition
+  ---
+  duration_ms: 19.956654
+  type: 'test'
+  ...
+# Subtest: initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+ok 24 - initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+  ---
+  duration_ms: 62.719525
+  type: 'test'
+  ...
+# Subtest: initialization accepts an explicit linked subtable and retains its registry through a definition book
+ok 25 - initialization accepts an explicit linked subtable and retains its registry through a definition book
+  ---
+  duration_ms: 83.41502
+  type: 'test'
+  ...
+# Subtest: ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+ok 26 - ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+  ---
+  duration_ms: 44.562427
+  type: 'test'
+  ...
+# Subtest: uncertain inference, protected schemas, and schema edits after review are refused without writing
+ok 27 - uncertain inference, protected schemas, and schema edits after review are refused without writing
+  ---
+  duration_ms: 60.093598
+  type: 'test'
+  ...
+# Subtest: native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+ok 28 - native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+  ---
+  duration_ms: 41.806132
+  type: 'test'
+  ...
+# Subtest: actual persona export path saves settings and chat lock with direct readback
+ok 29 - actual persona export path saves settings and chat lock with direct readback
+  ---
+  duration_ms: 29.04262
+  type: 'test'
+  ...
+# Subtest: native persona persistence failure leaves a recoverable book intent and original pointer
+ok 30 - native persona persistence failure leaves a recoverable book intent and original pointer
+  ---
+  duration_ms: 25.690217
+  type: 'test'
+  ...
+# Subtest: book host with no open chat lists personas without writing identity metadata
+ok 31 - book host with no open chat lists personas without writing identity metadata
+  ---
+  duration_ms: 0.832902
+  type: 'test'
+  ...
+# Subtest: real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+ok 32 - real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+  ---
+  duration_ms: 37.46554
+  type: 'test'
+  ...
+# Subtest: native draft callback saves current unsent text only in its original archive book
+ok 33 - native draft callback saves current unsent text only in its original archive book
+  ---
+  duration_ms: 24.218003
+  type: 'test'
+  ...
+# Subtest: explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+ok 34 - explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+  ---
+  duration_ms: 44.748825
+  type: 'test'
+  ...
+# Subtest: new archives require explicit selections and never migrate arbitrary legacy books
+ok 35 - new archives require explicit selections and never migrate arbitrary legacy books
+  ---
+  duration_ms: 5.113035
+  type: 'test'
+  ...
+# Subtest: A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+ok 36 - A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+  ---
+  duration_ms: 34.824545
+  type: 'test'
+  ...
+# Subtest: stale same-namespace whole views are rejected even after a newer view was read
+ok 37 - stale same-namespace whole views are rejected even after a newer view was read
+  ---
+  duration_ms: 24.93381
+  type: 'test'
+  ...
+# Subtest: foreign namespace and activation attempts fail before persistence
+ok 38 - foreign namespace and activation attempts fail before persistence
+  ---
+  duration_ms: 17.355023
+  type: 'test'
+  ...
+# Subtest: real W24 original store and ledger adapter persist together, rename keeps original ID and references
+ok 39 - real W24 original store and ledger adapter persist together, rename keeps original ID and references
+  ---
+  duration_ms: 56.769272
+  type: 'test'
+  ...
+# Subtest: rename is revision-checked and operation-idempotent
+ok 40 - rename is revision-checked and operation-idempotent
+  ---
+  duration_ms: 9.850796
+  type: 'test'
+  ...
+# Subtest: changed core does not move the fixed preference bank; old runtime cannot write
+ok 41 - changed core does not move the fixed preference bank; old runtime cannot write
+  ---
+  duration_ms: 19.807609
+  type: 'test'
+  ...
+# Subtest: player change requires explicit matching preference owner and isolates P
+ok 42 - player change requires explicit matching preference owner and isolates P
+  ---
+  duration_ms: 23.038186
+  type: 'test'
+  ...
+# Subtest: same account preference owner is explicitly shareable across players
+ok 43 - same account preference owner is explicitly shareable across players
+  ---
+  duration_ms: 24.94398
+  type: 'test'
+  ...
+# Subtest: foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+ok 44 - foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+  ---
+  duration_ms: 25.240966
+  type: 'test'
+  ...
+# Subtest: missing external host capability fails explicitly without committing a pointer
+ok 45 - missing external host capability fails explicitly without committing a pointer
+  ---
+  duration_ms: 7.905462
+  type: 'test'
+  ...
+# Subtest: draft save failure keeps pointer and binding; intent retries after draft is preserved
+ok 46 - draft save failure keeps pointer and binding; intent retries after draft is preserved
+  ---
+  duration_ms: 11.861598
+  type: 'test'
+  ...
+# Subtest: failed foreign activation leaves original pointer and durable retry intent
+ok 47 - failed foreign activation leaves original pointer and durable retry intent
+  ---
+  duration_ms: 13.10155
+  type: 'test'
+  ...
+# Subtest: pointer acknowledgement loss is resolved by direct readback, not a second commit
+ok 48 - pointer acknowledgement loss is resolved by direct readback, not a second commit
+  ---
+  duration_ms: 16.975825
+  type: 'test'
+  ...
+# Subtest: pointer write failure exposes recoverable incomplete binding without default reset
+ok 49 - pointer write failure exposes recoverable incomplete binding without default reset
+  ---
+  duration_ms: 15.936011
+  type: 'test'
+  ...
+# Subtest: concurrent binding requests serialize; stale expected revision cannot overwrite selection
+ok 50 - concurrent binding requests serialize; stale expected revision cannot overwrite selection
+  ---
+  duration_ms: 14.034624
+  type: 'test'
+  ...
+# Subtest: selected immutable definition versions yield initialRows and reject conflicting IDs
+ok 51 - selected immutable definition versions yield initialRows and reject conflicting IDs
+  ---
+  duration_ms: 13.938829
+  type: 'test'
+  ...
+# Subtest: creation retry is idempotent and physical rename is never performed
+ok 52 - creation retry is idempotent and physical rename is never performed
+  ---
+  duration_ms: 2.699357
+  type: 'test'
+  ...
+# Subtest: real direct readback detects a corrupted physical write
+ok 53 - real direct readback detects a corrupted physical write
+  ---
+  duration_ms: 12.250142
+  type: 'test'
+  ...
+# Subtest: fork binds a fresh archive after a real host branch transition without copying raw text or native values
+ok 54 - fork binds a fresh archive after a real host branch transition without copying raw text or native values
+  ---
+  duration_ms: 24.120257
+  type: 'test'
+  ...
+# Subtest: fork rejects an unactivated target and cannot overwrite another archive pointer
+ok 55 - fork rejects an unactivated target and cannot overwrite another archive pointer
+  ---
+  duration_ms: 4.95659
+  type: 'test'
+  ...
+# Subtest: two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+ok 56 - two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+  ---
+  duration_ms: 9.901831
+  type: 'test'
+  ...
+# Subtest: definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+ok 57 - definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+  ---
+  duration_ms: 21.161596
+  type: 'test'
+  ...
+# Subtest: binding intents keep only a draft fingerprint, and new competing switches are blocked
+ok 58 - binding intents keep only a draft fingerprint, and new competing switches are blocked
+  ---
+  duration_ms: 9.892819
+  type: 'test'
+  ...
+# Subtest: versioned definition saves validate closure, preserve old revisions, and never move active selection
+ok 59 - versioned definition saves validate closure, preserve old revisions, and never move active selection
+  ---
+  duration_ms: 14.826519
+  type: 'test'
+  ...
+# Subtest: two player preference namespaces in the same core retain separate actual ledgers
+ok 60 - two player preference namespaces in the same core retain separate actual ledgers
+  ---
+  duration_ms: 23.676565
+  type: 'test'
+  ...
+1..60
+# tests 60
+# suites 0
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 708.533511

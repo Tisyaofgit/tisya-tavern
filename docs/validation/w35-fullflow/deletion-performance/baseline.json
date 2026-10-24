@@ -1,0 +1,60 @@
+{
+  "schema": "tisya.delete-path-measurement/1",
+  "sourceRoot": "/workspace/scratch/289ae625ecae/restored-checkpoint-w34",
+  "simulatedIoDelayMs": 5,
+  "boundary": "Production source chain/controller/identity/original-store/adapter; simulated transport and chat persistence. No real device timings.",
+  "results": [
+    {
+      "assistantFloors": 3,
+      "refresh": {
+        "elapsedMs": 91,
+        "worldRead": 3,
+        "worldSave": 0,
+        "stableId": 12,
+        "chatSave": 1,
+        "metadataRead": 1
+      },
+      "deletion": {
+        "elapsedMs": 314,
+        "beforeNativeRemovalMs": 21,
+        "afterNativeRemovalMs": 292,
+        "worldRead": 9,
+        "worldSave": 1,
+        "stableId": 36,
+        "chatSave": 6,
+        "metadataRead": 6
+      },
+      "verified": {
+        "deletedOriginalTombstone": true,
+        "invalidationApplied": true,
+        "retainedSources": true
+      }
+    },
+    {
+      "assistantFloors": 24,
+      "refresh": {
+        "elapsedMs": 684,
+        "worldRead": 24,
+        "worldSave": 0,
+        "stableId": 96,
+        "chatSave": 1,
+        "metadataRead": 1
+      },
+      "deletion": {
+        "elapsedMs": 1487,
+        "beforeNativeRemovalMs": 22,
+        "afterNativeRemovalMs": 1465,
+        "worldRead": 51,
+        "worldSave": 1,
+        "stableId": 204,
+        "chatSave": 6,
+        "metadataRead": 6
+      },
+      "verified": {
+        "deletedOriginalTombstone": true,
+        "invalidationApplied": true,
+        "retainedSources": true
+      }
+    }
+  ]
+}

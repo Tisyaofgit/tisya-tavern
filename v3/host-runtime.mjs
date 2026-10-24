@@ -1678,6 +1678,48 @@ function assertWorldBasisUnchanged(world, current) {
   for (const expected of world.basisRows) check(same(semantic(rows.get(expected.id)), semantic(expected)), "World basis changed after native readback; a new request is required");
 }
 
+// v3/runtime-source/host/json-value.mjs
+function sameJsonValue(left, right) {
+  const leftPath = /* @__PURE__ */ new Set(), rightPath = /* @__PURE__ */ new Set();
+  function compare(a, b) {
+    if (a === null || b === null) return a === b;
+    if (typeof a !== typeof b) return false;
+    if (typeof a === "string" || typeof a === "boolean") return a === b;
+    if (typeof a === "number") return Number.isFinite(a) && Number.isFinite(b) && a === b;
+    if (typeof a !== "object") return false;
+    if (leftPath.has(a) || rightPath.has(b)) return false;
+    const arrays = Array.isArray(a);
+    if (arrays !== Array.isArray(b)) return false;
+    if (!arrays) {
+      const plain2 = (value) => {
+        const proto = Object.getPrototypeOf(value);
+        return proto === null || Object.getPrototypeOf(proto) === null;
+      };
+      if (!plain2(a) || !plain2(b)) return false;
+    }
+    const fieldsA = Object.getOwnPropertyDescriptors(a), fieldsB = Object.getOwnPropertyDescriptors(b);
+    const keysA = Reflect.ownKeys(fieldsA), keysB = Reflect.ownKeys(fieldsB);
+    if (keysA.length !== keysB.length || keysA.some((key) => typeof key !== "string" || !Object.hasOwn(fieldsB, key))) return false;
+    if (arrays && (fieldsA.length.value !== fieldsB.length.value || keysA.length !== fieldsA.length.value + 1)) return false;
+    leftPath.add(a);
+    rightPath.add(b);
+    try {
+      return keysA.every((key) => {
+        const fieldA = fieldsA[key], fieldB = fieldsB[key];
+        if (!Object.hasOwn(fieldA, "value") || !Object.hasOwn(fieldB, "value")) return false;
+        if (arrays && key === "length") return true;
+        if (!fieldA.enumerable || !fieldB.enumerable) return false;
+        if (arrays && (!/^(0|[1-9]\d*)$/.test(key) || Number(key) >= fieldsA.length.value)) return false;
+        return compare(fieldA.value, fieldB.value);
+      });
+    } finally {
+      leftPath.delete(a);
+      rightPath.delete(b);
+    }
+  }
+  return compare(left, right);
+}
+
 // tables/preferences.js
 function preferenceMatches(row, { context = {}, world = {}, persona = null, binding = null } = {}) {
   const scope3 = row?.values?.\u4F5C\u7528\u57DF;
@@ -1880,6 +1922,38 @@ function projectPreferences(state, { enabled = true, context = {}, chatId = cont
   return { rows: copy(selected), groups: [...groups.values()], hardConstraints };
 }
 
+// v3/design-schema.mjs
+var copy2 = structuredClone;
+var check2 = (ok, message) => {
+  if (!ok) throw Error(message);
+};
+var reserved = /* @__PURE__ */ new Set(["native_cells", "preferences"]);
+function mergeDefinitionRegistries(base, ...registries) {
+  const result = copy2(base);
+  registryIndex(result);
+  for (const registry of registries.filter(Boolean)) {
+    registryIndex(registry);
+    for (const kind of ["tables", "types"]) for (const incoming of registry[kind]) {
+      const prior = result[kind].find((item) => item.id === incoming.id);
+      if (!prior) {
+        check2(kind !== "tables" || incoming.owner === "archive", "\u65B0\u589E\u5B50\u8868\u53EA\u80FD\u7531\u6863\u6848\u670D\u52A1\u7EF4\u62A4");
+        result[kind].push(copy2(incoming));
+        continue;
+      }
+      check2(prior.name === incoming.name && prior.owner === incoming.owner && prior.parent === incoming.parent, "\u5B9A\u4E49\u7ED3\u6784\u8EAB\u4EFD\u51B2\u7A81\uFF1A" + incoming.id);
+      for (const [key, field2] of Object.entries(incoming.fields)) {
+        if (reserved.has(incoming.id) && kind === "tables") check2(sameDefinition(prior.fields[key], field2), "\u5B9A\u4E49\u4E0D\u80FD\u6539\u53D8\u539F\u751F\u6216\u504F\u597D\u7ED3\u6784");
+        if (!prior.fields[key]) check2(!field2.required, "\u5B9A\u4E49\u65B0\u589E\u5B57\u6BB5\u987B\u4E3A\u53EF\u9009\uFF1A" + incoming.id + "." + key);
+        prior.fields[key] = prior.fields[key] ? fieldMerge(prior.fields[key], field2, incoming.id + "." + key) : copy2(field2);
+      }
+      prior.aliases = [.../* @__PURE__ */ new Set([...prior.aliases, ...incoming.aliases])];
+      prior.version = Math.max(prior.version, incoming.version);
+    }
+  }
+  registryIndex(result);
+  return result;
+}
+
 // v3/runtime-source/runner/preflight-runner.mjs
 var ROOT_FIELDS = ["requestKey", "archiveProposal", "worldProposal", "scope", "preferenceCandidates", "archiveRequests", "creativeBrief", "pending"];
 var PROPOSAL_FIELDS = ["templates", "schemaChanges", "changes", "pending"];
@@ -1933,11 +2007,18 @@ function currentView(state, input) {
   const view = projectRetained(state, input.activeSourceKeys), preferences = preferencesFor(state, input);
   return { ...view, rows: [...view.rows.filter((r) => r.table !== "preferences"), ...preferences.rows] };
 }
-function remapProposal(proposal, registry, aliases) {
+function remapPatchReferences(op, registry, aliases, rows) {
+  if (!op.values) return;
+  const inherited = op.table === "objects" && !Object.hasOwn(op.values, "\u7C7B\u578B"), values = inherited ? { ...op.values, \u7C7B\u578B: rows.find((row) => row.id === op.id)?.values.\u7C7B\u578B } : op.values;
+  mapRowReferences({ id: op.id, table: op.table, values }, registry, (id) => aliases.get(id) ?? id);
+  if (inherited) delete values.\u7C7B\u578B;
+  op.values = values;
+}
+function remapProposal(proposal, registry, aliases, rows) {
   const p = copy(proposal);
   for (const op of p.changes) {
     op.id = aliases.get(op.id) ?? op.id;
-    if (op.values) mapRowReferences({ table: op.table, values: op.values }, registry, (id) => aliases.get(id) ?? id);
+    remapPatchReferences(op, registry, aliases, rows);
     if (op.access) for (const k of ["readers", "knowers"]) op.access[k] = op.access[k]?.map((id) => aliases.get(id) ?? id);
   }
   return p;
@@ -2003,6 +2084,7 @@ function projectRetained(state, activeSourceKeys) {
     applied.add(commit.id);
     last = commit.id;
   }
+  if (state.definitionRegistry) registry = mergeDefinitionRegistries(registry, state.definitionRegistry);
   const result = { registry, rows: [...rows.values()], anchors, commits, last };
   for (const row of result.rows) validateRow(registry, row);
   validateReferences(result.rows, registry);
@@ -2217,7 +2299,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
     await storage.compareAndWrite(state.revision, next);
     guard();
     const actual = await storage.read();
-    check(same2(actual, next), "Store write was not confirmed");
+    check(sameJsonValue(actual, next), "Store write was not confirmed");
     return actual;
   }
   async function verifySources(input) {
@@ -2271,7 +2353,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
           const item = input.archiveSources[index];
           check(!shadow.commits.some((c) => c.source === batch.source && c.kind === "archive" && !c.archiveSkipped), "Retained source was already archived");
           const bound = await boundArchive(batch.proposal, item, input, { bindArchiveParagraphs, resolveEvidence });
-          const p = remapProposal(bound.proposal, shadow.registry, aliases), nativeOps = p.changes.filter((op) => op.table === "native_cells"), businessOps = p.changes.filter((op) => op.table !== "native_cells");
+          const p = remapProposal(bound.proposal, shadow.registry, aliases, shadow.rows), nativeOps = p.changes.filter((op) => op.table === "native_cells"), businessOps = p.changes.filter((op) => op.table !== "native_cells");
           check(input.archiveEnabled !== false || businessOps.length === 0 && p.templates.length === 0 && p.schemaChanges.length === 0, "Business archive is disabled");
           check(!item.nativeBridge?.nativeAlready || nativeOps.length === 0, "This source native state is already settled");
           const business = { ...p, changes: businessOps };
@@ -2319,7 +2401,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
           }
         }
         const worldInput = mapWorld(result.worldProposal, aliases);
-        if (worldInput) for (const event of worldInput.events) for (const op of event.changes) mapRowReferences({ table: op.table, values: op.values }, shadow.registry, (id) => aliases.get(id) ?? id);
+        if (worldInput) for (const event of worldInput.events) for (const op of event.changes) remapPatchReferences(op, shadow.registry, aliases, shadow.rows);
         const world = prepareWorld(shadow, worldInput, input.worldWindow, { playerObjects: input.playerObjects ?? [], onstageObjects: input.onstageObjects ?? [], activeSourceKeys: input.activeSourceKeys, existingNewIds: allNewIds });
         if (world) registerAliases(world.proposal, world.prepared, aliases);
         const prefs = preparePreferences(shadow, result.preferenceCandidates, input, state);
@@ -2511,7 +2593,7 @@ function validateDeliveryReceipt(receipt, requestKey) {
 
 // v3/runtime-source/host/worldbook-adapter.mjs
 var KEY = "tisyaOriginal";
-var copy2 = (value) => value == null ? value : structuredClone(value);
+var copy3 = (value) => value == null ? value : structuredClone(value);
 var stable = (value) => value && typeof value === "object" ? Array.isArray(value) ? value.map(stable) : Object.fromEntries(Object.keys(value).sort().map((k) => [k, stable(value[k])])) : value;
 var same3 = (a, b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
 var HostAdapterError = class extends Error {
@@ -2593,7 +2675,7 @@ function decode(wire, bookId) {
     "Original archive entry activation flags changed",
     { id: meta.id }
   );
-  return { ...copy2(meta), content: wire.content };
+  return { ...copy3(meta), content: wire.content };
 }
 function locate(data, bookId, id) {
   const matches = Object.entries(data?.entries ?? {}).filter(([, wire2]) => wire2?.extensions?.[KEY]?.id === id);
@@ -2616,8 +2698,8 @@ function createWorldbookOriginalAdapter({ transport }) {
   const read = ({ bookId, id }) => serial2(async () => {
     const data = await transport.readFresh(bookId);
     const found = locate(data, bookId, id);
-    observed.set(key(bookId, id), found ? copy2(found.entry) : null);
-    return copy2(found?.entry ?? null);
+    observed.set(key(bookId, id), found ? copy3(found.entry) : null);
+    return copy3(found?.entry ?? null);
   });
   async function write({ bookId, id, expectedVersion, entry }, creating) {
     require2(entry?.bookId === bookId && entry?.id === id && entry.disable === true && entry.constant === false && entry.probability === 0 && entry.key?.length === 0 && entry.keysecondary?.length === 0, "INVALID_ORIGINAL", "Original entry identity or activation flags are invalid");
@@ -2635,13 +2717,13 @@ function createWorldbookOriginalAdapter({ transport }) {
     require2(same3(current, observed.get(observedKey)), "EXTERNAL_CHANGE", "Original changed after it was read", { id });
     const wire = found?.wire ?? transport.createEntry(bookId, data);
     require2(wire && Number.isInteger(wire.uid), "WORLD_UID", "Host did not allocate a worldbook UID");
-    const { content, ...metadata2 } = copy2(entry);
+    const { content, ...metadata2 } = copy3(entry);
     Object.assign(wire, { content, disable: true, constant: false, vectorized: false, key: [], keysecondary: [], probability: 0, useProbability: true, excludeRecursion: true, preventRecursion: true, comment: id });
     wire.extensions = { ...wire.extensions ?? {}, [KEY]: metadata2 };
     await transport.save(bookId, data);
     const saved = locate(await transport.readFresh(bookId), bookId, id)?.entry;
     require2(same3(saved, entry), "WRITE_READBACK_MISMATCH", "Worldbook original readback differs from its write", { id });
-    observed.set(observedKey, copy2(saved));
+    observed.set(observedKey, copy3(saved));
     return { id, version: saved.version };
   }
   return Object.freeze({
@@ -2666,19 +2748,19 @@ function createWorldbookOriginalAdapter({ transport }) {
 }
 
 // v3/runtime-source/host/table-storage.mjs
-var copy3 = (value) => structuredClone(value);
+var copy4 = (value) => structuredClone(value);
 var stable2 = (value) => value && typeof value === "object" ? Array.isArray(value) ? value.map(stable2) : Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable2(value[key])])) : value;
 var same4 = (a, b) => JSON.stringify(stable2(a)) === JSON.stringify(stable2(b));
-var check2 = (ok, code, message) => {
+var check3 = (ok, code, message) => {
   if (!ok) throw new HostAdapterError(code, message);
 };
 var KEY2 = "tisyaTableLedger";
 function createWorldbookTableStorage({ transport, bookId, owner, initialState }) {
-  check2(["readFresh", "save", "createEntry"].every((key) => typeof transport?.[key] === "function"), "HOST_DEPENDENCY", "Worldbook transport is required");
-  check2(typeof bookId === "string" && bookId.length > 0 && Number.isSafeInteger(initialState?.revision) && initialState.revision === 0, "LEDGER_INITIAL_STATE", "A book ID and revision-zero initial ledger are required");
-  check2(owner && Object.keys(owner).length === 2 && ["chatId", "branchId"].every((key) => typeof owner[key] === "string" && owner[key]), "LEDGER_OWNER", "Exact chatId and branchId are required for the table ledger");
-  const expectedOwner = copy3(owner);
-  const initial = copy3(initialState);
+  check3(["readFresh", "save", "createEntry"].every((key) => typeof transport?.[key] === "function"), "HOST_DEPENDENCY", "Worldbook transport is required");
+  check3(typeof bookId === "string" && bookId.length > 0 && Number.isSafeInteger(initialState?.revision) && initialState.revision === 0, "LEDGER_INITIAL_STATE", "A book ID and revision-zero initial ledger are required");
+  check3(owner && Object.keys(owner).length === 2 && ["chatId", "branchId"].every((key) => typeof owner[key] === "string" && owner[key]), "LEDGER_OWNER", "Exact chatId and branchId are required for the table ledger");
+  const expectedOwner = copy4(owner);
+  const initial = copy4(initialState);
   let observed, tail = Promise.resolve();
   const serial2 = (action) => {
     const result = tail.then(action);
@@ -2688,92 +2770,50 @@ function createWorldbookTableStorage({ transport, bookId, owner, initialState })
   };
   function find(data) {
     const entries2 = Object.values(data?.entries ?? {}).filter((entry) => entry?.extensions?.[KEY2]?.schema === "tisya.ledger-storage/1");
-    check2(entries2.length <= 1, "DUPLICATE_LEDGER", "Worldbook B has multiple ledger entries");
+    check3(entries2.length <= 1, "DUPLICATE_LEDGER", "Worldbook B has multiple ledger entries");
     return entries2[0] ?? null;
   }
   function decode2(entry) {
-    if (!entry) return copy3(initial);
-    check2(same4(entry.extensions[KEY2].owner, expectedOwner), "LEDGER_OWNER", "Worldbook B belongs to another chat or branch");
-    check2(entry.disable === true && entry.constant === false && entry.key?.length === 0 && entry.keysecondary?.length === 0 && entry.probability === 0, "LEDGER_ACTIVATION_RISK", "Private table ledger activation flags changed");
+    if (!entry) return copy4(initial);
+    check3(same4(entry.extensions[KEY2].owner, expectedOwner), "LEDGER_OWNER", "Worldbook B belongs to another chat or branch");
+    check3(entry.disable === true && entry.constant === false && entry.key?.length === 0 && entry.keysecondary?.length === 0 && entry.probability === 0, "LEDGER_ACTIVATION_RISK", "Private table ledger activation flags changed");
     let value;
     try {
       value = JSON.parse(entry.content);
     } catch {
       throw new HostAdapterError("LEDGER_FORMAT", "Table ledger content is not JSON");
     }
-    check2(Number.isSafeInteger(value?.revision) && value.revision === entry.extensions[KEY2].revision, "LEDGER_REVISION", "Table ledger revision metadata differs");
+    check3(Number.isSafeInteger(value?.revision) && value.revision === entry.extensions[KEY2].revision, "LEDGER_REVISION", "Table ledger revision metadata differs");
     return value;
   }
   return Object.freeze({
     capabilities: Object.freeze({ managedSingleWriter: true, conditionalWrites: false, consistencyScope: "single-controller", crossWindowAtomicity: false }),
     read: () => serial2(async () => {
       const state = decode2(find(await transport.readFresh(bookId)));
-      observed = copy3(state);
+      observed = copy4(state);
       return state;
     }),
     compareAndWrite: (expectedRevision, next) => serial2(async () => {
       const data = await transport.readFresh(bookId) ?? { entries: {} }, wire = find(data), current = decode2(wire);
-      check2(current.revision === expectedRevision && next?.revision === expectedRevision + 1, "LEDGER_CONFLICT", "Table ledger revision changed");
-      check2(observed && same4(current, observed), "LEDGER_EXTERNAL_CHANGE", "Table ledger changed after read");
+      check3(current.revision === expectedRevision && next?.revision === expectedRevision + 1, "LEDGER_CONFLICT", "Table ledger revision changed");
+      check3(observed && same4(current, observed), "LEDGER_EXTERNAL_CHANGE", "Table ledger changed after read");
       const target = wire ?? transport.createEntry(bookId, data);
-      check2(target && Number.isInteger(target.uid), "WORLD_UID", "Host did not allocate a ledger UID");
+      check3(target && Number.isInteger(target.uid), "WORLD_UID", "Host did not allocate a ledger UID");
       Object.assign(target, { content: JSON.stringify(next), comment: "Tisya W24 private ledger", disable: true, constant: false, vectorized: false, key: [], keysecondary: [], probability: 0, useProbability: true, excludeRecursion: true, preventRecursion: true });
       target.extensions = { ...target.extensions ?? {}, [KEY2]: { schema: "tisya.ledger-storage/1", owner: expectedOwner, revision: next.revision } };
       await transport.save(bookId, data);
       const actual = decode2(find(await transport.readFresh(bookId)));
-      check2(same4(actual, next), "LEDGER_READBACK", "Table ledger readback differs from write");
-      observed = copy3(actual);
+      check3(same4(actual, next), "LEDGER_READBACK", "Table ledger readback differs from write");
+      observed = copy4(actual);
       return { revision: actual.revision };
     })
   });
 }
 
-// v3/runtime-source/host/json-value.mjs
-function sameJsonValue(left, right) {
-  const leftPath = /* @__PURE__ */ new Set(), rightPath = /* @__PURE__ */ new Set();
-  function compare(a, b) {
-    if (a === null || b === null) return a === b;
-    if (typeof a !== typeof b) return false;
-    if (typeof a === "string" || typeof a === "boolean") return a === b;
-    if (typeof a === "number") return Number.isFinite(a) && Number.isFinite(b) && a === b;
-    if (typeof a !== "object") return false;
-    if (leftPath.has(a) || rightPath.has(b)) return false;
-    const arrays = Array.isArray(a);
-    if (arrays !== Array.isArray(b)) return false;
-    if (!arrays) {
-      const plain2 = (value) => {
-        const proto = Object.getPrototypeOf(value);
-        return proto === null || Object.getPrototypeOf(proto) === null;
-      };
-      if (!plain2(a) || !plain2(b)) return false;
-    }
-    const fieldsA = Object.getOwnPropertyDescriptors(a), fieldsB = Object.getOwnPropertyDescriptors(b);
-    const keysA = Reflect.ownKeys(fieldsA), keysB = Reflect.ownKeys(fieldsB);
-    if (keysA.length !== keysB.length || keysA.some((key) => typeof key !== "string" || !Object.hasOwn(fieldsB, key))) return false;
-    if (arrays && (fieldsA.length.value !== fieldsB.length.value || keysA.length !== fieldsA.length.value + 1)) return false;
-    leftPath.add(a);
-    rightPath.add(b);
-    try {
-      return keysA.every((key) => {
-        const fieldA = fieldsA[key], fieldB = fieldsB[key];
-        if (!Object.hasOwn(fieldA, "value") || !Object.hasOwn(fieldB, "value")) return false;
-        if (arrays && key === "length") return true;
-        if (!fieldA.enumerable || !fieldB.enumerable) return false;
-        if (arrays && (!/^(0|[1-9]\d*)$/.test(key) || Number(key) >= fieldsA.length.value)) return false;
-        return compare(fieldA.value, fieldB.value);
-      });
-    } finally {
-      leftPath.delete(a);
-      rightPath.delete(b);
-    }
-  }
-  return compare(left, right);
-}
-
 // v3/runtime-source/host/floor-identities.mjs
 var IDENTITY_NAMESPACE = "tisya_w24";
 var MESSAGE_MARKER = "tisya_w24_floor";
-var copy4 = (value) => value == null ? value : structuredClone(value);
+var copy5 = (value) => value == null ? value : structuredClone(value);
 var fail4 = (code, message) => {
   throw new HostAdapterError(code, message);
 };
@@ -2816,11 +2856,11 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
     const stableId = await getStableChatId();
     if (typeof stableId !== "string" || stableId.length === 0) fail4("CHAT_IDENTITY", "Native stable chat ID is unavailable");
     await assertActive(ctx, stableId);
-    const previousState = copy4(ctx.chatMetadata[IDENTITY_NAMESPACE]);
-    const previousMarkers = ctx.chat.map((message) => [message, copy4(message[MESSAGE_MARKER])]);
+    const previousState = copy5(ctx.chatMetadata[IDENTITY_NAMESPACE]);
+    const previousMarkers = ctx.chat.map((message) => [message, copy5(message[MESSAGE_MARKER])]);
     const old = previousState?.schema === "tisya.floor-identities/1" ? previousState : null;
     const forked = Boolean(old && old.branchId !== stableId);
-    const state = old && !forked ? copy4(old) : {
+    const state = old && !forked ? copy5(old) : {
       schema: "tisya.floor-identities/1",
       chatId: old?.chatId ?? stableId,
       branchId: stableId,
@@ -2856,7 +2896,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
   return Object.freeze({
     sync: () => serial2(async () => {
       const { state } = await capture();
-      return copy4(state);
+      return copy5(state);
     }),
     resolve: (floor) => serial2(async () => {
       const { state } = await capture();
@@ -2867,7 +2907,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
       if (typeof requestId !== "string" || !requestId || typeof userRequest !== "string" || !userRequest.trim() || !Number.isInteger(candidateRevision) || candidateRevision < 1) fail4("REROLL_REQUEST", "Reroll requires requestId, instruction and positive candidate revision");
       const { ctx, state } = await capture(), identity2 = identityAt(state, floor);
       if (state.rows[identity2.messageId].role !== "assistant") fail4("REROLL_TARGET", "Advanced reroll must target an assistant floor");
-      const previousState = copy4(state), known = state.feedback[requestId];
+      const previousState = copy5(state), known = state.feedback[requestId];
       const payload = { targetMessageId: identity2.messageId, replacedRevision: candidateRevision, instruction: userRequest };
       if (known && Object.keys(payload).some((key) => payload[key] !== known[key])) fail4("FEEDBACK_ID_REUSE", "Request ID was already used for different feedback");
       const feedback = known ?? { id: uuid2(), ...payload };
@@ -2875,42 +2915,42 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
         state.feedback[requestId] = feedback;
         await persist(ctx, state, previousState, []);
       }
-      return { identity: identity2, advancedReroll: copy4(feedback) };
+      return { identity: identity2, advancedReroll: copy5(feedback) };
     }),
     recordInvalidation: (change) => serial2(async () => {
-      const { ctx, state } = await capture(), previousState = copy4(state);
+      const { ctx, state } = await capture(), previousState = copy5(state);
       if (change.identity && (change.identity.chatId !== state.chatId || change.identity.branchId !== state.branchId)) fail4("CHAT_CHANGED", "Invalidation belongs to another branch");
       if (state.invalidations.some((event2) => event2.status !== "applied")) fail4("INVALIDATION_OUTCOME_UNKNOWN", "A prior invalidation has no durable completion receipt; verify its effects before continuing");
       if (change.feedbackId) {
         const existing = state.invalidations.find((event2) => event2.feedbackId === change.feedbackId && event2.reason === change.reason);
         if (existing) {
           if (existing.status !== "applied") fail4("INVALIDATION_OUTCOME_UNKNOWN", "An earlier invalidation has no durable completion receipt; verify its effects before recovery");
-          return copy4(existing);
+          return copy5(existing);
         }
       }
-      const event = { id: `invalidation:${uuid2()}`, ...copy4(change), branchId: state.branchId, status: "pending" };
+      const event = { id: `invalidation:${uuid2()}`, ...copy5(change), branchId: state.branchId, status: "pending" };
       state.invalidations.push(event);
       await persist(ctx, state, previousState, []);
       return event;
     }),
     completeInvalidation: ({ id, receipt }) => serial2(async () => {
-      const { ctx, state } = await capture(), previousState = copy4(state);
+      const { ctx, state } = await capture(), previousState = copy5(state);
       const event = state.invalidations.find((item) => item.id === id);
       if (!event || event.status !== "pending") fail4("INVALIDATION_STATE", "No pending invalidation matches the completion");
       if (!receipt || !Array.isArray(receipt.activeSourceKeys) || !Array.isArray(receipt.invalidatedSourceKeys)) fail4("INVALIDATION_RECEIPT", "Source-chain invalidation receipt is incomplete");
-      event.receipt = copy4(receipt);
+      event.receipt = copy5(receipt);
       event.status = "applied";
       await persist(ctx, state, previousState, []);
-      return copy4(event.receipt);
+      return copy5(event.receipt);
     }),
     /** Explicit native regenerate handoff. Rebind only the intended replacement, never an unrelated append. */
     bindReplacement: ({ identity: identity2, floor }) => serial2(async () => {
       const ctx = getContext(), stableId = await getStableChatId();
-      const state = copy4(ctx.chatMetadata?.[IDENTITY_NAMESPACE]);
+      const state = copy5(ctx.chatMetadata?.[IDENTITY_NAMESPACE]);
       if (!state || identity2.branchId !== stableId || identity2.chatId !== state.chatId || state.branchId !== stableId) fail4("CHAT_CHANGED", "Replacement belongs to another branch");
       if (!ctx.chat[floor] || ctx.chat[floor].is_user || ctx.chat[floor].is_system || !state.rows[identity2.messageId] && !state.tombstones[identity2.messageId]) fail4("REPLACEMENT_IDENTITY", "No matching assistant floor to replace");
       if (ctx.chat.some((message, index) => index !== floor && message[MESSAGE_MARKER]?.id === identity2.messageId)) fail4("REPLACEMENT_IDENTITY", "Logical floor remains elsewhere");
-      const previousState = copy4(state), previousMarkers = [[ctx.chat[floor], copy4(ctx.chat[floor][MESSAGE_MARKER])]];
+      const previousState = copy5(state), previousMarkers = [[ctx.chat[floor], copy5(ctx.chat[floor][MESSAGE_MARKER])]];
       const displaced = ctx.chat[floor][MESSAGE_MARKER]?.id;
       if (displaced && displaced !== identity2.messageId && state.rows[displaced]) {
         state.tombstones[displaced] = { ...state.rows[displaced], deleted: true };
@@ -2921,7 +2961,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
       state.rows[identity2.messageId] = { id: identity2.messageId, floor, role: "assistant" };
       state.order[floor] = identity2.messageId;
       await persist(ctx, state, previousState, previousMarkers);
-      return copy4(identity2);
+      return copy5(identity2);
     })
   });
 }
@@ -2999,18 +3039,18 @@ function createHostController({ identities, run, invalidate, finalize }) {
 }
 
 // v3/runtime-source/host/message-bridge.mjs
-var copy5 = (value) => value == null ? value : structuredClone(value);
-var check3 = (ok, code, message) => {
+var copy6 = (value) => value == null ? value : structuredClone(value);
+var check4 = (ok, code, message) => {
   if (!ok) throw new HostAdapterError(code, message);
 };
 function extractNumberedBody(fullMessage) {
-  check3(typeof fullMessage === "string", "REPLY_FORMAT", "A complete reply string is required");
+  check4(typeof fullMessage === "string", "REPLY_FORMAT", "A complete reply string is required");
   const matches = [...fullMessage.matchAll(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/gi)];
-  check3(matches.length === 1, "REPLY_FORMAT", "Reply must contain exactly one body block");
+  check4(matches.length === 1, "REPLY_FORMAT", "Reply must contain exactly one body block");
   return matches[0][1];
 }
 function createMessageOriginalBridge({ originals, identities, getContext, nativeRuntime = null, digest: digest2 = sha256Utf16 }) {
-  check3(originals && identities && typeof getContext === "function", "HOST_DEPENDENCY", "Original store, identity manager and context are required");
+  check4(originals && identities && typeof getContext === "function", "HOST_DEPENDENCY", "Original store, identity manager and context are required");
   async function existing(identity2) {
     const entryId = await originals.entryIdFor(identity2);
     try {
@@ -3022,12 +3062,12 @@ function createMessageOriginalBridge({ originals, identities, getContext, native
   }
   async function saveFloor({ floor, operationId, sourceRevision, historical = false }) {
     const identity2 = await identities.resolve(floor), context = getContext(), message = context.chat[floor];
-    check3(message && !message.is_user && !message.is_system, "SOURCE_ROLE", "Only assistant narrative bodies are archived");
+    check4(message && !message.is_user && !message.is_system, "SOURCE_ROLE", "Only assistant narrative bodies are archived");
     const fullMessage = message.mes, swipeId = message.swipe_id ?? 0;
     const content = historical ? fullMessage : extractNumberedBody(fullMessage), nativeOwned = hasNativeUpdate(fullMessage);
     const previous = await existing(identity2);
     const receipt = await originals[historical ? "putHistory" : "put"]({ identity: identity2, content, operationId, sourceRevision, expectedVersion: previous?.version ?? 0, displayFloor: floor });
-    check3(getContext().chat === context.chat && context.chat[floor] === message && message.mes === fullMessage && (message.swipe_id ?? 0) === swipeId, "SOURCE_CHANGED", "Reply changed while original was being saved");
+    check4(getContext().chat === context.chat && context.chat[floor] === message && message.mes === fullMessage && (message.swipe_id ?? 0) === swipeId, "SOURCE_CHANGED", "Reply changed while original was being saved");
     return { ...receipt, nativeOwned, candidate: { fullMessageHash: await digest2(fullMessage), swipeId } };
   }
   async function archiveSource({ floor, sourceRevision, operationId, sourceKey, enableNativeBridge = true, historical = false }) {
@@ -3046,40 +3086,40 @@ function createMessageOriginalBridge({ originals, identities, getContext, native
     if (nativeRuntime && !historical) {
       if (saved.nativeOwned) {
         const before = nativeRuntime.getMvuData({ type: "message", message_id: floor });
-        check3(before && typeof before.stat_data === "object", "MVU_BASELINE", "Original MVU owner has not supplied this floor snapshot");
-        item.nativeState = { before: copy5(before), index: floor, snapshotIndex: floor };
+        check4(before && typeof before.stat_data === "object", "MVU_BASELINE", "Original MVU owner has not supplied this floor snapshot");
+        item.nativeState = { before: copy6(before), index: floor, snapshotIndex: floor };
       } else {
         const baseline = bridgeInput(context, nativeRuntime, floor);
-        item.nativeState = { before: copy5(baseline.data), index: baseline.index, snapshotIndex: baseline.snapshotIndex };
+        item.nativeState = { before: copy6(baseline.data), index: baseline.index, snapshotIndex: baseline.snapshotIndex };
       }
     }
     return item;
   }
   async function sourceGuard(input) {
-    check3(input && Array.isArray(input.archiveSources), "SOURCE_FREEZE", "Archive source list is required");
+    check4(input && Array.isArray(input.archiveSources), "SOURCE_FREEZE", "Archive source list is required");
     const branch = await identities.asyncNativeStableId();
-    if (input.originalScope) check3(input.originalScope.branchId === branch, "CHAT_CHANGED", "Archive request belongs to another branch");
+    if (input.originalScope) check4(input.originalScope.branchId === branch, "CHAT_CHANGED", "Archive request belongs to another branch");
     for (const source of input.archiveSources) {
       const freeze = source.sourceFreeze;
-      check3(freeze?.identity && freeze.identity.branchId === branch, "SOURCE_FREEZE", "Source has no matching frozen branch identity");
+      check4(freeze?.identity && freeze.identity.branchId === branch, "SOURCE_FREEZE", "Source has no matching frozen branch identity");
       const context = getContext();
       const floor = context.chat.findIndex((message2) => message2[MESSAGE_MARKER]?.branchId === branch && message2[MESSAGE_MARKER]?.id === freeze.identity.messageId);
-      check3(floor >= 0, "SOURCE_CHANGED", "Frozen source floor was deleted");
+      check4(floor >= 0, "SOURCE_CHANGED", "Frozen source floor was deleted");
       const message = context.chat[floor];
-      check3((message.swipe_id ?? 0) === freeze.swipeId && await digest2(message.mes) === freeze.fullMessageHash, "SOURCE_CHANGED", "Frozen source candidate changed");
-      check3(source.archiveSource.messageId === freeze.identity.messageId && source.archiveSource.floor === floor, "SOURCE_CHANGED", "Frozen source floor position changed");
-      check3(source.nativeBridge?.nativeOwned === hasNativeUpdate(message.mes), "MVU_OWNERSHIP", "Full-message native ownership changed");
+      check4((message.swipe_id ?? 0) === freeze.swipeId && await digest2(message.mes) === freeze.fullMessageHash, "SOURCE_CHANGED", "Frozen source candidate changed");
+      check4(source.archiveSource.messageId === freeze.identity.messageId && source.archiveSource.floor === floor, "SOURCE_CHANGED", "Frozen source floor position changed");
+      check4(source.nativeBridge?.nativeOwned === hasNativeUpdate(message.mes), "MVU_OWNERSHIP", "Full-message native ownership changed");
       const actual = await originals.read({ entryId: source.originalReference.entryId, scope: input.originalScope, purpose: "archive-task", reference: source.originalReference });
-      check3(actual.content === source.archiveSource.text, "SOURCE_CHANGED", "Archive task text differs from worldbook A");
+      check4(actual.content === source.archiveSource.text, "SOURCE_CHANGED", "Archive task text differs from worldbook A");
     }
   }
   function finalizer({ resolveFloor }) {
-    check3(typeof resolveFloor === "function", "HOST_DEPENDENCY", "Output floor resolver is required");
+    check4(typeof resolveFloor === "function", "HOST_DEPENDENCY", "Output floor resolver is required");
     return async ({ input, result }) => {
       const floor = await resolveFloor({ input, result });
-      check3(Number.isInteger(floor) && floor >= 0, "OUTPUT_FLOOR", "Committed output floor is unavailable");
+      check4(Number.isInteger(floor) && floor >= 0, "OUTPUT_FLOOR", "Committed output floor is unavailable");
       const text3 = typeof result.output === "string" ? result.output : result.output?.text;
-      check3(typeof text3 === "string" && getContext().chat[floor]?.mes === text3, "OUTPUT_READBACK", "Committed host message differs from writer output");
+      check4(typeof text3 === "string" && getContext().chat[floor]?.mes === text3, "OUTPUT_READBACK", "Committed host message differs from writer output");
       return saveFloor({ floor, operationId: `output:${input.requestKey}`, sourceRevision: `candidate:${input.requestKey}` });
     };
   }
@@ -3088,22 +3128,22 @@ function createMessageOriginalBridge({ originals, identities, getContext, native
     return async (output, snapshot2, options = {}) => {
       if (options.recovery === true) {
         const receipt = options.receipt;
-        check3(receipt?.entryId && receipt.identity, "OUTPUT_RECEIPT", "Original output receipt is required for recovery");
+        check4(receipt?.entryId && receipt.identity, "OUTPUT_RECEIPT", "Original output receipt is required for recovery");
         const branchId = await identities.asyncNativeStableId();
-        check3(receipt.identity.branchId === branchId, "CHAT_CHANGED", "Output receipt belongs to another branch");
+        check4(receipt.identity.branchId === branchId, "CHAT_CHANGED", "Output receipt belongs to another branch");
         const current = await originals.metadata({ entryId: receipt.entryId, scope: { chatId: receipt.identity.chatId, branchId } });
-        check3(
+        check4(
           ["entryId", "version", "revision", "hash"].every((key) => current[key] === receipt[key]) && current.deleted === false,
           "OUTPUT_RECEIPT_CHANGED",
           "Saved output original differs from its receipt"
         );
         const message = getContext().chat.find((message2) => message2[MESSAGE_MARKER]?.branchId === branchId && message2[MESSAGE_MARKER]?.id === receipt.identity.messageId);
-        check3(
+        check4(
           message && receipt.candidate && (message.swipe_id ?? 0) === receipt.candidate.swipeId && await digest2(message.mes) === receipt.candidate.fullMessageHash && await digest2(extractNumberedBody(message.mes)) === receipt.hash,
           "OUTPUT_RECEIPT_CHANGED",
           "Current host candidate differs from the accepted output"
         );
-        return { ...copy5(receipt), ...current, nativeOwned: receipt.nativeOwned === true, candidate: copy5(receipt.candidate) };
+        return { ...copy6(receipt), ...current, nativeOwned: receipt.nativeOwned === true, candidate: copy6(receipt.candidate) };
       }
       return finalize({ input: snapshot2, result: { output } });
     };

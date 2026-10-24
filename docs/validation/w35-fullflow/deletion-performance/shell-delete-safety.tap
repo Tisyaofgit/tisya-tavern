@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: rollback marker-save failure prevents deletion and generation
+ok 1 - rollback marker-save failure prevents deletion and generation
+  ---
+  duration_ms: 2019.831119
+  type: 'test'
+  ...
+# Subtest: rollback final-save failure reports completed deletions and prevents generation
+ok 2 - rollback final-save failure reports completed deletions and prevents generation
+  ---
+  duration_ms: 2505.608871
+  type: 'test'
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+ok 3 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 1846.886627
+  type: 'test'
+  ...
+# Subtest: direct candidate jump edits the selected native text and deletes only selected version
+ok 4 - direct candidate jump edits the selected native text and deletes only selected version
+  ---
+  duration_ms: 2454.006917
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9364.117643

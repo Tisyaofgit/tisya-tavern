@@ -1,0 +1,122 @@
+TAP version 13
+# Subtest: actual initialization, opening and history requests deliver visible chunks before completion
+ok 1 - actual initialization, opening and history requests deliver visible chunks before completion
+  ---
+  duration_ms: 172.248419
+  type: 'test'
+  ...
+# Subtest: actual task cancellation during a stalled stream cancels its reader with no terminal success or retry
+ok 2 - actual task cancellation during a stalled stream cancels its reader with no terminal success or retry
+  ---
+  duration_ms: 51.9132
+  type: 'test'
+  ...
+# Subtest: servers returning buffered JSON report buffering, and callback-free callers retain stream=false
+ok 3 - servers returning buffered JSON report buffering, and callback-free callers retain stream=false
+  ---
+  duration_ms: 98.1267
+  type: 'test'
+  ...
+# Subtest: task stream follows the current host native Gemini, Claude and Cohere response dialects
+ok 4 - task stream follows the current host native Gemini, Claude and Cohere response dialects
+  ---
+  duration_ms: 224.830447
+  type: 'test'
+  ...
+# Subtest: selected universal transport remains authoritative and native task streams are not normalized twice
+ok 5 - selected universal transport remains authoritative and native task streams are not normalized twice
+  ---
+  duration_ms: 648.520793
+  type: 'test'
+  ...
+# Subtest: native incomplete output and HTTP failure never become a completed task or trigger a retry
+ok 6 - native incomplete output and HTTP failure never become a completed task or trigger a retry
+  ---
+  duration_ms: 214.339789
+  type: 'test'
+  ...
+# Subtest: native parser cancellation propagates upstream while waiting for later Claude content
+ok 7 - native parser cancellation propagates upstream while waiting for later Claude content
+  ---
+  duration_ms: 38.858152
+  type: 'test'
+  ...
+# Subtest: design status starts synchronously, reports received output without percent, and retains only a complete review draft
+ok 8 - design status starts synchronously, reports received output without percent, and retains only a complete review draft
+  ---
+  duration_ms: 2.996291
+  type: 'test'
+  ...
+# Subtest: task state rejects concurrent work, preserves failed save draft, and clears it only after saved receipt
+ok 9 - task state rejects concurrent work, preserves failed save draft, and clears it only after saved receipt
+  ---
+  duration_ms: 0.922312
+  type: 'test'
+  ...
+# Subtest: cancel, changed binding and disposed callbacks never publish a stale draft to a new owner
+ok 10 - cancel, changed binding and disposed callbacks never publish a stale draft to a new owner
+  ---
+  duration_ms: 0.496198
+  type: 'test'
+  ...
+# Subtest: design stream notifications never reread worldbooks or archive state per chunk
+ok 11 - design stream notifications never reread worldbooks or archive state per chunk
+  ---
+  duration_ms: 4.296243
+  type: 'test'
+  ...
+# (node:28) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual application forwards streaming events, retains review result, and reports successful save to every consumer
+ok 12 - actual application forwards streaming events, retains review result, and reports successful save to every consumer
+  ---
+  duration_ms: 1010.24601
+  type: 'test'
+  ...
+# Subtest: actual application cancellation aborts its model signal and never exposes streamed text as a usable draft
+ok 13 - actual application cancellation aborts its model signal and never exposes streamed text as a usable draft
+  ---
+  duration_ms: 516.919729
+  type: 'test'
+  ...
+# (node:44) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual application streams task state before completion and keeps one initialization alive while the workbench is suspended
+ok 14 - actual application streams task state before completion and keeps one initialization alive while the workbench is suspended
+  ---
+  duration_ms: 954.381499
+  type: 'test'
+  ...
+# Subtest: a new workbench attached to the still-running application observes and recovers the same completed draft
+ok 15 - a new workbench attached to the still-running application observes and recovers the same completed draft
+  ---
+  duration_ms: 606.454493
+  type: 'test'
+  ...
+# Subtest: pet cancellation aborts the real service signal, keeps typed inputs, and ignores late streamed fragments
+ok 16 - pet cancellation aborts the real service signal, keeps typed inputs, and ignores late streamed fragments
+  ---
+  duration_ms: 593.209188
+  type: 'test'
+  ...
+# Subtest: stream failure stays visible in the workbench and pet without saving or losing the form
+ok 17 - stream failure stays visible in the workbench and pet without saving or losing the form
+  ---
+  duration_ms: 574.26839
+  type: 'test'
+  ...
+# Subtest: native history progress counts only real assistant floors and advances after each actual result
+ok 18 - native history progress counts only real assistant floors and advances after each actual result
+  ---
+  duration_ms: 611.409791
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7413.242447

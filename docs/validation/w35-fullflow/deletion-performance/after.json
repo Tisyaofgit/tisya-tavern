@@ -1,0 +1,60 @@
+{
+  "schema": "tisya.delete-path-measurement/1",
+  "sourceRoot": "/workspace/scratch/289ae625ecae/tisya-w33",
+  "simulatedIoDelayMs": 5,
+  "boundary": "Production source chain/controller/identity/original-store/adapter; simulated transport and chat persistence. No real device timings.",
+  "results": [
+    {
+      "assistantFloors": 3,
+      "refresh": {
+        "elapsedMs": 21,
+        "worldRead": 1,
+        "worldSave": 0,
+        "stableId": 2,
+        "chatSave": 0,
+        "metadataRead": 0
+      },
+      "deletion": {
+        "elapsedMs": 208,
+        "beforeNativeRemovalMs": 22,
+        "afterNativeRemovalMs": 186,
+        "worldRead": 7,
+        "worldSave": 1,
+        "stableId": 20,
+        "chatSave": 5,
+        "metadataRead": 5
+      },
+      "verified": {
+        "deletedOriginalTombstone": true,
+        "invalidationApplied": true,
+        "retainedSources": true
+      }
+    },
+    {
+      "assistantFloors": 24,
+      "refresh": {
+        "elapsedMs": 28,
+        "worldRead": 1,
+        "worldSave": 0,
+        "stableId": 2,
+        "chatSave": 0,
+        "metadataRead": 0
+      },
+      "deletion": {
+        "elapsedMs": 223,
+        "beforeNativeRemovalMs": 22,
+        "afterNativeRemovalMs": 202,
+        "worldRead": 7,
+        "worldSave": 1,
+        "stableId": 20,
+        "chatSave": 5,
+        "metadataRead": 5
+      },
+      "verified": {
+        "deletedOriginalTombstone": true,
+        "invalidationApplied": true,
+        "retainedSources": true
+      }
+    }
+  ]
+}

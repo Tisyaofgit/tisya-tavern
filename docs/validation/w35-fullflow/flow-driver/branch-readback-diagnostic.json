@@ -1,0 +1,42 @@
+{
+  "captures": [
+    {
+      "semanticSame": true,
+      "serializedSame": false,
+      "actualKeys": [
+        "format",
+        "revision",
+        "baseView",
+        "commits",
+        "requests",
+        "nativeIntents",
+        "preferenceDrafts",
+        "preferenceRows",
+        "preferenceHistory",
+        "preferenceBankReceipts",
+        "preferenceBankReference"
+      ],
+      "expectedKeys": [
+        "format",
+        "revision",
+        "baseView",
+        "commits",
+        "requests",
+        "nativeIntents",
+        "preferenceDrafts",
+        "preferenceHistory",
+        "preferenceBankReceipts",
+        "preferenceBankReference",
+        "preferenceRows"
+      ],
+      "differingTopLevel": []
+    }
+  ],
+  "requests": 0,
+  "errors": [
+    {
+      "message": "Store write was not confirmed",
+      "stack": "Error: Store write was not confirmed\n    at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:810:18)\n    at write (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2220:5)\n    at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2251:17)\n    at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20)"
+    }
+  ]
+}

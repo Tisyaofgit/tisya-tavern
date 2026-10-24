@@ -1,0 +1,84 @@
+TAP version 13
+# Subtest: initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+not ok 1 - initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+  ---
+  duration_ms: 14.042134
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:13:1'
+  failureType: 'testCodeFailure'
+  error: '未登记字段：character.职责'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/schema.js:6:56)
+    align (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:13:153)
+    reconcileProposal (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:40:380)
+    prepareCommit (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/ledger.js:55:19)
+    Object.generateDesign (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:78:367)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:13:155)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: initialization accepts an explicit linked subtable and retains its registry through a definition book
+not ok 2 - initialization accepts an explicit linked subtable and retains its registry through a definition book
+  ---
+  duration_ms: 13.270988
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: '本次提炼使用既有 V3 字段'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:9:35)
+    unpackDesign (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:67:186)
+    Object.generateDesign (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:77:463)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:14:622)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+not ok 3 - ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+  ---
+  duration_ms: 11.114024
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: '未登记字段：character.职责'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/schema.js:6:56)
+    align (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:13:153)
+    reconcileProposal (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:40:380)
+    prepareCommit (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/ledger.js:55:19)
+    Object.generateDesign (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:78:367)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:15:140)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: uncertain inference, protected schemas, and schema edits after review are refused without writing
+not ok 4 - uncertain inference, protected schemas, and schema edits after review are refused without writing
+  ---
+  duration_ms: 22.871652
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: '未登记字段：character.职责'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/schema.js:6:56)
+    align (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:13:153)
+    reconcileProposal (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/reconcile.js:40:380)
+    prepareCommit (file:///workspace/scratch/289ae625ecae/tisya-w33/tables/ledger.js:55:19)
+    Object.generateDesign (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/archive-service.mjs:78:367)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/w35-extension-schema.test.mjs:16:523)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 160.503006

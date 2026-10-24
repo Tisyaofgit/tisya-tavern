@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline
+ok 1 - automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline
+  ---
+  duration_ms: 41.182018
+  type: 'test'
+  ...
+# Subtest: initialization holds separate initial-state candidates visibly and never silently writes them during definition save
+ok 2 - initialization holds separate initial-state candidates visibly and never silently writes them during definition save
+  ---
+  duration_ms: 21.927313
+  type: 'test'
+  ...
+# Subtest: native source changes before generation, after response, and before confirmation fail without fallback or writes
+ok 3 - native source changes before generation, after response, and before confirmation fail without fallback or writes
+  ---
+  duration_ms: 20.603507
+  type: 'test'
+  ...
+# Subtest: a read failure cannot turn automatic initialization into manual or incomplete success
+ok 4 - a read failure cannot turn automatic initialization into manual or incomplete success
+  ---
+  duration_ms: 24.594743
+  type: 'test'
+  ...
+# Subtest: source ownership, disabled state, and cancellation are checked at actual read boundaries
+ok 5 - source ownership, disabled state, and cancellation are checked at actual read boundaries
+  ---
+  duration_ms: 5.910153
+  type: 'test'
+  ...
+# Subtest: archive prefixes classify genuine material; only a verified generated projection loses initialization authority
+ok 6 - archive prefixes classify genuine material; only a verified generated projection loses initialization authority
+  ---
+  duration_ms: 2.456183
+  type: 'test'
+  ...
+# Subtest: native initialization retains a source fingerprint and exact supplement for the separate opening stage
+ok 7 - native initialization retains a source fingerprint and exact supplement for the separate opening stage
+  ---
+  duration_ms: 17.283129
+  type: 'test'
+  ...
+# Subtest: saving a managed ledger in a linked book does not change the effective confirmed card definition
+ok 8 - saving a managed ledger in a linked book does not change the effective confirmed card definition
+  ---
+  duration_ms: 17.638851
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 251.428303

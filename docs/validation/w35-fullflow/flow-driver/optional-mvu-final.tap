@@ -1,0 +1,158 @@
+TAP version 13
+# Subtest: verified native rule text and hash provenance enter A once, separate from custom constraints
+not ok 1 - verified native rule text and hash provenance enter A once, separate from custom constraints
+  ---
+  duration_ms: 1.576455
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:7:1'
+  failureType: 'testCodeFailure'
+  error: 'Run with node --experimental-vm-modules'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createExtractedHostHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/native-fixtures/host-harness.mjs:12:35)
+    createInstallerHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer-harness.mjs:25:19)
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:9:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: editing verified native rules while A runs rejects the old result before B
+not ok 2 - editing verified native rules while A runs rejects the old result before B
+  ---
+  duration_ms: 0.187101
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:12:1'
+  failureType: 'testCodeFailure'
+  error: 'Run with node --experimental-vm-modules'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createExtractedHostHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/native-fixtures/host-harness.mjs:12:35)
+    createInstallerHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer-harness.mjs:25:19)
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:13:31)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: ordinary HTML card with a global MVU runtime reaches both A and B without probing native variables
+not ok 3 - ordinary HTML card with a global MVU runtime reaches both A and B without probing native variables
+  ---
+  duration_ms: 0.201532
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: 'Run with node --experimental-vm-modules'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createExtractedHostHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/native-fixtures/host-harness.mjs:12:35)
+    createInstallerHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer-harness.mjs:25:19)
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/native-rules.test.mjs:17:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields
+ok 4 - one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields
+  ---
+  duration_ms: 3.35963
+  type: 'test'
+  ...
+# Subtest: automatic MVU follows this chat active-swipe variables rather than a global runtime
+ok 5 - automatic MVU follows this chat active-swipe variables rather than a global runtime
+  ---
+  duration_ms: 0.520581
+  type: 'test'
+  ...
+# Subtest: world controls and the two distinct focus reference types are projected without guessing or overwriting
+ok 6 - world controls and the two distinct focus reference types are projected without guessing or overwriting
+  ---
+  duration_ms: 1.22612
+  type: 'test'
+  ...
+# Subtest: verified native rules come only from enabled current-card entries with exact source hashes
+ok 7 - verified native rules come only from enabled current-card entries with exact source hashes
+  ---
+  duration_ms: 7.954412
+  type: 'test'
+  ...
+# Subtest: preflight consumes actual controls and writer receives preference constraints in their proper home
+ok 8 - preflight consumes actual controls and writer receives preference constraints in their proper home
+  ---
+  duration_ms: 7.690908
+  type: 'test'
+  ...
+# Subtest: ordinary material APIs exclude every exact private marker while retaining ordinary disabled entries
+ok 9 - ordinary material APIs exclude every exact private marker while retaining ordinary disabled entries
+  ---
+  duration_ms: 4.787652
+  type: 'test'
+  ...
+# Subtest: automatic ordinary HTML card binds without native variables (global MVU false)
+ok 10 - automatic ordinary HTML card binds without native variables (global MVU false)
+  ---
+  duration_ms: 31.804
+  type: 'test'
+  ...
+# Subtest: automatic ordinary HTML card binds without native variables (global MVU true)
+ok 11 - automatic ordinary HTML card binds without native variables (global MVU true)
+  ---
+  duration_ms: 12.436036
+  type: 'test'
+  ...
+# Subtest: declared native MVU card clearly reports its missing dependency without creating an archive
+ok 12 - declared native MVU card clearly reports its missing dependency without creating an archive
+  ---
+  duration_ms: 5.573972
+  type: 'test'
+  ...
+# Subtest: native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+ok 13 - native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+  ---
+  duration_ms: 11.142856
+  type: 'test'
+  ...
+# Subtest: actual persona export path saves settings and chat lock with direct readback
+ok 14 - actual persona export path saves settings and chat lock with direct readback
+  ---
+  duration_ms: 16.86539
+  type: 'test'
+  ...
+# Subtest: native persona persistence failure leaves a recoverable book intent and original pointer
+ok 15 - native persona persistence failure leaves a recoverable book intent and original pointer
+  ---
+  duration_ms: 17.370959
+  type: 'test'
+  ...
+# Subtest: book host with no open chat lists personas without writing identity metadata
+ok 16 - book host with no open chat lists personas without writing identity metadata
+  ---
+  duration_ms: 2.201663
+  type: 'test'
+  ...
+# Subtest: real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+ok 17 - real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+  ---
+  duration_ms: 29.332663
+  type: 'test'
+  ...
+# Subtest: native draft callback saves current unsent text only in its original archive book
+ok 18 - native draft callback saves current unsent text only in its original archive book
+  ---
+  duration_ms: 13.020173
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 15
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 264.128377

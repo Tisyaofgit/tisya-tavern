@@ -1,0 +1,7 @@
+TRACE before more
+TRACE after more
+TRACE after dialog
+TRACE after deletion click
+TRACE after close
+TRACE before menu
+✖ pending history save allows menu dismissal and does not close a later panel (12002.44676ms)

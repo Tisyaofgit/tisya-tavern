@@ -1,0 +1,48 @@
+TAP version 13
+# (node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: concurrent session readers wait for the same initialization persistence before allowing another mutation
+ok 1 - concurrent session readers wait for the same initialization persistence before allowing another mutation
+  ---
+  duration_ms: 596.740015
+  type: 'test'
+  ...
+# Subtest: initialization failure reaches every waiting reader, releases busy, and a retry durably restores the source index
+not ok 2 - initialization failure reaches every waiting reader, releases busy, and a retry durably restores the source index
+  ---
+  duration_ms: 404.325727
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/initialization-concurrency.test.mjs:21:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    retry must not mistake an unsaved in-memory source index for a durable one
+    + actual - expected
+    
+    + undefined
+    - [
+    -   'user:floor:9fd29e38-4e64-4006-9624-8106306fbff5:fb123daa3bdee7186ff918b9cf374e9b87a7ab75e7b17dda8a10ab1394772281',
+    -   'original:original:532284c6395a33a5bd9326f611a6066ee6120154af95068c860f04fe205db844:1',
+    -   'user:floor:a9b9e983-0010-4ac6-8e44-ceb9681f6f4e:d6194ed9765c39981883143649593c75cc55421a1322185fc7b58facdfb44eec'
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'user:floor:9fd29e38-4e64-4006-9624-8106306fbff5:fb123daa3bdee7186ff918b9cf374e9b87a7ab75e7b17dda8a10ab1394772281'
+    1: 'original:original:532284c6395a33a5bd9326f611a6066ee6120154af95068c860f04fe205db844:1'
+    2: 'user:floor:a9b9e983-0010-4ac6-8e44-ceb9681f6f4e:d6194ed9765c39981883143649593c75cc55421a1322185fc7b58facdfb44eec'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/initialization-concurrency.test.mjs:32:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1206.164884

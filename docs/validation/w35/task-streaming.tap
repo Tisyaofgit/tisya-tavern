@@ -1,0 +1,550 @@
+TAP version 13
+# Subtest: native dialect detection follows host formats including normalized Responses
+ok 1 - native dialect detection follows host formats including normalized Responses
+  ---
+  duration_ms: 1.398277
+  type: 'test'
+  ...
+# Subtest: Claude native text projects exact body and preserves every original frame
+ok 2 - Claude native text projects exact body and preserves every original frame
+  ---
+  duration_ms: 13.300676
+  type: 'test'
+  ...
+# Subtest: Claude actual tool JSON and signatures remain in native sidecars with handoff projection
+ok 3 - Claude actual tool JSON and signatures remain in native sidecars with handoff projection
+  ---
+  duration_ms: 3.663294
+  type: 'test'
+  ...
+# Subtest: Claude rejects nonfinal stop max_tokens
+ok 4 - Claude rejects nonfinal stop max_tokens
+  ---
+  duration_ms: 1.265167
+  type: 'test'
+  ...
+# Subtest: Claude rejects nonfinal stop model_context_window_exceeded
+ok 5 - Claude rejects nonfinal stop model_context_window_exceeded
+  ---
+  duration_ms: 0.62047
+  type: 'test'
+  ...
+# Subtest: Claude rejects nonfinal stop refusal
+ok 6 - Claude rejects nonfinal stop refusal
+  ---
+  duration_ms: 5.94118
+  type: 'test'
+  ...
+# Subtest: Claude rejects nonfinal stop pause_turn
+ok 7 - Claude rejects nonfinal stop pause_turn
+  ---
+  duration_ms: 0.949324
+  type: 'test'
+  ...
+# Subtest: Claude rejects nonfinal stop unknown
+ok 8 - Claude rejects nonfinal stop unknown
+  ---
+  duration_ms: 0.604777
+  type: 'test'
+  ...
+# Subtest: Claude rejects missing, duplicate, out of order and postterminal frames
+ok 9 - Claude rejects missing, duplicate, out of order and postterminal frames
+  ---
+  duration_ms: 5.044104
+  type: 'test'
+  ...
+# Subtest: Claude malformed tool JSON is rejected before handoff
+ok 10 - Claude malformed tool JSON is rejected before handoff
+  ---
+  duration_ms: 0.61294
+  type: 'test'
+  ...
+# Subtest: Claude server search blocks remain native and never become executable client calls
+ok 11 - Claude server search blocks remain native and never become executable client calls
+  ---
+  duration_ms: 0.787691
+  type: 'test'
+  ...
+# Subtest: Claude citation deltas stay native and do not duplicate body
+ok 12 - Claude citation deltas stay native and do not duplicate body
+  ---
+  duration_ms: 0.666279
+  type: 'test'
+  ...
+# Subtest: Claude refuses unknown or malformed blocks and citations
+ok 13 - Claude refuses unknown or malformed blocks and citations
+  ---
+  duration_ms: 1.302724
+  type: 'test'
+  ...
+# Subtest: Cohere v2 text and citations retain original frames and exact body
+ok 14 - Cohere v2 text and citations retain original frames and exact body
+  ---
+  duration_ms: 1.822193
+  type: 'test'
+  ...
+# Subtest: Cohere v2 multiple real tools retain IDs and only project complete JSON
+ok 15 - Cohere v2 multiple real tools retain IDs and only project complete JSON
+  ---
+  duration_ms: 8.708385
+  type: 'test'
+  ...
+# Subtest: Cohere refuses truncated, missing, duplicate and postterminal messages
+ok 16 - Cohere refuses truncated, missing, duplicate and postterminal messages
+  ---
+  duration_ms: 5.024365
+  type: 'test'
+  ...
+# Subtest: Cohere refuses malformed calls and unclosed citations before handoff
+ok 17 - Cohere refuses malformed calls and unclosed citations before handoff
+  ---
+  duration_ms: 2.061371
+  type: 'test'
+  ...
+# Subtest: Cohere cancellation propagates upstream and unknown Bedrock dialect is blocked
+ok 18 - Cohere cancellation propagates upstream and unknown Bedrock dialect is blocked
+  ---
+  duration_ms: 1.317286
+  type: 'test'
+  ...
+# Subtest: production universal fetch returns original Claude and Cohere frames with completion gate
+ok 19 - production universal fetch returns original Claude and Cohere frames with completion gate
+  ---
+  duration_ms: 8.649221
+  type: 'test'
+  ...
+# Subtest: production universal native truncation never completes or retries
+ok 20 - production universal native truncation never completes or retries
+  ---
+  duration_ms: 9.373938
+  type: 'test'
+  ...
+# Subtest: Claude cancellation cancels upstream without emitting successful finish
+ok 21 - Claude cancellation cancels upstream without emitting successful finish
+  ---
+  duration_ms: 1.079118
+  type: 'test'
+  ...
+# Subtest: buffered Claude native stop reason cannot be masked by normalized tool_calls
+ok 22 - buffered Claude native stop reason cannot be masked by normalized tool_calls
+  ---
+  duration_ms: 3.456233
+  type: 'test'
+  ...
+# Subtest: buffered Cohere production fetch preserves raw body, citations and tool plan
+ok 23 - buffered Cohere production fetch preserves raw body, citations and tool plan
+  ---
+  duration_ms: 3.685968
+  type: 'test'
+  ...
+# Subtest: buffered Cohere real tools preserve original IDs and handoff only after JSON check
+ok 24 - buffered Cohere real tools preserve original IDs and handoff only after JSON check
+  ---
+  duration_ms: 0.775303
+  type: 'test'
+  ...
+# Subtest: buffered Cohere truncation, errors, bad tools and hidden text never complete or retry
+ok 25 - buffered Cohere truncation, errors, bad tools and hidden text never complete or retry
+  ---
+  duration_ms: 8.391029
+  type: 'test'
+  ...
+# Subtest: SSE decodes arbitrary byte boundaries and emits cumulative content without reasoning
+ok 26 - SSE decodes arbitrary byte boundaries and emits cumulative content without reasoning
+  ---
+  duration_ms: 32.262844
+  type: 'test'
+  ...
+# Subtest: SSE handles folded data lines, comments, metadata and content parts
+ok 27 - SSE handles folded data lines, comments, metadata and content parts
+  ---
+  duration_ms: 1.388993
+  type: 'test'
+  ...
+# Subtest: terminal DONE cancels an otherwise open reader, while stop also completes at EOF
+ok 28 - terminal DONE cancels an otherwise open reader, while stop also completes at EOF
+  ---
+  duration_ms: 1.946489
+  type: 'test'
+  ...
+# Subtest: the full visible result survives many chunks without trimming or truncation
+ok 29 - the full visible result survives many chunks without trimming or truncation
+  ---
+  duration_ms: 42.673557
+  type: 'test'
+  ...
+# Subtest: missing completion, malformed frames and malformed envelope shapes fail explicitly
+ok 30 - missing completion, malformed frames and malformed envelope shapes fail explicitly
+  ---
+  duration_ms: 5.69421
+  type: 'test'
+  ...
+# Subtest: length, content_filter and unsupported finish reasons never become success
+ok 31 - length, content_filter and unsupported finish reasons never become success
+  ---
+  duration_ms: 4.328541
+  type: 'test'
+  ...
+# Subtest: stream API errors and error events retain readable diagnostics but redact credentials
+ok 32 - stream API errors and error events retain readable diagnostics but redact credentials
+  ---
+  duration_ms: 1.125999
+  type: 'test'
+  ...
+# Subtest: reasoning-only, empty completion and refusal are not successful empty results
+ok 33 - reasoning-only, empty completion and refusal are not successful empty results
+  ---
+  duration_ms: 2.128842
+  type: 'test'
+  ...
+# Subtest: non-stream OpenAI content stays exact and emits buffered then received
+ok 34 - non-stream OpenAI content stays exact and emits buffered then received
+  ---
+  duration_ms: 4.708321
+  type: 'test'
+  ...
+# Subtest: legacy json-only response mocks and direct task JSON objects remain supported
+ok 35 - legacy json-only response mocks and direct task JSON objects remain supported
+  ---
+  duration_ms: 0.900069
+  type: 'test'
+  ...
+# Subtest: existing non-stream text-part envelopes ignore reasoning blocks
+ok 36 - existing non-stream text-part envelopes ignore reasoning blocks
+  ---
+  duration_ms: 1.0669
+  type: 'test'
+  ...
+# Subtest: JSON API errors, missing text and malformed JSON never stringify into task success
+ok 37 - JSON API errors, missing text and malformed JSON never stringify into task success
+  ---
+  duration_ms: 5.44781
+  type: 'test'
+  ...
+# Subtest: HTTP failures show status and sanitized server error instead of parsing a task result
+ok 38 - HTTP failures show status and sanitized server error instead of parsing a task result
+  ---
+  duration_ms: 0.981372
+  type: 'test'
+  ...
+# Subtest: abort before reading and while awaiting a stream stops progress and cancels the reader
+ok 39 - abort before reading and while awaiting a stream stops progress and cancels the reader
+  ---
+  duration_ms: 1.735913
+  type: 'test'
+  ...
+# Subtest: abort also interrupts a pending json-only mock without waiting for its promise
+ok 40 - abort also interrupts a pending json-only mock without waiting for its promise
+  ---
+  duration_ms: 0.370336
+  type: 'test'
+  ...
+# Subtest: underlying stream errors and progress callback failures remain visible failures
+ok 41 - underlying stream errors and progress callback failures remain visible failures
+  ---
+  duration_ms: 0.889413
+  type: 'test'
+  ...
+# Subtest: invalid UTF-8 bytes and unfinished JSON frames cannot produce received progress
+ok 42 - invalid UTF-8 bytes and unfinished JSON frames cannot produce received progress
+  ---
+  duration_ms: 0.711217
+  type: 'test'
+  ...
+# Subtest: safeDiagnostic redacts common quoted/header/query credentials and remains readable and idempotent
+ok 43 - safeDiagnostic redacts common quoted/header/query credentials and remains readable and idempotent
+  ---
+  duration_ms: 0.334021
+  type: 'test'
+  ...
+# Subtest: native definition request carries card, bound book and optional supplement once with definition-only authorization
+ok 44 - native definition request carries card, bound book and optional supplement once with definition-only authorization
+  ---
+  duration_ms: 67.232903
+  type: 'test'
+  ...
+# Subtest: opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+ok 45 - opening request carries one selected opening, native user, confirmed template and supplement without re-running definition extraction
+  ---
+  duration_ms: 29.899555
+  type: 'test'
+  ...
+# Subtest: specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+ok 46 - specialized preset cannot silently accept a different initialization phase; legacy phase-free calls retain original contract
+  ---
+  duration_ms: 23.534294
+  type: 'test'
+  ...
+# Subtest: actual config host request compiles the input phase into the final transport messages
+ok 47 - actual config host request compiles the input phase into the final transport messages
+  ---
+  duration_ms: 89.693921
+  type: 'test'
+  ...
+# Subtest: native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+ok 48 - native history task wire preserves exact source, adjacent user definitions, floor and verified or unknown story time
+  ---
+  duration_ms: 41.249641
+  type: 'test'
+  ...
+# Subtest: actual initialization, opening and history requests deliver visible chunks before completion
+ok 49 - actual initialization, opening and history requests deliver visible chunks before completion
+  ---
+  duration_ms: 179.947313
+  type: 'test'
+  ...
+# Subtest: actual task cancellation during a stalled stream cancels its reader with no terminal success or retry
+ok 50 - actual task cancellation during a stalled stream cancels its reader with no terminal success or retry
+  ---
+  duration_ms: 64.121161
+  type: 'test'
+  ...
+# Subtest: servers returning buffered JSON report buffering, and callback-free callers retain stream=false
+ok 51 - servers returning buffered JSON report buffering, and callback-free callers retain stream=false
+  ---
+  duration_ms: 108.893074
+  type: 'test'
+  ...
+# Subtest: task stream follows the current host native Gemini, Claude and Cohere response dialects
+ok 52 - task stream follows the current host native Gemini, Claude and Cohere response dialects
+  ---
+  duration_ms: 215.120826
+  type: 'test'
+  ...
+# Subtest: selected universal transport remains authoritative and native task streams are not normalized twice
+ok 53 - selected universal transport remains authoritative and native task streams are not normalized twice
+  ---
+  duration_ms: 613.671755
+  type: 'test'
+  ...
+# Subtest: native incomplete output and HTTP failure never become a completed task or trigger a retry
+ok 54 - native incomplete output and HTTP failure never become a completed task or trigger a retry
+  ---
+  duration_ms: 187.923435
+  type: 'test'
+  ...
+# Subtest: native parser cancellation propagates upstream while waiting for later Claude content
+ok 55 - native parser cancellation propagates upstream while waiting for later Claude content
+  ---
+  duration_ms: 38.726177
+  type: 'test'
+  ...
+# Subtest: nullable stream type fragments retain the function call and reject unsupported concrete types
+ok 56 - nullable stream type fragments retain the function call and reject unsupported concrete types
+  ---
+  duration_ms: 83.379903
+  type: 'test'
+  ...
+# Subtest: opt-in parser preserves complete tool arguments/signatures and the ordinary reader still rejects tool finishes
+ok 57 - opt-in parser preserves complete tool arguments/signatures and the ordinary reader still rejects tool finishes
+  ---
+  duration_ms: 5.511726
+  type: 'test'
+  ...
+# Subtest: streamed multi-call fragments form one complete batch without exposing reasoning as progress
+ok 58 - streamed multi-call fragments form one complete batch without exposing reasoning as progress
+  ---
+  duration_ms: 18.240946
+  type: 'test'
+  ...
+# Subtest: controlled loop returns results in the next request with matching IDs and never calls a native registry
+ok 59 - controlled loop returns results in the next request with matching IDs and never calls a native registry
+  ---
+  duration_ms: 3.84753
+  type: 'test'
+  ...
+# Subtest: independent reads overlap but all results are backfilled once in call order
+ok 60 - independent reads overlap but all results are backfilled once in call order
+  ---
+  duration_ms: 7.783232
+  type: 'test'
+  ...
+# Subtest: a terminal parallel read failure never backfills partial success or starts another request
+ok 61 - a terminal parallel read failure never backfills partial success or starts another request
+  ---
+  duration_ms: 1.507841
+  type: 'test'
+  ...
+# Subtest: unknown names, duplicate IDs and malformed argument batches perform zero calls
+ok 62 - unknown names, duplicate IDs and malformed argument batches perform zero calls
+  ---
+  duration_ms: 2.880259
+  type: 'test'
+  ...
+# Subtest: reused IDs across rounds stop instead of executing again; the final budget round advertises no tools
+ok 63 - reused IDs across rounds stop instead of executing again; the final budget round advertises no tools
+  ---
+  duration_ms: 4.88067
+  type: 'test'
+  ...
+# Subtest: repairable query errors are explicit tool results; stale state aborts without another model request
+ok 64 - repairable query errors are explicit tool results; stale state aborts without another model request
+  ---
+  duration_ms: 1.884727
+  type: 'test'
+  ...
+# Subtest: cancellation after accepted transport and after a tool result never launches another request
+ok 65 - cancellation after accepted transport and after a tool result never launches another request
+  ---
+  duration_ms: 1.481682
+  type: 'test'
+  ...
+# Subtest: an oversized query can be narrowed by the model but exhausted budgets never trigger another request
+ok 66 - an oversized query can be narrowed by the model but exhausted budgets never trigger another request
+  ---
+  duration_ms: 1.937566
+  type: 'test'
+  ...
+# Subtest: loop timeout aborts its transport signal and stale responses release their unread body
+ok 67 - loop timeout aborts its transport signal and stale responses release their unread body
+  ---
+  duration_ms: 16.04297
+  type: 'test'
+  ...
+# Subtest: native Gemini streaming returns signed tool calls and final text across byte boundaries
+ok 68 - native Gemini streaming returns signed tool calls and final text across byte boundaries
+  ---
+  duration_ms: 5.976233
+  type: 'test'
+  ...
+# Subtest: provider metadata is retained when supported and unknown reasoning envelopes stop explicitly
+ok 69 - provider metadata is retained when supported and unknown reasoning envelopes stop explicitly
+  ---
+  duration_ms: 195.702175
+  type: 'test'
+  ...
+# Subtest: timeout releases a stalled host read and late resolution cannot send another request
+ok 70 - timeout releases a stalled host read and late resolution cannot send another request
+  ---
+  duration_ms: 66.029002
+  type: 'test'
+  ...
+# Subtest: proposal capability requires its separate task mode and never expands the default read catalogue
+ok 71 - proposal capability requires its separate task mode and never expands the default read catalogue
+  ---
+  duration_ms: 2.582082
+  type: 'test'
+  ...
+# Subtest: a forbidden save tool prevents a whole batch including a valid draft proposal
+ok 72 - a forbidden save tool prevents a whole batch including a valid draft proposal
+  ---
+  duration_ms: 0.869664
+  type: 'test'
+  ...
+# Subtest: native Gemini empty intermediate finish and terminal padding require a real STOP
+ok 73 - native Gemini empty intermediate finish and terminal padding require a real STOP
+  ---
+  duration_ms: 2.858146
+  type: 'test'
+  ...
+# Subtest: native signature length is independent of its JSON metadata envelope
+ok 74 - native signature length is independent of its JSON metadata envelope
+  ---
+  duration_ms: 8.098635
+  type: 'test'
+  ...
+# Subtest: AT10 built-in search preserves the native request and still enables integrity protection
+ok 75 - AT10 built-in search preserves the native request and still enables integrity protection
+  ---
+  duration_ms: 4.346488
+  type: 'test'
+  ...
+# Subtest: AT10 search metadata and server calls survive synthetic native delivery without executable synthetic leaks
+ok 76 - AT10 search metadata and server calls survive synthetic native delivery without executable synthetic leaks
+  ---
+  duration_ms: 41.533658
+  type: 'test'
+  ...
+# Subtest: AT10 real native tool handoff preserves grounding, signature and tool ID
+ok 77 - AT10 real native tool handoff preserves grounding, signature and tool ID
+  ---
+  duration_ms: 8.571294
+  type: 'test'
+  ...
+# Subtest: AT10 synthetic buffered top content cannot shadow restored text
+ok 78 - AT10 synthetic buffered top content cannot shadow restored text
+  ---
+  duration_ms: 1.964876
+  type: 'test'
+  ...
+# Subtest: AT10 universal accepts complete direct text without claiming wrapper restoration
+ok 79 - AT10 universal accepts complete direct text without claiming wrapper restoration
+  ---
+  duration_ms: 8.089041
+  type: 'test'
+  ...
+# Subtest: AT10 truncated universal responses never become complete and never retry
+ok 80 - AT10 truncated universal responses never become complete and never retry
+  ---
+  duration_ms: 11.708419
+  type: 'test'
+  ...
+# Subtest: AT10 streaming grounding survives independent metadata frames
+ok 81 - AT10 streaming grounding survives independent metadata frames
+  ---
+  duration_ms: 4.496574
+  type: 'test'
+  ...
+# Subtest: AT10 streaming grounding survives finish metadata frames
+ok 82 - AT10 streaming grounding survives finish metadata frames
+  ---
+  duration_ms: 13.093906
+  type: 'test'
+  ...
+# Subtest: AT10 streaming grounding survives after-finish metadata frames
+ok 83 - AT10 streaming grounding survives after-finish metadata frames
+  ---
+  duration_ms: 2.9738
+  type: 'test'
+  ...
+# Subtest: AT10 native partialArgs preserve Unicode, quotes and multiline body exactly
+ok 84 - AT10 native partialArgs preserve Unicode, quotes and multiline body exactly
+  ---
+  duration_ms: 6.796322
+  type: 'test'
+  ...
+# Subtest: AT10 real streaming signature remains attached to the same native call part
+ok 85 - AT10 real streaming signature remains attached to the same native call part
+  ---
+  duration_ms: 2.260419
+  type: 'test'
+  ...
+# Subtest: AT10 cancellation during buffered native tool stream cannot complete or retry
+ok 86 - AT10 cancellation during buffered native tool stream cannot complete or retry
+  ---
+  duration_ms: 1.603715
+  type: 'test'
+  ...
+# Subtest: AT10 native media strategy preserves request_images, search and explicit native tools
+ok 87 - AT10 native media strategy preserves request_images, search and explicit native tools
+  ---
+  duration_ms: 0.287351
+  type: 'test'
+  ...
+# Subtest: AT10 nonempty host shadow text is rejected rather than silently overwritten
+ok 88 - AT10 nonempty host shadow text is rejected rather than silently overwritten
+  ---
+  duration_ms: 1.062603
+  type: 'test'
+  ...
+# Subtest: AT10 builtin search direct answer and provenance survive buffered
+ok 89 - AT10 builtin search direct answer and provenance survive buffered
+  ---
+  duration_ms: 1.917196
+  type: 'test'
+  ...
+# Subtest: AT10 builtin search direct answer and provenance survive stream
+ok 90 - AT10 builtin search direct answer and provenance survive stream
+  ---
+  duration_ms: 1.07354
+  type: 'test'
+  ...
+1..90
+# tests 90
+# suites 0
+# pass 90
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1619.514865

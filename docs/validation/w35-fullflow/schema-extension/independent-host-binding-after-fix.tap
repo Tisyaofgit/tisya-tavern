@@ -1,0 +1,31 @@
+TAP version 13
+# (node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual definition selection extends an existing ledger once and cold-reopens without resetting progress
+ok 1 - actual definition selection extends an existing ledger once and cold-reopens without resetting progress
+  ---
+  duration_ms: 918.339076
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: ordinary A uses a rebound extension after cold host reopen and rejects another undeclared field
+ok 2 - ordinary A uses a rebound extension after cold host reopen and rejects another undeclared field
+  ---
+  duration_ms: 2534.860306
+  type: 'test'
+  ...
+# Subtest: conflicting definition is rejected before binding pointer or current ledger changes
+ok 3 - conflicting definition is rejected before binding pointer or current ledger changes
+  ---
+  duration_ms: 607.652902
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4220.978293

@@ -1,0 +1,202 @@
+TAP version 13
+# Subtest: initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+ok 1 - initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+  ---
+  duration_ms: 39.296491
+  type: 'test'
+  ...
+# Subtest: initialization accepts an explicit linked subtable and retains its registry through a definition book
+ok 2 - initialization accepts an explicit linked subtable and retains its registry through a definition book
+  ---
+  duration_ms: 43.139699
+  type: 'test'
+  ...
+# Subtest: ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+ok 3 - ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+  ---
+  duration_ms: 29.223341
+  type: 'test'
+  ...
+# Subtest: uncertain inference, protected schemas, and schema edits after review are refused without writing
+ok 4 - uncertain inference, protected schemas, and schema edits after review are refused without writing
+  ---
+  duration_ms: 47.689325
+  type: 'test'
+  ...
+# Subtest: conflicting reusable registries are rejected before creating a bound archive
+ok 5 - conflicting reusable registries are rejected before creating a bound archive
+  ---
+  duration_ms: 29.461567
+  type: 'test'
+  ...
+# Subtest: explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+ok 6 - explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive
+  ---
+  duration_ms: 34.424472
+  type: 'test'
+  ...
+# Subtest: new archives require explicit selections and never migrate arbitrary legacy books
+ok 7 - new archives require explicit selections and never migrate arbitrary legacy books
+  ---
+  duration_ms: 3.207796
+  type: 'test'
+  ...
+# Subtest: A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+ok 8 - A/B concurrent saves preserve each namespace, unrelated entries, manifest, and root metadata
+  ---
+  duration_ms: 13.462128
+  type: 'test'
+  ...
+# Subtest: stale same-namespace whole views are rejected even after a newer view was read
+ok 9 - stale same-namespace whole views are rejected even after a newer view was read
+  ---
+  duration_ms: 9.525781
+  type: 'test'
+  ...
+# Subtest: foreign namespace and activation attempts fail before persistence
+ok 10 - foreign namespace and activation attempts fail before persistence
+  ---
+  duration_ms: 8.861365
+  type: 'test'
+  ...
+# Subtest: real W24 original store and ledger adapter persist together, rename keeps original ID and references
+ok 11 - real W24 original store and ledger adapter persist together, rename keeps original ID and references
+  ---
+  duration_ms: 21.877105
+  type: 'test'
+  ...
+# Subtest: rename is revision-checked and operation-idempotent
+ok 12 - rename is revision-checked and operation-idempotent
+  ---
+  duration_ms: 12.871323
+  type: 'test'
+  ...
+# Subtest: changed core does not move the fixed preference bank; old runtime cannot write
+ok 13 - changed core does not move the fixed preference bank; old runtime cannot write
+  ---
+  duration_ms: 21.398488
+  type: 'test'
+  ...
+# Subtest: player change requires explicit matching preference owner and isolates P
+ok 14 - player change requires explicit matching preference owner and isolates P
+  ---
+  duration_ms: 26.015695
+  type: 'test'
+  ...
+# Subtest: same account preference owner is explicitly shareable across players
+ok 15 - same account preference owner is explicitly shareable across players
+  ---
+  duration_ms: 27.225257
+  type: 'test'
+  ...
+# Subtest: foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+ok 16 - foreign archive switch saves current branch, activates actual chat/user and restores native before pointer
+  ---
+  duration_ms: 13.45678
+  type: 'test'
+  ...
+# Subtest: missing external host capability fails explicitly without committing a pointer
+ok 17 - missing external host capability fails explicitly without committing a pointer
+  ---
+  duration_ms: 10.87347
+  type: 'test'
+  ...
+# Subtest: draft save failure keeps pointer and binding; intent retries after draft is preserved
+ok 18 - draft save failure keeps pointer and binding; intent retries after draft is preserved
+  ---
+  duration_ms: 11.406889
+  type: 'test'
+  ...
+# Subtest: failed foreign activation leaves original pointer and durable retry intent
+ok 19 - failed foreign activation leaves original pointer and durable retry intent
+  ---
+  duration_ms: 11.24708
+  type: 'test'
+  ...
+# Subtest: pointer acknowledgement loss is resolved by direct readback, not a second commit
+ok 20 - pointer acknowledgement loss is resolved by direct readback, not a second commit
+  ---
+  duration_ms: 15.735489
+  type: 'test'
+  ...
+# Subtest: pointer write failure exposes recoverable incomplete binding without default reset
+ok 21 - pointer write failure exposes recoverable incomplete binding without default reset
+  ---
+  duration_ms: 15.384778
+  type: 'test'
+  ...
+# Subtest: concurrent binding requests serialize; stale expected revision cannot overwrite selection
+ok 22 - concurrent binding requests serialize; stale expected revision cannot overwrite selection
+  ---
+  duration_ms: 12.569902
+  type: 'test'
+  ...
+# Subtest: selected immutable definition versions yield initialRows and reject conflicting IDs
+ok 23 - selected immutable definition versions yield initialRows and reject conflicting IDs
+  ---
+  duration_ms: 11.358877
+  type: 'test'
+  ...
+# Subtest: creation retry is idempotent and physical rename is never performed
+ok 24 - creation retry is idempotent and physical rename is never performed
+  ---
+  duration_ms: 2.891822
+  type: 'test'
+  ...
+# Subtest: real direct readback detects a corrupted physical write
+ok 25 - real direct readback detects a corrupted physical write
+  ---
+  duration_ms: 12.485576
+  type: 'test'
+  ...
+# Subtest: fork binds a fresh archive after a real host branch transition without copying raw text or native values
+ok 26 - fork binds a fresh archive after a real host branch transition without copying raw text or native values
+  ---
+  duration_ms: 20.474153
+  type: 'test'
+  ...
+# Subtest: fork rejects an unactivated target and cannot overwrite another archive pointer
+ok 27 - fork rejects an unactivated target and cannot overwrite another archive pointer
+  ---
+  duration_ms: 10.343466
+  type: 'test'
+  ...
+# Subtest: two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+ok 28 - two managers sharing one physical transport use the same book FIFO without dropping A/B writes
+  ---
+  duration_ms: 14.766352
+  type: 'test'
+  ...
+# Subtest: definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+ok 29 - definition selection returns field conflicts without changing the pointer and accepts exact keep-current reviews
+  ---
+  duration_ms: 16.246119
+  type: 'test'
+  ...
+# Subtest: binding intents keep only a draft fingerprint, and new competing switches are blocked
+ok 30 - binding intents keep only a draft fingerprint, and new competing switches are blocked
+  ---
+  duration_ms: 9.455416
+  type: 'test'
+  ...
+# Subtest: versioned definition saves validate closure, preserve old revisions, and never move active selection
+ok 31 - versioned definition saves validate closure, preserve old revisions, and never move active selection
+  ---
+  duration_ms: 10.497677
+  type: 'test'
+  ...
+# Subtest: two player preference namespaces in the same core retain separate actual ledgers
+ok 32 - two player preference namespaces in the same core retain separate actual ledgers
+  ---
+  duration_ms: 30.982859
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 535.061559

@@ -1,0 +1,34 @@
+TAP version 13
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: concurrent session readers wait for the same initialization persistence before allowing another mutation
+not ok 1 - concurrent session readers wait for the same initialization persistence before allowing another mutation
+  ---
+  duration_ms: 511.136362
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/initialization-concurrency.test.mjs:5:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    a second UI reader must not expose a session before its first durable source-index save
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/initialization-concurrency.test.mjs:14:10)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 666.221737

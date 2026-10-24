@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: a pending clipboard or reader cannot lock history or hide the true write owner
+ok 1 - a pending clipboard or reader cannot lock history or hide the true write owner
+  ---
+  duration_ms: 1.936273
+  type: 'test'
+  ...
+# Subtest: failure releases only its own lock, while all history changes stay exclusive
+ok 2 - failure releases only its own lock, while all history changes stay exclusive
+  ---
+  duration_ms: 0.371627
+  type: 'test'
+  ...
+# Subtest: deleting a trailing source has bounded host I/O as retained history grows
+ok 3 - deleting a trailing source has bounded host I/O as retained history grows
+  ---
+  duration_ms: 238.812404
+  type: 'test'
+  ...
+# Subtest: scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+ok 4 - scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+  ---
+  duration_ms: 10.003175
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 394.18442

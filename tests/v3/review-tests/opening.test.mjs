@@ -22,6 +22,12 @@ function fixture(request=async()=>response(),{template=true,sourceProvider}={}){
 }
 async function generate(f){const available=await f.service.inspect();return f.service.generate({openingId:available.selectedOpeningId,sourceStamp:available.sourceStamp});}
 
+test('opening forwards streaming content and reports validation separately from response completion',async()=>{
+ const events=[],f=fixture(async(input,options)=>{assert.equal(typeof options.onProgress,'function');options.onProgress({stage:'receiving',characters:15,text:'开局草稿的可见文本'});options.onProgress({stage:'received',characters:15,text:'开局草稿的可见文本'});return response();}),source=await f.service.inspect();
+ await f.service.generate({openingId:source.selectedOpeningId,sourceStamp:source.sourceStamp,onProgress:event=>events.push(event)});
+ assert.deepEqual(events.map(e=>e.phase??e.stage),['sources','preparing','receiving','received','validating']);assert.equal(f.writes(),0);
+});
+
 test('opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes',async()=>{
  const f=fixture(async()=>formatSimpleSheet(response())),available=await f.service.inspect();assert.equal(available.ready,true);assert.equal(available.selectedOpeningId,'chat:0');assert.equal(available.openings.length,1);assert.equal(available.canEstablish,true);assert.equal(f.writes(),0);
  const d=await generate(f);assert.equal(f.calls(),1);assert.equal(f.writes(),0);assert.equal(f.payload().phase,'opening');assert.equal(f.payload().sourceUser.objectId,'new:opening-user');assert.equal(f.payload().selectedOpening.text,opener);assert.equal(f.payload().sourceHistory,undefined);assert.deepEqual(f.payload().confirmedTemplate.rowIds,[row.id]);assert.equal(JSON.stringify(f.payload()).includes('未选开场'),false);assert.equal(d.changes[0].values.描述,'沈舟是一名年轻木匠。');assert.deepEqual(d.protectedIds,['new:opening-user']);

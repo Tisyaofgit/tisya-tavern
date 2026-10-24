@@ -1,0 +1,426 @@
+TAP version 13
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+ok 1 - installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+  ---
+  duration_ms: 2029.968646
+  type: 'test'
+  ...
+# Failed running interceptor for undefined SimpleSheetError: 简表格式错误：需要分组标题或稳定行号字段
+#     at fail2 (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:498:9)
+#     at parseSimpleSheet (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:668:27)
+#     at Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2264:22)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+#   code: 'SIMPLE_SHEET_INVALID'
+# }
+# Subtest: invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+ok 2 - invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+  ---
+  duration_ms: 392.022951
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 请先等待原卡 MVU 脚本初始化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:19:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:20:46)
+#     at file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:69:31
+#     at async initialize (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:113:14)
+#     at async perform (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:116:89) {
+#   code: 'V3_MVU_UNAVAILABLE'
+# }
+# Subtest: missing enabled native runtime aborts before A and before narrative commit
+ok 3 - missing enabled native runtime aborts before A and before narrative commit
+  ---
+  duration_ms: 253.196749
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+ok 4 - advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+  ---
+  duration_ms: 2895.520289
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+ok 5 - partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+  ---
+  duration_ms: 2701.681457
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: out-of-range partial edit fails before native chat mutation
+ok 6 - out-of-range partial edit fails before native chat mutation
+  ---
+  duration_ms: 2469.773748
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+ok 7 - two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+  ---
+  duration_ms: 1813.850665
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+ok 8 - trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+  ---
+  duration_ms: 1502.612909
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+ok 9 - normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+  ---
+  duration_ms: 2771.795626
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update for groups
+# Subtest: real group wrapper lifecycle permits exactly one A+B across drafted members
+ok 10 - real group wrapper lifecycle permits exactly one A+B across drafted members
+  ---
+  duration_ms: 1518.664918
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: external native edit invalidates source lineage and updates A rather than retaining the previous reference
+ok 11 - external native edit invalidates source lineage and updates A rather than retaining the previous reference
+  ---
+  duration_ms: 1535.583633
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 测试取消
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:19:43)
+#     at Object.cancel (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:142:128)
+#     at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer.test.mjs:60:58)
+#     at async Test.run (node:internal/test_runner/test:1409:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+#   code: 'V3_CANCELLED'
+# }
+# Subtest: stopping A prevents B and does not commit a late API response
+ok 12 - stopping A prevents B and does not commit a late API response
+  ---
+  duration_ms: 323.944341
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+ok 13 - turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+  ---
+  duration_ms: 1565.077862
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+ok 14 - explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+  ---
+  duration_ms: 1733.911683
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 用户身份已切换，旧任务停止
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:19:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:20:46)
+#     at guard (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:54:1563)
+#     at request (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:88:450)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2255:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+#   code: 'V3_PLAYER_CHANGED'
+# }
+# Subtest: persona changed during A prevents B and native save even without a chat switch
+ok 15 - persona changed during A prevents B and native save even without a chat switch
+  ---
+  duration_ms: 303.768094
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: editing an earlier user evidence source removes its dependent archived facts
+ok 16 - editing an earlier user evidence source removes its dependent archived facts
+  ---
+  duration_ms: 1206.067293
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+ok 17 - awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+  ---
+  duration_ms: 1563.212416
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: unnumbered native opening remains untouched as card setup and does not enter numbered archive
+ok 18 - unnumbered native opening remains untouched as card setup and does not enter numbered archive
+  ---
+  duration_ms: 1434.773743
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+ok 19 - disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+  ---
+  duration_ms: 3972.266568
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 生成期间聊天楼层已变化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:19:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:20:46)
+#     at guard (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:54:529)
+#     at request (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:88:450)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2255:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+#   code: 'V3_CHAT_MUTATED'
+# }
+# Subtest: a new native user appended during A cannot receive the prior request response
+ok 20 - a new native user appended during A cannot receive the prior request response
+  ---
+  duration_ms: 338.062892
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: native mode off permits business archival of an original-owned message without requiring or executing MVU
+ok 21 - native mode off permits business archival of an original-owned message without requiring or executing MVU
+  ---
+  duration_ms: 1219.663608
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turning native mode on creates missing projection rows from actual card data without executing historical variables
+ok 22 - turning native mode on creates missing projection rows from actual card data without executing historical variables
+  ---
+  duration_ms: 1578.322613
+  type: 'test'
+  ...
+# (node:14) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: verified native rule text and hash provenance enter A once, separate from custom constraints
+ok 23 - verified native rule text and hash provenance enter A once, separate from custom constraints
+  ---
+  duration_ms: 1992.577161
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 原卡变量规则在生成期间已变化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:19:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:20:46)
+#     at verifyNativeRules (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:52:148)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:88:511)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2255:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+#   code: 'V3_NATIVE_RULES_CHANGED'
+# }
+# Subtest: editing verified native rules while A runs rejects the old result before B
+ok 24 - editing verified native rules while A runs rejects the old result before B
+  ---
+  duration_ms: 367.831423
+  type: 'test'
+  ...
+# (node:136) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: production application focus invalidates and rebuilds host configuration without a second focus authority
+ok 25 - production application focus invalidates and rebuilds host configuration without a second focus authority
+  ---
+  duration_ms: 2210.235079
+  type: 'test'
+  ...
+# Subtest: journey reads one actual retained store, respects reader access and psychology switch, and excludes raw prose and closed pools
+ok 26 - journey reads one actual retained store, respects reader access and psychology switch, and excludes raw prose and closed pools
+  ---
+  duration_ms: 56.129161
+  type: 'test'
+  ...
+# Subtest: identical full text floors resolve by logical identity and current A revision, with no raw reads
+ok 27 - identical full text floors resolve by logical identity and current A revision, with no raw reads
+  ---
+  duration_ms: 79.115156
+  type: 'test'
+  ...
+# Subtest: focus writes only the real world tables focus IDs once, preserves aliases, and can remove a missing focus
+ok 28 - focus writes only the real world tables focus IDs once, preserves aliases, and can remove a missing focus
+  ---
+  duration_ms: 130.812988
+  type: 'test'
+  ...
+# Subtest: focus rejects stale configuration, changed bindings, hidden or missing IDs and actual source changes without writes
+ok 29 - focus rejects stale configuration, changed bindings, hidden or missing IDs and actual source changes without writes
+  ---
+  duration_ms: 66.062527
+  type: 'test'
+  ...
+# Subtest: message-specific timeline uses that original source while current characters and pool remain live
+ok 30 - message-specific timeline uses that original source while current characters and pool remain live
+  ---
+  duration_ms: 42.738532
+  type: 'test'
+  ...
+# Subtest: memory pagination exposes all retained events and direct detail does not depend on the default page
+ok 31 - memory pagination exposes all retained events and direct detail does not depend on the default page
+  ---
+  duration_ms: 73.317364
+  type: 'test'
+  ...
+# Subtest: noncharacter focus remains an explicit existing object instead of a false missing dossier
+ok 32 - noncharacter focus remains an explicit existing object instead of a false missing dossier
+  ---
+  duration_ms: 74.143526
+  type: 'test'
+  ...
+# Subtest: atlas contains every public record type, strips private references and direct detail reads noncharacters
+ok 33 - atlas contains every public record type, strips private references and direct detail reads noncharacters
+  ---
+  duration_ms: 37.989071
+  type: 'test'
+  ...
+# Subtest: timeline searches all pages and tags, anchors current identity, and does not match hidden psychology
+ok 34 - timeline searches all pages and tags, anchors current identity, and does not match hidden psychology
+  ---
+  duration_ms: 185.066872
+  type: 'test'
+  ...
+# Subtest: atlas shows only bound exact definition revisions in separate readonly layers
+ok 35 - atlas shows only bound exact definition revisions in separate readonly layers
+  ---
+  duration_ms: 18.084111
+  type: 'test'
+  ...
+# Subtest: locate refuses stale card revision, changed binding and different original reference
+ok 36 - locate refuses stale card revision, changed binding and different original reference
+  ---
+  duration_ms: 43.413393
+  type: 'test'
+  ...
+# Subtest: default timeline anchor is the latest archived event even while newest story awaits next archive
+ok 37 - default timeline anchor is the latest archived event even while newest story awaits next archive
+  ---
+  duration_ms: 18.162909
+  type: 'test'
+  ...
+# Subtest: atlas directory filters actual public objects by full text/tag and renders complete semantic dossier
+ok 38 - atlas directory filters actual public objects by full text/tag and renders complete semantic dossier
+  ---
+  duration_ms: 24.902642
+  type: 'test'
+  ...
+# Subtest: atlas focus and edit retain stable record IDs, related references navigate, and scope change closes detail
+ok 39 - atlas focus and edit retain stable record IDs, related references navigate, and scope change closes detail
+  ---
+  duration_ms: 23.588092
+  type: 'test'
+  ...
+# Subtest: atlas event/source actions pass IDs and reference only; text is escaped and inaccessible reference names stay absent
+ok 40 - atlas event/source actions pass IDs and reference only; text is escaped and inaccessible reference names stay absent
+  ---
+  duration_ms: 5.081448
+  type: 'test'
+  ...
+# Subtest: late atlas read cannot replace disposed content
+ok 41 - late atlas read cannot replace disposed content
+  ---
+  duration_ms: 2.674199
+  type: 'test'
+  ...
+# Subtest: atlas keeps origin/core definitions distinct and read-only, while unrelated world records remain reachable
+ok 42 - atlas keeps origin/core definitions distinct and read-only, while unrelated world records remain reachable
+  ---
+  duration_ms: 13.195322
+  type: 'test'
+  ...
+# Subtest: production journey ball opens current memory, navigates participant to complete atlas, then returns through event to timeline
+ok 43 - production journey ball opens current memory, navigates participant to complete atlas, then returns through event to timeline
+  ---
+  duration_ms: 281.786033
+  type: 'test'
+  ...
+# Subtest: production notebook is the full searchable timeline and invalidates on changed source chat
+ok 44 - production notebook is the full searchable timeline and invalidates on changed source chat
+  ---
+  duration_ms: 87.027827
+  type: 'test'
+  ...
+# Subtest: independent reader public journey tab mounts complete atlas and timeline with no serialized raw fields
+ok 45 - independent reader public journey tab mounts complete atlas and timeline with no serialized raw fields
+  ---
+  duration_ms: 119.859787
+  type: 'test'
+  ...
+# Subtest: journey and independent reader keep the selected dossier after a real focus save and honor returning to the directory
+ok 46 - journey and independent reader keep the selected dossier after a real focus save and honor returning to the directory
+  ---
+  duration_ms: 399.696802
+  type: 'test'
+  ...
+# Subtest: journey player and character pages retain separate selected dossiers
+ok 47 - journey player and character pages retain separate selected dossiers
+  ---
+  duration_ms: 66.808586
+  type: 'test'
+  ...
+# Subtest: one-click candidate confirmation invokes the actual batch service and writes one P revision
+ok 48 - one-click candidate confirmation invokes the actual batch service and writes one P revision
+  ---
+  duration_ms: 137.432512
+  type: 'test'
+  ...
+# Subtest: lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+ok 49 - lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+  ---
+  duration_ms: 104.335454
+  type: 'test'
+  ...
+# Subtest: invalid batch remains reviewable for manual correction without confirming any source
+ok 50 - invalid batch remains reviewable for manual correction without confirming any source
+  ---
+  duration_ms: 29.560456
+  type: 'test'
+  ...
+# Subtest: saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+ok 51 - saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+  ---
+  duration_ms: 348.206982
+  type: 'test'
+  ...
+# Subtest: configuration recovery requires the real preview and appends a new core-book version
+ok 52 - configuration recovery requires the real preview and appends a new core-book version
+  ---
+  duration_ms: 379.271312
+  type: 'test'
+  ...
+# (node:274) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: chat UI uses real companion history, queues without API, withdraws and sends independently
+ok 53 - chat UI uses real companion history, queues without API, withdraws and sends independently
+  ---
+  duration_ms: 443.05986
+  type: 'test'
+  ...
+# Subtest: pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+ok 54 - pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+  ---
+  duration_ms: 133.71594
+  type: 'test'
+  ...
+# Subtest: character tag picker includes registered descendants of character
+ok 55 - character tag picker includes registered descendants of character
+  ---
+  duration_ms: 167.26192
+  type: 'test'
+  ...
+# Subtest: workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+ok 56 - workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+  ---
+  duration_ms: 598.461184
+  type: 'test'
+  ...
+1..56
+# tests 56
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35321.507378

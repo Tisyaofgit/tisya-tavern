@@ -142,3 +142,28 @@ test('worldbook native-save failure keeps its draft; retry commits native settin
 test('worldbook domain-write failure never publishes new cache and load can complete the original operation',async()=>{
  const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});const w=nativeWorldbookFixture(x),state=await w.store.load();state.tags.suffix.push('未完成');x.f.fail.save=true;await assert.rejects(w.store.save(state),/save failed/);assert.equal(w.store.hasUnconfirmedSettings(),true);assert.deepEqual(x.ctx.extensionSettings.缇斯亚世界书.tags.suffix,[]);x.f.fail.save=false;const restored=await w.store.load();assert.deepEqual(restored.tags.suffix,['未完成']);assert.equal(x.service.read().revision,2);assert.equal(w.control.count,1);
 });
+
+
+test('manual configuration profiles remain stable through automatic edits and update only by explicit save',async()=>{
+ const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});
+ for(let i=0;i<21;i++)await x.service.saveDomain('interface',{联系人分组:{},动态效果:i%2===0},x.service.read());
+ assert.equal(x.service.read().domains.configurationProfiles,undefined);
+ const previousVersions=x.service.read().versions.length,reference=x.service.read().revision;
+ await x.service.saveProfile({name:'慢节奏',expected:x.service.read(),operationId:'profile-slow'});
+ let bank=x.service.read().domains.configurationProfiles;assert.equal(bank.profiles.length,1);const id=bank.profiles[0].id;assert.equal(bank.profiles[0].revision,reference);
+ const r=x.store.read();r.data.worlds[r.key].context.history=3;await x.store.save(r.data,r.revision,r.key);
+ assert.equal(x.service.read().domains.configurationProfiles.profiles.length,1);assert.equal(x.service.read().domains.configurationProfiles.profiles[0].revision,reference);
+ await x.service.saveProfile({name:'快节奏',expected:x.service.read(),operationId:'profile-fast'});
+ await x.service.saveProfile({id,name:'慢节奏修订',expected:x.service.read(),operationId:'profile-update'});
+ bank=x.service.read().domains.configurationProfiles;assert.equal(bank.profiles.length,2);assert.equal(bank.profiles.find(p=>p.id===id).name,'慢节奏修订');
+ const preview=await x.service.previewRestore({revision:reference,expected:x.service.read()});await x.service.restore({token:preview.token});
+ assert.equal(x.service.read().domains.configurationProfiles.profiles.length,2);assert.ok(x.service.read().versions.length>previousVersions);assert.notEqual(x.store.read().world.context.history,3);
+ const fresh=x.make(createBookManager(x.f.opts));await fresh.service.hydrate();assert.deepEqual(fresh.service.read().domains.configurationProfiles,bank);
+});
+
+test('failed manual profile save keeps original profile and retries the same draft once',async()=>{
+ const x=await serviceFixture();await x.service.hydrate({initializeIfMissing:true});await x.service.saveProfile({name:'原方案',expected:x.service.read(),operationId:'original-profile'});const before=x.service.read(),id=before.domains.configurationProfiles.profiles[0].id;
+ x.f.fail.save=true;await assert.rejects(x.service.saveProfile({id,name:'修订方案',expected:before,operationId:'failed-profile'}),/save failed/);
+ assert.equal(x.service.read().domains.configurationProfiles.profiles[0].name,'原方案');assert.equal(x.service.read().draft.operationId,'failed-profile');
+ x.f.fail.save=false;await x.service.retryDraft();assert.equal(x.service.read().domains.configurationProfiles.profiles.length,1);assert.equal(x.service.read().domains.configurationProfiles.profiles[0].name,'修订方案');assert.equal(x.service.read().revision,before.revision+1);
+});

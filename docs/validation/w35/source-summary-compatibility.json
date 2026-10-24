@@ -1,0 +1,55 @@
+{
+  "baseline": "35fb4a48c67f466295f42685e3facee10bc06879",
+  "checks": {
+    "basis": {
+      "identical": true,
+      "sha256": "7002c50072adbbacb25160e3357ffb7d63ac531d95783a370076f895d516cdaa"
+    },
+    "definitionBasis": {
+      "identical": true,
+      "sha256": "821b4df719d54769359f1e973f7618f1aae36e64d2650fe241f72cea19df104e"
+    },
+    "sourceCard": {
+      "identical": true,
+      "sha256": "90b9a9eb8ccee62e73ca59868d7a9237f1931fab6b2ffe7da048d4cf032bebd6"
+    },
+    "sourceCardRaw": {
+      "identical": true,
+      "sha256": "211962167713f3109128bed8556a82ace658e8b9d116828ffcf714ba07a1fa70"
+    },
+    "sourceBooks": {
+      "identical": true,
+      "sha256": "0629968d8af6278593f86f6d05000e3e0ca06404312ec16d001a5ddd40eeb4d3"
+    }
+  },
+  "summary": {
+    "kind": "native-card",
+    "card": {
+      "id": "test.png",
+      "name": "试验"
+    },
+    "books": [
+      {
+        "name": "绑定书",
+        "entries": 1,
+        "disabledEntries": 1
+      }
+    ],
+    "counts": {
+      "cardFields": 2,
+      "entries": 2,
+      "embeddedEntries": 1,
+      "linkedEntries": 1,
+      "disabled": 2,
+      "runtime": 2,
+      "managed": 0
+    },
+    "characters": 91,
+    "notes": [
+      "已排除 2 项停用资料。",
+      "2 项动态模板不纳入固定设定提炼；模板运行仍交由原卡／宿主，此操作不会关闭原卡变量功能。"
+    ]
+  },
+  "realModelCalls": 0,
+  "storageWrites": 0
+}

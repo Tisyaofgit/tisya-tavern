@@ -1,0 +1,24 @@
+(node:14) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ an existing unnumbered chat opens the real session and history import writes an exact original with native worldbook readback (647.947579ms)
+entering chat update routine for non-swipe post
+✔ historical sources supply explicit prose paragraph indices, never execute old native patches, and do not enter B as raw text (1465.210561ms)
+entering chat update routine for non-swipe post
+✔ a malformed retained V3 source stays pending without blocking send or being archived as raw thinking; one CRLF is not a blank line (935.177432ms)
+(node:35) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ opening a session does not import old reply with an unmatched control tag (488.79255ms)
+✔ opening a session does not import ordinary old reply (333.875559ms)
+✔ opening a session does not import incomplete V3 reply (275.951967ms)
+✔ an empty bound chat opens without originals or model calls (278.748571ms)
+✔ switching an unstructured opening candidate does not import character setup (265.291348ms)
+entering chat update routine for non-swipe post
+✔ ordinary generation retains an incomplete historical source as a local pending diagnostic (941.31942ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5984.545336

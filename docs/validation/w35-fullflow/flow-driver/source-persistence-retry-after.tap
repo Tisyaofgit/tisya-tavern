@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: deleting a trailing source has bounded host I/O as retained history grows
+ok 1 - deleting a trailing source has bounded host I/O as retained history grows
+  ---
+  duration_ms: 401.653307
+  type: 'test'
+  ...
+# Subtest: scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+ok 2 - scan rejects text, swipe, or message replacement while its original-book snapshot is pending
+  ---
+  duration_ms: 13.742957
+  type: 'test'
+  ...
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: concurrent session readers wait for the same initialization persistence before allowing another mutation
+ok 3 - concurrent session readers wait for the same initialization persistence before allowing another mutation
+  ---
+  duration_ms: 689.684182
+  type: 'test'
+  ...
+# Subtest: initialization failure reaches every waiting reader, releases busy, and a retry durably restores the source index
+ok 4 - initialization failure reaches every waiting reader, releases busy, and a retry durably restores the source index
+  ---
+  duration_ms: 403.523365
+  type: 'test'
+  ...
+# (node:19) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: retained unmatched legacy controls remains locally pending while normal A/B send and deletion work
+ok 5 - retained unmatched legacy controls remains locally pending while normal A/B send and deletion work
+  ---
+  duration_ms: 2849.674061
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: retained incomplete old V3 remains locally pending while normal A/B send and deletion work
+ok 6 - retained incomplete old V3 remains locally pending while normal A/B send and deletion work
+  ---
+  duration_ms: 2428.025211
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: HTML card opener and unnumbered old prose do not require Tisya control markup
+ok 7 - HTML card opener and unnumbered old prose do not require Tisya control markup
+  ---
+  duration_ms: 1422.85894
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: TISYA_V3_REPLY_ORDER
+#     at fail (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:13:39)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:14:32)
+#     at parseV3Reply (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:59:54)
+#     at writerB (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:100:6)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2540:54)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2984:20) {
+#   code: 'TISYA_V3_REPLY_ORDER'
+# }
+# Subtest: fresh malformed writer output still fails before being saved
+ok 8 - fresh malformed writer output still fails before being saved
+  ---
+  duration_ms: 961.729483
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: World info save failed for "Tisya-archive-25dbeabf-e357-4e6a-b628-2ff23a18f5e0" (500): Injected native save failure
+#     at requireSuccess (/scripts/world-info-persistence.js:33:11)
+#     at async persist (/scripts/world-info-persistence.js:77:5)
+# Subtest: an original storage failure is not disguised as a legacy parsing notice
+ok 9 - an original storage failure is not disguised as a legacy parsing notice
+  ---
+  duration_ms: 288.507944
+  type: 'test'
+  ...
+# Subtest: source text changed after the scan but before materialization is rejected before original writes
+ok 10 - source text changed after the scan but before materialization is rejected before original writes
+  ---
+  duration_ms: 3.148503
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: a branch retains malformed legacy chat without requiring that source to become archived prose
+ok 11 - a branch retains malformed legacy chat without requiring that source to become archived prose
+  ---
+  duration_ms: 976.875638
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: editing a pending legacy source to valid prose clears the diagnostic and archives the actual new source
+ok 12 - editing a pending legacy source to valid prose clears the diagnostic and archives the actual new source
+  ---
+  duration_ms: 2902.514241
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12040.190501

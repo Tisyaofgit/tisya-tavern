@@ -1,0 +1,53 @@
+{
+  "schema": "tisya.w35-source-availability-findings/1",
+  "at_utc": "2026-10-24T18:52:31.748800+00:00",
+  "at_beijing": "2026-10-25T02:52:31.748800+08:00",
+  "product_frozen": true,
+  "changes": [
+    "Retained history format defects create per-source pending diagnostics; ordinary A/B requests continue, raw chat unchanged, no false archive commit.",
+    "Existing valid ordinary unnumbered history stays on historical parser path; card openers stay card material.",
+    "New writer output, storage write/readback, identity and source race failures remain fatal.",
+    "Single scan uses one identity and original metadata snapshot, then verifies chat contents/candidates unchanged; no cross-scan cache.",
+    "Only unprocessed sources are materialized for new request, unchanged refresh does not rewrite chat metadata.",
+    "Branch write/readback compares strict JSON values, not object insertion order; captured semantic equality proves old mismatch."
+  ],
+  "verification": {
+    "baselineRegression": "legacy-availability-before.tap: 2 fail/2 pass (expected legacy blocked before fix)",
+    "sourceIntegration": "legacy-and-sources-after-2.tap: 34 pass",
+    "updatedOldStandards": "legacy-standards-after-3.tap: 9 pass",
+    "finalFocused": "legacy-final-after-6.tap: 16 pass",
+    "postFreezeCorrection": "legacy-correction-after-7.tap",
+    "race": "source-materialization-race.tap: 1 pass",
+    "branchRootCause": "branch-readback-diagnostic.json semanticSame=true serializedSame=false no differingTopLevel",
+    "performance": "../deletion-performance/; owner streaming_review"
+  },
+  "boundaries": [
+    "actual product services and extracted native JS with simulated host storage/UI",
+    "no Android evidence",
+    "no external provider model evidence",
+    "this is not the requested complete KPOP/Luc semantic run"
+  ],
+  "files": [
+    {
+      "path": "v3/host-sources.mjs",
+      "sha256": "c0310fc0836b0a813d2e4de806bb9237491975643984f27b1b1cb504caa692d9"
+    },
+    {
+      "path": "v3/runtime-source/runner/preflight-runner.mjs",
+      "sha256": "6ccde6ae32b9ebae5cb1279e129647f41c9ccc9616508fa307362f64aa39cd32"
+    },
+    {
+      "path": "tests/v3/host-tests/legacy-source-availability.test.mjs",
+      "sha256": "b9fa3b06ae09232a34afc56406bdfa011a0fa843f81f0a5ab5527186b4f3292b"
+    },
+    {
+      "path": "tests/v3/host-tests/passive-session.test.mjs",
+      "sha256": "284a72dd1ee1a96549e3770deca16557abe8e04c6d40ab438cabb6e660292b6c"
+    },
+    {
+      "path": "tests/v3/host-tests/historical-session.test.mjs",
+      "sha256": "952506b6b1b1b3d2812fbbea5ae7d8f547bcede5d97f10fe507e8f46c39e8778"
+    }
+  ],
+  "next": "Root builds all generated bundles, combines UI diagnostic and schema/delete changes, runs full regression, continues actual native host scenario if available; preserve 19:28 UTC save cutoff."
+}

@@ -1,0 +1,26 @@
+✖ manual configuration profiles remain stable through automatic edits and update only by explicit save (1995.887639ms)
+✖ failed manual profile save keeps original profile and retries the same draft once (81.411805ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2214.936667
+
+✖ failing tests:
+
+test at tests/v3/storage-tests/configuration-book.test.mjs:147:1
+✖ manual configuration profiles remain stable through automatic edits and update only by explicit save (1995.887639ms)
+  TypeError [Error]: x.service.saveProfile is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/configuration-book.test.mjs:152:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/v3/storage-tests/configuration-book.test.mjs:164:1
+✖ failed manual profile save keeps original profile and retries the same draft once (81.411805ms)
+  TypeError [Error]: x.service.saveProfile is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/storage-tests/configuration-book.test.mjs:165:101)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

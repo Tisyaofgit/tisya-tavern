@@ -1,4 +1,4 @@
-import {sha256Utf16,projectRetained,prepareCommit} from './host-runtime.mjs';
+import {sha256Utf16,projectRetained,prepareCommit,parseHistoricalBody} from './host-runtime.mjs';
 import {parseV3Reply} from './reply.mjs';
 import {openingMaterial,nativeCardMaterial} from './host-materials.mjs';
 import {readTurnDirection} from '../communication.js';
@@ -10,6 +10,8 @@ const clone=structuredClone;
 const fail=(code,message)=>{throw Object.assign(Error(message),{code});};
 const isAssistant=m=>m&&!m.is_user&&!m.is_system&&m.role!=='tool';
 const access={readers:[],knowers:[]};
+const sourceFormatError=error=>/^TISYA_V3_REPLY_/.test(error?.code??'')||['HISTORY_CONTROL_BLOCK','REPLY_FORMAT','EMPTY_BODY','UNNUMBERED_BODY','UNNUMBERED_PREFIX','UNNUMBERED_PARAGRAPH','NUMBER_SEQUENCE','EMPTY_PARAGRAPH','INVALID_NUMBER','UNCLOSED_FENCE'].includes(error?.code);
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export function nativeInitialRows(context,runtime){
  if(!runtime)return [];
  let data;for(let i=context.chat.length-1;i>=0;i--){const candidate=runtime.getMvuData({type:'message',message_id:i});if(candidate?.stat_data){data=candidate;break;}}
@@ -19,10 +21,20 @@ export function nativeInitialRows(context,runtime){
 export function createSourceChain({getContext,system,getNative,configuration,guard,persist}){
  let current=[],pendingSource=null;
  const meta=()=>{const c=getContext();let value=c.chatMetadata[HOST_META];if(value===undefined){value={schema:'tisya.host-sources/1',outputs:{},active:[]};c.chatMetadata[HOST_META]=value;}if(value.schema!=='tisya.host-sources/1'||!value.outputs||!Array.isArray(value.active))fail('V3_SOURCE_METADATA','原文来源索引损坏');return value;};
- async function sourceRecord(floor,{read=false}={}){
-  guard();const c=getContext(),message=c.chat[floor],identity=await system.identities.resolve(floor);guard();
+ async function persistFields(fields){
+  const metadata=getContext().chatMetadata,target=meta(),before=Object.fromEntries(Object.keys(fields).map(key=>[key,{present:Object.hasOwn(target,key),value:target[key]}]));
+  Object.assign(target,fields);
+  try{await persist();}catch(error){
+   // Failed saves must not become the comparison baseline for a later retry.
+   // Restore only fields still owned by this write, never a newly opened chat.
+   if(getContext().chatMetadata===metadata&&metadata[HOST_META]===target)for(const [key,value]of Object.entries(fields))if(target[key]===value){if(before[key].present)target[key]=before[key].value;else delete target[key];}
+   throw error;
+  }
+ }
+ async function sourceRecord(floor,{read=false,allowUnavailable=false,knownIdentity=null,originalIndex=null,expectedFullHash=null}={}){
+  guard();const c=getContext(),message=c.chat[floor],identity=knownIdentity??await system.identities.resolve(floor);guard();
   if(!message||message.is_system||message.role==='tool')return null;
-  const fullHash=await sha256Utf16(String(message.mes??''));
+  const fullHash=await sha256Utf16(String(message.mes??''));guard();if(expectedFullHash!==null&&fullHash!==expectedFullHash)fail('SOURCE_CHANGED','聊天在原文读取与保存之间已改变');
   if(message.is_user){const turnDirection=readTurnDirection(message);return {role:'user',floor,identity,key:`user:${identity.messageId}:${fullHash}`,fullHash,text:String(message.mes??''),turnDirection,directionKey:turnDirection?`direction:${identity.messageId}:${await sha256Utf16(turnDirection)}`:null};}
   const output=meta().outputs[identity.messageId+':'+fullHash];
   const historical=!output&&!/<think\b[^>]*\bphase\s*=/i.test(message.mes);
@@ -30,47 +42,63 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
   // belong to a requested generation/import or an explicit source mutation.
   const bodies=historical?[]:[...String(message.mes).matchAll(/<body\b[^>]*>([\s\S]*?)<\/body\s*>/gi)];
   const body=historical?String(message.mes):bodies.length===1?bodies[0][1]:String(message.mes),bodyHash=await sha256Utf16(body),entryId=await system.originals.entryIdFor(identity);
-  let prior;try{prior=await system.originals.metadata({entryId,scope:{chatId:identity.chatId,branchId:identity.branchId},includeDeleted:true});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}
+  let prior;if(originalIndex)prior=originalIndex.get(identity.messageId);else try{prior=await system.originals.metadata({entryId,scope:{chatId:identity.chatId,branchId:identity.branchId},includeDeleted:true});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}
   const revision=prior&&!prior.deleted&&prior.hash===bodyHash?prior.sourceRevision:`host:${fullHash}`;
-  if(!read){
-   const unchanged=prior&&!prior.deleted&&prior.hash===bodyHash&&prior.format===(historical?'historical':'numbered');
+  const unchanged=prior&&!prior.deleted&&prior.hash===bodyHash&&prior.format===(historical?'historical':'numbered');
    const sourceRevision=(prior?.revision??0)+(unchanged?0:1);
-   return {role:'assistant',floor,identity,key:`original:${entryId}:${sourceRevision}`,fullHash,entryId,
+   const record={role:'assistant',floor,identity,key:`original:${entryId}:${sourceRevision}`,fullHash,entryId,
     reference:unchanged?{entryId,revision:prior.revision,hash:prior.hash,paragraphs:[]}:null,
     requestKey:output?.requestKey??null,time:storyTime(message.mes)};
-  }
+  if(!read)return record;
   let item;
   try{
-   if(!historical)parseV3Reply(message.mes);
-   item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,historical,enableNativeBridge:configuration().nativeBridge===true&&!historical});
+   if(historical)parseHistoricalBody(String(message.mes??''));else parseV3Reply(message.mes);
   }catch(error){
    error.floor=floor;
    error.message=`聊天第 ${floor+1} 条（楼层 ${floor}）无法作为本轮原文：${error.code==='HISTORY_CONTROL_BLOCK'?'旧回复含有未配对的控制标签':error.message}。原聊天未修改。`;
+   // A retained legacy message is not a newly generated reply. A local parsing
+   // issue leaves this source pending; it must not veto sending or deleting.
+   // Storage/identity/readback failures remain fatal and are never downgraded.
+   if(allowUnavailable&&sourceFormatError(error))return {...record,diagnostic:{floor,messageId:identity.messageId,sourceKey:record.key,fullHash,code:error.code,status:'pending',message:`第 ${floor+1} 条旧聊天暂未归档：${error.code==='HISTORY_CONTROL_BLOCK'?'控制标签不完整':error.message}。原文保留；可在历史补录中核对，本轮聊天继续。`}};
    throw error;
   }
+  // Keep storage/bridge errors outside the legacy format diagnostic catch.
+  item=await system.sourceBridge.archiveSource({floor,sourceRevision:revision,operationId:`source:${identity.branchId}:${identity.messageId}:${fullHash}`,historical,enableNativeBridge:configuration().nativeBridge===true&&!historical});
   item.storyTime=storyTime(message.mes);
   return {role:'assistant',floor,identity,key:item.archiveSource.key,fullHash,entryId:item.originalReference.entryId,reference:item.originalReference,requestKey:output?.requestKey??null,time:storyTime(message.mes),...(read?{item}:{})};
  }
- async function scan({before=Infinity,read=false}={}){
-  const result=[];for(let floor=0;floor<getContext().chat.length&&floor<before;floor++){
-   const m=getContext().chat[floor];if(m.is_system||m.role==='tool')continue;
+ async function scan({before=Infinity,read=false,allowUnavailable=true}={}){
+  guard();const context=getContext(),messages=context.chat.map(message=>({message,text:message.mes,swipeId:message.swipe_id??0}));
+  // Reuse one verified identity/metadata snapshot per scan, never across scans.
+  // Per-floor resolve otherwise copies the complete chat and reads the same book N times.
+  const identities=typeof system.identities.sync==='function'?await system.identities.sync():null;guard();
+  const originalIndex=identities&&typeof system.originals.listMetadata==='function'?new Map((await system.originals.listMetadata({scope:{chatId:identities.chatId,branchId:identities.branchId},includeDeleted:true})).map(item=>[item.identity.messageId,item])):null;guard();
+  const result=[];for(let floor=0;floor<messages.length&&floor<before;floor++){
+   const m=messages[floor].message;if(m.is_system||m.role==='tool')continue;
    // Unstructured opener is character setup, never disguised as archived numbered prose.
-   if(floor===0&&openingMaterial(getContext()))continue;
-   const row=await sourceRecord(floor,{read});if(row)result.push(row);
-  }return result;
+   if(floor===0&&openingMaterial(context))continue;
+   const messageId=identities?.order?.[floor],knownIdentity=messageId?{chatId:identities.chatId,branchId:identities.branchId,messageId}:null;
+   const row=await sourceRecord(floor,{read,allowUnavailable,knownIdentity,originalIndex});if(row)result.push(row);
+  }
+  guard();if(getContext().chat!==context.chat||context.chat.length!==messages.length||messages.some((entry,i)=>context.chat[i]!==entry.message||entry.message.mes!==entry.text||(entry.message.swipe_id??0)!==entry.swipeId))fail('SOURCE_CHANGED','聊天在读取来源期间已改变');
+  return result;
  }
  const keys=rows=>rows.flatMap(row=>[...(row.requestKey?['request:'+row.requestKey]:[]),row.key,...(row.directionKey?[row.directionKey]:[])]);
  async function build({requestKey,generationType='normal',before=Infinity,instruction}){
-  const rows=await scan({before,read:true}),active=keys(rows),requestSource='request:'+requestKey;active.push(requestSource);
+  const rows=await scan({before,read:false}),active=keys(rows),requestSource='request:'+requestKey;active.push(requestSource);
 
   const state=await system.storage.read(),view=projectRetained(state,active),done=new Set(view.commits.filter(c=>c.kind==='archive'&&!c.archiveSkipped).map(c=>c.source)),processed=new Set(view.commits.filter(c=>c.kind==='archive').map(c=>c.source)),nativeDone=new Set(view.commits.filter(c=>c.kind==='archive'&&['applied','original-owned'].includes(c.nativeReceipt?.phase)).map(c=>c.source));
-  const archiveSources=[];let users=[];for(const row of rows){if(row.role==='user'){users.push({key:row.key,text:row.text});continue;}if(!(configuration().archiveEnabled===false?processed:done).has(row.key)){row.item.userSources=clone(users);row.item.nativeBridge.nativeAlready=nativeDone.has(row.key);archiveSources.push(row.item);}users=[];}
+  const archiveSources=[];let users=[];for(const row of rows){if(row.role==='user'){users.push({key:row.key,text:row.text});continue;}if(!(configuration().archiveEnabled===false?processed:done).has(row.key)){
+   const materialized=await sourceRecord(row.floor,{read:true,allowUnavailable:true,knownIdentity:row.identity,expectedFullHash:row.fullHash});if(materialized.key!==row.key||materialized.fullHash!==row.fullHash)fail('SOURCE_CHANGED','原文保存期间来源修订已改变');Object.assign(row,materialized);
+   if(row.item){row.item.userSources=clone(users);row.item.nativeBridge.nativeAlready=nativeDone.has(row.key);archiveSources.push(row.item);}
+  }users=[];}
   const lastUser=rows.findLast(r=>r.role==='user'),config=configuration(view),onstageObjects=config.onstageObjects??view.rows.find(r=>r.table==='scene')?.values.参与者??[],effective={...config,onstageObjects},worldWindow=typeof config.worldWindow?.ready==='boolean'?config.worldWindow:worldWindowFor(view,rows,archiveSources,effective);
   const preferenceSources=lastUser?[{key:lastUser.key,text:lastUser.text,kind:'user'},...(lastUser.turnDirection?[{key:lastUser.directionKey,text:lastUser.turnDirection,kind:'turn-direction'}]:[])]:[];
   // Repeated explicit feedback is analyzed once per stable user source.
   const used=new Set([...(state.preferenceRows??[]).map(r=>r.preferenceSource),...(state.preferenceDrafts??[]).flatMap(d=>(d.contributions??[]).map(c=>c.source))]);
+  const sourceDiagnostics=rows.filter(row=>row.diagnostic).map(row=>row.diagnostic);if(!same(meta().sourceDiagnostics??[],sourceDiagnostics))await persistFields({sourceDiagnostics});
   current=rows;pendingSource=requestSource;
-  return {requestKey,generationType,archiveEnabled:config.archiveEnabled!==false,plotEnabled:config.plotEnabled!==false,activeSourceKeys:active,currentSourceKey:generationType==='advanced-reroll'?requestSource:(lastUser?.directionKey??lastUser?.key??requestSource),archiveSources,preferenceSources:preferenceSources.filter(s=>!used.has(s.key)),currentUser:instruction??lastUser?.text??'',currentRequest:{turnDirection:lastUser?.turnDirection??'',sourceKey:lastUser?.directionKey??null},additionalInput:{...(lastUser?.turnDirection?{directives:lastUser.turnDirection,kind:'turn-direction',sourceKey:lastUser.directionKey}:{}),cardSetup:nativeCardMaterial(getContext())},worldWindow,queryCatalog:['list_archive','describe_fields','search_archive','read_archive'],playerObjects:config.playerObjects??[],onstageObjects,focusText:config.focusText??config.worldWindow?.focusText??'',focusObjects:config.focusObjects??[],nativeRules:config.nativeRules??'',...config.preflightControls};
+  return {requestKey,generationType,archiveEnabled:config.archiveEnabled!==false,plotEnabled:config.plotEnabled!==false,activeSourceKeys:active,currentSourceKey:generationType==='advanced-reroll'?requestSource:(lastUser?.directionKey??lastUser?.key??requestSource),archiveSources,preferenceSources:preferenceSources.filter(s=>!used.has(s.key)),currentUser:instruction??lastUser?.text??'',currentRequest:{turnDirection:lastUser?.turnDirection??'',sourceKey:lastUser?.directionKey??null},additionalInput:{...(sourceDiagnostics.length?{sourceDiagnostics:clone(sourceDiagnostics)}:{}),...(lastUser?.turnDirection?{directives:lastUser.turnDirection,kind:'turn-direction',sourceKey:lastUser.directionKey}:{}),cardSetup:nativeCardMaterial(getContext())},worldWindow,queryCatalog:['list_archive','describe_fields','search_archive','read_archive'],playerObjects:config.playerObjects??[],onstageObjects,focusText:config.focusText??config.worldWindow?.focusText??'',focusObjects:config.focusObjects??[],nativeRules:config.nativeRules??'',...config.preflightControls};
  }
  async function invalidate(event){
   guard();const previous=[...meta().active];const before=event.reason==='delete'?event.fromFloor:event.fromFloor;
@@ -96,11 +124,15 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
    const id=await system.originals.entryIdFor(event.identity);let old;try{old=await system.originals.metadata({entryId:id,scope:event.identity,includeDeleted:true});}catch(e){if(e.code!=='SOURCE_NOT_FOUND')throw e;}
    if(old&&!old.deleted)await system.originals.remove({entryId:id,scope:event.identity,expectedVersion:old.version,operationId:event.id});
   }
-  meta().active=active;await persist();
+  await persistFields({active,sourceDiagnostics:(meta().sourceDiagnostics??[]).filter(d=>retained.some(row=>row.identity.messageId===d.messageId&&row.fullHash===d.fullHash))});
   return {activeSourceKeys:active,invalidatedSourceKeys:previous.filter(k=>!active.includes(k)),...(nativeRestore?{nativeRestore}:{})};
  }
  async function recordOutput({floor,requestKey}){const identity=await system.identities.resolve(floor),hash=await sha256Utf16(getContext().chat[floor].mes);meta().outputs[identity.messageId+':'+hash]={requestKey};await persist();}
- async function refresh(){current=await scan({read:false});meta().active=keys(current);await persist();return [...meta().active];}
+ async function refresh(){
+  const rows=await scan({read:false}),active=keys(rows),metadata=meta(),diagnostics=(metadata.sourceDiagnostics??[]).filter(d=>rows.some(row=>row.identity.messageId===d.messageId&&row.fullHash===d.fullHash));
+  if(!same(metadata.active,active)||!same(metadata.sourceDiagnostics??[],diagnostics))await persistFields({active,...metadata.sourceDiagnostics!==undefined||diagnostics.length?{sourceDiagnostics:diagnostics}:{}});
+  current=rows;return [...meta().active];
+ }
  async function detectChange(){
   guard();await system.identities.sync();const context=getContext(),live=[];
   for(let floor=0;floor<context.chat.length;floor++){const message=context.chat[floor];if(message.is_system||message.role==='tool'||floor===0&&openingMaterial(context))continue;const identity=await system.identities.resolve(floor),hash=await sha256Utf16(String(message.mes??''));live.push({floor,identity,hash,turnDirection:message.is_user?readTurnDirection(message):''});}
@@ -109,7 +141,7 @@ export function createSourceChain({getContext,system,getNative,configuration,gua
   if(!deleted.length&&!changed.length)return null;
   const first=[...deleted,...changed].sort((a,b)=>a.floor-b.floor)[0];return {fromFloor:first.floor,identity:first.identity,deleted,changed};
  }
- return {build,invalidate,recordOutput,scan,refresh,detectChange,materialize:floor=>floor===0&&openingMaterial(getContext())?null:sourceRecord(floor,{read:true}),activeKeys:()=>[...meta().active],current:()=>clone(current),metadata:meta};
+ return {build,invalidate,recordOutput,scan,refresh,detectChange,materialize:floor=>floor===0&&openingMaterial(getContext())?null:sourceRecord(floor,{read:true,allowUnavailable:true}),activeKeys:()=>[...meta().active],current:()=>clone(current),metadata:meta};
 }
 function storyTime(message){const title=String(message).match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];const time=title?.trim().split('|')[1]?.trim();return calendarTime(time)!==null?time:null;}
 function worldWindowFor(view,rows,sources,config){

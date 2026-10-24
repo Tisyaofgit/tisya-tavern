@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-24T19:06:28.202Z",
+  "path": "v3/host-sources.mjs",
+  "sha256": "24a36bfde6dfce3a3df8c623b8cb7f9f42ddfa1a85521a81e6a47fe8b4b93b46",
+  "before": "../initialization-concurrency/retry-before.tap",
+  "after": "source-persistence-retry-after.tap",
+  "passed": 12,
+  "failed": 0,
+  "rootCause": "A failed source metadata save left active changed in memory; retry saw no change and skipped persistence.",
+  "fix": "Persist source fields transactionally: restore old value or absence on failed save only if the same chat metadata and field values still belong to this write. Publish refreshed current rows only after persistence succeeds.",
+  "scope": [
+    "refresh active/diagnostics",
+    "build diagnostics",
+    "invalidate active/diagnostics"
+  ],
+  "limits": "Injected actual host persistence failure; simulated host IO, not an Android UI claim."
+}

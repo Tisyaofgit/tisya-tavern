@@ -1,0 +1,131 @@
+TAP version 13
+# (node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: verified native rule text and hash provenance enter A once, separate from custom constraints
+ok 1 - verified native rule text and hash provenance enter A once, separate from custom constraints
+  ---
+  duration_ms: 1883.394259
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 原卡变量规则在生成期间已变化
+#     at error (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:22:43)
+#     at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:23:46)
+#     at verifyNativeRules (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:55:148)
+#     at async send (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:92:511)
+#     at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2330:59)
+#     at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2977:20) {
+#   code: 'V3_NATIVE_RULES_CHANGED'
+# }
+# Subtest: editing verified native rules while A runs rejects the old result before B
+ok 2 - editing verified native rules while A runs rejects the old result before B
+  ---
+  duration_ms: 398.023278
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: ordinary HTML card with a global MVU runtime reaches both A and B without probing native variables
+ok 3 - ordinary HTML card with a global MVU runtime reaches both A and B without probing native variables
+  ---
+  duration_ms: 1298.774338
+  type: 'test'
+  ...
+# Subtest: one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields
+ok 4 - one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields
+  ---
+  duration_ms: 3.257586
+  type: 'test'
+  ...
+# Subtest: automatic MVU follows this chat active-swipe variables rather than a global runtime
+ok 5 - automatic MVU follows this chat active-swipe variables rather than a global runtime
+  ---
+  duration_ms: 0.454412
+  type: 'test'
+  ...
+# Subtest: world controls and the two distinct focus reference types are projected without guessing or overwriting
+ok 6 - world controls and the two distinct focus reference types are projected without guessing or overwriting
+  ---
+  duration_ms: 0.847932
+  type: 'test'
+  ...
+# Subtest: verified native rules come only from enabled current-card entries with exact source hashes
+ok 7 - verified native rules come only from enabled current-card entries with exact source hashes
+  ---
+  duration_ms: 10.402231
+  type: 'test'
+  ...
+# Subtest: preflight consumes actual controls and writer receives preference constraints in their proper home
+ok 8 - preflight consumes actual controls and writer receives preference constraints in their proper home
+  ---
+  duration_ms: 7.529213
+  type: 'test'
+  ...
+# Subtest: ordinary material APIs exclude every exact private marker while retaining ordinary disabled entries
+ok 9 - ordinary material APIs exclude every exact private marker while retaining ordinary disabled entries
+  ---
+  duration_ms: 5.538407
+  type: 'test'
+  ...
+# Subtest: automatic ordinary HTML card binds without native variables (global MVU false)
+ok 10 - automatic ordinary HTML card binds without native variables (global MVU false)
+  ---
+  duration_ms: 30.050851
+  type: 'test'
+  ...
+# Subtest: automatic ordinary HTML card binds without native variables (global MVU true)
+ok 11 - automatic ordinary HTML card binds without native variables (global MVU true)
+  ---
+  duration_ms: 17.139837
+  type: 'test'
+  ...
+# Subtest: declared native MVU card clearly reports its missing dependency without creating an archive
+ok 12 - declared native MVU card clearly reports its missing dependency without creating an archive
+  ---
+  duration_ms: 8.235863
+  type: 'test'
+  ...
+# Subtest: native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+ok 13 - native callback adapter initializes stable owner and directly reads back pointer without dropping other metadata
+  ---
+  duration_ms: 17.223101
+  type: 'test'
+  ...
+# Subtest: actual persona export path saves settings and chat lock with direct readback
+ok 14 - actual persona export path saves settings and chat lock with direct readback
+  ---
+  duration_ms: 25.394778
+  type: 'test'
+  ...
+# Subtest: native persona persistence failure leaves a recoverable book intent and original pointer
+ok 15 - native persona persistence failure leaves a recoverable book intent and original pointer
+  ---
+  duration_ms: 29.0574
+  type: 'test'
+  ...
+# Subtest: book host with no open chat lists personas without writing identity metadata
+ok 16 - book host with no open chat lists personas without writing identity metadata
+  ---
+  duration_ms: 0.848913
+  type: 'test'
+  ...
+# Subtest: real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+ok 17 - real chat-open export uses stored avatar/file locator and verifies native MVU hash without copying values
+  ---
+  duration_ms: 33.134997
+  type: 'test'
+  ...
+# Subtest: native draft callback saves current unsent text only in its original archive book
+ok 18 - native draft callback saves current unsent text only in its original archive book
+  ---
+  duration_ms: 14.722952
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3757.851443

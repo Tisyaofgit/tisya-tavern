@@ -82,9 +82,10 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
   async function nativeCheckpoint(){
     const c=raw(),current=context(),base={format:'tisya.native-checkpoint/1',owner:copy(current.owner),locator:locator()};
     if(readConfiguration().nativeBridge!==true)return {...base,mode:'none'};
-    const runtime=target.Mvu;need('Mvu.getMvuData',runtime?.getMvuData);need('Mvu.parseMessage',runtime?.parseMessage);need('Mvu.replaceMvuData',runtime?.replaceMvuData);
+    const runtime=target.Mvu,missing=['getMvuData','parseMessage','replaceMvuData'].filter(name=>typeof runtime?.[name]!=='function');
+    check(missing.length===0,'NATIVE_MVU_UNAVAILABLE','当前角色卡或本会话已有原生 MVU 变量，需要先安装并启用酒馆助手，让该卡的 MVU 脚本完成初始化。原聊天和变量未修改。',{capabilities:missing.map(name=>'Mvu.'+name)});
     for(let floor=c.chat.length-1;floor>=0;floor--){const value=runtime.getMvuData({type:'message',message_id:floor});if(value?.stat_data&&typeof value.stat_data==='object')return {...base,mode:'mvu',floor,hashTarget:'stat_data',hash:await sha256Utf16(JSON.stringify(canonical(value.stat_data)))};}
-    throw new BookError('NATIVE_CHECKPOINT_MISSING','The active card has no native MVU snapshot');
+    throw new BookError('NATIVE_CHECKPOINT_MISSING','当前角色卡需要原生 MVU 变量，但本会话尚无可读取的变量快照。请先完成原卡开场初始化；原聊天和变量未修改。');
   }
   async function saveCurrentBranch({archiveId,binding,draft,operationId}){
     const c=raw(),h=handle();check(same(context().owner,binding.owner),'ARCHIVE_OWNER','Current branch differs from the archive being saved');const before=await nativeCheckpoint();await need('saveChat',c.saveChat)();scopeGuard(c,h);

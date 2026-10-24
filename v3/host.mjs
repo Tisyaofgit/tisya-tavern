@@ -14,6 +14,9 @@ import {compileCompanionMessages,compileSharedCompanionSlot} from './companion-p
 import {languageView} from '../config/language.js';
 import {sameJsonValue} from './runtime-source/host/json-value.mjs';
 import {resolveOpeningPlayer} from './opening-service.mjs';
+import {BOOK_POINTER_KEY} from './book-host.mjs';
+import {mergeDefinitionRegistries} from './design-schema.mjs';
+import {sameDefinition} from '../tables/schema.js';
 
 const clone=structuredClone,ID_META='tisya_w24';
 const error=(code,message)=>Object.assign(Error(message),{code});
@@ -56,8 +59,8 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
  function assertIdle(){check(!operation&&!initializing&&!companionRequest&&!mutationDepth,'V3_BUSY','缇斯亚正在处理本轮请求');check(!script.isGenerating?.(),'V3_NATIVE_BUSY','原生生成尚未结束');}
  const runExclusive=fn=>{const job=tail.then(fn);tail=job.catch(()=>{});return job;};
  async function initialize(){
-  if(session){guard();return session;}
   if(initializing)return initializing;
+  if(session){guard();return session;}
   initializing=(async()=>{
    const ctx=getContext(),handle=activeHandle(),cfg=readConfig(),boundEpoch=epoch;
    check(cfg.enabled!==false,'V3_DISABLED','当前聊天未启用表单推进');
@@ -68,7 +71,8 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
    const runtime=cfg.nativeBridge===true?target.Mvu:null;
    if(cfg.nativeBridge===true)check(runtime&&['getMvuData','parseMessage','replaceMvuData'].every(k=>typeof runtime[k]==='function'),'V3_MVU_UNAVAILABLE','请先等待原卡 MVU 脚本初始化');
    const baseRows=clone(binding.initialRows??[]),nativeRows=nativeInitialRows(ctx,runtime);for(const row of nativeRows)if(!baseRows.some(r=>r.id===row.id))baseRows.push(row);
-   const sessionStorage=createWorldbookTableStorage({transport:binding.transport,bookId:binding.books.tables,owner,initialState:createInitialState({registry:tableRegistry,rows:baseRows})});
+   const sessionStorage=createWorldbookTableStorage({transport:binding.transport,bookId:binding.books.tables,owner,initialState:createInitialState({registry:binding.initialRegistry??tableRegistry,rows:baseRows})});
+   if(binding.initialRegistry){const stored=await sessionStorage.read(),definitionRegistry=mergeDefinitionRegistries(stored.definitionRegistry??tableRegistry,binding.initialRegistry);const snapshots=[stored.baseView.registry,...stored.commits.filter(commit=>commit.registry).map(commit=>commit.registry)];const snapshotsChanged=snapshots.map(registry=>!sameDefinition(registry,mergeDefinitionRegistries(registry,definitionRegistry))).some(Boolean),changed=stored.definitionRegistry?!sameDefinition(definitionRegistry,stored.definitionRegistry):snapshotsChanged;if(changed){const next=clone(stored);next.definitionRegistry=definitionRegistry;next.revision++;await sessionStorage.compareAndWrite(stored.revision,next);}}
    if(runtime){const stored=await sessionStorage.read();if(!stored.baseView.rows.some(r=>r.table==='native_cells')&&!stored.commits.some(c=>c.changes.some(x=>x.after?.table==='native_cells'))){const next=clone(stored);next.baseView.rows.push(...nativeRows);next.revision++;await sessionStorage.compareAndWrite(stored.revision,next);check(same(nativeInitialRows(ctx,runtime).map(r=>r.values),nativeRows.map(r=>r.values)),'V3_NATIVE_CHANGED','原卡初始变量在读取期间变化');}}
    const preferenceStorage=createWorldbookPreferenceStorage({transport:binding.transport,bookId:binding.books.preferences,registry:tableRegistry});
    const storage=createPreferenceOverlayStorage({sessionStorage,preferenceStorage});
@@ -149,7 +153,27 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
  }
  async function mutation(fn){assertIdle();return runExclusive(async()=>{await initialize();mutationDepth++;try{return await fn();}finally{mutationDepth--;}});}
  async function selectSwipe({floor,swipeId}){return mutation(async()=>{await script.hydrateChatMessageSwipes(floor);const message=getContext().chat[floor];check(Number.isInteger(swipeId)&&swipeId>=0&&swipeId<message?.swipes?.length,'V3_SWIPE','候选序号无效');const result=await session.system.controller.switchSwipe({floor,swipeId,switchNative:async()=>{await script.swipe(null,swipeId<(message.swipe_id??0)?'left':'right',{message,forceMesId:floor,forceSwipeId:swipeId,forceDuration:0});check(message.swipe_id===swipeId&&message.mes===message.swipes[swipeId],'V3_SWIPE_READBACK','原生候选切换未确认');await persist();}});await session.chain.materialize(floor);await session.chain.refresh();return result;});}
- async function deleteFloor({floor}){return mutation(async()=>{const result=await session.system.controller.deleteFloor({floor,deleteNative:async()=>{await script.deleteMessage(floor);await persist();}});await session.chain.refresh();return result;});}
+ async function deleteFloor({floor}){
+  assertIdle();const context=getContext(),chat=context.chat,metadata=context.chatMetadata,startedEpoch=epoch;
+  const deletionScope=()=>check(!disposed&&epoch===startedEpoch&&getContext().chat===chat&&getContext().chatMetadata===metadata,'V3_CHAT_CHANGED','删除期间聊天已切换');
+  return runExclusive(async()=>{deletionScope();mutationDepth++;try{
+   // A chat with no archive is still a native chat. Inspect its durable binding
+   // before loading generation configuration; corrupt/known bindings never fall back.
+   const active=!session&&typeof bookManager.binding==='function'?await bookManager.binding():null;deletionScope();
+   const unmanaged=()=>metadata[BOOK_POINTER_KEY]==null&&metadata[HOST_META]===undefined;
+   if(!session&&active?.pointer===null&&active?.binding===null&&unmanaged()){
+    check(Number.isInteger(floor)&&floor>=0&&floor<chat.length,'DELETE_REQUEST','删除楼层不存在');
+    const handle=activeHandle(),ids=createFloorIdentityManager({getContext,getStableChatId:()=>activeHandle().stableId(),saveChat:()=>context.saveChat(),readMetadata:()=>handle.metadata.get()});
+    const identity=await ids.resolve(floor);deletionScope();check(unmanaged(),'V3_BINDING_CHANGED','删除期间聊天已绑定受管存档');const retained=freezeChat(chat).filter((_,index)=>index!==floor);
+    await script.deleteMessage(floor);deletionScope();
+    const verifyNative=()=>check(chat.length===retained.length&&retained.every((entry,index)=>chat[index]===entry.message&&entry.message.mes===entry.text&&(entry.message.swipe_id??0)===entry.swipeId),'DELETE_READBACK','原生删除结果与所选楼层不符');
+    verifyNative();const state=await ids.sync();deletionScope();verifyNative();
+    check(state.tombstones[identity.messageId],'DELETE_READBACK','删除的楼层身份仍在当前聊天中');
+    return {managed:false,deleted:true,identity};
+   }
+   await initialize();deletionScope();const result=await session.system.controller.deleteFloor({floor,deleteNative:async()=>{await script.deleteMessage(floor);await persist();}});await session.chain.refresh();return result;
+  }finally{mutationDepth--;}});
+ }
  async function deleteCandidate({floor,swipeId}){return mutation(async()=>{const identity=await session.identities.resolve(floor);await script.deleteSwipe(swipeId,floor);await session.identities.sync();const event=await session.identities.recordInvalidation({reason:'swipe',identity,fromFloor:floor});const receipt=await session.chain.invalidate(event);await session.identities.completeInvalidation({id:event.id,receipt});await persist();await session.chain.materialize(floor);await session.chain.refresh();return receipt;});}
  async function advancedReroll({floor,instruction,revision,requestId=crypto.randomUUID()}){assertIdle();check(floor===getContext().chat.length-1,'V3_REROLL_POSITION','较早楼层请先建立分支再重骰');const bound=revision?bindRevision(revision,revision.source??getContext().chat[floor]?.mes):null;instruction=instruction??[bound?.direction,bound?.details].filter(Boolean).join('\n');check(typeof instruction==='string'&&(instruction.trim()||bound),'V3_FEEDBACK','请输入本次重骰要求');return runExclusive(()=>perform({type:'advanced-reroll',instruction:instruction||'按本次所选范围润色正文。',revision:bound,requestKey:requestId,targetFloor:floor,advanced:true}));}
  async function reroll({floor,requestId=crypto.randomUUID()}){assertIdle();check(floor===getContext().chat.length-1,'V3_REROLL_POSITION','较早楼层请先建立分支再重骰');return runExclusive(()=>perform({type:'swipe',requestKey:requestId,targetFloor:floor}));}
@@ -175,7 +199,7 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
  const api={createCompanion:installCompanion,requestCompanion,initialize,generateInterceptor,advancedReroll,reroll,selectSwipe,deleteFloor,deleteCandidate,branch,cancel,assertIdle,bindingTransition:()=>mutationDepth>0,busy:()=>!!operation||!!initializing||!!companionRequest||mutationDepth>0,
   prepareAuthorNote:()=>prepareNativeAuthorNote({native,getContext,guard}),
   async getSession(){const s=await initialize();return {system:s.system,storage:s.storage,preferences:s.preferences,scope:s.getScope(),getScope:s.getScope,binding:s.binding,sourceChain:{scan:options=>s.chain.scan(options),materialize:floor=>s.chain.materialize(floor)},guard,sourceGuard:async captured=>{guard();check(same(captured,s.getScope()),'V3_SOURCE_CHANGED','审校来源已变化');const fresh=await s.chain.scan({read:false});check(same(fresh.map(r=>[r.identity.messageId,r.key]),s.chain.current().map(r=>[r.identity.messageId,r.key])),'V3_SOURCE_CHANGED','正文候选已变化');guard();}};},
-  inspect(){let enabled=false,configurationReady=true,issue=lastError;const c=getContext();try{if(!c.chatId&&c.characterId===undefined&&!c.groupId)throw error('CHAT_REQUIRED','请先打开聊天');enabled=readConfig().enabled!==false;}catch(e){if(!['CHAT_REQUIRED','CONFIGURATION_NOT_READY','CONFIGURATION_SCOPE','CONFIGURATION_BINDING','CONFIGURATION_PLAYER'].includes(e.code))throw e;configurationReady=false;issue={code:e.code,message:e.message};}return {enabled,configurationReady,busy:!!operation||!!companionRequest||mutationDepth>0,requestKey:operation?.requestKey??null,scope:configurationReady?session?.getScope()??null:null,error:issue};},
+  inspect(){let enabled=false,configurationReady=true,issue=lastError;const c=getContext();try{if(!c.chatId&&c.characterId===undefined&&!c.groupId)throw error('CHAT_REQUIRED','请先打开聊天');enabled=readConfig().enabled!==false;}catch(e){if(!['CHAT_REQUIRED','CONFIGURATION_NOT_READY','CONFIGURATION_SCOPE','CONFIGURATION_BINDING','CONFIGURATION_PLAYER'].includes(e.code))throw e;configurationReady=false;issue={code:e.code,message:e.message};}return {enabled,configurationReady,busy:!!operation||!!initializing||!!companionRequest||mutationDepth>0,requestKey:operation?.requestKey??null,scope:configurationReady?session?.getScope()??null:null,error:issue};},
   setProgress(value){progress=value;},setBeforeWriter(value){assertIdle();check(value===null||typeof value==='function','V3_DEPENDENCY','beforeWriter必须为函数');beforeWriter=value;},configurationChanged(){assertIdle();session=null;epoch++;},
   dispose(){if(disposed)return;companion?.dispose();cancel('插件已卸载');disposed=true;epoch++;listeners.splice(0).forEach(fn=>fn());if(target[interceptorName]===generateInterceptor){if(previous===undefined)delete target[interceptorName];else target[interceptorName]=previous;}if(target[ownerSymbol]===api)delete target[ownerSymbol];session=null;}
  };

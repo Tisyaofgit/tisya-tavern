@@ -4,7 +4,9 @@ import {copy,object,check,validateRow,validateReferences,mapRowReferences,regist
 import {digest} from '../../../tables/books.js';
 import {bridgePatch,parseNativeTransaction,auditNativeOutcome,hasNativeUpdate,valueAt,carryNativeForward} from '../../../tables/native-bridge.js';
 import {prepareWorld,assertWorldBasisUnchanged} from './world.mjs';
+import {sameJsonValue} from '../host/json-value.mjs';
 import {preferenceGroup,preferenceContributionIdentity,preferenceContributionIdentities,projectPreferences} from '../preferences/service.mjs';
+import {mergeDefinitionRegistries} from '../../design-schema.mjs';
 
 export {formatSimpleSheet};
 export const ROOT_FIELDS=['requestKey','archiveProposal','worldProposal','scope','preferenceCandidates','archiveRequests','creativeBrief','pending'];
@@ -25,7 +27,8 @@ function stepView(view,prepared){return {...view,registry:prepared.registry,rows
 function preferencesFor(state,input){return projectPreferences(state,{...input.preferenceProjectionOptions,chatId:input.originalScope?.chatId??input.identity?.chatId??input.preferenceProjectionOptions?.chatId,enabled:input.preferencesEnabled!==false,activeSourceKeys:input.activeSourceKeys});}
 function preferenceWeights(state,input){const p=preferencesFor(state,input);return {groups:p.groups.map(g=>({...g,contributions:g.contributions.map(c=>({id:c.id,source:c.source,score:c.score,instruction:c.instruction}))})),hardConstraints:p.hardConstraints.map(c=>({group:c.group,kind:c.kind,tag:c.tag,id:c.id,source:c.source,instruction:c.instruction})),rows:p.rows.map(r=>({id:r.id,values:{...(r.values.适用情境?{适用情境:r.values.适用情境}:{}),...(r.values.例外?{例外:copy(r.values.例外)}:{})}}))};}
 function currentView(state,input){const view=projectRetained(state,input.activeSourceKeys),preferences=preferencesFor(state,input);return {...view,rows:[...view.rows.filter(r=>r.table!=='preferences'),...preferences.rows]};}
-function remapProposal(proposal,registry,aliases){const p=copy(proposal);for(const op of p.changes){op.id=aliases.get(op.id)??op.id;if(op.values)mapRowReferences({table:op.table,values:op.values},registry,id=>aliases.get(id)??id);if(op.access)for(const k of ['readers','knowers'])op.access[k]=op.access[k]?.map(id=>aliases.get(id)??id);}return p;}
+function remapPatchReferences(op,registry,aliases,rows){if(!op.values)return;const inherited=op.table==='objects'&&!Object.hasOwn(op.values,'类型'),values=inherited?{...op.values,类型:rows.find(row=>row.id===op.id)?.values.类型}:op.values;mapRowReferences({id:op.id,table:op.table,values},registry,id=>aliases.get(id)??id);if(inherited)delete values.类型;op.values=values;}
+function remapProposal(proposal,registry,aliases,rows){const p=copy(proposal);for(const op of p.changes){op.id=aliases.get(op.id)??op.id;remapPatchReferences(op,registry,aliases,rows);if(op.access)for(const k of ['readers','knowers'])op.access[k]=op.access[k]?.map(id=>aliases.get(id)??id);}return p;}
 function registerAliases(proposal,prepared,aliases){proposal.changes.forEach((op,i)=>{if(op.id.startsWith('new:'))aliases.set(op.id,prepared.commit.changes[i].id);});}
 function assertUnsettledWorldWindow(view,window){
  if(!window?.ready)return;
@@ -53,6 +56,7 @@ export function projectRetained(state,activeSourceKeys){
   for(const change of commit.changes){if(change.deleted)rows.delete(change.id);else rows.set(change.id,copy(change.after));}
   if(commit.registry)registry=copy(commit.registry);commits.push(copy(commit));anchors.push(...copy(commit.anchors));applied.add(commit.id);last=commit.id;
  }
+ if(state.definitionRegistry)registry=mergeDefinitionRegistries(registry,state.definitionRegistry);
  const result={registry,rows:[...rows.values()],anchors,commits,last};for(const row of result.rows)validateRow(registry,row);validateReferences(result.rows,registry);return result;
 }
 
@@ -152,7 +156,7 @@ async function prepareReadbackCommit({archive,view,item,input,after,index,resolv
 export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,resolveEvidence,native={},query,writerB,acceptWriterOutput,guard=()=>{},sourceGuard=async()=>{},onProgress,beforeWriter}){
  check(typeof storage?.read==='function'&&typeof storage?.compareAndWrite==='function'&&typeof requestA==='function','Runner dependencies are incomplete');check(typeof writerB!=='function'||typeof acceptWriterOutput==='function','A configured writer needs a worldbook A acceptance callback');let busy=false;
  const progress=(requestKey,phase,status='running')=>{try{onProgress?.({requestKey,phase,status});}catch(error){console.warn('[Tisya progress observer]',error);}};
- async function write(state,mutate){guard();const next=copy(state);mutate(next);next.revision=state.revision+1;await storage.compareAndWrite(state.revision,next);guard();const actual=await storage.read();check(same(actual,next),'Store write was not confirmed');return actual;}
+ async function write(state,mutate){guard();const next=copy(state);mutate(next);next.revision=state.revision+1;await storage.compareAndWrite(state.revision,next);guard();const actual=await storage.read();check(sameJsonValue(actual,next),'Store write was not confirmed');return actual;}
  async function verifySources(input){await sourceGuard(input);for(const item of input.archiveSources)await bindArchiveParagraphs({proposal:emptyProposal(),source:item.originalReference,scope:input.originalScope});guard();}
  async function run(rawInput){
   if(busy)throw failure('RUN_BUSY','A request is already active');busy=true;
@@ -172,7 +176,7 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
     const sourceOrder=Object.fromEntries(input.activeSourceKeys.map((key,index)=>[key,index]));
     for(const [index,batch]of result.archiveProposal.entries()){
      const item=input.archiveSources[index];check(!shadow.commits.some(c=>c.source===batch.source&&c.kind==='archive'&&!c.archiveSkipped),'Retained source was already archived');
-     const bound=await boundArchive(batch.proposal,item,input,{bindArchiveParagraphs,resolveEvidence});const p=remapProposal(bound.proposal,shadow.registry,aliases),nativeOps=p.changes.filter(op=>op.table==='native_cells'),businessOps=p.changes.filter(op=>op.table!=='native_cells');
+     const bound=await boundArchive(batch.proposal,item,input,{bindArchiveParagraphs,resolveEvidence});const p=remapProposal(bound.proposal,shadow.registry,aliases,shadow.rows),nativeOps=p.changes.filter(op=>op.table==='native_cells'),businessOps=p.changes.filter(op=>op.table!=='native_cells');
      check(input.archiveEnabled!==false||businessOps.length===0&&p.templates.length===0&&p.schemaChanges.length===0,'Business archive is disabled');check(!item.nativeBridge?.nativeAlready||nativeOps.length===0,'This source native state is already settled');
      const business={...p,changes:businessOps};const businessRefs=p.changes.flatMap((op,i)=>op.table!=='native_cells'?[bound.refs[i]]:[]);
      check(!item.nativeBridge?.archiveAlready||business.changes.length===0&&business.templates.length===0&&business.schemaChanges.length===0,'Already archived business is read-only');
@@ -192,7 +196,7 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
      if(nativeOwned&&item.nativeBridge?.enabled===true){check(object(item.nativeState?.before?.stat_data),'Original-owned native source has no frozen snapshot');const maps=nativeMaps(shadow,item.nativeState.before);if(maps.length){const synced=prepareCommit(shadow,{changes:maps,pending:[]},{source:batch.source,kind:'native-sync',evidence:'Native callback readback',allowedTables:['native_cells'],allowSchemaExtensions:false,inferSchemaFields:false});shadow={...shadow,rows:synced.rows};}}
      if(nativeOps.length){const maps=nativeOps.map(op=>({...op,evidence:'Native proposed shadow'}));const simulated=prepareCommit(shadow,{changes:maps,pending:[]},{source:batch.source,kind:'native-fill',evidence:'Native proposed shadow',allowedTables:['native_cells'],allowSchemaExtensions:false,inferSchemaFields:false});shadow={...shadow,rows:simulated.rows};}
     }
-    const worldInput=mapWorld(result.worldProposal,aliases);if(worldInput)for(const event of worldInput.events)for(const op of event.changes)mapRowReferences({table:op.table,values:op.values},shadow.registry,id=>aliases.get(id)??id);
+    const worldInput=mapWorld(result.worldProposal,aliases);if(worldInput)for(const event of worldInput.events)for(const op of event.changes)remapPatchReferences(op,shadow.registry,aliases,shadow.rows);
     const world=prepareWorld(shadow,worldInput,input.worldWindow,{playerObjects:input.playerObjects??[],onstageObjects:input.onstageObjects??[],activeSourceKeys:input.activeSourceKeys,existingNewIds:allNewIds});
     if(world)registerAliases(world.proposal,world.prepared,aliases);
     const prefs=preparePreferences(shadow,result.preferenceCandidates,input,state);

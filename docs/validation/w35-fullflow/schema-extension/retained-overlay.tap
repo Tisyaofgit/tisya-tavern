@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+ok 1 - initialization presents an unregistered responsibility as a typed extension draft and saves only on confirmation
+  ---
+  duration_ms: 47.434404
+  type: 'test'
+  ...
+# Subtest: initialization accepts an explicit linked subtable and retains its registry through a definition book
+ok 2 - initialization accepts an explicit linked subtable and retains its registry through a definition book
+  ---
+  duration_ms: 48.554233
+  type: 'test'
+  ...
+# Subtest: ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+ok 3 - ordinary archival still rejects undeclared fields and accepts confirmed initialization extensions
+  ---
+  duration_ms: 28.611141
+  type: 'test'
+  ...
+# Subtest: uncertain inference, protected schemas, and schema edits after review are refused without writing
+ok 4 - uncertain inference, protected schemas, and schema edits after review are refused without writing
+  ---
+  duration_ms: 44.614271
+  type: 'test'
+  ...
+# Subtest: conflicting reusable registries are rejected before creating a bound archive
+ok 5 - conflicting reusable registries are rejected before creating a bound archive
+  ---
+  duration_ms: 25.059024
+  type: 'test'
+  ...
+# Subtest: Genesis converts a compatible complete registry into the same reviewed extension declarations
+ok 6 - Genesis converts a compatible complete registry into the same reviewed extension declarations
+  ---
+  duration_ms: 63.472392
+  type: 'test'
+  ...
+# Subtest: custom subtable rows require a typed owner reference during generation and final review
+ok 7 - custom subtable rows require a typed owner reference during generation and final review
+  ---
+  duration_ms: 23.327592
+  type: 'test'
+  ...
+# Subtest: confirmed definition schema survives old registry snapshots without rewriting ledger rows or replay history
+ok 8 - confirmed definition schema survives old registry snapshots without rewriting ledger rows or replay history
+  ---
+  duration_ms: 13.482416
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 404.349272

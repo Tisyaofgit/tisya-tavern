@@ -1,0 +1,13 @@
+(node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+entering chat update routine for non-swipe post
+entering chat update routine for non-swipe post
+✔ editing a pending legacy source to valid prose clears the diagnostic and archives the actual new source (3243.371915ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3412.868677

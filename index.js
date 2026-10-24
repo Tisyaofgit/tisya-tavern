@@ -217,6 +217,7 @@ function v3Routes(){const routes={};
  return {...routes,'journey.openSource':openJourneySource,
  'configuration.status':()=>v3ConfigurationBook.read(),
  'configuration.hydrate':args=>v3ConfigurationBook.hydrate({initializeIfMissing:true,...args}),
+ 'configuration.saveProfile':args=>{v3Application.assertIdle();return v3ConfigurationBook.saveProfile(args);},
  'configuration.previewRestore':args=>{v3Application.assertIdle();return v3ConfigurationBook.previewRestore(args);},
  'configuration.restore':args=>{v3Application.assertIdle();return v3ConfigurationBook.restore(args);},
  'configuration.discardRestore':args=>v3ConfigurationBook.discardRestore(args),
@@ -361,7 +362,7 @@ function openSettings(tab='play',initialView=''){
  if(!mayLeaveUtility())return false;
  const key=configStore.read().key;renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
  const cached=configurationViews.get(key);if(cached){query('#tisya-settings-app').append(cached.root);utility=cached;cached.setVisible(true);cached.resume().then(()=>cached.navigate(tab,initialView)).catch(error);return true;}
- utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,runtimeV3:!!v3Application,getSettings:settings,onTables:()=>openWorkbench('archives'),initialTab:tab,initialView,version:VERSION,embedded:true,preserveOnClose:true,
+ utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,runtimeV3:!!v3Application,getSettings:settings,onTables:()=>openWorkbench('archives'),onProfiles:()=>openWorkbench('books'),initialTab:tab,initialView,version:VERSION,embedded:true,preserveOnClose:true,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
  saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onApplied:()=>{v3Application?.configurationChanged();appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
  onIdentity:ref=>openIdentity(ref),onAssistant:task=>openAssistant(task),onNative:kind=>{if(kind==='agent')extensionSection('agent');else nativeDrawer(kind==='api'?'sys-settings-button':'ai-config-button');}
@@ -634,7 +635,9 @@ async function removeMessages(rollback) {
                 throw err;
             }deleted++;
         }
-        await context().saveChat();close(epoch);
+        // Each host deletion already saves and verifies its source/identity
+        // receipts. A second whole-chat write only keeps the UI lock waiting.
+        close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
 }
 function openRevision(token,selection){

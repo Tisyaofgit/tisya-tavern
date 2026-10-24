@@ -1,0 +1,28 @@
+(node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+entering chat update routine for non-swipe post
+entering chat update routine for non-swipe post
+✔ retained unmatched legacy controls remains locally pending while normal A/B send and deletion work (2779.019377ms)
+entering chat update routine for non-swipe post
+entering chat update routine for non-swipe post
+✔ retained incomplete old V3 remains locally pending while normal A/B send and deletion work (2456.75802ms)
+entering chat update routine for non-swipe post
+✔ HTML card opener and unnumbered old prose do not require Tisya control markup (1283.630876ms)
+Failed running interceptor for undefined Error: TISYA_V3_REPLY_ORDER
+    at fail (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:13:39)
+    at check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:14:32)
+    at parseV3Reply (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/reply.mjs:59:54)
+    at writerB (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host.mjs:96:6)
+    at async Object.run (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2458:54)
+    at async deliver (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2944:20) {
+  code: 'TISYA_V3_REPLY_ORDER'
+}
+✔ fresh malformed writer output still fails before being saved (1019.556043ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7694.039176

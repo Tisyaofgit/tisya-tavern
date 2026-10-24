@@ -47,10 +47,10 @@ export async function setupFlow(t,{request,initialRows=[],chat}={}){
  const store=createStore({getContext:()=>h.ctx,persist:async()=>{throw Error('Configuration must use its worldbook');}});
  const configurationBook=createConfigurationBook({books,store,getContext:()=>h.ctx,getPlayerId:()=>h.ctx.userAvatar,domainValidators:{tagTemplates:validateTagTemplateBank}});
  await configurationBook.hydrate({initializeIfMissing:true});
- const configHost={runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'deterministic-fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input)=>{
+ const configHost={runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'deterministic-fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input,options={})=>{
   const snapshot=store.read(),messages=taskMessages({preset:pairedPreset({task,configuration:snapshot,phase:input.phase}),task,input,substitute:s=>s.replaceAll('{{user}}','MUST_NOT_EXPAND_SOURCE')});
   tasks.push({task,input:copy(input),messages:copy(messages)});assert.ok(request,'Unexpected model task '+task);
-  const value=await request(task,input,{h,app,tasks,messages});return typeof value==='string'?value:formatSimpleSheet(value);
+  const value=await request(task,input,{h,app,tasks,messages,options});return typeof value==='string'?value:formatSimpleSheet(value);
  }};
  const create=async()=>{app=await createApplication({target:h.target,getContext:()=>h.ctx,store,configHost,books,configurationBook,native:h.native,getPlayerId:()=>h.ctx.userAvatar,readConfiguration:()=>h.config,worldbookScan:false,onError:error=>h.errors.push(error)});const action=app.capabilities.action;app.capabilities.action=async(...args)=>{try{return await action(...args);}catch(error){actionErrors.push(error);throw error;}};};
  await create();const win=new Window({url:'http://localhost/'});
