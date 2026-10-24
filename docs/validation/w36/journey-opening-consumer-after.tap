@@ -1,0 +1,45 @@
+✖ production application focus invalidates and rebuilds host configuration without a second focus authority (1.860586ms)
+✔ journey reads one actual retained store, respects reader access and psychology switch, and excludes raw prose and closed pools (71.760151ms)
+✔ identical full text floors resolve by logical identity and current A revision, with no raw reads (97.281227ms)
+✔ focus writes only the real world tables focus IDs once, preserves aliases, and can remove a missing focus (160.925498ms)
+✔ focus rejects stale configuration, changed bindings, hidden or missing IDs and actual source changes without writes (83.024749ms)
+✔ message-specific timeline uses that original source while current characters and pool remain live (58.16313ms)
+✔ memory pagination exposes all retained events and direct detail does not depend on the default page (87.203679ms)
+✔ noncharacter focus remains an explicit existing object instead of a false missing dossier (144.302297ms)
+✔ atlas contains every public record type, strips private references and direct detail reads noncharacters (49.222297ms)
+✔ timeline searches all pages and tags, anchors current identity, and does not match hidden psychology (200.71112ms)
+✔ atlas shows only bound exact definition revisions in separate readonly layers (22.152729ms)
+✔ locate refuses stale card revision, changed binding and different original reference (51.514218ms)
+✔ default timeline anchor is the latest archived event even while newest story awaits next archive (19.338556ms)
+✔ journey consumes the retained opening player mapping without a permanent object binding and does not cross personas (113.140426ms)
+✔ atlas directory filters actual public objects by full text/tag and renders complete semantic dossier (26.888348ms)
+✔ atlas focus and edit retain stable record IDs, related references navigate, and scope change closes detail (27.370268ms)
+✔ atlas event/source actions pass IDs and reference only; text is escaped and inaccessible reference names stay absent (6.528503ms)
+✔ late atlas read cannot replace disposed content (4.228659ms)
+✔ atlas keeps origin/core definitions distinct and read-only, while unrelated world records remain reachable (17.065975ms)
+✔ production journey ball opens current memory, navigates participant to complete atlas, then returns through event to timeline (393.921774ms)
+✔ production notebook is the full searchable timeline and invalidates on changed source chat (96.633724ms)
+✔ independent reader public journey tab mounts complete atlas and timeline with no serialized raw fields (127.383201ms)
+✔ journey and independent reader keep the selected dossier after a real focus save and honor returning to the directory (440.774685ms)
+✔ journey player and character pages retain separate selected dossiers (79.492433ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 23
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1612.477018
+
+✖ failing tests:
+
+test at tests/v3/review-tests/journey-application.integration.mjs:8:1
+✖ production application focus invalidates and rebuilds host configuration without a second focus authority (1.860586ms)
+  Error: Run with node --experimental-vm-modules
+      at createExtractedHostHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/native-fixtures/host-harness.mjs:12:35)
+      at createInstallerHarness (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/host-tests/installer-harness.mjs:25:19)
+      at TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/journey-application.integration.mjs:9:153)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)

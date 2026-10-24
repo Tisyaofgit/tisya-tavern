@@ -1,0 +1,11 @@
+{
+  "atUtc": "2026-10-24T20:05:35.180Z",
+  "boundary": "synthetic retained opening receipt through actual journey service",
+  "status": "reproduced-consumer-gap",
+  "expectedPlayerId": "fixture:player",
+  "actualPlayerIds": [],
+  "actualPlayer": null,
+  "charactersCount": 1,
+  "consequence": "Atlas player section is empty and player is eligible for NPC focus controls when mapping exists only in opening commit.",
+  "noProductCodeChanged": true
+}

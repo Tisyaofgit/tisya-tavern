@@ -1,0 +1,150 @@
+TAP version 13
+# Subtest: opening forwards streaming content and reports validation separately from response completion
+ok 1 - opening forwards streaming content and reports validation separately from response completion
+  ---
+  duration_ms: 28.929465
+  type: 'test'
+  ...
+# Subtest: opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+ok 2 - opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+  ---
+  duration_ms: 38.17883
+  type: 'test'
+  ...
+# Subtest: opening cannot run without confirmed template or over actual later progress
+ok 3 - opening cannot run without confirmed template or over actual later progress
+  ---
+  duration_ms: 11.545899
+  type: 'test'
+  ...
+# Subtest: opening accepts current-ledger confirmed initialization, not only origin definitions
+ok 4 - opening accepts current-ledger confirmed initialization, not only origin definitions
+  ---
+  duration_ms: 24.382104
+  type: 'test'
+  ...
+# Subtest: opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+ok 5 - opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+  ---
+  duration_ms: 42.563096
+  type: 'test'
+  ...
+# Subtest: native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+ok 6 - native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+  ---
+  duration_ms: 18.161202
+  type: 'test'
+  ...
+# Subtest: changed opener/persona/templates or binding invalidate generation and pending save, without writes
+ok 7 - changed opener/persona/templates or binding invalidate generation and pending save, without writes
+  ---
+  duration_ms: 60.417423
+  type: 'test'
+  ...
+# Subtest: lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+ok 8 - lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+  ---
+  duration_ms: 20.292429
+  type: 'test'
+  ...
+# Subtest: cancelled opening stops before canonical changes
+ok 9 - cancelled opening stops before canonical changes
+  ---
+  duration_ms: 5.457166
+  type: 'test'
+  ...
+# Subtest: existing explicit player binding is reused without overwriting native persona or adding a second player
+ok 10 - existing explicit player binding is reused without overwriting native persona or adding a second player
+  ---
+  duration_ms: 21.290637
+  type: 'test'
+  ...
+# Subtest: an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+ok 11 - an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+  ---
+  duration_ms: 6.055083
+  type: 'test'
+  ...
+# Subtest: saved opening survives a new service instance and player reference never crosses persona selection
+ok 12 - saved opening survives a new service instance and player reference never crosses persona selection
+  ---
+  duration_ms: 21.215224
+  type: 'test'
+  ...
+# Subtest: confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+ok 13 - confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+  ---
+  duration_ms: 20.347803
+  type: 'test'
+  ...
+# Subtest: opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+ok 14 - opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+  ---
+  duration_ms: 13.15905
+  type: 'test'
+  ...
+# Subtest: native initialization saved as a real origin definition retains source provenance for later opening establishment
+ok 15 - native initialization saved as a real origin definition retains source provenance for later opening establishment
+  ---
+  duration_ms: 53.984008
+  type: 'test'
+  ...
+# Subtest: mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+ok 16 - mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+  ---
+  duration_ms: 2.395072
+  type: 'test'
+  ...
+# Subtest: an initialized same-name character requires explicit opening selection and persists without duplicating the player
+ok 17 - an initialized same-name character requires explicit opening selection and persists without duplicating the player
+  ---
+  duration_ms: 29.238194
+  type: 'test'
+  ...
+# Subtest: opening selection rejects missing/non-character IDs and cannot override an existing binding
+ok 18 - opening selection rejects missing/non-character IDs and cannot override an existing binding
+  ---
+  duration_ms: 13.618408
+  type: 'test'
+  ...
+# Subtest: opening player selection becomes stale if persona binding changes before response or save
+ok 19 - opening player selection becomes stale if persona binding changes before response or save
+  ---
+  duration_ms: 37.181098
+  type: 'test'
+  ...
+# Subtest: a lost opening save acknowledgement cannot be confirmed under a different persona
+ok 20 - a lost opening save acknowledgement cannot be confirmed under a different persona
+  ---
+  duration_ms: 16.697076
+  type: 'test'
+  ...
+# Subtest: opening candidate selection recognizes registered character subtypes and keeps duplicate names distinct
+not ok 21 - opening candidate selection recognizes registered character subtypes and keeps duplicate names distinct
+  ---
+  duration_ms: 2.832689
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/opening.test.mjs:143:1'
+  failureType: 'testCodeFailure'
+  error: '模板必须定义字段'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:810:18)
+    registryIndex (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:869:7)
+    stateValid (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:1984:3)
+    projectRetained (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2066:3)
+    capture (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/opening-service.mjs:49:354)
+    async Object.inspect (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/opening-service.mjs:57:35)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/opening.test.mjs:145:18)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 20
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 588.080418

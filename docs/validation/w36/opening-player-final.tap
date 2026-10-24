@@ -1,0 +1,189 @@
+TAP version 13
+# Subtest: opening forwards streaming content and reports validation separately from response completion
+ok 1 - opening forwards streaming content and reports validation separately from response completion
+  ---
+  duration_ms: 48.247529
+  type: 'test'
+  ...
+# Subtest: opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+ok 2 - opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+  ---
+  duration_ms: 69.58079
+  type: 'test'
+  ...
+# Subtest: opening cannot run without confirmed template or over actual later progress
+ok 3 - opening cannot run without confirmed template or over actual later progress
+  ---
+  duration_ms: 13.116144
+  type: 'test'
+  ...
+# Subtest: opening accepts current-ledger confirmed initialization, not only origin definitions
+ok 4 - opening accepts current-ledger confirmed initialization, not only origin definitions
+  ---
+  duration_ms: 37.798656
+  type: 'test'
+  ...
+# Subtest: opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+ok 5 - opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+  ---
+  duration_ms: 67.919627
+  type: 'test'
+  ...
+# Subtest: native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+ok 6 - native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+  ---
+  duration_ms: 26.428441
+  type: 'test'
+  ...
+# Subtest: changed opener/persona/templates or binding invalidate generation and pending save, without writes
+ok 7 - changed opener/persona/templates or binding invalidate generation and pending save, without writes
+  ---
+  duration_ms: 66.869346
+  type: 'test'
+  ...
+# Subtest: lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+ok 8 - lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+  ---
+  duration_ms: 24.911486
+  type: 'test'
+  ...
+# Subtest: cancelled opening stops before canonical changes
+ok 9 - cancelled opening stops before canonical changes
+  ---
+  duration_ms: 5.487582
+  type: 'test'
+  ...
+# Subtest: existing explicit player binding is reused without overwriting native persona or adding a second player
+ok 10 - existing explicit player binding is reused without overwriting native persona or adding a second player
+  ---
+  duration_ms: 18.467441
+  type: 'test'
+  ...
+# Subtest: an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+ok 11 - an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+  ---
+  duration_ms: 6.44712
+  type: 'test'
+  ...
+# Subtest: saved opening survives a new service instance and player reference never crosses persona selection
+ok 12 - saved opening survives a new service instance and player reference never crosses persona selection
+  ---
+  duration_ms: 20.824406
+  type: 'test'
+  ...
+# Subtest: confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+ok 13 - confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+  ---
+  duration_ms: 26.9537
+  type: 'test'
+  ...
+# Subtest: opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+ok 14 - opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+  ---
+  duration_ms: 27.161441
+  type: 'test'
+  ...
+# Subtest: native initialization saved as a real origin definition retains source provenance for later opening establishment
+ok 15 - native initialization saved as a real origin definition retains source provenance for later opening establishment
+  ---
+  duration_ms: 72.138976
+  type: 'test'
+  ...
+# Subtest: mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+ok 16 - mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+  ---
+  duration_ms: 2.658588
+  type: 'test'
+  ...
+# Subtest: an initialized same-name character requires explicit opening selection and persists without duplicating the player
+ok 17 - an initialized same-name character requires explicit opening selection and persists without duplicating the player
+  ---
+  duration_ms: 40.66075
+  type: 'test'
+  ...
+# Subtest: opening selection rejects missing/non-character IDs and cannot override an existing binding
+ok 18 - opening selection rejects missing/non-character IDs and cannot override an existing binding
+  ---
+  duration_ms: 18.622464
+  type: 'test'
+  ...
+# Subtest: opening player selection becomes stale if persona binding changes before response or save
+ok 19 - opening player selection becomes stale if persona binding changes before response or save
+  ---
+  duration_ms: 43.723523
+  type: 'test'
+  ...
+# Subtest: a lost opening save acknowledgement cannot be confirmed under a different persona
+ok 20 - a lost opening save acknowledgement cannot be confirmed under a different persona
+  ---
+  duration_ms: 17.433289
+  type: 'test'
+  ...
+# Subtest: opening candidate selection recognizes registered character subtypes and keeps duplicate names distinct
+not ok 21 - opening candidate selection recognizes registered character subtypes and keeps duplicate names distinct
+  ---
+  duration_ms: 2.493099
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/opening.test.mjs:143:1'
+  failureType: 'testCodeFailure'
+  error: '模板名称或版本无效'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    check (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:810:18)
+    registryIndex (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:862:7)
+    stateValid (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:1984:3)
+    projectRetained (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/host-runtime.mjs:2066:3)
+    capture (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/opening-service.mjs:51:354)
+    async Object.inspect (file:///workspace/scratch/289ae625ecae/tisya-w33/v3/opening-service.mjs:59:35)
+    async TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/review-tests/opening.test.mjs:145:18)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: actual application UI automatically initializes card/books, establishes the selected opening, imports native floors and reopens the same records
+ok 22 - actual application UI automatically initializes card/books, establishes the selected opening, imports native floors and reopens the same records
+  ---
+  duration_ms: 3132.241466
+  type: 'test'
+  ...
+# Subtest: opening refuses an unconfirmed template before model calls or native archive writes
+ok 23 - opening refuses an unconfirmed template before model calls or native archive writes
+  ---
+  duration_ms: 517.704061
+  type: 'test'
+  ...
+# Subtest: a changed linked worldbook rejects the reviewed initialization before write, retaining the native book and prior archive
+ok 24 - a changed linked worldbook rejects the reviewed initialization before write, retaining the native book and prior archive
+  ---
+  duration_ms: 503.476796
+  type: 'test'
+  ...
+# Subtest: native initialization save failure stays visible and retries the same reviewed draft without rerunning the model
+ok 25 - native initialization save failure stays visible and retries the same reviewed draft without rerunning the model
+  ---
+  duration_ms: 662.588737
+  type: 'test'
+  ...
+# Subtest: editing a native history floor after review rejects save before originals or archive changes
+ok 26 - editing a native history floor after review rejects save before originals or archive changes
+  ---
+  duration_ms: 507.517848
+  type: 'test'
+  ...
+# Subtest: opening UI explicitly selects the initialized player, saves one mapping and reopens it without duplicate dossiers
+ok 27 - opening UI explicitly selects the initialized player, saves one mapping and reopens it without duplicate dossiers
+  ---
+  duration_ms: 944.481807
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 26
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6821.95958

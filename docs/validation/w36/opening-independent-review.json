@@ -1,0 +1,15 @@
+{
+  "atUtc": "2026-10-24T20:03:44.255Z",
+  "boundary": "independent actual service test with synthetic host and schema, not native UI",
+  "passed": true,
+  "cases": [
+    "explicit existing character subtype selected under a different native persona display name",
+    "candidate includes inherited character type",
+    "no implicit mapping or extra character row",
+    "opening receipt survives fresh service instance",
+    "permanent book player binding unchanged",
+    "saved draft rejects persona rename on repeated save"
+  ],
+  "modelCalls": 1,
+  "storageWrites": 1
+}

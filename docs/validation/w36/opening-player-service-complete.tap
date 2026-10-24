@@ -1,0 +1,97 @@
+TAP version 13
+# Subtest: opening forwards streaming content and reports validation separately from response completion
+ok 1 - opening forwards streaming content and reports validation separately from response completion
+  ---
+  duration_ms: 27.573564
+  type: 'test'
+  ...
+# Subtest: opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+ok 2 - opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+  ---
+  duration_ms: 39.623999
+  type: 'test'
+  ...
+# Subtest: opening cannot run without confirmed template or over actual later progress
+ok 3 - opening cannot run without confirmed template or over actual later progress
+  ---
+  duration_ms: 12.108523
+  type: 'test'
+  ...
+# Subtest: opening accepts current-ledger confirmed initialization, not only origin definitions
+ok 4 - opening accepts current-ledger confirmed initialization, not only origin definitions
+  ---
+  duration_ms: 27.534695
+  type: 'test'
+  ...
+# Subtest: opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+ok 5 - opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+  ---
+  duration_ms: 44.644373
+  type: 'test'
+  ...
+# Subtest: native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+ok 6 - native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+  ---
+  duration_ms: 20.613598
+  type: 'test'
+  ...
+# Subtest: changed opener/persona/templates or binding invalidate generation and pending save, without writes
+ok 7 - changed opener/persona/templates or binding invalidate generation and pending save, without writes
+  ---
+  duration_ms: 57.9741
+  type: 'test'
+  ...
+# Subtest: lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+ok 8 - lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+  ---
+  duration_ms: 19.802982
+  type: 'test'
+  ...
+# Subtest: cancelled opening stops before canonical changes
+ok 9 - cancelled opening stops before canonical changes
+  ---
+  duration_ms: 4.750079
+  type: 'test'
+  ...
+# Subtest: existing explicit player binding is reused without overwriting native persona or adding a second player
+ok 10 - existing explicit player binding is reused without overwriting native persona or adding a second player
+  ---
+  duration_ms: 17.819824
+  type: 'test'
+  ...
+# Subtest: an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+ok 11 - an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+  ---
+  duration_ms: 5.575548
+  type: 'test'
+  ...
+# Subtest: saved opening survives a new service instance and player reference never crosses persona selection
+ok 12 - saved opening survives a new service instance and player reference never crosses persona selection
+  ---
+  duration_ms: 21.302992
+  type: 'test'
+  ...
+# Subtest: confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+ok 13 - confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation
+  ---
+  duration_ms: 25.895485
+  type: 'test'
+  ...
+# Subtest: opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+ok 14 - opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions
+  ---
+  duration_ms: 14.916287
+  type: 'test'
+  ...
+# Subtest: native initialization saved as a real origin definition retains source provenance for later opening establishment
+ok 15 - native initialization saved as a real origin definition retains source provenance for later opening establishment
+  ---
+  duration_ms: 52.269207
+  type: 'test'
+  ...
+# Subtest: mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+ok 16 - mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance
+  ---
+  duration_ms: 2.42522
+  type: 'test'
+  ...

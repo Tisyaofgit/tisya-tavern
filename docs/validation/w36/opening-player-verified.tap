@@ -1,0 +1,73 @@
+TAP version 13
+# Subtest: opening forwards streaming content and reports validation separately from response completion
+ok 1 - opening forwards streaming content and reports validation separately from response completion
+  ---
+  duration_ms: 31.467042
+  type: 'test'
+  ...
+# Subtest: opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+ok 2 - opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes
+  ---
+  duration_ms: 43.143575
+  type: 'test'
+  ...
+# Subtest: opening cannot run without confirmed template or over actual later progress
+ok 3 - opening cannot run without confirmed template or over actual later progress
+  ---
+  duration_ms: 14.627293
+  type: 'test'
+  ...
+# Subtest: opening accepts current-ledger confirmed initialization, not only origin definitions
+ok 4 - opening accepts current-ledger confirmed initialization, not only origin definitions
+  ---
+  duration_ms: 36.332807
+  type: 'test'
+  ...
+# Subtest: opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+ok 5 - opening rejects forged/unselected evidence, model-made native player, events, deletion, schema changes, and overwriting confirmed fields
+  ---
+  duration_ms: 52.467043
+  type: 'test'
+  ...
+# Subtest: native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+ok 6 - native user row cannot be unchecked or edited, dependency removal and forged edit evidence reject
+  ---
+  duration_ms: 22.031524
+  type: 'test'
+  ...
+# Subtest: changed opener/persona/templates or binding invalidate generation and pending save, without writes
+ok 7 - changed opener/persona/templates or binding invalidate generation and pending save, without writes
+  ---
+  duration_ms: 68.236519
+  type: 'test'
+  ...
+# Subtest: lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+ok 8 - lost save acknowledgement recovers same opening commit without rerunning model or duplicating user
+  ---
+  duration_ms: 24.168117
+  type: 'test'
+  ...
+# Subtest: cancelled opening stops before canonical changes
+ok 9 - cancelled opening stops before canonical changes
+  ---
+  duration_ms: 6.852796
+  type: 'test'
+  ...
+# Subtest: existing explicit player binding is reused without overwriting native persona or adding a second player
+ok 10 - existing explicit player binding is reused without overwriting native persona or adding a second player
+  ---
+  duration_ms: 19.803603
+  type: 'test'
+  ...
+# Subtest: an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+ok 11 - an adopted native opening excludes alternative card greetings, while an empty chat offers explicit candidate sources
+  ---
+  duration_ms: 8.031362
+  type: 'test'
+  ...
+# Subtest: saved opening survives a new service instance and player reference never crosses persona selection
+ok 12 - saved opening survives a new service instance and player reference never crosses persona selection
+  ---
+  duration_ms: 31.067728
+  type: 'test'
+  ...

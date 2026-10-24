@@ -1,0 +1,192 @@
+{
+  "atUtc": "2026-10-24T20:09:09.119340+00:00",
+  "sourceFreezeManifestSha256": "0266cef0f12c723ccaf6880b48db082e2164dfc82f025ed7786f0764e44191ea",
+  "savedW35ArchiveSha256": "57c017559cbe0a106a32f886d15c2fc7b9d091deba9a51a372d869c12b52e141",
+  "frozenFileCount": 606,
+  "archivedTisyaFileCount": 584,
+  "retainedFilesWithDifferentHash": [],
+  "missingCount": 22,
+  "missing": [
+    {
+      "path": "prompt-evidence/english-actual-full-request.json",
+      "bytes": 30961,
+      "sha256": "5cda737b8f4426e6b4d1cad500d1cc6eb9ddd3f1c43dd707e8c1afe53edb6edb",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "prompt-evidence/english-assembly-notes.txt",
+      "bytes": 2029,
+      "sha256": "89ba6f8647f81b335297d76758ad592a1bdb2f63773171b031e5c83e133723f5",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "prompt-evidence/english-assembly-tests.txt",
+      "bytes": 1702,
+      "sha256": "e99e893d14b24a58166b979f366614313944027e83e9edd91bea2f0c5ea003d6",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "prompt-evidence/english-legacy-targeted-tests.txt",
+      "bytes": 9147,
+      "sha256": "d7c9d3c255d4862a3b929346d86cb4f7a664d82c7696b0d0e9bec6500f68b9a1",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "prompt-evidence/english-material-history-tests.txt",
+      "bytes": 4025,
+      "sha256": "dc4be34adbeee1e216fe8326afd57c3d1772e911ff27cf66e59731b7387a6877",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/conversion-final-regression.log",
+      "bytes": 172619,
+      "sha256": "872147222af019c3ca5f5ad091561518532767c635a307c334e7911475b1f41a",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/conversion-first-regression.log",
+      "bytes": 241739,
+      "sha256": "32e2c6537ffe055ee8048d29156c822978e303e11436501b7751555bbfe3e8a8",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/conversion-verified-regression.log",
+      "bytes": 148516,
+      "sha256": "5fb18673f488af186bae4c0ccc4eabda635009a6777573ab7097ad77d89c29c5",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/core-source-evidence-tests.log",
+      "bytes": 19217,
+      "sha256": "1ba83933d3a9ef97de62451a4c1d3313ae3796b4b92d47c15298704bd67925a4",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/complete-verdict.json",
+      "bytes": 288,
+      "sha256": "baa1490384a46c3927d3896e2c346eb62b442ce3727e7a7bd8218ddf14a1fbf8",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/first-verdict.json",
+      "bytes": 207,
+      "sha256": "0a97bb59408f818388740155a6ab6f39510128afad44faca723f570786695c78",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/input.json",
+      "bytes": 58978,
+      "sha256": "3137287c025de99f14dea3cf20c4b4a13a9977adcf3eb983fb6422fc9e339f39",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/preference-request-v2.txt",
+      "bytes": 83016,
+      "sha256": "ebd0e105b733bb6d14e61b695205f02146c13fb6ea20553ad2077842b20f7e5b",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/preference-request.txt",
+      "bytes": 80796,
+      "sha256": "7502921b8bd1d54d2344d7f278972c88de738aed5d76546cb2db0f793324d617",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/preference-response-complete.txt",
+      "bytes": 1169,
+      "sha256": "cbbbda0831f6a856c92bd7269bcb072cbc68823e80b7d71e9f7df4d381d9c120",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/preference-response-v2.txt",
+      "bytes": 825,
+      "sha256": "398ddda5122ab4978cd9e11e18411abd8236b72abce09fa89ffc1f0fdb1e040a",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/preference-response.txt",
+      "bytes": 891,
+      "sha256": "efcf03e2bfaa2bce5e8ab1697fe255bce079bf27a3f04603b00fd1e3a29c7445",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/isolated-model/second-verdict.json",
+      "bytes": 332,
+      "sha256": "3e41b3fb9e5b8df5f556f11de1e3c1c9c43944729641bf39b014458225b07393",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/preference-schema-projection.tap",
+      "bytes": 448,
+      "sha256": "1372aad688d716e46b6bbb1b9b997cfbdf3c3a9b4a9bddfd3da79a44b7e09400",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/simple-sheet-host-migration.md",
+      "bytes": 4733,
+      "sha256": "2112ef88b85aef829728a17c9a28e9e93aef73312306bf45926c314986e3b39f",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/story-and-revision-final.tap",
+      "bytes": 1340,
+      "sha256": "7f133ab5d109c795885a892358eccf62e68c9f70de3c6b6fa0bd868cb632ce9f",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    },
+    {
+      "path": "protocol-evidence/story-material-integration.tap",
+      "bytes": 3797,
+      "sha256": "ff9399d8553b756dd6a2ab222861517dd02e60d1d3e08f738b33ca54dadd3f14",
+      "exclusionReasons": [
+        "non-runtime extension source/evidence"
+      ]
+    }
+  ],
+  "missingGroups": {
+    "prompt-evidence": 5,
+    "protocol-evidence": 17
+  },
+  "conclusion": "All 22 omissions are explicitly excluded validation artifacts; no runtime module or image dependency is missing. W36 complete-installation packaging now retains these artifacts and compares deployed files against payload hashes."
+}

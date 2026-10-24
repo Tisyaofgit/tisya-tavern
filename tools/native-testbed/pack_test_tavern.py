@@ -2,7 +2,8 @@
 """Prepare a private, relocatable Linux TT snapshot only after the host stops."""
 import argparse,collections,datetime,hashlib,json,os,pathlib,re,shutil,stat,subprocess,tempfile,zipfile
 HERE=pathlib.Path(__file__).resolve().parent
-SKIP_DIRS={'.git','.svn','node_modules','__pycache__','ui-evidence','screenshots','browser-screenshots'}
+SKIP_DIRS={'.git','.svn','node_modules','__pycache__'}
+DIAGNOSTIC_SCREENSHOT_DIRS={'ui-evidence','screenshots','browser-screenshots'}
 SKIP_NAMES={'lock','SingletonLock','SingletonCookie','SingletonSocket','Xauthority','.Xauthority','Cookies','cookies.sqlite','cookies.db'}
 TEXT_SUFFIXES={'.json','.jsonl','.txt','.md','.log','.tap','.patch','.mjs','.py','.sha256','.sh','.tsv'}
 CREDENTIAL_KEYS={'apikey','customapikey','secretkey','password','authorization','accesstoken','refreshtoken','clientsecret'}
@@ -14,8 +15,8 @@ def sha(path):
   for block in iter(lambda:f.read(1024*1024),b''):h.update(block)
  return h.hexdigest()
 def write(path,obj):path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n')
-def running_host(source):
- target=(source/'linux-host/usr/bin/tauritavern').resolve();found=[]
+def running_host(source,package_layout=False):
+ target=(source/('app/linux-host/usr/bin/tauritavern' if package_layout else 'linux-host/usr/bin/tauritavern')).resolve();found=[]
  for process in pathlib.Path('/proc').glob('[0-9]*'):
   try:
    name=process.joinpath('comm').read_text().strip().lower()
@@ -37,8 +38,8 @@ def screenshot_command_pairs(runtime):
 def excluded_path(path,rel,group,screen_pairs):
  if path in screen_pairs:return 'browser screenshot command or response'
  if any(part in SKIP_DIRS for part in rel.parts):return 'non-runtime cache/source evidence directory'
+ if group=='diagnostics' and any(part in DIAGNOSTIC_SCREENSHOT_DIRS for part in rel.parts):return 'browser screenshot evidence directory'
  if path.name in SKIP_NAMES or path.name.startswith('.env') or path.name.endswith(('.pid','.lock','.sock','.socket','-shm')):return 'transient state or credential/cookie cache'
- if group=='runtime' and 'extensions' in rel.parts and any(part in {'tests','docs','.github','tools','prompt-evidence','protocol-evidence','config-evidence'} for part in rel.parts):return 'non-runtime extension source/evidence'
  if group=='diagnostics' and (path.suffix.lower() not in TEXT_SUFFIXES or re.search(r'(^|[-_])(screen(?:shot)?|capture)[-_\d.]',path.name,re.I)):return 'non-text diagnostic or browser screenshot'
  if group=='materials' and path.name in UNUSED_MATERIALS:return 'inspected but not used in the KPOP/VI/Luc testbed; provenance remains in diagnostics'
  return None
@@ -71,6 +72,67 @@ def inventory(source):
   result.append((path,pathlib.PurePosixPath('diagnostics/native-state')/path.name,'diagnostics'))
  return result,excluded
 
+def inventory_package(source):
+ """Re-snapshot an extracted, used package without changing its saved state."""
+ if not (source/'MANIFEST.json').is_file():raise RuntimeError('Expected an extracted package with MANIFEST.json')
+ result=[];excluded=[];pairs=set()
+ for commands in (source/'runtime/sessions').glob('*/commands'):
+  pairs.update(screenshot_command_pairs(commands.parent))
+ def add(root,prefix,group):
+  if root.is_symlink():raise RuntimeError('Review symbolic link before packaging: '+str(root))
+  if not root.exists():return
+  for directory,dirs,names in os.walk(root,followlinks=False):
+   for dirname in dirs:
+    path=pathlib.Path(directory)/dirname
+    if path.is_symlink() and dirname not in SKIP_DIRS:raise RuntimeError('Review symbolic link before packaging: '+str(path))
+   dirs[:]=[d for d in dirs if d not in SKIP_DIRS]
+   for name in sorted(names):
+    path=pathlib.Path(directory)/name;rel=path.relative_to(root);why=excluded_path(path,rel,group,pairs)
+    if why:excluded.append({'path':str(path.relative_to(source)),'reason':why});continue
+    if path.is_symlink():raise RuntimeError('Review symbolic link before packaging: '+str(path))
+    if not path.is_file():excluded.append({'path':str(path.relative_to(source)),'reason':'not a regular file'});continue
+    result.append((path,pathlib.PurePosixPath(prefix)/rel,group))
+ add(source/'app','app','app')
+ for name in ['data','config','cache']:add(source/'runtime'/name,'runtime/'+name,'runtime')
+ add(source/'materials','materials','materials')
+ add(source/'diagnostics','diagnostics','diagnostics')
+ add(source/'runtime/sessions','diagnostics/previous-sessions','diagnostics')
+ add(source/'runtime/helper-assets','diagnostics/helper-assets','diagnostics')
+ add(source/'provenance','provenance','provenance')
+ add(source/'tools','tools','tools')
+ for name in ['README.md','start-tavern.sh']:
+  path=source/name
+  if path.is_symlink():raise RuntimeError('Review symbolic link before packaging: '+str(path))
+  if path.is_file():result.append((path,pathlib.PurePosixPath(name),'tools'))
+ destinations=[str(entry[1]) for entry in result]
+ if len(destinations)!=len(set(destinations)):raise RuntimeError('Snapshot contains colliding diagnostic paths; preserve both sources explicitly before packaging')
+ return result,excluded
+
+def require_closed_package_session(source):
+ active=source/'runtime/active-session.json'
+ if not active.exists():return
+ session=pathlib.Path(json.loads(active.read_text())['sessionDirectory']).resolve()
+ if not session.is_relative_to((source/'runtime/sessions').resolve()):raise RuntimeError('Active session points outside this package; review its shutdown state before packaging')
+ if not (session/'closed.json').is_file():raise RuntimeError('Active package session has no closed.json receipt; finish stopping the supervisor first')
+
+def verify_deployed_tisya(source,stage,package_layout=False):
+ """The private snapshot must preserve the whole actually installed Tisya tree."""
+ relative='data/com.tauritavern.client/data/default-user/extensions/tisya-tavern'
+ installed=source/('runtime' if package_layout else 'linux-runtime-state')/relative
+ payload=stage/'runtime'/relative
+ if not installed.is_dir():return {'applicable':False,'reason':'No installed Tisya extension in this input'}
+ rows=[];differences=[]
+ for path in sorted(installed.rglob('*')):
+  if path.is_symlink():raise RuntimeError('Installed Tisya dependency is a symbolic link: '+str(path))
+  if not path.is_file():continue
+  name=path.relative_to(installed).as_posix();target=payload/name;expected=sha(path)
+  actual=sha(target) if target.is_file() else None
+  rows.append({'path':name,'sourceSha256':expected,'payloadSha256':actual})
+  if expected!=actual:differences.append(name)
+ result={'applicable':True,'comparedFiles':len(rows),'differences':differences,'matchesDeployedRuntime':not differences,'files':rows}
+ if differences:raise RuntimeError('Installed Tisya files would be omitted or changed; review any credential/screenshot exclusion conflict: '+json.dumps(differences,ensure_ascii=False))
+ return result
+
 def credential_check(path,group):
  if path.name.lower()=='secrets.json':
   data=json.loads(path.read_text())
@@ -96,15 +158,22 @@ def credential_check(path,group):
   visit(data)
  return None
 
-def gather_provenance(source,stage):
+def gather_provenance(source,stage,package_layout=False):
  prov=stage/'provenance';prov.mkdir(exist_ok=True)
  shutil.copy2('/etc/os-release',prov/'os-release.txt')
- for args,name in [(['dpkg-query','-W','-f=${binary:Package}\t${Version}\t${Architecture}\n'],'apt-installed.tsv'),(['ldd',str(source/'linux-host/usr/bin/tauritavern')],'native-shared-libraries.txt'),(['node','--version'],'node-version.txt'),(['python3','--version'],'python-version.txt')]:
+ binary=source/('app/linux-host/usr/bin/tauritavern' if package_layout else 'linux-host/usr/bin/tauritavern')
+ for args,name in [(['dpkg-query','-W','-f=${binary:Package}\t${Version}\t${Architecture}\n'],'apt-installed.tsv'),(['ldd',str(binary)],'native-shared-libraries.txt'),(['node','--version'],'node-version.txt'),(['python3','--version'],'python-version.txt')]:
   result=subprocess.run(args,capture_output=True,text=True,check=False);(prov/name).write_text(result.stdout+result.stderr)
- extensions=source/'linux-runtime-state/data/com.tauritavern.client/data/default-user/extensions';rows=[]
+ extensions=source/('runtime/data/com.tauritavern.client/data/default-user/extensions' if package_layout else 'linux-runtime-state/data/com.tauritavern.client/data/default-user/extensions');rows=[]
  for manifest in sorted(extensions.glob('*/manifest.json')):
   value=json.loads(manifest.read_text());rows.append({'directory':manifest.parent.name,'displayName':value.get('display_name'),'version':value.get('version'),'homePage':value.get('homePage'),'manifestSha256':sha(manifest)})
  write(prov/'installed-extensions.json',rows)
+ if package_layout:
+  prior=source/'provenance/snapshot.json'
+  if prior.is_file():
+   history=prov/'history'/('snapshot-'+sha(prior)[:16]+'.json');history.parent.mkdir(exist_ok=True);shutil.copy2(prior,history)
+  write(prov/'repackage-input.json',{'sourcePackageRoot':str(source),'inheritedManifestSha256':sha(source/'MANIFEST.json'),'inheritedPayloadComparison':'not asserted; this snapshot captures current state','note':'Used runtime is intentionally snapshotted at its current state. Historical diagnostic/provenance receipts remain historical; new payload hashes are in MANIFEST.json.'})
+  return
  for path,name in [(source/'native-dependencies/JS-Slash-Runner-source.json','helper-source.json'),(source/'tisya-w33/docs/validation/w35-fullflow/linux-runtime/release-v2.4.0.json','tt-release-v2.4.0.json'),(source/'tisya-w33/docs/validation/w35-fullflow/native-dependencies/source-check.json','external-script-checks.json')]:
   if path.exists():shutil.copy2(path,prov/name)
  source_checkpoint=source/'w35-publish/remote-save.json'
@@ -138,13 +207,14 @@ def verify_archive(archive,destination):
 
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--source-root',type=pathlib.Path,default=HERE.parent);p.add_argument('--output',type=pathlib.Path);p.add_argument('--plan',action='store_true');p.add_argument('--confirm-host-stopped',action='store_true');a=p.parse_args();source=a.source_root.resolve();entries,excluded=inventory(source)
+ p=argparse.ArgumentParser(description=__doc__);inputs=p.add_mutually_exclusive_group();inputs.add_argument('--source-root',type=pathlib.Path);inputs.add_argument('--package-root',type=pathlib.Path,help='Re-snapshot a previously extracted and used private testbed');p.add_argument('--output',type=pathlib.Path);p.add_argument('--plan',action='store_true');p.add_argument('--confirm-host-stopped',action='store_true');a=p.parse_args();package_layout=a.package_root is not None;source=(a.package_root or a.source_root or HERE.parent).resolve();entries,excluded=inventory_package(source) if package_layout else inventory(source)
  if a.plan:
   groups=collections.defaultdict(lambda:{'files':0,'bytes':0})
   for path,_,group in entries:groups[group]['files']+=1;groups[group]['bytes']+=path.stat().st_size
-  print(json.dumps({'mode':'metadata-only-plan','groups':dict(groups),'excludedCount':len(excluded),'sourceHostRunningPids':running_host(source)},indent=2));return
+  print(json.dumps({'mode':'metadata-only-plan','inputLayout':'extracted-package' if package_layout else 'workspace','groups':dict(groups),'excludedCount':len(excluded),'sourceHostRunningPids':running_host(source,package_layout)},indent=2));return
  if not a.confirm_host_stopped:raise SystemExit('Stop the native supervisor first, then use --confirm-host-stopped')
- if running_host(source):raise SystemExit('Native TauriTavern is still running. No snapshot was taken.')
+ if running_host(source,package_layout):raise SystemExit('Native TauriTavern is still running. No snapshot was taken.')
+ if package_layout:require_closed_package_session(source)
  if not a.output:raise SystemExit('--output FILE.zip is required')
  output=a.output.resolve()
  if output.exists():raise SystemExit('Output already exists; choose a new archive name')
@@ -157,9 +227,14 @@ def main():
    target=stage/relative;target.parent.mkdir(parents=True,exist_ok=True);before=path.stat();shutil.copy2(path,target);after=path.stat()
    if (before.st_size,before.st_mtime_ns)!=(after.st_size,after.st_mtime_ns):raise RuntimeError('Source changed during snapshot: '+str(path))
    counts[group]+=1;total+=target.stat().st_size
-  tools=stage/'tools';api=source/'tisya-w33/docs/validation/w35-fullflow/flow-driver/agent-api-server.mjs';code=api.read_text();old="from '../../../../tables/simple-sheet.js'"
-  if old not in code:raise RuntimeError('Agent API import changed; review its packaging path')
-  (tools/'agent-api-server.mjs').write_text(code.replace(old,"from './simple-sheet.mjs'",1));shutil.copy2(source/'tisya-w33/tables/simple-sheet.js',tools/'simple-sheet.mjs');shutil.copy2(HERE/'restore_smoke.py',tools/'restore-smoke.py');gather_provenance(source,stage)
+  tools=stage/'tools'
+  if not package_layout:
+   api=source/'tisya-w33/docs/validation/w35-fullflow/flow-driver/agent-api-server.mjs';code=api.read_text();old="from '../../../../tables/simple-sheet.js'"
+   if old not in code:raise RuntimeError('Agent API import changed; review its packaging path')
+   (tools/'agent-api-server.mjs').write_text(code.replace(old,"from './simple-sheet.mjs'",1));shutil.copy2(source/'tisya-w33/tables/simple-sheet.js',tools/'simple-sheet.mjs')
+  elif not all((tools/name).is_file() for name in ['agent-api-server.mjs','simple-sheet.mjs']):raise RuntimeError('Extracted package is missing its local API tools')
+  shutil.copy2(HERE/'restore_smoke.py',tools/'restore-smoke.py');gather_provenance(source,stage,package_layout)
+  write(stage/'provenance/installed-tisya-payload-comparison.json',verify_deployed_tisya(source,stage,package_layout))
   write(stage/'provenance/exclusions.json',excluded);write(stage/'provenance/snapshot.json',{'createdUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'hostStoppedCheckPassed':True,'groups':dict(counts),'payloadSourceBytes':total,'private':True,'offlineGuaranteed':False,'platform':'Linux x86_64 Ubuntu 24.04 testbed','credentialPolicy':'secrets.json must be {}; populated credential settings must be known test placeholders','runtimeToolTransforms':['Agent API imports colocated simple-sheet.mjs; launcher and queue client resolve package-relative paths']})
   files=[]
   for path in sorted(stage.rglob('*')):

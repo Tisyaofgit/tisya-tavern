@@ -105,3 +105,42 @@ test('native initialization saved as a real origin definition retains source pro
 test('mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance',async()=>{
  const f=fixture();f.binding.initialRows[0].designProvenance={sourceMode:'native',definitionHash:'first',sourceSupplement:'第一版'};f.binding.initialRows.push({...copy(row),id:'another-definition',values:{...copy(row.values),名称:'北街铺'},designProvenance:{sourceMode:'native',definitionHash:'second',sourceSupplement:'第二版'}});await assert.rejects(f.service.inspect(),/不同角色卡资料版本/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
 });
+
+function initializedPlayer(f){
+ const player={id:'player:initialized',table:'objects',rev:1,values:{名称:'沈舟',类型:'character',描述:'已确认的木匠档案'},source:null,access:copy(access),lockedFields:[]},state=f.state();
+ state.commits.push({id:'initialization-player',kind:'manual',source:null,depends:null,changes:[{id:player.id,before:null,after:copy(player)}],anchors:[],design:{task:'extract',sourceHash:'card-source'}});state.revision++;f.setState(state);return player;
+}
+function existingPlayerResponse(input){const result=response();result.initial.changes[0].values.参与者[0]=input.sourceUser.objectId;return result;}
+
+test('an initialized same-name character requires explicit opening selection and persists without duplicating the player',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),available=await f.service.inspect(),originalBinding=copy(f.binding);
+ assert.deepEqual(available.playerCandidates,[{id:player.id,name:'沈舟',description:'已确认的木匠档案'}]);assert.equal(available.resolvedPlayerId,null);assert.equal(available.playerSelectionRequired,true);
+ await assert.rejects(generate(f),/主控档案|明确用户身份/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
+ const draft=await f.service.generate({openingId:available.selectedOpeningId,sourceStamp:available.sourceStamp,playerObjectId:player.id});
+ assert.equal(f.payload().sourceUser.objectId,player.id);assert.equal(draft.changes.some(ch=>ch.id==='new:opening-user'),false);assert.deepEqual(draft.player,{id:'persona:zhou',objectId:player.id,name:'沈舟',created:false});
+ await f.service.preview(draft);const saved=await f.service.save(draft);assert.equal(saved.player.objectId,player.id);assert.equal((await f.service.save(draft)).reused,true);assert.equal(f.writes(),1);
+ assert.deepEqual(f.binding,originalBinding);const view=projectRetained(f.state(),[]);assert.equal(view.rows.filter(r=>r.values.名称==='沈舟').length,1);assert.deepEqual(view.rows.find(r=>r.id===player.id),player);assert.equal(resolveOpeningPlayer(view,f.binding),player.id);
+ const reopened=createOpeningService({getSession:async()=>f.session,getContext:()=>f.context}),inspection=await reopened.inspect();assert.equal(inspection.resolvedPlayerId,player.id);assert.equal(inspection.alreadyEstablished,true);assert.equal(inspection.playerSelectionRequired,false);assert.equal(f.context.chat[0].mes,opener);
+});
+
+test('opening selection rejects missing/non-character IDs and cannot override an existing binding',async()=>{
+ for(const id of ['missing',row.id,{},5]){const f=fixture(existingPlayerResponse);initializedPlayer(f);await assert.rejects(f.service.generate({openingId:'chat:0',playerObjectId:id}),/主控档案|人物档案/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);}
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f);f.binding.player.objectId=player.id;
+ await assert.rejects(f.service.generate({openingId:'chat:0',playerObjectId:row.id}),/已绑定/);assert.equal(f.calls(),0);assert.equal((await f.service.inspect()).resolvedPlayerId,player.id);
+});
+
+test('opening player selection becomes stale if persona binding changes before response or save',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});
+ f.binding.player.objectId=row.id;await assert.rejects(f.service.preview(draft),/依据已改变/);await assert.rejects(f.service.save(draft),/依据已改变/);assert.equal(f.writes(),0);
+ const g=fixture(input=>{g.binding.player.objectId=row.id;return existingPlayerResponse(input);}),other=initializedPlayer(g);await assert.rejects(g.service.generate({openingId:'chat:0',playerObjectId:other.id}),/生成期间/);assert.equal(g.writes(),0);
+ const h=fixture(existingPlayerResponse),savedPlayer=initializedPlayer(h),saved=await h.service.generate({openingId:'chat:0',playerObjectId:savedPlayer.id});await h.service.save(saved);h.binding.player.id='persona:other';await assert.rejects(h.service.save(saved),/身份.*改变|用户.*改变/);assert.equal(h.writes(),1);
+});
+
+test('a lost opening save acknowledgement cannot be confirmed under a different persona',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});f.failAck();await assert.rejects(f.service.save(draft),/acknowledgement/);f.binding.player.id='persona:other';await assert.rejects(f.service.save(draft),/用户身份已改变/);assert.equal(f.writes(),1);assert.equal(f.state().commits.at(-1).openingEstablishment.player.id,'persona:zhou');
+});
+
+test('opening candidate selection recognizes registered character subtypes without changing another dossier',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),state=f.state();state.baseView.registry.types.push({id:'artisan',name:'工匠',version:1,parent:'character',aliases:[],fields:{工种:{type:'text'}}});state.commits.at(-1).changes[0].after.values.类型='artisan';const other={...copy(player),id:'player:other',values:{...copy(player.values),名称:'另一位木匠'}};state.commits.at(-1).changes.push({id:other.id,before:null,after:other});f.setState(state);
+ const available=await f.service.inspect();assert.deepEqual(available.playerCandidates.map(p=>p.id),[player.id,other.id]);assert.equal(available.resolvedPlayerId,null);await assert.rejects(generate(f),/明确选择/);const draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});await f.service.save(draft);assert.equal(resolveOpeningPlayer(projectRetained(f.state(),[]),f.binding),player.id);assert.deepEqual(projectRetained(f.state(),[]).rows.find(r=>r.id===other.id),other);assert.equal(projectRetained(f.state(),[]).rows.filter(r=>r.values.名称==='沈舟').length,1);
+});

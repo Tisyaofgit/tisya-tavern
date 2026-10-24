@@ -1,0 +1,17 @@
+{
+  "atUtc": "2026-10-24T19:59:51.211Z",
+  "test": "Existing persisted initialization replay through actual candidate projectRetained",
+  "passed": true,
+  "ledgerRevision": 1,
+  "commitCount": 1,
+  "tableCounts": {
+    "native_cells": 22,
+    "objects": 6,
+    "facts": 1
+  },
+  "openingCommitCount": 0,
+  "preferenceDraftCount": 0,
+  "playerBindingHasObjectId": false,
+  "sameNameInitializedCharacterCount": 1,
+  "interpretation": "Persisted registry and references replay successfully. Same-name player row exists without explicit object mapping; this does not test opening generation or native UI."
+}

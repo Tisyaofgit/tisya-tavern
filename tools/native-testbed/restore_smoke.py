@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Open an extracted snapshot in the real native host, inspect, then stop it."""
 import argparse,datetime,json,pathlib,subprocess,time
-p=argparse.ArgumentParser();p.add_argument('package_root',type=pathlib.Path);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--display-number',type=int,default=92);p.add_argument('--api-port',type=int,default=8096);p.add_argument('--driver-port',type=int,default=4445);a=p.parse_args();root=a.package_root.resolve()
+p=argparse.ArgumentParser();p.add_argument('package_root',type=pathlib.Path);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--display-number',type=int,default=92);p.add_argument('--api-port',type=int,default=8097);p.add_argument('--driver-port',type=int,default=4445);a=p.parse_args();root=a.package_root.resolve()
 if (root/'runtime/active-session.json').exists():raise SystemExit('Use a fresh extracted copy for this check')
 record={'startedUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'packageRoot':str(root),'boundary':'Actual TauriTavern startup from extracted bytes and read-only page inspection; no generation or full-flow claim'}
 check=subprocess.run(['python3',str(root/'tools/verify-package.py')],capture_output=True,text=True);record['payloadVerificationExit']=check.returncode
@@ -9,7 +9,7 @@ if check.returncode:raise SystemExit('Payload verification failed before startin
 a.output.parent.mkdir(parents=True,exist_ok=True);log=a.output.with_suffix('.log');session=None;host=None
 try:
  with log.open('w') as stream:
-  host=subprocess.Popen(['python3',str(root/'tools/native_session.py'),'--hours','0.025','--api-port',str(a.api_port),'--driver-port',str(a.driver_port),'--display-number',str(a.display_number)],stdout=stream,stderr=subprocess.STDOUT)
+  host=subprocess.Popen(['bash',str(root/'start-tavern.sh'),'--hours','0.025','--api-port',str(a.api_port),'--driver-port',str(a.driver_port),'--display-number',str(a.display_number)],stdout=stream,stderr=subprocess.STDOUT)
   until=time.monotonic()+55
   while not (root/'runtime/active-session.json').exists():
    if host.poll() is not None:raise RuntimeError('Restored native supervisor exited before readiness')

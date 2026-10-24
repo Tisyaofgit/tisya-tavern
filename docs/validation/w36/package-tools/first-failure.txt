@@ -1,0 +1,13 @@
+2026-10-24 UTC, W36 package-root implementation first run.
+Command: python3 tools/native-testbed/test_packaging.py
+Result: 9 tests, 8 passed, 1 failed; exit 1.
+Captured failure:
+
+FAIL: test_repackage_rejects_symlink_and_colliding_diagnostic_history (__main__.PackagingTests.test_repackage_rejects_symlink_and_colliding_diagnostic_history)
+Traceback (most recent call last):
+  File "/workspace/scratch/289ae625ecae/tisya-w33/tools/native-testbed/test_packaging.py", line 32, in test_repackage_rejects_symlink_and_colliding_diagnostic_history
+    self.assertRaises(RuntimeError,pack.inventory_package,root);(root/'tools').unlink();put(root,'runtime/sessions/same/closed.json','{}');put(root,'diagnostics/previous-sessions/same/closed.json','{}');self.assertRaises(RuntimeError,pack.inventory_package,root)
+AssertionError: RuntimeError not raised by inventory_package
+
+The collector rejected symlink descendants but not a symlink used as a collection root.
+The fix checks root.is_symlink() before os.walk. No native runtime was modified.

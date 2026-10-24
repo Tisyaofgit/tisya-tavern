@@ -1,0 +1,19 @@
+test_archive_is_extracted_and_each_payload_hash_checked (__main__.PackagingTests.test_archive_is_extracted_and_each_payload_hash_checked) ... ok
+test_empty_secrets_required_and_non_test_settings_credentials_rejected (__main__.PackagingTests.test_empty_secrets_required_and_non_test_settings_credentials_rejected) ... ok
+test_inline_screenshot_response_detected (__main__.PackagingTests.test_inline_screenshot_response_detected) ... ok
+test_installed_extension_evidence_and_image_dependencies_are_preserved (__main__.PackagingTests.test_installed_extension_evidence_and_image_dependencies_are_preserved) ... ok
+test_installed_extension_filter_conflicts_are_explicit (__main__.PackagingTests.test_installed_extension_filter_conflicts_are_explicit) ... ok
+test_inventory_keeps_cards_and_state_but_not_screenshots_and_locks (__main__.PackagingTests.test_inventory_keeps_cards_and_state_but_not_screenshots_and_locks) ... ok
+test_local_assets_wrapper_check_does_not_start_services_and_rejects_port_collision (__main__.PackagingTests.test_local_assets_wrapper_check_does_not_start_services_and_rejects_port_collision) ... ok
+test_local_helper_assets_serve_only_fixed_public_files_without_forwarding (__main__.PackagingTests.test_local_helper_assets_serve_only_fixed_public_files_without_forwarding) ... ok
+test_relocatable_supervisor_with_protocol_stubs (__main__.PackagingTests.test_relocatable_supervisor_with_protocol_stubs) ... ok
+test_repackage_cli_roundtrip_preserves_current_payload_and_original_source (__main__.PackagingTests.test_repackage_cli_roundtrip_preserves_current_payload_and_original_source) ... ok
+test_repackage_keeps_changed_state_and_history_but_excludes_live_files_and_screenshots (__main__.PackagingTests.test_repackage_keeps_changed_state_and_history_but_excludes_live_files_and_screenshots) ... ok
+test_repackage_refuses_a_running_host_without_producing_archive (__main__.PackagingTests.test_repackage_refuses_a_running_host_without_producing_archive) ... ok
+test_repackage_rejects_symlink_and_colliding_diagnostic_history (__main__.PackagingTests.test_repackage_rejects_symlink_and_colliding_diagnostic_history) ... ok
+test_repackage_requires_the_active_session_to_have_closed (__main__.PackagingTests.test_repackage_requires_the_active_session_to_have_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.874s
+
+OK
