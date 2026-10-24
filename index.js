@@ -626,7 +626,12 @@ async function removeMessages(rollback) {
         for(let id=end;id>=token.id;id--) {
             const message=context().chat[id], snapshot=snapshots[id-token.id];
             if(context().getCurrentChatId()!==token.chatId||message!==original[id-token.id]||!snapshot||message?.mes!==snapshot.text||message?.swipe_id!==snapshot.swipe) throw new Error('删除期间消息发生变化');
-            await v3Host.deleteFloor({floor:id});deleted++;
+            try{await v3Host.deleteFloor({floor:id});}catch(err){
+                // Native deletion can succeed before persistence fails. Report
+                // the observed side effect instead of understating data loss.
+                if(context().chat===ctx.chat&&ctx.chat.length===token.length-deleted-1&&!ctx.chat.includes(following[id-token.id-1]))deleted++;
+                throw err;
+            }deleted++;
         }
         await context().saveChat();close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
@@ -664,6 +669,7 @@ async function generateAtOperation(token, reroll, operation) {
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:type,mainApi:ctx.mainApi,selectedGroup:ctx.groupId}));
     assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
+    if(Array.from(context().chat).some(m=>!m||typeof m.mes!=='string'))throw new Error('后续历史尚未完整加载，未回溯消息');
     // Establish stable floor markers before comparing the remaining history.
     // Initializing during the first deletion otherwise looks like a user edit.
     const v3Host=await requireV3();await v3Host.initialize();operation.check();
@@ -677,7 +683,12 @@ async function generateAtOperation(token, reroll, operation) {
         for(let id=token.length-1;id>token.id;id--) {
             operation.check();validate(context(),token);
             if(context().chat.length!==token.length-deleted||context().chat[id]!==following[id-token.id-1]||JSON.stringify(context().chat[id])!==snapshots[id-token.id-1])throw new Error('回溯期间历史已变化');
-            await v3Host.deleteFloor({floor:id});
+            try{await v3Host.deleteFloor({floor:id});}catch(err){
+                // Native deletion can succeed before persistence fails. Report
+                // the observed side effect instead of understating data loss.
+                if(context().chat===ctx.chat&&ctx.chat.length===token.length-deleted-1&&!ctx.chat.includes(following[id-token.id-1]))deleted++;
+                throw err;
+            }
             if(context().chat.length!==token.length-deleted-1)throw new Error('宿主未完成消息删除');
             deleted++;
             if(operation.signal.aborted){await context().saveChat();operation.check();}
