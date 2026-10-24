@@ -1,0 +1,93 @@
+{
+  "format": "tisya.native-scan-source/1",
+  "version": "TauriTavern 2.4.0",
+  "sourceRoot": "w24/host-audit/extracted/scripts",
+  "extraction": "Acorn original function source ranges; no edits to extracted functions",
+  "scope": "Actual collection, sort, parser, scan, output wrapper. DOM, data, tokenizer, buffer/timed-effects integrations are isolated fixtures. Not a complete Android runtime.",
+  "sources": [
+    {
+      "path": "world-info.js",
+      "sha256": "c7c6d639822ac89016dec17c92dc508a145f2775adbc985feb62948f89bc4b57",
+      "functions": [
+        {
+          "name": "getWorldInfoPrompt",
+          "start": 34448,
+          "end": 35840,
+          "sha256": "147afc9a8031a563f9c9ffba95b65e2b08a356d2c6b5dafda8da04b2a9b4a746"
+        },
+        {
+          "name": "collectWorldInfoEntries",
+          "start": 196089,
+          "end": 197327,
+          "sha256": "7a294f3695a4222895e013eeb03a563cdf04ab22a12c4f007c3b295564b17d6e"
+        },
+        {
+          "name": "getSortedEntries",
+          "start": 197491,
+          "end": 199138,
+          "sha256": "230a7dbbc42104ef186aa3a31cfc7d92be3c857ac4a487cfc38315d87bfe6e1e"
+        },
+        {
+          "name": "parseDecorators",
+          "start": 199342,
+          "end": 200749,
+          "sha256": "95261acef1211c62aae3fb21c52188613dfdda713ac3f3a984615f1250061c5a"
+        },
+        {
+          "name": "checkWorldInfo",
+          "start": 201206,
+          "end": 201386,
+          "sha256": "ff777359e272ca8ad221af067e2858e57cdbac13fb9939ca24059cb76f6f1835"
+        },
+        {
+          "name": "checkWorldInfoInternal",
+          "start": 201388,
+          "end": 228258,
+          "sha256": "9a12c6ddf2f824c5261b268baea80b6b0a7d3c76bffde18f3810e8862e0b5832"
+        }
+      ]
+    },
+    {
+      "path": "world-info-entry-prepare.js",
+      "sha256": "8978b53003ffdc324374faec5e35b2c8885c7fb52b78f5d1da4d1ccb2aafbf4a",
+      "functions": [
+        {
+          "name": "prepareWorldInfoEntries",
+          "start": 348,
+          "end": 715,
+          "sha256": "bd6b270201bac7a3663c56215facc48fa9c4572f986b11cd5095f68e80ed99af"
+        }
+      ]
+    },
+    {
+      "path": "tauritavern/agent/world-info-activation.js",
+      "sha256": "0e7da9f514d6da9b2f8d65b8a9d2fb9063c3abfb3cc8d22db429f4898c4483b9",
+      "functions": [
+        {
+          "name": "normalizeWorldInfoActivationBatch",
+          "start": 7,
+          "end": 314,
+          "sha256": "e43991a95d57898fb509ad9c4bd671772216be09c235f7c8da41e1e9e404f30e"
+        },
+        {
+          "name": "normalizeWorldInfoEntry",
+          "start": 316,
+          "end": 797,
+          "sha256": "b09f51d16d37aca67f09c0eecf41c814323e7a4381f9f35f8943371985038a68"
+        },
+        {
+          "name": "normalizeWorldInfoPosition",
+          "start": 799,
+          "end": 1297,
+          "sha256": "519a7727ea3a4f06cc7c26ded2c639020f7e28168590eae9d25c22ce28f387d1"
+        },
+        {
+          "name": "normalizeWorldInfoDisplayName",
+          "start": 1299,
+          "end": 1700,
+          "sha256": "09ffceb1b39504204bbda83912685ece6e542d362a17a42b9121c2632394ef22"
+        }
+      ]
+    }
+  ]
+}

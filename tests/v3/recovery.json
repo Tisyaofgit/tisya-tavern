@@ -1,0 +1,242 @@
+[
+  {
+    "path": "tests/v3/integration-tests/host-boundaries.test.mjs",
+    "source_sha256": "9a1d8041f2b93027326a0834e6f1018a27502bd905f3eb94ac88c9884c177b6a",
+    "source": "integration-tests/host-boundaries.test.mjs"
+  },
+  {
+    "path": "tests/v3/integration-tests/entry-isolation.test.mjs",
+    "source_sha256": "868628b08a485b10151666ca4f8bf98480105fc056530c711b884d19bbb0c93d",
+    "source": "integration-tests/entry-isolation.test.mjs"
+  },
+  {
+    "path": "tests/v3/reply-tests/journey-v3.test.mjs",
+    "source_sha256": "532aa5a8086e1aeefd8e72768bda3a40771f287341ad63dd1b7388383d24c273",
+    "source": "reply-tests/journey-v3.test.mjs"
+  },
+  {
+    "path": "tests/v3/reply-tests/reply.test.mjs",
+    "source_sha256": "c3afbc370a4bc5db14a2291d1ec4fda479c0fe7a2ba321ceb775023188e4ebca",
+    "source": "reply-tests/reply.test.mjs"
+  },
+  {
+    "path": "tests/v3/reply-tests/fixture.mjs",
+    "source_sha256": "07ed188fd07d1ec967610677702a38f78f26c6d4e176387956de9675f9a0f99a",
+    "source": "reply-tests/fixture.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/author-note.test.mjs",
+    "source_sha256": "4c67207e5547fb38f484784752830dd517c0466a8df2aa6f6ed96f721163a893",
+    "source": "host-tests/author-note.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/communication.test.mjs",
+    "source_sha256": "f470fee12f0ddfb8fb537037034e4760be00c951c6bf6a3304165f18965869bf",
+    "source": "host-tests/communication.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/projection.test.mjs",
+    "source_sha256": "9c914531c8321a9ed76eab6c66cd5345e0ef620b1a43c046bdddcc17dc1539c5",
+    "source": "host-tests/projection.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/installer.test.mjs",
+    "source_sha256": "cd5c3c988cf69fbba4d3709cfcd976828b7d810c4b5dd3168a0bc94fce3fa9b0",
+    "source": "host-tests/installer.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/native-rules.test.mjs",
+    "source_sha256": "1f186a40943e0f15bf3ddb4770e15234231fa61f13baca0477de36516cf33baf",
+    "source": "host-tests/native-rules.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/companion.test.mjs",
+    "source_sha256": "81809983adb7cac611e5a4b88e085dc106f385efd4778fe1f035599788c9bb64",
+    "source": "host-tests/companion.test.mjs"
+  },
+  {
+    "path": "tests/v3/host-tests/installer-harness.mjs",
+    "source_sha256": "11881b3dd50098a0554aa4a6694542de6cc93d4d2cbcf42c8aa6123e333ecfd3",
+    "source": "host-tests/installer-harness.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/w26-services.test.mjs",
+    "source_sha256": "c10ac972e22716f5ec43f71f9577f9aec387c5790cec280f89c68fc684f6ac3e",
+    "source": "ui-tests/w26-services.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/action-focus.test.mjs",
+    "source_sha256": "17b16b209fdebbea98fe9a857941b7b6d8cef719d802f69d2fe17502d938f796",
+    "source": "ui-tests/action-focus.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/journey-consumers.test.mjs",
+    "source_sha256": "890d4cad79eb9141f99fb60e17bcbce58a3622afde48a2395ecf57a876af17c8",
+    "source": "ui-tests/journey-consumers.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/companion-display.test.mjs",
+    "source_sha256": "d90a9035f3e97b78da71f8b615dd8fcfde32a1ba4de72ba2403ee43c75de63ad",
+    "source": "ui-tests/companion-display.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/application-ui.test.mjs",
+    "source_sha256": "6e5dad3ca2d4aae3f66faf40369c1bf06314ef27aa2ac946146de8c39177a6b1",
+    "source": "ui-tests/application-ui.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/bubble-chat.test.mjs",
+    "source_sha256": "c0216d8c071c2db5293a5f0ca82f74303c322bfefeaee936c8ac78e62a9e3156",
+    "source": "ui-tests/bubble-chat.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/journey-fixture.mjs",
+    "source_sha256": "d35140ee9b546d980b389daf71d30e539b818d959b99997d9becd04e4a48e29f",
+    "source": "ui-tests/journey-fixture.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/workbench.test.mjs",
+    "source_sha256": "e60b584092adc8fc916720a0c50b261f35e62d3b0a0a13f18168ef1989e779b6",
+    "source": "ui-tests/workbench.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/atlas-view.test.mjs",
+    "source_sha256": "574ff901344e1e738c5d6f62aefc89599fc6aa11e0131bbe3c80e09633ca7c20",
+    "source": "ui-tests/atlas-view.test.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/fixture.mjs",
+    "source_sha256": "07ed188fd07d1ec967610677702a38f78f26c6d4e176387956de9675f9a0f99a",
+    "source": "ui-tests/fixture.mjs"
+  },
+  {
+    "path": "tests/v3/ui-tests/memory-timeline.test.mjs",
+    "source_sha256": "c53a2e5f062901f5d6088276d86a6ee62e9b1a507d32241694e0d5d3e370a223",
+    "source": "ui-tests/memory-timeline.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/worldbook-management-config.test.mjs",
+    "source_sha256": "2a4161ab70dc79fcb0a1fe89cc05b23728d4d17171d8ef771dd6ba76f2ba0d48",
+    "source": "storage-tests/worldbook-management-config.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/conditions.test.mjs",
+    "source_sha256": "7f4af9bcb66e975cb9d36bd1b24d3d31e2b9ce40b758dddebc904f8148f006a4",
+    "source": "storage-tests/conditions.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/books.test.mjs",
+    "source_sha256": "d3a39e94125b0ad6947d9b4f3ebb8f0a88af2991aa6a632e60cf740f62cf4ee7",
+    "source": "storage-tests/books.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/native-scan-harness.mjs",
+    "source_sha256": "c559845e87a45ca312fa6783ba9f0536cd2754d1290f9a0228e134a68f90b1c2",
+    "source": "storage-tests/native-scan-harness.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/configuration-native-host.test.mjs",
+    "source_sha256": "d51acde14692f9e1773957a28c55f018ecb64375a45f3ece0f9aebd5b58da0b0",
+    "source": "storage-tests/configuration-native-host.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/configuration-book.test.mjs",
+    "source_sha256": "9a6e8e66aecbc81c3d97d2eae658ecc132d189f7d106fce6e4ec9361d3c51aa3",
+    "source": "storage-tests/configuration-book.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/native-host-fixture.mjs",
+    "source_sha256": "c3e7d926390c51f3a76b7db8cae8468934b251bb4ceff5ac9cbefbe1038863fc",
+    "source": "storage-tests/native-host-fixture.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/book-host.test.mjs",
+    "source_sha256": "a3854b2c90e3f535bd474fd52307429da974be2057ae2fec75a9962a8f677708",
+    "source": "storage-tests/book-host.test.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/native-scan-2.4-source.mjs",
+    "source_sha256": "9698f6dd9a83eb8feb01098434ac3dc00a9791e0744f2f0fcce9ff05bb89a512",
+    "source": "storage-tests/native-scan-2.4-source.mjs"
+  },
+  {
+    "path": "tests/v3/storage-tests/fixture.mjs",
+    "source_sha256": "c85649209b2b05705183c958ed9cdeb8683e368cb5bac1be594640cfebe55cf0",
+    "source": "storage-tests/fixture.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/fixtures.mjs",
+    "source_sha256": "d8be15472d031e6aab10f3d634f5040c2cca585cda053aa4fecce7bc0bc3c0e8",
+    "source": "review-tests/fixtures.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/journey-application.integration.mjs",
+    "source_sha256": "7d43389a7932144046dc028e6c82ab6ef53d65e6561cf4f8707847091f3602a0",
+    "source": "review-tests/journey-application.integration.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/tags.test.mjs",
+    "source_sha256": "5666810651971c13c061100c4f57595f6ce3226b7241d4faf3feff9a193dfc8a",
+    "source": "review-tests/tags.test.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/journey.test.mjs",
+    "source_sha256": "97f4de53a61e5912627c1b74f75fb5ada9668117eb197be2c7fafde0c6a82723",
+    "source": "review-tests/journey.test.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/batch.test.mjs",
+    "source_sha256": "e535c2d8b86c887b0bd7a1ed21565c366639744061e8efba6b33ba02c4abbc4c",
+    "source": "review-tests/batch.test.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/application-tags.integration.mjs",
+    "source_sha256": "58ba2fec487b933d5759dd56965ab3675282fb3ea9c602781a00f3a1fe8bc85d",
+    "source": "review-tests/application-tags.integration.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/design.test.mjs",
+    "source_sha256": "69d7a348b8d182747bdd512e2578274459cdcfead20d2b00e1a307832879cc89",
+    "source": "review-tests/design.test.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/services.test.mjs",
+    "source_sha256": "e80e7d5c9170a09a63776a82785fa8fea495ee618db66458d011f4892088bdf2",
+    "source": "review-tests/services.test.mjs"
+  },
+  {
+    "path": "tests/v3/review-tests/progress.test.mjs",
+    "source_sha256": "f80b34b25ba8dcbf507d75b6b63d19c312d1fab1036053f3cb8c8f57b1afd0be",
+    "source": "review-tests/progress.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/full-preset.test.mjs",
+    "source_sha256": "1ce2987eb235614b961b71e0be678ba2bd4806981aa4aee2c558365035bfca28",
+    "source": "preset-tests/full-preset.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/focus-dynamics.test.mjs",
+    "source_sha256": "6d9226a6bbc9f5ff091f5e76c79f315bb926b03e03a4b505c530d0ec76f85fd5",
+    "source": "preset-tests/focus-dynamics.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/companion-preset.test.mjs",
+    "source_sha256": "750b044c097f206e11fb7959c66316955b5f3d89caf361b98026d27a5c1029f5",
+    "source": "preset-tests/companion-preset.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/native-positions.test.mjs",
+    "source_sha256": "7b877cc20f3fb59ae513edf7ea5e894cad836684dbba2eee765aa0cd90f2c432",
+    "source": "preset-tests/native-positions.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/catalog.test.mjs",
+    "source_sha256": "75149f0120e6dfd5d9fb3f0d2d7eb06df606f3ea914e156276cd675600aea666",
+    "source": "preset-tests/catalog.test.mjs"
+  },
+  {
+    "path": "tests/v3/preset-tests/configuration.test.mjs",
+    "source_sha256": "546096e75944dfd30e49b5411065b34dcdaa7de103f17210bd8fcc2da510e981",
+    "source": "preset-tests/configuration.test.mjs"
+  }
+]

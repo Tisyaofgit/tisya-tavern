@@ -70,7 +70,9 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
  }
  function resolveConnectionFor(task){
   const captured=store.read(),route=resolveRoute(captured.data,captured.world,task);
-  const settings={...connectionSettings(route),...clone(route.parameters??{})};
+  const paired=typeof route.preset==='string'&&route.preset.startsWith('tisya:');
+  const preset=paired?null:nativePreset(route.preset);
+  const settings={...connectionSettings(route),...(preset?pickParameters(preset):{}),...clone(route.parameters??{})};
   const model=route.model||settings.__tisyaModel||ctx().getChatCompletionModel(settings);delete settings.__tisyaModel;
   if(typeof model!=='string'||!model.trim())fail('当前任务尚未选择模型');
   return {settings,model,route:clone(route),configurationRevision:captured.revision,world:captured.key};

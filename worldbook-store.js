@@ -8,7 +8,7 @@ const filterKeys=['characterFilterNames','characterFilterTags','characterFilterE
 const originalExtra={group:'extensions.group',outletName:'extensions.outlet_name',useProbability:'extensions.use_probability',addMemo:'extensions.add_memo'};
 function ensure(value,message){if(!value)throw Error(message);}
 export function createWorldbookStore({native,getContext,readFresh,listNames,sanitizeName,persistSettings,orderAvailable=()=>true,getBindings=()=>({primary:'',extra:[],chat:'',persona:''}),conditionEngine=null,configurationBook=null}){
- let conditionRules=[],conditionError='',bases=new Map(),origins=new Map(),uiOrigins=new Map(),bookMap=new Map(),allocations=new Map(),settingsBase,prefsBase,activeBase,scopeBase,loaded=false,busy=false,version=0,pendingSettings=null;
+ let conditionRules=[],conditionError='',bases=new Map(),origins=new Map(),uiOrigins=new Map(),bookMap=new Map(),allocations=new Map(),settingsBase,prefsBase,prefsViewBase,activeBase,scopeBase,loaded=false,busy=false,version=0,pendingSettings=null;
  const scope=()=>{const c=getContext();return stable([c.characterId,c.groupId,c.chatId,getBindings()]);};
  const prefs=()=>{const state=configurationBook?.read();return clone(validateWorldbookPreferences(state?.ready?state.domains.worldbookInterface??{}:getContext().extensionSettings[PREFS]??{}));};
  const settings=()=>{const {world_info,...s}=native.getWorldInfoSettings();return clone(s);};
@@ -38,6 +38,7 @@ export function createWorldbookStore({native,getContext,readFresh,listNames,sani
     const data=bases.get(name);for(const raw of Object.values(data.entries).sort((a,b)=>(a.displayIndex??a.uid)-(b.displayIndex??b.uid))){ensure(Number.isInteger(raw.uid)||typeof raw.uid==='string'&&/^\d+$/.test(raw.uid),'条目 UID 无效：'+name);const eid=id+'e'+raw.uid;ensure(!uiOrigins.has(eid),'条目 UID 重复：'+name);const ui=toUI(raw,eid,id);entries.push(ui);origins.set(eid,{name,uid:raw.uid,raw:clone(raw)});uiOrigins.set(eid,clone(ui));}
    }
    settingsBase=settings();prefsBase=prefs();activeBase=clone(native.selected_world_info);scopeBase=scope();loaded=true;version++;
+   prefsViewBase={tags:clone(p.tags??{prefix:[],suffix:[]}),auto:p.auto!==false,pin:!!p.pin,layoutOrder:!!p.layoutOrder,bookOrder:books.map(b=>b.name)};
    const idFor=n=>books.find(b=>b.name===n)?.id??'';
    return {version,books,entries,tags:p.tags??{prefix:[],suffix:[]},auto:p.auto!==false,globalSettings:{...settingsBase,pin:!!p.pin,layoutOrder:!!p.layoutOrder},bindings:{primary:idFor(binding.primary),extra:(binding.extra??[]).map(idFor).filter(Boolean),chat:idFor(binding.chat),persona:idFor(binding.persona)},capabilities:{entrySave:true,globalSettings:true,characterLink:false,conditions:!!conditionEngine&&!conditionError,conditionError,conditionRules:clone(conditionRules),promptOrder:orderAvailable()}};
   }finally{busy=false;}
@@ -69,7 +70,8 @@ export function createWorldbookStore({native,getContext,readFresh,listNames,sani
  async function save(input){
   ensure(loaded,'请先载入世界书');ensure(!busy,'已有保存正在进行');ensure(input.version===version,'页面已更新，请重新载入');ensure(scope()===scopeBase,'角色或聊天已切换，请导出草稿后重新载入');busy=true;const saved=[];
   try{
-   await refreshConditionRules();ensure(scope()===scopeBase,'条件登记读取期间会话变化');const compiled=compile(input);const active=input.books.filter(b=>b.enabled).map(b=>b.name);const desiredPrefs={...prefsBase,tags:clone(input.tags),auto:!!input.auto,pin:!!input.globalSettings.pin,layoutOrder:!!input.globalSettings.layoutOrder,bookOrder:input.books.map(b=>b.name)};
+   await refreshConditionRules();ensure(scope()===scopeBase,'条件登记读取期间会话变化');const compiled=compile(input);const active=input.books.filter(b=>b.enabled).map(b=>b.name);const prefsView={tags:clone(input.tags),auto:!!input.auto,pin:!!input.globalSettings.pin,layoutOrder:!!input.globalSettings.layoutOrder,bookOrder:input.books.map(b=>b.name)},desiredPrefs={...prefsBase};
+   for(const [key,value]of Object.entries(prefsView))if(!equal(value,prefsViewBase[key]))desiredPrefs[key]=clone(value);
    validateWorldbookPreferences(desiredPrefs);if(!equal(desiredPrefs,prefsBase))ensure(configurationBook?.read().ready,'请先绑定并恢复配置书，再保存世界书界面设置');
    ensure(!desiredPrefs.layoutOrder||orderAvailable(),'此宿主缺少排布控制事件，请关闭“按队列顺序扫描与注入”');
    ensure(input.tags&&['prefix','suffix'].every(k=>Array.isArray(input.tags[k])&&input.tags[k].every(t=>typeof t==='string')),'标签格式无效');
@@ -82,7 +84,7 @@ export function createWorldbookStore({native,getContext,readFresh,listNames,sani
    for(const [name,data] of writes){ensure(scope()===scopeBase,'角色或聊天在保存期间切换；已完成的书保留');if(bases.has(name))ensure(equal(await readFresh(name),bases.get(name)),'保存前世界书发生变化：'+name);await native.saveWorldInfo(name,clone(data),true);const actual=await readFresh(name);ensure(equal(actual,data),'宿主回读与提交不同：'+name);bases.set(name,clone(data));saved.push(name);}
    ensure(scope()===scopeBase,'角色或聊天在保存期间切换');ensure(settingsMatch(),'保存期间全局配置发生变化；条目保存结果已保留');
    if(pendingSettings||!equal(desiredSettings,settingsBase)||!equal(active,activeBase)||!equal(desiredPrefs,prefsBase)){if(pendingSettings){ensure(equal(pendingSettings.settings,desiredSettings)&&equal(pendingSettings.active,active)&&equal(pendingSettings.prefs,desiredPrefs),'已有待完成设置，请保持原草稿重试');}else pendingSettings={settings:clone(desiredSettings),active:clone(active),prefs:clone(desiredPrefs),expected:configurationBook?.read(),operationId:'worldbook-interface:'+crypto.randomUUID(),nativeSaved:false};native.updateWorldInfoSettings(clone(desiredSettings),clone(active));native.flushPendingWorldInfoSettings();await completeSettings();}
-   await native.updateWorldInfoList();return {ok:true,saved};
+   await native.updateWorldInfoList();prefsViewBase=clone(prefsView);return {ok:true,saved};
   }catch(error){error.savedBooks=saved;throw error;}finally{busy=false;}
  }
  return {load,save,isBusy:()=>busy,hasUnconfirmedSettings:()=>!!pendingSettings,getVersion:()=>version,exportBook:id=>{const name=bookMap.get(id);ensure(name,'世界书不存在');return {name,data:clone(bases.get(name))};}};

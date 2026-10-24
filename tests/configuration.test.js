@@ -401,3 +401,11 @@ test('text task JSON-looking quotations remain literal source text',async()=>{
  globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({choices:[{message:{content:'完成'},finish_reason:'stop'}]});};
  try{await f.host.request('summary',source);const message=sent.messages.find(m=>m.content.startsWith('[SOURCE]'));assert.equal(parseSimpleSheet(message.content.split('\n').slice(1,-1).join('\n')),source);}finally{globalThis.fetch=oldFetch;}
 });
+
+
+test('V3 connection resolver applies selected preset parameters with explicit task overrides, without borrowing its prompt',()=>{
+ const f=fixture();f.c.getPresetManager=()=>({getAllPresets:()=>['sampling'],getCompletionPresetByName:()=>({temp_openai:0,top_p_openai:0.6,prompts:[{content:'MUST_NOT_REPLACE_V3'}]})});
+ f.d.routes.tasks.main={preset:'sampling',parameters:{top_p_openai:0.8}};
+ const resolved=f.host.resolveConnectionFor('main');assert.equal(resolved.settings.temp_openai,0);assert.equal(resolved.settings.top_p_openai,0.8);assert.equal(resolved.model,'N-model');assert.equal(resolved.settings.prompts.some(p=>p.content==='MUST_NOT_REPLACE_V3'),false);
+ f.d.routes.tasks.main.preset=null;assert.equal(f.host.resolveConnectionFor('main').settings.temp_openai,undefined);
+});

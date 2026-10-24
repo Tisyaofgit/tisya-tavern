@@ -76,7 +76,7 @@ export function createConfigurationBook({books,store,getContext,getPlayerId,read
  }
  const authority={guard,save:async(data,{expected,key})=>queue(async()=>{guard({raw:store.cacheSnapshot(),key});check(JSON.stringify(store.cacheSnapshot())===expected,'CONFIGURATION_CACHE','配置表单依据已变化');return saveDomains({configuration:data},expectedOf(state));})};store.installAuthority(authority);
  return Object.freeze({
-   read,hydrate:options=>queue(()=>hydrateInner(options)),
+   read,assertReady:liveGuard,hydrate:options=>queue(()=>hydrateInner(options)),
    saveDomain:(name,payload,expected,options={})=>queue(async()=>{const candidate={kind:'candidate',changes:{[name]:copy(payload)},expected:expectedOf(expected),operationId:options.operationId??'configuration-save:'+uuid()};try{return await saveDomains(candidate.changes,expected,{operationId:candidate.operationId});}catch(error){if(state.draft?.operationId!==candidate.operationId)state.draft=candidate;state.error=errorValue(error);throw error;}}),
    saveCombined:({configuration,interface:ui,configurationRevision,key},expected,options)=>queue(()=>{
      const current=store.read();const prepared=store.prepare(configuration,configurationRevision??current.revision,key??current.key);return saveDomains({configuration:prepared,...ui!==undefined?{interface:ui}:{}},expected,options);
