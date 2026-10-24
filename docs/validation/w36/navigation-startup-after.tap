@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+ok 1 - failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 46.084552
+  type: 'test'
+  ...
+# Subtest: failed 世界档案 navigation shows its failure and an explicit fresh retry
+ok 2 - failed 世界档案 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 14.183285
+  type: 'test'
+  ...
+# Subtest: failed 历史补录 navigation shows its failure and an explicit fresh retry
+ok 3 - failed 历史补录 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 14.798527
+  type: 'test'
+  ...
+# Subtest: user preferences home entry uses actual shared contributions, projection and confirmation service
+ok 4 - user preferences home entry uses actual shared contributions, projection and confirmation service
+  ---
+  duration_ms: 129.509777
+  type: 'test'
+  ...
+# Subtest: preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+ok 5 - preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+  ---
+  duration_ms: 85.429225
+  type: 'test'
+  ...
+# Subtest: disabled preference processing remains visible read only without becoming an empty bank or active projection
+ok 6 - disabled preference processing remains visible read only without becoming an empty bank or active projection
+  ---
+  duration_ms: 69.653994
+  type: 'test'
+  ...
+# Subtest: same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+ok 7 - same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+  ---
+  duration_ms: 74.941125
+  type: 'test'
+  ...
+# Subtest: a navigation click during the first snapshot read remains selected after startup finishes
+ok 8 - a navigation click during the first snapshot read remains selected after startup finishes
+  ---
+  duration_ms: 43.282621
+  type: 'test'
+  ...
+# Subtest: the most recent accepted startup tab click wins and an untouched initial page still opens
+ok 9 - the most recent accepted startup tab click wins and an untouched initial page still opens
+  ---
+  duration_ms: 15.084144
+  type: 'test'
+  ...
+# Subtest: a failed first refresh stays visible without reverting the accepted page
+ok 10 - a failed first refresh stays visible without reverting the accepted page
+  ---
+  duration_ms: 4.961249
+  type: 'test'
+  ...
+# Subtest: startup completion after disposal does not initiate the initial page reads
+ok 11 - startup completion after disposal does not initiate the initial page reads
+  ---
+  duration_ms: 4.690623
+  type: 'test'
+  ...
+# Subtest: canonical setting search delegates once and internal navigation is usable
+ok 12 - canonical setting search delegates once and internal navigation is usable
+  ---
+  duration_ms: 41.410555
+  type: 'test'
+  ...
+# Subtest: pending preference edit stays pending and uses preference service only
+ok 13 - pending preference edit stays pending and uses preference service only
+  ---
+  duration_ms: 22.83769
+  type: 'test'
+  ...
+# Subtest: same-level nested editor keeps draft across back; close preserves then save commits once
+ok 14 - same-level nested editor keeps draft across back; close preserves then save commits once
+  ---
+  duration_ms: 31.450527
+  type: 'test'
+  ...
+# Subtest: unapplied assistant changes block leaving until explicitly abandoned
+ok 15 - unapplied assistant changes block leaving until explicitly abandoned
+  ---
+  duration_ms: 21.736238
+  type: 'test'
+  ...
+# Subtest: bubble clamps to small keyboard viewport and falls below top head
+ok 16 - bubble clamps to small keyboard viewport and falls below top head
+  ---
+  duration_ms: 0.429193
+  type: 'test'
+  ...
+# Subtest: missing pet adds only badge to existing approved entry
+ok 17 - missing pet adds only badge to existing approved entry
+  ---
+  duration_ms: 3.509531
+  type: 'test'
+  ...
+# Subtest: actual capability facade receives book version guards and stable IDs
+ok 18 - actual capability facade receives book version guards and stable IDs
+  ---
+  duration_ms: 37.283923
+  type: 'test'
+  ...
+# Subtest: actual capability facade supports selective configuration batch without extra save
+ok 19 - actual capability facade supports selective configuration batch without extra save
+  ---
+  duration_ms: 23.453012
+  type: 'test'
+  ...
+# Subtest: P saved receipt recovery is offered as completion, not another edit or approval
+ok 20 - P saved receipt recovery is offered as completion, not another edit or approval
+  ---
+  duration_ms: 14.125738
+  type: 'test'
+  ...
+# Subtest: registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+ok 21 - registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+  ---
+  duration_ms: 138.344173
+  type: 'test'
+  ...
+# Subtest: book definition conflicts require each acknowledgement and retain the same operation ID
+ok 22 - book definition conflicts require each acknowledgement and retain the same operation ID
+  ---
+  duration_ms: 24.897978
+  type: 'test'
+  ...
+# Subtest: UI settled waits for pending action, preserving parent busy lifecycle
+ok 23 - UI settled waits for pending action, preserving parent busy lifecycle
+  ---
+  duration_ms: 9.461836
+  type: 'test'
+  ...
+# Subtest: user switching automatically binds the selected real player preference owner
+ok 24 - user switching automatically binds the selected real player preference owner
+  ---
+  duration_ms: 10.106282
+  type: 'test'
+  ...
+# Subtest: design UI preserves delta metadata and source, selects rows, and saves one validated batch
+ok 25 - design UI preserves delta metadata and source, selects rows, and saves one validated batch
+  ---
+  duration_ms: 38.822194
+  type: 'test'
+  ...
+# Subtest: chat entry opens independent conversation directly and aside bubble routes to chat
+ok 26 - chat entry opens independent conversation directly and aside bubble routes to chat
+  ---
+  duration_ms: 13.681958
+  type: 'test'
+  ...
+# Subtest: first setup creates three explicit books with player preference owner and retries the same creation intent
+ok 27 - first setup creates three explicit books with player preference owner and retries the same creation intent
+  ---
+  duration_ms: 16.44153
+  type: 'test'
+  ...
+# Subtest: condition UI uses actual fields, explicit events and preview-before-commit through one facade
+ok 28 - condition UI uses actual fields, explicit events and preview-before-commit through one facade
+  ---
+  duration_ms: 16.045606
+  type: 'test'
+  ...
+# Subtest: unbound archive entry explains setup and routes to books without attempting ledger access
+ok 29 - unbound archive entry explains setup and routes to books without attempting ledger access
+  ---
+  duration_ms: 5.106315
+  type: 'test'
+  ...
+# Subtest: actual outward navigation passes the host suspend guard only during synchronous route dispatch
+ok 30 - actual outward navigation passes the host suspend guard only during synchronous route dispatch
+  ---
+  duration_ms: 9.845912
+  type: 'test'
+  ...
+# Subtest: condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+ok 31 - condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+  ---
+  duration_ms: 49.779091
+  type: 'test'
+  ...
+# Subtest: confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+ok 32 - confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+  ---
+  duration_ms: 22.886963
+  type: 'test'
+  ...
+# Subtest: gate editor leaves probability to the worldbook entry and action editor retains rule probability
+ok 33 - gate editor leaves probability to the worldbook entry and action editor retains rule probability
+  ---
+  duration_ms: 8.053905
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 905.289831

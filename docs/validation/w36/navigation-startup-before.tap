@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: a navigation click during the first snapshot read remains selected after startup finishes
+not ok 1 - a navigation click during the first snapshot read remains selected after startup finishes
+  ---
+  duration_ms: 33.684348
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/w36-navigation-startup.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'settings' !== 'home'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'home'
+  actual: 'settings'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/w36-navigation-startup.test.mjs:19:40)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: the most recent accepted startup tab click wins and an untouched initial page still opens
+not ok 2 - the most recent accepted startup tab click wins and an untouched initial page still opens
+  ---
+  duration_ms: 9.718501
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/w36-navigation-startup.test.mjs:22:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'home' !== 'settings'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'settings'
+  actual: 'home'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/w36-navigation-startup.test.mjs:23:201)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 349.627639

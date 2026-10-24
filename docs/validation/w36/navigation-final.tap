@@ -1,0 +1,12 @@
+✔ a navigation click during the first snapshot read remains selected after startup finishes (35.796831ms)
+✔ the most recent accepted startup tab click wins and an untouched initial page still opens (20.295847ms)
+✔ a failed first refresh stays visible without reverting the accepted page (5.105442ms)
+✔ startup completion after disposal does not initiate the initial page reads (4.512363ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 345.186996
