@@ -2141,7 +2141,7 @@ function preparePreferences(view, proposal, input, state) {
     if (merged.\u5F3A\u5EA6 === "\u559C\u7231") check(merged.\u8D4B\u5206 >= 0, "Encouragement score is negative");
     if (merged.\u5F3A\u5EA6 === "\u538C\u6076") check(merged.\u8D4B\u5206 <= 0, "Aversion score is positive");
     const origin = fresh ? { chatId } : copy(before.preferenceOrigin), identity2 = preferenceContributionIdentity({ preferenceSource: source, preferenceOrigin: origin, values: merged });
-    const duplicate = state.preferenceDrafts.some((d) => d.status !== "rejected" && d.changes?.some((c) => c.after && preferenceContributionIdentities(c.after).includes(identity2))) || (state.preferenceRows ?? []).some((r) => preferenceContributionIdentities(r).includes(identity2));
+    const duplicate = state.preferenceDrafts.some((d) => (!input.preferenceBankId || d.preferenceBankId === input.preferenceBankId) && d.status !== "rejected" && d.changes?.some((c) => c.after && preferenceContributionIdentities(c.after).includes(identity2))) || (state.preferenceRows ?? []).some((r) => preferenceContributionIdentities(r).includes(identity2));
     check(!fresh || !duplicate, "Feedback contribution is already pending or confirmed");
     sourceByChange.push({ key, source, origin, group, feedbackSource: op.preferenceSource, feedbackOrigin: { chatId } });
     delete op.preferenceSource;
@@ -2413,7 +2413,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
       if (!state.requests[input.requestKey].preferencesDone) {
         progress(input.requestKey, "preferences");
         state = await write(state, (s) => {
-          if (plan.prefs.prepared.commit.changes.length) s.preferenceDrafts.push({ id: "preference:" + input.requestKey, requestKey: input.requestKey, status: "pending", contributions: copy(plan.prefs.contributions), mutations: copy(plan.prefs.mutations), changes: copy(plan.prefs.prepared.commit.changes), contextSource: input.currentSourceKey ?? null });
+          if (plan.prefs.prepared.commit.changes.length) s.preferenceDrafts.push({ id: "preference:" + input.requestKey, requestKey: input.requestKey, ...input.preferenceBankId ? { preferenceBankId: input.preferenceBankId } : {}, status: "pending", contributions: copy(plan.prefs.contributions), mutations: copy(plan.prefs.mutations), changes: copy(plan.prefs.prepared.commit.changes), contextSource: input.currentSourceKey ?? null });
           s.requests[input.requestKey].preferencesDone = true;
         });
       }
@@ -2448,7 +2448,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
       const creativeBrief = copy(result.creativeBrief);
       for (const beat of creativeBrief.beats) beat.basis = beat.basis.map(alias);
       for (const key of ["pendingChoices", "due", "clues", "constraints"]) creativeBrief[key] = creativeBrief[key].map(alias);
-      const view = currentView(state, input), snapshot2 = { requestKey: input.requestKey, generationType: input.generationType, ...input.identity ? { identity: copy(input.identity) } : {}, ...input.advancedReroll ? { advancedReroll: copy(input.advancedReroll) } : {}, ...projectWriter(view), preferenceProjection: preferenceWeights(state, input), scope: scope3, creativeBrief, toolReceipts: reads, preferenceDrafts: input.preferencesEnabled === false ? [] : state.preferenceDrafts.filter((d) => d.status === "pending" && (!d.contextSource || input.activeSourceKeys.includes(d.contextSource) || d.contributions.some((c) => c.source.startsWith("feedback:")))).map((d) => ({ id: d.id, count: d.changes.length })), receipt: { archiveSources: copy(state.requests[input.requestKey].completedSources), world: plan.world?.receipt ?? null, modelCalls: 1 } };
+      const view = currentView(state, input), snapshot2 = { requestKey: input.requestKey, generationType: input.generationType, ...input.identity ? { identity: copy(input.identity) } : {}, ...input.advancedReroll ? { advancedReroll: copy(input.advancedReroll) } : {}, ...projectWriter(view), preferenceProjection: preferenceWeights(state, input), scope: scope3, creativeBrief, toolReceipts: reads, preferenceDrafts: input.preferencesEnabled === false ? [] : state.preferenceDrafts.filter((d) => (!input.preferenceBankId || d.preferenceBankId === input.preferenceBankId) && d.status === "pending" && (!d.contextSource || input.activeSourceKeys.includes(d.contextSource) || d.contributions.some((c) => c.source.startsWith("feedback:")))).map((d) => ({ id: d.id, count: d.changes.length })), receipt: { archiveSources: copy(state.requests[input.requestKey].completedSources), world: plan.world?.receipt ?? null, modelCalls: 1 } };
       const durableSnapshot = { ...copy(snapshot2), toolReceipts: reads.map((r) => ({ method: r.method, purpose: r.purpose, result: { status: r.result.status ?? "ok", snapshot: r.result.snapshot ?? null, has_more: r.result.has_more ?? false } })) };
       state = await write(state, (s) => {
         Object.assign(s.requests[input.requestKey], { status: "writer-running", writerSnapshot: durableSnapshot });
@@ -2557,8 +2557,28 @@ function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, getRequest
     }
   });
 }
+async function loadWorldbookHostModules() {
+  let worldInfo;
+  async function load(path, stage) {
+    try {
+      return await import(path);
+    } catch (cause) {
+      const error = new HostAdapterError(
+        "HOST_WORLDINFO_MODULE_LOAD",
+        `\u5BBF\u4E3B\u4E16\u754C\u4E66${stage === "world-info" ? "\u6A21\u5757" : "\u4FDD\u5B58\u7EC4\u4EF6"}\u65E0\u6CD5\u52A0\u8F7D\uFF08${path.split("/").at(-1)}\uFF09\u3002\u672C\u6B21\u5C1A\u672A\u5F00\u59CB\u4E16\u754C\u4E66\u5199\u5165\uFF1B\u8BF7\u5B8C\u6574\u91CD\u542F\u5BBF\u4E3B\u5E76\u6838\u5BF9\u5B89\u88C5\u7248\u672C\u3002\u539F\u59CB\u9519\u8BEF\uFF1A${cause?.message ?? String(cause)}`,
+        { stage, modulePath: path, loadedCapabilities: worldInfo ? ["saveWorldInfo", "createWorldInfoEntry", "flushWorldInfoSaves", "discardWorldInfoDocument"].filter((key) => typeof worldInfo[key] === "function") : [] }
+      );
+      error.cause = cause;
+      throw error;
+    }
+  }
+  worldInfo = await load("/scripts/world-info.js", "world-info");
+  const persistence = typeof worldInfo.discardWorldInfoDocument === "function" ? worldInfo : await load("/scripts/world-info-persistence.js", "persistence");
+  require2(typeof persistence.discardWorldInfoDocument === "function", "HOST_DEPENDENCY", "\u5BBF\u4E3B\u7F3A\u5C11\u4E16\u754C\u4E66\u5931\u8D25\u6E05\u7406\u63A5\u53E3\uFF0C\u672A\u5F00\u59CB\u5199\u5165\uFF1B\u8BF7\u6838\u5BF9\u5BBF\u4E3B\u7248\u672C", { capability: "discardWorldInfoDocument" });
+  return { worldInfo, persistence };
+}
 async function loadBrowserWorldbookTransport(hostWindow = window) {
-  const [worldInfo, persistence] = await Promise.all([import("/scripts/world-info.js"), import("/scripts/world-info-persistence.js")]);
+  const { worldInfo, persistence } = await loadWorldbookHostModules();
   const context = hostWindow.SillyTavern?.getContext?.();
   require2(context && typeof context.getRequestHeaders === "function", "HOST_DEPENDENCY", "SillyTavern context is unavailable");
   return createTauriWorldbookTransport({ worldInfo: { ...worldInfo, discardWorldInfoDocument: persistence.discardWorldInfoDocument }, fetch: hostWindow.fetch.bind(hostWindow), getRequestHeaders: context.getRequestHeaders });
@@ -2708,6 +2728,48 @@ function createWorldbookTableStorage({ transport, bookId, owner, initialState })
   });
 }
 
+// v3/runtime-source/host/json-value.mjs
+function sameJsonValue(left, right) {
+  const leftPath = /* @__PURE__ */ new Set(), rightPath = /* @__PURE__ */ new Set();
+  function compare(a, b) {
+    if (a === null || b === null) return a === b;
+    if (typeof a !== typeof b) return false;
+    if (typeof a === "string" || typeof a === "boolean") return a === b;
+    if (typeof a === "number") return Number.isFinite(a) && Number.isFinite(b) && a === b;
+    if (typeof a !== "object") return false;
+    if (leftPath.has(a) || rightPath.has(b)) return false;
+    const arrays = Array.isArray(a);
+    if (arrays !== Array.isArray(b)) return false;
+    if (!arrays) {
+      const plain2 = (value) => {
+        const proto = Object.getPrototypeOf(value);
+        return proto === null || Object.getPrototypeOf(proto) === null;
+      };
+      if (!plain2(a) || !plain2(b)) return false;
+    }
+    const fieldsA = Object.getOwnPropertyDescriptors(a), fieldsB = Object.getOwnPropertyDescriptors(b);
+    const keysA = Reflect.ownKeys(fieldsA), keysB = Reflect.ownKeys(fieldsB);
+    if (keysA.length !== keysB.length || keysA.some((key) => typeof key !== "string" || !Object.hasOwn(fieldsB, key))) return false;
+    if (arrays && (fieldsA.length.value !== fieldsB.length.value || keysA.length !== fieldsA.length.value + 1)) return false;
+    leftPath.add(a);
+    rightPath.add(b);
+    try {
+      return keysA.every((key) => {
+        const fieldA = fieldsA[key], fieldB = fieldsB[key];
+        if (!Object.hasOwn(fieldA, "value") || !Object.hasOwn(fieldB, "value")) return false;
+        if (arrays && key === "length") return true;
+        if (!fieldA.enumerable || !fieldB.enumerable) return false;
+        if (arrays && (!/^(0|[1-9]\d*)$/.test(key) || Number(key) >= fieldsA.length.value)) return false;
+        return compare(fieldA.value, fieldB.value);
+      });
+    } finally {
+      leftPath.delete(a);
+      rightPath.delete(b);
+    }
+  }
+  return compare(left, right);
+}
+
 // v3/runtime-source/host/floor-identities.mjs
 var IDENTITY_NAMESPACE = "tisya_w24";
 var MESSAGE_MARKER = "tisya_w24_floor";
@@ -2735,7 +2797,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
       await saveChat(ctx);
       await assertActive(ctx, state.branchId);
       const actual = await readMetadata();
-      if (JSON.stringify(actual?.[IDENTITY_NAMESPACE]) !== JSON.stringify(state)) fail4("IDENTITY_READBACK", "Floor identity metadata readback differs");
+      if (!sameJsonValue(actual?.[IDENTITY_NAMESPACE], state)) fail4("IDENTITY_READBACK", "Floor identity metadata readback differs");
     } catch (error) {
       if (getContext().chatMetadata === ctx.chatMetadata) {
         if (previousState === void 0) delete ctx.chatMetadata[IDENTITY_NAMESPACE];
@@ -2784,7 +2846,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
       delete state.rows[id];
     }
     state.order = order;
-    if (JSON.stringify(previousState) !== JSON.stringify(state) || previousMarkers.some(([message, before]) => JSON.stringify(before) !== JSON.stringify(message[MESSAGE_MARKER]))) await persist(ctx, state, previousState, previousMarkers);
+    if (!sameJsonValue(previousState, state) || previousMarkers.some(([message, before]) => !sameJsonValue(before, message[MESSAGE_MARKER]))) await persist(ctx, state, previousState, previousMarkers);
     return { ctx, state };
   }
   const identityAt = (state, floor) => {
@@ -3586,7 +3648,7 @@ var serial = () => {
 };
 var ownerValid = (owner) => object2(owner) && nonempty2(owner.chatId) && nonempty2(owner.branchId);
 var hash = (value) => digest(canonical3(value));
-var stamp = (draft) => ({ id: draft.id, requestKey: draft.requestKey, changes: draft.changes, contributions: draft.contributions, mutations: draft.mutations ?? [], contextSource: draft.contextSource ?? null });
+var stamp = (draft) => ({ id: draft.id, requestKey: draft.requestKey, changes: draft.changes, contributions: draft.contributions, mutations: draft.mutations ?? [], contextSource: draft.contextSource ?? null, ...draft.preferenceBankId ? { preferenceBankId: draft.preferenceBankId } : {} });
 function createInitialPreferenceBank({ registry }) {
   registryIndex(registry);
   return { format: "tisya.preferences-bank/1", revision: 0, baseView: { registry: copy(registry) }, preferenceRows: [], preferenceHistory: [], preferenceDrafts: [], receipts: {} };
@@ -3650,9 +3712,19 @@ function createPreferenceOverlayStorage({ sessionStorage, preferenceStorage }) {
     })
   };
 }
-function createSharedPreferenceService({ sessionStorage, preferenceStorage, getSessionOwner, isEnabled = () => true, getProjectionOptions = () => ({}) }) {
+function createSharedPreferenceService({ sessionStorage, preferenceStorage, getSessionOwner, isEnabled = () => true, getProjectionOptions = () => ({}), preferenceBankId = null }) {
   check(typeof getSessionOwner === "function", "An actual session/branch owner getter is required");
   const queue = serial();
+  check(preferenceBankId === null || nonempty2(preferenceBankId), "Preference bank identity must be a stable ID");
+  function belongs(draft, bank2, captured) {
+    if (!preferenceBankId) return true;
+    if (draft.preferenceBankId) return draft.preferenceBankId === preferenceBankId;
+    return Object.values(bank2.receipts).some((r) => r.status === "accepted" && r.draftId === draft.id && equal2(r.owner, captured.owner));
+  }
+  function assertDraftOwner(draft, bank2, captured) {
+    check(draft, "Preference draft does not exist");
+    check(belongs(draft, bank2, captured), draft.preferenceBankId ? "\u504F\u597D\u5019\u9009\u5C5E\u4E8E\u53E6\u4E00\u7528\u6237\u8EAB\u4EFD\uFF0C\u672A\u5199\u5165\u5F53\u524D\u504F\u597D\u5E93" : "\u65E7\u504F\u597D\u5019\u9009\u7F3A\u5C11\u8EAB\u4EFD\u5F52\u5C5E\u8BB0\u5F55\uFF1B\u539F\u5019\u9009\u4FDD\u7559\uFF0C\u4E0D\u80FD\u5199\u5165\u5F53\u524D\u504F\u597D\u5E93");
+  }
   function capture() {
     const owner = copy(getSessionOwner()), projection = copy(getProjectionOptions());
     check(ownerValid(owner), "Session/branch identity is required");
@@ -3668,7 +3740,7 @@ function createSharedPreferenceService({ sessionStorage, preferenceStorage, getS
       captured.guard();
       if (options.expectedRevision !== void 0) check(session.revision === options.expectedRevision, "Preference draft revision conflict");
       const draft = session.preferenceDrafts.find((item) => item.id === id);
-      check(draft, "Preference draft does not exist");
+      assertDraftOwner(draft, bank2, captured);
       const operation = await hash([captured.owner, id]), fingerprint = await hash(stamp(draft));
       let receipt = bank2.receipts[operation], recovered = !!receipt;
       if (receipt) {
@@ -3730,6 +3802,7 @@ function createSharedPreferenceService({ sessionStorage, preferenceStorage, getS
     for (const id of ids2) {
       const draft = session.preferenceDrafts.find((d) => d.id === id);
       check(draft, "Preference batch contains a missing draft");
+      assertDraftOwner(draft, bank2, captured);
       const fingerprint = await hash(stamp(draft)), operation = await hash([captured.owner, id]), receipt = bank2.receipts[operation];
       if (options.fingerprints) check(options.fingerprints[id] === fingerprint, "Preference batch draft changed after preview");
       if (receipt) {
@@ -3852,6 +3925,7 @@ function createSharedPreferenceService({ sessionStorage, preferenceStorage, getS
     reject: (id, options = {}) => queue(async () => {
       const captured = capture(), session = cleanSession(await sessionStorage.read()), bank2 = validateBank2(await preferenceStorage.read());
       captured.guard();
+      assertDraftOwner(session.preferenceDrafts.find((d) => d.id === id), bank2, captured);
       const operation = await hash([captured.owner, id]);
       check(!bank2.receipts[operation], "Preference already committed to P; resume confirmation or explicitly disable its contribution");
       if (options.expectedRevision !== void 0) check(session.revision === options.expectedRevision, "Preference draft revision conflict");
@@ -3872,14 +3946,14 @@ function createSharedPreferenceService({ sessionStorage, preferenceStorage, getS
       captured.guard();
       return result;
     },
-    async list() {
-      const captured = capture();
-      if (!isEnabled()) return { drafts: [], rows: [], history: [] };
+    async list({ includeDisabled = false } = {}) {
+      const captured = capture(), enabled = isEnabled();
+      if (!enabled && !includeDisabled) return { drafts: [], rows: [], history: [] };
       const session = cleanSession(await sessionStorage.read());
       captured.guard();
       const bank2 = validateBank2(await preferenceStorage.read());
       captured.guard();
-      return { drafts: copy(session.preferenceDrafts), rows: copy(bank2.preferenceRows), history: copy([...bank2.preferenceHistory, ...session.preferenceReviewHistory ?? []]), confirmations: copy(Object.values(bank2.receipts).filter((r) => r.status === "accepted" && equal2(r.owner, captured.owner))) };
+      return { ...includeDisabled ? { enabled } : {}, drafts: copy(session.preferenceDrafts.filter((d) => belongs(d, bank2, captured))), ...preferenceBankId ? { unresolvedDraftCount: session.preferenceDrafts.filter((d) => !d.preferenceBankId && d.status === "pending" && !belongs(d, bank2, captured)).length } : {}, rows: copy(bank2.preferenceRows), history: copy([...bank2.preferenceHistory, ...(session.preferenceReviewHistory ?? []).filter((h) => !preferenceBankId || session.preferenceDrafts.some((d) => d.id === h.subject && belongs(d, bank2, captured)))]), confirmations: copy(Object.values(bank2.receipts).filter((r) => r.status === "accepted" && equal2(r.owner, captured.owner))) };
     }
   };
 }
@@ -6973,6 +7047,7 @@ export {
   extractNumberedBody,
   formatSimpleSheet,
   loadBrowserWorldbookTransport,
+  loadWorldbookHostModules,
   modelRegistry,
   parseHistoricalBody,
   parseNumberedBody,

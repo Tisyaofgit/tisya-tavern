@@ -1,5 +1,5 @@
 import {createBookManager,BookError} from './books.mjs';
-import {createTauriWorldbookTransport,createFloorIdentityManager,projectRetained,sha256Utf16} from './host-runtime.mjs';
+import {createTauriWorldbookTransport,loadWorldbookHostModules,createFloorIdentityManager,projectRetained,sha256Utf16} from './host-runtime.mjs';
 
 export const BOOK_POINTER_KEY='tisya_v3_books';
 export const GLOBAL_BOOK_KEY='tisya_v3_global';
@@ -12,8 +12,8 @@ const need=(name,fn)=>{check(typeof fn==='function','CAPABILITY_UNAVAILABLE',`Na
 
 /** Uses the exact 2.4.0 host exports. Inject native modules only for tests or an already-loaded host. */
 export async function loadBookHostModules(){
-  const [worldInfo,persistence,script,personas,groups]=await Promise.all([
-    import('/scripts/world-info.js'),import('/scripts/world-info-persistence.js'),import('/script.js'),import('/scripts/personas.js'),import('/scripts/group-chats.js'),
+  const [{worldInfo,persistence},script,personas,groups]=await Promise.all([
+    loadWorldbookHostModules(),import('/script.js'),import('/scripts/personas.js'),import('/scripts/group-chats.js'),
   ]);return {worldInfo,persistence,script,personas,groups};
 }
 

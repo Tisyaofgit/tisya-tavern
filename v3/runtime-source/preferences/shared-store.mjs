@@ -9,7 +9,7 @@ const nonempty=v=>typeof v==='string'&&v.trim();
 const serial=()=>{let tail=Promise.resolve();return fn=>{const task=tail.then(fn);tail=task.catch(()=>{});return task;};};
 const ownerValid=owner=>object(owner)&&nonempty(owner.chatId)&&nonempty(owner.branchId);
 const hash=value=>digest(canonical(value));
-const stamp=draft=>({id:draft.id,requestKey:draft.requestKey,changes:draft.changes,contributions:draft.contributions,mutations:draft.mutations??[],contextSource:draft.contextSource??null});
+const stamp=draft=>({id:draft.id,requestKey:draft.requestKey,changes:draft.changes,contributions:draft.contributions,mutations:draft.mutations??[],contextSource:draft.contextSource??null,...(draft.preferenceBankId?{preferenceBankId:draft.preferenceBankId}:{})});
 
 export function createInitialPreferenceBank({registry}){
  registryIndex(registry);
@@ -63,14 +63,21 @@ export function createPreferenceOverlayStorage({sessionStorage,preferenceStorage
 }
 
 /** P commit receipt precedes B draft acknowledgement; these two writes are recoverable, not atomic. */
-export function createSharedPreferenceService({sessionStorage,preferenceStorage,getSessionOwner,isEnabled=()=>true,getProjectionOptions=()=>({})}){
+export function createSharedPreferenceService({sessionStorage,preferenceStorage,getSessionOwner,isEnabled=()=>true,getProjectionOptions=()=>({}),preferenceBankId=null}){
  check(typeof getSessionOwner==='function','An actual session/branch owner getter is required');
  const queue=serial();
+ check(preferenceBankId===null||nonempty(preferenceBankId),'Preference bank identity must be a stable ID');
+ function belongs(draft,bank,captured){
+  if(!preferenceBankId)return true;
+  if(draft.preferenceBankId)return draft.preferenceBankId===preferenceBankId;
+  return Object.values(bank.receipts).some(r=>r.status==='accepted'&&r.draftId===draft.id&&equal(r.owner,captured.owner));
+ }
+ function assertDraftOwner(draft,bank,captured){check(draft,'Preference draft does not exist');check(belongs(draft,bank,captured),draft.preferenceBankId?'偏好候选属于另一用户身份，未写入当前偏好库':'旧偏好候选缺少身份归属记录；原候选保留，不能写入当前偏好库');}
  function capture(){const owner=copy(getSessionOwner()),projection=copy(getProjectionOptions());check(ownerValid(owner),'Session/branch identity is required');return {owner,guard(){check(equal(getSessionOwner(),owner),'Session/branch changed during preference operation');check(equal(getProjectionOptions(),projection),'Preference source projection changed during operation');}};}
  async function confirm(id,options={}){return queue(async()=>{
   const captured=capture();let session=cleanSession(await sessionStorage.read()),bank=validateBank(await preferenceStorage.read());captured.guard();
   if(options.expectedRevision!==undefined)check(session.revision===options.expectedRevision,'Preference draft revision conflict');
-  const draft=session.preferenceDrafts.find(item=>item.id===id);check(draft,'Preference draft does not exist');
+  const draft=session.preferenceDrafts.find(item=>item.id===id);assertDraftOwner(draft,bank,captured);
   const operation=await hash([captured.owner,id]),fingerprint=await hash(stamp(draft));let receipt=bank.receipts[operation],recovered=!!receipt;
   if(receipt){check(receipt.fingerprint===fingerprint&&equal(receipt.owner,captured.owner),'Preference confirmation receipt conflicts with draft');}
   else{
@@ -106,7 +113,7 @@ export function createSharedPreferenceService({sessionStorage,preferenceStorage,
  async function prepareBatch(ids,session,bank,captured,options={}){
   check(Array.isArray(ids)&&ids.length>0&&ids.every(nonempty)&&new Set(ids).size===ids.length,'Preference batch requires unique draft IDs');
   const entries=[],next=copy(bank);
-  for(const id of ids){const draft=session.preferenceDrafts.find(d=>d.id===id);check(draft,'Preference batch contains a missing draft');
+  for(const id of ids){const draft=session.preferenceDrafts.find(d=>d.id===id);check(draft,'Preference batch contains a missing draft');assertDraftOwner(draft,bank,captured);
    const fingerprint=await hash(stamp(draft)),operation=await hash([captured.owner,id]),receipt=bank.receipts[operation];
    if(options.fingerprints)check(options.fingerprints[id]===fingerprint,'Preference batch draft changed after preview');
    if(receipt){check(receipt.fingerprint===fingerprint&&equal(receipt.owner,captured.owner),'Preference confirmation receipt conflicts with draft');entries.push({id,fingerprint,operation,receipt:copy(receipt)});continue;}
@@ -155,7 +162,7 @@ export function createSharedPreferenceService({sessionStorage,preferenceStorage,
   confirm,previewBatch,confirmBatch,
   reject:(id,options={})=>queue(async()=>{
    const captured=capture(),session=cleanSession(await sessionStorage.read()),bank=validateBank(await preferenceStorage.read());captured.guard();
-   const operation=await hash([captured.owner,id]);check(!bank.receipts[operation],'Preference already committed to P; resume confirmation or explicitly disable its contribution');
+   assertDraftOwner(session.preferenceDrafts.find(d=>d.id===id),bank,captured);const operation=await hash([captured.owner,id]);check(!bank.receipts[operation],'Preference already committed to P; resume confirmation or explicitly disable its contribution');
    if(options.expectedRevision!==undefined)check(session.revision===options.expectedRevision,'Preference draft revision conflict');
    const combined={...copy(session),preferenceRows:copy(bank.preferenceRows),preferenceHistory:copy(bank.preferenceHistory)},result=rejectPreferenceDraft(combined,id,options);
    if(equal(result,combined))return {changed:false,revision:session.revision};
@@ -165,6 +172,6 @@ export function createSharedPreferenceService({sessionStorage,preferenceStorage,
   setEnabled:(id,enabled,options={})=>manual('activation',id,{enabled},options,state=>setPreferenceContributionEnabled(state,id,enabled,options)),
   revise:(id,values,options={})=>manual('revise',id,{values},options,state=>revisePreferenceContribution(state,id,values,options)),
   async project(options={}){const captured=capture(),bank=validateBank(await preferenceStorage.read());captured.guard();const result=projectPreferences(bank,{...getProjectionOptions(),...options,chatId:captured.owner.chatId,enabled:isEnabled()&&options.enabled!==false});captured.guard();return result;},
-  async list(){const captured=capture();if(!isEnabled())return {drafts:[],rows:[],history:[]};const session=cleanSession(await sessionStorage.read());captured.guard();const bank=validateBank(await preferenceStorage.read());captured.guard();return {drafts:copy(session.preferenceDrafts),rows:copy(bank.preferenceRows),history:copy([...bank.preferenceHistory,...(session.preferenceReviewHistory??[])]),confirmations:copy(Object.values(bank.receipts).filter(r=>r.status==='accepted'&&equal(r.owner,captured.owner)))};}
+  async list({includeDisabled=false}={}){const captured=capture(),enabled=isEnabled();if(!enabled&&!includeDisabled)return {drafts:[],rows:[],history:[]};const session=cleanSession(await sessionStorage.read());captured.guard();const bank=validateBank(await preferenceStorage.read());captured.guard();return {...(includeDisabled?{enabled}:{}),drafts:copy(session.preferenceDrafts.filter(d=>belongs(d,bank,captured))),...(preferenceBankId?{unresolvedDraftCount:session.preferenceDrafts.filter(d=>!d.preferenceBankId&&d.status==='pending'&&!belongs(d,bank,captured)).length}:{}),rows:copy(bank.preferenceRows),history:copy([...bank.preferenceHistory,...(session.preferenceReviewHistory??[]).filter(h=>!preferenceBankId||session.preferenceDrafts.some(d=>d.id===h.subject&&belongs(d,bank,captured)))]),confirmations:copy(Object.values(bank.receipts).filter(r=>r.status==='accepted'&&equal(r.owner,captured.owner)))};}
  };
 }

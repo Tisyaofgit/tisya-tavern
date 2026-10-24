@@ -34,8 +34,8 @@ export async function createApplication({target=globalThis,getContext,store,conf
   return reviewService;
  }
  const review={list:async args=>await hasBinding()?(await getReview()).list(args):[]};
- for(const method of ['beginEdit','previewEdit','saveEdit','preference','discardEdit','batchPreview','batchConfirm'])review[method]=async(...args)=>(await getReview())[method](...args);
- const progress=createProgressService({getBinding:binding,preferencesEnabled:()=>configurationBook?.read().ready===false?false:readConfiguration().preferencesEnabled!==false,readState:async()=>await hasBinding()?(await host.getSession()).storage.read():{requests:{}}});
+ for(const method of ['inspectPreferences','beginEdit','previewEdit','saveEdit','preference','discardEdit','batchPreview','batchConfirm'])review[method]=async(...args)=>(await getReview())[method](...args);
+ const progress=createProgressService({getBinding:binding,preferencesEnabled:()=>configurationBook?.read().ready===false?false:readConfiguration().preferencesEnabled!==false,readState:async()=>{if(!await hasBinding())return {requests:{}};const session=await host.getSession(),state=await session.storage.read(),preferences=await session.preferences.list();session.guard();return {...state,preferenceDrafts:preferences.drafts};}});
  host=await installV3Host({target,getContext,bookManager:books,readConfiguration,
   getRuntimePreset:stage=>configHost.runtimePresetFor(stage),getConfigurationSnapshot:()=>store.read(),resolveConnection:stage=>configHost.resolveConnectionFor(({communication:'communication',preflight:'tableArchive',archive:'tableArchive',preferences:'preferenceAnalysis',plan:'plotAdvance',writer:'main'}[stage]??stage)),
   selectedMaterials:task=>configHost.selectedMaterialsFor(task),readNativeRules:()=>readVerifiedNativeRules({snapshot:store.read(),context:getContext()}),progress,onError,native,moods,communication,

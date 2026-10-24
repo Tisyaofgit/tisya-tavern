@@ -1,0 +1,36 @@
+TAP version 13
+# (node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: browser worldbook loader uses a complete public save protocol without a redundant private import
+ok 1 - browser worldbook loader uses a complete public save protocol without a redundant private import
+  ---
+  duration_ms: 12.895005
+  type: 'test'
+  ...
+# Subtest: missing split module is reported with the exact failed stage and original cause before writing
+ok 2 - missing split module is reported with the exact failed stage and original cause before writing
+  ---
+  duration_ms: 3.923223
+  type: 'test'
+  ...
+# Subtest: split host keeps native save/readback and discards a failed pending document before later flush
+ok 3 - split host keeps native save/readback and discards a failed pending document before later flush
+  ---
+  duration_ms: 27.093294
+  type: 'test'
+  ...
+# Subtest: a loaded module without cleanup cannot start a save
+ok 4 - a loaded module without cleanup cannot start a save
+  ---
+  duration_ms: 4.404043
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 154.174632

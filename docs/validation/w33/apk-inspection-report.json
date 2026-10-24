@@ -1,0 +1,226 @@
+{
+  "timestamp_utc": "2026-10-24T16:19:02.072758+00:00",
+  "source": {
+    "library_file_id": "libfile_fc85c354a9088191bebe6652511933b1",
+    "name": "TauriTavern-2.4.0-android-arm64-v8a.apk",
+    "size_bytes": 106215898,
+    "sha256": "015e4eaae9de8ca6588d8cbda27dc4124a55df6d98735ea877b197f5be93da17",
+    "native_member": "lib/arm64-v8a/libtauritavern_lib.so",
+    "native_size_bytes": 95953176,
+    "native_sha256": "85387fdd92877cf0d2f5cfba76eb90952418d51ec25c7b557fc633c98858d09d"
+  },
+  "method": "ZIP member extraction, ELF64 AArch64 asset key/relative relocation inspection, Node Brotli decode; compressed sizes and decoded SHA256 recorded per resource.",
+  "findings": [
+    "The supplied 2.4.0 APK includes /scripts/world-info-persistence.js; decoded bytes exactly match the existing W32 extracted fixture and current w28-host source.",
+    "All six direct imports of that module were decoded from the APK: script.js, events.js, constants.js, utils.js, StructuredCloneMap.js, lifecycle-flush-service.js; lifecycle direct tauri-bridge.js also decoded.",
+    "world-info.js statically imports world-info-persistence.js and publicly re-exports flushWorldInfoSaves/loadWorldInfo/saveWorldInfo/worldInfoCache, but not discardWorldInfoDocument.",
+    "metadata.get in tauri/main/api/chat.js calls safeInvoke get_character_chat_metadata or get_group_chat_metadata; setExtension calls commitChatMetadataExtension through JSON serialization and native commit pipeline.",
+    "script.js differs from current w28-host only in amount_gen/max_context settings assignment, not inspected metadata code."
+  ],
+  "limits": [
+    "This APK is the previously uploaded artifact, not proof of the exact binary currently installed on the user phone.",
+    "No APK execution, Android module loading, network request, or user-data operation occurred.",
+    "No cause for the screenshot dynamic-import fetch failure is established by presence of embedded bytes.",
+    "Direct resource presence is checked; a complete recursive module-execution audit was not performed."
+  ],
+  "assets": [
+    {
+      "path": "/scripts/world-info-persistence.js",
+      "path_offset": 13948754,
+      "encoded_start": 13948788,
+      "encoded_size": 1815,
+      "decoded_size": 5701,
+      "sha256": "da2a6f59bfa8bc0c798b0a0589e231120e36edf456a2baef94f8de3442acbd4a",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/world-info-persistence.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": true
+    },
+    {
+      "path": "/scripts/world-info.js",
+      "path_offset": 15191130,
+      "encoded_start": 15191152,
+      "encoded_size": 51065,
+      "decoded_size": 272192,
+      "sha256": "c7c6d639822ac89016dec17c92dc508a145f2775adbc985feb62948f89bc4b57",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/world-info.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": true
+    },
+    {
+      "path": "/script.js",
+      "path_offset": 16063779,
+      "encoded_start": 16063789,
+      "encoded_size": 119064,
+      "decoded_size": 577869,
+      "sha256": "386e78ab1ff046cc2d08d20ad9d293098337ac829aa78df2118900ad910fe107",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/script.js",
+      "matches_host_source": false,
+      "matches_existing_fixture": false
+    },
+    {
+      "path": "/scripts/extensions.js",
+      "path_offset": 19171578,
+      "encoded_start": 19171600,
+      "encoded_size": 20003,
+      "decoded_size": 96603,
+      "sha256": "f6679d11f72a64dc4c282adce1d8fbcc8c91fb1b7180f556275f35902a00fc71",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/extensions.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": true
+    },
+    {
+      "path": "/scripts/st-context.js",
+      "path_offset": 21601786,
+      "encoded_start": 21601808,
+      "encoded_size": 2786,
+      "decoded_size": 11176,
+      "sha256": "59e6fbce12fae8f07eeeffe85d7a694854ee6caf503abbda30dd536982e7177d",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/st-context.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/tauri/main/api/world-info.js",
+      "path_offset": 14661889,
+      "encoded_start": 14661918,
+      "encoded_size": 585,
+      "decoded_size": 1838,
+      "sha256": "dcfe000b856ca72acfd68009358f6fc4cd6f23ae2a3abff19a037516c3d5ff67",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/tauri/main/api/world-info.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/tauri/main/api/chat.js",
+      "path_offset": 16842536,
+      "encoded_start": 16842559,
+      "encoded_size": 2124,
+      "decoded_size": 14387,
+      "sha256": "9144fb47b94160c6ddbc823d7323f83103dca87bd6665df59d5f64f82b5d073a",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/tauri/main/api/chat.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/chat-payload-transport.js",
+      "path_offset": 20794773,
+      "encoded_start": 20794807,
+      "encoded_size": 260,
+      "decoded_size": 675,
+      "sha256": "306d3482ed0d95897856c14f12281fab5f49186b1daaf3c5af8a7833ecb085e8",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/chat-payload-transport.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/events.js",
+      "path_offset": 21391110,
+      "encoded_start": 21391128,
+      "encoded_size": 1638,
+      "decoded_size": 5856,
+      "sha256": "774fe96bd805d77916ecc93329622b27db31853c9980c97c22738e72a1e26d6e",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/events.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": true
+    },
+    {
+      "path": "/scripts/constants.js",
+      "path_offset": 23296370,
+      "encoded_start": 23296391,
+      "encoded_size": 1977,
+      "decoded_size": 4942,
+      "sha256": "953a09a8cea181f6d82e2aafbb021e7bc3649a41a144d0e798d8e19b99cf4066",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/constants.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/utils.js",
+      "path_offset": 12636860,
+      "encoded_start": 12636877,
+      "encoded_size": 28064,
+      "decoded_size": 111789,
+      "sha256": "31ca2544106e85a43dfe75dca0d811eac5194bbf5a7f263f305a8d8168a3ba99",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/utils.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/util/StructuredCloneMap.js",
+      "path_offset": 12122078,
+      "encoded_start": 12122113,
+      "encoded_size": 675,
+      "decoded_size": 2078,
+      "sha256": "086902fdb5ddd1d34a6c3c93a64ddb240d6b4336b43fbd973c3e372d883a7f10",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/util/StructuredCloneMap.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": true
+    },
+    {
+      "path": "/tauri/main/services/lifecycle/lifecycle-flush-service.js",
+      "path_offset": 14450977,
+      "encoded_start": 14451034,
+      "encoded_size": 1572,
+      "decoded_size": 6279,
+      "sha256": "25d37e992b8e402f035a476cec5fbbc2481f49c83eaef3e0da85e4d5b0bd38ba",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/tauri/main/services/lifecycle/lifecycle-flush-service.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/tauri/chat/commit.js",
+      "path_offset": 23299138,
+      "encoded_start": 23299167,
+      "encoded_size": 968,
+      "decoded_size": 2891,
+      "sha256": "9d5bc9f443f5e88ed74ac7ba60cbc8d02e84ba074b1f0b09cc7dfcb0d11bdfac",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/tauri/chat/commit.js",
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/scripts/tauri/chat/transport.js",
+      "path_offset": 8175512,
+      "encoded_start": 21755813,
+      "encoded_size": 1035,
+      "decoded_size": 4041,
+      "sha256": "22b6bace59a268dd5de2b6b153490b9a38caa50ba63bf9d4b0878ab5b1386cb1",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/scripts/tauri/chat/transport.js",
+      "relocation": {
+        "dataOffset": 21755813,
+        "compressedSize": 1035,
+        "keyAddress": 94062560,
+        "relocationOffset": 305712
+      },
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    },
+    {
+      "path": "/tauri-bridge.js",
+      "path_offset": 7501488,
+      "encoded_start": 14668572,
+      "encoded_size": 1355,
+      "decoded_size": 4734,
+      "sha256": "61b760bc8efe18fc67ea5b93edc394a2d21ef4596e9f93aa376dd49642e868da",
+      "target": "/workspace/scratch/289ae625ecae/apk-inspect/frontend/tauri-bridge.js",
+      "relocation": {
+        "dataOffset": 14668572,
+        "compressedSize": 1355,
+        "keyAddress": 94048480,
+        "relocationOffset": 284592
+      },
+      "matches_host_source": true,
+      "matches_existing_fixture": null
+    }
+  ],
+  "tooling_attempts": [
+    {
+      "attempt": "Python import brotli",
+      "result": "ModuleNotFoundError; no product implication"
+    },
+    {
+      "attempt": "decode bytes adjacent to /scripts/tauri/chat/transport.js key",
+      "result": "not adjacent; resolved exact ELF64 relative relocation and decoded 1035 compressed bytes into 4041 JS bytes"
+    }
+  ]
+}

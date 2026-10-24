@@ -1,0 +1,32 @@
+TAP version 13
+# Subtest: same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+not ok 1 - same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+  ---
+  duration_ms: 126.48975
+  type: 'test'
+  location: '/workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/entry-preferences.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /本会话.*争执之后/. Input:
+    
+    '用户持续偏好'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '用户持续偏好'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/289ae625ecae/tisya-w33/tests/v3/ui-tests/entry-preferences.test.mjs:37:335)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 531.62771

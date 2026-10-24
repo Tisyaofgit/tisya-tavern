@@ -1,6 +1,6 @@
 import { iconMarkup } from './icons.js';
 // Native shells own viewport/safe-area/IME geometry. Tisya owns their contents.
-export const VERSION = '0.3.3-w32.1';
+export const VERSION = '0.3.4-w33.1';
 const anonymousDrawerKeys = new WeakMap();
 let nextDrawerKey = 0;
 

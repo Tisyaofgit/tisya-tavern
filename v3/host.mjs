@@ -74,7 +74,7 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
    const originals=createOriginalStore({adapter:createWorldbookOriginalAdapter({transport:binding.transport}),bookId:binding.books.originals});
    const sourceBridge=createMessageOriginalBridge({originals,identities:ids,getContext,nativeRuntime:runtime});
    const getScope=()=>({chatId:owner.chatId,branchId:owner.branchId,activeSourceKeys:session.chain.activeKeys(),currentSourceKey:session.chain.activeKeys().at(-1)??null,bindingId:binding.archive.id,bindingRevision:binding.bindingRevision});
-   const preferences=createSharedPreferenceService({sessionStorage,preferenceStorage,getSessionOwner:()=>{guard();return owner;},isEnabled:()=>readConfig().preferencesEnabled!==false,getProjectionOptions:()=>({context:{chatId:owner.chatId},activeSourceKeys:session.chain.activeKeys()})});
+   const preferences=createSharedPreferenceService({sessionStorage,preferenceStorage,preferenceBankId:binding.books.preferences,getSessionOwner:()=>{guard();return owner;},isEnabled:()=>readConfig().preferencesEnabled!==false,getProjectionOptions:()=>({context:{chatId:owner.chatId},activeSourceKeys:session.chain.activeKeys()})});
    session={owner,handle,epoch:boundEpoch,chat:ctx.chat,metadata:ctx.chatMetadata,configurationRevision:cfg.revision,binding,storage,sessionStorage,preferenceStorage,preferences,sourceBridge,originals,identities:ids,nativeRuntime:runtime,getScope,chain:null,system:null};
    const requests=createNativeRequests({getContext,native,resolveConnection,guard,signal,progress:emit});
    const query=async(method,args,{input,view})=>{
@@ -106,7 +106,7 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
     },acceptWriterOutput:sourceBridge.acceptWriterOutput({resolveFloor:async({input,result})=>{guard();if(operation?.requestKey===input.requestKey)return operation.outputFloor;const floor=ctx.chat.findIndex(m=>m.mes===result.output&&!m.is_user);check(floor>=0,'V3_OUTPUT_MISSING','找不到已提交正文');return floor;}})});
    const system={runner,preferences,originals,sourceBridge,identities:ids,sessionStorage,preferenceStorage,storage};
    const chain=createSourceChain({getContext,system,getNative:()=>runtime,configuration:()=>{const c=readConfig();return {...c,playerObjects:c.playerObjects?.length?c.playerObjects:binding.player?.objectId?[binding.player.objectId]:[]};},guard,persist});session.chain=chain;
-   const controller=createHostController({identities:ids,invalidate:event=>chain.invalidate(event),run:input=>runner.run({...input,originalScope:owner,preferencesEnabled:readConfig().preferencesEnabled!==false,preferenceProjectionOptions:{context:{chatId:owner.chatId}}})});system.controller=controller;session.system=system;
+   const controller=createHostController({identities:ids,invalidate:event=>chain.invalidate(event),run:input=>runner.run({...input,originalScope:owner,preferenceBankId:binding.books.preferences,preferencesEnabled:readConfig().preferencesEnabled!==false,preferenceProjectionOptions:{context:{chatId:owner.chatId}}})});system.controller=controller;session.system=system;
    await chain.refresh();guard();return session;
   })();
   try{return await initializing;}catch(e){session=null;throw e;}finally{initializing=null;}

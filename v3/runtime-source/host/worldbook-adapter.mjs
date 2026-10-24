@@ -40,8 +40,30 @@ export function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, get
   });
 }
 
+/** Load the host's actual save protocol; missing cleanup is not an older-protocol fallback. */
+export async function loadWorldbookHostModules() {
+  let worldInfo;
+  async function load(path, stage) {
+    try { return await import(path); }
+    catch (cause) {
+      const error = new HostAdapterError('HOST_WORLDINFO_MODULE_LOAD',
+        `宿主世界书${stage === 'world-info' ? '模块' : '保存组件'}无法加载（${path.split('/').at(-1)}）。本次尚未开始世界书写入；请完整重启宿主并核对安装版本。原始错误：${cause?.message ?? String(cause)}`,
+        { stage, modulePath: path, loadedCapabilities: worldInfo ? ['saveWorldInfo', 'createWorldInfoEntry', 'flushWorldInfoSaves', 'discardWorldInfoDocument'].filter(key => typeof worldInfo[key] === 'function') : [] });
+      error.cause = cause;
+      throw error;
+    }
+  }
+  worldInfo = await load('/scripts/world-info.js', 'world-info');
+  // A host may expose the complete protocol from its public module. Otherwise
+  // the verified TT split-module cleanup remains required before any writes.
+  const persistence = typeof worldInfo.discardWorldInfoDocument === 'function'
+    ? worldInfo : await load('/scripts/world-info-persistence.js', 'persistence');
+  require(typeof persistence.discardWorldInfoDocument === 'function', 'HOST_DEPENDENCY', '宿主缺少世界书失败清理接口，未开始写入；请核对宿主版本', { capability: 'discardWorldInfoDocument' });
+  return { worldInfo, persistence };
+}
+
 export async function loadBrowserWorldbookTransport(hostWindow = window) {
-  const [worldInfo, persistence] = await Promise.all([import('/scripts/world-info.js'), import('/scripts/world-info-persistence.js')]);
+  const { worldInfo, persistence } = await loadWorldbookHostModules();
   const context = hostWindow.SillyTavern?.getContext?.();
   require(context && typeof context.getRequestHeaders === 'function', 'HOST_DEPENDENCY', 'SillyTavern context is unavailable');
   return createTauriWorldbookTransport({ worldInfo: { ...worldInfo, discardWorldInfoDocument: persistence.discardWorldInfoDocument }, fetch: hostWindow.fetch.bind(hostWindow), getRequestHeaders: context.getRequestHeaders });

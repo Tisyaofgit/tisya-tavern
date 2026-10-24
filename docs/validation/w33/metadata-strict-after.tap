@@ -1,0 +1,72 @@
+TAP version 13
+# Subtest: floor identity save accepts native JSON object key reordering without rewriting chat or unrelated metadata
+ok 1 - floor identity save accepts native JSON object key reordering without rewriting chat or unrelated metadata
+  ---
+  duration_ms: 2.737455
+  type: 'test'
+  ...
+# Subtest: floor identity readback still rejects missing field
+ok 2 - floor identity readback still rejects missing field
+  ---
+  duration_ms: 0.76046
+  type: 'test'
+  ...
+# Subtest: floor identity readback still rejects changed field type
+ok 3 - floor identity readback still rejects changed field type
+  ---
+  duration_ms: 0.390065
+  type: 'test'
+  ...
+# Subtest: floor identity readback still rejects changed array order
+ok 4 - floor identity readback still rejects changed array order
+  ---
+  duration_ms: 0.374251
+  type: 'test'
+  ...
+# Subtest: floor identity readback still rejects unknown field
+ok 5 - floor identity readback still rejects unknown field
+  ---
+  duration_ms: 0.488643
+  type: 'test'
+  ...
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: opening the workbench accepts native metadata key order and does not call a model or archive old messages
+ok 6 - opening the workbench accepts native metadata key order and does not call a model or archive old messages
+  ---
+  duration_ms: 497.212924
+  type: 'test'
+  ...
+# Subtest: opening the workbench still reports genuinely changed identity metadata
+ok 7 - opening the workbench still reports genuinely changed identity metadata
+  ---
+  duration_ms: 315.99501
+  type: 'test'
+  ...
+# Subtest: metadata comparison accepts cross-realm JSON while retaining zero, false, null and array order
+ok 8 - metadata comparison accepts cross-realm JSON while retaining zero, false, null and array order
+  ---
+  duration_ms: 0.999138
+  type: 'test'
+  ...
+# Subtest: metadata comparison does not invoke accessors or toJSON and does not drop unsupported fields
+ok 9 - metadata comparison does not invoke accessors or toJSON and does not drop unsupported fields
+  ---
+  duration_ms: 0.20627
+  type: 'test'
+  ...
+# Subtest: a fresh installed host opens with native JSON ordering from its first identity save
+ok 10 - a fresh installed host opens with native JSON ordering from its first identity save
+  ---
+  duration_ms: 252.749786
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1244.882313

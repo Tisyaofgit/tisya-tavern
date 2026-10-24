@@ -1,0 +1,752 @@
+TAP version 13
+# (node:12) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: actual host runner records the selected preference bank on a model-generated pending candidate
+ok 1 - actual host runner records the selected preference bank on a model-generated pending candidate
+  ---
+  duration_ms: 1704.466861
+  type: 'test'
+  ...
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: production application binds configuration book, confirms tag batch, injects actual A/B preferences and reopens
+ok 2 - production application binds configuration book, confirms tag batch, injects actual A/B preferences and reopens
+  ---
+  duration_ms: 15397.673829
+  type: 'test'
+  ...
+# Subtest: batch previews all items and confirms with one P write and one B acknowledgement
+ok 3 - batch previews all items and confirms with one P write and one B acknowledgement
+  ---
+  duration_ms: 66.406622
+  type: 'test'
+  ...
+# Subtest: an invalid last candidate rejects the entire batch before any storage write
+ok 4 - an invalid last candidate rejects the entire batch before any storage write
+  ---
+  duration_ms: 21.809513
+  type: 'test'
+  ...
+# Subtest: edited, denied and stale candidates are re-evaluated before batch confirmation
+ok 5 - edited, denied and stale candidates are re-evaluated before batch confirmation
+  ---
+  duration_ms: 70.968395
+  type: 'test'
+  ...
+# Subtest: P batch success with B failure reports pending acknowledgement and retries without resumming
+ok 6 - P batch success with B failure reports pending acknowledgement and retries without resumming
+  ---
+  duration_ms: 62.822735
+  type: 'test'
+  ...
+# Subtest: batch recovery survives recreated review service and a later manual P revision
+ok 7 - batch recovery survives recreated review service and a later manual P revision
+  ---
+  duration_ms: 67.299339
+  type: 'test'
+  ...
+# Subtest: source invalidation rejects batch before P writes while feedback UUID survives reroll
+ok 8 - source invalidation rejects batch before P writes while feedback UUID survives reroll
+  ---
+  duration_ms: 38.940568
+  type: 'test'
+  ...
+# Subtest: duplicates across two separate drafts invalidate the whole batch before the first contribution persists
+ok 9 - duplicates across two separate drafts invalidate the whole batch before the first contribution persists
+  ---
+  duration_ms: 19.1365
+  type: 'test'
+  ...
+# Subtest: lost P write acknowledgement recovers the durable whole-batch receipt without repeating contributions
+ok 10 - lost P write acknowledgement recovers the durable whole-batch receipt without repeating contributions
+  ---
+  duration_ms: 28.479652
+  type: 'test'
+  ...
+# Subtest: empty effective batch leaves archived review available and returns no confirmation token
+ok 11 - empty effective batch leaves archived review available and returns no confirmation token
+  ---
+  duration_ms: 12.137397
+  type: 'test'
+  ...
+# Subtest: extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+ok 12 - extraction parses one registered-task reply, reviews edits, and saves one source-bound B commit
+  ---
+  duration_ms: 41.494162
+  type: 'test'
+  ...
+# Subtest: design refuses unknown fields, forged source, native ownership, stale source, and excluded dependency
+ok 13 - design refuses unknown fields, forged source, native ownership, stale source, and excluded dependency
+  ---
+  duration_ms: 39.36161
+  type: 'test'
+  ...
+# Subtest: current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+ok 14 - current B design acknowledgement loss reuses the frozen commit rather than rerunning the model
+  ---
+  duration_ms: 23.017061
+  type: 'test'
+  ...
+# Subtest: origin definition save uses the real book manager, preserves old versions, and never binds automatically
+ok 15 - origin definition save uses the real book manager, preserves old versions, and never binds automatically
+  ---
+  duration_ms: 36.908786
+  type: 'test'
+  ...
+# Subtest: definition response loss resumes actual operation receipt without adding a second version
+ok 16 - definition response loss resumes actual operation receipt without adding a second version
+  ---
+  duration_ms: 20.245901
+  type: 'test'
+  ...
+# Subtest: genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+ok 17 - genesis uses blueprint decisions as exact design evidence and rejects historical or executable artifacts
+  ---
+  duration_ms: 55.823809
+  type: 'test'
+  ...
+# Subtest: design API cancellation and binding switches stop before archive writes
+ok 18 - design API cancellation and binding switches stop before archive writes
+  ---
+  duration_ms: 7.716286
+  type: 'test'
+  ...
+# Subtest: actual host source guard blocks a changed candidate even before cached scope keys update
+ok 19 - actual host source guard blocks a changed candidate even before cached scope keys update
+  ---
+  duration_ms: 8.521592
+  type: 'test'
+  ...
+# Subtest: design updates cannot remove an existing source reference through unset
+ok 20 - design updates cannot remove an existing source reference through unset
+  ---
+  duration_ms: 4.616313
+  type: 'test'
+  ...
+# Subtest: history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart
+ok 21 - history preserves complete raw source, reviews candidate, binds eligible original and rejects duplicate after cold service restart
+  ---
+  duration_ms: 46.83449
+  type: 'test'
+  ...
+# Subtest: control-block evidence, deletion, fabricated reference and fake date fail before any write
+ok 22 - control-block evidence, deletion, fabricated reference and fake date fail before any write
+  ---
+  duration_ms: 19.626393
+  type: 'test'
+  ...
+# Subtest: unknown historical date cannot overwrite an existing current state
+ok 23 - unknown historical date cannot overwrite an existing current state
+  ---
+  duration_ms: 7.362346
+  type: 'test'
+  ...
+# Subtest: commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save
+ok 24 - commit acknowledgement loss resumes one original and one commit without another model call; scope change blocks save
+  ---
+  duration_ms: 28.843236
+  type: 'test'
+  ...
+# (node:76) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: production application focus invalidates and rebuilds host configuration without a second focus authority
+ok 25 - production application focus invalidates and rebuilds host configuration without a second focus authority
+  ---
+  duration_ms: 2301.85634
+  type: 'test'
+  ...
+# Subtest: journey reads one actual retained store, respects reader access and psychology switch, and excludes raw prose and closed pools
+ok 26 - journey reads one actual retained store, respects reader access and psychology switch, and excludes raw prose and closed pools
+  ---
+  duration_ms: 59.154852
+  type: 'test'
+  ...
+# Subtest: identical full text floors resolve by logical identity and current A revision, with no raw reads
+ok 27 - identical full text floors resolve by logical identity and current A revision, with no raw reads
+  ---
+  duration_ms: 77.88362
+  type: 'test'
+  ...
+# Subtest: focus writes only the real world tables focus IDs once, preserves aliases, and can remove a missing focus
+ok 28 - focus writes only the real world tables focus IDs once, preserves aliases, and can remove a missing focus
+  ---
+  duration_ms: 135.69091
+  type: 'test'
+  ...
+# Subtest: focus rejects stale configuration, changed bindings, hidden or missing IDs and actual source changes without writes
+ok 29 - focus rejects stale configuration, changed bindings, hidden or missing IDs and actual source changes without writes
+  ---
+  duration_ms: 67.206891
+  type: 'test'
+  ...
+# Subtest: message-specific timeline uses that original source while current characters and pool remain live
+ok 30 - message-specific timeline uses that original source while current characters and pool remain live
+  ---
+  duration_ms: 58.745398
+  type: 'test'
+  ...
+# Subtest: memory pagination exposes all retained events and direct detail does not depend on the default page
+ok 31 - memory pagination exposes all retained events and direct detail does not depend on the default page
+  ---
+  duration_ms: 80.279539
+  type: 'test'
+  ...
+# Subtest: noncharacter focus remains an explicit existing object instead of a false missing dossier
+ok 32 - noncharacter focus remains an explicit existing object instead of a false missing dossier
+  ---
+  duration_ms: 84.619514
+  type: 'test'
+  ...
+# Subtest: atlas contains every public record type, strips private references and direct detail reads noncharacters
+ok 33 - atlas contains every public record type, strips private references and direct detail reads noncharacters
+  ---
+  duration_ms: 42.412522
+  type: 'test'
+  ...
+# Subtest: timeline searches all pages and tags, anchors current identity, and does not match hidden psychology
+ok 34 - timeline searches all pages and tags, anchors current identity, and does not match hidden psychology
+  ---
+  duration_ms: 195.494468
+  type: 'test'
+  ...
+# Subtest: atlas shows only bound exact definition revisions in separate readonly layers
+ok 35 - atlas shows only bound exact definition revisions in separate readonly layers
+  ---
+  duration_ms: 23.223361
+  type: 'test'
+  ...
+# Subtest: locate refuses stale card revision, changed binding and different original reference
+ok 36 - locate refuses stale card revision, changed binding and different original reference
+  ---
+  duration_ms: 59.280761
+  type: 'test'
+  ...
+# Subtest: default timeline anchor is the latest archived event even while newest story awaits next archive
+ok 37 - default timeline anchor is the latest archived event even while newest story awaits next archive
+  ---
+  duration_ms: 20.076782
+  type: 'test'
+  ...
+# Subtest: foreign player cannot list confirm batch-preview batch-confirm reject or edit another preference bank candidate
+ok 38 - foreign player cannot list confirm batch-preview batch-confirm reject or edit another preference bank candidate
+  ---
+  duration_ms: 85.24828
+  type: 'test'
+  ...
+# Subtest: legacy unknown candidates remain stored and are counted without being adopted by current player
+ok 39 - legacy unknown candidates remain stored and are counted without being adopted by current player
+  ---
+  duration_ms: 16.014404
+  type: 'test'
+  ...
+# Subtest: legacy P receipts recover already confirmed ownership while another P cannot replay B accepted rows
+ok 40 - legacy P receipts recover already confirmed ownership while another P cannot replay B accepted rows
+  ---
+  duration_ms: 30.482301
+  type: 'test'
+  ...
+# Subtest: same player bank survives cross-chat reads and manual revision while local scope remains inactive
+ok 41 - same player bank survives cross-chat reads and manual revision while local scope remains inactive
+  ---
+  duration_ms: 45.457854
+  type: 'test'
+  ...
+# Subtest: rejected candidate history stays with its preference identity
+ok 42 - rejected candidate history stays with its preference identity
+  ---
+  duration_ms: 23.908457
+  type: 'test'
+  ...
+# Subtest: manual tag candidates appear without a model request and obey preference master switch
+ok 43 - manual tag candidates appear without a model request and obey preference master switch
+  ---
+  duration_ms: 33.244278
+  type: 'test'
+  ...
+# Subtest: candidates from other request retain native archive phase and completed receipt counts
+ok 44 - candidates from other request retain native archive phase and completed receipt counts
+  ---
+  duration_ms: 17.603003
+  type: 'test'
+  ...
+# Subtest: durably accepted P remains pending acknowledgement after source changes, never returns to pending review
+ok 45 - durably accepted P remains pending acknowledgement after source changes, never returns to pending review
+  ---
+  duration_ms: 83.111854
+  type: 'test'
+  ...
+# Subtest: capability mutation refreshes progress once while pure reads do not trigger repeated snapshots
+ok 46 - capability mutation refreshes progress once while pure reads do not trigger repeated snapshots
+  ---
+  duration_ms: 48.132876
+  type: 'test'
+  ...
+# Subtest: manual review creates a source-bound real commit, preserves values and old history
+ok 47 - manual review creates a source-bound real commit, preserves values and old history
+  ---
+  duration_ms: 85.078276
+  type: 'test'
+  ...
+# Subtest: historical request receipts distinguish their committed values from later current values
+ok 48 - historical request receipts distinguish their committed values from later current values
+  ---
+  duration_ms: 61.39342
+  type: 'test'
+  ...
+# Subtest: stale row, changed binding and native-owned values cannot be edited
+ok 49 - stale row, changed binding and native-owned values cannot be edited
+  ---
+  duration_ms: 36.479923
+  type: 'test'
+  ...
+# Subtest: per-item preference accept/edit/reject uses shared P, has no duplicate row and retains provenance
+ok 50 - per-item preference accept/edit/reject uses shared P, has no duplicate row and retains provenance
+  ---
+  duration_ms: 104.58552
+  type: 'test'
+  ...
+# Subtest: rejecting one preference leaves sibling pending and cannot alter source evidence
+ok 51 - rejecting one preference leaves sibling pending and cannot alter source evidence
+  ---
+  duration_ms: 48.176471
+  type: 'test'
+  ...
+# Subtest: P saved but acknowledgement failed is displayed as saved and resumes without editing or duplicate confirmation
+ok 52 - P saved but acknowledgement failed is displayed as saved and resumes without editing or duplicate confirmation
+  ---
+  duration_ms: 57.48041
+  type: 'test'
+  ...
+# Subtest: progress counts a saved P contribution as awaiting acknowledgement rather than awaiting review
+ok 53 - progress counts a saved P contribution as awaiting acknowledgement rather than awaiting review
+  ---
+  duration_ms: 37.609277
+  type: 'test'
+  ...
+# Subtest: request-specific accepted preference can be disabled and immediately reflects shared P truth
+ok 54 - request-specific accepted preference can be disabled and immediately reflects shared P truth
+  ---
+  duration_ms: 59.132486
+  type: 'test'
+  ...
+# Subtest: progress uses committed receipts and pending preferences together, and observer errors do not poison state
+ok 55 - progress uses committed receipts and pending preferences together, and observer errors do not poison state
+  ---
+  duration_ms: 12.672829
+  type: 'test'
+  ...
+# Subtest: reopened progress treats unknown model outcomes as blocked and lost branch receipts as superseded
+ok 56 - reopened progress treats unknown model outcomes as blocked and lost branch receipts as superseded
+  ---
+  duration_ms: 12.056156
+  type: 'test'
+  ...
+# Subtest: one assistant instruction validates a full configuration batch and applies with one store save
+ok 57 - one assistant instruction validates a full configuration batch and applies with one store save
+  ---
+  duration_ms: 233.204527
+  type: 'test'
+  ...
+# Subtest: one invalid or unknown configuration leaf rejects the whole batch
+ok 58 - one invalid or unknown configuration leaf rejects the whole batch
+  ---
+  duration_ms: 158.396529
+  type: 'test'
+  ...
+# Subtest: head chat is optional and isolated; no fake API response or config mutation
+ok 59 - head chat is optional and isolated; no fake API response or config mutation
+  ---
+  duration_ms: 136.438798
+  type: 'test'
+  ...
+# Subtest: head request can be aborted without sending to story or accepting a late reply
+ok 60 - head request can be aborted without sending to story or accepting a late reply
+  ---
+  duration_ms: 1.355212
+  type: 'test'
+  ...
+# Subtest: capability catalog covers actual 30 destinations and 46 groups with canonical aliases
+ok 61 - capability catalog covers actual 30 destinations and 46 groups with canonical aliases
+  ---
+  duration_ms: 4.087599
+  type: 'test'
+  ...
+# Subtest: archive migration map names every actual old table page once without inventing old entries
+ok 62 - archive migration map names every actual old table page once without inventing old entries
+  ---
+  duration_ms: 1.508061
+  type: 'test'
+  ...
+# Subtest: first lazy initialization is accepted; later scope changes during snapshot reads are rejected
+ok 63 - first lazy initialization is accepted; later scope changes during snapshot reads are rejected
+  ---
+  duration_ms: 0.810435
+  type: 'test'
+  ...
+# Subtest: archive editor uses one V3 store for complete create/edit/delete and readonly definitions
+ok 64 - archive editor uses one V3 store for complete create/edit/delete and readonly definitions
+  ---
+  duration_ms: 100.983301
+  type: 'test'
+  ...
+# Subtest: archive state editor preserves 0 false null and rejects dangling references and native ownership
+ok 65 - archive state editor preserves 0 false null and rejects dangling references and native ownership
+  ---
+  duration_ms: 88.315734
+  type: 'test'
+  ...
+# Subtest: configuration assistant query adapter reads the actual V3 view, excludes raw source, and closes stale snapshots
+ok 66 - configuration assistant query adapter reads the actual V3 view, excludes raw source, and closes stale snapshots
+  ---
+  duration_ms: 41.882204
+  type: 'test'
+  ...
+# Subtest: manual archive and review retry a persisted commit after acknowledgement loss without double edits
+ok 67 - manual archive and review retry a persisted commit after acknowledgement loss without double edits
+  ---
+  duration_ms: 53.551037
+  type: 'test'
+  ...
+# Subtest: nested native mapping cannot be introduced or changed through generic archive and review forms
+ok 68 - nested native mapping cannot be introduced or changed through generic archive and review forms
+  ---
+  duration_ms: 32.715259
+  type: 'test'
+  ...
+# Subtest: head conversation follows chat and user identity across ordinary story source advances
+ok 69 - head conversation follows chat and user identity across ordinary story source advances
+  ---
+  duration_ms: 5.384343
+  type: 'test'
+  ...
+# Subtest: confirmed preference revision replaces one contribution with full history and never adds its old score
+ok 70 - confirmed preference revision replaces one contribution with full history and never adds its old score
+  ---
+  duration_ms: 66.069286
+  type: 'test'
+  ...
+# Subtest: manual preference revision has a durable P receipt across acknowledgement loss and rejects changed retries
+ok 71 - manual preference revision has a durable P receipt across acknowledgement loss and rejects changed retries
+  ---
+  duration_ms: 66.080323
+  type: 'test'
+  ...
+# Subtest: confirmed preference re-enable restores only the existing source contribution and duplicate group revisions fail atomically
+ok 72 - confirmed preference re-enable restores only the existing source contribution and duplicate group revisions fail atomically
+  ---
+  duration_ms: 100.114879
+  type: 'test'
+  ...
+# Subtest: manual feedback preference revision preserves independent feedback identity and exact selected scope
+ok 73 - manual feedback preference revision preserves independent feedback identity and exact selected scope
+  ---
+  duration_ms: 55.804116
+  type: 'test'
+  ...
+# Subtest: renaming a confirmed preference keeps its old source group reserved and cannot revive a second contribution elsewhere
+ok 74 - renaming a confirmed preference keeps its old source group reserved and cannot revive a second contribution elsewhere
+  ---
+  duration_ms: 79.327794
+  type: 'test'
+  ...
+# Subtest: pending B acknowledgement remains a saved P receipt after another session manually revises that contribution
+ok 75 - pending B acknowledgement remains a saved P receipt after another session manually revises that contribution
+  ---
+  duration_ms: 67.020843
+  type: 'test'
+  ...
+# Subtest: late native capabilities are deduplicated and resolve the current route at invocation
+ok 76 - late native capabilities are deduplicated and resolve the current route at invocation
+  ---
+  duration_ms: 6.018183
+  type: 'test'
+  ...
+# Subtest: archive read failures remain visible while configuration and binding routes stay reachable
+ok 77 - archive read failures remain visible while configuration and binding routes stay reachable
+  ---
+  duration_ms: 1.383164
+  type: 'test'
+  ...
+# Subtest: catalog viewing changes no state; application creates candidates with signed scores and real object target
+ok 78 - catalog viewing changes no state; application creates candidates with signed scores and real object target
+  ---
+  duration_ms: 83.12359
+  type: 'test'
+  ...
+# Subtest: same application retries once even after confirmation; changed retries and invalid batch selections do not write
+ok 79 - same application retries once even after confirmation; changed retries and invalid batch selections do not write
+  ---
+  duration_ms: 58.719045
+  type: 'test'
+  ...
+# Subtest: saved templates have no scores or facts, persist only through config authority, and can be reused after reload
+ok 80 - saved templates have no scores or facts, persist only through config authority, and can be reused after reload
+  ---
+  duration_ms: 6.946694
+  type: 'test'
+  ...
+# Subtest: saving existing preference copies reusable instruction while retaining original evidence in P
+ok 81 - saving existing preference copies reusable instruction while retaining original evidence in P
+  ---
+  duration_ms: 21.706925
+  type: 'test'
+  ...
+# Subtest: tag applications reject duplicate same-source groups before storing candidates
+ok 82 - tag applications reject duplicate same-source groups before storing candidates
+  ---
+  duration_ms: 16.286839
+  type: 'test'
+  ...
+# Subtest: actual core configuration book persists custom tags across empty host-cache reboot
+ok 83 - actual core configuration book persists custom tags across empty host-cache reboot
+  ---
+  duration_ms: 266.549534
+  type: 'test'
+  ...
+# Subtest: failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+ok 84 - failed 初始化／从资料提炼 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 45.524854
+  type: 'test'
+  ...
+# Subtest: failed 世界档案 navigation shows its failure and an explicit fresh retry
+ok 85 - failed 世界档案 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 13.096644
+  type: 'test'
+  ...
+# Subtest: failed 历史补录 navigation shows its failure and an explicit fresh retry
+ok 86 - failed 历史补录 navigation shows its failure and an explicit fresh retry
+  ---
+  duration_ms: 11.326971
+  type: 'test'
+  ...
+# Subtest: user preferences home entry uses actual shared contributions, projection and confirmation service
+ok 87 - user preferences home entry uses actual shared contributions, projection and confirmation service
+  ---
+  duration_ms: 130.652341
+  type: 'test'
+  ...
+# Subtest: preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+ok 88 - preference visualization retains positive negative and hard constraints separately and never activates another chat scope
+  ---
+  duration_ms: 74.464065
+  type: 'test'
+  ...
+# Subtest: disabled preference processing remains visible read only without becoming an empty bank or active projection
+ok 89 - disabled preference processing remains visible read only without becoming an empty bank or active projection
+  ---
+  duration_ms: 77.095605
+  type: 'test'
+  ...
+# Subtest: same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+ok 90 - same tag in global and current-chat scopes keeps distinct totals and each contribution shows its own scope and context
+  ---
+  duration_ms: 68.649017
+  type: 'test'
+  ...
+# Subtest: home initialization opens the existing reviewed design flow without writing or generating
+ok 91 - home initialization opens the existing reviewed design flow without writing or generating
+  ---
+  duration_ms: 36.951767
+  type: 'test'
+  ...
+# Subtest: one-click candidate confirmation invokes the actual batch service and writes one P revision
+ok 92 - one-click candidate confirmation invokes the actual batch service and writes one P revision
+  ---
+  duration_ms: 131.176786
+  type: 'test'
+  ...
+# Subtest: lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+ok 93 - lost B acknowledgement keeps the same batch request and freezes individual candidates until actual receipt recovery
+  ---
+  duration_ms: 89.527307
+  type: 'test'
+  ...
+# Subtest: invalid batch remains reviewable for manual correction without confirming any source
+ok 94 - invalid batch remains reviewable for manual correction without confirming any source
+  ---
+  duration_ms: 28.08921
+  type: 'test'
+  ...
+# Subtest: saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+ok 95 - saved tag template and selected role candidate use actual configuration book, B draft and P confirmation authorities
+  ---
+  duration_ms: 374.703906
+  type: 'test'
+  ...
+# Subtest: configuration recovery requires the real preview and appends a new core-book version
+ok 96 - configuration recovery requires the real preview and appends a new core-book version
+  ---
+  duration_ms: 345.791541
+  type: 'test'
+  ...
+# (node:170) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: chat UI uses real companion history, queues without API, withdraws and sends independently
+ok 97 - chat UI uses real companion history, queues without API, withdraws and sends independently
+  ---
+  duration_ms: 443.001596
+  type: 'test'
+  ...
+# Subtest: pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+ok 98 - pending acknowledgement survives review service recreation without reconfirming P or combining new candidates
+  ---
+  duration_ms: 116.894515
+  type: 'test'
+  ...
+# Subtest: character tag picker includes registered descendants of character
+ok 99 - character tag picker includes registered descendants of character
+  ---
+  duration_ms: 158.062758
+  type: 'test'
+  ...
+# Subtest: workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+ok 100 - workbench atlas and timeline consume the real ACL projection, preserve current anchor and locate exact source references
+  ---
+  duration_ms: 618.61101
+  type: 'test'
+  ...
+# Subtest: canonical setting search delegates once and internal navigation is usable
+ok 101 - canonical setting search delegates once and internal navigation is usable
+  ---
+  duration_ms: 43.600509
+  type: 'test'
+  ...
+# Subtest: pending preference edit stays pending and uses preference service only
+ok 102 - pending preference edit stays pending and uses preference service only
+  ---
+  duration_ms: 21.603127
+  type: 'test'
+  ...
+# Subtest: same-level nested editor keeps draft across back; close preserves then save commits once
+ok 103 - same-level nested editor keeps draft across back; close preserves then save commits once
+  ---
+  duration_ms: 29.8198
+  type: 'test'
+  ...
+# Subtest: unapplied assistant changes block leaving until explicitly abandoned
+ok 104 - unapplied assistant changes block leaving until explicitly abandoned
+  ---
+  duration_ms: 22.802956
+  type: 'test'
+  ...
+# Subtest: bubble clamps to small keyboard viewport and falls below top head
+ok 105 - bubble clamps to small keyboard viewport and falls below top head
+  ---
+  duration_ms: 0.481271
+  type: 'test'
+  ...
+# Subtest: missing pet adds only badge to existing approved entry
+ok 106 - missing pet adds only badge to existing approved entry
+  ---
+  duration_ms: 3.848099
+  type: 'test'
+  ...
+# Subtest: actual capability facade receives book version guards and stable IDs
+ok 107 - actual capability facade receives book version guards and stable IDs
+  ---
+  duration_ms: 31.984485
+  type: 'test'
+  ...
+# Subtest: actual capability facade supports selective configuration batch without extra save
+ok 108 - actual capability facade supports selective configuration batch without extra save
+  ---
+  duration_ms: 24.708282
+  type: 'test'
+  ...
+# Subtest: P saved receipt recovery is offered as completion, not another edit or approval
+ok 109 - P saved receipt recovery is offered as completion, not another edit or approval
+  ---
+  duration_ms: 11.896564
+  type: 'test'
+  ...
+# Subtest: registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+ok 110 - registry UI edits real V3 archive via preview and CAS commit, preserving original row and timeline
+  ---
+  duration_ms: 129.713644
+  type: 'test'
+  ...
+# Subtest: book definition conflicts require each acknowledgement and retain the same operation ID
+ok 111 - book definition conflicts require each acknowledgement and retain the same operation ID
+  ---
+  duration_ms: 19.57727
+  type: 'test'
+  ...
+# Subtest: UI settled waits for pending action, preserving parent busy lifecycle
+ok 112 - UI settled waits for pending action, preserving parent busy lifecycle
+  ---
+  duration_ms: 9.363458
+  type: 'test'
+  ...
+# Subtest: user switching automatically binds the selected real player preference owner
+ok 113 - user switching automatically binds the selected real player preference owner
+  ---
+  duration_ms: 10.253892
+  type: 'test'
+  ...
+# Subtest: design UI preserves delta metadata and source, selects rows, and saves one validated batch
+ok 114 - design UI preserves delta metadata and source, selects rows, and saves one validated batch
+  ---
+  duration_ms: 42.10306
+  type: 'test'
+  ...
+# Subtest: chat entry opens independent conversation directly and aside bubble routes to chat
+ok 115 - chat entry opens independent conversation directly and aside bubble routes to chat
+  ---
+  duration_ms: 4.990021
+  type: 'test'
+  ...
+# Subtest: first setup creates three explicit books with player preference owner and retries the same creation intent
+ok 116 - first setup creates three explicit books with player preference owner and retries the same creation intent
+  ---
+  duration_ms: 15.343102
+  type: 'test'
+  ...
+# Subtest: condition UI uses actual fields, explicit events and preview-before-commit through one facade
+ok 117 - condition UI uses actual fields, explicit events and preview-before-commit through one facade
+  ---
+  duration_ms: 13.913158
+  type: 'test'
+  ...
+# Subtest: unbound archive entry explains setup and routes to books without attempting ledger access
+ok 118 - unbound archive entry explains setup and routes to books without attempting ledger access
+  ---
+  duration_ms: 5.224853
+  type: 'test'
+  ...
+# Subtest: actual outward navigation passes the host suspend guard only during synchronous route dispatch
+ok 119 - actual outward navigation passes the host suspend guard only during synchronous route dispatch
+  ---
+  duration_ms: 11.016435
+  type: 'test'
+  ...
+# Subtest: condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+ok 120 - condition page executes real B ledger action once, and subsequent view exposes the saved receipt
+  ---
+  duration_ms: 54.420305
+  type: 'test'
+  ...
+# Subtest: confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+ok 121 - confirmed preference revisions use the current row revision and an independent edit receipt; re-enable is explicit
+  ---
+  duration_ms: 24.243254
+  type: 'test'
+  ...
+# Subtest: gate editor leaves probability to the worldbook entry and action editor retains rule probability
+ok 122 - gate editor leaves probability to the worldbook entry and action editor retains rule probability
+  ---
+  duration_ms: 9.007413
+  type: 'test'
+  ...
+1..122
+# tests 122
+# suites 0
+# pass 122
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15585.158568

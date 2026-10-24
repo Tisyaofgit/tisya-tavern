@@ -1,6 +1,6 @@
 export {createOriginalStore,sha256Utf16} from './originals/original-store.mjs';
 export {createPreflightRunner,createInitialState,projectRetained,projectWriter} from './runner/preflight-runner.mjs';
-export {createTauriWorldbookTransport,loadBrowserWorldbookTransport,createWorldbookOriginalAdapter} from './host/worldbook-adapter.mjs';
+export {createTauriWorldbookTransport,loadWorldbookHostModules,loadBrowserWorldbookTransport,createWorldbookOriginalAdapter} from './host/worldbook-adapter.mjs';
 export {createWorldbookTableStorage} from './host/table-storage.mjs';
 export {createFloorIdentityManager} from './host/floor-identities.mjs';
 export {createHostController} from './host/controller.mjs';
