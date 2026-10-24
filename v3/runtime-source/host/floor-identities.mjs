@@ -1,4 +1,5 @@
 import { HostAdapterError } from './worldbook-adapter.mjs';
+import { sameJsonValue } from './json-value.mjs';
 
 export const IDENTITY_NAMESPACE = 'tisya_w24';
 export const MESSAGE_MARKER = 'tisya_w24_floor';
@@ -21,7 +22,7 @@ export function createFloorIdentityManager({ getContext, getStableChatId, saveCh
       await saveChat(ctx);
       await assertActive(ctx, state.branchId);
       const actual = await readMetadata();
-      if (JSON.stringify(actual?.[IDENTITY_NAMESPACE]) !== JSON.stringify(state)) fail('IDENTITY_READBACK', 'Floor identity metadata readback differs');
+      if (!sameJsonValue(actual?.[IDENTITY_NAMESPACE], state)) fail('IDENTITY_READBACK', 'Floor identity metadata readback differs');
     } catch (error) {
       if (getContext().chatMetadata === ctx.chatMetadata) {
         if (previousState === undefined) delete ctx.chatMetadata[IDENTITY_NAMESPACE]; else ctx.chatMetadata[IDENTITY_NAMESPACE] = previousState;
@@ -60,7 +61,7 @@ export function createFloorIdentityManager({ getContext, getStableChatId, saveCh
       delete state.rows[id];
     }
     state.order = order;
-    if (JSON.stringify(previousState) !== JSON.stringify(state) || previousMarkers.some(([message, before]) => JSON.stringify(before) !== JSON.stringify(message[MESSAGE_MARKER]))) await persist(ctx, state, previousState, previousMarkers);
+    if (!sameJsonValue(previousState, state) || previousMarkers.some(([message, before]) => !sameJsonValue(before, message[MESSAGE_MARKER]))) await persist(ctx, state, previousState, previousMarkers);
     return { ctx, state };
   }
   const identityAt = (state, floor) => {
