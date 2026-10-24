@@ -1,0 +1,256 @@
+TAP version 13
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# entering chat update routine for non-swipe post
+# Subtest: installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+ok 1 - installer executes real manifest abort gate, one A, real MVU, one B, real native saveReply, A+B worldbook readback
+  ---
+  duration_ms: 2037.735189
+  type: 'test'
+  ...
+# Failed running interceptor for undefined SimpleSheetError: 简表格式错误：需要分组标题或稳定行号字段
+#     at fail2 (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:498:9)
+#     at parseSimpleSheet (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:668:27)
+#     at Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2264:22)
+#     at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20) {
+#   code: 'SIMPLE_SHEET_INVALID'
+# }
+# Subtest: invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+ok 2 - invalid A is blocked by the actual interceptor and makes zero B/saveReply calls
+  ---
+  duration_ms: 409.953606
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 请先等待原卡 MVU 脚本初始化
+#     at error (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:17:43)
+#     at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:18:46)
+#     at file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:67:31
+#     at async initialize (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:111:14)
+#     at async perform (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:114:89) {
+#   code: 'V3_MVU_UNAVAILABLE'
+# }
+# Subtest: missing enabled native runtime aborts before A and before narrative commit
+ok 3 - missing enabled native runtime aborts before A and before narrative commit
+  ---
+  duration_ms: 247.290996
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+ok 4 - advanced reroll uses native swipe save, stable original ID and repeat receipt without extra A/B
+  ---
+  duration_ms: 2852.110731
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+ok 5 - partial revision reaches B as task material, feedback reaches A, untouched paragraph survives byte exactly
+  ---
+  duration_ms: 2599.680663
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: out-of-range partial edit fails before native chat mutation
+ok 6 - out-of-range partial edit fails before native chat mutation
+  ---
+  duration_ms: 2222.262891
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+ok 7 - two original-owned MVU floors synchronize their own snapshots in order without reapplying variables
+  ---
+  duration_ms: 1757.369934
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+not ok 8 - trailing native deletion tombstones original without rewriting the retained predecessor snapshot
+  ---
+  duration_ms: 1532.141222
+  type: 'test'
+  location: '/workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/installer.test.mjs:38:1'
+  failureType: 'testCodeFailure'
+  error: 'Requested floor is absent'
+  code: 'FLOOR_NOT_FOUND'
+  name: 'HostAdapterError'
+  stack: |-
+    fail4 (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2716:9)
+    identityAt (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2791:58)
+    file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2801:14
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+ok 9 - normal reroll and selected swipe use one stable floor, branch creates distinct original namespace
+  ---
+  duration_ms: 2817.532347
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update for groups
+# Subtest: real group wrapper lifecycle permits exactly one A+B across drafted members
+ok 10 - real group wrapper lifecycle permits exactly one A+B across drafted members
+  ---
+  duration_ms: 1515.286023
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: external native edit invalidates source lineage and updates A rather than retaining the previous reference
+ok 11 - external native edit invalidates source lineage and updates A rather than retaining the previous reference
+  ---
+  duration_ms: 1558.723466
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 测试取消
+#     at error (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:17:43)
+#     at Object.cancel (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:140:128)
+#     at TestContext.<anonymous> (file:///workspace/scratch/8af76944f38d/w29-fix/tests/v3/host-tests/installer.test.mjs:60:58)
+#     at async Test.run (node:internal/test_runner/test:1409:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+#   code: 'V3_CANCELLED'
+# }
+# Subtest: stopping A prevents B and does not commit a late API response
+ok 12 - stopping A prevents B and does not commit a late API response
+  ---
+  duration_ms: 319.097472
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+ok 13 - turn direction is a separate A feedback source and B instruction, never appended to roleplay text
+  ---
+  duration_ms: 1448.07059
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+ok 14 - explicit source tool read returns only selected original paragraphs, pages share one scoped query session, ledger omits raw receipts
+  ---
+  duration_ms: 1544.906292
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 用户身份已切换，旧任务停止
+#     at error (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:17:43)
+#     at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:18:46)
+#     at guard (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:52:1563)
+#     at request (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:86:450)
+#     at async Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2255:59)
+#     at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20) {
+#   code: 'V3_PLAYER_CHANGED'
+# }
+# Subtest: persona changed during A prevents B and native save even without a chat switch
+ok 15 - persona changed during A prevents B and native save even without a chat switch
+  ---
+  duration_ms: 315.413557
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: editing an earlier user evidence source removes its dependent archived facts
+ok 16 - editing an earlier user evidence source removes its dependent archived facts
+  ---
+  duration_ms: 1318.534323
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+ok 17 - awaited beforeWriter may persist condition receipts before snapshot, avoiding a stale ledger write
+  ---
+  duration_ms: 1658.011829
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: unnumbered native opening remains untouched as card setup and does not enter numbered archive
+ok 18 - unnumbered native opening remains untouched as card setup and does not enter numbered archive
+  ---
+  duration_ms: 1320.050941
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# entering chat update routine for non-swipe post
+# Subtest: disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+ok 19 - disabled business archive preserves A and native state; re-enabling backfills without reapplying native changes
+  ---
+  duration_ms: 3998.439772
+  type: 'test'
+  ...
+# Failed running interceptor for undefined Error: 生成期间聊天楼层已变化
+#     at error (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:17:43)
+#     at check (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:18:46)
+#     at guard (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:52:529)
+#     at request (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-network.mjs:35:3)
+#     at async send (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host.mjs:86:450)
+#     at async Object.run (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2255:59)
+#     at async deliver (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:2882:20) {
+#   code: 'V3_CHAT_MUTATED'
+# }
+# Subtest: a new native user appended during A cannot receive the prior request response
+ok 20 - a new native user appended during A cannot receive the prior request response
+  ---
+  duration_ms: 320.665669
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: native mode off permits business archival of an original-owned message without requiring or executing MVU
+ok 21 - native mode off permits business archival of an original-owned message without requiring or executing MVU
+  ---
+  duration_ms: 1130.874416
+  type: 'test'
+  ...
+# entering chat update routine for non-swipe post
+# Subtest: turning native mode on creates missing projection rows from actual card data without executing historical variables
+ok 22 - turning native mode on creates missing projection rows from actual card data without executing historical variables
+  ---
+  duration_ms: 1151.628185
+  type: 'test'
+  ...
+# (node:14) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: opening a session does not import old reply with an unmatched control tag
+ok 23 - opening a session does not import old reply with an unmatched control tag
+  ---
+  duration_ms: 547.63345
+  type: 'test'
+  ...
+# Subtest: opening a session does not import ordinary old reply
+ok 24 - opening a session does not import ordinary old reply
+  ---
+  duration_ms: 412.62669
+  type: 'test'
+  ...
+# Subtest: opening a session does not import incomplete V3 reply
+ok 25 - opening a session does not import incomplete V3 reply
+  ---
+  duration_ms: 279.93762
+  type: 'test'
+  ...
+# Subtest: an empty bound chat opens without originals or model calls
+ok 26 - an empty bound chat opens without originals or model calls
+  ---
+  duration_ms: 266.479888
+  type: 'test'
+  ...
+# Failed running interceptor for undefined OriginalStoreError: 聊天第 3 条（楼层 2）无法作为本轮原文：旧回复含有未配对的控制标签。原聊天未修改。
+#     at fail (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:14:9)
+#     at assert (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:17:19)
+#     at parseHistoricalBody (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:163:3)
+#     at put (file:///workspace/scratch/8af76944f38d/w29-fix/v3/host-runtime.mjs:291:37) {
+#   code: 'HISTORY_CONTROL_BLOCK',
+#   details: {},
+#   floor: 2
+# }
+# Subtest: explicit generation still rejects an incomplete historical source and identifies its floor
+ok 27 - explicit generation still rejects an incomplete historical source and identifies its floor
+  ---
+  duration_ms: 265.336339
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 26
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34243.318944
