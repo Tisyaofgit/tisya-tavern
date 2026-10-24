@@ -208,6 +208,7 @@ function openWorkbench(initialPage='home'){
  else {query('#tisya-workbench-slot').append(view.root);view.resume().then(()=>view.navigate(initialPage)).catch(error);}
  utility=view;view.ready.catch(error);return true;
 }
+function v3NativeRoutes(){return drawerEntries(document).filter(row=>!['rightNavHolder','persona-management-button'].includes(row.key)).map(row=>({id:'drawer:'+row.key,action:'drawer:'+row.key,label:row.label,description:'打开扩展的原生设置',group:'native',icon:'tools',run:()=>nativeDrawer(row.key)}));}
 function v3Routes(){const routes={};
  for(const row of CAPABILITIES){const id=row.id;
   if(id.startsWith('drawer:'))routes[id]=()=>nativeDrawer(id.slice(7));
@@ -245,7 +246,7 @@ async function installV3(){
   v3Application=await createApplication({target:window,getContext:context,store:configStore,configHost,books:v3BookHost.manager,readWorldbook:(...args)=>v3BookHost.callbacks.transport.readFresh(...args),communication,getPlayerId:()=>user_avatar,
    configurationBook:v3ConfigurationBook,identityService,
    interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},getChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),
-   routes:v3Routes(),onSaved:()=>{appearance?.refresh();decorate();},onError:error,moods:()=>emotionCatalog(document).names(),
+   routes:v3Routes(),dynamicRoutes:v3NativeRoutes,onSaved:()=>{appearance?.refresh();decorate();},onError:error,moods:()=>emotionCatalog(document).names(),
    assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');}});
   v3Bubble?.dispose();v3Bubble=mountProgressBubble(document,{pet,progress:v3Application.progress,capabilities:v3Application.capabilities,assistant:v3Application.assistant,
    isPanelOpen:()=>utility?.kind==='v3-workbench'&&utility.root.isConnected,onOpen:page=>openWorkbench(page??'review'),fallbackElement:document.querySelector('[data-tisya-action="assistant"]')});
@@ -616,7 +617,7 @@ async function chooseReaderAction(token,text,mode) {
 }
 async function removeMessages(rollback) {
     const token=overlay._messageToken,epoch=sheetEpoch;assertIdle();validate(context(),token,{tail:true});
-    const original=context().chat.slice(token.id);
+    const originalChat=context().chat,original=originalChat.slice(token.id);
     const snapshots=original.map(message=>message && ({text:message.mes,swipe:message.swipe_id}));
     if(rollback && original.some(message=>!message)) throw new Error('后续历史尚未完整加载，未执行回溯');
     const v3Host=await requireV3();
@@ -629,7 +630,7 @@ async function removeMessages(rollback) {
             try{await v3Host.deleteFloor({floor:id});}catch(err){
                 // Native deletion can succeed before persistence fails. Report
                 // the observed side effect instead of understating data loss.
-                if(context().chat===ctx.chat&&ctx.chat.length===token.length-deleted-1&&!ctx.chat.includes(following[id-token.id-1]))deleted++;
+                if(context().chat===originalChat&&originalChat.length===token.length-deleted-1&&!originalChat.includes(original[id-token.id]))deleted++;
                 throw err;
             }deleted++;
         }
