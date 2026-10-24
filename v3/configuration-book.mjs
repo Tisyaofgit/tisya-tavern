@@ -1,5 +1,6 @@
 import {validateConfig,emptyConfig,configuredWorld,worldKey,KEY} from '../config/core.js';
 import {BookError} from './books.mjs';
+import {projectGlobalConfiguration,persistGlobalConfiguration,validateGlobalConfiguration} from './configuration-scope.mjs';
 const copy=v=>v===undefined?undefined:structuredClone(v);
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -22,29 +23,17 @@ export function createConfigurationBook({books,store,getContext,getPlayerId,read
  const previews=new Map(),queue=fn=>{const pending=tail.then(fn);tail=pending.catch(()=>{});return pending;};
  const read=()=>copy(state);
  function validateDomain(name,value){jsonValue(value);noCredentials(value);if(name==='configuration')validateConfig(value);else if(name==='interface'){check(typeof validateInterface==='function'&&typeof applyInterface==='function','CAPABILITY_UNAVAILABLE','界面配置保存能力未接入');validateInterface(value);}else{check(typeof domainValidators[name]==='function','CONFIGURATION_DOMAIN','未登记配置域：'+name);domainValidators[name](value);}return value;}
- function validateSnapshot(snapshot){check(plain(snapshot.domains),'CONFIGURATION_DOMAINS','配置域损坏');for(const [name,value]of Object.entries(snapshot.domains))validateDomain(name,value);check(snapshot.domains.configuration,'CONFIGURATION_MISSING','配置书未保存世界配置');validateBindings(snapshot.worldBindings);return snapshot;}
- function liveGuard(){check(state.ready,'CONFIGURATION_NOT_READY','配置书尚未恢复，请在资料绑定页载入');const ctx=getContext();check(worldKey(ctx)===activeKey,'CONFIGURATION_SCOPE','会话已切换，须先载入对应配置书');const pointer=ctx.chatMetadata?.tisya_v3_books,identity=ctx.chatMetadata?.tisya_w24;
-   if(pointer)check(pointer.archiveId===state.binding.archiveId&&pointer.bindingRevision===state.binding.revision,'CONFIGURATION_BINDING','资料绑定已改变，须先载入对应配置');
-   if(identity)check(identity.chatId===state.binding.chatId&&identity.branchId===state.binding.branchId,'CONFIGURATION_SCOPE','配置属于另一分支');
-   if(getPlayerId)check(getPlayerId()===state.binding.playerId,'CONFIGURATION_PLAYER','主控角色已切换，须先恢复其配置');
- }
+ function validateSnapshot(snapshot){check(plain(snapshot.domains),'CONFIGURATION_DOMAINS','配置域损坏');for(const [name,value]of Object.entries(snapshot.domains))validateDomain(name,value);check(snapshot.domains.configuration,'CONFIGURATION_MISSING','配置书未保存世界配置');validateBindings(snapshot.worldBindings);validateGlobalConfiguration(snapshot.domains.configuration);return snapshot;}
+ function liveGuard(){check(state.ready,'CONFIGURATION_NOT_READY','请先选择全局基点并载入配置');const ctx=getContext();check(worldKey(ctx)===activeKey,'CONFIGURATION_SCOPE','会话已切换，请载入当前故事引用');const pointer=ctx.extensionSettings.tisya_v3_global;if(pointer)check(pointer.coreId===state.bookId&&pointer.revision===state.binding.revision,'CONFIGURATION_BINDING','全局基点已切换，请重新载入');}
  function guard({raw,key}){if(publishing)return;liveGuard();check(key===activeKey&&JSON.stringify(raw)===cacheStamp,'CONFIGURATION_CACHE','运行配置缓存已变化，请从配置书重新载入；未覆盖书内版本');if(state.domains.interface!==undefined)check(same(interfaceCache(),state.domains.interface),'CONFIGURATION_CACHE','界面缓存与配置书不一致，请重新载入');for(const [name,cache]of Object.entries(domainCaches))check(same(cache.read(),state.domains[name]??cache.defaultValue),'CONFIGURATION_CACHE','配置域缓存与基点书不一致：'+name);}
- function bindWorld(snapshot,key){const data=copy(snapshot.domains.configuration),b=snapshot.binding,row=snapshot.worldBindings.find(row=>row.archiveId===b.archiveId&&row.playerId===b.playerId);
-   if(row){check(row.chatId===b.chatId&&row.branchId===b.branchId,'CONFIGURATION_WORLD_OWNER','存档配置归属与当前绑定不一致');check(Object.hasOwn(data.worlds,row.key),'CONFIGURATION_WORLD_MISSING','书内存档配置缺失');data.worlds[key]=copy(data.worlds[row.key]);if(row.key!==key)delete data.worlds[row.key];}
-   else{const source=snapshot.forkOf?snapshot.worldBindings.find(row=>row.archiveId===snapshot.forkOf.archiveId&&row.playerId===b.playerId):null;if(source){check(Object.hasOwn(data.worlds,source.key),'CONFIGURATION_FORK_MISSING','来源分支配置缺失');data.worlds[key]=copy(data.worlds[source.key]);}else if(!Object.hasOwn(data.worlds,key))data.worlds[key]=configuredWorld(data,key);}
-   return data;
- }
+ function bindWorld(snapshot,key){return projectGlobalConfiguration(snapshot.domains.configuration,key,getContext());}
  function interfaceCache(){try{return typeof readInterface==='function'?copy(readInterface()):undefined;}catch{return undefined;}}
- function publishGuard(snapshot,key){const c=getContext();check(worldKey(c)===key,'CONFIGURATION_SCOPE','恢复期间会话已切换');const p=c.chatMetadata?.tisya_v3_books,i=c.chatMetadata?.tisya_w24;if(p)check(p.archiveId===snapshot.binding.archiveId&&p.bindingRevision===snapshot.binding.revision,'CONFIGURATION_BINDING','恢复期间资料绑定已改变');if(i)check(i.chatId===snapshot.binding.chatId&&i.branchId===snapshot.binding.branchId,'CONFIGURATION_SCOPE','恢复目标不是当前分支');if(getPlayerId)check(getPlayerId()===snapshot.binding.playerId,'CONFIGURATION_PLAYER','恢复期间主控角色已改变');}
+ function publishGuard(snapshot,key){check(worldKey(getContext())===key,'CONFIGURATION_SCOPE','恢复期间会话已切换');const p=getContext().extensionSettings.tisya_v3_global;if(p)check(p.coreId===snapshot.bookId&&p.revision===snapshot.binding.revision,'CONFIGURATION_BINDING','恢复期间全局基点已切换');}
  async function publish(snapshot){validateSnapshot(snapshot);const key=worldKey(getContext()),data=bindWorld(snapshot,key),old=store.cacheSnapshot(),oldInterface=interfaceCache(),oldMarker=copy(getContext().extensionSettings[CACHE_KEY]),oldDomains=Object.fromEntries(Object.entries(domainCaches).map(([name,cache])=>{try{return [name,copy(cache.read())];}catch{return [name,undefined];}}));
    publishing=true;try{publishGuard(snapshot,key);store.replaceCache(data);if(snapshot.domains.interface!==undefined)await applyInterface(copy(snapshot.domains.interface));for(const [name,cache]of Object.entries(domainCaches)){publishGuard(snapshot,key);await cache.apply(copy(snapshot.domains[name]??cache.defaultValue));}publishGuard(snapshot,key);state={...copy(snapshot),ready:true,draft:null,error:null};activeKey=key;cacheStamp=JSON.stringify(store.cacheSnapshot());getContext().extensionSettings[CACHE_KEY]={bookId:snapshot.bookId,owner:copy(snapshot.owner),binding:copy(snapshot.binding),revision:snapshot.revision};everHydrated=true;previews.clear();if(onApplied)await onApplied(read());publishGuard(snapshot,key);}
    catch(error){let stillHere=false;try{publishGuard(snapshot,key);stillHere=true;}catch{}if(stillHere){if(old!==undefined){try{store.replaceCache(old);}catch{delete getContext().extensionSettings[KEY];}}else delete getContext().extensionSettings[KEY];if(oldMarker===undefined)delete getContext().extensionSettings[CACHE_KEY];else getContext().extensionSettings[CACHE_KEY]=oldMarker;if(oldInterface!==undefined&&applyInterface)try{await applyInterface(oldInterface);}catch{}for(const [name,cache]of Object.entries(domainCaches))if(oldDomains[name]!==undefined)try{await cache.apply(copy(oldDomains[name]));}catch{}}state={...state,ready:false,error:errorValue(error)};throw error;}finally{publishing=false;}return read();
  }
- function worldBindingsFor(snapshot,data){const nativeKey=worldKey(getContext()),b=snapshot.binding,rows=copy(snapshot.worldBindings??[]),existing=rows.find(row=>row.archiveId===b.archiveId&&row.playerId===b.playerId),key=JSON.stringify(['tisya-archive',b.archiveId,b.playerId]);
-   check(Object.hasOwn(data.worlds,nativeKey),'CONFIGURATION_WORLD_MISSING','保存内容缺少当前世界配置');data.worlds[key]=copy(data.worlds[nativeKey]);if(key!==nativeKey)delete data.worlds[nativeKey];
-   const row={archiveId:b.archiveId,chatId:b.chatId,branchId:b.branchId,playerId:b.playerId,key};if(existing){if(existing.key!==key&&existing.key!==nativeKey)delete data.worlds[existing.key];Object.assign(existing,row);}else rows.push(row);
-   return validateBindings(rows);
- }
+ function worldBindingsFor(snapshot,data){const stored=persistGlobalConfiguration(data,worldKey(getContext()),getContext());for(const key of Object.keys(data))delete data[key];Object.assign(data,stored);return [];}
  function matchesExpected(expected,current){check(expected&&expected.bookId===current.bookId&&same(expected.binding,current.binding),'CONFIGURATION_BINDING','所依据的配置书或资料绑定已改变');check(expected.revision===current.revision,'CONFIGURATION_CONFLICT','配置已有新版本，请重新核对');}
  async function persistDraft(draft){state.draft=copy(draft);state.error=null;try{
    const current=await books.readConfiguration();check(current.bookId===draft.expected.bookId&&same(current.binding,draft.expected.binding),'CONFIGURATION_BINDING','配置保存目标已切换');
@@ -53,12 +42,25 @@ export function createConfigurationBook({books,store,getContext,getPlayerId,read
    const saved=await books.saveConfiguration({domains:draft.domains,worldBindings:draft.worldBindings,expected:draft.expected,operationId:draft.operationId});return await publish(saved);
  }catch(error){state.draft=copy(draft);state.error=errorValue(error);throw error;}}
  async function hydrateInner({initializeIfMissing=false}={}){check(!state.draft,'CONFIGURATION_DRAFT_PENDING','尚有未完成配置草稿，请重试或明确放弃后再载入');const oldOwner=copy(state.owner);try{
-   const current=await books.readConfiguration();if(current.exists){validateSnapshot(current);const mapped=current.worldBindings.some(row=>row.archiveId===current.binding.archiveId&&row.playerId===current.binding.playerId);if(mapped)return await publish(current);const domains=copy(current.domains);domains.configuration=bindWorld(current,worldKey(getContext()));return await persistDraft({kind:'bind-world',domains,worldBindings:worldBindingsFor(current,domains.configuration),expected:expectedOf(current),operationId:'configuration-bind:'+uuid()});}
-   check(initializeIfMissing,'CONFIGURATION_MISSING','此用户尚未建立配置记录');
+   const current=await books.readConfiguration();if(current.exists)return await publish(validateSnapshot(current));
+   check(initializeIfMissing,'CONFIGURATION_MISSING','全局配置尚未建立');
+   if(current.initialConfiguration){
+     const source=current.initialConfiguration,domains=copy(source.domains),key=worldKey(getContext()),configuration=domains.configuration;
+     check(configuration,'CONFIGURATION_MISSING','原配置缺少创作设置，保留原记录');validateConfig(configuration);
+     const archiveId=getContext().chatMetadata?.tisya_v3_books?.archiveId;
+     const selected=source.worldBindings.find(row=>row.archiveId===archiveId)??source.worldBindings.find(row=>row.archiveId===source.binding?.archiveId);
+     check(Object.hasOwn(configuration.worlds,key)||selected&&Object.hasOwn(configuration.worlds,selected.key),'CONFIGURATION_SOURCE_REQUIRED','请打开原配置对应的故事，核对后建立全局配置');
+     const currentWorld=copy(configuration.worlds[key]??configuration.worlds[selected.key]);
+     // Keep object references for every recorded story; use the selected
+     // source's latest settings as the single shared configuration.
+     for(const row of source.worldBindings){if(!configuration.worlds[row.key])continue;const scoped=persistGlobalConfiguration(configuration,row.key,{chatMetadata:{tisya_v3_books:{archiveId:row.archiveId}}});configuration.storyBindings=scoped.storyBindings;}
+     configuration.worlds[key]=currentWorld;
+     for(const [name,value]of Object.entries(domains))validateDomain(name,value);
+     return await persistDraft({kind:'initialize',domains,worldBindings:worldBindingsFor(current,configuration),expected:expectedOf(current),operationId:'configuration-global:'+uuid()});
+   }
    const key=worldKey(getContext()),raw=store.cacheSnapshot();
-   // Bootstrap once from the pre-authority host cache; a different owner starts
-   // from defaults and never adopts the previous owner's preferences.
-   const marker=getContext().extensionSettings[CACHE_KEY],canImportCache=!everHydrated&&(!marker||marker.bookId===current.bookId&&same(marker.owner,current.owner)),useExisting=canImportCache&&raw!==undefined;const configuration=useExisting?copy(validateConfig(raw)):emptyConfig();
+   // Explicit first initialization captures current settings once.
+   const marker=getContext().extensionSettings[CACHE_KEY],canImportCache=!everHydrated&&(!marker||marker.bookId===current.bookId),useExisting=canImportCache&&raw!==undefined;const configuration=useExisting?copy(validateConfig(raw)):emptyConfig();
    configuration.worlds[key]=configuredWorld(configuration,key);
    const domains={configuration};if(typeof readInterface==='function'&&typeof applyInterface==='function'&&typeof validateInterface==='function'){const value=(canImportCache||same(oldOwner,current.owner))?copy(readInterface()):{联系人分组:{}};validateDomain('interface',value);domains.interface=value;}
    for(const [name,cache]of Object.entries(domainCaches))domains[name]=copy(canImportCache||same(oldOwner,current.owner)?cache.read():cache.defaultValue);
@@ -82,11 +84,11 @@ export function createConfigurationBook({books,store,getContext,getPlayerId,read
    retryDraft:({expected}={})=>queue(async()=>{check(state.draft,'CONFIGURATION_DRAFT','没有待重试的配置草稿');if(expected)check(expected.bookId===state.draft.expected.bookId&&same(expected.binding,state.draft.expected.binding),'CONFIGURATION_BINDING','草稿属于另一资料绑定');const draft=copy(state.draft);return draft.kind==='candidate'?saveDomains(draft.changes,draft.expected,{operationId:draft.operationId}):persistDraft(draft);}),
    discardDraft(){state.draft=null;state.error=null;return read();},
    previewRestore:({revision,expected,domains:requestedDomains})=>queue(async()=>{liveGuard();const current=await books.readConfiguration();matchesExpected(expected,current);const previous=validateSnapshot(await books.readConfiguration({revision}));
-     check(same(previous.owner,current.owner)&&previous.bookId===current.bookId,'CONFIGURATION_OWNER','历史配置属于另一用户');
+     check(same(previous.owner,current.owner)&&previous.bookId===current.bookId,'CONFIGURATION_OWNER','历史配置属于另一全局基点');
      const restoredDomains=requestedDomains??['configuration','interface','worldbookInterface'].filter(name=>Object.hasOwn(current.domains,name)||Object.hasOwn(previous.domains,name));
      check(Array.isArray(restoredDomains)&&restoredDomains.length>0&&new Set(restoredDomains).size===restoredDomains.length&&restoredDomains.every(name=>['configuration','interface'].includes(name)||typeof domainValidators[name]==='function'),'CONFIGURATION_RESTORE_DOMAINS','请明确选择可恢复的配置域');
      const domains=copy(current.domains);for(const name of restoredDomains){if(Object.hasOwn(previous.domains,name))domains[name]=copy(previous.domains[name]);else delete domains[name];}
-     const material=restoredDomains.includes('configuration')?previous:current;domains.configuration=bindWorld({...material,domains},worldKey(getContext()));
+     const material=current;if(domains.configuration)domains.configuration.storyBindings=copy(current.domains.configuration.storyBindings);domains.configuration=bindWorld({...material,domains},worldKey(getContext()));
      const token=uuid(),preview={token,fromRevision:revision,currentRevision:current.revision,expected:expectedOf(current),restoredDomains:copy(restoredDomains),preservedDomains:Object.keys(current.domains).filter(name=>!restoredDomains.includes(name)),changes:restoredDomains.filter(name=>!same(current.domains[name],domains[name])).map(name=>({domain:name,before:copy(current.domains[name]),after:copy(domains[name])})),domains,worldBindings:worldBindingsFor(material,domains.configuration)};
      previews.set(token,preview);return copy(preview);
    }),

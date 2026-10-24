@@ -21,7 +21,7 @@ export async function createApplication({target=globalThis,getContext,store,conf
  let host,reviewOwner=null,reviewService=null,archiveService=null,bindingChanging=false;
  const binding=()=>host?.inspect().scope??null;
  const readConfiguration=customConfiguration??(()=>resolveRuntimeConfiguration({snapshot:store.read(),target,context:getContext(),playerId:getPlayerId()}));
- const hasBinding=async()=>!!(await books.binding()).pointer;
+ const hasBinding=async()=>configurationBook?.read().ready===false?false:!!(await books.binding()).pointer;
  const idle=()=>{externalIdle();host?.assertIdle();};
  async function getReview(){
   const s=await host.getSession();
@@ -33,7 +33,7 @@ export async function createApplication({target=globalThis,getContext,store,conf
  }
  const review={list:async args=>await hasBinding()?(await getReview()).list(args):[]};
  for(const method of ['beginEdit','previewEdit','saveEdit','preference','discardEdit','batchPreview','batchConfirm'])review[method]=async(...args)=>(await getReview())[method](...args);
- const progress=createProgressService({getBinding:binding,preferencesEnabled:()=>readConfiguration().preferencesEnabled!==false,readState:async()=>await hasBinding()?(await host.getSession()).storage.read():{requests:{}}});
+ const progress=createProgressService({getBinding:binding,preferencesEnabled:()=>configurationBook?.read().ready===false?false:readConfiguration().preferencesEnabled!==false,readState:async()=>await hasBinding()?(await host.getSession()).storage.read():{requests:{}}});
  host=await installV3Host({target,getContext,bookManager:books,readConfiguration,
   getConfigurationSnapshot:()=>store.read(),resolveConnection:stage=>configHost.resolveConnectionFor(stage==='communication'?'communication':stage==='preflight'?'tableArchive':'main'),
   selectedMaterials:task=>configHost.selectedMaterialsFor(task),readNativeRules:()=>readVerifiedNativeRules({snapshot:store.read(),context:getContext()}),progress,onError,native,moods,communication,
@@ -53,8 +53,8 @@ export async function createApplication({target=globalThis,getContext,store,conf
   requestConfig:(input,{signal})=>configHost.request('tableAssistant',input,{signal,typedInput:input})
  });
  const bookFacade=new Proxy({...books},{get(object,key){const fn=object[key];if(typeof fn!=='function')return fn;
-  if(!['create','rename','select','resume'].includes(key))return fn.bind(object);
-  return async(...args)=>{idle();const switching=['select','resume'].includes(key);if(switching)bindingChanging=true;try{const value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}return value;}finally{if(switching)bindingChanging=false;}};
+  if(!['create','rename','select','resume','selectGlobalCore'].includes(key))return fn.bind(object);
+  return async(...args)=>{idle();const switching=['select','resume','selectGlobalCore'].includes(key);if(switching&&configurationBook?.read().draft)throw Error('请先保存或放弃配置草稿，再切换资料');if(switching)bindingChanging=true;try{const value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}return value;}finally{if(switching)bindingChanging=false;}};
  }});
  archiveService=createArchiveService({getSession:()=>host.getSession(),getContext,
   getConfigurationWorldKey:()=>store.read().key,assertIdle:idle,books,requestTask:(task,input,{signal}={})=>configHost.request(task,input,{signal,typedInput:input})});

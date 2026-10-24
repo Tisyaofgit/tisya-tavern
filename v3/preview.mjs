@@ -75,7 +75,9 @@ export function createPreviewCapabilities(){
   if(id==='assistant.poke')return {answer:'嗯？你要干什么呀。',source:'local'};
   if(id==='assistant.cancel')return;
   if(id==='books.list')return clone(books.filter(b=>!args.kind||b.kind===args.kind));
-  if(id==='books.options')return clone(options);
+  if(id==='books.options')return {...clone(options),global:{pointer:{coreId:binding.core.bookId,revision:1},core:clone(books.find(b=>b.id===binding.core.bookId))}};
+  if(id==='books.global')return {pointer:{coreId:binding.core.bookId,revision:1},core:clone(books.find(b=>b.id===binding.core.bookId))};
+  if(id==='books.selectGlobal'){binding.core={bookId:args.coreId};await publish();return {status:'complete'};}
   if(id==='books.pending')return [];
   if(id==='books.rename'){const b=books.find(b=>b.id===args.id);b.displayName=args.name;b.revision++;await publish();return b;}
   if(id==='books.create'){const b={...clone(args),id:'book-'+books.length,displayName:args.name,revision:1};books.push(b);return clone(b);}

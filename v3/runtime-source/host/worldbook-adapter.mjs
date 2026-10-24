@@ -20,6 +20,16 @@ export function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, get
       require(response.ok, 'WORLD_READ_FAILED', `Worldbook read failed (${response.status})`, { name });
       const data = await response.json();
       require(data && typeof data === 'object' && data.entries && typeof data.entries === 'object' && !Array.isArray(data.entries), 'WORLD_FORMAT', 'Worldbook entries must be an object', { name });
+      // TT 2.4.0 returns HTTP 200 + {entries:{}} for a missing file. An
+      // existing empty book has the same body; only the fresh inventory can
+      // distinguish them. Never overwrite an empty book by guessing.
+      if (Object.keys(data.entries).length === 0) {
+        const inventory = await fetchImpl('/api/settings/get', { method: 'POST', headers: getRequestHeaders(), body: '{}', cache: 'no-cache' });
+        require(inventory.ok, 'WORLD_INVENTORY_FAILED', '无法核对资料书目录，未创建或覆盖资料', { name, status: inventory.status });
+        const settings = await inventory.json();
+        require(Array.isArray(settings.world_names) && settings.world_names.every(x => typeof x === 'string'), 'WORLD_INVENTORY_FORMAT', '资料书目录格式无效', { name });
+        if (!settings.world_names.includes(name)) return null;
+      }
       return data;
     },
     async save(name, data) {

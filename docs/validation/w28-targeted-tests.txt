@@ -1,0 +1,21 @@
+✔ TT missing 200 empty document is absent; a genuinely empty book is preserved (20.077965ms)
+✔ UUID collision with an existing empty physical book is rejected without overwriting it (4.403462ms)
+✔ inventory failure cannot be interpreted as missing, and non-empty documents are not reclassified (0.749785ms)
+✔ create retry after lost acknowledgement reuses the same durable identity (2.660529ms)
+✔ global core and configuration can initialize and rename without any chat or player (88.303325ms)
+✔ all users, chats, branches and cold sessions read the same configuration revision (983.53178ms)
+✔ global interface edits do not create per-user records; configuration restore preserves story references (873.592651ms)
+✔ identity preferences are distinct children of one core, and persist across chats (22.699164ms)
+✔ configuration failures retain drafts; retry is idempotent and stale revisions reject (206.410195ms)
+✔ existing identity configuration and custom tags are retained when establishing the global record (195.260908ms)
+✔ switching global core invalidates old runtime writers and keeps existing books intact (7.635568ms)
+✔ native global pointer persists through settings without a chat; new host reads it back (3.612126ms)
+✔ production workbench shows global parent, persists partial setup and retries without creating a second origin (123.523562ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2883.728267

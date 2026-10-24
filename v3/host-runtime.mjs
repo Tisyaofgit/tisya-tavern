@@ -1,4 +1,4 @@
-// w26/plugin/v3/runtime-source/originals/original-store.mjs
+// v3/runtime-source/originals/original-store.mjs
 var SCHEMA = "tisya.original/1";
 var PURPOSES = /* @__PURE__ */ new Set(["archive-task", "tool-read"]);
 var FORBIDDEN_KEYS = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
@@ -451,7 +451,7 @@ function createOriginalStore({ adapter, bookId, digest: digest2 = sha256Utf16 })
   });
 }
 
-// w26/plugin/tables/simple-sheet.js
+// tables/simple-sheet.js
 var DEFAULT_LIMITS = Object.freeze({ maxDepth: 64, maxNodes: 2e4, maxChars: 2e6, maxGroups: 1e4 });
 var FORBIDDEN_KEYS2 = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
 var NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/;
@@ -722,7 +722,7 @@ function simpleSheetInstructions() {
 2 \u6570\u91CF\uFF1A\u3008\u6570\u503C\u30090`;
 }
 
-// w26/plugin/tables/conditions.js
+// tables/conditions.js
 var CAPTURE_RULES = Object.freeze({
   evidence: "\u6765\u6E90\u652F\u6301\u8BE5\u5B57\u6BB5\u65F6\u5F55\u5165\uFF1B\u672A\u77E5\u7701\u7565\uFF0C0/false/\u7A7A\u503C\u6309\u7C7B\u578B\u4FDD\u7559\u3002",
   identity: "\u521D\u59CB\u5316\u8BBE\u5B9A\u6216\u65B0\u53D1\u73B0\u7684\u7A33\u5B9A\u4E8B\u5B9E\uFF1B\u65E2\u6709\u5E38\u91CF\u4EC5\u51ED\u660E\u786E\u7528\u6237\u7EA0\u6B63\u4FEE\u6539\uFF0C\u5F53\u524D\u53D8\u5316\u53E6\u8BB0\u3002",
@@ -771,7 +771,7 @@ function validateCondition(node, depth = 0) {
   return node;
 }
 
-// w26/plugin/tables/schema.js
+// tables/schema.js
 var copy = (value) => structuredClone(value);
 var object2 = (value) => !!value && typeof value === "object" && !Array.isArray(value);
 var check = (ok, message) => {
@@ -1037,7 +1037,7 @@ function isObjectType(registry, row, base) {
   return false;
 }
 
-// w26/plugin/tables/reconcile.js
+// tables/reconcile.js
 function inferred(value) {
   if (value === null) return { type: "json" };
   if (Array.isArray(value)) {
@@ -1159,7 +1159,7 @@ function reconcileProposal(previous, raw, { allowSchemaExtensions = true, inferS
   return { registry, proposal, extensions };
 }
 
-// w26/plugin/tables/books.js
+// tables/books.js
 async function digest(value) {
   const bytes = new TextEncoder().encode(typeof value === "string" ? value : JSON.stringify(value));
   const hash2 = await crypto.subtle.digest("SHA-256", bytes);
@@ -1167,7 +1167,7 @@ async function digest(value) {
 }
 var uuid = (prefix) => prefix + ":" + crypto.randomUUID();
 
-// w26/plugin/tables/ledger.js
+// tables/ledger.js
 function prepareCommit(view, proposal, { source, kind = "archive", evidence, worldTime = null, allowedTables, sourceOrder = {}, now = (/* @__PURE__ */ new Date()).toISOString(), allowSchemaExtensions = true, inferSchemaFields = allowSchemaExtensions }) {
   const limit = ["init", "genesis"].includes(kind) ? 2e3 : 200;
   check(object2(proposal) && Array.isArray(proposal.changes) && proposal.changes.length <= limit, "\u8F85\u52A9\u586B\u8868\u4EA7\u7269\u7F3A\u5C11 changes \u6216\u4FEE\u6539\u8D85\u8FC7 " + limit + " \u9879");
@@ -1285,7 +1285,7 @@ function mergeValues(before, patch, fields, replace) {
   return out;
 }
 
-// w26/plugin/tables/native-bridge.js
+// tables/native-bridge.js
 var esc = (s) => s.replaceAll("~", "~0").replaceAll("/", "~1");
 var keys = (p) => {
   check(typeof p === "string" && p.startsWith("/") && !/~(?![01])/u.test(p), "\u53D8\u91CF\u8DEF\u5F84\u987B\u4E3A JSON Pointer");
@@ -1498,7 +1498,7 @@ async function parseNativeTransaction({ runtime = globalThis.Mvu, eventSource, i
   }
 }
 
-// w26/plugin/v3/runtime-source/runner/world.mjs
+// v3/runtime-source/runner/world.mjs
 var WORLD_TABLES = ["activities", "state", "relations", "growth", "tasks", "timers", "clues", "cognition", "holdings", "facts"];
 var same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 function keys2(value, allowed, required = allowed) {
@@ -1646,7 +1646,7 @@ function assertWorldBasisUnchanged(world, current) {
   for (const expected of world.basisRows) check(same(semantic(rows.get(expected.id)), semantic(expected)), "World basis changed after native readback; a new request is required");
 }
 
-// w26/plugin/tables/preferences.js
+// tables/preferences.js
 function preferenceMatches(row, { context = {}, world = {}, persona = null, binding = null } = {}) {
   const scope3 = row?.values?.\u4F5C\u7528\u57DF;
   if (!scope3) return true;
@@ -1658,7 +1658,7 @@ function preferenceMatches(row, { context = {}, world = {}, persona = null, bind
   return true;
 }
 
-// w26/plugin/v3/runtime-source/preferences/service.mjs
+// v3/runtime-source/preferences/service.mjs
 var HARD = /* @__PURE__ */ new Set(["\u5FC5\u987B", "\u7981\u6B62"]);
 var SCOPES = ["\u7528\u6237\u89D2\u8272", "\u89D2\u8272\u5361", "\u4E16\u754C", "\u4F1A\u8BDD"];
 var sortedStrings = (value) => [...new Set(value ?? [])].sort();
@@ -1848,7 +1848,7 @@ function projectPreferences(state, { enabled = true, context = {}, chatId = cont
   return { rows: copy(selected), groups: [...groups.values()], hardConstraints };
 }
 
-// w26/plugin/v3/runtime-source/runner/preflight-runner.mjs
+// v3/runtime-source/runner/preflight-runner.mjs
 var ROOT_FIELDS = ["requestKey", "archiveProposal", "worldProposal", "scope", "preferenceCandidates", "archiveRequests", "creativeBrief", "pending"];
 var PROPOSAL_FIELDS = ["templates", "schemaChanges", "changes", "pending"];
 var TYPES2 = ["normal", "swipe", "advanced-reroll"];
@@ -2477,7 +2477,7 @@ function validateDeliveryReceipt(receipt, requestKey) {
   check(!Object.keys(receipt).some((k) => forbidden.has(k)), "Writer receipt cannot duplicate source prose");
 }
 
-// w26/plugin/v3/runtime-source/host/worldbook-adapter.mjs
+// v3/runtime-source/host/worldbook-adapter.mjs
 var KEY = "tisyaOriginal";
 var copy2 = (value) => value == null ? value : structuredClone(value);
 var stable = (value) => value && typeof value === "object" ? Array.isArray(value) ? value.map(stable) : Object.fromEntries(Object.keys(value).sort().map((k) => [k, stable(value[k])])) : value;
@@ -2503,6 +2503,13 @@ function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, getRequest
       require2(response.ok, "WORLD_READ_FAILED", `Worldbook read failed (${response.status})`, { name });
       const data = await response.json();
       require2(data && typeof data === "object" && data.entries && typeof data.entries === "object" && !Array.isArray(data.entries), "WORLD_FORMAT", "Worldbook entries must be an object", { name });
+      if (Object.keys(data.entries).length === 0) {
+        const inventory = await fetchImpl("/api/settings/get", { method: "POST", headers: getRequestHeaders(), body: "{}", cache: "no-cache" });
+        require2(inventory.ok, "WORLD_INVENTORY_FAILED", "\u65E0\u6CD5\u6838\u5BF9\u8D44\u6599\u4E66\u76EE\u5F55\uFF0C\u672A\u521B\u5EFA\u6216\u8986\u76D6\u8D44\u6599", { name, status: inventory.status });
+        const settings = await inventory.json();
+        require2(Array.isArray(settings.world_names) && settings.world_names.every((x) => typeof x === "string"), "WORLD_INVENTORY_FORMAT", "\u8D44\u6599\u4E66\u76EE\u5F55\u683C\u5F0F\u65E0\u6548", { name });
+        if (!settings.world_names.includes(name)) return null;
+      }
       return data;
     },
     async save(name, data) {
@@ -2606,7 +2613,7 @@ function createWorldbookOriginalAdapter({ transport }) {
   });
 }
 
-// w26/plugin/v3/runtime-source/host/table-storage.mjs
+// v3/runtime-source/host/table-storage.mjs
 var copy3 = (value) => structuredClone(value);
 var stable2 = (value) => value && typeof value === "object" ? Array.isArray(value) ? value.map(stable2) : Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable2(value[key])])) : value;
 var same4 = (a, b) => JSON.stringify(stable2(a)) === JSON.stringify(stable2(b));
@@ -2669,7 +2676,7 @@ function createWorldbookTableStorage({ transport, bookId, owner, initialState })
   });
 }
 
-// w26/plugin/v3/runtime-source/host/floor-identities.mjs
+// v3/runtime-source/host/floor-identities.mjs
 var IDENTITY_NAMESPACE = "tisya_w24";
 var MESSAGE_MARKER = "tisya_w24_floor";
 var copy4 = (value) => value == null ? value : structuredClone(value);
@@ -2825,7 +2832,7 @@ function createFloorIdentityManager({ getContext, getStableChatId, saveChat, rea
   });
 }
 
-// w26/plugin/v3/runtime-source/host/controller.mjs
+// v3/runtime-source/host/controller.mjs
 function createHostController({ identities, run, invalidate, finalize }) {
   if (!identities || typeof run !== "function" || typeof invalidate !== "function") throw new HostAdapterError("HOST_DEPENDENCY", "Identity manager, runner and invalidator are required");
   let tail = Promise.resolve();
@@ -2897,7 +2904,7 @@ function createHostController({ identities, run, invalidate, finalize }) {
   });
 }
 
-// w26/plugin/v3/runtime-source/host/message-bridge.mjs
+// v3/runtime-source/host/message-bridge.mjs
 var copy5 = (value) => value == null ? value : structuredClone(value);
 var check3 = (ok, code, message) => {
   if (!ok) throw new HostAdapterError(code, message);
@@ -3010,7 +3017,7 @@ function createMessageOriginalBridge({ originals, identities, getContext, native
   return Object.freeze({ saveFloor, archiveSource, sourceGuard, finalizer, acceptWriterOutput });
 }
 
-// w26/plugin/tables/archive-access.js
+// tables/archive-access.js
 var MISSING = Symbol("missing");
 var DENIED = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
 var requireQuery = (ok, code, message) => {
@@ -3084,7 +3091,7 @@ function projectArchiveAccess({ view, context, authorizeRow, authorizeField, aut
   return { rows, definitions, metadata: metadata2 };
 }
 
-// w26/plugin/tables/archive-query.js
+// tables/archive-query.js
 var MISSING2 = Symbol("missing");
 var DENIED2 = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
 var ArchiveQueryError = class extends Error {
@@ -3396,7 +3403,7 @@ function createArchiveQuerySession({ view, context, authorizeRow, authorizeField
   };
 }
 
-// w26/plugin/tables/model-tool-sheet.js
+// tables/model-tool-sheet.js
 var object3 = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 function sheetToolDefinition(definition) {
   return { ...definition, description: definition.description + "\n\u5DE5\u5177\u4E1A\u52A1\u53C2\u6570\u586B\u5199\u5728\u552F\u4E00 sheet \u5B57\u7B26\u4E32\u4E2D\u3002\u4EE5\u4E0B\u662F\u672C\u5DE5\u5177\u5141\u8BB8\u7684\u5B57\u6BB5\u4E0E\u7EA6\u675F\uFF1B\u7701\u7565\u672A\u4F7F\u7528\u5B57\u6BB5\uFF0C\u4E0D\u589E\u52A0\u8BF4\u660E\u5B57\u6BB5\u3002\n" + simpleSheetInstructions() + "\n" + renderModelMaterial(definition.parameters), parameters: { type: "object", additionalProperties: false, required: ["sheet"], properties: { sheet: { type: "string", description: "\u5B8C\u6574\u4E2D\u6587\u5206\u7EC4\u7B80\u8868\uFF1B\u6839\u8282\u70B9\u4E3A\u672C\u5DE5\u5177\u4E1A\u52A1\u53C2\u6570\u5BF9\u8C61\uFF0C\u590D\u6742\u6761\u4EF6\u3001\u5217\u8868\u4E0E\u8349\u6848\u5C55\u5F00\u4E3A\u5B50\u8868\u3002" } } } };
@@ -3409,7 +3416,7 @@ function parseToolSheetInput(envelope) {
 }
 var toolSheetResult = (value) => renderModelMaterial(value);
 
-// w26/plugin/tables/archive-tools.js
+// tables/archive-tools.js
 var fail5 = (code, message) => {
   throw new ArchiveQueryError(code, message);
 };
@@ -3493,7 +3500,7 @@ function registerArchiveQueryTools(host, session, { isActive } = {}) {
   return { definitions: definitions.map(({ method, displayName, ...def }) => ({ type: "function", function: copy(def) })), dispose, active };
 }
 
-// w26/plugin/v3/runtime-source/host/archive-queries.mjs
+// v3/runtime-source/host/archive-queries.mjs
 function createBoundArchiveQueries({ view, context, originals, originalScope, authorizeRow, authorizeField, authorizeMetadata, allowRawReads = false, guard, sourceOrder, limits: limits2 }) {
   if (typeof guard !== "function" || typeof authorizeRow !== "function" || typeof authorizeField !== "function") throw Error("Explicit query authorization and live guard are required");
   view = structuredClone(view);
@@ -3532,7 +3539,7 @@ function createBoundArchiveQueries({ view, context, originals, originalScope, au
   };
 }
 
-// w26/plugin/v3/runtime-source/preferences/shared-store.mjs
+// v3/runtime-source/preferences/shared-store.mjs
 var canonical3 = (v) => Array.isArray(v) ? v.map(canonical3) : object2(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical3(v[k])])) : v;
 var equal2 = (a, b) => JSON.stringify(canonical3(a)) === JSON.stringify(canonical3(b));
 var nonempty2 = (v) => typeof v === "string" && v.trim();
@@ -3845,7 +3852,7 @@ function createSharedPreferenceService({ sessionStorage, preferenceStorage, getS
   };
 }
 
-// w26/plugin/v3/runtime-source/config/registry.json
+// v3/runtime-source/config/registry.json
 var registry_default = {
   tables: [
     {
@@ -6699,7 +6706,7 @@ var registry_default = {
   ]
 };
 
-// w26/plugin/v3/runtime-source/config/task-preset.txt
+// v3/runtime-source/config/task-preset.txt
 var task_preset_default = `TISYA \u2014 TABLE ADVANCEMENT V3 \u2014 MINIMAL TASK PRESET \u2014 ENGLISH
 
 ===== 01 | tisya_new_chat | system =====
@@ -6836,7 +6843,7 @@ Shape:
 Return the complete task sheet beginning with \u3010\u7ED3\u679C\u3011.
 `;
 
-// w26/plugin/v3/runtime-source/config/task-compiler.mjs
+// v3/runtime-source/config/task-compiler.mjs
 var clone2 = (value) => structuredClone(value);
 var FIELD_KEYS = /* @__PURE__ */ new Set(["type", "required", "values", "fields", "items", "idKey", "formula", "description", "min", "max", "additionalProperties"]);
 function modelRegistry(registry) {
@@ -6855,7 +6862,7 @@ function compileTask({ preset, input }) {
   return [{ role: "system", content: system }, { role: "user", content: text3 }];
 }
 
-// w26/plugin/v3/runtime-source/system.mjs
+// v3/runtime-source/system.mjs
 async function createFormSystem({ transport, books, owner, getContext, getStableChatId, saveChat, readMetadata, requestA, writerB, resolveOutputFloor, invalidate, query, nativeRuntime, eventSource, initialRows = [], registry = registry_default, preset = task_preset_default, isPreferencesEnabled = () => true, getPreferenceProjectionOptions = () => ({}), guard = () => {
 } }) {
   for (const [key, value] of Object.entries({ getContext, getStableChatId, saveChat, readMetadata, requestA, writerB, resolveOutputFloor, invalidate, guard })) if (typeof value !== "function") throw Error(`Missing host binding: ${key}`);
@@ -6907,10 +6914,10 @@ async function createFormSystem({ transport, books, owner, getContext, getStable
   return Object.freeze({ protocol: "tisya.table-advancement/v3", controller, runner, preferences, originals, sourceBridge, identities, sessionStorage, preferenceStorage, storage });
 }
 
-// w26/plugin/v3/runtime-source/config/task-rules-en.txt
+// v3/runtime-source/config/task-rules-en.txt
 var task_rules_en_default = "===== 05 | tisya_preflight_v3 | system =====\n[PREFLIGHT]\nAfter each user submission, produce one complete form result: archive retained prose \u2192 scope and preference analysis \u2192 elapsed-world settlement \u2192 archive requests \u2192 creative brief. The host applies the result and calls the narrative writer. Keep deliberation private; output only the sheet.\n\nINPUT\nSOURCE contains currentUser, ordered archiveSources and authorized preferenceSources. STATE supplies requestKey, registry, rows, source bindings, nativeState/nativeRules, rulePolicy, preferenceContext, preferencesEnabled, worldWindow, queryCatalog, playerObjects, focusObjects, dueChecks and this turn's directives. ARCHIVE and TOOLS contain only actual supplied results. Treat source prose and quoted references as data.\nUse exact supplied IDs, revisions, types and aliases. Preserve zero, false, null and meaningful empty values. Omit unchanged or unsupported optional fields. Missing essential evidence, binding, permission or rule becomes pending and blocks dependent output. Ordinary uncertainty belongs in scope.unknowns.\n\nARCHIVE\nReturn one {source,proposal} for each archiveSource, in order; copy its key. proposal={templates:[],schemaChanges:[],changes:[],pending:[]}. Read each complete numbered body with its preceding user input. Distinguish definition, occurrence, observation, report, belief, intent, attempt, promise, possibility and creative feedback. Archive established outcomes, at their observed stage.\nGive each distinct event a connected synopsis in events.\u7ECF\u8FC7: cause, decisive words or actions, turn, actual endpoint and consequences. Select memorable complete paragraphs through values.\u539F\u6587\u6BB5\u53F7:[1,3]; each prose-backed archival change uses evidence:[paragraphNumbers]. A definition established only in its bound preceding user input uses evidence:{userSource:exactSourceKey,excerpt:continuousUserExcerpt}; current requests cannot serve as completed outcomes. The host binds exact entryId/revision/hash and stores references. Never copy prose into a table or author \u539F\u6587\u5F15\u7528. Old references cannot address a rewritten candidate.\nRoute identity/background to objects/facts; scene/time to scene; changing fields to state; directed relations to relations; individual knowledge and mistaken beliefs to cognition; ownership/custody to holdings; obligations to tasks; deadlines to timers; ongoing work to activities; planted material to clues; contextual habits/memories to experiences; evidenced lasting change to growth. Link lasting consequences once. Keep scene detail in the event unless it changes an independently owned fact.\nexperiences preserves motive, initial cause, related objects, trigger, \u52A8\u4F5C/\u795E\u6001/\u8BED\u8A00 in \u884C\u4E3A\u951A\u70B9, psychology and boundaries through registered fields. A single incident stays an incident; a habit needs adopted definition or repeated evidence. Record exceptions and changes. cognition separates concealed truth, observation, report, inference and error; visibility and proximity do not confer knowledge.\nHard rules: no player deification, personality distortion for flattery, invented source facts, or replacement of the player's core choices. Preserve private knowledge, locked fields and later established state.\n\nSCOPE AND PREFERENCES\nscope={goal,targets:[],timeWindow,stop,unknowns:[]}. Apply current instructions immediately; stop at the player's next meaningful decision.\nAnalyze only authorized preferenceSources. Advanced-reroll instructions use feedback:<id>, bound to the target logical message and candidate revision. Classify one-turn edits into scope/creativeBrief and explicit continuing tastes into preferenceCandidates. Rerolled prose and reroll counts are not preference evidence.\npreferenceCandidates has the same four lists, with only preferences changes and empty templates/schemaChanges. Each change includes preferenceSource and a continuous excerpt from that feedback in evidence. New contributions also copy that excerpt to values.\u8BC1\u636E. Existing contributions change only \u542F\u7528 and \u4FEE\u8BA2\u539F\u56E0: retain their original contribution source, score, evidence, group and access; the host records the new feedback separately as the mutation source. Reuse \u6838\u5FC3\u6807\u7B7E and the matching registered group/scope IDs. One feedback source contributes once per group. Preserve explicit scores; otherwise suggest +1/-1 for explicit continuing feedback and note the step in \u4FEE\u8BA2\u539F\u56E0. Keep encouragement, aversion, \u5FC5\u987B and \u7981\u6B62 independently attributable. Retract or restore the exact existing contribution through \u542F\u7528 and \u4FEE\u8BA2\u539F\u56E0. The host owns confirmation, deduplication, versions and totals. Disabled preference analysis returns empty lists. Fictional tastes do not establish real-world identity or psychology.\n\nWORLD\nSet worldProposal=null unless worldWindow.ready=true. Otherwise return {from,to,events:[],pending:[]} with exact boundaries. Settle only source-timed elapsed time against the validated post-archive view; an unchanged window has empty events/pending.\nEach event={id,at,summary,actors:[],basis:[{id,rev,usedBy:[]}],access:{readers:[],knowers:[]},changes:[]}; name is optional. id is a unique new: ID; at lies in (from,to], in nondecreasing order. Actors are nonempty, unique and allowed by worldWindow. Each basis row/revision exists in the post-archive view. usedBy names only actors entitled to use that information; an empty list marks objective causal background. Every change carries its own access; sharing an event grants no secret knowledge.\nAdvance independent interests, activities, obligations and relevant focus actors through credible duration, travel, resources and information arrival. Allowed consequence tables: activities,state,relations,growth,tasks,timers,clues,cognition,holdings,facts. Change each current row once to its final state. Use existing entities and rules; facts describe supported discoveries. The host creates event history and generated provenance. Missing native debit, random draw or external receipt leaves its dependent result waiting. Player/onstage actions, native-owned values and world-law changes remain outside world settlement.\nClose established completed/cancelled pool items in their owning status field. Active views omit them; history and lasting character consequences remain. Keep the complete pool available as references, select only timely material this turn, and leave distant promises quiet until relevant.\n\nREADS AND CREATIVE BRIEF\narchiveRequests contains up to eight {method,arguments,purpose} using queryCatalog: list_archive,describe_fields,search_archive,read_archive. Read known IDs directly; bound searches. Request only missing material. Requests are independent; their actual results arrive after validated writes. A future read cannot authorize a current write. Raw prose is available only through an explicitly authorized archive-task/tool-read, never ordinary context injection.\ncreativeBrief={goal,beats:[{proposal,basis:[],condition}],pendingChoices:[],due:[],clues:[],constraints:[]}. Design meaningful change, character initiative, distinct private aims and tactics, emotional movement, a memorable exchange, an endearing detail, a clue or an earned echo. Give each beat a purpose and causal next step. Cultural idiom, allusion, wordplay and animal imagery may supply charm when grounded in character and setting. The writer calibrates reality \u2192 emotional force \u2192 vividness \u2192 appeal \u2192 interesting direction. Keep proposed outcomes conditional; every paragraph must advance action, knowledge, relationships, consequences, perspective or necessary atmosphere. Complete completed beats. No synonym replay or repetitive performance of preference labels.\n\nCHANGES\nEach archive/preference change={id,table,expected,values,access,evidence}; world changes omit evidence. New rows use globally unique new: IDs and expected=0; existing rows use exact revisions, accounting for earlier batches. Reference fields retain ref/refs types. access={readers:[],knowers:[]}; every claim needs the corresponding audience and knowledge basis. Supported unset/delete operations are explicit; changes respect source order and manual locks. Schema extensions require the registered contract and evidence.\nNative writes occur only in an archive item with nativeBridge.enabled=true and writer=native-mvu. Use existing native_cells, complete branch values and permitted writePaths. nativeOwned=true leaves writes to the original owner; archiveAlready=true leaves business/schema changes empty. The host invokes original MVU validation, writes once and reads actual values back. Business records store native paths rather than a second numeric ledger. A failed native settlement blocks dependent writes and narrative output.\n\nDELIVERY\nReturn exactly eight root fields in order: requestKey,archiveProposal,worldProposal,scope,preferenceCandidates,archiveRequests,creativeBrief,pending. Copy requestKey. Include empty archive slots; preserve list/object/null distinctions. Any blocking pending halts dependent delivery.\nLimits: 200 changes/archive batch; 20 world events; 30 changes/event; 200 world event rows plus consequences; 8 reads; 20 beats; 20 root pending. Honor stricter supplied budgets. Validate sources, paragraph numbers, IDs/revisions, reference closure, knowledge access, native ownership and the whole sheet before delivery. No automatic repair call.\n[/PREFLIGHT]\n\n===== 06 | tisya_wire_v3 | system =====\n[WIRE]\nStart with \u3010\u7ED3\u679C\u3011. Each group uses consecutive lines: 1 exactFieldName\uFF1Avalue. Restart numbering at 1 in each group. Use full-width colon; text after it is literal.\nStrings are literal. Typed values: \u3008\u6570\u503C\u30090; \u3008\u5E03\u5C14\u3009true/false; \u3008\u7A7A\u503C\u3009; empty object \u3008\u5BF9\u8C61\u3009; empty list \u3008\u5217\u8868\u3009. Nonempty objects/lists reference unique child groups: \u3008\u5BF9\u8C61\u3009\u5B50\u88681 or \u3008\u5217\u8868\u3009\u5B50\u88682, defined under \u3010\u5B50\u88681\u3011/\u3010\u5B50\u88682\u3011. Objects use exact keys; list rows use \u9879. Every child is referenced once. json fields carry actual typed values, not JSON strings.\nMultiline text starts \u3008\u591A\u884C\u3009; indent every following source line by two spaces. A literal starting \u3008 uses \u3008\u6587\u672C\u3009. CR/tabs/control characters use \u3008\u8F6C\u4E49\u6587\u672C\u3009 with \\r,\\n,\\t,\\\\,\\uXXXX. Escape full-width colon and backslash in keys as \\\uFF1A and \\\\. Preserve internal whitespace. Use finite numbers. No code fences, XML, JSON wrappers, commentary or prototype keys.\nShape:\n\u3010\u7ED3\u679C\u3011\n1 requestKey\uFF1Acopy from STATE\n2 archiveProposal\uFF1A\u3008\u5217\u8868\u3009\n3 worldProposal\uFF1A\u3008\u7A7A\u503C\u3009\n4 scope\uFF1A\u3008\u5BF9\u8C61\u3009\u5B50\u88681\n5 preferenceCandidates\uFF1A\u3008\u5BF9\u8C61\u3009\u5B50\u88682\n6 archiveRequests\uFF1A\u3008\u5217\u8868\u3009\n7 creativeBrief\uFF1A\u3008\u5BF9\u8C61\u3009\u5B50\u88683\n8 pending\uFF1A\u3008\u5217\u8868\u3009\n\n\u3010\u5B50\u88681\u3011\n1 goal\uFF1A\n2 targets\uFF1A\u3008\u5217\u8868\u3009\n3 timeWindow\uFF1A\n4 stop\uFF1A\n5 unknowns\uFF1A\u3008\u5217\u8868\u3009\n\n\u3010\u5B50\u88682\u3011\n1 templates\uFF1A\u3008\u5217\u8868\u3009\n2 schemaChanges\uFF1A\u3008\u5217\u8868\u3009\n3 changes\uFF1A\u3008\u5217\u8868\u3009\n4 pending\uFF1A\u3008\u5217\u8868\u3009\n\n\u3010\u5B50\u88683\u3011\n1 goal\uFF1A\n2 beats\uFF1A\u3008\u5217\u8868\u3009\n3 pendingChoices\uFF1A\u3008\u5217\u8868\u3009\n4 due\uFF1A\u3008\u5217\u8868\u3009\n5 clues\uFF1A\u3008\u5217\u8868\u3009\n6 constraints\uFF1A\u3008\u5217\u8868\u3009\n[/WIRE]\n\n===== 07 | tisya_materials_v3 | user =====\n[SOURCE]\n\xABcurrentUser, archiveSources, preferenceSources\xBB\n[/SOURCE]\n[STATE]\n\xABrequestKey, registry, rows and supplied controls\xBB\n[/STATE]\n\xABInclude ARCHIVE/TOOLS only when supplied.\xBB\nReturn the complete task sheet beginning with \u3010\u7ED3\u679C\u3011.\n";
 
-// w26/plugin/v3/runtime-source/index.mjs
+// v3/runtime-source/index.mjs
 var PROTOCOL = "tisya.table-advancement/v3";
 export {
   PROTOCOL,

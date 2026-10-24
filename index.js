@@ -200,7 +200,7 @@ function promptNewChatIdentity(){const state=identityService.read(),key=JSON.str
 function openAssistant(task=null){return openWorkbench(['home','review','books','archives','settings','genesis','extract','conditions','chat'].includes(task)?task:task==='idea'?'genesis':task==='core'?'extract':'assistant');}
 function openWorkbench(initialPage='home'){
  if(!mayLeaveUtility())return false;
- if(!context().chatId){page('缇斯亚','<section class="tisya-sub-card"><h3>选择一段故事</h3><p>打开会话后，小缇会接续这段故事的资料、偏好与存档。</p>'+button('角色会话','role-library')+button('群聊会话','group-library')+button('用户身份','drawer:persona-management-button')+'</section>');return true;}
+
  if(!v3Application){installV3().then(()=>openWorkbench(initialPage)).catch(error);return false;}
  const key=JSON.stringify([worldKey(context()),context().chatMetadata?.[BOOK_POINTER_KEY]?.archiveId??null,user_avatar]);renderEpoch++;page('缇斯亚','<div id="tisya-workbench-slot"></div>');
  let view=v3Views.get(key);if(!view){view=mountWorkbench(document,query('#tisya-workbench-slot'),{capabilities:v3Application.capabilities,initialPage,stylesheetURL:new URL('./v3/workbench.css',import.meta.url).href,onClose:()=>hidePage()});v3Views.set(key,view);}
@@ -239,7 +239,7 @@ async function installV3(){
    readInterface:settings,applyInterface:applyInterfaceSettings,validateInterface:validateInterfaceSettings,domainValidators:{tagTemplates:validateTagTemplateBank,worldbookInterface:validateWorldbookPreferences},
    domainCaches:{worldbookInterface:{read:()=>context().extensionSettings['缇斯亚世界书']??{},apply:value=>{context().extensionSettings['缇斯亚世界书']=structuredClone(value);},defaultValue:{}}},
    onApplied:()=>{if(v3Application&&!v3Application.host.busy())v3Application.configurationChanged();}});
-  try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['UNBOUND','HOST_OWNER','CHAT_IDENTITY','CHAT_UNAVAILABLE','CHAT_REQUIRED','CONFIGURATION_NOT_READY'].includes(err.code))error(err);}
+  try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['GLOBAL_UNBOUND','UNBOUND','HOST_OWNER','CHAT_IDENTITY','CHAT_UNAVAILABLE','CHAT_REQUIRED','CONFIGURATION_NOT_READY'].includes(err.code))error(err);}
   v3Application=await createApplication({target:window,getContext:context,store:configStore,configHost,books:v3BookHost.manager,readWorldbook:(...args)=>v3BookHost.callbacks.transport.readFresh(...args),communication,getPlayerId:()=>user_avatar,
    configurationBook:v3ConfigurationBook,
    interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},getChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),
@@ -354,7 +354,7 @@ const chatLoading=createChatLoadingController({powerUser:power_user,persist:save
 function openSettings(tab='play',initialView=''){
  if(tab==='tables')return openWorkbench(initialView==='assistant'?'assistant':initialView==='genesis'?'genesis':initialView==='foundation'?'extract':initialView==='core'?'books':initialView==='conditions'?'conditions':'archives');
  if(tab==='theme'&&!context().chatId){if(!mayLeaveUtility())return;renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
- if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
+ if(!v3ConfigurationBook?.read().ready)return openWorkbench('books');
  if(!mayLeaveUtility())return false;
  const key=configStore.read().key;renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
  const cached=configurationViews.get(key);if(cached){query('#tisya-settings-app').append(cached.root);utility=cached;cached.setVisible(true);cached.resume().then(()=>cached.navigate(tab,initialView)).catch(error);return true;}
@@ -863,7 +863,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      bind('GENERATION_AFTER_COMMANDS',()=>{nativeGenerationEpoch++;nativeConfiguration.clearScan();});
      bind('GENERATION_ENDED',()=>{generationBusy=false;decorate();});
      bind('GENERATION_STOPPED',()=>{nativeGenerationEpoch++;generationOperations.stop();v3Application.host.cancel();v3Application.assistant.cancel();configHost.cancelTransport();});
-     bind('CHAT_CHANGED',async()=>{nativeGenerationEpoch++;configHost.cancelTransport();communication.contextChanged();v3Application.assistant.cancel();const reopen=utility?.kind==='v3-workbench';if(reopen)hidePage();if(v3Application.isBindingTransition())return;try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(err.code!=='UNBOUND')error(err);}if(reopen&&context().chatId)openWorkbench('home');});
+     bind('CHAT_CHANGED',async()=>{nativeGenerationEpoch++;configHost.cancelTransport();communication.contextChanged();v3Application.assistant.cancel();const reopen=utility?.kind==='v3-workbench';if(reopen)hidePage();if(v3Application.isBindingTransition())return;try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['UNBOUND','GLOBAL_UNBOUND'].includes(err.code))error(err);}if(reopen&&context().chatId)openWorkbench('home');});
      window.Tisya=Object.freeze({version:VERSION,operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:v3Application.archives,forms:v3Application.host,books:v3Application.books,journey:Object.freeze({...v3Application.journey,registerRoute:registerJourneyRoute}),capabilities:v3Application.capabilities,assistant:v3Application.assistant,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>v3Application.host.inspect()});
 
 

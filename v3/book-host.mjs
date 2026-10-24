@@ -2,6 +2,7 @@ import {createBookManager,BookError} from './books.mjs';
 import {createTauriWorldbookTransport,createFloorIdentityManager,projectRetained,sha256Utf16} from './host-runtime.mjs';
 
 export const BOOK_POINTER_KEY='tisya_v3_books';
+export const GLOBAL_BOOK_KEY='tisya_v3_global';
 const ID='tisya_w24',SOURCES='tisya_v3_host';
 const copy=value=>value==null?value:structuredClone(value);
 const canonical=value=>value&&typeof value==='object'?Array.isArray(value)?value.map(canonical):Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
@@ -50,6 +51,18 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
     try{await need('saveChat',c.saveChat)();scopeGuard(c,h);const after=await h.metadata.get();scopeGuard(c,h);check(same(after?.[BOOK_POINTER_KEY],pointer),'POINTER_READBACK','Native pointer did not persist');}
     catch(error){let actual;try{actual=await h.metadata.get();}catch{}if(!same(actual?.[BOOK_POINTER_KEY],pointer)&&raw().chatMetadata===c.chatMetadata){if(memoryBefore===undefined)delete c.chatMetadata[BOOK_POINTER_KEY];else c.chatMetadata[BOOK_POINTER_KEY]=memoryBefore;}throw error;}
   }
+  async function readGlobalMetadata(){
+    const saved=settingsValue(await settings());
+    const value=copy(saved.extension_settings?.[GLOBAL_BOOK_KEY]??null);
+    if(value===null)delete raw().extensionSettings[GLOBAL_BOOK_KEY];else raw().extensionSettings[GLOBAL_BOOK_KEY]=copy(value);
+    return value;
+  }
+  async function saveGlobalMetadata(pointer,{expected,operationId}){
+    const before=await readGlobalMetadata();check(same(before,expected),'GLOBAL_CONFLICT','全局基点已变化，请重新载入',{operationId});
+    const settingsObject=raw().extensionSettings;settingsObject[GLOBAL_BOOK_KEY]=copy(pointer);
+    let failure;try{check(await need('saveSettings',script?.saveSettings)()===true,'GLOBAL_UNSAVED','宿主未确认全局基点保存');}catch(error){failure=error;}
+    const actual=await readGlobalMetadata();if(!same(actual,pointer)){if(failure)throw failure;throw new BookError('GLOBAL_READBACK','全局基点保存读回不一致');}
+  }
   async function nativeCheckpoint(){
     const c=raw(),current=context(),base={format:'tisya.native-checkpoint/1',owner:copy(current.owner),locator:locator()};
     if(readConfiguration().nativeBridge!==true)return {...base,mode:'none'};
@@ -89,13 +102,13 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
     const active=metadata?.[SOURCES]?.active;if((state.commits??[]).some(commit=>commit.source!==null||commit.contextSource))check(Array.isArray(active),'SOURCE_CHAIN_MISSING','Retained source chain is required for the current ledger projection');
     return projectRetained(state,active??[]);
   }
-  const callbacks={transport,listNames:async()=>{const data=await settings();check(Array.isArray(data.world_names),'BOOK_NAMES','Native worldbook inventory is unavailable');return [...data.world_names];},getContext:context,assertIdle:idle,readMetadata,saveMetadata,saveCurrentBranch,activateChat,activateUser,restoreNative,readNative:nativeCheckpoint,projectLedger,requireChatLocator:true,
+  const callbacks={transport,listNames:async()=>{const data=await settings();check(Array.isArray(data.world_names),'BOOK_NAMES','Native worldbook inventory is unavailable');return [...data.world_names];},getContext:context,assertIdle:idle,readMetadata,saveMetadata,readGlobalMetadata,saveGlobalMetadata,saveCurrentBranch,activateChat,activateUser,restoreNative,readNative:nativeCheckpoint,projectLedger,requireChatLocator:true,
     invalidate:async event=>{if(typeof invalidate==='function')return invalidate(event);const host=getHost();need('V3 configurationChanged',host?.configurationChanged);return host.configurationChanged();},
   };
   core=createBookManager(callbacks);
   const prepared=fn=>async(...args)=>{await prepare();return fn(...args);};
-  const manager=Object.freeze({...core,create:prepared(core.create),rename:prepared(core.rename),saveDefinition:prepared(core.saveDefinition),select:prepared(core.select),fork:prepared(core.fork),resume:prepared(core.resume),readRuntime:prepared(core.readRuntime),binding:prepared(core.binding),readConfiguration:prepared(core.readConfiguration),saveConfiguration:prepared(core.saveConfiguration),
-    async options(){const owner=await prepare(),c=raw(),id=getPlayerId(),players=Object.entries(c.powerUserSettings?.personas??{}).map(([id,name])=>({id,name})),defaultPreferenceOwner=id?{kind:'player',id}:null;return {owner,currentPlayer:players.find(p=>p.id===id)??(id?{id,name:c.name1??id}:null),players,defaultPreferenceOwner,accountPreferenceOwner:null,availablePreferenceOwners:defaultPreferenceOwner?[defaultPreferenceOwner]:[]};},
+  const manager=Object.freeze({...core,create:request=>request.kind==='core'?core.create(request):prepared(core.create)(request),rename:prepared(core.rename),saveDefinition:prepared(core.saveDefinition),select:prepared(core.select),fork:prepared(core.fork),resume:prepared(core.resume),readRuntime:prepared(core.readRuntime),binding:prepared(core.binding),readConfiguration:core.readConfiguration,saveConfiguration:core.saveConfiguration,
+    async options(){const owner=await prepare(),c=raw(),id=getPlayerId(),players=Object.entries(c.powerUserSettings?.personas??{}).map(([id,name])=>({id,name})),defaultPreferenceOwner=id?{kind:'player',id}:null;const global=await core.globalBinding();return {owner,global,currentPlayer:players.find(p=>p.id===id)??(id?{id,name:c.name1??id}:null),players,defaultPreferenceOwner,accountPreferenceOwner:null,availablePreferenceOwners:defaultPreferenceOwner?[defaultPreferenceOwner]:[]};},
   });
   return Object.freeze({manager,prepare,callbacks,dispose(){disposed=true;}});
 }

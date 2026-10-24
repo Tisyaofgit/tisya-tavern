@@ -7,6 +7,7 @@ const INTENT = 'tisyaBindingIntent';
 export const BOOK_FORMAT = 'tisya.book/1';
 export const BINDING_FORMAT = 'tisya.archive-binding/1';
 export const POINTER_FORMAT = 'tisya.active-binding/1';
+export const GLOBAL_POINTER_FORMAT = 'tisya.global-binding/1';
 const clone = value => value == null ? value : structuredClone(value);
 const stable = value => value && typeof value === 'object' ? Array.isArray(value) ? value.map(stable) : Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
 const equal = (a,b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
@@ -49,7 +50,7 @@ function parseManifest(data,name) {
   text(value.displayName,'Book display name');
   return {wire,value,physicalName:name};
 }
-function publicBook(record) { if(!record)return null; const v=record.value; return {id:v.id,kind:v.kind,displayName:v.displayName,revision:v.revision,physicalName:record.physicalName,...v.binding?.owner?{owner:clone(v.binding.owner)}:{},definitions:(v.definitions??[]).map(({id,revision,name})=>({id,revision,...name?{name}:{}}))}; }
+function publicBook(record) { if(!record)return null; const v=record.value; return {id:v.id,kind:v.kind,displayName:v.displayName,revision:v.revision,physicalName:record.physicalName,...v.kind==='core'?{playerIds:clone(v.playerIds??[])}:{},...v.binding?.owner?{owner:clone(v.binding.owner)}:{},definitions:(v.definitions??[]).map(({id,revision,name})=>({id,revision,...name?{name}:{}}))}; }
 function definitionRows(record,ref) {
   if(!ref.definitionId)return [];
   check(Number.isSafeInteger(ref.revision)&&ref.revision>=0,'DEFINITION_REVISION','Selected definition requires an exact revision');
@@ -84,7 +85,7 @@ export async function compareDefinitionRows({definitionRows,currentRows,sources=
  */
 export function createBookManager(options) {
   const {transport,listNames,getContext,assertIdle,saveMetadata,readMetadata,
-    saveCurrentBranch,activateChat,activateUser,restoreNative,readNative,invalidate,projectLedger,requireChatLocator=false,
+    saveCurrentBranch,activateChat,activateUser,restoreNative,readNative,invalidate,projectLedger,readGlobalMetadata,saveGlobalMetadata,requireChatLocator=false,
     registry=tableRegistry,now=()=>new Date().toISOString(),uuid=()=>globalThis.crypto.randomUUID()}=options;
   for(const [key,value] of Object.entries({listNames,getContext,assertIdle,saveMetadata,readMetadata}))check(typeof value==='function','CAPABILITY_UNAVAILABLE',`Book manager requires ${key}`,{capability:key});
   for(const key of ['readFresh','save','createEntry'])check(typeof transport?.[key]==='function','CAPABILITY_UNAVAILABLE',`Worldbook transport requires ${key}`,{capability:key});
@@ -149,15 +150,35 @@ export function createBookManager(options) {
     }
     return {selectedDefinitionRows:rows,selectedDefinitionSources:sources,definitionConflicts:await compareDefinitionRows({definitionRows:rows,currentRows,sources})};
   }
+  async function globalBinding() {
+    const pointer=await capability('readGlobalMetadata',readGlobalMetadata)();
+    if(pointer===null)return {pointer:null,core:null};
+    check(pointer?.format===GLOBAL_POINTER_FORMAT&&typeof pointer.coreId==='string'&&Number.isSafeInteger(pointer.revision)&&pointer.revision>0,'GLOBAL_POINTER','全局基点指针无效');
+    return {pointer:clone(pointer),core:publicBook(await load(pointer.coreId,'core'))};
+  }
+  async function selectGlobalCore({coreId,expectedRevision,operationId}) {
+    await idle();text(operationId,'Operation ID');const core=await load(coreId,'core'),before=await globalBinding();
+    if(before.pointer?.operationId===operationId){check(before.pointer.coreId===coreId,'OPERATION_CONFLICT','全局基点操作编号被用于其他书');return before;}
+    check((before.pointer?.revision??null)===expectedRevision,'GLOBAL_CONFLICT','全局基点已变化，请重新载入');
+    if(before.pointer?.coreId===coreId)return before;
+    const pointer={format:GLOBAL_POINTER_FORMAT,coreId:core.value.id,revision:(before.pointer?.revision??0)+1,operationId};
+    let failure;try{await capability('saveGlobalMetadata',saveGlobalMetadata)(pointer,{expected:before.pointer,operationId});}catch(error){failure=error;}
+    const actual=await globalBinding();if(!equal(actual.pointer,pointer)){if(failure)throw failure;throw new BookError('GLOBAL_READBACK','全局基点保存未获回执');}
+    return actual;
+  }
   async function preference(owner,fallbackCore,{register=true}={}) {
     const key=prefKey(owner);owner={kind:owner.kind,id:owner.id};
     return serial(coordinate,`preference-owner:${key}`,async()=>{
-      const records=await scan();const matches=records.filter(r=>r.value.kind==='core'&&(r.value.preferenceOwners??[]).some(o=>prefKey(o)===key));
-      check(matches.length<=1,'DUPLICATE_PREFERENCE_OWNER','Preference owner is registered in multiple core books',{owner});
-      if(matches.length)return {bookId:matches[0].value.id,owner:clone(owner)};
-      const core=await load(fallbackCore,'core');if(register)await writeManifest(core.value.id,core.value.revision,next=>{next.preferenceOwners=[...(next.preferenceOwners??[]),clone(owner)];});
+      const core=await load(fallbackCore,'core');
+      if(!(core.value.preferenceOwners??[]).some(o=>prefKey(o)===key)&&register)
+        await writeManifest(core.value.id,core.value.revision,next=>{next.preferenceOwners=[...(next.preferenceOwners??[]),clone(owner)];});
       return {bookId:core.value.id,owner:clone(owner)};
     });
+  }
+  async function registerPlayer(coreId,player){
+    const core=await load(coreId,'core');
+    if((core.value.playerIds??[]).includes(player.id))return;
+    await writeManifest(coreId,core.value.revision,next=>{next.playerIds=[...(next.playerIds??[]),player.id];});
   }
   function checkPlayerPreference(player,owner) {prefKey(owner);check(owner.kind!=='player'||owner.id===player.id,'PREFERENCE_PLAYER','Player preference owner must match the selected player');}
   async function runtimeBinding() {
@@ -204,12 +225,14 @@ export function createBookManager(options) {
     const active=await runtimeBinding();check(active.binding,'UNBOUND','Select an archive before starting generation');const c=context();check(equal(active.binding.owner,c.owner),'BINDING_OWNER','The selected archive belongs to another chat or branch');
     check(c.playerId===undefined||c.playerId===active.binding.player.id,'BINDING_PLAYER','Native player differs from the archive binding');
     const archive=await load(active.archive.id,'archive'),origin=await selected(active.binding.origin,'origin'),core=await selected(active.binding.core,'core');
-    const pref=active.binding.preference;checkPlayerPreference(active.binding.player,pref?.owner);const prefBook=await load(pref.bookId,'core');check((prefBook.value.preferenceOwners??[]).some(o=>equal(o,pref.owner)),'PREFERENCE_BINDING','Preference owner is not registered in the bound core book');
-    const books={originals:addRoute(`tisya:originals:${archive.value.id}`,archive,'originals'),tables:addRoute(`tisya:tables:${archive.value.id}`,archive,'tables',active.binding.owner),preferences:addRoute(`tisya:preferences:${prefKey(pref.owner)}`,prefBook,'preferences',{chatId:'tisya-preferences',branchId:'global'})};
+    const global=await globalBinding();check(global.core,'GLOBAL_UNBOUND','请先选择全局基点书');
+    const pref=await preference(active.binding.preference.owner,global.core.id);await registerPlayer(global.core.id,active.binding.player);checkPlayerPreference(active.binding.player,pref?.owner);const prefBook=await load(pref.bookId,'core');check((prefBook.value.preferenceOwners??[]).some(o=>equal(o,pref.owner)),'PREFERENCE_BINDING','Preference owner is not registered in the bound core book');
+    const priorPreferenceId=Object.values(prefBook.data.entries).map(e=>e.extensions?.[NS]?.logicalId).find(id=>id===`tisya:preferences:${prefKey(pref.owner)}`);
+    const books={originals:addRoute(`tisya:originals:${archive.value.id}`,archive,'originals'),tables:addRoute(`tisya:tables:${archive.value.id}`,archive,'tables',active.binding.owner),preferences:addRoute(priorPreferenceId??`tisya:preferences:${pref.bookId}:${prefKey(pref.owner)}`,prefBook,'preferences',{chatId:'tisya-preferences',branchId:'global'})};
     const initialRows=mergeRows(definitionRows(origin.record,origin.ref),definitionRows(core.record,core.ref));
     if(active.binding.player.objectId)check(initialRows.some(row=>row.id===active.binding.player.objectId),'PLAYER_OBJECT','Selected player object is absent from the chosen definitions');
     const leaseContext=context();
-    const lease=async()=>{guardContext(leaseContext);check(equal(await readMetadata(),active.pointer),'RUNTIME_BINDING_CHANGED','This runtime belongs to an earlier binding');};
+    const lease=async()=>{guardContext(leaseContext);check(equal((await globalBinding()).pointer,global.pointer),'GLOBAL_CHANGED','全局基点已切换');check(equal(await readMetadata(),active.pointer),'RUNTIME_BINDING_CHANGED','This runtime belongs to an earlier binding');};
     const scopedTransport=Object.freeze({capabilities:virtualTransport.capabilities,
       readFresh:async logical=>{await lease();check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.readFresh(logical);},
       createEntry:(logical,data)=>{guardContext(leaseContext);check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.createEntry(logical,data);},
@@ -219,7 +242,7 @@ export function createBookManager(options) {
     return {archive:publicBook(archive),origin:{...publicBook(origin.record),selection:origin.ref},core:{...publicBook(core.record),selection:core.ref},player:clone(active.binding.player),preferenceOwner:clone(pref.owner),preferenceBookId:pref.bookId,owner:clone(active.binding.owner),bindingRevision:active.binding.revision,books,transport:scopedTransport,initialRows,...material};
   }
   async function create(request) {
-    await idle();const captured=context();const {kind,name,operationId}=request;check(['archive','origin','core'].includes(kind),'BOOK_KIND','Book kind must be archive, origin or core');text(name,'Book name');text(operationId,'Operation ID');
+    await idle();const {kind,name,operationId}=request;const captured=kind==='core'?null:context(),guardCreation=()=>{if(captured)guardContext(captured);};check(['archive','origin','core'].includes(kind),'BOOK_KIND','Book kind must be archive, origin or core');text(name,'Book name');text(operationId,'Operation ID');
     const records=await scan();const duplicate=records.find(r=>r.value.creationOperation===operationId);
     const creationFingerprint=await fingerprint(request);
     if(duplicate){check(duplicate.value.creationFingerprint===creationFingerprint,'OPERATION_CONFLICT','Operation ID was reused with different creation data');return publicBook(duplicate);}
@@ -234,21 +257,22 @@ export function createBookManager(options) {
       if(request.locator!==undefined)value.binding.locator=clone(request.locator);else if(equal(owner,captured.owner)&&captured.locator)value.binding.locator=clone(captured.locator);
       await initialFor(value.binding);
       value.binding.preference=await preference(request.preferenceOwner,core.record.value.id);
+      await registerPlayer(core.record.value.id,player);
       if(request.nativeCheckpoint!==undefined)value.nativeCheckpoint=clone(request.nativeCheckpoint);
       else if(equal(owner,captured.owner)&&typeof readNative==='function')value.nativeCheckpoint=clone(await readNative({owner}));
       if(request.forkOf!==undefined)value.forkOf=clone(request.forkOf);
     }
-    guardContext(captured);const physicalName=`Tisya-${value.id.replace(':','-')}`;
+    guardCreation();const physicalName=`Tisya-${value.id.replace(':','-')}`;
     return serial(coordinate,physicalName,async()=>{
-      check(await transport.readFresh(physicalName)===null,'BOOK_EXISTS','Physical worldbook already exists');const data={entries:{}};const entry=makePrivate(allocate(physicalName,data),'Tisya book');entry.extensions={...(entry.extensions??{}),[BOOK]:{id:value.id,format:BOOK_FORMAT}};entry.content=JSON.stringify(value);
-      guardContext(captured);await transport.save(physicalName,data);const actualData=await transport.readFresh(physicalName);check(equal(actualData,data),'BOOK_READBACK','New book readback differs from write');const record=parseManifest(actualData,physicalName);index.set(value.id,record);fullCache.set(physicalName,clone(actualData));return publicBook(record);
+      check(await transport.readFresh(physicalName)===null,'BOOK_EXISTS','资料书已经存在，未覆盖；请重新读取目录后选择已有资料');const data={entries:{}};const entry=makePrivate(allocate(physicalName,data),'Tisya book');entry.extensions={...(entry.extensions??{}),[BOOK]:{id:value.id,format:BOOK_FORMAT}};entry.content=JSON.stringify(value);
+      guardCreation();await transport.save(physicalName,data);const actualData=await transport.readFresh(physicalName);check(equal(actualData,data),'BOOK_READBACK','New book readback differs from write');const record=parseManifest(actualData,physicalName);index.set(value.id,record);fullCache.set(physicalName,clone(actualData));return publicBook(record);
     });
   }
   async function rename({id,name,expectedRevision,operationId}) {
-    await idle();const captured=context();text(name,'Book name');text(operationId,'Operation ID');const current=await load(id);
+    await idle();const captured=getContext()?.owner?context():null;text(name,'Book name');text(operationId,'Operation ID');const current=await load(id);
     const receipt=current.value.operations?.[operationId];if(receipt){check(receipt.kind==='rename'&&receipt.name===name,'OPERATION_CONFLICT','Operation ID was reused with a different rename');return publicBook(current);}
     check(Number.isSafeInteger(expectedRevision),'EXPECTED_REVISION','Rename requires the observed book revision');
-    const next=await writeManifest(id,expectedRevision,value=>{guardContext(captured);value.displayName=name;value.operations={...(value.operations??{}),[operationId]:{kind:'rename',name}};});return publicBook(next);
+    const next=await writeManifest(id,expectedRevision,value=>{if(captured)guardContext(captured);value.displayName=name;value.operations={...(value.operations??{}),[operationId]:{kind:'rename',name}};});return publicBook(next);
   }
   async function saveDefinition(request) {
     await idle();const captured=context(),{bookId,expectedBookRevision,expectedDefinitionRevision,name,rows,operationId}=request;text(operationId,'Operation ID');text(name,'Definition name');validateDefinitionRows(rows);
@@ -290,7 +314,7 @@ export function createBookManager(options) {
     if(request.origin!==undefined)binding.origin=(await selected(request.origin,'origin')).ref;
     if(request.core!==undefined)binding.core=(await selected(request.core,'core')).ref;
     if(request.player!==undefined){binding.player=playerValue(request.player);if(binding.player.id!==target.value.binding.player.id)check(request.preferenceOwner!==undefined,'PREFERENCE_OWNER_REQUIRED','Changing player requires an explicit preference owner');}
-    if(request.preferenceOwner!==undefined){checkPlayerPreference(binding.player,request.preferenceOwner);binding.preference=await preference(request.preferenceOwner,binding.core.bookId,{register:false});}
+    if(request.preferenceOwner!==undefined||request.core!==undefined){const owner=request.preferenceOwner??binding.preference.owner;checkPlayerPreference(binding.player,owner);binding.preference=await preference(owner,binding.core.bookId,{register:false});}
     await initialFor(binding);
     const material=await materialFor(target,binding);
     if(request.origin!==undefined||request.core!==undefined){const acknowledgements=request.definitionResolutions??[];check(Array.isArray(acknowledgements),'DEFINITION_RESOLUTIONS','Definition resolutions must be an array');
@@ -305,7 +329,8 @@ export function createBookManager(options) {
     if(restoreCheckpoint){check(target.value.nativeCheckpoint!==undefined,'NATIVE_CHECKPOINT_REQUIRED','Selected archive needs a native checkpoint locator');capability('restoreNative',restoreNative);capability('readNative',readNative);}
     if(captured.playerId!==binding.player.id)capability('activateUser',activateUser);
     capability('invalidate',invalidate);guardContext(captured);
-    if(request.preferenceOwner!==undefined)binding.preference=await preference(request.preferenceOwner,binding.core.bookId);
+    if(request.preferenceOwner!==undefined||request.core!==undefined)binding.preference=await preference(request.preferenceOwner??binding.preference.owner,binding.core.bookId);
+    await registerPlayer(binding.core.bookId,binding.player);
     const intent={format:'tisya.binding-intent/1',id:request.operationId,request:clone(request),sourcePointer:clone(active.pointer),sourceBinding:clone(active.binding),sourceContext:{owner:clone(captured.owner),playerId:captured.playerId,epoch:captured.epoch},sourceHasDraft:!!captured.draft,sourceDraftFingerprint:await fingerprint(captured.draft),targetArchiveId:archiveId,targetBinding:binding,targetPreviousBinding:clone(target.value.binding),targetManifestRevision:target.value.revision,nativeCheckpoint:clone(target.value.nativeCheckpoint),activatePlayer:captured.playerId!==binding.player.id,foreign,restoreCheckpoint,phase:'prepared',createdAt:now()};
     await putIntent(archiveId,intent);return continueIntent(archiveId,intent);
   }
@@ -374,15 +399,13 @@ export function createBookManager(options) {
   }
   const CONFIGURATION='tisyaConfiguration';
   async function configurationLocation(){
-    const captured=context(),active=await runtimeBinding();check(active.binding,'UNBOUND','先绑定存档，再保存配置');
-    check(equal(active.binding.owner,captured.owner)&&active.binding.player.id===captured.playerId,'CONFIGURATION_BINDING','配置与当前聊天或主控角色不一致');
-    const pref=active.binding.preference;checkPlayerPreference(active.binding.player,pref.owner);
-    const record=await load(pref.bookId,'core');check((record.value.preferenceOwners??[]).some(owner=>equal(owner,pref.owner)),'CONFIGURATION_OWNER','配置所属用户未登记在基点书');
-    const archive=await load(active.archive.id,'archive');return {captured,active,record,forkOf:clone(archive.value.forkOf??null),bookId:pref.bookId,owner:clone(pref.owner),binding:{archiveId:active.archive.id,revision:active.binding.revision,playerId:active.binding.player.id,...clone(active.binding.owner)}};
+    const active=await globalBinding();check(active.core,'GLOBAL_UNBOUND','请先选择全局基点书');
+    const record=await load(active.core.id,'core');
+    return {active,record,bookId:record.value.id,owner:{kind:'global',id:'tisya'},binding:{scope:'global',coreId:record.value.id,revision:active.pointer.revision}};
   }
   function configurationRecord(location){
     const matches=Object.values(location.record.data.entries).filter(entry=>equal(entry.extensions?.[CONFIGURATION]?.owner,location.owner));
-    check(matches.length<=1,'CONFIGURATION_DUPLICATE','同一用户存在多份配置记录');if(!matches.length)return null;
+    check(matches.length<=1,'CONFIGURATION_DUPLICATE','全局基点存在多份配置记录');if(!matches.length)return null;
     const wire=matches[0];check(disabled(wire),'CONFIGURATION_ACTIVATION','配置记录必须关闭自动注入');let value;
     try{value=JSON.parse(wire.content);}catch{throw new BookError('CONFIGURATION_JSON','配置记录已损坏，保留原数据');}
     check(value?.format==='tisya.configuration-book/1'&&value.bookId===location.bookId&&equal(value.owner,location.owner)&&Number.isSafeInteger(value.revision)&&value.revision>0&&Array.isArray(value.versions)&&value.versions.length===value.revision,'CONFIGURATION_FORMAT','配置记录版本或归属不一致');
@@ -395,14 +418,23 @@ export function createBookManager(options) {
     const version=record?.value.versions.find(v=>v.revision===chosen);
     return {exists:!!record,bookId:location.bookId,owner:clone(location.owner),forkOf:clone(location.forkOf),binding:clone(location.binding),revision,selectedRevision:chosen,domains:clone(version?.domains??{}),worldBindings:clone(version?.worldBindings??[]),versions:(record?.value.versions??[]).map(({revision,createdAt,operationId})=>({revision,createdAt,operationId}))};
   }
-  async function readConfiguration({revision}={}){const location=await configurationLocation();guardContext(location.captured);return configurationView(location,configurationRecord(location),revision);}
+  async function readConfiguration({revision}={}){
+    const location=await configurationLocation(),record=configurationRecord(location),view=configurationView(location,record,revision);
+    if(record||revision!==undefined)return view;
+    const owners=Object.values(location.record.data.entries).map(e=>e.extensions?.[CONFIGURATION]?.owner).filter(o=>o&&o.kind!=='global');
+    if(!owners.length)return view;
+    const playerId=getContext()?.playerId,selected=owners.filter(o=>o.kind==='player'&&o.id===playerId),owner=selected.length===1?selected[0]:owners.length===1?owners[0]:null;
+    check(owner,'CONFIGURATION_SOURCE_REQUIRED','此基点有多份原配置，请先切到要沿用的用户身份，再载入全局配置');
+    const source=configurationRecord({...location,owner}),last=source.value.versions.at(-1);
+    return {...view,initialConfiguration:{owner:clone(owner),revision:source.value.revision,domains:clone(last.domains),worldBindings:clone(last.worldBindings),binding:clone(last.binding)}};
+  }
   async function saveConfiguration(request){
     await idle();const first=await configurationLocation(),{domains,worldBindings,expected,operationId}=request;text(operationId,'Configuration operation ID');
     check(plain(domains)&&Array.isArray(worldBindings),'CONFIGURATION_PAYLOAD','配置域和会话绑定格式无效');
     check(plain(expected)&&expected.bookId===first.bookId&&equal(expected.binding,first.binding),'CONFIGURATION_BINDING','配置保存所依据的书或存档绑定已改变');
     const digest=await fingerprint({domains,worldBindings,binding:first.binding});
     return serial(coordinate,first.record.physicalName,async()=>{
-      guardContext(first.captured);const current=await configurationLocation();check(equal(current.binding,first.binding)&&current.bookId===first.bookId&&equal(current.owner,first.owner),'CONFIGURATION_BINDING','保存期间配置归属已改变');
+      const current=await configurationLocation();check(equal(current.binding,first.binding)&&current.bookId===first.bookId&&equal(current.owner,first.owner),'CONFIGURATION_BINDING','保存期间配置归属已改变');
       const prior=configurationRecord(current),receipt=prior?.value.versions.find(v=>v.operationId===operationId);
       if(receipt){check(receipt.fingerprint===digest,'OPERATION_CONFLICT','配置保存操作编号被用于不同内容');return configurationView(current,prior);}
       check((prior?.value.revision??null)===expected.revision,'CONFIGURATION_CONFLICT','配置书已有新版本，请重新核对',{expected:expected.revision,actual:prior?.value.revision??null});
@@ -411,9 +443,9 @@ export function createBookManager(options) {
       const value={format:'tisya.configuration-book/1',bookId:current.bookId,owner:clone(current.owner),revision:version.revision,versions:[...(prior?.value.versions??[]),version]};
       let wire=prior?.wire;if(!wire){const shadow=clone(current.record.data);for(const [uid,entry]of coordinate.reserved.get(current.record.physicalName)??[])shadow.entries[uid]=clone(entry);wire=allocate(current.record.physicalName,shadow);current.record.data.entries[String(wire.uid)]=wire;}
       makePrivate(wire,'Tisya configuration');wire.extensions={...(wire.extensions??{}),[CONFIGURATION]:{format:'tisya.configuration-marker/1',bookId:current.bookId,owner:clone(current.owner)}};wire.content=JSON.stringify(value);
-      guardContext(first.captured);check(equal(await readMetadata(),first.active.pointer),'CONFIGURATION_BINDING','写入前当前存档已切换');
+      check(equal((await globalBinding()).pointer,first.active.pointer),'CONFIGURATION_BINDING','写入前全局基点已切换');
       let saveError;try{await transport.save(current.record.physicalName,current.record.data);}catch(error){saveError=error;}
-      const actual=await configurationLocation(),saved=configurationRecord(actual);check(equal(actual.binding,first.binding),'CONFIGURATION_BINDING','配置已写入原书，当前存档已切换');
+      const actual=await configurationLocation(),saved=configurationRecord(actual);check(equal(actual.binding,first.binding),'CONFIGURATION_BINDING','配置已写入原书，全局基点已切换');
       if(!equal(saved?.value,value)){if(saveError)throw saveError;throw new BookError('CONFIGURATION_READBACK','配置写回核验未完成，草稿保留');}
       check(equal(actual.record.data,current.record.data),'CONFIGURATION_READBACK','配置书其他条目在写回时发生变化');return configurationView(actual,saved);
     });
@@ -421,6 +453,7 @@ export function createBookManager(options) {
   return Object.freeze({
     capabilities:Object.freeze({managedSingleWriter:true,conditionalWrites:false,crossWindowAtomicity:false,renamePhysicalFiles:false,fork:true}),
     list:async kind=>(await scan()).filter(r=>!kind||r.value.kind===kind).map(publicBook),
+    globalBinding,selectGlobalCore:request=>operation(()=>selectGlobalCore(request)),
     create:request=>operation(()=>create(request)),rename:request=>operation(()=>rename(request)),
     saveDefinition:request=>operation(()=>saveDefinition(request)),readDefinition,
     binding:runtimeBinding,readRuntime,

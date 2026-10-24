@@ -26,7 +26,7 @@ registerTableTasks(registry);
 registry.tasks.set('communication',{id:'communication',name:'场外交流',capability:'chat',isolated:true,inheritMain:true});
 for(const id of Object.keys(TEXT_TASKS))if(registry.tasks.has(id))Object.assign(registry.tasks.get(id),{preset:'tisya:'+id});
 export function register(kind,row){const bank=registry[kind];if(!(bank instanceof Map)||!row||typeof row.id!=='string'||!row.id.trim())fail('登记类型或编号无效');if(bank.has(row.id))fail('编号已登记：'+row.id);bank.set(row.id,row);return ()=>bank.delete(row.id);}
-export function worldKey(c){if(!c.chatId)fail('请先打开一个世界的聊天');const card=c.characters?.[c.characterId],owner=c.groupId||card?.avatar;if(!owner)fail('当前会话身份尚未就绪，未初始化或覆盖配置');return JSON.stringify([c.groupId?'group':'card',owner,c.chatId]);}
+export function worldKey(c){if(!c.chatId)return 'tisya:global';const card=c.characters?.[c.characterId],owner=c.groupId||card?.avatar;if(!owner)fail('当前会话身份尚未就绪，未初始化或覆盖配置');return JSON.stringify([c.groupId?'group':'card',owner,c.chatId]);}
 export function defaultMode(legacy={}){return {narrative:{...N.suggestions(),...legacy},nativeMvu:'auto',selected:[],routes:{},summary:true,actions:true,workflowDetail:'full'};}
 export function defaultWorld(legacy={}){return {mode:'narrative',modes:{narrative:defaultMode(legacy)},controller:null,focus:[],style:null,styles:[],overrides:{},parameters:{},switches:{difficulty:'常规',centrality:'均衡',boundary:''},context:{owner:'native',history:50,maxInputTokens:0,books:[],entries:[],persona:true,card:true},theme:{nativeRegex:true,resources:[],parameters:{}}};}
 export function emptyConfig(){return {schema:2,revision:0,resources:[],routes:{global:{},tasks:{}},agent:{driver:'native',profile:''},worlds:{}};}
