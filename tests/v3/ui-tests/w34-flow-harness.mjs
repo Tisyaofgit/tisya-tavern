@@ -47,7 +47,7 @@ export async function setupFlow(t,{request,initialRows=[],chat}={}){
  const store=createStore({getContext:()=>h.ctx,persist:async()=>{throw Error('Configuration must use its worldbook');}});
  const configurationBook=createConfigurationBook({books,store,getContext:()=>h.ctx,getPlayerId:()=>h.ctx.userAvatar,domainValidators:{tagTemplates:validateTagTemplateBank}});
  await configurationBook.hydrate({initializeIfMissing:true});
- const configHost={runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'deterministic-fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input,options={})=>{
+ const configHost={prepareRuntimeRequest:async()=>({responseDialect:"openai"}),runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'deterministic-fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input,options={})=>{
   const snapshot=store.read(),messages=taskMessages({preset:pairedPreset({task,configuration:snapshot,phase:input.phase}),task,input,substitute:s=>s.replaceAll('{{user}}','MUST_NOT_EXPAND_SOURCE')});
   tasks.push({task,input:copy(input),messages:copy(messages)});assert.ok(request,'Unexpected model task '+task);
   const value=await request(task,input,{h,app,tasks,messages,options});return typeof value==='string'?value:formatSimpleSheet(value);

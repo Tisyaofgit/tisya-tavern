@@ -1,4 +1,5 @@
 import {readTaskResponse} from '../config/stream-response.js';
+import {detectNativeProtocol} from '../config/native-protocol-guard.js';
 
 const fail=(code,message)=>{throw Object.assign(Error(message),{code});};
 export async function loadNativeBindings(target=globalThis){
@@ -20,7 +21,7 @@ export async function prepareNativeAuthorNote({native,getContext,guard}){
 }
 
 /** Uses the active host connection settings; never stores credentials in journals. */
-export function createNativeRequests({getContext,native,resolveConnection,guard,signal,progress,beforeSend=null}){
+export function createNativeRequests({getContext,native,resolveConnection,guard,signal,progress,beforeSend=null,prepareRequest=null}){
  for(const [name,fn]of Object.entries({getContext,resolveConnection,guard,signal}))if(typeof fn!=='function')fail('V3_DEPENDENCY','Missing request binding: '+name);
  if(beforeSend!==null&&typeof beforeSend!=='function')fail('V3_DEPENDENCY','beforeSend must be a function');
  if(typeof native?.openai?.createGenerationParameters!=='function'||typeof native.fetch!=='function')fail('V3_NATIVE_API','Native completion APIs are unavailable');
@@ -30,10 +31,12 @@ export function createNativeRequests({getContext,native,resolveConnection,guard,
   if(!route?.settings||typeof route.model!=='string'||!route.model)fail('V3_ROUTE','The selected task connection has no model');
   const {generate_data:payload}=await native.openai.createGenerationParameters(structuredClone(route.settings),route.model,'quiet',structuredClone(messages),{allowToolCalls:false,toolData:{}});
   guard();payload.stream=true;
-  if(!Array.isArray(payload.messages)||payload.messages.length!==messages.length)fail('V3_REQUEST_REWRITE','Host changed the compiled message shape');
+  if(!Array.isArray(payload.messages)||JSON.stringify(payload.messages.map(({role,content})=>({role,content})))!==JSON.stringify(messages))fail('V3_REQUEST_REWRITE','Host changed the compiled message shape');
   if(beforeSend){await beforeSend({stage,requestKey});guard();}
+  let responseDialect=detectNativeProtocol(payload),validateResponse=null;if(prepareRequest){const prepared=await prepareRequest(payload,route,{stage,requestKey,guard});guard();responseDialect=prepared?.responseDialect??detectNativeProtocol(payload);validateResponse=prepared?.validateResponse;}
   const abortSignal=signal();abortSignal?.throwIfAborted();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running'});
-  const response=await native.fetch('/api/backends/chat-completions/generate',{method:'POST',headers:getContext().getRequestHeaders(),body:JSON.stringify(payload),signal:abortSignal});
-  guard();return readTaskResponse(response,{signal:abortSignal,onProgress:update=>{guard();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running',characters:update.characters??update.chars});}});
+  try{const response=await native.fetch('/api/backends/chat-completions/generate',{method:'POST',headers:getContext().getRequestHeaders(),body:JSON.stringify(payload),signal:abortSignal});
+  guard();const text=await readTaskResponse(response,{signal:abortSignal,responseDialect,taskLabel:({writer:'正文 API',preflight:'辅助 API（合并）',archive:'辅助 API（归档）',preferences:'辅助 API（偏好）',plan:'辅助 API（推进）',communication:'小缇 API'})[stage]??'任务 API',onProgress:update=>{guard();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running',characters:update.characters??update.chars});}});validateResponse?.();return text;
+  }catch(error){if(error&&typeof error==='object'){error.runtimeRequestFailed=true;error.requestStage=stage;}throw error;}
  };
 }

@@ -77,7 +77,7 @@ function jsonText(payload,raw){
  return raw??JSON.stringify(payload);
 }
 
-export function readTaskResponse(response,options={}){return readResponse(response,options,false);}
+export async function readTaskResponse(response,options={}){try{return await readResponse(response,options,false);}catch(error){if(options.taskLabel&&typeof error?.message==='string')error.message=error.message.replaceAll('辅助 API',options.taskLabel);throw error;}}
 export function readToolResponse(response,options={}){return readResponse(response,options,true);}
 async function readResponse(response,{signal,onProgress,responseDialect}={},allowTools=false){
  const tools=allowTools?toolResponseState():null;

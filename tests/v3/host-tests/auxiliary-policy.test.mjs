@@ -52,3 +52,11 @@ test('manual forms remain explicitly callable with automatic auxiliary disabled'
  const f=await createInstallerHarness({mvu:false,workspace:true});t.after(()=>f.api.dispose());f.config.auxiliaryEnabled=false;await f.api.getSession();const before=copy(f.ctx.chat);
  const result=await f.api.advance({requestId:'manual-with-auto-off'});assert.equal(result.output,null);assert.equal(f.requests.length,1);assert(xml(f.requests[0].messages,'TISYA.DATA.SOURCE'));assert.deepEqual(f.ctx.chat,before);
 });
+
+
+test('writer rejection with automatic auxiliary off retains chat, flushes its prepared journal and permits an explicit retry',async t=>{
+ const f=await createInstallerHarness({mvu:false,workspace:true});t.after(()=>f.api.dispose());f.config.auxiliaryEnabled=false;await f.api.getSession();const before=copy(f.ctx.chat),original=f.native.fetch;let attempts=0;
+ f.native.fetch=async(...args)=>{if(++attempts===1)return new Response(JSON.stringify({choices:[{message:{content:''},finish_reason:'SAFETY'}]}),{headers:{'content-type':'application/json'}});return original(...args);};
+ await f.intercept('normal');assert.equal(f.errors.length,1);assert.equal(f.errors[0].requestStage,'writer');assert.match(f.errors[0].message,/正文 API/);assert.equal(f.errors[0].workspacePreparationSaved,true);assert.deepEqual(f.ctx.chat,before);assert.equal(f.workspaceLayer.status().blocked,false);assert.deepEqual(f.workspaceLayer.status().pendingBooks,[]);assert.equal(attempts,1);
+ await f.intercept('normal');assert.equal(attempts,2);assert.equal(f.errors.length,1);assert.equal(f.ctx.chat.length,before.length+1);
+});

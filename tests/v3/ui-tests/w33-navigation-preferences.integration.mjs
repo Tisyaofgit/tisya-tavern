@@ -27,7 +27,7 @@ async function setup(t,{request}={}){
  const store=createStore({getContext:()=>h.ctx,persist:async()=>{throw Error('Configuration must use its worldbook');}});
  const book=createConfigurationBook({books:h.books,store,getContext:()=>h.ctx,getPlayerId:()=>playerId,domainValidators:{tagTemplates:validateTagTemplateBank}});
  await book.hydrate({initializeIfMissing:true});
- const configHost={runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input)=>{tasks.push({task,input:copy(input)});if(!request)throw Error('No model task expected');return request(task,input);}};
+ const configHost={prepareRuntimeRequest:async()=>({responseDialect:"openai"}),runtimePresetFor:createRuntimePreset,resolveConnectionFor:async()=>({settings:{},model:'fixture'}),selectedMaterialsFor:async()=>({lanes:{},ids:[]}),request:async(task,input)=>{tasks.push({task,input:copy(input)});if(!request)throw Error('No model task expected');return request(task,input);}};
  const create=async()=>{app=await createApplication({target:h.target,getContext:()=>h.ctx,store,configHost,books:h.books,configurationBook:book,native:h.native,getPlayerId:()=>playerId,readConfiguration:()=>h.config,worldbookScan:false,onError:error=>h.errors.push(error)});return app;};
  await create();const win=new Window({url:'http://localhost/'});
  const mount=async()=>{view=mountWorkbench(win.document,win.document.body,{capabilities:app.capabilities,stylesheetURL:'http://localhost/workbench.css'});await view.ready;};await mount();

@@ -4,7 +4,7 @@ const clone=structuredClone;
 const check=(ok,message)=>{if(!ok)throw Error('V3 预设：'+message);};
 export const TISYA_PRESET_VERSION='tisya.full.v3-w30';
 const groups=new Set(['worldInfoBefore','worldInfoAfter','dialogueExamples','chatHistory','tisya_author_note_before','tisya_author_note_after','tisya_after_current']);
-const dynamic=new Set([...groups,'tisya_material_task_material','tisya_material_environment','tisya_material_gameplay','tisya_material_lorebook','tisya_material_character_card','tisya_material_user_identity','tisya_material_current_state','tisya_material_memory_archive','tisya_material_world_progression','tisya_material_foreshadow','tisya_material_tool_result','tisya_material_card_extensions','tisya_current_input','chatHistory','chatHistory／当前user']);
+const dynamic=new Set([...groups,'tisya_material_task_material','tisya_material_rule_material','tisya_material_environment','tisya_material_gameplay','tisya_material_lorebook','tisya_material_character_card','tisya_material_user_identity','tisya_material_current_state','tisya_material_memory_archive','tisya_material_world_progression','tisya_material_foreshadow','tisya_material_tool_result','tisya_material_card_extensions','tisya_current_input','chatHistory','chatHistory／当前user']);
 const labels={worldInfoBefore:'原生世界书 · 前置',worldInfoAfter:'原生世界书 · 后置',dialogueExamples:'角色卡对话示例',tisya_author_note_before:'作者注 · 故事前',tisya_author_note_after:'作者注 · 故事后',tisya_after_current:'当前输入之后的深度资料',tisya_material_character_card:'角色卡资料',tisya_material_user_identity:'当前用户身份',tisya_material_lorebook:'世界书与额外资料',tisya_material_task_material:'世界定义',tisya_material_current_state:'当前档案与状态',tisya_material_memory_archive:'历史记忆',tisya_material_world_progression:'待办与本轮推进',tisya_current_input:'本轮输入及归档来源',chatHistory:'近期摘要与原生深度资料','chatHistory／当前user':'当前用户输入'};
 const neutralRegistry={tables:[],types:[]};
 export function defaultPresetMessages(stage){
@@ -49,5 +49,6 @@ export function assembleRuntimePreset(stage,preset,compiled){
  }
  const required=stage==='writer'?'chatHistory／当前user':'tisya_current_input';
  check(used.has(required),'当前输入资料槽未启用，已停止发送');
+ if(stage==='preflight'){for(const id of ['tisya_registry','tisya_think_commit'])check(out.some(m=>m.identifier===id&&m.content.trim()),'辅助预设缺少已启用的任务协议：'+id);check(used.has('tisya_material_current_state'),'辅助预设缺少当前档案资料槽');}
  return out;
 }
