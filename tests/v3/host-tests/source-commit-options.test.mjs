@@ -20,7 +20,7 @@ test('changed source indexes commit metadata only, unchanged refresh is a no-op,
 
 test('build records pending historical diagnostics through metadata only',async()=>{
  const f=fixture();f.context.chat[1].mes='</think><body>旧控制片段</body>';
- const input=await f.chain.build({requestKey:'diagnostic'});assert.equal(input.archiveSources.length,0);assert.equal(f.writes.length,1);assert.equal(f.writes[0].nativeMessagesChanged,false);assert.equal(f.disk.chatMetadata[HOST_META].sourceDiagnostics[0].status,'pending');assert.equal(f.disk.chat[1].mes,'旧正文');
+ const input=await f.chain.build({requestKey:'diagnostic',standalone:true});assert.equal(input.archiveSources.length,0);assert.equal(f.writes.length,1);assert.equal(f.writes[0].nativeMessagesChanged,false);assert.equal(f.disk.chatMetadata[HOST_META].sourceDiagnostics[0].status,'pending');assert.equal(f.disk.chat[1].mes,'旧正文');
 });
 
 test('output plus deferred source refresh commits complete native content and metadata together once',async()=>{

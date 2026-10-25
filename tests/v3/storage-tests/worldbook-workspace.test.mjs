@@ -115,3 +115,19 @@ test('physical flush refuses a same-book edit or context epoch change across eit
   await assert.rejects(w.run(async()=>{const data=await w.readWorking('book-0');data.entries[0].content='ours';await w.save('book-0',data);arm=true;}),{code:'WORKSPACE_CHANGED'});assert.equal(writes,0,phase+':'+change);assert(pending?.books['book-0']);assert.equal(f.disk.get('book-0').entries[0].content,'book-0');await w.sync();assert.equal(f.disk.get('book-0').entries[0].content,'ours');if(change==='book')assert.equal(f.disk.get('book-0').entries[1].content,'external');assert.equal(pending,null);
  }
 });
+
+test('preflight rejection synchronizes only preparation and preserves the original failure',async()=>{
+ const f=fixture(),w=f.create(),error=Object.assign(Error('SAFETY'),{code:'TISYA_RESPONSE_FILTERED',preflightRequestFailed:true});
+ await assert.rejects(w.run(async()=>{const d=await w.readWorking('book');d.entries[0].content='preparation';await w.save('book',d);throw error;}),e=>e===error&&e.workspacePreparationSaved===true);
+ assert.equal(f.disk.entries[0].content,'preparation');assert.equal(f.saved,null);assert.equal(w.status().blocked,false);await w.run(async()=>{});
+});
+test('preflight rejection never retries an uncertain physical save or discards its journal',async()=>{
+ const f=fixture(),w=f.create(),error=Object.assign(Error('filtered'),{preflightRequestFailed:true});f.failSave(true);
+ await assert.rejects(w.run(async()=>{const d=await w.readWorking('book');d.entries[0].content='preparation';await w.save('book',d);throw error;}),e=>e===error&&/outcome unknown/.test(e.workspaceSyncError.message));
+ assert.equal(f.counts().writes,1);assert(f.saved);assert(w.status().blocked);assert.equal(error.workspacePreparationSaved,undefined);await assert.rejects(w.run(async()=>{}),{code:'WORKSPACE_SYNC_REQUIRED'});assert.equal(f.counts().writes,1);
+});
+test('a failed preflight in a changed owner never flushes another chat',async()=>{
+ const f=fixture(),w=f.create(),error=Object.assign(Error('filtered'),{preflightRequestFailed:true});
+ await assert.rejects(w.run(async()=>{const d=await w.readWorking('book');d.entries[0].content='preparation';await w.save('book',d);f.owner('other');throw error;}),e=>e===error);
+ assert.equal(f.counts().writes,0);assert(f.saved);assert(w.status().blocked);assert.equal(error.workspacePreparationSaved,undefined);
+});

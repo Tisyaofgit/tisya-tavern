@@ -30,6 +30,7 @@ export function createCapabilities({routes={},dynamicRoutes=()=>[],capabilitySta
   'assistant.poke':()=>assistant.poke(),
   'assistant.cancel':()=>assistant.cancel(),
   'configuration.read':()=>assistant.readConfiguration(),
+  'books.syncWorkspace':()=>books.syncWorkspace(),
   'books.list':args=>books.list(args.kind),
   'books.binding':()=>books.binding(),
   'books.options':()=>books.options(),

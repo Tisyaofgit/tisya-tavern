@@ -35,7 +35,7 @@ test('source text changed after the scan but before materialization is rejected 
  const {createInitialState,tableRegistry}=await import(new URL('../../../v3/host-runtime.mjs',harness));
  const context={chat:[{mes:'卡片开场',is_user:false},{mes:'交接。',is_user:true},{mes:'她交回旧钥匙。',is_user:false},{mes:'继续。',is_user:true}],chatMetadata:{}};let writes=0;
  const system={identities:{resolve:async floor=>({chatId:'c',branchId:'b',messageId:'m'+floor})},originals:{entryIdFor:async id=>'original:'+id.messageId,metadata:async()=>{throw Object.assign(Error('missing'),{code:'SOURCE_NOT_FOUND'});}},sourceBridge:{archiveSource:async()=>{writes++;throw Error('should not write changed source');}},storage:{read:async()=>{context.chat[2].mes='她改为收回旧钥匙。';return createInitialState({registry:tableRegistry});}}};
- const chain=createSourceChain({getContext:()=>context,system,getNative:()=>null,configuration:()=>({}),guard:()=>{},persist:async()=>{}});
+ const chain=createSourceChain({getContext:()=>context,system,getNative:()=>null,configuration:()=>({auxiliaryEnabled:true}),guard:()=>{},persist:async()=>{}});
  await assert.rejects(chain.build({requestKey:'race'}),{code:'SOURCE_CHANGED'});assert.equal(writes,0);assert.equal(context.chat[2].mes,'她改为收回旧钥匙。');
 });
 test('a branch retains malformed legacy chat without requiring that source to become archived prose',async()=>{

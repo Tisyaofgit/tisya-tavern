@@ -1089,7 +1089,7 @@ function validateFormula(node, depth = 0) {
   }
   return node;
 }
-var TABLE_SETTINGS = Object.freeze({ enabled: true, preflightMode: "combined", continuity: "hybrid", styleEnabled: true, archive: true, plot: true, preferences: true, offstage: true, nativeBridge: false, focusObjects: [], focusText: "", playerObjects: [], objectsSeparate: false, injection: "worldbook", retrieval: "keywords", topK: 8, originBook: "", sessionBook: "", originPins: [], hardRules: [], taskInstructions: {}, contextChars: 4e4 });
+var TABLE_SETTINGS = Object.freeze({ enabled: true, auxiliaryEnabled: false, preflightMode: "combined", continuity: "hybrid", styleEnabled: true, archive: true, plot: true, preferences: true, offstage: true, nativeBridge: false, focusObjects: [], focusText: "", playerObjects: [], objectsSeparate: false, injection: "worldbook", retrieval: "keywords", topK: 8, originBook: "", sessionBook: "", originPins: [], hardRules: [], taskInstructions: {}, contextChars: 4e4 });
 var FORM_GROUPS = Object.freeze([{ id: "definitions", name: "\u4E16\u754C\u5B9A\u4E49", tables: ["facts"] }, { id: "archives", name: "\u5BF9\u8C61\u5E95\u6863", tables: ["objects"] }, { id: "current", name: "\u5F53\u524D\u72B6\u6001", tables: ["scene", "state"] }, { id: "relationships", name: "\u5173\u7CFB\u4E0E\u5F52\u5C5E", tables: ["relations", "holdings"] }, { id: "knowledge", name: "\u8BA4\u77E5\u4E0E\u4FE1\u606F", tables: ["cognition", "experiences", "growth"] }, { id: "affairs", name: "\u4E8B\u52A1\u4E0E\u65E5\u7A0B", tables: ["tasks", "timers", "activities"] }, { id: "history", name: "\u4E8B\u4EF6\u4E0E\u4FEE\u6539\u5386\u53F2", tables: ["events"] }, { id: "threads", name: "\u7EBF\u7D22\u4E0E\u672A\u89E3\u4E8B\u9879", tables: ["clues"] }]);
 function validateScale(axis) {
   check(!(axis.\u539F\u751F\u5F15\u7528 && Object.hasOwn(axis, "\u503C")), "\u539F\u751F\u523B\u5EA6\u53EA\u4FDD\u5B58\u5F15\u7528\uFF0C\u4E0D\u590D\u5236\u6570\u503C");
@@ -2182,6 +2182,8 @@ function normalizeInput(input) {
   check(Array.isArray(i.archiveSources), "archiveSources is required");
   check(Array.isArray(i.activeSourceKeys) && i.activeSourceKeys.every((k) => typeof k === "string" && k) && new Set(i.activeSourceKeys).size === i.activeSourceKeys.length, "activeSourceKeys must be exact and unique");
   check(i.currentSourceKey === void 0 || i.currentSourceKey === null || i.activeSourceKeys.includes(i.currentSourceKey), "Current request context must be retained");
+  check(i.preflightSkipped === void 0 || ["disabled", "first-turn"].includes(i.preflightSkipped), "Invalid preflight policy");
+  if (i.preflightSkipped) check(i.archiveSources.length === 0 && !i.worldWindow, "Direct narrative cannot settle archives or world");
   i.preferenceSources ??= [];
   check(Array.isArray(i.preferenceSources), "preferenceSources must be a list");
   if (i.generationType === "advanced-reroll") {
@@ -2377,8 +2379,19 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
         state = await write(state, (s) => {
           s.requests[input.requestKey] = { inputHash, status: "awaiting-model", baseViewHash: null, createdAt: (/* @__PURE__ */ new Date()).toISOString(), ...writeNarrative ? {} : { execution: "forms" } };
         });
-        progress(input.requestKey, "model-a");
-        const requestView = publicView(view2), response = await requestA({ ...input, view: requestView, preferenceProjection: preferenceWeights(state, input) });
+        let response;
+        if (input.preflightSkipped) {
+          response = formatSimpleSheet({ requestKey: input.requestKey, archiveProposal: [], worldProposal: null, scope: { goal: input.currentUser ?? "", targets: [], timeWindow: "", stop: "", unknowns: [] }, preferenceCandidates: emptyProposal(), archiveRequests: [], creativeBrief: { goal: "", beats: [], pendingChoices: [], due: [], clues: [], constraints: [] }, pending: [] });
+        } else {
+          progress(input.requestKey, "model-a");
+          const requestView = publicView(view2);
+          try {
+            response = await requestA({ ...input, view: requestView, preferenceProjection: preferenceWeights(state, input) });
+          } catch (error) {
+            error.preflightRequestFailed = true;
+            throw error;
+          }
+        }
         guard();
         check(typeof response === "string", "Model A must return one complete simple sheet");
         state = await write(state, (s) => {
@@ -2574,7 +2587,7 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
       const creativeBrief = copy(result.creativeBrief);
       for (const beat of creativeBrief.beats) beat.basis = beat.basis.map(alias);
       for (const key of ["pendingChoices", "due", "clues", "constraints"]) creativeBrief[key] = creativeBrief[key].map(alias);
-      const view = currentView(state, input), snapshot2 = { requestKey: input.requestKey, generationType: input.generationType, ...input.identity ? { identity: copy(input.identity) } : {}, ...input.advancedReroll ? { advancedReroll: copy(input.advancedReroll) } : {}, ...projectWriter(view), preferenceProjection: preferenceWeights(state, input), scope: scope3, creativeBrief, toolReceipts: reads, preferenceDrafts: input.preferencesEnabled === false ? [] : state.preferenceDrafts.filter((d) => (!input.preferenceBankId || d.preferenceBankId === input.preferenceBankId) && d.status === "pending" && (!d.contextSource || input.activeSourceKeys.includes(d.contextSource) || d.contributions.some((c) => c.source.startsWith("feedback:")))).map((d) => ({ id: d.id, count: d.changes.length })), receipt: { archiveSources: copy(state.requests[input.requestKey].completedSources), world: plan.world?.receipt ?? null, modelCalls: 1 } };
+      const view = currentView(state, input), snapshot2 = { requestKey: input.requestKey, generationType: input.generationType, ...input.identity ? { identity: copy(input.identity) } : {}, ...input.advancedReroll ? { advancedReroll: copy(input.advancedReroll) } : {}, ...projectWriter(view), preferenceProjection: preferenceWeights(state, input), scope: scope3, creativeBrief, toolReceipts: reads, preferenceDrafts: input.preferencesEnabled === false ? [] : state.preferenceDrafts.filter((d) => (!input.preferenceBankId || d.preferenceBankId === input.preferenceBankId) && d.status === "pending" && (!d.contextSource || input.activeSourceKeys.includes(d.contextSource) || d.contributions.some((c) => c.source.startsWith("feedback:")))).map((d) => ({ id: d.id, count: d.changes.length })), receipt: { archiveSources: copy(state.requests[input.requestKey].completedSources), world: plan.world?.receipt ?? null, modelCalls: input.preflightSkipped ? 0 : 1, ...input.preflightSkipped ? { preflightSkipped: input.preflightSkipped } : {} } };
       const durableSnapshot = { ...copy(snapshot2), toolReceipts: reads.map((r) => ({ method: r.method, purpose: r.purpose, result: { status: r.result.status ?? "ok", snapshot: r.result.snapshot ?? null, has_more: r.result.has_more ?? false } })) };
       if (!writeNarrative) {
         await verifySources(input);

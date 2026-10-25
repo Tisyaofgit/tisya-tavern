@@ -17,6 +17,6 @@ test('ordinary HTML card with a global MVU runtime reaches both A and B without 
  const f=await createInstallerHarness({mvu:false}),opening='<div class="card">普通美化开场</div>';let reads=0;
  f.ctx.chat[0].mes=opening;f.ctx.characters=[{avatar:'ordinary.png',data:{first_mes:opening}}];f.ctx.characterId=0;
  f.target.Mvu={getMvuData(){reads++;throw Error('Unrelated global MVU');},parseMessage(){throw Error('No native proposal');},replaceMvuData(){throw Error('No native write');}};
- const world=defaultWorld(),data=emptyConfig();Object.assign(f.config,resolveRuntimeConfiguration({snapshot:{world,data,key:'ordinary',revision:0},context:f.ctx,target:f.target}));
+ const world=defaultWorld(),data=emptyConfig();world.tables={...world.tables,auxiliaryEnabled:true};Object.assign(f.config,resolveRuntimeConfiguration({snapshot:{world,data,key:'ordinary',revision:0},context:f.ctx,target:f.target}));
  try{await f.intercept('normal');assert.equal(f.errors.length,0,f.errors[0]?.stack);assert.equal(f.requests.length,2);assert.equal(f.ctx.chat[0].mes,opening);assert.equal(f.ctx.chat.at(-1).mes,wrap(newBody));assert.equal(reads,0);}finally{f.api.dispose();}
 });
