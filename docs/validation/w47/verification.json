@@ -1,0 +1,33 @@
+{
+  "version": "0.3.6-w47.1",
+  "utc": "2026-10-25T18:36:46.951277+00:00",
+  "timezone": "UTC+08:00",
+  "rootTests": 1499,
+  "v3Tests": 737,
+  "failed": 0,
+  "testCommand": "npm test",
+  "durationsMs": [
+    207664.374476,
+    97869.491367
+  ],
+  "testLogSha256": "10994d30a66243033babf0b9fe1249a95539aa89e2e5deeb786774297a8c054f",
+  "buildChecksPassed": true,
+  "runtimeEquivalence": {
+    "runtimeSha256": "13e99c6f4ef3c57490c29f4ef718bde3d72af739447f51934dd0fc2ef9ea765d",
+    "w46RuntimeSha256": "09cb51648b79f84c59fca2df97c8fc20dfe45e43d43d032dbbe6977f6e2cf74a",
+    "runtimeByteExactAfterVersionNormalization": true,
+    "hostRuntimeExact": true
+  },
+  "nativeCoverage": "W46 final Linux native ordinary Send and advanced reroll A/B, actual full requests with agent-authored local responses; semantic data restore with one native ctime/date_added card metadata update. W47 runtime differs only by version string.",
+  "unverified": [
+    "Android real device",
+    "external model providers",
+    "all historical feature combinations"
+  ],
+  "noPrivateNativeStateIncluded": true,
+  "retainedHostBoundaries": [
+    "fresh identity and source checks at actual send/write",
+    "real durable write/readback receipts",
+    "MVU helper debounced save pending trusted receipt support"
+  ]
+}

@@ -1,4 +1,5 @@
 import {validateRow,validateReferences,registryIndex} from '../tables/schema.js';
+import {mergeDefinitionRegistries} from './design-schema.mjs';
 import {tableRegistry} from './host-runtime.mjs';
 /** Three durable worldbooks, one physical-document writer per transport. */
 const BOOK = 'tisyaBook';
@@ -51,6 +52,12 @@ function parseManifest(data,name) {
   return {wire,value,physicalName:name};
 }
 function publicBook(record) { if(!record)return null; const v=record.value; return {id:v.id,kind:v.kind,displayName:v.displayName,revision:v.revision,physicalName:record.physicalName,...v.kind==='core'?{playerIds:clone(v.playerIds??[])}:{},...v.binding?.owner?{owner:clone(v.binding.owner)}:{},definitions:(v.definitions??[]).map(({id,revision,name})=>({id,revision,...name?{name}:{}}))}; }
+function definitionRegistry(record,ref) {
+  if(!ref.definitionId)return null;
+  const definition=(record.value.definitions??[]).find(d=>d.id===ref.definitionId&&d.revision===ref.revision);
+  check(definition,'DEFINITION_MISSING','Selected definition revision is absent',{ref});
+  return definition.registry?clone(definition.registry):null;
+}
 function definitionRows(record,ref) {
   if(!ref.definitionId)return [];
   check(Number.isSafeInteger(ref.revision)&&ref.revision>=0,'DEFINITION_REVISION','Selected definition requires an exact revision');
@@ -85,13 +92,16 @@ export async function compareDefinitionRows({definitionRows,currentRows,sources=
  */
 export function createBookManager(options) {
   const {transport,listNames,getContext,assertIdle,saveMetadata,readMetadata,
-    saveCurrentBranch,activateChat,activateUser,restoreNative,readNative,invalidate,projectLedger,readGlobalMetadata,saveGlobalMetadata,requireChatLocator=false,
+    saveCurrentBranch,activateChat,activateUser,restoreNative,readNative,invalidate,projectLedger,readGlobalMetadata,saveGlobalMetadata,readBindingSnapshot,requireChatLocator=false,
     registry=tableRegistry,now=()=>new Date().toISOString(),uuid=()=>globalThis.crypto.randomUUID()}=options;
   for(const [key,value] of Object.entries({listNames,getContext,assertIdle,saveMetadata,readMetadata}))check(typeof value==='function','CAPABILITY_UNAVAILABLE',`Book manager requires ${key}`,{capability:key});
   for(const key of ['readFresh','save','createEntry'])check(typeof transport?.[key]==='function','CAPABILITY_UNAVAILABLE',`Worldbook transport requires ${key}`,{capability:key});
+  const readPhysical=(name,options)=>(transport.readWorking??transport.readFresh).call(transport,name,options);
+  const workspaceDependencies=(...documents)=>typeof transport.prepare==='function'?documents.map(data=>transport.prepare(data)):[];
   const coordinate=coordinator(transport), index=new Map(), observed=new Map(), fullCache=new Map(), routes=new Map(), viewSnapshots=new WeakMap();
   registryIndex(registry);
-  let opTail=Promise.resolve();
+  let opTail=Promise.resolve(),currentRuntimeCheckpoint=null;
+  if(readBindingSnapshot!==undefined)check(typeof readBindingSnapshot==='function','CAPABILITY_UNAVAILABLE','readBindingSnapshot must be a function');
   const operation=work=>{const task=opTail.then(work);opTail=task.catch(()=>{});return task;};
   const capability=(name,fn)=>{check(typeof fn==='function','CAPABILITY_UNAVAILABLE',`${name} is unavailable`,{capability:name});return fn;};
   const context=()=>{const c=getContext();check(validOwner(c?.owner),'HOST_OWNER','Stable chat and branch IDs are unavailable');return clone(c);};
@@ -99,13 +109,20 @@ export function createBookManager(options) {
   async function idle(){const result=await assertIdle();check(result!==false,'BUSY','Finish the current generation before changing a binding');}
   async function scan() {
     const names=await listNames();check(Array.isArray(names)&&names.every(n=>typeof n==='string'),'BOOK_NAMES','Worldbook inventory must be a list of physical names');
-    const next=new Map();
-    for(const name of [...new Set(names)]){const data=await transport.readFresh(name);if(data===null)continue;document(data);const record=parseManifest(data,name);if(!record)continue;check(!next.has(record.value.id),'DUPLICATE_BOOK_ID','Managed book ID appears in multiple physical books',{id:record.value.id});next.set(record.value.id,record);fullCache.set(name,clone(data));}
+    const next=new Map(),documents=new Map(),unique=[...new Set(names)];
+    // Independent physical reads share no writer. Bound the fan-out and drain
+    // each batch even on failure; publish the new inventory only after every
+    // manifest and duplicate-ID check succeeds.
+    for(let offset=0;offset<unique.length;offset+=8){
+      const batch=unique.slice(offset,offset+8),results=await Promise.allSettled(batch.map(name=>readPhysical(name,{consume:false})));
+      for(let i=0;i<batch.length;i++){const result=results[i];if(result.status==='rejected')throw result.reason;const name=batch[i],data=result.value;if(data===null)continue;document(data);const record=parseManifest(data,name);if(!record)continue;check(!next.has(record.value.id),'DUPLICATE_BOOK_ID','Managed book ID appears in multiple physical books',{id:record.value.id});next.set(record.value.id,record);documents.set(name,clone(data));}
+    }
+    for(const [name,data]of documents)fullCache.set(name,data);
     index.clear();for(const [id,record]of next)index.set(id,record);return [...index.values()];
   }
   async function load(id,kind) {
     text(id,'Book ID');if(!index.has(id))await scan();const cached=index.get(id);check(cached,'BOOK_MISSING','Selected managed book does not exist',{id});
-    const data=await transport.readFresh(cached.physicalName);check(data,'BOOK_MISSING','Managed worldbook is missing',{id});document(data);const record=parseManifest(data,cached.physicalName);
+    const data=await readPhysical(cached.physicalName);check(data,'BOOK_MISSING','Managed worldbook is missing',{id});document(data);const record=parseManifest(data,cached.physicalName);
     check(record?.value.id===id,'BOOK_ID_CHANGED','Physical worldbook identity changed',{id});if(kind)check(record.value.kind===kind,'BOOK_KIND',`Expected ${kind} book`,{id});index.set(id,record);fullCache.set(record.physicalName,clone(data));return {...record,data};
   }
   function allocate(name,data) {
@@ -128,27 +145,29 @@ export function createBookManager(options) {
   }
   function playerValue(player) {check(plain(player),'PLAYER_REQUIRED','Select a player explicitly');text(player.id,'Player ID');return clone(player);}
   async function initialFor(binding) {
-    const origin=await selected(binding.origin,'origin'),core=await selected(binding.core,'core');
+    const [origin,core]=await Promise.all([selected(binding.origin,'origin'),selected(binding.core,'core')]);
     const rows=mergeRows(definitionRows(origin.record,origin.ref),definitionRows(core.record,core.ref));
+    validateDefinitionRows(rows,mergeDefinitionRegistries(registry,definitionRegistry(origin.record,origin.ref),definitionRegistry(core.record,core.ref)));
     if(binding.player.objectId)check(rows.some(row=>row.id===binding.player.objectId),'PLAYER_OBJECT','Selected player object is absent from the chosen definitions');
     return rows;
   }
-  function validateDefinitionRows(rows) {
+  function validateDefinitionRows(rows,definitionRegistry=registry) {
     check(Array.isArray(rows),'DEFINITION_ROWS','Definition rows must be an array');const ids=new Set();
-    for(const row of rows){check(!ids.has(row?.id),'DUPLICATE_ROW','Definition contains duplicate row IDs',{id:row?.id});ids.add(row?.id);check(!['native_cells','preferences'].includes(row?.table)&&!row?.values?.原生引用,'DEFINITION_AUTHORITY','Native values and confirmed preferences retain their own authority');validateRow(registry,row);check(Number.isSafeInteger(row.rev)&&row.rev>0,'ROW_REVISION','Definition rows require a positive row revision');}
-    validateReferences(rows,registry);for(const row of rows){for(const id of row.access.readers)check(id==='读者'||ids.has(id),'DEFINITION_ACCESS_REFERENCE','Definition reader must be the registered reader token or an included object',{rowId:row.id,id});for(const id of row.access.knowers)check(ids.has(id),'DEFINITION_ACCESS_REFERENCE','Definition knower must be inside the complete row set',{rowId:row.id,id});}
+    for(const row of rows){check(!ids.has(row?.id),'DUPLICATE_ROW','Definition contains duplicate row IDs',{id:row?.id});ids.add(row?.id);check(!['native_cells','preferences'].includes(row?.table)&&!row?.values?.原生引用,'DEFINITION_AUTHORITY','Native values and confirmed preferences retain their own authority');validateRow(definitionRegistry,row);check(Number.isSafeInteger(row.rev)&&row.rev>0,'ROW_REVISION','Definition rows require a positive row revision');}
+    validateReferences(rows,definitionRegistry);for(const row of rows){for(const id of row.access.readers)check(id==='读者'||ids.has(id),'DEFINITION_ACCESS_REFERENCE','Definition reader must be the registered reader token or an included object',{rowId:row.id,id});for(const id of row.access.knowers)check(ids.has(id),'DEFINITION_ACCESS_REFERENCE','Definition knower must be inside the complete row set',{rowId:row.id,id});}
   }
   async function materialFor(record,binding,currentRows) {
-    const origin=await selected(binding.origin,'origin'),core=await selected(binding.core,'core');
+    const [origin,core]=await Promise.all([selected(binding.origin,'origin'),selected(binding.core,'core')]);
     const sources=[['origin',origin],['core',core]].filter(([,entry])=>entry.ref.definitionId).map(([kind,entry])=>({kind,...clone(entry.ref),rowIds:definitionRows(entry.record,entry.ref).map(row=>row.id)}));
     const rows=mergeRows(definitionRows(origin.record,origin.ref),definitionRows(core.record,core.ref));
     if(currentRows===undefined){
       const logical=`tisya:tables:${record.value.id}`,entries=Object.values(namespace(logical,record.data));check(entries.length<=1,'DUPLICATE_LEDGER','Archive has multiple branch ledger entries');
       if(entries.length){check(disabled(entries[0]),'LEDGER_ACTIVATION','Branch ledger must remain disabled');check(equal(entries[0].extensions?.tisyaTableLedger?.owner,binding.owner),'LEDGER_OWNER','Branch ledger belongs to another owner');let state;try{state=JSON.parse(entries[0].content);}catch{throw new BookError('LEDGER_FORMAT','Branch ledger is not JSON');}
+        const selectedRegistry=mergeDefinitionRegistries(registry,definitionRegistry(origin.record,origin.ref),definitionRegistry(core.record,core.ref));for(const prior of [state.baseView?.registry,state.definitionRegistry,...(state.commits??[]).filter(commit=>commit.registry).map(commit=>commit.registry)].filter(Boolean))mergeDefinitionRegistries(prior,selectedRegistry);
         const result=await capability('projectLedger',projectLedger)({state,owner:clone(binding.owner),archiveId:record.value.id,locator:clone(binding.locator)});currentRows=Array.isArray(result)?result:result?.rows;check(Array.isArray(currentRows),'LEDGER_PROJECTION','Ledger projection must return current retained rows');
       }else currentRows=[];
     }
-    return {selectedDefinitionRows:rows,selectedDefinitionSources:sources,definitionConflicts:await compareDefinitionRows({definitionRows:rows,currentRows,sources})};
+    return {selectedDefinitionRows:rows,selectedDefinitionSources:sources,definitionConflicts:await compareDefinitionRows({definitionRows:rows,currentRows,sources}),...(typeof transport.prepare==='function'?{workspaceDependencies:workspaceDependencies(origin.record.data,core.record.data)}:{})};
   }
   async function globalBinding() {
     const pointer=await capability('readGlobalMetadata',readGlobalMetadata)();
@@ -215,7 +234,7 @@ export function createBookManager(options) {
         const current=await load(route.physicalId),existing=namespace(logical,current.data);check(stamp(existing)===expected,'NAMESPACE_CONFLICT','Logical namespace changed after it was read',{logical});
         const next=clone(current.data);for(const uid of Object.keys(existing))delete next.entries[uid];
         for(const [uid,entry]of Object.entries(desired)){check(!next.entries[uid],'WORLD_UID_COLLISION','UID belongs to a different namespace',{uid,logical});next.entries[uid]=entry;}
-        if(lease)await lease();await transport.save(route.physicalName,next);const readback=await load(route.physicalId);check(equal(readback.data,next),'NAMESPACE_READBACK','Physical book readback differs from merged write',{logical});observed.set(logical,stamp(desired));viewSnapshots.set(data,{logical,stamp:stamp(desired)});
+        const snapshot=lease?await lease():null;await transport.save(route.physicalName,next);const readback=await load(route.physicalId);snapshot?.guard();check(transport.capabilities?.workingDocuments?equal(namespace(logical,readback.data),desired):equal(readback.data,next),'NAMESPACE_READBACK','Physical book readback differs from merged write',{logical});observed.set(logical,stamp(desired));viewSnapshots.set(data,{logical,stamp:stamp(desired)});
         const reservations=coordinate.reserved.get(route.physicalName);for(const uid of Object.keys(desired))reservations?.delete(uid);
       });
     },
@@ -224,22 +243,38 @@ export function createBookManager(options) {
   async function readRuntime({currentRows}={}) {
     const active=await runtimeBinding();check(active.binding,'UNBOUND','Select an archive before starting generation');const c=context();check(equal(active.binding.owner,c.owner),'BINDING_OWNER','The selected archive belongs to another chat or branch');
     check(c.playerId===undefined||c.playerId===active.binding.player.id,'BINDING_PLAYER','Native player differs from the archive binding');
-    const archive=await load(active.archive.id,'archive'),origin=await selected(active.binding.origin,'origin'),core=await selected(active.binding.core,'core');
-    const global=await globalBinding();check(global.core,'GLOBAL_UNBOUND','请先选择全局基点书');
+    const [archive,origin,core,global]=await Promise.all([load(active.archive.id,'archive'),selected(active.binding.origin,'origin'),selected(active.binding.core,'core'),globalBinding()]);check(global.core,'GLOBAL_UNBOUND','请先选择全局基点书');
     const pref=await preference(active.binding.preference.owner,global.core.id);await registerPlayer(global.core.id,active.binding.player);checkPlayerPreference(active.binding.player,pref?.owner);const prefBook=await load(pref.bookId,'core');check((prefBook.value.preferenceOwners??[]).some(o=>equal(o,pref.owner)),'PREFERENCE_BINDING','Preference owner is not registered in the bound core book');
     const priorPreferenceId=Object.values(prefBook.data.entries).map(e=>e.extensions?.[NS]?.logicalId).find(id=>id===`tisya:preferences:${prefKey(pref.owner)}`);
     const books={originals:addRoute(`tisya:originals:${archive.value.id}`,archive,'originals'),tables:addRoute(`tisya:tables:${archive.value.id}`,archive,'tables',active.binding.owner),preferences:addRoute(priorPreferenceId??`tisya:preferences:${pref.bookId}:${prefKey(pref.owner)}`,prefBook,'preferences',{chatId:'tisya-preferences',branchId:'global'})};
-    const initialRows=mergeRows(definitionRows(origin.record,origin.ref),definitionRows(core.record,core.ref));
+    const initialRegistry=mergeDefinitionRegistries(registry,definitionRegistry(origin.record,origin.ref),definitionRegistry(core.record,core.ref)),initialRows=mergeRows(definitionRows(origin.record,origin.ref),definitionRows(core.record,core.ref));validateDefinitionRows(initialRows,initialRegistry);
     if(active.binding.player.objectId)check(initialRows.some(row=>row.id===active.binding.player.objectId),'PLAYER_OBJECT','Selected player object is absent from the chosen definitions');
     const leaseContext=context();
-    const lease=async()=>{guardContext(leaseContext);check(equal((await globalBinding()).pointer,global.pointer),'GLOBAL_CHANGED','全局基点已切换');check(equal(await readMetadata(),active.pointer),'RUNTIME_BINDING_CHANGED','This runtime belongs to an earlier binding');};
+    let readingLease=null;
+    // Only the native adapter's guarded snapshot may be reused for working reads.
+    // Legacy adapters still verify every read. Each actual write takes a fresh lease.
+    const lease=({fresh=false}={})=>{
+      guardContext(leaseContext);
+      if(!readBindingSnapshot&&readingLease)return readingLease;
+      const job=(async()=>{
+        const snapshot=readBindingSnapshot?await readBindingSnapshot({fresh}):await (async()=>{const [global,pointer]=await Promise.all([readGlobalMetadata(),readMetadata()]);return {global,pointer,guard:()=>guardContext(leaseContext)};})();
+        guardContext(leaseContext);check(typeof snapshot?.guard==='function','BINDING_SNAPSHOT','Binding snapshot has no live guard');
+        check(equal(snapshot.global,global.pointer),'GLOBAL_CHANGED','全局基点已切换');check(equal(snapshot.pointer,active.pointer),'RUNTIME_BINDING_CHANGED','This runtime belongs to an earlier binding');snapshot.guard();return snapshot;
+      })();
+      if(readBindingSnapshot)return job;
+      readingLease=job;return job.finally(()=>{if(readingLease===job)readingLease=null;});
+    };
+    const checkpointBinding=()=>lease({fresh:true});
+    // A workspace save only journals a local delta. Its physical flush owns the
+    // fresh durable binding check; a direct transport still checks here.
+    const writeLease=transport.capabilities?.physicalCommitAtOperationBoundary===true?lease:checkpointBinding;
     const scopedTransport=Object.freeze({capabilities:virtualTransport.capabilities,
-      readFresh:async logical=>{await lease();check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.readFresh(logical);},
+      readFresh:async logical=>{guardContext(leaseContext);check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');const [snapshot,data]=await Promise.all([lease(),virtualTransport.readFresh(logical)]);snapshot.guard();guardContext(leaseContext);return data;},
       createEntry:(logical,data)=>{guardContext(leaseContext);check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.createEntry(logical,data);},
-      save:async(logical,data)=>{await lease();check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.save(logical,data,lease);},
+      save:async(logical,data)=>{await lease();check(Object.values(books).includes(logical),'RUNTIME_BOOK','Logical book is outside this runtime');return virtualTransport.save(logical,data,writeLease);},
     });
-    const material=await materialFor(archive,active.binding,currentRows);
-    return {archive:publicBook(archive),origin:{...publicBook(origin.record),selection:origin.ref},core:{...publicBook(core.record),selection:core.ref},player:clone(active.binding.player),preferenceOwner:clone(pref.owner),preferenceBookId:pref.bookId,owner:clone(active.binding.owner),bindingRevision:active.binding.revision,books,transport:scopedTransport,initialRows,...material};
+    const material=await materialFor(archive,active.binding,currentRows);guardContext(leaseContext);currentRuntimeCheckpoint=checkpointBinding;
+    return {archive:publicBook(archive),origin:{...publicBook(origin.record),selection:origin.ref},core:{...publicBook(core.record),selection:core.ref},player:clone(active.binding.player),preferenceOwner:clone(pref.owner),preferenceBookId:pref.bookId,owner:clone(active.binding.owner),bindingRevision:active.binding.revision,checkpointBinding,books,transport:scopedTransport,initialRows,initialRegistry,...material,...(typeof transport.prepare==='function'?{workspaceDependencies:[...workspaceDependencies(archive.data,origin.record.data,core.record.data,prefBook.data),...(material.workspaceDependencies??[])]}:{})};
   }
   async function create(request) {
     await idle();const {kind,name,operationId}=request;const captured=kind==='core'?null:context(),guardCreation=()=>{if(captured)guardContext(captured);};check(['archive','origin','core'].includes(kind),'BOOK_KIND','Book kind must be archive, origin or core');text(name,'Book name');text(operationId,'Operation ID');
@@ -248,7 +283,7 @@ export function createBookManager(options) {
     if(duplicate){check(duplicate.value.creationFingerprint===creationFingerprint,'OPERATION_CONFLICT','Operation ID was reused with different creation data');return publicBook(duplicate);}
     const value={format:BOOK_FORMAT,id:`${kind}:${uuid()}`,kind,displayName:name,revision:0,createdAt:now(),updatedAt:now(),creationOperation:operationId,creationFingerprint,definitions:clone(request.definitions??[])};
     check(Array.isArray(value.definitions)&&value.definitions.every(d=>plain(d)&&typeof d.id==='string'&&Number.isSafeInteger(d.revision)&&d.revision>=0&&Array.isArray(d.rows)),'DEFINITION_FORMAT','Definitions require id, revision and rows');
-    for(const definition of value.definitions)validateDefinitionRows(definition.rows);
+    for(const definition of value.definitions){if(definition.registry)definition.registry=mergeDefinitionRegistries(registry,definition.registry);validateDefinitionRows(definition.rows,definition.registry??registry);}
     const keys=value.definitions.map(d=>`${d.id}@${d.revision}`);check(new Set(keys).size===keys.length,'DUPLICATE_DEFINITION','Definition IDs and revisions must be unique');
     if(kind==='archive'){
       const owner=clone(request.owner??captured.owner);check(validOwner(owner),'ARCHIVE_OWNER','Archive requires a stable chat and branch owner');
@@ -275,19 +310,19 @@ export function createBookManager(options) {
     const next=await writeManifest(id,expectedRevision,value=>{if(captured)guardContext(captured);value.displayName=name;value.operations={...(value.operations??{}),[operationId]:{kind:'rename',name}};});return publicBook(next);
   }
   async function saveDefinition(request) {
-    await idle();const captured=context(),{bookId,expectedBookRevision,expectedDefinitionRevision,name,rows,operationId}=request;text(operationId,'Operation ID');text(name,'Definition name');validateDefinitionRows(rows);
+    await idle();const captured=context(),{bookId,expectedBookRevision,expectedDefinitionRevision,name,rows,operationId}=request;text(operationId,'Operation ID');text(name,'Definition name');const definitionRegistry=request.registry?mergeDefinitionRegistries(registry,request.registry):registry;validateDefinitionRows(rows,definitionRegistry);
     const current=await load(bookId);check(['origin','core'].includes(current.value.kind),'BOOK_KIND','Definitions belong in origin or core books');const requestFingerprint=await fingerprint(request),receipt=current.value.operations?.[operationId];
     if(receipt){check(receipt.kind==='definition'&&receipt.fingerprint===requestFingerprint,'OPERATION_CONFLICT','Definition operation ID was reused with different content');return readDefinition({bookId,definitionId:receipt.definitionId,revision:receipt.revision});}
     check(Number.isSafeInteger(expectedBookRevision),'EXPECTED_REVISION','Saving a definition requires the observed book revision');const definitionId=request.definitionId??`definition:${uuid()}`;text(definitionId,'Definition ID');
     const previous=(current.value.definitions??[]).filter(d=>d.id===definitionId),latest=previous.reduce((max,d)=>Math.max(max,d.revision),0);
     check(previous.length?expectedDefinitionRevision===latest:expectedDefinitionRevision===undefined||expectedDefinitionRevision===null,'DEFINITION_CONFLICT','Definition revision changed',{definitionId,expectedDefinitionRevision,actualRevision:latest});
-    const revision=latest+1,definition={id:definitionId,revision,name,rows:clone(rows),createdAt:now()};
+    const revision=latest+1,definition={id:definitionId,revision,name,rows:clone(rows),...(request.registry?{registry:clone(definitionRegistry)}:{}),createdAt:now()};
     await writeManifest(bookId,expectedBookRevision,next=>{guardContext(captured);next.definitions=[...(next.definitions??[]),definition];next.operations={...(next.operations??{}),[operationId]:{kind:'definition',definitionId,revision,fingerprint:requestFingerprint}};});
     return readDefinition({bookId,definitionId,revision});
   }
   async function readDefinition({bookId,definitionId,revision}) {
     const record=await load(bookId);check(['origin','core'].includes(record.value.kind),'BOOK_KIND','Definitions belong in origin or core books');text(definitionId,'Definition ID');check(Number.isSafeInteger(revision)&&revision>=0,'DEFINITION_REVISION','Read an exact definition revision');const matches=(record.value.definitions??[]).filter(d=>d.id===definitionId&&d.revision===revision);check(matches.length===1,'DEFINITION_MISSING','Definition revision does not exist');
-    return {bookId,bookRevision:record.value.revision,kind:record.value.kind,definitionId,revision,name:matches[0].name??definitionId,rows:clone(matches[0].rows)};
+    return {bookId,bookRevision:record.value.revision,kind:record.value.kind,definitionId,revision,name:matches[0].name??definitionId,rows:clone(matches[0].rows),...(matches[0].registry?{registry:clone(matches[0].registry)}:{})};
   }
   function intentEntry(data,id) {const matches=Object.values(data.entries).filter(e=>e.extensions?.[INTENT]?.id===id);check(matches.length<=1,'DUPLICATE_INTENT','Duplicate binding intent');return matches[0]??null;}
   async function putIntent(archiveId,intent) {
@@ -416,7 +451,7 @@ export function createBookManager(options) {
     const revision=record?.value.revision??null,chosen=requestedRevision??revision;
     check(requestedRevision===undefined||Number.isSafeInteger(chosen)&&chosen>0&&chosen<=revision,'CONFIGURATION_REVISION','指定配置版本不存在');
     const version=record?.value.versions.find(v=>v.revision===chosen);
-    return {exists:!!record,bookId:location.bookId,owner:clone(location.owner),forkOf:clone(location.forkOf),binding:clone(location.binding),revision,selectedRevision:chosen,domains:clone(version?.domains??{}),worldBindings:clone(version?.worldBindings??[]),versions:(record?.value.versions??[]).map(({revision,createdAt,operationId})=>({revision,createdAt,operationId}))};
+    return {exists:!!record,bookId:location.bookId,owner:clone(location.owner),forkOf:clone(location.forkOf),binding:clone(location.binding),revision,selectedRevision:chosen,domains:clone(version?.domains??{}),worldBindings:clone(version?.worldBindings??[]),versions:(record?.value.versions??[]).map(({revision,createdAt,operationId})=>({revision,createdAt,operationId})),...(typeof transport.prepare==='function'?{workspaceDependencies:workspaceDependencies(location.record.data)}:{})};
   }
   async function readConfiguration({revision}={}){
     const location=await configurationLocation(),record=configurationRecord(location),view=configurationView(location,record,revision);
@@ -447,7 +482,7 @@ export function createBookManager(options) {
       let saveError;try{await transport.save(current.record.physicalName,current.record.data);}catch(error){saveError=error;}
       const actual=await configurationLocation(),saved=configurationRecord(actual);check(equal(actual.binding,first.binding),'CONFIGURATION_BINDING','配置已写入原书，全局基点已切换');
       if(!equal(saved?.value,value)){if(saveError)throw saveError;throw new BookError('CONFIGURATION_READBACK','配置写回核验未完成，草稿保留');}
-      check(equal(actual.record.data,current.record.data),'CONFIGURATION_READBACK','配置书其他条目在写回时发生变化');return configurationView(actual,saved);
+      check(transport.capabilities?.workingDocuments||equal(actual.record.data,current.record.data),'CONFIGURATION_READBACK','配置书其他条目在写回时发生变化');return configurationView(actual,saved);
     });
   }
   return Object.freeze({
@@ -456,7 +491,7 @@ export function createBookManager(options) {
     globalBinding,selectGlobalCore:request=>operation(()=>selectGlobalCore(request)),
     create:request=>operation(()=>create(request)),rename:request=>operation(()=>rename(request)),
     saveDefinition:request=>operation(()=>saveDefinition(request)),readDefinition,
-    binding:runtimeBinding,readRuntime,
+    binding:runtimeBinding,readRuntime,checkpointBinding:()=>currentRuntimeCheckpoint?currentRuntimeCheckpoint():readBindingSnapshot?readBindingSnapshot({fresh:true}):Promise.all([readGlobalMetadata(),readMetadata()]),
     select:request=>operation(()=>select(request)),
     fork:request=>operation(()=>fork(request)),
     saveDraft,readConfiguration,saveConfiguration,

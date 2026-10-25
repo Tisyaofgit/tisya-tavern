@@ -22,6 +22,38 @@ function fixture(request=async()=>response(),{template=true,sourceProvider}={}){
 }
 async function generate(f){const available=await f.service.inspect();return f.service.generate({openingId:available.selectedOpeningId,sourceStamp:available.sourceStamp});}
 
+async function cachedNativeFixture(request){
+ const definitionBasis={identity:{cardId:'shop.png'},sourceCardRaw:{fields:{description:'已确认定义'}},sourceBooks:[],names:[]};let externalRevision=1;const checkpoints=[];
+ const snapshot={definitionBasis,basis:{revision:1},sourceCardRaw:definitionBasis.sourceCardRaw,sourceBooks:[],sourceCard:'已确认定义'};
+ const sourceProvider={read:async()=>copy(snapshot),assertFresh:async prior=>{checkpoints.push(externalRevision);if(prior.basis.revision!==externalRevision)throw Error('原始世界书已改变');return copy(snapshot);}};
+ const f=fixture(request,{sourceProvider}),state=f.state();state.commits.push({id:'init-cached',kind:'manual',source:null,depends:null,changes:[],anchors:[],design:{task:'extract',sourceMode:'native',definitionHash:await digest(definitionBasis)}});state.revision++;f.setState(state);
+ return {...f,checkpoints,changeExternal:()=>externalRevision++};
+}
+
+test('opening sends only after a fresh check even when passive reads reuse a durable source snapshot',async()=>{
+ const f=await cachedNativeFixture(),available=await f.service.inspect();assert.deepEqual(f.checkpoints,[]);f.changeExternal();
+ await assert.rejects(f.service.generate({openingId:available.selectedOpeningId,sourceStamp:available.sourceStamp}),/原始世界书已改变/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);assert.deepEqual(f.checkpoints,[2]);
+});
+test('opening forwards its original snapshot check through request refresh to the actual send boundary',async()=>{
+ let sends=0;const f=await cachedNativeFixture(async(_input,options)=>{assert.equal(typeof options.verifySources,'function');f.changeExternal();await options.verifySources({signal:options.signal});sends++;return response();});
+ await assert.rejects(generate(f),/原始世界书已改变/);assert.equal(sends,0);assert.equal(f.writes(),0);assert.deepEqual(f.checkpoints,[1,2]);
+});
+
+test('an external edit during opening generation rejects the result while working reads remain cached',async()=>{
+ const f=await cachedNativeFixture(async()=>{f.changeExternal();return response();});await assert.rejects(generate(f),/原始世界书已改变/);assert.equal(f.calls(),1);assert.equal(f.writes(),0);assert.deepEqual(f.checkpoints,[1,2]);
+});
+
+test('opening rechecks native sources immediately before committing a cached draft',async()=>{
+ const f=await cachedNativeFixture(),draft=await generate(f);assert.deepEqual(f.checkpoints,[1,1]);const preview=await f.service.preview(draft);assert.deepEqual(f.checkpoints,[1,1]);f.changeExternal();
+ await assert.rejects(f.service.save(preview),/原始世界书已改变/);assert.equal(f.calls(),1);assert.equal(f.writes(),0);assert.deepEqual(f.checkpoints,[1,1,2]);
+});
+
+test('opening forwards streaming content and reports validation separately from response completion',async()=>{
+ const events=[],f=fixture(async(input,options)=>{assert.equal(typeof options.onProgress,'function');options.onProgress({stage:'receiving',characters:15,text:'开局草稿的可见文本'});options.onProgress({stage:'received',characters:15,text:'开局草稿的可见文本'});return response();}),source=await f.service.inspect();
+ await f.service.generate({openingId:source.selectedOpeningId,sourceStamp:source.sourceStamp,onProgress:event=>events.push(event)});
+ assert.deepEqual(events.map(e=>e.phase??e.stage),['sources','preparing','receiving','received','validating']);assert.equal(f.writes(),0);
+});
+
 test('opening reads confirmed definitions and selected actual opener, creates exact user/team dossiers, then persists one opening without history writes',async()=>{
  const f=fixture(async()=>formatSimpleSheet(response())),available=await f.service.inspect();assert.equal(available.ready,true);assert.equal(available.selectedOpeningId,'chat:0');assert.equal(available.openings.length,1);assert.equal(available.canEstablish,true);assert.equal(f.writes(),0);
  const d=await generate(f);assert.equal(f.calls(),1);assert.equal(f.writes(),0);assert.equal(f.payload().phase,'opening');assert.equal(f.payload().sourceUser.objectId,'new:opening-user');assert.equal(f.payload().selectedOpening.text,opener);assert.equal(f.payload().sourceHistory,undefined);assert.deepEqual(f.payload().confirmedTemplate.rowIds,[row.id]);assert.equal(JSON.stringify(f.payload()).includes('未选开场'),false);assert.equal(d.changes[0].values.描述,'沈舟是一名年轻木匠。');assert.deepEqual(d.protectedIds,['new:opening-user']);
@@ -76,13 +108,13 @@ test('saved opening survives a new service instance and player reference never c
 
 test('confirmed native initialization rereads source-backed opening definitions and rejects changed card/worldbook before generation',async()=>{
  const raw={sourceCardRaw:{fields:{name:'南街修理铺'},entries:[]},sourceBooks:[{book:'配套',entry:'初始关系',uid:4,content:'开局时阿禾是沈舟的记账同伴。'}],sourceCard:'开局时阿禾是沈舟的记账同伴。'};let snapshot={...copy(raw),basis:{card:'v1',books:'v1'},definitionBasis:{identity:{cardId:'shop.png'},...copy(raw),names:['配套']}};
- const f=fixture(async input=>{assert.equal(input.sourceBooks[0].content,raw.sourceBooks[0].content);assert.equal(input.sourceSupplement,'开局时携带工具箱。');assert.equal(input.sourceCard,undefined);assert.deepEqual(input.confirmedTemplate.rowIds,[row.id]);const result=response();result.initial.changes.push(op('new:relation','relations',{名称:'开局同伴',主体:'new:he',对象:input.sourceUser.objectId,证据:raw.sourceBooks[0].content},raw.sourceBooks[0].content));return result;},{sourceProvider:{read:async()=>copy(snapshot)}});
+ const f=fixture(async input=>{assert.equal(input.sourceBooks[0].content,raw.sourceBooks[0].content);assert.equal(input.sourceSupplement,'开局时携带工具箱。');assert.equal(input.sourceCard,undefined);assert.deepEqual(input.confirmedTemplate.rowIds,[row.id]);const result=response();result.initial.changes.push(op('new:relation','relations',{名称:'开局同伴',主体:'new:he',对象:input.sourceUser.objectId,证据:raw.sourceBooks[0].content},raw.sourceBooks[0].content));return result;},{sourceProvider:{read:async()=>copy(snapshot),assertFresh:async prior=>{assert.deepEqual(prior.basis,snapshot.basis);return copy(snapshot);}}});
  const state=f.state();state.commits.push({id:'init-native',kind:'manual',source:null,depends:null,changes:[],anchors:[],design:{task:'extract',sourceMode:'native',templateConfirmed:true,sourceHash:'source',definitionHash:await digest(snapshot.definitionBasis),sourceSupplement:'开局时携带工具箱。'}});state.revision++;f.setState(state);const d=await generate(f);assert(d.changes.some(ch=>ch.table==='relations'));await f.service.save(d);assert.equal(f.state().commits.at(-1).openingEstablishment.source.hash,await sha256Utf16(opener));
- const g=fixture(undefined,{sourceProvider:{read:async()=>copy(snapshot)}});g.setState(state);snapshot.definitionBasis.sourceBooks[0].content='关系已修改';await assert.rejects(generate(g),/配套世界书已改变/);assert.equal(g.calls(),0);assert.equal(g.writes(),0);
+ const g=fixture(undefined,{sourceProvider:{read:async()=>copy(snapshot),assertFresh:async prior=>{assert.deepEqual(prior.basis,snapshot.basis);return copy(snapshot);}}});g.setState(state);snapshot.definitionBasis.sourceBooks[0].content='关系已修改';await assert.rejects(generate(g),/配套世界书已改变/);assert.equal(g.calls(),0);assert.equal(g.writes(),0);
 });
 
 test('opening source freshness includes raw snapshot changes during a task, while a prior managed-book update does not invalidate confirmed definitions',async()=>{
- const definitionBasis={identity:{cardId:'shop.png'},sourceCardRaw:{fields:{description:'已确认定义'}},sourceBooks:[],names:[]};let rawRevision=2;const provider={read:async()=>({definitionBasis:copy(definitionBasis),basis:{revision:rawRevision},sourceCardRaw:copy(definitionBasis.sourceCardRaw),sourceBooks:[],sourceCard:'已确认定义'})};
+ const definitionBasis={identity:{cardId:'shop.png'},sourceCardRaw:{fields:{description:'已确认定义'}},sourceBooks:[],names:[]};let rawRevision=2;const read=async()=>({definitionBasis:copy(definitionBasis),basis:{revision:rawRevision},sourceCardRaw:copy(definitionBasis.sourceCardRaw),sourceBooks:[],sourceCard:'已确认定义'}),provider={read,assertFresh:async prior=>{const current=await read();assert.deepEqual(current.basis,prior.basis);return current;}};
  const f=fixture(undefined,{sourceProvider:provider}),state=f.state();state.commits.push({id:'init',kind:'manual',source:null,depends:null,changes:[],anchors:[],design:{task:'extract',sourceMode:'native',definitionHash:await digest(definitionBasis)}});state.revision++;f.setState(state);const d=await generate(f);assert.equal(f.calls(),1);rawRevision++;await assert.rejects(f.service.save(d),/草稿依据已改变/);assert.equal(f.writes(),0);
 });
 
@@ -98,4 +130,43 @@ test('native initialization saved as a real origin definition retains source pro
 
 test('mixed confirmed native definition versions fail explicitly rather than choosing the last row provenance',async()=>{
  const f=fixture();f.binding.initialRows[0].designProvenance={sourceMode:'native',definitionHash:'first',sourceSupplement:'第一版'};f.binding.initialRows.push({...copy(row),id:'another-definition',values:{...copy(row.values),名称:'北街铺'},designProvenance:{sourceMode:'native',definitionHash:'second',sourceSupplement:'第二版'}});await assert.rejects(f.service.inspect(),/不同角色卡资料版本/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
+});
+
+function initializedPlayer(f){
+ const player={id:'player:initialized',table:'objects',rev:1,values:{名称:'沈舟',类型:'character',描述:'已确认的木匠档案'},source:null,access:copy(access),lockedFields:[]},state=f.state();
+ state.commits.push({id:'initialization-player',kind:'manual',source:null,depends:null,changes:[{id:player.id,before:null,after:copy(player)}],anchors:[],design:{task:'extract',sourceHash:'card-source'}});state.revision++;f.setState(state);return player;
+}
+function existingPlayerResponse(input){const result=response();result.initial.changes[0].values.参与者[0]=input.sourceUser.objectId;return result;}
+
+test('an initialized same-name character requires explicit opening selection and persists without duplicating the player',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),available=await f.service.inspect(),originalBinding=copy(f.binding);
+ assert.deepEqual(available.playerCandidates,[{id:player.id,name:'沈舟',description:'已确认的木匠档案'}]);assert.equal(available.resolvedPlayerId,null);assert.equal(available.playerSelectionRequired,true);
+ await assert.rejects(generate(f),/主控档案|明确用户身份/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
+ const draft=await f.service.generate({openingId:available.selectedOpeningId,sourceStamp:available.sourceStamp,playerObjectId:player.id});
+ assert.equal(f.payload().sourceUser.objectId,player.id);assert.equal(draft.changes.some(ch=>ch.id==='new:opening-user'),false);assert.deepEqual(draft.player,{id:'persona:zhou',objectId:player.id,name:'沈舟',created:false});
+ await f.service.preview(draft);const saved=await f.service.save(draft);assert.equal(saved.player.objectId,player.id);assert.equal((await f.service.save(draft)).reused,true);assert.equal(f.writes(),1);
+ assert.deepEqual(f.binding,originalBinding);const view=projectRetained(f.state(),[]);assert.equal(view.rows.filter(r=>r.values.名称==='沈舟').length,1);assert.deepEqual(view.rows.find(r=>r.id===player.id),player);assert.equal(resolveOpeningPlayer(view,f.binding),player.id);
+ const reopened=createOpeningService({getSession:async()=>f.session,getContext:()=>f.context}),inspection=await reopened.inspect();assert.equal(inspection.resolvedPlayerId,player.id);assert.equal(inspection.alreadyEstablished,true);assert.equal(inspection.playerSelectionRequired,false);assert.equal(f.context.chat[0].mes,opener);
+});
+
+test('opening selection rejects missing/non-character IDs and cannot override an existing binding',async()=>{
+ for(const id of ['missing',row.id,{},5]){const f=fixture(existingPlayerResponse);initializedPlayer(f);await assert.rejects(f.service.generate({openingId:'chat:0',playerObjectId:id}),/主控档案|人物档案/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);}
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f);f.binding.player.objectId=player.id;
+ await assert.rejects(f.service.generate({openingId:'chat:0',playerObjectId:row.id}),/已绑定/);assert.equal(f.calls(),0);assert.equal((await f.service.inspect()).resolvedPlayerId,player.id);
+});
+
+test('opening player selection becomes stale if persona binding changes before response or save',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});
+ f.binding.player.objectId=row.id;await assert.rejects(f.service.preview(draft),/依据已改变/);await assert.rejects(f.service.save(draft),/依据已改变/);assert.equal(f.writes(),0);
+ const g=fixture(input=>{g.binding.player.objectId=row.id;return existingPlayerResponse(input);}),other=initializedPlayer(g);await assert.rejects(g.service.generate({openingId:'chat:0',playerObjectId:other.id}),/生成期间/);assert.equal(g.writes(),0);
+ const h=fixture(existingPlayerResponse),savedPlayer=initializedPlayer(h),saved=await h.service.generate({openingId:'chat:0',playerObjectId:savedPlayer.id});await h.service.save(saved);h.binding.player.id='persona:other';await assert.rejects(h.service.save(saved),/身份.*改变|用户.*改变/);assert.equal(h.writes(),1);
+});
+
+test('a lost opening save acknowledgement cannot be confirmed under a different persona',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});f.failAck();await assert.rejects(f.service.save(draft),/acknowledgement/);f.binding.player.id='persona:other';await assert.rejects(f.service.save(draft),/用户身份已改变/);assert.equal(f.writes(),1);assert.equal(f.state().commits.at(-1).openingEstablishment.player.id,'persona:zhou');
+});
+
+test('opening candidate selection recognizes registered character subtypes without changing another dossier',async()=>{
+ const f=fixture(existingPlayerResponse),player=initializedPlayer(f),state=f.state();state.baseView.registry.types.push({id:'artisan',name:'工匠',version:1,parent:'character',aliases:[],fields:{工种:{type:'text'}}});state.commits.at(-1).changes[0].after.values.类型='artisan';const other={...copy(player),id:'player:other',values:{...copy(player.values),名称:'另一位木匠'}};state.commits.at(-1).changes.push({id:other.id,before:null,after:other});f.setState(state);
+ const available=await f.service.inspect();assert.deepEqual(available.playerCandidates.map(p=>p.id),[player.id,other.id]);assert.equal(available.resolvedPlayerId,null);await assert.rejects(generate(f),/明确选择/);const draft=await f.service.generate({openingId:'chat:0',playerObjectId:player.id});await f.service.save(draft);assert.equal(resolveOpeningPlayer(projectRetained(f.state(),[]),f.binding),player.id);assert.deepEqual(projectRetained(f.state(),[]).rows.find(r=>r.id===other.id),other);assert.equal(projectRetained(f.state(),[]).rows.filter(r=>r.values.名称==='沈舟').length,1);
 });

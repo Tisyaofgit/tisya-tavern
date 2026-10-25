@@ -15,8 +15,15 @@ test('historical sources supply explicit prose paragraph indices, never execute 
  const old=legacy.replace('</reply>','<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable></reply>');const f=await createInstallerHarness({provider:({stage,messages})=>{if(stage!=='a')return wrap(newBody);const proposal=parseSimpleSheet(sheet(messages));for(const p of proposal.archiveProposal)p.proposal.changes=[];return formatSimpleSheet(proposal);}});f.ctx.chat[2].mes=old;
  try{await f.intercept('normal');assert.equal(f.errors.length,0,f.errors[0]?.stack);const a=xml(f.requests[0].messages,'TISYA.DATA.SOURCE').archiveSources[0];assert.equal(a.archiveSource.text,old);assert.deepEqual(a.archiveSource.paragraphs.map(p=>p.text),['她递来钥匙。','她约好明天回来。']);assert.equal(a.nativeBridge.enabled,false);assert.equal(f.nativeMvu.counts().parses,0);assert(!JSON.stringify(f.requests[1].messages).includes('PRIVATE_TASK'));assert.equal(f.ctx.chat[2].mes,old);}finally{f.api.dispose();}
 });
-test('a malformed V3 source never falls back to historical import; one CRLF is not a blank line',async()=>{
+test('a malformed retained V3 source stays pending without blocking send or being archived as raw thinking; one CRLF is not a blank line',async()=>{
  const f=await createInstallerHarness({mvu:false});f.ctx.chat[2].mes='<reply><think phase="before">broken</think><body>unnumbered</body></reply>';
- try{await f.api.getSession();await f.intercept('normal');assert.equal(f.errors.length,1);assert.equal(f.requests.length,0);}finally{f.api.dispose();}
+ try{await f.api.getSession();await f.intercept('normal');assert.equal(f.errors.length,0);assert.equal(f.requests.length,2);assert.equal(f.ctx.chatMetadata.tisya_v3_host.sourceDiagnostics[0].status,'pending');assert.equal(xml(f.requests[0].messages,'TISYA.DATA.SOURCE').archiveSources.length,0);}finally{f.api.dispose();}
  assert.equal(parseHistoricalBody('一句\r\n换行').length,1);assert.equal(parseHistoricalBody('一句\r\n\r\n另段').length,2);
+});
+
+test('historical self-closing control and display placeholders are complete, never prose evidence',()=>{
+ const source='<reply><task/>\n<body>1 已抵达演播厅。\n\n2 经纪人通知五分钟后集合。</body>\n<archive/>\n<memory format="json"/>\n<StatusPlaceHolderImpl/>\n</reply>';
+ const spans=parseHistoricalBody(source),prose=spans.map(p=>source.slice(p.contentStart,p.contentEnd));
+ assert.deepEqual(prose,['1 已抵达演播厅。','2 经纪人通知五分钟后集合。']);
+ assert.throws(()=>parseHistoricalBody('<body>正文。</body><archive>'),{code:'HISTORY_CONTROL_BLOCK'});
 });

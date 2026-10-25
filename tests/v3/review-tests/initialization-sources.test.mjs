@@ -6,6 +6,11 @@ import {tableRegistry,createInitialState,projectRetained} from '../../../v3/host
 import {digest} from '../../../tables/books.js';
 const copy=structuredClone,access={readers:['读者'],knowers:[]};
 const definition='温榆是一名守门人。',lore='银钥能够开启西侧小门。';
+test('automatic initialization forwards actual streaming progress then validates before exposing a draft',async()=>{
+ const events=[],f=fixture(({options,proposal})=>{assert.equal(typeof options.onProgress,'function');options.onProgress({stage:'receiving',characters:12,text:'模型已返回的可见文本'});return proposal();});
+ const d=await f.archives.generateDesign({mode:'extract',onProgress:event=>events.push(event)});
+ assert.deepEqual(events.map(e=>e.phase??e.stage),['sources','preparing','receiving','validating']);assert.equal(d.changes.length,1);assert.equal(f.writes(),0);
+});
 function fixture(request){
  const context={chatId:'chat',characterId:0,characters:[{avatar:'gate.png',name:'温榆',data:{name:'温榆',description:definition,first_mes:'开场白不可进入模板',mes_example:'示例不可进入模板',alternate_greetings:['备选不可进入模板'],extensions:{world:'门庭'},character_book:{entries:[{id:1,content:'内嵌法则',enabled:true},{id:2,content:'停用内嵌不可进入模板',enabled:false}]}}}],chat:[{mes:'历史不可进入模板'}],name1:'玩家',powerUserSettings:{persona_description:'玩家设定不可进入模板'}};
  const documents={'门庭':{entries:{0:{uid:0,comment:'钥匙',content:lore},1:{uid:1,comment:'停用',content:'停用书不可进入模板',disable:true},2:{uid:2,comment:'脚本',content:'<% throw Error("不要执行") %>'},3:{uid:3,comment:'data',content:'当前进度不可进入模板',extensions:{tisyaTableLedger:{}}}}}},names=['门庭'];
@@ -17,8 +22,12 @@ function fixture(request){
  const archives=createArchiveService({getSession:async()=>session,getContext:()=>context,sourceProvider,requestTask:async(task,payload,options)=>{calls++;input=copy(payload);assert.equal(task,'templateInit');return request?request({task,payload,options,proposal,context,documents}):proposal();}});
  return {archives,sourceProvider,context,documents,names,owner,proposal,state:()=>copy(state),writes:()=>writes,reads:()=>reads,calls:()=>calls,input:()=>copy(input)};
 }
+test('native initialization forwards captured source verification to the actual send boundary',async()=>{
+ let sends=0;const f=fixture(async({options,documents,proposal})=>{assert.equal(typeof options.verifySources,'function');documents['门庭'].entries[0].content='发送前已编辑';await options.verifySources({signal:options.signal});sends++;return proposal();});
+ await assert.rejects(f.archives.generateDesign({mode:'extract'}),/已改变/);assert.equal(sends,0);assert.equal(f.writes(),0);
+});
 test('automatic initialization reads current card and linked books without paste, then saves only a confirmed reusable baseline',async()=>{
- const f=fixture(),summary=await f.archives.inspectDesignSources();assert.equal(summary.card.id,'gate.png');assert.deepEqual(summary.books,[{name:'门庭',entries:1,disabledEntries:1}]);assert.equal(summary.counts.disabled,2);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
+ const f=fixture(),summary=await f.archives.inspectDesignSources();assert.equal(summary.card.id,'gate.png');assert.deepEqual(summary.books,[{name:'门庭',entries:1,disabledEntries:1,duplicateEntries:0}]);assert.equal(summary.counts.disabled,2);assert.equal(summary.counts.embeddedEntries,1);assert.equal(summary.counts.linkedEntries,1);assert.equal(summary.counts.entries,summary.counts.embeddedEntries+summary.counts.linkedEntries);assert.match(summary.notes.join('\n'),/动态模板不纳入固定设定提炼.*不会关闭原卡变量功能/);assert.equal(f.calls(),0);assert.equal(f.writes(),0);
  const draft=await f.archives.generateDesign({mode:'extract',sourceToken:summary.token});assert.equal(f.calls(),1);assert.equal(draft.sourceMode,'native');assert.equal(draft.nextStep,'opening');assert.equal(f.input().phase,'definition');assert.equal(f.input().sourceCardRaw.fields.description,definition);assert.equal(f.input().sourceBooks[0].content,lore);assert.equal(f.writes(),0);
  const payload=JSON.stringify(f.input());for(const text of ['开场白不可进入模板','示例不可进入模板','备选不可进入模板','停用内嵌不可进入模板','历史不可进入模板','玩家设定不可进入模板','停用书不可进入模板','不要执行','当前进度不可进入模板'])assert.equal(payload.includes(text),false,text);
  await f.archives.saveDesign(draft);assert.equal(f.writes(),1);const commit=f.state().commits[0];assert.equal(commit.design.templateConfirmed,true);assert.equal(commit.design.sourceMode,'native');assert.equal(commit.source,null);assert.equal(commit.contextSource,null);assert.equal(projectRetained(f.state(),[]).rows[0].values.名称,'温榆');assert.equal(JSON.stringify(f.state()).includes('银钥能够'),false);
@@ -59,4 +68,15 @@ test('saving a managed ledger in a linked book does not change the effective con
  f.documents['门庭'].entries[3].content=JSON.stringify(f.state());const after=await f.sourceProvider.read();assert.notDeepEqual(before.basis,after.basis);assert.deepEqual(before.definitionBasis,after.definitionBasis);assert.equal(await digest(after.definitionBasis),fingerprint);
  f.context.chatId='another-chat';assert.equal(await digest((await f.sourceProvider.read()).definitionBasis),fingerprint);
  f.documents['门庭'].entries[1].disable=false;assert.notEqual(await digest((await f.sourceProvider.read()).definitionBasis),fingerprint);
+});
+test('exported primary worldbook duplicates are injected once with exact source provenance and distinct definitions retained',async()=>{
+ const f=fixture();f.context.characters[0].data.character_book.entries[0].comment='相同规则';
+ f.documents['门庭'].entries[4]={uid:4,comment:'相同规则',content:'内嵌法则'};
+ f.documents['门庭'].entries[5]={uid:5,comment:'相同规则',content:'内嵌法则修订'};
+ const before=copy(f.documents),read=await f.sourceProvider.read();
+ assert.equal(read.summary.counts.duplicates,1);assert.equal(read.summary.counts.entries,3);assert.equal(read.summary.books[0].duplicateEntries,1);
+ assert.equal(read.sourceBooks.some(e=>e.uid===4),false);assert.equal(read.sourceBooks.some(e=>e.uid===5),true);
+ assert.deepEqual(read.duplicateDefinitions,[{kept:{kind:'embedded',path:'/data/character_book/entries/0'},duplicate:{kind:'linked',book:'门庭',uid:4}}]);
+ assert.deepEqual(f.documents,before);f.documents['门庭'].entries[4].content='独立改动';await assert.rejects(f.sourceProvider.assertFresh(read),/已改变/);
+ const changed=await f.sourceProvider.read();assert.equal(changed.summary.counts.duplicates,0);assert.equal(changed.summary.counts.entries,4);
 });

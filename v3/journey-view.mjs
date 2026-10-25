@@ -19,7 +19,7 @@ export function renderJourneyRecords(document,container,view,{section='all',card
  }
  let timeline=null,atlas=null;
  if(['all','memory'].includes(section)){
-  if(timelineRead){timeline=mountMemoryTimeline(document,container,{read:timelineRead,currentAnchor,initialAnchorId,onSource,onObject:onObject??(({id})=>atlas?.select(id)),showPsychology:view.options?.showPsychology===true,onError});releases.push(()=>timeline.dispose());}
+  if(timelineRead){timeline=mountMemoryTimeline(document,container,{read:timelineRead,currentAnchor,initialAnchorId,initialView:!initialAnchorId||initialAnchorId===view.initialTimeline?.anchor?.id?view.initialTimeline:null,onSource,onObject:onObject??(({id})=>atlas?.select(id)),showPsychology:view.options?.showPsychology===true,onError});releases.push(()=>timeline.dispose());}
   else empty('记忆时间轴尚未接入当前存档。');
  }
  if(['all','player','characters'].includes(section)){

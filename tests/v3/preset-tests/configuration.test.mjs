@@ -16,8 +16,20 @@ function setup(){
 test('one MVU mode decides both execution and checkpoints; off wins over retired duplicate fields',()=>{
  const f=setup();f.world.tables={nativeBridge:true};f.world.modes.narrative.narrative.缇斯亚MVU兼容=true;f.world.modes.narrative.nativeMvu='off';
  const before=JSON.stringify(f.snapshot),off=resolveRuntimeConfiguration({snapshot:f.snapshot,target:{Mvu:{}},context:f.context,playerId:'p'});assert.equal(off.nativeBridge,false);assert.equal(off.nativeMode,'off');assert.equal(JSON.stringify(f.snapshot),before);
- f.world.modes.narrative.nativeMvu='auto';assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{Mvu:{}},context:f.context}).nativeBridge,true);assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{},context:f.context}).nativeBridge,false);
+ f.world.modes.narrative.nativeMvu='auto';assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{Mvu:{}},context:f.context}).nativeBridge,false);assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{},context:f.context}).nativeBridge,false);
  const paths=editablePaths(configurationView(f.snapshot));assert.ok(paths.includes('/world/modes/narrative/nativeMvu'));assert.ok(!paths.includes('/world/tables/nativeBridge'));assert.ok(!paths.some(path=>path.endsWith('/缇斯亚MVU兼容')));
+});
+test('automatic MVU follows this chat active-swipe variables rather than a global runtime',()=>{
+ const f=setup();let reads=0;const target={Mvu:{getMvuData(){reads++;throw Error('Unrelated runtime must not be probed');}}};
+ assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target,context:f.context}).nativeBridge,false);
+ f.context.chat=[{mes:'<div>普通美化开场</div>',swipe_id:1,variables:[{stat_data:{score:1}},{}]}];
+ assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target,context:f.context}).nativeBridge,false,'Inactive swipe is not current native state');
+ f.context.chat[0].swipe_id=0;
+ assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{},context:f.context}).nativeBridge,true,'Persisted native state remains authoritative when the dependency is missing');
+ f.context.chat[0].variables[0].stat_data=null;
+ assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target:{},context:f.context}).nativeBridge,true,'Damaged existing native state must still reach validation');
+ f.world.modes.narrative.nativeMvu='off';
+ assert.equal(resolveRuntimeConfiguration({snapshot:f.snapshot,target,context:f.context}).nativeBridge,false);assert.equal(reads,0);
 });
 test('world controls and the two distinct focus reference types are projected without guessing or overwriting',()=>{
  const f=setup();f.world.focus=['card:someone.png'];f.world.tables={archive:false,plot:false,offstage:false,preferences:false,focusObjects:['row:actor'],playerObjects:['row:player'],focusText:'关注正在进行的修桥工作',hardRules:['保留自然对白']};

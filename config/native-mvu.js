@@ -15,20 +15,21 @@ export function nativeMvuDeclaration(context,world){
  if(!loader)return null;
  return {name:card.name??data.name??'当前角色卡',book:data.extensions?.world??'',entries:data.character_book?.entries??[],signature:JSON.stringify([card.avatar,active.map(s=>[s.id,s.content])])};
 }
-export async function nativeMvuFormats(context,world){
+export async function nativeMvuFormats(context,world,{readWorldbook=null}={}){
  const declaration=nativeMvuDeclaration(context,world);if(!declaration)return null;
  let entries=declaration.entries;
  if(declaration.book){
-  if(typeof context.loadWorldInfo!=='function')fail('宿主缺少原卡 MVU 世界书读取接口。');
-  const book=await context.loadWorldInfo(declaration.book);
+  const read=readWorldbook??context.loadWorldInfo?.bind(context);
+  if(typeof read!=='function')fail('宿主缺少原卡 MVU 世界书读取接口。');
+  const book=await read(declaration.book,{fresh:false});
   if(!plain(book?.entries))fail('原卡 MVU 关联世界书读取失败：'+declaration.book);
   entries=Object.values(book.entries);
  }
  const enabled=entries.filter(e=>e.enabled!==false&&e.disable!==true);
  return {...declaration,enabled,formats:enabled.filter(e=>/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(e.content??'')).map(e=>String(e.content).trim())};
 }
-export async function prepareNativeMvu(context,world,type='normal',runtime=globalThis.Mvu,structured=true){
- const declaration=await nativeMvuFormats(context,world);if(!declaration)return null;
+export async function prepareNativeMvu(context,world,type='normal',runtime=globalThis.Mvu,structured=true,{readWorldbook=null}={}){
+ const declaration=await nativeMvuFormats(context,world,{readWorldbook});if(!declaration)return null;
  if(isTableContinuity(world)&&!world.tables.nativeBridge)fail('原卡 MVU 已启用；仅表单接续须先接通原生变量桥。');
  if(typeof runtime?.getMvuData!=='function'||typeof runtime?.parseMessage!=='function')fail('角色卡已启用 MVU 脚本，但原生 MVU 尚未就绪。请检查酒馆助手的卡片脚本运行状态；缇斯亚没有关闭它，也不会代建变量存档。');
  let index=context.chat.length-1;if(['swipe','regenerate'].includes(type)&&!context.chat[index]?.is_user)index--;

@@ -4,7 +4,9 @@ import {copy,object,check,validateRow,validateReferences,mapRowReferences,regist
 import {digest} from '../../../tables/books.js';
 import {bridgePatch,parseNativeTransaction,auditNativeOutcome,hasNativeUpdate,valueAt,carryNativeForward} from '../../../tables/native-bridge.js';
 import {prepareWorld,assertWorldBasisUnchanged} from './world.mjs';
+import {sameJsonValue} from '../host/json-value.mjs';
 import {preferenceGroup,preferenceContributionIdentity,preferenceContributionIdentities,projectPreferences} from '../preferences/service.mjs';
+import {mergeDefinitionRegistries} from '../../design-schema.mjs';
 
 export {formatSimpleSheet};
 export const ROOT_FIELDS=['requestKey','archiveProposal','worldProposal','scope','preferenceCandidates','archiveRequests','creativeBrief','pending'];
@@ -25,7 +27,8 @@ function stepView(view,prepared){return {...view,registry:prepared.registry,rows
 function preferencesFor(state,input){return projectPreferences(state,{...input.preferenceProjectionOptions,chatId:input.originalScope?.chatId??input.identity?.chatId??input.preferenceProjectionOptions?.chatId,enabled:input.preferencesEnabled!==false,activeSourceKeys:input.activeSourceKeys});}
 function preferenceWeights(state,input){const p=preferencesFor(state,input);return {groups:p.groups.map(g=>({...g,contributions:g.contributions.map(c=>({id:c.id,source:c.source,score:c.score,instruction:c.instruction}))})),hardConstraints:p.hardConstraints.map(c=>({group:c.group,kind:c.kind,tag:c.tag,id:c.id,source:c.source,instruction:c.instruction})),rows:p.rows.map(r=>({id:r.id,values:{...(r.values.适用情境?{适用情境:r.values.适用情境}:{}),...(r.values.例外?{例外:copy(r.values.例外)}:{})}}))};}
 function currentView(state,input){const view=projectRetained(state,input.activeSourceKeys),preferences=preferencesFor(state,input);return {...view,rows:[...view.rows.filter(r=>r.table!=='preferences'),...preferences.rows]};}
-function remapProposal(proposal,registry,aliases){const p=copy(proposal);for(const op of p.changes){op.id=aliases.get(op.id)??op.id;if(op.values)mapRowReferences({table:op.table,values:op.values},registry,id=>aliases.get(id)??id);if(op.access)for(const k of ['readers','knowers'])op.access[k]=op.access[k]?.map(id=>aliases.get(id)??id);}return p;}
+function remapPatchReferences(op,registry,aliases,rows){if(!op.values)return;const inherited=op.table==='objects'&&!Object.hasOwn(op.values,'类型'),values=inherited?{...op.values,类型:rows.find(row=>row.id===op.id)?.values.类型}:op.values;mapRowReferences({id:op.id,table:op.table,values},registry,id=>aliases.get(id)??id);if(inherited)delete values.类型;op.values=values;}
+function remapProposal(proposal,registry,aliases,rows){const p=copy(proposal);for(const op of p.changes){op.id=aliases.get(op.id)??op.id;remapPatchReferences(op,registry,aliases,rows);if(op.access)for(const k of ['readers','knowers'])op.access[k]=op.access[k]?.map(id=>aliases.get(id)??id);}return p;}
 function registerAliases(proposal,prepared,aliases){proposal.changes.forEach((op,i)=>{if(op.id.startsWith('new:'))aliases.set(op.id,prepared.commit.changes[i].id);});}
 function assertUnsettledWorldWindow(view,window){
  if(!window?.ready)return;
@@ -53,6 +56,7 @@ export function projectRetained(state,activeSourceKeys){
   for(const change of commit.changes){if(change.deleted)rows.delete(change.id);else rows.set(change.id,copy(change.after));}
   if(commit.registry)registry=copy(commit.registry);commits.push(copy(commit));anchors.push(...copy(commit.anchors));applied.add(commit.id);last=commit.id;
  }
+ if(state.definitionRegistry)registry=mergeDefinitionRegistries(registry,state.definitionRegistry);
  const result={registry,rows:[...rows.values()],anchors,commits,last};for(const row of result.rows)validateRow(registry,row);validateReferences(result.rows,registry);return result;
 }
 
@@ -152,17 +156,18 @@ async function prepareReadbackCommit({archive,view,item,input,after,index,resolv
 export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,resolveEvidence,native={},query,writerB,acceptWriterOutput,guard=()=>{},sourceGuard=async()=>{},onProgress,beforeWriter}){
  check(typeof storage?.read==='function'&&typeof storage?.compareAndWrite==='function'&&typeof requestA==='function','Runner dependencies are incomplete');check(typeof writerB!=='function'||typeof acceptWriterOutput==='function','A configured writer needs a worldbook A acceptance callback');let busy=false;
  const progress=(requestKey,phase,status='running')=>{try{onProgress?.({requestKey,phase,status});}catch(error){console.warn('[Tisya progress observer]',error);}};
- async function write(state,mutate){guard();const next=copy(state);mutate(next);next.revision=state.revision+1;await storage.compareAndWrite(state.revision,next);guard();const actual=await storage.read();check(same(actual,next),'Store write was not confirmed');return actual;}
+ async function write(state,mutate){guard();const next=copy(state);mutate(next);next.revision=state.revision+1;const receipt=await storage.compareAndWrite(state.revision,next);guard();if(storage.capabilities?.verifiedWriteReadback===true)check(receipt?.revision===next.revision&&object(receipt.state),'Store verified readback receipt is invalid');const actual=storage.capabilities?.verifiedWriteReadback===true?copy(receipt.state):await storage.read();guard();check(sameJsonValue(actual,next),'Store write was not confirmed');return actual;}
  async function verifySources(input){await sourceGuard(input);for(const item of input.archiveSources)await bindArchiveParagraphs({proposal:emptyProposal(),source:item.originalReference,scope:input.originalScope});guard();}
- async function run(rawInput){
+ async function run(rawInput,{writeNarrative=true}={}){
+  check(typeof writeNarrative==='boolean','Invalid narrative execution option');
   if(busy)throw failure('RUN_BUSY','A request is already active');busy=true;
   try{
-   const input=normalizeInput(rawInput),inputHash=await digest(input);let state=await storage.read();stateValid(state);let record=state.requests[input.requestKey];
+   const input=normalizeInput(rawInput),inputHash=await digest(writeNarrative?input:{input,execution:'forms'});let state=await storage.read();stateValid(state);let record=state.requests[input.requestKey];
    if(record){check(record.inputHash===inputHash,'requestKey was reused for different input');if(record.status==='delivered'){await verifySources(input);if(record.result.deliveryReceipt)await acceptWriterOutput(null,copy(record.result.snapshot),{recovery:true,receipt:copy(record.result.deliveryReceipt)});return {...copy(record.result),output:null,reused:true};}if(record.status==='awaiting-model')throw failure('MODEL_OUTCOME_UNKNOWN','The previous model call has no durable response; use a new explicit request');if(['writer-running','writer-output'].includes(record.status))throw failure('WRITER_OUTCOME_UNKNOWN','Recover the existing host output receipt; the writer will not run again');}
    await verifySources(input);
    if(!record){
     const view=currentView(state,input);assertUnsettledWorldWindow(view,input.worldWindow);if(input.viewRevision!==undefined)check(input.viewRevision===state.revision,'Snapshot revision changed before preflight');
-    state=await write(state,s=>{s.requests[input.requestKey]={inputHash,status:'awaiting-model',baseViewHash:null,createdAt:new Date().toISOString()};});
+    state=await write(state,s=>{s.requests[input.requestKey]={inputHash,status:'awaiting-model',baseViewHash:null,createdAt:new Date().toISOString(),...writeNarrative?{}:{execution:'forms'}};});
     progress(input.requestKey,'model-a');const requestView=publicView(view),response=await requestA({...input,view:requestView,preferenceProjection:preferenceWeights(state,input)});guard();check(typeof response==='string','Model A must return one complete simple sheet');
     state=await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'response',response,baseViewHash:null});});record=state.requests[input.requestKey];
    }
@@ -172,7 +177,7 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
     const sourceOrder=Object.fromEntries(input.activeSourceKeys.map((key,index)=>[key,index]));
     for(const [index,batch]of result.archiveProposal.entries()){
      const item=input.archiveSources[index];check(!shadow.commits.some(c=>c.source===batch.source&&c.kind==='archive'&&!c.archiveSkipped),'Retained source was already archived');
-     const bound=await boundArchive(batch.proposal,item,input,{bindArchiveParagraphs,resolveEvidence});const p=remapProposal(bound.proposal,shadow.registry,aliases),nativeOps=p.changes.filter(op=>op.table==='native_cells'),businessOps=p.changes.filter(op=>op.table!=='native_cells');
+     const bound=await boundArchive(batch.proposal,item,input,{bindArchiveParagraphs,resolveEvidence});const p=remapProposal(bound.proposal,shadow.registry,aliases,shadow.rows),nativeOps=p.changes.filter(op=>op.table==='native_cells'),businessOps=p.changes.filter(op=>op.table!=='native_cells');
      check(input.archiveEnabled!==false||businessOps.length===0&&p.templates.length===0&&p.schemaChanges.length===0,'Business archive is disabled');check(!item.nativeBridge?.nativeAlready||nativeOps.length===0,'This source native state is already settled');
      const business={...p,changes:businessOps};const businessRefs=p.changes.flatMap((op,i)=>op.table!=='native_cells'?[bound.refs[i]]:[]);
      check(!item.nativeBridge?.archiveAlready||business.changes.length===0&&business.templates.length===0&&business.schemaChanges.length===0,'Already archived business is read-only');
@@ -192,7 +197,7 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
      if(nativeOwned&&item.nativeBridge?.enabled===true){check(object(item.nativeState?.before?.stat_data),'Original-owned native source has no frozen snapshot');const maps=nativeMaps(shadow,item.nativeState.before);if(maps.length){const synced=prepareCommit(shadow,{changes:maps,pending:[]},{source:batch.source,kind:'native-sync',evidence:'Native callback readback',allowedTables:['native_cells'],allowSchemaExtensions:false,inferSchemaFields:false});shadow={...shadow,rows:synced.rows};}}
      if(nativeOps.length){const maps=nativeOps.map(op=>({...op,evidence:'Native proposed shadow'}));const simulated=prepareCommit(shadow,{changes:maps,pending:[]},{source:batch.source,kind:'native-fill',evidence:'Native proposed shadow',allowedTables:['native_cells'],allowSchemaExtensions:false,inferSchemaFields:false});shadow={...shadow,rows:simulated.rows};}
     }
-    const worldInput=mapWorld(result.worldProposal,aliases);if(worldInput)for(const event of worldInput.events)for(const op of event.changes)mapRowReferences({table:op.table,values:op.values},shadow.registry,id=>aliases.get(id)??id);
+    const worldInput=mapWorld(result.worldProposal,aliases);if(worldInput)for(const event of worldInput.events)for(const op of event.changes)remapPatchReferences(op,shadow.registry,aliases,shadow.rows);
     const world=prepareWorld(shadow,worldInput,input.worldWindow,{playerObjects:input.playerObjects??[],onstageObjects:input.onstageObjects??[],activeSourceKeys:input.activeSourceKeys,existingNewIds:allNewIds});
     if(world)registerAliases(world.proposal,world.prepared,aliases);
     const prefs=preparePreferences(shadow,result.preferenceCandidates,input,state);
@@ -239,13 +244,14 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
     else state=await write(state,s=>{s.requests[input.requestKey].worldDone=true;});
    }
    if(!state.requests[input.requestKey].preferencesDone){progress(input.requestKey,'preferences');state=await write(state,s=>{if(plan.prefs.prepared.commit.changes.length)s.preferenceDrafts.push({id:'preference:'+input.requestKey,requestKey:input.requestKey,...(input.preferenceBankId?{preferenceBankId:input.preferenceBankId}:{}),status:'pending',contributions:copy(plan.prefs.contributions),mutations:copy(plan.prefs.mutations),changes:copy(plan.prefs.prepared.commit.changes),contextSource:input.currentSourceKey??null});s.requests[input.requestKey].preferencesDone=true;});}
-   if(typeof beforeWriter==='function'){await beforeWriter({input:copy(input),view:currentView(state,input)});guard();state=await storage.read();stateValid(state);await verifySources(input);}
+   if(writeNarrative&&typeof beforeWriter==='function'){await beforeWriter({input:copy(input),view:currentView(state,input)});guard();state=await storage.read();stateValid(state);await verifySources(input);}
    const alias=id=>plan.aliases[id]??id,reads=[];for(const request of result.archiveRequests){progress(input.requestKey,'query');check(typeof query==='function','Archive query adapter is unavailable');const baseArgs=copy(request.arguments);if(typeof baseArgs.id==='string')baseArgs.id=alias(baseArgs.id);if(Array.isArray(baseArgs.ids))baseArgs.ids=baseArgs.ids.map(alias);let args=copy(baseArgs),seen=new Set();for(let page=0;;page++){check(page<100,'Read pagination exceeded its bound');const receipt=await query(request.method,args,{input,view:projectRetained(state,input.activeSourceKeys)});check(object(receipt),'Archive query did not return a receipt');reads.push({method:request.method,purpose:request.purpose,result:copy(receipt)});if(!receipt.has_more)break;check(typeof receipt.next_cursor==='string'&&receipt.next_cursor&&!seen.has(receipt.next_cursor),'Invalid archive pagination cursor');seen.add(receipt.next_cursor);args={...baseArgs,cursor:receipt.next_cursor};}}
    const scope=copy(result.scope);scope.targets=scope.targets.map(alias);const creativeBrief=copy(result.creativeBrief);for(const beat of creativeBrief.beats)beat.basis=beat.basis.map(alias);for(const key of ['pendingChoices','due','clues','constraints'])creativeBrief[key]=creativeBrief[key].map(alias);
    const view=currentView(state,input),snapshot={requestKey:input.requestKey,generationType:input.generationType,...(input.identity?{identity:copy(input.identity)}:{}),...(input.advancedReroll?{advancedReroll:copy(input.advancedReroll)}:{}),...projectWriter(view),preferenceProjection:preferenceWeights(state,input),scope,creativeBrief,toolReceipts:reads,preferenceDrafts:input.preferencesEnabled===false?[]:state.preferenceDrafts.filter(d=>(!input.preferenceBankId||d.preferenceBankId===input.preferenceBankId)&&d.status==='pending'&&(!d.contextSource||input.activeSourceKeys.includes(d.contextSource)||d.contributions.some(c=>c.source.startsWith('feedback:')))).map(d=>({id:d.id,count:d.changes.length})),receipt:{archiveSources:copy(state.requests[input.requestKey].completedSources),world:plan.world?.receipt??null,modelCalls:1}};
    // Query payloads may contain explicitly requested original excerpts. Keep only
    // their receipt identities in the durable writer journal; A remains canonical.
    const durableSnapshot={...copy(snapshot),toolReceipts:reads.map(r=>({method:r.method,purpose:r.purpose,result:{status:r.result.status??'ok',snapshot:r.result.snapshot??null,has_more:r.result.has_more??false}}))};
+   if(!writeNarrative){await verifySources(input);const durable={snapshot:durableSnapshot,deliveryReceipt:null};await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'delivered',result:copy(durable)});});return {snapshot,deliveryReceipt:null,output:null,reused:false};}
    state=await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'writer-running',writerSnapshot:durableSnapshot});});await verifySources(input);progress(input.requestKey,'writer');const output=typeof writerB==='function'?await writerB(copy(snapshot)):null;
    state=await write(state,s=>{s.requests[input.requestKey].status='writer-output';});
    progress(input.requestKey,'original-a');const deliveryReceipt=typeof writerB==='function'?await acceptWriterOutput(output,copy(snapshot)):null;

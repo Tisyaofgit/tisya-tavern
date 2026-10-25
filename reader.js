@@ -1,6 +1,6 @@
 import {createJourneyReader,renderJourneyRecords} from './v3/journey-view.mjs';
 import {createMessageCache} from './message-cache.js';
-import {createDisplayCache} from './display-cache.js';
+import {messageWorkspace} from './message-workspace.js';
 import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
@@ -35,9 +35,8 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
 // fallback, including when a structured reply is partial or malformed.
 let localCache=null,cacheGeneration=0;
-const inspectionCache=createDisplayCache();
+const inspectionCache=messageWorkspace;
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
-const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-v3-with-legacy-read-2',onError});
  return localCache;
@@ -47,7 +46,7 @@ export const readerCacheGeneration=()=>cacheGeneration;
 export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null};
 export const messageCacheReport=()=>inspectionCache.report();
 export const reconcileReaderCache=(scope,messages)=>localCache?.reconcile(scope,messages);
-export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(inspectionKey(source,selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(source,'reader:'+replyFormatRevision()+':'+JSON.stringify(selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
 export async function prepareReaderMessage(identity,options={}){
  const generation=cacheGeneration,source=identity.source,base=selectedOptions({}),selected=selectedOptions(options);
  if(!localCache||typeof source!=='string'||source.length>2000000)return {inspection:inspectMessage(source)};
@@ -55,7 +54,7 @@ export async function prepareReaderMessage(identity,options={}){
  const rows=await Promise.all(variants.map(async value=>{
   const row=await localCache.prepare({...identity,variant:replyFormatRevision()+':'+JSON.stringify(value)},()=>inspectMessage(source,value));
   if(!row.value||typeof row.value.structured!=='boolean'||!row.value.body)throw Error('显示缓存内容无效');
-  if(generation===cacheGeneration)inspectionCache.restore([{key:inspectionKey(source,value),value:row.value}]);
+  if(generation===cacheGeneration)inspectionCache.read(source,'reader:'+replyFormatRevision()+':'+JSON.stringify(value),()=>row.value);
   return row;
  }));
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};

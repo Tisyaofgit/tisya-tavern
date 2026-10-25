@@ -13,8 +13,8 @@ const require = (condition, code, message, details) => { if (!condition) throw n
 export function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, getRequestHeaders = () => ({ 'Content-Type': 'application/json' }) }) {
   require(typeof worldInfo?.saveWorldInfo === 'function' && typeof worldInfo?.createWorldInfoEntry === 'function' && typeof worldInfo?.discardWorldInfoDocument === 'function', 'HOST_DEPENDENCY', 'World-info save, entry factory and working-document discard exports are required');
   require(typeof fetchImpl === 'function', 'HOST_DEPENDENCY', 'Host fetch is required');
-  return Object.freeze({
-    async readFresh(name) {
+  const reads = new Map();
+  async function readDocument(name) {
       const response = await fetchImpl('/api/worldinfo/get', { method: 'POST', headers: getRequestHeaders(), body: JSON.stringify({ name }), cache: 'no-cache' });
       if (response.status === 404) return null;
       require(response.ok, 'WORLD_READ_FAILED', `Worldbook read failed (${response.status})`, { name });
@@ -31,10 +31,19 @@ export function createTauriWorldbookTransport({ worldInfo, fetch: fetchImpl, get
         if (!settings.world_names.includes(name)) return null;
       }
       return data;
+  }
+  return Object.freeze({
+    async readFresh(name) {
+      let job = reads.get(name);
+      if (!job) { job = readDocument(name); reads.set(name, job); }
+      try { return copy(await job); }
+      finally { if (reads.get(name) === job) reads.delete(name); }
     },
     async save(name, data) {
+      reads.delete(name);
       try { await worldInfo.saveWorldInfo(name, data, true); }
       catch (error) { worldInfo.discardWorldInfoDocument(name); throw error; }
+      finally { reads.delete(name); }
     },
     createEntry(name, data) { return worldInfo.createWorldInfoEntry(name, data); },
   });

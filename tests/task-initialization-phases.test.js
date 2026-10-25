@@ -26,7 +26,7 @@ test('native definition request carries card, bound book and optional supplement
  assert.equal(slot(messages,'state').phase,'definition');
  for(const marker of ['卡原句','卡内定义哨兵','书原句哨兵','补充原句'])assert.equal(count(text,marker),1,marker);
  assert.doesNotMatch(text,/AGGREGATE_MUST_NOT_DUPLICATE|SOURCE_WAS_EXPANDED|SOURCE.sourceUser→程序独占/);
- assert.match(text,/@PHASE definition/);assert.match(text,/Keep initial.changes empty/);assert.match(text,/templates and schemaChanges stay empty/);
+ assert.match(text,/@PHASE definition/);assert.match(text,/Keep initial.changes empty/);assert.match(text,/typed optional fields and linked subtables/);assert.doesNotMatch(text,/templates and schemaChanges stay empty/);
  assert.doesNotMatch(text,/Schemas must not embed this save|整理完整原卡 AI 须知、绑定定义、用户人设和原始历史/);
  assert.deepEqual(definitions,before);
 });

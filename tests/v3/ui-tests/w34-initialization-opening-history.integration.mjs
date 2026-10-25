@@ -134,3 +134,25 @@ test('editing a native history floor after review rejects save before originals 
  await assert.rejects(f.app.capabilities.action('design.save',{draft}),/正文候选已变化|原文或候选已改变|历史已改变|来源.*变化/);
  assert.deepEqual(await s.storage.read(),before);assert.deepEqual(await s.system.originals.listMetadata({scope:s.getScope()}),originals);assert.equal(f.tasks.length,2);
 });
+
+test('opening UI explicitly selects the initialized player, saves one mapping and reopens it without duplicate dossiers',async t=>{
+ let selectedId;
+ const f=await setupFlow(t,{request:(task,input)=>{
+  assert.equal(task,'templateInit');
+  if(input.phase==='definition')return extraction([...initialChanges(),change('new:player','objects',{名称:'林澈',类型:'character',描述:sourceText.persona},sourceText.persona)]);
+  assert.equal(input.phase,'opening');assert.equal(input.sourceUser.objectId,selectedId);assert.equal(input.currentRows.filter(r=>r.values.名称==='林澈').length,1);
+  return {templates:[],schemaChanges:[],notes:[],base:proposal([]),initial:proposal([change('new:scene','scene',{名称:'渡口开局',场景:'修理铺柜台',参与者:[input.sourceUser.objectId]},sourceText.opener)])};
+ }});
+ f.h.ctx.characters[0].data.description+='\n'+sourceText.persona;
+ const originalChat=f.h.ctx.chat.map(m=>m.mes),bindingBefore=copy((await f.app.getSession()).binding.player);
+ await f.click('初始化／从资料提炼');await f.click('读取角色卡和绑定世界书');await f.click('生成初始化草案');noAlert(f);await f.click('保存已选设定');noAlert(f);
+ const initialized=await currentView(f),player=initialized.rows.find(r=>r.values.名称==='林澈');assert.ok(player);selectedId=player.id;
+ await f.click('继续建立开局');await f.click('读取当前开局');noAlert(f);
+ const picker=f.shadow.querySelector('[aria-label="本故事主控档案"]');assert.ok(picker);assert.equal(picker.value,'','Same-name uniqueness is not authorization to bind');assert.equal(picker.disabled,false);assert.equal([...picker.options].some(o=>o.value===player.id),true);
+ await f.click('生成开局草案');assert.match(f.shadow.querySelector('[role="alert"]').textContent,/明确选择.*主控档案/);assert.equal(f.tasks.length,1);
+ f.fill('本故事主控档案',player.id);assert.match(f.shadow.textContent,/核对主控档案/);assert.match(f.shadow.textContent,/蓝封皮账本/);
+ await f.click('生成开局草案');noAlert(f);assert.match(f.shadow.textContent,/本故事主控：林澈.*使用已确认/);assert.equal(f.shadow.querySelector('[aria-label="采用设定 林澈"]'),null);
+ await f.click('核对整组变更');noAlert(f);await f.click('保存已选设定');noAlert(f);
+ let view=await currentView(f);assert.deepEqual(view.rows.find(r=>r.id===player.id),player);assert.equal(view.rows.filter(r=>r.values.名称==='林澈').length,1);assert.equal(view.commits.find(c=>c.openingEstablishment).openingEstablishment.player.objectId,player.id);assert.deepEqual((await f.app.getSession()).binding.player,bindingBefore);
+ await f.reopen();view=await currentView(f);assert.equal(view.rows.filter(r=>r.values.名称==='林澈').length,1);const available=await f.app.capabilities.action('opening.inspect',{});assert.equal(available.resolvedPlayerId,player.id);assert.equal(available.alreadyEstablished,true);assert.deepEqual(f.h.ctx.chat.map(m=>m.mes),originalChat);
+});

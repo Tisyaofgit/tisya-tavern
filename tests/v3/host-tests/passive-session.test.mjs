@@ -25,7 +25,7 @@ test('switching an unstructured opening candidate does not import character setu
  Object.assign(m,{swipes:['原卡开场','另一开场'],swipe_info:[{extra:{}},{extra:{}}],swipe_id:0});
  try{await h.api.selectSwipe({floor:0,swipeId:1});const s=await h.api.getSession();assert.equal(m.mes,'另一开场');assert.deepEqual(await s.system.originals.listMetadata({scope:s.scope}),[]);assert.equal(h.requests.length,0);}finally{h.api.dispose();}
 });
-test('explicit generation still rejects an incomplete historical source and identifies its floor',async()=>{
+test('ordinary generation retains an incomplete historical source as a local pending diagnostic',async()=>{
  const h=await createInstallerHarness({mvu:false});h.ctx.chat[2].mes='</think><body>她走进房间。</body>';
- try{await h.api.getSession();await h.intercept('normal');assert.equal(h.requests.length,0);assert.equal(h.errors[0]?.code,'HISTORY_CONTROL_BLOCK');assert.match(h.errors[0]?.message,/第 3 条/);assert.equal(h.errors[0]?.floor,2);}finally{h.api.dispose();}
+ try{await h.api.getSession();await h.intercept('normal');assert.equal(h.requests.length,2);assert.equal(h.errors.length,0);const diagnostic=h.ctx.chatMetadata.tisya_v3_host.sourceDiagnostics[0];assert.equal(diagnostic.code,'HISTORY_CONTROL_BLOCK');assert.match(diagnostic.message,/第 3 条/);assert.equal(diagnostic.floor,2);assert.equal(diagnostic.status,'pending');assert.equal(h.ctx.chat[2].mes,'</think><body>她走进房间。</body>');}finally{h.api.dispose();}
 });

@@ -92,3 +92,8 @@ test('real configuration accepts enabled MVU and defaults workflow detail withou
  delete world.modes.narrative.workflowDetail;assert.equal(configurationView({data,world,key:'test'}).world.modes.narrative.workflowDetail,'full');assert.ok(!Object.hasOwn(world.modes.narrative,'workflowDetail'));
  world.modes.narrative.workflowDetail='compact';assert.equal(configurationView({data,world,key:'test'}).world.modes.narrative.workflowDetail,'compact');world.modes.narrative.narrative.缇斯亚MVU兼容='yes';assert.throws(()=>validateConfig(data));
 });
+test('preflight states beat basis list type and supplies a parseable nonempty example',()=>{
+ const s=text(preflight());assert.ok(s.includes('basis as a list of text'));
+ const example=s.match(/Example: (\{"proposal":"A grounded next move"[^\n]*?\})\./);
+ assert.ok(example);assert.deepEqual(JSON.parse(example[1]).basis,['An authorized source']);
+});

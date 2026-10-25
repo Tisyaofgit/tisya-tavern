@@ -5,6 +5,12 @@ import {isPrivateTisyaEntry} from '../config/private-materials.js';
 const clone=structuredClone;
 const check=(ok,message)=>{if(!ok)throw Object.assign(Error(message),{code:'V3_CONFIGURATION'});};
 const ids=(value,name)=>{check(Array.isArray(value)&&value.every(id=>typeof id==='string'&&id),'Invalid '+name);return [...new Set(value)];};
+// TavernHelper's message variable source is chat[floor].variables[swipe_id ?? 0].
+// Detect persisted ownership without probing/copying an unrelated global runtime.
+const hasNativeMessageState=context=>Array.isArray(context?.chat)&&context.chat.some(message=>{
+ const variables=message?.variables?.[message.swipe_id??0];
+ return variables!==null&&typeof variables==='object'&&Object.hasOwn(variables,'stat_data');
+});
 
 /** Read-only projection of the existing store. Never saves aliases or another settings object. */
 export function resolveRuntimeConfiguration({snapshot,target=globalThis,context,playerId,verifiedNativeRules}={}){
@@ -14,7 +20,7 @@ export function resolveRuntimeConfiguration({snapshot,target=globalThis,context,
  const companionMode=mode.缇斯亚聊天模式??'independent';check(['independent','with-story'].includes(companionMode),'小缇聊天模式须为 independent 或 with-story');
  // This is the sole stored MVU switch. The old narrative boolean and table bridge flag are not controls.
  const declaration=context?nativeMvuDeclaration(context,world):null;
- const nativeBridge=nativeMode==='auto'&&Boolean(target.Mvu||declaration);
+ const nativeBridge=nativeMode==='auto'&&Boolean(declaration||hasNativeMessageState(context));
  const nativeRules=verifiedNativeRules?.text??'';
  check(typeof nativeRules==='string','原卡变量规则须为已核验文本');
  if(nativeRules)check(Array.isArray(verifiedNativeRules.sources)&&verifiedNativeRules.sources.length>0,'原卡变量规则缺少实际来源');
@@ -34,10 +40,10 @@ export function resolveRuntimeConfiguration({snapshot,target=globalThis,context,
 }
 
 /** Reads enabled rules from the actual current card/book; no preference text is relabeled as a native rule. */
-export async function readVerifiedNativeRules({snapshot,context}={}){
+export async function readVerifiedNativeRules({snapshot,context,readWorldbook}={}){
  check(snapshot?.world&&context,'Native rule reads require the actual world and host context');
  if((snapshot.world.modes[snapshot.world.mode].nativeMvu??'auto')==='off')return {text:'',sources:[]};
- const declaration=await nativeMvuFormats(context,snapshot.world);if(!declaration)return {text:'',sources:[]};
+ const declaration=await nativeMvuFormats(context,snapshot.world,{readWorldbook});if(!declaration)return {text:'',sources:[]};
  const card=context.characters?.[context.characterId],selected=declaration.enabled.filter(entry=>!isPrivateTisyaEntry(entry)&&(/\[mvu_update\]/i.test(entry.comment??'')||/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(entry.content??'')));
  const sources=[];
  for(const entry of selected){
@@ -49,7 +55,7 @@ export async function readVerifiedNativeRules({snapshot,context}={}){
 
 export const CONFIGURATION_SEMANTICS=Object.freeze({
  'world.modes[current].缇斯亚聊天模式':'independent sends one companion-only API request; with-story queues a companion message for the next normal story B request, without another API.',
- 'world.modes.narrative.nativeMvu':'Only stored native-variable switch: off prevents bridging and checkpoints; auto detects the current native runtime/card declaration and requires actual host validation.',
+ 'world.modes.narrative.nativeMvu':'Only stored native-variable switch: off prevents bridging and checkpoints; auto requires the current card declaration or active-swipe message stat_data, then validates the actual host runtime. A global Mvu object alone does not enable it.',
  'world.tables.archive':'Automatic business archival; retained numbered originals and source identity are always preserved. Native settlement has its own owner.',
  'world.tables.plot':'Preflight creative-brief design; never creates a second API call.',
  'world.tables.offstage':'Source-timed offstage settlement only; player and onstage actors remain excluded.',

@@ -1,4 +1,5 @@
 import {W22_ENTRIES,V2_ENTRIES} from './presets/sources.mjs';
+import {updateParagraphContract} from './paragraph-contract.mjs';
 import {NARRATIVE as N} from '../settings-core.js';
 import {ENGLISH_RULES} from '../config/english-rules.js';
 import {narrativeRuleRows} from '../config/rule-text.js';
@@ -172,7 +173,7 @@ function styles(c){
 }
 
 function output(c,focus=[]){
- let text=base.tisya_registry.replace('<body min="2000" max="5000" unit="字">',`<body min="${c.range.下限}" max="${c.range.上限}" unit="${c.range.单位}">`).replace('<actions min="4" max="6">',`<actions min="${c.actions.下限}" max="${c.actions.上限}">`);
+ let text=updateParagraphContract(base.tisya_registry).replace('<body min="2000" max="5000" unit="字">',`<body min="${c.range.下限}" max="${c.range.上限}" unit="${c.range.单位}">`).replace('<actions min="4" max="6">',`<actions min="${c.actions.下限}" max="${c.actions.上限}">`);
  for(const id of ['D03','D04']){const row=N.rows.find(r=>r.id===id),r=narrativeRuleRows(c.m).find(r=>r.id===id);if(r?.custom||c.n[row.variable]!==defaultChoices[row.variable])text=replaceOnce(text,ANCHORS[id],r?.custom?r.text:ENGLISH_RULES[id][c.n[row.variable]]);}
  const commentLine=line=>DIRECTIONS.some(d=>line.startsWith(d+'|'));
  text=text.split('\n').filter(line=>!commentLine(line)||c.directions.includes(line.split('|')[0])).join('\n');
@@ -337,6 +338,7 @@ export function compileFullNarrative({snapshot,configurationSnapshot,settings,na
 
 function fullPreflightRules(){
  let text=aux.tisya_registry;
+ text=replaceOnce(text,'Every beat has proposal,basis,condition.','Every beat has proposal and condition as text, and basis as a list of text, including when it contains only one source. Example: {"proposal":"A grounded next move","basis":["An authorized source"],"condition":"Its enabling condition"}.');
  text=replaceOnce(text,'Keep a complete synopsis in events.经过 and meaningful original paragraphs in events.原文段落. Copy each selected paragraph exactly and completely, in source order; separate nonconsecutive paragraphs as separate list items.','Keep a complete synopsis in events.经过. Select memorable complete source paragraphs using values.原文段号:[1,3]. 原文段号 is a task-only input field; do not add it to the stored schema. The host binds entryId, revision and hash and stores references in 原文引用. Never copy original prose into a table or author 原文引用.');
  text=replaceOnce(text,'Each evidence value is one continuous excerpt from that batch\'s eligible source.','For prose-backed archival changes, evidence is a list of exact paragraph numbers from that batch, such as [1,3]. An adopted definition found only in its bound preceding user input uses evidence:{userSource:exactSourceKey,excerpt:continuousUserExcerpt}. Preference evidence remains a continuous excerpt of its authorized feedback.');
  text=text.replace('Write ordinary strings literally.','Write ordinary strings literally.');

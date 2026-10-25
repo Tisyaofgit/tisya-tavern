@@ -29,7 +29,7 @@ export function createWorldbookTableStorage({ transport, bookId, owner, initialS
     return value;
   }
   return Object.freeze({
-    capabilities: Object.freeze({ managedSingleWriter: true, conditionalWrites: false, consistencyScope: 'single-controller', crossWindowAtomicity: false }),
+    capabilities: Object.freeze({ managedSingleWriter: true, conditionalWrites: false, consistencyScope: 'single-controller', crossWindowAtomicity: false, verifiedWriteReadback: true }),
     read: () => serial(async () => { const state = decode(find(await transport.readFresh(bookId))); observed = copy(state); return state; }),
     compareAndWrite: (expectedRevision, next) => serial(async () => {
       const data = await transport.readFresh(bookId) ?? { entries: {} }, wire = find(data), current = decode(wire);
@@ -43,7 +43,9 @@ export function createWorldbookTableStorage({ transport, bookId, owner, initialS
       const actual = decode(find(await transport.readFresh(bookId)));
       check(same(actual, next), 'LEDGER_READBACK', 'Table ledger readback differs from write');
       observed = copy(actual);
-      return { revision: actual.revision };
+      // Explicit contract: this detached state is the exact fresh readback from
+      // this write, not the submitted candidate or an arbitrary save result.
+      return { revision: actual.revision, state: copy(actual) };
     }),
   });
 }

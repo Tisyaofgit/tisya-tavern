@@ -4,6 +4,7 @@ import {createBookManager} from '../../../v3/books.mjs';
 import {createWorldbookOriginalAdapter} from '../../../v3/runtime-source/host/worldbook-adapter.mjs';
 import {createWorldbookTableStorage} from '../../../v3/runtime-source/host/table-storage.mjs';
 import {createOriginalStore} from '../../../v3/runtime-source/originals/original-store.mjs';
+import {createWorldbookWorkspace} from '../../../v3/worldbook-workspace.mjs';
 
 const copy=v=>structuredClone(v),code=wanted=>error=>error.code===wanted;
 const owner={chatId:'chat-1',branchId:'branch-1'},player={id:'player-1'},preferenceOwner={kind:'player',id:'player-1'};
@@ -17,7 +18,7 @@ function fixture(overrides={}) {
   createEntry(name,data){const uid=Object.keys(data.entries).map(Number).reduce((max,x)=>Math.max(max,x),-1)+1;const wire={uid,extensions:{},hostDefault:'kept'};data.entries[uid]=wire;return wire;},
  };
  const opts={transport,listNames:async()=>[...docs.keys()],getContext:()=>copy(ctx),assertIdle:()=>{if(fail.busy)throw Error('generation is running');return true;},
-  readGlobalMetadata:async()=>copy(globalPointer),saveGlobalMetadata:async(value,{expected})=>{assert.deepEqual(globalPointer,expected);globalPointer=copy(value);},
+  readGlobalMetadata:async()=>{if(fail.readGlobalGate)await fail.readGlobalGate();return copy(globalPointer);},saveGlobalMetadata:async(value,{expected})=>{assert.deepEqual(globalPointer,expected);globalPointer=copy(value);},
   readMetadata:async()=>copy(pointers.get(key())??null),saveMetadata:async(pointer,{expected})=>{assert.deepEqual(pointers.get(key())??null,expected);if(fail.pointerBefore)throw Error('pointer failed');pointers.set(key(),copy(pointer));if(fail.pointerAfter)throw Error('ack lost');},
   saveCurrentBranch:async args=>{calls.push(['saveCurrentBranch',copy(args)]);if(fail.draft)return {saved:true,draftSaved:false};return {saved:true,draftSaved:true,nativeCheckpoint:copy(native)};},
   activateChat:async({owner})=>{calls.push(['activateChat',copy(owner)]);if(fail.chat)throw Error('chat failed');ctx.owner=copy(owner);ctx.epoch++;},
@@ -43,6 +44,43 @@ function originalWire(rt,view,id='source-1') {
  const wire=rt.transport.createEntry(rt.books.originals,view);
  Object.assign(wire,{content:'1 正文。',disable:true,constant:false,key:[],keysecondary:[],probability:0});wire.extensions.tisyaOriginal={bookId:rt.books.originals,id,version:1};return wire;
 }
+
+test('book inventory reads are bounded and concurrent, preserve order, and remain fresh',async()=>{
+ const f=fixture();for(let i=0;i<19;i++)await f.manager.create({kind:'origin',name:'世界'+i,operationId:'create:'+i});
+ let active=0,peak=0;const original=f.transport.readFresh;
+ f.transport.readFresh=async name=>{active++;peak=Math.max(peak,active);try{await new Promise(resolve=>setImmediate(resolve));return await original(name);}finally{active--;}};
+ const listed=await f.manager.list();assert.deepEqual(listed.map(b=>b.displayName),Array.from({length:19},(_,i)=>'世界'+i));assert(peak>1&&peak<=8);assert.equal(active,0);
+ const wire=Object.values(f.docs.get(listed[18].physicalName).entries)[0];wire.disable=false;
+ await assert.rejects(f.manager.list(),code('MANIFEST_ACTIVATION'));assert.equal(active,0);
+});
+test('parallel inventory still rejects duplicate identities and drains failed reads before returning',async()=>{
+ const f=fixture(),a=await f.manager.create({kind:'origin',name:'世界',operationId:'a'});
+ f.docs.set('duplicate',copy(f.docs.get(a.physicalName)));await assert.rejects(f.manager.list(),code('DUPLICATE_BOOK_ID'));
+ f.docs.delete('duplicate');for(let i=0;i<6;i++)f.docs.set('native:'+i,{entries:{}});
+ let active=0;const original=f.transport.readFresh;
+ f.transport.readFresh=async name=>{active++;try{if(name===a.physicalName)throw Error('read failed');await new Promise(resolve=>setImmediate(resolve));return await original(name);}finally{active--;}};
+ await assert.rejects(f.manager.list(),/read failed/);assert.equal(active,0);
+ f.transport.readFresh=original;assert.equal((await f.manager.list()).length,1);
+});
+
+test('managed runtime sources retain original workspace tokens while directory-only books are not send dependencies',async()=>{
+ const s=await setup(),f=s.f;for(let i=0;i<19;i++)f.docs.set('unrelated-'+i,{entries:{0:{uid:0,content:'unused'}}});let pending=null;
+ const workspace=createWorldbookWorkspace({transport:f.transport,journal:{read:async()=>copy(pending),write:async value=>{pending=copy(value);}},getScope:()=>f.ctx.owner}),manager=createBookManager({...f.opts,transport:workspace});let runtime;
+ await workspace.run(async()=>{runtime=await manager.readRuntime();assert.equal(new Set(runtime.workspaceDependencies.map(token=>token.name)).size,3);f.calls.length=0;assert.deepEqual(await workspace.checkpoint(),{verified:3});});
+ assert.equal(f.calls.filter(([kind])=>kind==='read').length,3);
+ const configuration=await manager.readConfiguration();assert.equal(configuration.workspaceDependencies.length,1);assert.equal(configuration.workspaceDependencies[0].name,s.core.physicalName);
+ await manager.list();f.docs.get('unrelated-0').entries[0].content='edited';f.calls.length=0;await workspace.run(()=>workspace.checkpoint(),{dependencies:runtime.workspaceDependencies});assert.equal(f.calls.filter(([kind])=>kind==='read').length,3);
+ workspace.invalidate(s.origin.physicalName);await manager.readRuntime();await assert.rejects(workspace.run(()=>workspace.checkpoint(),{dependencies:runtime.workspaceDependencies}),code('WORKSPACE_CHANGED'));
+});
+
+test('local staged namespace saves reuse a guarded binding and the physical flush takes one fresh checkpoint',async()=>{
+ const s=await setup(),f=s.f;let pending=null,cached=null,freshReads=0;const readBindingSnapshot=async({fresh=false}={})=>{if(!fresh&&cached){cached.guard();return cached;}if(fresh)freshReads++;const epoch=f.ctx.epoch,owner=copy(f.ctx.owner),global=await f.opts.readGlobalMetadata(),pointer=await f.opts.readMetadata();return cached={global,pointer,guard(){assert.deepEqual(f.ctx.owner,owner);assert.equal(f.ctx.epoch,epoch,'binding epoch changed');assert.deepEqual(f.pointers.get(JSON.stringify(f.ctx.owner)),pointer,'binding pointer changed');}};};
+ const workspace=createWorldbookWorkspace({transport:f.transport,journal:{read:async()=>copy(pending),write:async value=>{pending=copy(value);}},getScope:()=>f.ctx.owner,beforePersist:()=>readBindingSnapshot({fresh:true})}),manager=createBookManager({...f.opts,transport:workspace,readBindingSnapshot}),runtime=await manager.readRuntime();f.calls.length=0;
+ await workspace.run(async()=>{for(let i=1;i<=3;i++){const data=await runtime.transport.readFresh(runtime.books.tables);if(i===1)ledgerWire(runtime,data,{revision:i});else Object.values(data.entries)[0].content=JSON.stringify({revision:i});await runtime.transport.save(runtime.books.tables,data);assert.equal(freshReads,0,'local staging cannot request a fresh native binding');assert.equal(f.calls.filter(([kind])=>kind==='save').length,0);}},{dependencies:runtime.workspaceDependencies});
+ assert.equal(freshReads,1);assert.equal(f.calls.filter(([kind])=>kind==='save').length,1);assert.equal(pending,null);
+ const key=JSON.stringify(f.ctx.owner),originalPointer=copy(f.pointers.get(key));await assert.rejects(workspace.run(async()=>{const data=await runtime.transport.readFresh(runtime.books.tables);f.pointers.set(key,{...originalPointer,bindingRevision:originalPointer.bindingRevision+1});await runtime.transport.save(runtime.books.tables,data);},{dependencies:runtime.workspaceDependencies}),/binding pointer changed/);f.pointers.set(key,originalPointer);assert.equal(freshReads,1);
+ await assert.rejects(workspace.run(async()=>{const data=await runtime.transport.readFresh(runtime.books.tables);f.ctx.epoch++;await runtime.transport.save(runtime.books.tables,data);},{dependencies:runtime.workspaceDependencies}),code('CONTEXT_CHANGED'));assert.equal(freshReads,1);
+});
 
 test('explicit three-book create leaves binding unset; initial selection has distinct A/B routes in one archive',async()=>{
  const f=fixture(),origin=await f.manager.create({kind:'origin',name:'世界',operationId:'o'}),core=await f.manager.create({kind:'core',name:'核心',operationId:'c'});
@@ -199,4 +237,12 @@ test('two player preference namespaces in the same core retain separate actual l
  const firstStore=createWorldbookTableStorage({transport:first.transport,bookId:first.books.preferences,owner:prefOwner,initialState:{revision:0,score:0}});await firstStore.read();await firstStore.compareAndWrite(0,{revision:1,score:5});
  await f.manager.select({player:{id:'player-2'},preferenceOwner:{kind:'player',id:'player-2'},expectedBindingRevision:0,operationId:'second-player'});const second=await f.manager.readRuntime(),secondStore=createWorldbookTableStorage({transport:second.transport,bookId:second.books.preferences,owner:prefOwner,initialState:{revision:0,score:0}});assert.equal((await secondStore.read()).score,0);await secondStore.compareAndWrite(0,{revision:1,score:-2});
  await f.manager.select({player,preferenceOwner,expectedBindingRevision:1,operationId:'back-player'});const back=await f.manager.readRuntime(),backStore=createWorldbookTableStorage({transport:back.transport,bookId:back.books.preferences,owner:prefOwner,initialState:{revision:0,score:0}});assert.equal((await backStore.read()).score,5);
+});
+test('runtime reads overlap independent binding verification and data IO without returning before verification',async()=>{
+ const {f,core,archive,runtime:rt}=await setup();let release,entered;const gate=new Promise(r=>release=r),started=new Promise(r=>entered=r),original=f.transport.readFresh;let archiveRead=false,returned=false;
+ f.fail.readGlobalGate=async()=>{entered();await gate;};
+ f.transport.readFresh=async name=>{if(name===archive.physicalName)archiveRead=true;return original(name);};
+ const pending=rt.transport.readFresh(rt.books.originals).then(v=>(returned=true,v));
+ try{await started;await new Promise(r=>setImmediate(r));assert.equal(archiveRead,true);assert.equal(returned,false);}finally{release();}
+ await pending;assert.equal(returned,true);
 });

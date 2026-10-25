@@ -30,19 +30,30 @@ test('two original-owned MVU floors synchronize their own snapshots in order wit
   const tail='\n<UpdateVariable><JSONPatch>[{"op":"replace","path":"/resources/energy","value":3}]</JSONPatch></UpdateVariable>';
   f.ctx.chat[2].mes+=tail;f.ctx.chat[2].swipes=[f.ctx.chat[2].mes];f.ctx.chat.push({mes:wrap(oldBody)+tail,is_user:false,extra:{}},{mes:'继续交接。',is_user:true});
   await f.nativeMvu.runtime.replaceMvuData({stat_data:{resources:{energy:3}}},{type:'message',message_id:2});await f.nativeMvu.runtime.replaceMvuData({stat_data:{resources:{energy:2}}},{type:'message',message_id:4});
-  const before=f.nativeMvu.counts();await f.intercept('normal');assert.equal(f.errors.length,0,f.errors[0]?.stack);assert.equal(f.requests.length,2);const after=f.nativeMvu.counts();assert.equal(after.parses,before.parses);assert.equal(after.replaces,before.replaces);
+  const before=f.nativeMvu.counts();await f.intercept('normal');assert.equal(f.errors.length,0,f.errors[0]?.stack);assert.equal(f.requests.length,2);const after=f.nativeMvu.counts();assert.equal(after.parses,before.parses);assert.equal(typeof before.writes,'number');assert.equal(after.writes,before.writes);
   const s=await f.api.getSession(),view=projectRetained(await s.storage.read(),s.getScope().activeSourceKeys);assert.equal(view.rows.find(r=>r.table==='native_cells').values.值.energy,2);
  }finally{f.api.dispose();}
 });
 
 test('trailing native deletion tombstones original without rewriting the retained predecessor snapshot',async()=>{
- const f=await fixture();try{await f.intercept('normal');const s=await f.api.getSession(),identity=await s.system.identities.resolve(4),entryId=await s.system.originals.entryIdFor(identity),before=f.nativeMvu.counts();await f.api.deleteFloor({floor:4});const after=f.nativeMvu.counts();assert.equal(f.ctx.chat.length,4);assert.equal(after.replaces,before.replaces);assert.equal((await s.system.originals.metadata({entryId,scope:s.scope,includeDeleted:true})).deleted,true);}finally{f.api.dispose();}
+ const f=await fixture();try{await f.intercept('normal');const s=await f.api.getSession(),identity=await s.system.identities.resolve(4),entryId=await s.system.originals.entryIdFor(identity),before=f.nativeMvu.counts();await f.api.deleteFloor({floor:4});const after=f.nativeMvu.counts();assert.equal(f.ctx.chat.length,4);assert.equal(typeof before.writes,'number');assert.equal(after.writes,before.writes);assert.equal((await s.system.originals.metadata({entryId,scope:s.scope,includeDeleted:true})).deleted,true);}finally{f.api.dispose();}
 });
 
 test('normal reroll and selected swipe use one stable floor, branch creates distinct original namespace',async()=>{
  let n=0;const f=await fixture({mvu:false,provider:({stage,messages})=>stage==='a'?sheet(messages):wrap(++n===1?newBody:newBody.replace('一小时','两小时'))});
  try{await f.intercept('normal');const s=await f.api.getSession(),id=await s.system.identities.resolve(4),entryId=await s.system.originals.entryIdFor(id);await f.api.reroll({floor:4,requestId:'plain-reroll'});assert.equal(f.ctx.chat[4].swipes.length,2);await f.api.selectSwipe({floor:4,swipeId:0});assert.equal(f.ctx.chat[4].mes,wrap(newBody));assert.equal((await s.system.identities.resolve(4)).messageId,id.messageId);
   const result=await f.api.branch({floor:4,swipeId:0});assert.equal(result.owner.branchId,'branch-two');const next=await f.api.getSession(),newId=await next.system.identities.resolve(4);assert.equal(newId.messageId,id.messageId);assert.notEqual(await next.system.originals.entryIdFor(newId),entryId);
+ }finally{f.api.dispose();}
+});
+
+test('branch materializes unarchived originals only in the child and leaves the parent book unchanged',async()=>{
+ const f=await fixture({mvu:false});try{
+  const parent=await f.api.getSession(),book=parent.binding.archive.physicalName,before=structuredClone(f.host.disk.get(book)),raw=f.ctx.chat.map(m=>m.mes);
+  assert(book);assert(before);assert.equal((await parent.system.originals.listMetadata({scope:parent.scope})).length,0);
+  await f.api.branch({floor:f.ctx.chat.length-1});
+  assert.deepEqual(f.host.disk.get(book),before);assert.deepEqual(f.ctx.chat.map(m=>m.mes),raw);
+  const child=await f.api.getSession(),originals=await child.system.originals.listMetadata({scope:child.scope});
+  assert.equal(originals.length,1);assert.equal(originals[0].identity.branchId,'branch-two');assert.notEqual(child.binding.archive.physicalName,book);
  }finally{f.api.dispose();}
 });
 
@@ -103,4 +114,9 @@ test('native mode off permits business archival of an original-owned message wit
 
 test('turning native mode on creates missing projection rows from actual card data without executing historical variables',async()=>{
  const f=await fixture({mvu:false});try{await f.intercept('normal');assert.equal(f.errors.length,0,f.errors[0]?.stack);f.target.Mvu=f.nativeMvu.runtime;f.config.nativeBridge=true;f.config.revision='mvu-on';f.api.configurationChanged();const s=await f.api.getSession(),state=await s.storage.read();assert.equal(state.baseView.rows.find(r=>r.table==='native_cells').values.值.energy,4);assert.equal(f.nativeMvu.counts().parses,0);assert.equal(f.nativeMvu.counts().writes,0);}finally{f.api.dispose();}
+});
+
+test('branch-owned binding invalidation crosses the real busy host without bypassing unrelated invalidations',async()=>{
+ let f;f=await fixture({mvu:false,onBindingInvalidation:event=>{if(f){assert.throws(()=>f.api.invalidateBinding({...event,operationId:'unrelated'}),e=>e.code==='V3_BUSY');f.api.invalidateBinding(event);}}});
+ try{await f.api.getSession();const before=f.ctx.chat.map(m=>m.mes);const result=await f.api.branch({floor:f.ctx.chat.length-1});assert.equal(result.owner.branchId,'branch-two');assert.deepEqual(f.ctx.chat.map(m=>m.mes),before);assert.equal(f.errors.length,0);const session=await f.api.getSession();assert.equal(session.scope.branchId,'branch-two');}finally{f.api.dispose();}
 });

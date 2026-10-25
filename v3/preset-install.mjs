@@ -1,5 +1,6 @@
 import {createRuntimePreset,TISYA_PRESET_VERSION} from './preset-template.mjs';
 import {keepPresetConnection} from '../preset-connection.js';
+import {updateParagraphContract} from './paragraph-contract.mjs';
 
 const clone=structuredClone;
 const fail=message=>{throw Error('Tisya 预设安装：'+message);};
@@ -36,9 +37,11 @@ export async function ensureInstalledPreset({getContext,now=()=>new Date(),uuid=
  const context=getContext(),manager=context.getPresetManager?.('openai');
  for(const key of ['getAllPresets','getCompletionPresetByName','getSelectedPresetName','savePreset','selectPreset','findPreset'])if(typeof manager?.[key]!=='function')fail('宿主缺少 '+key);
  const exists=manager.getAllPresets().includes('Tisya'),stored=exists?clone(manager.getCompletionPresetByName('Tisya')):null;
- if(stored?.extensions?.tisya?.version===TISYA_PRESET_VERSION)return {status:'current',version:TISYA_PRESET_VERSION};
  const previous=clone(stored);
  if(previous&&manager.getSelectedPresetName()==='Tisya')for(const key of ['prompts','prompt_order'])if(context.chatCompletionSettings?.[key])previous[key]=clone(context.chatCompletionSettings[key]);
+ const sameVersion=previous?.extensions?.tisya?.version===TISYA_PRESET_VERSION,paragraphUpgrade=sameVersion?clone(previous):null;
+ if(paragraphUpgrade)for(const entry of paragraphUpgrade.prompts??[])if(entry.identifier==='tisya_registry')entry.content=updateParagraphContract(entry.content);
+ if(sameVersion&&same(previous,paragraphUpgrade))return {status:'current',version:TISYA_PRESET_VERSION};
  let backup=null;
  if(previous){
   backup='Tisya backup '+now().toISOString().replace(/[:.]/g,'-')+' '+uuid();
@@ -46,7 +49,7 @@ export async function ensureInstalledPreset({getContext,now=()=>new Date(),uuid=
   // exposes it in its preset list on the next load.
   await manager.savePreset(backup,previous,{skipUpdate:true});
  }
- const preset=createRuntimePreset('writer');Object.assign(preset,portablePresetParameters(previous??{}));
+ const preset=paragraphUpgrade??createRuntimePreset('writer');Object.assign(preset,portablePresetParameters(previous??{}));
  const event=context.eventTypes?.OAI_PRESET_CHANGED_BEFORE;
  if(!event||typeof context.eventSource?.on!=='function'||typeof context.eventSource?.removeListener!=='function')fail('宿主缺少预设切换保护事件');
  const protect=change=>{if(change.presetName==='Tisya')keepPresetConnection({...change,settings:change.settings??context.chatCompletionSettings});};

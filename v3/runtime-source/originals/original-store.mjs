@@ -158,6 +158,7 @@ export function parseHistoricalBody(source){
  const denied=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
  const removed=[];let masked=source;
  for(const match of source.matchAll(denied))removed.push([match.index,match.index+match[0].length]);
+ for(const match of source.matchAll(/<(?:task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch|StatusPlaceHolderImpl)(?:\s[^<>]*?)?\s*\/>/gi))removed.push([match.index,match.index+match[0].length]);
  for(const match of source.matchAll(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi))removed.push([match.index,match.index+match[0].length]);
  const chars=source.split('');for(const [a,b]of removed)for(let i=a;i<b;i++)chars[i]='\u0000';masked=chars.join('');
  assert(!/<\/?(?:task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|world_thinking|character_mode|character_thinking|UpdateVariable|JSONPatch)\b/i.test(masked),'HISTORY_CONTROL_BLOCK','Historical control block is incomplete');
@@ -206,13 +207,24 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
   const writeGuarantee = conditionalWrites ? 'conditional-writes' : 'managed-single-writer';
   let tail = Promise.resolve();
   const serial = work => { const result = tail.then(work); tail = result.catch(() => {}); return result; };
-  const makeId = async value => 'original:' + await digest(JSON.stringify([bookId, value.chatId, value.branchId, value.messageId]));
+  const identityIds = new Map(), verified = new Map();let verifiedUnits=0;
+  const forget = id => {const old=verified.get(id);if(old){verifiedUnits-=old.cost;verified.delete(id);}};
+  const makeId = async value => {
+    const key=JSON.stringify([bookId,value.chatId,value.branchId,value.messageId]);
+    let job=identityIds.get(key);if(!job){job=Promise.resolve().then(()=>digest(key)).then(hash=>'original:'+hash);identityIds.set(key,job);while(identityIds.size>512)identityIds.delete(identityIds.keys().next().value);job.catch(()=>{if(identityIds.get(key)===job)identityIds.delete(key);});}return job;
+  };
 
   async function inspect(entry, requestedScope) {
     jsonData(entry, 'stored original');
     assert(entry?.bookId === bookId && entry.original?.schema === SCHEMA, 'WRONG_STORE', 'Record does not belong to this original store');
     const data = entry.original, id = identity(data.identity);
     assert(sameScope(id, requestedScope), 'SCOPE_MISMATCH', 'Original belongs to another chat or branch');
+    // The adapter still supplies fresh bytes. Reuse expensive digest/paragraph
+    // validation only when ALL record metadata and exact content match a prior
+    // successful validation. A same-version external edit is not a cache hit.
+    const {content,...envelope}=entry, stamp=JSON.stringify(envelope), prior=verified.get(entry.id);
+    if(prior&&prior.content===content&&prior.stamp===stamp){verified.delete(entry.id);verified.set(entry.id,prior);return entry;}
+    forget(entry.id);
     assert(entry.id === await makeId(id), 'IDENTITY_MISMATCH', 'Original identity does not match its stable entry ID');
     assert(integer(entry.version) && entry.version > 0 && integer(data.revision) && data.revision > 0, 'CORRUPT_RECORD', 'Original revisions are invalid');
     assert(typeof entry.content === 'string' && ['numbered','historical'].includes(data.format) && typeof data.deleted === 'boolean', 'CORRUPT_RECORD', 'Original content metadata is invalid');
@@ -227,6 +239,7 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
     const parsed = data.deleted ? [] : data.format==='historical'?parseHistoricalBody(entry.content):parseNumberedBody(entry.content);
     assert(!data.deleted || entry.content === '', 'CORRUPT_RECORD', 'Deleted original still has active content');
     assert(sameJson(parsed, data.paragraphs), 'PARAGRAPH_INDEX_MISMATCH', 'Stored paragraph offsets do not match the original');
+    const cost=content.length+stamp.length;if(cost<=16000000){verified.set(entry.id,{content,stamp,cost});verifiedUnits+=cost;while(verified.size>512||verifiedUnits>16000000)forget(verified.keys().next().value);}
     return entry;
   }
 
@@ -410,12 +423,22 @@ export function createOriginalStore({ adapter, bookId, digest = sha256Utf16 }) {
     const entries = await adapter.list({ bookId, scope: requestedScope });
     assert(Array.isArray(entries), 'INVALID_ADAPTER_RESULT', 'Adapter.list must return records');
     const output = [];
-    for (const entry of entries) {
-      jsonData(entry, 'listed original');
-      if (entry?.bookId !== bookId || entry?.original?.schema !== SCHEMA) continue;
-      if (!sameScope(identity(entry.original.identity), requestedScope)) continue;
-      await inspect(entry, requestedScope);
-      if (!entry.original.deleted || input.includeDeleted === true) output.push(metadata(entry));
+    // Validate the fresh adapter snapshot in bounded batches. WebKit dispatches
+    // each WebCrypto digest asynchronously; awaiting every record in series
+    // turns a long archive into seconds of scheduling latency. Keep all checks,
+    // preserve adapter order, and drain each batch before releasing the writer.
+    for (let offset = 0; offset < entries.length; offset += 16) {
+      const inspected = await Promise.allSettled(entries.slice(offset, offset + 16).map(async entry => {
+        jsonData(entry, 'listed original');
+        if (entry?.bookId !== bookId || entry?.original?.schema !== SCHEMA) return null;
+        if (!sameScope(identity(entry.original.identity), requestedScope)) return null;
+        await inspect(entry, requestedScope);
+        return !entry.original.deleted || input.includeDeleted === true ? metadata(entry) : null;
+      }));
+      for (const result of inspected) {
+        if (result.status === 'rejected') throw result.reason;
+        if (result.value) output.push(result.value);
+      }
     }
     return output;
   }

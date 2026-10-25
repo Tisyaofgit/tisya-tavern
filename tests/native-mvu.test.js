@@ -29,6 +29,13 @@ test('native preparation preserves 0/false/empty values, excludes unrelated/disa
  await assert.rejects(prepareNativeMvu(f.c,f.w,'normal',{}),/已启用.*尚未就绪/);
  f.setState(null);await assert.rejects(prepareNativeMvu(f.c,f.w,'normal',f.runtime),/损坏/);
 });
+test('native MVU worldbook declarations use the injected workspace reader and preserve read failures',async()=>{
+ const f=setup();f.c.characters[0].data.extensions.world='原卡规则';let reads=0,nativeReads=0;
+ f.c.loadWorldInfo=async()=>{nativeReads++;throw Error('native reader must not bypass the workspace');};
+ const readWorldbook=async(name,options)=>{reads++;assert.equal(name,'原卡规则');assert.deepEqual(options,{fresh:false});return {entries:{1:{uid:1,content:'<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>'},2:{uid:2,comment:'[mvu_update]工作区',content:'WORKSPACE_NATIVE_RULE'}}};};
+ const result=await prepareNativeMvu(f.c,f.w,'normal',f.runtime,true,{readWorldbook});assert.match(result.text,/WORKSPACE_NATIVE_RULE/);assert.equal(reads,1);assert.equal(nativeReads,0);assert.equal(result.stateDigest,JSON.stringify({计数:0,开启:false,文本:''}));
+ await assert.rejects(prepareNativeMvu(f.c,f.w,'normal',f.runtime,true,{readWorldbook:async()=>{throw Error('工作区来源冲突');}}),/工作区来源冲突/);assert.equal(nativeReads,0);
+});
 test('native MVU uses selected branch pre-swipe state and current user snapshot when present',async()=>{
  const f=setup();f.c.chat.push({mes:'discarded'});
  const runtime={parseMessage(){},getMvuData:({message_id})=>({stat_data:{floor:message_id}})};
@@ -50,11 +57,13 @@ test('all compiled detail levels retain native JSONPatch format without disabled
 test('actual host request supplies native state and rules, and rejects state drift before send',async()=>{
  const f=setup(),old=globalThis.Mvu;globalThis.Mvu=f.runtime;
  try{
+  f.c.characters[0].data.extensions.world='原卡规则';let bookReads=0;f.c.loadWorldInfo=async()=>{throw Error('native host reader bypassed workspace');};const readWorldbook=async(name,options)=>{assert.equal(name,'原卡规则');assert.deepEqual(options,{fresh:false});bookReads++;return {entries:Object.fromEntries(f.c.characters[0].data.character_book.entries.map((entry,index)=>[index,{...entry,uid:index}]))};};
   const macros=new Map();f.c.registerMacro=(k,v)=>macros.set(k,v);f.c.unregisterMacro=k=>macros.delete(k);f.c.substituteParams=s=>s.replace(/\{\{(tisya_\w+)\}\}/g,(_,k)=>macros.get(k)());
-  const store=createStore({getContext:()=>f.c,persist:async()=>true});const host=createHost({getContext:()=>f.c,getSource:()=>f.source,store,createParameters:async(_,model,type,messages)=>({generate_data:{model,messages}})});
+  const store=createStore({getContext:()=>f.c,persist:async()=>true});const host=createHost({getContext:()=>f.c,getSource:()=>f.source,store,readWorldbook,createParameters:async(_,model,type,messages)=>({generate_data:{model,messages}})});
   registerLivePreset(f.c,()=>f.source,()=>f.c,()=>MOODS);registerPresetProtocol(f.c,()=>f.source,()=>{},()=>MOODS);f.c.registerMacro('tisya_config_selected',()=>host.selectedText());
   await host.before('normal');const payload={messages:[]};await host.payloadReady(payload);const text=JSON.stringify(payload);
   assert.match(text,/status_current_variables/);assert.match(text,/只按实际事件修改计数/);assert.doesNotMatch(text,/MVU is disabled|UNRELATED_BOOK/);
+  assert.equal(bookReads,2);
   await host.before('normal');f.setState({计数:1});const drift={messages:[]};await assert.rejects(host.payloadReady(drift),/MVU 来源或变量已变化/);assert.throws(()=>JSON.stringify(drift));
  }finally{if(old===undefined)delete globalThis.Mvu;else globalThis.Mvu=old;}
 });

@@ -46,18 +46,26 @@ async function writeVerified(storage,before,next,label,guard=()=>{}){
 export function createPreferenceOverlayStorage({sessionStorage,preferenceStorage}){
  const queue=serial();
  return {
-  capabilities:{managedSingleWriter:true,consistencyScope:'single-controller',crossStoreAtomicity:false},
-  read:()=>queue(async()=>projected(cleanSession(await sessionStorage.read()),validateBank(await preferenceStorage.read()))),
+  capabilities:{managedSingleWriter:true,consistencyScope:'single-controller',crossStoreAtomicity:false,verifiedWriteReadback:true},
+  read:()=>queue(async()=>{
+   // B and P are independent reads. Keep the serial queue until both settle,
+   // including failure, so a following write cannot overtake a pending read.
+   const results=await Promise.allSettled([sessionStorage.read(),preferenceStorage.read()]);
+   for(const result of results)if(result.status==='rejected')throw result.reason;
+   return projected(cleanSession(results[0].value),validateBank(results[1].value));
+  }),
   compareAndWrite:(expectedRevision,next)=>queue(async()=>{
    const bank=validateBank(await preferenceStorage.read()),reference={revision:bank.revision,fingerprint:await hash(bank)};
    check(equal(next.preferenceBankReference,reference),'Preference bank changed; discard the stale writer snapshot');
    check(equal(next.preferenceRows,bank.preferenceRows)&&equal(next.preferenceHistory,bank.preferenceHistory)&&equal(next.preferenceBankReceipts,Object.values(bank.receipts).filter(r=>r.status==='accepted')),'Runner cannot write the shared preference projection');
    const session=cleanSession(await sessionStorage.read());check(session.revision===expectedRevision,'Session ledger revision conflict');
    const plain=stripProjection(next);check(plain.revision===expectedRevision+1,'Session revision must advance once');
-   await sessionStorage.compareAndWrite(expectedRevision,plain);
-   const actual=cleanSession(await sessionStorage.read());check(equal(actual,plain),'Session ledger readback did not match');
-   check(equal(await preferenceStorage.read(),bank),'Preference bank changed during session persistence');
-   return {revision:actual.revision};
+   const receipt=await sessionStorage.compareAndWrite(expectedRevision,plain);
+   if(sessionStorage.capabilities?.verifiedWriteReadback===true)check(receipt?.revision===plain.revision&&object(receipt.state),'Session ledger verified readback receipt is invalid');
+   const actual=cleanSession(sessionStorage.capabilities?.verifiedWriteReadback===true?copy(receipt.state):await sessionStorage.read());check(equal(actual,plain),'Session ledger readback did not match');
+   const actualBank=await preferenceStorage.read();check(equal(actualBank,bank),'Preference bank changed during session persistence');
+   const state=await projected(actual,actualBank);check(equal(state,next),'Projected ledger readback did not match');
+   return {revision:actual.revision,state:copy(state)};
   })
  };
 }

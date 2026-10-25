@@ -20,8 +20,9 @@ export async function prepareNativeAuthorNote({native,getContext,guard}){
 }
 
 /** Uses the active host connection settings; never stores credentials in journals. */
-export function createNativeRequests({getContext,native,resolveConnection,guard,signal,progress}){
+export function createNativeRequests({getContext,native,resolveConnection,guard,signal,progress,beforeSend=null}){
  for(const [name,fn]of Object.entries({getContext,resolveConnection,guard,signal}))if(typeof fn!=='function')fail('V3_DEPENDENCY','Missing request binding: '+name);
+ if(beforeSend!==null&&typeof beforeSend!=='function')fail('V3_DEPENDENCY','beforeSend must be a function');
  if(typeof native?.openai?.createGenerationParameters!=='function'||typeof native.fetch!=='function')fail('V3_NATIVE_API','Native completion APIs are unavailable');
  return async function request(stage,messages,requestKey){
   if(!Array.isArray(messages)||!messages.length||messages.some(m=>!['system','user','assistant'].includes(m.role)||typeof m.content!=='string'))fail('V3_MESSAGES','Invalid compiled request');
@@ -30,6 +31,7 @@ export function createNativeRequests({getContext,native,resolveConnection,guard,
   const {generate_data:payload}=await native.openai.createGenerationParameters(structuredClone(route.settings),route.model,'quiet',structuredClone(messages),{allowToolCalls:false,toolData:{}});
   guard();payload.stream=true;
   if(!Array.isArray(payload.messages)||payload.messages.length!==messages.length)fail('V3_REQUEST_REWRITE','Host changed the compiled message shape');
+  if(beforeSend){await beforeSend({stage,requestKey});guard();}
   const abortSignal=signal();abortSignal?.throwIfAborted();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running'});
   const response=await native.fetch('/api/backends/chat-completions/generate',{method:'POST',headers:getContext().getRequestHeaders(),body:JSON.stringify(payload),signal:abortSignal});
   guard();return readTaskResponse(response,{signal:abortSignal,onProgress:update=>{guard();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running',characters:update.characters??update.chars});}});
