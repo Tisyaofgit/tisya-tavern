@@ -131,3 +131,8 @@ test('a failed preflight in a changed owner never flushes another chat',async()=
  await assert.rejects(w.run(async()=>{const d=await w.readWorking('book');d.entries[0].content='preparation';await w.save('book',d);f.owner('other');throw error;}),e=>e===error);
  assert.equal(f.counts().writes,0);assert(f.saved);assert(w.status().blocked);assert.equal(error.workspacePreparationSaved,undefined);
 });
+test('an unsafe source or persistence boundary vetoes every legacy and new automatic settlement flag',async()=>{
+ const f=fixture(),w=f.create(),error=Object.assign(Error('original unsafe boundary'),{preparationSettlementSafe:true,preflightRequestFailed:true,runtimeRequestFailed:true,workspaceRecoveryUnsafe:true});
+ await assert.rejects(w.run(async()=>{const d=await w.readWorking('book');d.entries[0].content='retained preparation';await w.save('book',d);throw error;}),e=>e===error);
+ assert.equal(f.counts().writes,0);assert(f.saved);assert(w.status().blocked);assert.equal(error.workspacePreparationSaved,undefined);assert.equal(error.message,'original unsafe boundary');
+});

@@ -1,5 +1,6 @@
 import {readTaskResponse} from '../config/stream-response.js';
 import {detectNativeProtocol} from '../config/native-protocol-guard.js';
+import {markRequestFailureForSettlement} from './request-failure.mjs';
 
 const fail=(code,message)=>{throw Object.assign(Error(message),{code});};
 export async function loadNativeBindings(target=globalThis){
@@ -26,17 +27,21 @@ export function createNativeRequests({getContext,native,resolveConnection,guard,
  if(beforeSend!==null&&typeof beforeSend!=='function')fail('V3_DEPENDENCY','beforeSend must be a function');
  if(typeof native?.openai?.createGenerationParameters!=='function'||typeof native.fetch!=='function')fail('V3_NATIVE_API','Native completion APIs are unavailable');
  return async function request(stage,messages,requestKey){
-  if(!Array.isArray(messages)||!messages.length||messages.some(m=>!['system','user','assistant'].includes(m.role)||typeof m.content!=='string'))fail('V3_MESSAGES','Invalid compiled request');
-  guard();const route=await resolveConnection(stage);guard();
+  let route,payload;
+  try{if(!Array.isArray(messages)||!messages.length||messages.some(m=>!['system','user','assistant'].includes(m.role)||typeof m.content!=='string'))fail('V3_MESSAGES','Invalid compiled request');
+  guard();route=await resolveConnection(stage);guard();
   if(!route?.settings||typeof route.model!=='string'||!route.model)fail('V3_ROUTE','The selected task connection has no model');
-  const {generate_data:payload}=await native.openai.createGenerationParameters(structuredClone(route.settings),route.model,'quiet',structuredClone(messages),{allowToolCalls:false,toolData:{}});
+  ({generate_data:payload}=await native.openai.createGenerationParameters(structuredClone(route.settings),route.model,'quiet',structuredClone(messages),{allowToolCalls:false,toolData:{}}));
   guard();payload.stream=true;
   if(!Array.isArray(payload.messages)||JSON.stringify(payload.messages.map(({role,content})=>({role,content})))!==JSON.stringify(messages))fail('V3_REQUEST_REWRITE','Host changed the compiled message shape');
-  if(beforeSend){await beforeSend({stage,requestKey});guard();}
-  let responseDialect=detectNativeProtocol(payload),validateResponse=null;if(prepareRequest){const prepared=await prepareRequest(payload,route,{stage,requestKey,guard});guard();responseDialect=prepared?.responseDialect??detectNativeProtocol(payload);validateResponse=prepared?.validateResponse;}
+  }catch(error){throw markRequestFailureForSettlement(error,{guard,stage,phase:'request-construction'});}
+  // Source/storage checkpoint failures never authorize automatic settlement,
+  // including when the auxiliary runner catches the same error higher up.
+  if(beforeSend)try{await beforeSend({stage,requestKey});guard();}catch(error){if(error&&typeof error==='object')error.workspaceRecoveryUnsafe=true;throw error;}
+  let responseDialect,validateResponse=null;try{responseDialect=detectNativeProtocol(payload);if(prepareRequest){const prepared=await prepareRequest(payload,route,{stage,requestKey,guard});guard();responseDialect=prepared?.responseDialect??detectNativeProtocol(payload);validateResponse=prepared?.validateResponse;}}catch(error){throw markRequestFailureForSettlement(error,{guard,stage,phase:'request-construction'});}
   const abortSignal=signal();abortSignal?.throwIfAborted();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running'});
   try{const response=await native.fetch('/api/backends/chat-completions/generate',{method:'POST',headers:getContext().getRequestHeaders(),body:JSON.stringify(payload),signal:abortSignal});
   guard();const text=await readTaskResponse(response,{signal:abortSignal,responseDialect,taskLabel:({writer:'正文 API',preflight:'辅助 API（合并）',archive:'辅助 API（归档）',preferences:'辅助 API（偏好）',plan:'辅助 API（推进）',communication:'小缇 API'})[stage]??'任务 API',onProgress:update=>{guard();progress?.({requestKey,phase:stage==='writer'?'writer':'model-a',status:'running',characters:update.characters??update.chars});}});validateResponse?.();return text;
-  }catch(error){if(error&&typeof error==='object'){error.runtimeRequestFailed=true;error.requestStage=stage;}throw error;}
+  }catch(error){markRequestFailureForSettlement(error,{guard,stage,phase:'request'});if(error?.preparationSettlementSafe===true)error.runtimeRequestFailed=true;throw error;}
  };
 }

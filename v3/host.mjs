@@ -17,6 +17,7 @@ import {resolveOpeningPlayer} from './opening-service.mjs';
 import {BOOK_POINTER_KEY} from './book-host.mjs';
 import {mergeDefinitionRegistries} from './design-schema.mjs';
 import {sameDefinition} from '../tables/schema.js';
+import {markRequestFailureForSettlement} from './request-failure.mjs';
 
 const clone=structuredClone,ID_META='tisya_w24';
 const error=(code,message)=>Object.assign(Error(message),{code});
@@ -101,13 +102,14 @@ export async function installV3Host({target=globalThis,getContext,bookManager,re
     },
     writerB:async snapshot=>{
      guard();await verifyNativeRules();const material=await selectedMaterials('main');guard();const narrativeInput=currentNarrativeInput(snapshot,operation.input);const nativeMaterials=nativeCardMaterial(ctx);const compiled=compileFullNarrative({includeEmpty:true,snapshot:{...projectNarrativeMaterial({...snapshot,...definitionMaterial(session.binding)},narrativeInput),playerObjects:operation.input.playerObjects,focusObjects:operation.input.focusObjects,onstageObjects:narrativeInput.onstageObjects,worldWindow:operation.input.worldWindow,playerBinding:session.binding.player},configurationSnapshot:getConfigurationSnapshot(),currentUser:operation.currentUser,history:[],card:{...operation.writerMaterials,nativeCharacter:nativeMaterials.find(m=>m.kind==='native-character-card'),nativePersona:nativeMaterials.find(m=>m.kind==='native-player-persona'),lore:[material.lanes?.lorebook??'',...(operation.writerMaterials?.lore??[])].filter(Boolean),supplements:[material.lanes?.environment??'',material.lanes?.gameplay??'',material.text??'',...(operation.writerMaterials?.supplements??[]),...nativeMaterials.filter(m=>m.kind==='native-character-opening')].filter(Boolean),output:operation.writerMaterials?.output??[]},moods:typeof moods==='function'?moods():moods});
-     const preset=getRuntimePreset('writer');const messages=assembleRuntimePreset('writer',preset,compiled);
+     let messages;try{const preset=getRuntimePreset('writer');messages=assembleRuntimePreset('writer',preset,compiled);}catch(error){throw markRequestFailureForSettlement(error,{guard,stage:'writer',phase:'request-construction'});}
      if(operation.retainedHistory?.length){const at=messages.findIndex(m=>m.identifier==='chatHistory／当前user');check(at>=0,'V3_HISTORY_SLOT','当前输入位置不可用');messages.splice(at,0,...operation.retainedHistory);}
      const shared=operation.companionBatch?compileSharedCompanionSlot({requests:operation.companionBatch.requests,language:companionLanguage()}):[];const output=await requests('writer',[...ownMessages(messages),...ownMessages(Array.isArray(shared)?shared:[shared]),...contractorMessages(operation.input.currentRequest?.turnDirection),...revisionTaskMessages(operation.revision),...(material.directives??[])],snapshot.requestKey);guard();
      // Validate the numbered source before changing native chat.
-     parseV3Reply(output);readCompanionReplies(output,operation.companionBatch?.requests.map(r=>r.id)??[]);const body=output.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1];check(typeof body==='string'&&[...output.matchAll(/<body\b/gi)].length===1,'V3_REPLY_FORMAT','正文缺少唯一 body 区块');parseNumberedBody(body);validateRevision(operation.revision,output);
-     const cleaned=typeof script.cleanUpMessage==='function'?script.cleanUpMessage({getMessage:output,isImpersonate:false,isContinue:false,displayIncompleteSentences:false}):output;
+     let cleaned;try{parseV3Reply(output);readCompanionReplies(output,operation.companionBatch?.requests.map(r=>r.id)??[]);const body=output.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1];check(typeof body==='string'&&[...output.matchAll(/<body\b/gi)].length===1,'V3_REPLY_FORMAT','正文缺少唯一 body 区块');parseNumberedBody(body);validateRevision(operation.revision,output);
+     cleaned=typeof script.cleanUpMessage==='function'?script.cleanUpMessage({getMessage:output,isImpersonate:false,isContinue:false,displayIncompleteSentences:false}):output;
      check(typeof cleaned==='string'&&cleaned,'V3_EMPTY_OUTPUT','正文 API 没有完整输出');parseV3Reply(cleaned);readCompanionReplies(cleaned,operation.companionBatch?.requests.map(r=>r.id)??[]);validateRevision(operation.revision,cleaned);
+     }catch(error){throw markRequestFailureForSettlement(error,{guard,stage:'writer',phase:'response-validation',response:output});}
      const before=ctx.chat.length;let type=operation.saveType;operation.nativeSave={type,output:cleaned};
      if(type==='swipe'){const m=ctx.chat.at(-1);check(m&&!m.is_user,'V3_TARGET','重骰目标不存在');await script.hydrateChatMessageSwipes(ctx.chat.length-1);await checkpointNative();check(typeof script.ensureSwipes==='function','V3_NATIVE_API','原生 ensureSwipes 不可用');script.ensureSwipes(m);check(Array.isArray(m.swipes)&&Array.isArray(m.swipe_info)&&Number.isInteger(m.swipe_id),'V3_SWIPE_FORMAT','原生候选初始化未完成');operation.targetCandidate=null;m.swipe_id=m.swipes.length;}else await checkpointNative();
      mutationDepth++;try{await script.saveReply({type,getMessage:cleaned,fromStreaming:false});}finally{mutationDepth--;}

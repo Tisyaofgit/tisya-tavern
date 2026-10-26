@@ -7,6 +7,7 @@ import {prepareWorld,assertWorldBasisUnchanged} from './world.mjs';
 import {sameJsonValue} from '../host/json-value.mjs';
 import {preferenceGroup,preferenceContributionIdentity,preferenceContributionIdentities,projectPreferences} from '../preferences/service.mjs';
 import {mergeDefinitionRegistries} from '../../design-schema.mjs';
+import {markRequestFailureForSettlement} from '../../request-failure.mjs';
 
 export {formatSimpleSheet};
 export const ROOT_FIELDS=['requestKey','archiveProposal','worldProposal','scope','preferenceCandidates','archiveRequests','creativeBrief','pending'];
@@ -171,11 +172,11 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
     state=await write(state,s=>{s.requests[input.requestKey]={inputHash,status:'awaiting-model',baseViewHash:null,createdAt:new Date().toISOString(),...writeNarrative?{}:{execution:'forms'}};});
     let response;
     if(input.preflightSkipped){response=formatSimpleSheet({requestKey:input.requestKey,archiveProposal:[],worldProposal:null,scope:{goal:input.currentUser??'',targets:[],timeWindow:'',stop:'',unknowns:[]},preferenceCandidates:emptyProposal(),archiveRequests:[],creativeBrief:{goal:'',beats:[],pendingChoices:[],due:[],clues:[],constraints:[]},pending:[]});}
-    else {progress(input.requestKey,'model-a');const requestView=publicView(view);try{response=await requestA({...input,view:requestView,preferenceProjection:preferenceWeights(state,input)});}catch(error){error.preflightRequestFailed=true;throw error;}}
+    else {progress(input.requestKey,'model-a');const requestView=publicView(view);try{response=await requestA({...input,view:requestView,preferenceProjection:preferenceWeights(state,input)});}catch(error){markRequestFailureForSettlement(error,{guard,stage:'preflight',phase:error.requestFailurePhase??'request'});if(error.preparationSettlementSafe===true)error.preflightRequestFailed=true;throw error;}}
     guard();check(typeof response==='string','Model A must return one complete simple sheet');
     state=await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'response',response,baseViewHash:null});});record=state.requests[input.requestKey];
    }
-   progress(input.requestKey,'validate');const result=parseSimpleSheet(record.response);const responseNewIds=validateEnvelope(result,input);
+   progress(input.requestKey,'validate');let result,responseNewIds;try{result=parseSimpleSheet(record.response);responseNewIds=validateEnvelope(result,input);}catch(error){throw markRequestFailureForSettlement(error,{guard,stage:'preflight',phase:'response-validation',response:record.response});}
    if(!record.plan){
     let shadow=currentView(state,input);const aliases=new Map(),archivePlans=[],allNewIds=new Set(responseNewIds);
     const sourceOrder=Object.fromEntries(input.activeSourceKeys.map((key,index)=>[key,index]));
@@ -256,7 +257,18 @@ export function createPreflightRunner({storage,requestA,bindArchiveParagraphs,re
    // their receipt identities in the durable writer journal; A remains canonical.
    const durableSnapshot={...copy(snapshot),toolReceipts:reads.map(r=>({method:r.method,purpose:r.purpose,result:{status:r.result.status??'ok',snapshot:r.result.snapshot??null,has_more:r.result.has_more??false}}))};
    if(!writeNarrative){await verifySources(input);const durable={snapshot:durableSnapshot,deliveryReceipt:null};await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'delivered',result:copy(durable)});});return {snapshot,deliveryReceipt:null,output:null,reused:false};}
-   state=await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'writer-running',writerSnapshot:durableSnapshot});});await verifySources(input);progress(input.requestKey,'writer');const output=typeof writerB==='function'?await writerB(copy(snapshot)):null;
+   state=await write(state,s=>{Object.assign(s.requests[input.requestKey],{status:'writer-running',writerSnapshot:durableSnapshot});});await verifySources(input);progress(input.requestKey,'writer');let output;
+   try{output=typeof writerB==='function'?await writerB(copy(snapshot)):null;}
+   catch(error){
+    // A rejected, received reply has no native/original-store copy. Retain it
+    // privately with its failed request; never insert it as a chat message or
+    // treat it as accepted prose. No callback is repeated by this write.
+    if(error?.preparationSettlementSafe===true&&error.requestFailurePhase==='response-validation'&&typeof error.responseText==='string'){
+     try{state=await write(state,s=>{s.requests[input.requestKey].writerFailure={stage:'writer',phase:'response-validation',code:error.code??'V3_REPLY_INVALID',message:error.message,response:error.responseText,at:new Date().toISOString()};});}
+     catch(diagnosticError){error.workspaceRecoveryUnsafe=true;error.diagnosticPersistenceError={code:diagnosticError.code??'DIAGNOSTIC_SAVE',message:diagnosticError.message};}
+    }
+    throw error;
+   }
    state=await write(state,s=>{s.requests[input.requestKey].status='writer-output';});
    progress(input.requestKey,'original-a');const deliveryReceipt=typeof writerB==='function'?await acceptWriterOutput(output,copy(snapshot)):null;
    if(typeof writerB==='function')validateDeliveryReceipt(deliveryReceipt,input.requestKey);

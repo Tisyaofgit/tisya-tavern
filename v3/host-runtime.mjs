@@ -1995,6 +1995,27 @@ function mergeDefinitionRegistries(base, ...registries) {
   return result;
 }
 
+// v3/request-failure.mjs
+function markRequestFailureForSettlement(error, { guard, stage, phase, response } = {}) {
+  if (!error || typeof error !== "object") return error;
+  if (typeof response === "string") Object.defineProperty(error, "responseText", { value: response, writable: true, configurable: true, enumerable: false });
+  if (error.workspaceRecoveryUnsafe === true) return error;
+  try {
+    guard();
+  } catch {
+    error.workspaceRecoveryUnsafe = true;
+    return error;
+  }
+  if (error.name === "AbortError" || /^(?:WORKSPACE_|BINDING_)|_(?:CHANGED|MUTATED|OWNER|READBACK|CONFLICT|BUSY|DISPOSED|CANCELLED|TIMEOUT|OUTCOME_UNKNOWN)$/.test(error.code ?? "")) {
+    error.workspaceRecoveryUnsafe = true;
+    return error;
+  }
+  error.preparationSettlementSafe = true;
+  error.requestStage = stage;
+  error.requestFailurePhase = phase;
+  return error;
+}
+
 // v3/runtime-source/runner/preflight-runner.mjs
 var ROOT_FIELDS = ["requestKey", "archiveProposal", "worldProposal", "scope", "preferenceCandidates", "archiveRequests", "creativeBrief", "pending"];
 var PROPOSAL_FIELDS = ["templates", "schemaChanges", "changes", "pending"];
@@ -2388,7 +2409,8 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
           try {
             response = await requestA({ ...input, view: requestView, preferenceProjection: preferenceWeights(state, input) });
           } catch (error) {
-            error.preflightRequestFailed = true;
+            markRequestFailureForSettlement(error, { guard, stage: "preflight", phase: error.requestFailurePhase ?? "request" });
+            if (error.preparationSettlementSafe === true) error.preflightRequestFailed = true;
             throw error;
           }
         }
@@ -2400,8 +2422,13 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
         record = state.requests[input.requestKey];
       }
       progress(input.requestKey, "validate");
-      const result = parseSimpleSheet(record.response);
-      const responseNewIds = validateEnvelope(result, input);
+      let result, responseNewIds;
+      try {
+        result = parseSimpleSheet(record.response);
+        responseNewIds = validateEnvelope(result, input);
+      } catch (error) {
+        throw markRequestFailureForSettlement(error, { guard, stage: "preflight", phase: "response-validation", response: record.response });
+      }
       if (!record.plan) {
         let shadow = currentView(state, input);
         const aliases = /* @__PURE__ */ new Map(), archivePlans = [], allNewIds = new Set(responseNewIds);
@@ -2602,7 +2629,22 @@ function createPreflightRunner({ storage, requestA, bindArchiveParagraphs, resol
       });
       await verifySources(input);
       progress(input.requestKey, "writer");
-      const output = typeof writerB === "function" ? await writerB(copy(snapshot2)) : null;
+      let output;
+      try {
+        output = typeof writerB === "function" ? await writerB(copy(snapshot2)) : null;
+      } catch (error) {
+        if (error?.preparationSettlementSafe === true && error.requestFailurePhase === "response-validation" && typeof error.responseText === "string") {
+          try {
+            state = await write(state, (s) => {
+              s.requests[input.requestKey].writerFailure = { stage: "writer", phase: "response-validation", code: error.code ?? "V3_REPLY_INVALID", message: error.message, response: error.responseText, at: (/* @__PURE__ */ new Date()).toISOString() };
+            });
+          } catch (diagnosticError) {
+            error.workspaceRecoveryUnsafe = true;
+            error.diagnosticPersistenceError = { code: diagnosticError.code ?? "DIAGNOSTIC_SAVE", message: diagnosticError.message };
+          }
+        }
+        throw error;
+      }
       state = await write(state, (s) => {
         s.requests[input.requestKey].status = "writer-output";
       });
