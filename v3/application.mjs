@@ -15,6 +15,7 @@ import {createTagService} from './tags.mjs';
 import {createInitializationSourceProvider} from './initialization-sources.mjs';
 import {createOpeningService} from './opening-service.mjs';
 import {createDesignProgress} from './design-progress.mjs';
+import {recoverWorkspace} from './workspace-recovery.mjs';
 
 const clone=structuredClone;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -68,7 +69,7 @@ export async function createApplication({target=globalThis,getContext,store,conf
   requestConfig:(input,{signal})=>configHost.request('tableAssistant',input,{signal,typedInput:input})
  });
  const bookFacade=new Proxy({...books},{get(object,key){const fn=object[key];if(typeof fn!=='function')return fn;
-  if(key==='syncWorkspace')return async(...args)=>{const before=books.workspaceState?.(),result=await fn.apply(object,args);if(before?.pendingBooks?.length||configurationBook?.read().ready===false){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:false});host.configurationChanged();}return result;};
+  if(key==='syncWorkspace')return async(...args)=>{bindingChanging=true;try{return await recoverWorkspace({books,configurationBook,onConfigurationChanged:()=>host.configurationChanged()},...args);}finally{bindingChanging=false;}};
   if(!['create','rename','select','resume','selectGlobalCore'].includes(key))return fn.bind(object);
   return async(...args)=>{idle();const switching=['select','resume','selectGlobalCore'].includes(key);if(switching&&configurationBook?.read().draft)throw Error('请先保存或放弃配置草稿，再切换资料');if(switching)bindingChanging=true;let value;try{value=await fn.apply(object,args);if(switching){if(configurationBook)await configurationBook.hydrate({initializeIfMissing:true});host.configurationChanged();}}finally{if(switching)bindingChanging=false;}if(switching)await progress.refresh();return value;};
  }});

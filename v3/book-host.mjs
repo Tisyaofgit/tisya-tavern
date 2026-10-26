@@ -174,11 +174,23 @@ export async function createNativeBookHost({target=globalThis,getContext,getHost
     invalidate:async event=>{if(typeof invalidate==='function')return invalidate(event);const host=getHost();need('V3 configurationChanged',host?.configurationChanged);return host.configurationChanged();},
   };
   core=createBookManager(callbacks);
+  // Recovery inspection reads the saved book explicitly; it never loads the
+  // pending working copy as configuration, writes a pointer, or clears a journal.
+  async function inspectWorkspaceRecovery(){
+    if(!workspace)return null;await workspace.ready();const state=workspace.status();
+    if(!state.blocked&&!state.pendingBooks.length)return {...state,global:null};
+    const local=captureBindingLocal(),saved=createBookManager({...callbacks,transport:diskTransport});
+    let global=null,globalError=null;
+    try{global=await saved.globalBinding();local.guard();}
+    catch(error){globalError={code:error.code??'READ_FAILED',message:error.message};local.guard();}
+    let owner=null;try{owner=JSON.parse(state.owner);}catch{}
+    return {...state,global,globalError,readOnly:true,pendingContext:owner?{chat:owner.chat,player:owner.player}:null};
+  }
   const prepared=fn=>async(...args)=>{await prepare();return fn(...args);};
   const manager=Object.freeze({...core,refreshWorkspaceSources:async runtime=>{if(!workspace)return false;try{const dependencies=[...getWorkspaceDependencies(),...(runtime?.workspaceDependencies??[])];workspace.consume(dependencies);await workspace.beginReads(dependencies);return false;}catch(error){if(!['WORKSPACE_CHANGED','WORKSPACE_DEPENDENCY'].includes(error.code)||typeof refreshWorkspaceSources!=='function')throw error;await workspace.ready();const state=workspace.status();check(!state.active&&!state.flushing&&!state.pendingBooks.length,'WORKSPACE_SYNC_REQUIRED','请先同步上次未完成的工作区，再重新载入资料');if(typeof getHost()?.assertSourceRefreshIdle==='function')await getHost().assertSourceRefreshIdle();else await idle();await refreshWorkspaceSources();await workspace.beginReads(getWorkspaceDependencies());return true;}},checkpointWorkspace:async runtime=>{const snapshot=await(runtime?.checkpointBinding?runtime.checkpointBinding():readBindingSnapshot({fresh:true}));snapshot.guard();workspace?.consume?.([...getWorkspaceDependencies(),...(runtime?.workspaceDependencies??[])]);await workspace?.checkpoint?.();snapshot.guard();return {verified:true};},runWorkspace:workspace?(fn,{dependencies=[]}={})=>workspace.run(fn,{dependencies:[...getWorkspaceDependencies(),...dependencies]}):undefined,syncWorkspace:async()=>{if(!workspace)return {saved:0};await workspace.ready();const state=workspace.status();if(state.active||state.flushing||state.pendingBooks.length)await idle();return workspace.sync();},workspaceState:()=>workspace?.status()??null,clearWorkspaceMemory:filter=>workspace?.clearMemory(filter),retryWorkspaceCache:()=>workspace?.retryCache(),create:request=>request.kind==='core'?core.create(request):prepared(core.create)(request),rename:prepared(core.rename),saveDefinition:prepared(core.saveDefinition),select:prepared(core.select),fork:prepared(core.fork),resume:prepared(core.resume),readRuntime:prepared(core.readRuntime),binding:prepared(core.binding),readConfiguration:core.readConfiguration,saveConfiguration:core.saveConfiguration,
     getLinkedWorldbookNames(avatar){return characterWorldbookNames(raw(),worldInfo.world_info,avatar);},
     async readWorldbook(name,{fresh=false}={}){const c=raw(),h=handle(),data=await(fresh?transport.readFresh:transport.readWorking??transport.readFresh).call(transport,name);scopeGuard(c,h);check(data,'CHARACTER_BOOK_MISSING','角色配套世界书不存在：'+name);return data;},
     async options(){const owner=await prepare(),c=raw(),id=getPlayerId(),players=Object.entries(c.powerUserSettings?.personas??{}).map(([id,name])=>({id,name})),defaultPreferenceOwner=id?{kind:'player',id}:null;const global=await core.globalBinding();return {owner,global,currentPlayer:players.find(p=>p.id===id)??(id?{id,name:c.name1??id}:null),players,defaultPreferenceOwner,accountPreferenceOwner:null,availablePreferenceOwners:defaultPreferenceOwner?[defaultPreferenceOwner]:[]};},
   });
-  return Object.freeze({manager,prepare,callbacks,dispose(){for(const off of workspaceListeners)off();workspace?.dispose();disposed=true;}});
+  return Object.freeze({manager:Object.freeze({...manager,inspectWorkspaceRecovery}),prepare,callbacks,dispose(){for(const off of workspaceListeners)off();workspace?.dispose();disposed=true;}});
 }
