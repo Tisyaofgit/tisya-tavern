@@ -1,8 +1,3 @@
-import {buildTimeline} from './timeline.js';
-import {storyMaterial,projectStoryDossiers,storyPreferences,storyContext,storyBlueprint} from './story-material.js';
-import {archiveSourceView} from './archive-source-view.js';
-import {parseSimpleSheet,renderModelMaterial} from './simple-sheet.js';
-import {parseRuleReviewSheet} from './rule-review-sheet.js';
 import {registerOpening,matchingOpening,applyOpening,canRestoreInto} from './startup.js';
 import {assembleArchiveBook} from './archive-book.js';
 import {createArchiveSystem} from './archive-system.js';
@@ -14,7 +9,7 @@ import {STATE_SYSTEM_CONTRACT,compileStateFormulas} from './state-formulas.js';
 import {historyGroups} from '../config/tool-history.js';
 import {historySignature} from '../config/history-context.js';
 import {storySources,assertStoryLedger} from './story-sources.js';
-import {coreSelection,validateBundle,validateCoreMapping,coreKind,hasCoreEvidence} from './core-assets.js';
+import {coreSelection,validateBundle,validateCoreMapping,coreKind} from './core-assets.js';
 import {validateStateCatalog,registerStateCatalog,readStateGrid,stateGridProposal,readStateValues,stateValuesProposal,stateFormulaProposal,stateGrowthProposal} from './state-form.js';
 import {ruleSources,validateRuleReview,rulePolicy,chooseRule,policyEvidence} from './rule-review.js';
 import {safeDiagnostic} from '../config/stream-response.js';
@@ -23,9 +18,9 @@ import {preferenceMatches,withGlobalPreferences,confirmedPreferenceDraft,prefere
 import {prepareArchiveInput,validateArchiveNeedsRows,archiveProposalNeedsRows} from './archive-input.js';
 import {assembleTableRows} from './assembly.js';
 import {cardDefinitionSource,cardMechanisms,cardAIMaterials,bookAIMaterials} from './card-source.js';
-import {nativeBranches,bridgeInput,bridgePatch,hasNativeUpdate,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
+import {nativeBranches,bridgeInput,bridgePatch,carryNativeForward,valueAt,parseNativeTransaction,auditNativeOutcome} from './native-bridge.js';
 import {nativeSnapshot} from './native-state.js';
-import {progressionWindow,validateWorldProposal,validatePlanProposal,progressionKey,planContext} from './progression.js';
+import {progressionWindow,validateWorldProposal,progressionKey,planContext} from './progression.js';
 import {snapshotAnchor,branchSeed,forkCommits} from './branches.js';
 import {freezeCanonSnapshot,validateFrozenCanon} from './canon.js';
 import {createArchiveQuerySession} from './archive-query.js';
@@ -34,39 +29,17 @@ import {createArchiveProposalSession,ARCHIVE_SCHEMA_OPTIONS} from './archive-pro
 import {reconcileProposal,mergeRegistries} from './reconcile.js';
 import {createTableAssistant} from './assistant.js';
 import {validateNativeConfig} from './native-config.js';
-import {materialSlots,narrativeSlot} from './slots.js';
+import {materialSlots} from './slots.js';
 import {styleRules,stylePrompt,scanStyle} from './style-rules.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 import {tableSettings,copy,check,isObjectType,sameDefinition,derive,normalized,registryIndex,validateRow,defaultRegistry,upgradeRegistry,mapRowReferences,references} from './schema.js';
 import {createBookGateway,digest} from './books.js';
-import {precedingUserSource,memoryBlock,taskTags,project,originPinsAtStart,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
+import {precedingUserSource,memoryBlock,taskTags,project,originPinsAtStart,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
 import {worldbookEntries,createWorldbookProjection} from './worldbook-context.js';
-import {narrativeInstructions} from './prompts.js';
+import {NARRATIVE_TAGS} from './prompts.js';
 const fields=['objects','facts','scene','state','relations','cognition','holdings','tasks','timers','clues','events'];
 const cardBasis=c=>cardDefinitionSource(c.characters?.[c.characterId]);
 const stampChat=historySignature;
-// Internal executors may hand back typed candidates. Real model text has one
-// parser per registered task and never falls back to the legacy JSON wire.
-export function parseTableTaskResponse(task,response){
- if(response&&typeof response==='object'&&!Array.isArray(response)&&!Object.hasOwn(response,'choices')&&!Object.hasOwn(response,'content')&&!Object.hasOwn(response,'candidates'))return response;
- const text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.filter(x=>x.thought!==true).map(x=>x.text??'').join('');
- check(typeof text==='string'&&text.trim(),'辅助 API 没有返回完整简表文本');const result=task==='ruleReview'?parseRuleReviewSheet(text):parseSimpleSheet(text);
- check(result&&typeof result==='object'&&!Array.isArray(result),'辅助任务简表根须为对象');return result;
-}
-// Trusted narrative layouts share one selected snapshot and retain alternate
-// references for consumers the user explicitly disables in the preset.
-function projectNarrativeSlots(input,metadata={},stateContext='',extra={}){
- const append=(text,tag,items=[])=>{if(!items.length)return text;const end='</'+tag+'>';return text?text.replace(end,items.join('\n\n')+'\n'+end):'<'+tag+'>\n'+items.join('\n\n')+'\n'+end;};
- const project=referenceTables=>{const p=projectStoryDossiers({...input,...(referenceTables?{referenceTables}:{})});p.sections.state=[p.sections.state,...(extra.state??[])].filter(Boolean).join('\n\n');for(const [key,tag]of [['history','History'],['foreshadow','Foreshadow'],['progression','WorldProgression']])p.sections[key]=append(p.sections[key],tag,extra[key]);p.progressionWithoutDossiers=append(p.progressionWithoutDossiers,'WorldProgression',extra.progression);p.sections.recent=[p.sections.recent,...(extra.recent??[])].filter(Boolean).join('\n\n');return p;};
- const main=project(),alternates={withoutHistory:project(['clues']),withoutForeshadow:project(['events']),withoutHistoryAndForeshadow:project([])},slots={};
- const state=p=>[p.sections.state,stateContext].filter(Boolean).join('\n\n'),history=(p,temporary=true)=>[p.sections.history,temporary?p.sections.recent:''].filter(Boolean).join('\n\n');
- slots.state=narrativeSlot(metadata.state??{},state(main),Object.fromEntries(Object.entries(alternates).map(([name,p])=>[name,state(p)])));
- if(metadata.archive||history(main))slots.archive=narrativeSlot(metadata.archive??{},history(main),{withoutTemporary:history(main,false),withoutForeshadow:history(alternates.withoutForeshadow),withoutTemporaryAndForeshadow:history(alternates.withoutForeshadow,false)});
- if(main.sections.progression)slots.progression=narrativeSlot({},main.sections.progression,{withoutDossiers:main.progressionWithoutDossiers,...Object.fromEntries(Object.entries(alternates).flatMap(([name,p])=>[[name,p.sections.progression],[name.replace('without','withoutDossiersAnd'),p.progressionWithoutDossiers]]))});
- if(main.sections.foreshadow)slots.foreshadow=narrativeSlot({},main.sections.foreshadow,{withoutHistory:alternates.withoutHistory.sections.foreshadow});
- if(input.plot)slots.plan=narrativeSlot(metadata.plan??{},main.sections.plan);
- return slots;
-}
 export function createTableService({store,getContext,request,projectToolTurns,books=createBookGateway(undefined,getContext),vector=null,nativeConfig=null,persona=null,archiveQueryPolicy=null,getConfigurationChoices=()=>({}),interfaceConfig=null,onNotice=()=>{},setPrompt=()=>{}}){
  let busy=false,controller=null,jobScope=null,latest=null,lastStyleAudit=null,progress=null,pendingFork=null,boundWorld=getContext().chatId?store.read().key:null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
  let archiveChanged=false;const archiveListeners=new Set();
@@ -99,14 +72,14 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  async function invoke(task,input,c,signal,{archiveToolSession=null}={}){
   status(task,'运行中');progress={task,stage:'preparing',characters:0,text:'',startedAt:Date.now(),updatedAt:Date.now()};
   try{
-   signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);const typedInput={...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]};const response=await request(task,renderModelMaterial(typedInput),{signal,typedInput:copy(typedInput),...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
+   signal?.throwIfAborted();const policy=task==='ruleReview'||task==='tableAssistant'?null:await selectedRulePolicy(c);const response=await request(task,JSON.stringify({...input,preferences:activePreferences(withGlobalPreferences({rows:input.preferences??input.currentRows??input.rows??[]},c.data.全局偏好).rows,c),...(policy?{rulePolicy:policy}:{}),explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[]}),{signal,...(archiveToolSession?{archiveToolSession}:{}),onProgress:update=>{
     if(signal?.aborted||!update||!['preparing','prepared','waiting','connected','thinking','receiving','buffered','received'].includes(update.stage))return;
     // Reader delivers cumulative visible content; reasoning fields are never
     // accepted as a progress payload or appended to task data.
     const text=typeof update.text==='string'?update.text:progress.text;progress={...progress,stage:update.stage,text,characters:text.length,updatedAt:Date.now()};
    }});
    if(typeof response==='string')progress={...progress,text:response,characters:response.length};progress={...progress,stage:'validating',updatedAt:Date.now()};
-   const result=copy(parseTableTaskResponse(task,response));c.guard();status(task,'返回待校验');return result;
+   const result=copy(parseJSONResponse(response));c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }
  async function commit(c,loaded,proposal,options){
@@ -153,14 +126,13 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   return {...history,templates:distinct(discovery.templates??[],history.templates??[]),schemaChanges:distinct(discovery.schemaChanges??[],history.schemaChanges??[]),changes:[...discovery.changes,...history.changes],pending:[...(discovery.pending??[]),...(history.pending??[])]};
  }
  async function archiveLoaded(c,loaded,signal,includeLatest=false,range=null){
-  if(c.settings.nativeBridge)return archiveNativeLoaded(c,loaded,signal,range);
   if(!c.settings.archive&&!range)return loaded;
   const ai=loaded.chain.filter(s=>s.role==='assistant'),eligible=(includeLatest?ai:ai.filter(s=>loaded.chain.some(u=>u.role==='user'&&u.index>s.index))).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)).slice(0,range?.limit??Infinity);
   for(const source of eligible){
    if(loaded.view.archived.has(source.key))continue;
    c.guard();status('楼层归档','运行中','第 '+source.floor+' 层');
    const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n'),view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))};
-   const input={...archiveSourceView(source),userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
+   const input={sourceHistory:[{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text:source.text,candidate:source.candidate}],archiveSource:{key:source.key,parent:source.parent,index:source.index,floor:source.floor,role:source.role,name:source.name,text,time:sourceTime(source.text)},userSource,pending:loaded.view.commits.filter(x=>x.source===source.key).flatMap(x=>x.pending??[]),instruction:'仅处理当前正文及本 AI 回复前连续用户输入。按来源顺序补录；计划、审核总结、任务标签及旧记忆块不是事实依据。已有事实更新原记录，不重复建行。',objectsSeparate:c.settings.objectsSeparate};
    const isHistory=!!range,task=isHistory?'historyImport':'tableArchive',options={source:source.key,kind:isHistory?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
    try{
     let discovery=null,working=view;
@@ -185,106 +157,41 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   }
   return loaded;
  }
- function nativeMapChanges(view,data,reserved=[]){
-  const prior=view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
-  const ids=new Set(reserved);
-  const newId=index=>{let id='new:native-'+index;while(ids.has(id))id+='-snapshot';ids.add(id);return id;};
-  for(const [i,leaf] of leaves.entries()){const before=byPath.get(leaf.path);if(before&&before.values.启用!==false&&JSON.stringify(before.values.值)===JSON.stringify(leaf.value))continue;changes.push({id:before?.id??newId(i),table:'native_cells',expected:before?.rev??0,values:{名称:leaf.path,路径:leaf.path,值:leaf.value,启用:true},access:{readers:[],knowers:[]},evidence:'原生变量快照'});}
-  const paths=new Set(leaves.map(l=>l.path));for(const old of prior)if(old.values.启用!==false&&!paths.has(old.values.路径))changes.push({id:old.id,table:'native_cells',expected:old.rev,values:{启用:false},access:{readers:[],knowers:[]},evidence:'原生变量快照'});
-  return changes;
- }
  async function nativeMapLoaded(c,loaded,data,source,index){
-  const changes=nativeMapChanges(loaded.view,data);
+  const prior=loaded.view.rows.filter(r=>r.table==='native_cells'),byPath=new Map(prior.map(r=>[r.values.路径,r])),leaves=nativeBranches(data.stat_data),changes=[];
+  for(const [i,leaf] of leaves.entries()){const before=byPath.get(leaf.path);if(before&&before.values.启用!==false&&JSON.stringify(before.values.值)===JSON.stringify(leaf.value))continue;changes.push({id:before?.id??'new:native-'+i,table:'native_cells',expected:before?.rev??0,values:{名称:leaf.path,路径:leaf.path,值:leaf.value,启用:true},access:{readers:[],knowers:[]},evidence:'原生变量快照'});}
+  const paths=new Set(leaves.map(l=>l.path));for(const old of prior)if(old.values.启用!==false&&!paths.has(old.values.路径))changes.push({id:old.id,table:'native_cells',expected:old.rev,values:{启用:false},access:{readers:[],knowers:[]},evidence:'原生变量快照'});
   for(let offset=0;offset<changes.length;offset+=100)loaded=await commit(c,loaded,{changes:changes.slice(offset,offset+100)},{source,kind:'native-snapshot',evidence:'原生变量快照',allowedTables:['native_cells'],nativeReceipt:{phase:'snapshot',index}});
   return loaded;
  }
- async function enableNativeBridge(enabled=true){return exclusive(async()=>{const c=capture();if(enabled){check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');const settings=getContext().extensionSettings?.mvu_settings;check(!(settings?.更新方式==='额外模型解析'&&settings?.额外模型解析配置?.启用自动请求!==false),'原 MVU 额外模型自动更新正在启用，请先关闭该重复计算来源，脚本保持开启');let loaded=await load(c);const native=bridgeInput(getContext());loaded=await nativeMapLoaded(c,loaded,native.data,loaded.chain.at(-1)?.key??null,native.index);}
+ async function enableNativeBridge(enabled=true){return exclusive(async()=>{const c=capture();if(enabled){const settings=getContext().extensionSettings?.mvu_settings;check(!(settings?.更新方式==='额外模型解析'&&settings?.额外模型解析配置?.启用自动请求!==false),'原 MVU 额外模型自动更新正在启用，请先关闭该重复计算来源，脚本保持开启');let loaded=await load(c);const native=bridgeInput(getContext());loaded=await nativeMapLoaded(c,loaded,native.data,loaded.chain.at(-1)?.key??null,native.index);}
   const fresh=capture(),data=copy(fresh.data);data.worlds[fresh.key].tables={...fresh.settings,nativeBridge:enabled,enabled:enabled||fresh.settings.enabled};await store.save(data,fresh.revision,fresh.key);status('原生变量桥',enabled?'已启用':'已关闭','原 MVU 脚本保持开启；更新块由插件生成');return enabled;});}
- // A confirmed floor has one proposal and one persisted native settlement.
- // The journal bridges the native message store and the archive worldbook;
- // neither a retry nor a service recreation replays an adjudication callback.
- async function archiveNativeLoaded(c,loaded,signal,range=null){
-  check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');
-  const applied=(state,key)=>state.view.commits.some(x=>x.source===key&&x.nativeReceipt?.phase==='applied');
-  const eligible=loaded.chain.filter(s=>s.role==='assistant'&&loaded.chain.some(u=>u.role==='user'&&u.index>s.index)).filter(s=>!range||(s.floor>=range.from&&s.floor<=range.to)).filter(s=>!loaded.view.archived.has(s.key)||!applied(loaded,s.key)).slice(0,range?.limit??Infinity);
-  for(const source of eligible){
-   c.guard();const index=source.floor-1;
-   check(!loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.nativeReceipt.index>index),'后续楼层已有原生结算；请恢复到本楼对应时间锚再补录，未回退当前变量映射');
-   // A completed old candidate is absent from the current projection but its
-   // journal is complete in the raw session. This does not settle the new source.
-   check(!(loaded.session.data.nativeIntents??[]).some(x=>x.index===index&&x.source!==source.key&&!loaded.session.data.commits.some(commit=>commit.source===x.source&&commit.nativeReceipt?.phase==='applied')),'该楼层正文已改变且存在未完成的原生结算；请先恢复对应来源，未重复执行模型或回调');
-   let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
-   if(waiting&&!applied(loaded,source.key)){
-    if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
-    if(waiting.unifiedArchive){loaded=await finishArchiveNative(c,loaded,source,waiting);continue;}
-    // Resume a pre-upgrade native-only journal before requesting its missing archive.
-    await finishNative(c,loaded,source,waiting);loaded=await load(c);
-   }
-   const archiveAlready=loaded.view.archived.has(source.key),legacyNative=hasNativeUpdate(source.text),nativeOwned=legacyNative||applied(loaded,source.key);
-   const native=bridgeInput(getContext(),undefined,index);
-   if(nativeOwned){const existing=globalThis.Mvu.getMvuData({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');native.data=copy(existing);native.snapshotIndex=index;}
-   loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
-   const userSource=precedingUserSource(loaded.chain,source),text=archivalText(source.text),evidence=[text,userSource?.text??''].filter(Boolean).join('\n\n');
-   const view={...loaded.view,rows:loaded.view.rows.map(r=>({...r,sourceFloor:loaded.chain.find(s=>s.key===r.source)?.floor??null}))},entries=bookAIMaterials(await books.materials(getContext().characters[getContext().characterId].avatar));c.guard();
-   const input={...archiveSourceView(source),userSource,pending:[],objectsSeparate:c.settings.objectsSeparate&&!archiveAlready,
-    nativeBridge:{enabled:true,writer:'native-mvu',sourceFloor:source.floor,index,snapshotFloor:native.snapshotIndex+1,nativeOwned,archiveAlready},nativeState:{readOnly:true,sourceFloor:source.floor,snapshotFloor:native.snapshotIndex+1,valuesFrom:'currentRows.native_cells'},nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n'),instruction:'同一次归档提出记忆与变量变更。native_cells 仅为原生映射；程序交原 MVU 结算后保存实际值。业务状态引用原生路径，不复制变量值。仅处理当前正文及此前连续用户输入，不授予人物未获知的事实。'};
-   const options={source:source.key,kind:archiveAlready?'native-fill':range?'history':'archive',worldTime:sourceTime(source.text),evidence,allowedTables:loaded.view.registry.tables.filter(t=>t.owner==='archive'&&t.id!=='native_cells').map(t=>t.id),sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))},reading={ids:[],rounds:0};
-   let discovery=null,working=view;
-   if(input.objectsSeparate){discovery=await archiveProposal('objectArchive',{...input,nativeBridge:undefined,nativeState:undefined,nativeRules:undefined},view,c,signal,reading);working=proposalView(view,discovery,{...options,allowedTables:['objects','facts']});}
-   const task=range?'historyImport':'tableArchive';let history=await archiveProposal(task,input,working,c,signal,reading);
-   function splitAndValidate(history){
-    if(discovery)onlyArchiveObjects(history,working,false);
-    const proposal=discovery?mergeArchiveProposals(discovery,history):history;
-    check(!proposal.pending?.length,'统一归档仍有未解决项目；未结算变量或完成归档');
-    const tables=registryIndex(loaded.view.registry),nativeChanges=[],changes=[];
-    for(const op of proposal.changes)(tables.tables.get(normalized(op.table))?.id==='native_cells'?nativeChanges:changes).push(copy(op));
-    check(!nativeOwned||!nativeChanges.length,'原回复已有原生更新，native_cells 本轮只读');
-    check(!archiveAlready||(!changes.length&&!proposal.templates?.length&&!proposal.schemaChanges?.length),'此楼层记忆已归档；补结算只能提出 native_cells 变更');
-    const business={...proposal,changes},nativeProposal={changes:nativeChanges.map(op=>({...op,table:'native_cells'}))};
-    prepareCommit(loaded.view,business,options);
-    const wire=bridgePatch(loaded.view.rows.filter(r=>r.table==='native_cells'&&r.values.启用!==false),nativeProposal,native.data,evidence);
-    return {business,nativeProposal,wire};
-   }
-   let validated;
-   try{validated=splitAndValidate(history);}catch(e){status('统一归档','修正格式',e.message);history=await archiveProposal(task,{...input,repair:{error:e.message,previous:history,instruction:'只修正同一归档提案，保留正确业务与变量项、来源和 discovery ID；不能解决的项目保留 pending。'}},working,c,signal,reading);validated=splitAndValidate(history);}
-   const {business,nativeProposal,wire}=validated;
-   const intent={unifiedArchive:true,source:source.key,index,snapshotIndex:native.snapshotIndex,phase:'parsing',before:JSON.stringify(native.data.stat_data),originalMissing:!globalThis.Mvu.getMvuData({type:'message',message_id:index})?.stat_data,proposal:nativeProposal,archiveProposal:business,archiveOptions:options,evidence,operations:copy(wire.operations),block:wire.block,legacyNative,nativeOwned};
-   assertNativeBaseline(intent);loaded=await saveNativeIntent(c,loaded,intent);assertNativeBaseline(intent);
-   const parsed=wire.operations.length?await parseNativeTransaction({runtime:globalThis.Mvu,eventSource:getContext().eventSource,index,before:native.data,block:wire.block,guard:c.guard}):{after:copy(native.data),stagedWrites:0};
-   const ready={phase:'parsed',after:JSON.stringify(parsed.after.stat_data),afterData:copy(parsed.after),stagedWrites:parsed.stagedWrites,outcome:auditNativeOutcome(wire.operations,native.data.stat_data,parsed.after.stat_data)};
-   parsedNative.set(c.key+':'+source.key,ready);Object.assign(intent,ready);loaded=await saveNativeIntent(c,loaded,intent);
-   loaded=await finishArchiveNative(c,loaded,source,intent);
-  }
-  return loaded;
- }
- function assertNativeBaseline(intent){
-  const snapshot=globalThis.Mvu?.getMvuData?.({type:'message',message_id:intent.snapshotIndex});
-  check(JSON.stringify(snapshot?.stat_data)===intent.before,'原生来源快照已改变；未使用过期前值结算，请恢复到已确认时间锚后重试');
- }
- async function finishArchiveNative(c,loaded,source,intent){
-  check(intent.phase==='parsed'&&intent.source===source.key&&intent.index===source.floor-1,'原生归档日志与当前来源不匹配');
-  const outcome=intent.outcome;
-  if(outcome?.rejected.length){status('统一归档','原生规则拒绝',outcome.rejected.length+' 项未生效；已保存实际回执，不重复回调');throw Error('原生规则拒绝了 '+outcome.rejected.length+' 项更新；未写入变量或完成归档，解析结果已保存');}
-  // Validate both destinations before the first native write. Native cells are
-  // constructed only from the actual callback result, never from the proposal.
-  prepareCommit(loaded.view,intent.archiveProposal,intent.archiveOptions);
-  const proposal={...copy(intent.archiveProposal),changes:[...copy(intent.archiveProposal.changes),...nativeMapChanges(loaded.view,intent.afterData,intent.archiveProposal.changes.map(op=>op.id))]},options={...intent.archiveOptions,evidence:intent.evidence+'\n原生变量快照',allowedTables:[...intent.archiveOptions.allowedTables,'native_cells'],nativeReceipt:{phase:'applied',unifiedArchive:true,index:intent.index,block:intent.block,legacyNative:intent.legacyNative,stagedWrites:intent.stagedWrites??0,outcome:copy(outcome),updated:intent.proposal.changes.length}};
-  prepareCommit(loaded.view,proposal,options);
-  const runtime=globalThis.Mvu,index=intent.index,current=runtime.getMvuData({type:'message',message_id:index}),currentText=JSON.stringify(current?.stat_data);
-  check(currentText===intent.after||currentText===intent.before||intent.originalMissing&&!current?.stat_data,'变量已被其他来源修改，未覆盖');
-  if(currentText!==intent.after){assertNativeBaseline(intent);c.guard();await runtime.replaceMvuData(intent.afterData,{type:'message',message_id:index});c.guard();check(JSON.stringify(runtime.getMvuData({type:'message',message_id:index})?.stat_data)===intent.after,'原生写回未确认；已保存结果可重试，随机判定不会重跑');}
-  await carryNativeForward({context:getContext(),runtime,index,before:{stat_data:JSON.parse(intent.before)},after:intent.afterData,guard:c.guard});
-  loaded=await commit(c,loaded,proposal,options);
-  parsedNative.delete(c.key+':'+source.key);
-  if(typeof globalThis.TavernHelper?.refreshOneMessage==='function')try{await globalThis.TavernHelper.refreshOneMessage(index);}catch(e){status('原卡显示','待刷新','变量与记忆已保存；'+e.message);}
-  loaded.nativeResult={updated:intent.proposal.changes.length,block:intent.block,outcome:copy(outcome),...(intent.nativeOwned?{nativeOwned:true}:{})};return loaded;
- }
  async function syncNative({scope='manual'}={}){return exclusive(async signal=>{
-  const c=capture();if(!c.settings.nativeBridge)return null;
-  check(c.settings.archive,'请先启用自动归档历史；原生变量桥通过同一次归档结算变量');
-  let loaded=await load(c);const confirmed=loaded.chain.some(s=>s.role==='assistant'&&loaded.chain.some(u=>u.role==='user'&&u.index>s.index));
-  if(!confirmed)return {deferred:true,reason:'最新回复暂不结算；等用户继续后统一归档变量与记忆'};
-  loaded=await archiveNativeLoaded(c,loaded,signal);return loaded.nativeResult??{already:true};
+  const c=capture();if(!c.settings.nativeBridge)return null;let loaded=await load(c);const source=loaded.chain.findLast(x=>x.role==='assistant');if(!source||!loaded.chain.some(x=>x.role==='user'&&x.index>source.index))return {deferred:true,reason:'最新回复暂不结算；等用户继续后生成更新块'};const index=source.floor-1;
+  if(loaded.view.commits.some(x=>x.nativeReceipt?.phase==='applied'&&x.source===source.key))return {already:true};
+  if(/<JSONPatch>\s*\[(?!\s*\])/i.test(source.text)){const existing=globalThis.Mvu?.getMvuData?.({type:'message',message_id:index});check(existing?.stat_data,'旧回复含原生更新但尚无变量快照，请先由原脚本完成处理');loaded=await nativeMapLoaded(c,loaded,existing,source.key,index);await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence:'沿用原回复已保存的原生变量',allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,legacyNative:true}});return {updated:0,already:true,nativeOwned:true};}
+  const native=bridgeInput(getContext(),undefined,index);const evidence=[archivalText(source.text),precedingUserSource(loaded.chain,source)?.text??''].join('\n\n');
+  let waiting=loaded.session.data.nativeIntents?.findLast(x=>x.source===source.key);
+  if(waiting){
+   if(waiting.phase==='parsing'){const cached=parsedNative.get(c.key+':'+source.key);check(cached,'上次原生回调中断，结果未能保存；为避免重抽随机结果，未再次执行。请回溯到已确认时间锚后继续');waiting={...waiting,...cached};loaded=await saveNativeIntent(c,loaded,waiting);}
+   return finishNative(c,loaded,source,waiting);
+  }
+  loaded=await nativeMapLoaded(c,loaded,native.data,source.key,index);
+  const rows=loaded.view.rows.filter(r=>r.table==='native_cells'&&r.values.启用!==false),entries=bookAIMaterials(await books.materials(getContext().characters[getContext().characterId].avatar));c.guard();
+  const proposal=await invoke('nativeFill',{archiveSource:{text:evidence},registry:loaded.view.registry,currentRows:rows,nativeRules:[cardBasis(getContext()),...entries.map(e=>e.content)].join('\n\n')},c,signal);check(!proposal.pending?.length,'变量填录仍有未定条件，未生成更新块');
+  const wire=bridgePatch(rows,proposal,native.data,evidence);if(!wire.operations.length){await commit(c,loaded,{changes:[]},{source:source.key,kind:'native-fill',evidence,allowedTables:['native_cells'],nativeReceipt:{phase:'applied',index,block:''}});return {updated:0};}
+  const intent={source:source.key,index,phase:'parsing',before:JSON.stringify(native.data.stat_data),originalMissing:!globalThis.Mvu.getMvuData({type:'message',message_id:index})?.stat_data,proposal,evidence,operations:copy(wire.operations),block:wire.block};
+  // Journal before invoking callbacks, including random adjudication. An interrupted parse is not replayed.
+  loaded=await saveNativeIntent(c,loaded,intent);
+  const {after,stagedWrites}=await parseNativeTransaction({runtime:globalThis.Mvu,eventSource:getContext().eventSource,index,before:native.data,block:wire.block,guard:c.guard});
+  const outcome=auditNativeOutcome(wire.operations,native.data.stat_data,after.stat_data);
+  const ready={phase:'parsed',after:JSON.stringify(after.stat_data),afterData:copy(after),proposal:copy(proposal),stagedWrites,outcome};
+  // Persist the actual parse result before evaluating acceptance or attempting
+  // writes. Recreated services resume this journal instead of rerunning random
+  // callbacks, including a rejected or adjusted result.
+  parsedNative.set(c.key+':'+source.key,ready);
+  Object.assign(intent,ready);loaded=await saveNativeIntent(c,loaded,intent);
+  return finishNative(c,loaded,source,intent);
  },{scope});}
  async function saveNativeIntent(c,loaded,intent){const next=copy(loaded.session.data);next.revision++;next.nativeIntents=(next.nativeIntents??[]).filter(x=>x.source!==intent.source);next.nativeIntents.push(copy(intent));return {...loaded,session:await books.write(loaded.session,next,c.guard)};}
  async function finishNative(c,loaded,source,intent){
@@ -392,13 +299,13 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  function activateFork({rollback=false}={}){if(activatingFork)return activatingFork;if(!pendingFork)return Promise.resolve(null);activatingFork=exclusive(async()=>{const pending=pendingFork,ctx=getContext();if(ctx.characters?.[ctx.characterId]?.avatar!==pending.avatar)return null;const signature=historySignature(ctx);if(signature!==pending.signature)return null;let c=capture();if(!rollback&&c.key===pending.sourceKey)return null;
  if(!rollback){check(!c.settings.sessionBook,'目标会话已有表单存档，未覆盖');const data=copy(c.data);data.worlds[c.key].tables={...pending.settings,sessionBook:'',originPins:[]};await store.save(data,c.revision,c.key);c=capture();}
  let loaded=await load(c);const next=copy(loaded.session.data);next.revision++;next.retiredBranches??=[];if(rollback&&next.commits.length)next.retiredBranches.push({at:new Date().toISOString(),commits:copy(next.commits),branchSeed:copy(next.branchSeed??null)});else check(!next.commits.length,'新分支已有进度，未覆盖');next.commits=[];next.pins=[];next.nativeIntents=[];next.branchSeed=branchSeed(pending.anchor);if(pending.candidateSession){for(const key of ['commits','pins','nativeIntents','branchSeed','preferenceDrafts','revisionFeedback','personaBinding'])if(Object.hasOwn(pending.candidateSession,key))next[key]=copy(pending.candidateSession[key]);if(!Object.hasOwn(pending.candidateSession,'branchSeed'))delete next.branchSeed;}next.registry=copy(pending.anchor.registry);next.schemaPinned=true;project(loaded.origin.data,next,loaded.chain.map(s=>s.key));await books.write(loaded.session,next,c.guard);pendingFork=null;status('平行存档','已建立',(next.branchSeed?.nodes?.length??0)+' 个未来可能节点');return next.branchSeed?.anchor??{id:pending.anchor.id};}).finally(()=>{activatingFork=null;});return activatingFork;}
- async function coreDraft(objectId,{growth=false}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c),row=loaded.view.rows.find(r=>r.id===objectId&&r.table==='objects');check(row,'请先选择已建档对象');const selected=[row,...(growth?loaded.view.rows.filter(r=>['growth','experiences'].includes(r.table)&&r.values.主体===objectId):[])],basis=JSON.stringify(selected);const result=await invoke('assetAdapt',{sourceCard:selected,goal:growth?'提取无画风基点、已有叙事意义及已选择的成长':'提取无画风基点与已有叙事意义，不携带成长',registry:loaded.view.registry},c,signal);check(result.core&&typeof result.core.name==='string'&&Array.isArray(result.core.traits)&&Array.isArray(result.core.growth),'核心草稿格式无效');for(const item of [...result.core.traits,...result.core.growth])check(typeof item.name==='string'&&typeof item.value==='string'&&typeof item.evidence==='string'&&item.evidence.trim()&&hasCoreEvidence(selected,item.evidence),'核心项缺少真实来源');check(growth||!result.core.growth.length,'未选择携带成长');return {format:'tisya.core-draft/1',world:c.key,chat:c.chat,revision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,objectId,sourceType:row.values.类型,kind:['character','item','place','rule','organization'].find(kind=>isObjectType(loaded.view.registry,row,kind))??null,basis,core:result.core};});}
- async function saveCore(draft){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.core-draft/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.revision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'核心草稿依据已改变');check(draft.core&&typeof draft.core.name==='string'&&Array.isArray(draft.core.traits)&&Array.isArray(draft.core.growth),'核心草稿格式无效');for(const item of [...draft.core.traits,...draft.core.growth])check(typeof item.value==='string'&&typeof item.evidence==='string'&&item.evidence.trim()&&hasCoreEvidence(JSON.parse(draft.basis),item.evidence),'核心项缺少原文依据');const next=copy(loaded.origin.data);next.revision++;next.coreAssets??=[];const core={name:draft.core.name,traits:copy(draft.core.traits),growth:copy(draft.core.growth),id:crypto.randomUUID(),version:1,sourceObject:draft.objectId,sourceType:loaded.view.rows.find(r=>r.id===draft.objectId)?.values.类型??null,kind:['character','item','place','rule','organization'].find(kind=>isObjectType(loaded.view.registry,loaded.view.rows.find(r=>r.id===draft.objectId),kind))??null,sourceSession:loaded.session.data.id,createdAt:new Date().toISOString()};next.coreAssets.push(core);await books.write(loaded.origin,next,c.guard);return core;});}
+ async function coreDraft(objectId,{growth=false}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c),row=loaded.view.rows.find(r=>r.id===objectId&&r.table==='objects');check(row,'请先选择已建档对象');const selected=[row,...(growth?loaded.view.rows.filter(r=>['growth','experiences'].includes(r.table)&&r.values.主体===objectId):[])],basis=JSON.stringify(selected);const result=await invoke('assetAdapt',{sourceCard:basis,goal:growth?'提取无画风基点、已有叙事意义及已选择的成长':'提取无画风基点与已有叙事意义，不携带成长',registry:loaded.view.registry},c,signal);check(result.core&&typeof result.core.name==='string'&&Array.isArray(result.core.traits)&&Array.isArray(result.core.growth),'核心草稿格式无效');for(const item of [...result.core.traits,...result.core.growth])check(typeof item.name==='string'&&typeof item.value==='string'&&typeof item.evidence==='string'&&item.evidence.trim()&&basis.includes(item.evidence),'核心项缺少真实来源');check(growth||!result.core.growth.length,'未选择携带成长');return {format:'tisya.core-draft/1',world:c.key,chat:c.chat,revision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,objectId,sourceType:row.values.类型,kind:['character','item','place','rule','organization'].find(kind=>isObjectType(loaded.view.registry,row,kind))??null,basis,core:result.core};});}
+ async function saveCore(draft){return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.core-draft/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.revision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'核心草稿依据已改变');check(draft.core&&typeof draft.core.name==='string'&&Array.isArray(draft.core.traits)&&Array.isArray(draft.core.growth),'核心草稿格式无效');for(const item of [...draft.core.traits,...draft.core.growth])check(typeof item.value==='string'&&typeof item.evidence==='string'&&item.evidence.trim()&&draft.basis.includes(item.evidence),'核心项缺少原文依据');const next=copy(loaded.origin.data);next.revision++;next.coreAssets??=[];const core={name:draft.core.name,traits:copy(draft.core.traits),growth:copy(draft.core.growth),id:crypto.randomUUID(),version:1,sourceObject:draft.objectId,sourceType:loaded.view.rows.find(r=>r.id===draft.objectId)?.values.类型??null,kind:['character','item','place','rule','organization'].find(kind=>isObjectType(loaded.view.registry,loaded.view.rows.find(r=>r.id===draft.objectId),kind))??null,sourceSession:loaded.session.data.id,createdAt:new Date().toISOString()};next.coreAssets.push(core);await books.write(loaded.origin,next,c.guard);return core;});}
  async function listCores(book){const c=capture(),source=await books.read(book||c.settings.originBook);c.guard();check(source.data.kind==='origin','请选择原点书');return copy(source.data.coreAssets??[]);}
- async function adaptCore(book,id,goal=''){const c=capture(),source=await books.read(book);c.guard();const core=source.data.coreAssets?.find(x=>x.id===id);check(core,'通用核心不存在');const reference=book+' / '+id+'@'+core.version;const draft=await genesis('将以下无画风基点整合成当前角色卡世界的新原点版本。保留每项核心设定与有来源的叙事意义，适配身份、经历、形态、用词和世界机制。人物及装备都必须保持其独特用途、意义、限制与代价；不因换画风变成只有泛泛标签的另一个对象。旧世界已完成任务、人际关系、持有与知识不能直接继承；获选成长须作为等价的世界经历重新设计，不能冒充本会话已发生事实。仅代表这个基点主体的原点对象把核心引用字段写为下述引用，陪衬对象不可使用同一引用；若需要拆成多个主体，在蓝图中说明映射。核心引用：'+reference+'\n基点：'+renderModelMaterial(core)+'\n用户补充：'+goal);const objects=draft.proposal.artifacts.base.changes.filter(op=>op.table==='objects'),bound=objects.filter(op=>op.values.核心引用===reference);if(!bound.length){const candidates=objects.filter(op=>isObjectType(draft.proposal.artifacts.registry,{table:'objects',values:{...op.values,类型:registryIndex(draft.proposal.artifacts.registry).types.get(normalized(op.values.类型))?.id}},core.kind??'character'));check(candidates.length===1,'世界化蓝图缺少明确的基点主体映射，请保留草稿并核对；未将全部同类对象误绑到同一基点');candidates[0].values.核心引用=reference;}return draft;}
+ async function adaptCore(book,id,goal=''){const c=capture(),source=await books.read(book);c.guard();const core=source.data.coreAssets?.find(x=>x.id===id);check(core,'通用核心不存在');const reference=book+' / '+id+'@'+core.version;const draft=await genesis('将以下无画风基点整合成当前角色卡世界的新原点版本。保留每项核心设定与有来源的叙事意义，适配身份、经历、形态、用词和世界机制。人物及装备都必须保持其独特用途、意义、限制与代价；不因换画风变成只有泛泛标签的另一个对象。旧世界已完成任务、人际关系、持有与知识不能直接继承；获选成长须作为等价的世界经历重新设计，不能冒充本会话已发生事实。仅代表这个基点主体的原点对象把核心引用字段写为下述引用，陪衬对象不可使用同一引用；若需要拆成多个主体，在蓝图中说明映射。核心引用：'+reference+'\n基点：'+JSON.stringify(core)+'\n用户补充：'+goal);const objects=draft.proposal.artifacts.base.changes.filter(op=>op.table==='objects'),bound=objects.filter(op=>op.values.核心引用===reference);if(!bound.length){const candidates=objects.filter(op=>isObjectType(draft.proposal.artifacts.registry,{table:'objects',values:{...op.values,类型:registryIndex(draft.proposal.artifacts.registry).types.get(normalized(op.values.类型))?.id}},core.kind??'character'));check(candidates.length===1,'世界化蓝图缺少明确的基点主体映射，请保留草稿并核对；未将全部同类对象误绑到同一基点');candidates[0].values.核心引用=reference;}return draft;}
  async function previewCoreBundle(objectIds,options={}){const c=capture(),loaded=await load(c);return coreSelection(loaded.view,objectIds,options);}
  async function coreBundleDraft(objectIds,options={}){const selection=copy({objectIds,linkIds:options.linkIds??[],growthIds:options.growthIds??[],instructions:options.instructions??''});return exclusive(async signal=>{const c=capture(),loaded=await load(c),source=coreSelection(loaded.view,selection.objectIds,selection).source;
-  const result=await invoke('assetAdapt',{sourceCard:source,goal:'按所选对象和关联提取完整无画风基点资产组；只含明确勾选的成长。',registry:loaded.view.registry},c,signal),bundle=validateBundle(result.bundle,source,{assignIds:true});
+  const result=await invoke('assetAdapt',{sourceCard:JSON.stringify(source),goal:'按所选对象和关联提取完整无画风基点资产组；只含明确勾选的成长。',registry:loaded.view.registry},c,signal),bundle=validateBundle(result.bundle,source,{assignIds:true});
   return {format:'tisya.core-bundle-draft/1',world:c.key,chat:c.chat,revision:loaded.origin.data.revision,sessionRevision:loaded.session.data.revision,selection,source,bundle,notes:copy(result.notes??[])};
  });}
  async function saveCoreBundle(input){const draft=copy(input);return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.core-bundle-draft/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.revision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision,'整组基点草稿依据已改变');
@@ -407,7 +314,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   next.coreAssets.push(bundle);await books.write(loaded.origin,next,c.guard);return copy(bundle);
  });}
  async function adaptCoreBundle(book,id,goal='',version=null){return exclusive(async signal=>{const c=capture(),loaded=await load(c),source=await books.read(book);c.guard();check(source.data.kind==='origin','请选择原点书');const candidates=(source.data.coreAssets??[]).filter(x=>x.id===id&&(version===null||x.version===version));check(candidates.length===1,'请明确选择唯一的基点版本');const bundle=candidates[0];check(bundle?.format==='tisya.core-bundle/1','整组基点不存在');
-  const reference=book+' / '+bundle.id+'@'+bundle.version,requestGoal='将以下无画风基点资产组完整适配为当前卡的新原点。逐成员保留核心、叙事意义、限制及所选成长的等价意义；为每个成员设计符合当前世界的独立身份、背景及表现。关联只保留已选择的抽象意义，不能直接继承旧会话实际持有、关系、知情、完成任务或经历。此次仅建立新原点，initial.changes=[]，所有档案使用new:编号。每个成员的核心引用为“'+reference+'/”加该成员sourceObject。输出coreMapping，逐条对应每项核心/成长及每条关联，expression须逐字存在于目标档案path字段。\n基点资产组：'+renderModelMaterial({format:bundle.format,id:bundle.id,version:bundle.version,name:bundle.name,members:bundle.members,links:bundle.links})+'\n用户补充：'+goal;
+  const reference=book+' / '+bundle.id+'@'+bundle.version,requestGoal='将以下无画风基点资产组完整适配为当前卡的新原点。逐成员保留核心、叙事意义、限制及所选成长的等价意义；为每个成员设计符合当前世界的独立身份、背景及表现。关联只保留已选择的抽象意义，不能直接继承旧会话实际持有、关系、知情、完成任务或经历。此次仅建立新原点，initial.changes=[]，所有档案使用new:编号。每个成员的核心引用为“'+reference+'/”加该成员sourceObject。输出coreMapping，逐条对应每项核心/成长及每条关联，expression须逐字存在于目标档案path字段。\n基点资产组：'+JSON.stringify({format:bundle.format,id:bundle.id,version:bundle.version,name:bundle.name,members:bundle.members,links:bundle.links})+'\n用户补充：'+goal;
   const draft=await genesisLoaded(requestGoal,c,loaded,signal);draft.coreBinding={book,id:bundle.id,version:bundle.version,fingerprint:await digest(bundle)};draft.corePreview=copy({members:bundle.members,links:bundle.links});
   try{validateCoreMapping(draft.proposal,bundle,book);draft.mappingErrors=[];}catch(error){draft.mappingErrors=[error.message];}
   return draft;
@@ -437,45 +344,26 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   if(c.settings.preferences&&user)loaded=await analysePreferenceSource(c,loaded,user,signal,{generationType:type});
   const currentPersona=readPersona(),binding=loaded.session.data.personaBinding;if(c.settings.continuity==='tables'&&currentPersona){check(binding?.state==='bound'&&binding.personaId===currentPersona.id&&loaded.view.rows.some(row=>row.id===binding.objectId&&row.table==='objects'),'当前原生用户身份尚未初始化或绑定，请在用户身份中核对后继续表单接续');}const allowedRows=personaProjection(loaded.view.rows,binding,currentPersona,{nativeInjected:c.settings.continuity!=='tables'&&!!c.world.context.persona&&!c.world.controller}).filter(r=>r.table!=='native_cells').filter(r=>r.table!=='preferences'||r.preferenceConfirmed===true&&r.values.启用!==false&&preferenceMatches(r,{context:getContext(),world:c,persona:currentPersona,binding})),readView={...loaded.view,rows:allowedRows};
   let found=retrieval(readView,{tags,query:user?.text??'',topK:c.settings.topK});
-  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:allowedRows.filter(r=>['objects','facts','events'].includes(r.table)),timeline:buildTimeline(readView,{sessionId:loaded.session.data.id,chain:loaded.chain}),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
-  const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()],strict=c.settings.continuity==='tables',assembled=assembleTableRows(readView,{previousText:archivalText(lastAI?.text??''),userText:user?.text??'',tags,strict,retrieved:selected.map(row=>row.id),actorIds:[...new Set([...playerSettings(c,loaded).playerObjects,...c.settings.focusObjects])]});
+  if(c.settings.retrieval==='vector'&&c.settings.topK){check(vector,'尚未接入向量驱动；请配置原生向量 API 或选关键词');found.optional=await vector.search({scope:loaded.session.data.id,rows:allowedRows.filter(r=>['objects','facts','events'].includes(r.table)),query:user?.text??'',topK:c.settings.topK,signal,guard:c.guard});c.guard();}
+  const selected=[...new Map([...found.mandatory,...found.optional].map(r=>[r.id,r])).values()],strict=c.settings.continuity==='tables',assembled=assembleTableRows(readView,{previousText:archivalText(lastAI?.text??''),userText:user?.text??'',tags,strict,retrieved:selected.map(row=>row.id),actorIds:playerSettings(c,loaded).playerObjects});
   const data={format:'tisya.context/1',source:'本轮表单资料。人物知识与读者可见范围仍以每行 access 为准；读者展示开关不授予人物知识。state.有效性为失效或待确认时，所存值只是最后已知，不是当前确证。',originBook:loaded.origin.name,sessionBook:loaded.session.name,revision:loaded.session.data.revision,rows:assembled.rows,latestTemporary:!strict&&lastAI?{source:lastAI.key,text:archivalText(lastAI.text),tags}:null,unresolvedTags:found.unresolved,explicitRules:c.settings.hardRules,styleRules:c.settings.styleEnabled?styleRules(c.settings):[],preferences:allowedRows.filter(r=>r.table==='preferences'),antiCliche:true,dueChecks:dueChecks(loaded.view,chain),eventResults:stateEventNarrative(loaded.view,lastAI?.key??null),conditionResults:conditionNarrative(loaded,lastAI?.key??null),plot:null};
   if(runPlan&&c.settings.plot)data.plot=await invoke('plotAdvance',{...data,phase:'plan',nativeState:nativeSnapshot(loaded.view.rows,{context:getContext()}),registry:loaded.view.registry,...planContext(loaded,playerSettings(c,loaded)),userInput:user?.text??'',generationType:type},c,signal);
-  if(data.plot)validatePlanProposal(data.plot);
+  if(data.plot){check(typeof data.plot.goal==='string'&&Array.isArray(data.plot.beats)&&Array.isArray(data.plot.pendingChoices)&&Array.isArray(data.plot.constraints),'剧情推进产物字段不完整');check(!Object.hasOwn(data.plot,'changes'),'剧情推进不得产生事实写入');for(const beat of data.plot.beats)check(beat&&typeof beat.proposal==='string'&&Array.isArray(beat.basis)&&beat.basis.every(x=>typeof x==='string')&&typeof beat.condition==='string','剧情节拍须有提案、依据和触发条件');for(const name of ['pendingChoices','constraints'])check(data.plot[name].every(x=>typeof x==='string'),'剧情设计列表内容无效');}
   let entries=[],text;
   if(c.settings.injection==='worldbook'){
    check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');
    const rows=assembled.candidates.filter(r=>r.table!=='preferences');
    const temporary=!strict&&lastAI?{text:archivalText(lastAI.text)}:null;
-   entries=worldbookEntries({rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,nativeState:nativeSnapshot(assembled.candidates,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}),scope:loaded.session.data.id,bookName:loaded.session.name,tags,forcedIds:[...new Set([...found.optional.map(r=>r.id),...assembled.rows.filter(r=>c.settings.focusObjects.includes(r.id)||[r.values.主体,...(Array.isArray(r.values.对象)?r.values.对象:[r.values.对象]),...(r.values.负责人??[])].some(id=>c.settings.focusObjects.includes(id))).map(r=>r.id)])],temporary,due:data.dueChecks});
+   entries=worldbookEntries({rows,registry:loaded.view.registry,scope:loaded.session.data.id,bookName:loaded.session.name,tags,forcedIds:found.optional.map(r=>r.id),temporary,due:data.dueChecks});
   }
-  const ruleVersion=await selectedRulePolicy(c);const slots={state:{rulePolicy:ruleVersion,source:data.source,revision:data.revision,eventResults:data.eventResults,conditionResults:data.conditionResults,rows:c.settings.injection==='direct'?data.rows.filter(r=>r.table!=='events'&&r.table!=='preferences'):[],nativeState:c.settings.injection==='direct'?nativeSnapshot(assembled.rows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}):null,dueChecks:data.dueChecks,unresolvedTags:data.unresolvedTags},preferences:{explicit:data.explicitRules,style:stylePrompt(data.styleRules),rows:data.preferences},plan:data.plot,genesis:loaded.session.data.blueprint??null};
+  const ruleVersion=await selectedRulePolicy(c);const slots={state:{rulePolicy:ruleVersion,source:data.source,revision:data.revision,eventResults:data.eventResults,rows:c.settings.injection==='direct'?data.rows.filter(r=>r.table!=='events'&&r.table!=='preferences'):[],nativeState:nativeSnapshot(loaded.view.rows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1}),dueChecks:data.dueChecks,unresolvedTags:data.unresolvedTags},preferences:{explicit:data.explicitRules,style:stylePrompt(data.styleRules),rows:data.preferences},plan:data.plot,genesis:loaded.session.data.blueprint??null};
   if(c.settings.injection==='direct')slots.archive={rows:data.rows.filter(r=>r.table==='events'),latestTemporary:data.latestTemporary};
-  const stateProjection={rows:slots.state.rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks},stateContext=storyContext(slots.state,allowedRows);
-  // One selected snapshot owns labels and full-text placement across all slots.
-  // Focus affects recall, never row access or the scene's participant list.
-  const projectionInput={...stateProjection,rows:c.settings.injection==='direct'?data.rows:[],plot:data.plot,latestTemporary:c.settings.injection==='direct'?data.latestTemporary:null};
-  const stateMetadata=slots.state;Object.assign(slots,projectNarrativeSlots(projectionInput,slots,stateContext));
-  slots.preferences=narrativeSlot(slots.preferences,storyPreferences(slots.preferences));
-  if(slots.genesis)slots.genesis=narrativeSlot(slots.genesis,storyBlueprint(slots.genesis));
-  const instructions=narrativeInstructions(c.settings);text=instructions+'\n\n'+materialSlots(slots);
+  const instructions=(c.settings.nativeBridge?'原生变量由表单辅助填录，插件自动生成 UpdateVariable 并交给原 MVU；本轮正文禁止再次输出变量命令，vars 留空。\n':'')+(c.settings.nativeBridge?NARRATIVE_TAGS.replace('正文变量块继续沿用原卡与当前预设约定。',''):NARRATIVE_TAGS)+'\nSTATE.rulePolicy 是玩家确认的当前会话规则版本：optimize 仅在指定原文范围内使用 after，keep 保留原规则；不改历史事实、原生脚本或未涉及的规则。资料槽按预处理路由使用；剧情方案不是事实，表单数据保留来源权限与版本。原生 user 的身份说明属于定义，不应覆盖后来有来源的会话状态；原生引用只能取已给定的实际快照，缺失字段保持未知。历史锚点只在具备相应经历和知识权限时成为默契，不把读者知道的内心解释强加给人物。';text=instructions+'\n\n'+materialSlots(slots);
   // Required archives, current facts and explicit rules are never silently cut.
   check(text.length<=c.settings.contextChars,'表单注入超过 '+c.settings.contextChars+' 字符预算；请提高预算、减少检索数量或整理冗余表行');
-  c.guard();latest={world:c.key,revision:loaded.session.data.revision,source:lastAI?.key??null,rows:assembled.rows.length,tags,unresolved:found.unresolved,assembly:{trace:assembled.trace,omitted:assembled.omitted,recall:assembled.recall},slots,instructions,text,injection:c.settings.injection};if(entries.length)worldbook.install(entries,c.guard,{projectSelection:selected=>{
-   const ids=new Set(selected.map(entry=>entry.tisyaTable.id));
-   // A host may legitimately expand macros or apply its regex to a body. Keep
-   // that actual body once; do not overwrite it with the pre-transform source.
-   const changed=selected.filter(entry=>entry.tisyaTable.id!=='latest-temporary'&&entry.content!==entries.find(original=>original.tisyaTable.id===entry.tisyaTable.id)?.content),changedIds=new Set(changed.map(entry=>entry.tisyaTable.id));
-   const rows=assembled.candidates.filter(row=>ids.has(row.id)).map(row=>changedIds.has(row.id)?{...row,referenceOnly:true,values:Object.fromEntries(Object.entries(row.values).filter(([key])=>['名称','类型','别名'].includes(key)))}:row);
-   const nativeRows=rows.filter(row=>!changedIds.has(row.id)),selectedNative=nativeSnapshot(nativeRows,{context:getContext(),messageIndex:lastAI?lastAI.floor-1:getContext().chat.length-1});
-   const extras={state:[],history:[],foreshadow:[],recent:[]};for(const entry of changed){const table=assembled.candidates.find(row=>row.id===entry.tisyaTable.id)?.table;extras[table==='events'?'history':table==='clues'?'foreshadow':'state'].push(entry.content);}
-   const temporary=selected.find(entry=>entry.tisyaTable.id==='latest-temporary'),originalTemporary=entries.find(entry=>entry.tisyaTable.id==='latest-temporary');
-   const latestTemporary=temporary&&temporary.content===originalTemporary?.content?data.latestTemporary:null;if(temporary&&!latestTemporary)extras.recent.push(temporary.content);
-   const projectedSlots=projectNarrativeSlots({rows,registry:loaded.view.registry,userId:binding?.objectId,focusObjects:c.settings.focusObjects,due:data.dueChecks,latestTemporary},{state:{...stateMetadata,rows},archive:{rows:rows.filter(row=>row.table==='events'),latestTemporary}},[stateContext,storyContext({nativeState:selectedNative},nativeRows)].filter(Boolean).join('\n\n'),extras);
-   return {text:materialSlots(projectedSlots),slots:projectedSlots};
-  }});return latest;
+  c.guard();latest={world:c.key,revision:loaded.session.data.revision,source:lastAI?.key??null,rows:assembled.rows.length,tags,unresolved:found.unresolved,assembly:{trace:assembled.trace,omitted:assembled.omitted,recall:assembled.recall},slots,instructions,text,injection:c.settings.injection};if(entries.length)worldbook.install(entries,c.guard);return latest;
  }
- function rulesContext(){const c=capture(),rules=c.settings.styleEnabled?styleRules(c.settings):[],slots={preferences:narrativeSlot({explicit:c.settings.hardRules,style:stylePrompt(rules)},storyPreferences({explicit:c.settings.hardRules,style:stylePrompt(rules)}))};return {world:c.key,slots,text:materialSlots(slots),instructions:'已启用禁词、写作要求及用户明确限制按硬约束执行。'};}
+ function rulesContext(){const c=capture(),rules=c.settings.styleEnabled?styleRules(c.settings):[],slots={preferences:{explicit:c.settings.hardRules,style:stylePrompt(rules)}};return {world:c.key,slots,text:materialSlots(slots),instructions:'已启用禁词、写作要求及用户明确限制按硬约束执行。'};}
  function requireNativeBridge(c){
   if(c.settings.continuity!=='tables'||c.world.modes?.[c.world.mode]?.nativeMvu==='off')return;
   const mechanisms=cardMechanisms(getContext().characters?.[getContext().characterId]),required=mechanisms.scripts.some(script=>script.enabled&&script.apis.some(api=>['getMvuData','replaceMvuData','parseMessage','registerMvuSchema','registerVariableSchema'].includes(api)));
@@ -561,7 +449,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const saved=await persona.write({before:draft.before,name:draft.name,description:draft.description,origin:draft.reference},c.guard);return {reference:draft.reference,personaId:saved.id};
  });}
 
- async function createIdentityDraft({goal,core=null}){check(typeof goal==='string'&&goal.trim(),'请填写点子或适配要求');return exclusive(async signal=>{const c=capture(),loaded=await load(c);let fixed=null;if(core){const book=await books.read(core.book);c.guard();const row=book.data.coreAssets?.find(x=>x.id===core.id&&x.version===core.version);check(row,'基点固定版本不存在');fixed={...copy(core),data:copy(row),stamp:book.stamp};}const prompt='设计恰好一个新的用户原点人物完整档案，可新增配套物品、地点或事实，不新增其他人物。用户钉死的要求必须保留，新设计明确写入蓝图说明。只允许 artifacts.base 新增 objects/facts，不改已有对象，不写会话进度；artifacts.initial.changes 必须为空，不生成原生配置或状态系统。字段采用当前世界注册表，人物身份、外貌、性格、背景及定义完整。角色卡是目标世界参考，不能把卡中人物误当用户。'+(fixed?'固定基点（核心引用必须为 '+fixed.book+' / '+fixed.id+'@'+fixed.version+'）：'+renderModelMaterial(fixed.data):'')+'\n用户点子和要求：'+goal;const draft=await genesisLoaded(prompt,c,loaded,signal);draft.format='tisya.identity-creation/1';draft.chat=c.chat;draft.coreSource=fixed;draft.raw=progress?.text??'';if(fixed){const people=draft.proposal.artifacts.base.changes.filter(x=>x.table==='objects'&&isObjectType(draft.proposal.artifacts.registry,x,'character'));check(people.length===1,'用户建档须有且仅有一个主体人物，请核对原答');people[0].values.核心引用=fixed.book+' / '+fixed.id+'@'+fixed.version;}return draft;});}
+ async function createIdentityDraft({goal,core=null}){check(typeof goal==='string'&&goal.trim(),'请填写点子或适配要求');return exclusive(async signal=>{const c=capture(),loaded=await load(c);let fixed=null;if(core){const book=await books.read(core.book);c.guard();const row=book.data.coreAssets?.find(x=>x.id===core.id&&x.version===core.version);check(row,'基点固定版本不存在');fixed={...copy(core),data:copy(row),stamp:book.stamp};}const prompt='设计恰好一个新的用户原点人物完整档案，可新增配套物品、地点或事实，不新增其他人物。用户钉死的要求必须保留，新设计明确写入蓝图说明。只允许 artifacts.base 新增 objects/facts，不改已有对象，不写会话进度；artifacts.initial.changes 必须为空，不生成原生配置或状态系统。字段采用当前世界注册表，人物身份、外貌、性格、背景及定义完整。角色卡是目标世界参考，不能把卡中人物误当用户。'+(fixed?'固定基点（核心引用必须为 '+fixed.book+' / '+fixed.id+'@'+fixed.version+'）：'+JSON.stringify(fixed.data):'')+'\n用户点子和要求：'+goal;const draft=await genesisLoaded(prompt,c,loaded,signal);draft.format='tisya.identity-creation/1';draft.chat=c.chat;draft.coreSource=fixed;draft.raw=progress?.text??'';if(fixed){const people=draft.proposal.artifacts.base.changes.filter(x=>x.table==='objects'&&isObjectType(draft.proposal.artifacts.registry,x,'character'));check(people.length===1,'用户建档须有且仅有一个主体人物，请核对原答');people[0].values.核心引用=fixed.book+' / '+fixed.id+'@'+fixed.version;}return draft;});}
  async function saveIdentityDraft(input){const draft=copy(input);return exclusive(async()=>{const c=capture(),loaded=await load(c);check(draft.format==='tisya.identity-creation/1'&&draft.world===c.key&&draft.chat===c.chat&&draft.originRevision===loaded.origin.data.revision&&draft.sessionRevision===loaded.session.data.revision&&draft.basisCard===cardBasis(getContext()),'建档依据已变化，请重新生成或核对');if(draft.coreSource){const b=await books.read(draft.coreSource.book);c.guard();check(b.stamp===draft.coreSource.stamp,'基点版本已改变');}const p=validateBlueprint(draft.proposal,loaded.origin.data.registry);check(!p.artifacts.initial.changes.length&&!p.artifacts.stateSystem&&!Object.values(p.artifacts.native??{}).some(x=>x.length),'用户建档不能修改会话进度或原生配置');check(p.artifacts.base.changes.length&&p.artifacts.base.changes.every(x=>x.expected===0&&!loaded.view.rows.some(r=>r.id===x.id)),'只可创建新原点，不覆盖已有档案');const prepared=prepareCommit({...loaded.view,registry:p.artifacts.registry,last:null},p.artifacts.base,{source:null,kind:'genesis',evidence:[draft.goal,draft.basisCard,...p.blueprint.decisions].join('\n'),allowedTables:['objects','facts']});const people=prepared.commit.changes.filter(x=>x.after.table==='objects'&&isObjectType(prepared.registry,x.after,'character'));check(people.length===1,'用户建档须有且仅有一个主体人物');if(draft.coreSource)check(people[0].after.values.核心引用===draft.coreSource.book+' / '+draft.coreSource.id+'@'+draft.coreSource.version,'基点固定引用不能被草稿改写');const next=copy(loaded.origin.data);next.revision++;next.registry=mergeRegistries(next.registry,prepared.registry);next.bases.push(...prepared.commit.changes.map(x=>x.after));await books.write(loaded.origin,next,c.guard);return prepared.commit.changes.filter(x=>isObjectType(prepared.registry,x.after,'character')).map(x=>({book:loaded.origin.name,originId:next.id,id:x.id,rev:x.after.rev,name:x.after.values.名称}));});}
  async function previewUserBinding(objectId){return exclusive(async()=>{const c=capture(),loaded=await load(c),current=readPersona();check(loaded.session.data.personaBinding?.state!=='writing','上次绑定尚未完成，请先继续核对');return {format:'tisya.persona-draft/1',...personaDraft(loaded.view.rows.find(r=>r.id===objectId),loaded.view.registry,current),world:c.key,chat:c.chat,sessionRevision:loaded.session.data.revision};});}
  async function finishUserBinding(c,loaded,intent){
@@ -581,7 +469,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   function collisions(){const names=new Map();for(const id of new Set([...current.keys(),...proposed.keys()])){const value={...current.get(id)?.values,...proposed.get(id)?.values},name=value.名称;check(typeof name==='string'&&name.trim(),'对象名称缺失：'+id);const key=name.trim().normalize('NFKC').toLocaleLowerCase();if(!names.has(key))names.set(key,[]);names.get(key).push({id,name,editable:proposed.has(id)&&id!==userId});}return [...names.values()].filter(rows=>rows.length>1);}
   const conflicts=collisions();if(!conflicts.length)return;
   const editable=new Set(conflicts.flat().filter(row=>row.editable).map(row=>row.id));check(editable.size,'现有对象名称冲突，初始化不能改写未提交档案或原生用户名称');
-  const repair=await invoke('templateInit',{sourceCard,registry:result.registry,currentRows,repair:{instruction:'仅修复所列新提案对象的显示名称冲突。简表根填写 renames 列表，每项有 id 与 name 文本；未决项放 notes 文本列表。保持 ID、引用、事实、用户原生名称以及不可编辑档案不变。依据来源用身份限定名称；不可确定放 notes，不合并同名不同人。',nameConflicts:conflicts,editableIds:[...editable]}},c,signal);
+  const repair=await invoke('templateInit',{sourceCard,registry:result.registry,currentRows,repair:{instruction:'仅修复所列新提案对象的显示名称冲突。返回 {renames:[{id,name}]}，保持 ID、引用、事实、用户原生名称以及不可编辑档案不变。依据来源用身份限定名称；不可确定放 notes，不合并同名不同人。',nameConflicts:conflicts,editableIds:[...editable]}},c,signal);
   check(Array.isArray(repair.renames)&&repair.renames.length<=editable.size,'名称修复格式无效');const seen=new Set();for(const rename of repair.renames){check(editable.has(rename.id)&&!seen.has(rename.id)&&typeof rename.name==='string'&&rename.name.trim(),'名称修复越界或重复');seen.add(rename.id);proposed.get(rename.id).values.名称=rename.name;}
   check(!collisions().length,'对象显示名称仍冲突，请在草稿中区分身份');
  }

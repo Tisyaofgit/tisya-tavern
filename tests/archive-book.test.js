@@ -1,4 +1,3 @@
-import {formatSimpleSheet} from '../tables/simple-sheet.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './fixtures/condition-service-host.js';
@@ -53,10 +52,10 @@ test('real service restarts with latest rows, deletion persists and stale atlas 
 test('host atlas uses actual current save, switches origin and refreshes after writes; read-only actions never write',async()=>{
  const f=await fixture(),window=new Window(),doc=window.document,panel=mountTablePanel(doc,doc.body,{service:f.service,store:f.store});await panel.ready;
  const select=panel.root.querySelector('[aria-label="表单功能"]');select.value='atlas';await select.onchange();
- const archive=()=>panel.root.querySelector('.tisya-compact-atlas');
- assert(archive().textContent.includes('方鹿'));assert(!archive().textContent.includes('渡口清晨'));assert.equal(archive().querySelector('textarea'),null);const writes=f.writes();
- const layer=archive().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));await panel.settled();assert.equal(archive().querySelector('.atlas-result')?.textContent,'共 0 条');assert.equal(archive().querySelector('[aria-label="资料层"]').value,'origin');assert.equal(archive().querySelector('textarea'),null);assert.equal(f.writes(),writes);
- await f.service.edit({changes:[op(f.owner,{描述:'即时更新'},1)]});const afterEdit=f.writes();await panel.settled();assert(archive().textContent.includes('即时更新'));assert.equal(archive().querySelector('textarea'),null);assert.equal(f.writes(),afterEdit);
+ let app=panel.root.querySelector('div div')?.shadowRoot;const shadow=()=>[...panel.root.querySelectorAll('div')].find(e=>e.shadowRoot)?.shadowRoot;
+ assert(shadow().textContent.includes('方鹿'));assert(!shadow().textContent.includes('渡口清晨'));const writes=f.writes();
+ const layer=shadow().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));for(let i=0;i<100&&!shadow().textContent.includes('0 份可读档案');i++)await new Promise(r=>setTimeout(r,10));assert.equal(shadow().querySelector('.result-count')?.textContent,'0 份可读档案');assert.equal(f.writes(),writes);
+ await f.service.edit({changes:[op(f.owner,{描述:'即时更新'},1)]});await panel.settled();assert(shadow().textContent.includes('即时更新'));
  panel.dispose();await window.happyDOM.abort();
 });
 test('prefix routing is anchored, entry-specific and never grants ledger authority',async()=>{
@@ -66,7 +65,7 @@ test('prefix routing is anchored, entry-specific and never grants ledger authori
 });
 test('automatic model fill sees the latest save, commits once and deletes only this branch without changing origin',async()=>{
  const f=await fixture(),ai=mes=>({is_user:false,mes}),user=mes=>({is_user:true,mes});f.context.chat=[ai('旅人到了。'),user('继续')];let requests=0;
- f.respond((task,input)=>{requests++;const existing=input.currentRows.find(r=>r.values.名称==='旅人');if(input.archiveSource.text==='旅人到了。')return formatSimpleSheet({changes:[{...edit('new:visitor',{名称:'旅人',类型:'character',描述:'刚到渡口'}),evidence:'旅人到了。'}]});assert(existing);assert.equal(existing.values.描述,'刚到渡口');return formatSimpleSheet({changes:[{...edit(existing.id,{},existing.rev),delete:true,evidence:'撤回旅人这个误登记的档案。'}]});});
+ f.respond((task,input)=>{requests++;const existing=input.currentRows.find(r=>r.values.名称==='旅人');if(input.archiveSource.text==='旅人到了。')return {changes:[{...edit('new:visitor',{名称:'旅人',类型:'character',描述:'刚到渡口'}),evidence:'旅人到了。'}]};assert(existing);assert.equal(existing.values.描述,'刚到渡口');return {changes:[{...edit(existing.id,{},existing.rev),delete:true,evidence:'撤回旅人这个误登记的档案。'}]};});
  const origin=(await f.service.inspect()).origin;await f.service.archive();assert((await f.service.inspect()).rows.some(r=>r.values.名称==='旅人'));const n=requests;await f.service.archive();assert.equal(requests,n);
  f.context.chat.push(ai('撤回旅人这个误登记的档案。'),user('继续'));await f.service.archive();const result=await f.make().inspect();assert(!result.rows.some(r=>r.values.名称==='旅人'));assert.deepEqual(result.origin,origin);assert.equal(result.session.archiveView.trace.at(-1).operation,'delete');
 });

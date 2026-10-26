@@ -6,7 +6,7 @@ import {pairedPreset} from '../tables/paired-preset.js';
 import {AUX_TASKS} from '../tables/prompts.js';
 const configuration={data:emptyConfig(),world:defaultWorld()},reg=defaultRegistry();
 const label=process.env.TISYA_DOC_LABEL??JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url))).version.split('-').at(-1).replaceAll('.','');
-let out='# '+label+' · 表单专用预设与基础表单\n\n此文件直接从本版运行编译器导出。下列每项任务各有完整的授权、预处理路由、内部填表流程和规范，不借用其他任务的规则。资料槽由本次任务填入完整原始资料；运行脚本与显示实现留在宿主。内部流程不作为可见思维过程输出，辅助任务交付各自运行契约规定的简表；程序解码为内部对象后，仍执行原有字段、来源、权限、版本与引用校验。\n\n';
+let out='# '+label+' · 表单专用预设与基础表单\n\n此文件直接从本版运行编译器导出。下列每项任务各有完整的授权、预处理路由、内部填表流程和规范，不借用其他任务的规则。资料槽由本次任务填入完整原始资料；运行脚本与显示实现留在宿主。内部流程不作为可见思维过程输出，辅助任务只交付各自约定的 JSON。\n\n';
 for(const [task,spec] of Object.entries(AUX_TASKS)){
  const preset=pairedPreset({task,configuration}),byId=new Map(preset.prompts.map(p=>[p.identifier,p]));
  out+='## '+spec.name+' · '+task+'\n\n';

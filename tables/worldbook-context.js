@@ -1,9 +1,7 @@
 import {archiveLayer} from './archive-book.js';
-import {storyMaterial,storyContext} from './story-material.js';
-import {nativeReferences} from './native-state.js';
 import {copy,check,normalized,references} from './schema.js';
 // Read-only generation projection. Storage journals never become active lore.
-export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forcedIds=[],temporary=null,due=[],userId=null,focusObjects=[],nativeState=null}){
+export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forcedIds=[],temporary=null,due=[]}){
  const byId=new Map(rows.map(r=>[r.id,r])),forced=new Set(forcedIds),dueIds=new Set(due.filter(x=>x.due===true).map(x=>x.id));
  const names=r=>[r?.values.名称,...(r?.values.别名??[])].filter(x=>typeof x==='string'&&x.trim());
  const entries=[];
@@ -17,10 +15,7 @@ export function worldbookEntries({rows,registry,scope,bookName=null,tags=[],forc
   const constant=reason!=='关键词';
   // Native syntax can interpret /name/ as a regular expression; escape literal names.
   const safeKeys=keys.map(key=>key.startsWith('/')?'/'+key.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')+'/i':key);
-  const paths=new Set(nativeReferences([row]));
-  const snapshot=nativeState&&paths.size?{...nativeState,values:(nativeState.values??[]).filter(v=>paths.has(v.path)),missing:(nativeState.missing??[]).filter(p=>paths.has(p))}:null;
-  const content=storyMaterial({rows,selectedRows:[row],registry,userId,focusObjects,due});
-  if(content)entry(row.id,row.values.名称,content+(snapshot?'\n'+storyContext({nativeState:snapshot},[row]):''),safeKeys,constant,reason);
+  entry(row.id,row.values.名称,'表单资料；access 分别限定读者与人物知情；失效或待确认的状态值不是当前确证：\n'+JSON.stringify({id:row.id,table:row.table,values:row.values,access:row.access}),safeKeys,constant,reason);
  }
  if(temporary?.text)entry('latest-temporary','最新回复暂存','最新回复接续资料（尚未确认归档）：\n'+temporary.text,[],true,'最新回复暂存');
  return entries;
@@ -29,14 +24,12 @@ export function createWorldbookProjection({getContext}){
  let active=null,last=null,fault=null;
  const available=()=>{const t=getContext().eventTypes;return !!(t?.WORLDINFO_ENTRIES_LOADED&&t?.WORLD_INFO_ACTIVATED);};
  function valid(){if(!active)return false;try{active.guard();return true;}catch(e){fault=e;active=null;return false;}}
- function selectedProjection(){const ok=valid();if(fault)throw fault;if(!ok)return {text:'',slots:undefined};check(active.loaded,'本轮未经过原生世界书扫描，不能确认表单激活结果');if(!last)last={candidates:active.entries.length,blue:active.entries.filter(e=>e.constant).length,green:active.entries.filter(e=>!e.constant).length,active:[],characters:0};if(!active.projected){const result=active.projectSelection?active.projectSelection(active.selected):active.selected.map(e=>e.content).join('\n\n');active.projected=typeof result==='string'?{text:result}:result;}return active.projected;}
  return {
   available,
-  install(entries,guard,{projectSelection=null}={}){check(available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');active={entries:copy(entries),guard,projectSelection,loaded:false,selected:[]};last=null;fault=null;},
+  install(entries,guard){check(available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');active={entries:copy(entries),guard,loaded:false,selected:[]};last=null;fault=null;},
   entriesLoaded(payload){if(!valid())return;check(Array.isArray(payload?.chatLore),'世界书扫描数据格式不支持');const world=active.entries[0]?.world;payload.chatLore.push(...copy(active.entries.filter(e=>!payload.chatLore.some(old=>old.world===world&&old.uid===e.uid))));active.loaded=true;},
-  activated(entries){if(!valid())return;active.projected=null;const ours=new Map(active.entries.map(e=>[e.world+'.'+e.uid,e]));active.selected=[...new Map((Array.isArray(entries)?entries:[]).filter(e=>ours.has(e.world+'.'+e.uid)).map(e=>[e.world+'.'+e.uid,{...ours.get(e.world+'.'+e.uid),content:String(e.content??'')}])).values()];last={candidates:active.entries.length,blue:active.entries.filter(e=>e.constant).length,green:active.entries.filter(e=>!e.constant).length,active:active.selected.map(e=>({id:e.tisyaTable.id,name:e.comment,light:e.constant?'蓝':'绿',reason:e.tisyaTable.reason,characters:e.content.length})),characters:active.selected.reduce((n,e)=>n+e.content.length,0)};},
-  selectedText(){return selectedProjection().text;},
-  selectedSlots(){return selectedProjection().slots;},
+  activated(entries){if(!valid())return;const ours=new Map(active.entries.map(e=>[e.world+'.'+e.uid,e]));active.selected=(Array.isArray(entries)?entries:[]).filter(e=>ours.has(e.world+'.'+e.uid)).map(e=>({...ours.get(e.world+'.'+e.uid),content:String(e.content??'')}));last={candidates:active.entries.length,blue:active.entries.filter(e=>e.constant).length,green:active.entries.filter(e=>!e.constant).length,active:active.selected.map(e=>({id:e.tisyaTable.id,name:e.comment,light:e.constant?'蓝':'绿',reason:e.tisyaTable.reason,characters:e.content.length})),characters:active.selected.reduce((n,e)=>n+e.content.length,0)};},
+  selectedText(){const ok=valid();if(fault)throw fault;if(!ok)return '';check(active.loaded,'本轮未经过原生世界书扫描，不能确认表单激活结果');if(!last)last={candidates:active.entries.length,blue:active.entries.filter(e=>e.constant).length,green:active.entries.filter(e=>!e.constant).length,active:[],characters:0};return active.selected.map(e=>e.content).join('\n\n');},
   preview:()=>copy(last??(active?{candidates:active.entries.length,blue:active.entries.filter(e=>e.constant).length,green:active.entries.filter(e=>!e.constant).length,active:[],pending:true}:null)),
   clear(){fault=null;if(active&&!last)last={candidates:active.entries.length,active:[],pending:true};active=null;}
  };

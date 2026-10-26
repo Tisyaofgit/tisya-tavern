@@ -1,20 +1,3 @@
-import {selectArchiveIdentity} from './v3/identity-selection.mjs';
-import {resolveRuntimeConfiguration} from './v3/configuration.mjs';
-import {createApplication} from './v3/application.mjs';
-import {registerJourneyRoute} from './v3/journey-routes.mjs';
-import {createNativeBookHost,BOOK_POINTER_KEY} from './v3/book-host.mjs';
-import {createConfigurationBook} from './v3/configuration-book.mjs';
-import {createDurableWorkspace} from './v3/durable-workspace.mjs';
-import {createSessionWorkspace} from './v3/session-workspace.mjs';
-import {getCurrentUserHandle} from '/scripts/user.js';
-import {validateTagTemplateBank} from './v3/tags.mjs';
-import {validateWorldbookPreferences} from './config/worldbook-preferences.js';
-import {mountWorkbench} from './v3/workbench.mjs';
-import {mountProgressBubble} from './v3/bubble.mjs';
-import {CAPABILITIES} from './v3/capabilities.mjs';
-import {makeRevision} from './revision.js';
-let v3Application=null,v3BookHost=null,v3ConfigurationBook=null,v3Bubble=null,v3Installing=null,applyingInterface=false,durableWorkspace=null,sessionWorkspace=null,cacheClearing=false,persistentInstalling=null,persistentReady=false;
-const v3Views=new Map();
 import {nativePanelContentProcessor} from './native-panel-source.js';
 import {selectChatReady,notifySelectedChatContent,chatSelectionDiagnostic,chatSelectionSummary} from './chat-selection.js';
 import {createUiOperations,messageActionExclusive} from './ui-operation.js';
@@ -25,13 +8,11 @@ import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
-import {createNativePersonaGateway} from './native-persona-gateway.js';
-import {evaluateIdentityOnboarding,mountIdentityOnboarding} from './identity-onboarding.js';
 import {mountIdentityPage} from './user-identity-page.js';
 import {createWorldbookConditionGate} from './worldbook-conditions.js';
 import {createPersonaGateway} from './tables/persona.js';
 import {projectToolTurns} from '/scripts/tauritavern/tool-turn-projection.js';
-import {user_avatar,initUserAvatar,setPersonaDescription,convertCharacterToPersona,initPersona,getUserAvatars} from '/scripts/personas.js';
+import {user_avatar,initUserAvatar,setPersonaDescription,convertCharacterToPersona} from '/scripts/personas.js';
 import {createCharacterGroupHost} from './character-group-host.js';
 import {installWorldbookOrder} from './worldbook-order.js';
 import {createWorldbookConsole} from './worldbook-console.js';
@@ -40,7 +21,7 @@ import {mountSettingsHome} from './settings-home.js';
 import {hideFullPanels,hideAllPanels,refreshPanelFonts} from './panel-surface.js';
 import {createUserEditHistory,installUserEditHistory,userRevisionMaterial,userRerollTarget} from './user-revision.js';
 import {directoryState,directoryEntry,directoryToken,changeDirectory,mountDirectoryHold} from './home-directory.js';
-import {deleteCharacterChatByName,closeCurrentChat,default_user_avatar} from '/script.js';
+import {deleteCharacterChatByName,closeCurrentChat} from '/script.js';
 import {createChatLoadingController,mountChatLoadingSettings} from './chat-loading.js';
 import {select_group_chats} from '/scripts/group-chats.js';
 import {power_user} from '/scripts/power-user.js';
@@ -59,14 +40,14 @@ import {branchChat} from '/scripts/bookmarks.js';
 import {createTextTransport} from './config/text-transport.js';
 import {interfaceSnapshot,validateInterfaceSettings} from './tables/interface-config.js';
 import {createNativeConfiguration,createRegexGate} from './tables/native-config.js';
-import {SLOT_TARGETS} from './tables/slots.js';
+import {createTableService} from './tables/service.js';
 import {createNativeVectors} from './tables/vectors.js';
 import {appendFileContent} from '/scripts/chats.js';
 import {yaml} from '/lib.js';
 import {configureReplyFormats} from './reply-formats.js';
 import {GENERATION_CONTRACTS,MODE_CONTRACT,ARCHIVE_CONTRACT,validateGeneratedTask} from './config/contracts.js';
 import {loadAgentSystemSettings} from '/scripts/tauritavern/agent/agent-system-settings.js';
-import {createStore,register,registry,worldKey,configuredWorld,emptyConfig} from './config/core.js';
+import {createStore,register,registry,worldKey} from './config/core.js';
 import {createHost,blockPayload} from './config/host.js';
 import {mountConfiguration} from './config/panel.js';
 import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
@@ -107,13 +88,13 @@ const query = selector => document.querySelector(selector);
 const iconButton = (text, action, icon, extraClass="") => `<button type="button" class="tisya-icon-button ${esc(extraClass)}" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}${extraClass.includes('tisya-orb-button')?`<small class="tisya-orb-caption" aria-hidden="true">${esc(text==='重投下一条'?'重投下一条':({regen:'重骰','msg-regen':'重骰',next:'继续','msg-next':'继续','msg-revision':'高级','msg-read':'阅读','msg-edit':'改写','msg-rollback':'回溯','msg-delete':'删除','msg-branch':'分支','msg-copy':'复制',more:'更多','message-tools':'设置','candidate-prev':'上版','candidate-next':'下版'})[action]??text.slice(0,2))}</small>`:''}</button>`;
 const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;
 let layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;
-const assistantViews=new Map(),configurationViews=new Map();
+const assistantViews=new Map();
 let motionEnabled=true,utility=null,nativeDisplay=null,homeView=null;
 const getAppearance=owner=>appearanceValues(settings(),owner);
 const getDisplay=()=>getAppearance('extensions');
 const getPlayerName=()=>context().name1??null;
 let displaySaving=false;
-async function saveDisplayPreference(field,value,expected,owner='extensions'){if(displaySaving)throw Error('阅读设置正在保存');if(getAppearance(owner)[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,{...appearanceOverrides(settings(),owner),[field]:value}));}finally{displaySaving=false;}}
+async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
 const uiOperations=createUiOperations();
@@ -136,12 +117,13 @@ let worldbookOrder=null;
 let requiredPreset=null;
 async function mandatoryPresetSource(){if(!requiredPreset){const response=await fetch(new URL('./presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url));if(!response.ok)throw Error('必需协议加载失败，请更新并重启扩展');requiredPreset=await response.json();}return {prompts:requiredPreset.prompts,order:requiredPreset.prompt_order[0].order};}
 const textTransport=createTextTransport({target:window});
-const configHost=createHost({beforeRequest:()=>v3BookHost?.manager.refreshWorkspaceSources(),readWorldbook:(name,options)=>{if(!v3BookHost)throw Error('缇斯亚世界书工作区正在初始化');return v3BookHost.manager.readWorldbook(name,options);},beforeSend:()=>v3BookHost?.manager.checkpointWorkspace(),projectToolTurns,openArchiveQuery:(task,input,options)=>{if(task!=='tableAssistant')throw Error('此任务没有档案工具授权');if(!v3Application)throw Error('缇斯亚正在初始化');return v3Application.openAssistantArchiveQuery(input,options);},getContractorMessages:()=>communication.directions(),transport:textTransport,getContext:context,getSource:presetSource,getBaseSource:mandatoryPresetSource,prepareMessage:m=>appendFileContent(m,String(m.mes??'')),parseRequestBody:s=>typeof yaml.parse==='function'?yaml.parse(s):yaml.load(s),store:configStore,createParameters:createGenerationParameters,getProxies:()=>proxies,getMoods:()=>emotionCatalog(document).names(),isAgentEnabled:async()=>(await loadAgentSystemSettings()).agentModeEnabled,onError:error});
+const configHost=createHost({projectToolTurns,openArchiveQuery:(task,input,options)=>{if(task!=='tableAssistant')throw Error('此任务没有档案工具授权');return tableService.openAssistantArchiveQuery(input,options);},getContractorMessages:()=>communication.directions(),transport:textTransport,getContext:context,getSource:presetSource,getBaseSource:mandatoryPresetSource,prepareMessage:m=>appendFileContent(m,String(m.mes??'')),parseRequestBody:s=>typeof yaml.parse==='function'?yaml.parse(s):yaml.load(s),store:configStore,createParameters:createGenerationParameters,getProxies:()=>proxies,getMoods:()=>emotionCatalog(document).names(),isAgentEnabled:async()=>(await loadAgentSystemSettings()).agentModeEnabled,onError:error});
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
-
+const tableService=createTableService({projectToolTurns,persona:personaGateway,store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,getConfigurationChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
+const worldbookConditions=createWorldbookConditionGate({getContext:context,engine:tableService,onError:error});
 let tableGeneration=false,preparationError=null;
-globalThis.tisyaHistoryInput=async(chat,size,abort,type)=>{if(['quiet','impersonate'].includes(type))return;abort(true);throw Error('缇斯亚尚未完成初始化，请查看助手中的资料绑定');};
+globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{try{if(['quiet','impersonate'].includes(type))return configHost.historyInput(chat,type);const result=await tableService.prepare(type);tableGeneration=!!result;const rules=result?null:tableService.rulesContext();setExtensionPrompt('tisya_style_rules',rules?.text??'',1,1,false,0);configHost.attachTableContext(result??rules);return configHost.historyInput(chat,type);}catch(e){abort(true);error(e);throw e;}};
 function error(err) { console.error('[Tisya UI]', err); window.toastr?.error(String(err.message ?? err), '缇斯亚界面'); }
 function settings() {
     const s = context().extensionSettings[KEY];
@@ -151,23 +133,13 @@ function settings() {
     return s;
 }
 function getActionMode(){const value=settings().行动建议?.写入方式??'续接输入框';const row=ACTION_MODES.find(row=>row.label===value);if(!row)throw Error('行动写入方式配置损坏');return row.id;}
-async function setActionMode(mode){const row=ACTION_MODES.find(row=>row.id===mode);if(!row)throw Error('行动写入方式无效');const next=structuredClone(settings());next.行动建议={...(next.行动建议??{}),写入方式:row.label};await saveInterfaceSettings(next);}
+function setActionMode(mode){const row=ACTION_MODES.find(row=>row.id===mode);if(!row)throw Error('行动写入方式无效');const next=structuredClone(settings());next.行动建议={...(next.行动建议??{}),写入方式:row.label};context().extensionSettings[KEY]=next;context().saveSettingsDebounced();appearance?.refresh();}
 const generationOperations=createGenerationOperations({waitForIdle:()=>waitForGenerationIdle()});
 const communication=createCommunication({getContext:context,persist:persistConversationMetadata,request:(...args)=>configHost.request(...args),assertIdle,onChange:()=>communicationUI?.refresh()});
 const userEditHistory=createUserEditHistory();
-const revisionController={
- active:()=>v3Application?.host.busy()??false,navigating:()=>false,
- async generate(token,options){validate(context(),token,{tail:true});const host=await requireV3();
-  if(token.id<context().chat.length-1){await host.branch({floor:token.id,swipeId:token.swipe??0});token=capture(context(),token.id);}
-  const result=options===null?await host.reroll({floor:token.id}):await host.advancedReroll({floor:token.id,revision:makeRevision(token,options??{})});decorate();return result;},
- async select(token,index){validate(context(),token,{tail:true});const host=await requireV3();await host.selectSwipe({floor:token.id,swipeId:index});decorate();},
- async remove(token,index){validate(context(),token,{tail:true});const host=await requireV3();await host.deleteCandidate({floor:token.id,swipeId:index});decorate();},
- received(){},ended(){return false;},stopped(){v3Application?.host.cancel();}
-};
-async function requireV3(){if(!v3Application)await installV3();if(!v3Application)throw Error('缇斯亚初始化未完成');return v3Application.host;}
-
+const revisionController=createRevisionController({getContext:context,assertIdle,runGeneration:fn=>generationOperations.run(fn),hydrate:hydrateChatMessageSwipes,swipe,deleteSwipe,branch:branchChat,
+ stageFork:(...args)=>tableService.stageFork(...args),activateFork:()=>tableService.activateFork(),cancelFork:()=>tableService.cancelFork(),prepare:()=>tableService.ensureInitialized({scope:'manual'}),canSwipe:isMessageSwipeable,overswipe:getOverswipeBehavior,setRevision:value=>configHost.setRevision(value),setUserRevision:value=>configHost.setUserRevision(value),archive:()=>tableService.archive({scope:'generation'}),feedback:value=>communication.recordFeedback(value),onState:()=>decorate()});
 function assertIdle() {
-    if(cacheClearing)throw new Error('工作区正在清理，请稍后操作');
     if (isGenerating() || hasActiveAgentRun() || generationBusy || revisionController.active() || communication.busy()) throw new Error('请先等待或停止正在进行的生成');
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
@@ -176,7 +148,7 @@ function checkReadingSource(){
     notebook?.checkCurrent();
     if(readerToken)try{validate(context(),readerToken);}catch{sheet('阅读已失效','<p role="status">原消息或候选已变化，请重新打开阅读。</p>');}
 }
-function clearNotebook(){closeDirectoryMenu();homeView?.dispose();homeView=null;notebook?.dispose();notebook=null;if(['assistant','configuration','v3-workbench'].includes(utility?.kind)){utility.setVisible?.(false);utility.root.remove();}else utility?.dispose();utility=null;}
+function clearNotebook(){closeDirectoryMenu();homeView?.dispose();homeView=null;notebook?.dispose();notebook=null;if(utility?.kind==='assistant')utility.root.remove();else utility?.dispose();utility=null;}
 function close(expectedEpoch = sheetEpoch) { if(expectedEpoch!==sheetEpoch)return;sheetEpoch++;clearReader();revisionEditor?.dispose();revisionEditor=null;if(overlay.open)overlay.close();overlay.replaceChildren();delete overlay._messageToken; }
 function sheet(title, body) {
     closeDirectoryMenu();sheetEpoch++;
@@ -193,112 +165,23 @@ function closeNativeDrawers(except=null) {
 }
 function hidePage() { hideFullPanels(document);renderEpoch++; clearNotebook();root.querySelector('.tisya-page').replaceChildren(); root.classList.remove('tisya-page-open'); refreshVisuals(); }
 let worldbookConsole=null,characterGroup=null;
-const nativePersona=createNativePersonaGateway({getContext:context,getAvatar:()=>user_avatar,fetch:(...args)=>window.fetch(...args),defaultAvatar:default_user_avatar,initPersona,persistSettings:saveSettings,readAvatarIds:()=>getUserAvatars(false)});
-const identityNewChats=new Set(),identityPromptSeen=new Set();
-const identityService=createIdentityService({nativePersona,getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persistSettings:saveSettings,persistChat:()=>{const c=context();return persistConversationMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata});},afterSelect:async id=>{if(!v3Application)return;const b=await v3Application.books.binding();if(b.binding&&b.binding.player.id!==id)throw Error('请从资料绑定切换用户，以保持当前存档关联');},assertIdle:()=>{assertIdle();if(v3Application?.host.busy())throw Error('缇斯亚任务正在进行，请先完成或停止，再切换用户身份');},prepareArchiveSelection:id=>selectArchiveIdentity(v3Application?.books,context().powerUserSettings?.personas,id),convertCharacter:async id=>{const i=context().characters.findIndex(c=>c.avatar===id);if(i<0)throw Error('角色已不存在');return convertCharacterToPersona(i);},openNative:()=>nativeDrawerOriginal('persona-management-button'),openPage:()=>openIdentity(),onChanged:()=>{refreshIdentityNotice();v3Application?.configurationChanged();worldbookConsole?.refreshContext();const c=context(),event=c.eventTypes?.PERSONA_CHANGED;if(event)Promise.resolve(c.eventSource.emit(event,user_avatar)).catch(error);}});
-function identityPrompt(){const state=identityService.read(),key=JSON.stringify(state.scope),target=state.scope.groupId!=null?{type:'group',id:state.scope.groupId}:{type:'character',id:state.scope.characterAvatar};const linked=state.personas.some(p=>p.descriptor?.connections?.some(x=>x.type===target.type&&String(x.id)===String(target.id)));const fresh=identityNewChats.has(key);return {state,key,fresh,model:evaluateIdentityOnboarding(state,{newChat:fresh||!linked})};}
-function refreshIdentityNotice(){if(!root||!enabled)return;const {model}=identityPrompt();let notice=root.querySelector('.tisya-player-notice');if(!model.needed){notice?.remove();return;}if(!notice){notice=document.createElement('div');notice.className='tisya-player-notice';notice.setAttribute('role','status');notice.style.cssText='position:absolute;inset:auto 8px 8px;pointer-events:auto;z-index:3;max-width:640px;margin:6px auto;padding:8px 12px;border:1px solid #b7a46f66;background:#0d2b22;color:#e4ddc8;border-radius:8px;display:flex;gap:10px;align-items:center;justify-content:space-between;font:inherit';root.append(notice);}const text=model.kind==='new-card'?'为此卡创建或选择玩家角色':model.kind==='new-chat'?'新聊天：沿用或切换玩家角色':model.kind==='pending'?'玩家身份保存待核对':'当前聊天需要选择玩家角色';notice.innerHTML='<style>#tisya-shell.tisya-page-open>.tisya-player-notice{display:none!important}</style><span>'+esc(text)+'</span>'+button('查看','user-identity');}
-function openIdentity(initialOrigin=null,{management=false}={}){if(!mayLeaveUtility())return false;const prompt=identityPrompt();close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('用户身份','<div id="tisya-user-page"></div>');if(!initialOrigin&&!management&&prompt.model.needed){utility=mountIdentityOnboarding(query('#tisya-user-page'),{service:identityService,newChat:prompt.fresh||prompt.model.kind==='new-card',onDone:()=>{identityNewChats.delete(prompt.key);refreshIdentityNotice();openIdentity(null,{management:true});},onManage:()=>openIdentity(null,{management:true}),onClose:()=>{if(mayLeaveUtility())nav();}});}else utility=mountIdentityPage(query('#tisya-user-page'),{service:identityService,initialOrigin,onBooks:()=>openWorkbench('books'),onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onAssistant:task=>openAssistant(task),onClose:()=>nav()});refreshIdentityNotice();return true;}
-function promptNewChatIdentity(){const state=identityService.read(),key=JSON.stringify(state.scope);if(!state.scope.chatId||identityPromptSeen.has(key))return;identityNewChats.add(key);refreshIdentityNotice();if(!enabled)return;const gate=utility?.kind==='configuration'?utility.requestSuspend():utility?.requestLeave?.();if(gate?.allowed===false)return;if(openWorkbench('books'))identityPromptSeen.add(key);}
+const identityService=createIdentityService({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persistSettings:saveSettings,persistChat:()=>{const c=context();return persistConversationMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata});},afterSelect:id=>tableService.bindIdentitySelection(id),assertIdle:()=>{assertIdle();if(tableService.state().busy)throw Error('缇斯亚任务正在进行，请先完成或停止，再切换用户身份');},validateSelection:id=>tableService.assertIdentityCompatible(id),convertCharacter:async id=>{const i=context().characters.findIndex(c=>c.avatar===id);if(i<0)throw Error('角色已不存在');return convertCharacterToPersona(i);},openNative:()=>nativeDrawerOriginal('persona-management-button'),openPage:()=>openIdentity(),onChanged:()=>{tableService.clear({scope:'generation',reason:'用户身份已改变'});worldbookConsole?.refreshContext();const c=context(),event=c.eventTypes?.PERSONA_CHANGED;if(event)Promise.resolve(c.eventSource.emit(event,user_avatar)).catch(error);}});
+function openIdentity(initialOrigin=null){if(!mayLeaveUtility())return false;close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('用户身份','<div id="tisya-user-page"></div>');utility=mountIdentityPage(query('#tisya-user-page'),{service:identityService,tables:tableService,initialOrigin,onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onAssistant:task=>openAssistant(task),onClose:()=>nav()});return true;}
 
-
-function openAssistant(task=null){return openWorkbench(['home','review','books','archives','settings','genesis','extract','history','conditions','chat'].includes(task)?task:task==='idea'?'genesis':task==='core'?'extract':'assistant');}
-function openWorkbench(initialPage='home'){
+function openAssistant(task=null){
  if(!mayLeaveUtility())return false;
-
- if(!v3Application){installV3().then(()=>openWorkbench(initialPage)).catch(error);return false;}
- const key=JSON.stringify([worldKey(context()),context().chatMetadata?.[BOOK_POINTER_KEY]?.archiveId??null,user_avatar]);renderEpoch++;page('缇斯亚','<div id="tisya-workbench-slot"></div>');
- let view=v3Views.get(key);if(!view){view=mountWorkbench(document,query('#tisya-workbench-slot'),{capabilities:v3Application.capabilities,initialPage,stylesheetURL:new URL('./v3/workbench.css',import.meta.url).href,onClose:()=>hidePage()});v3Views.set(key,view);}
- else {query('#tisya-workbench-slot').append(view.root);view.resume().then(()=>view.navigate(initialPage)).catch(error);}
- utility=view;view.ready.catch(error);return true;
-}
-function v3NativeRoutes(){return drawerEntries(document).filter(row=>!['rightNavHolder','persona-management-button'].includes(row.key)).map(row=>({id:'drawer:'+row.key,action:'drawer:'+row.key,label:row.label,description:'打开扩展的原生设置',group:'native',icon:'tools',run:()=>nativeDrawer(row.key)}));}
-function v3Routes(){const routes={};
- for(const row of CAPABILITIES){const id=row.id;
-  if(id.startsWith('drawer:'))routes[id]=()=>nativeDrawer(id.slice(7));
-  else if(id.startsWith('settings-tab:'))routes[id]=()=>openSettings(id.slice(13));
- }
- return {...routes,'journey.openSource':openJourneySource,
- 'configuration.status':()=>v3ConfigurationBook.read(),
- 'configuration.hydrate':args=>v3ConfigurationBook.hydrate({initializeIfMissing:true,...args}),
- 'configuration.saveProfile':args=>{v3Application.assertIdle();return v3ConfigurationBook.saveProfile(args);},
- 'configuration.previewRestore':args=>{v3Application.assertIdle();return v3ConfigurationBook.previewRestore(args);},
- 'configuration.restore':args=>{v3Application.assertIdle();return v3ConfigurationBook.restore(args);},
- 'configuration.discardRestore':args=>v3ConfigurationBook.discardRestore(args),
- 'configuration.retryDraft':args=>{v3Application.assertIdle();return v3ConfigurationBook.retryDraft(args);},
- 'configuration.discardDraft':()=>v3ConfigurationBook.discardDraft(),
- contacts:()=>openCharacterGroup(),'role-detail':({id}={})=>openCharacterGroup('character',id??context().characters[context().characterId]?.avatar),groups:()=>openCharacterGroup('group'),chat:()=>{close();hidePage();},home:()=>home(),phone:()=>{pet.setVisible(true);pet.setMode('folded');},'drawer:persona-management-button':()=>openIdentity(null,{management:true}),assistant:()=>openWorkbench('assistant'),'user-identity':()=>openWorkbench('books'),
- 'settings-tab:tables':()=>openWorkbench('archives'),'role-library':()=>openCharacterGroup(),'group-library':()=>openCharacterGroup('group'),
- 'settings-app':()=>openSettings(),'display-settings':openDisplaySettings,notes:()=>openNotebook('notes'),'display-cache':openChatLoading,
- 'input-tools':()=>{close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');},'emotion-atlas':openEmotionAtlas,'pet-toggle':()=>{pet.setVisible(!pet.isVisible());},
- 'motion-toggle':async()=>{await saveInterfaceSettings({...settings(),动态效果:!motionEnabled});},
- fullscreen:()=>{close();hidePage();nativeControl('#option_toggle_fullscreen');},'continue-settings':()=>{sheet('继续设置',`<label for="tisya-continue-text">自动发送的用户消息</label><textarea id="tisya-continue-text">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);},
- 'selection-diagnostic':()=>showSelectionDiagnostic(),'context-overview':()=>openSettings('mode','overview'),'font-retry':startFont,disable:stopUI};
-}
-function workspaceOwner(){
- const c=context(),card=c.characters?.[c.characterId],group=c.groups?.find?.(row=>String(row.id)===String(c.groupId)),cardId=c.groupId!=null?'group:'+c.groupId:card?.avatar??'system:global',cardName=c.groupId!=null?group?.name??'群组 '+c.groupId:card?.data?.name??card?.name??'共享配置';
- const owner={account:getCurrentUserHandle(),cardId:String(cardId),cardName:String(cardName)};
- if(c.chatId){owner.chatId=c.chatMetadata?.tisya_w24?.branchId??'native:'+String(c.chatId);owner.chatName=String(c.chatId);}
- return owner;
-}
-function assertWorkspaceClear(){assertIdle();const state=v3BookHost?.manager.workspaceState();if(state?.active||state?.flushing||state?.pendingBooks?.length)throw Error('工作区还有未同步变更，请先完成同步再清理缓存');if(v3ConfigurationBook?.read().draft)throw Error('配置草稿尚未保存，请先处理草稿');}
-async function clearSavedWorkspace(filter,key){
- assertWorkspaceClear();cacheClearing=true;sessionWorkspace?.clearMemory();
- try{if(key){const row=await durableWorkspace.get(key);if(!row)throw Error('缓存目录已变化，请刷新工作区列表后重试');if(row.owner.account!==getCurrentUserHandle())throw Error('不能清理其他账号的工作区');await durableWorkspace.remove(key);}else{if(filter.account!==undefined&&filter.account!==getCurrentUserHandle())throw Error('不能清理其他账号的工作区');await durableWorkspace.clear({...filter,account:getCurrentUserHandle()});}
-  v3BookHost?.manager.clearWorkspaceMemory(key?{key}:filter);return {cleared:true};
- }finally{cacheClearing=false;}
-}
-const workspaceManagement={
- async list(){if(!durableWorkspace)return [];return (await durableWorkspace.list()).filter(row=>row.owner.account===getCurrentUserHandle()).map(row=>{let label;try{if(row.kind==='worldbook')label=JSON.parse(row.key)[2];}catch{}return {...row,status:row.state,...label?{label}:{}};});},
- remove:key=>clearSavedWorkspace(null,key),clear:filter=>clearSavedWorkspace(filter),
- async flush(){assertWorkspaceClear();await sessionWorkspace?.flush();await v3BookHost?.manager.retryWorkspaceCache();return {saved:true};},
- inspect:()=>({owner:workspaceOwner(),worldbooks:v3BookHost?.manager.workspaceState()??null})
-};
-async function installPersistentWorkspace(){
- if(persistentReady)return;if(persistentInstalling)return persistentInstalling;
- persistentInstalling=(async()=>{durableWorkspace??=createDurableWorkspace({indexedDB:window.indexedDB,onError:error});await durableWorkspace.ready;
- sessionWorkspace??=createSessionWorkspace({cache:durableWorkspace,getContext:context,getOwner:workspaceOwner,getConfiguration:()=>{const value=v3ConfigurationBook?.read();if(!value?.ready||value.draft)return {ready:false};try{v3ConfigurationBook.assertReady();return value;}catch(err){if(['CONFIGURATION_SCOPE','CONFIGURATION_NOT_READY','CONFIGURATION_BINDING'].includes(err.code))return {ready:false};throw err;}},isBusy:()=>cacheClearing||isGenerating()||hasActiveAgentRun()||generationBusy||!!v3Application?.host.busy(),onError:error});
- await sessionWorkspace.hydrate();
- const observe=(name,fn)=>{const event=context().eventTypes[name];if(event)context().eventSource.on(event,fn);};
- for(const name of ['MESSAGE_RECEIVED','MESSAGE_SENT','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED'])observe(name,value=>{const floor=Number.isInteger(value)?value:Number.isInteger(value?.messageId)?value.messageId:undefined;sessionWorkspace.schedule(floor===undefined?{}:{floor});});
- observe('MESSAGE_DELETED',()=>sessionWorkspace.schedule({full:true}));
- for(const name of ['GENERATION_ENDED','GENERATION_STOPPED','CHARACTER_EDITED','SETTINGS_UPDATED','PERSONA_CHANGED'])observe(name,()=>sessionWorkspace.schedule());
- observe('CHAT_CHANGED',async()=>{try{await sessionWorkspace.hydrate();sessionWorkspace.schedule({full:true});}catch(err){error(err);}});
- const flush=()=>sessionWorkspace.flush().catch(error);document.addEventListener('visibilitychange',()=>{if(document.hidden&&!isGenerating()&&!v3Application?.host.busy())flush();});window.addEventListener('pagehide',()=>{if(!isGenerating()&&!v3Application?.host.busy())flush();});persistentReady=true;
- })();try{return await persistentInstalling;}finally{persistentInstalling=null;}
-}
-async function installV3(){
- if(v3Application)return v3Application;if(v3Installing)return v3Installing;
- v3Installing=(async()=>{
-  await configHost.ensureRuntimePresets();await installPersistentWorkspace();
-  v3BookHost=await createNativeBookHost({target:window,enableWorkspace:true,durableCache:durableWorkspace,durableOwner:workspaceOwner,getWorkspaceDependencies:()=>v3ConfigurationBook?.getWorkspaceDependencies?.()??[],refreshWorkspaceSources:async()=>{await v3ConfigurationBook?.hydrate({initializeIfMissing:false});},getContext:context,getHost:()=>v3Application?.host,getPlayerId:()=>user_avatar,
-   assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');},
-   readConfiguration:()=>{const data=configStore.cacheSnapshot()??emptyConfig(),key=worldKey(context()),world=configuredWorld(data,key);return resolveRuntimeConfiguration({snapshot:{data,key,world,revision:JSON.stringify(data)},target:window,context:context(),playerId:user_avatar});},
-   invalidate:event=>v3Application?.invalidateBinding(event)});
-  v3ConfigurationBook=createConfigurationBook({books:v3BookHost.manager,store:configStore,getContext:context,getPlayerId:()=>user_avatar,
-   readInterface:settings,applyInterface:applyInterfaceSettings,validateInterface:validateInterfaceSettings,domainValidators:{tagTemplates:validateTagTemplateBank,worldbookInterface:validateWorldbookPreferences},
-   domainCaches:{worldbookInterface:{read:()=>context().extensionSettings['缇斯亚世界书']??{},apply:value=>{context().extensionSettings['缇斯亚世界书']=structuredClone(value);},defaultValue:{}}},
-   onApplied:()=>{if(v3Application&&!v3Application.host.busy())v3Application.configurationChanged();sessionWorkspace?.schedule();}});
-  try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['GLOBAL_UNBOUND','UNBOUND','HOST_OWNER','CHAT_IDENTITY','CHAT_UNAVAILABLE','CHAT_REQUIRED','CONFIGURATION_NOT_READY'].includes(err.code))error(err);}
-  v3Application=await createApplication({target:window,getContext:context,store:configStore,configHost,books:v3BookHost.manager,readWorldbook:(...args)=>v3BookHost.manager.readWorldbook(...args),communication,getPlayerId:()=>user_avatar,
-   configurationBook:v3ConfigurationBook,identityService,
-   interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},getChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),
-   routes:v3Routes(),dynamicRoutes:v3NativeRoutes,runtimeStatus:()=>({pluginVersion:VERSION,preset:configHost.runtimePresetStatus()}),capabilityState:()=>({fullscreen:{available:!!query('#option_toggle_fullscreen'),label:immersiveState(window)?'退出沉浸全屏':'沉浸全屏'},'pet-toggle':{label:pet?.isVisible()?'隐藏桌宠':'显示桌宠'},'motion-toggle':{label:motionEnabled?'暂停动态效果':'开启动态效果'}}),onSaved:()=>{appearance?.refresh();decorate();},onBusyChanged:()=>{refreshMessageActionStates();appearance?.refresh();if(!v3Application?.host.busy())sessionWorkspace?.schedule();},onError:error,moods:()=>emotionCatalog(document).names(),
-   assertIdle:()=>{if(isGenerating()||hasActiveAgentRun()||generationBusy)throw Error('请先等待当前操作完成');}});
-  v3Bubble?.dispose();v3Bubble=mountProgressBubble(document,{pet,progress:v3Application.progress,capabilities:v3Application.capabilities,assistant:v3Application.assistant,
-   isPanelOpen:()=>utility?.kind==='v3-workbench'&&utility.root.isConnected,onOpen:page=>openWorkbench(page??'review'),fallbackElement:document.querySelector('[data-tisya-action="assistant"]')});
-  sessionWorkspace.schedule({full:true});return v3Application;
- })();try{return await v3Installing;}finally{v3Installing=null;}
+ if(!context().chatId){openSettings();return false;}
+ const key=configStore.read().key;renderEpoch++;page('与缇斯亚一起创作','<div id="tisya-assistant-slot"></div>');
+ let view=assistantViews.get(key);if(!view){view=mountAssistantApp(document,query('#tisya-assistant-slot'),{service:tableService,identity:identityService,store:configStore,onClose:()=>hidePage(),onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onIdentity:ref=>openIdentity(ref),onSaved:()=>{appearance?.refresh();decorate();}});assistantViews.set(key,view);utility=view;view.navigate(task??'assistant').catch(error);}else{query('#tisya-assistant-slot').append(view.root);utility=view;view.resume();if(task)view.navigate(task).catch(error);}return true;
 }
 
 function returnToSettings(){if(!mayLeaveUtility())return false;nav();return true;}
 function ensureCharacterGroup(){characterGroup??=createCharacterGroupHost({document,pins:{read:(type,id)=>directoryEntry(settings(),{avatar:type==='group'?'group:'+id:id}).置顶,write:async(type,id,enabled)=>saveInterfaceSettings(changeDirectory(settings(),directoryToken({avatar:type==='group'?'group:'+id:id}),{置顶:enabled?Date.now():null}))},getContext:context,assertIdle,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,worldbookBlocked:()=>!!worldbookConsole?.hasDraft()||!!worldbookConsole?.isBusy(),openWorldbook:async id=>openWorldbook(id)});characterGroup.identity.connect(identityService);return characterGroup;}
 function openCharacterGroup(type='character',id){close();closeNativeDrawers();ensureCharacterGroup().open({type,id});}
 
-async function openWorldbook(characterId){try{window.toastr?.info?.('正在同步工作区，再打开世界书。','缇斯亚');await (v3Application?.books??v3BookHost?.manager)?.syncWorkspace();}catch(err){error(err);return false;}close();closeNativeDrawers();worldbookConsole??=createWorldbookConsole({configurationBook:v3ConfigurationBook,conditionEngine:{describeRules:()=>{if(!v3Application)throw Error('缇斯亚正在初始化');return v3Application.conditions.describeConditionRules();}},document,getContext:context,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,openNative:()=>nativeDrawerOriginal('WI-SP-button'),characterLinks:ensureCharacterGroup().bindings});worldbookConsole.open(characterId);}
+function openWorldbook(characterId){close();closeNativeDrawers();worldbookConsole??=createWorldbookConsole({conditionEngine:worldbookConditions,document,getContext:context,persistSettings:saveSettings,onError:error,onSettings:returnToSettings,openNative:()=>nativeDrawerOriginal('WI-SP-button'),characterLinks:ensureCharacterGroup().bindings});worldbookConsole.open(characterId);}
 function nativeDrawer(key){if(key==='persona-management-button')return openIdentity();if(key==='WI-SP-button')return openWorldbook();return nativeDrawerOriginal(key)}
-async function nativeDrawerOriginal(key) {
-    if(key==='WI-SP-button'){try{window.toastr?.info?.('正在同步工作区，再打开世界书。','缇斯亚');await (v3Application?.books??v3BookHost?.manager)?.syncWorkspace();}catch(err){error(err);return false;}}
+function nativeDrawerOriginal(key) {
     const entry=drawerEntries(document).find(entry=>entry.key===key);
     const target=entry?.element.querySelector('.drawer-toggle');
     if(!target)throw new Error('此版本缺少对应的原生入口');
@@ -326,7 +209,14 @@ function showSelectionDiagnostic(){
  const data={version:VERSION,managedSurface:managed,operation:uiOperations.state(),selection:chatSelectionDiagnostic()};
  page('会话进入诊断',`<p>${esc(chatSelectionSummary())}</p><p>只读取当前操作状态，不读取正文、不调用模型、不修改存档。</p><pre style="white-space:pre-wrap;user-select:text" id="tisya-selection-diagnostic">${esc(JSON.stringify(data,null,2))}</pre><div>${button('刷新诊断','selection-diagnostic')}${button('复制诊断','selection-diagnostic-copy')}</div>`);
 }
-function nav(){return openWorkbench('settings');}
+function nav(refresh=false) {
+    const fullscreen=query('#option_toggle_fullscreen'),immersive=immersiveSupported(window);
+    const rows=settingsDestinations({fullscreen:immersive||!!(fullscreen&&!fullscreen.classList.contains('displayNone')),fullscreenLabel:immersive?(immersiveState(window)?'退出沉浸全屏':'沉浸全屏'):'切换系统全屏',pet:pet?.isVisible(),motion:motionEnabled,extra:drawerEntries(document)});
+    const options={identityName:identityService.read().personas.find(p=>p.id===identityService.read().active)?.name??'尚未选择身份',rows,version:VERSION,fontState,styleVersion:getComputedStyle(document.body).getPropertyValue('--tisya-style-version').replace(/["']/g,'').trim()};
+    const existing=root.querySelector('#tisya-settings-home');if(existing){close();closeNativeDrawers();hideFullPanels(document);mountSettingsHome(existing,options);return;}
+    renderEpoch++;page('设置','<div id="tisya-settings-home"></div>');
+    mountSettingsHome(root.querySelector('#tisya-settings-home'),options);
+}
 
 function nativePanelAction(selector){
     const target=query(selector);
@@ -367,9 +257,7 @@ function page(title, html) {
 function openNotebook(mode){
     renderEpoch++;
     page(mode==='memory'?'公开记忆':'会话手记',`<nav class="tisya-sub-tabs" aria-label="记录分类">${button('会话手记','notes')}${button('公开记忆','memory')}</nav><div id="tisya-notebook"></div>`);
-    notebook=mountNotebook(document,query('#tisya-notebook'),{getContext:context,getDisplay,mode,onRead:openReader,onError:error,
-    getJourney:options=>{if(!v3Application)throw Error('缇斯亚正在初始化');return v3Application.journey.read(options);},
-    getJourneyTimeline:options=>v3Application.journey.timeline(options),getJourneyAnchor:options=>v3Application.journey.currentAnchor(options),onJourneySource:openJourneySource,onLocate:token=>{
+    notebook=mountNotebook(document,query('#tisya-notebook'),{getContext:context,getDisplay,mode,onRead:openReader,onError:error,onLocate:token=>{
         const node=nodeFor(token);close();closeNativeDrawers();hidePage();node.scrollIntoView({block:'start',behavior:'auto'});
     }});
 }
@@ -382,33 +270,27 @@ function narrativeController(){return createNarrativeBridge({getContext:context,
 
 async function saveAssistantConfiguration({data,revision,key,value,expected}){
  assertIdle();if(JSON.stringify(settings())!==expected)throw Error('界面配置已变化，请重新让助手核对');validateInterfaceSettings(value);
- if(!v3ConfigurationBook)throw Error('配置书尚未就绪');
- return v3ConfigurationBook.saveCombined({configuration:data,interface:value,configurationRevision:revision,key},v3ConfigurationBook.read());
+ const c=context(),previous=c.extensionSettings[KEY],beforeConfig=c.extensionSettings.缇斯亚配置;c.extensionSettings[KEY]=value;
+ try{await configStore.save(data,revision,key);}catch(e){if(c.extensionSettings[KEY]===value&&c.extensionSettings.缇斯亚配置===beforeConfig){if(previous===undefined)delete c.extensionSettings[KEY];else c.extensionSettings[KEY]=previous;}throw e;}
+ motionEnabled=settings().动态效果!==false;if(pet&&pet.isVisible()!==(settings().显示桌宠!==false))pet.setVisible(settings().显示桌宠!==false);refreshVisuals();inputShortcuts?.refresh();messageNavigation?.update();decorate();
 }
-function applyInterfaceSettings(value){
- applyingInterface=true;
- try{context().extensionSettings[KEY]=structuredClone(value);motionEnabled=value.动态效果!==false;if(pet&&pet.isVisible()!==(value.显示桌宠!==false))pet.setVisible(value.显示桌宠!==false);refreshVisuals();inputShortcuts?.refresh();messageNavigation?.update();if(root)decorate();}
- finally{applyingInterface=false;}
-}
-async function saveInterfaceSettings(next){assertIdle();validateInterfaceSettings(next);if(!v3ConfigurationBook)throw Error('配置书尚未就绪');return v3ConfigurationBook.saveDomain('interface',next,v3ConfigurationBook.read());}
+async function saveInterfaceSettings(next){assertIdle();const previous=settings();context().extensionSettings[KEY]=next;refreshVisuals();try{if(await saveSettings()!==true)throw Error('宿主尚未确认保存');}catch(e){if(context().extensionSettings[KEY]===next)context().extensionSettings[KEY]=previous;refreshVisuals();throw Error('保存未完成，草稿保留：'+e.message);}}
 const chatLoading=createChatLoadingController({powerUser:power_user,persist:saveSettings,assertIdle,isBounded:isBoundedChatSurfaceView,clearCache:async()=>{await clearReaderCache();nativeDisplay?.clear();},onApplied:count=>{for(const id of ['chat_truncation','chat_truncation_counter']){const input=document.getElementById(id);if(input)input.value=String(count);}}});
 function openSettings(tab='play',initialView=''){
- if(tab==='tables')return openWorkbench(initialView==='assistant'?'assistant':initialView==='genesis'?'genesis':initialView==='foundation'?'extract':initialView==='history'?'history':initialView==='core'?'books':initialView==='conditions'?'conditions':'archives');
+ if(tab==='tables'&&['assistant','genesis','foundation','core','style'].includes(initialView))return openAssistant(initialView==='core'?'core-assets':initialView);
  if(tab==='theme'&&!context().chatId){if(!mayLeaveUtility())return;renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
- if(!v3ConfigurationBook?.read().ready)return openWorkbench('books');
- if(!mayLeaveUtility())return false;
- const key=configStore.read().key;renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
- const cached=configurationViews.get(key);if(cached){query('#tisya-settings-app').append(cached.root);utility=cached;cached.setVisible(true);cached.resume().then(()=>cached.navigate(tab,initialView)).catch(error);return true;}
- utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,runtimeV3:!!v3Application,getSettings:settings,onTables:()=>openWorkbench('archives'),onProfiles:()=>openWorkbench('books'),initialTab:tab,initialView,version:VERSION,embedded:true,preserveOnClose:true,
+ if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
+ renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
+ utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,initialView,version:VERSION,embedded:true,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
- saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onApplied:()=>{v3Application?.configurationChanged();appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
+ saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onApplied:()=>{appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
  onIdentity:ref=>openIdentity(ref),onAssistant:task=>openAssistant(task),onNative:kind=>{if(kind==='agent')extensionSection('agent');else nativeDrawer(kind==='api'?'sys-settings-button':'ai-config-button');}
- });utility.kind='configuration';configurationViews.set(key,utility);utility.ready.catch(error);
+ });utility.ready.catch(error);
 }
 function openDisplaySettings(){openSettings('theme');}
-function openChatLoading(){renderEpoch++;page('聊天显示与缓存','<div id="tisya-chat-loading"></div>');utility=mountChatLoadingSettings(document,query('#tisya-chat-loading'),{controller:chatLoading,workspace:workspaceManagement});utility.ready?.catch(error);}
+function openChatLoading(){renderEpoch++;page('聊天显示与缓存','<div id="tisya-chat-loading"></div>');utility=mountChatLoadingSettings(document,query('#tisya-chat-loading'),{controller:chatLoading});utility.ready?.catch(error);}
 function openEmotionAtlas(){renderEpoch++;page('图鉴 · 内置表情','<div id="tisya-emotion-atlas"></div>');utility=mountEmotionAtlas(document,query('#tisya-emotion-atlas'));}
-function mayLeaveUtility(){const state=['configuration','v3-workbench'].includes(utility?.kind)?utility.requestSuspend():utility?.requestLeave?.();if(state?.allowed===false){error(new Error(state.reason||'请先保存或放弃修改'));return false;}return true;}
+function mayLeaveUtility(){const state=utility?.requestLeave?.();if(state?.allowed===false){error(new Error(state.reason||'请先保存或放弃修改'));return false;}return true;}
 function phoneApp(name){
     if(!enabled)return false;
     const routes={手记:()=>openNotebook('notes'),记忆:()=>openNotebook('memory'),通信:()=>{renderEpoch++;contacts();},生图:()=>extensionSection('image'),语音:()=>extensionSection('voice'),主题:openDisplaySettings,图鉴:openEmotionAtlas,协议:()=>nativeDrawer('advanced-formatting-button'),应用:()=>nativeDrawer('extensions-settings-button'),设置:()=>nav()};
@@ -588,7 +470,7 @@ async function candidateAction(action){
   sheet('删除版本',`<p>删除第 ${index+1} 版？其他版本保留。</p>${button('取消','close')}${button('删除','candidate-delete-confirm')}`);overlay._messageToken=token;overlay._candidateIndex=index;return;
  }
  close();if(action==='candidate-delete-confirm')await revisionController.remove(token,index);else{await revisionController.select(token,index);if(action==='candidate-rewrite')await generateAt(messageToken(token.id),true);}
- decorate();
+ tableService.clear({scope:'generation'});decorate();
 }
 function nodeFor(token) {
     validate(context(),token);
@@ -605,7 +487,7 @@ async function messageAction(action) {
     if(action==='msg-copy') { const epoch=sheetEpoch;await navigator.clipboard.writeText(validate(context(),token).mes);close(epoch);return; }
     if(action==='msg-revision') {openRevision(token);return;}
     assertIdle();
-    if(action==='msg-branch'&&v3Application?.host.inspect().enabled){sheet('创建平行分支',`<p>将此条消息及以前的进度接续到独立存档。</p>${button('创建分支','branch-create')}${button('取消','close')}`);overlay._messageToken=token;return;}
+    if(action==='msg-branch'&&configStore.read().world.tables?.enabled){sheet('创建平行分支',`<p>保留此条消息及以前进度。后续事件可以作为条件蓝本保留，也可以全部清空。</p>${button('保留后续可能性','branch-keep')}${button('清空后续蓝本','branch-clear')}${button('取消','close')}`);overlay._messageToken=token;return;}
     if(action==='msg-edit'||action==='msg-branch') {
         if(action==='msg-edit'){userEditHistory.begin(token.message);close();await messageEdit(token.id);return;}
         const target = node.querySelector('.mes_create_branch');
@@ -614,18 +496,9 @@ async function messageAction(action) {
     }
     if(action==='msg-delete'||action==='msg-rollback') {
         const count = action==='msg-delete'?1:context().chat.length-token.id;
-        sheet(action==='msg-delete'?'删除本条':'回溯确认',`<p>将删除 ${count} 条消息${action==='msg-rollback'?'，包括选中消息及其后的全部消息':''}。操作使用宿主删除接口。</p>${button('取消','close')}${button('确认删除',action==='msg-delete'?'delete-confirm':'rollback-confirm')}`);
+        sheet(action==='msg-delete'?'删除本条':'回溯确认',`<p>将删除 ${count} 条消息${action==='msg-rollback'?'，包括选中消息及其后的全部消息':''}。操作使用宿主删除接口。</p>${action==='msg-rollback'&&configStore.read().world.tables?.enabled?'<label>后续时间锚<select id="tisya-future-choice"><option value="keep">保留事件可能性</option><option value="clear">清空后续蓝本</option></select></label>':''}${button('取消','close')}${button('确认删除',action==='msg-delete'?'delete-confirm':'rollback-confirm')}`);
         overlay._messageToken = token;
     }
-}
-async function openJourneySource(payload) {
-    if(!v3Application)throw Error('缇斯亚正在初始化');
-    const source=await v3Application.journey.locate(payload);
-    openReader(capture(context(),source.floor));
-    const paragraphs=new Set(source.paragraphs??[]),matches=[...document.querySelectorAll('#tisya-reader [data-paragraph]')].filter(node=>paragraphs.has(Number(node.dataset.paragraph)));
-    for(const node of matches){node.setAttribute('data-source-match','true');node.style.outline='1px solid #bda56e';node.style.outlineOffset='5px';}
-    matches[0]?.scrollIntoView({block:'center',behavior:'auto'});
-    return source;
 }
 function openReader(token,initialTab='body') {
     const message=validate(context(),token);
@@ -633,11 +506,7 @@ function openReader(token,initialTab='body') {
     sheet('阅读与回合记录','<div id="tisya-reader"></div>');
     releaseReader=mountMessageReader(document,query('#tisya-reader'),{
         source:message.mes,getNativeDisplay:()=>nativeDisplay?.project(message.mes,message,{getAttribute:()=>String(token.id)}),
-        initialTab,getAppearance,getDisplay,getPlayerName,saveDisplayPreference,onError:error,
-        getJourney:options=>{validate(context(),token);if(!v3Application)throw Error('缇斯亚正在初始化');return v3Application.journey.read({floor:token.id,...options});},
-        getJourneyTimeline:options=>{validate(context(),token);return v3Application.journey.timeline(options);},
-        getJourneyAnchor:options=>{validate(context(),token);return v3Application.journey.currentAnchor({...options,floor:token.id});},
-        setJourneyFocus:payload=>v3Application.journey.focus(payload),onJourneySource:openJourneySource,
+        initialTab,getAppearance,getDisplay,getPlayerName,
         formatBody:body=>messageFormatting(body,message.name,!!message.is_system,!!message.is_user,token.id,
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},
             false,{regexPrepared:true,regexSourceText:body}),
@@ -655,26 +524,19 @@ async function chooseReaderAction(token,text,mode) {
 }
 async function removeMessages(rollback) {
     const token=overlay._messageToken,epoch=sheetEpoch;assertIdle();validate(context(),token,{tail:true});
-    const originalChat=context().chat,original=originalChat.slice(token.id);
+    const original=context().chat.slice(token.id);
     const snapshots=original.map(message=>message && ({text:message.mes,swipe:message.swipe_id}));
     if(rollback && original.some(message=>!message)) throw new Error('后续历史尚未完整加载，未执行回溯');
-    const v3Host=await requireV3();
+    if(rollback)await tableService.stageFork(token.id,query('#tisya-future-choice')?.value!=='clear');
     let deleted=0;
     try {
         const end=rollback?token.length-1:token.id;
         for(let id=end;id>=token.id;id--) {
             const message=context().chat[id], snapshot=snapshots[id-token.id];
             if(context().getCurrentChatId()!==token.chatId||message!==original[id-token.id]||!snapshot||message?.mes!==snapshot.text||message?.swipe_id!==snapshot.swipe) throw new Error('删除期间消息发生变化');
-            try{await v3Host.deleteFloor({floor:id});}catch(err){
-                // Native deletion can succeed before persistence fails. Report
-                // the observed side effect instead of understating data loss.
-                if(context().chat===originalChat&&originalChat.length===token.length-deleted-1&&!originalChat.includes(original[id-token.id]))deleted++;
-                throw err;
-            }deleted++;
+            await context().deleteMessage(id,undefined,false);deleted++;
         }
-        // Each host deletion already saves and verifies its source/identity
-        // receipts. A second whole-chat write only keeps the UI lock waiting.
-        close(epoch);
+        await context().saveChat();if(rollback)await tableService.activateFork({rollback:true});close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
 }
 function openRevision(token,selection){
@@ -683,16 +545,16 @@ function openRevision(token,selection){
  const key=JSON.stringify([configStore.read().key,token.id,token.swipe??0,token.text]);sheet('高级重骰','<div id="tisya-revision-panel"></div>');overlay._messageToken=token;
  revisionEditor=mountRevisionEditor(document,query('#tisya-revision-panel'),{token,draft:{...revisionDrafts.get(key),...(selection?{mode:'partial',selected:selection}: {})},onDraft:value=>revisionDrafts.set(key,value),onError:error,onSubmit:async options=>{
   assertIdle();validate(context(),token,{tail:true});if(String(query('#send_textarea')?.value??'').trim())throw Error('剧情输入框有草稿；请先发送或暂存后再重骰，场外草稿可以保留。');
-  close();closeNativeDrawers();hidePage();try{await revisionController.generate(token,options);}finally{decorate();}
+  close();closeNativeDrawers();hidePage();try{await revisionController.generate(token,options);}finally{tableService.clear({scope:'generation'});decorate();}
  }});
 }
 async function rerollAfterUser(token,operation){
     const target=userRerollTarget(context(),token);
-    if(target){const material=userRevisionMaterial(token.message);try{configHost.setUserRevision(material?{...material,messageId:token.id}:null);return await revisionController.generate(target,null);}finally{configHost.setUserRevision(null);}}
+    if(target)return revisionController.generate(target,null);
     if(context().onlineStatus==='no_connection')throw Error('模型尚未连接，未改动消息');
     userRevisionMaterial(token.message);
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:'normal',mainApi:context().mainApi,selectedGroup:context().groupId}));
-    await (await requireV3()).initialize();operation.check();assertIdle();validate(context(),token,{tail:true});
+    await tableService.ensureInitialized({scope:'manual'});operation.check();assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw Error('输入框新增了草稿，未发送重投');
     const material=userRevisionMaterial(token.message);generationBusy=true;
     try{configHost.setUserRevision(material?{...material,messageId:token.id}:null);decorate();await operation.host(()=>Generate('normal',{...options,automatic_trigger:true}));}
@@ -700,7 +562,7 @@ async function rerollAfterUser(token,operation){
 }
 function generateAt(token,reroll=false){return generationOperations.run(operation=>generateAtOperation(token,reroll,operation));}
 async function generateAtOperation(token, reroll, operation) {
-    if(reroll){assertIdle();validate(context(),token,{tail:true});if(String(query('#send_textarea')?.value??'').trim())throw Error('剧情输入框有草稿，请先发送或暂存后再重骰');closeNativeDrawers();hidePage();try{if(token.message.is_user)await rerollAfterUser(token,operation);else await revisionController.generate(token,null);}finally{decorate();}return;}
+    if(reroll){assertIdle();validate(context(),token,{tail:true});if(String(query('#send_textarea')?.value??'').trim())throw Error('剧情输入框有草稿，请先发送或暂存后再重骰');closeNativeDrawers();hidePage();try{if(token.message.is_user)await rerollAfterUser(token,operation);else await revisionController.generate(token,null);}finally{tableService.clear({scope:'generation'});decorate();}return;}
     assertIdle();const selected=validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim()) throw new Error('输入框有草稿，请先发送或清空后操作');
     if(context().onlineStatus==='no_connection')throw new Error('模型尚未连接，未回溯消息');
@@ -708,12 +570,6 @@ async function generateAtOperation(token, reroll, operation) {
     const type=reroll&&!selected.is_user&&!selected.is_system?'regenerate':'normal';
     const ctx=context();
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:type,mainApi:ctx.mainApi,selectedGroup:ctx.groupId}));
-    assertIdle();validate(context(),token,{tail:true});
-    if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
-    if(Array.from(context().chat).some(m=>!m||typeof m.mes!=='string'))throw new Error('后续历史尚未完整加载，未回溯消息');
-    // Establish stable floor markers before comparing the remaining history.
-    // Initializing during the first deletion otherwise looks like a user edit.
-    const v3Host=await requireV3();await v3Host.initialize();operation.check();
     assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw new Error('输入框新增了草稿，未回溯消息');
     const following=context().chat.slice(token.id+1);
@@ -724,12 +580,7 @@ async function generateAtOperation(token, reroll, operation) {
         for(let id=token.length-1;id>token.id;id--) {
             operation.check();validate(context(),token);
             if(context().chat.length!==token.length-deleted||context().chat[id]!==following[id-token.id-1]||JSON.stringify(context().chat[id])!==snapshots[id-token.id-1])throw new Error('回溯期间历史已变化');
-            try{await v3Host.deleteFloor({floor:id});}catch(err){
-                // Native deletion can succeed before persistence fails. Report
-                // the observed side effect instead of understating data loss.
-                if(context().chat===ctx.chat&&ctx.chat.length===token.length-deleted-1&&!ctx.chat.includes(following[id-token.id-1]))deleted++;
-                throw err;
-            }
+            await context().deleteMessage(id,undefined,false);
             if(context().chat.length!==token.length-deleted-1)throw new Error('宿主未完成消息删除');
             deleted++;
             if(operation.signal.aborted){await context().saveChat();operation.check();}
@@ -745,19 +596,6 @@ async function generateAtOperation(token, reroll, operation) {
         throw new Error(`${deleted?'已删除后续 '+deleted+' 条消息；':''}生成未完成：${err.message}`);
     } finally { generationBusy=false;decorate(); }
 }
-// Busy transitions change controls, not message content or native formatting.
-function syncMessageActionState(node,id,msg,pos) {
-    node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':messageActionExclusive(b.dataset.tisyaAction)&&(isGenerating()||hasActiveAgentRun()||generationBusy||revisionController.active()||revisionController.navigating()||communication.busy())?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
-}
-function refreshMessageActionStates() {
-    if(!enabled)return;
-    const c=context();
-    for(const row of document.querySelectorAll('#chat .tisya-actions')){
-        const node=row.closest('.mes');if(!node)continue;
-        const id=Number(node.getAttribute('mesid')),msg=c.chat[id];
-        syncMessageActionState(node,id,msg,candidatePosition(msg));
-    }
-}
 function decorate(element = null) {
     if(!enabled)return;
     nativeDisplay?.refresh();paragraphActions?.check();
@@ -770,7 +608,7 @@ function decorate(element = null) {
             row.addEventListener('click',e=>{const b=e.target.closest('[data-tisya-action]');if(!b)return;e.stopPropagation();run(async()=>{
                 const token=messageToken(Number(node.getAttribute('mesid')));
                 if(b.dataset.tisyaAction==='candidate-picker'){openCandidates(token);return;}
-                if(b.dataset.tisyaAction==='candidate-prev'||b.dataset.tisyaAction==='candidate-next'){const pos=candidatePosition(validate(context(),token));await revisionController.select(token,pos.index+(b.dataset.tisyaAction==='candidate-prev'?-1:1));decorate();return;}
+                if(b.dataset.tisyaAction==='candidate-prev'||b.dataset.tisyaAction==='candidate-next'){const pos=candidatePosition(validate(context(),token));await revisionController.select(token,pos.index+(b.dataset.tisyaAction==='candidate-prev'?-1:1));tableService.clear({scope:'generation'});decorate();return;}
                 if(b.dataset.tisyaAction==='more')return messageMenu(node);
                 if(b.dataset.tisyaAction.startsWith('msg-')){overlay._messageToken=token;return messageAction(b.dataset.tisyaAction);}
                 if(b.dataset.tisyaAction==='next')return generateAt(token);
@@ -785,7 +623,7 @@ function decorate(element = null) {
         appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy)});
         const actionBlock=node.querySelector('.mes_block')??node;if(row.parentElement!==actionBlock||actionBlock.lastElementChild!==row)actionBlock.append(row);
         editToolbarPlacement?.sync(node);
-        syncMessageActionState(node,id,msg,pos);
+        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':messageActionExclusive(b.dataset.tisyaAction)&&(isGenerating()||hasActiveAgentRun()||generationBusy||revisionController.active()||revisionController.navigating()||communication.busy())?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
             if(title)el.dataset.tisyaLabel=title;
@@ -799,13 +637,12 @@ function stopUI() {
     if(characterGroup?.isBusy()||characterGroup?.hasDraft())throw Error('角色页面还有未保存的修改');characterGroup?.dispose();characterGroup=null;
     if(worldbookConsole?.isBusy()||worldbookConsole?.hasDraft())throw Error('世界书还有未保存的修改，请先保存或放弃');worldbookConsole?.dispose();worldbookConsole=null;
     if(uiOperations.busy()||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
-    for(const view of [...configurationViews.values(),...v3Views.values()]){const gate=view.requestLeave();if(gate.allowed===false)throw Error(gate.reason+'；请回到对应会话保存或放弃后关闭界面');}
-    clearNotebook();for(const view of configurationViews.values())view.dispose();configurationViews.clear();for(const view of v3Views.values())view.dispose();v3Views.clear();v3Bubble?.dispose();v3Bubble=null;clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;globalFonts?.dispose();globalFonts=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
+    clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;globalFonts?.dispose();globalFonts=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
     document.querySelectorAll('.tisya-actions,.tisya-turn-direction').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
 }
 function ensureNativeDisplay(){
- if(!nativeDisplay)nativeDisplay=createNativeDisplayPipeline({enabled:()=>{if(!context().chatId||v3Application?.isBindingTransition())return false;try{return configStore.read().world.theme.nativeRegex;}catch(err){if(['CONFIGURATION_NOT_READY','CONFIGURATION_SCOPE','CONFIGURATION_BINDING','CONFIGURATION_PLAYER'].includes(err.code))return false;throw err;}},scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
+ if(!nativeDisplay)nativeDisplay=createNativeDisplayPipeline({enabled:()=>!!context().chatId&&configStore.read().world.theme.nativeRegex,scripts:()=>context().extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true}),regexProvider:RegexProvider.instance,substitute:substituteParams,substituteExtended:substituteParamsExtended,contextKey:()=>JSON.stringify([context().chatId,context().characterId,context().groupId,context().chatMetadata?.variables,context().extensionSettings.variables,context().name1,context().name2]),depth:(msg,node)=>Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)});
  return nativeDisplay;
 }
 function init() {
@@ -835,18 +672,14 @@ function init() {
         getNativeDisplay:(...args)=>nativeDisplay.project(...args),getRenderKey:(...args)=>nativeDisplay.key(...args),
         preferNative:(message,native,data)=>preferNativeBeauty({message,native,structured:data.structured,...nativeDisplay.state()}),
         formatNativeBody:createNativeBodyFormatter({contextKey:()=>context().chat.length,onError:visualError,enabled:()=>nativeDisplay.state().enabled,scripts:()=>nativeDisplay.state().scripts,regex:(body,msg,node)=>getRegexedString(body,msg.is_user?1:2,{isMarkdown:true,characterOverride:msg.name,depth:Math.max(0,context().chat.length-Number(node.getAttribute('mesid'))-1)}),format:(prepared,source,msg,node)=>messageFormatting(prepared,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:source})}),
-        getDisplay,getAppearance,getPlayerName,saveDisplayPreference,canReadJourney:()=>!!v3Application&&!v3Application.host.busy()&&!root.classList.contains('tisya-page-open'),getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
-        getJourney:(msg,node,options)=>{if(!v3Application)throw Error('缇斯亚正在初始化');return v3Application.journey.read({floor:Number(node.getAttribute('mesid')),...options});},
-        getJourneyTimeline:(msg,node,options)=>v3Application.journey.timeline(options),
-        getJourneyAnchor:(msg,node,options)=>v3Application.journey.currentAnchor({...options,floor:Number(node.getAttribute('mesid'))}),
-        setJourneyFocus:payload=>v3Application.journey.focus(payload),onJourneySource:openJourneySource,
+        getDisplay,getAppearance,getPlayerName,saveDisplayPreference,getMotion:()=>motionEnabled&&!root.classList.contains('tisya-page-open'),onError:visualError,
         formatBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),
             {FORBID_TAGS:['script','style','custom-style','iframe','object','embed','form','input','button','select','textarea'],FORBID_ATTR:['style','id']},false,{regexPrepared:true,regexSourceText:body}),
         getActionMode,setActionMode,onChooseAction:async(node,source,text,mode)=>{const token=messageToken(Number(node.getAttribute('mesid')));if(validate(context(),token).mes!==source)throw new Error('消息已变化，请重新选择行动');return chooseReaderAction(token,text,mode);},
     });
     cleanups.push(()=>appearance.dispose());
     chatEffects=mountChatEffects(document,{getDisplay,getAppearance,getMotion:()=>motionEnabled&&getAppearance('extensions').动画效果,onError:visualError});cleanups.push(()=>chatEffects.dispose());
-    pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onOpenApp:phoneApp,onPoke:()=>{if(v3Application)v3Bubble?.showAside(v3Application.assistant.poke());},onVisibility:value=>{if(applyingInterface)return;saveInterfaceSettings({...settings(),显示桌宠:value}).catch(err=>{applyInterfaceSettings(settings());error(err);});}});cleanups.push(()=>pet.dispose());
+    pet=mountPet(document,{getMotion:()=>motionEnabled,onError:visualError,onOpenApp:phoneApp,onVisibility:value=>{const next=structuredClone(settings());next.显示桌宠=value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();}});cleanups.push(()=>pet.dispose());
     if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{getLanding:()=>getDisplay().上条落点,onNavigate:()=>{appearance?.revealHistory();closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     communicationUI=mountCommunication(document,{controller:communication,onError:error});cleanups.push(()=>{communicationUI?.dispose();communicationUI=null;});
@@ -864,15 +697,15 @@ function init() {
         if(action==='selection-diagnostic-copy'){navigator.clipboard.writeText(query('#tisya-selection-diagnostic').textContent).catch(error);return;}
         if(action==='directory-menu'){try{directoryMenu(decodeURIComponent(id));}catch(e){error(e);}return;}
         run(async()=>{
-        if(action==='assistant')openAssistant();else if(action==='user-identity')openWorkbench('books');else if(action==='directory-close')closeDirectoryMenu();else if(action==='directory-back')directoryButtons();else if(action==='directory-group')directoryGroup();else if(action==='directory-group-save')await directoryGroupSave();else if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')openSettings();else if(action==='settings-tab')openSettings(id);else if(action==='display-cache')openChatLoading();else if(action==='context-overview')openSettings('mode','overview');else if(action==='role-library')openCharacterGroup();else if(action==='group-library')openCharacterGroup('group');else if(action==='group-create'){openCharacterGroup('group');}else if(action==='group-menu')groupMenu(id);else if(action==='group-edit'){const g=groupTarget(id);openCharacterGroup('group',String(g.id));}else if(action==='group-open')await openGroup(id);else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){await saveInterfaceSettings({...settings(),动态效果:!motionEnabled});nav(true);}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;await saveInterfaceSettings(next);close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='select'){openCharacterGroup('character',context().characters[Number(id)]?.avatar);}else if(action==='disable')stopUI();
+        if(action==='assistant')openAssistant();else if(action==='user-identity')openIdentity();else if(action==='directory-close')closeDirectoryMenu();else if(action==='directory-back')directoryButtons();else if(action==='directory-group')directoryGroup();else if(action==='directory-group-save')await directoryGroupSave();else if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')openSettings();else if(action==='settings-tab')openSettings(id);else if(action==='display-cache')openChatLoading();else if(action==='context-overview')openSettings('mode','overview');else if(action==='role-library')openCharacterGroup();else if(action==='group-library')openCharacterGroup('group');else if(action==='group-create'){openCharacterGroup('group');}else if(action==='group-menu')groupMenu(id);else if(action==='group-edit'){const g=groupTarget(id);openCharacterGroup('group',String(g.id));}else if(action==='group-open')await openGroup(id);else if(action==='display-settings')openDisplaySettings();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav(true);}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='select'){openCharacterGroup('character',context().characters[Number(id)]?.avatar);}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('角色分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);
         } else if(action==='save-group') {
             const name=query('#tisya-group-name').value.trim();if(!name)throw new Error('请输入分组名称');
             const avatar=decodeURIComponent(id);if(!context().characters.some(x=>x.avatar===avatar))throw new Error('角色已变化');
-            const next=structuredClone(settings());next.联系人分组[avatar]=name;await saveInterfaceSettings(next);contacts();
-        } else if(action==='branch-create'){const token=overlay._messageToken;validate(context(),token,{tail:true});const host=await requireV3();close();await host.branch({floor:token.id,swipeId:token.swipe??0});} else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
+            const next=structuredClone(settings());next.联系人分组[avatar]=name;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();contacts();
+        } else if(action==='branch-keep'||action==='branch-clear'){const token=overlay._messageToken;validate(context(),token,{tail:true});await tableService.stageFork(token.id+1,action==='branch-keep');const target=nodeFor(token).querySelector('.mes_create_branch');if(!target)throw Error('原生分支操作未挂载');close();target.click();} else if(action.startsWith('msg-'))await messageAction(action);else if(action==='delete-confirm'||action==='rollback-confirm')await removeMessages(action==='rollback-confirm');
         else if(action==='chat-all') {close();hidePage();document.body.classList.add('tisya-show-native-menu');nativeControl('#options_button');}
     },{exclusive:['directory-group-save','directory-save','directory-pin','directory-delete-confirm','select','msg-edit','msg-branch','msg-delete','msg-rollback','delete-confirm','rollback-confirm'].includes(action),label:b.getAttribute('aria-label')||b.textContent.trim()||action});};
     document.addEventListener('click',listener);cleanups.push(()=>document.removeEventListener('click',listener));
@@ -906,10 +739,7 @@ function init() {
         context().eventSource.on(event,checkReadingSource);cleanups.push(()=>context().eventSource.removeListener(event,checkReadingSource));
     }
     cleanups.push(()=>clearTimeout(refreshTimer));
-    const viewKey=()=>{const c=context();return c.chatId?JSON.stringify([c.groupId,c.characters?.[c.characterId]?.avatar??c.characterId,c.chatId]):null;};let visibleWorld=viewKey();const onChange=()=>{const current=viewKey();if(current===visibleWorld)return;visibleWorld=current;if(notebook||utility){close();hidePage();}else if(readerToken||revisionEditor||!root.classList.contains('tisya-page-open'))close();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
-    const identityChanged=()=>refreshIdentityNotice();context().eventSource.on(context().eventTypes.CHAT_CHANGED,identityChanged);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,identityChanged));
-    for(const name of ['CHAT_CREATED','GROUP_CHAT_CREATED']){const event=context().eventTypes[name];if(event){context().eventSource.on(event,promptNewChatIdentity);cleanups.push(()=>context().eventSource.removeListener(event,promptNewChatIdentity));}}
-    refreshIdentityNotice();
+    let visibleWorld=context().chatId?configStore.read().key:null;const onChange=()=>{const current=context().chatId?configStore.read().key:null;if(current===visibleWorld)return;visibleWorld=current;if(notebook||utility){close();hidePage();}else if(readerToken||revisionEditor||!root.classList.contains('tisya-page-open'))close();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
     home().catch(error);decorate();startFont();void fontsService().refresh().catch(error);
 }
 export function registerChatSurface() {
@@ -927,18 +757,14 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     // Register once independently of the visible surface; expanding a macro is read-only.
     try{const syncMessageCache=()=>{const c=context();if(c.chatId)reconcileReaderCache(worldKey(c),c.chat);};
      for(const name of ['CHAT_CHANGED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','GENERATION_ENDED','GENERATION_STOPPED']){const event=context().eventTypes[name];if(event)context().eventSource.on(event,()=>{if(!isGenerating()||['MESSAGE_DELETED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED'].includes(name))syncMessageCache();});}
-     syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');for(const key of ['style','environment','gameplay','lorebook'])context().registerMacro('tisya_material_'+key,()=>configHost.materialText(key),'缇斯亚：选中资料 '+key);for(const key of Object.keys(SLOT_TARGETS))context().registerMacro('tisya_slot_'+key,()=>configHost.tableSlotText(key),'缇斯亚：本轮资料 '+key);
+     syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
      worldbookOrder=installWorldbookOrder({getContext:context,onError:error});
-     bind('WORLDINFO_ENTRIES_LOADED',p=>nativeConfiguration.entriesLoaded(p));
-     await installV3();
-     bind('GENERATION_AFTER_COMMANDS',()=>{nativeGenerationEpoch++;nativeConfiguration.clearScan();});
-     bind('GENERATION_ENDED',()=>{generationBusy=false;decorate();});
-     bind('GENERATION_STOPPED',()=>{nativeGenerationEpoch++;generationOperations.stop();v3Application.host.cancel();v3Application.assistant.cancel();configHost.cancelTransport();});
-     bind('CHAT_CHANGED',async()=>{nativeGenerationEpoch++;configHost.cancelTransport();communication.contextChanged();v3Application.assistant.cancel();const reopen=utility?.kind==='v3-workbench';if(reopen)hidePage();if(v3Application.isBindingTransition())return;try{await v3ConfigurationBook.hydrate({initializeIfMissing:true});}catch(err){if(!['UNBOUND','GLOBAL_UNBOUND'].includes(err.code))error(err);}if(reopen&&context().chatId)openWorkbench('home');});
-     window.Tisya=Object.freeze({version:VERSION,workspace:Object.freeze(workspaceManagement),operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:v3Application.archives,forms:v3Application.host,books:v3Application.books,journey:Object.freeze({...v3Application.journey,registerRoute:registerJourneyRoute}),capabilities:v3Application.capabilities,assistant:v3Application.assistant,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>v3Application.host.inspect()});
-
-
+     bind('WORLDINFO_SCAN_DONE',p=>worldbookConditions.scanDone(p));bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));bind('GENERATION_AFTER_COMMANDS',async(...args)=>{nativeGenerationEpoch++;worldbookOrder?.clear();worldbookConditions.begin(args[0],{...args[1],dryRun:args[2]===true||args[1]?.dryRun===true});tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天开始新一轮，旧推进任务已停止'});nativeConfiguration.clearScan();preparationError=null;try{if(identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('世界书保存尚未完成，请先等待或重试保存');await tableService.assertIdentityCompatible(user_avatar);if(!['quiet','impersonate'].includes(args[0])){await tableService.ensureInitialized({scope:'generation'});await tableService.syncNative({scope:'generation'});}await communication.beginNative(String(query('#send_textarea')?.value??''),...args);return await configHost.before(...args);}catch(e){await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}});bind('WORLDINFO_ENTRIES_LOADED',async p=>{await nativeConfiguration.entriesLoaded(p);tableService.worldbook.entriesLoaded(p);await worldbookConditions.entriesLoaded(p);});if(tableService.worldbook.available())bind('WORLD_INFO_ACTIVATED',entries=>tableService.worldbook.activated(entries));bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{try{await worldbookConditions.assertReady();if(preparationError)throw preparationError;worldbookOrder?.assertReady();nativeConfiguration.assertReady();const projection=tableService.state().latest;if(projection?.injection==='worldbook')configHost.attachTableActivation({world:projection.world,text:tableService.worldbook.selectedText()});return configHost.payloadReady(p);}catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}});bind('GENERATION_ENDED',async()=>{const endingEpoch=nativeGenerationEpoch;worldbookConditions.end();const configHostAccepted=configHost.generationAccepted();communication.ended(configHost.generationAccepted());await communication.finishNative(configHostAccepted).catch(error);if(endingEpoch!==nativeGenerationEpoch)return;const runTables=tableGeneration&&configHostAccepted;configHost.clear();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已结束'});if(!configHostAccepted)revisionController.stopped();if(revisionController.ended(runTables))return;if(runTables&&!tableService.state().busy)try{await tableService.archive({scope:'generation'});}catch(e){error(e);}});bind('GENERATION_STOPPED',async()=>{nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();worldbookConditions.end();tableGeneration=false;tableService.clear({scope:'generation',reason:'主聊天已停止，附属推进任务已停止'});configHost.clear();await communication.stopped().catch(error);});bind('CHAT_CHANGED',()=>{nativeGenerationEpoch++;worldbookConditions.end();configHost.setUserRevision(null);communication.contextChanged();configHost.cancelTransport();if(!tableService.contextChanged())return;tableGeneration=false;configHost.clear();tableService.activateFork().catch(error);});
+     window.Tisya=Object.freeze({version:VERSION,operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>configStore.read(),save:(...args)=>configStore.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     const activeSource=()=>configHost.activeSource()??presetSource();const live=registerLivePreset(context(),activeSource,context,()=>emotionCatalog(document).names(),error);registerPresetProtocol(context(),activeSource,error,()=>emotionCatalog(document).names(),source=>!isLivePreset(source)||live.execution().prose,()=>isLivePreset(activeSource())?live.execution():null);
+     const initialize=async()=>{if(context().chatId&&configStore.read().revision!==null)return;const bridge=narrativeController();try{await bridge.initialize();}catch(e){error(e);}finally{bridge.dispose();}};
+     context().eventSource.on(context().eventTypes.CHAT_CHANGED,initialize);void initialize().catch(error);
     }catch(err){error(err);}
     emotionCatalog(document).ready.catch(()=>error(new Error('表情图鉴加载失败，请更新扩展后重启。')));
 });

@@ -1,8 +1,0 @@
-{
-  "model": "isolated assistant simulation",
-  "attempt": 1,
-  "parsed": true,
-  "validated": false,
-  "writePerformed": false,
-  "error": "关联字段类型无效：preferences.作用域.会话 (texts)"
-}

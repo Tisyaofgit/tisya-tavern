@@ -1,7 +1,5 @@
-import {projectFormEnvelope,formJourneyView} from './reply-form-wire.js';
 import {sourceVarsJSON,nativeStatusTail,nativeUpdateTail,nativeStatusInVars} from './native-mvu-wire.js';
 import {displayRecordSource} from './display-records.js';
-import {normalizeEscapedPipes} from './reply-pipes-text.js';
 // Read-only wire compatibility. Original messages and vendor sources are never
 // rewritten. Compact grades carry no inferred character/participant knowledge.
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -58,16 +56,9 @@ function validateLocator(row,blocks,load){
 }
 
 export function adaptReaderModule(id,original,load){
- if(id==='pipes-wire.cjs')return {...original,projectEnvelope:envelope=>envelope.layout==='forms'?projectFormEnvelope(envelope,{decode:original.decode,records:original.records,readParagraphs:load('numbered-paragraphs.cjs').read,toInternal:load('task-handoff-wire.cjs').toInternal}):original.projectEnvelope(envelope)};
- if(id==='journey-reader.cjs'){
-  const project=envelope=>envelope.wire?.version===6;
-  return {...original,projectJourney:(source,options)=>{const envelope=load('xml-envelope.cjs').parseDisplayEnvelope(source);return project(envelope)?formJourneyView():original.projectJourneyEnvelope(envelope,options);},projectJourneyEnvelope:(envelope,options)=>project(envelope)?formJourneyView():original.projectJourneyEnvelope(envelope,options)};
- }
-
  if(id==='xml-envelope.cjs'){
   const normalize=source=>{
    const parse=load('strict-json.cjs').strictJSON;
-   source=normalizeEscapedPipes(source,original.xmlTokens);
    return nativeStatusTail(nativeUpdateTail(nativeStatusInVars(source,original.xmlTokens,parse),original.xmlTokens,parse),original.xmlTokens);
   };
   const envelope=source=>{

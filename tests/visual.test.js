@@ -7,37 +7,6 @@ function setup(){const w=new Window({url:'http://localhost',settings:{disableCSS
  const ctx=new Proxy({createRadialGradient:()=>({addColorStop(){}})}, {get:(o,k)=>o[k]??(()=>{}),set:(o,k,v)=>{o[k]=v;return true;}});w.HTMLCanvasElement.prototype.getContext=()=>ctx;
  Object.defineProperty(w,'innerWidth',{value:360,writable:true});Object.defineProperty(w,'innerHeight',{value:760,writable:true});const r=(x,y,width,height)=>({x,y,left:x,top:y,width,height,right:x+width,bottom:y+height});d.querySelector('#chat').getBoundingClientRect=()=>r(0,24,w.innerWidth,600);d.querySelector('#send_form').getBoundingClientRect=()=>r(0,624,w.innerWidth,110);d.querySelector('#sheld').getBoundingClientRect=()=>r(0,24,w.innerWidth,712);return {w,d,node:d.querySelector('.mes')};}
 const flush=async()=>{for(let i=0;i<90;i++)await Promise.resolve();};
-test('journey reads wait for visible expanded messages and folding avoids repeated reads',async()=>{
- const {w,d,node}=setup();let intersect;w.IntersectionObserver=class{constructor(callback){intersect=callback;}observe(){}disconnect(){}};
- let hidden=false;Object.defineProperty(d,'hidden',{get:()=>hidden,configurable:true});
- const display={旅程球默认状态:'展开',世界扩展默认状态:'收起',显示角色心理:false},reads=[];
- const view=mountMessageVisual(d,node,{source:fixture(),formatBody:format,getMotion:()=>false,getDisplay:()=>display,getJourney:async options=>{reads.push(options);return {recordSource:'forms-live'};}});
- await flush();assert.equal(reads.length,0,'offscreen mount does not read the archive');
- intersect([{isIntersecting:true}]);await flush();assert.equal(reads.length,1);
- for(let i=0;i<10;i++)view.refresh();await flush();assert.equal(reads.length,1,'unchanged display does not rescan');
- const pearl=view.host.shadowRoot.querySelector('#journey-toggle');pearl.click();display.显示角色心理=true;view.refresh();await flush();assert.equal(reads.length,1,'folded preference update is deferred');
- pearl.click();await flush();assert.equal(reads.length,2);assert.equal(reads[1].showPsychology,true);view.refresh();await flush();assert.equal(reads.length,2,'opening does not cause a second refresh scan');
- hidden=true;display.显示角色心理=false;d.dispatchEvent(new w.Event('visibilitychange'));await flush();assert.equal(reads.length,2);
- hidden=false;d.dispatchEvent(new w.Event('visibilitychange'));await flush();assert.equal(reads.length,3,'foreground uses current display settings');
- view.dispose();await w.happyDOM.abort();
-});
-test('a visible folded journey reads only when the user opens it and refreshes on reopening',async()=>{
- const {w,d,node}=setup();let intersect;w.IntersectionObserver=class{constructor(callback){intersect=callback;}observe(){}disconnect(){}};Object.defineProperty(d,'hidden',{value:false,configurable:true});
- let reads=0;const view=mountMessageVisual(d,node,{source:fixture(),formatBody:format,getMotion:()=>false,getDisplay:()=>({旅程球默认状态:'收起'}),getJourney:async()=>{reads++;return {recordSource:'forms-live'};}});
- intersect([{isIntersecting:true}]);await flush();assert.equal(reads,0);const pearl=view.host.shadowRoot.querySelector('#journey-toggle');pearl.click();await flush();assert.equal(reads,1);pearl.click();view.refresh();await flush();assert.equal(reads,1);pearl.click();await flush();assert.equal(reads,2,'reopening reloads current archive instead of displaying a stale snapshot');view.dispose();pearl.click();await flush();assert.equal(reads,2);await w.happyDOM.abort();
-});
-test('journey reads defer through native mutations and covered chat, then resume once',async()=>{
- const {w,d,node}=setup(),intersections=new Map();w.IntersectionObserver=class{constructor(callback){this.callback=callback;}observe(target){intersections.set(target,this.callback);}unobserve(){}disconnect(){}};
- Object.defineProperty(d,'hidden',{value:false,configurable:true});let busy=true,covered=false,reads=0;
- const display={旅程球默认状态:'展开',世界扩展默认状态:'收起',显示角色心理:false},message={mes:fixture(),is_user:false,name:'测试'};
- const ui=mountMessageAppearance(d,{getMessage:()=>message,formatBody:format,getMotion:()=>false,getDisplay:()=>display,canReadJourney:()=>!busy&&!covered,getJourney:async()=>{reads++;return {recordSource:'forms-live'};}});
- ui.sync(node);const host=node.querySelector('.tisya-message-visual');intersections.get(host)([{isIntersecting:true}]);await flush();assert.equal(reads,0,'native mutation does not compete with archive reads');
- busy=false;covered=true;ui.refresh();await flush();assert.equal(reads,0,'covered chat remains deferred');
- covered=false;ui.refresh();await flush();assert.equal(reads,1,'returning to chat reads the latest archive');
- const pearl=host.shadowRoot.querySelector('#journey-toggle');busy=true;pearl.click();pearl.click();ui.refresh();await flush();assert.equal(reads,1,'an expand while busy does not read or consume its pending display revision');
- busy=false;ui.refresh();await flush();assert.equal(reads,2);ui.refresh();await flush();assert.equal(reads,2,'completion refresh does not start a second scan');
- ui.dispose();await w.happyDOM.abort();
-});
 test('phone app routing hands off once, restores standing geometry, and disposed icons cannot act',async()=>{
  const {w,d}=setup(),opened=[],pet=mountPet(d,{onOpenApp:name=>{opened.push(name);return name==='手记';}});pet.setMode('expanded');await flush();const root=d.querySelector('#tisya-pet').shadowRoot;
  root.querySelector('.app[aria-label="手记"]').click();await flush();assert.deepEqual(opened,['手记']);assert.equal(pet.report().mode,'standing');assert.equal(root.querySelector('.app-page'),null);

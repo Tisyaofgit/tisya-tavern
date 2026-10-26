@@ -1,6 +1,6 @@
-import {createJourneyReader,renderJourneyRecords} from './v3/journey-view.mjs';
+import {displayReplySource} from './display-repair.js';
 import {createMessageCache} from './message-cache.js';
-import {messageWorkspace} from './message-workspace.js';
+import {createDisplayCache} from './display-cache.js';
 import {replyFormatRevision} from './reply-formats.js';
 import {mountActionChoice} from './actions.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
@@ -8,13 +8,9 @@ import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from 
 import {formatProse,proseCSS,proseStyles} from './prose.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
 import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-core.js';
-import {usesV3Reply} from './reply-protocol.js';
-import {displayReplySource} from './display-repair.js';
 import {readJourney} from './reply-records.js';
-import {inspectV3Message,isV3ReplyCandidate,readV3Paragraphs} from './v3/reply.mjs';
 
 export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
-export const formJourneyText='人物资料与本回合记录，请在图鉴和历史中查看。';
 export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
@@ -35,10 +31,11 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 // Reply-local, read-only projection. Never return task/audit/raw memory as a
 // fallback, including when a structured reply is partial or malformed.
 let localCache=null,cacheGeneration=0;
-const inspectionCache=messageWorkspace;
+const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
+const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(!localCache)localCache=createMessageCache(window,{version:'reader-v3-with-legacy-read-2',onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.31.18',onError});
  return localCache;
 }
 export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}
@@ -46,7 +43,7 @@ export const readerCacheGeneration=()=>cacheGeneration;
 export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null};
 export const messageCacheReport=()=>inspectionCache.report();
 export const reconcileReaderCache=(scope,messages)=>localCache?.reconcile(scope,messages);
-export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(source,'reader:'+replyFormatRevision()+':'+JSON.stringify(selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(inspectionKey(source,selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
 export async function prepareReaderMessage(identity,options={}){
  const generation=cacheGeneration,source=identity.source,base=selectedOptions({}),selected=selectedOptions(options);
  if(!localCache||typeof source!=='string'||source.length>2000000)return {inspection:inspectMessage(source)};
@@ -54,14 +51,13 @@ export async function prepareReaderMessage(identity,options={}){
  const rows=await Promise.all(variants.map(async value=>{
   const row=await localCache.prepare({...identity,variant:replyFormatRevision()+':'+JSON.stringify(value)},()=>inspectMessage(source,value));
   if(!row.value||typeof row.value.structured!=='boolean'||!row.value.body)throw Error('显示缓存内容无效');
-  if(generation===cacheGeneration)inspectionCache.read(source,'reader:'+replyFormatRevision()+':'+JSON.stringify(value),()=>row.value);
+  if(generation===cacheGeneration)inspectionCache.restore([{key:inspectionKey(source,value),value:row.value}]);
   return row;
  }));
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
 }
 function inspectUncached(source,options) {
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
-    if(usesV3Reply(source))return inspectV3Message(source);
     const structured=isReplyMessage(source)||candidate(source);
     const body=structured?attempt(()=>extractXMLBody(displayReplySource(source))):{value:source};
     if(Object.hasOwn(body,'value')) {
@@ -78,17 +74,16 @@ function inspectUncached(source,options) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,saveDisplayPreference,getJourney,getJourneyTimeline,getJourneyAnchor,setJourneyFocus,onJourneySource,onError=()=>{}}) {
+export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null}) {
     const data=inspectMessage(source,{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()});
-    let alive=true,actionChoice=null,extraView=null,journeyRelease=()=>{},journeyStarted=false,currentTab=null,journeyObjectId=null;
-    const archive=createJourneyReader({read:getJourney,onChange:()=>{if(alive&&currentTab==='journey'){panel.replaceChildren();renderJourney();}},onError:()=>{}});
+    let alive=true,actionChoice=null,extraView=null;
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
     const tabs=make('div',null,'tisya-reader-tabs');tabs.setAttribute('aria-label','阅读内容');
     const panel=make('div',null,'tisya-reader-panel');panel.id='tisya-reader-panel';panel.setAttribute('role','region');
     const buttons=new Map();
-    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动'],['checks','创作与心声'],['extra','世界扩展']]) {
+    for(const [key,label]of [['body','正文'],['journey','本回合'],['actions','行动'],['checks','心声与核验'],['extra','世界扩展']]) {
         const b=make('button',label);b.type='button';b.dataset.readerTab=key;b.setAttribute('aria-controls',panel.id);
         b.addEventListener('click',()=>render(key));tabs.append(b);buttons.set(key,b);
     }
@@ -105,9 +100,8 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
     const valueText=value=>typeof value==='string'?value:JSON.stringify(value);
     function renderBody(){
         if(data.body.error){failure(panel,'正文',data.body.error);return;}
-        if(data.structured){const title=readReplyBlock(readPublicReplyEnvelope(source),'title');panel.append(make('h3',title.text));const meta=[title.time,title.place,title.world].filter(Boolean);if(meta.length)panel.append(note(meta.join(' · ')));}
         if(data.body.count.error)failure(panel,'字数',data.body.count.error);
-        else panel.append(note(`${data.body.count.value} ${data.v3?.attrs.body.unit??'字'}`));
+        else panel.append(note(`${data.body.count.value} 字`));
         const text=make('div',null,'tisya-reader-body');
         try {
             const paragraphs=data.body.paragraphs.value;
@@ -119,10 +113,9 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
             panel.append(text);
         } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
     }
-    function renderLegacyJourney(){
+    function renderJourney(){
         if(data.journey.error){failure(panel,'回合记录',data.journey.error);return;}
         const view=data.journey.value;
-        if(view?.recordSource==='forms'){panel.append(note(formJourneyText));return;}
         panel.append(note('记录对应所选消息这一回合。'));
         for(const row of view?.diagnostics??[])panel.append(note(`${row.section}${row.row?'第 '+row.row+' 条':''}：${readerErrorText(row.code)}`));
         const compatibility=journeyCompatibilityText(view);if(compatibility){const info=make('details',null,'tisya-record-compatibility');info.append(make('summary','旧记录兼容'),note(compatibility));panel.append(info);}
@@ -149,36 +142,19 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
             field(card,'原因',change.reason);panel.append(card);
         }}
     }
-    function renderJourney(){
-        if(!data.v3&&typeof getJourney!=='function')return renderLegacyJourney();
-        journeyRelease();journeyRelease=()=>{};
-        if(!journeyStarted){journeyStarted=true;archive.load({showPsychology:getDisplay().显示角色心理===true});}
-        if(archive.error){panel.append(note(archive.error.message));return;}
-        panel.append(note('本条记忆与当前公开档案。'));
-        journeyRelease=renderJourneyRecords(document,panel,archive.value,{getView:()=>archive.value,focus:setJourneyFocus,onChange:next=>archive.accept(next),onSource:onJourneySource,timelineRead:getJourneyTimeline,currentAnchor:getJourneyAnchor,readAtlas:()=>getJourney({showPsychology:getDisplay().显示角色心理===true}),initialObjectId:journeyObjectId,onObjectSelect:id=>{journeyObjectId=id;},onError});
-    }
     function renderActions(){
         if(data.actions.error){failure(panel,'行动建议',data.actions.error);return;}
         if(!data.actions.value.length){panel.append(note('本条没有行动建议。'));return;}
         panel.append(note('点选后填入输入框，发送前可以继续修改。'));
-        actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode,getPossibilityVisibility:()=>getAppearance('next').显示可能走向!==false,setPossibilityVisibility:saveDisplayPreference?(value,expected)=>saveDisplayPreference('显示可能走向',value,expected,'next'):undefined,onError});
+        actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode});
     }
     function render(key){
-        if(!alive)return;currentTab=key;journeyRelease();journeyRelease=()=>{};actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
+        if(!alive)return;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {
-          if(data.details?.error)failure(panel,'创作与心声',data.details.error);
-          else if(data.details?.value){const value=data.details.value;if(!data.v3)mountAuditBlock(document,panel,value.audit);
-            const group=(title,rows)=>{if(!rows.length)return;const section=make('section');section.append(make('h3',title));for(const row of rows){const item=make('div');if(row.label)item.append(make('strong',row.label));if(row.status)item.append(make('small',row.status));item.append(make('p',row.text));section.append(item);}panel.append(section);};
-            group('创作摘要',value.rounds.tasks);mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});
-            group('本轮落点',value.audit.map(a=>({label:a.kind,text:a.evidence,...a.status==='留白'?{status:'留白'}:{}})));
-            group('待叙',value.rounds.pending);group('本轮交付',value.rounds.delivered);group('候选走向',value.rounds.candidates??[]);
-            mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});
-          }else panel.append(note('本条没有公开创作摘要与心声。'));
-        }
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;if(value.heartDiagnostic)panel.append(note(value.heartDiagnostic));mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
-    return {settled:async()=>{await archive.settled();await journeyRelease.settled?.();},dispose(){alive=false;archive.dispose();journeyRelease();actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
+    return {dispose(){alive=false;actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
 }

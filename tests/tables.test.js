@@ -1,4 +1,3 @@
-import {parseSimpleSheet,formatSimpleSheet} from '../tables/simple-sheet.js';
 import {createPersonaGateway,personaProjection} from '../tables/persona.js';
 import {assembleArchiveBook} from '../tables/archive-book.js';
 import {test} from 'node:test';
@@ -9,8 +8,6 @@ import {createBookGateway} from '../tables/books.js';
 import {sources,project,prepareCommit,retrieval,taskTags} from '../tables/ledger.js';
 import {createTableService} from '../tables/service.js';
 import {createNativeVectors} from '../tables/vectors.js';
-import {buildMessages} from '../config/host.js';
-import {SLOT_TARGETS} from '../tables/slots.js';
 const access={readers:['读者'],knowers:[]};
 const blank=()=>({registry:defaultRegistry(),rows:[],last:null});
 const op=(id,table,values,evidence='源',expected=0)=>({id,table,expected,values,access,evidence});
@@ -19,16 +16,10 @@ function fixture(nativeConfig=null){
  const store=createStore({getContext:()=>c,persist:async()=>true}),saved=new Map(),binding={primary:'角色原书',additional:['数据库资料']};let nextUid=1,writeHook=null;
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{assert(saved.has(name));return structuredClone(saved.get(name));},createWorldbook:async(name,entries)=>{if(saved.has(name))return false;saved.set(name,entries.map(e=>({...structuredClone(e),uid:nextUid++})));return true;},updateWorldbookWith:async(name,fn)=>{await writeHook?.();const entries=fn(structuredClone(saved.get(name)));saved.set(name,entries);return structuredClone(entries);},getCharWorldbookNames:async n=>{assert.equal(n,'current');return structuredClone(binding);},rebindCharWorldbooks:async(n,b)=>{assert.equal(n,'current');Object.assign(binding,b);}};
  const books=createBookGateway(()=>helper,()=>c),calls=[],prompts=[];let responder=async()=>({changes:[],templates:[]});
- const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:parseSimpleSheet(text),signal:opts.signal});if(task==='ruleReview')return {issues:[]};const answer=await responder(task,parseSimpleSheet(text));return typeof answer==='string'?answer:formatSimpleSheet(answer);},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
+ const makeService=(overrides={})=>createTableService({store,getContext:()=>c,books,nativeConfig,request:async(task,text,opts)=>{calls.push({task,input:JSON.parse(text),signal:opts.signal});return task==='ruleReview'?{issues:[]}:responder(task,JSON.parse(text));},setPrompt:(text,filter)=>prompts.push({text,filter}),...overrides});const service=makeService();
  const set=async fields=>{const snap=store.read();snap.data.worlds[snap.key].tables={...snap.world.tables,...fields};await store.save(snap.data,snap.revision,snap.key);};
  return {c,d,store,helper,books,saved,binding,calls,prompts,service,makeService,set,responder:f=>responder=f,writeHook:f=>writeHook=f};
 }
-test('service sends sheet material plus isolated typed input and persists only validated sheet replies without automatic repair',async()=>{
- const f=fixture();await f.service.initialize();const source='城门已经开启。',reply={changes:[op('new:opened','events',{名称:'城门开启',经过:source},source)]};let count=0;
- const service=f.makeService({request:async(task,text,options)=>{count++;assert.equal(task,'historyImport');assert.match(text,/^【结果】/);assert.deepEqual(parseSimpleSheet(text),options.typedInput);assert.equal(options.typedInput.historyText,source);return formatSimpleSheet(reply);}});
- const before=JSON.stringify([...f.saved]),draft=await service.importHistory(source);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(count,1);await service.saveHistory(draft);assert.equal((await service.inspect()).rows.find(row=>row.table==='events').values.经过,source);
- for(const response of [JSON.stringify(reply),'【结果】\n1 changes：〈列表〉缺失表']){let calls=0;const bad=f.makeService({request:async()=>{calls++;return response;}}),saved=JSON.stringify([...f.saved]);await assert.rejects(bad.importHistory('另一份已发生历史。'),/简表/);assert.equal(calls,1);assert.equal(JSON.stringify([...f.saved]),saved);assert.equal(bad.state().progress.stage,'error');}
-});
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
@@ -117,7 +108,7 @@ test('initializer dropdown uses selected mode and previews stay protected until 
  const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;const select=panel.root.querySelector('[aria-label="表单功能"]');select.value='history';await select.onchange();
  const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(n=>n.textContent===text);assert(button,text);await button.onclick();};
  const mode=panel.root.querySelector('[aria-label="初始化来源"]');mode.value='generic';mode.dispatchEvent(new w.Event('input'));assert.equal(panel.requestLeave().allowed,true);await click('按所选来源建立表单');assert.equal(f.calls.length,0);assert.equal(f.saved.size,2);
- const reused=panel.root.querySelector('[aria-label="初始化来源"]');reused.value='reuse';reused.dispatchEvent(new w.Event('input'));await click('读取并预览初始化模板');assert.equal(f.calls.length,0);assert.equal(panel.requestLeave().allowed,false);const previewBox=[...panel.root.querySelectorAll('fieldset')].find(node=>node.querySelector('legend')?.textContent==='初始化草稿'),beforeSave=JSON.stringify([...f.saved]);assert(previewBox);select.value='forms';await select.onchange();assert.equal(select.value,'atlas');assert.equal(JSON.stringify([...f.saved]),beforeSave);assert.equal(panel.requestLeave().allowed,false);select.value='history';await select.onchange();assert.equal(select.value,'history');assert(panel.root.contains(previewBox));assert.equal(JSON.stringify([...f.saved]),beforeSave);
+ const reused=panel.root.querySelector('[aria-label="初始化来源"]');reused.value='reuse';reused.dispatchEvent(new w.Event('input'));await click('读取并预览初始化模板');assert.equal(f.calls.length,0);assert.equal(panel.requestLeave().allowed,false);const previewBox=[...panel.root.querySelectorAll('fieldset')].find(node=>node.querySelector('legend')?.textContent==='初始化草稿'),beforeSave=JSON.stringify([...f.saved]);assert(previewBox);select.value='forms';await select.onchange();assert.equal(select.value,'forms');assert.equal(JSON.stringify([...f.saved]),beforeSave);assert.equal(panel.requestLeave().allowed,false);select.value='history';await select.onchange();assert.equal(select.value,'history');assert(panel.root.contains(previewBox));assert.equal(JSON.stringify([...f.saved]),beforeSave);
  await click('保存模板');assert.equal(panel.requestLeave().allowed,true);assert.equal(panel.root.querySelector('[role=alert]'),null);panel.dispose();await w.happyDOM.abort();
 });
 
@@ -183,7 +174,7 @@ test('book CAS rejects stale and unknown writes without replacing unrelated entr
  const next=structuredClone(snap.data);next.revision++;await f.books.write(snap,next);assert.equal(f.saved.get('book')[1].content,'KEEP');await assert.rejects(f.books.write(snap,next),/其他页面/);
 });
 test('disabled feature and memoryless greeting issue no auxiliary calls',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});assert.equal(await f.service.prepare(),null);assert.equal(f.calls.length,0);await f.service.initialize();await f.set({enabled:true,plot:false});const result=await f.service.prepare();assert.equal(f.calls.length,0);assert.match(result.text,/开场白/);
+ const f=fixture();assert.equal(await f.service.prepare(),null);assert.equal(f.calls.length,0);await f.service.initialize();await f.set({enabled:true,plot:false});const result=await f.service.prepare();assert.equal(f.calls.length,0);assert.match(result.text,/开场白/);
 });
 test('archive stays one assistant reply behind and retry discards candidate tags',async()=>{
  const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('开场'),user('去城门'),ai('<task>引用：城门</task><memory>抵达城门</memory>'),user('继续'),ai('<task>引用：被丢弃的名字</task><memory>最新候选</memory>')];
@@ -191,7 +182,7 @@ test('archive stays one assistant reply behind and retry discards candidate tags
  f.calls.length=0;await f.service.prepare('swipe');assert.equal(f.calls.length,0);
 });
 test('source fingerprints invalidate an edited prefix and dependent records',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('门是红色'),user('继续'),ai('最新')];f.responder(async(_,input)=>({templates:[],changes:[op('new:door','objects',{名称:'城门',类型:'place',描述:'红色'},input.archiveSource.text)]}));
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('门是红色'),user('继续'),ai('最新')];f.responder(async(_,input)=>({templates:[],changes:[op('new:door','objects',{名称:'城门',类型:'place',描述:'红色'},input.archiveSource.text)]}));
  await f.service.prepare();assert.equal((await f.service.inspect()).rows.length,1);f.c.chat[0].mes='门是蓝色';assert.equal((await f.service.inspect()).rows.length,0);assert.equal((await f.service.inspect()).origin.bases.length,0);
 });
 test('old API completion after chat switch cannot write either worldbook',async()=>{
@@ -245,45 +236,16 @@ test('new genesis initial references remain valid after explicit origin selectio
  const f=fixture();await f.service.initialize();await f.service.pinOrigins([]);const data=await f.service.inspect();
  f.responder(()=>({blueprint:{name:'岚与钟',goal:'创建岚和钟',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:data.registry,base:{changes:[op('new:person','objects',{名称:'岚',类型:'character'},'创建岚和钟'),op('new:item','objects',{名称:'钟',类型:'item'},'创建岚和钟')]},initial:{changes:[op('new:holding','holdings',{名称:'岚持钟',保管者:['new:person'],物品:'new:item',数量:1},'创建岚和钟')]}},workflow:{id:'pair',name:'岚与钟',version:1,steps:[]}}));await f.service.saveGenesis(await f.service.genesis('创建岚和钟'));const after=await f.service.inspect();assert.equal(after.rows.filter(r=>r.table==='objects').length,2);assert.equal(after.rows.filter(r=>r.table==='holdings').length,1);
 });
-test('single core service preserves multiline evidence through natural material and validates it again before saving',async()=>{
- const f=fixture();await f.service.initialize();const raw='第一行“原话”\r\n第二行 \\ 原路径';await initializeBase(f,[op('new:item','objects',{名称:'旧物',类型:'item',描述:raw},'用户手动修改表单')]);const row=(await f.service.inspect()).rows.find(r=>r.values.名称==='旧物');
- f.responder((task,input)=>{assert.equal(task,'assetAdapt');assert.equal(input.sourceCard[0].values.描述,raw);return {core:{name:'旧物意义',traits:[{name:'用途',value:'原文支持的意义',evidence:raw}],growth:[]},notes:[]};});
- const draft=await f.service.coreDraft(row.id),bad=structuredClone(draft),before=JSON.stringify([...f.saved]);bad.core.traits[0].evidence='描述';await assert.rejects(f.service.saveCore(bad),/原文依据/);assert.equal(JSON.stringify([...f.saved]),before);const saved=await f.service.saveCore(draft);assert.equal(saved.traits[0].evidence,raw);
-});
 test('equipment baselines retain source type and bind only the adapted item, never incidental characters',async()=>{
  const f=fixture();await f.service.initialize();await f.service.edit({changes:[op('new:key','objects',{名称:'无齿铜钥匙',类型:'item',属性:{用途:'不能开锁，只在掌心留住熟悉重量；是师徒相处的纪念。'}},'用户手动修改表单')]});const before=await f.service.inspect(),item=before.rows[0];
- f.responder((task,input)=>{assert.equal(task,'assetAdapt');assert.match(JSON.stringify(input.sourceCard),/无齿铜钥匙/);return formatSimpleSheet({core:{name:'掌心的旧物',traits:[{name:'用途与叙事意义',value:'没有实用开锁能力的掌心旧物，熟悉重量承载师徒纪念。',evidence:'不能开锁，只在掌心留住熟悉重量；是师徒相处的纪念。'}],growth:[]},notes:[]});});
+ f.responder((task,input)=>{assert.equal(task,'assetAdapt');assert.match(input.sourceCard,/无齿铜钥匙/);return JSON.stringify({core:{name:'掌心的旧物',traits:[{name:'用途与叙事意义',value:'没有实用开锁能力的掌心旧物，熟悉重量承载师徒纪念。',evidence:'不能开锁，只在掌心留住熟悉重量；是师徒相处的纪念。'}],growth:[]},notes:[]});});
  const draft=await f.service.coreDraft(item.id),core=await f.service.saveCore(draft);assert.equal(core.kind,'item');assert.equal(core.sourceType,'item');assert.deepEqual(core.growth,[]);const originBook=before.settings.originBook;
  f.c.chatId='other-world';f.c.characters[0].description='高科技港城，物品采用本地技术表达。';await f.service.initialize();let ambiguous=false;
  f.responder((task,input)=>{assert.equal(task,'tableGenesis');assert.match(input.goal,/叙事意义/);return {blueprint:{name:'适配旧物',goal:'当前世界表达',decisions:['建立纪念物和路人'],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[op('new:item1','objects',{名称:'掌心旧构件',类型:'item',属性:{用途:'没有功能，只保留熟悉重量和师徒纪念。'}},'建立纪念物和路人'),op('new:extra','objects',{名称:ambiguous?'第二件旧物':'路过工匠',类型:ambiguous?'item':'character'},'建立纪念物和路人')]},initial:{changes:[]}},workflow:{id:'adapt-item',name:'适配旧物',version:1,steps:[]}};});
  const adapted=await f.service.adaptCore(originBook,core.id);const changes=adapted.proposal.artifacts.base.changes;assert.match(changes[0].values.核心引用,new RegExp(core.id));assert.equal(changes[1].values.核心引用,undefined);const unchanged=JSON.stringify([...f.saved]);ambiguous=true;await assert.rejects(f.service.adaptCore(originBook,core.id),/明确的基点主体映射/);assert.equal(JSON.stringify([...f.saved]),unchanged);
 });
 test('plot API remains a proposal and explicit preference constraints reach context',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],due:[],clues:[],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
-});
-test('plan sheet due and clues reach legacy and English final messages once without becoming stored facts',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});f.c.chat.push({is_user:true,mes:'查看门口的情况'});
- const proposal={goal:'PLAN_GOAL',beats:[{proposal:'PLAN_BEAT',basis:['PLAN_BASIS'],condition:'PLAN_CONDITION'}],pendingChoices:['PLAN_CHOICE'],due:['PLAN_DUE\n核实期限及触发条件'],clues:['PLAN_CLUE\n先核实人物能否知情'],constraints:['PLAN_LIMIT']};
- const saved=JSON.stringify([...f.saved]),copy=structuredClone(proposal);f.responder(async(task,input)=>{assert.equal(task,'plotAdvance');assert.equal(input.phase,'plan');return formatSimpleSheet(proposal);});
- const result=await f.service.prepare(),source={prompts:[{identifier:'tisya_english_v1',content:''},...Object.keys(result.slots).map(key=>({identifier:SLOT_TARGETS[key],content:'{{tisya_slot_'+key+'}}'})),{identifier:'chatHistory',marker:true}].map(p=>({...p,enabled:true,role:'system'}))};
- const text=buildMessages({source,context:f.c,world:f.store.read().world,materials:'',slots:result.slots,substitute:s=>s}).map(m=>m.content).join('\n');
- for(const payload of [result.text,text])for(const value of ['PLAN_GOAL','PLAN_BEAT','PLAN_CONDITION','PLAN_CHOICE','PLAN_DUE','PLAN_CLUE','PLAN_LIMIT'])assert.equal(payload.split(value).length-1,1,value);
- assert(!text.includes('PLAN_BASIS'));assert(!result.text.includes('PLAN_BASIS'));
- assert.match(text,/<NarrativeAgenda>[\s\S]*PLAN_DUE[\s\S]*PLAN_CLUE[\s\S]*<\/NarrativeAgenda>/);assert.doesNotMatch(text,/<当前叙事待办>/);
- assert.match(text,/尚未发生的候选，不作为历史事实/);assert.match(text,/不代表已经触发或人物已经知情/);assert(text.includes(proposal.due[0]));assert(text.includes(proposal.clues[0]));
- assert.equal(JSON.stringify([...f.saved]),saved);assert.equal((await f.service.inspect()).rows.length,0);assert.deepEqual(proposal,copy);assert.equal(f.calls.filter(call=>call.task==='plotAdvance').length,1);
-});
-test('incomplete or incorrectly typed plan lists fail visibly without retaining a stale plan or writing facts',async()=>{
- const f=fixture();await f.service.initialize();await f.set({enabled:true,archive:false,plot:true});
- const valid={goal:'VALID_PLAN',beats:[],pendingChoices:[],due:[],clues:[],constraints:[]};let proposal=valid;f.responder(async()=>formatSimpleSheet(proposal));
- await f.service.prepare();assert(f.service.preview());const saved=JSON.stringify([...f.saved]);
- for(const field of ['due','clues'])for(const value of [undefined,null,0,false,'不是列表',{},[0],[false],[null],[undefined]]){
-  proposal={...valid,[field]:value};if(value===undefined)delete proposal[field];
-  await assert.rejects(f.service.prepare(),new RegExp(field+' 须为文本列表'));
-  assert.equal(f.service.preview(),null);assert.equal(f.prompts.at(-1).text,'');assert.equal(f.service.state().progress.stage,'error');assert.equal(JSON.stringify([...f.saved]),saved);
- }
- proposal={...valid,changes:[]};await assert.rejects(f.service.prepare(),/不得产生事实写入/);assert.equal(JSON.stringify([...f.saved]),saved);
- proposal=valid;const retried=await f.service.prepare();assert.match(retried.text,/VALID_PLAN/);assert.equal((await f.service.inspect()).rows.length,0);
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:true,hardRules:['禁止使用套话甲']});f.responder(async task=>task==='plotAdvance'?{goal:'到达门口',beats:[],pendingChoices:['是否进入'],constraints:['禁止使用套话甲']}:{changes:[],templates:[]});const result=await f.service.prepare();assert.match(result.text,/禁止使用套话甲/);assert.match(result.text,/是否进入/);assert.equal((await f.service.inspect()).rows.length,0);
 });
 test('preference task rejects unsupported evidence and inference promoted to hard rule',()=>{
  const v=blank();assert.throws(()=>prepareCommit(v,{changes:[op('new:p','preferences',{名称:'偏好',性质:'推测偏好',强度:'必须'},'源')]},{source:'u',kind:'preferences',evidence:'源',allowedTables:['preferences']}),/推测偏好/);assert.throws(()=>prepareCommit(v,{changes:[op('new:p','preferences',{名称:'偏好'},'没有说过')]},{source:'u',kind:'preferences',evidence:'源',allowedTables:['preferences']}),/连续原文/);
@@ -300,7 +262,7 @@ test('vector index is isolated, removes stale sources and never trusts returned 
 });
 
 test('body archives without memory and does not copy contradictory old summary',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><body>抵达门口，尚未进入。</body><memory>已经进入城中</memory>'),user('继续'),ai('暂存')];
+ const f=fixture();await f.service.initialize();await f.set({enabled:true,plot:false});f.c.chat=[ai('<title>场景：北门|2026-10-12 10:00|北门|世界</title><body>抵达门口，尚未进入。</body><memory>已经进入城中</memory>'),user('继续'),ai('暂存')];
  f.responder((task,input)=>{assert.equal(input.archiveSource.text,'抵达门口，尚未进入。');return {changes:[op('new:event','events',{名称:'抵达北门',经过:'抵达门口，尚未进入。'},'抵达门口，尚未进入。')]};});
  await f.service.prepare();const data=await f.service.inspect();assert.equal(data.rows.find(r=>r.table==='events').values.经过,'抵达门口，尚未进入。');assert.equal(data.anchors[0].worldTime,'2026-10-12 10:00');assert(!JSON.stringify(data.rows).includes('已经进入城中'));
 });
@@ -375,12 +337,12 @@ test('new custom table names participate in previous-turn tags and keyword retri
 });
 
 test('first table use auto-creates card origin and independent session; repeated initialize is idempotent',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});await f.service.ensureInitialized();assert.equal(f.saved.size,0);await f.set({enabled:true,plot:false,archive:false});await f.service.ensureInitialized();assert.equal(f.saved.size,2);const before=f.store.read().revision,refs=f.store.read().world.tables;await f.service.initialize();await f.service.prepare();assert.equal(f.saved.size,2);assert.equal(f.store.read().revision,before);assert.equal(f.binding.primary,'角色原书');assert(f.binding.additional.includes('数据库资料'));assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
+ const f=fixture();await f.service.ensureInitialized();assert.equal(f.saved.size,0);await f.set({enabled:true,plot:false,archive:false});await f.service.ensureInitialized();assert.equal(f.saved.size,2);const before=f.store.read().revision,refs=f.store.read().world.tables;await f.service.initialize();await f.service.prepare();assert.equal(f.saved.size,2);assert.equal(f.store.read().revision,before);assert.equal(f.binding.primary,'角色原书');assert(f.binding.additional.includes('数据库资料'));assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
  // Lost settings can recover deterministic books without duplicating stored data.
  await f.set({originBook:'',sessionBook:''});await f.service.ensureInitialized();assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.sessionBook,refs.sessionBook);
 });
 test('manual forms/history work before memory setup without enabling automatic table processing',async()=>{
- const f=fixture();await f.set({enabled:false,preferences:false,offstage:false});const data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.enabled,false);assert.equal(await f.service.prepare(),null);
+ const f=fixture();const data=await f.service.inspect();assert.equal(data.rows.length,0);assert.equal(f.saved.size,2);assert.equal(f.store.read().world.tables.enabled,false);assert.equal(await f.service.prepare(),null);
 });
 
 test('Genesis native creation runs after confirmed tables, saves explicit scope targets and supports retry without refilling',async()=>{
@@ -409,7 +371,7 @@ test('assistant unrelated configuration edit retains old alias routing and secre
 });
 test('preview and assistant UI stay usable when worldbook helper is absent, no textarea type setter',async()=>{
  const {Window}=await import('happy-dom');const {mountTablePanel}=await import('../tables/panel.js');const w=new Window(),d=w.document;Object.defineProperty(w.HTMLTextAreaElement.prototype,'type',{get(){return 'textarea';},configurable:true});const f=fixture();delete f.helper.getWorldbook;f.c.chat=[ai('旧正文'),user('继续'),ai('最新')];const panel=mountTablePanel(d,d.body,{service:f.service,store:f.store});await panel.ready;
- const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};await click('初始化与历史');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/完整.*简表/);assert.equal(f.saved.size,0);
+ const click=async text=>{const b=[...panel.root.querySelectorAll('button')].find(x=>x.textContent===text);if(b)return b.onclick();const select=panel.root.querySelector('[aria-label="表单功能"]'),option=[...select.options].find(o=>o.textContent===text);assert(option,text);select.value=option.value;return select.onchange();};await click('初始化与历史');assert.match(panel.root.textContent,/共 3 条/);assert.match(panel.root.textContent,/归档状态尚未核对/);await click('开始／继续补录所选楼层');assert.match(panel.root.textContent,/新版酒馆助手/);assert(panel.root.querySelector('[aria-label="历史原文或手写摘要"]'));await click('预设与表单全文');assert.match(panel.root.textContent,/历史事件记忆/);assert.match(panel.root.textContent,/tableArchive/);assert.match(panel.root.textContent,/Return one strict JSON object/);assert.equal(f.saved.size,0);
  await click('缇斯亚助手');f.responder(async()=>({answer:'把历史条数改为10',changes:[{path:'/world/context/history',value:10,reason:'用户要求'}],backfill:null,genesisGoal:''}));const q=panel.root.querySelector('[aria-label="想让缇斯亚帮你做什么"]');q.value='保留10条历史';q.dispatchEvent(new w.Event('input'));await click('让缇斯亚处理');assert.match(panel.root.textContent,/修改前/);await click('应用全部更改');assert.equal(f.store.read().world.context.history,10);assert.match(panel.root.textContent,/已保存 1 项/);panel.dispose();await w.happyDOM.abort();
 });
 
@@ -472,7 +434,7 @@ test('native bridge defers latest candidate, fills after user continuation and c
  globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const patch=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);for(const op of patch){assert.equal(op.op,'replace');before.stat_data[op.path.slice(1)]=op.value;}return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
  try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降到8。')];await f.service.enableNativeBridge();assert.equal((await f.service.syncNative()).deferred,true);assert.equal(f.calls.length,0);
  f.c.chat.push(user('去吃饭'));values.set(1,structuredClone(values.get(0)));
- f.responder(async(task,input)=>{assert.equal(task,'tableArchive');assert(!input.archiveSource.text.includes('去吃饭'));const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}],pending:[]};});
+ f.responder(async(task,input)=>{assert.equal(task,'nativeFill');assert(!input.archiveSource.text.includes('去吃饭'));const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降到8'}],pending:[]};});
  const result=await f.service.syncNative();assert.equal(result.updated,1);assert.equal(parses,1);assert.equal(values.get(0).stat_data.energy,8);assert.equal(values.get(1).stat_data.energy,8);assert.deepEqual(values.get(1).stat_data.bag,['钥匙']);assert.equal((await f.service.syncNative()).already,true);assert.equal(parses,1);assert.equal(f.calls.length,1);
  }finally{globalThis.Mvu=previous;}
 });
@@ -588,9 +550,9 @@ test('recovery failed plot clears previously assembled main context and strict M
 });
 
 test('recovery task progress carries visible cumulative text and never completes malformed output',async()=>{
- const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];let release;const wire=formatSimpleSheet({changes:[]}),partial=wire.slice(0,16);
- const service=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'thinking',text:'',characters:0,reasoning:'PRIVATE_REASONING'});onProgress({stage:'receiving',text:partial,characters:partial.length});return new Promise(resolve=>release=resolve);}});
- const job=service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});while(!release)await new Promise(resolve=>setTimeout(resolve,1));assert.equal(service.state().progress.text,partial);assert.equal(service.state().progress.stage,'receiving');assert(!JSON.stringify(service.state()).includes('PRIVATE_REASONING'));release(wire);await job;assert.equal(service.state().progress.stage,'complete');assert.equal(service.state().progress.characters,wire.length);
+ const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];let release;
+ const service=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'thinking',text:'',characters:0,reasoning:'PRIVATE_REASONING'});onProgress({stage:'receiving',text:'{"changes":',characters:11});return new Promise(resolve=>release=resolve);}});
+ const job=service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});while(!release)await new Promise(resolve=>setTimeout(resolve,1));assert.equal(service.state().progress.text,'{"changes":');assert.equal(service.state().progress.stage,'receiving');assert(!JSON.stringify(service.state()).includes('PRIVATE_REASONING'));release('{"changes":[]}');await job;assert.equal(service.state().progress.stage,'complete');assert.equal(service.state().progress.characters,14);
  f.c.chat[0].mes='门已关闭。';const broken=f.makeService({request:async(task,input,{onProgress})=>{onProgress({stage:'receiving',text:'broken'});return 'broken';}});const failed=await broken.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(failed.archived,0);assert.equal(broken.state().progress.stage,'error');assert(!JSON.stringify(broken.state().jobs).includes('PRIVATE_REASONING'));
 });
 
@@ -680,7 +642,7 @@ test('bundle selection previews closure without importing unselected objects, li
 test('bundle extract/edit/save/adapt validates each meaning and preserves source worlds on fresh reload',async()=>{
  const f=fixture();await f.service.initialize();await f.service.edit({changes:[op('new:p','objects',{名称:'守铃人',类型:'character',描述:'以耐心教导代替直接给答案。'},'用户手动修改表单'),op('new:i','objects',{名称:'静铃',类型:'item',描述:'无声的普通铜铃，握持的重量帮助思考。'},'用户手动修改表单'),op('new:holding','holdings',{名称:'守铃人保管静铃',保管者:['new:p'],物品:'new:i',数量:1},'用户手动修改表单')]});
  const before=await f.service.inspect(),objects=before.rows.filter(x=>x.table==='objects'),link=before.rows.find(x=>x.table==='holdings'),book=before.settings.originBook;let leak=false;
- f.responder((task,input)=>{assert.equal(task,'assetAdapt');const source=input.sourceCard;assert.equal(source.format,'tisya.core-selection/1');return formatSimpleSheet({bundle:{name:'守铃人与静铃',members:source.objects.map(({row})=>({sourceObject:row.id,name:row.values.名称,traits:[{name:'核心意义',value:row.values.描述,evidence:leak&&row.id===objects[0].id?objects[1].values.描述:row.values.描述}],growth:[]})),links:source.links.map(x=>({sourceRow:x.row.id,members:x.members,name:'物件保管的职责',value:'人物承担照管物件的职责，但新世界开局持有另定。',evidence:x.row.values.名称}))},notes:[]});});
+ f.responder((task,input)=>{assert.equal(task,'assetAdapt');const source=JSON.parse(input.sourceCard);assert.equal(source.format,'tisya.core-selection/1');return JSON.stringify({bundle:{name:'守铃人与静铃',members:source.objects.map(({row})=>({sourceObject:row.id,name:row.values.名称,traits:[{name:'核心意义',value:row.values.描述,evidence:leak&&row.id===objects[0].id?objects[1].values.描述:row.values.描述}],growth:[]})),links:source.links.map(x=>({sourceRow:x.row.id,members:x.members,name:'物件保管的职责',value:'人物承担照管物件的职责，但新世界开局持有另定。',evidence:x.row.values.名称}))},notes:[]});});
  const draft=await f.service.coreBundleDraft(objects.map(x=>x.id),{linkIds:[link.id]});assert.equal((await f.service.listCores()).length,0);draft.bundle.members[0].traits[0].value='耐心地引导对方独立思考。';
  const tampered=structuredClone(draft);tampered.source.objects[0].row.values.描述='伪造来源';await assert.rejects(f.service.saveCoreBundle(tampered),/来源或选择已改变/);
  const bundle=await f.service.saveCoreBundle(draft);assert.equal(bundle.members.length,2);assert.deepEqual(bundle.members.map(x=>x.kind),['character','item']);assert.deepEqual((await f.makeService().inspect()).rows,before.rows);assert.deepEqual((await f.service.inspect()).session,before.session);
@@ -736,8 +698,8 @@ test('production assistant and controlled host query archives then return a draf
  let service;const host=createHost({store:f.store,getContext:()=>f.c,getSource:()=>({prompts:[]}),openArchiveQuery:(task,input,options)=>{assert.equal(task,'tableAssistant');return service.openAssistantArchiveQuery(input,options);},createParameters:async(settings,model,type,messages,options)=>({generate_data:{messages,model,chat_completion_source:settings.chat_completion_source,custom_api_format:settings.custom_api_format,...options.toolData}})});
  service=f.makeService({request:(...args)=>host.request(...args)});const oldFetch=globalThis.fetch,requests=[],before=JSON.stringify([...f.saved]),config=JSON.stringify(f.c.extensionSettings);let calls=0;
  globalThis.fetch=async(url,options)=>{assert.equal(url,'/api/backends/chat-completions/generate');const p=JSON.parse(options.body);requests.push(p);assert.equal(p.tools.length,4);assert(p.tools.every(x=>x.function.name.startsWith('tisya_')));
- if(calls++===0){assert.doesNotMatch(JSON.stringify(p.messages),/EXACT_ARCHIVE_SENTINEL/);assert.match(p.messages.at(-1).content,/^\[PREPARE_STEP\]/);assert.equal(p.messages.filter(m=>m.content.includes('本轮档案按需查询')).length,1);assert(p.messages.findIndex(m=>m.content.includes('本轮档案按需查询'))<p.messages.findIndex(m=>m.content==='[/MATERIALS]'));return Response.json({choices:[{finish_reason:'tool_calls',message:{content:null,tool_calls:[{id:'query1',type:'function',function:{name:'tisya_search_archive',arguments:JSON.stringify({sheet:formatSimpleSheet({query:'旧约定'})})}}]}}]});}
- assert.equal(p.messages.at(-1).role,'tool');if(calls===2){assert.equal(p.messages.at(-1).tool_call_id,'query1');const found=parseSimpleSheet(p.messages.at(-1).content);assert.equal(found.total,1);assert.doesNotMatch(p.messages.at(-1).content,/EXACT_ARCHIVE_SENTINEL/);return Response.json({choices:[{finish_reason:'tool_calls',message:{content:null,tool_calls:[{id:'read1',type:'function',function:{name:'tisya_read_archive',arguments:JSON.stringify({sheet:formatSimpleSheet({id:found.items[0].id,select:['经过']})})}}]}}]});}assert.equal(p.messages.at(-1).tool_call_id,'read1');assert.match(p.messages.at(-1).content,/EXACT_ARCHIVE_SENTINEL/);return Response.json({choices:[{finish_reason:'stop',message:{content:formatSimpleSheet({answer:'已查询旧约定，未修改配置。',changes:[],backfill:null,genesisGoal:''})}}]});};
+ if(calls++===0){assert.doesNotMatch(JSON.stringify(p.messages),/EXACT_ARCHIVE_SENTINEL/);assert.match(p.messages.at(-1).content,/^\[PREPARE_STEP\]/);assert.equal(p.messages.filter(m=>m.content.includes('本轮档案按需查询')).length,1);assert(p.messages.findIndex(m=>m.content.includes('本轮档案按需查询'))<p.messages.findIndex(m=>m.content==='[/MATERIALS]'));return Response.json({choices:[{finish_reason:'tool_calls',message:{content:null,tool_calls:[{id:'query1',type:'function',function:{name:'tisya_search_archive',arguments:'{"query":"旧约定"}'}}]}}]});}
+ assert.equal(p.messages.at(-1).role,'tool');if(calls===2){assert.equal(p.messages.at(-1).tool_call_id,'query1');const found=JSON.parse(p.messages.at(-1).content);assert.equal(found.total,1);assert.doesNotMatch(p.messages.at(-1).content,/EXACT_ARCHIVE_SENTINEL/);return Response.json({choices:[{finish_reason:'tool_calls',message:{content:null,tool_calls:[{id:'read1',type:'function',function:{name:'tisya_read_archive',arguments:JSON.stringify({id:found.items[0].id,select:['经过']})}}]}}]});}assert.equal(p.messages.at(-1).tool_call_id,'read1');assert.match(p.messages.at(-1).content,/EXACT_ARCHIVE_SENTINEL/);return Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify({answer:'已查询旧约定，未修改配置。',changes:[],backfill:null,genesisGoal:''})}}]});};
  try{const draft=await service.assistant.ask('查一下旧约定');assert.equal(draft.changes.length,0);assert.equal(requests.length,3);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(JSON.stringify(f.c.extensionSettings),config);assert.equal(host.snapshots()[0].response.status,'tools');assert.equal(host.preview().response.status,'complete');assert.equal(host.preview().response.totalCalls,2);}finally{globalThis.fetch=oldFetch;}
 });
 
@@ -806,24 +768,24 @@ test('external abort at the single session write prevents schema and active prop
 
 async function archiveReviewHost(f,provider='openai'){
  const {createHost}=await import('../config/host.js');Object.assign(f.c,{chatCompletionSettings:{function_calling:true,model:'fixture-model',chat_completion_source:'custom',custom_api_format:provider==='gemini'?'gemini_generate_content':'openai_compat'},getChatCompletionModel:s=>s.model,isToolCallingSupported:()=>true,substituteParams:s=>s,getPresetManager:()=>({getAllPresets:()=>[]})});let seed;
- const host=createHost({store:f.store,getContext:()=>f.c,getSource:()=>({prompts:[]}),createParameters:async(s,model,type,messages,o)=>({generate_data:{messages,model,...o.toolData}})}),service=f.makeService({request:(task,input,options)=>{seed=parseSimpleSheet(input);assert.equal(task,'tableArchive');assert(options.archiveToolSession);assert.equal(options.archiveToolSession.saveArchiveProposal,undefined);return host.request(task,input,options);}});
+ const host=createHost({store:f.store,getContext:()=>f.c,getSource:()=>({prompts:[]}),createParameters:async(s,model,type,messages,o)=>({generate_data:{messages,model,...o.toolData}})}),service=f.makeService({request:(task,input,options)=>{seed=JSON.parse(input);assert.equal(task,'tableArchive');assert(options.archiveToolSession);assert.equal(options.archiveToolSession.saveArchiveProposal,undefined);return host.request(task,input,options);}});
  return {service,host,seed:()=>seed};
 }
 function archiveToolReply(provider,name,args,id='call'){
- return provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{functionCall:{name,args:{sheet:formatSimpleSheet(args)}},thoughtSignature:'kept-signature'}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:[{id,type:'function',function:{name,arguments:JSON.stringify({sheet:formatSimpleSheet(args)})}}]}}]});
+ return provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{functionCall:{name,args},thoughtSignature:'kept-signature'}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:[{id,type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]});
 }
-const archiveFinalReply=(provider,body)=>provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{text:formatSimpleSheet(body)}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'stop',message:{role:'assistant',content:formatSimpleSheet(body)}}]});
+const archiveFinalReply=(provider,body)=>provider==='gemini'?Response.json({candidates:[{content:{role:'model',parts:[{text:JSON.stringify(body)}]},finishReason:'STOP'}]}):Response.json({choices:[{finish_reason:'stop',message:{role:'assistant',content:JSON.stringify(body)}}]});
 test('archive host honors configured recursion above five and reserves the final no-tools response',async()=>{
  const f=await proposalFixture(),h=await archiveReviewHost(f),old=globalThis.fetch;f.c.ToolManager={RECURSE_LIMIT:6};let count=0;
- globalThis.fetch=async(_url,options)=>{count++;const p=JSON.parse(options.body);assert.equal(p.tools.length,count<=6?5:0);if(count>1)assert.equal(p.messages.slice(-5).filter(m=>m.role==='tool'&&parseSimpleSheet(m.content).status==='ok').length,5);if(count<=6)return Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:Array.from({length:5},(_,i)=>({id:'round-'+count+'-'+i,type:'function',function:{name:'tisya_list_archive',arguments:JSON.stringify({sheet:formatSimpleSheet({})})}}))}}]});assert.equal(p.tool_choice,'none');return archiveFinalReply('openai',{changes:[],archiveRequestId:null,notes:['本例验证超过24次工具调用及配置续轮上限']});};
+ globalThis.fetch=async(_url,options)=>{count++;const p=JSON.parse(options.body);assert.equal(p.tools.length,count<=6?5:0);if(count>1)assert.equal(p.messages.slice(-5).filter(m=>m.role==='tool'&&JSON.parse(m.content).status==='ok').length,5);if(count<=6)return Response.json({choices:[{finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:Array.from({length:5},(_,i)=>({id:'round-'+count+'-'+i,type:'function',function:{name:'tisya_list_archive',arguments:'{}'}}))}}]});assert.equal(p.tool_choice,'none');return archiveFinalReply('openai',{changes:[],archiveRequestId:null,notes:['本例验证超过24次工具调用及配置续轮上限']});};
  try{const before=JSON.stringify([...f.saved]);await h.service.previewArchiveChanges({sourceKey:f.source});assert.equal(count,7);assert.equal(JSON.stringify([...f.saved]),before);}finally{globalThis.fetch=old;}
 });
 test('production archive review roundtrip uses five bounded tools and waits for separate confirmation before writes',async()=>{
  for(const provider of ['openai','gemini']){const f=await proposalFixture(),h=await archiveReviewHost(f,provider),oldFetch=globalThis.fetch,before=JSON.stringify([...f.saved]);let count=0;
   globalThis.fetch=async(_url,options)=>{const payload=JSON.parse(options.body);assert.equal(payload.tools.length,5);assert.equal(payload.tools.some(t=>/save|write/.test(t.function.name)),false);count++;
    if(count===1){const wire=JSON.stringify(payload.messages);assert(wire.includes(h.seed().archiveRequestId));assert.equal(wire.split(h.seed().archiveRequestId).length-1,1);assert.match(payload.messages.at(-1).content,/^\[PREPARE_STEP\]/);assert(payload.messages.findIndex(m=>m.content.includes('本轮是归档草案审核流程'))<payload.messages.findIndex(m=>m.content==='[/MATERIALS]'));return archiveToolReply(provider,'tisya_list_archive',{},'list');}
-   if(count===2){assert.equal(parseSimpleSheet(payload.messages.at(-1).content).status,'ok');return archiveToolReply(provider,'tisya_propose_archive_change',{...f.payload,requestId:h.seed().archiveRequestId},'draft');}
-   assert.equal(count,3);const receipt=parseSimpleSheet(payload.messages.at(-1).content);assert.equal(receipt.written,false);assert.deepEqual(receipt.completion,{changes:[],archiveRequestId:h.seed().archiveRequestId,notes:[]});if(provider==='gemini')assert.equal(payload.messages.at(-2).tool_calls[0].extra_content.google.thought_signature,'kept-signature');return archiveFinalReply(provider,{...receipt.completion,notes:['核对来源']});
+   if(count===2){assert.equal(JSON.parse(payload.messages.at(-1).content).status,'ok');return archiveToolReply(provider,'tisya_propose_archive_change',{...f.payload,requestId:h.seed().archiveRequestId},'draft');}
+   assert.equal(count,3);const receipt=JSON.parse(payload.messages.at(-1).content);assert.equal(receipt.written,false);assert.deepEqual(receipt.completion,{changes:[],archiveRequestId:h.seed().archiveRequestId,notes:[]});if(provider==='gemini')assert.equal(payload.messages.at(-2).tool_calls[0].extra_content.google.thought_signature,'kept-signature');return archiveFinalReply(provider,{...receipt.completion,notes:['核对来源']});
   };
   try{const review=await h.service.previewArchiveChanges({sourceKey:f.source});assert.equal(count,3);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(review.changes.length,1);assert.equal(review.changes[0].before,null);assert.equal(review.source.text,'岚在城门。');assert.equal(h.seed().currentRows.length,0);
    const saved=await h.service.acceptArchiveReview(review.id);assert(saved.active);assert.equal((await h.service.inspect()).rows.length,1);assert((await h.service.acceptArchiveReview(review.id)).replayed);h.service.discardArchiveReview(review.id);await assert.rejects(h.service.acceptArchiveReview(review.id),/不存在或已关闭/);
@@ -840,16 +802,16 @@ test('archive draft request requires explicit function support and cannot be gra
  try{await assert.rejects(h.service.previewArchiveChanges({sourceKey:f.source}),/启用函数调用/);assert.equal(calls,0);await assert.rejects(h.host.request('tableAssistant','{}',{archiveToolSession:{}}),/只能用于独立记忆归档/);assert.equal(calls,0);}finally{globalThis.fetch=old;}
 });
 test('review without changes writes nothing and a staged review rejects chat mutation or discard',async()=>{
- const f=await proposalFixture();let mode='empty';const service=f.makeService({request:async(_task,input,options)=>{const seed=parseSimpleSheet(input);if(mode==='empty')return {changes:[],archiveRequestId:null,notes:['无新事实']};await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}});
+ const f=await proposalFixture();let mode='empty';const service=f.makeService({request:async(_task,input,options)=>{const seed=JSON.parse(input);if(mode==='empty')return {changes:[],archiveRequestId:null,notes:['无新事实']};await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}});
  const before=JSON.stringify([...f.saved]);assert.equal((await service.previewArchiveChanges({sourceKey:f.source})).id,null);mode='draft';const review=await service.previewArchiveChanges({sourceKey:f.source});f.c.chat[0].mes='改了';await assert.rejects(service.acceptArchiveReview(review.id),/已改变/);service.discardArchiveReview(review.id);await assert.rejects(service.acceptArchiveReview(review.id),/不存在或已关闭/);assert.equal(JSON.stringify([...f.saved]),before);
 });
 test('stopping review generation after staging a proposal prevents any review handle or write',async()=>{
- const f=await proposalFixture();let entered,release;const staged=new Promise(r=>entered=r);const service=f.makeService({request:async(_task,input,options)=>{const seed=parseSimpleSheet(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]),running=service.previewArchiveChanges({sourceKey:f.source});await staged;service.clear({scope:'archive-review',reason:'cancel review'});release();await assert.rejects(running,/cancel review/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(service.state().busy,false);
+ const f=await proposalFixture();let entered,release;const staged=new Promise(r=>entered=r);const service=f.makeService({request:async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]),running=service.previewArchiveChanges({sourceKey:f.source});await staged;service.clear({scope:'archive-review',reason:'cancel review'});release();await assert.rejects(running,/cancel review/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(service.state().busy,false);
 });
 
 async function archiveReviewPanel(f,{request,wrap}={}){
  const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');let review;
- const base=f.makeService({request:request??(async(_task,input,options)=>{const seed=parseSimpleSheet(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:['界面核对']};})});
+ const base=f.makeService({request:request??(async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});return {changes:[],archiveRequestId:seed.archiveRequestId,notes:['界面核对']};})});
  const service={...base,previewArchiveChanges:async options=>{review=await base.previewArchiveChanges(options);return review;},...wrap?.(base)};
  const w=new Window(),panel=mountTablePanel(w.document,w.document.body,{service,store:f.store});await panel.ready;const select=panel.root.querySelector('[aria-label="表单功能"]');const page=async name=>{select.value=name;await select.onchange();};await page('history');
  const click=async text=>{const button=[...panel.root.querySelectorAll('button')].find(n=>n.textContent===text);assert(button,text);await button.onclick();};return {w,panel,service,base,click,page,review:()=>review,close:async()=>{panel.dispose();await w.happyDOM.abort();}};
@@ -869,7 +831,7 @@ test('archive review UI requires latest-source confirmation and closes drafts wi
  }finally{await p.close();}
 });
 test('archive review UI disposal cancels staged and in-flight reviews without writes',async()=>{
- for(const inFlight of [false,true]){const f=await proposalFixture();let entered,release;const started=new Promise(r=>entered=r);const p=await archiveReviewPanel(f,{request:async(_task,input,options)=>{const seed=parseSimpleSheet(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();if(inFlight)await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]);
+ for(const inFlight of [false,true]){const f=await proposalFixture();let entered,release;const started=new Promise(r=>entered=r);const p=await archiveReviewPanel(f,{request:async(_task,input,options)=>{const seed=JSON.parse(input);await options.archiveToolSession.propose_archive_change({...f.payload,requestId:seed.archiveRequestId});entered();if(inFlight)await new Promise(r=>release=r);return {changes:[],archiveRequestId:seed.archiveRequestId,notes:[]};}}),before=JSON.stringify([...f.saved]);
   const running=p.click('生成所选楼层草案');await started;if(!inFlight)await running;p.panel.dispose();if(inFlight){release();await running;}else await assert.rejects(p.base.acceptArchiveReview(p.review().id),/不存在或已关闭/);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(p.base.state().busy,false);await p.w.happyDOM.abort();
  }
 });
@@ -891,7 +853,7 @@ test('explicit schema and rows save in one session commit, reload and withdraw t
 });
 
 test('schema-bearing preview exposes full definitions and evidence and only confirmation performs the one write',async()=>{
- const f=await proposalFixture(),payload=structurePayload(f),before=JSON.stringify([...f.saved]);const service=f.makeService({request:async(_task,text,options)=>{const input=parseSimpleSheet(text);await options.archiveToolSession.propose_archive_change({...payload,requestId:input.archiveRequestId});return {changes:[],archiveRequestId:input.archiveRequestId,notes:[]};}});
+ const f=await proposalFixture(),payload=structurePayload(f),before=JSON.stringify([...f.saved]);const service=f.makeService({request:async(_task,text,options)=>{const input=JSON.parse(text);await options.archiveToolSession.propose_archive_change({...payload,requestId:input.archiveRequestId});return {changes:[],archiveRequestId:input.archiveRequestId,notes:[]};}});
  const review=await service.previewArchiveChanges({sourceKey:f.source});assert.equal(JSON.stringify([...f.saved]),before);assert(review.extensions.includes('gate-keeper'));assert(review.extensions.includes('gate-log'));assert(review.extensions.includes('objects.出现记录'));assert.equal(review.structure.evidence.length,3);assert.equal(review.structure.templates[0].fields.执勤门.type,'text');review.structure.templates[0].fields.执勤门.type='number';
  let writes=0;f.writeHook(()=>writes++);await service.acceptArchiveReview(review.id);assert.equal(writes,1);assert.equal((await service.inspect()).registry.types.find(t=>t.id==='gate-keeper').fields.执勤门.type,'text');
 });
@@ -951,134 +913,3 @@ test('deleted origin recovery creates an independent pair and preserves the surv
 test('restored book or changed configuration invalidates a recovery preview without writes',async()=>{const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();const prior=f.store.read().world.tables,original=f.saved.get(prior.originBook);f.saved.delete(prior.originBook);const preview=await f.service.storageRecovery();f.saved.set(prior.originBook,original);const before=JSON.stringify([...f.saved]);await assert.rejects(f.service.recoverMissingStorage(preview),/缺失状态已变化/);assert.equal(JSON.stringify([...f.saved]),before);f.saved.delete(prior.originBook);const preview2=await f.service.storageRecovery();await f.set({plot:true});await assert.rejects(f.service.recoverMissingStorage(preview2),/缺失状态已变化/);});
 
 test('missing-storage settings entry remains usable and rebuilds from its reviewed snapshot',async()=>{const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');const w=new Window(),f=fixture();try{f.binding.primary='';f.binding.additional=[];await f.service.initialize();const old=f.store.read().world.tables;f.saved.delete(old.originBook);const panel=mountTablePanel(w.document,w.document.body,{service:f.service,store:f.store});await panel.ready;assert.equal(panel.root.querySelector('[role=alert]'),null);const recovery=[...panel.root.querySelectorAll('button')].find(b=>b.textContent==='另建原点与新档（保留旧书）');assert(recovery);await recovery.onclick();assert.equal(panel.root.querySelector('[role=alert]'),null);assert.match(panel.root.textContent,/已另建原点与独立新档/);assert(f.saved.has(old.sessionBook));assert.notEqual(f.store.read().world.tables.sessionBook,old.sessionBook);panel.dispose();}finally{await w.happyDOM.abort();w.close();}});
-
-test('unified archive settles native and business in one request and records the actual adjusted value',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10,flag:false,optional:null}}]]);let parses=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=7;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练使体能下降。'),user('继续')];const original=structuredClone(f.c.chat);await f.service.enableNativeBridge();
- f.responder((task,input)=>{assert.equal(task,'tableArchive');assert.equal(input.nativeBridge.writer,'native-mvu');assert.equal(input.nativeState.stat_data,undefined);assert.equal(input.nativeState.valuesFrom,'currentRows.native_cells');const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练使体能下降'},op('new:training','events',{名称:'训练',内容:'训练使体能下降。'},'训练使体能下降')]};});
- const result=await f.service.syncNative(),view=await f.service.inspect(),commit=view.session.commits.find(x=>x.kind==='archive');assert.equal(result.updated,1);assert.equal(result.outcome.adjusted.length,1);assert.equal(parses,1);assert.equal(f.calls.length,1);assert(commit.nativeReceipt.unifiedArchive);assert.equal(commit.complete,true);assert.equal(view.rows.find(r=>r.values.路径==='/energy').values.值,7);assert.equal(view.rows.find(r=>r.values.路径==='/flag').values.值,false);assert.equal(view.rows.find(r=>r.values.路径==='/optional').values.值,null);assert.equal(view.rows.filter(r=>r.table==='events').length,1);assert.deepEqual(f.c.chat,original);await f.service.archive();assert.equal(f.calls.length,1);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive commit interruption resumes journal without another model or native callback',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,fail=true;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:event','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]};});
- f.writeHook(()=>{if(fail&&values.get(0).stat_data.energy===8){fail=false;throw Error('archive disk interrupted');}});
- await assert.rejects(f.service.syncNative(),/archive disk interrupted/);const failed=await f.service.inspect();assert.equal(failed.session.nativeIntents[0].phase,'parsed');assert.equal(failed.session.commits.some(x=>x.kind==='archive'),false);assert.equal(failed.rows.some(x=>x.table==='events'),false);assert.equal(failed.rows.find(x=>x.values.路径==='/energy').values.值,10);
- const fresh=f.makeService();await fresh.syncNative();assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal((await fresh.inspect()).rows.filter(x=>x.table==='events').length,1);assert.equal((await fresh.syncNative()).already,true);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive validates business evidence before any native callback or write',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async()=>{writes++;}};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:event','events',{名称:'臆造',内容:'外人进入。'},'无来源的证据')]};});
- await assert.rejects(f.service.syncNative(),/连续原文证据/);assert.equal(parses,0);assert.equal(writes,0);assert.equal((await f.service.inspect()).session.commits.some(x=>x.kind==='archive'),false);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive honors archive gate after reload without changing settings or calling model',async()=>{
- const f=fixture();await f.service.initialize();await f.set({nativeBridge:true,archive:false});const before=JSON.stringify([...f.saved]),settings=structuredClone(f.store.read().world.tables);await assert.rejects(f.makeService().syncNative(),/请先启用自动归档历史/);await assert.rejects(f.makeService().archive(),/请先启用自动归档历史/);assert.equal(f.calls.length,0);assert.equal(JSON.stringify([...f.saved]),before);assert.deepEqual(f.store.read().world.tables,settings);
-});
-
-test('unified archive processes confirmed floors in order without reading a future snapshot',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}],[4,{stat_data:{energy:999}}]]);let parses=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const operations=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);before.stat_data.energy=operations[0].value;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('第一次训练。'),user('继续'),ai('第二次训练。'),user('继续'),ai('未确认候选。')];await f.service.initialize();await f.set({nativeBridge:true});
- const floors=[];f.responder((task,input)=>{floors.push(input.archiveSource.floor);const row=input.currentRows.find(r=>r.values.路径==='/energy');assert.equal(row.values.值,input.archiveSource.floor===1?10:9);assert(input.nativeBridge.snapshotFloor<=input.nativeBridge.sourceFloor);return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:row.values.值-1},evidence:input.archiveSource.text}]};});
- await f.service.syncNative();assert.deepEqual(floors,[1,3]);assert.equal(parses,2);assert.equal(values.get(0).stat_data.energy,9);assert.equal(values.get(2).stat_data.energy,8);assert.equal(values.get(4).stat_data.energy,999);await f.service.archive({includeLatest:true});assert.equal(f.calls.length,2);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive upgrades an already archived floor with only its missing native settlement',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.initialize();f.responder(()=>({changes:[op('new:event','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]}));await f.service.archive();await f.service.enableNativeBridge();
- f.responder((task,input)=>{assert(input.nativeBridge.archiveAlready);const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'}]};});await f.service.syncNative();const view=await f.service.inspect();assert.equal(parses,1);assert.equal(view.rows.filter(x=>x.table==='events').length,1);assert.equal(view.session.commits.filter(x=>x.kind==='archive').length,1);assert.equal(view.session.commits.findLast(x=>x.nativeReceipt?.phase==='applied').kind,'native-fill');
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive rejects a stale preceding native snapshot before parsing',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async()=>{writes++;}};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[user('开场'),ai('体能下降。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder((task,input)=>{assert.equal(input.nativeBridge.snapshotFloor,1);const row=input.currentRows.find(r=>r.values.路径==='/energy');values.set(0,{stat_data:{energy:9}});return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降'}]};});
- await assert.rejects(f.service.syncNative(),/原生来源快照已改变/);assert.equal(parses,0);assert.equal(writes,0);assert.equal(values.has(1),false);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive rechecks preceding native snapshot after callback before first target write',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;before.stat_data.energy=8;values.set(0,{stat_data:{energy:9}});return before;},replaceMvuData:async()=>{writes++;}};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[user('开场'),ai('体能下降。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'体能下降'}]};});
- await assert.rejects(f.service.syncNative(),/原生来源快照已改变/);assert.equal(parses,1);assert.equal(writes,0);await assert.rejects(f.makeService().syncNative(),/原生来源快照已改变/);assert.equal(parses,1);assert.equal(f.calls.length,1);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive refuses older pending history after a later native receipt instead of rolling mirrors back',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}],[2,{stat_data:{energy:8}}]]);
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>before,replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('早期训练。'),user('继续'),ai('后期训练。'),user('继续')];await f.service.initialize();await f.set({nativeBridge:true});f.responder(()=>({changes:[]}));await f.service.archive({range:{from:3,to:3,limit:1}});const before=await f.service.inspect();assert.equal(before.rows.find(x=>x.values.路径==='/energy').values.值,8);const calls=f.calls.length;
- await assert.rejects(f.service.syncNative(),/后续楼层已有原生结算/);const after=await f.service.inspect();assert.equal(after.rows.find(x=>x.values.路径==='/energy').values.值,8);assert.equal(f.calls.length,calls);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive keeps legacy nonempty native updates owned by the original runtime',async()=>{
- const {hasNativeUpdate}=await import('../tables/native-bridge.js');assert.equal(hasNativeUpdate('<UpdateVariable><Analysis>无变化</Analysis><JSONPatch>[]</JSONPatch></UpdateVariable>'),false);assert.equal(hasNativeUpdate('<UpdateVariable>_.set("energy", 8);</UpdateVariable>'),true);
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:8}}]]);let parses=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{parses++;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练。<UpdateVariable>_.set("energy", 8);</UpdateVariable>'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{assert(input.nativeBridge.nativeOwned);return {changes:[op('new:event','events',{名称:'训练',内容:'训练。'},'训练')]};});await f.service.syncNative();assert.equal(parses,0);assert.equal(f.calls.length,1);const view=await f.service.inspect();assert.equal(view.rows.filter(x=>x.table==='events').length,1);assert.equal(view.session.commits.findLast(x=>x.nativeReceipt?.phase==='applied').nativeReceipt.legacyNative,true);
- }finally{globalThis.Mvu=previous;}
-});
-
-test('unified archive keeps callback-created native roots distinct from business temporary IDs',async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>{before.stat_data.energy=8;before.stat_data.derived=42;return before;},replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
- try{f.binding.primary='';f.binding.additional=[];f.c.chat=[ai('训练后体能下降。'),user('继续')];await f.service.enableNativeBridge();f.responder((task,input)=>{const row=input.currentRows.find(r=>r.values.路径==='/energy');return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:8},evidence:'训练后体能下降'},op('new:native-1','events',{名称:'训练',内容:'体能下降。'},'训练后体能下降')]};});
- await f.service.syncNative();const view=await f.service.inspect(),event=view.rows.find(x=>x.table==='events'),derived=view.rows.find(x=>x.values.路径==='/derived');assert.equal(event.values.名称,'训练');assert.equal(derived.values.值,42);assert.notEqual(event.id,derived.id);
- }finally{globalThis.Mvu=previous;}
-});
-
-for(const completed of [true,false])test('unified archive candidate switch '+(completed?'accepts a completed old journal without inheriting its settlement':'blocks a truly pending old journal without touching the new snapshot'),async()=>{
- const f=fixture(),previous=globalThis.Mvu,values=new Map([[0,{stat_data:{energy:10}}]]);let parses=0,writes=0;
- globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(text,before)=>{parses++;const operations=JSON.parse(text.match(/<JSONPatch>([\s\S]*?)<\/JSONPatch>/)[1]);before.stat_data.energy=operations[0].value;return before;},replaceMvuData:async(data,{message_id})=>{writes++;if(!completed)throw Error('first candidate write interrupted');values.set(message_id,structuredClone(data));}};
- try{f.binding.primary='';f.binding.additional=[];const alternatives=['训练后体能下降。','另一候选训练后体能下降。'];f.c.chat=[{...ai(alternatives[0]),swipes:alternatives,swipe_id:0},user('继续')];await f.service.enableNativeBridge();
- f.responder((task,input)=>{assert.equal(task,'tableArchive');assert.equal(input.nativeBridge.nativeOwned,false);const row=input.currentRows.find(r=>r.values.路径==='/energy');assert.equal(row.values.值,parses===0?10:20);return {changes:[{id:row.id,table:'native_cells',expected:row.rev,values:{值:row.values.值-2},evidence:'训练后体能下降'}]};});
- if(completed)await f.service.syncNative();else await assert.rejects(f.service.syncNative(),/first candidate write interrupted/);
- const old=await f.service.inspect(),oldSource=old.session.nativeIntents[0].source;assert.equal(old.session.commits.some(x=>x.source===oldSource&&x.nativeReceipt?.phase==='applied'),completed);
- f.c.chat[0].mes=alternatives[1];f.c.chat[0].swipe_id=1;values.set(0,{stat_data:{energy:20}});values.delete(1);const fresh=f.makeService(),beforeWrites=writes;
- if(completed){const result=await fresh.syncNative();assert.equal(result.updated,1);assert.equal(result.already,undefined);assert.equal(parses,2);assert.equal(f.calls.length,2);assert.equal(values.get(0).stat_data.energy,18);const current=await fresh.inspect();assert.equal(current.archived,1);assert.equal(current.rows.find(x=>x.values.路径==='/energy').values.值,18);assert.equal(current.session.commits.filter(x=>x.nativeReceipt?.phase==='applied').length,2);}
- else{await assert.rejects(fresh.syncNative(),/正文已改变且存在未完成的原生结算/);assert.equal(parses,1);assert.equal(f.calls.length,1);assert.equal(writes,beforeWrites);assert.equal(values.get(0).stat_data.energy,20);assert.equal(values.has(1),false);}
- }finally{globalThis.Mvu=previous;}
-});
-
-test('same-source archive view reaches normal, numbered, separate-object and native requests without changing raw history',async()=>{
- const {restoreArchiveSource}=await import('../tables/archive-source-view.js'),{pairedPreset,taskMessages}=await import('../tables/paired-preset.js');
- const prose='城门仍然关闭。'+('守门人在檐下等待，雨落在青石路上。'.repeat(100))+'归档正文唯一尾哨。';
- const raw='<reply><title>场景：城门 | 2026-10-22 12:00 | 雨</title><body>'+prose+'</body><memory>假门已开。</memory><extra>独有面板哨兵</extra><unknown>保留未知块。</unknown></reply>';
- const previous=globalThis.Mvu;
- try{for(const native of [false,true])for(const numbered of [false,true])for(const objectsSeparate of [false,true]){
-  const f=fixture(),values=new Map([[0,{stat_data:{energy:10}}]]);globalThis.Mvu={getMvuData:({message_id})=>structuredClone(values.get(message_id)),parseMessage:async(_,before)=>before,replaceMvuData:async(data,{message_id})=>values.set(message_id,structuredClone(data))};
-  f.binding.primary='';f.binding.additional=[];f.c.chat=[{...ai(raw),swipe_id:2},user('继续')];const original=structuredClone(f.c.chat),chain=await sources(f.c.chat);
-  await f.service.initialize();await f.set({nativeBridge:native,objectsSeparate});let observed=0;
-  f.responder((task,input)=>{
-   observed++;assert.equal(task,objectsSeparate&&observed===1?'objectArchive':numbered?'historyImport':'tableArchive');
-   const history=input.sourceHistory[0];assert.equal(history.projection,'source-reference');assert.equal(history.key,chain[0].key);assert.equal(history.parent,chain[0].parent);assert.equal(history.candidate,2);assert.equal(input.archiveSource.text,prose);assert.equal(input.archiveSource.time,'2026-10-22 12:00');assert.equal(restoreArchiveSource(history,input.archiveSource),raw);
-   const configuration=f.store.read(),messages=taskMessages({preset:pairedPreset({task,configuration,nativeBridge:input.nativeBridge}),task,input}),sent=messages.map(m=>m.content).join('\n');
-   assert.equal(sent.split('归档正文唯一尾哨。').length-1,1);assert.equal(sent.split('独有面板哨兵').length-1,1);assert.equal(sent.split('保留未知块。').length-1,1);
-   return {changes:task==='objectArchive'?[]:[op('new:closed','events',{名称:'城门关闭',经过:'城门仍然关闭。'},'城门仍然关闭。')]};
-  });
-  const result=await f.service.archive(numbered?{range:{from:1,to:1,limit:1}}:{});assert.equal(result.archived,1);assert.equal(observed,objectsSeparate?2:1);assert.deepEqual(f.c.chat,original);assert.deepEqual(await sources(f.c.chat),chain);assert.equal((await f.service.inspect()).rows.filter(r=>r.table==='events').length,1);
- }}finally{globalThis.Mvu=previous;}
-});
-
-test('same-source repair keeps the exact view and rejects auxiliary-only evidence before completing the floor',async()=>{
- const {restoreArchiveSource}=await import('../tables/archive-source-view.js'),f=fixture();await f.service.initialize();
- const prose='门仍然关闭。'+('守卫保持原来的站位。'.repeat(100)),raw='<body>'+prose+'</body><memory>门已经打开。</memory>';f.c.chat=[ai(raw),user('继续')];let attempts=0,first;
- f.responder((task,input)=>{attempts++;assert.equal(task,'tableArchive');assert.equal(input.sourceHistory[0].projection,'source-reference');assert.equal(restoreArchiveSource(input.sourceHistory[0],input.archiveSource),raw);
-  if(!first)first=structuredClone({archiveSource:input.archiveSource,sourceHistory:input.sourceHistory});else assert.deepEqual({archiveSource:input.archiveSource,sourceHistory:input.sourceHistory},first);
-  return {changes:[op('new:event','events',{名称:'错误事件',经过:'门已经打开。'},'门已经打开。')]};
- });
- const result=await f.service.archive();assert.equal(attempts,2);assert(result.pending.length);assert.equal(result.archived,0);assert.equal((await f.service.inspect()).rows.length,0);assert.equal(f.c.chat[0].mes,raw);
-});

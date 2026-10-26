@@ -1,7 +1,4 @@
-import {isEnglishPreset,compileEnglish} from './english-preset.js';
-import {applyNarrativeRules} from './rule-text.js';
 import {applyDialogueLanguage,deduplicateLanguageDelivery} from './language.js';
-import {applyUserVoiceGuidance} from './user-voice.js';
 import {applyTableArchiveMemory} from './memory-output.js';
 import {routeStyleRules} from '../tables/style-rules.js';
 import {addSlotRouting} from '../tables/modes.js';
@@ -10,15 +7,14 @@ import {selectWorkflow,condenseWorkflow} from './workflow.js';
 import {applyWireContract} from './wire-contract.js';
 import {prepareInitiative,applyInitiative} from './initiative.js';
 import {KEY,registry,worldKey,configuredWorld,emptyConfig,compileSelected,validateConfig,workflowDetail} from './core.js';
-export function modularSource(source){return isEnglishPreset(source)||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));}
+export function modularSource(source){return source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));}
 export function currentConfiguration(context,legacy={}){const d=context.extensionSettings[KEY]===undefined?emptyConfig():validateConfig(context.extensionSettings[KEY]);return {data:d,world:configuredWorld(d,worldKey(context),legacy)};}
 export function refineCompiled(c,{data,world},source){
- if(isEnglishPreset(source))return compileEnglish(c,{data,world},source);
  addSlotRouting(c.rest.entries);if(world.mode!=='narrative'){const mode=registry.modes.get(world.mode);if(typeof mode?.compile!=='function')throw Error('该模式的编译接口尚未接入');return mode.compile({compiledBase:c,configuration:{data,world},source});}
  const m=world.modes[world.mode],r=c.stepwiseRules;
  // Main style is an open resource slot, never a built-in style choice.
  r.C01='';if(!m.actions)c.actionRange={下限:0,上限:0};const actor={难度:world.switches.difficulty,中心化:world.switches.centrality};
- applyDialogueLanguage(c,m);const initiative=prepareInitiative(c,m);applyNarrativeRules(c,m);
+ applyDialogueLanguage(c,m);const initiative=prepareInitiative(c,m);
  c.rest=renderProtocol(c,{actor});const entries=routeStyleRules(addSlotRouting(c.rest.entries));
  if(!c.prose)return c;
  if(c.outputEnabled){
@@ -30,7 +26,6 @@ export function refineCompiled(c,{data,world},source){
  if(detail!=='full')entries.tisya_inner_chain=condenseWorkflow(entries.tisya_inner_chain,c,m,actor,detail);
  entries.tisya_inner_chain=deduplicateLanguageDelivery(entries.tisya_inner_chain,c);
  entries.tisya_inner_chain=applyInitiative(entries.tisya_inner_chain,initiative,detail);
- entries.tisya_inner_chain=applyUserVoiceGuidance(entries.tisya_inner_chain,c,m);
  entries.tisya_internal_login=entries.tisya_internal_login.replace('narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;utility:T.1→D.4;then','narrative:P.1→A.1..A.4→E→C.1..C.5→D.1..D.4;then');
  if(detail!=='full')entries.tisya_internal_login=entries.tisya_internal_login.replace(/^@FLOW .*$/m,'@FLOW narrative:'+(detail==='compact'?'WORKFLOW→C.2→D.1..D.4':'C.2→INNER_END')+'→COMMIT.READY→PREPARE_STEP');
  c.workflowDetail=detail;if(world.tables?.enabled&&world.tables.archive!==false)applyTableArchiveMemory(entries);pruneRegistry(entries,c.checks);c.selectedIds=selected.ids;return c;

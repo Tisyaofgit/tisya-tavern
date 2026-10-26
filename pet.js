@@ -8,7 +8,7 @@ export function petBounds(document){
  const bottom=Math.min(w.innerHeight,(v?.offsetTop??0)+(v?.height??w.innerHeight),c?.height?c.bottom:w.innerHeight,form?.height?form.top:w.innerHeight)-4;
  return {x:left,y:top,width:Math.max(1,right-left),height:Math.max(1,bottom-top)};
 }
-export function mountPet(document,{onError=()=>{},onVisibility=()=>{},onOpenApp=()=>false,onPoke=()=>{},getMotion=()=>true}={}){
+export function mountPet(document,{onError=()=>{},onVisibility=()=>{},onOpenApp=()=>false,getMotion=()=>true}={}){
  const win=document.defaultView,host=document.createElement('aside');host.id='tisya-pet';host.setAttribute('data-tt-mobile-surface','none');host.setAttribute('aria-label','缇斯亚桌宠与手机');const root=host.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=css;root.append(style);document.body.append(host);
  const make=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls;if(text)n.textContent=text;return n;},viewport=make('div','viewport'),scene=make('div','scene'),status=make('button','status');status.type='button';status.setAttribute('role','status');status.hidden=true;viewport.append(scene);root.append(viewport,status);
  let alive=true,shown=true,mode='standing',page=null,g,position=null,drag=null,reaction=null,epoch=0,ready=false,failed=false,canvases=[],off=[],blocked=false,lastMode=null;
@@ -31,7 +31,7 @@ export function mountPet(document,{onError=()=>{},onVisibility=()=>{},onOpenApp=
   Object.assign(host.style,{left:position.x+'px',top:position.y+'px',width:width+'px',height:height+'px'});Object.assign(viewport.style,{width:width+'px',height:height+'px',pointerEvents:mode==='standing'?'none':'auto'});reaction?.refresh();
  }
  function openApp(name){if(!alive||!shown)return;try{if(onOpenApp(name)===true){page=null;render('standing',true);return;}}catch(error){fail(error);return;}page=name;render(mode);}
- function request(action){if(action==='poke'||action==='drag-face'){reaction?.poke();onPoke({mode,anchor:anchor()});return;}if(action==='open')render('folded',true);else if(action==='expand')render('expanded',true);else if(action==='collapse')render('folded',true);else if(action==='close'){page=null;render('standing',true);}else if(action==='home'||action==='back'){page=null;render(mode);}else if(action==='more')openApp('设置');}
+ function request(action){if(action==='poke'||action==='drag-face'){reaction?.poke();return;}if(action==='open')render('folded',true);else if(action==='expand')render('expanded',true);else if(action==='collapse')render('folded',true);else if(action==='close'){page=null;render('standing',true);}else if(action==='home'||action==='back'){page=null;render(mode);}else if(action==='more')openApp('设置');}
  function render(next=mode,center=false){
   if(!alive)return;const ticket=++epoch;ready=false;status.hidden=true;failed=false;reaction?.dismiss('layout');mode=next;if(mode!=='expanded')page=null;
   const available=sceneBounds().width;g=composition(mode,Math.max(360,Math.min(412,available+8)));scene.replaceChildren();canvases=[];box(scene,{x:0,y:0,width:g.width,height:g.height});scene.dataset.mode=mode;
@@ -60,5 +60,5 @@ export function mountPet(document,{onError=()=>{},onVisibility=()=>{},onOpenApp=
  listen(scene,'click',e=>{const b=e.target.closest('[data-action]');if(!b)return;if(suppressClick){suppressClick=false;return;}request(b.dataset.action);});
  listen(status,'click',()=>{failed=false;startReaction();render(mode);});listen(win,'resize',()=>layout());listen(win.visualViewport,'resize',()=>layout());listen(win.visualViewport,'scroll',()=>layout());
  const resize=win.ResizeObserver?new win.ResizeObserver(()=>layout()):null;for(const n of [document.querySelector('#chat'),document.querySelector('#send_form')])if(n)resize?.observe(n);
- render();return {getAnchor:()=>({...anchor(),visible:shown&&!blocked&&ready&&!failed}),setVisible,isVisible:()=>shown,refresh:()=>{if(getMotion())reaction.refresh();else{reaction.dismiss('motion-off');paint();}},setMode:next=>render(next,true),report:()=>({shown,mode,page,ready,failed,position,geometry:g,reaction:reaction.report()}),dispose(){alive=false;epoch++;reaction.dispose();resize?.disconnect();off.splice(0).forEach(f=>f());host.remove();images.clear();imageJobs.clear();}};
+ render();return {setVisible,isVisible:()=>shown,refresh:()=>{if(getMotion())reaction.refresh();else{reaction.dismiss('motion-off');paint();}},setMode:next=>render(next,true),report:()=>({shown,mode,page,ready,failed,position,geometry:g,reaction:reaction.report()}),dispose(){alive=false;epoch++;reaction.dispose();resize?.disconnect();off.splice(0).forEach(f=>f());host.remove();images.clear();imageJobs.clear();}};
 }

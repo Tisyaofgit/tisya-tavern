@@ -128,10 +128,10 @@ function errorEvents(response,signal){
 export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TAURITAVERN__,origin=()=>target.location?.origin,timeoutMs=600000,now=()=>Date.now()}={}){
  let original,wrapped,installed=false,disposed=false,last=null;const pending=new Map(),spent=new Set(),active=new Set();
  const publish=(status,notify)=>{last=status;notify?.(structuredClone(status));};
- function assertOwner({allowOuterFetchWrapper=false}={}){if(!installed||disposed||typeof target.fetch!=='function'||!allowOuterFetchWrapper&&target.fetch!==wrapped||target[OWNER]!==api)throw problem('TISYA_TRANSPORT_OWNER','请求通道已变化，请停用冲突扩展并重启应用');if(target[OTHER])throw problem('TISYA_TRANSPORT_CONFLICT','检测到社区抗截断扩展；请只启用一个传输实现并重启应用');}
- function prepare(payload,mode,{allowOuterFetchWrapper=false}={}){const result=prepareTextTransport(payload,mode,{isTauri:isTauri()});if(result.plan){result.plan.allowOuterFetchWrapper=allowOuterFetchWrapper;assertOwner(result.plan);}return result;}
+ function assertOwner(){if(!installed||disposed||target.fetch!==wrapped||target[OWNER]!==api)throw problem('TISYA_TRANSPORT_OWNER','请求通道已变化，请停用冲突扩展并重启应用');if(target[OTHER])throw problem('TISYA_TRANSPORT_CONFLICT','检测到社区抗截断扩展；请只启用一个传输实现并重启应用');}
+ function prepare(payload,mode){const result=prepareTextTransport(payload,mode,{isTauri:isTauri()});if(result.plan)assertOwner();return result;}
  function authorize(payload,result,{kind='main',guard=()=>{},notify=()=>{}}={}){
-  const status={...result.audit};publish(status,notify);if(!result.plan)return status;assertOwner(result.plan);guard();
+  const status={...result.audit};publish(status,notify);if(!result.plan)return status;assertOwner();guard();
   // Store exact serialization, not only a guessed message id or loose URL match.
   if(pending.size>=8)throw problem('TISYA_TRANSPORT_PENDING','等待发送的抗截断请求过多，请停止旧请求后重试');
   const key=JSON.stringify(payload);if(pending.has(key)||spent.has(result.plan.id))throw problem('TISYA_TRANSPORT_DUPLICATE','同一抗截断请求不能重复发送');
@@ -159,7 +159,7 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
    let failureReported=false;
    const failed=(error,state='error')=>{if(failureReported)return;failureReported=true;const detail=transportFailure(error?.code??'read');Object.assign(e.status,{state,label:state==='cancelled'?'本次已取消':detail.message+((e.status.upstreamStatus??e.status.httpStatus)>=400?'（HTTP '+(e.status.upstreamStatus??e.status.httpStatus)+'）':''),errorCode:detail.code,elapsedMs:Math.max(0,now()-(e.started??e.created))});publish(e.status,e.notify);clean();};
    try{
-    assertOwner(e.plan);if(now()-e.created>300000)throw problem('TISYA_TRANSPORT_EXPIRED','抗截断请求已过期，请重新生成');e.guard();controller.signal.throwIfAborted();
+    assertOwner();if(now()-e.created>300000)throw problem('TISYA_TRANSPORT_EXPIRED','抗截断请求已过期，请重新生成');e.guard();controller.signal.throwIfAborted();
     e.started=now();timer=setTimeout(()=>controller.abort(problem('TISYA_TRANSPORT_TIMEOUT','抗截断请求超时')),timeoutMs);
     Object.assign(e.status,{state:'receiving',label:'正在接收抗截断输出',upstreamRequests:1});publish(e.status,e.notify);
     const response=await original.call(target,input,{...init,signal:controller.signal});e.guard();controller.signal.throwIfAborted();

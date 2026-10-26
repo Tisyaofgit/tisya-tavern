@@ -1,4 +1,3 @@
-import {formatSimpleSheet,parseSimpleSheet} from '../tables/simple-sheet.js';
 import {textTaskPreset} from '../task-envelope.js';
 import {createUserEditHistory} from '../user-revision.js';
 import {contractorMessages} from '../communication.js';
@@ -16,20 +15,13 @@ test('any recognizable archive kind can become user, with stable IDs and missing
 test('actual settings-ready payload excludes all native worldbook bypasses, option catalogue, off style and tool definitions',async()=>{const f=fixture();f.d.resources=[{id:'a',kind:'style',name:'A',content:'ONLY_SELECTED_STYLE'},{id:'b',kind:'style',name:'B',content:'NOT_SELECTED_CANARY'}];f.w.style='a';f.d.routes.tasks.main={connection:'profile:b'};await f.host.before('normal');const payload={messages:[{role:'system',content:'NATIVE_WORLD_BEFORE_RECURSIVE_DEPTH_CANARY'}],tools:[{name:'UNSELECTED_TOOL_CANARY'}],stream:true};await f.host.payloadReady(payload);const bytes=JSON.stringify(payload);assert.match(bytes,/ONLY_SELECTED_STYLE/);assert.doesNotMatch(bytes,/NOT_SELECTED_CANARY|NATIVE_WORLD_BEFORE|UNSELECTED_TOOL|自然小说|正文可依实际内容使用短标记/);assert.equal(payload.model,'B-model');assert.equal(payload.stream,true);assert.equal(f.c.chatCompletionSettings.model,'N-model');assert.equal((bytes.match(/ONLY_SELECTED_STYLE/g)??[]).length,1);assert.equal(f.host.preview().messages.length,payload.messages.length);assert.doesNotMatch(JSON.stringify(f.host.preview()),/credential-reference|example.invalid/);});
 test('late third-party injection and swallowed event errors cannot serialize an unverified request',async()=>{const p={messages:[{role:'user',content:'OK'}]};sealPayload(p);assert.ok(JSON.stringify(p));p.messages.push({role:'system',content:'LATE_UNSELECTED'});assert.throws(()=>JSON.stringify(p),/其他扩展/);const f=fixture();f.w.controller='missing';await assert.rejects(f.host.before('normal'));const request={messages:[{role:'system',content:'DO_NOT_SEND'}]};await assert.rejects(f.host.payloadReady(request));assert.throws(()=>JSON.stringify(request));});
 test('worldbook resource version drift and exact duplicate sources are detected before send',async()=>{const f=fixture();f.d.resources=[{id:'a',kind:'style',name:'A',content:'BOOK_STYLE_ONLY',source:{book:'book',uid:2}}];f.w.style='a';f.w.context.entries=[{book:'book',uid:2}];const p=await f.host.resolveMaterials(f.d,f.w);assert.equal((p.text.match(/BOOK_STYLE_ONLY/g)??[]).length,1);f.d.resources[0].content='OLD';await assert.rejects(f.host.resolveMaterials(f.d,f.w),/已更新/);});
-test('native and controlled main payloads both checkpoint consumed workspace sources before allowing serialization',async()=>{
- for(const owner of ['native','tisya']){
-  let checks=0,stale=false;const f=fixture({beforeSend:async scope=>{assert.deepEqual(scope,{task:'main',world:f.k});checks++;if(stale)throw Error('世界书已在外部改变');}});f.w.context.owner=owner;
-  await f.host.before('normal');assert.equal(checks,0);const accepted={messages:[{role:'user',content:'继续'}]};await f.host.payloadReady(accepted);assert.equal(checks,1);assert.doesNotThrow(()=>JSON.stringify(accepted));
-  await f.host.before('normal');stale=true;const blocked={messages:[{role:'user',content:'继续'}]};await assert.rejects(f.host.payloadReady(blocked),/世界书已在外部改变/);assert.equal(checks,2);assert.throws(()=>JSON.stringify(blocked),/世界书已在外部改变/);
- }
-});
 test('selected workflow compiles only enabled enhancement text while preserving fixed output block names',()=>{const f=fixture();f.w.modes.narrative.narrative.缇斯亚叙事防神化=false;const c=compileNarrative(f.c,f.source,MOODS),text=c.rest.entries.tisya_inner_chain;assert.doesNotMatch(text,/不无因崇拜/);for(const tag of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(text.includes('<'+tag)||text.includes('blk.'+tag),tag);assert.match(text,/@DEFINE @OUT/);assert.doesNotMatch(text,/自然小说/);});
 
 test('three workflow detail levels change actual compiled requests and preserve selected constraints',async()=>{
  const f=fixture(),m=f.w.modes.narrative,results={};
  m.narrative.缇斯亚叙事基调='诙谐';m.narrative.缇斯亚叙事玩家代写='补充轻微言行';
- // The full guide is the default without writing a new setting.
- delete m.workflowDetail;assert.equal(compileNarrative(f.c,f.source,MOODS).workflowDetail,'full');assert.equal(m.workflowDetail,undefined);
+ // The legacy default remains compact without writing a new setting.
+ delete m.workflowDetail;assert.equal(compileNarrative(f.c,f.source,MOODS).workflowDetail,'compact');assert.equal(m.workflowDetail,undefined);
  for(const detail of ['full','compact','format']){
   m.workflowDetail=detail;await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
   const inner=f.macros.get('tisya_live_tisya_inner_chain')();results[detail]=inner;
@@ -42,10 +34,7 @@ test('three workflow detail levels change actual compiled requests and preserve 
   assert.doesNotMatch(request,/PERM_SHAPE|never bare null\/~/);
   assert.doesNotMatch(inner,/权限：vars\||valid variable operations replace/);
   assert.match(inner,/采用诙谐基调/);assert.match(inner,/围绕玩家已经确定的意图/);assert.match(inner,/重大选择保留给玩家/);
-  const outputSheet=inner.match(/^@DEFINE @OUT:=\n([\s\S]*?)(?=\n@)/m);assert.ok(outputSheet,detail+' typed output contract');
-  const output=parseSimpleSheet(outputSheet[1]);assert.equal(output.kind,'structured');assert.deepEqual(output.body,{min:2000,max:5000,unit:'字',max_rule:'preferred'});assert.deepEqual(output.actions,{min:4,max:6});
-  assert.match(inner,/PERM:简写权限A\/B\/C\/D\/E\/~保持原义/);assert.match(inner,/未知范围不猜公开/);
-  assert.doesNotMatch(inner,/MVU is disabled/);assert.match(inner,/自有状态执行器停用不禁用其他来源/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
+  assert.match(inner,/"min":2000,"max":5000/);assert.doesNotMatch(inner,/MVU is disabled/);assert.match(inner,/自有状态执行器停用不禁用其他来源/);assert.match(inner,/!private reasoning/);assert.match(inner,/@FREEZE the entire assembled output text as @DRAFT/);
   for(const name of ['task','title','body','next','status','extra','vars','archive','memory','actions'])assert.ok(inner.includes('<'+name),detail+' '+name);
   assert.doesNotMatch(inner,/自然小说|缇斯亚叙事基调|T\.1|<think>/);
  }
@@ -76,7 +65,7 @@ test('all detail levels honor disabled actions and plain output without running 
   assert.match(text,/<actions\/>/);assert.doesNotMatch(text,/行动：\{交流|materially different optional goals/);
   f.source.order.find(e=>e.identifier==='tisya_output').enabled=false;
   const plain=compileNarrative(f.c,f.source,MOODS).rest.entries.tisya_inner_chain;
-  assert.match(plain,/1 kind：plain/);assert.doesNotMatch(plain,/<reply>|<actions|\[CALL blk.memory\]|\[CALL blk.next\]/);
+  assert.match(plain,/"kind":"plain"/);assert.doesNotMatch(plain,/<reply>|<actions|\[CALL blk.memory\]|\[CALL blk.next\]/);
  }
 });
 
@@ -84,7 +73,7 @@ test('workflow detail saves globally through production UI, reopens, and rejects
  const f=fixture(),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const options={store:f.store,host:f.host,getSettings:()=>({联系人分组:{}})};
  let ui=mountConfiguration(doc,box,options);await ui.ready;let root=ui.root.shadowRoot;
- const select=root.querySelector('[aria-label="思维链详细程度"]');assert.equal(select.value,'"full"');assert.equal(select.options.length,3);
+ const select=root.querySelector('[aria-label="思维链详细程度"]');assert.equal(select.value,'"compact"');assert.equal(select.options.length,3);
  select.value='"format"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
  assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');ui.dispose();
  ui=mountConfiguration(doc,box,options);await ui.ready;root=ui.root.shadowRoot;assert.equal(root.querySelector('[aria-label="思维链详细程度"]').value,'"format"');ui.dispose();
@@ -92,7 +81,7 @@ test('workflow detail saves globally through production UI, reopens, and rejects
  for(const value of [null,false,0,'unknown']){const s=f.store.read();s.data.worlds[f.k].modes.narrative.workflowDetail=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/详细程度无效/);}
  assert.equal(f.store.read().world.modes.narrative.workflowDetail,'format');await win.happyDOM.abort();
 });
-test('dropdown production UI saves, reopens, and registers extra theme fields without injecting them',async()=>{const f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div');doc.body.append(container);const ui=mountConfiguration(doc,container,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),onClose(){},onNative(){}});await ui.ready;const root=ui.root.shadowRoot;const picker=root.querySelector('[aria-label="配置分类"]');assert.equal(picker.options.length,7);assert.equal(root.querySelectorAll('[role=tab]').length,0);picker.value='world';picker.dispatchEvent(new win.Event('change'));await new Promise(r=>setTimeout(r,10));assert.match(root.textContent,/玩家角色统一在用户身份/);picker.value='theme';picker.dispatchEvent(new win.Event('change'));await new Promise(r=>setTimeout(r,10));const check=root.querySelector('input[type=checkbox]');check.checked=false;check.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));assert.equal(f.store.read().world.theme.nativeRegex,false);assert.match(root.textContent,/配置已保存/);ui.dispose();await win.happyDOM.abort();});
+test('dropdown production UI saves, reopens, and registers extra theme fields without injecting them',async()=>{const f=fixture(),win=new Window(),doc=win.document,container=doc.createElement('div');doc.body.append(container);const ui=mountConfiguration(doc,container,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),onClose(){},onNative(){}});await ui.ready;const root=ui.root.shadowRoot;const picker=root.querySelector('[aria-label="配置分类"]');assert.equal(picker.options.length,7);assert.equal(root.querySelectorAll('[role=tab]').length,0);picker.value='world';picker.dispatchEvent(new win.Event('change'));await new Promise(r=>setTimeout(r,10));assert.match(root.textContent,/本世界 user/);picker.value='theme';picker.dispatchEvent(new win.Event('change'));await new Promise(r=>setTimeout(r,10));const check=root.querySelector('input[type=checkbox]');check.checked=false;check.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));assert.equal(f.store.read().world.theme.nativeRegex,false);assert.match(root.textContent,/配置已保存/);ui.dispose();await win.happyDOM.abort();});
 test('native card beauty keeps original DOM nodes and handlers including late helper iframe mounting',async()=>{const win=new Window(),doc=win.document;doc.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><button>开场白按钮</button></div></div></div></div></div>';const node=doc.querySelector('.mes'),native=doc.querySelector('.mes_text'),button=doc.querySelector('button'),message={mes:'【系统启动】',is_user:false,name:'卡'};let clicks=0;button.onclick=()=>clicks++;const view=mountMessageAppearance(doc,{getMessage:()=>message,preferNative:(m,n,c)=>preferNativeBeauty({message:m,native:n,structured:c.structured,scripts:[{markdownOnly:true,placement:[2]}]}),formatBody:s=>s});view.sync(node);assert.equal(doc.querySelector('.tisya-message-visual'),null);assert.equal(doc.querySelector('button'),button);assert.equal(native.classList.contains('tisya-source-concealed'),false);button.click();assert.equal(clicks,1);native.append(doc.createElement('iframe'));view.sync(node);assert.equal(native.querySelectorAll('iframe').length,1);view.dispose();assert.equal(doc.querySelector('button'),button);await win.happyDOM.abort();});
 
 test('zero history preserves current input, swipe excludes discarded answer, continuation keeps its tail',()=>{const f=fixture();f.w.context.history=0;f.c.chat=[{is_user:true,mes:'OLD_USER'},{mes:'OLD_REPLY'},{is_user:true,mes:'CURRENT_USER'}];const source={prompts:[{identifier:'chatHistory',marker:true}],order:[{identifier:'chatHistory',enabled:true}]},args={source,context:f.c,world:f.w,substitute:s=>s};assert.deepEqual(buildMessages(args),[{role:'user',content:'CURRENT_USER'}]);f.c.chat.push({mes:'DISCARDED_SWIPE'});assert.deepEqual(buildMessages({...args,type:'swipe'}),[{role:'user',content:'CURRENT_USER'}]);assert.match(JSON.stringify(buildMessages({...args,type:'continue'})),/DISCARDED_SWIPE/);});
@@ -171,23 +160,23 @@ test('context owner keeps independent history controls visible and preserves sav
  const mount=()=>mountConfiguration(doc,box,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),initialTab:'data'});
  let ui=mount();await ui.ready;let root=ui.root.shadowRoot,select=root.querySelector('[aria-label="上下文来源"]');
  assert.equal(select.value,'"native"');assert.match(root.textContent,/允许数据库扩展注入/);
- [...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('历史范围')).click();assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
- root.querySelector('[aria-label="返回本页目录"]').click();[...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('上下文来源')).click();assert.equal(root.querySelector('[aria-label="原卡 MVU"]').closest('fieldset').hidden,false);
+ assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
+ assert.equal(root.querySelector('[aria-label="原卡 MVU"]').closest('fieldset').hidden,false);
  assert.equal(root.querySelector('[aria-label="注入窗口以前的记忆"]'),null);
  select.value='"tisya"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));
  assert.equal(f.store.read().world.context.owner,'tisya');assert.equal(f.store.read().world.context.memory,true);assert.equal(f.store.read().world.context.history,17);
  ui.dispose();ui=mount();await ui.ready;root=ui.root.shadowRoot;select=root.querySelector('[aria-label="上下文来源"]');assert.equal(select.value,'"tisya"');
- [...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('历史范围')).click();assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
+ assert.equal(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]').closest('fieldset').hidden,false);
  select.value='"native"';select.dispatchEvent(new win.Event('change'));root.querySelector('footer button:last-child').click();await new Promise(r=>setTimeout(r,10));assert.equal(f.store.read().world.context.owner,'native');ui.dispose();
  f.c.chatId='other';assert.equal(f.store.read().world.context.owner,'native');f.c.chatId='one';assert.equal(f.store.read().world.context.history,17);
  for(const value of [null,false,'unknown']){const s=f.store.read();s.world.context.owner=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/记忆与上下文选项无效/);}
  await win.happyDOM.abort();
 });
 
-test('paired auxiliary API retains identity and direct sheets while isolating source slots and unselected books',async()=>{
+test('paired auxiliary API retains identity and direct JSON while isolating source slots and unselected books',async()=>{
  const f=fixture();f.d.routes.tasks.main={connection:'profile:b',model:'B-AUX',preset:'r13'};const prior=globalThis.fetch;let sent;
  globalThis.fetch=async(url,opts)=>{sent=JSON.parse(opts.body);return {ok:true,json:async()=>({choices:[{message:{content:'{"changes":[],"templates":[]}'}}]})};};
- try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_INPUT'},registry:{tables:[],types:[]},currentRows:[]}));assert.equal(sent.model,'B-AUX');assert.equal(sent.custom_url,'https://example.invalid/v1');const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MODE.ANALYZE/);assert.match(text,/TISYA.DATA.SOURCE/);assert.equal((text.match(/ONLY_TABLE_INPUT/g)??[]).length,1);assert.match(text,/完整.*简表/);assert.doesNotMatch(text,/<tisya_result>|首尾各按所选方向|心声：/);assert.doesNotMatch(text,/BOOK_STYLE_ONLY|角色甲|\{mood或null\}/);assert.doesNotMatch(text,/<reply>|<body>|<extra>|<vars/);assert.equal(f.c.chatCompletionSettings.model,'N-model');}finally{globalThis.fetch=prior;}
+ try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_INPUT'},registry:{tables:[],types:[]},currentRows:[]}));assert.equal(sent.model,'B-AUX');assert.equal(sent.custom_url,'https://example.invalid/v1');const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MODE.ANALYZE/);assert.match(text,/TISYA.DATA.SOURCE/);assert.equal((text.match(/ONLY_TABLE_INPUT/g)??[]).length,1);assert.match(text,/Return one strict JSON object/);assert.doesNotMatch(text,/<tisya_result>|首尾各按所选方向|心声：/);assert.doesNotMatch(text,/BOOK_STYLE_ONLY|角色甲|\{mood或null\}/);assert.doesNotMatch(text,/<reply>|<body>|<extra>|<vars/);assert.equal(f.c.chatCompletionSettings.model,'N-model');}finally{globalThis.fetch=prior;}
 });
 
 test('managed table activation is included exactly once and native mode keeps native lore untouched',async()=>{
@@ -195,14 +184,14 @@ test('managed table activation is included exactly once and native mode keeps na
  const native=fixture();native.w.context.owner='native';await native.host.before('normal');native.host.attachTableContext({world:native.k,text:'DO_NOT_DUPLICATE'});native.host.attachTableActivation({world:native.k,text:'DO_NOT_DUPLICATE'});const payload={messages:[{role:'system',content:'HOST_ALREADY_INSERTED_TABLE'}]};await native.host.payloadReady(payload);assert.equal(payload.messages.length,1);assert.equal(payload.messages[0].content,'HOST_ALREADY_INSERTED_TABLE');
 });
 
-test('managed material slots respect an explicitly disabled entry and retain other material once',async()=>{
- const f=fixture();f.source.order.find(p=>p.identifier==='tisya_material_current_state').enabled=false;await f.host.before('normal');f.host.attachTableContext({world:f.k,instructions:'FORM_INSTRUCTIONS',slots:{state:{rows:[{name:'UNIQUE_CURRENT_ROW'}]},preferences:{explicit:['UNIQUE_HARD_RULE']},plan:{goal:'UNIQUE_PROPOSAL'}}});const payload={messages:[]};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');for(const marker of ['UNIQUE_HARD_RULE','UNIQUE_PROPOSAL','FORM_INSTRUCTIONS'])assert.equal(text.split(marker).length-1,1);assert.doesNotMatch(text,/UNIQUE_CURRENT_ROW/);
+test('managed material slots survive an older disabled empty slot without duplicating source content',async()=>{
+ const f=fixture();f.source.order.find(p=>p.identifier==='tisya_material_current_state').enabled=false;await f.host.before('normal');f.host.attachTableContext({world:f.k,instructions:'FORM_INSTRUCTIONS',slots:{state:{rows:[{name:'UNIQUE_CURRENT_ROW'}]},preferences:{explicit:['UNIQUE_HARD_RULE']},plan:{goal:'UNIQUE_PROPOSAL'}}});const payload={messages:[]};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');for(const marker of ['UNIQUE_CURRENT_ROW','UNIQUE_HARD_RULE','UNIQUE_PROPOSAL','FORM_INSTRUCTIONS'])assert.equal(text.split(marker).length-1,1);assert(text.indexOf('UNIQUE_CURRENT_ROW')<text.indexOf('[/MATERIALS]'));
 });
 
 test('manual auxiliary modes also omit narrative wrappers while main narration keeps them',async()=>{
  const f=fixture();const live=registerLivePreset(f.c,()=>f.source,()=>f.c,()=>{if(f.w.mode!=='narrative')throw Error('辅助模式不应读取表情目录');return MOODS;});registerPresetProtocol(f.c,()=>f.source,()=>{},()=>MOODS,s=>!isLivePreset(s)||live.execution().prose);
  for(const mode of ['archive','plot','preferences','genesis','objects','history']){
-  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');assert.match(text,/完整.*简表/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);f.host.clear();
+  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');assert.match(text,/Return one strict JSON object/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);f.host.clear();
  }
  f.w.mode='narrative';await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);assert.match(JSON.stringify(p.messages),/<reply>/);
 });
@@ -284,8 +273,8 @@ test('RP01 config backup round-trips explicit levels and invalid stored values f
  for(const value of ['',null,false,0,[],{},'随机剧情']){const s=f.store.read();s.world.modes.narrative.角色主动性=value;await assert.rejects(f.store.save(s.data,s.revision,s.key),/角色主动性选项无效/);assert.equal(f.store.read().revision,saved);}
 });
 
-test('OOC uses isolated identity and literal feedback with native API, without narrative instructions or tools',async()=>{const f=fixture(),saved=globalThis.fetch;let sent;globalThis.fetch=async(_,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'场外答复'},finish_reason:'stop'}]})};};try{const result=await f.host.request('communication',{format:'tisya.communication-input/1',text:'继续多写一点',history:[],reference:{text:'旧稿'}});assert.equal(result,'场外答复');assert.equal(sent.model,'N-model');assert.equal(sent.stream,false);const joined=JSON.stringify(sent.messages);assert.match(joined,/场外交流/);assert.doesNotMatch(joined,/WORLDINFO|<reply>/);for(const marker of ['[TASK.START]','[INNER.LOGIN]','[MODE.ANALYZE]','[COMMIT.READY]','[PREPARE_STEP]'])assert(joined.includes(marker));assert.equal(parseSimpleSheet(sent.messages.find(m=>m.content.startsWith('[SOURCE]')).content.split('\n').slice(1,-1).join('\n')).text,'继续多写一点');assert.equal(sent.messages.at(-1).role,'system');const before=sent;await assert.rejects(f.host.request('communication',{format:'bad',text:'不得发送'}),/场外交流输入无效/);assert.equal(sent,before);}finally{globalThis.fetch=saved;}});
-test('revision directives reach both native and controlled payload without mutating original source',async()=>{for(const owner of ['native','tisya']){const f=fixture();f.w.context.owner=owner;const request={source:'旧稿',direction:'多些互动',details:'主动提出条件',mode:'whole',selected:[],paragraphs:[{id:1,raw:'旧稿'}]};f.host.setRevision(request);await f.host.before('swipe');const p={messages:[{role:'user',content:'RP'}]};await f.host.payloadReady(p);const last=parseSimpleSheet(p.messages.at(-1).content);assert.equal(last.kind,'revision-material');assert.equal(last.details,'主动提出条件');assert.equal(request.source,'旧稿');f.host.setRevision(null);f.host.clear();await f.host.before('normal');const clean={messages:[{role:'user',content:'下一轮'}]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean.messages),/revision-material/);}});
+test('OOC uses isolated identity and literal feedback with native API, without narrative instructions or tools',async()=>{const f=fixture(),saved=globalThis.fetch;let sent;globalThis.fetch=async(_,options)=>{sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'场外答复'},finish_reason:'stop'}]})};};try{const result=await f.host.request('communication',{format:'tisya.communication-input/1',text:'继续多写一点',history:[],reference:{text:'旧稿'}});assert.equal(result,'场外答复');assert.equal(sent.model,'N-model');assert.equal(sent.stream,false);const joined=JSON.stringify(sent.messages);assert.match(joined,/场外交流/);assert.doesNotMatch(joined,/WORLDINFO|<reply>/);for(const marker of ['[TASK.START]','[INNER.LOGIN]','[MODE.ANALYZE]','[COMMIT.READY]','[PREPARE_STEP]'])assert(joined.includes(marker));assert.equal(JSON.parse(sent.messages.find(m=>m.content.startsWith('[SOURCE]')).content.split('\n').slice(1,-1).join('\n')).text,'继续多写一点');assert.equal(sent.messages.at(-1).role,'system');const before=sent;await assert.rejects(f.host.request('communication',{format:'bad',text:'不得发送'}),/场外交流输入无效/);assert.equal(sent,before);}finally{globalThis.fetch=saved;}});
+test('revision directives reach both native and controlled payload without mutating original source',async()=>{for(const owner of ['native','tisya']){const f=fixture();f.w.context.owner=owner;const request={source:'旧稿',direction:'多些互动',details:'主动提出条件',mode:'whole',selected:[],paragraphs:[{id:1,raw:'旧稿'}]};f.host.setRevision(request);await f.host.before('swipe');const p={messages:[{role:'user',content:'RP'}]};await f.host.payloadReady(p);const last=JSON.parse(p.messages.at(-1).content);assert.equal(last.kind,'revision-material');assert.equal(last.details,'主动提出条件');assert.equal(request.source,'旧稿');f.host.setRevision(null);f.host.clear();await f.host.before('normal');const clean={messages:[{role:'user',content:'下一轮'}]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean.messages),/revision-material/);}});
 
 test('both context owners await saved turn directions and block a failed binding',async()=>{
  for(const owner of ['native','tisya']){
@@ -295,7 +284,7 @@ test('both context owners await saved turn directions and block a failed binding
   const pending=f.host.payloadReady(p).then(()=>done=true);await entering;assert.equal(done,false);
   release(contractorMessages('只写现场回应'));await pending;
   const note=p.messages.find(m=>m.role==='user'&&m.content.includes('tisya.turn-direction/1'));
-  assert.equal(parseSimpleSheet(note.content).text,'只写现场回应');assert.match(p.messages.find(m=>m.role==='system'&&m.content.includes('本轮输入分两块')).content,/不是角色台词/);
+  assert.equal(JSON.parse(note.content).text,'只写现场回应');assert.match(p.messages.find(m=>m.role==='system'&&m.content.includes('本轮输入分两块')).content,/不是角色台词/);
   const bad=fixture({getContractorMessages:async()=>{throw Error('消息要求未保存');}});bad.w.context.owner=owner;await bad.host.before('normal');const failed={messages:[{role:'user',content:'角色行动'}]};await assert.rejects(bad.host.payloadReady(failed),/未保存/);assert.throws(()=>JSON.stringify(failed));
  }
 });
@@ -312,7 +301,7 @@ test('parent settled and leave reason include a pending cache subpage operation'
 
 test('edited user comparison reaches full native and controlled requests then clears for ordinary send',async()=>{
  for(const owner of ['native','tisya']){const f=fixture();f.w.context.owner=owner;f.c.chat[0].mes='我留下等他解释。';await f.host.before('swipe');const baseline={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(baseline);f.host.clear();f.host.setUserRevision({messageId:0,previous:'我离开。',current:f.c.chat[0].mes});await f.host.before('swipe');const payload={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(payload);
- const material=parseSimpleSheet(payload.messages.at(-1).content);assert.deepEqual(material,{kind:'user-rewrite-material',previous:'我离开。',current:f.c.chat[0].mes});assert.equal(JSON.stringify(payload.messages).split('user-rewrite-material').length-1,2);assert.deepEqual(f.host.preview().messages,payload.messages);assert.deepEqual(payload.messages.slice(0,-2),baseline.messages);
+ const material=JSON.parse(payload.messages.at(-1).content);assert.deepEqual(material,{kind:'user-rewrite-material',previous:'我离开。',current:f.c.chat[0].mes});assert.equal(JSON.stringify(payload.messages).split('user-rewrite-material').length-1,2);assert.deepEqual(f.host.preview().messages,payload.messages);assert.deepEqual(payload.messages.slice(0,-2),baseline.messages);
  if(process.env.TISYA_REQUEST_EVIDENCE){fs.mkdirSync(process.env.TISYA_REQUEST_EVIDENCE,{recursive:true});fs.writeFileSync(process.env.TISYA_REQUEST_EVIDENCE+'/'+owner+'-request.json',JSON.stringify({environment:'production createHost, isolated host fixture; no model call',baseline,reroll:payload},null,2));}
  f.host.clear();await f.host.before('normal');const clean={messages:[{role:'user',content:f.c.chat[0].mes}]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean.messages),/user-rewrite-material|我离开/);
  }
@@ -322,7 +311,7 @@ test('late user edit invalidates comparison before request serialization',async(
 });
 
 test('native swipe and regenerate also use the edited user pair, with no leakage into ordinary send after missing end event',async()=>{
- for(const type of ['swipe','regenerate']){const f=fixture();f.w.context.owner='native';const user=f.c.chat[0],h=createUserEditHistory();h.begin(user);user.mes='本次方向';h.commit(user);f.c.chat.push({mes:'旧角色回复'});await f.host.before(type);const p={messages:[{role:'user',content:user.mes}]};await f.host.payloadReady(p);assert.equal(parseSimpleSheet(p.messages.at(-1).content).previous,'继续');await f.host.before('normal');const clean={messages:[]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean),/user-rewrite-material/);}
+ for(const type of ['swipe','regenerate']){const f=fixture();f.w.context.owner='native';const user=f.c.chat[0],h=createUserEditHistory();h.begin(user);user.mes='本次方向';h.commit(user);f.c.chat.push({mes:'旧角色回复'});await f.host.before(type);const p={messages:[{role:'user',content:user.mes}]};await f.host.payloadReady(p);assert.equal(JSON.parse(p.messages.at(-1).content).previous,'继续');await f.host.before('normal');const clean={messages:[]};await f.host.payloadReady(clean);assert.doesNotMatch(JSON.stringify(clean),/user-rewrite-material/);}
 });
 
 test('play language controls save exact default and independent dialogue settings without duplicate advanced owners',async()=>{
@@ -373,46 +362,30 @@ test('one configuration footer saves or discards cached theme drafts across page
  ui.dispose();await win.happyDOM.abort();
 });
 
-test('same-layer configuration retains rule wording drafts, saves them to actual requests, and restores one default',async()=>{
- const f=fixture(),win=new Window(),box=win.document.createElement('div');win.document.body.append(box);
- const ui=mountConfiguration(win.document,box,{store:f.store,host:f.host,getSettings:()=>({联系人分组:{}}),initialTab:'mode',preserveOnClose:true});
- try{await ui.ready;let root=ui.root.shadowRoot;
-  [...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('提示词润色')).click();
-  const picker=root.querySelector('[aria-label="选择润色规则"]');picker.value='B04';picker.onchange();
-  const area=root.querySelector('[aria-label="当前规则提示词"]');area.value='CUSTOM_NATURAL_TRANSITION_只用人物动作自然承接';area.dispatchEvent(new win.Event('change'));
-  assert.equal(ui.requestLeave().allowed,false);assert.equal(ui.requestSuspend().allowed,true);
-  root.querySelector('[aria-label="返回本页目录"]').click();[...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('提示词润色')).click();assert.equal(root.querySelector('[aria-label="当前规则提示词"]'),area);assert.match(area.value,/CUSTOM_NATURAL/);
-  await root.querySelector('footer button:last-child').onclick();await ui.settled();await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);assert.match(JSON.stringify(payload.messages),/CUSTOM_NATURAL_TRANSITION/);f.host.clear();
-  root=ui.root.shadowRoot;[...root.querySelectorAll('.tisya-section-link')].find(n=>n.textContent.startsWith('提示词润色')).click();const p=root.querySelector('[aria-label="选择润色规则"]');p.value='B04';p.onchange();await [...root.querySelectorAll('button')].find(n=>n.textContent==='恢复本条默认').onclick();await root.querySelector('footer button:last-child').onclick();await ui.settled();await f.host.before('normal');const restored={messages:[]};await f.host.payloadReady(restored);assert.doesNotMatch(JSON.stringify(restored.messages),/CUSTOM_NATURAL_TRANSITION/);
- }finally{ui.dispose();await win.happyDOM.abort();}
+test('rollback reads later optional preferences without rewriting configuration or V3 records',async()=>{
+ for(const global of [false,true]){
+  const f=fixture();f.w.modes.narrative.narrative.缇斯亚叙事信息迷雾=true;
+  f.w.modes.narrative.用户口癖保留=false;f.w.modes.narrative.用户叙事口吻延续=true;
+  if(global){f.d.schema=3;f.d.游玩偏好={narrative:structuredClone(f.w.modes.narrative.narrative),summary:true,actions:true,用户口癖保留:false,用户叙事口吻延续:true};}
+  f.c.extensionSettings.tisya_v3_global={coreId:'preserved-core'};
+  f.c.chatMetadata.tisya_v3_books={archiveId:'preserved-archive'};
+  f.c.chatMetadata.tisya_w24={journal:{pending:['preserved-entry']}};
+  const before=JSON.stringify([f.c.extensionSettings,f.c.chatMetadata]);
+  assert.equal(f.store.read().world.modes.narrative.narrative.缇斯亚叙事信息迷雾,true);
+  await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);
+  assert.ok(payload.messages.length);assert.doesNotMatch(JSON.stringify(payload),/\{\{tisya_v3:/);
+  assert.equal(JSON.stringify([f.c.extensionSettings,f.c.chatMetadata]),before);
+  const state=f.store.read();state.data.worlds[state.key].theme.nativeRegex=false;
+  await f.store.save(state.data,state.revision,state.key);
+  const current=f.store.read().world.modes.narrative;
+  assert.equal(current.narrative.缇斯亚叙事信息迷雾,true);assert.equal(current.用户口癖保留,false);assert.equal(current.用户叙事口吻延续,true);
+  assert.deepEqual(f.c.chatMetadata.tisya_w24,{journal:{pending:['preserved-entry']}});
+ }
 });
-
-
-test('host accepts typed task input beside rendered text and custom executors receive both contracts',async()=>{
- const f=fixture(),input={archiveSource:{key:'source-1',text:'原文第一行\n【不可替换】{{user}}'},currentRows:[],complex:{zero:0,no:false,nil:null,list:[{},[]]}},oldFetch=globalThis.fetch;let sent;
- globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({choices:[{message:{content:'完成'},finish_reason:'stop'}]});};
- try{
-  await f.host.request('tableArchive','这段已渲染文本不能反向解析',{typedInput:input});
-  const source=sent.messages.find(m=>m.content.includes('[TISYA.DATA.SOURCE]')).content;
-  assert.deepEqual(parseSimpleSheet(source.split('\n').slice(2,-1).join('\n')),input.archiveSource);
-  const state=sent.messages.find(m=>m.content.includes('[TISYA.DATA.STATE]')).content;
-  assert.deepEqual(parseSimpleSheet(state.split('\n').slice(2,-1).join('\n')).additionalInput.complex,input.complex);
-  let received;const unregister=register('executors',{id:'tableArchive',run:async request=>(received=request,'done')});
-  try{assert.equal(await f.host.request('tableArchive','rendered',{typedInput:input}),'done');assert.deepEqual(received.typedInput,input);assert.deepEqual(parseSimpleSheet(received.input),input);assert.equal(received.inputFormat,'tisya.simple-sheet/1');}finally{unregister();}
-  assert.equal(input.archiveSource.text,'原文第一行\n【不可替换】{{user}}');
- }finally{globalThis.fetch=oldFetch;}
-});
-
-test('text task JSON-looking quotations remain literal source text',async()=>{
- const f=fixture(),source='{"quoted":"{{user}}","nested":[0,false,null]}',oldFetch=globalThis.fetch;let sent;
- globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({choices:[{message:{content:'完成'},finish_reason:'stop'}]});};
- try{await f.host.request('summary',source);const message=sent.messages.find(m=>m.content.startsWith('[SOURCE]'));assert.equal(parseSimpleSheet(message.content.split('\n').slice(1,-1).join('\n')),source);}finally{globalThis.fetch=oldFetch;}
-});
-
-
-test('V3 connection resolver applies selected preset parameters with explicit task overrides, without borrowing its prompt',()=>{
- const f=fixture();f.c.getPresetManager=()=>({getAllPresets:()=>['sampling'],getCompletionPresetByName:()=>({temp_openai:0,top_p_openai:0.6,prompts:[{content:'MUST_NOT_REPLACE_V3'}]})});
- f.d.routes.tasks.main={preset:'sampling',parameters:{top_p_openai:0.8}};
- const resolved=f.host.resolveConnectionFor('main');assert.equal(resolved.settings.temp_openai,0);assert.equal(resolved.settings.top_p_openai,0.8);assert.equal(resolved.model,'N-model');assert.equal(resolved.settings.prompts.some(p=>p.content==='MUST_NOT_REPLACE_V3'),false);
- f.d.routes.tasks.main.preset=null;assert.equal(f.host.resolveConnectionFor('main').settings.temp_openai,undefined);
+test('rollback compatibility accepts only known typed optional fields and keeps unknown data rejected',()=>{
+ for(const [key,value]of [['缇斯亚叙事信息迷雾','true'],['unknownLaterSetting',false]]){
+  const f=fixture();f.w.modes.narrative.narrative[key]=value;
+  assert.throws(()=>f.store.read(),/SHAPE/);
+ }
+ const f=fixture();f.w.modes.narrative.用户口癖保留='false';assert.throws(()=>f.store.read(),/布尔值/);
 });

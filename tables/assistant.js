@@ -10,8 +10,8 @@ const params={temp_openai:'',openai_max_tokens:'',top_p_openai:'',reasoning_effo
 const route=r=>({connection:'',preset:'__inherit__',model:'',profile:'',...copy(r??{}),parameters:{...params,...copy(r?.parameters??{})}});
 function unroute(r){const out=copy(r);for(const k of ['connection','model','profile'])if(!out[k])delete out[k];if(out.preset==='__inherit__')delete out.preset;for(const [k,v]of Object.entries(out.parameters??{}))if(v==='__inherit__'||v===''&&k!=='custom_prompt_post_processing')delete out.parameters[k];if(!Object.keys(out.parameters??{}).length)delete out.parameters;return out;}
 export function configurationView(snapshot){
- const w=copy(snapshot.world);w.tables=tableSettings(w);delete w.tables.nativeBridge;for(const task of Object.keys(AUX_TASKS))w.tables.taskInstructions[task]??='';
- for(const m of Object.values(w.modes)){delete m.narrative.缇斯亚MVU兼容;m.nativeMvu??='auto';m.缇斯亚聊天模式??='independent';m.heartDirections??=['输入评价','回应用户评价','剧情吐槽'];m.workflowDetail??='full';for(const [id,task]of registry.tasks)if(!task.aliasOf)m.routes[id]=route(m.routes[id]);}
+ const w=copy(snapshot.world);w.tables=tableSettings(w);for(const task of Object.keys(AUX_TASKS))w.tables.taskInstructions[task]??='';
+ for(const m of Object.values(w.modes)){m.nativeMvu??='auto';m.heartDirections??=['输入评价','回应用户评价','剧情吐槽'];m.workflowDetail??='compact';for(const [id,task]of registry.tasks)if(!task.aliasOf)m.routes[id]=route(m.routes[id]);}
  const routes=copy(snapshot.data.routes);routes.global=route(routes.global);for(const [id,task]of registry.tasks)if(!task.aliasOf)routes.tasks[id]=route(routes.tasks[id]);
  return {world:w,routes,agent:copy(snapshot.data.agent),resources:copy(snapshot.data.resources),...(snapshot.interface?{interface:copy(snapshot.interface.value)}:{})};
 }
@@ -20,7 +20,7 @@ const segments=path=>{check(typeof path==='string'&&path.startsWith('/')&&!/~(?!
 function get(root,path){let v=root;for(const key of segments(path)){check(object(v)||Array.isArray(v),'配置路径不存在');check(Object.hasOwn(v,key),'配置路径不存在：'+path);v=v[key];}return v;}
 function put(root,path,value){const keys=segments(path),key=keys.pop();let v=root;for(const k of keys)v=v[k];v[key]=copy(value);}
 export function configurationLabel(path){
- const keys=segments(path),last=keys.at(-1),names={world:'当前会话',interface:'界面',routes:'API 路由',global:'通用',tasks:'任务',modes:'模式',context:'上下文',tables:'表单推进',theme:'主题',agent:'Agent',resources:'已登记资源',history:'历史聊天条数',owner:'上下文来源',maxInputTokens:'输入 token 预算',enabled:'启用',archive:'自动归档历史',plot:'前置创作设计',offstage:'场外演算',focus:'关注资料引用',focusObjects:'剧情关注对象',playerObjects:'玩家控制对象',focusText:'推进重点',preferences:'用户偏好分析',objectsSeparate:'独立新发现建档',preflightMode:'辅助调用方式',styleEnabled:'禁词与防套话',injection:'注入方式',retrieval:'检索方式',topK:'补充检索条数',contextChars:'注入字符预算',connection:'API 连接',model:'模型',preset:'预设',taskInstructions:'辅助补充要求',parameters:'参数',nativeMvu:'原卡变量更新',缇斯亚聊天模式:'小缇聊天模式',heartDirections:'心声方向',workflowDetail:'流程详略',summary:'公开摘要',actions:'行动建议'};
+ const keys=segments(path),last=keys.at(-1),names={world:'当前会话',interface:'界面',routes:'API 路由',global:'通用',tasks:'任务',modes:'模式',context:'上下文',tables:'表单推进',theme:'主题',agent:'Agent',resources:'已登记资源',history:'历史聊天条数',owner:'上下文来源',maxInputTokens:'输入 token 预算',enabled:'启用',archive:'自动归档历史',plot:'剧情推进',offstage:'场外演算',focusObjects:'关注对象',playerObjects:'玩家控制对象',focusText:'推进重点',preferences:'用户偏好分析',objectsSeparate:'独立新发现建档',styleEnabled:'禁词与防套话',injection:'注入方式',retrieval:'检索方式',topK:'补充检索条数',contextChars:'注入字符预算',connection:'API 连接',model:'模型',preset:'预设',taskInstructions:'辅助补充要求',parameters:'参数',nativeMvu:'原卡变量更新',heartDirections:'心声方向',workflowDetail:'流程详略',summary:'公开摘要',actions:'行动建议'};
  const narrative=N.rows.find(r=>r.variable===last);if(narrative)return '叙事 · '+narrative.label;
  return keys.map(k=>names[k]??registry.tasks.get(k)?.name??registry.modes.get(k)?.name??k).join(' › ');
 }

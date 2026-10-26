@@ -46,7 +46,7 @@ const fail=(code,details={})=>{throw Object.assign(new Error(code),{code,details
 const LIMIT=2000000;
 function partition(source){
  source=replyRegion(source).source;
- const envelope=parseRegexEnvelope(source),hideExtra=envelope.wire&&envelope.wire.version!==6&&!require('./reader-projection.cjs').extraAllowed(JSON.parse(envelope.blocks.memory)); // Stored-message structure, not generation identity; never parse rendered HTML as XML.
+ const envelope=parseRegexEnvelope(source),hideExtra=envelope.wire&&!require('./reader-projection.cjs').extraAllowed(JSON.parse(envelope.blocks.memory)); // Stored-message structure, not generation identity; never parse rendered HTML as XML.
  const runs=[];let depth=0,owner='outside',panel=null,panelCount=0;
  for(const t of xmlTokens(source)){
   let boundary=false;
@@ -547,16 +547,16 @@ function optionalItem(xs){if(xs.length!==1)bad('COLUMNS');return emptyItem(xs[0]
 function certainty(s){return s==='hearsay'?'听闻':s==='K3'?'确认':s;}
 function records(s){return s.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(line=>{const i=line.indexOf('：');if(i<1)bad('LABEL');return {name:line.slice(0,i).trim(),raw:split(line.slice(i+1))};});}
 function heart(b,x){const [status]=cells(x.slice(0,1),'s');if(!['有内容','沉默','关闭'].includes(status))bad('HEART');if(b.heart===null)b.heart={status,items:[]};else if(b.heart.status!==status||status!=='有内容')bad('HEART_DUPLICATE');if(status==='有内容'){const [,type,mood,text]=cells(x,'ss?s');b.heart.items.push({type,mood:x[2]==='null'?null:mood,text});}else if(x.length!==1)bad('COLUMNS');}
-function decode(name,source,{body,title,forms=false}={}){
+function decode(name,source,{body,title}={}){
  const rows=records(source);
  if(name==='title'){if(rows.length!==1||rows[0].name!=='场景')bad('TITLE');const [text,time,places,world]=cells(rows[0].raw,'s?L?');return {text,time,place:places===null?null:places.join('、'),world,places};}
  if(name==='task'||name==='next'||name==='actions'){
-  const b=name==='task'?{tasks:[],refs:forms?{style:[],world:[],environment:[],gameplay:[],worldbook:[],cast:[],history:[],tools:[]}:{style:[],cast:[]},pending:[],characters:[],heart:null,unlocks:[]}:name==='next'?{tasks:[],audit:[],heart:null,delivered:[],candidates:[]}:{actions:[]};
+  const b=name==='task'?{tasks:[],refs:{style:[],cast:[]},pending:[],characters:[],heart:null,unlocks:[]}:name==='next'?{tasks:[],audit:[],heart:null,delivered:[],candidates:[]}:{actions:[]};
   for(const {name:n,raw:x}of rows){
    if(n==='心声'&&name!=='actions'){heart(b,x);continue;}
    if(name==='task'){
     if(n==='任务'){const [input,plan,stop]=cells(x,'ses');b.tasks.push({input,plan,stop});}
-    else if(n==='资料'){if(x.length===1&&emptyItem(x[0]))continue;if(x.length!==2)bad('COLUMNS');const kind=text(x[0]);const kinds=forms?{文风:'style',世界观:'world',环境:'environment',玩法:'gameplay',世界书:'worldbook',人物:'cast',历史:'history',工具:'tools'}:{文风:'style',人物:'cast'};if(!Object.hasOwn(kinds,kind))bad('REF');b.refs[kinds[kind]].push(...optionalItem(x.slice(1)));}
+    else if(n==='资料'){if(x.length===1&&emptyItem(x[0]))continue;if(x.length!==2)bad('COLUMNS');const kind=text(x[0]);if(!['文风','人物'].includes(kind))bad('REF');b.refs[kind==='文风'?'style':'cast'].push(...optionalItem(x.slice(1)));}
     else if(n==='待定')b.pending.push(...optionalItem(x));
     else if(n==='人物'){const [status,actor,intent,evidence]=cells(x,'ss?s');b.characters.push({status,actor,intent,evidence});}
     else if(n==='解锁'){if((x.length===1||x.length===3)&&x.every(emptyItem))continue;b.unlocks.push(cells(x,'sss'));}
@@ -572,7 +572,7 @@ function decode(name,source,{body,title,forms=false}={}){
    }else{if(n!=='行动')bad('ACTIONS_FIELD');const [type,text,source]=cells(x,'sss');b.actions.push({type,text,source});}
   }
   if(name==='task'&&!b.tasks.length)bad('TASK_REQUIRED');
-  if(name!=='actions'&&!b.heart&&!forms)bad('HEART_REQUIRED');
+  if(name!=='actions'&&!b.heart)bad('HEART_REQUIRED');
   if(name==='next')b.audit.sort((a,b)=>AUDIT.indexOf(a.kind)-AUDIT.indexOf(b.kind));
   return b;
  }
@@ -928,7 +928,6 @@ module.exports={parse:createStrictJSON({maxDepth:512})};
 'use strict';
 const LEGACY_NAMES=Object.freeze(['task','title','body','status','extra','vars','archive','memory','next']);
 const XML_NAMES=Object.freeze(['task','title','body','next','status','extra','vars','archive','memory','actions']);
-const FORM_NAMES=Object.freeze(['task','title','body','next','extra','vars','actions']);
 const bad=code=>{throw Object.assign(new Error('TISHA_OUTPUT_'+code),{code:'TISHA_OUTPUT_'+code});};
 function escapeBareAmpersands(s){
  return s.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[\da-fA-F]+;)/g,(m,p)=>{
@@ -1048,13 +1047,13 @@ function readEnvelope(source,acceptId){
   }
   if(t.kind==='open'){
    if(!stack.length){if(root||closed||t.name!=='reply'||t.selfClose||Object.keys(t.attrs).length&&(Object.keys(t.attrs).join()!=='id'||!acceptId(t.attrs.id)))bad('REPLY');root=true;id=t.attrs.id??null;}
-   else if(stack.length===1){if(index===3)names=t.name==='next'?XML_NAMES:LEGACY_NAMES;if(index===4&&names===XML_NAMES&&t.name==='extra')names=FORM_NAMES;if(t.name!==(names||XML_NAMES)[index++])bad('BLOCK_ORDER');current=t.name;blocks[current]='';attrs[current]=t.attrs;}
+   else if(stack.length===1){if(index===3)names=t.name==='next'?XML_NAMES:LEGACY_NAMES;if(t.name!==(names||XML_NAMES)[index++])bad('BLOCK_ORDER');current=t.name;blocks[current]='';attrs[current]=t.attrs;}
    else {if(DISPLAY_BLOCKS.has(current))blocks[current]+=displayTag(t);else{if(!structured.has(current))bad('NESTED_BLOCK_'+current.toUpperCase());blocks[current]+=tag(t);}}
    stack.push(t.name);if(stack.length>64)bad('XML_DEPTH');if(t.selfClose){stack.pop();if(stack.length===1)current=null;}
   }else{if(stack.length>2)blocks[current]+='</'+t.name+'>';if(stack.pop()!==t.name)bad('XML_CLOSE');if(t.name==='reply')closed=true;if(stack.length<2)current=null;}
  }
  if(!closed||stack.length||index!==(names||XML_NAMES).length)bad('INCOMPLETE');
- const e={id,blocks,attrs,...names===FORM_NAMES?{layout:'forms'}:{}};return names===XML_NAMES||names===FORM_NAMES?require('./pipes-wire.cjs').projectEnvelope(e):require('./rows-wire.cjs').projectEnvelope(e);
+ const e={id,blocks,attrs};return names===XML_NAMES?require('./pipes-wire.cjs').projectEnvelope(e):require('./rows-wire.cjs').projectEnvelope(e);
 }
 // Generation IDs correlate a saved reply with one prepared request. Display
 // reads an already stored message by its host message ID and full source, so

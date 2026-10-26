@@ -972,7 +972,7 @@ function suggestions(){
     '第三','玩家角色','限知','视角人物内心','关闭','不揭示未公开秘密',
     '自然小说','随世界设定','均衡','适中','随场景',[],{下限:2000,上限:5000,单位:'字'},'简体中文','克制套话','遵循人物',
     '标准','关键人物','简短','原本人格','关闭',{下限:4,上限:6},null,null,null,null,null,null];
-  return {...Object.fromEntries(D.contract.configurations.map((r,i)=>[r.variable,values[i]])),'缇斯亚当前任务':'叙事','缇斯亚叙事语言配置':[],'缇斯亚叙事信息迷雾':true,...Protocol.defaults()};
+  return {...Object.fromEntries(D.contract.configurations.map((r,i)=>[r.variable,values[i]])),'缇斯亚当前任务':'叙事','缇斯亚叙事语言配置':[],...Protocol.defaults()};
 }
 function message(error,settings){
   const code=error?.code||'';

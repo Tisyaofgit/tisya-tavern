@@ -1,4 +1,3 @@
-import {parseSimpleSheet,formatSimpleSheet} from '../tables/simple-sheet.js';
 import {preprocessTask} from '../tables/slots.js';
 import {Window} from 'happy-dom';
 import {mountTablePanel} from '../tables/panel.js';
@@ -16,7 +15,7 @@ async function fixture(){
  const store=createStore({getContext:()=>context,persist:async()=>true}),saved=new Map();let uid=1,writes=0,beforeWrite=null,afterWrite=null,failRead=false,responder=null;
  const binding={primary:'',additional:[]};
  const helper={getWorldbookNames:()=>[...saved.keys()],getWorldbook:async name=>{if(failRead)throw Error('模拟读取失败');assert(saved.has(name));return clone(saved.get(name));},createWorldbook:async(name,entries)=>{saved.set(name,entries.map(e=>({...clone(e),uid:uid++})));return true;},updateWorldbookWith:async(name,fn)=>{await beforeWrite?.(name);const updated=fn(clone(saved.get(name)));saved.set(name,updated);writes++;await afterWrite?.(name);return clone(updated);},getCharWorldbookNames:async()=>clone(binding),rebindCharWorldbooks:async(_,next)=>Object.assign(binding,clone(next))};
- const books=createBookGateway(()=>helper,()=>context),make=()=>createTableService({store,getContext:()=>context,books,request:async(task,text)=>{if(task==='ruleReview')return {issues:[]};if(responder)return responder(task,parseSimpleSheet(text));throw Error('此测试不应调用模型');}});const service=make();await service.initialize();
+ const books=createBookGateway(()=>helper,()=>context),make=()=>createTableService({store,getContext:()=>context,books,request:async(task,text)=>{if(task==='ruleReview')return {issues:[]};if(responder)return responder(task,JSON.parse(text));throw Error('此测试不应调用模型');}});const service=make();await service.initialize();
  await service.edit({changes:['方鹿','阿禾'].map((name,i)=>({id:'new:person-'+i,table:'objects',expected:0,values:{名称:name,类型:'character'},access:{readers:['读者'],knowers:[]},evidence:'用户手动修改表单'}))});
  const persons=(await service.inspect()).rows.filter(r=>r.table==='objects'),owner=persons.find(r=>r.values.名称==='方鹿').id,other=persons.find(r=>r.values.名称==='阿禾').id;
  const setup=async()=>{const old=await service.stateCatalog();return service.saveStateCatalog({preset:true,items:'技能：修船\n技能：游泳\n伤病：右腕旧伤'},old.originRevision);};
@@ -150,7 +149,7 @@ test('private event results remain private and cannot widen public state access'
 test('committed event outcomes reach actual prepare slots without replay; later replies consume their narrative window',async()=>{
  const f=await eventFixture();let current=f.store.read(),next=clone(current.data);next.worlds[current.key].tables={...current.world.tables,enabled:true,archive:false,plot:false,preferences:false,progression:false};await f.store.save(next,current.revision,current.key);
  const p=await f.service.previewStateEvent(f.args);await f.service.saveStateForm(p.id);const n=f.writes();f.context.chat.push({is_user:true,mes:'继续'});
- const result=await f.make().prepare();assert.equal(result.slots.state.eventResults.length,1);assert.match(result.text,/已经结算/);assert.match(result.text,/收工后的疲惫/);assert.equal(f.writes(),n);
+ const result=await f.make().prepare();assert.equal(result.slots.state.eventResults.length,1);assert.match(result.text,/已经保存的事件结算结果/);assert.match(result.text,/收工后的疲惫/);assert.equal(f.writes(),n);
  await f.make().prepare();assert.equal(f.writes(),n);f.context.chat.push({is_user:false,mes:'新的一轮已叙述。'});assert.deepEqual((await f.make().prepare()).slots.state.eventResults,[]);assert.equal(f.writes(),n);
  f.context.chat=[];assert.deepEqual(await f.make().readStateEventResults(),[]);await assert.rejects(f.make().previewStateEvent(f.args),/不存在/);assert.equal(f.writes(),n);
 });

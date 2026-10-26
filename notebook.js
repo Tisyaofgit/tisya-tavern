@@ -1,6 +1,5 @@
 import {inspectMessage,readerErrorText} from './reader.js';
 import {capture,validate} from './model.js';
-import {mountMemoryTimeline} from './v3/memory-timeline.mjs';
 
 // This is a disposable view over loaded messages, never a state database.
 // Search the same public fields that the reader displays, never the envelope.
@@ -23,16 +22,14 @@ export function notebookEntry(context,id,mode,display={}) {
     const message=context.chat[id];
     if(!message||message.is_system||typeof message.mes!=='string')return null;
     const token=capture(context,id),data=inspectMessage(token.text,{showPsychology:display.显示角色心理===true,playerName:context.name1??null});
-    if(mode==='memory'&&data.v3)return null;
     const result=mode==='memory'?data.journey:data.body;
     const text=result.error?'':mode==='memory'?publicJourneyText(result.value):result.value;
     if(!result.error&&!text?.trim())return null;
     return {token,text,error:result.error??null,name:message.is_user?'你':String(message.name??'角色')};
 }
 
-export function mountNotebook(document,container,{getContext,getDisplay=()=>({}),mode='notes',onRead,onLocate,getJourney,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError=()=>{}}) {
+export function mountNotebook(document,container,{getContext,getDisplay=()=>({}),mode='notes',onRead,onLocate,onError}) {
     if(!['notes','memory'].includes(mode))throw new Error('未知的阅读页');
-    if(mode==='memory'&&typeof getJourneyTimeline==='function')return mountArchiveNotebook(document,container,{getContext,getDisplay,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError});
     const win=document.defaultView,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
     const note=make('p',mode==='memory'?'读者记录按原消息所属回合展示，不代表当前状态。仅浏览当前会话已载入的内容。':'只读浏览当前会话已载入的对话消息，最近的消息在前。','tisya-note');
     const search=make('input');search.type='search';search.placeholder=mode==='memory'?'搜索读者记录':'搜索正文';search.setAttribute('aria-label',search.placeholder);
@@ -100,13 +97,4 @@ export function mountNotebook(document,container,{getContext,getDisplay=()=>({})
     next.addEventListener('click',()=>{page++;render();});refresh.addEventListener('click',refreshView);
     refreshView();
     return {checkCurrent,refresh:refreshView,invalidate,dispose(){alive=false;epoch++;clearTimer();entries=[];snapshot=null;container.replaceChildren();}};
-}
-
-function mountArchiveNotebook(document,container,{getContext,getDisplay,getJourneyTimeline,getJourneyAnchor,onJourneySource,onError}){
- let alive=true,snapshot=null,timeline=null;
- const stamp=()=>{const c=getContext();return {chat:c.chat,id:c.getCurrentChatId(),messages:c.chat.map(m=>[m,m.mes,m.swipe_id]),psychology:getDisplay().显示角色心理===true};};
- function invalidate(){if(!alive)return;snapshot=null;timeline?.dispose();timeline=null;container.replaceChildren();const p=document.createElement('p');p.className='tisya-note';p.textContent='会话内容已变化，请刷新后继续查看。';const b=document.createElement('button');b.type='button';b.textContent='刷新记忆';b.onclick=refresh;container.append(p,b);}
- function checkCurrent(){const now=stamp();if(!snapshot||snapshot.chat!==now.chat||snapshot.id!==now.id||snapshot.psychology!==now.psychology||snapshot.messages.length!==now.messages.length||snapshot.messages.some((r,i)=>r.some((v,j)=>v!==now.messages[i][j]))){invalidate();return false;}return true;}
- function refresh(){if(!alive)return;timeline?.dispose();container.replaceChildren();snapshot=stamp();try{timeline=mountMemoryTimeline(document,container,{read:getJourneyTimeline,currentAnchor:getJourneyAnchor,showPsychology:getDisplay().显示角色心理===true,onSource:onJourneySource?payload=>{if(!checkCurrent())throw Error('会话内容已变化');return onJourneySource(payload);}:undefined,onError});return timeline.settled();}catch(e){const p=document.createElement('p');p.textContent=e.message;container.append(p);onError(e);}}
- refresh();return {settled:()=>timeline?.settled()??Promise.resolve(),checkCurrent,refresh,invalidate,dispose(){alive=false;timeline?.dispose();container.replaceChildren();}};
 }

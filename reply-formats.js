@@ -1,5 +1,3 @@
-import {usesV3Reply} from './reply-protocol.js';
-import {readV3PublicEnvelope,readV3Block} from './v3/reply.mjs';
 import {displayReplySource} from './display-repair.js';
 import {createDisplayCache} from './display-cache.js';
 import {strictJSON,parseDisplayEnvelope,xmlTokens,replyRegion} from './reader-core.js';
@@ -33,23 +31,22 @@ function withoutRecords(source,names){
  return view;
 }
 
-export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>usesV3Reply(source)?readV3PublicEnvelope(source):publicEnvelope(source));}
+export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>publicEnvelope(source));}
 function publicEnvelope(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status','memory'])));
  const publicNames=new Set(['task','title','body','next','actions']);
  return {id:e.id,blocks:Object.fromEntries(Object.entries(e.blocks).filter(([name])=>publicNames.has(name))),attrs:Object.fromEntries(Object.entries(e.attrs).filter(([name])=>publicNames.has(name))),...(e.wire?{wire:{version:e.wire.version}}:{}),projection:'public-ui'};
 }
 
-export function readReplyMemory(source){return memoryCache.read(source,()=>usesV3Reply(source)?null:replyMemory(source));}
+export function readReplyMemory(source){return memoryCache.read(source,()=>replyMemory(source));}
 function replyMemory(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status'])));
- if(e.wire?.version===6)return null;
  return e.blocks.memory.trim()?strictJSON(e.blocks.memory):null;
 }
 
 // The host owns the YAML dependency. This adapter is a read-only display
 // boundary; it never changes messages, protocol generations, or stored state.
-export function configureReplyFormats({yaml}={}){
+export function configureReplyFormats({yaml}){
  revision++;publicCache.clear();memoryCache.clear();
  yamlReader=['parseDocument','isAlias','isMap','isSeq','isScalar'].every(key=>typeof yaml?.[key]==='function')?yaml:null;
 }
@@ -87,7 +84,6 @@ function readYaml(text,block){
 }
 
 export function readReplyBlock(envelope,block){
- if(envelope?.wire?.version===3)return readV3Block(envelope,block);
  if(!['task','title','next'].includes(block)||typeof envelope?.blocks?.[block]!=='string')fail(block,'MISSING');
  const format=envelope.attrs?.[block]?.format??'json',text=envelope.blocks[block];
  let value;
@@ -98,4 +94,3 @@ export function readReplyBlock(envelope,block){
  if(!value||typeof value!=='object'||Array.isArray(value))fail(block,'OBJECT');
  return value;
 }
-

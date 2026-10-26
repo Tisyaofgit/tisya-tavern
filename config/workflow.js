@@ -1,5 +1,4 @@
 import {LEGACY_INITIATIVE} from './initiative.js';
-import {renderModelMaterial} from '../tables/simple-sheet.js';
 // Preserve the rendered source protocol, including its stage inputs, results,
 // dependencies and repair routes. Selection removes only inactive work; it must
 // never replace the narrative stages with a summary of their configuration.
@@ -55,7 +54,7 @@ export function selectWorkflow(text,c,mode){
 
 function plainDelivery(text,c){
  const out={kind:'plain',language:c.stepwiseRules.C08,body:{min:c.range.下限,max:c.range.上限,unit:c.range.单位,max_rule:'preferred'}};
- text=block(text,'C.2',()=> '[C.2]\n@REQUIRE DONE(C.1)\n@DEFINE @OUT:=\n'+renderModelMaterial(out)+'\n@LANG @OUT.language\n@FORMAT ordinary public prose only;no wrappers,paragraph labels,summary,hearts,records,actions or state updates\n@BODY count only visible body text per @M.11\n@RESULT @OUT\n@DONE C.2\n[/C.2]');
+ text=block(text,'C.2',()=> '[C.2]\n@REQUIRE DONE(C.1)\n@DEFINE @OUT:='+JSON.stringify(out)+'\n@LANG '+c.stepwiseRules.C08+'\n@FORMAT ordinary public prose only;no wrappers,paragraph labels,summary,hearts,records,actions or state updates\n@BODY count only visible body text per @M.11\n@RESULT @OUT\n@DONE C.2\n[/C.2]');
  text=block(text,'D.1',()=> '[D.1]\n@REQUIRE DONE(C)\n[CALL blk.body]\n@INPUT final @BODY+@OUT\n@TASK render the completed public prose unchanged,without labels or wrappers;do not regenerate the story\n@RESULT @BLOCK.body\n@DONE blk.body\n@RETURN @BLOCK.body\n[/CALL blk.body]\n@RESULT @BLOCK.body\n@DONE D.1\n[/D.1]');
  text=block(text,'D.2',()=> '[D.2]\n@REQUIRE DONE(D.1)\n@CHECK final body identity,reader permissions,source and authorization consistency\n@REJECT extraction error→blk.body;prose inconsistency→responsible P/E/C stage\n@RESULT content findings+actual corrections\n@DONE D.2 after blocking errors are corrected\n[/D.2]');
  text=block(text,'D.3',()=> '[D.3]\n@REQUIRE DONE(D.2)\n@CHECK ordinary paragraphs only;no wrappers,index labels,auxiliary records or process leakage\n@REJECT rendering error→blk.body;content error→owning stage\n@RESULT @DRAFT:=@BLOCK.body+checks tied to this revision\n@DONE D.3 after blocking errors are corrected\n[/D.3]');
@@ -81,14 +80,14 @@ export function condenseWorkflow(text,c,mode,actor,detail){
  const activeFeatures={角色自主:c.checks.initiative,防绝望:c.checks.resilience,防神化:c.checks.regard,防八股:c.checks.cliche,防名词堆砌:c.checks.plain_language,文风鲜活:c.checks.vivid,角色鲜活:c.checks.voice};
  const features=Object.entries(featureRules).filter(([name])=>activeFeatures[name]).map(([,value])=>value);
  const auth=join(['A01','A02','A03','A04','A05','B01','B02','B03','B04','B05','B06']);
- const start='[INNER]\n@USE [REGISTRY]\n@INPUT actual current input and supplied materials;source knowledge and public-release boundaries remain binding\n@PLANNING '+r.D01+'\n@AUTH '+auth+'\n';
+ const start='[INNER]\n@USE [REGISTRY]\n@INPUT actual current input and supplied materials;source knowledge and public-release boundaries remain binding\n@AUTH '+auth+'\n';
  const actorRules='中心化：'+actor.中心化+'；行动难度：'+actor.难度+'，不改动既定事实与规则。';
  if(detail==='compact'){
   const workflow='[WORKFLOW]\n'+[...lines,...features,actorRules].join('\n')+'\n@RESULT '+conclusions+'\n@DONE WORKFLOW after applicable work is complete\n[/WORKFLOW]\n';
   return start+workflow+remap(extract(text,'C.2')+'\n'+extract(text,'D'))+'\n[/INNER]\n'+extract(text,'DELIVER');
  }
  if(detail!=='format')fail('detail');
- const config=join(['D02'])+r.C02.split('场外的缇斯亚')[0]+join(['C03','C04','C05','C06','C09','C10'])+actorRules;
+ const config=join(['D01','D02'])+r.C02.split('场外的缇斯亚')[0]+join(['C03','C04','C05','C06','C09','C10'])+actorRules;
  const output=extract(text,'C.2').replace(/^@REQUIRE .*\n/m,'');
  return start+'@CONFIGURATION '+config+'\n'+features.join('\n')+'\n@BIND '+conclusions+'\n'+output+
   '\n@DELIVERY write the complete selected reply directly from actual input,source facts and selected configuration;no stage-by-stage narrative workflow or private reasoning in output\n@AUDIT only checks actually performed support a verdict;unperformed or unsupported checks→待确认;no actual body count→篇幅待程序计数;never invent completion,receipts or state changes\n@CHECK actual sources,authorization,body limits and selected output format;repair errors before delivery\n@RESULT @DRAFT:=complete selected deliverable\n@FREEZE the entire assembled output text as @DRAFT\n@SET @LOCK:=READY\n@DONE INNER_END\n[/INNER]\n'+extract(text,'DELIVER');

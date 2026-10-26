@@ -1,6 +1,3 @@
-import {usesV3Reply} from './reply-protocol.js';
-import {readV3Details} from './v3/reply.mjs';
-export const readReplyDetails=source=>usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
 import {validateMemoryProjection} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
 import {readReplyBlock,readPublicReplyEnvelope,readReplyMemory} from './reply-formats.js';
@@ -11,10 +8,9 @@ function heart(value){
  const items=value.items.map(row=>{if(!row||typeof row.type!=='string'||!row.type.trim()||typeof row.text!=='string'||row.text.length>1000||!(row.mood===null||typeof row.mood==='string'))fail();return {type:row.type,text:row.text,mood:row.mood};});
  return {status:value.status,items};
 }
-// Public summaries retain task.plan. Internal input, stop, references, unlocks
-// and candidates never become presentation data. Edition 6 next.tasks are the
-// public unfinished-work contract; legacy next planning remains private.
-function readLegacyDetails(source){
+// Public summaries retain the original task.plan field. Internal input, stop,
+// references, unlocks and next planning never become presentation data.
+export function readReplyDetails(source){
  const envelope=readPublicReplyEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
  if(!Array.isArray(task.audit))fail();
  const audit=task.audit.map(row=>{if(!row||['kind','status','evidence'].some(k=>typeof row[k]!=='string'||!row[k].trim()))fail();return {kind:row.kind,status:row.status,evidence:row.evidence};});
@@ -23,8 +19,7 @@ function readLegacyDetails(source){
   const tasks=(envelope.wire?task.tasks:[]).flatMap((row,i)=>{if(!row||typeof row.plan!=='string')fail();return row.plan.trim()?[{label:'任务 '+String(i+1).padStart(2,'0'),text:row.plan}]:[];});
   const delivered=next.delivered.map(text=>{if(typeof text!=='string')fail();return {text};});
   let pending=[],pendingError=false;
-  if(envelope.wire?.version===6)pending=next.tasks.map(row=>({label:row.type,status:row.trigger,text:row.text}));
-  else try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});pending=[];}}catch{pendingError=true;}
+  try{const memory=readReplyMemory(source);if(memory?.protocol==='tisya.lab.memory/5'){validateMemoryProjection({...memory,权限:[]},{body:envelope.blocks.body});pending=[];}}catch{pendingError=true;}
   rounds={tasks,delivered,pending,pendingError};
  }catch{rounds={error:true,tasks:[],delivered:[],pending:[]};}
  const taskHeart=heart(task.heart),nextHeart=heart(next.heart);
@@ -62,4 +57,3 @@ export const replyControlsCSS=`
 .action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}
 .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;
-

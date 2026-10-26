@@ -1,5 +1,0 @@
-const builtins=[{id:'player',label:'玩家',icon:'user'},{id:'memory',label:'记忆',icon:'book'},{id:'characters',label:'角色',icon:'group'},{id:'tasks',label:'待叙',icon:'task-list'},{id:'more',label:'更多',icon:'ellipsis'}];
-const entries=new Map(builtins.map(row=>[row.id,Object.freeze({...row,builtin:true})])),listeners=new Set();
-export const journeyRoutes=()=>[...entries.values()];
-export function subscribeJourneyRoutes(listener){if(typeof listener!=='function')throw Error('导航监听器无效');listeners.add(listener);return()=>listeners.delete(listener);}
-export function registerJourneyRoute(route){if(!route||typeof route.id!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(route.id)||typeof route.label!=='string'||!route.label.trim()||typeof route.render!=='function')throw Error('旅程入口需要稳定ID、名称和实际页面渲染器');if(entries.has(route.id))throw Error('旅程入口已登记：'+route.id);const entry=Object.freeze({id:route.id,label:route.label.trim(),icon:route.icon??'ellipsis',render:route.render,builtin:false});entries.set(entry.id,entry);for(const fn of listeners)fn();return()=>{if(entries.get(entry.id)!==entry)return;entries.delete(entry.id);for(const fn of listeners)fn();};}

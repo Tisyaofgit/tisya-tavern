@@ -20,10 +20,3 @@ test('draft changed during input notification prevents direct send and preserves
 test('a held action cannot be submitted twice and a disposed menu cannot apply anything',async()=>{
  const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);let release,calls=0;const pending=new Promise(r=>release=r),ui=mountActionChoice(d,host,{rows:[{text:'观察灯塔'}],onChoose:()=>{calls++;return pending;}}),b=host.querySelector('.action');b.click();b.click();assert.equal(calls,1);release();await w.happyDOM.whenAsyncComplete();const menu=host.querySelector('[data-mode="send"]');ui.dispose();b.click();menu.click();assert.equal(calls,1);await w.happyDOM.abort();
 });
-
-test('action clicks wait for mode persistence and a failed mode save preserves the prior mode',async()=>{
- const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);let mode='append',release,reject;const chosen=[],errors=[];
- const ui=mountActionChoice(d,host,{rows:[{text:'观察灯塔'}],getMode:()=>mode,setMode:next=>new Promise((yes,no)=>{release=()=>{mode=next;yes();};reject=no;}),onChoose:(text,mode)=>chosen.push({text,mode}),onError:e=>errors.push(e.message)});
- const action=host.querySelector('.action'),replace=host.querySelector('[data-mode=replace]');const pending=replace.onclick();assert.equal(action.disabled,true);await action.onclick();assert.equal(chosen.length,0);release();await pending;assert.equal(action.disabled,false);await action.onclick();assert.equal(chosen[0].mode,'replace');
- const failed=host.querySelector('[data-mode=send]').onclick();reject(Error('保存失败'));await failed;assert.equal(mode,'replace');assert.deepEqual(errors,['保存失败']);await action.onclick();assert.equal(chosen.at(-1).mode,'replace');ui.dispose();await w.happyDOM.abort();
-});

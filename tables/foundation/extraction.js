@@ -1,4 +1,3 @@
-import {complexCell,complexCellInstructions,complexShape} from './complex-cell.js';
 import {textTaskPreset,textTaskMessages} from '../../task-envelope.js';
 // Local extraction adapter. Dynamic child proposals are validated in a cloned workbook.
 // It does not publish, call a model, or modify the caller's existing workbook/context.
@@ -12,16 +11,16 @@ const chinese=['一','二','三','四','五','六','七','八','九','十'];
 const titleNumber=n=>chinese[n-1]??String(n);
 const clone=x=>structuredClone(x);
 const stripFence=(raw,types)=>{
- const text=raw.replace(/^\uFEFF/,'');
- if(!text.trimStart().startsWith('```'))return text;
- const match=text.match(/^\s*```([^\n]*)\n([\s\S]*)\n```\s*$/);
+ const text=raw.replace(/^\uFEFF/,'').trim();
+ if(!text.startsWith('```'))return text;
+ const match=text.match(/^```([^\n]*)\n([\s\S]*)\n```$/);
  check(match&&types.includes(match[1].trim()),'代码块未闭合或类型不支持');return match[2];
 };
 export function unwrapChatResponse(raw){
  check(typeof raw==='string'&&raw.trim(),'响应为空');
  const text=stripFence(raw,['','json','text','txt']);
  if(!text.trimStart().startsWith('{')){
-  check(!/^data:|^HTTP\//m.test(text),'请提供完整填表文本或非流式接口响应正文；未导入SSE或HTTP报文');
+  check(!/^data:|^HTTP\//m.test(text),'需要非流式JSON响应正文；未导入SSE或HTTP报文');
   return {text:stripFence(text,['','text','txt']),transport:{kind:'plain-text',finishReason:null,integrity:'not-provided'}};
  }
  let data;try{data=JSON.parse(text);}catch{throw Error('接口响应JSON不完整或无效');}
@@ -44,7 +43,6 @@ function fieldLine(f,tid,conditionVocabulary,layout){
  hint=extractionHint(f,tid,layout)??hint;
  if(conditionVocabulary?.slots?.[tid]?.[f.key]){const slot=conditionVocabulary.slots[tid][f.key];hint+=' 按下方条件写法，结果只改'+slot.writeKeys.map(k=>conditionVocabulary.fields.find(x=>x.key===k).name).join('、')+'。';}
  if(f.definition.type==='refs'||f.definition.type==='texts')hint+=' 多项。';
- if(complexCell(f.definition))hint+=' 此格使用缩进简表，结构说明：\n'+complexShape(f.definition);
  return f.row+' '+label+(hint?'（'+hint.trim()+'）':'');
 }
 export function prepareExtraction(catalog,validateValue,{source,ownerName,references,model,conditionVocabulary,layout='compact-v2'}){
@@ -58,7 +56,6 @@ export function prepareExtraction(catalog,validateValue,{source,ownerName,refere
  for(const group of [...new Set(main.fields.map(f=>f.group))].sort((a,b)=>({核心:-2,面具:-1}[a]??0)-({核心:-2,面具:-1}[b]??0))){definitions.push('【人物／'+group+'】');for(const f of visibleExtractionFields(openFields(main),main.id,layout).filter(f=>f.group===group))definitions.push(fieldLine(f,main.id,conditionVocabulary,layout));}
  for(const [name,kind]of Object.entries(kinds)){const t=e.template('origin.character.'+kind);definitions.push('【'+name+'／序号】');for(const f of visibleExtractionFields(openFields(t),t.id,layout))definitions.push(fieldLine(f,t.id,conditionVocabulary,layout));}
  const system=[
-  ...(catalog.templates.filter(t=>t.id==='origin.character'||t.id.startsWith('origin.character.')).some(t=>t.fields.some(f=>complexCell(f.definition)))?[complexCellInstructions()]:[]),
   atomicSemanticContract,
   semanticSynonymContract,
   ...['本次为精简表：只输出定义中出现的行，保留行号，只填写本次定义的字段。每项细节选一个主要归处：过去事件归前史经过，稳定特征归人物，特定对象互动归关系，触发门槛与结果归条件格；不要用长处/影响/概括反复重写。同一材料可以支持不同独立事实，但不重复整句。原始资料由程序保留一次，无需逐条复抄原文。人物核心与面具优先：标签概括底色，多股欲望同时成立，矛盾写其冲突、依赖与取舍代价；面具区分呈现、用途及真实落差。有依据才写，不为完整强造第二欲望、创伤或伪装；这是叙事人格，不是可执行规则或已发生事件，隐情不能泄入这些格子。'],
@@ -84,7 +81,6 @@ export function acceptExtraction(catalog,validateValue,context,raw){
  check(context.before.records.find(r=>r.id===context.rootId)?.template==='origin.character','人物任务无效');
  const sections=[],counts={history:0,relationships:0,secrets:0};let current=null;
  for(const rawLine of response.text.split(/\r?\n/)){
-  if(rawLine.startsWith('  ')&&current){current.lines.push(rawLine);continue;}
   const line=rawLine.trim();if(!line)continue;
   const match=line.match(/^【([^】]+)】$/);
   if(match){check(!sections.some(s=>s.heading===match[1]),'分组重复：'+match[1]);current={heading:match[1],lines:[]};sections.push(current);}else{check(current,'结果须从分组标题开始');current.lines.push(rawLine);}

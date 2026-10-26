@@ -1,5 +1,4 @@
-import {parseSimpleSheet} from '../tables/simple-sheet.js';
-const extractionSource=body=>parseSimpleSheet(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
+const extractionSource=body=>JSON.parse(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {sheetCatalog} from '../tables/foundation/catalog.js';import {valueValid} from '../tables/schema.js';
 import {prepareExtraction,acceptExtraction} from '../tables/foundation/extraction.js';

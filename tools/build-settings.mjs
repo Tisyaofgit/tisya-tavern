@@ -13,10 +13,7 @@ function adapt(id,s){
  }
  if(id==='src/display-registry.cjs')return cut(s,'const DISPLAY_FIELDS=','function validateDisplay(')+'\nmodule.exports={DISPLAY_FIELDS:Object.fromEntries(Object.entries(DISPLAY_FIELDS).filter(([k])=>[\'装饰程度\',\'动画效果\'].includes(k)))};';
  if(id==='src/narrative-settings.cjs')return s.replace('return {root,setPage(page)', 'return {root,refresh,setPage(page)').replace('name:profileName.value.trim(),settings:draft,output:outputDraft','name:profileName.value.trim(),settings:draft,output:outputDraft,revision:library.修订');
- if(id==='src/narrative.cjs'){
-  const body=s.slice(0,s.indexOf('const SHAPE_FIELDS='))+cut(s,'function snapshot(','const PROFILE_INDEX=')+cut(s,'function message(','async function read(io)')+cut(s,'function previewSettings(','module.exports=');
-  return body.replace("const OPTIONAL=['缇斯亚MVU兼容'];","const OPTIONAL=['缇斯亚MVU兼容','缇斯亚叙事信息迷雾'];").replace("'缇斯亚叙事语言配置':[],...Protocol.defaults()","'缇斯亚叙事语言配置':[],'缇斯亚叙事信息迷雾':true,...Protocol.defaults()")+'\nmodule.exports={NARRATIVE:{validate,suggestions,previewSettings,message,rows:D.contract.configurations,tasks:Object.keys(D.tasks),protocol:Protocol}};';
- }
+ if(id==='src/narrative.cjs')return s.slice(0,s.indexOf('const SHAPE_FIELDS=')).replace("const OPTIONAL=['缇斯亚MVU兼容'];","const OPTIONAL=['缇斯亚MVU兼容','缇斯亚叙事信息迷雾'];")+cut(s,'function snapshot(','const PROFILE_INDEX=')+cut(s,'function message(','async function read(io)')+cut(s,'function previewSettings(','module.exports=')+'\nmodule.exports={NARRATIVE:{validate,suggestions,previewSettings,message,rows:D.contract.configurations,tasks:Object.keys(D.tasks),protocol:Protocol}};';
  if(id==='src/story-memory.cjs')return cut(s,'const PROTOCOL=','const fail=')+'\nmodule.exports={MEMORY_EMPTY:EMPTY,MEMORY_EVENT:EVENT};';
  if(id==='src/unified-settings.cjs')return cut(s,'const SECTIONS=','const TITLES=')+'\nmodule.exports={SECTIONS};';
  return s;

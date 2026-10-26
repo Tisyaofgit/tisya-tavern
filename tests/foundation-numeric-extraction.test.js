@@ -1,5 +1,4 @@
-import {parseSimpleSheet} from '../tables/simple-sheet.js';
-const extractionSource=body=>parseSimpleSheet(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
+const extractionSource=body=>JSON.parse(body.messages.find(m=>m.content.startsWith('[SOURCE]\n')).content.split('\n').slice(1,-1).join('\n'));
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
