@@ -23,6 +23,51 @@ function fixture(nativeConfig=null){
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('generation initialization binds only missing storage while normal settings edits stay idle-locked',async()=>{
+ const f=fixture();let generating=true;const store=createStore({getContext:()=>f.c,persist:async()=>true,assertIdle:()=>{if(generating)throw Error('generating');}});
+ const snap=store.read();await assert.rejects(store.save(snap.data,snap.revision,snap.key),/generating/);
+ await assert.rejects(store.bindTableStorage({originBook:'origin',sessionBook:'session',enabled:true},snap.revision,snap.key),/无关/);
+ const next=await store.bindTableStorage({originBook:'origin',sessionBook:'session'},snap.revision,snap.key);
+ assert.equal(next.world.tables.originBook,'origin');assert.equal(next.world.tables.enabled,snap.world.tables.enabled);
+ await assert.rejects(store.bindTableStorage({originBook:'other',sessionBook:'session'},next.revision,next.key),/改绑/);
+ await assert.rejects(store.bindTableStorage({originBook:'origin',sessionBook:'session'},snap.revision,snap.key),/依据/);
+ await assert.rejects(store.save(next.data,next.revision,next.key),/generating/);
+ generating=false;await store.save(next.data,next.revision,next.key);
+});
+test('one-pass preparation and archive use zero auxiliary model calls and preserve selected source on duplicate callback',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');const f=fixture();f.c.chat=[user('继续当前互动')];
+ await f.set({enabled:true,archive:true,plot:true,preferences:true,worldProgress:true});
+ const result=await f.service.prepareOnePass(),state=JSON.parse(result.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);assert.equal(f.calls.length,0);assert.equal(state.registry.tables.length,defaultRegistry().tables.length);
+ const evidence='铜铃在工具盒里滚了半圈。宋遥用擦布垫住铃口。';
+ const text=onePassReply({basis:state.basis,vars:[op('new:person','objects',{名称:'宋遥',类型:'character'},evidence),op('new:state','state',{名称:'当前动作',对象:'new:person',字段:'动作',值:'用擦布垫住铃口'},evidence)],memory:[op('new:event','events',{名称:'铜铃停下',经过:evidence,参与者:['new:person'],原文段落:[evidence]},evidence)]});
+ f.c.chat.push(ai(text));const accepted=await f.service.acceptOnePass();assert.equal(accepted.changes,3);assert.equal(f.calls.length,0);const after=await f.service.inspect();assert.equal(after.rows.length,3);assert.equal(after.archived,1);const bytes=JSON.stringify([...f.saved]);assert.equal((await f.service.acceptOnePass()).already,true);assert.equal(JSON.stringify([...f.saved]),bytes);
+ const reopened=f.makeService();assert.equal((await reopened.inspect()).rows.length,3);f.c.chat.push(user('接下去'));const next=await reopened.prepareOnePass();assert.match(next.text,/宋遥/);assert.equal(f.calls.length,0);
+});
+test('one-pass bad schema, evidence and coverage never partially commit or call a repair model',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');
+ for(const variant of ['schema','evidence','coverage','basis']){
+  const f=fixture();f.c.chat=[user('继续')];const result=await f.service.prepareOnePass(),state=JSON.parse(result.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);
+  const change=op('new:person','objects',{名称:'宋遥',类型:'character'},variant==='evidence'?'没有发生的事':'宋遥用擦布垫住铃口。');if(variant==='schema')change.values.虚构字段='不能建字段';
+  const text=onePassReply({basis:variant==='basis'?'wrong':state.basis,vars:[change],...(variant==='coverage'?{coverage:[]}:{})});f.c.chat.push(ai(text));const before=JSON.stringify([...f.saved]);await assert.rejects(f.service.acceptOnePass());assert.equal(JSON.stringify([...f.saved]),before);assert.equal(f.calls.length,0);assert.equal(f.c.chat.at(-1).mes,text);
+ }
+});
+test('one-pass reroll projects the prior baseline and selects one candidate without accumulating discarded changes',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');const f=fixture();f.c.chat=[user('继续')];
+ let r=await f.service.prepareOnePass(),state=JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);
+ const first=onePassReply({basis:state.basis,vars:[op('new:person','objects',{名称:'宋遥',类型:'character'},'宋遥用擦布垫住铃口。')]});f.c.chat.push({...ai(first),swipe_id:0,swipes:[first]});await f.service.acceptOnePass();assert.equal((await f.service.inspect()).rows.length,1);
+ r=await f.service.prepareOnePass('swipe');state=JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);assert.equal(state.rows.length,0);
+ const second=onePassReply({basis:state.basis});f.c.chat.at(-1).swipes.push(second);Object.assign(f.c.chat.at(-1),{mes:second,swipe_id:1});await f.service.acceptOnePass();assert.equal((await f.service.inspect()).rows.length,0);
+ Object.assign(f.c.chat.at(-1),{mes:first,swipe_id:0});assert.equal((await f.service.inspect()).rows.length,1);assert.equal(f.calls.length,0);
+});
+test('one-pass stale chat or stored revision rejects instead of crossing branches',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');for(const kind of ['chat','revision']){const f=fixture();f.c.chat=[user('继续')];const r=await f.service.prepareOnePass(),state=JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);f.c.chat.push(ai(onePassReply({basis:state.basis})));if(kind==='chat')f.c.chat[0].mes='已修改输入';else{const snap=await f.books.read(f.store.read().world.tables.sessionBook),next=structuredClone(snap.data);next.revision++;await externalBookWrite(f,snap,next);}const before=JSON.stringify([...f.saved]);await assert.rejects(f.service.acceptOnePass());assert.equal(JSON.stringify([...f.saved]),before);assert.equal(f.calls.length,0);}
+});
+test('native status marker arriving during one-pass archive preserves source identity without changing raw history',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');const f=fixture();f.c.chat=[user('继续')];const r=await f.service.prepareOnePass(),state=JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);
+ const raw=onePassReply({basis:state.basis,vars:[op('new:person','objects',{名称:'宋遥',类型:'character'},'宋遥用擦布垫住铃口。')]});f.c.chat.push(ai(raw));const original=(await sources(f.c.chat)).at(-1).key,read=f.books.read;let appended=false;
+ f.books.read=async(...args)=>{if(!appended){appended=true;f.c.chat.at(-1).mes+='\n\n<StatusPlaceHolderImpl/>';f.c.chat.at(-1).swipe_id=0;}return read(...args);};
+ assert.equal((await f.service.acceptOnePass()).changes,1);assert.equal((await sources(f.c.chat)).at(-1).key,original);assert.equal((await f.makeService().inspect()).rows.length,1);assert.equal(f.c.chat.at(-1).mes,raw+'\n\n<StatusPlaceHolderImpl/>');assert.equal(f.calls.length,0);
+});
 test('archive and review exclude intermediate tool owners while final prose keeps its original source key',async()=>{
  const f=fixture();f.c.chat=[user('去城门'),{...ai('OPERATION_NOT_STORY'),tool_calls:[{id:'a',name:'lookup',parameters:'{}'}]},{role:'tool',is_system:true,tool_call_id:'a',mes:'TOOL_RESULT_NOT_STORY'},ai('他推开城门。'),user('继续')];
  const before=structuredClone(f.c.chat),raw=await sources(f.c.chat),projectToolTurns=chat=>[{type:'message',sourceIndex:0,message:chat[0]},{type:'tool-turn',sourceIndices:[1,2]},...chat.slice(3).map((message,index)=>({type:'message',sourceIndex:index+3,message}))];

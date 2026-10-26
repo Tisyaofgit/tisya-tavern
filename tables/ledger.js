@@ -1,4 +1,5 @@
 import {reconcileProposal} from './reconcile.js';
+import {onePassStoryText} from '../onepass/source.mjs';
 import {copy,check,object,addTypes,registryIndex,validateRow,validateReferences,normalized,mapRowReferences,references,upgradeRegistry,typeFields} from './schema.js';
 import {digest,uuid} from './books.js';
 export function selectedMessages(chat,type='normal'){
@@ -9,7 +10,7 @@ export function selectedMessages(chat,type='normal'){
 export async function sources(chat,type='normal'){
  let parent='';const out=[];
  for(const [index,message] of selectedMessages(chat,type).entries()){
-  const text=String(message.mes??'');const identity={role:message.is_user?'user':'assistant',name:message.name??'',text,candidate:message.swipe_id??0};
+  const text=message.is_user?String(message.mes??''):onePassStoryText(message.mes);const identity={role:message.is_user?'user':'assistant',name:message.name??'',text,candidate:message.swipe_id??0};
   const key=await digest([parent,identity]);out.push({key,parent,index,floor:chat.indexOf(message)+1,...identity});parent=key;
  }
  return out;

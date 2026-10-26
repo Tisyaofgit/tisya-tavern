@@ -1,14 +1,15 @@
 {
   "name": "tisya-tavern",
-  "version": "0.2.0-alpha.31.31.19-reply6.3",
+  "version": "0.2.0-alpha.31.31.19-onepass.1",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node tools/build-six-preset.mjs --check && node --test tests/*.test.js",
+    "test": "node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node tools/build-six-preset.mjs --check && node tools/build-onepass-preset.mjs --check && node --test tests/*.test.js",
     "build:reader": "node tools/build-reader.mjs",
     "build:extension": "node tools/build-extension.mjs",
     "build:worldbook": "node tools/build-worldbook.mjs",
-    "build:six-preset": "node tools/build-six-preset.mjs"
+    "build:six-preset": "node tools/build-six-preset.mjs",
+    "build:onepass-preset": "node tools/build-onepass-preset.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

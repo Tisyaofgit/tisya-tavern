@@ -1,4 +1,5 @@
 import {isSixPreset,sixEntries,SIX_KEYS,fullDefaultConfiguration} from './six/preset.mjs';
+import {isOnePassPreset,onePassEntries,ONEPASS_KEYS} from './onepass/preset.mjs';
 import {nativeMvuDeclaration,applySourceOutputRoutes} from './config/native-mvu.js';
 import {requireMoodNames} from './heart-contract.js';
 import {modularSource,currentConfiguration,refineCompiled} from './config/compiler.js';
@@ -24,20 +25,20 @@ export function readNarrative(context,scope='chat'){
 }
 export function compileNarrative(context,source,moods=[],configuration=null){
  const modular=modularSource(source),current=modular?(configuration??currentConfiguration(context,()=>readNarrative(context).settings)):null,config=modular?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:readNarrative(context),selection=modular&&current.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source),activeEntries=source.order.filter(s=>s.enabled&&source.prompts.some(p=>p.identifier===s.identifier&&p.enabled!==false)).map(p=>p.identifier);
- if(isSixPreset(source)){
+ if(isSixPreset(source)||isOnePassPreset(source)){
   const resolved=current??fullDefaultConfiguration();
   if(!current)Object.assign(resolved.world.modes.narrative,{narrative:config.settings,summary:config.summary,heartDirections:selection.directions});
-  const entries=sixEntries(resolved,moods,{structured:outputEnabled(source)});
-  return {prose:true,taskMode:false,outputEnabled:outputEnabled(source),rest:{entries:Object.fromEntries(Object.entries(entries).flatMap(([id,text])=>[[id,text],['six_'+id,text]]))}};
+  const onepass=isOnePassPreset(source),entries=(onepass?onePassEntries:sixEntries)(resolved,moods,{structured:outputEnabled(source)});
+  return {prose:true,taskMode:false,outputEnabled:outputEnabled(source),rest:{entries:Object.fromEntries(Object.entries(entries).flatMap(([id,text])=>[[id,text],[(onepass?'onepass_':'six_')+id,text]]))}};
  }
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});
  if((!current||current.world.mode==='narrative')&&c.prose&&c.outputEnabled&&c.heartActive){const values=JSON.parse(c.outputValues);const before='mood must be one of '+JSON.stringify(values.mood);values.mood=requireMoodNames(moods);c.outputValues=JSON.stringify(values);const inner=c.rest.entries.tisya_inner_chain;if(inner.split(before).length!==2)fail('原版心声表情格式发生变化。');c.rest.entries.tisya_inner_chain=inner.replace(before,'mood must be one of '+JSON.stringify(values.mood)).replaceAll('{mood或null}','{mood}');}
  const result=modular?refineCompiled(c,current,source):c;if(!result.taskMode&&c.prose&&c.outputEnabled)applySourceOutputRoutes(result.rest.entries);return result;
 }
 export function registerLivePreset(context,getSource,getContext,getMoods,onError=()=>{}){
- const ids=[...Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries),...SIX_KEYS.map(id=>'six_'+id)];let cacheKey=null,cached=null;
+ const ids=[...Object.keys(N.previewSettings(NARRATIVE_DEFAULTS,{summary:true,directions:[]}).rest.entries),...SIX_KEYS.map(id=>'six_'+id),...ONEPASS_KEYS.map(id=>'onepass_'+id)];let cacheKey=null,cached=null;
  const execution=()=>{const source=getSource(),ctx=getContext(),current=modularSource(source)?currentConfiguration(ctx,()=>readNarrative(ctx).settings):null,legacy=current?null:readNarrative(ctx),config=current?{settings:current.world.modes[current.world.mode].narrative,summary:current.world.modes[current.world.mode].summary}:legacy,selection=current?.world.modes[current.world.mode].heartDirections?{directions:current.world.modes[current.world.mode].heartDirections}:nativeSelection(source);const enabled=outputEnabled(source);const moods=(!current||current.world.mode==='narrative')&&enabled&&selection.directions.length&&config.settings.缇斯亚当前任务==='叙事'&&['互动叙事','大纲扩写'].includes(config.settings.缇斯亚叙事创作模式)?getMoods():[];
-  const next=stamp([current?nativeMvuDeclaration(ctx,current.world)?.signature??null:null,modularSource(source)?currentConfiguration(ctx):null,config.settings,config.summary,source.order,source.prompts.map(p=>[p.identifier,p.enabled]),moods]);if(next!==cacheKey){cacheKey=null;cached=null;cached=compileNarrative(ctx,source,moods);cacheKey=next;}return cached;};
+  const next=stamp([current?nativeMvuDeclaration(ctx,current.world)?.signature??null:null,modularSource(source)?currentConfiguration(ctx):null,config.settings,config.summary,source.identity,source.order,source.prompts,moods]);if(next!==cacheKey){cacheKey=null;cached=null;cached=compileNarrative(ctx,source,moods);cacheKey=next;}return cached;};
  for(const id of ids)context.registerMacro(LIVE_PREFIX+id,()=>{try{return execution().rest.entries[id]??'';}catch(e){cacheKey=null;cached=null;onError(e);throw e;}},'缇斯亚：当前聊天配置 · '+id);
  return {execution,dispose(){ids.forEach(id=>context.unregisterMacro(LIVE_PREFIX+id));cached=null;cacheKey=null;}};
 }

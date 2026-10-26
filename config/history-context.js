@@ -1,4 +1,5 @@
 import {hasToolMetadata,historyGroups} from './tool-history.js';
+import {onePassStoryText,isOnePassReply} from '../onepass/source.mjs';
 // Read the selected native branch on every request. No mirror, state write,
 // reader projection, vector service, or stale cross-chat cache is involved.
 // TauriTavern 2.3.0 constants.js publishes IGNORE_SYMBOL via Symbol.for.
@@ -17,7 +18,7 @@ export function selectedHistory(context,world,type){
  if(recent.some(({message,index})=>hasToolMetadata(message)||hasToolMetadata(context.chat[index+1])&&context.chat[index+1]?.is_system===true))throw Error('所选历史包含工具调用；手选资料装配尚未支持完整工具历史，请使用原生上下文或调整历史范围。');
  return recent.map(r=>r.message);
 }
-export function historySignature(context){return JSON.stringify(context.chat.map(m=>[m.is_user,m.is_system,m.role,m.name,m.mes,m.swipe_id,m.extra?.media,m.extra?.file,m.tool_calls,m.tool_call_id,m.error,m.extra?.tool_invocations,ignored(m)]));}
+export function historySignature(context){return JSON.stringify(context.chat.map(m=>{const onepass=!m.is_user&&isOnePassReply(m.mes);return [m.is_user,m.is_system,m.role,m.name,onepass?onePassStoryText(m.mes):m.mes,onepass?(m.swipe_id??0):m.swipe_id,m.extra?.media,m.extra?.file,m.tool_calls,m.tool_call_id,m.error,m.extra?.tool_invocations,ignored(m)];}));}
 
 // Host generate_interceptor receives a prepared coreChat copy after swipe
 // selection and before worldbook/preset assembly. Never edit stored chat rows.
