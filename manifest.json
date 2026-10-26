@@ -10,6 +10,6 @@
   "hooks": {
     "chatSurface": "registerChatSurface"
   },
-  "description": "稳定 RP 底座上的六块回复、预设与解析增量；新版表单推进未接入，保留原生聊天和用户数据。",
+  "description": "单次完整输出试用：保留双 think，将正文填表、记忆归档和世界场外推进合入同一回复；兼容既有聊天格式和用户数据。",
   "generate_interceptor": "tisyaHistoryInput"
 }
