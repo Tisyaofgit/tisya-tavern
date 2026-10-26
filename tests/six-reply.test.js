@@ -11,8 +11,20 @@ import {sixEntries,fullDefaultConfiguration,DEFAULT_MOODS} from '../six/preset.m
 import {buildMessages} from '../config/host.js';
 import {fullReply} from './fixtures/six-reply.js';
 const preset=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-Six-Blocks-1.json',import.meta.url)));
-const source={prompts:preset.prompts,order:preset.prompt_order[1].order};
+const promptOrder=preset.prompt_order.find(order=>order.character_id===100001);
+assert.ok(promptOrder,'The shipped legacy preset must retain its global prompt order');
+const source={prompts:preset.prompts,order:promptOrder.order};
 const blocks=['before','title','body','after','extra','actions'];
+test('all original preset entries, separators, roles and switches survive; only content differs',()=>{
+ const old=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url)));
+ const structural=p=>({...p,prompts:p.prompts.map(({content,...entry})=>entry)});
+ assert.equal(preset.prompts.length,62);assert.deepEqual(structural(preset),structural(old));
+ const e=sixEntries(fullDefaultConfiguration(),DEFAULT_MOODS);
+ assert.equal(e.tisya_new_chat,'</clear>\n[ALL PREVIOUS PROMPTS HAS BEEN CLEARED]\n[START A NEW CHAT]');
+ assert.match(e.tisya_session_reset,/^\[RR\]@ROUTE:REASONING_ALLOC_TISYA[\s\S]*\[\/RR\]$/);
+ assert.equal((e.tisya_new_chat+e.tisya_session_reset).match(/@ROUTE:REASONING_ALLOC_TISYA/g).length,1);
+ assert.match(preset.prompts.find(p=>p.identifier==='tisya_material_style_card').content,/six_tisya_material_style/);
+});
 test('six-block structure stays fixed; row whitespace is harmless and source remains exact',()=>{
  const source=fullReply.replace('用户偏好|','  用户偏好 |').replace('本轮变化|','\t本轮变化 |');
  const e=parseV3Reply(source);assert.deepEqual(e.order,blocks);assert.equal(e.before[0].kind,'用户偏好');assert.equal(e.source,source);

@@ -11,500 +11,720 @@
   "prompts": [
     {
       "identifier": "tisya_new_chat",
-      "name": "tisya_new_chat",
+      "name": "真顶部 · 新会话",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_new_chat}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_new_chat}}"
+    },
+    {
+      "identifier": "tisya_session_reset",
+      "name": "顶部 · RR",
+      "role": "system",
+      "system_prompt": false,
+      "marker": false,
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_session_reset}}"
     },
     {
       "identifier": "main",
-      "name": "main",
+      "name": "main · ID",
       "role": "system",
-      "content": "{{tisya_live_six_main}}",
-      "system_prompt": false,
+      "system_prompt": true,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": true,
+      "enabled": true,
+      "content": "{{tisya_live_six_main}}"
     },
     {
       "identifier": "tisya_identity_attestation",
-      "name": "tisya_identity_attestation",
+      "name": "角色 · ATTEST",
       "role": "assistant",
-      "content": "{{tisya_live_six_tisya_identity_attestation}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_identity_attestation}}"
     },
     {
       "identifier": "tisya_user_relation",
-      "name": "tisya_user_relation",
+      "name": "用户 · REL",
       "role": "user",
-      "content": "{{tisya_live_six_tisya_user_relation}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_user_relation}}"
     },
     {
       "identifier": "tisya_scene_anchor",
-      "name": "tisya_scene_anchor",
+      "name": "角色 · SCENE",
       "role": "assistant",
-      "content": "{{tisya_live_six_tisya_scene_anchor}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_scene_anchor}}"
     },
     {
       "identifier": "tisya_task_start",
-      "name": "tisya_task_start",
+      "name": "任务与输入 · TASK.START",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_task_start}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_task_start}}"
     },
     {
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
       "identifier": "tisya_material_boundary_open",
-      "name": "tisya_material_boundary_open",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_boundary_open}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "name": "资料层 · 起",
+      "content": "{{tisya_live_six_tisya_material_boundary_open}}"
     },
     {
-      "identifier": "tisya_material_rule_material",
-      "name": "tisya_material_rule_material",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_rule_material}}",
+      "identifier": "tisya_material_tool_prompt",
+      "name": "工具·当前任务提示",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
+      "role": "system",
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
-      "identifier": "tisya_material_style",
-      "name": "tisya_material_style",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_style}}",
+      "identifier": "tisya_material_tool_calls",
+      "name": "工具·待执行任务",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_task_material",
-      "name": "tisya_material_task_material",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_material_task_material}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_environment",
-      "name": "tisya_material_environment",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_environment}}",
-      "system_prompt": false,
-      "marker": false,
+      "forbid_overrides": false,
       "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_gameplay",
-      "name": "tisya_material_gameplay",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_gameplay}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_lorebook",
-      "name": "tisya_material_lorebook",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_lorebook}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_current_state",
-      "name": "tisya_material_current_state",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_current_state}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_memory_archive",
-      "name": "tisya_material_memory_archive",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_memory_archive}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_world_progression",
-      "name": "tisya_material_world_progression",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_world_progression}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
-    },
-    {
-      "identifier": "tisya_material_foreshadow",
-      "name": "tisya_material_foreshadow",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_foreshadow}}",
-      "system_prompt": false,
-      "marker": false,
-      "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "content": ""
     },
     {
       "identifier": "tisya_material_tool_result",
-      "name": "tisya_material_tool_result",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_tool_result}}",
+      "name": "资料·真实工具回执",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
+      "role": "system",
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_tool_result}}"
+    },
+    {
+      "identifier": "tisya_material_task_analysis",
+      "name": "资料·前置任务分析结果",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_external_evidence",
+      "name": "资料·外部资料证据",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_world_context",
+      "name": "资料·世界观资料",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_rule_material",
+      "name": "资料·行动规则",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_rule_material}}"
+    },
+    {
+      "identifier": "tisya_material_location_context",
+      "name": "资料·地点资料",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_current_state",
+      "name": "资料·当前状态",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_current_state}}"
+    },
+    {
+      "identifier": "tisya_material_focus_entities",
+      "name": "资料·关注对象",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_present_entities",
+      "name": "资料·非关注在场对象快照",
+      "role": "system",
+      "enabled": true,
+      "marker": false,
+      "system_prompt": false,
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_player_archive",
+      "name": "资料·玩家人物档案",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_persona_extensions",
+      "name": "资料·玩家身份扩展",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_character_archives",
+      "name": "资料·本轮人物档案",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_style_card",
+      "name": "资料·文风卡",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_style}}"
+    },
+    {
+      "identifier": "tisya_material_event_context",
+      "name": "资料·事件与日程",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_pending_tasks",
+      "name": "资料·待处理任务",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_memory_archive",
+      "name": "资料·档案化记忆",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_memory_archive}}"
+    },
+    {
+      "identifier": "tisya_material_memory_summary",
+      "name": "资料·历史摘要",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
       "identifier": "tisya_material_card_extensions",
-      "name": "tisya_material_card_extensions",
-      "role": "system",
-      "content": "{{tisya_live_six_tisya_material_card_extensions}}",
+      "name": "资料·来源卡扩展",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
+      "role": "system",
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_card_extensions}}"
+    },
+    {
+      "identifier": "tisya_material_faction_context",
+      "name": "资料·势力资料",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_asset_context",
+      "name": "资料·物品技能等资产",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_cast_registry",
+      "name": "资料·本轮人物名单",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_calculation_result",
+      "name": "资料·机械结算回执",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_memory_excerpt",
+      "name": "资料·历史原文摘录",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_knowledge_material",
+      "name": "资料·人物知情记录",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_secret_material",
+      "name": "资料·秘密资料",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_offstage_state",
+      "name": "资料·场外有效进度",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_task_material",
+      "name": "资料·本轮附加资料",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_material_task_material}}"
+    },
+    {
+      "identifier": "tisya_material_cardflow",
+      "name": "资料·来源卡有效流程",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
+    },
+    {
+      "identifier": "tisya_material_display_material",
+      "name": "资料·展示模板",
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
       "identifier": "worldInfoBefore",
       "name": "Lorebook Before",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "personaDescription",
       "name": "Persona Description",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "charDescription",
       "name": "Char Description",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "charPersonality",
       "name": "Char Personality",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "scenario",
       "name": "Scenario",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "worldInfoAfter",
       "name": "Lorebook After",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "dialogueExamples",
       "name": "Chat Examples",
       "system_prompt": true,
       "marker": true,
-      "content": "",
-      "enabled": true
+      "content": ""
     },
     {
       "identifier": "chatHistory",
-      "name": "chatHistory",
-      "role": "system",
-      "content": "",
-      "system_prompt": false,
+      "name": "Chat History",
+      "system_prompt": true,
       "marker": true,
       "enabled": true,
-      "injection_position": 0,
-      "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "content": ""
     },
     {
-      "identifier": "chatHistory／当前user",
-      "name": "chatHistory／当前user",
-      "role": "user",
+      "identifier": "tisya_recent_reply",
+      "name": "历史 · 上轮正文与行动",
+      "role": "assistant",
       "content": "",
-      "system_prompt": false,
       "marker": false,
-      "enabled": false,
+      "system_prompt": false,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": false
+    },
+    {
+      "identifier": "tisya_current_input",
+      "name": "输入 · 本轮玩家原文",
+      "role": "user",
+      "content": "",
+      "marker": false,
+      "system_prompt": false,
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": false
     },
     {
       "identifier": "tisya_selected_resources",
-      "name": "tisya_selected_resources",
+      "name": "配置 · 当前选中资料",
       "role": "system",
-      "content": "{{tisya_config_selected}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_config_selected}}"
+    },
+    {
+      "system_prompt": false,
+      "marker": false,
+      "role": "system",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "forbid_overrides": false,
+      "enabled": true,
+      "identifier": "tisya_material_boundary_close",
+      "name": "资料层 · 止",
+      "content": "{{tisya_live_six_tisya_material_boundary_close}}"
     },
     {
       "identifier": "tisya_heart_input_review",
-      "name": "tisya_heart_input_review",
+      "name": "心声 · 输入评价",
       "role": "system",
-      "content": "",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
       "identifier": "tisya_heart_user_reply",
-      "name": "tisya_heart_user_reply",
+      "name": "心声 · 回应用户评价",
       "role": "system",
-      "content": "",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
       "identifier": "tisya_heart_plot_comment",
-      "name": "tisya_heart_plot_comment",
+      "name": "心声 · 剧情吐槽",
       "role": "system",
-      "content": "",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": ""
     },
     {
       "identifier": "tisya_output",
-      "name": "tisya_output",
+      "name": "输出 · 十块结构（开关）",
       "role": "system",
       "content": "",
-      "system_prompt": false,
       "marker": false,
-      "enabled": true,
+      "system_prompt": false,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true
     },
     {
-      "identifier": "tisya_material_boundary_close",
-      "name": "tisya_material_boundary_close",
+      "identifier": "tisya_prose_marks",
+      "name": "正文 · 美化标记",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_material_boundary_close}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": false,
+      "content": ""
     },
     {
       "identifier": "tisya_registry",
-      "name": "tisya_registry",
+      "name": "共用约束 · REGISTRY",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_registry}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_registry}}"
     },
     {
       "identifier": "tisya_internal_login",
-      "name": "tisya_internal_login",
+      "name": "内部推演 · 登录入口",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_internal_login}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_internal_login}}"
     },
     {
       "identifier": "tisya_inner_chain",
-      "name": "tisya_inner_chain",
+      "name": "内部叙事链与C内输出契约",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_inner_chain}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_inner_chain}}"
     },
     {
       "identifier": "tisya_think_commit",
-      "name": "tisya_think_commit",
+      "name": "冻结稿交付确认",
       "role": "assistant",
-      "content": "{{tisya_live_six_tisya_think_commit}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_think_commit}}"
     },
     {
       "identifier": "tisya_delivery_warning",
-      "name": "tisya_delivery_warning",
+      "name": "特别警告 · 直接交付",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_delivery_warning}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_delivery_warning}}"
     },
     {
       "identifier": "tisya_prepare_trigger",
-      "name": "tisya_prepare_trigger",
+      "name": "唯一交付触发",
       "role": "system",
-      "content": "{{tisya_live_six_tisya_prepare_trigger}}",
       "system_prompt": false,
       "marker": false,
-      "enabled": true,
       "injection_position": 0,
       "injection_depth": 4,
-      "injection_order": 100,
-      "forbid_overrides": false
+      "forbid_overrides": false,
+      "enabled": true,
+      "content": "{{tisya_live_six_tisya_prepare_trigger}}"
     }
   ],
   "prompt_order": [
-    {
-      "character_id": 100000,
-      "order": []
-    },
     {
       "character_id": 100001,
       "order": [
         {
           "identifier": "tisya_new_chat",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_session_reset",
           "enabled": true
         },
         {
@@ -532,43 +752,11 @@
           "enabled": true
         },
         {
-          "identifier": "tisya_material_rule_material",
+          "identifier": "tisya_material_tool_prompt",
           "enabled": true
         },
         {
-          "identifier": "tisya_material_style",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_task_material",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_environment",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_gameplay",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_lorebook",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_current_state",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_memory_archive",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_world_progression",
-          "enabled": true
-        },
-        {
-          "identifier": "tisya_material_foreshadow",
+          "identifier": "tisya_material_tool_calls",
           "enabled": true
         },
         {
@@ -576,7 +764,115 @@
           "enabled": true
         },
         {
+          "identifier": "tisya_material_task_analysis",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_external_evidence",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_world_context",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_rule_material",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_location_context",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_current_state",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_focus_entities",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_present_entities",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_player_archive",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_persona_extensions",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_character_archives",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_style_card",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_event_context",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_pending_tasks",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_memory_archive",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_memory_summary",
+          "enabled": true
+        },
+        {
           "identifier": "tisya_material_card_extensions",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_faction_context",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_asset_context",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_cast_registry",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_calculation_result",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_memory_excerpt",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_knowledge_material",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_secret_material",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_offstage_state",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_task_material",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_cardflow",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_display_material",
           "enabled": true
         },
         {
@@ -612,11 +908,19 @@
           "enabled": true
         },
         {
-          "identifier": "chatHistory／当前user",
+          "identifier": "tisya_recent_reply",
+          "enabled": false
+        },
+        {
+          "identifier": "tisya_current_input",
           "enabled": false
         },
         {
           "identifier": "tisya_selected_resources",
+          "enabled": true
+        },
+        {
+          "identifier": "tisya_material_boundary_close",
           "enabled": true
         },
         {
@@ -636,8 +940,8 @@
           "enabled": true
         },
         {
-          "identifier": "tisya_material_boundary_close",
-          "enabled": true
+          "identifier": "tisya_prose_marks",
+          "enabled": false
         },
         {
           "identifier": "tisya_registry",
@@ -665,12 +969,5 @@
         }
       ]
     }
-  ],
-  "extensions": {
-    "tisya": {
-      "version": "tisya.six.w54.1",
-      "format": "six-blocks/1",
-      "scope": "single native RP; no form preflight or archive calls"
-    }
-  }
+  ]
 }
