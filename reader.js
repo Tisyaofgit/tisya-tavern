@@ -39,7 +39,10 @@ const candidate=source=>/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|think
 let localCache=null,cacheGeneration=0;
 const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
-const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
+// Version parsed projections independently of the disk rows so reader updates
+// recompute old successes/errors while retaining the user's fold and tab state.
+const projectionKey=selected=>'onepass-w59.1:'+replyFormatRevision()+':'+JSON.stringify(selected);
+const inspectionKey=(source,selected)=>projectionKey(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
  return localCache;
@@ -55,7 +58,7 @@ export async function prepareReaderMessage(identity,options={}){
  if(!localCache||typeof source!=='string'||source.length>2000000)return {inspection:inspectMessage(source)};
  const variants=JSON.stringify(base)===JSON.stringify(selected)?[base]:[base,selected];
  const rows=await Promise.all(variants.map(async value=>{
-  const row=await localCache.prepare({...identity,variant:replyFormatRevision()+':'+JSON.stringify(value)},()=>inspectMessage(source,value));
+  const row=await localCache.prepare({...identity,variant:projectionKey(value)},()=>inspectMessage(source,value));
   if(!row.value||typeof row.value.structured!=='boolean'||!row.value.body)throw Error('显示缓存内容无效');
   if(generation===cacheGeneration)inspectionCache.restore([{key:inspectionKey(source,value),value:row.value}]);
   return row;
