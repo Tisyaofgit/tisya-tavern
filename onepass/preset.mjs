@@ -1,7 +1,7 @@
 import {sixEntries,SIX_KEYS} from '../six/preset.mjs';
 export const ONEPASS_ID='tisya-onepass-1';
 export const ONEPASS_KEYS=SIX_KEYS;
-export const isOnePassPreset=source=>source?.prompts?.some(p=>p.content?.includes('{{tisya_live_onepass_'));
+export const isOnePassPreset=source=>source?.protocol===ONEPASS_ID||source?.prompts?.some(p=>p.content?.includes('{{tisya_live_onepass_')||p.identifier==='tisya_registry'&&p.content?.includes('[ONEPASS.CONTRACT]')&&p.content.includes('<reply id="'+ONEPASS_ID+'">'));
 export function onePassEntries(configuration,moods,options={}){
  const out=sixEntries(configuration,moods,options);
  if(options.structured===false)return out;

@@ -192,8 +192,6 @@ Main: 基础文风 · 自然叙事
 Keep the prose supple and concrete. Build clear spatial relations around precise nouns and active verbs. Let sentence length follow attention: brisk at a turn, more spacious while a sensation or recognition unfolds. Vary the rhythm of adjacent sentences. Choose telling sensory details through the viewpoint character’s attention; let the rest of the setting recede. Draw images from the scene’s materials, occupations and culture, and let an image end when it has done its work. Connect speech and action through natural pauses, interruptions, unfinished phrases and practical business. Use transitions to carry a changed mood or attention into the next beat. Give an emotionally charged detail room to resonate through placement and silence.
 </StyleResources>
 
-{{tisya_config_selected}}
-
 [/MATERIALS]
 
 [REGISTRY]

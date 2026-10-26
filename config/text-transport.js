@@ -126,7 +126,7 @@ function errorEvents(response,signal){
 }
 
 export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TAURITAVERN__,origin=()=>target.location?.origin,timeoutMs=600000,now=()=>Date.now()}={}){
- let original,wrapped,installed=false,disposed=false,last=null;const pending=new Map(),spent=new Set(),active=new Set();
+ let original,wrapped,installed=false,disposed=false,last=null;const pending=new Map(),spent=new Set(),active=new Set(),observations=new Map();
  const publish=(status,notify)=>{last=status;notify?.(structuredClone(status));};
  function assertOwner(){if(!installed||disposed||target.fetch!==wrapped||target[OWNER]!==api)throw problem('TISYA_TRANSPORT_OWNER','请求通道已变化，请停用冲突扩展并重启应用');if(target[OTHER])throw problem('TISYA_TRANSPORT_CONFLICT','检测到社区抗截断扩展；请只启用一个传输实现并重启应用');}
  function prepare(payload,mode){const result=prepareTextTransport(payload,mode,{isTauri:isTauri()});if(result.plan)assertOwner();return result;}
@@ -140,6 +140,7 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
  // Keep only small random identifiers after dispatch, never whole chat bodies.
  function retire(key,entry){pending.delete(key);spent.add(entry.plan.id);}
  function invalidate(kind,reason='上下文已变化，抗截断请求已停止'){
+  for(const [key,e]of observations)if(!kind||e.kind===kind)observations.delete(key);
   for(const [key,e]of pending)if(!kind||e.kind===kind){retire(key,e);Object.assign(e.status,{state:'cancelled',label:reason});publish(e.status,e.notify);}
   for(const a of active)if(!kind||a.kind===kind)a.controller.abort(problem('TISYA_TRANSPORT_CANCELLED',reason));
  }
@@ -150,6 +151,9 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
    let url;try{url=new URL(typeof input==='string'||input instanceof URL?input:input.url,origin());}catch{return original.call(target,input,init);}
    const method=init?.method??input?.method??'GET';if(url.origin!==origin()||url.pathname!==PATH||method.toUpperCase()!=='POST')return original.call(target,input,init);
    const key=typeof init?.body==='string'?init.body:input instanceof Request&&init?.body==null?await input.clone().text():null;
+   let observation=observations.get(key),observationKey=key;
+   if(!observation&&typeof key==='string'){let body;try{body=JSON.parse(key);}catch{}if(body){const matches=[...observations].filter(([,e])=>now()-e.created<=300000&&e.match?.(body));if(matches.length===1)[observationKey,observation]=matches[0];}}
+   if(observation){observations.delete(observationKey);if(now()-observation.created<=300000){const body=JSON.parse(key);observation.notify({stage:'host-fetch',at:new Date(now()).toISOString(),messages:structuredClone(body.messages??[]),tools:structuredClone(body.tools??[])});}}
    const e=pending.get(key);
    if(!e){if(typeof key==='string'&&([...spent].some(name=>key.includes(name))||[...pending.values()].some(p=>p.plan.toolName&&key.includes(p.plan.toolName))))throw problem('TISYA_TRANSPORT_UNVERIFIED','抗截断请求已变更或已发送，未再次提交');return original.call(target,input,init);}
    retire(key,e);const controller=new AbortController(),parent=init?.signal??input?.signal;
@@ -180,5 +184,6 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
   };
   target.fetch=wrapped;target[OWNER]=api;installed=true;return api;
  }
- const api={install,prepare,authorize,invalidate,status:()=>last?structuredClone(last):null,dispose(){if(disposed)return;invalidate(null,'抗截断通道已卸载');disposed=true;if(target.fetch===wrapped)target.fetch=original;if(target[OWNER]===api)delete target[OWNER];},pendingCount:()=>pending.size};return api;
+ function observeRequest(payload,{kind='main',match=null,notify=()=>{}}={}){if(!installed||disposed)return false;for(const [key,e]of observations)if(e.kind===kind)observations.delete(key);observations.set(JSON.stringify(payload),{kind,match,notify,created:now()});return true;}
+ const api={install,prepare,authorize,observeRequest,invalidate,status:()=>last?structuredClone(last):null,dispose(){if(disposed)return;invalidate(null,'抗截断通道已卸载');disposed=true;if(target.fetch===wrapped)target.fetch=original;if(target[OWNER]===api)delete target[OWNER];},pendingCount:()=>pending.size};return api;
 }

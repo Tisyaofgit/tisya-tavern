@@ -18,7 +18,7 @@ export function transportSummary(status){
 }
 
 export function contextRecord(snapshot,{version='',exportedAt=new Date().toISOString()}={}){
- return {schema:'tisya.context-export/1',version,exportedAt,note:'当前选中请求的观察快照；含正文与提示词，不是最终发送回执。',transportSummary:transportSummary(snapshot.transport),snapshot:structuredClone(snapshot)};
+ return {schema:'tisya.context-export/1',version,exportedAt,note:snapshot.dispatch?.stage==='host-fetch'?'已在宿主发送入口读回此请求的消息和工具；不是供应商接收回执。':'当前选中请求的装配快照；含正文与提示词，尚无宿主发送入口读回。',transportSummary:transportSummary(snapshot.transport),snapshot:structuredClone(snapshot)};
 }
 
 export async function copyContextText(document,text){

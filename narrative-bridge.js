@@ -12,7 +12,7 @@ const MARK='缇斯亚叙事配置提交记录',SUMMARY='缇斯亚构思显示',I
 const clone=v=>structuredClone(v),stamp=v=>JSON.stringify(v),plain=v=>v&&typeof v==='object'&&!Array.isArray(v),fail=text=>{throw Object.assign(Error(text),{code:text});};
 const key=(k,scope)=>scope==='global'?k.replace('缇斯亚','缇斯亚默认'):k;
 const fields=Object.keys(NARRATIVE_DEFAULTS);
-export function isLivePreset(source){return source.prompts.some(p=>typeof p.content==='string'&&/\{\{tisya_live_[a-z_]+\}\}/.test(p.content));}
+export function isLivePreset(source){return isOnePassPreset(source)||source.prompts.some(p=>typeof p.content==='string'&&/\{\{tisya_live_[a-z_]+\}\}/.test(p.content));}
 export function nativeSelection(source){return {summary:true,directions:HEART_CONTROLS.filter((_,i)=>heartSelection(source)&(1<<i)).map(c=>c.name)};}
 function variables(context,scope){const v=scope==='global'?context.extensionSettings.variables?.global:context.chatMetadata?.variables;if(v!==undefined&&!plain(v))fail('原生变量格式损坏，配置未改动。');return v??{};}
 export function readNarrative(context,scope='chat'){
