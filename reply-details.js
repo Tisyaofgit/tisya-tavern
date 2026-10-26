@@ -1,3 +1,6 @@
+import {usesV3Reply} from './reply-protocol.js';
+import {readV3Details} from './six/reply.mjs';
+export const readReplyDetails=source=>usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
 import {validateMemoryProjection} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
 import {readReplyBlock,readPublicReplyEnvelope,readReplyMemory} from './reply-formats.js';
@@ -10,7 +13,7 @@ function heart(value){
 }
 // Public summaries retain the original task.plan field. Internal input, stop,
 // references, unlocks and next planning never become presentation data.
-export function readReplyDetails(source){
+function readLegacyDetails(source){
  const envelope=readPublicReplyEnvelope(source),task=readReplyBlock(envelope,'task'),next=readReplyBlock(envelope,'next');
  if(!Array.isArray(task.audit))fail();
  const audit=task.audit.map(row=>{if(!row||['kind','status','evidence'].some(k=>typeof row[k]!=='string'||!row[k].trim()))fail();return {kind:row.kind,status:row.status,evidence:row.evidence};});

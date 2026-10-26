@@ -1,0 +1,21 @@
+{
+  "format": "tisya.six-source-provenance/1",
+  "baseCommit": "15e97fec4e4636917380875cdc6560315669e066",
+  "baseTree": "90e41d91cee240d5109cfa6e9861f28cae4681f2",
+  "selectiveSourceCommit": "f0c566508e1ebc6ea0b956f884cd4556b9d3597f",
+  "sourcePaths": [
+    "v3/presets/sources.mjs:W22_ENTRIES",
+    "v3/preset.mjs:configuration/preferences/style/output/guide",
+    "v3/reply.mjs",
+    "v3/paragraph-contract.mjs",
+    "v3/runtime-source/originals/original-store.mjs:parseNumberedBody",
+    "v3/host-companion-wire.mjs",
+    "config/english-rules.js",
+    "config/rule-text.js",
+    "config/user-voice.js"
+  ],
+  "scope": "single native generation; only text compilation and read-only reply views",
+  "formatLock": "format-lock.txt",
+  "formatLockSHA256": "5ee04bd65f38409c4f5b8e0698eaf6bf71750f4d0b7a564268fbf33cc3478b22",
+  "protocolChangePolicy": "Keep six blocks, their order, field labels, columns and escaping; later narrative changes edit text inside the contract only."
+}

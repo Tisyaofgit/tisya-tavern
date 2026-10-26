@@ -1,3 +1,5 @@
+import {usesV3Reply} from './reply-protocol.js';
+import {inspectV3Message} from './six/reply.mjs';
 import {displayReplySource} from './display-repair.js';
 import {createMessageCache} from './message-cache.js';
 import {createDisplayCache} from './display-cache.js';
@@ -15,6 +17,8 @@ export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
+    const row=/^TISYA_V3_REPLY_(BEFORE|AFTER)_LINE_(\d+)_(LABEL|COLUMNS|EMPTY|OUTCOME)$/.exec(safe);
+    if(row)return `${row[1]==='BEFORE'?'开头':'结尾'}摘要第 ${row[2]} 行${{LABEL:'标签不在约定格式内',COLUMNS:'字段列数不符',EMPTY:'必填字段为空',OUTCOME:'留白类别不符'}[row[3]]}；正文和原消息保留。（${safe}）`;
     if(safe==='TISYA_NATIVE_MVU_FORMAT')return `原卡变量更新块结构不完整，或混入了显示组件、重复更新。此提示属于阅读校验，不代表原生变量已经写入或写入失败；原消息仍保留。（${safe}）`;
     const block=/^TISYA_READER_(TASK|TITLE|NEXT)_(YAML_\w+|JSON_SYNTAX|FORMAT|OBJECT|MISSING)$/.exec(safe);
     if(block){const name={TASK:'本轮任务',TITLE:'标题',NEXT:'下轮交付'}[block[1]];return `${name}区块${block[2]==='YAML_UNAVAILABLE'?'缺少宿主 YAML 读取组件，请更新并完全重启扩展。':'格式未通过读取校验。'}原消息仍保留。（${safe}）`;}
@@ -35,7 +39,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 const inspectionKey=(source,selected)=>replyFormatRevision()+':'+JSON.stringify(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
- if(!localCache)localCache=createMessageCache(window,{version:'reader-alpha31.31.18',onError});
+ if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
  return localCache;
 }
 export async function clearReaderCache(){cacheGeneration++;await localCache?.clear();inspectionCache.clear();}
@@ -57,6 +61,7 @@ export async function prepareReaderMessage(identity,options={}){
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
 }
 function inspectUncached(source,options) {
+    if(usesV3Reply(source))return inspectV3Message(source);
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};
     const structured=isReplyMessage(source)||candidate(source);
     const body=structured?attempt(()=>extractXMLBody(displayReplySource(source))):{value:source};

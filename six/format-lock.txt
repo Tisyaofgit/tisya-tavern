@@ -1,0 +1,47 @@
+<reply>
+<think phase="before">
+用户偏好|{the interaction shaped by this turn's preference}
+文风用词|{the chosen voice, rhythm or telling image}
+情节取向|{the new beat and the possibility it changes}
+角色锚点|{the autonomous choice revealing charm or depth}
+篇幅重点|{the exchange to develop and transition to compress}
+信息迷雾|{the publicly knowable misreading or uncertainty and the consequence it opens}
+解锁|{secret}|{authorized fragment}|{basis}
+{文风/世界观/环境/玩法/世界书/人物/历史/世界推演/伏笔/工具: choose one}|{used source names}
+待定|{unresolved gap}
+设计|{character}|{public or disclosure-authorized aim}|{distinct contribution}
+输入评价|{mood}|{your response to the user's concrete input before its outcome}
+回应用户评价|{mood}|{your in-character answer to the user's actual appraisal or correction}
+剧情吐槽|{mood}|{your remark on the opening situation's distinctive tension or absurdity}
+[One mood per cell: 困倦、好奇、开心、怀疑、惊讶、闹别扭、促狭、憋笑、装无辜、小得意.]
+</think>
+<title>
+{title}|{time or ~}|{places or ~}|{world or ~}
+</title>
+<body min="2000" max="5000" unit="字">
+{complete natural paragraphs numbered from 1, separated by blank lines}
+</body>
+<think phase="after">
+本轮变化|{the situation or available choice actually changed}
+角色主动|{the independent move that affected this encounter}
+世界动向|{the independent affair that advanced and its effect}
+关系位移|{the change in trust, distance, leverage or mutual understanding}
+人物厚度|{the choice revealing a competing wish, limit, cost or contrast}
+语言亮点|{the memorable line, image or detail and its specific effect}
+下一步张力|{the fresh unresolved question or opening}
+剧情待处理任务|{trigger}|{new or materially changed story task}
+系统任务|{trigger}|{new or materially changed system task}
+下轮基础任务|{trigger}|{new or materially changed next-turn task}
+输入评价|{mood}|{your reaction to what the user's choice actually changed}
+回应用户评价|{mood}|{your fresh answer to that appraisal in light of the new result}
+剧情吐槽|{mood}|{your fresh remark on the new consequence, surprise or tension}
+已交付|{additional public progress}
+候选|{unadopted proposal}
+</think>
+<extra>
+{triggered authorized display components, each placeholder on its own line}
+</extra>
+<actions min="4" max="6">
+{交流/调查/移动/操作/战斗/休整/其他}|{available action}|{interesting possible turn}
+</actions>
+</reply>
