@@ -77,5 +77,6 @@ test('native single-generation bridge expands new entries and keeps original hos
  assert.match(result.rest.entries.six_tisya_inner_chain,/Followed dynamics/);
  assert.match(result.rest.entries.six_tisya_registry,/<think phase="before">/);
  assert.equal(result.taskMode,false);
+ assert.doesNotMatch(Object.values(sixEntries(config,DEFAULT_MOODS)).join('\n'),/NarrativeAgenda\.(?:CurrentTurn|MaterialPool)/);
  assert.doesNotMatch(fs.readFileSync(new URL('../six/preset.mjs',import.meta.url),'utf8'),/import .*host-runtime|import .*host-service/);
 });

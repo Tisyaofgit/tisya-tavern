@@ -26,3 +26,22 @@ test('closed hearts do not become orphan decorations and an empty world scroll s
  const {w,d,node}=setup(),ui=mountMessageVisual(d,node,props(source)),r=ui.host.shadowRoot;
  assert.equal(r.querySelectorAll('.heart-host,.visual-creature,.visual-creatures').length,0);assert.equal(r.querySelector('#world-extension-toggle').getAttribute('aria-expanded'),'false');assert.equal(r.querySelector('.world-extension').hidden,true);assert.equal(r.querySelector('#next-toggle').textContent,'下轮待办');r.querySelector('#world-extension-toggle').click();assert.equal(r.querySelector('#world-extension-toggle').getAttribute('aria-expanded'),'true');assert.match(r.querySelector('.world-extension').textContent,/没有可展示/);ui.dispose();await w.happyDOM.abort();
 });
+
+
+test('six-block display owns before/after folds and shows candidates without treating them as completed facts',async()=>{
+ const {fullReply}=await import('./fixtures/six-reply.js');
+ const {w,d,node}=setup(),ui=mountMessageVisual(d,node,props(fullReply)),r=ui.host.shadowRoot;
+ assert.equal(r.querySelector('#task-toggle').textContent,'开篇摘要');assert.equal(r.querySelector('#next-toggle').textContent,'核验与待办');
+ assert.match(r.querySelector('h1').textContent,/铜铃/);assert.match(r.querySelector('.story').textContent,/宋遥/);
+ assert.match(r.querySelector('#task-content').textContent,/用户偏好/);assert.match(r.querySelector('#next-content .audit-ledger').textContent,/关系位移/);
+ assert.match(r.querySelector('.candidate-ledger').textContent,/后续候选（尚未发生）/);assert.match(r.querySelector('.candidate-ledger').textContent,/零件送回库房/);
+ assert.doesNotMatch(r.querySelector('.audit-ledger').textContent,/零件送回库房/);assert.ok(r.querySelector('.action'));assert.equal(ui.data.journey.value.memories.length,0);
+ r.querySelector('#task-toggle').click();r.querySelector('#next-toggle').click();r.querySelector('.candidate-ledger').open=true;const state=ui.capture();ui.dispose();
+ const fresh=mountMessageVisual(d,node,props(fullReply));fresh.restore(state);const rr=fresh.host.shadowRoot;assert.equal(rr.querySelector('#task-content').hidden,false);assert.equal(rr.querySelector('#next-content').hidden,false);assert.equal(rr.querySelector('.candidate-ledger').open,true);fresh.dispose();await w.happyDOM.abort();
+});
+
+test('six-block malformed summary stays visible as an error while body and action controls survive',async()=>{
+ const {fullReply}=await import('./fixtures/six-reply.js');const source=fullReply.replace('用户偏好|','用户偏好|多一列|');
+ const {w,d,node}=setup(),ui=mountMessageVisual(d,node,props(source)),r=ui.host.shadowRoot;
+ assert.match(r.querySelector('.story').textContent,/宋遥/);assert.match(r.textContent,/开头摘要第 2 行字段列数不符/);assert.ok(r.querySelector('.action'));assert.equal(r.querySelector('.candidate-ledger'),null);ui.dispose();await w.happyDOM.abort();
+});

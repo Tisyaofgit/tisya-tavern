@@ -195,11 +195,13 @@ export function sixEntries(configuration,moods,{structured=true}={}){
  out.chatHistory='';out['chatHistory／当前user']='';
  out.tisya_material_rule_material=preferences(c);out.tisya_material_style=styles(c);
  out.tisya_registry=output(c);out.tisya_inner_chain=guide(c);
+ out.tisya_task_start=out.tisya_task_start.replace('• NarrativeAgenda.CurrentTurn → selected material for this turn; NarrativeAgenda.MaterialPool → available dynamics, events, clues, tasks and timers by reference. Keep records in their homes and select what this turn needs.','• Current user input, supplied character/persona/worldbook materials and established chat history → select the relevant dynamics, events, clues, unfinished matters and time constraints for this turn. Do not assume an absent agenda or material pool.');
  out.tisya_task_start=out.tisya_task_start.replace("• Forms → enabled stages' registered projections; persistence → independent form writers.","• Materials → the actual native character, persona, worldbook and chat-history sources supplied in this request. No independent form or archival execution is implied.");
  out.tisya_inner_chain=out.tisya_inner_chain.replace('review → independent archive handoff','review → complete reply delivery')
  .replace('Use the confirmed preference projection and current preflight scope. Apply current directions for their stated duration; unconfirmed candidates do not add persistent weight.','Use explicit preferences and current directions from supplied materials for their stated duration. Do not invent preference scores or persistent updates.')
  .replace('Build the draft from the preflight creative brief and NarrativeAgenda.CurrentTurn.','Build the draft from the current user input, actual supplied materials and established chat history.')
  .replace('use the preflight’s settled facts','use established facts in supplied history')
+ .replace('draw useful material for this turn from NarrativeAgenda.MaterialPool','draw useful material for this turn from the actual supplied materials and established chat history')
  .replace(/Handoff — [^\n]+/,'Handoff — Keep confirmed developments distinct from proposals in the reply and subsequent chat history. No separate archival or form call runs in this trial; do not claim saved tables, preference updates, completed tools or native-variable writes without actual supplied receipts.');
  out.tisya_registry=out.tisya_registry.replace('Cells use |.','Machine tags, phase attributes and Chinese row labels are fixed. Translate cell text only. Preserve all six blocks and their order, including empty extra and actions. Public think blocks contain brief creative conclusions, never private reasoning.\nCells use |.');
  if(!structured){
