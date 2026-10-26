@@ -1,4 +1,5 @@
 import {usesV3Reply} from './reply-protocol.js';
+import {isOnePassReply,onePassEnvelope} from './onepass/reply.mjs';
 import {extractV3Body,readV3Paragraphs} from './six/reply.mjs';
 import {createGenerationOperations} from './generation-operation.js';
 import {userRevisionMaterial} from './user-revision.js';
@@ -6,7 +7,7 @@ import {displayReplySource} from './display-repair.js';
 import {isReplyMessage,parseDisplayEnvelope,readParagraphs,extractXMLBody} from './reader-core.js';
 import {capture,validate} from './model.js';
 const check=(ok,message)=>{if(!ok)throw Error(message);};
-export function revisionBody(source){return usesV3Reply(source)?extractV3Body(source):isReplyMessage(source)?extractXMLBody(displayReplySource(source)):String(source);}
+export function revisionBody(source){return isOnePassReply(source)?onePassEnvelope(source).blocks.body:usesV3Reply(source)?extractV3Body(source):isReplyMessage(source)?extractXMLBody(displayReplySource(source)):String(source);}
 export function revisionParagraphs(source){
  if(usesV3Reply(source))return readV3Paragraphs(revisionBody(source));
  const body=revisionBody(source),numbered=readParagraphs(body);if(numbered)return numbered;

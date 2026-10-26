@@ -1,4 +1,5 @@
 import {usesV3Reply} from './reply-protocol.js';
+import {isOnePassReply,readOnePassPublic} from './onepass/reply.mjs';
 import {readV3PublicEnvelope,readV3Block} from './six/reply.mjs';
 import {displayReplySource} from './display-repair.js';
 import {createDisplayCache} from './display-cache.js';
@@ -33,7 +34,7 @@ function withoutRecords(source,names){
  return view;
 }
 
-export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>usesV3Reply(source)?readV3PublicEnvelope(source):publicEnvelope(source));}
+export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>isOnePassReply(source)?readOnePassPublic(source):usesV3Reply(source)?readV3PublicEnvelope(source):publicEnvelope(source));}
 function publicEnvelope(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status','memory'])));
  const publicNames=new Set(['task','title','body','next','actions']);

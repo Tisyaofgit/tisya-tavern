@@ -1,3 +1,4 @@
+import {isOnePassPreset} from '../onepass/preset.mjs';
 import {keepPresetConnection} from '../preset-connection.js';
 import {TEXT_TASKS,textTaskPreset,textTaskMessages,validateTaskPreset} from '../task-envelope.js';
 import {userRevisionMessages,userRevisionMaterial} from '../user-revision.js';
@@ -70,7 +71,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const route=resolveRoute(d,w,'main');
    const capturedSettings=connectionSettings(route),manager=ctx().getPresetManager('openai');
   if(route.preset!==null&&route.preset!=='native'&&manager.getSelectedPresetName()!==route.preset){nativePreset(route.preset);await new Promise((resolve,reject)=>{const c=ctx(),event=c.eventTypes.OAI_PRESET_CHANGED_AFTER,beforeEvent=c.eventTypes.OAI_PRESET_CHANGED_BEFORE;let timer;const protect=change=>{if(change.presetName!==route.preset)return;keepPresetConnection({...change,settings:change.settings??c.chatCompletionSettings});};const cleanup=()=>{clearTimeout(timer);c.eventSource.removeListener(event,done);if(beforeEvent)c.eventSource.removeListener(beforeEvent,protect);};const done=()=>{cleanup();manager.getSelectedPresetName()===route.preset?resolve():reject(Error('原生预设切换目标不一致'));};if(beforeEvent)c.eventSource.on(beforeEvent,protect);c.eventSource.on(event,done);timer=setTimeout(()=>{cleanup();reject(Error('原生预设切换超时'));},5000);try{manager.selectPreset(manager.findPreset(route.preset));}catch(e){cleanup();reject(e);}});}
-  const source=route.preset===null?clone(await getBaseSource()):clone(getSource()),modular=route.preset===null||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));
+  const source=route.preset===null&&!isOnePassPreset(getSource())?clone(await getBaseSource()):clone(getSource()),modular=route.preset===null||source.prompts.some(p=>p.content?.includes('{{tisya_config_selected}}'));
   if(isTableContinuity(w)&&!modular)fail('仅表单接续需要缇斯亚配套预设，当前预设无法保证资料单一来源');
   if(!modular){if(compileSelected(d,w).ids.length||w.controller||w.context.entries.length)fail('当前预设尚未适配选中项装配，请选用 alpha.13 配套预设');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials:{text:'',ids:[]},settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:false};return;}
   if(options.agentMode||await isAgentEnabled())fail('本版选中项编译使用普通生成；Agent 执行适配接口已预留，请先关闭原生 Agent 模式');

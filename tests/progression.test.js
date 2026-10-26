@@ -4,12 +4,24 @@ import {project,prepareCommit,retrieval} from '../tables/ledger.js';
 import {progressionWindow,validateWorldProposal} from '../tables/progression.js';
 import {snapshotAnchor,branchSeed} from '../tables/branches.js';
 import {taskSlots} from '../tables/slots.js';
+import {prepareOnePassBatch} from '../onepass/tables.mjs';
+import {parseOnePassReply} from '../onepass/reply.mjs';
+import {onePassReply} from './fixtures/onepass-reply.js';
 const access={readers:[],knowers:['npc']};
 const row=(id,table,values,knowers=['npc'])=>({id,table,rev:1,values,access:{readers:[],knowers},source:'s0'});
 const actor=row('npc','objects',{名称:'林音',类型:'character',属性:{性格:'耐心但谨慎'}}),player=row('player','objects',{名称:'玩家',类型:'character'});
 function fixture(){const scene=row('scene','scene',{名称:'现状',当前时间:'2001-10-12 11:00',参与者:['player']}),work=row('work','activities',{名称:'练歌',主体:'npc',开始时间:'2001-10-12 10:00',推进至:'2001-10-12 10:00',目标:'复习歌曲',状态:'进行',进度:0});return {registry:defaultRegistry(),rows:[actor,player,scene,work],anchors:[{table:'scene',after:{当前时间:'2001-10-12 10:00'}},{table:'scene',after:{当前时间:'2001-10-12 11:00'}}],commits:[],last:null};}
 function proposal(){return {from:'2001-10-12 10:00',to:'2001-10-12 11:00',events:[{id:'new:event',name:'练歌推进',at:'2001-10-12 10:50',summary:'林音复习了歌曲，完成半小时练习后休息。',actors:['npc'],basis:[{id:'work',rev:1}],changes:[{id:'work',table:'activities',expected:1,values:{进度:50,推进至:'2001-10-12 10:50'}}]}],pending:[]};}
 const settings={playerObjects:['player'],focusObjects:['npc'],focusText:'歌唱成长'};
+test('one-pass settles offstage movement through the current body endpoint and rejects player/future moves',async()=>{
+ const view=fixture();view.rows=structuredClone(view.rows);view.rows.find(r=>r.id==='scene').values.当前时间='2001-10-12 10:00';view.anchors=[];
+ const state={basis:'now',focus:['npc'],worldSettings:settings,window:progressionWindow(view,settings)};
+ const vars=[{id:'scene',table:'scene',expected:1,values:{当前时间:'2001-10-12 11:00'},access:{readers:[],knowers:['npc']},evidence:'宋遥用擦布垫住铃口。'}];
+ const world={...proposal(),focus:[{id:'npc',state:'仍在练歌',possibility:'练习结束后休息'}]};
+ const reply=parseOnePassReply(onePassReply({basis:'now',vars,world}));const result=await prepareOnePassBatch(view,reply,state,{key:'current'});
+ assert.equal(result.commits.length,2);assert.equal(result.commits[1].depends,result.commits[0].id);assert.equal(result.commits[1].progression.to,'2001-10-12 11:00');assert.equal(result.changes,3);
+ for(const mutate of [p=>p.records.status.events[0].actors=['player'],p=>p.records.status.events[0].at='2001-10-12 11:01',p=>p.records.status.focus=[]]){const invalid=structuredClone(reply);mutate(invalid);await assert.rejects(prepareOnePassBatch(view,invalid,state,{key:'current'}));}
+});
 test('world advances by confirmed time with independent focus; unresolved player binding does not run',()=>{const view=fixture(),w=progressionWindow(view,settings);assert.equal(w.elapsedMinutes,60);assert.deepEqual(w.actors,['npc']);assert.equal(progressionWindow(view,{}).ready,false);view.commits.push({progression:{to:w.to}});assert.equal(progressionWindow(view,settings).ready,false);});
 test('generated world events carry private provenance, clocks, dependencies and growth anchors',()=>{const view=fixture(),w=progressionWindow(view,settings),r=validateWorldProposal(view,proposal(),w);const p=prepareCommit(view,r.proposal,{source:'s0',kind:'simulation',evidence:r.evidence,worldTime:w.to,allowedTables:['events','activities']});assert.equal(p.commit.changes.length,2);const e=p.rows.find(x=>x.table==='events'),work=p.rows.find(x=>x.id==='work');assert.deepEqual(e.access.readers,[]);assert.deepEqual(work.values.锚点事件,[e.id]);assert.equal(r.receipt.producer,'world-simulation');});
 test('world rejects future, stale evidence, player action, unknown secrets and native writes',()=>{const view=fixture(),w=progressionWindow(view,settings);for(const mutate of [p=>p.events[0].at='2001-10-12 11:01',p=>p.events[0].basis[0].rev=2,p=>p.events[0].actors=['player'],p=>p.events[0].changes[0].values.原生引用='/npc/training',p=>p.events[0].changes[0].values.推进至='2001-10-12 12:00']){const p=proposal();mutate(p);assert.throws(()=>validateWorldProposal(view,p,w));}view.rows.push(row('secret','events',{名称:'未送出的信',经过:'重要秘密'},['player']));const p=proposal();p.events[0].basis.push({id:'secret',rev:1});assert.throws(()=>validateWorldProposal(view,p,w),/未实际获知/);});

@@ -1,6 +1,7 @@
 import {usesV3Reply} from './reply-protocol.js';
 import {readV3Details} from './six/reply.mjs';
-export const readReplyDetails=source=>usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
+import {isOnePassReply,readOnePassDetails} from './onepass/reply.mjs';
+export const readReplyDetails=source=>isOnePassReply(source)?readOnePassDetails(source):usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
 import {validateMemoryProjection} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
 import {readReplyBlock,readPublicReplyEnvelope,readReplyMemory} from './reply-formats.js';
