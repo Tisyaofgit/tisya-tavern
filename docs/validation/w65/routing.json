@@ -1,0 +1,282 @@
+{
+  "protocol": "tisya-onepass-1",
+  "blocks": 11,
+  "rows": [
+    {
+      "id": "A01",
+      "variable": "缇斯亚叙事玩家代写",
+      "owner": "GlobalWritingRequirements",
+      "choices": [
+        "不代写",
+        "仅润色已给言行",
+        "补充轻微言行",
+        "完整代演"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "A02",
+      "variable": "缇斯亚叙事重大选择权限",
+      "owner": "GlobalWritingRequirements",
+      "choices": [
+        "留给玩家",
+        "允许代演"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "A03",
+      "variable": "缇斯亚叙事输入转述",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "不复述",
+        "简短承接",
+        "润色转述"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "A04",
+      "variable": "缇斯亚叙事玩家内心代写",
+      "owner": "GlobalWritingRequirements",
+      "choices": [
+        "不新增",
+        "仅复现用户明确提供",
+        "允许依人设推写"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "A05",
+      "variable": "缇斯亚叙事回合停点",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "待玩家选择时",
+        "自然段落节点",
+        "完成授权片段"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "A06",
+      "variable": "缇斯亚叙事创作模式",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "互动叙事",
+        "大纲扩写",
+        "场外讨论",
+        "总结整理"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "B01",
+      "variable": "缇斯亚叙事人称",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "第一",
+        "第二",
+        "第三"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "B02",
+      "variable": "缇斯亚叙事视角主体",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "玩家角色",
+        "指定 NPC",
+        "多人物轮换"
+      ],
+      "npcBindingRequiresReference": true
+    },
+    {
+      "id": "B03",
+      "variable": "缇斯亚叙事信息视角",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "外部观察",
+        "限知",
+        "全知"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "B04",
+      "variable": "缇斯亚叙事心理呈现",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "行为外化",
+        "视角人物内心",
+        "分段多人物内心"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "B05",
+      "variable": "缇斯亚叙事旁线呈现",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "关闭",
+        "场景切换时",
+        "独立分段穿插"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "B06",
+      "variable": "缇斯亚叙事秘密公开",
+      "owner": "GlobalWritingRequirements",
+      "choices": [
+        "不揭示未公开秘密",
+        "允许读者知情"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C02",
+      "variable": "缇斯亚叙事基调",
+      "owner": "PlotPreferences",
+      "choices": [
+        "随世界设定",
+        "明亮",
+        "冷峻",
+        "诙谐",
+        "悬疑",
+        "悲剧（BE）"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C03",
+      "variable": "缇斯亚叙事推进速度",
+      "owner": "PlotPreferences",
+      "choices": [
+        "慢写",
+        "均衡",
+        "快进"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C04",
+      "variable": "缇斯亚叙事剧情烈度",
+      "owner": "PlotPreferences",
+      "choices": [
+        "平静日常",
+        "适中",
+        "强冲突"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C05",
+      "variable": "缇斯亚叙事对白比重",
+      "owner": "DictionAndStyle",
+      "choices": [
+        "少",
+        "均衡",
+        "多",
+        "随场景"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C09",
+      "variable": "缇斯亚叙事表达纪律",
+      "owner": "DictionAndStyle",
+      "choices": [
+        "克制套话",
+        "更朴素",
+        "更有修辞"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "C10",
+      "variable": "缇斯亚叙事情绪表现",
+      "owner": "CharacterPortrayal",
+      "choices": [
+        "遵循人物",
+        "更克制",
+        "更外显"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "D01",
+      "variable": "缇斯亚叙事推演详度",
+      "owner": "NarrativeComposition",
+      "choices": [
+        "精简",
+        "标准",
+        "深入"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "D02",
+      "variable": "缇斯亚叙事人物推演重点",
+      "owner": "CharacterPortrayal",
+      "choices": [
+        "关键人物",
+        "全部相关在场人物",
+        "群像与旁线人物"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "D03",
+      "variable": "缇斯亚叙事创作摘要详度",
+      "owner": "GlobalWritingRequirements",
+      "choices": [
+        "简短",
+        "较详"
+      ],
+      "npcBindingRequiresReference": false
+    },
+    {
+      "id": "D04",
+      "variable": "缇斯亚叙事作者交流口吻",
+      "owner": "SpeechHabits",
+      "choices": [
+        "原本人格",
+        "收敛毒舌",
+        "简洁少言"
+      ],
+      "npcBindingRequiresReference": false
+    }
+  ],
+  "wordingChoices": 69,
+  "additionalControls": [
+    "C01 style/resources",
+    "C06 focus list",
+    "C07 range",
+    "C08 language/dialogue",
+    "E01 action bounds",
+    "seven feature switches",
+    "seven stages",
+    "three workflow details",
+    "summary",
+    "actions",
+    "three heart directions",
+    "initiative levels",
+    "user voice flags",
+    "difficulty",
+    "centrality",
+    "boundary",
+    "selected resources/player/focus"
+  ],
+  "evidence": [
+    "tests/preference-routing.test.js",
+    "tests/onepass-injection.test.js",
+    "tests/onepass.test.js"
+  ],
+  "notObserved": [
+    "model response",
+    "installed host",
+    "Android"
+  ],
+  "publication": "pending explicit authorization"
+}

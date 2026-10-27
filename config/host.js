@@ -1,5 +1,6 @@
+import {selectedHeartDirections} from '../heart-contract.js';
 import {isOnePassPreset} from '../onepass/preset.mjs';
-import {resolveOnePassSource,applyOnePassSource,assertOnePassInjection} from '../onepass/injection.mjs';
+import {resolveOnePassSource,applyOnePassSource,applyOnePassSelectedMaterials,assertOnePassInjection} from '../onepass/injection.mjs';
 import {compileNarrative} from '../narrative-bridge.js';
 import {keepPresetConnection} from '../preset-connection.js';
 import {TEXT_TASKS,textTaskPreset,textTaskMessages,validateTaskPreset} from '../task-envelope.js';
@@ -51,7 +52,8 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   for(const provider of registry.archives.values()){const rows=await provider.scan({context:c,world:clone(w)});if(!Array.isArray(rows))fail('档案扫描器返回格式无效：'+provider.id);for(const r of rows){if(!r.id||!r.name||typeof r.identity!=='string')fail('档案缺少稳定编号或身份描述');out.push({...r,id:provider.id+':'+r.id});}}
   const ids=new Set();return out.filter(r=>{if(ids.has(r.id))fail('档案编号冲突：'+r.id);ids.add(r.id);return true;});
  }
- async function resolveMaterials(d,w,task='main'){w=continuityWorld(w);const key=worldKey(ctx()),selected=compileSelected(d,w,task),all=await archives(w);if(worldKey(ctx())!==key)fail('世界已切换');const lines=[];if(w.controller){const row=all.find(r=>r.id===w.controller);if(!row)fail('主控档案已失效，请重新选择');lines.push('本世界 user／主控：'+row.name+'。\n'+row.identity);}for(const id of w.focus){const row=all.find(r=>r.id===id);if(!row)fail('关注档案已失效：'+id);lines.push('关注对象：'+row.name+'（'+row.type+'）。');}
+ function objectMaterials(w,all){const lines=[];if(w.controller){const row=all.find(r=>r.id===w.controller);if(!row)fail('主控档案已失效，请重新选择');lines.push('本世界 user／主控：'+row.name+'。\n'+row.identity);}for(const id of w.focus){const row=all.find(r=>r.id===id);if(!row)fail('关注档案已失效：'+id);lines.push('关注对象：'+row.name+'（'+row.type+'）。');}return lines;}
+ async function resolveMaterials(d,w,task='main',options={}){w=continuityWorld(w);const key=worldKey(ctx()),selected=compileSelected(d,w,task,options),all=await archives(w);if(worldKey(ctx())!==key)fail('世界已切换');const lines=objectMaterials(w,all);
   const seen=new Set(resources(d).filter(r=>selected.ids.includes(r.id)).map(r=>resourceText(r,w))); for(const ref of w.context.entries){const rows=await entries(ref.book),r=rows.find(x=>x.uid===ref.uid);if(!r)fail('所选世界书条目已失效：'+ref.book+'/'+ref.uid);if(!seen.has(r.content)&&r.content.trim()){lines.push(r.content);seen.add(r.content);}}
   for(const r of resources(d).filter(r=>selected.ids.includes(r.id)&&r.source)){const current=(await entries(r.source.book)).find(e=>e.uid===r.source.uid);if(!current)fail('已选资源来源失效：'+r.name);if(current.content!==r.content)fail('世界书资源已更新，请在配置中预览并重新保存：'+r.name);}
   if(selected.text)lines.push(selected.text);return {text:lines.join('\n\n'),ids:selected.ids,controller:w.controller};
@@ -72,7 +74,11 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   }
   if(!['quiet','impersonate'].includes(type))transport?.invalidate('main');if(type==='quiet'||type==='impersonate'){generation={passthrough:true};return;}const current=store.read(),{data:d}=current,w=continuityWorld(current.world);current.world=w;generation=null;
   if(contextOwner(w)==='native'){
-   generation={...current,passthrough:true,nativeContext:true,type,source:clone(getSource())};return;
+   const source=clone(getSource()),selected=isOnePassPreset(source)?compileSelected(d,w,'main',{includeBoundary:false,labels:true}):{text:'',ids:[]};
+   const selectedRows=resources(d).filter(r=>selected.ids.includes(r.id)),objectParts=isOnePassPreset(source)&&(w.controller||w.focus.length)?objectMaterials(w,await archives(w)):[];
+   for(const row of selectedRows.filter(r=>r.source)){const now=(await entries(row.source.book)).find(e=>e.uid===row.source.uid);if(!now||now.content!==row.content)fail('已选资源来源失效或已更新，请预览并重新保存：'+row.name);}
+   if(worldKey(ctx())!==current.key||store.read().revision!==current.revision)fail('装配期间聊天或配置已变化，请重新生成');
+   generation={...current,passthrough:true,nativeContext:true,type,source,materials:{...selected,parts:[...objectParts,...(selected.parts??[])]}};return;
   }
   const route=resolveRoute(d,w,'main');
    const capturedSettings=connectionSettings(route),manager=ctx().getPresetManager('openai');
@@ -81,7 +87,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(isTableContinuity(w)&&!modular)fail('仅表单接续需要缇斯亚配套预设，当前预设无法保证资料单一来源');
   if(!modular){if(compileSelected(d,w).ids.length||w.controller||w.context.entries.length)fail('当前预设尚未适配选中项装配，请选用 alpha.13 配套预设');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials:{text:'',ids:[]},settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:false};return;}
   if(options.agentMode||await isAgentEnabled())fail('本版选中项编译使用普通生成；Agent 执行适配接口已预留，请先关闭原生 Agent 模式');
-  const materials=await resolveMaterials(d,w),nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(nativeMvu)materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu};
+  const materials=await resolveMaterials(d,w,'main',{includeBoundary:!isOnePassPreset(source),labels:isOnePassPreset(source)}),nativeMvu=await prepareNativeMvu(ctx(),w,type,undefined,outputEnabled(source));if(nativeMvu)materials.text=[materials.text,nativeMvu.text].filter(Boolean).join('\n\n');if(store.read().revision!==current.revision||worldKey(ctx())!==current.key)fail('装配期间配置已变化，请重新生成');generation={...current,route,type,options:{quiet_prompt:String(options.quiet_prompt??'')},dryRun,materials,settings:{...clone(ctx().chatCompletionSettings),...pickConnection(capturedSettings),__tisyaModel:route.model||capturedSettings.__tisyaModel||ctx().getChatCompletionModel(capturedSettings)},source,modular:true,nativeMvu};
  }
  function historyInput(chat,type='normal'){
   if(type==='quiet'||type==='impersonate')return null;
@@ -100,19 +106,19 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
    let injection=null;const source=generation.source;
    if(isOnePassPreset(source)){
     if(JSON.stringify(getSource())!==JSON.stringify(source))fail('生成期间预设已变化，未发送混合版本');
-    const resolved=resolveOnePassSource(source,compileNarrative(ctx(),source,getMoods()).rest.entries);
-    const applied=applyOnePassSource(payload.messages??[],source,resolved);payload.messages=applied.messages;
+    const resolved=resolveOnePassSource(source,compileNarrative(ctx(),source,outputEnabled(source)&&selectedHeartDirections(generation.world.modes[generation.world.mode]).length?getMoods():[]).rest.entries);
+    const applied=applyOnePassSource(payload.messages??[],source,resolved);payload.messages=applyOnePassSelectedMaterials(applied.messages,source,generation.materials?.parts);
     if(outputEnabled(source)){injection={...assertOnePassInjection(payload.messages,source,generation.onePassContext),adaptedEntries:applied.expanded};validateBodyOverrides(payload,parseRequestBody);}
    }
    const directions=await getContractorMessages();appendContractorMessages(payload.messages,directions);const directives=[...revisionMessages(pendingRevision),...userDirectives()];if(directions.length||directives.length){payload.messages.push(...directives);await checkBudget(payload.messages,generation.world.context.maxInputTokens,ctx());}
    const prepared=await prepareTransport(payload,resolveRoute(generation.data,generation.world,'main').transport,generation);if(prepared?.plan){for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared.payload);sealPayload(payload);}
-   const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,...(injection?{injection}:{}),historyWindow:generation.historyWindow??null,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');if(injection)observeInjection(payload,snap);last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
+   const snap={at:new Date().toISOString(),world:generation.key,task:'main',contextOwner:'native',observedOnly:true,...(injection?{injection}:{}),selected:generation.materials?.ids??[],historyWindow:generation.historyWindow??null,route:{connection:'native',preset:'native',model:payload.model??''},messages:clone(payload.messages??[]),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');if(injection)observeInjection(payload,snap);last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
   }
   return;
  }const g=generation;if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');
   // Rebuild the controlled preset's material channels. Native worldbook activation
   // is not forwarded wholesale: selected refs and this turn's table activation only.
-  const c=ctx(),w=g.world,source=isOnePassPreset(g.source)?resolveOnePassSource(g.source,compileNarrative(c,g.source,getMoods()).rest.entries):g.source,preparedHistory=new Map(),historyStamp=historySignature(c);
+  const c=ctx(),w=g.world,source=isOnePassPreset(g.source)?resolveOnePassSource(g.source,compileNarrative(c,g.source,outputEnabled(g.source)&&selectedHeartDirections(w.modes[w.mode]).length?getMoods():[]).rest.entries):g.source,preparedHistory=new Map(),historyStamp=historySignature(c);
   if(isTableContinuity(w)&&!g.tableSlots?.state)fail('本轮表单组装尚未就绪，未发送缺失长期记忆的请求');
   if(g.nativeMvu){const now=await prepareNativeMvu(c,w,g.type,undefined,outputEnabled(source));if(!now||now.signature!==g.nativeMvu.signature||now.messageIndex!==g.nativeMvu.messageIndex||now.stateDigest!==g.nativeMvu.stateDigest||now.text!==g.nativeMvu.text)fail('原卡 MVU 来源或变量已变化，请重新生成');}
   if(g.modular)for(const m of selectedHistory(c,w,g.type))preparedHistory.set(m,await prepareMessage(clone(m)));

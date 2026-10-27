@@ -1,3 +1,4 @@
+const fissureEdge=new URL('./assets/actions/fissure-edge.png',import.meta.url).href;
 import {usesV3Reply} from './reply-protocol.js';
 import {readV3Details} from './six/reply.mjs';
 import {isOnePassReply,readOnePassDetails} from './onepass/reply.mjs';
@@ -73,5 +74,29 @@ export const replyControlsCSS=`
 @media(hover:hover){.tisya-reader-actions .action:hover:not(:disabled){filter:none;border-color:#dfc88d99;box-shadow:inset 0 1px 2px #e1e6c240,0 6px 18px #001a1840}}
 @media(max-width:360px){.tisya-reader-actions .action{grid-template-columns:22px minmax(0,1fr);gap:9px;padding:13px 11px}.tisya-reader-actions .action .text{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.tisya-reader-actions .action{transition:none}}
+/* Approved water-fissure action layout; shared by message and reader. */
+.tisya-reader-actions{gap:24px;padding:12px 0;isolation:isolate}
+.tisya-reader-actions .action{position:relative;isolation:isolate;display:block;box-sizing:border-box;width:calc(100% - 12px);margin:0 12px 0 0;padding:35px 20px 25px 42px;border:0;border-radius:0;outline:none;background:linear-gradient(105deg,#021510e8,#031914eb 65%,#051b1499);box-shadow:none;overflow:visible;transition:filter .18s ease}
+.tisya-reader-actions .action:nth-child(even){margin:0 0 0 12px;padding:35px 42px 25px 20px;background:linear-gradient(255deg,#021510e8,#031914eb 65%,#051b1499)}
+.tisya-reader-actions .action::before,.tisya-reader-actions .action::after{content:"";position:absolute;z-index:-1;pointer-events:none;left:0;right:0;height:36px;background-image:url("${fissureEdge}");background-size:100% 100%;background-repeat:no-repeat;opacity:.8}
+.tisya-reader-actions .action::before{top:-10px;transform:rotate(2deg)}
+.tisya-reader-actions .action::after{bottom:-10px;transform:rotate(182deg);opacity:.38}
+.tisya-reader-actions .action:nth-child(even)::before{transform:scaleX(-1) rotate(2deg)}
+.tisya-reader-actions .action .number{position:absolute;left:2px;top:8px;font:italic 40px/1 Georgia,serif;color:#b7c5ad5c;padding:0;letter-spacing:-.08em}
+.tisya-reader-actions .action:nth-child(even) .number{left:auto;right:4px}
+.tisya-reader-actions .action-content{gap:10px;position:relative;z-index:1}
+.tisya-reader-actions .action-type{position:absolute;left:-31px;top:38px;writing-mode:vertical-rl;border:0;border-radius:0;border-left:1px solid #cbb77d66;background:none;padding:0 0 0 5px;letter-spacing:.18em;font-size:11px}
+.tisya-reader-actions .action:nth-child(even) .action-type{left:auto;right:-31px;border-left:0;border-right:1px solid #cbb77d66;padding:0 5px 0 0}
+.tisya-reader-actions .action .text{font-size:16px;line-height:1.85}
+.tisya-reader-actions .action-possibility{position:relative;align-self:flex-end;max-width:95%;margin:4px 0 0 14px;padding:4px 0 0 17px;border:0;color:#c6ba94;font-size:11px;line-height:1.7;text-align:left}
+.tisya-reader-actions .action-possibility::before{content:"";position:absolute;left:-14px;top:2px;width:24px;height:12px;border-bottom:1px solid #beaa71;border-left:1px solid #beaa71;border-radius:0 0 0 14px}
+.tisya-reader-actions .action-possibility-label{font-size:10px;opacity:.8}
+.tisya-reader-actions .action.selected{outline:0;border:0;box-shadow:none;background-color:#122e23}
+.tisya-reader-actions .action.selected::before{opacity:1;filter:brightness(1.35)}
+.tisya-reader-actions .action.selected .action-type{background:none;border-color:#d9c78e}
+.tisya-reader-actions .action:focus-visible{outline:1px dashed #d9c78e;outline-offset:5px}
+@media(hover:hover){.tisya-reader-actions .action:hover:not(:disabled){border:0;box-shadow:none;filter:brightness(1.12)}}
+.tisya-reader-actions .action:active:not(:disabled){filter:brightness(1.2)}
+@media(max-width:360px){.tisya-reader-actions .action{padding:32px 14px 22px 35px}.tisya-reader-actions .action:nth-child(even){padding:32px 35px 22px 14px}.tisya-reader-actions .action .text{font-size:15px}.tisya-reader-actions .action .number{font-size:34px}.tisya-reader-actions .action-type{left:-27px}.tisya-reader-actions .action:nth-child(even) .action-type{right:-27px}}
 .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;

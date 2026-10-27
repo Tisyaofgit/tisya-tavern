@@ -1,3 +1,4 @@
+import {workflowDetail} from '../config/core.js';
 // W60 creative requirements in compact English; wire labels stay unchanged.
 export const CREATIVE_CONTRACT = `[CREATIVE.CONTRACT]
 Prose craft, character appeal/endearing traits, lively interaction, paragraph design, plot ingenuity, and setup/echo/payoff are mandatory quality dimensions. Select concrete designs suited to this scene and realize them in the body; labels such as "improve prose" or "add charm" are not designs.
@@ -39,6 +40,15 @@ Is a clue newly planted, advanced or paid off? Are its source, currently public 
 Repair found issues once; do not loop audit reports. After records actual results; data rows use finished prose and effective sources. Candidates are not facts; submission is not a save receipt.
 Then deliver once through the existing OUTPUT.GATE, COMMIT.READY and PREPARE_STEP.`
 };
+export const COMPACT_CREATIVE_STAGES = {
+ 身份复核:'Bind responder, narrator and actual player; apply selected authorship, viewpoint and language permissions. Reserve player choices and undisclosed interiority.',
+ 资料承接:'Resume the effective branch, time and current state from supplied sources. Keep facts, beliefs, plans and unknowns distinct; retain unfinished consequences.',
+ 视角认知:'Give each character only knowledge acquired through an established channel. Preserve viewpoint and reader-disclosure limits; ground any misreading in evidence.',
+ 人物反应:'Let each character respond and initiate from their own aims, history, abilities and boundaries, following CharacterPortrayal. Earn emotional and relational changes through conduct.',
+ 行动与剧情:'Advance feasible actions through established resources, resistance, cost and causality. Keep independent affairs in motion without inventing offstage outcomes; stop at reserved choices.',
+ 正文组织:'Realize selected preferences and StyleResources through distinct voices, consequential exchanges, concrete detail and varied paragraphs. Preserve the chosen language, wording bans and delivery structure.',
+ 成稿总检:'Repair repetition, stalled beats, unsupported knowledge and player flattery in the current draft. Report only actual outcomes; validate structure and evidence before one complete delivery.'
+};
 export const CREATIVE_BLOCKS = {
   "task": "偏好：<Confirmed or provisional? (明确要求/候选)>|<Where does it apply? (user-given scope)>|<What does the user explicitly want to experience, keep or avoid? (actual feedback only)>|<How should it apply this turn, and where does it stop? (concrete requirement/bounds; put literary design in its owning creative row)>",
   "before": `用户偏好|<How can the desired reading experience meet these characters' own wishes with a fresh flavor instead of repeating the last scene's reward? (this turn's experience and interaction focus)>
@@ -57,7 +67,7 @@ export const CREATIVE_BLOCKS = {
   "title": "<Which image, action, pun or renewed old phrase names this scene with an aftertaste? (at most 8 characters including punctuation; no spoiler)>|<What story time is it? (established time or ~)>|<Where is the scene? (established place labels; join with 、; absent ~)>|<Which world? (established label or ~)>",
   "body": "<How can the chosen craft become a naturally unfolding scene: intentions meeting in action and speech; each response changing the next line or move; appeal emerging through interaction; a vivid, precise sentence landing where it matters; paragraphs linked by action, objects, topics and feeling; setup answered under changed conditions? How can this turn land while leaving a playable opening worth returning to? (complete natural prose, not design explanations; consecutive paragraphs from 1, separated by blank lines; realize selected goals within all underlying constraints)>",
   "after": `本轮变化|<What new situation actually emerged? Which prepared turn, quick response or fulfilled expectation gave it more resonance than routine progression? (actual outcome and its enabling beat; no self-ratings)>
-角色主动|<Who proposed, adapted, chose or refused from their own judgment, changing what? (autonomous move and effect; do not retell the whole scene)>
+角色主动|<Which non-player character initiated an unscripted proposal, decision, refusal or action from their own aim, with what visible consequence in the body? Do not count player-supplied actions, passive reactions, repeated outlines or merely using the word active. If none occurred, report 留白 honestly. (autonomous move and effect; do not retell the whole scene)>
 世界动向|<Which independent affair advanced, and how did this world's rules, work or daily processes affect the scene? (settled progress; use 留白 if there was only background description)>
 关系位移|<Which probe, care, rejoinder, refusal or rapport produced a discernible change between people? What exchange gave it flavor and an aftereffect? (behavior-supported shift; no forced closeness, hostility or escalation)>
 人物厚度|<Whose appeal, endearing trait or edge came alive? How did it coexist with duty, self-interest, limitation or boundaries, making this individual memorable? (finished speech/action, optionally Pn; do not repeat the plan)>
@@ -93,9 +103,9 @@ export function applyCreativeRevision(out,configuration){
  // Preserve selected stages; mandatory permissions remain in their original sections.
  const selected=Object.entries(CREATIVE_STAGES).filter(([name])=>stages.includes(name));
  const followed=/^Followed dynamics — [^\n]+/m.exec(out.tisya_inner_chain)?.[0]??'';
- const guide=mode.workflowDetail==='format'
+ const guide=workflowDetail(mode)==='format'
   ? 'Apply existing identity, player authority, source, knowledge, causality and delivery rules at each enabled stage; keep reasoning private.'
-  : selected.map(([name,body])=>name+' —\n'+body).join('\n\n');
+  : selected.map(([name,body])=>name+' —\n'+(workflowDetail(mode)==='compact'?COMPACT_CREATIVE_STAGES[name]:body)).join('\n\n');
  out.tisya_inner_chain=out.tisya_inner_chain.replace(/\[CREATIVE.GUIDE\][\s\S]*?\[\/CREATIVE.GUIDE\]/,'[CREATIVE.GUIDE]\n'+followed+'\n'+guide+'\n[/CREATIVE.GUIDE]');
  out.tisya_registry=registry;
  return out;

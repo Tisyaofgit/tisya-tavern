@@ -15,6 +15,7 @@ export function mountRoundPanel(document,container,value,part){
  decorateWaterControl(button,new URL('./assets/controls/'+(part==='task'?'task':'pending')+'.svg',import.meta.url).href);
  const toggle=()=>{if(!alive||!container.isConnected)return;content.hidden=!content.hidden;button.setAttribute('aria-expanded',String(!content.hidden));};
  button.addEventListener('click',toggle);
+ if(part==='next'&&value.heartDiagnostic){const note=document.createElement('p');note.className='summary-diagnostic';note.setAttribute('role','status');note.textContent=value.heartDiagnostic;container.append(note);}
  const heart=mountHeartBlock(document,container,part==='task'?value.taskHeart:value.nextHeart,{label:six?(part==='task'?'开篇心声':'收篇心声'):(part==='task'?'任务心声':'剧情心声')});
  if(heart){heart.id=part+'-heart';placeholder.replaceWith(heart);}else placeholder.remove();
  const empty=(title,text,kind)=>{const ledger=mountOriginalLedger(document,content,title,[],kind),p=document.createElement('p');p.textContent=text;ledger.querySelector('.ledger-body').append(p);};

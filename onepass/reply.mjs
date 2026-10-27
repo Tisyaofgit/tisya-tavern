@@ -30,7 +30,7 @@ export function parseOnePassReply(source){
  for(const k of ['status','vars','archive','memory']){check(e.attrs[k]?.format==='json','FORMAT_'+k.toUpperCase());try{records[k]=strictJSON(e.blocks[k]);}catch{fail('JSON_'+k.toUpperCase());}check(records[k]&&typeof records[k]==='object'&&!Array.isArray(records[k]),'JSON_'+k.toUpperCase());}
  return {...e,publicReply,records};
 }
-export function readOnePassDetails(source){const e=onePassEnvelope(source),details=readV3Details(e.projected,{tolerant:true});return {...details,protocol:4,preferences:preferenceRows(e.blocks.task,details.diagnostics)};}
+export function readOnePassDetails(source){const e=onePassEnvelope(source),details=readV3Details(e.projected,{tolerant:true});const afterKinds=new Set(details.nextHeart.items.map(row=>row.type));const missing=details.taskHeart.items.filter(row=>!afterKinds.has(row.type)).map(row=>row.type);return {...details,protocol:4,...(missing.length?{heartDiagnostic:'原回复缺少收篇心声：'+missing.join('、')+'；未补写，其他内容保留。'}:{}),preferences:preferenceRows(e.blocks.task,details.diagnostics)};}
 function preferenceRows(text,diagnostics=null){const rows=[];for(const [index,raw]of text.split(/\r?\n/).entries()){
  const line=raw.trim();if(!line)continue;
  try{

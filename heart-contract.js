@@ -1,3 +1,10 @@
+export const HEART_DIRECTIONS=Object.freeze(['输入评价','回应用户评价','剧情吐槽']);
+export function selectedHeartDirections(mode){
+ const directions=mode?.heartDirections??HEART_DIRECTIONS;
+ if(!Array.isArray(directions)||new Set(directions).size!==directions.length||directions.some(d=>!HEART_DIRECTIONS.includes(d)))throw Error('心声方向无效，原设置保留。');
+ return [...directions];
+}
+
 // Generation contract only. Historical null moods remain readable as written.
 export function requireMoodNames(names){
  if(!Array.isArray(names)||!names.length||names.some(n=>typeof n!=='string'||!n.trim()||n==='null')||new Set(names).size!==names.length)throw Error('心声表情目录为空或无效，请检查表情图鉴后重试。');

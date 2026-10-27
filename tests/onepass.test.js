@@ -48,3 +48,16 @@ test('top preference, creative-draft and simulation panels render independently 
  assert.match(r.querySelector('#task-toggle').textContent,/草案与推演/);assert.match(r.querySelector('.preference-ledger').textContent,/明确要求/);assert.match(r.querySelector('.draft-ledger').textContent,/文风用词/);assert.match(r.querySelector('.simulation-ledger').textContent,/宋遥/);assert.match(r.querySelector('.audit-ledger').textContent,/关系位移/);assert.doesNotMatch(r.textContent,/test-basis|"coverage"/);
  r.querySelector('#task-toggle').click();r.querySelector('.simulation-ledger').open=true;const state=ui.capture();ui.dispose();ui=mountMessageVisual(d,target,p);ui.restore(state);r=ui.host.shadowRoot;assert.equal(r.querySelector('#task-content').hidden,false);assert.equal(r.querySelector('.simulation-ledger').open,true);ui.dispose();await w.happyDOM.abort();
 });
+
+test('each enabled heart direction remains in both phases across summary modes',()=>{
+ for(const summary of [true,false])for(let mask=0;mask<8;mask++){
+ const c=fullDefaultConfiguration(),m=c.world.modes.narrative;const directions=['输入评价','回应用户评价','剧情吐槽'];m.summary=summary;m.heartDirections=directions.filter((_,i)=>mask&(1<<i));const registry=onePassEntries(c,DEFAULT_MOODS).tisya_registry;
+ for(const phase of ['before','after']){const block=registry.match(new RegExp('<think phase="'+phase+'">([\\s\\S]*?)</think>'))[1];for(const d of directions)assert.equal(block.split('\n').filter(line=>line.startsWith(d+'|')).length,m.heartDirections.includes(d)?1:0);}
+ }
+});
+
+test('one-pass creative replacement retains the selected initiative directive and player boundary',()=>{
+ const c=fullDefaultConfiguration(),m=c.world.modes.narrative;m.narrative.缇斯亚叙事创作模式='互动叙事';m.narrative.缇斯亚叙事角色自主=true;
+ for(const level of ['自主互动','主动推进']){m.角色主动性=level;const out=onePassEntries(c,DEFAULT_MOODS);assert.match(out.tisya_material_rule_material,new RegExp('角色主动性·'+level));assert.match(out.tisya_material_rule_material,/不等待玩家设计大纲|不只复述玩家/);assert.match(out.tisya_material_rule_material,/人物的提议与决定不等于玩家已同意/);assert.doesNotMatch(out.tisya_inner_chain,/角色主动性·/);}
+ m.narrative.缇斯亚叙事角色自主=false;assert.doesNotMatch(onePassEntries(c,DEFAULT_MOODS).tisya_material_rule_material,/角色主动性·/);
+});

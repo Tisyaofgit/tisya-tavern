@@ -36,6 +36,18 @@ export function applyOnePassSource(messages,source,resolved){
  }
  return {messages:out,expanded};
 }
+// Native mode keeps the host's materials; append only explicitly selected
+// configuration resources at the existing material boundary, never history.
+export function applyOnePassSelectedMaterials(messages,source,parts){
+ const out=structuredClone(messages);if(!parts?.length)return out;
+ const system=cells(out,'system'),remaining=[];
+ for(const text of new Set(parts.filter(Boolean))){const count=system.reduce((n,c)=>n+occurrences(c.get(),text),0);if(count>1)fail('DUPLICATE_RESOURCE','本轮已选资源重复，未继续追加。');if(!count)remaining.push(text);}
+ if(!remaining.length)return out;
+ const boundary=enabledOnePassEntries(source).find(p=>p.identifier==='tisya_material_boundary_close'),marker=boundary?.content?.trim();
+ if(!marker)fail('MISSING_MATERIAL_BOUNDARY','已选配置资源缺少启用的资料结束入口，未发送缺失资源的请求。');
+ const count=system.reduce((n,c)=>n+occurrences(c.get(),marker),0);if(count!==1)fail('MATERIAL_BOUNDARY','本轮资料结束入口缺失或重复，未猜选资源位置。');
+ const target=system.find(c=>c.get().includes(marker));target.set(target.get().replace(marker,()=>remaining.join('\n\n')+'\n\n'+marker));return out;
+}
 export function assertOnePassInjection(messages,source,stateText){
  const system=cells(messages,'system').map(c=>c.get()).join('\n');
  const unresolved=/\{\{tisya_(?:live_onepass_[^{}]+|config_selected)\}\}/.exec(system);

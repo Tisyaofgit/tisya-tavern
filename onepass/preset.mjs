@@ -1,3 +1,4 @@
+import {applyUtilityAuthoring} from '../config/authoring-mode.js';
 import {applyCreativeRevision} from './creative.mjs';
 import {PIPE_ROWS} from './pipes.mjs';
 import {sixEntries,SIX_KEYS} from '../six/preset.mjs';
@@ -17,7 +18,7 @@ export function onePassEntries(configuration,moods,options={}){
  out.tisya_task_start=out.tisya_task_start.replace('No independent form or archival execution is implied.','ONEPASS_STATE supplies the actual registry, rows, revisions, focus and elapsed-world window. Classify these facts before creation; produce their updates once in this reply.');
  out.tisya_delivery_warning+='\nUse the complete eleven-block ONEPASS contract. Preserve every outer block, both public think digests and their configured comments. Follow the fixed-column pipes contract for state and archival proposals. Never copy historical layouts or claim persistence without a host receipt.';
  applyCreativeRevision(out,configuration);
- return out;
+ return applyUtilityAuthoring(out,configuration.world.modes.narrative);
 }
 const standards={
  所属事实:'Owning fact ID (must have a 事实发现 row in this batch)',快照:'Exact ONEPASS_STATE.basis',提交编号:'All submitted primary row IDs, including vars (join with 、; none [])',关联编号:'Related row ID (or ~)',缺项:'Precise missing prerequisite',解除条件:'Condition that permits resuming',
@@ -52,7 +53,7 @@ export const ONEPASS_CONTRACT=String.raw`
 [ONEPASS.CONTRACT]
 Use one native generation for prose and fixed-column record proposals; no extra form, memory or preference model call. The host validates against the same snapshot before saving; output is not a save receipt.
 Keep all eleven blocks in order: task/think-before/title/body/think-after/status/extra/vars/archive/memory/actions. Historical layouts do not override this contract. These instructions are English; prose and public cell text still follow the configured output language. Keep Chinese wire labels/enums exactly as shown.
-task: actual feedback only, always 偏好：status|scope|source|application, with four nonempty cells; status is 明确要求 or 候选. Do not drop 偏好：. When summaries are enabled, retain the five before choices in order and seven distinct after outcomes; absent outcomes use 留白|original category|specific reason. Preserve enabled comments/moods.
+task: actual feedback only, always 偏好：status|scope|source|application, with four nonempty cells; status is 明确要求 or 候选. Do not drop 偏好：. When summaries are enabled, retain the five before choices in order and seven distinct after outcomes; absent outcomes use 留白|original category|specific reason. Preserve enabled comments/moods. Every enabled comment direction MUST have one row in EACH think phase, before AND after: three selected directions mean six rows total, never three shared rows. After-comments respond to the finished result and must not repeat the opening. If no actual user appraisal exists, explicitly note its absence briefly instead of inventing one.
 Public columns: ordinary before/after rows 2; 设计 and 解锁 4; comments, 留白 and task rows inside after 3. Replace cell contents only; question clauses are not extra columns. Escape literal pipes. Both thinks contain brief public creative conclusions, never private reasoning.
 Ownership: memory = occurred events, facts, clues, timers and fact subtables; status = narrative descriptions, cognition, habit anchors; vars = existing business numbers/booleans; archive = batch IDs and pending gaps. No extra offstage settlement or candidates presented as events. extra retains authorized card displays, never write commands.
 Wire: fullwidth ： after each row label; | between cells; newline or & between records; 、 between list items. Lists are 1、2 or P1、P2, NOT [1,2], [Name,Name] or JSON; only [] denotes an empty list. Escape literal backslash, pipe, &, 、, LF, CR, TAB as \\, \|, \&, \、, \n, \r, \t; then XML-escape & and < once. A record-separator & may be &amp;. Keep column order/count; omit only trailing ~ cells, retaining interior ~ or empty cells. Do not emit placeholder questions/instructions.
