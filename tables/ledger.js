@@ -72,8 +72,8 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
    rows.delete(id);changes.push({id,before:copy(before),after:null,deleted:true});
    anchors.push({id:uuid('change'),group:batch,source,worldTime,recordedAt:now,row:id,table:table.id,operation:'delete',before:copy(before.values),after:null,evidence:op.evidence});continue;
   }
-  check(kind==='manual'||![...Object.keys(op.values),...(op.unset??[])].some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
-  const values=mergeValues(before?.values??{},op.values,table.fields,kind==='manual');if(table.id==='objects'&&op.values.属性&&kind!=='manual'){const type=index.types.get(normalized(values.类型??''));if(type)values.属性=mergeValues(before?.values.属性??{},op.values.属性,typeFields(registry,type.id),false);}check(op.unset===undefined||Array.isArray(op.unset)&&op.unset.every(k=>table.fields[k]&&!table.fields[k].required),'不能清除必填或未知字段');for(const key of op.unset??[])delete values[key];
+  check(kind==='manual'||![...Object.keys(op.values),...(op.unset??[]),...(op.unsetPaths??[]).map(path=>path[0])].some(k=>before?.lockedFields?.includes(k)),'更新涉及人工锁定字段，请人工确认：'+before?.values.名称);
+  const values=mergeValues(before?.values??{},op.values,table.fields,kind==='manual');if(table.id==='objects'&&op.values.属性&&kind!=='manual'){const type=index.types.get(normalized(values.类型??''));if(type)values.属性=mergeValues(before?.values.属性??{},op.values.属性,typeFields(registry,type.id),false);}check(op.unset===undefined||Array.isArray(op.unset)&&op.unset.every(k=>table.fields[k]&&!table.fields[k].required),'不能清除必填或未知字段');for(const key of op.unset??[])delete values[key];clearRegisteredPaths(values,op.unsetPaths??[],table.fields);
   if(kind==='import'&&before&&['scene','state','relations','cognition','holdings','tasks','timers','clues','activities','experiences','growth'].includes(table.id)&&JSON.stringify(values)!==JSON.stringify(before.values)){
    const prior=(view.anchors??[]).findLast(a=>a.row===before.id),current=calendarTime(prior?.worldTime),incoming=calendarTime(worldTime);
    check(current!==null&&incoming!==null&&incoming>=current,'手写历史缺少可核实的较晚时间，不能覆盖已有当前状态；请保留为历史事件或人工核对');
@@ -85,7 +85,7 @@ export function prepareCommit(view,proposal,{source,kind='archive',evidence,worl
    check(values.性质!=='推测偏好'||values.强度!=='必须','推测偏好不能升级为硬性要求');
   }
   if(['state','holdings'].includes(table.id)&&values.原生引用)check(!Object.hasOwn(op.values,'值')&&!Object.hasOwn(op.values,'数量')&&!Object.hasOwn(op.values,'值引用'),'原生变量由宿主执行，表单只保存引用');
-  const row={id,table:table.id,rev:(before?.rev??0)+1,values,access:{readers:op.access.readers.map(x=>ids.get(x)??x),knowers:op.access.knowers.map(x=>ids.get(x)??x)},source,lockedFields:kind==='manual'?[...new Set([...(before?.lockedFields??[]),...Object.keys(op.values),...(op.unset??[])])]:before?.lockedFields??[],updatedAt:now};validateRow(registry,row);rows.set(id,row);
+  const row={id,table:table.id,rev:(before?.rev??0)+1,values,access:{readers:op.access.readers.map(x=>ids.get(x)??x),knowers:op.access.knowers.map(x=>ids.get(x)??x)},source,lockedFields:kind==='manual'?[...new Set([...(before?.lockedFields??[]),...Object.keys(op.values),...(op.unset??[]),...(op.unsetPaths??[]).map(path=>path[0])])]:before?.lockedFields??[],updatedAt:now};validateRow(registry,row);rows.set(id,row);
   changes.push({id,before:before?copy(before):null,after:row});anchors.push({id:uuid('change'),group:batch,source,worldTime,recordedAt:now,row:id,table:table.id,operation:before?'update':'create',before:before?.values??null,after:copy(values),evidence:op.evidence});
  }
  for(const row of rows.values())validateRow(registry,row);validateReferences([...rows.values()],registry);
@@ -164,3 +164,11 @@ export function prepareRecoverable(view,proposal,options){
 }
 
 function mergeValues(before,patch,fields,replace){const out=copy(before);for(const [k,v]of Object.entries(patch)){const def=fields[k];out[k]=!replace&&object(v)&&object(before[k])&&['object','map'].includes(def?.type)?mergeValues(before[k],v,def.type==='map'?Object.fromEntries(Object.keys(v).map(key=>[key,def.items])):def.fields??{},false):copy(v);}return out;}
+
+// Only the compact form adapter emits these registered optional-field clears.
+function clearRegisteredPaths(values,paths,fields){
+ check(Array.isArray(paths)&&paths.length<=100,'嵌套清空路径无效');
+ for(const path of paths){check(Array.isArray(path)&&path.length>1&&path.length<=12&&path.every(k=>typeof k==='string'&&!['__proto__','constructor','prototype'].includes(k)),'嵌套清空路径无效');let node=values,defs=fields;
+  for(const [i,key]of path.entries()){check(Object.hasOwn(defs,key),'清空字段未登记');const def=defs[key];if(i===path.length-1){check(!def.required,'不能清空必填字段');if(node)delete node[key];}else{check(def.type==='object'&&def.fields,'不能穿过非登记对象字段');defs=def.fields;node=node?.[key];}}
+ }
+}

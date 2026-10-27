@@ -28,15 +28,17 @@ function rawCells(line,separator='|'){
 const decodeCell=text=>unxml(text.replace(/\\(.)/gs,(_,c)=>{check(Object.hasOwn({'\\':'\\','|':'|',n:'\n',r:'\r',t:'\t','、':'、'},c),'ESCAPE');return {'\\':'\\','|':'|',n:'\n',r:'\r',t:'\t','、':'、'}[c];}));
 export function splitV3Cells(line){return rawCells(line).map(decodeCell);}
 
-function rows(text,allowed,phase){
+function rows(text,allowed,phase,diagnostics=null){
  const result=[],seen=new Set();
  for(const [index,line] of text.split(/\r?\n/).entries()){if(!line.trim())continue;
+  try{
   const [label,...cells]=splitV3Cells(line),kind=label.trim(),prefix=phase.toUpperCase()+'_LINE_'+(index+1)+'_';
   check(allowed.has(kind),prefix+'LABEL');check(cells.length===allowed.get(kind),prefix+'COLUMNS');check(cells.every(c=>c.trim()),prefix+'EMPTY');
-  if(HEART.has(kind)||OUTCOMES.has(kind)||['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾'].includes(kind)){check(!seen.has(kind),'DUPLICATE_ROW');seen.add(kind);}
+  const unique=HEART.has(kind)||OUTCOMES.has(kind)||['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾'].includes(kind);if(unique)check(!seen.has(kind),'DUPLICATE_ROW');
   if(HEART.has(kind))check([...cells[1]].length<=80,'HEART_LENGTH');
   if(kind==='留白'){cells[0]=cells[0].trim();check(OUTCOMES.has(cells[0])&&!seen.has(cells[0]),prefix+'OUTCOME');seen.add(cells[0]);}
-  result.push({kind,cells});
+  if(unique)seen.add(kind);result.push({kind,cells});
+  }catch(error){if(!diagnostics)throw error;diagnostics.push({phase,line:index+1,code:error.code??'TISYA_V3_REPLY_INVALID',raw:line});}
  }
  return result;
 }
@@ -92,23 +94,24 @@ export const isV3ReplyMessage=source=>typeof source==='string'&&/^\s*<reply(?:\s
 export const isV3ReplyCandidate=source=>typeof source==='string'&&/^\s*(?:<!--[\s\S]*?-->\s*)*<(?:reply|output|think|thinking|world_thinking|character_mode|character_thinking|task|next|status|memory|actions)\b/i.test(source);
 export const extractV3Body=source=>parseV3Envelope(source).blocks.body;
 const heart=rows=>{const items=rows.filter(r=>HEART.has(r.kind)).map(r=>({type:r.kind,mood:r.cells[0],text:r.cells[1]}));return {status:items.length?'有内容':'沉默',items};};
-export function readV3Details(source){
- const e=typeof source==='string'?parseV3Reply(source):source;
+export function readV3Details(source,{tolerant=false}={}){
+ const diagnostics=[],envelope=tolerant&&typeof source==='string'?parseV3Envelope(source):null;
+ const e=envelope?{...envelope,before:rows(envelope.blocks.before,BEFORE,'before',diagnostics),after:rows(envelope.blocks.after,AFTER,'after',diagnostics)}:typeof source==='string'?parseV3Reply(source):source;
  const audit=e.after.filter(r=>OUTCOMES.has(r.kind)||r.kind==='留白').map(r=>({kind:r.kind==='留白'?r.cells[0]:r.kind,status:r.kind==='留白'?'留白':'落点',evidence:r.cells.at(-1)}));
- return {protocol:3,taskHeart:heart(e.before),nextHeart:heart(e.after),audit,rounds:{error:false,tasks:e.before.filter(r=>!HEART.has(r.kind)).map(r=>({label:r.kind,text:r.cells.join(' · ')})),delivered:e.after.filter(r=>r.kind==='已交付').map(r=>({text:r.cells[0]})),pending:e.after.filter(r=>TODO.has(r.kind)).map(r=>({label:r.kind,status:r.cells[0],text:r.cells[1]})),pendingError:false,candidates:e.after.filter(r=>r.kind==='候选').map(r=>({text:r.cells[0]}))},before:e.before,after:e.after};
+ return {protocol:3,diagnostics,taskHeart:heart(e.before),nextHeart:heart(e.after),audit,rounds:{error:false,tasks:e.before.filter(r=>!HEART.has(r.kind)).map(r=>({label:r.kind,text:r.cells.join(' · ')})),delivered:e.after.filter(r=>r.kind==='已交付').map(r=>({text:r.cells[0]})),pending:e.after.filter(r=>TODO.has(r.kind)).map(r=>({label:r.kind,status:r.cells[0],text:r.cells[1]})),pendingError:false,candidates:e.after.filter(r=>r.kind==='候选').map(r=>({text:r.cells[0]}))},before:e.before,after:e.after};
 }
 export function readV3Journey(){return {recordSource:'forms',scene:null,associations:[],memories:[],characters:[],changes:[],player:null};}
-export function readV3PublicEnvelope(source){
- const e=parseV3Reply(source),details=readV3Details(e);
+export function readV3PublicEnvelope(source,{tolerant=false}={}){
+ const e=tolerant?parseV3Envelope(source):parseV3Reply(source),details=readV3Details(tolerant?source:e,{tolerant});if(tolerant){e.title=titleOf(e);e.actions=actionsOf(e);e.paragraphs=readV3Paragraphs(e.blocks.body);e.before=details.before;e.after=details.after;}
  const task={tasks:details.rounds.tasks.map(r=>({type:r.label,plan:r.text})),audit:details.audit,heart:details.taskHeart};
  const next={heart:details.nextHeart,delivered:details.rounds.delivered.map(r=>r.text),tasks:details.rounds.pending.map(r=>({type:r.label,trigger:r.status,text:r.text})),actions:e.actions.map(r=>({...r,source:r.possibility}))};
  return {id:null,blocks:{task:JSON.stringify(task),title:JSON.stringify(e.title),body:e.blocks.body,next:JSON.stringify(next),extra:e.blocks.extra,actions:JSON.stringify({actions:next.actions})},attrs:{task:{format:'json'},title:{format:'json'},next:{format:'json'}},wire:{version:3,order:[...e.order]},projection:'public-ui',v3:e};
 }
 export function readV3Block(envelope,block){check(['task','title','next'].includes(block)&&typeof envelope?.blocks?.[block]==='string','BLOCK');return JSON.parse(envelope.blocks[block]);}
-export function inspectV3Message(source){
+export function inspectV3Message(source,{tolerant=false}={}){
  const result=attempt(()=>parseV3Envelope(source));if(result.error)return {structured:true,body:{error:result.error},journey:{error:result.error},actions:{error:result.error},details:{error:result.error}};
  const e=result.value,paragraphs=attempt(()=>readV3Paragraphs(e.blocks.body));
- return {structured:true,body:{value:e.blocks.body,paragraphs,count:attempt(()=>countBody(paragraphs.value?paragraphs.value.map(p=>p.raw).join('\n\n'):e.blocks.body,e.attrs.body.unit))},journey:{value:readV3Journey()},actions:attempt(()=>actionsOf(e)),details:attempt(()=>readV3Details(source)),v3:e};
+ return {structured:true,body:{value:e.blocks.body,paragraphs,count:attempt(()=>countBody(paragraphs.value?paragraphs.value.map(p=>p.raw).join('\n\n'):e.blocks.body,e.attrs.body.unit))},journey:{value:readV3Journey()},actions:attempt(()=>actionsOf(e)),details:attempt(()=>readV3Details(source,{tolerant})),v3:e};
 }
 
 function partition(e){

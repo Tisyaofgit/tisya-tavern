@@ -1,4 +1,4 @@
-// FT01 candidate definitions. Not imported by the production service; no stored registry changes.
+// Shared FT01 definitions. W61 installs only the approved optional facts subrecords; other candidate groups retain their existing opt-in workflow.
 export const FOUNDATION_DEFINITIONS = {
   "format": "tisya.foundation-template-catalog/1",
   "status": "candidate-not-installed",

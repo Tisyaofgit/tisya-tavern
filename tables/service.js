@@ -379,7 +379,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   return exclusive(async()=>{
    const c=capture(),loaded=await load(c,type==='regenerate'?'swipe':type),window=progressionWindow(loaded.view,playerSettings(c,loaded));
    const focus=[...new Set(c.settings.focusObjects??[])],basis=await digest([c.key,loaded.origin.stamp,loaded.session.stamp,loaded.chain.map(s=>s.key)]);
-   const state={basis,registry:loaded.view.registry,rows:loaded.view.rows,focus,window,worldSettings:{playerObjects:playerSettings(c,loaded).playerObjects,focusObjects:focus},windowKey:window.ready?await progressionKey(window):null};
+   const state={basis,registry:loaded.view.registry,rows:loaded.view.rows,aliases:Object.fromEntries(loaded.view.rows.map((row,i)=>[String(i+1),row.id])),focus,window,worldSettings:{playerObjects:playerSettings(c,loaded).playerObjects,focusObjects:focus},windowKey:window.ready?await progressionKey(window):null};
    const text='<ONEPASS_STATE>\n'+JSON.stringify(state).replaceAll('<','\\u003c')+'\n</ONEPASS_STATE>';
    check(text.length<=c.settings.contextChars,'单次填表快照超过已设上下文预算，未裁掉任何表格');c.guard();
    onePassPending={world:c.key,revision:c.revision,originStamp:loaded.origin.stamp,sessionStamp:loaded.session.stamp,prefix:loaded.chain.map(s=>s.key),state};

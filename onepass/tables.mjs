@@ -1,8 +1,15 @@
 import {prepareCommit} from '../tables/ledger.js';
+import {compilePipeRecords} from './pipes.mjs';
 import {validateWorldProposal,progressionWindow,progressionKey} from '../tables/progression.js';
 const check=(ok,message)=>{if(!ok)throw Error('单次填表：'+message);};
 const list=(v,name)=>check(Array.isArray(v)&&v.every(x=>typeof x==='string'&&x.trim()),name+'须为非空文本列表');
 export async function prepareOnePassBatch(view,reply,state,source){
+ if(reply.recordFormat==='pipes'){
+  const proposal=compilePipeRecords(view,reply,state),evidence=reply.publicReply.paragraphs.map(p=>p.raw).join('\n\n');
+  const base=prepareCommit(view,proposal,{source:source.key,kind:'archive',evidence,allowedTables:['events','facts','clues','timers','cognition','experiences','objects','scene','state','relations','holdings','tasks','activities','growth'],allowSchemaExtensions:false,inferSchemaFields:false});
+  base.commit.onePass={basis:state.basis,coverage:proposal.coverage,wire:'pipes/1',worldPending:[]};
+  return {commits:[base.commit],changes:base.commit.changes.length,pending:proposal.pending};
+ }
  const {vars,memory,status,archive}=reply.records;
  check(archive.basis===state.basis,'存档基线已变化');
  for(const [name,p] of Object.entries({vars,memory})){check(Array.isArray(p.changes)&&p.changes.length<=200,name+'缺少 changes');list(p.pending,name+'.pending');check(Object.keys(p).every(k=>['changes','pending'].includes(k)),name+'含未登记字段');}

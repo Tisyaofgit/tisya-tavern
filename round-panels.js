@@ -35,6 +35,7 @@ export function mountRoundPanel(document,container,value,part){
   if(six&&value.rounds.candidates?.length)mountOriginalLedger(document,content,'后续候选（尚未发生）',value.rounds.candidates,'candidate-ledger');
   if(value.rounds.pendingError){const p=document.createElement('p');p.setAttribute('role','status');p.textContent='待办记录未通过公开权限校验，原消息保留。';content.append(p);}
  }
+ for(const issue of value.diagnostics??[]){if((part==='task')!==(issue.phase!=='after'))continue;const fold=document.createElement('details'),head=document.createElement('summary'),raw=document.createElement('pre');fold.className='summary-diagnostic';fold.style.overflowWrap='anywhere';raw.style.whiteSpace='pre-wrap';head.textContent='第 '+issue.line+' 行暂未解析（'+issue.code+'）';raw.textContent=issue.raw;fold.append(head,raw);content.append(fold);}
  if(part==='task'){
   const counters=document.createElement('span');counters.className='top-counters';
   for(const [label,count]of [[six?'摘要':'任务',value.rounds.tasks?.length??0],['核验',value.audit.length],['待办',value.rounds.pending?.length??0]]){const bead=document.createElement('span'),n=document.createElement('b');bead.className='count-bead';n.textContent=String(count);bead.append(n,document.createTextNode(label));counters.append(bead);}

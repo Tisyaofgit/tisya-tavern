@@ -45,7 +45,8 @@ export function assertOnePassInjection(messages,source,stateText){
  for(const id of required)if(!enabled.has(id))fail('MISSING_ENTRY','单次完整输出缺少已启用的必需条目：'+id);
  const registry=[...system.matchAll(/\[REGISTRY\]([\s\S]*?)\[\/REGISTRY\]/g)].filter(x=>x[1].includes('[ONEPASS.CONTRACT]'));
  if(registry.length!==1)fail('MISSING_CONTRACT','本次请求未注入唯一的单次完整回复格式，未发送。');
- const contract=registry[0][1],tags=['<reply id="'+ONEPASS_ID+'">','<task format="pipes">','<think phase="before">','<title','<body','<think phase="after">','<status format="json">','<extra','<vars format="json">','<archive format="json">','<memory format="json">','<actions'];
+ const contract=registry[0][1],tags=['<reply id="'+ONEPASS_ID+'">','<task format="pipes">','<think phase="before">','<title','<body','<think phase="after">','<status','<extra','<vars','<archive','<memory','<actions'];
+ const machineFormats=[...contract.matchAll(/<(?:status|vars|archive|memory) format="(.*?)">/g)].map(x=>x[1]);if(machineFormats.length!==4||!['json','pipes'].some(f=>machineFormats.every(x=>x===f)))fail('INCOMPLETE_CONTRACT','本次数据块格式不一致或尚未支持，未发送。');
  let cursor=0;for(const tag of tags){const at=contract.indexOf(tag,cursor);if(at<0)fail('INCOMPLETE_CONTRACT','本次回复格式缺少或错排 '+tag+'；未发送。');cursor=at+tag.length;}
  if(!system.includes('[ID]')||!system.includes('[TASK.START]')||!system.includes('[PREPARE_STEP]')||!system.includes('[CREATIVE.GUIDE]'))fail('MISSING_GUIDE','本次请求缺少身份、资料承接或完整创作指导，未发送。');
  const states=[...system.matchAll(/<ONEPASS_STATE>\s*([\s\S]*?)\s*<\/ONEPASS_STATE>/g)];

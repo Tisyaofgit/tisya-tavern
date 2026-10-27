@@ -12,15 +12,15 @@ const read=name=>JSON.parse(fs.readFileSync(new URL('../presets/'+name,import.me
 const source=p=>({prompts:p.prompts,order:p.prompt_order.find(x=>x.character_id===100001).order});
 test('single-pass import retains all 62 legacy entries and dividers, with both new think blocks and complete creative guide',()=>{
  const old=read('Tisya-TauriTavern-0.2.0-alpha.13.json'),p=read('Tisya-One-Pass-1.json'),shape=p=>({...p,prompts:p.prompts.map(({content,...r})=>r)});assert.deepEqual(shape(p),shape(old));
- const e=onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS);for(const part of ['Preference','Style','Plot','Budget','Draft','Character','Charm','Mask','World','Logic','Fog','Calibration','Narrative','Audit','Handoff','Actions'])assert.match(e.tisya_inner_chain,new RegExp(part+' —'));
- assert.match(e.tisya_registry,/<task format="pipes">/);assert.match(e.tisya_registry,/<think phase="before">/);assert.match(e.tisya_registry,/<think phase="after">/);for(const k of ['status','vars','archive','memory'])assert.match(e.tisya_registry,new RegExp('<'+k+' format="json">'));assert.doesNotMatch(e.tisya_registry,/<next/);
+ const e=onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS);for(const part of ['身份复核','资料承接','视角认知','人物反应','行动与剧情','正文组织','成稿总检'])assert.match(e.tisya_inner_chain,new RegExp(part+' —'));
+ assert.match(e.tisya_registry,/<task format="pipes">/);assert.match(e.tisya_registry,/<think phase="before">/);assert.match(e.tisya_registry,/<think phase="after">/);for(const k of ['status','vars','archive','memory'])assert.match(e.tisya_registry,new RegExp('<'+k+' format="pipes">'));assert.doesNotMatch(e.tisya_registry,/<next/);
 });
 test('same live instance switches legacy, six, one-pass and back without stale or empty macro entries',()=>{
  let selected=source(read('Tisya-TauriTavern-0.2.0-alpha.13.json'));const macros={},c={extensionSettings:{},chatMetadata:{variables:{}},chatId:'one',characterId:0,characters:[{avatar:'one.png'}],registerMacro(k,fn){macros[k]=fn},unregisterMacro(){}};
  const runtime=registerLivePreset(c,()=>selected,()=>c,()=>DEFAULT_MOODS);
  const old=macros.tisya_live_tisya_registry();assert(old.length>1000);
  selected=source(read('Tisya-Six-Blocks-1.json'));assert.match(macros.tisya_live_six_tisya_registry(),/<think phase="before">/);
- selected=source(read('Tisya-One-Pass-1.json'));assert.match(macros.tisya_live_onepass_tisya_registry(),/ONEPASS.CONTRACT/);assert.match(macros.tisya_live_onepass_tisya_inner_chain(),/Draft —/);
+ selected=source(read('Tisya-One-Pass-1.json'));assert.match(macros.tisya_live_onepass_tisya_registry(),/ONEPASS.CONTRACT/);assert.match(macros.tisya_live_onepass_tisya_inner_chain(),/正文组织 —/);
  selected=source(read('Tisya-TauriTavern-0.2.0-alpha.13.json'));assert.equal(macros.tisya_live_tisya_registry(),old);runtime.dispose();
 });
 test('eleven-block reply retains both thinks, machine blocks, prose offsets and native display',()=>{

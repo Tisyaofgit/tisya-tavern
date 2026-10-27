@@ -1,4 +1,5 @@
 import {applyConditionTemplates,validateCondition,CAPTURE_RULES} from './conditions.js';
+import {FOUNDATION_DEFINITIONS} from './foundation-definitions.js';
 // Form definitions are data shared by Genesis, archive filling and the editor.
 export const FORMAT = 'tisya.tables/1';
 export const copy = value => structuredClone(value);
@@ -16,7 +17,7 @@ const pair = () => f('object',{fields:{正面:scale(),负面:scale()}});
 const table = (id, name, fields, owner='archive') => ({id, name, aliases:[], version:1, owner, fields:{名称:f('text',{required:true}), ...fields}});
 export const TABLES = [
  table('objects','常量档案',{类型:f('type',{required:true}),别名:f('texts'),...text('世界 描述 核心引用'),...refs('关联'),标签:f('texts'),发现环境:f('object',{fields:{地点:f('refs'),时段:f(),出现条件:f(),来源依据:f(),确认程度:f('enum',{values:['设定明确','当事人陈述','一次观察']}),可复用:f('boolean')}}),属性:f('object')}),
- table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts')}),
+ table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts'),...structuredClone(FOUNDATION_DEFINITIONS.schemaChanges.find(x=>x.kind==='table'&&x.id==='facts').fields)}),
  table('scene','场景与全局进度',{...text('世界 时代 场景 地点 当前时间 阶段'),...refs('参与者'),标志:f('object')}),
  table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
  table('relations','关系',{主体:f('ref',{required:true}),对象:f('ref',{required:true}),维度:f('object'),好感:pair(),声望:pair(),印象:f('map',{items:scale()}),...refs('锚点事件'),...text('证据 生效时间')}),
@@ -27,7 +28,7 @@ export const TABLES = [
  table('clues','伏笔线索',{...text('已出现内容 阶段 公开范围 推进条件'),...refs('事件 对象')}),
  table('events','历史事件记忆',{...text('时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波'),触发线索:f('texts'),...refs('参与者 关联事件 前置事件 后续事件'),标签:f('texts'),原文段落:f('texts')}),
  table('activities','进行中事务',{主体:f('ref',{required:true}),...text('目标 行动 开始时间 推进至 预计结束 阻力 下一步'),进度:f('number',{min:0,max:100}),状态:f('enum',{values:['计划','进行','等待','完成','取消']}),...refs('任务 地点 知情依据 锚点事件'),资源:f('object')}),
- table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
+ table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界 内在动因 初始成因 心理'),动作:f('texts'),神态:f('texts'),语言:f('texts'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
  table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
  table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
  table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),倾向区间:f('map',{items:preferenceInterval()}),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
