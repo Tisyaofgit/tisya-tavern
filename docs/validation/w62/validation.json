@@ -1,0 +1,218 @@
+{
+  "branch": "trial/reply6",
+  "release": "0.2.0-alpha.31.31.19-onepass.5",
+  "remote_ref": {
+    "ref": "refs/heads/trial/reply6",
+    "node_id": "REF_kwDOVAv_s7dyZWZzL2hlYWRzL3RyaWFsL3JlcGx5Ng",
+    "url": "https://api.github.com/repos/Tisyaofgit/tisya-tavern/git/refs/heads/trial/reply6",
+    "object": {
+      "sha": "9b270d354193d5f4b32e7950392012817fe823d7",
+      "type": "commit",
+      "url": "https://api.github.com/repos/Tisyaofgit/tisya-tavern/git/commits/9b270d354193d5f4b32e7950392012817fe823d7"
+    }
+  },
+  "remote_tree": "a88857627732b7af626beeb17590dd9f9072a4f6",
+  "release_commit": "9b270d354193d5f4b32e7950392012817fe823d7",
+  "parent": "955d2e6182c4f59798e3fbc63318898ece388e0c",
+  "local_commit": "3c40b9948259ae5065793433ce81b08e25c3aaa4",
+  "source_restoration_files": 765,
+  "create_tree": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "a88857627732b7af626beeb17590dd9f9072a4f6"
+    },
+    "isError": false
+  },
+  "create_commit": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "9b270d354193d5f4b32e7950392012817fe823d7"
+    },
+    "isError": false
+  },
+  "update_ref": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "success": true
+    },
+    "isError": false
+  },
+  "manifest_readback": {
+    "content": "{\n  \"display_name\": \"缇斯亚 · 月潮\",\n  \"version\": \"0.2.0-alpha.31.31.19-onepass.5\",\n  \"author\": \"Tisya Project\",\n  \"loading_order\": 100,\n  \"requires\": [],\n  \"optional\": [],\n  \"js\": \"runtime.js\",\n  \"css\": \"shell.css\",\n  \"hooks\": {\n    \"chatSurface\": \"registerChatSurface\"\n  },\n  \"description\": \"单次完整输出试用：保留双 think，将正文填表、记忆归档和世界场外推进合入同一回复；兼容既有聊天格式和用户数据。\",\n  \"generate_interceptor\": \"tisyaHistoryInput\"\n}\n",
+    "encoding": "utf-8",
+    "sha": "ef111ea25ee8f9ed1457f565b5a6d864dd723ef0",
+    "display_url": "https://github.com/Tisyaofgit/tisya-tavern/blob/trial/reply6/manifest.json",
+    "display_title": "manifest.json"
+  },
+  "pre_publish_target_tree_error": {
+    "content": [
+      {
+        "type": "text",
+        "text": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/trees#get-a-tree\",\"status\":\"404\"}"
+      }
+    ],
+    "structuredContent": {
+      "error": "GitHub API error 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/trees#get-a-tree\",\"status\":\"404\"}",
+      "error_code": "NOT_FOUND",
+      "error_data": {
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/git/trees#get-a-tree",
+        "status": "404"
+      }
+    },
+    "isError": true
+  },
+  "skill_reference_errors": [
+    {
+      "resource": "continuation.md",
+      "error": "failed to read skill resource",
+      "resolution": "read existing executor references; current README/cloud main and user's 90-minute rule remain authoritative"
+    },
+    {
+      "resource": "maintenance.md",
+      "error": "failed to read skill resource",
+      "resolution": "read existing executor references; current README/cloud main and user's 90-minute rule remain authoritative"
+    },
+    {
+      "resource": "project-workspaces.md",
+      "error": "failed to read skill resource",
+      "resolution": "read existing executor references; current README/cloud main and user's 90-minute rule remain authoritative"
+    },
+    {
+      "resource": "task-checkpoints.md",
+      "error": "failed to read skill resource",
+      "resolution": "read existing executor references; current README/cloud main and user's 90-minute rule remain authoritative"
+    }
+  ],
+  "test_boundary": "Existing full suite and focused logs from this same W62 workspace; neutral local Chromium fixture; no new external-model/installed-native/Android run",
+  "ui": {
+    "passed": true,
+    "browser": "133.0.6943.0",
+    "checks": [
+      {
+        "kind": "message",
+        "width": 320,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "message",
+        "width": 360,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "message",
+        "width": 430,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "message",
+        "width": 900,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "reader",
+        "width": 320,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "reader",
+        "width": 360,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "reader",
+        "width": 430,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      },
+      {
+        "kind": "reader",
+        "width": 900,
+        "cards": 4,
+        "overflow": false,
+        "smallTextBelow": true,
+        "actionOnly": true
+      }
+    ],
+    "boundary": "Local Chromium, production modules/CSS and neutral fixture; not Android or installed TauriTavern."
+  },
+  "token_counts": {
+    "cl100k_base": {
+      "w61-source": {
+        "all_prompts": 19136,
+        "format": 10050,
+        "guide": 1871
+      },
+      "w62-source": {
+        "all_prompts": 13493,
+        "format": 5096,
+        "guide": 1182
+      }
+    },
+    "o200k_base": {
+      "w61-source": {
+        "all_prompts": 16004,
+        "format": 7822,
+        "guide": 1413
+      },
+      "w62-source": {
+        "all_prompts": 12838,
+        "format": 4913,
+        "guide": 1156
+      }
+    }
+  },
+  "focused_test_raw": "✔ built-in keeps the complete 62-entry plaintext preset and both creative digests (1.996124ms)\n✔ first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched (21.332573ms)\n✔ upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset (6.047669ms)\n✔ selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions (7.852812ms)\n✔ failed native save keeps saved and live data, and does not report an installation (22.697406ms)\n✔ missing native capability and active generation reject before a write (8.105204ms)\n✔ concurrent initialization is one native save (4.742745ms)\n✔ refresh timeout stays visible; reopened stale active settings load the saved release (14.690837ms)\n✔ download contains complete instructions without a core or selected-material macro dependency (3.137437ms)\n✔ native requests expand the already-imported macro preset even when the host macro substitution is unavailable (49.003623ms)\n✔ embedded preset follows current writing controls without overwriting the imported file (164.847488ms)\n✔ user edits, custom order, extra materials and multimodal content remain intact (27.707925ms)\n✔ missing instructions or wrong table snapshot fail before JSON serialization and cannot be replaced by historical examples (107.90099ms)\n✔ turning off structured output removes machine contract while preserving ordinary writing instructions (26.975745ms)\n✔ request inspection observes exact host-fetch bytes with transport off, preserving the original request and response (57.26636ms)\n✔ late host history cleanup is observed by the exact turn state; lost instructions block dispatch (96.432915ms)\n✔ fixed-column full memory archive maps to the existing event/fact/clue/timer records and stable references (24.87697ms)\n✔ state owns cognition and all habit fields; values preserve zero and false without a second writer (11.625295ms)\n✔ wire separates records and lists only before decoding escaped literal characters (3.055076ms)\n✔ missing references/evidence, mismatched basis, extra columns, wrong enum and stale values reject atomically (9.042036ms)\n✔ unprovided, explicit clear and actual empty list stay distinct on update (6.510211ms)\n✔ all old data survives additive optional schema registration (2.407701ms)\n✔ one malformed before row preserves every valid panel, title, after and original text; it is not accepted for archive (74.539106ms)\n✔ approved literary dimensions coexist with the unmodified authority rules and current controls (4.018386ms)\n✔ nested explicit clear removes only the optional field and respects existing manual locks (6.885045ms)\n✔ a named but empty archival row and fabricated original quotation cannot count as delivered memory (5.703663ms)\n✔ English skeleton keeps every registered column and the original complete writing constraints (2.018607ms)\n✔ the reported wire mistakes are readable syntax but cannot guess IDs, paths or an incomplete commit list (9.834043ms)\n✔ a machine-column error identifies block, line and counts without hiding the readable reply (33.147699ms)\n✔ single-pass import retains all 62 legacy entries and dividers, with both new think blocks and complete creative guide (6.597299ms)\n✔ same live instance switches legacy, six, one-pass and back without stale or empty macro entries (92.434528ms)\n✔ eleven-block reply retains both thinks, machine blocks, prose offsets and native display (16.232191ms)\n✔ complete bare preference rows read like canonical rows without changing the original reply (3.439513ms)\n✔ preference compatibility never guesses an unknown label or missing column (6.958712ms)\n✔ invalid machine JSON leaves visible prose, both summaries and actions readable and does not become a successful archive (2.489482ms)\n✔ host-appended status marker retains its native card display region (1.2401ms)\n✔ missing and reordered blocks are rejected without manufacturing replacements (1.154513ms)\n✔ top preference, creative-draft and simulation panels render independently and retain folds (110.5451ms)\n✔ public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks (51.791185ms)\n✔ broken heart state has a local error while body and source remain intact; display text is not executable markup (4.265321ms)\n✔ reader hides paragraph labels while keeping canonical source references and shows heart/audit tab (23.579177ms)\n✔ draft changed during input notification prevents direct send and preserves user text (5.645957ms)\n✔ a held action cannot be submitted twice and a disposed menu cannot apply anything (8.358047ms)\n✔ action cards show type and a secondary possibility while submitting only the chosen action (7.746746ms)\nℹ tests 44\nℹ suites 0\nℹ pass 44\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 687.744069\n",
+  "release_recovery": {
+    "utc": "2026-10-27T08:58:13.235512+00:00",
+    "branch": "trial/reply6",
+    "remote_head_observed": "955d2e6182c4f59798e3fbc63318898ece388e0c",
+    "remote_manifest_observed": "0.2.0-alpha.31.31.19-onepass.4",
+    "local_commit": "3c40b9948259ae5065793433ce81b08e25c3aaa4",
+    "target_tree": "a88857627732b7af626beeb17590dd9f9072a4f6",
+    "uploaded_records_verified": 24,
+    "status": "all blob records match; remote target tree absent; create tree and commit then advance ref",
+    "test_counts": {
+      "tests": 1276,
+      "pass": 1276,
+      "fail": 0,
+      "skipped": 0
+    },
+    "clock_deadline_utc": "2026-10-27T09:26:04Z"
+  }
+}
