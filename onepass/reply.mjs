@@ -31,11 +31,19 @@ export function parseOnePassReply(source){
  return {...e,publicReply,records};
 }
 export function readOnePassDetails(source){const e=onePassEnvelope(source),details=readV3Details(e.projected,{tolerant:true});return {...details,protocol:4,preferences:preferenceRows(e.blocks.task,details.diagnostics)};}
-function preferenceRows(text,diagnostics=null){const rows=[];for(const [index,line]of text.split(/\r?\n/).entries()){if(!line.trim())continue;try{check(line.startsWith('偏好：'),'TASK_LABEL');const cells=splitV3Cells(line.slice(3));check(cells.length===4&&['明确要求','候选'].includes(cells[0])&&cells.every(x=>x.trim()),'TASK_ROW');rows.push({label:cells[0],status:cells[1],text:cells.slice(2).join(' · ')});}catch(error){if(!diagnostics)throw error;diagnostics.push({phase:'task',line:index+1,code:error.code,raw:line});}}return rows;}
+function preferenceRows(text,diagnostics=null){const rows=[];for(const [index,raw]of text.split(/\r?\n/).entries()){
+ const line=raw.trim();if(!line)continue;
+ try{
+  // A missing row prefix is unambiguous only for these two complete four-cell forms.
+  const prefixed=line.startsWith('偏好：');check(prefixed||/^(明确要求|候选)\|/.test(line),'TASK_LABEL');
+  const cells=splitV3Cells(prefixed?line.slice(3):line).map(x=>x.trim());check(cells.length===4&&['明确要求','候选'].includes(cells[0])&&cells.every(Boolean),'TASK_ROW');
+  rows.push({label:cells[0],status:cells[1],text:cells.slice(2).join(' · ')});
+ }catch(error){if(!diagnostics)throw error;diagnostics.push({phase:'task',line:index+1,code:error.code,raw});}
+}return rows;}
 
 export function readOnePassPublic(source){return readV3PublicEnvelope(onePassEnvelope(source).projected,{tolerant:true});}
 export function inspectOnePass(source){
- try{const e=onePassEnvelope(source),result=inspectV3Message(e.projected,{tolerant:true});if(result.details.value){try{result.details.value=readOnePassDetails(source);}catch(error){result.details={error:error.code};}}try{parseOnePassReply(source);}catch(error){result.records={error:error.code??'TISYA_ONEPASS_RECORDS'};}return result;}
+ try{const e=onePassEnvelope(source),result=inspectV3Message(e.projected,{tolerant:true});if(result.details.value){try{result.details.value=readOnePassDetails(source);}catch(error){result.details={error:error.code};}}try{parseOnePassReply(source);}catch(error){result.records={error:error.code??'TISYA_ONEPASS_RECORDS',...(error.detail?{detail:error.detail}:{})};}return result;}
  catch(error){const code=error.code??'TISYA_ONEPASS_INVALID';return {structured:true,body:{error:code},details:{error:code},journey:{error:code},actions:{error:code}};}
 }
 export function runOnePassDisplay(options){return runV3Display({...options,source:onePassEnvelope(options.source).projected});}

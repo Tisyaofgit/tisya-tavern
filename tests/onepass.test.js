@@ -26,6 +26,18 @@ test('same live instance switches legacy, six, one-pass and back without stale o
 test('eleven-block reply retains both thinks, machine blocks, prose offsets and native display',()=>{
  const s=onePassReply(),e=parseOnePassReply(s);assert.deepEqual(Object.keys(e.blocks),ONEPASS_ORDER);assert.equal(e.records.vars.changes.length,0);assert.match(revisionBody(s),/宋遥/);assert.equal(revisionParagraphs(s).length,2);assert.equal(inspectMessage(s).details.value.protocol,4);assert.match(runReplyDisplay({source:s}).body,/铜铃/);assert.doesNotThrow(()=>parseOnePassReply(s+'\n<StatusPlaceHolderImpl/>'));
 });
+test('complete bare preference rows read like canonical rows without changing the original reply',()=>{
+ const canonical=onePassReply(),bare=canonical.replace('偏好：明确要求|','  明确要求|');
+ assert.doesNotThrow(()=>parseOnePassReply(bare));
+ const result=inspectMessage(bare);assert.deepEqual(result.details.value.preferences,inspectMessage(canonical).details.value.preferences);assert.equal(result.details.value.diagnostics.length,0);assert.equal(result.records?.error,undefined);
+ assert(bare.includes('  明确要求|'));assert.doesNotThrow(()=>parseOnePassReply(canonical.replace('偏好：明确要求|','候选|')));
+});
+test('preference compatibility never guesses an unknown label or missing column',()=>{
+ const source=onePassReply();
+ for(const row of ['明确要求|本轮|少一列','明确要求|本轮|来源|执行|多一列','错误标签|本轮|来源|执行','偏好：候选|本轮||执行']){
+  const bad=source.replace(/偏好：明确要求\|[^\n]+/,row);assert.throws(()=>parseOnePassReply(bad));const result=inspectMessage(bad);assert.equal(result.details.value.preferences.length,0);assert.equal(result.details.value.diagnostics.length,1);assert.equal(result.actions.value.length,4);assert.match(result.body.value,/宋遥/);
+ }
+});
 test('invalid machine JSON leaves visible prose, both summaries and actions readable and does not become a successful archive',()=>{
  const s=onePassReply().replace('<vars format="json">','<vars format="json">BROKEN');assert.throws(()=>parseOnePassReply(s),{code:'TISYA_ONEPASS_JSON_VARS'});const v=inspectMessage(s);assert.match(v.body.value,/宋遥/);assert.equal(v.details.value.protocol,4);assert.equal(v.actions.value.length,4);assert.equal(v.records.error,'TISYA_ONEPASS_JSON_VARS');assert.match(runReplyDisplay({source:s}).body,/铜铃/);
 });

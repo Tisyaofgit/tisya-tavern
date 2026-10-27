@@ -16,7 +16,7 @@ export function parsePipeBlock(text,block){
  check(Object.hasOwn(PIPE_ROWS,block),'未登记区块');const rows=[];let common={};
  for(const [index,line] of unxml(text).split(/\r?\n/).entries())for(const part of splitPipeRaw(line,'&')){
   if(!part.trim())continue;const at=part.indexOf('：');check(at>0,block+'第 '+(index+1)+' 行缺少类别冒号');const kind=part.slice(0,at).trim(),fields=PIPE_ROWS[block][kind];check(fields,block+' 未登记类别 '+kind);
-  const cells=splitPipeRaw(part.slice(at+1).trim(),'|').map(x=>x.trim());check(cells.length<=fields.length,block+'.'+kind+' 列数过多');while(cells.length<fields.length)cells.push('~');for(const c of cells)decodePipeCell(c);
+  const cells=splitPipeRaw(part.slice(at+1).trim(),'|').map(x=>x.trim());check(cells.length<=fields.length,block+' 第 '+(index+1)+' 行 '+kind+' 列数过多：应为 '+fields.length+' 列，实际 '+cells.length+' 列；正文中的 | 须写为 \\|');while(cells.length<fields.length)cells.push('~');for(const c of cells)decodePipeCell(c);
   const values=Object.fromEntries(fields.map((key,i)=>[key,cells[i]]));if(kind==='共用'){common=values;continue;}rows.push({kind,values,common:{...common},line:index+1});check(rows.length<=400,'记录数量超过上限');
  }return {format:'pipes',rows};
 }

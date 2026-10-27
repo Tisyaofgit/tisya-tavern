@@ -20,31 +20,48 @@ export function onePassEntries(configuration,moods,options={}){
  return out;
 }
 const standards={
- 编号:'既有编号；新增用 +E1、+F1 等不同编号',所属事实:'本次事实发现行编号',快照:'逐字填写 ONEPASS_STATE.basis',提交编号:'本次所有实际提交的主记录编号列表；无变化用 []',关联编号:'相关记录编号或 ~',缺项:'精确缺项',解除条件:'继续所需的实际条件',
- 证据:'本条完整正文段号列表 P1、P2；无证据的记录列入待定',原文段号:'本条正文段号列表 P1、P2；= 继承证据',读者:'获准读者或对象编号列表；无人用 []',知情者:'有实际获知依据的对象编号列表；无人用 []',
- 对象:'对象编号列表；= 继承本组共用对象',主体:'单一对象编号；= 仅继承单个共用对象',参与者:'对象编号列表；= 继承共用对象',事实:'事实编号列表',相关对象:'对象编号列表',锚点事件:'已发生事件编号列表',
- 确认程度:'K0/K1/K2/K3；确定程度与认识真假分别保存',登记字段路径:'快照登记的 table.字段；不填脚本或原生变量路径',原值:'快照中该字段的实际值',新值:'有依据的新数值或 true/false',变化后文本:'实际变更后的叙事描述',
- 地点:'地点编号列表',故事时间:'已确定故事时间；未知用 ~',生效时间:'已确定生效时间；= 继承共用故事时间',到期轮次:'绝对已保留 AI 回复数，不是延后轮数',
- 公开范围:'读者或对象编号列表；不得推定获得知识',阶段:'埋设/推进/回收/作废',类别:'喜好/厌恶/习惯/回忆/安心方式/边界',默契层次:'共同经历/明确约定/单方联想/待确认',确定性:'明确自述/反复表现/单次观察/暂定',有效性:'描述：有效/失效/待确认；习惯：有效/已改变/待确认',状态:'等待/到期/完成/取消',领域:'方向/法则/空间/生态/社会/生活/文化/时间'
+ 所属事实:'Owning fact ID (must have a 事实发现 row in this batch)',快照:'Exact ONEPASS_STATE.basis',提交编号:'All submitted primary row IDs, including vars (join with 、; none [])',关联编号:'Related row ID (or ~)',缺项:'Precise missing prerequisite',解除条件:'Condition that permits resuming',
+ 证据:'Current body paragraph IDs (P1、P2; no evidence: pending)',原文段号:'Current body paragraph IDs (P1、P2; = inherits evidence)',读者:'Authorized reader IDs (literal 读者 only if permitted; none [])',知情者:'Object IDs with actual knowledge (none []; unknown ~)',
+ 对象:'Object ID list',主体:'Single object ID (= only for one common object)',参与者:'Participant IDs (= inherits common objects)',事实:'Fact ID list',相关对象:'Related object IDs',锚点事件:'Occurred event IDs',
+ 确认程度:'K0/K1/K2/K3 (certainty is separate from belief truth)',登记字段路径:'Exact registered table.field for this row (e.g. state.值, never an invented field or native path)',原值:'Exact snapshot field value',新值:'Supported number or true/false (null only if nullable)',变化后文本:'Changed narrative description',
+ 地点:'Place ID list',故事时间:'Established story time (unknown ~)',生效时间:'Established effective time',到期轮次:'Absolute retained AI reply count (not a delay in turns)',
+ 公开范围:'Authorized reader/object IDs (access is not acquisition)',阶段:'埋设/推进/回收/作废',类别:'喜好/厌恶/习惯/回忆/安心方式/边界',默契层次:'共同经历/明确约定/单方联想/待确认',确定性:'明确自述/反复表现/单次观察/暂定',状态:'等待/到期/完成/取消',领域:'方向/法则/空间/生态/社会/生活/文化/时间',
+ 获知途径:'Actual acquisition channel',认识:'Changed belief or understanding',心理:'Supported psychological change',授权依据:'Source authority for this disclosure',
+ 情境:'Applicable situation',内容:'Supported habit, preference or memory anchor',感受:'Authorized feeling',例外:'Exception or limitation',表现方式:'Observable expression',回应边界:'Response boundary',内在动因:'Authorized inner motive',初始成因:'Established origin',
+ 时间范围:'Occurred time interval',经过:'What actually happened',结果:'Actual result',场面:'Distinctive scene detail',台词:'Exact finished line',意象:'Memorable image',前因:'Established cause',影响:'Actual consequence',后续:'Established follow-through (not a candidate)',情感余波:'Authorized emotional aftermath',
+ 命题:'Established fact proposition',条件:'Applicability condition',验证状态:'Verification status (supported free text, not a truth guarantee)',已出现内容:'Clue content already present in this body',推进条件:'Condition for advancing the clue',
+ 时间基准:'Established clock or timing basis',起点:'Established starting point',到期时间:'Due time on that basis',触发条件:'Actual trigger condition',失效条件:'Expiry/cancellation condition',重复规则:'Established recurrence rule',
+ 时期:'Established period',选择:'Occurred choice',后果:'Actual consequence',当下影响:'Present effect',原文:'Exact excerpt locatable in this body',当时理解:'Authorized understanding at that time',
+ 性质:'Established relationship nature',形成经过:'How the relationship formed',相处方式:'Established interaction pattern',主体边界:'Subject boundary',成立条件:'Condition under which it holds',揭示条件:'Authorized reveal condition',影响范围:'Affected scope',适用范围:'Applicable scope'
 };
 const idLists=new Set(['替代事实','任务','事件','关联事件','前置事件','后续事件','涉及对象','地点引用','参与者引用','关联对象']);
 const textLists=new Set(['动作','神态','语言','触发线索','标签','可观察线索']);
+function cellHint(kind,key){
+ if(key==='编号')return ['描述','变量'].includes(kind)?'Existing row alias/ID (snapshot only; never +ID)':'Existing row alias/ID or unique +ID (new row only)';
+ if(key==='有效性')return kind==='描述'?'有效/失效/待确认':'有效/已改变/待确认';
+ if(key==='生效时间'&&kind==='事实发现')return 'Established effective time (= inherits common story time)';
+ const hint=standards[key]??(idLists.has(key)?'Registered ID list':textLists.has(key)?'Supported text list':null);
+ if(!hint)throw Error('Missing one-pass column guidance: '+kind+'.'+key);
+ return hint;
+}
 function machineSkeleton(block){
- const lines=Object.entries(PIPE_ROWS[block]).map(([kind,fields])=>kind+'：'+fields.map(key=>'<'+(standards[key]??(idLists.has(key)?'有效编号列表':textLists.has(key)?'有依据的文本列表':'实际'+key+'；未知用 ~'))+'（按本列语义填写；不复述别列）>').join('|'));
+ const lines=Object.entries(PIPE_ROWS[block]).map(([kind,fields])=>kind+'：'+fields.map(key=>'<'+cellHint(kind,key)+'>').join('|'));
  return '<'+block+' format="pipes">\n'+lines.join('\n')+'\n</'+block+'>';
 }
 export const ONEPASS_CONTRACT=String.raw`
 [ONEPASS.CONTRACT]
-本轮一次原生生成，完成创作、正文、固定列归档提案；不另调表单、记忆或偏好模型。宿主按同一快照校验后保存，输出本身不是成功回执。
-十一块及顺序固定：task/think-before/title/body/think-after/status/extra/vars/archive/memory/actions。旧回复仅为历史，不改变本轮格式。task 只填写实际偏好反馈；开启摘要时，before 五个创作选择按顺序；after 七个独立成果，缺项用 留白|原类别|具体原因。保留已启用的短评与情绪配置。
-公开摘要列数固定：普通 before 行 2 列，设计和解锁各 4 列，三类短评各 3 列；普通 after 成果 2 列，留白与任务行 3 列。只更换每列文本，不把问句里的分句拆成新列；文字中的竖线必须转义。所有 think 只输出简短、可公开的创作结论，不输出内部推导。
-数据职责：memory 存已发生事件、事实发现、伏笔和倒计时及事实子表；status 存叙事描述、认知、习惯锚点；vars 只更新已有业务记录的数值或布尔值；archive 核对本批编号并列待定。这里不结算额外场外事件；后续可能不冒充已发生。extra 保留原卡显示组件，不放写入命令。
-固定列共用约束：类别后用全角冒号，列用 |；同类或不同类记录可分行，或用 & 连接。列表用 、。先对单元格内的反斜线、竖线、&、顿号、换行、回车、TAB 转义为 \\, \|, \&, \、, \n, \r, \t，再将 & 和 < XML 转义一次。作为分隔符的 & 也可写 &amp;。列序不可改变，不能加列；只省略末尾连续 ~，中间缺值须保留 ~ 或空列。占位问句、括号填写说明不输出。
-~ 表示未提供，更新时保留原值；= 只能继承本块最近一条共用行中语义和类型相同的值；! 只清除可清除的可选字段；[] 是实际空列表；null 只用于登记可空类型；0、false 必须原样保留。字面 ~、=、! 可转义为 \~、\=、\!。布尔只用 true/false；枚举从本列或快照字段定义选取，禁止混用中文是/否。
-共用行作用至本块下一条共用行，不跨块继承。新记录必须明确证据、读者、知情者；无人范围用 []，未知权限不能伪填空范围。旧记录未填权限时保留原权限，不从亲近、同场或资料可见推断知情。
-编号引用优先用 ONEPASS_STATE.aliases 的数字别名，也接受实际已有 ID；新记录使用 +E1、+F1、+C1 等唯一编号，同批可互引。名称不另填，由宿主保存编号作为新记录内部标识。不得把未建档角色名称猜作已有编号。归档行逐字回填 basis，第二列列出本批所有主记录编号，事实子表不重复计数；无变更填 []。存储版本由对应快照行绑定，不由模型猜写。
-证据只能引用这条回复已完成正文的 P1、P2 等段号，宿主保留完整原段。只来自旧资料且本轮无可定位证据的项先列待定，不伪造正文或虚构已发生事件。事件原文段号省略时使用共用证据；事实子表必须跟随本批所属事实发现行，同一事实同类子表最多一项。后台秘密仍遵守已有披露权限，输出表格不扩大公开范围。
-仅填写新增或实质变化的记录，未变化的不重写。开启摘要时各关注对象单独考虑其已知信息、事务、愿望、触发与可行行动；缺位置或档案则保留精确缺项，不强行出场或围绕玩家运转。空 status/vars/memory 可保留空标签或自闭合；archive 保留本轮真实基线。记录缺必要字段或未登记引用时不造值，在 archive 待定行注明缺项与解除条件。
-描述行更新已有编号的已登记文本字段；编号须与 table.字段 所属表一致。变量行更新已有业务记录的直接数值/布尔字段，原值必须匹配快照且归属对象匹配共用对象。复杂状态字段缺登记路径时列待定，不生成 JSON。preferences 与 native_cells 由独立所有者处理；绑定原生引用的数值也不得在此重复写入。习惯/认知使用各自专行；本轮一个萌点不自动固化为长期性格或偏好。
-伏笔仅记录本轮已出现内容及当前作用；新埋、推进、回收分别对应真实正文，不补造过去。短距离呼应可只留在事件，具备跨轮延续价值才建伏笔。不把 before 计划或 after 总结再建一份重复事件。
+Use one native generation for prose and fixed-column record proposals; no extra form, memory or preference model call. The host validates against the same snapshot before saving; output is not a save receipt.
+Keep all eleven blocks in order: task/think-before/title/body/think-after/status/extra/vars/archive/memory/actions. Historical layouts do not override this contract. These instructions are English; prose and public cell text still follow the configured output language. Keep Chinese wire labels/enums exactly as shown.
+task: actual feedback only, always 偏好：status|scope|source|application, with four nonempty cells; status is 明确要求 or 候选. Do not drop 偏好：. When summaries are enabled, retain the five before choices in order and seven distinct after outcomes; absent outcomes use 留白|original category|specific reason. Preserve enabled comments/moods.
+Public columns: ordinary before/after rows 2; 设计 and 解锁 4; comments, 留白 and task rows inside after 3. Replace cell contents only; question clauses are not extra columns. Escape literal pipes. Both thinks contain brief public creative conclusions, never private reasoning.
+Ownership: memory = occurred events, facts, clues, timers and fact subtables; status = narrative descriptions, cognition, habit anchors; vars = existing business numbers/booleans; archive = batch IDs and pending gaps. No extra offstage settlement or candidates presented as events. extra retains authorized card displays, never write commands.
+Wire: fullwidth ： after each row label; | between cells; newline or & between records; 、 between list items. Lists are 1、2 or P1、P2, NOT [1,2], [Name,Name] or JSON; only [] denotes an empty list. Escape literal backslash, pipe, &, 、, LF, CR, TAB as \\, \|, \&, \、, \n, \r, \t; then XML-escape & and < once. A record-separator & may be &amp;. Keep column order/count; omit only trailing ~ cells, retaining interior ~ or empty cells. Do not emit placeholder questions/instructions.
+~ = unprovided, retaining old value on update; = inherits only a same-meaning/type common value; ! clears an optional clearable field; [] = actual empty list; null requires a nullable field. Preserve 0 and false. Escape literal ~, =, ! as \~, \=, \!. Booleans are true/false only; enums must match the column or snapshot schema exactly. Verification status is free text, not an enum or proof of truth.
+共用 lasts until the next common row in the SAME block. It cannot inherit from another block. In record rows, = may use matching common objects/time/evidence; a single subject can inherit only one object. New rows need explicit evidence, readers and knowers. [] means nobody, never unknown permission. Omitted access on existing rows preserves it. Intimacy, co-presence or source visibility does not establish knowledge.
+References: use numeric aliases from ONEPASS_STATE.aliases or exact existing IDs, never character/place names. New primary rows use unique +E1/+F1/+C1 etc.; same-batch references are allowed. The host uses that ID as the new row's internal name. This wire cannot create missing object dossiers: keep dependent records pending. Snapshot rows bind revisions; never invent revisions.
+UPDATE versus CREATE: 描述 and 变量 require EXISTING row IDs; +IDs are invalid there. Use the record's ID, not its owner's ID. Paths must be registered direct table.field keys belonging to that row. For a state row whose 字段 names a property, its stored value may be state.值; do not turn the property name into an invented path. 描述 updates text only; its optional validity/event columns require matching registered fields, otherwise ~. 变量 updates numeric/boolean business fields: exact old value, common object matching the stored owner, supported new value. Missing rows/paths go pending, not JSON or guessed IDs. One primary operation per row ID across blocks. preferences/native_cells and native-bound values retain their independent writer. Use dedicated cognition/habit rows; one charming beat cannot establish a lasting habit/preference.
+归档: exactly one row; copy basis verbatim and list EVERY submitted primary ID from memory, status AND vars, once each. Do not list object/evidence-only references or count fact subtables again. No changes: []. A pending row is 关联编号|precise gap|release condition; use ~ if its record ID is unresolved, not a name.
+Evidence is P1、P2 etc. from this completed body; the host retains full paragraphs. Old-source-only items without current locatable evidence remain pending; never invent prose/events. Omitted event paragraph IDs inherit common evidence. Each fact subtable must belong to a 事实发现 row in this batch; at most one of each subtype per fact. Tables do not expand secret-disclosure permission.
+Emit only new/materially changed records. With summaries enabled, consider each followed object's actual knowledge, affairs, wishes, triggers and feasible actions individually; keep exact missing dossier/location gaps without forced appearances or player-centered devotion. Empty status/vars/memory blocks may stay empty or self-close; archive retains the real basis. Missing required content/references goes in archive 待定 with its release condition.
+Clues record only content already present and its current function: planted, advanced or paid off in actual prose, without invented history. Local echoes may remain in events; create clues for cross-turn value. Do not archive the before plan or after summary as duplicate events.
 [/ONEPASS.CONTRACT]`;

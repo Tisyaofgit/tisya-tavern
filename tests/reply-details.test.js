@@ -20,3 +20,10 @@ test('draft changed during input notification prevents direct send and preserves
 test('a held action cannot be submitted twice and a disposed menu cannot apply anything',async()=>{
  const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);let release,calls=0;const pending=new Promise(r=>release=r),ui=mountActionChoice(d,host,{rows:[{text:'观察灯塔'}],onChoose:()=>{calls++;return pending;}}),b=host.querySelector('.action');b.click();b.click();assert.equal(calls,1);release();await w.happyDOM.whenAsyncComplete();const menu=host.querySelector('[data-mode="send"]');ui.dispose();b.click();menu.click();assert.equal(calls,1);await w.happyDOM.abort();
 });
+test('action cards show type and a secondary possibility while submitting only the chosen action',async()=>{
+ const w=new Window(),d=w.document,host=d.createElement('div'),calls=[];d.body.append(host);
+ const rows=[{type:'调查',text:'观察铜铃的裂纹',possibility:'可能找出修补线索 <img src=x onerror=alert(1)>'},{type:'交流',text:'询问来历',source:'旧版依据'}];
+ const ui=mountActionChoice(d,host,{rows,onChoose:(text,mode)=>calls.push({text,mode})}),cards=host.querySelectorAll('.action');
+ assert.equal(cards[0].querySelector('.action-type').textContent,'调查');assert.equal(cards[0].querySelector('.text').textContent,rows[0].text);assert.match(cards[0].querySelector('small').textContent,/修补线索/);assert.equal(cards[0].querySelector('img'),null);assert.equal(cards[1].querySelector('small'),null);
+ cards[0].querySelector('small').click();await w.happyDOM.whenAsyncComplete();assert.deepEqual(calls,[{text:rows[0].text,mode:'append'}]);assert(cards[0].classList.contains('selected'));ui.dispose();await w.happyDOM.abort();
+});

@@ -2,13 +2,13 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {onePassReply} from './fixtures/onepass-reply.js';
 import {parseOnePassReply} from '../onepass/reply.mjs';
-import {parsePipeBlock,compilePipeRecords} from '../onepass/pipes.mjs';
+import {parsePipeBlock,compilePipeRecords,PIPE_ROWS} from '../onepass/pipes.mjs';
 import {prepareOnePassBatch} from '../onepass/tables.mjs';
 import {defaultRegistry,upgradeRegistry} from '../tables/schema.js';
 import {inspectMessage} from '../reader.js';
 import {mountMessageVisual} from '../message-ui.js';
 import {onePassEntries} from '../onepass/preset.mjs';
-import {fullDefaultConfiguration,DEFAULT_MOODS} from '../six/preset.mjs';
+import {fullDefaultConfiguration,DEFAULT_MOODS,sixEntries} from '../six/preset.mjs';
 const acl={readers:['读者'],knowers:[]};
 const row=(id,table,values)=>({id,table,values,rev:1,access:structuredClone(acl),lockedFields:[],source:null});
 const view=()=>({registry:defaultRegistry(),last:null,anchors:[],rows:[row('person-a','objects',{名称:'宋遥',类型:'character',描述:'整理铜铃'}),row('person-b','objects',{名称:'陆舟',类型:'character'}),row('place-a','objects',{名称:'工坊',类型:'place'}),row('stock','holdings',{名称:'铜铃数量',物品:'person-a',所有者:['person-b'],数量:2}),row('flag','state',{名称:'持灯',对象:'person-a',字段:'持灯',值:true})]});
@@ -66,4 +66,38 @@ test('a named but empty archival row and fabricated original quotation cannot co
  for(const memory of ['共用：~|[]|[]|P1|读者|[]\n事件：+E1','共用：~|[]|[]|P1|读者|[]\n事实发现：+F1|[]|旧事\n前史：+F1|~|~|~|~|~|~|~|未曾说过的引用']){
   const reply=parseOnePassReply(pipesReply({memory,ids:memory.includes('+F1')?'+F1':'+E1'}));await assert.rejects(prepareOnePassBatch(v,reply,state,{key:'empty'}));
  }
+});
+
+test('English skeleton keeps every registered column and the original complete writing constraints',()=>{
+ const c=fullDefaultConfiguration(),entries=onePassEntries(c,DEFAULT_MOODS),six=sixEntries(c,DEFAULT_MOODS);
+ assert.equal(entries.tisya_material_rule_material,six.tisya_material_rule_material);
+ for(const [block,rows]of Object.entries(PIPE_ROWS)){
+  const text=new RegExp('<'+block+' format="pipes">([\\s\\S]*?)</'+block+'>').exec(entries.tisya_registry)[1];
+  for(const [kind,fields]of Object.entries(rows)){const line=text.split('\n').find(line=>line.startsWith(kind+'：'));assert(line,block+'.'+kind);assert.equal(line.slice(kind.length+1).split('|').length,fields.length,block+'.'+kind);}
+ }
+ assert.match(entries.tisya_registry,/描述：<Existing row alias\/ID \(snapshot only; never \+ID\)>/);
+ assert.match(entries.tisya_registry,/变量：<Existing row alias\/ID \(snapshot only; never \+ID\)>/);
+ assert.match(entries.tisya_registry,/文风用词\|<What wording/);assert.match(entries.tisya_registry,/篇幅重点\|<How should paragraphs/);
+ assert.doesNotMatch(entries.tisya_registry,/按本列语义填写|实际使用的资料属于哪类|\{the interaction/);
+});
+
+test('the reported wire mistakes are readable syntax but cannot guess IDs, paths or an incomplete commit list',async()=>{
+ const v=view(),state=snapshot(v),before=JSON.stringify(v),common='共用：清晨|1|P1|读者|1\n';
+ const cases=[
+  {memory:'共用：清晨|3|宋遥、陆舟|P1|读者|1\n事件：+E1|~|=|修好铜铃',ids:'+E1',error:/编号不存在/},
+  {memory:'共用：清晨|3|1、2|P1|[1,2]|[1,2]\n事件：+E1|~|=|修好铜铃',ids:'+E1',error:/编号不存在/},
+  {status:common+'描述：+E1|objects.描述|正在修铃',ids:'+E1',error:/已有记录/},
+  {vars:'共用：1|P1\n变量：+V1|state.值|true|false',ids:'+V1',error:/现有业务/},
+  {vars:'共用：1|P1\n变量：5|state.持灯|true|false',ids:'5',error:/已登记/},
+  {vars:'共用：1|P1\n变量：5|state.值|true|false',ids:'[]',error:/清单/}
+ ];
+ for(const {error,...input}of cases){const reply=parseOnePassReply(pipesReply(input));await assert.rejects(prepareOnePassBatch(v,reply,state,{key:'wire-misuse'}),error);assert.equal(JSON.stringify(v),before);}
+ const valid=pipesReply({memory:memory.replace('|目击|[]','|已验证|[]'),vars:'共用：1|P1\n变量：5|state.值|true|false',ids:'+E1、+F1、+C1、+T1、5'}).replace('偏好：明确要求|','明确要求|');
+ const batch=await prepareOnePassBatch(v,parseOnePassReply(valid),state,{key:'wire-valid'});assert.equal(batch.changes,5);assert.equal(batch.commits[0].changes.find(c=>c.after.table==='facts').after.values.验证状态,'已验证');
+});
+
+test('a machine-column error identifies block, line and counts without hiding the readable reply',async()=>{
+ const source=pipesReply({vars:'共用：1|P1\n变量：5|state.值|true|false|extra',ids:'5'}),result=inspectMessage(source);
+ assert.equal(result.records.error,'TISYA_ONEPASS_PIPES');assert.match(result.records.detail,/vars 第 3 行 变量.*应为 4 列，实际 5 列/);assert.equal(result.actions.value.length,4);assert.match(result.body.value,/宋遥/);
+ const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);w.IntersectionObserver=class{observe(){}disconnect(){}};const ui=mountMessageVisual(d,host,{source,formatBody:x=>x,getMotion:()=>false});assert.match(ui.host.shadowRoot.querySelector('.story-region [role=status]').textContent,/应为 4 列，实际 5 列/);ui.dispose();await w.happyDOM.abort();
 });

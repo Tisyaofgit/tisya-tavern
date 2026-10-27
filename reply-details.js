@@ -59,5 +59,19 @@ export const replyControlsCSS=`
 .action-mode-menu [aria-checked=true]{color:#f5dca0;background:#a5b18822;border-radius:8px}
 .action-feedback{margin:8px 2px 0;font:12px/1.65 var(--tisya-global-font,TisyaReading),TisyaReading,serif;min-height:18px;color:var(--muted,#e8f0ea)}
 .action-heading{padding-right:80px}.action.selected{outline:1px solid #dfc88d}
+.tisya-reader-actions{display:grid;gap:12px;min-width:0}
+.tisya-reader-actions .action{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:start;gap:12px;width:100%;min-width:0;min-height:64px;margin:0;padding:16px 15px;text-align:left;white-space:normal;border:1px solid #b8c6a45c;border-radius:20px;background:radial-gradient(ellipse at 0 0,#63957824,transparent 70%),linear-gradient(135deg,#153c30ed,#06251fe8);box-shadow:inset 0 1px 1px #e1e6c22e,inset 0 -1px 2px #001e1970,0 5px 14px #001a1826;color:var(--ink,var(--tisya-ink,#fff9ed));transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease}
+.tisya-reader-actions .action .number{padding-top:2px;color:var(--gold,var(--tisya-gold,#dfc88d));font:italic 21px/1.4 var(--tisya-global-font,TisyaReading),TisyaReading,serif;font-variant-numeric:tabular-nums}
+.action-content{display:flex;flex-direction:column;align-items:stretch;gap:9px;min-width:0;overflow-wrap:anywhere}
+.tisya-reader-actions .action-type{align-self:flex-start;padding:2px 9px;border:1px solid #d6c99c52;border-radius:6px;background:#b9c3920c;color:var(--gold,var(--tisya-gold,#dfc88d));font:12px/1.6 var(--tisya-global-font,TisyaReading),TisyaReading,serif;letter-spacing:.12em}
+.tisya-reader-actions .action .text{display:block;min-width:0;color:inherit;font:16px/1.8 var(--tisya-global-font,TisyaReading),TisyaReading,serif}
+.action-possibility{display:block;margin:1px 0 0;padding-top:9px;border-top:1px solid #b4c5ad26;color:var(--muted,var(--tisya-muted,#b0c4b8));font:12px/1.75 var(--tisya-global-font,TisyaReading),TisyaReading,serif;letter-spacing:.015em;overflow-wrap:anywhere}
+.action-possibility-label{color:var(--gold,var(--tisya-gold,#dfc88d))}
+.tisya-reader-actions .action.selected{border-color:#dfc88da8;outline:none;box-shadow:inset 3px 0 0 #dfc88d9e,inset 0 1px 1px #e1e6c233,0 5px 14px #001a1826}
+.tisya-reader-actions .action.selected .action-type{background:#dfc88d16;border-color:#dfc88d80}
+.tisya-reader-actions .action:focus-visible{outline:2px solid var(--gold,var(--tisya-gold,#dfc88d));outline-offset:3px}
+@media(hover:hover){.tisya-reader-actions .action:hover:not(:disabled){filter:none;border-color:#dfc88d99;box-shadow:inset 0 1px 2px #e1e6c240,0 6px 18px #001a1840}}
+@media(max-width:360px){.tisya-reader-actions .action{grid-template-columns:22px minmax(0,1fr);gap:9px;padding:13px 11px}.tisya-reader-actions .action .text{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.tisya-reader-actions .action{transition:none}}
 .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;
