@@ -1,0 +1,13 @@
+# Preset load verification and direct recovery
+
+The old update path compared the active `prompts` and `prompt_order` arrays byte for byte with the shipped JSON. TauriTavern's PromptManager adds six missing native definitions and three Agent position references in its `OAI_PRESET_CHANGED_AFTER` listener. A correctly loaded 62-entry Tisya preset therefore becomes 68 entries with 65 references, reproducing the reported saved-but-not-loaded error.
+
+`preset-load-check.js` now checks every shipped prompt, property, reference, switch and content revision, permitting only the observed native additions. Duplicate identifiers, unknown additions, changed instructions, altered ordering and active non-marker additions still fail. JSON object key order is irrelevant; the ordered prompt references remain strict.
+
+The error notice has an actual **更新 Tisya 预设** button. The same action is available at the top of the native preset drawer and in Settings. One controller owns initialization, manual retry, in-flight state and the generation guard. A successful acknowledged save and verified load clears the old error. Manual native reselection can clear a saved-load error only after verifying the active release; an unacknowledged save error cannot be cleared that way.
+
+Manual update restores the shipped same-name Tisya prompts. It retains the selected connection, model, live sampling, extensions, chats and differently named presets, and never selects Tisya over another currently selected preset. Automatic startup of the same revision still preserves user edits. A saved current revision can be reloaded without another disk write. Native save failures and refresh failures remain explicit and retryable.
+
+Validation includes a pre-fix reproduction, strict rejection checks, same-revision edits/manual reset, persistence failures, timeout/reopening, real mounted settings/native entry points, click deduplication and stale-error recovery. The browser check executes normalization methods from the separately retrieved fixed host source `Darkatse/TauriTavern@a1855be4a4f8b6ee7cd0374a84dbb3709c3e5375` and real production control modules in Chromium. It covers failure notice → button retry → verified 68/65 load → reopening with zero additional writes, plus phone widths and connection preservation.
+
+This is an isolated host-adapter/browser test, not an installed TauriTavern, external-model or Android run. The user's exact device failure has not been captured as a raw active-settings snapshot; the verified bug is not a claim to have excluded every other device-specific cause. Test fixture export/font setup failures are retained separately from product failures.

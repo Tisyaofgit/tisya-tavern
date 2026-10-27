@@ -1,0 +1,17 @@
+PAGE_ERROR Unexpected token 'export'
+PAGE_ERROR window.normalizeHost is not a function
+RETRY_STATE {"state":{"receipt":null,"error":"Tisya 已保存，但宿主预设刷新超时。请点“更新 Tisya 预设”重试。","busy":false},"writes":2,"refreshes":2,"prompts":62,"order":62,"model":"keep-model","temp":0.83,"binding":true,"books":["live"],"mismatch":null}
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Tisya 已保存，但宿主预设刷新超时。请点“更新 Tisya 预设”重试。'
+- null
+
+    at /workspace/scratch/bcba0421d0d2/tisya-source/tools/check-preset-update-browser.cjs:39:197 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Tisya 已保存，但宿主预设刷新超时。请点“更新 Tisya 预设”重试。',
+  expected: null,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

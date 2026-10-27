@@ -1,0 +1,18 @@
+✖ native PromptManager normalization loads the shipped preset without a restart error (28.455105ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 420.415708
+
+✖ failing tests:
+
+test at tests/builtin-preset.test.js:41:1
+✖ native PromptManager normalization loads the shipped preset without a restart error (28.455105ms)
+  Error: Tisya 已保存，但宿主尚未载入新版提示词；请完整重启。
+      at done (file:///workspace/scratch/bcba0421d0d2/tisya-source/builtin-preset.js:64:371)
+      at emit (file:///workspace/scratch/bcba0421d0d2/tisya-source/tests/builtin-preset.test.js:14:93)
+      at async file:///workspace/scratch/bcba0421d0d2/tisya-source/tests/builtin-preset.test.js:16:1222

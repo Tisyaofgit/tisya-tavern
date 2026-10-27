@@ -4,8 +4,9 @@ import {Window} from 'happy-dom';
 import bundled from '../presets/Tisya.json' with {type:'json'};
 import original from '../presets/Tisya-One-Pass-1.json' with {type:'json'};
 import {installBuiltInPreset,BUILTIN_PRESET_REVISION} from '../builtin-preset.js';
+import {presetLoadMismatch} from '../preset-load-check.js';
 const copy=x=>structuredClone(x);
-function fixture({selected='Other',existing=true,failSave=false,silentRefresh=false}={}){
+function fixture({selected='Other',existing=true,failSave=false,silentRefresh=false,normalizeHost=false}={}){
  const w=new Window(),document=w.document;document.body.innerHTML='<select id="presets"></select><input id="bind_preset_to_connection" type="checkbox" checked>';
  const select=document.querySelector('select'),disk=new Map([['Other',{prompts:[{content:'unrelated'}],extensions:{other:true}}]]);
  if(existing)disk.set('Tisya',{prompts:[{identifier:'old',content:'old'}],prompt_order:[],temperature:.2,custom_model:'stored-model',extensions:{tisya:{worldbooks:['saved-book']},userNote:'saved'}});
@@ -16,8 +17,49 @@ function fixture({selected='Other',existing=true,failSave=false,silentRefresh=fa
  const manager={select:'#presets',getAllPresets:()=>[...select.options].map(o=>o.text),getSelectedPresetName:()=>select.selectedOptions[0]?.text??'',getCompletionPresetByName:name=>list.presets[list.preset_names[name]],getPresetList:()=>list,findPreset:name=>String(list.preset_names[name]),async savePreset(name,value,{skipUpdate}={}){saves++;assert.equal(skipUpdate,true);assert.equal(name,'Tisya');if(failSave)throw Error('native disk failure');disk.set(name,copy(value));},selectPreset(value){refreshes++;select.value=value;if(silentRefresh)return;void (async()=>{const name=manager.getSelectedPresetName(),preset=copy(manager.getCompletionPresetByName(name));const mapping={prompts:['','prompts',false,false],prompt_order:['','prompt_order',false,false],temperature:['','temp_openai',false,false],custom_model:['','custom_model',false,true],extensions:['','extensions',false,false]};await emit('before',{preset,presetName:name,settings:context.chatCompletionSettings,settingsToUpdate:mapping});for(const [key,[,dest,,connection]]of Object.entries(mapping)){if(connection&&!context.chatCompletionSettings.bind_preset_to_connection)continue;if(preset[key]!==undefined)context.chatCompletionSettings[dest]=preset[key];}await emit('after');})();}};
  // The real PresetManager constructor receives a jQuery-wrapped select.
  manager.select={0:select,length:1};
+ // TauriTavern PromptManager AFTER listener runs before extension listeners.
+ // Source: a1855be4, sanitizeServiceSettings/checkForMissingPrompts and
+ // ensureAgentPromptOrderReferences. The former fixture omitted this step.
+ if(normalizeHost)context.eventSource.on('after',()=>normalizeNativePrompts(context.chatCompletionSettings));
  context.getPresetManager=id=>{assert.equal(id,'openai');return manager;};return {w,document,context,manager,disk,list,events,saves:()=>saves,refreshes:()=>refreshes};
 }
+function normalizeNativePrompts(settings){
+ const extras=[
+  {name:'Agent System Prompt',system_prompt:true,role:'system',content:'',identifier:'agentSystemPrompt',marker:true},
+  {name:'Auxiliary Prompt',system_prompt:true,role:'system',content:'',identifier:'nsfw'},
+  {name:'Post-History Instructions',system_prompt:true,role:'system',content:'',identifier:'jailbreak'},
+  {identifier:'agentTask',name:'Agent Task',role:'user',content:'',system_prompt:true,marker:true},
+  {identifier:'agentResults',name:'Agent Results',role:'system',content:'',system_prompt:true,marker:true},
+  {identifier:'enhanceDefinitions',role:'system',name:'Enhance Definitions',content:"If you have more knowledge of {{char}}, add to the character's lore and personality to enhance them but keep the Character Sheet's definitions absolute.",system_prompt:true,marker:false},
+ ];
+ for(const row of extras)if(!settings.prompts.some(p=>p.identifier===row.identifier))settings.prompts.push(copy(row));
+ for(const group of settings.prompt_order)for(const [identifier,before]of [['agentSystemPrompt','main'],['agentTask','chatHistory'],['agentResults',null]]){
+  if(group.order.some(row=>row.identifier===identifier))continue;
+  const index=before?group.order.findIndex(row=>row.identifier===before):-1;
+  group.order.splice(index<0?group.order.length:index,0,{identifier,enabled:true});
+ }
+}
+test('native PromptManager normalization loads the shipped preset without a restart error',async()=>{
+ const f=fixture({selected:'Tisya',normalizeHost:true});
+ try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,68);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,65);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
+});
+test('load verification accepts only observed native additions and still detects changed instructions and order',()=>{
+ const native=copy(bundled);normalizeNativePrompts(native);assert.equal(presetLoadMismatch(native,bundled),null);
+ for(const mutate of [
+  s=>s.prompts[0].content+=' stale',s=>s.prompts.shift(),s=>s.prompts.push(copy(s.prompts[0])),
+  s=>s.prompt_order[0].order[2].enabled=!s.prompt_order[0].order[2].enabled,
+  s=>s.prompt_order[0].order.reverse(),s=>s.prompts.push({identifier:'unknown',content:'other'}),
+  s=>s.prompts.find(p=>p.identifier==='agentTask').content='injected',
+  s=>s.prompt_order[0].order.push({identifier:'enhanceDefinitions',enabled:true}),
+ ]){const altered=copy(native);mutate(altered);assert(presetLoadMismatch(altered,bundled));}
+ const reordered=copy(native);reordered.prompts=reordered.prompts.map(p=>Object.fromEntries(Object.entries(p).reverse()));assert.equal(presetLoadMismatch(reordered,bundled),null);
+});
+test('manual refresh reinstalls same revision while automatic startup preserves same-release edits',async()=>{
+ const f=fixture({selected:'Tisya',normalizeHost:true});
+ try{await installBuiltInPreset(f.context,f.document);f.context.chatCompletionSettings.prompts[0].content='custom edit';await installBuiltInPreset(f.context,f.document);assert.equal(f.context.chatCompletionSettings.prompts[0].content,'custom edit');assert.equal(f.saves(),1);
+  await installBuiltInPreset(f.context,f.document,{force:true});assert.equal(presetLoadMismatch(f.context.chatCompletionSettings,bundled),null);assert.equal(f.saves(),2);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');
+ }finally{await f.w.happyDOM.close();}
+});
 test('built-in keeps the complete 62-entry plaintext preset and both creative digests',()=>{
  assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,62);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });

@@ -1,0 +1,5 @@
+page.waitForFunction: Timeout 30000ms exceeded.
+    at /workspace/scratch/bcba0421d0d2/tisya-source/tools/check-preset-update-browser.cjs:39:59 {
+  log: [],
+  name: 'TimeoutError'
+}

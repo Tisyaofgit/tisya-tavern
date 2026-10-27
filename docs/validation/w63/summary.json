@@ -1,0 +1,105 @@
+{
+  "utc": "2026-10-27T14:11:24.460566+00:00",
+  "version": "0.2.0-alpha.31.31.19-onepass.6",
+  "base_commit": "9b270d354193d5f4b32e7950392012817fe823d7",
+  "base_tree": "a88857627732b7af626beeb17590dd9f9072a4f6",
+  "tests": {
+    "full": 1283,
+    "focused": 95,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "passed": true,
+    "browser": "133.0.6943.0",
+    "hostCommit": "a1855be4a4f8b6ee7cd0374a84dbb3709c3e5375",
+    "hostSourceSha256": "eef3f8b094125ace1786f7fe9011d91db17548db550932e73a585e6a69b1b091",
+    "failed": {
+      "state": {
+        "receipt": null,
+        "error": "Tisya 已保存，但宿主预设刷新超时。请点“更新 Tisya 预设”重试。",
+        "busy": false
+      },
+      "writes": 1,
+      "refreshes": 1,
+      "prompts": 1,
+      "model": "keep-model",
+      "temp": 0.83,
+      "binding": true,
+      "books": [
+        "live"
+      ],
+      "mismatch": "载入修订号不一致"
+    },
+    "recovered": {
+      "state": {
+        "receipt": {
+          "name": "Tisya",
+          "revision": "2dd94c23118bcd5631f46bc106f2110787fb2e689fee6729422524cb2f40d5d7",
+          "status": "updated",
+          "active": true
+        },
+        "error": null,
+        "busy": false
+      },
+      "writes": 2,
+      "refreshes": 2,
+      "prompts": 68,
+      "order": 65,
+      "model": "keep-model",
+      "temp": 0.83,
+      "binding": true,
+      "books": [
+        "live"
+      ],
+      "mismatch": null
+    },
+    "reopened": {
+      "state": {
+        "receipt": {
+          "name": "Tisya",
+          "revision": "2dd94c23118bcd5631f46bc106f2110787fb2e689fee6729422524cb2f40d5d7",
+          "status": "current",
+          "active": true
+        },
+        "error": null,
+        "busy": false
+      },
+      "writes": 0,
+      "refreshes": 0,
+      "prompts": 68,
+      "order": 65,
+      "model": "keep-model",
+      "temp": 0.83,
+      "binding": true,
+      "books": [
+        "live"
+      ],
+      "mismatch": null
+    },
+    "widths": [
+      320,
+      360,
+      430,
+      900
+    ],
+    "boundary": "Real Chromium + actual pinned PromptManager normalization methods. Native persistence/selection is a neutral isolated fixture; not installed TauriTavern, external-model or Android."
+  },
+  "original_failure": "before-fix.txt",
+  "harness_failures": [
+    "browser-initial-failure.txt",
+    "browser-harness-failure.txt"
+  ],
+  "boundaries": [
+    "Neutral isolated adapter plus actual pinned host normalization",
+    "No installed TauriTavern run",
+    "No external model calls",
+    "No Android run"
+  ],
+  "source_changes": [
+    "Native additions verified separately from shipped prompt content",
+    "Direct update controls in notice, native preset drawer and Settings",
+    "Same-revision manual reset and retry clears saved-load error",
+    "Save failures and unknown/changed payloads remain explicit"
+  ]
+}

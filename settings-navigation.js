@@ -2,7 +2,7 @@ export const SETTINGS_GROUP=Object.freeze({
 'user-identity':'identity','role-library':'world','group-library':'world','drawer:WI-SP-button':'world','notes':'world','settings-tab:tables':'world','settings-tab:world':'world',
 'settings-app':'play','settings-tab:mode':'play','continue-settings':'play','input-tools':'play',
 'display-settings':'reading','drawer:backgrounds-button':'reading','emotion-atlas':'reading','pet-toggle':'reading','motion-toggle':'reading','fullscreen':'reading',
-'drawer:ai-config-button':'model','drawer:sys-settings-button':'model','settings-tab:api':'model','drawer:advanced-formatting-button':'model',
+'preset-update':'model','drawer:ai-config-button':'model','drawer:sys-settings-button':'model','settings-tab:api':'model','drawer:advanced-formatting-button':'model',
 'selection-diagnostic':'data','display-cache':'data','settings-tab:data':'data','context-overview':'data','font-retry':'data',
 'drawer:extensions-settings-button':'native','drawer:user-settings-button':'native','disable':'native'});
 // One canonical destination per item. Presentation never writes story settings.
@@ -10,6 +10,7 @@ export const SETTINGS_DESTINATIONS=Object.freeze([
  ['assistant','缇斯亚助手','设计人物、世界与基点，提炼档案、调整配置','assistant','sparkles'],
  ['user-identity','用户身份','原点档案、角色和会话绑定','library','user'],
  ['role-library','角色卡','资料、会话与导入导出','library','user'],
+ ['preset-update','更新 Tisya 预设','重新写入内置提示词并核对当前载入','model','refresh'],
  ['drawer:ai-config-button','预设','生成参数与预设管理','library','sliders'],
  ['drawer:WI-SP-button','世界书','条目、角色绑定与批量操作','library','book'],
  ['group-library','群聊','成员、规则与会话管理','library','group'],
