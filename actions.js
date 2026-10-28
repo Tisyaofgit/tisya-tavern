@@ -1,3 +1,4 @@
+import {mountInteractionFeedback} from './settings-core.js';
 export const ACTION_MODES=Object.freeze([{id:'append',label:'续接输入框',short:'续接'},{id:'replace',label:'替换输入框',short:'替换'},{id:'send',label:'直接发送',short:'直发'}]);
 const modeFor=id=>{const mode=ACTION_MODES.find(row=>row.id===id);if(!mode)throw Error('行动写入方式无效');return mode;};
 
@@ -21,11 +22,11 @@ export function mountActionChoice(document,container,{rows,onChoose,getMode,setM
   content.append(make('span',row.text,'text'));
   // Old protocols' source field is evidence, not a prediction. Never relabel it as an outcome.
   if(typeof row.possibility==='string'&&row.possibility.trim()){const note=make('small',undefined,'action-possibility');note.append(make('span','可能影响 · ','action-possibility-label'),document.createTextNode(row.possibility));content.append(note);}
-  b.append(number,content);
-  b.onclick=async()=>{if(!alive||busy)return;busy=true;buttons.forEach(n=>n.disabled=true);toggle.disabled=true;close();try{mode=readMode();render();const result=await onChoose(row.text,mode);if(!alive)return;list.querySelectorAll('.action').forEach(n=>n.classList.toggle('selected',n===b));feedback.textContent=result?.message??(mode==='send'?'所选行动已交给原生发送。':mode==='replace'?'已替换输入框，尚未发送。':'已续接输入框，尚未发送。');}catch(e){if(alive){feedback.textContent=e.message;onError(e);}}finally{busy=false;if(alive){buttons.forEach(n=>n.disabled=false);toggle.disabled=false;}}};buttons.push(b);list.append(b);
+  const flare=make('span',undefined,'action-flare');flare.setAttribute('aria-hidden','true');b.append(flare,number,content);
+  b.onclick=async()=>{if(!alive||busy)return;if(!document.defaultView.matchMedia?.('(prefers-reduced-motion: reduce)').matches&&typeof flare.animate==='function')flare.animate([{opacity:.65,transform:'scale(.15)'},{opacity:0,transform:'scale(1.4)'}],{duration:650,easing:'ease-out'}).finished.catch(()=>{});busy=true;buttons.forEach(n=>n.disabled=true);toggle.disabled=true;close();try{mode=readMode();render();const result=await onChoose(row.text,mode);if(!alive)return;list.querySelectorAll('.action').forEach(n=>n.classList.toggle('selected',n===b));feedback.textContent=result?.message??(mode==='send'?'所选行动已交给原生发送。':mode==='replace'?'已替换输入框，尚未发送。':'已续接输入框，尚未发送。');}catch(e){if(alive){feedback.textContent=e.message;onError(e);}}finally{busy=false;if(alive){buttons.forEach(n=>n.disabled=false);toggle.disabled=false;}}};buttons.push(b);list.append(b);
  }
- controls.append(toggle,menu);container.append(controls,list,feedback);render();
- return {refresh(){if(!alive||busy)return;mode=readMode();render();},dispose(){alive=false;controls.remove();list.remove();feedback.remove();}};
+ const pressFeedback=mountInteractionFeedback(list);controls.append(toggle,menu);container.append(controls,list,feedback);render();
+ return {refresh(){if(!alive||busy)return;mode=readMode();render();},dispose(){alive=false;pressFeedback.dispose();for(const n of list.querySelectorAll('.action-flare'))for(const a of n.getAnimations?.()??[])a.cancel();controls.remove();list.remove();feedback.remove();}};
 }
 
 export async function executeAction({document,text,mode,validate,send}){

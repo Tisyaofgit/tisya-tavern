@@ -147,6 +147,7 @@ function styles(c){
  const main=chosen.find(r=>r.id===id);let parts=[];
  if(main)parts.push('Main: '+main.name+'\nUse the material labeled Main style with this name; its body is supplied once in MATERIALS.');
  else{const choice=c.n.缇斯亚叙事文风;assert(choice!=='选文风卡','Select an actual style resource');parts.push(choice==='自然小说'?base.tisya_material_style.replace(/^<StyleResources>\n|\n<\/StyleResources>$/g,''):'Main: '+choice+'\n'+STYLES[choice]);}
+ if(Object.values(c.world.styleCards??{}).some(Boolean))parts.push('Compose the selected cards by role: 基调卡 sets emotional register; 视角卡 sets desire position, gaze direction and selective attention; 句式卡 sets sentence rhythm and subtext. Retain the main style elsewhere. Gaze does not alter player authorship, knowledge, disclosure or consent.');
  const seen=new Set(main?[resourceText(main,c.world)]:[]);for(const r of chosen.filter(r=>r!==main)){const body=resourceText(r,c.world);if(body&&!seen.has(body)){parts.push('Supplement: '+r.name+'\nApply the material labeled Style supplement with this name to the main style; preserve facts, permissions and output structure.');seen.add(body);}}
  return '<StyleResources>\n'+parts.join('\n\n')+'\n</StyleResources>';
 }

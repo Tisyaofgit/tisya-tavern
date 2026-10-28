@@ -1,0 +1,66 @@
+[
+  {
+    "width": 320,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "errors": []
+  },
+  {
+    "width": 360,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "errors": []
+  },
+  {
+    "width": 430,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "errors": []
+  },
+  {
+    "width": 900,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "errors": []
+  }
+]
