@@ -1,0 +1,19 @@
+{
+  "kind": "synthetic host-shaped SSE; not provider output",
+  "wireBytes": 210430,
+  "expectedCharacters": 35032,
+  "before": {
+    "code": "TISYA_RESPONSE_EMPTY",
+    "extractedCharacters": 0,
+    "keys": [
+      "candidates",
+      "usageMetadata",
+      "native"
+    ]
+  },
+  "after": {
+    "exact": true,
+    "characters": 35032
+  },
+  "originalUserPayloadAvailable": false
+}

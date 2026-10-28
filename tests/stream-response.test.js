@@ -164,3 +164,28 @@ test('empty, interrupted and buffered failures keep response evidence without re
  await assert.rejects(readTaskResponse(streamResponse(event({content:'partial'}))),e=>{assert.equal(e.code,'TISYA_RESPONSE_TRUNCATED');assert.equal(e.responseDiagnostic.text,'partial');return true;});
  await assert.rejects(readTaskResponse(jsonResponse({choices:[{message:{content:'{"api_key":"credential-777","note":"partial"}',reasoning_content:'HIDDEN'},finish_reason:'length'}]})),e=>{assert.equal(e.responseDiagnostic.finishReason,'length');assert.match(e.responseDiagnostic.text,/partial/);assert(!JSON.stringify(e.responseDiagnostic).includes('credential-777'));assert(!JSON.stringify(e.responseDiagnostic).includes('HIDDEN'));return true;});
 });
+
+const geminiFrame=(text,finishReason,thought=false)=>({candidates:[{index:0,content:{parts:[{text,...(thought?{thought:true}:{})}]},...(finishReason?{finishReason}:{})}],usageMetadata:{totalTokenCount:10}});
+const nativeWire=(p,mirror=false)=>'data: '+JSON.stringify({...p,choices:[{index:0,delta:{...p,native:{provider:'gemini'},...(mirror?{content:p.candidates[0].content.parts.filter(x=>!x.thought).map(x=>x.text).join('')}:{} )}}]})+'\n\n';
+
+test('W73 host-shaped Gemini SSE extracts 100KB text once and ignores thought text',async()=>{
+ const expected=JSON.stringify({world:'群岛',description:'云'.repeat(35000)}),split=Math.floor(expected.length/2);
+ for(const mirror of [false,true]){const progress=[];const wire=nativeWire(geminiFrame('HIDDEN',null,true))+nativeWire(geminiFrame(expected.slice(0,split)),mirror)+nativeWire(geminiFrame(expected.slice(split),'STOP'),mirror)+done;
+ assert.equal(await readTaskResponse(streamResponse(wire,{size:97}),{onProgress:p=>progress.push(p)}),expected);assert(!JSON.stringify(progress).includes('HIDDEN'));assert(progress.some(x=>x.responseDiagnostic.reasoningDetected));}
+});
+
+test('W73 native Gemini direct/buffered/mirrored envelopes share text and completion validation',async()=>{
+ const expected='{"blueprint":{"name":"群岛"}}',p=geminiFrame(expected,'STOP');
+ assert.equal(await readTaskResponse(streamResponse('data: '+JSON.stringify(p)+'\n\n'+done)),expected);
+ assert.equal(await readTaskResponse(jsonResponse(p)),expected);
+ assert.equal(await readTaskResponse(jsonResponse({...p,choices:[{index:0,message:{...p,native:true}}]})),expected);
+ await assert.rejects(readTaskResponse(streamResponse(nativeWire(geminiFrame('partial','MAX_TOKENS')))),e=>{assert.equal(e.code,'TISYA_RESPONSE_TRUNCATED');assert.equal(e.responseDiagnostic.text,'partial');return true;});
+ await assert.rejects(readTaskResponse(streamResponse(nativeWire({...p,candidates:[{content:{parts:[{functionCall:{name:'unapproved',args:{}}}]},finishReason:'STOP'}]}))),e=>e.code==='TISYA_RESPONSE_FINISH');
+ await expectFailure(streamResponse(nativeWire({...p,choices:[],candidates:'broken'})+done),'TISYA_RESPONSE_PROTOCOL');
+});
+
+
+test('W73 a mirrored outer truncation cannot be hidden by native STOP',async()=>{
+ const p=geminiFrame('partial','STOP');const wire='data: '+JSON.stringify({...p,choices:[{index:0,delta:{...p},finish_reason:'length'}]})+'\n\n'+done;
+ await assert.rejects(readTaskResponse(streamResponse(wire)),e=>{assert.equal(e.code,'TISYA_RESPONSE_TRUNCATED');assert.equal(e.responseDiagnostic.text,'partial');return true;});
+});

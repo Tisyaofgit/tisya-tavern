@@ -49,13 +49,43 @@ function firstChoice(choices){
  if(!Array.isArray(choices)||choices.some(choice=>!object(choice)))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API choices 格式无效');
  return choices.find(choice=>choice.index===0)??choices.find(choice=>choice.index===undefined);
 }
+// Host relays can preserve Gemini parts inside an OpenAI-shaped delta.
+// Select one representation; never concatenate mirrored native and plain text.
+function geminiEnvelope(payload,part){
+ if(object(part)&&Object.hasOwn(part,'candidates'))return part;
+ if(object(payload)&&Object.hasOwn(payload,'candidates'))return payload;
+ return null;
+}
+function geminiTextChoice(payload){
+ if(payload.promptFeedback?.blockReason)throw failure('TISYA_RESPONSE_FILTERED','辅助 API 输出被拦截：'+payload.promptFeedback.blockReason);
+ if(!Array.isArray(payload.candidates))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API candidates 格式无效');
+ const candidate=payload.candidates.find(c=>object(c)&&c.index===0)??payload.candidates.find(c=>object(c)&&c.index===undefined);
+ if(!candidate){if(!payload.candidates.length&&object(payload.usageMetadata))return null;throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 没有可读取的 Gemini 候选');}
+ const parts=candidate.content?.parts??[];if(!Array.isArray(parts))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API Gemini 文本块格式无效');
+ let content='',thinking=false;
+ for(const part of parts){
+  if(!object(part))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API Gemini 文本块格式无效');
+  if(part.functionCall)throw failure('TISYA_RESPONSE_FINISH','正文任务收到未授权的工具调用，未作为表单结果接纳');
+  if(typeof part.text==='string'){if(part.thought===true)thinking=true;else content+=part.text;}
+  else if(Object.keys(part).some(key=>key!=='thoughtSignature'))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API Gemini 返回了非文本内容，未作为表单结果接纳');
+ }
+ return {index:0,delta:{content,...(thinking?{reasoning_content:true}:{})},finish_reason:candidate.finishReason||null};
+}
+function mergeNativeChoice(plain,native){
+ if(!native)return null;
+ const visible=textParts(plain?.delta?.content??plain?.message?.content);
+ if(visible&&native.delta.content&&visible!==native.delta.content)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 原生正文与兼容正文不一致，未猜测选择');
+ return {...native,delta:{...native.delta,content:visible||native.delta.content},finish_reason:[native.finish_reason,plain?.finish_reason].find(reason=>reason!=null&&!['stop','STOP','end_turn'].includes(reason))??native.finish_reason??plain?.finish_reason};
+}
 function jsonText(payload,raw,remember=()=>{}){
  const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
  if(typeof payload==='string')return payload;
  if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 没有返回有效的正文对象');
  if(payload.promptFeedback?.blockReason)throw failure('TISYA_RESPONSE_FILTERED','辅助 API 输出被拦截：'+payload.promptFeedback.blockReason);
+ const plain=Object.hasOwn(payload,'choices')?firstChoice(payload.choices):null,native=geminiEnvelope(payload,plain?.message);
+ if(native){const choice=mergeNativeChoice(plain,geminiTextChoice(native));if(!choice)return '';remember(choice.delta.content);checkFinish(choice.finish_reason);return choice.delta.content;}
  if(Object.hasOwn(payload,'choices')){
-  const choice=firstChoice(payload.choices);if(!choice)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本选项');remember(object(choice.message)?textParts(choice.message.content):typeof choice.text==='string'?choice.text:'');checkFinish(choice.finish_reason);
+  const choice=plain;if(!choice)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本选项');remember(object(choice.message)?textParts(choice.message.content):typeof choice.text==='string'?choice.text:'');checkFinish(choice.finish_reason);
   if(choice.message?.refusal)throw failure('TISYA_RESPONSE_REFUSED','辅助 API 拒绝生成：'+description(choice.message.refusal));
   if(object(choice.message))return textParts(choice.message.content);
   if(typeof choice.text==='string')return choice.text;
@@ -130,7 +160,12 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    let payload;try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效 JSON');}
    diagnostic.frames++;inspect(payload);const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
    if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效对象');
-   let choice;if(Object.hasOwn(payload,'choices'))choice=firstChoice(payload.choices);else{choice=tools?.nativeFrame(payload);if(choice===null||choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}if(!choice)return;
+   let choice=Object.hasOwn(payload,'choices')?firstChoice(payload.choices):undefined;
+   const native=geminiEnvelope(payload,choice?.delta);
+   if(native){inspect(native);choice=mergeNativeChoice(choice,tools?tools.nativeFrame(native):geminiTextChoice(native));}
+   else if(choice===undefined&&!Object.hasOwn(payload,'choices')){choice=tools?.nativeFrame(payload);if(choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}
+   if(!choice)return;
+   if(choice.delta?.reasoning_content)diagnostic.reasoningDetected=true;
    tools?.delta(choice);const reason=choice.finish_reason;
    if(choice.delta!==undefined&&!object(choice.delta))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧 delta 格式无效');
    if(!choice.delta&&reason==null)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 delta');

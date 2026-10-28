@@ -1,0 +1,31 @@
+✔ SSE decodes arbitrary byte boundaries and emits cumulative content without reasoning (22.607472ms)
+✔ SSE handles folded data lines, comments, metadata and content parts (1.308991ms)
+✔ terminal DONE cancels an otherwise open reader, while stop also completes at EOF (1.762844ms)
+✔ the full visible result survives many chunks without trimming or truncation (26.307543ms)
+✔ missing completion, malformed frames and malformed envelope shapes fail explicitly (2.84874ms)
+✔ length, content_filter and unsupported finish reasons never become success (2.999886ms)
+✔ stream API errors and error events retain readable diagnostics but redact credentials (0.755738ms)
+✔ reasoning-only, empty completion and refusal are not successful empty results (0.994478ms)
+✔ non-stream OpenAI content stays exact and emits buffered then received (0.970431ms)
+✔ legacy json-only response mocks and direct task JSON objects remain supported (0.533774ms)
+✔ existing non-stream text-part envelopes ignore reasoning blocks (0.885584ms)
+✔ JSON API errors, missing text and malformed JSON never stringify into task success (2.180214ms)
+✔ HTTP failures show status and sanitized server error instead of parsing a task result (0.594315ms)
+✔ abort before reading and while awaiting a stream stops progress and cancels the reader (0.769159ms)
+✔ abort also interrupts a pending json-only mock without waiting for its promise (0.211769ms)
+✔ underlying stream errors and progress callback failures remain visible failures (0.56474ms)
+✔ invalid UTF-8 bytes and unfinished JSON frames cannot produce received progress (0.412682ms)
+✔ safeDiagnostic redacts common quoted/header/query credentials and remains readable and idempotent (0.214553ms)
+✔ failed streams retain visible final-frame text with safe structural diagnostics (4.72879ms)
+✔ empty, interrupted and buffered failures keep response evidence without reasoning values (0.823069ms)
+✔ W73 host-shaped Gemini SSE extracts 100KB text once and ignores thought text (560.208242ms)
+✔ W73 native Gemini direct/buffered/mirrored envelopes share text and completion validation (2.301365ms)
+✔ W73 a mirrored outer truncation cannot be hidden by native STOP (0.603939ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 738.849688

@@ -1,0 +1,18 @@
+{
+  "tests": 1359,
+  "pass": 1359,
+  "fail": 0,
+  "skip": 0,
+  "cancelled": 0,
+  "version": "0.2.0-alpha.31.31.19-onepass.15",
+  "baseline": "6ae87d63fb002f9b9ba82e3cdede0c3149a95c8a",
+  "build": {
+    "modules": 227,
+    "bytes": 3416094,
+    "externals": 40
+  },
+  "providerCalled": false,
+  "installedHostTested": false,
+  "androidTested": false,
+  "at": "2026-10-28T14:08:00.869422+00:00"
+}
