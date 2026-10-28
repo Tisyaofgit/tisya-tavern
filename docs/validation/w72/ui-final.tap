@@ -1,0 +1,10 @@
+✔ failed run UI shows content beside error and export retains it across retries (16.16098ms)
+✔ empty response UI exposes finish and reasoning presence rather than inventing a reply (3.08093ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1307.102743

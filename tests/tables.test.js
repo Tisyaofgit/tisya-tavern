@@ -1061,3 +1061,10 @@ test('one-pass pipes memory reaches V3 archive layers, survives reopen and expos
  prepared=await service.prepareOnePass('swipe');state=JSON.parse(prepared.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);assert.equal(state.rows.length,0);const alternate=build(state.basis,'P1');Object.assign(f.c.chat.at(-1),{mes:alternate,swipe_id:1,swipes:[source,alternate]});await service.acceptOnePass();assert.equal((await service.inspect()).rows.length,1);
  Object.assign(f.c.chat.at(-1),{mes:source,swipe_id:0});assert.equal((await service.inspect()).rows[0].values.台词,'P2');f.c.chat.push(user('她刚才怎么说？'));prepared=await service.prepareOnePass();state=JSON.parse(prepared.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);assert.equal(state.rows.filter(r=>r.table==='events').length,1);assert.equal(state.rows.find(r=>r.table==='events').values.台词,'P2');assert.equal(f.calls.length,0);
 });
+
+test('W72 parser failure retains response diagnostics through service and does not archive partial reply',async()=>{
+ const {readTaskResponse}=await import('../config/stream-response.js');const f=fixture();await f.service.initialize();f.c.chat=[ai('门已开启。'),user('继续')];const wire='data: '+JSON.stringify({choices:[{index:0,delta:{content:'{"changes":['},finish_reason:'length'}]})+'\n\n';
+ const service=f.makeService({request:async(task,input,options)=>readTaskResponse(new Response(wire,{headers:{'content-type':'text/event-stream'}}),options)});
+ const result=await service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert.equal(result.archived,0);const failed=service.state();assert.equal(failed.progress.text,'{"changes":[');assert.equal(failed.progress.responseDiagnostic.finishReason,'length');assert(failed.jobs.some(j=>j.response?.text==='{"changes":['));assert.equal((await service.inspect()).rows.length,0);
+ await service.archive({includeLatest:true,range:{from:1,to:1,limit:1}});assert(service.state().jobs.filter(j=>j.response?.text==='{"changes":[').length>=2);
+});

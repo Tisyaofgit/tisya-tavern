@@ -150,3 +150,17 @@ test('safeDiagnostic redacts common quoted/header/query credentials and remains 
  assert.match(safe,/HTTP 401 denied/);assert.match(safe,/retry=3/);assert.match(safe,/proxy.invalid\/path/);assert.match(safe,/REDACTED/);assert.equal(safeDiagnostic(safe),safe);
  assert.equal(safeDiagnostic('ordinary error: row 12 has no name'),'ordinary error: row 12 has no name');
 });
+
+test('failed streams retain visible final-frame text with safe structural diagnostics',async()=>{
+ for(const reason of ['length','content_filter']){
+ const hidden='PRIVATE_REASONING',visible='{"changes":["last piece"]}';
+ await assert.rejects(readTaskResponse(streamResponse(event({reasoning_content:hidden})+event({content:visible},reason))),e=>{
+ assert.equal(e.responseDiagnostic.text,visible);assert.equal(e.responseDiagnostic.finishReason,reason);assert.equal(e.responseDiagnostic.reasoningDetected,true);assert.equal(e.responseDiagnostic.httpStatus,200);assert(e.responseDiagnostic.receivedBytes>0);assert.equal(e.responseDiagnostic.frames,2);assert.equal(e.responseDiagnostic.accepted,false);assert(!JSON.stringify(e.responseDiagnostic).includes(hidden));return true;});
+ }
+});
+
+test('empty, interrupted and buffered failures keep response evidence without reasoning values',async()=>{
+ await assert.rejects(readTaskResponse(streamResponse(event({reasoning_content:'HIDDEN'})+done)),e=>{assert.equal(e.code,'TISYA_RESPONSE_EMPTY');assert.equal(e.responseDiagnostic.reasoningDetected,true);assert.equal(e.responseDiagnostic.done,true);assert.equal(e.responseDiagnostic.text,'');assert(!JSON.stringify(e.responseDiagnostic).includes('HIDDEN'));return true;});
+ await assert.rejects(readTaskResponse(streamResponse(event({content:'partial'}))),e=>{assert.equal(e.code,'TISYA_RESPONSE_TRUNCATED');assert.equal(e.responseDiagnostic.text,'partial');return true;});
+ await assert.rejects(readTaskResponse(jsonResponse({choices:[{message:{content:'{"api_key":"credential-777","note":"partial"}',reasoning_content:'HIDDEN'},finish_reason:'length'}]})),e=>{assert.equal(e.responseDiagnostic.finishReason,'length');assert.match(e.responseDiagnostic.text,/partial/);assert(!JSON.stringify(e.responseDiagnostic).includes('credential-777'));assert(!JSON.stringify(e.responseDiagnostic).includes('HIDDEN'));return true;});
+});

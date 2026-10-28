@@ -49,13 +49,13 @@ function firstChoice(choices){
  if(!Array.isArray(choices)||choices.some(choice=>!object(choice)))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API choices 格式无效');
  return choices.find(choice=>choice.index===0)??choices.find(choice=>choice.index===undefined);
 }
-function jsonText(payload,raw){
+function jsonText(payload,raw,remember=()=>{}){
  const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
  if(typeof payload==='string')return payload;
  if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 没有返回有效的正文对象');
  if(payload.promptFeedback?.blockReason)throw failure('TISYA_RESPONSE_FILTERED','辅助 API 输出被拦截：'+payload.promptFeedback.blockReason);
  if(Object.hasOwn(payload,'choices')){
-  const choice=firstChoice(payload.choices);if(!choice)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本选项');checkFinish(choice.finish_reason);
+  const choice=firstChoice(payload.choices);if(!choice)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本选项');remember(object(choice.message)?textParts(choice.message.content):typeof choice.text==='string'?choice.text:'');checkFinish(choice.finish_reason);
   if(choice.message?.refusal)throw failure('TISYA_RESPONSE_REFUSED','辅助 API 拒绝生成：'+description(choice.message.refusal));
   if(object(choice.message))return textParts(choice.message.content);
   if(typeof choice.text==='string')return choice.text;
@@ -63,13 +63,13 @@ function jsonText(payload,raw){
  }
  // Preserve the non-stream response shapes already accepted by parseJSONResponse.
  if(Array.isArray(payload.content)){
-  checkFinish(payload.stop_reason);return textParts(payload.content);
+  remember(textParts(payload.content));checkFinish(payload.stop_reason);return textParts(payload.content);
  }
  if(Object.hasOwn(payload,'candidates')){
   if(!Array.isArray(payload.candidates)||!object(payload.candidates[0]))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API candidates 格式无效');
-  const candidate=payload.candidates[0];checkFinish(candidate.finishReason);const parts=candidate.content?.parts;
+  const candidate=payload.candidates[0];const parts=candidate.content?.parts;
   if(!Array.isArray(parts))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 候选缺少正文');
-  return parts.filter(part=>object(part)&&part.thought!==true&&typeof part.text==='string').map(part=>part.text).join('');
+  const result=parts.filter(part=>object(part)&&part.thought!==true&&typeof part.text==='string').map(part=>part.text).join('');remember(result);checkFinish(candidate.finishReason);return result;
  }
  if(!Object.keys(payload).length||Object.hasOwn(payload,'reasoning')||Object.hasOwn(payload,'reasoning_content')||Object.hasOwn(payload,'finish_reason')||Object.hasOwn(payload,'usage')||typeof payload.object==='string'&&payload.object.startsWith('chat.completion')||payload.type==='message')throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 返回了状态或推理数据，但没有正文');
  // Some hosts return the task's JSON object directly instead of a model envelope.
@@ -82,6 +82,9 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
  const tools=allowTools?toolResponseState():null;
  if(!response||typeof response!=='object')throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 响应对象无效');
  let reader=null,ended=false,text='',lastStage='',lastText='',abortReject;
+ const diagnostic={httpStatus:Number(response.status)||null,contentType:safeDiagnostic(response.headers?.get?.('content-type')??''),receivedBytes:0,frames:0,done:false,finishReason:null,reasoningDetected:false,envelopeKeys:[],choiceKeys:[],deltaKeys:[]};
+ const inspect=payload=>{if(!object(payload))return;diagnostic.envelopeKeys=[...new Set([...diagnostic.envelopeKeys,...Object.keys(payload).map(safeDiagnostic)])].slice(0,40);const choice=Array.isArray(payload.choices)?payload.choices.find(x=>x?.index===0||x?.index===undefined):null;const value=choice?.delta??choice?.message??payload;diagnostic.choiceKeys=[...new Set([...diagnostic.choiceKeys,...Object.keys(choice??{}).map(safeDiagnostic)])].slice(0,40);diagnostic.deltaKeys=[...new Set([...diagnostic.deltaKeys,...Object.keys(object(value)?value:{}).map(safeDiagnostic)])].slice(0,40);diagnostic.reasoningDetected ||= !!(value.reasoning||value.reasoning_content||value.reasoning_details||payload.content?.some?.(x=>x?.type==='thinking')||payload.candidates?.some?.(x=>x?.content?.parts?.some?.(p=>p?.thought===true)));const reason=choice?.finish_reason??payload.stop_reason??payload.candidates?.[0]?.finishReason;if(reason!=null)diagnostic.finishReason=safeDiagnostic(String(reason));};
+ const remember=value=>{text=value;};
  const interrupted=new Promise((_,reject)=>{abortReject=reject;});
  // The read race consumes this rejection; the catch also covers aborts before a read starts.
  interrupted.catch(()=>{});
@@ -92,11 +95,11 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
  const guarded=async promise=>{checkAbort();const result=await Promise.race([promise,interrupted]);checkAbort();return result;};
  const progress=async stage=>{
   checkAbort();if(stage===lastStage&&text===lastText)return;lastStage=stage;lastText=text;
-  if(typeof onProgress==='function')await guarded(Promise.resolve().then(()=>onProgress({stage,characters:text.length,text})));
+  if(typeof onProgress==='function')await guarded(Promise.resolve().then(()=>onProgress({stage,characters:text.length,text,responseDiagnostic:{...diagnostic}})));
  };
  async function bodyText(){
-  if(reader){const decoder=new TextDecoder('utf-8',{fatal:true});let raw='';for(;;){const part=await guarded(reader.read());if(part.done){ended=true;return raw+decoder.decode();}raw+=decoder.decode(part.value,{stream:true});}}
-  if(typeof response.text==='function')return guarded(Promise.resolve().then(()=>response.text()));
+  if(reader){const decoder=new TextDecoder('utf-8',{fatal:true});let raw='';for(;;){const part=await guarded(reader.read());if(part.done){ended=true;return raw+decoder.decode();}diagnostic.receivedBytes+=part.value.byteLength;raw+=decoder.decode(part.value,{stream:true});}}
+  if(typeof response.text==='function'){const raw=await guarded(Promise.resolve().then(()=>response.text()));diagnostic.receivedBytes=new TextEncoder().encode(raw).byteLength;return raw;}
   return null;
  }
  try{
@@ -113,9 +116,9 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    if(raw!==null){if(typeof raw!=='string'||!raw.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 返回了空正文');try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 返回的正文不是有效 JSON');}}
    else if(typeof response.json==='function')payload=await guarded(Promise.resolve().then(()=>response.json()));
    else throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 响应缺少可读取的正文接口');
-   const apiFailure=apiError(payload);if(apiFailure)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+apiFailure);
+   inspect(payload);const apiFailure=apiError(payload);if(apiFailure)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+apiFailure);
    const toolResult=tools?.json(payload);if(toolResult){text=toolResult.content;await progress('received');return toolResult;}
-   text=jsonText(payload,raw);if(typeof text!=='string'||!text.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本结果');
+   text=jsonText(payload,raw,remember);if(typeof text!=='string'||!text.trim())throw failure('TISYA_RESPONSE_EMPTY','辅助 API 没有返回文本结果');
    await progress('received');return tools?tools.final(text):text;
   }
   await progress('connected');let pending='',data=[],event='',done=false,finished=false;
@@ -123,19 +126,19 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
    if(!data.length){if(event==='error')throw failure('TISYA_RESPONSE_API','辅助 API 返回了错误事件');event='';return;}
    const raw=data.join('\n'),kind=event;data=[];event='';
    if(kind==='error'){let detail=raw;try{const payload=JSON.parse(raw);detail=apiError(payload)||description(payload);}catch{}throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+detail);}
-   if(raw.trim()==='[DONE]'){done=true;return;}
+   if(raw.trim()==='[DONE]'){done=true;diagnostic.done=true;return;}
    let payload;try{payload=JSON.parse(raw);}catch{throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效 JSON');}
-   const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
+   diagnostic.frames++;inspect(payload);const error=apiError(payload);if(error)throw failure('TISYA_RESPONSE_API','辅助 API 返回错误：'+error);
    if(!object(payload))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧不是有效对象');
    let choice;if(Object.hasOwn(payload,'choices'))choice=firstChoice(payload.choices);else{choice=tools?.nativeFrame(payload);if(choice===null||choice===undefined&&(object(payload.usage)||object(payload.usageMetadata)))return;if(choice===undefined)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少支持的 choices/candidates');}if(!choice)return;
-   tools?.delta(choice);const terminal=tools&&choice.finish_reason==='tool_calls'?true:checkFinish(choice.finish_reason);
+   tools?.delta(choice);const reason=choice.finish_reason;
    if(choice.delta!==undefined&&!object(choice.delta))throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧 delta 格式无效');
-   if(!choice.delta&&!terminal)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 delta');
+   if(!choice.delta&&reason==null)throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流帧缺少 delta');
    if(choice.delta?.refusal)throw failure('TISYA_RESPONSE_REFUSED','辅助 API 拒绝生成：'+description(choice.delta.refusal));
    const part=textParts(choice.delta?.content);
    if(part){text+=part;if(tools&&text.length>262144)throw failure('TISYA_RESPONSE_TOOL_PROTOCOL','工具响应超出长度限制');await progress('receiving');}
    else if(!text&&(choice.delta?.reasoning_content||choice.delta?.reasoning||choice.delta?.reasoning_details))await progress('thinking');
-   if(terminal)finished=true;
+   const terminal=tools&&reason==='tool_calls'?true:checkFinish(reason);if(terminal)finished=true;
   }
   async function line(value){
    if(value===''){await frame();return;}if(value.startsWith(':'))return;
@@ -153,15 +156,13 @@ async function readResponse(response,{signal,onProgress}={},allowTools=false){
   }
   if(reader){
    const decoder=new TextDecoder('utf-8',{fatal:true});
-   while(!done&&!finished){const part=await guarded(reader.read());if(part.done){ended=true;await consume(decoder.decode(),true);break;}await consume(decoder.decode(part.value,{stream:true}));}
-  }else if(typeof response.text==='function')await consume(await guarded(Promise.resolve().then(()=>response.text())),true);
+   while(!done&&!finished){const part=await guarded(reader.read());if(part.done){ended=true;await consume(decoder.decode(),true);break;}diagnostic.receivedBytes+=part.value.byteLength;await consume(decoder.decode(part.value,{stream:true}));}
+  }else if(typeof response.text==='function'){const raw=await guarded(Promise.resolve().then(()=>response.text()));diagnostic.receivedBytes=new TextEncoder().encode(raw).byteLength;await consume(raw,true);}
   else throw failure('TISYA_RESPONSE_PROTOCOL','辅助 API 流响应缺少正文读取接口');
   if(!done&&!finished)throw failure('TISYA_RESPONSE_TRUNCATED','辅助 API 流提前结束，缺少完成标记，结果未被接纳');
   const toolResult=tools?.finish(text);if(!text.trim()&&!toolResult?.toolCalls.length)throw failure('TISYA_RESPONSE_EMPTY','辅助 API 完成但没有返回文本结果');
   await progress('received');return toolResult??text;
  }catch(error){
-  if(signal?.aborted){cancel();throw aborted(signal);}
-  if(error?.code?.startsWith?.('TISYA_RESPONSE_'))throw error;
-  throw failure('TISYA_RESPONSE_READ','辅助 API 读取失败：'+(error?.message??String(error)));
+  const result=signal?.aborted?aborted(signal):error?.code?.startsWith?.('TISYA_RESPONSE_')?error:failure('TISYA_RESPONSE_READ','辅助 API 读取失败：'+(error?.message??String(error)));if(signal?.aborted)cancel();result.responseDiagnostic={...diagnostic,text:safeDiagnostic(text),accepted:false};throw result;
  }finally{signal?.removeEventListener('abort',onAbort);if(reader){if(!ended)cancel();try{reader.releaseLock();}catch{}}}
 }

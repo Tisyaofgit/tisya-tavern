@@ -12,7 +12,7 @@ import {runArchiveToolLoop} from './tool-loop.js';
 import {archiveToolBudget} from '../tables/tool-budget.js';
 import {continuityWorld,isTableContinuity} from '../tables/continuity.js';
 import {archivalText} from '../tables/ledger.js';
-import {readTaskResponse} from './stream-response.js';
+import {readTaskResponse,safeDiagnostic} from './stream-response.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {slotText,SLOT_TARGETS} from '../tables/slots.js';
 import {prepareNativeMvu} from './native-mvu.js';
@@ -142,7 +142,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   if(paired&&route.preset!==definition.preset)fail('此任务必须选用对应的模式预设');
   const nativeSettingsStamp=JSON.stringify(ctx().chatCompletionSettings),connectionStamp=JSON.stringify(connectionSettings(route));
   const preset=paired?null:nativePreset(route.preset),settings={...connectionSettings(route),...(preset?pickParameters(preset):{}),...route.parameters};let messages=[];
-  let query=null;try{
+  let query=null;const requestInfo={connection:route.connection,model:route.model||null,source:settings.chat_completion_source??null,transport:route.transport??'off'};try{
   let parsedInput;try{parsedInput=typeof input==='string'?JSON.parse(input):clone(input);}catch{}
   const useArchiveTools=task==='tableAssistant'&&settings.function_calling===true&&parsedInput?.storage?.ready===true;
   if(archiveToolSession){
@@ -170,7 +170,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
    messages=taskMessages({preset:built,task,input:value,selected:materials.text,substitute:s=>ctx().substituteParams(s)});
   }
   onProgress?.({stage:'prepared'});
-  const model=route.model||settings.__tisyaModel||ctx().getChatCompletionModel(settings);delete settings.__tisyaModel;
+  const model=route.model||settings.__tisyaModel||ctx().getChatCompletionModel(settings);requestInfo.model=model;delete settings.__tisyaModel;
   if(query){
    const guard=()=>{signal?.throwIfAborted();if(worldKey(ctx())!==key||store.read().revision!==revision||JSON.stringify(ctx().chatCompletionSettings)!==nativeSettingsStamp||JSON.stringify(connectionSettings(route))!==connectionStamp)fail('世界、预设或配置已变化，工具循环已停止');};
    const toolBudget=archiveToolBudget(ctx().ToolManager?.RECURSE_LIMIT);
@@ -185,9 +185,9 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   }
   await checkBudget(messages,w.context.maxInputTokens,ctx());const {generate_data:payload}=await createParameters(settings,model,'quiet',messages,{allowToolCalls:false,toolData:{}});payload.stream=typeof onProgress==='function';validateBodyOverrides(payload,parseRequestBody);const prepared=await prepareTransport({...payload},route.transport,{key,revision,world:w});if(prepared?.plan){for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared.payload);}
   if(worldKey(ctx())!==key||store.read().revision!==revision)fail('世界或配置已变化，任务未发送');const snap={at:new Date().toISOString(),world:key,task,route:{connection:route.connection,preset:route.preset,model},selected:materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'auxiliary');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
-  onProgress?.({stage:'waiting'});
+  onProgress?.({stage:'waiting',responseDiagnostic:{request:requestInfo}});
   const response=await fetch('/api/backends/chat-completions/generate',{method:'POST',headers:ctx().getRequestHeaders(),body:JSON.stringify(payload),signal});return await readTaskResponse(response,{signal,onProgress});
-  }finally{query?.dispose();}
+  }catch(error){const failed=error instanceof Error?error:Error(String(error));failed.responseDiagnostic={...(failed.responseDiagnostic??{}),request:Object.fromEntries(Object.entries(requestInfo).map(([key,value])=>[key,typeof value==='string'?safeDiagnostic(value):value]))};throw failed;}finally{query?.dispose();}
  }
  return {setUserRevision(value){if(value&&ctx().mainApi&&ctx().mainApi!=='openai')fail('当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');pendingUserRevision=value?{material:clone(value),chat:ctx().chat,user:ctx().chat[value.messageId]}:null;},setRevision(value){pendingRevision=value?clone(value):null;},attachTableActivation(result){if(generation?.key===result.world&&generation.modular)generation.tableActivation=result.text;},attachTableContext(result){if(!result)return;if(!generation||generation.key!==result.world)fail('表单上下文没有对应的当前生成');if(result.onepass)generation.onePassContext=result.text;if(generation.modular){generation.tableSlots={...generation.tableSlots,...result.slots};generation.materials.text=[generation.materials.text,result.slots?result.instructions:result.text].filter(Boolean).join('\n\n');}},taskPreset,presets,connections,books,entries,searchBooks,archives,historyInput(chat,type){try{return historyInput(chat,type);}catch(e){generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},before:async(...args)=>{try{await before(...args);}catch(e){pendingUserRevision=null;generation={error:e};ctx().stopGeneration?.();onError(e);throw e;}},payloadReady:async p=>{try{if(generation?.error)throw generation.error;if(!generation&&contextOwner(store.read().world)==='native')return;if(!generation&&getSource().prompts.some(x=>x.content?.includes('{{tisya_config_selected}}')))throw Error('配置装配尚未就绪，请重新生成');await payloadReady(p);}catch(e){pendingUserRevision=null;blockPayload(p,e);ctx().stopGeneration?.();onError(e);throw e;}},activeSource:()=>generation?.source??null,selectedText,request,resolveMaterials,connectionSettings,preview:()=>clone(last),snapshots:()=>clone(snapshots),transportStatus:()=>transport?.status()??null,generationAccepted:()=>!generation?.transport||['off','bypassed','complete'].includes(generation.transport.state),clear(){transport?.invalidate('main');generation=null;pendingUserRevision=null;},cancelTransport:()=>transport?.invalidate(null),api};
 }

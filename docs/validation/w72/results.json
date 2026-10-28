@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.14",
+  "baseline": "9abbdde13c4ebcfc86a0ad25b7d4047a756441d4",
+  "tests": 1355,
+  "pass": 1355,
+  "fail": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "targetTests": 74,
+  "postCopyLabelUiTests": 2,
+  "build": {
+    "modules": 227,
+    "bytes": 3413321,
+    "externalImports": 40,
+    "reproducible": true
+  },
+  "realProviderTested": false,
+  "installedHostTested": false,
+  "androidTested": false,
+  "originalEmptyResponseRootCause": "unknown; requires new response diagnostics",
+  "at": "2026-10-28T12:16:14.912292+00:00"
+}

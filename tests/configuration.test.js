@@ -389,3 +389,8 @@ test('rollback compatibility accepts only known typed optional fields and keeps 
  }
  const f=fixture();f.w.modes.narrative.用户口癖保留='false';assert.throws(()=>f.store.read(),/布尔值/);
 });
+
+test('W72 auxiliary failure reports actual route and response evidence without endpoint or credentials',async()=>{
+ const f=fixture();f.d.routes.tasks.main={connection:'profile:b',model:'B-AUX',preset:'r13'};const prior=globalThis.fetch;let sent;globalThis.fetch=async(url,opts)=>{sent=JSON.parse(opts.body);return new Response('data: '+JSON.stringify({choices:[{index:0,delta:{content:'{"changes":['},finish_reason:'length'}]})+'\n\n',{headers:{'content-type':'text/event-stream'}});};
+ try{await assert.rejects(f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'SOURCE'},registry:{tables:[],types:[]},currentRows:[]}),{onProgress:()=>{}}),e=>{assert.equal(e.code,'TISYA_RESPONSE_TRUNCATED');assert.equal(e.responseDiagnostic.request.model,sent.model);assert.equal(e.responseDiagnostic.request.source,'custom');assert.equal(e.responseDiagnostic.text,'{"changes":[');assert.equal(e.responseDiagnostic.finishReason,'length');assert(!JSON.stringify(e.responseDiagnostic).includes('credential-reference'));assert(!JSON.stringify(e.responseDiagnostic).includes('example.invalid'));return true;});}finally{globalThis.fetch=prior;}
+});
