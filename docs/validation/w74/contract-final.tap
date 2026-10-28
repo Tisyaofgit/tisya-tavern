@@ -1,0 +1,43 @@
+✔ host-selected archive review compiles one compatible contract without altering ordinary tasks (83.328371ms)
+✔ registry saves no values; actual book gateway persists compact values and restart reads the same ledger (796.776881ms)
+✔ malformed second row and forged returned diff cannot partially write or change the private draft (538.777736ms)
+✔ old previews reject changed state/definitions; empty and unchanged submissions are zero-write (954.276731ms)
+✔ prior access is preserved and native/reference ownership is not overwritten (785.985719ms)
+✔ failed writes stay visible; post-write read failure recovers by the recorded receipt without writing twice (529.731857ms)
+✔ chat switches at the write callback reject before publishing; removed source does not replay a saved draft (502.516798ms)
+✔ registered growth settles cost and rank in one write, persists receipt and stops after one evaluation (872.62104ms)
+✔ growth conflict and information boundary reject the whole batch; stale formula previews cannot overwrite (1363.438379ms)
+✔ genesis request registers world numeric system and explicit initial values with stable new-character binding (612.719183ms)
+✔ invalid genesis numeric initial values reject before either book; existing values cannot be reinitialized (576.39325ms)
+✔ actual panel state page edits numeric cells, previews growth, saves and reopens with shared level labels (1480.017467ms)
+✔ actual genesis panel retains the generated numeric definition, growth rules and initial values through confirmation (2576.589615ms)
+✔ state panel does not save a preview under a changed character selector (790.785291ms)
+✔ the same numeric rank engine binds item archives without character-specific runtime code (674.56353ms)
+✔ event registration is immutable, creates only definitions and flags; conditional formulas settle once with growth (1198.020967ms)
+✔ event eligibility, mismatched names, changed previews and duplicate competing saves do not write (1188.281873ms)
+✔ event write failures preserve retry evidence and restart resolves post-write uncertainty without double rewards (850.940587ms)
+✔ private event results remain private and cannot widen public state access (1671.997982ms)
+✔ committed event outcomes reach actual prepare slots without replay; later replies consume their narrative window (1019.273902ms)
+✔ actual author panel binds the selected event and target and saves one receipt (1205.374491ms)
+✔ event selectors changing after preview cannot commit the previous occurrence (967.104414ms)
+✔ forked snapshot retains settled event identities and never pays again after restart or a second fork (2294.362172ms)
+✔ unmet event formula and formula bypass reject without flag, receipt or partial numeric writes (783.31797ms)
+✔ an event with no final state changes still saves exactly one durable receipt (1243.247879ms)
+✔ Genesis confirms event registration without marking occurrence or executing narrative text (526.39553ms)
+✔ unmatched private growth conditions do not leak through a zero-change event receipt (1173.257445ms)
+✔ actual grid handles a custom rank-only category, locks absent columns and persists numeric state (877.474184ms)
+✔ all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order (207.507217ms)
+✔ material values survive actual paired message assembly without source macro expansion (14.305676ms)
+✔ large source layers retain every record, Unicode and final sentinel without a summarizing substitute (24.961033ms)
+✔ AI notices retain complete rules and format examples while scripts remain only in the original card (1.049741ms)
+✔ manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence (0.428465ms)
+✔ manual old or undated history cannot overwrite current sourced state, later evidenced time can (27.314568ms)
+✔ actual archive request separates operational blockers and inaccessible corrections from source data (33.850011ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28514.99243

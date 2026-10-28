@@ -244,6 +244,8 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  }
  async function coreAssets(){
   if(beginPage('core'))return;const data=await refresh(),g=section('基点与世界原点');g.append(el('p','基点保留所选人物、装备或其他对象不受画风影响的核心设定与叙事意义；适配后形成本卡的原点版本。成长单独选择，旧世界的关系、持有与完成事项不自动继承。'));
+  const design=section('直接设计基点人物',g);let coreGoal='';design.append(el('p','输入人物点子，生成可编辑的世界无关人物档案，保存到 '+data.settings.originBook+' 的基点资产区；随后可在任意世界适配。'));field(design,'基点人物点子',coreGoal,{type:'textarea',track:false,change:v=>coreGoal=v});
+  button(design,'生成基点人物草稿',async()=>{check(!draft,'请先保存或放弃当前草稿');const value=await service.createCoreDesign(coreGoal),box=el('fieldset');draft={kind:'core-design',value};dirty=true;design.append(box);box.append(el('legend','基点人物完整表单'));const readBase=ui.proposal(box,value.proposal.artifacts.base,{registry:value.proposal.artifacts.registry,rows:[]});button(box,'保存基点人物',async()=>{await service.saveCoreDesign({...value,proposal:{...value.proposal,artifacts:{...value.proposal.artifacts,base:readBase()}}});draft=null;dirty=false;await coreAssets();notice.textContent='基点人物已保存，可跨卡适配或用于设计用户身份';});button(box,'放弃基点人物草稿',()=>{draft=null;dirty=false;box.remove();notice.textContent='基点人物草稿已放弃';});notice.textContent='基点人物草稿已生成，请核对完整表单';});
   const anchors=data.origin.timelineAnchors??[],anchor=coreStageId?anchors.find(a=>a.id===coreStageId):null;check(!coreStageId||anchor,'所选人生阶段已不存在，请重新打开页面选择');
   const sourceRows=anchor?.rows??data.rows;let nextStage=coreStageId??'';
   field(g,'提取人生阶段',nextStage,{track:false,choices:[['','当前存档'],...anchors.map(a=>[a.id,a.name+' · '+(a.worldTime??'时间未定')])],change:v=>nextStage=v});

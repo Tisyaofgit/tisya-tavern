@@ -1,0 +1,23 @@
+{
+  "status": "candidate; W74 overall incomplete",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.1",
+  "fullTests": 1361,
+  "fullPass": 1361,
+  "fullFail": 0,
+  "postFullContractTests": 35,
+  "postFullCoreTests": 2,
+  "build": {
+    "modules": 228,
+    "bytes": 3407231,
+    "externals": 40
+  },
+  "providerTested": false,
+  "androidTested": false,
+  "remaining": [
+    "review remaining wording audit hits and all source variants",
+    "complete original staged genesis workflow with confirmation and durable products",
+    "full assembled-context semantic audit",
+    "release after complete acceptance"
+  ],
+  "at": "2026-10-28T14:53:01.535726+00:00"
+}

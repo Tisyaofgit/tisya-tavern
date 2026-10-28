@@ -69,12 +69,12 @@ test('actual archive request separates operational blockers and inaccessible cor
  for(const task of ['objectArchive','historyImport','tableArchive']){
   const messages=taskMessages({preset:pairedPreset({task,configuration}),task,input:material});
   const norms=messages.find(m=>m.content.startsWith('[REGISTRY]')).content;
-  assert.equal(norms.split('pending is an operational blocker').length-1,1);
-  assert.match(norms,/required write in this task that cannot be represented faithfully/);
-  assert.match(norms,/invalid or missing native values outside the required write are not archival blockers/);
-  assert.match(norms,/Do not silently drop a genuine required-write conflict/);
-  assert.match(norms,/Do not embed concealed objective facts in that record/);
-  assert.match(norms,/mistaken belief must not carry the hidden correction as character knowledge/);
+  assert.equal(norms.split('pending只列本任务必要写入中无法忠实表达的操作阻塞').length-1,1);
+  assert.match(norms,/逐项填写目标写入、冲突来源/);
+  assert.match(norms,/目标写入之外的原生数值保持各自未知或来源状态/);
+  assert.match(norms,/隐瞒必要写入冲突/);
+  assert.match(norms,/禁止在人物可读字段或免责声明中夹入其未知真相/);
+  assert.match(norms,/错误信念保存主体实际理解/);
   assert.deepEqual(slot(messages,'source'),{archiveSource:material.archiveSource,userSource:material.userSource});
  }
 });

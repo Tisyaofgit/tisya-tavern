@@ -1,0 +1,11 @@
+import {AUX_TASKS} from '../tables/prompts.js';
+import {pairedPreset} from '../tables/paired-preset.js';
+import {onePassEntries} from '../onepass/preset.mjs';
+import {fullDefaultConfiguration,DEFAULT_MOODS} from '../six/preset.mjs';
+import {emptyConfig,defaultWorld} from '../config/core.js';
+const rows=[];
+for(const [id,text] of Object.entries(onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS)))if(typeof text==='string')rows.push({owner:'main.'+id,text});
+for(const task of Object.keys(AUX_TASKS))for(const p of pairedPreset({task,configuration:{data:emptyConfig(),world:defaultWorld()}}).prompts)if(p.content)rows.push({owner:task+'.'+p.identifier,text:p.content});
+const pattern=/不是|而不是|不要|不得|不能|不应|不必|尽量|避免|建议|不(?:为|因|将|把|以|用|会|可|做|作|再|宜|许)|Do not|do not|Never|never|\bnot\b|\bNo\b/g;
+const hits=[];for(const row of rows)for(const m of row.text.matchAll(pattern))hits.push({owner:row.owner,offset:m.index,marker:m[0],context:row.text.slice(Math.max(0,m.index-50),m.index+110),status:'待逐义复核；可能是指令、源事实、示例、正则或逻辑表达式'});
+console.log(JSON.stringify({format:'tisya.prompt-wording-audit/1',scope:'发行默认主叙事和11个辅助模式的完整编译提示条目；不含用户改写、聊天资料和所有开关排列',instruction:'机械命中只定位复核项，逐义核对后裁定；禁止将命中数直接解释为通过或失败',entries:rows.length,characters:rows.reduce((n,r)=>n+r.text.length,0),hits: hits.length,review:hits},null,2));

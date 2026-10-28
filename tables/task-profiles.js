@@ -38,9 +38,9 @@ export const TASK_PROFILES=Object.freeze({
   route:['SOURCE.sourceCard→当前选择的对象档案；有依据的无画风核心设定、独特功能与限制、身份经历或物品的叙事意义→core.traits。','明确选取的成长来源→core.growth；世界职业称谓、机制表达、人际绑定和旧世界完成记录保留在来源，已有的抽象意义可提取，实际完成状态与知情不迁移。'],
   steps:['核定选中的对象类型与是否携带成长，保留每条原始来源。','分开无画风核心与当前世界表达；保留身份经历或装备用途的已有叙事意义，不猜作者意图。','逐项填写 core.traits 和获准 core.growth，核心设定与叙事意义分别命名，证据原句取自来源。','检查未丢失有依据的意义，无未选择成长、旧关系或持有自动继承、无目标世界虚构适配；整组选择逐成员填写bundle.members并逐关联填写bundle.links，提交基点草稿。']},
  tableGenesis:{
-  authorize:'依用户创世目标设计可修改的完整蓝图、模板、底档与初始状态；保存前由用户确认，不替用户执行未授权外部操作。',
-  route:['SOURCE.goal→本轮用户设计需求；PREFERENCES.rows→已确认且匹配作用域的全局／局部偏好，直接参与原点设计；未确认候选不采用。GENESIS→已有蓝图与待续工作；STATE.registry/rows→可复用资源及既有人物差异比对。','结构与机制→schemas/templates；可复用世界底档→base；明确新开局→initial；后续生成规则→workflow。','API、宿主或外部创建→有真实回执的后续操作，不以蓝图文本宣称创建成功。'],
-  steps:['梳理目标、现有蓝图、约束、资源和未完成项；接续而不重建已确认内容。','设计相容的表、字段、类型、引用与公式，安排每项填录的唯一负责流程。','逐对比较既有角色与本批新角色的动机、价值冲突、关键经历及影响、表达习惯、能力限制、关系模式与独特细节；去掉姓名职业和装饰细节后，检查起点、关键选择、代价、形成的信念和当下反应是否仍是同一因果链；禁止换名换皮复用同一内核或成长教训，修改未获用户指定的重复设计，不靠强加创伤制造差异。填写完整 blueprint/checklist/artifacts/workflow，简列结果差异；保持底档与当前会话分离，不输出私有推理。','检查依赖环、引用、可实现性和所有需求落点；整组基点逐成员、逐核心项及逐关联填写coreMapping，引用目标档案的实际字段原句；保留待确认项目，只交设计草稿。']},
+  authorize:'按用户目标设计完整的世界、人物、表单与开局，提交可修改的创世蓝图。每个永久档案直接写实际设定，方案说明与待办放在蓝图对应容器。',
+  route:['SOURCE.goal→主题、体验、必保留条件及目标范围；已确认且作用域匹配的PREFERENCES.rows→创作要求。','GENESIS→当前有效蓝图与待续目标；STATE.registry/rows→既有结构、人物和事实的版本依据。','世界与人物稳定档案→base；明确开局状态→initial；模板结构→registry；实施任务→workflow；阻断应用的具体缺项→blueprint.unresolved。'],
+  steps:['读目标与既有档案，确定主题、体验、人物吸引力和本轮设计范围。','按世界八域、人物九组档案及相关对象设计具体内容，逐对比较人物动机、经历因果链、表达和关系策略，修订本次原创部分中的重复设计。','沿现有结构填写blueprint/checklist/artifacts/workflow，保留已有字段、元数据、原生用户对象和来源，新增内容填写连续原文或完整设计条目作为evidence。','核对因果、时序、引用、知情权限、公式和保存接口，基点适配逐成员、逐核心项及逐关联填写coreMapping并落到真实字段；交付完整JSON草稿。']},
  tableAssistant:{
   authorize:'根据用户当前要求分析真实配置并提出批量修改草稿；仅由用户点击应用执行，不在回答时写入。',
   route:['SOURCE.question/conversation→当前需求；STATE.configuration/editablePaths/choices→可改路径与真实选项。','STATE.history/storage 和 TOOLS→实测状态；缺失能力与新资源需求→genesisGoal；已知楼层补录→backfill。','配置更改→changes；诊断说明→answer；无真实写回回执→不声称完成。'],

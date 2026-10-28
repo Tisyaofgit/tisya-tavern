@@ -15,7 +15,7 @@
     "src/interaction.cjs": "260682d4837ac4c1f794810849056406097c0c37102d97701e7f9e2234b4ec08",
     "src/output-contract.cjs": "f5bc33f799d0607ba4618ecacbbb0bb3b09ba974cc223c0dd9c12fd60f02da5e",
     "src/action-range.cjs": "43264c9a18a93278e4f4c4c362a205461cfd5585ebfbac107eb184b73bba9787",
-    "src/tisya-protocol/source.json": "8c0886fb8849a141df61b8e76c049684a3829f7adc783cfd7fc94c0ce81317e1",
+    "src/tisya-protocol/source.json": "653391c19baa49c26f775462ccdfe1b9e0fc43e848bf50a2c7da3561fb07fe16",
     "src/stepwise-protocol.cjs": "c5b98f477644ceb9705799b95e96a37f5be957b413fd3bb6025f0065728e579f",
     "src/independent-preset.cjs": "fe0e195e6765a727f02f1136a075fe651306ba2d4fe41b804d0fd45a4f8e6ff0",
     "src/narrative-protocol-data.cjs": "ce58266b4f3b1bfbcc2adb4aec99910c3334a68f71ec90ac79c562ccadb756c7",
@@ -26,7 +26,7 @@
     "src/flow-login.json": "859f476c19d1e36725917fd51748e2d06af309d4a1a0059700e887c276129c62",
     "src/output-template.cjs": "9174493249bceb33e36ec11b6be547de52a3861c117af454f68aaf789d7a84a0",
     "src/story-memory.cjs": "8b51ff9090efaf5549d2003b6b58d4f84fdadc26edbcd6e1bb5b326afd860440",
-    "src/world-generation-task.json": "ccc067fd36a2584c17382004f90430fb3dd68a6142e20e2e1d317fd85ce11bd0",
+    "src/world-generation-task.json": "8d23b0c34814166e11e3e05e01651a88b5734adaab8156fa703f066c82e866d1",
     "src/rest-protocol.cjs": "426d5ec0ceb2ee1b0aecc9044b8b73d345f6e3bbaa70bb104c16c56abb42cac2",
     "src/output-template-data.cjs": "6c218aea79660afbd7bb418fe93155a465853da83da4e0310b16596c5fa97ce1",
     "src/output-guidance.json": "f67c547161b6a83b30e5677b140d9fe9c1f4241f2f021e881ba64bb1e49aae02",
@@ -43,5 +43,15 @@
     "Original narrative renderer exposes refresh and includes its viewed profile revision when saving a new named profile",
     "Original appearance renderer; display registry exposes only connected decoration and motion fields; original unsupported automatic-reference controls are withheld",
     "Native Tauri storage adapters replace original Tavo service calls; no original UI source bytes changed"
-  ]
+  ],
+  "localRevisions": {
+    "src/tisya-protocol/source.json": {
+      "parentSha256": "8c0886fb8849a141df61b8e76c049684a3829f7adc783cfd7fc94c0ce81317e1",
+      "reason": "W74 user-authorized positive prompt wording candidate; factual and format contracts retained"
+    },
+    "src/world-generation-task.json": {
+      "parentSha256": "ccc067fd36a2584c17382004f90430fb3dd68a6142e20e2e1d317fd85ce11bd0",
+      "reason": "W74 user-authorized positive prompt wording candidate; factual and format contracts retained"
+    }
+  }
 }
