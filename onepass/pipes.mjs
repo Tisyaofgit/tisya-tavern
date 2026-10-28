@@ -17,12 +17,13 @@ export function parsePipeBlock(text,block){
  for(const [index,line] of unxml(text).split(/\r?\n/).entries())for(const part of splitPipeRaw(line,'&')){
   if(!part.trim())continue;const at=part.indexOf('：');check(at>0,block+'第 '+(index+1)+' 行缺少类别冒号');const kind=part.slice(0,at).trim(),fields=PIPE_ROWS[block][kind];check(fields,block+' 未登记类别 '+kind);
   const cells=splitPipeRaw(part.slice(at+1).trim(),'|').map(x=>x.trim());check(cells.length<=fields.length,block+' 第 '+(index+1)+' 行 '+kind+' 列数过多：应为 '+fields.length+' 列，实际 '+cells.length+' 列；正文中的 | 须写为 \\|');while(cells.length<fields.length)cells.push('~');for(const c of cells)decodePipeCell(c);
+  if(kind!=='共用'&&cells.every(missing))continue;
   const values=Object.fromEntries(fields.map((key,i)=>[key,cells[i]]));if(kind==='共用'){common=values;continue;}rows.push({kind,values,common:{...common},line:index+1});check(rows.length<=400,'记录数量超过上限');
  }return {format:'pipes',rows};
 }
 const rowTable={事件:'events',事实发现:'facts',伏笔:'clues',倒计时:'timers',认知:'cognition',习惯锚点:'experiences'};
 const nested=new Set(['前史','关系底稿','隐情','世界设定']);
-export function compilePipeRecords(view,reply,state){
+export function compilePipeRecords(view,reply,state,{sourceKey=null}={}){
  const pending=[],ops=new Map(),wireIDs=new Set(),paragraphs=reply.publicReply.paragraphs,byId=new Map(view.rows.map(r=>[r.id,r])),aliases=state.aliases??{};
  const ref=raw=>{const s=decodePipeCell(raw);if(/^\+[A-Za-z][\w-]*$/.test(s))return 'new:'+s.slice(1);const id=aliases[s]??s;check(byId.has(id),'引用编号不存在：'+s);return id;};
  const list=(raw,resolve=false)=>{check(!missing(raw)&&!['!','=','null'].includes(raw),'缺少明确列表');if(raw==='[]')return [];const a=splitPipeRaw(raw,'、').map(x=>resolve?ref(x):decodePipeCell(x));check(a.every(x=>x.trim())&&new Set(a).size===a.length,'列表有空项或重复');return a;};
@@ -35,7 +36,7 @@ export function compilePipeRecords(view,reply,state){
   else if(def.type==='json'){if(v==='true'||v==='false')v=v==='true';else if(/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(v))v=Number(v);else check(!/^[\[{]/.test(v),'复合值须由已登记子字段填写，不填 JSON');}
   check(valueValid(v,def),'字段类型或枚举不符');return v;
  };
- const evidence=raw=>{const ids=list(raw);check(ids.length,'缺少原文证据');const parts=ids.map(id=>{check(/^P[1-9]\d*$/.test(id),'证据须为本条正文段号 P1、P2；其他来源先列待定');const p=paragraphs.find(p=>p.id===Number(id.slice(1)));check(p,'证据段号不存在：'+id);return p.raw;});return {parts,quote:parts[0]};};
+ const evidence=raw=>{const ids=list(raw);check(ids.length,'缺少原文证据');check(ids.every(id=>/^P[1-9]\d*$/.test(id)),'证据须为本条正文段号 P1、P2；其他来源先列待定');ids.sort((a,b)=>Number(a.slice(1))-Number(b.slice(1)));const parts=ids.map(id=>{const p=paragraphs.find(p=>p.id===Number(id.slice(1)));check(p,'证据段号不存在：'+id);return p.raw;});return {ids,parts,quote:parts[0]};};
  const commonAccess=(common,old)=>{
   const readers=missing(common.读者)?old?.access.readers:list(common.读者).map(x=>x==='读者'?x:ref(x));
   const knowers=missing(common.知情者)?old?.access.knowers:list(common.知情者,true);
@@ -49,13 +50,14 @@ export function compilePipeRecords(view,reply,state){
  const set=(op,key,raw,def)=>{if(missing(raw))return;check(def,'字段未登记：'+key);if(raw==='!'){check(!def.required,'不能清空必填字段');(op.unset??=[]).push(key);return;}op.values[key]=value(raw,def);};
  for(const block of ['memory','status'])for(const r of reply.records[block].rows){if(nested.has(r.kind))continue;
   if(r.kind==='描述'){
-   const path=decodePipeCell(r.values.登记字段路径).split('.'),table=view.registry.tables.find(t=>t.id===path.shift());check(table&&!['native_cells','preferences'].includes(table.id),'描述路径未登记或属独立写入者');
+   const path=decodePipeCell(r.values.登记字段路径).split('.'),tableId=path.shift(),table=view.registry.tables.find(t=>t.id===tableId);check(table&&!['native_cells','preferences'].includes(table.id),'描述路径未登记或属独立写入者');
    const {op,old,def,ev}=make(r,table.id==='state'?'state':table.id);check(old,'描述更新须引用已有记录；新认知和习惯使用各自专行');check(path.length===1&&(def.fields[path[0]]?.type==='text'||def.fields[path[0]]?.type==='json'&&typeof old.values[path[0]]==='string'),'描述只更新已登记文本字段');set(op,path[0],r.values.变化后文本,{...def.fields[path[0]],type:'text'});if(def.fields.生效时间&&!missing(r.common.生效时间))op.values.生效时间=decodePipeCell(r.common.生效时间);
    for(const key of ['有效性','锚点事件'])if(!missing(r.values[key]))set(op,key,r.values[key],def.fields[key]);continue;
   }
   const table=rowTable[r.kind];check(table,'未登记行 '+r.kind);const {op,old,def,ev}=make(r,table);
   for(const [key,raw]of Object.entries(r.values)){if(key==='编号')continue;
-   if(key==='原文段号'){if(!missing(raw)){check(raw!=='!','原文段落不得伪清空');op.values.原文段落=evidence(inherited(raw,r.common,'证据')).parts;}continue;}
+   if(key==='原文段号'){if(!missing(raw)){check(raw!=='!','原文段落不得伪清空');const original=evidence(inherited(raw,r.common,'证据'));op.values.原文段落=original.parts;op.values.原文段号=original.ids;}continue;}
+   if(table==='events'&&key==='台词'&&!missing(raw)&&/^P[1-9]\d*(?:、P[1-9]\d*)*$/.test(raw)){evidence(raw);op.values.台词=raw;continue;}
    const commonKey=key==='参与者'||key==='主体'?'对象':key==='生效时间'?'故事时间':key;
    let cell=inherited(raw,r.common,commonKey);
    if(raw==='='&&key==='主体'){const a=list(cell,true);check(a.length===1,'主体只能继承单个对象');cell=a[0];}
@@ -69,7 +71,15 @@ export function compilePipeRecords(view,reply,state){
    if(!missing(r.common.故事时间))op.values.时间=decodePipeCell(r.common.故事时间);
    if(!missing(r.common.地点))op.values.地点=list(r.common.地点,true).join('、');
    if(!Object.hasOwn(op.values,'参与者')&&!old&& !missing(r.common.对象))op.values.参与者=list(r.common.对象,true);
-   if(!Object.hasOwn(op.values,'原文段落'))op.values.原文段落=ev.parts;
+   const referenceLine=v=>typeof v==='string'&&/^P[1-9]\d*(?:、P[1-9]\d*)*$/.test(v);
+   const oldReference=referenceLine(old?.values.台词),newDialogue=Object.hasOwn(op.values,'台词')||(op.unset??[]).includes('台词');
+   check(!oldReference||newDialogue||!Object.hasOwn(op.values,'原文段落'),'更新原文时须重申或明确清除旧台词段号，禁止错绑');
+   if(!Object.hasOwn(op.values,'原文段落')&&!(oldReference&&!newDialogue)){op.values.原文段落=ev.parts;op.values.原文段号=ev.ids;}
+   if(referenceLine(op.values.台词)){
+    const ids=[...new Set([...(op.values.原文段号??[]),...list(op.values.台词)])],original=evidence(ids.join('、'));
+    op.values.原文段落=original.parts;op.values.原文段号=original.ids;
+   }
+   if(sourceKey&&Object.hasOwn(op.values,'原文段落'))op.values.原文来源=sourceKey;
   }
  }
  for(const r of reply.records.memory.rows.filter(r=>nested.has(r.kind))){

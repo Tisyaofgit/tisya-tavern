@@ -1,0 +1,14 @@
+✔ reported optional placeholders and candidate annotations parse without rewriting the source or swallowing real column errors (11.355183ms)
+✔ dialogue paragraph references retain original wording once and bind IDs to the exact source; pending placeholders create nothing (14.58084ms)
+✔ V3 archive safeguards apply to one-pass changes: locks and newer current-state sources reject whole batches (3.562625ms)
+✔ optional original ID/source metadata upgrades without changing saved records or custom fields (1.576665ms)
+✔ dialogue reference updates preserve their original source or require explicit rebinding instead of silently changing their text (12.106474ms)
+✔ installed, displayed and stylesheet versions agree (1.164043ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.391622

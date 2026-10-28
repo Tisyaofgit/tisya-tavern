@@ -65,6 +65,12 @@ function checkUnboundTemporaryReferences(registry,rows,operations){
  });
 }
 
+// The one-pass writer consumes canonical rows too. Keep V3 safeguards owned here.
+export function reviewCanonicalArchiveChanges(view,changes,source){
+ checkIdentity(view,changes);checkStateValues(view,changes);
+ checkUnboundTemporaryReferences(view.registry,view.rows,changes);checkProtectedUpdates(view,changes,source);
+}
+
 function registered(items,value){return items.find(item=>[item.id,item.name,...(item.aliases??[])].some(name=>normalized(name)===normalized(value)));}
 function registeredField(fields,value){for(const [name,definition]of Object.entries(fields))if([name,...(definition.aliases??[])].some(alias=>normalized(alias)===normalized(value)))return {name,definition};return null;}
 function schemaDiagnostic(index,path,label='字段'){
@@ -165,7 +171,7 @@ export function createArchiveProposalSession({view,context,source,allowedTables,
     reviewArchiveSchema(schema,raw.rows,operations);
     proposal={templates,schemaChanges,changes:operations,schemaEvidence:declarations.map(({change,id,evidence})=>({kind:change.kind,id,evidence}))};
     const reconciled=reconcileProposal(raw.registry,{...proposal,currentRows:raw.rows},ARCHIVE_SCHEMA_OPTIONS);proposal.changes=reconciled.proposal.changes;
-    checkIdentity(raw,proposal.changes);checkStateValues(raw,proposal.changes);checkUnboundTemporaryReferences(reconciled.registry,raw.rows,proposal.changes);checkProtectedUpdates(raw,proposal.changes,basis);
+    reviewCanonicalArchiveChanges({...raw,registry:reconciled.registry},proposal.changes,basis);
     prepareCommit(raw,proposal,{source:basis.key,kind:'archive',evidence:basis.evidence,worldTime:basis.worldTime??null,allowedTables:tables,sourceOrder:basis.sourceOrder??{},...ARCHIVE_SCHEMA_OPTIONS});
    }
    catch(error){if(error instanceof ArchiveProposalError)throw error;throw new ArchiveProposalError('INVALID_PROPOSAL','归档草案未通过字段、证据、引用或批次校验；未写入档案。');}

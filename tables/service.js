@@ -393,7 +393,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   const already=loaded.session.data.commits.find(x=>x.source===source.key&&x.onePass?.basis===token.state.basis);if(already)return {already:true,changes:0};
   check(loaded.origin.stamp===token.originStamp&&loaded.session.stamp===token.sessionStamp,'生成期间表单已改变，未覆盖新版本');
   check(JSON.stringify(loaded.chain.slice(0,-1).map(s=>s.key))===JSON.stringify(token.prefix),'回复所属历史或候选已改变，未提交');
-  const parsed=parseOnePassReply(source.text),batch=await prepareOnePassBatch(loaded.view,parsed,token.state,source),next=copy(loaded.session.data);
+  const parsed=parseOnePassReply(source.text),batch=await prepareOnePassBatch(loaded.view,parsed,token.state,{...source,sourceOrder:Object.fromEntries(loaded.chain.map((s,i)=>[s.key,i]))}),next=copy(loaded.session.data);
   next.revision++;next.commits.push(...batch.commits);project(loaded.origin.data,next,loaded.chain.map(s=>s.key));
   await books.write(loaded.session,next,c.guard);status('单次填表','已保存',batch.changes+' 项'+(batch.pending.length+' 项待定'));return {already:false,changes:batch.changes,pending:batch.pending};
  },{scope:'generation'});}

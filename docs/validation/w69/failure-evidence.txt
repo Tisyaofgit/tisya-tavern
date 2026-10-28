@@ -1,0 +1,73 @@
+w69-new-tests.tap
+✖ failing tests:
+
+test at tests/onepass-memory-w69.test.js:34:1
+✖ V3 archive safeguards apply to one-pass changes: locks, newer sources and state value ambiguity reject whole batches (7.052476ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/6b21b2343f0e/w66-source/tests/onepass-memory-w69.test.js:36:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /更晚楼层/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+
+w69-new-tests-final.tap
+✖ failing tests:
+
+test at tests/onepass-memory-w69.test.js:34:1
+✖ V3 archive safeguards apply to one-pass changes: locks and newer current-state sources reject whole batches (3.655716ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /更晚楼层/. Input:
+  
+  'Error: 描述路径未登记或属独立写入者'
+  
+      at async TestContext.<anonymous> (file:///workspace/scratch/6b21b2343f0e/w66-source/tests/onepass-memory-w69.test.js:36:333)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: 描述路径未登记或属独立写入者
+        at fail (file:///workspace/scratch/6b21b2343f0e/w66-source/onepass/pipes.mjs:9:44)
+        at check (file:///workspace/scratch/6b21b2343f0e/w66-source/onepass/pipes.mjs:10:35)
+        at compilePipeRecords (file:///workspace/scratch/6b21b2343f0e/w66-source/onepass/pipes.mjs:53:114)
+        at prepareOnePassBatch (file:///workspace/scratch/6b21b2343f0e/w66-source/onepass/tables.mjs:9:18)
+        at TestContext.<anonymous> (file:///workspace/scratch/6b21b2343f0e/w66-source/tests/onepass-memory-w69.test.js:36:354)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: /更晚楼层/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+
+w69-full.tap
+✖ failing tests:
+
+test at tests/release.test.js:2:1
+✖ installed, displayed and stylesheet versions agree (1.704607ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '0.2.0-alpha.31.31.19-onepass.10'
+  - '0.2.0-alpha.31.31.19-onepass.11'
+                                   ^
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/6b21b2343f0e/w66-source/tests/release.test.js:2:255)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '0.2.0-alpha.31.31.19-onepass.10',
+    expected: '0.2.0-alpha.31.31.19-onepass.11',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

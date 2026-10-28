@@ -1,11 +1,13 @@
 import {prepareCommit} from '../tables/ledger.js';
 import {compilePipeRecords} from './pipes.mjs';
+import {reviewCanonicalArchiveChanges} from '../tables/archive-proposal.js';
 import {validateWorldProposal,progressionWindow,progressionKey} from '../tables/progression.js';
 const check=(ok,message)=>{if(!ok)throw Error('单次填表：'+message);};
 const list=(v,name)=>check(Array.isArray(v)&&v.every(x=>typeof x==='string'&&x.trim()),name+'须为非空文本列表');
 export async function prepareOnePassBatch(view,reply,state,source){
  if(reply.recordFormat==='pipes'){
-  const proposal=compilePipeRecords(view,reply,state),evidence=reply.publicReply.paragraphs.map(p=>p.raw).join('\n\n');
+  const proposal=compilePipeRecords(view,reply,state,{sourceKey:source.key}),evidence=reply.publicReply.paragraphs.map(p=>p.raw).join('\n\n');
+  reviewCanonicalArchiveChanges(view,proposal.changes,source);
   const base=prepareCommit(view,proposal,{source:source.key,kind:'archive',evidence,allowedTables:['events','facts','clues','timers','cognition','experiences','objects','scene','state','relations','holdings','tasks','activities','growth'],allowSchemaExtensions:false,inferSchemaFields:false});
   base.commit.onePass={basis:state.basis,coverage:proposal.coverage,wire:'pipes/1',worldPending:[]};
   return {commits:[base.commit],changes:base.commit.changes.length,pending:proposal.pending};
@@ -25,6 +27,7 @@ export async function prepareOnePassBatch(view,reply,state,source){
  for(const op of memory.changes)if(op.values?.原文段落)check(op.values.原文段落.every(x=>paragraphs.includes(x)),'归档原文必须是本条完整正文段落');
  const pending=[...vars.pending,...memory.pending,...archive.pending,...coverage.filter(x=>x.status==='pending').map(x=>x.table+'：'+x.reason)];
  const options={source:source.key,kind:'archive',evidence,allowedTables:view.registry.tables.filter(t=>t.id!=='preferences'&&t.id!=='native_cells').map(t=>t.id),allowSchemaExtensions:false,inferSchemaFields:false};
+ reviewCanonicalArchiveChanges(view,changes,source);
  const base=prepareCommit(view,{changes,pending},options);base.commit.onePass={basis:state.basis,coverage,focus:status.focus,worldPending:status.pending};
  const commits=[base.commit];
  const worldView={...view,rows:base.rows,registry:base.registry,last:base.commit.id,baseTime:view.baseTime??view.rows.find(r=>r.table==='scene')?.values.当前时间};
