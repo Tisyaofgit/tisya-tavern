@@ -1,0 +1,32 @@
+{
+  "base_commit": "b8184b646ca2323d5dcdc7f90d19a12a17079271",
+  "base_tree": "9ebf7db0eeb17950c00c9d969a3e915f4430b042",
+  "version": "0.2.0-alpha.31.31.19-onepass.13",
+  "verified_at": "2026-10-28T11:30:51.642029+00:00",
+  "tests": {
+    "total": 1349,
+    "pass": 1349,
+    "fail": 0,
+    "skipped": 0,
+    "added": 14,
+    "command": "npm test",
+    "log_sha256": "367df09ae32279692ad0123ef6fdf8f68ed841ead18b37802f8ab86ee58929bd"
+  },
+  "runtime_bytes": 3409132,
+  "runtime_sha256": "3a96c692ceacf09315c632d11f14a2f639a91be25736ef0079bba1407d4b5a9c",
+  "scope": [
+    "independent native persona slot from fixed origin",
+    "idempotent avatar/carrier recovery",
+    "idea-only world creation from welcome sidebar",
+    "idea to real genesis preview, save and next onepass forms",
+    "additive/revision authoring guard",
+    "old profile/world preservation"
+  ],
+  "not_tested": [
+    "actual provider model",
+    "newly installed Tauri host",
+    "Android device"
+  ],
+  "no_per_turn_model_calls_added": true,
+  "form_character_budget_reintroduced": false
+}

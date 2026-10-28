@@ -1,0 +1,19 @@
+✖ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (105.984781ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 493.768548
+
+✖ failing tests:
+
+test at tests/shell.test.js:53:1
+✖ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (105.984781ms)
+  TypeError [Error]: Cannot read properties of null (reading 'click')
+      at click (file:///workspace/scratch/a82b391acf8b/w70-source/tests/shell.test.js:52:335)
+      at TestContext.<anonymous> (file:///workspace/scratch/a82b391acf8b/w70-source/tests/shell.test.js:54:81)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

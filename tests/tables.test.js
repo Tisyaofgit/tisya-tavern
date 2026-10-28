@@ -23,6 +23,22 @@ function fixture(nativeConfig=null){
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('W71 idea-only carrier reaches the real genesis UI, saves complete forms and leaves the old world untouched',async()=>{
+ const {createWorldSeedService}=await import('../world-seed.js'),{mountAssistantApp}=await import('../assistant-app.js'),{Window}=await import('happy-dom');const f=fixture(),old=f.store.read(),oldWorld=structuredClone(old.world);f.c.name1='用户';f.c.userAvatar='old-user.png';f.c.powerUserSettings={personas:{'old-user.png':'用户'},persona_descriptions:{'old-user.png':{description:''}},persona_description:''};
+ const seed=createWorldSeedService({getContext:()=>f.c,persist:async()=>true,createCarrier:async p=>{f.c.characters.push({avatar:'islands.png',name:p.name,description:'这是独立的表单化世界游玩载体。'});return 'islands.png';},findCarrier:async()=>null,openCarrier:async()=>{f.c.characterId=1;f.c.chatId='islands';f.c.chat=[];}});
+ const receipt=await seed.start({name:'群岛',idea:'天空群岛，旅人寻找失落的朋友'});f.binding.primary='';f.binding.additional=[];
+ f.responder((task,input)=>{assert.equal(task,'tableGenesis');assert.match(input.goal,/天空群岛/);assert.doesNotMatch(input.sourceCard,/开场白/);return {blueprint:{name:'天空群岛',goal:input.goal,decisions:['创建云港与旅人阿青，开局旅人在云港'],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[op('new:port','objects',{名称:'云港',类型:'place'},'云港'),op('new:person','objects',{名称:'旅人阿青',类型:'character',描述:'寻找失落的朋友'},'旅人阿青')]},initial:{changes:[op('new:scene','scene',{名称:'云港开局',场景:'云港',参与者:['new:person']},'开局旅人在云港')]}},workflow:{id:'islands',name:'群岛',version:1,steps:[]}};});
+ const w=new Window(),container=w.document.createElement('div');w.document.body.append(container);const app=mountAssistantApp(w.document,container,{service:f.service,identity:{},store:f.store,initialGoal:receipt.goal,onClose:()=>{}});await app.navigate('genesis',receipt.goal);
+ const dom=app.root.shadowRoot,click=async label=>{const b=[...dom.querySelectorAll('button')].find(b=>b.textContent===label);assert(b,label);b.click();await app.settled();};
+ assert.match(dom.querySelector('[aria-label="创世要求"]').value,/天空群岛/);await click('生成可编辑创世蓝图');assert.equal((await f.service.inspect()).rows.length,0);await click('确认应用创世蓝图');
+ const saved=await f.service.inspect();assert.equal(saved.rows.length,3);assert.equal(saved.rows.filter(r=>r.table==='scene').length,1);const sent=await f.service.prepareOnePass();assert.match(sent.text,/云港/);assert.match(sent.text,/旅人阿青/);assert.deepEqual(f.store.read().data.worlds[old.key],oldWorld);
+ app.dispose();await w.happyDOM.abort();
+});
+test('W71 additive authoring rejects a model overwrite of an existing person with zero writes',async()=>{
+ const f=fixture();await initializeBase(f,[op('new:p','objects',{名称:'原人物',类型:'character',描述:'原设定'},'用户手动修改表单')]);const before=await f.service.inspect(),person=before.rows[0];
+ f.responder((_task,input)=>({blueprint:{name:'补充',goal:input.goal,decisions:['改写设定'],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[op(person.id,'objects',{描述:'改写设定'},'改写设定',person.rev)]},initial:{changes:[]}},workflow:{id:'extend',name:'补充',version:1,steps:[]}}));
+ const draft=await f.service.genesis('补充世界',{authoringMode:'extend'}),bytes=JSON.stringify([...f.saved]);await assert.rejects(f.service.saveGenesis(draft),/补充创作不能改写/);assert.equal(JSON.stringify([...f.saved]),bytes);assert.deepEqual((await f.service.inspect()).rows,before.rows);
+});
 test('W70 card initialization, native-book reopen, one-pass archive and next layered snapshot form one lossless chain at topK zero',async()=>{
  const {onePassReply}=await import('./fixtures/onepass-reply.js');
  const f=fixture();f.binding.primary='';f.binding.additional=[];

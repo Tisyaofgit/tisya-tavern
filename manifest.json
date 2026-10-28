@@ -1,6 +1,6 @@
 {
   "display_name": "缇斯亚 · 月潮",
-  "version": "0.2.0-alpha.31.31.19-onepass.12",
+  "version": "0.2.0-alpha.31.31.19-onepass.13",
   "author": "Tisya Project",
   "loading_order": 100,
   "requires": [],
@@ -10,6 +10,6 @@
   "hooks": {
     "chatSurface": "registerChatSurface"
   },
-  "description": "单次完整回复与分层表单归档；角色卡建表、用户角色、基点人生阶段和条件主线沿原生世界书连接。",
+  "description": "点子开世界、完整表单与独立人物槽位；支持游玩中增补或修订人物和世界定义，沿原生存档归档。",
   "generate_interceptor": "tisyaHistoryInput"
 }

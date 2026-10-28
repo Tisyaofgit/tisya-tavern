@@ -7,6 +7,7 @@ export const SETTINGS_GROUP=Object.freeze({
 'drawer:extensions-settings-button':'native','drawer:user-settings-button':'native','disable':'native'});
 // One canonical destination per item. Presentation never writes story settings.
 export const SETTINGS_DESTINATIONS=Object.freeze([
+ ['new-world','从点子开世界','不需要角色卡，创建独立世界与人物表单','assistant','sparkles'],
  ['assistant','缇斯亚助手','设计人物、世界与基点，提炼档案、调整配置','assistant','sparkles'],
  ['user-identity','用户身份','原点档案、角色和会话绑定','library','user'],
  ['role-library','角色卡','资料、会话与导入导出','library','user'],
