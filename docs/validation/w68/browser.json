@@ -1,0 +1,90 @@
+[
+  {
+    "width": 320,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "longLayout": {
+      "rows": 6,
+      "overflow": false,
+      "clipped": false,
+      "asset": true
+    },
+    "errors": []
+  },
+  {
+    "width": 360,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "longLayout": {
+      "rows": 6,
+      "overflow": false,
+      "clipped": false,
+      "asset": true
+    },
+    "errors": []
+  },
+  {
+    "width": 430,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "longLayout": {
+      "rows": 6,
+      "overflow": false,
+      "clipped": false,
+      "asset": true
+    },
+    "errors": []
+  },
+  {
+    "width": 900,
+    "overflow": false,
+    "actions": 4,
+    "font": true,
+    "selected": {
+      "calls": 1,
+      "selected": 1,
+      "animations": 1
+    },
+    "reduced": {
+      "calls": 2,
+      "animations": 0
+    },
+    "longLayout": {
+      "rows": 6,
+      "overflow": false,
+      "clipped": false,
+      "asset": true
+    },
+    "errors": []
+  }
+]

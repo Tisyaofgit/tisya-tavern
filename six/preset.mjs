@@ -1,3 +1,4 @@
+import {styleProjection} from '../config/style-cards.js';
 import {applyUtilityAuthoring} from '../config/authoring-mode.js';
 import {selectedHeartDirections} from '../heart-contract.js';
 import {initiativeRule,initiativeBlockers} from '../config/initiative.js';
@@ -86,7 +87,7 @@ const defaultChoices={...fullDefaultConfiguration().world.modes.narrative.narrat
 function preferences(c,snapshot={}){
  let text=withoutSlots(base.tisya_material_rule_material);
  const custom=new Map(narrativeRuleRows(c.m).map(r=>[r.id,r]));
- for(const row of N.rows){if(!ANCHORS[row.id]||['D03','D04'].includes(row.id))continue;const choice=c.n[row.variable],r=custom.get(row.id);if(choice===defaultChoices[row.variable]&&!r?.custom)continue;
+ for(const row of N.rows){if(row.id==='C02'){text=replaceOnce(text,ANCHORS.C02,'');continue;}if(!ANCHORS[row.id]||['D03','D04'].includes(row.id))continue;const choice=c.n[row.variable],r=custom.get(row.id);if(choice===defaultChoices[row.variable]&&!r?.custom)continue;
   let replacement=r?.custom?r.text:ENGLISH_RULES[row.id]?.[choice];
   if(row.id==='B02'&&choice==='指定 NPC'){assert(c.n.缇斯亚叙事视角人物&&typeof c.n.缇斯亚叙事视角人物==='object','Resolve the selected viewpoint NPC');replacement='Viewpoint subject reference: '+JSON.stringify(c.n.缇斯亚叙事视角人物)+'.';}
   assert(typeof replacement==='string','Missing selected English rule '+row.id);text=replaceOnce(text,ANCHORS[row.id],replacement);
@@ -144,10 +145,10 @@ const STYLES={写实:'Ground spatial relations, objects, work, action conditions
 function styles(c){
  const chosen=c.resources.filter(r=>r.kind==='style'),id=c.world.style;
  if(id)assert(chosen.some(r=>r.id===id),'Selected main style is unavailable');
- const main=chosen.find(r=>r.id===id);let parts=[];
+ const main=chosen.find(r=>r.id===id);const toneRow=N.rows.find(r=>r.id==='C02'),tone=narrativeRuleRows(c.m).find(r=>r.id==='C02');let parts=['基调卡 · 故事基调\n'+(tone?.custom?tone.text:c.n[toneRow.variable]===defaultChoices[toneRow.variable]?ANCHORS.C02:ENGLISH_RULES.C02[c.n[toneRow.variable]])];const projection=styleProjection(c.world,c.resources);if(projection)parts.unshift(projection);
  if(main)parts.push('Main: '+main.name+'\nUse the material labeled Main style with this name; its body is supplied once in MATERIALS.');
- else{const choice=c.n.缇斯亚叙事文风;assert(choice!=='选文风卡','Select an actual style resource');parts.push(choice==='自然小说'?base.tisya_material_style.replace(/^<StyleResources>\n|\n<\/StyleResources>$/g,''):'Main: '+choice+'\n'+STYLES[choice]);}
- if(Object.values(c.world.styleCards??{}).some(Boolean))parts.push('Compose the selected cards by role: 基调卡 sets emotional register; 视角卡 sets desire position, gaze direction and selective attention; 句式卡 sets sentence rhythm and subtext. Retain the main style elsewhere. Gaze does not alter player authorship, knowledge, disclosure or consent.');
+ else{const choice=c.n.缇斯亚叙事文风;assert(choice!=='选文风卡'||chosen.length>0,'Select an actual style resource');parts.push(['自然小说','选文风卡'].includes(choice)?base.tisya_material_style.replace(/^<StyleResources>\n|\n<\/StyleResources>$/g,''):'Main: '+choice+'\n'+STYLES[choice]);}
+ if(Object.values(c.world.styleCards??{}).some(Boolean))parts.push('Compose 基调卡 for story tone and target aesthetics, 视角卡 for desire lens and gaze direction together, and 句式卡 for rhythm and subtext. Apply the selected aesthetics to the specified subjects and carry attraction through concrete sensory attention and reciprocal action.');
  const seen=new Set(main?[resourceText(main,c.world)]:[]);for(const r of chosen.filter(r=>r!==main)){const body=resourceText(r,c.world);if(body&&!seen.has(body)){parts.push('Supplement: '+r.name+'\nApply the material labeled Style supplement with this name to the main style; preserve facts, permissions and output structure.');seen.add(body);}}
  return '<StyleResources>\n'+parts.join('\n\n')+'\n</StyleResources>';
 }

@@ -23,7 +23,7 @@ test('each selectable narrative wording reaches its owning preference category o
   if(choice==='指定 NPC')continue;
   const c=fresh(),m=mode(c),row=N.rows.find(r=>r.id===id),original=m.narrative[row.variable];
   m.narrative[row.variable]=choice;
-  const out=onePassEntries(c,DEFAULT_MOODS),owner=group(out.tisya_material_rule_material,Object.entries(CATEGORY_ROWS).find(([,ids])=>ids.includes(id))[0]);
+  const out=onePassEntries(c,DEFAULT_MOODS),owner=group(id==='C02'?out.tisya_material_style:out.tisya_material_rule_material,Object.entries(CATEGORY_ROWS).find(([,ids])=>ids.includes(id))[0]);
   if(choice!==original)assert.ok(owner.includes(expected),id+' '+choice+' missing from owner');
   assert.deepEqual(skeleton(out.tisya_registry),skeleton(baseline.tisya_registry),id+' must retain eleven-block skeleton');count++;
  }

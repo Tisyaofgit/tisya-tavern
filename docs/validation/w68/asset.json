@@ -1,0 +1,19 @@
+{
+  "asset": "assets/actions/water-panel.png",
+  "sha256": "7597ec6b883fe5bdb92068f731765a730674b7d04091587b818073637f85fb62",
+  "width": 2022,
+  "height": 778,
+  "mode": "RGBA",
+  "alphaRange": [
+    0,
+    255
+  ],
+  "transparentCorner": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "source": "built-in image generation, retained original exec-e08d822e-46cc-4bd3-9b4f-d54c02a27284.png",
+  "use": "Complete action background, nine-slice border image; live text and feedback separate"
+}

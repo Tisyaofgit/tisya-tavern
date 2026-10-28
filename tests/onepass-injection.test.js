@@ -62,8 +62,8 @@ test('all preference categories reach the actual native and controlled requests 
   Object.assign(m,{角色主动性:'主动推进',用户口癖保留:true,用户叙事口吻延续:true,heartDirections:['输入评价','剧情吐槽'],workflowDetail:'compact',角色对白:{启用:true,来源:'指定语言',语言:'English'}});
   Object.assign(m.narrative,{缇斯亚叙事玩家代写:'不代写',缇斯亚叙事人称:'第二',缇斯亚叙事基调:'诙谐',缇斯亚叙事描写重心:['对白'],缇斯亚叙事篇幅区间:{下限:1000,上限:1600,单位:'字'}});
   const payload=await f.ready();await f.host.payloadReady(payload);const text=payload.messages.filter(x=>x.role==='system').map(x=>typeof x.content==='string'?x.content:'').join('\n'),pref=/<UserPreferences>([\s\S]*?)<\/UserPreferences>/.exec(text)?.[1];assert.ok(pref,owner);
-  for(const phrase of ['Narrative person: second person.','Tone: humorous.','Description focus: 对白.','Use "English"','catchphrases','current narrative voice','角色主动性·主动推进'])assert.ok(pref.includes(phrase),owner+' '+phrase);
-  assert.equal(text.split('角色主动性·主动推进').length-1,1);assert.match(pref,/<CharacterPortrayal>[\s\S]*角色主动性·主动推进[\s\S]*<\/CharacterPortrayal>/);
+  for(const phrase of ['Narrative person: second person.','Description focus: 对白.','Use "English"','catchphrases','current narrative voice','角色主动性·主动推进'])assert.ok(pref.includes(phrase),owner+' '+phrase);
+  assert.match(text,/<StyleResources>[\s\S]*Tone: humorous\.[\s\S]*<\/StyleResources>/);assert.equal(pref.includes('Tone: humorous.'),false);assert.equal(text.split('角色主动性·主动推进').length-1,1);assert.match(pref,/<CharacterPortrayal>[\s\S]*角色主动性·主动推进[\s\S]*<\/CharacterPortrayal>/);
   assert.match(text,/<body min="1000" max="1600" unit="字">/);assert.equal(text.split('\n').filter(l=>l.startsWith('输入评价|')).length,2);assert.equal(text.split('\n').filter(l=>l.startsWith('剧情吐槽|')).length,2);assert.equal(text.split('\n').filter(l=>l.startsWith('回应用户评价|')).length,0);assert.equal(f.host.preview().injection.blocks,11);assert.equal(JSON.stringify(f.source),before);
  }
 });
