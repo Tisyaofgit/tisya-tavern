@@ -64,5 +64,7 @@ export function assertOnePassInjection(messages,source,stateText){
  const states=[...system.matchAll(/<ONEPASS_STATE>\s*([\s\S]*?)\s*<\/ONEPASS_STATE>/g)];
  const expected=/<ONEPASS_STATE>\s*([\s\S]*?)\s*<\/ONEPASS_STATE>/.exec(stateText??'');
  if(!expected||states.length!==1||states[0][1].trim()!==expected[1].trim())fail('MISSING_STATE','本次请求没有唯一且匹配的填表快照，未发送。');
+ const formGuide=/\[FORM\.CONTEXT\][\s\S]*?\[\/FORM\.CONTEXT\]/.exec(stateText??'')?.[0];
+ if(formGuide&&occurrences(system,formGuide)!==1)fail('MISSING_FORM_CONTEXT','本次请求缺少唯一的分层表单资料说明，未发送。');
  return {protocol:ONEPASS_ID,corePrompts:'expanded',blocks:11,state:'matched',stage:'settings-ready'};
 }

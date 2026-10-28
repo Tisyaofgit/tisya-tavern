@@ -1,0 +1,34 @@
+{
+  "base_commit": "535df4777a93c89d2cba16963589acce9ee110e8",
+  "base_tree": "4f6cd8d1fb2557d9ecc63ec6a53a8c3d6f8ce87e",
+  "version": "0.2.0-alpha.31.31.19-onepass.12",
+  "verified_at": "2026-10-28T09:50:35.036813+00:00",
+  "tests": {
+    "total": 1335,
+    "passed": 1335,
+    "failed": 0,
+    "skipped": 0,
+    "command": "npm test",
+    "log_sha256": "276acbce75d5a9efbd28cb5d4b603f4280e29fc2ee935576b8c20c05c19b5815"
+  },
+  "targeted": {
+    "chains_sends_ui_no_budget": 7,
+    "pure_context_stages": 5,
+    "prior_regressions": 10
+  },
+  "runtime_sha256": "7dfad4d1dc412bfd5e698dd2d46e06415c5c3ee116badadf3d0e103a85bc0ff9",
+  "runtime_bytes": 3389766,
+  "bounds": {
+    "provider_model": false,
+    "installed_tauri_host": false,
+    "android": false,
+    "private_user_data_modified": false,
+    "per_turn_auxiliary_calls_added": 0,
+    "form_character_cap": null
+  },
+  "remaining": [
+    "dedicated travel/rebirth memory transfer and arrival workflow",
+    "life-range synthesis beyond stored anchor points",
+    "lifeline condition settlement and multiworld device acceptance"
+  ]
+}

@@ -10,7 +10,7 @@ const params={temp_openai:'',openai_max_tokens:'',top_p_openai:'',reasoning_effo
 const route=r=>({connection:'',preset:'__inherit__',model:'',profile:'',...copy(r??{}),parameters:{...params,...copy(r?.parameters??{})}});
 function unroute(r){const out=copy(r);for(const k of ['connection','model','profile'])if(!out[k])delete out[k];if(out.preset==='__inherit__')delete out.preset;for(const [k,v]of Object.entries(out.parameters??{}))if(v==='__inherit__'||v===''&&k!=='custom_prompt_post_processing')delete out.parameters[k];if(!Object.keys(out.parameters??{}).length)delete out.parameters;return out;}
 export function configurationView(snapshot){
- const w=copy(snapshot.world);w.tables=tableSettings(w);for(const task of Object.keys(AUX_TASKS))w.tables.taskInstructions[task]??='';
+ const w=copy(snapshot.world);w.tables=tableSettings(w);delete w.tables.contextChars;for(const task of Object.keys(AUX_TASKS))w.tables.taskInstructions[task]??='';
  for(const m of Object.values(w.modes)){m.nativeMvu??='auto';m.heartDirections??=['输入评价','回应用户评价','剧情吐槽'];m.workflowDetail??='compact';for(const [id,task]of registry.tasks)if(!task.aliasOf)m.routes[id]=route(m.routes[id]);}
  const routes=copy(snapshot.data.routes);routes.global=route(routes.global);for(const [id,task]of registry.tasks)if(!task.aliasOf)routes.tasks[id]=route(routes.tasks[id]);
  return {world:w,routes,agent:copy(snapshot.data.agent),resources:copy(snapshot.data.resources),...(snapshot.interface?{interface:copy(snapshot.interface.value)}:{})};

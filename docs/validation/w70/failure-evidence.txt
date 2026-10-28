@@ -1,0 +1,57 @@
+W70 original failure evidence (synthetic fixtures; no private chat).
+
+1. New stage test initially returned a raw core object; the existing helper expects text for that shape. Fixed the fixture to return JSON text, without changing the production parser.
+✖ failing tests:
+
+test at tests/tables.test.js:45:1
+✖ W70 selecting a saved life stage extracts its actual dossier, saves provenance and leaves the current person unchanged (590.526468ms)
+  Error: 辅助 API 没有返回文本结果
+      at check (file:///workspace/scratch/a82b391acf8b/w70-source/tables/schema.js:7:56)
+      at parseJSONResponse (file:///workspace/scratch/a82b391acf8b/w70-source/tables/ledger.js:49:2)
+      at invoke (file:///workspace/scratch/a82b391acf8b/w70-source/tables/service.js:87:22)
+      at async file:///workspace/scratch/a82b391acf8b/w70-source/tables/service.js:314:16
+      at async exclusive (file:///workspace/scratch/a82b391acf8b/w70-source/tables/service.js:65:322)
+      at async TestContext.<anonymous> (file:///workspace/scratch/a82b391acf8b/w70-source/tests/tables.test.js:51:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+2. First full run: version label/style were not bumped together; UI changed the exact existing adaptation button label. Fixed production version strings and preserved the existing button label, showing provenance beside it. Assertions retained.
+✖ failing tests:
+
+test at tests/release.test.js:2:1
+✖ installed, displayed and stylesheet versions agree (1.635123ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '0.2.0-alpha.31.31.19-onepass.11'
+  - '0.2.0-alpha.31.31.19-onepass.12'
+                                   ^
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/a82b391acf8b/w70-source/tests/release.test.js:2:255)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '0.2.0-alpha.31.31.19-onepass.11',
+    expected: '0.2.0-alpha.31.31.19-onepass.12',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/ui-recovery.test.js:94:1
+✖ bundle UI keeps explicit selection, edited draft and mapping across page changes (16.616018ms)
+  AssertionError [ERR_ASSERTION]: Missing button 适配 · 双人组
+      at button (file:///workspace/scratch/a82b391acf8b/w70-source/tests/ui-recovery.test.js:11:108)
+      at click (file:///workspace/scratch/a82b391acf8b/w70-source/tests/ui-recovery.test.js:12:40)
+      at TestContext.<anonymous> (file:///workspace/scratch/a82b391acf8b/w70-source/tests/ui-recovery.test.js:107:94)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

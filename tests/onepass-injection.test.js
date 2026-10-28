@@ -9,14 +9,26 @@ import {contextRecord} from '../config/context-export.js';
 const preset=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-One-Pass-1.json',import.meta.url)));
 const oldMacros=()=>{const p=structuredClone(preset),entries=onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS);for(const row of p.prompts){const id=row.identifier==='tisya_material_style_card'?'tisya_material_style':row.identifier;if(!row.marker&&Object.hasOwn(entries,id)&&!['chatHistory','chatHistory／当前user'].includes(id))row.content='{{tisya_live_onepass_'+id+'}}';if(row.identifier==='tisya_selected_resources')row.content='{{tisya_config_selected}}';}return p;};
 const state='<ONEPASS_STATE>\n{"basis":"current-basis","registry":{"tables":[]},"rows":[]}\n</ONEPASS_STATE>';
-function setup({macro=false,owner='native',route='native',transport=null,moods=()=>DEFAULT_MOODS}={}){
+function setup({macro=false,owner='native',route='native',transport=null,moods=()=>DEFAULT_MOODS,formState=state}={}){
  const p=macro?oldMacros():structuredClone(preset),source={identity:'One-Pass-1',prompts:p.prompts,order:p.prompt_order[0].order},data=emptyConfig();
  const c={extensionSettings:{[KEY]:data},chatMetadata:{},chatId:'one',characterId:0,characters:[{avatar:'one.png',name:'测试',description:'普通角色'}],chat:[{is_user:true,mes:'查看桌上的工具。'}],chatCompletionSettings:{model:'fixture'},powerUserSettings:{},substituteParams:s=>s,getChatCompletionModel:s=>s.model,stopGeneration(){},getPresetManager:()=>({getAllPresets:()=>['One-Pass-1'],getSelectedPresetName:()=> 'One-Pass-1'})};
  const key=worldKey(c);data.worlds[key]=defaultWorld();data.worlds[key].context.owner=owner;data.routes.tasks.main={preset:route};
  const store=createStore({getContext:()=>c,persist:async()=>true}),host=createHost({getContext:()=>c,getSource:()=>source,store,getMoods:moods,transport,createParameters:async(s,model,type,messages)=>({generate_data:{model,messages}})});
- const messages=()=>[...enabledOnePassEntries(source).filter(p=>p.content).map(p=>({role:p.role,content:p.content})),{role:'system',content:state},{role:'user',content:'查看桌上的工具。'}];
- return {c,data,key,source,host,world:data.worlds[key],async ready(){await host.before('normal');host.attachTableContext({world:key,onepass:true,text:state,instructions:state,slots:{}});return {model:'fixture',messages:messages()};}};
+ const messages=()=>[...enabledOnePassEntries(source).filter(p=>p.content).map(p=>({role:p.role,content:p.content})),{role:'system',content:formState},{role:'user',content:'查看桌上的工具。'}];
+ return {c,data,key,source,host,world:data.worlds[key],async ready(){await host.before('normal');host.attachTableContext({world:key,onepass:true,text:formState,instructions:formState,slots:{}});return {model:'fixture',messages:messages()};}};
 }
+test('W70 layered forms reach native and controlled final send payloads once, with a guard against losing their reading contract',async()=>{
+ const {FORM_CONTEXT_GUIDE}=await import('../onepass/context.mjs');
+ const forms=['WORLD_FORM_CANARY','GLOBAL_FORM_CANARY','OBJECT_FORM_CANARY','HISTORY_FORM_CANARY'];
+ const formState=state.replace('"rows":[]','"rows":'+JSON.stringify(forms.map((name,i)=>({id:'row'+i,rev:1,values:{名称:name}}))));
+ for(const owner of ['native','tisya'])for(const history of [0,1]){
+  const f=setup({owner,formState:FORM_CONTEXT_GUIDE+'\n'+formState});f.world.context.history=history;f.c.chat.unshift({is_user:false,mes:'旧故事文本'});const payload=await f.ready();await f.host.payloadReady(payload);
+  const text=payload.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');assert.equal(text.split(FORM_CONTEXT_GUIDE).length-1,1);assert.equal(text.split('<ONEPASS_STATE>').length-1,1);assert.equal(f.host.preview().injection.state,'matched');
+  for(const name of forms)assert.equal(text.split(name).length-1,1,owner+' history='+history+' '+name);
+ }
+ const f=setup({formState:FORM_CONTEXT_GUIDE+'\n'+state}),payload=await f.ready();for(const m of payload.messages)if(typeof m.content==='string')m.content=m.content.replace(FORM_CONTEXT_GUIDE,'');
+ await assert.rejects(f.host.payloadReady(payload),/分层表单资料说明/);
+});
 test('download contains complete instructions without a core or selected-material macro dependency',()=>{
  const text=JSON.stringify(preset);assert.doesNotMatch(text,/\{\{tisya_/);assert.match(text,/CREATIVE.GUIDE/);assert.match(text,/ONEPASS.CONTRACT/);assert(isOnePassPreset({prompts:preset.prompts}));
  const old=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url)));const metadata=p=>({...p,prompts:p.prompts.map(({content,...row})=>row)});assert.deepEqual(metadata(preset),metadata(old));

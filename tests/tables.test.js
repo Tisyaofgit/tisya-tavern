@@ -23,6 +23,68 @@ function fixture(nativeConfig=null){
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('W70 card initialization, native-book reopen, one-pass archive and next layered snapshot form one lossless chain at topK zero',async()=>{
+ const {onePassReply}=await import('./fixtures/onepass-reply.js');
+ const f=fixture();f.binding.primary='';f.binding.additional=[];
+ f.c.characters[0].description='工坊不得点火。宋遥是修铃人。开局宋遥在工坊。';f.c.chat=[user('开局宋遥在工坊。')];
+ f.responder((task,input)=>{assert.equal(task,'templateInit');return {registry:input.registry,base:{changes:[op('new:rule','objects',{名称:'工坊门规',类型:'rule',描述:'工坊不得点火。'},'工坊不得点火。'),op('new:person','objects',{名称:'宋遥',类型:'character',属性:{身份:'修铃人'}},'宋遥是修铃人。')]},initial:{changes:[op('new:scene','scene',{名称:'工坊开局',场景:'工坊',参与者:['new:person']},'开局宋遥在工坊。')]},notes:[]};});
+ await f.service.saveCardTemplate(await f.service.cardTemplate('card'));await f.set({topK:0,archive:true});
+ const calls=f.calls.length,service=f.makeService(),decode=r=>JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);
+ const prepared=await service.prepareOnePass(),state=decode(prepared),person=state.rows.find(r=>r.values.名称==='宋遥');
+ assert.deepEqual(state.formContext.order,['world','global','objects','timeline']);
+ assert.deepEqual(state.formContext.layers.map(l=>l.ids.length),[1,1,1,0]);
+ assert.equal(state.aliases['1'],state.rows[0].id);assert.match(f.prompts.at(-1).text,/\[FORM.CONTEXT\]/);
+ const evidence='铜铃在工具盒里滚了半圈。宋遥用擦布垫住铃口。';
+ const reply=onePassReply({basis:state.basis,memory:[op('new:event','events',{名称:'垫住铃口',经过:evidence,参与者:[person.id],原文段落:[evidence]},evidence)]});
+ f.c.chat.push(ai(reply));await service.acceptOnePass();const saved=JSON.stringify([...f.saved]);assert.equal((await service.acceptOnePass()).already,true);assert.equal(JSON.stringify([...f.saved]),saved);
+ const reopened=f.makeService();f.c.chat.push(user('接下来呢？'));const next=decode(await reopened.prepareOnePass());
+ assert.equal(next.rows.length,4);assert.equal(next.formContext.layers[3].ids.length,1);assert.match(JSON.stringify(next.rows),/工坊不得点火/);assert.match(JSON.stringify(next.rows),/垫住铃口/);
+ const session=await f.books.read(f.store.read().world.tables.sessionBook);assert.equal(next.formContext.basis.session.revision,session.data.revision);assert.equal(session.data.archiveView.layers.memory.length,1);assert.equal(f.calls.length,calls);
+ f.c.chat.splice(-2);const rolledBack=decode(await f.makeService().prepareOnePass());assert.equal(rolledBack.formContext.layers[3].ids.length,0);assert.equal(rolledBack.rows.length,3);assert.equal(f.calls.length,calls);
+});
+test('W70 selecting a saved life stage extracts its actual dossier, saves provenance and leaves the current person unchanged',async()=>{
+ const f=fixture();await initializeBase(f,[op('new:person','objects',{名称:'宋遥',类型:'character',描述:'最初只想守住工坊'},'用户手动修改表单')]);
+ const early=(await f.service.inspect()).rows[0],anchor=await f.service.saveAnchor({name:'离乡前'});
+ await f.service.edit({changes:[op(early.id,'objects',{描述:'后来成为远行者'},'用户手动修改表单',early.rev)]});
+ const current=await f.service.inspect(),session=structuredClone(current.session);
+ f.responder((task,input)=>{assert.equal(task,'assetAdapt');const source=JSON.parse(input.sourceCard),person=source[0];return JSON.stringify({core:{name:person.values.名称,traits:[{name:'动机',value:person.values.描述,evidence:person.values.描述}],growth:[]}});});
+ const draft=await f.service.coreDraft(early.id,{anchorId:anchor.id});assert.match(draft.basis,/最初只想守住工坊/);assert.doesNotMatch(draft.basis,/后来成为远行者/);
+ const fake=structuredClone(draft);fake.basis+='伪造来源';fake.core.traits[0].evidence='伪造来源';const before=JSON.stringify([...f.saved]);await assert.rejects(f.service.saveCore(fake),/核心来源/);assert.equal(JSON.stringify([...f.saved]),before);
+ const core=await f.service.saveCore(draft);assert.equal(core.sourceStage.anchor,anchor.id);assert.equal(core.sourceStage.name,'离乡前');assert.equal(core.sourceSession,anchor.sourceSession);
+ const reopened=f.makeService(),after=await reopened.inspect();assert.equal(after.rows.find(r=>r.id===early.id).values.描述,'后来成为远行者');assert.deepEqual(after.session,session);
+ const saved=(await reopened.listCores()).find(x=>x.id===core.id);assert.equal(saved.traits[0].value,'最初只想守住工坊');assert.equal(saved.sourceStage.anchor,anchor.id);
+ const selection=await reopened.previewCoreBundle([early.id],{anchorId:anchor.id});assert.equal(selection.objects[0].values.描述,'最初只想守住工坊');assert.equal(selection.sourceStage.anchor,anchor.id);
+ await assert.rejects(reopened.coreDraft(early.id,{anchorId:'missing'}),/人生阶段不存在/);
+});
+test('W70 future lifeline nodes reach the selected branch as conditional plans, never past events, and obey the plot switch',async()=>{
+ const f=fixture();await initializeBase(f,[op('new:person','objects',{名称:'宋遥',类型:'character'},'用户手动修改表单')]);const person=(await f.service.inspect()).rows[0];
+ const node={id:'life-node',time:'将来',name:'离乡',summary:'因自己的愿望踏上旅途',actors:[person.id],condition:'工坊有人接手且本人决定离开',kind:'个人'};
+ const anchor=await f.service.saveAnchor({name:'离乡前',nodes:[node]});f.c.chatId='life-branch';await f.service.initialize();await f.service.useAnchor(anchor.id);await f.set({plot:true});
+ const decode=r=>JSON.parse(r.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]),before=JSON.stringify([...f.saved]),state=decode(await f.service.prepareOnePass());
+ assert.equal(state.plan.anchor.id,anchor.id);assert.deepEqual(state.plan.nodes,[node]);assert.equal(state.formContext.layers[3].ids.length,0);assert.equal(state.rows.filter(r=>r.table==='events').length,0);assert.equal(JSON.stringify([...f.saved]),before);assert.equal(f.calls.length,0);
+ await f.set({plot:false});assert.equal(decode(await f.service.prepareOnePass()).plan,null);assert.deepEqual((await f.service.inspect()).session.branchSeed.nodes,[node]);
+});
+test('W70 core UI chooses a saved life stage and extracts that stage through its actual buttons',async()=>{
+ const {Window}=await import('happy-dom'),{mountTablePanel}=await import('../tables/panel.js');const f=fixture();await initializeBase(f,[op('new:person','objects',{名称:'宋遥',类型:'character',描述:'离乡前守着工坊'},'用户手动修改表单')]);
+ const person=(await f.service.inspect()).rows[0],anchor=await f.service.saveAnchor({name:'离乡前'});await f.service.edit({changes:[op(person.id,'objects',{描述:'离乡后四处远行'},'用户手动修改表单',person.rev)]});
+ f.responder((task,input)=>{assert.equal(task,'assetAdapt');const source=JSON.parse(input.sourceCard);assert.equal(source[0].values.描述,'离乡前守着工坊');return JSON.stringify({core:{name:'宋遥',traits:[{name:'动机',value:'守着工坊',evidence:'离乡前守着工坊'}],growth:[]}});});
+ const w=new Window(),container=w.document.createElement('div');w.document.body.append(container);const panel=mountTablePanel(w.document,container,{service:f.service,store:f.store,initialPage:'core'});await panel.ready;
+ const choose=container.querySelector('[aria-label="提取人生阶段"]');choose.value=anchor.id;choose.dispatchEvent(new w.Event('input',{bubbles:true}));
+ const click=async text=>{const b=[...container.querySelectorAll('button')].find(b=>b.textContent===text);assert(b,text);b.click();await panel.settled();};
+ await click('载入所选人生阶段');await click('提取无画风基点草稿');assert.match(container.textContent,/离乡前守着工坊/);await click('保存核心到原点');assert.equal((await f.service.listCores())[0].sourceStage.anchor,anchor.id);
+ panel.dispose();await w.happyDOM.abort();
+});
+test('W70 global core discovery uses native journal identity rather than a filename prefix and preserves unrelated books',async()=>{
+ const f=fixture();await f.service.initialize();f.saved.set('普通世界设定',[{name:'天气',content:'晴天',enabled:true}]);
+ const other=await f.books.create('origin','other','旅行人物册'),next=structuredClone(other.data);next.revision++;next.coreAssets=[{id:'core-traveller',version:1,name:'旅行者',traits:[],growth:[],kind:'character'}];next.bases=[{id:'person-custom',rev:1,table:'objects',values:{名称:'旅行者',类型:'character'},access,source:null}];await f.books.write(other,next);
+ const before=JSON.stringify([...f.saved]),cores=await f.service.identityCores(),origins=await f.service.identityOrigins();assert(cores.some(x=>x.id==='core-traveller'&&x.book==='旅行人物册'));assert(origins.some(x=>x.id==='person-custom'&&x.book==='旅行人物册'));assert.equal(JSON.stringify([...f.saved]),before);
+});
+test('W70 complete long forms ignore retired character budgets in one-pass and direct assembly without truncation',async()=>{
+ const f=fixture(),description='完整人物经历：'+'保存全部经历。'.repeat(8000)+'资料尾部仍然保留';
+ await initializeBase(f,[op('new:person','objects',{名称:'长档人物',类型:'character',描述:description},'用户手动修改表单')]);await f.set({enabled:true,archive:false,contextChars:2000,topK:0});
+ const first=await f.service.prepareOnePass(),state=JSON.parse(first.text.match(/<ONEPASS_STATE>\n([\s\S]*)\n<\/ONEPASS_STATE>/)[1]);assert(first.text.length>40000);assert.equal(state.rows[0].values.描述,description);
+ f.c.chat.push(user('长档人物'));const second=await f.service.prepare();assert(second.text.length>40000);assert.match(second.text,/资料尾部仍然保留/);assert.equal(f.calls.length,0);
+});
 test('generation initialization binds only missing storage while normal settings edits stay idle-locked',async()=>{
  const f=fixture();let generating=true;const store=createStore({getContext:()=>f.c,persist:async()=>true,assertIdle:()=>{if(generating)throw Error('generating');}});
  const snap=store.read();await assert.rejects(store.save(snap.data,snap.revision,snap.key),/generating/);

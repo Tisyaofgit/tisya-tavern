@@ -29,5 +29,13 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getConte
  async function bindOrigin(card,name,outerGuard=()=>{},{removeMissing=[]}={}){const h=helper();check(typeof h.getCharWorldbookNames==='function'&&typeof h.rebindCharWorldbooks==='function','宿主缺少角色卡世界书绑定接口');const {target,guard}=characterWorldbookScope(card,getContext,outerGuard);guard();const prior=await h.getCharWorldbookNames(target);guard();check(object(prior)&&Array.isArray(prior.additional),'角色卡世界书绑定格式无效');const names=removeMissing.length?await h.getWorldbookNames():null;guard();check(removeMissing.every(n=>!names.includes(n)),'待移除的旧书已重新出现，请重新核对');const removed=new Set(removeMissing),kept={primary:removed.has(prior.primary)?'':prior.primary,additional:prior.additional.filter(n=>!removed.has(n))};if(!removeMissing.length&&(prior.primary===name||prior.additional.includes(name)))return;await h.rebindCharWorldbooks(target,{primary:kept.primary,additional:[...new Set([...kept.additional,name])]});guard();const after=await h.getCharWorldbookNames(target);guard();check(after.primary===kept.primary&&Array.isArray(after.additional)&&after.additional.includes(name)&&kept.additional.every(n=>after.additional.includes(n))&&removeMissing.every(n=>after.primary!==n&&!after.additional.includes(n)),'原点书绑定未确认，原有角色书请核对');}
  async function cardBooks(card){const h=helper();check(typeof h.getCharWorldbookNames==='function','宿主缺少角色书绑定读取接口');const {target,guard}=characterWorldbookScope(card,getContext);const refs=await h.getCharWorldbookNames(target);guard();check(object(refs)&&Array.isArray(refs.additional),'角色卡世界书绑定格式无效');return [...new Set([refs.primary,...refs.additional].filter(Boolean))];}
  async function materials(card,{includeDisabled=false}={}){const out=[];for(const name of await cardBooks(card)){const entries=await helper().getWorldbook(name),journal=find(entries),generated=journal?!!decode(journal).archiveView:false;for(const e of entries)if(e.name!==ENTRY&&!(generated&&MANAGED.includes(e.name))&&(includeDisabled||e.enabled!==false)&&typeof e.content==='string')out.push({book:name,entry:e.name,content:e.content,...(archivePrefixRole(name,e.name)?{archiveRole:archivePrefixRole(name,e.name),sourcePath:[name,e.uid??e.name]}:{}),...(e.enabled===false?{enabled:false}:{})});}return out;}
- return {read,write,create,bindOrigin,cardBooks,materials,names:()=>helper().getWorldbookNames(),available:()=>{try{helper();return true;}catch{return false;}}};
+ async function originNames(){
+  const h=helper(),out=[];
+  for(const name of await h.getWorldbookNames()){
+   const entries=await h.getWorldbook(name),entry=find(entries);if(!entry)continue;
+   if(decode(entry).kind==='origin')out.push(name);
+  }
+  return out;
+ }
+ return {read,write,create,bindOrigin,cardBooks,materials,originNames,names:()=>helper().getWorldbookNames(),available:()=>{try{helper();return true;}catch{return false;}}};
 }

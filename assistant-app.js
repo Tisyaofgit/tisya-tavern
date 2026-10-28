@@ -10,7 +10,7 @@ export function mountAssistantApp(document,container,{service,identity,store,onC
  const style=el('style',PANEL_CSS+UTILITY_STYLE+'main{padding:0}.assistant-tasks{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:transparent;border:0;padding:0}.assistant-tasks button{text-align:left}.assistant-tasks button[aria-pressed=true]{background:#c8b57e;color:#172b20}.assistant-intro{border-left:1px solid #c8b57e;padding:4px 0 4px 18px;margin:20px 0}.tisya-tables>nav{display:none}.tisya-user>header{display:none}.assistant-task-body{min-width:0}.assistant-task-body:empty{display:none}@media(max-width:350px){.assistant-tasks{grid-template-columns:1fr}}');dom.append(style);
  const header=el('header'),title=el('h1','缇斯亚助手'),close=el('button','聊天 ›');close.type='button';close.onclick=onClose;header.append(title,close);dom.append(header);
  const intro=el('p','把想法交给小缇。先生成可修改的草稿，核对后再保存；已有档案和当前故事各自保留。');intro.className='assistant-intro';dom.append(intro);
- const tasks=[['idea','设计用户身份'],['core','基点＋角色卡'],['genesis','设计世界与角色'],['foundation','提炼人物档案'],['core-assets','提取与适配基点'],['assistant','调整配置'],['history','整理会话历史'],['style','文风与禁词']];
+ const tasks=[['idea','设计用户身份'],['core','基点＋角色卡'],['genesis','设计世界与角色'],['foundation','提炼人物档案'],['core-assets','提取与适配基点'],['assistant','调整配置'],['history','角色卡建表与记忆归档'],['style','文风与禁词']];
  const nav=el('nav');nav.className='assistant-tasks';const notice=el('p');notice.setAttribute('role','status');dom.append(nav,notice);
  const progress=mountRunView(document,dom,{service,onMinimize:onClose}),body=el('main');dom.append(body);
  const panes=new Map();let current='',tablePanel=null,alive=true,pending=Promise.resolve();

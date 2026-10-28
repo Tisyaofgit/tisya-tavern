@@ -1,6 +1,6 @@
 {
   "display_name": "缇斯亚 · 月潮",
-  "version": "0.2.0-alpha.31.31.19-onepass.11",
+  "version": "0.2.0-alpha.31.31.19-onepass.12",
   "author": "Tisya Project",
   "loading_order": 100,
   "requires": [],
@@ -10,6 +10,6 @@
   "hooks": {
     "chatSurface": "registerChatSurface"
   },
-  "description": "单次完整输出试用：保留双 think，将正文填表、记忆归档和世界场外推进合入同一回复；兼容既有聊天格式和用户数据。",
+  "description": "单次完整回复与分层表单归档；角色卡建表、用户角色、基点人生阶段和条件主线沿原生世界书连接。",
   "generate_interceptor": "tisyaHistoryInput"
 }
