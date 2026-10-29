@@ -17,6 +17,13 @@ export function pipesReply({basis='now',memory='',status='',vars='',ids='[]',pen
  let s=onePassReply();for(const [k,text]of Object.entries({status,vars,memory,archive:'归档：'+basis+'|'+ids+(pending?'\n'+pending:'')}))s=s.replace(new RegExp('<'+k+' format="json">[\\s\\S]*?</'+k+'>'),'<'+k+' format="pipes">\n'+text+'\n</'+k+'>');return s;
 }
 const memory='共用：清晨|3|1、2|P1、P2|读者|1\n事件：+E1|~|=|宋遥垫住铃口|铜铃停下\n事实发现：+F1|1、3|擦布可以垫铃|当前场合|=|目击|[]\n伏笔：+C1|1|铜铃放在工具盒里|埋设|读者|再次取用时|+E1\n倒计时：+T1|故事时间|清晨|午时|约定修好|约定取消|无|0|[]|等待\n前史：+F1|1|早年|3|1、2|学习修理|保留手艺\n关系底稿：+F1|1|2|同事|共事|协作|各负其责|仍在工坊\n隐情：+F1|1|磨损痕迹|获准查验|修理工作\n世界设定：+F1|生活|3|本工坊';
+test('ASCII category colons survive complete reply parsing and atomic archival preparation',async()=>{
+ const v=view(),state=snapshot(v),before=JSON.stringify(v);
+ const source=pipesReply({memory:memory.replaceAll('：',':'),ids:'+E1、+F1、+C1、+T1'}).replace('归档：','归档:');
+ const batch=await prepareOnePassBatch(v,parseOnePassReply(source),state,{key:'ascii-colon'});
+ assert.equal(batch.changes,4);assert.equal(JSON.stringify(v),before);
+ assert.equal(batch.commits[0].changes.find(c=>c.after.table==='events').after.values.经过,'宋遥垫住铃口');
+});
 test('fixed-column full memory archive maps to the existing event/fact/clue/timer records and stable references',async()=>{
  const v=view(),state=snapshot(v),reply=parseOnePassReply(pipesReply({memory,ids:'+E1、+F1、+C1、+T1'}));
  const before=JSON.stringify(v),batch=await prepareOnePassBatch(v,reply,state,{key:'reply1'});assert.equal(JSON.stringify(v),before);assert.equal(batch.changes,4);const rows=batch.commits[0].changes.map(c=>c.after),event=rows.find(r=>r.table==='events'),fact=rows.find(r=>r.table==='facts');
