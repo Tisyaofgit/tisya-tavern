@@ -19,7 +19,7 @@ test('reported optional placeholders and candidate annotations parse without rew
  const source=wire({before:'待定|~|~|~\n解锁|~|~|~'}).replace('候选|可以先把零件送回库房','候选|可以先把零件送回库房|等玩家决定');
  const copy=source,p=parseOnePassReply(source),details=readOnePassDetails(source);
  assert.equal(details.diagnostics.length,0);assert(!p.publicReply.before.some(r=>r.kind==='待定'||r.kind==='解锁'));assert.match(details.rounds.candidates[0].text,/等玩家决定/);assert.equal(source,copy);
- assert.throws(()=>parseOnePassReply(source.replace('待定|~|~|~','待定|缺少日期|未知|来源')),{code:'TISYA_V3_REPLY_BEFORE_LINE_10_COLUMNS'});
+ const expanded=parseOnePassReply(source.replace('待定|~|~|~','待定|缺少日期|未知|来源'));assert.equal(expanded.publicReply.before.find(r=>r.kind==='待定').cells[0],'缺少日期 · 未知 · 来源');
  assert.throws(()=>parseOnePassReply(source.replace('设计|宋遥|想把日程说清|留下可以拒绝的空隙','设计|宋遥|多余|想把日程说清|留下可以拒绝的空隙')));
  assert.equal(parsePipeBlock('描述：~|~|~|~|~','status').rows.length,0);
  assert.equal(parsePipeBlock('待定：~|~|~','archive').rows.length,0);

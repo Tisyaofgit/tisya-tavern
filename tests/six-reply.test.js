@@ -32,7 +32,8 @@ test('six-block structure stays fixed; row whitespace is harmless and source rem
  assert.ok(readWorldExtra(source).length);assert.match(runV3Display({source}).body,/铜铃/);
 });
 test('bad auxiliary row identifies phase/line without hiding successful prose or accepting bad data',()=>{
- const bad=fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','用户偏好|多了一列|坏');
+ const joined=parseV3Reply(fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','用户偏好|多了一列|保留内容'));assert.equal(joined.before[0].cells[0],'多了一列 · 保留内容');
+ const bad=fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','设计|宋遥|缺少独立贡献');
  assert.throws(()=>parseV3Reply(bad),{code:'TISYA_V3_REPLY_BEFORE_LINE_2_COLUMNS'});
  const inspected=inspectMessage(bad);assert.match(inspected.body.value,/铜铃/);assert.equal(inspected.details.error,'TISYA_V3_REPLY_BEFORE_LINE_2_COLUMNS');assert.ok(inspected.body.count.value>0);
  assert.match(readerErrorText(inspected.details.error),/开头摘要第 2 行字段列数/);assert.match(runV3Display({source:bad}).body,/铜铃/);

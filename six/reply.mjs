@@ -7,8 +7,10 @@ export const V3_REPLY_ORDER=Object.freeze(['before','title','body','after','extr
 const HEART=new Set(['输入评价','回应用户评价','剧情吐槽']);
 const OUTCOMES=new Set(['本轮变化','角色主动','世界动向','关系位移','人物厚度','语言亮点','下一步张力']);
 const TODO=new Set(['剧情待处理任务','系统任务','下轮基础任务']);
-const BEFORE=new Map([...['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾','文风','世界观','环境','玩法','世界书','人物','历史','世界推演','伏笔','工具','待定'].map(k=>[k,1]),['设计',3],['解锁',3],...[...HEART].map(k=>[k,2])]);
-const AFTER=new Map([...[...OUTCOMES].map(k=>[k,1]),['留白',2],...[...TODO].map(k=>[k,2]),...[...HEART].map(k=>[k,2]),['已交付',1],['候选',1]]);
+const BLANKABLE=new Set([...OUTCOMES,...TODO,'候选','已交付']);
+export const BEFORE_ROWS=Object.freeze(Object.fromEntries([...['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾','文风','世界观','环境','玩法','世界书','人物','历史','世界推演','伏笔','工具','待定'].map(k=>[k,1]),['设计',3],['解锁',3],...[...HEART].map(k=>[k,2])]));
+export const AFTER_ROWS=Object.freeze(Object.fromEntries([...[...OUTCOMES].map(k=>[k,1]),['留白',2],...[...TODO].map(k=>[k,2]),...[...HEART].map(k=>[k,2]),['已交付',1],['候选',1]]));
+const BEFORE=new Map(Object.entries(BEFORE_ROWS)),AFTER=new Map(Object.entries(AFTER_ROWS));
 const ACTION_TYPES=new Set(['交流','调查','移动','操作','战斗','休整','其他']);
 const fail=code=>{throw Object.assign(Error('TISYA_V3_REPLY_'+code),{code:'TISYA_V3_REPLY_'+code});};
 const check=(ok,code)=>{if(!ok)fail(code);};
@@ -32,17 +34,23 @@ function rows(text,allowed,phase,diagnostics=null){
  const result=[],seen=new Set();
  for(const [index,line] of text.split(/\r?\n/).entries()){if(!line.trim())continue;
   try{
-  const [label,...cells]=splitV3Cells(line),kind=label.trim(),prefix=phase.toUpperCase()+'_LINE_'+(index+1)+'_';
+  const [label,...cells]=splitV3Cells(line),prefix=phase.toUpperCase()+'_LINE_'+(index+1)+'_';let kind=label.trim().replace(/[:：]$/,'').trim(),wireVariant=null;
+  if(phase==='after'&&BLANKABLE.has(kind)&&cells[0]?.trim()==='留白'){
+   if(cells.length===2){cells.splice(0,1,kind);kind='留白';wireVariant='outcome-first-blank';}
+   else if(cells.length===3&&cells[1].trim()===kind){cells.shift();kind='留白';wireVariant='repeated-category-blank';}
+  }
   check(allowed.has(kind),prefix+'LABEL');
   // Optional empty records may use the wider machine-block placeholder shape.
   // Quoted/literal tildes are content; unknown labels and substantive bad rows fail.
   if(['待定','解锁','已交付','候选'].includes(kind)&&cells.length&&cells.every(c=>c.trim()==='~'))continue;
-  if(['候选','已交付'].includes(kind)&&cells.length>1){const joined=cells.join(' · ');cells.splice(0,cells.length,joined);}
+  if(allowed.get(kind)===1&&cells.length>1&&cells[0].trim()!=='留白'){
+   check(cells.every(c=>c.trim()),prefix+'EMPTY');const joined=cells.join(' · ');cells.splice(0,cells.length,joined);wireVariant='text-cell-join';
+  }
   check(cells.length===allowed.get(kind),prefix+'COLUMNS');check(cells.every(c=>c.trim()),prefix+'EMPTY');
   const unique=HEART.has(kind)||OUTCOMES.has(kind)||['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾'].includes(kind);if(unique)check(!seen.has(kind),'DUPLICATE_ROW');
   if(HEART.has(kind))check([...cells[1]].length<=80,'HEART_LENGTH');
-  if(kind==='留白'){cells[0]=cells[0].trim();check(OUTCOMES.has(cells[0])&&!seen.has(cells[0]),prefix+'OUTCOME');seen.add(cells[0]);}
-  if(unique)seen.add(kind);result.push({kind,cells});
+  if(kind==='留白'){cells[0]=cells[0].trim();check(BLANKABLE.has(cells[0])&&!seen.has(cells[0]),prefix+'OUTCOME');seen.add(cells[0]);}
+  if(unique)seen.add(kind);result.push({kind,cells,...(wireVariant?{wireVariant}:{})});
   }catch(error){if(!diagnostics)throw error;diagnostics.push({phase,line:index+1,code:error.code??'TISYA_V3_REPLY_INVALID',raw:line});}
  }
  return result;

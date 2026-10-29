@@ -41,7 +41,7 @@ test('six-block display owns before/after folds and shows candidates without tre
 });
 
 test('six-block malformed summary stays visible as an error while body and action controls survive',async()=>{
- const {fullReply}=await import('./fixtures/six-reply.js');const source=fullReply.replace('用户偏好|','用户偏好|多一列|');
+ const {fullReply}=await import('./fixtures/six-reply.js');const source=fullReply.replace('用户偏好|','设计|');
  const {w,d,node}=setup(),ui=mountMessageVisual(d,node,props(source)),r=ui.host.shadowRoot;
  assert.match(r.querySelector('.story').textContent,/宋遥/);assert.match(r.textContent,/开头摘要第 2 行字段列数不符/);assert.ok(r.querySelector('.action'));assert.equal(r.querySelector('.candidate-ledger'),null);ui.dispose();await w.happyDOM.abort();
 });

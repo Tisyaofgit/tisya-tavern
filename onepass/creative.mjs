@@ -58,11 +58,20 @@ export const CREATIVE_BLOCKS = {
 篇幅重点|<How should paragraphs enter, pause, turn and land so information and feeling arrive at the right time? Which earlier line, object or gesture can return with changed meaning? Where does an exchange need room, and where does silence resonate? (paragraph links, setup and echo; no fixed paragraph formula)>
 信息迷雾|<How does limited information shape someone's reading of this encounter, with what publicly knowable consequence? (only if it affects this turn; no forced misunderstanding or hidden answer)>
 解锁|<Which secret meets its release condition? (registered ID)>|<What fragment may now be disclosed? (authorized content only)>|<What supports this release? (effective source/event IDs)>
-<Which source class was used? (文风/世界观/环境/玩法/世界书/人物/历史/世界推演/伏笔/工具)>|<Which sources shaped this passage? (source IDs)>
+文风|<Used style sources; omit this row when unused>
+世界观|<Used world-setting sources; omit this row when unused>
+环境|<Used environment sources; omit this row when unused>
+玩法|<Used gameplay sources; omit this row when unused>
+世界书|<Used worldbook sources; omit this row when unused>
+人物|<Used character sources; omit this row when unused>
+历史|<Used history sources; omit this row when unused>
+世界推演|<Used world-simulation sources; omit this row when unused>
+伏笔|<Used clue sources; omit this row when unused>
+工具|<Used tool sources; omit this row when unused>
 待定|<Which precise gap blocks which branch, and what would release it? (gap and condition)>
 设计|<Who is this about? (object ID)>|<What independent aim brings this person into the encounter, with what irreplaceable contribution? (public or authorized action direction)>|<Which distinctive appeal, quirk, contrast or edge can this intervention reveal through interaction? (only this person's added contribution; do not repeat 角色锚点)>
 输入评价|<Which mood fits? (enabled mood enum)>|<What intention, edge or mischief in the contractor's actual input invites a reply? (brief Tisya aside)>
-回应用户评价|<Which mood fits this reply? (enabled mood enum)>|<What did the contractor actually point out, and how would Tisya answer briefly? (only with an actual appraisal)>
+回应用户评价|<Which mood fits this reply? (enabled mood enum)>|<What did the contractor actually point out, and how would Tisya answer briefly? (when enabled keep this row; if no actual appraisal was given, say so briefly without inventing one)>
 剧情吐槽|<Which mood does this situation evoke? (enabled mood enum)>|<Where does someone's earnestness make this opening situation funny, awkward or rueful? (concrete aside; do not explain a joke)>`,
   "title": "<Which image, action, pun or renewed old phrase names this scene with an aftertaste? (at most 8 characters including punctuation; no spoiler)>|<What story time is it? (established time or ~)>|<Where is the scene? (established place labels; join with 、; absent ~)>|<Which world? (established label or ~)>",
   "body": "<How can the chosen craft become a naturally unfolding scene: intentions meeting in action and speech; each response changing the next line or move; appeal emerging through interaction; a vivid, precise sentence landing where it matters; paragraphs linked by action, objects, topics and feeling; setup answered under changed conditions? How can this turn land while leaving a playable opening worth returning to? (complete natural prose, not design explanations; consecutive paragraphs from 1, separated by blank lines; realize selected goals within all underlying constraints)>",
@@ -90,16 +99,18 @@ export function applyCreativeRevision(out,configuration){
  const start=out.tisya_registry.indexOf('<reply id='),end=out.tisya_registry.indexOf('</reply>',start)+8;
  const prefix=out.tisya_registry.slice(0,start),suffix=out.tisya_registry.slice(end);
  let registry=out.tisya_registry.slice(start,end);
+ const moodGuides=registry.match(/^\[One mood per cell:[^\n]*\]\s*$/gm)??[];
+ registry=registry.replace(/^\[One mood per cell:[^\n]*\]\s*$/gm,'');
  for(const phase of ['before','after']){
   const replacements=new Map(CREATIVE_BLOCKS[phase].split('\n').map(line=>[line.split('|')[0],line]));
   registry=registry.replace(new RegExp('(<think phase="'+phase+'">)([\\s\\S]*?)(</think>)'),(_,open,body,close)=>open+body.split('\n').map(line=>{
    const label=line.split('|')[0];
-   if(label.startsWith('{文风/世界观/'))return CREATIVE_BLOCKS.before.split('\n').find(x=>x.startsWith('<Which source class'));
+   if(label.startsWith('{文风/世界观/'))return CREATIVE_BLOCKS.before.split('\n').filter(x=>/^(文风|世界观|环境|玩法|世界书|人物|历史|世界推演|伏笔|工具)\|/.test(x)).join('\n');
    return replacements.get(label)??line;
   }).join('\n')+close);
  }
  for(const tag of ['task','title','body','actions'])registry=registry.replace(new RegExp('(<'+tag+'[^>]*>)[\\s\\S]*?(</'+tag+'>)'),(_,open,close)=>open+'\n'+CREATIVE_BLOCKS[tag]+'\n'+close);
- registry=(prefix+registry+suffix).replace('[/REGISTRY]',CREATIVE_CONTRACT+'\n[/REGISTRY]');
+ registry=(prefix+registry+suffix).replace('[/REGISTRY]',CREATIVE_CONTRACT+'\n'+[...new Set(moodGuides)].join('\n')+'\n[/REGISTRY]');
  // Preserve selected stages; mandatory permissions remain in their original sections.
  const selected=Object.entries(CREATIVE_STAGES).filter(([name])=>stages.includes(name));
  const followed=/^Followed dynamics — [^\n]+/m.exec(out.tisya_inner_chain)?.[0]??'';
