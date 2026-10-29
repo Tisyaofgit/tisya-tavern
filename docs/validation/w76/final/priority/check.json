@@ -1,0 +1,59 @@
+{
+  "input": "docs/validation/w76/final/priority/reply.txt",
+  "sha256": "8c06c2e4f8460fcd62888c96c0e7090120ea3375ffd7885347434dd6db6ba819",
+  "characters": 3633,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 12,
+  "afterRows": 12,
+  "paragraphs": 18,
+  "rootId": "tisya-onepass-1",
+  "wireCompatibility": null,
+  "titleCharacters": 5,
+  "titleWithinDefaultLimit": true,
+  "beforeChoicesComplete": true,
+  "afterOutcomesComplete": true,
+  "bodyCharacters": 1794,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "defaultCommentsComplete": true,
+  "defaultRangeAttributesPreserved": true,
+  "normalizations": [],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 2,
+    "memory": 0
+  },
+  "standalonePrimaryRecordsAbsent": true,
+  "standaloneMachineBlocksEmpty": true,
+  "summaryDiagnostics": []
+}

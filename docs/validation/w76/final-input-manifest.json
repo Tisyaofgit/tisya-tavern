@@ -1,0 +1,84 @@
+{
+  "cat": {
+    "characters": 55328,
+    "sha256": "7458eaee3d0a3490f832a00bc2c1d4eae632da9baed02a7cfa4753439520a702",
+    "parts": [
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-01.txt",
+        "characters": 8000,
+        "sha256": "c5f4b9a8d55ae68f9e3027481f64b9015c20dfdd43abd3fc4a91162d88d4c33d"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-02.txt",
+        "characters": 8000,
+        "sha256": "3b8d781c31fbba5e43e921e22db57f8e1b38a25294945251e29cb453443c066a"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-03.txt",
+        "characters": 8000,
+        "sha256": "df8da4a2dff45887b4057d5fe9e13fd91934aad552699e53a01adbc6b7e23da5"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-04.txt",
+        "characters": 8000,
+        "sha256": "c198ecea6cb371c22908aace1bc634cfce31d0c02c919dcc45ab93ab42dc172a"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-05.txt",
+        "characters": 8000,
+        "sha256": "5ec27c3a84a2ddfbb9b6ccbaf557c791dc5d0760eda882eef0b2b803e2365e52"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-06.txt",
+        "characters": 8000,
+        "sha256": "be18746df80dee171114cea320fd93d382711bd5746a941b5ec4a8c9ac18bd70"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/cat/part-07.txt",
+        "characters": 7328,
+        "sha256": "c1d68a8932bf49b1481fe53047566c401e5615f711749c42a89fa52b2769f5e1"
+      }
+    ]
+  },
+  "priority": {
+    "characters": 55440,
+    "sha256": "e483ec32e614a7aa676f2006cdcdb04945aea2b0b7d26d26129203349ad0c89b",
+    "parts": [
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-01.txt",
+        "characters": 8000,
+        "sha256": "c5f4b9a8d55ae68f9e3027481f64b9015c20dfdd43abd3fc4a91162d88d4c33d"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-02.txt",
+        "characters": 8000,
+        "sha256": "3b8d781c31fbba5e43e921e22db57f8e1b38a25294945251e29cb453443c066a"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-03.txt",
+        "characters": 8000,
+        "sha256": "df8da4a2dff45887b4057d5fe9e13fd91934aad552699e53a01adbc6b7e23da5"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-04.txt",
+        "characters": 8000,
+        "sha256": "aed92427177277d6348d2aecaf9651663a2e9660dda47844037b378e0716595d"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-05.txt",
+        "characters": 8000,
+        "sha256": "5a29a12821b609501a1bf65272a4c50bace08e1f73786f54e8f8575d070ddfcf"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-06.txt",
+        "characters": 8000,
+        "sha256": "4214f0b0b45ea7484bd62890bada74c78e44521b3607ed9a47c662e49b551aca"
+      },
+      {
+        "path": "/workspace/scratch/f4b1f4e4d696/w76-final-input/priority/part-07.txt",
+        "characters": 7440,
+        "sha256": "f8f39a888f73cab67a9a705fab48586cde5bd8788e1eb9956ec3f1f1ac0beb18"
+      }
+    ]
+  }
+}

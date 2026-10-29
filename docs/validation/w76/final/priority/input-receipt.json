@@ -1,0 +1,49 @@
+{
+  "parts": [
+    {
+      "part": "part-01.txt",
+      "characters": 8000,
+      "sha256": "c5f4b9a8d55ae68f9e3027481f64b9015c20dfdd43abd3fc4a91162d88d4c33d",
+      "truncated": false
+    },
+    {
+      "part": "part-02.txt",
+      "characters": 8000,
+      "sha256": "3b8d781c31fbba5e43e921e22db57f8e1b38a25294945251e29cb453443c066a",
+      "truncated": false
+    },
+    {
+      "part": "part-03.txt",
+      "characters": 8000,
+      "sha256": "df8da4a2dff45887b4057d5fe9e13fd91934aad552699e53a01adbc6b7e23da5",
+      "truncated": false
+    },
+    {
+      "part": "part-04.txt",
+      "characters": 8000,
+      "sha256": "aed92427177277d6348d2aecaf9651663a2e9660dda47844037b378e0716595d",
+      "truncated": false
+    },
+    {
+      "part": "part-05.txt",
+      "characters": 8000,
+      "sha256": "5a29a12821b609501a1bf65272a4c50bace08e1f73786f54e8f8575d070ddfcf",
+      "truncated": false
+    },
+    {
+      "part": "part-06.txt",
+      "characters": 8000,
+      "sha256": "4214f0b0b45ea7484bd62890bada74c78e44521b3607ed9a47c662e49b551aca",
+      "truncated": false
+    },
+    {
+      "part": "part-07.txt",
+      "characters": 7440,
+      "sha256": "f8f39a888f73cab67a9a705fab48586cde5bd8788e1eb9956ec3f1f1ac0beb18",
+      "truncated": false
+    }
+  ],
+  "total_characters": 55440,
+  "complete_read": true,
+  "statement": "七份输入均已按序完整读取，工具输出均无截断。"
+}

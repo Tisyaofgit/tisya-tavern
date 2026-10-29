@@ -1,0 +1,49 @@
+{
+  "parts": [
+    {
+      "file": "part-01.txt",
+      "characters": 8000,
+      "sha256": "c5f4b9a8d55ae68f9e3027481f64b9015c20dfdd43abd3fc4a91162d88d4c33d",
+      "truncated": false
+    },
+    {
+      "file": "part-02.txt",
+      "characters": 8000,
+      "sha256": "59002cfa05dc9396533084ed8a4695d161a9a2e5c96905cfc991422c36bfd878",
+      "truncated": false
+    },
+    {
+      "file": "part-03.txt",
+      "characters": 8000,
+      "sha256": "ce78c766edd4f96411e43e3f51a34c0c8fe6894927fe389441033921eabdcfd1",
+      "truncated": false
+    },
+    {
+      "file": "part-04.txt",
+      "characters": 8000,
+      "sha256": "cb37edbf15d9633bafbd8214c42698de4974ccac814bb14f7d6e688662ed1091",
+      "truncated": false
+    },
+    {
+      "file": "part-05.txt",
+      "characters": 8000,
+      "sha256": "48311c55ea187650650f44e97f4c6c99013cd40ea2e308ed7778b4f557c7a8a6",
+      "truncated": false
+    },
+    {
+      "file": "part-06.txt",
+      "characters": 8000,
+      "sha256": "b78704a8a1428bdf59c1d7d6b3a20e214145d069411bfcb08797a1f3ee9981de",
+      "truncated": false
+    },
+    {
+      "file": "part-07.txt",
+      "characters": 7345,
+      "sha256": "d76b570eb483189fcbc7f987d9978234ba77a42f5bb1e89cdf5326e49ba1335c",
+      "truncated": false
+    }
+  ],
+  "total_characters": 55345,
+  "reading_order_complete": true,
+  "no_output_truncation_observed": true
+}

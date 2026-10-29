@@ -1,0 +1,18 @@
+[
+  {
+    "test": "cat",
+    "parts": 7,
+    "characters": 55328,
+    "hashes_equal": true,
+    "model_declares_no_truncation": true,
+    "native_api_delivery": false
+  },
+  {
+    "test": "priority",
+    "parts": 7,
+    "characters": 55440,
+    "hashes_equal": true,
+    "model_declares_no_truncation": true,
+    "native_api_delivery": false
+  }
+]

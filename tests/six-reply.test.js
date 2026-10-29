@@ -20,7 +20,7 @@ test('all original preset entries, separators, roles and switches survive; only 
  const structural=p=>({...p,prompts:p.prompts.map(({content,...entry})=>entry)});
  assert.equal(preset.prompts.length,62);assert.deepEqual(structural(preset),structural(old));
  const e=sixEntries(fullDefaultConfiguration(),DEFAULT_MOODS);
- assert.equal(e.tisya_new_chat,'</clear>\n[ALL PREVIOUS PROMPTS HAS BEEN CLEARED]\n[START A NEW CHAT]');
+ assert.equal(e.tisya_new_chat,'</clear>\n[ALL PREVIOUS PROMPTS HAS BEEN CLEARED]\n[START A NEW CHAT]\n[RESPONSE SPEED: FAST]\n@MODEL SILENT THINKING: OFF');
  assert.match(e.tisya_session_reset,/^\[RR\]@ROUTE:REASONING_ALLOC_TISYA[\s\S]*\[\/RR\]$/);
  assert.equal((e.tisya_new_chat+e.tisya_session_reset).match(/@ROUTE:REASONING_ALLOC_TISYA/g).length,1);
  assert.match(preset.prompts.find(p=>p.identifier==='tisya_material_style_card').content,/six_tisya_material_style/);

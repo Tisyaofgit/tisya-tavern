@@ -1,0 +1,43 @@
+✔ W70 layered forms reach native and controlled final send payloads once, with a guard against losing their reading contract (270.262086ms)
+✔ download contains complete instructions without a core or selected-material macro dependency (2.524313ms)
+✔ native requests expand the already-imported macro preset even when the host macro substitution is unavailable (48.580612ms)
+✔ embedded preset follows current writing controls without overwriting the imported file (186.233261ms)
+✔ user edits, custom order, extra materials and multimodal content remain intact (56.630949ms)
+✔ missing instructions or wrong table snapshot fail before JSON serialization and cannot be replaced by historical examples (197.661834ms)
+✔ turning off structured output removes machine contract while preserving ordinary writing instructions (47.973907ms)
+✔ request inspection observes exact host-fetch bytes with transport off, preserving the original request and response (66.452006ms)
+✔ late host history cleanup is observed by the exact turn state; lost instructions block dispatch (124.031577ms)
+✔ all preference categories reach the actual native and controlled requests without changing skeleton or preset (101.05852ms)
+✔ discussion and summary configuration reach both send paths with the existing eleven-block contract (129.243072ms)
+✔ explicit style and requirement resources reach native and controlled materials exactly once (82.315312ms)
+✔ native resource validation rejects changed source and a missing material insertion boundary (43.587749ms)
+✔ selected player and focus identities reach either context owner without rewriting archive objects (87.602282ms)
+✔ disabled hearts or structured output never access the mood catalogue on either send path (157.260716ms)
+✔ main versus supplementary styles remain distinguishable on both send paths (148.363645ms)
+✔ identical selected resource bodies remain single-source and retain main-style priority (103.710485ms)
+✔ each selectable narrative wording reaches its owning preference category or output owner (64.68746ms)
+✔ every editable selected rule is consumed once, not replaced by the built-in wording (15.898735ms)
+✔ initiative belongs once in CharacterPortrayal and respects every prerequisite (7.312873ms)
+✔ unsaved heart selection has one display/compile/mood default; explicit empty remains disabled (24.5482ms)
+✔ global save, reopen and another card compile the same user preference categories (81.010725ms)
+✔ feature switches, description focus, world constraints and voice reach only their owner (10.665064ms)
+✔ all creative stage switches survive replacement without removing mandatory source/player boundaries (6.148016ms)
+✔ language, lengths, action ranges and summary are compiled independently (3.886883ms)
+✔ full, compact and format workflow selections change executed detail and keep preference owners (2.641006ms)
+✔ discussion and summary selections retain current eleven blocks without forcing scene creation (2.157139ms)
+✔ real configuration checkboxes save empty hearts, reopen consistently and skip the mood catalogue (578.442699ms)
+✔ missing workflow detail uses the same compact read default as the configuration UI (1.394037ms)
+✔ live macro expansion supports every authoring choice and loads moods only for selected comments (388.776155ms)
+✔ plain output live macros do not require moods or emit a dormant public-digest instruction (13.589135ms)
+✔ full frozen skeleton retains all eleven blocks, attributes, row keys and cell counts (8.446414ms)
+✔ constraints have one owning layer rather than appended duplicate contracts (2.912579ms)
+✔ Dream History boundaries preserve source-layer priority without changing identity or dispatch (3.212494ms)
+✔ selected summaries, comments and actions retain their exact enabled rows across workflow modes (74.87703ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2013.278476

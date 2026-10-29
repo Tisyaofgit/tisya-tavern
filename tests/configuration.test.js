@@ -329,7 +329,7 @@ test('custom language and optional dialogue reach complete actual requests for a
  for(const detail of ['full','compact','format'])for(const source of ['角色与环境','指定语言']){
   const f=fixture(),m=f.w.modes.narrative;m.workflowDetail=detail;m.narrative.缇斯亚叙事语言='指定单语';m.narrative.缇斯亚叙事语言配置=['日本語'];m.角色对白={启用:true,来源:source,语言:'Italiano'};
   await f.host.before('normal');const payload={messages:[]};await f.host.payloadReady(payload);const text=JSON.stringify(payload.messages),inner=f.macros.get('tisya_live_tisya_inner_chain')();
-  assert.match(text,/默认语言/);assert.match(text,/日本語/);assert.match(text,/角色对白双语对照/);assert.match(text,/旁白不做双语复制/);assert.match(text,/译文服务读者/);assert.match(text,/情话、称呼、祷词与咒语/);assert.equal(inner.split('角色对白双语对照：').length-1,1,detail);
+  assert.match(text,/默认语言/);assert.match(text,/日本語/);assert.match(text,/角色对白双语对照/);assert.match(text,/仅在世界观明确写明存在多种语言/);assert.match(text,/当前角色身份与已知语言能力适合/);assert.match(text,/指定语言只选择符合上述条件时的原语/);assert.match(text,/不在对白或旁白中零散夹入外语词/);assert.match(text,/旁白不做双语复制/);assert.match(text,/译文服务读者/);assert.match(text,/情话、称呼、祷词与咒语/);assert.equal(inner.split('角色对白双语对照：').length-1,1,detail);
   assert.doesNotMatch(text,/\{语言\}|\{语言一\}|\{语言二\}/);if(source==='指定语言')assert.match(text,/Italiano/);else{assert.match(text,/不凭姓名、外貌或族裔猜测母语/);assert.doesNotMatch(text,/Italiano/);}
   m.角色对白.启用=false;await f.host.before('normal');const off={messages:[]};await f.host.payloadReady(off);assert.doesNotMatch(JSON.stringify(off),/角色对白双语对照：|Italiano/);assert.match(JSON.stringify(off),/不自动增加逐句双语/);
  }

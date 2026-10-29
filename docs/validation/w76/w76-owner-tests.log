@@ -1,0 +1,12 @@
+✔ full frozen skeleton retains all eleven blocks, attributes, row keys and cell counts (6.727786ms)
+✔ constraints have one owning layer rather than appended duplicate contracts (2.757419ms)
+✔ Dream History boundaries preserve source-layer priority without changing identity or dispatch (2.059003ms)
+✔ selected summaries, comments and actions retain their exact enabled rows across workflow modes (80.324198ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 228.896199

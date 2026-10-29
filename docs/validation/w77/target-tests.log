@@ -1,0 +1,34 @@
+✔ each selectable narrative wording reaches its owning preference category or output owner (49.053145ms)
+✔ every editable selected rule is consumed once, not replaced by the built-in wording (17.168581ms)
+✔ initiative belongs once in CharacterPortrayal and respects every prerequisite (9.431667ms)
+✔ unsaved heart selection has one display/compile/mood default; explicit empty remains disabled (25.411214ms)
+✔ global save, reopen and another card compile the same user preference categories (75.421954ms)
+✔ feature switches, description focus, world constraints and voice reach only their owner (8.320769ms)
+✔ all creative stage switches survive replacement without removing mandatory source/player boundaries (4.82797ms)
+✔ language, lengths, action ranges and summary are compiled independently (3.225503ms)
+✔ full, compact and format workflow selections change executed detail and keep preference owners (2.143659ms)
+✔ discussion and summary selections retain current eleven blocks without forcing scene creation (1.768032ms)
+✔ real configuration checkboxes save empty hearts, reopen consistently and skip the mood catalogue (546.422588ms)
+✔ missing workflow detail uses the same compact read default as the configuration UI (0.947916ms)
+✔ live macro expansion supports every authoring choice and loads moods only for selected comments (405.399043ms)
+✔ plain output live macros do not require moods or emit a dormant public-digest instruction (20.607751ms)
+✔ all original preset entries, separators, roles and switches survive; only content differs (6.260474ms)
+✔ six-block structure stays fixed; row whitespace is harmless and source remains exact (10.769961ms)
+✔ bad auxiliary row identifies phase/line without hiding successful prose or accepting bad data (4.705859ms)
+✔ missing, duplicate or reordered blocks remain actual format errors; no decoder fallback (0.76247ms)
+✔ latest preset keeps six blocks across switches and has no fictitious archive execution (4.899236ms)
+✔ locked authoritative skeleton and compiler agree on all tag boundaries (1.044619ms)
+✔ every row in the shipped template can be decoded without a template/parser mismatch (0.967304ms)
+✔ native single-generation bridge expands new entries and keeps original host data route (4.578775ms)
+✔ full frozen skeleton retains all eleven blocks, attributes, row keys and cell counts (7.854398ms)
+✔ constraints have one owning layer rather than appended duplicate contracts (2.794024ms)
+✔ Dream History boundaries preserve source-layer priority without changing identity or dispatch (3.82331ms)
+✔ selected summaries, comments and actions retain their exact enabled rows across workflow modes (82.520726ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1328.442537
