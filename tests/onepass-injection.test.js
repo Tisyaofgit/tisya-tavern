@@ -31,7 +31,7 @@ test('W70 layered forms reach native and controlled final send payloads once, wi
 });
 test('download contains complete instructions without a core or selected-material macro dependency',()=>{
  const text=JSON.stringify(preset);assert.doesNotMatch(text,/\{\{tisya_/);assert.match(text,/CREATIVE.GUIDE/);assert.match(text,/ONEPASS.CONTRACT/);assert(isOnePassPreset({prompts:preset.prompts}));
- const old=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url)));const metadata=p=>({...p,prompts:p.prompts.map(({content,...row})=>row)});assert.deepEqual(metadata(preset),metadata(old));
+ const old=JSON.parse(fs.readFileSync(new URL('../presets/Tisya-TauriTavern-0.2.0-alpha.13.json',import.meta.url)));const metadata=p=>{const {temperature,reasoning_effort,verbosity,show_thoughts,tool_reasoning_mode,function_calling,openai_max_tokens,...rest}=p;return {...rest,prompts:p.prompts.filter(x=>x.identifier!=='tisya_fast_response').map(({content,...row})=>row),prompt_order:p.prompt_order.map(g=>({...g,order:g.order.filter(x=>x.identifier!=='tisya_fast_response')}))}};assert.deepEqual(metadata(preset),metadata(old));
 });
 test('native requests expand the already-imported macro preset even when the host macro substitution is unavailable',async()=>{
  const f=setup({macro:true}),before=JSON.stringify(f.source);const payload=await f.ready();assert.match(JSON.stringify(payload.messages),/tisya_live_onepass_main/);await f.host.payloadReady(payload);
@@ -120,4 +120,15 @@ test('main versus supplementary styles remain distinguishable on both send paths
 
 test('identical selected resource bodies remain single-source and retain main-style priority',async()=>{
  for(const owner of ['native','tisya']){const f=setup({owner});f.data.resources=[{id:'supplement',kind:'style',name:'相同补充',content:'SAME_RESOURCE_BODY_CANARY'},{id:'main',kind:'style',name:'相同主调',content:'SAME_RESOURCE_BODY_CANARY'}];f.world.style='main';f.world.styles=['supplement'];f.world.modes.narrative.selected=['supplement'];const payload=await f.ready();await f.host.payloadReady(payload);const text=payload.messages.map(m=>typeof m.content==='string'?m.content:'').join('\n');assert.equal(text.split('SAME_RESOURCE_BODY_CANARY').length-1,1,owner);assert.match(text,/Main style: "相同主调"/);}
+});
+
+
+test('speed preference reaches native and controlled OpenAI messages once and never mutates the imported preset',async()=>{
+ for(const owner of ['native','tisya'])for(const enabled of [false,true])for(const nativeEntry of [false,true]){
+  const f=setup({owner}),before=JSON.stringify(f.source);f.world.modes.narrative.极速模式=enabled;
+  f.source.order.find(p=>p.identifier==='tisya_fast_response').enabled=nativeEntry;const sourceBefore=JSON.stringify(f.source);
+  const payload=await f.ready();await f.host.payloadReady(payload);const system=payload.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
+  assert.equal(system.split('[FAST.RESPONSE]').length-1,enabled||nativeEntry?1:0,owner+' '+enabled+' '+nativeEntry);
+  assert.match(system,/<body min="2000" max="5000" unit="字">/);assert.equal(JSON.stringify(f.source),sourceBefore);assert(before);
+ }
 });

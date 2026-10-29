@@ -53,7 +53,7 @@ test('all old data survives additive optional schema registration',()=>{
  const old=defaultRegistry();delete old.tables.find(t=>t.id==='facts').fields.前史;delete old.tables.find(t=>t.id==='experiences').fields.内在动因;const before=JSON.stringify(old),next=upgradeRegistry(old);assert.equal(JSON.stringify(old),before);assert(next.tables.find(t=>t.id==='facts').fields.前史);assert(next.tables.find(t=>t.id==='experiences').fields.内在动因);
 });
 test('one malformed before row preserves every valid panel, title, after and original text; it is not accepted for archive',async()=>{
- const source=onePassReply().replace('设计|宋遥|','设计|'),snapshot=source,result=inspectMessage(source);assert.equal(result.details.value.diagnostics.length,1);assert(result.details.value.rounds.tasks.some(x=>x.label==='文风用词'));assert.equal(result.actions.value.length,4);assert.throws(()=>parseOnePassReply(source));
+ const source=onePassReply().replace('设计|宋遥|','解锁|'),snapshot=source,result=inspectMessage(source);assert.equal(result.details.value.diagnostics.length,1);assert(result.details.value.rounds.tasks.some(x=>x.label==='文风用词'));assert.equal(result.actions.value.length,4);assert.throws(()=>parseOnePassReply(source));
  const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);w.IntersectionObserver=class{observe(){}disconnect(){}};const ui=mountMessageVisual(d,host,{source,formatBody:x=>x,getMotion:()=>false});const r=ui.host.shadowRoot;assert(r.querySelector('.draft-ledger'));assert(r.querySelector('.audit-ledger'));assert(r.querySelector('.summary-diagnostic'));assert.match(r.querySelector('.summary-diagnostic').textContent,/COLUMNS/);assert.equal(source,snapshot);ui.dispose();await w.happyDOM.abort();
 });
 test('approved literary dimensions coexist with the unmodified authority rules and current controls',()=>{
@@ -110,4 +110,15 @@ test('a machine-column error identifies block, line and counts without hiding th
  const source=pipesReply({vars:'共用：1|P1\n变量：5|state.值|true|false|extra',ids:'5'}),result=inspectMessage(source);
  assert.equal(result.records.error,'TISYA_ONEPASS_PIPES');assert.match(result.records.detail,/vars 第 3 行 变量.*应为 4 列，实际 5 列/);assert.equal(result.actions.value.length,4);assert.match(result.body.value,/宋遥/);
  const w=new Window(),d=w.document,host=d.createElement('div');d.body.append(host);w.IntersectionObserver=class{observe(){}disconnect(){}};const ui=mountMessageVisual(d,host,{source,formatBody:x=>x,getMotion:()=>false});assert.match(ui.host.shadowRoot.querySelector('.story-region [role=status]').textContent,/应为 4 列，实际 5 列/);ui.dispose();await w.happyDOM.abort();
+});
+
+
+test('named common columns compile to the same inert proposal and nonexistent evidence still fails',async()=>{
+ const v=view(),state=snapshot(v),before=JSON.stringify(v);
+ const named=memory.replace('共用：清晨|3|1、2|P1、P2|读者|1','共用：故事时间=清晨|地点=3|对象=1、2|证据=[p1, P2]|读者=读者|知情者=1');
+ const ordinary=await prepareOnePassBatch(v,parseOnePassReply(pipesReply({memory,ids:'+E1、+F1、+C1、+T1'})),state,{key:'same-source'});
+ const adapted=await prepareOnePassBatch(v,parseOnePassReply(pipesReply({memory:named,ids:'+E1、+F1、+C1、+T1'})),state,{key:'same-source'});
+ const canonical=batch=>{const ids=new Map(batch.commits[0].changes.map(c=>[c.after.id,c.after.values.名称]));return JSON.parse(JSON.stringify(batch.commits[0].changes.map(c=>c.after.values)),(_,v)=>typeof v==='string'&&ids.has(v)?ids.get(v):v);};assert.deepEqual(canonical(adapted),canonical(ordinary));
+ await assert.rejects(()=>prepareOnePassBatch(v,parseOnePassReply(pipesReply({memory:named.replace('[p1, P2]','P999'),ids:'+E1、+F1、+C1、+T1'})),state,{key:'bad-source'}),/证据段号不存在/);
+ assert.equal(JSON.stringify(v),before);
 });

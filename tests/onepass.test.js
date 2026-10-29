@@ -11,7 +11,7 @@ import {mountMessageVisual} from '../message-ui.js';
 const read=name=>JSON.parse(fs.readFileSync(new URL('../presets/'+name,import.meta.url)));
 const source=p=>({prompts:p.prompts,order:p.prompt_order.find(x=>x.character_id===100001).order});
 test('single-pass import retains all 62 legacy entries and dividers, with both new think blocks and complete creative guide',()=>{
- const old=read('Tisya-TauriTavern-0.2.0-alpha.13.json'),p=read('Tisya-One-Pass-1.json'),shape=p=>({...p,prompts:p.prompts.map(({content,...r})=>r)});assert.deepEqual(shape(p),shape(old));
+ const old=read('Tisya-TauriTavern-0.2.0-alpha.13.json'),p=read('Tisya-One-Pass-1.json'),shape=p=>{const {temperature,reasoning_effort,verbosity,show_thoughts,tool_reasoning_mode,function_calling,openai_max_tokens,...rest}=p;return {...rest,prompts:p.prompts.filter(x=>x.identifier!=='tisya_fast_response').map(({content,...r})=>r),prompt_order:p.prompt_order.map(g=>({...g,order:g.order.filter(x=>x.identifier!=='tisya_fast_response')}))}};;assert.deepEqual(shape(p),shape(old));
  const e=onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS);for(const part of ['身份复核','资料承接','视角认知','人物反应','行动与剧情','正文组织','成稿总检'])assert.match(e.tisya_inner_chain,new RegExp(part+' —'));
  assert.match(e.tisya_registry,/<task format="pipes">/);assert.match(e.tisya_registry,/<think phase="before">/);assert.match(e.tisya_registry,/<think phase="after">/);for(const k of ['status','vars','archive','memory'])assert.match(e.tisya_registry,new RegExp('<'+k+' format="pipes">'));assert.doesNotMatch(e.tisya_registry,/<next/);
 });
@@ -58,6 +58,6 @@ test('each enabled heart direction remains in both phases across summary modes',
 
 test('one-pass creative replacement retains the selected initiative directive and player boundary',()=>{
  const c=fullDefaultConfiguration(),m=c.world.modes.narrative;m.narrative.缇斯亚叙事创作模式='互动叙事';m.narrative.缇斯亚叙事角色自主=true;
- for(const level of ['自主互动','主动推进']){m.角色主动性=level;const out=onePassEntries(c,DEFAULT_MOODS);assert.match(out.tisya_material_rule_material,new RegExp('角色主动性·'+level));assert.match(out.tisya_material_rule_material,/不等待玩家设计大纲|不只复述玩家/);assert.match(out.tisya_material_rule_material,/人物的提议与决定不等于玩家已同意/);assert.doesNotMatch(out.tisya_inner_chain,/角色主动性·/);}
+ for(const level of ['自主互动','主动推进']){m.角色主动性=level;const out=onePassEntries(c,DEFAULT_MOODS);assert.match(out.tisya_material_rule_material,new RegExp('角色主动性·'+level));assert.match(out.tisya_material_rule_material,/NPC agency requires no player-written outline|reducing their participation to paraphrase/);assert.match(out.tisya_material_rule_material,/A character’s proposal or decision does not establish player consent/);assert.doesNotMatch(out.tisya_inner_chain,/角色主动性·/);}
  m.narrative.缇斯亚叙事角色自主=false;assert.doesNotMatch(onePassEntries(c,DEFAULT_MOODS).tisya_material_rule_material,/角色主动性·/);
 });

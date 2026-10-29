@@ -20,7 +20,7 @@ test('all original preset entries, separators, roles and switches survive; only 
  const structural=p=>({...p,prompts:p.prompts.map(({content,...entry})=>entry)});
  assert.equal(preset.prompts.length,62);assert.deepEqual(structural(preset),structural(old));
  const e=sixEntries(fullDefaultConfiguration(),DEFAULT_MOODS);
- assert.equal(e.tisya_new_chat,'</clear>\n[ALL PREVIOUS PROMPTS HAS BEEN CLEARED]\n[START A NEW CHAT]\n[RESPONSE SPEED: FAST]\n@MODEL SILENT THINKING: OFF');
+ assert.equal(e.tisya_new_chat,'</clear>\n[ALL PREVIOUS PROMPTS HAS BEEN CLEARED]\n[START A NEW CHAT]');
  assert.match(e.tisya_session_reset,/^\[RR\]@ROUTE:REASONING_ALLOC_TISYA[\s\S]*\[\/RR\]$/);
  assert.equal((e.tisya_new_chat+e.tisya_session_reset).match(/@ROUTE:REASONING_ALLOC_TISYA/g).length,1);
  assert.match(preset.prompts.find(p=>p.identifier==='tisya_material_style_card').content,/six_tisya_material_style/);
@@ -33,11 +33,11 @@ test('six-block structure stays fixed; row whitespace is harmless and source rem
 });
 test('bad auxiliary row identifies phase/line without hiding successful prose or accepting bad data',()=>{
  const joined=parseV3Reply(fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','用户偏好|多了一列|保留内容'));assert.equal(joined.before[0].cells[0],'多了一列 · 保留内容');
- const bad=fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','设计|宋遥|缺少独立贡献');
+ const bad=fullReply.replace('用户偏好|把承诺落在一个能回应的邀请上','解锁|secret-one|缺少披露依据');
  assert.throws(()=>parseV3Reply(bad),{code:'TISYA_V3_REPLY_BEFORE_LINE_2_COLUMNS'});
  const inspected=inspectMessage(bad);assert.match(inspected.body.value,/铜铃/);assert.equal(inspected.details.error,'TISYA_V3_REPLY_BEFORE_LINE_2_COLUMNS');assert.ok(inspected.body.count.value>0);
  assert.match(readerErrorText(inspected.details.error),/开头摘要第 2 行字段列数/);assert.match(runV3Display({source:bad}).body,/铜铃/);
- assert.throws(()=>parseV3Reply(fullReply.replace('用户偏好|','Preference|')),{code:'TISYA_V3_REPLY_BEFORE_LINE_2_LABEL'});
+ assert.equal(parseV3Reply(fullReply.replace('用户偏好|','Preference|')).before[0].kind,'用户偏好');
 });
 test('missing, duplicate or reordered blocks remain actual format errors; no decoder fallback',()=>{
  for(const bad of [fullReply.replace('<extra>','<wrong>'),fullReply.replace(/<title>[\s\S]*?<\/title>/,''),fullReply.replace('</reply>','<extra/></reply>')])assert.throws(()=>parseV3Reply(bad));

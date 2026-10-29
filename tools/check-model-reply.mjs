@@ -2,9 +2,12 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {parseOnePassReply,inspectOnePass} from '../onepass/reply.mjs';
 import {countBody} from '../reader-core.js';
+import {readTaskResponse} from '../config/stream-response.js';
 const [input,output]=process.argv.slice(2);
 if(!input)throw Error('Usage: node tools/check-model-reply.mjs INPUT [OUTPUT]');
-const source=await readFile(input,'utf8'),result={input,sha256:createHash('sha256').update(source).digest('hex'),characters:source.length,syntaxPassed:false,persistenceTested:false};
+const raw=await readFile(input,'utf8');
+const source=input.endsWith('.json')?await readTaskResponse(new Response(raw,{headers:{'content-type':'application/json'}})):raw;
+const result={input,sha256:createHash('sha256').update(source).digest('hex'),rawSha256:createHash('sha256').update(raw).digest('hex'),responsePath:input.endsWith('.json')?'OpenAI JSON → readTaskResponse → one-pass parser':'raw-text',characters:source.length,syntaxPassed:false,persistenceTested:false};
 try{
  const parsed=parseOnePassReply(source);
  result.syntaxPassed=true;result.blocks=Object.keys(parsed.blocks);result.beforeRows=parsed.publicReply.before.length;result.afterRows=parsed.publicReply.after.length;result.paragraphs=parsed.publicReply.paragraphs.length;

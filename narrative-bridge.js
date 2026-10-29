@@ -28,7 +28,7 @@ export function compileNarrative(context,source,moods=[],configuration=null){
  if(isSixPreset(source)||isOnePassPreset(source)){
   const resolved=current??fullDefaultConfiguration();
   if(!current)Object.assign(resolved.world.modes.narrative,{narrative:config.settings,summary:config.summary,heartDirections:selection.directions});
-  const onepass=isOnePassPreset(source),entries=(onepass?onePassEntries:sixEntries)(resolved,moods,{structured:outputEnabled(source)});
+  const onepass=isOnePassPreset(source),entries=(onepass?onePassEntries:sixEntries)(resolved,moods,{structured:outputEnabled(source),fastResponseEntryEnabled:activeEntries.includes('tisya_fast_response')});
   return {prose:true,taskMode:false,outputEnabled:outputEnabled(source),rest:{entries:Object.fromEntries(Object.entries(entries).flatMap(([id,text])=>[[id,text],[(onepass?'onepass_':'six_')+id,text]]))}};
  }
  const c=N.previewSettings(config.settings,{summary:config.summary,directions:selection.directions},{activeEntries,outputEnabled:outputEnabled(source)});

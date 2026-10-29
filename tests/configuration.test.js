@@ -212,9 +212,9 @@ test('RP01 selected initiative reaches the assembled request once across all wor
   assert.equal(text.split('角色主动性·'+level+'：').length-1,1,detail+' '+level+' '+structured);
   assert.doesNotMatch(text,new RegExp('角色主动性·'+(level==='主动推进'?'自主互动':'主动推进')));
   assert.doesNotMatch(text,/allow supported initiative from the character’s own goals|人物保有独立目标、意愿与已有事务/);
-  assert.match(text,/不等于玩家已同意/);assert.match(text,/不虚构既往经历/);assert.match(text,/不为主动性强塞冲突/);
+  assert.match(text,/does not establish player consent/);assert.match(text,/inventing past experiences/);assert.match(text,/imposing conflict, accidents/);
   for(const id of ['A01','A02','A04','A05','B06'])assert.ok(text.includes(c.stepwiseRules[id]),detail+' preserves '+id);
-  if(level==='主动推进')assert.match(text,/不等待玩家设计大纲或逐项授权 NPC 行动/);
+  if(level==='主动推进')assert.match(text,/NPC agency requires no player-written outline or itemized advance permission/);
   if(!structured)assert.doesNotMatch(c.rest.entries.tisya_inner_chain,/<reply>/);
   assert.equal(JSON.stringify(f.d),saved,'compilation does not write settings');
  }

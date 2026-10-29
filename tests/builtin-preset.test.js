@@ -41,7 +41,7 @@ function normalizeNativePrompts(settings){
 }
 test('native PromptManager normalization loads the shipped preset without a restart error',async()=>{
  const f=fixture({selected:'Tisya',normalizeHost:true});
- try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,68);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,65);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
+ try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,69);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,66);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
 });
 test('load verification accepts only observed native additions and still detects changed instructions and order',()=>{
  const native=copy(bundled);normalizeNativePrompts(native);assert.equal(presetLoadMismatch(native,bundled),null);
@@ -61,7 +61,7 @@ test('manual refresh reinstalls same revision while automatic startup preserves 
  }finally{await f.w.happyDOM.close();}
 });
 test('built-in keeps the complete 62-entry plaintext preset and both creative digests',()=>{
- assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,62);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
+ assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,63);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });
 test('first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched',async()=>{
  const f=fixture({existing:false}),settings=copy(f.context.chatCompletionSettings),other=copy(f.disk.get('Other'));

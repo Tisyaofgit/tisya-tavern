@@ -26,7 +26,7 @@ test('every emitted public skeleton row has a literal registered key and exact p
 test('known public keys tolerate a trailing category colon without inventing unknown labels',()=>{
  const source=onePassReply(),changed=source.replace('用户偏好|','用户偏好：|').replace('世界动向|','世界动向:|').replace('偏好：','偏好:');
  const a=parseOnePassReply(source),b=parseOnePassReply(changed);assert.deepEqual(b.publicReply.before,a.publicReply.before);assert.deepEqual(b.publicReply.after,a.publicReply.after);
- assert.throws(()=>parseOnePassReply(source.replace('用户偏好|','自创类别|')),/LABEL/);
+ const note=parseOnePassReply(source.replace('用户偏好|','自创类别|')).publicReply.before[0];assert.equal(note.kind,'自创类别');assert.equal(note.wireVariant,'supplemental-public-note');
 });
 test('shifted common columns identify the evidence field and preserve all source text',()=>{
  const status='\n共用:~|P1、P2|读者|[]\n',memory='\n共用:[]|[]|P1、P2|读者|[]\n';
@@ -43,7 +43,7 @@ test('explicit absent outcomes normalize only known categories and never create 
  const a=canonical.publicReply.after.find(x=>x.kind==='留白'),b=variant.publicReply.after.find(x=>x.kind==='留白');
  assert.deepEqual(b.cells,a.cells);assert.equal(b.wireVariant,'outcome-first-blank');
  const repeated=parseOnePassReply(source.replace(/世界动向\|[^\n]+/,'世界动向|留白|世界动向|雨只作为背景')).publicReply.after.find(x=>x.kind==='留白');assert.deepEqual(repeated.cells,a.cells);assert.equal(repeated.wireVariant,'repeated-category-blank');
- assert.throws(()=>parseOnePassReply(source.replace(/世界动向\|[^\n]+/,'世界动向|留白|关系位移|原因')),/COLUMNS/);
+ const qualified=parseOnePassReply(source.replace(/世界动向\|[^\n]+/,'世界动向|留白|关系位移|原因')).publicReply.after;assert.deepEqual(qualified.find(x=>x.kind==='留白').cells,['世界动向','关系位移 · 原因']);assert.equal(qualified.filter(x=>x.kind==='关系位移').length,1);
  const empty=parseOnePassReply(source.replace('</think>\n<status','留白|系统任务|无待办\n</think>\n<status'));
  assert(empty.publicReply.after.some(x=>x.kind==='留白'&&x.cells[0]==='系统任务'));
  assert(!empty.publicReply.after.some(x=>x.kind==='系统任务'));

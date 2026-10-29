@@ -1,3 +1,4 @@
+import {QUALITY_PRESET_SETTINGS} from './config/response-speed.js';
 import bundled from './presets/Tisya.json' with {type:'json'};
 import {keepPresetConnection} from './preset-connection.js';
 import {presetLoadMismatch} from './preset-load-check.js';
@@ -62,7 +63,7 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
      if(change.presetName!==BUILTIN_PRESET_NAME)return;
      protectedChange=true;keepPresetConnection({...change,settings:change.settings??context.chatCompletionSettings});
      // Refresh only the shipped prompt fields, preserving active sampling/API settings.
-     for(const key of Object.keys(change.preset))if(!Object.hasOwn(bundled,key))delete change.preset[key];
+     for(const key of Object.keys(change.preset))if(!Object.hasOwn(bundled,key)||Object.hasOwn(QUALITY_PRESET_SETTINGS,key))delete change.preset[key];
      change.preset.extensions={...clone(context.chatCompletionSettings.extensions??{}),...clone(bundled.extensions)};
     };
     const done=()=>{if(!protectedChange)return;cleanup();if(manager.getSelectedPresetName()!==BUILTIN_PRESET_NAME)return reject(updateError('Tisya 已保存，但当前选择在刷新时变化；请重新选中 Tisya',true));const mismatch=presetLoadMismatch(context.chatCompletionSettings,next);if(mismatch)return reject(updateError('Tisya 已保存，当前载入校验未通过：'+mismatch,true));resolve();};

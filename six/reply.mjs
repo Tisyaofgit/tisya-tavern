@@ -12,6 +12,13 @@ export const BEFORE_ROWS=Object.freeze(Object.fromEntries([...['用户偏好','�
 export const AFTER_ROWS=Object.freeze(Object.fromEntries([...[...OUTCOMES].map(k=>[k,1]),['留白',2],...[...TODO].map(k=>[k,2]),...[...HEART].map(k=>[k,2]),['已交付',1],['候选',1]]));
 const BEFORE=new Map(Object.entries(BEFORE_ROWS)),AFTER=new Map(Object.entries(AFTER_ROWS));
 const ACTION_TYPES=new Set(['交流','调查','移动','操作','战斗','休整','其他']);
+const PUBLIC_LABELS=new Map(Object.entries({Preference:'用户偏好','User preference':'用户偏好','Language choice':'文风用词','Plot direction':'情节取向','Character anchor':'角色锚点','Pacing focus':'篇幅重点',人物设计:'设计',人物推演:'设计',角色设计:'设计',输入点评:'输入评价',回应评价:'回应用户评价',剧情点评:'剧情吐槽',剧情变化:'本轮变化',角色主动性:'角色主动',关系变化:'关系位移',人物塑造:'人物厚度',语言表现:'语言亮点',后续张力:'下一步张力'}));
+const publicLine=raw=>{
+ let line=raw.trim().replace(/^(?:[-*+]\s+|\d+[.)、]\s*)/,'');
+ if(!line.includes('|')&&line.includes('｜'))line=line.replaceAll('｜','|');
+ if(line.startsWith('|')&&line.endsWith('|'))line=line.slice(1,-1).trim();
+ return line.replace(/^(?:\*\*([^*]+)\*\*|`([^`]+)`)(?=\s*[:：|])/,'$1$2');
+};
 const fail=code=>{throw Object.assign(Error('TISYA_V3_REPLY_'+code),{code:'TISYA_V3_REPLY_'+code});};
 const check=(ok,code)=>{if(!ok)fail(code);};
 const attempt=fn=>{try{return {value:fn()};}catch(e){return {error:e?.code??'TISYA_V3_REPLY_INVALID'};}};
@@ -32,23 +39,35 @@ export function splitV3Cells(line){return rawCells(line).map(decodeCell);}
 
 function rows(text,allowed,phase,diagnostics=null){
  const result=[],seen=new Set();
- for(const [index,line] of text.split(/\r?\n/).entries()){if(!line.trim())continue;
+ for(const [index,raw] of text.split(/\r?\n/).entries()){const line=publicLine(raw);if(!line||/^[-:|\s]+$/.test(line))continue;
   try{
   const [label,...cells]=splitV3Cells(line),prefix=phase.toUpperCase()+'_LINE_'+(index+1)+'_';let kind=label.trim().replace(/[:：]$/,'').trim(),wireVariant=null;
+  if(PUBLIC_LABELS.has(kind)){kind=PUBLIC_LABELS.get(kind);wireVariant='public-label-alias';}
   if(phase==='after'&&BLANKABLE.has(kind)&&cells[0]?.trim()==='留白'){
    if(cells.length===2){cells.splice(0,1,kind);kind='留白';wireVariant='outcome-first-blank';}
    else if(cells.length===3&&cells[1].trim()===kind){cells.shift();kind='留白';wireVariant='repeated-category-blank';}
+   else if(cells.length>=3){cells.splice(0,cells.length,kind,cells.slice(1).join(' · '));kind='留白';wireVariant='qualified-outcome-blank';}
   }
-  check(allowed.has(kind),prefix+'LABEL');
+  // Supplementary public notes have no archival, permission or state semantics.
+  // Preserve their label and content rather than rejecting an entire digest.
+  if(!allowed.has(kind)){
+   check(cells.length>0&&cells.some(c=>c.trim())&&/^[\p{L}\p{N}_ .·/（）()：:-]{1,80}$/u.test(kind),prefix+'LABEL');
+   result.push({kind,cells:[cells.join(' · ')],wireVariant:'supplemental-public-note'});continue;
+  }
   // Optional empty records may use the wider machine-block placeholder shape.
   // Quoted/literal tildes are content; unknown labels and substantive bad rows fail.
   if(['待定','解锁','已交付','候选'].includes(kind)&&cells.length&&cells.every(c=>c.trim()==='~'))continue;
+  if(HEART.has(kind)&&cells.length===2&&cells.every(c=>['~',''].includes(c.trim())))continue;
   if(allowed.get(kind)===1&&cells.length>1&&cells[0].trim()!=='留白'){
    check(cells.every(c=>c.trim()),prefix+'EMPTY');const joined=cells.join(' · ');cells.splice(0,cells.length,joined);wireVariant='text-cell-join';
   }
-  check(cells.length===allowed.get(kind),prefix+'COLUMNS');check(cells.every(c=>c.trim()),prefix+'EMPTY');
+  if((HEART.has(kind)||TODO.has(kind))&&cells.length>2){cells.splice(1,cells.length-1,cells.slice(1).join(' · '));wireVariant='public-note-cell-join';}
+  if(kind==='设计'&&cells.length===2&&cells.every(c=>c.trim())){cells.push('');wireVariant='omitted-design-note';}
+  if(TODO.has(kind)&&cells.length===1&&cells[0].trim()){cells.unshift('~');wireVariant='unspecified-task-trigger';}
+  check(cells.length===allowed.get(kind),prefix+'COLUMNS');check(cells.every((c,i)=>c.trim()||wireVariant==='omitted-design-note'&&i===2),prefix+'EMPTY');
   const unique=HEART.has(kind)||OUTCOMES.has(kind)||['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾'].includes(kind);if(unique)check(!seen.has(kind),'DUPLICATE_ROW');
-  if(HEART.has(kind))check([...cells[1]].length<=80,'HEART_LENGTH');
+  // Length is a generation requirement, not a reason to discard a readable aside.
+  if(HEART.has(kind)&&[...cells[1]].length>80)wireVariant='long-public-comment';
   if(kind==='留白'){cells[0]=cells[0].trim();check(BLANKABLE.has(cells[0])&&!seen.has(cells[0]),prefix+'OUTCOME');seen.add(cells[0]);}
   if(unique)seen.add(kind);result.push({kind,cells,...(wireVariant?{wireVariant}:{})});
   }catch(error){if(!diagnostics)throw error;diagnostics.push({phase,line:index+1,code:error.code??'TISYA_V3_REPLY_INVALID',raw:line});}
@@ -96,7 +115,14 @@ function titleOf(e){
  return {text,time,place,places,world};
 }
 function actionsOf(e){
- const actions=e.blocks.actions.split(/\r?\n/).filter(x=>x.trim()).map(line=>{let [type,text,possibility,...rest]=splitV3Cells(line);type=type.trim();check(!rest.length&&ACTION_TYPES.has(type)&&text?.trim()&&possibility?.trim(),'ACTION');return {type,text,possibility};});
+ const aliases={交谈:'交流',对话:'交流',询问:'交流',探索:'调查',观察:'调查',行动:'操作',互动:'操作',休息:'休整'};
+ const actions=e.blocks.actions.split(/\r?\n/).filter(x=>x.trim()).map(raw=>{const line=publicLine(raw);let [type,text,possibility,...rest]=splitV3Cells(line);type=type.trim();let wireVariant=null;const originalType=type;
+  if(aliases[type]){type=aliases[type];wireVariant='action-type-alias';}
+  if(!ACTION_TYPES.has(type)&&text?.trim()&&/^[\p{L}\p{N}_ .·/（）()-]{1,40}$/u.test(type)){type='其他';wireVariant='custom-action-type';}
+  check(ACTION_TYPES.has(type)&&text?.trim(),'ACTION');
+  if(possibility===undefined){possibility='';wireVariant='omitted-action-note';}
+  if(rest.length){possibility=[possibility,...rest].join(' · ');wireVariant='action-note-cell-join';}
+  return {type,text,possibility,...(wireVariant?{wireVariant,originalType}:{})};});
  if(Object.hasOwn(e.attrs.actions,'min'))check(actions.length>=integer(e.attrs.actions.min)&&actions.length<=integer(e.attrs.actions.max),'ACTION_RANGE');else check(!actions.length,'ACTION_RANGE');
  return actions;
 }

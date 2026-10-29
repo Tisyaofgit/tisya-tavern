@@ -12,13 +12,25 @@ const missing=v=>v===undefined||v===''||v==='~';
 const unxml=s=>s.replace(/&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi,x=>{const key=x.slice(1,-1),named={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};if(Object.hasOwn(named,key))return named[key];const n=key[1]?.toLowerCase()==='x'?parseInt(key.slice(2),16):Number(key.slice(1));check(n>0&&n<=0x10ffff&&!(n>=0xd800&&n<=0xdfff),'无效 XML 实体');return String.fromCodePoint(n);});
 export function splitPipeRaw(text,separator){const out=[''];let escape=false;for(const c of text){if(escape){out[out.length-1]+='\\'+c;escape=false;}else if(c==='\\')escape=true;else if(c===separator)out.push('');else out[out.length-1]+=c;}check(!escape,'末尾反斜线未完成转义');return out;}
 export function decodePipeCell(s){return s.replace(/\\(.)/gs,(_,c)=>{const map={'\\':'\\','|':'|','&':'&','、':'、',n:'\n',r:'\r',t:'\t','~':'~','=':'=','!':'!'};check(Object.hasOwn(map,c),'未登记转义 '+c);return map[c];});}
+function paragraphEvidence(raw){
+ let value=raw.trim();
+ if(value.startsWith('[')&&value.endsWith(']'))value=value.slice(1,-1).trim();
+ if(!/^P[1-9]\d*(?:(?:\s*[,，、;；]\s*|\s+)P[1-9]\d*)*$/i.test(value))return raw;
+ return value.toUpperCase().split(/\s*[,，、;；]\s*|\s+/).join('、');
+}
 export function parsePipeBlock(text,block){
  check(Object.hasOwn(PIPE_ROWS,block),'未登记区块');const rows=[];let common={};
  for(const [index,line] of unxml(text).split(/\r?\n/).entries())for(const part of splitPipeRaw(line,'&')){
   if(!part.trim())continue;const at=part.search(/[:：]/);check(at>0,block+'第 '+(index+1)+' 行缺少类别冒号');const kind=part.slice(0,at).trim(),fields=PIPE_ROWS[block][kind];check(fields,block+' 未登记类别 '+kind);
-  const cells=splitPipeRaw(part.slice(at+1).trim(),'|').map(x=>x.trim());check(cells.length<=fields.length,block+' 第 '+(index+1)+' 行 '+kind+' 列数过多：应为 '+fields.length+' 列，实际 '+cells.length+' 列；正文中的 | 须写为 \\|');while(cells.length<fields.length)cells.push('~');for(const c of cells)decodePipeCell(c);
+  let cells=splitPipeRaw(part.slice(at+1).trim(),'|').map(x=>x.trim());
+  if(kind==='共用'&&cells.some(c=>fields.some(f=>c.startsWith(f+'=')||c.startsWith(f+'：')))){
+   const named=new Map();for(const cell of cells){const match=/^([^=：]+)[=：]([\s\S]*)$/.exec(cell);check(match&&fields.includes(match[1].trim()),block+' 共用命名列无效；不能混用命名列和位置列');const key=match[1].trim();check(!named.has(key),block+' 共用命名列重复：'+key);named.set(key,match[2].trim()||'~');}cells=fields.map(key=>named.get(key)??'~');
+  }
+  check(cells.length<=fields.length,block+' 第 '+(index+1)+' 行 '+kind+' 列数过多：应为 '+fields.length+' 列，实际 '+cells.length+' 列；正文中的 | 须写为 \\|');while(cells.length<fields.length)cells.push('~');for(const c of cells)decodePipeCell(c);
   if(kind!=='共用'&&cells.every(missing))continue;
-  const values=Object.fromEntries(fields.map((key,i)=>[key,cells[i]]));if(kind==='共用'){
+  const values=Object.fromEntries(fields.map((key,i)=>[key,cells[i]]));
+  for(const key of ['证据','原文段号','台词'])if(Object.hasOwn(values,key))values[key]=paragraphEvidence(values[key]);
+  if(kind==='共用'){
    if(Object.hasOwn(values,'证据')&&!missing(values.证据))check(/^P[1-9]\d*(?:、P[1-9]\d*)*$/.test(values.证据),block+' 第 '+(index+1)+' 行 共用.证据 须为 P1、P2 段号；请核对 '+fields.map((key,i)=>(i+1)+'.'+key).join(' | ')+'，中间未知值须保留 ~ 列');
    common=values;continue;
   }rows.push({kind,values,common:{...common},line:index+1});check(rows.length<=400,'记录数量超过上限');

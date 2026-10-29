@@ -18,10 +18,10 @@ export function selectedInitiative(mode,compiled){
  return compiled.prose&&mode.角色主动性!==undefined&&!initiativeBlockers(mode).length&&compiled.checks.initiative&&compiled.checks.resolve?mode.角色主动性:null;
 }
 const rules={
- 自主互动:'让人物主动表达自己的感受、判断和偏好，发起话题、提议、拒绝或做出当下的小动作，以具体言行推进眼前互动；不只复述玩家、赞同或把问题抛回去。',
- 主动推进:'让人物依据自身目标、已有事务与当前机会主动采取行动，包括发起接触、提出要求、拒绝配合、坚持安排或作出有代价的选择，让局面出现玩家可以回应的具体变化；不等待玩家设计大纲或逐项授权 NPC 行动。'
+ 自主互动:'Character-led interaction: let characters express their own feelings, judgments and preferences, initiate topics, make proposals, refuse, or take immediate small actions that develop the exchange. PROHIBITED: reducing their participation to paraphrase, assent, or returning every question to the player. ',
+ 主动推进:'Proactive scene progression: let characters pursue their objectives, ongoing business and present opportunities through contact, demands, refusals, maintained commitments, or consequential choices that create a concrete situation for the player to respond to. NPC agency requires no player-written outline or itemized advance permission. '
 };
-const shared='玩家代写、重大选择和内心描写仍各按已选权限执行；这些权限不要求 NPC 的个人反应与自主行动先获玩家许可。人物的提议与决定不等于玩家已同意，不自动完成共同活动或改变双方关系。在需要玩家回应的重要节点按所选停点交还回合；明确限定的片段和禁令仍有效。依据人物实际知情、性格、能力、资源与因果展开，不虚构既往经历或靠泄露秘密制造转折。允许人物间不同意愿和计划落空，也允许平静相处；不为主动性强塞冲突、事故或每轮必有的惊喜。本轮实际展开的新行为及其合理后果可以成为新事实；未执行计划、候选发展和未知结果仍为未定。';
+const shared='Apply the selected permissions for player speech, action, interiority and consequential choices independently; they do not make NPC reactions or autonomous conduct contingent on player approval. A character’s proposal or decision does not establish player consent, complete a joint activity, or change a relationship by itself. Return control at the selected decision boundary; explicit scene scope and prohibitions remain binding. Ground conduct in the character’s actual knowledge, disposition, competence, resources and causal circumstances. PROHIBITED: inventing past experiences or disclosing secrets to manufacture a turn. Allow divergent intentions, failed plans and quiet companionship. PROHIBITED: imposing conflict, accidents or a mandatory surprise each turn in the name of initiative. Actions actually enacted this turn and their warranted consequences may establish new facts; unexecuted plans, candidate developments and unknown outcomes remain unsettled.';
 export const LEGACY_INITIATIVE='人物保有独立目标、意愿与已有事务，按实际接触决定是否回应及主动行动。';
 export function initiativeRule(level){return level?'角色主动性·'+level+'：'+rules[level]+shared:LEGACY_INITIATIVE;}
 export function prepareInitiative(compiled,mode){
