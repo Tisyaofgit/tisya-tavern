@@ -20,8 +20,8 @@ test('every emitted public skeleton row has a literal registered key and exact p
   const body=new RegExp('<'+block+' format="pipes">([\\s\\S]*?)</'+block+'>').exec(text)[1];
   for(const [kind,fields] of Object.entries(rows)){const line=body.split('\n').find(x=>x.startsWith(kind+'：'));assert(line);assert.equal(line.slice(kind.length+1).split('|').length,fields.length,block+'.'+kind);}
  }
- assert.doesNotMatch(text,/<Which source class/);assert.match(text,/status 共用 has exactly 5 cells/);assert.match(text,/memory 共用 has exactly 6/);
- assert.match(onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS).tisya_task_start,/Each new user message starts a fresh generation/);
+ assert.doesNotMatch(text,/<Which source class|EXACT.ROW.KEYS/);assert.equal(PIPE_ROWS.status.共用.length,5);assert.equal(PIPE_ROWS.memory.共用.length,6);
+ assert.match(onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS).tisya_task_start,/the next user message starts another generation/);
 });
 test('known public keys tolerate a trailing category colon without inventing unknown labels',()=>{
  const source=onePassReply(),changed=source.replace('用户偏好|','用户偏好：|').replace('世界动向|','世界动向:|').replace('偏好：','偏好:');

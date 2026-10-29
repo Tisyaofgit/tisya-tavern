@@ -58,7 +58,7 @@ test('one malformed before row preserves every valid panel, title, after and ori
 });
 test('approved literary dimensions coexist with the unmodified authority rules and current controls',()=>{
  const c=fullDefaultConfiguration(),m=c.world.modes.narrative;m.summary=false;m.actions=false;m.heartDirections=['输入评价'];m.narrative.缇斯亚叙事信息迷雾=false;m.narrative.缇斯亚叙事步序=['资料承接','成稿总检'];
- const e=onePassEntries(c,DEFAULT_MOODS);assert.match(e.tisya_registry,/CREATIVE.CONTRACT/);assert.match(e.tisya_registry,/<actions\/>/);assert.doesNotMatch(e.tisya_registry,/^文风用词\|/m);assert.doesNotMatch(e.tisya_registry,/^剧情吐槽\|/m);assert.match(e.tisya_inner_chain,/资料承接 —/);assert.doesNotMatch(e.tisya_inner_chain,/人物反应 —/);assert.match(e.tisya_material_rule_material,/PROHIBITED: deifying the player/);assert.match(e.tisya_material_rule_material,/ProhibitedWordsAndPatterns/);
+ const e=onePassEntries(c,DEFAULT_MOODS);assert.match(e.tisya_material_rule_material,/Prose craft, character appeal/);assert.doesNotMatch(e.tisya_registry,/CREATIVE.CONTRACT/);assert.match(e.tisya_registry,/<actions\/>/);assert.doesNotMatch(e.tisya_registry,/^文风用词\|/m);assert.doesNotMatch(e.tisya_registry,/^剧情吐槽\|/m);assert.match(e.tisya_inner_chain,/资料承接 —/);assert.doesNotMatch(e.tisya_inner_chain,/人物反应 —/);assert.match(e.tisya_material_rule_material,/PROHIBITED: deifying the player/);assert.match(e.tisya_material_rule_material,/ProhibitedWordsAndPatterns/);
 });
 
 
@@ -77,7 +77,10 @@ test('a named but empty archival row and fabricated original quotation cannot co
 
 test('English skeleton keeps every registered column and the original complete writing constraints',()=>{
  const c=fullDefaultConfiguration(),entries=onePassEntries(c,DEFAULT_MOODS),six=sixEntries(c,DEFAULT_MOODS);
- assert.equal(entries.tisya_material_rule_material,six.tisya_material_rule_material);
+ for(const tag of ['GlobalWritingRequirements','NarrativeComposition','PlotPreferences','SpeechHabits','CharacterConstruction','PlotDirection']){
+  const block=text=>new RegExp('<'+tag+'>[\\s\\S]*?</'+tag+'>').exec(text)?.[0];assert.equal(block(entries.tisya_material_rule_material),block(six.tisya_material_rule_material),tag);
+ }
+ assert.match(entries.tisya_material_rule_material,/PROHIBITED: deifying the player/);assert.match(entries.tisya_material_rule_material,/infantilizing characters/);
  for(const [block,rows]of Object.entries(PIPE_ROWS)){
   const text=new RegExp('<'+block+' format="pipes">([\\s\\S]*?)</'+block+'>').exec(entries.tisya_registry)[1];
   for(const [kind,fields]of Object.entries(rows)){const line=text.split('\n').find(line=>line.startsWith(kind+'：'));assert(line,block+'.'+kind);assert.equal(line.slice(kind.length+1).split('|').length,fields.length,block+'.'+kind);}

@@ -93,7 +93,7 @@ test('full, compact and format workflow selections change executed detail and ke
 
 test('discussion and summary selections retain current eleven blocks without forcing scene creation',()=>{
  for(const authoring of ['场外讨论','总结整理']){
-  const c=fresh(),m=mode(c);m.narrative.缇斯亚叙事创作模式=authoring;m.角色主动性='主动推进';const out=onePassEntries(c,DEFAULT_MOODS);assert.deepEqual(skeleton(out.tisya_registry),skeleton(baseline.tisya_registry));assert.match(out.tisya_material_rule_material,/\[AUTHORING.MODE\]/);assert.match(out.tisya_inner_chain,/Do not continue the fictional scene/);assert.match(out.tisya_registry,/<body min="0"/);assert.match(out.tisya_registry,/keep any machine blocks empty/);assert.doesNotMatch(out.tisya_material_rule_material,/角色主动性·/);assert.doesNotMatch(out.tisya_inner_chain,/人物反应 —/);
+  const c=fresh(),m=mode(c);m.narrative.缇斯亚叙事创作模式=authoring;m.角色主动性='主动推进';const out=onePassEntries(c,DEFAULT_MOODS);assert.deepEqual(skeleton(out.tisya_registry),skeleton(baseline.tisya_registry));assert.match(out.tisya_material_rule_material,/\[AUTHORING.MODE\]/);assert.match(out.tisya_material_rule_material,/Do not continue the fictional scene/);assert.match(out.tisya_inner_chain,/Apply AUTHORING.MODE/);assert.match(out.tisya_registry,/<body min="0"/);assert.match(out.tisya_registry,/keep any machine blocks empty/);assert.doesNotMatch(out.tisya_material_rule_material,/角色主动性·/);assert.doesNotMatch(out.tisya_inner_chain,/人物反应 —/);
  }
 });
 

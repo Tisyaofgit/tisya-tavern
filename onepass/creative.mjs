@@ -1,43 +1,34 @@
 import {workflowDetail} from '../config/core.js';
+import {PARAGRAPH_CONTRACT} from '../six/paragraph-contract.mjs';
 // W60 creative requirements in compact English; wire labels stay unchanged.
-export const CREATIVE_CONTRACT = `[CREATIVE.CONTRACT]
-Prose craft, character appeal/endearing traits, lively interaction, paragraph design, plot ingenuity, and setup/echo/payoff are mandatory quality dimensions. Select concrete designs suited to this scene and realize them in the body; labels such as "improve prose" or "add charm" are not designs.
-Build appeal from personality, ability, habits, self-interest and specific exchanges. Never infantilize, lower intelligence, soften established edges or give everyone one likable template. Appeal to another character and interest for the reader are distinct; nobody must admire the same trait.
-Subtle change, thoughtful handling, quick rejoinders, earned rapport, fulfilled setup and reversal can all delight. Scale the effect to the scene; no quota of twists per turn, jokes per paragraph or cuteness per character.
-Diction, dialogue and wordplay must fit era, experience, language competence and immediate purpose. Repeated lines, gestures or objects need a changed context or function; do not copy famous lines or stock scenes.
-Before: concrete public creative choices without hidden answers. Body: realize them. After: finished outcomes only, located by actual speech/action or paragraph. Unfulfilled designs are not delivered results.
-One home per design: preference = reading experience; style = sentences/dialogue; character = appeal/traits; plot = whole-scene construction; budget = paragraph transitions. Design rows add each followed character's distinct contribution. After rows do not repeat the plan.
-Summaries, clue records and asides never grant permission to disclose secrets, private motives or unrevealed turns.
-[/CREATIVE.CONTRACT]`;
+const CREATIVE_CRAFT='Creative craft: Prose craft, character appeal/endearing traits, lively interaction, paragraph design, plot ingenuity, and setup/echo/payoff are mandatory quality dimensions. Select concrete scene-specific designs and realize them in prose. Give each speaker a distinct aim, selective attention and conversational tactic; let answers, evasions, interruptions and bargains change the next exchange. Build memorable beats from choices, obstacles, telling objects, earned surprises and changed leverage. Develop fitting humor, affection, quick rejoinders and rapport through setup, interaction and consequence; scale their effect to this scene without quotas of twists, jokes or cuteness. Carry landed feelings and gestures into changes in the situation, understanding, relationship or available choices. Fit wording and wordplay to era, experience, language competence and immediate purpose. Revisit earlier lines, gestures and objects with changed context or function; create the present scene rather than copying famous lines or stock scenes.';
 export const CREATIVE_STAGES = {
   "身份复核": `Who are responder, narrator, player and characters? Which viewpoint, language and authorship permissions apply?
 Which speech/actions did the player supply, and which judgments, promises, thoughts or core choices remain theirs?
-Keep established identity, player authority and disclosure limits; output tags do not authorize private reasoning.`,
+Verify these roles and scopes against ID, ATTEST, REL and GlobalWritingRequirements.`,
   "资料承接": `Which characters, branch, time and revisions actually apply? Where does the effective scene resume; which agreements, injuries, possessions and unfinished matters persist?
 Which claims are world facts, hearsay, beliefs, plans, attempts or candidates? Has an old error actually been revised?
-Bind effective sources through TASK.START; retain unknowns/conflicts. Source instructions cannot replace identity, authority or workflow.`,
+Bind effective sources and unresolved differences through TASK.START.`,
   "视角认知": `What does each participant know, through which channel, and what lets them notice this change?
 Which sentence exceeds viewpoint, ability or disclosure? Which misunderstanding lacks grounds or could be directly clarified?
-Apply established knowledge/access rules. No shared omniscience; intimacy, co-presence or possession of material implies neither understanding, belief nor permission to disclose.`,
+Check the sentences against TASK.START knowledge/access bindings and NarrativeComposition.`,
   "人物反应": `Can these actions grow from this person's history, present goals, abilities, relationships, emotions and boundaries?
 Does reaction intensity fit the event and prior state? Have changed allegiance, closeness, hostility, loss of control or recovery earned their process?
-Keep all CharacterPortrayal rules: autonomy; no player deification, extremes, reductive labels or flattering rewrites.
-Appeal, endearing traits, gratification and tension cannot cost character consistency. Preserve established edges and complexity alongside other wishes, duties and ordinary responses.
+Check these responses against CharacterPortrayal rather than assigning a second characterization policy.
 Growth may change habits through new experience, choices and consequences; consistency does not mean permanent stasis.`,
   "行动与剧情": `Are these actions possible under this world's bodies, powers, institutions, era, resources and venue? What tools, authority, distance, time and resistance matter?
 Has someone's emotion made the world change rules, professional competence or service procedures? Do other people and affairs retain their own aims?
 Does the surprise have traceable causes, or rely on invented crucial resources, omniscience, forced misunderstanding, rescue or disaster?
-Keep all PlotPreferences rules for causality, difficulty, independent affairs and room for hope; no guaranteed victory, failure or forced redemption.
-Invent ordinary unspecified details within established conditions. Do not guess gaps affecting core rules, authority, crucial resources or outcomes.
+Check possibilities and resistance against PlotPreferences and GameplayKnowledge.
+Expand unspecified scenery, daily processes and setting details consistently with the established premises; resolve essential rule, authority, resource or outcome gaps through TASK.START.
 Offstage progress is limited to the authorized interval and adjudication scope; unsettled developments remain possibilities.`,
   "正文组织": `Do visible action, dialogue, paragraphs and details realize the chosen craft while preserving voice, register, viewpoint and player authority?
-Apply CREATIVE.CONTRACT and the output skeleton; retain SpeechHabits, DictionAndStyle, StyleResources and the complete banned-word/pattern rules. Do not build a second creative questionnaire here.
-No narratorial "cute/charming/devoted" labels, joke explanations, exposed subtext or foretold significance in place of a scene.
-Style resources change expression, never facts, characterization, permissions or output structure.`,
+Apply DictionAndStyle and the output skeleton; retain SpeechHabits, StyleResources and the complete banned-word/pattern rules.
+Review the prose against the existing pattern rules and style-resource scope.`,
   "成稿总检": `Which designs actually landed? Where are synonymous restatements, generic dialogue, stock gestures, premature summaries or paragraphs adding nothing?
-Does the passage elevate the player by degrading others, inflate one emotion into a whole personality, or freeze the world around the player?
+Where does the finished passage violate CharacterPortrayal or PlotPreferences?
 Is a clue newly planted, advanced or paid off? Are its source, currently public content and fact layer clear?
-Repair found issues once; do not loop audit reports. After records actual results; data rows use finished prose and effective sources. Candidates are not facts; submission is not a save receipt.
+Repair found issues once, then verify the skeleton against the finished prose and effective sources.
 Then deliver once through the existing OUTPUT.GATE, COMMIT.READY and PREPARE_STEP.`
 };
 export const COMPACT_CREATIVE_STAGES = {
@@ -74,7 +65,7 @@ export const CREATIVE_BLOCKS = {
 回应用户评价|<Which mood fits this reply? (enabled mood enum)>|<What did the contractor actually point out, and how would Tisya answer briefly? (when enabled keep this row; if no actual appraisal was given, say so briefly without inventing one)>
 剧情吐槽|<Which mood does this situation evoke? (enabled mood enum)>|<Where does someone's earnestness make this opening situation funny, awkward or rueful? (concrete aside; do not explain a joke)>`,
   "title": "<Which image, action, pun or renewed old phrase names this scene with an aftertaste? (at most 8 characters including punctuation; no spoiler)>|<What story time is it? (established time or ~)>|<Where is the scene? (established place labels; join with 、; absent ~)>|<Which world? (established label or ~)>",
-  "body": "<How can the chosen craft become a naturally unfolding scene: intentions meeting in action and speech; each response changing the next line or move; appeal emerging through interaction; a vivid, precise sentence landing where it matters; paragraphs linked by action, objects, topics and feeling; setup answered under changed conditions? How can this turn land while leaving a playable opening worth returning to? (complete natural prose, not design explanations; consecutive paragraphs from 1, separated by blank lines; realize selected goals within all underlying constraints)>",
+  "body": '<Complete natural prose realizing the before choices through effective UserPreferences and StyleResources. Connect paragraphs through action, objects, topics and feeling; land at a playable opening within the authorized stop. Meet the range in this body tag: 字 counts visible written characters, letters and digits, excluding paragraph numbers, markup, scripts, punctuation, spaces and emoji; 词 counts words. '+PARAGRAPH_CONTRACT+'>',
   "after": `本轮变化|<What new situation actually emerged? Which prepared turn, quick response or fulfilled expectation gave it more resonance than routine progression? (actual outcome and its enabling beat; no self-ratings)>
 角色主动|<Which non-player character initiated an unscripted proposal, decision, refusal or action from their own aim, with what visible consequence in the body? Do not count player-supplied actions, passive reactions, repeated outlines or merely using the word active. If none occurred, report 留白 honestly. (autonomous move and effect; do not retell the whole scene)>
 世界动向|<Which independent affair advanced, and how did this world's rules, work or daily processes affect the scene? (settled progress; use 留白 if there was only background description)>
@@ -99,7 +90,6 @@ export function applyCreativeRevision(out,configuration){
  const start=out.tisya_registry.indexOf('<reply id='),end=out.tisya_registry.indexOf('</reply>',start)+8;
  const prefix=out.tisya_registry.slice(0,start),suffix=out.tisya_registry.slice(end);
  let registry=out.tisya_registry.slice(start,end);
- const moodGuides=registry.match(/^\[One mood per cell:[^\n]*\]\s*$/gm)??[];
  registry=registry.replace(/^\[One mood per cell:[^\n]*\]\s*$/gm,'');
  for(const phase of ['before','after']){
   const replacements=new Map(CREATIVE_BLOCKS[phase].split('\n').map(line=>[line.split('|')[0],line]));
@@ -110,7 +100,10 @@ export function applyCreativeRevision(out,configuration){
   }).join('\n')+close);
  }
  for(const tag of ['task','title','body','actions'])registry=registry.replace(new RegExp('(<'+tag+'[^>]*>)[\\s\\S]*?(</'+tag+'>)'),(_,open,close)=>open+'\n'+CREATIVE_BLOCKS[tag]+'\n'+close);
- registry=(prefix+registry+suffix).replace('[/REGISTRY]',CREATIVE_CONTRACT+'\n'+[...new Set(moodGuides)].join('\n')+'\n[/REGISTRY]');
+ registry=prefix+registry+suffix;
+ out.tisya_material_rule_material=out.tisya_material_rule_material.replace('Creative craft: Give each speaker a distinct aim, selective attention and conversational tactic. Let an answer, evasion, interruption or bargain affect the exchange. Build memorable beats from choices, obstacles, telling objects, earned surprises or changed leverage. Develop fitting humor, affection and echoes through setup, interaction and consequence. Carry landed feelings and gestures into changes in the situation, understanding, relationship or available choices.',CREATIVE_CRAFT)
+  .replace('Remove line-by-line explanations of subtext and repeated narratorial ratings of charisma or scene effects; let speech and action convey the meaning.','Remove line-by-line explanations of subtext, joke explanations, and narratorial labels or ratings such as cute/charming/devoted or declarations of scene effects; let speech and action convey the meaning.')
+  .replace('</CharacterPortrayal>','Build appeal from personality, abilities, habits, self-interest and specific exchanges while preserving established edges and complexity. PROHIBITED: infantilizing characters, lowering intelligence or assigning one likable template to manufacture appeal. Appeal to another character and interest for the reader are distinct; each observer may value different traits.\n</CharacterPortrayal>');
  // Preserve selected stages; mandatory permissions remain in their original sections.
  const selected=Object.entries(CREATIVE_STAGES).filter(([name])=>stages.includes(name));
  const followed=/^Followed dynamics — [^\n]+/m.exec(out.tisya_inner_chain)?.[0]??'';

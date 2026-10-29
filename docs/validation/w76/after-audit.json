@@ -1,0 +1,50 @@
+{
+  "all_entries": 62,
+  "role_marker_switches_preserved": true,
+  "changed_entries": [
+    {
+      "identifier": "tisya_task_start",
+      "before": 5303,
+      "after": 4713
+    },
+    {
+      "identifier": "tisya_material_boundary_open",
+      "before": 11,
+      "after": 297
+    },
+    {
+      "identifier": "tisya_material_rule_material",
+      "before": 14911,
+      "after": 15903
+    },
+    {
+      "identifier": "tisya_material_boundary_close",
+      "before": 12,
+      "after": 16
+    },
+    {
+      "identifier": "tisya_registry",
+      "before": 25327,
+      "after": 19371
+    },
+    {
+      "identifier": "tisya_inner_chain",
+      "before": 6176,
+      "after": 5387
+    },
+    {
+      "identifier": "tisya_delivery_warning",
+      "before": 598,
+      "after": 122
+    }
+  ],
+  "before_characters": 61857,
+  "after_characters": 55328,
+  "reduction_characters": 6529,
+  "after_sha256": "7458eaee3d0a3490f832a00bc2c1d4eae632da9baed02a7cfa4753439520a702",
+  "title_limit_occurrences": 1,
+  "outer_blocks": 11,
+  "row_shapes_preserved": 54,
+  "all_prompt_noncontent_fields_preserved": true,
+  "complete_prompt_order_preserved": true
+}

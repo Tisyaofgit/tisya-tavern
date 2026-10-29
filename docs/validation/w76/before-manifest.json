@@ -1,0 +1,503 @@
+{
+  "base": "8b040cc99888033f53a1a694da5dcb9c52253a79",
+  "all_entries": [
+    {
+      "identifier": "tisya_new_chat",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 67,
+      "sha256": "c3986eea8a815b1b1f2f760ceb0395848d337cbdeefceaa9242b59996ca91c96"
+    },
+    {
+      "identifier": "tisya_session_reset",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 1022,
+      "sha256": "864422051d06934d519affbcd54b26fc8cfdb2d06f9294ff57e25226ce964c5a"
+    },
+    {
+      "identifier": "main",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 4734,
+      "sha256": "91e5cd15ea57c878658a9ee18efd7b823ba19309fb1b1efda3e017a9a5d47e08"
+    },
+    {
+      "identifier": "tisya_identity_attestation",
+      "role": "assistant",
+      "marker": false,
+      "enabled": true,
+      "characters": 1147,
+      "sha256": "396cc8ec7aa19bba9233e4059c0f224981d0a1620efe6d83f10beeb1d38df1bf"
+    },
+    {
+      "identifier": "tisya_user_relation",
+      "role": "user",
+      "marker": false,
+      "enabled": true,
+      "characters": 200,
+      "sha256": "cb0b28886e5322e2d1a943346583e03fd672cbf1c1532b77e93f2f93c49445cb"
+    },
+    {
+      "identifier": "tisya_scene_anchor",
+      "role": "assistant",
+      "marker": false,
+      "enabled": true,
+      "characters": 351,
+      "sha256": "63bbdd7c98e2229e226efa1a46367d95b88d033480c6f0261bac46da2c6a0355"
+    },
+    {
+      "identifier": "tisya_task_start",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 5303,
+      "sha256": "9d697cd49d8543afb4a1081d9955be8759c4375f6eb30e2b4a01cd4ef56c03f6"
+    },
+    {
+      "identifier": "tisya_material_boundary_open",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 11,
+      "sha256": "ed20bca363ebf68c085437748a4c8b5101b5163e5b1c137a993bbdcdd94fa18b"
+    },
+    {
+      "identifier": "tisya_material_tool_prompt",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_tool_calls",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_tool_result",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_task_analysis",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_external_evidence",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_world_context",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_rule_material",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 14911,
+      "sha256": "f2ffa148c303ad6e0bb5e221aa1b52c53bd25718638611d5be0ac329a2e520a8"
+    },
+    {
+      "identifier": "tisya_material_location_context",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_current_state",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_focus_entities",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_present_entities",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_player_archive",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_persona_extensions",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_character_archives",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_style_card",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 898,
+      "sha256": "ff9532dffff84e6fa825c92cd467318ec777f20fd632b21acd5827b0cca4a0e6"
+    },
+    {
+      "identifier": "tisya_material_event_context",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_pending_tasks",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_memory_archive",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_memory_summary",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_card_extensions",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_faction_context",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_asset_context",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_cast_registry",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_calculation_result",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_memory_excerpt",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_knowledge_material",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_secret_material",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_offstage_state",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_task_material",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_cardflow",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_display_material",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "worldInfoBefore",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "personaDescription",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "charDescription",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "charPersonality",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "scenario",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "worldInfoAfter",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "dialogueExamples",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "chatHistory",
+      "role": null,
+      "marker": true,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_recent_reply",
+      "role": "assistant",
+      "marker": false,
+      "enabled": false,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_current_input",
+      "role": "user",
+      "marker": false,
+      "enabled": false,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_selected_resources",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_material_boundary_close",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 12,
+      "sha256": "492131104614b65c9f1e243edc19d09a6525bfd66fa8fcb117019b45a890908e"
+    },
+    {
+      "identifier": "tisya_heart_input_review",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_heart_user_reply",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_heart_plot_comment",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_output",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_prose_marks",
+      "role": "system",
+      "marker": false,
+      "enabled": false,
+      "characters": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "identifier": "tisya_registry",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 25327,
+      "sha256": "07f79c19679fd3b677976344a78ed8ccd9fe22ffa9add8e3f4d51fca866887b1"
+    },
+    {
+      "identifier": "tisya_internal_login",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 622,
+      "sha256": "d57c4a1ad82fd2138130e3db238e0ad407bf27a1b28f57348e63ba8c24dd818d"
+    },
+    {
+      "identifier": "tisya_inner_chain",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 6176,
+      "sha256": "6d3c85f8ea4ecb03d88523fab3ec34ca6446caaf36716bb7a7d9ee5926645d6d"
+    },
+    {
+      "identifier": "tisya_think_commit",
+      "role": "assistant",
+      "marker": false,
+      "enabled": true,
+      "characters": 146,
+      "sha256": "eb42948c09281f3ff30497bec90d51ace172104a558a1ede3267c536b3139805"
+    },
+    {
+      "identifier": "tisya_delivery_warning",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 598,
+      "sha256": "af0cca0f483429cfa80d38627d94e2660b7bec0448aefb635540394fbf8bfd9a"
+    },
+    {
+      "identifier": "tisya_prepare_trigger",
+      "role": "system",
+      "marker": false,
+      "enabled": true,
+      "characters": 299,
+      "sha256": "fc9802ddfec06c40b389d64df4bfde8700173404dae1a0af107f1d52da4fa897"
+    }
+  ],
+  "compiled_text_characters": 61857,
+  "compiled_text_sha256": "c10a47bb6d8606095042d2969f4bff254b1d1c2045ed6147d7075cb8df0844bd"
+}
