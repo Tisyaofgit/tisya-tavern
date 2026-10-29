@@ -1,0 +1,35 @@
+{
+  "input": "../cat-valid-round-01.txt",
+  "sha256": "e494104b6b011e1d59da0c66e610962e80110c158c12d11776dfc40406c1865c",
+  "characters": 3385,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 7,
+  "afterRows": 13,
+  "paragraphs": 18,
+  "bodyCharacters": 1690,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 2,
+    "memory": 0
+  },
+  "summaryDiagnostics": []
+}

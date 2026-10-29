@@ -1,0 +1,13 @@
+# Format contract repair: candidate.2
+
+1369 automated checks passed. A fresh GPT-6-Sol low-reasoning conversation read the complete 61,857-character preset in eight non-truncated parts, with no card, worldbook or host snapshot. Five actual cat-interaction outputs passed the complete eleven-block parser, had all six comments and zero summary diagnostics, and left machine blocks empty. Body counts were 2025, 1993, 2018, 1980 and 2024; only three met the 2000-character lower bound. No persistence, Android or external-vendor result is claimed. Child-agent task-material input is not identical to SillyTavern system-role injection.
+
+Development failures are retained: truncated input excluded from acceptance; wrong root counter; absent-outcome variants; split textual commentary; and a per-turn stop misinterpreted as ending the conversation. Known unambiguous public variants retain every text cell; typed rows, machine columns, references, evidence, revisions and atomic writes remain validated. Three old tests were changed from expecting a free-text column error to checking preserved joined text plus genuinely incomplete typed rows. Original full-suite failures remain in development/full-first-failure.log.
+
+Fixes: literal source-category labels; move mood guidance out of output skeleton; common-column positional diagnostics; ASCII colon support; fixed root-marker guidance; per-turn abstract-control reset; standalone prose continues without a snapshot while persistence proposals remain unresolved.
+
+Current source checkpoint is 86367fc1258975138c2aaede32d4dcf62166c76f (tree 1e3b4cd95534532fa79baa1a16d50a134f1866ef). Main remains 6695746. User now requests a full compiled-prompt audit: consolidate duplicate and stacking instructions into existing owners; retain title-length requirements in their owning skeleton block. This audit is NOT complete. World expansion and reasonable new setting details in prose remain authorized; snapshot restrictions concern machine IDs/fields/receipts, not creative scope.
+
+Latest user clarification: constraints such as title length are necessary and must remain; consolidate them into the format skeleton rather than delete them. The current source still has the title limit. Full audit is pending. Reasonable world expansion in prose is allowed even without a snapshot; machine identifiers and persistence receipts remain separately validated.
+
+Evidence note: round 2 was first inspected at 1906 counted characters and later frozen at 1993; the earlier inspection is retained without fabricating unavailable earlier raw bytes. Both versions passed syntax and fell short of the requested lower bound. The frozen acceptance/check-02.json and matching raw SHA identify this checkpoint.

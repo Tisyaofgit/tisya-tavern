@@ -1,0 +1,54 @@
+{
+  "input": "../cat-acceptance-round-02.txt",
+  "sha256": "c391d53bda7d05932f74c3f1635102d11bb465b670feb3cdef6a6019b7a888d3",
+  "characters": 3778,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 13,
+  "afterRows": 12,
+  "paragraphs": 18,
+  "rootId": "tisya-onepass-1",
+  "wireCompatibility": null,
+  "bodyCharacters": 1906,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "defaultCommentsComplete": true,
+  "normalizations": [],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 2,
+    "memory": 0
+  },
+  "standalonePrimaryRecordsAbsent": true,
+  "standaloneMachineBlocksEmpty": true,
+  "summaryDiagnostics": []
+}

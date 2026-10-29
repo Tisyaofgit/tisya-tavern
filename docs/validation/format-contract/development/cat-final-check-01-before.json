@@ -1,0 +1,23 @@
+{
+  "input": "../cat-final-round-01.txt",
+  "sha256": "2b681141b0f6bb85c622bd2e3a2d5f33d31564ca0303b17076d6e404eca3a12a",
+  "characters": 3113,
+  "syntaxPassed": false,
+  "persistenceTested": false,
+  "code": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+  "message": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+  "summaryDiagnostics": [
+    {
+      "phase": "after",
+      "line": 4,
+      "code": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+      "raw": "世界动向|留白|世界动向|当前只展开沙发边的猫咪互动，没有独立推进的其他事务"
+    },
+    {
+      "phase": "after",
+      "line": 11,
+      "code": "TISYA_V3_REPLY_AFTER_LINE_11_OUTCOME",
+      "raw": "留白|候选|尚无待确认的后续安排需要登记"
+    }
+  ]
+}

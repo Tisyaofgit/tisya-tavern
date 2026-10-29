@@ -1,0 +1,56 @@
+{
+  "input": "../cat-final-round-01.txt",
+  "sha256": "2b681141b0f6bb85c622bd2e3a2d5f33d31564ca0303b17076d6e404eca3a12a",
+  "characters": 3113,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 8,
+  "afterRows": 13,
+  "paragraphs": 11,
+  "rootId": "tisya-onepass-1",
+  "wireCompatibility": null,
+  "bodyCharacters": 1243,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "normalizations": [
+    {
+      "kind": "留白",
+      "variant": "repeated-category-blank"
+    }
+  ],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 1,
+    "memory": 0
+  },
+  "summaryDiagnostics": []
+}

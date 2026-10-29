@@ -1,0 +1,54 @@
+{
+  "input": "docs/validation/format-contract/acceptance/round-04.txt",
+  "sha256": "f87330375a03e7cef906e75d2368881731494111d88ad27492334b56ca880f18",
+  "characters": 3852,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 13,
+  "afterRows": 12,
+  "paragraphs": 18,
+  "rootId": "tisya-onepass-1",
+  "wireCompatibility": null,
+  "bodyCharacters": 1980,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "defaultCommentsComplete": true,
+  "normalizations": [],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 2,
+    "memory": 0
+  },
+  "standalonePrimaryRecordsAbsent": true,
+  "standaloneMachineBlocksEmpty": true,
+  "summaryDiagnostics": []
+}

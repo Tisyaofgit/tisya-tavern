@@ -1,0 +1,53 @@
+{
+  "input": "../cat-valid-round-02.txt",
+  "sha256": "f88a591dbea8c3e80d3c9753d9f690e33bf0be33fae8f6f679eb30d28c525167",
+  "characters": 2546,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 7,
+  "afterRows": 13,
+  "paragraphs": 10,
+  "bodyCharacters": 965,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "normalizations": [
+    {
+      "kind": "留白",
+      "variant": "outcome-first-blank"
+    }
+  ],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 2,
+    "memory": 0
+  },
+  "summaryDiagnostics": []
+}

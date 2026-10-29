@@ -1,0 +1,7 @@
+✔ every emitted public skeleton row has a literal registered key and exact parser column count (7.527135ms)
+✔ known public keys tolerate a trailing category colon without inventing unknown labels (12.238413ms)
+✔ shifted common columns identify the evidence field and preserve all source text (1.76659ms)
+✔ explicit absent outcomes normalize only known categories and never create pending work (5.176404ms)
+✔ numeric reply identifiers retain raw identity and still require the exact complete one-pass grammar (2.270658ms)
+✔ reported eleven-block shape preserves twenty inline-numbered paragraphs, both summaries and four actions (13.528156ms)
+✔ valid XML attribute spacing and leading comments select the one-pass reader on every public path (14.929966ms)

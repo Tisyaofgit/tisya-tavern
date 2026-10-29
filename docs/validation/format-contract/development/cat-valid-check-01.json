@@ -1,0 +1,29 @@
+{
+  "input": "../cat-valid-round-01.txt",
+  "sha256": "e494104b6b011e1d59da0c66e610962e80110c158c12d11776dfc40406c1865c",
+  "characters": 3385,
+  "syntaxPassed": false,
+  "persistenceTested": false,
+  "code": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+  "message": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+  "summaryDiagnostics": [
+    {
+      "phase": "after",
+      "line": 4,
+      "code": "TISYA_V3_REPLY_AFTER_LINE_4_COLUMNS",
+      "raw": "世界动向|留白|没有独立事务推进，雨只作为场景背景"
+    },
+    {
+      "phase": "after",
+      "line": 9,
+      "code": "TISYA_V3_REPLY_AFTER_LINE_9_OUTCOME",
+      "raw": "留白|剧情待处理任务|暂无已发生变化触发的未完事务"
+    },
+    {
+      "phase": "after",
+      "line": 10,
+      "code": "TISYA_V3_REPLY_AFTER_LINE_10_OUTCOME",
+      "raw": "留白|系统任务|没有已知系统状态需处理"
+    }
+  ]
+}

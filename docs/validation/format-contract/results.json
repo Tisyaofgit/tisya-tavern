@@ -1,0 +1,24 @@
+{
+  "model": "gpt-6-sol",
+  "reasoning": "low",
+  "rounds": 5,
+  "syntaxPassed": 5,
+  "summaryDiagnostics": 0,
+  "commentsComplete": 5,
+  "bodyWithinRange": 3,
+  "bodyCounts": [
+    2025,
+    1993,
+    2018,
+    1980,
+    2024
+  ],
+  "standaloneEmptyMachineBlocks": 5,
+  "input_sha256": "c10a47bb6d8606095042d2969f4bff254b1d1c2045ed6147d7075cb8df0844bd",
+  "realHostPersistence": false,
+  "AndroidTested": false,
+  "externalVendorTested": false,
+  "current_source_commit": "86367fc1258975138c2aaede32d4dcf62166c76f",
+  "next": "Full compiled-prompt deduplication audit: preserve required settings and title-length constraint; consolidate repeated and stacking instructions into the corresponding format-skeleton blocks. No main promotion before audit closure.",
+  "evidence_note": "Round 2 was initially observed as 1906 counted characters (earlier check retained); frozen final file measures 1993. Both inspections passed syntax but not the 2000-character lower bound. Frozen file hashes are authoritative for this checkpoint; no old raw text is fabricated."
+}

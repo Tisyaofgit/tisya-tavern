@@ -1,0 +1,60 @@
+{
+  "input": "../cat-release-round-01.txt",
+  "sha256": "882de01f7c2d08b889648c30fdabacdb5e91154f4af021ec287aa5bf061969f3",
+  "characters": 1746,
+  "syntaxPassed": true,
+  "persistenceTested": false,
+  "blocks": [
+    "task",
+    "before",
+    "title",
+    "body",
+    "after",
+    "status",
+    "extra",
+    "vars",
+    "archive",
+    "memory",
+    "actions"
+  ],
+  "beforeRows": 8,
+  "afterRows": 13,
+  "paragraphs": 5,
+  "rootId": "tisya-onepass-1",
+  "wireCompatibility": null,
+  "bodyCharacters": 276,
+  "bodyRange": {
+    "min": 2000,
+    "max": 5000
+  },
+  "bodyWithinRange": false,
+  "commentPresence": {
+    "before": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ],
+    "after": [
+      "输入评价",
+      "回应用户评价",
+      "剧情吐槽"
+    ]
+  },
+  "normalizations": [
+    {
+      "kind": "留白",
+      "variant": "repeated-category-blank"
+    },
+    {
+      "kind": "语言亮点",
+      "variant": "text-cell-join"
+    }
+  ],
+  "recordRows": {
+    "status": 0,
+    "vars": 0,
+    "archive": 1,
+    "memory": 1
+  },
+  "summaryDiagnostics": []
+}

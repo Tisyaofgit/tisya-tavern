@@ -1,0 +1,54 @@
+✖ every emitted public skeleton row has a literal registered key and exact parser column count (5.896425ms)
+✔ known public keys tolerate a trailing category colon without inventing unknown labels (10.858054ms)
+✔ shifted common columns identify the evidence field and preserve all source text (1.3686ms)
+✔ ASCII category colons survive complete reply parsing and atomic archival preparation (21.300622ms)
+✔ fixed-column full memory archive maps to the existing event/fact/clue/timer records and stable references (8.065703ms)
+✔ state owns cognition and all habit fields; values preserve zero and false without a second writer (11.7253ms)
+✔ wire separates records and lists only before decoding escaped literal characters (2.458336ms)
+✔ missing references/evidence, mismatched basis, extra columns, wrong enum and stale values reject atomically (9.02785ms)
+✔ unprovided, explicit clear and actual empty list stay distinct on update (5.193933ms)
+✔ all old data survives additive optional schema registration (2.152112ms)
+✔ one malformed before row preserves every valid panel, title, after and original text; it is not accepted for archive (76.406834ms)
+✔ approved literary dimensions coexist with the unmodified authority rules and current controls (4.192598ms)
+✔ nested explicit clear removes only the optional field and respects existing manual locks (4.151598ms)
+✔ a named but empty archival row and fabricated original quotation cannot count as delivered memory (2.284178ms)
+✔ English skeleton keeps every registered column and the original complete writing constraints (2.243027ms)
+✔ the reported wire mistakes are readable syntax but cannot guess IDs, paths or an incomplete commit list (14.20633ms)
+✔ a machine-column error identifies block, line and counts without hiding the readable reply (26.913758ms)
+✔ single-pass import retains all 62 legacy entries and dividers, with both new think blocks and complete creative guide (8.142446ms)
+✔ same live instance switches legacy, six, one-pass and back without stale or empty macro entries (92.615849ms)
+✔ eleven-block reply retains both thinks, machine blocks, prose offsets and native display (16.748291ms)
+✔ complete bare preference rows read like canonical rows without changing the original reply (3.230101ms)
+✔ preference compatibility never guesses an unknown label or missing column (7.222151ms)
+✔ invalid machine JSON leaves visible prose, both summaries and actions readable and does not become a successful archive (3.958822ms)
+✔ host-appended status marker retains its native card display region (1.891666ms)
+✔ missing and reordered blocks are rejected without manufacturing replacements (0.770873ms)
+✔ top preference, creative-draft and simulation panels render independently and retain folds (96.036068ms)
+✔ each enabled heart direction remains in both phases across summary modes (17.911415ms)
+✔ one-pass creative replacement retains the selected initiative directive and player boundary (1.690267ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 27
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 619.331263
+
+✖ failing tests:
+
+test at tests/format-contract.test.js:10:1
+✖ every emitted public skeleton row has a literal registered key and exact parser column count (5.896425ms)
+  AssertionError [ERR_ASSERTION]: before: [One mood per cell: 困倦、好奇、开心、怀疑、惊讶、闹别扭、促狭、憋笑、装无辜、小得意.]
+      at TestContext.<anonymous> (file:///workspace/scratch/f4b1f4e4d696/tisya-format-fix/tests/format-contract.test.js:15:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

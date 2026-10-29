@@ -1,0 +1,10 @@
+{
+  "input": "../cat-incomplete-round-01.txt",
+  "sha256": "98ed816f8dd96e4fa4564bf49f59f97daeedc94afbe92b65b0619d6e2d31e59c",
+  "characters": 1086,
+  "syntaxPassed": false,
+  "persistenceTested": false,
+  "code": "TISYA_ONEPASS_ROOT",
+  "message": "TISYA_ONEPASS_ROOT",
+  "summaryDiagnostics": []
+}

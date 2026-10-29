@@ -1,0 +1,31 @@
+✔ every emitted public skeleton row has a literal registered key and exact parser column count (11.238129ms)
+✔ known public keys tolerate a trailing category colon without inventing unknown labels (12.983444ms)
+✔ shifted common columns identify the evidence field and preserve all source text (1.280105ms)
+✔ explicit absent outcomes normalize only known categories and never create pending work (8.460506ms)
+✔ numeric reply identifiers retain raw identity and still require the exact complete one-pass grammar (2.400985ms)
+✔ reported optional placeholders and candidate annotations parse without rewriting the source or swallowing real column errors (17.660579ms)
+✔ dialogue paragraph references retain original wording once and bind IDs to the exact source; pending placeholders create nothing (19.647712ms)
+✔ V3 archive safeguards apply to one-pass changes: locks and newer current-state sources reject whole batches (3.734089ms)
+✔ optional original ID/source metadata upgrades without changing saved records or custom fields (4.523883ms)
+✔ dialogue reference updates preserve their original source or require explicit rebinding instead of silently changing their text (23.570134ms)
+✔ original task/next folds, owned animals and ledger clicks stay independent; view state survives remount (104.381272ms)
+✔ task summary and pending records keep public field ownership, including folded DOM and counters (34.070656ms)
+✔ closed hearts do not become orphan decorations and an empty world scroll starts folded (21.26766ms)
+✔ six-block display owns before/after folds and shows candidates without treating them as completed facts (53.59506ms)
+✔ six-block malformed summary stays visible as an error while body and action controls survive (15.275348ms)
+✔ all original preset entries, separators, roles and switches survive; only content differs (8.896012ms)
+✔ six-block structure stays fixed; row whitespace is harmless and source remains exact (11.554674ms)
+✔ bad auxiliary row identifies phase/line without hiding successful prose or accepting bad data (5.318835ms)
+✔ missing, duplicate or reordered blocks remain actual format errors; no decoder fallback (0.81726ms)
+✔ latest preset keeps six blocks across switches and has no fictitious archive execution (5.472263ms)
+✔ locked authoritative skeleton and compiler agree on all tag boundaries (1.075482ms)
+✔ every row in the shipped template can be decoded without a template/parser mismatch (0.952791ms)
+✔ native single-generation bridge expands new entries and keeps original host data route (3.805234ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 598.198291

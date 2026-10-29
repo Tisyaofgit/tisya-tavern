@@ -1,0 +1,117 @@
+{
+  "preset": "presets/Tisya.json",
+  "preset_sha256": "c8d06d5d91a5e1ded203bfb3caa3dcbd54ff0baa59934f0d6a8e7d375e5acb1a",
+  "assembled_input_sha256": "6b0826582aceac6ab6372d4d63f732a6c9e32ebde5855cfce6abf0532f46e562",
+  "entries": [
+    {
+      "identifier": "tisya_new_chat",
+      "role": "system",
+      "sha256": "c3986eea8a815b1b1f2f760ceb0395848d337cbdeefceaa9242b59996ca91c96",
+      "characters": 67
+    },
+    {
+      "identifier": "tisya_session_reset",
+      "role": "system",
+      "sha256": "864422051d06934d519affbcd54b26fc8cfdb2d06f9294ff57e25226ce964c5a",
+      "characters": 1022
+    },
+    {
+      "identifier": "main",
+      "role": "system",
+      "sha256": "91e5cd15ea57c878658a9ee18efd7b823ba19309fb1b1efda3e017a9a5d47e08",
+      "characters": 4734
+    },
+    {
+      "identifier": "tisya_identity_attestation",
+      "role": "assistant",
+      "sha256": "396cc8ec7aa19bba9233e4059c0f224981d0a1620efe6d83f10beeb1d38df1bf",
+      "characters": 1147
+    },
+    {
+      "identifier": "tisya_user_relation",
+      "role": "user",
+      "sha256": "cb0b28886e5322e2d1a943346583e03fd672cbf1c1532b77e93f2f93c49445cb",
+      "characters": 200
+    },
+    {
+      "identifier": "tisya_scene_anchor",
+      "role": "assistant",
+      "sha256": "63bbdd7c98e2229e226efa1a46367d95b88d033480c6f0261bac46da2c6a0355",
+      "characters": 351
+    },
+    {
+      "identifier": "tisya_task_start",
+      "role": "system",
+      "sha256": "411e453095a3c1f4440ff41c1346b3ed2f380aab716f22e249b2bb9d385b1057",
+      "characters": 4609
+    },
+    {
+      "identifier": "tisya_material_boundary_open",
+      "role": "system",
+      "sha256": "ed20bca363ebf68c085437748a4c8b5101b5163e5b1c137a993bbdcdd94fa18b",
+      "characters": 11
+    },
+    {
+      "identifier": "tisya_material_rule_material",
+      "role": "system",
+      "sha256": "f2ffa148c303ad6e0bb5e221aa1b52c53bd25718638611d5be0ac329a2e520a8",
+      "characters": 14911
+    },
+    {
+      "identifier": "tisya_material_style_card",
+      "role": "system",
+      "sha256": "ff9532dffff84e6fa825c92cd467318ec777f20fd632b21acd5827b0cca4a0e6",
+      "characters": 898
+    },
+    {
+      "identifier": "tisya_material_boundary_close",
+      "role": "system",
+      "sha256": "492131104614b65c9f1e243edc19d09a6525bfd66fa8fcb117019b45a890908e",
+      "characters": 12
+    },
+    {
+      "identifier": "tisya_registry",
+      "role": "system",
+      "sha256": "4040b85878028882ff4c9b6245cb8c08f3b49e4f1648fea6d39020fcb7086d47",
+      "characters": 24326
+    },
+    {
+      "identifier": "tisya_internal_login",
+      "role": "system",
+      "sha256": "d57c4a1ad82fd2138130e3db238e0ad407bf27a1b28f57348e63ba8c24dd818d",
+      "characters": 622
+    },
+    {
+      "identifier": "tisya_inner_chain",
+      "role": "system",
+      "sha256": "6d3c85f8ea4ecb03d88523fab3ec34ca6446caaf36716bb7a7d9ee5926645d6d",
+      "characters": 6176
+    },
+    {
+      "identifier": "tisya_think_commit",
+      "role": "assistant",
+      "sha256": "eb42948c09281f3ff30497bec90d51ace172104a558a1ede3267c536b3139805",
+      "characters": 146
+    },
+    {
+      "identifier": "tisya_delivery_warning",
+      "role": "system",
+      "sha256": "af0cca0f483429cfa80d38627d94e2660b7bec0448aefb635540394fbf8bfd9a",
+      "characters": 598
+    },
+    {
+      "identifier": "tisya_prepare_trigger",
+      "role": "system",
+      "sha256": "fc9802ddfec06c40b389d64df4bfde8700173404dae1a0af107f1d52da4fa897",
+      "characters": 299
+    }
+  ],
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "transport": "Codex child agent; preset read as task material, not vendor system-role injection",
+  "state_snapshot": null,
+  "worldbook": null,
+  "character_card": null,
+  "first_incomplete_trials": "Excluded from complete-preset acceptance: tool output truncated; preserved separately",
+  "persistenceTested": false
+}

@@ -1,0 +1,12 @@
+✔ every emitted public skeleton row has a literal registered key and exact parser column count (7.412558ms)
+✔ known public keys tolerate a trailing category colon without inventing unknown labels (10.444845ms)
+✔ shifted common columns identify the evidence field and preserve all source text (0.84759ms)
+✔ explicit absent outcomes normalize only known categories and never create pending work (5.054162ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 160.291335
