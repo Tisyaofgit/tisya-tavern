@@ -1,0 +1,50 @@
+import {fail,decimal,own,stable} from './common.mjs';
+const binary={or:1,and:2,in:3,is:3,'not in':3,'is not':3,'=':3,'==':3,'!=':3,'<>':3,'<':3,'>':3,'<=':3,'>=':3,'&':4,'+':5,'-':5,'*':6,'/':6,'//':6,'%':6,'^':7,'**':7};
+export function evaluate(text,functions={},names={},sheet=''){
+ text=String(text).replace(/^=+/,'');let i=0;const tokens=[];
+ while(i<text.length){if(/\s/.test(text[i])){i++;continue;}const rest=text.slice(i);let m;
+  if(text[i]==='"'||text[i]==="'"){const q=text[i++];let v='',closed=false;while(i<text.length){if(text[i]===q){if(text[i+1]===q){v+=q;i+=2;continue;}i++;closed=true;break;}if(text[i]==='\\'){i++;const c=text[i++];v+=({n:'\n',r:'\r',t:'\t'}[c]??c);}else v+=text[i++];}if(!closed)fail('FORMULA_STRING','公式字符串未闭合');if(text[i]==='!'){i++;m=/^\$?[A-Za-z]+\$?\d+(?::\$?[A-Za-z]+\$?\d+)?/.exec(text.slice(i));if(!m)fail('FORMULA_COORDINATE','坐标错误');tokens.push({type:'cell',value:v+'!'+m[0]});i+=m[0].length;}else tokens.push({type:'value',value:v});continue;}
+  if(m=/^(?:[\w\u4e00-\u9fff]+!)?\$?[A-Za-z]{1,3}\$?\d+(?::\$?[A-Za-z]+\$?\d+)?(?![\w])/.exec(rest)){tokens.push({type:'cell',value:m[0].includes('!')?m[0]:sheet+'!'+m[0]});i+=m[0].length;continue;}
+  if(m=/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(rest)){tokens.push({type:'value',value:Number(m[0])});i+=m[0].length;continue;}
+  if(m=/^[\p{L}_][\p{L}\p{N}_]*/u.exec(rest)){tokens.push({type:'name',value:m[0]});i+=m[0].length;continue;}
+  if(m=/^(?:\*\*|\/\/|<=|>=|==|!=|<>|[+\-*/%^&<>=(),\[\]{}:])/.exec(rest)){tokens.push({type:'op',value:m[0]});i+=m[0].length;continue;}fail('FORMULA_SYNTAX','无法识别的公式字符',{at:i});
+ }
+ let p=0;const peek=()=>tokens[p]?.value,take=v=>{const t=tokens[p++];if(v!==undefined&&t?.value!==v)fail('FORMULA_SYNTAX','公式缺少 '+v);return t;};
+ function expr(min=0){let t=take(),node;if(!t)fail('FORMULA_SYNTAX','公式不完整');if(t.type==='value'||t.type==='cell')node=t;
+  else if(['+','-','not'].includes(t.value)){node={type:'unary',op:t.value,arg:expr(t.value==='not'?3:7)};}
+  else if(t.value==='('){node=expr();if(peek()===','){const args=[node];while(peek()===','){take(',');if(peek()===')')break;args.push(expr());}node={type:'array',args};}take(')');}
+  else if(t.value==='['){const a=[];while(peek()!==']'){a.push(expr());if(peek()!==',')break;take(',');}take(']');node={type:'array',args:a};}
+  else if(t.value==='{'){const a=[];while(peek()!=='}'){const key=expr();take(':');a.push([key,expr()]);if(peek()!==',')break;take(',');}take('}');node={type:'object',args:a};}
+  else if(t.type==='name'){if(peek()==='('){take('(');const args=[];while(peek()!==')'){args.push(expr());if(peek()!==',')break;take(',');}take(')');node={type:'call',name:t.value.toUpperCase(),args};}else node=t;}
+  else fail('FORMULA_SYNTAX','不支持的公式结构');
+  while(peek()==='['){take('[');const key=expr();take(']');node={type:'index',left:node,right:key};}
+  while(true){let op=peek();if(op==='not'&&tokens[p+1]?.value==='in')op='not in';if(op==='is'&&tokens[p+1]?.value==='not')op='is not';if(!own(binary,op)||binary[op]<min)break;take();if(op.includes(' '))take();const level=binary[op],right=expr(level+(['^','**'].includes(op)?0:1));if(level===3){if(node.type==='compare')node.parts.push({op,right});else node={type:'compare',left:node,parts:[{op,right}]};}else node={type:'binary',op,left:node,right};}
+  if(min===0&&peek()==='if'){take();const test=expr();take('else');node={type:'conditional',test,yes:node,no:expr()};}return node;
+ }
+ const tree=expr();if(p!==tokens.length)fail('FORMULA_SYNTAX','公式包含未消费内容',{token:peek()});
+ const flat=a=>a.flat(Infinity).filter(v=>v!=null),numbers=a=>flat(a).filter(v=>typeof v==='number');
+ const truth=v=>Array.isArray(v)?v.length>0:v&&typeof v==='object'?Object.keys(v).length>0:Boolean(v);const comparison=(op,a,b)=>{if(op==='in'||op==='not in'){const has=typeof b==='string'||Array.isArray(b)?b.includes(a):b&&typeof b==='object'?own(b,a):fail('FORMULA_TYPE','成员比较需要容器');return op==='in'?has:!has;}if(op==='is'||op==='is not')return op==='is'?a===b:a!==b;if(['=','==','!=','<>'].includes(op)){const equal=stable(a)===stable(b);return ['!=','<>'].includes(op)?!equal:equal;}return {'<':()=>a<b,'>':()=>a>b,'<=':()=>a<=b,'>=':()=>a>=b}[op]();};
+ const basic={MIN:(...a)=>Math.min(...flat(a)),MAX:(...a)=>Math.max(...flat(a)),SUM:(...a)=>numbers(a).reduce((s,v)=>decimal(s,v),0),AVERAGE:(...a)=>numbers(a).reduce((s,v)=>decimal(s,v),0)/numbers(a).length,COUNT:(...a)=>numbers(a).length,ABS:Math.abs,INT:Math.floor,ROUND:(v,n=0)=>Math.sign(v)*Math.round((Math.abs(v)+Number.EPSILON)*10**n)/10**n,NOT:v=>!v,LEN:v=>v.length,TEXT:String};
+ function run(n){if(n.type==='value')return n.value;if(n.type==='cell'){const [a,b]=n.value.split(':');return b?functions.RANGE(a,a.split('!')[0]+'!'+b):functions.CELL(a);}
+  if(n.type==='name'){if(['TRUE','FALSE','NONE','NULL'].includes(n.value.toUpperCase()))return {TRUE:true,FALSE:false,NONE:null,NULL:null}[n.value.toUpperCase()];if(own(names,n.value))return names[n.value];fail('FORMULA_NAME','未知公式变量',{name:n.value});}
+  if(n.type==='conditional')return run(truth(run(n.test))?n.yes:n.no);if(n.type==='compare'){let a=run(n.left);for(const {op,right}of n.parts){const b=run(right);if(!comparison(op,a,b))return false;a=b;}return true;}
+  if(n.type==='array')return n.args.map(run);if(n.type==='object')return Object.fromEntries(n.args.map(([k,v])=>[run(k),run(v)]));if(n.type==='index'){const v=run(n.left),k=run(n.right);if(!own(v,k))fail('FORMULA_INDEX','不存在的下标');return v[k];}
+  if(n.type==='unary'){const v=run(n.arg);return n.op==='not'?!truth(v):n.op==='-'?-v:+v;}
+  if(n.type==='call'){const a=n.args,k=n.name;if(k==='IF'){if(a.length!==3)fail('ARITY','IF需要3个参数');return run(a[truth(run(a[0]))?1:2]);}if(k==='AND')return a.every(x=>truth(run(x)));if(k==='OR')return a.some(x=>truth(run(x)));if(k==='IFERROR'){try{return run(a[0]);}catch{return run(a[1]);}}const f=functions[k]??basic[k];if(!f)fail('FORMULA_FUNCTION','未知公式函数',{name:k});return f(...a.map(run));}
+  const a=run(n.left);if(n.op==='and')return truth(a)&&truth(run(n.right));if(n.op==='or')return truth(a)||truth(run(n.right));const b=run(n.right);
+  if(n.op==='+')return typeof a==='number'&&typeof b==='number'?decimal(a,b):a+b;if(n.op==='-')return decimal(a,b,'-');if(n.op==='*'){if(typeof a==='string'&&Number.isSafeInteger(b))return a.repeat(Math.max(0,b));if(typeof b==='string'&&Number.isSafeInteger(a))return b.repeat(Math.max(0,a));return decimal(a,b,'*');}if(['/','//','%'].includes(n.op)&&b===0)fail('FORMULA_DIV_ZERO','公式除数为零');return {'/':()=>a/b,'//':()=>Math.floor(a/b),'%':()=>((a%b)+b)%b,'^':()=>a**b,'**':()=>a**b,'&':()=>String(a)+String(b),'=':()=>a===b,'==':()=>a===b,'!=':()=>a!==b,'<>':()=>a!==b,'<':()=>a<b,'>':()=>a>b,'<=':()=>a<=b,'>=':()=>a>=b}[n.op]();
+ }
+ const result=run(tree);if(typeof result==='number'&&!Number.isFinite(result))fail('NONFINITE','公式结果不是有限数字');return result;
+}
+export class WorldClock{
+ constructor(config){if(!config)fail('MISSING_CALENDAR','请先配置世界历法');this.c={mode:'SEASON_FIXED',hour_minutes:60,day_hours:24,year:1,day:1,hour:0,minute:0,...config};const c=this.c;if(c.mode==='SEASON_FIXED'){c.season??=1;c.seasons_per_year??=4;c.days_per_season??=30;}else c.month??=1;
+  if(!['SEASON_FIXED','MONTH_FIXED','MONTH_TABLE'].includes(c.mode))fail('CALENDAR_MODE','不支持的历法');if(![c.hour_minutes,c.day_hours,c.year].every(v=>Number.isSafeInteger(v)&&v>0))fail('CALENDAR_UNIT','历法单位须为正整数');const lengths=this.lengths(c.year),idx=(c.mode==='SEASON_FIXED'?c.season:c.month)-1;if(!Number.isInteger(idx)||idx<0||idx>=lengths.length||c.day<1||c.day>lengths[idx]||c.hour<0||c.hour>=c.day_hours||c.minute<0||c.minute>=c.hour_minutes)fail('CALENDAR_DATE','世界日期不合法');
+ }
+ lengths(year){const c=this.c;if(c.mode==='SEASON_FIXED')return Array(c.seasons_per_year).fill(c.days_per_season);if(c.mode==='MONTH_FIXED')return Array(c.months_per_year??12).fill(c.days_per_month??30);const a=[...(c.month_lengths??[31,28,31,30,31,30,31,31,30,31,30,31])];if((c.leap_rule??'GREGORIAN')==='GREGORIAN'&&year%4===0&&(year%100!==0||year%400===0))a[(c.leap_month??2)-1]++;return a;}
+ before(year){const y=year-1,base=this.lengths(1).reduce((a,b)=>a+b,0);return y*base+(this.c.mode==='MONTH_TABLE'&&(this.c.leap_rule??'GREGORIAN')==='GREGORIAN'?Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400):0);}
+ ordinal(){const c=this.c,idx=(c.mode==='SEASON_FIXED'?c.season:c.month)-1;return ((this.before(c.year)+this.lengths(c.year).slice(0,idx).reduce((a,b)=>a+b,0)+c.day-1)*c.day_hours+c.hour)*c.hour_minutes+c.minute;}
+ setOrdinal(value){if(!Number.isSafeInteger(value)||value<0)fail('TIME_BEFORE_EPOCH','时间超出历法范围');const c=this.c,dm=c.day_hours*c.hour_minutes,days=Math.floor(value/dm),rem=value%dm;let y=Math.max(1,Math.floor(days/this.lengths(1).reduce((a,b)=>a+b,0))+1);while(this.before(y)>days)y--;while(this.before(y+1)<=days)y++;let d=days-this.before(y),i=0,ls=this.lengths(y);while(d>=ls[i])d-=ls[i++];Object.assign(c,{year:y,day:d+1,hour:Math.floor(rem/c.hour_minutes),minute:rem%c.hour_minutes,[c.mode==='SEASON_FIXED'?'season':'month']:i+1});}
+ duration(text){if(typeof text==='number'){if(!Number.isSafeInteger(text))fail('TIME_PRECISION','推进分钟必须为整数');return text;}const clean=String(text).replace(/\s/g,''),parts=[...clean.matchAll(/([+-]?\d+(?:\.\d+)?)([dhmt天时分刻])/gi)];if(!parts.length||parts.map(m=>m[0]).join('')!==clean)fail('TIME_SYNTAX','时间需要明确单位');const c=this.c,u={d:c.hour_minutes*c.day_hours,h:c.hour_minutes,m:1,t:c.tick_minutes??1,天:c.hour_minutes*c.day_hours,时:c.hour_minutes,分:1,刻:c.tick_minutes??1},v=parts.reduce((s,m)=>decimal(s,Number(m[1])*u[m[2].toLowerCase()]),0);if(!Number.isSafeInteger(v))fail('TIME_PRECISION','时间小于历法分钟精度');return v;}
+ advance(delta){const n=this.duration(delta),start=this.ordinal();this.setOrdinal(start+n);return n;}
+ text(){const c=this.c,p=n=>String(n).padStart(2,'0');return (c.mode==='SEASON_FIXED'?`第${c.year}年·${(c.season_names??['春','夏','秋','冬'])[c.season-1]??c.season}·第${c.day}日`:`${String(c.year).padStart(4,'0')}.${p(c.month)}.${p(c.day)}`)+` ${p(c.hour)}:${p(c.minute)}`;}
+}

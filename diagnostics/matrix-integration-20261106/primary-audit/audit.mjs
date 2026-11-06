@@ -1,0 +1,15 @@
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {Runtime} from './engine/runtime.mjs';
+import {Controller,chatKey} from './engine/controller.mjs';
+import {reconcile} from './engine/journal.mjs';
+import {initializeState,materials} from './engine/materials.mjs';
+const e=new Runtime();e.registerTable('ACTOR',[{key:'name',type:'TEXT'},{key:'hp',type:'NUMBER'}]);e.newRecord('ACTOR',{name:'阿青',hp:10},'u01');
+const disk=new Map(),ctx={chatId:'audit',characterId:0,chatMetadata:{},extensionSettings:{},chat:[],saveMetadata:async()=>{},saveChat:async()=>{},saveSettingsDebounced(){},setExtensionPrompt(){}};
+const storage={get:async k=>structuredClone(disk.get(k)),set:async(k,v)=>disk.set(k,structuredClone(v))};
+const c=new Controller({getContext:()=>ctx,storage,request:async(_,{bundle,messages,scope})=>reconcile(bundle,messages,scope)});
+await c.attach({state:e.data});ctx.chat.push({is_user:false,mes:'<reply><body>1 门开了。</body><cells>阿青.hp: -3 | P1</cells><archive>事件|e01：门开了</archive></reply>'});
+c.generating.set(chatKey(ctx),true);await c.event('GENERATION_STOPPED');const after=await c.current();console.log(JSON.stringify({case:'closed_reply_at_stop',before_hp:10,after_hp:after.state.tables.ACTOR.u01.values.hp,journal_status:after.journal.entries.at(-1)?.settlement_status}));
+const catalog=JSON.parse(gunzipSync(readFileSync('./engine/catalog.json.gz')));const m=new Runtime(initializeState(catalog));const blank=materials(m);console.log(JSON.stringify({case:'empty_schema_dictionary',tables:Object.keys(m.data.schema).length,has_dossier_field_dictionary:blank.tisya_material_cell_prompts.includes('T_CHAR_DOSSIER 字段：')}));
+m.newRecord('T_CHAR_DOSSIER',{name:'阿青'},'u');m.newRecord('T_PREF_CHAR_FILTER',{target_char_id:'u',speech_bias:'审计测试滤镜'},'f');m.newRecord('T_CHAR_ANCHORS',{name:'审计锚点',char_ref:'u',actions:'藏起手指',psychology:'掩饰紧张'},'a');const slots=materials(m);console.log(JSON.stringify({case:'character_material_routing',filter_slots:Object.entries(slots).filter(([,v])=>v.includes('审计测试滤镜')).map(([k])=>k),anchor_in_focus:slots.tisya_material_focus_entities.includes('审计锚点'),named_ten_dimensions:['表层=','触发=','防御=','执念=','软化=','权重=','演化='].every(k=>slots.tisya_material_focus_entities.includes(k))}));
+m.newRecord('T_DYN_EVENTS',{short_code:'e01',title:'门开了',spine_digest:'钥匙转动->门开了'},'event1');m.data.runtime.archive=[{rows:[{category:'事件',raw:'事件|e01[傍晚]：钥匙转动->门开了'}]}];const memory=materials(m).tisya_material_memory_archive;console.log(JSON.stringify({case:'event_archive_duplicate',code_occurrences:memory.split('e01').length-1,lines:memory.split('\n')}));

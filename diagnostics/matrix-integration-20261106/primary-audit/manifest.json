@@ -1,0 +1,165 @@
+{
+  "utc": "2026-11-06T13:29:43.541346+00:00",
+  "source": "legacy-new read-only snapshot",
+  "files": [
+    {
+      "path": "index.js",
+      "sha256": "9ec95b39c8b459de157df2fbb78b44995770cfd1c05d2106c2194039e2226af7",
+      "bytes": 103692
+    },
+    {
+      "path": "package.json",
+      "sha256": "6f530b8ae70b9115a5d1b11e3f9c26e955cc328507b098e2640846e60116fea5",
+      "bytes": 1378
+    },
+    {
+      "path": "result.json",
+      "sha256": "8940aed3761b3c44d4c2be8e3fe67c1bf5c6952494b819e06dc79a53933d8ee2",
+      "bytes": 910
+    },
+    {
+      "path": "audit.mjs",
+      "sha256": "5bac96d98f8751b6af21931e6493be99b47d57c9b2312da165463116b27f4a37",
+      "bytes": 2735
+    },
+    {
+      "path": "engine/display.mjs",
+      "sha256": "743a16391fe7716ecf8924b49b13f6932785bccf653cee67ef2d037cd709c5d6",
+      "bytes": 2231
+    },
+    {
+      "path": "engine/mechanical_runtime.mjs",
+      "sha256": "2c8722ced2e4da8677ab0c70435b9c052345084d56b920dde6e5446b0828b592",
+      "bytes": 95217
+    },
+    {
+      "path": "engine/actions.mjs",
+      "sha256": "f6fcd1d08d860c6511d7751e07ff3b2ce00de3fccdef6258aab9806b244a12c9",
+      "bytes": 13823
+    },
+    {
+      "path": "engine/ui.mjs",
+      "sha256": "28a8663eabf55b002b3bf09e9570423b6ccb6ad525caf6a5a5fc2f662b7803ea",
+      "bytes": 9545
+    },
+    {
+      "path": "engine/controller.mjs",
+      "sha256": "9623f9ddb53af869e8a26e0aa14d854e374b4654a855f58e821470289b35de41",
+      "bytes": 11334
+    },
+    {
+      "path": "engine/config.mjs",
+      "sha256": "9e4d139c349921cebd7c93c31e89b7f02b107a0da38bbe60102716841c191381",
+      "bytes": 6672
+    },
+    {
+      "path": "engine/output-config.mjs",
+      "sha256": "a9ae8192df5651d2a3b62d54a1a87707e622b45be592aa88fe7c0fc5d5b07d1e",
+      "bytes": 2732
+    },
+    {
+      "path": "engine/host.mjs",
+      "sha256": "2e31c2fb133311bdb51e2eb9b89ec962d2b783d92e15713de76618ac2323a951",
+      "bytes": 8196
+    },
+    {
+      "path": "engine/runtime.mjs",
+      "sha256": "c946284de0f76c1fdfba2c3ca54692fa7031ba3ff4b864badf19962e2fb5835d",
+      "bytes": 23103
+    },
+    {
+      "path": "engine/common.mjs",
+      "sha256": "50cdc5b8145ba079711325c60335466156b7e94537b2e3aa4b7a184a0fb1f008",
+      "bytes": 6426
+    },
+    {
+      "path": "engine/journal.mjs",
+      "sha256": "3b508df231bd961ab5dc3f9572b6a651e1059a2b181381991c4fa2b9b3429bb7",
+      "bytes": 6054
+    },
+    {
+      "path": "engine/uuid.mjs",
+      "sha256": "62d799d6386922a145ee56d1d089cac2761f3d85e8ae16f6f11e592e584fd10f",
+      "bytes": 1208
+    },
+    {
+      "path": "engine/math.mjs",
+      "sha256": "a701446868f642749392565452040b9570792fde8c5be1e8c09964e34ce52e42",
+      "bytes": 10368
+    },
+    {
+      "path": "engine/business.mjs",
+      "sha256": "eb6e4010b8aa773145dbb477b0700c9a58c6c133eb4f9ac146fd87d18d907786",
+      "bytes": 8634
+    },
+    {
+      "path": "engine/materials.mjs",
+      "sha256": "9fb791aa89f3806970a854ef1ca2a84782015ea55a384deb45111b892f8e95a9",
+      "bytes": 5941
+    },
+    {
+      "path": "engine/random.mjs",
+      "sha256": "2d46edaffd6235244f76ad51dbd6c6d46d2b7a125243336a35af029f3f749d0e",
+      "bytes": 985
+    },
+    {
+      "path": "engine/catalog.json",
+      "sha256": "8654d66bf3a6241d4acee0b724534a0fb4bc46e37e219109704038b0fdf200f9",
+      "bytes": 9328911
+    },
+    {
+      "path": "engine/generation.mjs",
+      "sha256": "d353b9e6d25d29e460754d18b8fd03e6a548c7d78229f2a9f2e69b003acb83b5",
+      "bytes": 1347
+    },
+    {
+      "path": "engine/tags.mjs",
+      "sha256": "b6f34cae3429ec663cbb9dc5865209a5f22f639a9daa3cd82727432f760beb49",
+      "bytes": 3511
+    },
+    {
+      "path": "engine/configuration.json",
+      "sha256": "2914d9a47e136bdd7cebbec93ffeadbfeb405805aa0afbb9a260f6d3d4c27249",
+      "bytes": 315129
+    },
+    {
+      "path": "engine/persona.mjs",
+      "sha256": "407f4d19a65b18bfba197c9d1f41ac9c90436f2f8f7a35af4003822edb65d159",
+      "bytes": 4582
+    },
+    {
+      "path": "engine/native-settings.json",
+      "sha256": "eef2b6be3e59978437e08ce55a024709591141669896485ddb3a79d13a1a451d",
+      "bytes": 11779
+    },
+    {
+      "path": "engine/reply.mjs",
+      "sha256": "d971675930641b027d1c236860ee8fedc643327d90c3bab06390c5d3dc453fc3",
+      "bytes": 8405
+    },
+    {
+      "path": "engine/random-default.json",
+      "sha256": "93ac89e8190ae967e5b171df3729527d6338deb95a7861ae378f01f034e0e88f",
+      "bytes": 6703
+    }
+  ],
+  "scope": "Frozen read-only diagnostic, not a second production engine. Run node audit.mjs from this directory.",
+  "included_files": [
+    "actions.mjs",
+    "business.mjs",
+    "common.mjs",
+    "controller.mjs",
+    "journal.mjs",
+    "materials.mjs",
+    "math.mjs",
+    "mechanical_runtime.mjs",
+    "persona.mjs",
+    "random-default.json",
+    "random.mjs",
+    "reply.mjs",
+    "runtime.mjs",
+    "tags.mjs",
+    "uuid.mjs"
+  ],
+  "catalog_gzip_sha256": "65f4bbcdf5787929315e98d271f2d55df4a15780ffa6db4bc4604bcaf292c1fd"
+}
