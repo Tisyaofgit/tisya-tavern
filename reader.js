@@ -1,3 +1,5 @@
+import {isMatrixReply,tagRevision} from './engine/tags.mjs';
+import {inspectMatrix} from './engine/display.mjs';
 import {usesV3Reply} from './reply-protocol.js';
 import {isOnePassReply,inspectOnePass} from './onepass/reply.mjs';
 import {inspectV3Message} from './six/reply.mjs';
@@ -41,7 +43,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 // Version parsed projections independently of the disk rows so reader updates
 // recompute old successes/errors while retaining the user's fold and tab state.
-const projectionKey=selected=>'onepass-w69.1:'+replyFormatRevision()+':'+JSON.stringify(selected);
+const projectionKey=selected=>'matrix-v1:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
 const inspectionKey=(source,selected)=>projectionKey(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
@@ -66,6 +68,7 @@ export async function prepareReaderMessage(identity,options={}){
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
 }
 function inspectUncached(source,options) {
+    if(isMatrixReply(source))return inspectMatrix(source);
     if(isOnePassReply(source))return inspectOnePass(source);
     if(usesV3Reply(source))return inspectV3Message(source);
     if(typeof source!=='string'||source.length>2000000)return {structured:true,body:{error:'TISHA_OUTPUT_SIZE'},journey:{error:'TISHA_OUTPUT_SIZE'},actions:{error:'TISHA_OUTPUT_SIZE'}};

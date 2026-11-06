@@ -1,8 +1,9 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import bundled from '../presets/Tisya.json' with {type:'json'};
-import original from '../presets/Tisya-One-Pass-1.json' with {type:'json'};
+import {matrixPreset} from '../engine/config.mjs';
+const bundled=matrixPreset();
+import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import {installBuiltInPreset,BUILTIN_PRESET_REVISION} from '../builtin-preset.js';
 import {presetLoadMismatch} from '../preset-load-check.js';
 const copy=x=>structuredClone(x);
@@ -41,7 +42,7 @@ function normalizeNativePrompts(settings){
 }
 test('native PromptManager normalization loads the shipped preset without a restart error',async()=>{
  const f=fixture({selected:'Tisya',normalizeHost:true});
- try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,68);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,65);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
+ try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,74);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,72);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
 });
 test('load verification accepts only observed native additions and still detects changed instructions and order',()=>{
  const native=copy(bundled);normalizeNativePrompts(native);assert.equal(presetLoadMismatch(native,bundled),null);
@@ -60,8 +61,8 @@ test('manual refresh reinstalls same revision while automatic startup preserves 
   await installBuiltInPreset(f.context,f.document,{force:true});assert.equal(presetLoadMismatch(f.context.chatCompletionSettings,bundled),null);assert.equal(f.saves(),2);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');
  }finally{await f.w.happyDOM.close();}
 });
-test('built-in keeps the complete 62-entry plaintext preset and both creative digests',()=>{
- assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,62);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
+test('built-in keeps the complete 69-slot new preset with separate user binding',()=>{
+ assert.equal(bundled.name,'Tisya');assert.equal(bundled.prompts.length,70);for(const p of original.prompts){if(p.identifier==='personaDescription')continue;assert.equal(bundled.prompts.find(x=>x.identifier===p.identifier).content,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,'));}assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);assert.equal(bundled.prompt_order[0].order.length,69);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });
 test('first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched',async()=>{
  const f=fixture({existing:false}),settings=copy(f.context.chatCompletionSettings),other=copy(f.disk.get('Other'));

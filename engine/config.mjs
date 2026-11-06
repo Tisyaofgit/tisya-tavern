@@ -1,0 +1,59 @@
+import {applyGeneration} from './generation.mjs';
+import {applyOutputConfiguration} from './output-config.mjs';
+import original from '../presets/Tisya-Matrix.json' with {type:'json'};
+import configuration from './configuration.json' with {type:'json'};
+import {clone,fail,digest} from './common.mjs';
+import {DEFAULT_TAGS,validateTags,rewriteTagReferences,configureTags} from './tags.mjs';
+export {configuration};
+export const CONFIG_KEY='tisya_matrix_configuration';
+export const MATRIX_REVISION=digest({original,identity_slots:1,engine:'matrix-js-v1'});
+export function matrixPreset(){
+ const p=clone(original);p.name='Tisya';p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
+ for(const row of p.prompts){
+  if(row.identifier==='main')row.content=row.content.replace('@U:={id:user,','@U:={id:contractor,');
+  if(row.identifier==='personaDescription'){row.enabled=false;}
+  else if(typeof row.content==='string')row.content=row.content.replaceAll('`personaDescription`','`tisya_user_identity`');
+ }
+ const personaAt=p.prompts.findIndex(row=>row.identifier==='personaDescription');p.prompts.splice(personaAt+1,0,{...clone(original.prompts[personaAt]),identifier:'tisya_user_identity',name:'user · 故事身份（世界书绑定）',marker:false,enabled:true,role:'system',content:'{{tisya_user_identity}}'});
+ for(const entry of p.prompt_order)for(const row of entry.order)if(row.identifier==='personaDescription')row.identifier='tisya_user_identity';
+ return p;
+}
+export const isMatrixPreset=source=>source?.prompts?.some(p=>p.identifier==='tisya_user_identity')===true;
+export const baseline=matrixPreset();
+export const materialNames=[...new Set(baseline.prompts.flatMap(p=>[...(p.content??'').matchAll(/\{\{(tisya_[\w]+)\}\}/g)].map(m=>m[1])))];
+export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
+ function key(){const c=getContext();return JSON.stringify([c.groupId?'group':'character',String(c.groupId??c.characterId??''),String(c.chatId)]);}
+ function story(all){const keys=[key(),...(getContext().chatMetadata?.tisya_engine?.origin_chat_keys??[])],normalize=k=>{try{return JSON.stringify(JSON.parse(k).map(String));}catch{return k;}};for(const candidate of keys){const found=Object.keys(all.stories??{}).find(k=>normalize(k)===normalize(candidate));if(found)return all.stories[found];}return {userBinding:null,userName:'',wish:''};}
+ function read(){const all=getContext().extensionSettings[CONFIG_KEY]??{format:1,tags:{...DEFAULT_TAGS},aliases:[],prompts:{},generation:{},stories:{},revision:0};if(all.format!==1)fail('CONFIG_VERSION','新版配置格式不受支持');return {...clone(all),story:clone(story(all))};}
+ async function save(next){assertIdle();const c=getContext(),previous=c.extensionSettings[CONFIG_KEY],before=read();if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[key()]=value.story;delete value.story;value.revision++;const undoGeneration=applyGeneration(c,value.generation);c.extensionSettings[CONFIG_KEY]=value;try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');}catch(error){c.extensionSettings[CONFIG_KEY]=previous;undoGeneration();throw error;}configureTags(value.tags,value.aliases);return read();}
+ configureTags(read().tags,read().aliases);return {read,save};
+}
+export function compilePrompts(source,config,slots){
+ const tags=validateTags(config.tags),out=clone(source);
+ for(const p of out.prompts)if(Object.hasOwn(config.prompts,p.identifier))p.content=config.prompts[p.identifier];
+ if(slots.tisya_output_configuration)applyOutputConfiguration(out.prompts,JSON.parse(slots.tisya_output_configuration));
+ for(const p of out.prompts){if(p.marker)continue;let text=p.content??'';
+  // {{user}} names the bound protagonist. The native persona is injected once
+  // into the contractor wish and cannot silently become the protagonist.
+  text=text.replaceAll('{{user}}',config.story.userName||'user');
+  text=text.replace(/\{\{(tisya_[\w]+)\}\}/g,(_,name)=>Object.hasOwn(slots,name)?slots[name]:'');
+  p.content=rewriteTagReferences(text,DEFAULT_TAGS,tags);
+ }
+ return out;
+}
+export async function identitySlots(ctx,config,persona){
+ const story=config.story,slots={};let bound='';
+ if(story.userBinding){const {book,uid}=story.userBinding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');}
+ slots.tisya_user_identity=bound?('[USER.IDENTITY]\n故事主角：'+(story.userName||'user')+'\n'+bound+'\n[/USER.IDENTITY]'):'';
+ slots.tisya_contractor_wish=['[CONTRACTOR.WISH]','@u 为屏幕外的契约者与读者。',persona?('@u 身份：\n'+persona):'',story.wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n');return slots;
+}
+// Native messages may have merged system entries. Replace each enabled preset
+// fragment exactly once after native macros, while preserving every history row.
+export function applyCompiledMessages(messages,source,compiled,expand=s=>s){
+ const out=clone(messages),order=source.order??source.prompt_order?.find(o=>o.character_id===100001)?.order??[],enabled=new Set(order.filter(x=>x.enabled).map(x=>x.identifier)),next=new Map(compiled.prompts.map(p=>[p.identifier,p]));
+ for(const p of source.prompts){if(p.marker||p.enabled===false||!enabled.has(p.identifier))continue;const a=expand(p.content??'').trim(),b=expand(next.get(p.identifier)?.content??'').trim();if(a===b||!a)continue;const matches=[];
+  for(const m of out){if(m.role!==(p.role??'system'))continue;if(typeof m.content==='string')matches.push({get:()=>m.content,set:v=>m.content=v});else if(Array.isArray(m.content))for(const part of m.content)if(part.type==='text')matches.push({get:()=>part.text,set:v=>part.text=v});}
+  const count=matches.reduce((n,c)=>n+c.get().split(a).length-1,0);if(count!==1)fail('PROMPT_MATCH','预设条目在最终请求中缺失或重复，未猜测替换',{identifier:p.identifier,matches:count});const target=matches.find(c=>c.get().includes(a));target.set(target.get().replace(a,()=>b));
+ }
+ return out;
+}

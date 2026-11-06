@@ -1,3 +1,5 @@
+import {isMatrixReply} from './engine/tags.mjs';
+import {readMatrixPublic} from './engine/display.mjs';
 import {usesV3Reply} from './reply-protocol.js';
 import {isOnePassReply,readOnePassPublic} from './onepass/reply.mjs';
 import {readV3PublicEnvelope,readV3Block} from './six/reply.mjs';
@@ -34,14 +36,14 @@ function withoutRecords(source,names){
  return view;
 }
 
-export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>isOnePassReply(source)?readOnePassPublic(source):usesV3Reply(source)?readV3PublicEnvelope(source):publicEnvelope(source));}
+export function readPublicReplyEnvelope(source){return publicCache.read(source,()=>isMatrixReply(source)?readMatrixPublic(source):isOnePassReply(source)?readOnePassPublic(source):usesV3Reply(source)?readV3PublicEnvelope(source):publicEnvelope(source));}
 function publicEnvelope(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status','memory'])));
  const publicNames=new Set(['task','title','body','next','actions']);
  return {id:e.id,blocks:Object.fromEntries(Object.entries(e.blocks).filter(([name])=>publicNames.has(name))),attrs:Object.fromEntries(Object.entries(e.attrs).filter(([name])=>publicNames.has(name))),...(e.wire?{wire:{version:e.wire.version}}:{}),projection:'public-ui'};
 }
 
-export function readReplyMemory(source){return memoryCache.read(source,()=>usesV3Reply(source)?null:replyMemory(source));}
+export function readReplyMemory(source){return memoryCache.read(source,()=>isMatrixReply(source)||usesV3Reply(source)?null:replyMemory(source));}
 function replyMemory(source){
  const e=parseDisplayEnvelope(withoutRecords(source,new Set(['status'])));
  return e.blocks.memory.trim()?strictJSON(e.blocks.memory):null;

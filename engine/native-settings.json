@@ -1,0 +1,501 @@
+{
+  "source": "Darkatse/TauriTavern@a1855be4:src/scripts/openai.js settingsToUpdate",
+  "map": {
+    "chat_completion_source": {
+      "key": "chat_completion_source",
+      "connection": true
+    },
+    "custom_api_format": {
+      "key": "custom_api_format",
+      "connection": true
+    },
+    "opencode_model": {
+      "key": "opencode_model",
+      "connection": true
+    },
+    "opencode_endpoint": {
+      "key": "opencode_endpoint",
+      "connection": true
+    },
+    "opencode_api_format": {
+      "key": "opencode_api_format",
+      "connection": true
+    },
+    "temperature": {
+      "key": "temp_openai",
+      "connection": false
+    },
+    "frequency_penalty": {
+      "key": "freq_pen_openai",
+      "connection": false
+    },
+    "presence_penalty": {
+      "key": "pres_pen_openai",
+      "connection": false
+    },
+    "top_p": {
+      "key": "top_p_openai",
+      "connection": false
+    },
+    "top_k": {
+      "key": "top_k_openai",
+      "connection": false
+    },
+    "top_a": {
+      "key": "top_a_openai",
+      "connection": false
+    },
+    "min_p": {
+      "key": "min_p_openai",
+      "connection": false
+    },
+    "repetition_penalty": {
+      "key": "repetition_penalty_openai",
+      "connection": false
+    },
+    "max_context_unlocked": {
+      "key": "max_context_unlocked",
+      "connection": false
+    },
+    "openai_model": {
+      "key": "openai_model",
+      "connection": true
+    },
+    "claude_model": {
+      "key": "claude_model",
+      "connection": true
+    },
+    "openrouter_model": {
+      "key": "openrouter_model",
+      "connection": true
+    },
+    "openrouter_use_fallback": {
+      "key": "openrouter_use_fallback",
+      "connection": true
+    },
+    "openrouter_group_models": {
+      "key": "openrouter_group_models",
+      "connection": true
+    },
+    "openrouter_sort_models": {
+      "key": "openrouter_sort_models",
+      "connection": true
+    },
+    "openrouter_providers": {
+      "key": "openrouter_providers",
+      "connection": true
+    },
+    "openrouter_quantizations": {
+      "key": "openrouter_quantizations",
+      "connection": true
+    },
+    "openrouter_allow_fallbacks": {
+      "key": "openrouter_allow_fallbacks",
+      "connection": true
+    },
+    "openrouter_middleout": {
+      "key": "openrouter_middleout",
+      "connection": true
+    },
+    "tool_reasoning_mode": {
+      "key": "tool_reasoning_mode",
+      "connection": false
+    },
+    "ai21_model": {
+      "key": "ai21_model",
+      "connection": true
+    },
+    "mistralai_model": {
+      "key": "mistralai_model",
+      "connection": true
+    },
+    "cohere_model": {
+      "key": "cohere_model",
+      "connection": true
+    },
+    "perplexity_model": {
+      "key": "perplexity_model",
+      "connection": true
+    },
+    "groq_model": {
+      "key": "groq_model",
+      "connection": true
+    },
+    "chutes_model": {
+      "key": "chutes_model",
+      "connection": true
+    },
+    "chutes_sort_models": {
+      "key": "chutes_sort_models",
+      "connection": true
+    },
+    "siliconflow_model": {
+      "key": "siliconflow_model",
+      "connection": true
+    },
+    "siliconflow_endpoint": {
+      "key": "siliconflow_endpoint",
+      "connection": true
+    },
+    "minimax_model": {
+      "key": "minimax_model",
+      "connection": true
+    },
+    "minimax_endpoint": {
+      "key": "minimax_endpoint",
+      "connection": true
+    },
+    "aws_bedrock_model": {
+      "key": "aws_bedrock_model",
+      "connection": true
+    },
+    "aws_bedrock_region": {
+      "key": "aws_bedrock_region",
+      "connection": true
+    },
+    "aws_bedrock_use_custom_template": {
+      "key": "aws_bedrock_use_custom_template",
+      "connection": true
+    },
+    "aws_bedrock_custom_template": {
+      "key": "aws_bedrock_custom_template",
+      "connection": true
+    },
+    "aws_bedrock_custom_response_path": {
+      "key": "aws_bedrock_custom_response_path",
+      "connection": true
+    },
+    "aws_bedrock_custom_stream_path": {
+      "key": "aws_bedrock_custom_stream_path",
+      "connection": true
+    },
+    "electronhub_model": {
+      "key": "electronhub_model",
+      "connection": true
+    },
+    "electronhub_sort_models": {
+      "key": "electronhub_sort_models",
+      "connection": true
+    },
+    "electronhub_group_models": {
+      "key": "electronhub_group_models",
+      "connection": true
+    },
+    "nanogpt_model": {
+      "key": "nanogpt_model",
+      "connection": true
+    },
+    "nanogpt_provider": {
+      "key": "nanogpt_provider",
+      "connection": true
+    },
+    "nanogpt_payg_override": {
+      "key": "nanogpt_payg_override",
+      "connection": true
+    },
+    "deepseek_model": {
+      "key": "deepseek_model",
+      "connection": true
+    },
+    "aimlapi_model": {
+      "key": "aimlapi_model",
+      "connection": true
+    },
+    "xai_model": {
+      "key": "xai_model",
+      "connection": true
+    },
+    "pollinations_model": {
+      "key": "pollinations_model",
+      "connection": true
+    },
+    "pollinations_endpoint": {
+      "key": "pollinations_endpoint",
+      "connection": true
+    },
+    "moonshot_model": {
+      "key": "moonshot_model",
+      "connection": true
+    },
+    "moonshot_endpoint": {
+      "key": "moonshot_endpoint",
+      "connection": true
+    },
+    "fireworks_model": {
+      "key": "fireworks_model",
+      "connection": true
+    },
+    "cometapi_model": {
+      "key": "cometapi_model",
+      "connection": true
+    },
+    "custom_model": {
+      "key": "custom_model",
+      "connection": true
+    },
+    "custom_url": {
+      "key": "custom_url",
+      "connection": true
+    },
+    "custom_models_by_source": {
+      "key": "custom_models_by_source",
+      "connection": true
+    },
+    "additional_parameters_by_source": {
+      "key": "additional_parameters_by_source",
+      "connection": true
+    },
+    "additional_parameters_migration_version": {
+      "key": "additional_parameters_migration_version",
+      "connection": true
+    },
+    "custom_include_body": {
+      "key": "custom_include_body",
+      "connection": true
+    },
+    "custom_exclude_body": {
+      "key": "custom_exclude_body",
+      "connection": true
+    },
+    "custom_include_headers": {
+      "key": "custom_include_headers",
+      "connection": true
+    },
+    "custom_claude_prompt_caching": {
+      "key": "custom_claude_prompt_caching",
+      "connection": true
+    },
+    "custom_openai_responses_websocket": {
+      "key": "custom_openai_responses_websocket",
+      "connection": true
+    },
+    "custom_prompt_post_processing": {
+      "key": "custom_prompt_post_processing",
+      "connection": true
+    },
+    "google_model": {
+      "key": "google_model",
+      "connection": true
+    },
+    "vertexai_model": {
+      "key": "vertexai_model",
+      "connection": true
+    },
+    "zai_model": {
+      "key": "zai_model",
+      "connection": true
+    },
+    "zai_endpoint": {
+      "key": "zai_endpoint",
+      "connection": true
+    },
+    "workers_ai_model": {
+      "key": "workers_ai_model",
+      "connection": true
+    },
+    "workers_ai_account_id": {
+      "key": "workers_ai_account_id",
+      "connection": true
+    },
+    "openai_max_context": {
+      "key": "openai_max_context",
+      "connection": false
+    },
+    "openai_max_tokens": {
+      "key": "openai_max_tokens",
+      "connection": false
+    },
+    "names_behavior": {
+      "key": "names_behavior",
+      "connection": false
+    },
+    "send_if_empty": {
+      "key": "send_if_empty",
+      "connection": false
+    },
+    "impersonation_prompt": {
+      "key": "impersonation_prompt",
+      "connection": false
+    },
+    "new_chat_prompt": {
+      "key": "new_chat_prompt",
+      "connection": false
+    },
+    "new_group_chat_prompt": {
+      "key": "new_group_chat_prompt",
+      "connection": false
+    },
+    "new_example_chat_prompt": {
+      "key": "new_example_chat_prompt",
+      "connection": false
+    },
+    "continue_nudge_prompt": {
+      "key": "continue_nudge_prompt",
+      "connection": false
+    },
+    "bias_preset_selected": {
+      "key": "bias_preset_selected",
+      "connection": false
+    },
+    "reverse_proxy": {
+      "key": "reverse_proxy",
+      "connection": true
+    },
+    "wi_format": {
+      "key": "wi_format",
+      "connection": false
+    },
+    "scenario_format": {
+      "key": "scenario_format",
+      "connection": false
+    },
+    "personality_format": {
+      "key": "personality_format",
+      "connection": false
+    },
+    "group_nudge_prompt": {
+      "key": "group_nudge_prompt",
+      "connection": false
+    },
+    "stream_openai": {
+      "key": "stream_openai",
+      "connection": false
+    },
+    "prompts": {
+      "key": "prompts",
+      "connection": false
+    },
+    "prompt_order": {
+      "key": "prompt_order",
+      "connection": false
+    },
+    "show_external_models": {
+      "key": "show_external_models",
+      "connection": true
+    },
+    "proxy_password": {
+      "key": "proxy_password",
+      "connection": true
+    },
+    "assistant_prefill": {
+      "key": "assistant_prefill",
+      "connection": false
+    },
+    "assistant_impersonation": {
+      "key": "assistant_impersonation",
+      "connection": false
+    },
+    "use_sysprompt": {
+      "key": "use_sysprompt",
+      "connection": false
+    },
+    "claude_fast_mode": {
+      "key": "claude_fast_mode",
+      "connection": false
+    },
+    "vertexai_auth_mode": {
+      "key": "vertexai_auth_mode",
+      "connection": true
+    },
+    "vertexai_region": {
+      "key": "vertexai_region",
+      "connection": true
+    },
+    "vertexai_express_project_id": {
+      "key": "vertexai_express_project_id",
+      "connection": true
+    },
+    "squash_system_messages": {
+      "key": "squash_system_messages",
+      "connection": false
+    },
+    "media_inlining": {
+      "key": "media_inlining",
+      "connection": false
+    },
+    "inline_image_quality": {
+      "key": "inline_image_quality",
+      "connection": false
+    },
+    "continue_prefill": {
+      "key": "continue_prefill",
+      "connection": false
+    },
+    "continue_postfix": {
+      "key": "continue_postfix",
+      "connection": false
+    },
+    "function_calling": {
+      "key": "function_calling",
+      "connection": false
+    },
+    "tool_call_recurse_limit": {
+      "key": "tool_call_recurse_limit",
+      "connection": false
+    },
+    "strip_old_tool_calls": {
+      "key": "strip_old_tool_calls",
+      "connection": false
+    },
+    "show_thoughts": {
+      "key": "show_thoughts",
+      "connection": false
+    },
+    "reasoning_effort": {
+      "key": "reasoning_effort",
+      "connection": false
+    },
+    "verbosity": {
+      "key": "verbosity",
+      "connection": false
+    },
+    "enable_web_search": {
+      "key": "enable_web_search",
+      "connection": false
+    },
+    "seed": {
+      "key": "seed",
+      "connection": false
+    },
+    "n": {
+      "key": "n",
+      "connection": false
+    },
+    "bypass_status_check": {
+      "key": "bypass_status_check",
+      "connection": true
+    },
+    "request_images": {
+      "key": "request_images",
+      "connection": false
+    },
+    "request_image_aspect_ratio": {
+      "key": "request_image_aspect_ratio",
+      "connection": false
+    },
+    "request_image_resolution": {
+      "key": "request_image_resolution",
+      "connection": false
+    },
+    "azure_base_url": {
+      "key": "azure_base_url",
+      "connection": true
+    },
+    "azure_deployment_name": {
+      "key": "azure_deployment_name",
+      "connection": true
+    },
+    "azure_api_version": {
+      "key": "azure_api_version",
+      "connection": true
+    },
+    "azure_openai_model": {
+      "key": "azure_openai_model",
+      "connection": true
+    },
+    "extensions": {
+      "key": "extensions",
+      "connection": false
+    }
+  }
+}

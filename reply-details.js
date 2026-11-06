@@ -1,8 +1,10 @@
+import {isMatrixReply} from './engine/tags.mjs';
+import {readMatrixDetails} from './engine/display.mjs';
 const actionPanel=new URL('./assets/actions/water-panel.png',import.meta.url).href;
 import {usesV3Reply} from './reply-protocol.js';
 import {readV3Details} from './six/reply.mjs';
 import {isOnePassReply,readOnePassDetails} from './onepass/reply.mjs';
-export const readReplyDetails=source=>isOnePassReply(source)?readOnePassDetails(source):usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
+export const readReplyDetails=source=>isMatrixReply(source)?readMatrixDetails(source):isOnePassReply(source)?readOnePassDetails(source):usesV3Reply(source)?readV3Details(source):readLegacyDetails(source);
 import {validateMemoryProjection} from './reader-core.js';
 import {emotionCatalog} from './emotion-catalog.js';
 import {readReplyBlock,readPublicReplyEnvelope,readReplyMemory} from './reply-formats.js';

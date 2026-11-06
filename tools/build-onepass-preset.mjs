@@ -8,5 +8,5 @@ const defaults=onePassEntries(fullDefaultConfiguration(),DEFAULT_MOODS);
 for(const p of preset.prompts){const id=p.identifier==='tisya_material_style_card'?'tisya_material_style':p.identifier;if(!p.marker&&Object.hasOwn(defaults,id)&&!['chatHistory','chatHistory／当前user'].includes(id))p.content=defaults[id];if(p.identifier==='tisya_selected_resources')p.content='';}
 const reference=preset.prompts.filter(p=>!p.marker&&p.enabled!==false).map(p=>p.content).filter(Boolean).join('\n\n');
 const builtin={...preset,name:'Tisya',extensions:{tisya_builtin:{id:'tisya-onepass-1',revision:createHash('sha256').update(JSON.stringify(preset)).digest('hex')}}};
-for(const [path,text] of [['presets/Tisya-One-Pass-1.json',JSON.stringify(preset,null,2)+'\n'],['presets/Tisya-One-Pass-1.txt',reference+'\n'],['presets/Tisya.json',JSON.stringify(builtin,null,2)+'\n']]){if(process.argv.includes('--check')){if(await read(path)!==text)throw Error('Stale '+path);}else await writeFile(new URL(path,root),text);}
+for(const [path,text] of [['presets/Tisya-One-Pass-1.json',JSON.stringify(preset,null,2)+'\n'],['presets/Tisya-One-Pass-1.txt',reference+'\n']]){if(process.argv.includes('--check')){if(await read(path)!==text)throw Error('Stale '+path);}else await writeFile(new URL(path,root),text);}
 console.log('One-pass preset: all '+preset.prompts.length+' original entries preserved');
