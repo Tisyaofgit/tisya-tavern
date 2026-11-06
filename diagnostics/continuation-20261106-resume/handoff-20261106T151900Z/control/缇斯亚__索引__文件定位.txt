@@ -1,0 +1,230 @@
+当前主实施恢复点：candidate/legacy-new-engine-20261106-resume @ ec0970d70710997000f673f9a114fec51111fec5，tree ba9dc0fa0cec375089a575e3a89cb48ee8927483。996源码/225宿主状态文件本轮空目录恢复通过。上轮1406回归及Linux真实宿主固定夹具验证已核；真实模型/Android未测。当前收束暂停，下一步自定义标签/配置点击/user绑定；唯一蓝图顶段为准。以下旧状态留存。
+当前主实施候选：candidate/legacy-new-engine-20261106-resume @ b2fe17de347dbc63d14ee29213dace5a98895209，tree e8a4e648200cac063d02dcac0192480fb3012d80。50专项、1406全回归通过；实际Linux宿主核验进行中，模型/Android未测。唯一蓝图顶段与时钟 continuation_resume_20261106 为当前接续，尚未安装交付。
+当前主实施legacy-new/engine，OLD-NEW-03～10未整体完成。补充实现与只读复现固定候选（非安装包）candidate/matrix-integration-20261106 @ a11747cc24ec3cad18f50b1701718b43ce01ba9d；tree c10a5b861c99671216fa8f927a9c1c4a64adc2f6，999文件恢复核验通过。来源、未完成接点与真实时钟看唯一蓝图顶段。
+前期设计记录（已由当前实施授权覆盖）：旧版增量接入新预设及表单推进；来源核验与方案见唯一蓝图libfile_38c4be789b488191afd346de39eb1374。固定旧源W77 3cc3ed1fb557e5840ba6eafacf25091d72e46d67；新预设候选libfile_b88ceddced088191ad923c0e82070041 v1，完整源映射libfile_4e6bcb6af020819195964dcc5166c3ad v3。
+
+当前W74本批试用：trial/reply6=51926539d6d431b09b2cc393a5efb241eee12258，tree590f07b3a9f75f81feb95b7404273a85e2009662，onepass.16-candidate.1，856文件一致；1361全套+后续35契约/2基点专项通过。完整任务未完成：原始分段创世及全提示剩余逐义复核待做。用户明确先试本批，能用再下一步；交付暂停等反馈，禁止后台展开后续。源w70-source当前work/w74-prompt-and-core-candidate，恢复w74-delivery-restore；完整状态看唯一蓝图末节。以下为历史。
+
+当前W73 onepass.15固定发布af9de889ac0bed26f3abdb4f6950f1ecf5b3a4d9，tree0275cf933b784f1fdcbf3186ae8f49c88ccfff2e，847文件一致，1359回归通过。当前W74转完整创世/直接设计基点/全提示词正向重写，未发布W74；唯一蓝图末节记录用户授权及核定缺口。完整设计阅读稿v37的68项为职责卡，具体已读第92—168行，非68次串行模型调用。以下为旧记录。
+
+当前W72 onepass.14：trial/reply6=6ae87d63fb002f9b9ba82e3cdede0c3149a95c8a；tree461ab5f9c9620ee262385e9a1062ba55b7f2cc4c；840文件一致，1355回归通过。失败正文+错误+响应诊断，脱敏复制/文件导出已完成。原空响应根因待新版诊断，未测真实模型/Android。源码w70-source/work/w72-response-diagnostics；证据固定提交docs/validation/w72，恢复w72-restore。唯一蓝图末节为W72，以下旧状态保留为历史。
+
+当前W71 onepass.13：trial/reply6固定9abbdde13c4ebcfc86a0ad25b7d4047a756441d4；tree8b4f05c3be714441f912b6603b7f033fd6a9e2ef；833文件一致，1349测试通过。自动人物槽/点子开世界/游玩中增补修订表单已完成。唯一蓝图末节为W71状态；以下W70及更早记录保留为历史。
+源码执行：/workspace/scratch/a82b391acf8b/w70-source；恢复：/workspace/scratch/a82b391acf8b/w71-restore；证据：固定提交docs/validation/w71。真实宿主/模型/Android待验；穿越重生专用流程及生命线结算仍待做。
+
+当前W70第一阶段已发布：trial/reply6=b8184b646ca2323d5dcdc7f90d19a12a17079271，tree9ebf7db0eeb17950c00c9d969a3e915f4430b042，onepass.12；823远端文件逐项一致，1335回归通过。完整分层表单/归档下轮读取/基点人生阶段与全局选择/条件主线资料已接；表单字符预算取消。Tisya.json仍v5，字节未改。真实安装宿主/供应商模型/Android未新测；穿越重生专用流程、时间区间与生命线结算待做。唯一蓝图W70末节与同一时钟为准，源码固定Git不另打包。
+
+历史W69记录：
+当前W69已发布：trial/reply6=535df4777a93c89d2cba16963589acce9ee110e8，tree4f6cd8d1fb2557d9ecc63ec6a53a8c3d6f8ce87e，onepass.11；815文件远端逐项一致。摘要空占位/候选说明兼容；台词P段号及完整原文/来源配对，正文对白连续编号；本轮记忆接工程内V3共享归档校验及原生书单次写入/分层档案。1323回归、重开/下轮/重骰夹具通过；真实模型/安装宿主/Android未新测。Tisya.json原身份v5；当前唯一蓝图末节W69。更新扩展后刷新Tisya预设，源码固定Git，不另打包。
+
+历史W68：当前W67—W68已发布：trial/reply6=0b95d5121f9fc02f086dcfd4b829e5144c0233b6，tree82e75d6fe5e5dbeceee799b992a11f5b68a2bbc0，onepass.10；809远端文件path/mode/blob SHA全部一致。完整水光九切片底图、24px长内容四宽无裁切、点击光晕保留；凝视双轴组合、user倾向与两个审美框、C02归基调。1317回归。Tisya.json原身份v4。源码固定Git，不另打包；唯一蓝图末节W67—W68为当前状态，更新扩展后刷新Tisya预设。真实模型/Android待验，无后台任务。
+
+历史W66：当前W66已发布：trial/reply6=52fe89b15ffa7e01ea35c4ddc95abfb1d231e011，tree 120bd2130b045cc3278e29ba4b2e3aed8138ffac，onepass.9。三类文风卡已接入；视角卡含女凝、男凝、user→char、char→user及观众凝视。整片水叶行动与局部按压/点击光晕已实装，原十一块、上下心声及写入/发送模式保留。1313回归通过，795远端文件逐一核对一致；模型/Android未验。源码w66-source，本地commit d494f23与远端同树。Tisya.json字节未改仍v3。原生接口发布，无上传脚本回退；唯一完整进度见蓝图W66完成节。无后台自续。
+
+历史W65记录：
+当前W65已发布：trial/reply6=fa736489bfb77b8aac704cc35c424897706edd1c，tree a709eb8a24f27afa5e838edf0f34e3d13510648c，onepass.8。当前十一块骨架保留，配置分类接入、完整主动性、上下心声、原生资源与主控/关注路由及已批准裂隙UI已交付。1308回归通过；787远端路径/mode/blob SHA与本地恢复树逐一一致。当前Tisya.json沿libfile_56b6eac826a08191a914dab4ab99091c v3，87272bytes，SHA256 40f2bac93e0eec57b9d4f222c83ef4d25e9f3f8c8955104dc13430af7b5dae66。全部实际发布/上传走原生接口；旧传输脚本副本已删，不重取为上传回退。真实模型/Android未验；更新扩展重启后点更新Tisya预设，等待手机反馈。唯一完整进度见蓝图W65发布完成节及同一时钟，无后台自续。
+
+以下 W59/W58 等旧记录仅为历史，不覆盖 W61：
+
+W58最终成功回执：源检查点v21为33709821bytes增量，SHA a9f82c3b59e00192a9841d0eb3bdbe9bf586cee1d66f9aa9a958cc23f084e006，BASE引用完整v20；预设JSON原ID成功v1。全部走原生文件接口。
+W58保存路线：用户要求原生上传接口；本次最新源检查点为增量，BASE.json引用原完整v20(file_00000000336c81f5aef52771ca8db0a7)。预设原生保存v1已可下载。大包上传失败未替换，最终版本以回执为准。
+当前W58：trial/reply6=fe705271f61ae2d0771688bfd7c445a1769d4e21，onepass.2，完整纯文字JSON+动态配置注入检查；1248测试通过、原生一次发送填表及重骰通过，最终发送messages与本地API一致。755源码/1737原生文件恢复通过。源码固定Git，CURRENT diagnostics/w58-final；Android/外部模型未测。旧W57及以下仅历史。
+
+W55最终：trial/reply6 @769d6a936c0ad177c0e4113142767c8318bc4004 / reply6.3；1223测试、原生45条发送通过。六块预设/解析/美化配套，候选独立显示，旧62条与分隔保持。main仍reply6.2。唯一完整进度看蓝图末节；最新检查点CURRENT为w55-final。
+
+当前W55（2026-10-26）：reply6.2已发布，固定Git01e33f1ff6dba9879f9401fb6e9b1b63029ff2c2/tree3c474e27069def9a4b72448c16685cc786f1fa6d。保留旧62条名称/角色/开关/排序/分隔，仅23条content更新；配套六块回复与旧十块读取并存。1221测试通过，真实Linux原生发送/重骰/坏行保留正文后继续/41条冷重开通过；真实供应商、Android仍未测。744源与1698原生文件空目录恢复逐哈希验证。源检查点沿libfile_437522eca0ac8191bf9775b76ba23d04，CURRENT指向W55；主程序仍v11；蓝图libfile_38c4be789b488191afd346de39eb1374末节与时钟是唯一进度。当前停止，不后台自续。
+
+以下W42及其他旧记录均为历史，不覆盖W55：
+
+当前W42：本地原生TT已实测，最终无探针runtime摘要42f40738…、606安装文件与候选一致；2035自动化通过，长档删除8336/7354/8142ms，性能仍不合格。补录4commit冷重开各1份、长档前132/父短档11原文保留；分支UI与service成功。共享增量工作区尚未实施，唯一下一步见蓝图末节W42。当前源码c418b739及工作树补丁，正式基线不动、未推送、Android/Lux未测。已保存源码v4、整现场v6；两包重取回SHA/CRC通过，整包SHA 794f2eff06d7ddfe0f98ee296a165f06f64ad2d8fd034b679a75dfdbb692b4b5。最新保存回执见蓝图W42末尾。
+
+以下W41及更早均为历史：
+
+当前W41候选：c418b739及未提交懒加载/并行读改动，未推送未发布；2034自动化与15打包通过，1416源码文件空目录恢复一致。原生长档保存66982→40113ms，删除14566–15959ms；最新UI/并行改动未原生复测，Android/Lux未测。中断现场无正常关闭回执，不宣称冷启动通过。当前唯一待办看蓝图末节W41，源码断点v3、整现场v5已保存并重取回SHA/CRC一致；整包SHA256 17abdba682dfc41494d730c562128d6074bba82349b9d39944084f7e6a5791c0。
+
+以下W40及更早为历史依据：
+
+当前W40：候选a6ddeb8a2c96021d623fdcb9e19aad12e9ccf70b未推送未发布；2022回归+14打包通过。独立表单推进/取消迟到响应/重试、Luc偏好隔离原生通过；108消息原文保留，53/53来源全量补录完成。性能仍未验收：删除6–7秒、分支41.145秒、末批10来源保存88.779秒。Android/Lux待验。完整ZIP原ID libfile_b8b4934864908191840a12f0b2052daa v4，215805769bytes，SHA256 65450e12893caec4242eb0a00e44d329ca6615c62ea35e9404a412a1df36459a；4241载荷、真实冷启动及重下载SHA通过。W40源码补丁断点libfile_437522eca0ac8191bf9775b76ba23d04 v2。唯一完整接续看蓝图末节W40与时钟；先分段计时长档保存，不删关键一致性守卫。所有宿主已关闭。
+
+以下为历史断点，不覆盖当前W40：
+
+当前W39：候选6dce76b（产品aa4d123）未推送未发布；2016回归+14打包通过。分支/高级重骰/偏好确认/4轮普通RP及前三轮归档/非空离场世界推演/角色会话切换/世界书编辑已实测。性能未验收（删除7–10秒、分支48.821秒）；独立表单推进、身份偏好隔离、全量补录和Android/Lux未完成。完整ZIP沿原ID libfile_b8b4934864908191840a12f0b2052daa v3，200643122bytes，SHA256 ee6c0054f9b48aa8ebc9b0acc0f9513d4db5b3caaa1d031c9084302d0eca3233。接续只读唯一蓝图末节W39和当前时钟。
+
+以下均为历史断点：
+
+当前W38：本地候选c29d06f5b11a4596c62f113c228f402808d640a0；2013测试通过但原生全流程/性能未验收。W38整包沿libfile_b8b4934864908191840a12f0b2052daa更新；SHA256 e82ce8953a1b7519bb9940711510b4e175158ba576683bfb01f112a8bc6f282f。唯一进度看蓝图末节W38/W39，旧条目不得覆盖。
+
+W37已暂停 2026-10-25T05:47:39.695252+00:00：整包v1重新下载SHA核验一致，所有宿主关闭；校验记录v3。未发布，完整验收仍未通过。
+
+2026-10-25 W37当前断点：测试候选未发布；本地源码7a03861975c98fa05e933ab75f98f9624424211a，tree513bdd1afe9ac78e877403dea34672e5a397933d。自动审核拒绝git push，远端仍dedd4ce；包内provenance/w37-candidate.patch可恢复未推送改动。正式主线仍0.3.5-w34.1。
+完整Linux测试酒馆沿原身份libfile_b8b4934864908191840a12f0b2052daa v1，188388790bytes，SHA256 0a3822af5b29064543f98c43a8e2387ffd72dc264b8c2351a0dc7bfb22862742。2932载荷哈希一致，解压副本实际启动并正常关闭；verification libfile_1369a8df0c2c8191a6e7a95f236f727d v2。
+已完成原卡四步建角、开局重骰A/B、首轮普通RP、3项开场归档、删除后冷重开；未完成三轮RP/世界/偏好全验收，删除22.362秒性能不通过。蓝图libfile_38c4be789b488191afd346de39eb1374末节为唯一完整边界。MVU双版本择一设置未改。
+以下W36/W35及更早均为历史断点，不覆盖当前W37结果：
+
+2026-10-25 W36中断后核对：候选源码固定Git dedd4ce72e6d51511efc7b44153e6811a2a4125c，未发布；W36新整包未保存，临时状态已被环境回收。可恢复测试整包仍为W35 libfile_b8b4934864908191840a12f0b2052daa。最新完整边界与恢复顺序见唯一蓝图libfile_38c4be789b488191afd346de39eb1374末节；三轮A/B及完整归档/世界/偏好尚未验收。时钟已收束，不自动续跑。
+
+当前W35接续（2026-10-25）：候选0.3.6-w35.1未发布；唯一业务进度从蓝图libfile_38c4be789b488191afd346de39eb1374的W35收尾节恢复。源码与工具Git分支codex/w35-native-fullflow-fixes，a5beffb2c54ff6272467249d4aa348ca37c16aee，tree25cb6e01065f6e05cc05ce79de1dee3f2d4891cb。
+整测试酒馆：libfile_b8b4934864908191840a12f0b2052daa（Tisya_W35_TestTavern_Linux_x64.zip，198156599bytes，SHA25657c017559cbe0a106a32f886d15c2fc7b9d091deba9a51a372d869c12b52e141）；解压2342载荷一致，已从Library重下核对。恢复说明/私有请求/当前原生存档均在包内。已有7项核心底档真实保存；开局/三楼A/B/归档世界推演偏好尚未验收，不能据组件测试发布。用户MVU两版择一说明保留，不改开关。
+以下均为此前窗口定位，不能覆盖以上当前断点：
+
+W34当前正式版本：0.3.5-w34.1；源码510d6c4794a04407f7002a6a227f0063ae82894c，tree1fd26043ec055eba548b5210b9787a8e00f64e20，main及manifest已读回。自动卡/绑定书初始化、独立开局与聊天选楼补档恢复；1925/1925及15构建，1222文件恢复一致。手机/真实模型待现场反馈。证据Git docs/validation/w34；同一工作副本/workspace/scratch/289ae625ecae/tisya-w33。当前唯一蓝图W34完成节与原时钟为准。
+
+以下W33及更早为历史依据，不覆盖当前W34结果：
+
+W33当前正式版本：0.3.4-w33.1；源码e6598c3f858433d88a6909d1ede7d96627fbabdc，tree38ed6a1e275cf25d11cfb5be87fac615802e3d66，main及manifest已读回。1877/1877与15构建，1192文件恢复。发送阻断、入口导航、偏好可视化和身份隔离已修；世界书模块现场加载仍待实际宿主版本与用户反馈。当前唯一蓝图末节W33为准，证据docs/validation/w33；工作副本/workspace/scratch/289ae625ecae/tisya-w33。
+
+以下为历史定位与来源追溯，不覆盖上面的W33当前状态：
+
+当前正式发布W31：0.3.2-w31.1。生产源码提交b1ed0396e7988c5446b24a55dd6ee4361b067556，tree 0f495aa0164e84dcd29fe704c40387f855a3d3a8；main与manifest已读回。完整npm test 1459+376=1835项全过，15生成检查，1107文件恢复一致。自动Tisya主预设与内嵌辅助已交付；原始证据及恢复清单位于Git docs/validation/w31。唯一蓝图W31发布完成节为当前断点；Android/外部模型待实际反馈。
+
+以下历史断点已被W31完成状态取代；仅作来源追溯，不再作为当前失败或发布状态：
+
+当前W30暂停：候选bc04af5da2b24e1e9791d09dd813d1a9f0093ae4，tree d0cb79c9b77646dcdafe811b789aafe10df16912，远端work/w30-managed-preset-20261024；1047文件恢复一致。旧套件1399/1403，4项shell失败；核心374/374为上一保存点。自动Tisya主预设及内嵌辅助已实现但未发布，下一步见唯一蓝图W30最终暂停。
+
+当前W29候选：本地commit6e0d390e8417f89de33413773e0af2207b837efc；远端保存未核验，禁止发布。A/B完整预设v2已保存；V3 326/349，旧测试1269/1454，剩余失败详见唯一蓝图W29收尾与Tisya_W29_checkpoint.json。
+
+当前正式发布：0.3.1-w28.1，main提交b5096361c8a372a8d877f0f69af29462d36a4dd7，tree38cf39a3aa6987c03ad79581e281d7b8bb05d76d。手机建书误报修复；全局基点／配置及身份偏好子节点已发布，main与manifest读回通过。专项13/13；全量201既有失败未新增；Android待用户验收。源码唯一真源Git；唯一蓝图W28节为当前断点。更新时间UTC 2026-10-24T10:15:34.413652+00:00。
+
+以下为历史发布与定位记录：
+当前正式发布：0.3.0-w26.1，main提交03aeed529ea09fc1c6014f5e89497a364a456c4b，tree3ae2064d18218eaddc3c2de95f837dd445256661。用户前端过稿后已发布并读回。源码唯一真源Git；完整恢复与验收边界见唯一蓝图W27最终。更新时间UTC 2026-10-24T09:19:14.531818+00:00。
+
+2026-10-24 W26当前断点：0.3.0-w26.1 图鉴/时间轴/标签批确认/基点配置/小缇双模式已完成。
+试玩：libfile_6e4f29dc29788191b0c289030acbb8d7 v2；source map：libfile_0894a424a75881918acb0ce51d0ae5e4；普通源回执：libfile_cbcead1dbba481918e34f9563f756af3；功能审计：libfile_e0781fca419081919573da9926bd7f4e。
+完整源码912文件可逐字节重建；W25恢复映射保留历史file_id，W22缺源边界不变。前端未发布，用户过稿后直接发布既有安装仓库。当前唯一蓝图W26最终节和恢复清单w26_implementation为准。
+
+2026-10-24 W25当前线程：完整英文A/B+V3插件0.3.0-w25.1已接入统一工作台和旅程；现交可试玩前端，用户前端过稿后直接发布。生产源已保存，未发布安装仓库、未做Android真机验收。
+试玩：libfile_6e4f29dc29788191b0c289030acbb8d7（Tisya_UI_Preview.html）
+逐文件源码恢复映射：libfile_4b44181e72908191886e64f2cbad75a3（source-recovery-map.json）
+完整叙事预设：libfile_8cd29c1925308191b3a6cb3c4a561f2e；完整辅助预设：libfile_553e96b72ca881919bc0c05de89f879e。
+最终集成证据：libfile_f54c9b38780c81919678c15cea44a96e；普通源上传回执：libfile_a669ff81042481918e19f8ece597c604（197项成功）。
+唯一蓝图libfile_38c4be789b488191afd346de39eb1374与恢复清单libfile_8045e9eeb7a4819185698256cfc74eef的W25节为当前断点；离线前端包不列用户下载交付。
+以下保留历史定位，其完成范围不覆盖本轮结果。
+
+2026-10-24 W24当前线程：表单推进V3新协议已独立实现，本地2.4.0模拟155项通过；旧插件UI尚未接入，W22仍缺223个精确源码文件。完整断点以唯一蓝图W24最终节为准。
+/工作区/tavo插件-缇斯亚/00_项目入口/Tisya-Forms-V3.mjs
+libfile_51b6423f47d88191a44bf395b1b1ddcb，v0
+/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V3_token审计.json
+libfile_132eec9a7bcc8191a53a4a3f77610c77，v0
+/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V3_完整表格契约.json
+libfile_44db7e8b025081918937df3bbcce7c9c，v0
+/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V3_完整表格组.txt
+libfile_93f06f7819a08191b58390bfdbe43045，v0
+/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V3_接入与验收.txt
+libfile_b2fdc246c2148191ba85a33883db7095，v0
+/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚_表单推进V3_极简填表预设_EN.txt
+libfile_8c47a518ae7081919874530c1b930060，v0
+V3新源码与复现材料：/工作区/tavo插件-缇斯亚/03_源码与历史基线/表单全流程开发/W24/；逐文件恢复映射沿用libfile_8045e9eeb7a4819185698256cfc74eef。以下旧正式产品与历史线程定位保留，各自验收范围不混同。
+
+缇斯亚项目：唯一基线入口
+更新：2026-10-22；本轮全库可见1504文件，ZIP为0。
+基线根：/资料区/缇斯亚/
+
+当前任务：/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚__蓝图__任务与断点.md
+libfile_38c4be789b488191afd346de39eb1374
+项目指令：libfile_1a6878896f9c81919224dee965e17aa2
+完整设计：02_设计与契约/缇斯亚__蓝图__完整设计阅读稿.html
+libfile_33f29ab301748191ba7440befa70c62f，v37；有效旧契约已归并。
+
+01_当前交付：alpha31.31.18正式源码与使用说明libfile_48a341164328819186a6c4f599c29db7，APK0.7.0及必要只读人物资料。
+02_设计与契约：完整设计、必要原格式契约；表格与交互参考/保存独立交互稿和XLSX。
+03_源码与历史基线：当前必要依赖与验证依据。纯旧包/旧断点/旧源码散件已清除。
+05_主题与美化：可编辑主题与必要素材。
+06_素材图库/主页水相原稿与制作源：54份现行制作源及认可原稿，9项外部依赖已实际闭合，manifest v2；不是待恢复旧包。
+08_宿主安装包：必要宿主输入。
+原始聊天与角色卡：原始资料及两份人物JSON原型；原型不是当前已验收人物事实。
+
+正式源码固定Git提交33b7256c88687e45a845e20eb9819143f4645235，tree dcce5b2be55ddf8e9c08ebdaf0a78f9b89093341；705项对照和空目录重建为上一窗口证据，本轮未新增真实模型或Android验收。
+
+工作区仍保留W97 v24（libfile_f361380646d081918cdc623cbf17669b）、当前蓝图、PowerBox连接与预设诊断。W97仍缺31项精确源码，12项逐源语义核定未完成；未业务保存、未进入第三阶段、未替换正式UI。保留“润色转述”，不恢复已撤回的简化修法。
+
+全库现行路径与别名：libfile_2ca9bba3cbcc8191b91c1411ab000a46。
+全库整理记录：/资料区/00_资料库导航/全库整理/清理状态/phase-progress.json（libfile_32e9c166a5948191ba070c8f1686be1f）。
+查找与去重工具：libfile_35608fe9cdd08191b07488deb6fcb532。
+已完成工作合回以上原身份；不再新建平行总档、ZIP或纯旧恢复副本。
+
+2026-10-22 清理收尾：ZIP为0；280个空旧目录已清除；历史成员索引已删除；整理台账从55,729,858字节精简为10,329,149字节，当前来源关系保留。完成的全库整理工作区已合入 /资料区/00_资料库导航/全库整理/，沿用稳定身份。工作区只留未完成项目，完成后合回所属资料区唯一基线。W97缺源31项、语义复核12项及试听/联调边界未改变。保存核验以同点 manifest.json 为准。
+
+W32当前正式版本：0.3.3-w32.1；Git main生产提交b45c98b0157db691b7d697810c454443395f73a7，tree 33bcc9ffb1b839fd12133a4567a43dea99b8dfc8。本地源码/workspace/scratch/8af76944f38d/w29-fix（94367910cf6560219010e22b8a8fcc43e4d88f02同树）；验证docs/validation/w32。唯一蓝图及时钟沿原Library身份，W32真实15:36:36Z起点、17:06:36Z截止未重置，2026-10-24T16:05:47.187197+00:00完成暂停。原文只读/写入分离和预设状态已修，1843/1843、15构建、1135文件恢复；Android待用户反馈。
+
+W43（2026-10-25）共享增量工作区已实施：message-workspace.js、reader.js、v3/host-sources.mjs、original-store.mjs、journey.mjs/journey-view.mjs；2042+15通过，最终runtime e635a803fad6bc06c0e8ba0248c0e5267de0dffe5d267bb25d61f36fa74b9b26。最新完整patch及1418文件恢复证明在源码断点diagnostics/w43；整现场provenance/current-source-checkpoint.zip为同包，CURRENT.json以W43为准。独立Branch #7保留失败证据、正常候选切换以Branch #8为准。性能与限制详蓝图W43。
+
+W43当前最终为物理世界书工作区版：v3/worldbook-workspace.mjs（IndexedDB条目差异日志、批次合并提交、编辑事件失效），book-host/books/host/application/index接入；最终runtime c670d64274e33527c9af60626485fed12a62fb5aa039fae265ddf5638a96a608，1420源码/608安装文件，2050+15通过。此前e635a803与phase1性能均为中途阶段，最新CURRENT.json/蓝图W43末段为准。源码包/完整现场仍替换原身份，不发布正式版。
+
+W43当前世界书工作区候选：完整包253654299字节SHA256 f999f1139626c5eb50447da5ced938f98196a6303894e370f3411b9429b4dbe6；源码8609763字节SHA256 b3f90ca1c034c304c630e82f0df21b2b81f1b8e254284c04d1bf3898e44189c2。冷恢复通过，原身份保存回执见蓝图最终段。
+
+W44当前候选：runtime 387017dbf392d8f564f6c6b3dc3e51c623342882eeca104717f425abdd6b022a；源码补丁 diagnostics/w44/w44-candidate.patch，完整恢复证明 diagnostics/w44/w44-source-checkpoint.json。2060自动测试、24追加installer、15打包通过。真实140楼删楼中位6.458→4.223秒（3+3次），世界书0新增IO；不代表全业务/Android验收。完整包与源码继续替换原W35/W40稳定身份，W34不动。
+
+W44续做最终：runtime75e7c0f0e14feddf593e404d56efee83652f61d6acb60fa0f7a76638ef88508c；diagnostics/w44b/w44b-candidate.patch + w44b-source-checkpoint.json（1427文件），2076回归；真实生成与副本恢复见diagnostics/w44b-flow/summary.json/overlay，不能直接将独立副本分支合并主档。段号协议缺口待定向修订，native阶段耗时/代码版本分界见results-summary.json。
+
+
+W44 最终收尾定位（2026-10-25）：此前 W44/续做段落为阶段记录，以此与蓝图末段为当前状态。
+- 可运行 TT：原身份 libfile_b8b4934864908191840a12f0b2052daa v9，W44b runtime 75e7c0f0e14feddf593e404d56efee83652f61d6acb60fa0f7a76638ef88508c，2076 全回归及 15 打包通过；不含 W44c 预设精确说明。
+- W44c 源码 checkpoint：原身份 libfile_437522eca0ac8191bf9775b76ba23d04，预计 v8（由 v7 替换，最终以保存回执为准）；包含预设原格式“1 正文”（数字后一个 ASCII 空格）的精确说明、定向迁移及已生成 runtime。实际 TT 安装/冷启动迁移验证待续，不能与 TT v9 混同。
+- W44c 测试：/workspace/scratch/289ae625ecae/w44c-evidence/targeted.tap，209 项定向全过。解析器和 reply 测试已逐字恢复 /workspace/scratch/ec2de1cbf7cb/w44b-source-restore-readback-final 对应基线，未保留 1. 支持。
+- W44b 性能和覆盖：/workspace/scratch/289ae625ecae/w44b-evidence/results-summary.json；独立原生流证据 /workspace/scratch/289ae625ecae/w44b-flow-evidence/，归档内 diagnostics/w44b-flow/summary.json。成功 A/B 为 6c39 版本，最终 75e7 的新 A/B 延迟与 W44c 原生升级未验收；独立副本不可覆盖父档。
+- 当前代码：/workspace/scratch/289ae625ecae/w37-source。断点蓝图：/workspace/scratch/289ae625ecae/recovery-meta/缇斯亚__蓝图__任务与断点.md。时钟：/workspace/scratch/289ae625ecae/recovery-meta/initialization-ui-clock.json（父代理收尾暂停，W44 起点 13:27:48.194497Z / 截止 14:57:48.194497Z 不重置）。
+
+W45阶段源码：diagnostics/w45/phase1/candidate.patch + source-checkpoint.json，runtime 3dbd657c82215ba28b3b710accddde947c32ecacd556cc582f69f821c28ed4f7，1434文件一致；功能验证中，TTv9尚未更新。本阶段UTC 2026-10-25T15:43:02.337296+00:00 / 北京时间 2026-10-25T23:43:02.337296+08:00，准确当前状态看唯一蓝图W45末段。
+
+W45最终 2026-10-25T16:19:37.188769+00:00 / 2026-10-26T00:19:37.188769+08:00：runtime8c43e1c7…d07ed89；2150回归+15打包通过；1434源码精确恢复。TT/source沿原身份更新，最终版本以当前回执为准。源码入口CURRENT.json→diagnostics/w45/final-source；主TT保有168持久记录，另存isolated-state.zip与精确W44b v9恢复要求；最终包冷验见同名verification.json。卡配置直接快启动、TT冷设置保存、重骰10次整chat提交为下一明确断点。
+
+W45最终保存回执与恢复落点补充（2026-10-25T16:28:12.098730+00:00）：TT与源码均原身份v10，先前verification v18及蓝图286/定位218/clock47/总索引84保存成功。取回TT/source字节SHA与ZIP CRC均一致，TT内runtime、嵌套源码及实际独立IDB现场SHA均核对通过。注意独立现场ZIP实际位置是TT的provenance/current-source-checkpoint.zip内部diagnostics/w45/cache-native-final/isolated-state.zip，或单独源码checkpoint的同一内部路径；外层TT diagnostics按既有规则只收文本，因此不能直接在外层diagnostics找该ZIP。数据未遗漏，无需重建/重发主包；本次仅补精确恢复定位及已保存字节回读证明。最终verification与当前蓝图/时钟以随后同身份保存回执为准。
+
+W46 phase1（UTC 2026-10-25T17:15:48.968697+00:00 / 北京时间 2026-10-26T01:15:48.968697+08:00）：本地候选Tisya_W40_source_checkpoint.zip，CURRENT→diagnostics/w46/final-source，runtime09cb5164，1441文件双恢复；V3 737/737、root 1499/1499，失败0。最终native A/B与main冷开待验，TT主交付仍W45 v10；本阶段未上传/改总索引。实际独立IDB overlay在源码ZIP diagnostics/w46/pre-final-native-state/isolated-state.zip，SHA8978baec6e4aec37d6ed67b809843a8e411f94958cc20a22dd1e1081ceb22bf3，只叠固定W44b v9到独立包根，523变32删1518恢复已验。W46 active至18:08:29Z，17:53停止新实验，不pause。
+
+
+### W46 最终原生验收与封包冻结（UTC 2026-10-25T17:47:48.740594+00:00；北京时间 2026-10-26T01:47:48.740594+08:00）
+最终 runtime09cb51648b79f84c59fca2df97c8fc20dfe45e43d43d032dbbe6977f6e2cf74a；源码1441文件两次空目录恢复及全部测试后的重核均精确一致，8个新增文件已收入完整patch。1499+737=2236自动回归、15打包测试全部通过；早期失败/fixture修订及未连接的原生发送早退记录保留。主现场140消息/168持久记录两次冷开，revision不变、世界书0IO、保护数据0变化。最终独立高级重骰完整A/B通过，7/7缓存exact、原候选保留；世界书编辑后的原生普通Send完整A/B通过，9/9缓存exact、旧7条全字段保留、无pending/blocked，注释恢复且新增ledger保留。所有宿主17:42:04Z已关闭。
+实测高级重骰程序段16.256秒（模型/代理等待另计），旧8c43诊断参照25.042秒；不是重复受控基准。聊天10次全文提交→4全文+2metadata，世界书读取50→10、物理写仍1次。已合并原子准备、来源/control/feedback/pending、真实回执复用与同书来源；只记录实际消费依赖、局部journal复用绑定lease；保留发送/写入前fresh边界、外部变更失效和失败pending。MVU助手自身debounce全量提交无落盘回执，不能安全删除我们的确认保存。B尾8.150秒中两个payload窗口合计1.198秒、世界书末端0.464秒；未覆盖等待不冒称已定位成渲染/CPU。
+完整最终证据见source ZIP diagnostics/w46/results-summary.json。实际独立IDB/聊天/配置恢复包SHA585728c4c8c5620c27437d2f31b7def9e6b37bba3915f2ee7ee1ead46a2d9600，29268883字节，固定W44b TT v9 SHAe198da9e1928a25e3fc48e64c24415ab368e797b90a72b7cd6e76d7cae7e6866+overlay完整恢复1516文件及目录通过。准确路径：源码ZIP内diagnostics/w46/final-native-state/isolated-state.zip；TT内provenance/current-source-checkpoint.zip再进入同一路径，外层TT diagnostics仅文本。只恢复到固定v9的独立根，不合入主档。
+代码/原生实验至此冻结；进入整包新解压冷启、原身份保存及远端字节核对，成功状态以随后保存回执及外部verification为准。原90分钟截止18:08:29Z不重置。Linux本地真实宿主通过，不等于Android/Lux、外部模型供应商或全历史业务矩阵全过；不发布、不推送。
+
+
+### W46 保存读回闭环（UTC 2026-10-25T17:56:26.926707+00:00；北京时间 2026-10-26T01:56:26.926707+08:00）
+真实保存成功回执已核：TT v11（libfile_b8b4934864908191840a12f0b2052daa，407712243字节，SHA59198e2c36cf1f3c35b1de7977dbd63c8f80777f7343e422bfb59abf91edb2a4）；源码v12（libfile_437522eca0ac8191bf9775b76ba23d04，121158160字节，SHAca5ea7db7e911a58d34c2b74de22ec0a795ed805f48e13859ce3c1f2e5ba8dc9）。两包已实际重新取回，SHA/字节数/ZIP CRC/内嵌源码与最终IDB overlay全部一致。SHA与成员清单均v11，首次外部verification v20、蓝图v289/定位v221/时钟v50成功；本段及完整恢复诊断另作原身份收尾替换，以后续真实回执为准。
+新解压实际native恢复核验：初始168记录所有revision精确恢复；开档后167非卡记录不变、140正文exact、卡正文及owner逐字段exact、世界书0读写、无pending。严格“全部168后续revision不变”断言失败保留；直接读取真实IDB卡完整payload叶差异证实唯一data.card.date_added从1792939310982变为1792950709231，触发1条卡快照更新，不是消息/世界书/配置全量重建。不得改写为严格全绿。另一次诊断解压副本因可执行权限0644启动失败，在未启动浏览器状态按ZIP0755等权限恢复后重试；原失败、权限修复、重试输出全部保留于外部verification。未改变产品源码或弱化原断言，未因Mvu undefined捏造未就绪结论。所有native最终已关闭。
+最终外部verification保留初次严格失败、权限失败、真实card字段差异、诊断脚本、成功保存收据和远端字节核验；包内checkpoint是封包前真实冻结记录，若状态不同以本段/外部verification及最新实际保存回执为准。最终2236回归和15打包通过；高级重骰与普通发送完整A/B通过，覆盖范围仍为Linux本地实际请求代理响应，非Android/Lux或外部模型全矩阵。剩余优化点明确保留：第三方MVU助手缺可信落盘回执的debounce全文保存；B尾未归因等待；新解压date_added导致一次完整card记录替换可后续考虑局部字段化。无后台任务、不自动续跑、不发布。
+
+
+## W47 用户明确授权更新发表
+UTC2026-10-25T18:26:16Z/北京时间2026-10-26T02:26:16+08:00起，沿用90分钟上限。用户“你先给我更新发表一下？现在这个版本全链路通了正常聊天可用了吧”授权将W46已测实现发布现有Tisyaofgit/tisya-tavern main，覆盖此前仅候选不发布限制。main先核805b01c；独立release/w47副本，版本0.3.6-w47.1。公开实现与干净验证摘要，私人TT聊天/IDB不公开。Linux普通聊天完整A/B已证，Android/外部模型待验。发布以实际commit/ref及读回为准。
+
+
+### W47 发布候选已准备，公开推送被自动审批拦截
+UTC 2026-10-25T18:38:50.964846+00:00 / 北京时间 2026-10-26T02:38:50.964846+08:00。候选0.3.6-w47.1，本地commit bb911a9a13505751cb782140206b3bd33396010c，base 805b01c51271c4256d8e1567a29afbcc4604bd36，1323文件空目录base+binary patch恢复全部精确一致。发布前npm test重跑1499+737=2236项通过，build check通过；runtime SHA13e99c6f4ef3c57490c29f4ef718bde3d72af739447f51934dd0fc2ef9ea765d，仅将版本字面量归一化即可与W46最终09cb逐字节相同，host-runtime完全相同。公开草稿仅实现、测试和干净验证摘要；无私人聊天/角色卡/世界书/IDB，W46原始现场证据仍私有保留。
+自动审批明确拒绝公开推送，理由：用户“更新发表”没有在可信用户文本中明确指定此公开仓库和具体源码披露范围。没有绕过或换工具重试；再次读取main manifest仍0.3.5-w34.1。**尚未发表**。需要用户明确批准“将0.3.6-w47.1插件源码和验证摘要发布到公开仓库Tisyaofgit/tisya-tavern的main分支；不公开私人TT数据”。确认后只需复核main未变、提交该已验证本地commit并读回；不重做功能、不重复跑已有无变化回归。
+本次source checkpoint继续替换原身份；CURRENT将定位diagnostics/w47/publication.patch及prepared-publication.json。W46实际TT包保持v11且未重新标号；之前W46源码、实际native证据仍留存。正常聊天Linux原生A/B主链已通，Android及用户实际API待设备验收；不称全平台全部功能全绿。
+
+
+## W48 已发布与 W49 待核问题（2026-10-26 北京时间03:59）
+W48 发布0.3.7-w48.1，公开commit a56aa6796910d36ac793e13734da8242c55b2602，tree 6903bb76d5f73a743f39c1a4c401b3a3d83abc9d；本地693c80b同树。2244回归通过（1499+745）。原生TT隔离Branch18、本地固定响应验证SAFETY失败原错保留及安全同步、显式关辅助后重骰、普通发送7→9条且前文保留、旧阻塞手动同步。真实外部模型和Android未测，不能据此声称全链路可用。冷重开确认插件新版本，分支读取被用户消息打断，结果文件为空，未验收。宿主自停，完整实际data/cache/config和session将进入source检查点diagnostics/w48/native-state.zip；原TT交付v11仍为W46。
+用户新纠正：空卡同样过滤，怀疑内置工具、档案工具提示词、防截断；辅助开关/预设/模型必须可选可改。已确认V3 UI隐藏预设选择且preflight固定createRuntimePreset，读取/导出不等于编辑，这是未完成项。下一步沿实际payload追工具/防截断和过滤分类，读本轮三个参考本地文件，再修独立预设路由并进行目标验收；不把固定模型响应当真实模型证据。
+W48原截止19:50:45Z因用户消息中断后恢复时已过，停止原生实验，仅完成保存。保留所有失败和未完成证据，无自动重试/清空。源码恢复从release-source-w48/；PRIVATE实际宿主数据不公开。
+
+
+## W49 最终断点：辅助完整预设／档案查询／真实TT传输（2026-10-26 04:31 新加坡时间）
+
+用户本轮指出：空卡仍报过滤，怀疑内置工具/档案指令/防截断，要求辅助开关、预设、模型均能独立改选，完整继承格式。已直接检查本轮三个参考本地原件（身份见diagnostics/w49/reference-audit.json），未安装执行Tavo参考插件；未把function_calling=true当工具已注册。
+
+发布：0.3.8-w49.1，公开main commit 89f343cff40f1a400dac4f506872783650372111；tree 88090873a103807e7c01d4f1ed55b50551ccf095；本地3d746d7012e5ea0ce429a4d8492122bef9dcae61同树。public只含插件及中性测试/验证摘要，无真实聊天/世界书/缓存/原始请求。
+
+确认并修复：V3辅助预设固定内嵌且UI不可选；queryCatalog只有方法名无参数定义；V3请求未接入抗截断设置；正文错误被共用读取器错标辅助。现选定完整辅助预设真实装配并独立继承参数/模型；资料槽动态注入，缺协议明确拒发；从canonical档案定义带四方法schema。普通A/B仍allowToolCalls=false，档案用archiveRequests，只有显式所选传输可加文字工具。精确实际消息核验，按provider dialect读取；原生助手扩展外层fetch包裹兼容，但未实际完成所选传输的响应拒绝。正文请求失败同样安全同步准备记录，原错误保留、不会自动重试。
+
+验证：最终npm test 2253/2253（1499根+754 V3）和全部构建一致性通过。新增覆盖真实UI保存重开、辅助编辑/参数独立、缺失协议、工具参数注入/查询结果到B、SAFETY/坏JSON/工具结束分类、被外层包装与被绕过两种传输、正文失败恢复。原生TT真实宿主、真实本地HTTP、实际查询/保存路径：命名辅助预设和设置跨重启保留；A/B文字工具回复还原，list_archive实际结果进入B，候选和前文保留，无待同步。关辅助+关抗截断仅B，脚本SAFETY准确标正文，原文不变准备记录同步；显式新请求B成功，receipt.modelCalls=0/preflightSkipped=disabled，无待同步。最后宿主20:27:51Z关闭，工具服务脚本恢复原件。
+
+证据边界与失败：全部原生响应为确定性测试夹具，不是真实外部模型；用户手机SAFETY根因未确认。早期配置保存出现WORKSPACE_SYNC_REQUIRED与保留草稿，显式同步并重试原草稿后恢复；紧接原生预设切换/分支准备时竞争未单独定位，不能称全部配置流程完美。测试误复用失败requestId被幂等拒绝，后来显式新ID；两份空写入夹具缺世界对象或未结算时点，被正常拒绝，原件保留；最终明确offstage=false限定查询测试，不能将其作世界推进质量验收。W48冷开未完成后本轮读回9条并确认旧分支仍在。
+
+恢复：稳定source检查点libfile_437522eca0ac8191bf9775b76ba23d04追加release-source-w49/完整源码与逐文件manifest；diagnostics/w49含原始测试/原生请求和所有失败、发布回执；实际native先恢复diagnostics/w48/native-state.zip，再按diagnostics/w49/native-state-delta.zip内DELTA.json删除/覆盖，保留旧会话证据。1801当前原生文件、196增改和5删除已在新空目录重建并逐字SHA校验。旧TT独立包libfile_b8b4934864908191840a12f0b2052daa仍v11/W46，不冒充新插件包；使用现有扩展更新并完整重开。
+
+待办：取得用户失败请求的阶段/模型/传输选择及脱敏原始响应，再验证真实服务商；Android仍需实际测试。若用户继续要求真实模型，不把本地夹具或源代码扫描代替。后续按现有台账续跑，本轮不建提醒、不自动启动下一窗口。
+
+W51当前发布：0.3.9-w51.1；Git Tisyaofgit/tisya-tavern commit 5f42d9e5c2c86388f595a50790ba1f8ab24c6a2b tree 355496a63a2d1a602ba48d58703abbc2923ae21d。2258回归；本轮原生启动失败，真实API/Android/手机同步根因未验。断点仍libfile_38c4be789b488191afd346de39eb1374；源ZIP v15不是独立完整恢复源，以固定Git为准，不新建包。
+
+
+W57单次完整输出已发布：trial/reply6=54b17e8975d2ed046ed3349cd903eb81be3aa643，tree bf2a9623a91a678c2028ce01fc054bf5b90dd8a6，onepass.1。入口presets/Tisya-One-Pass-1.json；旧62条布局、双think与11块完整输出。1240回归通过；Linux本地响应单次发送/归档/重骰/切换/最终52条冷开通过，Android及真实供应商未验。当前源码固定Git，实际1721文件恢复在原检查点diagnostics/w57-final，CURRENT指向该处；W55末态保留检查点v19。蓝图同一ID记录全部边界和早期失败。
+
+
+W57最终保存回执（2026-10-26T12:48:19.995998+00:00）：既有源检查点已成功v20，531376120bytes，SHA256 3dd060b1ab8788ce703c9594ade9aee6d9cbc2cb668a46911cc0fb864f26dd31；蓝图301、时钟60、项目索引229均成功且本地身份已写回。交付包CRC、全部新证据hash、实际打包恢复脚本1721文件/753源码的空目录恢复均通过。当前试用分支54b17e8/tree bf2a962与远端ref/commit/manifest读回一致。全库总索引94未在本窗口重复扫描刷新，以上原身份及版本为本次有效接续依据。功能与保存已完成，无活动宿主或后台新任务。
+
+W59解析修复接续：trial/reply6=dcb080e00ef370d9a89a40fc6a79872ec3bc278c，tree c842def44a32daad1b4db76d2a7a0d4dbd4ea02a，onepass.3；源码固定Git，预设W58字节不变。当前源检查点新版本为W59增量，BASE固定v21/file_0000000086b881f5bad51df1231259cb，继续其v20恢复链；先恢复W58 canonical，再按diagnostics/w59-final/restore-w59.py覆盖固定Git8项。W59隔离56条测试聊天不替换W58 canonical55条。1251测试及Linux原生同消息解析通过，Android未测。记忆归档与全表接入按用户要求下一步。
+W59源检查点原生保存成功：libfile_437522eca0ac8191bf9775b76ba23d04 v22，file_000000003d8882098bdab5ae25a9a7d2，328130 bytes，SHA256 81218bb424fdfba0f4f9e88c4e616d15aae74bb2c65f8643e55325ab565b239c；BASE固定v21，请保留v21/v20依赖。

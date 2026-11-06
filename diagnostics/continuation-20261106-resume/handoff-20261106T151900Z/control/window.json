@@ -1,0 +1,30 @@
+{
+  "task": "legacy-new-engine-continuation",
+  "state": "paused",
+  "started_utc": "2026-11-06T13:56:48Z",
+  "save_at_utc": "2026-11-06T15:11:48Z",
+  "deadline_utc": "2026-11-06T15:26:48Z",
+  "window_seconds": 5400,
+  "authorization": "用户分享接入新版预设表单会话并明确要求继续",
+  "source": "/workspace/scratch/6b9832f40e18/legacy-new",
+  "copy": "/workspace/scratch/bcbfb951b7bf/legacy-new",
+  "note": "本会话首次取得真实UTC为13:56:48Z；前置读取已发生，不续用过期前窗口。",
+  "actual_source": "/workspace/scratch/b4747cd65a63/legacy-new",
+  "last_increment_utc": "2026-11-06T15:19:00.659770+00:00",
+  "remote_commit": "ec0970d70710997000f673f9a114fec51111fec5",
+  "remote_tree": "ba9dc0fa0cec375089a575e3a89cb48ee8927483",
+  "validation": {
+    "targeted_previous": 50,
+    "full_previous": 1406,
+    "native_host": "Linux TT 2.4.0 fixed fixture: load, request, stream, reroll, swipe, stop, page cold reload, manual API save, reply UI; previous raw evidence verified",
+    "model": false,
+    "android": false
+  },
+  "paused_utc": "2026-11-06T15:19:00.659770+00:00",
+  "paused_beijing": "2026-11-06T23:19:00.659770+08:00",
+  "restored_source_files": 996,
+  "restored_native_files": 225,
+  "next": "从固定候选恢复隔离Linux宿主，先实际点击新版配置栏并验证自定义标签→预设→最终请求→reply美化→归档全链，再核user世界书book+uid绑定；随后编辑/删楼/分支。真实模型和Android分列，未验收不得发布main。",
+  "automatic_continue": false,
+  "control_persistence": "native replacement receipts and same-point candidate Git checkpoint accompany this snapshot"
+}

@@ -1,0 +1,39 @@
+{
+  "utc": "2026-11-06T15:19:00.659770+00:00",
+  "beijing": "2026-11-06T23:19:00.659770+08:00",
+  "state": "paused_after_checkpoint",
+  "source_commit": "ec0970d70710997000f673f9a114fec51111fec5",
+  "source_tree": "ba9dc0fa0cec375089a575e3a89cb48ee8927483",
+  "source_manifest": "recovery-verification.json",
+  "runtime": "source_commit:diagnostics/continuation-20261106-resume/native-host-state.tar.gz",
+  "evidence": "source_commit:diagnostics/continuation-20261106-resume/",
+  "next": "从固定候选恢复隔离Linux宿主，先实际点击新版配置栏并验证自定义标签→预设→最终请求→reply美化→归档全链，再核user世界书book+uid绑定；随后编辑/删楼/分支。真实模型和Android分列，未验收不得发布main。",
+  "controls": [
+    {
+      "name": "initialization-ui-clock.json",
+      "bytes": 328539,
+      "sha256": "8bbb78ca8705e07030c03c2ddff96c4738d969c2e841e424e39ca79e036f6030"
+    },
+    {
+      "name": "window.json",
+      "bytes": 1681,
+      "sha256": "98a67846664bc309c726956a352d662cae5a066ffee072c2df204126c648b833"
+    },
+    {
+      "name": "缇斯亚__索引__文件定位.txt",
+      "bytes": 43429,
+      "sha256": "6cf70c1eee6ee1c5297d323dccedafcf22241cb63a219ed5c5e7ece5bee39575"
+    },
+    {
+      "name": "缇斯亚__蓝图__任务与断点.md",
+      "bytes": 432555,
+      "sha256": "e229f296c9acb49899494476837bcf300df486a34ad8aae1dccd6e7f60171670"
+    }
+  ],
+  "limits": [
+    "real model untested",
+    "Android untested",
+    "native config clicking incomplete"
+  ],
+  "authorization": "用户要求继续，已授权接入；既有窗口不重置，进入收束后只完成保存。"
+}
