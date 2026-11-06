@@ -1,0 +1,341 @@
+{
+  "method": "Signed Ubuntu snapshot metadata, SHA256 package verification, extract only; no system installation or maintainer scripts",
+  "packages": [
+    {
+      "package": "libsoup-3.0-0",
+      "version": "3.4.4-5ubuntu0.7",
+      "file": "libsoup-3.0-0_3.4.4-5ubuntu0.7_amd64.deb",
+      "sha256": "b76f5a065cb2d789cf8cb2826614dd77654e70064ec8882d9d41f9c7aa3e2a8f",
+      "bytes": 291712,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libs/libsoup3/libsoup-3.0-0_3.4.4-5ubuntu0.7_amd64.deb"
+    },
+    {
+      "package": "libsoup-3.0-common",
+      "version": "3.4.4-5ubuntu0.7",
+      "file": "libsoup-3.0-common_3.4.4-5ubuntu0.7_all.deb",
+      "sha256": "663f6fa00d10194c4f80aa01503bfcf65f0d2dc2120ab79097ded5d471ea5222",
+      "bytes": 11558,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libs/libsoup3/libsoup-3.0-common_3.4.4-5ubuntu0.7_all.deb"
+    },
+    {
+      "package": "libjavascriptcoregtk-4.1-0",
+      "version": "2.52.3-0ubuntu0.24.04.1",
+      "file": "libjavascriptcoregtk-4.1-0_2.52.3-0ubuntu0.24.04.1_amd64.deb",
+      "sha256": "3ef1d9c7f437ba43492a7c4d02eeb0a68e2bc9b5e74974c8434cac2e78e369eb",
+      "bytes": 8141204,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/w/webkit2gtk/libjavascriptcoregtk-4.1-0_2.52.3-0ubuntu0.24.04.1_amd64.deb"
+    },
+    {
+      "package": "libwebkit2gtk-4.1-0",
+      "version": "2.52.3-0ubuntu0.24.04.1",
+      "file": "libwebkit2gtk-4.1-0_2.52.3-0ubuntu0.24.04.1_amd64.deb",
+      "sha256": "ba550f6b4ae9c00dd2ed1d1a21a0d8855983f4555cde44b7fe1519da2a250104",
+      "bytes": 25123398,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/w/webkit2gtk/libwebkit2gtk-4.1-0_2.52.3-0ubuntu0.24.04.1_amd64.deb"
+    },
+    {
+      "package": "libwayland-server0",
+      "version": "1.22.0-2.1build1",
+      "file": "libwayland-server0_1.22.0-2.1build1_amd64.deb",
+      "sha256": "edbfa4b6857691ae922cc768a753fab230eee9e956aa2ce4f2eaa8d9ad777dca",
+      "bytes": 33928,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/w/wayland/libwayland-server0_1.22.0-2.1build1_amd64.deb"
+    },
+    {
+      "package": "libsecret-1-0",
+      "version": "0.21.4-1build3",
+      "file": "libsecret-1-0_0.21.4-1build3_amd64.deb",
+      "sha256": "7d7263ffc92c33042328f99c93433a846e8d9e549876dab18ba18606e6541ecd",
+      "bytes": 116332,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libs/libsecret/libsecret-1-0_0.21.4-1build3_amd64.deb"
+    },
+    {
+      "package": "libsecret-common",
+      "version": "0.21.4-1build3",
+      "file": "libsecret-common_0.21.4-1build3_all.deb",
+      "sha256": "41866e9026e451fd25a4cbe887fa56c43219f9f3eda88d1831452ba6d6b8bb5b",
+      "bytes": 4962,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libs/libsecret/libsecret-common_0.21.4-1build3_all.deb"
+    },
+    {
+      "package": "libmanette-0.2-0",
+      "version": "0.2.7-1build2",
+      "file": "libmanette-0.2-0_0.2.7-1build2_amd64.deb",
+      "sha256": "8fbb67e94abf563c01398ad7458df1a6824f19a0b4337f67d61c0889771805db",
+      "bytes": 30570,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libm/libmanette/libmanette-0.2-0_0.2.7-1build2_amd64.deb"
+    },
+    {
+      "package": "libhyphen0",
+      "version": "2.8.8-7build3",
+      "file": "libhyphen0_2.8.8-7build3_amd64.deb",
+      "sha256": "b508d3a5da168ddb2ae6e79ea0521ba64cd121285db0ece438d0bd56ba628556",
+      "bytes": 26516,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/h/hyphen/libhyphen0_2.8.8-7build3_amd64.deb"
+    },
+    {
+      "package": "libharfbuzz-icu0",
+      "version": "8.3.0-2build2",
+      "file": "libharfbuzz-icu0_8.3.0-2build2_amd64.deb",
+      "sha256": "9098670758e60b190d7edf367ad57e954bfc1b2a616def3f4e281062e036a843",
+      "bytes": 13310,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/h/harfbuzz/libharfbuzz-icu0_8.3.0-2build2_amd64.deb"
+    },
+    {
+      "package": "libgstreamer1.0-0",
+      "version": "1.24.2-1ubuntu0.1",
+      "file": "libgstreamer1.0-0_1.24.2-1ubuntu0.1_amd64.deb",
+      "sha256": "306a6a5cff08630b79b8a68e5f888da7d8e209a452e9b5e24449cca95d8e71f5",
+      "bytes": 1165196,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gstreamer1.0/libgstreamer1.0-0_1.24.2-1ubuntu0.1_amd64.deb"
+    },
+    {
+      "package": "libdw1t64",
+      "version": "0.190-1.1ubuntu0.1",
+      "file": "libdw1t64_0.190-1.1ubuntu0.1_amd64.deb",
+      "sha256": "edaa9ce4221d95f4bd72a9805100902e313092a2f31a7a51e7186be97734714d",
+      "bytes": 261194,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/e/elfutils/libdw1t64_0.190-1.1ubuntu0.1_amd64.deb"
+    },
+    {
+      "package": "libgstreamer-plugins-base1.0-0",
+      "version": "1.24.2-1ubuntu0.4",
+      "file": "libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.4_amd64.deb",
+      "sha256": "508f0a23fab878be69390cd3f5d94024541875dc7034b64becb1c72241508afc",
+      "bytes": 862084,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gst-plugins-base1.0/libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.4_amd64.deb"
+    },
+    {
+      "package": "iso-codes",
+      "version": "4.16.0-1",
+      "file": "iso-codes_4.16.0-1_all.deb",
+      "sha256": "cafca0a3a1f07b44fbba53ab7a1f1d9755e6b80cc041173afe2b52e53bed97a7",
+      "bytes": 3491500,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/i/iso-codes/iso-codes_4.16.0-1_all.deb"
+    },
+    {
+      "package": "liborc-0.4-0t64",
+      "version": "1:0.4.38-1ubuntu0.1",
+      "file": "liborc-0.4-0t64_0.4.38-1ubuntu0.1_amd64.deb",
+      "sha256": "a546ca6e237748693596ba469e84a2e0581bc39113abc62b718931df00a4c682",
+      "bytes": 207380,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/o/orc/liborc-0.4-0t64_0.4.38-1ubuntu0.1_amd64.deb"
+    },
+    {
+      "package": "libgstreamer-gl1.0-0",
+      "version": "1.24.2-1ubuntu0.4",
+      "file": "libgstreamer-gl1.0-0_1.24.2-1ubuntu0.4_amd64.deb",
+      "sha256": "95200fbc93b7e88ccb451d7546cbf824189d9cefac0c9053be0246b9d0db8449",
+      "bytes": 213954,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gst-plugins-base1.0/libgstreamer-gl1.0-0_1.24.2-1ubuntu0.4_amd64.deb"
+    },
+    {
+      "package": "xdg-dbus-proxy",
+      "version": "0.1.5-1ubuntu0.2",
+      "file": "xdg-dbus-proxy_0.1.5-1ubuntu0.2_amd64.deb",
+      "sha256": "4ce84afa5e38cacc7c28d9b495d1bc453aa6a07b560e22b614e768c08609efa4",
+      "bytes": 26382,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/x/xdg-dbus-proxy/xdg-dbus-proxy_0.1.5-1ubuntu0.2_amd64.deb"
+    },
+    {
+      "package": "libgles2",
+      "version": "1.7.0-1build1",
+      "file": "libgles2_1.7.0-1build1_amd64.deb",
+      "sha256": "9dec2d79a2eebb80522f7cce77995f7a8ded22f0e3916f13353d066c62f97fac",
+      "bytes": 17122,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libg/libglvnd/libgles2_1.7.0-1build1_amd64.deb"
+    },
+    {
+      "package": "gstreamer1.0-plugins-good",
+      "version": "1.24.2-1ubuntu1.5",
+      "file": "gstreamer1.0-plugins-good_1.24.2-1ubuntu1.5_amd64.deb",
+      "sha256": "7d55d714eca1cd9c790b2834dbb1dc08b07344c6f636a1f749c9e2d8998a6551",
+      "bytes": 2235860,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gst-plugins-good1.0/gstreamer1.0-plugins-good_1.24.2-1ubuntu1.5_amd64.deb"
+    },
+    {
+      "package": "gstreamer1.0-plugins-base",
+      "version": "1.24.2-1ubuntu0.4",
+      "file": "gstreamer1.0-plugins-base_1.24.2-1ubuntu0.4_amd64.deb",
+      "sha256": "3ffe2ef90ec44d33e8758ee4bf839feeeac945676f4507db103b1a922cae91b1",
+      "bytes": 720834,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gst-plugins-base1.0/gstreamer1.0-plugins-base_1.24.2-1ubuntu0.4_amd64.deb"
+    },
+    {
+      "package": "libvisual-0.4-0",
+      "version": "0.4.2-2build1",
+      "file": "libvisual-0.4-0_0.4.2-2build1_amd64.deb",
+      "sha256": "2d64a0df6994e18d4fa21af12acce6f09db69c437ac972c622c7801fe858419f",
+      "bytes": 115008,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libv/libvisual/libvisual-0.4-0_0.4.2-2build1_amd64.deb"
+    },
+    {
+      "package": "libcdparanoia0",
+      "version": "3.10.2+debian-14build3",
+      "file": "libcdparanoia0_3.10.2+debian-14build3_amd64.deb",
+      "sha256": "b49131a4784d7a4b4f955071d36ea6caff73229c9821977b3f895e8ea16b820a",
+      "bytes": 48476,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/c/cdparanoia/libcdparanoia0_3.10.2+debian-14build3_amd64.deb"
+    },
+    {
+      "package": "libxtst6",
+      "version": "2:1.2.3-1.1build1",
+      "file": "libxtst6_1.2.3-1.1build1_amd64.deb",
+      "sha256": "632d74c760f0a4e844c499e7bc1eca4c709aa096fde783a7a6807604aef77545",
+      "bytes": 12642,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libx/libxtst/libxtst6_1.2.3-1.1build1_amd64.deb"
+    },
+    {
+      "package": "libwavpack1",
+      "version": "5.6.0-1build1",
+      "file": "libwavpack1_5.6.0-1build1_amd64.deb",
+      "sha256": "20b3bf66bdeac236db7255139d8fd2460bca90ddb9155fa30411fb05b6dfd4ec",
+      "bytes": 84580,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/w/wavpack/libwavpack1_5.6.0-1build1_amd64.deb"
+    },
+    {
+      "package": "libv4l-0t64",
+      "version": "1.26.1-4build3",
+      "file": "libv4l-0t64_1.26.1-4build3_amd64.deb",
+      "sha256": "0cafac8bb1fca1ae042cd11d40e06412a8958e1a6faf268df421f4762989a6d9",
+      "bytes": 46892,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/v/v4l-utils/libv4l-0t64_1.26.1-4build3_amd64.deb"
+    },
+    {
+      "package": "libv4lconvert0t64",
+      "version": "1.26.1-4build3",
+      "file": "libv4lconvert0t64_1.26.1-4build3_amd64.deb",
+      "sha256": "67811cffddbf1e601f5630d733455a26c1cadb6bc28795e5b673be82b55113b4",
+      "bytes": 87636,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/v/v4l-utils/libv4lconvert0t64_1.26.1-4build3_amd64.deb"
+    },
+    {
+      "package": "libtag1v5",
+      "version": "1.13.1-1build1",
+      "file": "libtag1v5_1.13.1-1build1_amd64.deb",
+      "sha256": "dfafc78203c6aa87d852acceca7a2a8fe98c5d3fe961e09692e3578a911ba7e5",
+      "bytes": 11684,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/t/taglib/libtag1v5_1.13.1-1build1_amd64.deb"
+    },
+    {
+      "package": "libtag1v5-vanilla",
+      "version": "1.13.1-1build1",
+      "file": "libtag1v5-vanilla_1.13.1-1build1_amd64.deb",
+      "sha256": "36efe5ed6005253c7790f5f572ac7ef52727d4ed8530c9c9a64c5589b5eaf1b2",
+      "bytes": 325994,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/t/taglib/libtag1v5-vanilla_1.13.1-1build1_amd64.deb"
+    },
+    {
+      "package": "libshout3",
+      "version": "2.4.6-1build2",
+      "file": "libshout3_2.4.6-1build2_amd64.deb",
+      "sha256": "b99146a88b414c828285435e10cb39e6ab10b299182b42c85727e2e8ec0eb156",
+      "bytes": 50340,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libs/libshout/libshout3_2.4.6-1build2_amd64.deb"
+    },
+    {
+      "package": "libgstreamer-plugins-good1.0-0",
+      "version": "1.24.2-1ubuntu1.5",
+      "file": "libgstreamer-plugins-good1.0-0_1.24.2-1ubuntu1.5_amd64.deb",
+      "sha256": "c8539ab574fc80c1697b42f66fc01f1304c35c43124c8213fe9768a33b5c3908",
+      "bytes": 33508,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gst-plugins-good1.0/libgstreamer-plugins-good1.0-0_1.24.2-1ubuntu1.5_amd64.deb"
+    },
+    {
+      "package": "libdv4t64",
+      "version": "1.0.0-17.1build1",
+      "file": "libdv4t64_1.0.0-17.1build1_amd64.deb",
+      "sha256": "7799a45a5e8a2139bb940c5db3f0b85e781a08210bf50ef148b28d8d3240a57c",
+      "bytes": 63192,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libd/libdv/libdv4t64_1.0.0-17.1build1_amd64.deb"
+    },
+    {
+      "package": "libaa1",
+      "version": "1.4p5-51.1",
+      "file": "libaa1_1.4p5-51.1_amd64.deb",
+      "sha256": "2648b362b9338770ba73382575859c38f49c35b5d23bd08a517b5cccfc226f57",
+      "bytes": 49938,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/a/aalib/libaa1_1.4p5-51.1_amd64.deb"
+    },
+    {
+      "package": "libncurses6",
+      "version": "6.4+20240113-1ubuntu2.1",
+      "file": "libncurses6_6.4+20240113-1ubuntu2.1_amd64.deb",
+      "sha256": "c4d0fd9d7c997f4b13dbfdd9b9a5e14ed0222303ac931f9c2594c6b99696b63d",
+      "bytes": 111900,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/n/ncurses/libncurses6_6.4+20240113-1ubuntu2.1_amd64.deb"
+    },
+    {
+      "package": "libgpm2",
+      "version": "1.20.7-11",
+      "file": "libgpm2_1.20.7-11_amd64.deb",
+      "sha256": "158b9073bf5177286474dacb87cb60aac9ceb08613fdb5a1e1643ca5d07be7cf",
+      "bytes": 14104,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/g/gpm/libgpm2_1.20.7-11_amd64.deb"
+    },
+    {
+      "package": "webkit2gtk-driver",
+      "version": "2.52.3-0ubuntu0.24.04.1",
+      "file": "webkit2gtk-driver_2.52.3-0ubuntu0.24.04.1_amd64.deb",
+      "sha256": "71a00e07b562c7a988371d630d5c2426adb8ae0d0d658b8499043a3f98ef8493",
+      "bytes": 561718,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/w/webkit2gtk/webkit2gtk-driver_2.52.3-0ubuntu0.24.04.1_amd64.deb"
+    },
+    {
+      "package": "xauth",
+      "version": "1:1.1.2-1build1",
+      "file": "xauth_1.1.2-1build1_amd64.deb",
+      "sha256": "037e70571f39384e28c4ad0db07b44de11f0911ee6c02445560979b417012650",
+      "bytes": 25594,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/x/xauth/xauth_1.1.2-1build1_amd64.deb"
+    },
+    {
+      "package": "libxmuu1",
+      "version": "2:1.1.3-3build2",
+      "file": "libxmuu1_1.1.3-3build2_amd64.deb",
+      "sha256": "27428f8d7b63c38424177d5b3b8b2b89d519956ccfe969927cd0a20cdec977c0",
+      "bytes": 8958,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libx/libxmu/libxmuu1_1.1.3-3build2_amd64.deb"
+    },
+    {
+      "package": "xvfb",
+      "version": "2:21.1.12-1ubuntu1.6",
+      "file": "xvfb_21.1.12-1ubuntu1.6_amd64.deb",
+      "sha256": "9188c2ab6394dfe6aa53f782f6bfa22b7eb6febfe51a48e0e36af35cd2f64307",
+      "bytes": 876922,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/x/xorg-server/xvfb_21.1.12-1ubuntu1.6_amd64.deb"
+    },
+    {
+      "package": "x11-xkb-utils",
+      "version": "7.7+8build2",
+      "file": "x11-xkb-utils_7.7+8build2_amd64.deb",
+      "sha256": "69df4191e165f8b89d067f6234fcce89a4923d27d1e66dd92e6d63d6da93cdb0",
+      "bytes": 170314,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/x/x11-xkb-utils/x11-xkb-utils_7.7+8build2_amd64.deb"
+    },
+    {
+      "package": "libxkbfile1",
+      "version": "1:1.1.0-1build4",
+      "file": "libxkbfile1_1.1.0-1build4_amd64.deb",
+      "sha256": "22ac5b7dca740e606261cebdfaf1a07738e92ad3d123570694374ddb4d5afea2",
+      "bytes": 70010,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libx/libxkbfile/libxkbfile1_1.1.0-1build4_amd64.deb"
+    },
+    {
+      "package": "libxfont2",
+      "version": "1:2.0.6-1+deb13u1build0.24.04.2",
+      "file": "libxfont2_2.0.6-1+deb13u1build0.24.04.2_amd64.deb",
+      "sha256": "e2ed49a20ccff6ffa52719a6cd118538e24c434d9035acd7fb736e7e4f8d6485",
+      "bytes": 93972,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libx/libxfont/libxfont2_2.0.6-1+deb13u1build0.24.04.2_amd64.deb"
+    },
+    {
+      "package": "xserver-common",
+      "version": "2:21.1.12-1ubuntu1.6",
+      "file": "xserver-common_21.1.12-1ubuntu1.6_all.deb",
+      "sha256": "5dd824cb0c0f59776cd60cd284c53df0e7485b5b09b79350071f9aef524e5eea",
+      "bytes": 34666,
+      "source": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/x/xorg-server/xserver-common_21.1.12-1ubuntu1.6_all.deb"
+    }
+  ]
+}

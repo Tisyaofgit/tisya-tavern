@@ -1,0 +1,46 @@
+✔ browser hashes preserve Unicode bytes (1.868212ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (10.555589ms)
+✔ edit, swipe and delete rebase instead of double charging (9.458336ms)
+✔ manual edits retain chronological placement when earlier prose changes (15.556363ms)
+✔ registered item action rolls back all costs and supports receipt replay (2.020803ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.710755ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (3.146453ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (30.586871ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (7.506989ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (1.962775ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.558213ms)
+✔ IndexedDB cold reopen and competing revision commit (12.323835ms)
+✔ new settings screen saves tag map without legacy configuration (22.397656ms)
+✔ native host round trip binds once, compiles all slots, settles and resumes from saved state (1033.87298ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (1.214504ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.33761ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (2.391913ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.269296ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (33.881061ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.245291ms)
+✔ delayed communication cannot change an already adopted reroll (29.945688ms)
+✔ delayed communication cannot change an already rejected reroll (10.555984ms)
+✔ manual edit after a new user input saves once and survives replay and cold reopen (15.723009ms)
+✔ stopped complete response remains uncommitted after a late end and cold reopen (8.121888ms)
+✔ editing a stopped draft does not silently accept its commands (1.584012ms)
+✔ reroll preparation reads its prior state without rolling back the accepted saved candidate (9.932132ms)
+✔ message arrival during generation cannot settle an unaccepted complete draft (0.567016ms)
+✔ a stopped swipe retains pending status in its native candidate metadata (3.770505ms)
+✔ event and delayed archive share one short code while complementary detail survives (109.320003ms)
+✔ a stopped reroll retains the previously accepted state across refresh and reopen (6.639729ms)
+✔ stopping before a replacement arrives leaves the original candidate editable (3.191521ms)
+✔ pending native swipe with new extras keeps its logical message and accepted state (3.377702ms)
+✔ editing an accepted earlier reply replays descendants once and survives cold reopen (11.408487ms)
+✔ deleting an accepted reply refunds only its effects and permits a fresh reply after reopen (13.459245ms)
+✔ fork edits and deletes keep the parent state exact across repeated chat switches (5.864488ms)
+✔ literal dots in custom envelope and block names never match a different closing tag (2.609943ms)
+✔ every allowed punctuation ending survives custom-tag normalization (1.117217ms)
+✔ custom tag names are case-insensitive while nested data and prose remain exact (0.491953ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1735.140082
