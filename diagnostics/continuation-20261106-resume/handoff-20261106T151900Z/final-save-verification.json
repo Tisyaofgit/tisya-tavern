@@ -1,0 +1,143 @@
+{
+  "utc": "2026-11-06T15:22:04.415522+00:00",
+  "verified": true,
+  "source_commit": "ec0970d70710997000f673f9a114fec51111fec5",
+  "checkpoint_commit": "f2ba68a5278ab51febfef620815e3c8a7a9e6f3a",
+  "checkpoint_tree": "1049391aac12c685cf15cba92555121723e8ca64",
+  "branch": "candidate/legacy-new-engine-20261106-resume",
+  "remote_verified_files": 1005,
+  "source_recovered_files": 996,
+  "native_state_recovered_files": 225,
+  "comparison": "Every remote path/mode/Git blob SHA equals the recovered source plus immutable handoff files",
+  "manifest_sha256": "108b795c210f2362ea0143d4d51ace1583f757eb1ff5c53718387403b3aeeb97",
+  "control_receipts": [
+    {
+      "request": {
+        "file": "/workspace/scratch/0210da28e4da/control/缇斯亚__蓝图__任务与断点.md",
+        "library_file_id": "libfile_38c4be789b488191afd346de39eb1374",
+        "expected_current_version": 345
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "operation": "replace_library_file",
+          "status": "succeeded",
+          "path": "/工作区/tavo插件-缇斯亚/00_项目入口/缇斯亚__蓝图__任务与断点.md",
+          "file_id": "file_000000005fe882098f0966c10721ba01",
+          "library_file_id": "libfile_38c4be789b488191afd346de39eb1374",
+          "file_name": "缇斯亚__蓝图__任务与断点.md",
+          "current_version_number": 346,
+          "restored_from_version_number": null,
+          "xattrs": [
+            {
+              "name": "user.library-file-version",
+              "value": "346"
+            }
+          ],
+          "directory_id": "6abe1566a7848191b344dc9fe22c6fc5",
+          "mime_type": "text/markdown",
+          "library_artifact_type": "report",
+          "file_size_bytes": 432555,
+          "external_connectors_accessed": false
+        },
+        "isError": false
+      }
+    },
+    {
+      "request": {
+        "file": "/workspace/scratch/0210da28e4da/control/缇斯亚__索引__文件定位.txt",
+        "library_file_id": "libfile_00f274d68b6c8191830dd1ed643ce1c6",
+        "expected_current_version": 247
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "operation": "replace_library_file",
+          "status": "succeeded",
+          "path": "/资料区/缇斯亚/缇斯亚__索引__文件定位.txt",
+          "file_id": "file_00000000654081f88581b6385e122da5",
+          "library_file_id": "libfile_00f274d68b6c8191830dd1ed643ce1c6",
+          "file_name": "缇斯亚__索引__文件定位.txt",
+          "current_version_number": 248,
+          "restored_from_version_number": null,
+          "xattrs": [
+            {
+              "name": "user.library-file-version",
+              "value": "248"
+            }
+          ],
+          "directory_id": "6acfc47bc8308191b56631a042a80ed9",
+          "mime_type": "text/plain",
+          "library_artifact_type": "report",
+          "file_size_bytes": 43429,
+          "external_connectors_accessed": false
+        },
+        "isError": false
+      }
+    },
+    {
+      "request": {
+        "file": "/workspace/scratch/0210da28e4da/control/initialization-ui-clock.json",
+        "library_file_id": "libfile_fc40edcd27388191a073f819b172e519",
+        "expected_current_version": 91
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "operation": "replace_library_file",
+          "status": "succeeded",
+          "path": "/工作区/tavo插件-缇斯亚/03_源码与历史基线/表单全流程开发/initialization-ui-clock.json",
+          "file_id": "file_000000002d008211afded9d9cbaf090a",
+          "library_file_id": "libfile_fc40edcd27388191a073f819b172e519",
+          "file_name": "initialization-ui-clock.json",
+          "current_version_number": 92,
+          "restored_from_version_number": null,
+          "xattrs": [
+            {
+              "name": "user.library-file-version",
+              "value": "92"
+            }
+          ],
+          "directory_id": "6ad9b3d842388191bde6c3070a3ee8e4",
+          "mime_type": "application/json",
+          "library_artifact_type": "other",
+          "file_size_bytes": 328539,
+          "external_connectors_accessed": false
+        },
+        "isError": false
+      }
+    }
+  ],
+  "status": "saved_and_paused",
+  "not_tested": [
+    "real model",
+    "Android",
+    "full native config form clicks"
+  ],
+  "validation_attempts": [
+    {
+      "result": "failed",
+      "raw": "AssertionError: (1005, 1005)",
+      "cause_verified": "git ls-tree default quotes non-ASCII paths; source blob values match; -z preserves exact path names"
+    },
+    {
+      "result": "passed",
+      "method": "git ls-tree -rz plus remote recursive tree, all paths/modes/blob SHAs equal"
+    }
+  ]
+}
