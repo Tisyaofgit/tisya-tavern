@@ -1,5 +1,5 @@
 {
-  "utc": "2026-11-06T16:40:59.140578+00:00",
+  "utc": "2026-11-06T16:50:18.368724+00:00",
   "beijing": "2026-11-07T00:40:59.140578+08:00",
   "state": "paused",
   "clock_enabled": false,
@@ -18,5 +18,33 @@
     "Android",
     "native host"
   ],
-  "next": "Recover saved source; no clock/automation; verify prior identity macro fix and native dependencies."
+  "next": "Restore native dependencies in a supported execution environment; rerun corrected identity macros and real edit/delete/branch. Retain no timer/no reminder policy.",
+  "validation": {
+    "identity_targeted": 20,
+    "lifecycle_targeted": 35,
+    "new_cases": 3,
+    "build_checks": [
+      "extension",
+      "matrix preset"
+    ],
+    "previous_full_regression": 1407,
+    "native_host_this_turn": false,
+    "real_model_this_turn": false,
+    "Android_this_turn": false
+  },
+  "native_host_blocker": {
+    "missing": [
+      "Xvfb",
+      "WebKitWebDriver",
+      "xauth",
+      "libwebkit2gtk-4.1",
+      "libsoup-3.0",
+      "libjavascriptcoregtk-4.1"
+    ],
+    "dependency_refresh_error": "setgroups/setegid/seteuid operation not permitted; package method exited112. No bypass or sandbox escalation attempted."
+  },
+  "source_restore": {
+    "tree": "634d66094d14053276a94d6b4fae54379833d178",
+    "verified_files": 1020
+  }
 }

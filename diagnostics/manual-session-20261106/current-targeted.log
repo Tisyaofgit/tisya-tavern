@@ -1,0 +1,28 @@
+✔ browser hashes preserve Unicode bytes (2.103929ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (9.470669ms)
+✔ edit, swipe and delete rebase instead of double charging (8.130685ms)
+✔ manual edits retain chronological placement when earlier prose changes (12.425804ms)
+✔ registered item action rolls back all costs and supports receipt replay (1.541239ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.366875ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (2.75974ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (27.462051ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (6.746673ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (1.884157ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.510581ms)
+✔ IndexedDB cold reopen and competing revision commit (8.523467ms)
+✔ new settings screen saves tag map without legacy configuration (21.525813ms)
+✔ native host round trip binds once, compiles all slots, settles and resumes from saved state (985.607921ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (1.228045ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.408116ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (2.264261ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.247184ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (28.432154ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.197799ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1574.97556

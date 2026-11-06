@@ -56,3 +56,40 @@ test('pending native swipe with new extras keeps its logical message and accepte
  m.swipes.push(reply(4));m.swipe_info.push({extra:{}});m.swipe_id=1;m.extra={};m.mes=reply(4);await f.controller.event('GENERATION_STOPPED');await new Controller(f.options).run();assert.equal(await f.hp(),7);
  assert(m.extra[NS].pending_previous);assert.equal(m.extra[NS].uid,m.swipe_info[0].extra[NS].uid);
 });
+
+test('editing an accepted earlier reply replays descendants once and survives cold reopen',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply(2)},{is_user:true,mes:'继续'},{mes:reply(3)});
+ await f.controller.run();assert.equal(await f.hp(),5);
+ const ids=f.ctx.chat.map(m=>m.extra[NS].uid);
+ f.ctx.chat[0].mes=reply(1);await f.controller.event('MESSAGE_EDITED',0);
+ assert.equal(await f.hp(),6);assert.deepEqual(f.ctx.chat.map(m=>m.extra[NS].uid),ids);
+ const reopened=new Controller(f.options);await reopened.event('CHAT_CHANGED');
+ assert.equal((await reopened.current()).state.tables.ACTOR.u.values.hp,6);
+ await reopened.run();assert.equal(await f.hp(),6);
+});
+
+test('deleting an accepted reply refunds only its effects and permits a fresh reply after reopen',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply(2)},{is_user:true,mes:'继续'},{mes:reply(3)});
+ await f.controller.run();assert.equal(await f.hp(),5);
+ const removedUid=f.ctx.chat.at(-1).extra[NS].uid;f.ctx.chat.pop();
+ await f.controller.event('MESSAGE_DELETED',2);assert.equal(await f.hp(),8);
+ const reopened=new Controller(f.options);await reopened.event('CHAT_CHANGED');assert.equal(await f.hp(),8);
+ f.ctx.chat.push({mes:reply(4)});await reopened.event('MESSAGE_RECEIVED',2);
+ assert.equal(await f.hp(),4);assert.notEqual(f.ctx.chat.at(-1).extra[NS].uid,removedUid);
+ await reopened.run();assert.equal(await f.hp(),4);
+});
+
+test('fork edits and deletes keep the parent state exact across repeated chat switches',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply(3)});await f.controller.run();
+ const parent={chatId:f.ctx.chatId,chat:structuredClone(f.ctx.chat),chatMetadata:structuredClone(f.ctx.chatMetadata)};
+ const parentBundle=await f.controller.current();
+ f.ctx.chatId='lifecycle-fork';f.ctx.chat[0].mes=reply(4);await f.controller.event('CHAT_CHANGED');
+ assert.equal(await f.hp(),6);assert.notEqual(f.ctx.chatMetadata[NS].chat_uid,parent.chatMetadata[NS].chat_uid);
+ f.ctx.chat=[];await f.controller.event('MESSAGE_DELETED',0);assert.equal(await f.hp(),10);
+ const child={chatId:f.ctx.chatId,chat:structuredClone(f.ctx.chat),chatMetadata:structuredClone(f.ctx.chatMetadata)};
+ Object.assign(f.ctx,structuredClone(parent));assert.deepEqual(await f.controller.current(),parentBundle);
+ await f.controller.event('CHAT_CHANGED');assert.equal(await f.hp(),7);
+ Object.assign(f.ctx,structuredClone(child));const reopened=new Controller(f.options);await reopened.event('CHAT_CHANGED');
+ assert.equal(await f.hp(),10);
+ Object.assign(f.ctx,structuredClone(parent));assert.equal(await f.hp(),7);
+});
