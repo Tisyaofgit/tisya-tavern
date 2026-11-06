@@ -1,0 +1,27 @@
+✔ JavaScript formula and custom-calendar results match frozen Python source (123.273355ms)
+✔ seeded rolls and stable IDs match Python across restart and large dice (41.26936ms)
+✔ partial selection preserves fenced paragraphs and exact unchanged bytes (5.981589ms)
+✔ feedback data remains literal and never enters system instructions (0.53688ms)
+✔ successful partial reroll keeps old candidate, then archives once; navigation generates nothing (3.481605ms)
+✔ out-of-scope partial change preserves rejected draft but restores old candidate and extras without archive (1.254334ms)
+✔ stopped and failed generation do not add dissatisfaction feedback or archive partial output (4.181562ms)
+✔ stop detaches a hung native reroll without late plugin rollback, feedback or archive (7.663128ms)
+✔ stop during branch preparation discards the staged fork and never starts a branch or generation (1.133561ms)
+✔ old-floor reroll creates independent prefix and preserves original following messages (1.548748ms)
+✔ stale feedback and out-of-range navigation are rejected before native mutation (0.467767ms)
+✔ revision initializes configuration before locking native generation and rechecks source afterward (0.545273ms)
+✔ ordinary reroll requests a new native candidate without injecting advanced instructions (0.603351ms)
+✔ candidate navigation delegates exact target and does not duplicate native persistence (0.545634ms)
+✔ native candidate deletion retains other bodies and extras and protects final version (0.66285ms)
+✔ navigation locks only until native completion and rejects stale unsynchronized body (2.287713ms)
+✔ reroll after edited user carries only its immediately previous input through a preserved historical branch (1.183948ms)
+✔ failed edited-user reroll clears one-shot comparison and keeps original candidate (0.495538ms)
+✔ one-pass reroll delegates the completed selected candidate to its single-response archive (0.378241ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 278.77234

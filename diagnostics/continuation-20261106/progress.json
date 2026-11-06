@@ -1,0 +1,24 @@
+{
+  "utc": "2026-11-06T14:03:52.218369+00:00",
+  "recovered_commit": "6e57763d596697595a4d070e653ec228d77adbef",
+  "recovered_tree": "b2ebfad815111b110853f1c9fbccf667d52e1e88",
+  "branch": "candidate/legacy-new-engine-20261106-resume",
+  "source": "/workspace/scratch/bcbfb951b7bf/legacy-new",
+  "changes": [
+    "engine/controller.mjs",
+    "engine/host.mjs",
+    "engine/materials.mjs",
+    "index.js",
+    "runtime.js",
+    "tests/matrix-lifecycle.test.js"
+  ],
+  "validation": {
+    "lifecycle_before": "6 failures",
+    "lifecycle_and_engine_after": 25,
+    "revision_and_python_parity": 19,
+    "real_host": false,
+    "model": false,
+    "Android": false
+  },
+  "next": "Verify candidate delegation, manual edits and scope/host API integration; then full regression and snapshot restore"
+}

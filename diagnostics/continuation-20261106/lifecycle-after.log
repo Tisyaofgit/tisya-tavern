@@ -1,0 +1,33 @@
+✔ browser hashes preserve Unicode bytes (2.160792ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (11.729718ms)
+✔ edit, swipe and delete rebase instead of double charging (8.149583ms)
+✔ manual edits retain chronological placement when earlier prose changes (12.859323ms)
+✔ registered item action rolls back all costs and supports receipt replay (1.60256ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.213963ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (2.551502ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (26.720167ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (7.441184ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (1.64975ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.586676ms)
+✔ IndexedDB cold reopen and competing revision commit (9.176173ms)
+✔ new settings screen saves tag map without legacy configuration (22.426896ms)
+✔ native host round trip binds once, compiles all slots, settles and resumes from saved state (914.214189ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (1.040781ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.361296ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (1.74227ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.349117ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (22.342349ms)
+✔ stopped complete response remains uncommitted after a late end and cold reopen (7.301213ms)
+✔ editing a stopped draft does not silently accept its commands (1.484191ms)
+✔ reroll preparation reads its prior state without rolling back the accepted saved candidate (10.848006ms)
+✔ message arrival during generation cannot settle an unaccepted complete draft (0.639265ms)
+✔ a stopped swipe retains pending status in its native candidate metadata (5.274522ms)
+✔ event and delayed archive share one short code while complementary detail survives (89.934735ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1506.152846

@@ -1,0 +1,122 @@
+✖ stopped complete response remains uncommitted after a late end and cold reopen (11.731898ms)
+✖ editing a stopped draft does not silently accept its commands (6.629461ms)
+✖ reroll preparation reads its prior state without rolling back the accepted saved candidate (2.151146ms)
+✖ message arrival during generation cannot settle an unaccepted complete draft (1.377518ms)
+✖ a stopped swipe retains pending status in its native candidate metadata (3.784359ms)
+✖ event and delayed archive share one short code while complementary detail survives (72.968209ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 201.086774
+
+✖ failing tests:
+
+test at tests/matrix-lifecycle.test.js:17:1
+✖ stopped complete response remains uncommitted after a late end and cold reopen (11.731898ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  7 !== 10
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:19:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 7,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:21:1
+✖ editing a stopped draft does not silently accept its commands (6.629461ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  6 !== 10
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:22:232)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 6,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:24:1
+✖ reroll preparation reads its prior state without rolling back the accepted saved candidate (2.151146ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  10 !== 7
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:26:148)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 10,
+    expected: 7,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:28:1
+✖ message arrival during generation cannot settle an unaccepted complete draft (1.377518ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  7 !== 10
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:29:160)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 7,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:31:1
+✖ a stopped swipe retains pending status in its native candidate metadata (3.784359ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(m.swipe_info[0].extra[NS]?.pending_sha256)
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:33:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:36:1
+✖ event and delayed archive share one short code while complementary detail survives (72.968209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bcbfb951b7bf/legacy-new/tests/matrix-lifecycle.test.js:40:65)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

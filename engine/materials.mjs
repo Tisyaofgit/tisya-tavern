@@ -34,8 +34,17 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
   }
   const writable=schema.fields.filter(f=>f.key!=='row_uuid'&&!f.alias_of&&!f.read_only&&(context.audience==='author'||!f.lock_level));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+'/'+f.type+((f.enum??f.options)?'/'+(f.enum??f.options).join('、'):'')+')').join('；'));
  }
- slots=renderBlocks(e,blocks);const known=new Set((slots.tisya_material_memory_archive??[]).map(l=>l.split('：')[0]));
- for(const batch of e.data.runtime.archive??[])for(const r of batch.rows??[]){const line=r.category==='事件'?r.raw.split('|').slice(1).join('|').trim():r.raw;if(!known.has(line.split('：')[0]))add('tisya_material_memory_archive',line);}
+ slots=renderBlocks(e,blocks);
+ // Event identity does not include its display time. Merge complementary
+ // archive prose into the event's one placement without repeating its code.
+ const memory=slots.tisya_material_memory_archive??=[],eventKey=line=>/^([^\s[：:]+)(?:\[[^\]]*\])?[：:]/u.exec(line)?.[1],events=new Map();
+ memory.forEach((line,i)=>{const key=eventKey(line);if(key)events.set(key,i);});
+ for(const batch of e.data.runtime.archive??[])for(const r of batch.rows??[]){
+  const line=r.category==='事件'?r.raw.split('|').slice(1).join('|').trim():r.raw,key=r.category==='事件'?eventKey(line):null;
+  if(key&&events.has(key)){const i=events.get(key),detail=line.replace(/^[^：:]*[：:]/u,'');if(detail&&!memory[i].includes(detail))memory[i]+='；归档补记：'+detail;}
+  else if(!memory.includes(line)){if(key)events.set(key,memory.length);memory.push(line);}
+ }
+ if(memory.length)slots.tisya_material_memory_archive=memory;
  for(const p of activePreferences(e,context))add('tisya_contractor_wish',p.directive);
  if(query){let hits=recall(e,query,{branch:context.branch_ref});if(context.subject_ref){const known=new Set(Object.values(e.rows('T_DYN_COGNITION')).filter(r=>r.values.subject_ref===context.subject_ref).map(r=>r.values.event_ref));const entries=new Set(Object.entries(e.rows('T_DYN_EVENTS')).filter(([id])=>known.has(id)).map(([,r])=>r.values.source_entry_id));hits=hits.filter(h=>entries.has(h.entry_id));}for(const h of hits)add('tisya_material_memory_excerpt','原文 '+h.source_key+' sha256='+h.body_sha256+'\n'+h.fragments.map(f=>f.paragraph_id+'：'+f.raw_block).join('\n'));}
  if(e.data.runtime.calendar||Object.keys(e.rows('X_WORLD_CLOCKS')).length)add('tisya_material_event_context','世界历法：'+e.clock().text());

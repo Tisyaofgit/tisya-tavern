@@ -28,7 +28,7 @@ export function captureMessages(ctx,{omitLastAssistant=false,excludeFrom=null}={
     let chat=ctx.chat??[];
     if(Number.isInteger(excludeFrom))chat=chat.slice(0,excludeFrom);
     if(omitLastAssistant&&chat.length&&!chat.at(-1).is_user&&!chat.at(-1).is_system)chat=chat.slice(0,-1);
-    return chat.map(m=>({uid:m.extra[NS].uid,role:m.is_user?'user':m.is_system?'system':m.extra?.[NS]?.pending_sha256===sha256(String(m.mes??''))?'assistant_pending':'assistant',text:String(m.mes??'')}));
+    return chat.map(m=>({uid:m.extra[NS].uid,role:m.is_user?'user':m.is_system?'system':m.extra?.[NS]?.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??'')}));
 }
 export function signature(messages){return JSON.stringify(messages);}
 
@@ -80,8 +80,24 @@ export class Controller{
         this.onUpdate({status:'已绑定。现有历史作为导入基线，后续回复开始结算。',id});return copy;
     }
     async current(){const {id}=await this.identity();return this.storage.get(id);}
+    async candidatePending(pending,index){
+        const ctx=this.getContext(),m=ctx.chat?.[Number.isInteger(index)?index:ctx.chat.length-1];
+        if(!m||m.is_user||m.is_system)return;
+        const info=m.swipe_info?.[m.swipe_id??0];m.extra??={};
+        const targets=[m.extra];if(info){info.extra??={};targets.push(info.extra);}
+        let changed=false;
+        for(const extra of targets){
+            if(pending){extra[NS]={...(extra[NS]??{}),pending_sha256:sha256(String(m.mes??''))};changed=true;}
+            else if(extra[NS]?.pending_sha256){delete extra[NS].pending_sha256;changed=true;}
+        }
+        if(changed)await ctx.saveChat();
+    }
     async run(options={}){
         const {ctx,key,id}=await this.identity();if(!this.enabled(ctx))return null;
+        // A request may inspect the logical pre-turn state, but only candidate
+        // acceptance replaces the saved state. Incidental refreshes during a
+        // generation also exclude its unfinished assistant tail.
+        if(this.generating.get(key)&&!options.preview)options={...options,preview:true,omitLastAssistant:true};
         const previous=this.owners.get(id)??Promise.resolve();
         // Only one chat's updates are ordered. Different owners remain independent.
         const task=previous.catch(()=>{}).then(async()=>{
@@ -90,10 +106,14 @@ export class Controller{
             let bundle=await this.storage.get(id);if(!bundle)throw Error('此聊天尚未绑定引擎，请导入沙盒JSON或绑定空白引擎。');
             let messages=captureMessages(live,options),stamp=signature(messages);
             const response=await this.request('/api/plugin/reconcile',{bundle,messages,scope:bundle.journal?.scope??bundle.state.runtime?.scope});
+            if(chatKey(this.getContext())===key&&signature(captureMessages(this.getContext(),options))!==stamp){
+                this.onUpdate({status:'检测到请求期间聊天变化，正在按最新内容重算。',pending:true});return {stale:true};
+            }
             // A chat switch does not erase a completed old chat settlement. Keep
             // it under its captured owner; don't project old data into the new UI.
             const expected=bundle.local_revision??0;response.bundle.local_revision=expected+1;
-            if(this.storage.commit){
+            if(options.preview){response.preview=true;response.bundle.local_revision=expected;}
+            else if(this.storage.commit){
                 if(!await this.storage.commit(id,expected,response.bundle))throw Error('同一聊天刚被另一窗口更新。较新状态已保留，请刷新此聊天后重试。');
             }else{
                 const current=await this.storage.get(id);if((current?.local_revision??0)!==expected)throw Error('同一聊天状态版本已变化，较新结果已保留。');
@@ -110,7 +130,7 @@ export class Controller{
         const c=this.getContext();if(!this.enabled(c)||type==='quiet'||type==='impersonate')return;
         const key=chatKey(c);this.generating.set(key,true);
         try{
-            const result=await this.run({omitLastAssistant:['swipe','regenerate','continue'].includes(type)});
+            const result=await this.run({preview:true,omitLastAssistant:['swipe','regenerate','continue'].includes(type)});
             if(result?.materials_error)throw Error('正文和结算已保存，但材料配置需要修复：'+result.materials_error.message);
             if(chatKey(this.getContext())!==key)throw Error('同步期间已切换聊天，请在目标聊天重新生成。');
             await this.inject();
@@ -123,8 +143,13 @@ export class Controller{
     }
     async event(name,...args){
         const ctx=this.getContext(),key=chatKey(ctx);
-        if(name==='GENERATION_STOPPED'){const m=ctx.chat?.at(-1);if(this.generating.get(key)&&m&&!m.is_user&&!m.is_system){m.extra??={};m.extra[NS]={...(m.extra[NS]??{}),pending_sha256:sha256(String(m.mes??''))};await ctx.saveChat();}this.generating.delete(key);return;}
-        if(name==='GENERATION_ENDED'||name==='MESSAGE_SWIPED'&&!this.generating.get(key)){const m=ctx.chat?.[Number.isInteger(args[0])?args[0]:ctx.chat.length-1];if(m?.extra?.[NS]?.pending_sha256){delete m.extra[NS].pending_sha256;await ctx.saveChat();}}
+        if(name==='GENERATION_STOPPED'){const generating=this.generating.delete(key);if(generating)await this.candidatePending(true);return;}
+        if(name==='GENERATION_ENDED'){
+            if(!this.generating.delete(key))return;
+            await this.candidatePending(false);
+        }
+        if(name==='MESSAGE_RECEIVED'&&this.generating.get(key))return;
+        if(name==='MESSAGE_SWIPED'&&!this.generating.get(key))await this.candidatePending(false,args[0]);
         if(name==='CHAT_CHANGED'){
             ctx.setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);
             if(this.enabled(ctx)){await this.run();await this.inject();}return;
