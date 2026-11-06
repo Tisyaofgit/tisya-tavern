@@ -1,0 +1,25 @@
+✔ JavaScript formula and custom-calendar results match frozen Python source (139.55987ms)
+✔ seeded rolls and stable IDs match Python across restart and large dice (56.097638ms)
+✔ hash and decimal settlement preserve canonical values (14.845665ms)
+✔ one bad line rolls back independently and keeps full original evidence (10.106636ms)
+✔ failed compound action restores all preceding mutations (2.500627ms)
+✔ edited and deleted replies rewind instead of accumulating (23.348978ms)
+✔ inverse patches preserve removed branches and array prefixes (1.664527ms)
+✔ custom tag maps parse old and new history and preserve prose (3.278729ms)
+✔ archive waits two completed successors and recall detects corruption (2.987641ms)
+✔ safe formulas cover lazy conditionals and mapped ranges (2.868822ms)
+✔ world clock observes custom units and Gregorian leap dates (1.088079ms)
+✔ native host preserves worldbook/history/image payload and separates identities (2191.960734ms)
+✔ native host baseline skips old deltas and fork creates separate book (2046.258386ms)
+✔ configuration failure retains old value and validates collisions (2.475449ms)
+✔ new configuration DOM exposes complete source and independent identity fields (54.345348ms)
+✔ prose examples do not become top-level settlement blocks (1.350064ms)
+✔ changing only cells tag still recognizes old tag history (1.145826ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4843.214541

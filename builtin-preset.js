@@ -1,9 +1,9 @@
-import bundled from './presets/Tisya.json' with {type:'json'};
+import {createPreset,configFor,NEW_REVISION} from './matrix/configuration.mjs';
 import {keepPresetConnection} from './preset-connection.js';
 import {presetLoadMismatch} from './preset-load-check.js';
 
 export const BUILTIN_PRESET_NAME='Tisya';
-export const BUILTIN_PRESET_REVISION=bundled.extensions.tisya_builtin.revision;
+export const BUILTIN_PRESET_REVISION=NEW_REVISION;
 const clone=value=>structuredClone(value);
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const updateError=(message,saved=false)=>Object.assign(Error(message+'。请点“更新 Tisya 预设”重试。'),{tisyaPresetUpdate:true,tisyaPresetSaved:saved});
@@ -19,6 +19,7 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
  if(inFlight.has(manager))return inFlight.get(manager);
  const operation=install().catch(error=>{error.tisyaPresetUpdate=true;throw error;}).finally(()=>inFlight.delete(manager));inFlight.set(manager,operation);return operation;
  async function install(){
+  const bundled=createPreset(configFor(context));
   for(const key of ['getAllPresets','getCompletionPresetByName','getSelectedPresetName','getPresetList','savePreset','findPreset','selectPreset'])if(typeof manager[key]!=='function')fail('宿主缺少 '+key);
   const exists=manager.getAllPresets().includes(BUILTIN_PRESET_NAME);
   const previous=exists?manager.getCompletionPresetByName(BUILTIN_PRESET_NAME):null;

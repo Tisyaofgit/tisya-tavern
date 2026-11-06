@@ -2,7 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import bundled from '../presets/Tisya.json' with {type:'json'};
-import original from '../presets/Tisya-One-Pass-1.json' with {type:'json'};
+import {createPreset,defaultConfig,CONFIG_KEY} from '../matrix/configuration.mjs';
+const original=createPreset();
 import {installBuiltInPreset,BUILTIN_PRESET_REVISION} from '../builtin-preset.js';
 import {presetLoadMismatch} from '../preset-load-check.js';
 const copy=x=>structuredClone(x);
@@ -41,7 +42,7 @@ function normalizeNativePrompts(settings){
 }
 test('native PromptManager normalization loads the shipped preset without a restart error',async()=>{
  const f=fixture({selected:'Tisya',normalizeHost:true});
- try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,68);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,65);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
+ try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,74);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,73);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,bundled.temperature);}finally{await f.w.happyDOM.close();}
 });
 test('load verification accepts only observed native additions and still detects changed instructions and order',()=>{
  const native=copy(bundled);normalizeNativePrompts(native);assert.equal(presetLoadMismatch(native,bundled),null);
@@ -60,8 +61,8 @@ test('manual refresh reinstalls same revision while automatic startup preserves 
   await installBuiltInPreset(f.context,f.document,{force:true});assert.equal(presetLoadMismatch(f.context.chatCompletionSettings,bundled),null);assert.equal(f.saves(),2);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');
  }finally{await f.w.happyDOM.close();}
 });
-test('built-in keeps the complete 62-entry plaintext preset and both creative digests',()=>{
- assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,62);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
+test('built-in keeps the complete 69-slot source plus the explicit identity contract',()=>{
+ assert.equal(bundled.name,'Tisya');assert.deepEqual(bundled.prompts,original.prompts);assert.deepEqual(bundled.prompt_order,original.prompt_order);assert.equal(bundled.prompts.length,70);assert.match(BUILTIN_PRESET_REVISION,/^matrix-integration-/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });
 test('first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched',async()=>{
  const f=fixture({existing:false}),settings=copy(f.context.chatCompletionSettings),other=copy(f.disk.get('Other'));
@@ -71,8 +72,8 @@ test('first install uses native persistence, adds one Tisya and leaves another s
 test('upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset',async()=>{
  const f=fixture(),before=copy(f.context.chatCompletionSettings);assert.equal((await installBuiltInPreset(f.context,f.document)).status,'updated');assert.equal(f.list.presets.length,2);assert.equal(f.disk.get('Tisya').custom_model,'stored-model');assert.deepEqual(f.disk.get('Tisya').extensions.tisya.worldbooks,['saved-book']);assert.deepEqual(f.context.chatCompletionSettings,before);assert.equal(f.manager.getSelectedPresetName(),'Other');await f.w.happyDOM.close();
 });
-test('selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions',async()=>{
- const f=fixture({selected:'Tisya'});await installBuiltInPreset(f.context,f.document);assert.deepEqual(f.context.chatCompletionSettings.prompts,bundled.prompts);assert.deepEqual(f.context.chatCompletionSettings.prompt_order,bundled.prompt_order);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);assert.equal(f.context.chatCompletionSettings.bind_preset_to_connection,true);assert.equal(f.document.querySelector('input').checked,true);assert.deepEqual(f.context.chatCompletionSettings.extensions.tisya.worldbooks,['live-book']);assert.equal(f.refreshes(),1);assert.equal([...f.events.values()].reduce((n,s)=>n+s.size,0),0);
+test('selected Tisya refreshes native prompts and preserves live API and applies new sampling with binding and extensions retained',async()=>{
+ const f=fixture({selected:'Tisya'});await installBuiltInPreset(f.context,f.document);assert.deepEqual(f.context.chatCompletionSettings.prompts,bundled.prompts);assert.deepEqual(f.context.chatCompletionSettings.prompt_order,bundled.prompt_order);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,bundled.temperature);assert.equal(f.context.chatCompletionSettings.bind_preset_to_connection,true);assert.equal(f.document.querySelector('input').checked,true);assert.deepEqual(f.context.chatCompletionSettings.extensions.tisya.worldbooks,['live-book']);assert.equal(f.refreshes(),1);assert.equal([...f.events.values()].reduce((n,s)=>n+s.size,0),0);
  f.context.chatCompletionSettings.prompts[0].content='same-release custom draft';await installBuiltInPreset(f.context,f.document);assert.equal(f.saves(),1);assert.equal(f.context.chatCompletionSettings.prompts[0].content,'same-release custom draft');await f.w.happyDOM.close();
 });
 test('failed native save keeps saved and live data, and does not report an installation',async()=>{

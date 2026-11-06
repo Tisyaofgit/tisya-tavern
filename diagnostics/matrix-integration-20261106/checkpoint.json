@@ -1,0 +1,24 @@
+{
+  "checkpoint_utc": "2026-11-06T13:09:44.890099+00:00",
+  "status": "implementation_in_progress_not_release",
+  "source_baseline": "3cc3ed1fb557e5840ba6eafacf25091d72e46d67",
+  "window_hard_stop_utc": "2026-11-06T13:52:16Z",
+  "notification_id": "Automation_780656973b80819199d2a41b9620a491",
+  "verified": {
+    "matrix_differential_and_engine": 17,
+    "legacy_shell": 78,
+    "targeted_core_and_preset": 35
+  },
+  "not_verified": [
+    "real model",
+    "Android",
+    "full new-host end to end"
+  ],
+  "next": [
+    "Finish full regression",
+    "Complete source-equivalent material grouping and config projection",
+    "Audit old native MVU isolation and legacy source migration",
+    "Test candidate navigation, binding drift and cancellation on actual host",
+    "Save exact final snapshot and receipts"
+  ]
+}

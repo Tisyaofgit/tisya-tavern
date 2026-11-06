@@ -1,9 +1,11 @@
+import {isMatrixReply} from '../matrix/protocol.mjs';
 import {xmlTokens} from '../reader-core.js';
 export const isOnePassRootId=id=>typeof id==='string'&&/^tisya-onepass-[1-9]\d{0,8}$/.test(id);
 
 // Route by the same root/attribute grammar as the envelope parser. This is
 // only protocol selection; the selected parser still validates the full reply.
 export function isOnePassReply(source){
+ if(isMatrixReply(source))return true;
  if(typeof source!=='string'||source.length>2000000)return false;
  try{
   for(const token of xmlTokens(source)){

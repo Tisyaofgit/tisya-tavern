@@ -26,10 +26,10 @@ export function finishWorldbookOrder(args){
  pairs.forEach(([key,e],i)=>map.set(key,{...e,order:pairs.length-i,[META]:{...e[META],scanOrder:e[META]?.scanOrder??e.order}}));
  return true;
 }
-export function installWorldbookOrder({getContext,onError}){
+export function installWorldbookOrder({getContext,onError,enabled=()=>true}){
  const c=getContext(),loaded=c.eventTypes.WORLDINFO_ENTRIES_LOADED,done=c.eventTypes.WORLDINFO_SCAN_DONE;let failure=null;
  const prefs=()=>getContext().extensionSettings['缇斯亚世界书'];
- const wrap=fn=>args=>{try{return fn(args)}catch(e){failure=e;onError(e);throw e}};
+ const wrap=fn=>args=>{try{if(enabled())return fn(args)}catch(e){failure=e;onError(e);throw e}};
  if(loaded&&done){c.eventSource.on(loaded,wrap(data=>prepareWorldbookOrder(data,prefs())));c.eventSource.on(done,wrap(finishWorldbookOrder));}
  return {clear(){failure=null},assertReady(){if(prefs()?.layoutOrder&&(!loaded||!done))throw Error('此宿主缺少世界书排布事件，已停止发送');if(failure)throw failure;},available:!!loaded&&!!done};
 }

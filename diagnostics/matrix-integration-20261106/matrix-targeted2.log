@@ -1,0 +1,43 @@
+✔ native PromptManager normalization loads the shipped preset without a restart error (32.558048ms)
+✔ load verification accepts only observed native additions and still detects changed instructions and order (15.992321ms)
+✔ manual refresh reinstalls same revision while automatic startup preserves same-release edits (21.98897ms)
+✔ built-in keeps the complete 69-slot source plus the explicit identity contract (1.941353ms)
+✔ first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched (9.171637ms)
+✔ upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset (6.567442ms)
+✔ selected Tisya refreshes native prompts and preserves live API and applies new sampling with binding and extensions retained (14.422129ms)
+✔ failed native save keeps saved and live data, and does not report an installation (6.078643ms)
+✔ missing native capability and active generation reject before a write (8.741396ms)
+✔ concurrent initialization is one native save (6.854035ms)
+✔ refresh timeout stays visible; reopened stale active settings load the saved release (23.781889ms)
+✔ hash and decimal settlement preserve canonical values (18.531256ms)
+✔ one bad line rolls back independently and keeps full original evidence (7.536907ms)
+✔ failed compound action restores all preceding mutations (0.610062ms)
+✔ edited and deleted replies rewind instead of accumulating (21.53851ms)
+✔ inverse patches preserve removed branches and array prefixes (1.357861ms)
+✔ custom tag maps parse old and new history and preserve prose (2.52887ms)
+✔ archive waits two completed successors and recall detects corruption (2.634089ms)
+✔ safe formulas cover lazy conditionals and mapped ranges (2.921634ms)
+✔ world clock observes custom units and Gregorian leap dates (1.170288ms)
+✔ native host preserves worldbook/history/image payload and separates identities (1987.460686ms)
+✔ native host baseline skips old deltas and fork creates separate book (1876.277649ms)
+✔ configuration failure retains old value and validates collisions (2.701592ms)
+✔ new configuration DOM exposes complete source and independent identity fields (58.898306ms)
+✔ installed, displayed and stylesheet versions agree (1.678245ms)
+✔ preload and explicit dry run do not call engine or mutate cached native records (1.988904ms)
+✔ every active source is gated before native sticky, decorators and forced activation; enabled matches keep native budget fields (3.646509ms)
+✔ forced or late injected denied entry stops final payload even if host catches scan error (0.845467ms)
+✔ unrecognized provider, missing result and wrong version fail closed and final readiness remembers failure (0.991458ms)
+✔ timeout and context changes reject late outcomes and never reuse last success (26.260229ms)
+✔ current state freshness is checked before recursion finishes and before final send (3.9381ms)
+✔ all eight host insertion anchors retain ordering after gate filtering; ordinary entries remain intact (2.394037ms)
+✔ actual entry point gates preset-added records after collection, awaits final guard and cancels all terminal paths (1.255557ms)
+✔ a cancelled scan finishing late cannot poison the next generation (0.467686ms)
+✔ late replacement cannot reuse a permitted entry identity with a different rule (0.550852ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4422.224939

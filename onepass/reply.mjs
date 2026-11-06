@@ -1,3 +1,4 @@
+import {isMatrixReply,parseEnvelope,toLegacyDisplay} from '../matrix/protocol.mjs';
 import {xmlTokens,strictJSON} from '../reader-core.js';
 import {parsePipeBlock} from './pipes.mjs';
 export {isOnePassReply} from './source.mjs';
@@ -7,6 +8,7 @@ export const ONEPASS_ORDER=Object.freeze(['task','before','title','body','after'
 const fail=code=>{throw Object.assign(Error('TISYA_ONEPASS_'+code),{code:'TISYA_ONEPASS_'+code});};
 const check=(v,c)=>{if(!v)fail(c);};
 export function onePassEnvelope(source){
+ if(isMatrixReply(source)){const e=parseEnvelope(source);return {...e,matrix:true,projected:toLegacyDisplay(source),rootId:'tisya-matrix-1'};}
  check(typeof source==='string'&&source.length<=2000000,'SIZE');
  const stack=[],blocks={},attrs={};let current=null,start=0,end=0,rootId=null;
  for(const t of xmlTokens(source)){
@@ -25,13 +27,13 @@ export function onePassEnvelope(source){
  return {blocks,attrs,source,rootId,...(rootId!=='tisya-onepass-1'?{wireCompatibility:'numeric-reply-id'}:{}),projected:projected+tail};
 }
 export function parseOnePassReply(source){
- const e=onePassEnvelope(source),publicReply=parseV3Reply(e.projected),records={};preferenceRows(e.blocks.task);
+ const e=onePassEnvelope(source),publicReply=parseV3Reply(e.projected),records={};if(e.matrix)return {...e,publicReply,records:{},recordFormat:'matrix'};preferenceRows(e.blocks.task);
  const formats=['status','vars','archive','memory'].map(k=>e.attrs[k]?.format).filter(Boolean);const pipes=formats.length&&formats.every(f=>f==='pipes');
  if(pipes){for(const k of ['status','vars','archive','memory']){check(e.attrs[k]?.format==='pipes'||!e.blocks[k].trim()&&!e.attrs[k]?.format,'FORMAT_'+k.toUpperCase());records[k]=parsePipeBlock(e.blocks[k],k);}return {...e,publicReply,records,recordFormat:'pipes'};}
  for(const k of ['status','vars','archive','memory']){check(e.attrs[k]?.format==='json','FORMAT_'+k.toUpperCase());try{records[k]=strictJSON(e.blocks[k]);}catch{fail('JSON_'+k.toUpperCase());}check(records[k]&&typeof records[k]==='object'&&!Array.isArray(records[k]),'JSON_'+k.toUpperCase());}
  return {...e,publicReply,records};
 }
-export function readOnePassDetails(source){const e=onePassEnvelope(source),details=readV3Details(e.projected,{tolerant:true});const afterKinds=new Set(details.nextHeart.items.map(row=>row.type));const missing=details.taskHeart.items.filter(row=>!afterKinds.has(row.type)).map(row=>row.type);return {...details,protocol:4,...(missing.length?{heartDiagnostic:'原回复缺少收篇心声：'+missing.join('、')+'；未补写，其他内容保留。'}:{}),preferences:preferenceRows(e.blocks.task,details.diagnostics)};}
+export function readOnePassDetails(source){const e=onePassEnvelope(source),details=readV3Details(e.projected,{tolerant:true});const afterKinds=new Set(details.nextHeart.items.map(row=>row.type));const missing=details.taskHeart.items.filter(row=>!afterKinds.has(row.type)).map(row=>row.type);return {...details,protocol:4,...(missing.length?{heartDiagnostic:'原回复缺少收篇心声：'+missing.join('、')+'；未补写，其他内容保留。'}:{}),preferences:e.matrix?e.blocks.task.split(/\r?\n/).filter(x=>x.trim()).map(x=>({label:x.split('|')[0],text:x.split('|').slice(1).join(' · ')})):preferenceRows(e.blocks.task,details.diagnostics)};}
 function preferenceRows(text,diagnostics=null){const rows=[];for(const [index,raw]of text.split(/\r?\n/).entries()){
  const line=raw.trim();if(!line)continue;
  try{
