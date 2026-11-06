@@ -1,0 +1,77 @@
+{
+  "utc": "2026-11-06T20:38:46.437277+00:00",
+  "beijing": "2026-11-07T04:38:46.437277+08:00",
+  "base_source_commit": "4a54abb97f02286df866f65c25bd329fd78c9186",
+  "product_code_changed": false,
+  "recovery_tool_changed": true,
+  "runtime": "TauriTavern2.4.0 fff9af0333be / Linux / WebKitGTK",
+  "tests": {
+    "targeted_node": 58,
+    "checkpoint_python": 3,
+    "prior_full_regression_not_rerun": 1413
+  },
+  "native": {
+    "configuration_via_DOM": [
+      "reply=scene.",
+      "body=story-",
+      "cells=ledger.",
+      "story name and wish",
+      "temperature=0.43"
+    ],
+    "identity_worldbook": "Existing isolated book+uid; saved/read back through native API; user/char macros and body sample tags expanded",
+    "first_request": {
+      "messages": 44,
+      "identity_occurrences": 1,
+      "wish_occurrences": 1,
+      "unexpanded_macros": false,
+      "temperature": 0.43
+    },
+    "failure_recovery": "Malformed local fixture L1 prefix caused explicit CELL_FAILED/REFERENCE_SYNTAX; body preserved; native edit corrected it and created exactly one row while prior row stayed intact",
+    "restored_state_files": 273,
+    "cold_restart": {
+      "onboarding_dialog": false,
+      "connection_and_preset_retained": true,
+      "story_tags_generation_retained": true,
+      "both_rows_retained": true,
+      "old_body_rendered": true,
+      "next_request": {
+        "messages": 47,
+        "temp": 0.43,
+        "newRowInSystem": true,
+        "oldRowInSystem": true,
+        "identity": 1,
+        "wish": 1,
+        "unexpanded": false
+      },
+      "new_body_and_valid_action_rendered": true
+    }
+  },
+  "failures_preserved": [
+    {
+      "phase": "first launch",
+      "error": "exec-server transport disconnected; process absent; no normal close receipt"
+    },
+    {
+      "phase": "second launch",
+      "error": "display91 stale lock after interruption; GTK startup failure; supervisor timed out; normal close recorded"
+    },
+    {
+      "phase": "restore baseline",
+      "error": "previous snapshot omitted settings/ shards; newly reconstructed isolated connection and selected preset, not claimed as exact old setting recovery"
+    },
+    {
+      "phase": "local fixture1",
+      "error": "invalid L1 prefix before @ROW+; corrected by native edit"
+    },
+    {
+      "phase": "local fixture2",
+      "error": "unsupported action category 出门 omitted by existing renderer; corrected to registered 观察 through native edit"
+    }
+  ],
+  "not_verified": [
+    "external provider model",
+    "Android device",
+    "complete settings and lifecycle matrix"
+  ],
+  "next": "Remaining OLD-NEW-03/04/07/10 cases; continue only from new complete state checkpoint. Raw requests and state are private; do not publish them to the source repository."
+}

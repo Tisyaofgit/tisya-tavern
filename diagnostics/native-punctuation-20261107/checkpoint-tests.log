@@ -1,0 +1,8 @@
+test_active_or_interrupted_host_cannot_be_captured (__main__.NativeCheckpoint.test_active_or_interrupted_host_cannot_be_captured) ... ok
+test_split_settings_and_unknown_new_state_survive (__main__.NativeCheckpoint.test_split_settings_and_unknown_new_state_survive) ... ok
+test_state_symlinks_are_not_silently_followed (__main__.NativeCheckpoint.test_state_symlinks_are_not_silently_followed) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.008s
+
+OK
