@@ -1,13 +1,14 @@
 {
-  "checkpoint_utc": "2026-11-06T13:09:44.890099+00:00",
-  "status": "implementation_in_progress_not_release",
+  "checkpoint_utc": "2026-11-06T13:22:07.723062+00:00",
+  "status": "supplemental_candidate_frozen_pending_primary_merge",
   "source_baseline": "3cc3ed1fb557e5840ba6eafacf25091d72e46d67",
   "window_hard_stop_utc": "2026-11-06T13:52:16Z",
-  "notification_id": "Automation_780656973b80819199d2a41b9620a491",
+  "notification_id": "Automation_b8e7395d95b881919a282dd2be486a53",
   "verified": {
     "matrix_differential_and_engine": 17,
     "legacy_shell": 78,
-    "targeted_core_and_preset": 35
+    "targeted_core_and_preset": 35,
+    "full_regression_before_added_differential": 1386
   },
   "not_verified": [
     "real model",
@@ -15,10 +16,28 @@
     "full new-host end to end"
   ],
   "next": [
-    "Finish full regression",
-    "Complete source-equivalent material grouping and config projection",
-    "Audit old native MVU isolation and legacy source migration",
-    "Test candidate navigation, binding drift and cancellation on actual host",
-    "Save exact final snapshot and receipts"
+    "Read primary latest blueprint and concurrent handoff",
+    "Verify primary final request keeps revision and contractor directives",
+    "Verify accepted-candidate settlement ordering",
+    "Merge only reviewed differences; never activate both writers"
+  ],
+  "primary_worktree": "legacy-new",
+  "supplemental_worktree": "integration",
+  "library_controls": [
+    {
+      "id": "libfile_38c4be789b488191afd346de39eb1374",
+      "version": 343,
+      "sha256": "3e2c88878fdb61cf2b770960ab9f22bd81257640e696dc45bf10c08343587635"
+    },
+    {
+      "id": "libfile_00f274d68b6c8191830dd1ed643ce1c6",
+      "version": 245,
+      "sha256": "c7ab56fb0c1e2e9bdc193894b8ff80fdedeb6149efc3b95a1d55aec794d30992"
+    },
+    {
+      "id": "libfile_fc40edcd27388191a073f819b172e519",
+      "version": 89,
+      "sha256": "7119347ab007052d9c38a230913ea0a7f97fb825240cfc293bef204ce71acdd4"
+    }
   ]
 }

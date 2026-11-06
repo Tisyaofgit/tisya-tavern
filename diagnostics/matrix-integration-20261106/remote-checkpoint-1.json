@@ -1,0 +1,1091 @@
+{
+  "utc": "2026-11-06T13:14:25.930Z",
+  "restore": {
+    "utc": "2026-11-06T13:13:36.075410+00:00",
+    "files": 974,
+    "tree": "4bf4d170473edb4842c3fed0f812c3ac0ab1eeb5"
+  },
+  "tree": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "4bf4d170473edb4842c3fed0f812c3ac0ab1eeb5"
+    },
+    "isError": false
+  },
+  "commit": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "5f144eb17ffe83ea925b0d76a1ca00ddbfa4a084"
+    },
+    "isError": false
+  },
+  "branch": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "branch": "candidate/matrix-integration-20261106"
+    },
+    "isError": false
+  },
+  "blob_receipts": [
+    {
+      "path": "matrix/protocol.mjs",
+      "sha": "df91be2c7e2a8949b9bacdad654376f8b52f35bc",
+      "mode": "100644",
+      "status": "A",
+      "size": 4683,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "df91be2c7e2a8949b9bacdad654376f8b52f35bc"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": ".gitignore",
+      "sha": "a707889c41e9200acb7e5f4f87235094dccb26e2",
+      "mode": "100644",
+      "status": "M",
+      "size": 33,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "a707889c41e9200acb7e5f4f87235094dccb26e2"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "builtin-preset.js",
+      "sha": "42efdd00a7bd5a526efe2acb979c79fca08f9640",
+      "mode": "100644",
+      "status": "M",
+      "size": 6634,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "42efdd00a7bd5a526efe2acb979c79fca08f9640"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "diagnostics/matrix-integration-20261106/checkpoint.json",
+      "sha": "9bea45623d20bedf294c0823c7e301a20d800fae",
+      "mode": "100644",
+      "status": "A",
+      "size": 819,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "9bea45623d20bedf294c0823c7e301a20d800fae"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "diagnostics/matrix-integration-20261106/matrix-differential.log",
+      "sha": "5c3d64496f10bef24aa08ab08b57f7e522abdf83",
+      "mode": "100644",
+      "status": "A",
+      "size": 1514,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5c3d64496f10bef24aa08ab08b57f7e522abdf83"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "diagnostics/matrix-integration-20261106/matrix-regression.log",
+      "sha": "62a9131b86b7b7fa6a0e79f58a6ec0a4171b8655",
+      "mode": "100644",
+      "status": "A",
+      "size": 544727,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "62a9131b86b7b7fa6a0e79f58a6ec0a4171b8655"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "diagnostics/matrix-integration-20261106/matrix-shell.log",
+      "sha": "6aeb2a0c88a1e228befd4d32cf6c9b3acc1e8cb3",
+      "mode": "100644",
+      "status": "A",
+      "size": 7944,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "6aeb2a0c88a1e228befd4d32cf6c9b3acc1e8cb3"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "diagnostics/matrix-integration-20261106/matrix-targeted2.log",
+      "sha": "bd2d9ea0cf5bd9f90d1d55b6e2e658935231c9d6",
+      "mode": "100644",
+      "status": "A",
+      "size": 3513,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "bd2d9ea0cf5bd9f90d1d55b6e2e658935231c9d6"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "index.js",
+      "sha": "00c63097108563665575e5b89885655bb45c82b3",
+      "mode": "100644",
+      "status": "M",
+      "size": 102497,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "00c63097108563665575e5b89885655bb45c82b3"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "layout.js",
+      "sha": "c889d8c661484bcbd5a90eb69a546d59f670f6c8",
+      "mode": "100644",
+      "status": "M",
+      "size": 10346,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "c889d8c661484bcbd5a90eb69a546d59f670f6c8"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "manifest.json",
+      "sha": "a0e4dc7f5fddd0d46944be4ea4167f28cf6418f2",
+      "mode": "100644",
+      "status": "M",
+      "size": 477,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "a0e4dc7f5fddd0d46944be4ea4167f28cf6418f2"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/actions.mjs",
+      "sha": "151021842eca569cd5d16694e68f9336d13dede1",
+      "mode": "100644",
+      "status": "A",
+      "size": 14759,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "151021842eca569cd5d16694e68f9336d13dede1"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/business.mjs",
+      "sha": "28d3a319a7821ad9fc6f4c5a9e849d29f705ade8",
+      "mode": "100644",
+      "status": "A",
+      "size": 8387,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "28d3a319a7821ad9fc6f4c5a9e849d29f705ade8"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/configuration.json",
+      "sha": "dac2d94770899f67ed2c3d3709bddcf03c48f642",
+      "mode": "100644",
+      "status": "A",
+      "size": 315129,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "dac2d94770899f67ed2c3d3709bddcf03c48f642"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/configuration.mjs",
+      "sha": "375e72c891d48da01f280ad4e36ad3dcc06bf8af",
+      "mode": "100644",
+      "status": "A",
+      "size": 4940,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "375e72c891d48da01f280ad4e36ad3dcc06bf8af"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/formula.mjs",
+      "sha": "de61f15fde0a68e1663cbdbcf935460382e14ec2",
+      "mode": "100644",
+      "status": "A",
+      "size": 10142,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "de61f15fde0a68e1663cbdbcf935460382e14ec2"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/host.mjs",
+      "sha": "5c42d0a9f7ca0ec627192ad67472734c3a8ae4ac",
+      "mode": "100644",
+      "status": "A",
+      "size": 11186,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5c42d0a9f7ca0ec627192ad67472734c3a8ae4ac"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/identity.mjs",
+      "sha": "f77332a14ccba531e88c9c88c957db0ae21b6e91",
+      "mode": "100644",
+      "status": "A",
+      "size": 1350,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "f77332a14ccba531e88c9c88c957db0ae21b6e91"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/journal.mjs",
+      "sha": "c6c79a68a948628f88ce694e0ebb8474cb9f45db",
+      "mode": "100644",
+      "status": "A",
+      "size": 5969,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "c6c79a68a948628f88ce694e0ebb8474cb9f45db"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/materials.mjs",
+      "sha": "5732dc428badfb8086c759c847fd5320b5461b96",
+      "mode": "100644",
+      "status": "A",
+      "size": 5784,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5732dc428badfb8086c759c847fd5320b5461b96"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/mechanical.mjs",
+      "sha": "64deee89409b0fb033009fc8390eee7cdbbacf5a",
+      "mode": "100644",
+      "status": "A",
+      "size": 95065,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "64deee89409b0fb033009fc8390eee7cdbbacf5a"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/memory.mjs",
+      "sha": "47dcac54c2ed78ea295c4f260510f514cce07b0b",
+      "mode": "100644",
+      "status": "A",
+      "size": 6871,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "47dcac54c2ed78ea295c4f260510f514cce07b0b"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/panel.mjs",
+      "sha": "5313bbf57e1877c4a527b694bc8f5cbe8a3887e9",
+      "mode": "100644",
+      "status": "A",
+      "size": 10405,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5313bbf57e1877c4a527b694bc8f5cbe8a3887e9"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/persona-model.mjs",
+      "sha": "cd2a36a72724d1a597a4be3eaf9041d8e205d5d2",
+      "mode": "100644",
+      "status": "A",
+      "size": 4539,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "cd2a36a72724d1a597a4be3eaf9041d8e205d5d2"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/preset-default.json",
+      "sha": "5418f6c630f2205f7cc9f29c02fa322e2cd4e8f4",
+      "mode": "100644",
+      "status": "A",
+      "size": 125663,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5418f6c630f2205f7cc9f29c02fa322e2cd4e8f4"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/preset-template.json",
+      "sha": "203fb1f77c145af7fa95b57d9fd3deec64ed5aa4",
+      "mode": "100644",
+      "status": "A",
+      "size": 78152,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "203fb1f77c145af7fa95b57d9fd3deec64ed5aa4"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/random.mjs",
+      "sha": "bee127a77b18e13858698fa041762c230f176b28",
+      "mode": "100644",
+      "status": "A",
+      "size": 1493,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "bee127a77b18e13858698fa041762c230f176b28"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/range-functions.mjs",
+      "sha": "b2929a5f4015fc9bd7fa63cf792d63439d955ddf",
+      "mode": "100644",
+      "status": "A",
+      "size": 1673,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "b2929a5f4015fc9bd7fa63cf792d63439d955ddf"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/runtime.mjs",
+      "sha": "00f69a318b988bfd43b93249a4bf8201670059e0",
+      "mode": "100644",
+      "status": "A",
+      "size": 19971,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "00f69a318b988bfd43b93249a4bf8201670059e0"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/schema.json",
+      "sha": "50c8694b7f9a7f4fac42ad688d27f7e265d1aaf1",
+      "mode": "100644",
+      "status": "A",
+      "size": 2225883,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "50c8694b7f9a7f4fac42ad688d27f7e265d1aaf1"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "matrix/util.mjs",
+      "sha": "bab1e9f8a86e993819649cc195fbb49e1cc1f483",
+      "mode": "100644",
+      "status": "A",
+      "size": 6403,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "bab1e9f8a86e993819649cc195fbb49e1cc1f483"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "onepass/reply.mjs",
+      "sha": "5ce262b551f22007be88fc667c9882d144774967",
+      "mode": "100644",
+      "status": "M",
+      "size": 5867,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "5ce262b551f22007be88fc667c9882d144774967"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "onepass/source.mjs",
+      "sha": "ec32620fa4a750027e818fef913d611dc020ebc4",
+      "mode": "100644",
+      "status": "M",
+      "size": 1134,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "ec32620fa4a750027e818fef913d611dc020ebc4"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "package-lock.json",
+      "sha": "e9dd20f345d8daedc2402e9c2465a747f996af0e",
+      "mode": "100644",
+      "status": "M",
+      "size": 19435,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "e9dd20f345d8daedc2402e9c2465a747f996af0e"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "package.json",
+      "sha": "1d80188f65f55163d5aa54952cee4a5813d43dac",
+      "mode": "100644",
+      "status": "M",
+      "size": 1359,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "1d80188f65f55163d5aa54952cee4a5813d43dac"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "presets/Tisya.json",
+      "sha": "478feb980c631c769a8e5d5d529b1fdc7188251d",
+      "mode": "100644",
+      "status": "M",
+      "size": 131344,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "478feb980c631c769a8e5d5d529b1fdc7188251d"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "runtime.js",
+      "sha": "b919223f89ba79bd3c5520a6e0637122d7b75341",
+      "mode": "100644",
+      "status": "M",
+      "size": 6200067,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "b919223f89ba79bd3c5520a6e0637122d7b75341"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "shell.css",
+      "sha": "3f59675fe691bfccc5bef43c9cbe878e7bd9403d",
+      "mode": "100644",
+      "status": "M",
+      "size": 83796,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "3f59675fe691bfccc5bef43c9cbe878e7bd9403d"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "six/reply.mjs",
+      "sha": "40262b62cb55734fdf1ea914fd905da405bc7a49",
+      "mode": "100644",
+      "status": "M",
+      "size": 20924,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "40262b62cb55734fdf1ea914fd905da405bc7a49"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/builtin-preset.test.js",
+      "sha": "266ddd4453552627e53d8eb95b00861b595effe6",
+      "mode": "100644",
+      "status": "M",
+      "size": 12416,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "266ddd4453552627e53d8eb95b00861b595effe6"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/matrix-differential.test.js",
+      "sha": "10bd75418e577f322db28d5a6fb12492d0fd9f52",
+      "mode": "100644",
+      "status": "A",
+      "size": 2578,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "10bd75418e577f322db28d5a6fb12492d0fd9f52"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/matrix-engine.test.js",
+      "sha": "e653fac18976f2e20f1ca0ced616e18d037ff719",
+      "mode": "100644",
+      "status": "A",
+      "size": 9443,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "e653fac18976f2e20f1ca0ced616e18d037ff719"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/domain_nodes.py",
+      "sha": "56734df4aaedb15d567058d2ae6023b8063b21cc",
+      "mode": "100644",
+      "status": "A",
+      "size": 7976,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "56734df4aaedb15d567058d2ae6023b8063b21cc"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/llm_commands.py",
+      "sha": "6d427fca2d63f464a0a94708c1ccf91431a9da1e",
+      "mode": "100644",
+      "status": "A",
+      "size": 8414,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "6d427fca2d63f464a0a94708c1ccf91431a9da1e"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/material_text.py",
+      "sha": "6d9a0107a06cfe092748d1b49b97184c3a55616f",
+      "mode": "100644",
+      "status": "A",
+      "size": 9244,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "6d9a0107a06cfe092748d1b49b97184c3a55616f"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/matrix_io.py",
+      "sha": "106b7518e0e45ab6bd811b371e9cba2564115197",
+      "mode": "100644",
+      "status": "A",
+      "size": 22001,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "106b7518e0e45ab6bd811b371e9cba2564115197"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/mechanical_adapter.py",
+      "sha": "a48f032fddcf14326b860232dbb2979fce836daf",
+      "mode": "100644",
+      "status": "A",
+      "size": 2795,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "a48f032fddcf14326b860232dbb2979fce836daf"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/persona_bridge.py",
+      "sha": "52b7798b62e9f2617d90950ab1996951f402730d",
+      "mode": "100644",
+      "status": "A",
+      "size": 2046,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "52b7798b62e9f2617d90950ab1996951f402730d"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/reply_memory.py",
+      "sha": "379ea1beb3ddacb97831e559c4d697bc0019b99e",
+      "mode": "100644",
+      "status": "A",
+      "size": 19079,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "379ea1beb3ddacb97831e559c4d697bc0019b99e"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/rule_math.py",
+      "sha": "0366836dc1810485025fbefb942d8a01840e882c",
+      "mode": "100644",
+      "status": "A",
+      "size": 11383,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "0366836dc1810485025fbefb942d8a01840e882c"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/reference/matrix-python/tisya_runtime.py",
+      "sha": "76bb021919a8e8118998f22590b72b6bd8776e80",
+      "mode": "100644",
+      "status": "A",
+      "size": 46437,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "76bb021919a8e8118998f22590b72b6bd8776e80"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tests/shell.test.js",
+      "sha": "b55986bb4f2f0d296234071e41686e0cc3a6fa80",
+      "mode": "100644",
+      "status": "M",
+      "size": 83922,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "b55986bb4f2f0d296234071e41686e0cc3a6fa80"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tools/build-matrix-preset.mjs",
+      "sha": "ffc38595e12d08a6c8d70f16046feef9b3ad24a7",
+      "mode": "100644",
+      "status": "A",
+      "size": 442,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "ffc38595e12d08a6c8d70f16046feef9b3ad24a7"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "tools/build-onepass-preset.mjs",
+      "sha": "c86875d236b113b2aff44b1e50d861dd5b6525fe",
+      "mode": "100644",
+      "status": "M",
+      "size": 1424,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "c86875d236b113b2aff44b1e50d861dd5b6525fe"
+        },
+        "isError": false
+      }
+    },
+    {
+      "path": "worldbook-order.js",
+      "sha": "0178db038e1c2e3cef071e3e8ec112218b0079e1",
+      "mode": "100644",
+      "status": "M",
+      "size": 3233,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "sha": "0178db038e1c2e3cef071e3e8ec112218b0079e1"
+        },
+        "isError": false
+      }
+    }
+  ]
+}

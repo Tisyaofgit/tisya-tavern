@@ -1,0 +1,30 @@
+{
+  "observed_utc": "2026-11-06T13:22:07.689338+00:00",
+  "files": [
+    {
+      "path": "index.js",
+      "sha256": "df92ea98f7a7792928f10aeabfea64fdc4530305a99f91a83292a0107a0649e0",
+      "bytes": 103408
+    },
+    {
+      "path": "engine/host.mjs",
+      "sha256": "e9665a2d9d49979d9720c75eb4b73776f9ef50d8cbbb0a44b3cb256ce932e2c9",
+      "bytes": 8451
+    },
+    {
+      "path": "engine/controller.mjs",
+      "sha256": "ec7e9179c2617e5d8f084b68208f4d4dc8694a316cc285ca5017996feff704ab",
+      "bytes": 11228
+    },
+    {
+      "path": "engine/config.mjs",
+      "sha256": "98f0f14924bb90a4c1eeddc433adb9e5193cd87cbf5214121828c9d472d7ab10",
+      "bytes": 6085
+    },
+    {
+      "path": "engine/materials.mjs",
+      "sha256": "9fb791aa89f3806970a854ef1ca2a84782015ea55a384deb45111b892f8e95a9",
+      "bytes": 5941
+    }
+  ]
+}
