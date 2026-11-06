@@ -1,0 +1,46 @@
+{
+  "utc": "2026-11-06T14:58:56.238802+00:00",
+  "beijing": "2026-11-06T22:58:56.238802+08:00",
+  "host": "TauriTavern 2.4.0 fff9af0333be / Linux WebKitGTK",
+  "source_tree": "e8a4e648200cac063d02dcac0192480fb3012d80",
+  "automatic_tests": {
+    "full": 1406,
+    "targeted": 50
+  },
+  "passed": [
+    "Extension runtime loaded; built-in preset installed and selected; 139 schemas bound",
+    "Captured final native request: 34 messages, system registry header exactly 1, zero unexpanded tisya macros",
+    "Fixed local streamed response created native-test-person; one committed turn",
+    "Actual reroll replaces same logical turn, name changed to 阿青候选; no duplicate turn",
+    "Native previous candidate restores 阿青; next restores 阿青候选; cold page reload preserves value",
+    "Stop native reroll while awaiting API preserves accepted 阿青候选; pending_previous survives cold reload; still one turn",
+    "Actual host API appends new user message, saveChat then matrix.mutate assigns stable UID; 阿青手改 / one manual edit survives cold page reload",
+    "Valid title/body/action UI shadow DOM rendered"
+  ],
+  "failed_or_limited": [
+    {
+      "kind": "fixture mistake",
+      "evidence": "003 reply title lacked 4 columns and action lacked 3 columns; reading validation reported TITLE, body preserved; 004 fixture corrected, product unchanged"
+    },
+    {
+      "kind": "native authorization",
+      "evidence": "First requests waited for native Allow custom endpoint dialog; trusted only loopback fixture endpoint, cancelled requests preserved"
+    },
+    {
+      "kind": "environment",
+      "evidence": "First unix-display session could not create native session; TCP X display succeeded; raw supervisor failure retained"
+    },
+    {
+      "kind": "unrelated host network",
+      "evidence": "Host GitHub update check failed; no inference about plugin or user screenshot Unknown error"
+    }
+  ],
+  "not_tested": [
+    "Real provider model",
+    "Android device",
+    "Full native config form clicking",
+    "Full integration acceptance OLD-NEW-03–10"
+  ],
+  "snapshot": "native-host-state.tar.gz",
+  "next": "Continue OLD-NEW-03–10: native custom tags / worldbook identity / config UI coverage, branch/delete/edit scenarios, real provider model and Android. Candidate not install release; do not publish main."
+}

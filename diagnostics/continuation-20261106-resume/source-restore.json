@@ -1,0 +1,7 @@
+{
+  "utc": "2026-11-06T14:59:32.092113+00:00",
+  "verified": true,
+  "files": 994,
+  "method": "git archive into empty directory; every file SHA256 and size checked",
+  "native_state_restored_files": 225
+}

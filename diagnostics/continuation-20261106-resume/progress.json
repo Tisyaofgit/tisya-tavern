@@ -1,6 +1,6 @@
 {
-  "utc": "2026-11-06T14:32:46.068205+00:00",
-  "beijing": "2026-11-06T22:32:46.068205+08:00",
+  "utc": "2026-11-06T14:58:56.238802+00:00",
+  "beijing": "2026-11-06T22:58:56.238802+08:00",
   "scope": "OLD-NEW-03–10 continuation; candidate not installation release",
   "base_commit": "6e57763d596697595a4d070e653ec228d77adbef",
   "recovered_local_commit": "d6ec6c654db7d54e8ae02e868549a1051f6708a6",
@@ -13,11 +13,20 @@
   "validation": {
     "previous_full_regression": 1400,
     "targeted_current": 50,
-    "current_full_regression": "running",
-    "real_host": false,
+    "current_full_regression": 1406,
+    "real_host": "Linux TT 2.4.0: load, bind139, final request, streaming fixture, native reroll/candidate switching/stop/cold reopen verified; manual edit verified through actual host API/storage (not form-click test).",
     "real_model": false,
     "android": false
   },
-  "runtime_state": "No user save loaded or mutated. Isolated in-memory and fake-indexeddb fixtures only.",
-  "next": "Complete full regression, inspect real host end/swipe event contract, verify cold snapshot restore, persist controls with receipts; final installed host/model/Android remain untested."
+  "runtime_state": "Fresh isolated native Linux TT profile; exact final chat, metadata, configuration, bundle, SQLite, raw request and response evidence in native-host-state.tar.gz. No user profile copied or changed.",
+  "next": "Continue OLD-NEW-03–10: native custom tags / worldbook identity / config UI coverage, branch/delete/edit scenarios, real provider model and Android. Candidate not install release; do not publish main.",
+  "persistence_incident": {
+    "utc": "2026-11-06T14:33:09Z",
+    "action": "update candidate branch with expected base 6e57763d",
+    "error": "GithubGraphQLAPIError UNKNOWN",
+    "request_id": "DA24:97954:43140:6849E:6AEDE524",
+    "observed_actual_head": "f2d05016c0e0f905bf576ba9849b24c73dc4d28c",
+    "verified_previous_tree": "7b0c1a19c0afbd8515bdd2fdb7206012399100c5",
+    "resolution": "Remote previous repair matches local d6ec6c6 exactly. New commit reparented on observed head; no force update."
+  }
 }
