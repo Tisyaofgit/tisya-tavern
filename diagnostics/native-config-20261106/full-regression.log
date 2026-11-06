@@ -1,0 +1,16 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tisya-tavern@0.2.0-alpha.31.31.19-onepass.16-candidate.4 test
+> node tools/build-chat-effects.mjs --check && node tools/build-character-group.mjs --check && node tools/build-worldbook.mjs --check && node tools/build-extension.mjs --check && node tools/build-reader.mjs --check && node tools/build-card-runtime.mjs --check && node tools/build-visual.mjs --check && node tools/build-typography.mjs --check && node tools/build-reply-ui.mjs --check && node tools/build-settings.mjs --check && node tools/build-live-preset.mjs --check && node tools/build-modular-preset.mjs --check && node tools/build-memory-preset.mjs --check && node tools/build-six-preset.mjs --check && node tools/build-onepass-preset.mjs --check && node tools/build-matrix-preset.mjs --check && node --test tests/*.test.js
+
+Shared chat effects verified for both consumers
+{"file":"character-group/console.html","bytes":194353}
+{"file":"worldbook/console.html","bytes":221405,"checked":true}
+file:///workspace/scratch/2159032885ec/source/tools/build-extension.mjs:13
+if(process.argv.includes('--check')){const current=await readFile(file);if(!current.equals(Buffer.from(bytes)))throw Error('runtime.js is stale; run npm run build:extension');}
+                                                                                                                     ^
+
+Error: runtime.js is stale; run npm run build:extension
+    at file:///workspace/scratch/2159032885ec/source/tools/build-extension.mjs:13:118
+
+Node.js v24.22.1

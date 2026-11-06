@@ -1,0 +1,74 @@
+{
+  "utc": "2026-11-06T15:36:45.442533+00:00",
+  "window_start": "2026-11-06T15:31:33Z",
+  "save_by": "2026-11-06T16:46:33Z",
+  "deadline": "2026-11-06T17:01:33Z",
+  "scope": "OLD-NEW-03/06/07/08/09/10 native validation",
+  "failures": [
+    {
+      "stage": "launch prerequisites",
+      "raw": "Missing prerequisites: Xvfb, WebKitWebDriver, xauth",
+      "resolution": "Existing cached dependency sysroot provided PATH, LD_LIBRARY_PATH and WEBKIT_EXEC_PATH; native host started successfully."
+    },
+    {
+      "stage": "webdriver inspection response",
+      "raw": "Expecting value: line 1 column 1 (char 0)",
+      "scope": "one request transport parse failed, UI remained on identity tab; subsequent bounded command succeeded"
+    },
+    {
+      "stage": "test fixture endpoint",
+      "raw": "Could not connect to the target service. (http://127.0.0.1:8098/v1/models)",
+      "cause": "supervisor started local server on8095 but saved native connection points to8098; separate executor listener does not share network namespace",
+      "resolution": "clean shutdown and relaunch native supervisor with saved8098 endpoint; no user credentials or production network involved"
+    }
+  ],
+  "passed_so_far": [
+    "actual settings UI saves reply=scene/body=narration/cells=ledger",
+    "actual UI saves story wish/name and worldbook uid7 binding",
+    "actual generation UI writes temperature0.37 to native settings",
+    "native process restart preserves custom tags/story binding/temp",
+    "after fix captured request includes identity exactly1 and wish exactly1",
+    "custom scene/narration/ledger response renders title/body/actions; settles native-tag-person=阿青绑定, turn count2, no warnings"
+  ],
+  "pending": [
+    "final full regression after identity macro fix",
+    "real native cold restart with corrected runtime",
+    "native edit/delete/branch",
+    "real provider model",
+    "Android"
+  ],
+  "product_modified": true,
+  "identity_bug": {
+    "observed": "Saved book+uid and macro expansion correct; actual captured request identityCount=0, wishCount=1. USER identity slot inherited system_prompt:true and native excludes it.",
+    "fixed": "system_prompt:false role:system; bound identity exact-once guard at final native request; builtin revision incremented",
+    "targeted_tests": 31,
+    "real_host_retest": "Captured002 request: identity exactly1, wish exactly1, temperature0.37, custom scene/narration/ledger tags, no raw macros",
+    "utc": "2026-11-06T15:39:37.650538+00:00",
+    "retested_utc": "2026-11-06T15:40:55.405602+00:00"
+  },
+  "resumed_utc": "2026-11-06T16:25:50.105739+00:00",
+  "actual_source": "/workspace/scratch/2159032885ec/source",
+  "new_failures": [
+    {
+      "stage": "source recovery",
+      "error": "git worktree pointer and node_modules symlink target unavailable",
+      "resolution": "recovered baseline1006 blobs from fixed remote commit and preserved5 modified product files; dependencies restored from exact lockfile via offline npm cache"
+    },
+    {
+      "stage": "full regression build check",
+      "error": "runtime.js is stale",
+      "cause_verified": "bundled presets/Tisya.json still had system_prompt:true; source preset had false",
+      "resolution": "rebuilt using existing build:extension; first full regression1407 passed"
+    },
+    {
+      "stage": "identity macro reproduction",
+      "error": "USER_IDENTITY_COUNT matches0 when bound worldbook contains {{user}}/{{char}} and custom tags",
+      "resolution": "one shared text compiler expands materials before protagonist macro and validates compiled identity;32 targeted tests passed"
+    },
+    {
+      "stage": "native host resume",
+      "error": "Missing prerequisites: Xvfb, WebKitWebDriver, xauth; webkit2gtk4.1/libsoup3/javascriptcore4.1 unavailable",
+      "resolution": "unresolved; prior native evidence preserved, no new native or Android claim"
+    }
+  ]
+}

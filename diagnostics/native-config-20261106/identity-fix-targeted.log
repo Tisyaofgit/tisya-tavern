@@ -1,0 +1,39 @@
+✔ native PromptManager normalization loads the shipped preset without a restart error (25.428254ms)
+✔ load verification accepts only observed native additions and still detects changed instructions and order (17.666607ms)
+✔ manual refresh reinstalls same revision while automatic startup preserves same-release edits (15.82685ms)
+✔ built-in keeps the complete 69-slot new preset with separate user binding (1.17271ms)
+✔ first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched (7.033127ms)
+✔ upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset (5.256274ms)
+✔ selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions (12.273206ms)
+✔ failed native save keeps saved and live data, and does not report an installation (5.097655ms)
+✔ missing native capability and active generation reject before a write (11.850048ms)
+✔ concurrent initialization is one native save (5.927308ms)
+✔ refresh timeout stays visible; reopened stale active settings load the saved release (17.266934ms)
+✔ browser hashes preserve Unicode bytes (2.222806ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (14.840943ms)
+✔ edit, swipe and delete rebase instead of double charging (14.802364ms)
+✔ manual edits retain chronological placement when earlier prose changes (16.436141ms)
+✔ registered item action rolls back all costs and supports receipt replay (1.824894ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.783592ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (3.031776ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (27.390416ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (10.117322ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (2.374425ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.541828ms)
+✔ IndexedDB cold reopen and competing revision commit (10.993615ms)
+✔ new settings screen saves tag map without legacy configuration (21.796301ms)
+✔ native host round trip binds once, compiles all slots, settles and resumes from saved state (1070.184225ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (1.19277ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.385742ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (2.20613ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.261044ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (27.164315ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.190177ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1731.50929

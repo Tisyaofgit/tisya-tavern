@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tisya-tavern@0.2.0-alpha.31.31.19-onepass.16-candidate.4 build:extension
+> node tools/build-extension.mjs
+
+{"file":"runtime.js","localModules":254,"bytes":4027361,"externalImports":40,"checked":false}
+Matrix preset: 69 active slots; native persona marker retained disabled.

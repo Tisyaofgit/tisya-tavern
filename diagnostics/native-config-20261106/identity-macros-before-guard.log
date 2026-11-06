@@ -1,0 +1,42 @@
+✔ browser hashes preserve Unicode bytes (5.46278ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (12.253077ms)
+✔ edit, swipe and delete rebase instead of double charging (12.119324ms)
+✔ manual edits retain chronological placement when earlier prose changes (15.680255ms)
+✔ registered item action rolls back all costs and supports receipt replay (2.230071ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.686819ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (3.44734ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (41.318107ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (7.482327ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (1.614249ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.724825ms)
+✔ IndexedDB cold reopen and competing revision commit (9.780875ms)
+✔ new settings screen saves tag map without legacy configuration (23.003151ms)
+✖ native host round trip binds once, compiles all slots, settles and resumes from saved state (192.595686ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (0.91958ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.378832ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (1.620759ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.275617ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (26.019219ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.172741ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 865.84988
+
+✖ failing tests:
+
+test at tests/matrix-engine.test.js:37:1
+✖ native host round trip binds once, compiles all slots, settles and resumes from saved state (192.595686ms)
+  Error: 最终请求缺少或重复了绑定的user身份资料
+      at fail (file:///workspace/scratch/2159032885ec/source/engine/common.mjs:6:50)
+      at Object.payloadReady (file:///workspace/scratch/2159032885ec/source/engine/host.mjs:31:854)
+      at TestContext.<anonymous> (file:///workspace/scratch/2159032885ec/source/tests/matrix-engine.test.js:41:1086)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'USER_IDENTITY_COUNT',
+    details: { matches: 0 }
+  }

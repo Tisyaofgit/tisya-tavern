@@ -1,0 +1,22 @@
+{
+  "utc": "2026-11-06T16:40:59.140578+00:00",
+  "beijing": "2026-11-07T00:40:59.140578+08:00",
+  "state": "paused",
+  "clock_enabled": false,
+  "reminders_enabled": false,
+  "root_cause": "unconfirmed",
+  "source_base_remote": "0eea48f6218e742d71404ef09de852b241c47361",
+  "product_edits_inherited": [
+    "engine/config.mjs",
+    "engine/host.mjs",
+    "presets/Tisya.json",
+    "runtime.js",
+    "tests/matrix-engine.test.js"
+  ],
+  "not_tested_this_turn": [
+    "real model",
+    "Android",
+    "native host"
+  ],
+  "next": "Recover saved source; no clock/automation; verify prior identity macro fix and native dependencies."
+}

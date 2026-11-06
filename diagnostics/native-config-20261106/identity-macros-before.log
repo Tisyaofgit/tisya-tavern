@@ -1,0 +1,56 @@
+✔ browser hashes preserve Unicode bytes (2.503319ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (9.114928ms)
+✔ edit, swipe and delete rebase instead of double charging (8.910147ms)
+✔ manual edits retain chronological placement when earlier prose changes (15.965683ms)
+✔ registered item action rolls back all costs and supports receipt replay (1.564004ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.601751ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (2.596935ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (29.915719ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (8.99144ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (1.579788ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.513466ms)
+✔ IndexedDB cold reopen and competing revision commit (10.366029ms)
+✔ new settings screen saves tag map without legacy configuration (20.934183ms)
+✖ native host round trip binds once, compiles all slots, settles and resumes from saved state (152.762476ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (0.995695ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.62885ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (8.436671ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.494037ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (24.315604ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.186542ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 783.321169
+
+✖ failing tests:
+
+test at tests/matrix-engine.test.js:37:1
+✖ native host round trip binds once, compiles all slots, settles and resumes from saved state (152.762476ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  Error: 预设条目在最终请求中缺失或重复，未猜测替换
+      at TestContext.<anonymous> (file:///workspace/scratch/2159032885ec/source/tests/matrix-engine.test.js:41:744)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: 预设条目在最终请求中缺失或重复，未猜测替换
+        at fail (file:///workspace/scratch/2159032885ec/source/engine/common.mjs:6:50)
+        at applyCompiledMessages (file:///workspace/scratch/2159032885ec/source/engine/config.mjs:56:81)
+        at Object.payloadReady (file:///workspace/scratch/2159032885ec/source/engine/host.mjs:31:421)
+        at assert.throws.host.payloadReady.messages.role (file:///workspace/scratch/2159032885ec/source/tests/matrix-engine.test.js:41:760)
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (file:///workspace/scratch/2159032885ec/source/tests/matrix-engine.test.js:41:744)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    operator: 'throws',
+    diff: 'simple'
+  }

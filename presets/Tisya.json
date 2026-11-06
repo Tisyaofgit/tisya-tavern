@@ -385,7 +385,7 @@
     {
       "identifier": "tisya_user_identity",
       "name": "user · 故事身份（世界书绑定）",
-      "system_prompt": true,
+      "system_prompt": false,
       "enabled": true,
       "marker": false,
       "role": "system",
@@ -1524,7 +1524,7 @@
   "name": "Tisya",
   "extensions": {
     "tisya_builtin": {
-      "revision": "4bc36fdf09e58df14c537f661f70a92ea2566251930b69fc705813dc2d827f5f"
+      "revision": "dba48a04cc8a93da8b186600f182b3e4a11b2876a7e3c75fe571a068d5e8536f"
     },
     "tisya_matrix": {
       "version": 1
