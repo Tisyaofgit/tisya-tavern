@@ -1,0 +1,24 @@
+✔ delayed communication cannot change an already adopted reroll (18.425586ms)
+✔ delayed communication cannot change an already rejected reroll (6.084302ms)
+✖ manual edit after a new user input saves once and survives replay and cold reopen (3.085291ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 213.537884
+
+✖ failing tests:
+
+test at tests/matrix-host-lifecycle.test.js:29:1
+✖ manual edit after a new user input saves once and survives replay and cold reopen (3.085291ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'tisya_engine')
+      at file:///workspace/scratch/b4747cd65a63/legacy-new/engine/controller.mjs:32:27
+      at Array.map (<anonymous>)
+      at captureMessages (file:///workspace/scratch/b4747cd65a63/legacy-new/engine/controller.mjs:31:17)
+      at Object.mutate (file:///workspace/scratch/b4747cd65a63/legacy-new/engine/host.mjs:33:832)
+      at async TestContext.<anonymous> (file:///workspace/scratch/b4747cd65a63/legacy-new/tests/matrix-host-lifecycle.test.js:31:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

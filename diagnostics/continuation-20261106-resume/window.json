@@ -1,0 +1,13 @@
+{
+  "task": "legacy-new-engine-continuation",
+  "state": "active",
+  "started_utc": "2026-11-06T13:56:48Z",
+  "save_at_utc": "2026-11-06T15:11:48Z",
+  "deadline_utc": "2026-11-06T15:26:48Z",
+  "window_seconds": 5400,
+  "authorization": "用户分享接入新版预设表单会话并明确要求继续",
+  "source": "/workspace/scratch/6b9832f40e18/legacy-new",
+  "copy": "/workspace/scratch/b4747cd65a63/legacy-new",
+  "note": "本会话首次取得真实UTC为13:56:48Z；前置读取已发生，不续用过期前窗口。 本轮沿用同一起点与15:26:48Z硬截止，不因异常断开重置。",
+  "authorization_continued": "你继续，再报错我去反馈投诉一下（难绷）"
+}

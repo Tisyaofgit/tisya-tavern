@@ -1,0 +1,54 @@
+✔ stopped complete response remains uncommitted after a late end and cold reopen (7.331202ms)
+✔ editing a stopped draft does not silently accept its commands (1.120991ms)
+✔ reroll preparation reads its prior state without rolling back the accepted saved candidate (11.79063ms)
+✔ message arrival during generation cannot settle an unaccepted complete draft (0.667998ms)
+✔ a stopped swipe retains pending status in its native candidate metadata (6.469942ms)
+✔ event and delayed archive share one short code while complementary detail survives (96.82523ms)
+✖ a stopped reroll retains the previously accepted state across refresh and reopen (4.323563ms)
+✖ stopping before a replacement arrives leaves the original candidate editable (2.177666ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 258.153271
+
+✖ failing tests:
+
+test at tests/matrix-lifecycle.test.js:43:1
+✖ a stopped reroll retains the previously accepted state across refresh and reopen (4.323563ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  10 !== 7
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/b4747cd65a63/legacy-new/tests/matrix-lifecycle.test.js:45:153)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 10,
+    expected: 7,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-lifecycle.test.js:49:1
+✖ stopping before a replacement arrives leaves the original candidate editable (2.177666ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '1e4d2304b995188ed82b901c743cd78f5549ee3ca512eb94f7d9c656f8d3addf'
+  - undefined
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/b4747cd65a63/legacy-new/tests/matrix-lifecycle.test.js:51:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '1e4d2304b995188ed82b901c743cd78f5549ee3ca512eb94f7d9c656f8d3addf',
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

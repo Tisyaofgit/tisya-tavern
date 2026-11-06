@@ -1,0 +1,23 @@
+{
+  "utc": "2026-11-06T14:32:46.068205+00:00",
+  "beijing": "2026-11-06T22:32:46.068205+08:00",
+  "scope": "OLD-NEW-03–10 continuation; candidate not installation release",
+  "base_commit": "6e57763d596697595a4d070e653ec228d77adbef",
+  "recovered_local_commit": "d6ec6c654db7d54e8ae02e868549a1051f6708a6",
+  "changes": [
+    "Preserve accepted source while stopped replacement remains visible, including swipe metadata and cold reopen",
+    "Do not mark unchanged old candidate pending when stopped before output",
+    "Finish deferred candidate ownership before communication persistence yields",
+    "Assign stable IDs and reconcile current messages before manual edits; retain chronological placement"
+  ],
+  "validation": {
+    "previous_full_regression": 1400,
+    "targeted_current": 50,
+    "current_full_regression": "running",
+    "real_host": false,
+    "real_model": false,
+    "android": false
+  },
+  "runtime_state": "No user save loaded or mutated. Isolated in-memory and fake-indexeddb fixtures only.",
+  "next": "Complete full regression, inspect real host end/swipe event contract, verify cold snapshot restore, persist controls with receipts; final installed host/model/Android remain untested."
+}

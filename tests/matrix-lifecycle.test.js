@@ -39,3 +39,20 @@ test('event and delayed archive share one short code while complementary detail 
  e.data.runtime.archive=[{rows:[{category:'事件',raw:'事件|e01[傍晚]：钥匙转动->门开了'},{category:'事件',raw:'事件|e01[傍晚]：门后还有一封信'}]}];
  const memory=materials(e).tisya_material_memory_archive;assert.equal(memory.split('e01').length-1,1);assert.match(memory,/门后还有一封信/);
 });
+
+test('a stopped reroll retains the previously accepted state across refresh and reopen',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply()});await f.controller.run();assert.equal(await f.hp(),7);
+ await f.controller.beforeGeneration('swipe');f.ctx.chat[0].mes=reply(4);await f.controller.event('GENERATION_STOPPED');await f.controller.run();assert.equal(await f.hp(),7);
+ await new Controller(f.options).run();assert.equal(await f.hp(),7);
+ await f.controller.event('MESSAGE_SWIPED',0);assert.equal(await f.hp(),6);
+});
+test('stopping before a replacement arrives leaves the original candidate editable',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:reply()});await f.controller.run();await f.controller.beforeGeneration('swipe');await f.controller.event('GENERATION_STOPPED');
+ assert.equal(f.ctx.chat[0].extra[NS]?.pending_sha256,undefined);f.ctx.chat[0].mes=reply(2);await f.controller.event('MESSAGE_EDITED',0);assert.equal(await f.hp(),8);
+});
+
+test('pending native swipe with new extras keeps its logical message and accepted state',async()=>{
+ const f=await fixture(),m={mes:reply(),swipe_id:0,swipes:[reply()],extra:{},swipe_info:[{extra:{}}]};f.ctx.chat.push(m);await f.controller.run();await f.controller.beforeGeneration('swipe');
+ m.swipes.push(reply(4));m.swipe_info.push({extra:{}});m.swipe_id=1;m.extra={};m.mes=reply(4);await f.controller.event('GENERATION_STOPPED');await new Controller(f.options).run();assert.equal(await f.hp(),7);
+ assert(m.extra[NS].pending_previous);assert.equal(m.extra[NS].uid,m.swipe_info[0].extra[NS].uid);
+});

@@ -28,7 +28,13 @@ export function captureMessages(ctx,{omitLastAssistant=false,excludeFrom=null}={
     let chat=ctx.chat??[];
     if(Number.isInteger(excludeFrom))chat=chat.slice(0,excludeFrom);
     if(omitLastAssistant&&chat.length&&!chat.at(-1).is_user&&!chat.at(-1).is_system)chat=chat.slice(0,-1);
-    return chat.map(m=>({uid:m.extra[NS].uid,role:m.is_user?'user':m.is_system?'system':m.extra?.[NS]?.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??'')}));
+    return chat.map(m=>{
+        const info=m.extra[NS];
+        // A visible draft may replace an already accepted swipe. Until explicit
+        // adoption, replay the accepted source, including after a cold reopen.
+        if(!m.is_user&&!m.is_system&&info.pending_sha256&&info.pending_previous)return {...info.pending_previous,uid:info.uid};
+        return {uid:info.uid,role:m.is_user?'user':m.is_system?'system':info.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??'')};
+    });
 }
 export function signature(messages){return JSON.stringify(messages);}
 
@@ -80,15 +86,25 @@ export class Controller{
         this.onUpdate({status:'已绑定。现有历史作为导入基线，后续回复开始结算。',id});return copy;
     }
     async current(){const {id}=await this.identity();return this.storage.get(id);}
+    async beginGeneration(){
+        const {ctx,key}=await this.identity();
+        if(ensureMessages(ctx,this.uid))await ctx.saveChat();
+        const generation={messages:captureMessages(ctx)};
+        this.generating.set(key,generation);return generation;
+    }
     async candidatePending(pending,index){
         const ctx=this.getContext(),m=ctx.chat?.[Number.isInteger(index)?index:ctx.chat.length-1];
         if(!m||m.is_user||m.is_system)return;
+        const identitiesChanged=ensureMessages(ctx,this.uid);
+        const generation=this.generating.get(chatKey(ctx));
+        const previous=generation?.messages?.find(x=>x.uid===m.extra?.[NS]?.uid);
+        if(pending&&previous?.role==='assistant'&&previous.text===String(m.mes??'')){if(identitiesChanged)await ctx.saveChat();return;}
         const info=m.swipe_info?.[m.swipe_id??0];m.extra??={};
         const targets=[m.extra];if(info){info.extra??={};targets.push(info.extra);}
-        let changed=false;
+        let changed=identitiesChanged;
         for(const extra of targets){
-            if(pending){extra[NS]={...(extra[NS]??{}),pending_sha256:sha256(String(m.mes??''))};changed=true;}
-            else if(extra[NS]?.pending_sha256){delete extra[NS].pending_sha256;changed=true;}
+            if(pending){extra[NS]={...(extra[NS]??{}),pending_sha256:sha256(String(m.mes??'')),...(previous?.role==='assistant'?{pending_previous:previous}:{})};changed=true;}
+            else if(extra[NS]?.pending_sha256){delete extra[NS].pending_sha256;delete extra[NS].pending_previous;changed=true;}
         }
         if(changed)await ctx.saveChat();
     }
@@ -128,7 +144,7 @@ export class Controller{
     }
     async beforeGeneration(type,abort){
         const c=this.getContext();if(!this.enabled(c)||type==='quiet'||type==='impersonate')return;
-        const key=chatKey(c);this.generating.set(key,true);
+        const key=chatKey(c);await this.beginGeneration();
         try{
             const result=await this.run({preview:true,omitLastAssistant:['swipe','regenerate','continue'].includes(type)});
             if(result?.materials_error)throw Error('正文和结算已保存，但材料配置需要修复：'+result.materials_error.message);
@@ -143,7 +159,7 @@ export class Controller{
     }
     async event(name,...args){
         const ctx=this.getContext(),key=chatKey(ctx);
-        if(name==='GENERATION_STOPPED'){const generating=this.generating.delete(key);if(generating)await this.candidatePending(true);return;}
+        if(name==='GENERATION_STOPPED'){const generating=this.generating.get(key);const saved=generating?this.candidatePending(true):null;this.generating.delete(key);await saved;return;}
         if(name==='GENERATION_ENDED'){
             if(!this.generating.delete(key))return;
             await this.candidatePending(false);
