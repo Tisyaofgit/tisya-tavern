@@ -10,6 +10,22 @@ spec.loader.exec_module(checkpoint)
 
 
 class NativeCheckpoint(unittest.TestCase):
+    def test_cached_offline_script_dependencies_are_recoverable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            relative = Path('data/com.tauritavern.client/WebKitCache/Version 17/Blobs/dependency')
+            original = root / 'host/runtime' / relative
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b'offline-script-dependency\x00\xff')
+            state = root / 'host/runtime/data/com.tauritavern.client/data/default-user/settings.json'
+            state.parent.mkdir(parents=True)
+            state.write_text('{}')
+            out = root / 'checkpoint'
+            checkpoint.capture(root / 'host', out, {})
+            self.assertTrue((out / relative).is_file(), 'offline iframe dependency was discarded')
+            self.assertEqual((out / relative).read_bytes(), original.read_bytes())
+            self.assertEqual(checkpoint.verify(out), 3)
+
     def test_split_settings_and_unknown_new_state_survive(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -18,8 +34,9 @@ class NativeCheckpoint(unittest.TestCase):
             required = ['data/default-user/settings.json', 'data/default-user/settings/presets.json',
                         'data/default-user/settings/persona-state.json', 'data/default-user/settings/appearance.json',
                         'data/default-user/settings/future-shard.json', 'data/default-user/tauritavern-settings.json',
-                        'data/default-user/chats/card/main.jsonl', 'databases/state.sqlite-wal', 'security/origin.json']
-            for name in required + ['data/default-user/extensions/plugin/runtime.js', 'WebKitCache/derived']:
+                        'data/default-user/chats/card/main.jsonl', 'databases/state.sqlite-wal', 'security/origin.json',
+                        'WebKitCache/derived', 'CacheStorage/cached-dependency']
+            for name in required + ['data/default-user/extensions/plugin/runtime.js']:
                 p = data / name
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text(name)
@@ -28,7 +45,6 @@ class NativeCheckpoint(unittest.TestCase):
             for name in required:
                 self.assertEqual((out / 'data/com.tauritavern.client' / name).read_text(), name)
             self.assertFalse((out / 'data' / checkpoint.EXTENSIONS).exists())
-            self.assertFalse((out / 'data/com.tauritavern.client/WebKitCache').exists())
             self.assertEqual(checkpoint.verify(out), len(required) + 1)
             (out / 'data/com.tauritavern.client' / required[1]).write_text('changed')
             with self.assertRaisesRegex(RuntimeError, 'mismatch'):

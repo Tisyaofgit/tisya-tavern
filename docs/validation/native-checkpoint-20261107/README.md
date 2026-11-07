@@ -1,0 +1,11 @@
+# Native checkpoint fidelity and actual restore
+
+The checkpoint tool now retains WebKitCache and CacheStorage along with all other data/config files. Only separately pinned extension source remains excluded. Cached script resources are part of the available local state and are no longer assumed reproducible from remote CDNs. A new binary-byte preservation regression failed on the prior implementation and passed after the change; all four checkpoint tests passed.
+
+The initially generated archive restored 1328 payload files byte for byte, plus 1064 source files matching fixed Git. A separate Linux host was assembled from that restored state, the independently verified source, the pinned host executable, and the saved TavernHelper extension. The fresh host preserved the test branch's 11 messages and native values count=2, enabled=false, text="".
+
+Cold restore exposed two requirements in the diagnostic procedure: launch native_session_local_assets.py so TavernHelper's two fixed local assets are served; and scroll the actual TH-render panel into view after Tisya layout, since the host replaces offscreen iframes with tt-runtime-ghost placeholders. Merely seeing an empty iframe list did not establish a display defect. The corrected probe requires one status iframe with the actual values, not just an iframe element or the initial loading label.
+
+A controlled second process run with WebKitCache and CacheStorage moved aside also showed one status iframe with count=2, false and an empty string. Therefore cache omission was NOT established as the cause of the missing iframe. Retaining caches is a fidelity improvement, not a claim that they are necessary for this fixture. The cold host with the local asset server and correct viewport step was verified with and without those caches. No model request was made in these restore checks, and the existing product runtime was not modified.
+
+Original failed probes (absent optional config directory, transient WebDriver HTTP 500, missing local asset server, and offscreen ghost) and corrected results remain in the private checkpoint. No error was replaced with an old successful value. Real-provider and Android validation remain pending.

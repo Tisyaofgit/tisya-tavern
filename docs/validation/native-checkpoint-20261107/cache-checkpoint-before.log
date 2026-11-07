@@ -1,0 +1,13 @@
+.F..
+======================================================================
+FAIL: test_cached_offline_script_dependencies_are_recoverable (__main__.NativeCheckpoint.test_cached_offline_script_dependencies_are_recoverable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/26b88692f07c/working-source/tests/native-checkpoint.test.py", line 25, in test_cached_offline_script_dependencies_are_recoverable
+    self.assertTrue((out / relative).is_file(), 'offline iframe dependency was discarded')
+AssertionError: False is not true : offline iframe dependency was discarded
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.010s
+
+FAILED (failures=1)

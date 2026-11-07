@@ -12,7 +12,8 @@ import shutil
 from pathlib import Path
 
 EXTENSIONS = Path('com.tauritavern.client/data/default-user/extensions')
-REBUILDABLE = {'CacheStorage', 'WebKitCache'}
+# WebKit caches can contain the only locally available iframe dependencies.
+# Retain them: a cold restore must not assume remote CDNs are reachable.
 
 
 def capture(host, output, metadata, controls=None):
@@ -39,8 +40,7 @@ def capture(host, output, metadata, controls=None):
                 raise RuntimeError('Unexpected state symlink: ' + str(source))
             if not source.is_file():
                 continue
-            if section == 'data' and (relative == EXTENSIONS or EXTENSIONS in relative.parents or
-                    (len(relative.parts) > 1 and relative.parts[1] in REBUILDABLE)):
+            if section == 'data' and (relative == EXTENSIONS or EXTENSIONS in relative.parents):
                 excluded.append(str(Path(section) / relative))
                 continue
             target = output / section / relative
@@ -54,7 +54,7 @@ def capture(host, output, metadata, controls=None):
     report = dict(metadata)
     report.update(captured_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   captured_state_files=len(copied),
-                  exclusions={'reason': 'Pinned extension source and rebuildable browser caches only',
+                  exclusions={'reason': 'Pinned extension source only; browser dependency caches retained',
                               'files': excluded})
     (output / 'CHECKPOINT.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     return seal(output)
