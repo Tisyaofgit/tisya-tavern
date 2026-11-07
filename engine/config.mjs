@@ -1,8 +1,8 @@
-import {applyGeneration} from './generation.mjs';
+import {applyGeneration,assertGeneration} from './generation.mjs';
 import {applyOutputConfiguration} from './output-config.mjs';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import configuration from './configuration.json' with {type:'json'};
-import {clone,fail,digest} from './common.mjs';
+import {clone,fail,digest,asError} from './common.mjs';
 import {DEFAULT_TAGS,validateTags,rewriteTagReferences,configureTags} from './tags.mjs';
 export {configuration};
 export const CONFIG_KEY='tisya_matrix_configuration';
@@ -25,7 +25,19 @@ export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
  function key(){const c=getContext();return JSON.stringify([c.groupId?'group':'character',String(c.groupId??c.characterId??''),String(c.chatId)]);}
  function story(all){const keys=[key(),...(getContext().chatMetadata?.tisya_engine?.origin_chat_keys??[])],normalize=k=>{try{return JSON.stringify(JSON.parse(k).map(String));}catch{return k;}};for(const candidate of keys){const found=Object.keys(all.stories??{}).find(k=>normalize(k)===normalize(candidate));if(found)return all.stories[found];}return {userBinding:null,userName:'',wish:''};}
  function read(){const all=getContext().extensionSettings[CONFIG_KEY]??{format:1,tags:{...DEFAULT_TAGS},aliases:[],prompts:{},generation:{},stories:{},revision:0};if(all.format!==1)fail('CONFIG_VERSION','新版配置格式不受支持');return {...clone(all),story:clone(story(all))};}
- async function save(next){assertIdle();const c=getContext(),previous=c.extensionSettings[CONFIG_KEY],before=read();if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[key()]=value.story;delete value.story;value.revision++;const undoGeneration=applyGeneration(c,value.generation);c.extensionSettings[CONFIG_KEY]=value;try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');}catch(error){c.extensionSettings[CONFIG_KEY]=previous;undoGeneration();throw error;}configureTags(value.tags,value.aliases);return read();}
+ async function save(next){
+  assertIdle();const c=getContext(),previous=c.extensionSettings[CONFIG_KEY],hadPrevious=Object.hasOwn(c.extensionSettings,CONFIG_KEY),before=read();
+  if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');
+  const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[key()]=value.story;delete value.story;value.revision++;
+  const undoGeneration=applyGeneration(c,value.generation);c.extensionSettings[CONFIG_KEY]=value;let confirmed=false;
+  try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');confirmed=true;assertGeneration(c,value.generation);}
+  catch(error){
+   if(hadPrevious)c.extensionSettings[CONFIG_KEY]=previous;else delete c.extensionSettings[CONFIG_KEY];undoGeneration();
+   if(confirmed)try{if(await persist()!==true)throw Error('宿主尚未确认恢复原配置');}catch(rollback){fail('CONFIG_ROLLBACK_FAILED','配置保存后发生冲突，恢复原配置也未获确认；请重开配置核对实际状态。',{original:asError(error),rollback:asError(rollback)});}
+   throw error;
+  }
+  configureTags(value.tags,value.aliases);return read();
+ }
  configureTags(read().tags,read().aliases);return {read,save};
 }
 export function compilePromptText(text,config,slots={}){
