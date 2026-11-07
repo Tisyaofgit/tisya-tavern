@@ -1,0 +1,337 @@
+{
+  "fields": [
+    {
+      "setting": "temperature",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "temperature"
+    },
+    {
+      "setting": "frequency_penalty",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "frequency_penalty"
+    },
+    {
+      "setting": "presence_penalty",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "presence_penalty"
+    },
+    {
+      "setting": "top_p",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "top_p"
+    },
+    {
+      "setting": "top_k",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "top_a",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "min_p",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "repetition_penalty",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "max_context_unlocked",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "tool_reasoning_mode",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "openai_max_context",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "openai_max_tokens",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "max_tokens"
+    },
+    {
+      "setting": "names_behavior",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "send_if_empty",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "impersonation_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "new_chat_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "exact multiline text observed once in messages"
+    },
+    {
+      "setting": "new_group_chat_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "new_example_chat_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "continue_nudge_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "bias_preset_selected",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "wi_format",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "scenario_format",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "personality_format",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "group_nudge_prompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "stream_openai",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "stream"
+    },
+    {
+      "setting": "assistant_prefill",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "assistant_impersonation",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "use_sysprompt",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "squash_system_messages",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "system message consolidation observed in B; 25 system rows in A, 5 in B with larger history"
+    },
+    {
+      "setting": "media_inlining",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "inline_image_quality",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "continue_prefill",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "continue_postfix",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "function_calling",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "tool_call_recurse_limit",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "show_thoughts",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "reasoning_effort",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "reasoning_effort"
+    },
+    {
+      "setting": "verbosity",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "enable_web_search",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "seed",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "observed",
+      "request_key": "seed"
+    },
+    {
+      "setting": "n",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "request_images",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "request_image_aspect_ratio",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "request_image_resolution",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "strip_old_tool_calls",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    },
+    {
+      "setting": "claude_fast_mode",
+      "ui_saved": true,
+      "native_save_acknowledged": true,
+      "cold_form_reopen": true,
+      "final_request": "not individually verified for active custom provider / generation mode"
+    }
+  ],
+  "count": 46,
+  "external_provider": false,
+  "android": false
+}
