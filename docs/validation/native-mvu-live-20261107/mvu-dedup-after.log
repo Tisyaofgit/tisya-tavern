@@ -1,0 +1,15 @@
+✔ matrix rejects native MVU drift before final send: state (176.148413ms)
+✔ matrix rejects native MVU drift before final send: disabled (180.612853ms)
+✔ matrix rejects native MVU drift before final send: format (176.762812ms)
+✔ matrix rejects native MVU drift before final send: new declaration (142.394718ms)
+✔ matrix accepts native copying unchanged variables to the new user floor (153.975184ms)
+✔ matrix preserves native zero, false and empty values without executing updates (159.026071ms)
+✔ matrix removes only native MVU entries already captured in its material slot (130.597276ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1356.159658

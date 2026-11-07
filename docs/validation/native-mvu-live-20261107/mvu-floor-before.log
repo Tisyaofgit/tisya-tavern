@@ -1,0 +1,28 @@
+✔ matrix rejects native MVU drift before final send: state (185.733761ms)
+✔ matrix rejects native MVU drift before final send: disabled (159.15847ms)
+✔ matrix rejects native MVU drift before final send: format (160.676825ms)
+✔ matrix rejects native MVU drift before final send: new declaration (144.581148ms)
+✖ matrix accepts native copying unchanged variables to the new user floor (161.683279ms)
+✔ matrix preserves native zero, false and empty values without executing updates (151.142677ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1185.520334
+
+✖ failing tests:
+
+test at tests/matrix-native-mvu.test.js:29:1
+✖ matrix accepts native copying unchanged variables to the new user floor (161.683279ms)
+  Error: 原卡 MVU 来源或变量已变化，请重新生成
+      at fail (file:///workspace/scratch/bccaf642cff4/source/engine/common.mjs:6:50)
+      at Object.payloadReady (file:///workspace/scratch/bccaf642cff4/source/engine/host.mjs:32:687)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:33:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'NATIVE_MVU_STALE',
+    details: {}
+  }

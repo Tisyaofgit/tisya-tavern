@@ -46,8 +46,10 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
  const enabled=declaration.enabled;
  const format=enabled.find(e=>/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(e.content??''));
  if(!format)fail('原卡 MVU 的 JSONPatch 输出格式未启用或无法识别；原配置保留。');
- const rules=enabled.filter(e=>/\[mvu_update\]/i.test(e.comment??'')&&!/<JSONPatch>/i.test(e.content??'')).map(e=>String(e.content??'').trim()).filter(Boolean);
- return {...declaration,messageIndex:index,stateDigest:JSON.stringify(stat),text:[
+ const ruleEntries=enabled.filter(e=>/\[mvu_update\]/i.test(e.comment??'')&&!/<JSONPatch>/i.test(e.content??'')&&String(e.content??'').trim());
+ const rules=ruleEntries.map(e=>String(e.content).trim());
+ const materialEntries=enabled.filter(e=>ruleEntries.includes(e)||/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(e.content??'')).map(e=>({uid:e.uid,content:String(e.content)}));
+ return {...declaration,materialEntries,messageIndex:index,stateDigest:JSON.stringify(stat),text:[
   '[原卡 MVU：变量由原生脚本更新，缇斯亚只传递本轮提案；不得在 status 再写相同字段。]',
   '<status_current_variables>\n'+JSON.stringify(stat)+'\n</status_current_variables>',
   ...rules,

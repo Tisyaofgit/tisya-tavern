@@ -1,0 +1,52 @@
+✔ matrix rejects native MVU drift before final send: state (169.238498ms)
+✔ matrix rejects native MVU drift before final send: disabled (153.822233ms)
+✔ matrix rejects native MVU drift before final send: format (180.247044ms)
+✔ matrix rejects native MVU drift before final send: new declaration (135.468089ms)
+✔ matrix accepts native copying unchanged variables to the new user floor (157.264498ms)
+✔ matrix preserves native zero, false and empty values without executing updates (155.785679ms)
+✖ matrix removes only native MVU entries already captured in its material slot (142.756931ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1348.322484
+
+✖ failing tests:
+
+test at tests/matrix-native-mvu.test.js:42:1
+✖ matrix removes only native MVU entries already captured in its material slot (142.756931ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     content: '<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>',
+  +     uid: 0,
+  +     world: 'native-vars'
+  +   },
+  +   {
+  +     comment: '[mvu_update]规则',
+  +     content: '只增加一次计数。',
+  +     uid: 1,
+  +     world: 'native-vars'
+  +   },
+  +   {
+        comment: '[mvu_update]停用',
+        content: '停用规则',
+        disable: true,
+        uid: 2,
+        world: 'native-vars'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:53:37)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { uid: 0, content: '<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>', world: 'native-vars' }, { uid: 1, comment: '[mvu_update]规则', content: '只增加一次计数。', world: 'native-vars' }, { uid: 2, comment: '[mvu_update]停用', content: '停用规则', disable: true, world: 'native-vars' }, { uid: 3, content: '普通世界设定', world: 'native-vars' }, { uid: 1, comment: '[mvu_update]规则', content: '只增加一次计数。', world: 'another-book' }, { uid: 9, comment: '[mvu_update]规则', content: '只增加一次计数。', world: 'native-vars' }, { uid: 1, comment: '[mvu_update]规则', content: '扫描期间已改动', world: 'native-vars' } ],
+    expected: [ { uid: 2, comment: '[mvu_update]停用', content: '停用规则', disable: true, world: 'native-vars' }, { uid: 3, content: '普通世界设定', world: 'native-vars' }, { uid: 1, comment: '[mvu_update]规则', content: '只增加一次计数。', world: 'another-book' }, { uid: 9, comment: '[mvu_update]规则', content: '只增加一次计数。', world: 'native-vars' }, { uid: 1, comment: '[mvu_update]规则', content: '扫描期间已改动', world: 'native-vars' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
