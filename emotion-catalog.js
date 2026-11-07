@@ -14,10 +14,10 @@ export function emotionCatalog(document){
 }
 export function mountEmotionAtlas(document,container){
  const catalog=emotionCatalog(document),title=document.createElement('p'),grid=document.createElement('div');let alive=true;
- title.textContent='内置表情 · 心声会按回复中的表情名使用对应原图。';grid.className='tisya-emotion-grid';container.replaceChildren(title,grid);
+ title.textContent='内置表情 · 心声通过 @rendering{emotion.表情名} 使用对应原图。';grid.className='tisya-emotion-grid';container.replaceChildren(title,grid);
  for(const row of EMOTIONS){const card=document.createElement('figure'),img=document.createElement('img'),caption=document.createElement('figcaption');img.src=row.url;img.alt=row.name;img.width=120;img.height=112;caption.textContent=row.name;card.append(img,caption);grid.append(card);}
  const status=document.createElement('p');status.setAttribute('role','status');status.textContent='正在核对表情资源…';container.append(status);
  catalog.ready.then(()=>{if(alive)status.textContent=EMOTIONS.length+' 张表情已就绪。';},()=>{if(alive){status.textContent='表情资源加载失败，请更新扩展后重启。';status.setAttribute('role','alert');}});
- const note=document.createElement('p');note.className='tisya-note';note.textContent='自建档案、资源编辑与角色绑定仍在移植中。';container.append(note);
+ const note=document.createElement('p');note.className='tisya-note';note.textContent='新增多媒体资源可在新版配置的“多媒体资源”中登记；角色绑定在人物档案中管理。';container.append(note);
  return {dispose(){alive=false;container.replaceChildren();}};
 }

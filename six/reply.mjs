@@ -11,7 +11,6 @@ const BLANKABLE=new Set([...OUTCOMES,...TODO,'候选','已交付']);
 export const BEFORE_ROWS=Object.freeze(Object.fromEntries([...['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾','文风','世界观','环境','玩法','世界书','人物','历史','世界推演','伏笔','工具','待定'].map(k=>[k,1]),['设计',3],['解锁',3],...[...HEART].map(k=>[k,2])]));
 export const AFTER_ROWS=Object.freeze(Object.fromEntries([...[...OUTCOMES].map(k=>[k,1]),['留白',2],...[...TODO].map(k=>[k,2]),...[...HEART].map(k=>[k,2]),['已交付',1],['候选',1]]));
 const BEFORE=new Map(Object.entries(BEFORE_ROWS)),AFTER=new Map(Object.entries(AFTER_ROWS));
-const ACTION_TYPES=new Set(['交流','调查','移动','操作','战斗','休整','其他']);
 const fail=code=>{throw Object.assign(Error('TISYA_V3_REPLY_'+code),{code:'TISYA_V3_REPLY_'+code});};
 const check=(ok,code)=>{if(!ok)fail(code);};
 const attempt=fn=>{try{return {value:fn()};}catch(e){return {error:e?.code??'TISYA_V3_REPLY_INVALID'};}};
@@ -96,7 +95,7 @@ function titleOf(e){
  return {text,time,place,places,world};
 }
 function actionsOf(e){
- const actions=e.blocks.actions.split(/\r?\n/).filter(x=>x.trim()).map(line=>{let [type,text,possibility,...rest]=splitV3Cells(line);type=type.trim();check(!rest.length&&ACTION_TYPES.has(type)&&text?.trim()&&possibility?.trim(),'ACTION');return {type,text,possibility};});
+ const actions=e.blocks.actions.split(/\r?\n/).filter(x=>x.trim()).map(line=>{const cells=splitV3Cells(line);let type='',text,possibility='';if(cells.length===1)[text]=cells;else if(cells.length===2)[text,possibility]=cells;else if(cells.length===3)[type,text,possibility]=cells;else fail('ACTION');check(text?.trim(),'ACTION');return {type:type.trim(),text,possibility};});
  if(Object.hasOwn(e.attrs.actions,'min'))check(actions.length>=integer(e.attrs.actions.min)&&actions.length<=integer(e.attrs.actions.max),'ACTION_RANGE');else check(!actions.length,'ACTION_RANGE');
  return actions;
 }

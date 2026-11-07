@@ -42,7 +42,7 @@ function normalizeNativePrompts(settings){
 }
 test('native PromptManager normalization loads the shipped preset without a restart error',async()=>{
  const f=fixture({selected:'Tisya',normalizeHost:true});
- try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,74);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,72);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
+ try{const result=await installBuiltInPreset(f.context,f.document);assert.equal(result.status,'updated');assert.equal(f.context.chatCompletionSettings.prompts.length,74);assert.equal(f.context.chatCompletionSettings.prompt_order[0].order.length,73);assert.equal(f.context.chatCompletionSettings.custom_model,'live-model');assert.equal(f.context.chatCompletionSettings.temp_openai,.8);}finally{await f.w.happyDOM.close();}
 });
 test('load verification accepts only observed native additions and still detects changed instructions and order',()=>{
  const native=copy(bundled);normalizeNativePrompts(native);assert.equal(presetLoadMismatch(native,bundled),null);
@@ -62,7 +62,7 @@ test('manual refresh reinstalls same revision while automatic startup preserves 
  }finally{await f.w.happyDOM.close();}
 });
 test('built-in keeps the complete 69-slot new preset with separate user binding',()=>{
- assert.equal(bundled.name,'Tisya');assert.equal(bundled.prompts.length,70);for(const p of original.prompts){if(p.identifier==='personaDescription')continue;assert.equal(bundled.prompts.find(x=>x.identifier===p.identifier).content,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,'));}assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);assert.equal(bundled.prompt_order[0].order.length,69);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
+ assert.equal(bundled.name,'Tisya');assert.equal(bundled.prompts.length,70);for(const p of original.prompts){if(p.identifier==='personaDescription')continue;assert.equal(bundled.prompts.find(x=>x.identifier===p.identifier).content,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,').replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>').replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}'));}assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);assert.equal(bundled.prompt_order[0].order.length,70);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });
 test('first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched',async()=>{
  const f=fixture({existing:false}),settings=copy(f.context.chatCompletionSettings),other=copy(f.disk.get('Other'));

@@ -18,6 +18,8 @@ import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
+import {mountMatrixIdentity} from './engine/identity-ui.mjs';
+import {createStoryIdentity} from './engine/identity.mjs';
 import {mountIdentityPage} from './user-identity-page.js';
 import {createWorldbookConditionGate} from './worldbook-conditions.js';
 import {createPersonaGateway} from './tables/persona.js';
@@ -200,7 +202,7 @@ function openWorldSeed(){
  if(!mayLeaveUtility())return false;assertIdle();close();closeNativeDrawers();renderEpoch++;page('从点子开世界','<div id="tisya-world-seed-slot"></div>');
  if(!worldSeedView)worldSeedView=mountWorldSeed(document,query('#tisya-world-seed-slot'),{service:worldSeedService,onReady:result=>openAssistant('genesis',result.goal),onClose:()=>nav()});else query('#tisya-world-seed-slot').append(worldSeedView.root);utility=worldSeedView;return true;
 }
-function openIdentity(initialOrigin=null){if(!mayLeaveUtility())return false;close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('用户身份','<div id="tisya-user-page"></div>');utility=mountIdentityPage(query('#tisya-user-page'),{service:identityService,tables:tableService,initialOrigin,onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onAssistant:task=>openAssistant(task),onClose:()=>nav()});return true;}
+function openIdentity(initialOrigin=null){if(!mayLeaveUtility())return false;close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('用户身份','<div id="tisya-user-page"></div>');utility=matrixHost.active()?mountMatrixIdentity(document,query('#tisya-user-page'),{identity:identityService,config:matrixHost.config,roles:createStoryIdentity({config:matrixHost.config,getContext:context,assertIdle}),onNative:()=>nativeDrawerOriginal('persona-management-button'),onClose:()=>nav()}):mountIdentityPage(query('#tisya-user-page'),{service:identityService,tables:tableService,initialOrigin,onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onAssistant:task=>openAssistant(task),onClose:()=>nav()});return true;}
 
 function openAssistant(task=null,initialGoal=''){
  if(!mayLeaveUtility())return false;
@@ -320,7 +322,7 @@ function openSettings(tab='play',initialView=''){
  if(tab==='theme'){if(!mayLeaveUtility())return;renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
  if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
  renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
- if(tab!=='theme'){utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:matrixHost,onError:error,onClose:()=>nav(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button')});utility.ready.catch(error);return;}
+ if(tab!=='theme'){utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:matrixHost,onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button')});utility.ready.catch(error);return;}
  utility=mountConfiguration(document,query('#tisya-settings-app'),{store:configStore,host:configHost,tableService,getSettings:settings,initialTab:tab,initialView,version:VERSION,embedded:true,
  saveAppearance:async(owner,value)=>{await saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value));messageNavigation?.update();},
  saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onApplied:()=>{appearance?.refresh();decorate();},onClose:()=>nav(),onTitle:title=>{const heading=root.querySelector('.tisya-sub-title');if(heading)heading.textContent=title;},
