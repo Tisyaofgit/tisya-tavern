@@ -1,4 +1,5 @@
 import {finishMatrixGeneration} from './engine/lifecycle.mjs';
+import {mountGenerationIdleGuard} from './generation-idle-guard.js';
 import {createMatrixHost} from './engine/host.mjs';
 import {mountMatrixConfiguration} from './engine/ui.mjs';
 import {createWorldSeedService,mountWorldSeed} from './world-seed.js';
@@ -107,7 +108,7 @@ async function saveDisplayPreference(field,value,expected){if(displaySaving)thro
 const visualError=err=>console.warn('[Tisya visual]',err);
 function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
 const uiOperations=createUiOperations();
-let nativeGenerationEpoch=0;
+let nativeGenerationEpoch=0,nativeIdleGuard=null;
 let root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 let globalFonts=null;
@@ -166,6 +167,7 @@ const revisionController=createRevisionController({getContext:context,assertIdle
  stageFork:(floor,keep,options={})=>matrixHost.active()?Promise.resolve():tableService.stageFork(floor,keep,{...options,onepass:onePassActive()}),activateFork:()=>matrixHost.active()?matrixHost.sync():tableService.activateFork(),cancelFork:()=>tableService.cancelFork(),prepare:()=>matrixHost.active()?matrixHost.sync():tableService.ensureInitialized({scope:'manual',force:onePassActive()}),canSwipe:isMessageSwipeable,overswipe:getOverswipeBehavior,setRevision:value=>matrixHost.active()?matrixHost.setRevision(value):configHost.setRevision(value),setUserRevision:value=>matrixHost.active()?matrixHost.setUserRevision(value):configHost.setUserRevision(value),onRejected:()=>matrixHost.active()?matrixHost.sync():Promise.resolve(),archive:mode=>matrixHost.active()?matrixHost.acceptCandidate():mode==='onepass'?tableService.acceptOnePass():tableService.archive({scope:'generation'}),feedback:value=>communication.recordFeedback(value),onState:()=>decorate()});
 function assertIdle() {
     if (isGenerating() || hasActiveAgentRun() || generationBusy || revisionController.active() || communication.busy()) throw new Error('请先等待或停止正在进行的生成');
+    nativeIdleGuard?.assertIdle();
     if (query('#chat .mes.editing') || query('#chat .edit_textarea')) throw new Error('请先保存或取消消息编辑');
 }
 function clearReader() {releaseReader?.();releaseReader=null;readerToken=null;}
@@ -721,6 +723,7 @@ function init() {
     if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{getLanding:()=>getDisplay().上条落点,onNavigate:()=>{appearance?.revealHistory();closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     communicationUI=mountCommunication(document,{controller:communication,onError:error});cleanups.push(()=>{communicationUI?.dispose();communicationUI=null;});
+    nativeIdleGuard=mountGenerationIdleGuard(document,{events:context().eventSource,eventTypes:context().eventTypes,waitForIdle:waitForGenerationIdle,isGenerating,onError:error});cleanups.push(()=>{nativeIdleGuard?.dispose();nativeIdleGuard=null;});
     inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=e=>{if(directoryPanel&&!directoryRow?.contains(e.target))closeDirectoryMenu();const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');

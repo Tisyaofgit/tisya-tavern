@@ -101,7 +101,8 @@
       "ui_saved": true,
       "native_save_acknowledged": true,
       "cold_form_reopen": true,
-      "final_request": "not individually verified for active custom provider / generation mode"
+      "final_request": "configured fallback user message observed exactly once in empty normal send",
+      "evidence": "../native-continuation-20261107/README.md"
     },
     {
       "setting": "impersonation_prompt",
@@ -136,7 +137,8 @@
       "ui_saved": true,
       "native_save_acknowledged": true,
       "cold_form_reopen": true,
-      "final_request": "not individually verified for active custom provider / generation mode"
+      "final_request": "exact multiline nudge observed in non-prefill continuation; absent in prefill continuation",
+      "evidence": "../native-continuation-20261107/README.md"
     },
     {
       "setting": "bias_preset_selected",
@@ -228,14 +230,16 @@
       "ui_saved": true,
       "native_save_acknowledged": true,
       "cold_form_reopen": true,
-      "final_request": "not individually verified for active custom provider / generation mode"
+      "final_request": "false and true native continuation modes verified; final role system versus assistant; same floor and one MVU update",
+      "evidence": "../native-continuation-20261107/README.md"
     },
     {
       "setting": "continue_postfix",
       "ui_saved": true,
       "native_save_acknowledged": true,
       "cold_form_reopen": true,
-      "final_request": "not individually verified for active custom provider / generation mode"
+      "final_request": "exact multiline postfix preserved between old prefix and continuation in both modes",
+      "evidence": "../native-continuation-20261107/README.md"
     },
     {
       "setting": "function_calling",
