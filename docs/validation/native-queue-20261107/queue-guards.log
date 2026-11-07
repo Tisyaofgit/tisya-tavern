@@ -1,0 +1,9 @@
+test_closed_session_never_gets_a_request (test_native_queue.NativeQueueTests.test_closed_session_never_gets_a_request) ... ok
+test_received_response_survives_immediate_shutdown (test_native_queue.NativeQueueTests.test_received_response_survives_immediate_shutdown) ... ok
+test_replacement_does_not_replay_into_new_session (test_native_queue.NativeQueueTests.test_replacement_does_not_replay_into_new_session) ... ok
+test_shutdown_keeps_uncertain_request_and_exits_promptly (test_native_queue.NativeQueueTests.test_shutdown_keeps_uncertain_request_and_exits_promptly) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.420s
+
+OK

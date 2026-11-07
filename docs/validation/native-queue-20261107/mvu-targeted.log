@@ -1,0 +1,18 @@
+✔ matrix native appended status reaches the original display rule exactly once without changing source or variables (10.200651ms)
+✔ matrix status projection supports punctuation tags and historical mixed native vars (6.34102ms)
+✔ matrix native display does not expose a marker literal from variables or accept malformed mixed updates (1.989195ms)
+✔ matrix rejects native MVU drift before final send: state (154.065146ms)
+✔ matrix rejects native MVU drift before final send: disabled (140.026908ms)
+✔ matrix rejects native MVU drift before final send: format (151.124572ms)
+✔ matrix rejects native MVU drift before final send: new declaration (128.376244ms)
+✔ matrix accepts native copying unchanged variables to the new user floor (138.669735ms)
+✔ matrix preserves native zero, false and empty values without executing updates (123.8191ms)
+✔ matrix removes only native MVU entries already captured in its material slot (125.206116ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1154.441059
