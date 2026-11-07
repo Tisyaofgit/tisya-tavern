@@ -1,0 +1,22 @@
+{
+  "file": "001-B-or-auxiliary.request.json",
+  "sha256": "2e10ad55565d12d532fc1e35d66beb74fa96f818ae796e85770c1d0ddb347153",
+  "messages": 51,
+  "params": {
+    "frequency_penalty": 0,
+    "max_tokens": 768,
+    "model": "tisya-agent-assisted",
+    "presence_penalty": 0,
+    "seed": 0,
+    "stream": false,
+    "temperature": 0,
+    "top_p": 0.75
+  },
+  "counts": {
+    "NATIVE_PRESET_EDIT_20261107": 1,
+    "OUTPUT_STYLE_SENTINEL_20261107": 1,
+    "IDENTITY_MACRO_SENTINEL_20261107": 1,
+    "阿青重骰": 2,
+    "阿青分支": 0
+  }
+}

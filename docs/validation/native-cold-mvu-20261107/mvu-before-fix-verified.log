@@ -1,0 +1,67 @@
+✖ matrix rejects native MVU drift before final send: state (170.085059ms)
+✖ matrix rejects native MVU drift before final send: disabled (150.221298ms)
+✖ matrix rejects native MVU drift before final send: format (172.331801ms)
+✖ matrix rejects native MVU drift before final send: new declaration (141.843902ms)
+✔ matrix preserves native zero, false and empty values without executing updates (145.541018ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 1
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 993.228857
+
+✖ failing tests:
+
+test at source/tests/matrix-native-mvu.test.js:17:69
+✖ matrix rejects native MVU drift before final send: state (170.085059ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:26:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at source/tests/matrix-native-mvu.test.js:17:69
+✖ matrix rejects native MVU drift before final send: disabled (150.221298ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:26:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at source/tests/matrix-native-mvu.test.js:17:69
+✖ matrix rejects native MVU drift before final send: format (172.331801ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:26:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at source/tests/matrix-native-mvu.test.js:17:69
+✖ matrix rejects native MVU drift before final send: new declaration (141.843902ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bccaf642cff4/source/tests/matrix-native-mvu.test.js:26:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }

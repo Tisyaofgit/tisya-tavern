@@ -1,0 +1,33 @@
+{
+  "source": "665aa42a9d3398b4cc0f5334b7d77a21a308ce97",
+  "host": "Linux TauriTavern 2.4.0",
+  "cold_start": true,
+  "restored_state_files": 288,
+  "main": {
+    "messages": 20,
+    "selected_swipe": 1,
+    "swipes": 2,
+    "name": "阿青重骰"
+  },
+  "branch2": {
+    "messages": 20,
+    "selected_swipe": 1,
+    "swipes": 2,
+    "name": "阿青分支"
+  },
+  "config": {
+    "edited_preset": true,
+    "person": "first",
+    "min_length": 120,
+    "max_length": 240,
+    "temperature": 0,
+    "stream": false,
+    "seed": 0,
+    "custom_tags": [
+      "scene.",
+      "story-",
+      "ledger."
+    ]
+  },
+  "native_mvu_runtime": "undefined; no actual card-script execution claimed"
+}

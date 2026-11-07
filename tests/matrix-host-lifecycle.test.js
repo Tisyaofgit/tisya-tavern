@@ -15,7 +15,7 @@ async function fixture(){
  const source={prompts:clone(baseline.prompts),order:clone(baseline.prompt_order[1].order)},expand=s=>s.replace(/\{\{([^{}]+)\}\}/g,(s,k)=>macros.get(k)?.()??(k==='user'?'user':k==='char'?'char':s));
  const options={getContext:()=>ctx,getSource:()=>source,loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true,expand};
  const host=createMatrixHost(options);host.register();const e=new Runtime();e.registerTable('ACTOR',[{key:'name',type:'TEXT'},{key:'hp',type:'NUMBER'}]);e.newRecord('ACTOR',{name:'阿青',hp:10},'u');await host.import({state:e.data});
- async function start(type='normal'){await host.before(type);const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier));host.payloadReady({messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))});}
+ async function start(type='normal'){await host.before(type);const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier));await host.payloadReady({messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))});}
  return {host,ctx,options,start,hp:async()=>(await host.export()).state.tables.ACTOR.u.values.hp};
 }
 for(const accept of [true,false])test(`delayed communication cannot change an already ${accept?'adopted':'rejected'} reroll`,async()=>{

@@ -1,0 +1,47 @@
+{
+  "utc": "2026-11-07T03:02:35.891358+00:00",
+  "changes": [
+    "Matrix payloadReady awaits and revalidates native MVU presence, script signature, source text, selected floor and variable digest before changing outgoing messages.",
+    "Recheck current preparation, chat and configuration after asynchronous source loading.",
+    "Native settings-ready handler awaits validation so rejection enters the existing blocking/error path."
+  ],
+  "repro": {
+    "before": {
+      "failed": 4,
+      "passed": 1
+    },
+    "after_targeted": {
+      "passed": 46,
+      "failed": 0
+    },
+    "full": {
+      "passed": 1418,
+      "failed": 0
+    }
+  },
+  "native": {
+    "cold_start_preserved": true,
+    "main_messages_before": 20,
+    "branch2_messages": 20,
+    "main_messages_after": 22,
+    "requests_after_fix": 1,
+    "request_messages": 51,
+    "body_and_actions_rendered": true,
+    "table_name": "阿青重骰",
+    "branch_name_absent_from_request": true,
+    "warnings": []
+  },
+  "boundaries": {
+    "external_model": false,
+    "android": false,
+    "real_mvu_script": false,
+    "mvu_revalidation": "simulated runtime regression tests; native ordinary request verified"
+  },
+  "failures": [
+    "Display99 occupied; preserved launch timeout and used free display104.",
+    "Two early commands targeted the closed prior queue after a readiness assertion; no native operations occurred.",
+    "An initial build invocation used the wrong working directory and failed before execution; corrected source-root build passed.",
+    "Send readiness probe occurred before native connection completed; no message sent; bounded readiness wait then succeeded."
+  ],
+  "next": "Run real MVU card script with original variable dialect and verify native update writer; remaining generation/lifecycle matrix and Android/external provider."
+}
