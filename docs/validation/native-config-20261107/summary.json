@@ -1,0 +1,82 @@
+{
+  "checked_utc": "2026-11-07T02:43:07.475607+00:00",
+  "host": "Linux TauriTavern 2.4.0 fff9af0333be",
+  "base_source": "4da4d1d9a63bb8603346f4c793602c5dde48f64e",
+  "external_model": false,
+  "android": false,
+  "requests": [
+    {
+      "file": "001-B-or-auxiliary.request.json",
+      "request_sha256": "a9603fe9e2491fc8ec708fa63f9ece661d681341be1397b355a0d457088844fc",
+      "messages": 49,
+      "params": {
+        "frequency_penalty": 0,
+        "max_tokens": 768,
+        "model": "tisya-agent-assisted",
+        "presence_penalty": 0,
+        "seed": 0,
+        "stream": false,
+        "temperature": 0,
+        "top_p": 0.75
+      },
+      "counts": {
+        "NATIVE_PRESET_EDIT_20261107": 1,
+        "OUTPUT_STYLE_SENTINEL_20261107": 1,
+        "OUTPUT_DIALOGUE_SENTINEL_20261107": 1,
+        "IDENTITY_MACRO_SENTINEL_20261107": 1,
+        "WISH_MACRO_SENTINEL_20261107": 1,
+        "native-config-person": 0,
+        "阿青初稿": 0
+      },
+      "first_person": true,
+      "custom_tag_length": true
+    },
+    {
+      "file": "002-B-or-auxiliary.request.json",
+      "request_sha256": "dfd5b58b1bd9126887184c823906fa0fbb573213d91df3ff8cdb47c3d9f0218b",
+      "messages": 49,
+      "params": {
+        "frequency_penalty": 0,
+        "max_tokens": 768,
+        "model": "tisya-agent-assisted",
+        "presence_penalty": 0,
+        "seed": 0,
+        "stream": false,
+        "temperature": 0,
+        "top_p": 0.75
+      },
+      "counts": {
+        "NATIVE_PRESET_EDIT_20261107": 1,
+        "OUTPUT_STYLE_SENTINEL_20261107": 1,
+        "OUTPUT_DIALOGUE_SENTINEL_20261107": 1,
+        "IDENTITY_MACRO_SENTINEL_20261107": 1,
+        "WISH_MACRO_SENTINEL_20261107": 1,
+        "native-config-person": 0,
+        "阿青初稿": 0
+      },
+      "first_person": true,
+      "custom_tag_length": true
+    }
+  ],
+  "native_operations": {
+    "full_preset_edit": true,
+    "selected_output_config": "7ecef56c-744a-40d8-8b06-aca9be544719",
+    "reroll_excludes_current_variant_row": true,
+    "swipe_0": "阿青初稿",
+    "swipe_1": "阿青重骰",
+    "branch_edit": "阿青分支",
+    "main_after_branch_edit": "阿青重骰",
+    "main_messages": 20,
+    "branch_messages": 20,
+    "warnings": []
+  },
+  "source_changes": "validation evidence only; no product code change",
+  "failures": [
+    "Expired dependency directory; restored 42 cached packages. Dangling WebKit and xkbcomp test links updated.",
+    "Initial launch timed out from missing hardcoded /usr/bin/xkbcomp. Preserved supervisor failure.",
+    "Three queue commands sent to stale closed active-session while launch pending; no native operations occurred.",
+    "Output row activation probe ran before asynchronous save finished; later activation and actual request verified.",
+    "One chat-button lookup failed before home menu opened; subsequent native home navigation succeeded."
+  ],
+  "next": "Cold startup verify new configuration/swipes/branch; remaining generation matrix; old-card MVU routing; external provider and Android separately."
+}
