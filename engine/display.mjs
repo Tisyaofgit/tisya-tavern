@@ -1,4 +1,7 @@
 import {envelope,paragraphs} from './reply.mjs';
+import {normalizeEnvelope} from './tags.mjs';
+import {xmlTokens,strictJSON} from '../reader-core.js';
+import {nativeStatusInVars,nativeStatusTail} from '../native-mvu-wire.js';
 import {runV3Display,readV3PublicEnvelope,readV3Details,inspectV3Message} from '../six/reply.mjs';
 const before={'构想':'用户偏好','情节':'情节取向','运镜':'篇幅重点','用语':'文风用词','余韵':'伏笔','与用户互动':'回应用户评价'};
 const after={'立住了':'语言亮点','变局':'本轮变化','骨相':'人物厚度','主动':'角色主动','世界':'世界动向','关系':'关系位移','余钩':'下一步张力','与用户互动':'回应用户评价'};
@@ -7,7 +10,8 @@ const mapRows=(value,map)=>(value??'').split(/\r?\n/).map(line=>{const cells=lin
 // Read-only projection reuses the established title, prose, hearts and action
 // widgets. The source and its machine instructions are never rewritten.
 export function displayProjection(source){
- const e=envelope(source),b=e.blocks,p=paragraphs(b.body),actions=mapRows(b.actions,action),count=actions.split(/\r?\n/).filter(s=>s.trim()).length;
+ const reading=nativeStatusTail(nativeStatusInVars(normalizeEnvelope(source),xmlTokens,strictJSON),xmlTokens);
+ const e=envelope(reading),b=e.blocks,p=paragraphs(b.body),actions=mapRows(b.actions,action),count=actions.split(/\r?\n/).filter(s=>s.trim()).length;
  return '<reply><think phase="before">'+mapRows(b.before,before)+'</think><title>'+b.title+'</title><body min="0" max="2000000" unit="字">'+p.normalized+'</body><think phase="after">'+mapRows(b.after,after)+'</think><extra>'+(b.extra??'')+'</extra><actions min="0" max="'+count+'">'+actions+'</actions></reply>';
 }
 export const runMatrixDisplay=options=>runV3Display({...options,source:displayProjection(options.source)});

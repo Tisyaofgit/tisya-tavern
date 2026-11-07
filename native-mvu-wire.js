@@ -39,6 +39,7 @@ export function nativeStatusTail(source,xmlTokens){
  for(const t of xmlTokens(source)){
   if(t.kind==='open'){
    if(depth===1&&t.name==='extra')extra={start:t.start,end:t.end,selfClose:t.selfClose};
+   if(depth===2&&extra&&!extra.selfClose&&extra.close===undefined&&t.name==='StatusPlaceHolderImpl'&&t.selfClose&&Object.keys(t.attrs).length===0)extra.marker=true;
    if(!t.selfClose)depth++;
   }else if(t.kind==='close'){
    if(depth===2&&t.name==='extra'&&extra)extra.close=t.start;
@@ -46,7 +47,7 @@ export function nativeStatusTail(source,xmlTokens){
   }
  }
  if(end<0||!extra||!/^\s*<StatusPlaceHolderImpl\s*\/>\s*$/.test(source.slice(end)))return source;
- const head=source.slice(0,end);if(head.includes('<StatusPlaceHolderImpl/>'))return head;
+ const head=source.slice(0,end);if(extra.marker)return head;
  return extra.selfClose?head.slice(0,extra.start)+'<extra><StatusPlaceHolderImpl/></extra>'+head.slice(extra.end):head.slice(0,extra.close)+'<StatusPlaceHolderImpl/>'+head.slice(extra.close);
 }
 
