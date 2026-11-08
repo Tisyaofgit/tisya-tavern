@@ -1,5 +1,6 @@
 import {PREFERENCE_GROUPS,effectivePreferences} from './preferences.mjs';
 import {storyAvatar} from './identity.mjs';
+import {selectControl} from './form-controls.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
 
 export function renderPreferences(document,body,{config,changed,save,button,field,input,el,onIdentity,historyLimit}){
@@ -23,11 +24,11 @@ export function renderPreferences(document,body,{config,changed,save,button,fiel
    if(!group.multiple){
     const select=el('select');select.className='text_pole';select.style.cssText='width:100%;min-width:0;max-width:100%';select.setAttribute('aria-label',group.label);select.append(option('沿用完整预设',''));
     for(const choice of group.options)select.append(option(choice.label,choice.id));
-    select.value=selected??'';select.onchange=()=>set(group.id,select.value||null);box.append(select);
+    select.value=selected??'';select.onchange=()=>set(group.id,select.value||null);box.append(selectControl(document,select));
    }else{
     const note=el('small',selected==null?'当前沿用完整预设；勾选后采用本组勾选结果。':'当前采用本组勾选结果。');box.append(note);
     const checks=[];
-    for(const option of group.options){const check=el('input');check.type='checkbox';check.value=option.id;check.checked=Array.isArray(selected)&&selected.includes(option.id);check.setAttribute('aria-label',option.label);checks.push(check);check.onchange=()=>{set(group.id,checks.filter(i=>i.checked).map(i=>i.value));note.textContent='当前采用本组勾选结果。';};box.append(field(option.label,check));}
+    for(const option of group.options){const check=el('input');check.type='checkbox';check.value=option.id;check.checked=Array.isArray(selected)&&selected.includes(option.id);check.setAttribute('aria-label',option.label);checks.push(check);check.onchange=()=>{set(group.id,checks.filter(i=>i.checked).map(i=>i.value));note.textContent='当前采用本组勾选结果。';};const row=field(option.label,check);row.classList.add('tisya-check-row');row.style.display='flex';row.style.alignItems='center';row.style.justifyContent='space-between';box.append(row);}
     box.append(button('沿用本组预设',()=>{set(group.id,null);draw();}),button('关闭本组',()=>{set(group.id,[]);draw();}));
    }
    if(scope==='story'&&Object.hasOwn(config.story.play?.choices??{},group.id))box.append(button('恢复默认继承',()=>{delete config.story.play.choices[group.id];changed();draw();}));

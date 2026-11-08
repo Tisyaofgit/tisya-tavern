@@ -58,3 +58,9 @@ test('Python expression syntax keeps lazy branches, membership, chained comparis
 test('blank engine exposes creation fields and attaches character filters only to their character slot',()=>{const e=new Runtime(initializeState(catalog));const blank=materials(e);assert.match(blank.tisya_material_cell_prompts,/T_CHAR_DOSSIER.*字段：.*name/);e.newRecord('T_CHAR_DOSSIER',{name:'阿青'},'u');e.newRecord('T_PREF_CHAR_FILTER',{target_char_id:'u'},'f');const slots=materials(e);assert.match(slots.tisya_material_focus_entities,/T_PREF_CHAR_FILTER#f/);assert(!slots.tisya_material_task_material?.includes('T_PREF_CHAR_FILTER#f'));});
 
 test('bound identity is a custom prompt eligible for the native PromptManager',()=>{const nativeUserPrompts=baseline.prompts.filter(p=>p.system_prompt===false&&p.marker===false);const identity=nativeUserPrompts.find(p=>p.identifier==='tisya_user_identity');assert(identity,'native getUserPrompts would omit the identity');assert.equal(identity.role,'system');assert.equal(identity.content,'{{tisya_user_identity}}');for(const order of baseline.prompt_order)assert.equal(order.order.find(p=>p.identifier==='tisya_user_identity').enabled,true);});
+
+test('core library entries never enter native lore, including unselected enabled rows; unrelated books remain native',()=>{
+ const ctx={extensionSettings:{},chatMetadata:{},chatId:'library-scan',characterId:0};const host=createMatrixHost({getContext:()=>ctx,getSource:()=>baseline,loadCatalog:async()=>catalog,persistSettings:async()=>true,persistMetadata:async()=>true});
+ const rows=[{world:'基点书',uid:0,content:'所选角色'},{world:'基点书',uid:1,content:'未选角色',disable:false},{world:'普通世界书',uid:2,content:'世界信息'}];
+ const scan=Object.fromEntries(['globalLore','characterLore','chatLore','personaLore'].map(k=>[k,structuredClone(rows)]));host.entriesLoaded(scan);for(const entries of Object.values(scan))assert.deepEqual(entries,[rows[2]]);
+});

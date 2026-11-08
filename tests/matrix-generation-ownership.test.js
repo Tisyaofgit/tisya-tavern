@@ -61,3 +61,14 @@ test('generation text controls preserve multiline edits and saved values when re
  view.dispose();view=await open();for(const [key,value]of Object.entries(values)){const label=[...root.querySelectorAll('label')].find(l=>l.firstChild.textContent===key);assert.equal(label.querySelector('textarea').value,value,key);}
  view.dispose();window.happyDOM.abort();
 });
+
+test('configuration save blocks concurrent tab switches until durable completion and preserves the saved field',async()=>{
+ const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);let release;const c={extensionSettings:{}},config=createConfiguration({getContext:()=>c,persist:()=>new Promise(r=>release=r)});
+ const view=mountMatrixConfiguration(w.document,root,{service:{config}});await view.ready;const click=t=>[...root.querySelectorAll('button')].find(b=>b.textContent===t).click();const tick=()=>new Promise(r=>setImmediate(r));click('回复格式');await tick();
+ const input=[...root.querySelectorAll('label')].find(x=>x.firstChild.textContent==='正文').querySelector('input');input.value='storycheck';input.dispatchEvent(new w.Event('input'));click('保存回复格式');assert.equal(view.requestLeave().allowed,false);click('游玩偏好');assert(input.isConnected);assert.equal(root.querySelector('button[aria-current=true]').textContent,'回复格式');release(true);await tick();await tick();assert.equal(config.read().tags.body,'storycheck');assert.equal(root.inert,false);click('游玩偏好');await tick();assert(root.querySelector('[data-preference-group]'));view.dispose();await w.happyDOM.abort();
+});
+
+test('configuration navigation permits its own clean route while blocking outside navigation during a pending save',async()=>{
+ const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ctx={extensionSettings:{}},config=createConfiguration({getContext:()=>ctx,persist:async()=>true});let ui,visited=0;
+ ui=mountMatrixConfiguration(w.document,root,{service:{config},onIdentity:()=>{assert.equal(ui.requestLeave().allowed,true);visited++;}});await ui.ready;[...root.querySelectorAll('button')].find(b=>b.textContent==='用户身份').click();await new Promise(r=>setImmediate(r));assert.equal(visited,1);ui.dispose();await w.happyDOM.abort();
+});

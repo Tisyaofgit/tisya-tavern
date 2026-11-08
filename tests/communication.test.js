@@ -39,3 +39,28 @@ test('changed or corrupt saved requirements stop replay instead of borrowing a n
 test('stop during message save cannot consume the draft or dispatch a late request',async()=>{
  const f=fixture();let release;f.c.saveChat=()=>new Promise(r=>release=r);f.service.setDraft('仍在保存的要求');await f.service.beginNative('动作','normal');f.c.chat.push({is_user:true,mes:'动作'});const pending=f.service.directions();await f.service.stopped();release(true);await assert.rejects(pending,/已变化/);assert.equal(f.service.view().draft,'仍在保存的要求');assert.equal(readTurnDirection(f.c.chat[1]),'');
 });
+
+test('editing attached directions preserves RP and next-turn draft; clear and cold replay use saved new value',async()=>{
+ const f=fixture(),message={is_user:true,mes:'角色行动',extra:{keep:{value:1},[TURN_DIRECTION_KEY]:{format:'tisya.turn-direction/1',text:'旧要求'}}};f.c.chat.push(message);f.service.setDraft('下一轮的草稿');
+ await f.service.editDirection(message,'新要求','旧要求');assert.equal(message.mes,'角色行动');assert.deepEqual(message.extra.keep,{value:1});assert.equal(f.service.view().draft,'下一轮的草稿');
+ const restored=createCommunication({getContext:()=>f.c,persist:async()=>true});await restored.beginNative('','normal',{automatic_trigger:true});assert.equal(JSON.parse((await restored.directions())[1].content).text,'新要求');
+ await restored.editDirection(message,'','新要求');assert.equal(message.extra[TURN_DIRECTION_KEY],undefined);await restored.beginNative('','swipe');assert.deepEqual(await restored.directions(),[]);
+});
+test('attached-direction save failure and conflicts retain old metadata and allow exact retry',async()=>{
+ const f=fixture(),message={is_user:true,mes:'角色行动',extra:{keep:1,[TURN_DIRECTION_KEY]:{format:'tisya.turn-direction/1',text:'旧'}}};f.c.chat.push(message);const old=structuredClone(message);
+ f.c.saveChat=async()=>false;await assert.rejects(f.service.editDirection(message,'新','旧'),/未确认/);assert.deepEqual(message,old);
+ f.c.saveChat=async()=>true;await assert.rejects(f.service.editDirection(message,'新','不对应'),/其他操作/);await f.service.editDirection(message,'新','旧');assert.equal(readTurnDirection(message),'新');
+});
+test('native rewrite edits attached direction before saving RP, keeps errors editable, and cancel discards only the unsaved note',async()=>{
+ const {syncTurnDirectionEditor}=await import('../communication.js');const w=new Window(),d=w.document;d.body.innerHTML='<div class="mes"><div class="mes_text"><textarea class="edit_textarea">行动</textarea></div><button class="mes_edit_done">保存</button><button class="mes_edit_cancel">取消</button></div>';
+ const f=fixture(),message={is_user:true,mes:'行动',extra:{[TURN_DIRECTION_KEY]:{format:'tisya.turn-direction/1',text:'原要求'}}};f.c.chat.push(message);const node=d.querySelector('.mes'),errors=[];let saves=0;
+ node.querySelector('.mes_edit_done').onclick=()=>{saves++;assert.equal(readTurnDirection(message),'新要求');};syncTurnDirectionEditor(d,node,message,{controller:f.service,onError:e=>errors.push(e.message)});
+ const note=node.querySelector('.tisya-turn-direction-editor textarea');note.value='新要求';f.c.saveChat=async()=>false;node.querySelector('.mes_edit_done').click();await w.happyDOM.whenAsyncComplete();assert.equal(saves,0);assert.equal(note.value,'新要求');assert.equal(note.disabled,false);assert.match(errors[0],/未确认/);
+ f.c.saveChat=async()=>true;node.querySelector('.mes_edit_done').click();await w.happyDOM.whenAsyncComplete();assert.equal(saves,1);note.value='未保存';node.querySelector('.mes_edit_cancel').click();assert.equal(readTurnDirection(message),'新要求');await w.happyDOM.abort();
+});
+
+test('native early preparation snapshots the note before the user row exists, then final payload durably binds it once',async()=>{
+ const f=fixture();f.service.setDraft('本轮要求');await f.service.beginNative('新的行动','normal');
+ const early=await f.service.directions({prepare:true});assert.equal(JSON.parse(early[1].content).text,'本轮要求');assert.equal(f.service.view().draft,'本轮要求');assert.equal(f.c.chat.length,1);
+ f.c.chat.push({is_user:true,mes:'新的行动'});const actual=await f.service.directions();assert.deepEqual(actual,early);assert.equal(readTurnDirection(f.c.chat.at(-1)),'本轮要求');assert.equal(f.service.view().draft,'');assert.deepEqual(await f.service.directions(),early);
+});

@@ -66,7 +66,7 @@ export function compilePrompts(source,config,slots){
  return out;
 }
 export async function identitySlots(ctx,config,persona){
- const story=config.story,slots={},avatar=storyAvatar(config);if(avatar.mode==='bound'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择全局基点书的【角色】档案');let bound='',name=story.userName||'user';
+ const story=config.story,slots={},avatar=storyAvatar(config);if(avatar.mode==='bound'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');let bound='',name=story.userName||'user';
  if(avatar.binding){const {book,uid}=avatar.binding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);if(/^【角色】.+/u.test(entry.comment??''))name=entry.comment.slice('【角色】'.length);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');}
  slots.tisya_user_identity=bound?('[USER.IDENTITY]\n故事主角：'+name+'\n'+bound+'\n[/USER.IDENTITY]'):'';
  slots.tisya_user_name=bound?name:'';

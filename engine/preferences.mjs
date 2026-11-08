@@ -50,7 +50,7 @@ export function wishPreferences(config){
 export function applyPreferences(entries,config){
  const value=validatePreferences(effectivePreferences(config));
  const avatar=storyAvatar(config);
- if(avatar.choice==='N01-B'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择全局基点书的【角色】档案');
+ if(avatar.choice==='N01-B'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');
  if(avatar.managed)value.choices.N01=avatar.choice;
  for(const group of PREFERENCE_GROUPS){
   const selection=value.choices[group.id];if(selection==null||group.id==='W')continue;

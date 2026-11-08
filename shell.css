@@ -1,5 +1,5 @@
 /* Native shells own geometry; this sheet owns their contents. */
-body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.31.19-onepass.16-candidate.7";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:var(--tisya-global-font,system-ui),TisyaReading,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
+body.tisya-active{--tisya-style-version:"0.2.0-alpha.31.31.19-onepass.16-candidate.8";--tisya-gold:#d5c38e;--tisya-ink:#e1e8dc;--tisya-muted:#adc0b3;--tisya-line:#cabb8738;--tisya-ui:var(--tisya-global-font,system-ui),TisyaReading,-apple-system,"Noto Sans SC",sans-serif;--tisya-safe-top:max(var(--tt-inset-top,0px),env(safe-area-inset-top,0px));--tisya-safe-bottom:max(var(--tt-inset-bottom,0px),var(--tt-ime-bottom,0px),env(safe-area-inset-bottom,0px));--tisya-height:var(--tt-base-viewport-height,var(--doc-height,100dvh));color:var(--tisya-ink);background:#06261e!important}
 body.tisya-active #sheld{background:transparent!important;border:0!important;box-shadow:none!important;overflow-x:hidden;isolation:isolate}
 body.tisya-active #top-settings-holder{display:flex!important;pointer-events:none}
 body.tisya-active #top-settings-holder>.drawer>.drawer-toggle{visibility:hidden!important;pointer-events:none!important}
@@ -17,6 +17,33 @@ body.tisya-active #top-bar{display:none!important}
 #tisya-shell header button,#tisya-overlay header button{border:0;background:transparent;font-size:13px;padding-inline:8px}
 #tisya-shell .tisya-note,#tisya-overlay .tisya-note{font-size:12px;line-height:1.6;color:var(--tisya-muted);margin:6px 0 12px}
 #tisya-shell input,#tisya-overlay input,#tisya-overlay textarea{font:16px/1.5 var(--tisya-ui);color:var(--tisya-ink);background:#11392c;border:1px solid var(--tisya-line);border-radius:10px;width:100%;max-width:100%;min-width:0;min-height:44px;padding:10px 12px;box-shadow:none;box-sizing:border-box}
+#tisya-shell .tisya-check-row,#tisya-overlay .tisya-check-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;margin:12px 0;cursor:pointer}
+#tisya-shell .tisya-check-row input[type=checkbox],#tisya-overlay .tisya-check-row input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:0 0 22px;width:22px;height:22px;min-width:22px;min-height:22px;max-width:22px;margin:0;padding:0;border:1px solid var(--tisya-gold);border-radius:4px;background:#0b2e24;box-shadow:none;position:relative;cursor:pointer}
+#tisya-shell .tisya-check-row input[type=checkbox]:checked,#tisya-overlay .tisya-check-row input[type=checkbox]:checked{background:#d5c38e}
+#tisya-shell .tisya-check-row input[type=checkbox]:checked::after,#tisya-overlay .tisya-check-row input[type=checkbox]:checked::after{content:'';display:block;position:absolute;left:7px;top:3px;width:6px;height:11px;border:solid #10271e;border-width:0 2px 2px 0;transform:rotate(45deg)}
+#tisya-shell .tisya-check-row input[type=checkbox]:focus-visible{outline:2px solid var(--tisya-gold);outline-offset:3px}
+.tisya-matrix-identity select,.tisya-matrix-identity textarea{width:100%;min-width:0;box-sizing:border-box}
+.tisya-matrix-identity .tisya-identity-status:not(:empty){position:sticky;top:0;z-index:2;padding:10px;background:#102c23;border:1px solid #a7976555;border-radius:6px;white-space:pre-wrap}
+.tisya-matrix-identity [data-role-create]{margin-top:20px;padding-top:12px;border-top:1px solid #a7976555}
+/* Moon-tide forms: scoped to the configuration and identity pages. */
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity){--form-line:#b9a66d55;--form-fill:#0c3028;line-height:1.65}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) :is(input:not([type=checkbox]):not([type=radio]),textarea,.tisya-select){font:inherit;font-size:16px;line-height:1.6;color:#e3dec7;width:100%;min-width:0;max-width:100%;padding:12px 15px;border:1px solid var(--form-line);border-radius:4px 14px 4px 14px;background:linear-gradient(120deg,#123b2fc9,#08261fe6);box-shadow:inset 0 1px 0 #d7c78b0b;box-sizing:border-box}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) textarea{resize:vertical;min-height:112px}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) :is(input,textarea):focus-visible,#tisya-shell .tisya-select:focus-within{outline:1px solid #d5c38e;outline-offset:2px;border-color:#d5c38e}
+#tisya-shell .tisya-select{display:block;position:relative;min-height:48px;padding-right:42px!important}
+#tisya-shell .tisya-select-value{display:block;white-space:normal;overflow-wrap:anywhere;pointer-events:none}
+#tisya-shell .tisya-select::after{content:'';position:absolute;right:17px;top:19px;width:7px;height:7px;border:solid #c9b77d;border-width:0 1px 1px 0;transform:rotate(45deg);pointer-events:none}
+#tisya-shell .tisya-select>select{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;font:inherit;z-index:1}
+#tisya-shell .tisya-select.is-disabled{opacity:.55}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) fieldset{min-width:0;margin:16px 0;padding:14px 16px 18px;border:1px solid #b9a66d38;border-radius:3px 18px 3px 18px;background:linear-gradient(145deg,#153d2a38,#041b1526)}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) legend{max-width:100%;padding:0 8px;color:#d5c38e;font-size:15px;letter-spacing:.04em;white-space:normal}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) label{color:#d1d8c2;font-size:15px}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) .menu_button{min-height:44px;padding:10px 16px;margin:6px 6px 6px 0;border:1px solid #b9a66d66;border-radius:4px 12px 4px 12px;background:linear-gradient(130deg,#284738,#102d24);color:#decf9e;box-shadow:none}
+#tisya-shell .tisya-matrix-config .tisya-directory-buttons{padding:6px 0 14px;border-bottom:1px solid #b9a66d33}
+#tisya-shell .tisya-matrix-config .tisya-directory-buttons button{background:transparent;border-color:transparent;margin:0;color:#a7b7a3}
+#tisya-shell .tisya-matrix-config .tisya-directory-buttons button[aria-current=true]{color:#ecdfb5;background:#234333;border-color:#b9a66d66}
+#tisya-shell :is(.tisya-matrix-config,.tisya-matrix-identity) pre{white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;max-width:100%;font-size:13px;line-height:1.65}
+#tisya-shell .tisya-matrix-config .tisya-sub-card{padding:12px 0;background:transparent;border:0;box-shadow:none}
 #tisya-overlay textarea{min-height:120px;resize:vertical;margin:8px 0 12px}
 #tisya-shell .tisya-search{margin-bottom:12px}
 .tisya-list{display:flex;flex-direction:column;gap:4px;margin:8px 0 16px;min-width:0}
@@ -634,3 +661,8 @@ body.tisya-active #top-settings-holder>.drawer>.drawer-content :is(.menu_button_
 
 /* Owned page titles use the independent title face; prose keeps its own scope. */
 #tisya-shell :is(h1,h2,h3){font-family:var(--tisya-title-font,var(--tisya-global-font,TisyaReading)),TisyaReading,serif}
+
+body.tisya-active .tisya-turn-direction-editor{margin:14px 0;padding:12px 14px;border:1px solid #b9a66d55;border-radius:4px 14px;background:#0c3028;color:var(--tisya-ink)}
+body.tisya-active .tisya-turn-direction-editor label{display:block;font:14px/1.6 var(--tisya-ui);color:var(--tisya-gold)}
+body.tisya-active .tisya-turn-direction-editor textarea{display:block;width:100%;min-width:0;box-sizing:border-box;margin-top:8px;padding:10px 12px;border:1px solid #b9a66d55;border-radius:4px 12px;background:#08261f;color:var(--tisya-ink);font:16px/1.6 var(--tisya-ui);resize:vertical}
+body.tisya-active .tisya-turn-direction-editor [role=status]:empty{display:none}

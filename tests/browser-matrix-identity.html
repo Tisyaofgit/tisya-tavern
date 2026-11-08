@@ -1,0 +1,18 @@
+<!doctype html><html lang="zh"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/shell.css"><style>body{margin:0;background:#06261e}#tisya-shell{position:relative;pointer-events:auto;padding:16px;min-height:100vh}.tisya-page-test{max-width:780px;margin:auto}button,input,textarea,select{font:inherit}</style><body class="tisya-active"><main id="tisya-shell"><div id="app" class="tisya-page-test"></div></main><script type="module">
+import {createStoryIdentity} from '/engine/identity.mjs';
+import {createIdentityService} from '/user-identity-service.js';
+import {createConfiguration} from '/engine/config.mjs';
+import {mountMatrixIdentity} from '/engine/identity-ui.mjs';
+import {mountMatrixConfiguration} from '/engine/ui.mjs';
+const restored=JSON.parse(localStorage.getItem('matrix-ui-fixture')??'null');
+const data=restored??{active:'a',books:{},globals:[],context:{extensionSettings:{},chatId:'ui-chat',characterId:0,characters:[{avatar:'world.png'}],chatMetadata:{},name1:'甲',chat:[{is_user:true,mes:'已有历史',name:'旧署名'}],powerUserSettings:{personas:{a:'甲',b:'乙'},persona_descriptions:{a:{description:'甲的心愿'},b:{description:'乙的心愿'}},persona_description:'甲的心愿'}}};
+const c=data.context;let failChat=false;const persist=async()=>{localStorage.setItem('matrix-ui-fixture',JSON.stringify(data));return true;};
+c.loadWorldInfo=async name=>({entries:Object.fromEntries((data.books[name]??[]).map(e=>[e.uid,{...e,comment:e.name}]))});
+const config=createConfiguration({getContext:()=>c,persist});
+const helper={getGlobalWorldbookNames:async()=>[...data.globals],getWorldbookNames:async()=>Object.keys(data.books),getWorldbook:async n=>structuredClone(data.books[n]),createWorldbook:async(n,rows)=>{data.books[n]=rows.map((r,i)=>({...r,uid:i}));return persist();},updateWorldbookWith:async(n,fn)=>{data.books[n]=fn(structuredClone(data.books[n])).map((r,i)=>({...r,uid:r.uid??i}));await persist();},rebindGlobalWorldbooks:async names=>{data.globals=names;await persist();}};
+const roles=createStoryIdentity({config,getContext:()=>c,getHelper:()=>helper});
+const identity=createIdentityService({getContext:()=>c,getAvatar:()=>data.active,applyActive:(id,name)=>{data.active=id;c.name1=name;c.powerUserSettings.persona_description=c.powerUserSettings.persona_descriptions[id].description;},persistSettings:persist,persistChat:async()=>failChat?false:persist()});
+const root=document.querySelector('#app');const screen=new URL(location.href).searchParams.get('screen');
+const ui=screen==='config'?mountMatrixConfiguration(document,root,{service:{config,historyLimit:()=>50},onIdentity(){}}):mountMatrixIdentity(document,root,{identity,config,roles,onNative(){},onClose(){}});
+await ui.ready;window.fixture={data,c,config,identity,roles,ui,failChat:value=>failChat=value};
+</script></body></html>
