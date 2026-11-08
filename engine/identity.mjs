@@ -1,9 +1,17 @@
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 const roleName=entry=>String(entry.comment??entry.name??'');
+export function storyAvatar(config){
+ const story=config.story??{},legacy=Object.hasOwn(story.play?.choices??{},'N01')?story.play.choices.N01:config.playDefaults?.choices?.N01;
+ const managed=Object.hasOwn(story,'userMode')||!!story.userBinding;
+ const mode=story.userMode??(story.userBinding?'bound':legacy==='N01-B'?'bound':legacy==='N01-C'?'ensemble':'unbound');
+ return {mode,managed,choice:managed?(mode==='bound'?'N01-B':mode==='generic'?'N01-A':'N01-C'):legacy,
+  binding:mode==='bound'?story.userBinding??null:null};
+}
+export const avatarReference=binding=>binding?binding.book+'#'+binding.uid:'';
 export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.TavernHelper,assertIdle=()=>{}}){
  const scope=()=>{const c=getContext();return JSON.stringify([c.chatId,c.characterId,c.groupId]);};
  const helper=()=>{const h=getHelper();check(h,'世界书接口尚未就绪');return h;};
- async function list(book=config.read().coreBook??'基点书'){
+ async function list(book=config.read().story.userBinding?.book??config.read().coreBook??'基点书'){
   const h=helper(),books=await h.getGlobalWorldbookNames(),all=await h.getWorldbookNames();
   const entries=all.includes(book)?Object.values((await getContext().loadWorldInfo(book))?.entries??{}).filter(e=>/^【角色】.+/u.test(roleName(e))).map(e=>({uid:e.uid,name:roleName(e),content:e.content})):[];
   return {book,books,exists:all.includes(book),entries};
@@ -13,7 +21,7 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
   if(mode==='bound'){
    const h=helper();check((await h.getGlobalWorldbookNames()).includes(book),'请选择全局基点书');const rows=await list(book),entry=rows.entries.find(e=>String(e.uid)===String(uid));check(entry,'全局基点书的角色条目已不存在');
    value.coreBook=book;value.story.userBinding={book,uid:entry.uid};value.story.userName=entry.name.slice('【角色】'.length);value.story.userMode='bound';
-  }else{check(['unbound','generic'].includes(mode),'角色绑定模式无效');value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;}
+  }else{check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;}
   check(captured===scope(),'聊天已切换，绑定尚未保存');return config.save(value);
  }
  async function create({book=config.read().coreBook??'基点书',name,content},expected=config.read().revision){

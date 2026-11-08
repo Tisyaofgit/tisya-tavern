@@ -92,9 +92,9 @@ test('AT10 real streaming signature remains attached to the same native call par
  try{const a=await s.run(payload('gemini',true));const values=frames(await a.response.text());const part=values.flatMap(v=>v.candidates??[]).flatMap(c=>c.content?.parts??[]).find(p=>p.functionCall);assert.deepEqual(part,signed);assert.equal(a.status.state,'tool-handoff');assert.notEqual(a.status.restored,true);assert.equal(s.count(),1);}finally{s.t.dispose();}
 });
 
-test('AT10 cancellation during buffered native tool stream cannot complete or retry',async()=>{
+test('AT10 cancellation during incremental native tool stream cannot complete or retry',async()=>{
  let cancelled=false;const s=setup(name=>new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode(evt({candidates:[{content:{role:'model',parts:[{functionCall:{name,partialArgs:[{jsonPath:'$.content',stringValue:'partial',willContinue:true}],willContinue:true}}]}}]})));},cancel(){cancelled=true;}}),{headers:{'content-type':'text/event-stream'}}));
- try{const running=s.run(payload('gemini',true));for(let i=0;i<8;i++)await Promise.resolve();assert.equal(s.count(),1);s.t.invalidate('main','test cancellation');await assert.rejects(running);assert.equal(s.t.status().state,'cancelled');assert.equal(cancelled,true);assert.equal(s.count(),1);}finally{s.t.dispose();}
+ try{const running=s.run(payload('gemini',true)).then(a=>a.response.text());for(let i=0;i<8;i++)await Promise.resolve();assert.equal(s.count(),1);s.t.invalidate('main','test cancellation');await assert.rejects(running);assert.equal(s.t.status().state,'cancelled');assert.equal(cancelled,true);assert.equal(s.count(),1);}finally{s.t.dispose();}
 });
 
 test('AT10 native media strategy preserves request_images, search and explicit native tools',()=>{

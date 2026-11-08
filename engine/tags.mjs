@@ -17,10 +17,13 @@ export function rewriteTagReferences(text,from=DEFAULT_TAGS,to=active){
 }
 // Only envelope-level protocol tokens are normalized; HTML, code and quoted
 // machine payloads inside a block remain byte-for-byte source data.
-export function normalizeEnvelope(source,tags=active){
+export function envelopeTags(source,tags=active){
  const candidates=[tags,...history,DEFAULT_TAGS];let selected;
  let score=-1;for(const map of candidates){const name=map.reply.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');if(new RegExp('^\\s*<'+name+'(?=[\\s>])','i').test(source)){const found=Object.values(map).reduce((n,t)=>n+(new RegExp('<'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[\\s/>])','i').test(source)?1:0),0);if(found>score){selected=map;score=found;}}}
- if(!selected)return source;
+ return selected??null;
+}
+export function normalizeEnvelope(source,tags=active){
+ const selected=envelopeTags(source,tags);if(!selected)return source;
  const inverse=Object.fromEntries(Object.entries(selected).map(([k,v])=>[v.toLowerCase(),k]));
  const root=regexLiteral(selected.reply),rootEnd=new RegExp('</'+root+'\\s*>\\s*(?:<StatusPlaceHolderImpl\\s*/>\\s*)?$','i').exec(source);if(!rootEnd)return source;
  const first=source.indexOf('>')+1;let at=first,out=source.slice(0,first).replace(new RegExp('(<)'+root,'i'),'$1reply');

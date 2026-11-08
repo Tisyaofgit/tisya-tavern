@@ -61,26 +61,36 @@ export function verifyBufferedToolMirrors(value,plan){
  }
 }
 
-// A mixed-tool stream is collected once so no synthetic call can escape to the
-// host executor. The selected original bytes are then checked by existing parsers.
+// Select the delivery lane from the first identifiable content, then continue
+// checking every frame. Only the undecided prefix is retained. Terminal frames
+// remain held by verifiedStream, so a later conflict cannot execute a real tool
+// or commit a tentative body.
 export async function selectToolTextStream(response,plan,status,{signal,guard,limit}){
- const reader=response.body.getReader(),decoder=new TextDecoder('utf-8',{fatal:true}),chunks=[];
- let size=0,rejectAbort,raw='';
+ const reader=response.body.getReader(),chunks=[];
+ let size=0,rejectAbort,selected=null,plainText=false,ended=false,closed=false;
+ const names=new Set(),calls=new Map();
  const interrupted=new Promise((_,reject)=>{rejectAbort=reject;});interrupted.catch(()=>{});
  const abort=()=>{rejectAbort(signal.reason);reader.cancel(signal.reason).catch(()=>{});};
  signal.addEventListener('abort',abort,{once:true});
- try{
-  for(;;){guard();signal.throwIfAborted();const r=await Promise.race([reader.read(),interrupted]);guard();signal.throwIfAborted();if(r.done)break;size+=r.value.byteLength;if(size>limit)fail('OUTPUT_LIMIT','正文工具响应超过本地读取限制');chunks.push(r.value);raw+=decoder.decode(r.value,{stream:true});}
-  raw+=decoder.decode();
-  const names=[],calls=new Map();let plainText=false;
-  const parser=createSseParser(({data})=>{
-   if(!data||data.trim()==='[DONE]')return;
+ const classify=final=>{
+  const all=plan.protocol==='gemini'?[...names]:[...calls.values()];
+  const known=all.filter(n=>n===plan.toolName||plan.realToolNames.includes(n));
+  const lane=classifyToolTurn(final?all:known,plan);
+  if(lane==='synthetic'&&plainText)fail('WRAP_MIXED_TEXT','正文同时出现在工具内外，回复未被接纳');
+  if(lane!=='none')selected??=lane;
+  if(plainText)selected??='none';
+  status.toolTextTurn=lane;
+ };
+ const parser=createSseParser(({data})=>{
+   if(!data)return;
+   if(data.trim()==='[DONE]'){ended=true;classify(true);return;}
+   if(ended)fail('WRAP_DATA_AFTER_DONE','正文结束之后仍有数据');
    const p=JSON.parse(data);
    if(hasOutsideToolText(p))plainText=true;
    if(plan.protocol==='gemini')for(const c of p.candidates??[])for(const part of c.content?.parts??[]){
     if(!part.thought&&typeof part.text==='string'&&part.text.trim())plainText=true;
     if(part.inlineData||part.fileData)fail('WRAP_MEDIA','正文工具包装收到非文字输出');
-    if(part.functionCall?.name)names.push(part.functionCall.name);
+    if(part.functionCall?.name)names.add(part.functionCall.name);
    }
    else for(const c of p.choices??[]){
     const d=c.delta??c.message;
@@ -93,11 +103,19 @@ export async function selectToolTextStream(response,plan,status,{signal,guard,li
      if(typeof call.function?.name==='string')calls.set(key,calls.get(key)+call.function.name);
     }
    }
-  });parser.push(new TextEncoder().encode(raw));parser.finish();
-  // Native partialArgs may repeat the same synthetic function name across frames.
-  const selected=classifyToolTurn(plan.protocol==='gemini'?[...new Set(names)]:[...calls.values()],plan);
-  if(selected==='synthetic'&&plainText)fail('WRAP_MIXED_TEXT','正文同时出现在工具内外，回复未被接纳');
-  status.toolTextTurn=selected;status.bufferedToolStream=true;
-  return {response:new Response(new Blob(chunks),{status:response.status,headers:response.headers}),selected};
- }finally{signal.removeEventListener('abort',abort);reader.cancel().catch(()=>{});reader.releaseLock();}
+   classify(false);
+ });
+ const clean=()=>{if(closed)return;closed=true;signal.removeEventListener('abort',abort);};
+ const read=async()=>{guard();signal.throwIfAborted();const r=await Promise.race([reader.read(),interrupted]);guard();signal.throwIfAborted();if(r.done){parser.finish();classify(true);clean();}else{size+=r.value.byteLength;if(size>limit)fail('OUTPUT_LIMIT','正文工具响应超过本地读取限制');parser.push(r.value);}return r;};
+ try{
+  let done=false;
+  while(selected===null&&!done){const r=await read();done=r.done;if(!done)chunks.push(r.value);}
+  status.bufferedToolStream=false;status.streamedToolSelection=true;
+  const body=new ReadableStream({
+   start(c){for(const chunk of chunks)c.enqueue(chunk);chunks.length=0;if(done)c.close();},
+   async pull(c){if(done)return;try{const r=await read();if(r.done){done=true;c.close();}else c.enqueue(r.value);}catch(e){done=true;clean();reader.cancel(e).catch(()=>{});c.error(e);}},
+   cancel(reason){done=true;clean();return reader.cancel(reason);},
+  });
+  return {response:new Response(body,{status:response.status,headers:response.headers}),selected:selected??'none'};
+ }catch(e){clean();reader.cancel(e).catch(()=>{});throw e;}
 }

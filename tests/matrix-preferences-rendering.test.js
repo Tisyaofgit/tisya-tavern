@@ -18,9 +18,10 @@ test('all 188 recovered choices compile their exact source effect once and remov
  assert.equal(PREFERENCE_GROUPS.length,43);assert.equal(PREFERENCE_GROUPS.reduce((n,g)=>n+g.options.length,0),188);
  for(const group of PREFERENCE_GROUPS)for(const option of group.options){
   const config={tags:{},prompts:{},story:{userName:'阿青',wish:'只写眼前的事。',play:{choices:{[group.id]:group.multiple?[option.id]:option.id},parameters:{main_language:'中文',active_avatar_dossier_id:'u01'}}}};
+  if(option.id==='N01-B')config.story.userBinding={book:'基点书',uid:7};
   const entries=clone(baseline.prompts);applyPreferences(entries,config);
   const actual=group.id==='W'?wishPreferences(config):entries.find(p=>p.identifier===group.slot).content;
-  const expected=option.effect.replaceAll('{{main_language}}','中文').replaceAll('{{active_avatar_dossier_id}}','u01').replaceAll('{{user_custom_wish_raw_text}}',config.story.wish).replaceAll('personaDescription','tisya_user_identity');
+  const expected=option.effect.replaceAll('{{main_language}}','中文').replaceAll('{{active_avatar_dossier_id}}',option.id==='N01-B'?'基点书#7':'u01').replaceAll('{{user_custom_wish_raw_text}}',config.story.wish).replaceAll('personaDescription','tisya_user_identity');
   assert(actual.includes(expected),option.id+' did not reach its slot');
   assert.equal(actual.split('\n').filter(line=>line.startsWith('@'+key(option.effect))&&/^@[^\s:={]+\s*(?::=|::|=)/u.test(line)).length,1,option.id+' duplicate');
   for(const other of group.options)if(key(other.effect)!==key(option.effect))assert(!actual.includes('@'+key(other.effect)+' '),option.id+' retained '+other.id);
@@ -31,7 +32,7 @@ test('story overrides inherit global choices and survive UI save, second save an
  const w=new Window(),ctx={extensionSettings:{},chatId:'story',characterId:0};const store=createConfiguration({getContext:()=>ctx,persist:async()=>true});
  const v=store.read();v.playDefaults={choices:{N02:'N02-B'},parameters:{main_language:'中文'}};await store.save(v);
  const root=w.document.createElement('div');w.document.body.append(root);let ui=mountMatrixConfiguration(w.document,root,{service:{config:store}});await ui.ready;
- assert.equal(root.querySelectorAll('[data-preference-group]').length,42);
+ assert.equal(root.querySelectorAll('[data-preference-group]').length,41);
  let select=root.querySelector('[data-preference-group="N02"] select');assert.equal(select.value,'N02-B');select.value='N02-C';select.dispatchEvent(new w.Event('change'));
  button(root,'保存游玩偏好').click();await tick();select=root.querySelector('[data-preference-group="N02"] select');select.value='N02-D';select.dispatchEvent(new w.Event('change'));button(root,'保存游玩偏好').click();await tick();assert.equal(store.read().story.play.choices.N02,'N02-D');
  ui.dispose();const reopened=createConfiguration({getContext:()=>ctx,persist:async()=>true});ui=mountMatrixConfiguration(w.document,root,{service:{config:reopened}});await ui.ready;assert.equal(root.querySelector('[data-preference-group="N02"] select').value,'N02-D');

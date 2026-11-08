@@ -13,3 +13,24 @@ test('native persona injection is disabled in the saved preset and relocated fro
  for(const position of [0,4,2,3]){const value=[2,3].includes(position)?'保留作者注\n原身份描述':'原身份描述',ctx={powerUserSettings:{persona_description_position:position},extensionPrompts:{PERSONA_DESCRIPTION:{value,role:0},'2_floating_prompt':{value,role:0}},chat:[{is_user:true,mes:history.content}]},input=[wish,{role:'system',content:value},history];const out=contractorMessages(input,ctx,'原身份描述');assert.deepEqual(out.at(-1),history);assert.equal(out.map(m=>m.content).join('\n').split('原身份描述').length-1,1);if(position===2||position===3)assert(out.some(m=>m.content==='保留作者注'));assert.equal(input[1].content,value);}
  const ctx={powerUserSettings:{persona_description_position:4},extensionPrompts:{PERSONA_DESCRIPTION:{value:'同文',role:1}},chat:[{is_user:true,mes:'同文'}]};assert.throws(()=>contractorMessages([{role:'user',content:'同文'}],ctx,'同文'),/未改动历史/);
 });
+
+test('binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs',async()=>{
+ const f=setup();let v=f.config.read();v.playDefaults={choices:{N01:'N01-C'},parameters:{active_avatar_dossier_id:'WRONG_LEGACY_ID'}};await f.config.save(v);
+ await f.roles.create({name:'统一角色',content:'只属于统一角色的原文'});v=f.config.read();const slots=await identitySlots(f.ctx,v,'原身份心愿');const compiled=compilePrompts(baseline,v,slots),n=compiled.prompts.find(p=>p.identifier==='tisya_pref_narrative').content;
+ assert.match(n,/dossier \[基点书#0\]/);assert(!n.includes('WRONG_LEGACY_ID'));assert.equal(n.split('@AVATAR.BIND :=').length-1,1);assert.match(slots.tisya_user_identity,/统一角色的原文/);
+ await f.roles.bind({mode:'ensemble'});v=f.config.read();const zero=await identitySlots(f.ctx,v,'原身份心愿');assert.equal(zero.tisya_user_identity,'');assert.match(compilePrompts(baseline,v,zero).prompts.find(p=>p.identifier==='tisya_pref_narrative').content,/Zero-avatar ensemble/);assert.equal(v.playDefaults.parameters.active_avatar_dossier_id,'WRONG_LEGACY_ID');
+ f.ctx.chatId='b';assert.equal(f.config.read().story.userBinding,null);f.ctx.chatId='a';assert.equal(f.config.read().story.userMode,'ensemble');
+});
+test('legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback',async()=>{
+ const f=setup();const v=f.config.read();v.story.play={choices:{N01:'N01-B'},parameters:{active_avatar_dossier_id:'typed-but-unbound'}};await f.config.save(v);
+ await assert.rejects(()=>identitySlots(f.ctx,f.config.read(),''),/选择全局基点书/);assert.throws(()=>compilePrompts(baseline,f.config.read(),{}),/选择全局基点书/);
+});
+test('empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish',async()=>{
+ const {createIdentityService}=await import('../user-identity-service.js');const f=setup();f.ctx.powerUserSettings={personas:{},persona_descriptions:{},persona_description:'保留原身份描述'};f.ctx.name1='用户';const identity=createIdentityService({getContext:()=>f.ctx,getAvatar:()=>'',persistSettings:async()=>true,persistChat:async()=>true});
+ const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountMatrixIdentity(w.document,root,{identity,config:f.config,roles:f.roles,onClose(){},onNative(){}});await ui.ready;
+ assert.equal(root.querySelector('[data-identity-wish]').value,'保留原身份描述');assert(root.querySelector('[data-wish-module="0"] [data-wish-option="W00"]'));assert.equal(root.querySelectorAll('[data-builtin-wishes] [data-wish-option]').length,7);
+ const c=root.querySelector('[data-wish-option="W00"]');c.checked=true;c.dispatchEvent(new w.Event('change'));const text=root.querySelector('[data-identity-wish]');text.value='修改后的原身份描述';text.dispatchEvent(new w.Event('input'));[...root.querySelectorAll('button')].find(b=>b.textContent==='保存身份与心愿').click();await new Promise(r=>setTimeout(r,10));
+ assert.equal(f.ctx.powerUserSettings.persona_description,'修改后的原身份描述');assert.deepEqual(f.ctx.powerUserSettings.personas,{});assert.equal(f.writes(),0);
+ const slots=await identitySlots(f.ctx,f.config.read(),f.ctx.powerUserSettings.persona_description),wish=PREFERENCE_GROUPS.find(g=>g.id==='W');assert(slots.tisya_contractor_wish.includes(wish.base_effect));assert(slots.tisya_contractor_wish.includes(wish.options.find(o=>o.id==='W00').effect));assert.equal(slots.tisya_contractor_wish.split('修改后的原身份描述').length-1,1);ui.dispose();await w.happyDOM.abort();
+});
+test('base and optional wishes remain absent when the original description is empty and every module is off',async()=>{const f=setup(),v=f.config.read();v.story.play={choices:{W:[]}};await f.config.save(v);assert.equal((await identitySlots(f.ctx,f.config.read(),'')).tisya_contractor_wish,'');});

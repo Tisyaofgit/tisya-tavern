@@ -47,7 +47,6 @@ function rows(text,allowed,phase,diagnostics=null){
   }
   check(cells.length===allowed.get(kind),prefix+'COLUMNS');check(cells.every(c=>c.trim()),prefix+'EMPTY');
   const unique=HEART.has(kind)||OUTCOMES.has(kind)||['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾'].includes(kind);if(unique)check(!seen.has(kind),'DUPLICATE_ROW');
-  if(HEART.has(kind))check([...cells[1]].length<=80,'HEART_LENGTH');
   if(kind==='留白'){cells[0]=cells[0].trim();check(BLANKABLE.has(cells[0])&&!seen.has(cells[0]),prefix+'OUTCOME');seen.add(cells[0]);}
   if(unique)seen.add(kind);result.push({kind,cells,...(wireVariant?{wireVariant}:{})});
   }catch(error){if(!diagnostics)throw error;diagnostics.push({phase,line:index+1,code:error.code??'TISYA_V3_REPLY_INVALID',raw:line});}

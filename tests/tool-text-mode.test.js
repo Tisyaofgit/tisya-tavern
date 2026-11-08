@@ -20,6 +20,36 @@ function setup(respond){
  return {t,run,count:()=>count};
 }
 
+test('incremental wrapper exposes Unicode prose while upstream is still open and holds final acceptance',async()=>{
+ let upstream;
+ const s=setup(name=>new Response(new ReadableStream({start(c){upstream=c;c.enqueue(new TextEncoder().encode(chunk({tool_calls:[{index:0,id:'text',type:'function',function:{name,arguments:'{"content":"第一段🙂\\n\\n2 正在'}}]})));}}),{headers:{'content-type':'text/event-stream'}}));
+ try{
+  const a=await Promise.race([s.run(payload('openai',true)),new Promise((_,reject)=>setTimeout(()=>reject(Error('Response waited for EOF')),500))]);
+  const reader=a.response.body.getReader(),first=await reader.read();assert.match(new TextDecoder().decode(first.value),/第一段🙂/);assert.equal(a.status.state,'receiving');assert.equal(s.count(),1);
+  upstream.enqueue(new TextEncoder().encode(chunk({tool_calls:[{index:0,function:{arguments:'生长。"}'}}]})+end('tool_calls')));upstream.close();
+  let rest='';for(;;){const r=await reader.read();if(r.done)break;rest+=new TextDecoder().decode(r.value);}assert.match(rest,/生长/);assert.equal(a.status.state,'complete');assert.equal(a.status.restored,true);
+ }finally{s.t.dispose();}
+});
+
+test('a late mixed real tool fails after a visible tentative paragraph, with no terminal commit or retry',async()=>{
+ let upstream;
+ const s=setup(name=>new Response(new ReadableStream({start(c){upstream=c;c.enqueue(new TextEncoder().encode(chunk({tool_calls:[{index:0,id:'text',type:'function',function:{name,arguments:'{"content":"已显示段落'}}]})));}}),{headers:{'content-type':'text/event-stream'}}));
+ try{
+  const a=await s.run(payload('openai',true)),reader=a.response.body.getReader();assert.match(new TextDecoder().decode((await reader.read()).value),/已显示段落/);
+  upstream.enqueue(new TextEncoder().encode(chunk({tool_calls:[{index:1,id:'real',type:'function',function:{name:'lookup',arguments:'{"q":"x"}'}}]})+end('tool_calls')));upstream.close();
+  let rest='';for(;;){const r=await reader.read();if(r.done)break;rest+=new TextDecoder().decode(r.value);}assert.match(rest,/TISYA_TRANSPORT_WRAP_MIXED/);assert.doesNotMatch(rest,/\[DONE\]|finish_reason/);assert.equal(a.status.state,'error');assert.equal(s.count(),1);
+ }finally{s.t.dispose();}
+});
+
+test('native partial arguments release prose before the function and native stream finish',async()=>{
+ let upstream;
+ const s=setup(name=>new Response(new ReadableStream({start(c){upstream=c;c.enqueue(new TextEncoder().encode(native([{functionCall:{name,partialArgs:[{jsonPath:'$.content',stringValue:'原生第一段🙂',willContinue:true}],willContinue:true}}])));}}),{headers:{'content-type':'text/event-stream'}}));
+ try{
+  const a=await Promise.race([s.run(payload('gemini',true)),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native response waited for EOF')),500))]),reader=a.response.body.getReader();
+  let visible='';for(let i=0;i<6&&!visible.includes('原生第一段🙂');i++){const r=await Promise.race([reader.read(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Native prose waited for EOF')),500))]);visible+=new TextDecoder().decode(r.value);}assert.match(visible,/原生第一段🙂/);assert.equal(a.status.state,'receiving');s.t.invalidate('main','stop after visible paragraph');await assert.rejects(reader.read());assert.equal(a.status.state,'cancelled');assert.equal(s.count(),1);
+ }finally{s.t.dispose();}
+});
+
 test('AT09 explicit mode adds one final-delivery function without losing real declarations/history/inputs',()=>{
  const history=[{role:'assistant',content:null,tool_calls:[tool('lookup')],native:{gemini:{content:{parts:[{functionCall:{name:'lookup',args:{q:'benign'}},thoughtSignature:'sig'}]}}}},{role:'tool',tool_call_id:'stable-id',content:'result'}];
  for(const protocol of ['openai','gemini']){
@@ -65,7 +95,7 @@ test('AT09 streaming final bodies restore OpenAI split arguments and native full
    }
    return sse(partial?native([{functionCall:{name,partialArgs:[{jsonPath:'$.content',stringValue:body.slice(0,4),willContinue:true}],willContinue:true}}])+native([{functionCall:{partialArgs:[{jsonPath:'$.content',stringValue:body.slice(4)}]}}],'STOP')+evt('[DONE]'):native([{functionCall:{name,args:{content:body}},thoughtSignature:'synthetic-signature'}],'STOP')+evt('[DONE]'));
   });
-  const a=await s.run(payload(protocol,true));const raw=await a.response.text();assert.doesNotMatch(raw,/functionCall|tool_calls|synthetic-copy|synthetic-signature/);const parsed=protocol==='gemini'?raw.split('\n').filter(x=>x.startsWith('data: ')&&!x.includes('[DONE]')).flatMap(x=>JSON.parse(x.slice(6)).candidates??[]).flatMap(c=>c.content?.parts??[]).filter(p=>!p.thought).map(p=>p.text??'').join(''):await readTaskResponse(sse(raw));assert.equal(parsed,body);assert.equal(a.status.state,'complete');assert.equal(a.status.restored,true);assert.equal(a.status.bufferedToolStream,true);assert.equal(s.count(),1);s.t.dispose();
+  const a=await s.run(payload(protocol,true));const raw=await a.response.text();assert.doesNotMatch(raw,/functionCall|tool_calls|synthetic-copy|synthetic-signature/);const parsed=protocol==='gemini'?raw.split('\n').filter(x=>x.startsWith('data: ')&&!x.includes('[DONE]')).flatMap(x=>JSON.parse(x.slice(6)).candidates??[]).flatMap(c=>c.content?.parts??[]).filter(p=>!p.thought).map(p=>p.text??'').join(''):await readTaskResponse(sse(raw));assert.equal(parsed,body);assert.equal(a.status.state,'complete');assert.equal(a.status.restored,true);assert.equal(a.status.bufferedToolStream,false);assert.equal(a.status.streamedToolSelection,true);assert.equal(s.count(),1);s.t.dispose();
  }
 });
 

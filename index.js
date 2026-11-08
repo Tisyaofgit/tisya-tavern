@@ -1,3 +1,4 @@
+import {streamingMessageSource} from './streaming-message.js';
 import {finishMatrixGeneration} from './engine/lifecycle.mjs';
 import {mountGenerationIdleGuard} from './generation-idle-guard.js';
 import {createMatrixHost} from './engine/host.mjs';
@@ -134,10 +135,10 @@ const nativeConfiguration=createNativeConfiguration({getContext:context,regexGat
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 const tableService=createTableService({projectToolTurns,persona:personaGateway,store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,getConfigurationChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
 const worldbookConditions=createWorldbookConditionGate({getContext:context,engine:tableService,onError:error});
-const matrixHost=createMatrixHost({getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',getContractorMessages:()=>communication.directions(),expand:text=>substituteParams(text),assertIdle,onError:error});
+const matrixHost=createMatrixHost({getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:()=>communication.directions(),expand:text=>substituteParams(text),assertIdle,onError:error});
 let tableGeneration=false,onePassGeneration=false,nativeDryRun=false,nativeGenerationOpen=false,preparationError=null;
 const onePassActive=()=>isOnePassPreset(configHost.activeSource()??presetSource())&&outputEnabled(configHost.activeSource()??presetSource());
-globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{try{if(nativeDryRun)return null;if(matrixHost.active())return null;if(['quiet','impersonate'].includes(type))return configHost.historyInput(chat,type);const result=onePassActive()?await tableService.prepareOnePass(type):await tableService.prepare(type);onePassGeneration=result?.onepass===true;tableGeneration=!!result&&!onePassGeneration;const rules=result?null:tableService.rulesContext();setExtensionPrompt('tisya_style_rules',rules?.text??'',1,1,false,0);configHost.attachTableContext(result??rules);return configHost.historyInput(chat,type);}catch(e){abort(true);error(e);throw e;}};
+globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{try{if(nativeDryRun)return null;if(matrixHost.active())return matrixHost.historyInput(chat,type);if(['quiet','impersonate'].includes(type))return configHost.historyInput(chat,type);const result=onePassActive()?await tableService.prepareOnePass(type):await tableService.prepare(type);onePassGeneration=result?.onepass===true;tableGeneration=!!result&&!onePassGeneration;const rules=result?null:tableService.rulesContext();setExtensionPrompt('tisya_style_rules',rules?.text??'',1,1,false,0);configHost.attachTableContext(result??rules);return configHost.historyInput(chat,type);}catch(e){abort(true);error(e);throw e;}};
 async function finishMainGeneration(){
  if(nativeDryRun&&!nativeGenerationOpen)return;
  if(matrixHost.active()){if(!nativeGenerationOpen)return;nativeGenerationOpen=false;return finishMatrixGeneration({host:matrixHost,revision:revisionController,communication,onError:error});}
@@ -705,6 +706,8 @@ function init() {
     ensureNativeDisplay();
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],
+        getPending:node=>Number(node.getAttribute('mesid'))===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy),
+        getStreamingSource:(node,msg)=>streamingMessageSource(context(),node,msg),
         getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar)),
         getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
         getCacheKey:msg=>JSON.stringify([context().chatId?worldKey(context()):null,messageCacheOwner(msg),msg.mes,getDisplay().显示角色心理===true,getPlayerName(),readerCacheGeneration(),isGenerating()]),
@@ -779,10 +782,13 @@ function init() {
         const event=context().eventTypes[name];if(!event)continue;
         context().eventSource.on(event,refreshActions);cleanups.push(()=>context().eventSource.removeListener(event,refreshActions));
     }
-    for(const name of ['STREAM_TOKEN_RECEIVED','CHARACTER_MESSAGE_RENDERED','USER_MESSAGE_RENDERED']){
+    let streamTimer=null;
+    const refreshStream=()=>{checkReadingSource();if(streamTimer!==null)return;streamTimer=setTimeout(()=>{streamTimer=null;if(!enabled)return;const p=context().streamingProcessor;if(!p)return;const node=document.querySelector('#chat .mes[mesid="'+p.messageId+'"]');if(node)appearance?.sync(node,{pending:!p.isFinished&&!p.isStopped});},32);};
+    for(const name of ['STREAM_TOKEN_RECEIVED','SMOOTH_STREAM_TOKEN_RECEIVED','CHARACTER_MESSAGE_RENDERED','USER_MESSAGE_RENDERED']){
         const event=context().eventTypes[name];if(!event)continue;
-        context().eventSource.on(event,checkReadingSource);cleanups.push(()=>context().eventSource.removeListener(event,checkReadingSource));
+        context().eventSource.on(event,refreshStream);cleanups.push(()=>context().eventSource.removeListener(event,refreshStream));
     }
+    cleanups.push(()=>clearTimeout(streamTimer));
     cleanups.push(()=>clearTimeout(refreshTimer));
     let visibleWorld=context().chatId?configStore.read().key:null;const onChange=()=>{const current=context().chatId?configStore.read().key:null;if(current===visibleWorld)return;visibleWorld=current;if(notebook||utility){close();hidePage();}else if(readerToken||revisionEditor||!root.classList.contains('tisya-page-open'))close();messageNavigation.reset();decorate();};context().eventSource.on(context().eventTypes.CHAT_CHANGED,onChange);cleanups.push(()=>context().eventSource.removeListener(context().eventTypes.CHAT_CHANGED,onChange));
     home().catch(error);decorate();startFont();void fontsService().refresh().catch(error);

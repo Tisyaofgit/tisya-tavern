@@ -9,3 +9,11 @@ The existing user identity description is the contractor wish. Wish options, inc
 The preset explicitly disables the native persona order entry, avoiding the host fallback that injected it again when the order entry was absent. Confirmed native depth/author-note injections are relocated without editing history or unrelated notes.
 
 Validation: full automated suite plus actual Linux TauriTavern UI save, cold reopen, final native HTTP request to a deterministic local fixture, linked heart/body image loading and action click. The native request contains one multimedia declaration, one original identity wish and one bound role. A 360px settings container has no horizontal overflow. No external model or Android execution was used for these checks.
+
+## Candidate 6 correction
+
+N01 and the manually entered dossier ID are removed from play preferences. That page shows one summary and links to the existing user identity page. Story mode and the selected global base-book entry now drive both the identity slot and original N01 prompt effect; stale legacy fields cannot override an explicit story binding. Selecting a dossier requires a real entry. Ensemble mode clears the binding without deleting the role.
+
+The original persona description field and W00 / W01–W07 controls remain visible when the native persona registry is empty. The original conditional wish base is restored; an empty description with every option off emits an empty wish slot.
+
+The history count control inherits the old saved per-chat value and limits the actual native sending copy through the existing tool-aware limiter. It preserves the current input, grouped tool calls, external material and full saved chat. Native validation with zero history confirms the older prose is absent from the actual local HTTP request.

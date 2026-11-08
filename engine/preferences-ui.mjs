@@ -1,7 +1,8 @@
 import {PREFERENCE_GROUPS,effectivePreferences} from './preferences.mjs';
+import {storyAvatar} from './identity.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
 
-export function renderPreferences(document,body,{config,changed,save,button,field,input,el}){
+export function renderPreferences(document,body,{config,changed,save,button,field,input,el,onIdentity,historyLimit}){
  const option=(label,value)=>{const n=document.createElement('option');n.textContent=label;n.value=value;return n;};
  let scope='story';
  const intro=el('p','选择叙事、文风、情节和人物表现。沿用预设会保留当前完整原文；明确选择后，下轮请求只在对应位置写入所选效果。');
@@ -12,9 +13,9 @@ export function renderPreferences(document,body,{config,changed,save,button,fiel
  const chosen=()=>scope==='global'?config.playDefaults??{}:effectivePreferences(config);
  const set=(id,value)=>{const target=owner();target.choices??={};target.choices[id]=value;changed();};
  function draw(){
-  area.replaceChildren();const value=chosen(),sections=new Map();
+  area.replaceChildren();const value=chosen(),sections=new Map(),avatar=storyAvatar(config),binding=avatar.binding;const summary=el('fieldset');summary.dataset.avatarSummary='';summary.append(el('legend','主控化身绑定'),el('p',binding?'当前角色：'+(config.story.userName||'')+' · '+binding.book+' / '+binding.uid:avatar.mode==='bound'?'尚未选择角色档案':avatar.mode==='ensemble'?'无主控纯群像 / 场外导演模式':avatar.mode==='generic'?'通用':'不绑定角色'),button('前往用户身份选择档案',onIdentity));area.append(summary);
   for(const group of PREFERENCE_GROUPS){
-   if(group.id==='W')continue;
+   if(['W','N01'].includes(group.id))continue;
    let section=sections.get(group.section);
    if(!section){section=el('details');section.open=sections.size===0;section.append(el('summary',group.section));sections.set(group.section,section);area.append(section);}
    const box=el('fieldset');box.style.minWidth='0';box.dataset.preferenceGroup=group.id;box.append(el('legend',group.label));
@@ -32,11 +33,12 @@ export function renderPreferences(document,body,{config,changed,save,button,fiel
    if(scope==='story'&&Object.hasOwn(config.story.play?.choices??{},group.id))box.append(button('恢复默认继承',()=>{delete config.story.play.choices[group.id];changed();draw();}));
    section.append(box);
   }
-  const params=el('details');params.append(el('summary','语言、篇幅与主控档案'));
-  for(const [id,label,type,fallback]of [['main_language','主语言','text','中文'],['min_length','正文最少字数','number',2000],['max_length','正文最多字数','number',5000],['active_avatar_dossier_id','指定主控档案 ID','text','']]){
+  const params=el('details');params.append(el('summary','语言与篇幅'));
+  for(const [id,label,type,fallback]of [['main_language','主语言','text','中文'],['min_length','正文最少字数','number',2000],['max_length','正文最多字数','number',5000]]){
    const control=input(value.parameters?.[id]??'',v=>{const target=owner();target.parameters??={};if(v==='')delete target.parameters[id];else target.parameters[id]=type==='number'?Number(v):v;changed();},{type});control.placeholder=String(fallback);control.setAttribute('aria-label',label);params.append(field(label,control));
   }
 
+  const history=el('fieldset');history.append(el('legend','历史可见记忆条数'));const limit=input(value.parameters?.history_messages??historyLimit?.()??50,v=>{const target=owner();target.parameters??={};if(v==='')delete target.parameters.history_messages;else target.parameters.history_messages=Number(v);changed();},{type:'number'});limit.min='0';limit.step='1';limit.setAttribute('aria-label','历史聊天条数（当前输入始终保留）');history.append(field('历史聊天条数（当前输入始终保留）',limit));area.append(history);
   area.append(params,button('保存游玩偏好',save));
  }
  scopes.onchange=()=>{scope=scopes.value;draw();};draw();
