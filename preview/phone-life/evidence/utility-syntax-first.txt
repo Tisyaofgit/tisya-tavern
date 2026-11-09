@@ -1,0 +1,8 @@
+/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/phone-life/utility-views.mjs:63
+   section('账期记录')+(c.statements.length?card(c.statements.slice().reverse().map(s=>'<div class="u-list-row"><div class="u-list-copy"><p class="u-item-title">'+e({unbilled:'未出账',billed:'待还账单',overdue:'已逾期',paid:'已还清'}[s.status]??s.status)+'</p><p class="u-item-sub">到期 '+at(s.dueAt)+'</p></div><div><p class="u-list-amount">¥'+m(s.remaining)+'</p><p class="u-item-sub">本期原金额 '+m(s.total)+'</p></div></div>').join(''))):note('消费产生后可在此查看账期。故事时间推进到对应日期才更新状态。'));
+                                                                                                                                                                                                                                                                                                                                                                                                                                ^
+
+SyntaxError: Unexpected token ')'
+    at checkSyntax (node:internal/main/check_syntax:84:5)
+
+Node.js v24.22.1

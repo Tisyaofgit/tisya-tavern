@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: new demo is valid and no renderer mutates its source
+ok 1 - new demo is valid and no renderer mutates its source
+  ---
+  duration_ms: 6.361526
+  type: 'test'
+  ...
+# Subtest: failed operation leaves all state unchanged; successful action is idempotent
+ok 2 - failed operation leaves all state unchanged; successful action is idempotent
+  ---
+  duration_ms: 5.164832
+  type: 'test'
+  ...
+# Subtest: own alternate account privacy, follows, bookmarks and likes remain scoped
+ok 3 - own alternate account privacy, follows, bookmarks and likes remain scoped
+  ---
+  duration_ms: 3.908269
+  type: 'test'
+  ...
+# Subtest: private album share starts private; public disclosure requires an explicit grant and never changes original visibility
+ok 4 - private album share starts private; public disclosure requires an explicit grant and never changes original visibility
+  ---
+  duration_ms: 0.730521
+  type: 'test'
+  ...
+# Subtest: queued accidental like can be cancelled before dispatch with no notification
+ok 5 - queued accidental like can be cancelled before dispatch with no notification
+  ---
+  duration_ms: 0.851283
+  type: 'test'
+  ...
+# Subtest: in-flight cancellation is a follow-up; already seen notification survives withdrawal
+ok 6 - in-flight cancellation is a follow-up; already seen notification survives withdrawal
+  ---
+  duration_ms: 1.209212
+  type: 'test'
+  ...
+# Subtest: one simulation action advances each operation by only one delivery stage
+ok 7 - one simulation action advances each operation by only one delivery stage
+  ---
+  duration_ms: 2.387317
+  type: 'test'
+  ...
+# Subtest: post, comment and queued operation capture actual story clock
+ok 8 - post, comment and queued operation capture actual story clock
+  ---
+  duration_ms: 0.700876
+  type: 'test'
+  ...
+# Subtest: current account cannot read another account notification; read records remain
+ok 9 - current account cannot read another account notification; read records remain
+  ---
+  duration_ms: 0.956311
+  type: 'test'
+  ...
+# Subtest: unavailable music offers source selection, real attached source offers actual player action
+ok 10 - unavailable music offers source selection, real attached source offers actual player action
+  ---
+  duration_ms: 0.644271
+  type: 'test'
+  ...
+# Subtest: song import, playlists and source replacement preserve stable references
+ok 11 - song import, playlists and source replacement preserve stable references
+  ---
+  duration_ms: 1.221791
+  type: 'test'
+  ...
+# Subtest: imported image remains private and missing file is explicitly visible
+ok 12 - imported image remains private and missing file is explicitly visible
+  ---
+  duration_ms: 0.69061
+  type: 'test'
+  ...
+# Subtest: valid intentionally empty collections stay empty after reopen validation
+ok 13 - valid intentionally empty collections stay empty after reopen validation
+  ---
+  duration_ms: 0.419712
+  type: 'test'
+  ...
+# Subtest: malformed import rejects private media leaks and invalid cross-account operations
+ok 14 - malformed import rejects private media leaks and invalid cross-account operations
+  ---
+  duration_ms: 0.433804
+  type: 'test'
+  ...
+# Subtest: rendered user content is escaped and source text stays single-valued
+ok 15 - rendered user content is escaped and source text stays single-valued
+  ---
+  duration_ms: 0.516728
+  type: 'test'
+  ...
+# Subtest: deleted posts remain as tombstones and public reposts cannot expose private originals
+ok 16 - deleted posts remain as tombstones and public reposts cannot expose private originals
+  ---
+  duration_ms: 0.608407
+  type: 'test'
+  ...
+# Subtest: double-tap preference is explicit; absent old preference stays absent on validation
+ok 17 - double-tap preference is explicit; absent old preference stays absent on validation
+  ---
+  duration_ms: 0.508265
+  type: 'test'
+  ...
+# Subtest: draft text and privacy survive account switching; publish clears only the active draft
+ok 18 - draft text and privacy survive account switching; publish clears only the active draft
+  ---
+  duration_ms: 1.601233
+  type: 'test'
+  ...
+# Subtest: core and social share stable action receipts and reject changed duplicate parameters
+ok 19 - core and social share stable action receipts and reject changed duplicate parameters
+  ---
+  duration_ms: 4.071375
+  type: 'test'
+  ...
+# Subtest: reading a delivered notice marks its actor delivery record seen without deleting the notice
+ok 20 - reading a delivered notice marks its actor delivery record seen without deleting the notice
+  ---
+  duration_ms: 1.047719
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 229.628914

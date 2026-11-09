@@ -1,0 +1,11 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {build} from 'esbuild';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const result=await build({entryPoints:[path.join(root,'app.mjs')],bundle:true,write:false,format:'iife',target:'es2020',minify:false,legalComments:'inline'});
+const css=(await Promise.all(['app.css','utility.css','social.css'].map(f=>readFile(path.join(root,f),'utf8')))).join('\n');
+let html=await readFile(path.join(root,'index.html'),'utf8');
+html=html.replace(/<link rel="stylesheet"[^>]+>/g,'').replace('</head>',`<style>${css.replace(/<\/style/gi,'<\\/style')}</style></head>`).replace('<script type="module" src="app.mjs"></script>',`<script>${result.outputFiles[0].text.replace(/<\/script/gi,'<\\/script')}</script>`);
+await mkdir(path.join(root,'dist'),{recursive:true});await writeFile(path.join(root,'dist','phone-life.html'),html);
+console.log(JSON.stringify({output:path.join(root,'dist','phone-life.html'),bytes:Buffer.byteLength(html),externalResources:0}));
