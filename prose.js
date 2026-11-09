@@ -1,6 +1,7 @@
 import {decorateBody,bodyCSS,formatMarks,MARK_CSS} from './typography-core.js';
+import {projectPresentationMarks,PRESENTATION_CSS} from './extension-presentation.mjs';
 
-export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS;
+export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS+PRESENTATION_CSS;
 export const proseCSS=proseStyles();
 
 // Only receives the public body selected by inspectMessage. Host sanitization
@@ -11,9 +12,11 @@ export function formatProse(document,source,hostFormat,options={}){
  if(source.includes('〔')){
   template.innerHTML=source;
   const draft=document.createElement('div');draft.append(template.content);
+  const authoredNodes=new Set(draft.querySelectorAll('*'));
   formatMarks(draft,options);
-  // Reference services are not migrated yet: retain their literal label without
-  // presenting a dead interactive control or inferring access to another record.
+  if(options.presentation)projectPresentationMarks(draft,{...options.presentation,authoredNodes});
+  // An unregistered reference retains its literal label. Only explicitly bound
+  // historical projections above may become a card or a native media control.
   for(const button of draft.querySelectorAll('[data-tisya-reference]'))button.replaceWith(document.createTextNode(button.textContent));
   prepared=draft.innerHTML;
  }

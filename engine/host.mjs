@@ -12,7 +12,7 @@ import {reconcile,inversePatch} from './journal.mjs';
 import {materials,initializeState} from './materials.mjs';
 import {createConfiguration,materialNames,identitySlots,compilePrompts,compilePromptText,isMatrixPreset,applyCompiledMessages} from './config.mjs';
 import {configureTags} from './tags.mjs';
-import {clone,fail,asError} from './common.mjs';
+import {clone,fail,asError,digest} from './common.mjs';
 import {prepareNativeMvu} from '../config/native-mvu.js';
 import {excludeTemplateBookEntries,readStoryReferenceBooks,applyStoryReferenceBooks} from './template-book.mjs';
 const nativeWorld={context:{owner:'native',card:true},mode:'matrix',modes:{matrix:{nativeMvu:'on'}},tables:{nativeBridge:false}};
@@ -50,7 +50,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  function historyLimit(){const count=effectivePreferences(config.read()).parameters.history_messages??getHistoryLimit();if(!Number.isSafeInteger(count)||count<0)fail('HISTORY_COUNT','历史聊天条数须为非负整数');return count;}
  function historyInput(chat,type='normal'){if(['quiet','impersonate'].includes(type))return null;if(chat===ctx().chat)fail('HISTORY_COPY','宿主应传入历史发送副本');const count=prepared?.historyLimit??historyLimit(),report=limitNativeHistory(chat,count,type,projectToolTurns);if(prepared)prepared.historyWindow=report;latest={...latest,historyWindow:report};return report;}
  async function initialize(){assertIdle();const current=await controller.current();if(current)fail('ENGINE_EXISTS','本会话已有引擎状态，请导出备份或继续使用');const c=ctx();await controller.attach({state:initializeState(await catalog(),{session_ref:String(c.chatId),branch_ref:'main'})});await sync();}
- async function sync(options={}){busy=true;try{const r=await controller.run(options);if(r?.materials_error)fail('MATERIALS_ERROR','表单已保存，材料读取失败',{error:r.materials_error});slots={...(r?.materials??{})};const selected=config.read().story.outputConfigId;if(selected){const row=r?.bundle?.state?.tables?.T_PREF_OUTPUT_CONFIG?.[selected];if(!row)fail('OUTPUT_CONFIGURATION_MISSING','当前输出配置记录已不存在');slots.tisya_output_configuration=JSON.stringify(row.values);}const identities=await identitySlots(ctx(),config.read(),persona());slots.tisya_contractor_wish=identities.tisya_contractor_wish?identities.tisya_contractor_wish.replace('[/CONTRACTOR.WISH]',()=>[slots.tisya_contractor_wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n')):slots.tisya_contractor_wish?'[CONTRACTOR.WISH]\n'+slots.tisya_contractor_wish+'\n[/CONTRACTOR.WISH]':'';slots.tisya_user_identity=identities.tisya_user_identity;slots.tisya_user_name=identities.tisya_user_name;for(const [name,text]of Object.entries(resourcePromptSlots(config.read().resources??[])))slots[name]=[slots[name],text].filter(Boolean).join('\n');return r;}finally{busy=false;}}
+ async function sync(options={}){busy=true;try{const r=await controller.run(options);if(r?.materials_error)fail('MATERIALS_ERROR','表单已保存，材料读取失败',{error:r.materials_error});slots={...(r?.materials??{})};const selected=config.read().story.outputConfigId;if(selected){const row=r?.bundle?.state?.tables?.T_PREF_OUTPUT_CONFIG?.[selected];if(!row)fail('OUTPUT_CONFIGURATION_MISSING','当前输出配置记录已不存在');slots.tisya_output_configuration=JSON.stringify(row.values);}const identities=await identitySlots(ctx(),config.read(),persona(),{state:r?.bundle?.state,revision:r?.bundle?.local_revision??0,contextKey:chatKey(ctx())});slots.tisya_contractor_wish=identities.tisya_contractor_wish?identities.tisya_contractor_wish.replace('[/CONTRACTOR.WISH]',()=>[slots.tisya_contractor_wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n')):slots.tisya_contractor_wish?'[CONTRACTOR.WISH]\n'+slots.tisya_contractor_wish+'\n[/CONTRACTOR.WISH]':'';slots.tisya_user_identity=identities.tisya_user_identity;slots.tisya_user_name=identities.tisya_user_name;for(const [name,text]of Object.entries(resourcePromptSlots(config.read().resources??[])))slots[name]=[slots[name],text].filter(Boolean).join('\n');return r;}finally{busy=false;}}
  async function before(type,options={},dryRun=false){if(dryRun||['quiet','impersonate'].includes(type)){prepared={passthrough:true,accepted:true};return;}prepared=null;referenceSnapshot=null;await controller.inject();if(!controller.enabled())fail('ENGINE_NOT_BOUND','请在新版配置的“表单与存档”中接入本会话，或导入已有新版状态');const key=chatKey(ctx()),settings=config.read();configureTags(settings.tags,settings.aliases);applyGeneration(ctx(),settings.generation);await controller.beginGeneration();try{await sync({preview:true,omitLastAssistant:['swipe','regenerate','continue'].includes(type)});const native=await prepareNativeMvu(ctx(),nativeWorld,type);if(native)slots.tisya_material_rule_material=[slots.tisya_material_rule_material,native.text].filter(Boolean).join('\n');if(chatKey(ctx())!==key)fail('CHAT_CHANGED','准备期间已切换会话');const user=ctx().chat?.[ctx().chat.length-(ctx().chat.at(-1)?.is_user?1:2)],rewrite=['swipe','regenerate'].includes(type)?userRevisionMaterial(user):null,directives=[...revisionMessages(pendingRevision),...userRevisionMessages(pendingUserRevision??rewrite)],directions=await getContractorMessages({prepare:true});prepared={native,type,historyLimit:historyLimit(),directives,directions,user,userText:user?.mes,key,revision:settings.revision,source:clone(getSource()),settings,slots:clone(slots),accepted:false};}catch(e){controller.generating.delete(key);throw e;}}
  // MVU copies identical variables to a newly sent user message asynchronously.
  // Compare script, contract and value bytes; a copied floor alone is not stale.
@@ -75,5 +75,48 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   return result;
  }
 
- return {active,register,config,catalog,setRevision:value=>{pendingRevision=value?clone(value):null;},setUserRevision:value=>{pendingUserRevision=value?clone(value):null;},async defer(){const saved=controller.candidatePending(true);controller.generating.delete(chatKey(ctx()));prepared=null;await saved;},async acceptCandidate(){await controller.candidatePending(false);return sync();},generationValues:()=>generationValues(ctx()),controller,initialize,historyLimit,historyInput,sync,before,payloadReady,event,mutate,latest:()=>latest,isBusy:()=>busy,accepted:()=>prepared?.accepted===true,clear:()=>{prepared=null;},entriesLoaded,subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn);},async import(value){assertIdle();await controller.attach(value.state?value:{state:value});await sync();},export:()=>controller.current()};
+ // The forms database is available regardless of the prompt preset. Reads do
+ // not create business rows; all clients share this single bundle CAS boundary.
+ async function readDatabase(){
+  const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS];if(!meta?.chat_uid||meta.owner_chat_key!==key)return null;
+  const bundle=await storage.get(meta.chat_uid);if(!bundle)return null;
+  const hasIds=(c.chat??[]).every(m=>m.extra?.[NS]?.uid);const current=hasIds?reconcile(bundle,captureMessages(c)).bundle:bundle;
+  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key};
+ }
+ async function ensureDatabase(){const current=await controller.current();if(!current){await initialize();return readDatabase();}return readDatabase();}
+ const lifecycleKinds=new Set(['turn-prepare','turn-accept','turn-fail','turn-reconcile','turn-reject']);
+ function createPhoneDatabaseBridge(){return {read:readDatabase,commit:commitDatabase,commitLifecycle(input){if(input?.source?.kind!=='phone'||!lifecycleKinds.has(input.source.lifecycle))fail('DATABASE_CAPABILITY','仅手机内部回合生命周期可以在生成期间保存');const job=databaseChain.then(()=>commitDatabaseNow(input,true));databaseChain=job.catch(()=>{});return job;}};}
+ let databaseChain=Promise.resolve();
+ function commitDatabase(input){const job=databaseChain.then(()=>commitDatabaseNow(input));databaseChain=job.catch(()=>{});return job;}
+ async function commitDatabaseNow({operationId,expectedRevision,contextKey,changes=[],schema=[],source=null}={},lifecycle=false){
+  if(!lifecycle)assertIdle();if(typeof operationId!=='string'||!operationId.trim())fail('OPERATION_ID','表单提交需要稳定操作ID');
+  if(!Array.isArray(changes)||!Array.isArray(schema))fail('DATABASE_BATCH','表单批次必须为列表');
+  const {ctx:c,id,key}=await controller.identity();if(contextKey!==key)fail('CHAT_CHANGED','表单提交归属已变化');
+  if(ensureMessages(c))await c.saveChat();const bundle=await storage.get(id);if(!bundle)fail('ENGINE_NOT_BOUND','请先接入本会话');
+  const messages=captureMessages(c),current=reconcile(bundle,messages).bundle,request={operationId,contextKey,changes,schema,source},hash=digest(request),prior=bundle.database_operations?.[operationId];
+  if(prior){if(prior.hash!==hash)fail('OPERATION_CONFLICT','同一操作ID不能替换内容');const receipt=current.state.runtime?.receipts?.[operationId];if(!receipt)fail('OPERATION_DETACHED','这项操作属于已离开的历史，不能搬到当前分支');return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,receipt:{...clone(receipt),replayed:true}};}
+  if(!Number.isSafeInteger(expectedRevision)||expectedRevision!==(bundle.local_revision??0))fail('SAVE_CONFLICT','表单已被另一页面更新，请刷新后重试');
+  const e=new Runtime(current.state),registered=await catalog();
+  for(const table of [...registered.tables,...schema]){
+   if(!e.data.schema[table.id]){e.data.schema[table.id]=clone(table);e.data.tables[table.id]={};}
+   else for(const field of table.fields??[]){const old=e.data.schema[table.id].fields.find(x=>x.key===field.key);if(!old)e.declareField(table.id,field);else if(old.type!==field.type)fail('SCHEMA_TYPE_CHANGE','已有字段类型不可隐式迁移',{table:table.id,field:field.key});}
+  }
+  const transaction=e.transaction(operationId,request,()=>{
+   for(const change of changes){const tid=change.tableId??change.table,rid=change.recordId??change.id;if(typeof tid!=='string'||typeof rid!=='string'||!tid||!rid)fail('DATABASE_TARGET','表单修改缺少表或稳定记录ID');if(!e.data.schema[tid])fail('TABLE_MISSING','目标表尚未注册',{table:tid});
+    if(change.remove){delete e.data.tables[tid][rid];continue;}
+    if(!e.rows(tid)[rid])e.newRecord(tid,{},rid);
+    for(const [field,value]of Object.entries(change.values??{}))e.set([tid,rid,field,[]],value,change.states?.[field]??'known');
+    if(change.metadata)e.record(tid,rid).metadata={...(e.record(tid,rid).metadata??{}),...clone(change.metadata)};
+   }
+   return {changed:changes.length,source:clone(source)};
+  });
+  if(transaction.status==='FAILED')fail(transaction.error.code,transaction.error.message,transaction.error.details);
+  const ids=messages.map(m=>m.uid),edit={uid:'database:'+operationId,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:messages.map(m=>({uid:m.uid,signature:digest({role:m.role,text:m.text??'',uid:m.uid})})),patch:inversePatch(e.data,current.state)};
+  const staged={...current,manual_edits:[...(current.manual_edits??[]),edit],database_operations:{...(bundle.database_operations??{}),[operationId]:{hash,contextKey:key,anchor_uid:ids.at(-1)??null}}};
+  const next={...reconcile(staged,messages).bundle,local_revision:(bundle.local_revision??0)+1};
+  if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');if(!await storage.commit(id,bundle.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已经更新此会话，请刷新后重试');
+  notify({status:'表单事务已保存',bundle:clone(next),database:true});
+  return {state:clone(next.state),revision:next.local_revision,contextKey:key,receipt:clone(transaction)};
+ }
+ return {active,register,config,catalog,readDatabase,commitDatabase,ensureDatabase,createPhoneDatabaseBridge,setRevision:value=>{pendingRevision=value?clone(value):null;},setUserRevision:value=>{pendingUserRevision=value?clone(value):null;},async defer(){const saved=controller.candidatePending(true);controller.generating.delete(chatKey(ctx()));prepared=null;await saved;},async acceptCandidate(){await controller.candidatePending(false);return sync();},generationValues:()=>generationValues(ctx()),controller,initialize,historyLimit,historyInput,sync,before,payloadReady,event,mutate,latest:()=>latest,isBusy:()=>busy,accepted:()=>prepared?.accepted===true,clear:()=>{prepared=null;},entriesLoaded,subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn);},async import(value){assertIdle();await controller.attach(value.state?value:{state:value});await sync();},export:()=>controller.current()};
 }

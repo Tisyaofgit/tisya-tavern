@@ -212,7 +212,7 @@ function updateMetrics(doc,changes,path) {
 
 function envelopeInput(input) {
   const envelope=json(input,'envelope'); obj(envelope,'envelope');
-  allowed(envelope,['id','accounts','documents','blocks','source'],'envelope');
+  allowed(envelope,['id','accounts','documents','blocks','source','databaseProjection'],'envelope');
   ident(envelope.id,'envelope.id');
   if (!Array.isArray(envelope.blocks)) fail('BLOCKS_REQUIRED','envelope.blocks','blocks 必须是数组');
   return envelope;
@@ -223,6 +223,12 @@ function applyProjection(projection,envelope) {
   if (own(projection.receipts,envelope.id)) {
     if (projection.receipts[envelope.id]!==signature) fail('ENVELOPE_CONFLICT','envelope.id','同一提交 ID 已用于不同内容');
     return false;
+  }
+  if(own(envelope,'databaseProjection')){
+    const snapshot=obj(envelope.databaseProjection,'envelope.databaseProjection');allowed(snapshot,['accounts','documents'],'envelope.databaseProjection');
+    const replacement={accounts:clone(snapshot.accounts),documents:clone(snapshot.documents),receipts:projection.receipts};
+    obj(replacement.accounts,'database.accounts');obj(replacement.documents,'database.documents');validateDocuments(replacement);
+    projection.accounts=replacement.accounts;projection.documents=replacement.documents;
   }
   if (own(envelope,'accounts')) registerAccounts(projection,envelope.accounts,'envelope.accounts');
   if (own(envelope,'documents')) registerDocuments(projection,envelope.documents,'envelope.documents');

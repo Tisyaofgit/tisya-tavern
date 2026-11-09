@@ -1,5 +1,5 @@
 import {applyGeneration,assertGeneration} from './generation.mjs';
-import {storyAvatar} from './identity.mjs';
+import {storyAvatar,projectDatabaseIdentity} from './identity.mjs';
 import {stripPhoneInitialization,validateStoryLibraries} from './template-book.mjs';
 import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
@@ -66,9 +66,10 @@ export function compilePrompts(source,config,slots){
  }
  return out;
 }
-export async function identitySlots(ctx,config,persona){
+export async function identitySlots(ctx,config,persona,databaseSnapshot=null){
  const story=config.story,slots={},avatar=storyAvatar(config);if(avatar.mode==='bound'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');let bound='',name=story.userName||'user';
- if(avatar.binding){const {book,uid}=avatar.binding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);const title=entry.comment??entry.name??'';if(/^【角色】.+/u.test(title))name=title.slice('【角色】'.length);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');bound=stripPhoneInitialization(bound,'手机初态');}
+ if(avatar.binding?.database){const snapshot=databaseSnapshot??await ctx.tisyaReadDatabase?.();if(!snapshot)fail('USER_DATABASE_MISSING','当前表单尚未读取，角色资料没有使用旧书替代');const projection=projectDatabaseIdentity(snapshot,avatar.binding);name=projection.name;bound=projection.text;}
+ else if(avatar.binding){const {book,uid}=avatar.binding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);const title=entry.comment??entry.name??'';if(/^【角色】.+/u.test(title))name=title.slice('【角色】'.length);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');bound=stripPhoneInitialization(bound,'手机初态');}
  slots.tisya_user_identity=avatar.binding?('[USER.IDENTITY]\n故事主角：'+name+'\n'+bound+'\n[/USER.IDENTITY]'):'';
  slots.tisya_user_name=avatar.binding?name:'';
  const wish=wishPreferences({...config,story:{...story,wish:persona}});

@@ -88,9 +88,9 @@ function inspectUncached(source,options) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null}) {
+export function mountMessageReader(document, container, {source,message=null,phoneMessage=message,getPresentation=message=>document.defaultView?.Tisya?.presentation?.forMessage?.(message),formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,onError=()=>{}}) {
     const data=inspectMessage(source,{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()});
-    let alive=true,actionChoice=null,extraView=null;
+    let alive=true,actionChoice=null,extraView=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=source.includes('@record{')?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
@@ -121,9 +121,9 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
             const paragraphs=data.body.paragraphs.value;
             if(paragraphs?.length)for(const p of paragraphs){
                 const section=make('section',null,'tisya-reader-paragraph'),number=make('span',p.id,'tisya-paragraph-number'),content=make('div');
-                number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody,getAppearance('body'));section.append(number,content);text.append(section);
+                number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody,bodyOptions());section.append(number,content);text.append(section);
             }
-            else text.innerHTML=formatProse(document,data.body.value,formatBody,getAppearance('body'));
+            else text.innerHTML=formatProse(document,data.body.value,formatBody,bodyOptions());
             panel.append(text);
         } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
     }
@@ -163,12 +163,16 @@ export function mountMessageReader(document, container, {source,formatBody,getNa
         actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode});
     }
     function render(key){
-        if(!alive)return;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
+        if(!alive)return;activeTab=key;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
         if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;if(value.heartDiagnostic)panel.append(note(value.heartDiagnostic));mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
+    if(presentationOptions){const raw=phoneMessage?.mes;Promise.resolve().then(()=>phoneMessage?getPresentation(phoneMessage):null).then(value=>{
+      if(!alive||phoneMessage&&phoneMessage.mes!==raw)return;const current=document.defaultView?.Tisya?.phone?.contextKey?.();if(current&&presentationContext&&current!==presentationContext)return;
+      presentationOptions=value??{projections:[],contextKey:presentationContext};if(activeTab==='body'){const scroll=panel.scrollTop;render('body');panel.scrollTop=scroll;}
+    },error=>{if(!alive)return;onError(error);presentationOptions={projections:[],contextKey:presentationContext};if(activeTab==='body')render('body');}).catch(onError);}
     return {dispose(){alive=false;actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
 }

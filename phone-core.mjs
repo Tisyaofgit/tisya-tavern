@@ -1,5 +1,6 @@
 import {createSuite,applyEnvelope,getDoc,getVisibleDocuments,exportSuite,importSuite,projectSuiteAt,forkSuiteAt} from './social-suite-core.mjs';
 import {extractPhonePayload} from './phone-protocol.mjs';
+import {digest as databaseDigest} from './engine/common.mjs';
 import {createInitialPhoneLife,validatePhoneLife} from './phone-life-config.mjs';
 import {reduce as reduceLifeCore} from './phone-life/core.mjs';
 import {reduceSocial as reduceLifeSocial} from './phone-life/social.mjs';
@@ -61,6 +62,7 @@ export function phoneLifeBoundary(state,suite=state.suite){
     const event=lifeRecord(state,envelope.id);if(!event)continue;
     events.push(clone(event));
     if(event.kind==='init'){life=clone(event.initial);initial=clone(event.initial);validatePhoneLife(life);}
+    else if(event.kind==='database'){if(!life||life.bindingKey!==event.bindingKey)fail('PHONE_LIFE_HISTORY','表单同步失去角色来源');life=clone(event.snapshot);validatePhoneLife(life);}
     else if(event.kind==='profile'){
       if(!life||life.bindingKey!==event.bindingKey)fail('PHONE_LIFE_HISTORY','画风更新失去所属角色。');
       if(event.name!==undefined)life.world.name=event.name;life.world.theme=clone(event.theme);life.world.apps=clone(event.apps);life.world.appNames=clone(event.appNames??{});life.world.sourceDigest=event.sourceDigest;life.state.config.theme=clone(event.theme);life.state.config.apps=clone(event.apps);life.state.config.appNames=clone(event.appNames??{});validatePhoneLife(life);
@@ -154,9 +156,9 @@ export function importPhone(raw,{contextKey}={}){
       const firstInit=s.lifeEventLog.find(e=>e.kind==='init');if(!firstInit||stableLife(firstInit.initial)!==stableLife(s.lifeInitial))fail('PHONE_LIFE_ARCHIVE','生活初态与首次初始化事件不一致');
       const allEnvelopes=new Set(Object.values(s.suite.branches).flatMap(b=>b.envelopes.map(e=>e.id)));
       for(const e of s.lifeEventLog){
-        if(!allEnvelopes.has(e.envelopeId)||!['init','profile','action','world'].includes(e.kind))fail('PHONE_LIFE_ARCHIVE','生活事件失去真实分支来源');
+        if(!allEnvelopes.has(e.envelopeId)||!['init','profile','action','world','database'].includes(e.kind))fail('PHONE_LIFE_ARCHIVE','生活事件失去真实分支来源');
         if(e.kind==='init'){validatePhoneLife(e.initial);if(e.initial.bindingKey!==phoneLifeBindingKey(e.initial.binding))fail('PHONE_LIFE_BINDING','初始化身份摘要不符');if((e.initial.mediaOriginContextKey??s.contextKey)!==mediaOrigin)fail('PHONE_LIFE_MEDIA_SCOPE','媒体初始归属在事件历史中发生变化');}
-        else{id(e.bindingKey);if(e.kind!=='profile'&&(!Array.isArray(e.actions)||e.actions.some(a=>!a||typeof a.type!=='string'||typeof a.id!=='string')))fail('PHONE_LIFE_ARCHIVE','生活操作日志损坏');}
+        else{id(e.bindingKey);if(e.kind==='database'){validatePhoneLife(e.snapshot);if(e.snapshot.bindingKey!==e.bindingKey)fail('PHONE_LIFE_BINDING','表单快照归属不一致');}if(!['profile','database'].includes(e.kind)&&(!Array.isArray(e.actions)||e.actions.some(a=>!a||typeof a.type!=='string'||typeof a.id!=='string')))fail('PHONE_LIFE_ARCHIVE','生活操作日志损坏');}
       }
       const current=phoneLifeBoundary(s);if(stableLife(current.life)!==stableLife(s.life??null))fail('PHONE_LIFE_ARCHIVE','当前生活状态与事件回放不一致，原档保留');
       for(const r of Object.values(s.requests))if(r.lifeSnapshot&&stableLife(r.lifeSnapshot)!==stableLife(phoneLifeBoundary(s,projectSuiteAt(s.suite,r.branchId,r.eventCount))))fail('PHONE_LIFE_ARCHIVE','生活请求快照与捕获边界不一致');
@@ -392,24 +394,41 @@ export function reconcilePhone(input,sources,{at}={}){
   state.notifications=state.notifications.map(n=>({...n,inactive:!state.selectedSources.includes(n.sourceId)}));return state;
 }
 
+export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
+  const state=clone(input),currentLife=state.life?clone(state.life):null;
+  const expected=createSuite(state.suite.seed);let rebuilt=expected;for(const envelope of state.suite.branches[state.suite.activeBranch].envelopes)rebuilt=applyEnvelope(rebuilt,envelope);
+  const suiteChanged=stableLife([rebuilt.accounts,rebuilt.documents])!==stableLife([state.suite.accounts,state.suite.documents]);
+  const lifeChanged=state.lifeEventLog&&stableLife(phoneLifeBoundary(state).life)!==stableLife(currentLife);
+  if(suiteChanged||lifeChanged){
+    const envelopeId='phone-database:'+databaseDigest({revision,life:currentLife,accounts:state.suite.accounts,documents:state.suite.documents});
+    const projection={accounts:clone(state.suite.accounts),documents:clone(state.suite.documents)};
+    // applyEnvelope validates documents and authors before publishing the event.
+    state.suite=applyEnvelope(state.suite,{id:envelopeId,blocks:[],databaseProjection:projection,source:{kind:'forms',revision}});
+    if(currentLife){state.lifeEventLog??=[];state.lifeEventLog.push({envelopeId,kind:'database',bindingKey:currentLife.bindingKey,snapshot:currentLife,databaseRevision:revision});}
+    state.life=currentLife;
+  }
+  return JSON.parse(exportPhone(state));
+}
+
 export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=()=>new Date().toISOString(),idFactory=()=>globalThis.crypto.randomUUID()}={}){
   if(!storage||typeof storage.load!=='function'||typeof storage.save!=='function')fail('PHONE_STORAGE','缺少手机存储接口');
   let state=null,chain=Promise.resolve(),disposed=false;
   const assert=()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(!state)fail('PHONE_NOT_READY','手机尚未初始化');};
-  const enqueue=fn=>{const p=chain.then(()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');return fn();});chain=p.catch(()=>{});return p;};
+  const enqueue=fn=>{const p=chain.then(()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(fresh)state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
   async function commit(next,kind='state'){
     assert();if(next===state)return state;
     const previous=state.revision;next.revision=previous+1;scoped(next,contextKey);
-    const archive=JSON.parse(exportPhone(next));await storage.save(archive,{expectedRevision:previous});
+    const archive=JSON.parse(exportPhone(next));await storage.save(archive,{expectedRevision:previous,kind});
     if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');state=next;onChange({kind,revision:state.revision});return state;
   }
   const api={
     async init(){return enqueue(async()=>{if(state)return api;const value=await storage.load();if(value==null){const initial=createPhoneState(seed,contextKey);await storage.save(JSON.parse(exportPhone(initial)),{expectedRevision:null});state=initial;}else state=importPhone(value,{contextKey});onChange({kind:'init',revision:state.revision});return api;});},
+    async refresh(){return enqueue(async()=>clone(state));},
     getState(){assert();return clone(state);},
     readLife(){assert();return state.life?clone(state.life):null;},
     lifeRouteForDocument(docId){assert();const route=state.suite.documents[docId]?.meta?.lifeProjection;return route?{appId:route.appId,detail:route.entityId,bindingKey:route.bindingKey}:null;},
     initLife(profile){return enqueue(async()=>{
-      assert();assertEditable(state);const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
+      assert();assertEditable(state);if(profile?.database){if(!state.life||profile.worldId!==state.life.world.id||profile.entityId!==state.life.state.identity.personId)fail('PHONE_LIFE_BINDING','所选表单世界或角色尚未有手机初始化记录');return clone(state.life);}const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
       const previous=state.life??state.lifeInitial;
       if(previous&&previous.bindingKey!==initial.bindingKey)fail('PHONE_LIFE_BINDING','这条聊天已有另一世界或角色的生活进度；请切回原世界/角色，或另开聊天。原进度没有重置。',{existingBinding:previous.binding});
       if(state.life){
@@ -443,11 +462,11 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     cancelAction(actionId){return enqueue(async()=>{assert();assertEditable(state);const next=clone(state),a=next.actions.find(x=>x.id===actionId);if(!a||!['queued','failed'].includes(a.status))fail('PHONE_CANCEL','只能撤回尚未随剧情发送的操作');a.status='cancelled';delete a.error;await commit(next);});},
     retryAction(actionId){return enqueue(async()=>{assert();const next=clone(state),a=next.actions.find(x=>x.id===actionId);if(!a||!['failed'].includes(a.status))fail('PHONE_RETRY','该操作当前不能重试');a.status='queued';delete a.error;await commit(next);});},
     readNotification(notificationId){return enqueue(async()=>{assert();const next=clone(state),n=next.notifications.find(x=>x.id===notificationId);if(!n)fail('PHONE_NOTIFICATION','通知不存在');n.read=true;await commit(next);});},
-    prepareTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);const result=preparePhoneTurn(state,{...options,requestId:options.requestId??idFactory(),at:now()});if(result.changed)await commit(result.state);return {requestId:result.requestId,messages:result.messages};});},
-    acceptTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);let r;try{r=acceptPhoneTurn(state,{...options,at:now()});}catch(error){error.phoneReplyInvalid=true;throw error;}await commit(r.state);return {snapshot:r.snapshot,receipt:r.receipt};});},
-    failTurn({requestId,error}){return enqueue(async()=>{assert();const next=clone(state),r=next.requests[requestId];if(!r)return;const reason=typeof error==='string'?error:error?.message??'本轮生成未完成';r.status='failed';r.error=reason;for(const a of next.actions)if(r.actionIds.includes(a.id)&&a.status==='sent'){a.status='failed';a.error=reason;}await commit(next);});},
-    rejectSource({sourceId,uid,candidate,requestId,error}){return enqueue(async()=>{assert();id(sourceId);id(uid);id(candidate);if(sourceId!==`${uid}:${candidate}`||!own(state.requests,requestId)||own(state.frames,sourceId))fail('PHONE_REJECTION_SCOPE','不能将已接纳或无归属的手机来源记作失败');const next=clone(state);next.rejectedSources??={};next.rejectedSources[sourceId]={sourceId,uid,candidate,requestId,error:{code:error?.code??'PHONE_REPLY_REJECTED',message:String(error?.message??error)},at:now()};await commit(next);});},
-    reconcile({chatKey,sources}){return enqueue(async()=>{assert();scoped(state,chatKey);await commit(reconcilePhone(state,sources,{at:now()}));});},
+    prepareTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);const result=preparePhoneTurn(state,{...options,requestId:options.requestId??idFactory(),at:now()});if(result.changed)await commit(result.state,'turn-prepare');return {requestId:result.requestId,messages:result.messages};});},
+    acceptTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);let r;try{r=acceptPhoneTurn(state,{...options,at:now()});}catch(error){error.phoneReplyInvalid=true;throw error;}await commit(r.state,'turn-accept');return {snapshot:r.snapshot,receipt:r.receipt};});},
+    failTurn({requestId,error}){return enqueue(async()=>{assert();const next=clone(state),r=next.requests[requestId];if(!r)return;const reason=typeof error==='string'?error:error?.message??'本轮生成未完成';r.status='failed';r.error=reason;for(const a of next.actions)if(r.actionIds.includes(a.id)&&a.status==='sent'){a.status='failed';a.error=reason;}await commit(next,'turn-fail');});},
+    rejectSource({sourceId,uid,candidate,requestId,error}){return enqueue(async()=>{assert();id(sourceId);id(uid);id(candidate);if(sourceId!==`${uid}:${candidate}`||!own(state.requests,requestId)||own(state.frames,sourceId))fail('PHONE_REJECTION_SCOPE','不能将已接纳或无归属的手机来源记作失败');const next=clone(state);next.rejectedSources??={};next.rejectedSources[sourceId]={sourceId,uid,candidate,requestId,error:{code:error?.code??'PHONE_REPLY_REJECTED',message:String(error?.message??error)},at:now()};await commit(next,'turn-reject');});},
+    reconcile({chatKey,sources}){return enqueue(async()=>{assert();scoped(state,chatKey);await commit(reconcilePhone(state,sources,{at:now()}),'turn-reconcile');});},
     snapshot(sourceId){assert();const rejected=own(state.rejectedSources,sourceId)?state.rejectedSources[sourceId]:null;if(rejected)fail('PHONE_SOURCE_REJECTED',`本条手机内容未接纳：${rejected.error.message}`);return phoneSnapshot(state,sourceId);},
     export(){assert();return exportPhone(state);},
     import(raw,{expectedRevision}={}){return enqueue(async()=>{assert();assertEditable(state);if(expectedRevision!==undefined&&expectedRevision!==state.revision)fail('PHONE_LIFE_REVISION','导入期间已有新操作保存，旧备份未覆盖当前进度');const next=importPhone(raw,{contextKey});if(state.lifeInitial&&next.lifeInitial?.bindingKey!==state.lifeInitial.bindingKey)fail('PHONE_LIFE_BINDING','导入档案属于另一世界或角色，原进度保留');if(next.lifeInitial&&(next.lifeInitial.mediaOriginContextKey??next.contextKey)!==(state.lifeInitial?.mediaOriginContextKey??state.contextKey))fail('PHONE_LIFE_MEDIA_SCOPE','导入档案的媒体原件属于另一聊天来源，未借用其他聊天缓存');await commit(next);});},
