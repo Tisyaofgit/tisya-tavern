@@ -1,0 +1,21 @@
+{
+  "utc": "2026-11-09T12:06:35.140Z",
+  "html": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/phone.html",
+  "bytes": 338738,
+  "sha256": "88065b4403dbbd7f0351a0a91b0f07d99c0b500f418b6022caeb78cf3d9ab4d4",
+  "inlineScriptSha256": "5925d8049b0f7980a46e6e44f7f3017fa1e3acd6a4c66b53c87a07371560faae",
+  "expectedGroups": 3,
+  "passedGroups": 3,
+  "groups": [
+    "inline-native-ESM boot + 17 apps + no external dependencies",
+    "bundled event path + scoped search + real File-input phone archive import",
+    "bundled frozen URL + accepted frame + no current-service read + full-phone jump"
+  ],
+  "execution": "Exact delivered inline script, Node native vm.SourceTextModule in Happy DOM 20.14.5 window; parsed delivered HTML/CSS; actual controller events",
+  "limitations": [
+    "Happy DOM automatic ESM loader rejected a script accepted by node --check; native VM bypasses only that simulator module compiler.",
+    "Happy DOM Window lacks structuredClone; a test-only realm-local JSON-data clone shim is installed. This is not a full structuredClone API test.",
+    "No graphical browser, layout, Android, real-host session, or real-model call."
+  ],
+  "command": "PHONE_BUNDLE_HTML=<path> node --experimental-vm-modules --test --test-reporter=tap phone-work/phone-bundle-dom.test.mjs"
+}

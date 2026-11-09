@@ -1,0 +1,100 @@
+✔ pure OOC persists outside story, supplies reference and preserves untouched RP (4.363835ms)
+✔ request failure, cancellation and changed candidate keep draft without late acceptance (1.202001ms)
+✔ persona and chat drafts isolated, persistence restores same scope (0.490339ms)
+✔ combined request adds separate messages once and never appends note to RP (1.078765ms)
+✔ combined wrong input, no dispatch, source mutation and send failure retain note (1.18797ms)
+✔ cross-chat late response never enters new metadata (0.437479ms)
+✔ mount isolates keyboard, leaves native composer and displays API text safely (32.850558ms)
+✔ native send clears after durable dispatch and restores on stop or empty output (1.899552ms)
+✔ minimized requirements keep draft and the original single composer (7.645315ms)
+✔ requirements travel with the user message through reload, branch, repeated tool payloads and rerolls (1.380801ms)
+✔ failed message persistence blocks dispatch without clearing the requirement draft (0.667055ms)
+✔ a stopped generation restores the consumed draft but keeps its saved message association (0.320062ms)
+✔ OOC mode uses the one native send control, RP mode leaves native sending untouched (10.778291ms)
+✔ changed or corrupt saved requirements stop replay instead of borrowing a neighbouring turn (0.852815ms)
+✔ stop during message save cannot consume the draft or dispatch a late request (0.648988ms)
+✔ editing attached directions preserves RP and next-turn draft; clear and cold replay use saved new value (0.605192ms)
+✔ attached-direction save failure and conflicts retain old metadata and allow exact retry (0.529137ms)
+✔ native rewrite edits attached direction before saving RP, keeps errors editable, and cancel discards only the unsaved note (10.45663ms)
+✔ native early preparation snapshots the note before the user row exists, then final payload durably binds it once (0.490609ms)
+✔ actual 17-kind seed: send -> prepare -> valid ack -> frozen frame (34.798063ms)
+✔ partial acknowledgements leave unhandled actions queued (27.871076ms)
+✔ invalid JSON, unknown acks and missing payload do not mutate input (42.970578ms)
+✔ future messages and reactions do not rewrite the earlier snapshot (25.290077ms)
+✔ retry changes the attempt while preserving a single user message (82.24254ms)
+✔ public search excludes private messages and local reader state (7.588283ms)
+✔ same source is idempotent and changed content conflicts (21.787409ms)
+✔ reconcile also rejects changed content behind an unchanged source id (18.498453ms)
+✔ reroll forks from the original request and keeps the former frozen page (35.348283ms)
+✔ reroll deactivates notices from abandoned sources (28.637881ms)
+✔ reconcile deleting a later source restores history and preserves its snapshot (43.362689ms)
+✔ like/down are mutually exclusive; unknown remains unknown and zero is real (16.218117ms)
+✔ persistent write failure leaves in-memory state and saved state unchanged (36.251253ms)
+✔ host chat mismatch rejects prepare/accept/import without mutation (43.916333ms)
+✔ model cannot change readerState/visibility or impersonate self in existing blocks (13.663678ms)
+✔ new documents cannot smuggle local reader state (7.727253ms)
+✔ new document items cannot impersonate the current user (7.703537ms)
+✔ model cannot delete the just-queued user message (7.498488ms)
+✔ missing response preserves pending actions and supports explicit failure/retry (52.401378ms)
+✔ a prepared request id cannot be overwritten by a different set of actions (13.669017ms)
+✔ valid identifier toString does not collide with object prototypes (10.332238ms)
+✔ reroll of an earlier turn detaches user actions from the abandoned continuation (26.311746ms)
+✔ saved archive restores frozen frames and current reader choices exactly (44.703719ms)
+✔ prepared turn blocks mutations but preserves editable drafts (36.199344ms)
+✔ replay request locks writes until the new candidate is accepted (70.813721ms)
+✔ cancelled queued message is absent from the next factual thread context (51.272457ms)
+✔ archive rejects malformed action and request schemas before accepting the data (199.746324ms)
+✔ archive rejects a request or snapshot referencing a nonexistent branch (38.7124ms)
+✔ archive import is blocked while a prepared turn owns the state (31.428025ms)
+✔ replaying an older request cannot take ownership from a different prepared turn (16.533302ms)
+node:internal/modules/esm/resolve:272
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/social-communication.mjs' imported from /workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/phone-cross-realm.test.js
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:381:17) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/social-communication.mjs'
+}
+
+Node.js v24.22.1
+✖ tests/phone-cross-realm.test.js (106.691852ms)
+✔ no transport returns null and leaves the source untouched (2.206535ms)
+✔ one extra supports other children and all supported payload fields (2.250451ms)
+✔ JSON strings containing closing tags, braces, slashes and backticks are data (0.393473ms)
+✔ fenced examples are ignored while an active payload is extracted (0.61765ms)
+✔ invalid JSON and incomplete transport never strip content (1.100067ms)
+✔ duplicate phone, extra ambiguity and misplaced blocks are rejected (0.704541ms)
+✔ standalone import is explicit, one object only, and validated identically (4.238587ms)
+✔ top-level keys and field shapes are enforced without revalidating the suite (2.188728ms)
+✔ acks are nonempty, exact and unique strings (0.8955ms)
+✔ dangerous prototype keys are rejected at every depth including escaped and shadowed keys (0.649899ms)
+✔ marker schema enforces unique valid ids and one optional target (0.653204ms)
+✔ body markers expose exact offsets and ignore invalid ids (0.432932ms)
+✔ markers skip fenced and inline code with matching delimiter lengths (0.372782ms)
+✔ fence closing must match the opening length, character and line (0.38538ms)
+✔ input and option errors use protocol error codes (0.21205ms)
+✔ installed, displayed and stylesheet versions agree (1.969969ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 65
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1210.522583
+
+✖ failing tests:
+
+test at tests/phone-cross-realm.test.js:1:1
+✖ tests/phone-cross-realm.test.js (106.691852ms)
+  'test failed'

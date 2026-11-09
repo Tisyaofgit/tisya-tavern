@@ -1,0 +1,129 @@
+{
+  "utc": "2026-11-09T12:16:18.006744+00:00",
+  "status": "passed",
+  "source_root": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate",
+  "before_manifest": "final-source-before-validation.json",
+  "before_manifest_sha256": "8a3b7158de7d01d9419c6b86e81241331355d31759ca3acf46cf4aa221eb1f38",
+  "after_manifest": "final-source-after-validation.json",
+  "after_manifest_sha256": "90fe4b08aa2fc9f42f83510420ca6a23035d325931480e1e6432a5244b38a804",
+  "file_count": 1131,
+  "source_changes_during_verification": [],
+  "checks": [
+    {
+      "log": "final-phone-shell-tests.tap",
+      "command": [
+        "node",
+        "--test",
+        "tests/phone-context-window.test.js",
+        "tests/phone-core.test.js",
+        "tests/phone-cross-realm.test.js",
+        "tests/phone-host-dom.test.js",
+        "tests/phone-host.test.js",
+        "tests/phone-protocol.test.js",
+        "tests/phone-ui-controller.test.js",
+        "tests/phone-ui-dom.test.js",
+        "tests/shell.test.js"
+      ],
+      "started_utc": "2026-11-09T12:14:04.668597+00:00",
+      "finished_utc": "2026-11-09T12:14:14.199132+00:00",
+      "exit_code": 0,
+      "sha256": "e7aae648e3e102a8a1020a1911c183bd6a2062a80bbfe8e8ccab9f8924f3091c",
+      "stats": [
+        "ℹ tests 180",
+        "ℹ pass 180",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 9473.014983"
+      ]
+    },
+    {
+      "log": "final-phone-bundle.tap",
+      "command": [
+        "node",
+        "--experimental-vm-modules",
+        "--test",
+        "--test-reporter=tap",
+        "tests/phone-bundle-dom.mjs"
+      ],
+      "started_utc": "2026-11-09T12:14:14.200058+00:00",
+      "finished_utc": "2026-11-09T12:14:15.660250+00:00",
+      "exit_code": 0,
+      "sha256": "cfed267646863cc679a163d7e3a40f40185577919503297ec7f6d7506ac2b7e0",
+      "stats": [
+        "# tests 3",
+        "# pass 3",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 0",
+        "# todo 0",
+        "# duration_ms 1389.245295"
+      ]
+    },
+    {
+      "log": "final-full-tests.txt",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "started_utc": "2026-11-09T12:14:15.660629+00:00",
+      "finished_utc": "2026-11-09T12:16:17.576149+00:00",
+      "exit_code": 0,
+      "sha256": "6678cc2f9294755bd5c7e63bc9d48781ea5d0f50b4c98a12f6f9a4cb5c7940e8",
+      "stats": [
+        "ℹ tests 1575",
+        "ℹ pass 1575",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 120356.179561"
+      ]
+    },
+    {
+      "log": "final-phone-build-check.json",
+      "command": [
+        "python3",
+        "tools/build-phone.py",
+        "--check"
+      ],
+      "started_utc": "2026-11-09T12:16:17.577419+00:00",
+      "finished_utc": "2026-11-09T12:16:17.624455+00:00",
+      "exit_code": 0,
+      "sha256": "b1bb5c4c6e6a6d7629ed067fecabd7a5181c676eee8ce9fcc3abe69a880b1293",
+      "stats": []
+    },
+    {
+      "log": "final-host-build-check.txt",
+      "command": [
+        "node",
+        "tools/build-extension.mjs",
+        "--check"
+      ],
+      "started_utc": "2026-11-09T12:16:17.624717+00:00",
+      "finished_utc": "2026-11-09T12:16:17.859502+00:00",
+      "exit_code": 0,
+      "sha256": "72961541922ac210c6356da52b4d9a5a92b21cbadb904967c69745c554e09fd0",
+      "stats": []
+    },
+    {
+      "log": "final-diff-check.txt",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "started_utc": "2026-11-09T12:16:17.859793+00:00",
+      "finished_utc": "2026-11-09T12:16:17.897552+00:00",
+      "exit_code": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stats": []
+    }
+  ],
+  "limitations": [
+    "Node automated tests and Happy DOM, not graphical browser/Android",
+    "No external model or real-host session executed",
+    "Bundle tests use JSON-state clone shim for Happy DOM structuredClone absence"
+  ]
+}

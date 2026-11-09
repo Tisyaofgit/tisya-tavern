@@ -1,0 +1,31 @@
+✔ 真实world-extra对旧格式和Matrix格式都识别phone行；JSON不作为网页显示 (38.503973ms)
+✖ 真实message-ui初次门面尚未出现也按传入context挂正文定格；展开后有独立完整手机 (44.803823ms)
+✔ 真实communication追加器不会因已存在场外要求而漏掉手机消息对 (0.374324ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 452.929062
+
+✖ failing tests:
+
+test at network-blocks-design/phone-work/phone-host-dom.test.mjs:27:1
+✖ 真实message-ui初次门面尚未出现也按传入context挂正文定格；展开后有独立完整手机 (44.803823ms)
+  AssertionError [ERR_ASSERTION]: {"body":"<section class=\"reading-paragraph\" data-paragraph=\"1\"><div><div data-tisya-prose-root=\"\"><p data-tisya-prose=\"paragraph\">你低头看了一眼<span data-tisya-prose=\"punctuation\">。</span>[[手机<span data-tisya-prose=\"punctuation\">:</span>m1]]</p></div></div></section><section class=\"reading-paragraph\" data-paragraph=\"2\"><div><div data-tisya-prose-root=\"\"><p data-tisya-prose=\"paragraph\">屏幕又暗下去<span data-tisya-prose=\"punctuation\">。</span></p></div></div></section>","errors":[]}
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-dom.test.mjs:34:60)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

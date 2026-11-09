@@ -1,0 +1,41 @@
+{
+  "schema": "tisya-phone-snapshot-tool-check/1",
+  "checked_utc": "2026-11-09T12:12:12.793797+00:00",
+  "scope": "Independent synthetic fixture only, not the mutable phone product snapshot",
+  "checks": [
+    {
+      "check": "tracked/untracked inventory excludes caches and preserves executable mode",
+      "passed": true
+    },
+    {
+      "check": "blob SHA1 matches git hash-object for Unicode text and all-byte binary",
+      "passed": true
+    },
+    {
+      "check": "manifest restore verifies all bytes and exact inventory in new directory",
+      "passed": true
+    },
+    {
+      "check": "existing destination rejected",
+      "passed": true
+    },
+    {
+      "check": "changed source bytes rejected",
+      "passed": true
+    },
+    {
+      "check": "untracked symlink rejected",
+      "passed": true
+    },
+    {
+      "check": "parent traversal rejected",
+      "passed": true
+    },
+    {
+      "check": "fixed-commit git archive restores text binary and modes exactly",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "fixture_dir": "/workspace/scratch/5717d8fb3725/checkpoint-prep/phone-snapshot-check-nsqgylza"
+}

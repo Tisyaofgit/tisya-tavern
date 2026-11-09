@@ -1,0 +1,32 @@
+{
+  "reviewed_utc": "2026-11-09T12:15:24.781283+00:00",
+  "scope": "Independent source review of phone-review changes before final exclusive build",
+  "files": [
+    "phone-turn-host.js",
+    "phone-core.mjs",
+    "index.js",
+    "tests/phone-host.test.js"
+  ],
+  "blocking_findings": [],
+  "reviewed_invariants": [
+    "Native branch adoption requires matching kind and character/group owner, direct-parent sessionName equal to main_chat, nonempty integrity, and a different target chat. Ordinary import remains context strict.",
+    "Native branch adoption validates imported archive, reconciles only the retained branch messages, increments revision, and persists through captured target metadata storage. Parent archive is not mutated.",
+    "Prepared parent requests stop branch adoption explicitly and retain copied bytes rather than silently reset or invent completion.",
+    "Rejected phone replies are keyed by stable message UID plus exact candidate hash; rejection is limited to the active bound turn, actual last selected assistant source, and no existing accepted frame.",
+    "Metadata/storage failure after valid parsing is not flagged phoneReplyInvalid, so it cannot be silently classified as a malformed reply.",
+    "Rejected source records preserve original reason and request; historical enumeration skips only that exact rejected candidate. Corrected text hashes and regenerated candidates remain eligible.",
+    "Snapshots for rejected sources raise PHONE_SOURCE_REJECTED; the failure is visible rather than replaced with current/live data."
+  ],
+  "official_contract_evidence": "host-branch-source-contract.json",
+  "formatting_only_changes": [
+    "Trimmed one extra EOF newline in communication.js",
+    "Trimmed one extra EOF newline in index.js",
+    "Trimmed one extra EOF newline in message-ui.js",
+    "Trimmed one extra EOF newline in world-extra.js"
+  ],
+  "limitations": [
+    "Source review and automated native adapters are not installed-host or Android acceptance.",
+    "A native branch copied while a parent request is still prepared is explicitly rejected; recovery instructions require resolving the parent and creating a fresh branch."
+  ],
+  "validation_summary": "final-validation-summary.json"
+}

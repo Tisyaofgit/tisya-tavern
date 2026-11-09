@@ -1,0 +1,172 @@
+缇斯亚虚拟小手机：第三方参考只读审计
+初审时间：2026-11-09 11:12 UTC（北京时间 19:12）；用户后续明确主路径为下一轮正文API提示词注入，本报告已据此更新。早期独立generate设计建议已撤回，相关API只保留为参考对照。本文件为工作证据，未运行任何第三方插件代码，未写用户宿主聊天、变量、世界书或外部网站。
+
+结论
+用户此前发过独立小手机参考，已从既有全库索引恢复定位。最贴切的是「绮楼在改小手机 1.4.1」，不需要用户重传。现有附件「拟真语音通话 10.32.6」与「漫画工作室 2.4.2」提供不同生成和持久化路径，但都不能单凭源码认定目标 Android 上可用。另有已保存的 Saber Phone 3.5.0 与 5.6.5 源码；5.6.5 的请求归属和过期检查比绮楼参考更完善，其双存储静默回退不符合缇斯亚规范。
+
+一、精确来源
+1. 绮楼在改小手机 1.4.1
+   稳定身份：libfile_005c3fc336f48191a92c4b51aaa385b0
+   固定文件：file_0000000014cc82068b26f50e3b79f011
+   资料路径：/资料区/第三方参考与工具/插件与开发参考/第三方参考与工具__插件与开发参考__绮楼在改小手机-1.4.1.tpg
+   归档大小：243990 bytes；父任务提供的固定 SHA256：863ca2ef1b8efa7bd63b13367fad1ae6c3ef7eb242dcc50468511d543a45d198
+   本地：phone-work/reference-qilou/第三方参考与工具__插件与开发参考__绮楼在改小手机-1.4.1.tpg
+   只读解包：phone-work/reference-qilou/extracted/
+   manifest：id=com.user.app-simulator；version=1.4.1；author=绮楼；description 声明原作者 ray 停更后继续维护；entry=panel.html；specVersion=2；minTavoVersion=2.0.0。
+   共20个归档成员，其中17个htmlFragments：panel、plotOption、wechat、wallet、twitter、tetris、shop、setting、news、moments、memo、contacts、camera、album、friends、fortune、weather；另含entry.js、manifest.json、cover.jpg。
+   未见许可文件。可参考交互与公开调用形状；不应把整个第三方实现当作自有源码重新发布。
+
+2. Saber Phone 3.5.0
+   目录：/资料区/第三方参考与工具/插件与开发参考/第三方参考与工具__插件与开发参考__com.madmax.saber-phone/
+   manifest：libfile_0910f47452108191a84ae02ecae1444d（file_000000007014820b84f2981f1badd161，1178 bytes）
+   entry：libfile_bb016f1bd20c8191a42b2c6ca9f86408（file_00000000809c820b8be8454ad10649e3，115615 bytes）
+   读取manifest确认为3.5.0，不是靠文件大小/修改时间推测。
+   本地完整抽取：phone-work/reference-saber-350-complete.js，1685行，115615 bytes，与索引大小一致。
+
+3. Saber Phone 5.6.5
+   目录：/资料区/第三方参考与工具/插件与开发参考/第三方参考与工具__插件与开发参考__plugins/com.madmax.saber-phone/
+   manifest：libfile_d53e3c69406081919c25c9eebdbb93c7（file_00000000d7b081fa95fd2170896085ed，1262 bytes）
+   entry：libfile_7e40214b68948191a3a726f073b0407c（file_000000005e6081f8a83b835f1630bab5，381062 bytes）
+   读取manifest确认为5.6.5，id仍为com.madmax.saber-phone、author=Mad Max；权限input/message/generate/variable/file/network。
+   本地完整抽取：phone-work/reference-saber-565-complete.js，4662行，381062 bytes，与索引大小一致。来自Library文本分段读取，不把此步骤说成远端二进制逐哈希下载。
+
+4. 当前附件：拟真语音通话 10.32.6
+   /workspace/scratch/37663c457d00/project_sources/02-10.32.6.tpg
+   SHA256 e0900fe72c58939061b13e92e5365dbcabb8c4caad94a568d3a02244843cbc9f
+   id=com.cecelia.voice-call.release；8个成员；entry=actions.js；htmlFragment=ui/call-widget.html，mount=/chat；有完整localization资源。
+   解包到phone-work/reference-voice/。
+
+5. 当前附件：漫画工作室 2.4.2
+   /workspace/scratch/37663c457d00/project_sources/01-2.4.2.tpg
+   SHA256 f7440c0f985abb92222f5466fe23c7653c56e0f7ca72b62e38d24e4968dc46fe
+   id=com.tavo.comic-studio；11个成员；manifest version=2.4.2，README标题仍写2.3.0，属于参考内部版本文案不一致，实际归档版本按manifest记录。
+   entry=entry.js；HTML=ui/panel.html；permissions=message/generate/file/variable。
+   解包到phone-work/reference-comic/。
+
+二、绮楼小手机：可采纳的产品结构
+1. panel.html 315行起 window.registerApp(config) 管理注册表，按id替换同名应用注册；桌面与底栏按location分路由。布局四列五行起，拖动可调整位置；背景、布局存全局配置。
+2. 微信单聊与群聊独立，先显示用户消息，再调用模型，回复可以分为1–3条简讯；群聊挑1–3人回复，其余成员无需每轮都说话。这些是拟真节奏的有效参考。
+3. 联系人能连接世界书条目，生成时提取角色资料；主聊天经历和线上聊天记录分段组装。手机里的聊天使用独立存储，没有必要借主聊天发一条再删掉。
+4. 新闻、朋友圈、微博、商城、天气等应用共用手机桌面。图像与资料跳转使用各自页面而非拼长楼；这一点与已有17类区块可自然对应。
+5. 本项目应保留现有统一文档ID、楼层引用、独立账号ID与公开/私人投影，采用手机壳承载这些内容；桌面、通知、搜索与发送共享原状态内核。
+
+三、实际调用链与缺陷（绮楼）
+wechat.html 652行 sendMessage(userContent)：
+  检查isGenerating、当前视图 → appendMessage('user',...) → await getNativeHistoryText() → 读取成员世界书与本聊天记录 → 750行才isGenerating=true → 755行 await tavo.generate(prompt,{context:false}) → 解析花括号消息 → 延迟逐条appendMessage('assistant',...)。
+实际缺陷：
+  a. 忙锁在多个await后才设置，快速重复点击可能在前序资料读取阶段并发；应在首个await前占请求槽，并用稳定requestId判幂等。
+  b. 779行 catch(e){} 直接吞错；模型失败后用户只能看见没有回复。应保留本次已发送消息与失败状态，允许用户明确重试，显示阶段/错误。
+  c. 233–253行以联系人name或groupName做存储键，修改名字/同名人物会冲突。应使用稳定accountId/threadId。
+  d. 保存依赖可变currentContact/currentGroupName/chatHistory。生成期间切联系人后，迟到回复存在写到当前会话的风险；应快照chatId、threadId、branchId、epoch、requestId，结果按快照校验归属。
+  e. getNativeHistoryText在未配置depth时读取全部主聊天，又把整个手机历史加入prompt；增长无界，且只用提示词要求角色不知未知内容，不能真正隔离信息。应在供数层投影可见资料，限制按任务取原文，清晰区别公开资料与目标私聊。
+  f. pending_chat_messages与pending_wallet_notifications使用global作用域，消息没有chat/thread目标；打开哪个聊天就flush到当前记录。应使用带明确归属的收件队列，不能全局一把清空。
+  g. 各模块tavo.set多为未await、无回读；没有统一串行写者、修订版本守卫或冲突处理。不能宣称落库成功。
+  h. 花括号文本正则允许回复退回原始字符串，群聊speaker未按成员白名单核验；应使用严格结构化对象、白名单与整批校验，失败保留原始响应而不伪造普通消息。
+  i. 微博twitter.html 349行点赞数是span展示；moments/twitter的likes来自模型文本解析。相关页面未发现赞/踩切换事件；现有“赞数”不能直接视为真正交互实现。
+  j. 新闻news.html 128–149行生成JSON数组并追加；内容要求user不知情暗线。这是剧情资料流，不应直接作为角色可搜索的公开新闻。正式手机须标明可见权限。
+  k. twitter.html 674–685行空回复会补固定示例文案，缺数据补0；这与缇斯亚未知值/失败可见要求冲突，不能采纳。
+  l. 图片模块可用用户配置imgbbKey上传外部图床；本轮不继承该外传行为，也未调用任何上传。
+  m. manifest的permissions写法与已验证较新示例不同，localization只有defaultLocale没有resources，entry指向panel.html且同时挂该fragment。该参考不能作为新TPG打包格式的可靠模板，应按本项目当前已验证包和官方文档构建。
+
+四、Saber Phone 5.6.5：更贴切的请求控制参考
+reference-saber-565-complete.js：
+  3804–3832 callPhoneModel(text)：45秒上限，tavoApi.generate(text,{context:true})；超时拒绝并忽略迟到返回。这是调用侧结算超时，不是已证明底层网络取消。
+  3835–3845 queuePhoneModel(text,guard)：串行队列，真正启动前做有效性检查。
+  3848–3931 sendPhoneMessage：快照chatId、epoch、senderOwnerId、threadId；pendingReplies[chat::app::thread]=requestId；先持久化outgoing，再构造角色请求；请求前后检查归属与应用安装状态；parseReply检验请求；保存incoming成功后，仅当前可见线程标已读。
+  3934–3960 publishPost：先保存用户动态，再生成角色评论，解析后addPostReactions；没有可用角色时发布仍成功且说明无生成回复。
+可采纳：发送、生成、落库、通知拆成明确阶段；消息先保存且生成失败不回滚已发内容；按请求及线程绑定，跨聊天切换丢弃已失效结果；通知已读由实际打开状态决定。
+不可照搬：
+  2111–2113 hostSet吞错；2133起在宿主与localStorage两个版本中按revision/更新时间选新值；2157先写localStorage再排队写宿主。会形成两个可独立变化的真源，宿主失败也可能对用户报成功。应选一个正式真源并显示失败。
+  3792 cancelPhoneReplies只删除pending键/重置队列，不证明网络请求已取消；新旧队列可能并行，必须按实际宿主能力标注。
+  读取旧版本时自动normalize/migrate不等于用户数据损坏恢复；本项目不得在读取失败时自动清空或换存储。
+
+五、当前两附件可复用的接口证据
+漫画工作室：
+  ui/panel.html 427–428，await tavo.generate(prompt,{context:false})；另一个请求可context:true。独立生成返回内容供插件解析。
+  425行，tavo.chat.current()与tavo.message.find([],{hidden:false})读取来源；参考代码尝试id/chatId/uuid多个字段，不应把猜测字段纳入正式适配契约。
+  425行，await tavo.file.load('comic-studio-library.json',{scope:'global',encoding:'utf8'})；保存await tavo.file.save同名与JSON字符串，文件一个主体。
+  entry.js 1–16，tavo.set('comic_studio_command',{action,at})作命令信号，fragment轮询tavo.get；CustomEvent仅同document补充。不要把该参考注释“reliable”当成已实测跨realm保证。
+  模型解析失败会退回默认分镜，读取失败console.warn后继续默认对象；与本项目失败保留要求冲突。
+语音通话：
+  ui/call-widget.html 636–662，先清空宿主输入，tavo.input.set/send原生发送，最多3次自动重试，之后再多次clear。
+  881–957按起始消息索引轮询，从新消息选assistant，以250ms/650ms文本稳定猜完成，并收集消息id清理。
+  978–1001调用原生发送，再删除临时user/assistant消息；挂断也继续等迟到消息再删。
+  不宜采用：可能覆盖用户草稿，依索引误认消息归属，自动重试可能重复请求，文本短暂停顿不能证明流结束，删主聊天影响正式记录。本轮新版按用户澄清使用下一轮正文API注入，独立generate仅留作第三方能力对照。
+
+六、用户澄清后的主路径：正文注入、微页面定格、完整扩展
+用户当前要求：手机操作排队注入下一轮正文API；正文标记渲染为该回复时点的定格微页面，下方扩展保留完整可操作小手机；正文回复后自动检索并增量合并。早期独立generate作为主路径的建议作废。
+建议闭环：用户点击发送/赞踩/搜索 → 在chat/branch/thread作用域内记录稳定eventId与pending事件 → 下一轮generation:prepare取本次待处理事件快照与相关可见状态，按单一注入点进入正文请求 → 正文完成后按消息ID/版本提取严格闭合的手机增量与微页面标记 → 校验归属/基准版本/数据结构 → 一次提交增量、通知、来源回执与该消息的只读快照 → 按确认ack消费本次已处理事件 → 扩展展示最新状态，旧正文仍展示其原时点快照。
+失败：保留待处理事件、已发送消息、请求阶段与原始响应，显示可见错误；未得到有效ack的事件留待后续正文请求。不能因generation:success事件名就认为手机块有效，也不能把仅解析到流式前半段当成完成。重试沿同一事件ID去重，防止本次发送的消息被再造一遍。
+赞踩：按readerId+docId+itemId保存三态选择；点赞/踩互斥，同一按钮再次点击撤销；聚合值基于已知总数做差分，未知总数保持未知但展示本人选择。搜索：从同一状态的公开投影生成，跳回精确帖子/楼层；私聊搜索单独在本人可见范围内。
+通知：由成功提交的回复/被回复/引用等事件派生，稳定eventId去重；点击后标已读并跳源；不把整个内部消息队列做公开搜索源。
+
+七、与新主路径直接相关的第三方证据
+1. SaberPhone5.6.5 已有正文正反同步，文件reference-saber-565-complete.js：
+   - 2602–2638 planSync从phoneEvents里挑status!=consumed的事件，携带id、seq、appId、threadId、messageId、direction、text、visibility；已消费事件作为近期记忆另取。
+   - 2731–2749将只读手机记忆放入<cpp_phone_memory_v1>，未消费事件放入<cpp_phone_events_v1>；提醒正文继承已发生操作、沿用messageId，并限定参与者可见性。
+   - 2755–2774要求正文正常完成后输出<cpp_phone_v4>。其内部<cpp_meta>有turn、owner、required、content_mode，各App独立标签。多主人使用<mph_actor_v1 id="ownerId">包裹。
+   - 2786–2795 mutatePrepareHub选择event.text（已有text或无content时），否则event.content；先删旧协议，再把本次契约追加到该字段。
+   - 4541–4546 generation:prepare计算plan，capturePreparedEvents(plan.storyEventIds)，然后返回改写后的event。
+   - 2425–2447 preparedEvents保存chatId+epoch+事件ID快照；ack校验作用域后标consumed。
+   - 4549–4560 generation:success从event.text/content取协议并applyPayloads；4573/4574 message:added和message:updated也复用同一提取路径。
+   - 2247–2276切聊天后从历史assistant消息content/text重建；2321–2337 applyText发现协议解析失败会保存parse-error而不拿空对象覆盖既有应用。
+   - 755–859 applySnapshot按turnId与各App签名去重；部分有效应用增量合并、保留本地消息，重复消息事件不会无条件累加。
+2. 不能照搬的环节：
+   - 4555在applyPayloads后无条件ack preparedEvents，下一行才处理parseError；因此解析失败也可能消费队列。新版应有效提交并确认ack后消费。
+   - prepare只记录一份全局preparedEvents，没有生成请求ID；多个生成或重挂时需要本项目请求归属与生命周期约束。
+   - 2758要求每轮输出全部已安装应用完整块，和本次“自动检索增量、信息单次落位”不同。新版应按变更与检索上下文供数，不抄每轮全量配额。
+   - 3553对空可见正文补“手机已同步”字样；4471起遍历DOM文本去除协议，可能影响原消息显示。新版微页面应从已确认消息原文的标记投影，单独持有sourceMessageId与冻结快照；不通过任意全局DOM删字制造成功。
+   - 817–822允许同turn有变化时继续合并，便于流式修补但与最终归档的幂等边界不同。正式写入应明确“流式预览/最终提交”阶段，不在未闭合协议时持久化。
+   - 这份参考未提供每条历史正文“冻结微页面+下方完整交互扩展”的已实现证据，不能宣称照搬就有；该分层需本项目新建。
+3. 绮楼1.4.1 对应边界：
+   - entry.js第9–16行只监听message:added/chat:opened，延迟1200/500ms调用window.top.__memoModule.autoSummarize，作用是记忆归纳；不是手机协议自动提取。
+   - plotOption.html第1204–1233行“注入世界书”按钮创建/更新lorebookBefore的条目，属于手动安装写作引导；未发现generation:prepare进行手机事件注入。
+   - 微信/朋友圈/新闻主要按点击调用独立generate，不能作为“下一轮正文返还手机增量”的已实现证据。
+
+当前接口事实与用户方案结论分开：上述第三方hook/API调用仅是实际源码证据，不证明宿主每个事件均真实稳定触发；正式实现以现有缇斯亚正文组装点和宿主完成回执接入，官方契约与实机结果由父任务核验。
+
+验证边界
+本审计只检查实际参考归档、manifest、文本源码与索引身份；无真实模型调用、无浏览器运行、无Android实测。API返回形状、权限、取消能力、存储与切换竞态仍以当前官方资料和本项目适配测试/目标设备证据为准。对参考的缺陷判断是源码路径分析，不等同于已在用户设备重现故障。
+
+八、纯协议实现与验证
+{
+  "verified_utc": "2026-11-09T11:20:42.709175+00:00",
+  "command": "node --test --test-reporter=tap evidence/phone-protocol.test.mjs",
+  "exit_code": 0,
+  "passed": 15,
+  "files": {
+    "preview/phone-protocol.mjs": {
+      "bytes": 11043,
+      "sha256": "0a54e5c71bd7ec5a86ad7354e3abd50325878672c09b071c7200f2c2e758ff96"
+    },
+    "evidence/phone-protocol.test.mjs": {
+      "bytes": 8756,
+      "sha256": "1bb8186913180d5e9fb65b3e819dbf0962d21ddba1adb96cfa26e24291c3807e"
+    }
+  },
+  "scope": "Pure protocol unit tests; no host/model/browser/Android execution"
+}
+API：extractPhonePayload默认仅识别唯一extra内phone，allowStandalone只用于显式预览导入；findPhoneMarkers返回UTF-16偏移，忽略围栏与行内代码；stripPhonePayload验证成功才移除phone原范围，保留其余字节。requestId必填，其余顶层字段可省略；提供时按类型校验，17类blocks细节交suite。错误码统一PHONE_PROTOCOL_，调用方保留原文。包含危险键、坏JSON、重复、字符中结束标签、代码示例与标记语义测试。
+
+九、phone-core独立事实场景测试（进行中，父任务修核心）
+新增 evidence/phone-core.test.mjs，以三组实际renderer导出的28页/17类seed验证，不执行DOM。首轮21组15通过，记录5个真实缺口以及1个新增忙锁导致的测试路径调整；第二轮23组21通过，记录请求码预期校正和较早轮次reroll未detach后续用户操作；第三轮29组26通过，前述核心缺口已修，剩取消消息进入下轮事实上下文、archive字段/引用验证不足、prepared期间import可覆盖在途请求。原始失败均保留phone-core-first/second/third.tap.txt及对应json；未把后来的通过覆盖首错。测试code及核心散列由这些原始证据记录。
+当前覆盖：发送/prepare/严格ack/冻结快照；未ack操作留队；JSON/acks坏值保持input不变；未来楼层与赞踩不改旧定格；失败后重试不重复发用户消息；公开搜索与私人消息隔离；同source幂等和签名冲突；reroll/历史删楼/较早分支回滚；赞踩互斥、未知与0；持久化失败不更新内存；chatKey不符拒绝；模型不能写readerState/visibility/self或删用户消息；空手机响应留队；存档往返；prepared及replay忙锁与草稿；取消消息不可作为已发事实；存档字段/分支/事件引用守卫。
+
+
+十、phone-core固定终验与首错收束
+UTC：2026-11-09T11:31:03.792283+00:00；北京时间：2026-11-09 19:31:03。
+最终固定范围：evidence/phone-core.test.mjs 共30组，全部通过；实际三组renderer合并seed（28页/17类）参与，没有换为简化虚拟seed。命令：node --test --test-reporter=tap evidence/phone-core.test.mjs。
+最终原始输出 evidence/phone-core-final.tap.txt，执行时间、前后散列与范围 evidence/phone-core-final.json；本次运行前后核心与测试散列一致。
+核心 SHA256：9c9815284b1c5e3bd646ccbb9142032c6d3a181583c83b2851732a3b1be1bed9
+测试 SHA256：e8486e3063db7fbc229a2c433f49b45ed0d72bd578648e7a29ce2e4df752d236
+保留首错：phone-core-first.tap.txt（21组15过6失败，5个产品缺口与1个测试时序需调整）；phone-core-second.tap.txt（23组21过，1个产品缺口与1个错误码预期校正）；phone-core-third.tap.txt（29组26过3失败）。对应json均保留，不以最终通过覆盖早期原始证据。
+第30组在停止扩测指令到达前已经加入并执行，场景为r1已接纳、r2已prepared，此时replay r1应拒绝。首次单项运行实际报Missing expected exception，已在协作工具报告；该次完整TAP仅保留于工具执行历史，没有另存文件，不能称本地保存了该单项原始输出。父任务补充另一prepared请求守卫后，最终30组全过。
+修正归属：测试agent未修改phone-core，仅编写独立测试、复现报告及证据；产品修正由父任务实现。仍无真实模型调用、浏览器运行、目标宿主运行或Android实测。停止追加测试，交父任务继续合包/构建/安装核验。
+
+十一、host最新源码只读核验（提交父任务处理，不构成已实测结论）
+核验文件：phone-work/host-source/phone-turn-host.js、index.js、engine/controller.mjs、engine/tags.mjs。
+1. createPhoneMetadataStorage：归属锁为chatKey加chatMetadata对象身份，load后比revision及完整known值再保存；persist抛错或返回false时只在当前槽仍为本次next对象时回滚，避免盖掉其他writer替换后的值。没有localStorage双真源和自动清空。返回atomic:false，不能将其描述为宿主磁盘与内存原子事务：persist成功后切聊天/冲突仍可能出现磁盘已写但当前调用失败的结果，需重开重读核对，且未做真实宿主故障注入。
+2. prepared锁恢复：初读发现contextChanged/dispose清active而保留持久化prepared；begin prepare成功后valid失败也可能留锁。已告知父任务与host agent。host agent说明这是父任务明确“不跨chat写入”的约束，已处理同chat stop race，UI正在增加显式“本轮已结束，恢复待发”。因此将此列为待验证恢复流程，不能继续表述为已确认永久死锁或声称已实机修复。
+3. 重大来源归属待核：selectedSources读取所有已选assistant的requestId送reconcile，没有在此处核对前置user的PHONE_TURN_KEY binding/对应request.anchorUid。core只要求requestId存在。新回复本应r2却误返已有r1时，finished不匹配分支仍先reconcile全部sources，可能把新消息UID的旧r1增量落入状态，再fail r2。已报告父任务和host agent建议按用户锚点绑定拒绝请求跨锚迁移；这是实际源码路径分析，未新增执行测试，修正结果以后续父任务证据为准。
+4. 标签适配待核：readPhoneRequestId对raw调用normalizeEnvelope，而accept/reconcile传递原raw。项目允许extra标签别名；启用别名时可能存在“取到requestId但后续原raw解析不到phone”的不一致。已同步host agent，不宣称默认标签路径失败。
+5. 消息候选边界：captureMessages对pending候选返回pending_previous的已接受来源，而正文挂载phoneSource按可见message.mes哈希。未接纳候选可无快照；此时必须明确显示未接纳/暂无定格，不能拿旧快照冒充当前候选。当前审计仅记录这两个实际来源选择不同，未据此认定展示已违规。

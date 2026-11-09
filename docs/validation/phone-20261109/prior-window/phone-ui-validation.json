@@ -1,0 +1,85 @@
+{
+  "utc": "2026-11-09T11:50:12.966871+00:00",
+  "scope": "Actual phone core and controller with minimal DOM stubs. Not a real browser or Android test. DOM enhancement selectors are inspected in source, not exercised by these stubs.",
+  "result": "passed",
+  "tests": 14,
+  "failed": 0,
+  "features": [
+    "all 28 seeded documents and 17 kinds render",
+    "empty host keeps all 17 application placeholders, no fictional documents",
+    "new message and scalar quote, queued status",
+    "mutually exclusive like/down/cancel and known floor counters",
+    "public versus mine search, next-turn queued search",
+    "prepare locks sending while drafts remain editable",
+    "pending prompt copy reuses the same request",
+    "accept reply JSON or full reply and notify",
+    "snapshot references accepted floor, never current fallback",
+    "frozen UI waits for receipt and retries same source only",
+    "source context guard and dispose generation guard",
+    "rapid drafts preserve newest text",
+    "video by-author compatibility projection",
+    "single composer",
+    "localStorage conflict and malformed-byte preservation",
+    "whole-page frozen marker includes original post, latest six records and explicit omitted count; no later data"
+  ],
+  "failures_preserved": [
+    {
+      "path": "phone-work/phone-ui-controller-first-failure.txt",
+      "reason": "First test draft incorrectly asserted last.quote.floor; actual core contract stores scalar quote. Updated assertion to last.quote, then all passed."
+    },
+    {
+      "stage": "temporary syntax after reaction counter enhancement",
+      "stderr": "phone-app.mjs:103\nexport async function bootPhone(...)\n^^^^^^\nSyntaxError: Unexpected token export",
+      "resolution": "Missing closing brace for the label arrow function was corrected; node --check and all controller tests subsequently passed."
+    },
+    {
+      "stage": "patch invocation working directory",
+      "stderr": "FileNotFoundError: [Errno 2] No such file or directory: 'network-blocks-design/phone-work/phone-ui-controller.test.mjs'",
+      "resolution": "Relative path was prefixed twice because the shell already ran in network-blocks-design. Patch was rerun with absolute task root; original failure did not mutate files."
+    }
+  ],
+  "files": [
+    {
+      "path": "preview/phone-app.mjs",
+      "bytes": 37284,
+      "sha256": "d574d466ca6bd4bafb9fcb4a0661ae3dfc6b9527e27d268b66934255c219df3a"
+    },
+    {
+      "path": "preview/phone-shell.mjs",
+      "bytes": 21709,
+      "sha256": "bb82aaaee3fe11d27cf481f1ad64c0ec07b722862668c6dcfda4e18ec58f1ee3"
+    },
+    {
+      "path": "preview/phone-shell.css",
+      "bytes": 31170,
+      "sha256": "9ed0018d35b5856cb7cd068d3b4840d0121b03535a1ff3a8f8d83a52ac09e417"
+    },
+    {
+      "path": "phone-work/phone-ui-controller.test.mjs",
+      "bytes": 11935,
+      "sha256": "486773e59816e53b60107494fe51a9d3f3bac8f1eaf813097510159190616ad2"
+    },
+    {
+      "path": "phone-work/phone-ui-controller-test-output.txt",
+      "bytes": 3196,
+      "sha256": "5e5b5157cdd6a6ab30b76e3cc25f00d5823a85b7199565ad042f0899066ecbfa"
+    },
+    {
+      "path": "phone-work/phone-ui-controller-first-failure.txt",
+      "bytes": 3141,
+      "sha256": "eeb89c85b7018b96fa6cf57ee088df29213ee6dd510d83cf108ce14d15c1f6a1"
+    }
+  ],
+  "dom_followup": {
+    "report": "phone-work/phone-ui-dom.json",
+    "passed": 7,
+    "failed": 0,
+    "scope": "Happy DOM actual parsed-DOM events; no graphical browser/Android"
+  },
+  "bundle_followup": {
+    "report": "phone-work/phone-bundle-dom.json",
+    "passed": 3,
+    "failed": 0,
+    "scope": "Delivered inline module executed byte-for-byte with native VM and Happy DOM; no graphical browser/Android"
+  }
+}

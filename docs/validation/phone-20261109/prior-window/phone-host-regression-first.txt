@@ -1,0 +1,944 @@
+✖ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (26.921586ms)
+✖ mounted preset recovery is available on both settings and native preset page and clears startup failure (6.523157ms)
+✖ new configuration replaces legacy panels and preserves unsaved tag edits (5.094405ms)
+✖ phone and sidebar open the same read-only notes and public memory pages (4.678468ms)
+✖ native image and voice entries open existing settings without generating or rewriting controls (4.935685ms)
+✖ unavailable native phone actions report failure, never substitute another configuration (8.47044ms)
+✖ phone settings opens the new configuration; theme and protocol keep native surfaces (4.532959ms)
+✖ theme workshop saves live effects without the removed configuration categories (4.531507ms)
+✖ editing or swiping invalidates an open reader and notebook without touching messages (4.427239ms)
+✖ notebook lookup works during a pending generation and tears down on return to native UI (4.815584ms)
+✖ contacts, labels, grouping and teardown keep native nodes (4.694231ms)
+✖ continue requests next normal response, never submits composer draft (4.751137ms)
+✖ message menu refuses edited source and generation blocks editing (4.888254ms)
+✖ home lists every persisted chat and keeps same-name contacts separate (4.393148ms)
+✖ production home checks avatar identity and selects the exact persisted chat before closing (4.380069ms)
+✖ homepage USER opens the unified identity page and retains a real native-controls exit (4.211765ms)
+✖ worldbook entry stays accessible during streaming and chat editing stays locked (9.763187ms)
+✖ streaming disables actions and generation end re-enables both on same mounted message (4.99843ms)
+✖ old AI advanced reroll opens review without deleting history (5.398282ms)
+✖ old user continue returns to that turn and requests next reply (4.793091ms)
+✖ rollback save failure prevents generation and reports partial deletion (4.731778ms)
+✖ draft and disconnected model prevent any history deletion (4.664437ms)
+✖ custom continue text persists and reaches native normal generation as user input (4.34834ms)
+✖ typing a draft during rollback preserves it and stops generation (14.091438ms)
+✖ unloaded sparse history is rejected without deletion (5.577943ms)
+✖ workflow navigation retains the original expansion control without duplicate shortcuts (5.014975ms)
+✖ chat menu keeps the native anchor and removes the duplicated settings entry (8.618923ms)
+✖ sidebar shortcut entry closes the page and opens seven position selectors (4.536354ms)
+✖ supported system fullscreen routes to native action while app header stays removed (3.972444ms)
+✖ message and bottom menu icons retain accessible names and native source nodes (3.945053ms)
+✖ reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds (3.622948ms)
+✖ inline action mode append changes draft without a confirmation modal (3.639723ms)
+✖ inline action mode replace changes draft without a confirmation modal (3.900034ms)
+✖ action refuses changed message after opening inline mode menu (3.750179ms)
+✖ action refuses changed chat after opening inline mode menu (3.669968ms)
+✖ direct send is an explicit mode and native submission occurs only after an action click (3.727796ms)
+✖ direct send preserves a nonempty draft with inline feedback (3.518971ms)
+✖ chat change closes reader and stale actions cannot write into the next conversation (3.559322ms)
+✖ holding a shadow UI button never opens the native long-press message menu (3.72373ms)
+✖ stopping a hung native generation releases history after host idle and a late result cannot unlock a new run (3.739734ms)
+✖ stopping generation options cancels the pending action without a late send (3.962048ms)
+✖ stop during rollback persists the completed deletion before unlocking and reports the actual count (3.955398ms)
+✖ a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation (4.370624ms)
+✖ UI completions cannot release the history lock while generation options are pending (4.14862ms)
+✖ late clipboard completion leaves a newly opened menu intact (4.371766ms)
+✖ pending history save allows menu dismissal and does not close a later panel (4.504175ms)
+✖ message toolbar supports only more, custom order, full expansion, and persists independently (4.350774ms)
+✖ unbound new engine aborts before the native payload and never initializes old tables (4.324474ms)
+✖ native edit focus places confirmation controls below the editor and exit restores them (4.148899ms)
+✖ welcome startup mounts the pet and functional sidebar without a world or persistence (4.406999ms)
+✖ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (4.191074ms)
+✖ native composer persists requirements separately and clears the draft before awaiting the reply (4.161229ms)
+✖ Android immersive entry remains discoverable and invokes the persistent native toggle (4.257194ms)
+✖ legacy native shortcut is hidden without overwriting settings; advanced revision remains in More (4.227388ms)
+✖ candidate navigation has its own final row after message tools (15.372497ms)
+✖ direct candidate jump edits the selected native text and deletes only selected version (5.264932ms)
+✖ production initializer wires asynchronous message cache without disabling the shell (4.790546ms)
+✖ production long-press More saves manual order and keeps copy reachable (4.142841ms)
+✖ production display route saves the real host loading field without replacing history (4.467659ms)
+✖ settings has one destination per entry and discovers later native drawers (4.212255ms)
+✖ groups use stable native IDs; inline management does not load a chat (4.193427ms)
+✖ cache drafts block page and phone navigation until saved or discarded (4.403464ms)
+✖ native API editor opens from clean configuration and preserves unsaved tags (15.02861ms)
+✖ home settings invokes the menu; menu rename and pin persist with native names unchanged (4.531426ms)
+✖ late host autoload leaves home visible, while choosing a row still opens exact chat (3.64488ms)
+✖ deletion requires confirmation and checks the native result instead of assuming success (3.592011ms)
+✖ directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape (3.813325ms)
+✖ detached inline edit is rejected instead of saving against a stale row (3.607064ms)
+✖ user message exposes reroll-next, preserves draft guard and sends edited comparison only once (3.68372ms)
+✖ all settings entry points reuse one page, preserve search and discover a drawer installed while open (3.654515ms)
+✖ settings and identity headers return directly to current chat without changing its contents (3.784891ms)
+✖ pending native clipboard on the actual message toolbar never blocks a new chat action (3.722587ms)
+✖ rendered target chat releases actual home navigation lock while native selection promise stays pending (3.938253ms)
+✖ managed committed tail releases home lock even when host never emits CHAT_CHANGED (4.260348ms)
+✖ pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock (3.628206ms)
+✖ target data loaded without completion events closes the directory and releases chat operations (3.653093ms)
+✖ native token-count dry runs do not clear pending one-pass storage work (4.159226ms)
+✖ token count between a real start and its end still completes the real generation lifecycle (3.592542ms)
+✔ preload and explicit dry run do not call engine or mutate cached native records (1.392047ms)
+✔ every active source is gated before native sticky, decorators and forced activation; enabled matches keep native budget fields (2.383822ms)
+✔ forced or late injected denied entry stops final payload even if host catches scan error (0.632513ms)
+✔ unrecognized provider, missing result and wrong version fail closed and final readiness remembers failure (0.642117ms)
+✔ timeout and context changes reject late outcomes and never reuse last success (26.355021ms)
+✔ current state freshness is checked before recursion finishes and before final send (0.491881ms)
+✔ all eight host insertion anchors retain ordering after gate filtering; ordinary entries remain intact (2.181887ms)
+✖ actual entry point gates preset-added records after collection, awaits final guard and cancels all terminal paths (1.958711ms)
+✔ a cancelled scan finishing late cannot poison the next generation (0.429277ms)
+✔ late replacement cannot reuse a permitted entry identity with a different rule (0.660886ms)
+ℹ tests 88
+ℹ suites 0
+ℹ pass 9
+ℹ fail 79
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 815.530355
+
+✖ failing tests:
+
+test at tests/shell.test.js:57:1
+✖ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (26.921586ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:58:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/shell.test.js:61:1
+✖ mounted preset recovery is available on both settings and native preset page and clears startup failure (6.523157ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:63:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:69:1
+✖ new configuration replaces legacy panels and preserves unsaved tag edits (5.094405ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:70:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:72:1
+✖ phone and sidebar open the same read-only notes and public memory pages (4.678468ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:73:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:79:1
+✖ native image and voice entries open existing settings without generating or rewriting controls (4.935685ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:80:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:88:1
+✖ unavailable native phone actions report failure, never substitute another configuration (8.47044ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:89:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:91:1
+✖ phone settings opens the new configuration; theme and protocol keep native surfaces (4.532959ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:92:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:94:1
+✖ theme workshop saves live effects without the removed configuration categories (4.531507ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:95:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:97:1
+✖ editing or swiping invalidates an open reader and notebook without touching messages (4.427239ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:98:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:103:1
+✖ notebook lookup works during a pending generation and tears down on return to native UI (4.815584ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:104:28)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:108:1
+✖ contacts, labels, grouping and teardown keep native nodes (4.694231ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:108:84)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:109:1
+✖ continue requests next normal response, never submits composer draft (4.751137ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:109:95)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:110:1
+✖ message menu refuses edited source and generation blocks editing (4.888254ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:110:91)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:112:1
+✖ home lists every persisted chat and keeps same-name contacts separate (4.393148ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:112:96)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:114:1
+✖ production home checks avatar identity and selects the exact persisted chat before closing (4.380069ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:115:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:119:1
+✖ homepage USER opens the unified identity page and retains a real native-controls exit (4.211765ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:120:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:126:1
+✖ worldbook entry stays accessible during streaming and chat editing stays locked (9.763187ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:126:106)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:128:1
+✖ streaming disables actions and generation end re-enables both on same mounted message (4.99843ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:129:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:145:1
+✖ old AI advanced reroll opens review without deleting history (5.398282ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:146:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:149:1
+✖ old user continue returns to that turn and requests next reply (4.793091ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:150:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:153:1
+✖ rollback save failure prevents generation and reports partial deletion (4.731778ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:154:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:157:1
+✖ draft and disconnected model prevent any history deletion (4.664437ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:158:45)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:160:1
+✖ custom continue text persists and reaches native normal generation as user input (4.34834ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:161:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:166:1
+✖ typing a draft during rollback preserves it and stops generation (14.091438ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:167:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:172:1
+✖ unloaded sparse history is rejected without deletion (5.577943ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:173:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:176:1
+✖ workflow navigation retains the original expansion control without duplicate shortcuts (5.014975ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:177:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:182:1
+✖ chat menu keeps the native anchor and removes the duplicated settings entry (8.618923ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:183:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:188:1
+✖ sidebar shortcut entry closes the page and opens seven position selectors (4.536354ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:189:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:195:1
+✖ supported system fullscreen routes to native action while app header stays removed (3.972444ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:196:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:200:1
+✖ message and bottom menu icons retain accessible names and native source nodes (3.945053ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:201:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:207:1
+✖ reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds (3.622948ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:208:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:213:40
+✖ inline action mode append changes draft without a confirmation modal (3.639723ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:214:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:213:40
+✖ inline action mode replace changes draft without a confirmation modal (3.900034ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:214:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:218:40
+✖ action refuses changed message after opening inline mode menu (3.750179ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:219:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:218:40
+✖ action refuses changed chat after opening inline mode menu (3.669968ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:219:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:223:1
+✖ direct send is an explicit mode and native submission occurs only after an action click (3.727796ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:224:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:227:1
+✖ direct send preserves a nonempty draft with inline feedback (3.518971ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:228:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:230:1
+✖ chat change closes reader and stale actions cannot write into the next conversation (3.559322ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:231:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:235:1
+✖ holding a shadow UI button never opens the native long-press message menu (3.72373ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:236:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:240:1
+✖ stopping a hung native generation releases history after host idle and a late result cannot unlock a new run (3.739734ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:241:79)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:250:1
+✖ stopping generation options cancels the pending action without a late send (3.962048ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:251:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:254:1
+✖ stop during rollback persists the completed deletion before unlocking and reports the actual count (3.955398ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:255:30)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:259:1
+✖ a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation (4.370624ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:260:28)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:281:1
+✖ UI completions cannot release the history lock while generation options are pending (4.14862ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:282:47)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:291:1
+✖ late clipboard completion leaves a newly opened menu intact (4.371766ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:292:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:301:1
+✖ pending history save allows menu dismissal and does not close a later panel (4.504175ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:302:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:310:2
+✖ message toolbar supports only more, custom order, full expansion, and persists independently (4.350774ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:310:120)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:312:1
+✖ unbound new engine aborts before the native payload and never initializes old tables (4.324474ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:313:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:315:1
+✖ native edit focus places confirmation controls below the editor and exit restores them (4.148899ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:316:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:326:1
+✖ welcome startup mounts the pet and functional sidebar without a world or persistence (4.406999ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:327:50)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:341:1
+✖ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (4.191074ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:342:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:364:1
+✖ native composer persists requirements separately and clears the draft before awaiting the reply (4.161229ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:365:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:372:1
+✖ Android immersive entry remains discoverable and invokes the persistent native toggle (4.257194ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:372:112)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:374:1
+✖ legacy native shortcut is hidden without overwriting settings; advanced revision remains in More (4.227388ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:374:123)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:376:1
+✖ candidate navigation has its own final row after message tools (15.372497ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:376:89)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:378:1
+✖ direct candidate jump edits the selected native text and deletes only selected version (5.264932ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:378:113)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:380:1
+✖ production initializer wires asynchronous message cache without disabling the shell (4.790546ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:381:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:383:1
+✖ production long-press More saves manual order and keeps copy reachable (4.142841ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:384:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:391:1
+✖ production display route saves the real host loading field without replacing history (4.467659ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:392:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:395:1
+✖ settings has one destination per entry and discovers later native drawers (4.212255ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:396:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:401:1
+✖ groups use stable native IDs; inline management does not load a chat (4.193427ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:402:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:406:1
+✖ cache drafts block page and phone navigation until saved or discarded (4.403464ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:407:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:410:1
+✖ native API editor opens from clean configuration and preserves unsaved tags (15.02861ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:411:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:413:1
+✖ home settings invokes the menu; menu rename and pin persist with native names unchanged (4.531426ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:414:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:418:1
+✖ late host autoload leaves home visible, while choosing a row still opens exact chat (3.64488ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:419:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:422:1
+✖ deletion requires confirmation and checks the native result instead of assuming success (3.592011ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:423:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:426:1
+✖ directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape (3.813325ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:427:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:436:1
+✖ detached inline edit is rejected instead of saving against a stale row (3.607064ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:437:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:444:1
+✖ user message exposes reroll-next, preserves draft guard and sends edited comparison only once (3.68372ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:445:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:454:1
+✖ all settings entry points reuse one page, preserve search and discover a drawer installed while open (3.654515ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:455:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:463:1
+✖ settings and identity headers return directly to current chat without changing its contents (3.784891ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:463:118)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:466:1
+✖ pending native clipboard on the actual message toolbar never blocks a new chat action (3.722587ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:467:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:478:1
+✖ rendered target chat releases actual home navigation lock while native selection promise stays pending (3.938253ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:479:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:492:1
+✖ managed committed tail releases home lock even when host never emits CHAT_CHANGED (4.260348ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:493:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:509:1
+✖ pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock (3.628206ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:510:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:523:1
+✖ target data loaded without completion events closes the directory and releases chat operations (3.653093ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:524:26)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:533:1
+✖ native token-count dry runs do not clear pending one-pass storage work (4.159226ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:534:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:538:1
+✖ token count between a real start and its end still completes the real generation lifecycle (3.592542ms)
+  SyntaxError [Error]: Unexpected identifier 'as'
+      at Window.eval (<anonymous>)
+      at setup (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:55:483)
+      at async TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:539:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/worldbook-conditions.test.js:18:1
+✖ actual entry point gates preset-added records after collection, awaits final guard and cancels all terminal paths (1.958711ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /GENERATION_STOPPED',(?:async)?\(\)=>\{nativeGenerationEpoch\+\+;generationOperations.stop\(\);revisionController.stopped\(\);worldbookConditions.end/. Input:
+  
+  "import {streamingMessageSource} from './streaming-message.js';\n" +
+    "import {createPhoneService} from './phone-core.mjs';\n" +
+    "import {createPhoneTurnHost,createPhoneMetadataStorage} from './phone-turn-host.js';\n" +
+    "import {chatKey as phoneChatKey} from './engine/controller.mjs';\n" +
+    "import {finishMatrixGeneration} from './engine/lifecycle.mjs';\n" +
+    "import {mountGenerationIdleGuard} from './generation-idle-guard.js';\n" +
+    "import {createMatrixHost} from './engine/host.mjs';\n" +
+    "import {mountMatrixConfiguration} from './engine/ui.mjs';\n" +
+    "import {createWorldSeedService,mountWorldSeed} from './world-seed.js';\n" +
+    "import * as personaNative from '/scripts/personas.js';\n" +
+    "import * as hostNative from '/script.js';\n" +
+    "import {createNativePersonaSlotHost} from './persona-slots.js';\n" +
+    "import {isOnePassPreset} from './onepass/preset.mjs';\n" +
+    "import {nativePanelContentProcessor} from './native-panel-source.js';\n" +
+    "import {selectChatReady,notifySelectedChatContent,chatSelectionDiagnostic,chatSelectionSummary} from './chat-selection.js';\n" +
+    "import {createUiOperations,messageActionExclusive} from './ui-operation.js';\n" +
+    "import {createGenerationOperations} from './generation-operation.js';\n" +
+    "import {initializePresetConnection} from './preset-connection.js';\n" +
+    "import {createPresetUpdateController,mountPresetUpdateControl,showPresetUpdateError} from './builtin-preset-controls.js';\n" +
+    "import {createGlobalFonts} from './global-fonts.js';\n" +
+    "import {mountThemeWorkbench} from './theme-workbench.js';\n" +
+    "import {messageCardCover} from './message-cover.js';\n" +
+    "import {mountAssistantApp} from './assistant-app.js';\n" +
+    "import {createIdentityService} from './user-identity-service.js';\n" +
+    "import {mountMatrixIdentity} from './engine/identity-ui.mjs';\n" +
+    "import {createStoryIdentity} from './engine/identity.mjs';\n" +
+    "import {mountIdentityPage} from './user-identity-page.js';\n" +
+    "import {createWorldbookConditionGate} from './worldbook-conditions.js';\n" +
+    "import {createPersonaGateway} from './tables/persona.js';\n" +
+    "import {projectToolTurns} from '/scripts/tauritavern/tool-turn-projection.js';\n" +
+    "import {user_avatar,initUserAvatar,setPersonaDescription,convertCharacterToPersona} from '/scripts/personas.js';\n" +
+    "import {createCharacterGroupHost} from './character-group-host.js';\n" +
+    "import {installWorldbookOrder} from './worldbook-order.js';\n" +
+    "import {createWorldbookConsole} from './worldbook-console.js';\n" +
+    "import {settingsDestinations} from './settings-navigation.js';\n" +
+    "import {mountSettingsHome} from './settings-home.js';\n" +
+    "import {hideFullPanels,hideAllPanels,refreshPanelFonts} from './panel-surface.js';\n" +
+    "import {createUserEditHistory,installUserEditHistory,userRevisionMaterial,userRerollTarget} from './user-revision.js';\n" +
+    "import {directoryState,directoryEntry,directoryToken,changeDirectory,mountDirectoryHold} from './home-directory.js';\n" +
+    "import {deleteCharacterChatByName,closeCurrentChat} from '/script.js';\n" +
+    "import {createChatLoadingController,mountChatLoadingSettings} from './chat-loading.js';\n" +
+    "import {select_group_chats} from '/scripts/group-chats.js';\n" +
+    "import {power_user} from '/scripts/power-user.js';\n" +
+    "import {isBoundedChatSurfaceView,getThumbnailUrl} from '/script.js';\n" +
+    "import {mountHome} from './home.js';\n" +
+    "import {timestampToMoment} from '/scripts/utils.js';\n" +
+    "import {resetNativePanelSources} from './native-panels.js';\n" +
+    "import {immersiveState,immersiveSupported} from './fullscreen.js';\n" +
+    "import {createCommunication,mountCommunication,readTurnDirection,syncTurnDirectionEditor} from './communication.js';\n" +
+    "import {createRevisionController,candidatePosition} from './revision.js';\n" +
+    "import {startReaderCache,clearReaderCache,prepareReaderMessage,reconcileReaderCache,readerCacheGeneration} from './reader.js';\n" +
+    "import {messageCacheOwner} from './message-cache.js';\n" +
+    "import {mountParagraphActions,LONG_PRESS_TOOLS,longPressSlots} from './paragraph-actions.js';\n" +
+    "import {mountRevisionEditor} from './revision-ui.js';\n" +
+    "import {branchChat} from '/scripts/bookmarks.js';\n" +
+    "import {createTextTransport} from './config/text-transport.js';\n" +
+    "import {interfaceSnapshot,validateInterfaceSettings} from './tables/interface-config.js';\n" +
+    "import {createNativeConfiguration,createRegexGate} from './tables/native-config.js';\n" +
+    "import {createTableService} from './tables/service.js';\n" +
+    "import {createNativeVectors} from './tables/vectors.js';\n" +
+    "import {appendFileContent} from '/scripts/chats.js';\n" +
+    "import {yaml} from '/lib.js';\n" +
+    "import {configureReplyFormats} from './reply-formats.js';\n" +
+    "import {GENERATION_CONTRACTS,MODE_CONTRACT,ARCHIVE_CONTRACT,validateGeneratedTask} from './config/contracts.js';\n" +
+    "import {loadAgentSystemSettings} from '/scripts/tauritavern/agent/agent-system-settings.js';\n" +
+    "import {createStore,register,registry,worldKey} from './config/core.js';\n" +
+    "import {createHost,blockPayload} from './config/host.js';\n" +
+    "import {mountConfiguration} from './config/panel.js';\n" +
+    "import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';\n" +
+    "import {createNativeDisplayPipeline} from './native-display.js';\n" +
+    "import {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from '/scripts/extensions/regex/engine.js';\n" +
+    "import {readNarrative} from './narrative-bridge.js';\n" +
+    "import {createNarrativeBridge,registerLivePreset,isLivePreset} from './narrative-bridge.js';\n" +
+    "import {mountSettingsApp} from './settings-app.js';\n" +
+    "import {appearanceValues,appearanceOverrides,withAppearanceOverrides} from './appearance-settings.js';\n" +
+    "import {saveCharacterChatMetadata,saveGroupChatMetadata} from '/scripts/chat-payload-transport.js';\n" +
+    "import {emotionCatalog,mountEmotionAtlas} from './emotion-catalog.js';\n" +
+    "import {ACTION_MODES,executeAction} from './actions.js';\n" +
+    "import {mountMessageAppearance,mountChatEffects} from './message-ui.js';\n" +
+    "import {mountPet} from './pet.js';\n" +
+    "import { iconMarkup } from './icons.js';\n" +
+    "import { mountMessageNavigation } from './navigation.js';\n" +
+    "import {mountInputShortcuts} from './input-shortcuts.js';\n" +
+    "import {createEditToolbarPlacement} from './edit-toolbar.js';\n" +
+    'let inputShortcuts=null,communicationUI=null,revisionEditor=null,paragraphActions=null;\n' +
+    'const revisionDrafts=new Map();\n' +
+    'let editToolbarPlacement=null;\n' +
+    "import { mountMessageReader } from './reader.js';\n" +
+    "import { mountNotebook } from './notebook.js';\n" +
+    "import { getContext } from '/scripts/st-context.js';\n" +
+    "import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';\n" +
+    "import { registerPresetProtocol,outputEnabled } from './preset.js';\n" +
+    "import { setUserName, setExtensionPrompt, isGenerating, Generate, swipe, deleteSwipe, messageEdit, hydrateChatMessageSwipes, isMessageSwipeable, getOverswipeBehavior, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata, waitForGenerationIdle } from '/script.js';\n" +
+    "import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';\n" +
+    "import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';\n" +
+    "import { capture, validate, groupContacts } from './model.js';\n" +
+    "import { loadReadingFont } from './font.js';\n" +
+    "import { VERSION, SECTIONS, drawerEntries, chatPreview, chatTitle, mountLayout, installComposer } from './layout.js';\n" +
+    '\n' +
+    "const KEY = '缇斯亚界面';\n" +
+    'configureReplyFormats({yaml});\n' +
+    `const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));\n` +
+    'const query = selector => document.querySelector(selector);\n' +
+    'const iconButton = (text, action, icon, extraClass="") => `<button type="button" class="tisya-icon-button ${esc(extraClass)}" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}${extraClass.includes(\'tisya-orb-button\')?`<small class="tisya-orb-caption" aria-hidden="true">${esc(text===\'重投下一条\'?\'重投下一条\':({regen:\'重骰\',\'msg-regen\':\'重骰\',next:\'继续\',\'msg-next\':\'继续\',\'msg-revision\':\'高级\',\'msg-read\':\'阅读\',\'msg-edit\':\'改写\',\'msg-rollback\':\'回溯\',\'msg-delete\':\'删除\',\'msg-branch\':\'分支\',\'msg-copy\':\'复制\',more:\'更多\',\'message-tools\':\'设置\',\'candidate-prev\':\'上版\',\'candidate-next\':\'下版\'})[action]??text.slice(0,2))}</small>`:\'\'}</button>`;\n' +
+    'const button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;\n' +
+    'let layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;\n' +
+    'const assistantViews=new Map();\n' +
+    'let motionEnabled=true,utility=null,nativeDisplay=null,homeView=null;\n' +
+    'const getAppearance=owner=>appearanceValues(settings(),owner);\n' +
+    "const getDisplay=()=>getAppearance('extensions');\n" +
+    'const getPlayerName=()=>context().name1??null;\n' +
+    'let displaySaving=false;\n' +
+    "async function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error('阅读设置正在保存');if(getDisplay()[field]!==expected)throw Error('阅读设置已在其他位置修改，请重新点击');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),'extensions',{...appearanceOverrides(settings(),'extensions'),[field]:value}));}finally{displaySaving=false;}}\n" +
+    "const visualError=err=>console.warn('[Tisya visual]',err);\n" +
+    "function refreshVisuals(){document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}\n" +
+    'const uiOperations=createUiOperations();\n' +
+    'let nativeGenerationEpoch=0,nativeIdleGuard=null;\n' +
+    'let root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;\n' +
+    "let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';\n" +
+    'let globalFonts=null;\n' +
+    'function fontsService(){return globalFonts??=createGlobalFonts(document,{getSettings:settings,saveSettings:saveInterfaceSettings,headers:()=>context().getRequestHeaders(),onError:error});}\n' +
+    'const FONT_URLS=Array.from({length:4},(_,i)=>new URL(`./font/reading.part${i+1}.bin`,import.meta.url).href);\n' +
+    'async function startFont(){\n' +
+    ' if(fontController)return;const controller=new AbortController();fontContr'... 94794 more characters
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/worldbook-conditions.test.js:18:549)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import {streamingMessageSource} from \'./streaming-message.js\';\nimport {createPhoneService} from \'./phone-core.mjs\';\nimport {createPhoneTurnHost,createPhoneMetadataStorage} from \'./phone-turn-host.js\';\nimport {chatKey as phoneChatKey} from \'./engine/controller.mjs\';\nimport {finishMatrixGeneration} from \'./engine/lifecycle.mjs\';\nimport {mountGenerationIdleGuard} from \'./generation-idle-guard.js\';\nimport {createMatrixHost} from \'./engine/host.mjs\';\nimport {mountMatrixConfiguration} from \'./engine/ui.mjs\';\nimport {createWorldSeedService,mountWorldSeed} from \'./world-seed.js\';\nimport * as personaNative from \'/scripts/personas.js\';\nimport * as hostNative from \'/script.js\';\nimport {createNativePersonaSlotHost} from \'./persona-slots.js\';\nimport {isOnePassPreset} from \'./onepass/preset.mjs\';\nimport {nativePanelContentProcessor} from \'./native-panel-source.js\';\nimport {selectChatReady,notifySelectedChatContent,chatSelectionDiagnostic,chatSelectionSummary} from \'./chat-selection.js\';\nimport {createUiOperations,messageActionExclusive} from \'./ui-operation.js\';\nimport {createGenerationOperations} from \'./generation-operation.js\';\nimport {initializePresetConnection} from \'./preset-connection.js\';\nimport {createPresetUpdateController,mountPresetUpdateControl,showPresetUpdateError} from \'./builtin-preset-controls.js\';\nimport {createGlobalFonts} from \'./global-fonts.js\';\nimport {mountThemeWorkbench} from \'./theme-workbench.js\';\nimport {messageCardCover} from \'./message-cover.js\';\nimport {mountAssistantApp} from \'./assistant-app.js\';\nimport {createIdentityService} from \'./user-identity-service.js\';\nimport {mountMatrixIdentity} from \'./engine/identity-ui.mjs\';\nimport {createStoryIdentity} from \'./engine/identity.mjs\';\nimport {mountIdentityPage} from \'./user-identity-page.js\';\nimport {createWorldbookConditionGate} from \'./worldbook-conditions.js\';\nimport {createPersonaGateway} from \'./tables/persona.js\';\nimport {projectToolTurns} from \'/scripts/tauritavern/tool-turn-projection.js\';\nimport {user_avatar,initUserAvatar,setPersonaDescription,convertCharacterToPersona} from \'/scripts/personas.js\';\nimport {createCharacterGroupHost} from \'./character-group-host.js\';\nimport {installWorldbookOrder} from \'./worldbook-order.js\';\nimport {createWorldbookConsole} from \'./worldbook-console.js\';\nimport {settingsDestinations} from \'./settings-navigation.js\';\nimport {mountSettingsHome} from \'./settings-home.js\';\nimport {hideFullPanels,hideAllPanels,refreshPanelFonts} from \'./panel-surface.js\';\nimport {createUserEditHistory,installUserEditHistory,userRevisionMaterial,userRerollTarget} from \'./user-revision.js\';\nimport {directoryState,directoryEntry,directoryToken,changeDirectory,mountDirectoryHold} from \'./home-directory.js\';\nimport {deleteCharacterChatByName,closeCurrentChat} from \'/script.js\';\nimport {createChatLoadingController,mountChatLoadingSettings} from \'./chat-loading.js\';\nimport {select_group_chats} from \'/scripts/group-chats.js\';\nimport {power_user} from \'/scripts/power-user.js\';\nimport {isBoundedChatSurfaceView,getThumbnailUrl} from \'/script.js\';\nimport {mountHome} from \'./home.js\';\nimport {timestampToMoment} from \'/scripts/utils.js\';\nimport {resetNativePanelSources} from \'./native-panels.js\';\nimport {immersiveState,immersiveSupported} from \'./fullscreen.js\';\nimport {createCommunication,mountCommunication,readTurnDirection,syncTurnDirectionEditor} from \'./communication.js\';\nimport {createRevisionController,candidatePosition} from \'./revision.js\';\nimport {startReaderCache,clearReaderCache,prepareReaderMessage,reconcileReaderCache,readerCacheGeneration} from \'./reader.js\';\nimport {messageCacheOwner} from \'./message-cache.js\';\nimport {mountParagraphActions,LONG_PRESS_TOOLS,longPressSlots} from \'./paragraph-actions.js\';\nimport {mountRevisionEditor} from \'./revision-ui.js\';\nimport {branchChat} from \'/scripts/bookmarks.js\';\nimport {createTextTransport} from \'./config/text-transport.js\';\nimport {interfaceSnapshot,validateInterfaceSettings} from \'./tables/interface-config.js\';\nimport {createNativeConfiguration,createRegexGate} from \'./tables/native-config.js\';\nimport {createTableService} from \'./tables/service.js\';\nimport {createNativeVectors} from \'./tables/vectors.js\';\nimport {appendFileContent} from \'/scripts/chats.js\';\nimport {yaml} from \'/lib.js\';\nimport {configureReplyFormats} from \'./reply-formats.js\';\nimport {GENERATION_CONTRACTS,MODE_CONTRACT,ARCHIVE_CONTRACT,validateGeneratedTask} from \'./config/contracts.js\';\nimport {loadAgentSystemSettings} from \'/scripts/tauritavern/agent/agent-system-settings.js\';\nimport {createStore,register,registry,worldKey} from \'./config/core.js\';\nimport {createHost,blockPayload} from \'./config/host.js\';\nimport {mountConfiguration} from \'./config/panel.js\';\nimport {preferNativeBeauty,createNativeBodyFormatter} from \'./native-beauty.js\';\nimport {createNativeDisplayPipeline} from \'./native-display.js\';\nimport {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from \'/scripts/extensions/regex/engine.js\';\nimport {readNarrative} from \'./narrative-bridge.js\';\nimport {createNarrativeBridge,registerLivePreset,isLivePreset} from \'./narrative-bridge.js\';\nimport {mountSettingsApp} from \'./settings-app.js\';\nimport {appearanceValues,appearanceOverrides,withAppearanceOverrides} from \'./appearance-settings.js\';\nimport {saveCharacterChatMetadata,saveGroupChatMetadata} from \'/scripts/chat-payload-transport.js\';\nimport {emotionCatalog,mountEmotionAtlas} from \'./emotion-catalog.js\';\nimport {ACTION_MODES,executeAction} from \'./actions.js\';\nimport {mountMessageAppearance,mountChatEffects} from \'./message-ui.js\';\nimport {mountPet} from \'./pet.js\';\nimport { iconMarkup } from \'./icons.js\';\nimport { mountMessageNavigation } from \'./navigation.js\';\nimport {mountInputShortcuts} from \'./input-shortcuts.js\';\nimport {createEditToolbarPlacement} from \'./edit-toolbar.js\';\nlet inputShortcuts=null,communicationUI=null,revisionEditor=null,paragraphActions=null;\nconst revisionDrafts=new Map();\nlet editToolbarPlacement=null;\nimport { mountMessageReader } from \'./reader.js\';\nimport { mountNotebook } from \'./notebook.js\';\nimport { getContext } from \'/scripts/st-context.js\';\nimport { promptManager,createGenerationParameters,proxies } from \'/scripts/openai.js\';\nimport { registerPresetProtocol,outputEnabled } from \'./preset.js\';\nimport { setUserName, setExtensionPrompt, isGenerating, Generate, swipe, deleteSwipe, messageEdit, hydrateChatMessageSwipes, isMessageSwipeable, getOverswipeBehavior, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata, waitForGenerationIdle } from \'/script.js\';\nimport { getAgentGenerationOptions } from \'/scripts/tauritavern/agent/agent-generation-router.js\';\nimport { hasActiveAgentRun } from \'/scripts/tauritavern/agent/agent-run-controller.js\';\nimport { capture, validate, groupContacts } from \'./model.js\';\nimport { loadReadingFont } from \'./font.js\';\nimport { VERSION, SECTIONS, drawerEntries, chatPreview, chatTitle, mountLayout, installComposer } from \'./layout.js\';\n\nconst KEY = \'缇斯亚界面\';\nconfigureReplyFormats({yaml});\nconst esc = value => String(value ?? \'\').replace(/[&<>"\']/g, c => ({ \'&\':\'&amp;\', \'<\':\'&lt;\', \'>\':\'&gt;\', \'"\':\'&quot;\', "\'":\'&#39;\' }[c]));\nconst query = selector => document.querySelector(selector);\nconst iconButton = (text, action, icon, extraClass="") => `<button type="button" class="tisya-icon-button ${esc(extraClass)}" data-tisya-action="${esc(action)}" aria-label="${esc(text)}" title="${esc(text)}">${iconMarkup(icon)}${extraClass.includes(\'tisya-orb-button\')?`<small class="tisya-orb-caption" aria-hidden="true">${esc(text===\'重投下一条\'?\'重投下一条\':({regen:\'重骰\',\'msg-regen\':\'重骰\',next:\'继续\',\'msg-next\':\'继续\',\'msg-revision\':\'高级\',\'msg-read\':\'阅读\',\'msg-edit\':\'改写\',\'msg-rollback\':\'回溯\',\'msg-delete\':\'删除\',\'msg-branch\':\'分支\',\'msg-copy\':\'复制\',more:\'更多\',\'message-tools\':\'设置\',\'candidate-prev\':\'上版\',\'candidate-next\':\'下版\'})[action]??text.slice(0,2))}</small>`:\'\'}</button>`;\nconst button = (text, action) => `<button type="button" data-tisya-action="${esc(action)}">${esc(text)}</button>`;\nlet layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;\nconst assistantViews=new Map();\nlet motionEnabled=true,utility=null,nativeDisplay=null,homeView=null;\nconst getAppearance=owner=>appearanceValues(settings(),owner);\nconst getDisplay=()=>getAppearance(\'extensions\');\nconst getPlayerName=()=>context().name1??null;\nlet displaySaving=false;\nasync function saveDisplayPreference(field,value,expected){if(displaySaving)throw Error(\'阅读设置正在保存\');if(getDisplay()[field]!==expected)throw Error(\'阅读设置已在其他位置修改，请重新点击\');displaySaving=true;try{await saveInterfaceSettings(withAppearanceOverrides(settings(),\'extensions\',{...appearanceOverrides(settings(),\'extensions\'),[field]:value}));}finally{displaySaving=false;}}\nconst visualError=err=>console.warn(\'[Tisya visual]\',err);\nfunction refreshVisuals(){document.body.classList.toggle(\'tisya-motion-paused\',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance(\'extensions\').动画效果,getDisplay());}\nconst uiOperations=createUiOperations();\nlet nativeGenerationEpoch=0,nativeIdleGuard=null;\nlet root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;\nlet managed = false, participant, fontController, releaseFont, fontState=\'使用默认字体\';\nlet globalFonts=null;\nfunction fontsService(){return globalFonts??=createGlobalFonts(document,{getSettings:settings,saveSettings:saveInterfaceSettings,headers:()=>context().getRequestHeaders(),onError:error});}\nconst FONT_URLS=Array.from({length:4},(_,i)=>new URL(`./font/reading.part${i+1}.bin`,import.meta.url).href);\nasync function startFont(){\n if(fontController)return;const controller=new AbortController();fontContr'... 94794 more characters,
+    expected: /GENERATION_STOPPED',(?:async)?\(\)=>\{nativeGenerationEpoch\+\+;generationOperations.stop\(\);revisionController.stopped\(\);worldbookConditions.end/,
+    operator: 'match',
+    diff: 'simple'
+  }

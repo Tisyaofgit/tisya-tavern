@@ -1,0 +1,75 @@
+{
+  "repository": "Darkatse/TauriTavern",
+  "host_ref": "fff9af0333be97697be2313981699ab0ce35c236",
+  "source_locator": "candidate diagnostics/continuation-20261106-resume/handoff-20261106T151900Z/control/缇斯亚__蓝图__任务与断点.md W28-R1 and capture_native.py",
+  "findings": [
+    "createBranch records direct-parent sessionName in main_chat and generates a new integrity UUID.",
+    "saveChatUnsafe/persistedChatMetadata shallow merge previous metadata with main_chat/integrity overrides, so nested phone state remains copied verbatim.",
+    "Group branch saving performs the same metadata merge.",
+    "No additional persistent parent integrity field is established by the branch implementation.",
+    "Full metadata lineage must also constrain same character/group and exact parent sessionName; main_chat presence alone is insufficient."
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/Darkatse/TauriTavern/blob/fff9af0333be97697be2313981699ab0ce35c236/src/scripts/bookmarks.js",
+      "git_blob_sha": "2eaea0e4b5d1fe348cab3ee38342abfb72274b8d",
+      "total_lines": 783,
+      "excerpts": [
+        {
+          "start_line": 225,
+          "end_line": 304,
+          "content": "export async function createBranch(mesId, { swipeId = null } = {}) {\n    if (!chat.length) {\n        toastr.warning('The chat is empty.', 'Branch creation failed');\n        return;\n    }\n\n    if (mesId < 0 || mesId >= chat.length) {\n        toastr.warning('Invalid message ID.', 'Branch creation failed');\n        return;\n    }\n\n    const lastMes = chat[mesId];\n    const mainChatName = (getCurrentChatDetails()).sessionName;\n    const newMetadata = { main_chat: mainChatName, integrity: uuidv4() };\n    const selectedSwipeId = swipeId === null ? null : Number(swipeId);\n\n    if (selectedSwipeId !== null && (!Number.isInteger(selectedSwipeId) || selectedSwipeId < 0 || selectedSwipeId >= (lastMes?.swipes?.length ?? 0))) {\n        toastr.warning('Invalid swipe ID.', 'Branch creation failed');\n        return;\n    }\n\n    function buildBranchName(name, i) {\n        // Strip off existing suffixes, then build new name\n        let cleanName = name.replace(/ - Branch #\\d+$/, '');\n        // Strip off legacy old name prefix too\n        cleanName = cleanName.replace(/^Branch #\\d+ - /, '');\n        return `${cleanName} - Branch #${i}`;\n    }\n    const existingChats = await getExistingChatNames();\n    const name = getUniqueName(mainChatName, (x) => existingChats.includes(x), { nameBuilder: buildBranchName, startIndex: 1 });\n    if (!name) {\n        console.error('Could not generate a unique branch name.');\n        toastr.error('Could not generate a unique branch name.', 'Branch creation failed');\n        return;\n    }\n\n    if (selectedSwipeId !== null && !await hydrateChatMessageSwipes(mesId)) return;\n    if (chat[mesId] !== lastMes) return;\n    const branchChatSnapshot = getBranchChatSnapshot(mesId, { swipeId: selectedSwipeId });\n    if (!branchChatSnapshot) {\n        toastr.warning('Could not prepare the selected swipe for branching.', 'Branch creation failed');\n        return;\n    }\n    const persistentStateFork = resolveAgentPersistentStateFork(name, newMetadata.integrity);\n\n    if (selected_group) {\n        await saveGroupBookmarkChat(selected_group, name, newMetadata, mesId, branchChatSnapshot);\n    } else {\n        await saveChat({ chatName: name, withMetadata: newMetadata, mesId, chatData: branchChatSnapshot });\n    }\n    await copyAgentPersistentStatesForFork(persistentStateFork);\n    // append to branches list if it exists\n    // otherwise create it\n    if (typeof lastMes.extra !== 'object') {\n        lastMes.extra = {};\n    }\n    if (typeof lastMes.extra.branches !== 'object') {\n        lastMes.extra.branches = [];\n    }\n    lastMes.extra.branches.push(name);\n    return name;\n}\n\n/**\n * Creates a new bookmark for a message.\n *\n * @param {number} mesId - The ID of the message.\n * @param {Object} [options={}] - Optional parameters.\n * @param {string?} [options.forceName=null] - The name to force for the bookmark.\n * @returns {Promise<string?>} - A promise that resolves to the bookmark name when the bookmark is created.\n */\nexport async function createNewBookmark(mesId, { forceName = null } = {}) {\n    if (this_chid === undefined && !selected_group) {\n        toastr.info('No character selected.', 'Create Checkpoint');\n        return null;\n    }\n    if (!chat.length) {\n        toastr.warning('The chat is empty.', 'Create Checkpoint');\n        return null;\n    }"
+        },
+        {
+          "start_line": 489,
+          "end_line": 520,
+          "content": "export async function branchChat(mesId, { swipeId = null } = {}) {\n    if (this_chid === undefined && !selected_group) {\n        toastr.info('No character selected.', 'Create Branch');\n        return null;\n    }\n\n    const fileName = await createBranch(mesId, { swipeId });\n    if (!fileName) {\n        return null;\n    }\n\n    await saveItemizedPrompts(fileName);\n\n    if (selected_group) {\n        await openGroupChat(selected_group, fileName);\n    } else {\n        await openCharacterChat(fileName);\n    }\n\n    return fileName;\n}\n\nfunction registerBookmarksSlashCommands() {\n    /**\n     * Validates a message ID. (Is a number, exists as a message)\n     *\n     * @param {number} mesId - The message ID to validate.\n     * @param {string} context - The context of the slash command. Will be used as the title of any toasts.\n     * @returns {boolean} - Returns true if the message ID is valid, otherwise false.\n     */\n    function validateMessageId(mesId, context) {\n        if (isNaN(mesId)) {"
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/Darkatse/TauriTavern/blob/fff9af0333be97697be2313981699ab0ce35c236/src/script.js",
+      "git_blob_sha": "cfb2bc0f386aa8302e370fb83a099b98c813827d",
+      "total_lines": 14267,
+      "excerpts": [
+        {
+          "start_line": 8843,
+          "end_line": 8892,
+          "content": "/** The `chat_metadata` that goes to disk: the canonical object without its transient in-context marker. */\nexport function persistedChatMetadata(overrides) {\n    const metadata = { ...chat_metadata, ...overrides };\n    delete metadata.lastInContextMessageId;\n    return metadata;\n}\n\nasync function saveChatUnsafe({ chatName, withMetadata, mesId, force = false, chatData = undefined, commitReason = CHAT_COMMIT_REASON.MUTATION } = {}) {\n    if (arguments.length > 0 && typeof arguments[0] !== 'object') {\n        console.trace('saveChat called with positional arguments. Please use an object instead.');\n        [chatName, withMetadata, mesId, force] = arguments;\n    }\n\n    const fileName = chatName ?? characters[this_chid]?.chat;\n\n    if (!fileName && name2 === neutralCharacterName) {\n        // TODO: Do something for a temporary chat with no character.\n        return;\n    }\n\n    if (!fileName) {\n        console.warn('saveChat called without chat_name and no chat file found');\n        return;\n    }\n\n    characters[this_chid].date_last_chat = Date.now();\n\n    const trimmedChat = Array.isArray(chatData)\n        ? chatData\n        : (mesId !== undefined && mesId >= 0 && mesId < chat.length)\n            ? chat.slice(0, Number(mesId) + 1)\n            : chat.slice();\n\n    /** @type {ChatHeader} */\n    const chatHeader = {\n        chat_metadata: persistedChatMetadata(withMetadata),\n        user_name: 'unused',\n        character_name: 'unused',\n    };\n    const payload = [chatHeader, ...trimmedChat];\n\n    await runChatSave({\n        title: t`Chat could not be saved`,\n        save: () => saveCharacterChatPayload({\n            characterName: characters[this_chid].name,\n            avatarUrl: characters[this_chid].avatar,\n            fileName,\n            payload,\n            force,\n            commitReason,"
+        },
+        {
+          "start_line": 10051,
+          "end_line": 10067,
+          "content": "/**\n * Helper for `displayPastChats`, to make the same info consistently available for other functions\n */\nexport function getCurrentChatDetails() {\n    if (!characters[this_chid] && !selected_group) {\n        return { sessionName: '', group: null, characterName: '', avatarImgURL: '' };\n    }\n\n    const group = selected_group ? groups.find(x => x.id === selected_group) : null;\n    const currentChat = selected_group ? group?.chat_id : characters[this_chid].chat;\n    const displayName = selected_group ? group?.name : characters[this_chid].name;\n    const avatarImg = selected_group ? group?.avatar_url : getThumbnailUrl('avatar', characters[this_chid].avatar);\n    return { sessionName: currentChat, group: group, characterName: displayName, avatarImgURL: avatarImg };\n}\n\n/**\n * Displays the past chats for a character or a group based on the selected context."
+        }
+      ]
+    },
+    {
+      "url": "https://github.com/Darkatse/TauriTavern/blob/fff9af0333be97697be2313981699ab0ce35c236/src/scripts/group-chats.js",
+      "git_blob_sha": "7af6fc63b71ec460165002e7660b948535544dfa",
+      "total_lines": 2566,
+      "excerpts": [
+        {
+          "start_line": 2424,
+          "end_line": 2470,
+          "content": " * @param {string} name Name of the chat to save\n * @param {ChatMetadata?} metadata New metadata to save with the chat\n * @param {number|undefined} mesId Optional message ID to trim the chat up to\n * @param {ChatMessage[]|undefined} chatData Optional chat snapshot to save instead of the current in-memory chat\n * @returns {Promise<void>} Promise that resolves when the group chat is saved\n */\nexport async function saveGroupBookmarkChat(groupId, name, metadata, mesId, chatData = undefined) {\n    const group = groups.find(x => x.id === groupId);\n\n    if (!group) {\n        return;\n    }\n\n    /** @type {ChatHeader} */\n    const chatHeader = {\n        chat_metadata: { ...chat_metadata, ...(metadata || {}) },\n        user_name: 'unused',\n        character_name: 'unused',\n    };\n\n    /** @type {ChatMessage[]} */\n    const trimmedChat = Array.isArray(chatData)\n        ? chatData\n        : (mesId !== undefined && mesId >= 0 && mesId < chat.length)\n            ? chat.slice(0, Number(mesId) + 1)\n            : chat;\n\n    try {\n        await saveGroupChatPayload({ id: name, payload: [chatHeader, ...trimmedChat] });\n    } catch (error) {\n        toastr.error(t`Check the server connection and reload the page to prevent data loss.`, t`Group chat could not be saved`);\n        console.error('Group chat could not be saved', error);\n        throw error;\n    }\n\n    group.chats.push(name);\n    await editGroup(groupId, true, false).catch(error => {\n        console.error('Chat saved, but group settings could not be saved:', error);\n        toastr.warning(error.message, t`Chat saved, but group settings could not be saved.`);\n    });\n}\n\nfunction onSendTextareaInput() {\n    if (is_group_automode_enabled) {\n        // Wait for current automode generation to finish\n        is_group_automode_enabled = false;\n        $('#rm_group_automode').prop('checked', false);"
+        }
+      ]
+    }
+  ],
+  "compared_ref": "a1855be4a4f8b6ee7cd0374a84dbb3709c3e5375",
+  "bookmarks_identical_between_known_refs": false,
+  "second_bookmarks_blob": "c8c84ad35222f15610ad7eddfd278a1262d84070",
+  "evidence_recorded_utc": "2026-11-09T12:09:33.779044+00:00",
+  "createBranch_difference_between_refs": "getUniqueName options in fff9af include startIndex:1; a1855be omits it. main_chat/integrity creation and save signatures are identical; helper fork validation and bookmark UI also differ.",
+  "bookmarks_files": [
+    {
+      "file": "bookmarks-fff9af0333be.js",
+      "sha256": "e9036217104bc323cf5718dc6027cb6a4af938fa1dd8905369cf5b617985594f"
+    },
+    {
+      "file": "bookmarks-a1855be4.js",
+      "sha256": "dbd1d0e4c9d90600f3c60f6a9da1d098b473af2da09c5e9296c3727cfd8ff3dc"
+    }
+  ]
+}

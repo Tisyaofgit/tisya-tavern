@@ -21,8 +21,11 @@ export function contractorMessages(note){return note?[{role:'system',content:'�
 export function appendContractorMessages(messages,directives){
  if(!directives.length)return;
  // A host tool round may reuse an already prepared payload.
- const same=messages.findIndex((m,i)=>m.role===directives[0].role&&m.content===directives[0].content&&messages[i+1]?.role===directives[1].role&&messages[i+1]?.content===directives[1].content);
- if(same<0)messages.push(...directives);
+ for(let offset=0;offset<directives.length;offset+=2){
+  const pair=directives.slice(offset,offset+2);
+  const same=messages.findIndex((_m,i)=>pair.every((value,j)=>messages[i+j]?.role===value.role&&messages[i+j]?.content===value.content));
+  if(same<0)messages.push(...pair);
+ }
 }
 export function createCommunication({getContext,persist,persistMessage=async c=>{check(typeof c.saveChat==='function','宿主缺少消息保存接口');return c.saveChat();},request,assertIdle=()=>{},assertEditIdle=assertIdle,onChange=()=>{}}){
  const cache=new Map();let active=null,staged=null,replay=null,queue=Promise.resolve();

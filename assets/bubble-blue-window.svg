@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2400" viewBox="0 0 1200 2400">
+  <title>候选壁纸 · 蓝色窗影</title>
+  <desc>原创可复用矢量素材。低对比蓝灰纸面与窗影；不含角色设定、文字或平台标志。</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#eff5f7"/><stop offset=".55" stop-color="#e2ecf0"/><stop offset="1" stop-color="#f3f6f6"/>
+    </linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff" stop-opacity=".7"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="27"/></filter>
+    <pattern id="grain" width="27" height="31" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="7" r=".7" fill="#688a9d" opacity=".10"/>
+      <circle cx="19" cy="23" r=".6" fill="#ffffff" opacity=".65"/>
+    </pattern>
+  </defs>
+  <path fill="url(#paper)" d="M0 0h1200v2400H0z"/>
+  <g transform="translate(-180 100) skewY(-21)" filter="url(#blur)" opacity=".65">
+    <path fill="url(#light)" d="M0 0h520v590H0zm580 0h520v590H580zM0 650h520v760H0zm580 0h520v760H580z"/>
+  </g>
+  <path d="M965 1570c-37 121 80 235 45 355s-149 153-106 296" fill="none" stroke="#9db5be" stroke-width="2" opacity=".18"/>
+  <path d="M1004 1889c-101-75-169-43-188 24 78 13 141 1 188-24zm-5 44c64-84 135-85 169-27-57 37-114 45-169 27z" fill="#b0c2c8" opacity=".14"/>
+  <path fill="url(#grain)" d="M0 0h1200v2400H0z"/>
+</svg>

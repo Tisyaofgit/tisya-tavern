@@ -1,0 +1,91 @@
+TAP version 13
+# Subtest: all 28 documents and 17 kinds render; only one active composer
+ok 1 - all 28 documents and 17 kinds render; only one active composer
+  ---
+  duration_ms: 219.006426
+  type: 'test'
+  ...
+# Subtest: send and quote use actual core floor references; message remains queued
+not ok 2 - send and quote use actual core floor references; message remains queued
+  ---
+  duration_ms: 44.540244
+  type: 'test'
+  location: '/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller.test.mjs:29:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    undefined !== 8
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 8
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller.test.mjs:31:160)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: like, down, cancel are mutually exclusive; source known floor totals change once
+ok 3 - like, down, cancel are mutually exclusive; source known floor totals change once
+  ---
+  duration_ms: 53.244974
+  type: 'test'
+  ...
+# Subtest: private search is explicit; follow-up search queues an action
+ok 4 - private search is explicit; follow-up search queues an action
+  ---
+  duration_ms: 28.849187
+  type: 'test'
+  ...
+# Subtest: prepare locks sending but keeps an editable draft; copy reuses pending request
+ok 5 - prepare locks sending but keeps an editable draft; copy reuses pending request
+  ---
+  duration_ms: 101.099461
+  type: 'test'
+  ...
+# Subtest: receive appends model values, acknowledges actions and freezes the original floor
+ok 6 - receive appends model values, acknowledges actions and freezes the original floor
+  ---
+  duration_ms: 109.97194
+  type: 'test'
+  ...
+# Subtest: frozen renderer reads host snapshot only, and missing snapshots never read current state
+ok 7 - frozen renderer reads host snapshot only, and missing snapshots never read current state
+  ---
+  duration_ms: 90.359905
+  type: 'test'
+  ...
+# Subtest: rapid draft inputs persist the newest value and survive re-render
+ok 8 - rapid draft inputs persist the newest value and survive re-render
+  ---
+  duration_ms: 69.604603
+  type: 'test'
+  ...
+# Subtest: video self comments render with the me identity; readonly live has no send form
+ok 9 - video self comments render with the me identity; readonly live has no send form
+  ---
+  duration_ms: 53.250812
+  type: 'test'
+  ...
+# Subtest: local storage rejects cross-window writes and preserves malformed bytes
+ok 10 - local storage rejects cross-window writes and preserves malformed bytes
+  ---
+  duration_ms: 1.170203
+  type: 'test'
+  ...
+# Subtest: shell escapes text and unknown inherited names; no independent API input
+ok 11 - shell escapes text and unknown inherited names; no independent API input
+  ---
+  duration_ms: 0.629879
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 10
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 875.942958

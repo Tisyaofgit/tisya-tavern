@@ -1,0 +1,44 @@
+[
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/preview/phone-app.mjs",
+    "recorded": "d574d466ca6bd4bafb9fcb4a0661ae3dfc6b9527e27d268b66934255c219df3a",
+    "actual": "d574d466ca6bd4bafb9fcb4a0661ae3dfc6b9527e27d268b66934255c219df3a"
+  },
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/preview/phone-shell.mjs",
+    "recorded": "bb82aaaee3fe11d27cf481f1ad64c0ec07b722862668c6dcfda4e18ec58f1ee3",
+    "actual": "bb82aaaee3fe11d27cf481f1ad64c0ec07b722862668c6dcfda4e18ec58f1ee3"
+  },
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/preview/phone-shell.css",
+    "recorded": "9ed0018d35b5856cb7cd068d3b4840d0121b03535a1ff3a8f8d83a52ac09e417",
+    "actual": "9ed0018d35b5856cb7cd068d3b4840d0121b03535a1ff3a8f8d83a52ac09e417"
+  },
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller.test.mjs",
+    "recorded": "486773e59816e53b60107494fe51a9d3f3bac8f1eaf813097510159190616ad2",
+    "actual": "486773e59816e53b60107494fe51a9d3f3bac8f1eaf813097510159190616ad2"
+  },
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller-test-output.txt",
+    "recorded": "5e5b5157cdd6a6ab30b76e3cc25f00d5823a85b7199565ad042f0899066ecbfa",
+    "actual": "5e5b5157cdd6a6ab30b76e3cc25f00d5823a85b7199565ad042f0899066ecbfa"
+  },
+  {
+    "report": "phone-ui-validation.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller-first-failure.txt",
+    "recorded": "eeb89c85b7018b96fa6cf57ee088df29213ee6dd510d83cf108ce14d15c1f6a1",
+    "actual": "eeb89c85b7018b96fa6cf57ee088df29213ee6dd510d83cf108ce14d15c1f6a1"
+  },
+  {
+    "report": "phone-bundle-dom.json",
+    "path": "/workspace/scratch/37663c457d00/network-blocks-design/deliverables/缇斯亚__虚拟手机交互预览__20261109_115239UTC.html",
+    "recorded": "88065b4403dbbd7f0351a0a91b0f07d99c0b500f418b6022caeb78cf3d9ab4d4",
+    "actual": "88065b4403dbbd7f0351a0a91b0f07d99c0b500f418b6022caeb78cf3d9ab4d4"
+  }
+]
