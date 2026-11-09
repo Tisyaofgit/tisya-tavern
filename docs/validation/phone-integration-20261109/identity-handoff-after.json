@@ -1,0 +1,82 @@
+{
+  "utc": "2026-11-09T15:47:40.265121+00:00",
+  "root": "/workspace/scratch/5717d8fb3725/phone-integration-work",
+  "files": {
+    "engine/identity.mjs": {
+      "bytes": 13669,
+      "sha256": "bf5581486169feb41f1258a8e965f3958593f734d9a8dbb3a703ed44ecf79b24"
+    },
+    "engine/identity-ui.mjs": {
+      "bytes": 17348,
+      "sha256": "80ab538adc7b4c36dae0c8e4b27278243d4298078b0d6a273bf74425f4099c01"
+    },
+    "engine/config.mjs": {
+      "bytes": 9083,
+      "sha256": "1877f0cf91c52a700e93637f3d335539c88ee8861da9b037c1d13c5b70f78de3"
+    },
+    "engine/host.mjs": {
+      "bytes": 13911,
+      "sha256": "d4a584eb9b3a6bd6c1cee06ca6308245e6d1ca3d9386246a781514a7102ca259"
+    },
+    "engine/template-book.mjs": {
+      "bytes": 23135,
+      "sha256": "2f0118b214b4c9e6545019501ae1c5df457df893e55143ad4d952809dc755fc0"
+    },
+    "tables/service.js": {
+      "bytes": 145878,
+      "sha256": "1eaa3af5a2640a5f83edf63610d515a1d55c788e926ca6cd3243352e706ce494"
+    },
+    "templates/phone-world.json": {
+      "bytes": 608,
+      "sha256": "2a099e902b6403be6f3e976231839d93341762f496060dfa7877d8888edeeebe"
+    },
+    "templates/phone-character.json": {
+      "bytes": 406,
+      "sha256": "f94c520841bb2a3accde9dcff53b708d94a2521a8e0a819111af50cb40d2faa1"
+    },
+    "templates/tisya-template-book.json": {
+      "bytes": 15723,
+      "sha256": "39fbb5038d52007990b2f21ea702e57c4fc9843d94fa30ea06a222e04f84e48d"
+    },
+    "templates/phone-fields.md": {
+      "bytes": 10508,
+      "sha256": "0a5374d44deb1bdda0a6180ea3c8ce720863b56c03274d3bc040020c37b74cfe"
+    },
+    "templates/README.md": {
+      "bytes": 2992,
+      "sha256": "6d5e22e4ab6164a1daf1783b2ff9c2f801feb737d2c8e110556cefb03b6897ee"
+    },
+    "tests/template-book-identity.test.js": {
+      "bytes": 17768,
+      "sha256": "dae0ed924ccaa2533206a1f716d77f1c6e6984c16815a875cfd37ad06894f1dc"
+    },
+    "tests/matrix-identity.test.js": {
+      "bytes": 18529,
+      "sha256": "5e53d4debc832844eb51d66a1ea8c91fe153d9d75964481e37531cee16b24461"
+    },
+    "tests/matrix-engine.test.js": {
+      "bytes": 21673,
+      "sha256": "741ccfb56660cde5a03ab5d995faa7e022db4ddcaec7359aa5af11f20fbda84a"
+    },
+    "tests/tables.test.js": {
+      "bytes": 214879,
+      "sha256": "b3e526ae9d949646f86f78b5db3dd9ef91bfe94c9b507ddaab8eece11104f2a7"
+    },
+    "phone-life-config.mjs": {
+      "bytes": 25943,
+      "sha256": "e8cef287f26ed7d120b7a26879bf83f59e791826b0352f2d381c088efae5f47f"
+    },
+    "phone-life/core.mjs": {
+      "bytes": 32914,
+      "sha256": "f9dad07cb6f6f010a4714ab430cfed6a56ac3553666bd52a5f913c9f688a4f24"
+    },
+    "phone-life/social.mjs": {
+      "bytes": 37095,
+      "sha256": "95eb39affdced3b23273d97b78743bcc61109babb054868af350d76bc702b866"
+    },
+    "worldbook-order.js": {
+      "bytes": 3203,
+      "sha256": "ae47f910e251311e6abea57f8bf225fb3682fe7e292cef1124b2f7fc41a45f5f"
+    }
+  }
+}

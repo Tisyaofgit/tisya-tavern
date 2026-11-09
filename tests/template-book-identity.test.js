@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
+import {readFileSync} from 'node:fs';
 import {createConfiguration,identitySlots} from '../engine/config.mjs';
 import {createStoryIdentity} from '../engine/identity.mjs';
 import {mountStoryResources} from '../engine/identity-ui.mjs';
-import {DEFAULT_TEMPLATE_BOOK,bundledTemplateEntries,ensureTemplateBook,readCreationTemplates,stripPhoneInitialization,excludeTemplateBookEntries,readStoryReferenceBooks,scanStoryReferenceBooks} from '../engine/template-book.mjs';
+import {DEFAULT_TEMPLATE_BOOK,bundledTemplateEntries,bundledNativeTemplateBook,PHONE_FIELDS_GUIDE,ensureTemplateBook,readCreationTemplates,stripPhoneInitialization,excludeTemplateBookEntries,readStoryReferenceBooks,scanStoryReferenceBooks} from '../engine/template-book.mjs';
 import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
+import {prepareWorldbookOrder} from '../worldbook-order.js';
 
 function fixture(){
  const books={},ctx={extensionSettings:{},chatMetadata:{phone:{balance:7431,story:'already progressed'}},chatId:'a',characterId:0};let writes=0,hook=null;
@@ -19,11 +21,15 @@ const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
 
 test('packaged templates are empty parser-compatible drafts rather than a demo runtime',()=>{
  const entries=bundledTemplateEntries(),world=parsePhoneWorld(entries[0].content),character=parsePhoneCharacter(entries[1].content);
- assert.equal(world.id,null);assert.equal(character.id,null);assert.deepEqual(character.accounts,[]);assert.deepEqual(character.wallet.accounts,[]);assert.deepEqual(world.products,[]);
+ assert.equal(world.id,null);assert.equal(character.id,null);assert.deepEqual(character.accounts,[]);assert.deepEqual(character.wallet.accounts,[]);assert.deepEqual(world.catalog,[]);
  assert.match(entries[2].content,/仅供生成新世界/);
 });
+test('complete native template book and readable field guide match runtime templates exactly',()=>{
+ const book=JSON.parse(readFileSync(new URL('../templates/tisya-template-book.json',import.meta.url),'utf8'));assert.deepEqual(book,bundledNativeTemplateBook());assert.equal(Object.keys(book.entries).length,4);assert(Object.values(book.entries).every(e=>e.disable===true));
+ assert.equal(readFileSync(new URL('../templates/phone-fields.md',import.meta.url),'utf8'),PHONE_FIELDS_GUIDE);for(const name of ['每年计息期数','默认付款账户','默认收支账户','当前账号','歌单','公开授权','到期分钟'])assert(PHONE_FIELDS_GUIDE.includes(name));
+});
 test('global template preparation appends missing entries and preserves user edits and activation',async()=>{
- const f=fixture(),a=await f.roles.ensureTemplates();assert.equal(a.created,true);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,3);assert(f.books[DEFAULT_TEMPLATE_BOOK].every(e=>e.enabled===false));
+ const f=fixture(),a=await f.roles.ensureTemplates();assert.equal(a.created,true);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,4);assert(f.books[DEFAULT_TEMPLATE_BOOK].every(e=>e.enabled===false));
  const row=f.books[DEFAULT_TEMPLATE_BOOK][0];row.content='用户自订世界骨架';row.enabled=true;f.books[DEFAULT_TEMPLATE_BOOK].pop();const old=structuredClone(row);
  const b=await f.roles.ensureTemplates();assert.equal(b.added.length,1);assert.deepEqual(f.books[DEFAULT_TEMPLATE_BOOK][0],old);const count=f.writes();await f.roles.ensureTemplates();assert.equal(f.writes(),count);assert.equal(f.config.read().templateBook,DEFAULT_TEMPLATE_BOOK);
 });
@@ -36,12 +42,21 @@ test('templates are available only to creation tasks and configured read failure
  await f.roles.ensureTemplates();f.books[DEFAULT_TEMPLATE_BOOK][0].content='编辑后的模板';const actual=await readCreationTemplates(()=>f.ctx,{getHelper,task:'newCharacter'});assert.equal(actual.source,'worldbook');assert.equal(actual.entries[0].content,'编辑后的模板');
  await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper,task:'normal'}),/只用于新内容/);delete f.books[DEFAULT_TEMPLATE_BOOK];await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper}),/格式无效/);
 });
+test('creation reads an existing default template book before the identity page has configured it',async()=>{
+ const f=fixture();f.books[DEFAULT_TEMPLATE_BOOK]=[{uid:8,name:'已编辑的模板',content:'已有用户规则',enabled:false}];
+ const actual=await readCreationTemplates(()=>f.ctx,{getHelper:()=>f.helper});assert.equal(actual.source,'worldbook');assert.equal(actual.entries[0].content,'已有用户规则');assert.equal(f.config.read().templateBook,undefined);
+ f.helper.getWorldbookNames=async()=>{throw Error('目录暂时不可读');};await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper:()=>f.helper}),/目录暂时不可读/);
+});
 test('editing the stable dossier UID preserves metadata and current phone runtime',async()=>{
  const f=fixture();await f.roles.create({name:'青',content:'原有完整档案'});Object.assign(f.books.基点书[0],{custom:{retained:true},enabled:true});f.books.基点书.push({uid:9,name:'【角色】旁人',content:'其他档案'});
  const before=(await f.roles.list()).entries[0],metadata=structuredClone(f.ctx.chatMetadata),original=structuredClone(f.books.基点书[0]);
  await f.roles.edit({book:'基点书',uid:0,name:'青的新名字',content:'编辑后的完整档案',before});
  assert.deepEqual(f.books.基点书[0],{...original,name:'【角色】青的新名字',content:'编辑后的完整档案'});assert.equal(f.books.基点书[1].content,'其他档案');assert.equal(f.config.read().story.userName,'青的新名字');assert.deepEqual(f.ctx.chatMetadata,metadata);
 });
+test('manual role creation never writes into the template book or adds implicit phone state',async()=>{
+ const f=fixture(),before=structuredClone(f.ctx.chatMetadata);await assert.rejects(f.roles.create({book:DEFAULT_TEMPLATE_BOOK,name:'青',content:'手填'}),/模板书不能/);assert.equal(f.writes(),0);await f.roles.create({name:'青',content:'手填'});assert.equal(f.books[DEFAULT_TEMPLATE_BOOK],undefined);assert.deepEqual(f.ctx.chatMetadata,before);
+});
+test('empty prefixed role name is rejected before creating an unreadable entry',async()=>{const f=fixture();await assert.rejects(f.roles.create({name:'【角色】',content:'正文'}),/名称不能为空/);assert.equal(f.writes(),0);});
 test('stale dossier snapshot and write-time race cannot overwrite another page',async()=>{
  const f=fixture();await f.roles.create({name:'青',content:'原文'});const before=(await f.roles.list()).entries[0];f.books.基点书[0].content='别处改文';
  await assert.rejects(f.roles.edit({book:'基点书',uid:0,name:'青',content:'想保存',before}),/其他页面修改/);assert.equal(f.books.基点书[0].content,'别处改文');
@@ -73,7 +88,12 @@ test('reference scan uses current native conditions, retains source UID and dedu
 test('reference scan guards before mutation and does not mask missing or duplicate source data',async()=>{
  const f=fixture(),settings=f.config.read();settings.story.referenceBooks=['资料'];f.books.资料=[{uid:1,name:'资料',content:'文'}];const payload={chatLore:[]};
  await assert.rejects(scanStoryReferenceBooks(payload,{getContext:()=>f.ctx,settings,guard(){throw Error('聊天已切换');}}),/聊天已切换/);assert.deepEqual(payload,{chatLore:[]});
- f.books.资料.push({uid:1,name:'重复',content:'文'});await assert.rejects(readStoryReferenceBooks(()=>f.ctx,settings),/条目标识/);delete f.books.资料;await assert.rejects(readStoryReferenceBooks(()=>f.ctx,settings),/不存在或损坏/);
+ f.books.资料.push({uid:1,name:'重复',content:'文'});f.ctx.loadWorldInfo=async name=>f.books[name]?{entries:Object.fromEntries(f.books[name].map((e,i)=>[i,e]))}:null;await assert.rejects(readStoryReferenceBooks(()=>f.ctx,settings),/条目标识/);delete f.books.资料;await assert.rejects(readStoryReferenceBooks(()=>f.ctx,settings),/不存在或损坏/);
+});
+test('refreshing a natively selected reference retains the console opt-in scan order',async()=>{
+ const f=fixture(),settings=f.config.read();settings.story.referenceBooks=['资料'];f.books.资料=[{uid:4,name:'资料',content:'新原文',order:99,position:1,displayIndex:0}];
+ const payload={globalLore:[{...f.books.资料[0],world:'资料'}],characterLore:[],chatLore:[],personaLore:[]};prepareWorldbookOrder(payload,{layoutOrder:true,bookOrder:['资料']});const order=payload.globalLore[0].order,rank=structuredClone(payload.globalLore[0].tisyaConsoleOrder);
+ await scanStoryReferenceBooks(payload,{getContext:()=>f.ctx,settings});assert.equal(payload.globalLore[0].order,order);assert.deepEqual(payload.globalLore[0].tisyaConsoleOrder,rank);assert.equal(payload.globalLore[0].content,'新原文');assert.equal(f.books.资料[0].order,99);
 });
 test('native exclusion removes the entire template book even when enabled and strips both seed types',()=>{
  const data={chatLore:[{world:DEFAULT_TEMPLATE_BOOK,uid:2,content:'开启的模板',disable:false},{world:'其他',uid:3,content:'正文<手机初态>{}</手机初态>下文<手机世界>{}</手机世界>',key:['正文']}]};
@@ -83,4 +103,14 @@ test('legacy shared resource mount edits the original dossier and saves referenc
  const f=fixture();await f.roles.create({name:'青',content:'档案旧文'});f.books.资料=[{uid:1,name:'【手机世界】河城',content:'世界定义'}];const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;
  assert.equal(root.querySelector('[data-identity-wish]'),null);assert(root.querySelector('[data-role-edit]'));const editor=root.querySelector('[data-role-edit-content]');editor.value='编辑后的原文';editor.dispatchEvent(new w.Event('input'));assert.equal(ui.requestLeave().allowed,false);button(root,'保存角色档案').click();await settle();assert.equal(f.books.基点书[0].content,'编辑后的原文');assert.equal(ui.requestLeave().allowed,true);
  const checkbox=root.querySelector('[data-reference-book="资料"]');checkbox.checked=true;checkbox.dispatchEvent(new w.Event('change'));button(root,'保存资料书与手机世界选择').click();await settle();assert.deepEqual(f.config.read().story.referenceBooks,['资料']);assert.equal(ui.requestLeave().allowed,true);ui.dispose();await w.happyDOM.abort();
+});
+test('an unreadable selected phone world remains visible and cannot be silently cleared while saving references',async()=>{
+ const f=fixture();await f.roles.create({name:'青',content:'档案'});f.books.世界=[{uid:6,name:'【手机世界】远方',content:'定义'}];await f.roles.saveResources({phoneWorld:{book:'世界',uid:6}});delete f.books.世界;
+ const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;assert.equal(root.querySelector('[data-phone-world-book]').value,'世界');assert.equal(root.querySelector('[data-phone-world-entry]').value,'6');
+ button(root,'保存资料书与手机世界选择').click();await settle();assert.deepEqual(f.config.read().story.phoneWorld,{book:'世界',uid:6});assert.match(root.textContent,/不存在/);ui.dispose();await w.happyDOM.abort();
+});
+test('failed source-book switch restores the editor source and cross-chat save is blocked',async()=>{
+ const f=fixture();await f.roles.create({name:'青',content:'原档案'});f.books.另书=[{uid:0,name:'【角色】青',content:'原档案'}];const originalLoad=f.ctx.loadWorldInfo;f.ctx.loadWorldInfo=async name=>{if(name==='另书')throw Error('读取暂不可用');return originalLoad(name);};
+ const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;const select=root.querySelector('[data-role-book]');select.value='另书';select.dispatchEvent(new w.Event('change'));await settle();assert.equal(select.value,'基点书');assert.match(root.textContent,/读取暂不可用/);
+ const editor=root.querySelector('[data-role-edit-content]');editor.value='待保存';editor.dispatchEvent(new w.Event('input'));f.ctx.chatId='b';button(root,'保存角色档案').click();await settle();assert.equal(f.books.基点书[0].content,'原档案');assert.equal(f.books.另书[0].content,'原档案');assert.match(root.textContent,/聊天已切换/);ui.dispose();await w.happyDOM.abort();
 });

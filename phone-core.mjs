@@ -63,7 +63,7 @@ export function phoneLifeBoundary(state,suite=state.suite){
     if(event.kind==='init'){life=clone(event.initial);initial=clone(event.initial);validatePhoneLife(life);}
     else if(event.kind==='profile'){
       if(!life||life.bindingKey!==event.bindingKey)fail('PHONE_LIFE_HISTORY','画风更新失去所属角色。');
-      life.world.theme=clone(event.theme);life.world.apps=clone(event.apps);life.world.appNames=clone(event.appNames??{});life.world.sourceDigest=event.sourceDigest;life.state.config.theme=clone(event.theme);life.state.config.apps=clone(event.apps);life.state.config.appNames=clone(event.appNames??{});validatePhoneLife(life);
+      if(event.name!==undefined)life.world.name=event.name;life.world.theme=clone(event.theme);life.world.apps=clone(event.apps);life.world.appNames=clone(event.appNames??{});life.world.sourceDigest=event.sourceDigest;life.state.config.theme=clone(event.theme);life.state.config.apps=clone(event.apps);life.state.config.appNames=clone(event.appNames??{});validatePhoneLife(life);
     }else{
       if(!life||life.bindingKey!==event.bindingKey)fail('PHONE_LIFE_HISTORY','生活操作失去所属世界或角色。');
       for(const action of event.actions??[])life=runLife(life,action,{world:event.kind==='world'}).life;
@@ -105,7 +105,7 @@ function rejectLifeProjectionWrite(state,threadId){if(state.suite.documents[thre
 function lifeContext(boundary,actions){
   const domain=boundary?.life;if(!domain)return null;const s=domain.state,chosen=new Set(actions.map(a=>a.lifeAction?.postId).filter(Boolean));
   const projectionPrefix=`life-${signature(domain.bindingKey)}-post-`;const posts=s.social.posts.filter(p=>p.visibility==='public'||chosen.has(p.id)).slice(-40).map(p=>({...p,projectionDocumentId:projectionPrefix+encodeURIComponent(p.id)}));
-  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,apps:domain.world.apps,clock:s.clock,privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:['order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。'};
+  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,world:{id:domain.world.id,name:domain.world.name,currency:domain.world.currency},apps:domain.world.apps,clock:s.clock,contacts:(s.contacts??[]).map(c=>({id:c.id,name:c.name})),privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:['order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。'};
 }
 
 export function createPhoneState(seed,contextKey){return {format:PHONE_FORMAT,contextKey:id(contextKey,'聊天标识'),revision:0,suite:createSuite(seed),actions:[],requests:{},frames:{},rejectedSources:{},selectedSources:[],notifications:[],drafts:{}};}
@@ -150,10 +150,12 @@ export function importPhone(raw,{contextKey}={}){
     if(own(s,'life')||own(s,'lifeInitial')||own(s,'lifeEventLog')){
       if(!Array.isArray(s.lifeEventLog)||!s.lifeInitial)fail('PHONE_LIFE_ARCHIVE','生活档案缺少初态或事件日志，未补造数据');
       validatePhoneLife(s.lifeInitial);unique(s.lifeEventLog.map(e=>e.envelopeId),'生活事件');
+      const mediaOrigin=s.lifeInitial.mediaOriginContextKey??s.contextKey;id(mediaOrigin,'媒体初始聊天归属');
+      const firstInit=s.lifeEventLog.find(e=>e.kind==='init');if(!firstInit||stableLife(firstInit.initial)!==stableLife(s.lifeInitial))fail('PHONE_LIFE_ARCHIVE','生活初态与首次初始化事件不一致');
       const allEnvelopes=new Set(Object.values(s.suite.branches).flatMap(b=>b.envelopes.map(e=>e.id)));
       for(const e of s.lifeEventLog){
         if(!allEnvelopes.has(e.envelopeId)||!['init','profile','action','world'].includes(e.kind))fail('PHONE_LIFE_ARCHIVE','生活事件失去真实分支来源');
-        if(e.kind==='init'){validatePhoneLife(e.initial);if(e.initial.bindingKey!==phoneLifeBindingKey(e.initial.binding))fail('PHONE_LIFE_BINDING','初始化身份摘要不符');}
+        if(e.kind==='init'){validatePhoneLife(e.initial);if(e.initial.bindingKey!==phoneLifeBindingKey(e.initial.binding))fail('PHONE_LIFE_BINDING','初始化身份摘要不符');if((e.initial.mediaOriginContextKey??s.contextKey)!==mediaOrigin)fail('PHONE_LIFE_MEDIA_SCOPE','媒体初始归属在事件历史中发生变化');}
         else{id(e.bindingKey);if(e.kind!=='profile'&&(!Array.isArray(e.actions)||e.actions.some(a=>!a||typeof a.type!=='string'||typeof a.id!=='string')))fail('PHONE_LIFE_ARCHIVE','生活操作日志损坏');}
       }
       const current=phoneLifeBoundary(s);if(stableLife(current.life)!==stableLife(s.life??null))fail('PHONE_LIFE_ARCHIVE','当前生活状态与事件回放不一致，原档保留');
@@ -407,14 +409,14 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     readLife(){assert();return state.life?clone(state.life):null;},
     lifeRouteForDocument(docId){assert();const route=state.suite.documents[docId]?.meta?.lifeProjection;return route?{appId:route.appId,detail:route.entityId,bindingKey:route.bindingKey}:null;},
     initLife(profile){return enqueue(async()=>{
-      assert();assertEditable(state);const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);validatePhoneLife(initial);
+      assert();assertEditable(state);const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
       const previous=state.life??state.lifeInitial;
       if(previous&&previous.bindingKey!==initial.bindingKey)fail('PHONE_LIFE_BINDING','这条聊天已有另一世界或角色的生活进度；请切回原世界/角色，或另开聊天。原进度没有重置。',{existingBinding:previous.binding});
       if(state.life){
-        const oldWorld={...state.life.world},newWorld={...initial.world};for(const key of ['theme','apps','appNames','sourceDigest']){delete oldWorld[key];delete newWorld[key];}
+        const oldWorld={...state.life.world},newWorld={...initial.world};for(const key of ['name','theme','apps','appNames','sourceDigest']){delete oldWorld[key];delete newWorld[key];}
         if(stableLife(oldWorld)!==stableLife(newWorld))fail('PHONE_LIFE_PROFILE_MIGRATION','世界的货币、时间或机制已经改变，需要明确迁移；已有账户与订单保留。');
-        if(stableLife(state.life.world.theme)===stableLife(initial.world.theme)&&stableLife(state.life.world.apps)===stableLife(initial.world.apps)&&stableLife(state.life.world.appNames)===stableLife(initial.world.appNames))return clone(state.life);
-        const next=clone(state),event={envelopeId:`phone-life-profile:${idFactory()}`,kind:'profile',bindingKey:initial.bindingKey,theme:initial.world.theme,apps:initial.world.apps,appNames:initial.world.appNames,sourceDigest:initial.world.sourceDigest};
+        if(state.life.world.name===initial.world.name&&stableLife(state.life.world.theme)===stableLife(initial.world.theme)&&stableLife(state.life.world.apps)===stableLife(initial.world.apps)&&stableLife(state.life.world.appNames)===stableLife(initial.world.appNames))return clone(state.life);
+        const next=clone(state),event={envelopeId:`phone-life-profile:${idFactory()}`,kind:'profile',bindingKey:initial.bindingKey,name:initial.world.name,theme:initial.world.theme,apps:initial.world.apps,appNames:initial.world.appNames,sourceDigest:initial.world.sourceDigest};
         appendLifeEvent(next,event);await commit(next,'life-profile');return clone(state.life);
       }
       const next=clone(state);next.lifeInitial??=clone(initial);
@@ -448,7 +450,7 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     reconcile({chatKey,sources}){return enqueue(async()=>{assert();scoped(state,chatKey);await commit(reconcilePhone(state,sources,{at:now()}));});},
     snapshot(sourceId){assert();const rejected=own(state.rejectedSources,sourceId)?state.rejectedSources[sourceId]:null;if(rejected)fail('PHONE_SOURCE_REJECTED',`本条手机内容未接纳：${rejected.error.message}`);return phoneSnapshot(state,sourceId);},
     export(){assert();return exportPhone(state);},
-    import(raw,{expectedRevision}={}){return enqueue(async()=>{assert();assertEditable(state);if(expectedRevision!==undefined&&expectedRevision!==state.revision)fail('PHONE_LIFE_REVISION','导入期间已有新操作保存，旧备份未覆盖当前进度');const next=importPhone(raw,{contextKey});if(state.lifeInitial&&next.lifeInitial?.bindingKey!==state.lifeInitial.bindingKey)fail('PHONE_LIFE_BINDING','导入档案属于另一世界或角色，原进度保留');await commit(next);});},
+    import(raw,{expectedRevision}={}){return enqueue(async()=>{assert();assertEditable(state);if(expectedRevision!==undefined&&expectedRevision!==state.revision)fail('PHONE_LIFE_REVISION','导入期间已有新操作保存，旧备份未覆盖当前进度');const next=importPhone(raw,{contextKey});if(state.lifeInitial&&next.lifeInitial?.bindingKey!==state.lifeInitial.bindingKey)fail('PHONE_LIFE_BINDING','导入档案属于另一世界或角色，原进度保留');if(next.lifeInitial&&(next.lifeInitial.mediaOriginContextKey??next.contextKey)!==(state.lifeInitial?.mediaOriginContextKey??state.contextKey))fail('PHONE_LIFE_MEDIA_SCOPE','导入档案的媒体原件属于另一聊天来源，未借用其他聊天缓存');await commit(next);});},
     dispose(){disposed=true;},
     settled(){return chain;}
   };return api;

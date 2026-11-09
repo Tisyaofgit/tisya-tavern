@@ -57,6 +57,7 @@ export function renderUtility(state,ui,h){
  }
  function credit(){
   const c=state.wallet.card;
+  if(c.enabled===false)return empty('角色档案尚未配置已开通的信用卡。');
   return '<div class="u-credit-card"><div class="u-row u-card-name"><span>'+e(c.name||'信用账户')+'</span>'+h.icon('card')+'</div><p class="u-label">剩余额度</p><div class="u-value">'+unit+''+m((c.limit===null?null:Math.max(0,c.limit-c.used)))+'</div><div class="u-card-number">'+e(c.id??'尚未开户')+'</div></div>'+
    card('<div class="u-three">'+stat('信用总额',''+unit+''+m(c.limit))+stat('当前欠款',''+unit+''+m(c.used))+stat('溢缴款',''+unit+''+m(c.refundBalance))+'</div><div class="u-rule"></div><div class="u-row"><span class="u-subtle">账单日 · 每月 '+e(c.billDay??'未配置')+' 日</span><span class="u-subtle">到期日 · 每月 '+e(c.dueDay??'未配置')+' 日</span></div>'+note('依世界配置的账期，账单与未出账消费分别记录，偿还后才恢复相应额度。'))+
    section('还款')+(c.used>0?card(form('wallet.card.repay',
@@ -65,7 +66,7 @@ export function renderUtility(state,ui,h){
  }
  function loan(){
   const w=state.wallet;
-  if(!loanConfig)return empty('这个世界尚未配置贷款产品。已有资产不会因此改变。');
+  if(!loanConfig||!['annualRateBps','periodDays','periodsPerYear','minAmount','maxAmount'].every(k=>Number.isSafeInteger(loanConfig[k]))||!loanConfig.terms?.length)return empty('这个世界尚未完整配置新贷款；已有借款仍按原记录处理。')+loanRecords();
   if(ui.tab==='loan-quote'){
    let q;try{q=quoteLoan(Number(ui.loanAmount),Number(ui.loanMonths),state);}catch(error){return card('<h3>请重新选择借款方案</h3>'+note(error.message)+b('返回修改','nav',nav('wallet','loan')));}
    return card('<div class="u-row"><h3>借款方案确认</h3>'+pill(hosted?'故事内报价':'演示报价')+'</div>'+note('这一步只展示费用；点击下方确认后，借款才进入所选账户。')+
@@ -80,7 +81,9 @@ export function renderUtility(state,ui,h){
   return card('<p class="u-kicker">A LITTLE ROOM</p><h3>需要时，留一点余地</h3>'+note('先看完整报价，再决定是否借款。世界配置年利率 '+(loanConfig.annualRateBps/100)+'%，等额本金，无额外手续费。')+'<div class="u-rule"></div>'+form('ui',
    hidden('tab','loan-quote')+field('入账账户',select('loanAccountId',accountOptions,ui.loanAccountId||bank))+field('借款本金（'+currencyName+'）',amount('loanAmount',Number(ui.loanAmount)||loanConfig.minAmount))+
    field('还款期数',select('loanMonths',loanConfig.terms.map(n=>[n,n+' 期 · 每期 '+loanConfig.periodDays+' 故事日']),ui.loanMonths||loanConfig.terms[0],'data-number'))+
-   submit('查看完整费用与还款计划')))+section('我的借款')+
+   submit('查看完整费用与还款计划')))+loanRecords();
+ }
+ function loanRecords(){const w=state.wallet;return section('我的借款')+
    (w.loans.length?w.loans.slice().reverse().map(l=>{
     const remaining=l.totalPayable-l.paid,next=l.installments.find(i=>i.paid<i.amount);
     return card('<div class="u-row"><h3>周转借款 · '+e(l.id)+'</h3>'+pill(remaining<=0?'已还清':'还款中',remaining<=0?'':'warn')+'</div><div class="u-grid">'+stat('未还金额',''+unit+''+m(Math.max(0,remaining)))+stat('剩余本金',''+unit+''+m(l.remainingPrincipal))+'</div>'+
@@ -96,7 +99,7 @@ export function renderUtility(state,ui,h){
  }
  function wallet(){
   const current=ui.tab?.startsWith('loan')?'loan':ui.tab||'overview';
-  return heading('FINANCE',state.config?.appNames?.wallet??'钱包','让每一笔生活，都有来处。')+tabs([['overview','账户'],['card','信用'],['loan','借款'],['invest','理财'],['ledger','账单']],current)+
+  return heading('FINANCE',state.config?.appNames?.wallet??'钱包','让每一笔生活，都有来处。')+(hosted&&state.config?.settlementOwner!=='phone'?note('资金由'+(state.config?.settlementOwner==='native'?'原生变量':state.config?.settlementOwner==='tables'?'表单':'尚未指定的结算方')+'管理；这里显示档案资料，手机不会另写一份余额。'):'')+tabs([['overview','账户'],['card','信用'],['loan','借款'],['invest','理财'],['ledger','账单']],current)+
     (current==='overview'?walletHome():current==='card'?credit():current==='loan'?loan():current==='invest'?investments():current==='transfer'?transfer():current==='ledger'?ledgerList(state.wallet.ledger.slice()):walletHome());
  }
  function productCard(p,app){
@@ -170,7 +173,7 @@ export function renderUtility(state,ui,h){
    (selected.id!==mp.position&&!mp.journey?'<div class="u-mode-row">'+[['walk','步行'],['bike','骑行'],['transit','公交']].map(([id,label])=>b(label,'ui',{travelMode:id},mode===id?'active':'')).join('')+'</div>'+
     (route?'<div class="u-row"><span class="u-subtle">预计路程 '+route.duration+' 分钟</span><span class="u-subtle">抵达 '+at(route.arriveAt)+'</span></div>':'')+
     (route?'<div class="u-buttons">'+b('确认出发','map.depart',{placeId:selected.id,mode},'u-primary')+'</div>':note(routeError||'尚未配置有效路线。'))+note('选择地点和查看路线不会移动角色；确认出发才建立行程。'):'')+
-   (selected.id==='cafe'?b('看看咖啡与餐点','nav',nav('food'),'u-text'):selected.id==='store'?b('逛逛店里的好物','nav',nav('shop'),'u-text'):'')):'';
+   (selected.kind==='cafe'||selected.kind==='food'?b('看看咖啡与餐点','nav',nav('food'),'u-text'):selected.kind==='shop'?b('逛逛店里的好物','nav',nav('shop'),'u-text'):'')):'';
   return heading('WORLD / MAP','出去走走','此刻的位置 · '+locationName(mp.position))+map+journey+selection+
    section('熟悉的地方')+places.map(p=>'<div class="u-place"><span class="u-mini-icon">'+h.icon(p.id==='home'?'home':p.id==='cafe'?'food':p.id==='store'?'shop':'location')+'</span><div class="u-list-copy"><p class="u-item-title">'+e(p.name)+'</p><p class="u-item-sub">'+e(p.description)+'</p></div>'+b('查看','ui',{detail:p.id})+'</div>').join('');
  }

@@ -1,0 +1,233 @@
+{
+  "task": "phone-life-host-and-template-integration",
+  "captured_utc": "2026-11-09T15:58:10.787612+00:00",
+  "captured_beijing": "2026-11-09T23:58:10.787612+08:00",
+  "source_parent": "76082a5ba7c38a45897829e9dd7b7f2381109091",
+  "branch": "candidate/phone-integration-20261109",
+  "implementation": [
+    "desktop-pet life page retains old tools",
+    "eight life apps share original per-chat phone service",
+    "world/character first initialization and same-source appearance refresh",
+    "global new-content-only template book",
+    "in-place role editing by book+uid",
+    "optional per-chat reference books and phone world selection in both identity UI paths",
+    "revision guards, idempotent events, replay/frozen reply integration",
+    "complete retained-history media backup and original media inheritance on native branches"
+  ],
+  "validation": {
+    "full_node_suite": {
+      "tests": 1645,
+      "pass": 1645,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "preview_regression": {
+      "tests": 56,
+      "pass": 56,
+      "fail": 0
+    },
+    "exact_bundled_html": {
+      "groups": 4,
+      "pass": 4,
+      "failure": 0
+    },
+    "build_gates": "all package build gates plus phone style and HTML --check passed",
+    "real_browser": {
+      "attempted_utc": "2026-11-09T15:35:15.465Z",
+      "result": "failed: required Chromium executable absent",
+      "visual_layout_verified": false
+    },
+    "real_host_installation": false,
+    "real_model_call": false,
+    "android": false
+  },
+  "user_live_data": {
+    "accessed": false,
+    "reset": false
+  },
+  "retained_failures": [
+    "first full run exited nonzero without complete footer; not counted as a passed full suite",
+    "second full suite: 1641 pass/1 fail due source-order assertion needing new final template exclusion step; final full suite passed after correction",
+    "first hosted fixture rejected invalid food enum; original raw failure retained",
+    "shell fixture lacked new entry imports and IndexedDB; actual imports and optional fake storage added, real entry now verified",
+    "media history export and native-branch original lookup failed and were fixed; before/after evidence retained"
+  ],
+  "limitations": [
+    "different world/character binding in same chat is rejected; switch back or start a new chat",
+    "finance/time/currency mechanism migration is rejected rather than resetting existing records",
+    "native variable/table settlement does not create writable parallel finance state; generic two-way synchronization not implemented",
+    "world styles currently control app availability/names, palette and corner radius",
+    "template book on actual client is installed/prepared on opening identity UI or by importing delivered book; no live client was accessed"
+  ],
+  "runtime": {
+    "runtime.js": {
+      "bytes": 4399334,
+      "sha256": "b99f9aedfa7f2e74ccfd9914f7b8efcabb05c1797e0eda0df741741e1f3bb555"
+    },
+    "phone.html": {
+      "bytes": 580814,
+      "sha256": "5b598acf02baf84d5e91b519b4914d49e4891dbdddc066141c64bfe9cf44cbc1"
+    },
+    "phone-life/style.mjs": {
+      "bytes": 40560,
+      "sha256": "f7d806eb47937b6c51b20fb2c56d8f25c3e9def44c02e26e233bcd443934ca79"
+    },
+    "templates/tisya-template-book.json": {
+      "bytes": 15723,
+      "sha256": "39fbb5038d52007990b2f21ea702e57c4fc9843d94fa30ea06a222e04f84e48d"
+    }
+  },
+  "evidence": [
+    {
+      "path": "identity-handoff-after.json",
+      "bytes": 2885,
+      "sha256": "09e6af74faea1b2141cab1ca838a31d727497e8855f01cdc468f426b14de13f1"
+    },
+    {
+      "path": "identity-handoff-before.json",
+      "bytes": 2885,
+      "sha256": "8894ff365593a77c8253f07afd5393d170d2b2f0bec547e9ae0939b057683c60"
+    },
+    {
+      "path": "identity-handoff-creation.tap",
+      "bytes": 658,
+      "sha256": "e9f38ccf9dc4ccd3d18d38943cdacffcca79fb870484e92490721bf03b4a940f"
+    },
+    {
+      "path": "identity-handoff-final.json",
+      "bytes": 2906,
+      "sha256": "8eaab78dd21ea61b19ec3008c0608fbf261c5f9d107f12b2a043ce0c631f4ac2"
+    },
+    {
+      "path": "identity-handoff-focused.tap",
+      "bytes": 15455,
+      "sha256": "7b10d1dd494ee341a48b9b9e31d832f60d35d7e6776857df22c44f176e8c8198"
+    },
+    {
+      "path": "identity-template-focused-first.tap",
+      "bytes": 10614,
+      "sha256": "72be2c086ff9859be2bf33f30d12f0ecddcda7c8eeb1900b392ba53ee24b0434"
+    },
+    {
+      "path": "identity-template-focused-second.tap",
+      "bytes": 13466,
+      "sha256": "4171dbee32ca86cf4f61b76f88ed7d60c878587fddcfa7ce1987747925735ab7"
+    },
+    {
+      "path": "phone-build-gates-final.log",
+      "bytes": 1289,
+      "sha256": "baa2d20d5eac0c966dc0340f03c2251d3572be425e8fdb7f9ac771b017139d36"
+    },
+    {
+      "path": "phone-bundle-integration-final.json",
+      "bytes": 1398,
+      "sha256": "9a50eeeac79b1ad9863dcddd680c94fb06c1b3f434cd5760fe3ecf4ea43c21dd"
+    },
+    {
+      "path": "phone-bundle-integration-final.tap",
+      "bytes": 1223,
+      "sha256": "2e60dd290656450cf65b4b66ccdec0e60164218653ce2adaf84d4ad397b72d1b"
+    },
+    {
+      "path": "phone-host-media-native-branch-fixed.json",
+      "bytes": 222,
+      "sha256": "b7d322d04b65522d01ab0a3cff03e0641a793a8d5200ba49aadac4b6f70fb63e"
+    },
+    {
+      "path": "phone-host-media-native-branch-probe.json",
+      "bytes": 281,
+      "sha256": "38d92b5dcf294f988153d9605dfd2159fdb2d4d3d76b50ac6f10145e2646e3ea"
+    },
+    {
+      "path": "phone-host-media-probe-confirmed.json",
+      "bytes": 321,
+      "sha256": "5afbe655cbcc9f8ea27433843a363c5d8649966f8f8151b847d0442ceab6fa8d"
+    },
+    {
+      "path": "phone-host-media-probe-fixed.json",
+      "bytes": 340,
+      "sha256": "d00964685277ef40d93ede411615ff43ea0d5adf1394ca84ee56c0dc0344f3fb"
+    },
+    {
+      "path": "phone-integration-browser-attempt.txt",
+      "bytes": 1085,
+      "sha256": "6f0161b5c2d2c8a81b2c32e3b749ced3a3e5f5942eea0fef1ce6a054cf9c001e"
+    },
+    {
+      "path": "phone-integration-core-complete.tap",
+      "bytes": 10788,
+      "sha256": "9b7e88349df213605c68aa6dc3c2a3acae6f1ea3e59af930a07721be6715b69d"
+    },
+    {
+      "path": "phone-integration-final-build.log",
+      "bytes": 275,
+      "sha256": "9d5a0d50224de8c45dab9c07da5ad1d8aa43be9efc7859d00df0178e45f61113"
+    },
+    {
+      "path": "phone-integration-full-final.tap",
+      "bytes": 411075,
+      "sha256": "f2f42449265685a85f96d025643dec188321772af88e0ac6caaf386ec665914a"
+    },
+    {
+      "path": "phone-integration-full-first.tap",
+      "bytes": 152856,
+      "sha256": "b438a98d3647b3126dc59f7b7448ff31b67c3926942931febb0c9c73ae2e771f"
+    },
+    {
+      "path": "phone-integration-full-second.tap",
+      "bytes": 542369,
+      "sha256": "5d9a17e948229a9354b2b3703ab29d1a618bf239ff04c71512fef27ce79c5183"
+    },
+    {
+      "path": "phone-integration-media-dom-final.tap",
+      "bytes": 347,
+      "sha256": "7fbb48671bd1ad860495cab4409d39e0f24ee990ec8d0d64e42ce1cc09d481ab"
+    },
+    {
+      "path": "phone-integration-media-origin-first.tap",
+      "bytes": 4500,
+      "sha256": "458d1ac6fdbcb83086b23ed03b8a477535bcd50fa32c11b65facc736c9bd4ca8"
+    },
+    {
+      "path": "phone-life-host-dom-first.tap",
+      "bytes": 9907,
+      "sha256": "6acbb513b3dcdb5c6586af90ee8113dd3e5eedeac5025fed6dd5784afd8e09bc"
+    },
+    {
+      "path": "phone-life-host-dom-second.tap",
+      "bytes": 899,
+      "sha256": "76aa46a0ef3f3f264b1368d6bdfd995118f6107d5dd302c8b020ff5156a2e264"
+    },
+    {
+      "path": "phone-life-host-dom-third.tap",
+      "bytes": 898,
+      "sha256": "163a1eaf3f31ae51744cf3e2175217f12b5d3bbaad8f79aebdc6a920c859798e"
+    },
+    {
+      "path": "phone-preview-regression-final.tap",
+      "bytes": 5249,
+      "sha256": "9913de4918f6e8f6ea1bbc1cdb3913939e3dae9293932d9f955c98497d632c6a"
+    },
+    {
+      "path": "phone-prompt-export-final.log",
+      "bytes": 85,
+      "sha256": "d6960e6e07dabbbf468183ea2b37d4fb917a5b9c41ae774e4d6bab7d80050629"
+    },
+    {
+      "path": "phone-shell-new-entries-second.tap",
+      "bytes": 434,
+      "sha256": "8841a0ed7233b70d6c24caf0f79559572a13e958844db27cb676ed36158134f6"
+    },
+    {
+      "path": "phone-shell-new-entries.tap",
+      "bytes": 1277,
+      "sha256": "920d32bce30600ad8997913f9e37df42ebd030353d07f62ff9d79857598992ac"
+    },
+    {
+      "path": "phone-worldbook-final-gate.tap",
+      "bytes": 1212,
+      "sha256": "461a13633cd0e02246b48d64f0a2452e61a8550c0a33630986ad4c28f7ac1f8d"
+    }
+  ]
+}

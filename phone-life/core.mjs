@@ -61,7 +61,7 @@ function refresh(s) {
     }
   }
 }
-function advanceTime(s, minutes) { epoch(s); s.clock.totalMinutes += integer(minutes, '推进分钟', 0, YEAR * 10); need(s.clock.totalMinutes <= YEAR * 100, '演示时钟最多推进100个故事年。'); refresh(s); }
+function advanceTime(s, minutes) { epoch(s); s.clock.totalMinutes += integer(minutes, '推进分钟', 0, YEAR * 10); need(s.clock.totalMinutes <= YEAR * 100, '故事时钟最多推进100个故事年。'); refresh(s); }
 
 export function money(cents) {
   if(cents===null||cents===undefined)return '未配置';
@@ -116,7 +116,7 @@ function refund(s, order, status) {
   if (order.status === 'completed') {
     for (const item of order.items) {
       const holding = s.inventory.find(x => x.orderId === order.id && x.productId === item.productId);
-      need(holding && holding.qty === item.qty && holding.consumed === 0 && holding.ownerId === owner(s), '商品已经使用、消耗或不再完整，不能模拟整单退货。');
+      need(holding && holding.qty === item.qty && holding.consumed === 0 && holding.ownerId === owner(s), '商品已经使用、消耗或不再完整，不能整单退货。');
       need(!s.map.journey && holding.placeId === s.map.position, '请先回到商品所在地点办理退货。');
     }
     s.inventory = s.inventory.filter(x => x.orderId !== order.id);
@@ -158,7 +158,7 @@ function perform(s, a) {
       const quote = quoteLoan(a.amount, a.months, s); need(a.quoteId === quote.quoteId, '请先查看并确认本次贷款报价。', 'QUOTE_REQUIRED');
       epoch(s); const to = fundingAccount(s,a.accountId); account(s, to);
       const loan = { ...quote, id: nextId(s, 'loan'), remainingPrincipal: quote.amount, paid: 0, status: 'active', createdAt: s.clock.totalMinutes, accountId: to, installments: quote.installments.map(x => ({ ...x, paid: 0, dueAt: s.clock.totalMinutes + x.number * quote.periodDays * 24 * 60 })) };
-      s.wallet.loans.push(loan); credit(s, to, loan.amount); record(s, 'loan.disburse', '演示贷款放款（同时产生负债）', loan.amount, to, { loanId: loan.id });
+      s.wallet.loans.push(loan); credit(s, to, loan.amount); record(s, 'loan.disburse', '贷款放款（同时产生负债）', loan.amount, to, { loanId: loan.id });
       return { message: `已按已确认报价放款 ${money(loan.amount)} ${s.config.currency?.name||''}，共${loan.months}期，总还款 ${money(loan.totalPayable)} ${s.config.currency?.name||''}。`, loanId: loan.id };
     }
     case 'wallet.loan.repay': {
@@ -177,24 +177,24 @@ function perform(s, a) {
       return msg(`已归还 ${money(n)} ${s.config.currency?.name||''}；剩余应还 ${money(loan.totalPayable - loan.paid)} ${s.config.currency?.name||''}。`);
     }
     case 'wallet.invest.buy': {
-      epoch(s); const product = byId(s.wallet.investmentProducts, a.productId, '模拟理财产品'); const n = amount(a.amount), from = fundingAccount(s,a.accountId); debit(s, from, n);
+      epoch(s); const product = byId(s.wallet.investmentProducts, a.productId, '理财产品'); const n = amount(a.amount), from = fundingAccount(s,a.accountId); debit(s, from, n);
       const investment = { id: nextId(s, 'invest'), productId: product.id, principal: n, accrued: 0, createdAt: s.clock.totalMinutes, settledAt: s.clock.totalMinutes, status: 'active' };
-      s.wallet.investments.push(investment); record(s, 'invest.buy', '模拟理财申购（现金转为持有份额）', -n, from);
-      return { message: `已申购 ${money(n)} ${s.config.currency?.name||''}。收益只在明确模拟结算后入账。`, investmentId: investment.id };
+      s.wallet.investments.push(investment); record(s, 'invest.buy', '理财申购（现金转为持有份额）', -n, from);
+      return { message: `已申购 ${money(n)} ${s.config.currency?.name||''}。收益只在明确结算后入账。`, investmentId: investment.id };
     }
     case 'wallet.invest.settle': {
       const row = byId(s.wallet.investments, a.investmentId, '理财持仓'); need(row.status === 'active', '该持仓已经赎回。');
-      epoch(s); const product = byId(s.wallet.investmentProducts, row.productId, '模拟理财产品');
+      epoch(s); const product = byId(s.wallet.investmentProducts, row.productId, '理财产品');
       const earned = Number(BigInt(row.principal) * BigInt(product.annualRateBps) * BigInt(s.clock.totalMinutes - row.createdAt) / BigInt(10000 * YEAR));
       const gain = earned - row.accrued; need(gain > 0, '按已过去的故事时间计算，尚无新增整分收益；不会凭空加钱。');
       row.accrued = earned; row.settledAt = s.clock.totalMinutes; s.wallet.external -= gain;
-      record(s, 'invest.simulated-yield', '明确模拟结算收益（非真实金融回报）', gain, row.id);
-      return msg(`按故事时间模拟结算 ${money(gain)} ${s.config.currency?.name||''}；未修改现实时间。`);
+      record(s, 'invest.simulated-yield', '按故事规则结算收益', gain, row.id);
+      return msg(`按故事时间结算 ${money(gain)} ${s.config.currency?.name||''}；未修改现实时间。`);
     }
     case 'wallet.invest.redeem': {
       const row = byId(s.wallet.investments, a.investmentId, '理财持仓'); need(row.status === 'active', '该持仓已经赎回，不能重复领取。');
       const n = row.principal + row.accrued, to = fundingAccount(s,a.accountId); credit(s, to, n); row.status = 'redeemed'; row.redeemedAt = s.clock.totalMinutes;
-      record(s, 'invest.redeem', '赎回本金与已结算模拟收益', n, to);
+      record(s, 'invest.redeem', '赎回本金与已结算收益', n, to);
       return msg(`已赎回 ${money(n)} ${s.config.currency?.name||''}；未结算收益不会自动补入。`);
     }
     case 'cart.add': {
@@ -220,9 +220,9 @@ function perform(s, a) {
     }
     case 'order.advance': {
       const order = byId(s.commerce.orders, a.orderId, '订单'); const steps = order.kind === 'food' ? ['paid', 'preparing', 'delivering', 'delivered'] : ['paid', 'shipped', 'delivered'];
-      const index = steps.indexOf(order.status); need(index >= 0 && index < steps.length - 1, '此订单当前没有可模拟推进的物流阶段。');
+      const index = steps.indexOf(order.status); need(index >= 0 && index < steps.length - 1, '此订单当前没有可推进的物流阶段。');
       order.status = steps[index + 1]; order.updatedAt = s.clock.totalMinutes;
-      return msg(`已明确模拟下一阶段：${{ preparing: '制作中', delivering: '配送中', shipped: '已发货', delivered: '已送到指定地点，等待领取' }[order.status]}。`);
+      return msg(`订单更新为：${{ preparing: '制作中', delivering: '配送中', shipped: '已发货', delivered: '已送到指定地点，等待领取' }[order.status]}。`);
     }
     case 'order.collect': {
       const order = byId(s.commerce.orders, a.orderId, '订单'); need(order.status === 'delivered', '订单尚未送达，或者已经领取。');
@@ -235,8 +235,8 @@ function perform(s, a) {
       refund(s, order, 'cancelled'); return msg('已取消并原路全额退款，库存已经释放。');
     }
     case 'order.refund': {
-      const order = byId(s.commerce.orders, a.orderId, '订单'); need(['delivered', 'completed'].includes(order.status), '只有已送达或已领取的订单可以在此模拟批准退货退款。');
-      refund(s, order, 'refunded'); return msg('已明确模拟批准全额退货退款；原付款与退款记录都保留。');
+      const order = byId(s.commerce.orders, a.orderId, '订单'); need(['delivered', 'completed'].includes(order.status), '只有已送达或已领取的订单可以在此退货退款。');
+      refund(s, order, 'refunded'); return msg('已登记全额退货退款；原付款与退款记录都保留。');
     }
     case 'inventory.consume': {
       const item = byId(s.inventory, a.itemId, '持有物'); need(item.kind === 'food' && item.ownerId === owner(s) && item.holderId === owner(s), '只有本人已经领取的食物可以食用。');
@@ -255,9 +255,9 @@ function perform(s, a) {
       const at = atMinute(s,s.clock.year, s.clock.month, day, minute); need(at >= s.clock.totalMinutes, '不能把新日程安排到故事过去。'); byId(s.map.places, a.placeId, '日程地点');
       const participantId = String(a.participantId || ''); need(!participantId||(s.contacts||[]).some(x=>x.id===participantId)||(s.social?.accounts||[]).some(x=>x.id===participantId),'请先确认邀请对象。');
       const event = { id: nextId(s, 'event'), title, day, minute, placeId: a.placeId, participantId, status: participantId ? 'invited' : 'personal', at, notified: false };
-      s.calendar.events.push(event); return { message: participantId ? '已发出演示邀请，尚未得到参与者确认。' : '已记入个人日程。', eventId: event.id };
+      s.calendar.events.push(event); return { message: participantId ? '已发出邀请，尚未得到参与者确认。' : '已记入个人日程。', eventId: event.id };
     }
-    case 'calendar.confirm': { const event = byId(s.calendar.events, a.eventId, '日程'); need(event.status === 'invited', '只有待确认邀请可以模拟接受。'); event.status = 'confirmed'; return msg('已明确模拟参与者确认；这不是实际联网回应。'); }
+    case 'calendar.confirm': { const event = byId(s.calendar.events, a.eventId, '日程'); need(event.status === 'invited', '只有待确认邀请可以接受。'); event.status = 'confirmed'; return msg('已按本轮回执记录参与者确认。'); }
     case 'calendar.cancel': { const event = byId(s.calendar.events, a.eventId, '日程'); need(event.status !== 'cancelled', '日程已经取消。'); event.status = 'cancelled'; return msg('已取消日程，原记录仍保留。'); }
     case 'world.advance': { const n = integer(a.minutes, '推进分钟', 1, YEAR * 10); advanceTime(s, n); return msg(`已推进${n}个故事分钟；没有自动付款、借款或结算理财收益。`); }
     default: fail('UNSUPPORTED_ACTION', `核心不处理动作 ${String(a.type)}。请由所属应用处理。`);
@@ -265,7 +265,7 @@ function perform(s, a) {
 }
 
 export function validateState(s) {
-  need(s && s.schema === 1 && s.wallet && s.commerce && s.map && s.calendar && s.clock, '演示存档结构不完整；不会重置原档。', 'INVALID_STATE');
+  need(s && s.schema === 1 && s.wallet && s.commerce && s.map && s.calendar && s.clock, '手机存档结构不完整；不会重置原档。', 'INVALID_STATE');
   for (const [label, rows] of [['账户', s.wallet.accounts], ['信用消费', s.wallet.card?.charges], ['贷款', s.wallet.loans], ['理财持仓', s.wallet.investments], ['理财产品', s.wallet.investmentProducts], ['资金流水', s.wallet.ledger], ['商品', s.commerce.products], ['订单', s.commerce.orders], ['持有物', s.inventory], ['地点', s.map.places], ['日程', s.calendar.events]]) {
     need(Array.isArray(rows) && rows.every(x => x && typeof x.id === 'string') && new Set(rows.map(x => x.id)).size === rows.length, `${label}记录缺失或身份重复；原档不会重置。`, 'INVALID_STATE');
   }

@@ -1,0 +1,3 @@
+✔ actual hosted export includes both current and frozen historical audio originals after a source replacement (126.833072ms)
+✔ verified native child branch reads the parent original from its immutable media origin (93.803806ms)
+✔ reroll removing later media stops old audio, revokes live URLs and closes the former photo view (101.205442ms)

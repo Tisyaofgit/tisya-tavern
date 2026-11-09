@@ -23,6 +23,21 @@ function fixture(nativeConfig=null){
 async function externalBookWrite(f,snapshot,next){if(next.kind==='session'&&next.origin)next.archiveView=assembleArchiveBook(await f.books.read(next.origin),next,await sources(f.c.chat));return f.books.write(snapshot,next);}
 async function initializeBase(f,changes){const draft=await f.service.cardTemplate('generic');draft.basis='用户手动修改表单';draft.proposal.base.changes=changes;return f.service.saveCardTemplate(draft);}
 const ai=text=>({is_user:false,name:'甲',mes:text});const user=text=>({is_user:true,name:'用户',mes:text});
+test('creation templates reach new world and character drafts, while revision and generic reuse do not read them',async()=>{
+ const f=fixture();await f.service.initialize();let reads=0,fail=false;const templates={entries:{7:{uid:7,comment:'用户创作规则',content:'仅新创作使用的真实模板'}}};
+ f.c.extensionSettings.tisya_matrix_configuration={templateBook:'自订模板'};f.c.loadWorldInfo=async name=>{assert.equal(name,'自订模板');reads++;if(fail)throw Error('模板读取失败');return structuredClone(templates);};
+ f.responder((task,input)=>{assert.equal(task,'tableGenesis');return {blueprint:{name:'新设计',goal:'测试创作',decisions:[],unresolved:[]},checklist:[],artifacts:{registry:input.registry,base:{changes:[]},initial:{changes:[]}},workflow:{id:'new-design',name:'设计',version:1,steps:[]}};});
+ const world=await f.service.genesis('创建新世界');assert.match(f.calls.at(-1).input.goal,/NEW_CONTENT_TEMPLATES/);assert.match(f.calls.at(-1).input.goal,/仅新创作使用的真实模板/);assert.equal(world.goal,'创建新世界');assert.equal(world.creationTemplates.book,'自订模板');
+ const character=await f.service.createIdentityDraft({goal:'新人物'});assert.match(f.calls.at(-1).input.goal,/仅新创作使用的真实模板/);assert.equal(character.creationTemplates.task,'tableGenesis');
+ const readCount=reads;fail=true;const revise=await f.service.genesis('修改已有世界',{authoringMode:'revise'});assert.equal(reads,readCount);assert.equal(revise.creationTemplates,undefined);assert.doesNotMatch(f.calls.at(-1).input.goal,/NEW_CONTENT_TEMPLATES/);
+ const callCount=f.calls.length;await f.service.cardTemplate('generic');await f.service.cardTemplate('reuse');assert.equal(f.calls.length,callCount);assert.equal(reads,readCount);
+ await assert.rejects(f.service.genesis('另一个新世界'),/模板读取失败/);assert.equal(f.calls.length,callCount);
+});
+test('template initialization uses the configured book and stale template edits block draft save',async()=>{
+ const f=fixture();f.binding.primary='';f.binding.additional=[];await f.service.initialize();let text='最初模板';f.c.extensionSettings.tisya_matrix_configuration={templateBook:'自订模板'};f.c.loadWorldInfo=async()=>({entries:{8:{uid:8,comment:'模板',content:text}}});
+ f.responder((task,input)=>{assert.equal(task,'templateInit');assert.match(input.goal,/NEW_CONTENT_TEMPLATES/);assert.match(input.goal,/最初模板/);return {registry:input.registry,base:{changes:[]},initial:{changes:[]},notes:[]};});
+ const draft=await f.service.cardTemplate('card');assert.equal(draft.creationTemplates.task,'templateInit');const before=JSON.stringify([...f.saved]);text='用户后来修改模板';await assert.rejects(f.service.saveCardTemplate(draft),/创作模板已改变/);assert.equal(JSON.stringify([...f.saved]),before);
+});
 test('W71 idea-only carrier reaches the real genesis UI, saves complete forms and leaves the old world untouched',async()=>{
  const {createWorldSeedService}=await import('../world-seed.js'),{mountAssistantApp}=await import('../assistant-app.js'),{Window}=await import('happy-dom');const f=fixture(),old=f.store.read(),oldWorld=structuredClone(old.world);f.c.name1='用户';f.c.userAvatar='old-user.png';f.c.powerUserSettings={personas:{'old-user.png':'用户'},persona_descriptions:{'old-user.png':{description:''}},persona_description:''};
  const seed=createWorldSeedService({getContext:()=>f.c,persist:async()=>true,createCarrier:async p=>{f.c.characters.push({avatar:'islands.png',name:p.name,description:'这是独立的表单化世界游玩载体。'});return 'islands.png';},findCarrier:async()=>null,openCarrier:async()=>{f.c.characterId=1;f.c.chatId='islands';f.c.chat=[];}});

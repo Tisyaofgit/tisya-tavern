@@ -1,0 +1,138 @@
+✖ real phone boot mounts configured life apps and no preview identities (18.071205ms)
+✖ host transfer form writes once into actual chat metadata and survives service reload (3.261806ms)
+✖ commerce checkout uses configured fee and hides model-owned logistics controls (2.470333ms)
+✖ loan quote and consent use world APR, terms and selected funding account (2.447719ms)
+✖ unconfigured values stay unknown and accountless personal media remains usable (2.060415ms)
+✖ draft autosave retains newer input arriving during an older metadata save (27.830515ms)
+✖ old frame rejects changed selection and changed chat without overwriting either archive (3.234896ms)
+✖ archive validates visual tokens even when world and state config are tampered together (3.241356ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 444.858766
+
+✖ failing tests:
+
+test at tests/phone-life-host-dom.test.js:31:1
+✖ real phone boot mounts configured life apps and no preview identities (18.071205ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:32:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:36:1
+✖ host transfer form writes once into actual chat metadata and survives service reload (3.261806ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:37:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:43:1
+✖ commerce checkout uses configured fee and hides model-owned logistics controls (2.470333ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:44:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:49:1
+✖ loan quote and consent use world APR, terms and selected funding account (2.447719ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:50:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:54:1
+✖ unconfigured values stay unknown and accountless personal media remains usable (2.060415ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:55:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:58:1
+✖ draft autosave retains newer input arriving during an older metadata save (27.830515ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:59:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:62:1
+✖ old frame rejects changed selection and changed chat without overwriting either archive (3.234896ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:63:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }
+
+test at tests/phone-life-host-dom.test.js:66:1
+✖ archive validates visual tokens even when world and state config are tampered together (3.241356ms)
+  Error: 商品类别须为实物或食品。
+      at need (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:13:79)
+      at product (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:36:92)
+      at Array.map (<anonymous>)
+      at parsePhoneWorld (file:///workspace/scratch/5717d8fb3725/phone-integration-work/phone-life-config.mjs:45:262)
+      at profile (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:14:36)
+      at fixture (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:21:229)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/phone-life-host-dom.test.js:67:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'PHONE_LIFE_CONFIG'
+  }

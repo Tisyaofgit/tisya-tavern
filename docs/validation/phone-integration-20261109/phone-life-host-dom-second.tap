@@ -1,0 +1,16 @@
+✔ real phone boot mounts configured life apps and no preview identities (99.210906ms)
+✔ host transfer form writes once into actual chat metadata and survives service reload (157.497669ms)
+✔ commerce checkout uses configured fee and hides model-owned logistics controls (143.386185ms)
+✔ loan quote and consent use world APR, terms and selected funding account (101.304179ms)
+✔ unconfigured values stay unknown and accountless personal media remains usable (30.062564ms)
+✔ draft autosave retains newer input arriving during an older metadata save (1199.099642ms)
+✔ old frame rejects changed selection and changed chat without overwriting either archive (25.41672ms)
+✔ archive validates visual tokens even when world and state config are tampered together (17.325681ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2391.016519

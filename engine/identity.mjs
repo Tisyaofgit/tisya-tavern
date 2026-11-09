@@ -16,7 +16,7 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
  async function ensureBook(book=config.read().story.userBinding?.book??config.read().coreBook??'基点书'){
   if(preparation)return preparation;
   const work=async()=>{
-   assertIdle();check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');
+   assertIdle();check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
    const captured=scope(),h=helper(),guard=()=>check(captured===scope(),'聊天已切换；基点书已保存的部分保留，请重新打开身份页');
    const names=await h.getWorldbookNames();guard();
    if(!names.includes(book)){check(await h.createWorldbook(book,[])===true,'基点书创建未确认');guard();check((await h.getWorldbookNames()).includes(book),'基点书创建后回读失败');}
@@ -25,21 +25,23 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
   preparation=work();try{return await preparation;}finally{preparation=null;}
  }
  async function list(book=config.read().story.userBinding?.book??config.read().coreBook??'基点书'){
-  const h=helper(),all=await h.getWorldbookNames(),books=all;
+  const h=helper(),all=await h.getWorldbookNames(),books=all.filter(name=>name!==templateBookName(config.read()));
   const entries=all.includes(book)?Object.values((await getContext().loadWorldInfo(book))?.entries??{}).filter(e=>/^【角色】.+/u.test(roleName(e))).map(e=>({uid:e.uid,name:roleName(e),content:e.content})):[];
   return {book,books,exists:all.includes(book),entries};
  }
  async function bind({book,uid,mode='bound'},expected=config.read().revision){
   assertIdle();const captured=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');check(getContext().chatId,'请先打开要绑定的聊天');
   if(mode==='bound'){
-   const rows=await list(book);check(rows.exists,'请选择已建立的基点书');const entry=rows.entries.find(e=>String(e.uid)===String(uid));check(entry,'基点书的角色条目已不存在');
+   const rows=await list(book);check(rows.exists,'请选择已建立的基点书');const found=rows.entries.filter(e=>String(e.uid)===String(uid));check(found.length===1,'基点书的角色条目已不存在或标识重复');const entry=found[0];
    value.coreBook=book;value.story.userBinding={book,uid:entry.uid};value.story.userName=entry.name.slice('【角色】'.length);value.story.userMode='bound';
   }else{check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;}
   check(captured===scope(),'聊天已切换，绑定尚未保存');return config.save(value);
  }
  async function create({book=config.read().coreBook??'基点书',name,content},expected=config.read().revision){
   assertIdle();check(getContext().chatId,'请先打开要绑定的聊天');check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');check(typeof name==='string'&&name.trim()===name&&name&&!/[\r\n]/.test(name),'角色名称须为单行非空文字');check(typeof content==='string'&&content.trim(),'请填写角色条目原文');
+  check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
   const captured=scope(),h=helper(),title=name.startsWith('【角色】')?name:'【角色】'+name;
+  check(title.slice('【角色】'.length).trim(),'角色名称不能为空');
   check(config.read().revision===expected,'身份配置已变化，请重新读取');
   const guard=()=>check(scope()===captured,'聊天已切换；已保存的角色条目保留，尚未绑定到新聊天');
   const wanted={name:title,content,enabled:false,strategy:{type:'selective',keys:[],keys_secondary:{logic:'and_any',keys:[]},scan_depth:'same_as_global'},position:{type:'after_character_definition',role:'system',depth:0,order:100},probability:100,recursion:{prevent_incoming:true,prevent_outgoing:true,delay_until:null},effect:{sticky:null,cooldown:null,delay:null}};
@@ -58,6 +60,7 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
   check(typeof name==='string'&&name.trim()===name&&name&&!/[\r\n]/.test(name),'角色名称须为单行非空文字');
   check(typeof content==='string'&&content.trim(),'请填写角色条目原文');
   check(before&&typeof before.name==='string'&&typeof before.content==='string','缺少原档案快照，请重新读取');
+  check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
   const captured=scope(),h=helper(),title=name.startsWith('【角色】')?name:'【角色】'+name;
   check(title.slice('【角色】'.length).trim(),'角色名称不能为空');
   check(typeof h.getWorldbook==='function'&&typeof h.updateWorldbookWith==='function','宿主尚未提供档案更新接口');
@@ -94,7 +97,7 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
  async function worldDefinitions(book){
   if(!book)return [];const captured=scope();check(book!==templateBookName(config.read()),'模板骨架不能直接作为当前手机世界');
   const data=await getContext().loadWorldInfo(book);check(captured===scope(),'聊天已切换，未选择旧世界');check(data?.entries&&typeof data.entries==='object','手机世界资料书不存在或损坏：'+book);
-  return Object.values(data.entries).filter(e=>/^【手机世界】.+/u.test(roleName(e))).map(e=>({uid:e.uid,name:roleName(e),content:e.content}));
+  const rows=Object.values(data.entries).filter(e=>/^【手机世界】.+/u.test(roleName(e))),ids=new Set();for(const row of rows){check(Number.isSafeInteger(row.uid)&&row.uid>=0&&!ids.has(row.uid)&&typeof row.content==='string','手机世界条目标识或正文无效：'+book);ids.add(row.uid);}return rows.map(e=>({uid:e.uid,name:roleName(e),content:e.content}));
  }
  async function saveResources({referenceBooks=[],phoneWorld=null},expected=config.read().revision){
   assertIdle();const captured=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');check(getContext().chatId,'请先打开聊天');
@@ -108,12 +111,12 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
  }
  async function phoneProfile(){
   const captured=scope(),value=config.read(),character=storyAvatar(value).binding,world=value.story.phoneWorld;if(!character||!world)return null;
-  check(world.book!==templateBookName(value),'模板骨架不能直接作为当前手机世界');
+  check(world.book!==templateBookName(value)&&character.book!==templateBookName(value),'模板骨架不能直接作为当前手机世界或角色');
   check(typeof getContext().loadWorldInfo==='function','世界书读取接口尚未就绪');
   const read=async(ref,prefix)=>{const data=await getContext().loadWorldInfo(ref.book);check(data?.entries&&typeof data.entries==='object','初始化资料书不存在或损坏：'+ref.book);const rows=Object.values(data.entries).filter(e=>String(e.uid)===String(ref.uid));check(rows.length===1&&roleName(rows[0]).startsWith(prefix),'初始化资料条目已不存在或类型改变：'+ref.book);check(typeof rows[0].content==='string','初始化资料正文无效');return rows[0].content;};
   const [worldText,characterText]=await Promise.all([read(world,'【手机世界】'),read(character,'【角色】')]);
   check(captured===scope()&&config.read().revision===value.revision,'聊天或初始化选择已变化，请重新打开手机');
   return {worldText,characterText,binding:{world:{book:world.book,uid:world.uid},character:{book:character.book,uid:character.uid}}};
  }
- return {list,bind,create,edit,ensureBook,ensureTemplates,resources,worldDefinitions,saveResources,phoneProfile};
+ return {scope,list,bind,create,edit,ensureBook,ensureTemplates,resources,worldDefinitions,saveResources,phoneProfile};
 }

@@ -1,0 +1,9 @@
+{
+  "utc": "2026-11-09T15:42:05.634Z",
+  "nativeAdoptionSucceeded": true,
+  "sameBinding": true,
+  "parentHasOriginal": true,
+  "childHasOriginal": false,
+  "childReferencedAudio": "audio-before",
+  "playbackError": "这首歌还没有可用音源。请先导入音频文件。"
+}

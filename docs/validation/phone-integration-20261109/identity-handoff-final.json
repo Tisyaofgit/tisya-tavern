@@ -1,0 +1,70 @@
+{
+  "utc": "2026-11-09T15:47:40.266553+00:00",
+  "root": "/workspace/scratch/5717d8fb3725/phone-integration-work",
+  "sourceStatus": "frozen; write ownership returned to parent",
+  "ownedFiles": [
+    "engine/identity.mjs",
+    "engine/identity-ui.mjs",
+    "engine/config.mjs",
+    "engine/host.mjs",
+    "engine/template-book.mjs",
+    "tables/service.js",
+    "templates/phone-world.json",
+    "templates/phone-character.json",
+    "templates/tisya-template-book.json",
+    "templates/phone-fields.md",
+    "templates/README.md",
+    "tests/template-book-identity.test.js",
+    "tests/matrix-identity.test.js",
+    "tests/matrix-engine.test.js",
+    "tests/tables.test.js"
+  ],
+  "dependencies": [
+    "phone-life-config.mjs",
+    "phone-life/core.mjs",
+    "phone-life/social.mjs",
+    "worldbook-order.js"
+  ],
+  "changedDuringVerification": [],
+  "tests": [
+    {
+      "log": "/workspace/scratch/5717d8fb3725/validation-audit/identity-handoff-focused.tap",
+      "startUTC": "2026-11-09T15:47:36.071645+00:00",
+      "endUTC": "2026-11-09T15:47:38.715132+00:00",
+      "exitCode": 0,
+      "tests": 64,
+      "pass": 64,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "log": "/workspace/scratch/5717d8fb3725/validation-audit/identity-handoff-creation.tap",
+      "startUTC": "2026-11-09T15:47:38.715150+00:00",
+      "endUTC": "2026-11-09T15:47:40.265103+00:00",
+      "exitCode": 0,
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  ],
+  "verified": true,
+  "capabilities": [
+    "Editable stable-UID role dossiers with stale-source, cross-chat and write-readback guards; existing phone metadata unchanged.",
+    "Per-chat optional reference books and book+UID phone world selection.",
+    "Shared matrix/legacy resource UI, no copied editor implementation.",
+    "Global creation-only template book: two unfilled skeletons plus use guide and exact Chinese field guide; only appends missing builtins.",
+    "Existing default template book read before config installation; read errors stay visible.",
+    "Native scan retains entry conditions and source identity, deduplicates, strips template/initial-value blocks; final matrix request validates source freshness.",
+    "New-world/new-character/card initialization requests read template contents; revision, ordinary narration and manual role save do not."
+  ],
+  "publicTemplateBook": "templates/tisya-template-book.json",
+  "fieldGuide": "templates/phone-fields.md",
+  "limits": [
+    "Mock/Node DOM and simulated host verification only; no live model request, actual Tavern import or Android device check.",
+    "Complete repository validation, bundling and persistent saving are parent-owned."
+  ],
+  "earlierEvidence": "identity-integration-final-report.json is earlier 63+2 verification; this report supersedes it after one console-order compatibility test."
+}

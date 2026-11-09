@@ -64,3 +64,13 @@ test('core library entries never enter native lore, including unselected enabled
  const rows=[{world:'基点书',uid:0,content:'所选角色'},{world:'基点书',uid:1,content:'未选角色',disable:false},{world:'普通世界书',uid:2,content:'世界信息'}];
  const scan=Object.fromEntries(['globalLore','characterLore','chatLore','personaLore'].map(k=>[k,structuredClone(rows)]));host.entriesLoaded(scan);for(const entries of Object.values(scan))assert.deepEqual(entries,[rows[2]]);
 });
+test('selected reference books must finish native scanning and remain unchanged at the final model request',async()=>{
+ const macros=new Map(),disk=new Map(),book={entries:{8:{uid:8,comment:'参考',content:'当前世界叙述',disable:false,constant:false,key:['世界']}}};const reads=[];
+ const ctx={extensionSettings:{},chatMetadata:{},chatId:'reference-round',characterId:0,characters:[{name:'世界'}],chat:[{is_user:true,mes:'开场'}],registerMacro:(name,fn)=>macros.set(name,fn),saveChat:async()=>true,saveSettingsDebounced(){},loadWorldInfo:async name=>{reads.push(name);assert.equal(name,'参考书');return clone(book);}};
+ const source={prompts:clone(baseline.prompts),order:clone(baseline.prompt_order[1].order)},storage={get:async key=>clone(disk.get(key)),set:async(key,value)=>disk.set(key,clone(value)),commit:async(key,expected,value)=>{if((disk.get(key)?.local_revision??0)!==expected)return false;disk.set(key,clone(value));return true;}};
+ const expand=text=>text.replace(/\{\{([^{}]+)\}\}/g,(raw,key)=>macros.has(key)?macros.get(key)():raw),host=createMatrixHost({getContext:()=>ctx,getSource:()=>source,loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true,expand});host.register();await host.initialize();const settings=host.config.read();settings.story.referenceBooks=['参考书'];settings.templateBook='用户编辑模板书';await host.config.save(settings);await host.before('normal');
+ await assert.rejects(host.payloadReady({messages:[]}),e=>e.code==='REFERENCE_BOOK_NOT_SCANNED');
+ const scan={globalLore:[{world:'用户编辑模板书',uid:2,content:'模板绝不进入主生成'}],characterLore:[],chatLore:[],personaLore:[]};await host.entriesLoaded(scan);assert.equal(scan.globalLore.length,0);assert.equal(scan.chatLore[0].world,'参考书');assert.deepEqual(scan.chatLore[0].key,['世界']);
+ const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier)),messages=source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}));await host.payloadReady({messages});assert(reads.every(name=>name==='参考书'));
+ book.entries[8].content='另一页面更新';await assert.rejects(host.payloadReady({messages}),e=>e.code==='REFERENCE_BOOK_STALE');configureTags();
+});

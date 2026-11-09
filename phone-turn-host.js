@@ -46,6 +46,14 @@ export function adoptNativePhoneBranch(value,c){
  need(Array.isArray(source)&&source.length===3&&Array.isArray(owner)&&owner.length===3&&source[0]===owner[0]&&source[1]===owner[1]&&source[2]!==owner[2]&&c.chatMetadata?.main_chat===source[2]&&typeof c.chatMetadata?.integrity==='string'&&c.chatMetadata.integrity.length>0,'PHONE_CONTEXT_CHANGED','手机归属与当前聊天不一致，且没有可核对的原生父分支，未覆盖存档。');
  let next=importPhone(value);
  need(!Object.values(next.requests).some(r=>r.status==='prepared'),'PHONE_BRANCH_PENDING','父分支仍有待回请求；请先回到父分支确认生成结束，再建立分支。');
+ // Earlier life archives used the current chat as their media namespace. Only
+ // this verified native-parent path can carry that known source namespace into
+ // a child. Keep every historical domain boundary equal to its event replay.
+ const keepOrigin=domain=>{if(domain&&domain.mediaOriginContextKey===undefined)domain.mediaOriginContextKey=value.contextKey;};
+ const keepBoundary=boundary=>{if(!boundary)return;keepOrigin(boundary.initial);keepOrigin(boundary.life);for(const event of boundary.eventLog??[])if(event.kind==='init')keepOrigin(event.initial);};
+ keepOrigin(next.lifeInitial);keepOrigin(next.life);for(const event of next.lifeEventLog??[])if(event.kind==='init')keepOrigin(event.initial);
+ for(const request of Object.values(next.requests))keepBoundary(request.lifeSnapshot);
+ for(const frame of Object.values(next.frames)){keepBoundary(frame.lifeBefore);keepBoundary(frame.lifeAfter);}
  next.contextKey=target;next=reconcilePhone(next,selectedPhoneSources(c,next),{at:new Date().toISOString()});
  next.revision=value.revision+1;return JSON.parse(exportPhone(next));
 }
