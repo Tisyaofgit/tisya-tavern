@@ -18,7 +18,7 @@ def main():
         if path in active:raise ValueError('Cyclic module dependency')
         active.add(path); code=path.read_text(); imports=[]
         for match in IMPORT.finditer(code):
-            if not match[2].startswith('./'):raise ValueError('External import')
+            if not match[2].startswith(('./','../')):raise ValueError('External import')
             dep=visit(path.parent/match[2]); binding=re.sub(r'\s+as\s+',':',match[1])
             imports.append('const {'+binding+'}='+dep+';')
         exports=EXPORT.findall(code)

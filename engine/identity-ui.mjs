@@ -1,8 +1,9 @@
 import {PREFERENCE_GROUPS,effectivePreferences} from './preferences.mjs';
 import {storyAvatar} from './identity.mjs';
 import {selectControl} from './form-controls.mjs';
-export function mountMatrixIdentity(document,root,{identity,config,roles,onClose,onNative}){
- let state=identity.read(),value=config.read(),selected=state.active,dirty=false,busy=false,navigating=false,alive=true;
+export function mountStoryResources(document,root,options){return mountMatrixIdentity(document,root,{...options,resourcesOnly:true});}
+export function mountMatrixIdentity(document,root,{identity,config,roles,onClose,onNative,resourcesOnly=false}){
+ let state=identity?.read(),value=config.read(),selected=state?.active,dirty=false,busy=false,navigating=false,alive=true;
  const edits=new Set(),mark=kind=>{edits.add(kind);dirty=true;},only=(...kinds)=>{if([...edits].some(k=>!kinds.includes(k)))throw Error('请先保存另一部分的修改');},clean=()=>{edits.clear();dirty=false;};
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  const status=el('p');status.setAttribute('role','status');status.className='tisya-identity-status';
@@ -13,8 +14,9 @@ export function mountMatrixIdentity(document,root,{identity,config,roles,onClose
  const option=(s,label,id)=>{const o=el('option',label);o.value=id;s.append(o);};
  const leave=fn=>{if(dirty)throw Error('请先保存或放弃修改');navigating=true;try{return fn();}finally{navigating=false;}};
  async function draw(){
-  if(!alive)return;root.replaceChildren();root.classList.add('tisya-matrix-identity');root.style.cssText='max-width:900px;margin:auto;padding:16px;overflow-wrap:anywhere';root.append(el('h2','用户身份'),status);
-  const nav=el('div');nav.append(button('返回',()=>leave(onClose)),button('原生身份管理',()=>leave(onNative)),button('重新读取',async()=>{if(dirty)throw Error('请先保存或放弃修改');state=identity.read();value=config.read();selected=state.active;await draw();}),button('放弃修改',async()=>{clean();state=identity.read();value=config.read();selected=state.active;await draw();}));root.append(nav);
+  if(!alive)return;root.replaceChildren();root.classList.add('tisya-matrix-identity');root.style.cssText='max-width:900px;margin:auto;padding:16px;overflow-wrap:anywhere';root.append(el('h2',resourcesOnly?'故事档案与资料书':'用户身份'),status);
+  const nav=el('div');if(!resourcesOnly)nav.append(button('返回',()=>leave(onClose)),button('原生身份管理',()=>leave(onNative)));nav.append(button('重新读取',async()=>{if(dirty)throw Error('请先保存或放弃修改');state=identity?.read();value=config.read();selected=state?.active;await draw();}),button('放弃修改',async()=>{clean();state=identity?.read();value=config.read();selected=state?.active;await draw();}));root.append(nav);
+  if(!resourcesOnly){
   const profile=state.personas.find(p=>p.id===selected),picker=el('select');picker.className='text_pole';
   picker.dataset.identityPicker='';for(const p of state.personas)option(picker,p.name+(p.id===state.active?' · 使用中':''),p.id);picker.value=selected;picker.disabled=!state.personas.length;
   picker.onchange=()=>run(async()=>{if(dirty){picker.value=selected;throw Error('请先保存或放弃修改');}const id=picker.value;try{await identity.select({id,revision:state.revision,chat:!!state.scope.chatId,character:false,global:false});state=identity.read();value=config.read();selected=state.active;status.textContent='已切换用户身份并保存当前聊天绑定。';await draw();}catch(e){state=identity.read();selected=state.active;await draw();throw e;}});
@@ -47,17 +49,39 @@ export function mountMatrixIdentity(document,root,{identity,config,roles,onClose
    if(JSON.stringify(next)!==JSON.stringify(selection)||legacyWish){value.story.play??={};value.story.play.choices??={};value.story.play.choices.W=next;value.story.wish='';value=await config.save(value);}
    clean();status.textContent='身份描述与所选心愿已保存。';await draw();
   }));root.append(wishSection);
+  }
   const section=el('section');section.dataset.storyAvatar='';section.append(el('h3','user · 主控化身绑定'));root.append(section);
   const avatar=storyAvatar(value);let listing;try{listing=await roles.list();}catch(e){section.append(el('p','基点书读取失败：'+e.message),button('重试准备基点书',async()=>{await roles.ensureBook();await draw();}));return;}if(!alive)return;
   const mode=el('select');mode.className='text_pole';mode.dataset.avatarMode='';
   option(mode,'不绑定角色','unbound');option(mode,'通用','generic');option(mode,PREFERENCE_GROUPS.find(g=>g.id==='N01').options.find(o=>o.id==='N01-B').label,'bound');option(mode,'无主控纯群像 / 场外导演模式','ensemble');mode.value=avatar.mode;
   const book=el('select');book.className='text_pole';book.dataset.roleBook='';for(const n of new Set([listing.book,...listing.books]))option(book,n+(listing.books.includes(n)?'':'（尚未建立）'),n);book.value=listing.book;
-  const entries=el('select');entries.className='text_pole';entries.dataset.roleEntry='';const preview=el('p');preview.dataset.rolePreview='';let rows=listing.entries;
-  const show=()=>{book.disabled=false;entries.disabled=mode.value!=='bound';const selected=rows.find(e=>String(e.uid)===entries.value);preview.textContent=mode.value==='bound'?(selected?selected.name:rows.length?'请选择已有角色，或在下方创建新角色。':'还没有角色条目，在下方填写名称与设定即可创建并绑定。'):mode.options[mode.selectedIndex].textContent;book.tisyaRefresh?.();entries.tisyaRefresh?.();};
+  const entries=el('select');entries.className='text_pole';entries.dataset.roleEntry='';const preview=el('p');preview.dataset.rolePreview='';let rows=listing.entries,editBefore=null,editorKey='',previousBook=book.value,previousEntry='';
+  const editBox=el('section'),editName=input('',false,'dossier'),editContent=input('',true,'dossier');editBox.dataset.roleEdit='';editName.dataset.roleEditName='';editContent.dataset.roleEditContent='';editContent.rows=12;
+  editBox.append(el('h3','编辑角色档案'),field('角色名称',editName),field('完整档案原文',editContent),el('p','保存会更新同一个角色条目；不重置当前手机状态和已经发生的故事。'),button('保存角色档案',async()=>{
+   only('dossier','role');if(!editBefore)throw Error('请先选择角色档案');if(typeof roles.edit!=='function')throw Error('档案编辑接口尚未就绪');
+   const saved=await roles.edit({book:book.value,uid:editBefore.uid,name:editName.value,content:editContent.value,before:editBefore},value.revision);value=config.read();rows=rows.map(r=>String(r.uid)===String(saved.uid)?saved:r);editBefore={...saved};editName.value=saved.name.replace(/^【角色】/u,'');editContent.value=saved.content;const selectedOption=[...entries.options].find(o=>o.value===String(saved.uid));if(selectedOption)selectedOption.textContent=saved.name;edits.delete('dossier');dirty=edits.size>0;status.textContent='角色档案已保存；原条目标识保持，手机现有状态未重置。';show();
+  }));
+  const show=()=>{book.disabled=false;entries.disabled=mode.value!=='bound';const selected=rows.find(e=>String(e.uid)===entries.value);preview.textContent=mode.value==='bound'?(selected?selected.name:rows.length?'请选择已有角色，或在下方创建新角色。':'还没有角色条目，在下方填写名称与设定即可创建并绑定。'):mode.options[mode.selectedIndex].textContent;const key=selected?book.value+'#'+selected.uid:'';editBox.hidden=!selected;if(key!==editorKey){editorKey=key;editBefore=selected?{...selected}:null;editName.value=selected?.name?.replace(/^【角色】/u,'')??'';editContent.value=selected?.content??'';}previousBook=book.value;previousEntry=entries.value;book.tisyaRefresh?.();entries.tisyaRefresh?.();};
   const fill=data=>{rows=data;entries.replaceChildren();option(entries,'选择【角色】条目','');for(const e of rows)option(entries,e.name,String(e.uid));entries.value=book.value===avatar.binding?.book?String(avatar.binding.uid):'';show();};fill(rows);
-  mode.onchange=()=>{mark('role');show();};book.onchange=()=>run(async()=>{mark('role');fill((await roles.list(book.value)).entries);});entries.onchange=()=>{mark('role');show();};
+  mode.onchange=()=>{mark('role');show();};book.onchange=()=>run(async()=>{if(edits.has('dossier')){book.value=previousBook;book.tisyaRefresh?.();throw Error('请先保存或放弃当前档案编辑');}mark('role');fill((await roles.list(book.value)).entries);});entries.onchange=()=>run(async()=>{if(edits.has('dossier')){entries.value=previousEntry;entries.tisyaRefresh?.();throw Error('请先保存或放弃当前档案编辑');}mark('role');show();});
   section.append(field('主控模式',mode),field('基点书 · 资料来源',book),el('p','基点书不自动启用为世界书；插件只读取选中的角色条目，注入当前聊天的故事身份槽位。'),field('角色档案',entries),preview,button('保存当前聊天绑定',async()=>{only('role');value=await roles.bind({mode:mode.value,book:book.value,uid:entries.value},value.revision);clean();status.textContent='当前聊天的主控模式与角色档案已保存。';await draw();}));
+  section.append(editBox);
   const create=el('section'),roleName=input('',false,'create'),content=input('',true,'create');roleName.dataset.roleName='';content.dataset.roleContent='';create.dataset.roleCreate='';create.append(el('h3','创建角色并保存到基点书'),field('角色名称',roleName),field('角色条目原文',content),button('创建并绑定当前聊天',async()=>{only('role','create');const row=await roles.create({book:book.value,name:roleName.value,content:content.value},value.revision);value=config.read();clean();status.textContent=row.name+' 已保存到基点书并绑定当前聊天。';await draw();}));section.append(create);
+  if(typeof roles.resources==='function'){
+   const resources=el('section');resources.dataset.referenceBooks='';resources.append(el('h3','可选资料书启用'));root.append(resources);
+   let listing;try{listing=await roles.resources();}catch(e){resources.append(el('p','资料书列表读取失败：'+e.message));return;}if(!alive)return;
+   resources.append(el('p','补充当前聊天的世界设定、扩展小剧场等资料。已选条目仍按原有启用状态、关键词和触发条件参与本轮。'));
+   const checkboxes=[],available=listing.books.filter(n=>!listing.excluded.includes(n));
+   for(const name of new Set([...available,...listing.referenceBooks])){const box=el('input');box.type='checkbox';box.value=name;box.checked=listing.referenceBooks.includes(name);box.dataset.referenceBook=name;box.onchange=()=>mark('resources');checkboxes.push(box);resources.append(field(name+(available.includes(name)?'':'（已缺失或不能作为资料书，请取消后保存）'),box));}
+   if(!available.length)resources.append(el('p','目前没有可选资料书，可以先在世界书页面创建或导入。'));
+   const worldBook=el('select'),worldEntry=el('select');worldBook.dataset.phoneWorldBook='';worldEntry.dataset.phoneWorldEntry='';option(worldBook,'暂不选择手机世界','');for(const name of new Set([...listing.books.filter(n=>n!==listing.templateBook),listing.phoneWorld?.book].filter(Boolean)))option(worldBook,name,name);worldBook.value=listing.phoneWorld?.book??'';let worldRows=[];
+   const loadWorlds=async selected=>{worldRows=[];worldEntry.replaceChildren();option(worldEntry,'暂不选择定义','');if(worldBook.value)worldRows=await roles.worldDefinitions(worldBook.value);if(!alive)return;for(const row of worldRows)option(worldEntry,row.name,String(row.uid));if(selected&&!worldRows.some(r=>String(r.uid)===String(selected.uid)))option(worldEntry,'原定义已缺失，请重新选择',String(selected.uid));worldEntry.value=selected?String(selected.uid):'';worldEntry.tisyaRefresh?.();};
+   worldBook.onchange=()=>run(async()=>{mark('resources');await loadWorlds(null);});worldEntry.onchange=()=>mark('resources');
+   resources.append(el('h3','小手机对应世界与画风'),field('手机世界资料书',worldBook),field('【手机世界】定义',worldEntry),el('p','世界定义决定应用与画风；角色档案里的手机初态提供个人资料。保存选择不会重新套用初值或清空已有手机。'));
+   try{await loadWorlds(listing.phoneWorld);}catch(e){resources.append(el('p','手机世界读取失败：'+e.message));}
+   resources.append(button('保存资料书与手机世界选择',async()=>{only('resources');const selected=worldRows.find(r=>String(r.uid)===worldEntry.value),phoneWorld=worldBook.value&&worldEntry.value?{book:worldBook.value,uid:selected?.uid??worldEntry.value}:null;value=await roles.saveResources({referenceBooks:checkboxes.filter(c=>c.checked).map(c=>c.value),phoneWorld},value.revision);clean();status.textContent='当前聊天的资料书与手机世界选择已保存；已有手机状态保持。';await draw();}));
+   const templates=el('div');templates.dataset.templateBook='';templates.append(el('h3','全局模板书'),el('p',listing.templateBook+' · 仅新内容创作读取。内置世界与角色骨架可编辑，补齐操作保留已有内容。'));if(typeof roles.ensureTemplates==='function')templates.append(button('检查并补齐内置模板',async()=>{if(dirty)throw Error('请先保存或放弃当前修改');const receipt=await roles.ensureTemplates();value=config.read();status.textContent='模板书已核对；新增 '+receipt.added.length+' 项，已有模板保留。';await draw();}));resources.append(templates);
+  }
  }
- const ready=run(async()=>{try{await roles.ensureBook();}catch(e){status.textContent='基点书自动准备失败：'+e.message;}await draw();});return {ready,dispose(){alive=false;root.replaceChildren();},requestLeave:()=>dirty||busy&&!navigating?{allowed:false,reason:busy?'身份操作正在进行':'请先保存或放弃修改'}:{allowed:true}};
+ const ready=run(async()=>{try{await roles.ensureBook();}catch(e){status.textContent='基点书自动准备失败：'+e.message;}try{if(typeof roles.ensureTemplates==='function')await roles.ensureTemplates();}catch(e){status.textContent='模板书准备未完成：'+e.message;}value=config.read();await draw();});return {ready,dispose(){alive=false;root.replaceChildren();},requestLeave:()=>dirty||busy&&!navigating?{allowed:false,reason:busy?'身份操作正在进行':'请先保存或放弃修改'}:{allowed:true}};
 }

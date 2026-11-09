@@ -1,5 +1,5 @@
 // Phone transport is data inside one <extra>; it never executes model text.
-const TOP_KEYS = new Set(['requestId', 'acks', 'blocks', 'accounts', 'documents', 'markers']);
+const TOP_KEYS = new Set(['requestId', 'acks', 'blocks', 'accounts', 'documents', 'markers', 'lifeUpdates']);
 const MARKER_KEYS = new Set(['id', 'thread', 'floor', 'itemId']);
 const DANGEROUS_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 const MARKER_ID = /^[\p{Script=Han}A-Za-z0-9_-]+$/u;
@@ -115,6 +115,17 @@ function validatePayload(payload) {
     if (own(payload, key) && !Array.isArray(payload[key])) fail('SHAPE', `${key} 必须是数组`, `$.${key}`);
   }
   if (own(payload, 'accounts') && !object(payload.accounts)) fail('SHAPE', 'accounts 必须是账号对象', '$.accounts');
+  if(own(payload,'lifeUpdates')){
+    if(!Array.isArray(payload.lifeUpdates)||payload.lifeUpdates.length>32)fail('LIFE_UPDATES','lifeUpdates须为最多32项世界反馈数组','$.lifeUpdates');
+    const shapes={'order.advance':['type','orderId'],'calendar.confirm':['type','eventId'],'world.advance':['type','minutes'],'social.network.advance':['type'],'social.npc.post':['type','postId','authorId','text'],'social.npc.comment':['type','postId','authorId','text']};
+    for(const [i,update]of payload.lifeUpdates.entries()){
+      const path=`$.lifeUpdates[${i}]`,keys=object(update)&&shapes[update.type];
+      if(!keys||Object.keys(update).some(k=>!keys.includes(k)))fail('LIFE_SCOPE','生活世界反馈只允许配送、日程确认、故事时间和社交送达，不能代用户操作资金或私密资料',path);
+      if(update.type==='order.advance'&&!nonempty(update.orderId)||update.type==='calendar.confirm'&&!nonempty(update.eventId))fail('LIFE_REFERENCE','世界反馈缺少稳定记录ID',path);
+      if(update.type==='world.advance'&&(!Number.isSafeInteger(update.minutes)||update.minutes<=0||update.minutes>5256000))fail('LIFE_TIME','故事时间必须为允许范围内的正整数分钟',path);
+      if(update.type.startsWith('social.npc.')&&(!nonempty(update.postId)||!nonempty(update.authorId)||!nonempty(update.text)||update.text.length>(update.type==='social.npc.comment'?500:2000)))fail('LIFE_NPC','NPC公开帖子或评论须有稳定原文ID、已登记作者及有限正文',path);
+    }
+  }
   const seen = new Set();
   for (const [index, marker] of (payload.markers || []).entries()) {
     const path = `$.markers[${index}]`;
