@@ -42,6 +42,20 @@ const kindOf=value=>value===null?'null':Array.isArray(value)?'array':typeof valu
 const emptyValue=kind=>({string:'',number:0,boolean:false,object:{},array:[],null:null})[kind];
 const safeKey=key=>key.trim()&&!['__proto__','prototype','constructor'].includes(key);
 
+export function renderCreationAcceptance(document,root,{acceptance,rawResponse='',saved=false,onRepair,disabled=false}){
+ if(!acceptance)return null;const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;},section=el('section');section.dataset.creationAcceptance='';
+ const pending=acceptance.pending??[],warnings=acceptance.warnings??[];section.append(el('h4',(saved?'已保存':'已通过')+' '+(acceptance.acceptedCount??0)+' 条 · 待修复 '+pending.length+' 条'));
+ if(pending.length){const table=el('table');table.className='tisya-creation-table';table.dataset.creationPending='';const head=el('tr');head.append(el('th','条目 / 字段'),el('th','问题与原文'));table.append(head);
+  for(const row of pending){const tr=el('tr'),label=el('th',[row.heading??row.tableId??row.id,row.label??row.field].filter(Boolean).join(' / ')),cell=el('td');label.scope='row';cell.append(el('p',row.reason??row.message??'需要核对'));const value=row.rawValue??row.raw;if(value!==undefined)cell.append(el('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));tr.append(label,cell);table.append(tr);}section.append(table);
+ }
+ if(warnings.length){const details=el('details');details.dataset.creationWarnings='';details.append(el('summary','优化建议（'+warnings.length+'）'));for(const warning of warnings)details.append(el('p',typeof warning==='string'?warning:warning.message??warning.reason??JSON.stringify(warning)));section.append(details);}
+ if(pending.length||warnings.length){section.append(el('p',saved?'已通过条目已有保存回执；下轮只带待修内容、建议和已保存记录引用。':'可先核对并保存已通过条目；待修条目与原文会继续保留。'));
+  const original=el('details');original.dataset.creationPendingRaw='';original.append(el('summary','保留的本次原答'),el('pre',rawResponse));section.append(original);
+  if(onRepair){const repair=el('button',pending.length?'继续修复待办':'继续处理建议');repair.type='button';repair.className='menu_button';repair.dataset.creationRepair='';repair.disabled=disabled;repair.onclick=onRepair;section.append(repair);}
+ }
+ root.append(section);return section;
+}
+
 // Every cell remains typed. Nested rules and lists are edited as individual
 // fields; neither model output nor user input is executed as code.
 export function mountCreationTable(document,root,{proposal,schema={},fieldTexts={},fieldErrors={},onChange=()=>{},onInvalid=()=>{}}){
@@ -64,7 +78,7 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
   }
   const node=el(kind==='boolean'?'select':kind==='number'?'input':'textarea');node.className='text_pole';mark(node);
   if(kind==='boolean'){for(const [v,label]of [['true','是'],['false','否']]){const o=el('option',label);o.value=v;node.append(o);}}
-  else if(kind==='number'){node.type='number';node.step='any';}else node.rows=String(value??'').length>100?5:2;
+  else if(kind==='number'){node.type='text';node.inputMode='decimal';}else node.rows=String(value??'').length>100?5:2;
   node.value=fieldTexts[token]??String(value);if(fieldErrors[token])node.setCustomValidity('请输入有效的'+(kind==='number'?'数字':'内容'));
   const update=()=>{fieldTexts[token]=node.value;let next=node.value;if(kind==='number'){if(!next.trim()||!Number.isFinite(Number(next))){fieldErrors[token]=true;node.setCustomValidity('请输入有效数字');onInvalid(token,true);return;}next=Number(next);}else if(kind==='boolean')next=next==='true';set(next);delete fieldErrors[token];node.setCustomValidity('');onInvalid(token,false);onChange(proposal);};node.oninput=node.onchange=update;box.append(node);return box;
  }

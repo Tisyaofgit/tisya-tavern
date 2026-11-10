@@ -35,7 +35,7 @@ async function fixture(task='idea'){
  await app.navigate(task,'',{destination:task==='genesis'?{book:'新世界书',newBook:true}:{book:'世界基点',...(source?{uid:7}:{})},source,createPersona:task!=='genesis'});
 
  const q=s=>panel.querySelector(s),button=label=>[...panel.querySelectorAll('button')].find(node=>node.textContent===label);
- const press=async action=>{if(action==='save')await view.saveDraft();else{button(action==='generate'?'生成表单草稿':action).click();await view.settled();}await app.settled();};
+ const press=async action=>{if(action==='save')await view.saveDraft();else{(action==='generate'?q('[data-creation-send]'):button(action)).click();await view.settled();}await app.settled();};
  const generate=async()=>{q('[data-creation-goal]').value='设计一位人物';q('[data-creation-goal]').dispatchEvent(new w.Event('input'));await press('generate');assert(q('[data-creation-draft]'),panel.querySelector('.tisya-identity-status')?.textContent);};
  const review=()=>{q('[data-creation-confirm]').checked=true;q('[data-creation-confirm]').dispatchEvent(new w.Event('change'));};
  return {ctx,database,host,identity,options,app,w,q,press,generate,review,avatars,panel,routes,button,get view(){return view;},source:()=>capturedSource,changeCore:()=>{savedBooks.get('世界基点')[0].content='外部改动';},reopen:()=>mount(null),counts:()=>({databaseWrites,intentWrites,slotWrites,settingsWrites}),failAvatar:v=>failAvatar=v,failPersist:v=>failPersist=v,active:()=>active,async close(){view?.dispose();app.dispose();await w.happyDOM.abort();}};
@@ -74,7 +74,7 @@ test('creation history and exported draft retain invalid typed input until it is
  const f=await fixture('genesis');try{
   await f.generate();let year=f.q('[data-creation-key=value]');year.value='尚待确定，不应丢失';year.dispatchEvent(new f.w.Event('input'));await f.press('generate');
   assert(f.q('[data-creation-history]'));await f.press('恢复创作草稿 1');year=f.q('[data-creation-key=value]');assert.equal(year.value,'尚待确定，不应丢失');assert.equal(year.checkValidity(),false);assert.equal(f.q('[data-creation-confirm]').checked,false);
-  const exported=f.view.exportDraft();assert.equal(exported.format,'tisya.unified-identity-recovery/1');assert.equal(exported.creation.fieldTexts['1:value'],'尚待确定，不应丢失');assert.equal(exported.creation.fieldErrors['1:value'],true);assert(exported.creationHistory.length>=1);assert.equal(f.counts().databaseWrites,0);
+  const exported=f.view.exportDraft();assert.equal(exported.format,'tisya.unified-identity-recovery/1');assert.equal(exported.creation.fieldTexts['1:value:[]'],'尚待确定，不应丢失');assert.equal(exported.creation.fieldErrors['1:value:[]'],true);assert(exported.creationHistory.length>=1);assert.equal(f.counts().databaseWrites,0);
   f.review();await f.press('save');assert.equal(f.counts().databaseWrites,0);assert.match(f.panel.textContent,/数据格式/);year.value='2026';year.dispatchEvent(new f.w.Event('input'));f.review();await f.press('save');assert.equal(f.counts().databaseWrites,1);assert.equal(Object.values((await f.database.read()).state.tables.T_STATIC_CONSTANTS)[0].values.value,2026);assert.equal(f.view.state().dirty,false);
  }finally{await f.close();}
 });

@@ -11,7 +11,7 @@ const raw='<reply><title>渡口旅人</title><body>1 这是作者资料。</body
 async function fixture(){
  const disk=new Map(),books=new Map([['世界源',[{uid:1,name:'世界资料',content:'河口有一位旅人。',enabled:true}]]]);
  const counts={intent:0,business:0,book:0,model:0};let failure=null;
- const ctx={chatId:'recovery-chat',characterId:0,characters:[{avatar:'world.png',data:{name:'河口',extensions:{world:'世界源'}}}],chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>{},loadWorldInfo:async name=>({entries:Object.fromEntries(books.get(name).map(e=>[e.uid,{...clone(e),comment:e.name}]))})};
+ const ctx={chatId:'recovery-chat',characterId:0,characters:[{avatar:'world.png',data:{name:'河口',extensions:{world:'世界源'}}}],chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>{},loadWorldInfo:async name=>books.has(name)?({entries:Object.fromEntries(books.get(name).map(e=>[e.uid,{...clone(e),comment:e.name}]))}):undefined};
  const helper={getWorldbookNames:async()=>[...books.keys()],getWorldbook:async name=>clone(books.get(name)),createWorldbook:async(name,entries)=>{books.set(name,clone(entries));counts.book++;return true;},updateWorldbookWith:async(name,fn)=>{books.set(name,clone(fn(clone(books.get(name)))));counts.book++;if(failure==='book-ack')throw Error('书回包丢失');}};
  const sourceBooks=createBookGateway(()=>helper,()=>ctx),storage={get:async id=>clone(disk.get(id)),set:async(id,value)=>disk.set(id,clone(value)),commit:async(id,revision,value)=>{if((disk.get(id)?.local_revision??0)!==revision)return false;disk.set(id,clone(value));return true;}};
  const host=createMatrixHost({getContext:()=>ctx,getSource:()=>({}),loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>{}});await host.ensureDatabase();
