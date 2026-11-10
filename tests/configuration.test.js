@@ -1,4 +1,5 @@
 import {textTaskPreset} from '../task-envelope.js';
+import {matrixPreset} from '../engine/config.mjs';
 import {createUserEditHistory} from '../user-revision.js';
 import {contractorMessages} from '../communication.js';
 import {EMOTIONS} from '../emotion-catalog.js';
@@ -178,6 +179,12 @@ test('paired auxiliary API retains identity and direct JSON while isolating sour
  globalThis.fetch=async(url,opts)=>{sent=JSON.parse(opts.body);return {ok:true,json:async()=>({choices:[{message:{content:'{"changes":[],"templates":[]}'}}]})};};
  try{await f.host.request('tableArchive',JSON.stringify({archiveSource:{text:'ONLY_TABLE_INPUT'},registry:{tables:[],types:[]},currentRows:[]}));assert.equal(sent.model,'B-AUX');assert.equal(sent.custom_url,'https://example.invalid/v1');const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MODE.ANALYZE/);assert.match(text,/TISYA.DATA.SOURCE/);assert.equal((text.match(/ONLY_TABLE_INPUT/g)??[]).length,1);assert.match(text,/Return one strict JSON object/);assert.doesNotMatch(text,/<tisya_result>|首尾各按所选方向|心声：/);assert.doesNotMatch(text,/BOOK_STYLE_ONLY|角色甲|\{mood或null\}/);assert.doesNotMatch(text,/<reply>|<body>|<extra>|<vars/);assert.equal(f.c.chatCompletionSettings.model,'N-model');}finally{globalThis.fetch=prior;}
 });
+test('production source with prompts/order reaches the final form request in master order and missing order blocks sending',async()=>{
+ const f=fixture(),master=matrixPreset();f.source.identity='matrix';f.source.prompts=structuredClone(master.prompts);f.source.order=structuredClone(master.prompt_order[0].order);assert.equal(f.source.prompt_order,undefined);
+ f.source.prompts.find(p=>p.identifier==='main').content+='\nMASTER_IDENTITY_SENTINEL';f.source.prompts.find(p=>p.identifier==='tisya_scene_anchor').content='DISABLED_MASTER_SENTINEL';f.source.order.find(p=>p.identifier==='tisya_scene_anchor').enabled=false;
+ const before=structuredClone(f.source),prior=globalThis.fetch;let calls=0,sent;globalThis.fetch=async(_url,options)=>{calls++;sent=JSON.parse(options.body);return {ok:true,json:async()=>({choices:[{message:{content:'<reply><body>1 草稿。</body><cells/></reply>'}}]})};};
+ try{await f.host.request('tableGenesis',JSON.stringify({formContract:'tisya.simple-form/1',forms:'【世界／1】\n1 名称',source:{text:'EXACT_SOURCE_SENTINEL'}}));const text=sent.messages.map(m=>m.content).join('\n');assert.match(text,/MASTER_IDENTITY_SENTINEL/);assert.match(text,/EXACT_SOURCE_SENTINEL/);assert.match(text,/<cells format="form">/);assert.doesNotMatch(text,/DISABLED_MASTER_SENTINEL|Return JSON only|Return one strict JSON/);assert(text.indexOf('[SESSION.RESET]')<text.indexOf('MASTER_IDENTITY_SENTINEL'));assert(text.indexOf('EXACT_SOURCE_SENTINEL')<text.indexOf('\n[REGISTRY]\n'));assert(text.indexOf('\n[REGISTRY]\n')<text.indexOf('\n[COMMIT.READY]\n'));assert.deepEqual(f.source,before);delete f.source.order;await assert.rejects(f.host.request('tableGenesis',JSON.stringify({formContract:'tisya.simple-form/1',forms:'表格'})),/缺少实际条目顺序/);assert.equal(calls,1);}finally{globalThis.fetch=prior;}
+});
 
 test('managed table activation is included exactly once and native mode keeps native lore untouched',async()=>{
  const f=fixture();await f.host.before('normal');f.host.attachTableContext({world:f.k,text:'TABLE_CONTROL'});f.host.attachTableActivation({world:f.k,text:'ACTIVATED_TABLE_ARCHIVE'});f.host.attachTableActivation({world:f.k,text:'ACTIVATED_TABLE_ARCHIVE'});const p={messages:[{role:'system',content:'UNSELECTED_NATIVE_LORE'}]};await f.host.payloadReady(p);const text=JSON.stringify(p.messages);assert.equal((text.match(/ACTIVATED_TABLE_ARCHIVE/g)??[]).length,1);assert.equal((text.match(/TABLE_CONTROL/g)??[]).length,1);assert(!text.includes('UNSELECTED_NATIVE_LORE'));
@@ -188,10 +195,10 @@ test('managed material slots survive an older disabled empty slot without duplic
  const f=fixture();f.source.order.find(p=>p.identifier==='tisya_material_current_state').enabled=false;await f.host.before('normal');f.host.attachTableContext({world:f.k,instructions:'FORM_INSTRUCTIONS',slots:{state:{rows:[{name:'UNIQUE_CURRENT_ROW'}]},preferences:{explicit:['UNIQUE_HARD_RULE']},plan:{goal:'UNIQUE_PROPOSAL'}}});const payload={messages:[]};await f.host.payloadReady(payload);const text=payload.messages.map(m=>m.content).join('\n');for(const marker of ['UNIQUE_CURRENT_ROW','UNIQUE_HARD_RULE','UNIQUE_PROPOSAL','FORM_INSTRUCTIONS'])assert.equal(text.split(marker).length-1,1);assert(text.indexOf('UNIQUE_CURRENT_ROW')<text.indexOf('[/MATERIALS]'));
 });
 
-test('manual auxiliary modes also omit narrative wrappers while main narration keeps them',async()=>{
+test('manual creation preserves the full reply while legacy auxiliary modes keep their contracts',async()=>{
  const f=fixture();const live=registerLivePreset(f.c,()=>f.source,()=>f.c,()=>{if(f.w.mode!=='narrative')throw Error('辅助模式不应读取表情目录');return MOODS;});registerPresetProtocol(f.c,()=>f.source,()=>{},()=>MOODS,s=>!isLivePreset(s)||live.execution().prose);
  for(const mode of ['archive','plot','preferences','genesis','objects','history']){
-  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');assert.match(text,/Return one strict JSON object/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);f.host.clear();
+  f.w.modes[mode]=structuredClone(f.w.modes.narrative);f.w.mode=mode;await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);const text=p.messages.map(m=>m.content).join('\n');if(mode==='genesis'){assert.match(text,/<reply id="tisya-onepass-1">/);assert.match(text,/<cells format="form">/);assert.doesNotMatch(text,/Return one strict JSON object/);}else{assert.match(text,/Return one strict JSON object/,mode);assert.doesNotMatch(text,/<reply>|<body>|<tisya_result>|心声：有内容/,mode);}f.host.clear();
  }
  f.w.mode='narrative';await f.host.before('normal');const p={messages:[]};await f.host.payloadReady(p);assert.match(JSON.stringify(p.messages),/<reply>/);
 });

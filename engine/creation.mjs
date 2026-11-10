@@ -1,59 +1,24 @@
-import {programOwnedTable,promptFieldAllowed,creationFieldAllowed,compactCreationSchema} from './prompt-boundary.mjs';
-import {Runtime} from './runtime.mjs';
 import {clone,digest,fail} from './common.mjs';
+import {parseReply,envelope} from './reply.mjs';
+import {prepareMatrixSheets as prepareCreationSheets,acceptMatrixSheets,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
 import {readCreationTemplates,creationTemplateText} from './template-book.mjs';
 import {cardAIMaterials,bookAIMaterials} from '../tables/card-source.js';
 import {characterWorldbookScope} from '../tables/character-scope.js';
 import {personaSnapshot} from '../tables/persona.js';
 
 export const CREATION_CONTRACT='tisya.matrix-creation/1';
+export const CREATION_REPLY_CONTRACT='tisya.creation-sheets/1';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
-export function validateCreationProposal(proposal,snapshot,{mode='extend',kind='world'}={}){
- check(plain(proposal)&&typeof proposal.name==='string'&&proposal.name.trim(),'创作结果缺少名称');
- check(Array.isArray(proposal.unresolved??[])&&(proposal.unresolved??[]).every(x=>typeof x==='string'),'待补事项格式无效');
- check(!proposal.artifacts&&!proposal.phone,'请使用当前表单规范字段，不接受旧原点或独立手机状态');
- check(plain(proposal.matrix)&&Array.isArray(proposal.matrix.changes),'创作结果缺少 matrix.changes');
- check(proposal.matrix.changes.length>0&&proposal.matrix.changes.length<=2000,'创作变更必须在1至2000条之间');
- const runtime=new Runtime(snapshot.state),seen=new Set();
- for(const change of proposal.matrix.changes){
-  check(plain(change)&&typeof change.tableId==='string'&&typeof change.recordId==='string'&&change.recordId.trim(),'每条变更需要规范表ID和稳定记录ID');
-  check(Object.keys(change).every(k=>['tableId','recordId','values','states'].includes(k)),'创作不能填写程序元数据或未声明的变更属性');
-  check(!change.states||plain(change.states)&&Object.keys(change.states).every(k=>Object.hasOwn(change.values??{},k)&&['known','unknown','unset','none','not_applicable','cleared'].includes(change.states[k])),'创作值状态必须对应实际变更字段');
-  const {tableId,recordId,values}=change,key=tableId+'#'+recordId;
-  check(!seen.has(key),'同一记录须合并为一项变更：'+key);seen.add(key);
-  check(runtime.data.schema[tableId]&&plain(values),'表或字段不存在：'+key);
-  check(!programOwnedTable(tableId,runtime.data.schema[tableId]),'创作草稿不能编造程序回执或历史快照：'+tableId);
-  check(!change.remove,'创作草稿不删除已有记录；请在表单中核对删除');
-  const existing=runtime.data.tables[tableId]?.[recordId];check(!existing?.metadata?.phone_projection,'创作不能覆盖程序投影行，请修改其规范原点：'+key);
-  check(mode!=='extend'||!existing,'补充创作不能覆盖已有记录：'+key);
-  for(const [field,value] of Object.entries(values)){
-   const def=runtime.data.schema[tableId].fields.find(f=>f.key===field);
-   check(def,'未知字段：'+key+'.'+field);
-   check(creationFieldAllowed(def),'创作不能直接填写派生字段：'+key+'.'+field);
-  }
-  if(!existing)runtime.newRecord(tableId,{},recordId);
-  for(const [field,value]of Object.entries(values))runtime.set([tableId,recordId,field,[]],clone(value),change.states?.[field]??'known');
- }
- // References can target a later row in the same proposed batch.
- for(const change of proposal.matrix.changes){const row=runtime.record(change.tableId,change.recordId);for(const spec of runtime.data.schema[change.tableId].fields){
-  const value=row.values[spec.key],state=row.states[spec.key];check(!spec.required||spec.read_only||value!==undefined&&value!==null&&['known','derived'].includes(state),'必填字段尚未完整填写：'+change.tableId+'.'+spec.key);
-  if(value===null||value===undefined||!['known','derived'].includes(state)||!['REF','CHILD_REF','REF_LIST'].includes(spec.type)||!spec.ref)continue;
-  const target=spec.ref.startsWith('@')?row.values[spec.ref.slice(1)]:spec.ref;if(!runtime.data.schema[target])continue;
-  for(const ref of Array.isArray(value)?value:[value])if(typeof ref==='string')check(runtime.data.tables[target]?.[ref],'引用记录不存在：'+change.tableId+'.'+spec.key+' → '+target+'#'+ref);
- }}
- const binding=proposal.matrix.binding;
- if(kind==='character'){
-  check(plain(binding)&&typeof binding.entityId==='string','新人物必须明确唯一主体 entityId');
-  check(runtime.data.tables.T_SYS_ENTITIES?.[binding.entityId],'人物主体未登记在 T_SYS_ENTITIES');
-  if(binding.dossierId)check(runtime.data.tables.T_CHAR_DOSSIER?.[binding.dossierId],'人物档案引用不存在');
-  if(runtime.data.schema.M_FIELD_REFERENCES&&runtime.data.schema.T_SYS_ENTITIES.fields.some(f=>f.key==='origin_record_ref')){const entity=runtime.data.tables.T_SYS_ENTITIES[binding.entityId].values,ref=runtime.data.tables.M_FIELD_REFERENCES?.[entity.origin_record_ref]?.values;check(ref?.owner_table==='T_SYS_ENTITIES'&&ref.owner_row_uuid===binding.entityId&&ref.owner_field==='origin_record_ref'&&ref.target_table==='T_CHAR_DOSSIER'&&ref.target_row_uuid===binding.dossierId,'人物实体必须以规范原点引用连接所选档案');}
- }
- return clone(proposal);
+export {prepareMatrixSheets as prepareCreationSheets,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
+export function acceptCreationSheets(context,snapshot,raw){
+ const parsed=parseReply(raw,context.operationId),blocks=envelope(raw).blocks;
+ check(!blocks.vars?.trim()&&!blocks.archive?.trim(),'创作草稿不能提交原生变量或剧情归档');
+ return {...acceptMatrixSheets(context,snapshot,{blocks,parsed}),parsed};
 }
 
 // These are read-only source snapshots, never another editable ledger.
-export function createMatrixCreator({database,getContext,request,readCharacterBindings,getHelper=()=>globalThis.TavernHelper,ensureDatabase=async()=>{},assertIdle=()=>{},onProgress=()=>{}}){
+export function createMatrixCreator({database,getContext,request,sourceBooks,readCharacterBindings,getHelper=()=>globalThis.TavernHelper,ensureDatabase=async()=>{},assertIdle=()=>{},onProgress=()=>{}}){
  function scope(signal){
   const c=getContext(),identity=[c.chatId,c.groupId,c.characterId],meta=c.chatMetadata,chat=c.chat;
   return ()=>{const now=getContext();check(!signal?.aborted,'创作已取消');check(identity.every((v,i)=>v===[now.chatId,now.groupId,now.characterId][i])&&(!meta||now.chatMetadata===meta)&&(!chat||now.chat===chat),'当前角色或会话已切换；保留原始草稿，未提交');};
@@ -85,18 +50,21 @@ export function createMatrixCreator({database,getContext,request,readCharacterBi
  }
  async function verifySources(draft,guard){
   check(draft.nativeSourceDigest===digest(draft.nativeSources),'草稿原始来源快照已改变，请重新生成');
-  const current=await nativeSources(guard);check(digest(current)===draft.nativeSourceDigest,'原生角色卡、关联世界书或用户人设已经变化；保留原始草稿，请重新核对来源');
+  const current=await nativeSources(guard),receipt=draft.archiveReceipt;
+  if(receipt?.confirmed&&receipt.operationId===draft.operationId&&receipt.bookBefore&&receipt.bookAfter){const old=draft.nativeSources.books.find(b=>b.name===receipt.bookBefore.name),now=current.books.find(b=>b.name===receipt.bookAfter.name);if(old&&now&&digest(old)===digest(receipt.bookBefore)&&digest(now)===digest(receipt.bookAfter))current.books[current.books.indexOf(now)]=clone(old);}
+  check(digest(current)===draft.nativeSourceDigest,'原生角色卡、关联世界书或用户人设已经变化；保留原始草稿，请重新核对来源');
   if(draft.creationTemplates){const templates=await readCreationTemplates(getContext,{task:'tableGenesis'});guard();check(digest(templates)===digest(draft.creationTemplates),'模板内容已经变化，请重新核对草稿');}
  }
- async function draft(goal,{kind='world',mode='extend',source=null,signal}={}){
+ async function draft(goal,{kind='world',mode='extend',source=null,destination,signal}={}){
   assertIdle();check(typeof goal==='string'&&goal.trim(),'请填写创作要求');check(['world','character'].includes(kind)&&['extend','revise'].includes(mode),'创作类型无效');
   const guard=scope(signal),explicitSource=clone(source);
   await ensureDatabase();guard();const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
   const sources=await nativeSources(guard),templates=mode==='extend'?await readCreationTemplates(getContext,{task:'tableGenesis'}):null;guard();
-  const input={databaseContract:CREATION_CONTRACT,sourcePolicy:'来源快照、历史和回执由提交服务记录；模板提及归档来源表仅作定位，不输出这些程序表的变更。',kind,mode,goal,source:explicitSource,nativeSources:aiSources(sources),schema:compactCreationSchema(snapshot.state),valueStates:['known','unknown','unset','none','not_applicable','cleared'],currentRows:Object.entries(snapshot.state.tables).filter(([id])=>!programOwnedTable(id,snapshot.state.schema[id])).flatMap(([tableId,rows])=>Object.entries(rows).map(([recordId,row])=>({tableId,recordId,name:String(row.values?.name??row.values?.label??''),subject_ref:row.values?.subject_ref??null,readOnly:row.metadata?.phone_projection===true}))),template:templates?creationTemplateText(templates):'',output:{name:'名称',summary:'说明',unresolved:[],matrix:{changes:[{tableId:'已登记表ID',recordId:'稳定记录ID',values:{}}],...(kind==='character'?{binding:{entityId:'主体ID',dossierId:'档案ID'}}:{})}}};
+  const operationId='creation:'+crypto.randomUUID(),sheets=prepareCreationSheets(snapshot,{kind,mode,operationId});
+  const input={formContract:'tisya.simple-form/1',databaseContract:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,sourcePolicy:'来源快照、历史和回执由提交服务记录；模板只提供内容要求，本次完整 reply 与简表规则决定输出。旧叙事来源首次结构化时须完整提炼原文；已有同一人物只复用其身份编号，不能把当前聊天运行值当成作者定义或仅存本轮补丁。',kind,mode,goal,source:explicitSource,nativeSources:aiSources(sources),forms:sheets.form,references:sheets.referenceText,template:templates?creationTemplateText(templates):''};
   const raw=await request('tableGenesis',JSON.stringify(input),{signal,onProgress});
-  let proposal;try{proposal=typeof raw==='string'?JSON.parse(raw):raw;}catch(cause){throw Object.assign(Error('创作返回不是严格JSON；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources});}
-  const result={format:CREATION_CONTRACT,operationId:'creation:'+crypto.randomUUID(),kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,rawResponse:raw,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(templates?{creationTemplates:templates}:{})};
+  let accepted;try{accepted=acceptCreationSheets(sheets,snapshot,raw);}catch(cause){throw Object.assign(Error('创作回复或简表无法接纳：'+cause.message+'；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources,sheetContext:sheets});}
+  const proposal=accepted.proposal,result={format:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,operationId,kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,rawResponse:raw,workbook:accepted.workbook,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(destination?{destination:clone(destination)}:{}),...(templates?{creationTemplates:templates}:{})};
   try{
    guard();validateCreationProposal(proposal,snapshot,{kind,mode});
    result.schema=Object.fromEntries([...new Set(proposal.matrix.changes.map(c=>c.tableId))].map(id=>[id,clone(snapshot.state.schema[id])]));
@@ -113,9 +81,19 @@ export function createMatrixCreator({database,getContext,request,readCharacterBi
   check(!(proposal.unresolved??[]).length,'草稿仍有待补事项，请填写后再保存');
   return {snapshot,proposal,guard};
  }
- async function save(draft){
-  const {proposal,guard}=await validate(draft);guard();
-  return database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:proposal.matrix.changes,source:{kind:'creation',name:proposal.name,goal:draft.goal,binding:proposal.matrix.binding??null,explicitSource:clone(draft.source),nativeSources:clone(draft.nativeSources),nativeSourceDigest:draft.nativeSourceDigest,templateDigest:draft.creationTemplates?digest(draft.creationTemplates):null}});
+ async function save(draft,{destination=draft?.destination}={}){
+  const {proposal,snapshot,guard}=await validate(draft);guard();
+  if(sourceBooks&&snapshot.revision!==draft.expectedRevision)check(!!snapshot.state.runtime?.receipts?.[draft.operationId],'表单已被另一页面更新；来源书尚未写入，请刷新后重试');
+  const source={kind:'creation',name:proposal.name,goal:draft.goal,binding:proposal.matrix.binding??null,explicitSource:clone(draft.source),nativeSources:clone(draft.nativeSources),nativeSourceDigest:draft.nativeSourceDigest,templateDigest:draft.creationTemplates?digest(draft.creationTemplates):null};
+  let archivePlan,archiveReceipt,archiveInputDigest;
+  try{
+   if(sourceBooks){const archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:clone(source)},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes:proposal.matrix.changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema};archiveInputDigest=digest(archiveInput);
+    if(draft.archiveInputDigest&&draft.archiveInputDigest!==archiveInputDigest){check(draft.archiveReceipt?.confirmed===false&&draft.archiveReceipt.status==='not-written','已写入或尚未确认写入结果的归档计划不能更换内容，请完成同一次提交');delete draft.archivePlan;delete draft.archiveReceipt;delete draft.archiveInputDigest;}
+    archivePlan=draft.archiveInputDigest===archiveInputDigest&&draft.archivePlan?draft.archivePlan:await sourceBooks.prepareDefinitionArchive(archiveInput);guard();draft.archivePlan=clone(archivePlan);draft.archiveInputDigest=archiveInputDigest;
+    archiveReceipt=await sourceBooks.commitDefinitionArchive(archivePlan,{guard});check(archiveReceipt?.confirmed===true,'来源书归档尚未获回读确认');source.sourceArchive=clone(archiveReceipt.sourceArchive);draft.archiveReceipt=clone(archiveReceipt);guard();}
+   const saved=await database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:proposal.matrix.changes,source});return {...saved,...(archiveReceipt?{archiveReceipt,sourceArchive:clone(archiveReceipt.sourceArchive)}:{})};
+  }catch(error){archivePlan??=error.archivePlan;archiveReceipt??=error.archiveReceipt;if(archivePlan){error.archivePlan=clone(archivePlan);draft.archivePlan=clone(archivePlan);}if(archiveReceipt){error.archiveReceipt=clone(archiveReceipt);draft.archiveReceipt=clone(archiveReceipt);if(archiveReceipt.confirmed&&archiveInputDigest)draft.archiveInputDigest=archiveInputDigest;}throw error;}
  }
- return {draft,validate,save};
+ function form(draft){return draft.proposal.matrix.changes.map(change=>{const schema=draft.schema?.[change.tableId];return {tableId:change.tableId,recordId:change.recordId,label:schema?.label??change.tableId,name:change.values.name??change.values.label??'',fields:Object.entries(change.values).map(([key,value])=>({key,label:schema?.fields?.find(f=>f.key===key)?.label??key,type:schema?.fields?.find(f=>f.key===key)?.type??'TEXT',value:clone(value),state:change.states?.[key]??'known'}))};});}
+ return {draft,validate,save,form};
 }

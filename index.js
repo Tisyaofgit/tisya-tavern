@@ -4,6 +4,7 @@ import {createPhoneDatabaseStorage,readPhoneDatabaseProfile,decodePhoneDatabase}
 import {createNativeBuiltinBooks} from './engine/builtin-book-host.mjs';
 import {createMatrixCreator} from './engine/creation.mjs';
 import {createBookGateway} from './tables/books.js';
+import {createConditionService} from './tables/condition-service.js';
 import {createExtensionPresentationService} from './extension-host.mjs';
 import {mountExtensionPreferences} from './extension-preferences-ui.mjs';
 import {createPhonePresentationMedia} from './phone-life/presentation-media.mjs';
@@ -171,12 +172,13 @@ const turnDirections=async options=>{const extensions=await extensionPresentatio
 const configHost=createHost({projectToolTurns,openArchiveQuery:(task,input,options)=>{if(task!=='tableAssistant')throw Error('此任务没有档案工具授权');return tableService.openAssistantArchiveQuery(input,options);},getContractorMessages:turnDirections,transport:textTransport,getContext:context,getSource:presetSource,getBaseSource:mandatoryPresetSource,prepareMessage:m=>appendFileContent(m,String(m.mes??'')),parseRequestBody:s=>typeof yaml.parse==='function'?yaml.parse(s):yaml.load(s),store:configStore,createParameters:createGenerationParameters,getProxies:()=>proxies,getMoods:()=>emotionCatalog(document).names(),isAgentEnabled:async()=>(await loadAgentSystemSettings()).agentModeEnabled,onError:error});
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
-const sourceBooks=createBookGateway(undefined,context);
-const tableService=createTableService({books:sourceBooks,creator:{draft:(...args)=>matrixCreator.draft(...args),save:(...args)=>matrixCreator.save(...args)},projectToolTurns,persona:personaGateway,store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,getConfigurationChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
-const worldbookConditions=createWorldbookConditionGate({getContext:context,engine:tableService,onError:error});
 const matrixHost=createMatrixHost({getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,expand:text=>substituteParams(text),assertIdle,onError:error});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
+const sourceBooks=createBookGateway(undefined,context);
+const tableService=createTableService({matrixDatabase,matrixHost,books:sourceBooks,creator:{draft:(...args)=>matrixCreator.draft(...args),save:(...args)=>matrixCreator.save(...args)},projectToolTurns,persona:personaGateway,store:configStore,getContext:context,request:(...args)=>configHost.request(...args),nativeConfig:nativeConfiguration,getConfigurationChoices:()=>({connections:configHost.connections(),presets:configHost.presets()}),interfaceConfig:{read:()=>interfaceSnapshot(settings()),save:saveAssistantConfiguration},vector:createNativeVectors({getContext:context}),setPrompt:(text,filter)=>{setExtensionPrompt('tisya_style_rules','',1,1,false,0);setExtensionPrompt('tisya_table_context',text,1,1,false,0,filter);}});
+const conditionService=createConditionService({database:matrixHost.createConditionDatabaseBridge(),getContext:context});
+const worldbookConditions=createWorldbookConditionGate({getContext:context,engine:conditionService,onError:error});
 const builtinBooks=createNativeBuiltinBooks({native:worldInfoNative,getContext:context,persistSettings:saveSettings,assertIdle});
 const matrixCreator=createMatrixCreator({sourceBooks,database:matrixDatabase,getContext:context,request:(...args)=>configHost.request(...args),ensureDatabase:ensureMatrixDatabase,assertIdle,readCharacterBindings:avatar=>{const c=context(),id=c.characters.findIndex(card=>card.avatar===avatar),card=c.characters[id];if(!card)throw Error('角色卡来源已变化，请重新生成草稿。');const filename=getCharaFilename(id);return {primary:(card.data??card).extensions?.world??'',additional:worldInfoNative.world_info?.charLore?.find(row=>row.name===filename)?.extraBooks??[]};}});
 function storyRoles(){return createStoryIdentity({sourceBooks,config:matrixHost.config,getContext:context,assertIdle,database:matrixDatabase,builtins:builtinBooks,creator:matrixCreator});}
@@ -191,6 +193,7 @@ globalThis.tisyaHistoryInput=async(chat,contextSize,abort,type)=>{
  catch(e){abort(true);error(e);throw e;}
 };
 async function finishMainGeneration(){
+ worldbookConditions.end();
  if(!nativeGenerationOpen)return;
  nativeGenerationOpen=false;
  if(!nativeGenerationMatrix){revisionController.ended(false);return;}
@@ -306,7 +309,7 @@ async function openAssistant(task=null,initialGoal='',creationOptions=null){
  if(!await mayLeaveUtility())return false;
  if(!context().chatId)return openWorldSeed();
  const key=configStore.read().key;renderEpoch++;page('与缇斯亚一起创作','<div id="tisya-assistant-slot"></div>');
- let view=assistantViews.get(key);if(!view){view=mountAssistantApp(document,query('#tisya-assistant-slot'),{service:tableService,identity:identityService,store:configStore,initialGoal,mountCreation:(_document,node,options)=>mountMatrixCreation(document,node,{identity:identityService,config:matrixHost.config,roles:storyRoles(),initialCreation:options,onClose:()=>hidePage()}),onClose:()=>hidePage(),onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onIdentity:ref=>openIdentity(ref),onSaved:()=>{appearance?.refresh();decorate();}});assistantViews.set(key,view);utility=view;view.navigate(task??'idea',initialGoal,creationOptions).catch(error);}else{query('#tisya-assistant-slot').append(view.root);utility=view;view.resume();if(task)view.navigate(task,initialGoal,creationOptions).catch(error);}return true;
+ let view=assistantViews.get(key);if(!view){view=mountAssistantApp(document,query('#tisya-assistant-slot'),{service:tableService,identity:identityService,store:configStore,initialGoal,mountCreation:(_document,node,options)=>mountMatrixCreation(document,node,{identity:identityService,config:matrixHost.config,roles:storyRoles(),initialCreation:options,onClose:()=>hidePage()}),onClose:()=>hidePage(),onNative:()=>nativeDrawerOriginal('persona-management-button'),onWorldbook:()=>openWorldbook(),onAtlas:()=>openSettings('tables','atlas'),onStyle:()=>openSettings('tables','output'),onIdentity:ref=>openIdentity(ref),onSaved:()=>{appearance?.refresh();decorate();}});assistantViews.set(key,view);utility=view;view.navigate(task??'idea',initialGoal,creationOptions).catch(error);}else{query('#tisya-assistant-slot').append(view.root);utility=view;view.resume();if(task)view.navigate(task,initialGoal,creationOptions).catch(error);}return true;
 }
 
 async function returnToSettings(){if(!await mayLeaveUtility())return false;nav();return true;}
@@ -420,7 +423,7 @@ async function openSettings(tab='play',initialView=''){
  if(tab==='theme'){renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
  if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
  renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
- utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button')});utility.ready.catch(error);
+ utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button'),initialTab:tab==='tables'?'tables':'preferences',initialTable:initialView==='output'?'T_PREF_OUTPUT_CONFIG':undefined});utility.ready.catch(error);
 
 }
 function openDisplaySettings(){return openSettings('theme');}
@@ -929,21 +932,23 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       try{
        await defaultActivation.ready();builtinPreset.assertReady();
        if(worldSeedService.isBusy()||identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('资料保存尚未完成，请先等待或重试保存');
-       await phoneTurn.begin(...args);await communication.beginNative(String(query('#send_textarea')?.value??''),...args);return await matrixHost.before(...args);
+       await phoneTurn.begin(...args);await communication.beginNative(String(query('#send_textarea')?.value??''),...args);await matrixHost.before(...args);if(!['quiet','impersonate'].includes(args[0]))worldbookConditions.begin(args[0]??'normal',args[1]??{});
       }catch(e){await phoneTurn.stopped().catch(error);await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}
      });
-     bind('WORLDINFO_ENTRIES_LOADED',async p=>{excludeTemplateBookEntries(p,storyBookSettings());if(matrixHost.active()){await defaultActivation.ready();return matrixHost.entriesLoaded(p);}});
+     bind('WORLDINFO_ENTRIES_LOADED',async p=>{excludeTemplateBookEntries(p,storyBookSettings());if(matrixHost.active()){await defaultActivation.ready();await matrixHost.entriesLoaded(p);return worldbookConditions.entriesLoaded(p);}});
+     bind('WORLDINFO_SCAN_DONE',p=>matrixHost.active()?worldbookConditions.scanDone(p):undefined);
      bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{
       if(nativeDryRun||!nativeGenerationMatrix)return;
-      try{if(preparationError)throw preparationError;return await matrixHost.payloadReady(p);}
+      try{if(preparationError)throw preparationError;await worldbookConditions.assertReady();return await matrixHost.payloadReady(p);}
       catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}
      });
      bind('GENERATION_ENDED',finishMainGeneration);
      bind('GENERATION_STOPPED',async()=>{
-      nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();nativeGenerationOpen=false;
+      worldbookConditions.end();nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();nativeGenerationOpen=false;
       await phoneTurn.stopped().catch(error);await Promise.all([matrixHost.event('GENERATION_STOPPED'),communication.stopped().catch(error)]);
      });
      bind('CHAT_CHANGED',async()=>{
+      worldbookConditions.end();
       const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
       nativeGenerationEpoch++;nativeGenerationOpen=false;phoneTurn.contextChanged();communication.contextChanged();configHost.cancelTransport();
       // Auxiliary drafts may be cancelled, but chat entry never initializes the
@@ -953,7 +958,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       catch(e){error(e);}
      });
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
-     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const service=await phoneTurn.service();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:tableService,contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const service=await phoneTurn.service();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBooks,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,()=>reconcilePhoneHistory().catch(error));}
      window.addEventListener('pagehide',event=>{if(!event.persisted){defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
 

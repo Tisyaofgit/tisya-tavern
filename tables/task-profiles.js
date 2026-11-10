@@ -38,13 +38,20 @@ export const TASK_PROFILES=Object.freeze({
   route:['SOURCE.sourceCard→当前选择的对象档案；有依据的无画风核心设定、独特功能与限制、身份经历或物品的叙事意义→core.traits。','明确选取的成长来源→core.growth；世界职业称谓、机制表达、人际绑定和旧世界完成记录保留在来源，已有的抽象意义可提取，实际完成状态与知情不迁移。'],
   steps:['核定选中的对象类型与是否携带成长，保留每条原始来源。','分开无画风核心与当前世界表达；保留身份经历或装备用途的已有叙事意义，不猜作者意图。','逐项填写 core.traits 和获准 core.growth，核心设定与叙事意义分别命名，证据原句取自来源。','检查未丢失有依据的意义，无未选择成长、旧关系或持有自动继承、无目标世界虚构适配；整组选择逐成员填写bundle.members并逐关联填写bundle.links，提交基点草稿。']},
  tableGenesis:{
-  authorize:'按用户目标设计完整的世界、人物、表单与开局，提交可修改的创世蓝图。每个永久档案直接写实际设定，方案说明与待办放在蓝图对应容器。',
-  route:['SOURCE.databaseContract=tisya.matrix-creation/1时：STATE.schema是唯一已登记规范结构；SOURCE.template只指导新内容，GENESIS.output定义matrix.changes输出；世界与人物同义字段合并，其他业务使用关联子表，不输出旧base/initial/artifacts。其他合同沿其原格式。','SOURCE.goal→主题、体验、必保留条件及目标范围；已确认且作用域匹配的PREFERENCES.rows→创作要求。','GENESIS→当前有效蓝图与待续目标；STATE.registry/rows→既有结构、人物和事实的版本依据。','旧版合同：世界与人物稳定档案→base；明确开局状态→initial；模板结构→registry；实施任务→workflow；阻断应用的具体缺项→blueprint.unresolved。统一表单合同按matrix.changes和unresolved填写。'],
-  steps:['读目标与既有档案，确定主题、体验、人物吸引力和本轮设计范围。','按世界八域、人物九组档案及相关对象设计具体内容，逐对比较人物动机、经历因果链、表达和关系策略，修订本次原创部分中的重复设计。','按SOURCE.databaseContract选择产物：tisya.matrix-creation/1填写name/summary/unresolved/matrix.changes/binding，其余旧合同填写blueprint/checklist/artifacts/workflow。复用已登记结构与稳定引用；只读派生值和程序历史不填。','核对因果、时序、引用、知情权限、公式和保存接口，基点适配逐成员、逐核心项及逐关联填写coreMapping并落到真实字段；交付完整JSON草稿。']},
+  authorize:'按用户目标设计世界、人物与开局定义，使用同一完整 reply 和已登记简表提交可修改草稿；不推进故事，不执行变量、动作或保存。',
+  route:['SOURCE.goal→主题、体验、必保留条件与目标范围；SOURCE.source→用户明确选取的档案或基点来源。','CARD/BOOKS→保留启用状态的原生来源；SOURCE.contractor→契约者参考，不自动当作新人物。SOURCE.template→新内容填写要求，不作已有事实或输出格式。','STATE.forms→唯一允许填写的表名、字段行与类型；STATE.references→可用关联名称。内部记录编号与归属由程序生成。','永久设定与明确初值→cells简表；方案说明→body；具体阻断缺项→extra；未来细化方向→actions。archive/vars为空。'],
+  steps:['核定目标与来源边界，区分已确认定义、原创授权、停用资料、例子和旧历史；只在授权范围内设计。','按世界领域、人物完整档案及相关对象写具体内容，逐对核动机、经历、表达、关系策略与独特选择，消除原创部分的套壳。','把每项定义分配到注册简表唯一字段；关联使用名称和分组名，子表分别填写。不给模型增加ID、回执和存储JSON责任。','核对完整性、因果、时序、来源、知情与字段含义；基点每项意义要落实到实际内容。完成同一 reply 的全部区块，只交付草稿，不宣称已保存。']},
  tableAssistant:{
   authorize:'根据用户当前要求分析真实配置并提出批量修改草稿；仅由用户点击应用执行，不在回答时写入。',
   route:['SOURCE.question/conversation→当前需求；STATE.configuration/editablePaths/choices→可改路径与真实选项。','STATE.history/storage 和 TOOLS→实测状态；缺失能力与新资源需求→genesisGoal；已知楼层补录→backfill。','配置更改→changes；诊断说明→answer；无真实写回回执→不声称完成。'],
   steps:['核对用户要求与当前配置，区分已有选项、依赖和缺失功能。','只选 editablePaths 中的准确路径，提出需求及必要依赖的完整批量更改。','把新配置设计交 genesisGoal，把可验证历史范围交 backfill；未知状态保持未知。','校验值类型、范围与依赖，友好简短说明草稿；等用户应用，不重置无关配置。']}
 });
 
-export function taskProfile(task,{archiveProposal=false}={}){const profile=TASK_PROFILES[task];if(!profile)throw Error('辅助预设未登记：'+task);if(!archiveProposal)return profile;if(task!=='tableArchive')throw Error('归档审核契约只能用于独立记忆归档');return {...profile,steps:[...profile.steps.slice(0,2),'通过档案查询工具核对身份、旧字段、修订及权限；按已登记结构拟定增量，锁定字段不改。','检查证据、版本、时序、权限与引用后，用草案工具提交完整批次；不能解决的必要修改在 notes 中保留，最终 JSON 只引用已接纳的草案。']};}
+export const SIMPLE_FORM_CONTRACT='tisya.simple-form/1';
+const sheetGoals={tableAssistant:'分析用户需求与真实配置，只修改本次表单开放的配置值，正文给出可读回答。',historyImport:'从给定完整历史提炼有来源的既成事实，保留原文、楼层、时序和矛盾，不编造过渡或推进故事。',templateInit:'从角色卡和明确选中资料提炼可复用定义与有据初值，区别示例、停用定义和后续历史，不把当前运行值倒灌开局。',tableArchive:'从已确认来源提炼本次事实与变化，保留来源边界，不续写故事。',objectArchive:'提炼已确认出现的对象与稳定事实，不把临时状态写入永久档案。',nativeFill:'仅对本次开放的原生映射字段提出有依据的值，不产生第二写入源。',preferenceAnalysis:'仅依据用户原话提出本次开放字段中的偏好候选，不自动生效。',plotAdvance:'依本次明确授权的阶段填写结算提案或条件计划，计划不能记成已发生历史。',assetAdapt:'提炼已选对象的基点和获准成长，保留意义与来源，不混入未选择的旧世界进度。',ruleReview:'核对原卡规则与来源，提出已定位的可读问题与修改候选，未选择前不生效。'};
+export function sheetTaskProfile(task){
+ if(task==='tableGenesis')return TASK_PROFILES.tableGenesis;
+ const goal=sheetGoals[task];if(!goal)throw Error('简表任务未登记：'+task);
+ return {authorize:goal+' 使用同一完整 reply 和程序提供的简表草稿，执行与保存只由程序按确认后的真实回执处理。',route:['SOURCE→本次要求、来源和范围；CARD/BOOKS/HISTORY→分别保留其来源身份、启用状态和时间。','STATE.forms→本次唯一允许填写的行、字段与类型；STATE.references→明确可用的名称引用。既有当前值供核对，不重抄未改变值。','正文→可读回答与结果说明；cells→本次简表草稿；extra→具体阻断缺项。vars/archive为空，不从此请求推进故事或执行命令。'],steps:['逐项读取本次要求、开放字段和实际来源，核对身份、时序与权限边界。',goal,'把每项有据内容填写到唯一开放字段，未知留空；关联使用给定名称，不编造编号或存储结构。','核对遗漏、重复、类型、引用与来源，完成同一reply各区块；尚未提交的内容只称草稿，不虚构回执。']};
+}
+export function taskProfile(task,{archiveProposal=false,formContract}={}){const profile=formContract===SIMPLE_FORM_CONTRACT?sheetTaskProfile(task):TASK_PROFILES[task];if(!profile)throw Error('辅助预设未登记：'+task);if(!archiveProposal)return profile;if(task!=='tableArchive')throw Error('归档审核契约只能用于独立记忆归档');return {...profile,steps:[...profile.steps.slice(0,2),'通过档案查询工具核对身份、旧字段、修订及权限；按已登记结构拟定增量，锁定字段不改。','检查证据、版本、时序、权限与引用后，用草案工具提交完整批次；不能解决的必要修改在 notes 中保留，最终 JSON 只引用已接纳的草案。']};}

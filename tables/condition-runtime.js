@@ -36,9 +36,11 @@ export function validateBoundRule(rule,catalog,view){
  const current=compileBoundRule(rule,catalog,view);check(JSON.stringify(current)===JSON.stringify(rule),'条件来源或世界定义已改变，请重新登记规则');return current;
 }
 export function conditionReceipts(loaded){return [...(loaded.session.data.branchSeed?.conditionReceipts??[]),...loaded.view.commits.flatMap(c=>c.conditionReceipt?[c.conditionReceipt]:[])];}
-export function planCondition(rule,rows,{opportunity,turn,receipts=[],draw=null}={}){
+export function planCondition(rule,rows,options={}){return planConditionResult(rule,evaluateConditionRule(rule.program,rows,{}),options);}
+// Both legacy reading and the canonical form service share one chance/cooldown policy.
+export function planConditionResult(rule,result,{opportunity,turn,receipts=[],draw=null}={}){
  check(typeof opportunity==='string'&&opportunity&&Number.isSafeInteger(turn)&&turn>=0,'缺少稳定机会身份或回合');
- const result=evaluateConditionRule(rule.program,rows,{}),base={ruleId:rule.id,revision:rule.revision,opportunity,turn,status:result.status,matched:false,chance:rule.policy.chance,draw:null,changes:[],basis:result.basis};
+ const base={ruleId:rule.id,revision:rule.revision,opportunity,turn,status:result.status,matched:false,chance:rule.policy.chance,draw:null,changes:[],basis:result.basis};
  // A historical success never makes a currently false/unknown gate true.
  if(result.status!=='ready')return base;
  const history=receipts.filter(r=>r.ruleId===rule.id),prior=history.filter(r=>r.opportunity===opportunity);check(prior.length<=1,'条件机会回执重复');

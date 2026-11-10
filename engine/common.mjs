@@ -28,7 +28,7 @@ export function decimal(a,b,op='+'){
  if(!Number.isFinite(v))fail('NONFINITE','运算结果不是有限数字');return Number(v.toPrecision(15));
 }
 export function decode(raw,spec={}){
- const type=(spec.type??'TEXT').toUpperCase();if(raw==null||raw==='')return [null,'unset'];
+ const type=(spec.type??'TEXT').toUpperCase();if(raw==null)return [null,'unset'];if(raw===''){if(['TEXT','LONG_TEXT','LONGTEXT'].includes(type)||type==='ENUM'&&(spec.enum??spec.options)?.includes(''))return ['','known'];return [null,'unset'];}
  if(typeof raw==='string'&&own({'?':1,'~':1,'!':1,'∅':1,'—':1},raw))return [null,{'?':'unknown','~':'unset','!':'cleared','∅':'none','—':'not_applicable'}[raw]];
  if(['NUMBER','INTEGER','INT','DECIMAL','FLOAT','RATIO'].includes(type)){
   let v=raw;if(typeof v==='string'){const m=/^([+-]?\d+(?:\.\d+)?)(?:\/([+-]?\d+(?:\.\d+)?))?$/.exec(v.trim());if(!m)fail('NUMBER_TYPE','数字字段需要数字',{field:spec.key,value:raw});v=Number(m[1]);}
@@ -45,5 +45,5 @@ export function decode(raw,spec={}){
   if(!Array.isArray(a)||a.some(v=>typeof v!=='string'&&(!v||typeof v!=='object')))fail('TAGS_TYPE','状态标签格式错误');return [a.map(v=>typeof v==='string'?{name:v}:v),'known'];
  }
  if(['JSON','ARRAY','OBJECT','REF_LIST','TEXT_LIST'].includes(type)||type==='CHILD_REF'&&(typeof raw==='object'||/^\s*[\[{]/.test(raw))){const v=typeof raw==='string'?JSON.parse(raw):clone(raw);if(['ARRAY','REF_LIST','TEXT_LIST'].includes(type)&&!Array.isArray(v))fail('ARRAY_TYPE','需要数组');if(type==='OBJECT'&&(!v||typeof v!=='object'||Array.isArray(v)))fail('OBJECT_TYPE','需要对象');return [v,'known'];}
- if(type==='ENUM'&&(spec.enum??spec.options)&&!(spec.enum??spec.options).includes(raw))fail('ENUM_VALUE','值不在注册选项中',{field:spec.key,value:raw});if(typeof raw!=='string')fail('TEXT_TYPE','文本和ID字段需要文字',{field:spec.key});return [raw,'known'];
+ if(type==='ENUM'&&(spec.enum??spec.options)){if(!(spec.enum??spec.options).includes(raw))fail('ENUM_VALUE','值不在注册选项中',{field:spec.key,value:raw});return [raw,'known'];}if(typeof raw!=='string')fail('TEXT_TYPE','文本和ID字段需要文字',{field:spec.key});return [raw,'known'];
 }

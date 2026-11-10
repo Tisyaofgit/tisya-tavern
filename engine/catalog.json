@@ -39936,6 +39936,41 @@
           "unknown_default": null,
           "legacy_description": "受众、动作、允许值和条件分开，保留父作用域。",
           "legacy_source_description": "允许在何种视图或正文位置显示来源内容。"
+        },
+        {
+          "key": "condition_chance",
+          "label": "门禁命中概率",
+          "type": "NUMBER",
+          "required": false,
+          "definition": "0—100；未填时100。每个稳定扫描机会只抽签一次。"
+        },
+        {
+          "key": "condition_cooldown_turns",
+          "label": "门禁冷却回合",
+          "type": "INTEGER",
+          "required": false,
+          "definition": "非负整数；未填时0。自最近成功机会起累计已登记回复回合。"
+        },
+        {
+          "key": "condition_limit",
+          "label": "门禁成功次数上限",
+          "type": "INTEGER",
+          "required": false,
+          "definition": "非负整数；未填时不限。按当前分支保存的成功机会回执累计。"
+        },
+        {
+          "key": "condition_start_turn",
+          "label": "门禁起始回合",
+          "type": "INTEGER",
+          "required": false,
+          "definition": "非负整数；未填时0，边界包含。"
+        },
+        {
+          "key": "condition_end_turn",
+          "label": "门禁截止回合",
+          "type": "INTEGER",
+          "required": false,
+          "definition": "非负整数；未填时不限，边界包含且不得早于起始回合。"
         }
       ],
       "record_id_alias": "source_route_id",

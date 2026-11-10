@@ -131,9 +131,10 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const {generate_data:next}=await createParameters(settings,model,g.type,messages,{allowToolCalls:!g.modular,toolData:g.modular?{}:undefined});if(worldKey(ctx())!==g.key||store.read().revision!==g.revision)fail('生成配置已变化，请重试');if(g.modular&&historySignature(ctx())!==historyStamp)fail('聊天记录已变化，请重新生成');next.stream=payload.stream;if(g.modular)validateBodyOverrides(next,parseRequestBody);const prepared=await prepareTransport(next,g.route.transport,g);for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared?.payload??next);
   const snap={at:new Date().toISOString(),world:g.key,revision:g.data.revision,task:'main',...(injection?{injection}:{}),route:{connection:g.route.connection,preset:g.route.preset,model,sources:g.route.sources},selected:g.materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'main');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();sealPayload(payload);observeInjection(payload,snap);onSnapshot(snap);
  }
- function taskPreset(task,{archiveProposal=false}={}){
+ function taskPreset(task,{archiveProposal=false,formContract}={}){
   const {data,world}=store.read(),definition=registry.tasks.get(task);if(!definition?.preset)fail('此任务没有配套文本预设');
-  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal,source:getSource()});
+  if(!TEXT_TASKS[task]&&getSource()?.prompts?.some(p=>p.identifier==='tisya_user_identity'))formContract??='tisya.simple-form/1';
+  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal,source:getSource(),formContract});
   const instructions=task==='communication'?communicationMessages({format:'tisya.communication-input/1',text:''})[0].content:(definition.instructions??'');
   return textTaskPreset({task,settings:world.modes[world.mode].narrative,instructions:instructions+(world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+world.tables.taskInstructions[task]:'')});
  }
@@ -144,7 +145,8 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const preset=paired?null:nativePreset(route.preset),settings={...connectionSettings(route),...(preset?pickParameters(preset):{}),...route.parameters};let messages=[];
   let query=null;const requestInfo={connection:route.connection,model:route.model||null,source:settings.chat_completion_source??null,transport:route.transport??'off'};try{
   let parsedInput;try{parsedInput=typeof input==='string'?JSON.parse(input):clone(input);}catch{}
-  const useArchiveTools=task==='tableAssistant'&&settings.function_calling===true&&parsedInput?.storage?.ready===true;
+  if(!TEXT_TASKS[task]&&definition.preset?.startsWith('tisya:')&&getSource()?.prompts?.some(p=>p.identifier==='tisya_user_identity')&&parsedInput?.formContract!=='tisya.simple-form/1')fail('此数据任务须经统一极简表单服务准备；旧JSON填录入口已停用');
+  const useArchiveTools=parsedInput?.formContract!=='tisya.simple-form/1'&&task==='tableAssistant'&&settings.function_calling===true&&parsedInput?.storage?.ready===true;
   if(archiveToolSession){
    if(settings.function_calling!==true||ctx().isToolCallingSupported?.(settings,route.model||settings.__tisyaModel||ctx().getChatCompletionModel(settings))!==true)fail('归档草案需要启用函数调用，并选择支持工具的连接及后处理');
    if(archiveToolSession.context?.world!==key||archiveToolSession.context?.task!=='tableArchive'||archiveToolSession.context?.source!==parsedInput?.archiveSource?.key||archiveToolSession.context?.requestId!==parsedInput?.archiveRequestId)fail('归档草案工具与本轮来源不匹配');
@@ -159,7 +161,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
 
   onProgress?.({stage:'preparing'});
   let built;
-  if(paired)built=taskPreset(task,{archiveProposal:!!archiveToolSession});
+  if(paired)built=taskPreset(task,{archiveProposal:!!archiveToolSession,formContract:parsedInput?.formContract});
   else built=validateTaskPreset(preset??getSource(),task);
   if(TEXT_TASKS[task]){
    if(task==='communication')communicationMessages(input);

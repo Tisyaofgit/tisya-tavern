@@ -1,10 +1,15 @@
 import {check,copy} from './schema.js';
+import {Runtime} from '../engine/runtime.mjs';
+import {normalizeTables,evaluateConditionGroup,MechanicalError} from '../engine/mechanical_runtime.mjs';
+import {digest as matrixDigest} from '../engine/common.mjs';
+import {captureMessages,chatKey,NS} from '../engine/controller.mjs';
 import {digest} from './books.js';
 import {prepareCommit} from './ledger.js';
 import {projectStateVocabulary} from './state-registry.js';
-import {CONDITION_PROVIDER,compileBoundRule,validateBoundRule,planCondition,conditionActionProposal,conditionReceipts,conditionReadAccess} from './condition-runtime.js';
+import {CONDITION_PROVIDER,compileBoundRule,validateBoundRule,planCondition,planConditionResult,conditionActionProposal,conditionReceipts,conditionReadAccess} from './condition-runtime.js';
 const random=()=>crypto.getRandomValues(new Uint32Array(1))[0]/4294967296;
-export function createConditionService({run,capture,load,books,onCommitted=()=>{},draw=random}){
+export function createConditionService({run,capture,load,books,database=null,getContext=null,onCommitted=()=>{},draw=random}){
+ if(database)return databaseConditions({database,getContext,draw});
  const previews=new Map();
  async function current(){const c=capture();check(c.settings.originBook&&c.settings.sessionBook,'请先建立当前会话的表单存档');const loaded=await load(c);return {c,loaded,catalog:loaded.origin.data.状态目录};}
  const rules=l=>l.session.data.conditionRules??l.session.data.branchSeed?.conditionRules??[];
@@ -75,3 +80,119 @@ export function createConditionService({run,capture,load,books,onCommitted=()=>{
  return {describeConditionRules,listConditionRules,saveConditionRule,previewConditionAction,commitConditionAction,discardConditionPreview:id=>previews.delete(id),evaluateConditionEntries};
 }
 export function conditionNarrative(loaded,source){return loaded.view.commits.flatMap(c=>c.conditionReceipt?[c.conditionReceipt]:[]).filter(r=>{const e=loaded.view.rows.find(e=>e.table==='events'&&e.id===r.event?.id);return e&&JSON.stringify({...e,source:null})===JSON.stringify({...r.event,source:null});}).filter(r=>r.matched&&r.narrative&&r.deliveryAfter===source&&r.access?.readers.includes('读者')).map(r=>({ruleId:r.ruleId,text:r.narrative,note:'条件结果已经结算，只叙述已确认变化，不重复执行或扩大知情。'}));}
+
+// Source routes own gate definitions; the ordinary form commit owns receipts.
+// This adapter never initializes or writes an origin/session book.
+function databaseConditions({database,getContext,draw}){
+ check(typeof database.read==='function'&&typeof database.commitGate==='function','条件服务缺少统一表单读取或受控机会提交接口');
+ check(typeof getContext==='function','条件服务缺少当前聊天来源');
+ let queue=Promise.resolve();
+ const serial=fn=>{const work=queue.then(fn);queue=work.catch(()=>{});return work;};
+ const chatStamp=()=>{const context=getContext();check((context.chat??[]).every(m=>m.extra?.[NS]?.uid),'聊天消息尚未登记，先完成本轮表单准备');return matrixDigest(captureMessages(context));};
+ const rowValues=(state,table,id)=>state.tables?.[table]?.[id]?.values;
+ const metadata=(state,table,id)=>Object.values(state.tables?.X_RECORD_META??{}).find(r=>r.values.table_id===table&&r.values.record_id===id)?.values??{};
+ const scopeAllowed=(state,table,id)=>{
+  const m=metadata(state,table,id),scope=state.runtime?.scope??{};
+  return !['废弃','归档'].includes(m.record_status)&&[['world_ref','scope_world_id'],['session_ref','scope_session_id'],['branch_ref','scope_branch_id']].every(([s,k])=>!m[k]||m[k]==='GLOBAL'||!scope[s]||scope[s]===m[k]);
+ };
+ const policyOf=row=>{
+  const policy={chance:row.condition_chance??100,cooldown:row.condition_cooldown_turns??0,limit:row.condition_limit??null,start:row.condition_start_turn??0,end:row.condition_end_turn??null};
+  check(Number.isFinite(policy.chance)&&policy.chance>=0&&policy.chance<=100,'概率须为0—100');
+  for(const key of ['cooldown','start'])check(Number.isSafeInteger(policy[key])&&policy[key]>=0,'回合参数须为非负整数');
+  for(const key of ['limit','end'])check(policy[key]===null||Number.isSafeInteger(policy[key])&&policy[key]>=0,'次数/期限须为非负整数');
+  check(policy.end===null||policy.end>=policy.start,'结束回合早于开始');return policy;
+ };
+ async function current(){
+  const key=chatKey(getContext()),stamp=chatStamp(),db=await database.read();
+  check(db?.state&&db.contextKey===key&&key===chatKey(getContext())&&stamp===chatStamp(),'条件表单来源未准备或聊天已变化');
+  return {db,key,stamp};
+ }
+ function definition(db,id){
+  const state=db.state,route=rowValues(state,'T_SYS_SOURCE_ROUTES',id);
+  check(route?.activation_condition,'条件规则尚未登记到当前规范表单；旧规则需先按稳定格位迁移');
+  check(scopeAllowed(state,'T_SYS_SOURCE_ROUTES',id),'条件来源不属于当前生效作用域');
+  const groups=[],refs=[];
+  for(const field of ['activation_condition','expiry_condition']){
+   const ref=route[field];if(ref==null||ref==='')continue;
+   check(typeof ref==='string','条件须引用唯一的标准条件组');
+   const first=rowValues(state,'M_CONDITIONS',ref);check(first,'条件节点引用已不存在');
+   check(first.owner_table==='T_SYS_SOURCE_ROUTES'&&first.owner_row_uuid===id&&first.owner_field===field,'条件组归属与来源路由不一致');
+   const nodes=Object.values(state.tables?.M_CONDITIONS??{}).map(r=>r.values).filter(n=>n.owner_table===first.owner_table&&n.owner_row_uuid===id&&n.owner_field===field&&n.group_key===first.group_key);
+   check(nodes.length>0&&nodes.length<=128,'条件组为空或超出128项');
+   for(const node of nodes)for(const key of ['lhs_ref',...(node.rhs_kind==='reference'?['rhs_ref']:[])])if(node[key]){
+    check(typeof node[key]==='string','条件格位须为标准引用ID');
+    const reference=rowValues(state,'M_FIELD_REFERENCES',node[key]);check(reference,'条件格位引用不存在');refs.push(reference);
+   }
+   groups.push({field,first,nodes});
+  }
+  const record=state.tables.T_SYS_SOURCE_ROUTES[id];for(const key of ['activation_condition','expiry_condition','condition_chance','condition_cooldown_turns','condition_limit','condition_start_turn','condition_end_turn'])if(route[key]!=null||record.states?.[key]==='unknown')check(['known','derived'].includes(record.states?.[key]),'条件定义字段尚未确认：'+key);
+  const policy=policyOf(route),acl=Object.values(state.tables?.M_ACCESS_RULES??{}).map(r=>r.values).filter(a=>a.owner_table==='T_SYS_SOURCE_ROUTES'&&a.owner_row_uuid===id||refs.some(ref=>a.owner_table===ref.target_table&&a.owner_row_uuid===ref.target_row_uuid));
+  const fieldDefinitions=refs.map(ref=>({table:ref.target_table,field:state.schema?.[ref.target_table]?.fields.find(f=>f.key===ref.target_field)??null}));
+  const revision=parseInt(matrixDigest({route,groups,refs,acl,fieldDefinitions}).slice(0,12),16)+1;
+  return {id,name:route.source_name||id,revision,mode:'gate',policy,route,groups,refs,acl};
+ }
+ function publicSource(state,table,id,field=''){
+  const row=state.tables?.[table]?.[id],schema=state.schema?.[table],m=metadata(state,table,id);
+  if(!row||!scopeAllowed(state,table,id)||table==='T_CHAR_SECRETS'||['D','E','Access D','Access E'].includes(row.values.lock_level)||schema?.fields.find(f=>f.key===field)?.lock_level)return false;
+  const rules=Object.values(state.tables?.M_ACCESS_RULES??{}).map(r=>r.values).filter(r=>r.owner_table===table&&r.owner_row_uuid===id&&(!r.owner_field||r.owner_field===field||r.row_uuid===m.default_disclosure)&&['read','disclose'].includes(r.permission));
+  if(m.default_disclosure&&!rules.some(r=>r.row_uuid===m.default_disclosure))throw Error('条件依赖的读取权限引用不完整');
+  if(!rules.length)return true;
+  // Public gate outcomes must not expose an author/character-only fact.
+  const publicRules=rules.filter(r=>r.audience_kind==='public');
+  if(publicRules.some(r=>r.decision==='conditional'))throw Error('条件依赖的动态披露权限尚未完成绑定，未放行');
+  return publicRules.some(r=>r.decision==='allow'&&r.value_state==='known')&&!publicRules.some(r=>r.decision==='deny'||r.value_state!=='known');
+ }
+ function evaluate(db,rule,prepared={}){
+  if(!publicSource(db.state,'T_SYS_SOURCE_ROUTES',rule.id,'activation_condition')||rule.refs.some(ref=>!publicSource(db.state,ref.target_table,ref.target_row_uuid,ref.target_field??'')))return {status:'private',changes:[],basis:[]};
+  const e=prepared.engine??=new Runtime(db.state);
+  // Resolve only this rule's formula-backed inputs through their existing owner.
+  for(const ref of rule.refs)if(ref.reference_kind==='cell'&&ref.resolution_status==='resolved'){
+   const r=e.rows(ref.target_table)[ref.target_row_uuid];
+   if(r&&Object.hasOwn(r.formulas??{},ref.target_field))try{e.get([ref.target_table,ref.target_row_uuid,ref.target_field,[]]);prepared.tables=null;}catch(error){if(error.code==='VALUE_UNAVAILABLE')return {status:'unknown',changes:[],basis:[]};throw error;}
+  }
+  const tables=prepared.tables??=normalizeTables(e.mechanicalPayload());
+  for(const ref of rule.refs){const r=tables[ref.target_table]?.find(r=>r.row_uuid===ref.target_row_uuid);if(r?.__value_states?.[ref.target_field]==='derived')r.__value_states[ref.target_field]='known';}
+  const evaluateGroup=group=>{
+   try{return evaluateConditionGroup(tables,group.first,group.first.group_key).passed;}
+   catch(error){if(error instanceof MechanicalError&&['VALUE_STATE','MISSING_FIELD','MISSING_INPUT'].includes(error.code))return null;throw error;}
+  };
+  const active=evaluateGroup(rule.groups.find(g=>g.field==='activation_condition')),expiry=rule.groups.find(g=>g.field==='expiry_condition'),expired=expiry?evaluateGroup(expiry):false;
+  const status=active===false||expired===true?'unmatched':active===null||expired===null?'unknown':'ready';
+  return {status,changes:[],basis:rule.refs.map(r=>({table:r.target_table,id:r.target_row_uuid,field:r.target_field}))};
+ }
+ const receipts=state=>Object.values(state.runtime?.receipts??{}).flatMap(r=>r.result?.source?.kind==='worldbook-condition'?r.result.source.receipts??[]:[]);
+ async function describeConditionRules(){
+  const {db}=await current(),out=[],prepared={};
+  for(const [id,row]of Object.entries(db.state.tables?.T_SYS_SOURCE_ROUTES??{}))if(row.values.activation_condition){
+   try{const rule=definition(db,id);evaluate(db,rule,prepared);out.push({id,name:rule.name,revision:rule.revision,provider:CONDITION_PROVIDER,valid:true});}
+   catch(error){out.push({id,name:row.values.source_name||id,provider:CONDITION_PROVIDER,valid:false,diagnostic:error.message});}
+  }
+  return out;
+ }
+ async function evaluateConditionEntries({requestId,entryRefs,trigger='normal',dryRun=true,signal}={}){return serial(async()=>{
+  check(typeof requestId==='string'&&requestId&&Array.isArray(entryRefs)&&entryRefs.length<=512,'世界书条件请求无效');
+  const {db,key,stamp}=await current(),guard=()=>{signal?.throwIfAborted();check(key===chatKey(getContext())&&stamp===chatStamp(),'世界书条件来源已变化');};guard();
+  const opportunity='prompt:'+matrixDigest([stamp,trigger]),turn=(db.state.runtime?.turn_order??[]).length,history=receipts(db.state),seen=new Set(),prepared={};
+  // Validate the entire batch before consuming chance or writing a receipt.
+  const plans=entryRefs.map(ref=>{
+   const address=JSON.stringify([ref.bookRef,String(ref.uid)]),lane=JSON.stringify([ref.ruleRef,ref.bookRef,String(ref.uid)]);check(!seen.has(address),'同一世界书条目重复');seen.add(address);
+   const rule=definition(db,ref.ruleRef);check(ref.provider===CONDITION_PROVIDER&&ref.ruleVersion===rule.revision,'世界书条件规则提供者或版本不符');
+   const chance=ref.chance??rule.policy.chance;check(Number.isFinite(chance)&&chance>=0&&chance<=100,'世界书概率无效');
+   const prior=history.filter(r=>r.lane===lane),old=prior.find(r=>r.opportunity===opportunity);if(old)check(old.chance===chance,'同一机会的概率配置已改变，未重新抽签');
+   const evaluation=evaluate(db,rule,prepared),withChance={...rule,policy:{...rule.policy,chance}},options={opportunity,turn,receipts:prior};
+   return {ref,lane,rule:withChance,evaluation,options,plan:planConditionResult(withChance,evaluation,options)};
+  });
+  const recorded=[];
+  for(const row of plans)if(row.plan.status==='eligible'&&!dryRun){row.plan=planConditionResult(row.rule,row.evaluation,{...row.options,draw:draw()});const receipt={...row.plan,lane:row.lane};delete receipt.changes;delete receipt.basis;recorded.push(receipt);}
+  guard();let final=db;
+  if(recorded.length){
+   const source={kind:'worldbook-condition',opportunity,turn,receipts:recorded};
+   final=await database.commitGate({operationId:'worldbook-condition:'+matrixDigest([opportunity,recorded.map(r=>r.lane)]),expectedRevision:db.revision,contextKey:key,changes:[],source});
+   check(final?.contextKey===key&&final.receipt?.result?.source?.kind==='worldbook-condition','条件机会写入尚未获得完整回执');guard();
+  }
+  const stateHash=matrixDigest(final.state),revision=final.revision;
+  return {requestId,contextRevision:matrixDigest([key,revision,stateHash,stamp]),results:plans.map(({ref,plan})=>({bookRef:ref.bookRef,uid:ref.uid,ruleRef:ref.ruleRef,ruleVersion:ref.ruleVersion,state:plan.matched?'matched':plan.status==='unknown'?'unknown':'not_matched',reasonCode:plan.status})),
+   async assertCurrent(){guard();const now=await database.read();guard();check(now?.contextKey===key&&now.revision===revision&&matrixDigest(now.state)===stateHash,'条件扫描后规范表单已变化，已停止发送');}};
+ });}
+ return {describeConditionRules,evaluateConditionEntries};
+}

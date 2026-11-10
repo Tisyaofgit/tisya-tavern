@@ -1,4 +1,4 @@
-import {applyGeneration,assertGeneration} from './generation.mjs';
+import {applyGeneration,assertGeneration,validateGeneration} from './generation.mjs';
 import {storyAvatar,projectDatabaseIdentity} from './identity.mjs';
 import {stripPhoneInitialization,validateStoryLibraries} from './template-book.mjs';
 import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences} from './preferences.mjs';
@@ -29,24 +29,28 @@ export const isMatrixPreset=source=>source?.prompts?.some(p=>p.identifier==='tis
 export const baseline=matrixPreset();
 export const materialNames=[...new Set(baseline.prompts.flatMap(p=>[...(p.content??'').matchAll(/\{\{(tisya_[\w]+)\}\}/g)].map(m=>m[1])))];
 export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
+ let saving=false;
  function key(){const c=getContext();return JSON.stringify([c.groupId?'group':'character',String(c.groupId??c.characterId??''),String(c.chatId)]);}
  function story(all){const keys=[key(),...(getContext().chatMetadata?.tisya_engine?.origin_chat_keys??[])],normalize=k=>{try{return JSON.stringify(JSON.parse(k).map(String));}catch{return k;}};for(const candidate of keys){const found=Object.keys(all.stories??{}).find(k=>normalize(k)===normalize(candidate));if(found)return all.stories[found];}return {userBinding:null,userName:'',wish:''};}
- function read(){const all=getContext().extensionSettings[CONFIG_KEY]??{format:1,tags:{...DEFAULT_TAGS},aliases:[],prompts:{},generation:{},stories:{},revision:0};if(all.format!==1)fail('CONFIG_VERSION','新版配置格式不受支持');return {...clone(all),story:clone(story(all))};}
+ function read(){const all=getContext().extensionSettings[CONFIG_KEY]??{format:1,tags:{...DEFAULT_TAGS},aliases:[],prompts:{},generation:{},stories:{},revision:0};if(all.format!==1)fail('CONFIG_VERSION','新版配置格式不受支持');return {...clone(all),story:clone(story(all)),contextKey:key()};}
+ function validate(next){validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));validateGeneration(next.generation??{},getContext());renderingResources(next.resources??[]);validateStoryLibraries(next);validateTags(next.tags);return clone(next);}
  async function save(next){
-  assertIdle();const c=getContext(),previous=c.extensionSettings[CONFIG_KEY],hadPrevious=Object.hasOwn(c.extensionSettings,CONFIG_KEY),before=read();
+  if(saving)fail('CONFIG_BUSY','上一项配置保存尚未结束');assertIdle();const c=getContext(),scope=key(),previous=c.extensionSettings[CONFIG_KEY],hadPrevious=Object.hasOwn(c.extensionSettings,CONFIG_KEY),before=read();
+  if(next.contextKey!==undefined&&next.contextKey!==scope)fail('CONFIG_SCOPE','配置草稿属于另一聊天，请重新打开配置');
   if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');
-  validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));renderingResources(next.resources??[]);validateStoryLibraries(next);
-  const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[key()]=value.story;delete value.story;value.revision++;
-  const undoGeneration=applyGeneration(c,value.generation);c.extensionSettings[CONFIG_KEY]=value;let confirmed=false;
-  try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');confirmed=true;assertGeneration(c,value.generation);}
+  validate(next);
+  const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[scope]=value.story;delete value.story;delete value.contextKey;value.revision++;
+  const undoGeneration=applyGeneration(c,value.generation);saving=true;c.extensionSettings[CONFIG_KEY]=value;let confirmed=false;
+  try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');confirmed=true;if(key()!==scope||getContext().extensionSettings!==c.extensionSettings)fail('CONFIG_SCOPE','保存期间聊天已切换；已停止当前配置操作，请重新核对');if(c.extensionSettings[CONFIG_KEY]!==value)fail('CONFIG_CONFLICT','保存期间配置已被其他位置替换');assertGeneration(c,value.generation);}
   catch(error){
+   if(c.extensionSettings[CONFIG_KEY]!==value)fail('CONFIG_ROLLBACK_FAILED','保存期间配置被其他位置替换，未覆盖新内容；请重新读取持久配置核对。',{original:asError(error)});
    if(hadPrevious)c.extensionSettings[CONFIG_KEY]=previous;else delete c.extensionSettings[CONFIG_KEY];undoGeneration();
    if(confirmed)try{if(await persist()!==true)throw Error('宿主尚未确认恢复原配置');}catch(rollback){fail('CONFIG_ROLLBACK_FAILED','配置保存后发生冲突，恢复原配置也未获确认；请重开配置核对实际状态。',{original:asError(error),rollback:asError(rollback)});}
    throw error;
-  }
+  }finally{saving=false;}
   configureTags(value.tags,value.aliases);configureRenderingResources(value.resources??[]);return read();
  }
- configureTags(read().tags,read().aliases);configureRenderingResources(read().resources??[]);return {read,save};
+ configureTags(read().tags,read().aliases);configureRenderingResources(read().resources??[]);return {read,save,validate};
 }
 export function compilePromptText(text,config,slots={}){
  // Expand injected material before resolving the protagonist macro inside it.

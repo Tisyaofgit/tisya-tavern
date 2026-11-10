@@ -3,7 +3,7 @@ import {mountRunView} from './tables/run-view.js';
 import {PANEL_CSS} from './config/panel-style.js';
 import {UTILITY_STYLE} from './utility-style.js';
 
-export function mountAssistantApp(document,container,{service,identity,store,onClose,onNative,onWorldbook,onAtlas,onIdentity,onNewWorld,mountCreation,initialGoal='',onSaved=()=>{}}){
+export function mountAssistantApp(document,container,{service,identity,store,onClose,onNative,onWorldbook,onAtlas,onIdentity,onNewWorld,onStyle,mountCreation,initialGoal='',onSaved=()=>{}}){
  const root=document.createElement('section');root.className='tisya-assistant-app';container.append(root);const dom=root.attachShadow({mode:'open'});
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
  const style=el('style',PANEL_CSS+UTILITY_STYLE+'main{padding:0}.assistant-tasks{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:transparent;border:0;padding:0}.assistant-tasks button{text-align:left}.assistant-tasks button[aria-pressed=true]{background:#c8b57e;color:#172b20}.assistant-intro{border-left:1px solid #c8b57e;padding:4px 0 4px 18px;margin:20px 0}.tisya-tables>nav{display:none}.tisya-user>header{display:none}.assistant-task-body{min-width:0}.assistant-task-body:empty{display:none}@media(max-width:350px){.assistant-tasks{grid-template-columns:1fr}}');dom.append(style);
@@ -18,6 +18,7 @@ export function mountAssistantApp(document,container,{service,identity,store,onC
  async function navigate(id='assistant',goal='',creationOptions=null){
   if(!alive)return;if(service.state().busy||[...panes.values()].some(p=>p.api.busy||p.api.state?.().busy))throw Error('任务正在进行；可收起回聊天，完成或停止后再切换任务。');
   notice.textContent='';
+  if(id==='style'&&onStyle)return onStyle();
   if(['idea','core','genesis','foundation','core-assets'].includes(id)){
    if(typeof mountCreation!=='function')throw Error('创作表单服务尚未接入');
    const slot='creation',options={kind:id==='genesis'?'world':'character',goal:goal||initialGoal,mode:'extend',createPersona:false,...creationOptions};
@@ -37,7 +38,7 @@ export function mountAssistantApp(document,container,{service,identity,store,onC
   const slot='tables';
   if(!panes.has(slot)){
    const node=el('div');node.className='assistant-task-body';let api;
-   api=mountTablePanel(document,node,{service,store,onIdentity,onSaved,initialPage:id==='core-assets'?'core':id,initialGoal:goal||initialGoal});tablePanel=api;
+   api=mountTablePanel(document,node,{service,store,onIdentity,onAssistant:(id,goal)=>navigate(id,goal),onSaved,initialPage:id==='core-assets'?'core':id,initialGoal:goal||initialGoal});tablePanel=api;
    panes.set(slot,{node,api});body.append(node);await api.ready;
   }else await tablePanel.navigate(id==='core-assets'?'core':id,goal||initialGoal);
   for(const [key,pane]of panes)pane.node.hidden=key!==slot;

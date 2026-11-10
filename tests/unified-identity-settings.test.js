@@ -39,13 +39,13 @@ async function setup({companion=false}={}){
  const creator=createMatrixCreator({database,getContext:()=>ctx,request:async()=>{requests++;return {name:'新世界',unresolved:[],matrix:{changes:[{tableId:'T_STATIC_WORLDS',recordId:'new-world',values:{name:'新世界'}}]}};}});
  const roles=createStoryIdentity({config,getContext:()=>ctx,database,builtins,creator,getHelper:()=>null});await roles.bind({dossierId:'person'});await roles.saveResources({phoneWorld:{database:true,worldId:'world'}});configWrites=0;
  const identity=createIdentityService({getContext:()=>ctx,getAvatar:()=> 'a',applyActive:(id,name)=>{ctx.name1=name;ctx.powerUserSettings.persona_description=ctx.powerUserSettings.persona_descriptions[id].description;},persistSettings:async()=>{profileWrites++;return true;},persistChat:async()=>true});
- const ui=mountMatrixIdentity(window.document,root,{identity,config,roles});await ui.ready;
+ const creationRoutes=[];const ui=mountMatrixIdentity(window.document,root,{identity,config,roles,onCreate:input=>creationRoutes.push(structuredClone(input))});await ui.ready;
  let preferences=null;
  if(companion){const node=window.document.createElement('section'),books={definitions:async kind=>(kind==='extensions'?builtinExtensionDefinitions():builtinPresentationDefinitions()).map((definition,i)=>({definition,source:{book:kind,uid:String(i),digest:'a'.repeat(64)}}))};
   preferences=mountExtensionPreferences(window.document,node,{database,books,getScope:()=>{const value=config.read();return {ownerId:value.story.userBinding?.entityId,worldId:value.story.phoneWorld?.worldId,outputConfigId:null};},externalActions:true,onStateChange:()=>ui.refreshState()});ui.setCompanion(preferences);await preferences.ready;
  }
  const input=(selector,value,event='input')=>{const node=root.querySelector(selector);assert(node,selector);if(node.type==='checkbox')node.checked=value;else node.value=value;node.dispatchEvent(new window.Event(event));return node;};
- return {window,root,ctx,config,roles,database,ui,preferences,writes,attempts,input,get data(){return data;},get profileWrites(){return profileWrites;},get configWrites(){return configWrites;},get requests(){return requests;},failBinding(value){failBinding=value;},failDatabase(value){failDatabase=value;},async click(label){button(root,label).click();await ui.settled();await preferences?.settled?.();await tick();},async close(){ui.dispose();preferences?.dispose();await window.happyDOM.abort();}};
+ return {creationRoutes,window,root,ctx,config,roles,database,ui,preferences,writes,attempts,input,get data(){return data;},get profileWrites(){return profileWrites;},get configWrites(){return configWrites;},get requests(){return requests;},failBinding(value){failBinding=value;},failDatabase(value){failDatabase=value;},async click(label){button(root,label).click();await ui.settled();await preferences?.settled?.();await tick();},async close(){ui.dispose();preferences?.dispose();await window.happyDOM.abort();}};
 }
 
 test('one footer saves native wishes, reviewed dossier and several presentation regions without duplicate stores',async()=>{
@@ -64,31 +64,23 @@ test('a missing dossier review blocks every component before the native profile 
  const f=await setup({companion:true});try{f.input('[data-identity-wish]','保留草稿');f.input('[data-role-edit-name]','待确认');f.input('[data-extension-count]','1');assert.equal(await f.ui.saveDraft(),false);assert.equal(f.profileWrites,0);assert.equal(f.writes.length,0);assert.equal(f.root.querySelector('[data-identity-wish]').value,'保留草稿');assert.equal(f.ui.state().dirty,true);}finally{await f.close();}
 });
 
-test('manual database creation stays a preview and binding failure retries the same committed person',async()=>{
+test('the identity page routes character creation to the single assistant without a manual writer',async()=>{
  const f=await setup();try{
-  f.input('[data-role-name]','新人物');f.input('[data-role-content]','准确原文');await f.click('预览新人物');f.input('[data-role-create-confirm]',true,'change');assert.equal(f.writes.length,0);
-  f.failBinding(true);assert.equal(await f.ui.saveDraft(),false);assert.equal(f.writes.length,1);assert.equal(Object.keys(f.data.tables.T_CHAR_DOSSIER).length,2);assert.match(f.root.textContent,/角色表单已保存/);assert.equal(f.ui.state().dirty,true);
-  f.failBinding(false);assert.equal(await f.ui.saveDraft(),true,f.root.querySelector('.tisya-identity-status').textContent);assert.equal(f.writes.length,1);assert.equal(Object.keys(f.data.tables.T_CHAR_DOSSIER).length,2);assert.equal(f.attempts[0],f.attempts[1]);assert.equal(f.ui.state().dirty,false);
+  assert.equal(f.root.querySelector('[data-role-create]'),null);assert.equal(f.root.querySelector('[data-database-creation]'),null);
+  await f.click('前往缇斯亚助手创建人物');assert.equal(f.creationRoutes.length,1);assert.equal(f.creationRoutes[0].kind,'character');assert.equal(f.creationRoutes[0].createPersona,undefined);assert.equal(f.writes.length,0);assert.equal(f.requests,0);assert.equal(f.config.read().story.userBinding.dossierId,'person');
  }finally{await f.close();}
 });
 
-test('actual Matrix creator is preview-only until checked unified save and preserves the original selection',async()=>{
+test('world creation is a source-book task handed to the same assistant and leaves the active identity unchanged',async()=>{
  const f=await setup();try{
-  const kind=f.root.querySelector('[data-database-creation] select');kind.value='world';kind.dispatchEvent(new f.window.Event('change'));f.input('[data-creation-goal]','给定的新世界');await f.click('生成表单草稿');assert.equal(f.requests,1);assert.equal(f.writes.length,0);
-  const originalDraft=f.ui.exportDraft().creation.draft,source=structuredClone(originalDraft.nativeSources);
-  assert.equal(source.contractor.description,'原心愿');assert.equal(originalDraft.nativeSourceDigest,digest(source));
-  const commit=f.database.commit;f.database.commit=async patch=>{assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿','creation must commit while its reviewed native source is still current');assert.equal(f.profileWrites,0);return commit(patch);};
-  f.input('[data-identity-wish]','混合修改');assert.equal(await f.ui.saveDraft(),false);assert.equal(f.profileWrites,0);assert.equal(f.writes.length,0);
-  f.input('[data-creation-confirm]',true,'change');assert.equal(await f.ui.saveDraft(),true,f.root.querySelector('.tisya-identity-status').textContent);assert.equal(f.writes.length,1);assert.equal(f.data.tables.T_STATIC_WORLDS['new-world'].values.name,'新世界');assert.equal(f.config.read().story.userBinding.dossierId,'person');assert.equal(f.ctx.powerUserSettings.persona_descriptions.a.description,'混合修改');
-  assert.equal(f.ctx.powerUserSettings.persona_description,'混合修改');assert.equal(f.profileWrites,1);
-  assert.deepEqual(f.writes[0].source.nativeSources,source);assert.equal(f.writes[0].source.nativeSourceDigest,originalDraft.nativeSourceDigest);assert.deepEqual(originalDraft.nativeSources,source);
-  assert.equal(await f.ui.saveDraft(),true);assert.equal(f.writes.length,1);assert.equal(f.profileWrites,1);assert.equal(f.ui.state().dirty,false);
+  await f.click('前往缇斯亚助手创建世界');assert.deepEqual(f.creationRoutes,[{kind:'world',destination:{book:'',newBook:true}}]);assert.equal(f.requests,0);assert.equal(f.writes.length,0);assert.equal(f.profileWrites,0);assert.equal(f.config.read().story.userBinding.dossierId,'person');assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');
  }finally{await f.close();}
 });
 
-test('invalid actual creator output is rejected before native writes and keeps the editable proposal',async()=>{
+test('identity settings expose typed existing fields but no second JSON creation editor',async()=>{
  const f=await setup();try{
-  const kind=f.root.querySelector('[data-database-creation] select');kind.value='world';kind.dispatchEvent(new f.window.Event('change'));f.input('[data-creation-goal]','给定新世界');await f.click('生成表单草稿');const proposal=JSON.parse(f.root.querySelector('[data-creation-draft]').value);proposal.matrix.changes[0].values.unknown_typo='错误字段';f.input('[data-creation-draft]',JSON.stringify(proposal));f.input('[data-creation-confirm]',true,'change');f.input('[data-identity-wish]','待保存');assert.equal(await f.ui.saveDraft(),false);assert.equal(f.writes.length,0);assert.equal(f.profileWrites,0);assert.match(f.root.textContent,/未知字段/);assert(f.root.querySelector('[data-creation-draft]').value.includes('unknown_typo'));
+  assert(f.root.querySelector('[data-role-edit-name]'));assert.equal(f.root.querySelector('[data-creation-draft]'),null);assert.equal(f.root.querySelector('[data-creation-goal]'),null);assert.doesNotMatch(f.root.textContent,/候选内容（可修改 JSON）/);
+  f.input('[data-role-edit-name]','待核对的新名字');assert.equal(await f.ui.saveDraft(),false);assert.equal(f.writes.length,0);assert.equal(f.root.querySelector('[data-role-edit-name]').value,'待核对的新名字');
  }finally{await f.close();}
 });
 

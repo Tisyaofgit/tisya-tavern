@@ -15,7 +15,7 @@ export function createWorldbookConditionGate({getContext,engine,onError=()=>{},t
   // Host preload/token estimates have no authorized chance opportunity.
   if(!run){for(const list of lists)list.splice(0,list.length,...list.filter(e=>condition(e)?.mode!=='external'));return;}
   check(scope()===run.scope,'世界书条件作用域已变化');
-  const refs=new Map();for(const e of gated){if(e.disable)continue;const c=condition(e),k=key(e),ref={bookRef:e.world,uid:e.uid,provider:c.provider,ruleRef:c.ruleRef,ruleVersion:c.ruleVersion,chance:e.useProbability?e.probability:100};
+  const refs=new Map();for(const e of gated){if(e.disable)continue;const c=condition(e),k=key(e),ref={bookRef:e.world,uid:e.uid,provider:c.provider,ruleRef:c.ruleRef,ruleVersion:c.ruleVersion,...(e.useProbability?{chance:e.probability}:{})};
    check(c.provider===CONDITION_PROVIDER,'世界书条件提供者未连接');check(Number.isSafeInteger(c.ruleVersion),'世界书条件缺少规则版本');
    if(refs.has(k))check(JSON.stringify(refs.get(k))===JSON.stringify(ref),'同一世界书条目来源冲突');refs.set(k,ref);
   }

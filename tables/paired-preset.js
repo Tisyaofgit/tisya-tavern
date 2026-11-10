@@ -2,12 +2,28 @@ import {NARRATIVE as N} from '../settings-core.js';
 import {TABLE_MODES,auxiliaryEntries} from './modes.js';
 import {AUX_TASKS,archiveInstructions} from './prompts.js';
 import {taskSlots,slotText,SLOT_TARGETS,SLOT_NAMES} from './slots.js';
+import matrixReply from '../presets/Tisya-Matrix.json' with {type:'json'};
+import {SIMPLE_FORM_CONTRACT} from './task-profiles.js';
 const HEAD=['tisya_new_chat','tisya_session_reset','main','tisya_identity_attestation','tisya_user_relation','tisya_task_start','tisya_material_boundary_open'];
 const TAIL=['tisya_material_boundary_close','tisya_registry','tisya_internal_login','tisya_inner_chain','tisya_think_commit','tisya_delivery_warning','tisya_prepare_trigger'];
 const role=id=>id==='tisya_identity_attestation'||id==='tisya_think_commit'?'assistant':id==='tisya_user_relation'?'user':'system';
 // Auxiliary transport owns a data contract, independent of narrative UI output.
-export function pairedPreset({task,configuration,archiveProposal=false}){
+export function pairedPreset({task,configuration,archiveProposal=false,source,formContract}){
  const mode=TABLE_MODES[task];if(!mode)throw Error('未登记配套模式：'+task);
+ if(task==='tableGenesis'||formContract===SIMPLE_FORM_CONTRACT){
+  const preset=structuredClone(source?.prompts?.some(p=>p.identifier==='tisya_registry'&&p.content?.includes('<reply'))?source:matrixReply),base=Object.fromEntries(preset.prompts.map(p=>[p.identifier,p.content??'']));
+  const entries=auxiliaryEntries(base,task,AUX_TASKS[task].instructions+(configuration.world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''),{formContract:SIMPLE_FORM_CONTRACT});
+  preset.task=task;preset.mode=mode.id;preset.entries=entries;preset.name=AUX_TASKS[task].name;preset.formContract=SIMPLE_FORM_CONTRACT;
+  const targets=new Map(Object.entries(SLOT_TARGETS).map(([slot,id])=>[id,slot]));
+  // Keep the complete master order and instruction scaffold. Native markers are
+  // supplied by the explicit, snapshotted source slots for this quiet request.
+  for(const p of preset.prompts){p.content=entries[p.identifier]??p.content??'';if(targets.has(p.identifier)){p.tisyaMaterialSlot=targets.get(p.identifier);p.marker=false;}else if(p.identifier==='tisya_selected_resources'){p.tisyaSelectedResources=true;}else if(p.marker)p.content='';else p.content=p.content.replace(/\{\{tisya_[\w]+\}\}/g,'');}
+  const order=Array.isArray(preset.order)?{character_id:100001,order:structuredClone(preset.order)}:preset.prompt_order?.find(o=>o.character_id===100001)??preset.prompt_order?.[0];
+  if(!Array.isArray(order?.order)||!order.order.length)throw Error('完整reply预设缺少实际条目顺序');preset.prompt_order=[order];
+  // SOURCE has no native marker in the Matrix preset; add it inside materials.
+  for(const [slot,id]of Object.entries(SLOT_TARGETS))if(!preset.prompts.some(p=>p.identifier===id)){preset.prompts.push({identifier:id,name:SLOT_NAMES[slot],role:'user',content:'',enabled:true,marker:false,tisyaMaterialSlot:slot});const at=order.order.findIndex(o=>o.identifier==='tisya_material_boundary_close');order.order.splice(at<0?order.order.length:at,0,{identifier:id,enabled:true});}
+  return preset;
+ }
  const settings=configuration.world.modes[configuration.world.mode].narrative;
  const base=N.previewSettings(settings,{summary:false,directions:[]}).rest.entries;
  const entries=auxiliaryEntries(base,task,(archiveProposal?archiveInstructions(true):AUX_TASKS[task].instructions)+(configuration.world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''),{archiveProposal});
@@ -16,6 +32,7 @@ export function pairedPreset({task,configuration,archiveProposal=false}){
 }
 export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
  if(preset.task!==task)throw Error('专用预设与任务不匹配');
+ if(input?.formContract===SIMPLE_FORM_CONTRACT&&preset.formContract!==SIMPLE_FORM_CONTRACT)throw Error('简表任务需要完整reply模式预设');
  const slots=taskSlots(task,input),messages=[],seen=new Set(),byId=new Map(preset.prompts.map(p=>[p.identifier,p]));
  for(const order of preset.prompt_order[0].order){
   if(seen.has(order.identifier))throw Error('专用预设条目重复：'+order.identifier);seen.add(order.identifier);

@@ -10,9 +10,9 @@ import {mountUnsavedPrompt} from '../settings-unsaved.js';
 const labels={reply:'回复外壳',task:'任务',anchor:'前后摘要',title:'标题',body:'正文',extra:'附加卡片',cells:'表单指令',vars:'原卡变量',archive:'归档',actions:'行动建议'};
 const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tags','回复格式'],['prompts','完整预设'],['tables','表单与存档'],['generation','生成设置']];
 
-export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{}}){
- let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab='preferences';
- let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable='T_PREF_OUTPUT_CONFIG',selectedRecord='',catalog;
+export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
+ let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
+ let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
  let formDraft=null,resourceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
  const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};

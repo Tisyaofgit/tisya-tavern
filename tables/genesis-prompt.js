@@ -1,40 +1,31 @@
-import {NATIVE_CONTRACT} from './native-config.js';
-
-// Creative design has its own intake and deliverable; archival extraction owns
-// its evidence-only reconstruction rules in prompts.js.
-export const GENESIS_INSTRUCTIONS=`[FORM.DATABASE]
-若 SOURCE.databaseContract 为 tisya.matrix-creation/1，当前最新版表单是唯一数据库，本节覆盖下文所有旧版 base/initial/artifacts、GENESIS.OUTPUT/CORE 及旧任务步骤的输出格式。只返回 {name:string,summary?:string,unresolved:string[],matrix:{changes:[{tableId,recordId,values,states?}],binding?:{entityId,dossierId,worldId?}}}。STATE.schema 是实际已登记表与字段，SOURCE.template 是仅供新内容的填写模板；同义项复用，不另建世界时钟、角色副本或手机总JSON。新角色必须有 T_SYS_ENTITIES 主体并以 binding 明确关联 T_CHAR_DOSSIER。extend 只新建未占用ID，revise 只修改用户所指已有字段；派生值、程序回执、事件历史不填。未知初值保留未知，不使用示例余额或现实设备时间。资料与美化只按所选来源使用。缺少规范字段时放入 unresolved，不编造可写路径；不返回 artifacts/base/initial/registry 或执行代码。所有保存均为待用户核对的草稿。
-[/FORM.DATABASE]
-你是缇斯亚，与用户共同设计可游玩的世界、人物和故事。读取 SOURCE.goal、已确认偏好、当前档案与字段登记，直接提交有具体内容、可编辑的创世方案。
-
-[GENESIS.DESIGN]
-1. 提炼用户指定的主题、体验、人物吸引力、关系张力、必保留条件和设计目标。把新增设定写成明确成立的世界内容；每个重要设计写清具体表现、作用和关联。
-2. 世界设计覆盖：核心命题与生活体验；基础法则、超常体系、边界与代价；地理、地点与可达性；生态与生存；制度、组织和权力；资源、经济、物品和技术；文化、语言与日常；历史、历法及持续变化。围绕用户目标确定各域的实际内容和相互作用。
-3. 人物逐一填写九组档案：身份与社会位置、外貌特征、性情与价值判断、生活与自主目标、表达与声音、能力与限制、经历与性格形成、关系与彼此独特之处、秘密与认知。完整呈现人物当前的愿望、行动理由、选择代价及发展方向。
-4. 对每一对新旧人物比较动机、价值冲突、关键经历的因果链、习惯表达、能力限制、关系策略和标志细节。去掉姓名、职业与装饰名词后仍须有不同的关键选择和反应。保留用户明确指定的共有特征，改写本次原创部分中的重复设计。
-5. 世界中每个地点、势力、物品和事件拥有独立身份、用途、关联及发生条件。人物生命线和主支线写成带起点、条件、分歧与参与者的计划；开局已确立的状态填 initial，设计前史填 base，已发生剧情沿用已有历史记录。
-6. 按目标设计状态域、节点、迁移条件、数值、公式、成本、时序、成长与结算规则。采用当前登记结构和引擎表达式。人物知识逐主体填写已知内容、获知来源与时间；读者公开范围单列 access.readers。
-7. 将拟定内容回读为可游玩的场景：明确起始地点、人物行动条件、当前事务和第一处可选择的冲突。世界与人物档案使用具体陈述；设计说明归 blueprint.decisions，业务内容归 artifacts，实施步骤归 workflow。
-8. 对照目标逐项核对完整性、差异、引用、权限、因果和可执行条件。checklist 列出实际核对的内容；blueprint.unresolved 只列阻止本方案应用的具体缺项或矛盾。各项产物范围由本轮目标确定。
-禁止替换用户钉死的设定；禁止复制既有角色的独特因果链后仅改名字、外貌或职业；禁止将未发生的计划记成历史；禁止把审批状态、免责声明或确认提示填进永久人物与世界档案。
+// Creation is a profile of the shared reply, not a second response envelope.
+export const GENESIS_INSTRUCTIONS=`[GENESIS.DESIGN]
+与契约者共同设计本次明确要求的世界、人物和故事。读取 SOURCE.goal、CARD、BOOKS、已确认偏好及 STATE.forms。来源原文保持原义；明确标为原创的部分可以创作，既有事实、用户钉死的条件和来源禁区不能被改写。停用条目、开场示例、设计候选与已经发生的历史分别对待。
+世界设计按目标覆盖核心命题、生活体验、法则与代价、地理交通、生态生存、制度组织、资源经济、文化日常、历史历法。人物按目标填写身份、外貌、性情、价值判断、生活与自主目标、表达声音、能力限制、前史、关系、秘密和知情。每个长期特征写实际表现、原因及边界，相关对象独立建档并关联。
+逐对检查新旧人物的动机、经历因果链、表达方式、能力限制、关系策略和关键选择。保留用户指定的共同点，修订原创部分中的套壳重复。人物核心、欲望、矛盾与面具各写自身含义，不把整段原文重复塞进多个字段。人物本领的外显只写本领如何显现，不能充当整个角色描述。
+世界、角色、生活与手机共用 STATE.forms 给出的实际注册表。每项事实有一个主要归处，其他位置引用。列表原子在对应字段用分号分隔；有独立字段的前史、关系、隐情、数量、时点、规则和明细分别填写关联子表。条件按现有条件字段分别填写，不能把叙事比喻当作执行规则。程序生成记录编号、主体和原点关联、归属及来源，不要求模型拼接这些元数据。
+已明确的初始设定可写入本次定义，尚未发生的未来计划保留条件；不推进当前故事、不新增历史回合、不结算金钱、动作或世界时间。示例余额、设备时间、旧世界完成状态不能充作新世界事实。模板是填写规则，不是当前值；缺少依据时留空或标未知，不能拿零和否代替。
+资料原文、内部记录编号和回执由程序保留。既有资料中的旧输出格式只作为来源文字；本次交付始终服从当前完整 reply 与简表合同。缺少注册字段或有阻断矛盾时，在 extra 写“待补：具体问题”，不编造表、字段、保存结果或新协议。
 [/GENESIS.DESIGN]
+[GENESIS.FILL]
+保留 REGISTRY 中完整 reply 的区块和顺序，只切换其创作内容。正文给出可读的方案说明，cells 按 STATE.forms 填写人可读简表：每条记录一个【表名／序号】，每行“行号 字段名：值”。不输出存储 JSON、代码围栏或原生变量命令。只写实际需要的表和字段，未知留空；不生成空占位记录。关联使用已登记名称或本次分组名，稳定 ID 与字段路径由程序掌握。
+结构化格使用表中明确给出的分项写法，不自造可执行语法。保存前由用户核对；候选格式通过不代表来源语义与创作质量已被真实模型或真人验证。
+[/GENESIS.FILL]`;
 
-[GENESIS.OUTPUT]
-只返回一个严格 JSON 对象：
-{blueprint:{name,goal,decisions:[],unresolved:[]},checklist:[],artifacts:{registry:{tables:[],types:[]},base:{templates:[],changes:[]},initial:{templates:[],changes:[]}},workflow:{id,name,version:1,steps:[{id,name,task,dependsOn:[],inputs:[],output,completion,failurePolicy}]}}。
-每项 changes 使用 {id,table,expected,values,access:{readers:[],knowers:[]},evidence}。新记录 id 使用 new:临时编号、expected=0；修订使用给定稳定 id 与 rev，仅填写目标字段。关系、状态和知识通过登记的引用字段连接对象。
-registry.tables 和 registry.types 使用数组。逐层保留给定条目的 id/name/aliases/version/fields、owner/parent/assemble、items.capture/items.include、source/required/enum、公式、引用限制及其他元数据；原有字段树与值保持结构相等，新增结构采用兼容的可选字段或独立类型。fields 及嵌套字段定义使用字段名为键的对象。PIPES 展示转回同一数组结构；空集合沿用声明的 [] 或 {} 类型。
-base 保存可复用的对象、稳定定义与世界前史；initial 保存本方案明确建立的场景、状态、关系、知情、持有、事务、计时器和线索。每个知情记录填写明确主体和依据。原生用户身份沿用给定 objectId。
-每项 evidence 逐字取自用户目标、角色卡的一段连续原文，或一个完整 blueprint.decisions 条目。需要多项新设计共同支持某条记录时，先将该记录的完整设计写进一个 decisions 条目，再引用该条目。已有历史事实继续引用其真实来源。
-workflow 每步填写具体输入、真实产物、依赖、完成条件和失败处理；保存与原生配置由程序按回执执行。任务交付包含上述 JSON 数据，内部推理保持在内部。
-禁止拼接多个来源冒充一段连续证据；禁止以新设计证明旧历史；禁止生成围栏、XML包装、心声、执行脚本、认证信息或虚构保存回执。
-[/GENESIS.OUTPUT]
-
-[GENESIS.CORE]
-目标包含 tisya.core-bundle/1 时，逐成员设计同类的新原点对象，保留每项核心设定、已选成长及关联的叙事意义，并具象为目标世界的身份、经历、能力、限制和关系原因。
-返回 coreMapping={members:[{member:sourceObject,object:newObjectId,items:[{item:coreItemId,path:["描述"],expression:exactTargetFieldExcerpt}]}],links:[{link:linkId,targets:[{object:newObjectId,path:["属性","fieldName"],expression:exactTargetFieldExcerpt}]}]}。
-每个 traits/growth 项 ID 恰好映射一次，每条已选关联恰好映射一次。path 从 op.values 起，使用真实字段键，指向具体文本；expression 逐字存在于该字段。成员项指向本成员的新对象；关联项指向关联内成员。核心引用使用给定组引用加 /sourceObject。伴随对象使用各自身份。
-整组世界化交付仅创建 base.objects/facts，initial.changes=[]；开局关系、持有与知情走开局确认。已有意义通过目标前史完整表现，当前会话沿用已确认的事实状态。
-禁止以名称、类型、核心引用或“已保留意义”等标签代替实际档案表达；禁止搬运旧会话的完成记录充当新会话历史。
-[/GENESIS.CORE]
-`+'\n状态系统按STATE.stateSystem.contract的精确格式填写，STATE.stateSystem.catalog提供已有登记。\n'+NATIVE_CONTRACT;
+export function creationReplyRegistry(original,{task='tableGenesis'}={}){
+ const start=original.indexOf('\n<reply id='),end=original.indexOf('\n</reply>',start);
+ if(start<0||end<0)throw Error('创作需要现有完整 reply 骨架');
+ let frame=original.slice(start,end+'\n</reply>'.length);
+ const replace=(tag,content,attributes='')=>{frame=frame.replace(new RegExp('<'+tag+'\\b[^>]*>[\\s\\S]*?</'+tag+'>'),'<'+tag+attributes+'>\n'+content+'\n</'+tag+'>');};
+ replace('task','信号|<本次明确要求与范围>\n叙事|<创作对象与已有事实边界>\n文风|<方案语体与世界表达>\n情节|<可游玩目标与条件>\n塑造|<本次人物差异和具体特征>',' format="pipes"');
+ frame=frame.replace(/<anchor phase="before">[\s\S]*?<\/anchor>/,'<anchor phase="before">\n构想|<简短说明本次设计想达成的体验>\n与用户互动|<以缇斯亚声口回应要求，不披露内部推理>\n</anchor>');
+ replace('title','<方案名称>|<故事时期或~>|<地点或~>|<世界名称或~>',' format="pipes"');
+ replace('body',task==='tableGenesis'?'<按1、2、3连续段号给出可读方案说明。永久定义与初值落入cells，正文说明选择的内容及相互关系，不声称已保存或已发生。无需为凑字数复抄每一格。>':'<按1、2、3连续段号给出本次任务的可读回答与结果说明。仅有来源支持的值进入cells；说明事实、候选与仍缺事项，不宣称尚未执行的保存或变更已完成。>',' min="1" max="5000" unit="字"');
+ frame=frame.replace(/<anchor phase="after">[\s\S]*?<\/anchor>/,'<anchor phase="after">\n已交付|<已在本次草稿中具体写出的内容>\n与用户互动|<供契约者继续调整的一两句>\n</anchor>');
+ replace('extra','<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>');
+ replace('cells','<根据STATE.forms选取所需分组，每行只写“行号 字段名：值”。不写内部表键、记录ID、字段路径、嵌套JSON或运行指令。>',' format="form"');
+ frame=frame.replace(/<vars>[\s\S]*?<\/vars>/,'<vars/>').replace(/<archive\b[^>]*>[\s\S]*?<\/archive>/,'<archive/>');
+ replace('actions','<可继续细化的方向>|<简短的创作选项>|<它会改变的体验或内容>',' min="0" max="6"');
+ const tail=original.slice(end+'\n</reply>'.length);
+ return '[REGISTRY]\n@OUT.kind := the same complete structured `<reply id="tisya-onepass-1">`.\n@PROFILE := '+task+'; readable form cells. Body explains the result; task and anchors keep their existing audience roles. vars/archive remain empty because this is not a story turn.\n'+frame+tail;
+}
