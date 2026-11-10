@@ -10,7 +10,14 @@ import {clone,fail,digest,asError} from './common.mjs';
 import {DEFAULT_TAGS,validateTags,rewriteTagReferences,configureTags} from './tags.mjs';
 export {configuration};
 export const CONFIG_KEY='tisya_matrix_configuration';
-export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history'});
+export const REPLY_ENVELOPE_RULE=`@ENVELOPE :: Whole response boundary
+禁止在唯一 reply 根块之前或之后输出任何内容，包括说明文字、原卡触发符、变量更新、Markdown 代码围栏或第二个回复根块。
+整条响应从 <reply id="tisya-onepass-1"> 开始，以对应的 </reply> 结束；按下方骨架把本轮全部交付内容放入这个根块。
+正文与互动使用各自的 body、anchor、actions 区块。原卡状态栏等显示占位符只放在 extra；完整原生 UpdateVariable 更新只放在 vars，由原卡执行器解析。
+原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时用于 extra，普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。
+@END_ENVELOPE`;
+function withReplyEnvelope(text){return String(text).replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'').replace('[REGISTRY]','[REGISTRY]\n'+REPLY_ENVELOPE_RULE);}
+export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE});
 export function matrixPreset(){
  const p=clone(original);p.name='Tisya';p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
  for(const row of p.prompts){
@@ -21,6 +28,7 @@ export function matrixPreset(){
  const registry=p.prompts.find(row=>row.identifier==='tisya_registry');
  registry.content=registry.content.replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>')
   .replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}');
+ registry.content=withReplyEnvelope(registry.content);
  const personaAt=p.prompts.findIndex(row=>row.identifier==='personaDescription');p.prompts.splice(personaAt+1,0,{...clone(original.prompts[personaAt]),identifier:'tisya_user_identity',name:'user · 故事身份（世界书绑定）',system_prompt:false,marker:false,enabled:true,role:'system',content:'{{tisya_user_identity}}'});
  for(const entry of p.prompt_order)entry.order=entry.order.flatMap(row=>row.identifier==='personaDescription'?[{...row,enabled:false},{...row,identifier:'tisya_user_identity',enabled:true}]:[row]);
  return p;
@@ -66,7 +74,7 @@ export function compilePrompts(source,config,slots){
  for(const p of out.prompts){if(p.marker)continue;
   // {{user}} names the bound protagonist. The native persona is injected once
   // into the contractor wish and cannot silently become the protagonist.
-  p.content=compilePromptText(p.content??'',config,slots);
+  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):p.content??'',config,slots);
  }
  return out;
 }
