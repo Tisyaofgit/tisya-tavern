@@ -3,6 +3,7 @@
 // Seed/envelopes/frame snapshots are immutable history, never current authority.
 import {clone,digest,stable,stableId,fail} from './common.mjs';
 import {WorldClock} from './math.mjs';
+import {selectPhoneWorldClock,readPhoneWorldClock} from './phone-clock.mjs';
 import {importPhone,exportPhone,attachPhoneDatabaseSnapshot} from '../phone-core.mjs';
 import {EXTENSION_PREFERENCE_SCHEMA} from '../extension-preferences.mjs';
 
@@ -80,8 +81,7 @@ export function encodePhoneDatabase(archive,databaseState,{migration=false}={}){
  }
  const layout=pack(phone);layout.aliases=aliases;
  if(life){
-  const clockId=databaseState.runtime?.calendar_record_id??Object.keys(databaseState.tables?.X_WORLD_CLOCKS??{}).at(0)??'world-clock:'+world;
-  const existing=databaseState.tables?.X_WORLD_CLOCKS?.[clockId];
+  const {recordId:clockId,row:existing}=selectPhoneWorldClock(databaseState,world);
   let clockConfig=existing?clone(existing.values):null;
   if(!clockConfig&&Number.isFinite(life.state.config.epoch)){
    const d=new Date(life.state.config.epoch+(life.state.config.timezoneOffsetMinutes??0)*60000);clockConfig={name:life.world.name,world_ref:world,mode:'MONTH_TABLE',year:d.getUTCFullYear(),month:d.getUTCMonth()+1,day:d.getUTCDate(),hour:d.getUTCHours(),minute:d.getUTCMinutes(),day_hours:24,hour_minutes:60,month_lengths:[31,28,31,30,31,30,31,31,30,31,30,31],leap_rule:'GREGORIAN'};
@@ -108,7 +108,7 @@ export function decodePhoneDatabase(state,{contextKey,revision}={}){
  const unpack=n=>{if(n.snapshot)return readCoordinate(state,n.snapshot);if(n.scalar)return readCoordinate(state,n.scalar,n.empty);if(n.array)return n.array.map(unpack);const out={};for(const [k,f]of Object.entries(n.fields??{}))out[k]=readCoordinate(state,f.at,f.empty,f.unit);for(const [k,v]of Object.entries(n.children??{}))out[k]=unpack(v);return out;};
  const result=unpack(binding.layout),at=path=>path.reduce((v,k)=>v[k],result);
  for(const alias of binding.layout.aliases??[])at(alias.path.slice(0,-1))[alias.path.at(-1)]=clone(at(alias.source));
- if(binding.layout.clock&&result.life){const c=binding.layout.clock,values=state.tables[c.tableId]?.[c.recordId]?.values;if(!values)fail('PHONE_DATABASE_CLOCK','世界时钟绑定不存在');const clock=new WorldClock(values),s=result.life.state;s.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-c.origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};s.config.calendar=clone(clock.c);s.config.calendarOrigin=c.origin;}
+ if(binding.layout.clock&&result.life){const c=binding.layout.clock,{row}=readPhoneWorldClock(state,result.life.world?.id,c),values=row.values;const clock=new WorldClock(values),s=result.life.state;s.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-c.origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};s.config.calendar=clone(clock.c);s.config.calendarOrigin=c.origin;}
  if(contextKey&&result.contextKey!==contextKey)fail('PHONE_DATABASE_SCOPE','手机表单属于另一会话，需通过已验证的原生分支继承');
  return attachPhoneDatabaseSnapshot(result,{revision:revision??state.runtime?.revision??0});
 }
