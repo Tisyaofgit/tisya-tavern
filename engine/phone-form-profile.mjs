@@ -4,7 +4,7 @@ import {PHONE_WORLD_FORMAT,PHONE_CHARACTER_FORMAT} from '../phone-life-config.mj
 const required=(yes,message)=>{if(!yes)fail('PHONE_FORM_INITIALIZATION',message);};
 const minor=value=>{if(value==null)return null;const n=Math.round(value*100);required(Number.isSafeInteger(n)&&Math.abs(n/100-value)<1e-8,'金额无法按两位小数无损转换');return n;};
 const coordinateFields=new Set(['row_uuid','dictionary_key','collection_ref','parent_ref','collection_field','ordinal','world_ref','owner_ref']);
-export function phoneProfileFromForms(state,{worldId,entityId,dossierId,calendar=null}={}){
+export function phoneProfileFromForms(state,{worldId,entityId,dossierId,calendar=null,recordChildren}={}){
  // A stored value whose state is unknown is not a current fact. Defaults below
  // belong to this read projection; the encoder uses formDefaults to avoid
  // turning them into authored values during an unrelated phone action.
@@ -17,16 +17,17 @@ export function phoneProfileFromForms(state,{worldId,entityId,dossierId,calendar
  const clean=row=>Object.fromEntries(Object.entries(row.values).filter(([key])=>!coordinateFields.has(key)&&available(row,key)));
  const values=(table,id)=>{const row=state.tables?.[table]?.[id];return row?Object.fromEntries(Object.entries(row.values).filter(([key])=>available(row,key))):undefined;};
  const projected=(table,rid,row,defaults={})=>{
-  const value=clean(row),node=layoutRecords.get(table+'#'+rid);
+  const value={...clean(row),...clone(recordChildren?.get(table+'#'+rid)??{})},node=layoutRecords.get(table+'#'+rid);
   for(const [key,field]of Object.entries(node?.fields??{}))if(field.at){const [sourceTable,sourceId,sourceKey]=field.at;if(sourceTable===table&&sourceId===rid&&sourceKey===key)continue;const source=state.tables?.[sourceTable]?.[sourceId];if(available(source,sourceKey)){const raw=source.values[sourceKey];value[key]=field.unit==='minor100'?minor(raw):clone(raw);}}
   for(const [key,fallback]of Object.entries(defaults))if(!Object.hasOwn(value,key)||value[key]===null){value[key]=clone(fallback);formDefaults[JSON.stringify(node?.fields?.[key]?.at??[table,rid,key])]=clone(fallback);}
   return {id:available(row,'id')?row.values.id:rid,...value};
  };
  const worldRow=values('T_STATIC_WORLDS',worldId),entity=values('T_SYS_ENTITIES',entityId);if(!worldRow||!entity)return null;
  const origin=values('M_FIELD_REFERENCES',entity.origin_record_ref);dossierId??=origin?.target_table==='T_CHAR_DOSSIER'?origin.target_row_uuid:entityId;const dossier=values('T_CHAR_DOSSIER',dossierId);if(!dossier?.name||!worldRow.name)return null;
- const rows=(table,allOwners=false)=>Object.entries(state.tables?.[table]??{}).filter(([,r])=>(r.values.world_ref==null||r.values.world_ref===worldId)&&(allOwners||r.values.owner_ref==null||r.values.owner_ref===entityId));
+ const order=row=>available(row,'ordinal')&&Number.isSafeInteger(row.values.ordinal)?row.values.ordinal:Number.MAX_SAFE_INTEGER;
+ const rows=(table,allOwners=false)=>Object.entries(state.tables?.[table]??{}).filter(([,r])=>(r.values.world_ref==null||r.values.world_ref===worldId)&&(allOwners||r.values.owner_ref==null||r.values.owner_ref===entityId)).sort((a,b)=>order(a[1])-order(b[1]));
  const records=(table,allOwners=false,defaults={})=>rows(table,allOwners).map(([rid,row])=>projected(table,rid,row,defaults));
- const one=table=>{const list=rows(table);required(list.length<=1,'当前人物或世界有多份'+(state.schema?.[table]?.label??table)+'，请明确选择');return list[0]?[list[0][0],clean(list[0][1])]:[null,{}];};
+ const one=table=>{const list=rows(table);required(list.length<=1,'当前人物或世界有多份'+(state.schema?.[table]?.label??table)+'，请明确选择');return list[0]?[list[0][0],{...clean(list[0][1]),...clone(recordChildren?.get(table+'#'+list[0][0])??{})}]:[null,{}];};
  const [,config]=one('X_PHONE_WORLD_CONFIG');
  const balanceRows=Object.entries(state.tables?.T_DYN_CURRENCY_BALANCES??{}).filter(([,r])=>available(r,'owner_ref')&&r.values.owner_ref===entityId&&Object.hasOwn(r.values,'balance'));
  let currencyId=config.currency_ref;if(!currencyId){const ids=[...new Set(balanceRows.map(([,r])=>r.values.currency_ref).filter(Boolean))];required(ids.length<=1,'人物有多币种资产，请选择手机使用的货币原点');currencyId=ids[0]??null;}
@@ -35,9 +36,17 @@ export function phoneProfileFromForms(state,{worldId,entityId,dossierId,calendar
  const balance=(id,field)=>{const row=values('T_DYN_CURRENCY_BALANCES',id);if(!row||row.owner_ref!==entityId||currencyId!=null&&row.currency_ref!==currencyId)fail('PHONE_ACCOUNT_BINDING','账户原点不存在或属于另一人物／币种');if(row[field]==null)formDefaults[JSON.stringify(['T_DYN_CURRENCY_BALANCES',id,field])]=null;return minor(row[field]);};
  const accounts=records('X_FIN_ACCOUNTS',false,{name:null}).map(row=>({...row,balance:row.balance_ref==null?null:balance(row.balance_ref,'balance')}));
  if(!accounts.length)for(const [id,row]of balanceRows.filter(([,r])=>available(r,'currency_ref')&&r.values.currency_ref===currencyId))accounts.push({id,name:available(row,'name')?row.values.name:null,balance_ref:id,balance:balance(id,'balance')});
- const social=records('X_SOCIAL_ACCOUNTS',true,{name:null,handle:null,personId:null,bio:null,color:null,label:null,following:[]}).map(row=>({...row,owned:row.personId===entityId&&row.owned===true}));
- const places=records('X_PLACE_MAP_POINTS').map(row=>{const id=row.place_ref??row.id,p=values('T_STATIC_PLACES',id);required(p,'地图地点原点不存在');return {description:'',x:null,y:null,kind:null,known:false,...row,id,name:p.name};});
- const entityState=entity.runtime_state_ref?values('T_DYN_ENTITY_STATE',entity.runtime_state_ref):Object.values(state.tables?.T_DYN_ENTITY_STATE??{}).find(r=>r.values.entity_id===entityId)?.values,position=entityState?.location_ref??entity.place_ref??null;
+ const social=rows('X_SOCIAL_ACCOUNTS',true).map(([rid,source])=>{
+  const row=projected('X_SOCIAL_ACCOUNTS',rid,source,{name:null,handle:null,personId:null,bio:null,color:null,label:null,following:[],owned:false});
+  required(row.personId==null||values('T_SYS_ENTITIES',row.personId),'网络账号关联的人物原点不存在');
+  const owned=row.personId===entityId&&row.owned===true;
+  // Denying control of an unconfirmed or another person's account must not
+  // turn that current-user permission into an authored ownership fact.
+  if(row.owned!==owned)formDefaults[JSON.stringify(['X_SOCIAL_ACCOUNTS',rid,'owned'])]=owned;
+  return {...row,owned};
+ });
+ const places=records('X_PLACE_MAP_POINTS',false,{description:'',x:null,y:null,kind:null,known:false}).map(row=>{const id=row.place_ref??row.id,p=values('T_STATIC_PLACES',id);required(p,'地图地点原点不存在');return {...row,id,name:p.name};});
+ const entityState=values('T_DYN_ENTITY_STATE',entity.runtime_state_ref??Object.entries(state.tables?.T_DYN_ENTITY_STATE??{}).find(([,r])=>available(r,'entity_id')&&r.values.entity_id===entityId)?.[0]),position=entityState?.location_ref??entity.place_ref??null;
  if(position&&!places.some(p=>p.id===position)){const p=values('T_STATIC_PLACES',position);required(p,'人物当前位置引用不存在');places.push({id:position,name:p.name,description:'',x:null,y:null,kind:null,known:false});}
  const details=records('X_SHOP_PRODUCT_DETAILS'),options=records('X_SHOP_PRODUCT_OPTIONS'),seenProducts=new Set();
  const catalog=rows('X_SHOP_OFFERS').map(([,r])=>r.values).filter(r=>r.currency_ref===currencyId).map(offer=>{

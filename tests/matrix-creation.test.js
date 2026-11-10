@@ -39,3 +39,15 @@ test('editing the actual selected template after drafting blocks save and preser
  const f=fixture(),book=bundledNativeTemplateBook(),ctx={extensionSettings:{},getWorldInfoNames:async()=>['缇斯亚模板书'],loadWorldInfo:async()=>book},creator=createMatrixCreator({database:f.database,getContext:()=>ctx,request:async()=>reply()});
  const draft=await creator.draft('新人物',{kind:'character',mode:'revise'}),before=structuredClone(f.snapshot);const selected=Object.values(book.entries).find(row=>row.extensions.tisyaBuiltin.entryId==='template.character.form');selected.content+='\n用户明确增加的新规则';await assert.rejects(creator.save(draft),/模板内容已经变化/);assert.equal(f.writes,0);assert.deepEqual(f.snapshot,before);assert.equal(draft.rawResponse,reply());
 });
+
+// The actual request is inspected: sparse rules must survive task routing and
+// prompt assembly, and creating a draft must not fill missing user facts.
+test('phone creation request carries progressive known-field rules without requiring a complete profile',async()=>{
+ const f=fixture();let sent;
+ const creator=createMatrixCreator({database:f.database,getContext:()=>({}),request:async(_task,input)=>{sent=JSON.parse(input);return reply();}});
+ await creator.draft('手机初始化：仅建立人物最小档案，网名、住址和日程时间稍后再补',{kind:'character',mode:'revise'});
+ assert.match(sent.template,/最小档案/);assert.match(sent.template,/后补/);assert.match(sent.template,/同一表单/);assert.match(sent.template,/时间待定/);assert.match(sent.template,/不能当作零/);
+ assert.doesNotMatch(sent.template,/先按来源确定世界、人物和唯一故事时钟，再/);
+ assert.match(sent.forms,/只写本轮有内容的字段/);
+ assert.equal(Object.keys(f.snapshot.state.tables.T_CHAR_DOSSIER??{}).length,0);
+});

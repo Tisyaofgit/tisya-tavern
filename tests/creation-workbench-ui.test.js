@@ -65,3 +65,16 @@ test('optional field controls preserve omission until actual input, respect regi
  add('level');input=root.querySelector('[data-creation-key="level"]');assert.equal(input.value,'');assert.equal(Object.hasOwn(values,'level'),false);input.value='高';input.dispatchEvent(new win.Event('change'));assert.equal(values.level,'高');
  add('notes');assert.equal(Object.hasOwn(values,'notes'),false);const notes=[...root.querySelectorAll('tr')].find(row=>row.querySelector('th')?.textContent.startsWith('笔记'));[...notes.querySelectorAll('button')].find(button=>button.textContent==='添加一项').click();assert.deepEqual(values.notes,['']);const note=root.querySelector('textarea[data-creation-key="notes"]');note.value='后来确认的资料';note.dispatchEvent(new win.Event('input'));assert.deepEqual(values.notes,['后来确认的资料']);assert.equal(view.value().matrix.changes[0].recordId,'same-record');win.close();
 });
+
+for(const [kind,text,value,event]of [['number','0',0,'input'],['boolean','false',false,'change']])test('missing JSON type changes stay visual until explicit '+kind+' input',()=>{
+ const win=new Window(),root=win.document.createElement('main'),proposal={matrix:{changes:[{tableId:'PERSON',recordId:'same-record',values:{name:'简档'},states:{detail:'unknown'}}]}},schema={PERSON:{fields:[{key:'name',type:'TEXT'},{key:'detail',type:'JSON'}]}};let writes=0;
+ mountCreationTable(win.document,root,{proposal,schema,onChange:()=>writes++});const before=structuredClone(proposal),add=root.querySelector('[data-creation-add-field]');add.value='detail';add.dispatchEvent(new win.Event('change'));root.querySelector('[data-creation-add]').click();
+ for(const next of ['number','boolean','array','string','null',kind]){const selector=root.querySelector('[data-creation-value-type]');selector.value=next;selector.dispatchEvent(new win.Event('change'));assert.deepEqual(proposal,before,'choosing '+next+' must not supply a value');assert.equal(writes,0);}
+ const input=root.querySelector('[data-creation-key="detail"]');assert.equal(input.value,'');input.value=text;input.dispatchEvent(new win.Event(event));assert.equal(proposal.matrix.changes[0].values.detail,value);assert.equal(proposal.matrix.changes[0].states.detail,'known');assert.equal(proposal.matrix.changes[0].recordId,'same-record');assert.equal(writes,1);
+ const afterInput=root.querySelector('[data-creation-value-type]');afterInput.value='string';afterInput.dispatchEvent(new win.Event('change'));assert.equal(proposal.matrix.changes[0].values.detail,'');assert.equal(writes,2);win.close();
+});
+
+test('existing null retains explicit type-change behavior',()=>{
+ const win=new Window(),root=win.document.createElement('main'),proposal={matrix:{changes:[{tableId:'PERSON',recordId:'same-record',values:{detail:null}}]}};let writes=0;
+ mountCreationTable(win.document,root,{proposal,onChange:()=>writes++});const type=root.querySelector('[data-creation-value-type]');type.value='number';type.dispatchEvent(new win.Event('change'));assert.equal(proposal.matrix.changes[0].values.detail,0);assert.equal(writes,1);win.close();
+});

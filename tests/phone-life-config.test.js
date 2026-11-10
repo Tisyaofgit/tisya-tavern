@@ -108,6 +108,13 @@ test('accountless music renders its library and source-less work without fabrica
 test('accountless inbox message projection renders an explicit account boundary',()=>{
  const s=initial().state,before=JSON.stringify(s);assert.match(renderSocial(s,{app:'weibo',tab:'messages'},h),/尚未配置本人账号/);assert.equal(JSON.stringify(s),before);assert.deepEqual(s.social.notifications,[]);
 });
+
+test('sparse author labels never create doubled mentions or attribute another account comment to the player',()=>{
+ const s=initial({}, {accounts:[{id:'main',name:'主角',handle:'main',owned:true},{id:'unnamed',name:null,handle:'known-handle',personId:'person-b',owned:false},{id:'unknown',name:null,handle:null,personId:'person-c',owned:false}],posts:[{id:'original',authorId:'unnamed',text:'已知原文',visibility:'public',mediaIds:[]},{id:'unknown-original',authorId:'unknown',text:'另一条原文',visibility:'public',mediaIds:[]}],songs:[{id:'song',title:'共同听过的歌',ownerId:'person-a',visibility:'private',artist:null,audioId:null,comments:[{id:'comment',authorId:'unknown',text:'匿名账号的评论'}]}]}).state;
+ const first=social(s,'social.publish',{text:'转发',repostOf:'original',visibility:'public'}).state,second=social(first,'social.publish',{text:'再转发',repostOf:'unknown-original',visibility:'public'},'second').state,before=JSON.stringify(second);
+ const feed=renderSocial(second,{app:'weibo'},h);assert.match(feed,/@known-handle/);assert.doesNotMatch(feed,/@@|@未填网名/);
+ const song=renderSocial(second,{app:'music',detail:'song'},h);assert.match(song,/<strong>未填网名<\/strong><br>匿名账号的评论/);assert.doesNotMatch(song,/<strong>本人<\/strong><br>匿名账号的评论/);assert.equal(JSON.stringify(second),before);
+});
 test('accepted NPC posts cannot impersonate the player and stable operation replay never duplicates content',()=>{
  const s=initial(configured,{accounts:accountRows}).state,payload={postId:'npc-source-post',authorId:'account-b',text:'这一轮的内容'};
  assert.throws(()=>social(s,'social.npc.post',payload,'npc-post'),/宿主已接纳/);

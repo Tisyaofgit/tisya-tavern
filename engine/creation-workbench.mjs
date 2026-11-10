@@ -66,11 +66,11 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  const button=(text,fn)=>{const n=el('button',text);n.type='button';n.className='menu_button';n.onclick=fn;return n;};
  const options=select=>{for(const [value,label]of [['string','文字'],['number','数字'],['boolean','是 / 否'],['object','字段组'],['array','列表'],['null','未设置']]){const o=el('option',label);o.value=value;select.append(o);}};
- const availableSchema=compactCreationSchema({schema}),openedFields=new Map();
+ const availableSchema=compactCreationSchema({schema}),openedFields=new Map(),fieldKinds={};
  root.dataset.creationFields='';root.dataset.creationDraft='';
  function clearPathState(index,key,path,{arrayIndex}={}){
   const prefix=index+':'+key+':',under=(candidate,ancestor)=>ancestor.every((value,i)=>String(candidate[i])===String(value));
-  for(const values of [fieldTexts,fieldErrors]){
+  for(const values of [fieldTexts,fieldErrors,fieldKinds]){
    const retained=[];
    for(const token of Object.keys(values)){if(!token.startsWith(prefix))continue;let current;try{current=JSON.parse(token.slice(prefix.length));}catch{continue;}if(!Array.isArray(current)||!under(current,path))continue;
     const value=values[token];delete values[token];
@@ -81,13 +81,13 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
   onInvalid('',Object.keys(fieldErrors).length>0);
  }
  function editValue(value,{index,key,path=[],set,def,canChangeType=false}){
-  const missing=value===undefined,type=String(def?.type??'TEXT').toUpperCase();
-  if(missing){const kind=['NUMBER','INTEGER','INT','DECIMAL','FLOAT','RATIO'].includes(type)?'number':['BOOL','BOOLEAN'].includes(type)?'boolean':['ARRAY','REF_LIST','TEXT_LIST','TAGS'].includes(type)?'array':['OBJECT','JSON','BAG'].includes(type)?'object':'string';value=copy(emptyValue(kind));}
-  const box=el('div');box.className='tisya-creation-value';const kind=kindOf(value),token=index+':'+key+':'+JSON.stringify(path);
+  const missing=value===undefined,type=String(def?.type??'TEXT').toUpperCase(),token=index+':'+key+':'+JSON.stringify(path);
+  if(missing){const kind=fieldKinds[token]??(['NUMBER','INTEGER','INT','DECIMAL','FLOAT','RATIO'].includes(type)?'number':['BOOL','BOOLEAN'].includes(type)?'boolean':['ARRAY','REF_LIST','TEXT_LIST','TAGS'].includes(type)?'array':['OBJECT','JSON','BAG'].includes(type)?'object':'string');value=copy(emptyValue(kind));}
+  const box=el('div');box.className='tisya-creation-value';const kind=kindOf(value);
   const mark=(node)=>{node.dataset.creationRow=String(index);node.dataset.creationKey=key;node.dataset.creationPath=JSON.stringify(path);node.setAttribute('aria-label',(def?.label??key)+(path.length?' / '+path.join(' / '):''));};
   const change=next=>{clearPathState(index,key,path);set(next);onInvalid(token,false);onChange(proposal);};
   if(canChangeType||kind==='null'||missing&&type==='JSON'){
-   const types=el('select');types.dataset.creationValueType='';options(types);types.value=kind;types.setAttribute('aria-label','字段类型');types.onchange=()=>{change(copy(emptyValue(types.value)));draw();};box.append(types);
+   const types=el('select');types.dataset.creationValueType='';options(types);types.value=kind;types.setAttribute('aria-label','字段类型');types.onchange=()=>{const current=path.reduce((parent,part)=>parent?.[part],proposal.matrix.changes[index].values[key]);if(current===undefined){clearPathState(index,key,path);fieldKinds[token]=types.value;}else change(copy(emptyValue(types.value)));draw();};box.append(types);
   }
   if(kind==='null'){box.append(el('small','未设置；不会被当成空文字或否。'));return box;}
   if(kind==='object'||kind==='array'){

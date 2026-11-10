@@ -18,6 +18,18 @@ export const fundedPhoneProfile=(options={})=>phoneProfile({
  ...Object.fromEntries(Object.entries(options).filter(([key])=>!['world','character'].includes(key))),
 });
 
+export function installPhoneIdentities(runtime,profile){
+ for(const id of new Set(profile.character.accounts.map(a=>a.personId).filter(Boolean))){
+  if(runtime.data.tables.T_SYS_ENTITIES?.[id])continue;
+  const person=id===profile.character.id?profile.character:profile.character.contacts.find(c=>c.id===id);
+  if(!person?.name)throw Error('Fixture account person requires an explicit named identity: '+id);
+  const ref='fixture-origin:'+id;
+  runtime.newRecord('T_CHAR_DOSSIER',{name:person.name},id);
+  runtime.newRecord('T_SYS_ENTITIES',{kind:'character',origin_record_ref:ref},id);
+  runtime.newRecord('M_FIELD_REFERENCES',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:id,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:id,reference_kind:'record',resolution_status:'resolved'},ref);
+ }
+}
+
 export function installPhoneClock(runtime,profile){
  const c=profile.calendar;if(!c)return;
  const world=profile.world.id,calendar='calendar:'+world;

@@ -971,22 +971,27 @@ function jsonTextEnd(s,start,literalAmpersands){
  }
  return null;
 }
-function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false}={}){
+function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false}={}){
  if(typeof s!=='string'||s.length>2000000)bad('SIZE');
  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s))bad('XML_CHARACTER');
  let p=0;const path=[];
+ // Only a declared protocol slot, or its direct grouped vars child, may
+ // contain raw JSON. Display components never acquire JSON ownership.
+ const machineNames=new Map([['cells','cells'],['vars','vars'],[machineTags?.cells?.toLowerCase()??'cells','cells'],[machineTags?.vars?.toLowerCase()??'vars','vars']]);
  while(p<s.length){
   const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';
-  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])||nativeJSON){
-   const end=jsonTextEnd(s,p,nativeJSON?'native':literalAmpersands);
-   if(end!==null){const raw=s.slice(p,end);yield {kind:'text',value:nativeJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true,start:p,end};p=end;continue;}
+  const owner=protocolBlock??path[1],groupedJSON=path.length===3&&path[0]==='reply'&&owner==='extra'&&machineNames.get(path[2].toLowerCase())==='vars';
+  const rawJSON=nativeJSON||rawVarsJSON&&path[0]==='reply'&&(path.length===2&&owner==='vars'||groupedJSON);
+  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(owner)||groupedJSON||nativeJSON){
+   const end=jsonTextEnd(s,p,rawJSON?'native':literalAmpersands);
+   if(end!==null){const raw=s.slice(p,end);yield {kind:'text',value:rawJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true,start:p,end};p=end;continue;}
   }
   if(s[p]!=='<'){let q=s.indexOf('<',p);if(q<0)q=s.length;const raw=s.slice(p,q);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,start:p,end:q};p=q;continue;}
   if(s.startsWith('<![CDATA[',p)){const q=s.indexOf(']]>',p+9);if(q<0){if(tolerateTail)return;bad('XML_CDATA');}yield {kind:'text',value:s.slice(p+9,q),cdata:true,start:p,end:q+3};p=q+3;continue;}
   if(s.startsWith('<!--',p)){const q=s.indexOf('-->',p+4);if(q<0){if(tolerateTail)return;bad('XML_COMMENT');}if(s.slice(p+4,q).includes('--'))bad('XML_COMMENT');yield {kind:'comment',value:s.slice(p+4,q),start:p,end:q+3};p=q+3;continue;}
   let m=/^<(\/)?([A-Za-z_][\w.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/.exec(s.slice(p));
   // Native card marker names may be Unicode, exclusively inside extra.
-  if(!m&&path[0]==='reply'&&path[1]==='extra'&&path.length>=2)m=/^<(\/)?([\p{L}_][\p{L}\p{N}\p{M}_.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/u.exec(s.slice(p));
+  if(!m&&path[0]==='reply'&&(protocolBlock??path[1])==='extra'&&path.length>=2)m=/^<(\/)?([\p{L}_][\p{L}\p{N}\p{M}_.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/u.exec(s.slice(p));
   if(!m){if(tolerateTail&&s.indexOf('>',p)<0)return;bad('XML_TAG');}
   if(m[1]&&(m[3].trim()||m[4]))bad('XML_CLOSE');
   const attrs={};for(const a of m[3].matchAll(/([A-Za-z_][\w.:-]*)\s*=\s*(["'])(.*?)\2/g)){if(Object.hasOwn(attrs,a[1]))bad('XML_ATTRIBUTE_DUPLICATE');attrs[a[1]]=unxml(a[3]);}

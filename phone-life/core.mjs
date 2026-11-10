@@ -22,8 +22,8 @@ function stable(value) {
 function nextId(s,prefix){const used=new Set();const walk=x=>{if(!x||typeof x!=='object')return;if(typeof x.id==='string')used.add(x.id);for(const v of Object.values(x))walk(v);};walk(s);let value;do{value=`${prefix}-${++s.seq}`;}while(used.has(value));return value;}
 function byId(rows, id, label) { const found = rows.find(x => x.id === id); need(found, `${label}不存在。`, 'NOT_FOUND'); return found; }
 function account(s, id) { return byId(s.wallet.accounts, id, '账户'); }
-function debit(s, id, n) { const row = account(s, id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); need(row.balance >= n, `${row.name}余额不足；不会自动借款或透支。`, 'INSUFFICIENT_FUNDS'); row.balance -= n; }
-function credit(s, id, n) { const row=account(s,id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); row.balance += n; }
+function debit(s, id, n) { const row = account(s, id),label=row.name||row.id; need(Number.isSafeInteger(row.balance), `${label}余额未配置。`, 'UNCONFIGURED_BALANCE'); need(row.balance >= n, `${label}余额不足；不会自动借款或透支。`, 'INSUFFICIENT_FUNDS'); row.balance -= n; }
+function credit(s, id, n) { const row=account(s,id); need(Number.isSafeInteger(row.balance), `${row.name||row.id}余额未配置。`, 'UNCONFIGURED_BALANCE'); row.balance += n; }
 function record(s, type, description, n, accountId = '', extra = {}) {
   s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: !!s.config?.calendar?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
 }
@@ -149,7 +149,7 @@ function perform(s, a,options={}) {
       const recipient=(s.contacts||[]).find(x=>x.id===a.to); need(destination||recipient,'请先确认收款人的稳定身份。'); debit(s, from, n);
       if (destination) credit(s, destination.id, n); else s.wallet.external += n;
       record(s, 'transfer', `转给${destination ? (destination.name || destination.id) : (recipient.name || recipient.id)}`, -n, from, { to: a.to });
-      if (destination) record(s, 'transfer.in', `从${account(s, from).name}转入`, n, destination.id);
+      if (destination) { const source=account(s, from);record(s, 'transfer.in', `从${source.name || source.id}转入`, n, destination.id); }
       return msg(`已转账 ${money(n)} ${s.config.currency?.name||''}，付款记录已保留。`);
     }
     case 'wallet.card.repay': {

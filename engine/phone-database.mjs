@@ -144,7 +144,10 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
    const holding=projection?.holdingOrigins?.[obj.id]??'holding:'+person+':'+obj.id,field=key==='ownerId'?'owner_ref':'holder_ref',ref=holding+':'+field;
    for(const [k,v]of Object.entries({owner_table:'T_DYN_HOLDINGS_INVENTORY',owner_row_uuid:holding,owner_field:field,sequence:0,item_type:'reference',target_table:'T_SYS_ENTITIES',target_row_uuid:value}))write('M_LIST_VALUES',ref,k,v,{canonical:true});write('T_DYN_HOLDINGS_INVENTORY',holding,field,ref,{canonical:true});target=['M_LIST_VALUES',ref,'target_row_uuid'];
   }
-  if(p==='life/state/map'&&key==='position'){const states=Object.entries(databaseState.tables?.T_DYN_ENTITY_STATE??{}).filter(([,r])=>r.values.entity_id===person);if(states.length>1)fail('PHONE_LOCATION_BINDING','人物有多个当前地点状态，须明确绑定');const rid=rowValue(databaseState,'T_SYS_ENTITIES',person,'runtime_state_ref')??states[0]?.[0]??'state:'+person;write('T_DYN_ENTITY_STATE',rid,'entity_id',person,{canonical:true});write('T_SYS_ENTITIES',person,'runtime_state_ref',rid,{canonical:true});target=['T_DYN_ENTITY_STATE',rid,'location_ref'];}
+  if(p==='life/state/map'&&key==='position'){
+   if(value===null)return {unavailable:null};
+   const states=Object.entries(databaseState.tables?.T_DYN_ENTITY_STATE??{}).filter(([,r])=>r.values.entity_id===person);if(states.length>1)fail('PHONE_LOCATION_BINDING','人物有多个当前地点状态，须明确绑定');const rid=rowValue(databaseState,'T_SYS_ENTITIES',person,'runtime_state_ref')??states[0]?.[0]??'state:'+person;write('T_DYN_ENTITY_STATE',rid,'entity_id',person,{canonical:true});write('T_SYS_ENTITIES',person,'runtime_state_ref',rid,{canonical:true});target=['T_DYN_ENTITY_STATE',rid,'location_ref'];
+  }
   if(/^life\/state\/media\/(photos|songs)\/\d+$/.test(p)){
    const rid=obj.asset_ref??'media:'+person+':'+obj.id;
    if(key==='ownerId'){
@@ -214,7 +217,10 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
   }
  }
  const bind={context_key:scope,world_ref:world??null,owner_ref:person??null,revision:phone.revision,layout,archive_digest:digest(archive)};
- for(const [t,rows]of Object.entries(databaseState.tables??{}))if(databaseState.schema?.[t]?.phone_internal&&!immutableTables.has(t)&&t!==PHONE_BINDING_TABLE)for(const [rid,row]of Object.entries(rows))if(row.metadata?.phone_scope===scope&&!changes.has(t+'#'+rid))changes.set(t+'#'+rid,{tableId:t,recordId:rid,remove:true});
+ // An authored appointment may temporarily lack its time. Its absence from
+ // the schedulable projection is not a deletion request from an unrelated app.
+ const pendingRecords=new Set((projection?.formReadiness?.pendingCalendar??[]).map(({reference:r})=>r.tableId+'#'+r.recordId));
+ for(const [t,rows]of Object.entries(databaseState.tables??{}))if(databaseState.schema?.[t]?.phone_internal&&!immutableTables.has(t)&&t!==PHONE_BINDING_TABLE)for(const [rid,row]of Object.entries(rows))if(row.metadata?.phone_scope===scope&&!changes.has(t+'#'+rid)&&!pendingRecords.has(t+'#'+rid))changes.set(t+'#'+rid,{tableId:t,recordId:rid,remove:true});
  changes.set(PHONE_BINDING_TABLE+'#'+currentId,{tableId:PHONE_BINDING_TABLE,recordId:currentId,values:bind});
  return {changes:[...changes.values()].filter(c=>c.remove||Object.keys(c.values).length),schema:[...schemas.values()]};
 }
@@ -230,7 +236,7 @@ function readCoordinate(state,at,empty,unit,projection){
 // coordinates are layout metadata, not a second membership register that a
 // normal form writer must know. Business receipts, drafts and action history
 // still come from the saved layout and are never rebuilt from initial values.
-function refreshPhoneFormProjection(state,life,clockBinding){
+function refreshPhoneFormProjection(state,life,clockBinding,recordChildren){
  const worldId=life.world.id,entityId=life.state.identity.personId;
  const clockSource=phoneWorldClock(state,worldId,clockBinding),configuration=clockSource.configuration;
  let calendar=null;
@@ -240,7 +246,7 @@ function refreshPhoneFormProjection(state,life,clockBinding){
   life.state.config.calendar=clone(configuration);life.state.config.calendarOrigin=origin;
   life.state.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};
  }
- const profile=phoneProfileFromForms(state,{worldId,entityId,dossierId:life.binding?.character?.dossierId,calendar});
+ const profile=phoneProfileFromForms(state,{worldId,entityId,dossierId:life.binding?.character?.dossierId,calendar,recordChildren});
  if(!profile)return;
  const c=profile.character,s=life.state,oldSocial=s.social;
  life.world={...life.world,...clone(profile.world)};s.identity.name=c.name;
@@ -267,8 +273,12 @@ function refreshPhoneFormProjection(state,life,clockBinding){
 }
 export function decodePhoneDatabase(state,{contextKey,revision,allowedOriginContextKeys=[]}={}){
  const binding=state.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values;if(!binding)return null;const configRef=binding.layout?.children?.life?.children?.world?.record?.[1],currencyRef=state.tables?.X_PHONE_WORLD_CONFIG?.[configRef]?.values?.currency_ref;
+ // Reuse children freshly read by this same decoder. Ordinary row discovery
+ // must not drop timestamps, media derivations or other linked child records.
+ const recordChildren=new Map();
  const unpack=n=>{if(n.snapshot)return readCoordinate(state,n.snapshot);if(n.scalar)return readCoordinate(state,n.scalar,n.empty);if(n.array){if(!n.collection)return n.array.map(unpack);const c=n.collection,existing=new Map(n.array.filter(x=>x.record).map(x=>[x.record[1],x]));return Object.entries(state.tables?.[c.tableId]??{}).filter(([,r])=>r.values.collection_ref===c.collectionRef||r.values.parent_ref===c.parentRef&&r.values.collection_field===c.field).sort((a,b)=>(a[1].values.ordinal??0)-(b[1].values.ordinal??0)||a[0].localeCompare(b[0])).map(([rid,row])=>existing.has(rid)?unpack(existing.get(rid)):hydrateNew(c.tableId,rid,row.values));}const out={};for(const [k,f]of Object.entries(n.fields??{}))out[k]=f.at?readCoordinate(state,f.at,f.empty,f.unit,f):clone(f.unavailable);if(n.mapCollection){const c=n.mapCollection,existing=new Map(Object.values(n.children??{}).filter(x=>x.record).map(x=>[x.record[1],x]));for(const [rid,row]of Object.entries(state.tables?.[c.tableId]??{}))if(row.values.collection_ref===c.collectionRef){const key=row.values.dictionary_key??row.values.id??rid;out[key]=existing.has(rid)?unpack(existing.get(rid)):hydrateNew(c.tableId,rid,row.values);}}else for(const [k,v]of Object.entries(n.children??{}))out[k]=unpack(v);
   if(n.record?.[0]==='X_FIN_ACCOUNTS'){const row=state.tables.X_FIN_ACCOUNTS[n.record[1]].values;if(row.balance_ref!=null){const target=accountBalanceValues(state,row.balance_ref,binding.owner_ref,currencyRef);out.balance=known(state,'T_DYN_CURRENCY_BALANCES',row.balance_ref,'balance')?cents(target.balance):null;out.balance_ref=row.balance_ref;}else out.balance=null;}
+  if(n.record)recordChildren.set(n.record.join('#'),Object.fromEntries(Object.keys(n.children??{}).map(key=>[key,clone(out[key])])));
   return out;};
  function hydrateNew(table,rid,values){const value=Object.fromEntries(Object.entries(values).filter(([k])=>k!=='row_uuid'&&!Object.hasOwn(relationFields,k)&&!['balance_ref','debt_ref'].includes(k)).map(([k,v])=>[k,clone(v)]));value.id??=rid;
   if(table==='X_FIN_ACCOUNTS'){value.balance=values.balance_ref==null?null:known(state,'T_DYN_CURRENCY_BALANCES',values.balance_ref,'balance')?cents(accountBalanceValues(state,values.balance_ref,binding.owner_ref,currencyRef).balance):(accountBalanceValues(state,values.balance_ref,binding.owner_ref,currencyRef),null);}
@@ -280,7 +290,7 @@ export function decodePhoneDatabase(state,{contextKey,revision,allowedOriginCont
  for(const alias of binding.layout.aliases??[])at(alias.path.slice(0,-1))[alias.path.at(-1)]=clone(at(alias.source));
  if(result.life){const configId=binding.layout.children?.life?.children?.world?.record?.[1],cfg=state.tables.X_PHONE_WORLD_CONFIG?.[configId]?.values??{};for(const key of ['background','panel','text','accent','radius'])if(Object.hasOwn(cfg,'theme_'+key))result.life.world.theme[key]=cfg['theme_'+key];if(cfg.appNames!=null)result.life.world.appNames=clone(cfg.appNames);for(const key of ['apps','appNames','theme','currency','economy','travel','settlementOwner'])result.life.state.config[key]=clone(result.life.world[key]);}
  if(binding.layout.clock&&result.life){const c=binding.layout.clock,{configuration}=phoneWorldClock(state,result.life.world?.id,c);const clock=new WorldClock(configuration),s=result.life.state;s.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-c.origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};s.config.calendar=clone(clock.c);delete s.config.calendar.row_uuid;delete s.config.calendar.name;delete s.config.calendar.world_ref;s.config.calendarOrigin=c.origin;}
- if(result.life)refreshPhoneFormProjection(state,result.life,binding.layout.clock);
+ if(result.life)refreshPhoneFormProjection(state,result.life,binding.layout.clock,recordChildren);
  if(contextKey&&result.contextKey!==contextKey&&allowedOriginContextKeys.includes(result.contextKey))result.contextKey=contextKey;
  if(contextKey&&result.contextKey!==contextKey)fail('PHONE_DATABASE_SCOPE','手机表单属于另一会话，需通过已验证的原生分支继承');
  if(result.life){result.life.databaseRefs={};for(const [table,rows]of Object.entries(state.tables??{}))for(const [rid,row]of Object.entries(rows))if(row.values.id&&row.values.owner_ref===result.life.state.identity.personId&&row.values.world_ref===result.life.world.id)result.life.databaseRefs[table+'#'+row.values.id]={tableId:table,recordId:rid};}

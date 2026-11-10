@@ -6,3 +6,8 @@ export function displayText(value, fallback = '') {
 export function accountDisplayName(account) {
   return displayText(account?.name, displayText(account?.handle) ? '@' + account.handle : '未填网名');
 }
+
+export function accountMention(account) {
+  const value = displayText(account?.name, displayText(account?.handle));
+  return value ? '@' + value.replace(/^@+/, '') : '未填网名';
+}

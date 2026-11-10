@@ -142,7 +142,7 @@ test('accepted NPC replies populate the same social domain and its frozen projec
   await accept(service,{updates:[{type:'social.npc.comment',postId:own,authorId:'other',text:'看到了。'},{type:'social.npc.post',postId:'npc-new',authorId:'other',text:'一条新消息'}]});
   assert.equal(service.readLife().state.social.comments.length,1);assert.equal(service.readLife().state.social.posts.length,2);
   assert.ok(Object.values(service.snapshot('uid-a:candidate-a').suite.documents).some(d=>d.meta?.lifeProjection?.entityId==='npc-new'));
-  await dispatch(service,'own-private','social.publish',{text:'私密',visibility:'private'});const secret=service.readLife().state.social.posts[0].id;await prepare(service,'r2');const before=service.export();
+  const privateResult=await dispatch(service,'own-private','social.publish',{text:'私密',visibility:'private'});const secret=service.readLife().state.social.posts[0].id;assert.equal(secret,privateResult.result.postId);assert.equal(service.readLife().state.social.posts[0].visibility,'private');await prepare(service,'r2');const before=service.export();
   await assert.rejects(accept(service,{requestId:'r2',sourceId:'uid-b:candidate-a',updates:[{type:'social.npc.comment',postId:secret,authorId:'other',text:'不该知道'}]}),/读取.*依据|权限|私密|不可|不能|无权/);assert.equal(service.export(),before);
 });
 

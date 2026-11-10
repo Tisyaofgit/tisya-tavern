@@ -14,7 +14,7 @@ export function nativeVarsJSON(text,parse){
 export function nativeUpdateTail(source,xmlTokens,parse){
  if(typeof source!=='string'||!/^\s*<reply\b/.test(source)||!source.includes('<UpdateVariable>'))return source;
  let depth=0,end=-1,vars=null;
- for(const t of xmlTokens(source)){
+ for(const t of xmlTokens(source,{rawVarsJSON:true})){
   if(t.kind==='open'){
    if(depth===1&&t.name==='vars')vars={start:t.start,openEnd:t.end,end:t.selfClose?t.end:null,empty:t.selfClose};
    if(!t.selfClose)depth++;
@@ -36,7 +36,7 @@ export function nativeUpdateTail(source,xmlTokens,parse){
 export function nativeStatusTail(source,xmlTokens){
  if(typeof source!=='string'||!/<StatusPlaceHolderImpl\s*\/>\s*$/.test(source))return source;
  let depth=0,end=-1,extra=null;
- for(const t of xmlTokens(source)){
+ for(const t of xmlTokens(source,{rawVarsJSON:true})){
   if(t.kind==='open'){
    if(depth===1&&t.name==='extra')extra={start:t.start,end:t.end,selfClose:t.selfClose};
    if(depth===2&&extra&&!extra.selfClose&&extra.close===undefined&&t.name==='StatusPlaceHolderImpl'&&t.selfClose&&Object.keys(t.attrs).length===0)extra.marker=true;
@@ -62,9 +62,9 @@ export function sourceVarsJSON(text,parse){
 
 // Locate a machine/attachment block through XML tokens so a closing tag inside
 // JSON or CDATA cannot terminate its surrounding protocol slot.
-export function opaqueBlockEnd(source,start,xmlTokens){
+export function opaqueBlockEnd(source,start,xmlTokens,protocolBlock=null,machineTags=null){
  const prefix='<reply>',stack=[];
- for(const t of xmlTokens(prefix+source.slice(start),{literalAmpersands:true})){
+ for(const t of xmlTokens(prefix+source.slice(start),{literalAmpersands:true,protocolBlock,machineTags,rawVarsJSON:true})){
   if(t.kind==='open'){if(!t.selfClose)stack.push(t.name);}
   else if(t.kind==='close'){
    if(stack.at(-1)?.toLowerCase()!==t.name.toLowerCase())return null;
@@ -80,31 +80,48 @@ export function opaqueBlockEnd(source,start,xmlTokens){
 // projection. Source bytes, receipts and the native writer are untouched.
 export function groupedExtraSlots(source,xmlTokens,names={cells:'cells',vars:'vars'}){
  if(typeof source!=='string'||!/^\s*<reply\b/.test(source))return source;
- const machine=new Map([['cells','cells'],['vars','vars'],[names.cells,'cells'],[names.vars,'vars']]),stack=[],nested=[],outer=new Set();let extra=null,active=null;
+ const machine=new Map([['cells','cells'],['vars','vars'],[names.cells?.toLowerCase()??'cells','cells'],[names.vars?.toLowerCase()??'vars','vars']]),stack=[],nested=[],outer=new Set();let extra=null;
  const bad=code=>{throw Object.assign(Error(code),{code});};
- for(const t of xmlTokens(source,{literalAmpersands:true})){
+ for(const t of xmlTokens(source,{literalAmpersands:true,machineTags:names,rawVarsJSON:true})){
   if(t.kind==='open'){
-   const key=machine.get(t.name);
-   if(stack.length===1&&key)outer.add(key);
+   const lower=t.name.toLowerCase(),inExtra=stack[1]?.name==='extra';
+   // Envelope children were already normalized. Only grouped children retain
+   // configured aliases; a canonical outer cells slot must not become vars
+   // when the user's vars alias happens to be "cells".
+   const key=stack.length===1?(['cells','vars'].includes(lower)?lower:null):machine.get(lower);
+   const parent=stack.at(-1),owner=stack.findLast(frame=>frame.machine),insideMachine=!!owner;
+   const nativeUpdate=parent?.machine==='vars'&&t.name==='UpdateVariable';
+   // Reject protocol slots placed inside another slot. Once a vars payload
+   // has entered its own native wrapper, its nested field names stay opaque.
+   if(key&&insideMachine&&(parent?.machine||owner.machine==='cells')&&!nativeUpdate)bad('REPLY_MACHINE_NESTING');
+   if(stack.length===1&&key){if(outer.has(key))bad('REPLY_DUPLICATE_BLOCK');outer.add(key);}
    if(stack.length===1&&t.name==='extra')extra={end:t.selfClose?t.end:null};
-   if(stack[1]==='extra'&&key&&!active){
+   let slot=null;
+   if(inExtra&&key&&!insideMachine){
     if(stack.length!==2)bad('REPLY_MACHINE_NESTING');
     if(nested.some(n=>n.key===key))bad('REPLY_DUPLICATE_BLOCK');
-    active={key,name:t.name,start:t.start,openEnd:t.end,selfClose:t.selfClose};nested.push(active);
-    if(t.selfClose){active.end=t.end;active=null;}
+    slot={key,name:t.name,start:t.start,openEnd:t.end,selfClose:t.selfClose};nested.push(slot);
+    if(t.selfClose)slot.end=t.end;
    }
-   if(!t.selfClose)stack.push(t.name);
+   // Count actual native update elements only at a vars payload boundary.
+   // JSON strings and CDATA are text tokens, never a second update.
+   if(nativeUpdate){
+    parent.nativeUpdates=(parent.nativeUpdates??0)+1;
+    if(parent.nativeUpdates>1)bad('TISYA_NATIVE_MVU_FORMAT');
+   }
+   if(!t.selfClose)stack.push({name:t.name,machine:stack.length===1||slot?key:null,slot});
   }else if(t.kind==='close'){
-   if(stack.at(-1)!==t.name)bad('REPLY_BLOCK');
-   if(active&&stack.length===3){active.close=t.start;active.end=t.end;active=null;}
+   const frame=stack.at(-1);
+   if(!frame||(frame.machine?frame.name.toLowerCase()!==t.name.toLowerCase():frame.name!==t.name))bad('REPLY_BLOCK');
+   if(frame.slot){frame.slot.close=t.start;frame.slot.end=t.end;}
    if(stack.length===2&&t.name==='extra'&&extra)extra.end=t.end;
    stack.pop();if(!stack.length)break;
   }
  }
  if(!nested.length)return source;
- if(!extra?.end||active||nested.some(n=>!n.end))bad('REPLY_BLOCK');
+ if(!extra?.end||nested.some(n=>!n.end))bad('REPLY_BLOCK');
  if(nested.some(n=>outer.has(n.key)))bad('REPLY_DUPLICATE_BLOCK');
- const canonical=n=>source.slice(n.start,n.end).replace(new RegExp('^<'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[\\s/>])'),'<'+n.key).replace(new RegExp('</'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*>$'),'</'+n.key+'>');
+ const canonical=n=>source.slice(n.start,n.end).replace(new RegExp('^<'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=[\\s/>])','i'),'<'+n.key).replace(new RegExp('</'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*>$','i'),'</'+n.key+'>');
  const edits=[[extra.end,extra.end,nested.sort((a,b)=>a.key==='cells'?-1:b.key==='cells'?1:0).map(canonical).join('\n')],...nested.map(n=>[n.start,n.end,''])];
  for(const [a,b,value]of edits.sort((x,y)=>y[0]-x[0]))source=source.slice(0,a)+value+source.slice(b);
  return source;
@@ -116,14 +133,14 @@ export function groupedExtraSlots(source,xmlTokens,names={cells:'cells',vars:'va
 function nativeDisplayParts(text,xmlTokens,parse){
  const prefix='<reply><vars>',wrap=value=>prefix+value+'</vars></reply>';
  let stack=[],edits=[];
- for(const t of xmlTokens(wrap(text),{literalAmpersands:true})){
+ for(const t of xmlTokens(wrap(text),{literalAmpersands:true,rawVarsJSON:true})){
   if(t.kind==='open'){if(!t.selfClose)stack.push(t.name);}
   else if(t.kind==='close')stack.pop();
   else if(t.kind==='text'&&t.cdata&&stack.length===2)edits.push([t.start-prefix.length,t.end-prefix.length,t.value]);
  }
  for(const [a,b,value]of edits.reverse())text=text.slice(0,a)+value+text.slice(b);
  const attachments=[];let active=null;stack=[];
- for(const t of xmlTokens(wrap(text),{literalAmpersands:true})){
+ for(const t of xmlTokens(wrap(text),{literalAmpersands:true,rawVarsJSON:true})){
   if(t.kind==='open'){
    if(stack.length===2&&Object.keys(t.attrs).length===0&&(t.name==='combat_driver'||t.name==='StatusPlaceHolderImpl'&&t.selfClose)){
     active={name:t.name,start:t.start-prefix.length};attachments.push(active);if(t.selfClose){active.end=t.end-prefix.length;active=null;}
@@ -146,7 +163,7 @@ function nativeDisplayParts(text,xmlTokens,parse){
 export function nativeStatusInVars(source,xmlTokens,parse){
  if(typeof source!=='string'||!/^\s*<reply\b/.test(source)||!source.includes('StatusPlaceHolderImpl'))return source;
  const stack=[],slots=[];let slot=null,extra=null;
- for(const t of xmlTokens(source,{literalAmpersands:true})){
+ for(const t of xmlTokens(source,{literalAmpersands:true,rawVarsJSON:true})){
   if(t.kind==='open'){
    if(stack.length===1&&t.name==='vars'){slot={start:t.end,end:t.selfClose?t.end:null};slots.push(slot);if(t.selfClose)slot=null;}
    if(stack.length===1&&t.name==='extra')extra={start:t.start,end:t.end,selfClose:t.selfClose};

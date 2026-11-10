@@ -29,6 +29,29 @@ test('form calendar uses declared month lengths, hours and minutes; finer precis
 
 test('legitimate shared-asset changes are visible and next phone action still conserves funds',async()=>{const {db,service}=await setup();db.edit(state=>{state.tables.T_DYN_CURRENCY_BALANCES['account:person-a:cash'].values.balance=900;});await service.refresh();assert.equal(service.readLife().state.wallet.accounts[0].balance,90000);await dispatch(service,'post-external-cart','cart.add',{productId:'book'});await dispatch(service,'post-external-pay','order.checkout',{kind:'shop',payment:'balance',placeId:'home'});assert.equal(db.snapshot().state.tables.T_DYN_CURRENCY_BALANCES['account:person-a:cash'].values.balance,899);});
 
+test('live form projection preserves collected item identity and order history through refund and cold reopen',async()=>{
+ const {db,service}=await setup();await dispatch(service,'history-cart','cart.add',{productId:'book'});
+ const paid=await dispatch(service,'history-pay','order.checkout',{kind:'shop',payment:'balance',placeId:'home'}),orderId=paid.result.orderId;
+ const requestId='history-delivery';await service.prepareTurn({chatKey:'c',requestId,anchorUid:'history-user'});
+ await service.acceptTurn({chatKey:'c',requestId,sourceId:'history-assistant:candidate',uid:'history-assistant',candidate:'candidate',raw:'<extra><phone>'+JSON.stringify({requestId,acks:service.getState().requests[requestId].actionIds,blocks:[],lifeUpdates:[{type:'order.advance',orderId},{type:'order.advance',orderId}]})+'</phone></extra>'});
+ await dispatch(service,'history-collect','order.collect',{orderId});
+ const first=service.readLife().state.inventory[0],holdingKeys=Object.keys(db.snapshot().state.tables.T_DYN_HOLDINGS_INVENTORY);assert.equal(first.orderId,orderId);assert.equal(first.qty,1);
+ await service.refresh();assert.equal(service.readLife().state.inventory[0].id,first.id);assert.equal(service.readLife().state.inventory[0].orderId,orderId);
+ await dispatch(service,'history-refund','order.refund',{orderId});const cold=createPhoneService({seed,contextKey:'c',storage:createPhoneDatabaseStorage({database:db,contextKey:'c'})});await cold.init();
+ const restored=cold.readLife().state;assert.equal(restored.inventory[0].id,first.id);assert.equal(restored.inventory[0].qty,0);assert.equal(restored.inventory[0].orderId,orderId);assert.equal(restored.commerce.orders[0].status,'refunded');
+ assert.deepEqual(Object.keys(db.snapshot().state.tables.T_DYN_HOLDINGS_INVENTORY),holdingKeys);assert.equal(restored.wallet.accounts[0].balance,100000);assert(restored.receipts['history-pay']);assert(restored.receipts['history-refund']);
+});
+
+test('an ordinary canonical holding retains its original row when a phone action consumes it',async()=>{
+ const {db,service}=await setup();db.edit(state=>{const e=new Runtime(state);e.newRecord('T_STATIC_ITEMS_SKILLS',{name:'干粮',category:'food'},'food');
+  for(const key of ['owner_ref','holder_ref'])e.newRecord('M_LIST_VALUES',{owner_table:'T_DYN_HOLDINGS_INVENTORY',owner_row_uuid:'ordinary-food',owner_field:key,sequence:0,item_type:'reference',target_table:'T_SYS_ENTITIES',target_row_uuid:'person-a'},'ordinary-food:'+key);
+  e.newRecord('T_DYN_HOLDINGS_INVENTORY',{item_ref:'food',instance_name:'干粮',owner_ref:'ordinary-food:owner_ref',holder_ref:'ordinary-food:holder_ref',location_ref:'home',quantity:2},'ordinary-food');Object.assign(state,e.data);
+ });await service.refresh();assert.equal(service.readLife().state.inventory[0].id,'ordinary-food');
+ await dispatch(service,'eat-existing','inventory.consume',{itemId:'ordinary-food'});assert.equal(db.snapshot().state.tables.T_DYN_HOLDINGS_INVENTORY['ordinary-food'].values.quantity,1);assert.deepEqual(Object.keys(db.snapshot().state.tables.T_DYN_HOLDINGS_INVENTORY),['ordinary-food']);
+ const cold=createPhoneService({seed,contextKey:'c',storage:createPhoneDatabaseStorage({database:db,contextKey:'c'})});await cold.init();assert.equal(cold.readLife().state.inventory[0].id,'ordinary-food');assert.equal(cold.readLife().state.inventory[0].consumed,1);
+ await dispatch(cold,'eat-existing','inventory.consume',{itemId:'ordinary-food'});assert.equal(db.snapshot().state.tables.T_DYN_HOLDINGS_INVENTORY['ordinary-food'].values.quantity,1);
+});
+
 
 test('foreign owner or currency balance references fail before hydration or any phone write',async()=>{
  for(const scenario of ['new-owner','existing-owner','new-currency']){

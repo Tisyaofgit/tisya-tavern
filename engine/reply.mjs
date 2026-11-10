@@ -14,7 +14,7 @@ export function paragraphs(body){
 }
 export function envelope(raw){
  const text=groupedExtraSlots(normalizeEnvelope(raw),xmlTokens,envelopeTags(raw)??undefined),blocks={},attrs={},stack=[];let slot=null,end=null;
- for(const t of xmlTokens(text,{literalAmpersands:true})){
+ for(const t of xmlTokens(text,{literalAmpersands:true,rawVarsJSON:true})){
   if(t.kind==='open'){
    if(!stack.length){if(t.name!=='reply'||t.selfClose||end!==null)fail('REPLY_ROOT','需要完整回复外壳');}
    else if(stack.length===1){const tag=t.name.toLowerCase(),key=tag==='anchor'?t.attrs.phase:tag;if(!['task','before','after','title','body','extra','cells','vars','archive','actions'].includes(key))fail('REPLY_BLOCK','未知回复区块',{tag});if(Object.hasOwn(blocks,key))fail('REPLY_DUPLICATE_BLOCK','回复区块重复',{block:key});blocks[key]='';attrs[key]=t.attrs;slot=t.selfClose?null:{key,start:t.end};}

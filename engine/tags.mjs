@@ -1,6 +1,6 @@
 import {clone,fail} from './common.mjs';
 import {xmlTokens} from '../reader-core.js';
-import {opaqueBlockEnd} from '../native-mvu-wire.js';
+import {opaqueBlockEnd,groupedExtraSlots} from '../native-mvu-wire.js';
 export const DEFAULT_TAGS=Object.freeze(Object.fromEntries(['reply','task','anchor','title','body','extra','cells','vars','archive','actions'].map(k=>[k,k])));
 const blocked=new Set(['script','style','iframe','html','head','meta','link','svg','math','template','object','embed','img','input','button','a','div','span','p']);
 let active={...DEFAULT_TAGS},history=[],revision=0;
@@ -31,8 +31,14 @@ export function normalizeEnvelope(source,tags=active){
  const first=source.indexOf('>')+1;let at=first,out=source.slice(0,first).replace(new RegExp('(<)'+root,'i'),'$1reply');
  while(at<rootEnd.index){const m=/^\s*<([_A-Za-z][\w.-]*)(?=[\s/>])([^>]*?)(\/?)>/.exec(source.slice(at));if(!m)break;const name=m[1],canon=inverse[name.toLowerCase()];if(!canon||canon==='reply')break;
   const open=m[0].replace('<'+name,'<'+canon);out+=open;at+=m[0].length;if(m[3])continue;
-  const close=new RegExp('</'+regexLiteral(name)+'\\s*>','ig');close.lastIndex=at;const end=['extra','vars'].includes(canon)?opaqueBlockEnd(source,at-m[0].length,xmlTokens):close.exec(source);if(!end)break;out+=source.slice(at,end.index)+'</'+canon+'>';at=end.end??close.lastIndex;
+  const close=new RegExp('</'+regexLiteral(name)+'\\s*>','ig');close.lastIndex=at;const end=['extra','vars'].includes(canon)?opaqueBlockEnd(source,at-m[0].length,xmlTokens,canon,selected):close.exec(source);if(!end)break;out+=source.slice(at,end.index)+'</'+canon+'>';at=end.end??close.lastIndex;
  }
  return out+source.slice(at,rootEnd.index)+source.slice(rootEnd.index).replace(new RegExp('</'+root,'i'),'</reply');
 }
-export function isMatrixReply(source){const s=normalizeEnvelope(String(source??''));return /^\s*<reply\b/i.test(s)&&(/<anchor\b/i.test(s)||/<cells(?:\s|\/|>)/i.test(s));}
+export function isMatrixReply(source){
+ const raw=String(source??''),s=normalizeEnvelope(raw);if(!/^\s*<reply\b/i.test(s))return false;
+ if(/<anchor\b/i.test(s)||/<cells(?:\s|\/|>)/i.test(s))return true;
+ // A sparse reply can omit anchors. Its grouped cells alias still identifies
+ // Matrix; quoted alias text inside vars must not change protocol routing.
+ const names=envelopeTags(raw);return !!names&&names.cells!=='cells'&&/<cells(?:\s|\/|>)/i.test(groupedExtraSlots(s,xmlTokens,names));
+}

@@ -3,13 +3,21 @@
 function replaceOnce(source,from,to){if(source.split(from).length!==2)throw Error('Reader adapter anchor mismatch');return source.replace(from,to);}
 export function adaptReaderSource(id,source){
  if(id==='xml-envelope.cjs'){
+  source=replaceOnce(source,
+   'function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false}={}){',
+   'function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false}={}){');
+  source=replaceOnce(source,' let p=0;const path=[];',` let p=0;const path=[];
+ // Only a declared protocol slot, or its direct grouped vars child, may
+ // contain raw JSON. Display components never acquire JSON ownership.
+ const machineNames=new Map([['cells','cells'],['vars','vars'],[machineTags?.cells?.toLowerCase()??'cells','cells'],[machineTags?.vars?.toLowerCase()??'vars','vars']]);`);
   source=replaceOnce(source,"if(c==='&'){","if(c==='&'&&literalAmpersands!=='native'){");
   source=replaceOnce(source,"value=unxml(literalAmpersands?escapeBareAmpersands(raw):raw);","value=literalAmpersands==='native'?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw);");
   source=replaceOnce(source,
    "if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])){",
-   "const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';\n  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(path[1])||nativeJSON){");
-  source=replaceOnce(source,"const end=jsonTextEnd(s,p,literalAmpersands);","const end=jsonTextEnd(s,p,nativeJSON?'native':literalAmpersands);");
-  source=replaceOnce(source,"value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true","value:nativeJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true");
+   "const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';\n  const owner=protocolBlock??path[1],groupedJSON=path.length===3&&path[0]==='reply'&&owner==='extra'&&machineNames.get(path[2].toLowerCase())==='vars';\n  const rawJSON=nativeJSON||rawVarsJSON&&path[0]==='reply'&&(path.length===2&&owner==='vars'||groupedJSON);\n  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(owner)||groupedJSON||nativeJSON){");
+  source=replaceOnce(source,"const end=jsonTextEnd(s,p,literalAmpersands);","const end=jsonTextEnd(s,p,rawJSON?'native':literalAmpersands);");
+  source=replaceOnce(source,"value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true","value:rawJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true");
+  source=replaceOnce(source,"if(!m&&path[0]==='reply'&&path[1]==='extra'&&path.length>=2)","if(!m&&path[0]==='reply'&&(protocolBlock??path[1])==='extra'&&path.length>=2)");
  }
  if(id==='pipes-wire.cjs')source=replaceOnce(source,"if(t==='p')return ACL.validate(wireValue(s));","if(t==='p')return ACL.validate(s==='~'?'~':wireValue(s));");
  if(id==='pipes-wire.cjs')source=replaceOnce(source,
