@@ -1,3 +1,4 @@
+import {ensurePhoneFormSchema} from './phone-form-contract.mjs';
 import {clone,digest,fail} from './common.mjs';
 import {parseReply,envelope} from './reply.mjs';
 import {prepareMatrixSheets as prepareCreationSheets,acceptMatrixSheets,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
@@ -53,7 +54,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   const current=await nativeSources(guard),receipt=draft.archiveReceipt;
   if(receipt?.confirmed&&receipt.operationId===draft.operationId&&receipt.bookBefore&&receipt.bookAfter){const old=draft.nativeSources.books.find(b=>b.name===receipt.bookBefore.name),now=current.books.find(b=>b.name===receipt.bookAfter.name);if(old&&now&&digest(old)===digest(receipt.bookBefore)&&digest(now)===digest(receipt.bookAfter))current.books[current.books.indexOf(now)]=clone(old);}
   check(digest(current)===draft.nativeSourceDigest,'原生角色卡、关联世界书或用户人设已经变化；保留原始草稿，请重新核对来源');
-  if(draft.creationTemplates){const templates=await readCreationTemplates(getContext,{task:'tableGenesis'});guard();check(digest(templates)===digest(draft.creationTemplates),'模板内容已经变化，请重新核对草稿');}
+  if(draft.creationTemplates){const templates=await readCreationTemplates(getContext,{task:'tableGenesis',kind:draft.kind,goal:draft.goal});guard();check(digest(templates)===digest(draft.creationTemplates),'模板内容已经变化，请重新核对草稿');}
  }
  const intentKey=operationId=>operationId+':creation-intent';
  function frozenContent(draft){const value=clone(draft);for(const key of ['expectedRevision','archiveReceipt','archivePlan','archiveInputDigest','recovery'])delete value[key];return digest(value);}
@@ -88,9 +89,9 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   assertIdle();check(typeof goal==='string'&&goal.trim(),'请填写创作要求');check(['world','character'].includes(kind)&&['extend','revise'].includes(mode),'创作类型无效');
   const guard=scope(signal),explicitSource=clone(source);
   if(sourceBooks)check(!await pending(),'当前聊天有未完成创作，请先继续保存原草稿');guard();
-  await ensureDatabase();guard();const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
-  const sources=await nativeSources(guard),templates=mode==='extend'?await readCreationTemplates(getContext,{task:'tableGenesis'}):null;guard();
-  const operationId='creation:'+crypto.randomUUID(),sheets=prepareCreationSheets(snapshot,{kind,mode,operationId});
+  await ensureDatabase();guard();if(/手机|全初始化|完整初始化/.test(goal)){await ensurePhoneFormSchema(database);guard();}const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
+  const sources=await nativeSources(guard),templates=await readCreationTemplates(getContext,{task:'tableGenesis',kind,goal});guard();
+  const operationId='creation:'+crypto.randomUUID(),sheets=prepareCreationSheets(snapshot,{kind,mode,operationId,tableIds:templates?.tableIds});
   const input={formContract:'tisya.simple-form/1',databaseContract:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,sourcePolicy:'来源快照、历史和回执由提交服务记录；模板只提供内容要求，本次完整 reply 与简表规则决定输出。旧叙事来源首次结构化时须完整提炼原文；已有同一人物只复用其身份编号，不能把当前聊天运行值当成作者定义或仅存本轮补丁。',kind,mode,goal,source:explicitSource,nativeSources:aiSources(sources),forms:sheets.form,references:sheets.referenceText,template:templates?creationTemplateText(templates):''};
   const raw=await request('tableGenesis',JSON.stringify(input),{signal,onProgress});
   let accepted;try{accepted=acceptCreationSheets(sheets,snapshot,raw);}catch(cause){throw Object.assign(Error('创作回复或简表无法接纳：'+cause.message+'；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources,sheetContext:sheets});}

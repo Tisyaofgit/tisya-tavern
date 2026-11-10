@@ -1,3 +1,4 @@
+import {phoneFormReference,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
 import {programOwnedTable,creationFieldAllowed,compactCreationSchema} from '../../engine/prompt-boundary.mjs';
 import {Runtime} from '../../engine/runtime.mjs';
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
@@ -248,9 +249,11 @@ function structuredCell(raw,array=false){
 }
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{}}={}){
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
- const schemas=compactCreationSchema(snapshot.state),used=new Map(),templates=[],schemaByTemplate={};
+ const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null;
+ if(selected){let size;do{size=selected.size;for(const id of [...selected])for(const f of allSchemas[id]?.fields??[])if(f.ref&&allSchemas[f.ref])selected.add(f.ref);}while(size!==selected.size);}
+ const schemas=selected?Object.fromEntries(Object.entries(allSchemas).filter(([id])=>selected.has(id))):allSchemas,used=new Map(),templates=[],schemaByTemplate={};
  for(const [id,schema]of Object.entries(schemas)){
   let label=schema.label&&schema.label!==id?schema.label:'资料表 '+(templates.length+1);const count=(used.get(label)??0)+1;used.set(label,count);if(count>1)label+='〔'+count+'〕';
   const isOwned=ownedTable(schema),fields=schema.fields.filter(f=>(task!=='main'||scope.audience==='author'||!snapshot.state.schema[id].fields.find(x=>x.key===f.key)?.lock_level)&&!(isOwned&&ownerKeys.has(f.key))&&!(isOwned&&['sequence','value_state'].includes(f.key)));
@@ -300,6 +303,10 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={}}){
   if(spec.type==='FIELD_KEY'||['target_field','source_field','output_field'].includes(spec.key)){
    const prefix=spec.key.replace(/_field(?:_key)?$/,'_table'),target=row.values[prefix]??row.values[prefix+'_id']??row.owner?.owner_table;const tables=target?[snapshot.state.schema[target]]:Object.values(snapshot.state.schema);const matches=tables.flatMap(t=>(t?.fields??[]).filter(f=>f.label===raw||f.key===raw));const keys=[...new Set(matches.map(f=>f.key))];check(keys.length===1,'字段名称不存在或不唯一：'+raw);return [keys[0],'known'];
   }
+  const businessRef=phoneFormReference(row.tableId,spec.key),listRef=PHONE_FORM_LIST_REFERENCES[row.tableId]?.[spec.key];
+  const phoneId=ref=>{const made=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId),old=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;return made?.values.id??old?.id??ref.recordId;};
+  if(businessRef){const ref=reference(raw,businessRef);return [businessRef.startsWith('X_')?phoneId(ref):ref.recordId,'known'];}
+  if(listRef)return [list(raw).map(token=>{const ref=reference(token,listRef);return listRef.startsWith('X_')?phoneId(ref):ref.recordId;}),'known'];
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'){
    const values=list(raw),ids=[];for(const [i,text]of values.entries()){
     const typed=/^(关联|数值|布尔|条目|文字)[：:]\s*(.*)$/.exec(text);if(typed?.[1]==='条目'){const ref=reference(typed[2],'M_LIST_VALUES'),child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);else{const own=snapshot.state.tables.M_LIST_VALUES?.[ref.recordId]?.values;check(own?.owner_table===row.tableId&&own.owner_row_uuid===row.recordId&&own.owner_field===spec.key,'列表条目不能改挂另一字段');}ids.push(ref.recordId);continue;}
@@ -323,8 +330,9 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={}}){
  }
  // Table selectors precede their row/field references. Value conversion is
  // canonical decode(), while the shared sheet engine owns surface parsing.
- for(const row of rows){const schema=context.schemas[row.tableId];const pairs=Object.entries(row.raw).sort(([a],[b])=>Number(/table/.test(b))-Number(/table/.test(a)));for(const [key,rawValue]of pairs){const spec=schema.fields.find(f=>f.key===key),[value,state]=fieldValue(row,spec,rawValue);row.values[key]=value;if(state!=='known')row.states[key]=state;}}
+ for(const row of rows){const schema=context.schemas[row.tableId];const pairs=Object.entries(row.raw).sort(([a],[b])=>Number(/table/.test(b))-Number(/table/.test(a)));for(const [key,rawValue]of pairs){const spec=schema.fields.find(f=>f.key===key),[value,state]=fieldValue(row,spec,rawValue);row.values[key]=normalizePhoneFormValue(row.tableId,key,value);if(state!=='known')row.states[key]=state;}}
  for(const row of rows){const schema=context.schemas[row.tableId];if(ownedTable(schema)){check(row.owner&&Object.keys(row.owner).length,'子表需要从所属档案字段引用：'+row.heading);Object.assign(row.values,row.owner);if(schema.fields.some(f=>f.key==='value_state')&&!Object.hasOwn(row.values,'value_state'))row.values.value_state=Object.values(row.states).find(s=>['unknown','unset','none','not_applicable','cleared'].includes(s))??'known';if(schema.fields.some(f=>f.key==='sequence')&&!Object.hasOwn(row.values,'sequence'))row.values.sequence=row.existing?snapshot.state.tables[row.tableId][row.recordId].values.sequence:Number(row.heading.split('／').at(-1));}}
+ for(const row of rows)if(snapshot.state.schema[row.tableId]?.phone_internal&&snapshot.state.schema[row.tableId].fields.some(f=>f.key==='id')&&!row.existing)row.values.id=row.recordId;
  const changes=[...rows.map(({tableId,recordId,values,states})=>({tableId,recordId,values,...(Object.keys(states).length?{states}:{})})),...generated];
  if(context.kind==='character')check(actors.length===1,'创建单个人物时须有且只有一份人物原点档案');
  const world=rows.find(r=>r.tableId==='T_STATIC_WORLDS');if(context.kind==='world'&&context.task==='tableGenesis'&&context.mode==='extend'&&snapshot.state.schema.T_STATIC_WORLDS)check(world,'创建新世界须填写世界与历法身份');

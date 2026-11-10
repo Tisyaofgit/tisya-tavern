@@ -42,7 +42,7 @@ test('host transfer form writes once into actual chat metadata and survives serv
 });
 test('commerce checkout uses configured fee and hides model-owned logistics controls',async()=>{
  const f=await fixture({appId:'shop'});await f.app.handle('cart.add',{productId:'novel',qty:1});await f.app.handle('nav',{app:'shop',tab:'cart'});
- assert.match(f.root.querySelector('#screen').textContent,/1\.37/);assert.match(f.root.querySelector('#screen').textContent,/云币|¤/);await f.submit('[data-action="order.checkout"]');
+ assert.match(f.root.querySelector('#screen').textContent,/1\.37/);assert.match(f.root.querySelector('#screen').textContent,/云币|¤/);await f.submit('[data-action="order.quote"]');assert.equal(f.service.readLife().state.commerce.orders.length,0);assert.equal(f.service.readLife().state.wallet.accounts[0].balance,100000);await f.click('[data-action="order.checkout"]');
  const o=f.service.readLife().state.commerce.orders[0];assert.equal(o.total,2437);assert.equal(o.deliveryFee,137);assert.equal(f.service.readLife().state.wallet.accounts[0].balance,97563);
  await f.app.handle('nav',{app:'shop',tab:'order',detail:o.id});assert.equal(f.root.querySelector('[data-action="order.advance"]'),null);assert.match(f.root.textContent,/下一轮剧情/);await assert.rejects(()=>f.app.dispatch({type:'order.advance',orderId:o.id}),/实际回执/);f.close();
 });

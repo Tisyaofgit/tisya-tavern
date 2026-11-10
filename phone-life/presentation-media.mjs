@@ -17,7 +17,7 @@ export function createPhonePresentationMedia({indexedDB=globalThis.indexedDB,URL
  async function readMedia({ids,snapshot,contextKey}){
   assertScope(contextKey);if(!snapshot?.life?.bindingKey||!Array.isArray(ids))return [];
   const state=snapshot.life.state,authorized=new Map();
-  for(const row of state.media?.photos??[])if(row.source==='file')authorized.set(row.id,{kind:'image',name:row.name});
+  for(const row of state.media?.photos??[])if(row.source==='file')authorized.set(row.id,{kind:row.mime?.startsWith('video/')?'video':'image',name:row.name});
   for(const row of state.media?.songs??[])if(row.audioId)authorized.set(row.audioId,{kind:'audio',name:row.title});
   const chosen=[...new Set(ids)].filter(id=>authorized.has(id));if(!chosen.length)return [];
   const db=await openExisting();assertScope(contextKey);if(!db)return [];

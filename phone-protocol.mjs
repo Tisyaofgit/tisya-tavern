@@ -1,3 +1,5 @@
+import {LIFE_EXTENDED_WORLD_ACTIONS} from './phone-life/life-extended.mjs';
+import {SOCIAL_WORLD_ACTIONS} from './phone-life/social-rules.mjs';
 // Phone transport is data inside one <extra>; it never executes model text.
 const TOP_KEYS = new Set(['requestId', 'acks', 'blocks', 'accounts', 'documents', 'markers', 'lifeUpdates']);
 const MARKER_KEYS = new Set(['id', 'thread', 'floor', 'itemId']);
@@ -117,12 +119,20 @@ function validatePayload(payload) {
   if (own(payload, 'accounts') && !object(payload.accounts)) fail('SHAPE', 'accounts 必须是账号对象', '$.accounts');
   if(own(payload,'lifeUpdates')){
     if(!Array.isArray(payload.lifeUpdates)||payload.lifeUpdates.length>32)fail('LIFE_UPDATES','lifeUpdates须为最多32项世界反馈数组','$.lifeUpdates');
-    const shapes={'order.advance':['type','orderId'],'calendar.confirm':['type','eventId'],'world.advance':['type','minutes'],'social.network.advance':['type'],'social.npc.post':['type','postId','authorId','text'],'social.npc.comment':['type','postId','authorId','text']};
+    const shapes={...Object.fromEntries(Object.entries({...LIFE_EXTENDED_WORLD_ACTIONS,...SOCIAL_WORLD_ACTIONS}).map(([type,keys])=>[type,['type',...keys]])),'order.advance':['type','orderId'],'calendar.confirm':['type','eventId'],'world.advance':['type','minutes'],'social.network.advance':['type'],'social.npc.post':['type','postId','authorId','text'],'social.npc.comment':['type','postId','authorId','text']};
     for(const [i,update]of payload.lifeUpdates.entries()){
       const path=`$.lifeUpdates[${i}]`,keys=object(update)&&shapes[update.type];
       if(!keys||Object.keys(update).some(k=>!keys.includes(k)))fail('LIFE_SCOPE','生活世界反馈只允许配送、日程确认、故事时间和社交送达，不能代用户操作资金或私密资料',path);
       if(update.type==='order.advance'&&!nonempty(update.orderId)||update.type==='calendar.confirm'&&!nonempty(update.eventId))fail('LIFE_REFERENCE','世界反馈缺少稳定记录ID',path);
       if(update.type==='world.advance'&&(!Number.isSafeInteger(update.minutes)||update.minutes<=0||update.minutes>5256000))fail('LIFE_TIME','故事时间必须为允许范围内的正整数分钟',path);
+      if(LIFE_EXTENDED_WORLD_ACTIONS[update.type]||SOCIAL_WORLD_ACTIONS[update.type]){
+       for(const key of ['orderId','recipientId','transferId','eventId','sourceId','postId','actorId','evidenceId'].filter(k=>keys.includes(k)))if(!nonempty(update[key]))fail('LIFE_REFERENCE','世界反馈缺少已登记关联或来源：'+key,path);
+       const enums={'wallet.transfer.respond':{response:['accept','refuse']},'order.resolve':{status:['accepted','out-of-stock','delayed','ready','delivered']},'calendar.respond':{response:['accept','decline','tentative']},'calendar.source.update':{status:['confirmed','cancelled','tentative']},'social.propagate':{kind:['screenshot','mention','forward']}};
+       for(const [key,values]of Object.entries(enums[update.type]??{}))if((update.type!=='calendar.source.update'||own(update,key))&&!values.includes(update[key]))fail('LIFE_ENUM','世界反馈选项无效：'+key,path);
+       if(update.type==='social.metrics')for(const key of ['views','likes','comments','reposts'])if(!Number.isSafeInteger(update[key])||update[key]<0||update[key]>1000000000)fail('LIFE_METRICS','社交统计须为有据的非负整数',path);
+       if(own(update,'at')&&(!Number.isSafeInteger(update.at)||update.at<0))fail('LIFE_TIME','日程故事时点须为非负整数',path);
+       for(const key of ['note','text'])if(own(update,key)&&(typeof update[key]!=='string'||update[key].length>2000))fail('LIFE_TEXT','反馈说明过长或不是文字',path);
+      }
       if(update.type.startsWith('social.npc.')&&(!nonempty(update.postId)||!nonempty(update.authorId)||!nonempty(update.text)||update.text.length>(update.type==='social.npc.comment'?500:2000)))fail('LIFE_NPC','NPC公开帖子或评论须有稳定原文ID、已登记作者及有限正文',path);
     }
   }

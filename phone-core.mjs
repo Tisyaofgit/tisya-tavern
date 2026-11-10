@@ -1,3 +1,5 @@
+import {LIFE_EXTENDED_WORLD_ACTIONS} from './phone-life/life-extended.mjs';
+import {SOCIAL_WORLD_ACTIONS} from './phone-life/social-rules.mjs';
 import {createSuite,applyEnvelope,getDoc,getVisibleDocuments,exportSuite,importSuite,projectSuiteAt,forkSuiteAt} from './social-suite-core.mjs';
 import {extractPhonePayload} from './phone-protocol.mjs';
 import {digest as databaseDigest} from './engine/common.mjs';
@@ -28,9 +30,9 @@ function localEnvelope(state,operationId,blocks,extra={}){state.suite=applyEnvel
 
 const stableLife=value=>Array.isArray(value)?`[${value.map(stableLife).join(',')}]`:value&&typeof value==='object'?`{${Object.keys(value).filter(k=>value[k]!==undefined).sort().map(k=>`${JSON.stringify(k)}:${stableLife(value[k])}`).join(',')}}`:JSON.stringify(value);
 export const phoneLifeBindingKey=binding=>stableLife(asPlain(binding));
-const LIFE_WORLD_TYPES=new Set(['order.advance','calendar.confirm','world.advance','social.network.advance','social.npc.post','social.npc.comment']);
+const LIFE_WORLD_TYPES=new Set([...Object.keys(LIFE_EXTENDED_WORLD_ACTIONS),...Object.keys(SOCIAL_WORLD_ACTIONS),'order.advance','calendar.confirm','world.advance','social.network.advance','social.npc.post','social.npc.comment']);
 function lifeApp(domain,action){
-  const type=action.type??'';
+  const type=action.type??'';if(type==='media.theme.set')return null;
   if(type.startsWith('wallet.'))return 'wallet';
   if(type.startsWith('social.'))return 'weibo';
   if(type.startsWith('media.'))return 'album';
@@ -107,7 +109,7 @@ function rejectLifeProjectionWrite(state,threadId){if(state.suite.documents[thre
 function lifeContext(boundary,actions){
   const domain=boundary?.life;if(!domain)return null;const s=domain.state,chosen=new Set(actions.map(a=>a.lifeAction?.postId).filter(Boolean));
   const projectionPrefix=`life-${signature(domain.bindingKey)}-post-`;const posts=s.social.posts.filter(p=>p.visibility==='public'||chosen.has(p.id)).slice(-40).map(p=>({...p,projectionDocumentId:projectionPrefix+encodeURIComponent(p.id)}));
-  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,world:{id:domain.world.id,name:domain.world.name,currency:domain.world.currency},apps:domain.world.apps,clock:s.clock,contacts:(s.contacts??[]).map(c=>({id:c.id,name:c.name})),privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:['order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。'};
+  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,world:{id:domain.world.id,name:domain.world.name,currency:domain.world.currency},apps:domain.world.apps,clock:s.clock,contacts:(s.contacts??[]).map(c=>({id:c.id,name:c.name})),privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{pendingTransfers:s.wallet.pendingTransfers??[],accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:[...Object.entries({...LIFE_EXTENDED_WORLD_ACTIONS,...SOCIAL_WORLD_ACTIONS}).map(([type,fields])=>type+' {'+fields.join(',')+'}'),'order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。'};
 }
 
 export function createPhoneState(seed,contextKey){return {format:PHONE_FORMAT,contextKey:id(contextKey,'聊天标识'),revision:0,suite:createSuite(seed),actions:[],requests:{},frames:{},rejectedSources:{},selectedSources:[],notifications:[],drafts:{}};}

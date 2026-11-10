@@ -1,3 +1,4 @@
+import {extendPhoneFormCatalog} from './phone-form-contract.mjs';
 import {effectivePreferences} from './preferences.mjs';
 import {limitNativeHistory} from '../config/history-context.js';
 import {contractorMessages} from './contractor.mjs';
@@ -22,7 +23,7 @@ const nativeWorld={context:{owner:'native',card:true},mode:'matrix',modes:{matri
 export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],expand=s=>s,assertIdle=()=>{},onError=()=>{}}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null;const listeners=new Set();
- const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
+ const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendPhoneFormCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};
  const notify=r=>{latest=r;for(const fn of listeners)fn(r);};

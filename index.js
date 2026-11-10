@@ -276,13 +276,15 @@ async function initializeLifeForCurrentSelection(service){
 function phoneDesktop(){
  const service=phoneServices.get(phoneChatKey(context()))?.service,life=service?.readLife?.(),selection=phoneBindingSelection();
  const matches=life&&(selection.world?.database&&selection.character?.database?life.world.id===selection.world.worldId&&life.state.identity.personId===selection.character.entityId:JSON.stringify(life.binding)===JSON.stringify(selection));
- if(!matches)return {title:'生活手机',subtitle:'按世界设定启用应用',apps:selection.world&&selection.character?[{id:'home',name:'打开手机'}]:[],emptyLabel:'选择角色与手机世界'};
+ if(!matches)return {title:'生活手机',subtitle:'按世界设定启用应用',apps:selection.world&&selection.character?[{id:'home',name:'打开手机'}]:[{id:'setup',name:'设置手机'}],emptyLabel:'选择角色与手机世界'};
  const names={weibo:'微博',wallet:'钱包',shop:'商城',food:'外卖',album:'相册',music:'音乐',map:'地图',calendar:'日历'};
  return {title:life.world.name,subtitle:'当前角色的生活应用',theme:life.world.theme,apps:life.world.apps.map(id=>({id,name:life.world.appNames?.[id]??names[id]??id})),emptyLabel:'当前世界未启用应用'};
 }
 async function openVirtualPhone({docId,appId}={}){
- if(!await mayLeaveUtility())return false;const service=await getPhoneService();
- if(appId)await initializeLifeForCurrentSelection(service);
+ if(!await mayLeaveUtility())return false;let service;try{service=await getPhoneService();if(!service)throw Error('当前正在生成，请稍后重试打开手机。');if(appId)await initializeLifeForCurrentSelection(service);}catch(cause){
+  close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('手机待核对','<section class="tisya-sub-card" role="alert"><h3>手机暂时未打开</h3><p>'+esc(cause.message)+'</p><p>原手机进度已保留。请核对当前人物、世界和聊天来源后重试。</p><div class="tisya-actions"><button type="button" data-phone-retry>重试</button><button type="button" data-phone-identity>核对身份与世界</button><button type="button" data-phone-dismiss>返回</button></div></section>');
+  query('[data-phone-retry]').onclick=()=>openVirtualPhone({docId,appId}).catch(error);query('[data-phone-identity]').onclick=()=>openIdentity().catch(error);query('[data-phone-dismiss]').onclick=()=>hidePage();return false;
+ }
  close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;
  page('手机','<div id="tisya-phone-host-slot"></div>');
  const frame=document.createElement('iframe'),url=new URL('./phone.html',import.meta.url);url.searchParams.set('chat',phoneChatKey(context()));if(typeof docId==='string'&&docId)url.searchParams.set('doc',docId);if(appId)url.searchParams.set('app',appId);
@@ -834,7 +836,6 @@ function init() {
     if(settings().显示桌宠===false)pet.setVisible(false);
     messageNavigation=mountMessageNavigation(document,{getLanding:()=>getDisplay().上条落点,onNavigate:()=>{appearance?.revealHistory();closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     communicationUI=mountCommunication(document,{controller:communication,onError:error});cleanups.push(()=>{communicationUI?.dispose();communicationUI=null;});
-    const phoneButton=document.createElement('button');phoneButton.type='button';phoneButton.id='tisya-phone-open';phoneButton.textContent='手机';phoneButton.className='menu_button';phoneButton.onclick=()=>openVirtualPhone().catch(error);query('#nonQRFormItems').prepend(phoneButton);cleanups.push(()=>phoneButton.remove());
     nativeIdleGuard=mountGenerationIdleGuard(document,{events:context().eventSource,eventTypes:context().eventTypes,waitForIdle:waitForGenerationIdle,isGenerating,onError:error});cleanups.push(()=>{nativeIdleGuard?.dispose();nativeIdleGuard=null;});
     inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);

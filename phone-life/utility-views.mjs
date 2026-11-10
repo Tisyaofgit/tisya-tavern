@@ -1,9 +1,11 @@
 import {phoneTimeText,phoneDateParts,phoneCalendarPage} from './time-view.mjs';
 import {quoteLoan,quoteJourney} from './core.mjs';
+import {renderBusinessView,renderBusinessExtras} from './business-ui.mjs';
 
 // Presentation only. All changes go through the shared, persisted action reducer.
 export function renderUtility(state,ui,h){
  if(!['wallet','shop','food','map','calendar'].includes(ui.app))return null;
+ const extendedView=renderBusinessView(state,ui,h);if(extendedView!==null)return '<div class="life-utility">'+extendedView+'</div>';
  const e=h.esc,m=v=>h.money(v),hosted=h.hosted===true,unit=e(state.config?.currency?.symbol??''),currencyName=state.config?.currency?.name??'世界货币',bank=state.wallet.fundingAccountId??state.wallet.accounts[0]?.id??'',cashAccount=state.wallet.defaultAccountId??state.wallet.accounts[0]?.id??'',loanConfig=state.config?.economy?.loan,contacts=state.contacts??[],b=(label,type,payload={},cls='u-secondary')=>h.btn(e(label),type,payload,cls);
  const ib=(icon,label,type,payload={},cls='u-secondary')=>b(label,type,payload,cls).replace('>','>'+h.icon(icon));
  const card=(body,cls='')=>'<section class="card u-card '+cls+'">'+body+'</section>';
@@ -115,16 +117,16 @@ export function renderUtility(state,ui,h){
   let content='';
   if(current==='product'){
    const p=productBy(ui.detail);
-   content=p?card('<div class="u-product-large">'+productArt(p)+'<div class="u-row"><h3>'+e(p.name)+'</h3>'+pill(p.kind==='digital'?'数字内容':isFood?'现点现做':'生活好物')+'</div><p class="u-note">'+e(p.description)+'</p><div class="u-row" style="margin:18px 0"><span class="u-price">'+unit+''+m(p.price)+'</span><span class="u-subtle">库存 '+e(p.stock)+'</span></div>'+form('cart.add',hidden('productId',p.id)+field('数量','<input type="number" name="qty" min="1" max="'+e(p.stock)+'" value="1" required>')+submit('加入'+(isFood?'餐袋':'购物车')))+b('返回逛逛','nav',nav(app,'browse'),'u-text')+'</div>'):empty('没有找到这件商品。','shop');
+   content=p?card('<div class="u-product-large">'+productArt(p)+'<div class="u-row"><h3>'+e(p.name)+'</h3>'+pill(p.kind==='digital'?'数字内容':isFood?'现点现做':'生活好物')+'</div><p class="u-note">'+e(p.description)+'</p><div class="u-row" style="margin:18px 0"><span class="u-price">'+unit+''+m(p.price)+'</span><span class="u-subtle">库存 '+e(p.stock)+'</span></div>'+form('cart.add',hidden('productId',p.id)+(p.options?.length?field('规格',select('optionId',p.options.map(o=>[o.id,o.name+' + '+m(o.price)]),p.options[0].id)):'')+field('数量','<input type="number" name="qty" min="1" max="'+e(p.stock)+'" value="1" required>')+submit('加入'+(isFood?'餐袋':'购物车')))+b('返回逛逛','nav',nav(app,'browse'),'u-text')+'</div>'):empty('没有找到这件商品。','shop');
   }else if(current==='cart'){
    const subtotal=cartItems.reduce((n,r)=>n+productBy(r.productId).price*r.qty,0),fee=state.config?.economy?.deliveryFees?.[kind]??null;
    content=cartItems.length?card(cartItems.map(r=>{const p=productBy(r.productId);return '<div class="u-cart-line">'+productArt(p)+'<div><h4>'+e(p.name)+'</h4><p class="u-subtle">'+unit+''+m(p.price)+' × '+r.qty+'</p>'+b('移除','cart.remove',{productId:p.id},'u-text')+'</div><strong>'+unit+''+m(p.price*r.qty)+'</strong></div>';}).join('')+
     '<div class="u-rule"></div><div class="u-row u-subtle"><span>商品小计</span><span>'+unit+''+m(subtotal)+'</span></div><div class="u-row u-subtle"><span>配送费</span><span>'+unit+''+m(fee)+'</span></div><div class="u-cart-total"><strong>合计</strong><span class="u-price">'+unit+''+m(fee===null?null:subtotal+fee)+'</span></div>'+
-    form('order.checkout',hidden('kind',kind)+field('送到这里',select('placeId',places.map(p=>[p.id,p.name]),state.map.position))+
+    form('order.quote',hidden('kind',kind)+field('送到这里',select('placeId',places.map(p=>[p.id,p.name]),state.map.position))+
      field('付款方式',select('payment',[['balance','余额付款'],...(state.wallet.card.enabled===false?[]:[['credit','信用卡 · 可用 '+unit+''+m(state.wallet.card.limit===null?null:state.wallet.card.limit-state.wallet.card.used)]])],'balance'))+
-     field('余额付款账户',select('accountId',accountOptions,cashAccount))+
+     field('余额付款账户',select('accountId',accountOptions,cashAccount))+field('收件人',select('recipientId',[[state.identity.personId,'本人'],...contacts.map(c=>[c.id,c.name+' · 赠礼'])],state.identity.personId))+field('赠礼留言','<input name="giftMessage" maxlength="300">')+
      field(isFood?'餐品备注':'给商家的留言','<textarea name="note" placeholder="'+(isFood?'比如少糖、不要香菜……':'可填写礼物留言或配送说明')+'"></textarea>')+
-     submit('确认付款 '+unit+''+m(fee===null?null:subtotal+fee)))+note('付款后建立订单并扣库存；送达并领取后才进入持有物。')):empty('这里还空着。先挑一点喜欢的。',isFood?'food':'shop');
+     submit('生成报价并核对费用'))+note('付款后建立订单并扣库存；送达并领取后才进入持有物。')):empty('这里还空着。先挑一点喜欢的。',isFood?'food':'shop');
   }else if(current==='orders'){
    content=orderRows.length?orderRows.slice().map(o=>card('<div class="u-row"><span class="u-subtle">'+e(o.id)+' · '+at(o.createdAt)+'</span>'+pill(orderStatus(o.status))+'</div><div class="u-rule"></div>'+o.items.map(i=>'<div class="u-row" style="margin:8px 0"><span class="u-item-title">'+e(i.name)+' × '+i.qty+'</span><span class="u-subtle">'+unit+''+m(i.price*i.qty)+'</span></div>').join('')+'<div class="u-row" style="margin-top:15px"><strong>实付 '+unit+''+m(o.total)+'</strong>'+b('查看订单','nav',nav(app,'order',o.id))+'</div>')).join(''):empty('还没有订单。确认付款后，就可以在这里追踪。',isFood?'food':'shop');
   }else if(current==='order'){
@@ -133,7 +135,7 @@ export function renderUtility(state,ui,h){
    const held=state.inventory.filter(i=>isFood?i.kind==='food':i.kind!=='food');
    content=held.length?held.map(i=>card('<div class="u-row"><div><h3>'+e(i.name)+'</h3><p class="u-item-sub">'+e(locationName(i.placeId))+' · 剩余 '+i.qty+' 份</p></div>'+pill(i.qty>0?'已领取':'已用完')+'</div>'+(i.kind==='food'&&i.qty>0?'<div class="u-buttons">'+b('吃一份','inventory.consume',{itemId:i.id},'u-primary')+b('前往这里','nav',nav('map','',i.placeId),'u-secondary')+'</div>':'')+note('只有本人到达存放地点且已领取的食物才能食用。'))).join(''):empty(isFood?'餐品送达并领取后会放在这里。':'收到的物品会放在对应地点。',isFood?'food':'shop');
   }else{
-   const q=String(ui.query||'').trim().toLowerCase(),visible=items.filter(p=>!q||(p.name+' '+p.description+' '+p.tags.join(' ')).toLowerCase().includes(q));
+   const q=String(ui.query||'').trim().toLowerCase(),visible=items.filter(p=>!q||(p.name+' '+p.description+' '+(p.tags??[]).join(' ')).toLowerCase().includes(q));
    content='<div class="u-commerce-banner '+(isFood?'food':'')+'"><div><p class="u-kicker">'+(isFood?'DINNER, DELIVERED':'LITTLE THINGS / BIG DAYS')+'</p><h3>'+(isFood?'日落之前<br>好好吃饭':'新日常<br>刚刚上架')+'</h3><p>'+(isFood?'咖啡、热餐和水果<br>给今天留一点温度。':'一点柔软，一点喜欢<br>让平凡的日子发光。')+'</p></div>'+h.art(isFood?'meal':'coat')+'</div>'+
     '<form class="u-search" data-action="ui"><input type="search" name="query" value="'+e(ui.query||'')+'" placeholder="'+(isFood?'想吃点什么？':'搜索喜欢的物件')+'"><button type="submit" aria-label="搜索">'+h.icon('search')+'</button></form>'+
     section(isFood?'附近好味道':'为你挑选',pill('配送 '+(state.config?.currency?.symbol??'')+m(state.config?.economy?.deliveryFees?.[kind]??null)))+
@@ -142,7 +144,7 @@ export function renderUtility(state,ui,h){
   return heading(isFood?'SUNSET DELIVERY':'EVERYDAY SELECT',title,isFood?'当前收货位置 · '+locationName(state.map.position):'小小的物件，长长的陪伴。')+
    tabs([['browse',isFood?'点餐':'逛逛'],['cart',(isFood?'餐袋':'购物车')+(cartItems.length?' '+cartItems.reduce((n,r)=>n+r.qty,0):'')],['orders','订单'],['bag',isFood?'已领取':'持有物']],['product','order'].includes(current)?(current==='order'?'orders':'browse'):current)+content;
  }
- function orderStatus(status){return ({paid:'已付款',preparing:'制作中',shipped:'已发货',delivering:'配送中',delivered:'已送达',completed:'已领取',cancelled:'已取消',refunded:'已退款'})[status]??status;}
+ function orderStatus(status){return ({unpaid:'待付款',void:'未付款已取消',paid:'已付款',preparing:'制作中',shipped:'已发货',delivering:'配送中',delivered:'已送达',completed:'已领取',cancelled:'已取消',refunded:'已退款'})[status]??status;}
  function orderDetail(o,app){
   const steps=o.kind==='food'?['已付款','制作中','配送中','已送达']:['已付款','已发货','已送达','已领取'];
   const orderStates=o.kind==='food'?['paid','preparing','delivering','delivered']:['paid','shipped','delivered','completed'];
@@ -172,8 +174,8 @@ export function renderUtility(state,ui,h){
   const journey=mp.journey?'<div class="u-journey"><p class="u-kicker">ON THE WAY</p><h3>'+e(locationName(mp.journey.from))+' → '+e(locationName(mp.journey.to))+'</h3><p class="u-note">路程 '+mp.journey.duration+' 分钟 · 预计 '+at(mp.journey.arriveAt)+'</p><div class="u-buttons">'+b('抵达目的地','map.arrive',{},'u-primary')+'</div>'+note('确认抵达会推进相应故事时间，并改变当前位置。')+'</div>':'';
   const selection=selected?card('<div class="u-row"><div><h3>'+e(selected.name)+'</h3><p class="u-item-sub">'+e(selected.description)+'</p></div>'+pill(selected.id===mp.position?'当前位置':'目的地')+'</div>'+
    (selected.id!==mp.position&&!mp.journey?'<div class="u-mode-row">'+[['walk','步行'],['bike','骑行'],['transit','公交']].map(([id,label])=>b(label,'ui',{travelMode:id},mode===id?'active':'')).join('')+'</div>'+
-    (route?'<div class="u-row"><span class="u-subtle">预计路程 '+route.duration+' 分钟</span><span class="u-subtle">抵达 '+at(route.arriveAt)+'</span></div>':'')+
-    (route?'<div class="u-buttons">'+b('确认出发','map.depart',{placeId:selected.id,mode},'u-primary')+'</div>':note(routeError||'尚未配置有效路线。'))+note('选择地点和查看路线不会移动角色；确认出发才建立行程。'):'')+
+    (route?'<div class="u-row"><span class="u-subtle">预计路程 '+route.duration+' 分钟 · 费用 '+unit+''+m(route.fare??0)+'</span><span class="u-subtle">抵达 '+at(route.arriveAt)+'</span></div>':'')+
+    (route?'<div class="u-buttons">'+b('确认出发','map.depart',{placeId:selected.id,mode,quoteId:route.quoteId},'u-primary')+'</div>':note(routeError||'尚未配置有效路线。'))+note('选择地点和查看路线不会移动角色；确认出发才建立行程。'):'')+
    (selected.kind==='cafe'||selected.kind==='food'?b('看看咖啡与餐点','nav',nav('food'),'u-text'):selected.kind==='shop'?b('逛逛店里的好物','nav',nav('shop'),'u-text'):'')):'';
   return heading('WORLD / MAP','出去走走','此刻的位置 · '+locationName(mp.position))+map+journey+selection+
    section('熟悉的地方')+places.map(p=>'<div class="u-place"><span class="u-mini-icon">'+h.icon(p.id==='home'?'home':p.id==='cafe'?'food':p.id==='store'?'shop':'location')+'</span><div class="u-list-copy"><p class="u-item-title">'+e(p.name)+'</p><p class="u-item-sub">'+e(p.description)+'</p></div>'+b('查看','ui',{detail:p.id})+'</div>').join('');
@@ -181,9 +183,9 @@ export function renderUtility(state,ui,h){
  function calendar(){
   const c=state.clock,page=phoneCalendarPage(state),{count,offset}=page,period=page.period+page.periodLabel,day=Math.max(1,Math.min(count,Number(ui.calendarDay)||c.day));
   const events=state.calendar.events.filter(ev=>{const date=storyDate(ev.at);return date.year===c.year&&date.period===page.period;});
-  const rows=events.filter(v=>v.day===day).sort((a,b)=>a.minute-b.minute);
+  const rows=events.filter(v=>storyDate(v.at).day===day).map(v=>({...v,day:storyDate(v.at).day,minute:storyDate(v.at).hour*(state.config?.calendar?.hour_minutes??60)+storyDate(v.at).minute})).sort((a,b)=>a.at-b.at);
   let month='<section class="u-month"><div class="u-month-head"><div><h3>'+c.year+' 年 '+e(period)+'</h3><span class="u-subtle">MAKE ROOM FOR GOOD DAYS</span></div>'+b('今天','ui',{calendarDay:c.day},'u-text')+'</div><div class="u-week">'+page.weekdays.map(s=>'<span>'+s+'</span>').join('')+'</div><div class="u-dates">'+Array.from({length:offset},()=>'<span></span>').join('');
-  for(let d=1;d<=count;d++)month+=b(String(d),'ui',{calendarDay:d},'u-date '+(d===c.day?'today ':'')+(d===day?'selected ':'')+(events.some(x=>x.day===d&&x.status!=='cancelled')?'has-event':''));
+  for(let d=1;d<=count;d++)month+=b(String(d),'ui',{calendarDay:d},'u-date '+(d===c.day?'today ':'')+(d===day?'selected ':'')+(events.some(x=>storyDate(x.at).day===d&&x.status!=='cancelled')?'has-event':''));
   month+='</div></section>';
   const agenda=rows.length?rows.map(ev=>'<div class="u-agenda"><span class="u-agenda-time">'+hh(ev.minute)+'</span><article class="u-agenda-card '+e(ev.status)+'"><div class="u-row"><h3>'+e(ev.title)+'</h3>'+pill({personal:'我的安排',invited:'待对方确认',confirmed:'已确认',cancelled:'已取消'}[ev.status]??ev.status,ev.status==='invited'?'warn':'')+'</div><p class="u-item-sub">'+e(locationName(ev.placeId))+(ev.participantId?' · 与 '+e(state.social.accounts.find(a=>a.id===ev.participantId)?.name??ev.participantId):'')+'</p><div class="u-buttons">'+(!hosted&&ev.status==='invited'?b('模拟对方确认','calendar.confirm',{eventId:ev.id},'u-secondary'):'')+(ev.status!=='cancelled'?b('查看地点','nav',nav('map','',ev.placeId),'u-secondary')+b('取消安排','calendar.cancel',{eventId:ev.id},'u-text'):'')+'</div></article></div>').join(''):empty('这一天还留着空白，写下一件想做的事吧。','calendar');
   const add=card('<div class="u-row"><h3>添一件小事</h3>'+pill(period+day+'日')+'</div><div class="u-rule"></div>'+form('calendar.add',
@@ -193,5 +195,5 @@ export function renderUtility(state,ui,h){
    field('一起的人',select('participantId',[['','仅自己'],...contacts.map(c=>[c.id,c.name+' · 发出邀请'])],''))+submit('保存安排'))+note(hosted?'邀请先显示待确认，由下一轮剧情返回对方的实际回应。':'邀请先显示待确认。模拟对方确认是单独操作，不会替对方自动答应。'));
   return heading('LITTLE PLANS','把日子记下来','故事时间 · '+period+c.day+'日 '+hh(c.minute))+month+section(period+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
  }
- return '<div class="life-utility" data-utility-app="'+e(ui.app)+'">'+(ui.app==='wallet'?wallet():ui.app==='shop'||ui.app==='food'?commerce():ui.app==='map'?mapView():calendar())+'</div>';
+ return '<div class="life-utility" data-utility-app="'+e(ui.app)+'">'+(ui.app==='wallet'?wallet():ui.app==='shop'||ui.app==='food'?commerce():ui.app==='map'?mapView():calendar())+renderBusinessExtras(state,ui,h)+'</div>';
 }

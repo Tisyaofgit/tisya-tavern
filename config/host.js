@@ -1,3 +1,4 @@
+import {readCreationTemplates,creationTemplateText} from '../engine/template-book.mjs';
 import {selectedHeartDirections} from '../heart-contract.js';
 import {isOnePassPreset} from '../onepass/preset.mjs';
 import {resolveOnePassSource,applyOnePassSource,applyOnePassSelectedMaterials,assertOnePassInjection} from '../onepass/injection.mjs';
@@ -145,6 +146,11 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   const preset=paired?null:nativePreset(route.preset),settings={...connectionSettings(route),...(preset?pickParameters(preset):{}),...route.parameters};let messages=[];
   let query=null;const requestInfo={connection:route.connection,model:route.model||null,source:settings.chat_completion_source??null,transport:route.transport??'off'};try{
   let parsedInput;try{parsedInput=typeof input==='string'?JSON.parse(input):clone(input);}catch{}
+  if(parsedInput?.formContract==='tisya.simple-form/1'&&['tableGenesis','templateInit','historyImport','tableArchive','objectArchive','tableAssistant','ruleReview','nativeFill','preferenceAnalysis','assetAdapt'].includes(task)){
+   const templates=await readCreationTemplates(getContext,{task,kind:parsedInput.kind,goal:parsedInput.goal??parsedInput.question??'',sourceText:typeof parsedInput.sourceHistory==='string'?parsedInput.sourceHistory:''});
+   if(worldKey(ctx())!==key||store.read().revision!==revision)fail('读取模板期间世界或配置已变化，任务未发送');
+   parsedInput={...parsedInput,template:creationTemplateText(templates)};input=JSON.stringify(parsedInput);
+  }
   if(!TEXT_TASKS[task]&&definition.preset?.startsWith('tisya:')&&getSource()?.prompts?.some(p=>p.identifier==='tisya_user_identity')&&parsedInput?.formContract!=='tisya.simple-form/1')fail('此数据任务须经统一极简表单服务准备；旧JSON填录入口已停用');
   const useArchiveTools=parsedInput?.formContract!=='tisya.simple-form/1'&&task==='tableAssistant'&&settings.function_calling===true&&parsedInput?.storage?.ready===true;
   if(archiveToolSession){

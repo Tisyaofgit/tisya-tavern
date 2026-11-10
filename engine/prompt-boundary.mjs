@@ -1,3 +1,4 @@
+import {PHONE_FORM_INTERNAL_FIELDS} from './phone-form-contract.mjs';
 // One boundary for ordinary materials and model-authored database proposals.
 // Historical snapshots and program execution records never become story facts,
 // including when the caller is the author. Old saved schemas use this fallback.
@@ -10,4 +11,4 @@ const programTables=new Set(PROGRAM_TABLE_IDS),programFields=new Set(['layout','
 export function programOwnedTable(id,schema={}){return schema.program_owned===true||schema.prompt_omit===true||programTables.has(id)||/^X_PHONE_(?:ACTIONS(?:_|$)|LIFE_BINDING(?:_|$)|LIFE_INITIALIZATION(?:_|$)|SUITE(?:_|$)|SESSION(?:_|$)|DRAFTS(?:_|$)|REJECTEDSOURCES(?:_|$)|LIFE_STATE_(?:RECEIPTS|AUDIT|SOCIAL_DRAFTS)(?:_|$))/.test(id)||/(?:^|_)(?:RECEIPTS?|JOURNAL)(?:_|$)/.test(id);}
 export function promptFieldAllowed(field={}){return !field.program_owned&&!field.prompt_omit&&!programFields.has(field.key);}
 export function creationFieldAllowed(field={}){return promptFieldAllowed(field)&&field.key!=='row_uuid'&&!field.alias_of&&!field.read_only&&!field.formula;}
-export function compactCreationSchema(state){return Object.fromEntries(Object.entries(state.schema??{}).filter(([id,s])=>!programOwnedTable(id,s)).map(([id,s])=>[id,{id,label:s.label??id,fields:(s.fields??[]).filter(creationFieldAllowed).map(f=>Object.fromEntries(['key','label','type','required','ref','enum','options','minimum','maximum','unit','unit_ref','child_schema'].filter(k=>f[k]!==undefined).map(k=>[k,structuredClone(f[k])]))) }]).filter(([,s])=>s.fields.length));}
+export function compactCreationSchema(state){return Object.fromEntries(Object.entries(state.schema??{}).filter(([id,s])=>!programOwnedTable(id,s)).map(([id,s])=>[id,{id,label:s.label??id,fields:(s.fields??[]).filter(f=>creationFieldAllowed(f)&&!(s.phone_internal&&PHONE_FORM_INTERNAL_FIELDS.has(f.key))).map(f=>Object.fromEntries(['key','label','type','required','ref','enum','options','minimum','maximum','unit','unit_ref','child_schema'].filter(k=>f[k]!==undefined).map(k=>[k,structuredClone(f[k])]))) }]).filter(([,s])=>s.fields.length));}

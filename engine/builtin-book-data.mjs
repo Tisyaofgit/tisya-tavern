@@ -1,3 +1,4 @@
+import {PHONE_FORM_TEMPLATES} from './form-template-routing.mjs';
 import {builtinExtensionDefinitions,builtinPresentationDefinitions} from '../extension-preferences.mjs';
 
 export const BUILTIN_PACKAGE='tisya.builtin-books';
@@ -26,7 +27,8 @@ export function bundledFormTemplateEntries(){return [
  {id:'template.world.form',name:'【模板】世界统一表单',purpose:'template',content:WORLD_FORM_TEMPLATE.targets.map(t=>t.instruction).filter(Boolean).join('\n')+'\n\n'+MATRIX_CREATION_CONTRACT},
  {id:'template.character.form',name:'【模板】角色统一表单',purpose:'template',content:CHARACTER_FORM_TEMPLATE.targets.map(t=>t.instruction).filter(Boolean).join('\n')+'\n\n'+MATRIX_CREATION_CONTRACT},
  {id:'template.linked.modules',name:'【模板】生活模块关联子模板',purpose:'template',content:'手机应用、网络账号、联系人、订单及逐期明细、社交内容、媒体授权、日程均从本次 schema 选择对应表。世界/人物/货币/物品/当前时钟已有定义直接引用；不同业务只登记有实际缺口的关联子模板。每条记录明确所属实体、世界/会话/分支、来源和可见范围。不把同义字段或页面分区重复成表。\n\n'+MATRIX_CREATION_CONTRACT},
- {id:'template.guide',name:'【说明】统一表单模板使用说明',purpose:'template',content:FORM_TEMPLATE_GUIDE}
+ {id:'template.guide',name:'【说明】统一表单模板使用说明',purpose:'template',content:FORM_TEMPLATE_GUIDE},
+ ...PHONE_FORM_TEMPLATES
 ];}
 const definitionEntry=(definition,prefix)=>({id:definition.id,name:prefix+definition.name,purpose:'definition',content:JSON.stringify(definition,null,2)});
 export function builtinBookDefinitions(){return [
