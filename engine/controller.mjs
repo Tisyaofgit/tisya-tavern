@@ -1,4 +1,4 @@
-import {sha256} from './common.mjs';
+import {sha256,fail,digest} from './common.mjs';
 /* Host adapter independent of DOM. Event payload numbers are hints, never identities. */
 export const NS='tisya_engine';
 export const PROMPT_KEY='tisya_engine_materials';
@@ -40,10 +40,79 @@ export function signature(messages){return JSON.stringify(messages);}
 
 export class Controller{
     constructor({getContext,storage,request,onUpdate=()=>{},uid=makeUid}){
-        Object.assign(this,{getContext,storage,request,onUpdate,uid});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();
+        Object.assign(this,{getContext,storage,request,onUpdate,uid});this.owners=new Map();this.materials=new Map();this.packets=new Map();this.generating=new Map();this.bindingTasks=new Map();
     }
     settings(){const c=this.getContext();return c.extensionSettings[NS]??={mode:'macros'};}
     enabled(ctx=this.getContext()){return Boolean(ctx.chatMetadata?.[NS]?.enabled);}
+    // Opening a chat may attach an empty engine, but an existing owner whose
+    // saved bundle disappeared is a storage error, never a fresh installation.
+    async ensureBound(createState,{assertCurrent=()=>{}}={}){
+        const ctx=this.getContext(),key=chatKey(ctx);
+        if(!key)return {status:'no-chat',key:null};
+        const metadata=ctx.chatMetadata,chat=ctx.chat;
+        if(!metadata||typeof metadata!=='object'||Array.isArray(metadata)||!Array.isArray(chat))fail('HOST_CHAT_STATE','宿主聊天状态尚未就绪');
+        const prior=this.bindingTasks.get(key);
+        const job=(prior??Promise.resolve()).catch(()=>{}).then(()=>bind.call(this)).finally(()=>{if(this.bindingTasks.get(key)===job)this.bindingTasks.delete(key);});
+        this.bindingTasks.set(key,job);return job;
+        async function bind(){
+            let expectedMeta=metadata[NS];
+            const guard=()=>{assertCurrent();const live=this.getContext();if(chatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat)fail('CHAT_CHANGED','自动接入期间已切换聊天，原操作已停止');if(metadata[NS]!==expectedMeta)fail('SAVE_CONFLICT','聊天引擎归属已被另一操作修改');};
+            guard();let meta=metadata[NS],bundle,status='existing',targetIsNew=false;
+            if(meta!=null&&(typeof meta!=='object'||Array.isArray(meta)||typeof meta.chat_uid!=='string'||!meta.chat_uid||typeof meta.owner_chat_key!=='string'))fail('ENGINE_METADATA_INVALID','聊天引擎归属记录损坏，请先恢复原存档');
+            const original=meta?digest(meta):null;
+            if(meta){bundle=await this.storage.get(meta.chat_uid);guard();if(digest(metadata[NS])!==original)fail('SAVE_CONFLICT','聊天引擎归属已变化，请重新打开聊天');}
+            const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+            const valid=value=>object(value)&&object(value.state)&&object(value.state.schema)&&object(value.state.tables);
+            const pending=meta?.binding_pending;
+            if(pending&&(pending.version!==1||!['initial','fork'].includes(pending.kind)))fail('ENGINE_METADATA_INVALID','未完成的自动接入记录无法识别');
+            if(meta&&!bundle&&!pending)fail('ENGINE_STATE_MISSING','此聊天已有引擎绑定，但保存的状态无法读取；已停止自动接入，请恢复原存档');
+            if(bundle&&!valid(bundle))fail('ENGINE_STATE_INVALID','此聊天保存的引擎状态损坏；已停止自动接入');
+            if(meta&&meta.owner_chat_key!==key){
+                if(!bundle)fail('ENGINE_STATE_MISSING','分支来源的引擎状态缺失，未建立空白替代');
+                const source=meta;
+                meta={...structuredClone(source),chat_uid:this.uid(),owner_chat_key:key,origin_chat_keys:[...new Set([source.owner_chat_key,...(source.origin_chat_keys??[])].filter(k=>k&&k!==key))],enabled:false,binding_pending:{version:1,kind:'fork',source_chat_uid:source.chat_uid}};
+                status='forked';bundle=structuredClone(bundle);targetIsNew=true;
+            }else if(!meta){
+                const state=await createState({session_ref:String(ctx.chatId),branch_ref:'main'});guard();
+                if(metadata[NS]!=null)fail('SAVE_CONFLICT','聊天已由另一操作接入，请重新打开聊天');
+                meta={chat_uid:this.uid(),owner_chat_key:key,origin_chat_keys:[],enabled:false,binding_pending:{version:1,kind:'initial'}};
+                bundle={state};status='created';targetIsNew=true;
+            }else if(!bundle){
+                targetIsNew=true;
+                if(pending.kind==='fork'){bundle=await this.storage.get(pending.source_chat_uid);guard();if(!valid(bundle))fail('ENGINE_STATE_MISSING','未完成分支的来源存档不可用');bundle=structuredClone(bundle);status='forked';}
+                else{bundle={state:await createState({session_ref:String(ctx.chatId),branch_ref:'main'})};guard();status='created';}
+            }
+            if(!valid(bundle))fail('ENGINE_STATE_INVALID','初始化返回的引擎状态无效');
+            guard();
+            if(targetIsNew){
+                bundle=structuredClone(bundle);
+                if(!bundle.state.runtime?.scope?.owner_ref){
+                    const settings=this.settings();
+                    if(!settings.owner_ref){settings.owner_ref='contractor:'+this.uid();ctx.saveSettingsDebounced?.();}
+                    bundle.state.runtime??={};bundle.state.runtime.scope??={};bundle.state.runtime.scope.owner_ref=settings.owner_ref;
+                }
+                if(!bundle.journal){
+                    ensureMessages(ctx,this.uid);
+                    const messages=captureMessages(ctx);
+                    bundle.journal={entries:messages.map(m=>({uid:m.uid,signature:null,role:m.role,revision:0,baseline:true,pre_turn_snapshot:{inverse_patch:[]},warnings:[],settlement_status:'BASELINE'})),revision_by_uid:{},scope:structuredClone(bundle.state.runtime.scope),baseline_messages:messages};
+                }
+                bundle.local_revision??=1;
+                guard();metadata[NS]=meta;expectedMeta=meta;
+                // Persist the pending owner first. A failed write retains this
+                // explicit recovery marker; it cannot look like missing old data.
+                await ctx.saveMetadata();guard();
+                if(ensureMessages(ctx,this.uid)||status==='created'){await ctx.saveChat();guard();}
+                if(this.storage.commit){if(!await this.storage.commit(meta.chat_uid,0,bundle))fail('SAVE_CONFLICT','聊天自动接入时状态已存在，请重新打开聊天');}
+                else{const occupied=await this.storage.get(meta.chat_uid);guard();if(occupied)fail('SAVE_CONFLICT','聊天自动接入时状态已存在');await this.storage.set(meta.chat_uid,bundle);}
+                guard();const saved=await this.storage.get(meta.chat_uid);guard();if(digest(saved)!==digest(bundle))fail('ENGINE_SAVE_UNCONFIRMED','引擎状态写入后未能核对，请重新打开聊天');
+            }
+            if(meta.enabled!==true||meta.binding_pending){
+                guard();const previousEnabled=meta.enabled,previousPending=meta.binding_pending;meta.enabled=true;delete meta.binding_pending;
+                try{await ctx.saveMetadata();guard();}catch(error){if(metadata[NS]===meta){meta.enabled=previousEnabled;if(previousPending)meta.binding_pending=previousPending;}throw error;}
+            }
+            return {status,key,id:meta.chat_uid,enabled:true};
+        }
+    }
     async identity(){
         const ctx=this.getContext(),key=chatKey(ctx);if(!key)throw Error('请先打开一个聊天。');
         const old=ctx.chatMetadata[NS];

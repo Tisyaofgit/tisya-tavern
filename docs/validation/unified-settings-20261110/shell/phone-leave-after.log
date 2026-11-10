@@ -1,0 +1,36 @@
+✖ canonical phone history events refresh the cached phone without legacy metadata (2393.661209ms)
+✔ history events leave a conversation without a phone database uninitialized (74.637532ms)
+✔ direct phone opening waits for the settings leave decision and cancellation keeps the draft (83.074169ms)
+✔ direct phone close waits for the settings leave decision and only hides after confirmed discard (73.063552ms)
+✔ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (70.286838ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3185.502109
+
+✖ failing tests:
+
+test at tests/shell.test.js:730:1
+✖ canonical phone history events refresh the cached phone without legacy metadata (2393.661209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '当前宿主不支持逐条显示缓存；原聊天未修改。'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/shell.test.js:744:64)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '当前宿主不支持逐条显示缓存；原聊天未修改。' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

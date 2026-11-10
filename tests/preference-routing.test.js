@@ -98,7 +98,7 @@ test('discussion and summary selections retain current eleven blocks without for
 });
 
 test('real configuration checkboxes save empty hearts, reopen consistently and skip the mood catalogue',async()=>{
- const {Window}=await import('happy-dom'),{mountConfiguration}=await import('../config/panel.js'),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
+ const {Window}=await import('happy-dom'),{mountConfiguration}=await import('./legacy-fixtures/config-panel.js'),win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const ctx={chatId:'ui',characterId:0,characters:[{avatar:'ui.png'}],chatMetadata:{variables:{}},extensionSettings:{}};const store=createStore({getContext:()=>ctx,persist:async()=>true}),mount=()=>mountConfiguration(doc,box,{store,host:{},getSettings:()=>({联系人分组:{}}),initialTab:'mode'});
  let ui=mount();await ui.ready;for(const name of HEART_DIRECTIONS){const input=ui.root.shadowRoot.querySelector('[aria-label="心声 · '+name+'"]');assert.ok(input.checked);input.checked=false;input.dispatchEvent(new win.Event('change'));await ui.settled();}
  assert.deepEqual(store.read().world.modes.narrative.heartDirections,[]);ui.dispose();ui=mount();await ui.ready;for(const name of HEART_DIRECTIONS)assert.equal(ui.root.shadowRoot.querySelector('[aria-label="心声 · '+name+'"]').checked,false);

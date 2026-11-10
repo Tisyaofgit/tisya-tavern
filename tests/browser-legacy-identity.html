@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/shell.css">
+<style>html,body{margin:0;height:100%;overflow:hidden}#sheld{position:absolute;inset:0}</style>
+<body class="tisya-active">
+<div id="sheld"><div id="tisya-shell" class="tisya-page-open">
+<main class="tisya-page" aria-label="会话与角色">
+<header class="tisya-sub-header"><button>‹ 会话</button><span>TISYA</span><button>聊天 ›</button></header>
+<h2 class="tisya-sub-title">用户身份</h2><div id="tisya-user-page"></div>
+</main></div></div>
+<script type="module">
+import {mountIdentityPage} from '/tests/legacy-fixtures/user-identity-page.js';
+import {createIdentityService} from '/user-identity-service.js';
+const c={extensionSettings:{},chatMetadata:{},chat:[],characters:[],name1:'User',powerUserSettings:{personas:{user:'User'},persona_descriptions:{user:{description:''}},persona_description:''}};
+let writes=0;
+const identity=createIdentityService({getContext:()=>c,getAvatar:()=>'user',persistSettings:async()=>{writes++;return true;},persistChat:async()=>{writes++;return true;}});
+const tables={state:()=>({busy:false,jobs:[],progress:null}),reportError(){}};
+const ui=mountIdentityPage(document.querySelector('#tisya-user-page'),{service:identity,tables,onNative(){},onClose(){}});
+window.fixture={ui,c,identity,writes:()=>writes};
+</script>
+</body></html>

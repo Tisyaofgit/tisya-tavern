@@ -1,0 +1,8 @@
+{
+  "recorded_utc": "2026-11-10T06:13:40.069288+00:00",
+  "status": "interrupted_after_confirmed_version_mismatch",
+  "reason": "package/manifest bumped to candidate.11 while layout.js and stylesheet still displayed candidate.10. First run retained; no success claimed.",
+  "session_exit_code": 130,
+  "original_log": "full-regression.log",
+  "production_fix": "Version marker synchronized in layout.js and shell.css; runtime must be rebuilt."
+}

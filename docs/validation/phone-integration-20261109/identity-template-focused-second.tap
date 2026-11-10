@@ -1,0 +1,346 @@
+TAP version 13
+# Subtest: browser hashes preserve Unicode bytes
+ok 1 - browser hashes preserve Unicode bytes
+  ---
+  duration_ms: 2.175356
+  type: 'test'
+  ...
+# Subtest: three turns retain raw source, isolate failed lines and formalize two turns later
+ok 2 - three turns retain raw source, isolate failed lines and formalize two turns later
+  ---
+  duration_ms: 12.153963
+  type: 'test'
+  ...
+# Subtest: edit, swipe and delete rebase instead of double charging
+ok 3 - edit, swipe and delete rebase instead of double charging
+  ---
+  duration_ms: 13.495825
+  type: 'test'
+  ...
+# Subtest: manual edits retain chronological placement when earlier prose changes
+ok 4 - manual edits retain chronological placement when earlier prose changes
+  ---
+  duration_ms: 21.117213
+  type: 'test'
+  ...
+# Subtest: registered item action rolls back all costs and supports receipt replay
+ok 5 - registered item action rolls back all costs and supports receipt replay
+  ---
+  duration_ms: 2.003848
+  type: 'test'
+  ...
+# Subtest: Python MT19937 save continues exact rejection-sampled dice after restart
+ok 6 - Python MT19937 save continues exact rejection-sampled dice after restart
+  ---
+  duration_ms: 1.769124
+  type: 'test'
+  ...
+# Subtest: formula lazy branches, decimals, chained dependencies and clocks
+ok 7 - formula lazy branches, decimals, chained dependencies and clocks
+  ---
+  duration_ms: 3.609816
+  type: 'test'
+  ...
+# Subtest: all catalog schemas load; secrets and foreign branch data do not leak into material slots
+ok 8 - all catalog schemas load; secrets and foreign branch data do not leak into material slots
+  ---
+  duration_ms: 44.306384
+  type: 'test'
+  ...
+# Subtest: custom tags share reader, preset references and historical aliases; raw embedded payload stays exact
+ok 9 - custom tags share reader, preset references and historical aliases; raw embedded payload stays exact
+  ---
+  duration_ms: 9.843945
+  type: 'test'
+  ...
+# Subtest: @u wish and worldbook-bound user remain separate and missing binding is visible
+ok 10 - @u wish and worldbook-bound user remain separate and missing binding is visible
+  ---
+  duration_ms: 4.18304
+  type: 'test'
+  ...
+# Subtest: native merged prompt replacement leaves user and tool history exact
+ok 11 - native merged prompt replacement leaves user and tool history exact
+  ---
+  duration_ms: 0.675237
+  type: 'test'
+  ...
+# Subtest: IndexedDB cold reopen and competing revision commit
+ok 12 - IndexedDB cold reopen and competing revision commit
+  ---
+  duration_ms: 11.408461
+  type: 'test'
+  ...
+# Subtest: new settings screen saves tag map without legacy configuration
+ok 13 - new settings screen saves tag map without legacy configuration
+  ---
+  duration_ms: 86.112719
+  type: 'test'
+  ...
+# Subtest: native host round trip binds once, compiles all slots, settles and resumes from saved state
+ok 14 - native host round trip binds once, compiles all slots, settles and resumes from saved state
+  ---
+  duration_ms: 1379.682399
+  type: 'test'
+  ...
+# Subtest: all scalar generation settings reach native settings, preserve connection and rollback failed saves
+ok 15 - all scalar generation settings reach native settings, preserve connection and rollback failed saves
+  ---
+  duration_ms: 1.287889
+  type: 'test'
+  ...
+# Subtest: a fork inherits the parent story binding and its own changes do not alter the parent
+ok 16 - a fork inherits the parent story binding and its own changes do not alter the parent
+  ---
+  duration_ms: 0.49799
+  type: 'test'
+  ...
+# Subtest: selected narrative settings replace the contract length and view, then custom body tags compile
+ok 17 - selected narrative settings replace the contract length and view, then custom body tags compile
+  ---
+  duration_ms: 2.12504
+  type: 'test'
+  ...
+# Subtest: Python expression syntax keeps lazy branches, membership, chained comparisons and list truth
+ok 18 - Python expression syntax keeps lazy branches, membership, chained comparisons and list truth
+  ---
+  duration_ms: 0.252831
+  type: 'test'
+  ...
+# Subtest: blank engine exposes creation fields and attaches character filters only to their character slot
+ok 19 - blank engine exposes creation fields and attaches character filters only to their character slot
+  ---
+  duration_ms: 33.656226
+  type: 'test'
+  ...
+# Subtest: bound identity is a custom prompt eligible for the native PromptManager
+ok 20 - bound identity is a custom prompt eligible for the native PromptManager
+  ---
+  duration_ms: 0.508196
+  type: 'test'
+  ...
+# Subtest: core library entries never enter native lore, including unselected enabled rows; unrelated books remain native
+ok 21 - core library entries never enter native lore, including unselected enabled rows; unrelated books remain native
+  ---
+  duration_ms: 1.271975
+  type: 'test'
+  ...
+# Subtest: listing does not write; role creation saves exact disabled entry and binds only this chat
+ok 22 - listing does not write; role creation saves exact disabled entry and binds only this chat
+  ---
+  duration_ms: 24.34606
+  type: 'test'
+  ...
+# Subtest: failed binding retains saved role; retry reuses it without creating a default or duplicate
+ok 23 - failed binding retains saved role; retry reuses it without creating a default or duplicate
+  ---
+  duration_ms: 1.551627
+  type: 'test'
+  ...
+# Subtest: original persona description enters only the wish; selected original wish preset remains exact
+ok 24 - original persona description enters only the wish; selected original wish preset remains exact
+  ---
+  duration_ms: 6.10208
+  type: 'test'
+  ...
+# Subtest: user identity contains original wishes and creates exact core book role through its visible controls
+ok 25 - user identity contains original wishes and creates exact core book role through its visible controls
+  ---
+  duration_ms: 80.359961
+  type: 'test'
+  ...
+# Subtest: native persona injection is disabled in the saved preset and relocated from depth or author note without changing history
+ok 26 - native persona injection is disabled in the saved preset and relocated from depth or author note without changing history
+  ---
+  duration_ms: 1.013336
+  type: 'test'
+  ...
+# Subtest: binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs
+ok 27 - binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs
+  ---
+  duration_ms: 6.223894
+  type: 'test'
+  ...
+# Subtest: legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback
+ok 28 - legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback
+  ---
+  duration_ms: 1.0296
+  type: 'test'
+  ...
+# Subtest: empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish
+ok 29 - empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish
+  ---
+  duration_ms: 38.036273
+  type: 'test'
+  ...
+# Subtest: base and optional wishes remain absent when the original description is empty and every module is off
+ok 30 - base and optional wishes remain absent when the original description is empty and every module is off
+  ---
+  duration_ms: 0.715217
+  type: 'test'
+  ...
+# Subtest: automatic core book preparation is idempotent and preserves existing global books and entries
+ok 31 - automatic core book preparation is idempotent and preserves existing global books and entries
+  ---
+  duration_ms: 1.106787
+  type: 'test'
+  ...
+# Subtest: preparation and selection never require or change native global worldbook activation
+ok 32 - preparation and selection never require or change native global worldbook activation
+  ---
+  duration_ms: 1.274098
+  type: 'test'
+  ...
+# Subtest: identity picker switches and persists through the real service; interrupted binding is recoverable on this page
+ok 33 - identity picker switches and persists through the real service; interrupted binding is recoverable on this page
+  ---
+  duration_ms: 88.971109
+  type: 'test'
+  ...
+# Subtest: unavailable worldbook service leaves persona switching usable and its error visible
+ok 34 - unavailable worldbook service leaves persona switching usable and its error visible
+  ---
+  duration_ms: 19.318409
+  type: 'test'
+  ...
+# Subtest: one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry
+ok 35 - one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry
+  ---
+  duration_ms: 44.518564
+  type: 'test'
+  ...
+# Subtest: identity page allows its own clean return and native-manager navigation
+ok 36 - identity page allows its own clean return and native-manager navigation
+  ---
+  duration_ms: 21.049696
+  type: 'test'
+  ...
+# Subtest: matrix rejects native MVU drift before final send: state
+ok 37 - matrix rejects native MVU drift before final send: state
+  ---
+  duration_ms: 300.290148
+  type: 'test'
+  ...
+# Subtest: matrix rejects native MVU drift before final send: disabled
+ok 38 - matrix rejects native MVU drift before final send: disabled
+  ---
+  duration_ms: 239.607768
+  type: 'test'
+  ...
+# Subtest: matrix rejects native MVU drift before final send: format
+ok 39 - matrix rejects native MVU drift before final send: format
+  ---
+  duration_ms: 246.485859
+  type: 'test'
+  ...
+# Subtest: matrix rejects native MVU drift before final send: new declaration
+ok 40 - matrix rejects native MVU drift before final send: new declaration
+  ---
+  duration_ms: 199.207439
+  type: 'test'
+  ...
+# Subtest: matrix accepts native copying unchanged variables to the new user floor
+ok 41 - matrix accepts native copying unchanged variables to the new user floor
+  ---
+  duration_ms: 210.800374
+  type: 'test'
+  ...
+# Subtest: matrix preserves native zero, false and empty values without executing updates
+ok 42 - matrix preserves native zero, false and empty values without executing updates
+  ---
+  duration_ms: 220.375944
+  type: 'test'
+  ...
+# Subtest: matrix removes only native MVU entries already captured in its material slot
+ok 43 - matrix removes only native MVU entries already captured in its material slot
+  ---
+  duration_ms: 253.20893
+  type: 'test'
+  ...
+# Subtest: packaged templates are empty parser-compatible drafts rather than a demo runtime
+ok 44 - packaged templates are empty parser-compatible drafts rather than a demo runtime
+  ---
+  duration_ms: 2.846817
+  type: 'test'
+  ...
+# Subtest: global template preparation appends missing entries and preserves user edits and activation
+ok 45 - global template preparation appends missing entries and preserves user edits and activation
+  ---
+  duration_ms: 4.875833
+  type: 'test'
+  ...
+# Subtest: duplicate builtin template names fail without replacing the existing book
+ok 46 - duplicate builtin template names fail without replacing the existing book
+  ---
+  duration_ms: 0.937372
+  type: 'test'
+  ...
+# Subtest: templates are available only to creation tasks and configured read failure stays visible
+ok 47 - templates are available only to creation tasks and configured read failure stays visible
+  ---
+  duration_ms: 1.34159
+  type: 'test'
+  ...
+# Subtest: editing the stable dossier UID preserves metadata and current phone runtime
+ok 48 - editing the stable dossier UID preserves metadata and current phone runtime
+  ---
+  duration_ms: 3.187871
+  type: 'test'
+  ...
+# Subtest: stale dossier snapshot and write-time race cannot overwrite another page
+ok 49 - stale dossier snapshot and write-time race cannot overwrite another page
+  ---
+  duration_ms: 1.657506
+  type: 'test'
+  ...
+# Subtest: dossier saved but chat-name sync failed reports the preserved partial save
+ok 50 - dossier saved but chat-name sync failed reports the preserved partial save
+  ---
+  duration_ms: 2.510951
+  type: 'test'
+  ...
+# Subtest: world selection and exact raw initialization profile are chat scoped and read only
+ok 51 - world selection and exact raw initialization profile are chat scoped and read only
+  ---
+  duration_ms: 2.683932
+  type: 'test'
+  ...
+# Subtest: normal identity projection strips initial values while preserving narrative and source
+ok 52 - normal identity projection strips initial values while preserving narrative and source
+  ---
+  duration_ms: 1.457806
+  type: 'test'
+  ...
+# Subtest: reference scan uses current native conditions, retains source UID and deduplicates without enabling
+ok 53 - reference scan uses current native conditions, retains source UID and deduplicates without enabling
+  ---
+  duration_ms: 1.769084
+  type: 'test'
+  ...
+# Subtest: reference scan guards before mutation and does not mask missing or duplicate source data
+ok 54 - reference scan guards before mutation and does not mask missing or duplicate source data
+  ---
+  duration_ms: 0.71077
+  type: 'test'
+  ...
+# Subtest: native exclusion removes the entire template book even when enabled and strips both seed types
+ok 55 - native exclusion removes the entire template book even when enabled and strips both seed types
+  ---
+  duration_ms: 0.206872
+  type: 'test'
+  ...
+# Subtest: legacy shared resource mount edits the original dossier and saves references without native persona UI
+ok 56 - legacy shared resource mount edits the original dossier and saves references without native persona UI
+  ---
+  duration_ms: 73.512794
+  type: 'test'
+  ...
+1..56
+# tests 56
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2236.924373

@@ -1,0 +1,8 @@
+{
+  "checked_utc": "2026-11-09T12:17:42.311029+00:00",
+  "compared_manifest": "final-validation/final-source-after-validation.json",
+  "compared_manifest_sha256": "90fe4b08aa2fc9f42f83510420ca6a23035d325931480e1e6432a5244b38a804",
+  "product_files": 1131,
+  "product_bytes_and_modes_unchanged": true,
+  "new_files_only": "docs/validation/phone-20261109 plus self-excluded PHONE-RESTORE.json"
+}

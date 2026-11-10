@@ -1,0 +1,84 @@
+{
+  "scope": "default plugin preset activation and new chat engine attachment",
+  "verified_utc": "2026-11-10T06:38:25Z",
+  "verified_beijing": "2026-11-10T14:38:25+08:00",
+  "window_start_utc": "2026-11-10T06:01:11Z",
+  "hard_deadline_utc": "2026-11-10T07:31:11Z",
+  "status": "implemented and isolated regression passed; root integration/persistence pending",
+  "tests": {
+    "activation_unit": {
+      "passed": 37,
+      "failed": 0,
+      "log": "activation-unit.log"
+    },
+    "activation_and_matrix": {
+      "passed": 161,
+      "failed": 0,
+      "log": "activation-and-matrix-final.log"
+    }
+  },
+  "changes": [
+    "Explicit startup activation selects Tisya through the existing protected native refresh, retaining connection and sampling settings.",
+    "Same-release saved prompt edits are selected without rewriting. Concurrent update cannot swallow a later activation request.",
+    "Current chat binds via a serialized, scoped ensureBound service. Existing states are not reset; missing or corrupt owned data reports a concrete failure.",
+    "New attachment marks existing visible history as baseline. A pending owner marker supports safe recovery after metadata/storage failures.",
+    "New chat openings enable the engine. Repeated ready calls in the same opening preserve a deliberate disable; switching away and back enables again.",
+    "No user identity or role is selected implicitly.",
+    "Preset startup failure and catalog failure support explicit retry without automatic retry loops.",
+    "ensureDatabase uses the same ensureBound owner and cannot turn missing saved data into a new blank state."
+  ],
+  "preserved_failures": [
+    {
+      "log": "activation-unit-initial-failure.log",
+      "finding": "Happy DOM fixture selectedOptions retained stale selection after changing value. Fixture now observes options[selectedIndex], matching selected value; no production fallback was added."
+    },
+    {
+      "log": "activation-and-matrix.log",
+      "finding": "A concurrent in-progress identity UI change declared const mode twice. Its owner fixed it; the subsequent full relevant suite passed."
+    }
+  ],
+  "validation_boundaries": [
+    "Node service and synthetic storage tests",
+    "Happy DOM preset tests",
+    "Actual Matrix host with catalog in isolated memory storage",
+    "No external model call",
+    "No target host installation or Android execution"
+  ],
+  "files": [
+    {
+      "path": "builtin-preset.js",
+      "bytes": 6838,
+      "sha256": "64695fda70998a5ceab9065868bbd379d3461b60c1a9cfb9ca73bc4be572aec9"
+    },
+    {
+      "path": "builtin-preset-controls.js",
+      "bytes": 4320,
+      "sha256": "14100747a5072de8fede3e182492f22220a26e615ced4d9589161c084a130869"
+    },
+    {
+      "path": "engine/controller.mjs",
+      "bytes": 20953,
+      "sha256": "9419a56c5797b81958faec3d91b0565d827fcedec4e4416f01b38ca1a16e41e8"
+    },
+    {
+      "path": "engine/host.mjs",
+      "bytes": 23420,
+      "sha256": "dfc984ba215203275f7a5670d06b3bf5638958a79bfdd0fc92e5825c23a89d08"
+    },
+    {
+      "path": "default-activation.js",
+      "bytes": 2229,
+      "sha256": "f1199fb5dd972fc7f13f7066bf3f4826c1f6e52da10bb83f809e74767a46fa59"
+    },
+    {
+      "path": "tests/default-activation.test.js",
+      "bytes": 13393,
+      "sha256": "e3e0e2e87cbc32a4b738d6c84d57a42a96de4ccea20fad62471f79b845868c27"
+    },
+    {
+      "path": "tests/builtin-preset.test.js",
+      "bytes": 15871,
+      "sha256": "7c7f5ad799e92fb5ba9682f986aff7042b3a630a23b8cd39295e2f7e0127232a"
+    }
+  ]
+}

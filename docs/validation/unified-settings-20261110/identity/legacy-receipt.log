@@ -1,0 +1,30 @@
+✔ packaged templates reference the unified schema and do not create independent phone states (1.189619ms)
+✔ complete native template book and readable field guide match runtime templates exactly (2.479257ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (2.269214ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.521706ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (0.984324ms)
+✔ creation reads an existing default template book before the identity page has configured it (0.347877ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (1.475223ms)
+✔ manual role creation never writes into the template book or adds implicit phone state (0.501736ms)
+✔ empty prefixed role name is rejected before creating an unreadable entry (0.256542ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (0.608484ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (0.75297ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (1.273904ms)
+✔ normal identity projection strips initial values while preserving narrative and source (0.693721ms)
+✔ reference scan uses current native conditions, retains source UID and deduplicates without enabling (0.848762ms)
+✔ reference scan guards before mutation and does not mask missing or duplicate source data (0.361137ms)
+✔ refreshing a natively selected reference retains the console opt-in scan order (0.396239ms)
+✔ native exclusion removes the entire template book even when enabled and strips both seed types (0.111586ms)
+✔ legacy shared resource mount edits the original dossier and saves references without native persona UI (40.609975ms)
+✔ legacy shared save retries a confirmed dossier write without duplicating it after chat-name sync failure (11.843691ms)
+✔ legacy resource-only mount can stage and save a different existing role in the current chat (8.551656ms)
+✔ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (16.450952ms)
+✔ failed source-book switch restores the editor source and cross-chat save is blocked (48.337204ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 341.635313

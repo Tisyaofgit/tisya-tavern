@@ -58559,6 +58559,4167 @@
           "legacy_source_description": "仅拿到引用身份时标记真，不得据此声称读过完整内容。"
         }
       ]
+    },
+    {
+      "id": "X_PHONE_BINDINGS",
+      "phone_internal": true,
+      "label": "手机表单视图绑定",
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "context_key",
+          "label": "context_key",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "revision",
+          "label": "revision",
+          "type": "INTEGER"
+        },
+        {
+          "key": "layout",
+          "label": "layout",
+          "type": "JSON"
+        },
+        {
+          "key": "archive_digest",
+          "label": "archive_digest",
+          "type": "TEXT"
+        },
+        {
+          "key": "migration_source",
+          "label": "migration_source",
+          "type": "JSON"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "T_PREF_EXTENSION_PRESENTATION",
+      "label": "扩展排版与来源偏好",
+      "partition": "IV",
+      "sheet": "偏好与演出",
+      "purpose": "关联既有输出配置。只保存启用、排版来源、材料来源与条数偏好；不另存运行事实。",
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "稳定记录ID",
+          "type": "ID",
+          "required": true
+        },
+        {
+          "key": "output_config_ref",
+          "label": "所属输出配置",
+          "type": "REF",
+          "required": false,
+          "ref": "T_PREF_OUTPUT_CONFIG"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF",
+          "required": false,
+          "ref": "T_STATIC_WORLDS"
+        },
+        {
+          "key": "view_id",
+          "label": "显示区域",
+          "type": "ENUM",
+          "required": true,
+          "enum": [
+            "danmaku",
+            "rumor",
+            "notice",
+            "settlement",
+            "messages",
+            "theater",
+            "forum",
+            "news"
+          ]
+        },
+        {
+          "key": "enabled",
+          "label": "启用",
+          "type": "BOOLEAN",
+          "required": false
+        },
+        {
+          "key": "enabled_kinds",
+          "label": "允许内容类型",
+          "type": "TEXT_LIST",
+          "required": false
+        },
+        {
+          "key": "style_book",
+          "label": "画风来源书",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "style_uid",
+          "label": "画风条目ID",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "style_digest",
+          "label": "画风内容摘要",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "extension_book",
+          "label": "扩展定义来源书",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "extension_uid",
+          "label": "扩展定义条目ID",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "extension_digest",
+          "label": "扩展定义内容摘要",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "world_sources",
+          "label": "世界材料来源",
+          "type": "ARRAY",
+          "required": false,
+          "description": "明确选择的书定义或表单记录引用；选择本身不授予读取权限。"
+        },
+        {
+          "key": "audience_sources",
+          "label": "观众材料来源",
+          "type": "ARRAY",
+          "required": false,
+          "description": "观众身份/可知材料的引用；模板不等于已经存在或已经知情的角色。"
+        },
+        {
+          "key": "audience_kind",
+          "label": "观众本体类型",
+          "type": "ENUM",
+          "required": false,
+          "enum": [
+            "world_fans",
+            "higher_dimensional",
+            "mixed",
+            "none"
+          ],
+          "description": "本世界观众、高维观众、混合或无；未填保持未知，不默认全知或虚构在线人数。"
+        },
+        {
+          "key": "generate_count",
+          "label": "每轮生成目标条数",
+          "type": "INTEGER",
+          "required": false,
+          "description": "0表示本轮不生成；未知留空，不套默认。"
+        },
+        {
+          "key": "display_limit",
+          "label": "最多显示条数",
+          "type": "INTEGER",
+          "required": false,
+          "description": "0表示不显示；此值不会删除或改写已存历史。"
+        },
+        {
+          "key": "topic_preferences",
+          "label": "主题偏好",
+          "type": "ARRAY",
+          "required": false,
+          "description": "[{topic,mode:prefer|avoid,weight:0..1}]；偏好不是世界事实。"
+        }
+      ],
+      "parent_table": "T_PREF_OUTPUT_CONFIG",
+      "parent_field": "output_config_ref",
+      "common_fields_access": "by_common_contract"
+    },
+    {
+      "id": "T_DYN_MESSAGE_CONTENT",
+      "label": "消息内容与附件引用",
+      "partition": "III",
+      "sheet": "宿主与投影",
+      "purpose": "消息内容的关联子模板；转账和媒体只引用既有记录，不复制账本或原件。",
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "稳定记录ID",
+          "type": "ID",
+          "required": true
+        },
+        {
+          "key": "parent_item_ref",
+          "label": "所属网络条目",
+          "type": "REF",
+          "required": false,
+          "ref": "X_NETWORK_ITEMS"
+        },
+        {
+          "key": "kind",
+          "label": "内容类型",
+          "type": "ENUM",
+          "required": true,
+          "enum": [
+            "text",
+            "transfer",
+            "voice",
+            "image",
+            "news"
+          ]
+        },
+        {
+          "key": "title",
+          "label": "标题",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "text",
+          "label": "正文或语音文稿",
+          "type": "LONG_TEXT",
+          "required": false
+        },
+        {
+          "key": "sender_ref",
+          "label": "发出主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "recipient_ref",
+          "label": "接收主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "media_ref",
+          "label": "媒体记录",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_MEDIA_ASSETS"
+        },
+        {
+          "key": "transfer_ref",
+          "label": "转账记录",
+          "type": "REF",
+          "required": false,
+          "ref": "X_FIN_TRANSACTIONS"
+        },
+        {
+          "key": "source_label",
+          "label": "来源名称",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "source_url",
+          "label": "来源地址",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "story_time",
+          "label": "故事时间文字",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "ENUM",
+          "required": false,
+          "enum": [
+            "public",
+            "private"
+          ]
+        },
+        {
+          "key": "owner_ref",
+          "label": "归属主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "audience_refs",
+          "label": "明确可读主体",
+          "type": "REF_LIST",
+          "required": false
+        }
+      ],
+      "parent_table": "X_NETWORK_ITEMS",
+      "parent_field": "parent_item_ref",
+      "common_fields_access": "by_common_contract"
+    },
+    {
+      "id": "T_DYN_EXTENSION_BLOCKS",
+      "label": "扩展内容区块",
+      "partition": "III",
+      "sheet": "宿主与投影",
+      "purpose": "已接纳的小剧场、论坛或弹幕区块；书仅保存定义。",
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "稳定记录ID",
+          "type": "ID",
+          "required": true
+        },
+        {
+          "key": "kind",
+          "label": "区块类型",
+          "type": "ENUM",
+          "required": true,
+          "enum": [
+            "forum",
+            "danmaku",
+            "theater",
+            "notice",
+            "rumor",
+            "settlement"
+          ]
+        },
+        {
+          "key": "title",
+          "label": "标题",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "text",
+          "label": "区块说明",
+          "type": "LONG_TEXT",
+          "required": false
+        },
+        {
+          "key": "story_time",
+          "label": "故事时间文字",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "preference_ref",
+          "label": "来源偏好",
+          "type": "REF",
+          "required": false,
+          "ref": "T_PREF_EXTENSION_PRESENTATION"
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "ENUM",
+          "required": false,
+          "enum": [
+            "public",
+            "private"
+          ]
+        },
+        {
+          "key": "owner_ref",
+          "label": "归属主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "audience_refs",
+          "label": "明确可读主体",
+          "type": "REF_LIST",
+          "required": false
+        }
+      ],
+      "common_fields_access": "by_common_contract"
+    },
+    {
+      "id": "T_DYN_EXTENSION_ITEMS",
+      "label": "扩展内容条目",
+      "partition": "III",
+      "sheet": "宿主与投影",
+      "purpose": "关联区块的单条发言，稳定楼层和删除状态来自记录。",
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "稳定记录ID",
+          "type": "ID",
+          "required": true
+        },
+        {
+          "key": "block_ref",
+          "label": "所属区块",
+          "type": "REF",
+          "required": true,
+          "ref": "T_DYN_EXTENSION_BLOCKS"
+        },
+        {
+          "key": "floor",
+          "label": "稳定楼层",
+          "type": "INTEGER",
+          "required": false
+        },
+        {
+          "key": "author_ref",
+          "label": "发言主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "LONG_TEXT",
+          "required": false
+        },
+        {
+          "key": "quote_floor",
+          "label": "引用楼层",
+          "type": "INTEGER",
+          "required": false
+        },
+        {
+          "key": "at_seconds",
+          "label": "媒体时间秒",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "key": "story_time",
+          "label": "故事时间文字",
+          "type": "TEXT",
+          "required": false
+        },
+        {
+          "key": "deleted",
+          "label": "已删除",
+          "type": "BOOLEAN",
+          "required": false
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "ENUM",
+          "required": false,
+          "enum": [
+            "public",
+            "private"
+          ]
+        },
+        {
+          "key": "owner_ref",
+          "label": "归属主体",
+          "type": "REF",
+          "required": false,
+          "ref": "T_SYS_ENTITIES"
+        },
+        {
+          "key": "audience_refs",
+          "label": "明确可读主体",
+          "type": "REF_LIST",
+          "required": false
+        }
+      ],
+      "parent_table": "T_DYN_EXTENSION_BLOCKS",
+      "parent_field": "block_ref",
+      "common_fields_access": "by_common_contract"
+    },
+    {
+      "id": "X_PHONE_WORLD_CONFIG",
+      "label": "世界手机设置",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "apps",
+          "label": "启用应用",
+          "type": "ARRAY"
+        },
+        {
+          "key": "appNames",
+          "label": "应用显示名称",
+          "type": "JSON"
+        },
+        {
+          "key": "currency_ref",
+          "label": "货币资产原点",
+          "type": "REF"
+        },
+        {
+          "key": "currency_symbol",
+          "label": "货币符号",
+          "type": "TEXT"
+        },
+        {
+          "key": "currency_minor_units",
+          "label": "货币小数位",
+          "type": "INTEGER"
+        },
+        {
+          "key": "delivery_shop",
+          "label": "商城配送费",
+          "type": "INTEGER"
+        },
+        {
+          "key": "delivery_food",
+          "label": "外卖配送费",
+          "type": "INTEGER"
+        },
+        {
+          "key": "theme_background",
+          "label": "背景色",
+          "type": "TEXT"
+        },
+        {
+          "key": "theme_panel",
+          "label": "面板色",
+          "type": "TEXT"
+        },
+        {
+          "key": "theme_text",
+          "label": "文字色",
+          "type": "TEXT"
+        },
+        {
+          "key": "theme_accent",
+          "label": "强调色",
+          "type": "TEXT"
+        },
+        {
+          "key": "theme_radius",
+          "label": "圆角",
+          "type": "INTEGER"
+        },
+        {
+          "key": "format",
+          "label": "format",
+          "type": "TEXT"
+        },
+        {
+          "key": "phoneEpoch",
+          "label": "phoneEpoch",
+          "type": "TEXT"
+        },
+        {
+          "key": "settlementOwner",
+          "label": "settlementOwner",
+          "type": "TEXT"
+        },
+        {
+          "key": "travel",
+          "label": "travel",
+          "type": "JSON"
+        },
+        {
+          "key": "sourceDigest",
+          "label": "sourceDigest",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_ACCOUNTS",
+      "label": "资金账户",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "balance_ref",
+          "label": "余额原点",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_CREDIT_CARDS",
+      "label": "信用卡",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "enabled",
+          "label": "启用",
+          "type": "BOOLEAN"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "limit",
+          "label": "信用额度",
+          "type": "INTEGER"
+        },
+        {
+          "key": "refundBalance",
+          "label": "溢缴款",
+          "type": "INTEGER"
+        },
+        {
+          "key": "billDay",
+          "label": "账单日",
+          "type": "INTEGER"
+        },
+        {
+          "key": "dueDay",
+          "label": "还款日",
+          "type": "INTEGER"
+        },
+        {
+          "key": "debt_ref",
+          "label": "负债原点",
+          "type": "REF"
+        },
+        {
+          "key": "used",
+          "label": "used",
+          "type": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_CREDIT_CHARGES",
+      "label": "信用消费明细",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "orderId",
+          "label": "订单编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "amount",
+          "label": "金额（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "originalDebt",
+          "label": "originalDebt",
+          "type": "INTEGER"
+        },
+        {
+          "key": "remaining",
+          "label": "remaining",
+          "type": "INTEGER"
+        },
+        {
+          "key": "paid",
+          "label": "已还金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "refunded",
+          "label": "已退款金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "prepaid",
+          "label": "预付金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "statementAt",
+          "label": "出账故事分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "dueAt",
+          "label": "到期故事分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_CREDIT_STATEMENTS",
+      "label": "信用卡账单",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "statementAt",
+          "label": "出账故事分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "dueAt",
+          "label": "到期故事分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "total",
+          "label": "合计金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "remaining",
+          "label": "remaining",
+          "type": "INTEGER"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_LOANS",
+      "label": "贷款合同",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "amount",
+          "label": "金额（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "months",
+          "label": "分期期数",
+          "type": "INTEGER"
+        },
+        {
+          "key": "apr",
+          "label": "年化利率",
+          "type": "NUMBER"
+        },
+        {
+          "key": "annualRateBps",
+          "label": "年化利率基点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "periodDays",
+          "label": "每期故事天数",
+          "type": "INTEGER"
+        },
+        {
+          "key": "periodsPerYear",
+          "label": "每年计息期数",
+          "type": "INTEGER"
+        },
+        {
+          "key": "totalInterest",
+          "label": "总利息",
+          "type": "INTEGER"
+        },
+        {
+          "key": "totalPayable",
+          "label": "总应还金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "monthlyPayment",
+          "label": "首期应还金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "quoteId",
+          "label": "已确认报价",
+          "type": "TEXT"
+        },
+        {
+          "key": "paid",
+          "label": "已还金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "accountId",
+          "label": "账户编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "debt_ref",
+          "label": "负债原点",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_LOAN_INSTALLMENTS",
+      "label": "贷款分期",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "number",
+          "label": "期号",
+          "type": "INTEGER"
+        },
+        {
+          "key": "principal",
+          "label": "本金（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "interest",
+          "label": "利息（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "amount",
+          "label": "金额（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "paid",
+          "label": "已还金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "dueAt",
+          "label": "到期故事分钟",
+          "type": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_INVESTMENTS",
+      "label": "理财持仓",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "productId",
+          "label": "商品或产品编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "principal",
+          "label": "本金（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "accrued",
+          "label": "已结算收益",
+          "type": "INTEGER"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "settledAt",
+          "label": "结算时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "redeemedAt",
+          "label": "赎回时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_INVESTMENT_PRODUCTS",
+      "label": "理财产品定义",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "annualRateBps",
+          "label": "年化利率基点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "risk",
+          "label": "风险说明",
+          "type": "TEXT"
+        },
+        {
+          "key": "liquidity",
+          "label": "赎回规则",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_FIN_TRANSACTIONS",
+      "label": "资金流水",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "type",
+          "label": "业务类型",
+          "type": "TEXT"
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "TEXT"
+        },
+        {
+          "key": "amount",
+          "label": "金额（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "accountId",
+          "label": "账户编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "to",
+          "label": "收款对象",
+          "type": "TEXT"
+        },
+        {
+          "key": "orderId",
+          "label": "订单编号",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_SHOP_ORDERS",
+      "label": "购物与外卖订单",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        },
+        {
+          "key": "subtotal",
+          "label": "商品小计",
+          "type": "INTEGER"
+        },
+        {
+          "key": "deliveryFee",
+          "label": "配送费",
+          "type": "INTEGER"
+        },
+        {
+          "key": "total",
+          "label": "合计金额",
+          "type": "INTEGER"
+        },
+        {
+          "key": "payment",
+          "label": "付款方式",
+          "type": "TEXT"
+        },
+        {
+          "key": "accountId",
+          "label": "账户编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "placeId",
+          "label": "地点编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "note",
+          "label": "备注",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "updatedAt",
+          "label": "更新时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "refunded",
+          "label": "已退款金额",
+          "type": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "X_SHOP_ORDER_ITEMS",
+      "label": "订单商品明细",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "productId",
+          "label": "商品或产品编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "qty",
+          "label": "数量",
+          "type": "INTEGER"
+        },
+        {
+          "key": "price",
+          "label": "单价（最小单位）",
+          "type": "INTEGER"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_SHOP_CART_ITEMS",
+      "label": "购物车条目",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "productId",
+          "label": "商品或产品编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "qty",
+          "label": "数量",
+          "type": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "X_SHOP_PRODUCT_DETAILS",
+      "label": "商城商品扩展",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "shopId",
+          "label": "shopId",
+          "type": "JSON"
+        },
+        {
+          "key": "placeId",
+          "label": "地点编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "image",
+          "label": "image",
+          "type": "TEXT"
+        },
+        {
+          "key": "tags",
+          "label": "tags",
+          "type": "ARRAY"
+        }
+      ]
+    },
+    {
+      "id": "X_HOLDING_DETAILS",
+      "label": "持有物扩展",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_ACCOUNTS",
+      "label": "网络账号",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "owned",
+          "label": "本人账号",
+          "type": "BOOLEAN"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "handle",
+          "label": "账号标识",
+          "type": "TEXT"
+        },
+        {
+          "key": "personId",
+          "label": "人物编号",
+          "type": "REF"
+        },
+        {
+          "key": "bio",
+          "label": "简介",
+          "type": "TEXT"
+        },
+        {
+          "key": "color",
+          "label": "账号颜色",
+          "type": "TEXT"
+        },
+        {
+          "key": "label",
+          "label": "标签",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_POSTS",
+      "label": "微博帖子",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "authorId",
+          "label": "作者账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "TEXT"
+        },
+        {
+          "key": "mediaIds",
+          "label": "引用相片",
+          "type": "ARRAY"
+        },
+        {
+          "key": "mediaGrants",
+          "label": "本条公开授权",
+          "type": "ARRAY"
+        },
+        {
+          "key": "repostOf",
+          "label": "转发来源",
+          "type": "TEXT"
+        },
+        {
+          "key": "songId",
+          "label": "引用歌曲",
+          "type": "TEXT"
+        },
+        {
+          "key": "likesBase",
+          "label": "已知初始点赞数",
+          "type": "INTEGER"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "JSON"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_COMMENTS",
+      "label": "微博评论",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "postId",
+          "label": "所属帖子",
+          "type": "TEXT"
+        },
+        {
+          "key": "authorId",
+          "label": "作者账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "JSON"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_NOTIFICATIONS",
+      "label": "社交通知",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_OUTBOX",
+      "label": "待发社交操作",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_MEDIA_PHOTOS",
+      "label": "相片与可见范围",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "ownerId",
+          "label": "所属人物或账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "TEXT"
+        },
+        {
+          "key": "source",
+          "label": "原件来源",
+          "type": "TEXT"
+        },
+        {
+          "key": "art",
+          "label": "插画",
+          "type": "TEXT"
+        },
+        {
+          "key": "mime",
+          "label": "媒体格式",
+          "type": "TEXT"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "JSON"
+        }
+      ]
+    },
+    {
+      "id": "X_MEDIA_SONGS",
+      "label": "歌曲资料",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "title",
+          "label": "标题",
+          "type": "TEXT"
+        },
+        {
+          "key": "artist",
+          "label": "作者",
+          "type": "TEXT"
+        },
+        {
+          "key": "album",
+          "label": "专辑",
+          "type": "TEXT"
+        },
+        {
+          "key": "cover",
+          "label": "封面",
+          "type": "TEXT"
+        },
+        {
+          "key": "audioId",
+          "label": "音源原件",
+          "type": "TEXT"
+        },
+        {
+          "key": "duration",
+          "label": "时长",
+          "type": "NUMBER"
+        }
+      ]
+    },
+    {
+      "id": "X_MEDIA_PLAYLISTS",
+      "label": "歌单",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "songIds",
+          "label": "歌曲清单",
+          "type": "ARRAY"
+        }
+      ]
+    },
+    {
+      "id": "X_CALENDAR_EVENTS",
+      "label": "日程与邀请",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "title",
+          "label": "标题",
+          "type": "TEXT"
+        },
+        {
+          "key": "day",
+          "label": "故事日期",
+          "type": "INTEGER"
+        },
+        {
+          "key": "minute",
+          "label": "当日分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "placeId",
+          "label": "地点编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "participantId",
+          "label": "邀请对象",
+          "type": "TEXT"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        },
+        {
+          "key": "notified",
+          "label": "已提醒",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "X_PLACE_MAP_POINTS",
+      "label": "地图已知地点",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "x",
+          "label": "横坐标",
+          "type": "NUMBER"
+        },
+        {
+          "key": "y",
+          "label": "纵坐标",
+          "type": "NUMBER"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        },
+        {
+          "key": "known",
+          "label": "当前已知",
+          "type": "BOOLEAN"
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_JOURNEY_DETAILS",
+      "label": "出行进度",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_SOCIAL_CONTACTS",
+      "label": "手机联系人",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_NETWORK_DOCUMENTS",
+      "label": "网络页面",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        },
+        {
+          "key": "title",
+          "label": "标题",
+          "type": "TEXT"
+        },
+        {
+          "key": "author",
+          "label": "作者账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "TEXT"
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "TEXT"
+        },
+        {
+          "key": "audience",
+          "label": "可见对象",
+          "type": "ARRAY"
+        },
+        {
+          "key": "meta",
+          "label": "页面结构参数",
+          "type": "JSON"
+        }
+      ]
+    },
+    {
+      "id": "X_NETWORK_ITEMS",
+      "label": "网络消息与条目",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "floor",
+          "label": "楼层",
+          "type": "INTEGER"
+        },
+        {
+          "key": "by",
+          "label": "发言账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "author",
+          "label": "作者账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "LONG_TEXT"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_NETWORK_ACCOUNTS",
+      "label": "网络页面账号",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "name",
+          "label": "名称",
+          "type": "TEXT"
+        },
+        {
+          "key": "role",
+          "label": "role",
+          "type": "TEXT"
+        },
+        {
+          "key": "personId",
+          "label": "人物编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "platform",
+          "label": "platform",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_ACTIONS",
+      "label": "X_PHONE_ACTIONS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        },
+        {
+          "key": "bindingKey",
+          "label": "bindingKey",
+          "type": "TEXT"
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "TEXT"
+        },
+        {
+          "key": "status",
+          "label": "当前状态",
+          "type": "TEXT"
+        },
+        {
+          "key": "createdAt",
+          "label": "建立时点",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_REQUESTS",
+      "label": "X_PHONE_REQUESTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_FRAMES",
+      "label": "X_PHONE_FRAMES",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_EVENTS",
+      "label": "X_PHONE_LIFE_EVENTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "dictionary_key",
+          "label": "稳定索引",
+          "type": "TEXT"
+        },
+        {
+          "key": "collection_ref",
+          "label": "所属集合",
+          "type": "TEXT"
+        },
+        {
+          "key": "parent_ref",
+          "label": "上级记录",
+          "type": "REF"
+        },
+        {
+          "key": "collection_field",
+          "label": "关联栏目",
+          "type": "TEXT"
+        },
+        {
+          "key": "ordinal",
+          "label": "显示顺序",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "snapshot",
+          "label": "snapshot",
+          "type": "JSON"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_SESSION",
+      "label": "X_PHONE_SESSION",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "format",
+          "label": "format",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "contextKey",
+          "label": "contextKey",
+          "type": "TEXT"
+        },
+        {
+          "key": "revision",
+          "label": "revision",
+          "type": "INTEGER"
+        },
+        {
+          "key": "selectedSources",
+          "label": "selectedSources",
+          "type": "ARRAY"
+        },
+        {
+          "key": "notifications",
+          "label": "notifications",
+          "type": "ARRAY"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_SUITE",
+      "label": "X_PHONE_SUITE",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "format",
+          "label": "format",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "activeBranch",
+          "label": "activeBranch",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_NETWORK_SEEDS",
+      "label": "X_NETWORK_SEEDS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "snapshot",
+          "label": "snapshot",
+          "type": "JSON"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_SUITE_BRANCHES",
+      "label": "X_PHONE_SUITE_BRANCHES",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "envelopes",
+          "label": "envelopes",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "parent",
+          "label": "parent",
+          "type": "JSON"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_NETWORK_ENVELOPES",
+      "label": "X_NETWORK_ENVELOPES",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "snapshot",
+          "label": "snapshot",
+          "type": "JSON"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_SUITE_RECEIPTS",
+      "label": "X_PHONE_SUITE_RECEIPTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "phone-life-init:id-1",
+          "label": "phone-life-init:id-1",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "phone-database:91632ff0b0dfec8234a437bd31b81586401574c13d68f13579bdd51ee9d464dc",
+          "label": "phone-database:91632ff0b0dfec8234a437bd31b81586401574c13d68f13579bdd51ee9d464dc",
+          "type": "TEXT"
+        },
+        {
+          "key": "phone-life:schema-cart",
+          "label": "phone-life:schema-cart",
+          "type": "TEXT"
+        },
+        {
+          "key": "phone-database:02296f572e93e67c69ca130324051a305cd19c08e972087238e484869f0a3586",
+          "label": "phone-database:02296f572e93e67c69ca130324051a305cd19c08e972087238e484869f0a3586",
+          "type": "TEXT"
+        },
+        {
+          "key": "phone-life:schema-pay",
+          "label": "phone-life:schema-pay",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_INITIAL_SNAPSHOTS",
+      "label": "X_PHONE_INITIAL_SNAPSHOTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "snapshot",
+          "label": "snapshot",
+          "type": "JSON"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE",
+      "label": "X_PHONE_LIFE",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "format",
+          "label": "format",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "bindingKey",
+          "label": "bindingKey",
+          "type": "TEXT"
+        },
+        {
+          "key": "mediaOriginContextKey",
+          "label": "mediaOriginContextKey",
+          "type": "TEXT"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_BINDING_WORLD",
+      "label": "X_PHONE_LIFE_BINDING_WORLD",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "book",
+          "label": "book",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "uid",
+          "label": "uid",
+          "type": "JSON"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_BINDING_CHARACTER",
+      "label": "X_PHONE_LIFE_BINDING_CHARACTER",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "book",
+          "label": "book",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "uid",
+          "label": "uid",
+          "type": "JSON"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_WORLD_ECONOMY",
+      "label": "X_PHONE_LIFE_WORLD_ECONOMY",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "loan",
+          "label": "loan",
+          "type": "JSON"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_INITIALIZATION",
+      "label": "X_PHONE_LIFE_INITIALIZATION",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "digest",
+          "label": "digest",
+          "type": "TEXT"
+        },
+        {
+          "key": "worldDigest",
+          "label": "worldDigest",
+          "type": "TEXT"
+        },
+        {
+          "key": "characterDigest",
+          "label": "characterDigest",
+          "type": "TEXT"
+        },
+        {
+          "key": "subjectId",
+          "label": "subjectId",
+          "type": "TEXT"
+        },
+        {
+          "key": "worldId",
+          "label": "worldId",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE",
+      "label": "X_PHONE_LIFE_STATE",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "schema",
+          "label": "schema",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "revision",
+          "label": "revision",
+          "type": "INTEGER"
+        },
+        {
+          "key": "seq",
+          "label": "seq",
+          "type": "INTEGER"
+        },
+        {
+          "key": "applied",
+          "label": "applied",
+          "type": "ARRAY"
+        },
+        {
+          "key": "audit",
+          "label": "audit",
+          "type": "ARRAY"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_CONFIG",
+      "label": "X_PHONE_LIFE_STATE_CONFIG",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "epoch",
+          "label": "epoch",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "timezoneOffsetMinutes",
+          "label": "timezoneOffsetMinutes",
+          "type": "INTEGER"
+        },
+        {
+          "key": "subjectId",
+          "label": "subjectId",
+          "type": "TEXT"
+        },
+        {
+          "key": "demo",
+          "label": "demo",
+          "type": "BOOLEAN"
+        },
+        {
+          "key": "database",
+          "label": "database",
+          "type": "BOOLEAN"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_CLOCK",
+      "label": "X_PHONE_LIFE_STATE_CLOCK",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "year",
+          "label": "year",
+          "type": "INTEGER"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "month",
+          "label": "month",
+          "type": "INTEGER"
+        },
+        {
+          "key": "day",
+          "label": "故事日期",
+          "type": "INTEGER"
+        },
+        {
+          "key": "minute",
+          "label": "当日分钟",
+          "type": "INTEGER"
+        },
+        {
+          "key": "totalMinutes",
+          "label": "totalMinutes",
+          "type": "INTEGER"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_WALLET",
+      "label": "X_PHONE_LIFE_STATE_WALLET",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "defaultAccountId",
+          "label": "defaultAccountId",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "fundingAccountId",
+          "label": "fundingAccountId",
+          "type": "TEXT"
+        },
+        {
+          "key": "external",
+          "label": "external",
+          "type": "INTEGER"
+        },
+        {
+          "key": "initialNet",
+          "label": "initialNet",
+          "type": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_MAP",
+      "label": "X_PHONE_LIFE_STATE_MAP",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "journey",
+          "label": "journey",
+          "type": "JSON"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "ownedAccountIds",
+          "label": "ownedAccountIds",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "ownerPersonId",
+          "label": "ownerPersonId",
+          "type": "TEXT"
+        },
+        {
+          "key": "activeAccountId",
+          "label": "activeAccountId",
+          "type": "TEXT"
+        },
+        {
+          "key": "accidentalLikes",
+          "label": "accidentalLikes",
+          "type": "BOOLEAN"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL_DRAFTS",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL_DRAFTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "text",
+          "label": "正文",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL_FOLLOWS",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL_FOLLOWS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "me",
+          "label": "me",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL_LIKES",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL_LIKES",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "me",
+          "label": "me",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL_BOOKMARKS",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL_BOOKMARKS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "me",
+          "label": "me",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_SOCIAL_ACCEPTEDLIKES",
+      "label": "X_PHONE_LIFE_STATE_SOCIAL_ACCEPTEDLIKES",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "me",
+          "label": "me",
+          "type": "ARRAY"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_MEDIA",
+      "label": "X_PHONE_LIFE_STATE_MEDIA",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "ownerId",
+          "label": "所属人物或账号",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "favoritePhotos",
+          "label": "favoritePhotos",
+          "type": "ARRAY"
+        },
+        {
+          "key": "favoriteSongs",
+          "label": "favoriteSongs",
+          "type": "ARRAY"
+        }
+      ]
+    },
+    {
+      "id": "X_PHONE_ACTIONS_LIFEACTION",
+      "label": "X_PHONE_ACTIONS_LIFEACTION",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "type",
+          "label": "业务类型",
+          "type": "TEXT"
+        },
+        {
+          "key": "productId",
+          "label": "商品或产品编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "label": "类别",
+          "type": "TEXT"
+        },
+        {
+          "key": "payment",
+          "label": "付款方式",
+          "type": "TEXT"
+        },
+        {
+          "key": "placeId",
+          "label": "地点编号",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_AUDIT",
+      "label": "X_PHONE_LIFE_STATE_AUDIT",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "id",
+          "label": "业务编号",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "INTEGER"
+        },
+        {
+          "key": "type",
+          "label": "业务类型",
+          "type": "TEXT"
+        },
+        {
+          "key": "message",
+          "label": "message",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_RECEIPTS",
+      "label": "X_PHONE_LIFE_STATE_RECEIPTS",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "fingerprint",
+          "label": "fingerprint",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "at",
+          "label": "故事时点",
+          "type": "INTEGER"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_RECEIPTS_RESULT",
+      "label": "X_PHONE_LIFE_STATE_RECEIPTS_RESULT",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "message",
+          "label": "message",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "orderId",
+          "label": "订单编号",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
+    },
+    {
+      "id": "X_PHONE_LIFE_STATE_RECEIPTS_RESULT_NAVIGATE",
+      "label": "X_PHONE_LIFE_STATE_RECEIPTS_RESULT_NAVIGATE",
+      "phone_internal": true,
+      "fields": [
+        {
+          "key": "row_uuid",
+          "label": "row_uuid",
+          "type": "ID"
+        },
+        {
+          "key": "app",
+          "label": "app",
+          "type": "TEXT"
+        },
+        {
+          "key": "world_ref",
+          "label": "所属世界",
+          "type": "REF"
+        },
+        {
+          "key": "owner_ref",
+          "label": "所属主体",
+          "type": "REF"
+        },
+        {
+          "key": "tab",
+          "label": "tab",
+          "type": "TEXT"
+        },
+        {
+          "key": "detail",
+          "label": "detail",
+          "type": "TEXT"
+        }
+      ],
+      "program_owned": true,
+      "prompt_omit": true
     }
   ],
   "common_fields": [

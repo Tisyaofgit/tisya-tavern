@@ -1,0 +1,13 @@
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (9.456796ms)
+✔ stale draft cannot overwrite a concurrently edited form (2.206043ms)
+✔ generation changes no records on malformed response and retains raw evidence (0.386001ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.55827ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.4512ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 106.269159

@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-09T14:16:02.698Z",
+  "passed": true,
+  "rendered": 32,
+  "realCoreActions": 9,
+  "coverage": [
+    "pure rendering",
+    "all five apps and finance subpages",
+    "actual root form parser",
+    "loan quote and acceptance",
+    "credit checkout and repayment",
+    "investment buy",
+    "calendar time and invitation",
+    "map browse/depart/arrive distinction",
+    "month rollover",
+    "dynamic label escaping"
+  ],
+  "files": {
+    "utility-views.mjs": "06f59a8d9b8052c401f1a59ab8ad2b0b2175b85ddab7291bb4cb2f10a39c4e59",
+    "utility.css": "5026d06841c7a884f530590662fbabe32ea5cf2b9f8b9ec47ad7f3c63601bafb"
+  }
+}

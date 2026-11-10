@@ -1,0 +1,10 @@
+{
+  "recorded_utc": "2026-11-10T06:13:40.069442+00:00",
+  "passed": false,
+  "phase": "open-local-test-page",
+  "checks": [],
+  "tool": "shared cloud browser",
+  "error": "Browser Use rejected this action due to browser security policy. The requested URL protocol is not allowed. Allowed protocols: http:, https:.",
+  "attempted_url": "file:///workspace/scratch/cbf451dcd23c/control/browser-check/compare.html",
+  "boundary": "Browser tab opened about:blank, but local fixture navigation was blocked. No alternate protocol or indirect route attempted. No geometry or scrolling result."
+}

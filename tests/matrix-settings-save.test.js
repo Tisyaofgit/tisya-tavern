@@ -98,3 +98,21 @@ test('external navigation is guarded once and remains permitted to its own clean
   const second=button(f.root,'用户身份').onclick();await tick();await button(f.root,'保存并切换').onclick();assert.equal(await second,true);assert.equal(visited,1);assert.equal(f.config.read().tags.body,'externalroute');assert.equal(await f.view.confirmLeave(),true);
  }finally{await f.close();}
 });
+
+
+test('bound forms retire the repeated manual attach action and retain archive operations',async()=>{
+ const f=await fixture();try{
+  await button(f.root,'表单与存档').onclick();
+  assert.equal([...f.root.querySelectorAll('button')].some(node=>node.textContent==='接入本会话'||node.textContent==='重试接入当前聊天'),false);
+  assert(button(f.root,'同步回合'));assert(button(f.root,'导出完整存档'));assert(button(f.root,'导入已有新版状态'));
+ }finally{await f.close();}
+});
+
+test('an interrupted automatic attach retries the same ensureBound service instead of initialization',async()=>{
+ const f=await fixture();try{
+  const read=f.service.export;let attached=false,ensured=0,initialized=0;
+  f.service.export=()=>attached?read():Promise.resolve(null);f.service.ensureBound=async()=>{ensured++;attached=true;};f.service.initialize=async()=>{initialized++;};
+  await button(f.root,'表单与存档').onclick();assert.equal(ensured,0);assert.equal(initialized,0);assert.match(f.root.textContent,/打开聊天会自动接入/);
+  await button(f.root,'重试接入当前聊天').onclick();assert.equal(ensured,1);assert.equal(initialized,0);assert(control(f.root,'表单'));assert(control(f.root,'记录'));
+ }finally{await f.close();}
+});

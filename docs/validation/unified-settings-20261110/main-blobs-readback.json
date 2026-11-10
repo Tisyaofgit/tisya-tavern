@@ -1,0 +1,296 @@
+{
+  "schema": "tisya-readonly-remote-blob-verification/1",
+  "checked_at_utc": "2026-11-10 04:20:35 UTC",
+  "repository": "Tisyaofgit/tisya-tavern",
+  "base_main": "b56937003765626ec45a5aacad9eb74c173889a6",
+  "frozen_at_utc": "2026-11-10T04:03:59.128576+00:00",
+  "scope": "36 non-cache changed blobs retrieved independently by exact SHA through native GitHub connector. UTF-8 bytes were reconstructed from returned decoded text; Git blob SHA1 and byte count recomputed for every object. No source, tree, commit or ref modified by this audit.",
+  "hash_algorithm_self_test": "SHA1 abc a9993e364706816aba3e25717850c26c9cd0d89d passed",
+  "excluded": [
+    "tests/reference/matrix-python/__pycache__/matrix_io.cpython-312.pyc",
+    "tests/reference/matrix-python/__pycache__/rule_math.cpython-312.pyc"
+  ],
+  "passed": false,
+  "checks": [
+    {
+      "path": "docs/validation/settings-identity-save-20261110/browser-result.json",
+      "expected_blob": "c4476cef6c1123d6dea15e4202a9d6ffc8f6aea1",
+      "actual_blob": "c4476cef6c1123d6dea15e4202a9d6ffc8f6aea1",
+      "expected_bytes": 5190,
+      "actual_bytes": 5190,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/full-regression.log",
+      "expected_blob": "35c31e9d4012520a5fcc7f2689cc2ead3c1e80b6",
+      "actual_blob": "35c31e9d4012520a5fcc7f2689cc2ead3c1e80b6",
+      "expected_bytes": 169100,
+      "actual_bytes": 169100,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/legacy-final.log",
+      "expected_blob": "93001ffa2acb0e40edbb4448c48920841bb2b321",
+      "actual_blob": "93001ffa2acb0e40edbb4448c48920841bb2b321",
+      "expected_bytes": 1182,
+      "actual_bytes": 1182,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/legacy-first.log",
+      "expected_blob": "253a3cdd0475e43d588ce4bf23f847d1b3bbf231",
+      "actual_blob": "253a3cdd0475e43d588ce4bf23f847d1b3bbf231",
+      "expected_bytes": 346,
+      "actual_bytes": 346,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/legacy-scope-before.json",
+      "expected_blob": "ff718dbf93c5dad13dc4a8028bc2b114647f3ed2",
+      "actual_blob": "ff718dbf93c5dad13dc4a8028bc2b114647f3ed2",
+      "expected_bytes": 3629,
+      "actual_bytes": 3629,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/matrix-identity-after.log",
+      "expected_blob": "aeb2a9ee21fe7d5f61e46d3e7b165a69eef31c2f",
+      "actual_blob": "aeb2a9ee21fe7d5f61e46d3e7b165a69eef31c2f",
+      "expected_bytes": 3829,
+      "actual_bytes": 3829,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/matrix-identity-before.log",
+      "expected_blob": "deaaf5aae25315224315e003a454f92d27c66956",
+      "actual_blob": "deaaf5aae25315224315e003a454f92d27c66956",
+      "expected_bytes": 8399,
+      "actual_bytes": 8399,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/matrix-identity-validation.json",
+      "expected_blob": "b8c3e119414c42660b3d9fad37e3189df0844b19",
+      "actual_blob": "b8c3e119414c42660b3d9fad37e3189df0844b19",
+      "expected_bytes": 1841,
+      "actual_bytes": 1841,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/origin-final-targeted.log",
+      "expected_blob": "e1719bf80c2e3fa08ac5b9a53402a379e98bafc1",
+      "actual_blob": "e1719bf80c2e3fa08ac5b9a53402a379e98bafc1",
+      "expected_bytes": 3222,
+      "actual_bytes": 3222,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/origin-no-session.log",
+      "expected_blob": "fe93bfb2b1c0d4c12606a4ec79842b5a0a8247ec",
+      "actual_blob": "fe93bfb2b1c0d4c12606a4ec79842b5a0a8247ec",
+      "expected_bytes": 243,
+      "actual_bytes": 243,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/shared-services-before.tap",
+      "expected_blob": "0f718c75d0b21ea8cb3c2af094a928527965659d",
+      "actual_blob": "0f718c75d0b21ea8cb3c2af094a928527965659d",
+      "expected_bytes": 10692,
+      "actual_bytes": 10692,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/shared-services-final.tap",
+      "expected_blob": "1705b1927656228806d64aed09de4bd5194c6f1c",
+      "actual_blob": "1705b1927656228806d64aed09de4bd5194c6f1c",
+      "expected_bytes": 5790,
+      "actual_bytes": 5790,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/shared-services-validation.json",
+      "expected_blob": "5818411877566830de4ed3ba3b168f168d431bdc",
+      "actual_blob": "5818411877566830de4ed3ba3b168f168d431bdc",
+      "expected_bytes": 3610,
+      "actual_bytes": 3610,
+      "passed": true
+    },
+    {
+      "path": "docs/validation/settings-identity-save-20261110/validation.json",
+      "expected_blob": "1a17492c5449e0a477f06bfc185672c79019bda1",
+      "actual_blob": "1a17492c5449e0a477f06bfc185672c79019bda1",
+      "expected_bytes": 7505,
+      "actual_bytes": 7505,
+      "passed": true
+    },
+    {
+      "path": "engine/identity-ui.mjs",
+      "expected_blob": "2f2c13a8f0d22673a00b4e54fb45990d8986c874",
+      "actual_blob": "2f2c13a8f0d22673a00b4e54fb45990d8986c874",
+      "expected_bytes": 25227,
+      "actual_bytes": 25227,
+      "passed": true
+    },
+    {
+      "path": "engine/identity.mjs",
+      "expected_blob": "9cc398cd8ec6f7754bd73d708239a7a51e12a22b",
+      "actual_blob": "9cc398cd8ec6f7754bd73d708239a7a51e12a22b",
+      "expected_bytes": 5663,
+      "actual_bytes": 5663,
+      "passed": true
+    },
+    {
+      "path": "layout.js",
+      "expected_blob": "d3bc9b4d4565f3f8c79aee4daa237e37d372039b",
+      "actual_blob": "d3bc9b4d4565f3f8c79aee4daa237e37d372039b",
+      "expected_bytes": 10366,
+      "actual_bytes": 10366,
+      "passed": true
+    },
+    {
+      "path": "manifest.json",
+      "expected_blob": "8368cd15a47a1cb8e43fcfc8a93573daf7d9dc7b",
+      "actual_blob": "8368cd15a47a1cb8e43fcfc8a93573daf7d9dc7b",
+      "expected_bytes": 497,
+      "actual_bytes": 497,
+      "passed": true
+    },
+    {
+      "path": "package-lock.json",
+      "expected_blob": "e02fc9ab7f345cfa8fc01dd9a4e7ad17839074c2",
+      "actual_blob": "e02fc9ab7f345cfa8fc01dd9a4e7ad17839074c2",
+      "expected_bytes": 19475,
+      "actual_bytes": 19475,
+      "passed": true
+    },
+    {
+      "path": "package.json",
+      "expected_blob": "7b7f412189a48547900add1b7bc7488ecf19efb2",
+      "actual_blob": "7b7f412189a48547900add1b7bc7488ecf19efb2",
+      "expected_bytes": 1379,
+      "actual_bytes": 1379,
+      "passed": true
+    },
+    {
+      "path": "runtime.js",
+      "expected_blob": "77b43fd0e5fa18496c4bf7eb128b063ca02e9936",
+      "actual_blob": "77b43fd0e5fa18496c4bf7eb128b063ca02e9936",
+      "expected_bytes": 4199783,
+      "actual_bytes": 4199783,
+      "passed": true
+    },
+    {
+      "path": "shell.css",
+      "expected_blob": "ab72ffee61a6f09da2c6b7fe103bdcbccc58547b",
+      "actual_blob": "ab72ffee61a6f09da2c6b7fe103bdcbccc58547b",
+      "expected_bytes": 88969,
+      "actual_bytes": 88969,
+      "passed": true
+    },
+    {
+      "path": "tables/service.js",
+      "expected_blob": "23b328808d141e92926cb48a7d7416b89f8e7794",
+      "actual_blob": "23b328808d141e92926cb48a7d7416b89f8e7794",
+      "expected_bytes": 146445,
+      "actual_bytes": 146445,
+      "passed": true
+    },
+    {
+      "path": "tests/browser-matrix-identity.html",
+      "expected_blob": "47406e26d2dba02300af17cef2ba6480e9c1fc52",
+      "actual_blob": "47406e26d2dba02300af17cef2ba6480e9c1fc52",
+      "expected_bytes": 2945,
+      "actual_bytes": 2945,
+      "passed": true
+    },
+    {
+      "path": "tests/matrix-identity-save.test.js",
+      "expected_blob": "9d7a3ab5601fd45e17db23486352b268dc8b8195",
+      "actual_blob": "9d7a3ab5601fd45e17db23486352b268dc8b8195",
+      "expected_bytes": 21499,
+      "actual_bytes": 21499,
+      "passed": true
+    },
+    {
+      "path": "tests/matrix-identity.test.js",
+      "expected_blob": "2301ef2c39df8aa64ef115feb5563c345c3c07f4",
+      "actual_blob": "2301ef2c39df8aa64ef115feb5563c345c3c07f4",
+      "expected_bytes": 18649,
+      "actual_bytes": 18649,
+      "passed": true
+    },
+    {
+      "path": "tests/persona-create-ui.test.js",
+      "expected_blob": "0aaa97d23fc2312bab323fc1b741b36c458075e0",
+      "actual_blob": "0aaa97d23fc2312bab323fc1b741b36c458075e0",
+      "expected_bytes": 2283,
+      "actual_bytes": 2283,
+      "passed": true
+    },
+    {
+      "path": "tests/shell.test.js",
+      "expected_blob": "e9334ba115260f41dd72a0497a58254528ba3489",
+      "actual_blob": "e9334ba115260f41dd72a0497a58254528ba3489",
+      "expected_bytes": 91886,
+      "actual_bytes": 91886,
+      "passed": true
+    },
+    {
+      "path": "tests/story-identity-save.test.js",
+      "expected_blob": "a41cdf46bc983c93d08e93066fe096e8fe686c8f",
+      "actual_blob": "a41cdf46bc983c93d08e93066fe096e8fe686c8f",
+      "expected_bytes": 1939,
+      "actual_bytes": 1939,
+      "passed": true
+    },
+    {
+      "path": "tests/tables.test.js",
+      "expected_blob": "cb6120a3fe8c475242bf0d8c59088c920d2e859c",
+      "actual_blob": "cb6120a3fe8c475242bf0d8c59088c920d2e859c",
+      "expected_bytes": 214641,
+      "actual_bytes": 214641,
+      "passed": true
+    },
+    {
+      "path": "tests/user-identity-origin-recovery.test.js",
+      "expected_blob": "7ff071321d7fe3d3a45f80e7a71afdfbe20c23a5",
+      "actual_blob": "7ff071321d7fe3d3a45f80e7a71afdfbe20c23a5",
+      "expected_bytes": 6841,
+      "actual_bytes": 6841,
+      "passed": true
+    },
+    {
+      "path": "tests/user-identity-page-save.test.js",
+      "expected_blob": "7d1a78170db2721a715d28f6a658486924b3cf94",
+      "actual_blob": "7d1a78170db2721a715d28f6a658486924b3cf94",
+      "expected_bytes": 7842,
+      "actual_bytes": 7842,
+      "passed": true
+    },
+    {
+      "path": "tests/user-identity-service.test.js",
+      "expected_blob": "f559ef692b44be6c0f5eaf409e1acc72a6df255e",
+      "passed": false,
+      "error": "{\"content\":[{\"type\":\"text\",\"text\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\"}],\"structuredContent\":{\"error\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\",\"error_code\":\"NOT_FOUND\",\"error_data\":{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/blobs#get-a-blob\",\"status\":\"404\"}},\"isError\":true}"
+    },
+    {
+      "path": "tools/check-matrix-identity-browser.cjs",
+      "expected_blob": "ac4568da83f705e6eeabb2d5fd8598b195dd7667",
+      "passed": false,
+      "error": "{\"content\":[{\"type\":\"text\",\"text\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\"}],\"structuredContent\":{\"error\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\",\"error_code\":\"NOT_FOUND\",\"error_data\":{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/blobs#get-a-blob\",\"status\":\"404\"}},\"isError\":true}"
+    },
+    {
+      "path": "user-identity-page.js",
+      "expected_blob": "f88eec061f75e3c8036defb45f4ee3f6159c1d7e",
+      "passed": false,
+      "error": "{\"content\":[{\"type\":\"text\",\"text\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\"}],\"structuredContent\":{\"error\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\",\"error_code\":\"NOT_FOUND\",\"error_data\":{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/blobs#get-a-blob\",\"status\":\"404\"}},\"isError\":true}"
+    },
+    {
+      "path": "user-identity-service.js",
+      "expected_blob": "7a747aedbd807c5815969a6e5f0552b401a3fedd",
+      "passed": false,
+      "error": "{\"content\":[{\"type\":\"text\",\"text\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\"}],\"structuredContent\":{\"error\":\"GitHub API error 404: {\\\"message\\\":\\\"Not Found\\\",\\\"documentation_url\\\":\\\"https://docs.github.com/rest/git/blobs#get-a-blob\\\",\\\"status\\\":\\\"404\\\"}\",\"error_code\":\"NOT_FOUND\",\"error_data\":{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/git/blobs#get-a-blob\",\"status\":\"404\"}},\"isError\":true}"
+    }
+  ]
+}

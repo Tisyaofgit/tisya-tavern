@@ -1,0 +1,868 @@
+TAP version 13
+# Subtest: native PromptManager normalization loads the shipped preset without a restart error
+ok 1 - native PromptManager normalization loads the shipped preset without a restart error
+  ---
+  duration_ms: 27.670282
+  type: 'test'
+  ...
+# Subtest: load verification accepts only observed native additions and still detects changed instructions and order
+ok 2 - load verification accepts only observed native additions and still detects changed instructions and order
+  ---
+  duration_ms: 20.537999
+  type: 'test'
+  ...
+# Subtest: manual refresh reinstalls same revision while automatic startup preserves same-release edits
+ok 3 - manual refresh reinstalls same revision while automatic startup preserves same-release edits
+  ---
+  duration_ms: 16.085889
+  type: 'test'
+  ...
+# Subtest: built-in keeps the complete 69-slot new preset with separate user binding
+ok 4 - built-in keeps the complete 69-slot new preset with separate user binding
+  ---
+  duration_ms: 1.794535
+  type: 'test'
+  ...
+# Subtest: first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched
+ok 5 - first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched
+  ---
+  duration_ms: 6.809364
+  type: 'test'
+  ...
+# Subtest: upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset
+ok 6 - upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset
+  ---
+  duration_ms: 6.542953
+  type: 'test'
+  ...
+# Subtest: selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions
+ok 7 - selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions
+  ---
+  duration_ms: 10.073706
+  type: 'test'
+  ...
+# Subtest: failed native save keeps saved and live data, and does not report an installation
+ok 8 - failed native save keeps saved and live data, and does not report an installation
+  ---
+  duration_ms: 7.599976
+  type: 'test'
+  ...
+# Subtest: missing native capability and active generation reject before a write
+ok 9 - missing native capability and active generation reject before a write
+  ---
+  duration_ms: 9.663397
+  type: 'test'
+  ...
+# Subtest: concurrent initialization is one native save
+ok 10 - concurrent initialization is one native save
+  ---
+  duration_ms: 6.394799
+  type: 'test'
+  ...
+# Subtest: refresh timeout stays visible; reopened stale active settings load the saved release
+ok 11 - refresh timeout stays visible; reopened stale active settings load the saved release
+  ---
+  duration_ms: 21.977921
+  type: 'test'
+  ...
+# Subtest: Matrix identity has one persistent save/cancel pair including unavailable role sources
+ok 12 - Matrix identity has one persistent save/cancel pair including unavailable role sources
+  ---
+  duration_ms: 49.834522
+  type: 'test'
+  ...
+# Subtest: one save commits name, wish choices and existing role binding and reads them back on reopen
+ok 13 - one save commits name, wish choices and existing role binding and reads them back on reopen
+  ---
+  duration_ms: 33.941405
+  type: 'test'
+  ...
+# Subtest: identity selection is a draft until save and cancellation performs no persistence
+ok 14 - identity selection is a draft until save and cancellation performs no persistence
+  ---
+  duration_ms: 37.5068
+  type: 'test'
+  ...
+# Subtest: switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity
+ok 15 - switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity
+  ---
+  duration_ms: 30.100194
+  type: 'test'
+  ...
+# Subtest: cancel discards every unsaved field without changing source data or creating roles
+ok 16 - cancel discards every unsaved field without changing source data or creating roles
+  ---
+  duration_ms: 12.586533
+  type: 'test'
+  ...
+# Subtest: creation requires explicit confirmation and validates the complete page before any persistent write
+ok 17 - creation requires explicit confirmation and validates the complete page before any persistent write
+  ---
+  duration_ms: 18.954497
+  type: 'test'
+  ...
+# Subtest: partial profile success preserves the rest of the draft and retry does not write the profile twice
+ok 18 - partial profile success preserves the rest of the draft and retry does not write the profile twice
+  ---
+  duration_ms: 18.257883
+  type: 'test'
+  ...
+# Subtest: role creation followed by binding failure retains its exact source and safe retry creates no duplicate
+ok 19 - role creation followed by binding failure retains its exact source and safe retry creates no duplicate
+  ---
+  duration_ms: 33.171564
+  type: 'test'
+  ...
+# Subtest: concurrent configuration changes reject the entire save before changing the native profile
+ok 20 - concurrent configuration changes reject the entire save before changing the native profile
+  ---
+  duration_ms: 27.117098
+  type: 'test'
+  ...
+# Subtest: a chat switch during role preflight preserves drafts and cannot save them into the next chat
+ok 21 - a chat switch during role preflight preserves drafts and cannot save them into the next chat
+  ---
+  duration_ms: 93.457601
+  type: 'test'
+  ...
+# Subtest: interrupted identity switching resumes through the same save button after reopen
+ok 22 - interrupted identity switching resumes through the same save button after reopen
+  ---
+  duration_ms: 35.700446
+  type: 'test'
+  ...
+# Subtest: unavailable role sources still allow the native identity draft to be saved
+ok 23 - unavailable role sources still allow the native identity draft to be saved
+  ---
+  duration_ms: 10.87927
+  type: 'test'
+  ...
+# Subtest: failed native profile persistence retains the complete draft and retries the same values
+ok 24 - failed native profile persistence retains the complete draft and retries the same values
+  ---
+  duration_ms: 25.238315
+  type: 'test'
+  ...
+# Subtest: a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat
+ok 25 - a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat
+  ---
+  duration_ms: 13.761665
+  type: 'test'
+  ...
+# Subtest: discarding fresh edits keeps a durable pending identity recovery and still allows leaving
+ok 26 - discarding fresh edits keeps a durable pending identity recovery and still allows leaving
+  ---
+  duration_ms: 17.901025
+  type: 'test'
+  ...
+# Subtest: cancelling fresh edits does not force saving an existing legacy wish migration before leaving
+ok 27 - cancelling fresh edits does not force saving an existing legacy wish migration before leaving
+  ---
+  duration_ms: 19.951161
+  type: 'test'
+  ...
+# Subtest: a failed source read can be retried without clearing profile or creation drafts and saves to that exact source
+ok 28 - a failed source read can be retried without clearing profile or creation drafts and saves to that exact source
+  ---
+  duration_ms: 21.816743
+  type: 'test'
+  ...
+# Subtest: a non-binding mode retains the explicitly selected source after save and reopen
+ok 29 - a non-binding mode retains the explicitly selected source after save and reopen
+  ---
+  duration_ms: 24.043388
+  type: 'test'
+  ...
+# Subtest: listing does not write; role creation saves exact disabled entry and binds only this chat
+ok 30 - listing does not write; role creation saves exact disabled entry and binds only this chat
+  ---
+  duration_ms: 6.502802
+  type: 'test'
+  ...
+# Subtest: failed binding retains saved role; retry reuses it without creating a default or duplicate
+ok 31 - failed binding retains saved role; retry reuses it without creating a default or duplicate
+  ---
+  duration_ms: 1.265768
+  type: 'test'
+  ...
+# Subtest: original persona description enters only the wish; selected original wish preset remains exact
+ok 32 - original persona description enters only the wish; selected original wish preset remains exact
+  ---
+  duration_ms: 4.221003
+  type: 'test'
+  ...
+# Subtest: user identity contains original wishes and creates exact core book role through its visible controls
+ok 33 - user identity contains original wishes and creates exact core book role through its visible controls
+  ---
+  duration_ms: 56.229814
+  type: 'test'
+  ...
+# Subtest: native persona injection is disabled in the saved preset and relocated from depth or author note without changing history
+ok 34 - native persona injection is disabled in the saved preset and relocated from depth or author note without changing history
+  ---
+  duration_ms: 1.557127
+  type: 'test'
+  ...
+# Subtest: binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs
+ok 35 - binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs
+  ---
+  duration_ms: 5.003903
+  type: 'test'
+  ...
+# Subtest: legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback
+ok 36 - legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback
+  ---
+  duration_ms: 1.182412
+  type: 'test'
+  ...
+# Subtest: empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish
+ok 37 - empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish
+  ---
+  duration_ms: 34.733939
+  type: 'test'
+  ...
+# Subtest: base and optional wishes remain absent when the original description is empty and every module is off
+ok 38 - base and optional wishes remain absent when the original description is empty and every module is off
+  ---
+  duration_ms: 0.69602
+  type: 'test'
+  ...
+# Subtest: automatic core book preparation is idempotent and preserves existing global books and entries
+ok 39 - automatic core book preparation is idempotent and preserves existing global books and entries
+  ---
+  duration_ms: 1.184496
+  type: 'test'
+  ...
+# Subtest: preparation and selection never require or change native global worldbook activation
+ok 40 - preparation and selection never require or change native global worldbook activation
+  ---
+  duration_ms: 1.166619
+  type: 'test'
+  ...
+# Subtest: identity picker drafts the selection before a shared save; interrupted binding is recoverable on this page
+ok 41 - identity picker drafts the selection before a shared save; interrupted binding is recoverable on this page
+  ---
+  duration_ms: 111.459594
+  type: 'test'
+  ...
+# Subtest: unavailable worldbook service leaves persona switching usable and its error visible
+ok 42 - unavailable worldbook service leaves persona switching usable and its error visible
+  ---
+  duration_ms: 20.0737
+  type: 'test'
+  ...
+# Subtest: one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry
+ok 43 - one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry
+  ---
+  duration_ms: 29.879681
+  type: 'test'
+  ...
+# Subtest: identity page allows its own clean return and native-manager navigation
+ok 44 - identity page allows its own clean return and native-manager navigation
+  ---
+  duration_ms: 9.594623
+  type: 'test'
+  ...
+# Subtest: W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation
+ok 45 - W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation
+  ---
+  duration_ms: 178.142315
+  type: 'test'
+  ...
+# Subtest: mounted preset recovery is available on both settings and native preset page and clears startup failure
+ok 46 - mounted preset recovery is available on both settings and native preset page and clears startup failure
+  ---
+  duration_ms: 72.244453
+  type: 'test'
+  ...
+# Subtest: new configuration replaces legacy panels and preserves unsaved tag edits
+ok 47 - new configuration replaces legacy panels and preserves unsaved tag edits
+  ---
+  duration_ms: 128.574589
+  type: 'test'
+  ...
+# Subtest: phone and sidebar open the same read-only notes and public memory pages
+ok 48 - phone and sidebar open the same read-only notes and public memory pages
+  ---
+  duration_ms: 67.273537
+  type: 'test'
+  ...
+# Subtest: native image and voice entries open existing settings without generating or rewriting controls
+ok 49 - native image and voice entries open existing settings without generating or rewriting controls
+  ---
+  duration_ms: 46.637652
+  type: 'test'
+  ...
+# Subtest: unavailable native phone actions report failure, never substitute another configuration
+ok 50 - unavailable native phone actions report failure, never substitute another configuration
+  ---
+  duration_ms: 31.204308
+  type: 'test'
+  ...
+# Subtest: phone settings opens the new configuration; theme and protocol keep native surfaces
+ok 51 - phone settings opens the new configuration; theme and protocol keep native surfaces
+  ---
+  duration_ms: 77.552004
+  type: 'test'
+  ...
+# Subtest: theme workshop saves live effects without the removed configuration categories
+ok 52 - theme workshop saves live effects without the removed configuration categories
+  ---
+  duration_ms: 46.72853
+  type: 'test'
+  ...
+# Subtest: editing or swiping invalidates an open reader and notebook without touching messages
+ok 53 - editing or swiping invalidates an open reader and notebook without touching messages
+  ---
+  duration_ms: 39.50164
+  type: 'test'
+  ...
+# Subtest: notebook lookup works during a pending generation and tears down on return to native UI
+ok 54 - notebook lookup works during a pending generation and tears down on return to native UI
+  ---
+  duration_ms: 58.609041
+  type: 'test'
+  ...
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+ok 55 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 41.65836
+  type: 'test'
+  ...
+# Subtest: continue requests next normal response, never submits composer draft
+ok 56 - continue requests next normal response, never submits composer draft
+  ---
+  duration_ms: 38.447011
+  type: 'test'
+  ...
+# Subtest: message menu refuses edited source and generation blocks editing
+ok 57 - message menu refuses edited source and generation blocks editing
+  ---
+  duration_ms: 42.40185
+  type: 'test'
+  ...
+# Subtest: home lists every persisted chat and keeps same-name contacts separate
+ok 58 - home lists every persisted chat and keeps same-name contacts separate
+  ---
+  duration_ms: 38.269143
+  type: 'test'
+  ...
+# Subtest: production home checks avatar identity and selects the exact persisted chat before closing
+ok 59 - production home checks avatar identity and selects the exact persisted chat before closing
+  ---
+  duration_ms: 32.316564
+  type: 'test'
+  ...
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+ok 60 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 52.732105
+  type: 'test'
+  ...
+# Subtest: worldbook entry stays accessible during streaming and chat editing stays locked
+ok 61 - worldbook entry stays accessible during streaming and chat editing stays locked
+  ---
+  duration_ms: 31.779996
+  type: 'test'
+  ...
+# Subtest: streaming disables actions and generation end re-enables both on same mounted message
+ok 62 - streaming disables actions and generation end re-enables both on same mounted message
+  ---
+  duration_ms: 55.407327
+  type: 'test'
+  ...
+# Subtest: old AI advanced reroll opens review without deleting history
+ok 63 - old AI advanced reroll opens review without deleting history
+  ---
+  duration_ms: 40.841999
+  type: 'test'
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+ok 64 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 39.89983
+  type: 'test'
+  ...
+# Subtest: rollback save failure prevents generation and reports partial deletion
+ok 65 - rollback save failure prevents generation and reports partial deletion
+  ---
+  duration_ms: 29.710968
+  type: 'test'
+  ...
+# Subtest: draft and disconnected model prevent any history deletion
+ok 66 - draft and disconnected model prevent any history deletion
+  ---
+  duration_ms: 64.864546
+  type: 'test'
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+ok 67 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 50.926004
+  type: 'test'
+  ...
+# Subtest: typing a draft during rollback preserves it and stops generation
+ok 68 - typing a draft during rollback preserves it and stops generation
+  ---
+  duration_ms: 55.343871
+  type: 'test'
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 69 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 30.140105
+  type: 'test'
+  ...
+# Subtest: workflow navigation retains the original expansion control without duplicate shortcuts
+ok 70 - workflow navigation retains the original expansion control without duplicate shortcuts
+  ---
+  duration_ms: 33.118021
+  type: 'test'
+  ...
+# Subtest: chat menu keeps the native anchor and removes the duplicated settings entry
+ok 71 - chat menu keeps the native anchor and removes the duplicated settings entry
+  ---
+  duration_ms: 39.290167
+  type: 'test'
+  ...
+# Subtest: sidebar shortcut entry closes the page and opens seven position selectors
+ok 72 - sidebar shortcut entry closes the page and opens seven position selectors
+  ---
+  duration_ms: 53.784415
+  type: 'test'
+  ...
+# Subtest: supported system fullscreen routes to native action while app header stays removed
+ok 73 - supported system fullscreen routes to native action while app header stays removed
+  ---
+  duration_ms: 37.909802
+  type: 'test'
+  ...
+# Subtest: message and bottom menu icons retain accessible names and native source nodes
+ok 74 - message and bottom menu icons retain accessible names and native source nodes
+  ---
+  duration_ms: 43.31754
+  type: 'test'
+  ...
+# Subtest: reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+ok 75 - reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+  ---
+  duration_ms: 48.43115
+  type: 'test'
+  ...
+# Subtest: inline action mode append changes draft without a confirmation modal
+ok 76 - inline action mode append changes draft without a confirmation modal
+  ---
+  duration_ms: 63.955907
+  type: 'test'
+  ...
+# Subtest: inline action mode replace changes draft without a confirmation modal
+ok 77 - inline action mode replace changes draft without a confirmation modal
+  ---
+  duration_ms: 49.909863
+  type: 'test'
+  ...
+# Subtest: action refuses changed message after opening inline mode menu
+ok 78 - action refuses changed message after opening inline mode menu
+  ---
+  duration_ms: 699.22328
+  type: 'test'
+  ...
+# Subtest: action refuses changed chat after opening inline mode menu
+ok 79 - action refuses changed chat after opening inline mode menu
+  ---
+  duration_ms: 690.141569
+  type: 'test'
+  ...
+# Subtest: direct send is an explicit mode and native submission occurs only after an action click
+ok 80 - direct send is an explicit mode and native submission occurs only after an action click
+  ---
+  duration_ms: 50.880747
+  type: 'test'
+  ...
+# Subtest: direct send preserves a nonempty draft with inline feedback
+ok 81 - direct send preserves a nonempty draft with inline feedback
+  ---
+  duration_ms: 695.582554
+  type: 'test'
+  ...
+# Subtest: chat change closes reader and stale actions cannot write into the next conversation
+ok 82 - chat change closes reader and stale actions cannot write into the next conversation
+  ---
+  duration_ms: 49.320866
+  type: 'test'
+  ...
+# Subtest: holding a shadow UI button never opens the native long-press message menu
+ok 83 - holding a shadow UI button never opens the native long-press message menu
+  ---
+  duration_ms: 740.838973
+  type: 'test'
+  ...
+# Subtest: stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+ok 84 - stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+  ---
+  duration_ms: 61.807078
+  type: 'test'
+  ...
+# Subtest: stopping generation options cancels the pending action without a late send
+ok 85 - stopping generation options cancels the pending action without a late send
+  ---
+  duration_ms: 33.74027
+  type: 'test'
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+ok 86 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 40.93819
+  type: 'test'
+  ...
+# Subtest: a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+ok 87 - a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+  ---
+  duration_ms: 94.156021
+  type: 'test'
+  ...
+# Subtest: UI completions cannot release the history lock while generation options are pending
+ok 88 - UI completions cannot release the history lock while generation options are pending
+  ---
+  duration_ms: 59.311226
+  type: 'test'
+  ...
+# Subtest: late clipboard completion leaves a newly opened menu intact
+ok 89 - late clipboard completion leaves a newly opened menu intact
+  ---
+  duration_ms: 51.920856
+  type: 'test'
+  ...
+# Subtest: pending history save allows menu dismissal and does not close a later panel
+ok 90 - pending history save allows menu dismissal and does not close a later panel
+  ---
+  duration_ms: 49.744465
+  type: 'test'
+  ...
+# Subtest: message toolbar supports only more, custom order, full expansion, and persists independently
+ok 91 - message toolbar supports only more, custom order, full expansion, and persists independently
+  ---
+  duration_ms: 80.676517
+  type: 'test'
+  ...
+# Subtest: unbound new engine aborts before the native payload and never initializes old tables
+ok 92 - unbound new engine aborts before the native payload and never initializes old tables
+  ---
+  duration_ms: 40.702295
+  type: 'test'
+  ...
+# Subtest: native edit focus places confirmation controls below the editor and exit restores them
+ok 93 - native edit focus places confirmation controls below the editor and exit restores them
+  ---
+  duration_ms: 47.6315
+  type: 'test'
+  ...
+# Subtest: welcome startup mounts the pet and functional sidebar without a world or persistence
+ok 94 - welcome startup mounts the pet and functional sidebar without a world or persistence
+  ---
+  duration_ms: 88.122146
+  type: 'test'
+  ...
+# Subtest: welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+ok 95 - welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+  ---
+  duration_ms: 127.38379
+  type: 'test'
+  ...
+# Subtest: native composer persists requirements separately and clears the draft before awaiting the reply
+ok 96 - native composer persists requirements separately and clears the draft before awaiting the reply
+  ---
+  duration_ms: 39.954107
+  type: 'test'
+  ...
+# Subtest: Android immersive entry remains discoverable and invokes the persistent native toggle
+ok 97 - Android immersive entry remains discoverable and invokes the persistent native toggle
+  ---
+  duration_ms: 52.128429
+  type: 'test'
+  ...
+# Subtest: legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+ok 98 - legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+  ---
+  duration_ms: 31.035604
+  type: 'test'
+  ...
+# Subtest: candidate navigation has its own final row after message tools
+ok 99 - candidate navigation has its own final row after message tools
+  ---
+  duration_ms: 40.841786
+  type: 'test'
+  ...
+# Subtest: direct candidate jump edits the selected native text and deletes only selected version
+ok 100 - direct candidate jump edits the selected native text and deletes only selected version
+  ---
+  duration_ms: 54.784734
+  type: 'test'
+  ...
+# Subtest: production initializer wires asynchronous message cache without disabling the shell
+ok 101 - production initializer wires asynchronous message cache without disabling the shell
+  ---
+  duration_ms: 131.780325
+  type: 'test'
+  ...
+# Subtest: production long-press More saves manual order and keeps copy reachable
+ok 102 - production long-press More saves manual order and keeps copy reachable
+  ---
+  duration_ms: 1266.941503
+  type: 'test'
+  ...
+# Subtest: production display route saves the real host loading field without replacing history
+ok 103 - production display route saves the real host loading field without replacing history
+  ---
+  duration_ms: 50.749029
+  type: 'test'
+  ...
+# Subtest: settings has one destination per entry and discovers later native drawers
+ok 104 - settings has one destination per entry and discovers later native drawers
+  ---
+  duration_ms: 49.599456
+  type: 'test'
+  ...
+# Subtest: groups use stable native IDs; inline management does not load a chat
+ok 105 - groups use stable native IDs; inline management does not load a chat
+  ---
+  duration_ms: 38.562159
+  type: 'test'
+  ...
+# Subtest: cache drafts block page and phone navigation until saved or discarded
+ok 106 - cache drafts block page and phone navigation until saved or discarded
+  ---
+  duration_ms: 57.1146
+  type: 'test'
+  ...
+# Subtest: native API editor opens from clean configuration and preserves unsaved tags
+ok 107 - native API editor opens from clean configuration and preserves unsaved tags
+  ---
+  duration_ms: 94.940033
+  type: 'test'
+  ...
+# Subtest: home settings invokes the menu; menu rename and pin persist with native names unchanged
+ok 108 - home settings invokes the menu; menu rename and pin persist with native names unchanged
+  ---
+  duration_ms: 70.782638
+  type: 'test'
+  ...
+# Subtest: late host autoload leaves home visible, while choosing a row still opens exact chat
+ok 109 - late host autoload leaves home visible, while choosing a row still opens exact chat
+  ---
+  duration_ms: 31.493924
+  type: 'test'
+  ...
+# Subtest: deletion requires confirmation and checks the native result instead of assuming success
+ok 110 - deletion requires confirmation and checks the native result instead of assuming success
+  ---
+  duration_ms: 45.169638
+  type: 'test'
+  ...
+# Subtest: directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape
+ok 111 - directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape
+  ---
+  duration_ms: 40.249342
+  type: 'test'
+  ...
+# Subtest: detached inline edit is rejected instead of saving against a stale row
+ok 112 - detached inline edit is rejected instead of saving against a stale row
+  ---
+  duration_ms: 37.981529
+  type: 'test'
+  ...
+# Subtest: user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+ok 113 - user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+  ---
+  duration_ms: 52.552458
+  type: 'test'
+  ...
+# Subtest: all settings entry points reuse one page, preserve search and discover a drawer installed while open
+ok 114 - all settings entry points reuse one page, preserve search and discover a drawer installed while open
+  ---
+  duration_ms: 56.112218
+  type: 'test'
+  ...
+# Subtest: settings and identity headers return directly to current chat without changing its contents
+ok 115 - settings and identity headers return directly to current chat without changing its contents
+  ---
+  duration_ms: 91.684216
+  type: 'test'
+  ...
+# Subtest: pending native clipboard on the actual message toolbar never blocks a new chat action
+ok 116 - pending native clipboard on the actual message toolbar never blocks a new chat action
+  ---
+  duration_ms: 44.535262
+  type: 'test'
+  ...
+# Subtest: rendered target chat releases actual home navigation lock while native selection promise stays pending
+ok 117 - rendered target chat releases actual home navigation lock while native selection promise stays pending
+  ---
+  duration_ms: 50.678633
+  type: 'test'
+  ...
+# Subtest: managed committed tail releases home lock even when host never emits CHAT_CHANGED
+ok 118 - managed committed tail releases home lock even when host never emits CHAT_CHANGED
+  ---
+  duration_ms: 46.062179
+  type: 'test'
+  ...
+# Subtest: pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock
+ok 119 - pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock
+  ---
+  duration_ms: 44.075049
+  type: 'test'
+  ...
+# Subtest: target data loaded without completion events closes the directory and releases chat operations
+ok 120 - target data loaded without completion events closes the directory and releases chat operations
+  ---
+  duration_ms: 95.493918
+  type: 'test'
+  ...
+# Subtest: native token-count dry runs do not clear pending one-pass storage work
+ok 121 - native token-count dry runs do not clear pending one-pass storage work
+  ---
+  duration_ms: 33.516383
+  type: 'test'
+  ...
+# Subtest: token count between a real start and its end still completes the real generation lifecycle
+ok 122 - token count between a real start and its end still completes the real generation lifecycle
+  ---
+  duration_ms: 37.924427
+  type: 'test'
+  ...
+# Subtest: cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+ok 123 - cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+  ---
+  duration_ms: 61.711935
+  type: 'test'
+  ...
+# Subtest: cold-start identity saves and reopens a new role with the current preset and chat preserved
+ok 124 - cold-start identity saves and reopens a new role with the current preset and chat preserved
+  ---
+  duration_ms: 94.890811
+  type: 'test'
+  ...
+# Subtest: cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+ok 125 - cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+  ---
+  duration_ms: 130.98799
+  type: 'test'
+  ...
+# Subtest: cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+ok 126 - cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+  ---
+  duration_ms: 118.964235
+  type: 'test'
+  ...
+# Subtest: cold-start identity preserves explicit origin preview targets even with a Tisya preset selected
+ok 127 - cold-start identity preserves explicit origin preview targets even with a Tisya preset selected
+  ---
+  duration_ms: 32.649307
+  type: 'test'
+  ...
+# Subtest: cold-start identity reports unavailable worldbook support while keeping native identity editing usable
+ok 128 - cold-start identity reports unavailable worldbook support while keeping native identity editing usable
+  ---
+  duration_ms: 49.467504
+  type: 'test'
+  ...
+# Subtest: Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back
+ok 129 - Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back
+  ---
+  duration_ms: 108.215856
+  type: 'test'
+  ...
+# Subtest: Matrix identity production route cancels a staged persona switch and all mixed changes without writing them
+ok 130 - Matrix identity production route cancels a staged persona switch and all mixed changes without writing them
+  ---
+  duration_ms: 111.88741
+  type: 'test'
+  ...
+# Subtest: Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry
+ok 131 - Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry
+  ---
+  duration_ms: 107.300917
+  type: 'test'
+  ...
+# Subtest: non-bound identity modes preserve a legitimate selected source book
+ok 132 - non-bound identity modes preserve a legitimate selected source book
+  ---
+  duration_ms: 3.977095
+  type: 'test'
+  ...
+# Subtest: a missing source book rejects before a non-bound identity configuration is saved
+ok 133 - a missing source book rejects before a non-bound identity configuration is saved
+  ---
+  duration_ms: 1.744429
+  type: 'test'
+  ...
+# Subtest: source lookup that switches chats cannot save the selection into the new chat
+ok 134 - source lookup that switches chats cannot save the selection into the new chat
+  ---
+  duration_ms: 0.584441
+  type: 'test'
+  ...
+# Subtest: legacy origin recovery resumes the reviewed partial binding without repeating its stale preview write
+ok 135 - legacy origin recovery resumes the reviewed partial binding without repeating its stale preview write
+  ---
+  duration_ms: 91.383966
+  type: 'test'
+  ...
+# Subtest: legacy creation checks the original chat after draft persistence before creating a persona slot and retries only that slot
+ok 136 - legacy creation checks the original chat after draft persistence before creating a persona slot and retries only that slot
+  ---
+  duration_ms: 26.540148
+  type: 'test'
+  ...
+# Subtest: legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs
+ok 137 - legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs
+  ---
+  duration_ms: 95.869567
+  type: 'test'
+  ...
+# Subtest: legacy cancel discards mixed staged edits without persistence and restores selection
+ok 138 - legacy cancel discards mixed staged edits without persistence and restores selection
+  ---
+  duration_ms: 34.201246
+  type: 'test'
+  ...
+# Subtest: legacy leave prompt coalesces navigation and keeps failed save editable before retry
+ok 139 - legacy leave prompt coalesces navigation and keeps failed save editable before retry
+  ---
+  duration_ms: 35.09606
+  type: 'test'
+  ...
+# Subtest: legacy retries only unfinished binding after profile persistence succeeds
+ok 140 - legacy retries only unfinished binding after profile persistence succeeds
+  ---
+  duration_ms: 23.820929
+  type: 'test'
+  ...
+# Subtest: legacy retains unsaved fields and scope on page recreation
+ok 141 - legacy retains unsaved fields and scope on page recreation
+  ---
+  duration_ms: 15.480866
+  type: 'test'
+  ...
+# Subtest: legacy refuses external identity revisions and a changed chat before any write
+ok 142 - legacy refuses external identity revisions and a changed chat before any write
+  ---
+  duration_ms: 12.191028
+  type: 'test'
+  ...
+# Subtest: legacy recovery saves scope edits made after a failed earlier binding
+ok 143 - legacy recovery saves scope edits made after a failed earlier binding
+  ---
+  duration_ms: 19.605323
+  type: 'test'
+  ...
+1..143
+# tests 143
+# suites 0
+# pass 143
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9614.120417

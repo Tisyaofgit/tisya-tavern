@@ -1,0 +1,53 @@
+✔ one update action retries a failed initialization, deduplicates clicks and clears the stale error (31.007628ms)
+✔ persistent failure notice contains a real update button and reports retry failure until actual success (7.756955ms)
+✔ native reselection clears only a proven saved-load failure, never an unacknowledged save failure (3.697104ms)
+✔ native PromptManager normalization loads the shipped preset without a restart error (26.705463ms)
+✔ load verification accepts only observed native additions and still detects changed instructions and order (15.874483ms)
+✔ manual refresh reinstalls same revision while automatic startup preserves same-release edits (10.72504ms)
+✔ built-in keeps the complete 69-slot new preset with separate user binding (0.752235ms)
+✔ first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched (4.942331ms)
+✔ upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset (3.158281ms)
+✔ selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions (6.222722ms)
+✔ failed native save keeps saved and live data, and does not report an installation (3.281317ms)
+✔ missing native capability and active generation reject before a write (6.259567ms)
+✔ concurrent initialization is one native save (4.002213ms)
+✔ refresh timeout stays visible; reopened stale active settings load the saved release (15.267909ms)
+✔ explicit plugin activation selects newly installed Tisya and preserves native connection and sampling (4.310609ms)
+✖ activation of an already saved inactive revision loads without rewriting it (5008.15725ms)
+✔ generation blocks inactive preset activation before selection or replacement (5.943271ms)
+✔ fresh chat binds once, enables, and retains exact existing history as a baseline (7.565205ms)
+✔ existing bundle and story settings survive default activation unchanged (1.593091ms)
+✔ empty home does not read or write engine storage (0.214714ms)
+✔ existing binding with missing or corrupt storage is visible and never reset (4.361105ms)
+✔ storage read failure preserves the exact error and does not initialize (0.297158ms)
+✔ fork attaches a cloned owner while parent state and identity stay exact (1.971382ms)
+✔ chat switch while loading catalog cancels before a metadata or state write (5.291478ms)
+✔ chat switch while reading an old bundle cannot enable the new or old chat (1.574323ms)
+✔ failed new-state commit leaves an explicit pending owner that resumes without reset (1.120209ms)
+✔ failed final metadata save retains a recoverable marker and no success is reported (1.068802ms)
+✔ two simultaneous requests serialize and create one binding (1.342574ms)
+✔ startup selects once; repeated ready does not undo manual disable, reopening does (1.97669ms)
+✔ a delayed first-chat failure does not poison later chat activation (4.016185ms)
+✔ rapid A to B to A cancels the first A request and allows the new opening (1.224116ms)
+✔ failed preset activation prevents all automatic chat writes (0.332371ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 31
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5511.093392
+
+✖ failing tests:
+
+test at tests/builtin-preset.test.js:99:1
+✖ activation of an already saved inactive revision loads without rewriting it (5008.15725ms)
+  Error: Tisya 已保存，但宿主预设刷新超时。请点“更新 Tisya 预设”重试。
+      at updateError (file:///workspace/scratch/309c298d2de5/tisya/builtin-preset.js:10:56)
+      at Timeout.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/builtin-preset.js:71:44)
+      at listOnTimeout (node:internal/timers:685:17)
+      at process.processTimers (node:internal/timers:618:7) {
+    tisyaPresetUpdate: true,
+    tisyaPresetSaved: true
+  }

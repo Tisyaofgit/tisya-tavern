@@ -56,7 +56,7 @@ function mountDocument(document,container,html,label,{formatBody,onError}){
  container.append(frame);
  return {source:html,capture:()=>pending??folds().map(n=>n.open),restore,refresh(value){const changed=paused!==value;paused=value;if(ready)syncFonts();frame.contentDocument?.documentElement?.toggleAttribute('data-tisya-card-paused',paused);if(changed&&!paused)sizing?.refresh();},dispose(){alive=false;clearTimeout(timer);sizing?.dispose();frame.contentDocument?.removeEventListener('error',resourceError,true);for(const face of added)frame.contentDocument?.fonts?.delete(face);frame.onload=null;frame.remove();}};
 }
-export function mountWorldExtra(document,container,{source,structured,formatBody,display=null,displayError=null,lazy=false,getNativePanelStatus,onError=()=>{}}){
+export function mountWorldExtra(document,container,{source,structured,formatBody,display=null,displayError=null,lazy=false,phoneContextKey=document.defaultView?.Tisya?.phone?.contextKey?.(),getNativePanelStatus,onError=()=>{}}){
  const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
  let alive=true,children=[],active=null,paused=false,shown=!lazy,savedDocuments=[];const pages=[],nav=make('nav',undefined,'extra-tabs');nav.setAttribute('aria-label','世界扩展页面');
  container.replaceChildren();
@@ -69,9 +69,12 @@ export function mountWorldExtra(document,container,{source,structured,formatBody
  function select(id){if(!alive)return;active=id;for(const row of pages){row.panel.hidden=!native&&row.id!==id;row.button.setAttribute('aria-pressed',String(row.id===id));}if(shown)pages.filter(p=>native||p.id===active).forEach(p=>p.mount());for(const child of children)child.refresh(paused||!shown||(!native&&child.page!==active));}
  for(const [index,row]of rows.entries()){
   const panel=make('section',undefined,'extra-page'),button=make('button');button.type='button';panel.dataset.sourceTag=row.tag??'';
-  const template=document.createElement('template');template.innerHTML=row.html;
+  const phone=String(row.tag??'').toLowerCase()==='phone';const template=document.createElement('template');if(!phone)template.innerHTML=row.html;
   if(row.nativeHosted){const note=make('p','等待酒馆助手挂载世界面板。','public-note native-host-note');note.setAttribute('role','status');panel.append(note);container.append(panel);continue;}
-  const title=(row.label||template.content.querySelector('h1,h2,h3,title')?.textContent||row.ruleName||row.tag||'扩展 '+(index+1)).slice(0,100);button.textContent=title;button.onclick=()=>select(row.id);nav.append(button);container.append(panel);const page={id:row.id,panel,button,mounted:false};pages.push(page);
+  const title=phone?'手机':(row.label||template.content.querySelector('h1,h2,h3,title')?.textContent||row.ruleName||row.tag||'扩展 '+(index+1)).slice(0,100);button.textContent=title;button.onclick=()=>select(row.id);nav.append(button);container.append(panel);const page={id:row.id,panel,button,mounted:false};pages.push(page);
+  if(phone){
+   page.mount=()=>{if(page.mounted||!alive)return;page.mounted=true;const frame=make('iframe'),url=new URL('./phone.html',import.meta.url),chat=phoneContextKey;if(!chat)throw Error('手机扩展尚未取得聊天归属');url.searchParams.set('chat',chat);frame.src=url.href;frame.title='手机 · 当前状态';frame.loading='lazy';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-downloads');frame.style.cssText='display:block;width:100%;height:680px;max-height:85dvh;min-height:420px;border:0;border-radius:16px;background:#f4f5f1';panel.append(frame);children.push({page:row.id,source:'tisya-phone-live-v1',capture:()=>[],restore(){},refresh(){},dispose(){frame.remove();}});};if(!lazy)page.mount();continue;
+  }
   const unformatted=native&&!row.ruleName&&!template.content.querySelector('style,script,div,section,article,table,details,h1,h2,h3');
   if(unformatted){const raw=make('details',undefined,'native-unformatted');raw.append(make('summary',title+' · 原始内容'),make('pre',row.html));panel.append(raw);page.mount=()=>{};page.raw=raw;continue;}
   const failed=error=>{if(!alive)return;let note=panel.querySelector('.extra-error');if(!note){note=make('p',undefined,'public-note extra-error');note.setAttribute('role','status');panel.append(note);const raw=make('details'),summary=make('summary','查看原始扩展文本'),pre=make('pre',row.html);raw.append(summary,pre);panel.append(raw);}note.textContent=error.message==='TISYA_EXTRA_RUNTIME_REQUIRED'?'这一页需要卡片脚本或交互运行时，尚未接入；原始内容保留。':error.message==='TISYA_EXTRA_RESOURCE_FAILED'?'这一页有图片未能加载，已显示的内容和原始文本均保留。':'这一页暂时无法显示，原始内容保留。';onError(error);};

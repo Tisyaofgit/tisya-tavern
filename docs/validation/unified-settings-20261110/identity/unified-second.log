@@ -1,0 +1,14 @@
+✔ one footer saves native wishes, reviewed dossier and several presentation regions without duplicate stores (246.839918ms)
+✔ a missing dossier review blocks every component before the native profile is changed (80.125969ms)
+✔ manual database creation stays a preview and binding failure retries the same committed person (169.011476ms)
+✔ actual Matrix creator is preview-only until checked unified save and preserves the original selection (188.055009ms)
+✔ invalid actual creator output is rejected before native writes and keeps the editable proposal (112.572555ms)
+✔ one leave prompt cancels identity and presentation edits together without persistence (121.865587ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1174.649759

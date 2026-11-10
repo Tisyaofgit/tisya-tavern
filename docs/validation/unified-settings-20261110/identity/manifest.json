@@ -1,0 +1,113 @@
+{
+  "status": "specialist-complete",
+  "utc": "2026-11-10T04:40:00.067554+00:00",
+  "beijing": "2026-11-10T12:40:00.067554+08:00",
+  "verified_test_count": 82,
+  "passed": 82,
+  "failed": 0,
+  "command": "node --test tests/matrix-identity-save.test.js tests/matrix-identity.test.js tests/database-identity.test.js tests/extension-preferences-ui.test.js tests/template-book-identity.test.js tests/matrix-creation.test.js tests/matrix-creation-wire.test.js tests/unified-identity-settings.test.js",
+  "log": "docs/validation/unified-settings-20261110/identity/final-specialist-v2.log",
+  "files": [
+    {
+      "path": "engine/identity-ui.mjs",
+      "bytes": 48741,
+      "sha256": "a1f83fd1f1ef1c71d4eeca406cd37c4b0165c04538142db7af1280702e40c4c7"
+    },
+    {
+      "path": "engine/identity.mjs",
+      "bytes": 30680,
+      "sha256": "1853de091d0ed9bb9ef3c2a2841c52e62352771fc98a303da3bab61e320fa8c3"
+    },
+    {
+      "path": "engine/creation.mjs",
+      "bytes": 8626,
+      "sha256": "b368581526a31ae06b5675017998d5aa8a911961d11ee224f31cc11c8b4b6f15"
+    },
+    {
+      "path": "extension-preferences-ui.mjs",
+      "bytes": 15164,
+      "sha256": "847785f4aa064fd8281e369e69461330734bd25579718c8aa6a967a709c396c5"
+    },
+    {
+      "path": "tests/matrix-identity.test.js",
+      "bytes": 18649,
+      "sha256": "b6ad9f215e0e66ada7c68986494d1149011e8f094aaae504ddeb0e90ed859798"
+    },
+    {
+      "path": "tests/database-identity.test.js",
+      "bytes": 11333,
+      "sha256": "cb9536d42d2b6d3a2aa03cb7ff2ccfbb4de60cf35872ba0672d94b98a24cd32d"
+    },
+    {
+      "path": "tests/extension-preferences-ui.test.js",
+      "bytes": 3963,
+      "sha256": "c8c0d4ac31cb620c1c42c3fbe76882a143f5592660aec390e2bee1aabfb7be90"
+    },
+    {
+      "path": "tests/template-book-identity.test.js",
+      "bytes": 20099,
+      "sha256": "5a06828a4e3ec909b98128f4c6a5ca367decdb55b3238d8849002b909494dd7f"
+    },
+    {
+      "path": "tests/unified-identity-settings.test.js",
+      "bytes": 13828,
+      "sha256": "9dad789301abd4bcaee0949420c357986fd9d8fba3477e5850c004c6bbf35641"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/RESULT.md",
+      "bytes": 3795,
+      "sha256": "edf2b2557e61d8ff4c920d2d4132061b382940cbdff47e8f60a70a95196940f8"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/creator-regression.log",
+      "bytes": 2778,
+      "sha256": "c6a4d468eaf42c05401a21485b7d92324ac5132200a8c4b93fcc6fbc70216f31"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/final-specialist-v2.log",
+      "bytes": 9101,
+      "sha256": "187362f14410acbe270c87571a1ee7535ebe6225d904b3d8b56e7e4b2c598cc6"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/final-specialist.log",
+      "bytes": 8981,
+      "sha256": "f063ef80d3a7cefac2e7a43ebc5b0644aed3e63565e3ae53e9d73a53d8192970"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/first.log",
+      "bytes": 18487,
+      "sha256": "470d1267a5d35826959020b060f7b8a615c9950f3b8938fc426b27ed852da460"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/legacy-receipt.log",
+      "bytes": 2425,
+      "sha256": "1615d47c1789fee3a4d07669d90684dba21590dc6ceaaa264145ea53c91d2dbe"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/second.log",
+      "bytes": 8453,
+      "sha256": "be12fc7fabee3456d43c976b688828f08e72c4706c51bac2c380426d90c472c4"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/third.log",
+      "bytes": 7245,
+      "sha256": "0f94ca0441c85c173aa48f8beef7e6625584a926a5a86dc74b4fbb5e55bdafa9"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/unified-first.log",
+      "bytes": 19705,
+      "sha256": "63a8283ce911c00645e92c78b42dc698faf58b7966b4e493402d65a5ea129ef3"
+    },
+    {
+      "path": "docs/validation/unified-settings-20261110/identity/unified-second.log",
+      "bytes": 799,
+      "sha256": "587f8084ffa0beb0506ac9117116110c6d1b31f92e5d085753f3d634742f4ffc"
+    }
+  ],
+  "not_run": [
+    "external model invocation",
+    "native host manual testing",
+    "Android device testing"
+  ],
+  "next": "Parent: full suite and build, verify route composition, capture same-time source and progress snapshot, persist and verify upload receipts before inherited deadline."
+}

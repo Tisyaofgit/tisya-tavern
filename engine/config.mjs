@@ -1,5 +1,6 @@
 import {applyGeneration,assertGeneration} from './generation.mjs';
-import {storyAvatar} from './identity.mjs';
+import {storyAvatar,projectDatabaseIdentity} from './identity.mjs';
+import {stripPhoneInitialization,validateStoryLibraries} from './template-book.mjs';
 import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
 import {applyOutputConfiguration} from './output-config.mjs';
@@ -34,7 +35,7 @@ export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
  async function save(next){
   assertIdle();const c=getContext(),previous=c.extensionSettings[CONFIG_KEY],hadPrevious=Object.hasOwn(c.extensionSettings,CONFIG_KEY),before=read();
   if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');
-  validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));renderingResources(next.resources??[]);
+  validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));renderingResources(next.resources??[]);validateStoryLibraries(next);
   const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[key()]=value.story;delete value.story;value.revision++;
   const undoGeneration=applyGeneration(c,value.generation);c.extensionSettings[CONFIG_KEY]=value;let confirmed=false;
   try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');confirmed=true;assertGeneration(c,value.generation);}
@@ -65,11 +66,12 @@ export function compilePrompts(source,config,slots){
  }
  return out;
 }
-export async function identitySlots(ctx,config,persona){
+export async function identitySlots(ctx,config,persona,databaseSnapshot=null){
  const story=config.story,slots={},avatar=storyAvatar(config);if(avatar.mode==='bound'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');let bound='',name=story.userName||'user';
- if(avatar.binding){const {book,uid}=avatar.binding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);if(/^【角色】.+/u.test(entry.comment??''))name=entry.comment.slice('【角色】'.length);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');}
- slots.tisya_user_identity=bound?('[USER.IDENTITY]\n故事主角：'+name+'\n'+bound+'\n[/USER.IDENTITY]'):'';
- slots.tisya_user_name=bound?name:'';
+ if(avatar.binding?.database){const snapshot=databaseSnapshot??await ctx.tisyaReadDatabase?.();if(!snapshot)fail('USER_DATABASE_MISSING','当前表单尚未读取，角色资料没有使用旧书替代');const projection=projectDatabaseIdentity(snapshot,avatar.binding);name=projection.name;bound=projection.text;}
+ else if(avatar.binding){if(databaseSnapshot?.state)fail('USER_IDENTITY_MIGRATION_REQUIRED','当前身份仍指向旧资料书，请在用户身份页把来源档案迁移为表单草稿并确认；旧原文已保留');const {book,uid}=avatar.binding;if(!book||uid==null)fail('USER_BINDING','user身份绑定缺少世界书或条目ID');const data=await ctx.loadWorldInfo(book);const entry=Object.values(data?.entries??{}).find(e=>String(e.uid)===String(uid));if(!entry)fail('USER_BINDING_MISSING','user绑定条目已不存在：'+book+'/'+uid);const title=entry.comment??entry.name??'';if(/^【角色】.+/u.test(title))name=title.slice('【角色】'.length);bound=String(entry.content??'');if(!bound.trim())fail('USER_BINDING_EMPTY','user绑定条目内容为空');bound=stripPhoneInitialization(bound,'手机初态');}
+ slots.tisya_user_identity=avatar.binding?('[USER.IDENTITY]\n故事主角：'+name+'\n'+bound+'\n[/USER.IDENTITY]'):'';
+ slots.tisya_user_name=avatar.binding?name:'';
  const wish=wishPreferences({...config,story:{...story,wish:persona}});
  slots.tisya_contractor_wish=wish?['[CONTRACTOR.WISH]','@u 为屏幕外的契约者与读者。',wish,'[/CONTRACTOR.WISH]'].join('\n'):'';return slots;
 }

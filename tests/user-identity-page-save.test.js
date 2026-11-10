@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {mountIdentityPage} from '../user-identity-page.js';
+import {mountIdentityPage} from './legacy-fixtures/user-identity-page.js';
 import {createIdentityService} from '../user-identity-service.js';
 let serial=0;
 function fixture(){

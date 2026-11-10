@@ -1,0 +1,11 @@
+✔ 真实world-extra对旧格式和Matrix格式都识别phone行；JSON不作为网页显示 (45.110995ms)
+✔ 真实message-ui初次门面尚未出现也按传入context挂正文定格；展开后有独立完整手机 (60.108582ms)
+✔ 真实communication追加器不会因已存在场外要求而漏掉手机消息对 (0.624471ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 433.15983

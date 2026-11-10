@@ -5,7 +5,7 @@ import {prepareTextTransport,createTextTransport} from '../config/text-transport
 import {readTaskResponse} from '../config/stream-response.js';
 import {createHost,sealPayload} from '../config/host.js';
 import {KEY,emptyConfig,defaultWorld,worldKey,createStore,resolveRoute,validateConfig} from '../config/core.js';
-import {mountConfiguration} from '../config/panel.js';
+import {mountConfiguration} from './legacy-fixtures/config-panel.js';
 
 const event=v=>`data: ${typeof v==='string'?v:JSON.stringify(v)}\n\n`;
 const google=c=>event({candidates:[c],modelVersion:'gemini-3.7-flash',responseId:'fixture'});

@@ -1,0 +1,52 @@
+{
+  "format": "tisya.form-authoring-template/1",
+  "id": "character.dossier",
+  "kind": "character",
+  "targets": [
+    {
+      "tableId": "T_SYS_ENTITIES",
+      "fields": [
+        "kind",
+        "origin_record_ref",
+        "runtime_state_ref"
+      ],
+      "projections": [
+        "entity_id",
+        "name"
+      ],
+      "instruction": "名称只填写 T_CHAR_DOSSIER.name；M_FIELD_REFERENCES 以 owner_table=T_SYS_ENTITIES、owner_row_uuid=实体ID、owner_field=origin_record_ref、target_table=T_CHAR_DOSSIER、target_row_uuid=档案ID、reference_kind=record 建原点关联；entity.origin_record_ref 引用该关联行。"
+    },
+    {
+      "tableId": "T_CHAR_DOSSIER",
+      "fields": [
+        "name",
+        "public_identity",
+        "social_identity_duty",
+        "overall_physique",
+        "scene_personality_desc",
+        "manifest"
+      ]
+    },
+    {
+      "tableId": "T_DYN_CURRENCY_BALANCES",
+      "fields": [
+        "owner_ref",
+        "currency_ref",
+        "balance",
+        "debt",
+        "native_ref"
+      ],
+      "instruction": "只采用明确有据的初值；未知不填零，不把授信或贷款同时算作现金。"
+    },
+    {
+      "tableId": "T_DYN_HOLDINGS_INVENTORY",
+      "fields": [],
+      "instruction": "关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。"
+    },
+    {
+      "tableId": "T_SYS_SOURCE_FRAGMENTS",
+      "fields": [],
+      "instruction": "保存作者原文、实际来源及摘要；定义变更与会话状态变更分开审查。"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {Window} from 'happy-dom';
-import {mountIdentityPage} from '../user-identity-page.js';import {createIdentityService} from '../user-identity-service.js';
+import {mountIdentityPage} from './legacy-fixtures/user-identity-page.js';import {createIdentityService} from '../user-identity-service.js';
 test('saving an AI character through actual UI buttons creates its own slot and keeps the old active identity',async()=>{
  const c={chatId:'one',characterId:0,characters:[{avatar:'world.png'}],chatMetadata:{},powerUserSettings:{personas:{old:'旧人物'},persona_descriptions:{old:{description:'旧设定'}},default_persona:'old'}},ref={book:'原点',originId:'o',id:'new-person',rev:1};let active='old',saved=0;
  const service=createIdentityService({getContext:()=>c,getAvatar:()=>active,applyActive:id=>active=id,persistSettings:async()=>true,persistChat:async()=>true,slotHost:{ensureAvatar:async id=>id,initialize:async(id,p)=>{c.powerUserSettings.personas[id]=p.name;c.powerUserSettings.persona_descriptions[id]={description:p.description};}},resolveOrigin:async()=>({name:'新旅人',description:'完整人物设定',reference:ref})});

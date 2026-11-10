@@ -39,8 +39,8 @@ export const TASK_PROFILES=Object.freeze({
   steps:['核定选中的对象类型与是否携带成长，保留每条原始来源。','分开无画风核心与当前世界表达；保留身份经历或装备用途的已有叙事意义，不猜作者意图。','逐项填写 core.traits 和获准 core.growth，核心设定与叙事意义分别命名，证据原句取自来源。','检查未丢失有依据的意义，无未选择成长、旧关系或持有自动继承、无目标世界虚构适配；整组选择逐成员填写bundle.members并逐关联填写bundle.links，提交基点草稿。']},
  tableGenesis:{
   authorize:'按用户目标设计完整的世界、人物、表单与开局，提交可修改的创世蓝图。每个永久档案直接写实际设定，方案说明与待办放在蓝图对应容器。',
-  route:['SOURCE.goal→主题、体验、必保留条件及目标范围；已确认且作用域匹配的PREFERENCES.rows→创作要求。','GENESIS→当前有效蓝图与待续目标；STATE.registry/rows→既有结构、人物和事实的版本依据。','世界与人物稳定档案→base；明确开局状态→initial；模板结构→registry；实施任务→workflow；阻断应用的具体缺项→blueprint.unresolved。'],
-  steps:['读目标与既有档案，确定主题、体验、人物吸引力和本轮设计范围。','按世界八域、人物九组档案及相关对象设计具体内容，逐对比较人物动机、经历因果链、表达和关系策略，修订本次原创部分中的重复设计。','沿现有结构填写blueprint/checklist/artifacts/workflow，保留已有字段、元数据、原生用户对象和来源，新增内容填写连续原文或完整设计条目作为evidence。','核对因果、时序、引用、知情权限、公式和保存接口，基点适配逐成员、逐核心项及逐关联填写coreMapping并落到真实字段；交付完整JSON草稿。']},
+  route:['SOURCE.databaseContract=tisya.matrix-creation/1时：STATE.schema是唯一已登记规范结构；SOURCE.template只指导新内容，GENESIS.output定义matrix.changes输出；世界与人物同义字段合并，其他业务使用关联子表，不输出旧base/initial/artifacts。其他合同沿其原格式。','SOURCE.goal→主题、体验、必保留条件及目标范围；已确认且作用域匹配的PREFERENCES.rows→创作要求。','GENESIS→当前有效蓝图与待续目标；STATE.registry/rows→既有结构、人物和事实的版本依据。','旧版合同：世界与人物稳定档案→base；明确开局状态→initial；模板结构→registry；实施任务→workflow；阻断应用的具体缺项→blueprint.unresolved。统一表单合同按matrix.changes和unresolved填写。'],
+  steps:['读目标与既有档案，确定主题、体验、人物吸引力和本轮设计范围。','按世界八域、人物九组档案及相关对象设计具体内容，逐对比较人物动机、经历因果链、表达和关系策略，修订本次原创部分中的重复设计。','按SOURCE.databaseContract选择产物：tisya.matrix-creation/1填写name/summary/unresolved/matrix.changes/binding，其余旧合同填写blueprint/checklist/artifacts/workflow。复用已登记结构与稳定引用；只读派生值和程序历史不填。','核对因果、时序、引用、知情权限、公式和保存接口，基点适配逐成员、逐核心项及逐关联填写coreMapping并落到真实字段；交付完整JSON草稿。']},
  tableAssistant:{
   authorize:'根据用户当前要求分析真实配置并提出批量修改草稿；仅由用户点击应用执行，不在回答时写入。',
   route:['SOURCE.question/conversation→当前需求；STATE.configuration/editablePaths/choices→可改路径与真实选项。','STATE.history/storage 和 TOOLS→实测状态；缺失能力与新资源需求→genesisGoal；已知楼层补录→backfill。','配置更改→changes；诊断说明→answer；无真实写回回执→不声称完成。'],

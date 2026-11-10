@@ -1,0 +1,19 @@
+{
+  "utc_observed": "2026-11-09 before 11:49 UTC",
+  "scope": "Test-runner limitations observed while loading the delivered single HTML; no production code modified for these issues",
+  "observations": [
+    {
+      "runner": "Happy DOM automatic inline module evaluation",
+      "error": "SyntaxError: Failed to parse module in 'http://localhost/phone.html'. Execution error: Unexpected token '.'. Compile error: Missing end of parentheses on line 2134 and column 26",
+      "verification": "The exact extracted inline module passes node --check.",
+      "resolution": "Use native vm.SourceTextModule in the same Happy DOM Window. No rewrite of delivered script."
+    },
+    {
+      "runner": "Native ESM in Happy DOM Window",
+      "error": "ReferenceError: structuredClone is not defined",
+      "resolution": "Install test-only realm-local clone shim for JSON application state. Browser structuredClone semantics are not claimed as tested."
+    }
+  ],
+  "final_report": "phone-work/phone-bundle-dom.json",
+  "exact_extracted_script": "phone-work/phone-bundle-parse-original.mjs"
+}

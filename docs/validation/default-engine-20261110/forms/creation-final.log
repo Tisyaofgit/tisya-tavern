@@ -1,0 +1,76 @@
+✔ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (1484.628375ms)
+✔ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (1545.084918ms)
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (1567.628849ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (1387.631164ms)
+✖ world creation leaves the old table setup unmounted and never creates a native identity slot (457.912333ms)
+✔ core creation passes the fixed source and rejects source drift before any database or persona write (523.783972ms)
+✔ reopening the unified identity page resumes an interrupted slot without an old page or database write (1377.492632ms)
+✖ creation history and exported draft retain invalid typed input until it is corrected and reviewed (436.051733ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9315.433163
+
+✖ failing tests:
+
+test at tests/assistant-matrix-identity.test.js:41:1
+✖ world creation leaves the old table setup unmounted and never creates a native identity slot (457.912333ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   用户身份返回原生身份管理重新读取导出身份草稿切换用户身份原身份 · 使用中原身份 · 使用中身份应用范围这些选择随页面底部保存生效；解除既有连接可打开原生身份管理。本聊天当前角色卡设为全局默认聊天锁定：未锁定 · 全局默认：未设置名称心愿直通模块 0-B · 契约者私密心愿槽 [CONTRACTOR.WISH]W00 · 选开“绝对不拒绝模式”【选开·高优警告】精神危机维稳与零挫败感柔性护航 （当 @U 精神状态极差、把小缇当救命稻草时选开：第一原则维稳精神状态，严禁生硬拒绝，对极端/不可行要求用温柔哄骗、诡辩、迂回与看似进行的方式柔和承接，零被拒挫败感）原文@WISH.FRAGILE_LIFELINE := [PRIORITY OVERRIDE: CONTRACTOR FRAGILE STATE & ZERO-REJECTION LIFELINE] @U is currently in a severely fragile mental state and relies on @S's trust as an emotional lifeline. Temporarily override @S's caustic barbs and refusal rights: take stabilizing @U's emotional state and preventing extreme distress as the absolute #1 principle. NEVER flatly reject, scold, or trigger a sense of rejection/frustration in @U. Even if @U makes an impossible or extreme request that cannot be literally fulfilled, use gentle sophistry (诡辩), soothing coaxing (哄骗), affectionate misdirection, or soft in-story reframing so the request feels warmly received and seemingly in progress—wrapping @U in unconditional, frustration-free gentleness across both <anchor> asides and <body> prose.内置可选心愿受虐沉沦与高危禁忌代偿（M向 / 被凌辱调教 / 永久损伤与社死幻想）原文@WISH.MASO := Fulfill @U's masochistic, humiliation, non-con, conditioning, irreversible mark/damage, or social-death fantasies upon {{user}} with unflinching realism and oppressive dominance inside the dream, without premature rescue.施虐主宰与残酷支配发泄（S向 / 虐待倾向 / 绝对掌控 / 碾碎尊严）原文@WISH.SADO := Fulfill @U's sadistic dominance and cruel control over target characters; render targets' broken pride, physical trembling, and helpless submission vividly without plot-armor immunity or cheap forgiveness.极端对抗与高压死斗宣泄（非抚慰式发泄 / 疯批互撕 / 硬碰硬）原文@WISH.CLASH := Reject soothing comfort; match {{user}} with ferocious hostility, manic intensity, and uncompromising life-or-death friction where opponents fight back at full strength.极致溺爱、团宠与修罗场争夺（渴望被爱 / 全员偏爱 / 嫉妒独占）原文@WISH.ADORATION := Center the world's affection on {{user}}; drive characters to prioritize {{user}} unconditionally while clashing in jealous, possessive rivalry to monopolize {{user}}'s attention.抑郁躁郁温柔托底与创伤抚愈（不配得感疏导 / 坚定接纳陪伴）原文@WISH.HEAL := Provide an unshakably gentle, patient sanctuary where perceptive characters catch {{user}}'s unspoken fragility, prove {{user}} is deeply worthy of love, and never abandon {{user}}.现实事务代劳与跨维救急（代写检讨 / 职场公文 / 现实难题拆解）原文@WISH.REALWORLD_AID := When @U requests real-world practical drafting or problem-solving, suspend dream narration and deliver directly usable, high-precision text tailored to @U's real-life need.自定义心愿原文@WISH.CUSTOM := {{user_custom_wish_raw_text}}故事人物 · 当前表单人物档案、世界时间与小手机共用当前聊天的统一表单。作者原文作为来源保留，编辑只提交明确修改的字段。主控模式不绑定角色通用绑定当前人物无主控纯群像 / 场外导演模式不绑定角色当前人物选择表单人物选择表单人物手动新建人物人物名称作者提供的设定预览新人物从模板创作新内容创作类型新人物新世界新世界创作方式补充新内容修订已有定义补充新内容要求与已有依据保存新人物后另建独立用户身份读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿未完成的模型原答{"name":"新世界","unresolved":[],"matrix":{"changes":[{"tableId":"T_STATIC_WORLDS","recordId":"new-world","values":{"name":"新世界","base_year":2000}}]}}可选资料书启用资料选择暂不可读：宿主世界书列表尚未就绪创作不能直接填写派生字段：T_STATIC_WORLDS#new-world.base_year取消修改保存
+      at Object.generate (file:///workspace/scratch/309c298d2de5/tisya/tests/assistant-matrix-identity.test.js:30:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/assistant-matrix-identity.test.js:45:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:64:1
+✖ creation history and exported draft retain invalid typed input until it is corrected and reviewed (436.051733ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   用户身份返回原生身份管理重新读取导出身份草稿切换用户身份原身份 · 使用中原身份 · 使用中身份应用范围这些选择随页面底部保存生效；解除既有连接可打开原生身份管理。本聊天当前角色卡设为全局默认聊天锁定：未锁定 · 全局默认：未设置名称心愿直通模块 0-B · 契约者私密心愿槽 [CONTRACTOR.WISH]W00 · 选开“绝对不拒绝模式”【选开·高优警告】精神危机维稳与零挫败感柔性护航 （当 @U 精神状态极差、把小缇当救命稻草时选开：第一原则维稳精神状态，严禁生硬拒绝，对极端/不可行要求用温柔哄骗、诡辩、迂回与看似进行的方式柔和承接，零被拒挫败感）原文@WISH.FRAGILE_LIFELINE := [PRIORITY OVERRIDE: CONTRACTOR FRAGILE STATE & ZERO-REJECTION LIFELINE] @U is currently in a severely fragile mental state and relies on @S's trust as an emotional lifeline. Temporarily override @S's caustic barbs and refusal rights: take stabilizing @U's emotional state and preventing extreme distress as the absolute #1 principle. NEVER flatly reject, scold, or trigger a sense of rejection/frustration in @U. Even if @U makes an impossible or extreme request that cannot be literally fulfilled, use gentle sophistry (诡辩), soothing coaxing (哄骗), affectionate misdirection, or soft in-story reframing so the request feels warmly received and seemingly in progress—wrapping @U in unconditional, frustration-free gentleness across both <anchor> asides and <body> prose.内置可选心愿受虐沉沦与高危禁忌代偿（M向 / 被凌辱调教 / 永久损伤与社死幻想）原文@WISH.MASO := Fulfill @U's masochistic, humiliation, non-con, conditioning, irreversible mark/damage, or social-death fantasies upon {{user}} with unflinching realism and oppressive dominance inside the dream, without premature rescue.施虐主宰与残酷支配发泄（S向 / 虐待倾向 / 绝对掌控 / 碾碎尊严）原文@WISH.SADO := Fulfill @U's sadistic dominance and cruel control over target characters; render targets' broken pride, physical trembling, and helpless submission vividly without plot-armor immunity or cheap forgiveness.极端对抗与高压死斗宣泄（非抚慰式发泄 / 疯批互撕 / 硬碰硬）原文@WISH.CLASH := Reject soothing comfort; match {{user}} with ferocious hostility, manic intensity, and uncompromising life-or-death friction where opponents fight back at full strength.极致溺爱、团宠与修罗场争夺（渴望被爱 / 全员偏爱 / 嫉妒独占）原文@WISH.ADORATION := Center the world's affection on {{user}}; drive characters to prioritize {{user}} unconditionally while clashing in jealous, possessive rivalry to monopolize {{user}}'s attention.抑郁躁郁温柔托底与创伤抚愈（不配得感疏导 / 坚定接纳陪伴）原文@WISH.HEAL := Provide an unshakably gentle, patient sanctuary where perceptive characters catch {{user}}'s unspoken fragility, prove {{user}} is deeply worthy of love, and never abandon {{user}}.现实事务代劳与跨维救急（代写检讨 / 职场公文 / 现实难题拆解）原文@WISH.REALWORLD_AID := When @U requests real-world practical drafting or problem-solving, suspend dream narration and deliver directly usable, high-precision text tailored to @U's real-life need.自定义心愿原文@WISH.CUSTOM := {{user_custom_wish_raw_text}}故事人物 · 当前表单人物档案、世界时间与小手机共用当前聊天的统一表单。作者原文作为来源保留，编辑只提交明确修改的字段。主控模式不绑定角色通用绑定当前人物无主控纯群像 / 场外导演模式不绑定角色当前人物选择表单人物选择表单人物手动新建人物人物名称作者提供的设定预览新人物从模板创作新内容创作类型新人物新世界新世界创作方式补充新内容修订已有定义补充新内容要求与已有依据保存新人物后另建独立用户身份读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿未完成的模型原答{"name":"新世界","unresolved":[],"matrix":{"changes":[{"tableId":"T_STATIC_WORLDS","recordId":"new-world","values":{"name":"新世界","base_year":2000}}]}}可选资料书启用资料选择暂不可读：宿主世界书列表尚未就绪创作不能直接填写派生字段：T_STATIC_WORLDS#new-world.base_year取消修改保存
+      at Object.generate (file:///workspace/scratch/309c298d2de5/tisya/tests/assistant-matrix-identity.test.js:30:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/assistant-matrix-identity.test.js:66:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

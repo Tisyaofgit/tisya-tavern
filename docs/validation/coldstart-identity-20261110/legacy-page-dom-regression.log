@@ -1,0 +1,15 @@
+✔ legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs (52.785607ms)
+✔ legacy cancel discards mixed staged edits without persistence and restores selection (21.204518ms)
+✔ legacy leave prompt coalesces navigation and keeps failed save editable before retry (20.676093ms)
+✔ legacy retries only unfinished binding after profile persistence succeeds (14.485011ms)
+✔ legacy retains unsaved fields and scope on page recreation (26.657111ms)
+✔ legacy refuses external identity revisions and a changed chat before any write (12.140572ms)
+✔ legacy recovery saves scope edits made after a failed earlier binding (18.027912ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 714.29251

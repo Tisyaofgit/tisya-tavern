@@ -1,0 +1,182 @@
+✔ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (124.565832ms)
+✔ mounted preset recovery is available on both settings and native preset page and clears startup failure (70.59961ms)
+✔ new configuration replaces legacy panels and preserves unsaved tag edits (115.457904ms)
+✔ phone and sidebar open the same read-only notes and public memory pages (63.495398ms)
+✔ native image and voice entries open existing settings without generating or rewriting controls (44.088003ms)
+✔ unavailable native phone actions report failure, never substitute another configuration (35.545214ms)
+✔ phone settings opens the new configuration; theme and protocol keep native surfaces (90.084321ms)
+✔ theme workshop saves live effects without the removed configuration categories (47.482467ms)
+✔ editing or swiping invalidates an open reader and notebook without touching messages (45.159898ms)
+✔ notebook lookup works during a pending generation and tears down on return to native UI (68.925037ms)
+✔ contacts, labels, grouping and teardown keep native nodes (51.113536ms)
+✔ continue requests next normal response, never submits composer draft (43.77339ms)
+✔ message menu refuses edited source and generation blocks editing (42.045146ms)
+✔ home lists every persisted chat and keeps same-name contacts separate (44.739965ms)
+✔ production home checks avatar identity and selects the exact persisted chat before closing (32.356902ms)
+✔ homepage USER opens the unified identity page and retains a real native-controls exit (56.598018ms)
+✔ worldbook entry stays accessible during streaming and chat editing stays locked (32.743504ms)
+✔ streaming disables actions and generation end re-enables both on same mounted message (58.556378ms)
+✔ old AI advanced reroll opens review without deleting history (34.883489ms)
+✔ old user continue returns to that turn and requests next reply (39.251397ms)
+✔ rollback save failure prevents generation and reports partial deletion (27.434517ms)
+✔ draft and disconnected model prevent any history deletion (71.457251ms)
+✔ custom continue text persists and reaches native normal generation as user input (50.947116ms)
+✔ typing a draft during rollback preserves it and stops generation (38.869983ms)
+✔ unloaded sparse history is rejected without deletion (45.183924ms)
+✔ workflow navigation retains the original expansion control without duplicate shortcuts (45.476655ms)
+✔ chat menu keeps the native anchor and removes the duplicated settings entry (53.180661ms)
+✔ sidebar shortcut entry closes the page and opens seven position selectors (51.74665ms)
+✔ supported system fullscreen routes to native action while app header stays removed (58.669379ms)
+✔ message and bottom menu icons retain accessible names and native source nodes (43.25621ms)
+✔ reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds (70.384415ms)
+✔ inline action mode append changes draft without a confirmation modal (53.88482ms)
+✔ inline action mode replace changes draft without a confirmation modal (46.147195ms)
+✔ action refuses changed message after opening inline mode menu (698.472911ms)
+✔ action refuses changed chat after opening inline mode menu (708.224877ms)
+✔ direct send is an explicit mode and native submission occurs only after an action click (48.20854ms)
+✔ direct send preserves a nonempty draft with inline feedback (699.666783ms)
+✔ chat change closes reader and stale actions cannot write into the next conversation (44.420123ms)
+✔ holding a shadow UI button never opens the native long-press message menu (752.20913ms)
+✔ stopping a hung native generation releases history after host idle and a late result cannot unlock a new run (48.98469ms)
+✔ stopping generation options cancels the pending action without a late send (44.076806ms)
+✔ stop during rollback persists the completed deletion before unlocking and reports the actual count (33.245762ms)
+✔ a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation (90.951016ms)
+✔ UI completions cannot release the history lock while generation options are pending (55.049245ms)
+✔ late clipboard completion leaves a newly opened menu intact (45.680783ms)
+✔ pending history save allows menu dismissal and does not close a later panel (58.941138ms)
+✔ message toolbar supports only more, custom order, full expansion, and persists independently (72.649377ms)
+✔ unbound new engine aborts before the native payload and never initializes old tables (41.433895ms)
+✔ native edit focus places confirmation controls below the editor and exit restores them (61.306261ms)
+✔ welcome startup mounts the pet and functional sidebar without a world or persistence (107.119482ms)
+✖ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (140.107919ms)
+✖ native composer persists requirements separately and clears the draft before awaiting the reply (40.130963ms)
+✔ Android immersive entry remains discoverable and invokes the persistent native toggle (54.484189ms)
+✔ legacy native shortcut is hidden without overwriting settings; advanced revision remains in More (37.968845ms)
+✔ candidate navigation has its own final row after message tools (40.337584ms)
+✔ direct candidate jump edits the selected native text and deletes only selected version (67.89766ms)
+✔ production initializer wires asynchronous message cache without disabling the shell (131.49326ms)
+✔ production long-press More saves manual order and keeps copy reachable (1271.519661ms)
+✔ production display route saves the real host loading field without replacing history (63.778056ms)
+✔ settings has one destination per entry and discovers later native drawers (45.063624ms)
+✔ groups use stable native IDs; inline management does not load a chat (46.611726ms)
+✔ cache drafts block page and phone navigation until saved or discarded (48.230104ms)
+✔ native API editor opens from clean configuration and preserves unsaved tags (74.134026ms)
+✔ home settings invokes the menu; menu rename and pin persist with native names unchanged (64.286261ms)
+✖ late host autoload leaves home visible, while choosing a row still opens exact chat (31.36618ms)
+✔ deletion requires confirmation and checks the native result instead of assuming success (46.111647ms)
+✔ directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape (42.303215ms)
+✔ detached inline edit is rejected instead of saving against a stale row (47.674292ms)
+✔ user message exposes reroll-next, preserves draft guard and sends edited comparison only once (61.480283ms)
+✔ all settings entry points reuse one page, preserve search and discover a drawer installed while open (59.358007ms)
+✔ settings and identity headers return directly to current chat without changing its contents (88.977976ms)
+✔ pending native clipboard on the actual message toolbar never blocks a new chat action (43.164123ms)
+✖ rendered target chat releases actual home navigation lock while native selection promise stays pending (44.791924ms)
+✔ managed committed tail releases home lock even when host never emits CHAT_CHANGED (41.704814ms)
+✔ pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock (39.846556ms)
+✔ target data loaded without completion events closes the directory and releases chat operations (88.465983ms)
+✔ native token-count dry runs do not clear pending one-pass storage work (27.302861ms)
+✔ token count between a real start and its end still completes the real generation lifecycle (35.838387ms)
+✔ preload and explicit dry run do not call engine or mutate cached native records (1.452328ms)
+✔ every active source is gated before native sticky, decorators and forced activation; enabled matches keep native budget fields (2.401849ms)
+✔ forced or late injected denied entry stops final payload even if host catches scan error (0.714476ms)
+✔ unrecognized provider, missing result and wrong version fail closed and final readiness remembers failure (0.738693ms)
+✔ timeout and context changes reject late outcomes and never reuse last success (26.359296ms)
+✔ current state freshness is checked before recursion finishes and before final send (0.667375ms)
+✔ all eight host insertion anchors retain ordering after gate filtering; ordinary entries remain intact (2.000774ms)
+✔ actual entry point gates preset-added records after collection, awaits final guard and cancels all terminal paths (1.047728ms)
+✔ a cancelled scan finishing late cannot poison the next generation (0.589338ms)
+✔ late replacement cannot reuse a permitted entry identity with a different rule (0.521475ms)
+ℹ tests 88
+ℹ suites 0
+ℹ pass 84
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8692.274584
+
+✖ failing tests:
+
+test at tests/shell.test.js:344:1
+✖ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (140.107919ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '聊天归属已变化；本次操作未写入',
+  +   '聊天在读取手机历史时已切换。'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:364:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '聊天归属已变化；本次操作未写入', '聊天在读取手机历史时已切换。' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:367:1
+✖ native composer persists requirements separately and clears the draft before awaiting the reply (40.130963ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - '请让角色主动回应'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:370:58)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '请让角色主动回应',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:421:1
+✖ late host autoload leaves home visible, while choosing a row still opens exact chat (31.36618ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '聊天已切换，手机尚未初始化。',
+  +   '聊天目标已变化。；保存是否落盘尚未确认，请重新打开聊天读取宿主存档。'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:423:169)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '聊天已切换，手机尚未初始化。', '聊天目标已变化。；保存是否落盘尚未确认，请重新打开聊天读取宿主存档。' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:481:1
+✖ rendered target chat releases actual home navigation lock while native selection promise stays pending (44.791924ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   '聊天目标已变化。；保存是否落盘尚未确认，请重新打开聊天读取宿主存档。'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/tests/shell.test.js:490:67)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '聊天目标已变化。；保存是否落盘尚未确认，请重新打开聊天读取宿主存档。' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,127 @@
+{
+  "schema": "tisya.unified-shell-validation/1",
+  "at_utc": "2026-11-10T04:31:35.714100+00:00",
+  "base_commit": "72522564bfe75a80298396d4636c48c6f34f7d57",
+  "incoming_main": "432e8772b63bf0e2005685a80d8d4dffc872c3b3",
+  "candidate_source": "33ab08cecef94a7d7d40272e97f756fcb9c5ae77",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.10-phone.3",
+  "files": [
+    {
+      "path": "index.js",
+      "bytes": 120485,
+      "sha256": "a340d6da9b315a560a8295da7fb347aa595ca2fab3802ff3f461dae9e816b7fa"
+    },
+    {
+      "path": "layout.js",
+      "bytes": 10374,
+      "sha256": "315b4c571d6ddbc2b18998bf1607fc8fdad7171e030e8182d60d51764448abbb"
+    },
+    {
+      "path": "shell.css",
+      "bytes": 88977,
+      "sha256": "1dc2b5100ed1365979e99bec1ccaf405e298e0a17f8510b196c2e23cae2d4201"
+    },
+    {
+      "path": "tests/shell.test.js",
+      "bytes": 108428,
+      "sha256": "00b7c068cff81ee0037ebde44983d739e38fa9a5291e904f3a2f0025792e8ef1"
+    }
+  ],
+  "decisions": [
+    "Keep candidate Matrix/database/phone source, three-way merge all nonconflicting main changes.",
+    "Forward identity draft lifecycle via complete panel object, attach presentation to identity scroll region with a single footer; ready and disposal cover both children.",
+    "Await leave permission before direct phone open, public close and identity/world-seed routes; preserve boolean phone dispatch contract for life:setup.",
+    "Retain native identity route regressions and candidate phone history regressions with actual services and isolated IndexedDB."
+  ],
+  "regressions": {
+    "phone_leave_before": {
+      "tests": 3,
+      "pass": 0,
+      "fail": 3,
+      "scope": "Three-way merged shell where main made leave permission async but candidate phone entry points still consumed it synchronously."
+    },
+    "phone_history_and_leave_final": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0
+    },
+    "identity_route_final": {
+      "tests": 3,
+      "pass": 3,
+      "fail": 0
+    },
+    "presentation_route": {
+      "tests": 2,
+      "pass": 2,
+      "fail": 0
+    },
+    "full_shell": {
+      "command": "node --test tests/shell.test.js",
+      "tests": 90,
+      "pass": 90,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "syntax": [
+      "node --check index.js",
+      "node --check layout.js",
+      "node --check tests/shell.test.js"
+    ]
+  },
+  "preserved_intermediate_failures": [
+    "Missing isolated IndexedDB in the historical-delete UI fixture raised the actual display-cache unsupported error; configured supported fixture rather than suppressing the error.",
+    "Main identity route fixtures needed database role references and awaited actual asynchronous IndexedDB-backed panel readiness. All original logs are retained."
+  ],
+  "evidence": [
+    {
+      "path": "identity-route-after-await.log",
+      "bytes": 1269,
+      "sha256": "b8e2a49d3fc0a7640e9ff4cc6ecf729393ddab0322fdbc891d00f54806e0d6ef"
+    },
+    {
+      "path": "identity-route-final.log",
+      "bytes": 529,
+      "sha256": "7332262d794a59f9d005b1763af3db84d9e45c0e1ad3a2ae88307071976dd6ae"
+    },
+    {
+      "path": "identity-route-first.log",
+      "bytes": 2819,
+      "sha256": "0892e56fc5b638532d2a24f6bd819579e57ff7eacad686ae33c8d360de41f7f2"
+    },
+    {
+      "path": "phone-leave-after.log",
+      "bytes": 1483,
+      "sha256": "cc600e272d7f4329ab8fefb5bb985af8d58dd0e7cca46fb20dd4031c1f4e80fb"
+    },
+    {
+      "path": "phone-leave-before.log",
+      "bytes": 2427,
+      "sha256": "6c597cc5eeebdb0ec56cd025ecd5dd2f51abba6b06e087a0dd8cc0bcc4a5eac3"
+    },
+    {
+      "path": "phone-leave-final.log",
+      "bytes": 649,
+      "sha256": "9e9a99276b696a9767854190241abb3a7eb130abdf37957139fbe4907085a681"
+    },
+    {
+      "path": "presentation-route-first.log",
+      "bytes": 366,
+      "sha256": "19337b847a803ba48b78a9b005b5efe75ea70320d370eded23134a50dff42a6f"
+    },
+    {
+      "path": "shell-all-first.log",
+      "bytes": 9382,
+      "sha256": "d2d144e23eea55fa5190f531653fad4e17fee71baecbe94628604a541423eaac"
+    }
+  ],
+  "limits": {
+    "fixture": "Actual production index.js, Matrix/identity/presentation/phone services and Happy DOM; native host APIs and IndexedDB are isolated fixtures.",
+    "browser_geometry": "not verified",
+    "installed_host": "not verified",
+    "android": "not verified",
+    "external_model_calls": 0,
+    "user_live_data_accessed": false
+  }
+}

@@ -1,0 +1,13 @@
+✔ canonical phone history events refresh the cached phone without legacy metadata (1998.309336ms)
+✔ history events leave a conversation without a phone database uninitialized (67.716117ms)
+✔ direct phone opening waits for the settings leave decision and cancellation keeps the draft (72.077731ms)
+✔ direct phone close waits for the settings leave decision and only hides after confirmed discard (77.439148ms)
+✔ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (61.864902ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2607.415656

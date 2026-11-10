@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 import {defaultRegistry} from '../tables/schema.js';
-import {mountConfiguration} from '../config/panel.js';
+import {mountConfiguration} from './legacy-fixtures/config-panel.js';
 import {mountTablePanel} from '../tables/panel.js';
 
 const copy=value=>structuredClone(value);

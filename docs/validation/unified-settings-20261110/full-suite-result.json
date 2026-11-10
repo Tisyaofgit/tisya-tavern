@@ -1,0 +1,29 @@
+{
+  "started_at_utc": "2026-11-10T04:45:37.711189+00:00",
+  "source": "/workspace/scratch/18b060429516/unified-integration",
+  "scope": "local Node product/service/DOM tests; isolated fixtures; no real model/host/Android validation",
+  "build_exit": 0,
+  "build_log_sha256": "d614add57409040564102a24941114a10535ce6672f6a8b43bd3b146757b326e",
+  "finished_at_utc": "2026-11-10T04:47:11.518226+00:00",
+  "npm_test_exit": 0,
+  "source_drift": [],
+  "full_log_sha256": "924b5141ddcf3abd42fafc4db4f46fca48e3df0f4c5958ff1a340a5fb6bf4fb4",
+  "runtime_bytes": 4654122,
+  "runtime_sha256": "c76ca78cbb889f3088b541e72a0cc256279fcf6280a1655e1dc7c22432fcd43b",
+  "tests": 1874,
+  "suites": 0,
+  "pass": 1874,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "todo": 0,
+  "generated_checks_expected": 16,
+  "generated_checks_completed": 16,
+  "passed": true,
+  "generated_checks_evidence": "All 16 --check commands in package.json test are joined with &&; npm test reached the Node summary and exited 0. Raw outputs are preserved.",
+  "aggregation_correction": {
+    "original_record": "full-suite-result-original-parser.json",
+    "reason": "Summary collector initially accepted TAP # counters only; active Node reporter used ℹ. JSON-output-only check count omitted plain-text build checks. Product build and npm test both exited 0; raw logs are unchanged; no test result was replaced or rerun.",
+    "corrected_at_utc": "2026-11-10T04:48:22.823654+00:00"
+  }
+}

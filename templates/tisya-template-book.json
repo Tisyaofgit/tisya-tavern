@@ -1,0 +1,149 @@
+{
+  "name": "缇斯亚模板书",
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【模板】世界统一表单",
+      "content": "{\n  \"format\": \"tisya.form-authoring-template/1\",\n  \"id\": \"world.definition\",\n  \"kind\": \"world\",\n  \"targets\": [\n    {\n      \"tableId\": \"T_STATIC_WORLDS\",\n      \"fields\": [\n        \"name\",\n        \"core_proposition\",\n        \"era_name\",\n        \"current_baseline_ref\"\n      ],\n      \"projections\": [\n        \"world_id\",\n        \"calendar_id\",\n        \"base_year\"\n      ],\n      \"instruction\": \"world_id 由 recordId 自动提供；历法关联与基准年按已注册关系从历法子表读取。\"\n    },\n    {\n      \"tableId\": \"M_CALENDAR_RULES\",\n      \"fields\": [],\n      \"instruction\": \"使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。\"\n    },\n    {\n      \"tableId\": \"X_WORLD_CLOCKS\",\n      \"fields\": [],\n      \"instruction\": \"当前可执行世界时钟唯一归此表；场景时间和手机日期均读取它。\"\n    },\n    {\n      \"tableId\": \"T_STATIC_PLACES\",\n      \"fields\": [],\n      \"instruction\": \"已有地点复用稳定记录，坐标、权限与已知范围按实际 schema。\"\n    },\n    {\n      \"tableId\": \"T_STATIC_ITEMS_SKILLS\",\n      \"fields\": [],\n      \"instruction\": \"物品、货币及其单位先建或引用规范定义；商城报价不等于人物持有。\"\n    }\n  ]\n}\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "templates",
+          "entryId": "template.world.form",
+          "purpose": "template",
+          "retired": false,
+          "base": {
+            "comment": "【模板】世界统一表单",
+            "content": "{\n  \"format\": \"tisya.form-authoring-template/1\",\n  \"id\": \"world.definition\",\n  \"kind\": \"world\",\n  \"targets\": [\n    {\n      \"tableId\": \"T_STATIC_WORLDS\",\n      \"fields\": [\n        \"name\",\n        \"core_proposition\",\n        \"era_name\",\n        \"current_baseline_ref\"\n      ],\n      \"projections\": [\n        \"world_id\",\n        \"calendar_id\",\n        \"base_year\"\n      ],\n      \"instruction\": \"world_id 由 recordId 自动提供；历法关联与基准年按已注册关系从历法子表读取。\"\n    },\n    {\n      \"tableId\": \"M_CALENDAR_RULES\",\n      \"fields\": [],\n      \"instruction\": \"使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。\"\n    },\n    {\n      \"tableId\": \"X_WORLD_CLOCKS\",\n      \"fields\": [],\n      \"instruction\": \"当前可执行世界时钟唯一归此表；场景时间和手机日期均读取它。\"\n    },\n    {\n      \"tableId\": \"T_STATIC_PLACES\",\n      \"fields\": [],\n      \"instruction\": \"已有地点复用稳定记录，坐标、权限与已知范围按实际 schema。\"\n    },\n    {\n      \"tableId\": \"T_STATIC_ITEMS_SKILLS\",\n      \"fields\": [],\n      \"instruction\": \"物品、货币及其单位先建或引用规范定义；商城报价不等于人物持有。\"\n    }\n  ]\n}\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。"
+          },
+          "release": "b7e4cb8e14a52bf4b46cd28ab452d8ffe2da16913a537d6d2206c4f69ef2034b",
+          "checkedRelease": "b7e4cb8e14a52bf4b46cd28ab452d8ffe2da16913a537d6d2206c4f69ef2034b"
+        }
+      }
+    },
+    "1": {
+      "uid": 1,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【模板】角色统一表单",
+      "content": "{\n  \"format\": \"tisya.form-authoring-template/1\",\n  \"id\": \"character.dossier\",\n  \"kind\": \"character\",\n  \"targets\": [\n    {\n      \"tableId\": \"T_SYS_ENTITIES\",\n      \"fields\": [\n        \"kind\",\n        \"origin_record_ref\",\n        \"runtime_state_ref\"\n      ],\n      \"projections\": [\n        \"entity_id\",\n        \"name\"\n      ],\n      \"instruction\": \"名称只填写 T_CHAR_DOSSIER.name；M_FIELD_REFERENCES 以 owner_table=T_SYS_ENTITIES、owner_row_uuid=实体ID、owner_field=origin_record_ref、target_table=T_CHAR_DOSSIER、target_row_uuid=档案ID、reference_kind=record 建原点关联；entity.origin_record_ref 引用该关联行。\"\n    },\n    {\n      \"tableId\": \"T_CHAR_DOSSIER\",\n      \"fields\": [\n        \"name\",\n        \"public_identity\",\n        \"social_identity_duty\",\n        \"overall_physique\",\n        \"scene_personality_desc\",\n        \"manifest\"\n      ]\n    },\n    {\n      \"tableId\": \"T_DYN_CURRENCY_BALANCES\",\n      \"fields\": [\n        \"owner_ref\",\n        \"currency_ref\",\n        \"balance\",\n        \"debt\",\n        \"native_ref\"\n      ],\n      \"instruction\": \"只采用明确有据的初值；未知不填零，不把授信或贷款同时算作现金。\"\n    },\n    {\n      \"tableId\": \"T_DYN_HOLDINGS_INVENTORY\",\n      \"fields\": [],\n      \"instruction\": \"关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。\"\n    },\n    {\n      \"tableId\": \"T_SYS_SOURCE_FRAGMENTS\",\n      \"fields\": [],\n      \"instruction\": \"保存作者原文、实际来源及摘要；定义变更与会话状态变更分开审查。\"\n    }\n  ]\n}\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "templates",
+          "entryId": "template.character.form",
+          "purpose": "template",
+          "retired": false,
+          "base": {
+            "comment": "【模板】角色统一表单",
+            "content": "{\n  \"format\": \"tisya.form-authoring-template/1\",\n  \"id\": \"character.dossier\",\n  \"kind\": \"character\",\n  \"targets\": [\n    {\n      \"tableId\": \"T_SYS_ENTITIES\",\n      \"fields\": [\n        \"kind\",\n        \"origin_record_ref\",\n        \"runtime_state_ref\"\n      ],\n      \"projections\": [\n        \"entity_id\",\n        \"name\"\n      ],\n      \"instruction\": \"名称只填写 T_CHAR_DOSSIER.name；M_FIELD_REFERENCES 以 owner_table=T_SYS_ENTITIES、owner_row_uuid=实体ID、owner_field=origin_record_ref、target_table=T_CHAR_DOSSIER、target_row_uuid=档案ID、reference_kind=record 建原点关联；entity.origin_record_ref 引用该关联行。\"\n    },\n    {\n      \"tableId\": \"T_CHAR_DOSSIER\",\n      \"fields\": [\n        \"name\",\n        \"public_identity\",\n        \"social_identity_duty\",\n        \"overall_physique\",\n        \"scene_personality_desc\",\n        \"manifest\"\n      ]\n    },\n    {\n      \"tableId\": \"T_DYN_CURRENCY_BALANCES\",\n      \"fields\": [\n        \"owner_ref\",\n        \"currency_ref\",\n        \"balance\",\n        \"debt\",\n        \"native_ref\"\n      ],\n      \"instruction\": \"只采用明确有据的初值；未知不填零，不把授信或贷款同时算作现金。\"\n    },\n    {\n      \"tableId\": \"T_DYN_HOLDINGS_INVENTORY\",\n      \"fields\": [],\n      \"instruction\": \"关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。\"\n    },\n    {\n      \"tableId\": \"T_SYS_SOURCE_FRAGMENTS\",\n      \"fields\": [],\n      \"instruction\": \"保存作者原文、实际来源及摘要；定义变更与会话状态变更分开审查。\"\n    }\n  ]\n}\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。"
+          },
+          "release": "d871057d37604e86d532661ce4d863624f70e12c8275f7e6c9605c33a1f24754",
+          "checkedRelease": "d871057d37604e86d532661ce4d863624f70e12c8275f7e6c9605c33a1f24754"
+        }
+      }
+    },
+    "2": {
+      "uid": 2,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【模板】生活模块关联子模板",
+      "content": "手机应用、网络账号、联系人、订单及逐期明细、社交内容、媒体授权、日程均从本次 schema 选择对应表。世界/人物/货币/物品/当前时钟已有定义直接引用；不同业务只登记有实际缺口的关联子模板。每条记录明确所属实体、世界/会话/分支、来源和可见范围。不把同义字段或页面分区重复成表。\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "templates",
+          "entryId": "template.linked.modules",
+          "purpose": "template",
+          "retired": false,
+          "base": {
+            "comment": "【模板】生活模块关联子模板",
+            "content": "手机应用、网络账号、联系人、订单及逐期明细、社交内容、媒体授权、日程均从本次 schema 选择对应表。世界/人物/货币/物品/当前时钟已有定义直接引用；不同业务只登记有实际缺口的关联子模板。每条记录明确所属实体、世界/会话/分支、来源和可见范围。不把同义字段或页面分区重复成表。\n\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。"
+          },
+          "release": "44233761d22112e677d4d8ef4c8e046f62c9a042a019f61734cb29d15fabd330",
+          "checkedRelease": "44233761d22112e677d4d8ef4c8e046f62c9a042a019f61734cb29d15fabd330"
+        }
+      }
+    },
+    "3": {
+      "uid": 3,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【说明】统一表单模板使用说明",
+      "content": "世界、角色和生活手机共用最新版表单 schema、实例与提交日志。先读取实际注册表，核对含义、类型、单位、时间层、权限和唯一所有者，再匹配已有规范字段和已登记别名；只有独立生命周期或重复明细才增加必要关联子模板。新定义须先获 schema 接纳，未登记字段不直接填入。\n作者原文保留为版本化来源；模板更新不覆盖已采用定义或当前状态，资料页和手机打开不重新初始化。0、false、允许的空串和空数组保持原义。当前时钟只通过统一世界时钟推进；余额、订单、分期、持有物、帖子和媒体元数据均由同一数据库保存，文件二进制通过媒体资产引用。\n新建世界/人物走填写草稿、差异核对、统一提交与回读。已有角色编辑只修改选择的规范字段，不重放初始化，不清空未改字段。私人信息、原生变量绑定及旧分支来源不得因合并扩大权限。\n旧 <手机世界> / <手机初态> 以及随旧版附带的 phone-world.json / phone-character.json 只作为只读迁移来源；保存原文、UID、摘要和单位映射后生成导入草稿。不能继续据此创建独立手机状态。旧值与当前表单不同必须显示冲突，未确认不选择其中一个。\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "templates",
+          "entryId": "template.guide",
+          "purpose": "template",
+          "retired": false,
+          "base": {
+            "comment": "【说明】统一表单模板使用说明",
+            "content": "世界、角色和生活手机共用最新版表单 schema、实例与提交日志。先读取实际注册表，核对含义、类型、单位、时间层、权限和唯一所有者，再匹配已有规范字段和已登记别名；只有独立生命周期或重复明细才增加必要关联子模板。新定义须先获 schema 接纳，未登记字段不直接填入。\n作者原文保留为版本化来源；模板更新不覆盖已采用定义或当前状态，资料页和手机打开不重新初始化。0、false、允许的空串和空数组保持原义。当前时钟只通过统一世界时钟推进；余额、订单、分期、持有物、帖子和媒体元数据均由同一数据库保存，文件二进制通过媒体资产引用。\n新建世界/人物走填写草稿、差异核对、统一提交与回读。已有角色编辑只修改选择的规范字段，不重放初始化，不清空未改字段。私人信息、原生变量绑定及旧分支来源不得因合并扩大权限。\n旧 <手机世界> / <手机初态> 以及随旧版附带的 phone-world.json / phone-character.json 只作为只读迁移来源；保存原文、UID、摘要和单位映射后生成导入草稿。不能继续据此创建独立手机状态。旧值与当前表单不同必须显示冲突，未确认不选择其中一个。\n仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。"
+          },
+          "release": "18e1735e46d7b2d3c7a1f4f37e97ae4c80e229fcf383810ede5464729da1dd69",
+          "checkedRelease": "18e1735e46d7b2d3c7a1f4f37e97ae4c80e229fcf383810ede5464729da1dd69"
+        }
+      }
+    }
+  },
+  "extensions": {
+    "tisyaBuiltin": {
+      "package": "tisya.builtin-books",
+      "bookId": "templates",
+      "release": "36e1bacef0bb08f7036939d611a068ac8e33c862e7cc2f791e2d0073e6b1d101",
+      "checkedRelease": "36e1bacef0bb08f7036939d611a068ac8e33c862e7cc2f791e2d0073e6b1d101"
+    }
+  }
+}

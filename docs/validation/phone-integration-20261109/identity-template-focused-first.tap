@@ -1,0 +1,137 @@
+✔ browser hashes preserve Unicode bytes (2.57521ms)
+✔ three turns retain raw source, isolate failed lines and formalize two turns later (14.064769ms)
+✔ edit, swipe and delete rebase instead of double charging (11.110959ms)
+✔ manual edits retain chronological placement when earlier prose changes (16.773891ms)
+✔ registered item action rolls back all costs and supports receipt replay (1.736105ms)
+✔ Python MT19937 save continues exact rejection-sampled dice after restart (1.656395ms)
+✔ formula lazy branches, decimals, chained dependencies and clocks (3.483538ms)
+✔ all catalog schemas load; secrets and foreign branch data do not leak into material slots (40.818937ms)
+✔ custom tags share reader, preset references and historical aliases; raw embedded payload stays exact (9.549125ms)
+✔ @u wish and worldbook-bound user remain separate and missing binding is visible (3.927006ms)
+✔ native merged prompt replacement leaves user and tool history exact (0.638452ms)
+✔ IndexedDB cold reopen and competing revision commit (11.841199ms)
+✔ new settings screen saves tag map without legacy configuration (99.629076ms)
+✔ native host round trip binds once, compiles all slots, settles and resumes from saved state (1024.063324ms)
+✔ all scalar generation settings reach native settings, preserve connection and rollback failed saves (1.278266ms)
+✔ a fork inherits the parent story binding and its own changes do not alter the parent (0.370609ms)
+✔ selected narrative settings replace the contract length and view, then custom body tags compile (2.033744ms)
+✔ Python expression syntax keeps lazy branches, membership, chained comparisons and list truth (0.248434ms)
+✔ blank engine exposes creation fields and attaches character filters only to their character slot (33.604357ms)
+✔ bound identity is a custom prompt eligible for the native PromptManager (0.24542ms)
+✔ core library entries never enter native lore, including unselected enabled rows; unrelated books remain native (1.103603ms)
+✔ listing does not write; role creation saves exact disabled entry and binds only this chat (6.490408ms)
+✔ failed binding retains saved role; retry reuses it without creating a default or duplicate (1.240309ms)
+✔ original persona description enters only the wish; selected original wish preset remains exact (4.614301ms)
+✔ user identity contains original wishes and creates exact core book role through its visible controls (69.667588ms)
+✔ native persona injection is disabled in the saved preset and relocated from depth or author note without changing history (1.66568ms)
+✔ binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs (4.502103ms)
+✔ legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback (1.193928ms)
+✔ empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish (31.15696ms)
+✔ base and optional wishes remain absent when the original description is empty and every module is off (0.608427ms)
+✔ automatic core book preparation is idempotent and preserves existing global books and entries (1.021108ms)
+✔ preparation and selection never require or change native global worldbook activation (0.945704ms)
+✔ identity picker switches and persists through the real service; interrupted binding is recoverable on this page (85.386185ms)
+✔ unavailable worldbook service leaves persona switching usable and its error visible (21.419264ms)
+✔ one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry (44.584469ms)
+✔ identity page allows its own clean return and native-manager navigation (11.568548ms)
+✔ matrix rejects native MVU drift before final send: state (189.659322ms)
+✔ matrix rejects native MVU drift before final send: disabled (222.318365ms)
+✔ matrix rejects native MVU drift before final send: format (196.616219ms)
+✔ matrix rejects native MVU drift before final send: new declaration (163.393852ms)
+✔ matrix accepts native copying unchanged variables to the new user floor (157.021897ms)
+✔ matrix preserves native zero, false and empty values without executing updates (134.894957ms)
+✔ matrix removes only native MVU entries already captured in its material slot (145.807598ms)
+✖ packaged templates are empty parser-compatible drafts rather than a demo runtime (4.583575ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (4.093186ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.852905ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (1.251165ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (2.583281ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (1.362263ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (1.793732ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (2.204421ms)
+✖ normal identity projection strips initial values while preserving narrative and source (1.173899ms)
+✖ reference scan uses current native conditions, retains source UID and deduplicates without enabling (1.279869ms)
+✖ reference scan guards before mutation and does not mask missing or duplicate source data (0.825073ms)
+✖ native exclusion removes the entire template book even when enabled and strips both seed types (0.210817ms)
+✔ legacy shared resource mount edits the original dossier and saves references without native persona UI (67.282374ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 51
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1769.10424
+
+✖ failing tests:
+
+test at tests/template-book-identity.test.js:20:1
+✖ packaged templates are empty parser-compatible drafts rather than a demo runtime (4.583575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  
+  undefined !== []
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/template-book-identity.test.js:22:156)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/template-book-identity.test.js:62:1
+✖ normal identity projection strips initial values while preserving narrative and source (1.173899ms)
+  Error: 资料中的 手机初态 格式错误：须有唯一完整闭合区块
+      at check (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:5:77)
+      at stripPhoneInitialization (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:26:2)
+      at identitySlots (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/config.mjs:71:503)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/template-book-identity.test.js:64:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/template-book-identity.test.js:67:1
+✖ reference scan uses current native conditions, retains source UID and deduplicates without enabling (1.279869ms)
+  Error: 资料中的 手机世界 格式错误：须有唯一完整闭合区块
+      at check (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:5:77)
+      at stripPhoneInitialization (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:26:2)
+      at file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:29:337
+      at Array.map (<anonymous>)
+      at excludeTemplateBookEntries (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:29:290)
+      at applyStoryReferenceBooks (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:51:9)
+      at scanStoryReferenceBooks (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:54:75)
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/template-book-identity.test.js:70:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/template-book-identity.test.js:73:1
+✖ reference scan guards before mutation and does not mask missing or duplicate source data (0.825073ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/template-book-identity.test.js:76:49)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /条目标识/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/template-book-identity.test.js:78:1
+✖ native exclusion removes the entire template book even when enabled and strips both seed types (0.210817ms)
+  Error: 资料中的 手机世界 格式错误：须有唯一完整闭合区块
+      at check (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:5:77)
+      at stripPhoneInitialization (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:26:2)
+      at file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:29:337
+      at Array.map (<anonymous>)
+      at excludeTemplateBookEntries (file:///workspace/scratch/5717d8fb3725/phone-integration-work/engine/template-book.mjs:29:290)
+      at TestContext.<anonymous> (file:///workspace/scratch/5717d8fb3725/phone-integration-work/tests/template-book-identity.test.js:80:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)

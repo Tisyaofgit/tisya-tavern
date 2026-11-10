@@ -1,0 +1,37 @@
+TAP version 13
+# file:///workspace/scratch/309c298d2de5/tisya/engine/identity-ui.mjs:390
+#   const mode=el('select');mode.dataset.creationMode='';option(mode,'补充新内容','extend');option(mode,'修订已有定义','revise');mode.value=generationMode;mode.disabled=!!generationReceipt;mode.onchange=()=>{generationMode=mode.value;abandonGeneration();};
+#         ^
+# SyntaxError: Identifier 'mode' has already been declared
+#     at compileSourceTextModule (node:internal/modules/esm/utils:319:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+#     at \#translate (node:internal/modules/esm/loader:438:20)
+#     at afterLoad (node:internal/modules/esm/loader:506:29)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:511:12)
+#     at \#getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:564:36)
+#     at afterResolve (node:internal/modules/esm/loader:611:52)
+#     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:617:12)
+#     at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33)
+#     at ModuleJob.link (node:internal/modules/esm/module_job:381:17)
+# Node.js v24.22.1
+# Subtest: tests/shell.test.js
+not ok 1 - tests/shell.test.js
+  ---
+  duration_ms: 206.111395
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 216.743413

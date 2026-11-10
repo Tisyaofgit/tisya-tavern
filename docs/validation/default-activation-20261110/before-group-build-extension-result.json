@@ -1,0 +1,19 @@
+{
+  "started_utc": "2026-11-10T06:57:46.849251+00:00",
+  "ended_utc": "2026-11-10T06:57:47.104094+00:00",
+  "exit_code": 0,
+  "command": [
+    "node",
+    "tools/build-extension.mjs"
+  ],
+  "runtime_bytes": 4569590,
+  "runtime_sha256": "e92456f431d93c2cab6a81d442f8959cc647e7915e786964f283bb7004d5332b",
+  "runtime_git_blob": "bd6f17c0c2c6108911d11d32ac2ea2a59f6ba45f",
+  "build": {
+    "file": "runtime.js",
+    "localModules": 286,
+    "bytes": 4569590,
+    "externalImports": 40,
+    "checked": false
+  }
+}

@@ -5,9 +5,9 @@ import bundled from './presets/Tisya.json' with {type:'json'};
 export function createPresetUpdateController({getContext,document,isBusy,install=installBuiltInPreset}){
  let receipt=null,error=null,pending=null;
  const listeners=new Set(),state=()=>({receipt,error,busy:!!pending}),notify=()=>{for(const fn of listeners)fn(state());};
- function update({force=false}={}){
-  if(pending)return pending;
-  pending=Promise.resolve().then(()=>install(getContext(),document,{isBusy,force})).then(value=>{receipt=value;error=null;return value;},failure=>{error=failure;throw failure;}).finally(()=>{pending=null;notify();});
+ function update({force=false,activate=false}={}){
+  if(pending)return activate?pending.then(value=>value.active?value:update({activate:true})):pending;
+  pending=Promise.resolve().then(()=>install(getContext(),document,{isBusy,force,activate})).then(value=>{receipt=value;error=null;return value;},failure=>{error=failure;throw failure;}).finally(()=>{pending=null;notify();});
   notify();return pending;
  }
  return {state,update,subscribe(fn){listeners.add(fn);fn(state());return ()=>listeners.delete(fn);},assertReady(){

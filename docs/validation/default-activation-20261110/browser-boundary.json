@@ -1,0 +1,9 @@
+{
+  "attempt": "shared Chrome via CUA, local HTTP test page",
+  "local_server": "started, 127.0.0.1:37841",
+  "navigation_error": "net::ERR_CONNECTION_REFUSED",
+  "observation_error": "Browser security policy rejected observation: URL policy gate did not grant access; protocol not allowed; no workaround permitted.",
+  "action": "stopped browser verification, closed local test HTTP server; no alternate surface or bypass",
+  "passed": false,
+  "scope": "No real CSS scroll, target host, model, or Android validation"
+}

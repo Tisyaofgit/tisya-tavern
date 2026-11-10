@@ -1,0 +1,10 @@
+✔ clock storage cold load rejects the actual invalid decode and performs zero commits (25.668554ms)
+✔ clock storage save refuses a corrupt binding before persistence and preserves source data (35.962248ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.637836

@@ -1,0 +1,27 @@
+✔ creation includes complete native card, associated books and explicit core independently; saved receipt preserves raw immutable snapshot (12.594984ms)
+✔ generation rejects card drift and retains original raw/draft without writes (1.861746ms)
+✔ save rejects card drift without replacing original snapshot (1.725091ms)
+✔ generation rejects book drift and retains original raw/draft without writes (1.210164ms)
+✔ save rejects book drift without replacing original snapshot (1.634714ms)
+✔ generation rejects binding drift and retains original raw/draft without writes (1.1281ms)
+✔ save rejects binding drift without replacing original snapshot (1.546761ms)
+✔ generation rejects persona drift and retains original raw/draft without writes (1.100248ms)
+✔ save rejects persona drift without replacing original snapshot (1.040338ms)
+✔ known missing book and source reader failure abort before model and commit (0.581636ms)
+✔ chat switch during native read or model request cannot cross-write (0.717932ms)
+✔ empty host needs no worldbook API but an actual missing current card fails (0.75625ms)
+✔ editing original snapshot is rejected before commit (1.351858ms)
+✔ group creation without a current card keeps explicit sources and never guesses a member; group scope remains guarded (0.878915ms)
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (10.591525ms)
+✔ stale draft cannot overwrite a concurrently edited form (3.292402ms)
+✔ generation changes no records on malformed response and retains raw evidence (0.675038ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.907078ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.737462ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 143.387471

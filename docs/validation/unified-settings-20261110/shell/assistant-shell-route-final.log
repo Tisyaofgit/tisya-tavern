@@ -1,0 +1,16 @@
+✔ Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back (1181.450485ms)
+✔ Matrix identity production route cancels a staged persona switch and all mixed changes without writing them (965.50571ms)
+✔ Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry (1011.887681ms)
+✔ direct phone opening waits for the settings leave decision and cancellation keeps the draft (75.034176ms)
+✔ direct phone close waits for the settings leave decision and only hides after confirmed discard (75.655851ms)
+✔ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (64.47467ms)
+✔ identity production route owns presentation fields in its scroll region and saves both through one footer (1749.982061ms)
+✔ presentation-only edits participate in the identity route leave prompt and common cancel without writing (1222.90235ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6782.000662

@@ -1,0 +1,34 @@
+✔ actual task envelope retains unified schema, template, contract and stable references (14.866592ms)
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (4.391142ms)
+✔ stale draft cannot overwrite a concurrently edited form (2.054135ms)
+✔ generation changes no records on malformed response and retains raw evidence (1.199975ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.574314ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.317553ms)
+✔ packaged templates reference the unified schema and do not create independent phone states (1.320314ms)
+✔ complete native template book and readable field guide match runtime templates exactly (2.053183ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (2.149738ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.525883ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (0.926959ms)
+✔ creation reads an existing default template book before the identity page has configured it (0.286917ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (1.270801ms)
+✔ manual role creation never writes into the template book or adds implicit phone state (0.405022ms)
+✔ empty prefixed role name is rejected before creating an unreadable entry (0.227799ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (0.595255ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (0.77959ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (1.202989ms)
+✔ normal identity projection strips initial values while preserving narrative and source (0.681153ms)
+✔ reference scan uses current native conditions, retains source UID and deduplicates without enabling (0.801272ms)
+✔ reference scan guards before mutation and does not mask missing or duplicate source data (0.387186ms)
+✔ refreshing a natively selected reference retains the console opt-in scan order (0.363711ms)
+✔ native exclusion removes the entire template book even when enabled and strips both seed types (0.097275ms)
+✔ legacy shared resource mount edits the original dossier and saves references without native persona UI (47.731865ms)
+✔ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (18.864432ms)
+✔ failed source-book switch restores the editor source and cross-chat save is blocked (52.459627ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 364.550436

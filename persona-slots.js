@@ -6,20 +6,21 @@ export function createPersonaSlots({getContext,getAvatar,resolveOrigin,host,pers
  const comparable=p=>({name:p.name,description:p.description,reference:p.reference});
  async function finish(intent){
   const guard=()=>{check(scope()===intent.scope,'会话已改变；新人物槽保留待核对，请回原会话继续');check(getAvatar()===intent.active,'活动身份已改变；未覆盖当前身份');};guard();
+  const referenceField=intent.reference.database?'tisyaMatrixOrigin':'tisyaOrigin';
   const current=await resolveOrigin(intent.reference);guard();check(same(comparable(current),comparable(intent.profile)),'人物原点已变化，未使用旧资料创建槽位');
   check(await host.ensureAvatar(intent.id)===intent.id,'新人物头像创建未确认；请继续核对同一槽位');guard();intent.stage='avatar';
   const p=power();p.personas??={};p.persona_descriptions??={};
-  if(Object.hasOwn(p.personas,intent.id))check(p.personas[intent.id]===intent.profile.name&&p.persona_descriptions[intent.id]?.description===intent.profile.description&&(p.persona_descriptions[intent.id]?.tisyaOrigin===undefined||same(p.persona_descriptions[intent.id]?.tisyaOrigin,intent.reference)),'新槽位身份发生冲突，未覆盖');
+  if(Object.hasOwn(p.personas,intent.id))check(p.personas[intent.id]===intent.profile.name&&p.persona_descriptions[intent.id]?.description===intent.profile.description&&(p.persona_descriptions[intent.id]?.[referenceField]===undefined||same(p.persona_descriptions[intent.id]?.[referenceField],intent.reference)),'新槽位身份发生冲突，未覆盖');
   else{await host.initialize(intent.id,intent.profile);guard();check(p.personas[intent.id]===intent.profile.name&&p.persona_descriptions[intent.id]?.description===intent.profile.description,'原生人物槽回读不同');}
-  p.persona_descriptions[intent.id].tisyaOrigin=copy(intent.reference);
+  p.persona_descriptions[intent.id][referenceField]=copy(intent.reference);
   intent.stage='settings';check(await persist()===true,'人物槽已建立，设置持久保存未确认；请继续创建同一槽位');guard();
-  check(same(p.persona_descriptions[intent.id]?.tisyaOrigin,intent.reference),'人物槽的档案引用回读不同');
+  check(same(p.persona_descriptions[intent.id]?.[referenceField],intent.reference),'人物槽的档案引用回读不同');
   delete p.tisya_identity_creation_pending;
   try{check(await persist()===true,'人物槽已保存，恢复标记清理未确认');}catch(e){p.tisya_identity_creation_pending=intent;throw e;}
   guard();onChanged();return {id:intent.id,name:intent.profile.name,reference:copy(intent.reference),created:true};
  }
  async function createFromOrigin(input){
-  const reference={book:input?.book,originId:input?.originId,id:input?.id,rev:input?.rev};
+  const reference=input?.database?{database:true,contextKey:input.contextKey,entityId:input.entityId,dossierId:input.dossierId,operationId:input.operationId,revision:input.revision}:{book:input?.book,originId:input?.originId,id:input?.id,rev:input?.rev};
   check(!busy,'人物槽创建尚未完成');assertIdle();check(!power()?.tisya_identity_pending,'请先完成正在处理的身份绑定');check(host&&typeof resolveOrigin==='function','自动创建人物槽接口尚未接入');busy=true;
   try{let intent=power().tisya_identity_creation_pending;
    if(intent)check(same(intent.reference,reference),'已有另一份人物槽待核对，请先继续创建');

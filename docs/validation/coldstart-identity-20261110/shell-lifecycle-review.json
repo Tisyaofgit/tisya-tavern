@@ -1,0 +1,25 @@
+{
+  "recorded_utc": "2026-11-10T06:16:02.907147+00:00",
+  "scope": "isolated Node test-runner lifecycle diagnosis; no product edits",
+  "ordinary_shell_last_test": 87,
+  "ordinary_shell_all_assertions_finished": true,
+  "ordinary_shell_final_summary_missing": true,
+  "ordinary_shell_manually_stopped_exit": 130,
+  "bounded_diagnostic_seconds": 22,
+  "bounded_diagnostic_exit": 124,
+  "retained_refed_timeouts": [
+    {
+      "id": 35658,
+      "type": "Timeout",
+      "repeat": 400,
+      "hasRef": true,
+      "stack": "Error\\n    at AsyncHook.init (file:///workspace/scratch/cbf451dcd23c/control/identity-active-handles.mjs:9:19)\\n    at emitInitNative (node:internal/async_hooks:207:43)\\n    at emitInitScript (node:internal/async_hooks:514:3)\\n    at initAsyncResource (node:internal/timers:209:5)\\n    at new Timeout (node:internal/timers:259:5)\\n    at setInterval (node:timers:169:19)\\n    at mountIdentityPage (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/user-identity-page.js:143:14)\\n    at openIdentity (eval at setup (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:59:847), <anonymous>:217:21)"
+    }
+  ],
+  "cause": "New shell regression explicit origin preview test leaves imported legacy identity page mounted; its global Node interval is not managed by happyDOM.abort. Production dispose clears this interval.",
+  "recommended_fix": "Dispose the active utility during fixture cleanup; discard test-owned draft first to remove retainedDrafts cache. Do not force-exit the test suite or change production lifecycle merely to silence the fixture leak.",
+  "logs": [
+    "shell-no-force-review.log",
+    "shell-active-handles-review.log"
+  ]
+}

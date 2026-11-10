@@ -1,0 +1,8 @@
+/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/phone-life/utility-views.mjs:93
+   section('我的持仓')+(w.investments.length?w.investments.slice().reverse().map(i=>card('<div class="u-row"><h3>'+e(w.investmentProducts.find(p=>p.id===i.productId)?.name??i.productId)+'</h3>'+pill(i.status==='redeemed'?'已赎回':'持有中')+'</div><div class="u-grid">'+stat('本金','¥'+m(i.principal))+stat('已结算收益','+ ¥'+m(i.accrued))+'</div>'+note('申购 '+at(i.createdAt)+' · 上次结算 '+at(i.settledAt))+(i.status!=='redeemed'?'<div class="u-buttons">'+b('模拟结算收益','wallet.invest.settle',{investmentId:i.id},'u-secondary')+b('赎回至银行卡','wallet.invest.redeem',{investmentId:i.id,accountId:'bank'},'u-primary')+'</div>'+note('赎回金额为本金与已结算收益；未结算部分不会自动补入。'):'')).join(''):empty('还没有持仓。申购后会在这里保留记录。','star'));
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^
+
+SyntaxError: missing ) after argument list
+    at checkSyntax (node:internal/main/check_syntax:84:5)
+
+Node.js v24.22.1

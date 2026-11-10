@@ -1,0 +1,146 @@
+TAP version 13
+# Subtest: APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+not ok 1 - APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+  ---
+  duration_ms: 437.569901
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:99:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   '当前宿主不支持逐条显示缓存；原聊天未修改。'
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0: '当前宿主不支持逐条显示缓存；原聊天未修改。'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:107:153)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+ok 2 - CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+  ---
+  duration_ms: 1425.396291
+  type: 'test'
+  ...
+# Subtest: APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+ok 3 - APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+  ---
+  duration_ms: 32.273432
+  type: 'test'
+  ...
+# Subtest: user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+not ok 4 - user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+  ---
+  duration_ms: 713.00738
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:531:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    ["剧情输入框有草稿，请先发送或暂存后再重骰"]
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:537:32)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: a manually selected foreign preset passes native input through without either retired generation writer
+not ok 5 - a manually selected foreign preset passes native input through without either retired generation writer
+  ---
+  duration_ms: 583.31642
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:620:1'
+  failureType: 'testCodeFailure'
+  error: 'configHost is not defined'
+  code: 'ERR_TEST_FAILURE'
+  name: 'ReferenceError'
+  stack: |-
+    eval (eval at <anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:625:7), <anonymous>:1:1)
+    Window.eval (<anonymous>)
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:625:7)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: token count between a real start and its end completes the Matrix lifecycle once without legacy settlement
+not ok 6 - token count between a real start and its end completes the Matrix lifecycle once without legacy settlement
+  ---
+  duration_ms: 476.209451
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:638:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:643:40)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cold-start enables Tisya and opens the complete identity form without a chat or old settings
+ok 7 - cold-start enables Tisya and opens the complete identity form without a chat or old settings
+  ---
+  duration_ms: 109.46223
+  type: 'test'
+  ...
+# Subtest: cold-start automatically binds the engine and saves a previewed role only to the unified database
+ok 8 - cold-start automatically binds the engine and saves a previewed role only to the unified database
+  ---
+  duration_ms: 2184.355275
+  type: 'test'
+  ...
+# Subtest: manual preset navigation protects identity edits and does not reactivate Tisya until plugin enable
+ok 9 - manual preset navigation protects identity edits and does not reactivate Tisya until plugin enable
+  ---
+  duration_ms: 738.604295
+  type: 'test'
+  ...
+# Subtest: cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive
+ok 10 - cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive
+  ---
+  duration_ms: 1044.902912
+  type: 'test'
+  ...
+# Subtest: explicit legacy origin targets preview on the unified identity form without writing old or new records
+ok 11 - explicit legacy origin targets preview on the unified identity form without writing old or new records
+  ---
+  duration_ms: 1409.411127
+  type: 'test'
+  ...
+# Subtest: identity keeps native editing available when the existing database cannot be read and never creates old tables
+ok 12 - identity keeps native editing available when the existing database cannot be read and never creates old tables
+  ---
+  duration_ms: 332.89916
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 8
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10240.502938

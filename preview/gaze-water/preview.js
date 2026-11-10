@@ -1,6 +1,6 @@
 import {mountActionChoice} from '../../actions.js';
 import {replyControlsCSS} from '../../reply-details.js';
-import {mountConfiguration} from '../../config/panel.js';
+import {mountConfiguration} from '../../tests/legacy-fixtures/config-panel.js';
 import {createStore} from '../../config/core.js';
 const style=document.createElement('style');style.textContent=replyControlsCSS;document.head.append(style);
 const face=new FontFace('TisyaReading',await new Blob(await Promise.all([1,2,3,4].map(async i=>await (await fetch('../../font/reading.part'+i+'.bin')).arrayBuffer()))).arrayBuffer());await face.load();document.fonts.add(face);

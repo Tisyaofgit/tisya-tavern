@@ -1,0 +1,45 @@
+✔ one update action retries a failed initialization, deduplicates clicks and clears the stale error (28.135718ms)
+✔ persistent failure notice contains a real update button and reports retry failure until actual success (9.461124ms)
+✔ native reselection clears only a proven saved-load failure, never an unacknowledged save failure (4.53034ms)
+✔ native PromptManager normalization loads the shipped preset without a restart error (29.580175ms)
+✔ load verification accepts only observed native additions and still detects changed instructions and order (15.849996ms)
+✔ manual refresh reinstalls same revision while automatic startup preserves same-release edits (15.675803ms)
+✔ built-in keeps the complete 69-slot new preset with separate user binding (0.91567ms)
+✔ first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched (5.812573ms)
+✔ upgrade overwrites the same saved Tisya, retains extensions and never changes another selected preset (3.990837ms)
+✔ selected Tisya refreshes native prompts and preserves live API, sampling, binding and extensions (7.092864ms)
+✔ failed native save keeps saved and live data, and does not report an installation (5.257266ms)
+✔ missing native capability and active generation reject before a write (7.560608ms)
+✔ concurrent initialization is one native save (3.837536ms)
+✔ refresh timeout stays visible; reopened stale active settings load the saved release (18.308151ms)
+✔ explicit plugin activation selects newly installed Tisya and preserves native connection and sampling (5.862538ms)
+✔ activation of an already saved inactive revision loads without rewriting it (6.399368ms)
+✔ generation blocks inactive preset activation before selection or replacement (3.706748ms)
+✔ activation requested during installation is not lost behind a non-activating update (6.540451ms)
+✔ activation keeps same-release saved prompt edits while another preset is selected (9.718812ms)
+✔ fresh chat binds once, enables, and retains exact existing history as a baseline (8.258345ms)
+✔ existing bundle and story settings survive default activation unchanged (2.270193ms)
+✔ empty home does not read or write engine storage (0.18546ms)
+✔ existing binding with missing or corrupt storage is visible and never reset (1.997332ms)
+✔ storage read failure preserves the exact error and does not initialize (0.848138ms)
+✔ fork attaches a cloned owner while parent state and identity stay exact (2.078053ms)
+✔ chat switch while loading catalog cancels before a metadata or state write (7.123039ms)
+✔ chat switch while reading an old bundle cannot enable the new or old chat (1.840916ms)
+✔ failed new-state commit leaves an explicit pending owner that resumes without reset (1.253881ms)
+✔ failed final metadata save retains a recoverable marker and no success is reported (0.969902ms)
+✔ two simultaneous requests serialize and create one binding (0.831954ms)
+✔ startup selects once; repeated ready does not undo manual disable, reopening does (1.305589ms)
+✔ a delayed first-chat failure does not poison later chat activation (3.952324ms)
+✔ rapid A to B to A cancels the first A request and allows the new opening (1.67199ms)
+✔ failed preset activation prevents all automatic chat writes (0.329517ms)
+✔ explicit retry can recover a failed preset startup and binds only after success (0.678883ms)
+✔ actual Matrix host shares automatic and form initialization without resetting an existing owner (601.565315ms)
+✔ an explicit retry refetches a failed catalog without creating or resetting data on failure (2.359457ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 753.802986

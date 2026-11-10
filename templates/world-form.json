@@ -1,0 +1,42 @@
+{
+  "format": "tisya.form-authoring-template/1",
+  "id": "world.definition",
+  "kind": "world",
+  "targets": [
+    {
+      "tableId": "T_STATIC_WORLDS",
+      "fields": [
+        "name",
+        "core_proposition",
+        "era_name",
+        "current_baseline_ref"
+      ],
+      "projections": [
+        "world_id",
+        "calendar_id",
+        "base_year"
+      ],
+      "instruction": "world_id 由 recordId 自动提供；历法关联与基准年按已注册关系从历法子表读取。"
+    },
+    {
+      "tableId": "M_CALENDAR_RULES",
+      "fields": [],
+      "instruction": "使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。"
+    },
+    {
+      "tableId": "X_WORLD_CLOCKS",
+      "fields": [],
+      "instruction": "当前可执行世界时钟唯一归此表；场景时间和手机日期均读取它。"
+    },
+    {
+      "tableId": "T_STATIC_PLACES",
+      "fields": [],
+      "instruction": "已有地点复用稳定记录，坐标、权限与已知范围按实际 schema。"
+    },
+    {
+      "tableId": "T_STATIC_ITEMS_SKILLS",
+      "fields": [],
+      "instruction": "物品、货币及其单位先建或引用规范定义；商城报价不等于人物持有。"
+    }
+  ]
+}

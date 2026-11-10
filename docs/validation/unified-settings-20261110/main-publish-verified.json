@@ -1,0 +1,52 @@
+{
+  "at_utc": "2026-11-10T04:23:51.788107+00:00",
+  "main_commit": "432e8772b63bf0e2005685a80d8d4dffc872c3b3",
+  "main_tree": "5aa25abc8834d4b44a7803412f3aa8163c576e02",
+  "ref_readback": true,
+  "complete_tree_files": 1115,
+  "all_paths_modes_blobs_match": true,
+  "remaining_blobs_readback": [
+    {
+      "path": "tests/user-identity-service.test.js",
+      "bytes": 14543,
+      "blob": "f559ef692b44be6c0f5eaf409e1acc72a6df255e"
+    },
+    {
+      "path": "tools/check-matrix-identity-browser.cjs",
+      "bytes": 6923,
+      "blob": "ac4568da83f705e6eeabb2d5fd8598b195dd7667"
+    },
+    {
+      "path": "user-identity-page.js",
+      "bytes": 29387,
+      "blob": "f88eec061f75e3c8036defb45f4ee3f6159c1d7e"
+    },
+    {
+      "path": "user-identity-service.js",
+      "bytes": 12027,
+      "blob": "7a747aedbd807c5815969a6e5f0552b401a3fedd"
+    }
+  ],
+  "earlier_blobs_verified": 32,
+  "runtime_sha256": "496fa56928c1944a598ce3e68176ead5cc347bd6bc03c9dd59afdbbcde55731b",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.10",
+  "validation": {
+    "generated_checks": 16,
+    "full_node_tests": 1542,
+    "passed": 1542,
+    "failed": 0,
+    "npm_test_exit": 0,
+    "runtime_rebuilt": true,
+    "runtime_bytes": 4199783,
+    "runtime_sha256": "496fa56928c1944a598ce3e68176ead5cc347bd6bc03c9dd59afdbbcde55731b",
+    "browser": "blocked at ordinary startup: socket() Operation not permitted; original error retained",
+    "android": "not run",
+    "real_host": "not run",
+    "real_model_calls": 0,
+    "user_live_data": "not accessed/reset"
+  },
+  "excluded_caches": [
+    "tests/reference/matrix-python/__pycache__/matrix_io.cpython-312.pyc",
+    "tests/reference/matrix-python/__pycache__/rule_math.cpython-312.pyc"
+  ]
+}

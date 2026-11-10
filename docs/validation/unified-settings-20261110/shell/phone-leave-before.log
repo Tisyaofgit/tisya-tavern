@@ -1,0 +1,61 @@
+✖ direct phone opening waits for the settings leave decision and cancellation keeps the draft (646.649706ms)
+✖ direct phone close waits for the settings leave decision and only hides after confirmed discard (67.410577ms)
+✖ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (67.921777ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1129.092345
+
+✖ failing tests:
+
+test at tests/shell.test.js:767:1
+✖ direct phone opening waits for the settings leave decision and cancellation keeps the draft (646.649706ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/shell.test.js:775:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:780:1
+✖ direct phone close waits for the settings leave decision and only hides after confirmed discard (67.410577ms)
+  AssertionError [ERR_ASSERTION]: a Promise is not leave permission
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/shell.test.js:785:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:792:1
+✖ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (67.921777ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(page.isConnected)
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/shell.test.js:797:42)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

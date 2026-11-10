@@ -1,0 +1,34 @@
+✔ clock decode accepts its same-world clock and ignores an unrelated runtime selector (33.201738ms)
+✔ clock decode rejects a wrong table even when that table has the same record ID (29.409144ms)
+✔ clock decode rejects a foreign-world persisted binding without selecting another row (33.182148ms)
+✔ clock decode rejects a dangling binding despite an available same-world clock (24.588444ms)
+✔ clock invalid origin is rejected by both read and write paths (49.697751ms)
+✔ clock decode rejects unknown ownership even when its retained value names this world (30.786636ms)
+✔ clock decode rejects a clock with missing ownership (36.544713ms)
+✔ clock decode rejects unknown position instead of presenting the retained hour as known (21.67795ms)
+✔ clock decode rejects an incomplete position instead of accepting WorldClock defaults (39.074211ms)
+✔ clock encode rejects an existing foreign row at the deterministic initialization ID (41.226658ms)
+✔ clock encode validates the persisted binding before considering another same-world clock (36.384766ms)
+✔ clock encode rejects unknown ownership before producing a write set (31.423777ms)
+✔ clock initialization still refuses ambiguous same-world clocks (31.974895ms)
+✔ clock native-profile discovery applies the same ownership-state guard (26.12065ms)
+✔ clock confirmed derived ownership and old rows without state metadata remain readable (26.805077ms)
+✔ clock storage cold load rejects the actual invalid decode and performs zero commits (24.474545ms)
+✔ clock storage save refuses a corrupt binding before persistence and preserves source data (30.475578ms)
+✔ forms rows own money and orders; cold reopen and retry do not duplicate payment (454.281763ms)
+✔ database save failure preserves both balance and queued action; foreign archive conflicts (311.095801ms)
+✔ canonical clock changes hydrate from X_WORLD_CLOCKS and records keep stable IDs (133.776662ms)
+✔ native form-only world and character initialize from existing assets without legacy blocks (144.717773ms)
+✔ form-created and form-deleted collection records are actual current data (242.628715ms)
+✔ a unique pre-existing balance maps without duplication; conflicting migration keeps original data (236.893686ms)
+✔ form calendar uses declared month lengths, hours and minutes; finer precision is refused (37.381405ms)
+✔ legitimate shared-asset changes are visible and next phone action still conserves funds (259.951006ms)
+✔ foreign owner or currency balance references fail before hydration or any phone write (579.302117ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2544.364447

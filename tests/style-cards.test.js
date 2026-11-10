@@ -25,7 +25,7 @@ test('action pressure cancels on scrolling and teardown without executing a choi
  pointer(b,'pointerdown',0);pointer(d,'pointercancel',0);assert.equal(b.hasAttribute('data-tui-press'),false);ui.dispose();pointer(b,'pointerdown',0);assert.equal(b.hasAttribute('data-tui-press'),false);assert.equal(calls,0);await w.happyDOM.abort();
 });
 test('configuration saves and reopens a viewpoint card with its gaze relation and attention fields',async()=>{
- const {mountConfiguration}=await import('../config/panel.js'),{createStore}=await import('../config/core.js');const win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
+ const {mountConfiguration}=await import('./legacy-fixtures/config-panel.js'),{createStore}=await import('../config/core.js');const win=new Window(),doc=win.document,box=doc.createElement('div');doc.body.append(box);
  const ctx={chatId:'lens-ui',characterId:0,characters:[{avatar:'lens.png'}],chatMetadata:{variables:{}},extensionSettings:{}},store=createStore({getContext:()=>ctx,persist:async()=>true});
  const mount=()=>mountConfiguration(doc,box,{store,host:{archives:async()=>[]},getSettings:()=>({联系人分组:{}}),initialTab:'world'});let ui=mount();await ui.ready;
  const choose=(label,value)=>{const input=ui.root.shadowRoot.querySelector('[aria-label="'+label+'"]');assert.ok(input,label);input.value=JSON.stringify(value);input.dispatchEvent(new win.Event('change'));};

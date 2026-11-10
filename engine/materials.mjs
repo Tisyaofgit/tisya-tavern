@@ -1,3 +1,4 @@
+import {programOwnedTable,promptFieldAllowed,creationFieldAllowed} from './prompt-boundary.mjs';
 import {renderBlocks} from './material-render.mjs';
 import {clone} from './common.mjs';
 import {activePreferences} from './business.mjs';
@@ -13,8 +14,12 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
  const add=(k,v)=>{if(v)(slots[k]??=[]).push(v);};
  for(const [tid,rows]of Object.entries(e.data.tables)){
   if(/^(M_|register_|R_)/.test(tid)||['X_RECORD_META','T_SYS_SOURCE_FRAGMENTS','X_PREFERENCE_POLICIES'].includes(tid))continue;
-  const schema=e.data.schema[tid],used=new Set();if(!schema)throw Error('表缺少定义：'+tid);
-  for(const [rid,r]of Object.entries(rows)){
+  const schema=e.data.schema[tid],used=new Set();if(!schema)throw Error('表缺少定义：'+tid);if(programOwnedTable(tid,schema))continue;
+  const entries=Object.entries(rows);
+  for(const [rid,r]of entries){
+   if(r.metadata?.phone_projection)continue;
+   if(schema.phone_internal&&context.world_ref&&r.values.world_ref&&!['GLOBAL',context.world_ref].includes(r.values.world_ref))continue;
+   if(context.phone_context_key&&r.metadata?.phone_scope&&context.phone_context_key!==r.metadata.phone_scope)continue;
    if(tid==='T_PREF_OUTPUT_CONFIG')continue; // Compiled once through the selected output contract.
 
    if(context.audience!=='author'&&(tid==='T_CHAR_SECRETS'||['D','E','Access D','Access E'].includes(r.values.lock_level)))continue;
@@ -22,7 +27,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
    if([['world_ref','scope_world_id'],['session_ref','scope_session_id'],['branch_ref','scope_branch_id']].some(([k,mk])=>context[k]&&m[mk]&&!['GLOBAL',context[k]].includes(m[mk])))continue;
    const fields=Object.fromEntries(schema.fields.map(f=>[f.key,f])),values={};
    for(const [key,v]of Object.entries(r.values)){
-    const f=fields[key]??{},state=r.states[key];if(key==='row_uuid'||f.alias_of||context.audience!=='author'&&f.lock_level)continue;
+    const f=fields[key]??{},state=r.states[key];if(!fields[key]||!promptFieldAllowed(f)||key==='row_uuid'||f.alias_of||context.audience!=='author'&&f.lock_level)continue;
     if(!['known','derived','unknown','cleared','none','not_applicable'].includes(state))continue;
     if(context.audience!=='author'&&key==='true_name'&&['D','E','Access D','Access E'].includes(r.values.true_name_lock))continue;
     values[key]=['known','derived'].includes(state)?v:({unknown:'?',cleared:'!',none:'∅',not_applicable:'—'})[state];
@@ -32,7 +37,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
    if(!Object.keys(values).length)continue;
    (blocks['tisya_material_'+(tid==='T_PREF_CHAR_FILTER'?'focus_entities':routes[schema.sheet]??'task_material')]??=[]).push({table_id:tid,record_id:rid,values});
   }
-  const writable=schema.fields.filter(f=>f.key!=='row_uuid'&&!f.alias_of&&!f.read_only&&(context.audience==='author'||!f.lock_level));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+'/'+f.type+((f.enum??f.options)?'/'+(f.enum??f.options).join('、'):'')+')').join('；'));
+  const writable=schema.fields.filter(f=>creationFieldAllowed(f)&&(context.audience==='author'||!f.lock_level)&&(!entries.length||!Object.values(rows).every(r=>r.metadata?.phone_projection===true)));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+'/'+f.type+((f.enum??f.options)?'/'+(f.enum??f.options).join('、'):'')+')').join('；'));
  }
  slots=renderBlocks(e,blocks);
  // Event identity does not include its display time. Merge complementary
@@ -40,6 +45,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
  const memory=slots.tisya_material_memory_archive??=[],eventKey=line=>/^([^\s[：:]+)(?:\[[^\]]*\])?[：:]/u.exec(line)?.[1],events=new Map();
  memory.forEach((line,i)=>{const key=eventKey(line);if(key)events.set(key,i);});
  for(const batch of e.data.runtime.archive??[])for(const r of batch.rows??[]){
+  if(programOwnedTable(r.table_id??r.tableId??'',e.data.schema[r.table_id??r.tableId]??{}))continue;
   const line=r.category==='事件'?r.raw.split('|').slice(1).join('|').trim():r.raw,key=r.category==='事件'?eventKey(line):null;
   if(key&&events.has(key)){const i=events.get(key),detail=line.replace(/^[^：:]*[：:]/u,'');if(detail&&!memory[i].includes(detail))memory[i]+='；归档补记：'+detail;}
   else if(!memory.includes(line)){if(key)events.set(key,memory.length);memory.push(line);}

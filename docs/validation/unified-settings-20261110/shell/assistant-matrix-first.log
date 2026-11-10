@@ -1,0 +1,12 @@
+✔ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (604.960571ms)
+✔ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (556.884437ms)
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (548.898952ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (534.963176ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2544.482126

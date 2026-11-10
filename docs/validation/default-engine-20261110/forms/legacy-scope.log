@@ -1,0 +1,32 @@
+✔ Matrix identity has one persistent save/cancel pair including unavailable role sources (53.264717ms)
+✔ native identity scope options remain drafts and save character and global bindings once (66.511222ms)
+✔ scope binding recovery completes the same submission without reapplying native selection (59.136666ms)
+✔ one save commits name, wish choices and existing role binding and reads them back on reopen (25.922228ms)
+✔ identity selection is a draft until save and cancellation performs no persistence (36.26082ms)
+✔ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (27.927441ms)
+✔ cancel discards every unsaved field without changing source data or creating roles (32.939584ms)
+✔ creation requires explicit confirmation and validates the complete page before any persistent write (12.027176ms)
+✔ partial profile success preserves the rest of the draft and retry does not write the profile twice (22.998602ms)
+✔ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (28.484349ms)
+✔ concurrent configuration changes reject the entire save before changing the native profile (11.141151ms)
+✔ a chat switch during role preflight preserves drafts and cannot save them into the next chat (7.024396ms)
+✔ interrupted identity switching resumes through the same save button after reopen (21.470089ms)
+✔ unavailable role sources still allow the native identity draft to be saved (9.64728ms)
+✔ failed native profile persistence retains the complete draft and retries the same values (15.570006ms)
+✔ a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat (17.169907ms)
+✔ discarding fresh edits keeps a durable pending identity recovery and still allows leaving (26.100748ms)
+✔ cancelling fresh edits does not force saving an existing legacy wish migration before leaving (51.602121ms)
+✔ a failed source read can be retried without clearing profile or creation drafts and saves to that exact source (18.651569ms)
+✔ a non-binding mode retains the explicitly selected source after save and reopen (19.911279ms)
+✔ an explicit legacy origin is reviewed and saved inside the unified identity form with no old page (53.727319ms)
+✔ legacy recovery is a draft until shared save and a failed recovery remains visible (70.520294ms)
+✔ a reviewed fixed legacy origin creates one independent slot through unified save (50.249953ms)
+✔ a failed legacy origin slot resumes its durable identity after reopening the unified page (42.466412ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 937.417589

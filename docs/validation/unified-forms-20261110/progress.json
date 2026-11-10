@@ -1,0 +1,29 @@
+{
+  "phase": "candidate_source_repair_pending_build",
+  "not_a_release": true,
+  "scope": "One canonical Matrix database for forms and the virtual phone.",
+  "completed": [
+    "Recovered normalized Matrix phone and authoring implementation with prior complete-source validation evidence.",
+    "Native history and revision callbacks share reconcilePhoneHistory and consult the canonical phone binding, retaining legacy metadata only as a migration-source presence check.",
+    "The history gate rechecks context after its asynchronous read and leaves chats without a phone uninitialized."
+  ],
+  "current_validation": {
+    "targeted_node_tests": {
+      "passed": 19,
+      "failed": 0,
+      "scope": "Actual Matrix host and phone services; production history callback/function loaded from index.js. No DOM or real host."
+    },
+    "before_repair_behavior": "Retained original callback leaves the cached phone at the detached later balance after history deletion.",
+    "dom_regressions_added": 2,
+    "dom_regressions_executed": false,
+    "runtime_rebuilt": false
+  },
+  "pending": [
+    "Restore exact package-lock dependencies, rebuild runtime.js and verify generated artifacts.",
+    "Run the added shell DOM regressions and full suite on the combined source.",
+    "Verify the original form, identity and phone entry routes in the real host; verify real model and Android separately."
+  ],
+  "real_host_tested": false,
+  "real_model_tested": false,
+  "android_tested": false
+}

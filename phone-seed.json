@@ -1,0 +1,29 @@
+{
+  "accounts": {
+    "me": {
+      "name": "我",
+      "role": "self"
+    },
+    "system": {
+      "name": "消息中心",
+      "role": "system"
+    }
+  },
+  "documents": [
+    {
+      "id": "inbox-main",
+      "kind": "inbox",
+      "title": "消息中心",
+      "visibility": "private",
+      "audience": [
+        "me"
+      ],
+      "author": "system",
+      "at": null,
+      "items": [],
+      "meta": {
+        "unreadIds": []
+      }
+    }
+  ]
+}

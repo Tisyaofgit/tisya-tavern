@@ -1,0 +1,18 @@
+Shared chat effects verified for both consumers
+{"file":"character-group/console.html","bytes":194353}
+{"file":"worldbook/console.html","bytes":221405,"checked":true}
+{"file":"runtime.js","localModules":275,"bytes":4399334,"externalImports":40,"checked":true}
+Reader bundle verified against 15 original modules with explicit read adapters
+Display-only card runtime verified against original r243 source
+Visual bundle verified: 15 original modules
+Typography bundle verified: 3 original modules
+Original task/next templates, ledger and control art verified
+Original settings/compiler modules verified: 33
+Dynamic preset verified: 14 original compiler entries; native roles/order/markers preserved
+Modular narrative preset verified; original roles, protected identity and output wire preserved
+Memory preset verified: original slots preserved, current memory delivery contract bound
+Six-block preset preserves all 62 original native entries
+One-pass preset: all 62 original entries preserved
+Matrix preset: 69 active slots; native persona marker retained disabled.
+{"file":"phone-life/style.mjs","bytes":40560}
+{"file": "phone.html", "bytes": 580814, "sha256": "5b598acf02baf84d5e91b519b4914d49e4891dbdddc066141c64bfe9cf44cbc1", "modules": 19, "css": 5, "embedded_assets": 7, "check": true}

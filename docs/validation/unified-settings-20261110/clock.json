@@ -1,0 +1,32 @@
+{
+  "schema": "long-task-checkpoints/1",
+  "task": "settings-identity-save-then-full-database-forms",
+  "state": "active",
+  "window_seconds": 5400,
+  "started_at_utc": "2026-11-10T03:45:30Z",
+  "started_at_beijing": "2026-11-10T11:45:30+08:00",
+  "save_begin_by_utc": "2026-11-10T05:00:30Z",
+  "deadline_utc": "2026-11-10T05:15:30Z",
+  "deadline_beijing": "2026-11-10T13:15:30+08:00",
+  "authorization": "👌🏻你先把这个改完发，发完继续推全数据库最新版Excel表单化",
+  "new_window_after_explicit_resume": true,
+  "previous_window_ended_at": "2026-11-10T03:29:41Z",
+  "background_resume": false,
+  "phase": "integrating_unified_forms",
+  "last_observed_utc": "2026-11-10T04:24:31.761461+00:00",
+  "last_observed_beijing": "2026-11-10T12:24:31.761461+08:00",
+  "settings_base": {
+    "commit": "b56937003765626ec45a5aacad9eb74c173889a6",
+    "tree": "2d459e32b4a2b929a5397a724de32342f6647f1f",
+    "source": "/workspace/scratch/390b9cf04a3c/settings-identity-fix"
+  },
+  "next_steps": [
+    "合并身份、资源和呈现配置的统一草稿与离页接口",
+    "合并壳层异步入口，保留phone history唯一结算",
+    "复核时钟作用域守卫；定点/生成物/全套验证；保存候选"
+  ],
+  "validation": "原锁文件 npm ci 成功，普通官方registry HTTP200；真实项目回归进行中；不代表浏览器/Android/真实模型验收",
+  "source_persistence": "main基线1097文件与远端已核；本阶段修改实施中，尚未发布",
+  "clock_reset": false,
+  "candidate_source": "/workspace/scratch/18b060429516/unified-integration"
+}

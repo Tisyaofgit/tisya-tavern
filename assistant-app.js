@@ -1,4 +1,3 @@
-import {mountIdentityPage} from './user-identity-page.js';
 import {mountTablePanel} from './tables/panel.js';
 import {mountRunView} from './tables/run-view.js';
 import {PANEL_CSS} from './config/panel-style.js';
@@ -18,15 +17,19 @@ export function mountAssistantApp(document,container,{service,identity,store,onC
  const buttons=new Map();for(const [id,label]of tasks){const button=el('button',label);button.type='button';button.onclick=()=>navigate(id).catch(e=>notice.textContent=e.message);buttons.set(id,button);nav.append(button);}
  async function navigate(id='assistant',goal=''){
   if(!alive)return;if(service.state().busy||[...panes.values()].some(p=>p.api.busy))throw Error('任务正在进行；可收起回聊天，完成或停止后再切换任务。');
-  notice.textContent='';const identityTask=id==='idea'||id==='core';const slot=identityTask?id:'tables';
+  notice.textContent='';
+  if(['idea','core','genesis'].includes(id)){
+   if(typeof onIdentity!=='function')throw Error('统一表单创作入口尚未接入');
+   return onIdentity({creationKind:id==='genesis'?'world':'character',goal:goal||initialGoal,useCore:id==='core',createPersona:id!=='genesis'});
+  }
+  const slot='tables';
   if(!panes.has(slot)){
    const node=el('div');node.className='assistant-task-body';let api;
-   if(identityTask)api=mountIdentityPage(node,{service:identity,tables:service,initialDesign:id,onNative,onWorldbook,onAtlas,onClose,onMinimize:onClose});
-   else{api=mountTablePanel(document,node,{service,store,onIdentity,onSaved,initialPage:id==='core-assets'?'core':id,initialGoal:goal||initialGoal});tablePanel=api;}
+   api=mountTablePanel(document,node,{service,store,onIdentity,onSaved,initialPage:id==='core-assets'?'core':id,initialGoal:goal||initialGoal});tablePanel=api;
    panes.set(slot,{node,api});body.append(node);await api.ready;
-  }else if(!identityTask)await tablePanel.navigate(id==='core-assets'?'core':id,goal||initialGoal);
+  }else await tablePanel.navigate(id==='core-assets'?'core':id,goal||initialGoal);
   for(const [key,pane]of panes)pane.node.hidden=key!==slot;
-  progress.root.hidden=identityTask;current=id;for(const [key,b]of buttons)b.setAttribute('aria-pressed',String(key===id));
+  progress.root.hidden=false;current=id;for(const [key,b]of buttons)b.setAttribute('aria-pressed',String(key===id));
  }
  const timer=setInterval(()=>{if(!alive)return;try{if(current!=='idea'&&current!=='core')progress.tick();for(const b of buttons.values())b.disabled=!!service.state().busy||[...panes.values()].some(p=>p.api.busy);}catch(e){notice.textContent='读取任务状态失败：'+e.message;}},400);
  return {root,kind:'assistant',keepAlive:true,navigate(id,goal=''){pending=navigate(id,goal);return pending;},settled:async()=>{await pending;for(const p of panes.values())await p.api.settled?.();},requestLeave:()=>({allowed:true,preserved:true}),resume(){if(current!=='idea'&&current!=='core')progress.tick();},dispose(){alive=false;clearInterval(timer);for(const p of panes.values())p.api.dispose();panes.clear();root.remove();}};

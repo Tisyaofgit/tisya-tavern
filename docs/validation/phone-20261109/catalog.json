@@ -1,0 +1,403 @@
+{
+  "schema": "tisya-phone-evidence-catalog/1",
+  "captured_utc": "2026-11-09T12:11:27.606455+00:00",
+  "scope": "Interrupted window, continuation before repair, repair regression, and final validated product evidence. Per-group timing and scope are explicit. No claim that earlier passing logs validate later source.",
+  "source_count": 56,
+  "stored_file_count": 56,
+  "missing_files": [],
+  "entries": [
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate-full-tests.txt",
+      "requested_path": "prior-window/candidate-full-tests.txt",
+      "size_bytes": 239737,
+      "sha256": "b40b9c9a9ce5719c01da3ea7e17b976b6cb73eabf8a45c9d4f81fcf675472594",
+      "stored_path": "prior-window/candidate-full-tests.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate-full-tests-final.txt",
+      "requested_path": "prior-window/candidate-full-tests-final.txt",
+      "size_bytes": 170140,
+      "sha256": "f6af48764db35b9c03c921ace0b47b4d1304536099c0a3020894b818c6d6f707",
+      "stored_path": "prior-window/candidate-full-tests-final.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-regression-first.txt",
+      "requested_path": "prior-window/phone-host-regression-first.txt",
+      "size_bytes": 82260,
+      "sha256": "e65cb9fc2f6054c7aa1cd1dd0a597b42fc456cfd9b688b0540fabd26109e929e",
+      "stored_path": "prior-window/phone-host-regression-first.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-regression-second.txt",
+      "requested_path": "prior-window/phone-host-regression-second.txt",
+      "size_bytes": 12636,
+      "sha256": "64d3e2c4c193ede30887d6c7dcae8032779be1f76c775b3db2cb76ef331a2cf7",
+      "stored_path": "prior-window/phone-host-regression-second.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-regression-final.txt",
+      "requested_path": "prior-window/phone-host-regression-final.txt",
+      "size_bytes": 9532,
+      "sha256": "403ece813945c6347244be2530a17ad552ec423c4821d1774b4c63528c3e2a8d",
+      "stored_path": "prior-window/phone-host-regression-final.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-regression-final-v2.txt",
+      "requested_path": "prior-window/phone-host-regression-final-v2.txt",
+      "size_bytes": 8999,
+      "sha256": "1fc6301fab7f2f05a25525725d5223210403efccd9692854d7e49a082d800c6a",
+      "stored_path": "prior-window/phone-host-regression-final-v2.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-dom-first-test-output.tap",
+      "requested_path": "prior-window/phone-host-dom-first-test-output.tap",
+      "size_bytes": 1444,
+      "sha256": "2b0e518efb5fa0cbe8161d876e44a9849be5a3c5aeedf278c4758a875fdec5f0",
+      "stored_path": "prior-window/phone-host-dom-first-test-output.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-dom-diagnostic-test-output.tap",
+      "requested_path": "prior-window/phone-host-dom-diagnostic-test-output.tap",
+      "size_bytes": 1904,
+      "sha256": "9559e3eb9d03b1cb10a3b989269b091e649d10d4d72e40841e240c1d8fb1ec26",
+      "stored_path": "prior-window/phone-host-dom-diagnostic-test-output.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-dom-final-after-regression.tap",
+      "requested_path": "prior-window/phone-host-dom-final-after-regression.tap",
+      "size_bytes": 448,
+      "sha256": "cd44374963efa2c7ce2a0b4dc109584f004e1c70ed427a7a2dab2a1fc54c7033",
+      "stored_path": "prior-window/phone-host-dom-final-after-regression.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-host-final-after-regression.tap",
+      "requested_path": "prior-window/phone-host-final-after-regression.tap",
+      "size_bytes": 2041,
+      "sha256": "e01aac7dde2d0647b2f8b025c97514a43ea2815b7bb0f384371272b604b8bbc9",
+      "stored_path": "prior-window/phone-host-final-after-regression.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-final-focused-first-failure.tap",
+      "requested_path": "prior-window/phone-final-focused-first-failure.tap",
+      "size_bytes": 7338,
+      "sha256": "ffb2c100b692b742723cc018ec0b1f4de39990984e37987816be27ad08e4aa56",
+      "stored_path": "prior-window/phone-final-focused-first-failure.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller-first-failure.txt",
+      "requested_path": "prior-window/phone-ui-controller-first-failure.txt",
+      "size_bytes": 3141,
+      "sha256": "eeb89c85b7018b96fa6cf57ee088df29213ee6dd510d83cf108ce14d15c1f6a1",
+      "stored_path": "prior-window/phone-ui-controller-first-failure.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-controller-test-output.txt",
+      "requested_path": "prior-window/phone-ui-controller-test-output.txt",
+      "size_bytes": 3196,
+      "sha256": "5e5b5157cdd6a6ab30b76e3cc25f00d5823a85b7199565ad042f0899066ecbfa",
+      "stored_path": "prior-window/phone-ui-controller-test-output.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.first-failure.txt",
+      "requested_path": "prior-window/phone-ui-dom.first-failure.txt",
+      "size_bytes": 3629,
+      "sha256": "18679a4ce493a400313472fc8f00c8bc693464aa466d857b28f815b37c002cad",
+      "stored_path": "prior-window/phone-ui-dom.first-failure.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.output.txt",
+      "requested_path": "prior-window/phone-ui-dom.output.txt",
+      "size_bytes": 1781,
+      "sha256": "ed85108184afb712d6c725aa687b2a91caaf5ab549d61f82df82c5274ee5c510",
+      "stored_path": "prior-window/phone-ui-dom.output.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.json",
+      "requested_path": "prior-window/phone-ui-dom.json",
+      "size_bytes": 2816,
+      "sha256": "aec84204304c0e9d1c1d3d9e6525f908205e107279592ee43f01892f222b4e70",
+      "stored_path": "prior-window/phone-ui-dom.json"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/portable-phone-tests.tap",
+      "requested_path": "prior-window/portable-phone-tests.tap",
+      "size_bytes": 5179,
+      "sha256": "536b375931e913432e875784aefd6acec9dc6a3de1994b6be2ce3ca4c7889e65",
+      "stored_path": "prior-window/portable-phone-tests.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/portable-phone-tests-final.tap",
+      "requested_path": "prior-window/portable-phone-tests-final.tap",
+      "size_bytes": 4393,
+      "sha256": "49107788cf89a025fcc6977b0d6263c3b9062ef49c1e9a125da053d4962ffe64",
+      "stored_path": "prior-window/portable-phone-tests-final.tap"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-bundle-dom.json",
+      "requested_path": "prior-window/phone-bundle-dom.json",
+      "size_bytes": 1364,
+      "sha256": "ed416b85c316824fe5f1b03f11e006f4a75be06228ca5b64f7566f567b5a9c68",
+      "stored_path": "prior-window/phone-bundle-dom.json"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-bundle-dom.output.txt",
+      "requested_path": "prior-window/phone-bundle-dom.output.txt",
+      "size_bytes": 970,
+      "sha256": "9eaccb03af449f2a8acc19536dbdb2f7b73e3c638d699ea445e5b53bcfd61e2f",
+      "stored_path": "prior-window/phone-bundle-dom.output.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-bundle-loader-observations.json",
+      "requested_path": "prior-window/phone-bundle-loader-observations.json",
+      "size_bytes": 1085,
+      "sha256": "b9dadaece8576d03b298757a4bb0703c8e0be642ba3e4cc3f903746274dc1d98",
+      "stored_path": "prior-window/phone-bundle-loader-observations.json"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-validation.json",
+      "requested_path": "prior-window/phone-ui-validation.json",
+      "size_bytes": 3723,
+      "sha256": "e725e6ce0731f8fb380175c46d6633a0f6a72e477462a991eab5adaa39ca1d59",
+      "stored_path": "prior-window/phone-ui-validation.json"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/browser-attempt.txt",
+      "requested_path": "prior-window/browser-attempt.txt",
+      "size_bytes": 979,
+      "sha256": "713b96a4a4e09256b6ddbb191ca857d13cb627b8159a44a17b6961bb3335333d",
+      "stored_path": "prior-window/browser-attempt.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/browser-download-failure.txt",
+      "requested_path": "prior-window/browser-download-failure.txt",
+      "size_bytes": 786,
+      "sha256": "d662ca5c2fa57462e320a8b01a789682d86d83e723e478ff97c646acab0df6da",
+      "stored_path": "prior-window/browser-download-failure.txt"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/local-candidate-tree-check.json",
+      "requested_path": "prior-window/local-candidate-tree-check.json",
+      "size_bytes": 46057,
+      "sha256": "7637cb034f3fe7c69465c2333b203d98151682211c68eb6d40592e999c124da0",
+      "stored_path": "prior-window/local-candidate-tree-check.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/validation-audit-summary.json",
+      "requested_path": "resume-verification/validation-audit-summary.json",
+      "size_bytes": 1786,
+      "sha256": "8816ebc24d095df4c0957cf5892aec1c917de255983f8c9fe862ad96a742be06",
+      "stored_path": "resume-verification/validation-audit-summary.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/existing-evidence-hashes.json",
+      "requested_path": "resume-verification/existing-evidence-hashes.json",
+      "size_bytes": 2274,
+      "sha256": "35d839516de73dc74f2090a93eb459c027c645f0a398ee6067115dfadd04811f",
+      "stored_path": "resume-verification/existing-evidence-hashes.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/current-source-inventory.json",
+      "requested_path": "resume-verification/current-source-inventory.json",
+      "size_bytes": 217566,
+      "sha256": "19c83c77f067882f0048d0675d65bf1b5e9851d83edee924cb18776d869c45b8",
+      "stored_path": "resume-verification/current-source-inventory.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-host-build.txt",
+      "requested_path": "resume-verification/fresh-host-build.txt",
+      "size_bytes": 93,
+      "sha256": "e965f58fe6765033b0c8fd78a3df01b88344457671a9528ba55568c1ca8c7110",
+      "stored_path": "resume-verification/fresh-host-build.txt"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-phone-build.json",
+      "requested_path": "resume-verification/fresh-phone-build.json",
+      "size_bytes": 179,
+      "sha256": "fe2977992042fe5b987dcbe0087be3b9e12627a49e708e56ee98180f0fd5c450",
+      "stored_path": "resume-verification/fresh-phone-build.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-phone-bundle-report.json",
+      "requested_path": "resume-verification/fresh-phone-bundle-report.json",
+      "size_bytes": 1322,
+      "sha256": "26f62863b83747c120571e0c9d56add81e697e589a0b71ec13ade9ba40dde451",
+      "stored_path": "resume-verification/fresh-phone-bundle-report.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-phone-bundle.tap",
+      "requested_path": "resume-verification/fresh-phone-bundle.tap",
+      "size_bytes": 971,
+      "sha256": "f96b985807e3349222d1e359c6892e0543fd0288b6f50a4562cbf7454e5fd2a9",
+      "stored_path": "resume-verification/fresh-phone-bundle.tap"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-phone-tests.tap",
+      "requested_path": "resume-verification/fresh-phone-tests.tap",
+      "size_bytes": 8526,
+      "sha256": "eb46b8a8a97836324450f17c74f9c4bd52141cc3c4ebd0821f0381e5c37545c4",
+      "stored_path": "resume-verification/fresh-phone-tests.tap"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/fresh-shell-tests.tap",
+      "requested_path": "resume-verification/fresh-shell-tests.tap",
+      "size_bytes": 7905,
+      "sha256": "ac7e239616b4eb597792e2651203becf90519b567f0610002b7790eb4c3a1516",
+      "stored_path": "resume-verification/fresh-shell-tests.tap"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/host-branch-source-contract.json",
+      "requested_path": "resume-verification/host-branch-source-contract.json",
+      "size_bytes": 12017,
+      "sha256": "b25600b1bc981d7b981daef4434864cf0123a618c60ece6ad2b3a15ab2a6b836",
+      "stored_path": "resume-verification/host-branch-source-contract.json"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/bookmarks-a1855be4.js",
+      "requested_path": "resume-verification/bookmarks-a1855be4.js",
+      "size_bytes": 27862,
+      "sha256": "dbd1d0e4c9d90600f3c60f6a9da1d098b473af2da09c5e9296c3727cfd8ff3dc",
+      "stored_path": "resume-verification/bookmarks-a1855be4.js"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/bookmarks-fff9af0333be.js",
+      "requested_path": "resume-verification/bookmarks-fff9af0333be.js",
+      "size_bytes": 28416,
+      "sha256": "e9036217104bc323cf5718dc6027cb6a4af938fa1dd8905369cf5b617985594f",
+      "stored_path": "resume-verification/bookmarks-fff9af0333be.js"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/clock.json",
+      "requested_path": "prior-window/clock.json",
+      "stored_path": "prior-window/clock.json",
+      "size_bytes": 452,
+      "sha256": "23c82ec8a986b03baa0288bd121be8e3f501eecc8d74b03675669181930feede"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-diff-check.txt",
+      "requested_path": "final-validation/final-diff-check.txt",
+      "stored_path": "final-validation/final-diff-check.txt",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-full-tests.txt",
+      "requested_path": "final-validation/final-full-tests.txt",
+      "stored_path": "final-validation/final-full-tests.txt",
+      "size_bytes": 171017,
+      "sha256": "6678cc2f9294755bd5c7e63bc9d48781ea5d0f50b4c98a12f6f9a4cb5c7940e8"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-host-build-check.txt",
+      "requested_path": "final-validation/final-host-build-check.txt",
+      "stored_path": "final-validation/final-host-build-check.txt",
+      "size_bytes": 93,
+      "sha256": "72961541922ac210c6356da52b4d9a5a92b21cbadb904967c69745c554e09fd0"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-host-build.txt",
+      "requested_path": "final-validation/final-host-build.txt",
+      "stored_path": "final-validation/final-host-build.txt",
+      "size_bytes": 311,
+      "sha256": "1ea752467b9412837f85e263243493f2feed86f5485274bbe6230f7b51f59034"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-independent-review.json",
+      "requested_path": "final-validation/final-independent-review.json",
+      "stored_path": "final-validation/final-independent-review.json",
+      "size_bytes": 2240,
+      "sha256": "7a112b96d394f628f0b6ac0707d405854398e59ae3b3f6430dcd4d81f5b85d5c"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-phone-build-check.json",
+      "requested_path": "final-validation/final-phone-build-check.json",
+      "stored_path": "final-validation/final-phone-build-check.json",
+      "size_bytes": 179,
+      "sha256": "b1bb5c4c6e6a6d7629ed067fecabd7a5181c676eee8ce9fcc3abe69a880b1293"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-phone-build.json",
+      "requested_path": "final-validation/final-phone-build.json",
+      "stored_path": "final-validation/final-phone-build.json",
+      "size_bytes": 180,
+      "sha256": "821675a01ac6f225fa974a778e2b329dd179a430238c20562124355ec889ac97"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-phone-bundle-report.json",
+      "requested_path": "final-validation/final-phone-bundle-report.json",
+      "stored_path": "final-validation/final-phone-bundle-report.json",
+      "size_bytes": 1322,
+      "sha256": "cbd517a1568bebbeeb88978e186174a2e889d2fc1d59737c51bec798e65e7d61"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-phone-bundle.tap",
+      "requested_path": "final-validation/final-phone-bundle.tap",
+      "stored_path": "final-validation/final-phone-bundle.tap",
+      "size_bytes": 972,
+      "sha256": "cfed267646863cc679a163d7e3a40f40185577919503297ec7f6d7506ac2b7e0"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-phone-shell-tests.tap",
+      "requested_path": "final-validation/final-phone-shell-tests.tap",
+      "stored_path": "final-validation/final-phone-shell-tests.tap",
+      "size_bytes": 17152,
+      "sha256": "e7aae648e3e102a8a1020a1911c183bd6a2062a80bbfe8e8ccab9f8924f3091c"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-source-after-validation.json",
+      "requested_path": "final-validation/final-source-after-validation.json",
+      "stored_path": "final-validation/final-source-after-validation.json",
+      "size_bytes": 238627,
+      "sha256": "90fe4b08aa2fc9f42f83510420ca6a23035d325931480e1e6432a5244b38a804"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-source-before-validation.json",
+      "requested_path": "final-validation/final-source-before-validation.json",
+      "stored_path": "final-validation/final-source-before-validation.json",
+      "size_bytes": 238627,
+      "sha256": "8a3b7158de7d01d9419c6b86e81241331355d31759ca3acf46cf4aa221eb1f38"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-validation-progress.json",
+      "requested_path": "final-validation/final-validation-progress.json",
+      "stored_path": "final-validation/final-validation-progress.json",
+      "size_bytes": 3008,
+      "sha256": "b0604ae42355c682e56e08a865ac1dd5a8e5921fdf421a05b47e229ab100c85c"
+    },
+    {
+      "source": "/workspace/scratch/5717d8fb3725/validation-audit/final-validation-summary.json",
+      "requested_path": "final-validation/final-validation-summary.json",
+      "stored_path": "final-validation/final-validation-summary.json",
+      "size_bytes": 4020,
+      "sha256": "f829ffc78106ae5de22458e0ae09089c3c8741e91252547c7491ef0b5c5162f5"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-review-first-failure.txt",
+      "requested_path": "repair/phone-review-first-failure.txt",
+      "stored_path": "repair/phone-review-first-failure.txt",
+      "size_bytes": 3440,
+      "sha256": "0c6bf657510431e7e97529c35a3b15aeb715eee08c7a8d3281e763d9a6c29769"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-review-focused.txt",
+      "requested_path": "repair/phone-review-focused.txt",
+      "stored_path": "repair/phone-review-focused.txt",
+      "size_bytes": 5253,
+      "sha256": "480be9f6aec1136ca3e94fd077a807bb672cf9ffa8fd1b6785ebc7ba0541be3d"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-review-regression.txt",
+      "requested_path": "repair/phone-review-regression.txt",
+      "stored_path": "repair/phone-review-regression.txt",
+      "size_bytes": 16968,
+      "sha256": "de9c42fca357099206a4e338dfa2aa5dd1813e1675825f0594c32ad986630a66"
+    },
+    {
+      "source": "/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-review-regression-final.txt",
+      "requested_path": "repair/phone-review-regression-final.txt",
+      "stored_path": "repair/phone-review-regression-final.txt",
+      "size_bytes": 17154,
+      "sha256": "2375a3b9c6287ef984e2b624a42ab4d2268a0204cbd6406d8d9ddb29b922b3d8"
+    }
+  ],
+  "final_evidence_added_utc": "2026-11-09T12:17:42.310529+00:00"
+}

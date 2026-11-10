@@ -149,11 +149,13 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   catalog??=await service.catalog();const bundle=await service.export();if(disposed)return;
   const tools=el('div',null,'tisya-directory-buttons');
   const requireSaved=()=>{if(hasChanges())throw Error('请先使用底部按钮保存或取消本页修改。');};
-  tools.append(button('接入本会话',async()=>{requireSaved();await service.initialize();await render();}),button('同步回合',async()=>{requireSaved();await service.sync();await render();}),button('导出完整存档',async()=>{const current=await service.export();if(!current)throw Error('本会话尚未接入');download('Tisya-chat-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',current);}));
+  if(bundle){
+   tools.append(button('同步回合',async()=>{requireSaved();await service.sync();await render();}),button('导出完整存档',async()=>{const current=await service.export();if(!current)throw Error('本会话尚未接入');download('Tisya-chat-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',current);}));
+  }else tools.append(button('重试接入当前聊天',async()=>{requireSaved();if(typeof service.ensureBound!=='function')throw Error('当前聊天的自动接入服务尚未就绪');await service.ensureBound();await render();}));
   const file=el('input');file.type='file';file.accept='.json,application/json';file.hidden=true;
   file.onchange=()=>run(async()=>{requireSaved();if(file.files[0])await service.import(JSON.parse(await file.files[0].text()));await render();});
   tools.append(button('导入已有新版状态',()=>{requireSaved();file.click();}),file);body.append(tools);
-  if(!bundle){body.append(el('p','本会话尚未接入新版表单。接入后保留现有聊天作为历史基线，从后续回复开始结算；已有新版表单可直接导入。'));return;}
+  if(!bundle){body.append(el('p','当前聊天的表单尚未准备完成。打开聊天会自动接入并开启新引擎；准备中断时可重试，已有存档会保留。'));return;}
   if(!bundle.state.schema[selectedTable])selectedTable=catalog.tables.find(table=>bundle.state.schema[table.id])?.id??'';
   const schema=bundle.state.schema[selectedTable];if(!schema)throw Error('存档没有可编辑的表单。');
   const tableSelect=el('select');tableSelect.className='text_pole';tableSelect.setAttribute('aria-label','表单');

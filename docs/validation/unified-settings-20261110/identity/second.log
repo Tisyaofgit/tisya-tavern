@@ -1,0 +1,99 @@
+✔ identity projects the current canonical dossier through actual origin reference instead of a stale source book (67.132148ms)
+✔ dossier editing is zero-write until confirmation and only changes the canonical owner (96.377508ms)
+✔ stale, cross-chat and tampered edits cannot change current records (52.205737ms)
+✔ manual creation commits dossier, entity and normalized origin reference together and retries once (51.568776ms)
+✔ DB save plus failed selection save reports its preserved partial result and retry does not duplicate (52.07675ms)
+✔ resources save per-chat DB locators and expose no regenerated initialization block (66.345849ms)
+✔ database UI preserves untouched empty fields and requires preview before committing edits (163.682068ms)
+✔ empty database still exposes the creator entry and creation save stays separate from selection (46.959652ms)
+✔ main identity projection excludes old initialization blocks and does not revive a stale derived name (18.005946ms)
+✔ legacy dossier migration checks exact source UID and digest, preserves raw seed only as source, and commits one batch (58.63916ms)
+✔ actual preference UI persists audience, topics and explicit zero in one database commit (44.697117ms)
+✔ world or role selection change rejects an old form instead of saving to the new scope (24.880509ms)
+✔ Matrix identity has one persistent save/cancel pair including unavailable role sources (43.072741ms)
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (17.326706ms)
+✔ identity selection is a draft until save and cancellation performs no persistence (43.019372ms)
+✔ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (26.533638ms)
+✔ cancel discards every unsaved field without changing source data or creating roles (12.891379ms)
+✔ creation requires explicit confirmation and validates the complete page before any persistent write (14.218343ms)
+✔ partial profile success preserves the rest of the draft and retry does not write the profile twice (23.506234ms)
+✔ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (18.656754ms)
+✔ concurrent configuration changes reject the entire save before changing the native profile (18.778104ms)
+✔ a chat switch during role preflight preserves drafts and cannot save them into the next chat (6.461389ms)
+✔ interrupted identity switching resumes through the same save button after reopen (21.859196ms)
+✔ unavailable role sources still allow the native identity draft to be saved (10.542186ms)
+✔ failed native profile persistence retains the complete draft and retries the same values (11.087768ms)
+✔ a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat (7.992245ms)
+✔ discarding fresh edits keeps a durable pending identity recovery and still allows leaving (12.452878ms)
+✔ cancelling fresh edits does not force saving an existing legacy wish migration before leaving (15.066044ms)
+✔ a failed source read can be retried without clearing profile or creation drafts and saves to that exact source (12.15802ms)
+✔ a non-binding mode retains the explicitly selected source after save and reopen (15.78954ms)
+✔ listing does not write; role creation saves exact disabled entry and binds only this chat (4.100317ms)
+✔ failed binding retains saved role; retry reuses it without creating a default or duplicate (0.755994ms)
+✔ original persona description enters only the wish; selected original wish preset remains exact (2.776598ms)
+✔ user identity contains original wishes and creates exact core book role through its visible controls (33.705261ms)
+✔ native persona injection is disabled in the saved preset and relocated from depth or author note without changing history (0.951255ms)
+✔ binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs (2.51494ms)
+✔ legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback (0.883073ms)
+✔ empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish (23.714964ms)
+✔ base and optional wishes remain absent when the original description is empty and every module is off (0.58465ms)
+✔ automatic core book preparation is idempotent and preserves existing global books and entries (1.093787ms)
+✔ preparation and selection never require or change native global worldbook activation (0.985225ms)
+✔ identity picker drafts the selection before a shared save; interrupted binding is recoverable on this page (44.110554ms)
+✔ unavailable worldbook service leaves persona switching usable and its error visible (8.396115ms)
+✔ one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry (29.468391ms)
+✔ identity page allows its own clean return and native-manager navigation (7.22249ms)
+✔ packaged templates reference the unified schema and do not create independent phone states (1.749251ms)
+✔ complete native template book and readable field guide match runtime templates exactly (3.473656ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (2.735808ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.767852ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (1.147316ms)
+✔ creation reads an existing default template book before the identity page has configured it (0.515336ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (1.557987ms)
+✔ manual role creation never writes into the template book or adds implicit phone state (0.560975ms)
+✔ empty prefixed role name is rejected before creating an unreadable entry (0.292445ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (0.86693ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (1.009451ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (1.340223ms)
+✔ normal identity projection strips initial values while preserving narrative and source (0.764177ms)
+✔ reference scan uses current native conditions, retains source UID and deduplicates without enabling (1.160796ms)
+✔ reference scan guards before mutation and does not mask missing or duplicate source data (0.557819ms)
+✔ refreshing a natively selected reference retains the console opt-in scan order (0.556588ms)
+✔ native exclusion removes the entire template book even when enabled and strips both seed types (0.171014ms)
+✔ legacy shared resource mount edits the original dossier and saves references without native persona UI (47.018569ms)
+✔ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (19.233964ms)
+✖ failed source-book switch restores the editor source and cross-chat save is blocked (27.571741ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 63
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1008.113781
+
+✖ failing tests:
+
+test at tests/matrix-identity-save.test.js:82:1
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (17.326706ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:91:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/template-book-identity.test.js:112:1
+✖ failed source-book switch restores the editor source and cross-chat save is blocked (27.571741ms)
+  TypeError [Error]: Cannot set properties of null (setting 'value')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/template-book-identity.test.js:115:74)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

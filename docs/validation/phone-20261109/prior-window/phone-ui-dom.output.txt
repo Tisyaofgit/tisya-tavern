@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: DOM forum reactions hit the selected floor, toggle once, and scalar reply submits
+ok 1 - DOM forum reactions hit the selected floor, toggle once, and scalar reply submits
+  ---
+  duration_ms: 267.56922
+  type: 'test'
+  ...
+# Subtest: DOM weibo and video added item buttons target exact comment IDs and show reader delta
+ok 2 - DOM weibo and video added item buttons target exact comment IDs and show reader delta
+  ---
+  duration_ms: 257.848602
+  type: 'test'
+  ...
+# Subtest: DOM rapid draft input retains latest text and focus/caret after asynchronous old saves
+ok 3 - DOM rapid draft input retains latest text and focus/caret after asynchronous old saves
+  ---
+  duration_ms: 120.269236
+  type: 'test'
+  ...
+# Subtest: DOM search form is local first and queues only with continue-search button
+ok 4 - DOM search form is local first and queues only with continue-search button
+  ---
+  duration_ms: 61.436748
+  type: 'test'
+  ...
+# Subtest: DOM copy and receive dialogs keep request identity and apply actual protocol values
+ok 5 - DOM copy and receive dialogs keep request identity and apply actual protocol values
+  ---
+  duration_ms: 171.243507
+  type: 'test'
+  ...
+# Subtest: DOM prepared round disables send but keeps drafts, and explicit recovery restores edits
+ok 6 - DOM prepared round disables send but keeps drafts, and explicit recovery restores edits
+  ---
+  duration_ms: 183.356404
+  type: 'test'
+  ...
+# Subtest: DOM frozen frame receives onChange, opens full phone, and is inert after dispose
+ok 7 - DOM frozen frame receives onChange, opens full phone, and is inert after dispose
+  ---
+  duration_ms: 124.991089
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1520.145991

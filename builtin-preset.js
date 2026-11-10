@@ -12,12 +12,12 @@ const fail=message=>{throw updateError('Tisya 内置预设同步失败：'+messa
 const inFlight=new WeakMap();
 
 // Save through PresetManager. Its updateList always selects the saved preset;
-// register the acknowledged record in its native list without changing selection.
+// register the acknowledged record before an explicitly requested activation.
 // Verified against TauriTavern a1855be4: preset-manager.js savePreset/getPresetList.
-export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=5000,force=false}={}){
+export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=5000,force=false,activate=false}={}){
  const manager=context.getPresetManager?.('openai');
  if(!manager)return Promise.reject(updateError('宿主的聊天补全预设接口尚未就绪'));
- if(inFlight.has(manager))return inFlight.get(manager);
+ if(inFlight.has(manager)){const pending=inFlight.get(manager);return activate?pending.then(receipt=>receipt.active?receipt:installBuiltInPreset(context,document,{isBusy,timeout,activate:true})):pending;}
  const operation=install().catch(error=>{error.tisyaPresetUpdate=true;throw error;}).finally(()=>inFlight.delete(manager));inFlight.set(manager,operation);return operation;
  async function install(){
   for(const key of ['getAllPresets','getCompletionPresetByName','getSelectedPresetName','getPresetList','savePreset','findPreset','selectPreset'])if(typeof manager[key]!=='function')fail('宿主缺少 '+key);
@@ -26,7 +26,7 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
   if(exists&&!object(previous))fail('已有同名预设无法读取');
   const active=manager.getSelectedPresetName()===BUILTIN_PRESET_NAME;
   const savedCurrent=previous?.extensions?.tisya_builtin?.revision===BUILTIN_PRESET_REVISION;
-  if(!force&&savedCurrent&&(!active||context.chatCompletionSettings?.extensions?.tisya_builtin?.revision===BUILTIN_PRESET_REVISION))return {name:BUILTIN_PRESET_NAME,revision:BUILTIN_PRESET_REVISION,status:'current',active};
+  if(!force&&savedCurrent&&(!activate||active)&&(!active||context.chatCompletionSettings?.extensions?.tisya_builtin?.revision===BUILTIN_PRESET_REVISION))return {name:BUILTIN_PRESET_NAME,revision:BUILTIN_PRESET_REVISION,status:'current',active};
   if(isBusy())fail('当前仍在生成，尚未覆盖预设');
   const select=typeof manager.select==='string'?document.querySelector(manager.select):(manager.select?.[0]??manager.select);
   if(select?.tagName!=='SELECT')fail('宿主预设选择器尚未就绪');
@@ -49,7 +49,7 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
    const selected=select.value,option=document.createElement('option');option.value=String(index);option.textContent=BUILTIN_PRESET_NAME;select.appendChild(option);if(selected)select.value=selected;
   }
   if(manager.getCompletionPresetByName(BUILTIN_PRESET_NAME)?.extensions?.tisya_builtin?.revision!==BUILTIN_PRESET_REVISION)fail('原生列表读取未确认新版本');
-  if(manager.getSelectedPresetName()===BUILTIN_PRESET_NAME){
+  if(activate||manager.getSelectedPresetName()===BUILTIN_PRESET_NAME){
    if(isBusy())fail('新预设已保存，但生成正在进行；结束后再更新载入');
    await refresh();
   }

@@ -1,3 +1,18 @@
+import {createDefaultActivation} from '../default-activation.js';
+import {installBuiltInPreset} from '../builtin-preset.js';
+import {createPhoneService,phoneSnapshot} from '../phone-core.mjs';
+import {streamingMessageSource} from '../streaming-message.js';
+import {createPhoneDatabaseStorage,readPhoneDatabaseProfile,decodePhoneDatabase,PHONE_DATABASE_SCHEMAS} from '../engine/phone-database.mjs';
+import {createNativeBuiltinBooks} from '../engine/builtin-book-host.mjs';
+import {createMatrixCreator} from '../engine/creation.mjs';
+import {createExtensionPresentationService} from '../extension-host.mjs';
+import {mountExtensionPreferences} from '../extension-preferences-ui.mjs';
+import {EXTENSION_PREFERENCE_TABLE} from '../extension-preferences.mjs';
+import {createPhonePresentationMedia} from '../phone-life/presentation-media.mjs';
+import {finishMatrixGeneration} from '../engine/lifecycle.mjs';
+import {indexedStorage} from '../engine/controller.mjs';
+import {createPhoneTurnHost,createPhoneMetadataStorage} from '../phone-turn-host.js';
+import {chatKey} from '../engine/controller.mjs';
 import {baseline as matrixBaseline} from '../engine/config.mjs';
 import {createMatrixHost} from '../engine/host.mjs';
 import {mountGenerationIdleGuard} from '../generation-idle-guard.js';
@@ -18,10 +33,11 @@ import {createGlobalFonts} from '../global-fonts.js';
 import {mountThemeWorkbench} from '../theme-workbench.js';
 import {messageCardCover} from '../message-cover.js';
 import {createIdentityService} from '../user-identity-service.js';
-import {mountIdentityPage} from '../user-identity-page.js';
-import {mountMatrixIdentity} from '../engine/identity-ui.mjs';
-import {createStoryIdentity} from '../engine/identity.mjs';
-import {IDBFactory} from 'fake-indexeddb';
+import {mountIdentityPage} from './legacy-fixtures/user-identity-page.js';
+import {createStoryIdentity,storyAvatar} from '../engine/identity.mjs';
+import {mountMatrixIdentity,mountStoryResources} from '../engine/identity-ui.mjs';
+import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
+import {excludeTemplateBookEntries,scanStoryReferenceBooks,readStoryReferenceBooks} from '../engine/template-book.mjs';
 import {createPersonaGateway} from '../tables/persona.js';
 import {createWorldbookConditionGate} from '../worldbook-conditions.js';
 import * as panelSurfaces from '../panel-surface.js';
@@ -48,16 +64,92 @@ import {createNativeVectors} from '../tables/vectors.js';
 import {mountInputShortcuts} from '../input-shortcuts.js';
 import {createEditToolbarPlacement} from '../edit-toolbar.js';
 import {createNativeDisplayPipeline} from '../native-display.js';
-import * as replyFormats from '../reply-formats.js';import * as configCore from '../config/core.js';import * as configHost from '../config/host.js';import * as configPanel from '../config/panel.js';import * as configContracts from '../config/contracts.js';import * as nativeBeauty from '../native-beauty.js';
+import * as replyFormats from '../reply-formats.js';import * as configCore from '../config/core.js';import * as configHost from '../config/host.js';import * as configPanel from './legacy-fixtures/config-panel.js';import * as configContracts from '../config/contracts.js';import * as nativeBeauty from '../native-beauty.js';
 import * as liveSettings from '../narrative-bridge.js';import * as appearanceSettings from '../appearance-settings.js';import {mountSettingsApp} from '../settings-app.js';
 import * as displaySettings from '../display-settings.js';
-import {HEART_DIRECTIONS,HEART_ROWS} from '../preset-hearts.js';import * as actions from '../actions.js';import {registerPresetProtocol} from '../preset.js';import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {Window} from 'happy-dom';import * as model from '../model.js';import * as layout from '../layout.js';import * as icons from '../icons.js';import * as navigation from '../navigation.js';import * as reader from '../reader.js';import * as notebook from '../notebook.js';import {fixture as replyFixture} from './fixtures/journey-r4.cjs';
-async function setup({generateWait,optionsWait,idleWait=async()=>{},welcome=false,bookHelper,nativeIdentity,persistSettings,realMessages=false,presetInstaller=async()=>({name:'Tisya',status:'current'})}={}){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
-if(realMessages)w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={},formatCalls=[],listeners=new Map();const on=(e,f)=>{if(!listeners.has(e))listeners.set(e,[]);listeners.get(e).push(f);handlers[e]=(...args)=>Promise.all([...(listeners.get(e)??[])].map(fn=>fn(...args)));};const ctx={registerMacro:()=>{},unregisterMacro:()=>{},saveChat:async()=>true,chatId:'a',characterId:0,chatMetadata:{},chatCompletionSettings:{prompts:[]},chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getChatCompletionModel:()=> 'test-model',substituteParams:s=>s,getCurrentChatId:()=> 'a',getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>[],getSelectedPresetName:()=>'',getCompletionPresetByName:()=>({})}),eventTypes:{WORLDINFO_ENTRIES_LOADED:'entries-loaded',WORLDINFO_SCAN_DONE:'scan-done',OAI_PRESET_CHANGED_AFTER:'preset-after',GENERATION_AFTER_COMMANDS:'before',CHAT_COMPLETION_SETTINGS_READY:'payload',APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received',MESSAGE_UPDATED:'updated',MESSAGE_EDITED:'edited',MESSAGE_DELETED:'deleted',MESSAGE_SWIPED:'swiped'},eventSource:{on,removeListener:(e,f)=>{const list=listeners.get(e);if(list)listeners.set(e,list.filter(fn=>fn!==f));}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={createMatrixHost,mountGenerationIdleGuard,mountMatrixConfiguration,createWorldSeedService,mountWorldSeed,createNativePersonaSlotHost,mountAssistantApp,personaNative:{},hostNative:{},isOnePassPreset,outputEnabled,nativePanelContentProcessor,resetNativePanelSources,chatSelectionDiagnostic,chatSelectionSummary,selectChatReady:options=>selectChatReady({...options,schedule:fn=>setTimeout(fn,16),cancel:clearTimeout}),notifySelectedChatContent,...uiOperation,...generationOperation,waitForGenerationIdle:idleWait,initializePresetConnection,createPresetUpdateController:options=>createPresetUpdateController({...options,install:presetInstaller}),mountPresetUpdateControl,showPresetUpdateError,createGlobalFonts,mountThemeWorkbench,messageCardCover,createIdentityService,mountIdentityPage,mountMatrixIdentity,createStoryIdentity:options=>createStoryIdentity({...options,...(bookHelper?{getHelper:()=>bookHelper}:{})}),convertCharacterToPersona:async()=>true,saveMetadata:async()=>true,createPersonaGateway,createWorldbookConditionGate,projectToolTurns:undefined,user_avatar:'',initUserAvatar:()=>{},setPersonaDescription:()=>{},setUserName:()=>{},...panelSurfaces,mountSettingsHome,createCharacterGroupHost:()=>({open(target){w.characterGroupTarget=target;},identity:{connect(){}},bindings:{list:()=>[]},isBusy:()=>false,hasDraft:()=>false,dispose(){}}),installWorldbookOrder:()=>({clear(){},assertReady(){},available:true}),createWorldbookConsole:({openNative})=>({open(){w.worldbookOpened=(w.worldbookOpened??0)+1;},isBusy:()=>false,hasDraft:()=>false,dispose(){},openNative}),select_group_chats:(id)=>{w.groupEditorId=id;},...homeDirectory,deleteCharacter:async()=>false,deleteCharacterChatByName:async()=>{},closeCurrentChat:async()=>true,timestampToMoment:()=>({isValid:()=>false}),mountHome:(d,c,o)=>mountHome(d,c,{...o,mountArt:()=>({ready:Promise.resolve(),setPlaying(){},dispose(){}})}),getThumbnailUrl:(type,file)=>`/thumbnail?type=${type}&file=${encodeURIComponent(file)}`,...chatLoading,power_user:{chat_truncation:100},isBoundedChatSurfaceView:()=>false,...messageCache,...paragraphActions,...fullscreen,...communication,...revision,...userRevision,...settingsNavigation,...revisionUI,swipe:async(_,direction,{forceMesId:id,forceSwipeId:index})=>{ctx.chat[id].swipe_id=index;ctx.chat[id].mes=ctx.chat[id].swipes[index];},deleteSwipe:async(index,id)=>{const m=ctx.chat[id];m.swipes.splice(index,1);m.swipe_id=Math.min(m.swipe_id,m.swipes.length-1);m.mes=m.swipes[m.swipe_id];return m.swipe_id;},messageEdit:async id=>{const n=w.document.querySelector(`#chat .mes[mesid="${id}"] .mes_text`);n.innerHTML='<textarea class="edit_textarea"></textarea>';n.firstChild.value=ctx.chat[id].mes;},hydrateChatMessageSwipes:async()=>{},isMessageSwipeable:()=>true,getOverswipeBehavior:()=>'regenerate',branchChat:async()=>{},createTextTransport,createEditToolbarPlacement,interfaceSnapshot,validateInterfaceSettings,createNativeConfiguration,createRegexGate,isScopedScriptsAllowed:()=>true,allowScopedScripts:()=>{},isPresetScriptsAllowed:()=>true,allowPresetScripts:()=>{},createTableService:options=>createTableService({...options,...(bookHelper?{books:createBookGateway(()=>bookHelper,()=>ctx)}:{})}),createNativeVectors,setExtensionPrompt:()=>{},mountInputShortcuts,createNativeDisplayPipeline:options=>(w.displayPipeline=createNativeDisplayPipeline(options)),RegexProvider:{instance:{get:()=>null}},substituteParams:s=>s,substituteParamsExtended:s=>s,...replyFormats,appendFileContent:async(m,s)=>s,yaml:{parse:JSON.parse},...configCore,...configHost,...configPanel,...configContracts,...nativeBeauty,loadAgentSystemSettings:async()=>({agentModeEnabled:false}),getRegexScripts:()=>[],getRegexedString:s=>s,proxies:[],createGenerationParameters:async(settings,model,type,messages)=>({generate_data:{messages,model,type}}),...displaySettings,...liveSettings,...appearanceSettings,mountSettingsApp,enqueueChatSave:task=>task(),persistedChatMetadata:()=>({...ctx.chatMetadata}),saveCharacterChatMetadata:async()=>{},saveGroupChatMetadata:async()=>{},emotionCatalog:()=>({ready:Promise.resolve(),names:()=>[]}),mountEmotionAtlas:()=>({dispose(){}}),saveSettings:async()=>persistSettings?persistSettings(ctx):true,HEART_DIRECTIONS,HEART_ROWS,...actions,sendTextareaMessage:async()=>{generated.push(['native-send',w.document.querySelector('#send_textarea').value]);w.document.querySelector('#send_textarea').value='';},registerPresetProtocol,promptManager:{getPromptOrderForCharacter:()=>[]},mountMessageAppearance:realMessages?realMessageAppearance:()=>({sync(){},shouldRender:()=>true,revealHistory(){},dispose(){},restore(){},refresh(){}}),mountChatEffects:()=>({dispose(){},refresh(){}}),mountPet:(_,options)=>{w.phoneOptions=options;return {dispose(){},refresh(){},isVisible:()=>true,setVisible(){}}},getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value]);await generateWait?.(...args);},getAgentGenerationOptions:async()=>await optionsWait?.()??({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader,...notebook};w.toastr={error:t=>errors.push(t)};
+import {HEART_DIRECTIONS,HEART_ROWS} from '../preset-hearts.js';import * as actions from '../actions.js';import {registerPresetProtocol} from '../preset.js';import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {Window} from 'happy-dom';import {IDBFactory} from 'fake-indexeddb';import * as model from '../model.js';import * as layout from '../layout.js';import * as icons from '../icons.js';import * as navigation from '../navigation.js';import * as reader from '../reader.js';import * as notebook from '../notebook.js';import {fixture as replyFixture} from './fixtures/journey-r4.cjs';
+const matrixCatalog=JSON.parse(await readFile(new URL('../engine/catalog.json',import.meta.url),'utf8'));
+const phoneSeed=JSON.parse(await readFile(new URL('../phone-seed.json',import.meta.url),'utf8'));
+const fixtureWindows=new Set();
+test.afterEach(async()=>{
+ for(const window of fixtureWindows){
+  window.dispatchEvent(new window.Event('pagehide'));
+  await window.happyDOM.close();
+ }
+ fixtureWindows.clear();
+});
+async function setup({generateWait,optionsWait,idleWait=async()=>{},welcome=false,bookHelper,nativeIdentity,persistSettings,realMessages=false,mediaStorage=false,nativePresets=false,configureContext=null,presetInstaller=async()=>({name:'Tisya',status:'current',active:true})}={}){const w=new Window({url:'http://localhost'});fixtureWindows.add(w);w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
+if(mediaStorage||nativePresets)Object.defineProperty(w,'indexedDB',{value:new IDBFactory(),configurable:true,writable:true});if(realMessages)w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.structuredClone=structuredClone;const nativeBooks=new Map(),matrixStorage=indexedStorage(new IDBFactory()),worldInfoNative={world_names:[],async flushWorldInfoSaves(){},async updateWorldInfoList(){this.world_names=[...nativeBooks.keys()];},async saveWorldInfo(name,data){nativeBooks.set(name,structuredClone(data));await this.updateWorldInfoList();return true;}};w.fetch=async(url,options)=>String(url).endsWith('/engine/catalog.json')?{ok:true,json:async()=>structuredClone(matrixCatalog)}:String(url)==='/api/worldinfo/get'?{ok:true,json:async()=>structuredClone(nativeBooks.get(JSON.parse(options.body).name))}:String(url).endsWith('/phone-seed.json')?{ok:true,json:async()=>structuredClone(phoneSeed)}:{ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]};const macros=new Map(),expand=s=>String(s).replace(/\{\{([^{}]+)\}\}/g,(raw,name)=>macros.has(name)?macros.get(name)():raw);const errors=[],handlers={},formatCalls=[],listeners=new Map();const on=(e,f)=>{if(!listeners.has(e))listeners.set(e,[]);listeners.get(e).push(f);handlers[e]=(...args)=>Promise.all([...(listeners.get(e)??[])].map(fn=>fn(...args)));};const ctx={registerMacro:(name,handler)=>macros.set(name,handler),unregisterMacro:name=>macros.delete(name),saveChat:async()=>true,chatId:'a',characterId:0,chatMetadata:{},chatCompletionSettings:{prompts:[]},chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getChatCompletionModel:()=> 'test-model',substituteParams:expand,getCurrentChatId:()=>ctx.chatId,getWorldInfoNames:()=>[...nativeBooks.keys()],loadWorldInfo:async name=>structuredClone(nativeBooks.get(name)),getPresetManager:()=>({getAllPresets:()=>[],getSelectedPresetName:()=>'',getCompletionPresetByName:()=>({})}),eventTypes:{WORLDINFO_ENTRIES_LOADED:'entries-loaded',WORLDINFO_SCAN_DONE:'scan-done',OAI_PRESET_CHANGED_AFTER:'preset-after',GENERATION_AFTER_COMMANDS:'before',CHAT_COMPLETION_SETTINGS_READY:'payload',APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received',MESSAGE_UPDATED:'updated',MESSAGE_EDITED:'edited',MESSAGE_DELETED:'deleted',MESSAGE_SWIPED:'swiped'},eventSource:{on,removeListener:(e,f)=>{const list=listeners.get(e);if(list)listeners.set(e,list.filter(fn=>fn!==f));}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={createDefaultActivation,streamingMessageSource,phoneSnapshot,createPhoneDatabaseStorage,readPhoneDatabaseProfile,decodePhoneDatabase,createNativeBuiltinBooks:options=>createNativeBuiltinBooks({...options,fetchImpl:(...args)=>w.fetch(...args)}),worldInfoNative,createMatrixCreator,createExtensionPresentationService,mountExtensionPreferences:(...args)=>{const panel=mountExtensionPreferences(...args);w.preferencePanel=panel;return panel;},createPhonePresentationMedia,finishMatrixGeneration,createStoryIdentity:options=>createStoryIdentity({...options,...(bookHelper?{getHelper:()=>bookHelper}:{})}),storyAvatar,mountMatrixIdentity:(...args)=>{const panel=mountMatrixIdentity(...args);w.identityPanel=panel;return panel;},mountStoryResources,parsePhoneWorld,parsePhoneCharacter,excludeTemplateBookEntries,scanStoryReferenceBooks,readStoryReferenceBooks,createPhoneService,createPhoneTurnHost,createPhoneMetadataStorage,chatKey,createMatrixHost:options=>createMatrixHost({...options,storage:matrixStorage}),mountGenerationIdleGuard,mountMatrixConfiguration,createWorldSeedService,mountWorldSeed,createNativePersonaSlotHost,mountAssistantApp,personaNative:{},hostNative:{},isOnePassPreset,outputEnabled,nativePanelContentProcessor,resetNativePanelSources,chatSelectionDiagnostic,chatSelectionSummary,selectChatReady:options=>selectChatReady({...options,schedule:fn=>setTimeout(fn,16),cancel:clearTimeout}),notifySelectedChatContent,...uiOperation,...generationOperation,waitForGenerationIdle:idleWait,initializePresetConnection,createPresetUpdateController:options=>createPresetUpdateController({...options,install:nativePresets?installBuiltInPreset:presetInstaller}),mountPresetUpdateControl,showPresetUpdateError,createGlobalFonts,mountThemeWorkbench,messageCardCover,createIdentityService,mountIdentityPage,convertCharacterToPersona:async()=>true,saveMetadata:async()=>true,createPersonaGateway,createWorldbookConditionGate,projectToolTurns:undefined,user_avatar:'',initUserAvatar:()=>{},setPersonaDescription:()=>{},setUserName:()=>{},...panelSurfaces,mountSettingsHome,createCharacterGroupHost:()=>({open(target){w.characterGroupTarget=target;},identity:{connect(){}},bindings:{list:()=>[]},isBusy:()=>false,hasDraft:()=>false,dispose(){}}),installWorldbookOrder:()=>({clear(){},assertReady(){},available:true}),createWorldbookConsole:({openNative})=>({open(){w.worldbookOpened=(w.worldbookOpened??0)+1;},isBusy:()=>false,hasDraft:()=>false,dispose(){},openNative}),select_group_chats:(id)=>{w.groupEditorId=id;},...homeDirectory,deleteCharacter:async()=>false,deleteCharacterChatByName:async()=>{},closeCurrentChat:async()=>true,timestampToMoment:()=>({isValid:()=>false}),mountHome:(d,c,o)=>mountHome(d,c,{...o,mountArt:()=>({ready:Promise.resolve(),setPlaying(){},dispose(){}})}),getCharaFilename:()=>String(ctx.characters[ctx.characterId]?.avatar??'').replace(/\.png$/i,''),getThumbnailUrl:(type,file)=>`/thumbnail?type=${type}&file=${encodeURIComponent(file)}`,...chatLoading,power_user:{chat_truncation:100},isBoundedChatSurfaceView:()=>false,...messageCache,...paragraphActions,...fullscreen,...communication,...revision,...userRevision,...settingsNavigation,...revisionUI,swipe:async(_,direction,{forceMesId:id,forceSwipeId:index})=>{ctx.chat[id].swipe_id=index;ctx.chat[id].mes=ctx.chat[id].swipes[index];},deleteSwipe:async(index,id)=>{const m=ctx.chat[id];m.swipes.splice(index,1);m.swipe_id=Math.min(m.swipe_id,m.swipes.length-1);m.mes=m.swipes[m.swipe_id];return m.swipe_id;},messageEdit:async id=>{const n=w.document.querySelector(`#chat .mes[mesid="${id}"] .mes_text`);n.innerHTML='<textarea class="edit_textarea"></textarea>';n.firstChild.value=ctx.chat[id].mes;},hydrateChatMessageSwipes:async()=>{},isMessageSwipeable:()=>true,getOverswipeBehavior:()=>'regenerate',branchChat:async()=>{},createTextTransport,createEditToolbarPlacement,interfaceSnapshot,validateInterfaceSettings,createNativeConfiguration,createRegexGate,isScopedScriptsAllowed:()=>true,allowScopedScripts:()=>{},isPresetScriptsAllowed:()=>true,allowPresetScripts:()=>{},createTableService:options=>createTableService({...options,...(bookHelper?{books:createBookGateway(()=>bookHelper,()=>ctx)}:{})}),createNativeVectors,setExtensionPrompt:()=>{},mountInputShortcuts,createNativeDisplayPipeline:options=>(w.displayPipeline=createNativeDisplayPipeline(options)),RegexProvider:{instance:{get:()=>null}},substituteParams:expand,substituteParamsExtended:expand,...replyFormats,appendFileContent:async(m,s)=>s,yaml:{parse:JSON.parse},...configCore,...configHost,...configPanel,...configContracts,...nativeBeauty,loadAgentSystemSettings:async()=>({agentModeEnabled:false}),getRegexScripts:()=>[],getRegexedString:s=>s,proxies:[],createGenerationParameters:async(settings,model,type,messages)=>({generate_data:{messages,model,type}}),...displaySettings,...liveSettings,...appearanceSettings,mountSettingsApp,enqueueChatSave:task=>task(),persistedChatMetadata:()=>({...ctx.chatMetadata}),saveCharacterChatMetadata:async()=>{},saveGroupChatMetadata:async()=>{},emotionCatalog:()=>({ready:Promise.resolve(),names:()=>[]}),mountEmotionAtlas:()=>({dispose(){}}),saveSettings:async()=>persistSettings?persistSettings(ctx):true,HEART_DIRECTIONS,HEART_ROWS,...actions,sendTextareaMessage:async()=>{generated.push(['native-send',w.document.querySelector('#send_textarea').value]);w.document.querySelector('#send_textarea').value='';},registerPresetProtocol,promptManager:{getPromptOrderForCharacter:()=>ctx.chatCompletionSettings.prompt_order?.find(row=>row.character_id===100001)?.order??ctx.chatCompletionSettings.prompt_order?.[0]?.order??[]},mountMessageAppearance:realMessages?realMessageAppearance:()=>({sync(){},shouldRender:()=>true,revealHistory(){},dispose(){},restore(){},refresh(){}}),mountChatEffects:()=>({dispose(){},refresh(){}}),mountPet:(_,options)=>{w.phoneOptions=options;return {dispose(){},refresh(){},isVisible:()=>true,setVisible(){}}},getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value]);await generateWait?.(...args);},getAgentGenerationOptions:async()=>await optionsWait?.()??({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader,...notebook};w.toastr={error:t=>errors.push(t)};
 if(nativeIdentity){w.indexedDB=new IDBFactory();const {active,...state}=structuredClone(nativeIdentity);Object.assign(ctx,state);ctx.powerUserSettings={chat_truncation:100,...ctx.powerUserSettings};Object.assign(w.fixture,{user_avatar:active??'',power_user:ctx.powerUserSettings,initUserAvatar:id=>{w.fixture.user_avatar=id;},setUserName:name=>{ctx.name1=name;},setPersonaDescription:()=>{ctx.powerUserSettings.persona_description=ctx.powerUserSettings.persona_descriptions?.[w.fixture.user_avatar]?.description??'';}});}
 if(welcome){ctx.chatId=undefined;ctx.characterId=undefined;if(welcome!=='existing')ctx.characters=[];ctx.chat=[{mes:'欢迎',is_system:true}];}
-let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replaceAll('import.meta.url',JSON.stringify('http://localhost/scripts/extensions/third-party/tisya-tavern/index.js')).replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>{const ids=names.split(',').map(name=>name.trim());if(nativeIdentity&&ids.includes('user_avatar'))return `let user_avatar=window.fixture.user_avatar;const initUserAvatar=id=>{window.fixture.initUserAvatar(id);user_avatar=window.fixture.user_avatar;};const {${ids.filter(name=>!['user_avatar','initUserAvatar'].includes(name)).join(',')}}=window.fixture;`;return `const {${names}}=window.fixture;`;}).replace(/^import \* as ([A-Za-z_$][\w$]*) from '[^']+';/gm,(_,name)=>`const ${name}=window.fixture.${name};`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);await handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,emit:async(e,...args)=>{for(const fn of [...(listeners.get(e)??[])])await fn(...args);},formatCalls,setGenerating:v=>generating=v};}
+let presetHost=null;
+if(nativePresets){
+ const select=w.document.createElement('select');select.id='tisya-test-native-presets';w.document.body.append(select);
+ const other={name:'Other',prompts:[{identifier:'other',content:'User-owned Other prompt'}],prompt_order:[],extensions:{other:true}},disk=new Map([['Other',structuredClone(other)]]),list={presets:[structuredClone(other)],preset_names:{Other:0}};
+ const option=w.document.createElement('option');option.value='0';option.textContent='Other';select.append(option);select.value='0';
+ Object.assign(ctx.chatCompletionSettings,{preset_settings_openai:'Other',custom_model:'preserved-model',temp_openai:0.73,bind_preset_to_connection:true});
+ ctx.eventTypes.OAI_PRESET_CHANGED_BEFORE='preset-before';let saves=0,selections=0;
+ const emitNative=async(name,value)=>{for(const callback of [...(listeners.get(name)??[])])await callback(value);};
+ const manager={select:{0:select,length:1},getAllPresets:()=>Object.keys(list.preset_names),getSelectedPresetName:()=>select.options[select.selectedIndex]?.text??'',getCompletionPresetByName:name=>list.presets[list.preset_names[name]],getPresetList:()=>list,findPreset:name=>String(list.preset_names[name]),
+  async savePreset(name,value,{skipUpdate}={}){assert.equal(skipUpdate,true);saves++;disk.set(name,structuredClone(value));},
+  selectPreset(index){selections++;select.value=String(index);void(async()=>{const name=manager.getSelectedPresetName(),preset=structuredClone(manager.getCompletionPresetByName(name)),mapping={prompts:['','prompts',false,false],prompt_order:['','prompt_order',false,false],temperature:['','temp_openai',false,false],custom_model:['','custom_model',false,true],extensions:['','extensions',false,false]};await emitNative('preset-before',{preset,presetName:name,settings:ctx.chatCompletionSettings,settingsToUpdate:mapping});for(const [source,[,target,,connection]]of Object.entries(mapping)){if(connection&&!ctx.chatCompletionSettings.bind_preset_to_connection)continue;if(preset[source]!==undefined)ctx.chatCompletionSettings[target]=preset[source];}ctx.chatCompletionSettings.preset_settings_openai=name;await emitNative('preset-after');})();}
+ };
+ ctx.getPresetManager=()=>manager;presetHost={manager,disk,list,saves:()=>saves,selections:()=>selections};
+}
+w.fixture.createHost=options=>{const host=configHost.createHost(options);w.configurationHost=host;return host;};
+await configureContext?.(ctx,{window:w,nativeBooks,matrixStorage});
+let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replaceAll('import.meta.url',JSON.stringify('http://localhost/scripts/extensions/third-party/tisya-tavern/index.js')).replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>{const ids=names.split(',').map(name=>name.trim());if(nativeIdentity&&ids.includes('user_avatar'))return `let user_avatar=window.fixture.user_avatar;const initUserAvatar=id=>{window.fixture.initUserAvatar(id);user_avatar=window.fixture.user_avatar;};const {${ids.filter(name=>!['user_avatar','initUserAvatar'].includes(name)).join(',')}}=window.fixture;`;return `const {${names.replace(/\b([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)\b/g,'$1:$2')}}=window.fixture;`;}).replace(/^import \* as ([A-Za-z_$][\w$]*) from '[^']+';/gm,(_,name)=>`const ${name}=window.fixture.${name};`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);await handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,presetHost,nativeBooks,matrixStorage,expand,macros,emit:async(e,...args)=>{for(const fn of [...(listeners.get(e)??[])])await fn(...args);},formatCalls,setGenerating:v=>generating=v};}
+function selectFixtureChat(f,id,chatFile){
+ const c=f.ctx,changed=c.characterId!==id||c.chatId!==chatFile;c.characterId=id;c.chatId=chatFile;c.characters[id].chat=chatFile;
+ if(changed){c.chatMetadata={};c.chat=structuredClone(c.chat);for(const message of c.chat)delete message.extra?.tisya_engine;}
+}
+async function waitForShell(predicate,label){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>=deadline)assert.fail('Timed out: '+label);await new Promise(resolve=>setTimeout(resolve,5));}}
+function nativeMatrixPayload(f,messages=[]){
+ const source=f.ctx.chatCompletionSettings,order=source.prompt_order?.find(row=>row.character_id===100001)?.order??source.prompt_order?.[0]?.order??[];
+ const enabled=new Set(order.filter(row=>row.enabled).map(row=>row.identifier));
+ return {messages:[...source.prompts.filter(row=>!row.marker&&row.enabled!==false&&enabled.has(row.identifier)&&f.expand(row.content??'').trim()).map(row=>({role:row.role,content:f.expand(row.content)})),...messages],model:'test-model'};
+}
 async function click(f,a){let target=a==='menu'?f.w.document.querySelector('#tisya-menu-trigger'):f.w.document.querySelector(`[data-tisya-action="${a}"]`);if(!target&&['contacts','home'].includes(a)){await click(f,'menu');if(a==='contacts')await click(f,'home');target=f.w.document.querySelector(`[data-tisya-action="${a}"]`);}target.click();await f.w.happyDOM.whenAsyncComplete();}
+test('APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine',async()=>{
+ const f=await setup({nativePresets:true});try{
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Tisya');assert.equal(f.presetHost.saves(),1);assert.equal(f.presetHost.selections(),1);
+  assert.deepEqual(f.presetHost.disk.get('Other'),{name:'Other',prompts:[{identifier:'other',content:'User-owned Other prompt'}],prompt_order:[],extensions:{other:true}});
+  assert.equal(f.ctx.chatCompletionSettings.custom_model,'preserved-model');assert.equal(f.ctx.chatCompletionSettings.temp_openai,.73);assert.equal(f.ctx.chatCompletionSettings.bind_preset_to_connection,false);
+  const metadata=f.ctx.chatMetadata.tisya_engine,bundle=await f.matrixStorage.get(metadata.chat_uid);
+  assert.equal(metadata.enabled,true);assert.equal(metadata.owner_chat_key,chatKey(f.ctx));assert.equal(metadata.binding_pending,undefined);
+  assert.equal(Object.keys(bundle.state.tables.T_CHAR_DOSSIER??{}).length,0);assert(Object.keys(bundle.state.schema).length>100);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement',async()=>{
+ const f=await setup({nativePresets:true});try{
+  const a={chat:f.ctx.chat,metadata:f.ctx.chatMetadata},first=await f.w.Tisya.matrix.readDatabase();
+  await f.w.Tisya.matrix.commitDatabase({contextKey:first.contextKey,expectedRevision:first.revision,operationId:'retain-default-binding',changes:[{tableId:'T_CHAR_DOSSIER',recordId:'retained-person',values:{name:'保留人物',manifest:'原来的设定'}}]});
+  const id=a.metadata.tisya_engine.chat_uid,original=structuredClone((await f.matrixStorage.get(id)).state.tables);
+  await f.emit('chat');assert.equal(f.ctx.chatMetadata.tisya_engine.chat_uid,id);
+  f.ctx.chatId='second';f.ctx.characterId=1;f.ctx.characters[1].chat='second';f.ctx.chatMetadata={};f.ctx.chat=[{is_user:true,mes:'另一个故事'}];
+  await f.emit('chat');const second=f.ctx.chatMetadata.tisya_engine;
+  assert.equal(second.enabled,true,JSON.stringify(f.errors));assert.notEqual(second.chat_uid,id);assert.equal(second.owner_chat_key,chatKey(f.ctx));
+  assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.T_CHAR_DOSSIER?.['retained-person'],undefined);
+  a.metadata.tisya_engine.enabled=false;f.ctx.chatId='a';f.ctx.characterId=0;f.ctx.chatMetadata=a.metadata;f.ctx.chat=a.chat;
+  await f.emit('chat');assert.equal(f.ctx.chatMetadata.tisya_engine.chat_uid,id);assert.equal(f.ctx.chatMetadata.tisya_engine.enabled,true);
+  assert.deepEqual((await f.matrixStorage.get(id)).state.tables,original);assert.equal(f.presetHost.selections(),1);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat',async()=>{
+ const original={chat_uid:'missing-saved-engine',owner_chat_key:JSON.stringify(['character','0','a']),origin_chat_keys:[],enabled:true};
+ const f=await setup({nativePresets:true,configureContext:ctx=>{ctx.chatMetadata.tisya_engine=structuredClone(original);}});try{
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Tisya');assert.deepEqual(f.ctx.chatMetadata.tisya_engine,original);
+  assert.equal(await f.matrixStorage.get(original.chat_uid),undefined);assert(f.errors.some(message=>/保存的状态无法读取/.test(message)));
+  assert(f.w.document.querySelector('#tisya-shell'));assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);
+  await assert.rejects(f.emit('before','normal',{},false),/保存的状态无法读取/);
+  assert.deepEqual(f.ctx.chatMetadata.tisya_engine,original);assert.equal(f.generated.length,0);
+ }finally{await f.w.happyDOM.abort();}
+});
+
 test('W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation',async()=>{
  const f=await setup({welcome:true}),d=f.w.document,baselineErrors=[...f.errors];await click(f,'menu');await click(f,'new-world');assert(d.querySelector('[aria-label="我的世界点子"]'));d.querySelector('[aria-label="我的世界点子"]').value='天空群岛与失落的朋友';
  await click(f,'menu');await click(f,'assistant');assert.equal(d.querySelector('[aria-label="我的世界点子"]').value,'天空群岛与失落的朋友');assert.equal(f.ctx.chatId,undefined);assert.equal(f.ctx.characters.length,0);assert.deepEqual(f.errors,baselineErrors);await f.w.happyDOM.abort();
@@ -118,11 +210,11 @@ test('home lists every persisted chat and keeps same-name contacts separate',asy
 test('production home checks avatar identity and selects the exact persisted chat before closing',async()=>{
  const f=await setup(),d=f.w.document,calls=[];f.ctx.selectCharacterById=async(id,options)=>{calls.push({id,options});f.ctx.characterId=id;f.ctx.chatId=options.chatFile;};
  f.ctx.characters[0].avatar='replaced.png';d.querySelector('[data-home-card="0"]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(calls.length,0);assert.match(f.errors.at(-1),/角色列表已变化/);
- d.querySelector('[data-home-card="1"]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(calls.length,1);assert.equal(calls[0].id,1);assert.equal(calls[0].options.switchMenu,false);assert.equal(calls[0].options.chatFile,'b.png');assert.equal(d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),false);assert.equal(d.querySelector('.tisya-home'),null);await f.w.happyDOM.abort();
+ d.querySelector('[data-home-card="1"]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(calls.length,1);assert.equal(calls[0].id,1);assert.equal(calls[0].options.switchMenu,false);assert.equal(calls[0].options.chatFile,'b.png');assert.equal(d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),false);assert(!d.querySelector('.tisya-home'),'home remains open');await f.w.happyDOM.abort();
 });
 test('homepage USER opens the unified identity page and retains a real native-controls exit',async()=>{
- const f=await setup(),d=f.w.document;let opened=0;d.querySelector('#persona-management-button .drawer-toggle').onclick=()=>opened++;
- await click(f,'drawer:persona-management-button');assert.equal(opened,0);assert(d.querySelector('#tisya-user-page'));d.querySelector('[data-user-action=native]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opened,1);await click(f,'home');
+ const f=await setup({mediaStorage:true}),d=f.w.document;let opened=0;d.querySelector('#persona-management-button .drawer-toggle').onclick=()=>opened++;
+ await click(f,'drawer:persona-management-button');await settleIdentityRoute(f);assert.equal(opened,0);assert(d.querySelector('#tisya-user-page').classList.contains('tisya-matrix-identity'));await pressRouteButton(f,d.querySelector('#tisya-user-page'),'原生身份管理');assert.equal(opened,1,JSON.stringify({errors:f.errors,identity:f.w.identityPanel?.state?.(),status:d.querySelector('.tisya-identity-status')?.textContent}));await click(f,'home');
  d.querySelector('#WI-SP-button .drawer-toggle').onclick=()=>opened++;await click(f,'drawer:WI-SP-button');assert.equal(opened,1);assert.equal(f.w.worldbookOpened,1);await click(f,'home');
  d.querySelector('.tisya-home-role-open').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('.tisya-page h2').textContent,'同名');assert(d.querySelector('[data-tisya-action="select:0"]'));assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
@@ -313,8 +405,13 @@ test('pending history save allows menu dismissal and does not close a later pane
 
  test('message toolbar supports only more, custom order, full expansion, and persists independently',async()=>{const f=await setup(),d=f.w.document;await click(f,'more');await click(f,'message-tools');await click(f,'message-tools-collapse');await click(f,'message-tools-save');assert.deepEqual([...d.querySelectorAll('.tisya-actions button')].map(x=>x.dataset.tisyaAction),['more']);await click(f,'more');assert.ok(d.querySelector('[data-tisya-action="msg-regen"]'));await click(f,'message-tools');await click(f,'message-tools-expand');const selects=[...d.querySelectorAll('#tisya-message-slots select')];selects[0].value='more';selects[9].value='regen';await click(f,'message-tools-save');assert.equal(d.querySelectorAll('.tisya-actions button').length,10);assert.equal(d.querySelector('.tisya-actions button').dataset.tisyaAction,'more');assert.equal(f.ctx.extensionSettings.缇斯亚界面.消息快捷栏[0],'more');assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
 
-test('unbound new engine aborts before the native payload and never initializes old tables',async()=>{
- const f=await setup();try{f.ctx.chatCompletionSettings.prompts=structuredClone(matrixBaseline.prompts);await assert.rejects(f.handlers.before('normal'),/接入本会话/);const payload={messages:[{role:'user',content:'继续'}]};await assert.rejects(f.handlers.payload(payload),/接入本会话/);assert.throws(()=>JSON.stringify(payload));assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);}finally{await f.w.happyDOM.abort();}
+test('an explicitly disabled engine rejects generation without reopening it or starting old tables',async()=>{
+ const f=await setup({nativePresets:true});try{
+  const id=f.ctx.chatMetadata.tisya_engine.chat_uid;f.ctx.chatMetadata.tisya_engine.enabled=false;
+  await assert.rejects(f.handlers.before('normal'),/已停用/);
+  const payload={messages:[{role:'user',content:'继续'}]};await assert.rejects(f.handlers.payload(payload),/已停用/);assert.throws(()=>JSON.stringify(payload));
+  assert.equal(f.ctx.chatMetadata.tisya_engine.chat_uid,id);assert.equal(f.ctx.chatMetadata.tisya_engine.enabled,false);assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);
+ }finally{await f.w.happyDOM.abort();}
 });
 test('native edit focus places confirmation controls below the editor and exit restores them',async()=>{
  const f=await setup(),d=f.w.document,node=d.querySelector('#chat .mes'),block=node.querySelector('.mes_block'),header=d.createElement('div');header.className='ch_name';header.innerHTML='<div class="nested"><div class="mes_edit_buttons"><button class="mes_edit_done">保存</button><button class="mes_edit_cancel">取消</button></div></div>';block.prepend(header);
@@ -365,10 +462,10 @@ test('welcome to chat to welcome keeps sidebar alive and reads only the selected
   assert.deepEqual(f.errors,[]);assert.equal(f.generated.length,0);
  }finally{await f.w.happyDOM.abort();}
 });
-test('native composer persists requirements separately and clears the draft before awaiting the reply',async()=>{
- const f=await setup(),d=f.w.document,input=d.querySelector('#tisya-contractor-input');input.value='请让角色主动回应';input.dispatchEvent(new f.w.Event('input'));d.querySelector('#send_textarea').value='递出礼物';
- await f.emit('before','normal',{},false);f.ctx.chat.push({is_user:true,mes:'递出礼物'});const payload={messages:[{role:'user',content:'递出礼物'}],model:'test-model'};await f.emit('payload',payload);
- assert.equal(payload.messages[0].content,'递出礼物');assert.equal(JSON.parse(payload.messages.at(-1).content).text,'请让角色主动回应');assert.equal(input.value,'');
+for(const initializedPhone of [true,false])test('native composer persists requirements separately and clears the draft before awaiting the reply: '+(initializedPhone?'explicitly initialized phone':'uninitialized phone stays absent'),async()=>{
+ const f=await setup({mediaStorage:true,nativePresets:true});if(initializedPhone){await bindMatrixPhoneFixture(f);await f.w.Tisya.phone.initializeLife();}else assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);const d=f.w.document,input=d.querySelector('#tisya-contractor-input');input.value='请让角色主动回应';input.dispatchEvent(new f.w.Event('input'));d.querySelector('#send_textarea').value='递出礼物';
+ await f.emit('before','normal',{},false);f.ctx.chat.push({is_user:true,mes:'递出礼物'});const payload=nativeMatrixPayload(f,[{role:'user',content:'递出礼物'}]);await f.emit('payload',payload);
+ assert(payload.messages.some(row=>row.role==='user'&&row.content==='递出礼物'));const requirements=payload.messages.filter(m=>m.role==='user'&&m.content.startsWith('{\"format\":\"tisya.turn-direction/1\"')),phones=payload.messages.filter(m=>m.role==='user'&&m.content.startsWith('{\"format\":\"tisya.phone-turn-input/1\"'));assert.equal(requirements.length,1);assert.equal(JSON.parse(requirements[0].content).text,'请让角色主动回应');assert.equal(phones.length,initializedPhone?1:0);if(initializedPhone)assert.equal(JSON.parse(phones[0].content).requestId,f.w.Tisya.phone.state().requestId);else{assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);}assert.equal(input.value,'');
  f.ctx.chat.push({is_user:false,mes:'角色接过礼物并回应'});await f.emit('generation-end');assert.equal(input.value,'');assert.equal(f.ctx.chat.at(-2).mes,'递出礼物');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
 
@@ -415,13 +512,13 @@ test('native API editor opens from clean configuration and preserves unsaved tag
  const f=await setup(),d=f.w.document;try{await click(f,'menu');await click(f,'settings-tab:api');const root=d.querySelector('#tisya-settings-app');let opens=0;d.querySelector('#sys-settings-button .drawer-toggle').onclick=()=>opens++;const manage=[...root.querySelectorAll('button')].find(n=>n.textContent==='连接与模型');manage.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);[...root.querySelectorAll('button')].find(b=>b.textContent==='回复格式').click();await f.w.happyDOM.whenAsyncComplete();const input=root.querySelector('input');input.value='storyReply';input.dispatchEvent(new f.w.Event('input'));[...root.querySelectorAll('button')].find(n=>n.textContent==='连接与模型').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);assert.equal(root.querySelectorAll('[role=dialog]').length,1);assert.equal(input.value,'storyReply');[...root.querySelectorAll('.tisya-unsaved-prompt button')].find(n=>n.textContent==='继续编辑').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);assert.equal(input.isConnected,true);}finally{await f.w.happyDOM.abort();}
 });
 test('home settings invokes the menu; menu rename and pin persist with native names unchanged',async()=>{
- const f=await setup(),d=f.w.document;d.querySelector('.tisya-home-rail-bottom [data-tisya-action="menu"]').click();await f.w.happyDOM.whenAsyncComplete();assert(d.querySelector('#tisya-settings-home').textContent.includes('游玩偏好'));assert.equal(d.querySelector('.tisya-home'),null);assert.equal(d.querySelector('#tisya-overlay').open,false);await click(f,'home');
+ const f=await setup(),d=f.w.document;d.querySelector('.tisya-home-rail-bottom [data-tisya-action="menu"]').click();await f.w.happyDOM.whenAsyncComplete();assert(d.querySelector('#tisya-settings-home').textContent.includes('游玩偏好'));assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(d.querySelector('#tisya-overlay').open,false);await click(f,'home');
  d.querySelector('.tisya-home-chat-row .tisya-home-menu').click();await click(f,'directory-rename');d.querySelector('#tisya-directory-name').value='我喜欢的故事';await click(f,'directory-save');assert.match(d.querySelector('[data-home-chat]').textContent,/我喜欢的故事/);assert.equal(f.ctx.characters[0].name,'同名');assert.equal(f.ctx.chat[0].mes,'正文');
  d.querySelectorAll('.tisya-home-role>summary .tisya-home-menu')[1].click();await click(f,'directory-pin');assert.match(d.querySelector('.tisya-home-role-open').dataset.tisyaAction,/card:1/);assert.equal(d.querySelector('.tisya-home-form-note'),null);assert.equal(d.querySelector('.tisya-home-profile small').textContent,'用户入口 ↗');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
 test('late host autoload leaves home visible, while choosing a row still opens exact chat',async()=>{
- const f=await setup(),d=f.w.document;const home=d.querySelector('.tisya-home');f.ctx.chatId='loaded-later';await f.emit('chat');assert.equal(d.querySelector('.tisya-home'),home);let selections=0;f.ctx.selectCharacterById=async(id,o)=>{selections++;f.ctx.characterId=id;f.ctx.chatId=o.chatFile;await f.emit('chat');};
- d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(selections,1);assert.equal(d.querySelector('.tisya-home'),null);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ const f=await setup(),d=f.w.document;const home=d.querySelector('.tisya-home');selectFixtureChat(f,0,'loaded-later');await f.emit('chat');assert(d.querySelector('.tisya-home')===home,'late host autoload replaced or closed the home');let selections=0;f.ctx.selectCharacterById=async(id,o)=>{selections++;selectFixtureChat(f,id,o.chatFile);await f.emit('chat');};
+ d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();await waitForShell(()=>!d.querySelector('.tisya-home'),'selected chat leaves home');assert.equal(selections,1);assert(!d.querySelector('.tisya-home'),'home remains open');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
 test('deletion requires confirmation and checks the native result instead of assuming success',async()=>{
  const f=await setup(),d=f.w.document;d.querySelector('.tisya-home-chat-row .tisya-home-menu').click();await click(f,'directory-delete');assert.equal(d.querySelector('#tisya-overlay').open,false);assert.match(d.querySelector('.tisya-directory-inline').textContent,/永久删除/);assert(d.querySelector('[data-tisya-action="directory-delete-confirm"]'));await click(f,'directory-delete-confirm');assert.match(f.errors.at(-1),/会话仍在/);assert(d.querySelector('[data-home-chat]'));await f.w.happyDOM.abort();
@@ -446,13 +543,13 @@ test('detached inline edit is rejected instead of saving against a stale row',as
 
 
 test('user message exposes reroll-next, preserves draft guard and sends edited comparison only once',async()=>{
- let f,payload;f=await setup({generateWait:async()=>{await f.emit('before','normal',{},false);payload={messages:[{role:'user',content:f.ctx.chat[0].mes}]};await f.emit('payload',payload);await f.emit('generation-end');}});
- f.ctx.chat[0].is_user=true;await f.emit('chat');await f.w.happyDOM.whenAsyncComplete();
+ let f,payload;f=await setup({nativePresets:true,configureContext:ctx=>{ctx.chat[0].is_user=true;},generateWait:async()=>{await f.emit('before','normal',{},false);payload=nativeMatrixPayload(f,[{role:'user',content:f.ctx.chat[0].mes}]);await f.emit('payload',payload);await f.emit('generation-end');}});
+ await f.emit('chat');await f.w.happyDOM.whenAsyncComplete();
  await click(f,'more');await click(f,'msg-edit');f.ctx.chat[0].mes='改成停下来等他';await f.emit('edited',0);f.w.document.querySelector('.edit_textarea').remove();await f.emit('updated',0);await f.w.happyDOM.whenAsyncComplete();
  const regen=f.w.document.querySelector('[data-tisya-action=regen]');assert.equal(regen.disabled,false);assert.equal(regen.getAttribute('aria-label'),'重投下一条');
  f.w.document.querySelector('#send_textarea').value='没发送';await click(f,'regen');assert.equal(f.generated.length,0);assert.match(f.errors.at(-1),/草稿/);f.w.document.querySelector('#send_textarea').value='';
- await click(f,'regen');assert.equal(f.generated.length,1);assert.equal(f.generated[0][0],'normal');assert.equal(f.generated[0][1].automatic_trigger,true);assert.deepEqual(JSON.parse(payload.messages.at(-1).content),{kind:'user-rewrite-material',previous:'正文',current:'改成停下来等他'});
- await click(f,'next');assert.equal(f.generated.length,2);assert.doesNotMatch(JSON.stringify(payload),/user-rewrite-material/);assert.equal(f.ctx.chat.length,1);await f.w.happyDOM.abort();
+ await click(f,'regen');await waitForShell(()=>f.generated.length===1,'Matrix reroll starts: '+JSON.stringify(f.errors));await waitForShell(()=>payload&&f.w.Tisya.operationState()===null,'Matrix reroll payload completes: '+JSON.stringify(f.errors));assert.equal(f.generated.length,1,JSON.stringify(f.errors));assert.equal(f.generated[0][0],'normal');assert.equal(f.generated[0][1].automatic_trigger,true);assert.ok(payload,'generation must reach payload; errors: '+JSON.stringify(f.errors));assert.deepEqual(JSON.parse(payload.messages.at(-1).content),{kind:'user-rewrite-material',previous:'正文',current:'改成停下来等他'});
+ await click(f,'next');await waitForShell(()=>f.generated.length===2&&f.w.Tisya.operationState()===null,'next Matrix request completes: '+JSON.stringify(f.errors));assert.equal(f.generated.length,2);assert.doesNotMatch(JSON.stringify(payload),/user-rewrite-material/);assert.equal(f.ctx.chat.length,1);await f.w.happyDOM.abort();
 });
 
 test('all settings entry points reuse one page, preserve search and discover a drawer installed while open',async()=>{
@@ -464,7 +561,7 @@ test('all settings entry points reuse one page, preserve search and discover a d
  }finally{await f.w.happyDOM.abort();}
 });
 
-test('settings and identity headers return directly to current chat without changing its contents',async()=>{const f=await setup(),d=f.w.document,history=JSON.stringify(f.ctx.chat),chatId=f.ctx.chatId;await click(f,'menu');for(const route of ['settings-app','user-identity']){await click(f,route);const back=d.querySelector('.tisya-sub-header [data-tisya-action="chat"]');assert.equal(back.textContent,'聊天 ›');back.click();await f.w.happyDOM.whenAsyncComplete();assert(!d.querySelector('#tisya-shell').classList.contains('tisya-page-open'));assert.equal(f.ctx.chatId,chatId);assert.equal(JSON.stringify(f.ctx.chat),history);await click(f,'menu');}assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
+test('settings and identity headers return directly to current chat without changing its contents',async()=>{const f=await setup(),d=f.w.document,history=JSON.stringify(f.ctx.chat),chatId=f.ctx.chatId;await click(f,'menu');for(const route of ['settings-app','user-identity']){await click(f,route);await settleIdentityRoute(f);const back=d.querySelector('.tisya-sub-header [data-tisya-action="chat"]');assert.equal(back.textContent,'聊天 ›');back.click();await f.w.happyDOM.whenAsyncComplete();await f.w.identityPanel?.settled();assert(!d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),JSON.stringify({errors:f.errors,identity:f.w.identityPanel?.state?.(),status:d.querySelector('.tisya-identity-status')?.textContent}));assert.equal(f.ctx.chatId,chatId);assert.equal(JSON.stringify(f.ctx.chat),history);await click(f,'menu');}assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
 
 
 test('pending native clipboard on the actual message toolbar never blocks a new chat action',async()=>{
@@ -481,13 +578,13 @@ test('pending native clipboard on the actual message toolbar never blocks a new 
 
 test('rendered target chat releases actual home navigation lock while native selection promise stays pending',async()=>{
  const host=deferred(),f=await setup(),d=f.w.document;let selections=0;
- f.ctx.selectCharacterById=async(id,o)=>{selections++;f.ctx.characterId=id;f.ctx.chatId=o.chatFile;await f.emit('chat');await host.promise;};
+ f.ctx.selectCharacterById=async(id,o)=>{selections++;selectFixtureChat(f,id,o.chatFile);await f.emit('chat');await host.promise;};
  try{
-  d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(d.querySelector('.tisya-home'),null);assert.equal(f.w.Tisya.operationState(),null);
+  d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();await waitForShell(()=>!d.querySelector('.tisya-home'),'chat event releases home while native promise waits');
+  assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(f.w.Tisya.operationState(),null);
   await click(f,'home');assert(d.querySelector('.tisya-home'));
   d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(selections,1);assert.equal(d.querySelector('.tisya-home'),null);assert.equal(f.w.Tisya.operationState(),null);
+  assert.equal(selections,1);assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(f.w.Tisya.operationState(),null);
   await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
 });
@@ -504,7 +601,7 @@ test('managed committed tail releases home lock even when host never emits CHAT_
   d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();assert(f.w.Tisya.operationState());
   const element=d.querySelector('#chat .mes'),content=element.querySelector('.mes_text');
   participant.didCommitContent({element,content,mesid:0,signal:new f.w.AbortController().signal});
-  await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.Tisya.operationState(),null);assert.equal(d.querySelector('.tisya-home'),null);
+  await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.Tisya.operationState(),null);assert(!d.querySelector('.tisya-home'),'home remains open');
   await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
 });
@@ -529,9 +626,22 @@ test('target data loaded without completion events closes the directory and rele
  f.ctx.selectCharacterById=async(id,o)=>{f.ctx.characterId=id;f.ctx.chatId=o.chatFile;f.ctx.chatMetadata={integrity:'new-loaded-chat'};f.ctx.getCurrentChatId=()=>f.ctx.chatId;f.ctx.chat=[{...f.ctx.chat[0],mes:'已切换的聊天'}];await host.promise;};
  try{
   d.querySelector('[data-home-chat]').click();await new Promise(r=>setTimeout(r,50));await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(d.querySelector('.tisya-home'),null);assert.equal(f.w.Tisya.operationState(),null);
+  assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(f.w.Tisya.operationState(),null);
   await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
+});
+
+test('a manually selected foreign preset passes native input through without either retired generation writer',async()=>{
+ const f=await setup({nativePresets:true});try{
+  f.presetHost.manager.selectPreset('0');await f.w.happyDOM.whenAsyncComplete();
+  const before=await f.w.Tisya.matrix.readDatabase();let oldWrites=0;
+  for(const name of ['clear','prepare','archiveFromMessages','acceptOnePass','discardOnePass'])f.w.Tisya.tables[name]=()=>{oldWrites++;throw Error('retired writer called');};
+  f.w.configurationHost.before=()=>{throw Error('retired configuration writer called');};f.w.configurationHost.payloadReady=()=>{throw Error('retired configuration payload called');};
+  const payload={messages:[{role:'system',content:'Other preset unchanged'},{role:'user',content:'保留原生请求'}],model:'native-model'},original=structuredClone(payload);
+  await f.emit('before','normal',{},false);await f.emit('payload',payload);await f.emit('generation-end');
+  assert.deepEqual(payload,original);assert.equal(oldWrites,0);assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');
+  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
 });
 
 test('native token-count dry runs do not clear pending one-pass storage work',async()=>{
@@ -539,16 +649,19 @@ test('native token-count dry runs do not clear pending one-pass storage work',as
  await f.emit('before','normal',{},true);assert.equal(await f.w.tisyaHistoryInput([],100,()=>{},'normal'),null);await f.emit('generation-end');assert.equal(clears,0);assert.equal(discards,0);assert.equal(accepts,0);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
 
-test('token count between a real start and its end still completes the real generation lifecycle',async()=>{
- const f=await setup();let clears=0;const clear=f.w.Tisya.tables.clear;f.w.Tisya.tables.clear=(...args)=>{clears++;return clear(...args);};
- await f.emit('before','normal',{},false);const started=clears;await f.emit('before','normal',{},true);assert.equal(clears,started);await f.emit('generation-end');assert.equal(clears,started+1);await f.emit('generation-end');assert.equal(clears,started+1);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+test('token count between a real start and its end completes the Matrix lifecycle once without legacy settlement',async()=>{
+ const f=await setup({nativePresets:true});let ends=0,oldWrites=0;const event=f.w.Tisya.matrix.event;
+ f.w.Tisya.matrix.event=async(name,...args)=>{if(name==='GENERATION_ENDED')ends++;return event(name,...args);};
+ for(const name of ['clear','prepare','archiveFromMessages','acceptOnePass','discardOnePass'])f.w.Tisya.tables[name]=()=>{oldWrites++;};
+ await f.emit('before','normal',{},false);await f.emit('payload',nativeMatrixPayload(f));await f.emit('before','normal',{},true);
+ await f.emit('generation-end');assert.equal(ends,1);await f.emit('generation-end');assert.equal(ends,1);assert.equal(oldWrites,0);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
 });
 
 // These route regressions execute index.js with the actual Matrix identity UI,
 // identity service and story-identity service. Only native host persistence and
 // worldbook storage are in-memory fixtures; they never touch a user's data.
-async function setupIdentityRoute({empty=false,persistSettings}={}){
- const books={基点书:[{uid:0,name:'【角色】原角色',content:'原角色的完整设定',enabled:false}]};
+async function setupIdentityRoute({empty=false,persistSettings,cold=false,matrix=true,welcome=false,nativePresets=false,configureContext=null}={}){
+ const books=cold?{}:{基点书:[{uid:0,name:'【角色】原角色',content:'原角色的完整设定',enabled:false}]};
  let bookWrites=0;
  const bookHelper={
   getWorldbookNames:async()=>Object.keys(books),
@@ -557,23 +670,35 @@ async function setupIdentityRoute({empty=false,persistSettings}={}){
   updateWorldbookWith:async(name,update)=>{bookWrites++;books[name]=update(structuredClone(books[name])).map((entry,uid)=>({...entry,uid:entry.uid??uid}));},
   getCharWorldbookNames:async()=>({primary:'',additional:[]})
  };
- const f=await setup({bookHelper,persistSettings,nativeIdentity:{
+ const f=await setup({bookHelper,persistSettings,welcome,nativePresets,configureContext,nativeIdentity:{
   active:empty?'':'native-a',name1:empty?'用户':'原身份',
-  chatCompletionSettings:{prompts:structuredClone(matrixBaseline.prompts)},
+  chatCompletionSettings:{prompts:matrix?structuredClone(matrixBaseline.prompts):[],preset_settings_openai:matrix?'Tisya':'Other'},
   powerUserSettings:{
    personas:empty?{}:{'native-a':'原身份','native-b':'另一身份'},
    persona_descriptions:empty?{}:{'native-a':{description:'原心愿',connections:[]},'native-b':{description:'另一身份的心愿',connections:[]}},
    persona_description:'原心愿'
   }
  }});
- f.ctx.loadWorldInfo=async name=>({entries:Object.fromEntries(books[name].map(entry=>[entry.uid,{...entry,comment:entry.name}]))});
- const config=f.w.Tisya.configuration.read();
- config.story={...config.story,userMode:'generic',userBinding:null,userName:'',play:{choices:{W:[]}}};
- await f.w.Tisya.configuration.save(config);
+ f.ctx.loadWorldInfo=async name=>({entries:Object.fromEntries((books[name]??[]).map(entry=>[entry.uid,{...entry,comment:entry.name}]))});
+ if(!cold){
+  const config=f.w.Tisya.configuration.read();
+  config.story={...config.story,userMode:'generic',userBinding:null,userName:'',play:{choices:{W:[]}}};
+  await f.w.Tisya.configuration.save(config);
+  await f.w.Tisya.matrix.ensureDatabase();const db=await f.w.Tisya.matrix.readDatabase();
+  await f.w.Tisya.matrix.commitDatabase({contextKey:db.contextKey,expectedRevision:db.revision,operationId:'identity-route-fixture',changes:[
+   {tableId:'T_CHAR_DOSSIER',recordId:'route-character',values:{name:'原角色',manifest:'原角色的完整设定'}},
+   {tableId:'T_SYS_ENTITIES',recordId:'route-character',values:{kind:'character',origin_record_ref:'route-origin'}},
+   {tableId:'M_FIELD_REFERENCES',recordId:'route-origin',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'route-character',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'route-character',reference_kind:'record',resolution_status:'resolved'}}
+  ]});
+ }
  return {...f,books,bookWrites:()=>bookWrites};
 }
 function routeButton(root,label){const button=[...root.querySelectorAll('button')].find(node=>node.textContent===label);assert(button,`missing visible button: ${label}`);return button;}
-async function pressRouteButton(f,root,label){routeButton(root,label).click();await f.w.happyDOM.whenAsyncComplete();}
+async function settleIdentityRoute(f){
+ await f.w.identityPanel?.ready;await f.w.preferencePanel?.ready;
+ await f.w.identityPanel?.settled?.();await f.w.preferencePanel?.settled?.();await f.w.happyDOM.whenAsyncComplete();
+}
+async function pressRouteButton(f,root,label){routeButton(root,label).click();await f.w.happyDOM.whenAsyncComplete();await settleIdentityRoute(f);}
 function editIdentityField(f,selector,value,event='input'){
  const node=f.w.document.querySelector('#tisya-user-page '+selector);assert(node,`missing identity field: ${selector}`);
  if(node.type==='checkbox')node.checked=value;else node.value=value;
@@ -586,6 +711,115 @@ async function openIdentityFromSettings(f){
  assert(page?.classList.contains('tisya-matrix-identity'),'the production route must mount the actual Matrix identity page');return page;
 }
 function unsavedDialog(f){const dialogs=f.w.document.querySelectorAll('[role="dialog"][aria-label="保存未完成的修改"]');assert.equal(dialogs.length,1,'one attempted navigation must have one decision');return dialogs[0];}
+
+test('cold-start enables Tisya and opens the complete identity form without a chat or old settings',async()=>{
+ const f=await setupIdentityRoute({cold:true,matrix:false,empty:true,welcome:true,nativePresets:true}),d=f.w.document;
+ try{
+  const native=structuredClone(f.ctx.powerUserSettings);
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Tisya');
+  assert.equal(f.ctx.chatMetadata.tisya_engine,undefined);
+  assert.equal(f.ctx.extensionSettings.tisya_matrix_configuration,undefined);
+  await click(f,'menu');await click(f,'user-identity');await settleIdentityRoute(f);
+  let page=d.querySelector('#tisya-user-page');
+  assert(page.classList.contains('tisya-matrix-identity'));
+  assert(page.querySelector('[data-database-identity]'));assert(page.querySelector('[data-role-create]'));
+  assert(page.querySelector('.tisya-identity-content'));assert.equal(page.querySelectorAll('.tisya-settings-actions').length,1);
+  assert.equal(page.querySelector('.tisya-user'),null);assert.equal(page.querySelector('[data-identity-preset-notice]'),null);
+  assert.deepEqual(f.books,{});assert.equal(f.bookWrites(),0);assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);
+  editIdentityField(f,'[data-role-name]','未选会话的角色');editIdentityField(f,'[data-role-content]','不可写进未知会话');
+  await pressRouteButton(f,page,'预览新人物');
+  assert.match(page.querySelector('.tisya-settings-actions [role="alert"]').textContent,/尚未接入统一表单|先打开.*聊天/);
+  assert.equal(page.querySelector('[data-role-name]').value,'未选会话的角色');
+  assert.equal(f.ctx.chatMetadata.tisya_engine,undefined);assert.deepEqual(f.ctx.powerUserSettings,native);
+  await pressRouteButton(f,page,'取消修改');await pressRouteButton(f,page,'返回');
+  await click(f,'user-identity');await settleIdentityRoute(f);page=d.querySelector('#tisya-user-page');
+  assert(page.classList.contains('tisya-matrix-identity'));assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('cold-start automatically binds the engine and saves a previewed role only to the unified database',async()=>{
+ const f=await setupIdentityRoute({cold:true,matrix:false,nativePresets:true}),d=f.w.document;
+ try{
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Tisya');assert.equal(f.ctx.chatMetadata.tisya_engine.enabled,true);
+  const history=structuredClone(f.ctx.chat),native=structuredClone(f.ctx.powerUserSettings);
+  const before=await f.w.Tisya.matrix.readDatabase();let page=await openIdentityFromSettings(f);
+  editIdentityField(f,'[data-role-name]','初次角色');editIdentityField(f,'[data-role-content]','新安装的完整角色档案\n原文与 {{user}} 保留。');
+  await pressRouteButton(f,page,'预览新人物');assert(page.querySelector('[data-role-create-confirm]'));
+  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before,'preview does not commit');
+  editIdentityField(f,'[data-role-create-confirm]',true,'change');await pressRouteButton(f,page,'保存');
+  assert.equal(page.querySelector('.tisya-settings-actions [role="alert"]'),null);
+  const saved=f.w.Tisya.configuration.read(),binding=saved.story.userBinding,after=await f.w.Tisya.matrix.readDatabase();
+  assert.equal(binding.database,true);assert.equal(after.state.tables.T_CHAR_DOSSIER[binding.dossierId].values.name,'初次角色');
+  assert.equal(after.state.tables.T_CHAR_DOSSIER[binding.dossierId].values.manifest,'新安装的完整角色档案\n原文与 {{user}} 保留。');
+  assert.equal(saved.story.userMode,'bound');assert.deepEqual(f.books,{});assert.equal(f.bookWrites(),0);
+  assert.deepEqual(f.ctx.chat,history);assert.deepEqual(f.ctx.powerUserSettings,native);
+  await pressRouteButton(f,page,'返回');await click(f,'user-identity');await settleIdentityRoute(f);page=d.querySelector('#tisya-user-page');
+  assert.equal(page.querySelector('[data-role-entry]').value,binding.dossierId);
+  assert.equal(Object.keys((await f.w.Tisya.matrix.readDatabase()).state.tables.T_CHAR_DOSSIER).length,1);
+  assert.deepEqual(f.w.Tisya.configuration.read().story.userBinding,binding);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('manual preset navigation protects identity edits and does not reactivate Tisya until plugin enable',async()=>{
+ const f=await setupIdentityRoute({cold:true,nativePresets:true}),d=f.w.document;
+ try{
+  f.presetHost.manager.selectPreset('0');await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');
+  let opened=0;d.querySelector('#ai-config-button .drawer-toggle').onclick=()=>opened++;
+  const page=await openIdentityFromSettings(f);editIdentityField(f,'[data-identity-wish]','尚未保存的心愿');
+  routeButton(page,'打开预设设置').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opened,0);
+  await pressRouteButton(f,unsavedDialog(f),'继续编辑');assert.equal(opened,0);
+  assert.equal(page.querySelector('[data-identity-wish]').value,'尚未保存的心愿');
+  routeButton(page,'打开预设设置').click();await f.w.happyDOM.whenAsyncComplete();await pressRouteButton(f,unsavedDialog(f),'放弃修改');
+  assert.equal(opened,1);assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive',async()=>{
+ const f=await setupIdentityRoute({cold:true,nativePresets:true}),d=f.w.document;
+ try{
+  const original=structuredClone(f.ctx.powerUserSettings),page=await openIdentityFromSettings(f),before=await f.w.Tisya.matrix.readDatabase();
+  assert(page.querySelector('[data-legacy-origins]'));
+  await pressRouteButton(f,page,'核对未完成的原点绑定');
+  assert.equal(d.querySelector('#tisya-user-page'),page);assert.equal(page.querySelector('.tisya-user'),null);
+  assert.deepEqual(f.ctx.powerUserSettings,original);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);
+  await pressRouteButton(f,page,'保存');
+  assert.match(page.querySelector('.tisya-settings-actions [role="alert"]').textContent,/没有可恢复的旧原点绑定/);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('explicit legacy origin targets preview on the unified identity form without writing old or new records',async()=>{
+ const f=await setupIdentityRoute(),d=f.w.document;
+ try{
+  const ref={book:'旧原点书',originId:'origin-a',id:'person-a',rev:3},seen=[],before=await f.w.Tisya.matrix.readDatabase();
+  f.w.Tisya.tables.previewIdentityOrigin=async value=>{
+   seen.push(structuredClone(value));
+   return {format:'tisya.origin-persona/1',personaId:'native-a',name:'旧原点人物',description:'固定第三版的原文',reference:ref,world:'world-a',chat:f.ctx.chatId,before:{id:'native-a',name:'原身份',description:'原心愿'},originStamp:'fixed-revision-3'};
+  };
+  f.w.requestedOrigin=ref;await f.w.eval('openIdentity(window.requestedOrigin)');await settleIdentityRoute(f);
+  const page=d.querySelector('#tisya-user-page');assert(page.classList.contains('tisya-matrix-identity'));assert.equal(page.querySelector('.tisya-user'),null);
+  assert.deepEqual(seen,[ref]);assert.match(page.querySelector('[data-legacy-origins]').textContent,/固定第三版的原文/);
+  assert(page.querySelector('[data-origin-reviewed]'));assert.equal(f.ctx.powerUserSettings.personas['native-a'],'原身份');
+  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.deepEqual(f.errors,[]);
+ }finally{
+  const page=d.querySelector('#tisya-user-page');if(page)await pressRouteButton(f,page,'取消修改');
+  f.w.eval('clearNotebook()');await f.w.happyDOM.abort();
+ }
+});
+
+test('identity keeps native editing available when the existing database cannot be read and never creates old tables',async()=>{
+ const f=await setup(),d=f.w.document;
+ try{
+  const id=f.ctx.chatMetadata.tisya_engine.chat_uid;await f.matrixStorage.set(id,undefined);
+  await click(f,'menu');await click(f,'user-identity');await settleIdentityRoute(f);const page=d.querySelector('#tisya-user-page');
+  assert(page.classList.contains('tisya-matrix-identity'));assert(page.querySelector('[data-identity-wish]'));
+  assert.match(page.querySelector('[data-database-identity]').textContent,/暂不可读/);
+  assert(routeButton(page,'原生身份管理'));assert.equal(page.getAttribute('aria-busy'),'false');
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(await f.matrixStorage.get(id),undefined);
+ }finally{await f.w.happyDOM.abort();}
+});
 
 test('Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back',async()=>{
  const f=await setupIdentityRoute(),d=f.w.document,history=structuredClone(f.ctx.chat),chatId=f.ctx.chatId;
@@ -606,15 +840,16 @@ test('Matrix identity production route saves mixed profile, wish and story bindi
   editIdentityField(f,'[data-identity-wish]','混改后的完整心愿');
   editIdentityField(f,'[data-wish-option="W00"]',true,'change');
   editIdentityField(f,'[data-avatar-mode]','bound','change');
-  editIdentityField(f,'[data-role-entry]','0','change');
+  editIdentityField(f,'[data-role-entry]','route-character','change');await settleIdentityRoute(f);
   assert.deepEqual(f.ctx.powerUserSettings,beforeNative);assert.deepEqual(f.w.Tisya.configuration.read(),beforeConfig);
   await pressRouteButton(f,page,'保存');
+  assert.equal(page.querySelector('[role=alert]'),null,page.querySelector('[role=alert]')?.textContent);
   const saved=f.w.Tisya.configuration.read();
   assert.equal(f.ctx.powerUserSettings.personas['native-a'],'改后的身份');
   assert.equal(f.ctx.powerUserSettings.persona_descriptions['native-a'].description,'混改后的完整心愿');
   assert.equal(f.ctx.powerUserSettings.persona_description,'混改后的完整心愿');
   assert.deepEqual(saved.story.play.choices.W,['W00','W07']);
-  assert.equal(saved.story.userMode,'bound');assert.deepEqual(saved.story.userBinding,{book:'基点书',uid:0});
+  assert.equal(saved.story.userMode,'bound');assert.deepEqual(saved.story.userBinding,{database:true,entityId:'route-character',dossierId:'route-character'});
   assert.equal(saved.story.userName,'原角色');assert.equal(f.bookWrites(),0);
   d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
   assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);
@@ -622,7 +857,7 @@ test('Matrix identity production route saves mixed profile, wish and story bindi
   assert.equal(page.querySelector('[data-identity-name]').value,'改后的身份');
   assert.equal(page.querySelector('[data-identity-wish]').value,'混改后的完整心愿');
   assert.equal(page.querySelector('[data-wish-option="W00"]').checked,true);
-  assert.equal(page.querySelector('[data-avatar-mode]').value,'bound');assert.equal(page.querySelector('[data-role-entry]').value,'0');
+  assert.equal(page.querySelector('[data-avatar-mode]').value,'bound');assert.equal(page.querySelector('[data-role-entry]').value,'route-character');
   assert.equal(f.ctx.chatId,chatId);assert.deepEqual(f.ctx.chat,history);assert.deepEqual(f.errors,[]);
  }finally{await f.w.happyDOM.abort();}
 });
@@ -632,7 +867,7 @@ test('Matrix identity production route cancels a staged persona switch and all m
  try{
   let page=await openIdentityFromSettings(f);
   const beforeNative=structuredClone(f.ctx.powerUserSettings),beforeConfig=f.w.Tisya.configuration.read(),beforeMetadata=structuredClone(f.ctx.chatMetadata);
-  editIdentityField(f,'[data-identity-picker]','native-b','change');await f.w.happyDOM.whenAsyncComplete();
+  editIdentityField(f,'[data-identity-picker]','native-b','change');await f.w.happyDOM.whenAsyncComplete();await settleIdentityRoute(f);
   assert.equal(f.w.fixture.user_avatar,'native-a');assert.deepEqual(f.ctx.chatMetadata,beforeMetadata);
   editIdentityField(f,'[data-identity-name]','不应保存的名称');
   editIdentityField(f,'[data-identity-wish]','不应保存的心愿');
@@ -680,5 +915,156 @@ test('Matrix identity production route preserves an empty-registry wish on stay 
   page=await openIdentityFromSettings(f);assert.equal(page.querySelector('[data-identity-wish]').value,'无身份注册表的心愿草稿');
   assert.equal(page.querySelector('[data-avatar-mode]').value,'ensemble');assert.equal(f.bookWrites(),0);
   assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+
+async function bindMatrixPhoneFixture(f){
+  await f.w.Tisya.matrix.ensureDatabase();const db=await f.w.Tisya.matrix.readDatabase();
+  await f.w.Tisya.matrix.commitDatabase({contextKey:db.contextKey,expectedRevision:db.revision,operationId:'pet-life-fixture',schema:PHONE_DATABASE_SCHEMAS,changes:[
+   {tableId:'T_STATIC_WORLDS',recordId:'world-ui',values:{name:'UI世界'}},
+   {tableId:'T_CHAR_DOSSIER',recordId:'ui-person',values:{name:'界面角色',manifest:'角色介绍。'}},
+   {tableId:'T_SYS_ENTITIES',recordId:'ui-person',values:{kind:'character',origin_record_ref:'origin-ui-person'}},
+   {tableId:'M_FIELD_REFERENCES',recordId:'origin-ui-person',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'ui-person',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'ui-person',reference_kind:'record',resolution_status:'resolved'}},
+   {tableId:'T_STATIC_ITEMS_SKILLS',recordId:'ui-currency',values:{name:'星币',category:'currency'}},
+   {tableId:'T_DYN_CURRENCY_BALANCES',recordId:'cash',values:{owner_ref:'ui-person',currency_ref:'ui-currency',balance:123.45}},
+   {tableId:'X_PHONE_WORLD_CONFIG',recordId:'ui-world-phone',values:{world_ref:'world-ui',apps:['wallet','album'],currency_ref:'ui-currency'}}
+  ]});
+  const config=f.w.Tisya.configuration.read();config.story.userMode='bound';config.story.userBinding={database:true,entityId:'ui-person',dossierId:'ui-person'};config.story.phoneWorld={database:true,worldId:'world-ui'};await f.w.Tisya.configuration.save(config);
+}
+
+test('pet life entry initializes the selected Matrix profile in the original phone frame',async()=>{
+ const f=await setup({mediaStorage:true}),d=f.w.document;
+ try{
+  await bindMatrixPhoneFixture(f);
+  assert.equal(f.w.phoneOptions.getLifeDesktop().apps[0].id,'home');
+  assert.equal(f.w.phoneOptions.onOpenApp('life:wallet'),true);await f.w.happyDOM.whenAsyncComplete();
+  // The production Matrix bridge uses IndexedDB tasks outside Happy DOM's scheduler.
+  for(let i=0;i<300&&!d.querySelector('#tisya-phone-host-slot iframe')&&!f.errors.length;i++)await new Promise(resolve=>setTimeout(resolve,10));
+  const frame=d.querySelector('#tisya-phone-host-slot iframe');assert.ok(frame,JSON.stringify(f.errors));assert.equal(new URL(frame.src).searchParams.get('app'),'wallet');assert.equal(new URL(frame.src).searchParams.get('chat'),chatKey(f.ctx));
+  const service=await f.w.Tisya.phone.service(),life=service.readLife();assert.equal(life.state.wallet.accounts[0].balance,12345);assert.equal(life.binding.carrier.id,'a.png');assert.equal(life.binding.character.entityId,'ui-person');assert.equal(f.w.phoneOptions.getLifeDesktop().apps.length,2);const after=await f.w.Tisya.matrix.readDatabase();assert.equal(after.state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);assert.equal(Object.keys(after.state.tables.T_DYN_CURRENCY_BALANCES).length,1);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+
+test('canonical phone history events refresh the cached phone without legacy metadata',async()=>{
+ const f=await setup({mediaStorage:true});
+ try{
+  await bindMatrixPhoneFixture(f);const service=await f.w.Tisya.phone.service();await f.w.Tisya.phone.initializeLife();
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);
+  assert.equal(service.readLife().state.wallet.accounts[0].balance,12345);
+  f.ctx.chat.push({is_user:true,mes:'下一时点'});
+  const db=await f.w.Tisya.matrix.readDatabase();
+  await f.w.Tisya.matrix.commitDatabase({contextKey:db.contextKey,expectedRevision:db.revision,operationId:'phone-later-balance',changes:[{tableId:'T_DYN_CURRENCY_BALANCES',recordId:'cash',values:{balance:100}}]});
+  await service.refresh();assert.equal(service.readLife().state.wallet.accounts[0].balance,10000);
+  f.ctx.chat.pop();await f.emit('deleted');
+  for(let i=0;i<100&&service.readLife().state.wallet.accounts[0].balance!==12345&&!f.errors.length;i++)await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(service.readLife().state.wallet.accounts[0].balance,12345);
+  assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('history events preserve the automatically bound engine without initializing absent phone rows',async()=>{
+ const f=await setup();
+ try{
+  for(const event of ['edited','deleted','swiped','chat'])await f.emit(event);
+  await new Promise(resolve=>setTimeout(resolve,30));
+  const database=await f.w.Tisya.matrix.peekDatabase();assert(database);
+  assert.equal(database.state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+async function dirtySettingsForPhoneNavigation(f){
+ await click(f,'menu');await click(f,'settings-app');
+ const page=f.w.document.querySelector('#tisya-settings-app');
+ await pressRouteButton(f,page,'回复格式');
+ const body=[...page.querySelectorAll('label')].find(node=>node.textContent==='正文').querySelector('input');
+ body.value='phone_navigation_draft';body.dispatchEvent(new f.w.Event('input',{bubbles:true}));
+ return {page,body,before:f.w.Tisya.configuration.read()};
+}
+
+test('direct phone opening waits for the settings leave decision and cancellation keeps the draft',async()=>{
+ const f=await setup(),d=f.w.document;
+ try{
+  const {page,body,before}=await dirtySettingsForPhoneNavigation(f);
+  const opening=f.w.Tisya.phone.open();await f.w.happyDOM.whenAsyncComplete();
+  assert(page.isConnected,'phone must not replace settings before confirmation');
+  assert.equal(d.querySelector('#tisya-phone-host-slot'),null);
+  await pressRouteButton(f,unsavedDialog(f),'继续编辑');
+  assert.equal(await opening,false);assert(page.isConnected);assert.equal(body.value,'phone_navigation_draft');
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('direct phone close waits for the settings leave decision and only hides after confirmed discard',async()=>{
+ const f=await setup(),d=f.w.document;
+ try{
+  const {page,before}=await dirtySettingsForPhoneNavigation(f);
+  const closing=f.w.Tisya.phone.close();await f.w.happyDOM.whenAsyncComplete();
+  assert(page.isConnected,'a Promise is not leave permission');
+  await pressRouteButton(f,unsavedDialog(f),'放弃修改');
+  assert.equal(await closing,true);assert.equal(d.querySelector('#tisya-settings-app'),null);
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('life setup entry retains the boolean dispatch contract while awaiting the settings leave decision',async()=>{
+ const f=await setup(),d=f.w.document;
+ try{
+  const {page,body,before}=await dirtySettingsForPhoneNavigation(f);
+  assert.equal(f.w.phoneOptions.onOpenApp('life:setup'),true);
+  await f.w.happyDOM.whenAsyncComplete();assert(page.isConnected);assert.equal(d.querySelector('#tisya-user-page'),null);
+  await pressRouteButton(f,unsavedDialog(f),'继续编辑');
+  assert(page.isConnected);assert.equal(body.value,'phone_navigation_draft');
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+function editExtensionField(f,selector,value){
+ const node=f.w.document.querySelector('#tisya-story-resources '+selector);assert(node,`missing presentation field: ${selector}`);
+ if(node.type==='checkbox')node.checked=value;else node.value=value;
+ node.dispatchEvent(new f.w.Event('input',{bubbles:true}));return node;
+}
+
+test('identity production route owns presentation fields in its scroll region and saves both through one footer',async()=>{
+ const f=await setupIdentityRoute(),d=f.w.document;
+ try{
+  await bindMatrixPhoneFixture(f);let page=await openIdentityFromSettings(f);
+  const content=page.querySelector('.tisya-identity-content'),presentation=d.querySelector('#tisya-story-resources');
+  assert(content.contains(presentation),'all same-page fields must scroll above the common footer');
+  assert.equal(page.querySelectorAll('.tisya-settings-actions').length,1);
+  assert.deepEqual([...page.querySelectorAll('button')].filter(node=>node.textContent==='保存').map(node=>node.textContent),['保存']);
+  editIdentityField(f,'[data-identity-wish]','同时保存论坛偏好的心愿');
+  editExtensionField(f,'[data-extension-count]','3');editExtensionField(f,'[data-extension-enabled]',true);
+  const before=await f.w.Tisya.matrix.readDatabase();assert.equal(Object.keys(before.state.tables[EXTENSION_PREFERENCE_TABLE]??{}).length,0);
+  await pressRouteButton(f,page,'保存');
+  assert.equal(page.querySelector('[role=alert]'),null,page.querySelector('[role=alert]')?.textContent);
+  assert.equal(f.ctx.powerUserSettings.persona_descriptions['native-a'].description,'同时保存论坛偏好的心愿');
+  const rows=Object.values((await f.w.Tisya.matrix.readDatabase()).state.tables[EXTENSION_PREFERENCE_TABLE]);
+  assert.equal(rows.length,1);assert.equal(rows[0].values.generate_count,3);assert.equal(rows[0].values.enabled,true);
+  assert.equal(rows[0].values.owner_ref,'ui-person');assert.equal(rows[0].values.world_ref,'world-ui');
+  d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);page=await openIdentityFromSettings(f);
+  assert.equal(page.querySelector('[data-extension-count]').value,'3');assert.equal(page.querySelector('[data-extension-enabled]').checked,true);
+  assert.equal(page.querySelector('[data-identity-wish]').value,'同时保存论坛偏好的心愿');assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('presentation-only edits participate in the identity route leave prompt and common cancel without writing',async()=>{
+ const f=await setupIdentityRoute(),d=f.w.document;
+ try{
+  await bindMatrixPhoneFixture(f);const page=await openIdentityFromSettings(f),before=await f.w.Tisya.matrix.readDatabase();
+  editExtensionField(f,'[data-extension-count]','9');
+  const opening=f.w.Tisya.phone.open();await f.w.happyDOM.whenAsyncComplete();
+  assert(page.isConnected);assert.equal(d.querySelector('#tisya-phone-host-slot'),null);
+  await pressRouteButton(f,unsavedDialog(f),'继续编辑');assert.equal(await opening,false);
+  assert.equal(page.querySelector('[data-extension-count]').value,'9');
+  await pressRouteButton(f,page,'取消修改');
+  assert.equal(page.querySelector('[data-extension-count]').value,'');
+  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);
+  d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);assert.deepEqual(f.errors,[]);
  }finally{await f.w.happyDOM.abort();}
 });

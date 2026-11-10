@@ -1,0 +1,26 @@
+{
+  "task": "group creation without a selected single card",
+  "observed_utc": "2026-11-10T07:00:02.608307+00:00",
+  "observed_beijing": "2026-11-10T15:00:02.608307+08:00",
+  "change": "Only an explicitly selected missing character is an error. Undefined/null characterId preserves card:null and does not call readCharacterBindings or select a group member.",
+  "tests": {
+    "pass": 19,
+    "fail": 0,
+    "source_suite": 14,
+    "original_creation_suite": 5
+  },
+  "verified": [
+    "explicit core source unchanged",
+    "native source card is null",
+    "binding reader has zero calls",
+    "group switch after request rejected without another commit",
+    "declared but absent source card still rejected"
+  ],
+  "syntax": "passed",
+  "diff_check": "passed",
+  "sha256": {
+    "engine/creation.mjs": "a38d1e235b09b05ec8d323e0954207e4ccfefa343b58250eac76b13122139f88",
+    "tests/matrix-creation-sources.test.js": "772c814e10dafb85c04051f42ce0fcc91c683858a31a230029182236bacd8963",
+    "docs/validation/default-activation-20261110/creation-group-scope.log": "f91935c4c58d43d547404aa24d4c5eab40dd9c68a3bd9a31a626e1e71a287309"
+  }
+}

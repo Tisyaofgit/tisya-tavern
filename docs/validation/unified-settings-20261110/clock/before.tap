@@ -1,0 +1,243 @@
+✔ clock decode accepts its same-world clock and ignores an unrelated runtime selector (24.757887ms)
+✖ clock decode rejects a wrong table even when that table has the same record ID (18.827319ms)
+✖ clock decode rejects a foreign-world persisted binding without selecting another row (24.250673ms)
+✔ clock decode rejects a dangling binding despite an available same-world clock (30.338813ms)
+✖ clock decode rejects unknown ownership even when its retained value names this world (24.308644ms)
+✖ clock decode rejects a clock with missing ownership (22.402365ms)
+✖ clock decode rejects unknown position instead of presenting the retained hour as known (19.332571ms)
+✖ clock decode rejects an incomplete position instead of accepting WorldClock defaults (19.485088ms)
+✖ clock encode rejects an existing foreign row at the deterministic initialization ID (22.85639ms)
+✖ clock encode validates the persisted binding before considering another same-world clock (21.181269ms)
+✖ clock encode rejects unknown ownership before producing a write set (22.752856ms)
+✔ clock initialization still refuses ambiguous same-world clocks (28.536474ms)
+✖ clock native-profile discovery applies the same ownership-state guard (19.230289ms)
+✔ clock confirmed derived ownership and old rows without state metadata remain readable (23.625433ms)
+✖ clock storage cold load rejects the actual invalid decode and performs zero commits (21.61869ms)
+✖ clock storage save refuses a corrupt binding before persistence and preserves source data (25.909358ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 4
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 548.363189
+
+✖ failing tests:
+
+test at tests/phone-clock-integration.test.js:46:1
+✖ clock decode rejects a wrong table even when that table has the same record ID (18.827319ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:48:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:51:1
+✖ clock decode rejects a foreign-world persisted binding without selecting another row (24.250673ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:53:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:61:1
+✖ clock decode rejects unknown ownership even when its retained value names this world (24.308644ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:63:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:66:1
+✖ clock decode rejects a clock with missing ownership (22.402365ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:68:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:71:1
+✖ clock decode rejects unknown position instead of presenting the retained hour as known (19.332571ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:73:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:76:1
+✖ clock decode rejects an incomplete position instead of accepting WorldClock defaults (19.485088ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:78:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:81:1
+✖ clock encode rejects an existing foreign row at the deterministic initialization ID (22.85639ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:83:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:86:1
+✖ clock encode validates the persisted binding before considering another same-world clock (21.181269ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:88:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:91:1
+✖ clock encode rejects unknown ownership before producing a write set (22.752856ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:93:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:101:1
+✖ clock native-profile discovery applies the same ownership-state guard (19.230289ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at readOnlyFailure (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:37:86)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:103:2)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:113:1
+✖ clock storage cold load rejects the actual invalid decode and performs zero commits (21.61869ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:116:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/phone-clock-integration.test.js:119:1
+✖ clock storage save refuses a corrupt binding before persistence and preserves source data (25.909358ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  Error: unexpected commit
+      at async TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:123:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: unexpected commit
+        at commit (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:121:144)
+        at Object.save (file:///workspace/scratch/18b060429516/unified-integration/engine/phone-database.mjs:225:923)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/phone-clock-integration.test.js:123:2)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }

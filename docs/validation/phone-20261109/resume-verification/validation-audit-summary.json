@@ -1,0 +1,60 @@
+{
+  "utc": "2026-11-09T12:06:55.695830+00:00",
+  "base_commit": "72522564bfe75a80298396d4636c48c6f34f7d57",
+  "base_tree": "4996dce81ff2723f5b450363b96826237d68bb72",
+  "tracked_count": 1093,
+  "untracked_count": 40,
+  "generated_cache_exclude": [
+    "tests/reference/matrix-python/__pycache__/matrix_io.cpython-312.pyc",
+    "tests/reference/matrix-python/__pycache__/rule_math.cpython-312.pyc"
+  ],
+  "source_changed_during_verification": [],
+  "tests": {
+    "fresh-phone-tests.tap": {
+      "stats": [
+        "ℹ tests 92",
+        "ℹ pass 92",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 1764.23215"
+      ],
+      "sha256": "eb46b8a8a97836324450f17c74f9c4bd52141cc3c4ebd0821f0381e5c37545c4"
+    },
+    "fresh-phone-bundle.tap": {
+      "stats": [
+        "# tests 3",
+        "# pass 3",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 0",
+        "# todo 0",
+        "# duration_ms 1395.803416"
+      ],
+      "sha256": "f96b985807e3349222d1e359c6892e0543fd0288b6f50a4562cbf7454e5fd2a9"
+    },
+    "fresh-shell-tests.tap": {
+      "stats": [
+        "ℹ tests 78",
+        "ℹ pass 78",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 8754.029377"
+      ],
+      "sha256": "ac7e239616b4eb597792e2651203becf90519b567f0610002b7790eb4c3a1516"
+    }
+  },
+  "bundle_build": {
+    "file": "phone.html",
+    "bytes": 338738,
+    "sha256": "88065b4403dbbd7f0351a0a91b0f07d99c0b500f418b6022caeb78cf3d9ab4d4",
+    "modules": 9,
+    "css": 5,
+    "embedded_assets": 7,
+    "check": true
+  },
+  "host_build": "{\"file\":\"runtime.js\",\"localModules\":269,\"bytes\":4251755,\"externalImports\":40,\"checked\":true}"
+}

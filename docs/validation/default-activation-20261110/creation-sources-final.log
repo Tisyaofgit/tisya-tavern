@@ -1,0 +1,40 @@
+✔ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (1434.999535ms)
+✔ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (1289.746476ms)
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (1246.167596ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (1252.448293ms)
+✔ world creation leaves the old table setup unmounted and never creates a native identity slot (1079.661489ms)
+✔ core creation passes the fixed source and rejects source drift before any database or persona write (466.409956ms)
+✔ reopening the unified identity page resumes an interrupted slot without an old page or database write (1371.567733ms)
+✔ creation history and exported draft retain invalid typed input until it is corrected and reviewed (1301.257359ms)
+✔ creation includes complete native card, associated books and explicit core independently; saved receipt preserves raw immutable snapshot (10.781321ms)
+✔ generation rejects card drift and retains original raw/draft without writes (1.856768ms)
+✔ save rejects card drift without replacing original snapshot (1.172507ms)
+✔ generation rejects book drift and retains original raw/draft without writes (0.830992ms)
+✔ save rejects book drift without replacing original snapshot (1.146989ms)
+✔ generation rejects binding drift and retains original raw/draft without writes (0.869461ms)
+✔ save rejects binding drift without replacing original snapshot (1.00841ms)
+✔ generation rejects persona drift and retains original raw/draft without writes (0.877733ms)
+✔ save rejects persona drift without replacing original snapshot (1.013127ms)
+✔ known missing book and source reader failure abort before model and commit (0.672884ms)
+✔ chat switch during native read or model request cannot cross-write (1.026036ms)
+✔ empty host needs no worldbook API but an actual missing current card fails (0.766285ms)
+✔ editing original snapshot is rejected before commit (1.417286ms)
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (10.23751ms)
+✔ stale draft cannot overwrite a concurrently edited form (2.987313ms)
+✔ generation changes no records on malformed response and retains raw evidence (0.604541ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.661607ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.45137ms)
+✔ ordinary and author materials never reveal program history, layouts or writable program tables (72.387513ms)
+✔ old schemas without new flags still block phone snapshots and dynamic execution containers (30.280185ms)
+✔ current phone rows remain complete without character or row budgets, while aliases and other scopes are omitted (44.292015ms)
+✔ creation contract compacts the full actual catalog and excludes program and field payloads (37.621766ms)
+✔ proposal blocks every program table and forbidden field, but accepts a canonical character with forward references (509.636136ms)
+✔ real catalog creator integrates with actual Matrix host, derives the entity name and emits a compact clean request (1039.244929ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9944.37647

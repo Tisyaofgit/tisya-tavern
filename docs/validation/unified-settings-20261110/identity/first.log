@@ -1,0 +1,323 @@
+✔ identity projects the current canonical dossier through actual origin reference instead of a stale source book (50.433701ms)
+✔ dossier editing is zero-write until confirmation and only changes the canonical owner (62.023357ms)
+✔ stale, cross-chat and tampered edits cannot change current records (49.889722ms)
+✔ manual creation commits dossier, entity and normalized origin reference together and retries once (59.768351ms)
+✔ DB save plus failed selection save reports its preserved partial result and retry does not duplicate (51.627156ms)
+✔ resources save per-chat DB locators and expose no regenerated initialization block (64.312768ms)
+✖ database UI preserves untouched empty fields and requires preview before committing edits (99.50088ms)
+✖ empty database still exposes the creator entry and creation save stays separate from selection (36.930433ms)
+✔ main identity projection excludes old initialization blocks and does not revive a stale derived name (16.769254ms)
+✔ legacy dossier migration checks exact source UID and digest, preserves raw seed only as source, and commits one batch (57.046464ms)
+✖ actual preference UI persists audience, topics and explicit zero in one database commit (24.425889ms)
+✖ world or role selection change rejects an old form instead of saving to the new scope (9.693573ms)
+✔ Matrix identity has one persistent save/cancel pair including unavailable role sources (45.667683ms)
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (17.984662ms)
+✔ identity selection is a draft until save and cancellation performs no persistence (30.889863ms)
+✔ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (25.338667ms)
+✖ cancel discards every unsaved field without changing source data or creating roles (9.944156ms)
+✖ creation requires explicit confirmation and validates the complete page before any persistent write (7.76737ms)
+✔ partial profile success preserves the rest of the draft and retry does not write the profile twice (13.068892ms)
+✖ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (15.056829ms)
+✔ concurrent configuration changes reject the entire save before changing the native profile (9.72526ms)
+✖ a chat switch during role preflight preserves drafts and cannot save them into the next chat (6.6246ms)
+✔ interrupted identity switching resumes through the same save button after reopen (30.938335ms)
+✔ unavailable role sources still allow the native identity draft to be saved (9.092039ms)
+✖ failed native profile persistence retains the complete draft and retries the same values (17.523926ms)
+✖ a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat (12.24606ms)
+✔ discarding fresh edits keeps a durable pending identity recovery and still allows leaving (12.176024ms)
+✔ cancelling fresh edits does not force saving an existing legacy wish migration before leaving (13.732168ms)
+✖ a failed source read can be retried without clearing profile or creation drafts and saves to that exact source (8.886973ms)
+✔ a non-binding mode retains the explicitly selected source after save and reopen (13.640914ms)
+✔ listing does not write; role creation saves exact disabled entry and binds only this chat (10.220867ms)
+✔ failed binding retains saved role; retry reuses it without creating a default or duplicate (0.898106ms)
+✔ original persona description enters only the wish; selected original wish preset remains exact (3.460045ms)
+✖ user identity contains original wishes and creates exact core book role through its visible controls (22.392555ms)
+✔ native persona injection is disabled in the saved preset and relocated from depth or author note without changing history (0.657317ms)
+✔ binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs (1.749552ms)
+✔ legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback (0.50482ms)
+✖ empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish (21.381773ms)
+✔ base and optional wishes remain absent when the original description is empty and every module is off (0.525151ms)
+✔ automatic core book preparation is idempotent and preserves existing global books and entries (0.788573ms)
+✔ preparation and selection never require or change native global worldbook activation (0.906498ms)
+✔ identity picker drafts the selection before a shared save; interrupted binding is recoverable on this page (47.707061ms)
+✔ unavailable worldbook service leaves persona switching usable and its error visible (7.937942ms)
+✔ one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry (25.045611ms)
+✔ identity page allows its own clean return and native-manager navigation (15.933943ms)
+✔ packaged templates reference the unified schema and do not create independent phone states (1.226253ms)
+✔ complete native template book and readable field guide match runtime templates exactly (2.421831ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (2.01116ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.547163ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (0.839959ms)
+✔ creation reads an existing default template book before the identity page has configured it (0.307988ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (1.535814ms)
+✔ manual role creation never writes into the template book or adds implicit phone state (0.552462ms)
+✔ empty prefixed role name is rejected before creating an unreadable entry (0.224774ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (0.972196ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (1.589042ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (1.942949ms)
+✔ normal identity projection strips initial values while preserving narrative and source (1.042721ms)
+✔ reference scan uses current native conditions, retains source UID and deduplicates without enabling (1.664064ms)
+✔ reference scan guards before mutation and does not mask missing or duplicate source data (0.400636ms)
+✔ refreshing a natively selected reference retains the console opt-in scan order (0.493243ms)
+✔ native exclusion removes the entire template book even when enabled and strips both seed types (0.12087ms)
+✖ legacy shared resource mount edits the original dossier and saves references without native persona UI (22.18023ms)
+✖ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (7.790052ms)
+✖ failed source-book switch restores the editor source and cross-chat save is blocked (15.787104ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 48
+ℹ fail 17
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 881.201411
+
+✖ failing tests:
+
+test at tests/database-identity.test.js:41:1
+✖ database UI preserves untouched empty fields and requires preview before committing edits (99.50088ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at click (file:///workspace/scratch/18b060429516/unified-integration/tests/database-identity.test.js:42:473)
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/database-identity.test.js:42:623)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/database-identity.test.js:44:1
+✖ empty database still exposes the creator entry and creation save stays separate from selection (36.930433ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/database-identity.test.js:45:907)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/extension-preferences-ui.test.js:12:1
+✖ actual preference UI persists audience, topics and explicit zero in one database commit (24.425889ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/extension-preferences-ui.test.js:14:74)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/extension-preferences-ui.test.js:16:1
+✖ world or role selection change rejects an old form instead of saving to the new scope (9.693573ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/extension-preferences-ui.test.js:17:171)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:82:1
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (17.984662ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      chat: 0,
+  +   config: 1,
+  -   config: 0,
+      profile: 0,
+      settings: 0,
+  +   worldbook: 1
+  -   worldbook: 0
+    }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:90:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { settings: 0, config: 1, chat: 0, worldbook: 1, profile: 0 },
+    expected: { settings: 0, config: 0, chat: 0, worldbook: 0, profile: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:143:1
+✖ cancel discards every unsaved field without changing source data or creating roles (9.944156ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      chat: 0,
+  +   config: 1,
+  -   config: 0,
+      profile: 0,
+      settings: 0,
+  +   worldbook: 1
+  -   worldbook: 0
+    }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:155:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { settings: 0, config: 1, chat: 0, worldbook: 1, profile: 0 },
+    expected: { settings: 0, config: 0, chat: 0, worldbook: 0, profile: 0 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:159:1
+✖ creation requires explicit confirmation and validates the complete page before any persistent write (7.76737ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:164:44)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:194:1
+✖ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (15.056829ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:202:47)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:226:1
+✖ a chat switch during role preflight preserves drafts and cannot save them into the next chat (6.6246ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:234:44)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:264:1
+✖ failed native profile persistence retains the complete draft and retries the same values (17.523926ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:272:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:281:1
+✖ a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat (12.24606ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:287:69)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:327:1
+✖ a failed source read can be retried without clearing profile or creation drafts and saves to that exact source (8.886973ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity-save.test.js:341:91)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity.test.js:8:1
+✖ user identity contains original wishes and creates exact core book role through its visible controls (22.392555ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity.test.js:8:612)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity.test.js:28:1
+✖ empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish (21.381773ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/matrix-identity.test.js:33:133)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/template-book-identity.test.js:102:1
+✖ legacy shared resource mount edits the original dossier and saves references without native persona UI (22.18023ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/template-book-identity.test.js:104:303)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/template-book-identity.test.js:107:1
+✖ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (7.790052ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'click')
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/template-book-identity.test.js:110:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/template-book-identity.test.js:112:1
+✖ failed source-book switch restores the editor source and cross-chat save is blocked (15.787104ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '另书' !== '基点书'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/18b060429516/unified-integration/tests/template-book-identity.test.js:114:318)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '另书',
+    expected: '基点书',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

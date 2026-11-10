@@ -1,0 +1,56 @@
+{
+  "task": "Matrix creation fixed native source snapshots",
+  "observed_utc": "2026-11-10T06:58:35.088836+00:00",
+  "observed_beijing": "2026-11-10T14:58:35.088836+08:00",
+  "status": "source/tests frozen; parent owns final full suite and persistence",
+  "changes": [
+    "read-only current card and primary/additional associated worldbooks; complete raw snapshot plus filtered AI materials",
+    "explicit core source remains separate",
+    "after-generation and pre-save source/template drift checks, chat scope guard after awaits, failure rawResponse and original draft preserved",
+    "known missing source/book and read errors abort without model call or commit",
+    "commit source receipt retains original snapshot and digest, no legacy ledger initialized"
+  ],
+  "verification": {
+    "source_specialized": {
+      "passed": 13,
+      "failed": 0
+    },
+    "final_subset": {
+      "passed": 32,
+      "failed": 0,
+      "files": [
+        "tests/matrix-creation-sources.test.js",
+        "tests/matrix-creation.test.js",
+        "tests/prompt-boundary.test.js",
+        "tests/assistant-matrix-identity.test.js"
+      ]
+    },
+    "earlier_unified_subset": {
+      "passed": 32,
+      "failed": 0
+    },
+    "syntax": "pass",
+    "diff_check": "pass",
+    "live_models": "not called",
+    "Android": "not tested"
+  },
+  "original_failures": [
+    {
+      "log": "creation-sources-first.log",
+      "cause": "3 synthetic fixtures omitted source cards; 2 assistant mock world proposals attempted derived base_year; fixtures corrected without relaxing production validation"
+    },
+    {
+      "log": "creation-sources-combination-fixture-failure.log",
+      "cause": "experimental duplicated combo test used assistant applyActive mock without native name/description sync; original evidence retained; parent assigned verified unified fixture combination to verification agent"
+    }
+  ],
+  "sha256": {
+    "engine/creation.mjs": "acb6a604dc5f4bc8c1f0d60514c6ff71b38ad9c58a2abf1007b6b54c1939a36c",
+    "tests/matrix-creation-sources.test.js": "b1998ad5a4526d277a3543b521f8d97153c6d295761a3f6dd9deda72f01f811c",
+    "tests/prompt-boundary.test.js": "703823d2abff55d8a2f7bc89399aa3de57a8cf0a1cf7a9cbc6799b0eb53b6946",
+    "tests/assistant-matrix-identity.test.js": "fd5273696eb7fb4e1d77d982257ac3d9928f1b8b19703709ad873656ec44950e",
+    "docs/validation/default-activation-20261110/creation-sources-final.log": "ad24a04847c24b9cffcf6fb67e6cff72bab79bda57f0d1b1163c0e2701e68eee",
+    "docs/validation/default-activation-20261110/creation-sources-first.log": "3a7ce95bc0369de74b1a92a02a9e24fcb7c8d54d83b8911c6017af1e85b331cd",
+    "docs/validation/default-activation-20261110/creation-sources-combination-fixture-failure.log": "9f4dcf552167586320d025d32c664834b297c7e03f3cc0f60804aadec39c35aa"
+  }
+}

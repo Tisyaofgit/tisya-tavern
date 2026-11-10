@@ -1,0 +1,36 @@
+TAP version 13
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: delivered HTML has closed assets/modules and boots all 17 entry points
+ok 1 - delivered HTML has closed assets/modules and boots all 17 entry points
+  ---
+  duration_ms: 120.185761
+  type: 'test'
+  ...
+# Subtest: delivered bundle keeps forum event targets, search and actual phone-file import
+ok 2 - delivered bundle keeps forum event targets, search and actual phone-file import
+  ---
+  duration_ms: 690.132097
+  type: 'test'
+  ...
+# Subtest: delivered frozen URL takes only the accepted bundle snapshot and stays read-only
+ok 3 - delivered frozen URL takes only the accepted bundle snapshot and stays read-only
+  ---
+  duration_ms: 463.363524
+  type: 'test'
+  ...
+# Subtest: delivered life URL mounts configured wallet and commits its real form through host service
+ok 4 - delivered life URL mounts configured wallet and commits its real form through host service
+  ---
+  duration_ms: 61.349733
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1775.749308

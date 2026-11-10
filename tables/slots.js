@@ -9,6 +9,7 @@ export const SLOT_ROUTER=`[TASK.START]
 @OUTPUT variable commands retain original dialect and belong only inside vars;form proposals are data under extra,never native variable commands
 [/TASK.START]`;
 export function taskSlots(task,input){
+ if(task==='tableGenesis'&&input.databaseContract==='tisya.matrix-creation/1')return {source:{databaseContract:input.databaseContract,kind:input.kind,mode:input.mode,goal:input.goal,source:input.source,template:input.template},state:{schema:input.schema,valueStates:input.valueStates,rows:input.currentRows??[]},genesis:{output:input.output}};
  if(task==='tableAssistant')return {source:{question:input.question,conversation:input.conversation},state:{configuration:input.configuration,editablePaths:input.editablePaths,choices:input.choices,registry:input.registry,rows:input.currentRows,storage:input.storage,history:input.history},tools:input.diagnostics,toolInstructions:input.toolInstructions,genesis:input.blueprint};
  const slots={};
  if(input.sourceCardRaw!==undefined)slots.card=input.sourceCardRaw;

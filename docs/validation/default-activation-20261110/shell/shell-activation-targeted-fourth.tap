@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+ok 1 - APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+  ---
+  duration_ms: 458.034944
+  type: 'test'
+  ...
+# Subtest: CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+ok 2 - CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+  ---
+  duration_ms: 1698.271465
+  type: 'test'
+  ...
+# Subtest: APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+ok 3 - APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+  ---
+  duration_ms: 34.80282
+  type: 'test'
+  ...
+# Subtest: user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+ok 4 - user message exposes reroll-next, preserves draft guard and sends edited comparison only once
+  ---
+  duration_ms: 1233.920277
+  type: 'test'
+  ...
+# Subtest: a manually selected foreign preset passes native input through without either retired generation writer
+ok 5 - a manually selected foreign preset passes native input through without either retired generation writer
+  ---
+  duration_ms: 402.943347
+  type: 'test'
+  ...
+# Subtest: token count between a real start and its end completes the Matrix lifecycle once without legacy settlement
+ok 6 - token count between a real start and its end completes the Matrix lifecycle once without legacy settlement
+  ---
+  duration_ms: 489.461462
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4883.270038

@@ -1,0 +1,47 @@
+TAP version 13
+# Subtest: cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+ok 1 - cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+  ---
+  duration_ms: 150.588213
+  type: 'test'
+  ...
+# Subtest: cold-start identity saves and reopens a new role with the current preset and chat preserved
+ok 2 - cold-start identity saves and reopens a new role with the current preset and chat preserved
+  ---
+  duration_ms: 144.772087
+  type: 'test'
+  ...
+# Subtest: cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+not ok 3 - cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+  ---
+  duration_ms: 81.224357
+  type: 'test'
+  location: '/workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:640:1'
+  failureType: 'testCodeFailure'
+  error: 'missing visible button: 放弃并切换'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    routeButton (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:577:121)
+    pressRouteButton (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:578:47)
+    TestContext.<anonymous> (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:648:49)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+ok 4 - cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+  ---
+  duration_ms: 112.126224
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 927.507707

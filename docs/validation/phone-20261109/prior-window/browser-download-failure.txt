@@ -1,0 +1,9 @@
+Playwright current attempt 2026-11-09 UTC
+Downloading Chrome Headless Shell 151.0.7922.34 (playwright chromium-headless-shell v1234) from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-headless-shell-linux64.zip
+Progress: 100% of 0 MiB
+Error: End of central directory record signature not found. Either not a zip file, or file is truncated.
+The Playwright installer automatically repeated the same download 5 times, then returned exit 1.
+Failed to install browsers
+Error: Failed to download Chrome Headless Shell 151.0.7922.34 (playwright chromium-headless-shell v1234), caused by
+Error: Download failure, code=1
+Initial browser launch stack is retained in browser-attempt.txt. This file retains the exact substantive stderr messages, not a complete PTY transcript.

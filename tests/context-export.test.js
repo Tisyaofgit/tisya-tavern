@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {mountConfiguration} from '../config/panel.js';
+import {mountConfiguration} from './legacy-fixtures/config-panel.js';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 import {transportSummary,exportContextText,copyContextText} from '../config/context-export.js';
 

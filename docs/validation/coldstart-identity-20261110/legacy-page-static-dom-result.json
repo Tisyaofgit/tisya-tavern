@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-11-10T06:06:38.073326+00:00",
+  "finishedAt": "2026-11-10T06:06:39.001049+00:00",
+  "domExitCode": 0,
+  "syntax": [
+    {
+      "file": "user-identity-page.js",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "tools/check-legacy-identity-scroll.cjs",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "scope": "Existing Happy DOM identity save, cancel, draft, retry and revision guards; not layout or touch validation",
+  "browserGeometry": "blocked during browser launch; original error preserved in legacy-scroll-attempt-1-error.log",
+  "changedProductionFiles": [
+    "user-identity-page.js"
+  ]
+}

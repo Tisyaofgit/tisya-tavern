@@ -1,0 +1,11 @@
+✔ homepage USER opens the unified identity page and retains a real native-controls exit (164.757084ms)
+✔ settings and identity headers return directly to current chat without changing its contents (219.355031ms)
+✔ pet life entry initializes the selected source profile in the original phone frame (101.669752ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1018.229172

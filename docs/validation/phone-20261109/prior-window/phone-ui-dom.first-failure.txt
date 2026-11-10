@@ -1,0 +1,90 @@
+TAP version 13
+# Subtest: DOM forum reactions hit the selected floor, toggle once, and scalar reply submits
+ok 1 - DOM forum reactions hit the selected floor, toggle once, and scalar reply submits
+  ---
+  duration_ms: 273.930397
+  type: 'test'
+  ...
+# Subtest: DOM weibo and video added item buttons target exact comment IDs and show reader delta
+ok 2 - DOM weibo and video added item buttons target exact comment IDs and show reader delta
+  ---
+  duration_ms: 262.950349
+  type: 'test'
+  ...
+# Subtest: DOM rapid draft input retains latest text and focus/caret after asynchronous old saves
+ok 3 - DOM rapid draft input retains latest text and focus/caret after asynchronous old saves
+  ---
+  duration_ms: 103.921335
+  type: 'test'
+  ...
+# Subtest: DOM search form is local first and queues only with continue-search button
+not ok 4 - DOM search form is local first and queues only with continue-search button
+  ---
+  duration_ms: 45.125552
+  type: 'test'
+  location: '/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:39:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'kind')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:40:559)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: DOM copy and receive dialogs keep request identity and apply actual protocol values
+not ok 5 - DOM copy and receive dialogs keep request identity and apply actual protocol values
+  ---
+  duration_ms: 106.922876
+  type: 'test'
+  location: '/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:43:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(f.root.querySelector('[role="dialog"]'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:44:326)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: DOM prepared round disables send but keeps drafts, and explicit recovery restores edits
+not ok 6 - DOM prepared round disables send but keeps drafts, and explicit recovery restores edits
+  ---
+  duration_ms: 92.890251
+  type: 'test'
+  location: '/workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:48:1'
+  failureType: 'testCodeFailure'
+  error: '[data-phone-modal-close]'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    Object.click (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:14:81)
+    TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/phone-ui-dom.test.mjs:49:221)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: DOM frozen frame receives onChange, opens full phone, and is inert after dispose
+ok 7 - DOM frozen frame receives onChange, opens full phone, and is inert after dispose
+  ---
+  duration_ms: 141.798823
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 4
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1355.173314

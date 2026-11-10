@@ -1,0 +1,18 @@
+✔ preload and explicit dry run do not call engine or mutate cached native records (2.156201ms)
+✔ every active source is gated before native sticky, decorators and forced activation; enabled matches keep native budget fields (5.668751ms)
+✔ forced or late injected denied entry stops final payload even if host catches scan error (1.539738ms)
+✔ unrecognized provider, missing result and wrong version fail closed and final readiness remembers failure (0.806465ms)
+✔ timeout and context changes reject late outcomes and never reuse last success (27.863024ms)
+✔ current state freshness is checked before recursion finishes and before final send (0.746424ms)
+✔ all eight host insertion anchors retain ordering after gate filtering; ordinary entries remain intact (2.301365ms)
+✔ actual entry point gates preset-added records after collection, awaits final guard and cancels all terminal paths (1.289832ms)
+✔ a cancelled scan finishing late cannot poison the next generation (0.598401ms)
+✔ late replacement cannot reuse a permitted entry identity with a different rule (0.809689ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 195.997104

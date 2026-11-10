@@ -1,17 +1,18 @@
-import {STYLE_CARD_ROLES,USER_POSITIONS,AESTHETICS,viewSelection,isDirectionCard} from './style-cards.js';
-import {selectedHeartDirections,HEART_DIRECTIONS} from '../heart-contract.js';
-import {mountThemeWorkbench} from '../theme-workbench.js';
-import {UTILITY_STYLE} from '../utility-style.js';
-import {languageView,setDefaultLanguage,setDialogueLanguage} from './language.js';
-import {mountChatLoadingSettings} from '../chat-loading.js';
-import {normalizeTransportMode} from './transport-modes.js';
-import {INITIATIVE_LEVELS,initiativeNotice} from './initiative.js';
-import {contextRecord,transportSummary,copyContextText,exportContextText} from './context-export.js';
-import {TRANSPORT_MODES} from './text-transport.js';
-import {mountTablePanel} from '../tables/panel.js';
-import {NARRATIVE as N} from '../settings-core.js';
-import {clone,configuredWorld,preferenceSettings,registry,register,resources,KINDS,TASKS,FEATURES,WORKFLOW_DETAILS,workflowDetail,contextOwner,defaultMode,resolveRoute,effectiveResources,validateResource,validateConfig,cleanExport} from './core.js';
-import {mountAppearanceSettings,APPEARANCE_OWNERS} from '../appearance-settings.js';
+// Historical UI retained only for compatibility regression; production entry points use Matrix forms.
+import {STYLE_CARD_ROLES,USER_POSITIONS,AESTHETICS,viewSelection,isDirectionCard} from '../../config/style-cards.js';
+import {selectedHeartDirections,HEART_DIRECTIONS} from '../../heart-contract.js';
+import {mountThemeWorkbench} from '../../theme-workbench.js';
+import {UTILITY_STYLE} from '../../utility-style.js';
+import {languageView,setDefaultLanguage,setDialogueLanguage} from '../../config/language.js';
+import {mountChatLoadingSettings} from '../../chat-loading.js';
+import {normalizeTransportMode} from '../../config/transport-modes.js';
+import {INITIATIVE_LEVELS,initiativeNotice} from '../../config/initiative.js';
+import {contextRecord,transportSummary,copyContextText,exportContextText} from '../../config/context-export.js';
+import {TRANSPORT_MODES} from '../../config/text-transport.js';
+import {mountTablePanel} from '../../tables/panel.js';
+import {NARRATIVE as N} from '../../settings-core.js';
+import {clone,configuredWorld,preferenceSettings,registry,register,resources,KINDS,TASKS,FEATURES,WORKFLOW_DETAILS,workflowDetail,contextOwner,defaultMode,resolveRoute,effectiveResources,validateResource,validateConfig,cleanExport} from '../../config/core.js';
+import {mountAppearanceSettings,APPEARANCE_OWNERS} from '../../appearance-settings.js';
 export function mountConfiguration(document,container,{store,host,tableService,getSettings,saveAppearance,saveAppearanceProfiles,fontService,chatLoading,onClose,onNative,onIdentity,onAssistant,initialTab='mode',initialView='',onApplied=()=>{},contextIO={},version='',onTitle=()=>{},embedded=false}){
  let snapshot=store.read(),draft=clone(snapshot.data),w=draft.worlds[snapshot.key],tab=['play','mode','theme','world','api','data','tables'].includes(initialTab)?initialTab:'mode',alive=true,busy=false,dirty=false,manualDirty=false,preferenceSave=Promise.resolve(),child=null,themeView=null,themeSlot=null,ticket=0,pendingWork=Promise.resolve();
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};

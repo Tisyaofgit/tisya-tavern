@@ -1,0 +1,10 @@
+{
+  "task": "virtual-phone-chain",
+  "first_verified_clock_utc": "2026-11-09T11:05:31Z",
+  "first_verified_clock_beijing": "2026-11-09T19:05:31+08:00",
+  "hard_deadline_utc": "2026-11-09T12:33:00Z",
+  "save_begin_by_utc": "2026-11-09T12:15:00Z",
+  "phase": "implementation",
+  "reason": "前轮已交付结束，用户明确新授权整条链路打包为虚拟手机；保守截短到12:33，不因等待或压缩重置",
+  "background_resume": false
+}

@@ -1,0 +1,85 @@
+TAP version 13
+# Subtest: cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+not ok 1 - cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat
+  ---
+  duration_ms: 106.254615
+  type: 'test'
+  location: '/workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:592:1'
+  failureType: 'testCodeFailure'
+  error: 'cold install must not silently mount the old identity page'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:599:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: cold-start identity saves and reopens a new role with the current preset and chat preserved
+not ok 2 - cold-start identity saves and reopens a new role with the current preset and chat preserved
+  ---
+  duration_ms: 105.605341
+  type: 'test'
+  location: '/workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:618:1'
+  failureType: 'testCodeFailure'
+  error: 'the production route must mount the actual Matrix identity page'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    openIdentityFromSettings (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:588:2)
+    async TestContext.<anonymous> (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:622:12)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+not ok 3 - cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer
+  ---
+  duration_ms: 86.05603
+  type: 'test'
+  location: '/workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:640:1'
+  failureType: 'testCodeFailure'
+  error: 'the production route must mount the actual Matrix identity page'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    openIdentityFromSettings (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:588:2)
+    async TestContext.<anonymous> (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:644:14)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+not ok 4 - cold-start identity keeps an explicit origin archive and unfinished-binding recovery route
+  ---
+  duration_ms: 83.890746
+  type: 'test'
+  location: '/workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:654:1'
+  failureType: 'testCodeFailure'
+  error: 'the production route must mount the actual Matrix identity page'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    openIdentityFromSettings (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:588:2)
+    async TestContext.<anonymous> (file:///workspace/scratch/cbf451dcd23c/coldstart-fix/tests/shell.test.js:657:64)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 808.233605

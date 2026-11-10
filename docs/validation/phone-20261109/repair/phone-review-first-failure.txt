@@ -1,0 +1,49 @@
+✔ 元数据是单一真源，首次空值才初始化；不产生 localStorage 镜像 (8.056114ms)
+✔ 损坏存档拒绝，不拿空种子覆盖原始值 (0.808268ms)
+✔ 同 revision 的外部修改也构成冲突，较新原值保留 (0.389036ms)
+✔ 原生持久保存失败恢复当前内存原值，不声称原子CAS (0.390358ms)
+✔ 切换聊天后旧 storage 拒绝写入；新聊天没有收到旧值 (0.267073ms)
+✔ 下一轮原生请求追加冻结提示词；本轮绑定幂等，正文与草稿不被代发 (16.592462ms)
+✔ 完成后只接纳当前稳定来源一次；再次重渲染/对账不重复楼层与确认 (10.232392ms)
+✔ 同 UID 换候选按 raw SHA 分支；旧定格持续读取旧状态 (16.574165ms)
+✔ pending_previous 只对账已经采纳的原生候选；明确采纳后才显示新状态 (7.540358ms)
+✔ 删除原生源回退手机投影，旧快照保留且不按当前值补 (7.821471ms)
+✔ prepare 后历史变化阻止本次注入；停止保留待发内容 (3.800755ms)
+✔ 缺少手机扩展不消费操作，原生正文保留且状态可恢复 (3.867265ms)
+✔ 来源缺少前一原生用户回合绑定时明确拒绝，不越权接纳 (3.377106ms)
+✔ 自定义 reply/extra 标签规范化只供协议解析，来源仍使用原文SHA (5.825194ms)
+✔ stop 与 prepare 持久提交交错也回收已知请求，不留下新prepared锁 (2.375828ms)
+✔ 切聊天不擅自宣布旧请求结束；明确恢复先核原生空闲并保留旧源 (3.456707ms)
+✔ 冷启先对账已完成原生输出，恢复按钮不会把已完成请求判失败 (5.757713ms)
+✔ 正文marker仅挂载同源只读冻结页，保留code中的字面量与会话归属 (26.751655ms)
+✔ 正文marker拒绝跨源页面，不允许以当前状态替代未找到的冻结来源 (2.590261ms)
+✔ 候选接线包含实际双预设hook与延后候选归档、显式恢复、聊天iframe门禁 (10.000373ms)
+▶ 被拒的坏JSON、错ack、错request与坏引用保留证据，冷重开后下一轮仍可成功
+  ✔ json (9.229171ms)
+  ✔ ack (9.217985ms)
+  ✔ request (9.465968ms)
+  ✔ marker (10.505213ms)
+✔ 被拒的坏JSON、错ack、错request与坏引用保留证据，冷重开后下一轮仍可成功 (39.24299ms)
+✔ 被拒候选重骰复用原请求；修正源文本可重新接纳，不把旧失败当新结果 (5.794358ms)
+✖ 有精确原生父分支元数据才接管复制存档，切点回退与冷重开均保留母分支 (6.708124ms)
+✔ 普通复制、错父会话、跨角色及未知在途分支不自动改归属 (3.030535ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 27
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 525.235711
+
+✖ failing tests:
+
+test at tests/phone-host.test.js:201:1
+✖ 有精确原生父分支元数据才接管复制存档，切点回退与冷重开均保留母分支 (6.708124ms)
+  Error: 手机存档无法读取；原始数据未被覆盖
+      at fail (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/phone-core.mjs:9:57)
+      at importPhone (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/phone-core.mjs:64:57)
+      at file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/phone-core.mjs:278:263 {
+    code: 'PHONE_ARCHIVE_CORRUPT',
+    details: { cause: '无法读取网络资料档案；原始数据未被覆盖', code: 'ARCHIVE_CORRUPT' }
+  }

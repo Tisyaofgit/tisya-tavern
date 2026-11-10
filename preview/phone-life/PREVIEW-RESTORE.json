@@ -1,0 +1,365 @@
+{
+  "schema": "tisya-phone-life-preview-restore/1",
+  "artifact": "independent-local-phone-life-interactive-ui-candidate",
+  "created_at_utc": "2026-11-09T14:30:15Z",
+  "created_at_beijing": "2026-11-09T22:30:15+08:00",
+  "repository": "Tisyaofgit/tisya-tavern",
+  "candidate_branch": "candidate/phone-life-preview-20261109",
+  "repository_relative_root": "preview/phone-life",
+  "immutable_parent": {
+    "commit": "4586225b7e3e3e60a0ea6ab6f541b5ea4a13d61f",
+    "tree": "91db7cfa9961077804eef039992d330736300927",
+    "source": "prior verified remote Git receipt and phone-full-restore-manifest; parent agent confirmed exact full hashes"
+  },
+  "scope": "All files present under preview/phone-life at manifest creation except this manifest itself; formal runtime and prior delivered phone HTML remain independent.",
+  "self_exclusion": "PREVIEW-RESTORE.json",
+  "file_count": 37,
+  "total_size_bytes": 533898,
+  "content_tree_sha1_excluding_self": "19fea1dcf7410eb7b5e02c5c91171108ccb56273",
+  "final_git_anchor": {
+    "rule": "The exact final commit containing this manifest, recorded in the root save receipt, is the new immutable preview anchor. The immutable_parent is not the new preview commit.",
+    "status_at_manifest_creation": "pending_root_git_persistence",
+    "final_commit_in_manifest": null
+  },
+  "clock": {
+    "first_recorded_utc": "2026-11-09T13:26:00Z",
+    "first_recorded_precision": "minute",
+    "first_recorded_beijing": "2026-11-09T21:26:00+08:00",
+    "hard_deadline_utc": "2026-11-09T14:45:00Z",
+    "hard_deadline_beijing": "2026-11-09T22:45:00+08:00",
+    "phase": "closeout",
+    "deadline_reset": false
+  },
+  "validation": {
+    "final_tests": {
+      "path": "evidence/final-tests.tap",
+      "tests": 56,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "sha256": "c2cbb56776c6a949e9ce8aaa4b76ad10b083df6d72ad19ccf0e731cbd86f4ebf",
+      "classification": "Node tests, bundled DOM, modeled storage concurrency; not a real browser run"
+    },
+    "real_browser": "untested; browser executable unavailable, original failure retained",
+    "host_integration": "untested",
+    "real_model_calls": "untested",
+    "android_device": "untested",
+    "audio_in_real_browser": "untested",
+    "local_file_hashes": "verified while generating manifest",
+    "empty_directory_restore_and_remote_persistence": "pending root; this manifest alone is not a persistence or recovery receipt"
+  },
+  "recovery": {
+    "destination_rule": "Restore the exact final candidate commit to a nonexistent destination directory; do not overwrite an active save or source tree.",
+    "steps": [
+      "Read the final Git save receipt to obtain the full new candidate commit and tree.",
+      "Restore preview/phone-life from that exact commit into the empty destination.",
+      "For each listed path compare byte length, SHA-256, Git blob SHA-1 and file mode. Require all entries and reject unexpected files except PREVIEW-RESTORE.json.",
+      "Compare the excluding-self content tree SHA-1; verify the containing commit/tree from the Git receipt.",
+      "Use dist/phone-life.html to open the UI candidate. User-created media and play-state are separate browser data and require the user-exported full backup JSON."
+    ],
+    "user_data_in_source_snapshot": false
+  },
+  "next_phase": {
+    "first": "UI review with user: standalone eight-app visual and interaction candidate, record accepted changes and unresolved behavior.",
+    "then": "Only after explicit approval, design and implement approved host integration; keep current formal source baseline intact.",
+    "auto_resume": false
+  },
+  "files": [
+    {
+      "path": "DATA-CONTRACT.md",
+      "size_bytes": 6812,
+      "sha256": "04616f7e875e435af042e8e49f65c533ceb11eb9cfc547d781c332510915075f",
+      "git_blob_sha1": "9bfddb68469d9abe7cb4333abde4bd16a04fef8b",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "INTERFACE.md",
+      "size_bytes": 5457,
+      "sha256": "88862dacb91cab8fe1b05036192c57f7ee52a1cda3b796c4636831f223de042e",
+      "git_blob_sha1": "440830179c96dd838f265bfdf5907ec6edb524a5",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 7499,
+      "sha256": "309f6a7c00c682bd429dbc1d7a1ebf4a68c90d1c86b20650c02128e56296a5d0",
+      "git_blob_sha1": "27b90f7e4e4198cd1baf18cbef033092696caaf2",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "app.css",
+      "size_bytes": 10166,
+      "sha256": "a7c0979946de15af8eada45da986706d93cc76583c676c658b05a9f015dba271",
+      "git_blob_sha1": "0ae74f0bf93e029882a6c8666f3996533d8d2847",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "app.mjs",
+      "size_bytes": 28094,
+      "sha256": "5cae0fb7332fe20b6c91c3742952beb8efce32cb479649d7d5fab7a20f10ce59",
+      "git_blob_sha1": "7df7b7fcb01a3dc5996be74866a8e2b02d875661",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "assets.mjs",
+      "size_bytes": 4651,
+      "sha256": "72f7f97eb2ca3d198b729e3a187628939a6120c3f5f35de6e3502d6bba943016",
+      "git_blob_sha1": "f5bdf9c79dc5c461d7aa14367b80f3f38be49551",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "build.mjs",
+      "size_bytes": 1091,
+      "sha256": "d49004851bd17dd5f8cd012e1b1c933e3e4db1f009fa16b09226d8fde83d0370",
+      "git_blob_sha1": "5928ba61bc7a1e62a739d3dbc860a25703a880bd",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "bundle.test.mjs",
+      "size_bytes": 7608,
+      "sha256": "30115c1f92415e2ad7508a2c0a28beae79863f69bb00a155d7fcc43aeb6216ee",
+      "git_blob_sha1": "311ab8b317798bb8eea2d70a31d17cd800c12373",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "core.mjs",
+      "size_bytes": 31520,
+      "sha256": "82323be77e19eb19bb5b539c97c1532aa9b82051cc415fb97915e65052c6f4cc",
+      "git_blob_sha1": "c58e10a778f8f02f2bea2a1f111d13deef7f19d6",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "core.test.mjs",
+      "size_bytes": 16050,
+      "sha256": "85f2e6149b8dc5ac0578e672f44fd37f6b49fbe8fa9f3957dda82b3fd0385230",
+      "git_blob_sha1": "e1f17594a72ead7e10c63203661b4905edd87cd2",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "dist/phone-life.html",
+      "size_bytes": 207622,
+      "sha256": "601835790e863a12ef31bf58cca0bc441577f968cac810bf98ca0611fa1ff3a1",
+      "git_blob_sha1": "6411ba02e37bd79cc566051b71a7b82c01bd0a96",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/all-final-first.tap",
+      "size_bytes": 4958,
+      "sha256": "d18efd1ed09a82ea6bdd8e99f4d8fe4fffd9316a1ca1d5210c9b8b814f76a2f3",
+      "git_blob_sha1": "fdc78b5d0ee0c21735c1111e140cb7089a2cbe4b",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/app-at-storage-test-start.mjs",
+      "size_bytes": 28014,
+      "sha256": "ef2ed3cdc64e38f4f5d788eb10fca390b526d118ddac0cea5a040d38d89b55e8",
+      "git_blob_sha1": "625acaebf7bf7f02fd0e59a8945a35460b555b06",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/app-with-original-storage-functions.mjs",
+      "size_bytes": 27674,
+      "sha256": "45dced45616272ee51b4a828161afab5bb163e873daf77fafa29c8e81c7fa7e1",
+      "git_blob_sha1": "a057f0e6ee242bc8d13d25f1f904ec0f661d0516",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/browser-download-probe-body.bin",
+      "size_bytes": 195,
+      "sha256": "5b131ca14aa96311d3432b0062c7443d3b0e6346ec279bd376a75f0a76bcd5d7",
+      "git_blob_sha1": "474c93f493dbb57909f6650e0a126dcace14b17e",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/browser-download-probe.txt",
+      "size_bytes": 1479,
+      "sha256": "4afa3a245f01a85098254c94995c234b5eea14e8282387d52c43b174d8566c5e",
+      "git_blob_sha1": "dd106df7a0b6874221ff2c2936699700925c46fa",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/browser-launch.txt",
+      "size_bytes": 932,
+      "sha256": "96433d6cfa3df5cf55c9c6e457fbc3d6797c380972a52bea4096d894cd466195",
+      "git_blob_sha1": "785e0ec418ad017a6b6a6c4d51d2c0eda09645f9",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/bundle-first.tap",
+      "size_bytes": 807,
+      "sha256": "86d178f359cf3e0d5a83781d696ff8dc56a3af2f6d63b55b82bc87f35e1046a2",
+      "git_blob_sha1": "9674ae0f20de8537b583e4505a0d789f111df023",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/final-tests.tap",
+      "size_bytes": 5249,
+      "sha256": "c2cbb56776c6a949e9ce8aaa4b76ad10b083df6d72ad19ccf0e731cbd86f4ebf",
+      "git_blob_sha1": "5fca048f83f58dc1bf403821df9e1144487761eb",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/pre-freeze-tests.tap",
+      "size_bytes": 5053,
+      "sha256": "1574558fb1c570729a8c049a67f5f5c2259f62fcd472ea7d212315ec566deca1",
+      "git_blob_sha1": "0598279b96039cad7e18ac64bd557c0f6564dd05",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/social-final-tests.tap",
+      "size_bytes": 4694,
+      "sha256": "b38b1dbf5634837f5d6811abbbfa333034d42cef70bfd5cec4786b0dae7f4b0e",
+      "git_blob_sha1": "a4f013e1bffe28d5856f308f6a34e67694f0e626",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/social-first-tests.tap",
+      "size_bytes": 3716,
+      "sha256": "c75b522b334d058d7c8709254fae8cba2a3014dc998f654ea8962ab272c6a392",
+      "git_blob_sha1": "3cb266e08d93a65af96d6c5161cbabba6d4c4cde",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/social-second-tests.tap",
+      "size_bytes": 3717,
+      "sha256": "dc80d7f859ddd4a4b6f442c5d56ea02d3ef3510915cef773e8dbb9f14c547b84",
+      "git_blob_sha1": "3c3edeace92325bdf6a07e664df9975ac9b089e2",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/storage-green.txt",
+      "size_bytes": 317,
+      "sha256": "932f124014841f539c996466e86139b7b85a8c437093b27a701a4753b28c70b5",
+      "git_blob_sha1": "fe458a163b548d449ea4d30ee977ba82a480ebd8",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/storage-initial-invocation.txt",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/storage-red.txt",
+      "size_bytes": 1853,
+      "sha256": "fa94bcbdfa0fe788ee80c681cd5009321ddaa5ed3923f000ce5d352b0806c273",
+      "git_blob_sha1": "f7b8a3ac926871b28413023b1599c42929795214",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/storage-regression-context.json",
+      "size_bytes": 741,
+      "sha256": "77a95ba670646352d88e344098dfc83de0e4f53d991bb8670a541080ff3b3577",
+      "git_blob_sha1": "871591d3903edf11df743dc3c3f958e0653e3841",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/utility-dom-final.txt",
+      "size_bytes": 635,
+      "sha256": "b45135be607d18332093ed754de3aeb3fefaf20a9cfeb7ee6c08f3835e37405b",
+      "git_blob_sha1": "0b9f2e8255bb9fd08a9f3539ecc8331ed53908de",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/utility-syntax-first.txt",
+      "size_bytes": 1212,
+      "sha256": "6a1e85aa2d8cb3ddd6d3dd8ff7de55fa641bb0eb361639b069bf02e11556d75d",
+      "git_blob_sha1": "1cc67d8e8cb9fff219a593cfe2eba257bdf08e5f",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "evidence/utility-syntax-second.txt",
+      "size_bytes": 1725,
+      "sha256": "1a3f238e48ca2715482c689d1a87e4f9bb64cdf1f5d603630803505a39667db9",
+      "git_blob_sha1": "c1df40046f69c6a7461534768c542ffdd74f31a6",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "index.html",
+      "size_bytes": 2603,
+      "sha256": "a03930ea27d0427f73327589d03c2cfdd4bc87fd3d14bf36584ae13d04db87a8",
+      "git_blob_sha1": "5e1bc485dc180f6bbaedbcf7c4925d42efdb048e",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "social.css",
+      "size_bytes": 10955,
+      "sha256": "a0aa4c35892b4d0538ba619db660293c5178b8d57a488de42c4f56d7ffedf5c3",
+      "git_blob_sha1": "2072f34c9af4cd3b3224b5c4a9086b52dcbfdc32",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "social.mjs",
+      "size_bytes": 35994,
+      "sha256": "3269255f724e3b08486aeee3c216e0d899de2f91d7bdc4c3be36b12848dd0b1d",
+      "git_blob_sha1": "772d527b18450a008afc67f857f3356adb97d839",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "social.test.mjs",
+      "size_bytes": 12640,
+      "sha256": "12c42d16b6afcc37c0e701e0d0da2897c4671eebabf8ae745d984af284648479",
+      "git_blob_sha1": "507f3e089a5d7d6fdbf0681644ccac34fc451f61",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "storage.test.mjs",
+      "size_bytes": 4659,
+      "sha256": "7863f41f7fbe40664dadb42b9630275a334413d066e6a0b55036bc40732c4050",
+      "git_blob_sha1": "7d01f7f2d38fbcbe3c389c62db0491788503a70c",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "utility-views.mjs",
+      "size_bytes": 29767,
+      "sha256": "06f59a8d9b8052c401f1a59ab8ad2b0b2175b85ddab7291bb4cb2f10a39c4e59",
+      "git_blob_sha1": "328bf37e1d9407dbab5999c07012f93855f82f13",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "utility.css",
+      "size_bytes": 17739,
+      "sha256": "5026d06841c7a884f530590662fbabe32ea5cf2b9f8b9ec47ad7f3c63601bafb",
+      "git_blob_sha1": "a06450dedc446fcebb25340c8a779cd08d8d4162",
+      "git_mode": "100644",
+      "filesystem_mode": "0644"
+    }
+  ]
+}

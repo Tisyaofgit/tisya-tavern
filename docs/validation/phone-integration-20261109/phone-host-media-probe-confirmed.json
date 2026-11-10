@@ -1,0 +1,13 @@
+{
+  "utc": "2026-11-09T15:41:11.107Z",
+  "currentAudioId": "audio-after",
+  "frozenAudioId": "audio-before",
+  "srcBefore": "blob:proof-1",
+  "srcAfter": "blob:proof-2",
+  "playbackChanged": true,
+  "backupMediaIds": [
+    "audio-after"
+  ],
+  "backupHasFrozenOriginal": false,
+  "archiveRetainsOriginalSnapshot": true
+}

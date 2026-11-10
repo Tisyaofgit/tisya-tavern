@@ -1,0 +1,14 @@
+{
+  "started_utc": "2026-11-10T07:00:44.154486+00:00",
+  "ended_utc": "2026-11-10T07:02:52.254176+00:00",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "exit_code": 1,
+  "summary": {},
+  "source_files_checked": 1078,
+  "source_unchanged": true,
+  "changed_files": [],
+  "log": "docs/validation/default-activation-20261110/full-suite-first.log"
+}

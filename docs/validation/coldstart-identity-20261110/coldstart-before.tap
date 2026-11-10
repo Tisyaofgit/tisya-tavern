@@ -1,0 +1,4 @@
+✖ cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat (108.741043ms)
+✖ cold-start identity saves and reopens a new role with the current preset and chat preserved (113.463969ms)
+✖ cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer (85.333427ms)
+✖ cold-start identity keeps an explicit origin archive and unfinished-binding recovery route (78.696613ms)

@@ -1,0 +1,265 @@
+/* Isolated media skins; no body, root or global element mutations. */
+.social-media{--sm-ink:#262a31;--sm-muted:#7d8490;--sm-line:#e8ebee;--sm-blue:#4385b4;--sm-orange:#d5763b;color:var(--sm-ink);background:#fff;min-width:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55}
+.social-media *{box-sizing:border-box}
+.social-media button,.social-media input{font:inherit}
+.social-media button{cursor:pointer;border:0;background:transparent;color:inherit}
+.social-media button:disabled{cursor:default;opacity:.5}
+.social-media button:focus-visible,.social-media a:focus-visible,.social-media input:focus-visible{outline:2px solid #3288bb;outline-offset:3px}
+.social-media p{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.social-media h1,.social-media h2,.social-media h3{margin:0;font-size:inherit}
+.social-media h1{font-size:22px;line-height:1.45;font-weight:650;letter-spacing:-.3px}
+.social-media h2{font-size:15px;font-weight:600}
+.social-media h3{font-size:15px;font-weight:600}
+.social-media img{display:block;max-width:100%;object-fit:cover}
+.social-media small{font-size:11px}
+.social-media .avatar{width:32px;height:32px;flex:none;border-radius:50%;overflow:hidden}
+.sm-header{height:55px;display:flex;align-items:center;justify-content:space-between;padding:0 19px;border-bottom:1px solid var(--sm-line);background:#fff;gap:12px}
+.sm-header>div{display:flex;align-items:center;gap:13px;min-width:0}
+.sm-brand{font-size:12px;font-weight:750;letter-spacing:1.1px;white-space:nowrap}
+.sm-section-label{font-size:12px;color:var(--sm-muted);border-left:1px solid #ddd;padding-left:12px;white-space:nowrap}
+.sm-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;font-size:10px;line-height:1.4;padding:3px 7px;border-radius:3px;background:#edf1f5;color:#718294;vertical-align:middle}
+.sm-demo{color:#9499a1;background:#f2f3f4;white-space:nowrap;font-size:9px}
+.sm-page-body{padding:22px 21px 28px;min-width:0}
+.sm-description{font-size:13px;color:#6e7580;line-height:1.85;margin-top:12px!important}
+.sm-owner{display:flex;align-items:center;gap:9px;margin:16px 0}
+.sm-owner strong{display:block;font-size:12px;font-weight:550}
+.sm-owner small{display:block;color:#9299a2;margin-top:3px;font-size:10px}
+.sm-metrics{display:flex;gap:20px;margin-top:12px;flex-wrap:wrap}
+.sm-metric{display:inline-flex;gap:5px;align-items:baseline}
+.sm-metric strong{font-weight:500;font-size:12px;color:#68717d}
+.sm-metric small{color:#9aa1aa;font-size:10px}
+.sm-action-row{display:flex;gap:12px;align-items:center;margin:17px 0;flex-wrap:wrap}
+.sm-action-row button{border:1px solid #e2e6ea;padding:6px 13px;border-radius:5px;font-size:11px;background:#fff}
+.sm-link{color:var(--sm-blue)!important;font-size:12px;text-decoration:none;line-height:1.5;cursor:pointer}
+button.sm-link{padding:0;text-align:left}
+.sm-unavailable{color:#9199a3!important;cursor:default}
+.sm-related{margin-top:23px;border-top:1px solid var(--sm-line);padding-top:17px}
+.sm-related h2{margin-bottom:8px}
+.sm-related-row{padding:10px 0;border-bottom:1px solid #f0f2f4}
+.sm-related-row:last-child{border-bottom:0}
+.sm-related-row small{display:block;color:#949ba5;margin-top:4px;font-size:10px}
+.sm-tabs{display:flex;gap:26px;border-bottom:1px solid var(--sm-line);margin-top:18px;min-height:43px}
+.sm-tabs button{padding:10px 0;font-size:12px;color:#9399a2;min-height:43px;white-space:nowrap}
+.sm-tabs button[aria-pressed=true]{border-bottom:2px solid #4d7798;color:#3b5f7a;font-weight:600}
+.sm-empty{padding:32px 10px;text-align:center;font-size:12px;color:#9aa1aa}
+.sm-footnote{font-size:10px!important;line-height:1.7;color:#a0a6af;margin-top:16px!important}
+.sm-facts{padding:0;margin:18px 0;font-size:12px}
+.sm-facts>div{display:grid;grid-template-columns:75px minmax(0,1fr);padding:9px 0;gap:10px;border-bottom:1px solid #f0f1f2}
+.sm-facts dt{color:#9298a2}
+.sm-facts dd{margin:0;color:#626b76;overflow-wrap:anywhere;white-space:pre-wrap}
+.sm-eyebrow{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#88909b}
+.sm-cover-missing{display:grid;place-items:center;min-height:100px;background:#eef0f2;color:#9aa1aa;font-size:11px}
+
+/* Live: dark player with an explicitly synchronized chat replay. */
+.sm-live .sm-brand{color:#257f9b}
+.sm-player{background:#101820;color:#edf3f6}
+.sm-player-image{position:relative;overflow:hidden;aspect-ratio:16/9;isolation:isolate}
+.sm-player-image>img{width:100%;height:100%;object-fit:cover;opacity:.85}
+.sm-player-image:after{position:absolute;inset:0;content:"";background:linear-gradient(180deg,#0b101c44,transparent 30%,#07131fc9);pointer-events:none;z-index:0}
+.sm-player-top{position:absolute;top:13px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:start;gap:10px;z-index:2}
+.sm-on-dark{background:#071921aa;color:#9fd9df;border:1px solid #659da94d;font-size:9px}
+.sm-playback-notice{font-size:9px;color:#a0b1be;text-align:right;max-width:70%;line-height:1.5}
+.sm-scene{position:absolute;left:24px;bottom:27px;z-index:2;max-width:80%}
+.sm-scene strong{display:block;font-size:24px;font-weight:500;letter-spacing:1px;color:#f1f5f8}
+.sm-scene span{display:block;font-size:10px;color:#a4b6c8;margin-top:8px;letter-spacing:1px}
+.sm-danmaku-layer{position:absolute;inset:50px 13px 75px;z-index:1;pointer-events:none}
+.sm-danmaku{position:absolute;display:inline-block;background:#0c17235e;color:#eaf1f6;max-width:75%;padding:4px 9px;border-radius:15px;font-size:11px;line-height:1.4;text-shadow:0 1px 2px #0009}
+.sm-danmaku-0{top:0;right:4%}
+.sm-danmaku-1{top:27%;left:6%}
+.sm-danmaku-2{top:53%;right:15%}
+.sm-player-controls{display:flex;align-items:center;gap:13px;padding:12px 16px;background:#101820}
+.sm-play-button{flex:none;padding:5px 9px!important;border:1px solid #40505e!important;color:#e6eef4!important;border-radius:4px;font-size:11px!important;min-width:55px}
+.sm-player-clock{font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;color:#a1b2c1}
+.sm-seek{display:block;min-width:20px;width:100%;height:17px;margin:0;accent-color:#81b4cf;cursor:pointer}
+.sm-chapters{display:flex;gap:6px;padding:0 15px 14px;overflow-x:auto;scrollbar-width:thin}
+.sm-chapter{flex:none!important;font-size:9px!important;border:1px solid #273644!important;border-radius:3px;padding:5px 7px!important;color:#7e94a8!important;white-space:nowrap}
+.sm-chapter.sm-reached{border-color:#3d5f73!important;color:#b9d6e4!important}
+.sm-live-chat{margin-top:24px;border:1px solid #e6ebef;background:#fbfcfd;border-radius:5px;overflow:hidden}
+.sm-chat-heading{display:flex;justify-content:space-between;align-items:center;padding:12px 13px;border-bottom:1px solid #e8edf0}
+.sm-chat-heading h2{font-size:13px}
+.sm-chat-rows{padding:9px 13px;min-height:130px;max-height:275px;overflow-y:auto}
+.sm-chat-row{display:grid;grid-template-columns:36px max-content minmax(0,1fr);gap:7px;font-size:12px;padding:7px 0;align-items:start}
+.sm-chat-row time{font-size:9px;color:#a1a8b2;margin-top:2px;font-variant-numeric:tabular-nums}
+.sm-chat-row strong{font-size:10px;color:#62859b;font-weight:500;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.sm-chat-row>span{font-size:12px;color:#555f6c;overflow-wrap:anywhere}
+.sm-live-chat>.sm-footnote{border-top:1px solid #eef0f3;padding:10px 13px;margin-top:0!important;font-size:9px!important}
+
+/* Video: familiar plain metadata, source cards and comments. */
+.sm-video .sm-brand{color:#5388ad}
+.sm-video-info .sm-action-row{padding-bottom:1px}
+.sm-video-comments{margin-top:20px}
+.sm-video-comments>h2{font-size:14px;padding-bottom:12px;border-bottom:1px solid var(--sm-line)}
+.sm-video-comment{display:flex;gap:9px;padding:16px 0;border-bottom:1px solid #edf0f3;align-items:flex-start}
+.sm-video-comment>.avatar{width:28px;height:28px}
+.sm-comment-body{flex:1;min-width:0}
+.sm-comment-author{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.sm-comment-author strong{font-size:11px;font-weight:500;color:#6e8191}
+.sm-comment-author time{font-size:9px;color:#b0b5bc}
+.sm-comment-body>p{font-size:13px;line-height:1.75;margin-top:5px}
+.sm-time-link{display:inline!important;font-size:11px!important;color:#498bb8!important;background:#edf5fa!important;padding:1px 4px!important;border-radius:3px;margin-right:7px}
+.sm-comment-count{display:block;font-size:10px;color:#a2a8b0;margin-top:8px}
+.sm-nested-comment{margin-top:11px;background:#f7f8fa;padding:10px;border:0;border-radius:3px}
+.sm-nested-comment>.avatar{width:22px;height:22px}
+.sm-nested-comment .sm-comment-body>p{font-size:12px}
+.sm-player-short{max-width:100%;background:#0b1119}
+.sm-player-short .sm-player-image{aspect-ratio:9/13;max-height:560px;max-width:360px;margin:0 auto}
+.sm-player-short .sm-player-image>img{width:100%;height:100%;object-fit:cover}
+.sm-player-short .sm-player-top{left:13px;right:13px}
+.sm-player-short .sm-scene{left:20px;bottom:40px}
+.sm-short .sm-scene strong{font-size:26px;max-width:240px;line-height:1.4}
+
+/* Music: art-led album pages; charts stay tabular and retain their units. */
+.sm-music .sm-brand{color:#716778}
+.sm-music .sm-header{background:#faf9f6;border-bottom-color:#ebe9e4}
+.sm-music-hero{display:flex;align-items:center;gap:23px;padding:30px 24px;background:linear-gradient(135deg,#e8e3d7,#f4f1eb 62%,#f2e7dc)}
+.sm-album-cover{width:154px;height:154px;flex:none;border:1px solid #ffffff80;box-shadow:0 6px 20px #6b594222}
+.sm-album-info{min-width:0}
+.sm-album-info .sm-eyebrow{font-size:9px;color:#948975}
+.sm-album-info h1{font-size:24px;letter-spacing:-.6px;margin:9px 0;line-height:1.3;overflow-wrap:anywhere}
+.sm-album-artist{font-size:13px;font-weight:500;color:#6d695f}
+.sm-release{font-size:10px;color:#948d80;margin-top:12px!important}
+.sm-album-info>small{display:block;margin-top:6px;color:#a29988;font-size:9px}
+.sm-audio-unavailable{display:flex;align-items:center;gap:14px;justify-content:space-between;margin:20px 0 4px;padding:12px 0;border-top:1px solid #f0ede8}
+.sm-audio-unavailable>span{font-size:10px;color:#aaa298}
+.sm-audio-unavailable button{flex:none;padding:6px 11px;font-size:11px;border:1px solid #d8d3cb;border-radius:14px;color:#7b746b}
+.sm-music .sm-tabs button[aria-pressed=true]{border-bottom-color:#8c7b69;color:#776b60}
+.sm-track-list{padding-top:8px}
+.sm-track{display:grid;grid-template-columns:25px minmax(0,1fr) 42px;gap:12px;align-items:center;min-height:66px;border-bottom:1px solid #efede9}
+.sm-track-number{font-size:11px;color:#bab2a8}
+.sm-track>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sm-track .sm-link{font-size:14px;color:#655d54!important;font-weight:500}
+.sm-track .sm-badge{background:#f1e9dd;color:#ac8d63;padding:2px 5px;font-size:8px}
+.sm-track-duration{font-size:10px;color:#b0a79c;font-variant-numeric:tabular-nums;text-align:right}
+.sm-song-details{padding:22px 0 0;display:grid;gap:13px}
+.sm-song-details>p{font-size:12px;color:#9d9388}
+.sm-song-stat{background:#f8f6f1;border-left:2px solid #bdab8b;padding:15px 17px;margin-top:6px}
+.sm-song-stat strong{font-size:25px;font-weight:500;color:#776b59;display:inline-block;margin-right:9px;font-variant-numeric:tabular-nums}
+.sm-song-stat>span{font-size:10px;color:#9d917e}
+.sm-song-stat small{display:block;color:#b1a799;font-size:9px;margin-top:7px}
+.sm-chart .sm-page-body{padding-top:27px}
+.sm-chart-intro{padding:22px 0 19px}
+.sm-chart-intro h2{font-size:21px;margin-top:6px;font-weight:650}
+.sm-period{font-size:10px;color:#9d9b95;margin-top:8px!important}
+.sm-metric-definition{font-size:11px;color:#8d806d;margin-top:6px!important}
+.sm-chart-table{border-top:2px solid #79756d;border-bottom:1px solid #e7e5df}
+.sm-chart-table-head{display:grid;grid-template-columns:44px minmax(0,1fr) 100px;gap:10px;padding:10px 0;background:#f7f7f4;color:#9d9b94;font-size:9px}
+.sm-chart-table-head>span:first-child{padding-left:4px}
+.sm-chart-table-head>span:last-child{text-align:right;padding-right:7px}
+.sm-chart-table-row{display:grid;grid-template-columns:44px minmax(0,1fr) 100px;grid-template-rows:auto auto;gap:3px 10px;padding:17px 3px;border-top:1px solid #ecebe6;align-items:center}
+.sm-rank{grid-column:1;grid-row:1/3;align-self:center}
+.sm-rank strong{display:block;font-size:23px;font-weight:500;color:#837a6d;line-height:1}
+.sm-rank small{display:block;font-size:8px;color:#b7afa4;margin-top:7px}
+.sm-chart-track{grid-column:2;grid-row:1;min-width:0}
+.sm-chart-track strong,.sm-chart-track .sm-link{font-size:13px;color:#5b5c5b!important;font-weight:550}
+.sm-chart-artist{grid-column:2;grid-row:2;color:#a5a29b;font-size:10px!important}
+.sm-chart-value{grid-column:3;grid-row:1/3;text-align:right}
+.sm-chart-value strong{font-size:15px;font-weight:500;display:block;color:#787466;font-variant-numeric:tabular-nums}
+.sm-chart-value small{font-size:9px;color:#b1aa9f;display:block;margin-top:3px}
+.sm-method-note{margin-top:17px!important;color:#a39b8e;font-size:11px;line-height:1.8;padding:12px;background:#faf8f3}
+
+/* Schedule: calendar grid and public agenda, with an explicit timezone. */
+.sm-schedule .sm-brand{color:#668173}
+.sm-schedule .sm-header{background:#f7faf8}
+.sm-timezone{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+.sm-timezone>.sm-badge{color:#5b8b72;background:#ebf3ee}
+.sm-timezone>span:last-child{font-size:10px;color:#87988e}
+.sm-calendar{margin-top:20px;border:1px solid #e4ebe6;border-radius:4px;overflow:hidden}
+.sm-calendar-title{display:flex;justify-content:space-between;align-items:center;padding:17px 16px 13px}
+.sm-calendar-title h2{font-size:17px;color:#5a6f61;font-weight:550}
+.sm-calendar-title .sm-link{font-size:10px;color:#8c9f91!important}
+.sm-calendar-weekdays,.sm-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.sm-calendar-weekdays{padding:8px 5px;background:#f6f8f5;font-size:10px;color:#a2aea3;text-align:center}
+.sm-calendar-grid{padding:4px 5px 10px}
+.sm-calendar-day,.sm-calendar-empty{min-height:48px;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.sm-calendar-day{font-size:12px!important;color:#a6ada6!important;border-radius:4px}
+.sm-calendar-day>span{display:grid;place-items:center;width:27px;height:27px;border-radius:50%}
+.sm-calendar-day.sm-has-event{color:#4a6e57!important;font-weight:550}
+.sm-calendar-day i{width:4px;height:4px;background:#85a28b;border-radius:50%;position:absolute;bottom:4px}
+.sm-calendar-day i.sm-postponed-dot{background:#c9a778}
+.sm-calendar-day.sm-today>span{background:#edf2e8;color:#769263}
+.sm-calendar-day.sm-selected{background:#e8f1eb}
+.sm-calendar-day[aria-pressed=true]{outline:1px solid #a7bdac;outline-offset:-3px}
+.sm-list-title{margin:24px 0 6px!important;font-size:13px!important;color:#748474}
+.sm-event-row{display:grid;grid-template-columns:58px minmax(0,1fr);gap:16px;padding:20px 0;border-bottom:1px solid #e9eee8}
+.sm-event-date{padding-top:3px}
+.sm-event-date strong{display:block;font-size:15px;font-weight:500;color:#869682;white-space:nowrap}
+.sm-event-date small{display:block;font-size:9px;color:#afb6a9;margin-top:6px}
+.sm-event-body .sm-badge{font-size:8px;background:#eef4ed;color:#899d80}
+.sm-event-body .sm-status-ended{color:#9da69e;background:#f0f3f0}
+.sm-event-body .sm-status-postponed{color:#b09a79;background:#f5f0e7}
+.sm-event-body h3{margin:7px 0;font-size:14px}
+.sm-event-location{font-size:11px;color:#9caa9e}
+.sm-event-time{font-size:10px;color:#7b8c7d;margin-top:8px!important}
+.sm-event-secondary{display:block;font-size:9px;color:#b5beb3;margin-top:4px}
+.sm-event-actions{display:flex;align-items:center;gap:16px;margin-top:12px;flex-wrap:wrap}
+.sm-event-actions .sm-link{font-size:10px!important;color:#77947e!important}
+.sm-remind{font-size:10px!important;border:1px solid #dce5dc!important;border-radius:3px;padding:3px 7px!important;color:#91a48f!important}
+.sm-original-date{display:block;font-size:10px;color:#b2a18b;margin-top:7px!important;text-decoration:line-through}
+
+/* Ticket: practical event sheet, independent ticket states and policy notice. */
+.sm-ticket .sm-brand{color:#b2774d}
+.sm-ticket .sm-header{background:#fffaf5;border-bottom-color:#eee6dd}
+.sm-ticket-hero{display:flex;gap:19px;padding:23px 21px;background:#f5eee5;border-bottom:1px dashed #dbcbba}
+.sm-ticket-poster{width:106px;height:145px;flex:none;box-shadow:0 4px 12px #b2936b1c}
+.sm-ticket-overview{min-width:0}
+.sm-ticket-overview>.sm-badge{background:#f0dfcd;color:#b9804a;font-size:9px}
+.sm-ticket-overview>.sm-sale-postponed{background:#e9e3db;color:#a18f79}
+.sm-ticket-overview h1{font-size:20px;margin:9px 0 10px;font-weight:650;line-height:1.35}
+.sm-ticket-overview>p{font-size:11px;color:#8d7d6b}
+.sm-ticket-overview>small{display:block;font-size:9px;color:#b3a18d;margin-top:4px}
+.sm-ticket-date{margin-top:10px!important;color:#8e7051!important}
+.sm-ticket .sm-page-body{padding-top:18px}
+.sm-tiers{margin-top:23px}
+.sm-tiers h2{font-size:14px}
+.sm-price-note{font-size:10px;color:#b4a591;margin-top:5px!important}
+.sm-ticket-tier{display:grid;grid-template-columns:minmax(0,1fr) 85px 75px;gap:11px;align-items:center;border:1px solid #ebe3d8;border-radius:4px;padding:14px 12px;margin-top:10px}
+.sm-ticket-tier>div>strong{font-size:13px;font-weight:550;color:#746657}
+.sm-ticket-tier>div>small{display:block;font-size:10px;color:#b4a796;margin-top:4px}
+.sm-tier-price{text-align:right}
+.sm-ticket-tier .sm-tier-price strong{font-size:16px;font-weight:550;color:#bf7c47;white-space:nowrap}
+.sm-ticket-tier .sm-tier-price small{font-size:9px}
+.sm-booking-button{padding:7px 8px!important;border-radius:4px;font-size:10px!important;background:#c58b58!important;color:#fff!important;line-height:1.35}
+.sm-tier-unavailable{background:#faf8f5;border-color:#eee9e1}
+.sm-tier-unavailable>div>strong,.sm-tier-unavailable .sm-tier-price strong{color:#b7aa9b}
+.sm-tier-unavailable .sm-booking-button{background:#e4ddd3!important;color:#ad9d8a!important;opacity:1}
+.sm-booking-note{font-size:10px;color:#b49b7d;line-height:1.7;background:#fbf7ef;border-left:2px solid #e6d4b9;padding:12px;margin-top:16px!important}
+.sm-ticket-rules{margin-top:25px}
+.sm-ticket-rules .sm-facts{margin-top:10px}
+.sm-ticket .sm-facts>div{border-bottom-color:#f1ece4}
+.sm-ticket .sm-facts dt{color:#b2a696}
+.sm-ticket .sm-facts dd{color:#958575}
+.sm-ticket .sm-related{border-top-color:#eee5da}
+.sm-ticket .sm-related .sm-link{color:#b08d67!important}
+.sm-ticket .sm-related small{color:#baa992}
+.sm-ticket-notice .sm-page-body{padding-top:28px}
+.sm-ticket-notice h1{font-size:24px;margin-top:9px}
+.sm-notice-applies{padding:14px;background:#faf5ec;margin-top:22px}
+.sm-notice-applies>span{display:block;font-size:10px;color:#b09e85;margin-bottom:6px}
+.sm-notice-applies .sm-link{color:#a3845d!important}
+.sm-notice-section{margin-top:25px}
+.sm-notice-section h2{font-size:14px;color:#8c7961;margin-bottom:9px}
+.sm-notice-section p{font-size:13px;line-height:1.85;color:#8e8478}
+
+/* Compact layouts retain 44px calendar targets without overflowing at 320px. */
+@media(max-width:420px){
+  .sm-header{padding:0 15px;height:51px}.sm-header>div{gap:8px}.sm-brand{font-size:10px;letter-spacing:.6px}.sm-section-label{font-size:10px;padding-left:8px}
+  .sm-page-body{padding:19px 16px 24px}.social-media h1{font-size:20px}
+  .sm-scene{left:18px;bottom:22px}.sm-scene strong{font-size:21px}.sm-scene span{font-size:9px;margin-top:6px}
+  .sm-player-top{left:12px;right:12px;top:10px}.sm-playback-notice{font-size:8px}.sm-player-controls{padding:11px 12px;gap:8px}.sm-player-clock{font-size:9px}.sm-play-button{font-size:10px!important;padding:5px 7px!important}
+  .sm-chapters{padding-left:12px;gap:5px}.sm-chapter{font-size:8px!important}
+  .sm-danmaku{font-size:10px;max-width:76%;padding:3px 7px}.sm-danmaku-layer{inset:41px 8px 65px}
+  .sm-chat-row{grid-template-columns:31px max-content minmax(0,1fr);gap:5px}.sm-chat-row strong{max-width:74px;font-size:9px}.sm-chat-row>span{font-size:11px}
+  .sm-music-hero{padding:24px 17px;gap:16px}.sm-album-cover{width:124px;height:124px}.sm-album-info h1{font-size:21px}.sm-album-artist{font-size:11px}.sm-release{font-size:9px}
+  .sm-track{gap:8px;grid-template-columns:20px minmax(0,1fr) 36px}.sm-track .sm-link{font-size:13px}.sm-audio-unavailable{gap:9px}.sm-audio-unavailable>span{font-size:9px}
+  .sm-chart-table-row,.sm-chart-table-head{grid-template-columns:37px minmax(0,1fr) 80px;gap:4px 8px}.sm-chart-value strong{font-size:14px}
+  .sm-calendar-title{padding:14px 13px 10px}.sm-calendar-day,.sm-calendar-empty{min-height:44px}
+  .sm-event-row{gap:10px;grid-template-columns:51px minmax(0,1fr)}.sm-event-date strong{font-size:13px}.sm-event-body h3{font-size:13px}
+  .sm-ticket-hero{padding:20px 16px;gap:15px}.sm-ticket-poster{width:90px;height:128px}.sm-ticket-overview h1{font-size:18px}.sm-ticket-overview>p{font-size:10px}
+  .sm-ticket-tier{grid-template-columns:minmax(0,1fr) 76px 64px;gap:7px;padding:12px 10px}.sm-ticket-tier .sm-tier-price strong{font-size:14px}.sm-ticket-tier>div>strong{font-size:12px}.sm-ticket-tier>div>small{font-size:9px}.sm-booking-button{font-size:9px!important;padding:7px 5px!important}
+}
+@media(max-width:350px){
+  .sm-page-body{padding-left:13px;padding-right:13px}.sm-music-hero{gap:12px;padding-left:13px;padding-right:13px}.sm-album-cover{width:105px;height:105px}.sm-album-info h1{font-size:18px}
+  .sm-ticket-poster{width:78px;height:117px}.sm-ticket-overview h1{font-size:17px}.sm-ticket-hero{gap:12px;padding-left:13px;padding-right:13px}
+  .sm-player-clock{font-size:8px}.sm-player-controls{gap:6px}.sm-play-button{min-width:49px}.sm-tabs{gap:22px}
+}
+

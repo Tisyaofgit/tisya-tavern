@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: creation templates reach new world and character drafts, while revision and generic reuse do not read them
+ok 1 - creation templates reach new world and character drafts, while revision and generic reuse do not read them
+  ---
+  duration_ms: 668.819039
+  type: 'test'
+  ...
+# Subtest: template initialization uses the configured book and stale template edits block draft save
+ok 2 - template initialization uses the configured book and stale template edits block draft save
+  ---
+  duration_ms: 547.145473
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1452.311057

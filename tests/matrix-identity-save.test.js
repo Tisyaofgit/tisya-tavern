@@ -79,6 +79,25 @@ test('Matrix identity has one persistent save/cancel pair including unavailable 
  }
 });
 
+test('native identity scope options remain drafts and save character and global bindings once',async()=>{
+ const f=await fixture();try{
+  f.ctx.characters=[{avatar:'card.png'}];await f.view.discardDraft();
+  input(f,'[data-identity-picker]','b','change');await tick();input(f,'[data-identity-scope="character"]',true,'change');input(f,'[data-identity-scope="global"]',true,'change');
+  assert.equal(f.active(),'a');assert.equal(f.ctx.powerUserSettings.default_persona,undefined);assert.equal(f.ctx.powerUserSettings.persona_descriptions.b.connections,undefined);assert.equal(f.calls.settings,0);
+  assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.active(),'b');assert.equal(f.ctx.chatMetadata.persona,'b');assert.equal(f.ctx.powerUserSettings.default_persona,'b');assert.deepEqual(f.ctx.powerUserSettings.persona_descriptions.b.connections,[{type:'character',id:'card.png'}]);assert.equal(f.view.state().dirty,false);
+  const writes=f.calls.settings;assert.equal(await f.view.saveDraft(),true);assert.equal(f.calls.settings,writes);
+ }finally{await f.dispose();}
+});
+
+test('scope binding recovery completes the same submission without reapplying native selection',async()=>{
+ const f=await fixture();try{
+  f.ctx.groupId=11;await f.view.discardDraft();let selections=0;const select=f.identity.select;f.identity.select=async input=>{selections++;return select(input);};
+  input(f,'[data-identity-picker]','b','change');await tick();input(f,'[data-identity-scope="character"]',true,'change');input(f,'[data-identity-scope="global"]',true,'change');f.failChat(true);
+  assert.equal(await f.view.saveDraft(),false);assert.equal(selections,1);assert.equal(f.ctx.powerUserSettings.tisya_identity_pending.id,'b');assert.equal(f.view.state().dirty,true);
+  f.failChat(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(selections,1);assert.equal(f.ctx.powerUserSettings.tisya_identity_pending,undefined);assert.deepEqual(f.ctx.powerUserSettings.persona_descriptions.b.connections,[{type:'group',id:11}]);assert.equal(f.ctx.powerUserSettings.default_persona,'b');assert.equal(f.view.state().dirty,false);
+ }finally{await f.dispose();}
+});
+
 test('one save commits name, wish choices and existing role binding and reads them back on reopen', async () => {
  const f = await fixture();
  try {

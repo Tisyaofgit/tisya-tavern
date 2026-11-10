@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {Window} from 'happy-dom';
 import {KEY,createStore,worldKey,emptyConfig,defaultWorld,cleanExport} from '../config/core.js';
 import {currentConfiguration} from '../config/compiler.js';
-import {mountConfiguration} from '../config/panel.js';
+import {mountConfiguration} from './legacy-fixtures/config-panel.js';
 
 function fixture({persist}={}){
  const c={chatId:'story',characterId:0,characters:[{avatar:'card.png',name:'A'}],extensionSettings:{},chatCompletionSettings:{model:'A',preset:'A'},chatMetadata:{}};

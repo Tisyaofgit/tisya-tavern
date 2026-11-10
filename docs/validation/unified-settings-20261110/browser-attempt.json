@@ -1,0 +1,21 @@
+{
+  "at_utc": "2026-11-10T04:28:26.153141+00:00",
+  "method": "Cua shared cloud Chromium",
+  "inventory": "Chromium window and cdp browser present",
+  "url": "http://127.0.0.1:8765/tests/browser-matrix-identity.html",
+  "result": "net::ERR_CONNECTION_REFUSED",
+  "raw_error": "Browser Use cannot open http://127.0.0.1:8765/tests/browser-matrix-identity.html in tab 3. Browser reported: net::ERR_CONNECTION_REFUSED",
+  "successful_ui_assertions": 0,
+  "boundary": "No browser visual/interaction pass; native DOM tests and isolated services reported separately. Android and real installed host not tested.",
+  "executor_local_http": {
+    "error": "<urlopen error [Errno 111] Connection refused>"
+  },
+  "followup": {
+    "at_utc": "2026-11-10T04:32:25.740960+00:00",
+    "server": "Node HTTP fixture server reported listening on127.0.0.1:8765",
+    "action": "cua.getTab(\"3\") after first navigation error",
+    "result": "blocked_by_browser_security_policy",
+    "raw_error": "Browser Use rejected this action due to browser security policy. The browser URL policy blocks this action. Cloud browser could not acquire authority to observe page content. The URL policy gate did not grant access. The requested URL protocol is not allowed. Allowed protocols: http:, https:.",
+    "policy_followed": "Stopped browser actions; no alternate browser, raw CDP or workaround."
+  }
+}

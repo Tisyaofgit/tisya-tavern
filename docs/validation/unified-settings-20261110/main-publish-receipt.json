@@ -1,0 +1,44 @@
+{
+  "plan": {
+    "repository": "Tisyaofgit/tisya-tavern",
+    "parent": "b56937003765626ec45a5aacad9eb74c173889a6",
+    "tree": "5aa25abc8834d4b44a7803412f3aa8163c576e02",
+    "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.10"
+  },
+  "tree": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "5aa25abc8834d4b44a7803412f3aa8163c576e02"
+    },
+    "isError": false
+  },
+  "commit": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "432e8772b63bf0e2005685a80d8d4dffc872c3b3"
+    },
+    "isError": false
+  },
+  "ref": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "success": true
+    },
+    "isError": false
+  }
+}

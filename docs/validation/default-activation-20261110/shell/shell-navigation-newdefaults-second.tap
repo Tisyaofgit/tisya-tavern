@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+ok 1 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 572.793049
+  type: 'test'
+  ...
+# Subtest: late host autoload leaves home visible, while choosing a row still opens exact chat
+not ok 2 - late host autoload leaves home visible, while choosing a row still opens exact chat
+  ---
+  duration_ms: 636.651502
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:519:1'
+  failureType: 'testCodeFailure'
+  error: 'home remains open'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:521:112)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: settings and identity headers return directly to current chat without changing its contents
+ok 3 - settings and identity headers return directly to current chat without changing its contents
+  ---
+  duration_ms: 530.871996
+  type: 'test'
+  ...
+# Subtest: rendered target chat releases actual home navigation lock while native selection promise stays pending
+not ok 4 - rendered target chat releases actual home navigation lock while native selection promise stays pending
+  ---
+  duration_ms: 438.017709
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:579:1'
+  failureType: 'testCodeFailure'
+  error: 'home remains open'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:584:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 2
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2876.466572

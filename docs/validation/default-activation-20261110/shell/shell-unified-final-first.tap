@@ -1,0 +1,449 @@
+TAP version 13
+# Subtest: APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+ok 1 - APP_READY selects Tisya through the native preset lifecycle and attaches an enabled empty engine
+  ---
+  duration_ms: 468.364028
+  type: 'test'
+  ...
+# Subtest: CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+ok 2 - CHAT_CHANGED attaches each real chat once and reopening enables the original saved state without replacement
+  ---
+  duration_ms: 1435.251016
+  type: 'test'
+  ...
+# Subtest: APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+ok 3 - APP_READY reports an existing missing engine state and preserves its owner instead of resetting the chat
+  ---
+  duration_ms: 25.880335
+  type: 'test'
+  ...
+# Subtest: W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation
+ok 4 - W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation
+  ---
+  duration_ms: 58.711373
+  type: 'test'
+  ...
+# Subtest: mounted preset recovery is available on both settings and native preset page and clears startup failure
+ok 5 - mounted preset recovery is available on both settings and native preset page and clears startup failure
+  ---
+  duration_ms: 76.770944
+  type: 'test'
+  ...
+# Subtest: new configuration replaces legacy panels and preserves unsaved tag edits
+ok 6 - new configuration replaces legacy panels and preserves unsaved tag edits
+  ---
+  duration_ms: 424.127585
+  type: 'test'
+  ...
+# Subtest: phone and sidebar open the same read-only notes and public memory pages
+ok 7 - phone and sidebar open the same read-only notes and public memory pages
+  ---
+  duration_ms: 322.44832
+  type: 'test'
+  ...
+# Subtest: native image and voice entries open existing settings without generating or rewriting controls
+ok 8 - native image and voice entries open existing settings without generating or rewriting controls
+  ---
+  duration_ms: 286.195003
+  type: 'test'
+  ...
+# Subtest: unavailable native phone actions report failure, never substitute another configuration
+ok 9 - unavailable native phone actions report failure, never substitute another configuration
+  ---
+  duration_ms: 297.355592
+  type: 'test'
+  ...
+# Subtest: phone settings opens the new configuration; theme and protocol keep native surfaces
+ok 10 - phone settings opens the new configuration; theme and protocol keep native surfaces
+  ---
+  duration_ms: 308.902815
+  type: 'test'
+  ...
+# Subtest: theme workshop saves live effects without the removed configuration categories
+ok 11 - theme workshop saves live effects without the removed configuration categories
+  ---
+  duration_ms: 288.578181
+  type: 'test'
+  ...
+# Subtest: editing or swiping invalidates an open reader and notebook without touching messages
+ok 12 - editing or swiping invalidates an open reader and notebook without touching messages
+  ---
+  duration_ms: 281.272413
+  type: 'test'
+  ...
+# Subtest: notebook lookup works during a pending generation and tears down on return to native UI
+ok 13 - notebook lookup works during a pending generation and tears down on return to native UI
+  ---
+  duration_ms: 342.55155
+  type: 'test'
+  ...
+# Subtest: contacts, labels, grouping and teardown keep native nodes
+ok 14 - contacts, labels, grouping and teardown keep native nodes
+  ---
+  duration_ms: 286.744302
+  type: 'test'
+  ...
+# Subtest: continue requests next normal response, never submits composer draft
+ok 15 - continue requests next normal response, never submits composer draft
+  ---
+  duration_ms: 297.371987
+  type: 'test'
+  ...
+# Subtest: message menu refuses edited source and generation blocks editing
+ok 16 - message menu refuses edited source and generation blocks editing
+  ---
+  duration_ms: 286.38048
+  type: 'test'
+  ...
+# Subtest: home lists every persisted chat and keeps same-name contacts separate
+ok 17 - home lists every persisted chat and keeps same-name contacts separate
+  ---
+  duration_ms: 279.216877
+  type: 'test'
+  ...
+# Subtest: production home checks avatar identity and selects the exact persisted chat before closing
+ok 18 - production home checks avatar identity and selects the exact persisted chat before closing
+  ---
+  duration_ms: 283.651278
+  type: 'test'
+  ...
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+not ok 19 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 388.839243
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:203:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:205:275)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: worldbook entry stays accessible during streaming and chat editing stays locked
+ok 20 - worldbook entry stays accessible during streaming and chat editing stays locked
+  ---
+  duration_ms: 372.013501
+  type: 'test'
+  ...
+# Subtest: streaming disables actions and generation end re-enables both on same mounted message
+ok 21 - streaming disables actions and generation end re-enables both on same mounted message
+  ---
+  duration_ms: 386.429938
+  type: 'test'
+  ...
+# Subtest: old AI advanced reroll opens review without deleting history
+ok 22 - old AI advanced reroll opens review without deleting history
+  ---
+  duration_ms: 328.183671
+  type: 'test'
+  ...
+# Subtest: old user continue returns to that turn and requests next reply
+ok 23 - old user continue returns to that turn and requests next reply
+  ---
+  duration_ms: 295.369804
+  type: 'test'
+  ...
+# Subtest: rollback save failure prevents generation and reports partial deletion
+ok 24 - rollback save failure prevents generation and reports partial deletion
+  ---
+  duration_ms: 268.910778
+  type: 'test'
+  ...
+# Subtest: draft and disconnected model prevent any history deletion
+ok 25 - draft and disconnected model prevent any history deletion
+  ---
+  duration_ms: 564.776874
+  type: 'test'
+  ...
+# Subtest: custom continue text persists and reaches native normal generation as user input
+ok 26 - custom continue text persists and reaches native normal generation as user input
+  ---
+  duration_ms: 282.047271
+  type: 'test'
+  ...
+# Subtest: typing a draft during rollback preserves it and stops generation
+ok 27 - typing a draft during rollback preserves it and stops generation
+  ---
+  duration_ms: 278.712446
+  type: 'test'
+  ...
+# Subtest: unloaded sparse history is rejected without deletion
+ok 28 - unloaded sparse history is rejected without deletion
+  ---
+  duration_ms: 284.103404
+  type: 'test'
+  ...
+# Subtest: workflow navigation retains the original expansion control without duplicate shortcuts
+ok 29 - workflow navigation retains the original expansion control without duplicate shortcuts
+  ---
+  duration_ms: 293.283186
+  type: 'test'
+  ...
+# Subtest: chat menu keeps the native anchor and removes the duplicated settings entry
+ok 30 - chat menu keeps the native anchor and removes the duplicated settings entry
+  ---
+  duration_ms: 292.251812
+  type: 'test'
+  ...
+# Subtest: sidebar shortcut entry closes the page and opens seven position selectors
+ok 31 - sidebar shortcut entry closes the page and opens seven position selectors
+  ---
+  duration_ms: 340.479658
+  type: 'test'
+  ...
+# Subtest: supported system fullscreen routes to native action while app header stays removed
+ok 32 - supported system fullscreen routes to native action while app header stays removed
+  ---
+  duration_ms: 308.716314
+  type: 'test'
+  ...
+# Subtest: message and bottom menu icons retain accessible names and native source nodes
+ok 33 - message and bottom menu icons retain accessible names and native source nodes
+  ---
+  duration_ms: 322.119836
+  type: 'test'
+  ...
+# Subtest: reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+ok 34 - reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds
+  ---
+  duration_ms: 320.233139
+  type: 'test'
+  ...
+# Subtest: inline action mode append changes draft without a confirmation modal
+ok 35 - inline action mode append changes draft without a confirmation modal
+  ---
+  duration_ms: 309.323336
+  type: 'test'
+  ...
+# Subtest: inline action mode replace changes draft without a confirmation modal
+ok 36 - inline action mode replace changes draft without a confirmation modal
+  ---
+  duration_ms: 309.854194
+  type: 'test'
+  ...
+# Subtest: action refuses changed message after opening inline mode menu
+ok 37 - action refuses changed message after opening inline mode menu
+  ---
+  duration_ms: 1033.352711
+  type: 'test'
+  ...
+# Subtest: action refuses changed chat after opening inline mode menu
+ok 38 - action refuses changed chat after opening inline mode menu
+  ---
+  duration_ms: 942.934792
+  type: 'test'
+  ...
+# Subtest: direct send is an explicit mode and native submission occurs only after an action click
+ok 39 - direct send is an explicit mode and native submission occurs only after an action click
+  ---
+  duration_ms: 287.933587
+  type: 'test'
+  ...
+# Subtest: direct send preserves a nonempty draft with inline feedback
+ok 40 - direct send preserves a nonempty draft with inline feedback
+  ---
+  duration_ms: 942.459904
+  type: 'test'
+  ...
+# Subtest: chat change closes reader and stale actions cannot write into the next conversation
+ok 41 - chat change closes reader and stale actions cannot write into the next conversation
+  ---
+  duration_ms: 319.078859
+  type: 'test'
+  ...
+# Subtest: holding a shadow UI button never opens the native long-press message menu
+ok 42 - holding a shadow UI button never opens the native long-press message menu
+  ---
+  duration_ms: 1004.461428
+  type: 'test'
+  ...
+# Subtest: stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+ok 43 - stopping a hung native generation releases history after host idle and a late result cannot unlock a new run
+  ---
+  duration_ms: 301.964673
+  type: 'test'
+  ...
+# Subtest: stopping generation options cancels the pending action without a late send
+ok 44 - stopping generation options cancels the pending action without a late send
+  ---
+  duration_ms: 302.741648
+  type: 'test'
+  ...
+# Subtest: stop during rollback persists the completed deletion before unlocking and reports the actual count
+ok 45 - stop during rollback persists the completed deletion before unlocking and reports the actual count
+  ---
+  duration_ms: 298.531649
+  type: 'test'
+  ...
+# Subtest: a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+ok 46 - a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation
+  ---
+  duration_ms: 333.934247
+  type: 'test'
+  ...
+# Subtest: UI completions cannot release the history lock while generation options are pending
+ok 47 - UI completions cannot release the history lock while generation options are pending
+  ---
+  duration_ms: 307.029123
+  type: 'test'
+  ...
+# Subtest: late clipboard completion leaves a newly opened menu intact
+ok 48 - late clipboard completion leaves a newly opened menu intact
+  ---
+  duration_ms: 314.657798
+  type: 'test'
+  ...
+# Subtest: pending history save allows menu dismissal and does not close a later panel
+ok 49 - pending history save allows menu dismissal and does not close a later panel
+  ---
+  duration_ms: 457.855437
+  type: 'test'
+  ...
+# Subtest: message toolbar supports only more, custom order, full expansion, and persists independently
+ok 50 - message toolbar supports only more, custom order, full expansion, and persists independently
+  ---
+  duration_ms: 338.413917
+  type: 'test'
+  ...
+# Subtest: an explicitly disabled engine rejects generation without reopening it or starting old tables
+ok 51 - an explicitly disabled engine rejects generation without reopening it or starting old tables
+  ---
+  duration_ms: 301.680944
+  type: 'test'
+  ...
+# Subtest: native edit focus places confirmation controls below the editor and exit restores them
+ok 52 - native edit focus places confirmation controls below the editor and exit restores them
+  ---
+  duration_ms: 339.941694
+  type: 'test'
+  ...
+# Subtest: welcome startup mounts the pet and functional sidebar without a world or persistence
+ok 53 - welcome startup mounts the pet and functional sidebar without a world or persistence
+  ---
+  duration_ms: 68.777708
+  type: 'test'
+  ...
+# Subtest: welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+ok 54 - welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings
+  ---
+  duration_ms: 948.650141
+  type: 'test'
+  ...
+# Subtest: native composer persists requirements separately and clears the draft before awaiting the reply: explicitly initialized phone
+ok 55 - native composer persists requirements separately and clears the draft before awaiting the reply: explicitly initialized phone
+  ---
+  duration_ms: 4543.657616
+  type: 'test'
+  ...
+# Subtest: native composer persists requirements separately and clears the draft before awaiting the reply: uninitialized phone stays absent
+ok 56 - native composer persists requirements separately and clears the draft before awaiting the reply: uninitialized phone stays absent
+  ---
+  duration_ms: 999.141293
+  type: 'test'
+  ...
+# Subtest: Android immersive entry remains discoverable and invokes the persistent native toggle
+ok 57 - Android immersive entry remains discoverable and invokes the persistent native toggle
+  ---
+  duration_ms: 530.096565
+  type: 'test'
+  ...
+# Subtest: legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+ok 58 - legacy native shortcut is hidden without overwriting settings; advanced revision remains in More
+  ---
+  duration_ms: 664.789673
+  type: 'test'
+  ...
+# Subtest: candidate navigation has its own final row after message tools
+ok 59 - candidate navigation has its own final row after message tools
+  ---
+  duration_ms: 360.705556
+  type: 'test'
+  ...
+# Subtest: direct candidate jump edits the selected native text and deletes only selected version
+ok 60 - direct candidate jump edits the selected native text and deletes only selected version
+  ---
+  duration_ms: 945.623026
+  type: 'test'
+  ...
+# Subtest: production initializer wires asynchronous message cache without disabling the shell
+ok 61 - production initializer wires asynchronous message cache without disabling the shell
+  ---
+  duration_ms: 871.806976
+  type: 'test'
+  ...
+# Subtest: production long-press More saves manual order and keeps copy reachable
+ok 62 - production long-press More saves manual order and keeps copy reachable
+  ---
+  duration_ms: 1756.805267
+  type: 'test'
+  ...
+# Subtest: production display route saves the real host loading field without replacing history
+ok 63 - production display route saves the real host loading field without replacing history
+  ---
+  duration_ms: 369.028766
+  type: 'test'
+  ...
+# Subtest: settings has one destination per entry and discovers later native drawers
+ok 64 - settings has one destination per entry and discovers later native drawers
+  ---
+  duration_ms: 798.467923
+  type: 'test'
+  ...
+# Subtest: groups use stable native IDs; inline management does not load a chat
+ok 65 - groups use stable native IDs; inline management does not load a chat
+  ---
+  duration_ms: 770.882678
+  type: 'test'
+  ...
+# Subtest: cache drafts block page and phone navigation until saved or discarded
+ok 66 - cache drafts block page and phone navigation until saved or discarded
+  ---
+  duration_ms: 780.419429
+  type: 'test'
+  ...
+# Subtest: native API editor opens from clean configuration and preserves unsaved tags
+ok 67 - native API editor opens from clean configuration and preserves unsaved tags
+  ---
+  duration_ms: 1808.070942
+  type: 'test'
+  ...
+# Subtest: home settings invokes the menu; menu rename and pin persist with native names unchanged
+ok 68 - home settings invokes the menu; menu rename and pin persist with native names unchanged
+  ---
+  duration_ms: 1866.801689
+  type: 'test'
+  ...
+# <--- Last few GCs --->
+# [12:0x153c7000]    38537 ms: Scavenge (interleaved) 2034.4 (2049.0) -> 2032.8 (2049.3) MB, pooled: 0 MB, 21.90 / 0.00 ms  (average mu = 0.334, current mu = 0.312) allocation failure; 
+# [12:0x153c7000]    39018 ms: Mark-Compact (reduce) 2041.1 (2055.6) -> 2030.9 (2039.1) MB, pooled: 0 MB, 18.43 / 0.12 ms  (+ 387.9 ms in 130 steps since start of marking, biggest step 5.0 ms, walltime since start of marking 451 ms) (average mu = 0.332, cur
+# FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+# ----- Native stack trace -----
+#  1: 0x91d810  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  2: 0x75bb1b node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  3: 0xc755c0  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  4: 0xc756bf  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  5: 0xf24835  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  6: 0xf24862  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  7: 0xf24be4  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  8: 0xf3694a  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+#  9: 0xf3ae00  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+# 10: 0x1a3ed81  [/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node]
+1..68
+# tests 68
+# suites 0
+# pass 67
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 39133.022782

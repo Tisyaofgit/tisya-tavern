@@ -1,0 +1,68 @@
+✔ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (1345.243609ms)
+✔ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (1274.462284ms)
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (1343.884185ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (1312.204429ms)
+✔ world creation leaves the old table setup unmounted and never creates a native identity slot (1058.621016ms)
+✔ core creation passes the fixed source and rejects source drift before any database or persona write (485.272098ms)
+✔ reopening the unified identity page resumes an interrupted slot without an old page or database write (1442.31367ms)
+✔ creation history and exported draft retain invalid typed input until it is corrected and reviewed (1309.853645ms)
+✖ unified save commits source-checked creation before the same footer changes native wishes (1091.328942ms)
+✔ creation includes complete native card, associated books and explicit core independently; saved receipt preserves raw immutable snapshot (13.090296ms)
+✔ generation rejects card drift and retains original raw/draft without writes (1.876328ms)
+✔ save rejects card drift without replacing original snapshot (1.64581ms)
+✔ generation rejects book drift and retains original raw/draft without writes (1.092697ms)
+✔ save rejects book drift without replacing original snapshot (1.4132ms)
+✔ generation rejects binding drift and retains original raw/draft without writes (1.28037ms)
+✔ save rejects binding drift without replacing original snapshot (1.232467ms)
+✔ generation rejects persona drift and retains original raw/draft without writes (0.944033ms)
+✔ save rejects persona drift without replacing original snapshot (1.156093ms)
+✔ known missing book and source reader failure abort before model and commit (0.584771ms)
+✔ chat switch during native read or model request cannot cross-write (0.848068ms)
+✔ empty host needs no worldbook API but an actual missing current card fails (0.91535ms)
+✔ editing original snapshot is rejected before commit (1.623947ms)
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (9.187896ms)
+✔ stale draft cannot overwrite a concurrently edited form (4.518509ms)
+✔ generation changes no records on malformed response and retains raw evidence (0.612864ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.678272ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.542557ms)
+✔ ordinary and author materials never reveal program history, layouts or writable program tables (70.216889ms)
+✔ old schemas without new flags still block phone snapshots and dynamic execution containers (31.301811ms)
+✔ current phone rows remain complete without character or row budgets, while aliases and other scopes are omitted (40.849264ms)
+✔ creation contract compacts the full actual catalog and excludes program and field payloads (34.576664ms)
+✔ proposal blocks every program table and forbidden field, but accepts a canonical character with forward references (555.659207ms)
+✔ real catalog creator integrates with actual Matrix host, derives the entity name and emits a compact clean request (976.378843ms)
+✔ one footer saves native wishes, reviewed dossier and several presentation regions without duplicate stores (411.407855ms)
+✔ a missing dossier review blocks every component before the native profile is changed (150.241173ms)
+✔ manual database creation stays a preview and binding failure retries the same committed person (267.451849ms)
+✔ actual Matrix creator is preview-only until checked unified save and preserves the original selection (256.906724ms)
+✔ invalid actual creator output is rejected before native writes and keeps the editable proposal (188.161777ms)
+✔ one leave prompt cancels identity and presentation edits together without persistence (182.169577ms)
+✔ shared save reports confirmed presentation persistence when its final reread fails and never repeats it (260.063606ms)
+✔ confirmed dossier plus failed name sync can resume shared presentation save at the receipt revision (422.990029ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 40
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11161.889151
+
+✖ failing tests:
+
+test at tests/assistant-matrix-identity.test.js:73:1
+✖ unified save commits source-checked creation before the same footer changes native wishes (1091.328942ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '保留原文' !== '本次同页新心愿'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/assistant-matrix-identity.test.js:73:349)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '保留原文',
+    expected: '本次同页新心愿',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

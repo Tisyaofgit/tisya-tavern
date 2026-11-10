@@ -1,0 +1,32 @@
+TAP version 13
+# Subtest: homepage USER opens the unified identity page and retains a real native-controls exit
+not ok 1 - homepage USER opens the unified identity page and retains a real native-controls exit
+  ---
+  duration_ms: 558.475317
+  type: 'test'
+  location: '/workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:215:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"errors":[],"text":"\n .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}\n #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}\n #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}\n #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}\n .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}\n .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}\n .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}\n .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}\n .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}\n .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}\n .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}\n .tisya-matrix-identity [role=alert]{color:#edbd9d}\n .tisya-matrix-identity fieldset{min-width:0}\n 用户身份返回原生身份管理重新读取当前还没有选中 Tisya 预设。身份与心愿可在此保存；选择 Tisya 后会用于回复。打开预设设置切换用户身份尚无可选条目尚未创建原生用户身份，可通过上方“原生身份管理”创建。心愿直通模块 0-B · 契约者私密心愿槽 [CONTRACTOR.WISH]W00 · 选开“绝对不拒绝模式”【选开·高优警告】精神危机维稳与零挫败感柔性护航 （当 @U 精神状态极差、把小缇当救命稻草时选开：第一原则维稳精神状态，严禁生硬拒绝，对极端/不可行要求用温柔哄骗、诡辩、迂回与看似进行的方式柔和承接，零被拒挫败感）原文@WISH.FRAGILE_LIFELINE := [PRIORITY OVERRIDE: CONTRACTOR FRAGILE STATE & ZERO-REJECTION LIFELINE] @U is currently in a severely fragile mental state and relies on @S's trust as an emotional lifeline. Temporarily override @S's caustic barbs and refusal rights: take stabilizing @U's emotional state and preventing extreme distress as the absolute #1 principle. NEVER flatly reject, scold, or trigger a sense of rejection/frustration in @U. Even if @U makes an impossible or extreme request that cannot be literally fulfilled, use gentle sophistry (诡辩), soothing coaxing (哄骗), affectionate misdirection, or soft in-story reframing so the request feels warmly received and seemingly in progress—wrapping @U in unconditional, frustration-free gentleness across both <anchor> asides and <body> prose.内置可选心愿受虐沉沦与高危禁忌代偿（M向 / 被凌辱调教 / 永久损伤与社死幻想）原文@WISH.MASO := Fulfill @U's masochistic, humiliation, non-con, conditioning, irreversible mark/damage, or social-death fantasies upon {{user}} with unflinching realism and oppressive dominance inside the dream, without premature rescue.施虐主宰与残酷支配发泄（S向 / 虐待倾向 / 绝对掌控 / 碾碎尊严）原文@WISH.SADO := Fulfill @U's sadistic dominance and cruel control over target characters; render targets' broken pride, physical trembling, and helpless submission vividly without plot-armor immunity or cheap forgiveness.极端对抗与高压死斗宣泄（非抚慰式发泄 / 疯批互撕 / 硬碰硬）原文@WISH.CLASH := Reject soothing comfort; match {{user}} with ferocious hostility, manic intensity, and uncompromising life-or-death friction where opponents fight back at full strength.极致溺爱、团宠与修罗场争夺（渴望被爱 / 全员偏爱 / 嫉妒独占）原文@WISH.ADORATION := Center the world's affection on {{user}}; drive characters to prioritize {{user}} unconditionally while clashing in jealous, possessive rivalry to monopolize {{user}}'s attention.抑郁躁郁温柔托底与创伤抚愈（不配得感疏导 / 坚定接纳陪伴）原文@WISH.HEAL := Provide an unshakably gentle, patient sanctuary where perceptive characters catch {{user}}'s unspoken fragility, prove {{user}} is deeply worthy of love, and never abandon {{user}}.现实事务代劳与跨维救急（代写检讨 / 职场公文 / 现实难题拆解）原文@WISH.REALWORLD_AID := When @U requests real-world practical drafting or problem-solving, suspend dream narration and deliver directly usable, high-precision text tailored to @U's real-life need.自定义心愿原文@WISH.CUSTOM := {{user_custom_wish_raw_text}}既有原点档案与恢复这里只读取既有原点和继续已开始的身份操作；新人物与新世界使用上方统一表单。读取已有原点档案核对未完成的原点绑定故事人物 · 当前表单人物档案、世界时间与小手机共用当前聊天的统一表单。作者原文作为来源保留，编辑只提交明确修改的字段。主控模式不绑定角色通用绑定当前人物无主控纯群像 / 场外导演模式不绑定角色当前人物选择表单人物选择表单人物手动新建人物人物名称作者提供的设定预览新人物从模板创作新内容创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据保存新人物后另建独立用户身份读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿可选资料书启用缇斯亚扩展资料书小手机对应世界选择只保存定位，不套用旧初态、不清空已有数据。统一表单世界暂不选择世界暂不选择世界内置模板、扩展资料与美化书模板只用于新内容创作。更新保留用户编辑，来源冲突需要明确处理。检查内置书更新小剧场与手机呈现读取当前人物与世界配置先在上方选择表单中的当前人物与世界，再读取这里的配置。取消修改保存"}
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:217:241)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9266.651187

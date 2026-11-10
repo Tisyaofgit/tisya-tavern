@@ -1,0 +1,208 @@
+✔ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (163.521778ms)
+✔ mounted preset recovery is available on both settings and native preset page and clears startup failure (89.221331ms)
+✔ new configuration replaces legacy panels and preserves unsaved tag edits (115.561919ms)
+✔ phone and sidebar open the same read-only notes and public memory pages (74.852539ms)
+✔ native image and voice entries open existing settings without generating or rewriting controls (56.548536ms)
+✔ unavailable native phone actions report failure, never substitute another configuration (47.96031ms)
+✔ phone settings opens the new configuration; theme and protocol keep native surfaces (80.738543ms)
+✔ theme workshop saves live effects without the removed configuration categories (56.974228ms)
+✔ editing or swiping invalidates an open reader and notebook without touching messages (68.723159ms)
+✔ notebook lookup works during a pending generation and tears down on return to native UI (64.958309ms)
+✔ contacts, labels, grouping and teardown keep native nodes (53.194781ms)
+✔ continue requests next normal response, never submits composer draft (46.146881ms)
+✔ message menu refuses edited source and generation blocks editing (40.653716ms)
+✔ home lists every persisted chat and keeps same-name contacts separate (46.678518ms)
+✔ production home checks avatar identity and selects the exact persisted chat before closing (37.198276ms)
+✔ homepage USER opens the unified identity page and retains a real native-controls exit (71.851727ms)
+✔ worldbook entry stays accessible during streaming and chat editing stays locked (39.318222ms)
+✔ streaming disables actions and generation end re-enables both on same mounted message (67.239143ms)
+✔ old AI advanced reroll opens review without deleting history (44.43074ms)
+✔ old user continue returns to that turn and requests next reply (37.861616ms)
+✔ rollback save failure prevents generation and reports partial deletion (41.975728ms)
+✔ draft and disconnected model prevent any history deletion (81.754364ms)
+✔ custom continue text persists and reaches native normal generation as user input (44.67705ms)
+✔ typing a draft during rollback preserves it and stops generation (42.313938ms)
+✔ unloaded sparse history is rejected without deletion (34.476152ms)
+✔ workflow navigation retains the original expansion control without duplicate shortcuts (55.348097ms)
+✔ chat menu keeps the native anchor and removes the duplicated settings entry (49.904265ms)
+✔ sidebar shortcut entry closes the page and opens seven position selectors (59.092456ms)
+✔ supported system fullscreen routes to native action while app header stays removed (52.232109ms)
+✔ message and bottom menu icons retain accessible names and native source nodes (84.127592ms)
+✔ reading formats body without rerunning regex; selecting action fills composer and never generates or rewinds (56.217158ms)
+✔ inline action mode append changes draft without a confirmation modal (53.938581ms)
+✔ inline action mode replace changes draft without a confirmation modal (50.727301ms)
+✔ action refuses changed message after opening inline mode menu (709.477371ms)
+✔ action refuses changed chat after opening inline mode menu (695.119578ms)
+✔ direct send is an explicit mode and native submission occurs only after an action click (65.356544ms)
+✔ direct send preserves a nonempty draft with inline feedback (701.791179ms)
+✔ chat change closes reader and stale actions cannot write into the next conversation (47.324637ms)
+✔ holding a shadow UI button never opens the native long-press message menu (747.777398ms)
+✔ stopping a hung native generation releases history after host idle and a late result cannot unlock a new run (48.768253ms)
+✔ stopping generation options cancels the pending action without a late send (45.807654ms)
+✔ stop during rollback persists the completed deletion before unlocking and reports the actual count (40.578066ms)
+✔ a pending stream allows all dialog dismissals, reading, settings and native navigation without interrupting generation (106.989641ms)
+✔ UI completions cannot release the history lock while generation options are pending (67.134535ms)
+✔ late clipboard completion leaves a newly opened menu intact (56.413032ms)
+✔ pending history save allows menu dismissal and does not close a later panel (63.399074ms)
+✔ message toolbar supports only more, custom order, full expansion, and persists independently (87.954356ms)
+✔ unbound new engine aborts before the native payload and never initializes old tables (43.772747ms)
+✔ native edit focus places confirmation controls below the editor and exit restores them (60.324634ms)
+✔ welcome startup mounts the pet and functional sidebar without a world or persistence (116.185259ms)
+✔ welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings (117.256272ms)
+✔ native composer persists requirements separately and clears the draft before awaiting the reply: explicitly initialized phone (4279.287768ms)
+✔ native composer persists requirements separately and clears the draft before awaiting the reply: uninitialized phone stays absent (43.549475ms)
+✔ Android immersive entry remains discoverable and invokes the persistent native toggle (55.795848ms)
+✔ legacy native shortcut is hidden without overwriting settings; advanced revision remains in More (42.556933ms)
+✔ candidate navigation has its own final row after message tools (51.181301ms)
+✔ direct candidate jump edits the selected native text and deletes only selected version (80.982539ms)
+✔ production initializer wires asynchronous message cache without disabling the shell (170.911716ms)
+✔ production long-press More saves manual order and keeps copy reachable (1249.096864ms)
+✔ production display route saves the real host loading field without replacing history (53.368298ms)
+✔ settings has one destination per entry and discovers later native drawers (56.213968ms)
+✔ groups use stable native IDs; inline management does not load a chat (40.730425ms)
+✔ cache drafts block page and phone navigation until saved or discarded (61.315179ms)
+✔ native API editor opens from clean configuration and preserves unsaved tags (72.236814ms)
+✔ home settings invokes the menu; menu rename and pin persist with native names unchanged (65.456522ms)
+✔ late host autoload leaves home visible, while choosing a row still opens exact chat (35.247945ms)
+✔ deletion requires confirmation and checks the native result instead of assuming success (43.368472ms)
+✔ directory menus toggle in their own row, remain nonmodal, edit in place and dismiss with Escape (43.705391ms)
+✔ detached inline edit is rejected instead of saving against a stale row (43.447ms)
+✔ user message exposes reroll-next, preserves draft guard and sends edited comparison only once (54.44486ms)
+✔ all settings entry points reuse one page, preserve search and discover a drawer installed while open (57.252404ms)
+✔ settings and identity headers return directly to current chat without changing its contents (86.083785ms)
+✔ pending native clipboard on the actual message toolbar never blocks a new chat action (47.544842ms)
+✔ rendered target chat releases actual home navigation lock while native selection promise stays pending (62.781111ms)
+✔ managed committed tail releases home lock even when host never emits CHAT_CHANGED (40.790731ms)
+✔ pending selection diagnostics remain reachable and show actual target mismatch without clearing the lock (45.601143ms)
+✔ target data loaded without completion events closes the directory and releases chat operations (84.006573ms)
+✔ native token-count dry runs do not clear pending one-pass storage work (38.606458ms)
+✔ token count between a real start and its end still completes the real generation lifecycle (36.367724ms)
+✖ cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat (59.352557ms)
+✖ cold-start identity saves and reopens a new role with the current preset and chat preserved (82.717465ms)
+✖ cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer (76.123705ms)
+✖ cold-start identity keeps an explicit origin archive and unfinished-binding recovery route (79.462899ms)
+✖ cold-start identity preserves explicit origin preview targets even with a Tisya preset selected (750.594618ms)
+✖ cold-start identity reports unavailable worldbook support while keeping native identity editing usable (57.055369ms)
+✔ Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back (1337.349896ms)
+✔ Matrix identity production route cancels a staged persona switch and all mixed changes without writing them (1349.590841ms)
+✔ Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry (1368.34238ms)
+✔ pet life entry initializes the selected Matrix profile in the original phone frame (2071.389558ms)
+✔ canonical phone history events refresh the cached phone without legacy metadata (3022.554792ms)
+✔ history events leave a conversation without a phone database uninitialized (77.875923ms)
+✔ direct phone opening waits for the settings leave decision and cancellation keeps the draft (73.985534ms)
+✔ direct phone close waits for the settings leave decision and only hides after confirmed discard (76.547266ms)
+✔ life setup entry retains the boolean dispatch contract while awaiting the settings leave decision (82.918976ms)
+✔ identity production route owns presentation fields in its scroll region and saves both through one footer (2568.309409ms)
+✔ presentation-only edits participate in the identity route leave prompt and common cancel without writing (1867.941959ms)
+ℹ tests 96
+ℹ suites 0
+ℹ pass 90
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28526.992023
+
+✖ failing tests:
+
+test at tests/shell.test.js:618:1
+✖ cold-start identity opens the complete page without a selected Tisya preset, old settings or a chat (59.352557ms)
+  TypeError [Error]: Cannot read properties of null (reading 'textContent')
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:628:67)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/shell.test.js:644:1
+✖ cold-start identity saves and reopens a new role with the current preset and chat preserved (82.717465ms)
+  AssertionError [ERR_ASSERTION]: missing identity field: [data-role-create-confirm]
+      at editIdentityField (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:606:70)
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:651:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:666:1
+✖ cold-start identity preset navigation protects unsaved edits and opens the existing native preset drawer (76.123705ms)
+  AssertionError [ERR_ASSERTION]: missing visible button: 打开预设设置
+      at routeButton (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:599:121)
+      at pressRouteButton (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:604:47)
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:671:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:680:1
+✖ cold-start identity keeps an explicit origin archive and unfinished-binding recovery route (79.462899ms)
+  AssertionError [ERR_ASSERTION]: missing visible button: 原点档案与身份恢复
+      at routeButton (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:599:121)
+      at pressRouteButton (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:604:47)
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:684:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:695:1
+✖ cold-start identity preserves explicit origin preview targets even with a Tisya preset selected (750.594618ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(page.querySelector('.tisya-user'))
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:704:50)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:717:1
+✖ cold-start identity reports unavailable worldbook support while keeping native identity editing usable (57.055369ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /基点书.*失败.*世界书接口尚未就绪/. Input:
+  
+  '\n' +
+    ' .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}\n' +
+    ' #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}\n' +
+    ' #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}\n' +
+    ' #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}\n' +
+    ' .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}\n' +
+    ' .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}\n' +
+    ' .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}\n' +
+    ' .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}\n' +
+    ' .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}\n' +
+    ' .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}\n' +
+    ' .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}\n' +
+    ' .tisya-matrix-identity [role=alert]{color:#edbd9d}\n' +
+    ' .tisya-matrix-identity fieldset{min-width:0}\n' +
+    " 用户身份返回原生身份管理重新读取切换用户身份尚无可选条目尚未创建原生用户身份，可通过上方“原生身份管理”创建。心愿直通模块 0-B · 契约者私密心愿槽 [CONTRACTOR.WISH]W00 · 选开“绝对不拒绝模式”【选开·高优警告】精神危机维稳与零挫败感柔性护航 （当 @U 精神状态极差、把小缇当救命稻草时选开：第一原则维稳精神状态，严禁生硬拒绝，对极端/不可行要求用温柔哄骗、诡辩、迂回与看似进行的方式柔和承接，零被拒挫败感）原文@WISH.FRAGILE_LIFELINE := [PRIORITY OVERRIDE: CONTRACTOR FRAGILE STATE & ZERO-REJECTION LIFELINE] @U is currently in a severely fragile mental state and relies on @S's trust as an emotional lifeline. Temporarily override @S's caustic barbs and refusal rights: take stabilizing @U's emotional state and preventing extreme distress as the absolute #1 principle. NEVER flatly reject, scold, or trigger a sense of rejection/frustration in @U. Even if @U makes an impossible or extreme request that cannot be literally fulfilled, use gentle sophistry (诡辩), soothing coaxing (哄骗), affectionate misdirection, or soft in-story reframing so the request feels warmly received and seemingly in progress—wrapping @U in unconditional, frustration-free gentleness across both <anchor> asides and <body> prose.内置可选心愿受虐沉沦与高危禁忌代偿（M向 / 被凌辱调教 / 永久损伤与社死幻想）原文@WISH.MASO := Fulfill @U's masochistic, humiliation, non-con, conditioning, irreversible mark/damage, or social-death fantasies upon {{user}} with unflinching realism and oppressive dominance inside the dream, without premature rescue.施虐主宰与残酷支配发泄（S向 / 虐待倾向 / 绝对掌控 / 碾碎尊严）原文@WISH.SADO := Fulfill @U's sadistic dominance and cruel control over target characters; render targets' broken pride, physical trembling, and helpless submission vividly without plot-armor immunity or cheap forgiveness.极端对抗与高压死斗宣泄（非抚慰式发泄 / 疯批互撕 / 硬碰硬）原文@WISH.CLASH := Reject soothing comfort; match {{user}} with ferocious hostility, manic intensity, and uncompromising life-or-death friction where opponents fight back at full strength.极致溺爱、团宠与修罗场争夺（渴望被爱 / 全员偏爱 / 嫉妒独占）原文@WISH.ADORATION := Center the world's affection on {{user}}; drive characters to prioritize {{user}} unconditionally while clashing in jealous, possessive rivalry to monopolize {{user}}'s attention.抑郁躁郁温柔托底与创伤抚愈（不配得感疏导 / 坚定接纳陪伴）原文@WISH.HEAL := Provide an unshakably gentle, patient sanctuary where perceptive characters catch {{user}}'s unspoken fragility, prove {{user}} is deeply worthy of love, and never abandon {{user}}.现实事务代劳与跨维救急（代写检讨 / 职场公文 / 现实难题拆解）原文@WISH.REALWORLD_AID := When @U requests real-world practical drafting or problem-solving, suspend dream narration and deliver directly usable, high-precision text tailored to @U's real-life need.自定义心愿原文@WISH.CUSTOM := {{user_custom_wish_raw_text}}故事人物 · 当前表单人物档案、世界时间与小手机共用当前聊天的统一表单。作者原文作为来源保留，编辑只提交明确修改的字段。当前表单暂不可读：当前聊天尚未接入统一表单，请先创建世界或接入表单主控模式不绑定角色通用绑定当前人物无主控纯群像 / 场外导演模式不绑定角色当前人物选择表单人物选择表单人物手动新建人物人物名称作者提供的设定预览新人物从模板创作新内容创作类型新人物新世界新人物要求与已有依据读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿可选资料书启用缇斯亚扩展资料书小手机对应世界选择只保存定位，不套用旧初态、不清空已有数据。统一表单世界暂不选择世界暂不选择世界内置模板、扩展资料与美化书模板只用于新内容创作。更新保留用户编辑，来源冲突需要明确处理。检查内置书更新小剧场与手机呈现读取当前人物与世界配置先在上方选择表单中的当前人物与世界，再读取这里的配置。取消修改保存"
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/309c298d2de5/tisya/tests/shell.test.js:722:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "\n .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}\n #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}\n #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}\n #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}\n .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}\n .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}\n .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}\n .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}\n .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}\n .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}\n .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}\n .tisya-matrix-identity [role=alert]{color:#edbd9d}\n .tisya-matrix-identity fieldset{min-width:0}\n 用户身份返回原生身份管理重新读取切换用户身份尚无可选条目尚未创建原生用户身份，可通过上方“原生身份管理”创建。心愿直通模块 0-B · 契约者私密心愿槽 [CONTRACTOR.WISH]W00 · 选开“绝对不拒绝模式”【选开·高优警告】精神危机维稳与零挫败感柔性护航 （当 @U 精神状态极差、把小缇当救命稻草时选开：第一原则维稳精神状态，严禁生硬拒绝，对极端/不可行要求用温柔哄骗、诡辩、迂回与看似进行的方式柔和承接，零被拒挫败感）原文@WISH.FRAGILE_LIFELINE := [PRIORITY OVERRIDE: CONTRACTOR FRAGILE STATE & ZERO-REJECTION LIFELINE] @U is currently in a severely fragile mental state and relies on @S's trust as an emotional lifeline. Temporarily override @S's caustic barbs and refusal rights: take stabilizing @U's emotional state and preventing extreme distress as the absolute #1 principle. NEVER flatly reject, scold, or trigger a sense of rejection/frustration in @U. Even if @U makes an impossible or extreme request that cannot be literally fulfilled, use gentle sophistry (诡辩), soothing coaxing (哄骗), affectionate misdirection, or soft in-story reframing so the request feels warmly received and seemingly in progress—wrapping @U in unconditional, frustration-free gentleness across both <anchor> asides and <body> prose.内置可选心愿受虐沉沦与高危禁忌代偿（M向 / 被凌辱调教 / 永久损伤与社死幻想）原文@WISH.MASO := Fulfill @U's masochistic, humiliation, non-con, conditioning, irreversible mark/damage, or social-death fantasies upon {{user}} with unflinching realism and oppressive dominance inside the dream, without premature rescue.施虐主宰与残酷支配发泄（S向 / 虐待倾向 / 绝对掌控 / 碾碎尊严）原文@WISH.SADO := Fulfill @U's sadistic dominance and cruel control over target characters; render targets' broken pride, physical trembling, and helpless submission vividly without plot-armor immunity or cheap forgiveness.极端对抗与高压死斗宣泄（非抚慰式发泄 / 疯批互撕 / 硬碰硬）原文@WISH.CLASH := Reject soothing comfort; match {{user}} with ferocious hostility, manic intensity, and uncompromising life-or-death friction where opponents fight back at full strength.极致溺爱、团宠与修罗场争夺（渴望被爱 / 全员偏爱 / 嫉妒独占）原文@WISH.ADORATION := Center the world's affection on {{user}}; drive characters to prioritize {{user}} unconditionally while clashing in jealous, possessive rivalry to monopolize {{user}}'s attention.抑郁躁郁温柔托底与创伤抚愈（不配得感疏导 / 坚定接纳陪伴）原文@WISH.HEAL := Provide an unshakably gentle, patient sanctuary where perceptive characters catch {{user}}'s unspoken fragility, prove {{user}} is deeply worthy of love, and never abandon {{user}}.现实事务代劳与跨维救急（代写检讨 / 职场公文 / 现实难题拆解）原文@WISH.REALWORLD_AID := When @U requests real-world practical drafting or problem-solving, suspend dream narration and deliver directly usable, high-precision text tailored to @U's real-life need.自定义心愿原文@WISH.CUSTOM := {{user_custom_wish_raw_text}}故事人物 · 当前表单人物档案、世界时间与小手机共用当前聊天的统一表单。作者原文作为来源保留，编辑只提交明确修改的字段。当前表单暂不可读：当前聊天尚未接入统一表单，请先创建世界或接入表单主控模式不绑定角色通用绑定当前人物无主控纯群像 / 场外导演模式不绑定角色当前人物选择表单人物选择表单人物手动新建人物人物名称作者提供的设定预览新人物从模板创作新内容创作类型新人物新世界新人物要求与已有依据读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿可选资料书启用缇斯亚扩展资料书小手机对应世界选择只保存定位，不套用旧初态、不清空已有数据。统一表单世界暂不选择世界暂不选择世界内置模板、扩展资料与美化书模板只用于新内容创作。更新保留用户编辑，来源冲突需要明确处理。检查内置书更新小剧场与手机呈现读取当前人物与世界配置先在上方选择表单中的当前人物与世界，再读取这里的配置。取消修改保存",
+    expected: /基点书.*失败.*世界书接口尚未就绪/,
+    operator: 'match',
+    diff: 'simple'
+  }

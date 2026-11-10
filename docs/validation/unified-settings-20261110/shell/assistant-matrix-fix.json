@@ -1,0 +1,65 @@
+{
+  "at_utc": "2026-11-10T04:45:15.817330+00:00",
+  "finding": "assistant-identity-matrix-contract-mismatch",
+  "status": "resolved",
+  "original_evidence": "integration-review.json",
+  "source_files": {
+    "index.js": {
+      "sha256": "38e013977ee810c6ba952f0c8b3da214fdbb3a1f5fcacd45d0d41bbe73f09ae6",
+      "bytes": 120500
+    },
+    "user-identity-page.js": {
+      "sha256": "5f8dc64afabdc6088ec3dbbcda873319444b4be0e70bb6426c6ee518aaf6758b",
+      "bytes": 30434
+    },
+    "user-identity-service.js": {
+      "sha256": "974409cf551b9c6c83a4a76d31b526cb33d9cc0252cd7eb232d282bbb004bf72",
+      "bytes": 14408
+    },
+    "persona-slots.js": {
+      "sha256": "f881b6d22d1b8beb57cc8fafd233e578f045ce62b5ead2c50d7ef53f9ef48d60",
+      "bytes": 5508
+    },
+    "tests/assistant-matrix-identity.test.js": {
+      "sha256": "a62a24af3a36c1df79990ec809d76c8e89e462f887e6c95d9fcc767c1feb34c2",
+      "bytes": 6940
+    }
+  },
+  "verification": {
+    "assistant_and_legacy_regressions": {
+      "tests": 39,
+      "passed": 39,
+      "failed": 0,
+      "log": "assistant-matrix-verified.log"
+    },
+    "production_index_route_regressions": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "log": "assistant-shell-route-final.log"
+    },
+    "boundaries": [
+      "Actual assistant components, table service, Matrix creator, MatrixHost commit and shared persona-slot state machine.",
+      "In-memory native/storage boundary; deterministic model response, no external model invocation.",
+      "Both idea/core routes render Matrix editable fields and rawResponse.",
+      "Avatar and settings failures preserve the same pending slot and Matrix operation; retries and cold recovery do not repeat database writes or slot initialization.",
+      "Completed slot recovery is idempotent on subsequent same-page save.",
+      "Unrelated identity selection, existing native descriptors and legacy origin behavior retained."
+    ],
+    "static": "node --check passed for all four source files; final UI wording only after execution logs"
+  },
+  "evidence": {
+    "assistant-matrix-first.log": "7c58bd905b610ce2ecbb3d26aa9a7a7e13b8aaba714215a9825a9ba9c10f410c",
+    "assistant-matrix-regression.log": "5931e67162f5cf17bcea39a4ade069722d5da16d6b14d3743dd489f2ed68ec9c",
+    "assistant-matrix-final.log": "605080fd30d87d65bc9da6be31e5ebb2ad6e9782676cd1a4f5611666d288ca82",
+    "assistant-matrix-verified.log": "a9a3cf4415e7c4da5fee637251deddcaada478625bb7b1cabe275d332c2f9b00",
+    "assistant-shell-route-final.log": "10234e32707e5a11c99843c596159c53f848afee870caad70498d8f3b4bbb836"
+  },
+  "not_verified": [
+    "Installed native host",
+    "Android",
+    "Browser layout",
+    "Real model output"
+  ],
+  "frozen": true
+}

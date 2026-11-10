@@ -1,0 +1,20 @@
+{
+  "kind": "controlled-regression-evidence",
+  "scope": "DOM and IndexedDB scheduling simulation; no real browser claim",
+  "redFixture": "Current app with only confirmImport and new media add write reverted to the original implementation read during the audit. Not a full historical source snapshot.",
+  "firstObservedImportOutput": {
+    "afterPayment": 279000,
+    "afterImport": 280000,
+    "paymentLost": true,
+    "ledger": []
+  },
+  "firstObservedMediaOutput": {
+    "results": [
+      "fulfilled",
+      "fulfilled"
+    ],
+    "saved": "DIFFERENT"
+  },
+  "currentAppSha256": "5cae0fb7332fe20b6c91c3742952beb8efce32cb479649d7d5fab7a20f10ce59",
+  "testFileSha256": "7863f41f7fbe40664dadb42b9630275a334413d066e6a0b55036bc40732c4050"
+}

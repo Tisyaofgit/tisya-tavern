@@ -1,0 +1,81 @@
+{
+  "name": "缇斯亚美化书",
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【说明】美化书",
+      "content": "这本书登记标记对应的受限布局与样式令牌。世界/会话选用保存在统一表单数据库；未选择不会自动取第一项。模型仅看到当前可用标记及含义，显示编译器读取实际定义；原始定义不整本注入剧情，不执行书中任意脚本。现行 25+2 内容通道及旧 〔名称:参数〕…〔/名称〕 标记继续保留；新增 record 消息子类型属于本轮新协议，不声称复原 Vic 的旧原语法。T_DYN_MESSAGE_CONTENT.media_ref 引用 T_SYS_MEDIA_ASSETS，transfer_ref 引用 X_FIN_TRANSACTIONS；正文中的显示卡不再次扣账。完整允许字段和消息标记见 extension-host.mjs 的 PRESENTATION_PROMPT_CONTRACT。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "beauty",
+          "entryId": "presentation.guide",
+          "purpose": "guide",
+          "retired": false,
+          "base": {
+            "comment": "【说明】美化书",
+            "content": "这本书登记标记对应的受限布局与样式令牌。世界/会话选用保存在统一表单数据库；未选择不会自动取第一项。模型仅看到当前可用标记及含义，显示编译器读取实际定义；原始定义不整本注入剧情，不执行书中任意脚本。现行 25+2 内容通道及旧 〔名称:参数〕…〔/名称〕 标记继续保留；新增 record 消息子类型属于本轮新协议，不声称复原 Vic 的旧原语法。T_DYN_MESSAGE_CONTENT.media_ref 引用 T_SYS_MEDIA_ASSETS，transfer_ref 引用 X_FIN_TRANSACTIONS；正文中的显示卡不再次扣账。完整允许字段和消息标记见 extension-host.mjs 的 PRESENTATION_PROMPT_CONTRACT。"
+          },
+          "release": "52116a4581360cf8404b06b9c75ef71e599142507ec367c30f2f824de634296f",
+          "checkedRelease": "52116a4581360cf8404b06b9c75ef71e599142507ec367c30f2f824de634296f"
+        }
+      }
+    },
+    "1": {
+      "uid": 1,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【美化】既有缇斯亚排版",
+      "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "beauty",
+          "entryId": "presentation.existing",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【美化】既有缇斯亚排版",
+            "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}"
+          },
+          "release": "d91e78981ce80f5c3b40215ec6eb3b4cdd7ef4eb315684865f0ec638b7c57e09",
+          "checkedRelease": "d91e78981ce80f5c3b40215ec6eb3b4cdd7ef4eb315684865f0ec638b7c57e09"
+        }
+      }
+    }
+  },
+  "extensions": {
+    "tisyaBuiltin": {
+      "package": "tisya.builtin-books",
+      "bookId": "beauty",
+      "release": "e5540c7e0052c27729d9b84ed40005ad493117e0ff63a51393487b6cab870d3b",
+      "checkedRelease": "e5540c7e0052c27729d9b84ed40005ad493117e0ff63a51393487b6cab870d3b"
+    }
+  }
+}

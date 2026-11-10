@@ -1,0 +1,81 @@
+{
+  "task": "CLOCK-SCOPE-REBASE",
+  "completed_at_utc": "2026-11-10T04:25:28.640034+00:00",
+  "completed_at_beijing": "2026-11-10T12:25:28.640034+08:00",
+  "current_candidate": "33ab08cecef94a7d7d40272e97f756fcb9c5ae77",
+  "historical_supplement": {
+    "commit": "e8230a3653e05470fcb9bf77372f700d69530b78",
+    "helper": "engine/phone-clock.mjs",
+    "blob": "c1bf6f53a9d8f8b907f74330d90cf5a325d6525d",
+    "integration": "Read current and supplement; kept current world-specific selection and canonical worldClockConfiguration. Added only necessary guards in existing phone-database module; no old tree replacement."
+  },
+  "before": {
+    "log": "before.tap",
+    "source": "before-phone-database.mjs",
+    "tests": 16,
+    "pass": 4,
+    "fail": 12,
+    "skipped": 0,
+    "note": "Original current candidate with initial16 tests: actual invalid decodes/write proposals and storage boundary rejections were exercised. One origin regression was added after the first baseline run."
+  },
+  "runs": [
+    {
+      "command": [
+        "node",
+        "--test",
+        "tests/phone-clock-integration.test.js",
+        "tests/phone-database.test.js"
+      ],
+      "exit_code": 0,
+      "log": "after-with-database.tap",
+      "tests": 26,
+      "pass": 26,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "command": [
+        "node",
+        "--test",
+        "--test-name-pattern=clock storage",
+        "tests/phone-clock-integration.test.js"
+      ],
+      "exit_code": 0,
+      "log": "storage-isolation.tap",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    }
+  ],
+  "files": [
+    {
+      "path": "engine/phone-database.mjs",
+      "bytes": 49156,
+      "sha256": "da6c51b6a8fac664004e329f56dd3a88a3c358f8abd051c547e8c3434626f4b0"
+    },
+    {
+      "path": "tests/phone-clock-integration.test.js",
+      "bytes": 8836,
+      "sha256": "ef732d642f2bf87aced838c4d551702d6aa7391722c862609c539e4fc4f0b4d8"
+    }
+  ],
+  "behavior": [
+    "Persisted binding requires X_WORLD_CLOCKS, actual record ID and integer origin; invalid binding is never repaired by choosing another row.",
+    "Clock ownership must match current phone world and must not carry explicit unknown/unset/cleared/error value state.",
+    "Required clock position values must be integers and confirmed if state metadata is present; old rows without state metadata remain compatible.",
+    "A foreign row occupying world-clock:<world> blocks initialization; global runtime selector belonging to another world remains ignored.",
+    "Same guard is used by encode, decode and native profile discovery; canonical calendar units/rules are retained."
+  ],
+  "validation_boundary": {
+    "unit": "Actual phone codec, Runtime, WorldClock and worldClockConfiguration modules run in Node.",
+    "isolated_simulation": "Actual createPhoneDatabaseStorage load/save functions; database read/persistence callback is a controlled substitute. Both invalid load/save perform zero commit calls and preserve state.",
+    "runtime_rebuilt": false,
+    "full_suite": "root integration gate pending",
+    "real_host": false,
+    "external_model": false,
+    "android": false,
+    "user_live_data_accessed": false
+  },
+  "next_step": "Root integrates shared settings UI, rebuilds runtime/phone output, runs integrated gate, then freezes/persists actual same-point source and evidence."
+}

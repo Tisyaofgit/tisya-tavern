@@ -1,0 +1,12 @@
+{
+  "started_utc": "2026-11-10T07:00:43.672014+00:00",
+  "ended_utc": "2026-11-10T07:00:43.916351+00:00",
+  "exit_code": 0,
+  "command": [
+    "node",
+    "tools/build-extension.mjs"
+  ],
+  "runtime_bytes": 4569564,
+  "runtime_sha256": "48e4af59d82350e065c3e71f1b64e4ba7bd114296d2f2e89ad7ff1df26d1fb74",
+  "runtime_git_blob": "522135b7c40867f0d5273bc9655c6869cd8450ac"
+}

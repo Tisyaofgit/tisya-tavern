@@ -1,0 +1,47 @@
+✔ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (694.169215ms)
+✔ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (567.904628ms)
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (615.087995ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (630.598515ms)
+✔ new origin gets an independent native persona slot without selecting it or overwriting old profiles (2.801088ms)
+✔ lost settings acknowledgement resumes the same slot after service recreation with no duplicate avatar or persona (0.591461ms)
+✔ an interrupted native initialization resumes its reserved matching slot without overwriting or duplicating it (0.310012ms)
+✔ changed origin or chat rejects creation without touching an old identity (0.363511ms)
+✔ native slot host verifies an uploaded avatar and resumes a lost upload response by listing its fixed id (0.964705ms)
+✔ legacy origin recovery resumes the reviewed partial binding without repeating its stale preview write (51.867217ms)
+✔ legacy creation checks the original chat after draft persistence before creating a persona slot and retries only that slot (17.041176ms)
+✔ legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs (43.931728ms)
+✔ legacy cancel discards mixed staged edits without persistence and restores selection (15.275459ms)
+✔ legacy leave prompt coalesces navigation and keeps failed save editable before retry (21.495528ms)
+✔ legacy retries only unfinished binding after profile persistence succeeds (19.910175ms)
+✔ legacy retains unsaved fields and scope on page recreation (15.078786ms)
+✔ legacy refuses external identity revisions and a changed chat before any write (11.50607ms)
+✔ legacy recovery saves scope edits made after a failed earlier binding (16.089531ms)
+✔ failed new-slot creation does not block unrelated existing identities or pretend an active binding is pending (4.072569ms)
+✔ selection binds chat and stable card id while preserving history, defaults and unknown values (0.84693ms)
+✔ group selection binds only the group and keeps multi connection alternatives (0.32284ms)
+✔ selection without scope does not lock chat or alter global default (0.256642ms)
+✔ stale identity state and absent chat reject before mutation (0.244093ms)
+✔ failed chat persistence leaves a durable intent that a recreated service resumes (0.688154ms)
+✔ a context switch during settings save cannot lock the new chat (0.477921ms)
+✔ resume refuses later persona edits and preserves the recovery marker (0.372675ms)
+✔ profile editing keeps all descriptor extensions and validates stale drafts (0.554565ms)
+✔ archive binding failure retains intent and resumes with the same active identity (0.361618ms)
+✔ unconfirmed profile persistence restores its own native fields and preserves the original error (0.57144ms)
+✔ a false profile persistence receipt remains a failure even if fields already match the draft (0.223442ms)
+✔ failed profile rollback preserves concurrent values and new descriptor metadata (0.264714ms)
+✔ failed profile rollback removes only its own fields while preserving unrelated concurrent metadata (0.226798ms)
+✔ confirmed profile persistence survives a chat switch and reports the saved original scope (0.373095ms)
+✔ confirmed wish persistence is not rolled back when the chat changes after the write (0.38328ms)
+✔ failed wish rollback preserves a concurrent active description and descriptor replacement (1.618888ms)
+✔ unconfirmed wish persistence restores exact absent fields and remains retryable (0.192175ms)
+✔ failed profile persistence restores absent or null native descriptor containers exactly (0.371923ms)
+✔ a failed wish save never restores the previous persona description into a different active identity (0.137044ms)
+✔ a native projection rollback failure reports both failures without hiding the persistence error (0.308068ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2889.917067

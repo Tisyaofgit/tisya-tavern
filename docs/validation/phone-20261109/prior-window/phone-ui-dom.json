@@ -1,0 +1,67 @@
+{
+  "utc": "2026-11-09T11:36:28.495562+00:00",
+  "result": "passed",
+  "tests": 7,
+  "failed": 0,
+  "runtime": {
+    "name": "happy-dom",
+    "version": "20.14.5",
+    "source": "phone-work/candidate/node_modules/happy-dom/lib/index.js"
+  },
+  "scope": "Actual parsed DOM and browser-like events in Happy DOM, actual phone core, actual three renderers. Does not validate layout, real Chromium, Android, host API or real model invocation. Clipboard transport is stubbed; DOM parsing, selectors, focus, selection and click/input/submit propagation use Happy DOM.",
+  "command": "node --test --test-reporter=tap phone-work/phone-ui-dom.test.mjs",
+  "groups": [
+    "DOM-enhanced forum like/down and reply targets; one composer",
+    "Weibo/video item targets, per-reader counter delta, video self author",
+    "Rapid asynchronous drafts retain newest text, focus and caret",
+    "Search form public/mine, explicit queued search button",
+    "Copy/receive dialogs preserve request ID and accept real protocol updates",
+    "Prepared turn blocks send but keeps drafts, explicit recovery",
+    "Frozen onChange, immutable source, open-full action, dispose unsubscription"
+  ],
+  "initial_run": {
+    "passed": 4,
+    "failed": 3,
+    "output": "phone-work/phone-ui-dom.first-failure.txt",
+    "observation": "Happy DOM returned false for Object.hasOwn(button.dataset, key) when a data-* attribute had an empty value; value-bearing action flags worked.",
+    "fix": "Use DOM Element.hasAttribute for event-flag presence. No claim that the initial failure was reproduced in Chromium."
+  },
+  "prior_controller_regression": {
+    "command": "node --test --test-reporter=tap phone-work/phone-ui-controller.test.mjs",
+    "passed": 13,
+    "failed": 0,
+    "output": "phone-work/phone-ui-controller-test-output.txt"
+  },
+  "files": [
+    {
+      "path": "preview/phone-app.mjs",
+      "bytes": 36725,
+      "sha256": "68c94390f750f031ea8a94073748cd618324fa19cacbc3d1105c5a2fc1c26e85"
+    },
+    {
+      "path": "preview/phone-shell.mjs",
+      "bytes": 21709,
+      "sha256": "bb82aaaee3fe11d27cf481f1ad64c0ec07b722862668c6dcfda4e18ec58f1ee3"
+    },
+    {
+      "path": "preview/phone-shell.css",
+      "bytes": 31170,
+      "sha256": "9ed0018d35b5856cb7cd068d3b4840d0121b03535a1ff3a8f8d83a52ac09e417"
+    },
+    {
+      "path": "phone-work/phone-ui-dom.test.mjs",
+      "bytes": 10586,
+      "sha256": "bd918c7d48e01f54c3a185766a79473116463ff51a5237a0920fa91e78cebe97"
+    },
+    {
+      "path": "phone-work/phone-ui-dom.output.txt",
+      "bytes": 1781,
+      "sha256": "ed85108184afb712d6c725aa687b2a91caaf5ab549d61f82df82c5274ee5c510"
+    },
+    {
+      "path": "phone-work/phone-ui-dom.first-failure.txt",
+      "bytes": 3629,
+      "sha256": "18679a4ce493a400313472fc8f00c8bc693464aa466d857b28f815b37c002cad"
+    }
+  ]
+}

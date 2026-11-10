@@ -1,0 +1,50 @@
+✖ import cannot erase a payment acknowledged while asynchronous media import is running (77.571138ms)
+✖ same media ID concurrent imports cannot overwrite an already committed original (2.099212ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3952.04798
+
+✖ failing tests:
+
+test at storage.test.mjs:33:1
+✖ import cannot erase a payment acknowledged while asynchronous media import is running (77.571138ms)
+  AssertionError [ERR_ASSERTION]: 并发转账被确认后又被导入覆盖：during=279000, after=280000
+  + actual - expected
+  
+  + 'fulfilled'
+  - 'rejected'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/phone-life/storage.test.mjs:48:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fulfilled',
+    expected: 'rejected',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at storage.test.mjs:55:1
+✖ same media ID concurrent imports cannot overwrite an already committed original (2.099212ms)
+  AssertionError [ERR_ASSERTION]: 已保存媒体原件不能被同编号的不同字节覆盖
+  + actual - expected
+  
+  + 'DIFFERENT'
+  - 'ORIGINAL'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/37663c457d00/network-blocks-design/phone-work/candidate/preview/phone-life/storage.test.mjs:74:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'DIFFERENT',
+    expected: 'ORIGINAL',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
