@@ -7,7 +7,7 @@ export const SOCIAL_WORLD_ACTIONS={
 const localLikes=(s,p)=>Object.values(s.social.likes).filter(ids=>ids.includes(p.id)).length;
 export function postCounts(s,p){
  const m=p.metrics,own=localLikes(s,p),comments=s.social.comments.filter(c=>c.postId===p.id).length,reposts=s.social.posts.filter(c=>c.repostOf===p.id&&!c.deleted).length;
- return m?{likes:Math.max(0,m.likes+own-m.localLikes),comments:Math.max(0,m.comments+comments-m.localComments),reposts:Math.max(0,m.reposts+reposts-m.localReposts),views:m.views}:{likes:(p.likesBase??0)+own,comments,reposts,views:0};
+ return m?{likes:Math.max(0,m.likes+own-m.localLikes),comments:Math.max(0,m.comments+comments-m.localComments),reposts:Math.max(0,m.reposts+reposts-m.localReposts),views:m.views}:{likes:p.likesBase==null?null:p.likesBase+own,comments,reposts,views:null};
 }
 export function topicsOf(p){return [...new Set([...(p.topics??[]),...Array.from(String(p.text??'').matchAll(/#([^#\n]{1,40})#/g),m=>m[1].trim())].filter(Boolean))];}
 export function socialHeat(s,p){const c=postCounts(s,p),at=p.createdAt?.totalMinutes,age=Number.isFinite(at)?Math.max(0,s.clock.totalMinutes-at):0;return (c.likes+c.comments*2+c.reposts*3+Math.floor(c.views/100)+1)/(1+Math.floor(age/1440));}

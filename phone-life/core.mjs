@@ -3,7 +3,6 @@ import {sha256} from '../engine/common.mjs';
 import {WorldClock} from '../engine/math.mjs';
 import {performLifeExtension,refreshExtended,validateLifeExtensions,pendingMoney,quoteCommerce} from './life-extended.mjs';
 export {quoteCommerce} from './life-extended.mjs';
-const MINUTE = 60000;
 const YEAR = 365 * 24 * 60;
 const clone = value => structuredClone(value);
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -26,36 +25,24 @@ function account(s, id) { return byId(s.wallet.accounts, id, '账户'); }
 function debit(s, id, n) { const row = account(s, id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); need(row.balance >= n, `${row.name}余额不足；不会自动借款或透支。`, 'INSUFFICIENT_FUNDS'); row.balance -= n; }
 function credit(s, id, n) { const row=account(s,id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); row.balance += n; }
 function record(s, type, description, n, accountId = '', extra = {}) {
-  s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: (s.config?.calendar||Number.isFinite(s.config?.epoch))?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
+  s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: !!s.config?.calendar?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
 }
-function epoch(s) { if(s.config?.calendar)return 0;need(Number.isFinite(s.config?.epoch), '世界故事时间起点未配置。', 'UNCONFIGURED_CLOCK'); return s.config.epoch + (s.config.timezoneOffsetMinutes || 0) * MINUTE; }
+function epoch(s){need(s.config?.calendar,'世界故事时间尚未在表单配置。','UNCONFIGURED_CLOCK');return 0;}
 function owner(s) { need(typeof s.identity?.personId==='string'&&s.identity.personId,'当前人物身份未配置。','UNCONFIGURED_IDENTITY'); return s.identity.personId; }
 function defaultAccount(s, requested) { return requested || s.wallet.defaultAccountId || s.wallet.accounts[0]?.id; }
 function fundingAccount(s,requested){return requested||s.wallet.fundingAccountId||defaultAccount(s);}
 function formClock(s,minutes=s.clock.totalMinutes){if(!s.config?.calendar)return null;const clock=new WorldClock(s.config.calendar);need(Number.isSafeInteger(s.config.calendarOrigin),'表单历法缺少时间锚点。','UNCONFIGURED_CLOCK');clock.setOrdinal(s.config.calendarOrigin+minutes);return clock;}
-function dayMinutes(s){const c=formClock(s);return c?c.c.day_hours*c.c.hour_minutes:1440;}
-function yearMinutes(s,minutes=s.clock.totalMinutes){const c=formClock(s,minutes);return c?c.lengths(c.c.year).reduce((a,b)=>a+b,0)*dayMinutes(s):YEAR;}
-function atMinute(s, year, month, day, minute = 0) { const current=formClock(s);if(current){const c=current.c,clock=new WorldClock({...c,year,[c.mode==='SEASON_FIXED'?'season':'month']:month,day,hour:Math.floor(minute/c.hour_minutes),minute:minute%c.hour_minutes});return clock.ordinal()-s.config.calendarOrigin;}return Math.round((Date.UTC(year, month - 1, day, 0, minute) - epoch(s)) / MINUTE); }
+function dayMinutes(s){const c=formClock(s);need(c,'世界历法尚未配置。','UNCONFIGURED_CLOCK');return c.c.day_hours*c.c.hour_minutes;}
+function yearMinutes(s,minutes=s.clock.totalMinutes){const c=formClock(s,minutes);need(c,'世界历法尚未配置。','UNCONFIGURED_CLOCK');return c.lengths(c.c.year).reduce((a,b)=>a+b,0)*dayMinutes(s);}
+function atMinute(s,year,month,day,minute=0){const current=formClock(s);need(current,'世界历法尚未配置。','UNCONFIGURED_CLOCK');const c=current.c,clock=new WorldClock({...c,year,[c.mode==='SEASON_FIXED'?'season':'month']:month,day,hour:Math.floor(minute/c.hour_minutes),minute:minute%c.hour_minutes});return clock.ordinal()-s.config.calendarOrigin;}
 function cardDates(s) {
   need(s.wallet.card.enabled!==false&&Number.isInteger(s.wallet.card.billDay)&&Number.isInteger(s.wallet.card.dueDay),'信用卡或账单日期未配置。','UNCONFIGURED_CREDIT');
-  const current=formClock(s);
-  if(current){let year=current.c.year,period=current.c.mode==='SEASON_FIXED'?current.c.season:current.c.month;const next=()=>{period++;if(period>current.lengths(year).length){period=1;year++;}};
-    const end=dayMinutes(s)-1;let statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);if(statementAt<s.clock.totalMinutes){next();statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);}if(s.wallet.card.dueDay<=s.wallet.card.billDay)next();return {statementAt,dueAt:atMinute(s,year,period,s.wallet.card.dueDay,end)};
-  }
-  const d = new Date(epoch(s) + s.clock.totalMinutes * MINUTE);
-  let month = d.getUTCMonth();
-  let statement = Date.UTC(d.getUTCFullYear(), month, s.wallet.card.billDay, 23, 59);
-  if (epoch(s) + s.clock.totalMinutes * MINUTE > statement) { month += 1; statement = Date.UTC(d.getUTCFullYear(), month, s.wallet.card.billDay, 23, 59); }
-  const dueMonth = month + (s.wallet.card.dueDay <= s.wallet.card.billDay ? 1 : 0);
-  return { statementAt: (statement - epoch(s)) / MINUTE, dueAt: (Date.UTC(d.getUTCFullYear(), dueMonth, s.wallet.card.dueDay, 23, 59) - epoch(s)) / MINUTE };
+  const current=formClock(s);need(current,'世界历法尚未配置。','UNCONFIGURED_CLOCK');let year=current.c.year,period=current.c.mode==='SEASON_FIXED'?current.c.season:current.c.month;const next=()=>{period++;if(period>current.lengths(year).length){period=1;year++;}};
+  const end=dayMinutes(s)-1;let statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);if(statementAt<s.clock.totalMinutes){next();statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);}if(s.wallet.card.dueDay<=s.wallet.card.billDay)next();return {statementAt,dueAt:atMinute(s,year,period,s.wallet.card.dueDay,end)};
 }
 const extensionHelpers={nextId,defaultAccount,amount,epoch,debit,credit,record};
 function refresh(s) {
   if(s.config?.calendar){const current=formClock(s),c=current.c;Object.assign(s.clock,{year:c.year,month:c.month??c.season,day:c.day,minute:c.hour*c.hour_minutes+c.minute,...(c.mode==='SEASON_FIXED'?{season:c.season}:{})});}
-  else if(Number.isFinite(s.config?.epoch)){
-  const d = new Date(epoch(s) + s.clock.totalMinutes * MINUTE);
-  s.clock.year = d.getUTCFullYear(); s.clock.month = d.getUTCMonth() + 1; s.clock.day = d.getUTCDate(); s.clock.minute = d.getUTCHours() * 60 + d.getUTCMinutes();
-  }
   const c = s.wallet.card; c.used = c.charges.reduce((sum, x) => sum + x.remaining, 0);
   const statements = new Map();
   for (const charge of c.charges) {
@@ -68,7 +55,7 @@ function refresh(s) {
   for (const loan of s.wallet.loans) loan.status = loan.installments.every(x => x.paid === x.amount) ? 'paid' : loan.installments.some(x => x.paid < x.amount && s.clock.totalMinutes > x.dueAt) ? 'overdue' : 'active';
   refreshExtended(s,extensionHelpers);
   for (const event of s.calendar.events) {
-    if (['personal', 'confirmed'].includes(event.status) && (s.config?.calendar||Number.isFinite(s.config?.epoch)) && Number.isSafeInteger(event.at) && event.at <= s.clock.totalMinutes && !event.notified) {
+    if (['personal', 'confirmed'].includes(event.status) && !!s.config?.calendar && Number.isSafeInteger(event.at) && event.at <= s.clock.totalMinutes && !event.notified) {
       event.notified = true;
       s.audit.push({ id: nextId(s, 'reminder'), at: s.clock.totalMinutes, type: 'calendar.due', message: `故事日程已到时间：${event.title}` });
     }
@@ -105,11 +92,12 @@ export function quoteJourney(s, placeId, mode = 'walk') {
   need([from.x,from.y,to.x,to.y].every(Number.isFinite),'地点坐标尚未配置。','UNCONFIGURED_PLACE');
   need(own(speeds,mode)&&Number.isFinite(speeds[mode])&&speeds[mode]>0,'该出行方式尚未配置。');
   const duration = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / speeds[mode]));
-  const rule=s.config.travel.fares?.[mode],fare=rule?integer(rule.base??0,'起步费用')+duration*integer(rule.perMinute??0,'每分钟费用'):0;integer(fare,'总行程费用');const journey={from:from.id,to:to.id,mode,duration,fare,departAt:s.clock.totalMinutes,arriveAt:s.clock.totalMinutes+duration};return {...journey,quoteId:'journey:'+sha256(stable(journey))};
+  const rule=s.config.travel.fares?.[mode],fare=rule?integer(rule.base??0,'起步费用')+duration*integer(rule.perMinute??0,'每分钟费用'):null;if(fare!==null)integer(fare,'总行程费用');const journey={from:from.id,to:to.id,mode,duration,fare,departAt:s.clock.totalMinutes,arriveAt:s.clock.totalMinutes+duration};return {...journey,quoteId:'journey:'+sha256(stable(journey))};
 }
 
 
 function pay(s, order, payment, accountId) {
+  if(order.total===0){record(s,'purchase','已确认零总价订单，无需扣款',0,accountId??'',{orderId:order.id});return;}
   if (payment === 'balance') {
     debit(s, accountId, order.total);
     record(s, 'purchase', `${order.kind === 'food' ? '外卖' : '商城'}付款`, -order.total, accountId, { orderId: order.id });
@@ -126,19 +114,19 @@ function pay(s, order, payment, accountId) {
 }
 function refund(s, order, status, partial=null) {
   const remaining=order.total-order.refunded;need(remaining>0,'订单已经退款，不能重复退款。','ALREADY_REFUNDED');
-  const selected=partial?[order.items.find(x=>x.productId===partial.productId)]:order.items;need(selected.every(Boolean),'退货商品不存在。');
+  const matches=partial?order.items.filter(x=>x.id===partial.lineId):order.items;need(!partial||matches.length===1,'请选择唯一的退货商品与规格。');const selected=matches;need(selected.every(Boolean),'退货商品不存在。');
   const returns=[];
   for(const item of selected){const available=item.qty-(item.refundedQty??0),qty=partial?integer(partial.qty,'退货数量',1,available):available;if(!qty)continue;
-    if(item.fulfillment==='digital'||item.kind==='digital'){const right=(s.commerce.entitlements??[]).find(x=>x.orderId===order.id&&x.productId===item.productId);need(right&&right.status==='active'&&right.used===0,'数字权益已使用或不可退款。');need(!partial||qty===available,'数字权益须按完整一项退订。');}
-    else if(order.status==='completed'){const holding=s.inventory.find(x=>x.orderId===order.id&&x.productId===item.productId);need(holding&&holding.qty>=qty&&holding.ownerId===owner(s)&&holding.holderId===owner(s),'商品已消耗、转赠或不归本人，不能按此数量退货。');need(!s.map.journey&&holding.placeId===s.map.position,'请先回到商品所在地点办理退货。');}
+    if(item.fulfillment==='digital'||item.kind==='digital'){const right=(s.commerce.entitlements??[]).find(x=>x.orderId===order.id&&x.productId===item.productId&&x.orderLineId===item.id);need(right&&right.status==='active'&&right.used===0,'数字权益已使用或不可退款。');need(!partial||qty===available,'数字权益须按完整一项退订。');}
+    else if(order.status==='completed'){const holding=s.inventory.find(x=>x.orderId===order.id&&x.productId===item.productId&&x.orderLineId===item.id);need(holding&&holding.qty>=qty&&holding.ownerId===owner(s)&&holding.holderId===owner(s),'商品已消耗、转赠或不归本人，不能按此数量退货。');need(!s.map.journey&&holding.placeId===s.map.position,'请先回到商品所在地点办理退货。');}
     need(item.policy?.refundable!==false,'此商品的已确认规则不允许退款。');returns.push({item,qty});
   }
-  need(returns.length,'没有可退商品。');
+  need(returns.length||!partial&&order.items.every(x=>(x.refundedQty??0)===x.qty),'没有可退商品。');
   const gross=returns.reduce((n,r)=>n+r.item.price*r.qty,0),discountShare=order.discount?Math.floor(order.discount*gross/order.subtotal):0;
   const n=partial?Math.min(remaining,gross-discountShare):remaining;need(n>0,'本次退款金额为零。');
   for(const {item,qty} of returns){item.refundedQty=(item.refundedQty??0)+qty;const p=byId(s.commerce.products,item.productId,'商品');p.stock+=qty;
-    if(item.fulfillment==='digital'||item.kind==='digital'){const right=s.commerce.entitlements.find(x=>x.orderId===order.id&&x.productId===item.productId);right.status='refunded';right.refundedAt=s.clock.totalMinutes;}
-    else if(order.status==='completed'){const holding=s.inventory.find(x=>x.orderId===order.id&&x.productId===item.productId);holding.qty-=qty;holding.returned=(holding.returned??0)+qty;}
+    if(item.fulfillment==='digital'||item.kind==='digital'){const right=s.commerce.entitlements.find(x=>x.orderId===order.id&&x.productId===item.productId&&x.orderLineId===item.id);right.status='refunded';right.refundedAt=s.clock.totalMinutes;}
+    else if(order.status==='completed'){const holding=s.inventory.find(x=>x.orderId===order.id&&x.productId===item.productId&&x.orderLineId===item.id);holding.qty-=qty;holding.returned=(holding.returned??0)+qty;}
   }
   if(order.payment==='credit'){const c=s.wallet.card,charge=byId(c.charges,order.creditChargeId,'信用消费记录'),againstDebt=Math.min(charge.remaining,n);charge.remaining-=againstDebt;charge.refunded+=n;c.refundBalance+=n-againstDebt;c.used-=againstDebt;record(s,'credit.refund','原路退款：冲减本单债务，余款留作卡内溢缴款',n,'credit',{orderId:order.id});}
   else {credit(s,order.accountId,n);record(s,'refund',partial?'订单部分原路退款':'订单原路全额退款',n,order.accountId,{orderId:order.id});}
@@ -147,7 +135,7 @@ function refund(s, order, status, partial=null) {
 
 function fulfillDigital(s,order){
   const digital=order.items.filter(x=>x.fulfillment==='digital'||x.kind==='digital');
-  for(const item of digital){s.commerce.entitlements??=[];s.commerce.entitlements.push({id:nextId(s,'entitlement'),orderId:order.id,productId:item.productId,ownerId:order.recipientId??owner(s),kind:item.entitlement?.kind??'content',resourceId:item.entitlement?.resourceId??item.productId,status:'active',used:0,createdAt:s.clock.totalMinutes,expiresAt:item.entitlement?.durationMinutes==null?null:s.clock.totalMinutes+integer(item.entitlement.durationMinutes,'权益有效分钟',1)});}
+  for(const item of digital){s.commerce.entitlements??=[];s.commerce.entitlements.push({id:nextId(s,'entitlement'),orderId:order.id,productId:item.productId,orderLineId:item.id,ownerId:order.recipientId,kind:item.entitlement?.kind??'content',resourceId:item.entitlement?.resourceId??item.productId,status:'active',used:0,createdAt:s.clock.totalMinutes,expiresAt:item.entitlement?.durationMinutes==null?null:s.clock.totalMinutes+integer(item.entitlement.durationMinutes,'权益有效分钟',1)});}
   if(digital.length===order.items.length)order.status='completed';return digital;
 }
 
@@ -201,7 +189,7 @@ function perform(s, a,options={}) {
     }
     case 'wallet.invest.settle': {
       const row = byId(s.wallet.investments, a.investmentId, '理财持仓'); need(row.status === 'active', '该持仓已经赎回。');
-      epoch(s); const product = row.productSnapshot??byId(s.wallet.investmentProducts, row.productId, '理财产品');
+      epoch(s); const product = row.productSnapshot;need(product,'持仓缺少已确认的产品条款快照，不能以当前产品替代旧合同。');
       const earned = Number(BigInt(row.principal) * BigInt(product.annualRateBps) * BigInt(Math.min(s.clock.totalMinutes,row.maturityAt??s.clock.totalMinutes) - row.createdAt) / BigInt(10000 * yearMinutes(s,row.createdAt)));
       const gain = earned - row.accrued; need(gain > 0, '按已过去的故事时间计算，尚无新增整分收益；不会凭空加钱。');
       row.accrued = earned; row.settledAt = s.clock.totalMinutes; s.wallet.external -= gain;
@@ -217,16 +205,15 @@ function perform(s, a,options={}) {
     case 'cart.add': {
       const product = byId(s.commerce.products, a.productId, '商品'); need(Number.isSafeInteger(product.stock)&&Number.isSafeInteger(product.price),'商品价格或库存未配置。','UNCONFIGURED_PRODUCT'); const qty = integer(a.qty ?? 1, '数量', 1, 99);
       const optionIds=Array.isArray(a.optionIds)?[...new Set(a.optionIds)].sort():a.optionId?[a.optionId]:[];for(const id of optionIds)byId(product.options??[],id,'商品规格');const row = s.commerce.cart.find(x => x.productId === product.id&&stable(x.optionIds??[])===stable(optionIds)); const total = (row?.qty || 0) + qty;
-      need(total <= product.stock, '购物车数量超过当前库存。'); if (row) row.qty = total; else s.commerce.cart.push({ productId: product.id, qty,...(optionIds.length?{optionIds}:{}) });
+      const other=s.commerce.cart.filter(x=>x.productId===product.id&&x!==row).reduce((n,x)=>n+x.qty,0);need(total+other <= product.stock, '购物车数量超过当前库存。'); if (row) row.qty = total; else s.commerce.cart.push({ productId: product.id, qty,...(optionIds.length?{optionIds}:{}) });
       return msg(`已加入${product.name}，尚未付款。`);
     }
     case 'cart.remove': {
       need(s.commerce.cart.some(x => x.productId === a.productId), '购物车里没有这件商品。'); s.commerce.cart = s.commerce.cart.filter(x => x.productId !== a.productId); return msg('已从购物车移除。');
     }
     case 'order.checkout': {
-      let quote;
-      if(a.quoteId){quote=(s.commerce.quotes??[]).find(q=>q.quoteId===a.quoteId);need(quote,'确认报价不存在，请重新生成。','QUOTE_REQUIRED');need(s.clock.totalMinutes<=quote.expiresAt,'报价已过期，请重新核对。','QUOTE_EXPIRED');const fresh=quoteCommerce(s,{...quote,kind:a.kind??quote.kind});need(fresh.quoteId===quote.quoteId,'价格、库存、规格或费用已经变化，请重新确认报价。','QUOTE_CHANGED');}
-      else {need(!(s.commerce.quotes??[]).some(q=>q.kind===a.kind),'本类购物车已有报价，请从报价页确认。','QUOTE_REQUIRED');quote=quoteCommerce(s,a);}
+      need(a.quoteId,'请先生成并确认本次订单报价。','QUOTE_REQUIRED');let quote;
+      {quote=(s.commerce.quotes??[]).find(q=>q.quoteId===a.quoteId);need(quote,'确认报价不存在，请重新生成。','QUOTE_REQUIRED');need(s.clock.totalMinutes<=quote.expiresAt,'报价已过期，请重新核对。','QUOTE_EXPIRED');const fresh=quoteCommerce(s,{...quote,kind:a.kind??quote.kind});need(fresh.quoteId===quote.quoteId,'价格、库存、规格或费用已经变化，请重新确认报价。','QUOTE_CHANGED');}
       const order={...clone(quote),id:nextId(s,'order'),items:quote.items.map(({stock,version,...item})=>({...item,quotedStock:stock,quotedVersion:version})),status:'paid',createdAt:s.clock.totalMinutes,updatedAt:s.clock.totalMinutes,refunded:0,payerId:owner(s)};
       pay(s,order,order.payment,order.accountId);
       for(const item of order.items)byId(s.commerce.products,item.productId,'商品').stock-=item.qty;
@@ -246,15 +233,15 @@ function perform(s, a,options={}) {
       pay(s,order,order.payment,order.accountId);order.status='paid';order.updatedAt=s.clock.totalMinutes;fulfillDigital(s,order);return {message:'已按预留报价付款，订单和流水已保存。',orderId:order.id};
     }
     case 'order.advance': {
-      const order = byId(s.commerce.orders, a.orderId, '订单'); const steps = order.kind === 'food' ? ['paid', 'preparing', 'delivering', 'delivered'] : ['paid', 'shipped', 'delivered'];
+      const order = byId(s.commerce.orders, a.orderId, '订单');need(order.merchantStatus!=='out-of-stock','缺货订单须先得到新的商家处理回执。');const steps = order.kind === 'food' ? (order.pickup?['paid','preparing','delivered']:['paid', 'preparing', 'delivering', 'delivered']) : ['paid', 'shipped', 'delivered'];
       const index = steps.indexOf(order.status); need(index >= 0 && index < steps.length - 1, '此订单当前没有可推进的物流阶段。');
       if(steps[index+1]==='delivered')need(order.scheduledAt==null||s.clock.totalMinutes>=order.scheduledAt,'预约送达时间尚未到达。');order.status = steps[index + 1]; order.updatedAt = s.clock.totalMinutes;
       return msg(`订单更新为：${{ preparing: '制作中', delivering: '配送中', shipped: '已发货', delivered: '已送到指定地点，等待领取' }[order.status]}。`);
     }
     case 'order.collect': {
       const order = byId(s.commerce.orders, a.orderId, '订单'); need(order.status === 'delivered', '订单尚未送达，或者已经领取。');
-      need((order.recipientId??owner(s))===owner(s),'这是赠礼订单，须等待实际收件人的签收回执。');need(!s.map.journey && s.map.position === order.placeId, '请先到达订单的收货地点再领取。');
-      for (const item of order.items.filter(x=>x.fulfillment!=='digital'&&x.kind!=='digital')) s.inventory.push({ id: nextId(s, 'item'), productId: item.productId, name: item.name, kind: item.kind, qty: item.qty, ownerId: owner(s), holderId: owner(s), storage: 'carried', placeId: order.placeId, orderId: order.id, consumed: 0 });
+      need(order.recipientId===owner(s),'这是赠礼订单，须等待实际收件人的签收回执。');need(!s.map.journey && s.map.position === order.placeId, '请先到达订单的收货地点再领取。');
+      for (const item of order.items.filter(x=>x.fulfillment!=='digital'&&x.kind!=='digital')) s.inventory.push({ id: nextId(s, 'item'), productId: item.productId, orderLineId:item.id, name: item.name, kind: item.kind, qty: item.qty, ownerId: owner(s), holderId: owner(s), storage: 'carried', placeId: order.placeId, orderId: order.id, consumed: 0 });
       order.status = 'completed'; order.updatedAt = s.clock.totalMinutes; return msg('已经领取，物品归本人持有；食物现在可以食用。');
     }
     case 'order.cancel': {
@@ -265,21 +252,20 @@ function perform(s, a,options={}) {
       const order = byId(s.commerce.orders, a.orderId, '订单'); need(['delivered', 'completed'].includes(order.status), '只有已送达或已领取的订单可以在此退货退款。');
       refund(s, order, 'refunded'); return msg('已登记全额退货退款；原付款与退款记录都保留。');
     }
-    case 'order.refund.partial': {const order=byId(s.commerce.orders,a.orderId,'订单');need(['delivered','completed'].includes(order.status),'部分退货仅适用于已送达或已收货订单。');refund(s,order,'refunded',{productId:a.productId,qty:a.qty});return msg('已按原价和优惠分摊完成部分原路退款，未退商品仍保留。');}
+    case 'order.refund.partial': {const order=byId(s.commerce.orders,a.orderId,'订单');need(['delivered','completed'].includes(order.status),'部分退货仅适用于已送达或已收货订单。');refund(s,order,'refunded',{productId:a.productId,lineId:a.lineId,qty:a.qty});return msg('已按原价和优惠分摊完成部分原路退款，未退商品仍保留。');}
     case 'inventory.consume': {
       const item = byId(s.inventory, a.itemId, '持有物'); need(item.kind === 'food' && item.ownerId === owner(s) && item.holderId === owner(s), '只有本人已经领取的食物可以食用。');
       need(item.qty > 0, '这份食物已经吃完。'); need(!s.map.journey && item.placeId === s.map.position, '请在食物所在地点食用。'); item.qty -= 1; item.consumed += 1;
       return msg(`已吃掉一份${item.name}，物品记录保留。`);
     }
-    case 'map.depart': { const journey=quoteJourney(s,a.placeId,a.mode||'walk');need(a.quoteId===undefined||a.quoteId===journey.quoteId,'行程时间或费用已经变化，请重新确认。');if(journey.fare){need(s.config.settlementOwner==='phone'||s.config.settlementOwner==='tables'&&s.config.database===true,'行程费用必须由当前统一账本结算。');const from=defaultAccount(s,a.accountId);debit(s,from,journey.fare);s.wallet.external+=journey.fare;record(s,'travel.fare','出行费用',-journey.fare,from,{journeyId:journey.quoteId});journey.accountId=from;}s.map.journey=journey; return msg(`已出发，预计经过${s.map.journey.duration}个故事分钟到达；当前位置尚未变更。`); }
+    case 'map.depart': { const journey=quoteJourney(s,a.placeId,a.mode||'walk');need(a.quoteId===undefined||a.quoteId===journey.quoteId,'行程时间或费用已经变化，请重新确认。');if(journey.fare){need(s.config.settlementOwner==='tables'&&s.config.database===true,'行程费用必须由当前统一账本结算。');const from=defaultAccount(s,a.accountId);debit(s,from,journey.fare);s.wallet.external+=journey.fare;record(s,'travel.fare','出行费用',-journey.fare,from,{journeyId:journey.quoteId});journey.accountId=from;}s.map.journey=journey; return msg(`已出发，预计经过${s.map.journey.duration}个故事分钟到达；当前位置尚未变更。${journey.fare===null?'行程费用未配置，尚未结算。':''}`); }
     case 'map.arrive': {
       const journey = s.map.journey; need(journey, '当前没有正在进行的行程。'); advanceTime(s, Math.max(0, journey.arriveAt - s.clock.totalMinutes)); s.map.position = journey.to; s.map.journey = null;
       for (const item of s.inventory) if (item.holderId === owner(s) && item.storage === 'carried') item.placeId = journey.to;
       return msg(`已到达${byId(s.map.places, journey.to, '目的地').name}；故事时间已推进到抵达时刻。`);
     }
     case 'calendar.add': {
-      const title = String(a.title || '').trim(); need(title.length > 0 && title.length <= 100, '日程标题须为1—100字。'); const current=formClock(s),length=current?current.lengths(s.clock.year)[s.clock.month-1]:31;const day = integer(a.day, '日期', 1, length), minute = integer(a.minute, '当日分钟', 0, dayMinutes(s)-1);
-      if(!current){const date = new Date(Date.UTC(s.clock.year, s.clock.month - 1, day)); need(date.getUTCMonth() + 1 === s.clock.month, '当前故事月不存在这个日期。');}
+      const title = String(a.title || '').trim(); need(title.length > 0 && title.length <= 100, '日程标题须为1—100字。'); const current=formClock(s);need(current,'世界历法尚未配置。');const length=current.lengths(s.clock.year)[s.clock.month-1];const day = integer(a.day, '日期', 1, length), minute = integer(a.minute, '当日分钟', 0, dayMinutes(s)-1);
       const at = atMinute(s,s.clock.year, s.clock.month, day, minute); need(at >= s.clock.totalMinutes, '不能把新日程安排到故事过去。'); byId(s.map.places, a.placeId, '日程地点');
       const participantId = String(a.participantId || ''); need(!participantId||(s.contacts||[]).some(x=>x.id===participantId)||(s.social?.accounts||[]).some(x=>x.id===participantId),'请先确认邀请对象。');
       const event = { id: nextId(s, 'event'), title, day, minute, placeId: a.placeId, participantId, status: participantId ? 'invited' : 'personal', at, notified: false };
@@ -357,6 +343,6 @@ export function assertLifeActionAvailable(s,a){
   if(a.type.startsWith('cart.')){const p=s.commerce.products.find(x=>x.id===a.productId);app=p?.kind==='food'?'food':'shop';}
   if(a.type.startsWith('order.')){const o=a.type==='order.reserve'?(s.commerce.quotes??[]).find(q=>q.quoteId===a.quoteId):['order.checkout','order.quote'].includes(a.type)?a:s.commerce.orders.find(x=>x.id===a.orderId);app=o?.kind==='food'?'food':'shop';}
   if(app)need(config.apps.includes(app),'世界未启用这个应用。','APP_DISABLED');
-  if(a.type.startsWith('wallet.')||['order.checkout','order.pay','order.cancel','order.refund','order.refund.partial'].includes(a.type)){need(config.settlementOwner==='phone'||config.settlementOwner==='tables'&&config.database===true,'数值由原生变量或表单结算；手机不能另写一份账本。','EXTERNAL_STATE_OWNER');need(config.currency&&typeof config.currency.name==='string','世界货币尚未配置。','UNCONFIGURED_CURRENCY');}
+  if(a.type.startsWith('wallet.')||['order.checkout','order.pay','order.cancel','order.refund','order.refund.partial'].includes(a.type)){need(config.settlementOwner==='tables'&&config.database===true,'手机交易只能提交到当前表单的规范资产账户。','EXTERNAL_STATE_OWNER');need(config.currency&&typeof config.currency.name==='string','世界货币尚未配置。','UNCONFIGURED_CURRENCY');}
 }
 export function refreshState(input){const next=clone(input);refresh(next);validateState(next);return next;}

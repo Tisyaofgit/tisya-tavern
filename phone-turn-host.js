@@ -2,9 +2,7 @@ import {chatKey,ensureMessages,captureMessages} from './engine/controller.mjs';
 import {sha256} from './engine/common.mjs';
 import {normalizeEnvelope} from './engine/tags.mjs';
 import {extractPhonePayload,findPhoneMarkers} from './phone-protocol.mjs';
-import {importPhone,exportPhone,reconcilePhone} from './phone-core.mjs';
 
-export const PHONE_STATE_KEY='缇斯亚虚拟手机';
 export const PHONE_TURN_KEY='缇斯亚手机本轮';
 export const PHONE_SOURCE_KEY='缇斯亚手机来源';
 const copy=value=>structuredClone(value);
@@ -35,63 +33,6 @@ function selectedPhoneSources(c,state){
   sources.push({sourceId,uid:m.uid,candidate,raw:normalizeEnvelope(m.text),requestId});
  }
  return sources;
-}
-
-// Native TauriTavern 2.4.0 bookmarks.js copies metadata and overwrites only
-// main_chat with the immediate parent session name plus a fresh integrity ID.
-// Ordinary cross-chat imports retain their strict context-key rejection.
-export function adoptNativePhoneBranch(value,c){
- const target=chatKey(c);if(value?.contextKey===target)return value;
- let source,owner;try{source=JSON.parse(value?.contextKey);owner=JSON.parse(target);}catch{fail('PHONE_CONTEXT_CHANGED','手机归属与当前聊天不一致，未覆盖存档。');}
- need(Array.isArray(source)&&source.length===3&&Array.isArray(owner)&&owner.length===3&&source[0]===owner[0]&&source[1]===owner[1]&&source[2]!==owner[2]&&c.chatMetadata?.main_chat===source[2]&&typeof c.chatMetadata?.integrity==='string'&&c.chatMetadata.integrity.length>0,'PHONE_CONTEXT_CHANGED','手机归属与当前聊天不一致，且没有可核对的原生父分支，未覆盖存档。');
- let next=importPhone(value);
- need(!Object.values(next.requests).some(r=>r.status==='prepared'),'PHONE_BRANCH_PENDING','父分支仍有待回请求；请先回到父分支确认生成结束，再建立分支。');
- // Earlier life archives used the current chat as their media namespace. Only
- // this verified native-parent path can carry that known source namespace into
- // a child. Keep every historical domain boundary equal to its event replay.
- const keepOrigin=domain=>{if(domain&&domain.mediaOriginContextKey===undefined)domain.mediaOriginContextKey=value.contextKey;};
- const keepBoundary=boundary=>{if(!boundary)return;keepOrigin(boundary.initial);keepOrigin(boundary.life);for(const event of boundary.eventLog??[])if(event.kind==='init')keepOrigin(event.initial);};
- keepOrigin(next.lifeInitial);keepOrigin(next.life);for(const event of next.lifeEventLog??[])if(event.kind==='init')keepOrigin(event.initial);
- for(const request of Object.values(next.requests))keepBoundary(request.lifeSnapshot);
- for(const frame of Object.values(next.frames)){keepBoundary(frame.lifeBefore);keepBoundary(frame.lifeAfter);}
- next.contextKey=target;next=reconcilePhone(next,selectedPhoneSources(c,next),{at:new Date().toISOString()});
- next.revision=value.revision+1;return JSON.parse(exportPhone(next));
-}
-
-// One authoritative archive lives in the captured chat's metadata. No local
-// storage mirror or global fallback. The native metadata saver owns disk I/O.
-export function createPhoneMetadataStorage({getContext,persistMetadata,key=PHONE_STATE_KEY,allowNativeBranch=false},captured=getContext()){
- const owner=scope(captured);let loaded=false,known=null,tail=Promise.resolve(),blocked=null;
- const current=()=>{const c=getContext();need(matches(c,owner),'PHONE_CONTEXT_CHANGED','聊天已切换，原手机状态没有写入新聊天。');return c;};
- const writable=()=>{if(blocked)fail('PHONE_STORAGE_UNCERTAIN','上一笔手机保存是否落盘尚未确认。请重新打开聊天，从宿主读取存档后再操作。',{firstError:blocked});};
- function revision(value){if(value==null)return 0;need(value&&typeof value==='object'&&!Array.isArray(value)&&Number.isSafeInteger(value.revision)&&value.revision>=0,'PHONE_STORAGE_INVALID','手机存档格式损坏，原值已保留。');return value.revision;}
- const api={
-  async load(){writable();const c=current(),value=c.chatMetadata[key];revision(value);known=value==null?null:copy(value);loaded=true;if(value!=null&&allowNativeBranch&&value.contextKey!==owner.key){const next=adoptNativePhoneBranch(value,c);await api.save(next,{expectedRevision:value.revision});return copy(next);}return value==null?null:copy(value);},
-  async save(value,options={}){
-   revision(value);need(value!=null,'PHONE_STORAGE_INVALID','不能用空值覆盖手机存档。');const next=copy(value);
-   const expected=typeof options==='number'?options:options.expectedRevision;
-   const operation=tail.catch(()=>{}).then(async()=>{
-    writable();const c=current();need(loaded,'PHONE_STORAGE_NOT_LOADED','请先读取手机存档。');const before=c.chatMetadata[key];
-    const want=expected??revision(known);
-    need(revision(before)===want&&same(before??null,known),'PHONE_SAVE_CONFLICT','手机存档已经变化，请重新打开；较新数据已保留。');
-    if(same(before,next))return {revision:next.revision,unchanged:true,atomic:false};
-    c.chatMetadata[key]=next;
-    try{
-     const result=await persistMetadata(c,owner);
-     need(result!==false,'PHONE_SAVE_REJECTED','宿主没有确认保存手机存档。');
-     current();need(same(c.chatMetadata[key],next),'PHONE_SAVE_CONFLICT','保存期间手机存档被其他操作改变，请重新打开。');
-     known=copy(next);return {revision:next.revision,saved:true,atomic:false};
-    }catch(error){
-     blocked={code:error.code??null,message:String(error.message??error)};
-     if(c.chatMetadata[key]===next){if(before===undefined)delete c.chatMetadata[key];else c.chatMetadata[key]=before;}
-     error.phoneStorageUncertain=true;
-     error.message=String(error.message??error)+'；保存是否落盘尚未确认，请重新打开聊天读取宿主存档。';
-     throw error;
-    }
-   });tail=operation;return operation;
-  },
-  contextKey:owner.key,
- };return api;
 }
 
 export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isGenerating=()=>null,onChange=()=>{},onError=()=>{}}){

@@ -193,7 +193,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
   }
   await checkBudget(messages,w.context.maxInputTokens,ctx());const {generate_data:payload}=await createParameters(settings,model,'quiet',messages,{allowToolCalls:false,toolData:{}});payload.stream=typeof onProgress==='function';validateBodyOverrides(payload,parseRequestBody);const prepared=await prepareTransport({...payload},route.transport,{key,revision,world:w});if(prepared?.plan){for(const k of Object.keys(payload))delete payload[k];Object.assign(payload,prepared.payload);}
   if(worldKey(ctx())!==key||store.read().revision!==revision)fail('世界或配置已变化，任务未发送');const snap={at:new Date().toISOString(),world:key,task,route:{connection:route.connection,preset:route.preset,model},selected:materials.ids,messages:clone(payload.messages),tools:clone(payload.tools??[])};attachTransport(payload,prepared,snap,'auxiliary');last=snap;snapshots.push(snap);if(snapshots.length>10)snapshots.shift();onSnapshot(snap);
-  onProgress?.({stage:'waiting',responseDiagnostic:{request:requestInfo}});
+  onProgress?.({stage:'waiting',promptMessages:clone(payload.messages),templateInfo:parsedInput?.template??null,responseDiagnostic:{request:requestInfo}});
   const response=await fetch('/api/backends/chat-completions/generate',{method:'POST',headers:ctx().getRequestHeaders(),body:JSON.stringify(payload),signal});return await readTaskResponse(response,{signal,onProgress});
   }catch(error){const failed=error instanceof Error?error:Error(String(error));failed.responseDiagnostic={...(failed.responseDiagnostic??{}),request:Object.fromEntries(Object.entries(requestInfo).map(([key,value])=>[key,typeof value==='string'?safeDiagnostic(value):value]))};throw failed;}finally{query?.dispose();}
  }

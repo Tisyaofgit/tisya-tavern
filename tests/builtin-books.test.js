@@ -53,8 +53,12 @@ test('definitions come from actual installed edited bodies with a precise source
 test('normal lore excludes renamed entire template and beauty books plus extension definitions',()=>{
  const definition=Object.values(bundledNativeBuiltinBook('extensions').entries).find(e=>e.extensions.tisyaBuiltin.purpose==='definition');const payload={globalLore:[{world:'更名模板',uid:1,content:'用户新加模板'},{world:'更名美化',uid:2,content:'用户样式'}, {...definition,world:'资料'}, {world:'资料',uid:88,content:'普通设定',disable:false}],chatLore:[]};excludeTemplateBookEntries(payload,{builtinBooks:{templates:{name:'更名模板'},beauty:{name:'更名美化'}}});assert.deepEqual(payload.globalLore,[{world:'资料',uid:88,content:'普通设定',disable:false}]);
 });
-test('creation reads stable renamed book and excludes legacy phone-only templates without deleting sources',async()=>{
- const book=bundledNativeBuiltinBook('templates');book.entries[99]={uid:99,comment:'【模板】手机世界初始化骨架',content:'<手机世界>{}</手机世界>'};const ctx={extensionSettings:{tisya_builtin_books:{books:{templates:{name:'已改名模板'}}}},getWorldInfoNames:async()=>['已改名模板'],loadWorldInfo:async name=>name==='已改名模板'?book:null};const result=await readCreationTemplates(()=>ctx,{getHelper:()=>null});assert.equal(result.book,'已改名模板');assert.equal(result.entries.length,4);assert(book.entries[99]);
+test('one renamed template book routes all thirteen definitions by the current task without deleting source text',async()=>{
+ const book=bundledNativeBuiltinBook('templates');assert.equal(Object.keys(book.entries).length,13);book.entries[99]={uid:99,comment:'用户规则核对模板',content:'只在核对规则时使用',extensions:{tisyaTemplate:{tasks:['ruleReview']}}};const before=clone(book),ctx={extensionSettings:{tisya_builtin_books:{books:{templates:{name:'已改名模板'}}}},getWorldInfoNames:async()=>['已改名模板'],loadWorldInfo:async name=>name==='已改名模板'?book:null};
+ const read=options=>readCreationTemplates(()=>ctx,{getHelper:()=>null,...options});const character=await read({task:'newCharacter'}),phone=await read({task:'tableGenesis',goal:'手机全初始化'}),memory=await read({task:'tableArchive'}),rules=await read({task:'ruleReview'});
+ assert.equal(character.book,'已改名模板');assert.deepEqual(character.entries.map(entry=>entry.name),['【模板】角色统一表单','【说明】统一表单模板使用说明']);
+ assert.equal(phone.entries.filter(entry=>entry.name.startsWith('【模板】手机')||['【模板】商城外卖与赠礼初始化','【模板】相册音乐与主题初始化','【模板】地图交通与地点初始化','【模板】日历邀请与提醒初始化'].includes(entry.name)).length,7);assert(!phone.entries.some(entry=>/每轮记忆|规则修订|用户规则核对/.test(entry.name)));
+ assert(memory.entries.some(entry=>entry.name==='【模板】每轮记忆与历史提炼'));assert(!memory.entries.some(entry=>entry.name.includes('初始化')));assert(rules.entries.some(entry=>entry.name==='用户规则核对模板'));assert(rules.entries.some(entry=>entry.name==='【模板】表单配置与规则修订'));assert.deepEqual(book,before);
 });
 
 test('retired factory definitions preserve user text but are no longer executable definitions',async()=>{

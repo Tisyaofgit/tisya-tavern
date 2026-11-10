@@ -5,7 +5,7 @@ import {activePreferences} from './business.mjs';
 import {recall} from './reply.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
 import {ARCHIVE_PROTOCOL,stagedArchiveReferences} from './archive.mjs';
-import {extendPhoneFormCatalog} from '../phone-form-contract.mjs';
+import {extendPhoneFormCatalog} from './phone-form-contract.mjs';
 const routes={'世界与规则':'world_context','类型与物品':'asset_context','地点与交通':'location_context','组织与制度':'faction_context','场景与环境':'current_state','状态与成长':'current_state','持有与交易':'current_state','关系与约定':'current_state','人物原点':'focus_entities','人物细节':'focus_entities','认知与情报':'knowledge_material','历史与记忆':'memory_archive','任务与调度':'pending_tasks','生产与设施':'current_state','冲突与检定':'current_state','创世与跨世界':'cardflow','规则与执行':'cell_prompts','宿主与投影':'display_material','运行与归档':'offstage_state'};
 const text=v=>v==null?'~':typeof v==='boolean'?(v?'是':'否'):Array.isArray(v)?v.map(text).join('、')||'[]':typeof v==='object'?Object.entries(v).map(([k,x])=>k+'='+text(x)).join('；')||'{}':String(v).replace(/\r?\n/g,' ⏎ ');
 export function initializeState(catalog,scope={}){
@@ -44,18 +44,6 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
   const writable=schema.fields.filter(f=>creationFieldAllowed(f)&&(context.audience==='author'||!f.lock_level)&&(!entries.length||!Object.values(rows).every(r=>r.metadata?.phone_projection===true)));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+'/'+f.type+((f.enum??f.options)?'/'+(f.enum??f.options).join('、'):'')+')').join('；'));
  }
  slots=renderBlocks(e,blocks);
- // Event identity does not include its display time. Merge complementary
- // archive prose into the event's one placement without repeating its code.
- const memory=slots.tisya_material_memory_archive??=[],eventKey=line=>/^([^\s[：:]+)(?:\[[^\]]*\])?[：:]/u.exec(line)?.[1],events=new Map();
- memory.forEach((line,i)=>{const key=eventKey(line);if(key)events.set(key,i);});
- for(const batch of e.data.runtime.archive??[])for(const r of batch.rows??[]){
-  if(batch.mapped||context.audience!=='author'&&r.category==='隐情')continue;
-  if(programOwnedTable(r.table_id??r.tableId??'',e.data.schema[r.table_id??r.tableId]??{}))continue;
-  const line=r.category==='事件'?r.raw.split('|').slice(1).join('|').trim():r.raw,key=r.category==='事件'?eventKey(line):null;
-  if(key&&events.has(key)){const i=events.get(key),detail=line.replace(/^[^：:]*[：:]/u,'');if(detail&&!memory[i].includes(detail))memory[i]+='；归档补记：'+detail;}
-  else if(!memory.includes(line)){if(key)events.set(key,memory.length);memory.push(line);}
- }
- if(memory.length)slots.tisya_material_memory_archive=memory;
  const pendingArchives=(e.data.runtime.archive_queue??[]).filter(b=>b.status==='blocked'||b.plan?.pending?.length);
  if(pendingArchives.length)add('tisya_material_offstage_state','归档待处理（原文保留，未把受阻内容当成已确认事实）：'+pendingArchives.map(b=>b.source_key+' / '+(b.error?.code??'ARCHIVE_PENDING')).join('；'));
  for(const p of activePreferences(e,context))add('tisya_contractor_wish',p.directive);

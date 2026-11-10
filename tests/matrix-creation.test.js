@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {Runtime} from '../engine/runtime.mjs';
 import {createMatrixCreator,validateCreationProposal,CREATION_CONTRACT} from '../engine/creation.mjs';
 import {digest} from '../engine/common.mjs';
+import {bundledNativeTemplateBook} from '../engine/template-book.mjs';
 
 function fixture(){
  const r=new Runtime();r.registerTable('T_SYS_ENTITIES',[{key:'name',type:'TEXT'},{key:'enabled',type:'BOOLEAN'}],'人物主体');r.registerTable('T_CHAR_DOSSIER',[{key:'entity_ref',type:'REF'},{key:'name',label:'显示名称',type:'TEXT'},{key:'description',label:'描述',type:'TEXT'}],'人物');r.registerTable('T_DYN_CURRENCY_BALANCES',[{key:'amount',label:'数额',type:'NUMBER'},{key:'enabled',label:'启用',type:'BOOLEAN'}],'余额');r.registerTable('X_PHONE_RECEIPTS',[{key:'data',type:'JSON'}]);
@@ -20,9 +21,9 @@ test('stale draft cannot overwrite a concurrently edited form',async()=>{
  const f=fixture(),creator=createMatrixCreator({database:f.database,getContext:()=>({}),request:async()=>reply()}),d=await creator.draft('新角色',{kind:'character',mode:'revise'});
  await f.database.commit({operationId:'other',expectedRevision:0,contextKey:'chat-a',changes:[{tableId:'T_SYS_ENTITIES',recordId:'existing',values:{name:'不可覆盖'}}]});await assert.rejects(creator.save(d),/SAVE_CONFLICT/);assert.equal(f.writes,1);assert.equal(f.snapshot.state.tables.T_SYS_ENTITIES['existing'].values.name,'不可覆盖');
 });
-test('saved internal JSON proposal remains resumable, but a new model reply must use the shared reply and sheets',async()=>{
+test('legacy JSON replies and saved proposals are rejected; only current reply-sheet drafts can save',async()=>{
  const f=fixture(),creator=createMatrixCreator({database:f.database,getContext:()=>({}),request:async()=>JSON.stringify(proposal())});await assert.rejects(creator.draft('新人物',{kind:'character',mode:'revise'}),e=>e.rawResponse===JSON.stringify(proposal()));
- const nativeSources={card:null,bindings:[],books:[],contractor:null},saved={format:CREATION_CONTRACT,operationId:'saved-json',contextKey:'chat-a',expectedRevision:0,kind:'character',mode:'extend',goal:'旧草稿',source:null,nativeSources,nativeSourceDigest:digest(nativeSources),proposal:proposal()};await creator.save(saved);assert.equal(f.writes,1);
+ const nativeSources={card:null,bindings:[],books:[],contractor:null},saved={format:CREATION_CONTRACT,operationId:'saved-json',contextKey:'chat-a',expectedRevision:0,kind:'character',mode:'extend',goal:'旧草稿',source:null,nativeSources,nativeSourceDigest:digest(nativeSources),proposal:proposal()};await assert.rejects(creator.save(saved),/当前可视化表单格式/);assert.equal(f.writes,0);assert.deepEqual(saved.proposal,proposal());
 });
 test('generation changes no records on malformed response and retains raw evidence',async()=>{
  const f=fixture(),raw='{"name":"broken"',creator=createMatrixCreator({database:f.database,getContext:()=>({}),request:async()=>raw});await assert.rejects(creator.draft('新世界',{mode:'revise'}),e=>e.rawResponse===raw);assert.equal(f.writes,0);
@@ -32,4 +33,9 @@ test('rejects legacy state payload, unknown fields, program receipts and duplica
 });
 test('extend does not reinitialize an existing person and unknown body is not guessed',()=>{
  const f=fixture(),p=proposal(),r=new Runtime(f.snapshot.state);r.newRecord('T_SYS_ENTITIES',{name:'已有名字'},'person-1');f.snapshot={...f.snapshot,state:r.data};assert.throws(()=>validateCreationProposal(p,f.snapshot,{kind:'character',mode:'extend'}),/不能覆盖/);delete p.matrix.binding;assert.throws(()=>validateCreationProposal(p,f.snapshot,{kind:'character',mode:'revise'}),/entityId/);
+});
+
+test('editing the actual selected template after drafting blocks save and preserves the current records',async()=>{
+ const f=fixture(),book=bundledNativeTemplateBook(),ctx={extensionSettings:{},getWorldInfoNames:async()=>['缇斯亚模板书'],loadWorldInfo:async()=>book},creator=createMatrixCreator({database:f.database,getContext:()=>ctx,request:async()=>reply()});
+ const draft=await creator.draft('新人物',{kind:'character',mode:'revise'}),before=structuredClone(f.snapshot);const selected=Object.values(book.entries).find(row=>row.extensions.tisyaBuiltin.entryId==='template.character.form');selected.content+='\n用户明确增加的新规则';await assert.rejects(creator.save(draft),/模板内容已经变化/);assert.equal(f.writes,0);assert.deepEqual(f.snapshot,before);assert.equal(draft.rawResponse,reply());
 });

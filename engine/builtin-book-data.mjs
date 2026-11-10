@@ -20,7 +20,6 @@ export const CHARACTER_FORM_TEMPLATE=Object.freeze({format:'tisya.form-authoring
 export const FORM_TEMPLATE_GUIDE=`世界、角色和生活手机共用最新版表单 schema、实例与提交日志。先读取实际注册表，核对含义、类型、单位、时间层、权限和唯一所有者，再匹配已有规范字段和已登记别名；只有独立生命周期或重复明细才增加必要关联子模板。新定义须先获 schema 接纳，未登记字段不直接填入。
 作者原文保留为版本化来源；模板更新不覆盖已采用定义或当前状态，资料页和手机打开不重新初始化。0、false、允许的空串和空数组保持原义。当前时钟只通过统一世界时钟推进；余额、订单、分期、持有物、帖子和媒体元数据均由同一数据库保存，文件二进制通过媒体资产引用。
 新建世界/人物走填写草稿、差异核对、统一提交与回读。已有角色编辑只修改选择的规范字段，不重放初始化，不清空未改字段。私人信息、原生变量绑定及旧分支来源不得因合并扩大权限。
-旧 <手机世界> / <手机初态> 以及随旧版附带的 phone-world.json / phone-character.json 只作为只读迁移来源；保存原文、UID、摘要和单位映射后生成导入草稿。不能继续据此创建独立手机状态。旧值与当前表单不同必须显示冲突，未确认不选择其中一个。
 `+MATRIX_CREATION_CONTRACT;
 
 export function bundledFormTemplateEntries(){return [

@@ -1,5 +1,5 @@
 import {decode,digest} from './common.mjs';
-import {templateBookName,ensureTemplateBook,stripPhoneInitialization} from './template-book.mjs';
+import {templateBookName,ensureTemplateBook} from './template-book.mjs';
 import {createBookGateway,readMatrixDefinition} from '../tables/books.js';
 import {validateCreationProposal} from './creation.mjs';
 const check=(ok,message)=>{if(!ok)throw Error(message);};
@@ -155,7 +155,7 @@ export function projectDatabaseIdentity(snapshot,binding){
  const entity=snapshot.state.tables?.T_SYS_ENTITIES?.[binding.entityId],dossier=snapshot.state.tables?.T_CHAR_DOSSIER?.[binding.dossierId];check(entity&&dossier,'所选人物表单记录已不存在');
  const entityValues=entity.values??entity,values=dossier.values??dossier;check(entityDossierId(snapshot.state,{id:binding.entityId,values:entityValues})===binding.dossierId,'人物档案与实体归属不一致');
  const name=String(['known','derived'].includes(dossier.states?.name??'known')?values.name??binding.dossierId:binding.dossierId),specs=snapshot.state.schema?.T_CHAR_DOSSIER?.fields??[];
- const text=Object.entries(values).filter(([key])=>!['row_uuid','char_id','name'].includes(key)).map(([key,value])=>(specs.find(f=>f.key===key)?.label??key)+'：'+(!['known','derived'].includes(dossier.states?.[key]??'known')?'['+(dossier.states?.[key]??'未提供')+']':typeof value==='string'?stripPhoneInitialization(stripPhoneInitialization(value,'手机世界'),'手机初态'):JSON.stringify(value))).join('\n');
+ const text=Object.entries(values).filter(([key])=>!['row_uuid','char_id','name'].includes(key)).map(([key,value])=>(specs.find(f=>f.key===key)?.label??key)+'：'+(!['known','derived'].includes(dossier.states?.[key]??'known')?'['+(dossier.states?.[key]??'未提供')+']':typeof value==='string'?value:JSON.stringify(value))).join('\n');
  return {name,text,entityId:binding.entityId,dossierId:binding.dossierId,revision:snapshot.revision,contextKey:snapshot.contextKey};
 }
 function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,database,builtins,creator,sourceBooks}){
@@ -205,7 +205,7 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  }
  const archiveReference=source=>({book:source.book,uid:source.uid,definitionId:source.definition.id,version:source.definition.revision,digest:source.digest,definitionDigest:digest(source.definition),operationId:source.definition.operationId??null,kind:source.definition.kind});
  function isInstantiatedFrom(snapshot,row,source){const ref=archiveReference(source),same=link=>link?.book===ref.book&&String(link.uid)===String(ref.uid)&&link.definitionId===ref.definitionId&&link.version===ref.version&&link.definitionDigest===ref.definitionDigest;if(same(row.metadata?.sourceDefinition))return true;return Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>same(receipt.result?.source?.sourceArchive));}
- const sourceNarrative=entry=>stripPhoneInitialization(stripPhoneInitialization(entry.content,'手机世界'),'手机初态');
+ const sourceNarrative=entry=>entry.content;
  function legacySourceTarget(snapshot,source){
   const entry=source.definition?.source?.entry??source.entry,receipts=Object.entries(snapshot.state.runtime?.receipts??{}).filter(([,receipt])=>{const prior=receipt.result?.source;return prior?.kind==='legacy-character-import'&&prior.book===source.book&&String(prior.uid)===String(source.uid);});
   if(!receipts.length)return null;
@@ -284,19 +284,19 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  async function resources(){const snapshot=await database.read(),all=await names(),value=config.read(),managed=builtins?.bookNames?.()??{};return {database:true,books:all,templateBook:managed.templates??templateBookName(value),referenceBooks:[...(value.story.referenceBooks??[])],phoneWorld:value.story.phoneWorld??null,excluded:[managed.templates??templateBookName(value),managed.beauty??'缇斯亚美化书',value.coreBook??'基点书'].filter(Boolean),worlds:rowEntries(snapshot?.state,'T_STATIC_WORLDS').map(r=>({uid:r.id,worldId:r.id,name:String(r.values.name??r.id)})),builtinStatus:builtins?.status?.()??null};}
  async function saveResources({referenceBooks=[],phoneWorld=null},expected=config.read().revision){
   assertIdle();const key=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');const available=await resources();check(Array.isArray(referenceBooks)&&new Set(referenceBooks).size===referenceBooks.length&&referenceBooks.every(name=>available.books.includes(name)&&!available.excluded.includes(name)),'资料书选择无效、重复或包含定义专用书');
-  if(phoneWorld!==null)check(phoneWorld.database===true&&available.worlds.some(w=>w.worldId===phoneWorld.worldId),'请选择当前表单中实际世界，旧手机世界块仅供迁移');
+  if(phoneWorld!==null)check(phoneWorld.database===true&&available.worlds.some(w=>w.worldId===phoneWorld.worldId),'请选择当前表单中实际世界');
   check(key===scope(),'聊天已切换，资料选择未保存');value.story.referenceBooks=[...referenceBooks];value.story.phoneWorld=phoneWorld?{database:true,worldId:phoneWorld.worldId}:null;return config.save(value);
  }
  async function phoneProfile(){const value=config.read(),binding=storyAvatar(value).binding,world=value.story.phoneWorld;if(!binding?.database||!world?.database)return null;const snapshot=await read();projectDatabaseIdentity(snapshot,binding);check(snapshot.state.tables?.T_STATIC_WORLDS?.[world.worldId],'选中的世界表单记录已不存在');return {database:true,entityId:binding.entityId,dossierId:binding.dossierId,worldId:world.worldId,contextKey:snapshot.contextKey,revision:snapshot.revision};}
  async function ensureTemplates(){check(builtins,'内置书安装服务尚未接入');return builtins.update();}
- async function createDraft({goal,kind='character',mode='extend',source=null,destination}){
+ async function createDraft({goal,kind='character',mode='extend',source=null,destination,messages,onProgress,signal}){
   check(creator?.draft,'统一创作服务尚未接入');
   if(kind==='character'&&source?.book&&source.uid!==undefined){const handoff=await previewSourceMigration(source);check(handoff.requiresExtraction,'此来源已是规范人物，请先预览使用已有档案');if(source.revisionTarget)check(sameValue(source.revisionTarget,handoff.source.revisionTarget),'来源对应的旧人物已变化，请重新核对');source=handoff.source;if(source.revisionTarget)mode='revise';else check(mode==='extend','此来源尚未证明对应既有档案，不能直接修订当前人物');}
-  const draft=await creator.draft(goal,{kind,mode,source,destination});
+  const draft=await creator.draft(goal,{kind,mode,source,destination,messages,onProgress,signal});
   if(source?.revisionTarget)try{const snapshot=await read();check(snapshot.contextKey===draft.contextKey&&snapshot.revision===draft.expectedRevision,'生成期间表单已变化，请重新核对');validateSourceExtraction(draft,snapshot,{normalize:true,checkValues:false});}catch(error){error.rawResponse=draft.rawResponse;error.draft=structuredClone(draft);throw error;}
   return draft;
  }
  async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');const checked=await creator.validate(draft);validateSourceExtraction(draft,checked.snapshot);return checked;}
  async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');if(draft.source?.revisionTarget)await validateCreation(draft);return creator.save(draft);}
- return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewSourceRepair,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceMigration,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,createDraft,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
+ return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewSourceRepair,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceMigration,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
 }

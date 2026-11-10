@@ -5,6 +5,7 @@ import {renderBusinessView,renderBusinessExtras} from './business-ui.mjs';
 // Presentation only. All changes go through the shared, persisted action reducer.
 export function renderUtility(state,ui,h){
  if(!['wallet','shop','food','map','calendar'].includes(ui.app))return null;
+ if(ui.app==='calendar'&&!state.config?.calendar)return '<div class="empty"><h2>世界时间尚未配置</h2><p>在当前表单明确世界历法与时刻后，才能安排故事日程。</p></div>';
  const extendedView=renderBusinessView(state,ui,h);if(extendedView!==null)return '<div class="life-utility">'+extendedView+'</div>';
  const e=h.esc,m=v=>h.money(v),hosted=h.hosted===true,unit=e(state.config?.currency?.symbol??''),currencyName=state.config?.currency?.name??'世界货币',bank=state.wallet.fundingAccountId??state.wallet.accounts[0]?.id??'',cashAccount=state.wallet.defaultAccountId??state.wallet.accounts[0]?.id??'',loanConfig=state.config?.economy?.loan,contacts=state.contacts??[],b=(label,type,payload={},cls='u-secondary')=>h.btn(e(label),type,payload,cls);
  const ib=(icon,label,type,payload={},cls='u-secondary')=>b(label,type,payload,cls).replace('>','>'+h.icon(icon));
@@ -13,7 +14,7 @@ export function renderUtility(state,ui,h){
  const empty=(text,icon='wallet')=>'<div class="u-empty">'+h.icon(icon)+e(text)+'</div>';
  const note=text=>'<p class="u-note">'+e(text)+'</p>';
  const section=(title,more='')=>'<div class="u-section"><h3>'+e(title)+'</h3>'+more+'</div>';
- const heading=(kicker,title,desc)=>'<div class="u-heading"><div><p class="u-kicker">'+e(kicker)+'</p><h2>'+e(title)+'</h2><p>'+e(desc)+'</p></div><span class="u-demo">'+(hosted?'故事内账户':'离线演示')+'</span></div>';
+ const heading=(kicker,title,desc)=>'<div class="u-heading"><div><p class="u-kicker">'+e(kicker)+'</p><h2>'+e(title)+'</h2><p>'+e(desc)+'</p></div><span class="u-demo">'+'故事内账户'+'</span></div>';
  const tabs=(items,current)=>'<div class="u-tabs">'+h.tabs(items.map(([id,label])=>({id,label})),current)+'</div>';
  const stat=(title,value)=>'<div class="u-stat"><p class="u-label">'+e(title)+'</p><div class="u-value">'+value+'</div></div>';
  const hidden=(name,value)=>'<input type="hidden" name="'+e(name)+'" value="'+e(value)+'">';
@@ -32,7 +33,7 @@ export function renderUtility(state,ui,h){
  const at=value=>{
   if(typeof value==='string')return e(value.replace('T',' ').slice(0,16));
   if(!Number.isFinite(value))return '—';
-  const d=storyDate(value);
+  const d=storyDate(value);if(!d.configured)return '故事时间未配置';
   return d.period+d.periodLabel+d.day+'日 '+String(d.hour).padStart(2,'0')+':'+String(d.minute).padStart(2,'0');
  };
  const hh=minute=>phoneTimeText(state,minute);
@@ -72,7 +73,7 @@ export function renderUtility(state,ui,h){
   if(!loanConfig||!['annualRateBps','periodDays','periodsPerYear','minAmount','maxAmount'].every(k=>Number.isSafeInteger(loanConfig[k]))||!loanConfig.terms?.length)return empty('这个世界尚未完整配置新贷款；已有借款仍按原记录处理。')+loanRecords();
   if(ui.tab==='loan-quote'){
    let q;try{q=quoteLoan(Number(ui.loanAmount),Number(ui.loanMonths),state);}catch(error){return card('<h3>请重新选择借款方案</h3>'+note(error.message)+b('返回修改','nav',nav('wallet','loan')));}
-   return card('<div class="u-row"><h3>借款方案确认</h3>'+pill(hosted?'故事内报价':'演示报价')+'</div>'+note('这一步只展示费用；点击下方确认后，借款才进入所选账户。')+
+   return card('<div class="u-row"><h3>借款方案确认</h3>'+pill('故事内报价')+'</div>'+note('这一步只展示费用；点击下方确认后，借款才进入所选账户。')+
     '<div class="u-grid">'+stat('借款本金',''+unit+''+m(q.amount))+stat('年利率 APR',(Number(q.apr)*100).toFixed(1)+'%')+'</div>'+
     '<div class="u-quote-total"><p class="u-label">'+q.months+' 期合计应还</p><div class="u-value">'+unit+''+m(q.totalPayable)+'</div><p class="u-note">总利息 '+unit+''+m(q.totalInterest)+' · 无额外手续费</p></div>'+
     '<div class="u-row"><span class="u-subtle">等额本金 · 首期金额</span><strong>'+unit+''+m(q.monthlyPayment)+'</strong></div>'+
@@ -98,11 +99,11 @@ export function renderUtility(state,ui,h){
   const w=state.wallet;
   return '<div class="u-hero"><div class="u-hero-brand"><span>慢慢存 · SAVINGS</span>'+h.icon('star')+'</div><p class="u-label">持有本金</p><div class="u-hero-amount"><small>'+unit+'</small>'+m(w.investments.filter(i=>i.status!=='redeemed').reduce((n,i)=>n+i.principal,0))+'</div><div class="u-hero-footer"><span>按故事时间模拟</span><strong>由你明确结算</strong></div></div>'+
    w.investmentProducts.map(p=>card('<div class="u-row"><div><p class="u-kicker">DEMO SAVINGS</p><h3>'+e(p.name)+'</h3></div>'+pill('虚构产品')+'</div><div class="u-grid">'+stat('演示年化率',(p.annualRateBps/100).toFixed(2)+'%')+stat('结算方式','主动结算')+'</div>'+note(p.description)+'<div class="u-rule"></div>'+form('wallet.invest.buy',hidden('productId',p.id)+field('付款账户',select('accountId',accountOptions,bank))+field('申购金额（'+currencyName+'）',amount('amount',100000))+submit('确认申购')))).join('')+
-   section('我的持仓')+(w.investments.length?w.investments.slice().reverse().map(i=>card('<div class="u-row"><h3>'+e(w.investmentProducts.find(p=>p.id===i.productId)?.name??i.productId)+'</h3>'+pill(i.status==='redeemed'?'已赎回':'持有中')+'</div><div class="u-grid">'+stat('本金',''+unit+''+m(i.principal))+stat('已结算收益','+ '+unit+''+m(i.accrued))+'</div>'+note('申购 '+at(i.createdAt)+' · 上次结算 '+at(i.settledAt))+(i.status!=='redeemed'?'<div class="u-buttons">'+b(hosted?'结算已到期收益':'模拟结算收益','wallet.invest.settle',{investmentId:i.id},'u-secondary')+b('赎回至账户','wallet.invest.redeem',{investmentId:i.id,accountId:ui.loanAccountId||bank},'u-primary')+'</div>'+note('赎回金额为本金与已结算收益；未结算部分不会自动补入。'):''))).join(''):empty('还没有持仓。申购后会在这里保留记录。','star'));
+   section('我的持仓')+(w.investments.length?w.investments.slice().reverse().map(i=>card('<div class="u-row"><h3>'+e(w.investmentProducts.find(p=>p.id===i.productId)?.name??i.productId)+'</h3>'+pill(i.status==='redeemed'?'已赎回':'持有中')+'</div><div class="u-grid">'+stat('本金',''+unit+''+m(i.principal))+stat('已结算收益','+ '+unit+''+m(i.accrued))+'</div>'+note('申购 '+at(i.createdAt)+' · 上次结算 '+at(i.settledAt))+(i.status!=='redeemed'?'<div class="u-buttons">'+b('结算已到期收益','wallet.invest.settle',{investmentId:i.id},'u-secondary')+b('赎回至账户','wallet.invest.redeem',{investmentId:i.id,accountId:ui.loanAccountId||bank},'u-primary')+'</div>'+note('赎回金额为本金与已结算收益；未结算部分不会自动补入。'):''))).join(''):empty('还没有持仓。申购后会在这里保留记录。','star'));
  }
  function wallet(){
   const current=ui.tab?.startsWith('loan')?'loan':ui.tab||'overview';
-  return heading('FINANCE',state.config?.appNames?.wallet??'钱包','让每一笔生活，都有来处。')+(hosted&&state.config?.settlementOwner!=='phone'?note('资金由'+(state.config?.settlementOwner==='native'?'原生变量':state.config?.settlementOwner==='tables'?'表单':'尚未指定的结算方')+'管理；这里显示档案资料，手机不会另写一份余额。'):'')+tabs([['overview','账户'],['card','信用'],['loan','借款'],['invest','理财'],['ledger','账单']],current)+
+  return heading('FINANCE',state.config?.appNames?.wallet??'钱包','让每一笔生活，都有来处。')+note('每笔交易写入当前表单的同一资产账户。')+tabs([['overview','账户'],['card','信用'],['loan','借款'],['invest','理财'],['ledger','账单']],current)+
     (current==='overview'?walletHome():current==='card'?credit():current==='loan'?loan():current==='invest'?investments():current==='transfer'?transfer():current==='ledger'?ledgerList(state.wallet.ledger.slice()):walletHome());
  }
  function productCard(p,app){
@@ -155,12 +156,12 @@ export function renderUtility(state,ui,h){
    o.items.map(i=>'<div class="u-row" style="margin:9px 0"><span>'+e(i.name)+' × '+i.qty+'</span><span class="u-subtle">'+unit+''+m(i.price*i.qty)+'</span></div>').join('')+
    '<div class="u-rule"></div><div class="u-row"><span class="u-subtle">支付方式</span><strong>'+e(o.payment==='credit'?(state.wallet.card.name||'信用账户'):accounts.find(a=>a.id===o.accountId)?.name??'余额')+'</strong></div>'+
    '<div class="u-row" style="margin-top:10px"><span class="u-subtle">含配送费 '+unit+''+m(o.deliveryFee)+'</span><span class="u-price">'+unit+''+m(o.total)+'</span></div>'+note('下单 '+at(o.createdAt))+
-   '<div class="u-buttons">'+(!hosted&&['paid','preparing','shipped','delivering'].includes(o.status)?b('模拟推进配送','order.advance',{orderId:o.id},'u-primary'):'')+
+   '<div class="u-buttons">'+''+
    (o.status==='delivered'?b('确认领取','order.collect',{orderId:o.id},'u-primary'):'')+
    (['paid','preparing'].includes(o.status)?b('取消并退款','order.cancel',{orderId:o.id},'u-danger'):'')+
-   (['delivered','completed'].includes(o.status)?b(hosted?'退货退款':'模拟退货退款','order.refund',{orderId:o.id},'u-danger'):'')+'</div>'+
+   (['delivered','completed'].includes(o.status)?b('退货退款','order.refund',{orderId:o.id},'u-danger'):'')+'</div>'+
    (o.status==='delivered'?note('领取前请先到达配送地址；地图浏览不会改变当前位置。'):'')+
-   (['paid','preparing','shipped','delivering'].includes(o.status)?note(hosted?'配送状态等待下一轮剧情的实际回执。':'配送推进为明确点击的离线演示，不代表真实物流。'):'')+
+   (['paid','preparing','shipped','delivering'].includes(o.status)?note('配送状态等待下一轮剧情的实际回执。'):'')+
    (o.refunded?note('已原路退回 '+unit+''+m(o.refunded)+'。信用支付先冲减债务，超出部分记作溢缴款。'):'')+
    '<div class="u-buttons">'+b('查看收货地点','nav',nav('map','',o.placeId),'u-secondary')+b('返回订单','nav',nav(app,'orders'),'u-secondary')+'</div>');
  }
@@ -174,7 +175,7 @@ export function renderUtility(state,ui,h){
   const journey=mp.journey?'<div class="u-journey"><p class="u-kicker">ON THE WAY</p><h3>'+e(locationName(mp.journey.from))+' → '+e(locationName(mp.journey.to))+'</h3><p class="u-note">路程 '+mp.journey.duration+' 分钟 · 预计 '+at(mp.journey.arriveAt)+'</p><div class="u-buttons">'+b('抵达目的地','map.arrive',{},'u-primary')+'</div>'+note('确认抵达会推进相应故事时间，并改变当前位置。')+'</div>':'';
   const selection=selected?card('<div class="u-row"><div><h3>'+e(selected.name)+'</h3><p class="u-item-sub">'+e(selected.description)+'</p></div>'+pill(selected.id===mp.position?'当前位置':'目的地')+'</div>'+
    (selected.id!==mp.position&&!mp.journey?'<div class="u-mode-row">'+[['walk','步行'],['bike','骑行'],['transit','公交']].map(([id,label])=>b(label,'ui',{travelMode:id},mode===id?'active':'')).join('')+'</div>'+
-    (route?'<div class="u-row"><span class="u-subtle">预计路程 '+route.duration+' 分钟 · 费用 '+unit+''+m(route.fare??0)+'</span><span class="u-subtle">抵达 '+at(route.arriveAt)+'</span></div>':'')+
+    (route?'<div class="u-row"><span class="u-subtle">预计路程 '+route.duration+' 分钟 · 费用 '+unit+''+m(route.fare)+'</span><span class="u-subtle">抵达 '+at(route.arriveAt)+'</span></div>':'')+
     (route?'<div class="u-buttons">'+b('确认出发','map.depart',{placeId:selected.id,mode,quoteId:route.quoteId},'u-primary')+'</div>':note(routeError||'尚未配置有效路线。'))+note('选择地点和查看路线不会移动角色；确认出发才建立行程。'):'')+
    (selected.kind==='cafe'||selected.kind==='food'?b('看看咖啡与餐点','nav',nav('food'),'u-text'):selected.kind==='shop'?b('逛逛店里的好物','nav',nav('shop'),'u-text'):'')):'';
   return heading('WORLD / MAP','出去走走','此刻的位置 · '+locationName(mp.position))+map+journey+selection+
@@ -187,12 +188,12 @@ export function renderUtility(state,ui,h){
   let month='<section class="u-month"><div class="u-month-head"><div><h3>'+c.year+' 年 '+e(period)+'</h3><span class="u-subtle">MAKE ROOM FOR GOOD DAYS</span></div>'+b('今天','ui',{calendarDay:c.day},'u-text')+'</div><div class="u-week">'+page.weekdays.map(s=>'<span>'+s+'</span>').join('')+'</div><div class="u-dates">'+Array.from({length:offset},()=>'<span></span>').join('');
   for(let d=1;d<=count;d++)month+=b(String(d),'ui',{calendarDay:d},'u-date '+(d===c.day?'today ':'')+(d===day?'selected ':'')+(events.some(x=>storyDate(x.at).day===d&&x.status!=='cancelled')?'has-event':''));
   month+='</div></section>';
-  const agenda=rows.length?rows.map(ev=>'<div class="u-agenda"><span class="u-agenda-time">'+hh(ev.minute)+'</span><article class="u-agenda-card '+e(ev.status)+'"><div class="u-row"><h3>'+e(ev.title)+'</h3>'+pill({personal:'我的安排',invited:'待对方确认',confirmed:'已确认',cancelled:'已取消'}[ev.status]??ev.status,ev.status==='invited'?'warn':'')+'</div><p class="u-item-sub">'+e(locationName(ev.placeId))+(ev.participantId?' · 与 '+e(state.social.accounts.find(a=>a.id===ev.participantId)?.name??ev.participantId):'')+'</p><div class="u-buttons">'+(!hosted&&ev.status==='invited'?b('模拟对方确认','calendar.confirm',{eventId:ev.id},'u-secondary'):'')+(ev.status!=='cancelled'?b('查看地点','nav',nav('map','',ev.placeId),'u-secondary')+b('取消安排','calendar.cancel',{eventId:ev.id},'u-text'):'')+'</div></article></div>').join(''):empty('这一天还留着空白，写下一件想做的事吧。','calendar');
+  const agenda=rows.length?rows.map(ev=>'<div class="u-agenda"><span class="u-agenda-time">'+hh(ev.minute)+'</span><article class="u-agenda-card '+e(ev.status)+'"><div class="u-row"><h3>'+e(ev.title)+'</h3>'+pill({personal:'我的安排',invited:'待对方确认',confirmed:'已确认',cancelled:'已取消'}[ev.status]??ev.status,ev.status==='invited'?'warn':'')+'</div><p class="u-item-sub">'+e(locationName(ev.placeId))+(ev.participantId?' · 与 '+e(state.social.accounts.find(a=>a.id===ev.participantId)?.name??ev.participantId):'')+'</p><div class="u-buttons">'+''+(ev.status!=='cancelled'?b('查看地点','nav',nav('map','',ev.placeId),'u-secondary')+b('取消安排','calendar.cancel',{eventId:ev.id},'u-text'):'')+'</div></article></div>').join(''):empty('这一天还留着空白，写下一件想做的事吧。','calendar');
   const add=card('<div class="u-row"><h3>添一件小事</h3>'+pill(period+day+'日')+'</div><div class="u-rule"></div>'+form('calendar.add',
    field('安排名称','<input name="title" maxlength="80" placeholder="例如：和朋友喝一杯咖啡" required>')+
    '<div class="u-form-row">'+field('日期','<input type="number" name="day" min="1" max="'+count+'" value="'+day+'" required>')+(page.standardTime?field('时间','<input type="time" name="minute" data-minutes value="'+hh(c.minute)+'" required>'):field('时刻（当日分钟）','<input type="number" name="minute" min="0" max="'+(page.minutesPerDay-1)+'" value="'+c.minute+'" required>'))+'</div>'+
    field('地点',select('placeId',places.map(p=>[p.id,p.name]),state.map.position))+
-   field('一起的人',select('participantId',[['','仅自己'],...contacts.map(c=>[c.id,c.name+' · 发出邀请'])],''))+submit('保存安排'))+note(hosted?'邀请先显示待确认，由下一轮剧情返回对方的实际回应。':'邀请先显示待确认。模拟对方确认是单独操作，不会替对方自动答应。'));
+   field('一起的人',select('participantId',[['','仅自己'],...contacts.map(c=>[c.id,c.name+' · 发出邀请'])],''))+submit('保存安排'))+note('邀请先显示待确认，由下一轮剧情返回对方的实际回应。'));
   return heading('LITTLE PLANS','把日子记下来','故事时间 · '+period+c.day+'日 '+hh(c.minute))+month+section(period+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
  }
  return '<div class="life-utility" data-utility-app="'+e(ui.app)+'">'+(ui.app==='wallet'?wallet():ui.app==='shop'||ui.app==='food'?commerce():ui.app==='map'?mapView():calendar())+renderBusinessExtras(state,ui,h)+'</div>';

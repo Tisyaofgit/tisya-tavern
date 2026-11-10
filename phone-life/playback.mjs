@@ -1,8 +1,8 @@
 // One real audio element per phone. Media time never advances the story clock.
-export function createPhonePlayback({audio,read,resolveUrl,save,assertScope=()=>{},onChange=()=>{},onError=()=>{},now=()=>Date.now()}={}){
+export function createPhonePlayback({audio,read,resolveUrl,save,assertScope=()=>{},canRead=()=>true,assertPlayable=()=>{},onChange=()=>{},onError=()=>{},now=()=>Date.now()}={}){
  let current=null,currentAudioId=null,mode='sequence',queue=[],history=[],pendingPosition=null,dirty=false,saving=null,disposed=false,lastSavedAt=0,lastFailureAt=0,restoring=false;
  const listeners=[];const listen=(type,fn)=>{audio.addEventListener(type,fn);listeners.push(()=>audio.removeEventListener(type,fn));};
- const songs=()=>read()?.media?.songs??[],song=id=>songs().find(s=>s.id===id);
+ const songs=()=>(read()?.media?.songs??[]).filter(row=>canRead(row)),song=id=>songs().find(s=>s.id===id);
  const changed=()=>{if(!disposed)onChange();};
  const snapshot=()=>({songId:current,position:current?Math.max(0,Number(audio.currentTime)||pendingPosition||0):0,volume:Math.max(0,Math.min(1,Number(audio.volume))),mode,queue:[...queue],history:[...history]});
  async function flush(){
@@ -16,6 +16,7 @@ export function createPhonePlayback({audio,read,resolveUrl,save,assertScope=()=>
  function restorePosition(){if(pendingPosition===null)return;const duration=Number(audio.duration);if(!Number.isFinite(duration)||duration<=0)return;try{audio.currentTime=Math.min(pendingPosition,duration);pendingPosition=null;}catch(error){onError(Error('播放位置尚未恢复：'+error.message));}}
  async function select(id,{autoplay=false,position=0}={}){
   assertScope();const row=song(id);if(!row)throw Error('歌曲已不存在，队列与旧记录仍保留。');
+  assertPlayable(row);
   if(!row.audioId)throw Error('这首作品尚未关联音源，请先选择音频文件。');
   const url=await resolveUrl(row.audioId);assertScope();if(!url)throw Error('音源原件缺失，请重新关联文件。');
   if(song(id)?.audioId!==row.audioId)throw Error('音源已变化，请重新选择歌曲。');
@@ -51,7 +52,7 @@ export function createPhonePlayback({audio,read,resolveUrl,save,assertScope=()=>
  async function seek(value){assertScope();const duration=Number(audio.duration);if(!Number.isFinite(duration)||duration<=0)throw Error('音源尚未载入时长，暂不能拖动。');const n=Number(value);if(!Number.isFinite(n))throw Error('播放位置无效。');audio.currentTime=Math.min(duration,Math.max(0,n));pendingPosition=null;dirty=true;await flush();changed();}
  async function volume(value){const n=Number(value);if(!Number.isFinite(n)||n<0||n>1)throw Error('音量超出范围。');audio.volume=n;dirty=true;await flush();changed();}
  function reconcile(){
-  const row=song(current);if(current&&(!row||row.audioId!==currentAudioId)){restoring=true;audio.pause();audio.removeAttribute('src');current=null;currentAudioId=null;pendingPosition=null;dirty=false;restoring=false;}
+  const row=song(current);let permitted=!!row;try{if(row)assertPlayable(row);}catch{permitted=false;}if(current&&(!row||!permitted||row.audioId!==currentAudioId)){restoring=true;audio.pause();audio.removeAttribute('src');current=null;currentAudioId=null;pendingPosition=null;dirty=false;restoring=false;}
   queue=queue.filter(id=>song(id));history=history.filter(id=>song(id));changed();
  }
  listen('loadedmetadata',()=>{restorePosition();changed();});

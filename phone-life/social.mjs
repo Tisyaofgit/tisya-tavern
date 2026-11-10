@@ -12,7 +12,7 @@ const next=(s,p)=>{const used=new Set();const walk=x=>{if(!x||typeof x!=='object
 const stable = value => Array.isArray(value)?`[${value.map(stable).join(',')}]`:value&&typeof value==='object'?`{${Object.keys(value).filter(k=>value[k]!==undefined).sort().map(k=>`${JSON.stringify(k)}:${stable(value[k])}`).join(',')}}`:JSON.stringify(value);
 const account = (s,id) => s.social.accounts.find(x=>x.id===id);
 const active = s => s.social.activeAccountId;
-const mediaOwner=s=>active(s)??s.media.ownerId??s.config?.subjectId??null;
+const mediaOwner=s=>active(s)??s.media.ownerId;
 const ownPhoto=(s,p)=>!!p&&(p.ownerId===mediaOwner(s)||p.ownerId===s.media.ownerId||p.ownerId===s.config?.subjectId);
 
 export function canReadPost(s,p,reader=active(s)){
@@ -20,7 +20,7 @@ export function canReadPost(s,p,reader=active(s)){
 }
 const needPost=(s,id)=>{const p=s.social.posts.find(x=>x.id===id);assert(canReadPost(s,p),'这条微博不存在，或当前账号没有查看权限。');return p;};
 const needPhoto=(s,id)=>{const p=s.media.photos.find(x=>x.id===id);assert(p&&!p.purged&&p.deletedAt==null,'找不到这张相片，或已在最近删除中。');return p;};
-export const canReadSong=(s,p)=>!!p&&(p.visibility!=='private'||[active(s),s.media.ownerId,s.config?.subjectId].includes(p.ownerId)||(p.audience??[]).some(x=>[active(s),s.media.ownerId].includes(x)));
+export const canReadSong=(s,p)=>!!p&&(p.visibility==='public'||[active(s),s.media.ownerId,s.config?.subjectId].includes(p.ownerId)||(p.audience??[]).some(x=>[active(s),s.media.ownerId].includes(x)));
 const needSong=(s,id)=>{const p=s.media.songs.find(x=>x.id===id);assert(canReadSong(s,p),'找不到这首歌，或当前账号无权读取。');return p;};
 const toggle=(arr,id)=>{const n=arr.indexOf(id);if(n<0){arr.push(id);return true;}arr.splice(n,1);return false;};
 export function validateSocialState(state){
@@ -42,7 +42,7 @@ export function validateSocialState(state){
   assert(s[key]&&typeof s[key]==='object'&&!Array.isArray(s[key]),`社交存档的${key}结构错误。`);
   for(const who of OWN){const rows=s[key][who];assert(Array.isArray(rows)&&rows.every(x=>typeof x==='string')&&new Set(rows).size===rows.length,`${key}记录缺失或重复。`);assert(rows.every(x=>(key==='follows'?people:posts).has(x)),`${key}包含失效引用。`);}
  }
- for(const p of m.photos)assert((people.has(p.ownerId)||p.ownerId===m.ownerId||p.ownerId===state.config?.subjectId)&&['private','public'].includes(p.visibility)&&['illustration','file'].includes(p.source)&&typeof p.name==='string','相片归属、类型或可见范围不完整。');
+ for(const p of m.photos)assert((people.has(p.ownerId)||p.ownerId===m.ownerId||p.ownerId===state.config?.subjectId)&&['private','public'].includes(p.visibility)&&['art','file'].includes(p.source)&&typeof p.name==='string','相片归属、类型或可见范围不完整。');
  for(const p of s.posts){
   assert(people.has(p.authorId)&&typeof p.text==='string'&&['public','followers','private'].includes(p.visibility)&&Array.isArray(p.mediaIds)&&p.mediaIds.every(x=>photos.has(x)),'微博作者、正文、可见范围或媒体引用错误。');
   if(p.repostOf)assert(posts.has(p.repostOf)&&p.repostOf!==p.id,'原微博引用错误。');if(p.songId)assert(songs.has(p.songId),'微博中的歌曲引用错误。');
@@ -51,7 +51,7 @@ export function validateSocialState(state){
  for(const c of s.comments)assert(posts.has(c.postId)&&people.has(c.authorId)&&typeof c.text==='string','评论引用或正文错误。');
  for(const n of s.notifications)assert((posts.has(n.postId)||n.kind==='social.follow'&&n.postId===null)&&people.has(n.actorId)&&people.has(n.recipientId)&&typeof n.text==='string'&&typeof n.seen==='boolean','通知归属或来源错误。');
  for(const p of s.pending){assert(p.kind==='like'&&posts.has(p.postId)&&OWN.has(p.actorId)&&typeof p.value==='boolean'&&typeof p.previous==='boolean'&&['queued','sent','accepted','notification-seen','cancelled'].includes(p.status),'点赞收发记录不完整。');if(p.notificationId)assert(s.notifications.some(n=>n.id===p.notificationId),'点赞通知引用缺失。');}
- for(const song of m.songs)assert(typeof song.title==='string'&&typeof song.artist==='string'&&(song.audioId===null||typeof song.audioId==='string')&&(song.duration===undefined||(Number.isFinite(song.duration)&&song.duration>=0)),'歌曲或实际音源信息不完整。');
+ for(const song of m.songs)assert(typeof song.ownerId==='string'&&['public','private'].includes(song.visibility)&&typeof song.title==='string'&&typeof song.artist==='string'&&(song.audioId===null||typeof song.audioId==='string')&&(song.duration===undefined||(Number.isFinite(song.duration)&&song.duration>=0)),'歌曲或实际音源信息不完整。');
  for(const p of m.playlists)assert(typeof p.name==='string'&&Array.isArray(p.songIds)&&p.songIds.every(x=>songs.has(x))&&new Set(p.songIds).size===p.songIds.length,'歌单记录或歌曲引用错误。');
  assert(m.favoriteSongs.every(x=>songs.has(x))&&new Set(m.favoriteSongs).size===m.favoriteSongs.length,'音乐收藏引用错误。');
  assert(m.favoritePhotos.every(key=>typeof key==='string'&&[...new Set([...OWN,m.ownerId,state.config?.subjectId].filter(Boolean))].some(who=>key.startsWith(who+':')&&m.photos.some(p=>p.id===key.slice(who.length+1)&&p.ownerId===who)))&&new Set(m.favoritePhotos).size===m.favoritePhotos.length,'相片收藏归属错误。');
@@ -81,7 +81,7 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
  if(a.type.startsWith('media.'))assert(typeof me==='string'&&me,'个人媒体归属尚未配置。');
  if(a.type==='media.photo.share')assert(OWN.has(active(s))&&(!s.config||s.config.apps.includes('weibo')),'尚未配置可发博的本人账号或微博应用。');
  if(a.type==='music.share')assert(OWN.has(me)&&(!s.config||s.config.apps.includes('weibo')),'尚未配置可发博的本人账号或微博应用。');
- if(a.type==='social.network.advance')assert(!s.config||s.config.demo===true||acceptedSource,'正式送达只接受宿主已接纳的来源。');
+ if(a.type==='social.network.advance')assert(acceptedSource,'正式送达只接受宿主已接纳的来源。');
  const mediaResult=performMediaExtension(s,a,{next})??performSocialExtension(s,a,{next,canRead:canReadPost},{acceptedSource});
  if(mediaResult)result=mediaResult;else switch(a.type){
   case 'social.npc.post':{
@@ -122,10 +122,10 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
      changed++;
     }else if(p.status==='accepted'&&p.value&&p.notificationId){const n=s.social.notifications.find(x=>x.id===p.notificationId);if(n)n.seen=true;p.status='notification-seen';changed++;}
    }
-   result={message:changed?(s.config?.demo===false?'已按本轮回执更新送达状态。':'已演示下一步送达状态；这是本地模拟。'):'当前没有需要推进的社交动作。'};break;
+   result={message:changed?'已按本轮回执更新送达状态。':'当前没有需要推进的社交动作。'};break;
   }
   case 'social.notification.read':{const n=s.social.notifications.find(x=>x.id===a.notificationId&&x.recipientId===me);assert(n,'当前账号没有这条通知。');n.seen=true;for(const p of s.social.pending)if(p.notificationId===n.id&&p.status==='accepted')p.status='notification-seen';result={message:'已读。'};break;}
-  case 'media.photo.add':{const p=a.photo;assert(p&&typeof p.id==='string'&&!s.media.photos.some(x=>x.id===p.id),'相片编号无效或已存在。');assert(p.source==='file'&&p.ownerId===me&&p.visibility==='private','新导入相片必须属于当前账号并保留私密。');s.media.photos.push({id:p.id,name:text(p.name,100),source:'file',ownerId:me,visibility:'private',mime:String(p.mime||''),...(typeof p.savedAt==='string'?{savedAt:p.savedAt}:{}),createdAt:stamp(s)});result={message:'已导入到当前账号的私密相册。',navigate:{app:'album',tab:'all',detail:p.id}};break;}
+  case 'media.photo.add':{const p=a.photo;assert(p&&typeof p.id==='string'&&!s.media.photos.some(x=>x.id===p.id),'相片编号无效或已存在。');assert(p.source==='file'&&typeof p.assetId==='string'&&p.assetId&&p.ownerId===me&&p.visibility==='private','新导入相片必须属于当前账号并保留私密。');s.media.photos.push({id:p.id,assetId:p.assetId,name:text(p.name,100),source:'file',ownerId:me,visibility:'private',mime:String(p.mime||''),...(typeof p.savedAt==='string'?{savedAt:p.savedAt}:{}),createdAt:stamp(s)});result={message:'已导入到当前账号的私密相册。',navigate:{app:'album',tab:'all',detail:p.id}};break;}
   case 'media.photo.favorite':{const p=needPhoto(s,a.photoId);assert(ownPhoto(s,p),'这不是当前账号的相片。');const key=`${p.ownerId}:${p.id}`,on=toggle(s.media.favoritePhotos,key);result={message:on?'已收藏相片。':'已取消收藏。'};break;}
   case 'media.photo.share':{const p=needPhoto(s,a.photoId);assert(ownPhoto(s,p),'只能分享当前账号的相片。');result={message:'请选择本次微博的可见范围。',navigate:{app:'weibo',tab:'compose',photoId:p.id,repostOf:'',songId:'',detail:'',visibility:'private'}};break;}
   case 'music.song.add':{const p=a.song;assert(p&&typeof p.id==='string'&&!s.media.songs.some(x=>x.id===p.id),'歌曲编号无效或已存在。');s.media.songs.push({id:p.id,ownerId:mediaOwner(s),visibility:p.visibility==='public'?'public':'private',title:text(p.title,100),artist:String(p.artist||'本地导入'),album:String(p.album||'我的音乐'),cover:'album',audioId:p.audioId?String(p.audioId):null,...(Number.isFinite(p.duration)&&p.duration>=0?{duration:p.duration}:{})});result={message:'已加入音乐库。',navigate:{app:'music',tab:'library',detail:p.id}};break;}
@@ -144,7 +144,7 @@ function photoMarkup(s,p,h,extra=''){
  const url=h.mediaUrl(p.id);
  if(url&&String(p.mime??'').startsWith('video/'))return `<video class="social-photo ${extra}" src="${h.esc(url)}" controls playsinline preload="metadata" aria-label="${h.esc(p.name)}"></video>`;
  if(url)return `<img class="social-photo ${extra}" src="${h.esc(url)}" alt="${h.esc(p.name)}">`;
- if(p.source==='illustration')return `<div class="social-photo social-illustration ${extra}" role="img" aria-label="${h.esc(p.name)}，原创插画">${h.art(p.art||'photo')}<span>插画</span></div>`;
+ if(p.source==='art')return `<div class="social-photo social-illustration ${extra}" role="img" aria-label="${h.esc(p.name)}，原创插画">${h.art(p.art||'photo')}<span>插画</span></div>`;
  return `<div class="social-photo social-missing ${extra}">原图暂不可用<br><small>请重新导入原文件</small></div>`;
 }
 function visibilityLabel(p){return p.visibility==='private'?'仅自己可见':p.visibility==='followers'?'关注者可见':'公开';}
@@ -159,7 +159,7 @@ function postMarkup(s,p,h,{detail=false}={}){
 function queueMarkup(s,h){
  const operations=s.social.pending.filter(x=>x.actorId===active(s)).slice(-4).reverse();if(!operations.length)return '';
  const names={queued:'待送出',sent:'已送出',accepted:'已送达','notification-seen':'对方已看见',cancelled:'送出前已撤销'};
- return `<details class="social-delivery"><summary>最近的点赞 · ${names[operations[0].status]}</summary>${operations.map(x=>`<div><span>${x.value?'点赞':'取消赞'}</span><b>${names[x.status]}</b></div>`).join('')}<p>送出前可合并撤销；对方已看见的通知会保留。</p>${!s.config||s.config.demo?h.btn('演示下一步送达','social.network.advance',{},'secondary')+'<small>本地演示，不会调用模型或发送真实通知。</small>':'<small>等待宿主下一轮正式接纳。</small>'}</details>`;
+ return `<details class="social-delivery"><summary>最近的点赞 · ${names[operations[0].status]}</summary>${operations.map(x=>`<div><span>${x.value?'点赞':'取消赞'}</span><b>${names[x.status]}</b></div>`).join('')}<p>送出前可合并撤销；对方已看见的通知会保留。</p><small>等待宿主下一轮正式接纳。</small></details>`;
 }
 function compose(s,ui,h){
  const photo=ui.photoId?s.media.photos.find(x=>x.id===ui.photoId&&(x.ownerId===active(s)||x.ownerId===s.media.ownerId)):null, song=ui.songId?s.media.songs.find(x=>x.id===ui.songId):null;
@@ -170,6 +170,7 @@ function weibo(s,ui,h){
  const me=active(s),a=account(s,me),OWN=ownAccounts(s),tab=ui.tab||'recommend',unread=s.social.notifications.filter(x=>x.recipientId===me&&!x.seen).length;
  let body='';
  if(tab==='compose')body=compose(s,ui,h);
+ else if(tab==='evidence'){const rows=(s.social.evidence??[]).filter(x=>x.visibility==='public'||x.snapshot.authorId===me||x.actorId===me);body='<section class="card"><h2>传播记录</h2>'+rows.map(x=>`<article><h3>${h.esc({screenshot:'截图事件',mention:'提及事件',forward:'传播事件'}[x.kind])}</h3><p>${h.esc(account(s,x.actorId)?.name??x.actorId)} · ${timeLabel(s,x)}</p><blockquote>${h.esc(x.snapshot.text)}</blockquote><p>${h.esc(x.text)}</p><small>剧情已经确认的事件与当时内容；此记录不冒充实际图片文件。</small></article>`).join('')+(rows.length?'':'<p>尚无可见的传播事件。</p>')+'</section>';}
  else if(tab==='profile-edit'){body=`<section class="card"><h2>编辑账号</h2><form data-action="social.profile.edit"><label>显示名称<input name="name" value="${h.esc(a.name)}" maxlength="100" required></label><label>简介<textarea name="bio" maxlength="1000">${h.esc(a.bio??'')}</textarea></label><button type="submit">保存资料</button></form></section>`;}
  else if(tab==='edit'){const p=s.social.posts.find(x=>x.id===ui.detail&&x.authorId===me&&!x.deleted);body=p?`<section class="card"><h2>编辑微博</h2><form data-action="social.edit"><input type="hidden" name="postId" value="${h.esc(p.id)}"><input type="hidden" name="expectedVersion" value="${p.version??1}"><textarea name="text" maxlength="2000" required>${h.esc(p.text)}</textarea><button type="submit">保存新版本</button></form></section>`:'<div class="empty">没有可编辑的本人内容。</div>';}
  else if(tab==='post'){
@@ -183,33 +184,17 @@ function weibo(s,ui,h){
   if(tab==='bookmarks')posts=posts.filter(p=>(s.social.bookmarks[me]||[]).includes(p.id));
   if(tab==='search'){const q=String(ui.query||'').toLocaleLowerCase();posts=posts.filter(p=>`${p.text} ${account(s,p.authorId).name}`.toLocaleLowerCase().includes(q));intro=`<p class="social-search-result">当前可见内容中找到 ${posts.length} 条 · ${h.esc(ui.query||'')}</p>`;}
   if(tab==='profile'){
-   const target=account(s,ui.detail||me)||a;posts=posts.filter(p=>p.authorId===target.id).sort((a,b)=>Number(b.id===target.pinnedPostId)-Number(a.id===target.pinnedPostId));intro=`<section class="social-profile"><div class="social-profile-cover">${h.art('city')}</div>${h.avatar(target)}<h2>${h.esc(target.name)}</h2><p>@${h.esc(target.handle)}</p><p>${h.esc(target.bio)}</p><div><b>${posts.length}</b> 可见微博 · <b>${(s.social.follows[target.id]||[]).length}</b> 关注</div>${target.id!==me?h.btn((s.social.follows[me]||[]).includes(target.id)?'已关注':'关注','social.follow',{accountId:target.id},'secondary')+h.btn((s.social.mutes?.[me]||[]).includes(target.id)?'取消屏蔽':'屏蔽动态','social.mute',{accountId:target.id},'secondary')+h.btn((s.social.blocks?.[me]||[]).includes(target.id)?'解除拉黑':'拉黑','social.block',{accountId:target.id},'secondary'):h.btn('我的收藏','nav',{app:'weibo',tab:'bookmarks',detail:''},'secondary')+h.btn('编辑资料','nav',{app:'weibo',tab:'profile-edit'},'secondary')}</section>`;
+   const target=account(s,ui.detail||me)||a;posts=posts.filter(p=>p.authorId===target.id).sort((a,b)=>Number(b.id===target.pinnedPostId)-Number(a.id===target.pinnedPostId));intro=`<section class="social-profile"><div class="social-profile-cover">${h.art('city')}</div>${h.avatar(target)}<h2>${h.esc(target.name)}</h2><p>@${h.esc(target.handle)}</p><p>${h.esc(target.bio)}</p><div><b>${posts.length}</b> 可见微博 · <b>${(s.social.follows[target.id]||[]).length}</b> 已知关注${Number.isSafeInteger(target.followersCount)?' · '+target.followersCount+' 粉丝':' · 粉丝总数未知'}</div>${target.id!==me?h.btn((s.social.follows[me]||[]).includes(target.id)?'已关注':'关注','social.follow',{accountId:target.id},'secondary')+h.btn((s.social.mutes?.[me]||[]).includes(target.id)?'取消屏蔽':'屏蔽动态','social.mute',{accountId:target.id},'secondary')+h.btn((s.social.blocks?.[me]||[]).includes(target.id)?'解除拉黑':'拉黑','social.block',{accountId:target.id},'secondary'):h.btn('我的收藏','nav',{app:'weibo',tab:'bookmarks',detail:''},'secondary')+h.btn('编辑资料','nav',{app:'weibo',tab:'profile-edit'},'secondary')+h.btn('传播记录','nav',{app:'weibo',tab:'evidence'},'secondary')}</section>`;
   }
   if(['following','recommend','latest','hot','topic'].includes(tab)){intro=h.tabs([{id:'following',label:'关注'},{id:'recommend',label:'推荐'},{id:'latest',label:'最新'},{id:'hot',label:'热搜'}],tab);if(tab==='hot')intro+='<section class="card"><h3>当前公开话题</h3>'+trendingTopics(s,canReadPost).map(t=>h.btn('#'+h.esc(t.name)+'# · '+t.postIds.length+'条','nav',{app:'weibo',tab:'topic',query:t.name},'social-link')).join('')+'<p class="muted">只按已有公开事件与故事时间排序，不随机生成热度。</p></section>';}
   body=intro+(posts.length?posts.map(p=>postMarkup(s,p,h)).join(''):'<div class="empty">这里暂时没有微博。</div>');
  }
  return `<div class="social-weibo"><header class="social-top"><div class="social-brand"><span>W</span><b>${h.esc(s.config?.appNames?.weibo||'微博')}</b></div>${h.btn(h.avatar(a),'ui',{accountMenu:!ui.accountMenu},'social-avatar-button')}</header>${ui.accountMenu?`<div class="social-account-menu"><b>切换账号</b>${s.social.accounts.filter(x=>OWN.has(x.id)).map(x=>h.btn(`${h.avatar(x)}<span>${h.esc(x.name)}<small>${h.esc(x.label||'本人账号')}</small></span>${x.id===me?'✓':''}`,'social.account',{accountId:x.id},'social-account-option')).join('')}<small>小号的私密微博和消息只在该账号内显示。</small></div>`:''}<form class="social-search" data-action="social.search"><input name="query" maxlength="100" placeholder="搜索当前手机中的微博" value="${tab==='search'?h.esc(ui.query||''):''}" required><button type="submit" aria-label="搜索">${h.icon('search')}</button></form>${body}${queueMarkup(s,h)}<nav class="social-bottom">${h.btn(`${h.icon('weibo')}<span>首页</span>`,'nav',{app:'weibo',tab:'recommend',detail:''},'social-bottom-button')}${h.btn(`${h.icon('plus')}<span>发微博</span>`,'nav',{app:'weibo',tab:'compose',photoId:'',songId:'',repostOf:''},'social-bottom-button social-compose-nav')}${h.btn(`${h.icon('bell')}<span>消息${unread?` ${unread}`:''}</span>`,'nav',{app:'weibo',tab:'messages',detail:''},'social-bottom-button')}${h.btn(`${h.icon('user')}<span>我</span>`,'nav',{app:'weibo',tab:'profile',detail:me},'social-bottom-button')}</nav></div>`;
 }
-function album(s,ui,h){
- const me=mediaOwner(s),selected=s.media.photos.find(x=>x.id===ui.detail&&ownPhoto(s,x));
- if(selected)return `<section class="social-album-detail"><header class="app-heading">${h.btn(h.icon('back'),'ui',{detail:''},'social-icon-button')}<h2>${h.esc(selected.name)}</h2></header>${photoMarkup(s,selected,h)}${h.btn('查看原图','media.open',{photoId:selected.id},'social-link')}<p class="muted">${selected.visibility==='private'?'私密相片，只属于当前账号':'已公开的相片'} · ${selected.source==='illustration'?'角色插画':h.mediaUrl(selected.id)?'已导入原图':'原件尚未关联'}</p><div class="grid-2">${h.btn(`${h.icon('heart')} ${s.media.favoritePhotos.includes(`${selected.ownerId}:${selected.id}`)?'已收藏':'收藏'}`,'media.photo.favorite',{photoId:selected.id},'secondary')}${h.btn(`${h.icon('share')} 分享到微博`,'media.photo.share',{photoId:selected.id},'primary')}</div></section>`;
- let photos=s.media.photos.filter(x=>ownPhoto(s,x));if(ui.tab==='favorites')photos=photos.filter(x=>s.media.favoritePhotos.includes(`${x.ownerId}:${x.id}`));
- return `<section class="social-album"><header class="app-heading"><div><h2>相册</h2><p class="muted">${h.esc(account(s,me)?.name||s.identity?.name||'我的相册')} · ${photos.length}张</p></div>${h.btn(`${h.icon('plus')} 导入`,'file.image',{},'secondary')}</header>${h.tabs([{id:'all',label:'全部相片'},{id:'favorites',label:'收藏'}],ui.tab||'all')}<div class="social-photo-grid">${photos.map(p=>h.btn(`${photoMarkup(s,p,h)}<span>${h.esc(p.name)}</span>${p.visibility==='private'?'<small>私密</small>':''}`,'ui',{detail:p.id},'social-photo-tile')).join('')||'<div class="empty">还没有相片，导入一张吧。</div>'}</div><p class="social-footnote">导入默认私密；分享时单独选择本次可见范围。</p></section>`;
-}
-function music(s,ui,h){
- const song=s.media.songs.find(x=>x.id===ui.detail),playlist=s.media.playlists.find(x=>x.id===ui.detail),tab=ui.tab||'library';
- const songRow=(x,remove=false)=>`<article class="social-music-row">${h.btn(h.art(x.cover||'album'),'ui',{detail:x.id,tab:'library'},'social-music-thumb')}<div>${h.btn(h.esc(x.title),'ui',{detail:x.id,tab:'library'},'social-song-title')}<small>${h.esc(x.artist)}${x.audioId&&h.mediaUrl(x.audioId)?' · 有音源':' · 未关联音源'}</small></div>${remove?h.btn('移除','music.playlist.remove',{playlistId:playlist.id,songId:x.id},'social-link'):h.btn(h.icon('play'),x.audioId&&h.mediaUrl(x.audioId)?'player.play':'file.audio',{songId:x.id},'social-icon-button')}</article>`;
- let content='';
- if(song){const has=!!(song.audioId&&h.mediaUrl(song.audioId));content=`<div class="social-song-detail"><div class="social-record-cover">${h.art(song.cover||'album')}</div><h2>${h.esc(song.title)}</h2><p>${h.esc(song.artist)} · ${h.esc(song.album||'单曲')}</p><p class="muted">${has?'已关联真实本地音源': '还没有音源。选择音频文件后才能播放。'}</p><div class="social-music-actions">${h.btn(`${h.icon('heart')} ${s.media.favoriteSongs.includes(song.id)?'已喜欢':'喜欢'}`,'music.favorite',{songId:song.id},'secondary')}${h.btn(`${h.icon('play')} ${has?'播放':'选择音源'}`,has?'player.play':'file.audio',{songId:song.id},'primary')}${h.btn(h.icon('share'),'music.share',{songId:song.id},'secondary')}</div>${has?h.btn('更换音源','file.audio',{songId:song.id},'social-link'):''}<form class="social-add-playlist" data-action="music.playlist.add"><input type="hidden" name="songId" value="${h.esc(song.id)}"><label class="field">加入歌单<select name="playlistId">${s.media.playlists.map(x=>`<option value="${h.esc(x.id)}">${h.esc(x.name)}</option>`).join('')}</select></label><button type="submit" class="secondary">加入</button></form></div>`;}
- else if(playlist)content=`<div class="social-playlist-cover">${h.art('night')}<div><small>我的歌单</small><h2>${h.esc(playlist.name)}</h2><p>${playlist.songIds.length}首</p></div></div>${playlist.songIds.map(id=>s.media.songs.find(x=>x.id===id)).filter(Boolean).map(x=>songRow(x,true)).join('')||'<div class="empty">去作品页把喜欢的歌加进来。</div>'}`;
- else if(tab==='playlists')content=`<div class="social-playlists">${s.media.playlists.map(p=>h.btn(`${h.art('night')}<span><b>${h.esc(p.name)}</b><small>${p.songIds.length}首</small></span>`,'ui',{detail:p.id},'social-playlist-tile')).join('')}</div><form class="card" data-action="music.playlist.create"><label class="field">新建歌单<input name="name" required maxlength="40" placeholder="给这份心情起个名字"></label><button type="submit" class="primary">创建歌单</button></form>`;
- else{const songs=tab==='favorites'?s.media.songs.filter(x=>s.media.favoriteSongs.includes(x.id)):s.media.songs;content=songs.map(x=>songRow(x)).join('')||'<div class="empty">还没有收藏音乐。</div>';}
- return `<section class="social-music"><header class="app-heading">${ui.detail?h.btn(h.icon('back'),'ui',{detail:''},'social-icon-button'):''}<div><small>陪你走过这一程</small><h2>音乐</h2></div>${h.btn(`${h.icon('plus')} 导入`,'file.audio',{},'secondary')}</header>${!ui.detail?h.tabs([{id:'library',label:'音乐库'},{id:'playlists',label:'歌单'},{id:'favorites',label:'喜欢'}],tab):''}${content}<p class="social-footnote">${s.config?.demo===false?'作品资料来自角色档案或本机导入；播放只使用已关联的真实音频。':'作品名与封面为演示资料；播放只使用你导入的真实音频。'}</p></section>`;
-}
 export function renderSocial(state,ui,h){
- if(!['weibo','album','music'].includes(ui.app))return null;
+ if(ui.app!=='weibo')return null;
  assert(state.social&&state.media,'社交资料缺失，未自动重置。');
  if(state.config&&!state.config.apps.includes(ui.app))return '<div class="empty">世界未启用这个应用。</div>';
- if(ui.app==='weibo'&&!active(state))return '<div class="empty">尚未配置本人账号。请在角色档案中填写手机初态。</div>';
- return ui.app==='weibo'?weibo(state,ui,h):ui.app==='album'?album(state,ui,h):music(state,ui,h);
+ if(ui.app==='weibo'&&!active(state))return '<div class="empty">尚未配置本人账号。请在当前表单中填写本人的网络账号。</div>';
+ return weibo(state,ui,h);
 }

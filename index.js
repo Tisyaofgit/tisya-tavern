@@ -9,7 +9,7 @@ import {createExtensionPresentationService} from './extension-host.mjs';
 import {mountExtensionPreferences} from './extension-preferences-ui.mjs';
 import {createPhonePresentationMedia} from './phone-life/presentation-media.mjs';
 import * as worldInfoNative from '/scripts/world-info.js';
-import {createPhoneTurnHost,createPhoneMetadataStorage} from './phone-turn-host.js';
+import {createPhoneTurnHost} from './phone-turn-host.js';
 import {chatKey as phoneChatKey} from './engine/controller.mjs';
 import {finishMatrixGeneration} from './engine/lifecycle.mjs';
 import {mountGenerationIdleGuard} from './generation-idle-guard.js';
@@ -33,7 +33,6 @@ import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
 import {mountMatrixIdentity,mountMatrixCreation,mountStoryResources} from './engine/identity-ui.mjs';
 import {createStoryIdentity,storyAvatar} from './engine/identity.mjs';
-import {parsePhoneWorld,parsePhoneCharacter} from './phone-life-config.mjs';
 import {excludeTemplateBookEntries} from './engine/template-book.mjs';
 import {createWorldbookConditionGate} from './worldbook-conditions.js';
 import {createPersonaGateway} from './tables/persona.js';
@@ -152,8 +151,7 @@ async function getPhoneService(c=context()){
   const seed=await phoneSeedPromise;
   if(phoneChatKey(context())!==key||context().chatMetadata!==c.chatMetadata)throw Error('聊天已切换，手机尚未初始化。');
   if(!stored)await ensureMatrixDatabase();
-  const legacy=createPhoneMetadataStorage({getContext:context,persistMetadata:persistConversationMetadata,allowNativeBranch:true},c);
-  const storage=createPhoneDatabaseStorage({database:matrixHost.createPhoneDatabaseBridge(),contextKey:key,legacyLoad:()=>legacy.load()});
+  const storage=createPhoneDatabaseStorage({database:matrixHost.createPhoneDatabaseBridge(),contextKey:key});
   const service=createPhoneService({seed,storage,contextKey:key,onChange:phoneChanged});await service.init();row.service=service;return service;
  })();
  try{return await row.promise;}catch(error){if(phoneServices.get(key)===row&&!error.phoneStorageUncertain)phoneServices.delete(key);throw error;}
@@ -163,7 +161,7 @@ async function reconcilePhoneHistory(){
  const c=context(),key=phoneChatKey(c);
  const idle=()=>!isGenerating()&&!revisionController.active()&&!revisionController.navigating()&&!phoneTurn.state().active;
  if(!key||!idle())return;
- const existing=c.chatMetadata?.['缇斯亚虚拟手机']!=null||(await matrixDatabase.peek())?.state?.tables?.X_PHONE_BINDINGS?.['phone-current'];
+ const existing=(await matrixDatabase.peek())?.state?.tables?.X_PHONE_BINDINGS?.['phone-current'];
  if(!existing||phoneChatKey(context())!==key||context().chatMetadata!==c.chatMetadata||!idle())return;
  return phoneTurn.reconcile();
 }
@@ -268,10 +266,7 @@ async function initializeLifeForCurrentSelection(service){
  if(!profile){if(service.readLife())throw Error('请选择这份手机进度原本绑定的角色档案和世界定义；原进度已保留。');return null;}
  const selection=phoneBindingSelection();
  if(profile.database){await service.refresh();const snapshot=await matrixDatabase.read();const normalized=readPhoneDatabaseProfile(snapshot.state,{worldId:profile.worldId,entityId:profile.entityId,dossierId:profile.dossierId});if(!normalized)throw Error('请先在表单中填写所选角色与世界的手机初态；已有数据不会被默认值覆盖。');if(normalized.life)return normalized.life;return service.initLife({...normalized,binding:selection});}
- const world=parsePhoneWorld(profile.worldText),character=parsePhoneCharacter(profile.characterText);
- const result=await service.initLife({world,character,binding:selection});
- if(phoneSelectionKey()!==captured)throw Error('角色或世界选择已变化，当前页面未继续操作。');
- return result;
+ throw Error('手机需要当前表单中的人物和世界设置。');
 }
 function phoneDesktop(){
  const service=phoneServices.get(phoneChatKey(context()))?.service,life=service?.readLife?.(),selection=phoneBindingSelection();

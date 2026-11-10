@@ -2,6 +2,7 @@ import {PREFERENCE_GROUPS, effectivePreferences} from './preferences.mjs';
 import {storyAvatar} from './identity.mjs';
 import {selectControl} from './form-controls.mjs';
 import {mountUnsavedPrompt} from '../settings-unsaved.js';
+import {mountCreationWorkbench,mountCreationTable,creationTaskRunning} from './creation-workbench.mjs';
 
 const stamp = value => JSON.stringify(value);
 const clone = value => structuredClone(value);
@@ -17,6 +18,11 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
  let companion=null,recordDraft=null,recordConfirmed=false,dossierFields={},dossierBefore=null,generationDraft=null,generationText='',generationConfirmed=false,generationGoal='',generationKind='character',resourceBase=null,resourceDraft=null,legacyDossier=null;
  let generationReceipt=null,generationSavedDraft=null,generationFailure=null,generationUseCore=false,generationCreatePersona=false,generationMode='extend',creationCores=[],creationCoreIndex=0;
  let generationHistory=[],generationFieldTexts={},generationFieldErrors={};
+ let generationWorkbench=null,generationUnsubscribe=null,generationTask=null,generationPending=Promise.resolve(),adoptedTaskId=null,generationStarting=false;
+ const generationRunning=()=>generationStarting||creationTaskRunning(generationTask);
+ function retainCreationView(){if(disposed||!roles.rememberCreationView)return;try{if(stamp(identity.read().scope)!==scope)return;roles.rememberCreationView({taskId:generationTask?.id??null,creation:generationSnapshot(),history:clone(generationHistory),messages:clone(generationTask?.messages??[])});}catch(error){report(error);}}
+ function restoreCreationView(saved){const c=saved?.creation;if(!c)return false;generationDraft=clone(c.draft);generationText=c.text??'';generationGoal=c.goal??'';generationKind=c.kind??'character';generationMode=c.mode??'extend';generationUseCore=c.useCore===true;creationCoreIndex=c.coreIndex??0;generationCreatePersona=c.createPersona===true;generationFieldTexts=clone(c.fieldTexts??{});generationFieldErrors=clone(c.fieldErrors??{});creationDestination=clone(c.destination??creationDestination);creationSource=clone(c.source??null);generationHistory=clone(saved.history??[]);adoptedTaskId=c.draft?(saved.taskId??null):null;return true;}
+ function clearCreationTaskView(){roles.clearCreationView?.();generationTask=roles.creationTask?.()??null;adoptedTaskId=null;}
  let creationDestination={book:'',newBook:false},creationSource=null,sourceBook='',sourceUid='',sourceListing=null,sourceRepair=null;
  let originDraft=null,originReviewed=false,originRecovery=false,originRows=[],originIndex=0,originCreate=null,originCreateReviewed=false;
  let identityScopeDraft,identityScopeBase,selectionSubmission=null;
@@ -93,12 +99,12 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   || roleDirty() || createDirty() || draft.id !== savedIdentity.active || identityScopeDirty() || extraDirty();
  const hasChanges = () => hasDraftChanges() || profileDirty() || wishDirty() || !!savedIdentity.pending || !!savedIdentity.creationPending;
  const prompt = mountUnsavedPrompt(document, dialogs, {onStateChange: () => syncActions()});
- const state = () => ({dirty: hasChanges(), draftDirty: hasDraftChanges(), profileDirty: profileDirty(), wishDirty: wishDirty(), roleDirty: roleDirty(), createDirty: createDirty(), selectionDirty: selectionDirty(), reviewRequired, receipts: [...receipts], busy: busy || !!companion?.state?.().busy || prompt.state().busy, canSave: hasChanges() && !busy, selected: draft.id, active: savedIdentity.active});
+ const state = () => ({dirty: hasChanges(), draftDirty: hasDraftChanges(), profileDirty: profileDirty(), wishDirty: wishDirty(), roleDirty: roleDirty(), createDirty: createDirty(), selectionDirty: selectionDirty(), reviewRequired, receipts: [...receipts], busy: busy || !!companion?.state?.().busy || prompt.state().busy, creationRunning:generationRunning(), creationTask:generationTask?.id??null, canSave: hasChanges() && !busy && !generationRunning(), selected: draft.id, active: savedIdentity.active});
  function syncActions() {
   if (disposed) return;
   if(companion?.root)content.append(companion.root);
-  cancel.disabled = busy || !!companion?.state?.().busy || prompt.state().open || !hasDraftChanges();
-  saveButton.disabled = busy || !!companion?.state?.().busy || prompt.state().open || !hasChanges();
+  cancel.disabled = busy || generationRunning() || !!companion?.state?.().busy || prompt.state().open || !hasDraftChanges();
+  saveButton.disabled = busy || generationRunning() || !!companion?.state?.().busy || prompt.state().open || !hasChanges();
   content.inert = busy || prompt.state().open;
   root.setAttribute('aria-busy', String(busy));
  }
@@ -108,7 +114,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
  }
  function changed() {
   status.setAttribute('role', 'status'); status.textContent = hasChanges() ? '有未保存修改' : '';
-  syncActions();
+  syncActions();retainCreationView();
  }
  function run(fn) {
   if (busy || disposed) return Promise.resolve(false);
@@ -151,6 +157,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
  }
  function recordReceipt(label) {if (!receipts.includes(label)) receipts.push(label);}
  async function validate() {
+  check(!generationRunning(),'创作仍在进行，请等草稿完成后保存。');
   check(!reviewRequired, '已有部分确认保存，但保存期间会话改变；请先核对已保存内容，再取消修改后重新读取。');
   guard();
   if (profileDirty()) {
@@ -272,8 +279,9 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   return true;
  }
  async function discard() {
+  check(!generationRunning(),'请先停止创作；收起页面不会中断任务。');
   check(!creationLocked(),'这份创作已经开始保存，请继续保存并核对同一次提交；恢复草稿仍保留，也可先导出。');
-  if(companion?.discardDraft)check(await companion.discardDraft()!==false,'呈现配置取消未完成');clearExtras();
+  if(companion?.discardDraft)check(await companion.discardDraft()!==false,'呈现配置取消未完成');clearExtras();clearCreationTaskView();
   savedIdentity = identity.read(); savedConfig = config.read(); scope = stamp(savedIdentity.scope); resetDraft();
   await draw(); status.setAttribute('role', 'status');
   status.textContent = savedIdentity.pending||savedIdentity.creationPending ? '未保存的输入已取消；已进入保存的身份操作仍待核对，请使用保存继续。' : '已取消修改，恢复到已保存的内容。';
@@ -284,6 +292,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   if (disposed || busy && !navigating) return false;
   if (navigating) return true;
   if (navigationPending) return false;
+  if(creationOnly&&roles.rememberCreationView&&!creationLocked()){retainCreationView();return !prompt.state().open;}
   if (!hasDraftChanges()) return !prompt.state().open;
   return prompt.request({
    save: async () => {if (!await saveDraft()) throw lastError ?? Error('保存未完成，草稿仍保留。'); return !hasChanges();},
@@ -377,7 +386,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
    const receipt={confirmed:true,contextKey:result.contextKey,beforeRevision:request.expectedRevision,revision:result.revision,records:request.proposal.matrix.changes.map(change=>({tableId:change.tableId,recordId:change.recordId}))};
    await companion?.acceptDatabaseReceipt?.(receipt);
    if(generationCreatePersona&&request.kind==='character'){await identity.createFromMatrix({draft:request,receipt:result});captureIdentity();recordReceipt('独立人物槽位');}
-   generationDraft=null;generationText='';generationConfirmed=false;generationGoal='';generationReceipt=null;generationSavedDraft=null;generationFailure=null;generationHistory=[];generationFieldTexts={};generationFieldErrors={};guard();
+   generationDraft=null;generationText='';generationConfirmed=false;generationGoal='';generationReceipt=null;generationSavedDraft=null;generationFailure=null;generationHistory=[];generationFieldTexts={};generationFieldErrors={};clearCreationTaskView();guard();
   }
  }
  function showRecordPreview(container){
@@ -449,12 +458,13 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   else{recordDraft=handoff;recordConfirmed=false;await draw();changed();}
  }
  async function drawCreation(){
+  generationUnsubscribe?.();generationUnsubscribe=null;generationWorkbench?.dispose();generationWorkbench=null;
   const generated=el('section'),kind=el('select'),goal=el('textarea'),generationPreview=el('div');
   generated.dataset.databaseCreation='';goal.dataset.creationGoal='';goal.className='text_pole';goal.value=generationGoal;goal.rows=5;
   const abandonGeneration=()=>{check(!creationLocked(),'本次保存已开始，请使用底部保存继续核对同一份草稿。');rememberGeneration();generationDraft=null;generationText='';generationConfirmed=false;generationFailure=null;generationFieldTexts={};generationFieldErrors={};renderGeneration();changed();};
   option(kind,'新人物','character');option(kind,'新世界','world');kind.value=generationKind;kind.dataset.creationKind='';
   kind.onchange=()=>{if(creationLocked()){kind.value=generationKind;return;}abandonGeneration();generationKind=kind.value;changed();};
-  goal.oninput=()=>{if(creationLocked())return;abandonGeneration();generationGoal=goal.value;changed();};
+  goal.oninput=()=>{if(creationLocked()||generationRunning())return;generationGoal=goal.value;generationConfirmed=false;changed();};
   kind.disabled=goal.disabled=creationLocked();
   let destinations=[];if(typeof roles.sourceChoices==='function'){try{destinations=(await roles.sourceChoices(creationDestination.book||undefined)).books??[];}catch(error){generated.append(el('p','保存位置读取失败：'+error.message));}}
   const targetBook=el('select'),newBook=el('input');targetBook.dataset.creationBook='';newBook.dataset.creationBookName='';newBook.className='text_pole';
@@ -468,7 +478,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   const changeKind=kind.onchange;kind.onchange=()=>{changeKind();creationDestination={book:'',newBook:generationKind==='world'};creationSource=null;syncDestination();};
   if(creationSource){const sourceInfo=el('details');sourceInfo.append(el('summary','来源：'+creationSource.book+' / '+(creationSource.name??creationSource.title??creationSource.uid)),el('pre',creationSource.content??''));generated.append(sourceInfo);}
   const creationModeControl=el('select');creationModeControl.dataset.creationMode='';option(creationModeControl,'补充新内容','extend');option(creationModeControl,'修订已有定义','revise');creationModeControl.value=generationMode;creationModeControl.disabled=creationLocked();creationModeControl.onchange=()=>{abandonGeneration();generationMode=creationModeControl.value;changed();};
-  generated.append(el('h3','与缇斯亚一起创作'),field('创作类型',kind),field('创作方式',creationModeControl),field('要求与已有依据',goal));
+  generated.append(el('h3','与缇斯亚一起创作'),field('创作类型',kind),field('创作方式',creationModeControl));
   if(generationUseCore){
    const core=el('select');core.dataset.creationCore='';option(core,'请选择固定基点','');
    creationCores.forEach((row,i)=>option(core,row.name+' @'+row.version+' · '+row.book,String(i)));
@@ -495,32 +505,33 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
    const invalidate=()=>{generationConfirmed=false;confirmed.checked=false;changed();};
    confirmed.onchange=()=>{generationConfirmed=confirmed.checked;changed();};
    let proposal;try{proposal=JSON.parse(generationText);}catch{proposal=null;}
-   for(const [index,change] of (proposal?.matrix?.changes??[]).entries()){
-    const spec=generationDraft.schema?.[change.tableId],group=el('fieldset');group.append(el('legend',(spec?.label??change.tableId)+' · '+(change.values.name??'记录 '+(index+1))));
-    for(const [key,value]of Object.entries(change.values)){
-     const def=spec?.fields?.find(field=>field.key===key),complex=value!==null&&typeof value==='object',node=el(typeof value==='boolean'?'select':'textarea');
-     if(typeof value==='boolean'){option(node,'是','true');option(node,'否','false');}
-     const fieldKey=index+':'+key;node.className='text_pole';node.value=generationFieldTexts[fieldKey]??(complex?JSON.stringify(value,null,2):String(value??''));node.dataset.creationRow=String(index);node.dataset.creationKey=key;if(node.tagName==='TEXTAREA')node.rows=complex||String(value??'').length>100?5:2;if(generationFieldErrors[fieldKey])node.setCustomValidity('请保持当前字段的数据格式');
-     const update=()=>{generationFieldTexts[fieldKey]=node.value;try{let parsed=node.value;if(complex)parsed=JSON.parse(parsed);else if(typeof value==='number'){check(parsed.trim()&&Number.isFinite(Number(parsed)),'请输入有效数字');parsed=Number(parsed);}else if(typeof value==='boolean')parsed=parsed==='true';proposal.matrix.changes[index].values[key]=parsed;
-      if(key==='name'&&(generationKind==='character'&&change.tableId==='T_CHAR_DOSSIER'&&change.recordId===proposal.matrix.binding?.dossierId||generationKind==='world'&&change.tableId==='T_STATIC_WORLDS'&&change.recordId===proposal.matrix.binding?.worldId))proposal.name=parsed;
-      generationText=JSON.stringify(proposal,null,2);delete generationFieldErrors[fieldKey];node.setCustomValidity('');}catch{generationFieldErrors[fieldKey]=true;node.setCustomValidity('请保持当前字段的数据格式');}invalidate();};
-     node.oninput=node.onchange=update;group.append(field(def?.label??key,node));
-    }
-    typed.append(group);
-   }
+   mountCreationTable(document,typed,{proposal,schema:generationDraft.schema,fieldTexts:generationFieldTexts,fieldErrors:generationFieldErrors,onInvalid:invalidate,onChange:next=>{
+    const binding=next.matrix.binding,primary=next.matrix.changes.find(row=>generationKind==='character'?row.tableId==='T_CHAR_DOSSIER'&&row.recordId===binding?.dossierId:row.tableId==='T_STATIC_WORLDS'&&row.recordId===binding?.worldId);
+    if(primary?.values.name!==undefined)next.name=primary.values.name;generationText=JSON.stringify(next,null,2);invalidate();
+   }});
    const raw=el('details');raw.append(el('summary','模型原答'),el('pre',typeof generationDraft.rawResponse==='string'?generationDraft.rawResponse:JSON.stringify(generationDraft.rawResponse,null,2)));
    generationPreview.append(typed,raw,field('保存时提交这份创作草稿',confirmed));
   };
-  const generate=button('生成表单草稿',async()=>{
-   check(savedIdentity.scope.chatId,'请先打开要绑定的聊天');check(!creationLocked(),'请先完成已保存的人物槽位');check(!savedIdentity.creationPending,'请先使用底部保存恢复已开始的人物槽位');
-   check(!recordDraft&&!Object.keys(dossierFields).length&&!createDirty(),'请先完成或取消当前人物修改');
-   check(creationDestination.book?.trim(),'请选择保存到的世界基点书，或填写新世界书名称');
-   let source=creationSource?clone(creationSource):null;
-   if(generationUseCore){check(typeof listCreationCores==='function','基点读取接口尚未接入');const previous=creationCores[creationCoreIndex];check(previous,'请选择已有基点');const latest=await listCreationCores();guard();source=latest.find(row=>row.book===previous.book&&row.id===previous.id&&row.version===previous.version);check(source&&stamp(source)===stamp(previous),'所选基点版本已改变，请重新读取');}
-   try{const next=await roles.createDraft({goal:generationGoal,kind:generationKind,mode:generationMode,source:source?clone(source):null});guard();rememberGeneration();generationDraft=next;generationDraft.destination=clone(creationDestination);if(source&&generationUseCore)generationDraft.creationSource=clone(source);generationText=JSON.stringify(generationDraft.proposal,null,2);generationConfirmed=false;generationFailure=null;generationFieldTexts={};generationFieldErrors={};renderGeneration();changed();}
-   catch(error){generationFailure=error.rawResponse??null;renderGeneration();throw error;}
-  });generate.disabled=creationLocked();
-  generated.append(el('p','读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。'),generate,generationPreview);renderGeneration();content.append(generated);
+  function adoptDraft(next,taskId){if(disposed||creationLocked()||!next)return;guard();if(taskId&&adoptedTaskId===taskId)return;rememberGeneration();generationDraft=clone(next);generationDraft.destination=clone(next.destination??creationDestination);creationDestination=clone(generationDraft.destination);generationKind=next.kind??generationKind;generationMode=next.mode??generationMode;generationGoal=next.goal??generationGoal;generationText=JSON.stringify(next.proposal,null,2);generationConfirmed=false;generationFailure=null;generationFieldTexts={};generationFieldErrors={};adoptedTaskId=taskId??next.operationId;renderGeneration();changed();}
+  function syncCreationControls(){const locked=creationLocked()||generationRunning();for(const node of generated.querySelectorAll('[data-creation-kind],[data-creation-mode],[data-creation-book],[data-creation-book-name],[data-creation-core],[data-creation-persona]'))node.disabled=locked;generationPreview.inert=generationRunning();}
+  function receiveTask(task){if(disposed||stamp(identity.read().scope)!==scope)return;generationTask=task;generationWorkbench?.render(task);syncCreationControls();if(task?.status==='ready'&&task.draft&&!generationStarting){try{adoptDraft(task.draft,task.id);}catch(error){report(error);}}if(task?.status==='error')generationFailure=task.text??task.error?.rawResponse??null;syncActions();}
+  async function sendCreation(){
+   if(generationRunning()||disposed)return false;generationStarting=true;syncActions();syncCreationControls();
+   generationPending=(async()=>{try{
+    guard();check(savedIdentity.scope.chatId,'请先打开要绑定的聊天');check(!creationLocked(),'请先完成已保存的人物槽位');check(!savedIdentity.creationPending,'请先使用底部保存恢复已开始的人物槽位');
+    check(!recordDraft&&!Object.keys(dossierFields).length&&!createDirty(),'请先完成或取消当前人物修改');check(generationGoal.trim(),'请写下创作要求');
+    check(creationDestination.book?.trim(),'请选择保存到的世界基点书，或填写新世界书名称');
+    let source=creationSource?clone(creationSource):null;
+    if(generationUseCore){check(typeof listCreationCores==='function','基点读取接口尚未接入');const previous=creationCores[creationCoreIndex];check(previous,'请选择已有基点');const latest=await listCreationCores();guard();source=latest.find(row=>row.book===previous.book&&row.id===previous.id&&row.version===previous.version);check(source&&stamp(source)===stamp(previous),'所选基点版本已改变，请重新读取');}
+    retainCreationView();const next=await roles.createDraft({goal:generationGoal,kind:generationKind,mode:generationMode,source:source?clone(source):null,destination:clone(creationDestination),messages:clone(generationTask?.messages??[]),onProgress:()=>{if(!disposed)receiveTask(roles.creationTask?.()??generationTask);}});
+    if(disposed)return true;if(source&&generationUseCore)next.creationSource=clone(source);const task=roles.creationTask?.();adoptDraft(next,task?.id??next.operationId);goal.value='';if(task)receiveTask(task);return true;
+   }catch(error){if(!disposed){generationFailure=error.rawResponse??generationTask?.text??null;renderGeneration();if(generationTask?.status!=='cancelled')report(error);}return false;}
+   finally{generationStarting=false;if(!disposed){generationTask=roles.creationTask?.()??generationTask;generationWorkbench?.render(generationTask);syncCreationControls();syncActions();retainCreationView();}}
+   })();return generationPending;
+  }
+  const conversation=el('div');generationWorkbench=mountCreationWorkbench(document,conversation,{composer:goal,onSend:sendCreation,onCancel:()=>roles.cancelCreation?.(),onError:report});generationWorkbench.setLocked(creationLocked());
+  generated.append(conversation,el('p','结果在下方表格中核对和修改；列表、字段组和规则内容都可以逐格编辑。确认后使用底部保存。'),generationPreview);renderGeneration();content.append(generated);
+  generationTask=roles.creationTask?.()??null;receiveTask(generationTask);generationUnsubscribe=roles.subscribeCreation?.(receiveTask)??null;
 
  }
  async function drawLegacyDossier(section,rows){
@@ -568,7 +579,8 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
 
  async function draw() {
   if (disposed) return;
-  content.replaceChildren(el('h2',creationOnly?'创作表单':resourcesOnly?'故事档案与资料书':'用户身份'));
+  generationUnsubscribe?.();generationUnsubscribe=null;generationWorkbench?.dispose();generationWorkbench=null;
+  content.replaceChildren(el('h2',creationOnly?'创作工作台':resourcesOnly?'故事档案与资料书':'用户身份'));
   if(creationLocked()&&!creationOnly){const recovery=el('section');recovery.dataset.creationRecovery='';recovery.append(el('h3','继续上次创作保存'),el('p','上次创作保存尚未完成，草稿及保存依据已恢复。请使用底部保存继续同一次提交。'),button('导出创作恢复草稿',downloadDraft));content.append(recovery);}
   if(creationOnly){await drawCreation();syncActions();return;}
   if(!resourcesOnly){
@@ -706,17 +718,19 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   savedConfig=config.read();resetDraft(savedIdentity.active);
   if(initialCreation){check(['character','world'].includes(initialCreation.kind),'创作入口类型无效');generationKind=initialCreation.kind;generationMode=initialCreation.mode??'extend';check(['extend','revise'].includes(generationMode),'创作方式无效');generationGoal=String(initialCreation.goal??'');generationUseCore=initialCreation.useCore===true;generationCreatePersona=initialCreation.createPersona===true;creationSource=clone(initialCreation.source??null);creationDestination=clone(initialCreation.destination??{book:'',newBook:initialCreation.kind==='world'});if(generationUseCore){check(typeof listCreationCores==='function','基点读取接口尚未接入');creationCores=await listCreationCores();guard();}}
   if(typeof roles.pendingCreation==='function'){const recovered=await roles.pendingCreation();guard();if(recovered){check(recovered.proposal?.matrix&&recovered.destination?.book&&['character','world'].includes(recovered.kind),'上次创作恢复草稿不完整，原记录仍保留');generationDraft=clone(recovered);generationSavedDraft=clone(recovered);generationText=JSON.stringify(recovered.proposal,null,2);generationKind=recovered.kind;generationMode=recovered.mode??'extend';generationGoal=String(recovered.goal??'');generationCreatePersona=recovered.createPersona===true;generationConfirmed=true;creationDestination=clone(recovered.destination);creationSource=clone(recovered.source??null);}}
+  if(!generationSavedDraft)restoreCreationView(roles.creationView?.());
   if(initialOrigin){check(legacyOrigins?.preview,'既有原点读取接口尚未接入');originDraft=await legacyOrigins.preview(clone(initialOrigin));guard();}
   await draw();if(initialCreation)content.querySelector('[data-database-creation]')?.scrollIntoView?.({block:'start'});
  });
  return {
   root,ready,state,saveDraft,discardDraft,confirmLeave,validateDraft:validate,exportDraft,
   refreshState:syncActions,setCompanion(panel){companion=panel;syncActions();return this;},
-  settled: () => Promise.all([pending, ...(navigationPending ? [navigationPending] : [])]),
+  settled: () => Promise.all([pending,generationPending, ...(navigationPending ? [navigationPending] : [])]),
   requestLeave: () => {
-   const allowed=navigating||!busy&&!companion?.state?.().busy&&!hasDraftChanges()&&!prompt.state().open;
+   if(creationOnly&&!creationLocked())retainCreationView();
+   const allowed=navigating||!busy&&!companion?.state?.().busy&&(!hasDraftChanges()||creationOnly&&!!roles.rememberCreationView&&!creationLocked())&&!prompt.state().open;
    return {allowed, dirty: hasChanges(), reason: allowed ? '' : busy ? '身份操作正在进行' : '有未保存的修改'};
   },
-  dispose() {if (disposed) return; prompt.dispose(); disposed = true; if (hostPage && !hadHostClass) hostPage.classList.remove('tisya-matrix-page'); root.replaceChildren();}
+  dispose() {if (disposed) return;retainCreationView();generationUnsubscribe?.();generationWorkbench?.dispose(); prompt.dispose(); disposed = true; if (hostPage && !hadHostClass) hostPage.classList.remove('tisya-matrix-page'); root.replaceChildren();}
  };
 }

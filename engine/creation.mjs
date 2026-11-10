@@ -1,3 +1,4 @@
+import {createCreationTasks} from './creation-task.mjs';
 import {ensurePhoneFormSchema} from './phone-form-contract.mjs';
 import {clone,digest,fail} from './common.mjs';
 import {parseReply,envelope} from './reply.mjs';
@@ -19,7 +20,8 @@ export function acceptCreationSheets(context,snapshot,raw){
 }
 
 // These are read-only source snapshots, never another editable ledger.
-export function createMatrixCreator({database,getContext,request,sourceBooks,readCharacterBindings,getHelper=()=>globalThis.TavernHelper,ensureDatabase=async()=>{},assertIdle=()=>{},onProgress=()=>{}}){
+export function createMatrixCreator({database,getContext,request,sourceBooks,readCharacterBindings,getHelper=()=>globalThis.TavernHelper,ensureDatabase=async()=>{},assertIdle=()=>{},taskStorage} ){
+ const tasks=createCreationTasks({getContext,storage:taskStorage});
  function scope(signal){
   const c=getContext(),identity=[c.chatId,c.groupId,c.characterId],meta=c.chatMetadata,chat=c.chat;
   return ()=>{const now=getContext();check(!signal?.aborted,'创作已取消');check(identity.every((v,i)=>v===[now.chatId,now.groupId,now.characterId][i])&&(!meta||now.chatMetadata===meta)&&(!chat||now.chat===chat),'当前角色或会话已切换；保留原始草稿，未提交');};
@@ -85,7 +87,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   const confirmed=intentDraft(result?.state?.runtime?.receipts?.[intentKey(draft.operationId)],draft.contextKey);check(result?.contextKey===draft.contextKey&&confirmed,'创作保存意图尚未获回读确认；未开始写入世界书');
   Object.assign(draft,{expectedRevision:confirmed.expectedRevision,recovery:confirmed.recovery});
  }
- async function draft(goal,{kind='world',mode='extend',source=null,destination,signal}={}){
+ async function generateDraft(goal,{kind='world',mode='extend',source=null,destination,signal,messages=[],onProgress=()=>{}}={}){
   assertIdle();check(typeof goal==='string'&&goal.trim(),'请填写创作要求');check(['world','character'].includes(kind)&&['extend','revise'].includes(mode),'创作类型无效');
   const guard=scope(signal),explicitSource=clone(source);
   if(sourceBooks)check(!await pending(),'当前聊天有未完成创作，请先继续保存原草稿');guard();
@@ -93,7 +95,10 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   const sources=await nativeSources(guard),templates=await readCreationTemplates(getContext,{task:'tableGenesis',kind,goal});guard();
   const operationId='creation:'+crypto.randomUUID(),sheets=prepareCreationSheets(snapshot,{kind,mode,operationId,tableIds:templates?.tableIds});
   const input={formContract:'tisya.simple-form/1',databaseContract:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,sourcePolicy:'来源快照、历史和回执由提交服务记录；模板只提供内容要求，本次完整 reply 与简表规则决定输出。旧叙事来源首次结构化时须完整提炼原文；已有同一人物只复用其身份编号，不能把当前聊天运行值当成作者定义或仅存本轮补丁。',kind,mode,goal,source:explicitSource,nativeSources:aiSources(sources),forms:sheets.form,references:sheets.referenceText,template:templates?creationTemplateText(templates):''};
+  input.conversation=messages;input.conversationPolicy='对话中的既有草稿可供修订，不是已保存事实；本轮继续按完整reply及简表输出新的可预览草稿。';
+  onProgress({stage:'prepared',contextKey:snapshot.contextKey});
   const raw=await request('tableGenesis',JSON.stringify(input),{signal,onProgress});
+  onProgress({stage:'validating',text:raw});
   let accepted;try{accepted=acceptCreationSheets(sheets,snapshot,raw);}catch(cause){throw Object.assign(Error('创作回复或简表无法接纳：'+cause.message+'；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources,sheetContext:sheets});}
   const proposal=accepted.proposal,result={format:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,operationId,kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,rawResponse:raw,workbook:accepted.workbook,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(destination?{destination:clone(destination)}:{}),...(templates?{creationTemplates:templates}:{})};
   try{
@@ -105,7 +110,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   return result;
  }
  async function validate(draft){
-  assertIdle();check(draft?.format===CREATION_CONTRACT,'此草稿不是当前表单格式');const guard=scope();
+  assertIdle();check(draft?.format===CREATION_CONTRACT&&draft.replyContract===CREATION_REPLY_CONTRACT&&typeof draft.rawResponse==='string'&&draft.workbook,'此草稿不是当前可视化表单格式，请重新生成');const guard=scope();
   const snapshot=await database.read();guard();check(snapshot?.contextKey===draft.contextKey,'创作草稿属于另一聊天');
   await verifySources(draft,guard);guard();
   const proposal=validateCreationProposal(draft.proposal,snapshot,{...draft,mode:snapshot.revision===draft.expectedRevision?draft.mode:'revise'});
@@ -128,5 +133,6 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   }catch(error){archivePlan??=error.archivePlan;archiveReceipt??=error.archiveReceipt;if(archivePlan){error.archivePlan=clone(archivePlan);draft.archivePlan=clone(archivePlan);}if(!archiveReceipt&&archivePlan)archiveReceipt={confirmed:false,status:'not-written',operationId:draft.operationId};if(archiveReceipt){error.archiveReceipt=clone(archiveReceipt);draft.archiveReceipt=clone(archiveReceipt);if(archiveReceipt.confirmed&&archiveInputDigest)draft.archiveInputDigest=archiveInputDigest;}error.draft=clone(draft);throw error;}
  }
  function form(draft){return draft.proposal.matrix.changes.map(change=>{const schema=draft.schema?.[change.tableId];return {tableId:change.tableId,recordId:change.recordId,label:schema?.label??change.tableId,name:change.values.name??change.values.label??'',fields:Object.entries(change.values).map(([key,value])=>({key,label:schema?.fields?.find(f=>f.key===key)?.label??key,type:schema?.fields?.find(f=>f.key===key)?.type??'TEXT',value:clone(value),state:change.states?.[key]??'known'}))};});}
- return {draft,validate,save,form,pending};
+ const draft=(goal,options={})=>tasks.run(goal,options,current=>generateDraft(goal,current));
+ return {draft,validate,save,form,pending,creationTask:tasks.snapshot,subscribeCreation:tasks.subscribe,cancelCreation:tasks.cancel,rememberCreationView:tasks.rememberView,creationView:tasks.view,clearCreationView:tasks.clearView};
 }
