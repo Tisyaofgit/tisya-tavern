@@ -1,0 +1,19 @@
+{
+  "accepted": true,
+  "sourceDefinitionId": "4cbd443d-cf66-5c0c-bdef-f66c2c80bc92",
+  "previousSourceBinding": {
+    "entityId": "source-person",
+    "dossierId": "source-person"
+  },
+  "revisedSourceBinding": {
+    "database": true,
+    "entityId": "37f6c60c-eb1f-4fef-9467-051e5082ea4e",
+    "dossierId": "37f6c60c-eb1f-4fef-9467-051e5082ea4e"
+  },
+  "unrelatedUserHadSourceMetadata": false,
+  "proposedChanges": 0,
+  "boundDossier": "37f6c60c-eb1f-4fef-9467-051e5082ea4e",
+  "boundName": "用户独立人物",
+  "sourceName": "归档现在指向的另一个人物",
+  "userFieldUnchanged": true
+}

@@ -1,0 +1,168 @@
+{
+  "format": "tisya.ui-acceptance/1",
+  "status": "assigned-group-complete",
+  "completedUTC": "2026-11-10T10:05:02.096572+00:00",
+  "worktree": "/workspace/scratch/c04f833f6bb3/unify-release",
+  "clockWindowUTC": {
+    "start": "2026-11-10T09:45:57Z",
+    "closeoutBy": "2026-11-10T11:00:57Z",
+    "stopBy": "2026-11-10T11:15:57Z"
+  },
+  "edits": [
+    {
+      "path": "tests/shell.test.js",
+      "sha256": "9ef7db6a9d221597eeb7df5846832063e7b859f1ee1bf507c49e97615a8eda11",
+      "scope": "Three obsolete inline-creation tests replaced with equivalent production-navigation acceptance; actual mount handles captured; native fixture read fallback and fixture timer cleanup."
+    }
+  ],
+  "productionDOMRoutes": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "startUTC": "2026-11-10T09:58:27.343766+00:00",
+    "endUTC": "2026-11-10T09:58:33.931691+00:00",
+    "exitCode": 0,
+    "testSHA256": "9ef7db6a9d221597eeb7df5846832063e7b859f1ee1bf507c49e97615a8eda11",
+    "accepted": [
+      "No-chat cold entry: actual identity -> creation -> independent world start; zero model/book/engine/persona writes.",
+      "Settings -> identity -> fixed book+UID source -> actual assistant -> reviewed typed form -> same-UID archive with original source -> one Matrix dossier -> explicit main-character selection -> reopen readback; no default persona; no replay write.",
+      "Staged persona/profile/wish/mode/dossier edits: actual assistant navigation prompts once; continue preserves input; cancel restores saved native, metadata, Matrix and books."
+    ],
+    "boundary": "Actual index.js callbacks and production modules in Happy DOM; native host and persistence simulated; model fixed local string; no real model request."
+  },
+  "patchCrossReview": {
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "startUTC": "2026-11-10T10:02:52.583332+00:00",
+    "endUTC": "2026-11-10T10:03:08.143855+00:00",
+    "exitCode": 0,
+    "filesUnchangedDuringRun": true,
+    "verifiedSHA256": {
+      "engine/identity-ui.mjs": "249e1dfe58a01b6072cd61fe6229ea181174babe1628433b4fa50485d3250dfa",
+      "tables/paired-preset.js": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+      "tables/slots.js": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0",
+      "tests/matrix-identity-recovery-ui.test.js": "154abba24fd18e6fd25adab0f6da7850edd8572d70d3d7822e261f6395928461",
+      "tests/matrix-consumer-wire.test.js": "49319a332223e4d4f3c6960caca09041a0c5741f72bca8d297650ce62c74f749"
+    },
+    "accepted": [
+      "Pure archive preflight failure stays editable/cancellable with no false cold pending intent.",
+      "Archive plan/intent failure, unknown archive acknowledgment, and confirmed archive with failed Matrix save stay locked to one operation and resume without duplicates.",
+      "Only the bound character/world name updates the archive title.",
+      "Native order enables prompts with omitted enabled; explicit prompt/order false retained; disabled populated source slot fails before mocked dispatch.",
+      "Contractor/card/books/history time/policy reach final mocked native request with source macros literal and source state unchanged."
+    ],
+    "boundary": "Actual modules and final request assembly; in-memory host, Happy DOM and mocked fetch; no real native host/model/browser validation.",
+    "separatePendingWork": "Old migrated-source extend/revise route repair remains owned by creation_acceptance/root, outside these 12 cases."
+  },
+  "explicitValueProbe": {
+    "passed": 5,
+    "failed": 0,
+    "utc": "2026-11-10T10:02:05.009Z",
+    "verifiedSHA256": {
+      "tables/paired-preset.js": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+      "tables/slots.js": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0"
+    },
+    "cases": [
+      "absent",
+      "explicit-null",
+      "explicit-false",
+      "explicit-zero",
+      "explicit-empty"
+    ],
+    "accepted": "Actual pairedPreset -> taskMessages -> slotText -> compactMaterial retains contractor/policy/worldTime absent versus null/false/0/empty-string; only absent falls back; nested source null/false and literal macros retained.",
+    "boundary": "Local production-function execution and serialization only; no network/model/host writes; not a claim about every historical source adapter."
+  },
+  "browserAttempts": {
+    "nativeChromium": {
+      "binary": "/usr/bin/chromium",
+      "installed": true,
+      "returnCode": -6,
+      "result": "launch-blocked-before-page",
+      "firstFatalError": "socket() failed: Operation not permitted (1)",
+      "rawEvidence": "chromium-probe.stderr.log",
+      "probeMetadata": {
+        "utc": "2026-11-10T09:48:32.014288+00:00",
+        "command": [
+          "/usr/bin/chromium",
+          "--headless",
+          "--no-sandbox",
+          "--disable-dev-shm-usage",
+          "--dump-dom",
+          "data:text/html,<title>isolated-browser-probe</title><p id=\"ok\">ready</p>"
+        ],
+        "returncode": -6,
+        "output_has_marker": false
+      },
+      "escalationAttempted": false
+    },
+    "supportedCloudBrowser": {
+      "browser": "Chrome cdp",
+      "url": "http://127.0.0.1:37787/tests/browser-matrix-identity.html",
+      "tabId": "3",
+      "result": "net::ERR_CONNECTION_REFUSED",
+      "pageLoaded": false,
+      "alternateURLAttempts": 0,
+      "cuaCompletionSummarySent": true,
+      "fixtureServerTerminated": true
+    }
+  },
+  "notVerified": [
+    "Real browser pixels",
+    "Narrow-screen scrolling",
+    "Actual Tavern host",
+    "Android",
+    "Real model invocation"
+  ],
+  "sourceDriftDuringTests": "Cross-review exact source hashes recorded; root owns later full rebuild, full suite, save and publication.",
+  "evidence": [
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/dom-route.log",
+      "sha256": "920fc83a513b3dda0757f0e75b87ad653ec99666e31614656bf93e32d88176c3"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/dom-route-result.json",
+      "sha256": "48ff3ef0ef224c70f0f25acd48bc9212226c4bc2c6eea837e6fde68a8bc82ac3"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/chromium-probe.json",
+      "sha256": "b6151d92c50408387d18bfe3ac66656bda9895e887e4dd64b51311f578e41f57"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/chromium-probe.stderr.log",
+      "sha256": "130a4301c0f7be461984a6dd3170f649200456e6cc52d9f4051de19aa4c08bcb"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/shared-browser-probe.json",
+      "sha256": "1b59a85e864a11db19004c1b3e4af27dcf84337186b2650c4d953e516a953901"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/shell.test.before.js",
+      "sha256": "bc90e2bac3be3c6da0243b426d5ab694b48e494d675fff04d56a629feb8841c9"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/shell-route-replacement.diff",
+      "sha256": "bd7bfad3c0f224790ef4272b05108f8c09e3f9563c2eda9e2b56bb0d6686b7ce"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/shell-route-replacement-5.log",
+      "sha256": "2d15842a7765a813adcb15fd8caca84d5a7ae0fe7eec24d40e072c4b8e34237d"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/shell-route-replacement-5-result.json",
+      "sha256": "5bef34faf9c01062f4ab0e6a65bbe98b4cf42e6e45a3575cd9814073c18ece35"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/cross-review-focused.log",
+      "sha256": "de3d0bfe01190b1176a79ff068c477ec3e429c0b44b647abb3a777b1ac68875f"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/cross-review-focused-result.json",
+      "sha256": "73cda25427a6da5bd211168282846f17929a49804999cb8b86261a088c38855a"
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/resume-evidence/ui-audit/consumer-explicit-values-probe.json",
+      "sha256": "55420436d2f73afc504fc2141482e1e09ed9a37b39b0cbe8e741f4c8f2ede90c"
+    }
+  ]
+}

@@ -8,15 +8,14 @@
       "fields": [
         "name",
         "core_proposition",
-        "era_name",
-        "current_baseline_ref"
+        "era_name"
       ],
       "projections": [
         "world_id",
         "calendar_id",
         "base_year"
       ],
-      "instruction": "world_id 由 recordId 自动提供；历法关联与基准年按已注册关系从历法子表读取。"
+      "instruction": "填写世界名称、核心命题与纪年；编号由程序提供，历法与基准年填写注册关联子表。"
     },
     {
       "tableId": "M_CALENDAR_RULES",

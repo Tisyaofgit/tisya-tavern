@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "tests/task-presets.test.js",
+    "tests/template-book-identity.test.js",
+    "tests/builtin-books.test.js",
+    "tests/matrix-reply-sheets.test.js"
+  ],
+  "start_utc": "2026-11-10T09:59:28.963478+00:00",
+  "end_utc": "2026-11-10T09:59:29.624974+00:00",
+  "exit_code": 1,
+  "log": "/workspace/scratch/c04f833f6bb3/resume-evidence/root-profile-template.log"
+}

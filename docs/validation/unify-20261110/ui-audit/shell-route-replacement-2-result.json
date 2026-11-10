@@ -1,0 +1,5 @@
+{
+  "observedEndUTC": "2026-11-10T09:57:25.863185+00:00",
+  "exitCode": 130,
+  "reason": "Interrupted after tests reported 2 pass, 1 fail, but before runner exit: production assistant setInterval needed explicit synthetic fixture dispose; original output retained."
+}

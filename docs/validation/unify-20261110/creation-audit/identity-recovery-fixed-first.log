@@ -1,0 +1,14 @@
+✔ old source repair uses the existing typed identity form, reviewed diff and same entity transaction (2290.758388ms)
+✔ partial creation cannot be discarded and a cold identity view resumes its durable draft once (3164.325473ms)
+✔ a source name collision leaves the reviewed creation editable and renaming saves the matching archive once (2074.423639ms)
+✔ a source preflight rejection can be cancelled and cold reopening has no false pending creation (959.791062ms)
+✔ an interrupted intent keeps its creation plan locked and resumes the same archive (1912.512632ms)
+✔ an interrupted archive keeps its creation plan locked and resumes the same archive (2424.29206ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13257.368579

@@ -1,0 +1,17 @@
+{
+  "schema": "tisya.runtime-scope/1",
+  "recorded_utc": "2026-11-10T10:24:58.081529+00:00",
+  "real_user_runtime_opened": false,
+  "real_user_data_read": false,
+  "real_user_data_modified": false,
+  "real_user_data_reset": false,
+  "real_runtime_snapshot": "Not applicable: no actual Tavern/Android host or user runtime was opened.",
+  "isolated_data": "Node and Happy DOM tests construct in-memory state through the actual Matrix host and source services. Fixture definitions and raw reproduction receipts are retained in the exact source and evidence. No external model call was made.",
+  "source_paths": [
+    "tests/matrix-identity-recovery-ui.test.js",
+    "tests/source-definition-identity.test.js",
+    "tests/matrix-consumer-wire.test.js",
+    "tests/shell.test.js"
+  ],
+  "live_connections": []
+}

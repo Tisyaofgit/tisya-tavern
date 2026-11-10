@@ -1,0 +1,5 @@
+ROUTE {"mode":"extend","kind":"character","source":"【角色】阿青","uid":3,"existing":"人物原点档案／已有：阿青〔1〕"}
+DRAFT {"mode":"extend","heading":"人物原点档案／1","success":false,"error":"创作回复或简表无法接纳：已有同名记录，请明确选择修订对象，不能默建副本：阿青；原始返回已保留"}
+DRAFT {"mode":"extend","heading":"人物原点档案／已有：阿青〔1〕","success":false,"error":"创作回复或简表无法接纳：新增创作不能覆盖已有记录；原始返回已保留"}
+DRAFT {"mode":"revise","heading":"人物原点档案／已有：阿青〔1〕","success":true,"binding":{"entityId":"old-entity","dossierId":"old-dossier"},"changed":[{"table":"T_CHAR_DOSSIER","id":"old-dossier"}]}
+UNTOUCHED {"commits":["legacy-character-import"],"dossiers":["old-dossier"],"sourceRaw":true}

@@ -1,0 +1,11 @@
+{
+  "start_utc": "2026-11-10T09:49:59.160473+00:00",
+  "end_utc": "2026-11-10T09:49:59.614629+00:00",
+  "exit_code": 0,
+  "command": [
+    "npm",
+    "run",
+    "build:extension"
+  ],
+  "log": "/workspace/scratch/c04f833f6bb3/resume-evidence/build-initial.log"
+}

@@ -1,0 +1,28 @@
+{
+  "repository": "Tisyaofgit/tisya-tavern",
+  "commit": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+  "path": "engine/identity.mjs",
+  "pinned_main_file_bytes": 30699,
+  "pinned_main_file_sha256": "f0af86bfadecbb86568f8a5308a97250df0ec4fe9f6d5319a8fa56ed6634f228",
+  "historical_workspace_whole_file_equal": false,
+  "old_migration_writer_functions": {
+    "previewCreate": {
+      "exact": true,
+      "pinned_main_sha256": "6ceba96934528bb91bf3fe2ece6717fcead3a6b3b4db14ebe251555147c1bc1e"
+    },
+    "readAuthorSource": {
+      "exact": true,
+      "pinned_main_sha256": "5fa90548e86c5dd3e46f139a15a5e01071069533524dc26a8f1760f926247904"
+    },
+    "previewSourceMigration": {
+      "exact": true,
+      "pinned_main_sha256": "ec3b178c97ad8257cbce8f540b04a8094d39d1c056d2009bee5482c1149ddfe6"
+    },
+    "commit_request": {
+      "exact": true,
+      "sha256": "d7be41fa8e45588fa224a7344ea12a81fdafff129a2c133c0fa49d695c3ef06c"
+    }
+  },
+  "request_writer_equivalence_verified": true,
+  "different_file_reason": "Earlier workspace lacks later edit validation methods; the exact old creation, source intake, migration and database commit request are compared separately, no whole-file equivalence claim."
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "tisya.execution-window/1",
+  "task": "unify-all-data-on-existing-simple-forms",
+  "user_message": "你继续",
+  "user_authorized_resume": true,
+  "start_utc": "2026-11-10T09:45:57+00:00",
+  "start_beijing": "2026-11-10T17:45:57+08:00",
+  "deadline_utc": "2026-11-10T11:15:57+00:00",
+  "deadline_beijing": "2026-11-10T19:15:57+08:00",
+  "save_begin_by_utc": "2026-11-10T11:00:57+00:00",
+  "max_minutes": 90,
+  "status": "active",
+  "source": "/workspace/scratch/c04f833f6bb3/unify-release",
+  "base_commit": "ade8ab0e073101ba98b60fe992398ad493649f3e",
+  "main_guard": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+  "background_resume": false,
+  "reminder_created": false
+}

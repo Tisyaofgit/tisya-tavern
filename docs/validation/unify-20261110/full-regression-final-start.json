@@ -1,0 +1,8 @@
+{
+  "start_utc": "2026-11-10T10:22:26.650711+00:00",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "input_manifest": "final-regression-input-manifest.json"
+}

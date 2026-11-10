@@ -1,0 +1,48 @@
+✔ real configuration owners receive a complete simple form; asking has zero writes and never exposes old world editors (213.054746ms)
+✔ inheritance removes the actual override and restores preference and route inheritance (159.666052ms)
+✔ configuration generation validation is pure and rejects impossible native types before any owner writes (36.997347ms)
+✔ the actual paired assistant preset carries the same readable form and prior discussion through the complete reply scaffold (53.440227ms)
+✔ actual native generation edits invalidate both pending model replies and confirmed drafts (78.424701ms)
+✔ unsupported runtime capabilities reject the full plan before either configuration owner writes (44.208325ms)
+✔ unregistered or retired native configuration paths cannot be inserted into a reviewed form draft (51.21863ms)
+✔ JSON, partial cells, stale source and hidden story instructions keep exact model evidence without writing (103.991141ms)
+✔ external interface and same-revision engine edits invalidate drafts before any save (133.102944ms)
+✔ mixed-save failure returns confirmed and unknown receipts and blocks unsafe whole-draft retry (89.7045ms)
+✔ late competing native edits after the first owner saves do not get overwritten; confirmed partial receipt remains (95.013241ms)
+✔ Matrix owner blocks overlapping persistence and preserves the first confirmed save (0.520955ms)
+✔ Matrix configuration retains its captured chat owner before and during persistence (0.873817ms)
+✔ a replacement from another owner during persistence is preserved and reported instead of rolled back over (0.439121ms)
+✔ confirmed draft is idempotent and cannot silently change its remaining plan after a partial save (99.397197ms)
+✔ confirmed Matrix settings resume the same draft after a native pre-save busy rejection without repeating the first owner (257.678727ms)
+✔ native configuration scope and revision conflicts are typed before any persistence attempt (46.165344ms)
+✔ creation retains the full master reply and delivers native sources to their actual material slots (5.793792ms)
+✔ configuration, source initialization and history use the same registered reply with task-specific form profiles (3.773017ms)
+✔ history uses full reply/simple forms, retains raw drafts in the current request table, and commits exactly once (494.498067ms)
+✔ malformed model reply is preserved across service recreation and can be corrected with the same parser (403.181247ms)
+✔ initialization cannot overwrite a known field and invalid raw response remains reviewable (359.444193ms)
+✔ chat history excludes latest and pending candidates, detects edited sources and never reimports confirmed floors (378.403842ms)
+✔ a source changed during generation retains the failed raw answer without creating history facts (181.890304ms)
+✔ history cannot use a creation reply to spend money or move the live clock (117.727052ms)
+✔ Matrix history panel opens directly and never loads legacy setup/origin/session (53.38889ms)
+✔ Matrix service rejects every legacy ledger initializer before creating books, bindings, or settings (224.277799ms)
+✔ legacy source reads remain available while retired gateway writes cannot create a second ledger (365.509433ms)
+✔ the explicit legacy service still reads and initializes its original ledger without Matrix ownership (413.776711ms)
+✔ main reply uses one shared grouped codec with forward references, typed values and exact per-field evidence (22.705619ms)
+✔ any malformed field or unresolved reference rolls back the complete form while retaining the original source and receipt (6.800018ms)
+✔ existing grouped edits rebase through the original journal and old micro actions still settle normally (25.151155ms)
+✔ actual catalog main forms derive canonical actors and support typed list atoms without another parser (195.296954ms)
+✔ material instructions and main acceptance share exact group labels while hidden record names stay out of the prompt (2.642092ms)
+✔ ordinary and author materials never reveal program history, layouts or writable program tables (177.580114ms)
+✔ old schemas without new flags still block phone snapshots and dynamic execution containers (71.274244ms)
+✔ current phone rows remain complete without character or row budgets, while aliases and other scopes are omitted (56.652609ms)
+✔ creation contract compacts the full actual catalog and excludes program and field payloads (30.205421ms)
+✔ proposal blocks every program table and forbidden field, but accepts a canonical character with forward references (768.657127ms)
+✔ real catalog creator integrates with actual Matrix host, derives actor links and never commits a story turn (1171.393472ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2695.987775

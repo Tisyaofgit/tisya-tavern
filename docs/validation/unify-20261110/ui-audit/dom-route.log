@@ -1,0 +1,101 @@
+✔ failed Matrix slot upload retries retained receipt without repeating database commit (1936.814849ms)
+✔ Matrix slot persisted intent resumes after service recreation without another database or slot write (1784.238489ms)
+✔ world creation leaves the old table setup unmounted and never creates a native identity slot (1467.661917ms)
+✔ core creation passes the fixed source and rejects source drift before any database or persona write (747.148887ms)
+✔ reopening the unified identity page resumes an interrupted slot without an old page or database write (1976.910906ms)
+✔ creation history and exported draft retain invalid typed input until it is corrected and reviewed (1608.301714ms)
+✔ old source repair uses the existing typed identity form, reviewed diff and same entity transaction (2109.06243ms)
+✖ partial creation cannot be discarded and a cold identity view resumes its durable draft once (750.535143ms)
+✔ W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation (117.094291ms)
+✔ production home checks avatar identity and selects the exact persisted chat before closing (365.599381ms)
+✔ homepage USER opens the unified identity page and retains a real native-controls exit (556.511005ms)
+✔ settings and identity headers return directly to current chat without changing its contents (648.635432ms)
+✖ cold-start enables Tisya and opens the complete identity form without a chat or old settings (60.20299ms)
+✖ cold-start automatically binds the engine and saves a previewed role only to the unified database (595.902216ms)
+✔ manual preset navigation protects identity edits and does not reactivate Tisya until plugin enable (721.009219ms)
+✔ cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive (922.970367ms)
+✔ explicit legacy origin targets preview on the unified identity form without writing old or new records (1250.975654ms)
+✔ identity keeps native editing available when the existing database cannot be read and never creates old tables (320.13773ms)
+✔ Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back (1577.290241ms)
+✖ Matrix identity production route cancels a staged persona switch and all mixed changes without writing them (1359.127329ms)
+✔ Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry (1381.693367ms)
+✔ identity production route owns presentation fields in its scroll region and saves both through one footer (2315.496824ms)
+✔ presentation-only edits participate in the identity route leave prompt and common cancel without writing (1714.499185ms)
+✔ the identity page routes character creation to the single assistant without a manual writer (154.570087ms)
+✔ world creation is a source-book task handed to the same assistant and leaves the active identity unchanged (114.085294ms)
+✔ identity settings expose typed existing fields but no second JSON creation editor (105.058963ms)
+✔ one leave prompt cancels identity and presentation edits together without persistence (201.246203ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 23
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28624.784883
+
+✖ failing tests:
+
+test at tests/matrix-identity-recovery-ui.test.js:55:1
+✖ partial creation cannot be discarded and a cold identity view resumes its durable draft once (750.535143ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(recovery?.archiveReceipt?.confirmed)
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-identity-recovery-ui.test.js:58:103)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:716:1
+✖ cold-start enables Tisya and opens the complete identity form without a chat or old settings (60.20299ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(page.querySelector('[data-role-create]'))
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:726:58)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:741:1
+✖ cold-start automatically binds the engine and saves a previewed role only to the unified database (595.902216ms)
+  AssertionError [ERR_ASSERTION]: missing identity field: [data-role-name]
+      at editIdentityField (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:704:70)
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:747:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/shell.test.js:866:1
+✖ Matrix identity production route cancels a staged persona switch and all mixed changes without writing them (1359.127329ms)
+  AssertionError [ERR_ASSERTION]: missing identity field: [data-role-name]
+      at editIdentityField (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:704:70)
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:877:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

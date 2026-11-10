@@ -1,0 +1,31 @@
+✔ old source repair uses the existing typed identity form, reviewed diff and same entity transaction (2245.538802ms)
+✔ partial creation cannot be discarded and a cold identity view resumes its durable draft once (2594.89073ms)
+✔ a source name collision leaves the reviewed creation editable and renaming saves the matching archive once (1948.45644ms)
+✔ a source preflight rejection can be cancelled and cold reopening has no false pending creation (993.983034ms)
+✔ only the bound world name changes its archive title while supporting character names stay independent (1747.137352ms)
+✔ an interrupted intent keeps its creation plan locked and resumes the same archive (2031.860603ms)
+✔ an interrupted archive keeps its creation plan locked and resumes the same archive (2447.487919ms)
+✔ the actual source extraction route resumes a proven legacy person, archives the same UID and reuses its normalized source after reopening (5270.998454ms)
+✔ proven source extraction preserves filled user fields and rejects another existing target before archive writes (1589.049529ms)
+✔ narrative migration returns an extraction handoff and never fills manifest with a whole description (66.791536ms)
+✔ canonical source import is previewed, uses source IDs and keeps evolved chat values on reuse (229.391159ms)
+✔ source changes and unrelated ID collisions cannot overwrite chat state (128.401043ms)
+✔ database success and binding failure is recoverable without duplicate character creation (130.986548ms)
+✔ legacy manifest correction requires the original migration receipt, exact unchanged data and explicit preview (144.497285ms)
+✔ real identity source UI hands arbitrary-book prose to the assistant with exact UID and digest (170.631911ms)
+✔ real identity source preview requires confirmation and repeated adoption preserves the current balance (534.381434ms)
+✔ a reconstructed legacy request identifies its original person after manual edits and never adopts a copied manifest (170.673523ms)
+✔ a new source with the same name stays an extension and receives no authority over an existing legacy person (89.009802ms)
+✔ legacy source routing refuses an unproven source without changing records (90.685105ms)
+✔ legacy source routing refuses an unproven receipt without changing records (95.414442ms)
+✔ legacy source routing refuses an unproven context without changing records (94.776639ms)
+✔ legacy source routing refuses an unproven duplicates without changing records (119.847684ms)
+✔ an updated definition cannot borrow the previous source version receipt to bind an unrelated person (264.442667ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24022.292807

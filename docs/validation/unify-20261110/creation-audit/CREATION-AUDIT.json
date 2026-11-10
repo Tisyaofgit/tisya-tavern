@@ -1,0 +1,169 @@
+{
+  "written_utc": "2026-11-10T10:23:11.924090+00:00",
+  "written_beijing": "2026-11-10T18:23:11.924090+08:00",
+  "window": {
+    "started_utc": "2026-11-10T09:45:57Z",
+    "save_by_utc": "2026-11-10T11:00:57Z",
+    "hard_stop_utc": "2026-11-10T11:15:57Z"
+  },
+  "status": "four assigned files complete; writes stopped; parent owns full gate, build and persistence",
+  "source_root": "/workspace/scratch/c04f833f6bb3/unify-release",
+  "changes": {
+    "engine/identity-ui.mjs": [
+      "Pure archive preflight rejection keeps the reviewed creation editable; archive plans, durable recovery and known or unknown archive receipts keep the same operation locked for recovery.",
+      "Editing the bound character or world name synchronizes the archive title; supporting character names cannot rename a world archive.",
+      "Both prose-source entry routes use previewSourceMigration; a proven legacy source hands off in revise mode, and an already normalized source remains a reviewed source import."
+    ],
+    "engine/identity.mjs": [
+      "Legacy source target identity is proven by reconstructing the actual old writer host request and matching request_sha256, using the selected book/UID, original entry, recorded operation, current context, candidate dossier/entity IDs and original reference ID.",
+      "Matching prose or names never establishes target identity. Missing proof, source drift, changed context and multiple proven targets are blocked with source and current data retained.",
+      "Legacy extraction keeps the original entity, dossier, reference and source UID. Generation and save validation restrict revision to that dossier and preserve filled user fields. Only an exact still-misfiled original manifest is cleared; a corrected live manifest is preserved and is not copied into the author definition.",
+      "Repair receipts retain stable binding and migration proof through the existing transaction. No separate persistence or mapping table was introduced.",
+      "Existing canonical records require matching sourceArchive definition version and digest. Equality of field values is no longer accepted as identity proof; same-version proven reuse retains evolved chat values."
+    ],
+    "tests/source-definition-identity.test.js": [
+      "Fixture receipts now use the real host request shape, including schema:[] and excluding expectedRevision from the request hash.",
+      "Covers actual legacy request target proof, copied prose rejection, same-name new-source extension, changed source/receipt/context/duplicate import rejection, and canonical cross-version wrong-target rejection for equal and differing values."
+    ],
+    "tests/matrix-identity-recovery-ui.test.js": [
+      "The original partial-creation fixture now selects the real source and UID, so it reaches the intended archive-success/database-failure stage.",
+      "Covers preflight name collision editing/cancel/reopen, title synchronization and supporting-name isolation, intent and unknown archive receipt recovery, exact legacy UI handoff and cold recovery, normalized source reuse, protected existing fields and targets, and already corrected manifest preservation."
+    ]
+  },
+  "validation": [
+    {
+      "log": "creation-fixed-b0-first.log",
+      "result": "29/29 passed",
+      "layer": "deterministic service simulation",
+      "scope": "six original creation/source/archive files on frozen b0 production bytes"
+    },
+    {
+      "log": "partial-creation-ui-probe.log",
+      "result": "original failure retained",
+      "layer": "happy-dom integration with actual services",
+      "finding": "name collision occurred before any intent or archive write; pure preflight incorrectly locked the UI"
+    },
+    {
+      "log": "partial-creation-ui-focused.log",
+      "result": "confirmed pure preflight lock and valid source recovery behavior",
+      "layer": "happy-dom integration"
+    },
+    {
+      "log": "source-extraction-mode-probe.log",
+      "result": "original source handoff defect reproduced",
+      "layer": "actual UI route plus deterministic model reply",
+      "finding": "extend rejected both a duplicate new row and an existing revision row; revise reused the original binding"
+    },
+    {
+      "log": "canonical-equal-values-probe.log",
+      "result": "original remaining equal-value identity bypass reproduced",
+      "layer": "actual Matrix host and book gateway with isolated in-memory storage"
+    },
+    {
+      "log": "creation-identity-final-adjacent.log",
+      "result": "87/87 passed; 0 failed; 0 skipped",
+      "layer": "deterministic service and happy-dom integration",
+      "files": [
+        "tests/matrix-identity-recovery-ui.test.js",
+        "tests/source-definition-identity.test.js",
+        "tests/assistant-matrix-identity.test.js",
+        "tests/matrix-identity-save.test.js",
+        "tests/database-identity.test.js",
+        "tests/matrix-creation-recovery.test.js",
+        "tests/matrix-creation-archive.test.js",
+        "tests/matrix-creation-sources.test.js"
+      ]
+    }
+  ],
+  "independent_evidence": [
+    "../consumer-audit/legacy-target-proof-repro.mjs",
+    "../consumer-audit/legacy-target-proof-after.log",
+    "../consumer-audit/canonical-target-receipt-repro.mjs",
+    "../consumer-audit/canonical-target-receipt-after.log"
+  ],
+  "limits": [
+    "No external model provider was called.",
+    "No real browser pixel or Android result is claimed.",
+    "All state used for validation was synthetic and isolated.",
+    "Cross-version canonical sources or copied contexts lacking provable matching identity are safely refused; this is not claimed as automatic migration support.",
+    "Parent will run the full suite and build and persist the final same-point source/evidence snapshot."
+  ],
+  "files": [
+    {
+      "path": "engine/identity.mjs",
+      "bytes": 43069,
+      "sha256": "b7d7e00071403f61d36ceb85ecd4df1876cd1c52340e455f2b031e7bd40bf7db",
+      "frozen_b0_sha256": "761af8e78957ceebaf4c5a48ed53772270d6ba53acfe6a6c19b0c4fda28766ed"
+    },
+    {
+      "path": "engine/identity-ui.mjs",
+      "bytes": 75560,
+      "sha256": "934b65dc8c43dcb0273af7af0cdcbbdc44cd714eb1462add5e346e89aca723cb",
+      "frozen_b0_sha256": "878eef93309661cccecc90671ec877948e8f0fa1459e597bf10c300dfd425d00"
+    },
+    {
+      "path": "tests/source-definition-identity.test.js",
+      "bytes": 17038,
+      "sha256": "07a2fa6755faa425431808b3dbf2d42781418715a4c279379349191655419620",
+      "frozen_b0_sha256": "e59203b651ad41e40d11730808fa23710e41f80f68eee58223bb749f91031c7a"
+    },
+    {
+      "path": "tests/matrix-identity-recovery-ui.test.js",
+      "bytes": 22472,
+      "sha256": "52bdc6a05d3de9d4226c3f78f6ab09ab251aeaea67d23cb519f98c9528e0faf3",
+      "frozen_b0_sha256": "080100febe1a27950bf251f3de06ac55e398b977fcee7358e423b7e2a522382e"
+    }
+  ],
+  "logs": [
+    {
+      "path": "canonical-equal-values-probe.log",
+      "bytes": 602,
+      "sha256": "47851cbb9c59cbb6c935ae0061ba4f21a7635e4aae89549443eebf1ed2c7d1a8"
+    },
+    {
+      "path": "creation-fixed-b0-first.log",
+      "bytes": 3495,
+      "sha256": "437e95790b0c98addfaa59b58efc715114177591c6a56ee8f710ac26c6d54783"
+    },
+    {
+      "path": "creation-identity-final-adjacent.log",
+      "bytes": 9829,
+      "sha256": "28e797adce41c92a7545089d8da834084e362e38401ad6f2ccaad7036b5bb11f"
+    },
+    {
+      "path": "identity-creation-adjacent.log",
+      "bytes": 6209,
+      "sha256": "7ed78bb8cb7db0233f586ef767fb031e9372882b7c0ce96c18df7e6e6d27ae58"
+    },
+    {
+      "path": "identity-recovery-fixed-first.log",
+      "bytes": 794,
+      "sha256": "5a5fb0f841d4a2e9dbf48ec819c2298ee61a13d8e41fd1c53d27af1446d77684"
+    },
+    {
+      "path": "partial-creation-ui-focused.log",
+      "bytes": 14858,
+      "sha256": "1fa073fc1649e719ad08147e0f6017dbd1961f841f9ebb4f870b34719431a350"
+    },
+    {
+      "path": "partial-creation-ui-probe.log",
+      "bytes": 490613,
+      "sha256": "f44d28da4cbff14b1d7ef087bc98d655eeb4e8fb0e75e292666634e62a13143f"
+    },
+    {
+      "path": "source-extraction-mode-probe.log",
+      "bytes": 874,
+      "sha256": "707dc2577422b71b70c50424054425205fcff4671c1160f579a55836b41ed7a9"
+    },
+    {
+      "path": "source-routing-existing-first.log",
+      "bytes": 1710,
+      "sha256": "5d8e586a2fac79c5ea7735c15258b87dce715a5beefd682ea106b5ea6aef6bcf"
+    },
+    {
+      "path": "source-routing-expanded-first.log",
+      "bytes": 2754,
+      "sha256": "eb5e49df1fc7740e5b33bee85d120028684a3e6534b24b6cca2c5e474acb0b36"
+    }
+  ]
+}

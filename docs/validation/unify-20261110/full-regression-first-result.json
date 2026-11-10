@@ -1,0 +1,10 @@
+{
+  "start_utc": "2026-11-10T09:50:43.790080+00:00",
+  "end_utc": "2026-11-10T09:53:08.957993+00:00",
+  "exit_code": 1,
+  "command": [
+    "npm",
+    "test"
+  ],
+  "log": "/workspace/scratch/c04f833f6bb3/resume-evidence/full-regression-first.log"
+}

@@ -1,0 +1,94 @@
+✔ first install and concurrent repeated startup are idempotent with stable identity (5.614382ms)
+✔ plugin update changes only managed untouched fields and keeps user settings and entries (4.202795ms)
+✔ user-only edit survives without conflict; simultaneous upstream edit stays visible until explicit resolution (2.510784ms)
+✔ upstream choice requires the exact current conflict snapshot (2.862725ms)
+✔ deleted managed entry stays missing and explicit keep remembers the deletion (3.033001ms)
+✔ unowned title collision is never adopted and can be preserved explicitly (1.150664ms)
+✔ renamed book resolves by identity and duplicate owners are rejected (1.303424ms)
+✔ deleted whole book is not silently recreated (0.589218ms)
+✔ one failed book preserves successful books and reports partial instead of success (7.055314ms)
+✔ write readback mismatch cannot publish an install receipt (0.798503ms)
+✔ receipt save failure preserves the book and retry recovers without duplicate entries (0.92862ms)
+✔ definitions come from actual installed edited bodies with a precise source wrapper (8.300571ms)
+✔ normal lore excludes renamed entire template and beauty books plus extension definitions (2.635432ms)
+✔ creation reads stable renamed book and excludes legacy phone-only templates without deleting sources (2.033685ms)
+✔ retired factory definitions preserve user text but are no longer executable definitions (15.638791ms)
+✔ ordinary user JSON reference entries are preserved and do not masquerade as executable definitions (5.284575ms)
+✔ all three importable book artifacts exactly match this version of the factories (3.535799ms)
+✔ unsupported installation receipt blocks all writes and preserves existing books (0.235264ms)
+✔ main reply uses one shared grouped codec with forward references, typed values and exact per-field evidence (22.778923ms)
+✔ any malformed field or unresolved reference rolls back the complete form while retaining the original source and receipt (6.915322ms)
+✔ existing grouped edits rebase through the original journal and old micro actions still settle normally (13.178023ms)
+✔ actual catalog main forms derive canonical actors and support typed list atoms without another parser (161.889542ms)
+✔ material instructions and main acceptance share exact group labels while hidden record names stay out of the prompt (3.213022ms)
+✖ all eleven operations retain their authorization, routing and procedure under the selected reply contract (126.559036ms)
+✔ material values survive actual paired message assembly without source macro expansion (16.337334ms)
+✔ large source layers retain every record, Unicode and final sentinel without a summarizing substitute (20.83985ms)
+✔ AI notices retain complete rules and format examples while scripts remain only in the original card (1.075871ms)
+✔ manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence (0.386843ms)
+✔ manual old or undated history cannot overwrite current sourced state, later evidenced time can (16.685829ms)
+✔ actual archive request separates operational blockers and inaccessible corrections from source data (38.310732ms)
+✖ packaged authoring templates derive readable rules from canonical definitions and share the form contract (2.188028ms)
+✔ complete native template book and readable field guide match runtime templates exactly (2.331313ms)
+✔ global template preparation appends missing entries and preserves user edits and activation (2.697805ms)
+✔ duplicate builtin template names fail without replacing the existing book (0.689159ms)
+✔ templates are available only to creation tasks and configured read failure stays visible (1.134981ms)
+✔ creation reads an existing default template book before the identity page has configured it (0.439473ms)
+✔ editing the stable dossier UID preserves metadata and current phone runtime (1.875537ms)
+✔ manual role creation never writes into the template book or adds implicit phone state (0.791964ms)
+✔ empty prefixed role name is rejected before creating an unreadable entry (0.31188ms)
+✔ stale dossier snapshot and write-time race cannot overwrite another page (1.051615ms)
+✔ dossier saved but chat-name sync failed reports the preserved partial save (1.164275ms)
+✔ world selection and exact raw initialization profile are chat scoped and read only (1.640092ms)
+✔ normal identity projection strips initial values while preserving narrative and source (0.919105ms)
+✔ reference scan uses current native conditions, retains source UID and deduplicates without enabling (1.065976ms)
+✔ reference scan guards before mutation and does not mask missing or duplicate source data (0.492122ms)
+✔ refreshing a natively selected reference retains the console opt-in scan order (0.591301ms)
+✔ native exclusion removes the entire template book even when enabled and strips both seed types (0.204569ms)
+✔ legacy shared resource mount edits the original dossier and saves references without native persona UI (60.350851ms)
+✔ legacy shared save retries a confirmed dossier write without duplicating it after chat-name sync failure (17.375359ms)
+✔ legacy resource-only mount can stage and save a different existing role in the current chat (13.22355ms)
+✔ an unreadable selected phone world remains visible and cannot be silently cleared while saving references (18.960478ms)
+✔ failed source-book switch restores the editor source and cross-chat save is blocked (49.22354ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 50
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 586.46475
+
+✖ failing tests:
+
+test at tests/task-presets.test.js:17:1
+✖ all eleven operations retain their authorization, routing and procedure under the selected reply contract (126.559036ms)
+  TypeError [Error]: Cannot read properties of undefined (reading 'content')
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/task-presets.test.js:27:266)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at tests/template-book-identity.test.js:23:1
+✖ packaged authoring templates derive readable rules from canonical definitions and share the form contract (2.188028ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /统一表单/. Input:
+  
+  '世界、角色和生活手机共用最新版表单 schema、实例与提交日志。先读取实际注册表，核对含义、类型、单位、时间层、权限和唯一所有者，再匹配已有规范字段和已登记别名；只有独立生命周期或重复明细才增加必要关联子模板。新定义须先获 schema 接纳，未登记字段不直接填入。\n' +
+    '作者原文保留为版本化来源；模板更新不覆盖已采用定义或当前状态，资料页和手机打开不重新初始化。0、false、允许的空串和空数组保持原义。当前时钟只通过统一世界时钟推进；余额、订单、分期、持有物、帖子和媒体元数据均由同一数据库保存，文件二进制通过媒体资产引用。\n' +
+    '新建世界/人物走填写草稿、差异核对、统一提交与回读。已有角色编辑只修改选择的规范字段，不重放初始化，不清空未改字段。私人信息、原生变量绑定及旧分支来源不得因合并扩大权限。\n' +
+    '旧 <手机世界> / <手机初态> 以及随旧版附带的 phone-world.json / phone-character.json 只作为只读迁移来源；保存原文、UID、摘要和单位映射后生成导入草稿。不能继续据此创建独立手机状态。旧值与当前表单不同必须显示冲突，未确认不选择其中一个。\n' +
+    '保留完整 reply 框架；正文说明方案，cells 按本次实际注册简表填写“【表名／序号】＋行号 字段名：值”。模型只填可读内容和关联名称；程序掌握表、字段、稳定记录编号、主体关联、来源与提交回执。不要输出嵌套存储 JSON。已有记录只提交用户明确改变的字段；派生值、历史与程序回执不填。缺少必需定义时在 extra 写“待补：具体问题”，不猜值。世界、角色与生活手机共用同一规范字段，不另建时钟或钱包账本。模板是填写规则，不是当前事实；作者原文作为来源保留。'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/template-book-identity.test.js:29:211)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '世界、角色和生活手机共用最新版表单 schema、实例与提交日志。先读取实际注册表，核对含义、类型、单位、时间层、权限和唯一所有者，再匹配已有规范字段和已登记别名；只有独立生命周期或重复明细才增加必要关联子模板。新定义须先获 schema 接纳，未登记字段不直接填入。\n作者原文保留为版本化来源；模板更新不覆盖已采用定义或当前状态，资料页和手机打开不重新初始化。0、false、允许的空串和空数组保持原义。当前时钟只通过统一世界时钟推进；余额、订单、分期、持有物、帖子和媒体元数据均由同一数据库保存，文件二进制通过媒体资产引用。\n新建世界/人物走填写草稿、差异核对、统一提交与回读。已有角色编辑只修改选择的规范字段，不重放初始化，不清空未改字段。私人信息、原生变量绑定及旧分支来源不得因合并扩大权限。\n旧 <手机世界> / <手机初态> 以及随旧版附带的 phone-world.json / phone-character.json 只作为只读迁移来源；保存原文、UID、摘要和单位映射后生成导入草稿。不能继续据此创建独立手机状态。旧值与当前表单不同必须显示冲突，未确认不选择其中一个。\n保留完整 reply 框架；正文说明方案，cells 按本次实际注册简表填写“【表名／序号】＋行号 字段名：值”。模型只填可读内容和关联名称；程序掌握表、字段、稳定记录编号、主体关联、来源与提交回执。不要输出嵌套存储 JSON。已有记录只提交用户明确改变的字段；派生值、历史与程序回执不填。缺少必需定义时在 extra 写“待补：具体问题”，不猜值。世界、角色与生活手机共用同一规范字段，不另建时钟或钱包账本。模板是填写规则，不是当前事实；作者原文作为来源保留。',
+    expected: /统一表单/,
+    operator: 'match',
+    diff: 'simple'
+  }

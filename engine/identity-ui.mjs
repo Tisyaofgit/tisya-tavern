@@ -399,7 +399,7 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   section.append(field('主控模式',mode),field('当前人物',picker));
   const binding=storyAvatar(savedConfig).binding;
   if(binding&&!binding.database){const migration=el('section');migration.append(el('p','当前聊天仍引用旧角色原文；可在下方选择同一基点书，由助手提炼成规范表单。'));
-   if(onCreate)migration.append(routeButton('将旧角色交给助手提炼',async()=>{const source=await roles.readSource(binding);await onCreate({kind:'character',mode:'extend',source,destination:{book:source.book,uid:source.uid},goal:'按标准字段整理这份人物原文；保留原句、已知来源和未提供状态。'});}));section.append(migration);}
+   if(onCreate)migration.append(routeButton('将旧角色交给助手提炼',()=>handoffSource(binding)));section.append(migration);}
   const row=listing.entries.find(row=>row.dossierId===draft.uid);
   if(row){
    const edit=el('section');edit.dataset.roleEdit='';edit.append(el('h3','编辑角色档案'));section.append(edit);dossierBefore??=clone(row);const extras=el('details');extras.append(el('summary','更多档案字段'));const parsers=[];
@@ -439,9 +439,14 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
    const raw=el('details');raw.append(el('summary','查看作者原文'),el('pre',selected.content));box.append(raw);
    if(draft.uid&&typeof roles.previewSourceRepair==='function')box.append(button('按原文整理旧档案',async()=>{check(!recordDraft&&!generationGoal&&!generationDraft&&!createDirty(),'请先保存或取消当前档案草稿');const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});guard();sourceRepair={dossierId:draft.uid,source:clone(snapshot)};await draw();changed();}));
    if(selected.definition)box.append(button('预览使用此人物',async()=>{check(!recordDraft&&!Object.keys(dossierFields).length,'请先保存或取消当前人物修改');const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});recordDraft=await roles.previewSourceImport(snapshot,{bindOnCommit:true});recordConfirmed=false;await draw();changed();}));
-   else if(onCreate)box.append(routeButton('交给缇斯亚助手提炼',async()=>{const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});await onCreate({kind:'character',mode:'extend',source:snapshot,destination:{book:sourceBook,uid:selected.uid},goal:'将选中的人物原文按既有标准字段整理；保留原文，不补造未提供的信息。'});}));
+   else if(onCreate)box.append(routeButton('交给缇斯亚助手提炼',()=>handoffSource({book:sourceBook,uid:selected.uid})));
   }
   if(recordDraft?.kind==='source-import'||recordDraft?.kind==='source-migration')showRecordPreview(box);
+ }
+ async function handoffSource(reference){
+  check(typeof roles.previewSourceMigration==='function','来源提炼接口尚未接入');const handoff=await roles.previewSourceMigration(reference);guard();
+  if(handoff.requiresExtraction)await onCreate({kind:'character',mode:handoff.mode,source:handoff.source,destination:handoff.destination,goal:handoff.goal});
+  else{recordDraft=handoff;recordConfirmed=false;await draw();changed();}
  }
  async function drawCreation(){
   const generated=el('section'),kind=el('select'),goal=el('textarea'),generationPreview=el('div');

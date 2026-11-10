@@ -1,0 +1,76 @@
+{
+  "utc": "2026-11-10T10:02:05.009Z",
+  "scope": "Production pairedPreset -> taskMessages -> slotText -> compactMaterial in isolated local probe; no network/model/host writes",
+  "files": {
+    "tables/paired-preset.js": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+    "tables/slots.js": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0"
+  },
+  "cases": [
+    {
+      "name": "absent",
+      "passed": true,
+      "contractor": {
+        "name": "NATIVE_CONTRACTOR"
+      },
+      "policy": "NATIVE_POLICY",
+      "worldTimePresent": false,
+      "source": {
+        "text": "原文 {{literal}}",
+        "empty": null,
+        "enabled": false
+      }
+    },
+    {
+      "name": "explicit-null",
+      "passed": true,
+      "contractor": null,
+      "policy": null,
+      "worldTimePresent": true,
+      "worldTime": null,
+      "source": {
+        "text": "原文 {{literal}}",
+        "empty": null,
+        "enabled": false
+      }
+    },
+    {
+      "name": "explicit-false",
+      "passed": true,
+      "contractor": false,
+      "policy": false,
+      "worldTimePresent": true,
+      "worldTime": false,
+      "source": {
+        "text": "原文 {{literal}}",
+        "empty": null,
+        "enabled": false
+      }
+    },
+    {
+      "name": "explicit-zero",
+      "passed": true,
+      "contractor": 0,
+      "policy": 0,
+      "worldTimePresent": true,
+      "worldTime": 0,
+      "source": {
+        "text": "原文 {{literal}}",
+        "empty": null,
+        "enabled": false
+      }
+    },
+    {
+      "name": "explicit-empty",
+      "passed": true,
+      "contractor": "",
+      "policy": "",
+      "worldTimePresent": true,
+      "worldTime": "",
+      "source": {
+        "text": "原文 {{literal}}",
+        "empty": null,
+        "enabled": false
+      }
+    }
+  ]
+}

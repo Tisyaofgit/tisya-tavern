@@ -1,0 +1,37 @@
+✔ arbitrary source books expose exact entries and revisions without requiring old origin/session data (3.138169ms)
+✔ character archive preserves its source and unrelated entries; retries use one definition and original IDs (55.551684ms)
+✔ new world creates a distinct worldbook with disabled initialization and readable material entries (4.998965ms)
+✔ schema, required fields, unresolved reusable references, collisions and stale snapshots fail before write (41.77479ms)
+✔ lost host acknowledgement exposes a recoverable confirmed receipt and retry does not duplicate (20.750173ms)
+✔ worldbook receipt bridges a database failure and same-operation retries without mistaking its own source write for drift (1971.507929ms)
+✔ after an archive receipt, unrelated book edits and changed candidate data are still blocked (2222.459655ms)
+✔ stale database revision is rejected before a reusable source book is written (855.678557ms)
+✔ a host acknowledgement lost after the source write preserves the confirmed plan and can finish the same operation (1638.27014ms)
+✔ confirmed creation intent survives a cold reopen and resumes one source archive and one business commit (2225.680262ms)
+✔ intent persistence failure cannot write a source book and the same draft retries after recovery (1615.200871ms)
+✔ lost intent acknowledgement resumes from confirmed stored input without repeating the intent (1713.417173ms)
+✔ lost archive acknowledgement is recovered read-only before the original database submission resumes (1787.419202ms)
+✔ pending creation cannot be replaced or silently followed by a second new draft (1306.236587ms)
+✔ pending creation is scoped to its original chat and preserves concurrent database changes (1823.523764ms)
+✔ all current writable business tables use the shared sheet catalog; storage identity and owner coordinates are private (48.715643ms)
+✔ complete character fields and canonical child rows compile into the same database without storing prose in manifest (73.470132ms)
+✔ malformed labels, unauthorized groups, missing references and live operations fail before canonical writes (44.079696ms)
+✔ existing names must select the explicit revision row; partial dossier edits preserve its identity and untouched fields (59.171042ms)
+✔ typed leaves preserve zero, false, unknown and explicit collection shape without a nested model JSON envelope (2.933041ms)
+✔ shared workbook tickets handle independent records and reject stale/manual changes atomically (0.599574ms)
+✔ creation retains the full master reply and delivers native sources to their actual material slots (3.953117ms)
+✔ configuration, source initialization and history use the same registered reply with task-specific form profiles (3.555098ms)
+✔ canonical creation saves typed shared records and preserves zero/false; exact retry is idempotent (14.721838ms)
+✔ stale draft cannot overwrite a concurrently edited form (3.434346ms)
+✔ saved internal JSON proposal remains resumable, but a new model reply must use the shared reply and sheets (1.626431ms)
+✔ generation changes no records on malformed response and retains raw evidence (0.647436ms)
+✔ rejects legacy state payload, unknown fields, program receipts and duplicate targets (0.821037ms)
+✔ extend does not reinitialize an existing person and unknown body is not guessed (0.682789ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18432.417689

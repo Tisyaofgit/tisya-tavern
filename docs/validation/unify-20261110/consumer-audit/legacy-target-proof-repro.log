@@ -1,0 +1,54 @@
+{
+  "accepted": true,
+  "actualLegacyDossier": "519e4662-e382-4111-bdba-92d8e8d20360",
+  "uniqueMatchingDossier": "88c32fd0-81db-4287-a147-0c98b4755f02",
+  "proposedTarget": "88c32fd0-81db-4287-a147-0c98b4755f02",
+  "proposedManifest": null,
+  "oldWriterRequestHashVerified": true,
+  "legacyReceiptHash": "e39a7fffa30eef786010980a460a00903585a19d39eaf9479eb2ac963418a7ea",
+  "legacyReceiptSource": {
+    "kind": "legacy-character-import",
+    "book": "旧人物来源",
+    "uid": 3,
+    "entryDigest": "a32aec760ce115382f1dc0687a137fba9a67b0e95331317dd253bbe075599cd9",
+    "rawEntry": {
+      "uid": 3,
+      "name": "【角色】阿青",
+      "content": "阿青是河口旅人，习惯先听人说话。",
+      "enabled": true
+    },
+    "phoneInitializationPreserved": true
+  },
+  "oldWriterChanges": [
+    {
+      "tableId": "T_CHAR_DOSSIER",
+      "recordId": "519e4662-e382-4111-bdba-92d8e8d20360",
+      "values": {
+        "name": "阿青",
+        "manifest": "阿青是河口旅人，习惯先听人说话。"
+      }
+    },
+    {
+      "tableId": "T_SYS_ENTITIES",
+      "recordId": "519e4662-e382-4111-bdba-92d8e8d20360",
+      "values": {
+        "kind": "character",
+        "origin_record_ref": "aaca98f3-ebc6-468e-846a-faa0ee35796e"
+      }
+    },
+    {
+      "tableId": "M_FIELD_REFERENCES",
+      "recordId": "aaca98f3-ebc6-468e-846a-faa0ee35796e",
+      "values": {
+        "owner_table": "T_SYS_ENTITIES",
+        "owner_row_uuid": "519e4662-e382-4111-bdba-92d8e8d20360",
+        "owner_field": "origin_record_ref",
+        "target_table": "T_CHAR_DOSSIER",
+        "target_row_uuid": "519e4662-e382-4111-bdba-92d8e8d20360",
+        "reference_kind": "record",
+        "resolution_status": "resolved"
+      }
+    }
+  ],
+  "wrongTargetReconstructedHash": "e006100c590595239d593395c7b3b48c5671dae55bdcddda30fd2a78dbd12dbe"
+}

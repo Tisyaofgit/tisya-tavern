@@ -1,0 +1,14 @@
+{
+  "startUTC": "2026-11-10T09:58:27.343766+00:00",
+  "endUTC": "2026-11-10T09:58:33.931691+00:00",
+  "exitCode": 0,
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "--test-name-pattern=cold-start without a chat|cold-start source selection|cancels a staged persona",
+    "tests/shell.test.js"
+  ],
+  "testSHA256": "9ef7db6a9d221597eeb7df5846832063e7b859f1ee1bf507c49e97615a8eda11"
+}

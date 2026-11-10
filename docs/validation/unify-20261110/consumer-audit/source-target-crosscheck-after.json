@@ -1,0 +1,103 @@
+{
+  "utc": "2026-11-10T10:19:40.457659+00:00",
+  "beijing": "2026-11-10T18:19:40.457659+08:00",
+  "kind": "independent source-target checks after creation agent fix",
+  "runs_per_case": 1,
+  "original_failure_scripts_and_logs_unchanged": true,
+  "legacy_result": {
+    "rejected": true,
+    "message": "不能证明当前值仍是所选人物的旧迁移整段原文，未改动用户字段",
+    "oldWriterRequestHashVerified": true,
+    "fixedGitWriter": {
+      "repository": "Tisyaofgit/tisya-tavern",
+      "commit": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+      "path": "engine/identity.mjs",
+      "requestWriterEquivalenceVerified": true,
+      "wholeFileEqual": false
+    },
+    "actualLegacyDossier": "2401d010-a6c9-411a-a33f-a0a4720ec573",
+    "unrelatedUniqueTextDossier": "88416477-c7ea-446c-9625-c504f02d7ba1",
+    "databaseUnchanged": true,
+    "configurationUnchanged": true,
+    "sourceBooksUnchanged": true
+  },
+  "canonical_result": {
+    "rejected": true,
+    "message": "记录 ID 已被另一份内容占用，未覆盖当前聊天：T_CHAR_DOSSIER#4b1e529c-0e9f-42b1-a817-cb8fda97a000",
+    "sourceDefinitionId": "4cbd443d-cf66-5c0c-bdef-f66c2c80bc92",
+    "priorVersion": 1,
+    "revisedVersion": 2,
+    "priorBinding": {
+      "entityId": "source-person",
+      "dossierId": "source-person"
+    },
+    "attemptedBinding": {
+      "database": true,
+      "entityId": "4b1e529c-0e9f-42b1-a817-cb8fda97a000",
+      "dossierId": "4b1e529c-0e9f-42b1-a817-cb8fda97a000"
+    },
+    "databaseUnchanged": true,
+    "configurationUnchanged": true,
+    "sourceBooksUnchanged": true
+  },
+  "source_hashes_at_verification": [
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/unify-release/engine/identity.mjs",
+      "sha256": "3831984daf81b4723cfa7ca2074aaa315fac3b66ba09e4c8e98d3efc2addb4bb",
+      "bytes": 43207
+    },
+    {
+      "path": "/workspace/scratch/c04f833f6bb3/unify-release/engine/identity-ui.mjs",
+      "sha256": "934b65dc8c43dcb0273af7af0cdcbbdc44cd714eb1462add5e346e89aca723cb",
+      "bytes": 75560
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "legacy-target-proof-after.mjs",
+      "sha256": "242e682c3257433de4573ba7b941cedc6303adf5d0e169ac8b0a6f68e9b8d7ca",
+      "bytes": 5260
+    },
+    {
+      "path": "legacy-target-proof-after.log",
+      "sha256": "fc0c30d90d948f9af2c780a6e0743eaa7d881a2ac0d26451448b3dc2860af7dc",
+      "bytes": 638
+    },
+    {
+      "path": "canonical-target-receipt-after.mjs",
+      "sha256": "ea3e998d30ca6f7506df75cf949486cb5d08166c3513452b2d3be5fab583d7e0",
+      "bytes": 5020
+    },
+    {
+      "path": "canonical-target-receipt-after.log",
+      "sha256": "a97056a60a1ddfc126f8af3aee8c424deeb430443daeb762a84e73c0f65a3c9a",
+      "bytes": 612
+    },
+    {
+      "path": "legacy-writer-request-provenance.json",
+      "sha256": "33db21677869b01f74858a50923291101fb5e1e57f6e0cbdbac4a84715054f41",
+      "bytes": 1211
+    },
+    {
+      "path": "legacy-writer-fixed-provenance.json",
+      "sha256": "4de90f929f7d60c64f4e7766db1ed08b0b852752a93ade0c24524b6198f3930d",
+      "bytes": 560
+    },
+    {
+      "path": "identity-main-ed4302bd.mjs",
+      "sha256": "f0af86bfadecbb86568f8a5308a97250df0ec4fe9f6d5319a8fa56ed6634f228",
+      "bytes": 30699
+    },
+    {
+      "path": "source-target-crosscheck-before.json",
+      "sha256": "d2f75c6208f488f8bf8669c77ed90b5c3d9a72747b8d40561db907a3826e5fad",
+      "bytes": 2736
+    }
+  ],
+  "scope_limit": "Exactly the two demonstrated provenance failures are now refused without mutations. No assertion of general cross-version source merge completeness.",
+  "external_model_calls": false,
+  "user_data_access": false,
+  "real_browser_or_android_test": false,
+  "product_edits_by_crosscheck": false,
+  "handoff": "Root owns final whole-source checkpoint, unique TODO/blueprint update and persistent receipt. No further product tests scheduled by this agent."
+}

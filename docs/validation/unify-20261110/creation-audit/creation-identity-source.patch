@@ -1,0 +1,385 @@
+--- b0/engine/identity.mjs
++++ candidate/engine/identity.mjs
+@@ -199,28 +199,63 @@
+   check(key===scope(),'聊天已切换，未读取角色来源');check(!result.definition||result.definition.kind==='character','所选初始化条目是世界定义，请选择人物条目');return result;
+  }
+  async function previewSourceMigration(binding=config.read().story.userBinding){
+-  assertIdle();check(binding&&!binding.database,'请选择待迁移的旧书籍档案');const author=await readAuthorSource(binding);if(author.definition)return previewSourceImport(author);
+-  return {kind:'source-extraction',requiresExtraction:true,source:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
++  assertIdle();check(binding&&!binding.database,'请选择待迁移的旧书籍档案');const author=await readAuthorSource(binding);if(binding.digest)check(binding.digest===author.digest,'来源已变化，请重新读取后提炼');if(author.definition)return previewSourceImport(author);
++  const target=legacySourceTarget(await read(),author);
++  return {kind:'source-extraction',requiresExtraction:true,mode:target?'revise':'extend',source:target?{...author,revisionTarget:target}:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
+  }
+  const archiveReference=source=>({book:source.book,uid:source.uid,definitionId:source.definition.id,version:source.definition.revision,digest:source.digest,definitionDigest:digest(source.definition),operationId:source.definition.operationId??null,kind:source.definition.kind});
+- function isInstantiatedFrom(snapshot,row,source){const ref=archiveReference(source),same=link=>link?.book===ref.book&&String(link.uid)===String(ref.uid)&&link.definitionId===ref.definitionId;if(same(row.metadata?.sourceDefinition))return true;return Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>same(receipt.result?.source?.sourceArchive));}
++ function isInstantiatedFrom(snapshot,row,source){const ref=archiveReference(source),same=link=>link?.book===ref.book&&String(link.uid)===String(ref.uid)&&link.definitionId===ref.definitionId&&link.version===ref.version&&link.definitionDigest===ref.definitionDigest;if(same(row.metadata?.sourceDefinition))return true;return Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>same(receipt.result?.source?.sourceArchive));}
++ const sourceNarrative=entry=>stripPhoneInitialization(stripPhoneInitialization(entry.content,'手机世界'),'手机初态');
++ function legacySourceTarget(snapshot,source){
++  const entry=source.definition?.source?.entry??source.entry,receipts=Object.entries(snapshot.state.runtime?.receipts??{}).filter(([,receipt])=>{const prior=receipt.result?.source;return prior?.kind==='legacy-character-import'&&prior.book===source.book&&String(prior.uid)===String(source.uid);});
++  if(!receipts.length)return null;
++  const targets=new Map();
++  for(const [operationId,receipt]of receipts){
++   const prior=receipt.result.source,raw=prior.rawEntry;if(receipt.operation_id!==operationId||typeof receipt.request_sha256!=='string'||typeof raw?.content!=='string'||raw.content!==entry?.content)continue;
++   if(prior.entryDigest&&prior.entryDigest!==digest({book:source.book,entry:raw}))continue;
++   const title=roleName(raw),content=sourceNarrative(raw);if(!/^【角色】.+/u.test(title))continue;
++   for(const row of databaseCharacters(snapshot)){
++    // The old writer used one random ID for both the dossier and entity.
++    // Reconstruct its exact host request; equal text never proves identity.
++    if(!row.entityId||row.entityId!==row.dossierId)continue;
++    const originId=snapshot.state.tables.T_SYS_ENTITIES[row.entityId].values.origin_record_ref;if(typeof originId!=='string')continue;
++    const changes=[{tableId:'T_CHAR_DOSSIER',recordId:row.dossierId,values:{name:title.slice(4),...(content?{manifest:content}:{})}},{tableId:'T_SYS_ENTITIES',recordId:row.entityId,values:{kind:'character',origin_record_ref:originId}},{tableId:'M_FIELD_REFERENCES',recordId:originId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:row.entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.dossierId,reference_kind:'record',resolution_status:'resolved'}}];
++    if(digest({operationId,contextKey:snapshot.contextKey,changes,schema:[],source:prior})!==receipt.request_sha256)continue;
++    targets.set(row.dossierId,{kind:'legacy-character-import',contextKey:snapshot.contextKey,entityId:row.entityId,dossierId:row.dossierId,originRefId:originId,operationId,requestDigest:receipt.request_sha256,sourceDigest:source.digest});
++   }
++  }
++  check(targets.size===1,targets.size?'此来源对应多个已迁移人物，请在已有档案中明确选择待修订对象':'旧迁移回执无法核实目标人物或来源已变化；原数据保留，请在已有档案中明确核对');
++  return [...targets.values()][0];
++ }
++ function validateSourceExtraction(draft,snapshot,{normalize=false,checkValues=true}={}){
++  const selected=draft.source?.revisionTarget;if(!selected)return;
++  const target=legacySourceTarget(snapshot,draft.source);check(target&&sameValue(selected,target),'来源对应的旧人物已变化，请重新核对');
++  const binding=draft.proposal.matrix.binding;check(draft.kind==='character'&&draft.mode==='revise'&&binding?.entityId===target.entityId&&binding?.dossierId===target.dossierId,'来源提炼只能修订已核实的原人物，不能改用另一档案');
++  if(normalize)binding.originRefId=target.originRefId;else check(binding.originRefId===target.originRefId,'来源提炼必须保留原人物的原点引用');
++  const completed=snapshot.state.runtime?.receipts?.[draft.operationId]?.result?.source;if(completed?.kind==='creation'&&sameValue(completed.explicitSource,draft.source)&&sameValue(completed.binding,binding))return;
++  const changes=draft.proposal.matrix.changes,row=snapshot.state.tables.T_CHAR_DOSSIER[target.dossierId],dossier=changes.find(change=>change.tableId==='T_CHAR_DOSSIER'&&change.recordId===target.dossierId);check(dossier,'来源提炼缺少原人物档案');
++  for(const change of changes)check(!snapshot.state.tables[change.tableId]?.[change.recordId]||change===dossier,'来源提炼不能覆盖其他已有记录：'+change.tableId+'#'+change.recordId);
++  const original=sourceNarrative(draft.source.entry),misfiled=row.states.manifest==='known'&&row.values.manifest===original;
++  if(misfiled){check(dossier.values.manifest!==original,'提炼结果仍把整段原文放在本领表现字段');if(normalize&&!Object.hasOwn(dossier.values,'manifest'))dossier.values.manifest=null;}
++  if(checkValues)for(const [field,value]of Object.entries(dossier.values))if(!(field==='manifest'&&misfiled)&&row.values[field]!==undefined&&row.values[field]!==null)check(sameValue(row.values[field],value),'字段已有用户内容，不能在迁移提炼中覆盖：'+field);
++ }
+  async function previewSourceImport(input,{bindOnCommit=true}={}){
+   assertIdle();check(input?.book&&input.uid!==undefined&&typeof input.digest==='string','缺少来源快照，请重新选择');const source=await readAuthorSource(input);check(source.digest===input.digest,'来源已变化，请重新读取后提炼');const snapshot=await read();
+   check(source.definition,'叙事条目须先交给助手提炼并归档，不能作为已完成的标准人物直接迁移');
+   const candidate=structuredClone({name:source.definition.name,matrix:source.definition.matrix});validateCreationProposal(candidate,snapshot,{kind:'character',mode:'revise'});
+   const identity=candidate.matrix.binding;check(identity?.entityId&&identity?.dossierId,'人物定义缺少规范实体与档案绑定');
+   const sourceArchive=archiveReference(source),changes=[],diff=[];
+-  for(const change of candidate.matrix.changes){const existing=snapshot.state.tables[change.tableId]?.[change.recordId],fromSource=existing&&isInstantiatedFrom(snapshot,existing,source);if(existing){check(fromSource||Object.entries(change.values).every(([key,value])=>sameValue(existing.values[key],decode(value,snapshot.state.schema[change.tableId].fields.find(f=>f.key===key))[0])),'记录 ID 已被另一份内容占用，未覆盖当前聊天：'+change.tableId+'#'+change.recordId);diff.push({field:change.tableId+'#'+change.recordId,label:'沿用已实例化记录，当前进度保持',before:structuredClone(existing.values),after:structuredClone(existing.values)});continue;}
++  for(const change of candidate.matrix.changes){const existing=snapshot.state.tables[change.tableId]?.[change.recordId],fromSource=existing&&isInstantiatedFrom(snapshot,existing,source);if(existing){check(fromSource,'记录 ID 已被另一份内容占用，或缺少同版来源凭证，未覆盖当前聊天：'+change.tableId+'#'+change.recordId);diff.push({field:change.tableId+'#'+change.recordId,label:'沿用已实例化记录，当前进度保持',before:structuredClone(existing.values),after:structuredClone(existing.values)});continue;}
+    changes.push({...structuredClone(change),metadata:{sourceDefinition:sourceArchive}});for(const [field,after]of Object.entries(change.values))diff.push({field:change.tableId+'#'+change.recordId+'.'+field,label:snapshot.state.schema[change.tableId].fields.find(f=>f.key===field)?.label??field,before:undefined,after});
+   }
+   const draft={id:'identity:'+crypto.randomUUID(),kind:'source-import',scope:scope(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,configurationRevision:config.read().revision,changes,diff,binding:{database:true,entityId:identity.entityId,dossierId:identity.dossierId,source:sourceArchive},source:{kind:'definition-instance',sourceArchive,rawEntry:source.entry,sourceDigest:source.digest},importSource:{book:source.book,uid:source.uid,digest:source.digest},bindOnCommit};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
+  }
+  async function previewSourceRepair({dossierId,source:input,values={}}){
+   assertIdle();const source=await readAuthorSource(input);check(source.digest===input.digest,'来源已变化，请重新核对旧迁移');const snapshot=await read(),row=databaseCharacters(snapshot).find(r=>r.dossierId===dossierId);check(row?.entityId,'待修复人物不存在');
+-  const authorEntry=source.definition?.source?.entry??source.entry,original=stripPhoneInitialization(stripPhoneInitialization(authorEntry.content,'手机世界'),'手机初态'),proof=Object.values(snapshot.state.runtime?.receipts??{}).map(r=>r.result?.source).find(s=>s?.kind==='legacy-character-import'&&s.book===source.book&&String(s.uid)===String(source.uid)&&s.rawEntry?.content===authorEntry.content);
+-  check(proof&&row.states.manifest==='known'&&row.values.manifest===original,'不能证明当前值仍是旧迁移整段原文，未改动用户字段');check(Object.keys(values).length&&Object.keys(values).some(key=>key!=='manifest'),'请先提炼标准字段，再预览旧字段纠正');check(values.manifest!==original,'提炼结果仍把整段原文放在本领表现字段');
++  const authorEntry=source.definition?.source?.entry??source.entry,original=sourceNarrative(authorEntry),target=legacySourceTarget(snapshot,source),proof=target&&snapshot.state.runtime.receipts[target.operationId].result.source;
++  check(target?.dossierId===dossierId&&target.entityId===row.entityId&&row.states.manifest==='known'&&row.values.manifest===original,'不能证明当前值仍是所选人物的旧迁移整段原文，未改动用户字段');check(Object.keys(values).length&&Object.keys(values).some(key=>key!=='manifest'),'请先提炼标准字段，再预览旧字段纠正');check(values.manifest!==original,'提炼结果仍把整段原文放在本领表现字段');
+   for(const [field,value]of Object.entries(values))if(field!=='manifest'&&row.values[field]!==undefined&&row.values[field]!==null)check(sameValue(row.values[field],value),'字段已有用户内容，不能在迁移修复中覆盖：'+field);
+-  const draft=await previewEdit({dossierId,values:{...structuredClone(values),manifest:values.manifest??null},before:row});draft.kind='source-repair';draft.changes[0].states={manifest:values.manifest==null?'unset':'known'};draft.source={kind:'legacy-character-repair',book:source.book,uid:source.uid,entryDigest:source.digest,rawEntry:authorEntry,definitionEntry:source.definition?source.entry:null,previousValues:structuredClone(row.values),previousStates:structuredClone(row.states),priorMigration:structuredClone(proof)};draft.importSource={book:source.book,uid:source.uid,digest:source.digest};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
++  const draft=await previewEdit({dossierId,values:{...structuredClone(values),manifest:values.manifest??null},before:row});draft.kind='source-repair';draft.changes[0].states={manifest:values.manifest==null?'unset':'known'};draft.source={kind:'legacy-character-repair',book:source.book,uid:source.uid,entryDigest:source.digest,binding:{entityId:row.entityId,dossierId},migrationProof:structuredClone(target),rawEntry:authorEntry,definitionEntry:source.definition?source.entry:null,previousValues:structuredClone(row.values),previousStates:structuredClone(row.states),priorMigration:structuredClone(proof)};draft.importSource={book:source.book,uid:source.uid,digest:source.digest};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
+  }
+  async function validateEdit(input){
+   assertIdle();const draft=drafts.get(input?.id);check(draft&&sameValue(input,draft),'角色草稿已改变，请重新预览');check(draft.scope===scope(),'聊天已切换，未提交旧角色草稿');
+@@ -254,8 +289,14 @@
+  }
+  async function phoneProfile(){const value=config.read(),binding=storyAvatar(value).binding,world=value.story.phoneWorld;if(!binding?.database||!world?.database)return null;const snapshot=await read();projectDatabaseIdentity(snapshot,binding);check(snapshot.state.tables?.T_STATIC_WORLDS?.[world.worldId],'选中的世界表单记录已不存在');return {database:true,entityId:binding.entityId,dossierId:binding.dossierId,worldId:world.worldId,contextKey:snapshot.contextKey,revision:snapshot.revision};}
+  async function ensureTemplates(){check(builtins,'内置书安装服务尚未接入');return builtins.update();}
+- async function createDraft({goal,kind='character',mode='extend',source=null,destination}){check(creator?.draft,'统一创作服务尚未接入');return creator.draft(goal,{kind,mode,source,destination});}
+- async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');return creator.validate(draft);}
+- async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');return creator.save(draft);}
++ async function createDraft({goal,kind='character',mode='extend',source=null,destination}){
++  check(creator?.draft,'统一创作服务尚未接入');
++  if(kind==='character'&&source?.book&&source.uid!==undefined){const handoff=await previewSourceMigration(source);check(handoff.requiresExtraction,'此来源已是规范人物，请先预览使用已有档案');if(source.revisionTarget)check(sameValue(source.revisionTarget,handoff.source.revisionTarget),'来源对应的旧人物已变化，请重新核对');source=handoff.source;if(source.revisionTarget)mode='revise';else check(mode==='extend','此来源尚未证明对应既有档案，不能直接修订当前人物');}
++  const draft=await creator.draft(goal,{kind,mode,source,destination});
++  if(source?.revisionTarget)try{const snapshot=await read();check(snapshot.contextKey===draft.contextKey&&snapshot.revision===draft.expectedRevision,'生成期间表单已变化，请重新核对');validateSourceExtraction(draft,snapshot,{normalize:true,checkValues:false});}catch(error){error.rawResponse=draft.rawResponse;error.draft=structuredClone(draft);throw error;}
++  return draft;
++ }
++ async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');const checked=await creator.validate(draft);validateSourceExtraction(draft,checked.snapshot);return checked;}
++ async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');if(draft.source?.revisionTarget)await validateCreation(draft);return creator.save(draft);}
+  return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewSourceRepair,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceMigration,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,createDraft,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
+ }
+--- b0/engine/identity-ui.mjs
++++ candidate/engine/identity-ui.mjs
+@@ -355,7 +355,24 @@
+   }
+   if(generationDraft){
+    const request=generationSavedDraft??{...generationDraft,destination:clone(creationDestination),proposal:parseGeneration(),createPersona:generationCreatePersona};
+-   if(!generationReceipt){let result;try{result=await roles.saveCreation(request,{destination:request.destination});}catch(error){if(error.draft||error.archiveReceipt){const retained=error.draft?clone(error.draft):{...clone(request),archiveReceipt:clone(error.archiveReceipt)};generationSavedDraft=clone(retained);generationDraft=clone(retained);generationText=JSON.stringify(retained.proposal,null,2);if(retained.archiveReceipt?.confirmed)recordReceipt('基点书归档（聊天接入待继续）');}throw error;}check(result?.state&&result.contextKey===request.contextKey&&Number.isInteger(result.revision),'创作保存未返回当前聊天的确认表单');generationReceipt=result;generationSavedDraft=clone(request);recordReceipt('基点书角色或世界档案与当前表单');}
++   if(!generationReceipt){
++    let result;
++    try{result=await roles.saveCreation(request,{destination:request.destination});}
++    catch(error){
++     if(error.draft||error.archivePlan||error.archiveReceipt){
++      const retained=error.draft?clone(error.draft):clone(request);
++      if(error.archivePlan)retained.archivePlan=clone(error.archivePlan);
++      if(error.archiveReceipt)retained.archiveReceipt=clone(error.archiveReceipt);
++      // A rejected source preflight retains editable input. Once an archive
++      // plan or durable intent exists, even an unknown result must resume it.
++      if(retained.archivePlan||retained.recovery||retained.archiveReceipt)generationSavedDraft=clone(retained);
++      generationDraft=clone(retained);generationText=JSON.stringify(retained.proposal,null,2);
++      if(retained.archiveReceipt?.confirmed)recordReceipt('基点书归档（聊天接入待继续）');
++     }
++     throw error;
++    }
++    check(result?.state&&result.contextKey===request.contextKey&&Number.isInteger(result.revision),'创作保存未返回当前聊天的确认表单');generationReceipt=result;generationSavedDraft=clone(request);recordReceipt('基点书角色或世界档案与当前表单');
++   }
+    const result=generationReceipt;
+    const receipt={confirmed:true,contextKey:result.contextKey,beforeRevision:request.expectedRevision,revision:result.revision,records:request.proposal.matrix.changes.map(change=>({tableId:change.tableId,recordId:change.recordId}))};
+    await companion?.acceptDatabaseReceipt?.(receipt);
+@@ -382,7 +399,7 @@
+   section.append(field('主控模式',mode),field('当前人物',picker));
+   const binding=storyAvatar(savedConfig).binding;
+   if(binding&&!binding.database){const migration=el('section');migration.append(el('p','当前聊天仍引用旧角色原文；可在下方选择同一基点书，由助手提炼成规范表单。'));
+-   if(onCreate)migration.append(routeButton('将旧角色交给助手提炼',async()=>{const source=await roles.readSource(binding);await onCreate({kind:'character',mode:'extend',source,destination:{book:source.book,uid:source.uid},goal:'按标准字段整理这份人物原文；保留原句、已知来源和未提供状态。'});}));section.append(migration);}
++   if(onCreate)migration.append(routeButton('将旧角色交给助手提炼',()=>handoffSource(binding)));section.append(migration);}
+   const row=listing.entries.find(row=>row.dossierId===draft.uid);
+   if(row){
+    const edit=el('section');edit.dataset.roleEdit='';edit.append(el('h3','编辑角色档案'));section.append(edit);dossierBefore??=clone(row);const extras=el('details');extras.append(el('summary','更多档案字段'));const parsers=[];
+@@ -422,9 +439,14 @@
+    const raw=el('details');raw.append(el('summary','查看作者原文'),el('pre',selected.content));box.append(raw);
+    if(draft.uid&&typeof roles.previewSourceRepair==='function')box.append(button('按原文整理旧档案',async()=>{check(!recordDraft&&!generationGoal&&!generationDraft&&!createDirty(),'请先保存或取消当前档案草稿');const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});guard();sourceRepair={dossierId:draft.uid,source:clone(snapshot)};await draw();changed();}));
+    if(selected.definition)box.append(button('预览使用此人物',async()=>{check(!recordDraft&&!Object.keys(dossierFields).length,'请先保存或取消当前人物修改');const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});recordDraft=await roles.previewSourceImport(snapshot,{bindOnCommit:true});recordConfirmed=false;await draw();changed();}));
+-   else if(onCreate)box.append(routeButton('交给缇斯亚助手提炼',async()=>{const snapshot=await roles.readSource({book:sourceBook,uid:selected.uid});await onCreate({kind:'character',mode:'extend',source:snapshot,destination:{book:sourceBook,uid:selected.uid},goal:'将选中的人物原文按既有标准字段整理；保留原文，不补造未提供的信息。'});}));
++   else if(onCreate)box.append(routeButton('交给缇斯亚助手提炼',()=>handoffSource({book:sourceBook,uid:selected.uid})));
+   }
+   if(recordDraft?.kind==='source-import'||recordDraft?.kind==='source-migration')showRecordPreview(box);
++ }
++ async function handoffSource(reference){
++  check(typeof roles.previewSourceMigration==='function','来源提炼接口尚未接入');const handoff=await roles.previewSourceMigration(reference);guard();
++  if(handoff.requiresExtraction)await onCreate({kind:'character',mode:handoff.mode,source:handoff.source,destination:handoff.destination,goal:handoff.goal});
++  else{recordDraft=handoff;recordConfirmed=false;await draw();changed();}
+  }
+  async function drawCreation(){
+   const generated=el('section'),kind=el('select'),goal=el('textarea'),generationPreview=el('div');
+@@ -479,7 +501,9 @@
+      const def=spec?.fields?.find(field=>field.key===key),complex=value!==null&&typeof value==='object',node=el(typeof value==='boolean'?'select':'textarea');
+      if(typeof value==='boolean'){option(node,'是','true');option(node,'否','false');}
+      const fieldKey=index+':'+key;node.className='text_pole';node.value=generationFieldTexts[fieldKey]??(complex?JSON.stringify(value,null,2):String(value??''));node.dataset.creationRow=String(index);node.dataset.creationKey=key;if(node.tagName==='TEXTAREA')node.rows=complex||String(value??'').length>100?5:2;if(generationFieldErrors[fieldKey])node.setCustomValidity('请保持当前字段的数据格式');
+-     const update=()=>{generationFieldTexts[fieldKey]=node.value;try{let parsed=node.value;if(complex)parsed=JSON.parse(parsed);else if(typeof value==='number'){check(parsed.trim()&&Number.isFinite(Number(parsed)),'请输入有效数字');parsed=Number(parsed);}else if(typeof value==='boolean')parsed=parsed==='true';proposal.matrix.changes[index].values[key]=parsed;generationText=JSON.stringify(proposal,null,2);delete generationFieldErrors[fieldKey];node.setCustomValidity('');}catch{generationFieldErrors[fieldKey]=true;node.setCustomValidity('请保持当前字段的数据格式');}invalidate();};
++     const update=()=>{generationFieldTexts[fieldKey]=node.value;try{let parsed=node.value;if(complex)parsed=JSON.parse(parsed);else if(typeof value==='number'){check(parsed.trim()&&Number.isFinite(Number(parsed)),'请输入有效数字');parsed=Number(parsed);}else if(typeof value==='boolean')parsed=parsed==='true';proposal.matrix.changes[index].values[key]=parsed;
++      if(key==='name'&&(generationKind==='character'&&change.tableId==='T_CHAR_DOSSIER'&&change.recordId===proposal.matrix.binding?.dossierId||generationKind==='world'&&change.tableId==='T_STATIC_WORLDS'&&change.recordId===proposal.matrix.binding?.worldId))proposal.name=parsed;
++      generationText=JSON.stringify(proposal,null,2);delete generationFieldErrors[fieldKey];node.setCustomValidity('');}catch{generationFieldErrors[fieldKey]=true;node.setCustomValidity('请保持当前字段的数据格式');}invalidate();};
+      node.oninput=node.onchange=update;group.append(field(def?.label??key,node));
+     }
+     typed.append(group);
+--- b0/tests/source-definition-identity.test.js
++++ candidate/tests/source-definition-identity.test.js
+@@ -15,12 +15,17 @@
+  const helper={getWorldbookNames:async()=>[...saved.keys()],getWorldbook:async name=>copy(saved.get(name)),createWorldbook:async(name,entries)=>{saved.set(name,copy(entries));return true;},updateWorldbookWith:async(name,fn)=>saved.set(name,copy(fn(copy(saved.get(name)))))};
+  const books=createBookGateway(()=>helper,()=>ctx);let conf={revision:0,story:{userBinding:null},coreBook:'角色来源'},snapshot={state:new Runtime(initializeState(catalog)).data,revision:0,contextKey:'scope-a'},writes=0;const commits=[],operations=new Map();
+  const config={read:()=>copy(conf),save:async value=>{conf={...copy(value),revision:conf.revision+1};return copy(conf);}};
+- const database={read:async()=>copy(snapshot),commit:async input=>{const hash=digest({changes:input.changes,source:input.source});if(operations.has(input.operationId)){assert.equal(operations.get(input.operationId),hash);return copy(snapshot);}assert.equal(input.expectedRevision,snapshot.revision);assert.equal(input.contextKey,snapshot.contextKey);const e=new Runtime(snapshot.state),result=e.transaction(input.operationId,input,()=>{for(const c of input.changes){if(!e.rows(c.tableId)[c.recordId])e.newRecord(c.tableId,{},c.recordId);for(const [k,v]of Object.entries(c.values))e.set([c.tableId,c.recordId,k,[]],v,c.states?.[k]??'known');if(c.metadata)e.record(c.tableId,c.recordId).metadata={...e.record(c.tableId,c.recordId).metadata,...copy(c.metadata)};}return {source:copy(input.source)};});assert.notEqual(result.status,'FAILED');snapshot={...snapshot,state:e.data,revision:snapshot.revision+1};operations.set(input.operationId,hash);commits.push(copy(input));writes++;return copy(snapshot);}};
++ const database={read:async()=>copy(snapshot),commit:async input=>{const hash=digest({changes:input.changes,source:input.source});if(operations.has(input.operationId)){assert.equal(operations.get(input.operationId),hash);return copy(snapshot);}assert.equal(input.expectedRevision,snapshot.revision);assert.equal(input.contextKey,snapshot.contextKey);const e=new Runtime(snapshot.state),request={operationId:input.operationId,contextKey:input.contextKey,changes:input.changes,schema:[],source:input.source},result=e.transaction(input.operationId,request,()=>{for(const c of input.changes){if(!e.rows(c.tableId)[c.recordId])e.newRecord(c.tableId,{},c.recordId);for(const [k,v]of Object.entries(c.values))e.set([c.tableId,c.recordId,k,[]],v,c.states?.[k]??'known');if(c.metadata)e.record(c.tableId,c.recordId).metadata={...e.record(c.tableId,c.recordId).metadata,...copy(c.metadata)};}return {source:copy(input.source)};});assert.notEqual(result.status,'FAILED');snapshot={...snapshot,state:e.data,revision:snapshot.revision+1};operations.set(input.operationId,hash);commits.push(copy(input));writes++;return copy(snapshot);}};
+  const roles=createStoryIdentity({config,getContext:()=>ctx,getHelper:()=>helper,sourceBooks:books,database});
+  return {saved,ctx,books,config,database,roles,commits,get writes(){return writes;},get snapshot(){return snapshot;},set snapshot(value){snapshot=value;}};
+ }
+ function person(){return {name:'阿青',kind:'character',binding:{entityId:'person-entity',dossierId:'person-dossier'},changes:[{tableId:'T_CHAR_DOSSIER',recordId:'person-dossier',values:{name:'阿青',public_identity:'河口旅人'}},{tableId:'T_SYS_ENTITIES',recordId:'person-entity',values:{kind:'character',origin_record_ref:'person-origin'}},{tableId:'M_FIELD_REFERENCES',recordId:'person-origin',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'person-entity',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'person-dossier',reference_kind:'record',resolution_status:'resolved'}}]};}
+ async function archive(f,extra=[]){const source=await f.books.readSource({book:'角色来源',uid:3}),data=person(),plan=await f.books.prepareDefinitionArchive({...data,changes:[...data.changes,...extra],source,operationId:'archive-person',destination:{book:source.book,uid:source.uid},schema:f.snapshot.state.schema});await f.books.commitDefinitionArchive(plan);return f.roles.readSource(source);}
++async function legacyImport(f,id='legacy-person',operationId='legacy-import'){
++ const source=await f.roles.readSource({book:'角色来源',uid:3}),raw='阿青是河口旅人。\n',originId=id+'-origin';
++ await f.database.commit({operationId,expectedRevision:f.snapshot.revision,contextKey:f.snapshot.contextKey,source:{kind:'legacy-character-import',book:source.book,uid:source.uid,entryDigest:source.digest,rawEntry:source.entry,phoneInitializationPreserved:true},changes:[{tableId:'T_CHAR_DOSSIER',recordId:id,values:{name:'阿青',manifest:raw}},{tableId:'T_SYS_ENTITIES',recordId:id,values:{kind:'character',origin_record_ref:originId}},{tableId:'M_FIELD_REFERENCES',recordId:originId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:id,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:id,reference_kind:'record',resolution_status:'resolved'}}]});
++ return {source,raw,id,originId};
++}
+ async function mount(f){
+  Object.assign(f.ctx,{characters:[{avatar:'world.png'}],chatMetadata:{},extensionSettings:{},name1:'原身份',powerUserSettings:{personas:{native:'原身份'},persona_descriptions:{native:{description:'原心愿'}},persona_description:'原心愿'}});
+  const w=new Window(),root=w.document.createElement('main');w.document.body.append(root);const routes=[],identity=createIdentityService({getContext:()=>f.ctx,getAvatar:()=> 'native',applyActive:()=>{},persistSettings:async()=>true,persistChat:async()=>true});
+@@ -45,9 +50,9 @@
+  const f=fixture(),source=await archive(f),draft=await f.roles.previewSourceImport(source),save=f.config.save;f.config.save=async()=>{throw Error('设置回应丢失');};await assert.rejects(f.roles.commitEdit(draft),error=>error.databaseReceipt?.confirmed===true);assert.equal(f.writes,1);f.config.save=save;await f.roles.commitEdit(draft);assert.equal(f.writes,1);assert.equal(f.config.read().story.userBinding.entityId,'person-entity');
+ });
+ test('legacy manifest correction requires the original migration receipt, exact unchanged data and explicit preview',async()=>{
+- const f=fixture(),source=await f.roles.readSource({book:'角色来源',uid:3}),e=new Runtime(f.snapshot.state),p=person();for(const c of p.changes)e.newRecord(c.tableId,c.values,c.recordId);const raw='阿青是河口旅人。\n';e.set('T_CHAR_DOSSIER#person-dossier.manifest',raw);e.data.runtime.receipts['old-import']={result:{source:{kind:'legacy-character-import',book:source.book,uid:source.uid,rawEntry:source.entry}}};f.snapshot={...f.snapshot,state:e.data};
+- const draft=await f.roles.previewSourceRepair({dossierId:'person-dossier',source,values:{public_identity:'河口旅人'}});assert.equal(f.writes,0);assert(draft.diff.some(d=>d.field==='manifest'&&d.before===raw&&d.after===null));await f.roles.commitEdit(draft);assert.equal(f.snapshot.state.tables.T_CHAR_DOSSIER['person-dossier'].states.manifest,'unset');assert.equal(f.commits[0].source.previousValues.manifest,raw);assert.equal(f.commits[0].source.rawEntry.content,source.content);
+- f.snapshot.state.tables.T_CHAR_DOSSIER['person-dossier'].values.manifest='用户后来明确填写的本领表现';f.snapshot.state.tables.T_CHAR_DOSSIER['person-dossier'].states.manifest='known';await assert.rejects(f.roles.previewSourceRepair({dossierId:'person-dossier',source,values:{public_identity:'河口旅人'}}),/不能证明/);
++ const f=fixture(),{source,raw,id}=await legacyImport(f),before=f.writes;
++ const draft=await f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}});assert.equal(f.writes,before);assert(draft.diff.some(d=>d.field==='manifest'&&d.before===raw&&d.after===null));await f.roles.commitEdit(draft);assert.equal(f.snapshot.state.tables.T_CHAR_DOSSIER[id].states.manifest,'unset');assert.equal(f.commits.at(-1).source.previousValues.manifest,raw);assert.equal(f.commits.at(-1).source.rawEntry.content,source.content);assert.deepEqual(f.commits.at(-1).source.binding,{entityId:id,dossierId:id});
++ f.snapshot.state.tables.T_CHAR_DOSSIER[id].values.manifest='用户后来明确填写的本领表现';f.snapshot.state.tables.T_CHAR_DOSSIER[id].states.manifest='known';await assert.rejects(f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}}),/不能证明/);
+ });
+ test('real identity source UI hands arbitrary-book prose to the assistant with exact UID and digest',async()=>{
+  const f=fixture();f.saved.set('另一个世界的基点书',[{uid:77,name:'【角色】散文人物',content:'纯描述：住在山下，遇人先听再答。',enabled:false}]);const view=await mount(f);try{
+@@ -60,3 +65,35 @@
+   f.snapshot.state.tables.T_DYN_CURRENCY_BALANCES['wallet-a'].values.balance=777;f.snapshot={...f.snapshot,revision:f.snapshot.revision+1};await view.pick('[data-source-entry]',source.uid);await view.click('预览使用此人物');confirm=view.root.querySelector('[data-database-confirm]');assert(confirm);confirm.checked=true;confirm.dispatchEvent(new view.w.Event('change'));assert.equal(await view.ui.saveDraft(),true,view.root.textContent);assert.equal(Object.keys(f.snapshot.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(f.snapshot.state.tables.T_DYN_CURRENCY_BALANCES['wallet-a'].values.balance,777);assert.equal((await f.roles.readSource(source)).definition.matrix.changes.find(c=>c.recordId==='wallet-a').values.balance,100);assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');
+  }finally{await view.close();}
+ });
++
++test('a reconstructed legacy request identifies its original person after manual edits and never adopts a copied manifest',async()=>{
++ const f=fixture(),{source,raw,id}=await legacyImport(f);f.snapshot.state.tables.T_CHAR_DOSSIER[id].values.manifest='用户明确重写的本领表现';
++ const unrelated=await f.roles.previewCreate({name:'另一人物',values:{manifest:raw}});await f.roles.commitEdit(unrelated);
++ const before=copy(f.snapshot),settings=f.config.read(),book=copy(f.saved.get(source.book)),handoff=await f.roles.previewSourceMigration(source);
++ assert.equal(handoff.mode,'revise');assert.equal(handoff.source.revisionTarget.dossierId,id);assert.equal(handoff.source.revisionTarget.entityId,id);assert.notEqual(handoff.source.revisionTarget.dossierId,unrelated.binding.dossierId);
++ await assert.rejects(f.roles.previewSourceRepair({dossierId:unrelated.binding.dossierId,source,values:{public_identity:'不应写入'}}),/不能证明/);await assert.rejects(f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}}),/不能证明/);
++ assert.deepEqual(f.snapshot,before);assert.deepEqual(f.config.read(),settings);assert.deepEqual(f.saved.get(source.book),book);
++});
++
++test('a new source with the same name stays an extension and receives no authority over an existing legacy person',async()=>{
++ const f=fixture();await legacyImport(f);f.saved.get('角色来源').push({uid:4,name:'【角色】阿青',content:'另一份新人物的原文',enabled:false});const source=await f.roles.readSource({book:'角色来源',uid:4}),before=copy(f.snapshot),handoff=await f.roles.previewSourceMigration(source);
++ assert.equal(handoff.mode,'extend');assert.equal(handoff.source.revisionTarget,undefined);assert.equal(handoff.source.uid,4);assert.deepEqual(f.snapshot,before);
++});
++
++for(const cause of ['source','receipt','context','duplicates'])test('legacy source routing refuses an unproven '+cause+' without changing records',async()=>{
++ const f=fixture(),{source}=await legacyImport(f);
++ if(cause==='source')f.saved.get(source.book)[0].content+='\n外部修改';
++ if(cause==='receipt')f.snapshot.state.runtime.receipts['legacy-import'].request_sha256='0'.repeat(64);
++ if(cause==='context')f.snapshot={...f.snapshot,contextKey:'copied-chat-without-original-context'};
++ if(cause==='duplicates')await legacyImport(f,'duplicate-person','duplicate-import');
++ const fresh=await f.roles.readSource(source),before=copy(f.snapshot),book=copy(f.saved.get(source.book)),settings=f.config.read();await assert.rejects(f.roles.previewSourceMigration(fresh),/回执无法核实|多个已迁移人物/);assert.deepEqual(f.snapshot,before);assert.deepEqual(f.saved.get(source.book),book);assert.deepEqual(f.config.read(),settings);
++});
++
++for(const equalValues of [false,true])test('an updated definition cannot borrow the previous source version receipt even when unrelated values are '+(equalValues?'equal':'different'),async()=>{
++ const f=fixture(),source=await archive(f);await f.roles.commitEdit(await f.roles.previewSourceImport(source));
++ const manual=await f.roles.previewCreate({name:'用户独立人物',values:{public_identity:'人工字段'}});await f.roles.commitEdit(manual);await f.roles.bind({dossierId:'person-dossier'});
++ const changes=copy(manual.changes);if(!equalValues){changes[0].values.name='归档声称的另一人物';changes[0].values.public_identity='归档新内容';}
++ const plan=await f.books.prepareDefinitionArchive({operationId:'archive-version-2',kind:'character',mode:'revise',name:'归档声称的另一人物',binding:manual.binding,changes,destination:{book:source.book,uid:source.uid},source,schema:f.snapshot.state.schema});await f.books.commitDefinitionArchive(plan);
++ const revised=await f.roles.readSource(source),before=copy(f.snapshot),settings=f.config.read(),book=copy(f.saved.get(source.book));assert.equal(revised.definition.id,source.definition.id);assert.equal(revised.definition.revision,2);
++ await assert.rejects(f.roles.previewSourceImport(revised),/另一份内容占用/);assert.deepEqual(f.snapshot,before);assert.deepEqual(f.config.read(),settings);assert.deepEqual(f.saved.get(source.book),book);
++});
+--- b0/tests/matrix-identity-recovery-ui.test.js
++++ candidate/tests/matrix-identity-recovery-ui.test.js
+@@ -11,31 +11,32 @@
+ const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
+ const copy=structuredClone;
+ let serial=0;
+-async function fixture(){
++async function fixture({reply}={}){
+  const original='阿青是河口旅人，习惯先听人说话。',books=new Map([['角色来源',[{uid:3,name:'【角色】阿青',content:original,enabled:false}]]]),disk=new Map();
+  const ctx={chatId:'recovery-ui-'+(++serial),characterId:0,characters:[{avatar:'world.png'}],chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>true};
+- const helper={getWorldbookNames:async()=>[...books.keys()],getWorldbook:async name=>copy(books.get(name)),createWorldbook:async(name,rows)=>{books.set(name,copy(rows));return true;},updateWorldbookWith:async(name,fn)=>{books.set(name,copy(fn(copy(books.get(name)))));}};
++ let failArchiveAck=false,archiveWrites=0;
++ const helper={getWorldbookNames:async()=>[...books.keys()],getWorldbook:async name=>{if(failArchiveAck&&archiveWrites)throw Error('世界书回读中断');return copy(books.get(name));},createWorldbook:async(name,rows)=>{books.set(name,copy(rows));return true;},updateWorldbookWith:async(name,fn)=>{books.set(name,copy(fn(copy(books.get(name)))));archiveWrites++;if(failArchiveAck)throw Error('世界书确认中断');}};
+  const storage={get:async id=>copy(disk.get(id)),set:async(id,value)=>disk.set(id,copy(value)),commit:async(id,revision,value)=>{if((disk.get(id)?.local_revision??0)!==revision)return false;disk.set(id,copy(value));return true;}};
+  const host=createMatrixHost({getContext:()=>ctx,getSource:()=>({}),loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true});await host.ensureDatabase();
+- const sourceBooks=createBookGateway(()=>helper,()=>ctx),commits=[];let failCreation=false,failRepair=false;
+- const database={read:()=>host.readDatabase(),commit:async input=>{if(failCreation&&input.source?.kind==='creation')throw Error('当前聊天保存中断');if(failRepair&&input.source?.kind==='legacy-character-repair')throw Error('旧档保存中断');const result=await host.commitDatabase(input);if(!result.receipt.replayed)commits.push(copy(input));return result;}};
+- const raw='<reply><task/><anchor phase="before"/><title>阿青</title><body>1 阿青是河口旅人。</body><anchor phase="after"/><extra/><cells>【人物原点档案／1】\n1 显示名称：阿青\n20 公开身份：河口旅人</cells><vars/><archive/><actions/></reply>';
+- const rolesFactory=()=>createStoryIdentity({config:host.config,getContext:()=>ctx,getHelper:()=>helper,database,sourceBooks,creator:createMatrixCreator({database,getContext:()=>ctx,sourceBooks,request:async()=>raw})});
++ const sourceBooks=createBookGateway(()=>helper,()=>ctx),commits=[];let failCreation=false,failRepair=false,failIntent=false;
++ const database={read:()=>host.readDatabase(),commit:async input=>{if(failCreation&&input.source?.kind==='creation')throw Error('当前聊天保存中断');if(failRepair&&input.source?.kind==='legacy-character-repair')throw Error('旧档保存中断');if(failIntent&&input.source?.kind==='creation-intent')throw Error('创作意图保存中断');const result=await host.commitDatabase(input);if(!result.receipt.replayed)commits.push(copy(input));return result;}};
++ const raw=reply??'<reply><task/><anchor phase="before"/><title>阿青</title><body>1 阿青是河口旅人。</body><anchor phase="after"/><extra/><cells>【人物原点档案／1】\n1 显示名称：阿青\n20 公开身份：河口旅人</cells><vars/><archive/><actions/></reply>';
++ const rolesFactory=()=>createStoryIdentity({config:host.config,getContext:()=>ctx,getHelper:()=>helper,database,sourceBooks,creator:createMatrixCreator({database,getContext:()=>ctx,sourceBooks,request:async(_task,text)=>typeof reply==='function'?reply(JSON.parse(text)):raw})});
+  let roles=rolesFactory(),view;const window=new Window(),root=window.document.createElement('main');window.document.body.append(root);
+- const mount=async initialCreation=>{view?.dispose();roles=rolesFactory();view=mountMatrixIdentity(window.document,root,{config:host.config,roles,resourcesOnly:true,creationOnly:!!initialCreation,initialCreation});assert.equal(await view.ready,true,root.textContent);};
++ const routes=[],mount=async initialCreation=>{view?.dispose();roles=rolesFactory();view=mountMatrixIdentity(window.document,root,{config:host.config,roles,resourcesOnly:true,creationOnly:!!initialCreation,initialCreation,onCreate:input=>routes.push(copy(input))});assert.equal(await view.ready,true,root.textContent);};
+  const click=async label=>{const button=[...root.querySelectorAll('button')].find(node=>node.textContent===label);assert(button,label);button.click();await view.settled();};
+  const pick=async(selector,value)=>{const node=root.querySelector(selector);assert(node,selector);node.value=String(value);await node.onchange();await view.settled();};
+  const field=(key,value)=>{const node=root.querySelector('[data-role-field="'+key+'"]');assert(node,key);node.value=value;node.dispatchEvent(new window.Event('input'));};
+  const confirm=selector=>{const node=root.querySelector(selector);assert(node,selector);node.checked=true;node.dispatchEvent(new window.Event('change'));};
+- return {original,books,ctx,host,database,sourceBooks,commits,root,window,mount,click,pick,field,confirm,get roles(){return roles;},get view(){return view;},failCreation:value=>{failCreation=value;},failRepair:value=>{failRepair=value;},async close(){view?.dispose();await window.happyDOM.abort();}};
++ return {original,books,ctx,host,database,sourceBooks,commits,root,window,routes,mount,click,pick,field,confirm,get roles(){return roles;},get view(){return view;},failCreation:value=>{failCreation=value;},failRepair:value=>{failRepair=value;},failIntent:value=>{failIntent=value;},failArchive:value=>{failArchiveAck=value;},archiveWrites:()=>archiveWrites,async close(){view?.dispose();await window.happyDOM.abort();}};
+ }
+ 
+ async function seedLegacy(f){
+  const source=await f.roles.readSource({book:'角色来源',uid:3}),snapshot=await f.database.read();
+- await f.database.commit({operationId:'old-import',expectedRevision:snapshot.revision,contextKey:snapshot.contextKey,source:{kind:'legacy-character-import',book:source.book,uid:source.uid,rawEntry:source.entry},changes:[
++ await f.database.commit({operationId:'old-import',expectedRevision:snapshot.revision,contextKey:snapshot.contextKey,source:{kind:'legacy-character-import',book:source.book,uid:source.uid,entryDigest:source.digest,rawEntry:source.entry,phoneInitializationPreserved:true},changes:[
+   {tableId:'T_CHAR_DOSSIER',recordId:'old-dossier',values:{name:'阿青',manifest:f.original}},
+-  {tableId:'T_SYS_ENTITIES',recordId:'old-entity',values:{kind:'character',origin_record_ref:'old-origin'}},
+-  {tableId:'M_FIELD_REFERENCES',recordId:'old-origin',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'old-entity',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'old-dossier',reference_kind:'record',resolution_status:'resolved'}}
++  {tableId:'T_SYS_ENTITIES',recordId:'old-dossier',values:{kind:'character',origin_record_ref:'old-origin'}},
++  {tableId:'M_FIELD_REFERENCES',recordId:'old-origin',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'old-dossier',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'old-dossier',reference_kind:'record',resolution_status:'resolved'}}
+  ]});
+  await f.roles.bind({dossierId:'old-dossier'});
+ }
+@@ -48,17 +49,111 @@
+   f.confirm('[data-database-confirm]');f.failRepair(true);assert.equal(await f.view.saveDraft(),false);const operation=f.view.exportDraft().recordDraft.id;assert.match(f.root.textContent,/旧档保存中断/);assert.equal(f.view.exportDraft().sourceRepair.source.content,f.original);
+   f.failRepair(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);const saved=await f.database.read(),row=saved.state.tables.T_CHAR_DOSSIER['old-dossier'];
+   assert.equal(row.values.public_identity,'河口旅人');assert.equal(row.states.manifest,'unset');assert.equal(Object.keys(saved.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(Object.keys(saved.state.tables.T_SYS_ENTITIES).length,1);
+-  assert.equal(f.commits.at(-1).operationId,operation);assert.equal(f.commits.at(-1).source.rawEntry.content,f.original);assert.equal(f.commits.at(-1).source.previousValues.manifest,f.original);assert.equal(f.books.get('角色来源')[0].content,f.original);assert.equal(f.host.config.read().story.userBinding.entityId,'old-entity');assert.equal(f.view.state().dirty,false);
++  assert.equal(f.commits.at(-1).operationId,operation);assert.equal(f.commits.at(-1).source.rawEntry.content,f.original);assert.equal(f.commits.at(-1).source.previousValues.manifest,f.original);assert.equal(f.books.get('角色来源')[0].content,f.original);assert.equal(f.host.config.read().story.userBinding.entityId,'old-dossier');assert.equal(f.view.state().dirty,false);
+  }finally{await f.close();}
+ });
+ 
+ test('partial creation cannot be discarded and a cold identity view resumes its durable draft once',async()=>{
+  const f=await fixture();try{
+-  await f.mount({kind:'character',goal:'整理阿青',destination:{book:'角色来源'}});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');f.failCreation(true);
++  const source=await f.roles.readSource({book:'角色来源',uid:3});
++  await f.mount({kind:'character',goal:'整理阿青',source,destination:{book:'角色来源',uid:3}});await f.click('生成表单草稿');
++  const name=f.root.querySelector('[data-creation-key="name"]');name.value='青衣';name.dispatchEvent(new f.window.Event('input'));f.confirm('[data-creation-confirm]');f.failCreation(true);
+   assert.equal(await f.view.saveDraft(),false);const recovery=f.view.exportDraft().creationSavedDraft;assert(recovery?.archiveReceipt?.confirmed);assert.equal(f.commits.filter(c=>c.source?.kind==='creation').length,0);
+   assert.equal(await f.view.discardDraft(),false);assert.equal(f.view.exportDraft().creationSavedDraft.operationId,recovery.operationId);assert.equal(f.view.requestLeave().allowed,false);
+   await f.mount();assert(f.root.querySelector('[data-creation-recovery]'));assert.equal(f.view.exportDraft().creationSavedDraft.operationId,recovery.operationId);assert.equal(await f.view.discardDraft(),false);
+   f.failCreation(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.commits.filter(c=>c.source?.kind==='creation').length,1);assert.equal(Object.keys((await f.database.read()).state.tables.T_CHAR_DOSSIER).length,1);assert.equal(f.view.state().dirty,false);
++  const entries=f.books.get('角色来源');assert.equal(entries.length,1);assert.equal(entries[0].uid,3);assert.equal(entries[0].name,'【角色】青衣');assert.equal(JSON.parse(entries[0].content).source.content,f.original);
+   await f.mount();assert.equal(f.view.exportDraft().creationSavedDraft,null);assert.equal(f.view.state().dirty,false);
+  }finally{await f.close();}
+ });
++
++test('a source name collision leaves the reviewed creation editable and renaming saves the matching archive once',async()=>{
++ const f=await fixture();try{
++  const before=copy(f.books.get('角色来源'));
++  await f.mount({kind:'character',goal:'整理阿青',destination:{book:'角色来源'}});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
++  const operation=f.view.exportDraft().creation.draft.operationId;
++  assert.equal(await f.view.saveDraft(),false);assert.match(f.root.textContent,/目标世界书已有同名条目/);
++  const rejected=f.view.exportDraft();assert.equal(rejected.creationSavedDraft,null);assert.equal(rejected.creation.draft.operationId,operation);assert.equal(rejected.creation.draft.archivePlan,undefined);
++  assert.deepEqual(f.books.get('角色来源'),before);assert.equal(f.commits.length,0);assert.equal(await f.roles.pendingCreation(),null);
++  const name=f.root.querySelector('[data-creation-key="name"]');assert(name);name.value='阿白';name.dispatchEvent(new f.window.Event('input'));assert.equal(f.root.querySelector('[data-creation-confirm]').checked,false);
++  f.confirm('[data-creation-confirm]');assert.equal(await f.view.saveDraft(),true,f.root.textContent);
++  const saved=await f.database.read(),rows=f.books.get('角色来源');assert.equal(rows.length,2);assert.deepEqual(rows[0],before[0]);assert.equal(rows[1].name,'【角色】阿白');assert.equal(JSON.parse(rows[1].content).name,'阿白');
++  assert.equal(Object.values(saved.state.tables.T_CHAR_DOSSIER)[0].values.name,'阿白');assert.deepEqual(f.commits.map(c=>c.source?.kind),['creation-intent','creation']);assert.equal(f.commits[1].operationId,operation);assert.equal(f.archiveWrites(),1);assert.equal(f.view.state().dirty,false);
++ }finally{await f.close();}
++});
++
++test('a source preflight rejection can be cancelled and cold reopening has no false pending creation',async()=>{
++ const f=await fixture();try{
++  const before=copy(f.books.get('角色来源'));
++  await f.mount({kind:'character',goal:'整理阿青',destination:{book:'角色来源'}});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
++  assert.equal(await f.view.saveDraft(),false);assert.equal(await f.view.discardDraft(),true,f.root.textContent);assert.equal(f.view.state().dirty,false);assert.equal(f.view.exportDraft().creation.draft,null);
++  await f.mount();assert.equal(f.root.querySelector('[data-creation-recovery]'),null);assert.equal(f.view.exportDraft().creationSavedDraft,null);assert.equal(f.view.requestLeave().allowed,true);assert.equal(f.view.state().dirty,false);
++  assert.equal(f.commits.length,0);assert.equal(f.archiveWrites(),0);assert.deepEqual(f.books.get('角色来源'),before);assert.equal(Object.keys((await f.database.read()).state.tables.T_CHAR_DOSSIER).length,0);
++ }finally{await f.close();}
++});
++
++test('only the bound world name changes its archive title while supporting character names stay independent',async()=>{
++ const reply='<reply><task/><anchor phase="before"/><title>河口</title><body>1 河口的新世界。</body><anchor phase="after"/><extra/><cells>【世界与历法身份／1】\n1 世界名称：河口\n【人物原点档案／1】\n1 显示名称：阿青\n20 公开身份：河口旅人</cells><vars/><archive/><actions/></reply>';
++ const f=await fixture({reply});try{
++  await f.mount({kind:'world',goal:'设计河口',destination:{book:'新世界书',newBook:true}});await f.click('生成表单草稿');
++  const changeName=(tableId,value)=>{const proposal=JSON.parse(f.view.exportDraft().creation.text),index=proposal.matrix.changes.findIndex(row=>row.tableId===tableId),node=f.root.querySelector('[data-creation-row="'+index+'"][data-creation-key="name"]');assert(node);node.value=value;node.dispatchEvent(new f.window.Event('input'));};
++  changeName('T_CHAR_DOSSIER','旁支人物');assert.equal(JSON.parse(f.view.exportDraft().creation.text).name,'河口');
++  changeName('T_STATIC_WORLDS','大河口');changeName('T_CHAR_DOSSIER','旅人甲');assert.equal(JSON.parse(f.view.exportDraft().creation.text).name,'大河口');
++  f.confirm('[data-creation-confirm]');assert.equal(await f.view.saveDraft(),true,f.root.textContent);
++  const entries=f.books.get('新世界书');assert.deepEqual(entries.map(row=>row.name),['【初始化】大河口','【资料】大河口']);assert(entries.every(row=>row.enabled===false));
++  const saved=await f.database.read();assert.equal(Object.values(saved.state.tables.T_STATIC_WORLDS)[0].values.name,'大河口');assert.equal(Object.values(saved.state.tables.T_CHAR_DOSSIER)[0].values.name,'旅人甲');assert.equal(f.books.get('角色来源')[0].content,f.original);
++ }finally{await f.close();}
++});
++
++for(const failure of ['intent','archive'])test('an interrupted '+failure+' keeps its creation plan locked and resumes the same archive',async()=>{
++ const f=await fixture();try{
++  const source=await f.roles.readSource({book:'角色来源',uid:3});
++  await f.mount({kind:'character',goal:'整理阿青',source,destination:{book:'角色来源',uid:3}});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
++  if(failure==='intent')f.failIntent(true);else f.failArchive(true);
++  assert.equal(await f.view.saveDraft(),false);const retained=f.view.exportDraft().creationSavedDraft;assert(retained.archivePlan);assert.equal(retained.archiveReceipt.status,failure==='intent'?'not-written':'unknown');assert.equal(retained.archiveReceipt.confirmed,false);
++  assert.equal(f.commits.filter(c=>c.source?.kind==='creation').length,0);assert.equal(await f.view.discardDraft(),false);assert.equal(f.root.querySelector('[data-creation-fields]'),null);assert.equal(f.view.requestLeave().allowed,false);
++  f.failIntent(false);f.failArchive(false);
++  if(failure==='archive'){await f.mount();assert.equal(f.view.exportDraft().creationSavedDraft.operationId,retained.operationId);assert.equal(f.view.exportDraft().creationSavedDraft.archiveReceipt.confirmed,true);}
++  assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.archiveWrites(),1);assert.deepEqual(f.commits.map(c=>c.source?.kind),['creation-intent','creation']);assert.equal(f.commits[1].operationId,retained.operationId);assert.equal(Object.keys((await f.database.read()).state.tables.T_CHAR_DOSSIER).length,1);assert.equal(f.view.state().dirty,false);
++ }finally{await f.close();}
++});
++
++const extractedReply=input=>{
++ const heading=input.references.split('\n').find(line=>line.startsWith('人物原点档案／已有：阿青〔'));assert(heading);
++ return '<reply><task/><anchor phase="before"/><title>阿青</title><body>1 原文提炼。</body><anchor phase="after"/><extra/><cells>【'+heading+'】\n1 显示名称：阿青\n20 公开身份：河口旅人</cells><vars/><archive/><actions/></reply>';
++};
++
++test('the actual source extraction route resumes a proven legacy person, archives the same UID and reuses its normalized source after reopening',async()=>{
++ const inputs=[],f=await fixture({reply:input=>{inputs.push(input);return extractedReply(input);}});try{
++  await seedLegacy(f);await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);await f.click('交给缇斯亚助手提炼');
++  assert.equal(f.routes.length,1);const route=f.routes[0];assert.equal(route.mode,'revise');assert.equal(route.source.revisionTarget.dossierId,'old-dossier');assert.equal(route.source.revisionTarget.entityId,'old-dossier');assert.equal(route.source.revisionTarget.originRefId,'old-origin');assert.equal(f.commits.length,1);
++  await f.mount(route);await f.click('生成表单草稿');const draft=f.view.exportDraft().creation.draft;assert(draft,f.root.textContent);assert.equal(inputs[0].mode,'revise');assert.equal(draft.proposal.matrix.binding.dossierId,'old-dossier');assert.equal(draft.proposal.matrix.binding.originRefId,'old-origin');assert.equal(draft.proposal.matrix.changes[0].values.manifest,null);
++  f.confirm('[data-creation-confirm]');f.failCreation(true);assert.equal(await f.view.saveDraft(),false);assert.equal(f.view.exportDraft().creationSavedDraft.archiveReceipt.confirmed,true);
++  await f.mount();assert.equal(f.view.exportDraft().creationSavedDraft.operationId,draft.operationId);f.failCreation(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);
++  const source=await f.roles.readSource({book:'角色来源',uid:3}),saved=await f.database.read();assert.equal(source.definition.source.content,f.original);assert.equal(source.definition.matrix.binding.originRefId,'old-origin');assert.equal(saved.state.tables.T_CHAR_DOSSIER['old-dossier'].states.manifest,'unset');assert.equal(saved.state.tables.T_CHAR_DOSSIER['old-dossier'].values.public_identity,'河口旅人');assert.equal(Object.keys(saved.state.tables.T_SYS_ENTITIES).length,1);assert.equal(Object.keys(saved.state.tables.M_FIELD_REFERENCES).length,1);assert.equal(f.archiveWrites(),1);
++  await f.database.commit({operationId:'story-progress',expectedRevision:saved.revision,contextKey:saved.contextKey,changes:[{tableId:'T_CHAR_DOSSIER',recordId:'old-dossier',values:{public_identity:'当前故事中的渡口守卫'}}],source:{kind:'identity-form'}});
++  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);await f.click('预览使用此人物');assert.equal(f.view.exportDraft().recordDraft.changes.length,0);f.confirm('[data-database-confirm]');assert.equal(await f.view.saveDraft(),true,f.root.textContent);
++  const reopened=await f.database.read();assert.equal(reopened.state.tables.T_CHAR_DOSSIER['old-dossier'].values.public_identity,'当前故事中的渡口守卫');assert.equal(Object.keys(reopened.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(Object.keys(reopened.state.tables.T_SYS_ENTITIES).length,1);assert.equal(Object.keys(reopened.state.tables.M_FIELD_REFERENCES).length,1);assert.equal(f.archiveWrites(),1);assert.equal(inputs.length,1);
++ }finally{await f.close();}
++});
++
++test('proven source extraction preserves filled user fields and rejects another existing target before archive writes',async()=>{
++ const f=await fixture({reply:extractedReply});try{
++  await seedLegacy(f);const current=await f.database.read();await f.database.commit({operationId:'manual-field',expectedRevision:current.revision,contextKey:current.contextKey,changes:[{tableId:'T_CHAR_DOSSIER',recordId:'old-dossier',values:{public_identity:'用户亲自填写的职业'}}],source:{kind:'identity-form'}});
++  const unrelated=await f.roles.previewCreate({name:'旁支人物',values:{public_identity:'独立职业'}});await f.roles.commitEdit(unrelated);
++  const source=await f.roles.readSource({book:'角色来源',uid:3}),handoff=await f.roles.previewSourceMigration(source),before=await f.database.read(),book=copy(f.books.get('角色来源'));
++  const draft=await f.roles.createDraft({kind:'character',mode:handoff.mode,goal:handoff.goal,source:handoff.source,destination:handoff.destination});
++  await assert.rejects(f.roles.saveCreation(draft),/字段已有用户内容/);assert.deepEqual(await f.database.read(),before);assert.deepEqual(f.books.get('角色来源'),book);assert.equal(f.archiveWrites(),0);
++  const wrong=copy(draft);wrong.proposal.matrix.binding=copy(unrelated.binding);wrong.proposal.matrix.changes[0].recordId=unrelated.binding.dossierId;wrong.proposal.matrix.changes[0].values={name:'旁支人物',public_identity:'独立职业'};await assert.rejects(f.roles.validateCreation(wrong),/只能修订已核实的原人物/);
++  const extra=copy(draft);extra.proposal.matrix.changes.push({tableId:'T_CHAR_DOSSIER',recordId:unrelated.binding.dossierId,values:{public_identity:'不应覆盖'}});await assert.rejects(f.roles.saveCreation(extra),/不能覆盖其他已有记录/);assert.deepEqual(await f.database.read(),before);assert.equal(f.archiveWrites(),0);
++ }finally{await f.close();}
++});
++
++test('source extraction keeps an already corrected manifest and does not copy that live value into the author definition',async()=>{
++ const f=await fixture({reply:extractedReply});try{
++  await seedLegacy(f);const before=await f.database.read();await f.database.commit({operationId:'correct-ability',expectedRevision:before.revision,contextKey:before.contextKey,changes:[{tableId:'T_CHAR_DOSSIER',recordId:'old-dossier',values:{manifest:'用户已明确修正的本领表现'}}],source:{kind:'identity-form'}});
++  const source=await f.roles.readSource({book:'角色来源',uid:3}),handoff=await f.roles.previewSourceMigration(source);assert.equal(handoff.mode,'revise');
++  const draft=await f.roles.createDraft({kind:'character',mode:handoff.mode,goal:handoff.goal,source:handoff.source,destination:handoff.destination});assert.equal(draft.proposal.matrix.changes[0].values.manifest,undefined);await f.roles.saveCreation(draft);
++  const saved=await f.database.read(),archived=await f.roles.readSource(source);assert.equal(saved.state.tables.T_CHAR_DOSSIER['old-dossier'].values.manifest,'用户已明确修正的本领表现');assert.equal(saved.state.tables.T_CHAR_DOSSIER['old-dossier'].states.manifest,'known');assert.equal(Object.keys(saved.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(archived.definition.matrix.changes.find(row=>row.tableId==='T_CHAR_DOSSIER').values.manifest,undefined);assert.equal(archived.definition.source.content,f.original);
++ }finally{await f.close();}
++});

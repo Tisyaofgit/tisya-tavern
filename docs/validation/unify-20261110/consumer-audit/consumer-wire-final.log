@@ -1,0 +1,13 @@
+✔ actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions (90.610156ms)
+✔ real foundation initialization snapshots contractor, card and bound books into the final native request (262.799689ms)
+✔ history final request retains supplied story time and the confirmed-source policy (353.782487ms)
+✔ actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence (196.296024ms)
+✔ actual source slot disabled by order refuses dispatch instead of silently dropping card evidence (185.043775ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1293.200927

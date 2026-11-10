@@ -1,0 +1,53 @@
+{
+  "utc": "2026-11-10T10:10:56.878114+00:00",
+  "beijing": "2026-11-10T18:10:56.878114+08:00",
+  "kind": "read-only source-target crosscheck before repair",
+  "findings": [
+    {
+      "id": "legacy-unrelated-identical-text",
+      "reproduced": true,
+      "path": "real old writer -> real Matrix host with isolated memory disk -> manual edit of original target -> unrelated manual record with old text -> current previewSourceRepair",
+      "result": "Accepted unrelated target and proposed manifest:null. Exact old request reconstructed to the successful receipt request_sha256; wrong candidate produced a different hash.",
+      "location": "engine/identity.mjs previewSourceRepair legacy receipt lookup"
+    },
+    {
+      "id": "canonical-version-receipt-borrow",
+      "reproduced": true,
+      "path": "real book gateway archive v1 -> real Matrix import -> unrelated manual character -> same source identity archive v2 changes binding -> previewSourceImport/commitEdit",
+      "result": "Borrowed v1 source receipt, proposed zero changes, then bound the unrelated character despite differing source and actual name. User field values stayed unchanged.",
+      "location": "engine/identity.mjs isInstantiatedFrom sourceArchive predicate"
+    }
+  ],
+  "old_writer": {
+    "path": "/workspace/scratch/390b9cf04a3c/recovery-check/engine/identity.mjs",
+    "sha256": "0550fe6b3ea1ad11fabc4eb4ff11b657c27cce11be1eca39eeadf7654356810b",
+    "identity_algorithm": "dossierId and entityId are the same random UUID; originRefId is another random UUID. No book/uid-derived ID.",
+    "target_proof": "Reconstruct fixed three-change legacy host request with original receipt source, receipt operation_id, current contextKey and schema:[], then compare digest to request_sha256."
+  },
+  "files": [
+    {
+      "path": "legacy-target-proof-repro.mjs",
+      "sha256": "2b7d6621174cc79cc08a8961ee535ea7c1aca02129faa8876e731546cd7da49d",
+      "bytes": 4531
+    },
+    {
+      "path": "legacy-target-proof-repro.log",
+      "sha256": "d9d74b6c2b87a83e95aa936c6654614a7d73e950b30360909b0cb00f3c34f535",
+      "bytes": 1846
+    },
+    {
+      "path": "canonical-target-receipt-repro.mjs",
+      "sha256": "b09ae43ba44d1afdd36100d6b6855a2075371530d866b5aa0af3c27dcbf3d50f",
+      "bytes": 4480
+    },
+    {
+      "path": "canonical-target-receipt-repro.log",
+      "sha256": "e95e2d298ecc3082ea6516a0523ced9cf5d8f1c5e8822a221f5ecdc900a8ee5d",
+      "bytes": 602
+    }
+  ],
+  "product_edits_by_this_crosscheck": false,
+  "external_model_calls": false,
+  "user_data_access": false,
+  "after_repair": "Pending creation_acceptance implementation; root asked one after run per repro, separately named, with full DB/config/books equality on refusal."
+}

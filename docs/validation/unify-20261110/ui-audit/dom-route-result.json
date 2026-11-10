@@ -1,0 +1,39 @@
+{
+  "start_utc": "2026-11-10T09:49:37.885957+00:00",
+  "end_utc": "2026-11-10T09:50:06.571098+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-name-pattern=identity|cold-start|Matrix slot|creation|source repair",
+    "tests/shell.test.js",
+    "tests/assistant-matrix-identity.test.js",
+    "tests/matrix-identity-recovery-ui.test.js",
+    "tests/unified-identity-settings.test.js"
+  ],
+  "returncode": 1,
+  "source_before": {
+    "index.js": "c1d8556e515e5aec15a781521d7bcfb9718f20449e4127c51074b389970727fd",
+    "engine/identity-ui.mjs": "878eef93309661cccecc90671ec877948e8f0fa1459e597bf10c300dfd425d00",
+    "engine/identity.mjs": "761af8e78957ceebaf4c5a48ed53772270d6ba53acfe6a6c19b0c4fda28766ed",
+    "engine/creation.mjs": "d2227147f40247a3e4724f6aeb324d4c8b623e769518d49a7187f9104a569e9a",
+    "assistant-app.js": "7d13361ff567e71783b216e400d445199d1fa5cb3af16fcfee6d8513edc4a19d",
+    "tests/shell.test.js": "bc90e2bac3be3c6da0243b426d5ab694b48e494d675fff04d56a629feb8841c9",
+    "tests/assistant-matrix-identity.test.js": "f57939bf903e19e43a889f06ed08d9e4897c5032b020202ad19ecb6609f2287f",
+    "tests/matrix-identity-recovery-ui.test.js": "080100febe1a27950bf251f3de06ac55e398b977fcee7358e423b7e2a522382e",
+    "tests/unified-identity-settings.test.js": "e8b6da6ce3e4767e31eab98909fedbfc629a012bcbc498ddf5527e1ee40c18b9"
+  },
+  "source_after": {
+    "index.js": "c1d8556e515e5aec15a781521d7bcfb9718f20449e4127c51074b389970727fd",
+    "engine/identity-ui.mjs": "878eef93309661cccecc90671ec877948e8f0fa1459e597bf10c300dfd425d00",
+    "engine/identity.mjs": "761af8e78957ceebaf4c5a48ed53772270d6ba53acfe6a6c19b0c4fda28766ed",
+    "engine/creation.mjs": "d2227147f40247a3e4724f6aeb324d4c8b623e769518d49a7187f9104a569e9a",
+    "assistant-app.js": "7d13361ff567e71783b216e400d445199d1fa5cb3af16fcfee6d8513edc4a19d",
+    "tests/shell.test.js": "bc90e2bac3be3c6da0243b426d5ab694b48e494d675fff04d56a629feb8841c9",
+    "tests/assistant-matrix-identity.test.js": "f57939bf903e19e43a889f06ed08d9e4897c5032b020202ad19ecb6609f2287f",
+    "tests/matrix-identity-recovery-ui.test.js": "080100febe1a27950bf251f3de06ac55e398b977fcee7358e423b7e2a522382e",
+    "tests/unified-identity-settings.test.js": "e8b6da6ce3e4767e31eab98909fedbfc629a012bcbc498ddf5527e1ee40c18b9"
+  },
+  "changed_during_run": [],
+  "classification": "Actual production modules/index callbacks under isolated Happy DOM host, not browser pixels or real host/Android"
+}

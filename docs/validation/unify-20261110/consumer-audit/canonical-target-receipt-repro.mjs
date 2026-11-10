@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+const root=pathToFileURL('/workspace/scratch/c04f833f6bb3/unify-release/');
+const {createMatrixHost}=await import(new URL('engine/host.mjs',root));
+const {createStoryIdentity}=await import(new URL('engine/identity.mjs',root));
+const {createBookGateway}=await import(new URL('tables/books.js',root));
+const {default:catalog}=await import(new URL('engine/catalog.json',root),{with:{type:'json'}});
+const copy=structuredClone,books=new Map([['人物定义书',[]]]),disk=new Map();
+const ctx={chatId:'canonical-proof-isolated',characterId:0,characters:[{avatar:'world.png'}],chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>true};
+const helper={getWorldbookNames:async()=>[...books.keys()],getWorldbook:async name=>copy(books.get(name)),createWorldbook:async(name,rows)=>{books.set(name,copy(rows));return true;},updateWorldbookWith:async(name,fn)=>{let uid=100;const next=fn(copy(books.get(name)));books.set(name,copy(next.map(entry=>entry.uid===undefined?{...entry,uid:uid++}:entry)));return true;}};
+const storage={get:async id=>copy(disk.get(id)),set:async(id,value)=>disk.set(id,copy(value)),commit:async(id,revision,value)=>{if((disk.get(id)?.local_revision??0)!==revision)return false;disk.set(id,copy(value));return true;}};
+const host=createMatrixHost({getContext:()=>ctx,getSource:()=>({}),loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true});await host.ensureDatabase();
+const database={read:()=>host.readDatabase(),commit:input=>host.commitDatabase(input)},sourceBooks=createBookGateway(()=>helper,()=>ctx);
+const roles=createStoryIdentity({config:host.config,getContext:()=>ctx,getHelper:()=>helper,database,sourceBooks});
+const binding={entityId:'source-person',dossierId:'source-person'},changes=[{tableId:'T_CHAR_DOSSIER',recordId:'source-person',values:{name:'归档人物',public_identity:'来源身份'}},{tableId:'T_SYS_ENTITIES',recordId:'source-person',values:{kind:'character',origin_record_ref:'source-origin'}},{tableId:'M_FIELD_REFERENCES',recordId:'source-origin',values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'source-person',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'source-person',reference_kind:'record',resolution_status:'resolved'}}];
+const archive=await sourceBooks.prepareDefinitionArchive({operationId:'source-archive-v1',kind:'character',name:'归档人物',binding,changes,destination:{book:'人物定义书'},schema:(await database.read()).state.schema});
+const receipt=await sourceBooks.commitDefinitionArchive(archive),source=await roles.readSource(receipt.sourceArchive);
+await roles.commitEdit(await roles.previewSourceImport(source));
+const manual=await roles.previewCreate({name:'用户独立人物',values:{public_identity:'用户自己写的字段'}});await roles.commitEdit(manual);await roles.bind({dossierId:binding.dossierId});
+const rewrite=copy(manual.changes);rewrite[0].values.name='归档现在指向的另一个人物';rewrite[0].values.public_identity='归档拟写值';
+const revision=await sourceBooks.prepareDefinitionArchive({operationId:'source-archive-v2',kind:'character',mode:'revise',name:'归档现在指向的另一个人物',binding:manual.binding,changes:rewrite,destination:{book:source.book,uid:source.uid},source,schema:(await database.read()).state.schema});
+await sourceBooks.commitDefinitionArchive(revision);const revised=await roles.readSource(source);assert.equal(revised.definition.id,source.definition.id);
+const before=await database.read(),userRow=copy(before.state.tables.T_CHAR_DOSSIER[manual.binding.dossierId]);assert.equal(userRow.metadata.sourceDefinition,undefined);
+let output;
+try{
+ const draft=await roles.previewSourceImport(revised);await roles.commitEdit(draft);
+ const after=await database.read();
+ output={accepted:true,sourceDefinitionId:source.definition.id,previousSourceBinding:binding,revisedSourceBinding:revised.definition.matrix.binding,unrelatedUserHadSourceMetadata:false,proposedChanges:draft.changes.length,boundDossier:host.config.read().story.userBinding.dossierId,boundName:host.config.read().story.userName,sourceName:revised.definition.name,userFieldUnchanged:after.state.tables.T_CHAR_DOSSIER[manual.binding.dossierId].values.public_identity===userRow.values.public_identity};
+}catch(error){output={accepted:false,message:error.message};}
+console.log(JSON.stringify(output,null,2));

@@ -1,0 +1,89 @@
+{
+  "schema": "tisya.unify-acceptance/1",
+  "recorded_utc": "2026-11-10T10:32:41.747060+00:00",
+  "recorded_beijing": "2026-11-10T18:32:41.747060+08:00",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.13",
+  "status": "verified_candidate_at_source_freeze",
+  "starting_commit": "ade8ab0e073101ba98b60fe992398ad493649f3e",
+  "previous_checkpoint_commit": "3efff9a162c176acb1bf0f7eb13307324645b838",
+  "generated_checks": 17,
+  "canonical_template_outputs": 7,
+  "full_regression": {
+    "command": [
+      "npm",
+      "test"
+    ],
+    "start_utc": "2026-11-10T10:28:10.144753+00:00",
+    "end_utc": "2026-11-10T10:30:39.530126+00:00",
+    "exit_code": 0,
+    "log": "/workspace/scratch/c04f833f6bb3/resume-evidence/full-regression-release.log",
+    "counts": {
+      "tests": 2033,
+      "suites": 0,
+      "pass": 2033,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "existing_source_files_changed_during_run": [],
+    "tested_source_exact": true
+  },
+  "runtime": {
+    "path": "runtime.js",
+    "bytes": 4700177,
+    "sha256": "06818f1c59512d82a40b1c5cbd4d6baa00462401ae2a950b782f983cd74e07fe",
+    "git_blob": "2e8d6a32fce385544a68fb30163b561913e400ab",
+    "mode": "100644"
+  },
+  "earlier_regressions": [
+    {
+      "log": "full-regression-first.log",
+      "tests": 2012,
+      "pass": 2004,
+      "fail": 8
+    },
+    {
+      "log": "full-regression-final.log",
+      "tests": 2033,
+      "pass": 2032,
+      "fail": 1,
+      "cause": "stylesheet version still candidate.12; corrected before the release run"
+    }
+  ],
+  "focused_results_are_not_added_to_full_total": true,
+  "source_and_data_ownership": "Main reply, creation and current consumers use the existing shared form codec and canonical state owners. No second data writer was introduced.",
+  "fixed_findings": [
+    "Native prompt enable omission dropped actual source slots.",
+    "Foundation contractor and historical time/policy were lost before request assembly.",
+    "Write-free creation preflight locked editable drafts.",
+    "Bound name edits did not update archive titles.",
+    "Existing legacy source extraction was routed as new creation.",
+    "Legacy source repair could mistake copied prose for record identity.",
+    "Canonical source imports could borrow old-version receipts or equal values to bind an unrelated record.",
+    "Importable templates, authoring instructions and plan files drifted from current factories."
+  ],
+  "scope": {
+    "actual_node_modules_and_services": true,
+    "actual_index_routes_in_happy_dom": true,
+    "native_request_assembly_with_mocked_http": true,
+    "real_browser_pixels": false,
+    "real_tavern_installation": false,
+    "real_model_invocation": false,
+    "android": false,
+    "user_live_data_accessed": false,
+    "user_live_data_modified": false
+  },
+  "not_verified": [
+    "Real model semantic quality and real connection behavior",
+    "Actual Tavern installation",
+    "Browser pixels and narrow-screen scrolling",
+    "Android device behavior",
+    "General automatic merge of changed source versions"
+  ],
+  "browser_blockers": [
+    "Chromium startup socket(): Operation not permitted (-6)",
+    "Supported shared Chrome isolated URL: net::ERR_CONNECTION_REFUSED"
+  ],
+  "release_note": "This record describes the frozen verified candidate. The final commit, guarded main publication, full source restore verification and native control-file receipts are recorded by the project checkpoint under its stable identity."
+}

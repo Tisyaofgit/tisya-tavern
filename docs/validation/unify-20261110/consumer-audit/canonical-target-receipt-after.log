@@ -1,0 +1,19 @@
+{
+  "rejected": true,
+  "message": "记录 ID 已被另一份内容占用，未覆盖当前聊天：T_CHAR_DOSSIER#4b1e529c-0e9f-42b1-a817-cb8fda97a000",
+  "sourceDefinitionId": "4cbd443d-cf66-5c0c-bdef-f66c2c80bc92",
+  "priorVersion": 1,
+  "revisedVersion": 2,
+  "priorBinding": {
+    "entityId": "source-person",
+    "dossierId": "source-person"
+  },
+  "attemptedBinding": {
+    "database": true,
+    "entityId": "4b1e529c-0e9f-42b1-a817-cb8fda97a000",
+    "dossierId": "4b1e529c-0e9f-42b1-a817-cb8fda97a000"
+  },
+  "databaseUnchanged": true,
+  "configurationUnchanged": true,
+  "sourceBooksUnchanged": true
+}

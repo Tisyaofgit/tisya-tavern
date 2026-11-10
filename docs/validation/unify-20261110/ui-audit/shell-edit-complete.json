@@ -1,0 +1,9 @@
+{
+  "completedUTC": "2026-11-10T09:59:04.311389+00:00",
+  "changedFile": "/workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js",
+  "sha256": "9ef7db6a9d221597eeb7df5846832063e7b859f1ee1bf507c49e97615a8eda11",
+  "existingTestCountBefore": 93,
+  "existingTestCountAfter": 93,
+  "accepted": "3 targeted production-navigation replacement tests; 0 skipped",
+  "fullSuite": "owned by root; not claimed here"
+}

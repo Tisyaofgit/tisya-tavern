@@ -1,0 +1,5 @@
+/usr/bin/chromium: 9: [: 5225713664: unexpected operator
+[6:6:1110/184831.934093:FATAL:chrome/browser/process_singleton_posix.cc:297] Check failed: . socket() failed: Operation not permitted (1)
+[1110/184831.934296:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+[28:28:0100/000000.000836:ERROR:content/zygote/zygote_linux.cc:662] write: Broken pipe (32)
+[27:27:0100/000000.012700:ERROR:content/zygote/zygote_linux.cc:662] write: Broken pipe (32)

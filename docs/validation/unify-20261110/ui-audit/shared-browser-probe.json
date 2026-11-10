@@ -1,0 +1,19 @@
+{
+  "path": "supported cloud CUA Browser",
+  "browser": "Chrome cdp",
+  "url": "http://127.0.0.1:37787/tests/browser-matrix-identity.html",
+  "tabId": "3",
+  "result": "net::ERR_CONNECTION_REFUSED",
+  "rawToolResult": "Browser Use cannot open http://127.0.0.1:37787/tests/browser-matrix-identity.html in tab 3. Browser reported: net::ERR_CONNECTION_REFUSED",
+  "retry": "none; stopped this path",
+  "cuaCompletionSummary": "已确认隔离页面连接失败",
+  "serverSession": 4795,
+  "serverCleanup": "write_stdin Ctrl-C returned exit 130",
+  "pixelsAccepted": false,
+  "scrollAccepted": false,
+  "actualHostAccepted": false,
+  "androidAccepted": false,
+  "evidenceRecordedUTC": "2026-11-10T09:55:37.706852+00:00",
+  "observedBeforeUTC": "2026-11-10T09:52:01Z",
+  "observationTiming": "Exact browser-call clock was not sampled; preceding tool sequence proves observation occurred before the listed actual UTC clock read."
+}

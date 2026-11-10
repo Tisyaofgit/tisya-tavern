@@ -1,0 +1,15 @@
+{
+  "recorded_utc": "2026-11-10T10:06:48.299800+00:00",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.13",
+  "files": [
+    "package.json",
+    "package-lock.json",
+    "manifest.json",
+    "layout.js",
+    "shell.css",
+    "README.md"
+  ],
+  "status": "prepared_not_published",
+  "release_gate_correction_utc": "2026-11-10T10:25:37.293109+00:00",
+  "original_failure": "full-regression-final.log"
+}

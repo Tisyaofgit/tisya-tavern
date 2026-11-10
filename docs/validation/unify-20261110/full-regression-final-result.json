@@ -1,0 +1,21 @@
+{
+  "command": [
+    "npm",
+    "test"
+  ],
+  "start_utc": "2026-11-10T10:22:26.650711+00:00",
+  "end_utc": "2026-11-10T10:24:56.969100+00:00",
+  "exit_code": 1,
+  "log": "/workspace/scratch/c04f833f6bb3/resume-evidence/full-regression-final.log",
+  "counts": {
+    "tests": 2033,
+    "suites": 0,
+    "pass": 2032,
+    "fail": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "existing_source_files_changed_during_run": [],
+  "tested_source_exact": true
+}

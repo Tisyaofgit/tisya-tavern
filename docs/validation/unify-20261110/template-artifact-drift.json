@@ -1,0 +1,15 @@
+{
+  "utc": "2026-11-10T10:27:43.160199+00:00",
+  "status": "stale-before-regeneration",
+  "checks": [
+    {
+      "file": "templates/world-form.json",
+      "matches_current_factory": false
+    },
+    {
+      "file": "templates/character-form.json",
+      "matches_current_factory": false
+    }
+  ],
+  "finding": "Current authoring guide still requested nested model JSON and static plan artifacts no longer matched the canonical factory. Builder now covers all canonical plan and guide outputs."
+}

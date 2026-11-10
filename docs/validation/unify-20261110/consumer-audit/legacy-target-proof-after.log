@@ -1,0 +1,17 @@
+{
+  "rejected": true,
+  "message": "不能证明当前值仍是所选人物的旧迁移整段原文，未改动用户字段",
+  "oldWriterRequestHashVerified": true,
+  "fixedGitWriter": {
+    "repository": "Tisyaofgit/tisya-tavern",
+    "commit": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+    "path": "engine/identity.mjs",
+    "requestWriterEquivalenceVerified": true,
+    "wholeFileEqual": false
+  },
+  "actualLegacyDossier": "2401d010-a6c9-411a-a33f-a0a4720ec573",
+  "unrelatedUniqueTextDossier": "88416477-c7ea-446c-9625-c504f02d7ba1",
+  "databaseUnchanged": true,
+  "configurationUnchanged": true,
+  "sourceBooksUnchanged": true
+}

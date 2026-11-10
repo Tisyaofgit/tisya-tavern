@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions
+ok 1 - actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions
+  ---
+  duration_ms: 88.589438
+  type: 'test'
+  ...
+# Subtest: real foundation initialization snapshots contractor, card and bound books into the final native request
+ok 2 - real foundation initialization snapshots contractor, card and bound books into the final native request
+  ---
+  duration_ms: 265.432649
+  type: 'test'
+  ...
+# Subtest: history final request retains supplied story time and the confirmed-source policy
+ok 3 - history final request retains supplied story time and the confirmed-source policy
+  ---
+  duration_ms: 360.483541
+  type: 'test'
+  ...
+# Subtest: actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence
+ok 4 - actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence
+  ---
+  duration_ms: 217.252418
+  type: 'test'
+  ...
+# Subtest: actual source slot disabled by order refuses dispatch instead of silently dropping card evidence
+ok 5 - actual source slot disabled by order refuses dispatch instead of silently dropping card evidence
+  ---
+  duration_ms: 197.328498
+  type: 'test'
+  ...
+# Subtest: old source repair uses the existing typed identity form, reviewed diff and same entity transaction
+ok 6 - old source repair uses the existing typed identity form, reviewed diff and same entity transaction
+  ---
+  duration_ms: 2328.071921
+  type: 'test'
+  ...
+# Subtest: partial creation cannot be discarded and a cold identity view resumes its durable draft once
+ok 7 - partial creation cannot be discarded and a cold identity view resumes its durable draft once
+  ---
+  duration_ms: 2634.206552
+  type: 'test'
+  ...
+# Subtest: a source name collision leaves the reviewed creation editable and renaming saves the matching archive once
+ok 8 - a source name collision leaves the reviewed creation editable and renaming saves the matching archive once
+  ---
+  duration_ms: 1986.554106
+  type: 'test'
+  ...
+# Subtest: a source preflight rejection can be cancelled and cold reopening has no false pending creation
+ok 9 - a source preflight rejection can be cancelled and cold reopening has no false pending creation
+  ---
+  duration_ms: 947.063062
+  type: 'test'
+  ...
+# Subtest: only the bound world name changes its archive title while supporting character names stay independent
+ok 10 - only the bound world name changes its archive title while supporting character names stay independent
+  ---
+  duration_ms: 1658.92834
+  type: 'test'
+  ...
+# Subtest: an interrupted intent keeps its creation plan locked and resumes the same archive
+ok 11 - an interrupted intent keeps its creation plan locked and resumes the same archive
+  ---
+  duration_ms: 1840.743018
+  type: 'test'
+  ...
+# Subtest: an interrupted archive keeps its creation plan locked and resumes the same archive
+ok 12 - an interrupted archive keeps its creation plan locked and resumes the same archive
+  ---
+  duration_ms: 2255.199124
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15464.941138

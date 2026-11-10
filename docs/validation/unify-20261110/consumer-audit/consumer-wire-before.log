@@ -1,0 +1,75 @@
+✖ actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions (61.238473ms)
+✖ real foundation initialization snapshots contractor, card and bound books into the final native request (272.525147ms)
+✖ history final request retains supplied story time and the confirmed-source policy (185.77276ms)
+✔ actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence (194.012468ms)
+✔ actual source slot disabled by order refuses dispatch instead of silently dropping card evidence (191.451031ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1113.766034
+
+✖ failing tests:
+
+test at tests/matrix-consumer-wire.test.js:63:1
+✖ actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions (61.238473ms)
+  Error: 专用预设缺少来源资料槽：state
+      at taskMessages (file:///workspace/scratch/c04f833f6bb3/unify-release/tables/paired-preset.js:45:230)
+      at Object.request (file:///workspace/scratch/c04f833f6bb3/unify-release/config/host.js:172:13)
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-consumer-wire.test.js:65:15)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    responseDiagnostic: { request: { connection: 'native', model: null, source: 'openai', transport: 'off' } }
+  }
+
+test at tests/matrix-consumer-wire.test.js:73:1
+✖ real foundation initialization snapshots contractor, card and bound books into the final native request (272.525147ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   description: 'CONTRACTOR_WISH_SENTINEL {{literal}}',
+  -   descriptor: {
+  -     description: 'CONTRACTOR_STORED_DESCRIPTION',
+  -     position: 0
+  -   },
+  -   id: 'reader.png',
+  -   name: 'CONTRACTOR_NAME_SENTINEL',
+  -   storedName: 'CONTRACTOR_STORED_NAME'
+  - }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-consumer-wire.test.js:78:71)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { id: 'reader.png', name: 'CONTRACTOR_NAME_SENTINEL', description: 'CONTRACTOR_WISH_SENTINEL {{literal}}', descriptor: { description: 'CONTRACTOR_STORED_DESCRIPTION', position: 0 }, storedName: 'CONTRACTOR_STORED_NAME' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-consumer-wire.test.js:87:1
+✖ history final request retains supplied story time and the confirmed-source policy (185.77276ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'STORY_TIME_SENTINEL'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-consumer-wire.test.js:90:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'STORY_TIME_SENTINEL',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

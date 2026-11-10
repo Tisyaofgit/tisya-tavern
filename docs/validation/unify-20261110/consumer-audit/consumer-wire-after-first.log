@@ -1,0 +1,26 @@
+✔ actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions (87.05135ms)
+✔ real foundation initialization snapshots contractor, card and bound books into the final native request (264.857845ms)
+✖ history final request retains supplied story time and the confirmed-source policy (206.952168ms)
+✔ actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence (192.115897ms)
+✔ actual source slot disabled by order refuses dispatch instead of silently dropping card evidence (187.272852ms)
+✔ creation retains the full master reply and delivers native sources to their actual material slots (3.723484ms)
+✔ configuration, source initialization and history use the same registered reply with task-specific form profiles (3.72182ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1157.96324
+
+✖ failing tests:
+
+test at tests/matrix-consumer-wire.test.js:87:1
+✖ history final request retains supplied story time and the confirmed-source policy (206.952168ms)
+  SyntaxError [Error]: Unexpected token '我', "我推开渡口木门。" is not valid JSON
+      at JSON.parse (<anonymous>)
+      at slot (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-consumer-wire.test.js:19:14)
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/matrix-consumer-wire.test.js:91:15)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

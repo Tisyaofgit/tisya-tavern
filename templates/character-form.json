@@ -14,7 +14,7 @@
         "entity_id",
         "name"
       ],
-      "instruction": "名称只填写 T_CHAR_DOSSIER.name；M_FIELD_REFERENCES 以 owner_table=T_SYS_ENTITIES、owner_row_uuid=实体ID、owner_field=origin_record_ref、target_table=T_CHAR_DOSSIER、target_row_uuid=档案ID、reference_kind=record 建原点关联；entity.origin_record_ref 引用该关联行。"
+      "instruction": "人物名称和完整设定写入人物原点档案；程序建立主体及原点关联，不由模型重复建立人物注册。"
     },
     {
       "tableId": "T_CHAR_DOSSIER",
@@ -25,7 +25,8 @@
         "overall_physique",
         "scene_personality_desc",
         "manifest"
-      ]
+      ],
+      "instruction": "按当前完整字段逐项填写身份、外貌、性格、欲望、矛盾、面具、生活、表达、能力和边界；本领外显只写能力的实际表现。前史、关系与隐情分别使用关联子表。"
     },
     {
       "tableId": "T_DYN_CURRENCY_BALANCES",
@@ -42,11 +43,6 @@
       "tableId": "T_DYN_HOLDINGS_INVENTORY",
       "fields": [],
       "instruction": "关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。"
-    },
-    {
-      "tableId": "T_SYS_SOURCE_FRAGMENTS",
-      "fields": [],
-      "instruction": "保存作者原文、实际来源及摘要；定义变更与会话状态变更分开审查。"
     }
   ]
 }

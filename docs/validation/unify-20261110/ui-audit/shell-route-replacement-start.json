@@ -1,0 +1,12 @@
+{
+  "utc": "2026-11-10T09:55:50.138181+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-concurrency=1",
+    "--test-name-pattern=cold-start without a chat|cold-start source selection|cancels a staged persona",
+    "tests/shell.test.js"
+  ],
+  "cwd": "/workspace/scratch/c04f833f6bb3/unify-release",
+  "testSHA256": "54267810f50f2c06e7cf901f5844598efc6268e4d522b5f4e05f67d292d6dc23"
+}

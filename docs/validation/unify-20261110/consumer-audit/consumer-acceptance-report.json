@@ -1,0 +1,127 @@
+{
+  "utc": "2026-11-10T10:00:51.945832+00:00",
+  "beijing": "2026-11-10T18:00:51.945832+08:00",
+  "role": "consumer_acceptance",
+  "source_root": "/workspace/scratch/c04f833f6bb3/unify-release",
+  "scope": [
+    "UNIFY-CREATION wire assembly",
+    "UNIFY-ENTRY production index routing",
+    "UNIFY-CONSUMERS shared parser and legacy write boundary"
+  ],
+  "product_changes": [
+    {
+      "file": "tables/paired-preset.js",
+      "lines": [
+        39,
+        45
+      ],
+      "reason": "Native prompt enabled is optional; only explicit false excludes it, while the actual order must still enable the entry."
+    },
+    {
+      "file": "tables/slots.js",
+      "lines": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "reason": "Preserve foundation source contractor, worldTime and policy in the same simple-form material channels; retain nativeSources fallback only when the top-level field is absent."
+    }
+  ],
+  "fixed_findings": [
+    "Native prompts with omitted enabled and enabled native order refused creation with a missing state/card material slot.",
+    "Real foundation initialization captured contractor/persona but dropped it before the final native request.",
+    "Historical intake dropped explicit story time and the source confirmation policy before the final request."
+  ],
+  "verification": [
+    {
+      "log": "consumer-focused-first.log",
+      "result": "40 passed, 0 failed",
+      "scope": "six existing focused consumer, boundary and parser files before the fixes"
+    },
+    {
+      "log": "consumer-wire-before.log",
+      "result": "2 passed, 3 failed",
+      "scope": "five new real service-to-native-wire regressions before the fixes"
+    },
+    {
+      "log": "consumer-wire-after-first.log",
+      "result": "6 passed, 1 failed",
+      "scope": "two wire files; remaining failure was the new test helper parsing an intentionally raw-text HISTORY slot as JSON, retained verbatim"
+    },
+    {
+      "log": "consumer-wire-after.log",
+      "result": "45 passed, 0 failed",
+      "scope": "seven focused files after product fixes and corrected raw-text test reader"
+    },
+    {
+      "log": "consumer-wire-final.log",
+      "result": "5 passed, 0 failed",
+      "scope": "final wire tests after replacing a brittle exact-read-count assertion with bound-book scope assertions"
+    },
+    {
+      "log": "consumer-production-entry.log",
+      "result": "7 passed, 0 failed",
+      "scope": "actual index.js evaluated in happy-dom with isolated native hosts: legacy bypass, cold-start sources, Matrix lifecycle, disabled engine, failure preservation"
+    }
+  ],
+  "boundaries": {
+    "external_model_calls": false,
+    "user_data_access": false,
+    "android_device_test": false,
+    "real_browser_visual_test": false,
+    "runtime_bundle_rebuilt_by_this_agent": false,
+    "published_or_committed_by_this_agent": false,
+    "caution": "Counts describe these checked boundaries only; they do not mark the whole product or UNIFY stage complete."
+  },
+  "product_hashes": [
+    {
+      "path": "tables/paired-preset.js",
+      "sha256": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+      "bytes": 5757
+    },
+    {
+      "path": "tables/slots.js",
+      "sha256": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0",
+      "bytes": 5695
+    },
+    {
+      "path": "tests/matrix-consumer-wire.test.js",
+      "sha256": "49319a332223e4d4f3c6960caca09041a0c5741f72bca8d297650ce62c74f749",
+      "bytes": 11496
+    }
+  ],
+  "evidence_hashes": [
+    {
+      "path": "consumer-focused-first.log",
+      "sha256": "8074c212b18edd4d80e23218885556147143c0eab9be711068af0f081ac76b0d",
+      "bytes": 4874
+    },
+    {
+      "path": "consumer-production-entry.log",
+      "sha256": "83ab699d33e877012fd5c69a974bf0b23827c3097b344d0aebfa5858ea89ed10",
+      "bytes": 963
+    },
+    {
+      "path": "consumer-wire-after-first.log",
+      "sha256": "0ff4273b75003e6a7bbf892e2b496393278f82dda21be149e11c44f50c1c309c",
+      "bytes": 1614
+    },
+    {
+      "path": "consumer-wire-after.log",
+      "sha256": "9553c51685305cec036a7a74b9aaac5f6dfe658e3a833724be029b3c3e8a0a0e",
+      "bytes": 5446
+    },
+    {
+      "path": "consumer-wire-before.log",
+      "sha256": "6e809ba7c42cc90bae73050b4eadaf77d0df5949df66f0ab0046f2c6d787f0e5",
+      "bytes": 3591
+    },
+    {
+      "path": "consumer-wire-final.log",
+      "sha256": "ec2c507189bac1365787ab1f75fd51d570a5cc1aa688e6d08b89f776fd039d48",
+      "bytes": 692
+    }
+  ],
+  "remaining_handoff": "Root owns whole-source snapshot, one-blueprint/TODO update, runtime build, full regression and persistent save receipts. This file is local evidence pending that save."
+}

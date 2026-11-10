@@ -1,0 +1,27 @@
+{
+  "startUTC": "2026-11-10T10:02:52.583332+00:00",
+  "endUTC": "2026-11-10T10:03:08.143855+00:00",
+  "exitCode": 0,
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1",
+    "tests/matrix-identity-recovery-ui.test.js",
+    "tests/matrix-consumer-wire.test.js"
+  ],
+  "before": {
+    "engine/identity-ui.mjs": "249e1dfe58a01b6072cd61fe6229ea181174babe1628433b4fa50485d3250dfa",
+    "tables/paired-preset.js": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+    "tables/slots.js": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0",
+    "tests/matrix-identity-recovery-ui.test.js": "154abba24fd18e6fd25adab0f6da7850edd8572d70d3d7822e261f6395928461",
+    "tests/matrix-consumer-wire.test.js": "49319a332223e4d4f3c6960caca09041a0c5741f72bca8d297650ce62c74f749"
+  },
+  "after": {
+    "engine/identity-ui.mjs": "249e1dfe58a01b6072cd61fe6229ea181174babe1628433b4fa50485d3250dfa",
+    "tables/paired-preset.js": "db864c15a01e6aaee82266b11231d2ee065433de4f9890595543eb534501ce2b",
+    "tables/slots.js": "32c2b3bad2a9d1a570511b5dfc8b3849fa1a1e840a742475ee9cf7aa2d20a5d0",
+    "tests/matrix-identity-recovery-ui.test.js": "154abba24fd18e6fd25adab0f6da7850edd8572d70d3d7822e261f6395928461",
+    "tests/matrix-consumer-wire.test.js": "49319a332223e4d4f3c6960caca09041a0c5741f72bca8d297650ce62c74f749"
+  }
+}

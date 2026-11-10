@@ -1,0 +1,30 @@
+✔ cold-start without a chat opens unified identity and routes creation to the independent world start without writing (155.505359ms)
+✖ cold-start source selection opens the production assistant and archives reviewed fields before binding the saved character (883.76078ms)
+✔ Matrix identity production route cancels a staged persona switch and all mixed changes without writing them (1689.733097ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3248.656335
+
+✖ failing tests:
+
+test at tests/shell.test.js:755:1
+✖ cold-start source selection opens the production assistant and archives reviewed fields before binding the saved character (883.76078ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文与 \{\{user\}\} 保留/. Input:
+  
+  '基点书 · 资料来源世界基点书选择世界基点书首次基点首次基点角色条目选择角色条目【角色】初次角色 · 原文资料选择角色条目原文资料可交给助手提炼；已有规范表单可预览后用于当前聊天。来源条目和当前故事进度分别保存。'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c04f833f6bb3/unify-release/tests/shell.test.js:767:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '基点书 · 资料来源世界基点书选择世界基点书首次基点首次基点角色条目选择角色条目【角色】初次角色 · 原文资料选择角色条目原文资料可交给助手提炼；已有规范表单可预览后用于当前聊天。来源条目和当前故事进度分别保存。',
+    expected: /原文与 \{\{user\}\} 保留/,
+    operator: 'match',
+    diff: 'simple'
+  }

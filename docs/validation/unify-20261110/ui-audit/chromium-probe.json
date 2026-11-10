@@ -1,0 +1,13 @@
+{
+  "utc": "2026-11-10T09:48:32.014288+00:00",
+  "command": [
+    "/usr/bin/chromium",
+    "--headless",
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--dump-dom",
+    "data:text/html,<title>isolated-browser-probe</title><p id=\"ok\">ready</p>"
+  ],
+  "returncode": -6,
+  "output_has_marker": false
+}

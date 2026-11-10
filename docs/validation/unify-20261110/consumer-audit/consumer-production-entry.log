@@ -1,0 +1,15 @@
+✔ new configuration replaces legacy panels and preserves unsaved tag edits (478.645631ms)
+✔ an explicitly disabled engine rejects generation without reopening it or starting old tables (304.740093ms)
+✔ a manually selected foreign preset passes native input through without either retired generation writer (411.708334ms)
+✔ token count between a real start and its end completes the Matrix lifecycle once without legacy settlement (653.204405ms)
+✔ cold-start source selection opens the production assistant and archives reviewed fields before binding the saved character (3674.225296ms)
+✔ cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive (863.750121ms)
+✔ identity keeps native editing available when the existing database cannot be read and never creates old tables (300.457699ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7285.401784
