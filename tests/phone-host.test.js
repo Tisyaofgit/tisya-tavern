@@ -98,9 +98,10 @@ test('删除原生源回退手机投影，旧快照保留且不按当前值补',
  assert.equal(getDoc(f.service.getState().suite,'forum').items.length,2);assert.equal(f.service.getState().actions[0].status,'queued');assert.ok(f.service.snapshot(first.source.sourceId));assert.equal(f.service.snapshot('missing-source'),null);
 });
 
-test('prepare 后历史变化阻止本次注入；停止保留待发内容',async()=>{
- const f=await fixture();await f.service.dispatch({kind:'message',threadId:'forum',text:'不能丢的消息'});await f.host.begin();f.c.chat[0].mes='前情已编辑';f.c.chat.push(user('user-2'));
- await assert.rejects(f.host.directions(),code('PHONE_HISTORY_CHANGED'));await f.host.stopped();assert.equal(f.service.getState().actions[0].status,'failed');assert.equal(getDoc(f.service.getState().suite,'forum').items.at(-1).text,'不能丢的消息');
+test('prepare后离开初始化以前的历史会拒写；恢复原历史后待发内容仍可恢复',async()=>{
+ const f=await fixture();await f.service.dispatch({kind:'message',threadId:'forum',text:'不能丢的消息'});await f.host.begin();const old=f.c.chat[0].mes,saved=await f.engineStorage.get(f.c.chatMetadata[NS].chat_uid);f.c.chat[0].mes='前情已编辑';f.c.chat.push(user('user-2'));
+ await assert.rejects(f.host.directions(),code('PHONE_HISTORY_CHANGED'));await assert.rejects(f.host.stopped(),code('PHONE_DATABASE_DETACHED'));assert.deepEqual(await f.engineStorage.get(f.c.chatMetadata[NS].chat_uid),saved);
+ f.c.chat[0].mes=old;await f.host.recoverPending({confirmedEnded:true});assert.equal(f.service.getState().actions[0].status,'failed');assert.equal(getDoc(f.service.getState().suite,'forum').items.at(-1).text,'不能丢的消息');
 });
 
 test('缺少手机扩展不消费操作，原生正文保留且状态可恢复',async()=>{
@@ -119,6 +120,15 @@ test('自定义 reply/extra 标签规范化只供协议解析，来源仍使用�
   const source=raw(r.requestId,[r.actionId]).replaceAll('reply>','scene>').replaceAll('body>','prose>').replaceAll('extra>','appendix>');
   const m=assistant('assistant-2',source);f.c.chat.push(m);const expected=phoneSource(m);await f.host.finished({accepted:true});
   assert.ok(f.service.snapshot(expected.sourceId));assert.equal(m.mes,source);assert.equal(f.service.getState().actions[0].status,'received');
+ }finally{configureTags();}
+});
+
+test('自定义标签的错误ack保留精确原文及原文SHA，冷重开不改写失败证据',async()=>{
+ const f=await fixture(),r=await start(f);configureTags({reply:'scene',body:'prose',extra:'appendix'});
+ try{
+  const original=raw(r.requestId,['不属于本轮的操作']).replaceAll('reply>','scene>').replaceAll('body>','prose>').replaceAll('extra>','appendix>'),m=assistant('custom-rejected',original);f.c.chat.push(m);const source=phoneSource(m),result=await f.host.finished({accepted:true});assert.equal(result.failed,true);
+  const rejected=f.service.getState().rejectedSources[source.sourceId];assert.equal(rejected.error.code,'PHONE_ACK_SCOPE');assert.equal(rejected.raw,original);assert.equal(phoneSource(m,rejected.raw).sourceId,source.sourceId);assert.equal(m.mes,original);
+  const reopened=await currentPhoneHost({context:f.c,storage:f.engineStorage}),cold=createPhoneService({seed:seed(),contextKey:chatKey(f.c),storage:reopened.phoneStorage});await cold.init();assert.deepEqual(cold.getState().rejectedSources[source.sourceId],rejected);assert.equal(phoneSource(m,cold.getState().rejectedSources[source.sourceId].raw).candidate,source.candidate);
  }finally{configureTags();}
 });
 
@@ -174,7 +184,7 @@ test('被拒的坏JSON、错ack、错request与坏引用保留证据，冷重开
  for(const [name,makeRaw]of Object.entries(cases))await t.test(name,async()=>{
   const f=await fixture(),r=await start(f),original=makeRaw(r),m=assistant('bad-source',original);f.c.chat.push(m);
   const result=await f.host.finished({accepted:true}),source=phoneSource(m);assert.equal(result.failed,true);
-  const rejected=f.service.getState().rejectedSources[source.sourceId];assert.equal(rejected.requestId,r.requestId);assert.ok(rejected.error.message);assert.equal(m.mes,original);
+  const rejected=f.service.getState().rejectedSources[source.sourceId];assert.equal(rejected.requestId,r.requestId);assert.ok(rejected.error.message);assert.equal(rejected.raw,original);assert.equal(m.mes,original);
   assert.equal(f.service.getState().actions[0].status,'failed');assert.throws(()=>f.service.snapshot(source.sourceId),code('PHONE_SOURCE_REJECTED'));
   let seq=100;const cold=await currentPhoneHost({context:f.c,storage:f.engineStorage}),fresh=createPhoneService({seed:seed(),contextKey:chatKey(f.c),storage:cold.phoneStorage,now:()=>at,idFactory:()=>`retry-${++seq}`});await fresh.init();
   const host=createPhoneTurnHost({getContext:()=>f.c,phoneService:fresh,onError:e=>{throw e;}});

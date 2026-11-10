@@ -2,7 +2,7 @@ import {createCreationTasks} from './creation-task.mjs';
 import {ensurePhoneFormSchema} from './phone-form-contract.mjs';
 import {clone,digest,fail} from './common.mjs';
 import {parseReply,envelope} from './reply.mjs';
-import {prepareMatrixSheets as prepareCreationSheets,acceptMatrixSheets,sheetSections,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets as prepareCreationSheets,acceptMatrixSheets,sheetSections,matrixSheetReferenceGraph,validateMatrixProposal as validateCreationProposal} from '../tables/foundation/engine.js';
 import {readCreationTemplates,creationTemplateText} from './template-book.mjs';
 import {cardAIMaterials,bookAIMaterials} from '../tables/card-source.js';
 import {characterWorldbookScope} from '../tables/character-scope.js';
@@ -110,20 +110,35 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   }
   const input={formContract:'tisya.simple-form/1',databaseContract:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,sourcePolicy:'来源快照、历史和回执由提交服务记录；模板只提供内容要求，本次完整 reply 与简表规则决定输出。旧叙事来源首次结构化时须完整提炼原文；已有同一人物只复用其身份编号，不能把当前聊天运行值当成作者定义或仅存本轮补丁。',kind,mode,goal,source:explicitSource,nativeSources:aiSources(sources),forms:sheets.form,references:sheets.referenceText,template:templates?creationTemplateText(templates):''};
   input.conversation=messages;input.conversationPolicy='对话中的既有草稿可供修订，不是已保存事实；本轮继续按完整reply及简表输出新的可预览草稿。';
-  if(repairContext){input.repair={pending:clone(repairContext.acceptance.pending),warnings:clone(repairContext.acceptance.warnings??[]),accepted:(repairContext.acceptedRecords??[]).map(ref=>({...ref,values:clone(acceptedContext.get(ref.tableId+'#'+ref.recordId)??snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values??{})})),policy:'本轮只修复 pending 中的条目，保留给定分组标题；已接纳记录只供关联和上下文，禁止重写、重复输出或新增无关条目。可以只返回已修好的分组，未返回的待修原文会继续保留。未知表名只修正为已登记表名。优化建议不影响保存。'};input.conversationPolicy='仅继续待修条目；此前已接纳内容不是本轮输出目标。';}
+  if(repairContext){input.repair={pending:clone(repairContext.acceptance.pending),warnings:clone(repairContext.acceptance.warnings??[]),accepted:(repairContext.acceptedRecords??[]).map(ref=>({...ref,values:clone(acceptedContext.get(ref.tableId+'#'+ref.recordId)??snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values??{})})),policy:'本轮只修复 pending 中的条目，保留给定分组标题；已接纳记录只供关联和上下文，禁止重写、重复输出或新增无关条目。缺少真实依赖时可补建由待修条目的注册关联字段直接或间接引用的分组；其标题不得复用已接纳分组。可以只返回已修好的分组，未返回的待修原文会继续保留。未知表名只修正为已登记表名。优化建议不影响保存。'};input.conversationPolicy='仅继续待修条目及其必要依赖；此前已接纳内容不是本轮输出目标。';}
   onProgress({stage:'prepared',contextKey:snapshot.contextKey});
   const raw=await request('tableGenesis',JSON.stringify(input),{signal,onProgress});
   onProgress({stage:'validating',text:raw});
   let accepted;try{
    let cells,recordIds={};
    if(repairContext){
-    const pendingRows=clone(repairContext.acceptance.pending),returned=sheetSections(envelope(raw).blocks.cells??'',{tolerant:true}),patches=new Map(),unmatched=[];
-    for(const section of returned){check(!patches.has(section.heading),'修复回复重复输出同一分组：'+section.heading);if(pendingRows.some(row=>row.heading===section.heading))patches.set(section.heading,section);else unmatched.push(section);}
-    const unknown=pendingRows.filter(row=>!row.tableId&&!patches.has(row.heading));check(unmatched.length<=unknown.length,'修复回复包含已接纳或未授权的新条目；原待修保留');
-    for(const [index,section]of unmatched.entries()){const row=unknown[index];row.heading=section.heading;patches.set(section.heading,section);}
-    cells=pendingRows.map(row=>{recordIds[row.heading]=row.recordId;const section=patches.get(row.heading);return section?['【'+section.heading+'】',...section.lines].join('\n'):row.raw;}).join('\n');
+    const pendingRows=clone(repairContext.acceptance.pending),returned=sheetSections(envelope(raw).blocks.cells??'',{tolerant:true}),patches=new Map(),unmatched=[],seen=new Set();
+    for(const section of returned){check(!seen.has(section.heading),'修复回复重复输出同一分组：'+section.heading);seen.add(section.heading);if(pendingRows.some(row=>row.heading===section.heading))patches.set(section.heading,section);else{const prior=sheets.references.find(row=>row.display===section.heading);check(!prior||!(repairContext.acceptedRecords??[]).some(row=>row.tableId===prior.tableId&&row.recordId===prior.recordId),'修复回复包含已接纳或未授权的既有条目；原待修保留');unmatched.push(section);}}
+    const unknown=pendingRows.filter(row=>!row.tableId&&!patches.has(row.heading)),replacements=Math.min(unknown.length,unmatched.length);
+    for(let index=0;index<replacements;index++){const section=unmatched[index],row=unknown[index];row.heading=section.heading;patches.set(section.heading,section);}
+    const added=unmatched.slice(replacements),written=new Set();
+    cells=[...pendingRows.flatMap(row=>{recordIds[row.heading]=row.recordId;const section=patches.get(row.heading);if(section&&written.has(row.heading))return [];written.add(row.heading);return [section?['【'+section.heading+'】',...section.lines].join('\n'):row.raw];}),...added.map(section=>['【'+section.heading+'】',...section.lines].join('\n'))].join('\n');
+    const graph=matrixSheetReferenceGraph(sheets,cells),reachable=new Set(pendingRows.map(row=>row.heading)),queue=[...reachable];
+    while(queue.length){const heading=queue.shift();for(const dependency of graph.find(row=>row.heading===heading)?.dependencies??[])if(!reachable.has(dependency)){reachable.add(dependency);queue.push(dependency);}}
+    check(added.every(row=>reachable.has(row.heading)),'修复回复包含未授权的无关新条目；原待修保留');
    }
    accepted=acceptCreationSheets(sheets,snapshot,raw,{partial:true,recordIds,...(cells!==undefined?{cells}:{})});
+   if(repairContext)accepted.acceptance.warnings=[...new Map([...(repairContext.acceptance.warnings??[]),...accepted.acceptance.warnings].map(warning=>[typeof warning==='string'?warning:warning.message,clone(warning)])).values()];
+   if(sourceBooks?.reviewDefinitionGroups&&destination?.book&&accepted.proposal.matrix.changes.length){
+    const reviewed=await sourceBooks.reviewDefinitionGroups({changes:accepted.proposal.matrix.changes,groups:accepted.acceptance.accepted,destination,schema:snapshot.state.schema});guard();
+    accepted.acceptance.accepted=reviewed.acceptedGroups;accepted.acceptance.acceptedCount=reviewed.acceptedGroups.length;
+    accepted.acceptance.pending.push(...reviewed.pendingGroups.map(row=>({...row,errors:[{code:row.code,message:row.reason,field:row.field,dependency:row.dependency}]})));
+    accepted.proposal.matrix.changes=reviewed.changes;
+    const binding=accepted.proposal.matrix.binding,has=(tableId,recordId)=>reviewed.acceptedGroups.some(row=>row.tableId===tableId&&row.recordId===recordId);
+    if(binding&&!has('T_CHAR_DOSSIER',binding.dossierId)&&!has('T_STATIC_WORLDS',binding.worldId))delete accepted.proposal.matrix.binding;
+    else if(binding?.entityId&&!has('T_CHAR_DOSSIER',binding.dossierId))accepted.proposal.matrix.binding={worldId:binding.worldId};
+    else if(binding?.worldId&&!has('T_STATIC_WORLDS',binding.worldId))delete binding.worldId;
+   }
   }catch(cause){throw Object.assign(Error('创作回复或简表无法接纳：'+cause.message+'；原始返回已保留',{cause}),{rawResponse:raw,nativeSources:sources,sheetContext:sheets});}
   const proposal=accepted.proposal,result={format:CREATION_CONTRACT,replyContract:CREATION_REPLY_CONTRACT,operationId,identitySeed,kind,mode,goal,source:explicitSource,nativeSources:sources,nativeSourceDigest:digest(sources),proposal,acceptance:accepted.acceptance,rawResponse:raw,rawResponses:[...new Map([...(repairContext?.rawResponses??[]),...tasks.responses(identitySeed),{operationId,rawResponse:raw}].map(row=>[row.operationId,row])).values()],workbook:accepted.workbook,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,...(repairContext?{repairContext:clone(repairContext)}:{}),...(destination?{destination:clone(destination)}:{}),...(templates?{creationTemplates:templates}:{})};
   try{
@@ -158,7 +173,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   const source={kind:'creation',name:proposal.name,goal:draft.goal,binding:proposal.matrix.binding??null,explicitSource:clone(draft.source),nativeSources:clone(draft.nativeSources),nativeSourceDigest:draft.nativeSourceDigest,templateDigest:draft.creationTemplates?digest(draft.creationTemplates):null,...(draft.repairContext?{repairOf:draft.repairContext.operationId}:{})};
   let archivePlan,archiveReceipt,archiveInputDigest;
   try{
-   if(sourceBooks){const archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:clone(source)},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes:proposal.matrix.changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema,...(draft.acceptance?{groups:clone(draft.acceptance.accepted)}:{})};archiveInputDigest=digest(archiveInput);
+   if(sourceBooks){const archiveCreation=draft.recovery&&draft.archivePlan?.definition?.source?.creation?clone(draft.archivePlan.definition.source.creation):Object.fromEntries(Object.entries(source).filter(([key])=>!['nativeSources','explicitSource'].includes(key))),archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:archiveCreation},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes:proposal.matrix.changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema,...(draft.acceptance?{groups:clone(draft.acceptance.accepted)}:{})};archiveInputDigest=digest(archiveInput);
     if(draft.archiveInputDigest&&draft.archiveInputDigest!==archiveInputDigest){check(draft.archiveReceipt?.confirmed===false&&draft.archiveReceipt.status==='not-written','已写入或尚未确认写入结果的归档计划不能更换内容，请完成同一次提交');delete draft.archivePlan;delete draft.archiveReceipt;delete draft.archiveInputDigest;}
     archivePlan=draft.archiveInputDigest===archiveInputDigest&&draft.archivePlan?draft.archivePlan:await sourceBooks.prepareDefinitionArchive(archiveInput);guard();draft.archivePlan=clone(archivePlan);draft.archiveInputDigest=archiveInputDigest;
     await persistIntent(draft,snapshot);guard();
@@ -166,18 +181,20 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
    const repairContext=repairState({...draft,destination},{archiveReceipt,revision:draft.expectedRevision+1});
    source.repairContext=clone(repairContext);
    const saved=await database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:proposal.matrix.changes,source});
-   repairContext.revision=saved.revision;const remains=repairContext.acceptance.pending.length||repairContext.acceptance.warnings.length,persistenceError=tasks.rememberRepair(remains?repairContext:null);
-   return {...saved,repairContext,...(persistenceError?{persistenceError}:{}),...(archiveReceipt?{archiveReceipt,sourceArchive:clone(archiveReceipt.sourceArchive)}:{})};
+   repairContext.revision=saved.revision;const remains=repairContext.acceptance.pending.length||repairContext.acceptance.warnings.length,superseded=Object.values(saved.state?.runtime?.receipts??{}).some(receipt=>receipt.result?.source?.kind==='creation'&&receipt.result.source.repairOf===draft.operationId);
+   let currentRepair=repairContext,persistenceError;if(superseded){await pending();currentRepair=tasks.repair()??{...repairContext,acceptance:{...repairContext.acceptance,pending:[],warnings:[]}};}else persistenceError=tasks.rememberRepair(remains?repairContext:null);
+   return {...saved,repairContext:currentRepair,...(persistenceError?{persistenceError}:{}),...(archiveReceipt?{archiveReceipt,sourceArchive:clone(archiveReceipt.sourceArchive)}:{})};
   }catch(error){archivePlan??=error.archivePlan;archiveReceipt??=error.archiveReceipt;if(archivePlan){error.archivePlan=clone(archivePlan);draft.archivePlan=clone(archivePlan);}if(!archiveReceipt&&archivePlan)archiveReceipt={confirmed:false,status:'not-written',operationId:draft.operationId};if(archiveReceipt){error.archiveReceipt=clone(archiveReceipt);draft.archiveReceipt=clone(archiveReceipt);if(archiveReceipt.confirmed&&archiveInputDigest)draft.archiveInputDigest=archiveInputDigest;}error.draft=clone(draft);throw error;}
  }
  function form(draft){return draft.proposal.matrix.changes.map(change=>{const schema=draft.schema?.[change.tableId];return {tableId:change.tableId,recordId:change.recordId,label:schema?.label??change.tableId,name:change.values.name??change.values.label??'',fields:Object.entries(change.values).map(([key,value])=>({key,label:schema?.fields?.find(f=>f.key===key)?.label??key,type:schema?.fields?.find(f=>f.key===key)?.type??'TEXT',value:clone(value),state:change.states?.[key]??'known'}))};});}
  const draft=(goal,options={})=>tasks.run(goal,options,current=>generateDraft(goal,current));
  async function repair(input,{goal='只修复待办；保留已接纳条目',...options}={}){
   assertIdle();let context;
-  if(input?.draft){check(input.draft?.acceptance,'当前草稿没有分条校验结果');check(input.draft.proposal.matrix.changes.length===0,'请先核对并保存已通过条目，再修复剩余条目');context=repairState(input.draft);}
+  if(input?.draft){check(input.draft?.acceptance,'当前草稿没有分条校验结果');check(input.draft.proposal.matrix.changes.length===0,'请先核对并保存已通过条目，再修复剩余条目');context=repairState(input.draft);context.operationId=input.draft.repairContext?.operationId??input.draft.operationId;}
   else context=clone(input?.repairContext??input??tasks.repair());
   check(context?.contextKey&&context.identitySeed&&context.acceptance?.pending?.length,'当前没有待修条目；优化建议已保留');
   const snapshot=await database.read();check(snapshot?.contextKey===context.contextKey,'待修创作属于另一聊天');
+  check(!Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>receipt.result?.source?.kind==='creation'&&receipt.result.source.repairOf===context.operationId),'这份待修已有后续保存回执，请重新打开当前创作工作台');
   if(!input?.draft){const receipt=snapshot.state.runtime?.receipts?.[context.operationId];check(receipt?.result?.source?.kind==='creation','已接纳条目缺少当前聊天的确认回执');const stored=receipt.result.source.repairContext;check(stored&&digest(stored.acceptance)===digest(context.acceptance)&&stored.identitySeed===context.identitySeed,'待修上下文与已保存回执不一致，请重新打开创作工作台');context={...clone(stored),revision:snapshot.revision};}
   let source=clone(context.source);if(sourceBooks?.readSource&&source?.book&&source.uid!==undefined)source=await sourceBooks.readSource(source);
   return tasks.run(goal,{...options,messages:[],kind:context.kind,mode:'revise',source,destination:clone(context.destination),repairContext:context},current=>generateDraft(goal,current));

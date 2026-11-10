@@ -5,6 +5,7 @@ import {PHONE_TURN_KEY,phoneSource} from '../phone-turn-host.js';
 import {chatKey,NS} from '../engine/controller.mjs';
 import {fundedPhoneProfile} from './fixtures/phone-current.mjs';
 import {currentPhoneHost,matrixMemoryStorage} from './fixtures/phone-host-current.mjs';
+import {readPhoneDatabaseProfile} from '../engine/phone-database.mjs';
 
 const seed={accounts:{me:{name:'我',role:'self'},system:{name:'通知'}},documents:[{id:'inbox',kind:'inbox',title:'通知',visibility:'private',audience:['me'],author:'system',at:null,items:[]}]};
 function profile(world={},character={}){return fundedPhoneProfile({worldId:'test-world',world:{name:'有来源的世界',...world},character:{accounts:[{id:'main',name:'主账号',handle:'main',owned:true},{id:'other',name:'对方',handle:'other',owned:false,personId:'person-b'}],...character}});}
@@ -64,15 +65,16 @@ test('persistence failure keeps financial state, journal, pending list and origi
 });
 
 test('role/world binding switch refuses reseeding; style and application changes preserve all transactions',async()=>{
-  const {service}=await setup();await service.initLife(profile());await dispatch(service,'transfer-1','wallet.transfer',{to:'person-b',amount:50});
-  const original=service.readLife(),changed=profile({name:'世界新显示名',theme:{background:'#123456',accent:'#abcdef'},apps:['wallet','album'],appNames:{wallet:'新钱包名称'}});
-  await service.initLife(changed);assert.equal(cash(service.readLife().state),99950);assert.equal(service.readLife().world.theme.background,'#123456');
+  const {service,database}=await setup();await service.initLife(profile());await dispatch(service,'transfer-1','wallet.transfer',{to:'person-b',amount:50});
+  const original=service.readLife(),before=await database.snapshot(),config=Object.entries(before.state.tables.X_PHONE_WORLD_CONFIG).find(([,row])=>row.values.world_ref==='test-world')[0];
+  await database.host.commitDatabase({contextKey:before.contextKey,expectedRevision:before.revision,operationId:'phone-style-form-edit',changes:[{tableId:'T_STATIC_WORLDS',recordId:'test-world',values:{name:'世界新显示名'}},{tableId:'X_PHONE_WORLD_CONFIG',recordId:config,values:{theme_background:'#123456',theme_accent:'#abcdef',apps:['wallet','album'],appNames:{wallet:'新钱包名称'}}}]});await service.refresh();assert.equal(cash(service.readLife().state),99950);assert.equal(service.readLife().world.theme.background,'#123456');
   assert.deepEqual(service.readLife().initialization,original.initialization);
   assert.equal(service.readLife().world.name,'世界新显示名');assert.equal(service.readLife().bindingKey,original.bindingKey);assert.equal(service.readLife().state.config.appNames.wallet,'新钱包名称');
   const restored=importPhone(service.export());assert.equal(restored.life.world.name,'世界新显示名');assert.deepEqual(restored.life.initialization,original.initialization);
-  const otherWorld=profile();otherWorld.world.id='other-world';otherWorld.binding.world.worldId='other-world';await assert.rejects(service.initLife(otherWorld),/需要明确迁移/);
+  const current=readPhoneDatabaseProfile((await database.snapshot()).state,{worldId:'test-world',entityId:'person-a'});await service.initLife(current);assert.equal(cash(service.readLife().state),99950);
+  await assert.rejects(service.initLife({database:true,worldId:'other-world',entityId:'person-a'}),/所选表单世界或角色/);
   await assert.rejects(dispatch(service,'disabled','social.publish',{text:'不可发'}),/未开放/);
-  const other=profile();other.binding.persona='avatar-b';const before=service.export();await assert.rejects(service.initLife(other),/切回原世界/);assert.equal(service.export(),before);
+  const beforeSwitch=service.export();await assert.rejects(service.initLife({database:true,worldId:'test-world',entityId:'other-person'}),/所选表单世界或角色/);assert.equal(service.export(),beforeSwitch);
 });
 
 test('prepared native turn freezes life mutations and captures actual already-paid facts',async()=>{
@@ -128,7 +130,7 @@ test('native history truncation restores life before removed reply while preserv
 test('living weibo has one editable entity and an explicitly read-only suite projection',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'post-user','social.publish',{text:'同一个帖子',visibility:'public'});
   const post=service.readLife().state.social.posts[0],document=Object.values(service.getState().suite.documents).find(d=>d.meta?.lifeProjection?.entityId===post.id);
-  assert.ok(document);assert.equal(document.text,post.text);assert.equal(document.at,'2033-02-09T23:30:00.000Z');
+  assert.ok(document);assert.equal(document.text,post.text);assert.equal(document.at,null);assert.deepEqual(document.meta.lifeStoryTime,post.createdAt);assert.equal(service.readLife().state.clock.year,2033);
   assert.deepEqual(service.lifeRouteForDocument(document.id),{appId:'weibo',detail:post.id,bindingKey:service.readLife().bindingKey});
   await assert.rejects(service.dispatch({kind:'message',threadId:document.id,text:'第二份编辑'}),/只读正文投影/);
   await assert.rejects(service.applyLocal({blocks:[{type:'weibo',thread:document.id,text:'另改'}]}),/只读正文投影/);

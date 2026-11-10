@@ -129,3 +129,11 @@ test('combined target-table and target-record references participate in both arc
  const review=await f.books.reviewDefinitionGroups(request(changes,groups));assert.equal(review.acceptedGroups.length,0);assert.equal(review.pendingGroups.length,2);assert(review.pendingGroups.some(g=>g.field==='M_LIST_VALUES.target_row_uuid'));
  await assert.rejects(f.books.prepareDefinitionArchive(request(changes,groups)),/missing-person/);assert.equal(f.writes,0);
 });
+
+test('phone business-ID references resolve only a unique definition in the same world',async()=>{
+ for(const duplicateWorld of [false,true]){
+  const f=fixture(),worlds=['world-a','world-b'].map(recordId=>({tableId:'T_STATIC_WORLDS',recordId,values:{name:recordId}})),song={tableId:'X_MEDIA_SONGS',recordId:'song-row-a',values:{id:'song-business',world_ref:'world-a',title:'第一首'}},other={tableId:'X_MEDIA_SONGS',recordId:'song-row-b',values:{id:'song-business',world_ref:duplicateWorld?'world-a':'world-b',title:'另一世界同编号'}},playlist={tableId:'X_MEDIA_PLAYLISTS',recordId:'playlist-row',values:{world_ref:'world-a',name:'歌单',songIds:['song-business']}},changes=[...worlds,song,other,playlist],groups=changes.map(c=>group(c)),input=request(changes,groups),review=await f.books.reviewDefinitionGroups(input);
+  if(duplicateWorld){assert.equal(review.pendingGroups.length,1);assert.equal(review.pendingGroups[0].recordId,playlist.recordId);assert.match(review.pendingGroups[0].reason,/多个条目/);await assert.rejects(f.books.prepareDefinitionArchive(input),/唯一找到/);assert.equal(f.writes,0);}
+  else{assert.equal(review.pendingGroups.length,0);const receipt=await f.books.commitDefinitionArchive(await f.books.prepareDefinitionArchive(input));assert(receipt.confirmed);assert.equal(receipt.sourceArchive.entries.length,5);assert.equal(f.writes,1);}
+ }
+});

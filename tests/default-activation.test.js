@@ -115,9 +115,10 @@ test('explicit retry can recover a failed preset startup and binds only after su
 
 test('actual Matrix host shares automatic and form initialization without resetting an existing owner',async()=>{
  const {readFileSync}=await import('node:fs');const {createMatrixHost}=await import('../engine/host.mjs');const {matrixPreset}=await import('../engine/config.mjs');
+ const {PHONE_FORM_SCHEMAS}=await import('../engine/phone-form-contract.mjs');
  const f=fixture(),catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
  const host=createMatrixHost({getContext:()=>f.ctx,getSource:()=>matrixPreset(),loadCatalog:async()=>catalog,storage:f.storage,persistSettings:async()=>{},persistMetadata:async()=>{}});
- const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();assert.equal(database.contextKey,chatKey(f.ctx));assert.equal(Object.keys(database.state.schema).length,catalog.tables.length);assert.deepEqual(f.disk.get(first.id),before);
+ const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();assert.equal(database.contextKey,chatKey(f.ctx));assert.deepEqual(Object.keys(database.state.schema).sort(),[...new Set([...catalog.tables,...PHONE_FORM_SCHEMAS].map(t=>t.id))].sort());assert.deepEqual(f.disk.get(first.id),before);
  f.disk.delete(first.id);await assert.rejects(host.ensureDatabase(),e=>e.code==='ENGINE_STATE_MISSING');assert.equal(f.disk.size,0);
 });
 

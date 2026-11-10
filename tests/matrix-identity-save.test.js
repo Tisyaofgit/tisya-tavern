@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
+import {readFileSync} from 'node:fs';
+import {Runtime} from '../engine/runtime.mjs';
+import {initializeState} from '../engine/materials.mjs';
+const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
 import {mountMatrixIdentity} from '../engine/identity-ui.mjs';
 import {createStoryIdentity} from '../engine/identity.mjs';
 import {createConfiguration} from '../engine/config.mjs';
@@ -49,9 +53,11 @@ async function fixture({rolesUnavailable = false} = {}) {
  });
  const saveProfile = identity.saveProfile;
  identity.saveProfile = async next => {calls.profile++; return saveProfile(next);};
+ const runtime=new Runtime(initializeState(catalog));runtime.newRecord('T_CHAR_DOSSIER',{name:'已有角色'},'7');runtime.newRecord('T_SYS_ENTITIES',{kind:'character'},'7');
+ const database={read:async()=>({state:structuredClone(runtime.data),revision:0,contextKey:'chat-a'}),commit:async()=>{throw Error('本组身份范围测试不应写入人物档案');}};
  const roles = rolesUnavailable
-  ? {ensureBook: async () => {throw Error('世界书服务未连接');}, list: async () => {throw Error('世界书服务未连接');}}
-  : createStoryIdentity({config, getContext: () => ctx, getHelper: () => helper});
+  ? {database:true,ensureBook: async () => {}, list: async () => {throw Error('世界书服务未连接');}}
+  : createStoryIdentity({config, getContext: () => ctx, getHelper: () => helper,database});
  let view, closed = 0, native = 0;
  const mount = () => mountMatrixIdentity(window.document, root, {identity, config, roles, onClose: () => {assert.equal(view.requestLeave().allowed, true); closed++;}, onNative: () => {assert.equal(view.requestLeave().allowed, true); native++;}});
  view = mount(); await view.ready;
@@ -74,7 +80,7 @@ test('Matrix identity has one persistent save/cancel pair including unavailable 
    assert.deepEqual([...f.root.querySelector('footer').querySelectorAll('button')].map(node => node.textContent), ['取消修改', '保存']);
    assert.equal([...f.root.querySelectorAll('button')].filter(node => /保存|创建并绑定|继续完成身份切换|使用此用户身份/.test(node.textContent)).length, 1);
    assert.equal(f.view.state().dirty, false);
-   if (rolesUnavailable) assert.match(f.root.textContent, /基点书读取失败：世界书服务未连接/);
+   if (rolesUnavailable) assert.match(f.root.textContent, /当前表单暂不可读：世界书服务未连接/);
   } finally {await f.dispose();}
  }
 });
@@ -105,13 +111,13 @@ test('one save commits name, wish choices and existing role binding and reads th
   input(f, '[data-identity-wish]', '完整新心愿\n空格 与标点。');
   input(f, '[data-wish-option="W00"]', true, 'change');
   input(f, '[data-avatar-mode]', 'bound', 'change');
-  input(f, '[data-role-entry]', '7', 'change');
+  input(f, '[data-role-entry]', '7', 'change'); await f.view.settled();
   assert.deepEqual(f.calls, {settings: 0, config: 0, chat: 0, worldbook: 0, profile: 0});
   assert.equal(await f.view.saveDraft(), true);
   assert.equal(f.ctx.powerUserSettings.personas.a, '新的甲');
   assert.equal(f.ctx.powerUserSettings.persona_descriptions.a.description, '完整新心愿\n空格 与标点。');
   assert.deepEqual(f.config.read().story.play.choices.W, ['W00', 'W07']);
-  assert.deepEqual(f.config.read().story.userBinding, {book: '基点书', uid: 7});
+  assert.deepEqual(f.config.read().story.userBinding, {database:true,entityId:'7',dossierId:'7'});
   assert.equal(f.view.state().dirty, false);
   await f.reopen();
   assert.equal(f.root.querySelector('[data-identity-name]').value, '新的甲');
@@ -165,34 +171,14 @@ test('cancel discards every unsaved field without changing source data or creati
   input(f, '[data-identity-name]', '未存姓名'); input(f, '[data-identity-wish]', '未存心愿');
   input(f, '[data-wish-option="W00"]', true, 'change');
   input(f, '[data-avatar-mode]', 'ensemble', 'change');
-  input(f, '[data-role-name]', '新角色'); input(f, '[data-role-content]', '未存角色原文');
   assert.equal(await f.view.discardDraft(), true);
   assert.equal(f.root.querySelector('[data-identity-name]').value, '甲');
-  assert.equal(f.root.querySelector('[data-role-name]').value, '');
   assert.equal(f.root.querySelector('[data-avatar-mode]').value, 'unbound');
   assert.equal(f.root.querySelector('[data-wish-option="W00"]').checked, false);
   assert.deepEqual(f.calls, {settings: 0, config: 0, chat: 0, worldbook: 0, profile: 0});
  } finally {await f.dispose();}
 });
 
-test('creation requires explicit confirmation and validates the complete page before any persistent write', async () => {
- const f = await fixture();
- try {
-  input(f, '[data-identity-name]', '待存姓名'); input(f, '[data-role-name]', '待建角色');
-  assert.equal(await f.view.saveDraft(), false);
-  assert.equal(f.calls.profile, 0); assert.equal(f.calls.config, 0); assert.equal(f.calls.worldbook, 0);
-  input(f, '[data-role-content]', '完整角色原文');
-  assert.equal(await f.view.saveDraft(), false); assert.equal(f.calls.profile, 0);
-  input(f, '[data-role-create-confirm]', true, 'change');
-  assert.equal(await f.view.saveDraft(), true);
-  assert.equal(f.books.基点书.length, 2);
-  assert.equal(f.books.基点书[1].name, '【角色】待建角色');
-  assert.equal(f.books.基点书[1].content, '完整角色原文');
-  assert.equal(f.books.基点书[1].enabled, false);
-  assert.equal(f.config.read().story.userName, '待建角色');
-  assert.equal(f.root.querySelector('[data-role-name]').value, '');
- } finally {await f.dispose();}
-});
 
 test('partial profile success preserves the rest of the draft and retry does not write the profile twice', async () => {
  const f = await fixture();
@@ -210,24 +196,6 @@ test('partial profile success preserves the rest of the draft and retry does not
  } finally {await f.dispose();}
 });
 
-test('role creation followed by binding failure retains its exact source and safe retry creates no duplicate', async () => {
- const f = await fixture();
- try {
-  input(f, '[data-identity-wish]', '同次心愿');
-  input(f, '[data-role-name]', '重试角色'); input(f, '[data-role-content]', '原文不重建');
-  input(f, '[data-role-create-confirm]', true, 'change');
-  f.failBinding(true);
-  assert.equal(await f.view.saveDraft(), false);
-  assert.equal(f.books.基点书.length, 2); assert.equal(f.calls.worldbook, 1);
-  assert.match(f.root.querySelector('footer').textContent, /角色已保存.*绑定未完成/);
-  assert.equal(f.root.querySelector('[data-role-name]').value, '重试角色');
-  assert.equal(f.root.querySelector('[data-role-content]').value, '原文不重建');
-  f.failBinding(false);
-  assert.equal(await f.view.saveDraft(), true);
-  assert.equal(f.calls.profile, 1); assert.equal(f.calls.worldbook, 1); assert.equal(f.books.基点书.length, 2);
-  assert.equal(f.config.read().story.userName, '重试角色');
- } finally {await f.dispose();}
-});
 
 test('concurrent configuration changes reject the entire save before changing the native profile', async () => {
  const f = await fixture();
@@ -246,7 +214,7 @@ test('a chat switch during role preflight preserves drafts and cannot save them 
  const f = await fixture();
  try {
   input(f, '[data-identity-name]', '原聊天草稿'); input(f, '[data-avatar-mode]', 'bound', 'change');
-  input(f, '[data-role-entry]', '7', 'change');
+  input(f, '[data-role-entry]', '7', 'change'); await f.view.settled();
   const list = f.roles.list;
   f.roles.list = async book => {const rows = await list(book); f.ctx.chatId = 'chat-b'; return rows;};
   assert.equal(await f.view.saveDraft(), false);
@@ -276,7 +244,7 @@ test('unavailable role sources still allow the native identity draft to be saved
  try {
   input(f, '[data-identity-picker]', 'b', 'change'); await tick();
   assert.equal(f.active(), 'a'); assert.equal(await f.view.saveDraft(), true); assert.equal(f.active(), 'b');
-  assert.match(f.root.textContent, /基点书读取失败：世界书服务未连接/);
+  assert.match(f.root.textContent, /当前表单暂不可读：世界书服务未连接/);
  } finally {await f.dispose();}
 });
 
@@ -343,38 +311,4 @@ test('cancelling fresh edits does not force saving an existing legacy wish migra
  } finally {await f.dispose();}
 });
 
-test('a failed source read can be retried without clearing profile or creation drafts and saves to that exact source', async () => {
- const f = await fixture();
- try {
-  f.books.第二书 = []; await f.reopen();
-  input(f, '[data-identity-name]', '同页姓名'); input(f, '[data-identity-wish]', '同页心愿');
-  input(f, '[data-role-name]', '异源角色'); input(f, '[data-role-content]', '精确来源原文');
-  input(f, '[data-role-create-confirm]', true, 'change');
-  const list = f.roles.list; let sourceUnavailable = true;
-  f.roles.list = async book => {if (sourceUnavailable && book === '第二书') throw Error('第二书读取失败'); return list(book);};
-  input(f, '[data-role-book]', '第二书', 'change'); await f.view.settled();
-  assert.equal(f.root.querySelector('[data-role-book]').value, '第二书');
-  assert.equal(f.root.querySelector('[data-identity-name]').value, '同页姓名');
-  assert.equal(f.root.querySelector('[data-role-content]').value, '精确来源原文');
-  assert.equal(button(f.root, '重试读取资料来源').hidden, false);
-  assert.equal(await f.view.saveDraft(), false); assert.equal(f.calls.profile, 0); assert.equal(f.calls.worldbook, 0);
-  sourceUnavailable = false; await button(f.root, '重试读取资料来源').onclick();
-  assert.equal(await f.view.saveDraft(), true);
-  assert.equal(f.books.基点书.length, 1); assert.equal(f.books.第二书.length, 1);
-  assert.equal(f.books.第二书[0].content, '精确来源原文');
-  assert.equal(f.config.read().story.userBinding.book, '第二书');
- } finally {await f.dispose();}
-});
 
-test('a non-binding mode retains the explicitly selected source after save and reopen', async () => {
- const f = await fixture();
- try {
-  f.books.另一资料书 = []; await f.reopen();
-  input(f, '[data-avatar-mode]', 'generic', 'change');
-  input(f, '[data-role-book]', '另一资料书', 'change'); await f.view.settled();
-  assert.equal(await f.view.saveDraft(), true); await f.reopen();
-  assert.equal(f.config.read().story.userBinding, null);
-  assert.equal(f.root.querySelector('[data-avatar-mode]').value, 'generic');
-  assert.equal(f.root.querySelector('[data-role-book]').value, '另一资料书');
- } finally {await f.dispose();}
-});

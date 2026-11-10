@@ -4,6 +4,7 @@ from pathlib import Path
 import argparse, base64, datetime as dt, hashlib, json, re
 ROOT=Path(__file__).resolve().parents[1]
 IMPORT=re.compile(r"^import\s*\{([^}]+)\}\s*from\s*['\"]([^'\"]+)['\"];?",re.M)
+REEXPORT=re.compile(r"^export\s*\{([^}]+)\}\s*from\s*['\"]([^'\"]+)['\"];?",re.M)
 EXPORT=re.compile(r'^export\s+(?:async\s+)?(?:class|function|const|let|var)\s+([A-Za-z_$][\w$]*)',re.M)
 
 def main():
@@ -22,7 +23,17 @@ def main():
             dep=visit(path.parent/match[2]); binding=re.sub(r'\s+as\s+',':',match[1])
             imports.append('const {'+binding+'}='+dep+';')
         exports=EXPORT.findall(code)
-        code=IMPORT.sub('',code);code=re.sub(r'^export\s+(?=(?:async\s+)?(?:class|function|const|let|var)\b)','',code,flags=re.M)
+        for match in REEXPORT.finditer(code):
+            if not match[2].startswith(('./','../')):raise ValueError('External re-export')
+            dep=visit(path.parent/match[2])
+            for item in match[1].split(','):
+                if not item.strip():continue
+                binding=re.fullmatch(r'\s*([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?\s*',item)
+                if not binding:raise ValueError('Unsupported re-export binding: '+item)
+                # Return the dependency's binding directly; declaring another
+                # local would conflict with an existing import of the same name.
+                exports.append((binding[2] or binding[1])+':'+dep+'.'+binding[1])
+        code=IMPORT.sub('',code);code=REEXPORT.sub('',code);code=re.sub(r'^export\s+(?=(?:async\s+)?(?:class|function|const|let|var)\b)','',code,flags=re.M)
         if re.search(r'^\s*(?:import|export)\s',code,re.M):raise ValueError('Unsupported module syntax: '+path.name)
         name='__network_module_'+str(len(modules));modules[path]=name
         order.append((path,'const '+name+'=(()=>{\n'+ '\n'.join(imports)+'\n'+code+'\nreturn {'+','.join(exports)+'};\n})();'))

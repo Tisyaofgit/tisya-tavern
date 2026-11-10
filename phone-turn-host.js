@@ -29,7 +29,7 @@ function selectedPhoneSources(c,state){
   const candidate=sha256(m.text),sourceId=m.uid+':'+candidate;
   if(state?.rejectedSources?.[sourceId])continue;
   let requestId;
-  try{requestId=readPhoneRequestId(m.text);if(requestId)need(user?.extra?.[PHONE_TURN_KEY]?.requests?.some(r=>r.requestId===requestId),'PHONE_SOURCE_OWNERSHIP','手机回复未找到对应用户回合的归属记录；原状态已保留。');}catch(error){error.phoneReplyInvalid=true;error.phoneRejectedSource={sourceId,uid:m.uid,candidate};throw error;}
+  try{requestId=readPhoneRequestId(m.text);if(requestId)need(user?.extra?.[PHONE_TURN_KEY]?.requests?.some(r=>r.requestId===requestId),'PHONE_SOURCE_OWNERSHIP','手机回复未找到对应用户回合的归属记录；原状态已保留。');}catch(error){error.phoneReplyInvalid=true;error.phoneRejectedSource={sourceId,uid:m.uid,candidate,raw:m.text};throw error;}
   sources.push({sourceId,uid:m.uid,candidate,raw:normalizeEnvelope(m.text),requestId});
  }
  return sources;
@@ -117,7 +117,7 @@ export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isG
    // Reconciliation will settle a later explicit candidate adoption.
    await run.service.reconcile({chatKey:run.scope.key,sources:selected});
    await run.service.failTurn({requestId:run.request.requestId,error:{code:'PHONE_REPLY_MISSING',message:'正文已保留；本轮没有可接纳的手机扩展，待发操作仍保留。'}});
-  }catch(error){onError(error);try{const rejected=error.phoneRejectedSource??receiving,last=captureMessages(getContext()).filter(m=>m.role==='assistant').at(-1),lastSource=last?last.uid+':'+sha256(last.text):null;if(checkingReply&&error.phoneReplyInvalid&&rejected?.sourceId===lastSource&&run.bound&&matches(getContext(),run.scope)&&!run.service.getState().frames[rejected.sourceId])await run.service.rejectSource({...rejected,requestId:run.request.requestId,error});await run.service?.failTurn({requestId:run.request?.requestId,error:{code:error.code??'PHONE_ACCEPT_FAILED',message:error.message}});}catch(saveError){onError(saveError);}return {failed:true,error:{code:error.code,message:error.message}};
+  }catch(error){onError(error);try{const rejected=error.phoneRejectedSource??receiving,last=captureMessages(getContext()).filter(m=>m.role==='assistant').at(-1),lastSource=last?last.uid+':'+sha256(last.text):null;if(checkingReply&&error.phoneReplyInvalid&&rejected?.sourceId===lastSource&&run.bound&&matches(getContext(),run.scope)&&!run.service.getState().frames[rejected.sourceId])await run.service.rejectSource({...rejected,raw:last.text,requestId:run.request.requestId,error});await run.service?.failTurn({requestId:run.request?.requestId,error:{code:error.code??'PHONE_ACCEPT_FAILED',message:error.message}});}catch(saveError){onError(saveError);}return {failed:true,error:{code:error.code,message:error.message}};
   }finally{if(active===run)active=null;onChange();}
  }
  async function stopped(){const run=active;active=null;epoch++;if(run?.request)await run.service.failTurn({requestId:run.request.requestId,error:{code:'PHONE_TURN_STOPPED',message:'本轮生成已停止；手机操作保留，未消费未完成回复。'}});onChange();}

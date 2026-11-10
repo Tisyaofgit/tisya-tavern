@@ -9,7 +9,7 @@ import {appendContractorMessages} from '../communication.js';
 import {applyGeneration,generationValues,assertGeneration} from './generation.mjs';
 import {Controller,indexedStorage,chatKey,captureMessages,ensureMessages,NS,PROMPT_KEY} from './controller.mjs';
 import {Runtime} from './runtime.mjs';
-import {decodePhoneDatabase} from './phone-database.mjs';
+import {decodePhoneDatabase,restorePhoneDatabaseHistory} from './phone-database.mjs';
 import {importPhone} from '../phone-core.mjs';
 import {databaseSnapshotAtMessage} from './database-snapshot.mjs';
 import {reconcile,inversePatch} from './journal.mjs';
@@ -89,7 +89,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const bundle=await storage.get(meta.chat_uid);if(!bundle)return null;
   const hasIds=(c.chat??[]).every(m=>m.extra?.[NS]?.uid);const current=hasIds?reconcile(bundle,captureMessages(c)).bundle:bundle;
   let allowedOriginContextKeys=[];if(typeof c.chatMetadata?.main_chat==='string'&&c.chatMetadata?.integrity){const scope=JSON.parse(key),parent=JSON.stringify([scope[0],scope[1],c.chatMetadata.main_chat]);if((meta.origin_chat_keys??[]).includes(parent))allowedOriginContextKeys=(meta.origin_chat_keys??[]).filter(k=>{try{const a=JSON.parse(k);return a[0]===scope[0]&&a[1]===scope[1];}catch{return false;}});}
-  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+  const restored=restorePhoneDatabaseHistory(current.state,bundle.state,{contextKey:key,allowedOriginContextKeys});
+  return {state:clone(restored),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&!current.state.tables?.X_PHONE_BINDINGS?.['phone-current'],phoneActionReservations:clone(bundle.phone_action_reservations??{})};
  }
  async function readDatabaseSnapshot(input){const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS];if(!meta?.chat_uid||meta.owner_chat_key!==key)return null;const bundle=await storage.get(meta.chat_uid);return bundle?databaseSnapshotAtMessage(bundle,input,key):null;}
  async function ensureDatabase(){await ensureBound();return readDatabase();}
@@ -107,6 +108,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const {ctx:c,id,key}=await controller.identity();if(contextKey!==key)fail('CHAT_CHANGED','表单提交归属已变化');
   if(ensureMessages(c))await c.saveChat();const bundle=await storage.get(id);if(!bundle)fail('ENGINE_NOT_BOUND','请先接入本会话');
   const messages=captureMessages(c),current=reconcile(bundle,messages).bundle,request={operationId,contextKey,changes,schema,source},hash=digest(request),prior=bundle.database_operations?.[operationId];
+  const scope=JSON.parse(key),parent=typeof c.chatMetadata?.main_chat==='string'&&c.chatMetadata?.integrity?JSON.stringify([scope[0],scope[1],c.chatMetadata.main_chat]):null,origins=c.chatMetadata?.[NS]?.origin_chat_keys??[],allowedOriginContextKeys=parent&&origins.includes(parent)?origins.filter(origin=>{try{const value=JSON.parse(origin);return value[0]===scope[0]&&value[1]===scope[1];}catch{return false;}}):[];
+  current.state=restorePhoneDatabaseHistory(current.state,bundle.state,{contextKey:key,allowedOriginContextKeys});
   if(prior){if(prior.hash!==hash)fail('OPERATION_CONFLICT','同一操作ID不能替换内容');const receipt=current.state.runtime?.receipts?.[operationId];if(!receipt)fail('OPERATION_DETACHED','这项操作属于已离开的历史，不能搬到当前分支');return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,receipt:{...clone(receipt),replayed:true}};}
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision!==(bundle.local_revision??0))fail('SAVE_CONFLICT','表单已被另一页面更新，请刷新后重试');
   for(const action of source?.newPhoneActions??[]){const priorAction=bundle.phone_action_reservations?.[action.id];if(priorAction)fail('PHONE_LIFE_ACTION_BRANCH','这个操作ID已在旧历史中使用，不能搬到当前分支',{actionId:action.id});}

@@ -34,7 +34,7 @@ async function mount(f){
  return {w,root,ui,routes,pick,click,async close(){ui.dispose();await w.happyDOM.close();}};
 }
 test('narrative migration returns an extraction handoff and never fills manifest with a whole description',async()=>{
- const f=fixture(),source=await f.roles.readSource({book:'角色来源',uid:3}),handoff=await f.roles.previewSourceMigration(source);assert.equal(handoff.requiresExtraction,true);assert.equal(handoff.changes,undefined);assert.equal(handoff.source.content,source.content);assert.equal(f.writes,0);
+ const f=fixture(),source=await f.roles.readSource({book:'角色来源',uid:3}),handoff=await f.roles.previewSourceExtraction(source);assert.equal(handoff.requiresExtraction,true);assert.equal(handoff.changes,undefined);assert.equal(handoff.source.content,source.content);assert.equal(f.writes,0);
  await assert.rejects(f.roles.previewCreate({name:'阿青',content:'整段人物描述'}),/提炼/);await assert.rejects(f.roles.previewSourceImport(source),/提炼并归档/);await assert.rejects(f.roles.commitEdit(handoff),/草稿已改变/);assert.equal(f.writes,0);
 });
 test('canonical source import is previewed, uses source IDs and keeps evolved chat values on reuse',async()=>{
@@ -49,10 +49,12 @@ test('source changes and unrelated ID collisions cannot overwrite chat state',as
 test('database success and binding failure is recoverable without duplicate character creation',async()=>{
  const f=fixture(),source=await archive(f),draft=await f.roles.previewSourceImport(source),save=f.config.save;f.config.save=async()=>{throw Error('设置回应丢失');};await assert.rejects(f.roles.commitEdit(draft),error=>error.databaseReceipt?.confirmed===true);assert.equal(f.writes,1);f.config.save=save;await f.roles.commitEdit(draft);assert.equal(f.writes,1);assert.equal(f.config.read().story.userBinding.entityId,'person-entity');
 });
-test('legacy manifest correction requires the original migration receipt, exact unchanged data and explicit preview',async()=>{
- const f=fixture(),{source,raw,id}=await legacyImport(f),before=f.writes;
- const draft=await f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}});assert.equal(f.writes,before);assert(draft.diff.some(d=>d.field==='manifest'&&d.before===raw&&d.after===null));await f.roles.commitEdit(draft);assert.equal(f.snapshot.state.tables.T_CHAR_DOSSIER[id].states.manifest,'unset');assert.equal(f.commits.at(-1).source.previousValues.manifest,raw);assert.equal(f.commits.at(-1).source.rawEntry.content,source.content);assert.deepEqual(f.commits.at(-1).source.binding,{entityId:id,dossierId:id});
- f.snapshot.state.tables.T_CHAR_DOSSIER[id].values.manifest='用户后来明确填写的本领表现';f.snapshot.state.tables.T_CHAR_DOSSIER[id].states.manifest='known';await assert.rejects(f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}}),/不能证明/);
+test('book-only identity binding and legacy receipt repair are no longer exposed',async()=>{
+ const f=fixture(),{source}=await legacyImport(f),before=copy(f.snapshot),book=copy(f.saved.get(source.book));
+ assert.throws(()=>createStoryIdentity({config:f.config,getContext:()=>f.ctx}),/需要统一表单/);
+ assert.equal(f.roles.previewSourceRepair,undefined);assert.equal(f.roles.previewSourceMigration,undefined);
+ await assert.rejects(f.roles.previewSourceExtraction({...source,revisionTarget:{dossierId:'legacy-person'}}),/旧迁移目标已退役/);
+ assert.deepEqual(f.snapshot,before);assert.deepEqual(f.saved.get(source.book),book);
 });
 test('real identity source UI hands arbitrary-book prose to the assistant with exact UID and digest',async()=>{
  const f=fixture();f.saved.set('另一个世界的基点书',[{uid:77,name:'【角色】散文人物',content:'纯描述：住在山下，遇人先听再答。',enabled:false}]);const view=await mount(f);try{
@@ -66,27 +68,16 @@ test('real identity source preview requires confirmation and repeated adoption p
  }finally{await view.close();}
 });
 
-test('a reconstructed legacy request identifies its original person after manual edits and never adopts a copied manifest',async()=>{
- const f=fixture(),{source,raw,id}=await legacyImport(f);f.snapshot.state.tables.T_CHAR_DOSSIER[id].values.manifest='用户明确重写的本领表现';
- const unrelated=await f.roles.previewCreate({name:'另一人物',values:{manifest:raw}});await f.roles.commitEdit(unrelated);
- const before=copy(f.snapshot),settings=f.config.read(),book=copy(f.saved.get(source.book)),handoff=await f.roles.previewSourceMigration(source);
- assert.equal(handoff.mode,'revise');assert.equal(handoff.source.revisionTarget.dossierId,id);assert.equal(handoff.source.revisionTarget.entityId,id);assert.notEqual(handoff.source.revisionTarget.dossierId,unrelated.binding.dossierId);
- await assert.rejects(f.roles.previewSourceRepair({dossierId:unrelated.binding.dossierId,source,values:{public_identity:'不应写入'}}),/不能证明/);await assert.rejects(f.roles.previewSourceRepair({dossierId:id,source,values:{public_identity:'河口旅人'}}),/不能证明/);
- assert.deepEqual(f.snapshot,before);assert.deepEqual(f.config.read(),settings);assert.deepEqual(f.saved.get(source.book),book);
-});
-
-test('a new source with the same name stays an extension and receives no authority over an existing legacy person',async()=>{
- const f=fixture();await legacyImport(f);f.saved.get('角色来源').push({uid:4,name:'【角色】阿青',content:'另一份新人物的原文',enabled:false});const source=await f.roles.readSource({book:'角色来源',uid:4}),before=copy(f.snapshot),handoff=await f.roles.previewSourceMigration(source);
- assert.equal(handoff.mode,'extend');assert.equal(handoff.source.revisionTarget,undefined);assert.equal(handoff.source.uid,4);assert.deepEqual(f.snapshot,before);
-});
-
-for(const cause of ['source','receipt','context','duplicates'])test('legacy source routing refuses an unproven '+cause+' without changing records',async()=>{
- const f=fixture(),{source}=await legacyImport(f);
+for(const cause of ['unchanged','source','receipt','context','duplicates'])test('ordinary prose remains extractable without using old '+cause+' receipts as identity authority',async()=>{
+ const f=fixture(),{source,id}=await legacyImport(f);
+ f.snapshot.state.tables.T_CHAR_DOSSIER[id].values.manifest='用户明确填写的本领表现';
  if(cause==='source')f.saved.get(source.book)[0].content+='\n外部修改';
  if(cause==='receipt')f.snapshot.state.runtime.receipts['legacy-import'].request_sha256='0'.repeat(64);
- if(cause==='context')f.snapshot={...f.snapshot,contextKey:'copied-chat-without-original-context'};
+ if(cause==='context')f.snapshot={...f.snapshot,contextKey:'another-chat'};
  if(cause==='duplicates')await legacyImport(f,'duplicate-person','duplicate-import');
- const fresh=await f.roles.readSource(source),before=copy(f.snapshot),book=copy(f.saved.get(source.book)),settings=f.config.read();await assert.rejects(f.roles.previewSourceMigration(fresh),/回执无法核实|多个已迁移人物/);assert.deepEqual(f.snapshot,before);assert.deepEqual(f.saved.get(source.book),book);assert.deepEqual(f.config.read(),settings);
+ const fresh=await f.roles.readSource(source),before=copy(f.snapshot),book=copy(f.saved.get(source.book)),settings=f.config.read(),handoff=await f.roles.previewSourceExtraction(fresh);
+ assert.equal(handoff.mode,'extend');assert.equal(handoff.source.revisionTarget,undefined);assert.equal(handoff.source.content,fresh.content);assert.deepEqual(handoff.destination,{book:fresh.book,uid:fresh.uid});
+ assert.deepEqual(f.snapshot,before);assert.deepEqual(f.saved.get(source.book),book);assert.deepEqual(f.config.read(),settings);
 });
 
 for(const equalValues of [false,true])test('an updated definition cannot borrow the previous source version receipt even when unrelated values are '+(equalValues?'equal':'different'),async()=>{

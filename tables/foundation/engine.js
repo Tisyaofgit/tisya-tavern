@@ -27,7 +27,7 @@ export function matrixSheetReferenceGraph(context,text){
  const rows=sheetSections(text,{tolerant:true}).map(section=>{
   const existing=context.references.find(r=>r.display===section.heading),label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=[];
   if(template){const fields=template.fields.map((field,index)=>({...field,row:index+1}));for(const line of section.lines)try{const parsed=sheetFieldText(line,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
-  return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??'',raw,diagnostics,dependencies:[]};
+  return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??existing?.name??'',raw,diagnostics,dependencies:[]};
  });
  const table=raw=>context.catalog.templates.find(t=>t.id===raw||t.label===raw)?.id??raw;
  for(const row of rows){const dependencies=new Set();for(const [key,raw]of Object.entries(row.raw)){
@@ -308,7 +308,7 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=fa
  });
  const graph=matrixSheetReferenceGraph(context,blocks.cells??'');for(const entry of entries)entry.dependencies=graph.find(row=>row.heading===entry.heading)?.dependencies??[];
  const pending=[],remaining=[];
- const reject=(entry,error)=>{const location=error.formLocation??{};pending.push({...clone(entry),reason:error.message,field:location.label??location.field??'',rawValue:location.rawValue??'',errors:[{message:error.message,code:error.code??'MATRIX_CREATION',...clone(location)}],...(error.reference?{dependency:error.reference}:{})});};
+ const reject=(entry,error)=>{const location=error.formLocation??{};pending.push({...clone(entry),reason:error.message,field:location.label??location.field??'',...(location.rawValue!==undefined?{rawValue:location.rawValue}:{}),errors:[{message:error.message,code:error.code??'MATRIX_CREATION',...clone(location)}],...(error.reference?{dependency:error.reference}:{})});};
  if(!entries.length)reject({key:stableId(context.operationId+'|empty'),heading:'未提供表单',tableId:null,recordId:stableId(context.operationId+'|empty-record'),raw:blocks.cells??'',lines:[],records:[]},Error('回复没有可读取的表单条目'));
  for(const entry of entries)if(counts.get(entry.heading)>1)reject(entry,Error('分组重复，须合并为一份记录：'+entry.heading));else remaining.push(entry);
  let result=null;
@@ -347,7 +347,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  }
  if(partition){for(const [index,selection]of selections.entries())try{const ticket=engine.requestWorkbook([selection]);engine.accept(ticket.token,['【'+sections[index].heading+'】',...sections[index].lines].join('\n'));}catch(error){error.formLocation??={heading:sections[index].heading};throw error;}}
  else {const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));}
- for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??previous?.name??previous?.label??previous?.title??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
+ for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??previous?.name??previous?.label??previous?.title??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  // Build the canonical actor links before resolving references to newly created
  // people. These IDs are private to this draft and stable across save retries.
  const generated=[],actors=[];
@@ -356,6 +356,14 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   let existingEntity;if(row.existing)existingEntity=Object.entries(snapshot.state.tables.T_SYS_ENTITIES??{}).find(([,e])=>{const ref=snapshot.state.tables.M_FIELD_REFERENCES?.[e.values.origin_record_ref]?.values;return ref?.target_table===row.tableId&&ref.target_row_uuid===row.recordId;});
   const entityId=existingEntity?.[0]??stableId(context.operationId+'|actor|'+row.recordId),values={};const has=k=>schema.fields.some(f=>f.key===k&&!f.read_only&&!f.alias_of);if(has('kind'))values.kind='character';if(has('name'))values.name=row.name;
   if(!existingEntity&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});}
+  if(partition&&existingEntity){
+   const link=existingEntity[1].values.origin_record_ref,ref=snapshot.state.tables.M_FIELD_REFERENCES?.[link]?.values;
+   check(existingEntity[1].values.kind==='character'&&ref?.owner_table==='T_SYS_ENTITIES'&&ref.owner_row_uuid===entityId&&ref.owner_field==='origin_record_ref','既有人物的稳定身份引用不一致');
+   // Identity coordinates are reusable; live character attributes are not an
+   // author definition and must never be silently copied into the worldbook.
+   generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values:{kind:'character',origin_record_ref:link}});
+   generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});
+  }
   if(!existingEntity)generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values});actors.push({tableId:'T_SYS_ENTITIES',recordId:entityId,name:row.name,display:(schema.label??'主体')+'／'+row.name,dossierId:row.recordId});
   if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}
  }

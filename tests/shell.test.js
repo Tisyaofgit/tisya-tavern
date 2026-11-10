@@ -813,33 +813,28 @@ test('manual preset navigation protects identity edits and does not reactivate T
  }finally{await f.w.happyDOM.abort();}
 });
 
-test('cold-start origin recovery remains on the new form and refuses to initialize a missing legacy archive',async()=>{
+test('cold-start identity omits retired origin recovery and preserves existing native and form data',async()=>{
  const f=await setupIdentityRoute({cold:true,nativePresets:true}),d=f.w.document;
  try{
   const original=structuredClone(f.ctx.powerUserSettings),page=await openIdentityFromSettings(f),before=await f.w.Tisya.matrix.readDatabase();
-  assert(page.querySelector('[data-legacy-origins]'));
-  await pressRouteButton(f,page,'核对未完成的原点绑定');
-  assert.equal(d.querySelector('#tisya-user-page'),page);assert.equal(page.querySelector('.tisya-user'),null);
+  assert.equal(page.querySelector('[data-legacy-origins]'),null);
+  assert.equal(page.querySelector('[data-origin-reviewed]'),null);
+  assert.equal([...page.querySelectorAll('button')].some(b=>/核对未完成的原点绑定/.test(b.textContent)),false);
+  assert(page.querySelector('[data-identity-wish]'));assert(page.classList.contains('tisya-matrix-identity'));
   assert.deepEqual(f.ctx.powerUserSettings,original);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);
-  await pressRouteButton(f,page,'保存');
-  assert.match(page.querySelector('.tisya-settings-actions [role="alert"]').textContent,/没有可恢复的旧原点绑定/);
-  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
-test('explicit legacy origin targets preview on the unified identity form without writing old or new records',async()=>{
+test('explicit retired origin target cannot invoke the removed recovery adapter or write either data owner',async()=>{
  const f=await setupIdentityRoute(),d=f.w.document;
  try{
-  const ref={book:'旧原点书',originId:'origin-a',id:'person-a',rev:3},seen=[],before=await f.w.Tisya.matrix.readDatabase();
-  f.w.tableService.previewIdentityOrigin=async value=>{
-   seen.push(structuredClone(value));
-   return {format:'tisya.origin-persona/1',personaId:'native-a',name:'旧原点人物',description:'固定第三版的原文',reference:ref,world:'world-a',chat:f.ctx.chatId,before:{id:'native-a',name:'原身份',description:'原心愿'},originStamp:'fixed-revision-3'};
-  };
+  const ref={book:'旧原点书',originId:'origin-a',id:'person-a',rev:3},seen=[],before=await f.w.Tisya.matrix.readDatabase(),native=structuredClone(f.ctx.powerUserSettings);
+  f.w.tableService.previewIdentityOrigin=async value=>{seen.push(structuredClone(value));throw Error('retired origin adapter must remain unreachable');};
   f.w.requestedOrigin=ref;await f.w.eval('openIdentity(window.requestedOrigin)');await settleIdentityRoute(f);
   const page=d.querySelector('#tisya-user-page');assert(page.classList.contains('tisya-matrix-identity'));assert.equal(page.querySelector('.tisya-user'),null);
-  assert.deepEqual(seen,[ref]);assert.match(page.querySelector('[data-legacy-origins]').textContent,/固定第三版的原文/);
-  assert(page.querySelector('[data-origin-reviewed]'));assert.equal(f.ctx.powerUserSettings.personas['native-a'],'原身份');
-  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(seen,[]);assert.equal(page.querySelector('[data-legacy-origins]'),null);assert.equal(page.querySelector('[data-origin-reviewed]'),null);
+  assert.deepEqual(f.ctx.powerUserSettings,native);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
  }finally{
   const page=d.querySelector('#tisya-user-page');if(page)await pressRouteButton(f,page,'取消修改');
   f.w.eval('clearNotebook()');await f.w.happyDOM.abort();

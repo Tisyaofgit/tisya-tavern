@@ -48,7 +48,7 @@ export function phoneFormReference(table,key){return refs[table]?.[key]??(key===
 // registered above may resolve such an ID, and only in their declared table and
 // world. Ordinary REF fields still require the exact canonical record ID.
 export function phoneFormReferenceCandidates(state,{tableId,recordId,field,target,value}){
- const declared=phoneFormReference(tableId,field),targets=Array.isArray(declared)?declared:[declared];
+ const declared=phoneFormReference(tableId,field)??PHONE_FORM_LIST_REFERENCES[tableId]?.[field],targets=Array.isArray(declared)?declared:[declared];
  if(!target?.startsWith('X_')||!targets.includes(target))return null;
  const world=state.tables?.[tableId]?.[recordId]?.values?.world_ref;
  return Object.entries(state.tables?.[target]??{}).filter(([id,row])=>(id===value||row.values?.id===value)&&(!world||!row.values?.world_ref||row.values.world_ref===world)).map(([id])=>id);

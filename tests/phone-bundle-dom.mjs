@@ -8,7 +8,9 @@ import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {Window} from 'happy-dom';
 import {createPhoneService} from '../phone-core.mjs';
-import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
+import {fundedPhoneProfile} from './fixtures/phone-current.mjs';
+import {currentPhoneHost} from './fixtures/phone-host-current.mjs';
+import {chatKey} from '../engine/controller.mjs';
 
 const htmlPath=resolve(process.env.PHONE_BUNDLE_HTML??'phone.html');
 const reportPath=resolve(process.env.PHONE_BUNDLE_REPORT??'phone-bundle-dom-report.json');
@@ -43,7 +45,10 @@ async function load({host=null,url='http://localhost/phone.html',frozen=false}={
 
 test('delivered HTML has closed assets/modules and boots all 17 entry points',async()=>{
   assert.ok(!/<script\b[^>]*\bsrc=|<link\b[^>]*\bhref=/i.test(html));
-  for(const [,url]of html.matchAll(/url\(\s*['"]?([^)'"\s]+)['"]?\s*\)/g))assert.ok(url.startsWith('data:')||url.startsWith('#'),'external CSS asset '+url);
+  // Inspect delivered markup/CSS, not JavaScript template expressions for
+  // user-selected media URLs. Actual runtime fetches are trapped by load().
+  const markup=html.replace(matches[0][0],'');
+  for(const [,url]of markup.matchAll(/url\(\s*['"]?([^)'"\s]+)['"]?\s*\)/g))assert.ok(url.startsWith('data:')||url.startsWith('#'),'external CSS asset '+url);
   const f=await load();assert.equal(f.root.querySelectorAll('.phone-app-grid>.phone-app').length,17);assert.equal(f.win.document.querySelectorAll('script[src]').length,0);assert.ok(f.root.textContent.includes('独立预览'));f.close();results.push('inline-native-ESM boot + 17 apps + no external dependencies');
 });
 
@@ -64,13 +69,12 @@ test('delivered frozen URL takes only the accepted bundle snapshot and stays rea
 });
 
 test('delivered life URL mounts configured wallet and commits its real form through host service',async()=>{
- let saved=null;const key='bundle-life',service=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:key,storage:{load:async()=>saved,save:async value=>{saved=structuredClone(value);return true;}}});await service.init();
- const world=parsePhoneWorld('<手机世界>'+JSON.stringify({格式:'缇斯亚手机世界/1',世界编号:'bundle-world',名称:'打包世界',应用:['wallet','album'],应用名称:{wallet:'打包银行'},时间:{起点:'2033-05-01T12:00:00+08:00'},结算归属:'手机账本',货币:{名称:'星币',符号:'¤'}})+'</手机世界>');
- const character=parsePhoneCharacter('<手机初态>'+JSON.stringify({格式:'缇斯亚手机角色/1',角色编号:'bundle-person',姓名:'打包角色',钱包:{账户:[{编号:'cash',名称:'零钱',余额:10000}],默认付款账户:'cash'},联系人:[{编号:'friend',名称:'朋友'}]})+'</手机初态>');
- await service.initLife({world,character,binding:{world:{book:'world',uid:1},character:{book:'base',uid:2}}});
+ const context={chatId:'bundle-life',characterId:0,groupId:null,chat:[],chatMetadata:{}},key=chatKey(context);
+ const profile=fundedPhoneProfile({worldId:'bundle-world',personId:'bundle-person',world:{name:'打包世界',apps:['wallet','album'],appNames:{wallet:'打包银行'},currency:{name:'星币',symbol:'¤',minorUnits:2}},character:{name:'打包角色',wallet:{accounts:[{id:'cash',name:'零钱',balance:10000}],defaultAccountId:'cash',fundingAccountId:'cash'},contacts:[{id:'friend',name:'朋友'}]}});
+ const matrix=await currentPhoneHost({context,profile}),service=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:key,storage:matrix.phoneStorage});await service.init();await service.initLife(profile);
  const host={contextKey:()=>key,selectionKey:()=> 'same-selection',service:async()=>service,open:()=>{},openIdentity:()=>{}};
- const f=await load({host,url:'http://localhost/phone.html?chat='+key+'&app=wallet'});
- try{const shadow=f.app.getRoot();assert.match(shadow.querySelector('.bar-title').textContent,/打包银行/);assert.equal(f.win.localStorage.length,0);await f.app.handle('nav',{app:'wallet',tab:'transfer'});const form=shadow.querySelector('form[data-action="wallet.transfer"]');form.querySelector('[name="amount"]').value='1.25';form.querySelector('[name="to"]').value='friend';form.dispatchEvent(new f.win.Event('submit',{bubbles:true,cancelable:true}));await f.settle();assert.equal(service.readLife().state.wallet.accounts[0].balance,9875);assert.equal(saved.life.state.wallet.ledger.length,1);assert.equal(f.errors.length,0);results.push('exact bundled life URL + isolated shadow UI + real transfer form + host metadata service');}finally{f.close();}
+ const f=await load({host,url:'http://localhost/phone.html?chat='+encodeURIComponent(key)+'&app=wallet'});
+ try{const shadow=f.app.getRoot();assert.match(shadow.querySelector('.bar-title').textContent,/打包银行/);assert.equal(f.win.localStorage.length,0);await f.app.handle('nav',{app:'wallet',tab:'transfer'});const form=shadow.querySelector('form[data-action="wallet.transfer"]');form.querySelector('[name="amount"]').value='1.25';form.querySelector('[name="to"]').value='friend';form.dispatchEvent(new f.win.Event('submit',{bubbles:true,cancelable:true}));await f.settle();assert.equal(service.readLife().state.wallet.accounts[0].balance,9875);assert.equal((await matrix.read()).life.state.wallet.ledger.length,1);assert.equal(f.errors.length,0);results.push('exact bundled life URL + isolated shadow UI + real transfer form + current Matrix database service');}finally{f.close();}
 });
 
 after(async()=>{await writeFile(reportPath,JSON.stringify({utc:new Date().toISOString(),html:htmlPath,bytes:Buffer.byteLength(html),sha256:createHash('sha256').update(html).digest('hex'),inlineScriptSha256:createHash('sha256').update(source).digest('hex'),expectedGroups:4,passedGroups:results.length,groups:results,execution:'Exact delivered inline script, Node native vm.SourceTextModule in Happy DOM 20.14.5 window; parsed delivered HTML/CSS; actual controller events',limitations:['Happy DOM automatic ESM loader rejected a script accepted by node --check; native VM bypasses only that simulator module compiler.','Happy DOM Window lacks structuredClone; a test-only realm-local JSON-data clone shim is installed. This is not a full structuredClone API test.','No graphical browser, layout, Android, real-host session, or real-model call.'],command:'PHONE_BUNDLE_HTML=<path> node --experimental-vm-modules --test --test-reporter=tap phone-work/phone-bundle-dom.test.mjs'},null,2)+'\n');});

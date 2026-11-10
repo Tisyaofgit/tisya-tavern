@@ -384,6 +384,38 @@ export function acceptPhoneTurn(input,{sourceId,uid,candidate,raw,requestId,at,a
 
 export function phoneSnapshot(state,sourceId){const f=own(state.frames,sourceId)?state.frames[sourceId]:null;if(!f)return null;return {frame:clone(f),suite:projectSuiteAt(state.suite,f.branchId,f.eventCount),markers:clone(f.markers),...(f.lifeAfter?{life:clone(f.lifeAfter.life),lifeBoundary:clone(f.lifeAfter)}:{})};}
 
+// Restore evidence from the same persisted database bundle after its native
+// history projection rewinds. Current balances, selected sources and drafts
+// always come from the current projection; departed actions stay detached.
+export function mergePhoneHistory(current,previous){
+  if(!current||!previous)return current;
+  current=importPhone(current);previous=importPhone(previous);
+  scoped(previous,current.contextKey);
+  if(stableLife(current.suite.seed)!==stableLife(previous.suite.seed))fail('PHONE_HISTORY_CONFLICT','手机历史初态不一致，未借用其他来源');
+  if(current.lifeInitial&&previous.lifeInitial&&(current.lifeInitial.bindingKey!==previous.lifeInitial.bindingKey||(current.lifeInitial.mediaOriginContextKey??current.contextKey)!==(previous.lifeInitial.mediaOriginContextKey??previous.contextKey)))fail('PHONE_HISTORY_CONFLICT','手机历史属于另一世界或人物');
+  const next=clone(current),departedActions=new Set(),prefix=(a,b)=>a.length<=b.length&&a.every((value,index)=>stableLife(value)===stableLife(b[index]));
+  for(const [branchId,older]of Object.entries(previous.suite.branches)){
+    const active=next.suite.branches[branchId];
+    if(!active){next.suite.branches[branchId]=clone(older);continue;}
+    if(prefix(older.envelopes,active.envelopes))continue;
+    const alias='phone-history-'+databaseDigest({branchId,branch:active}).slice(0,20);
+    if(next.suite.branches[alias]&&stableLife(next.suite.branches[alias])!==stableLife(active))fail('PHONE_HISTORY_CONFLICT','手机历史分支身份冲突');
+    next.suite.branches[alias]=clone(active);next.suite.branches[branchId]=clone(older);
+    if(next.suite.activeBranch===branchId)next.suite.activeBranch=alias;
+    for(const [sourceId,frame]of Object.entries(next.frames))if(!previous.frames[sourceId])for(const field of ['branchId','beforeBranchId'])if(frame[field]===branchId)frame[field]=alias;
+    for(const [requestId,request]of Object.entries(next.requests))if(!previous.requests[requestId]&&request.branchId===branchId)request.branchId=alias;
+  }
+  for(const action of previous.actions)if(!next.actions.some(a=>a.id===action.id)){departedActions.add(action.id);next.actions.push({...clone(action),status:'detached',error:'这项操作属于已离开的剧情分支，原证据已保留'});}
+  for(const [requestId,request]of Object.entries(previous.requests))if(!next.requests[requestId])next.requests[requestId]={...clone(request),status:'failed',error:'该请求属于已离开的原生历史'};
+  for(const [sourceId,frame]of Object.entries(previous.frames)){if(next.frames[sourceId]&&stableLife(next.frames[sourceId])!==stableLife(frame))fail('PHONE_HISTORY_CONFLICT','同一手机来源的冻结证据已改变');next.frames[sourceId]??=clone(frame);}
+  next.rejectedSources??={};for(const [sourceId,rejected]of Object.entries(previous.rejectedSources??{})){if(next.frames[sourceId])fail('PHONE_HISTORY_CONFLICT','同一手机来源同时出现接纳与拒收证据');if(next.rejectedSources[sourceId]&&stableLife(next.rejectedSources[sourceId])!==stableLife(rejected))fail('PHONE_HISTORY_CONFLICT','同一失败来源的证据已改变');next.rejectedSources[sourceId]??=clone(rejected);}
+  if(previous.lifeEventLog&&next.lifeEventLog){for(const event of previous.lifeEventLog){const found=next.lifeEventLog.find(e=>e.envelopeId===event.envelopeId);if(found&&stableLife(found)!==stableLife(event))fail('PHONE_HISTORY_CONFLICT','同一生活事件的历史证据已改变');if(!found)next.lifeEventLog.push(clone(event));}}
+  const removedAccepted=previous.selectedSources.some(sourceId=>!next.selectedSources.includes(sourceId));
+  if(removedAccepted){refreshActionOwnership(next);for(const [requestId,request]of Object.entries(next.requests))if(request.status==='prepared'&&previous.requests[requestId]?.status==='accepted'&&!next.selectedSources.some(id=>next.frames[id]?.requestId===requestId)){request.status='failed';request.error='原回复已离开当前历史，待发内容尚未消费';}}
+  for(const action of next.actions)if(departedActions.has(action.id))action.status='detached';
+  return importPhone(exportPhone(next),{contextKey:current.contextKey});
+}
+
 export function reconcilePhone(input,sources,{at}={}){
   const parsed=sources.flatMap(s=>{const p=extractPhonePayload(s.raw??'');if(!p)return [];if(own(input.frames,s.sourceId)&&input.frames[s.sourceId].payloadSignature!==signature(p))fail('PHONE_SOURCE_CONFLICT','同一来源身份对应不同内容');return [{...s,requestId:s.requestId??p.requestId}];});
   const wanted=parsed.map(s=>s.sourceId);let common=0;while(common<wanted.length&&common<input.selectedSources.length&&wanted[common]===input.selectedSources[common])common++;
@@ -406,6 +438,10 @@ export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
     for(const actor of currentLife.state.social.accounts)state.suite.accounts[`${prefix}-actor-${encodeURIComponent(actor.id)}`]={name:actor.name,platform:'weibo',personId:actor.personId??actor.id};
   }
   const expected=createSuite(state.suite.seed);let rebuilt=expected;for(const envelope of state.suite.branches[state.suite.activeBranch].envelopes)rebuilt=applyEnvelope(rebuilt,envelope);
+  // These are derived network replay receipts, not financial action receipts.
+  // A native history rewind can retain an old coordinate; rebuild this index
+  // from the selected immutable envelope branch before projecting current rows.
+  state.suite.receipts=clone(rebuilt.receipts);
   const suiteChanged=stableLife([rebuilt.accounts,rebuilt.documents])!==stableLife([state.suite.accounts,state.suite.documents]);
   const lifeChanged=state.lifeEventLog&&stableLife(phoneLifeBoundary(state).life)!==stableLife(currentLife);
   if(suiteChanged||lifeChanged){
@@ -414,7 +450,7 @@ export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
     // applyEnvelope validates documents and authors before publishing the event.
     state.suite=applyEnvelope(state.suite,{id:envelopeId,blocks:[],databaseProjection:projection,source:{kind:'forms',revision}});
     if(currentLife){state.lifeEventLog??=[];state.lifeEventLog.push({envelopeId,kind:'database',bindingKey:currentLife.bindingKey,snapshot:currentLife,databaseRevision:revision});}
-    state.life=currentLife;
+    if(currentLife||state.lifeInitial)state.life=currentLife;
   }
   return JSON.parse(exportPhone(state));
 }
@@ -423,7 +459,7 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
   if(!storage||typeof storage.load!=='function'||typeof storage.save!=='function')fail('PHONE_STORAGE','缺少手机存储接口');
   let state=null,chain=Promise.resolve(),disposed=false;
   const assert=()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(!state)fail('PHONE_NOT_READY','手机尚未初始化');};
-  const enqueue=fn=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(fresh)state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
+  const enqueue=fn=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(!fresh)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，未把旧手机数据写回当前历史；请恢复原历史后继续');state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
   async function commit(next,kind='state'){
     assert();if(next===state)return state;
     const previous=state.revision;next.revision=previous+1;scoped(next,contextKey);
@@ -474,7 +510,7 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     prepareTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);const result=preparePhoneTurn(state,{...options,requestId:options.requestId??idFactory(),at:now()});if(result.changed)await commit(result.state,'turn-prepare');return {requestId:result.requestId,messages:result.messages};});},
     acceptTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);let r;try{r=acceptPhoneTurn(state,{...options,at:now()});}catch(error){error.phoneReplyInvalid=true;throw error;}await commit(r.state,'turn-accept');return {snapshot:r.snapshot,receipt:r.receipt};});},
     failTurn({requestId,error}){return enqueue(async()=>{assert();const next=clone(state),r=next.requests[requestId];if(!r)return;const reason=typeof error==='string'?error:error?.message??'本轮生成未完成';r.status='failed';r.error=reason;for(const a of next.actions)if(r.actionIds.includes(a.id)&&a.status==='sent'){a.status='failed';a.error=reason;}await commit(next,'turn-fail');});},
-    rejectSource({sourceId,uid,candidate,requestId,error}){return enqueue(async()=>{assert();id(sourceId);id(uid);id(candidate);if(sourceId!==`${uid}:${candidate}`||!own(state.requests,requestId)||own(state.frames,sourceId))fail('PHONE_REJECTION_SCOPE','不能将已接纳或无归属的手机来源记作失败');const next=clone(state);next.rejectedSources??={};next.rejectedSources[sourceId]={sourceId,uid,candidate,requestId,error:{code:error?.code??'PHONE_REPLY_REJECTED',message:String(error?.message??error)},at:now()};await commit(next,'turn-reject');});},
+    rejectSource({sourceId,uid,candidate,requestId,error,raw}){return enqueue(async()=>{assert();id(sourceId);id(uid);id(candidate);if(sourceId!==`${uid}:${candidate}`||!own(state.requests,requestId)||own(state.frames,sourceId))fail('PHONE_REJECTION_SCOPE','不能将已接纳或无归属的手机来源记作失败');const next=clone(state);next.rejectedSources??={};next.rejectedSources[sourceId]={sourceId,uid,candidate,requestId,...(typeof raw==='string'?{raw}:{}),error:{code:error?.code??'PHONE_REPLY_REJECTED',message:String(error?.message??error)},at:now()};await commit(next,'turn-reject');});},
     reconcile({chatKey,sources}){return enqueue(async()=>{assert();scoped(state,chatKey);await commit(reconcilePhone(state,sources,{at:now()}),'turn-reconcile');});},
     snapshot(sourceId){assert();const rejected=own(state.rejectedSources,sourceId)?state.rejectedSources[sourceId]:null;if(rejected)fail('PHONE_SOURCE_REJECTED',`本条手机内容未接纳：${rejected.error.message}`);return phoneSnapshot(state,sourceId);},
     export(){assert();return exportPhone(state);},

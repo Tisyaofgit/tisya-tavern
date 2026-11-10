@@ -17,7 +17,7 @@ function fixture(){
  ctx.loadWorldInfo=async name=>books[name]?{entries:Object.fromEntries(books[name].map(e=>[e.uid,{...structuredClone(e),comment:e.name}]))}:null;
  const config=createConfiguration({getContext:()=>ctx,persist:async()=>true});
  const helper={getWorldbookNames:async()=>Object.keys(books),getWorldbook:async name=>structuredClone(books[name]),createWorldbook:async(name,entries)=>{if(books[name])return false;writes++;books[name]=entries.map((e,i)=>({...structuredClone(e),uid:i}));return true;},updateWorldbookWith:async(name,fn)=>{await hook?.(name);const result=fn(structuredClone(books[name]));writes++;books[name]=result.map((e,i)=>({...e,uid:e.uid??i}));return structuredClone(books[name]);}};
- const roles=createStoryIdentity({config,getContext:()=>ctx,getHelper:()=>helper});return {books,ctx,config,helper,roles,writes:()=>writes,hook:fn=>hook=fn};
+ const roles=createStoryIdentity({config,getContext:()=>ctx,getHelper:()=>helper,database:{read:async()=>({state:{tables:{}}}),commit:async()=>{throw Error('not an authoring fixture');}}});return {books,ctx,config,helper,roles,writes:()=>writes,hook:fn=>hook=fn};
 }
 const button=(root,label)=>[...root.querySelectorAll('button')].find(b=>b.textContent===label);
 const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
@@ -36,9 +36,9 @@ test('complete native template book contains all thirteen task templates with no
  assert.equal(templateModule.PHONE_FIELDS_GUIDE,undefined);const text=PHONE_FORM_TEMPLATES.map(entry=>entry.content).join('\n');for(const word of ['每年计息期数','当前账号','歌单','逐条授权','故事分钟'])assert(text.includes(word));
 });
 test('global template preparation appends missing entries and preserves user edits and activation',async()=>{
- const f=fixture(),a=await f.roles.ensureTemplates();assert.equal(a.created,true);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,13);assert(f.books[DEFAULT_TEMPLATE_BOOK].every(e=>e.enabled===false));
+ const f=fixture(),a=await ensureTemplateBook({getHelper:()=>f.helper});assert.equal(a.created,true);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,13);assert(f.books[DEFAULT_TEMPLATE_BOOK].every(e=>e.enabled===false));
  const row=f.books[DEFAULT_TEMPLATE_BOOK][0];row.content='用户自订世界骨架';row.enabled=true;f.books[DEFAULT_TEMPLATE_BOOK].pop();const old=structuredClone(row);
- const b=await f.roles.ensureTemplates();assert.equal(b.added.length,1);assert.deepEqual(f.books[DEFAULT_TEMPLATE_BOOK][0],old);const count=f.writes();await f.roles.ensureTemplates();assert.equal(f.writes(),count);assert.equal(f.config.read().templateBook,DEFAULT_TEMPLATE_BOOK);
+ const b=await ensureTemplateBook({getHelper:()=>f.helper});assert.equal(b.added.length,1);assert.deepEqual(f.books[DEFAULT_TEMPLATE_BOOK][0],old);const count=f.writes();await ensureTemplateBook({getHelper:()=>f.helper});assert.equal(f.writes(),count);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,13);
 });
 test('duplicate builtin template names fail without replacing the existing book',async()=>{
  const f=fixture(),row=bundledTemplateEntries()[0];f.books[DEFAULT_TEMPLATE_BOOK]=[{...row,uid:1},{...row,uid:2}];const before=structuredClone(f.books);
@@ -46,40 +46,20 @@ test('duplicate builtin template names fail without replacing the existing book'
 });
 test('task routing selects matching templates and unknown tasks or configured read failures stay visible',async()=>{
  const f=fixture(),getHelper=()=>f.helper;const packaged=await readCreationTemplates(()=>f.ctx,{getHelper});assert.equal(packaged.source,'bundled-not-yet-installed');
- await f.roles.ensureTemplates();f.books[DEFAULT_TEMPLATE_BOOK].find(row=>row.id==='template.character.form').content='编辑后的模板';const actual=await readCreationTemplates(()=>f.ctx,{getHelper,task:'newCharacter'});assert.equal(actual.source,'worldbook');assert.equal(actual.entries.find(row=>row.name==='【模板】角色统一表单').content,'编辑后的模板');assert(!actual.entries.some(row=>row.name==='【模板】世界统一表单'));
- await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper,task:'normal'}),/未知表单模板任务/);delete f.books[DEFAULT_TEMPLATE_BOOK];await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper}),/格式无效/);
+ await ensureTemplateBook({getHelper:()=>f.helper});f.books[DEFAULT_TEMPLATE_BOOK].find(row=>row.id==='template.character.form').content='编辑后的模板';const actual=await readCreationTemplates(()=>f.ctx,{getHelper,task:'newCharacter'});assert.equal(actual.source,'worldbook');assert.equal(actual.entries.find(row=>row.name==='【模板】角色统一表单').content,'编辑后的模板');assert(!actual.entries.some(row=>row.name==='【模板】世界统一表单'));
+ await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper,task:'normal'}),/未知表单模板任务/);const settings=f.config.read();settings.templateBook=DEFAULT_TEMPLATE_BOOK;await f.config.save(settings);delete f.books[DEFAULT_TEMPLATE_BOOK];await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper}),/格式无效/);
 });
 test('creation reads an existing default template book before the identity page has configured it',async()=>{
  const f=fixture();f.books[DEFAULT_TEMPLATE_BOOK]=[{uid:8,name:'已编辑的模板',content:'已有用户规则',enabled:false}];
  const actual=await readCreationTemplates(()=>f.ctx,{getHelper:()=>f.helper});assert.equal(actual.source,'worldbook');assert.equal(actual.entries[0].content,'已有用户规则');assert.equal(f.config.read().templateBook,undefined);
  f.helper.getWorldbookNames=async()=>{throw Error('目录暂时不可读');};await assert.rejects(readCreationTemplates(()=>f.ctx,{getHelper:()=>f.helper}),/目录暂时不可读/);
 });
-test('editing the stable dossier UID preserves metadata and current phone runtime',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原有完整档案'});Object.assign(f.books.基点书[0],{custom:{retained:true},enabled:true});f.books.基点书.push({uid:9,name:'【角色】旁人',content:'其他档案'});
- const before=(await f.roles.list()).entries[0],metadata=structuredClone(f.ctx.chatMetadata),original=structuredClone(f.books.基点书[0]);
- await f.roles.edit({book:'基点书',uid:0,name:'青的新名字',content:'编辑后的完整档案',before});
- assert.deepEqual(f.books.基点书[0],{...original,name:'【角色】青的新名字',content:'编辑后的完整档案'});assert.equal(f.books.基点书[1].content,'其他档案');assert.equal(f.config.read().story.userName,'青的新名字');assert.deepEqual(f.ctx.chatMetadata,metadata);
-});
-test('manual role creation never writes into the template book or adds implicit phone state',async()=>{
- const f=fixture(),before=structuredClone(f.ctx.chatMetadata);await assert.rejects(f.roles.create({book:DEFAULT_TEMPLATE_BOOK,name:'青',content:'手填'}),/模板书不能/);assert.equal(f.writes(),0);await f.roles.create({name:'青',content:'手填'});assert.equal(f.books[DEFAULT_TEMPLATE_BOOK],undefined);assert.deepEqual(f.ctx.chatMetadata,before);
-});
-test('empty prefixed role name is rejected before creating an unreadable entry',async()=>{const f=fixture();await assert.rejects(f.roles.create({name:'【角色】',content:'正文'}),/名称不能为空/);assert.equal(f.writes(),0);});
-test('stale dossier snapshot and write-time race cannot overwrite another page',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原文'});const before=(await f.roles.list()).entries[0];f.books.基点书[0].content='别处改文';
- await assert.rejects(f.roles.edit({book:'基点书',uid:0,name:'青',content:'想保存',before}),/其他页面修改/);assert.equal(f.books.基点书[0].content,'别处改文');
- const current=(await f.roles.list()).entries[0];f.hook(()=>{f.books.基点书[0].content='在写入前修改';});await assert.rejects(f.roles.edit({book:'基点书',uid:0,name:'青',content:'另一草稿',before:current}),/其他页面修改/);assert.equal(f.books.基点书[0].content,'在写入前修改');
-});
-test('dossier saved but chat-name sync failed reports the preserved partial save',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原文'});const before=(await f.roles.list()).entries[0],save=f.config.save;f.config.save=async()=>{throw Error('确认写盘失败');};
- await assert.rejects(f.roles.edit({book:'基点书',uid:0,name:'新青',content:'已保存正文',before}),/角色档案已保存.*同步未完成.*确认写盘失败/);
- assert.equal(f.books.基点书[0].content,'已保存正文');assert.equal(f.config.read().story.userName,'青');f.config.save=save;await f.roles.edit({book:'基点书',uid:0,name:'新青',content:'已保存正文',before:(await f.roles.list()).entries[0]});assert.equal(f.books.基点书.length,1);assert.equal(f.config.read().story.userName,'新青');
-});
 test('legacy raw phone initialization is rejected without accepting a separate book binding',()=>{
  const before={world:{format:'tisya.phone-world/1'},character:{format:'tisya.phone-character/1'},binding:{world:{book:'世界',uid:7},character:{book:'基点书',uid:0}}},copy=structuredClone(before);
  assert.throws(()=>phoneConfig.createInitialPhoneLife(before),/统一表单/);assert.deepEqual(before,copy);assert.equal(phoneConfig.parsePhoneWorld,undefined);assert.equal(phoneConfig.parsePhoneCharacter,undefined);
 });
 test('old book binding cannot bypass current form identity projection and source text remains intact',async()=>{
- const f=fixture(),content='姓名和经历\n<手机初态>{"钱包":{"余额":9876}}</手机初态>\n结语';await f.roles.create({name:'青',content});
+ const f=fixture(),content='姓名和经历\n<手机初态>{"钱包":{"余额":9876}}</手机初态>\n结语';f.books.基点书=[{uid:0,name:'【角色】青',content}];const value=f.config.read();value.story.userBinding={book:'基点书',uid:0};await f.config.save(value);
  await assert.rejects(identitySlots(f.ctx,f.config.read(),''),/当前表单中的人物档案/);assert.equal(f.books.基点书[0].content,content);assert.equal(templateModule.stripPhoneInitialization,undefined);
 });
 test('reference scan uses current native conditions, retains source UID and deduplicates without enabling',async()=>{
@@ -102,26 +82,6 @@ test('native exclusion removes entire template book while ordinary source text i
  const data={chatLore:[{world:DEFAULT_TEMPLATE_BOOK,uid:2,content:'开启的模板',disable:false},{world:'其他',uid:3,content:'正文<手机初态>{}</手机初态>下文<手机世界>{}</手机世界>',key:['正文']}]};
  excludeTemplateBookEntries(data);assert.deepEqual(data.chatLore,[{world:'其他',uid:3,content:'正文<手机初态>{}</手机初态>下文<手机世界>{}</手机世界>',key:['正文']}]);
 });
-test('legacy shared resource mount edits the original dossier and saves references without native persona UI',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'档案旧文'});f.books.资料=[{uid:1,name:'【手机世界】河城',content:'世界定义'}];const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;
- assert.equal(root.querySelector('[data-identity-wish]'),null);assert(root.querySelector('[data-role-edit]'));const editor=root.querySelector('[data-role-edit-content]');editor.value='编辑后的原文';editor.dispatchEvent(new w.Event('input'));assert.equal(ui.requestLeave().allowed,false);button(root,'保存').click();await settle();assert.equal(f.books.基点书[0].content,'编辑后的原文');assert.equal(ui.requestLeave().allowed,true);
- const checkbox=root.querySelector('[data-reference-book="资料"]');checkbox.checked=true;checkbox.dispatchEvent(new w.Event('change'));button(root,'保存').click();await settle();assert.deepEqual(f.config.read().story.referenceBooks,['资料']);assert.equal(ui.requestLeave().allowed,true);ui.dispose();await w.happyDOM.abort();
-});
-test('legacy shared save retries a confirmed dossier write without duplicating it after chat-name sync failure',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原文'});const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;
- const name=root.querySelector('[data-role-edit-name]'),content=root.querySelector('[data-role-edit-content]');name.value='新青';name.dispatchEvent(new w.Event('input'));content.value='已保存正文';content.dispatchEvent(new w.Event('input'));
- const originalSave=f.config.save,beforeWrites=f.writes();f.config.save=async()=>{throw Error('身份名称确认失败');};assert.equal(await ui.saveDraft(),false);assert.equal(f.writes(),beforeWrites+1);assert.equal(f.books.基点书[0].content,'已保存正文');assert.equal(f.config.read().story.userName,'青');assert.equal(ui.state().dirty,true);assert.match(root.querySelector('.tisya-identity-status').textContent,/已保存.*身份名称确认失败/);
- f.config.save=originalSave;assert.equal(await ui.saveDraft(),true);assert.equal(f.writes(),beforeWrites+1);assert.equal(f.books.基点书.length,1);assert.equal(f.config.read().story.userName,'新青');assert.equal(ui.state().dirty,false);ui.dispose();await w.happyDOM.abort();
-});
-test('legacy resource-only mount can stage and save a different existing role in the current chat',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原文'});f.books.基点书.push({uid:8,name:'【角色】白',content:'另一档案'});const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;
- const entry=root.querySelector('[data-role-entry]');entry.value='8';entry.dispatchEvent(new w.Event('change'));assert.equal(f.config.read().story.userName,'青');assert.equal(await ui.saveDraft(),true);assert.equal(f.config.read().story.userName,'白');assert.equal(ui.state().dirty,false);ui.dispose();await w.happyDOM.abort();
-});
 test('legacy book world selection is rejected by current configuration without changing saved references',async()=>{
  const f=fixture();f.books.资料=[{uid:1,name:'资料',content:'原文'}];await f.roles.saveResources({referenceBooks:['资料']});const before=f.config.read(),next=structuredClone(before);next.story.phoneWorld={book:'世界',uid:6};await assert.rejects(f.config.save(next),/世界表单/);assert.deepEqual(f.config.read(),before);
-});
-test('failed source-book switch restores the editor source and cross-chat save is blocked',async()=>{
- const f=fixture();await f.roles.create({name:'青',content:'原档案'});f.books.另书=[{uid:0,name:'【角色】青',content:'原档案'}];const originalLoad=f.ctx.loadWorldInfo;f.ctx.loadWorldInfo=async name=>{if(name==='另书')throw Error('读取暂不可用');return originalLoad(name);};
- const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountStoryResources(w.document,root,{config:f.config,roles:f.roles});await ui.ready;const select=root.querySelector('[data-role-book]');select.value='另书';select.dispatchEvent(new w.Event('change'));await settle();assert.equal(select.value,'另书');assert.match(root.textContent,/读取暂不可用/);select.value='基点书';select.dispatchEvent(new w.Event('change'));await settle();const entry=root.querySelector('[data-role-entry]');entry.value='0';entry.dispatchEvent(new w.Event('change'));await settle();
- const editor=root.querySelector('[data-role-edit-content]');editor.value='待保存';editor.dispatchEvent(new w.Event('input'));f.ctx.chatId='b';button(root,'保存').click();await settle();assert.equal(f.books.基点书[0].content,'原档案');assert.equal(f.books.另书[0].content,'原档案');assert.match(root.textContent,/聊天已切换|会话已改变/);ui.dispose();await w.happyDOM.abort();
 });

@@ -6,7 +6,8 @@ import {phoneProfileFromForms} from './phone-form-profile.mjs';
 import {clone,digest,stable,stableId,fail} from './common.mjs';
 import {WorldClock} from './math.mjs';
 import {worldClockConfiguration} from './world-clock.mjs';
-import {importPhone,exportPhone,attachPhoneDatabaseSnapshot} from '../phone-core.mjs';
+import {importPhone,exportPhone,attachPhoneDatabaseSnapshot,mergePhoneHistory} from '../phone-core.mjs';
+import {Runtime} from './runtime.mjs';
 import {PRESENTATION_SCHEMAS} from '../extension-presentation.mjs';
 import {PHONE_WORLD_FORMAT,PHONE_CHARACTER_FORMAT} from '../phone-life-config.mjs';
 import {EXTENSION_PREFERENCE_SCHEMA} from '../extension-preferences.mjs';
@@ -232,10 +233,23 @@ export function readPhoneDatabaseProfile(state,{worldId,entityId,dossierId}={}){
  if(!state.tables?.T_STATIC_WORLDS?.[worldId]||!state.tables?.T_SYS_ENTITIES?.[entityId])return null;
  const {configuration:calendar}=phoneWorldClock(state,worldId);return phoneProfileFromForms(state,{worldId,entityId,dossierId,calendar});
 }
+export function restorePhoneDatabaseHistory(current,saved,{contextKey,allowedOriginContextKeys=[]}={}){
+ if(!current.tables?.[PHONE_BINDING_TABLE]?.[currentId]||!saved.tables?.[PHONE_BINDING_TABLE]?.[currentId])return current;
+ const origin=saved.tables[PHONE_BINDING_TABLE][currentId].values.context_key;if(contextKey&&origin!==contextKey&&!allowedOriginContextKeys.includes(origin))return current;
+ const options={contextKey,allowedOriginContextKeys},present=decodePhoneDatabase(current,options),previous=decodePhoneDatabase(saved,options),merged=JSON.parse(exportPhone(mergePhoneHistory(present,previous)));
+ if(stable(present)===stable(merged))return current;
+ // Compare the two projections so that only recovered history coordinates and
+ // their shape change. Existing canonical money, clocks and owner rows are not
+ // copied from the earlier bundle into the current branch.
+ const base=encodePhoneDatabase(present,current),next=encodePhoneDatabase(merged,current),baseRows=new Map(base.changes.map(c=>[c.tableId+'#'+c.recordId,c])),runtime=new Runtime(current);
+ for(const spec of next.schema){if(!runtime.data.schema[spec.id]){runtime.data.schema[spec.id]=clone(spec);runtime.data.tables[spec.id]={};}else for(const field of spec.fields)if(!runtime.data.schema[spec.id].fields.some(f=>f.key===field.key))runtime.declareField(spec.id,field);}
+ for(const change of next.changes){if(change.remove)continue;const before=baseRows.get(change.tableId+'#'+change.recordId),physical=current.tables?.[change.tableId]?.[change.recordId]?.values,values=Object.fromEntries(Object.entries(change.values).filter(([field,value])=>!physical||!Object.hasOwn(physical,field)||!before||!Object.hasOwn(before.values??{},field)||stable(before.values[field])!==stable(value)));if(!Object.keys(values).length)continue;if(!runtime.rows(change.tableId)[change.recordId])runtime.newRecord(change.tableId,{},change.recordId);for(const [field,value]of Object.entries(values))runtime.set([change.tableId,change.recordId,field,[]],value,change.states?.[field]??'known');if(change.metadata)runtime.record(change.tableId,change.recordId).metadata={...runtime.record(change.tableId,change.recordId).metadata,...clone(change.metadata)};}
+ return runtime.data;
+}
 export function createPhoneDatabaseStorage({database,contextKey}={}){
  if(!database?.read||!database?.commit)fail('PHONE_DATABASE_SERVICE','缺少唯一表单数据库接口');let loadedRevision=null,phoneRevision=null,previousActions=new Set(),reservations={};
  const read=async()=>{const value=await database.read();if(!value)fail('ENGINE_NOT_BOUND','请先接入最新版表单');if(value.contextKey!==contextKey)fail('PHONE_CONTEXT_CHANGED','手机表单聊天已改变');return value;};
- return {authoritativeDatabase:true,async load(){const db=await read();loadedRevision=db.revision;let archive=decodePhoneDatabase(db.state,{contextKey,revision:db.revision,allowedOriginContextKeys:db.allowedOriginContextKeys??[]});
+ return {authoritativeDatabase:true,async load(){const db=await read();loadedRevision=db.revision;let archive=decodePhoneDatabase(db.state,{contextKey,revision:db.revision,allowedOriginContextKeys:db.allowedOriginContextKeys??[]});if(!archive&&db.phoneDetached)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，原手机证据仍在同一存档，未重新初始化');
   phoneRevision=archive?.revision??null;previousActions=new Set((archive?.actions??[]).map(a=>a.id));reservations=db.phoneActionReservations??{};return archive;
  },async save(archive,{expectedRevision,kind='state'}={}){const db=await read();if(loadedRevision!==db.revision)fail('PHONE_DATABASE_STALE','表单已更新，请刷新手机后重试；未覆盖新数据');if(phoneRevision!==expectedRevision)fail('PHONE_LIFE_REVISION','手机版本已变化');const encoded=encodePhoneDatabase(archive,db.state,{initializing:!db.state.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values?.owner_ref&&!!archive.life});const operationId='phone:'+digest({contextKey,previous:phoneRevision,archive});const newPhoneActions=(archive.actions??[]).filter(a=>!previousActions.has(a.id));for(const action of newPhoneActions)if(reservations[action.id])fail('PHONE_LIFE_ACTION_BRANCH','这个操作ID属于已离开的历史，不能在当前分支重用');const source={kind:'phone',lifecycle:kind,newPhoneActions};const commit=['turn-prepare','turn-accept','turn-fail','turn-reconcile','turn-reject'].includes(kind)&&database.commitLifecycle?database.commitLifecycle:database.commit;const result=await commit({operationId,expectedRevision:db.revision,contextKey,...encoded,source});loadedRevision=result.revision;phoneRevision=archive.revision;return {...result,phoneArchive:decodePhoneDatabase(result.state,{contextKey,revision:result.revision,allowedOriginContextKeys:db.allowedOriginContextKeys??[]})};}};
 }

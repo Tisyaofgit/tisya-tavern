@@ -1,5 +1,5 @@
 import {decode,digest} from './common.mjs';
-import {templateBookName,ensureTemplateBook} from './template-book.mjs';
+import {templateBookName} from './template-book.mjs';
 import {createBookGateway,readMatrixDefinition} from '../tables/books.js';
 import {validateCreationProposal} from './creation.mjs';
 const check=(ok,message)=>{if(!ok)throw Error(message);};
@@ -13,122 +13,8 @@ export function storyAvatar(config){
 }
 export const avatarReference=binding=>binding?(binding.database?'T_CHAR_DOSSIER#'+binding.dossierId:binding.book+'#'+binding.uid):'';
 export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.TavernHelper,assertIdle=()=>{},database=null,builtins=null,creator=null,sourceBooks=null}){
- if(database)return createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,database,builtins,creator,sourceBooks});
- const scope=()=>{const c=getContext();return JSON.stringify([c.chatId,c.characterId,c.groupId]);};
- const helper=()=>{const h=getHelper();check(h,'世界书接口尚未就绪');return h;};
- let preparation=null,templatePreparation=null,editing=false;
- async function ensureBook(book=config.read().story.userBinding?.book??config.read().coreBook??'基点书'){
-  if(preparation)return preparation;
-  const work=async()=>{
-   assertIdle();check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
-   const captured=scope(),h=helper(),guard=()=>check(captured===scope(),'聊天已切换；基点书已保存的部分保留，请重新打开身份页');
-   const names=await h.getWorldbookNames();guard();
-   if(!names.includes(book)){check(await h.createWorldbook(book,[])===true,'基点书创建未确认');guard();check((await h.getWorldbookNames()).includes(book),'基点书创建后回读失败');}
-   guard();return book;
-  };
-  preparation=work();try{return await preparation;}finally{preparation=null;}
- }
- async function list(book=config.read().story.userBinding?.book??config.read().coreBook??'基点书'){
-  const h=helper(),all=await h.getWorldbookNames(),books=all.filter(name=>name!==templateBookName(config.read()));
-  const entries=all.includes(book)?Object.values((await getContext().loadWorldInfo(book))?.entries??{}).filter(e=>/^【角色】.+/u.test(roleName(e))).map(e=>({uid:e.uid,name:roleName(e),content:e.content})):[];
-  return {book,books,exists:all.includes(book),entries};
- }
- async function bind({book,uid,mode='bound'},expected=config.read().revision){
-  assertIdle();const captured=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');check(getContext().chatId,'请先打开要绑定的聊天');
-  if(mode==='bound'){
-   const rows=await list(book);check(rows.exists,'请选择已建立的基点书');const found=rows.entries.filter(e=>String(e.uid)===String(uid));check(found.length===1,'基点书的角色条目已不存在或标识重复');const entry=found[0];
-   value.coreBook=book;value.story.userBinding={book,uid:entry.uid};value.story.userName=entry.name.slice('【角色】'.length);value.story.userMode='bound';
-  }else{
-   check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');
-   if(book!==undefined&&book!==null&&book!==''){
-    check(typeof book==='string'&&book.trim()===book,'资料来源名称无效');const names=await helper().getWorldbookNames();check(Array.isArray(names)&&names.includes(book),'请选择已建立的资料来源书');value.coreBook=book;
-   }
-   value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;
-  }
-  check(captured===scope(),'聊天已切换，绑定尚未保存');return config.save(value);
- }
- async function create({book=config.read().coreBook??'基点书',name,content},expected=config.read().revision){
-  assertIdle();check(getContext().chatId,'请先打开要绑定的聊天');check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');check(typeof name==='string'&&name.trim()===name&&name&&!/[\r\n]/.test(name),'角色名称须为单行非空文字');check(typeof content==='string'&&content.trim(),'请填写角色条目原文');
-  check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
-  const captured=scope(),h=helper(),title=name.startsWith('【角色】')?name:'【角色】'+name;
-  check(title.slice('【角色】'.length).trim(),'角色名称不能为空');
-  check(config.read().revision===expected,'身份配置已变化，请重新读取');
-  const guard=()=>check(scope()===captured,'聊天已切换；已保存的角色条目保留，尚未绑定到新聊天');
-  const wanted={name:title,content,enabled:false,strategy:{type:'selective',keys:[],keys_secondary:{logic:'and_any',keys:[]},scan_depth:'same_as_global'},position:{type:'after_character_definition',role:'system',depth:0,order:100},probability:100,recursion:{prevent_incoming:true,prevent_outgoing:true,delay_until:null},effect:{sticky:null,cooldown:null,delay:null}};
-  const names=await h.getWorldbookNames();guard();
-  if(!names.includes(book)){check(await h.createWorldbook(book,[wanted])===true,'基点书保存未确认');}
-  else {const entries=await h.getWorldbook(book);guard();const same=entries.filter(e=>e.name===title);check(same.length<=1,'基点书中有多个同名角色，请先核对');if(same.length)check(same[0].content===content,'已有同名角色且内容不同，请选择已有条目或使用另一名称');else await h.updateWorldbookWith(book,entries=>{guard();check(!entries.some(e=>e.name===title),'保存期间出现同名角色');return [...entries,wanted];},{render:'immediate'});}
-  guard();
-  const rows=await list(book),entry=rows.entries.find(e=>e.name===title&&e.content===content);check(entry,'角色条目保存后回读不同');
-  try{await bind({book,uid:entry.uid},expected);}catch(e){throw Error('角色已保存至 '+book+' / '+title+'；聊天绑定未完成：'+e.message);}
-  return entry;
- }
- async function edit({book,uid,name,content,before},expected=config.read().revision){
-  check(!editing,'角色档案正在保存，请稍候');assertIdle();
-  check(typeof book==='string'&&book.trim()===book&&book,'基点书名称不能为空');
-  check(uid!==undefined&&uid!==null&&String(uid).trim(),'角色条目标识缺失');
-  check(typeof name==='string'&&name.trim()===name&&name&&!/[\r\n]/.test(name),'角色名称须为单行非空文字');
-  check(typeof content==='string'&&content.trim(),'请填写角色条目原文');
-  check(before&&typeof before.name==='string'&&typeof before.content==='string','缺少原档案快照，请重新读取');
-  check(book!==templateBookName(config.read()),'模板书不能作为角色档案书');
-  const captured=scope(),h=helper(),title=name.startsWith('【角色】')?name:'【角色】'+name;
-  check(title.slice('【角色】'.length).trim(),'角色名称不能为空');
-  check(typeof h.getWorldbook==='function'&&typeof h.updateWorldbookWith==='function','宿主尚未提供档案更新接口');
-  const guard=()=>{check(captured===scope(),'聊天已切换，请重新打开角色档案');check(config.read().revision===expected,'身份配置已变化，请重新读取');};
-  const selected=entries=>{check(Array.isArray(entries),'角色书读取格式无效');const rows=entries.filter(e=>String(e.uid)===String(uid));check(rows.length===1,'角色条目不存在或标识重复，请重新读取');return rows[0];};
-  const verify=entries=>{const row=selected(entries);check(/^【角色】.+/u.test(roleName(row)),'所选条目不是角色档案');check(roleName(row)===before.name&&row.content===before.content,'角色档案已被其他页面修改，请重新读取后核对');check(!entries.some(e=>String(e.uid)!==String(uid)&&roleName(e)===title),'已有同名角色，请使用不同名称');return row;};
-  editing=true;let written=false,confirmedEntry=null;
-  try{
-   guard();const entries=await h.getWorldbook(book);guard();const original=verify(entries);
-   if(roleName(original)!==title||original.content!==content){
-    let invoked=false;
-    await h.updateWorldbookWith(book,rows=>{guard();verify(rows);invoked=true;return rows.map(e=>String(e.uid)===String(uid)?{...e,name:title,...(Object.hasOwn(e,'comment')?{comment:title}:{}),content}:e);},{render:'immediate'});
-    check(invoked,'宿主没有执行角色档案更新，请重新读取核对');
-   }
-   const actual=selected(await h.getWorldbook(book));
-   check(roleName(actual)===title&&actual.content===content,'角色档案写入后回读不同，尚未确认保存');written=true;confirmedEntry={uid:actual.uid,name:title,content};
-   guard();const value=config.read();
-   if(value.story.userBinding?.book===book&&String(value.story.userBinding.uid)===String(uid)&&value.story.userName!==title.slice('【角色】'.length)){
-    value.story.userName=title.slice('【角色】'.length);await config.save(value);
-   }
-   return confirmedEntry;
-  }catch(error){if(written){const partial=new Error('角色档案已保存至 '+book+' / '+title+'；当前聊天身份同步未完成：'+error.message,{cause:error});partial.dossierReceipt={confirmed:true,scope:captured,book,entry:confirmedEntry};throw partial;}throw error;}
-  finally{editing=false;}
- }
- async function ensureTemplates(){
-  if(templatePreparation)return templatePreparation;
-  templatePreparation=(async()=>{assertIdle();const captured=scope(),value=config.read(),name=templateBookName(value),guard=()=>check(captured===scope(),'聊天已切换，已准备的模板书保留');
-   const receipt=await ensureTemplateBook({name,getHelper,guard});guard();
-   if(value.templateBook!==name){check(config.read().revision===value.revision,'配置已变化，模板书已保存，请重新读取');value.templateBook=name;await config.save(value);}
-   return receipt;
-  })();try{return await templatePreparation;}finally{templatePreparation=null;}
- }
- async function resources(){const value=config.read(),all=await helper().getWorldbookNames();check(Array.isArray(all),'世界书列表无效');return {books:all,templateBook:templateBookName(value),referenceBooks:[...(value.story.referenceBooks??[])],phoneWorld:value.story.phoneWorld??null,excluded:[templateBookName(value),value.coreBook??'基点书',value.story.userBinding?.book].filter(Boolean)};}
- async function worldDefinitions(book){
-  if(!book)return [];const captured=scope();check(book!==templateBookName(config.read()),'模板骨架不能直接作为当前手机世界');
-  const data=await getContext().loadWorldInfo(book);check(captured===scope(),'聊天已切换，未选择旧世界');check(data?.entries&&typeof data.entries==='object','手机世界资料书不存在或损坏：'+book);
-  const rows=Object.values(data.entries).filter(e=>/^【手机世界】.+/u.test(roleName(e))),ids=new Set();for(const row of rows){check(Number.isSafeInteger(row.uid)&&row.uid>=0&&!ids.has(row.uid)&&typeof row.content==='string','手机世界条目标识或正文无效：'+book);ids.add(row.uid);}return rows.map(e=>({uid:e.uid,name:roleName(e),content:e.content}));
- }
- async function saveResources({referenceBooks=[],phoneWorld=null},expected=config.read().revision){
-  assertIdle();const captured=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');check(getContext().chatId,'请先打开聊天');
-  check(Array.isArray(referenceBooks)&&referenceBooks.every(n=>typeof n==='string'&&n.trim()===n&&n)&&new Set(referenceBooks).size===referenceBooks.length,'资料书选择无效或重复');
-  const all=await helper().getWorldbookNames();check(captured===scope(),'聊天已切换，资料书选择未保存');
-  const excluded=new Set([templateBookName(value),value.coreBook??'基点书',value.story.userBinding?.book].filter(Boolean));
-  check(referenceBooks.every(n=>all.includes(n)&&!excluded.has(n)),'所选资料书缺失，或包含模板书／基点角色书');
-  if(phoneWorld!==null){check(phoneWorld&&typeof phoneWorld.book==='string'&&phoneWorld.uid!==null&&phoneWorld.uid!==undefined,'手机世界引用不完整');check(all.includes(phoneWorld.book),'手机世界资料书不存在');const rows=await worldDefinitions(phoneWorld.book);check(rows.some(e=>String(e.uid)===String(phoneWorld.uid)),'手机世界定义已不存在，请重新选择');}
-  check(captured===scope()&&config.read().revision===expected,'聊天或配置已变化，资料书选择未保存');
-  value.story.referenceBooks=[...referenceBooks];value.story.phoneWorld=phoneWorld?{book:phoneWorld.book,uid:phoneWorld.uid}:null;return config.save(value);
- }
- async function phoneProfile(){
-  const captured=scope(),value=config.read(),character=storyAvatar(value).binding,world=value.story.phoneWorld;if(!character||!world)return null;
-  check(world.book!==templateBookName(value)&&character.book!==templateBookName(value),'模板骨架不能直接作为当前手机世界或角色');
-  check(typeof getContext().loadWorldInfo==='function','世界书读取接口尚未就绪');
-  const read=async(ref,prefix)=>{const data=await getContext().loadWorldInfo(ref.book);check(data?.entries&&typeof data.entries==='object','初始化资料书不存在或损坏：'+ref.book);const rows=Object.values(data.entries).filter(e=>String(e.uid)===String(ref.uid));check(rows.length===1&&roleName(rows[0]).startsWith(prefix),'初始化资料条目已不存在或类型改变：'+ref.book);check(typeof rows[0].content==='string','初始化资料正文无效');return rows[0].content;};
-  const [worldText,characterText]=await Promise.all([read(world,'【手机世界】'),read(character,'【角色】')]);
-  check(captured===scope()&&config.read().revision===value.revision,'聊天或初始化选择已变化，请重新打开手机');
-  return {worldText,characterText,binding:{world:{book:world.book,uid:world.uid},character:{book:character.book,uid:character.uid}}};
- }
- return {scope,list,bind,create,edit,ensureBook,ensureTemplates,resources,worldDefinitions,saveResources,phoneProfile};
+ check(database,'身份服务需要统一表单；书籍原文请先交给助手提炼，再选择已登记人物');
+ return createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,database,builtins,creator,sourceBooks});
 }
 
 const DATABASE_LABEL='当前世界表单';
@@ -192,16 +78,16 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
   return {...result,books:result.books.filter(name=>!excluded.includes(name)),...(excluded.includes(result.book)?{book:'',exists:false,entries:[],unmarkedEntries:[]}:{})};
  }
  async function readAuthorSource({book,uid},{allowAuxiliary=false}={}){
-  check(typeof book==='string'&&book.trim()===book&&book&&uid!==null&&uid!==undefined,'旧角色来源定位不完整');
+  check(typeof book==='string'&&book.trim()===book&&book&&uid!==null&&uid!==undefined,'角色来源定位不完整');
   const managed=builtins?.bookNames?.()??{};check(![managed.templates??templateBookName(config.read()),managed.beauty??'缇斯亚美化书'].includes(book),'定义专用书不能作为当前角色来源');
   const key=scope();let result;
-  if(sourceBooks||!builtins?.readSourceBook)result=await books.readSource({book,uid});else{const data=await builtins.readSourceBook(book);check(data?.entries&&typeof data.entries==='object','旧角色来源书不存在或损坏');const rows=Object.values(data.entries).filter(e=>String(e.uid)===String(uid));check(rows.length===1,'旧角色 UID 不存在或重复');const row=rows[0],title=roleName(row);check(typeof row.content==='string','来源不是完整文本条目');const definition=readMatrixDefinition(row);result={book,uid:row.uid,name:title,title,content:row.content,entry:structuredClone(row),digest:digest({book,entry:row}),version:definition?.revision??null,definition};}
+  if(sourceBooks||!builtins?.readSourceBook)result=await books.readSource({book,uid});else{const data=await builtins.readSourceBook(book);check(data?.entries&&typeof data.entries==='object','角色来源书不存在或损坏');const rows=Object.values(data.entries).filter(e=>String(e.uid)===String(uid));check(rows.length===1,'角色 UID 不存在或重复');const row=rows[0],title=roleName(row);check(typeof row.content==='string','来源不是完整文本条目');const definition=readMatrixDefinition(row);result={book,uid:row.uid,name:title,title,content:row.content,entry:structuredClone(row),digest:digest({book,entry:row}),version:definition?.revision??null,definition};}
   check(key===scope(),'聊天已切换，未读取角色来源');check(allowAuxiliary||!result.definition||result.definition.kind==='character','所选初始化条目是世界定义，请选择人物条目');return result;
  }
- async function previewSourceMigration(binding=config.read().story.userBinding){
-  assertIdle();check(binding&&!binding.database,'请选择待迁移的旧书籍档案');const author=await readAuthorSource(binding);if(binding.digest)check(binding.digest===author.digest,'来源已变化，请重新读取后提炼');if(author.definition)return previewSourceImport(author);
-  const target=legacySourceTarget(await read(),author);
-  return {kind:'source-extraction',requiresExtraction:true,mode:target?'revise':'extend',source:target?{...author,revisionTarget:target}:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
+ async function previewSourceExtraction(reference){
+  assertIdle();check(reference?.book&&reference.uid!==undefined&&!reference.database,'请选择待提炼的书籍原文');check(!reference.revisionTarget,'旧迁移目标已退役，请重新选择原文并核对提炼结果');
+  const author=await readAuthorSource(reference);if(reference.digest)check(reference.digest===author.digest,'来源已变化，请重新读取后提炼');if(author.definition)return previewSourceImport(author);
+  return {kind:'source-extraction',requiresExtraction:true,mode:'extend',source:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
  }
  const archiveReference=source=>({book:source.book,uid:source.uid,definitionId:source.definition.id,version:source.definition.revision,digest:source.digest,definitionDigest:digest(source.definition),operationId:source.definition.operationId??null,kind:source.definition.kind});
  function isInstantiatedFrom(snapshot,row,source,record){const ref=archiveReference(source),same=link=>link?.book===ref.book&&String(link.uid)===String(ref.uid)&&link.definitionId===ref.definitionId&&link.version===ref.version&&link.definitionDigest===ref.definitionDigest;if(same(row.metadata?.sourceDefinition))return true;const owns=link=>!link?.records||link.records.some(value=>value.tableId===record.tableId&&value.recordId===record.recordId);return Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>{const saved=receipt.result?.source,links=[saved?.sourceArchive,...(saved?.sourceArchive?.entries??[]),...(saved?.sourceArchives??[])];return links.some(link=>same(link)&&owns(link));});}
@@ -221,54 +107,13 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
   for(let index=0;index<queue.length;index++){
    const change=queue[index],spec=snapshot.state.schema[change.tableId];
    for(const field of spec.fields??[]){if(!['REF','CHILD_REF','REF_LIST'].includes(field.type)||!known(change,field.key))continue;const value=change.values[field.key],target=field.ref?.startsWith('@')?change.values[field.ref.slice(1)]:field.ref;for(const id of Array.isArray(value)?value:[value])include(target,id);}
-   if(['M_FIELD_REFERENCES','M_LIST_VALUES'].includes(change.tableId)&&known(change,'target_table')&&known(change,'target_row_uuid'))include(change.values.target_table,change.values.target_row_uuid);
+   if(['M_FIELD_REFERENCES','M_LIST_VALUES'].includes(change.tableId)&&change.values.reference_kind!=='external'&&known(change,'target_table')&&known(change,'target_row_uuid'))include(change.values.target_table,change.values.target_row_uuid);
   }
   return {sources:[...selected.values()],records:[...records.values()]};
  }
  async function verifyImportSources(draft,snapshot){
   if(draft.importSources){const source=await readAuthorSource(draft.importSource);check(source.digest===draft.importSource.digest,'来源已变化，请重新预览');const closure=await definitionClosure(source,snapshot??await read()),current=new Map(closure.sources.map(row=>[String(row.uid),row]));check(current.size===draft.importSources.length,'来源的关联定义已变化，请重新预览');for(const expected of draft.importSources)check(current.get(String(expected.uid))?.digest===expected.digest,'来源已变化，请重新预览；待保存的依赖仍保留：'+expected.book+' / '+expected.uid);return;}
   if(draft.importSource){const fresh=await readAuthorSource(draft.importSource);check(fresh.digest===draft.importSource.digest,'来源已变化，请重新预览；待保存的原文仍保留');}
- }
- const sourceNarrative=entry=>entry.content;
- function legacySourceTarget(snapshot,source){
-  const entry=source.definition?.source?.entry??source.entry,receipts=Object.entries(snapshot.state.runtime?.receipts??{}).filter(([,receipt])=>{const prior=receipt.result?.source;return prior?.kind==='legacy-character-import'&&prior.book===source.book&&String(prior.uid)===String(source.uid);});
-  if(!receipts.length)return null;
-  const targets=new Map();
-  for(const [operationId,receipt]of receipts){
-   const prior=receipt.result.source,raw=prior.rawEntry;if(receipt.operation_id!==operationId||typeof receipt.request_sha256!=='string'||typeof raw?.content!=='string'||raw.content!==entry?.content)continue;
-   if(prior.entryDigest&&prior.entryDigest!==digest({book:source.book,entry:raw}))continue;
-   const title=roleName(raw),content=sourceNarrative(raw);if(!/^【角色】.+/u.test(title))continue;
-   for(const row of databaseCharacters(snapshot)){
-    // The old writer used one random ID for both the dossier and entity.
-    // Reconstruct its exact host request; equal text never proves identity.
-    if(!row.entityId||row.entityId!==row.dossierId)continue;
-    const originId=snapshot.state.tables.T_SYS_ENTITIES[row.entityId].values.origin_record_ref;if(typeof originId!=='string')continue;
-    const changes=[{tableId:'T_CHAR_DOSSIER',recordId:row.dossierId,values:{name:title.slice(4),...(content?{manifest:content}:{})}},{tableId:'T_SYS_ENTITIES',recordId:row.entityId,values:{kind:'character',origin_record_ref:originId}},{tableId:'M_FIELD_REFERENCES',recordId:originId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:row.entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.dossierId,reference_kind:'record',resolution_status:'resolved'}}];
-    if(digest({operationId,contextKey:snapshot.contextKey,changes,schema:[],source:prior})!==receipt.request_sha256)continue;
-    targets.set(row.dossierId,{kind:'legacy-character-import',contextKey:snapshot.contextKey,entityId:row.entityId,dossierId:row.dossierId,originRefId:originId,operationId,requestDigest:receipt.request_sha256,sourceDigest:source.digest});
-   }
-  }
-  check(targets.size===1,targets.size?'此来源对应多个已迁移人物，请在已有档案中明确选择待修订对象':'旧迁移回执无法核实目标人物或来源已变化；原数据保留，请在已有档案中明确核对');
-  return [...targets.values()][0];
- }
- function validateSourceExtraction(draft,snapshot,{normalize=false,checkValues=true}={}){
-  const selected=draft.source?.revisionTarget;if(!selected)return;
-  const target=legacySourceTarget(snapshot,draft.source);check(target&&sameValue(selected,target),'来源对应的旧人物已变化，请重新核对');
-  const binding=draft.proposal.matrix.binding,completed=snapshot.state.runtime?.receipts?.[draft.operationId]?.result?.source;
-  if(!binding&&draft.acceptance?.pending?.length){
-   check(draft.kind==='character'&&draft.mode==='revise','来源提炼只能修订已核实的原人物');
-   if(completed?.kind==='creation'&&sameValue(completed.explicitSource,draft.source)&&completed.binding==null)return;
-   for(const change of draft.proposal.matrix.changes)check(!snapshot.state.tables[change.tableId]?.[change.recordId],'人物核心仍待修复，当前合法组不能覆盖已有记录：'+change.tableId+'#'+change.recordId);
-   return;
-  }
-  check(draft.kind==='character'&&draft.mode==='revise'&&binding?.entityId===target.entityId&&binding?.dossierId===target.dossierId,'来源提炼只能修订已核实的原人物，不能改用另一档案');
-  if(normalize)binding.originRefId=target.originRefId;else check(binding.originRefId===target.originRefId,'来源提炼必须保留原人物的原点引用');
-  if(completed?.kind==='creation'&&sameValue(completed.explicitSource,draft.source)&&sameValue(completed.binding,binding))return;
-  const changes=draft.proposal.matrix.changes,row=snapshot.state.tables.T_CHAR_DOSSIER[target.dossierId],dossier=changes.find(change=>change.tableId==='T_CHAR_DOSSIER'&&change.recordId===target.dossierId);check(dossier,'来源提炼缺少原人物档案');
-  for(const change of changes)check(!snapshot.state.tables[change.tableId]?.[change.recordId]||change===dossier,'来源提炼不能覆盖其他已有记录：'+change.tableId+'#'+change.recordId);
-  const original=sourceNarrative(draft.source.entry),misfiled=row.states.manifest==='known'&&row.values.manifest===original;
-  if(misfiled){check(dossier.values.manifest!==original,'提炼结果仍把整段原文放在本领表现字段');if(normalize&&!Object.hasOwn(dossier.values,'manifest'))dossier.values.manifest=null;}
-  if(checkValues)for(const [field,value]of Object.entries(dossier.values))if(!(field==='manifest'&&misfiled)&&row.values[field]!==undefined&&row.values[field]!==null)check(sameValue(row.values[field],value),'字段已有用户内容，不能在迁移提炼中覆盖：'+field);
  }
  async function previewSourceImport(input,{bindOnCommit=true}={}){
   assertIdle();check(input?.book&&input.uid!==undefined&&typeof input.digest==='string','缺少来源快照，请重新选择');const source=await readAuthorSource(input);check(source.digest===input.digest,'来源已变化，请重新读取后提炼');const snapshot=await read();
@@ -283,13 +128,6 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
   const importSources=closure.sources.map(row=>({book:row.book,uid:row.uid,digest:row.digest})),sourceArchives=closure.sources.map(row=>({...archiveReference(row),records:row.definition.matrix.changes.map(change=>({tableId:change.tableId,recordId:change.recordId}))}));
   const draft={id:'identity:'+crypto.randomUUID(),kind:'source-import',scope:scope(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,configurationRevision:config.read().revision,changes,diff,binding:{database:true,entityId:identity.entityId,dossierId:identity.dossierId,source:sourceArchive},source:{kind:'definition-instance',sourceArchive,sourceArchives,rawEntry:source.entry,rawDependencies:closure.sources.filter(row=>String(row.uid)!==String(source.uid)).map(row=>({book:row.book,uid:row.uid,entry:row.entry,digest:row.digest})),sourceDigest:source.digest},importSource:{book:source.book,uid:source.uid,digest:source.digest},importSources,bindOnCommit};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
  }
- async function previewSourceRepair({dossierId,source:input,values={}}){
-  assertIdle();const source=await readAuthorSource(input);check(source.digest===input.digest,'来源已变化，请重新核对旧迁移');const snapshot=await read(),row=databaseCharacters(snapshot).find(r=>r.dossierId===dossierId);check(row?.entityId,'待修复人物不存在');
-  const authorEntry=source.definition?.source?.entry??source.entry,original=sourceNarrative(authorEntry),target=legacySourceTarget(snapshot,source),proof=target&&snapshot.state.runtime.receipts[target.operationId].result.source;
-  check(target?.dossierId===dossierId&&target.entityId===row.entityId&&row.states.manifest==='known'&&row.values.manifest===original,'不能证明当前值仍是所选人物的旧迁移整段原文，未改动用户字段');check(Object.keys(values).length&&Object.keys(values).some(key=>key!=='manifest'),'请先提炼标准字段，再预览旧字段纠正');check(values.manifest!==original,'提炼结果仍把整段原文放在本领表现字段');
-  for(const [field,value]of Object.entries(values))if(field!=='manifest'&&row.values[field]!==undefined&&row.values[field]!==null)check(sameValue(row.values[field],value),'字段已有用户内容，不能在迁移修复中覆盖：'+field);
-  const draft=await previewEdit({dossierId,values:{...structuredClone(values),manifest:values.manifest??null},before:row});draft.kind='source-repair';draft.changes[0].states={manifest:values.manifest==null?'unset':'known'};draft.source={kind:'legacy-character-repair',book:source.book,uid:source.uid,entryDigest:source.digest,binding:{entityId:row.entityId,dossierId},migrationProof:structuredClone(target),rawEntry:authorEntry,definitionEntry:source.definition?source.entry:null,previousValues:structuredClone(row.values),previousStates:structuredClone(row.states),priorMigration:structuredClone(proof)};draft.importSource={book:source.book,uid:source.uid,digest:source.digest};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
- }
  async function validateEdit(input){
   assertIdle();const draft=drafts.get(input?.id);check(draft&&sameValue(input,draft),'角色草稿已改变，请重新预览');check(draft.scope===scope(),'聊天已切换，未提交旧角色草稿');
   if(!databaseCompletions.has(draft.id)){
@@ -301,8 +139,8 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  }
  async function commitEdit(input){
   assertIdle();const draft=drafts.get(input?.id);check(draft&&sameValue(input,draft),'角色草稿已改变，请重新预览');check(draft.scope===scope(),'聊天已切换，未提交旧角色草稿');
-  if(draft.kind==='source-import'||draft.kind==='source-repair')await validateEdit(input);
-  if(draft.importSource&&!databaseCompletions.has(draft.id)&&!['source-import','source-repair'].includes(draft.kind))await verifyImportSources(draft);
+  if(draft.kind==='source-import')await validateEdit(input);
+  if(draft.importSource&&!databaseCompletions.has(draft.id)&&draft.kind!=='source-import')await verifyImportSources(draft);
   const result=await database.commit({operationId:draft.id,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:structuredClone(draft.changes),source:structuredClone(draft.source)});
   check(result?.state&&result.contextKey===draft.contextKey,'表单提交未返回匹配的归属，尚未确认保存');databaseCompletions.add(draft.id);
   const databaseReceipt={confirmed:true,operationId:draft.id,contextKey:result.contextKey,beforeRevision:draft.expectedRevision,revision:result.revision,records:draft.changes.map(change=>({tableId:change.tableId,recordId:change.recordId}))};
@@ -322,19 +160,16 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  }
  async function phoneProfile(){const value=config.read(),binding=storyAvatar(value).binding,world=value.story.phoneWorld;if(!binding?.database||!world?.database)return null;const snapshot=await read();projectDatabaseIdentity(snapshot,binding);check(snapshot.state.tables?.T_STATIC_WORLDS?.[world.worldId],'选中的世界表单记录已不存在');return {database:true,entityId:binding.entityId,dossierId:binding.dossierId,worldId:world.worldId,contextKey:snapshot.contextKey,revision:snapshot.revision};}
  async function ensureTemplates(){check(builtins,'内置书安装服务尚未接入');return builtins.update();}
+ const rejectLegacySource=draft=>check(!draft?.source?.revisionTarget,'旧迁移目标已退役，请重新选择原文并核对提炼结果');
  async function createDraft({goal,kind='character',mode='extend',source=null,destination,messages,onProgress,signal}){
-  check(creator?.draft,'统一创作服务尚未接入');
-  if(kind==='character'&&source?.book&&source.uid!==undefined){const handoff=await previewSourceMigration(source);check(handoff.requiresExtraction,'此来源已是规范人物，请先预览使用已有档案');if(source.revisionTarget)check(sameValue(source.revisionTarget,handoff.source.revisionTarget),'来源对应的旧人物已变化，请重新核对');source=handoff.source;if(source.revisionTarget)mode='revise';else check(mode==='extend','此来源尚未证明对应既有档案，不能直接修订当前人物');}
-  const draft=await creator.draft(goal,{kind,mode,source,destination,messages,onProgress,signal});
-  if(source?.revisionTarget)try{const snapshot=await read();check(snapshot.contextKey===draft.contextKey&&snapshot.revision===draft.expectedRevision,'生成期间表单已变化，请重新核对');validateSourceExtraction(draft,snapshot,{normalize:true,checkValues:false});}catch(error){error.rawResponse=draft.rawResponse;error.draft=structuredClone(draft);throw error;}
-  return draft;
+  check(creator?.draft,'统一创作服务尚未接入');rejectLegacySource({source});
+  if(kind==='character'&&source?.book&&source.uid!==undefined){const handoff=await previewSourceExtraction(source);check(handoff.requiresExtraction,'此来源已是规范人物，请先预览使用已有档案');check(mode==='extend','书籍原文须先提炼为新定义；修订请明确选择当前标准人物');source=handoff.source;}
+  return creator.draft(goal,{kind,mode,source,destination,messages,onProgress,signal});
  }
- async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');const checked=await creator.validate(draft);validateSourceExtraction(draft,checked.snapshot);return checked;}
- async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');if(draft.source?.revisionTarget)await validateCreation(draft);return creator.save(draft);}
+ async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');rejectLegacySource(draft);return creator.validate(draft);}
+ async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');rejectLegacySource(draft);return creator.save(draft);}
  async function repairCreation(saved,options={}){
-  check(creator?.repair,'待修服务尚未接入；原始内容与已保存条目仍保留');const draft=await creator.repair(saved,options);
-  if(draft.source?.revisionTarget)try{const snapshot=await read();check(snapshot.contextKey===draft.contextKey&&snapshot.revision===draft.expectedRevision,'修复期间表单已变化，请重新核对');validateSourceExtraction(draft,snapshot,{normalize:true,checkValues:false});}catch(error){error.rawResponse=draft.rawResponse;error.draft=structuredClone(draft);throw error;}
-  return draft;
+  check(creator?.repair,'待修服务尚未接入；原始内容与已保存条目仍保留');rejectLegacySource(saved?.repairContext??saved?.draft??saved);return creator.repair(saved,options);
  }
- return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewSourceRepair,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceMigration,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
+ return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceExtraction,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
 }
