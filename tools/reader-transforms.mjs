@@ -34,6 +34,7 @@ export function adaptReaderSource(id,source){
   source=replaceOnce(source,'text:expand(entry.replaceString,m,input)','text:native?native.expand(m,input):expand(entry.replaceString,m,input)');
   source=replaceOnce(source,'function runDisplay({source,groups,depth=null,opening=false}){','function runDisplay({source,groups,depth=null,opening=false,prepareRule=null}){');
   source=replaceOnce(source,'applyRule(runs,entry);','applyRule(runs,entry,prepareRule);');
+  source=replaceOnce(source," return {body:require('./numbered-paragraphs.cjs').text(display('body')),extra:"," const bodyRuns=projectBodyRuns(runs,require('./numbered-paragraphs.cjs').read);\n return {body:bodyRuns.map(r=>r.text).join(''),bodyRuns,extra:");
  }
  return source;
 }

@@ -1,6 +1,7 @@
 // Generated from verified Foundation r243 sources plus explicit read-only adapters.
 // No eval, host access, storage writes, or dynamic dependency loading.
 import {adaptReaderModule} from './reader-compat.js';
+import {projectBodyRuns} from './body-display-runs.js';
 const foundationModules={
 "body-count.cjs":[function(module,exports,require){
 'use strict';
@@ -173,7 +174,8 @@ function runDisplay({source,groups,depth=null,opening=false,prepareRule=null}){
  for(const r of runs.filter(r=>r.owner==='extra'&&!r.boundary)){const text=r.text,last=extraPanels.at(-1);if(!r.panel&&!text.trim()){if(last)last.html+=text;continue;}const id=r.panel?.id??(last?.untagged?last.id:'extra-text-'+(++untagged));if(last?.id===id){last.html+=text;if(r.ruleName)last.ruleName=r.ruleName;}else extraPanels.push({id,tag:r.panel?.tag??null,label:r.panel?.label??null,ruleName:r.ruleName??null,untagged:!r.panel,html:text});}
  for(const p of extraPanels)p.html=projectDisplayMarkers(p.html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,(_,v)=>v));
  const byId=new Map();for(const p of extraPanels){if(byId.has(p.id)){const first=byId.get(p.id);first.html+=p.html;}else byId.set(p.id,p);}
- return {body:require('./numbered-paragraphs.cjs').text(display('body')),extra:projectDisplayMarkers(display('extra')),extraPanels:[...byId.values()].filter(p=>p.html.trim()),rules,
+ const bodyRuns=projectBodyRuns(runs,require('./numbered-paragraphs.cjs').read);
+ return {body:bodyRuns.map(r=>r.text).join(''),bodyRuns,extra:projectDisplayMarkers(display('extra')),extraPanels:[...byId.values()].filter(p=>p.html.trim()),rules,
   depth,assumptions:['API group order then entry order; native order comparison pending','ST compatibility: depth 0 is last stored floor; bare patterns are case-sensitive first match'],nativeEquivalent:false};
 }
 module.exports={partition,applyRule,runDisplay,expand,displayRuleApplicable:applicable};

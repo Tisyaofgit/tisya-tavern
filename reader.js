@@ -1,3 +1,4 @@
+import {displayStartReplySource} from './display-start-prefix.js';
 import {isMatrixReply,tagRevision} from './engine/tags.mjs';
 import {inspectMatrix} from './engine/display.mjs';
 import {usesV3Reply} from './reply-protocol.js';
@@ -20,6 +21,7 @@ export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
+    if(safe==='TISYA_DISPLAY_START_BOUNDARY')return '空开场标记之后没有唯一、完整且边界明确的回复；本条暂不展示，原消息完整保留。（'+safe+'）';
     if(safe.startsWith('TISYA_ONEPASS_'))return `单次完整回复的${safe.includes('JSON_')?'表格 JSON':'结构或偏好记录'}未通过校验；原消息保留，未据此报告填表成功。（${safe}）`;
     const row=/^TISYA_V3_REPLY_(BEFORE|AFTER)_LINE_(\d+)_(LABEL|COLUMNS|EMPTY|OUTCOME)$/.exec(safe);
     if(row)return `${row[1]==='BEFORE'?'开头':'结尾'}摘要第 ${row[2]} 行${{LABEL:'标签不在约定格式内',COLUMNS:'字段列数不符',EMPTY:'必填字段为空',OUTCOME:'留白类别不符'}[row[3]]}；正文和原消息保留。（${safe}）`;
@@ -43,7 +45,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 // Version parsed projections independently of the disk rows so reader updates
 // recompute old successes/errors while retaining the user's fold and tab state.
-const projectionKey=selected=>'matrix-v2-full-hearts:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
+const projectionKey=selected=>'matrix-v3-bounded-start-display:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
 const inspectionKey=(source,selected)=>projectionKey(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
@@ -68,6 +70,7 @@ export async function prepareReaderMessage(identity,options={}){
  return {inspection:rows[0].value,viewState:rows[0].view,save:state=>generation===cacheGeneration?localCache.saveView(identity,state):undefined};
 }
 function inspectUncached(source,options) {
+    try{source=displayStartReplySource(source);}catch(error){const code=readerErrorCode(error);return {structured:true,body:{error:code},journey:{error:code},actions:{error:code},details:{error:code}};}
     if(isMatrixReply(source))return inspectMatrix(source);
     if(isOnePassReply(source))return inspectOnePass(source);
     if(usesV3Reply(source))return inspectV3Message(source);

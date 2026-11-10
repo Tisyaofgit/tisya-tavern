@@ -1,3 +1,4 @@
+import {projectBodyRuns} from '../body-display-runs.js';
 import {xmlTokens,countBody} from '../reader-core.js';
 import {parseNumberedBody} from './paragraphs.mjs';
 import {companionSlots} from './host-companion-wire.mjs';
@@ -171,7 +172,7 @@ export function runV3Display({source,groups=[],depth=null,opening=false,prepareR
  const extraPanels=[];let untagged=0;
  for(const r of runs.filter(r=>r.owner==='extra'&&!r.boundary)){const last=extraPanels.at(-1);if(!r.panel&&!r.text.trim()){if(last)last.html+=r.text;continue;}const id=r.panel?.id??(last?.untagged?last.id:'extra-text-'+(++untagged));if(last?.id===id){last.html+=r.text;if(r.ruleName)last.ruleName=r.ruleName;}else extraPanels.push({id,tag:r.panel?.tag??null,label:r.panel?.label??null,ruleName:r.ruleName??null,untagged:!r.panel,companion:r.panel?.companion===true,companionSegments:r.panel?.companionSegments??[],html:r.text});}
  const byId=new Map();for(const p of extraPanels){if(p.companion)continue;for(const segment of p.companionSegments){check(p.html.includes(segment),'COMPANION_DISPLAY_BOUNDARY');p.html=p.html.split(segment).join('');}delete p.companion;delete p.companionSegments;p.html=displayMarkers(p.html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,(_,t)=>t));if(byId.has(p.id))byId.get(p.id).html+=p.html;else byId.set(p.id,p);}
- const body=display('body');let cleanBody=body;try{cleanBody=readV3Paragraphs(body).map(p=>p.raw).join('\n\n');}catch{}
+ const bodyRuns=projectBodyRuns(runs,readV3Paragraphs,{tolerant:true}),cleanBody=bodyRuns.map(r=>r.text).join('');
  const panels=[...byId.values()].filter(p=>p.html.trim());for(const p of panels)if(p.tag==='StatusPlaceHolderImpl'&&!p.ruleName)p.nativeHosted=true;
- return {body:cleanBody,extra:panels.map(p=>p.html).join(''),extraPanels:panels,rules,depth,nativeEquivalent:false,version:3};
+ return {body:cleanBody,bodyRuns,extra:panels.map(p=>p.html).join(''),extraPanels:panels,rules,depth,nativeEquivalent:false,version:3};
 }

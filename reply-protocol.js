@@ -1,3 +1,4 @@
+import {displayStartReplySource} from './display-start-prefix.js';
 import {isMatrixReply} from './engine/tags.mjs';
 import {runMatrixDisplay} from './engine/display.mjs';
 // Explicit read-only protocol dispatch. A failed V3 parse never retries an old decoder.
@@ -6,4 +7,4 @@ import {runDisplay as legacyDisplay} from './reader-core.js';
 import {runV3Display,isV3ReplyCandidate} from './six/reply.mjs';
 import {isOnePassReply,runOnePassDisplay} from './onepass/reply.mjs';
 export const usesV3Reply=source=>typeof source==='string'&&/<think\b[^>]*\bphase\s*=/i.test(source);
-export function runReplyDisplay(options){return isMatrixReply(options.source)?runMatrixDisplay(options):isOnePassReply(options.source)?runOnePassDisplay(options):usesV3Reply(options.source)?runV3Display(options):legacyDisplay({...options,source:displayReplySource(options.source),opening:options.opening??!isV3ReplyCandidate(options.source)});}
+export function runReplyDisplay(options){options={...options,source:displayStartReplySource(options.source)};return isMatrixReply(options.source)?runMatrixDisplay(options):isOnePassReply(options.source)?runOnePassDisplay(options):usesV3Reply(options.source)?runV3Display(options):legacyDisplay({...options,source:displayReplySource(options.source),opening:options.opening??!isV3ReplyCandidate(options.source)});}
