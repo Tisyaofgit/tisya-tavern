@@ -133,7 +133,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
  }
  function taskPreset(task,{archiveProposal=false}={}){
   const {data,world}=store.read(),definition=registry.tasks.get(task);if(!definition?.preset)fail('此任务没有配套文本预设');
-  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal});
+  if(!TEXT_TASKS[task])return pairedPreset({task,configuration:{data,world},archiveProposal,source:getSource()});
   const instructions=task==='communication'?communicationMessages({format:'tisya.communication-input/1',text:''})[0].content:(definition.instructions??'');
   return textTaskPreset({task,settings:world.modes[world.mode].narrative,instructions:instructions+(world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+world.tables.taskInstructions[task]:'')});
  }
