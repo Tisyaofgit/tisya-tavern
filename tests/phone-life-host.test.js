@@ -1,49 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPhoneService,importPhone,phoneSnapshot,reconcilePhone} from '../phone-core.mjs';
-import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
-import {createPhoneMetadataStorage,PHONE_STATE_KEY,PHONE_TURN_KEY,phoneSource} from '../phone-turn-host.js';
-import {chatKey} from '../engine/controller.mjs';
+import {PHONE_TURN_KEY,phoneSource} from '../phone-turn-host.js';
+import {chatKey,NS} from '../engine/controller.mjs';
+import {fundedPhoneProfile} from './fixtures/phone-current.mjs';
+import {currentPhoneHost,matrixMemoryStorage} from './fixtures/phone-host-current.mjs';
 
-const wrap=(tag,value)=>`<${tag}>${JSON.stringify(value)}</${tag}>`;
 const seed={accounts:{me:{name:'我',role:'self'},system:{name:'通知'}},documents:[{id:'inbox',kind:'inbox',title:'通知',visibility:'private',audience:['me'],author:'system',at:null,items:[]}]};
-function profile(w={},c={}){return {
-  binding:{world:{book:'世界资料',uid:1},character:{book:'人物资料',uid:2},persona:'avatar-a'},
-  world:parsePhoneWorld(wrap('手机世界',{格式:'缇斯亚手机世界/1',世界编号:'test-world',名称:'有来源的世界',应用:['微博','钱包','商城','外卖','相册','音乐','地图','日历'],时间:{起点:'2033-02-09T23:30:00+08:00'},结算归属:'手机账本',货币:{名称:'银元',符号:'¤'},金融:{商城配送费:0,外卖配送费:0},地点:[{编号:'home',名称:'家',横坐标:0,纵坐标:0,已知:true}],商品:[{编号:'book',名称:'纸书',单价:100,库存:20,类别:'实物',地点编号:'home'}],...w})),
-  character:parsePhoneCharacter(wrap('手机初态',{格式:'缇斯亚手机角色/1',角色编号:'person-a',姓名:'本人',当前位置:'home',钱包:{账户:[{编号:'cash',名称:'零钱',余额:100000}],默认付款账户:'cash',默认收支账户:'cash'},联系人:[{编号:'person-b',名称:'对方'}],账号:[{编号:'main',名称:'主账号',用户名:'main',本人:true},{编号:'other',名称:'对方',用户名:'other',本人:false,人物编号:'person-b'}],...c})),
-};}
-async function setup(){let saved=null,fail=false,i=0;const service=createPhoneService({seed,contextKey:'life-chat',now:()=> '2026-11-09T15:00:00Z',idFactory:()=>`service-${++i}`,storage:{load:async()=>saved,save:async s=>{if(fail)throw Error('simulated disk failure');saved=structuredClone(s);}}});await service.init();return {service,saved:()=>saved,setFail:v=>{fail=v;}};}
-const dispatch=(service,id,type,data={})=>service.dispatchLife({id,type,...data},{expectedRevision:service.getState().revision,bindingKey:service.readLife()?.bindingKey});
+function profile(world={},character={}){return fundedPhoneProfile({worldId:'test-world',world:{name:'有来源的世界',...world},character:{accounts:[{id:'main',name:'主账号',handle:'main',owned:true},{id:'other',name:'对方',handle:'other',owned:false,personId:'person-b'}],...character}});}
+async function setup(){let fail=false,i=0;const context={chatId:'life-chat',characterId:0,groupId:null,chat:[],chatMetadata:{},extensionSettings:{},saveChat:async()=>true},disk=matrixMemoryStorage({onWrite:async()=>{if(fail)throw Error('simulated disk failure');}}),database=await currentPhoneHost({context,storage:disk,profile:profile()}),service=createPhoneService({seed,contextKey:chatKey(context),now:()=> '2026-11-09T15:00:00Z',idFactory:()=>`service-${++i}`,storage:database.phoneStorage});await service.init();return {service,database,context,disk,saved:()=>database.snapshot(),setFail:v=>{fail=v;}};}
+const dispatch=async(service,id,type,data={})=>{if(type==='order.checkout'&&!data.quoteId){const quote=await service.dispatchLife({id:id+':quote',type:'order.quote',...data},{expectedRevision:service.getState().revision,bindingKey:service.readLife()?.bindingKey});data={kind:data.kind,quoteId:quote.result.quoteId};}return service.dispatchLife({id,type,...data},{expectedRevision:service.getState().revision,bindingKey:service.readLife()?.bindingKey});};
 const cash=s=>s.wallet.accounts[0].balance;
 const frozenView=s=>({frame:s.frame,documents:s.suite.documents,accounts:s.suite.accounts,markers:s.markers,life:s.life,lifeBoundary:s.lifeBoundary});
-async function prepare(service,id='r1'){return service.prepareTurn({chatKey:'life-chat',requestId:id,anchorUid:`user-${id}`});}
+async function prepare(service,id='r1'){return service.prepareTurn({chatKey:service.getState().contextKey,requestId:id,anchorUid:`user-${id}`});}
 const raw=(requestId,acks,lifeUpdates=[],markers=[])=>`<extra><phone>${JSON.stringify({requestId,acks,blocks:[],lifeUpdates,markers})}</phone></extra>`;
-async function accept(service,{requestId='r1',sourceId='uid-a:candidate-a',updates=[],markers=[]}={}){const request=service.getState().requests[requestId];const source={sourceId,uid:sourceId.split(':')[0],candidate:sourceId.split(':')[1],requestId,raw:raw(requestId,request.actionIds,updates,markers),chatKey:'life-chat'};await service.acceptTurn(source);return source;}
+async function accept(service,{requestId='r1',sourceId='uid-a:candidate-a',updates=[],markers=[]}={}){const request=service.getState().requests[requestId];const source={sourceId,uid:sourceId.split(':')[0],candidate:sourceId.split(':')[1],requestId,raw:raw(requestId,request.actionIds,updates,markers),chatKey:service.getState().contextKey};await service.acceptTurn(source);return source;}
 
-test('old phone archive stays without life until explicit profile initialization',async()=>{
+test('current database keeps life uninitialized until an explicit normalized profile is applied',async()=>{
   const {service}=await setup();assert.equal(service.readLife(),null);assert.equal('life' in JSON.parse(service.export()),false);
   const domain=await service.initLife(profile());assert.equal(cash(domain.state),100000);assert.equal(domain.state.social.posts.length,0);
   assert.equal(domain.state.identity.name,'本人');assert.equal(importPhone(service.export()).life.bindingKey,domain.bindingKey);
 });
 
-test('media origin follows verified native branches, including old snapshots without the explicit field',async()=>{
-  for(const legacy of [false,true]){
-    const parent={chatId:'life-parent',characterId:7,groupId:null,chatMetadata:{},chat:[]},key=chatKey(parent);
-    const make=c=>createPhoneService({seed,contextKey:chatKey(c),storage:createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>true,allowNativeBranch:true},c)});
-    const source=make(parent);await source.init();await source.initLife(profile());
+test('current media origin follows verified native branches and cold reopen without metadata copies',async()=>{
+    const parent={chatId:'life-parent',characterId:7,groupId:null,chatMetadata:{},chat:[]},key=chatKey(parent),disk=matrixMemoryStorage();
+    const make=async c=>{const db=await currentPhoneHost({context:c,storage:disk,profile:profile()}),service=createPhoneService({seed,contextKey:chatKey(c),storage:db.phoneStorage});await service.init();return service;};
+    const source=await make(parent);await source.initLife(profile());
     await source.dispatchLife({id:'media-song',type:'music.song.add',song:{id:'song',title:'录音',artist:'本人',audioId:'original-audio'}},{expectedRevision:source.getState().revision});
     await source.prepareTurn({chatKey:key,requestId:'media-r1',anchorUid:'media-user'});
     const message={is_user:false,mes:raw('media-r1',['media-song']),extra:{tisya_engine:{uid:'media-assistant'}}},origin=phoneSource(message);
     await source.acceptTurn({chatKey:key,requestId:'media-r1',...origin});
     parent.chat.push({is_user:true,mes:'继续',extra:{tisya_engine:{uid:'media-user'},[PHONE_TURN_KEY]:{requests:[{requestId:'media-r1'}]}}},message);
-    const copied=structuredClone(parent.chatMetadata);
-    if(legacy){const remove=value=>{if(!value||typeof value!=='object')return;if(value.format==='tisya.phone-life/1')delete value.mediaOriginContextKey;for(const v of Object.values(value))remove(v);};remove(copied);}
+    const copied=structuredClone(parent.chatMetadata),parentBundle=await disk.get(parent.chatMetadata[NS].chat_uid);
     const child={...parent,chatId:'life-child',chat:structuredClone(parent.chat),chatMetadata:{...copied,main_chat:parent.chatId,integrity:'native-parent-verified'}};
-    const adopted=make(child);await adopted.init();assert.equal(adopted.getState().contextKey,chatKey(child));assert.equal(adopted.readLife().mediaOriginContextKey,key);assert.equal(adopted.snapshot(origin.sourceId).life.mediaOriginContextKey,key);
+    const adopted=await make(child);assert.equal(adopted.getState().contextKey,chatKey(child));assert.equal(adopted.readLife().mediaOriginContextKey,key);assert.equal(adopted.snapshot(origin.sourceId).life.mediaOriginContextKey,key);
     assert.equal(adopted.getState().requests['media-r1'].lifeSnapshot.life.mediaOriginContextKey,key);assert.equal(adopted.readLife().state.media.songs[0].audioId,'original-audio');
-    const nested={...child,chatId:'life-grandchild',chatMetadata:{...structuredClone(child.chatMetadata),main_chat:child.chatId,integrity:'native-child-verified'}};const grandchild=make(nested);await grandchild.init();assert.equal(grandchild.readLife().mediaOriginContextKey,key);
-    const cold=make(child);await cold.init();assert.equal(cold.readLife().mediaOriginContextKey,key);assert.equal(parent.chatMetadata[PHONE_STATE_KEY].contextKey,key);
-  }
+    const nested={...child,chatId:'life-grandchild',chatMetadata:{...structuredClone(child.chatMetadata),main_chat:child.chatId,integrity:'native-child-verified'}};const grandchild=await make(nested);assert.equal(grandchild.readLife().mediaOriginContextKey,key);
+    const cold=await make(child);assert.equal(cold.readLife().mediaOriginContextKey,key);assert.equal(parent.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(await disk.get(parent.chatMetadata[NS].chat_uid),parentBundle);
 });
 
 test('ordinary archive import cannot borrow another chat media namespace',async()=>{
@@ -56,28 +49,28 @@ test('ordinary archive import cannot borrow another chat media namespace',async(
 
 test('real payment is one serialized commit, exact-id replay is free, stale caller cannot overwrite it',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'cart-1','cart.add',{productId:'book'});
-  const oldRevision=service.getState().revision,action={id:'pay-1',type:'order.checkout',kind:'shop',payment:'balance',placeId:'home'};
+  const quote=await dispatch(service,'quote-1','order.quote',{kind:'shop',payment:'balance',placeId:'home'}),oldRevision=service.getState().revision,action={id:'pay-1',type:'order.checkout',kind:'shop',quoteId:quote.result.quoteId};
   const first=await service.dispatchLife(action,{expectedRevision:oldRevision});assert.equal(cash(first.state),99900);assert.equal(first.state.inventory.length,0);
   const replay=await service.dispatchLife(action,{expectedRevision:oldRevision});assert.equal(replay.result.replayed,true);assert.equal(replay.revision,first.revision);
   await assert.rejects(service.dispatchLife({id:'stale-1',type:'cart.add',productId:'book'},{expectedRevision:oldRevision}),/进度已变化/);
-  assert.equal(cash(service.readLife().state),99900);assert.equal(service.getState().actions.filter(a=>a.kind==='life').length,2);
+  assert.equal(cash(service.readLife().state),99900);assert.equal(service.getState().actions.filter(a=>a.kind==='life').length,3);
 });
 
 test('persistence failure keeps financial state, journal, pending list and original archive intact',async()=>{
   const f=await setup();await f.service.initLife(profile());await dispatch(f.service,'cart-f','cart.add',{productId:'book'});
-  const before=f.service.export(),saved=JSON.stringify(f.saved());f.setFail(true);
+  const before=f.service.export(),saved=JSON.stringify(await f.saved());f.setFail(true);
   await assert.rejects(dispatch(f.service,'pay-f','order.checkout',{kind:'shop',payment:'balance',placeId:'home'}),/disk failure/);
-  assert.equal(f.service.export(),before);assert.equal(JSON.stringify(f.saved()),saved);
+  assert.equal(f.service.export(),before);assert.equal(JSON.stringify(await f.saved()),saved);
 });
 
 test('role/world binding switch refuses reseeding; style and application changes preserve all transactions',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'transfer-1','wallet.transfer',{to:'person-b',amount:50});
-  const original=service.readLife(),changed=profile({名称:'世界新显示名',画风:{背景:'#123456',强调:'#abcdef'},应用:['钱包','相册'],应用名称:{wallet:'新钱包名称'}});
+  const original=service.readLife(),changed=profile({name:'世界新显示名',theme:{background:'#123456',accent:'#abcdef'},apps:['wallet','album'],appNames:{wallet:'新钱包名称'}});
   await service.initLife(changed);assert.equal(cash(service.readLife().state),99950);assert.equal(service.readLife().world.theme.background,'#123456');
   assert.deepEqual(service.readLife().initialization,original.initialization);
   assert.equal(service.readLife().world.name,'世界新显示名');assert.equal(service.readLife().bindingKey,original.bindingKey);assert.equal(service.readLife().state.config.appNames.wallet,'新钱包名称');
   const restored=importPhone(service.export());assert.equal(restored.life.world.name,'世界新显示名');assert.deepEqual(restored.life.initialization,original.initialization);
-  await assert.rejects(service.initLife(profile({世界编号:'other-world'})),/需要明确迁移/);
+  const otherWorld=profile();otherWorld.world.id='other-world';otherWorld.binding.world.worldId='other-world';await assert.rejects(service.initLife(otherWorld),/需要明确迁移/);
   await assert.rejects(dispatch(service,'disabled','social.publish',{text:'不可发'}),/未开放/);
   const other=profile();other.binding.persona='avatar-b';const before=service.export();await assert.rejects(service.initLife(other),/切回原世界/);assert.equal(service.export(),before);
 });
@@ -96,7 +89,7 @@ test('next-turn cannot pay or borrow for user, failed batch never consumes pendi
 });
 
 test('next-turn resolves invited person contacts without requiring a social account',async()=>{
-  const {service}=await setup();await service.initLife(profile({}, {账号:[{编号:'main',名称:'主账号',用户名:'main',本人:true}]}));
+  const {service}=await setup();await service.initLife(profile({}, {accounts:[{id:'main',name:'主账号',handle:'main',owned:true}]}));
   await dispatch(service,'calendar-contact','calendar.add',{title:'约见对方',day:10,minute:600,placeId:'home',participantId:'person-b'});
   const turn=await prepare(service),life=JSON.parse(turn.messages[1].content).life;
   assert.equal(life.calendar[0].participantId,'person-b');assert.deepEqual(life.contacts,[{id:'person-b',name:'对方'}]);
@@ -116,7 +109,7 @@ test('delivery and story-time feedback freeze with original source; later change
 test('reroll restores captured life boundary, detaches later local transactions, and keeps old frozen result',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'before-turn','wallet.transfer',{to:'person-b',amount:100});await prepare(service);await accept(service,{updates:[{type:'world.advance',minutes:60}]});
   const old=service.snapshot('uid-a:candidate-a');await dispatch(service,'abandoned-transfer','wallet.transfer',{to:'person-b',amount:500});
-  await service.prepareTurn({chatKey:'life-chat',replayRequestId:'r1'});await accept(service,{sourceId:'uid-a:candidate-b',updates:[{type:'world.advance',minutes:120}]});
+  await service.prepareTurn({chatKey:service.getState().contextKey,replayRequestId:'r1'});await accept(service,{sourceId:'uid-a:candidate-b',updates:[{type:'world.advance',minutes:120}]});
   assert.equal(cash(service.readLife().state),99900);assert.equal(service.readLife().state.clock.totalMinutes,120);
   assert.equal(service.getState().actions.find(a=>a.id==='abandoned-transfer').status,'detached');assert.deepEqual(frozenView(service.snapshot('uid-a:candidate-a')),frozenView(old));
   assert.equal(importPhone(service.export()).life.state.clock.totalMinutes,120);
@@ -125,7 +118,7 @@ test('reroll restores captured life boundary, detaches later local transactions,
 test('native history truncation restores life before removed reply while preserving its snapshot',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'before-history','wallet.transfer',{to:'person-b',amount:100});await prepare(service);const first=await accept(service,{updates:[{type:'world.advance',minutes:60}]});
   await dispatch(service,'after-history','wallet.transfer',{to:'person-b',amount:500});await prepare(service,'r2');await accept(service,{requestId:'r2',sourceId:'uid-b:candidate-a',updates:[{type:'world.advance',minutes:120}]});
-  const oldSecond=service.snapshot('uid-b:candidate-a');await service.reconcile({chatKey:'life-chat',sources:[first]});
+  const oldSecond=service.snapshot('uid-b:candidate-a');await service.reconcile({chatKey:service.getState().contextKey,sources:[first]});
   // The later local action precedes the removed assistant source and remains at
   // that user's captured boundary; model consequences from the removed reply do not.
   assert.equal(service.readLife().state.clock.totalMinutes,60);assert.equal(cash(service.readLife().state),99400);
@@ -135,7 +128,7 @@ test('native history truncation restores life before removed reply while preserv
 test('living weibo has one editable entity and an explicitly read-only suite projection',async()=>{
   const {service}=await setup();await service.initLife(profile());await dispatch(service,'post-user','social.publish',{text:'同一个帖子',visibility:'public'});
   const post=service.readLife().state.social.posts[0],document=Object.values(service.getState().suite.documents).find(d=>d.meta?.lifeProjection?.entityId===post.id);
-  assert.ok(document);assert.equal(document.text,post.text);assert.equal(document.at,'2033-02-09T15:30:00.000Z');
+  assert.ok(document);assert.equal(document.text,post.text);assert.equal(document.at,'2033-02-09T23:30:00.000Z');
   assert.deepEqual(service.lifeRouteForDocument(document.id),{appId:'weibo',detail:post.id,bindingKey:service.readLife().bindingKey});
   await assert.rejects(service.dispatch({kind:'message',threadId:document.id,text:'第二份编辑'}),/只读正文投影/);
   await assert.rejects(service.applyLocal({blocks:[{type:'weibo',thread:document.id,text:'另改'}]}),/只读正文投影/);

@@ -1,4 +1,4 @@
-import {extendPhoneFormCatalog} from './phone-form-contract.mjs';
+import {extendPhoneFormCatalog,phoneFormReferenceCandidates} from './phone-form-contract.mjs';
 import {effectivePreferences} from './preferences.mjs';
 import {limitNativeHistory} from '../config/history-context.js';
 import {contractorMessages} from './contractor.mjs';
@@ -127,7 +127,11 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
    for(const [rid,row]of Object.entries(e.rows('T_SYS_ENTITIES'))){const ref=row.values.origin_record_ref,link=typeof ref==='string'?e.rows('M_FIELD_REFERENCES')[ref]?.values:null;if(link?.target_table&&link?.target_row_uuid){const origin=e.rows(link.target_table)[link.target_row_uuid],name=origin?.values?.[link.target_field||'name'];if(typeof name==='string')e.set(['T_SYS_ENTITIES',rid,'name',[]],name,'derived');}}
    for(const change of changes){if(change.remove)continue;const tid=change.tableId??change.table,rid=change.recordId??change.id,row=e.record(tid,rid);
     for(const spec of e.data.schema[tid].fields){const v=row.values[spec.key],state=row.states[spec.key];if(spec.required&&(v==null||!['known','derived'].includes(state)))fail('REQUIRED_FIELD','表单必填字段尚未完整填写',{table:tid,record:rid,field:spec.key});
-     if(v==null||!['REF','CHILD_REF'].includes(spec.type)||!spec.ref)continue;const target=spec.ref.startsWith('@')?row.values[spec.ref.slice(1)]:spec.ref;if(!target||!e.data.schema[target])continue;const refs=Array.isArray(v)?v:[v];for(const ref of refs)if(typeof ref==='string'&&!e.rows(target)[ref])fail('REFERENCE_MISSING','表单引用的目标记录不存在',{table:tid,record:rid,field:spec.key,target,reference:ref});
+     if(v==null||!['REF','CHILD_REF'].includes(spec.type)||!spec.ref)continue;const target=spec.ref.startsWith('@')?row.values[spec.ref.slice(1)]:spec.ref;if(!target||!e.data.schema[target])continue;const refs=Array.isArray(v)?v:[v];for(const ref of refs)if(typeof ref==='string'){
+      const business=phoneFormReferenceCandidates(e.data,{tableId:tid,recordId:rid,field:spec.key,target,value:ref});
+      if(business?.length>1)fail('REFERENCE_AMBIGUOUS','表单业务引用对应多条记录，请明确目标',{table:tid,record:rid,field:spec.key,target,reference:ref});
+      if(business?business.length!==1:!e.rows(target)[ref])fail('REFERENCE_MISSING','表单引用的目标记录不存在',{table:tid,record:rid,field:spec.key,target,reference:ref});
+     }
     }
    }
    return {changed:changes.length,source:clone(source)};

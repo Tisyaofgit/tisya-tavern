@@ -3,21 +3,21 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {indexedDB} from 'fake-indexeddb';
 import {createPhoneService} from '../phone-core.mjs';
-import {createPhoneMetadataStorage,PHONE_STATE_KEY} from '../phone-turn-host.js';
+import {currentPhoneHost,matrixMemoryStorage} from './fixtures/phone-host-current.mjs';
+import {phoneProfile,currentCalendar} from './fixtures/phone-current.mjs';
 import {chatKey} from '../engine/controller.mjs';
 import {bootPhone} from '../phone-app.mjs';
-import {parsePhoneWorld,parsePhoneCharacter,validatePhoneLife} from '../phone-life-config.mjs';
+import {validatePhoneLife} from '../phone-life-config.mjs';
 
-const wrap=(tag,value)=>`<${tag}>${JSON.stringify(value)}</${tag}>`;
-const rawWorld={格式:'缇斯亚手机世界/1',世界编号:'world-1',名称:'青鸟之城',应用:['weibo','wallet','shop','food','album','music','map','calendar'],应用名称:{wallet:'青鸟银行',weibo:'鸟鸣'},画风:{背景:'#edf5ef',面板:'#fff',文字:'#234',强调:'#328f78',圆角:16},时间:{起点:'2033-04-08T15:30:00+08:00'},结算归属:'手机账本',货币:{名称:'云币',符号:'¤'},金融:{贷款:{年利率基点:400,期数:[2,4],每期天数:45,每年计息期数:8,最低本金:10000,最高本金:1000000},理财:[{编号:'fund-1',名称:'城市储蓄',年利率基点:120,说明:'故事内计划'}],商城配送费:137,外卖配送费:211},交通:{步行速度:5},地点:[{编号:'house',名称:'青鸟公寓',横坐标:0,纵坐标:0,已知:true},{编号:'garden',名称:'天空花园',横坐标:15,纵坐标:0,已知:true}],商品:[{编号:'novel',名称:'云间手札',单价:2300,库存:3,类别:'实物',地点编号:'house'},{编号:'noodle',名称:'热汤面',单价:1600,库存:9,类别:'食品',地点编号:'house'}]};
-const rawCharacter={格式:'缇斯亚手机角色/1',角色编号:'person-1',姓名:'阿青',账号:[{编号:'main',名称:'青鸟',用户名:'bluebird',本人:true},{编号:'friend',名称:'朋友',用户名:'friend',本人:false,人物编号:'person-2'}],钱包:{账户:[{编号:'cash',名称:'零钱',余额:100000},{编号:'savings',名称:'青鸟银行卡',余额:900000}],默认付款账户:'cash',默认收支账户:'savings'},联系人:[{编号:'person-2',名称:'朋友'}],微博:[{编号:'post-1',作者:'friend',正文:'今天在天空花园。',可见范围:'公开',时间:'2033-04-08T14:00:00+08:00'}],当前位置:'house'};
-const profile=(w={},c={})=>({world:parsePhoneWorld(wrap('手机世界',{...rawWorld,...w})),character:parsePhoneCharacter(wrap('手机初态',{...rawCharacter,...c})),binding:{world:{book:'青鸟世界',uid:1},character:{book:'基点书',uid:2},carrier:{kind:'character',id:'avatar.png'},persona:'user.png'}});
+const baseWorld={name:'青鸟之城',apps:['weibo','wallet','shop','food','album','music','map','calendar'],appNames:{wallet:'青鸟银行',weibo:'鸟鸣'},theme:{background:'#edf5ef',panel:'#fff',text:'#234',accent:'#328f78',radius:16},currency:{name:'云币',symbol:'¤',minorUnits:2},economy:{loan:{annualRateBps:400,terms:[2,4],periodDays:45,periodsPerYear:8,minAmount:10000,maxAmount:1000000},investments:[{id:'fund-1',name:'城市储蓄',annualRateBps:120,apr:0.012,description:'故事内计划'}],deliveryFees:{shop:137,food:211}},travel:{speeds:{walk:5}},places:[{id:'house',name:'青鸟公寓',x:0,y:0,known:true},{id:'garden',name:'天空花园',x:15,y:0,known:true}],catalog:[{id:'novel',name:'云间手札',price:2300,stock:3,kind:'physical',placeId:'house',tags:[]},{id:'noodle',name:'热汤面',price:1600,stock:9,kind:'food',placeId:'house',tags:[]}]};
+const baseCharacter={name:'阿青',accounts:[{id:'main',name:'青鸟',handle:'bluebird',owned:true},{id:'friend',name:'朋友',handle:'friend',owned:false,personId:'person-2'}],wallet:{accounts:[{id:'cash',name:'零钱',balance:100000},{id:'savings',name:'青鸟银行卡',balance:900000}],defaultAccountId:'cash',fundingAccountId:'savings'},contacts:[{id:'person-2',name:'朋友'}],posts:[{id:'post-1',authorId:'friend',text:'今天在天空花园。',visibility:'public',mediaIds:[],createdAt:{year:2033,month:4,day:8,minute:840,totalMinutes:-90}}],position:'house'};
+const profile=(w={},c={})=>{const {calendar={...currentCalendar(),month:4,day:8,hour:15,minute:30},...world}=w;return phoneProfile({worldId:'world-1',personId:'person-1',world:{...baseWorld,...world},character:{...baseCharacter,...c},calendar});};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function fixture({world={},character={},appId='home',initialize=true,slow=false}={}){
  let context={chatId:'life-dom',characterId:0,groupId:null,chatMetadata:{},chat:[]},selection='profile-1',app,saves=0,serial=0;
  const original=context,key=chatKey(context),win=new Window({url:'http://localhost/phone.html?chat='+encodeURIComponent(key)+'&app='+appId,settings:{disableIframePageLoading:true}}),doc=win.document;
  doc.body.innerHTML='<div id="phone-root" style="height:800px"></div>';Object.defineProperty(win,'indexedDB',{value:indexedDB,configurable:true});
- const storage=createPhoneMetadataStorage({getContext:()=>context,persistMetadata:async()=>{saves++;if(slow)await wait(25);return true;}},context);
+ const matrix=await currentPhoneHost({context,getContext:()=>context,profile:profile(world,character),storage:matrixMemoryStorage({onWrite:async()=>{saves++;if(slow)await wait(25);}})}),storage=matrix.phoneStorage;
  const service=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:key,storage,idFactory:()=>`life-dom-${++serial}`,onChange:()=>app?.refresh()});await service.init();if(initialize)await service.initLife(profile(world,character));
  const host={contextKey:()=>chatKey(context),selectionKey:()=>selection,service:async()=>service,open:()=>{},openIdentity:()=>{}};win.Tisya={phone:host};
  app=await bootPhone({win,doc});const root=app.getRoot?.();
@@ -25,20 +25,20 @@ async function fixture({world={},character={},appId='home',initialize=true,slow=
  const click=async selector=>{const target=root.querySelector(selector);assert.ok(target,selector);target.click();await settle();};
  const input=(selector,value)=>{const target=root.querySelector(selector);assert.ok(target,selector);target.value=value;target.dispatchEvent(new win.Event('input',{bubbles:true}));return target;};
  const submit=async selector=>{root.querySelector(selector).dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));await settle();};
- return {win,doc,root,app,service,original,host,settle,click,input,submit,get saves(){return saves;},setSelection:value=>{selection=value;},switchChat:()=>{context={...context,chatId:'other',chatMetadata:{}};},close:()=>{app.dispose();win.close();}};
+ return {win,doc,root,app,service,original,host,matrix,settle,click,input,submit,get saves(){return saves;},setSelection:value=>{selection=value;},switchChat:()=>{context={...context,chatId:'other',chatMetadata:{}};},close:()=>{app.dispose();win.close();}};
 }
 
 test('real phone boot mounts configured life apps and no preview identities',async()=>{
- const f=await fixture({world:{应用:['wallet','album'],应用名称:{wallet:'青鸟银行'}}});
+ const f=await fixture({world:{apps:['wallet','album'],appNames:{wallet:'青鸟银行'}}});
  assert.equal(f.root.querySelectorAll('.home-apps button').length,2);assert.match(f.root.querySelector('.home-apps').textContent,/青鸟银行/);assert.doesNotMatch(f.root.textContent,/余舟|林间|青禾/);assert.equal(f.root.querySelector('.phone').style.getPropertyValue('--accent'),'#328f78');
  assert.throws(()=>f.app.navigate({app:'shop'}),/没有启用/);assert.equal(f.win.localStorage.length,0);f.close();
 });
-test('host transfer form writes once into actual chat metadata and survives service reload',async()=>{
+test('host transfer form writes once into the current database and survives service reload',async()=>{
  const f=await fixture({appId:'wallet'});await f.app.handle('nav',{app:'wallet',tab:'transfer'});
  assert.match(f.root.querySelector('[name="to"]').textContent,/朋友/);assert.doesNotMatch(f.root.textContent,/演示联系人|余舟/);
  f.input('[name="amount"]','12.34');f.input('[name="to"]','person-2');await f.submit('[data-action="wallet.transfer"]');
- assert.equal(f.service.readLife().state.wallet.accounts.find(a=>a.id==='cash').balance,98766);assert.equal(f.original.chatMetadata[PHONE_STATE_KEY].life.state.wallet.ledger.length,1);assert.ok(f.saves>=3);
- const restored=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:chatKey(f.original),storage:{load:async()=>f.original.chatMetadata[PHONE_STATE_KEY],save:async()=>true}});await restored.init();assert.equal(restored.readLife().state.wallet.accounts[0].balance,98766);f.close();
+ assert.equal(f.service.readLife().state.wallet.accounts.find(a=>a.id==='cash').balance,98766);assert.equal((await f.matrix.read()).life.state.wallet.ledger.length,1);assert.ok(f.saves>=3);
+ const restored=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:chatKey(f.original),storage:(await currentPhoneHost({context:f.original,storage:f.matrix.storage})).phoneStorage});await restored.init();assert.equal(restored.readLife().state.wallet.accounts[0].balance,98766);f.close();
 });
 test('commerce checkout uses configured fee and hides model-owned logistics controls',async()=>{
  const f=await fixture({appId:'shop'});await f.app.handle('cart.add',{productId:'novel',qty:1});await f.app.handle('nav',{app:'shop',tab:'cart'});
@@ -52,16 +52,16 @@ test('loan quote and consent use world APR, terms and selected funding account',
  await f.click('[data-action="wallet.loan.borrow"]');assert.equal(f.service.readLife().state.wallet.loans.length,1);assert.equal(f.service.readLife().state.wallet.accounts.find(a=>a.id==='savings').balance,920000);f.close();
 });
 test('unconfigured values stay unknown and accountless personal media remains usable',async()=>{
- const f=await fixture({character:{账号:[],微博:[],钱包:{账户:[{编号:'unknown',名称:'待确认',余额:null}]}},world:{时间:{起点:null},货币:null,金融:{},交通:null},appId:'wallet'});
+ const f=await fixture({character:{accounts:[],posts:[],wallet:{accounts:[{id:'unknown',name:'待确认',balance:null}]}},world:{calendar:null,economy:{},travel:{speeds:{}}},appId:'wallet'});
  assert.match(f.root.textContent,/未配置/);assert.doesNotMatch(f.root.querySelector('.u-hero-amount').textContent,/0\.00/);await f.app.handle('nav',{app:'album'});assert.match(f.root.textContent,/相册/);await f.app.handle('nav',{app:'music'});assert.match(f.root.textContent,/音乐/);await f.app.handle('nav',{app:'calendar'});assert.match(f.root.textContent,/尚未提供日历起点/);assert.equal(f.service.readLife().state.social.activeAccountId,null);f.close();
 });
-test('draft autosave retains newer input arriving during an older metadata save',async()=>{
+test('draft autosave retains newer input arriving during an older database save',async()=>{
  const f=await fixture({appId:'weibo',slow:true});await f.app.handle('nav',{app:'weibo',tab:'compose'});const field=f.input('[name="text"]','第一句');assert.equal(f.app.requestLeave().allowed,false);await wait(455);field.value='第一句，第二句';field.dispatchEvent(new f.win.Event('input',{bubbles:true}));await wait(650);await f.settle();
  assert.equal(f.service.readLife().state.social.drafts.main.text,'第一句，第二句');assert.equal(f.root.querySelector('[name="text"]'),field);assert.equal(field.value,'第一句，第二句');assert.equal(f.app.requestLeave().allowed,true);f.close();
 });
 test('old frame rejects changed selection and changed chat without overwriting either archive',async()=>{
- const f=await fixture({appId:'wallet'}),before=JSON.stringify(f.original.chatMetadata[PHONE_STATE_KEY]);f.setSelection('new-person');await assert.rejects(()=>f.app.dispatch({type:'wallet.transfer',from:'cash',to:'person-2',amount:1}),/已切换/);assert.equal(JSON.stringify(f.original.chatMetadata[PHONE_STATE_KEY]),before);
- f.setSelection('profile-1');f.switchChat();await assert.rejects(()=>f.app.dispatch({type:'wallet.transfer',from:'cash',to:'person-2',amount:1}),/已切换/);assert.equal(JSON.stringify(f.original.chatMetadata[PHONE_STATE_KEY]),before);f.close();
+ const f=await fixture({appId:'wallet'}),before=JSON.stringify(await f.matrix.read());f.setSelection('new-person');await assert.rejects(()=>f.app.dispatch({type:'wallet.transfer',from:'cash',to:'person-2',amount:1}),/已切换/);assert.equal(JSON.stringify(await f.matrix.read()),before);
+ f.setSelection('profile-1');f.switchChat();await assert.rejects(()=>f.app.dispatch({type:'wallet.transfer',from:'cash',to:'person-2',amount:1}),/已切换/);const originalReader=await currentPhoneHost({context:f.original,storage:f.matrix.storage});assert.equal(JSON.stringify(await originalReader.read()),before);f.close();
 });
 test('archive validates visual tokens even when world and state config are tampered together',async()=>{
  const f=await fixture(),life=f.service.readLife();life.world.theme.background='url(https://bad.invalid/track)';life.state.config.theme.background=life.world.theme.background;assert.throws(()=>validatePhoneLife(life),/安全颜色/);f.close();

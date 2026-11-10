@@ -6,11 +6,12 @@ import {Window} from 'happy-dom';
 function parseHTML(html){const window=new Window({url:'https://host.test/',settings:{disableIframePageLoading:true}});window.document.write(html);return {window,document:window.document};}
 import {createPhoneService} from '../phone-core.mjs';
 import {getDoc} from '../social-suite-core.mjs';
-import {chatKey} from '../engine/controller.mjs';
+import {chatKey,NS} from '../engine/controller.mjs';
+import {currentPhoneHost,matrixMemoryStorage} from './fixtures/phone-host-current.mjs';
 import {configureTags} from '../engine/tags.mjs';
 import {
- PHONE_STATE_KEY,PHONE_TURN_KEY,PHONE_SOURCE_KEY,phoneSource,
- createPhoneMetadataStorage,createPhoneTurnHost,mountPhoneMarkers,
+ PHONE_TURN_KEY,PHONE_SOURCE_KEY,phoneSource,
+ createPhoneTurnHost,mountPhoneMarkers,
 } from '../phone-turn-host.js';
 
 globalThis.crypto??=webcrypto;
@@ -23,48 +24,40 @@ const seed=()=>({accounts:{me:{name:'我'},a:{name:'网友',platform:'douban'}},
 const context=(id='chat-a')=>({chatId:id,characterId:0,groupId:null,chatMetadata:{},chat:[user(),assistant()],saveChat:async()=>true});
 const raw=(requestId,acks=[],text='网友的新回复',floor=3)=>`<reply><body>看到手机。[[手机:m1]]</body><extra><phone>${JSON.stringify({requestId,acks,blocks:[{type:'forum',thread:'forum',items:[{by:'a',text}]}],markers:[{id:'m1',thread:'forum',floor}]})}</phone></extra></reply>`;
 async function fixture(){
- let current=context(),nativeBusy=false,seq=0,metadataSaves=0,messageSaves=0;
+ let current=context(),nativeBusy=false,seq=0,metadataSaves=0,messageSaves=0,diskWrites=0,diskFail=false;
  const errors=[];current.saveChat=async()=>{messageSaves++;return true;};
- const storage=createPhoneMetadataStorage({getContext:()=>current,persistMetadata:async()=>{metadataSaves++;return true;}},current);
+ const engineStorage=matrixMemoryStorage({onWrite:async()=>{if(diskFail)throw Error('模拟磁盘拒绝');diskWrites++;}}),database=await currentPhoneHost({context:current,getContext:()=>current,storage:engineStorage,persistMetadata:async()=>{metadataSaves++;return true;}}),storage=database.phoneStorage;
  const service=createPhoneService({seed:seed(),contextKey:chatKey(current),storage,now:()=>at,idFactory:()=>`id-${++seq}`});await service.init();
  const host=createPhoneTurnHost({getContext:()=>current,phoneService:service,isGenerating:()=>nativeBusy,onError:e=>errors.push(e)});
- return {get c(){return current;},setContext:c=>current=c,setBusy:v=>nativeBusy=v,service,host,storage,errors,counters:()=>({metadataSaves,messageSaves})};
+ return {get c(){return current;},setContext:c=>current=c,setBusy:v=>nativeBusy=v,setDiskFail:v=>diskFail=v,service,host,storage,database,engineStorage,errors,counters:()=>({metadataSaves,messageSaves,diskWrites})};
 }
 async function start(f){const action=await f.service.dispatch({kind:'message',threadId:'forum',text:'用户主动留言'});const request=await f.host.begin('normal');f.c.chat.push(user('user-2','下一条原生剧情'));const directions=await f.host.directions();return {...action,...request,directions};}
 async function finish(f,r,{uid='assistant-2',text='网友的新回复'}={}){const m=assistant(uid,raw(r.requestId,[r.actionId],text));f.c.chat.push(m);const result=await f.host.finished({accepted:true});return {m,result,source:phoneSource(m)};}
 
-test('元数据是单一真源，首次空值才初始化；不产生 localStorage 镜像',async()=>{
- const f=await fixture();assert.equal(f.c[PHONE_STATE_KEY],undefined);assert.equal(f.c.chatMetadata[PHONE_STATE_KEY].revision,0);
- assert.equal(f.c.chatMetadata[PHONE_STATE_KEY].contextKey,chatKey(f.c));assert.equal(f.counters().metadataSaves,1);
- const before=clone(f.c.chatMetadata);await f.service.init();assert.deepEqual(f.c.chatMetadata,before);
+test('真实Matrix表单是手机唯一真源；重复初始化不另写metadata手机档',async()=>{
+ const f=await fixture(),snapshot=await f.database.snapshot();assert.equal(f.c.chatMetadata['缇斯亚虚拟手机'],undefined);assert(snapshot.state.tables.X_PHONE_BINDINGS['phone-current']);
+ assert.equal((await f.storage.load()).contextKey,chatKey(f.c));const before=clone(f.c.chatMetadata),writes=f.counters().diskWrites;await f.service.init();assert.deepEqual(f.c.chatMetadata,before);assert.equal(f.counters().diskWrites,writes);
 });
 
-test('损坏存档拒绝，不拿空种子覆盖原始值',async()=>{
- const c=context();c.chatMetadata[PHONE_STATE_KEY]='坏存档';let saves=0;
- const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>saves++},c);
- await assert.rejects(storage.load(),code('PHONE_STORAGE_INVALID'));assert.equal(c.chatMetadata[PHONE_STATE_KEY],'坏存档');assert.equal(saves,0);
+test('损坏数据库绑定拒绝，不拿空种子覆盖原始值',async()=>{
+ const f=await fixture(),id=f.c.chatMetadata[NS].chat_uid,bundle=await f.engineStorage.get(id);bundle.state.tables.X_PHONE_BINDINGS['phone-current'].values.layout={damaged:true};await f.engineStorage.set(id,bundle);const writes=f.counters().diskWrites;
+ await assert.rejects(f.storage.load());assert.deepEqual((await f.engineStorage.get(id)).state.tables.X_PHONE_BINDINGS['phone-current'].values.layout,{damaged:true});assert.equal(f.counters().diskWrites,writes);
 });
 
-test('同 revision 的外部修改也构成冲突，较新原值保留',async()=>{
- const c=context();c.chatMetadata[PHONE_STATE_KEY]={revision:4,value:'原始'};
- const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>true},c);await storage.load();
- c.chatMetadata[PHONE_STATE_KEY]={revision:4,value:'另一个窗口'};
- await assert.rejects(storage.save({revision:5,value:'本窗口'},{expectedRevision:4}),code('PHONE_SAVE_CONFLICT'));
- assert.equal(c.chatMetadata[PHONE_STATE_KEY].value,'另一个窗口');
+test('同聊天两个真实host共享CAS，旧手机版本不能覆盖另一窗口的新操作',async()=>{
+ const f=await fixture(),loaded=await f.storage.load(),cold=await currentPhoneHost({context:f.c,storage:f.engineStorage}),service=createPhoneService({seed:seed(),contextKey:chatKey(f.c),storage:cold.phoneStorage,idFactory:()=> 'other-action'});await service.init();await service.dispatch({kind:'search',query:'另一个窗口'});
+ await assert.rejects(f.storage.save({...loaded,revision:loaded.revision+1},{expectedRevision:loaded.revision}),code('PHONE_DATABASE_STALE'));assert.equal((await cold.phoneStorage.load()).actions[0].query,'另一个窗口');
 });
 
-test('原生持久保存失败恢复当前内存原值，不声称原子CAS',async()=>{
- const c=context();c.chatMetadata[PHONE_STATE_KEY]={revision:2,value:'原值'};let writes=0;
- const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>{writes++;throw Error('模拟磁盘拒绝');}},c);await storage.load();
- await assert.rejects(storage.save({revision:3,value:'新值'},{expectedRevision:2}),/模拟磁盘拒绝/);
- assert.deepEqual(c.chatMetadata[PHONE_STATE_KEY],{revision:2,value:'原值'});
- await assert.rejects(storage.save({revision:3,value:'不得再次盲写'},{expectedRevision:2}),code('PHONE_STORAGE_UNCERTAIN'));
- await assert.rejects(storage.load(),code('PHONE_STORAGE_UNCERTAIN'));assert.equal(writes,1);
+test('数据库持久保存失败保留真源，重新回读恢复后才重试',async()=>{
+ const f=await fixture(),before=await f.database.snapshot(),writes=f.counters().diskWrites;f.setDiskFail(true);await assert.rejects(f.service.dispatch({kind:'search',query:'保存失败的操作'}),/模拟磁盘拒绝/);
+ assert.deepEqual(await f.database.snapshot(),before);assert.equal(f.counters().diskWrites,writes);assert.equal(f.service.getState().actions.length,0);
+ f.setDiskFail(false);await f.service.refresh();await f.service.dispatch({kind:'search',query:'恢复后的操作'});assert.equal((await f.storage.load()).actions[0].query,'恢复后的操作');
 });
 
 test('切换聊天后旧 storage 拒绝写入；新聊天没有收到旧值',async()=>{
- let c=context();const old=c;const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>true},c);await storage.load();c=context('chat-b');
- await assert.rejects(storage.save({revision:0,value:'旧会话'}),code('PHONE_CONTEXT_CHANGED'));assert.equal(c.chatMetadata[PHONE_STATE_KEY],undefined);assert.equal(old.chatMetadata[PHONE_STATE_KEY],undefined);
+ const f=await fixture(),old=f.c,loaded=await f.storage.load(),before=await f.engineStorage.get(old.chatMetadata[NS].chat_uid),next=context('chat-b');f.setContext(next);const newDb=await currentPhoneHost({context:next,storage:f.engineStorage});
+ await assert.rejects(f.storage.save({...loaded,revision:loaded.revision+1},{expectedRevision:loaded.revision}),code('PHONE_CONTEXT_CHANGED'));assert.equal(await newDb.phoneStorage.load(),null);assert.deepEqual(await f.engineStorage.get(old.chatMetadata[NS].chat_uid),before);assert.equal(next.chatMetadata['缇斯亚虚拟手机'],undefined);
 });
 
 test('下一轮原生请求追加冻结提示词；本轮绑定幂等，正文与草稿不被代发',async()=>{
@@ -183,7 +176,7 @@ test('被拒的坏JSON、错ack、错request与坏引用保留证据，冷重开
   const result=await f.host.finished({accepted:true}),source=phoneSource(m);assert.equal(result.failed,true);
   const rejected=f.service.getState().rejectedSources[source.sourceId];assert.equal(rejected.requestId,r.requestId);assert.ok(rejected.error.message);assert.equal(m.mes,original);
   assert.equal(f.service.getState().actions[0].status,'failed');assert.throws(()=>f.service.snapshot(source.sourceId),code('PHONE_SOURCE_REJECTED'));
-  let seq=100;const fresh=createPhoneService({seed:seed(),contextKey:chatKey(f.c),storage:createPhoneMetadataStorage({getContext:()=>f.c,persistMetadata:async()=>true},f.c),now:()=>at,idFactory:()=>`retry-${++seq}`});await fresh.init();
+  let seq=100;const cold=await currentPhoneHost({context:f.c,storage:f.engineStorage}),fresh=createPhoneService({seed:seed(),contextKey:chatKey(f.c),storage:cold.phoneStorage,now:()=>at,idFactory:()=>`retry-${++seq}`});await fresh.init();
   const host=createPhoneTurnHost({getContext:()=>f.c,phoneService:fresh,onError:e=>{throw e;}});
   const next=await host.begin('normal');f.c.chat.push(user('next-user','下一轮正常继续'));await host.directions();f.c.chat.push(assistant('next-assistant',raw(next.requestId,[r.actionId])));
   await host.finished({accepted:true});assert.equal(fresh.getState().actions[0].status,'received');assert.equal(getDoc(fresh.getState().suite,'forum').items.length,3);
@@ -199,26 +192,24 @@ test('被拒候选重骰复用原请求；修正源文本可重新接纳，不�
 });
 
 test('有精确原生父分支元数据才接管复制存档，切点回退与冷重开均保留母分支',async()=>{
- const f=await fixture(),r=await start(f),done=await finish(f,r),parentState=clone(f.c.chatMetadata[PHONE_STATE_KEY]),parentChat=clone(f.c.chat),parentKey=chatKey(f.c);
+ const f=await fixture(),r=await start(f),done=await finish(f,r),parentState=await f.database.snapshot(),parentChat=clone(f.c.chat),parentKey=chatKey(f.c);
  let branch={...f.c,chatId:'chat-a - Branch #1',chat:clone(f.c.chat.slice(0,-1)),chatMetadata:{...clone(f.c.chatMetadata),main_chat:f.c.chatId,integrity:'native-branch-integrity'}};
- let saves=0;const storage=createPhoneMetadataStorage({getContext:()=>branch,persistMetadata:async()=>{saves++;return true;},allowNativeBranch:true},branch);
- const service=createPhoneService({seed:seed(),contextKey:chatKey(branch),storage,now:()=>at,idFactory:()=>`branch-next`});await service.init();
- assert.equal(saves,1);assert.equal(service.getState().contextKey,chatKey(branch));assert.equal(branch.chatMetadata[PHONE_STATE_KEY].contextKey,chatKey(branch));assert.notEqual(chatKey(branch),parentKey);
+ const childDb=await currentPhoneHost({context:branch,storage:f.engineStorage}),service=createPhoneService({seed:seed(),contextKey:chatKey(branch),storage:childDb.phoneStorage,now:()=>at,idFactory:()=>`branch-next`});await service.init();
+ assert.equal(service.getState().contextKey,chatKey(branch));assert.equal(branch.chatMetadata['缇斯亚虚拟手机'],undefined);assert.notEqual(chatKey(branch),parentKey);
  assert.equal(getDoc(service.getState().suite,'forum').items.length,2);assert.deepEqual(service.getState().selectedSources,[]);assert.ok(service.snapshot(done.source.sourceId));
- assert.deepEqual(f.c.chatMetadata[PHONE_STATE_KEY],parentState);assert.deepEqual(f.c.chat,parentChat);
- const cold=createPhoneService({seed:seed(),contextKey:chatKey(branch),storage:createPhoneMetadataStorage({getContext:()=>branch,persistMetadata:async()=>{saves++;return true;},allowNativeBranch:true},branch)});await cold.init();assert.equal(saves,1);assert.deepEqual(cold.getState(),service.getState());
- const host=createPhoneTurnHost({getContext:()=>branch,phoneService:cold});assert.ok((await host.begin('normal')).requestId);await host.stopped();assert.deepEqual(f.c.chatMetadata[PHONE_STATE_KEY],parentState);
+ assert.deepEqual(await f.database.snapshot(),parentState);assert.deepEqual(f.c.chat,parentChat);
+ const reopened=await currentPhoneHost({context:branch,storage:f.engineStorage}),cold=createPhoneService({seed:seed(),contextKey:chatKey(branch),storage:reopened.phoneStorage});await cold.init();assert.deepEqual(cold.getState(),service.getState());
+ const host=createPhoneTurnHost({getContext:()=>branch,phoneService:cold});assert.ok((await host.begin('normal')).requestId);await host.stopped();assert.deepEqual(await f.database.snapshot(),parentState);
 });
 
-test('普通复制、错父会话、跨角色及未知在途分支不自动改归属',async()=>{
- const f=await fixture(),original=clone(f.c.chatMetadata[PHONE_STATE_KEY]);
+test('普通复制、错父会话和跨角色不能借用手机真源；已验证在途分支保留待确认状态',async()=>{
+ const f=await fixture(),original=await f.database.snapshot();
  for(const change of [{},{main_chat:'另一聊天',integrity:'new'},{main_chat:f.c.chatId},{main_chat:f.c.chatId,integrity:'new',otherCharacter:true}]){
   const c={...f.c,characterId:change.otherCharacter?4:f.c.characterId,chatId:'new-chat',chatMetadata:{...clone(f.c.chatMetadata),...change}};
-  const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>{throw Error('不可写');},allowNativeBranch:true},c);
-  await assert.rejects(storage.load(),code('PHONE_CONTEXT_CHANGED'));assert.deepEqual(c.chatMetadata[PHONE_STATE_KEY],original);
+  const child=await currentPhoneHost({context:c,storage:f.engineStorage});await assert.rejects(child.phoneStorage.load(),code('PHONE_DATABASE_SCOPE'));assert.deepEqual(await f.database.snapshot(),original);
  }
- await f.host.begin('normal');const pending=clone(f.c.chatMetadata[PHONE_STATE_KEY]),c={...f.c,chatId:'pending-branch',chatMetadata:{...clone(f.c.chatMetadata),main_chat:f.c.chatId,integrity:'new'}};
- const storage=createPhoneMetadataStorage({getContext:()=>c,persistMetadata:async()=>{throw Error('不可写');},allowNativeBranch:true},c);await assert.rejects(storage.load(),code('PHONE_BRANCH_PENDING'));assert.deepEqual(c.chatMetadata[PHONE_STATE_KEY],pending);
+ const request=await f.host.begin('normal'),pending=await f.database.snapshot(),c={...f.c,chat:clone(f.c.chat),chatId:'pending-branch',chatMetadata:{...clone(f.c.chatMetadata),main_chat:f.c.chatId,integrity:'new'}},child=await currentPhoneHost({context:c,storage:f.engineStorage}),service=createPhoneService({seed:seed(),contextKey:chatKey(c),storage:child.phoneStorage});await service.init();
+ assert.equal(service.getState().requests[request.requestId].status,'prepared');const host=createPhoneTurnHost({getContext:()=>c,phoneService:service,isGenerating:()=>false});await assert.rejects(host.recoverPending(),code('PHONE_RECOVERY_CONFIRM'));assert.deepEqual(await f.database.snapshot(),pending);
 });
 
 test('真实保存失败不误记为坏回复；存储恢复后仍接纳原来源',async()=>{
@@ -229,11 +220,10 @@ test('真实保存失败不误记为坏回复；存储恢复后仍接纳原来�
 });
 
 test('群聊嵌套分支按直接父名称接续，不借用同名其他组的手机',async()=>{
- let current={...context('group-parent'),characterId:null,groupId:'group-7'},saves=0;
- const create=()=>createPhoneService({seed:seed(),contextKey:chatKey(current),storage:createPhoneMetadataStorage({getContext:()=>current,persistMetadata:async()=>{saves++;return true;},allowNativeBranch:true},current)});
- const parent=create();await parent.init();const parentState=clone(current.chatMetadata[PHONE_STATE_KEY]);
- current={...current,chatId:'group-branch-1',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-parent',integrity:'one'}};await create().init();
- current={...current,chatId:'group-branch-2',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-branch-1',integrity:'two'}};const second=create();await second.init();
- assert.equal(saves,3);assert.equal(second.getState().contextKey,chatKey(current));assert.equal(parent.getState().contextKey,parentState.contextKey);
- current={...current,groupId:'group-8',chatId:'other-group-branch',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-branch-2',integrity:'three'}};await assert.rejects(create().init(),code('PHONE_CONTEXT_CHANGED'));assert.equal(saves,3);
+ let current={...context('group-parent'),characterId:null,groupId:'group-7'};const disk=matrixMemoryStorage(),create=async()=>{const db=await currentPhoneHost({context:current,storage:disk});const service=createPhoneService({seed:seed(),contextKey:chatKey(current),storage:db.phoneStorage});await service.init();return service;};
+ const parent=await create(),parentState=clone(parent.getState());
+ current={...current,chatId:'group-branch-1',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-parent',integrity:'one'}};await create();
+ current={...current,chatId:'group-branch-2',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-branch-1',integrity:'two'}};const second=await create();
+ assert.equal(second.getState().contextKey,chatKey(current));assert.equal(parent.getState().contextKey,parentState.contextKey);
+ current={...current,groupId:'group-8',chatId:'other-group-branch',chatMetadata:{...clone(current.chatMetadata),main_chat:'group-branch-2',integrity:'three'}};await assert.rejects(create(),code('PHONE_DATABASE_SCOPE'));assert.deepEqual(parent.getState(),parentState);
 });

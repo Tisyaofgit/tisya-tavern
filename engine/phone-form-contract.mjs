@@ -44,6 +44,15 @@ const refs={
  X_PLACE_MAP_POINTS:{place_ref:'T_STATIC_PLACES'},X_CALENDAR_EVENTS:{placeId:'T_STATIC_PLACES',participantId:'X_SOCIAL_CONTACTS'},X_SHOP_PRODUCT_DETAILS:{item_ref:'T_STATIC_ITEMS_SKILLS',placeId:'T_STATIC_PLACES'},X_SHOP_PRODUCT_OPTIONS:{product_ref:'T_STATIC_ITEMS_SKILLS'}
 };
 export function phoneFormReference(table,key){return refs[table]?.[key]??(key==='world_ref'&&table.startsWith('X_')?'T_STATIC_WORLDS':key==='owner_ref'&&table.startsWith('X_')?'T_SYS_ENTITIES':null);}
+// The phone's authored business IDs are distinct from row UUIDs. Only fields
+// registered above may resolve such an ID, and only in their declared table and
+// world. Ordinary REF fields still require the exact canonical record ID.
+export function phoneFormReferenceCandidates(state,{tableId,recordId,field,target,value}){
+ const declared=phoneFormReference(tableId,field),targets=Array.isArray(declared)?declared:[declared];
+ if(!target?.startsWith('X_')||!targets.includes(target))return null;
+ const world=state.tables?.[tableId]?.[recordId]?.values?.world_ref;
+ return Object.entries(state.tables?.[target]??{}).filter(([id,row])=>(id===value||row.values?.id===value)&&(!world||!row.values?.world_ref||row.values.world_ref===world)).map(([id])=>id);
+}
 export const PHONE_FORM_LIST_REFERENCES=Object.freeze({X_SOCIAL_ACCOUNTS:{following:'X_SOCIAL_ACCOUNTS'},X_SOCIAL_POSTS:{mediaIds:'X_MEDIA_PHOTOS',mediaGrants:'X_MEDIA_PHOTOS'},X_MEDIA_SONGS:{audience:'X_SOCIAL_ACCOUNTS'},X_MEDIA_PLAYLISTS:{songIds:'X_MEDIA_SONGS'},X_MEDIA_PLAYBACK:{queue:'X_MEDIA_SONGS',history:'X_MEDIA_SONGS'},X_SHOP_PRODUCT_DETAILS:{deliveryPlaceIds:'T_STATIC_PLACES'}});
 export const PHONE_FORM_INTERNAL_FIELDS=new Set(['id','format','sourceDigest','phoneEpoch','settlementOwner','dictionary_key','collection_ref','parent_ref','collection_field','ordinal']);
 export function normalizePhoneFormValue(table,key,value){

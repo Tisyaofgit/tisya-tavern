@@ -1,21 +1,48 @@
-import {phoneFormReference,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
+import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
 import {programOwnedTable,creationFieldAllowed,compactCreationSchema} from '../../engine/prompt-boundary.mjs';
 import {Runtime} from '../../engine/runtime.mjs';
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
 // Shared reviewable workbook. This module never writes a canonical store.
-export function sheetSections(text){
- if(typeof text!=='string'||!text.trim())throw Error('没有可读取的表单内容');
+export function sheetSections(text,{tolerant=false}={}){
+ if(typeof text!=='string'||!text.trim()){if(tolerant)return [];throw Error('没有可读取的表单内容');}
  const sections=[],seen=new Set();let current;
  for(const raw of text.trim().split(/\r?\n/)){
   const line=raw.trim();if(!line)continue;const heading=/^【([^】]+)】$/.exec(line);
-  if(heading){if(seen.has(heading[1]))throw Error('分组重复：'+heading[1]);seen.add(heading[1]);current={heading:heading[1],lines:[]};sections.push(current);}
-  else {if(!current)throw Error('结果须从分组标题开始');current.lines.push(line);}
+  if(heading){if(seen.has(heading[1])&&!tolerant)throw Error('分组重复：'+heading[1]);seen.add(heading[1]);current={heading:heading[1],lines:[]};sections.push(current);}
+  else {if(!current){if(!tolerant)throw Error('结果须从分组标题开始');current={heading:'未分组内容',lines:[]};sections.push(current);}current.lines.push(line);}
  }
  return sections;
 }
 export function sheetLine(line){const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2]};}
+function sheetFieldText(line,cells){
+ const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
+ let raw=parsed.body.slice(cell.label.length);check(!raw||/^[\s：:]/.test(raw),'字段名被修改：'+parsed.row);raw=raw.trimStart();if(/^[：:]/.test(raw))raw=raw.slice(1).trimStart();return {row:parsed.row,cell,raw};
+}
+// Reference reachability is derived from registered field types and the same
+// field-label parser, including rows that are still invalid for other reasons.
+// It authorizes only dependencies of a repair target, never unrelated output.
+export function matrixSheetReferenceGraph(context,text){
+ const rows=sheetSections(text,{tolerant:true}).map(section=>{
+  const existing=context.references.find(r=>r.display===section.heading),label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=[];
+  if(template){const fields=template.fields.map((field,index)=>({...field,row:index+1}));for(const line of section.lines)try{const parsed=sheetFieldText(line,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
+  return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??'',raw,diagnostics,dependencies:[]};
+ });
+ const table=raw=>context.catalog.templates.find(t=>t.id===raw||t.label===raw)?.id??raw;
+ for(const row of rows){const dependencies=new Set();for(const [key,raw]of Object.entries(row.raw)){
+  const spec=context.schemas[row.tableId]?.fields.find(f=>f.key===key);if(!spec)continue;
+  let targets=phoneFormReference(row.tableId,key)??PHONE_FORM_LIST_REFERENCES[row.tableId]?.[key],tokens=[];
+  if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES')tokens=raw.split(/[；;]/).map(token=>/^(?:关联|条目)[：:]\s*(.*)$/.exec(token.trim())?.[1]).filter(Boolean);
+  else if(targets||['REF','CHILD_REF','REF_LIST','ROW_REF'].includes(spec.type)||/^(?:target|source|output)_row_uuid$/.test(key)){
+   targets??=spec.ref?.startsWith('@')?table(row.raw[spec.ref.slice(1)]):spec.ref;
+   if(/^(?:target|source|output)_row_uuid$/.test(key))targets=table(row.raw[key.replace(/_row_uuid$/,'_table')])??targets;
+   tokens=(spec.type==='REF_LIST'||spec.type==='CHILD_REF'||PHONE_FORM_LIST_REFERENCES[row.tableId]?.[key]?raw.split(/[；;]/):[raw]).map(token=>token.trim());
+  }
+  for(const token of tokens)for(const candidate of rows)if((candidate.heading===token||candidate.name&&candidate.name===token)&&(!targets||(Array.isArray(targets)?targets:[targets]).some(target=>target===candidate.tableId||target==='T_SYS_ENTITIES'&&candidate.tableId==='T_CHAR_DOSSIER')))dependencies.add(candidate.heading);
+ }row.dependencies=[...dependencies];}
+ return rows.map(({raw,...row})=>row);
+}
 export function createSheetEngine(catalog, validateValue) {
  const clone=x=>structuredClone(x),own=(o,k)=>Object.hasOwn(o,k),check=(ok,m)=>{if(!ok)throw Error(m);};
  const bad=new Set(['__proto__','prototype','constructor']);
@@ -193,11 +220,9 @@ export function createSheetEngine(catalog, validateValue) {
    const line=rawLine.trim();if(!line)continue;
    const heading=line.match(/^【([^】]+)】$/);if(heading){check(sections.has(heading[1])&&!seenSections.has(heading[1]),'分组未开放或重复：'+heading[1]);current=sections.get(heading[1]);seenSections.add(heading[1]);continue;}
    if(ticket.parts.length===1&&/^行\s+A\s+B$/.test(line)&&!seen.size)continue;
-   check(current,'请保留分组标题');const parsed=sheetLine(line),number=parsed.row,c=current.cells.find(c=>c.row===number);check(c,'行号未开放：'+number);
+   check(current,'请保留分组标题');const {row:number,cell:c,raw}=sheetFieldText(line,current.cells);
    const identity=current.part.record+':'+number;check(!seen.has(identity),'行号重复：'+number);seen.add(identity);
-   const body=parsed.body;check(body.startsWith(c.label),'字段名被修改：'+number);
-   let rest=body.slice(c.label.length);check(!rest||/^[\s：:]/.test(rest),'字段名被修改：'+number);rest=rest.trimStart();if(/^[：:]/.test(rest))rest=rest.slice(1).trimStart();
-   if(rest)rawCells.push({record:current.part.record,cell:c,raw:rest});
+   if(raw)rawCells.push({record:current.part.record,cell:c,raw});
   }
   check(seen.size===ticket.parts.reduce((n,p)=>n+p.cells.length,0),'请保留本次全部字段行；未知值留空');
   const aliases=clone(ticket.aliases??[]);for(const x of rawCells)if(x.cell.key==='名称'&&ticket.refs.includes(x.record)&&!aliases.some(a=>a.值===x.record&&a.显示===x.raw))aliases.push({值:x.record,名称:x.raw,显示:x.raw});
@@ -268,30 +293,71 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  const instructions='在完整 reply 的 cells 中填写分组简表。每条记录用【表名／1】等标题，同表从1连续编号；每行“行号 字段名：值”。只写本轮有内容的字段，未知省略或留空；不修改行号与字段名。按需要选表，不为凑齐定义创建空记录。关联填写已登记名称或本次“表名／序号”，程序生成稳定编号与归属。人物从人物原点档案填写，主体注册及原点引用由程序建立。列表原子直接写多项，其他子表分组填写后由父格引用。不填写程序回执、原生变量或执行指令。'+(mode==='revise'?'修订已有记录用给定“表名／已有：名称〔序号〕”标题，只写本次任务明确授权且有据的改变。':'本轮只新增定义，不覆盖已有记录。')+(task==='main'?'本次为当前回复已发生的变化；每个有值字段可附 | Pn 指向正文依据，不把设想当既成事实。':task==='tableGenesis'?'本次为获准的创作草稿，不推进现有故事或补造既成历史。':'本次为来源提炼，只填给定原文明确支持的事实与定义；不能用创作补完缺口。');
  return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
-export function acceptMatrixSheets(context,snapshot,{blocks,parsed={}}){
+// Partial acceptance uses the same codec and canonical validator. A failed
+// group is removed, then the remaining batch is recompiled together. This
+// naturally closes over references while allowing valid forward/cyclic links.
+export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=false,recordIds={}}){
+ if(!partial)return acceptMatrixSheetBatch(context,snapshot,{blocks,parsed});
+ check(plain(blocks),'简表需要已解析的回复区块');
+ const sections=sheetSections(blocks.cells??'',{tolerant:true});check(sections.length<=500,'创作表单记录过多');
+ const counts=new Map();for(const section of sections)counts.set(section.heading,(counts.get(section.heading)??0)+1);
+ const entries=sections.map((section,index)=>{
+  const prior=context.references.find(r=>r.display===section.heading),match=/^(.+)／([1-9]\d*)$/.exec(section.heading),template=prior?context.catalog.templates.find(t=>t.id===prior.tableId):context.catalog.templates.find(t=>t.label===match?.[1]);
+  const tableId=prior?.tableId??template?.id??null,recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??prior?.recordId??stableId(context.operationId+'|'+(tableId??'pending')+'|'+(match?.[2]??index+1));
+  return {...section,key:stableId(context.operationId+'|group|'+recordId),tableId,recordId,raw:['【'+section.heading+'】',...section.lines].join('\n'),records:[]};
+ });
+ const graph=matrixSheetReferenceGraph(context,blocks.cells??'');for(const entry of entries)entry.dependencies=graph.find(row=>row.heading===entry.heading)?.dependencies??[];
+ const pending=[],remaining=[];
+ const reject=(entry,error)=>{const location=error.formLocation??{};pending.push({...clone(entry),reason:error.message,field:location.label??location.field??'',rawValue:location.rawValue??'',errors:[{message:error.message,code:error.code??'MATRIX_CREATION',...clone(location)}],...(error.reference?{dependency:error.reference}:{})});};
+ if(!entries.length)reject({key:stableId(context.operationId+'|empty'),heading:'未提供表单',tableId:null,recordId:stableId(context.operationId+'|empty-record'),raw:blocks.cells??'',lines:[],records:[]},Error('回复没有可读取的表单条目'));
+ for(const entry of entries)if(counts.get(entry.heading)>1)reject(entry,Error('分组重复，须合并为一份记录：'+entry.heading));else remaining.push(entry);
+ let result=null;
+ while(remaining.length){
+  try{
+   const ids=Object.fromEntries(remaining.map(e=>[e.heading,e.recordId]));
+   result=acceptMatrixSheetBatch(context,snapshot,{blocks:{...blocks,cells:remaining.map(e=>e.raw).join('\n'),extra:''},parsed,partition:true,recordIds:ids});
+   validateMatrixProposal(result.proposal,snapshot,{mode:context.mode,kind:context.kind==='character'&&result.proposal.matrix.binding?.entityId?'character':'world'});
+   break;
+  }catch(error){
+   const location=error.formLocation??{},blocked=error.blockedHeadings??[];
+   const bad=remaining.filter(e=>blocked.includes(e.heading)||location.heading===e.heading||location.tableId===e.tableId&&location.recordId===e.recordId||result?.groups?.find(g=>g.heading===e.heading)?.records.some(r=>r.tableId===location.tableId&&r.recordId===location.recordId));
+   // An unlocalized protocol or infrastructure failure must remain visible.
+   if(!bad.length)throw error;
+   for(const entry of bad){reject(entry,error);remaining.splice(remaining.indexOf(entry),1);}result=null;
+  }
+ }
+ if(!result)result={proposal:{name:((parsed.title??blocks.title??'').split('|')[0]??'').trim()||'待修创作',summary:parsed.body_normalized??blocks.body??'',unresolved:[],matrix:{changes:[]}},parsed,workbook:{format:'tisya.foundation-workbook/1',catalogVersion:context.catalog.version,records:[],revision:0},bindings:[],groups:[]};
+ const accepted=remaining.map(entry=>({...clone(entry),records:clone(result.groups?.find(g=>g.heading===entry.heading)?.records??[{tableId:entry.tableId,recordId:entry.recordId}])}));
+ const warnings=(blocks.extra??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(message=>({message:message.replace(/^(?:建议|优化|待补)[：:|]\s*/,''),severity:'suggestion'}));
+ return {...result,acceptance:{accepted,acceptedCount:accepted.length,pending,warnings,rawCells:blocks.cells??''}};
+}
+
+function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=false,recordIds={}}){
  check(plain(blocks),'简表需要已解析的回复区块');
  const cellText=context.task==='main'?(blocks.cells??'').split(/\r?\n/).map(line=>line.replace(/\|\s*P\d+(?:\.\.P?\d+)?\s*$/i,'').trimEnd()).join('\n'):(blocks.cells??'');
  const sections=sheetSections(cellText),engine=createSheetEngine(context.catalog,v=>typeof v==='string'),rows=[],counts=new Map(),selections=[];
  check(sections.length<=500,'创作表单记录过多');
  for(const section of sections){
-  const existing=context.references.find(r=>r.display===section.heading);let t,number,recordId;
+  try{const existing=context.references.find(r=>r.display===section.heading);let t,number,recordId;
   if(existing){check(context.mode==='revise','新增创作不能覆盖已有记录');t=context.catalog.templates.find(t=>t.id===existing.tableId);recordId=existing.recordId;}
-  else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=Number(match[2]);check(number===(counts.get(t.id)??0)+1,'同表记录须从1连续编号：'+section.heading);counts.set(t.id,number);recordId=stableId(context.operationId+'|'+t.id+'|'+number);}
+  else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=Number(match[2]);check(partition||number===(counts.get(t.id)??0)+1,'同表记录须从1连续编号：'+section.heading);counts.set(t.id,number);recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
   const made=engine.create(t.id),keys=section.lines.map(line=>{const {row}=sheetLine(line),f=t.fields[row-1];check(f,'字段行未开放：'+section.heading+'/'+row);return f.key;});
   check(keys.length,'不创建没有字段的记录：'+section.heading);selections.push({recordId:made.id,keys,heading:section.heading});rows.push({tableId:t.id,recordId,workbookId:made.id,heading:section.heading,existing:!!existing,values:{},states:{}});
+  }catch(error){error.formLocation??={heading:section.heading};throw error;}
  }
- const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));
- for(const row of rows){row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??previous?.name??previous?.label??previous?.title??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}
+ if(partition){for(const [index,selection]of selections.entries())try{const ticket=engine.requestWorkbook([selection]);engine.accept(ticket.token,['【'+sections[index].heading+'】',...sections[index].lines].join('\n'));}catch(error){error.formLocation??={heading:sections[index].heading};throw error;}}
+ else {const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));}
+ for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??previous?.name??previous?.label??previous?.title??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  // Build the canonical actor links before resolving references to newly created
  // people. These IDs are private to this draft and stable across save retries.
  const generated=[],actors=[];
  for(const row of rows.filter(r=>r.tableId==='T_CHAR_DOSSIER')){
-  check(row.name,'人物档案需要显示名称');const schema=snapshot.state.schema.T_SYS_ENTITIES;check(schema,'人物主体表尚未登记');
+  try{check(row.name,'人物档案需要显示名称');const schema=snapshot.state.schema.T_SYS_ENTITIES;check(schema,'人物主体表尚未登记');
   let existingEntity;if(row.existing)existingEntity=Object.entries(snapshot.state.tables.T_SYS_ENTITIES??{}).find(([,e])=>{const ref=snapshot.state.tables.M_FIELD_REFERENCES?.[e.values.origin_record_ref]?.values;return ref?.target_table===row.tableId&&ref.target_row_uuid===row.recordId;});
   const entityId=existingEntity?.[0]??stableId(context.operationId+'|actor|'+row.recordId),values={};const has=k=>schema.fields.some(f=>f.key===k&&!f.read_only&&!f.alias_of);if(has('kind'))values.kind='character';if(has('name'))values.name=row.name;
   if(!existingEntity&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});}
   if(!existingEntity)generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values});actors.push({tableId:'T_SYS_ENTITIES',recordId:entityId,name:row.name,display:(schema.label??'主体')+'／'+row.name,dossierId:row.recordId});
-  if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;
+  if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}
  }
  const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,display:r.heading})),...actors];
  function tableId(raw){const matches=context.catalog.templates.filter(t=>t.label===raw||t.id===raw);check(matches.length===1,'表名不存在或不唯一：'+raw);return matches[0].id;}
@@ -331,14 +397,18 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={}}){
  // Table selectors precede their row/field references. Value conversion is
  // canonical decode(), while the shared sheet engine owns surface parsing.
  for(const row of rows){const schema=context.schemas[row.tableId];const pairs=Object.entries(row.raw).sort(([a],[b])=>Number(/table/.test(b))-Number(/table/.test(a)));for(const [key,rawValue]of pairs){const spec=schema.fields.find(f=>f.key===key);try{const [value,state]=fieldValue(row,spec,rawValue);row.values[key]=normalizePhoneFormValue(row.tableId,key,value);if(state!=='known')row.states[key]=state;}catch(error){error.message='【'+row.heading+'】'+spec.label+'：'+error.message;error.formLocation={tableId:row.tableId,heading:row.heading,field:key,label:spec.label,rawValue};throw error;}}}
- for(const row of rows){const schema=context.schemas[row.tableId];if(ownedTable(schema)){check(row.owner&&Object.keys(row.owner).length,'子表需要从所属档案字段引用：'+row.heading);Object.assign(row.values,row.owner);if(schema.fields.some(f=>f.key==='value_state')&&!Object.hasOwn(row.values,'value_state'))row.values.value_state=Object.values(row.states).find(s=>['unknown','unset','none','not_applicable','cleared'].includes(s))??'known';if(schema.fields.some(f=>f.key==='sequence')&&!Object.hasOwn(row.values,'sequence'))row.values.sequence=row.existing?snapshot.state.tables[row.tableId][row.recordId].values.sequence:Number(row.heading.split('／').at(-1));}}
+ for(const row of rows){try{const schema=context.schemas[row.tableId];if(ownedTable(schema)){check(row.owner&&Object.keys(row.owner).length,'子表需要从所属档案字段引用：'+row.heading);Object.assign(row.values,row.owner);if(schema.fields.some(f=>f.key==='value_state')&&!Object.hasOwn(row.values,'value_state'))row.values.value_state=Object.values(row.states).find(s=>['unknown','unset','none','not_applicable','cleared'].includes(s))??'known';if(schema.fields.some(f=>f.key==='sequence')&&!Object.hasOwn(row.values,'sequence'))row.values.sequence=row.existing?snapshot.state.tables[row.tableId][row.recordId].values.sequence:Number(row.heading.split('／').at(-1));}}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  for(const row of rows)if(snapshot.state.schema[row.tableId]?.phone_internal&&snapshot.state.schema[row.tableId].fields.some(f=>f.key==='id')&&!row.existing)row.values.id=row.recordId;
  const changes=[...rows.map(({tableId,recordId,values,states})=>({tableId,recordId,values,...(Object.keys(states).length?{states}:{})})),...generated];
- if(context.kind==='character')check(actors.length===1,'创建单个人物时须有且只有一份人物原点档案');
- const world=rows.find(r=>r.tableId==='T_STATIC_WORLDS');if(context.kind==='world'&&context.task==='tableGenesis'&&context.mode==='extend'&&snapshot.state.schema.T_STATIC_WORLDS)check(world,'创建新世界须填写世界与历法身份');
- const binding=context.kind==='character'?{entityId:actors[0].recordId,dossierId:actors[0].dossierId,...(world?{worldId:world.recordId}:{})}:world?{worldId:world.recordId}:undefined;
+ if(context.kind==='character'&&(!partition||actors.length>1)){if(actors.length!==1)throw Object.assign(Error('创建单个人物时须有且只有一份人物原点档案'),{blockedHeadings:rows.filter(r=>r.tableId==='T_CHAR_DOSSIER').map(r=>r.heading)});}
+ const world=rows.find(r=>r.tableId==='T_STATIC_WORLDS');if(!partition&&context.kind==='world'&&context.task==='tableGenesis'&&context.mode==='extend'&&snapshot.state.schema.T_STATIC_WORLDS)check(world,'创建新世界须填写世界与历法身份');
+ const binding=context.kind==='character'&&actors.length===1?{entityId:actors[0].recordId,dossierId:actors[0].dossierId,...(world?{worldId:world.recordId}:{})}:world?{worldId:world.recordId}:undefined;
  const name=((parsed.title??blocks.title??'').split('|')[0]??'').trim()||rows.find(r=>r.name)?.name||(context.task==='main'?'本轮表单变更':'');check(name,'表单方案需要名称');const unresolved=context.task==='main'?[]:(blocks.extra??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(s=>s.replace(/^待补[：:|]\s*/,''));
- return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
+ const groups=rows.map(row=>({heading:row.heading,records:[{tableId:row.tableId,recordId:row.recordId}]}));
+ const byRecord=new Map(rows.map((row,index)=>[row.tableId+'#'+row.recordId,groups[index]]));
+ for(const actor of actors){const group=byRecord.get('T_CHAR_DOSSIER#'+actor.dossierId);byRecord.set('T_SYS_ENTITIES#'+actor.recordId,group);}
+ let unassigned=[...generated];while(unassigned.length){let progress=false;unassigned=unassigned.filter(change=>{const values=change.values,group=byRecord.get(change.tableId+'#'+change.recordId)??byRecord.get((values.owner_table??values.owner_form)+'#'+values.owner_row_uuid);if(!group)return true;group.records.push({tableId:change.tableId,recordId:change.recordId});byRecord.set(change.tableId+'#'+change.recordId,group);progress=true;return false;});check(progress,'生成子记录缺少归属，未接纳');}
+ return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),groups,bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
 }
 export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='world'}={}){
  check(plain(proposal)&&typeof proposal.name==='string'&&proposal.name.trim(),'创作结果缺少名称');
@@ -360,7 +430,7 @@ export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='wo
 export function applyMatrixChanges(runtime,changes,{mode='revise'}={}){
  check(Array.isArray(changes)&&changes.length>0&&changes.length<=2000,'表单变更必须在1至2000条之间');
  const seen=new Set();
- for(const change of changes){
+ for(const change of changes){try{
   check(plain(change)&&typeof change.tableId==='string'&&typeof change.recordId==='string'&&change.recordId.trim(),'每条变更需要规范表ID和稳定记录ID');
   check(Object.keys(change).every(k=>['tableId','recordId','values','states'].includes(k)),'创作不能填写程序元数据或未声明的变更属性');
   check(!change.states||plain(change.states)&&Object.keys(change.states).every(k=>Object.hasOwn(change.values??{},k)&&['known','unknown','unset','none','not_applicable','cleared'].includes(change.states[k])),'创作值状态必须对应实际变更字段');
@@ -378,14 +448,18 @@ export function applyMatrixChanges(runtime,changes,{mode='revise'}={}){
   }
   if(!existing)runtime.newRecord(tableId,{},recordId);
   for(const [field,value]of Object.entries(values))runtime.set([tableId,recordId,field,[]],clone(value),change.states?.[field]??'known');
- }
+ }catch(error){error.formLocation??={tableId:change?.tableId,recordId:change?.recordId};throw error;}}
  for(const [rid,row]of Object.entries(runtime.rows('T_SYS_ENTITIES'))){const ref=runtime.rows('M_FIELD_REFERENCES')[row.values.origin_record_ref]?.values;if(ref?.target_table&&ref.target_row_uuid){const name=runtime.rows(ref.target_table)[ref.target_row_uuid]?.values?.[ref.target_field||'name'];if(typeof name==='string'&&runtime.data.schema.T_SYS_ENTITIES.fields.some(f=>f.key==='name'))runtime.set(['T_SYS_ENTITIES',rid,'name',[]],name,'derived');}}
  // References can target a later row in the same proposed batch.
- for(const change of changes){const row=runtime.record(change.tableId,change.recordId);for(const spec of runtime.data.schema[change.tableId].fields){
+ for(const change of changes){try{const row=runtime.record(change.tableId,change.recordId);for(const spec of runtime.data.schema[change.tableId].fields){
   const value=row.values[spec.key],state=row.states[spec.key];check(!spec.required||spec.read_only||value!==undefined&&value!==null&&['known','derived'].includes(state),'必填字段尚未完整填写：'+change.tableId+'.'+spec.key);
   if(value===null||value===undefined||!['known','derived'].includes(state))continue;const dynamic=/^(?:target|source|output)_row_uuid$/.test(spec.key);if(!['REF','CHILD_REF','REF_LIST','ROW_REF'].includes(spec.type)&&!dynamic)continue;
   const target=dynamic?row.values[spec.key.replace(/_row_uuid$/,'_table')]:spec.ref?.startsWith('@')?row.values[spec.ref.slice(1)]:spec.ref;if(!runtime.data.schema[target])continue;
-  for(const ref of Array.isArray(value)?value:[value])if(typeof ref==='string')check(runtime.data.tables[target]?.[ref],'引用记录不存在：'+change.tableId+'.'+spec.key+' → '+target+'#'+ref);
- }}
+  for(const ref of Array.isArray(value)?value:[value])if(typeof ref==='string'){
+   const business=phoneFormReferenceCandidates(runtime.data,{tableId:change.tableId,recordId:change.recordId,field:spec.key,target,value:ref});
+   if(business?.length>1)fail('REFERENCE_AMBIGUOUS','表单业务引用对应多条记录，请明确目标',{table:change.tableId,record:change.recordId,field:spec.key,target,reference:ref});
+   check(business?business.length===1:runtime.data.tables[target]?.[ref],'引用记录不存在：'+change.tableId+'.'+spec.key+' → '+target+'#'+ref);
+  }
+ }}catch(error){error.formLocation??={tableId:change.tableId,recordId:change.recordId};throw error;}}
  return {changes:clone(changes)};
 }

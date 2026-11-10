@@ -4,19 +4,18 @@ import fs from 'node:fs';
 import {initializeState} from '../engine/materials.mjs';
 import {Runtime} from '../engine/runtime.mjs';
 import {createPhoneService} from '../phone-core.mjs';
-import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
+import {phoneProfile,installPhoneClock} from './fixtures/phone-current.mjs';
 import {encodePhoneDatabase,decodePhoneDatabase,readPhoneDatabaseProfile,createPhoneDatabaseStorage} from '../engine/phone-database.mjs';
 
 const catalog=JSON.parse(fs.readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
-const wrap=(tag,value)=>`<${tag}>${JSON.stringify(value)}</${tag}>`;
 const contextKey='clock-context';
 const seed={accounts:{me:{name:'本人',role:'self'}},documents:[]};
-const profile={binding:{world:{book:'world',uid:1},character:{book:'character',uid:2}},world:parsePhoneWorld(wrap('手机世界',{格式:'缇斯亚手机世界/1',世界编号:'w',名称:'本世界',应用:['日历'],时间:{起点:'2033-02-09T23:30:00+08:00'},结算归属:'手机账本'})),character:parsePhoneCharacter(wrap('手机初态',{格式:'缇斯亚手机角色/1',角色编号:'p',姓名:'本人',账号:[{编号:'me',名称:'本人',本人:true}]}))};
+const profile=phoneProfile({personId:'p',world:{apps:['calendar']},character:{accounts:[{id:'me',name:'本人',owned:true}]}});
 const service=createPhoneService({seed,contextKey,storage:{load:async()=>null,save:async value=>value}});
 await service.init();
 await service.initLife(profile);
 const archive=JSON.parse(service.export());
-const initial=initializeState(catalog),encoded=encodePhoneDatabase(archive,initial),runtime=new Runtime(initial);
+const initialRuntime=new Runtime(initializeState(catalog));installPhoneClock(initialRuntime,profile);const initial=initialRuntime.data,encoded=encodePhoneDatabase(archive,initial),runtime=new Runtime(initial);
 for(const table of encoded.schema){
  if(!runtime.data.schema[table.id]){runtime.data.schema[table.id]=structuredClone(table);runtime.data.tables[table.id]={};}
  else for(const field of table.fields)if(!runtime.data.schema[table.id].fields.some(f=>f.key===field.key))runtime.declareField(table.id,field);

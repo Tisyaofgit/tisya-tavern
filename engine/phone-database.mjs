@@ -135,7 +135,15 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
   if(p==='life/state/map'&&key==='position'){const states=Object.entries(databaseState.tables?.T_DYN_ENTITY_STATE??{}).filter(([,r])=>r.values.entity_id===person);if(states.length>1)fail('PHONE_LOCATION_BINDING','人物有多个当前地点状态，须明确绑定');const rid=rowValue(databaseState,'T_SYS_ENTITIES',person,'runtime_state_ref')??states[0]?.[0]??'state:'+person;write('T_DYN_ENTITY_STATE',rid,'entity_id',person,{canonical:true});write('T_SYS_ENTITIES',person,'runtime_state_ref',rid,{canonical:true});target=['T_DYN_ENTITY_STATE',rid,'location_ref'];}
   if(/^life\/state\/media\/(photos|songs)\/\d+$/.test(p)){
    const rid=obj.asset_ref??'media:'+person+':'+obj.id;
-   if(key==='ownerId')target=['T_SYS_MEDIA_ASSETS',rid,'entity_ref'];
+   if(key==='ownerId'){
+    // Media privacy is scoped to a social account (or the person directly),
+    // while the canonical asset points to a registered entity. Keep these
+    // distinct identities so a cold load does not widen account visibility.
+    const account=life.state.social.accounts.find(a=>a.id===value),entity=account?account.personId:value;
+    if(!entity||entity!==person&&!databaseState.tables?.T_SYS_ENTITIES?.[entity])fail('PHONE_MEDIA_OWNER','媒体所属账号没有可核对的人物实体',{ownerId:value,entityId:entity??null});
+    write('T_SYS_MEDIA_ASSETS',rid,'entity_ref',entity,{canonical:true});
+    return null;
+   }
    if(['audioId','assetId'].includes(key))target=['T_SYS_MEDIA_ASSETS',rid,'asset_locator'];
    if(key==='checksum')target=['T_SYS_MEDIA_ASSETS',rid,'checksum'];
   }

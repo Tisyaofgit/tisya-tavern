@@ -46,12 +46,15 @@ export function renderCreationAcceptance(document,root,{acceptance,rawResponse='
  if(!acceptance)return null;const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;},section=el('section');section.dataset.creationAcceptance='';
  const pending=acceptance.pending??[],warnings=acceptance.warnings??[];section.append(el('h4',(saved?'已保存':'已通过')+' '+(acceptance.acceptedCount??0)+' 条 · 待修复 '+pending.length+' 条'));
  if(pending.length){const table=el('table');table.className='tisya-creation-table';table.dataset.creationPending='';const head=el('tr');head.append(el('th','条目 / 字段'),el('th','问题与原文'));table.append(head);
-  for(const row of pending){const tr=el('tr'),label=el('th',[row.heading??row.tableId??row.id,row.label??row.field].filter(Boolean).join(' / ')),cell=el('td');label.scope='row';cell.append(el('p',row.reason??row.message??'需要核对'));const value=row.rawValue??row.raw;if(value!==undefined)cell.append(el('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));tr.append(label,cell);table.append(tr);}section.append(table);
+  for(const row of pending){const tr=el('tr'),label=el('th',[row.heading??row.tableId??row.id,row.label??row.field].filter(Boolean).join(' / ')),cell=el('td');label.scope='row';
+   const problems=[row.reason??row.message,...(row.errors??[]).map(problem=>typeof problem==='string'?problem:[problem.field,problem.message??problem.reason].filter(Boolean).join('：'))].filter(Boolean);for(const message of new Set(problems.length?problems:['需要核对']))cell.append(el('p',message));
+   const dependencies=row.dependencies??row.dependency;if(dependencies){const values=Array.isArray(dependencies)?dependencies:[dependencies];cell.append(el('p','等待关联条目：'+values.map(value=>typeof value==='string'?value:value.heading??value.label??[value.tableId,value.recordId].filter(Boolean).join(' / ')).join('、')));}
+   const value=row.rawValue??row.raw;if(value!==undefined)cell.append(el('pre',typeof value==='string'?value:JSON.stringify(value,null,2)));tr.append(label,cell);table.append(tr);}section.append(table);
  }
  if(warnings.length){const details=el('details');details.dataset.creationWarnings='';details.append(el('summary','优化建议（'+warnings.length+'）'));for(const warning of warnings)details.append(el('p',typeof warning==='string'?warning:warning.message??warning.reason??JSON.stringify(warning)));section.append(details);}
- if(pending.length||warnings.length){section.append(el('p',saved?'已通过条目已有保存回执；下轮只带待修内容、建议和已保存记录引用。':'可先核对并保存已通过条目；待修条目与原文会继续保留。'));
+ if(pending.length||warnings.length){section.append(el('p',saved?(pending.length?'已通过条目已有保存回执；下一轮只修待办，并沿用已保存条目的身份与引用。':'条目已保存；优化建议供之后明确修订时参考。'):(pending.length?'可先核对并保存已通过条目；待修条目与原文会继续保留。':'优化建议供你参考，确认后可以保存这些条目。')));
   const original=el('details');original.dataset.creationPendingRaw='';original.append(el('summary','保留的本次原答'),el('pre',rawResponse));section.append(original);
-  if(onRepair){const repair=el('button',pending.length?'继续修复待办':'继续处理建议');repair.type='button';repair.className='menu_button';repair.dataset.creationRepair='';repair.disabled=disabled;repair.onclick=onRepair;section.append(repair);}
+  if(onRepair&&pending.length){const repair=el('button','继续修复待办');repair.type='button';repair.className='menu_button';repair.dataset.creationRepair='';repair.disabled=disabled;repair.onclick=onRepair;section.append(repair);}
  }
  root.append(section);return section;
 }
@@ -63,17 +66,29 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
  const button=(text,fn)=>{const n=el('button',text);n.type='button';n.className='menu_button';n.onclick=fn;return n;};
  const options=select=>{for(const [value,label]of [['string','文字'],['number','数字'],['boolean','是 / 否'],['object','字段组'],['array','列表'],['null','未设置']]){const o=el('option',label);o.value=value;select.append(o);}};
  root.dataset.creationFields='';root.dataset.creationDraft='';
+ function clearPathState(index,key,path,{arrayIndex}={}){
+  const prefix=index+':'+key+':',under=(candidate,ancestor)=>ancestor.every((value,i)=>String(candidate[i])===String(value));
+  for(const values of [fieldTexts,fieldErrors]){
+   const retained=[];
+   for(const token of Object.keys(values)){if(!token.startsWith(prefix))continue;let current;try{current=JSON.parse(token.slice(prefix.length));}catch{continue;}if(!Array.isArray(current)||!under(current,path))continue;
+    const value=values[token];delete values[token];
+    if(arrayIndex!==undefined){const next=Number(current[path.length]);if(current.length>path.length&&Number.isInteger(next)&&next!==arrayIndex){if(next>arrayIndex)current[path.length]=String(next-1);retained.push([prefix+JSON.stringify(current),value]);}}
+   }
+   for(const [token,value]of retained)values[token]=value;
+  }
+  onInvalid('',Object.keys(fieldErrors).length>0);
+ }
  function editValue(value,{index,key,path=[],set,def,canChangeType=false}){
   const box=el('div');box.className='tisya-creation-value';const kind=kindOf(value),token=index+':'+key+':'+JSON.stringify(path);
   const mark=(node)=>{node.dataset.creationRow=String(index);node.dataset.creationKey=key;node.dataset.creationPath=JSON.stringify(path);node.setAttribute('aria-label',(def?.label??key)+(path.length?' / '+path.join(' / '):''));};
-  const change=next=>{delete fieldTexts[token];delete fieldErrors[token];set(next);onInvalid(token,false);onChange(proposal);};
+  const change=next=>{clearPathState(index,key,path);set(next);onInvalid(token,false);onChange(proposal);};
   if(canChangeType||kind==='null'){
    const types=el('select');types.dataset.creationValueType='';options(types);types.value=kind;types.setAttribute('aria-label','字段类型');types.onchange=()=>{change(copy(emptyValue(types.value)));draw();};box.append(types);
   }
   if(kind==='null'){box.append(el('small','未设置；不会被当成空文字或否。'));return box;}
   if(kind==='object'||kind==='array'){
    const entries=Object.entries(value);
-   for(const [childKey,childValue]of entries){const group=el('fieldset');group.append(el('legend',kind==='array'?'第 '+(Number(childKey)+1)+' 项':childKey));group.append(editValue(childValue,{index,key,path:[...path,childKey],set:next=>{value[childKey]=next;},canChangeType:true}));group.append(button('移除此项',()=>{kind==='array'?value.splice(Number(childKey),1):delete value[childKey];onChange(proposal);draw();}));box.append(group);}
+   for(const [childKey,childValue]of entries){const group=el('fieldset');group.append(el('legend',kind==='array'?'第 '+(Number(childKey)+1)+' 项':childKey));group.append(editValue(childValue,{index,key,path:[...path,childKey],set:next=>{value[childKey]=next;},canChangeType:true}));group.append(button('移除此项',()=>{if(kind==='array'){clearPathState(index,key,path,{arrayIndex:Number(childKey)});value.splice(Number(childKey),1);}else{clearPathState(index,key,[...path,childKey]);delete value[childKey];}onChange(proposal);draw();}));box.append(group);}
    const add=el('div'),type=el('select');options(type);type.setAttribute('aria-label','新项目类型');const name=el('input');name.placeholder='字段名称';name.setAttribute('aria-label','新字段名称');if(kind==='object')add.append(name);add.append(type,button('添加'+(kind==='array'?'一项':'字段'),()=>{if(kind==='object'){const childKey=name.value.trim();if(!safeKey(childKey)||Object.hasOwn(value,childKey)){name.setCustomValidity('请输入不重复的有效字段名');name.reportValidity();return;}value[childKey]=copy(emptyValue(type.value));}else value.push(copy(emptyValue(type.value)));onChange(proposal);draw();}));box.append(add);return box;
   }
   const node=el(kind==='boolean'?'select':kind==='number'?'input':'textarea');node.className='text_pole';mark(node);

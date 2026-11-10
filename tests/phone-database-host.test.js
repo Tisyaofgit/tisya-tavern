@@ -9,6 +9,23 @@ const catalog=JSON.parse(fs.readFileSync(new URL('../engine/catalog.json',import
 async function fixture(){let saves=0,busy=false;const disk=new Map(),ctx={chatId:'db-test',characterId:1,chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>{saves++;}};const storage={get:async id=>structuredClone(disk.get(id)),set:async(id,v)=>disk.set(id,structuredClone(v)),commit:async(id,revision,v)=>{if((disk.get(id)?.local_revision??0)!==revision)return false;disk.set(id,structuredClone(v));return true;}};const options={getContext:()=>ctx,getSource:()=>({}),loadCatalog:async()=>catalog,storage,persistSettings:async()=>{},persistMetadata:async()=>{saves++;},assertIdle:()=>{if(busy)throw Error('generation busy');}};const host=createMatrixHost(options);await host.ensureDatabase();return {host,ctx,disk,options,storage,saves:()=>saves,setBusy:v=>{busy=v;}};}
 const change=(value=1)=>({tableId:'TEST_DATABASE',recordId:'one',values:{value}});
 const schema=[{id:'TEST_DATABASE',fields:[{key:'row_uuid',type:'ID'},{key:'value',type:'INTEGER'}]}];
+
+test('declared phone references resolve business IDs only in their world and reject ambiguity atomically',async()=>{
+ const f=await fixture(),commit=async(id,changes,schema=[])=>{const db=await f.host.readDatabase();return f.host.commitDatabase({contextKey:db.contextKey,expectedRevision:db.revision,operationId:id,changes,schema});};
+ await commit('media-fixture',[
+  {tableId:'T_STATIC_WORLDS',recordId:'w1',values:{name:'本世界'}},{tableId:'T_STATIC_WORLDS',recordId:'w2',values:{name:'另一世界'}},
+  {tableId:'X_MEDIA_SONGS',recordId:'local-row',values:{id:'song',world_ref:'w1',title:'本地曲'}},{tableId:'X_MEDIA_SONGS',recordId:'foreign-row',values:{id:'song',world_ref:'w2',title:'另一首'}},
+  {tableId:'X_MEDIA_PLAYBACK',recordId:'player',values:{world_ref:'w1',songId:'song'}}
+ ]);
+ assert.equal((await f.host.readDatabase()).state.tables.X_MEDIA_PLAYBACK.player.values.songId,'song');
+ const before=await f.host.readDatabase();
+ await assert.rejects(commit('ambiguous',[
+  {tableId:'X_MEDIA_SONGS',recordId:'duplicate-row',values:{id:'song',world_ref:'w1',title:'冲突'}},
+  {tableId:'X_MEDIA_PLAYBACK',recordId:'player',values:{songId:'song'}}
+ ]),e=>e.code==='REFERENCE_AMBIGUOUS');assert.deepEqual(await f.host.readDatabase(),before);
+ await assert.rejects(commit('foreign', [{tableId:'X_MEDIA_PLAYBACK',recordId:'player',values:{songId:'foreign-row'}}]),e=>e.code==='REFERENCE_MISSING');assert.deepEqual(await f.host.readDatabase(),before);
+ await assert.rejects(commit('ordinary-ref',[{tableId:'TEST_EXACT_REF',recordId:'test',values:{song:'song'}}],[{id:'TEST_EXACT_REF',fields:[{key:'row_uuid',type:'ID'},{key:'song',type:'REF',ref:'X_MEDIA_SONGS'}]}]),e=>e.code==='REFERENCE_MISSING');assert.deepEqual(await f.host.readDatabase(),before);
+});
 async function write(host,id,value=1,source){const db=await host.readDatabase();return host.commitDatabase({contextKey:db.contextKey,operationId:id,expectedRevision:db.revision,changes:[change(value)],schema,source});}
 
 test('read/peek do not assign message IDs or write; DB CAS and exact receipts survive cold host',async()=>{const f=await fixture();f.ctx.chat.push({is_user:true,mes:'一个未持久编号的消息'});const saves=f.saves(),metadata=structuredClone(f.ctx.chatMetadata);await f.host.readDatabase();await f.host.peekDatabase();assert.equal(f.saves(),saves);assert.deepEqual(f.ctx.chatMetadata,metadata);assert.equal(f.ctx.chat[0].extra,undefined);const db=await f.host.readDatabase(),request={contextKey:db.contextKey,operationId:'stable-op',expectedRevision:db.revision,changes:[change(7)],schema};const first=await f.host.commitDatabase(request);const cold=createMatrixHost(f.options),replay=await cold.commitDatabase(request);assert.equal(replay.receipt.replayed,true);assert.equal(replay.revision,first.revision);assert.equal((await cold.readDatabase()).state.runtime.receipts['stable-op'].operation_id,'stable-op');await assert.rejects(cold.commitDatabase({...request,operationId:'stale'}),e=>e.code==='SAVE_CONFLICT');await assert.rejects(cold.commitDatabase({...request,changes:[change(8)]}),e=>e.code==='OPERATION_CONFLICT');});
