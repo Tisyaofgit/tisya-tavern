@@ -1,0 +1,5 @@
+{
+  "real_user_data_read": false,
+  "real_user_data_modified": false,
+  "real_runtime_snapshot": "not_applicable_no_real_host_or_user_runtime_opened; isolated-test input and source fixtures retained"
+}

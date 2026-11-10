@@ -1,0 +1,12 @@
+{
+  "schema": "tisya.workspace/1",
+  "task": "unify-all-data-on-existing-simple-forms",
+  "phase": "paused_pending_verification",
+  "repository": "Tisyaofgit/tisya-tavern",
+  "source_commit": "b0b89f2e77708f729dbdecef7001637609b59cf1",
+  "source_tree": "f5f95890f2dc2407e421eca8605166b6a484db4e",
+  "source": "/workspace/scratch/c04f833f6bb3/restored-source",
+  "authorization": "Continue existing approved unified-form scope; this session only restores and preserves interrupted work.",
+  "main": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+  "next_step": "Restore fixed source and lockfile dependencies; run current recovery/reply/source/archive tests and retain exact output."
+}

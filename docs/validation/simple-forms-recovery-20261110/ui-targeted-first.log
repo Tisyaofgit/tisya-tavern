@@ -1,0 +1,8 @@
+✖ assistant idea reviews Matrix fields and creates one independent native slot after actual Matrix commit (429.164139ms)
+✖ assistant core reviews Matrix fields and creates one independent native slot after actual Matrix commit (531.732186ms)
+✖ failed Matrix slot upload retries retained receipt without repeating database commit (410.347798ms)
+✖ Matrix slot persisted intent resumes after service recreation without another database or slot write (382.217455ms)
+✖ world creation leaves the old table setup unmounted and never creates a native identity slot (369.281941ms)
+✖ core creation passes the fixed source and rejects source drift before any database or persona write (357.851758ms)
+✖ reopening the unified identity page resumes an interrupted slot without an old page or database write (373.009951ms)
+✖ creation history and exported draft retain invalid typed input until it is corrected and reviewed (382.967835ms)

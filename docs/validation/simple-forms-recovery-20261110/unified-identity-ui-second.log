@@ -1,0 +1,16 @@
+✔ one footer saves native wishes, reviewed dossier and several presentation regions without duplicate stores (394.961197ms)
+✔ a missing dossier review blocks every component before the native profile is changed (135.873997ms)
+✔ the identity page routes character creation to the single assistant without a manual writer (123.068873ms)
+✔ world creation is a source-book task handed to the same assistant and leaves the active identity unchanged (164.367175ms)
+✔ identity settings expose typed existing fields but no second JSON creation editor (114.256124ms)
+✔ one leave prompt cancels identity and presentation edits together without persistence (248.601467ms)
+✔ shared save reports confirmed presentation persistence when its final reread fails and never repeats it (280.110446ms)
+✔ confirmed dossier plus failed name sync can resume shared presentation save at the receipt revision (462.688142ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2335.567352

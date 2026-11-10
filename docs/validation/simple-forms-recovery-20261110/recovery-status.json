@@ -1,0 +1,112 @@
+{
+  "schema": "tisya.interruption-recovery/1",
+  "recorded_utc": "2026-11-10T09:26:54.101233+00:00",
+  "recorded_beijing": "2026-11-10T17:26:54.101233+08:00",
+  "phase": "required_persistence_then_paused",
+  "task": "unify-all-data-on-existing-simple-forms",
+  "source_commit": "b0b89f2e77708f729dbdecef7001637609b59cf1",
+  "source_tree": "f5f95890f2dc2407e421eca8605166b6a484db4e",
+  "branch": "work/simple-forms-20261110",
+  "main_commit_observed": "ed4302bd10d9d4c8786b13ce6dd8b9a2dcf6c19c",
+  "main_modified_this_session": false,
+  "product_code_changed_this_session": false,
+  "clock": {
+    "budget_anchor_utc": "2026-11-10T07:49:07Z",
+    "deadline_utc": "2026-11-10T09:19:07Z",
+    "deadline_beijing": "2026-11-10T17:19:07+08:00",
+    "recovery_first_checked_utc": "2026-11-10T09:16:25Z",
+    "reset": false,
+    "status": "required_persistence_then_paused",
+    "after_deadline_scope": "Only interruption recovery, source preservation, receipt verification and control-file closeout; no new implementation or functional tests."
+  },
+  "source_verification": {
+    "empty_destination_restore_verified": true,
+    "all_1477_files_paths_bytes_modes_git_blobs_verified": true,
+    "files": 1477,
+    "bytes": 117055542,
+    "old_local_only_files": 0,
+    "old_eight_incremental_changes": "Six byte-identical to remote; two test files preserve original changes and contain subsequent remote corrections. No unique unsaved local product change remains."
+  },
+  "runtime": {
+    "bytes": 4569564,
+    "sha256": "48e4af59d82350e065c3e71f1b64e4ba7bd114296d2f2e89ad7ff1df26d1fb74",
+    "status": "same_as_previous_main_build_not_rebuilt_for_new_source"
+  },
+  "validation": {
+    "new_functional_tests_run_this_session": 0,
+    "old_target_logs": [
+      {
+        "file": "assistant-ui-third.log",
+        "pass": 8,
+        "fail": 0
+      },
+      {
+        "file": "unified-identity-ui-second.log",
+        "pass": 8,
+        "fail": 0
+      },
+      {
+        "file": "matrix-configuration-validation.log",
+        "pass": 45,
+        "fail": 0
+      },
+      {
+        "file": "matrix-legacy-recovery-validation.log",
+        "pass": 1,
+        "fail": 1
+      }
+    ],
+    "latest_full_regression_result": "not_recovered_or_verified",
+    "old_1933_result": "belongs_to_previous_main_source_only",
+    "browser_pixels": "not_verified",
+    "real_host": "not_verified",
+    "external_models": "not_verified",
+    "android": "not_verified"
+  },
+  "runtime_data": {
+    "real_user_data_read": false,
+    "real_user_data_modified": false,
+    "real_runtime_snapshot": "not_applicable_no_real_host_or_user_runtime_opened; isolated-test input and source fixtures retained"
+  },
+  "raw_logs": [
+    {
+      "name": "assistant-ui-second.log",
+      "bytes": 25094,
+      "sha256": "893ae0b380b930738aeae47a3de60528026b0c17ab7fb299682e0bfe7ee5fef9"
+    },
+    {
+      "name": "assistant-ui-third.log",
+      "bytes": 1083,
+      "sha256": "a2d47afcb785c35814faeacbd6653d5104bb43900bafff9262b491be5a552209"
+    },
+    {
+      "name": "matrix-configuration-validation.log",
+      "bytes": 5039,
+      "sha256": "06d3ab7e7f4c9b2494ce401cb972bb56e5e28292c31775a676a2c24df6c253fa"
+    },
+    {
+      "name": "matrix-legacy-recovery-validation.log",
+      "bytes": 435,
+      "sha256": "cb7d0f0d2cabbd0af3df2b11c9cd9f84648ce4f7023798d23317fa53f4d077dd"
+    },
+    {
+      "name": "ui-targeted-first.log",
+      "bytes": 939,
+      "sha256": "6ac3a17b7e8a2ca1ca602f53e4a42dfdef7d9b923157318dce5881691d68f06e"
+    },
+    {
+      "name": "unified-identity-ui-second.log",
+      "bytes": 1031,
+      "sha256": "26dcbfd480e224f5d5a8453e1783d73a3fea7698d3209cbebe5737b4cc294516"
+    }
+  ],
+  "next_steps": [
+    "Wait for explicit user continuation; do not reset the original window automatically.",
+    "Restore fixed source and lockfile dependencies; run current recovery/reply/source/archive tests and retain exact output.",
+    "Run npm run build:extension, then npm test; preserve any failure rather than claiming old results.",
+    "Complete real production route acceptance and distinguish simulated host, real model, browser pixels and Android.",
+    "Publish main within already-authorized scope only after the pending candidate gates; freeze and verify the same-point source and controls."
+  ],
+  "background_resume": false,
+  "reminder_created": false
+}

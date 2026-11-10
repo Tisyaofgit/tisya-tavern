@@ -1,0 +1,250 @@
+✖ assistant idea reviews Matrix fields and optionally creates one independent native slot after actual Matrix commit (440.16333ms)
+✖ assistant core reviews Matrix fields and optionally creates one independent native slot after actual Matrix commit (502.866503ms)
+✖ failed Matrix slot upload retries retained receipt without repeating database commit (395.286278ms)
+✖ Matrix slot persisted intent resumes after service recreation without another database or slot write (356.90758ms)
+✖ world creation leaves the old table setup unmounted and never creates a native identity slot (395.948396ms)
+✖ core creation passes the fixed source and rejects source drift before any database or persona write (344.111246ms)
+✖ reopening the unified identity page resumes an interrupted slot without an old page or database write (356.571765ms)
+✖ creation history and exported draft retain invalid typed input until it is corrected and reviewed (347.444026ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3637.78137
+
+✖ failing tests:
+
+test at tests/assistant-matrix-identity.test.js:44:35
+✖ assistant idea reviews Matrix fields and optionally creates one independent native slot after actual Matrix commit (440.16333ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:45:34)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:44:35
+✖ assistant core reviews Matrix fields and optionally creates one independent native slot after actual Matrix commit (502.866503ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称来源：世界基点 / 【角色】旧人物固定来源原文与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:45:34)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:47:1
+✖ failed Matrix slot upload retries retained receipt without repeating database commit (395.286278ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:47:131)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:48:1
+✖ Matrix slot persisted intent resumes after service recreation without another database or slot write (356.90758ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称来源：世界基点 / 【角色】旧人物固定来源原文与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:48:153)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:51:1
+✖ world creation leaves the old table setup unmounted and never creates a native identity slot (395.948396ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点选择要保存的世界基点书新世界书名称与缇斯亚一起创作创作类型新人物新世界新世界创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:55:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:59:1
+✖ core creation passes the fixed source and rejects source drift before any database or persona write (344.111246ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称来源：世界基点 / 【角色】旧人物固定来源原文与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:61:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:66:1
+✖ reopening the unified identity page resumes an interrupted slot without an old page or database write (356.571765ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点世界基点新世界书名称与缇斯亚一起创作创作类型新人物新世界新人物创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:68:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/assistant-matrix-identity.test.js:74:1
+✖ creation history and exported draft retain invalid typed input until it is corrected and reviewed (347.444026ms)
+  AssertionError [ERR_ASSERTION]: 
+   .tisya-matrix-identity{display:flex;flex-direction:column;min-width:0;width:100%;max-width:900px;margin:0 auto;min-height:0;height:var(--tisya-settings-height,100dvh);max-height:100dvh;overflow:hidden;overflow-wrap:anywhere;box-sizing:border-box}
+   #tisya-shell.tisya-page-open .tisya-page.tisya-matrix-page{display:flex;flex-direction:column;overflow:hidden}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-header,#tisya-shell .tisya-page.tisya-matrix-page>.tisya-sub-title{flex:none}
+   #tisya-shell .tisya-page.tisya-matrix-page>.tisya-matrix-identity{flex:1 1 0;min-height:0;height:auto}
+   .tisya-identity-content{flex:1;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:0 4px;scroll-padding-block:12px}
+   .tisya-matrix-identity .tisya-settings-actions{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:0;padding:10px 4px max(10px,env(safe-area-inset-bottom,0px));border-top:1px solid #b9a66d66;background:#0b3025;z-index:3}
+   .tisya-matrix-identity .tisya-settings-actions p{grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+   .tisya-matrix-identity .tisya-settings-actions p:empty{display:none}
+   .tisya-matrix-identity .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
+   .tisya-matrix-identity .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
+   .tisya-matrix-identity .tisya-identity-nav{display:flex;flex-wrap:wrap;gap:6px}
+   .tisya-matrix-identity [role=alert]{color:#edbd9d}
+   .tisya-matrix-identity fieldset{min-width:0}
+   创作表单保存到世界基点书选择要保存的世界基点书世界基点选择要保存的世界基点书新世界书名称与缇斯亚一起创作创作类型新人物新世界新世界创作方式补充新内容修订已有定义补充新内容要求与已有依据另建用户身份供扮演使用（可选）读取实际模板与当前表单，生成草稿先核对。待补事项完整处理后，勾选确认并使用底部保存。生成表单草稿模板书只剩旧手机初始化条目；请先检查并更新内置书，旧条目保留为迁移来源取消修改保存
+      at Object.generate (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:40:154)
+      at async TestContext.<anonymous> (file:///workspace/scratch/abffb3f51b28/tisya-unify/tests/assistant-matrix-identity.test.js:76:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

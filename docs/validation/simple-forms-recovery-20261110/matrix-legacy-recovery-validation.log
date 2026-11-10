@@ -1,0 +1,16 @@
+✔ an explicit legacy origin is reviewed and saved inside the unified identity form with no old page (46.308797ms)
+✖ tests/matrix-legacy-recovery.test.js (13233.889063ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13242.792193
+
+✖ failing tests:
+
+test at tests/matrix-legacy-recovery.test.js:1:1
+✖ tests/matrix-legacy-recovery.test.js (13233.889063ms)
+  'test failed'
