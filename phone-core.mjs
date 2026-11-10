@@ -96,9 +96,9 @@ function lifeProjectionEnvelope(state,domain){
     const docId=`${prefix}-post-${encodeURIComponent(post.id)}`,existing=state.suite.documents[docId];
     const owned=social.ownedAccountIds.includes(post.authorId),isPublic=post.visibility==='public';
     const audience=owned||post.visibility==='followers'&&(social.follows[social.activeAccountId]??[]).includes(post.authorId)?['me']:[];
-    const comments=social.comments.filter(c=>c.postId===post.id).map(c=>({id:`comment-${c.id}`,kind:'comment',by:actorId(c.authorId),text:c.text,...(lifeTime(c.createdAt,domain.state.config.timezoneOffsetMinutes)?{at:lifeTime(c.createdAt,domain.state.config.timezoneOffsetMinutes)}:{})}));
+    const comments=social.comments.filter(c=>c.postId===post.id).map(c=>({id:`comment-${c.id}`,kind:'comment',by:actorId(c.authorId),text:c.text,...((domain.state.config.calendar?null:lifeTime(c.createdAt,domain.state.config.timezoneOffsetMinutes))?{at:(domain.state.config.calendar?null:lifeTime(c.createdAt,domain.state.config.timezoneOffsetMinutes))}:{})}));
     const meta={lifeProjection:{bindingKey,entityId:post.id,appId:'weibo',readOnly:true},lifeStoryTime:post.createdAt,lifeLikeCount:Object.values(social.likes).filter(ids=>ids.includes(post.id)).length};
-    if(!existing)documents.push({id:docId,kind:'weibo',title:post.text.slice(0,48)||'微博',text:post.text,author:actorId(post.authorId),at:lifeTime(post.createdAt,domain.state.config.timezoneOffsetMinutes),visibility:isPublic?'public':'private',audience,items:comments,meta});
+    if(!existing)documents.push({id:docId,kind:'weibo',title:post.text.slice(0,48)||'微博',text:post.text,author:actorId(post.authorId),at:domain.state.config.calendar?null:lifeTime(post.createdAt,domain.state.config.timezoneOffsetMinutes),visibility:isPublic?'public':'private',audience,items:comments,meta});
     else blocks.push({type:'weibo',thread:docId,text:post.text,title:post.text.slice(0,48)||'微博',visibility:isPublic?'public':'private',audience,meta,items:comments.filter(c=>!(existing.items??[]).some(x=>x.id===c.id))});
   }
   return {blocks,...(Object.keys(accounts).length?{accounts}:{}),...(documents.length?{documents}:{})};
@@ -396,6 +396,13 @@ export function reconcilePhone(input,sources,{at}={}){
 
 export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
   const state=clone(input),currentLife=state.life?clone(state.life):null;
+  if(currentLife){
+    const binding=currentLife.bindingKey,prefix=`life-${signature(binding)}`;
+    const documents=Object.fromEntries(Object.entries(state.suite.documents).filter(([,d])=>d.meta?.lifeProjection?.bindingKey!==binding));
+    const fresh=lifeProjectionEnvelope({...state,suite:{...state.suite,documents}},currentLife);
+    state.suite.documents={...documents,...Object.fromEntries((fresh.documents??[]).map(d=>[d.id,d]))};
+    for(const actor of currentLife.state.social.accounts)state.suite.accounts[`${prefix}-actor-${encodeURIComponent(actor.id)}`]={name:actor.name,platform:'weibo',personId:actor.personId??actor.id};
+  }
   const expected=createSuite(state.suite.seed);let rebuilt=expected;for(const envelope of state.suite.branches[state.suite.activeBranch].envelopes)rebuilt=applyEnvelope(rebuilt,envelope);
   const suiteChanged=stableLife([rebuilt.accounts,rebuilt.documents])!==stableLife([state.suite.accounts,state.suite.documents]);
   const lifeChanged=state.lifeEventLog&&stableLife(phoneLifeBoundary(state).life)!==stableLife(currentLife);
@@ -414,12 +421,12 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
   if(!storage||typeof storage.load!=='function'||typeof storage.save!=='function')fail('PHONE_STORAGE','缺少手机存储接口');
   let state=null,chain=Promise.resolve(),disposed=false;
   const assert=()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(!state)fail('PHONE_NOT_READY','手机尚未初始化');};
-  const enqueue=fn=>{const p=chain.then(()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(fresh)state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
+  const enqueue=fn=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(fresh)state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
   async function commit(next,kind='state'){
     assert();if(next===state)return state;
     const previous=state.revision;next.revision=previous+1;scoped(next,contextKey);
-    const archive=JSON.parse(exportPhone(next));await storage.save(archive,{expectedRevision:previous,kind});
-    if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');state=next;onChange({kind,revision:state.revision});return state;
+    const archive=JSON.parse(exportPhone(next)),saved=await storage.save(archive,{expectedRevision:previous,kind});
+    if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');state=saved?.phoneArchive?importPhone(saved.phoneArchive,{contextKey}):next;onChange({kind,revision:state.revision});return state;
   }
   const api={
     async init(){return enqueue(async()=>{if(state)return api;const value=await storage.load();if(value==null){const initial=createPhoneState(seed,contextKey);await storage.save(JSON.parse(exportPhone(initial)),{expectedRevision:null});state=initial;}else state=importPhone(value,{contextKey});onChange({kind:'init',revision:state.revision});return api;});},
@@ -428,7 +435,7 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     readLife(){assert();return state.life?clone(state.life):null;},
     lifeRouteForDocument(docId){assert();const route=state.suite.documents[docId]?.meta?.lifeProjection;return route?{appId:route.appId,detail:route.entityId,bindingKey:route.bindingKey}:null;},
     initLife(profile){return enqueue(async()=>{
-      assert();assertEditable(state);if(profile?.database){if(!state.life||profile.worldId!==state.life.world.id||profile.entityId!==state.life.state.identity.personId)fail('PHONE_LIFE_BINDING','所选表单世界或角色尚未有手机初始化记录');return clone(state.life);}const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
+      assert();assertEditable(state);if(profile?.database&&state.life){if(profile.worldId!==state.life.world.id||profile.entityId!==state.life.state.identity.personId)fail('PHONE_LIFE_BINDING','所选表单世界或角色尚未有手机初始化记录');return clone(state.life);}const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
       const previous=state.life??state.lifeInitial;
       if(previous&&previous.bindingKey!==initial.bindingKey)fail('PHONE_LIFE_BINDING','这条聊天已有另一世界或角色的生活进度；请切回原世界/角色，或另开聊天。原进度没有重置。',{existingBinding:previous.binding});
       if(state.life){

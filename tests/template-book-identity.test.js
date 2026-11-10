@@ -19,10 +19,10 @@ function fixture(){
 const button=(root,label)=>[...root.querySelectorAll('button')].find(b=>b.textContent===label);
 const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
 
-test('packaged templates are empty parser-compatible drafts rather than a demo runtime',()=>{
- const entries=bundledTemplateEntries(),world=parsePhoneWorld(entries[0].content),character=parsePhoneCharacter(entries[1].content);
- assert.equal(world.id,null);assert.equal(character.id,null);assert.deepEqual(character.accounts,[]);assert.deepEqual(character.wallet.accounts,[]);assert.deepEqual(world.catalog,[]);
- assert.match(entries[2].content,/仅供生成新世界/);
+test('packaged templates reference the unified schema and do not create independent phone states',()=>{
+ const entries=bundledTemplateEntries();assert.equal(parsePhoneWorld(entries[0].content),null);assert.equal(parsePhoneCharacter(entries[1].content),null);
+ assert.match(entries[0].content,/T_STATIC_WORLDS/);assert.match(entries[1].content,/T_CHAR_DOSSIER/);assert.match(entries[3].content,/统一表单/);
+ assert.match(entries[0].content,/matrix/);assert(!entries.some(e=>/^【模板】.*初态/u.test(e.name)));
 });
 test('complete native template book and readable field guide match runtime templates exactly',()=>{
  const book=JSON.parse(readFileSync(new URL('../templates/tisya-template-book.json',import.meta.url),'utf8'));assert.deepEqual(book,bundledNativeTemplateBook());assert.equal(Object.keys(book.entries).length,4);assert(Object.values(book.entries).every(e=>e.disable===true));

@@ -3,7 +3,19 @@ import {normalizeRecordReference,MESSAGE_SUBTYPES} from './extension-preferences
 // Pure presentation of caller-authorized form projections. There are no state,
 // network, ledger, or generation services in this module.
 export const PRESENTATION_KINDS=Object.freeze([...MESSAGE_SUBTYPES,'forum','danmaku','theater','notice','rumor','settlement']);
+const field=(key,label,type,extra={})=>({key,label,type,required:false,...extra});
+export const PRESENTATION_RECORD_SCHEMA=Object.freeze({id:'T_DYN_MESSAGE_CONTENT',label:'消息内容与附件引用',partition:'III',sheet:'宿主与投影',purpose:'消息内容的关联子模板；转账和媒体只引用既有记录，不复制账本或原件。',fields:[
+ field('row_uuid','稳定记录ID','ID',{required:true}),field('parent_item_ref','所属网络条目','REF',{ref:'X_NETWORK_ITEMS'}),field('kind','内容类型','ENUM',{enum:[...MESSAGE_SUBTYPES],required:true}),
+ field('title','标题','TEXT'),field('text','正文或语音文稿','LONG_TEXT'),field('sender_ref','发出主体','REF',{ref:'T_SYS_ENTITIES'}),field('recipient_ref','接收主体','REF',{ref:'T_SYS_ENTITIES'}),
+ field('media_ref','媒体记录','REF',{ref:'T_SYS_MEDIA_ASSETS'}),field('transfer_ref','转账记录','REF',{ref:'X_FIN_TRANSACTIONS'}),field('source_label','来源名称','TEXT'),field('source_url','来源地址','TEXT'),
+ field('story_time','故事时间文字','TEXT'),field('visibility','可见范围','ENUM',{enum:['public','private']}),field('owner_ref','归属主体','REF',{ref:'T_SYS_ENTITIES'}),field('audience_refs','明确可读主体','REF_LIST')
+ ],parent_table:'X_NETWORK_ITEMS',parent_field:'parent_item_ref',common_fields_access:'by_common_contract'});
+const accessFields=()=>[field('visibility','可见范围','ENUM',{enum:['public','private']}),field('owner_ref','归属主体','REF',{ref:'T_SYS_ENTITIES'}),field('audience_refs','明确可读主体','REF_LIST')];
+export const EXTENSION_BLOCK_SCHEMA=Object.freeze({id:'T_DYN_EXTENSION_BLOCKS',label:'扩展内容区块',partition:'III',sheet:'宿主与投影',purpose:'已接纳的小剧场、论坛或弹幕区块；书仅保存定义。',fields:[field('row_uuid','稳定记录ID','ID',{required:true}),field('kind','区块类型','ENUM',{enum:['forum','danmaku','theater','notice','rumor','settlement'],required:true}),field('title','标题','TEXT'),field('text','区块说明','LONG_TEXT'),field('story_time','故事时间文字','TEXT'),field('preference_ref','来源偏好','REF',{ref:'T_PREF_EXTENSION_PRESENTATION'}),...accessFields()],common_fields_access:'by_common_contract'});
+export const EXTENSION_ITEM_SCHEMA=Object.freeze({id:'T_DYN_EXTENSION_ITEMS',label:'扩展内容条目',partition:'III',sheet:'宿主与投影',purpose:'关联区块的单条发言，稳定楼层和删除状态来自记录。',fields:[field('row_uuid','稳定记录ID','ID',{required:true}),field('block_ref','所属区块','REF',{ref:'T_DYN_EXTENSION_BLOCKS',required:true}),field('floor','稳定楼层','INTEGER'),field('author_ref','发言主体','REF',{ref:'T_SYS_ENTITIES'}),field('text','正文','LONG_TEXT'),field('quote_floor','引用楼层','INTEGER'),field('at_seconds','媒体时间秒','NUMBER'),field('story_time','故事时间文字','TEXT'),field('deleted','已删除','BOOLEAN'),...accessFields()],parent_table:'T_DYN_EXTENSION_BLOCKS',parent_field:'block_ref',common_fields_access:'by_common_contract'});
+export const PRESENTATION_SCHEMAS=Object.freeze([PRESENTATION_RECORD_SCHEMA,EXTENSION_BLOCK_SCHEMA,EXTENSION_ITEM_SCHEMA]);
 const names={text:'消息',transfer:'转账记录',voice:'语音',image:'图片',news:'新闻',forum:'论坛',danmaku:'弹幕',theater:'小剧场',notice:'公告',rumor:'风闻',settlement:'结算记录'};
+const viewForKind={text:'messages',transfer:'messages',voice:'messages',image:'messages',news:'news',forum:'forum',danmaku:'danmaku',theater:'theater',notice:'notice',rumor:'rumor',settlement:'settlement'};
 const fail=(code,message)=>{throw Object.assign(new Error(message),{code:'TISYA_PRESENTATION_'+code});};
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&(Object.getPrototypeOf(v)===Object.prototype||Object.getPrototypeOf(v)===null);
 const text=(v,label,{optional=false,max=100000}={})=>{if(v==null&&optional)return '';if(typeof v!=='string'||v.length>max)fail('VALUE',label+'不是合法文字');return v;};
@@ -64,13 +76,13 @@ function transfer(v){
 }
 function voice(v,options){
  const transcript=optional(v.transcript??v.text,'语音文稿');let output=header(v,'语音');
- if(v.resourceId==null)output+='<p class="tisya-presentation-muted">语音文稿 · 未提供音源</p>';
+ if(v.resourceId==null)output+='<p class="tisya-presentation-muted">语音文稿 · '+(v.resourceUnavailable?'音源暂不可用':'未提供音源')+'</p>';
  else{const r=resource(v.resourceId,'audio',options);output+='<audio controls preload="none" src="'+esc(r.url)+'" aria-label="'+esc(optional(v.title,'标题')||r.name||'语音音源')+'"></audio>';}
  if(transcript)output+='<div class="tisya-presentation-transcript">'+esc(transcript)+'</div>';
  return output+stamp(v);
 }
 function image(v,options){
- let output=header(v,'图片');if(v.resourceId==null)output+='<p class="tisya-presentation-muted">未提供图片资源</p>';
+ let output=header(v,'图片');if(v.resourceId==null)output+='<p class="tisya-presentation-muted">'+(v.resourceUnavailable?'图片资源暂不可用':'未提供图片资源')+'</p>';
  else{const r=resource(v.resourceId,'image',options);output+='<figure><img loading="lazy" src="'+esc(r.url)+'" alt="'+esc(optional(v.alt,'图片说明')||r.name||'图片')+'">'+(v.caption?'<figcaption>'+esc(text(v.caption,'图片说明'))+'</figcaption>':'')+'</figure>';}
  return output+paragraphs(v)+stamp(v);
 }
@@ -104,7 +116,7 @@ function danmaku(v,limit,{playbackSeconds,windowSeconds=35}={}){
 function theater(v,limit){const rows=itemRows(v),shown=limit===null?rows:rows.slice(0,limit);return header(v,'小剧场')+'<div class="tisya-presentation-theater">'+shown.map(row=>'<p><b>'+esc(optional(row.speaker??row.author,'发言者')||'未署名')+'</b> '+esc(row.deleted===true?'该条已删除':text(row.text,'小剧场正文'))+'</p>').join('')+'</div>';}
 export function compilePresentation(request,options={}){
  if(!plain(request)||!PRESENTATION_KINDS.includes(request.kind))fail('KIND','呈现内容类型未登记');
- const {config}=options,display=config?.display??null;
+ const config=options.config??options.configs?.[viewForKind[request.kind]]??(MESSAGE_SUBTYPES.includes(request.kind)?options.configs?.messages:null),display=config?.display??null;
  if(display){if(display.enabled===false||display.limit===0)return {hidden:true};if(!Array.isArray(display.kinds))fail('CONFIG','显示配置缺少内容类型');if(MESSAGE_SUBTYPES.includes(request.kind)&&!display.kinds.includes(request.kind))return {hidden:true};}
  const projection=resolveRecordReference(request.reference,options);if(projection.kind!==request.kind)fail('KIND','请求类型与已授权记录投影类型不一致');
  const limit=count(display?.limit??options.displayLimit,'显示条数'),tokens=display?.tokens??{};
@@ -135,7 +147,10 @@ export function projectPresentationMarks(root,{authoredNodes=new Set(),strict=fa
   else if(['消息','播报','档案','事件'].includes(node.getAttribute('data-tisya-mark')))parameter=[...node.children].find(c=>c.tagName==='HEADER')?.textContent;
   if(!parameter||!parameter.startsWith('@record'))continue;
   let html;try{const request=parsePresentationReference(parameter);if(!request)continue;
-   if(!options.pending&&request.reference.snapshotId==='@message'){if(typeof options.messageSnapshotId!=='string'||!options.messageSnapshotId)fail('UNAVAILABLE','本条消息没有已接纳的历史快照');request.reference.snapshotId=options.messageSnapshotId;}
+   if(!options.pending&&request.reference.snapshotId==='@message'){
+    const binding=options.messageReferences?.find(r=>r.kind===request.kind&&r.tableId===request.reference.tableId&&r.recordId===request.reference.recordId),snapshotId=binding?.snapshotId??options.messageSnapshotId;
+    if(typeof snapshotId!=='string'||!snapshotId)fail('UNAVAILABLE','本条消息没有已接纳的历史快照');request.reference.snapshotId=snapshotId;
+   }
    html=options.pending?'<span class="tisya-resource-error" role="status">正在读取当时的记录。</span>':renderPresentation(request,options);
   }catch(error){if(strict)throw error;errors.push(error);onError(error);html=presentationErrorNotice(error);}
   const template=root.ownerDocument.createElement('template');template.innerHTML=html;node.replaceWith(template.content);count++;

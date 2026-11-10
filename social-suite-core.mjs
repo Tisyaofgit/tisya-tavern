@@ -227,7 +227,9 @@ function applyProjection(projection,envelope) {
   if(own(envelope,'databaseProjection')){
     const snapshot=obj(envelope.databaseProjection,'envelope.databaseProjection');allowed(snapshot,['accounts','documents'],'envelope.databaseProjection');
     const replacement={accounts:clone(snapshot.accounts),documents:clone(snapshot.documents),receipts:projection.receipts};
-    obj(replacement.accounts,'database.accounts');obj(replacement.documents,'database.documents');validateDocuments(replacement);
+    obj(replacement.accounts,'database.accounts');obj(replacement.documents,'database.documents');
+    for(const [id,doc]of Object.entries(replacement.documents)){if(doc.id!==id||!DOCUMENT_KINDS.includes(doc.kind)||typeof doc.title!=='string'||!doc.title.trim()||!['public','private','subscriber'].includes(doc.visibility))fail('DATABASE_DOCUMENT','database.documents','表单页面身份、类型或可见范围无效');if(STREAM_KINDS.has(doc.kind)){if(!doc.meta?.coreThread)fail('CORE_CONFIG_MISSING','database.documents','消息流需要已有顺序与时间配置');const last=Math.max(0,...doc.items.map(x=>x.floor));if(!Number.isSafeInteger(doc.meta.coreThread.nextFloor)||doc.meta.coreThread.nextFloor<=last)fail('CORE_SEQUENCE','database.documents','表单新增楼层须同批更新nextFloor，避免覆盖消息');}}
+    validateDocuments(replacement);
     projection.accounts=replacement.accounts;projection.documents=replacement.documents;
   }
   if (own(envelope,'accounts')) registerAccounts(projection,envelope.accounts,'envelope.accounts');

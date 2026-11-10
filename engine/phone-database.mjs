@@ -3,50 +3,103 @@
 // Seed/envelopes/frame snapshots are immutable history, never current authority.
 import {clone,digest,stable,stableId,fail} from './common.mjs';
 import {WorldClock} from './math.mjs';
+import {worldClockConfiguration} from './world-clock.mjs';
 import {importPhone,exportPhone,attachPhoneDatabaseSnapshot} from '../phone-core.mjs';
+import {PRESENTATION_SCHEMAS} from '../extension-presentation.mjs';
+import {PHONE_WORLD_FORMAT,PHONE_CHARACTER_FORMAT} from '../phone-life-config.mjs';
 import {EXTENSION_PREFERENCE_SCHEMA} from '../extension-preferences.mjs';
 
 export const PHONE_BINDING_TABLE='X_PHONE_BINDINGS';
 export const phoneDatabaseRecordId=path=>stableId('phone:'+JSON.stringify(Array.isArray(path)?path:String(path).split('/')));
 const currentId='phone-current';
-const field=(key,type='TEXT')=>({key,label:key,type});
-export const PHONE_DATABASE_SCHEMAS=[{id:PHONE_BINDING_TABLE,label:'手机表单视图绑定',fields:[field('row_uuid','ID'),field('context_key'),field('world_ref','REF'),field('owner_ref','REF'),field('revision','INTEGER'),field('layout','JSON'),field('archive_digest'),field('migration_source','JSON')]},EXTENSION_PREFERENCE_SCHEMA];
+const FIELD_LABELS={"id": "业务编号", "name": "名称", "title": "标题", "text": "正文", "description": "说明", "owner_ref": "所属主体", "world_ref": "所属世界", "parent_ref": "上级记录", "collection_ref": "所属集合", "collection_field": "关联栏目", "ordinal": "显示顺序", "dictionary_key": "稳定索引", "balance_ref": "余额原点", "debt_ref": "负债原点", "amount": "金额（最小单位）", "principal": "本金（最小单位）", "remainingPrincipal": "剩余本金", "interest": "利息（最小单位）", "paid": "已还金额", "refunded": "已退款金额", "prepaid": "预付金额", "total": "合计金额", "subtotal": "商品小计", "totalPayable": "总应还金额", "totalInterest": "总利息", "monthlyPayment": "首期应还金额", "price": "单价（最小单位）", "qty": "数量", "stock": "库存", "status": "当前状态", "type": "业务类型", "kind": "类别", "accountId": "账户编号", "to": "收款对象", "enabled": "启用", "owned": "本人账号", "limit": "信用额度", "refundBalance": "溢缴款", "billDay": "账单日", "dueDay": "还款日", "dueAt": "到期故事分钟", "statementAt": "出账故事分钟", "createdAt": "建立时点", "updatedAt": "更新时点", "settledAt": "结算时点", "redeemedAt": "赎回时点", "at": "故事时点", "months": "分期期数", "number": "期号", "apr": "年化利率", "annualRateBps": "年化利率基点", "periodDays": "每期故事天数", "periodsPerYear": "每年计息期数", "quoteId": "已确认报价", "productId": "商品或产品编号", "orderId": "订单编号", "placeId": "地点编号", "payment": "付款方式", "deliveryFee": "配送费", "note": "备注", "accrued": "已结算收益", "risk": "风险说明", "liquidity": "赎回规则", "authorId": "作者账号", "postId": "所属帖子", "handle": "账号标识", "personId": "人物编号", "bio": "简介", "color": "账号颜色", "label": "标签", "visibility": "可见范围", "mediaIds": "引用相片", "mediaGrants": "本条公开授权", "repostOf": "转发来源", "songId": "引用歌曲", "likesBase": "已知初始点赞数", "ownerId": "所属人物或账号", "source": "原件来源", "art": "插画", "mime": "媒体格式", "artist": "作者", "album": "专辑", "cover": "封面", "audioId": "音源原件", "duration": "时长", "songIds": "歌曲清单", "day": "故事日期", "minute": "当日分钟", "participantId": "邀请对象", "notified": "已提醒", "x": "横坐标", "y": "纵坐标", "known": "当前已知", "apps": "启用应用", "appNames": "应用显示名称", "currency_ref": "货币资产原点", "currency_symbol": "货币符号", "currency_minor_units": "货币小数位", "theme_background": "背景色", "theme_panel": "面板色", "theme_text": "文字色", "theme_accent": "强调色", "theme_radius": "圆角", "delivery_shop": "商城配送费", "delivery_food": "外卖配送费", "author": "作者账号", "by": "发言账号", "floor": "楼层", "audience": "可见对象", "meta": "页面结构参数"};
+const TABLE_LABELS={"X_PHONE_WORLD_CONFIG": "世界手机设置", "X_FIN_ACCOUNTS": "资金账户", "X_FIN_TRANSACTIONS": "资金流水", "X_FIN_CREDIT_CARDS": "信用卡", "X_FIN_CREDIT_CHARGES": "信用消费明细", "X_FIN_CREDIT_STATEMENTS": "信用卡账单", "X_FIN_LOANS": "贷款合同", "X_FIN_LOAN_INSTALLMENTS": "贷款分期", "X_FIN_INVESTMENTS": "理财持仓", "X_FIN_INVESTMENT_PRODUCTS": "理财产品定义", "X_SHOP_ORDERS": "购物与外卖订单", "X_SHOP_ORDER_ITEMS": "订单商品明细", "X_SHOP_CART_ITEMS": "购物车条目", "X_SHOP_PRODUCT_DETAILS": "商城商品扩展", "X_HOLDING_DETAILS": "持有物扩展", "X_SOCIAL_ACCOUNTS": "网络账号", "X_SOCIAL_POSTS": "微博帖子", "X_SOCIAL_COMMENTS": "微博评论", "X_SOCIAL_NOTIFICATIONS": "社交通知", "X_SOCIAL_OUTBOX": "待发社交操作", "X_SOCIAL_CONTACTS": "手机联系人", "X_MEDIA_PHOTOS": "相片与可见范围", "X_MEDIA_SONGS": "歌曲资料", "X_MEDIA_PLAYLISTS": "歌单", "X_CALENDAR_EVENTS": "日程与邀请", "X_PLACE_MAP_POINTS": "地图已知地点", "X_JOURNEY_DETAILS": "出行进度", "X_NETWORK_DOCUMENTS": "网络页面", "X_NETWORK_ITEMS": "网络消息与条目", "X_NETWORK_ACCOUNTS": "网络页面账号"};
+const field=(key,type='TEXT')=>({key,label:FIELD_LABELS[key]??key,type});
+export const PHONE_DATABASE_SCHEMAS=[{id:PHONE_BINDING_TABLE,phone_internal:true,label:'手机表单视图绑定',fields:[field('row_uuid','ID'),field('context_key'),field('world_ref','REF'),field('owner_ref','REF'),field('revision','INTEGER'),field('layout','JSON'),field('archive_digest'),field('migration_source','JSON')]},EXTENSION_PREFERENCE_SCHEMA,...PRESENTATION_SCHEMAS];
 const tableNames={
  'life/world':'X_PHONE_WORLD_CONFIG','life/state/wallet/accounts/*':'X_FIN_ACCOUNTS','life/state/wallet/card':'X_FIN_CREDIT_CARDS','life/state/wallet/card/charges/*':'X_FIN_CREDIT_CHARGES','life/state/wallet/card/statements/*':'X_FIN_CREDIT_STATEMENTS','life/state/wallet/loans/*':'X_FIN_LOANS','life/state/wallet/loans/*/installments/*':'X_FIN_LOAN_INSTALLMENTS','life/state/wallet/investments/*':'X_FIN_INVESTMENTS','life/world/economy/investments/*':'X_FIN_INVESTMENT_PRODUCTS','life/state/wallet/ledger/*':'X_FIN_TRANSACTIONS','life/state/commerce/orders/*':'X_SHOP_ORDERS','life/state/commerce/orders/*/items/*':'X_SHOP_ORDER_ITEMS','life/state/commerce/cart/*':'X_SHOP_CART_ITEMS','life/state/commerce/products/*':'X_SHOP_PRODUCT_DETAILS','life/state/inventory/*':'X_HOLDING_DETAILS','life/state/social/accounts/*':'X_SOCIAL_ACCOUNTS','life/state/social/posts/*':'X_SOCIAL_POSTS','life/state/social/comments/*':'X_SOCIAL_COMMENTS','life/state/social/notifications/*':'X_SOCIAL_NOTIFICATIONS','life/state/social/pending/*':'X_SOCIAL_OUTBOX','life/state/media/photos/*':'X_MEDIA_PHOTOS','life/state/media/songs/*':'X_MEDIA_SONGS','life/state/media/playlists/*':'X_MEDIA_PLAYLISTS','life/state/calendar/events/*':'X_CALENDAR_EVENTS','life/state/map/places/*':'X_PLACE_MAP_POINTS','life/state/map/journey':'X_JOURNEY_DETAILS','life/state/contacts/*':'X_SOCIAL_CONTACTS','suite/documents/*':'X_NETWORK_DOCUMENTS','suite/documents/*/items/*':'X_NETWORK_ITEMS','suite/accounts/*':'X_NETWORK_ACCOUNTS','actions/*':'X_PHONE_ACTIONS','requests/*':'X_PHONE_REQUESTS','frames/*':'X_PHONE_FRAMES','lifeEventLog/*':'X_PHONE_LIFE_EVENTS'};
+const entityFields={
+ X_FIN_ACCOUNTS:{id:'TEXT',name:'TEXT',balance_ref:'REF'},X_FIN_TRANSACTIONS:{id:'TEXT',at:'INTEGER',type:'TEXT',description:'TEXT',amount:'INTEGER',accountId:'TEXT',to:'TEXT'},
+ X_SOCIAL_ACCOUNTS:{owned:'BOOLEAN',id:'TEXT',name:'TEXT',handle:'TEXT',personId:'REF',bio:'TEXT',color:'TEXT',label:'TEXT'},
+ X_SOCIAL_POSTS:{id:'TEXT',authorId:'TEXT',text:'LONG_TEXT',visibility:'TEXT',mediaIds:'ARRAY',mediaGrants:'ARRAY',repostOf:'TEXT',songId:'TEXT',likesBase:'INTEGER',createdAt:'JSON'},
+ X_SOCIAL_COMMENTS:{id:'TEXT',postId:'TEXT',authorId:'TEXT',text:'LONG_TEXT',createdAt:'JSON'},
+ X_SHOP_ORDERS:{id:'TEXT',kind:'TEXT',subtotal:'INTEGER',deliveryFee:'INTEGER',total:'INTEGER',payment:'TEXT',accountId:'TEXT',placeId:'TEXT',note:'LONG_TEXT',status:'TEXT',createdAt:'INTEGER',updatedAt:'INTEGER',refunded:'INTEGER'},
+ X_SHOP_ORDER_ITEMS:{productId:'TEXT',name:'TEXT',qty:'INTEGER',price:'INTEGER',kind:'TEXT'},
+ X_PHONE_WORLD_CONFIG:{apps:'ARRAY',appNames:'JSON',currency_ref:'REF',currency_symbol:'TEXT',currency_minor_units:'INTEGER',delivery_shop:'INTEGER',delivery_food:'INTEGER',theme_background:'TEXT',theme_panel:'TEXT',theme_text:'TEXT',theme_accent:'TEXT',theme_radius:'INTEGER'},
+ X_NETWORK_DOCUMENTS:{id:'TEXT',kind:'TEXT',title:'TEXT',author:'TEXT',text:'LONG_TEXT',at:'TEXT',visibility:'TEXT',audience:'ARRAY',meta:'JSON'},
+ X_NETWORK_ITEMS:{id:'TEXT',floor:'INTEGER',by:'TEXT',author:'TEXT',text:'LONG_TEXT',at:'TEXT',kind:'TEXT'},
+};
+Object.assign(entityFields,{
+ X_FIN_CREDIT_CARDS:{id:'TEXT',enabled:'BOOLEAN',name:'TEXT',limit:'INTEGER',refundBalance:'INTEGER',billDay:'INTEGER',dueDay:'INTEGER',debt_ref:'REF'},
+ X_FIN_CREDIT_CHARGES:Object.fromEntries('id:TEXT orderId:TEXT amount:INTEGER originalDebt:INTEGER remaining:INTEGER paid:INTEGER refunded:INTEGER prepaid:INTEGER statementAt:INTEGER dueAt:INTEGER createdAt:INTEGER status:TEXT'.split(' ').map(x=>x.split(':'))),
+ X_FIN_CREDIT_STATEMENTS:Object.fromEntries('id:TEXT statementAt:INTEGER dueAt:INTEGER total:INTEGER remaining:INTEGER status:TEXT'.split(' ').map(x=>x.split(':'))),
+ X_FIN_LOANS:Object.fromEntries('id:TEXT amount:INTEGER months:INTEGER apr:NUMBER annualRateBps:INTEGER periodDays:INTEGER periodsPerYear:INTEGER totalInterest:INTEGER totalPayable:INTEGER monthlyPayment:INTEGER quoteId:TEXT paid:INTEGER accountId:TEXT status:TEXT createdAt:INTEGER debt_ref:REF'.split(' ').map(x=>x.split(':'))),
+ X_FIN_LOAN_INSTALLMENTS:Object.fromEntries('number:INTEGER principal:INTEGER interest:INTEGER amount:INTEGER paid:INTEGER dueAt:INTEGER'.split(' ').map(x=>x.split(':'))),
+ X_FIN_INVESTMENTS:Object.fromEntries('id:TEXT productId:TEXT principal:INTEGER accrued:INTEGER createdAt:INTEGER settledAt:INTEGER redeemedAt:INTEGER status:TEXT'.split(' ').map(x=>x.split(':'))),
+ X_FIN_INVESTMENT_PRODUCTS:{id:'TEXT',name:'TEXT',annualRateBps:'INTEGER',description:'LONG_TEXT',risk:'TEXT',liquidity:'TEXT'},
+ X_SHOP_CART_ITEMS:{productId:'TEXT',qty:'INTEGER'},X_PLACE_MAP_POINTS:{id:'TEXT',x:'NUMBER',y:'NUMBER',kind:'TEXT',known:'BOOLEAN'},X_CALENDAR_EVENTS:{id:'TEXT',title:'TEXT',day:'INTEGER',minute:'INTEGER',at:'INTEGER',placeId:'TEXT',participantId:'TEXT',status:'TEXT',notified:'BOOLEAN'},
+ X_MEDIA_PHOTOS:{id:'TEXT',name:'TEXT',ownerId:'TEXT',visibility:'TEXT',source:'TEXT',art:'TEXT',mime:'TEXT',createdAt:'JSON'},X_MEDIA_SONGS:{id:'TEXT',title:'TEXT',artist:'TEXT',album:'TEXT',cover:'TEXT',audioId:'TEXT',duration:'NUMBER'},X_MEDIA_PLAYLISTS:{id:'TEXT',name:'TEXT',songIds:'ARRAY'}
+});
+const relationFields={dictionary_key:'TEXT',collection_ref:'TEXT',parent_ref:'REF',collection_field:'TEXT',ordinal:'INTEGER',world_ref:'REF',owner_ref:'REF'};
+for(const id of new Set(Object.values(tableNames)))PHONE_DATABASE_SCHEMAS.push({id,label:TABLE_LABELS[id]??id,phone_internal:true,fields:[field('row_uuid','ID'),...Object.entries({...relationFields,...(entityFields[id]??{})}).map(([k,t])=>field(k,t))]});
 const maps=new Set(['suite/accounts','suite/documents','suite/branches','requests','frames','rejectedSources','drafts','life/state/receipts','life/state/social/drafts','life/state/social/follows','life/state/social/likes','life/state/social/bookmarks','life/state/social/acceptedLikes']);
 const history=p=>p==='suite/seed'||p==='lifeInitial'||/^suite\/branches\/[^/]+\/envelopes\/\d+$/.test(p)||/^lifeEventLog\/\d+$/.test(p)||/^frames\/[^/]+$/.test(p)||/^requests\/[^/]+$/.test(p);
 const historyTable=p=>p.startsWith('frames/')?'X_PHONE_FRAMES':p.startsWith('requests/')?'X_PHONE_REQUESTS':p.startsWith('lifeEventLog/')?'X_PHONE_LIFE_EVENTS':p==='lifeInitial'?'X_PHONE_INITIAL_SNAPSHOTS':p==='suite/seed'?'X_NETWORK_SEEDS':'X_NETWORK_ENVELOPES';
+function entityPath(path,root){let at=root;return path.map(k=>{const value=at?.[k],next=Array.isArray(at)&&value&&typeof value==='object'?(value.id!=null?'@'+value.id:value.number!=null?'#'+value.number:value.productId!=null?'product:'+value.productId:k):k;at=value;return String(next);});}
 const pathId=p=>phoneDatabaseRecordId(p);
+const immutableTables=new Set(['X_PHONE_FRAMES','X_PHONE_REQUESTS','X_PHONE_LIFE_EVENTS','X_PHONE_INITIAL_SNAPSHOTS','X_NETWORK_SEEDS','X_NETWORK_ENVELOPES']);
 function namedTable(semantic){const p=semantic.join('/');return tableNames[p]??'X_PHONE_'+semantic.filter(x=>x!=='*').map(x=>x.replace(/[^A-Za-z0-9]/g,'_').toUpperCase()).join('_');}
-const typeOf=(v,key)=>v===null?'JSON':typeof v==='number'?(Number.isSafeInteger(v)?'INTEGER':'NUMBER'):typeof v==='boolean'?'BOOLEAN':typeof v==='string'?'TEXT':'JSON';
+const typeOf=(v,key)=>key==='uid'?'JSON':['world_ref','owner_ref','balance_ref','debt_ref'].includes(key)?'REF':v===null?'JSON':typeof v==='number'?(Number.isSafeInteger(v)?'INTEGER':'NUMBER'):typeof v==='boolean'?'BOOLEAN':typeof v==='string'?'TEXT':'JSON';
 const rowValue=(s,t,r,k)=>s.tables?.[t]?.[r]?.values?.[k];
 const known=(s,t,r,k)=>['known','derived'].includes(s.tables?.[t]?.[r]?.states?.[k]);
 const cents=v=>{if(v===null||v===undefined)return null;const c=Math.round(v*100);if(!Number.isSafeInteger(c)||Math.abs(c/100-v)>1e-8)fail('PHONE_MONEY_PRECISION','现有余额精度不能无损映射为分');return c;};
+function accountBalanceValues(state,recordId,ownerId,currencyId,{allowMissing=false}={}){const value=state.tables?.T_DYN_CURRENCY_BALANCES?.[recordId]?.values;if(!value){if(allowMissing)return null;fail('PHONE_ACCOUNT_BINDING','账户余额引用不存在',{recordId});}if(value.owner_ref!==ownerId||currencyId!=null&&value.currency_ref!==currencyId)fail('PHONE_ACCOUNT_BINDING','账户余额引用属于另一主体或币种',{recordId});return value;}
 
 export function encodePhoneDatabase(archive,databaseState,{migration=false}={}){
  const phone=importPhone(archive),scope=phone.contextKey,changes=new Map(),schemas=new Map(PHONE_DATABASE_SCHEMAS.map(t=>[t.id,clone(t)]));
- const life=phone.life,person=life?.state?.identity?.personId,world=life?.world?.id,currency=world?world+':currency':null;
- const ensure=(t,k,v)=>{let spec=schemas.get(t);if(!spec){spec={id:t,label:t,fields:[field('row_uuid','ID')]};schemas.set(t,spec);}const existing=databaseState.schema?.[t]?.fields?.find(f=>f.key===k);if(!spec.fields.some(f=>f.key===k))spec.fields.push(existing?clone(existing):field(k,typeOf(v,k)));};
+ if(phone.life){phone.life.world.settlementOwner='tables';phone.life.state.config.settlementOwner='tables';phone.life.state.config.database=true;}
+ const life=phone.life,person=life?.state?.identity?.personId,world=life?.world?.id;
+ const worldConfigs=Object.entries(databaseState.tables?.X_PHONE_WORLD_CONFIG??{}).filter(([,r])=>r.values.world_ref===world),configuredCurrency=worldConfigs[0]?.[1]?.values?.currency_ref;
+ const currencies=Object.entries(databaseState.tables?.T_STATIC_ITEMS_SKILLS??{}).filter(([,r])=>r.values.category==='currency'&&r.values.name===life?.world?.currency?.name);
+ if(currencies.length>1&&!configuredCurrency)fail('PHONE_CURRENCY_BINDING','同名币种有多条记录，请明确选择币种引用');const currency=configuredCurrency??currencies[0]?.[0]??(world?world+':currency':null);
+ const recordFor=(path,table,obj)=>{if(path.join('/')==='life/world'&&worldConfigs.length===1)return worldConfigs[0][0];if(obj?.id){const rows=Object.entries(databaseState.tables?.[table]??{}).filter(([,r])=>r.values.id===obj.id&&(r.values.owner_ref==null||r.values.owner_ref===person)&&(r.values.world_ref==null||r.values.world_ref===world));if(rows.length>1)fail('PHONE_ENTITY_DUPLICATE','同一主体有重复业务实体ID',{table,id:obj.id});if(rows.length===1)return rows[0][0];}return phoneDatabaseRecordId(entityPath(path,phone));};
+ const ensure=(t,k,v)=>{let spec=schemas.get(t);if(!spec){spec={id:t,label:TABLE_LABELS[t]??t,phone_internal:true,fields:[field('row_uuid','ID')]};schemas.set(t,spec);}const existing=databaseState.schema?.[t]?.fields?.find(f=>f.key===k);if(!spec.fields.some(f=>f.key===k))spec.fields.push(existing?clone(existing):field(k,typeOf(v,k)));};
  const write=(t,r,k,v,{canonical=false}={})=>{
-  const existing=databaseState.schema?.[t]?.fields?.find(f=>f.key===k);if(canonical&&!existing)fail('PHONE_DATABASE_SCHEMA','既有表字段不存在',{table:t,field:k});if(!canonical)ensure(t,k,v);
+  const existing=databaseState.schema?.[t]?.fields?.find(f=>f.key===k);if(canonical&&!existing)fail('PHONE_DATABASE_SCHEMA','既有表字段不存在',{table:t,field:k});if(!canonical){ensure(t,k,v);if(!['row_uuid','world_ref','owner_ref'].includes(k)){ensure(t,'world_ref',world??null);ensure(t,'owner_ref',person??null);}}
   if(migration&&canonical&&known(databaseState,t,r,k)&&stable(rowValue(databaseState,t,r,k))!==stable(v))fail('PHONE_MIGRATION_CONFLICT','旧手机与既有表单数值冲突，迁移未写入',{table:t,record:r,field:k,existing:rowValue(databaseState,t,r,k),incoming:v});
-  const key=t+'#'+r;let c=changes.get(key);if(!c){c={tableId:t,recordId:r,values:{},metadata:{phone_scope:scope}};changes.set(key,c);}c.values[k]=v;return [t,r,k];
+  const key=t+'#'+r;let c=changes.get(key);if(!c){c={tableId:t,recordId:r,values:{},metadata:{phone_scope:scope}};changes.set(key,c);}const valueSpec=databaseState.schema?.[t]?.fields?.find(f=>f.key===k)??schemas.get(t)?.fields?.find(f=>f.key===k);c.values[k]=valueSpec?.type==='JSON'&&typeof v==='string'?JSON.stringify(v):v;if(!canonical){c.values.world_ref??=world??null;c.values.owner_ref??=person??null;}return [t,r,k];
  };
  function canonical(path,obj,key,value){
   const p=path.join('/');let target=null,unit=null;
+  if(p==='life/world/theme'||p==='life/world/currency'&&['symbol','minorUnits'].includes(key)||p==='life/world/economy/deliveryFees'){const prefix=p.endsWith('theme')?'theme_':p.endsWith('currency')?'currency_':'delivery_',suffix=key==='minorUnits'?'minor_units':key;const at=write('X_PHONE_WORLD_CONFIG',worldConfigs[0]?.[0]??phoneDatabaseRecordId(['life','world']),prefix+suffix,value);return {at,empty:value===''?'string':null};}
+  if(p==='life/world/currency'&&key==='name'){write('T_STATIC_ITEMS_SKILLS',currency,'category','currency',{canonical:true});target=['T_STATIC_ITEMS_SKILLS',currency,'name'];}
   if(p==='life/world'&&['id','name'].includes(key))target=['T_STATIC_WORLDS',world,key==='id'?'world_id':'name'];
-  if(p==='life/state/identity'&&['personId','name'].includes(key))target=['T_SYS_ENTITIES',person,key==='personId'?'entity_id':'name'];
-  if(/^life\/state\/contacts\/\d+$/.test(p)&&key==='name')target=['T_SYS_ENTITIES',obj.personId??obj.id,'name'];
+  if(p==='life/state/identity'&&['personId','name'].includes(key)){
+   const ref=rowValue(databaseState,'T_SYS_ENTITIES',person,'origin_record_ref'),link=typeof ref==='string'?databaseState.tables?.M_FIELD_REFERENCES?.[ref]?.values:null,dossier=link?.target_table==='T_CHAR_DOSSIER'?link.target_row_uuid:person;
+   if(!databaseState.tables?.T_SYS_ENTITIES?.[person]?.values?.kind)write('T_SYS_ENTITIES',person,'kind','character',{canonical:true});target=key==='personId'?['T_SYS_ENTITIES',person,'entity_id']:['T_CHAR_DOSSIER',dossier,'name'];
+   if(!ref){const rid='origin:'+person;for(const [k,v]of Object.entries({owner_table:'T_SYS_ENTITIES',owner_row_uuid:person,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:dossier,reference_kind:'record',resolution_status:'resolved'}))write('M_FIELD_REFERENCES',rid,k,v,{canonical:true});write('T_SYS_ENTITIES',person,'origin_record_ref',rid,{canonical:true});}
+  }
+  if(/^life\/state\/contacts\/\d+$/.test(p)&&key==='name')target=['T_CHAR_DOSSIER',obj.personId??obj.id,'name'];
   if(/^life\/state\/wallet\/accounts\/\d+$/.test(p)&&key==='balance'){
-   const r='account:'+person+':'+obj.id;write('T_DYN_CURRENCY_BALANCES',r,'owner_ref',person,{canonical:true});write('T_DYN_CURRENCY_BALANCES',r,'currency_ref',currency,{canonical:true});target=['T_DYN_CURRENCY_BALANCES',r,'balance'];value=value===null?null:value/100;unit='minor100';
+   const accountRows=Object.values(databaseState.tables?.X_FIN_ACCOUNTS??{}).filter(r=>r.values.id===obj.id&&r.values.owner_ref===person),explicit=obj.balance_ref??accountRows[0]?.values.balance_ref,expected='account:'+person+':'+obj.id,existing=Object.entries(databaseState.tables?.T_DYN_CURRENCY_BALANCES??{}).filter(([,r])=>r.values.owner_ref===person&&r.values.currency_ref===currency&&Object.hasOwn(r.values,'balance'));
+   let r=explicit??(databaseState.tables?.T_DYN_CURRENCY_BALANCES?.[expected]?expected:null);
+   if(!r&&existing.length){if(life.state.wallet.accounts.length===1&&existing.length===1)r=existing[0][0];else fail('PHONE_MIGRATION_ACCOUNTS','已有多账户余额无法唯一对应旧手机，请在账户子表明确balance_ref，未另开重复钱包');}r??=expected;
+   accountBalanceValues(databaseState,r,person,currency,{allowMissing:!explicit});if(databaseState.tables?.T_DYN_CURRENCY_BALANCES?.[r]?.values?.native_ref)fail('PHONE_NATIVE_BALANCE','该余额由原生变量拥有，手机不能复制结算');write('T_DYN_CURRENCY_BALANCES',r,'owner_ref',person,{canonical:true});write('T_DYN_CURRENCY_BALANCES',r,'currency_ref',currency,{canonical:true});write('X_FIN_ACCOUNTS',recordFor(path,'X_FIN_ACCOUNTS',obj),'balance_ref',r);target=['T_DYN_CURRENCY_BALANCES',r,'balance'];value=value===null?null:value/100;unit='minor100';
+  }
+  if((p==='life/state/wallet/card'&&key==='used'&&obj.enabled!==false)||(/^life\/state\/wallet\/loans\/\d+$/.test(p)&&key==='remainingPrincipal')){
+   const r='debt:'+person+':'+(obj.id??'card');write('T_DYN_CURRENCY_BALANCES',r,'owner_ref',person,{canonical:true});write('T_DYN_CURRENCY_BALANCES',r,'currency_ref',currency,{canonical:true});target=['T_DYN_CURRENCY_BALANCES',r,'debt'];value=value/100;unit='minor100';write(namedTable(path.map(k=>/^\d+$/.test(k)?'*':k)),phoneDatabaseRecordId(entityPath(path,phone)),'debt_ref',r);
   }
   if(/^life\/state\/map\/places\/\d+$/.test(p)&&['id','name'].includes(key))target=['T_STATIC_PLACES',obj.id,key==='id'?'place_id':'name'];
   if(/^life\/state\/commerce\/products\/\d+$/.test(p)){
    if(['id','name','description','kind'].includes(key))target=['T_STATIC_ITEMS_SKILLS',obj.id,({id:'asset_id',name:'name',description:'identified_full_desc',kind:'category'})[key]];
    if(['price','stock'].includes(key)){const rid='offer:'+world+':'+obj.id;write('X_SHOP_OFFERS',rid,'item_ref',obj.id,{canonical:true});write('X_SHOP_OFFERS',rid,'currency_ref',currency,{canonical:true});target=['X_SHOP_OFFERS',rid,key==='price'?'buy_price':'stock'];if(key==='price'){value=value===null?null:value/100;unit='minor100';}}
   }
-  if(/^life\/state\/inventory\/\d+$/.test(p)&&['quantity','productId'].includes(key))target=['T_DYN_HOLDINGS_INVENTORY','holding:'+person+':'+obj.id,key==='quantity'?'quantity':'item_ref'];
-  if(p==='life/state/map'&&key==='position')target=['T_SYS_ENTITIES',person,'place_ref'];
+  if(/^life\/state\/inventory\/\d+$/.test(p)&&['qty','productId','name','placeId'].includes(key))target=['T_DYN_HOLDINGS_INVENTORY','holding:'+person+':'+obj.id,({qty:'quantity',productId:'item_ref',name:'instance_name',placeId:'location_ref'})[key]];
+  if(/^life\/state\/inventory\/\d+$/.test(p)&&['ownerId','holderId'].includes(key)){
+   const holding='holding:'+person+':'+obj.id,field=key==='ownerId'?'owner_ref':'holder_ref',ref=holding+':'+field;
+   for(const [k,v]of Object.entries({owner_table:'T_DYN_HOLDINGS_INVENTORY',owner_row_uuid:holding,owner_field:field,sequence:0,item_type:'reference',target_table:'T_SYS_ENTITIES',target_row_uuid:value}))write('M_LIST_VALUES',ref,k,v,{canonical:true});write('T_DYN_HOLDINGS_INVENTORY',holding,field,ref,{canonical:true});target=['M_LIST_VALUES',ref,'target_row_uuid'];
+  }
+  if(p==='life/state/map'&&key==='position'){const states=Object.entries(databaseState.tables?.T_DYN_ENTITY_STATE??{}).filter(([,r])=>r.values.entity_id===person);if(states.length>1)fail('PHONE_LOCATION_BINDING','人物有多个当前地点状态，须明确绑定');const rid=rowValue(databaseState,'T_SYS_ENTITIES',person,'runtime_state_ref')??states[0]?.[0]??'state:'+person;write('T_DYN_ENTITY_STATE',rid,'entity_id',person,{canonical:true});write('T_SYS_ENTITIES',person,'runtime_state_ref',rid,{canonical:true});target=['T_DYN_ENTITY_STATE',rid,'location_ref'];}
   if(/^life\/state\/media\/(photos|songs)\/\d+$/.test(p)){
    const rid='media:'+person+':'+obj.id;
    if(key==='ownerId')target=['T_SYS_MEDIA_ASSETS',rid,'entity_ref'];
@@ -55,38 +108,51 @@ export function encodePhoneDatabase(archive,databaseState,{migration=false}={}){
   }
   if(!target)return null;write(...target,value,{canonical:true});return {at:target,...(unit?{unit}:{}),empty:value===''?'string':null};
  }
- function pack(value,path=[],semantic=[]){
+ function pack(value,path=[],semantic=[],relation=null){
   const p=path.join('/');
   if(history(p)){const t=historyTable(p),r=pathId(path);write(t,r,'snapshot',clone(value));return {snapshot:[t,r,'snapshot']};}
-  if(Array.isArray(value))return {array:value.map((v,i)=>pack(v,[...path,String(i)],[...semantic,'*']))};
-  if(value===null||typeof value!=='object'){
-   const t=namedTable(semantic.length?semantic:['ROOT_VALUE']),r=pathId(path);write(t,r,'value',value);return {scalar:[t,r,'value'],empty:value===''?'string':null};
+  if(Array.isArray(value)){
+   const mapped=tableNames[[...semantic,'*'].join('/')],table=immutableTables.has(mapped)?null:mapped,collectionRef=phoneDatabaseRecordId(entityPath(path,phone)),parentRef=phoneDatabaseRecordId(entityPath(path.slice(0,-1),phone));
+   const nodes=value.map((v,i)=>pack(v,[...path,String(i)],[...semantic,'*'],table?{table,collectionRef,parentRef,field:path.at(-1),ordinal:i}:null));
+   return {array:nodes,...(table?{collection:{tableId:table,collectionRef,parentRef,field:path.at(-1)}}:{})};
   }
-  const table=namedTable(semantic.length?semantic:['SESSION']),rid=pathId(path),fields={},children={};
+  if(value===null||typeof value!=='object'){
+   const t=namedTable(semantic.length?semantic:['ROOT_VALUE']),r=phoneDatabaseRecordId(entityPath(path,phone));write(t,r,'value',value);return {scalar:[t,r,'value'],empty:value===''?'string':null};
+  }
+  const table=namedTable(semantic.length?semantic:['SESSION']),rid=recordFor(path,table,value),fields={},children={};
+  if(path.join('/')==='life/world'&&currency)write(table,rid,'currency_ref',currency);if(/^life\/state\/social\/accounts\/\d+$/.test(path.join('/')))write(table,rid,'owned',life.state.social.ownedAccountIds.includes(value.id));
+  if(value.meta?.lifeProjection){const key=table+'#'+rid;let c=changes.get(key);if(!c){c={tableId:table,recordId:rid,values:{},metadata:{phone_scope:scope}};changes.set(key,c);}c.metadata.phone_projection=clone(value.meta.lifeProjection);}
+  if(relation?.dictionaryKey!==undefined)write(table,rid,'dictionary_key',relation.dictionaryKey);
+  if(relation)for(const [k,v]of Object.entries({collection_ref:relation.collectionRef,parent_ref:relation.parentRef,collection_field:relation.field,ordinal:relation.ordinal}))write(table,rid,k,v);
   for(const [key,v]of Object.entries(value)){
    if(v===undefined)continue;
    if(path.length===0&&key==='life'){} // life is the current normalized view.
-   const next=[...path,key],sem=[...semantic,maps.has(p)?'*':key];
-   if(v===null||typeof v!=='object'){
+   const next=[...path,key],sem=[...semantic,maps.has(p)?'*':key],mapTable=maps.has(p)?tableNames[[...semantic,'*'].join('/')]:null;
+   if(p==='life/world'&&key==='appNames'||v===null||typeof v!=='object'||Array.isArray(v)&&v.every(x=>x===null||typeof x!=='object')&&!tableNames[[...sem,'*'].join('/')]){
+    if(Array.isArray(v)){ensure(table,key,v);schemas.get(table).fields.find(x=>x.key===key).type='ARRAY';}
     const special=canonical(path,value,key,v);fields[key]=special??{at:write(table,rid,key,v),empty:v===''?'string':null};
-   }else children[key]=pack(v,next,sem);
+   }else children[key]=pack(v,next,sem,mapTable&&!immutableTables.has(mapTable)?{table:mapTable,collectionRef:rid,parentRef:rid,field:path.at(-1),ordinal:Object.keys(value).indexOf(key),dictionaryKey:key}:null);
   }
-  return {fields,children};
+  const mappedTable=maps.has(p)?tableNames[[...semantic,'*'].join('/')]:null;return {record:[table,rid],fields,children,...(mappedTable&&!immutableTables.has(mappedTable)?{mapCollection:{tableId:mappedTable,collectionRef:rid}}:{})};
  }
  // Avoid two editable copies of shared configuration/catalogs in current rows.
  const aliases=[];
- if(life){for(const key of ['apps','appNames','theme','currency','economy','travel','settlementOwner']){aliases.push({path:['life','state','config',key],source:['life','world',key]});delete phone.life.state.config[key];}
+ if(life){delete phone.life.databaseRefs;delete phone.life.state.config.calendar;delete phone.life.state.config.calendarOrigin;for(const key of ['apps','appNames','theme','currency','economy','travel','settlementOwner']){aliases.push({path:['life','state','config',key],source:['life','world',key]});delete phone.life.state.config[key];}
   for(const [path,source]of [[['life','world','catalog'],['life','state','commerce','products']],[['life','world','places'],['life','state','map','places']],[['life','state','wallet','investmentProducts'],['life','world','economy','investments']]]){aliases.push({path,source});let at=phone;for(const k of path.slice(0,-1))at=at[k];delete at[path.at(-1)];}
  }
  const layout=pack(phone);layout.aliases=aliases;
  if(life){
-  const clockId=databaseState.runtime?.calendar_record_id??Object.keys(databaseState.tables?.X_WORLD_CLOCKS??{}).at(0)??'world-clock:'+world;
+  const worldClocks=Object.entries(databaseState.tables?.X_WORLD_CLOCKS??{}).filter(([,r])=>r.values.world_ref===world);if(worldClocks.length>1)fail('CALENDAR_BINDING','同一世界有多个时钟，请先明确选择');const clockId=worldClocks[0]?.[0]??'world-clock:'+world;
   const existing=databaseState.tables?.X_WORLD_CLOCKS?.[clockId];
-  let clockConfig=existing?clone(existing.values):null;
+  let clockConfig=existing?worldClockConfiguration(databaseState,clockId):null;
   if(!clockConfig&&Number.isFinite(life.state.config.epoch)){
    const d=new Date(life.state.config.epoch+(life.state.config.timezoneOffsetMinutes??0)*60000);clockConfig={name:life.world.name,world_ref:world,mode:'MONTH_TABLE',year:d.getUTCFullYear(),month:d.getUTCMonth()+1,day:d.getUTCDate(),hour:d.getUTCHours(),minute:d.getUTCMinutes(),day_hours:24,hour_minutes:60,month_lengths:[31,28,31,30,31,30,31,31,30,31,30,31],leap_rule:'GREGORIAN'};
   }
   if(clockConfig){
+   const existingRules=Object.entries(databaseState.tables?.M_CALENDAR_RULES??{}).filter(([,r])=>r.values.world_ref===world);
+   if(!existingRules.length){const calendarId='calendar:'+world,mode=clockConfig.mode==='MONTH_FIXED'?'FIXED':clockConfig.mode;for(const [k,v]of Object.entries({calendar_id:calendarId,world_ref:world,mode,hours_per_day:clockConfig.day_hours,minutes_per_hour:clockConfig.hour_minutes,...(mode==='SEASON_FIXED'?{seasons_per_year:clockConfig.seasons_per_year,days_per_season:clockConfig.days_per_season}:mode==='FIXED'?{months_per_year:clockConfig.months_per_year,days_per_month:clockConfig.days_per_month}:{})}))if(v!==undefined)write('M_CALENDAR_RULES',calendarId,k,v,{canonical:true});
+    if(mode==='MONTH_TABLE'){for(const [i,days]of (clockConfig.month_lengths??[]).entries())for(const [k,v]of Object.entries({calendar_ref:calendarId,month:i+1,days}))write('M_CALENDAR_MONTHS',calendarId+':month:'+(i+1),k,v,{canonical:true});if(clockConfig.leap_rule==='GREGORIAN')for(const rule of [{cycle_years:4,remainder:0,except_cycle_years:100,month:2,extra_days:1},{cycle_years:400,remainder:0,month:2,extra_days:1}])for(const [k,v]of Object.entries({calendar_ref:calendarId,...rule}))write('M_CALENDAR_EXCEPTIONS',calendarId+':leap:'+rule.cycle_years,k,v,{canonical:true});}
+   }
    const clock=new WorldClock(clockConfig),origin=life.state.config.calendarOrigin??new WorldClock({...clockConfig,year:life.state.clock.year,month:life.state.clock.month,season:life.state.clock.season,day:life.state.clock.day,hour:Math.floor(life.state.clock.minute/clockConfig.hour_minutes),minute:life.state.clock.minute%clockConfig.hour_minutes}).ordinal()-life.state.clock.totalMinutes;
    if(migration&&existing&&clock.ordinal()!==origin+life.state.clock.totalMinutes)fail('PHONE_MIGRATION_CLOCK','旧手机时刻与表单世界时钟不同，未自动选择或叠加');
    clock.setOrdinal(origin+life.state.clock.totalMinutes);for(const [k,v]of Object.entries(clock.c))if(databaseState.schema?.X_WORLD_CLOCKS?.fields.some(f=>f.key===k))write('X_WORLD_CLOCKS',clockId,k,v,{canonical:true});
@@ -98,28 +164,68 @@ export function encodePhoneDatabase(archive,databaseState,{migration=false}={}){
  }
  const bind={context_key:scope,world_ref:world??null,owner_ref:person??null,revision:phone.revision,layout,archive_digest:digest(archive)};
  if(migration)bind.migration_source=clone(archive);
+ for(const [t,rows]of Object.entries(databaseState.tables??{}))if(databaseState.schema?.[t]?.phone_internal&&!immutableTables.has(t)&&t!==PHONE_BINDING_TABLE)for(const [rid,row]of Object.entries(rows))if(row.metadata?.phone_scope===scope&&!changes.has(t+'#'+rid))changes.set(t+'#'+rid,{tableId:t,recordId:rid,remove:true});
  changes.set(PHONE_BINDING_TABLE+'#'+currentId,{tableId:PHONE_BINDING_TABLE,recordId:currentId,values:bind});
- return {changes:[...changes.values()].filter(c=>Object.keys(c.values).length),schema:[...schemas.values()]};
+ return {changes:[...changes.values()].filter(c=>c.remove||Object.keys(c.values).length),schema:[...schemas.values()]};
 }
 
 function readCoordinate(state,at,empty,unit){const [t,r,k]=at,row=state.tables?.[t]?.[r];if(!row||!Object.hasOwn(row.values,k))fail('PHONE_DATABASE_REFERENCE','手机引用的表单字段不存在',{table:t,record:r,field:k});let v=clone(row.values[k]);if(v===null&&empty==='string')v='';if(unit==='minor100')v=cents(v);return v;}
-export function decodePhoneDatabase(state,{contextKey,revision}={}){
- const binding=state.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values;if(!binding)return null;
- const unpack=n=>{if(n.snapshot)return readCoordinate(state,n.snapshot);if(n.scalar)return readCoordinate(state,n.scalar,n.empty);if(n.array)return n.array.map(unpack);const out={};for(const [k,f]of Object.entries(n.fields??{}))out[k]=readCoordinate(state,f.at,f.empty,f.unit);for(const [k,v]of Object.entries(n.children??{}))out[k]=unpack(v);return out;};
+export function decodePhoneDatabase(state,{contextKey,revision,allowedOriginContextKeys=[]}={}){
+ const binding=state.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values;if(!binding)return null;const configRef=binding.layout?.children?.life?.children?.world?.record?.[1],currencyRef=state.tables?.X_PHONE_WORLD_CONFIG?.[configRef]?.values?.currency_ref;
+ const unpack=n=>{if(n.snapshot)return readCoordinate(state,n.snapshot);if(n.scalar)return readCoordinate(state,n.scalar,n.empty);if(n.array){if(!n.collection)return n.array.map(unpack);const c=n.collection,existing=new Map(n.array.filter(x=>x.record).map(x=>[x.record[1],x]));return Object.entries(state.tables?.[c.tableId]??{}).filter(([,r])=>r.values.collection_ref===c.collectionRef||r.values.parent_ref===c.parentRef&&r.values.collection_field===c.field).sort((a,b)=>(a[1].values.ordinal??0)-(b[1].values.ordinal??0)||a[0].localeCompare(b[0])).map(([rid,row])=>existing.has(rid)?unpack(existing.get(rid)):hydrateNew(c.tableId,rid,row.values));}const out={};for(const [k,f]of Object.entries(n.fields??{}))out[k]=readCoordinate(state,f.at,f.empty,f.unit);if(n.mapCollection){const c=n.mapCollection,existing=new Map(Object.values(n.children??{}).filter(x=>x.record).map(x=>[x.record[1],x]));for(const [rid,row]of Object.entries(state.tables?.[c.tableId]??{}))if(row.values.collection_ref===c.collectionRef){const key=row.values.dictionary_key??row.values.id??rid;out[key]=existing.has(rid)?unpack(existing.get(rid)):hydrateNew(c.tableId,rid,row.values);}}else for(const [k,v]of Object.entries(n.children??{}))out[k]=unpack(v);
+  if(n.record?.[0]==='X_FIN_ACCOUNTS'){const row=state.tables.X_FIN_ACCOUNTS[n.record[1]].values,target=accountBalanceValues(state,row.balance_ref,binding.owner_ref,currencyRef);out.balance=cents(target.balance);out.balance_ref=row.balance_ref;}
+  return out;};
+ function hydrateNew(table,rid,values){const value=Object.fromEntries(Object.entries(values).filter(([k])=>k!=='row_uuid'&&!Object.hasOwn(relationFields,k)&&!['balance_ref','debt_ref'].includes(k)).map(([k,v])=>[k,clone(v)]));value.id??=rid;
+  if(table==='X_FIN_ACCOUNTS'){if(!values.balance_ref)fail('PHONE_ACCOUNT_BINDING','新账户必须引用已有余额行，不能在账户子表另写余额');value.balance=cents(accountBalanceValues(state,values.balance_ref,binding.owner_ref,currencyRef).balance);}
+  if(table==='X_SOCIAL_POSTS'){value.mediaIds??=[];value.mediaGrants??=[];value.repostOf??=null;value.songId??=null;value.likesBase??=null;}
+  if(table==='X_NETWORK_DOCUMENTS'){value.items??=[];value.at??=null;value.audience??=[];value.meta??={};}
+  for(const [field,child]of Object.entries(table==='X_SHOP_ORDERS'?{items:'X_SHOP_ORDER_ITEMS'}:table==='X_FIN_LOANS'?{installments:'X_FIN_LOAN_INSTALLMENTS'}:table==='X_NETWORK_DOCUMENTS'?{items:'X_NETWORK_ITEMS'}:{}))value[field]=Object.entries(state.tables?.[child]??{}).filter(([,r])=>r.values.parent_ref===rid&&r.values.collection_field===field).sort((a,b)=>(a[1].values.ordinal??0)-(b[1].values.ordinal??0)).map(([id,r])=>hydrateNew(child,id,r.values));return value;
+ }
  const result=unpack(binding.layout),at=path=>path.reduce((v,k)=>v[k],result);
  for(const alias of binding.layout.aliases??[])at(alias.path.slice(0,-1))[alias.path.at(-1)]=clone(at(alias.source));
- if(binding.layout.clock&&result.life){const c=binding.layout.clock,values=state.tables[c.tableId]?.[c.recordId]?.values;if(!values)fail('PHONE_DATABASE_CLOCK','世界时钟绑定不存在');const clock=new WorldClock(values),s=result.life.state;s.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-c.origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};s.config.calendar=clone(clock.c);s.config.calendarOrigin=c.origin;}
+ if(result.life){const configId=binding.layout.children?.life?.children?.world?.record?.[1],cfg=state.tables.X_PHONE_WORLD_CONFIG?.[configId]?.values??{};for(const key of ['background','panel','text','accent','radius'])if(Object.hasOwn(cfg,'theme_'+key))result.life.world.theme[key]=cfg['theme_'+key];if(cfg.appNames!=null)result.life.world.appNames=clone(cfg.appNames);for(const key of ['apps','appNames','theme','currency','economy','travel','settlementOwner'])result.life.state.config[key]=clone(result.life.world[key]);}
+ if(binding.layout.clock&&result.life){const c=binding.layout.clock,values=state.tables[c.tableId]?.[c.recordId]?.values;if(!values)fail('PHONE_DATABASE_CLOCK','世界时钟绑定不存在');const clock=new WorldClock(worldClockConfiguration(state,c.recordId)),s=result.life.state;s.clock={year:clock.c.year,month:clock.c.month??clock.c.season,day:clock.c.day,minute:clock.c.hour*clock.c.hour_minutes+clock.c.minute,totalMinutes:clock.ordinal()-c.origin,...(clock.c.mode==='SEASON_FIXED'?{season:clock.c.season}:{})};s.config.calendar=clone(clock.c);delete s.config.calendar.row_uuid;delete s.config.calendar.name;delete s.config.calendar.world_ref;s.config.calendarOrigin=c.origin;}
+ if(contextKey&&result.contextKey!==contextKey&&allowedOriginContextKeys.includes(result.contextKey))result.contextKey=contextKey;
  if(contextKey&&result.contextKey!==contextKey)fail('PHONE_DATABASE_SCOPE','手机表单属于另一会话，需通过已验证的原生分支继承');
+ if(result.life){result.life.databaseRefs={};for(const [table,rows]of Object.entries(state.tables??{}))for(const [rid,row]of Object.entries(rows))if(row.values.id&&row.values.owner_ref===result.life.state.identity.personId&&row.values.world_ref===result.life.world.id)result.life.databaseRefs[table+'#'+row.values.id]={tableId:table,recordId:rid};}
  return attachPhoneDatabaseSnapshot(result,{revision:revision??state.runtime?.revision??0});
 }
-export function readPhoneDatabaseProfile(state,{worldId,entityId}={}){
- const archive=decodePhoneDatabase(state);if(!archive?.life)return null;const life=archive.life;if(worldId&&life.world.id!==worldId||entityId&&life.state.identity.personId!==entityId)return null;
- return {database:true,worldId:life.world.id,entityId:life.state.identity.personId,binding:clone(life.binding),life:clone(life)};
+export function readPhoneDatabaseProfile(state,{worldId,entityId,dossierId}={}){
+ const archive=decodePhoneDatabase(state);if(archive?.life){const life=archive.life;if(worldId&&life.world.id!==worldId||entityId&&life.state.identity.personId!==entityId)return null;return {database:true,worldId:life.world.id,entityId:life.state.identity.personId,binding:clone(life.binding),life:clone(life)};}
+ const worldRow=state.tables?.T_STATIC_WORLDS?.[worldId]?.values,entity=state.tables?.T_SYS_ENTITIES?.[entityId]?.values;if(!worldRow||!entity)return null;
+ const origin=typeof entity.origin_record_ref==='string'?state.tables?.M_FIELD_REFERENCES?.[entity.origin_record_ref]?.values:null;dossierId??=origin?.target_table==='T_CHAR_DOSSIER'?origin.target_row_uuid:entityId;const dossier=state.tables?.T_CHAR_DOSSIER?.[dossierId]?.values;if(!dossier?.name||!worldRow.name)return null;
+ const clean=v=>Object.fromEntries(Object.entries(v??{}).filter(([k])=>k!=='row_uuid'&&!Object.hasOwn(relationFields,k)));
+ const rows=table=>Object.entries(state.tables?.[table]??{}).filter(([,r])=>(r.values.world_ref==null||r.values.world_ref===worldId)&&(r.values.owner_ref==null||r.values.owner_ref===entityId));
+ const configs=rows('X_PHONE_WORLD_CONFIG');if(configs.length>1)fail('PHONE_WORLD_CONFIGURATION','世界手机配置有多个当前定义');const config=configs[0]?.[1]?.values??{};
+ let currencyId=config.currency_ref;const balances=Object.entries(state.tables?.T_DYN_CURRENCY_BALANCES??{}).filter(([,r])=>r.values.owner_ref===entityId&&Object.hasOwn(r.values,'balance'));
+ if(!currencyId){const currencies=[...new Set(balances.map(([,r])=>r.values.currency_ref).filter(Boolean))];if(currencies.length>1)fail('PHONE_CURRENCY_BINDING','此人物有多币种资产，请在世界手机配置中明确currency_ref');currencyId=currencies[0]??null;}
+ const currencyAsset=state.tables?.T_STATIC_ITEMS_SKILLS?.[currencyId]?.values,currency=currencyAsset?{name:currencyAsset.name,symbol:config.currency_symbol??'',minorUnits:2}:null;
+ const accounts=rows('X_FIN_ACCOUNTS').map(([rid,r])=>({id:r.values.id??rid,name:r.values.name,balance_ref:r.values.balance_ref,balance:cents(accountBalanceValues(state,r.values.balance_ref,entityId,currencyId).balance)}));
+ if(!accounts.length)for(const [rid,row]of balances.filter(([,r])=>r.values.currency_ref===currencyId))accounts.push({id:rid,name:row.values.name??rid,balance_ref:rid,balance:cents(row.values.balance)});
+ const social=rows('X_SOCIAL_ACCOUNTS').map(([rid,r])=>({id:r.values.id??rid,name:r.values.name,handle:r.values.handle??'',personId:r.values.personId??null,owned:r.values.owned===true,bio:r.values.bio??'',color:r.values.color??null,label:r.values.label??'',following:[]}));
+ const places=rows('X_PLACE_MAP_POINTS').map(([rid,r])=>{const id=r.values.id??rid,p=state.tables?.T_STATIC_PLACES?.[id]?.values;return {...clean(r.values),id,name:p?.name??r.values.name};});
+ const entityState=entity.runtime_state_ref?state.tables?.T_DYN_ENTITY_STATE?.[entity.runtime_state_ref]?.values:Object.values(state.tables?.T_DYN_ENTITY_STATE??{}).find(r=>r.values.entity_id===entityId)?.values;const position=entityState?.location_ref??entity.place_ref??null;if(position&&!places.some(p=>p.id===position)){const p=state.tables?.T_STATIC_PLACES?.[position]?.values;if(!p)fail('PHONE_PLACE_BINDING','人物当前位置引用不存在');places.push({id:position,name:p.name,x:null,y:null,kind:null,known:false});}
+ const catalog=Object.values(state.tables?.X_SHOP_OFFERS??{}).map(r=>r.values).filter(r=>r.currency_ref===currencyId).map(r=>{const item=state.tables?.T_STATIC_ITEMS_SKILLS?.[r.item_ref]?.values;if(!item)fail('PHONE_ITEM_BINDING','商品报价引用不存在');return {id:r.item_ref,name:item.name,description:item.identified_full_desc??'',price:cents(r.buy_price),stock:r.stock??null,kind:item.category==='food'?'food':'physical',shopId:r.merchant_ref??null,placeId:null,image:'',tags:[]};});
+ const loanRows=rows('X_PHONE_LIFE_WORLD_ECONOMY_LOAN'),loan=loanRows.length?clean(loanRows[0][1].values):null;
+ const investments=rows('X_FIN_INVESTMENT_PRODUCTS').map(([rid,r])=>({id:r.values.id??rid,...clean(r.values)}));
+ const world={format:PHONE_WORLD_FORMAT,id:worldId,name:worldRow.name,apps:clone(config.apps??[]),appNames:clone(config.appNames??{}),theme:Object.fromEntries(['background','panel','text','accent','radius'].filter(k=>config['theme_'+k]!=null).map(k=>[k,config['theme_'+k]])),phoneEpoch:null,settlementOwner:'tables',currency,economy:{loan,investments,deliveryFees:{shop:config.delivery_shop??null,food:config.delivery_food??null}},catalog,places,travel:null};
+ const children=(table,parent,field)=>rows(table).filter(([,r])=>r.values.parent_ref===parent&&r.values.collection_field===field).sort((a,b)=>(a[1].values.ordinal??0)-(b[1].values.ordinal??0)).map(([rid,r])=>({...clean(r.values),...(r.values.id?{}:{id:rid})}));
+ const cards=rows('X_FIN_CREDIT_CARDS');if(cards.length>1)fail('PHONE_CREDIT_BINDING','当前人物有多张信用卡，需要明确手机显示绑定');let card=null;if(cards.length){const [rid,r]=cards[0];card={...clean(r.values),id:r.values.id??rid,used:cents(rowValue(state,'T_DYN_CURRENCY_BALANCES',r.values.debt_ref,'debt'))??0,charges:children('X_FIN_CREDIT_CHARGES',rid,'charges'),statements:[]};}
+ const loans=rows('X_FIN_LOANS').map(([rid,r])=>({...clean(r.values),id:r.values.id??rid,remainingPrincipal:cents(rowValue(state,'T_DYN_CURRENCY_BALANCES',r.values.debt_ref,'debt')),installments:children('X_FIN_LOAN_INSTALLMENTS',rid,'installments')}));
+ const positions=rows('X_FIN_INVESTMENTS').map(([rid,r])=>({id:r.values.id??rid,...clean(r.values)}));
+ const character={format:PHONE_CHARACTER_FORMAT,id:entityId,name:dossier.name,accounts:social,activeAccountId:config.active_account_ref??social.find(x=>x.owned)?.id??null,wallet:{accounts,defaultAccountId:config.default_account_ref??null,fundingAccountId:config.funding_account_ref??null,card,loans,investments:positions},contacts:rows('X_SOCIAL_CONTACTS').map(([rid,r])=>({id:r.values.id??rid,...clean(r.values)})),posts:rows('X_SOCIAL_POSTS').map(([rid,r])=>({id:r.values.id??rid,mediaIds:[],mediaGrants:[],repostOf:null,songId:null,likesBase:null,...clean(r.values)})),photos:rows('X_MEDIA_PHOTOS').map(([rid,r])=>({id:r.values.id??rid,...clean(r.values)})),songs:rows('X_MEDIA_SONGS').map(([rid,r])=>({id:r.values.id??rid,...clean(r.values)})),playlists:[],calendar:[],position};
+ const clocks=Object.entries(state.tables?.X_WORLD_CLOCKS??{}).filter(([,r])=>r.values.world_ref===worldId);if(clocks.length>1)fail('CALENDAR_BINDING','此世界有多个时钟，请明确选择');const calendar=clocks.length?worldClockConfiguration(state,clocks[0][0]):null;
+ return {database:true,worldId,entityId,world,character,calendar,binding:{world:{book:'@forms/T_STATIC_WORLDS',uid:worldId},character:{book:'@forms/T_CHAR_DOSSIER',uid:dossierId},subjectId:entityId}};
 }
 export function createPhoneDatabaseStorage({database,contextKey,legacyLoad}={}){
- if(!database?.read||!database?.commit)fail('PHONE_DATABASE_SERVICE','缺少唯一表单数据库接口');let loadedRevision=null,phoneRevision=null,legacy=null;
+ if(!database?.read||!database?.commit)fail('PHONE_DATABASE_SERVICE','缺少唯一表单数据库接口');let loadedRevision=null,phoneRevision=null,legacy=null,previousActions=new Set(),reservations={};
  const read=async()=>{const value=await database.read();if(!value)fail('ENGINE_NOT_BOUND','请先接入最新版表单');if(value.contextKey!==contextKey)fail('PHONE_CONTEXT_CHANGED','手机表单聊天已改变');return value;};
- return {authoritativeDatabase:true,async load(){const db=await read();loadedRevision=db.revision;let archive=decodePhoneDatabase(db.state,{contextKey,revision:db.revision});if(!archive&&legacyLoad){legacy=await legacyLoad();if(legacy!=null){archive=importPhone(legacy,{contextKey});const encoded=encodePhoneDatabase(archive,db.state,{migration:true});const saved=await database.commit({operationId:'phone-migration:'+digest({contextKey,legacy}),expectedRevision:db.revision,contextKey,...encoded,source:{kind:'phone-migration'}});loadedRevision=saved.revision;archive=decodePhoneDatabase(saved.state,{contextKey,revision:saved.revision});}}
-  phoneRevision=archive?.revision??null;return archive;
- },async save(archive,{expectedRevision,kind='state'}={}){const db=await read();if(loadedRevision!==db.revision)fail('PHONE_DATABASE_STALE','表单已更新，请刷新手机后重试；未覆盖新数据');if(phoneRevision!==expectedRevision)fail('PHONE_LIFE_REVISION','手机版本已变化');const encoded=encodePhoneDatabase(archive,db.state,{migration:!db.state.tables?.[PHONE_BINDING_TABLE]?.[currentId]&&!!archive.life});const operationId='phone:'+digest({contextKey,previous:phoneRevision,archive});const source={kind:'phone',lifecycle:kind};const commit=['turn-prepare','turn-accept','turn-fail','turn-reconcile','turn-reject'].includes(kind)&&database.commitLifecycle?database.commitLifecycle:database.commit;const result=await commit({operationId,expectedRevision:db.revision,contextKey,...encoded,source});loadedRevision=result.revision;phoneRevision=archive.revision;return result;}};
+ return {authoritativeDatabase:true,async load(){const db=await read();loadedRevision=db.revision;let archive=decodePhoneDatabase(db.state,{contextKey,revision:db.revision,allowedOriginContextKeys:db.allowedOriginContextKeys??[]});if(!archive&&legacyLoad){legacy=await legacyLoad();if(legacy!=null){archive=importPhone(legacy,{contextKey});const encoded=encodePhoneDatabase(archive,db.state,{migration:true});const saved=await database.commit({operationId:'phone-migration:'+digest({contextKey,legacy}),expectedRevision:db.revision,contextKey,...encoded,source:{kind:'phone-migration'}});loadedRevision=saved.revision;archive=decodePhoneDatabase(saved.state,{contextKey,revision:saved.revision});}}
+  phoneRevision=archive?.revision??null;previousActions=new Set((archive?.actions??[]).map(a=>a.id));reservations=db.phoneActionReservations??{};return archive;
+ },async save(archive,{expectedRevision,kind='state'}={}){const db=await read();if(loadedRevision!==db.revision)fail('PHONE_DATABASE_STALE','表单已更新，请刷新手机后重试；未覆盖新数据');if(phoneRevision!==expectedRevision)fail('PHONE_LIFE_REVISION','手机版本已变化');const encoded=encodePhoneDatabase(archive,db.state,{migration:!db.state.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values?.owner_ref&&!!archive.life});const operationId='phone:'+digest({contextKey,previous:phoneRevision,archive});const newPhoneActions=(archive.actions??[]).filter(a=>!previousActions.has(a.id));for(const action of newPhoneActions)if(reservations[action.id])fail('PHONE_LIFE_ACTION_BRANCH','这个操作ID属于已离开的历史，不能在当前分支重用');const source={kind:'phone',lifecycle:kind,newPhoneActions};const commit=['turn-prepare','turn-accept','turn-fail','turn-reconcile','turn-reject'].includes(kind)&&database.commitLifecycle?database.commitLifecycle:database.commit;const result=await commit({operationId,expectedRevision:db.revision,contextKey,...encoded,source});loadedRevision=result.revision;phoneRevision=archive.revision;return {...result,phoneArchive:decodePhoneDatabase(result.state,{contextKey,revision:result.revision,allowedOriginContextKeys:db.allowedOriginContextKeys??[]})};}};
 }
+
+export function phoneDatabaseReference(path,{root}={}){const p=Array.isArray(path)?path:String(path).split('/');const semantic=p.map((k,i)=>/^\d+$/.test(k)||maps.has(p.slice(0,i).join('/'))?'*':k);const table=history(p.join('/'))?historyTable(p.join('/')):namedTable(semantic),value=root?p.reduce((v,k)=>v?.[k],root):null,saved=value?.id?root?.life?.databaseRefs?.[table+'#'+value.id]:null;if(saved)return clone(saved);return {tableId:table,recordId:phoneDatabaseRecordId(root&&!history(p.join('/'))?entityPath(p,root):p)};}
+export const PHONE_DATABASE_ENTITY_TABLES=Object.freeze({...tableNames});
+
+export function phoneDatabaseRows(root){const rows=[];function visit(value,path=[]){if(!value||typeof value!=='object')return;if(!Array.isArray(value)){const semantic=path.map((k,i)=>/^\d+$/.test(k)||maps.has(path.slice(0,i).join('/'))?'*':k).join('/');if(tableNames[semantic])rows.push({reference:phoneDatabaseReference(path,{root}),value:clone(value),path:clone(path)});}for(const [k,v]of Object.entries(value))visit(v,[...path,k]);}visit(root);return rows;}

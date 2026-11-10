@@ -4,7 +4,7 @@ import {EXTENSION_PREFERENCE_SCHEMA,normalizeExtensionPreferences,compileExtensi
 
 const source={book:'内置美化书',uid:'beauty-1',digest:'sha256:style-1'},extensionSource={book:'内置扩展书',uid:'forum-1',digest:'sha256:forum-1'};
 const definitions=()=>[{source,definition:builtinPresentationDefinitions()[0]},{source:extensionSource,definition:builtinExtensionDefinitions().find(d=>d.view==='forum')}];
-const row=(extra={})=>({row_uuid:'pref-1',output_config_ref:'out-1',owner_ref:'person-1',world_ref:'world-1',view_id:'forum',enabled:true,enabled_kinds:['text','news'],style_book:source.book,style_uid:source.uid,style_digest:source.digest,extension_book:extensionSource.book,extension_uid:extensionSource.uid,extension_digest:extensionSource.digest,world_sources:[],audience_sources:[],generate_count:5,display_limit:10,topic_preferences:[],...extra});
+const row=(extra={})=>({row_uuid:'pref-1',output_config_ref:'out-1',owner_ref:'person-1',world_ref:'world-1',view_id:'forum',enabled:true,audience_kind:'world_fans',enabled_kinds:['text','news'],style_book:source.book,style_uid:source.uid,style_digest:source.digest,extension_book:extensionSource.book,extension_uid:extensionSource.uid,extension_digest:extensionSource.digest,world_sources:[],audience_sources:[],generate_count:5,display_limit:10,topic_preferences:[],...extra});
 const options=()=>({definitions:definitions(),context:{ownerId:'person-1',worldId:'world-1'}});
 test('extension preference schema links existing output facts without a runtime JSON bank',()=>{
  const s=EXTENSION_PREFERENCE_SCHEMA;assert.equal(s.id,'T_PREF_EXTENSION_PRESENTATION');assert.equal(s.parent_table,'T_PREF_OUTPUT_CONFIG');assert.ok(s.fields.some(f=>f.key==='output_config_ref'&&f.ref==='T_PREF_OUTPUT_CONFIG'));assert.ok(!s.fields.some(f=>['state','payload','style','worldTime'].includes(f.key)));assert.equal(new Set(s.fields.map(f=>f.key)).size,s.fields.length);
@@ -64,4 +64,11 @@ test('historical record references cannot silently become current rows',()=>{
 });
 test('record IDs separate owner/world/view and avoid concatenation collisions',()=>{
  const a=extensionPreferenceRecordId({worldId:'a:b',ownerId:'c',view:'forum'}),b=extensionPreferenceRecordId({worldId:'a',ownerId:'b:c',view:'forum'});assert.notEqual(a,b);assert.equal(a,extensionPreferenceRecordId({worldId:'a:b',ownerId:'c',view:'forum'}));
+});
+test('audience ontology is explicit, preserves unconfigured null and never grants omniscience',()=>{
+ assert.equal(normalizeExtensionPreferences({}).audience_kind,null);assert.equal(normalizeExtensionPreferences({view_id:'message'}).view_id,'messages');
+ for(const kind of ['world_fans','higher_dimensional','mixed']){const p=compileExtensionPreferences(row({audience_kind:kind}),options());assert.equal(p.generation.audienceKind,kind);assert.equal(p.generation.enabled,true);assert.match(p.prompt,new RegExp(kind));}
+ assert.match(compileExtensionPreferences(row({audience_kind:'higher_dimensional'}),options()).prompt,/不等于自动全知/);
+ for(const kind of [null,'none'])assert.equal(compileExtensionPreferences(row({audience_kind:kind}),options()).generation.enabled,false);
+ assert.throws(()=>normalizeExtensionPreferences(row({audience_kind:'all-knowing'})),/本体类型/);
 });

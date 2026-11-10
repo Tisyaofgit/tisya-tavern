@@ -1,0 +1,23 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {Window} from 'happy-dom';
+import {mountMessageVisual} from '../message-ui.js';import {mountMessageReader} from '../reader.js';import {presentationReferenceParameter} from '../extension-presentation.mjs';import {fixture} from './fixtures/journey-r4.cjs';
+const ref={tableId:'T_DYN_TRANSFERS',recordId:'tr-1',snapshotId:'@message'};
+const body='潮声不变。\n\n〔消息:'+presentationReferenceParameter({kind:'transfer',reference:ref})+'〕转账记录〔/消息〕';
+const source=fixture({body,taskExtra:'PRIVATE_ENVELOPE'});
+function result(amount=123){return {contextKey:'ctx',messageSnapshotId:'actual-source',projections:[{reference:{...ref,snapshotId:'actual-source'},contextKey:'ctx',kind:'transfer',allowed:true,value:{amount,currencyLabel:'银两',status:'已存'}}]};}
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
+test('actual message visual requests its message snapshot asynchronously and updates only public body',async()=>{
+ const w=new Window();try{w.IntersectionObserver=class{observe(){}disconnect(){}};const d=w.document;d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';let seen=null;const message={mes:source,extra:{tisya_engine:{uid:'uid-a'}}};const view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,phoneMessage:message,phoneContextKey:'ctx',getPresentation:async m=>(seen=m,result()),formatBody:x=>x,onChooseAction(){},getMotion:()=>false});
+ assert.match(view.host.shadowRoot.querySelector('.story').textContent,/正在读取/);await flush();assert.strictEqual(seen,message);assert.match(view.host.shadowRoot.querySelector('.story').textContent,/123 银两/);assert.match(view.host.shadowRoot.querySelector('.story').textContent,/潮声不变/);assert.ok(!view.host.shadowRoot.querySelector('.story').textContent.includes('PRIVATE_ENVELOPE'));view.dispose();}finally{await w.happyDOM.abort();}
+});
+test('read-only reader uses the exact selected message and leaves unrelated tabs intact',async()=>{
+ const w=new Window();try{const d=w.document;d.body.innerHTML='<div id="reader"></div>';let resolve;const gate=new Promise(r=>resolve=r),message={mes:source,extra:{tisya_engine:{uid:'uid-a'}}};const reader=mountMessageReader(d,d.querySelector('#reader'),{source,message,getPresentation:()=>gate,formatBody:x=>x,onChooseAction(){}});d.querySelector('[data-reader-tab="journey"]').click();const before=d.querySelector('.tisya-reader-panel').innerHTML;resolve(result());await flush();assert.equal(d.querySelector('.tisya-reader-panel').innerHTML,before);d.querySelector('[data-reader-tab="body"]').click();assert.match(d.querySelector('.tisya-reader-body').textContent,/123 银两/);reader.dispose();}finally{await w.happyDOM.abort();}
+});
+test('stale message result and disposed views never replace current content',async()=>{
+ const w=new Window();try{w.IntersectionObserver=class{observe(){}disconnect(){}};const d=w.document;d.body.innerHTML='<div id="chat"><div class="mes_block"></div></div>';let resolve;const gate=new Promise(r=>resolve=r),message={mes:source,extra:{tisya_engine:{uid:'uid-a'}}};const view=mountMessageVisual(d,d.querySelector('.mes_block'),{source,phoneMessage:message,phoneContextKey:'ctx',getPresentation:()=>gate,formatBody:x=>x,onChooseAction(){},getMotion:()=>false});message.mes='编辑后的消息';resolve(result(999));await flush();assert.ok(!view.host.shadowRoot.textContent.includes('999 银两'));view.dispose();assert.equal(d.querySelector('.tisya-message-visual'),null);}finally{await w.happyDOM.abort();}
+});
+test('missing record produces local notice and preserves surrounding prose',async()=>{
+ const w=new Window();try{const d=w.document;d.body.innerHTML='<div id="reader"></div>';const message={mes:source},reader=mountMessageReader(d,d.querySelector('#reader'),{source,message,getPresentation:async()=>({contextKey:'ctx',messageSnapshotId:'actual-source',projections:[]}),formatBody:x=>x,onChooseAction(){}});await flush();const target=d.querySelector('.tisya-reader-body');assert.match(target.textContent,/潮声不变/);assert.match(target.textContent,/指定历史记录当前不可读取/);reader.dispose();}finally{await w.happyDOM.abort();}
+});
+test('reader releases a media result arriving after it was disposed',async()=>{
+ const w=new Window();try{const d=w.document;d.body.innerHTML='<div id="reader"></div>';let resolve,releases=0;const gate=new Promise(r=>resolve=r),message={mes:source},reader=mountMessageReader(d,d.querySelector('#reader'),{source,message,getPresentation:()=>gate,formatBody:x=>x,onChooseAction(){}});reader.dispose();resolve({...result(),dispose(){releases++;}});await flush();assert.equal(releases,1);assert.equal(d.querySelector('#reader').childNodes.length,0);}finally{await w.happyDOM.abort();}
+});

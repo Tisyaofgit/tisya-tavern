@@ -1,5 +1,6 @@
 // Pure life-domain rules. All world facts and initial values are supplied explicitly.
 import {sha256} from '../engine/common.mjs';
+import {WorldClock} from '../engine/math.mjs';
 const MINUTE = 60000;
 const YEAR = 365 * 24 * 60;
 const clone = value => structuredClone(value);
@@ -23,15 +24,22 @@ function account(s, id) { return byId(s.wallet.accounts, id, '账户'); }
 function debit(s, id, n) { const row = account(s, id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); need(row.balance >= n, `${row.name}余额不足；不会自动借款或透支。`, 'INSUFFICIENT_FUNDS'); row.balance -= n; }
 function credit(s, id, n) { const row=account(s,id); need(Number.isSafeInteger(row.balance), `${row.name}余额未配置。`, 'UNCONFIGURED_BALANCE'); row.balance += n; }
 function record(s, type, description, n, accountId = '', extra = {}) {
-  s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: Number.isFinite(s.config?.epoch)?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
+  s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: (s.config?.calendar||Number.isFinite(s.config?.epoch))?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
 }
-function epoch(s) { need(Number.isFinite(s.config?.epoch), '世界故事时间起点未配置。', 'UNCONFIGURED_CLOCK'); return s.config.epoch + (s.config.timezoneOffsetMinutes || 0) * MINUTE; }
+function epoch(s) { if(s.config?.calendar)return 0;need(Number.isFinite(s.config?.epoch), '世界故事时间起点未配置。', 'UNCONFIGURED_CLOCK'); return s.config.epoch + (s.config.timezoneOffsetMinutes || 0) * MINUTE; }
 function owner(s) { need(typeof s.identity?.personId==='string'&&s.identity.personId,'当前人物身份未配置。','UNCONFIGURED_IDENTITY'); return s.identity.personId; }
 function defaultAccount(s, requested) { return requested || s.wallet.defaultAccountId || s.wallet.accounts[0]?.id; }
 function fundingAccount(s,requested){return requested||s.wallet.fundingAccountId||defaultAccount(s);}
-function atMinute(s, year, month, day, minute = 0) { return Math.round((Date.UTC(year, month - 1, day, 0, minute) - epoch(s)) / MINUTE); }
+function formClock(s,minutes=s.clock.totalMinutes){if(!s.config?.calendar)return null;const clock=new WorldClock(s.config.calendar);need(Number.isSafeInteger(s.config.calendarOrigin),'表单历法缺少时间锚点。','UNCONFIGURED_CLOCK');clock.setOrdinal(s.config.calendarOrigin+minutes);return clock;}
+function dayMinutes(s){const c=formClock(s);return c?c.c.day_hours*c.c.hour_minutes:1440;}
+function yearMinutes(s,minutes=s.clock.totalMinutes){const c=formClock(s,minutes);return c?c.lengths(c.c.year).reduce((a,b)=>a+b,0)*dayMinutes(s):YEAR;}
+function atMinute(s, year, month, day, minute = 0) { const current=formClock(s);if(current){const c=current.c,clock=new WorldClock({...c,year,[c.mode==='SEASON_FIXED'?'season':'month']:month,day,hour:Math.floor(minute/c.hour_minutes),minute:minute%c.hour_minutes});return clock.ordinal()-s.config.calendarOrigin;}return Math.round((Date.UTC(year, month - 1, day, 0, minute) - epoch(s)) / MINUTE); }
 function cardDates(s) {
   need(s.wallet.card.enabled!==false&&Number.isInteger(s.wallet.card.billDay)&&Number.isInteger(s.wallet.card.dueDay),'信用卡或账单日期未配置。','UNCONFIGURED_CREDIT');
+  const current=formClock(s);
+  if(current){let year=current.c.year,period=current.c.mode==='SEASON_FIXED'?current.c.season:current.c.month;const next=()=>{period++;if(period>current.lengths(year).length){period=1;year++;}};
+    const end=dayMinutes(s)-1;let statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);if(statementAt<s.clock.totalMinutes){next();statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);}if(s.wallet.card.dueDay<=s.wallet.card.billDay)next();return {statementAt,dueAt:atMinute(s,year,period,s.wallet.card.dueDay,end)};
+  }
   const d = new Date(epoch(s) + s.clock.totalMinutes * MINUTE);
   let month = d.getUTCMonth();
   let statement = Date.UTC(d.getUTCFullYear(), month, s.wallet.card.billDay, 23, 59);
@@ -40,7 +48,8 @@ function cardDates(s) {
   return { statementAt: (statement - epoch(s)) / MINUTE, dueAt: (Date.UTC(d.getUTCFullYear(), dueMonth, s.wallet.card.dueDay, 23, 59) - epoch(s)) / MINUTE };
 }
 function refresh(s) {
-  if(Number.isFinite(s.config?.epoch)){
+  if(s.config?.calendar){const current=formClock(s),c=current.c;Object.assign(s.clock,{year:c.year,month:c.month??c.season,day:c.day,minute:c.hour*c.hour_minutes+c.minute,...(c.mode==='SEASON_FIXED'?{season:c.season}:{})});}
+  else if(Number.isFinite(s.config?.epoch)){
   const d = new Date(epoch(s) + s.clock.totalMinutes * MINUTE);
   s.clock.year = d.getUTCFullYear(); s.clock.month = d.getUTCMonth() + 1; s.clock.day = d.getUTCDate(); s.clock.minute = d.getUTCHours() * 60 + d.getUTCMinutes();
   }
@@ -55,7 +64,7 @@ function refresh(s) {
   c.statements = [...statements.values()].sort((a, b) => a.statementAt - b.statementAt).map(x => ({ ...x, status: x.remaining === 0 ? 'paid' : s.clock.totalMinutes > x.dueAt ? 'overdue' : s.clock.totalMinutes >= x.statementAt ? 'billed' : 'unbilled' }));
   for (const loan of s.wallet.loans) loan.status = loan.installments.every(x => x.paid === x.amount) ? 'paid' : loan.installments.some(x => x.paid < x.amount && s.clock.totalMinutes > x.dueAt) ? 'overdue' : 'active';
   for (const event of s.calendar.events) {
-    if (['personal', 'confirmed'].includes(event.status) && Number.isFinite(s.config?.epoch) && Number.isSafeInteger(event.at) && event.at <= s.clock.totalMinutes && !event.notified) {
+    if (['personal', 'confirmed'].includes(event.status) && (s.config?.calendar||Number.isFinite(s.config?.epoch)) && Number.isSafeInteger(event.at) && event.at <= s.clock.totalMinutes && !event.notified) {
       event.notified = true;
       s.audit.push({ id: nextId(s, 'reminder'), at: s.clock.totalMinutes, type: 'calendar.due', message: `故事日程已到时间：${event.title}` });
     }
@@ -157,7 +166,7 @@ function perform(s, a) {
     case 'wallet.loan.borrow': {
       const quote = quoteLoan(a.amount, a.months, s); need(a.quoteId === quote.quoteId, '请先查看并确认本次贷款报价。', 'QUOTE_REQUIRED');
       epoch(s); const to = fundingAccount(s,a.accountId); account(s, to);
-      const loan = { ...quote, id: nextId(s, 'loan'), remainingPrincipal: quote.amount, paid: 0, status: 'active', createdAt: s.clock.totalMinutes, accountId: to, installments: quote.installments.map(x => ({ ...x, paid: 0, dueAt: s.clock.totalMinutes + x.number * quote.periodDays * 24 * 60 })) };
+      const loan = { ...quote, id: nextId(s, 'loan'), remainingPrincipal: quote.amount, paid: 0, status: 'active', createdAt: s.clock.totalMinutes, accountId: to, installments: quote.installments.map(x => ({ ...x, paid: 0, dueAt: s.clock.totalMinutes + x.number * quote.periodDays * dayMinutes(s) })) };
       s.wallet.loans.push(loan); credit(s, to, loan.amount); record(s, 'loan.disburse', '贷款放款（同时产生负债）', loan.amount, to, { loanId: loan.id });
       return { message: `已按已确认报价放款 ${money(loan.amount)} ${s.config.currency?.name||''}，共${loan.months}期，总还款 ${money(loan.totalPayable)} ${s.config.currency?.name||''}。`, loanId: loan.id };
     }
@@ -185,7 +194,7 @@ function perform(s, a) {
     case 'wallet.invest.settle': {
       const row = byId(s.wallet.investments, a.investmentId, '理财持仓'); need(row.status === 'active', '该持仓已经赎回。');
       epoch(s); const product = byId(s.wallet.investmentProducts, row.productId, '理财产品');
-      const earned = Number(BigInt(row.principal) * BigInt(product.annualRateBps) * BigInt(s.clock.totalMinutes - row.createdAt) / BigInt(10000 * YEAR));
+      const earned = Number(BigInt(row.principal) * BigInt(product.annualRateBps) * BigInt(s.clock.totalMinutes - row.createdAt) / BigInt(10000 * yearMinutes(s,row.createdAt)));
       const gain = earned - row.accrued; need(gain > 0, '按已过去的故事时间计算，尚无新增整分收益；不会凭空加钱。');
       row.accrued = earned; row.settledAt = s.clock.totalMinutes; s.wallet.external -= gain;
       record(s, 'invest.simulated-yield', '按故事规则结算收益', gain, row.id);
@@ -250,8 +259,8 @@ function perform(s, a) {
       return msg(`已到达${byId(s.map.places, journey.to, '目的地').name}；故事时间已推进到抵达时刻。`);
     }
     case 'calendar.add': {
-      const title = String(a.title || '').trim(); need(title.length > 0 && title.length <= 100, '日程标题须为1—100字。'); const day = integer(a.day, '日期', 1, 31), minute = integer(a.minute, '当日分钟', 0, 1439);
-      const date = new Date(Date.UTC(s.clock.year, s.clock.month - 1, day)); need(date.getUTCMonth() + 1 === s.clock.month, '当前故事月不存在这个日期。');
+      const title = String(a.title || '').trim(); need(title.length > 0 && title.length <= 100, '日程标题须为1—100字。'); const current=formClock(s),length=current?current.lengths(s.clock.year)[s.clock.month-1]:31;const day = integer(a.day, '日期', 1, length), minute = integer(a.minute, '当日分钟', 0, dayMinutes(s)-1);
+      if(!current){const date = new Date(Date.UTC(s.clock.year, s.clock.month - 1, day)); need(date.getUTCMonth() + 1 === s.clock.month, '当前故事月不存在这个日期。');}
       const at = atMinute(s,s.clock.year, s.clock.month, day, minute); need(at >= s.clock.totalMinutes, '不能把新日程安排到故事过去。'); byId(s.map.places, a.placeId, '日程地点');
       const participantId = String(a.participantId || ''); need(!participantId||(s.contacts||[]).some(x=>x.id===participantId)||(s.social?.accounts||[]).some(x=>x.id===participantId),'请先确认邀请对象。');
       const event = { id: nextId(s, 'event'), title, day, minute, placeId: a.placeId, participantId, status: participantId ? 'invited' : 'personal', at, notified: false };
@@ -301,10 +310,11 @@ export function validateState(s) {
   need(Number.isSafeInteger(s.wallet.external) && Number.isSafeInteger(s.wallet.initialNet), '资金核验数据损坏。');
   need([cash, invested, principal].every(Number.isSafeInteger), '汇总金额超过整数精度范围。');
   const net = BigInt(cash) + BigInt(invested) + BigInt(card.refundBalance) - BigInt(card.used) - BigInt(principal) + BigInt(s.wallet.external);
-  need(net === BigInt(s.wallet.initialNet), '资金与负债不守恒，候选操作被拒绝；原档不变。', 'MONEY_INVARIANT');
+  need(s.config?.database===true||net === BigInt(s.wallet.initialNet), '资金与负债不守恒，候选操作被拒绝；原档不变。', 'MONEY_INVARIANT');
   return true;
 }
 
+function financialNet(s){return BigInt(s.wallet.accounts.reduce((n,a)=>n+(a.balance??0),0))+BigInt(s.wallet.investments.filter(p=>p.status==='active').reduce((n,p)=>n+p.principal+p.accrued,0))+BigInt(s.wallet.card.refundBalance)-BigInt(s.wallet.card.used)-BigInt(s.wallet.loans.reduce((n,l)=>n+l.remainingPrincipal,0))+BigInt(s.wallet.external);}
 export function reduce(state, action) {
   validateState(state);
   need(action && typeof action.type === 'string', '动作类型缺失。');
@@ -319,7 +329,7 @@ export function reduce(state, action) {
   const next = clone(state); const result = perform(next, action); refresh(next);
   next.revision += 1; next.applied.push(action.id); next.receipts[action.id] = { fingerprint, result: clone(result), at: next.clock.totalMinutes };
   next.audit.push({ id: action.id, at: next.clock.totalMinutes, type: action.type, message: result.message });
-  validateState(next); return { state: next, result };
+  validateState(next);need(financialNet(next)===financialNet(state),'本次操作资金与负债不守恒，未写入表单。','MONEY_INVARIANT');return { state: next, result };
 }
 
 export function assertLifeActionAvailable(s,a){
@@ -328,6 +338,6 @@ export function assertLifeActionAvailable(s,a){
   if(a.type.startsWith('cart.')){const p=s.commerce.products.find(x=>x.id===a.productId);app=p?.kind==='food'?'food':'shop';}
   if(a.type.startsWith('order.')){const o=a.type==='order.checkout'?a:s.commerce.orders.find(x=>x.id===a.orderId);app=o?.kind==='food'?'food':'shop';}
   if(app)need(config.apps.includes(app),'世界未启用这个应用。','APP_DISABLED');
-  if(a.type.startsWith('wallet.')||['order.checkout','order.cancel','order.refund'].includes(a.type)){need(config.settlementOwner==='phone','数值由原生变量或表单结算；手机不能另写一份账本。','EXTERNAL_STATE_OWNER');need(config.currency&&typeof config.currency.name==='string','世界货币尚未配置。','UNCONFIGURED_CURRENCY');}
+  if(a.type.startsWith('wallet.')||['order.checkout','order.cancel','order.refund'].includes(a.type)){need(config.settlementOwner==='phone'||config.settlementOwner==='tables'&&config.database===true,'数值由原生变量或表单结算；手机不能另写一份账本。','EXTERNAL_STATE_OWNER');need(config.currency&&typeof config.currency.name==='string','世界货币尚未配置。','UNCONFIGURED_CURRENCY');}
 }
 export function refreshState(input){const next=clone(input);refresh(next);validateState(next);return next;}

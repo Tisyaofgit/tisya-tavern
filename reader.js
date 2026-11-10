@@ -90,7 +90,7 @@ function inspectUncached(source,options) {
 
 export function mountMessageReader(document, container, {source,message=null,phoneMessage=message,getPresentation=message=>document.defaultView?.Tisya?.presentation?.forMessage?.(message),formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,onError=()=>{}}) {
     const data=inspectMessage(source,{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()});
-    let alive=true,actionChoice=null,extraView=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=source.includes('@record{')?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');
+    let alive=true,actionChoice=null,extraView=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=source.includes('@record{')?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
@@ -171,8 +171,8 @@ export function mountMessageReader(document, container, {source,message=null,pho
     }
     render(buttons.has(initialTab)?initialTab:'body');
     if(presentationOptions){const raw=phoneMessage?.mes;Promise.resolve().then(()=>phoneMessage?getPresentation(phoneMessage):null).then(value=>{
-      if(!alive||phoneMessage&&phoneMessage.mes!==raw)return;const current=document.defaultView?.Tisya?.phone?.contextKey?.();if(current&&presentationContext&&current!==presentationContext)return;
-      presentationOptions=value??{projections:[],contextKey:presentationContext};if(activeTab==='body'){const scroll=panel.scrollTop;render('body');panel.scrollTop=scroll;}
+      if(!alive||phoneMessage&&phoneMessage.mes!==raw){releasePresentation(value);return;}const current=document.defaultView?.Tisya?.phone?.contextKey?.();if(current&&presentationContext&&current!==presentationContext){releasePresentation(value);return;}
+      releasePresentation(presentationOptions);presentationOptions=value??{projections:[],contextKey:presentationContext};if(activeTab==='body'){const scroll=panel.scrollTop;render('body');panel.scrollTop=scroll;}
     },error=>{if(!alive)return;onError(error);presentationOptions={projections:[],contextKey:presentationContext};if(activeTab==='body')render('body');}).catch(onError);}
-    return {dispose(){alive=false;actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
+    return {dispose(){alive=false;releasePresentation(presentationOptions);actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
 }

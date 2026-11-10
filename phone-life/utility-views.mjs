@@ -1,3 +1,4 @@
+import {phoneTimeText,phoneDateParts,phoneCalendarPage} from './time-view.mjs';
 import {quoteLoan,quoteJourney} from './core.mjs';
 
 // Presentation only. All changes go through the shared, persisted action reducer.
@@ -25,14 +26,14 @@ export function renderUtility(state,ui,h){
  const place=id=>places.find(p=>p.id===id);
  const locationName=id=>place(id)?.name??'未指定地点';
  const nav=(app,tab='',detail='')=>({app,tab,detail});
- const storyDate=value=>{const c=state.clock;return new Date(Date.UTC(c.year,c.month-1,c.day,0,c.minute-(c.totalMinutes??0)+value));};
+ const storyDate=value=>phoneDateParts(state,value);
  const at=value=>{
   if(typeof value==='string')return e(value.replace('T',' ').slice(0,16));
   if(!Number.isFinite(value))return '—';
   const d=storyDate(value);
-  return (d.getUTCMonth()+1)+'月'+d.getUTCDate()+'日 '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+  return d.period+d.periodLabel+d.day+'日 '+String(d.hour).padStart(2,'0')+':'+String(d.minute).padStart(2,'0');
  };
- const hh=minute=>String(Math.floor(minute/60)).padStart(2,'0')+':'+String(minute%60).padStart(2,'0');
+ const hh=minute=>phoneTimeText(state,minute);
  const artFor=p=>p.image||({coat:'coat',coffee:'coffee',meal:'meal',fruit:'meal',book:'album',headphones:'album'}[p.id]??'coat');
  const productArt=p=>'<div class="u-product-art">'+h.art(artFor(p))+'</div>';
  const productBy=id=>products.find(p=>p.id===id);
@@ -178,19 +179,19 @@ export function renderUtility(state,ui,h){
    section('熟悉的地方')+places.map(p=>'<div class="u-place"><span class="u-mini-icon">'+h.icon(p.id==='home'?'home':p.id==='cafe'?'food':p.id==='store'?'shop':'location')+'</span><div class="u-list-copy"><p class="u-item-title">'+e(p.name)+'</p><p class="u-item-sub">'+e(p.description)+'</p></div>'+b('查看','ui',{detail:p.id})+'</div>').join('');
  }
  function calendar(){
-  const c=state.clock,count=new Date(Date.UTC(c.year,c.month,0)).getUTCDate(),day=Math.max(1,Math.min(count,Number(ui.calendarDay)||c.day)),offset=(new Date(Date.UTC(c.year,c.month-1,1)).getUTCDay()+6)%7;
-  const events=state.calendar.events.filter(ev=>{const date=storyDate(ev.at);return date.getUTCFullYear()===c.year&&date.getUTCMonth()===c.month-1;});
+  const c=state.clock,page=phoneCalendarPage(state),{count,offset}=page,period=page.period+page.periodLabel,day=Math.max(1,Math.min(count,Number(ui.calendarDay)||c.day));
+  const events=state.calendar.events.filter(ev=>{const date=storyDate(ev.at);return date.year===c.year&&date.period===page.period;});
   const rows=events.filter(v=>v.day===day).sort((a,b)=>a.minute-b.minute);
-  let month='<section class="u-month"><div class="u-month-head"><div><h3>'+c.year+' 年 '+c.month+' 月</h3><span class="u-subtle">MAKE ROOM FOR GOOD DAYS</span></div>'+b('今天','ui',{calendarDay:c.day},'u-text')+'</div><div class="u-week">'+['一','二','三','四','五','六','日'].map(s=>'<span>'+s+'</span>').join('')+'</div><div class="u-dates">'+Array.from({length:offset},()=>'<span></span>').join('');
+  let month='<section class="u-month"><div class="u-month-head"><div><h3>'+c.year+' 年 '+e(period)+'</h3><span class="u-subtle">MAKE ROOM FOR GOOD DAYS</span></div>'+b('今天','ui',{calendarDay:c.day},'u-text')+'</div><div class="u-week">'+page.weekdays.map(s=>'<span>'+s+'</span>').join('')+'</div><div class="u-dates">'+Array.from({length:offset},()=>'<span></span>').join('');
   for(let d=1;d<=count;d++)month+=b(String(d),'ui',{calendarDay:d},'u-date '+(d===c.day?'today ':'')+(d===day?'selected ':'')+(events.some(x=>x.day===d&&x.status!=='cancelled')?'has-event':''));
   month+='</div></section>';
   const agenda=rows.length?rows.map(ev=>'<div class="u-agenda"><span class="u-agenda-time">'+hh(ev.minute)+'</span><article class="u-agenda-card '+e(ev.status)+'"><div class="u-row"><h3>'+e(ev.title)+'</h3>'+pill({personal:'我的安排',invited:'待对方确认',confirmed:'已确认',cancelled:'已取消'}[ev.status]??ev.status,ev.status==='invited'?'warn':'')+'</div><p class="u-item-sub">'+e(locationName(ev.placeId))+(ev.participantId?' · 与 '+e(state.social.accounts.find(a=>a.id===ev.participantId)?.name??ev.participantId):'')+'</p><div class="u-buttons">'+(!hosted&&ev.status==='invited'?b('模拟对方确认','calendar.confirm',{eventId:ev.id},'u-secondary'):'')+(ev.status!=='cancelled'?b('查看地点','nav',nav('map','',ev.placeId),'u-secondary')+b('取消安排','calendar.cancel',{eventId:ev.id},'u-text'):'')+'</div></article></div>').join(''):empty('这一天还留着空白，写下一件想做的事吧。','calendar');
-  const add=card('<div class="u-row"><h3>添一件小事</h3>'+pill(c.month+'月'+day+'日')+'</div><div class="u-rule"></div>'+form('calendar.add',
+  const add=card('<div class="u-row"><h3>添一件小事</h3>'+pill(period+day+'日')+'</div><div class="u-rule"></div>'+form('calendar.add',
    field('安排名称','<input name="title" maxlength="80" placeholder="例如：和朋友喝一杯咖啡" required>')+
-   '<div class="u-form-row">'+field('日期','<input type="number" name="day" min="1" max="'+count+'" value="'+day+'" required>')+field('时间','<input type="time" name="minute" data-minutes value="'+hh(c.minute)+'" required>')+'</div>'+
+   '<div class="u-form-row">'+field('日期','<input type="number" name="day" min="1" max="'+count+'" value="'+day+'" required>')+(page.standardTime?field('时间','<input type="time" name="minute" data-minutes value="'+hh(c.minute)+'" required>'):field('时刻（当日分钟）','<input type="number" name="minute" min="0" max="'+(page.minutesPerDay-1)+'" value="'+c.minute+'" required>'))+'</div>'+
    field('地点',select('placeId',places.map(p=>[p.id,p.name]),state.map.position))+
    field('一起的人',select('participantId',[['','仅自己'],...contacts.map(c=>[c.id,c.name+' · 发出邀请'])],''))+submit('保存安排'))+note(hosted?'邀请先显示待确认，由下一轮剧情返回对方的实际回应。':'邀请先显示待确认。模拟对方确认是单独操作，不会替对方自动答应。'));
-  return heading('LITTLE PLANS','把日子记下来','故事时间 · '+c.month+'月'+c.day+'日 '+hh(c.minute))+month+section(c.month+'月'+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
+  return heading('LITTLE PLANS','把日子记下来','故事时间 · '+period+c.day+'日 '+hh(c.minute))+month+section(period+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
  }
  return '<div class="life-utility" data-utility-app="'+e(ui.app)+'">'+(ui.app==='wallet'?wallet():ui.app==='shop'||ui.app==='food'?commerce():ui.app==='map'?mapView():calendar())+'</div>';
 }

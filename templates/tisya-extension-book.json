@@ -1,0 +1,319 @@
+{
+  "name": "缇斯亚扩展资料书",
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【说明】扩展资料书",
+      "content": "这本书保存可更新的扩展资料与生成定义。安装不等于在所有聊天启用；当前世界的选用、主题、数量和来源均保存在同一表单数据库。下列 JSON 定义由插件读取，不能作为已发生剧情或当前状态注入。自定义普通资料条目仍沿宿主启用状态与触发条件。",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "reference.guide",
+          "purpose": "guide",
+          "retired": false,
+          "base": {
+            "comment": "【说明】扩展资料书",
+            "content": "这本书保存可更新的扩展资料与生成定义。安装不等于在所有聊天启用；当前世界的选用、主题、数量和来源均保存在同一表单数据库。下列 JSON 定义由插件读取，不能作为已发生剧情或当前状态注入。自定义普通资料条目仍沿宿主启用状态与触发条件。"
+          },
+          "release": "2409057760615623e76df831058d3391e1adf2f6b6a1a79da4b8e4cdf87631e3",
+          "checkedRelease": "2409057760615623e76df831058d3391e1adf2f6b6a1a79da4b8e4cdf87631e3"
+        }
+      }
+    },
+    "1": {
+      "uid": 1,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】弹幕",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.danmaku\",\n  \"view\": \"danmaku\",\n  \"name\": \"弹幕\",\n  \"layout\": \"danmaku\",\n  \"allowedKinds\": [\n    \"danmaku\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.danmaku",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】弹幕",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.danmaku\",\n  \"view\": \"danmaku\",\n  \"name\": \"弹幕\",\n  \"layout\": \"danmaku\",\n  \"allowedKinds\": [\n    \"danmaku\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "55cb7ba9857cb7fb792d869ac80c08461341354a9f1364aaba65f86abe0aeea1",
+          "checkedRelease": "55cb7ba9857cb7fb792d869ac80c08461341354a9f1364aaba65f86abe0aeea1"
+        }
+      }
+    },
+    "2": {
+      "uid": 2,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】风闻",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.rumor\",\n  \"view\": \"rumor\",\n  \"name\": \"风闻\",\n  \"layout\": \"feed\",\n  \"allowedKinds\": [\n    \"text\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.rumor",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】风闻",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.rumor\",\n  \"view\": \"rumor\",\n  \"name\": \"风闻\",\n  \"layout\": \"feed\",\n  \"allowedKinds\": [\n    \"text\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "67454c6ab0a850046527895d28aaa89b4df1be60c84f56a224645606ed195d78",
+          "checkedRelease": "67454c6ab0a850046527895d28aaa89b4df1be60c84f56a224645606ed195d78"
+        }
+      }
+    },
+    "3": {
+      "uid": 3,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】公告",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.notice\",\n  \"view\": \"notice\",\n  \"name\": \"公告\",\n  \"layout\": \"notice\",\n  \"allowedKinds\": [\n    \"text\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.notice",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】公告",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.notice\",\n  \"view\": \"notice\",\n  \"name\": \"公告\",\n  \"layout\": \"notice\",\n  \"allowedKinds\": [\n    \"text\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "a9911e31a331339f0aa6676279f31fe58648935e22a8cb4585f99ea77544f18c",
+          "checkedRelease": "a9911e31a331339f0aa6676279f31fe58648935e22a8cb4585f99ea77544f18c"
+        }
+      }
+    },
+    "4": {
+      "uid": 4,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】结算展示",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.settlement\",\n  \"view\": \"settlement\",\n  \"name\": \"结算展示\",\n  \"layout\": \"ledger\",\n  \"allowedKinds\": [\n    \"transfer\",\n    \"settlement\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.settlement",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】结算展示",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.settlement\",\n  \"view\": \"settlement\",\n  \"name\": \"结算展示\",\n  \"layout\": \"ledger\",\n  \"allowedKinds\": [\n    \"transfer\",\n    \"settlement\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "4e31e1fc10d34085edcbbcf7797f85c3d9b86d52e6bd48d4b15e0c0f8b376c88",
+          "checkedRelease": "4e31e1fc10d34085edcbbcf7797f85c3d9b86d52e6bd48d4b15e0c0f8b376c88"
+        }
+      }
+    },
+    "5": {
+      "uid": 5,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】近日留言回读",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.messages\",\n  \"view\": \"messages\",\n  \"name\": \"近日留言回读\",\n  \"layout\": \"messages\",\n  \"allowedKinds\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.messages",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】近日留言回读",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.messages\",\n  \"view\": \"messages\",\n  \"name\": \"近日留言回读\",\n  \"layout\": \"messages\",\n  \"allowedKinds\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "6b9ad16a7847218147bf8b5685ed47119e47cf24f03de3aa5d5e7256f3b76be5",
+          "checkedRelease": "6b9ad16a7847218147bf8b5685ed47119e47cf24f03de3aa5d5e7256f3b76be5"
+        }
+      }
+    },
+    "6": {
+      "uid": 6,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】小剧场",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.theater\",\n  \"view\": \"theater\",\n  \"name\": \"小剧场\",\n  \"layout\": \"theater\",\n  \"allowedKinds\": [\n    \"theater\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.theater",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】小剧场",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.theater\",\n  \"view\": \"theater\",\n  \"name\": \"小剧场\",\n  \"layout\": \"theater\",\n  \"allowedKinds\": [\n    \"theater\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "76b29c740b5d35baa78f88a1ba9e73510f9e3f3ab4faa75a8fd5af4adbd931d0",
+          "checkedRelease": "76b29c740b5d35baa78f88a1ba9e73510f9e3f3ab4faa75a8fd5af4adbd931d0"
+        }
+      }
+    },
+    "7": {
+      "uid": 7,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】论坛",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.forum\",\n  \"view\": \"forum\",\n  \"name\": \"论坛\",\n  \"layout\": \"forum\",\n  \"allowedKinds\": [\n    \"forum\",\n    \"text\",\n    \"image\",\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.forum",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】论坛",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.forum\",\n  \"view\": \"forum\",\n  \"name\": \"论坛\",\n  \"layout\": \"forum\",\n  \"allowedKinds\": [\n    \"forum\",\n    \"text\",\n    \"image\",\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "13c5e27da75448cff07a5b089d653f589d81852bfb8155df935f7ea9aa9cbcc5",
+          "checkedRelease": "13c5e27da75448cff07a5b089d653f589d81852bfb8155df935f7ea9aa9cbcc5"
+        }
+      }
+    },
+    "8": {
+      "uid": 8,
+      "key": [],
+      "keysecondary": [],
+      "comment": "【扩展】新闻",
+      "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.news\",\n  \"view\": \"news\",\n  \"name\": \"新闻\",\n  \"layout\": \"news\",\n  \"allowedKinds\": [\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}",
+      "constant": false,
+      "selective": true,
+      "selectiveLogic": 0,
+      "order": 100,
+      "position": 1,
+      "disable": true,
+      "excludeRecursion": true,
+      "preventRecursion": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 0,
+      "role": 0,
+      "extensions": {
+        "tisyaBuiltin": {
+          "package": "tisya.builtin-books",
+          "bookId": "extensions",
+          "entryId": "extension.news",
+          "purpose": "definition",
+          "retired": false,
+          "base": {
+            "comment": "【扩展】新闻",
+            "content": "{\n  \"format\": \"tisya.extension-definition/1\",\n  \"kind\": \"extension\",\n  \"id\": \"extension.news\",\n  \"view\": \"news\",\n  \"name\": \"新闻\",\n  \"layout\": \"news\",\n  \"allowedKinds\": [\n    \"news\"\n  ],\n  \"counts\": {\n    \"min\": 0,\n    \"max\": 50,\n    \"default\": 5\n  },\n  \"topicTags\": [],\n  \"sourceRoles\": [\n    \"world\",\n    \"audience\"\n  ]\n}"
+          },
+          "release": "2018178212d0371a446888f01e1e8cc51a086459224442e0f4d70ff1ad26f168",
+          "checkedRelease": "2018178212d0371a446888f01e1e8cc51a086459224442e0f4d70ff1ad26f168"
+        }
+      }
+    }
+  },
+  "extensions": {
+    "tisyaBuiltin": {
+      "package": "tisya.builtin-books",
+      "bookId": "extensions",
+      "release": "a403c3aff20e136d1bcce12105a378d687c167cbfed6808c1889e6dfdcc4da5d",
+      "checkedRelease": "a403c3aff20e136d1bcce12105a378d687c167cbfed6808c1889e6dfdcc4da5d"
+    }
+  }
+}

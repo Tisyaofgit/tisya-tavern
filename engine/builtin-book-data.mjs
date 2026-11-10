@@ -2,17 +2,17 @@ import {builtinExtensionDefinitions,builtinPresentationDefinitions} from '../ext
 
 export const BUILTIN_PACKAGE='tisya.builtin-books';
 export const BUILTIN_BOOK_NAMES=Object.freeze({templates:'缇斯亚模板书',extensions:'缇斯亚扩展资料书',beauty:'缇斯亚美化书'});
-export const MATRIX_CREATION_CONTRACT='仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。新增只用任务分配的稳定 recordId，已有记录只提交明确改变的字段。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。';
+export const MATRIX_CREATION_CONTRACT='仅输出 JSON：{name:string,summary?:string,unresolved?:string[],matrix:{changes:[{tableId,recordId,values}],binding?:{entityId,dossierId,worldId?}}}。读取本次实际 schema，使用已登记的规范表、字段、类型、单位与稳定引用；同义名解析回规范字段，不新建同义表。为新增对象给出唯一稳定 recordId，已有记录只提交明确改变的字段。自动 ID 别名、只读派生字段和程序回执不填入 values；标识由 recordId 提供。缺少必需定义时列入 unresolved，不猜值。不得输出 phone.state、手机专属当前时钟、独立钱包余额库或旧 base/initial 账本。模板是填写规则，不是当前事实；作者原文是来源，当前状态以统一表单数据库为准。';
 export const WORLD_FORM_TEMPLATE=Object.freeze({format:'tisya.form-authoring-template/1',id:'world.definition',kind:'world',targets:[
- {tableId:'T_STATIC_WORLDS',fields:['world_id','name','core_proposition','calendar_id','era_name','base_year','current_baseline_ref']},
+ {tableId:'T_STATIC_WORLDS',fields:['name','core_proposition','era_name','current_baseline_ref'],projections:['world_id','calendar_id','base_year'],instruction:'world_id 由 recordId 自动提供；历法关联与基准年按已注册关系从历法子表读取。' },
  {tableId:'M_CALENDAR_RULES',fields:[],instruction:'使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。'},
  {tableId:'X_WORLD_CLOCKS',fields:[],instruction:'当前可执行世界时钟唯一归此表；场景时间和手机日期均读取它。'},
  {tableId:'T_STATIC_PLACES',fields:[],instruction:'已有地点复用稳定记录，坐标、权限与已知范围按实际 schema。'},
  {tableId:'T_STATIC_ITEMS_SKILLS',fields:[],instruction:'物品、货币及其单位先建或引用规范定义；商城报价不等于人物持有。'}
 ]});
 export const CHARACTER_FORM_TEMPLATE=Object.freeze({format:'tisya.form-authoring-template/1',id:'character.dossier',kind:'character',targets:[
- {tableId:'T_SYS_ENTITIES',fields:['entity_id','name','kind','origin_record_ref','runtime_state_ref']},
- {tableId:'T_CHAR_DOSSIER',fields:['char_id','name','public_identity','social_identity_duty','overall_physique','scene_personality_desc','manifest']},
+ {tableId:'T_SYS_ENTITIES',fields:['kind','origin_record_ref','runtime_state_ref'],projections:['entity_id','name'],instruction:'名称只填写 T_CHAR_DOSSIER.name；M_FIELD_REFERENCES 以 owner_table=T_SYS_ENTITIES、owner_row_uuid=实体ID、owner_field=origin_record_ref、target_table=T_CHAR_DOSSIER、target_row_uuid=档案ID、reference_kind=record 建原点关联；entity.origin_record_ref 引用该关联行。' },
+ {tableId:'T_CHAR_DOSSIER',fields:['name','public_identity','social_identity_duty','overall_physique','scene_personality_desc','manifest']},
  {tableId:'T_DYN_CURRENCY_BALANCES',fields:['owner_ref','currency_ref','balance','debt','native_ref'],instruction:'只采用明确有据的初值；未知不填零，不把授信或贷款同时算作现金。'},
  {tableId:'T_DYN_HOLDINGS_INVENTORY',fields:[],instruction:'关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。'},
  {tableId:'T_SYS_SOURCE_FRAGMENTS',fields:[],instruction:'保存作者原文、实际来源及摘要；定义变更与会话状态变更分开审查。'}
@@ -33,6 +33,6 @@ const definitionEntry=(definition,prefix)=>({id:definition.id,name:prefix+defini
 export function builtinBookDefinitions(){return [
  {id:'templates',name:BUILTIN_BOOK_NAMES.templates,entries:bundledFormTemplateEntries()},
  {id:'extensions',name:BUILTIN_BOOK_NAMES.extensions,entries:[{id:'reference.guide',name:'【说明】扩展资料书',purpose:'guide',content:'这本书保存可更新的扩展资料与生成定义。安装不等于在所有聊天启用；当前世界的选用、主题、数量和来源均保存在同一表单数据库。下列 JSON 定义由插件读取，不能作为已发生剧情或当前状态注入。自定义普通资料条目仍沿宿主启用状态与触发条件。'},...builtinExtensionDefinitions().map(d=>definitionEntry(d,'【扩展】'))]},
- {id:'beauty',name:BUILTIN_BOOK_NAMES.beauty,entries:[{id:'presentation.guide',name:'【说明】美化书',purpose:'guide',content:'这本书登记标记对应的受限布局与样式令牌。世界/会话选用保存在统一表单数据库；未选择不会自动取第一项。模型仅看到当前可用标记及含义，显示编译器读取实际定义；原始定义不整本注入剧情，不执行书中任意脚本。'},...builtinPresentationDefinitions().map(d=>definitionEntry(d,'【美化】'))]}
+ {id:'beauty',name:BUILTIN_BOOK_NAMES.beauty,entries:[{id:'presentation.guide',name:'【说明】美化书',purpose:'guide',content:'这本书登记标记对应的受限布局与样式令牌。世界/会话选用保存在统一表单数据库；未选择不会自动取第一项。模型仅看到当前可用标记及含义，显示编译器读取实际定义；原始定义不整本注入剧情，不执行书中任意脚本。现行 25+2 内容通道及旧 〔名称:参数〕…〔/名称〕 标记继续保留；新增 record 消息子类型属于本轮新协议，不声称复原 Vic 的旧原语法。T_DYN_MESSAGE_CONTENT.media_ref 引用 T_SYS_MEDIA_ASSETS，transfer_ref 引用 X_FIN_TRANSACTIONS；正文中的显示卡不再次扣账。完整允许字段和消息标记见 extension-host.mjs 的 PRESENTATION_PROMPT_CONTRACT。'},...builtinPresentationDefinitions().map(d=>definitionEntry(d,'【美化】'))]}
 ];}
 export const BUILTIN_BOOKS=builtinBookDefinitions();
