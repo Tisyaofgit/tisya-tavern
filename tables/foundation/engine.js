@@ -330,7 +330,7 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={}}){
  const world=rows.find(r=>r.tableId==='T_STATIC_WORLDS');if(context.kind==='world'&&context.task==='tableGenesis'&&context.mode==='extend'&&snapshot.state.schema.T_STATIC_WORLDS)check(world,'创建新世界须填写世界与历法身份');
  const binding=context.kind==='character'?{entityId:actors[0].recordId,dossierId:actors[0].dossierId,...(world?{worldId:world.recordId}:{})}:world?{worldId:world.recordId}:undefined;
  const name=((parsed.title??blocks.title??'').split('|')[0]??'').trim()||rows.find(r=>r.name)?.name||(context.task==='main'?'本轮表单变更':'');check(name,'表单方案需要名称');const unresolved=context.task==='main'?[]:(blocks.extra??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(s=>s.replace(/^待补[：:|]\s*/,''));
- return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot()};
+ return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
 }
 export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='world'}={}){
  check(plain(proposal)&&typeof proposal.name==='string'&&proposal.name.trim(),'创作结果缺少名称');

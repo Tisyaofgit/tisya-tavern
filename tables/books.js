@@ -125,6 +125,14 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getConte
   check(bookAfter.entries.every(e=>changedIds.has(String(e.uid))||beforeNative.some(before=>String(before.uid)===String(e.uid))),'保存期间出现额外世界书条目，需重新核对来源');
   return {confirmed:true,status,operationId:plan.operationId,sourceArchive,bookBefore:copy(plan.bookBefore),bookAfter,changedEntries,records:definition.matrix.changes.map(c=>({tableId:c.tableId,recordId:c.recordId}))};
  }
+ async function inspectDefinitionArchive(plan){
+  check(plan?.format===ARCHIVE_PLAN_FORMAT&&plan.digest===planHash(plan),'归档计划已改变，请重新核对');
+  const names=await sourceNames();
+  if(!names.includes(plan.book))return {confirmed:false,status:'not-written',operationId:plan.operationId,book:plan.book};
+  const entries=await sourceEntries(plan.book);
+  if(!entries.some(e=>readMatrixDefinition(e)?.operationId===plan.operationId))return {confirmed:false,status:'not-written',operationId:plan.operationId,book:plan.book};
+  return archivedReceipt(plan,'recovered');
+ }
  async function commitDefinitionArchive(plan,{guard=()=>{}}={}){
   check(plan?.format===ARCHIVE_PLAN_FORMAT&&plan.digest===planHash(plan),'归档计划已改变，请重新预览');validateDefinitionChanges(plan.definition.matrix.changes,plan.schema);assertDefinitionIntegrity(plan.definition);check(!locks.has(plan.book),'这本世界书正在保存');locks.set(plan.book,true);let attempted=false;
   try{
@@ -143,5 +151,5 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getConte
    throw Object.assign(new Error((receipt.confirmed?'世界书定义已保存；后续步骤未完成：':'世界书归档未完成：')+error.message,{cause:error}),{archivePlan:copy(plan),archiveReceipt:receipt});
   }finally{locks.delete(plan.book);}
  }
- return {read,write,create,bindOrigin,cardBooks,materials,originNames,listSources,readSource,prepareDefinitionArchive,commitDefinitionArchive,names:sourceNames,available:()=>{try{helper();return true;}catch{return false;}}};
+ return {read,write,create,bindOrigin,cardBooks,materials,originNames,listSources,readSource,prepareDefinitionArchive,inspectDefinitionArchive,commitDefinitionArchive,names:sourceNames,available:()=>{try{helper();return true;}catch{return false;}}};
 }

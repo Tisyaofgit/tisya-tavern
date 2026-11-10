@@ -12,12 +12,12 @@ const clone=structuredClone;
 function fixture(){
  const ctx={chatId:'one',characterId:0,characters:[{avatar:'a',name:'甲'}],chat:[],chatMetadata:{},extensionSettings:{},chatCompletionSettings:{temp_openai:1.37,stream_openai:true,send_if_empty:'继续'},ToolManager:{RECURSE_LIMIT:5}};
  const data=emptyConfig();data.worlds[worldKey(ctx)]=defaultWorld();ctx.extensionSettings[KEY]=data;
- let writes={native:0,matrix:0},failure=null,response=null,lastInput=null,ui={联系人分组:{},动态效果:true},hold=null,transform=null;
- const store=createStore({getContext:()=>ctx,persist:async()=>{writes.native++;if(failure==='native')throw Error('native response lost');return true;}});
+ let writes={native:0,matrix:0},failure=null,response=null,lastInput=null,ui={联系人分组:{},动态效果:true},hold=null,nativeHold=null,transform=null;
+ const store=createStore({getContext:()=>ctx,persist:async()=>{writes.native++;if(nativeHold)await nativeHold;if(failure==='native')throw Error('native response lost');return true;}});
  const matrix=createConfiguration({getContext:()=>ctx,persist:async()=>{writes.matrix++;if(hold)await hold;if(failure==='matrix')throw Error('matrix response lost');return true;}});
  const interfaces={read:()=>interfaceSnapshot(ui),save:async args=>{assert.equal(args.expected,interfaceSnapshot(ui).stamp);await store.save(args.data,args.revision,args.key);ui=clone(args.value);}};
  const assistant=createTableAssistant({store,matrixConfig:matrix,getContext:()=>ctx,interfaceConfig:interfaces,review:async()=>({rows:[],history:[],chatStamp:historySignature(ctx)}),run:fn=>fn(new AbortController().signal),getChoices:()=>({connections:[{id:'native',name:'原生'}],presets:['custom']}),call:async input=>{lastInput=input;const raw=response??filled(input,transform??[]);if(typeof raw==='function')return raw(input);return raw;}});
- return {ctx,store,matrix,assistant,interfaces,writes,input:()=>lastInput,setEdits:edits=>transform=edits,setResponse:r=>response=r,fail:v=>failure=v,hold:p=>hold=p,setUI:v=>ui=v};
+ return {ctx,store,matrix,assistant,interfaces,writes,input:()=>lastInput,setEdits:edits=>transform=edits,setResponse:r=>response=r,fail:v=>failure=v,hold:p=>hold=p,holdNative:p=>nativeHold=p,setUI:v=>ui=v};
 }
 function filled(input,edits){
  const chosen=new Map();for(const [pattern,value]of edits){const rows=input.source.configuration.filter(row=>typeof pattern==='function'?pattern(row):pattern.test(row.label));assert.equal(rows.length,1,'Expected one editable field for '+pattern+', got '+rows.map(r=>r.label));chosen.set(rows[0].row,value);}
@@ -96,4 +96,24 @@ test('a replacement from another owner during persistence is preserved and repor
 });
 test('confirmed draft is idempotent and cannot silently change its remaining plan after a partial save',async()=>{
  const f=fixture();f.setEdits([[temp,'0']]);const d=await f.assistant.ask('温度');await f.assistant.apply(d);const count=f.writes.matrix;await f.assistant.apply(d);assert.equal(f.writes.matrix,count);d.changes[0].value=1;await assert.rejects(f.assistant.apply(d),/不能改写/);assert.equal(f.matrix.read().generation.temperature,0);
+});
+
+test('confirmed Matrix settings resume the same draft after a native pre-save busy rejection without repeating the first owner',async()=>{
+ const f=fixture();let release;f.holdNative(new Promise(resolve=>release=resolve));
+ const pending=f.store.read();pending.data.routes.global.model='prior-model';const first=f.store.save(pending.data,pending.revision,pending.key);
+ try{
+  f.setEdits([[temp,'0'],[nativeModel,'next-model']]);const draft=await f.assistant.ask('应用引擎温度和原生模型');
+  await assert.rejects(f.assistant.apply(draft),error=>error.code==='CONFIG_BUSY'&&error.configurationReceipts.matrix.revision===1&&!error.configurationReceipts.native);
+  assert.equal(draft.uncertainOwner,undefined);assert.deepEqual(f.writes,{native:1,matrix:1});assert.equal(f.matrix.read().generation.temperature,0);
+  release();await first;f.holdNative(null);
+  assert.equal(await f.assistant.apply(draft),2);assert.deepEqual(f.writes,{native:2,matrix:1});assert.equal(f.store.read().data.routes.global.model,'next-model');
+  await f.assistant.apply(draft);assert.deepEqual(f.writes,{native:2,matrix:1});
+ }finally{release();await first;}
+});
+
+test('native configuration scope and revision conflicts are typed before any persistence attempt',async()=>{
+ const f=fixture(),before=f.store.read();
+ await assert.rejects(f.store.save(before.data,before.revision,'another-world'),error=>error.code==='CONFIG_SCOPE');assert.equal(f.writes.native,0);
+ const changed=clone(before.data);changed.routes.global.model='confirmed-model';await f.store.save(changed,before.revision,before.key);
+ await assert.rejects(f.store.save(before.data,before.revision,before.key),error=>error.code==='CONFIG_CONFLICT');assert.equal(f.writes.native,1);assert.equal(f.store.read().data.routes.global.model,'confirmed-model');
 });

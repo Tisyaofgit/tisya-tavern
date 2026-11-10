@@ -55,9 +55,39 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   check(digest(current)===draft.nativeSourceDigest,'原生角色卡、关联世界书或用户人设已经变化；保留原始草稿，请重新核对来源');
   if(draft.creationTemplates){const templates=await readCreationTemplates(getContext,{task:'tableGenesis'});guard();check(digest(templates)===digest(draft.creationTemplates),'模板内容已经变化，请重新核对草稿');}
  }
+ const intentKey=operationId=>operationId+':creation-intent';
+ function frozenContent(draft){const value=clone(draft);for(const key of ['expectedRevision','archiveReceipt','archivePlan','archiveInputDigest','recovery'])delete value[key];return digest(value);}
+ function intentDraft(receipt,contextKey){
+  const source=receipt?.result?.source;if(source?.kind!=='creation-intent')return null;
+  const saved=source.draft;if(saved?.contextKey!==contextKey)return null;check(saved?.format===CREATION_CONTRACT&&saved.contextKey===contextKey&&saved.recovery?.operationId===intentKey(saved.operationId)&&saved.expectedRevision===saved.recovery.intentRevision&&source.draftDigest===digest(saved),'未完成创作记录损坏或属于另一聊天；保留原存档');return clone(saved);
+ }
+ async function recoverIntent(draft,snapshot){
+  const saved=intentDraft(snapshot.state.runtime?.receipts?.[intentKey(draft.operationId)],snapshot.contextKey);
+  if(!saved)return false;
+  check(frozenContent(saved)===frozenContent(draft),'已开始保存的创作草稿不能更换内容，请继续同一次提交');
+  Object.assign(draft,{expectedRevision:saved.expectedRevision,archivePlan:saved.archivePlan,archiveInputDigest:saved.archiveInputDigest,recovery:saved.recovery});
+  if(sourceBooks?.inspectDefinitionArchive){try{draft.archiveReceipt=await sourceBooks.inspectDefinitionArchive(draft.archivePlan);}catch(error){draft.archiveReceipt={confirmed:false,status:'unknown',operationId:draft.operationId,error:error.message};error.archiveReceipt=clone(draft.archiveReceipt);error.draft=clone(draft);throw error;}}
+  return true;
+ }
+ async function pending(){
+  const guard=scope(),snapshot=await database.read();guard();if(!snapshot)return null;
+  const receipts=snapshot.state.runtime?.receipts??{},unfinished=[];
+  for(const receipt of Object.values(receipts)){const saved=intentDraft(receipt,snapshot.contextKey);if(saved&&!receipts[saved.operationId])unfinished.push(saved);}
+  check(unfinished.length<=1,'当前聊天有多份未完成创作，请先核对存档');if(!unfinished.length)return null;
+  const saved=unfinished[0];try{await recoverIntent(saved,snapshot);}catch(error){if(!saved.archiveReceipt)throw error;}guard();return saved;
+ }
+ async function persistIntent(draft,snapshot){
+  const receipts=snapshot.state.runtime?.receipts??{};if(receipts[intentKey(draft.operationId)])return;
+  for(const receipt of Object.values(receipts)){const saved=intentDraft(receipt,snapshot.contextKey);check(!saved||receipts[saved.operationId]||saved.operationId===draft.operationId,'已有未完成创作，请先继续该草稿');}
+  const intentRevision=snapshot.revision+1,saved={...clone(draft),expectedRevision:intentRevision,recovery:{kind:'creation-intent',operationId:intentKey(draft.operationId),baseRevision:snapshot.revision,intentRevision}};
+  const result=await database.commit({operationId:intentKey(draft.operationId),expectedRevision:snapshot.revision,contextKey:draft.contextKey,changes:[],source:{kind:'creation-intent',draft:saved,draftDigest:digest(saved)}});
+  const confirmed=intentDraft(result?.state?.runtime?.receipts?.[intentKey(draft.operationId)],draft.contextKey);check(result?.contextKey===draft.contextKey&&confirmed,'创作保存意图尚未获回读确认；未开始写入世界书');
+  Object.assign(draft,{expectedRevision:confirmed.expectedRevision,recovery:confirmed.recovery});
+ }
  async function draft(goal,{kind='world',mode='extend',source=null,destination,signal}={}){
   assertIdle();check(typeof goal==='string'&&goal.trim(),'请填写创作要求');check(['world','character'].includes(kind)&&['extend','revise'].includes(mode),'创作类型无效');
   const guard=scope(signal),explicitSource=clone(source);
+  if(sourceBooks)check(!await pending(),'当前聊天有未完成创作，请先继续保存原草稿');guard();
   await ensureDatabase();guard();const snapshot=await database.read();guard();check(snapshot,'请先打开聊天并建立表单');
   const sources=await nativeSources(guard),templates=mode==='extend'?await readCreationTemplates(getContext,{task:'tableGenesis'}):null;guard();
   const operationId='creation:'+crypto.randomUUID(),sheets=prepareCreationSheets(snapshot,{kind,mode,operationId});
@@ -82,6 +112,7 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
   return {snapshot,proposal,guard};
  }
  async function save(draft,{destination=draft?.destination}={}){
+  if(sourceBooks){const initial=await database.read();check(initial?.contextKey===draft?.contextKey,'创作草稿属于另一聊天');await recoverIntent(draft,initial);}
   const {proposal,snapshot,guard}=await validate(draft);guard();
   if(sourceBooks&&snapshot.revision!==draft.expectedRevision)check(!!snapshot.state.runtime?.receipts?.[draft.operationId],'表单已被另一页面更新；来源书尚未写入，请刷新后重试');
   const source={kind:'creation',name:proposal.name,goal:draft.goal,binding:proposal.matrix.binding??null,explicitSource:clone(draft.source),nativeSources:clone(draft.nativeSources),nativeSourceDigest:draft.nativeSourceDigest,templateDigest:draft.creationTemplates?digest(draft.creationTemplates):null};
@@ -90,10 +121,11 @@ export function createMatrixCreator({database,getContext,request,sourceBooks,rea
    if(sourceBooks){const archiveSource={...(plain(draft.source)?clone(draft.source):{}),creation:clone(source)},archiveInput={operationId:draft.operationId,kind:draft.kind,mode:draft.mode,name:proposal.name,summary:proposal.summary,changes:proposal.matrix.changes,binding:proposal.matrix.binding??null,destination,source:archiveSource,schema:snapshot.state.schema};archiveInputDigest=digest(archiveInput);
     if(draft.archiveInputDigest&&draft.archiveInputDigest!==archiveInputDigest){check(draft.archiveReceipt?.confirmed===false&&draft.archiveReceipt.status==='not-written','已写入或尚未确认写入结果的归档计划不能更换内容，请完成同一次提交');delete draft.archivePlan;delete draft.archiveReceipt;delete draft.archiveInputDigest;}
     archivePlan=draft.archiveInputDigest===archiveInputDigest&&draft.archivePlan?draft.archivePlan:await sourceBooks.prepareDefinitionArchive(archiveInput);guard();draft.archivePlan=clone(archivePlan);draft.archiveInputDigest=archiveInputDigest;
+    await persistIntent(draft,snapshot);guard();
     archiveReceipt=await sourceBooks.commitDefinitionArchive(archivePlan,{guard});check(archiveReceipt?.confirmed===true,'来源书归档尚未获回读确认');source.sourceArchive=clone(archiveReceipt.sourceArchive);draft.archiveReceipt=clone(archiveReceipt);guard();}
    const saved=await database.commit({operationId:draft.operationId,expectedRevision:draft.expectedRevision,contextKey:draft.contextKey,changes:proposal.matrix.changes,source});return {...saved,...(archiveReceipt?{archiveReceipt,sourceArchive:clone(archiveReceipt.sourceArchive)}:{})};
-  }catch(error){archivePlan??=error.archivePlan;archiveReceipt??=error.archiveReceipt;if(archivePlan){error.archivePlan=clone(archivePlan);draft.archivePlan=clone(archivePlan);}if(archiveReceipt){error.archiveReceipt=clone(archiveReceipt);draft.archiveReceipt=clone(archiveReceipt);if(archiveReceipt.confirmed&&archiveInputDigest)draft.archiveInputDigest=archiveInputDigest;}throw error;}
+  }catch(error){archivePlan??=error.archivePlan;archiveReceipt??=error.archiveReceipt;if(archivePlan){error.archivePlan=clone(archivePlan);draft.archivePlan=clone(archivePlan);}if(!archiveReceipt&&archivePlan)archiveReceipt={confirmed:false,status:'not-written',operationId:draft.operationId};if(archiveReceipt){error.archiveReceipt=clone(archiveReceipt);draft.archiveReceipt=clone(archiveReceipt);if(archiveReceipt.confirmed&&archiveInputDigest)draft.archiveInputDigest=archiveInputDigest;}error.draft=clone(draft);throw error;}
  }
  function form(draft){return draft.proposal.matrix.changes.map(change=>{const schema=draft.schema?.[change.tableId];return {tableId:change.tableId,recordId:change.recordId,label:schema?.label??change.tableId,name:change.values.name??change.values.label??'',fields:Object.entries(change.values).map(([key,value])=>({key,label:schema?.fields?.find(f=>f.key===key)?.label??key,type:schema?.fields?.find(f=>f.key===key)?.type??'TEXT',value:clone(value),state:change.states?.[key]??'known'}))};});}
- return {draft,validate,save,form};
+ return {draft,validate,save,form,pending};
 }

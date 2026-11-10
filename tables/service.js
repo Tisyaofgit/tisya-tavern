@@ -49,10 +49,12 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  let busy=false,controller=null,jobScope=null,latest=null,lastStyleAudit=null,progress=null,pendingFork=null,boundWorld=getContext().chatId?store.read().key:null;const jobs=[],parsedNative=new Map(),worldbook=createWorldbookProjection({getContext});
  let archiveChanged=false;const archiveListeners=new Set();
  let onePassPending=null;
- const rawBookWrite=books.write;
+ function assertLegacyLedger(){check(!matrixDatabase,'此旧账本写入入口已退出当前系统；请使用缇斯亚助手的统一表单或现有存档迁移入口。');}
+ const rawBookWrite=books.write,rawBookCreate=books.create,rawBindOrigin=books.bindOrigin;
  // Every service writer (including conditions, imports and edits) publishes the
  // same disposable reading projection alongside the authoritative journal.
- books={...books,async write(snapshot,next,guard=()=>{}){
+ books={...books,async create(...args){assertLegacyLedger();return rawBookCreate(...args);},async bindOrigin(...args){assertLegacyLedger();return rawBindOrigin(...args);},async write(snapshot,next,guard=()=>{}){
+  assertLegacyLedger();
   if(next.kind!=='session'||!next.origin){const result=await rawBookWrite(snapshot,next,guard);archiveChanged=true;return result;}
   const origin=await books.read(next.origin),projection=await storySources(getContext().chat,'normal',projectToolTurns);guard();
   const decorated=copy(next);decorated.archiveView=assembleArchiveBook(origin,decorated,projection.chain);
@@ -70,7 +72,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
  function contextChanged(){const next=getContext().chatId?store.read().key:null;if(next===boundWorld)return false;boundWorld=next;clear({reason:'会话已切换，旧表单任务已停止'});return true;}
  function capture(){const snapshot=store.read(),chat=stampChat(getContext()),signal=controller?.signal;return {...snapshot,settings:tableSettings(snapshot.world),chat,guard(){signal?.throwIfAborted();const now=store.read();check(now.key===snapshot.key&&now.revision===snapshot.revision&&stampChat(getContext())===chat,'聊天、候选或配置已改变，旧辅助结果未提交到当前进度');}};}
  async function load(c,type='normal'){
-  check(!matrixDatabase,'此旧账本写入入口已退出当前系统；请使用缇斯亚助手的统一表单或现有存档迁移入口。');historyGroups(getContext().chat,projectToolTurns);if(!c.settings.originBook||!c.settings.sessionBook){await initializeCaptured(c);Object.assign(c,capture());}const origin=await books.read(c.settings.originBook),session=await books.read(c.settings.sessionBook);c.guard();check(origin.data.kind==='origin'&&session.data.kind==='session','原点书／会话存档类型不匹配');check(session.data.owner===c.key,'此存档属于另一会话；请为当前会话创建独立存档');const projection=await storySources(getContext().chat,type,projectToolTurns),chain=projection.chain;c.guard();assertStoryLedger(origin.data,session.data,projection);const view=withGlobalPreferences(project(origin.data,session.data,chain.map(s=>s.key)),c.data.全局偏好);return {origin,session,chain,view};}
+  assertLegacyLedger();historyGroups(getContext().chat,projectToolTurns);if(!c.settings.originBook||!c.settings.sessionBook){await initializeCaptured(c);Object.assign(c,capture());}const origin=await books.read(c.settings.originBook),session=await books.read(c.settings.sessionBook);c.guard();check(origin.data.kind==='origin'&&session.data.kind==='session','原点书／会话存档类型不匹配');check(session.data.owner===c.key,'此存档属于另一会话；请为当前会话创建独立存档');const projection=await storySources(getContext().chat,type,projectToolTurns),chain=projection.chain;c.guard();assertStoryLedger(origin.data,session.data,projection);const view=withGlobalPreferences(project(origin.data,session.data,chain.map(s=>s.key)),c.data.全局偏好);return {origin,session,chain,view};}
  async function currentRuleSources(c){const context=getContext(),card=context.characters?.[context.characterId],entries=card?.avatar?await books.materials(card.avatar):[];c.guard();return ruleSources(card,entries);}
  async function selectedRulePolicy(c,{requireResolved=true}={}){if(!c.settings.sessionBook)return null;const session=await books.read(c.settings.sessionBook);c.guard();check(session.data.kind==='session'&&session.data.owner===c.key,'规则选择属于另一会话，请重新绑定当前存档');if(!session.data.ruleReview)return null;return rulePolicy(session.data.ruleReview,await currentRuleSources(c),{requireResolved});}
  async function reviewCardRules({force=false}={}){return exclusive(async signal=>{const c=capture(),loaded=await load(c),source=await currentRuleSources(c),old=loaded.session.data.ruleReview;if(!force&&old?.fingerprint===source.fingerprint)return {review:copy(old),sessionRevision:loaded.session.data.revision,stale:false};const proposal=await invoke('ruleReview',{ruleSources:source},c,signal),review=validateRuleReview(proposal,source);check((await currentRuleSources(c)).fingerprint===source.fingerprint,'校对期间原卡已变化，请重新校对');const next=copy(loaded.session.data);next.revision++;next.ruleReview=review;if(old){next.ruleReviewHistory??=[];next.ruleReviewHistory.push(copy(old));}await books.write(loaded.session,next,c.guard);return {review:copy(review),sessionRevision:next.revision,stale:false};});}
@@ -441,6 +443,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   return exclusive(async signal=>{const c=capture();try{requireNativeBridge(c);if(c.settings.injection==='worldbook')check(worldbook.available(),'当前宿主缺少原生世界书扫描事件，请更新宿主或选择“直接组装”');let loaded=await load(c,type);loaded=await archiveLoaded(c,loaded,signal);loaded=await progressLoaded(c,loaded,signal);const result=await assemble(c,loaded,type,signal);c.guard();setPrompt(result.text,()=>{try{c.guard();return true;}catch{return false;}});return result;}catch(e){status('表单推进','失败',e.message);worldbook.clear();setPrompt('');latest=null;throw e;}},{scope:'generation'});
  }
  async function initializeCaptured(c,{originBook=c.settings.originBook,sessionBook=c.settings.sessionBook,fresh=false,removeMissing=[]}={}){
+  assertLegacyLedger();
   const context=getContext(),card=context.characters?.[context.characterId]?.avatar;check(card&&!context.groupId,'请先在单角色卡会话中建立原点档案；群组复用需明确选择角色来源');
   const suffix=(await digest(c.key)).slice(0,12),originSuffix=(await digest(card)).slice(0,12),freshSuffix=fresh?' · 重建 '+crypto.randomUUID():'';let origin,session;c.guard();
   if(originBook)origin=await books.read(originBook);else{
