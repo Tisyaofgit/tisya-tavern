@@ -585,3 +585,32 @@ test('pet life entry initializes the selected Matrix profile in the original pho
   const service=await f.w.Tisya.phone.service(),life=service.readLife();assert.equal(life.state.wallet.accounts[0].balance,12345);assert.equal(life.binding.carrier.id,'a.png');assert.equal(life.binding.character.entityId,'ui-person');assert.equal(f.w.phoneOptions.getLifeDesktop().apps.length,2);const after=await f.w.Tisya.matrix.readDatabase();assert.equal(after.state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);assert.equal(Object.keys(after.state.tables.T_DYN_CURRENCY_BALANCES).length,1);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
  }finally{await f.w.happyDOM.abort();}
 });
+
+
+test('canonical phone history events refresh the cached phone without legacy metadata',async()=>{
+ const f=await setup();
+ try{
+  await bindMatrixPhoneFixture(f);const service=await f.w.Tisya.phone.service();await f.w.Tisya.phone.initializeLife();
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);
+  assert.equal(service.readLife().state.wallet.accounts[0].balance,12345);
+  f.ctx.chat.push({is_user:true,mes:'下一时点'});
+  const db=await f.w.Tisya.matrix.readDatabase();
+  await f.w.Tisya.matrix.commitDatabase({contextKey:db.contextKey,expectedRevision:db.revision,operationId:'phone-later-balance',changes:[{tableId:'T_DYN_CURRENCY_BALANCES',recordId:'cash',values:{balance:100}}]});
+  await service.refresh();assert.equal(service.readLife().state.wallet.accounts[0].balance,10000);
+  f.ctx.chat.pop();await f.emit('deleted');
+  for(let i=0;i<100&&service.readLife().state.wallet.accounts[0].balance!==12345&&!f.errors.length;i++)await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(service.readLife().state.wallet.accounts[0].balance,12345);
+  assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('history events leave a conversation without a phone database uninitialized',async()=>{
+ const f=await setup();
+ try{
+  for(const event of ['edited','deleted','swiped','chat'])await f.emit(event);
+  await new Promise(resolve=>setTimeout(resolve,30));
+  assert.equal(await f.w.Tisya.matrix.peekDatabase(),null);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
