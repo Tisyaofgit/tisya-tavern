@@ -34,7 +34,7 @@ test('story overrides inherit global choices and survive UI save, second save an
  const root=w.document.createElement('div');w.document.body.append(root);let ui=mountMatrixConfiguration(w.document,root,{service:{config:store}});await ui.ready;
  assert.equal(root.querySelectorAll('[data-preference-group]').length,41);
  let select=root.querySelector('[data-preference-group="N02"] select');assert.equal(select.value,'N02-B');select.value='N02-C';select.dispatchEvent(new w.Event('change'));
- button(root,'保存游玩偏好').click();await tick();select=root.querySelector('[data-preference-group="N02"] select');select.value='N02-D';select.dispatchEvent(new w.Event('change'));button(root,'保存游玩偏好').click();await tick();assert.equal(store.read().story.play.choices.N02,'N02-D');
+ button(root,'保存').click();await tick();select=root.querySelector('[data-preference-group="N02"] select');select.value='N02-D';select.dispatchEvent(new w.Event('change'));button(root,'保存').click();await tick();assert.equal(store.read().story.play.choices.N02,'N02-D');
  ui.dispose();const reopened=createConfiguration({getContext:()=>ctx,persist:async()=>true});ui=mountMatrixConfiguration(w.document,root,{service:{config:reopened}});await ui.ready;assert.equal(root.querySelector('[data-preference-group="N02"] select').value,'N02-D');
  ctx.chatId='other';assert.equal(effectivePreferences(reopened.read()).choices.N02,'N02-B');ctx.chatId='story';
  const bad=reopened.read();bad.playDefaults.parameters.min_length=100;bad.story.play.parameters={max_length:50};await assert.rejects(()=>reopened.save(bad),/范围/);

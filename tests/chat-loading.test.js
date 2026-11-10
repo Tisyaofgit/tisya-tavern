@@ -13,7 +13,7 @@ test('failed or conflicting count writes never claim success or overwrite newer 
 test('settings draft, busy leave guard, reload and bounded-mode explanation',async()=>{
  const w=new Window(),d=w.document,native={chat_truncation:100};let finish;
  const c=createChatLoadingController({powerUser:native,persist:()=>new Promise(r=>finish=r),isBounded:()=>true,clearCache:async()=>{}}),v=mountChatLoadingSettings(d,d.body,{controller:c}),button=text=>[...v.root.querySelectorAll('button')].find(n=>n.textContent===text);
- assert.match(v.root.textContent,/虚拟滚动/);button('设为 10 条').click();assert.equal(native.chat_truncation,100);assert.equal(v.requestLeave().allowed,false);button('保存条数').click();assert.equal(v.requestLeave().allowed,false);assert.equal(button('清理显示缓存').disabled,true);finish(true);await v.settled();assert.equal(v.requestLeave().allowed,true);assert.equal(native.chat_truncation,10);v.dispose();
+ assert.match(v.root.textContent,/虚拟滚动/);button('设为 10 条').click();assert.equal(native.chat_truncation,100);assert.equal(v.requestLeave().allowed,false);button('保存').click();assert.equal(v.requestLeave().allowed,false);assert.equal(button('清理显示缓存').disabled,true);finish(true);await v.settled();assert.equal(v.requestLeave().allowed,true);assert.equal(native.chat_truncation,10);v.dispose();
  const again=mountChatLoadingSettings(d,d.body,{controller:c});assert.equal(again.root.querySelector('input').value,'10');again.dispose();await w.happyDOM.abort();
 });
 test('clear errors remain visible and late completion after disposal cannot revive a panel',async()=>{

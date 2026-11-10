@@ -86,11 +86,16 @@ export const replyControlsCSS=`
 .tisya-reader-actions .action::after{display:none}
 .tisya-reader-actions .action .number{position:absolute;left:-1px;top:-11px;font:italic 55px/1 Georgia,serif;color:#d3c48b75;padding:0;letter-spacing:-.09em;z-index:2;text-shadow:0 3px 18px #001d17}
 .tisya-reader-actions .action:nth-child(even) .number{left:auto;right:6px}
-.tisya-reader-actions .action-content{display:flex;flex-direction:column;gap:0;position:relative;z-index:1;min-width:0}
-.tisya-reader-actions .action-type{position:absolute;left:8px;top:84px;writing-mode:vertical-rl;border:0;border-left:1px solid #d4bd7770;border-radius:0;background:none;padding:0 0 0 5px;letter-spacing:.25em;font-size:11px;color:#d6c793}
-.tisya-reader-actions .action:nth-child(even) .action-type{left:auto;right:8px;border-left:0;border-right:1px solid #d4bd7770;padding:0 5px 0 0}
-.tisya-reader-actions .action .text{position:relative;isolation:isolate;display:block;padding:64px 42px 62px 58px;font-size:16px;line-height:1.85;color:#e4e6cf;overflow-wrap:anywhere}
-.tisya-reader-actions .action-possibility{position:relative;align-self:flex-end;max-width:85%;margin:-6px 16px 4px 30px;padding:9px 0 0 22px;border:0;color:#b8c5ad;font-size:11px;line-height:1.65;text-align:left}
+/* Reserve a separate track for the vertical label, including the artwork's
+   6px overhang. Long labels take part in row sizing instead of covering a card. */
+.tisya-reader-actions .action-content{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:0 10px;position:relative;z-index:1;min-width:0}
+.tisya-reader-actions .action:nth-child(even) .action-content{grid-template-columns:minmax(0,1fr) max-content}
+.tisya-reader-actions .action-type{position:relative;grid-column:1;grid-row:1;justify-self:start;align-self:start;margin-top:84px;writing-mode:vertical-rl;border:0;border-left:1px solid #d4bd7770;border-radius:0;background:none;padding:0 0 0 5px;letter-spacing:.25em;font-size:11px;color:#d6c793}
+.tisya-reader-actions .action:nth-child(even) .action-type{grid-column:2;justify-self:end;border-left:0;border-right:1px solid #d4bd7770;padding:0 5px 0 0}
+.tisya-reader-actions .action .text{position:relative;grid-column:2;grid-row:1;align-self:start;isolation:isolate;display:block;padding:64px 42px 62px 58px;font-size:16px;line-height:1.85;color:#e4e6cf;overflow-wrap:anywhere}
+.tisya-reader-actions .action:nth-child(even) .text{grid-column:1}
+.tisya-reader-actions .action .text:first-child{grid-column:1/-1}
+.tisya-reader-actions .action-possibility{position:relative;grid-column:1/-1;grid-row:2;justify-self:end;align-self:start;max-width:85%;margin:0 16px 4px 30px;padding:9px 0 0 22px;border:0;color:#b8c5ad;font-size:11px;line-height:1.65;text-align:left}
 .tisya-reader-actions .action-possibility::before{content:"↳";position:absolute;left:0;top:6px;color:#cdb985;font-size:18px}
 .tisya-reader-actions .action-possibility-label{font-size:10px;color:#cfbd8a}
 .tisya-reader-actions .action-flare{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;mask:url("${actionPanel}") center/100% 100% no-repeat;-webkit-mask:url("${actionPanel}") center/100% 100% no-repeat;background:radial-gradient(ellipse at center,#e9d89c77,transparent 66%);transform-origin:center}
@@ -101,7 +106,7 @@ export const replyControlsCSS=`
 .tisya-reader-actions .action.selected .action-type{background:none;border-color:#d9c78e}
 .tisya-reader-actions .action:focus-visible{outline:1px dashed #d9c78e;outline-offset:5px}
 @media(hover:hover){.tisya-reader-actions .action:hover:not(:disabled){border:0;box-shadow:none;filter:brightness(1.13)}}
-@media(max-width:360px){.tisya-reader-actions .action{width:calc(100% - 18px);margin-right:18px;padding:0}.tisya-reader-actions .action:nth-child(even){margin:0 0 0 18px;padding:0}.tisya-reader-actions .action .text{font-size:15px;padding:60px 36px 58px 52px}.tisya-reader-actions .action .number{font-size:47px}.tisya-reader-actions .action-type{left:6px}.tisya-reader-actions .action:nth-child(even) .action-type{right:6px}}
+@media(max-width:360px){.tisya-reader-actions .action{width:calc(100% - 18px);margin-right:18px;padding:0}.tisya-reader-actions .action:nth-child(even){margin:0 0 0 18px;padding:0}.tisya-reader-actions .action .text{font-size:15px;padding:60px 36px 58px 52px}.tisya-reader-actions .action .number{font-size:47px}}
 @media(prefers-reduced-motion:reduce){.tisya-reader-actions .action,.tisya-reader-actions .action .text::before{transition:none}}
 .heart-bubble{white-space:normal;overflow-wrap:anywhere;text-align:left}.heart-mood[hidden]{display:none!important}.heart-mood[role=status]{height:auto;max-width:5em;font-size:11px;overflow-wrap:anywhere}.heart-emotion{display:block;width:100%;height:100%;object-fit:contain}.reply-checks{margin:12px 0;min-width:0}.reply-checks>.ledger-section>summary{font-size:14px;min-height:44px;padding:10px 8px}.reply-checks .audit-bead summary{white-space:normal!important}.reply-checks p{overflow-wrap:anywhere}
 `;

@@ -3,7 +3,7 @@ import {storyAvatar} from './identity.mjs';
 import {selectControl} from './form-controls.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
 
-export function renderPreferences(document,body,{config,changed,save,button,field,input,el,onIdentity,historyLimit}){
+export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit}){
  const option=(label,value)=>{const n=document.createElement('option');n.textContent=label;n.value=value;return n;};
  let scope='story';
  const intro=el('p','选择叙事、文风、情节和人物表现。沿用预设会保留当前完整原文；明确选择后，下轮请求只在对应位置写入所选效果。');
@@ -14,7 +14,7 @@ export function renderPreferences(document,body,{config,changed,save,button,fiel
  const chosen=()=>scope==='global'?config.playDefaults??{}:effectivePreferences(config);
  const set=(id,value)=>{const target=owner();target.choices??={};target.choices[id]=value;changed();};
  function draw(){
-  area.replaceChildren();const value=chosen(),sections=new Map(),avatar=storyAvatar(config),binding=avatar.binding;const summary=el('fieldset');summary.dataset.avatarSummary='';summary.append(el('legend','主控化身绑定'),el('p',binding?'当前角色：'+(config.story.userName||'')+' · '+binding.book+' / '+binding.uid:avatar.mode==='bound'?'尚未选择角色档案':avatar.mode==='ensemble'?'无主控纯群像 / 场外导演模式':avatar.mode==='generic'?'通用':'不绑定角色'),button('前往用户身份选择档案',onIdentity));area.append(summary);
+  area.replaceChildren();const value=chosen(),sections=new Map(),avatar=storyAvatar(config),binding=avatar.binding;const summary=el('fieldset');summary.dataset.avatarSummary='';summary.append(el('legend','主控化身绑定'),el('p',binding?'当前角色：'+(config.story.userName||'')+' · '+binding.book+' / '+binding.uid:avatar.mode==='bound'?'尚未选择角色档案':avatar.mode==='ensemble'?'无主控纯群像 / 场外导演模式':avatar.mode==='generic'?'通用':'不绑定角色'),navigationButton('前往用户身份选择档案',onIdentity));area.append(summary);
   for(const group of PREFERENCE_GROUPS){
    if(['W','N01'].includes(group.id))continue;
    let section=sections.get(group.section);
@@ -40,17 +40,20 @@ export function renderPreferences(document,body,{config,changed,save,button,fiel
   }
 
   const history=el('fieldset');history.append(el('legend','历史可见记忆条数'));const limit=input(value.parameters?.history_messages??historyLimit?.()??50,v=>{const target=owner();target.parameters??={};if(v==='')delete target.parameters.history_messages;else target.parameters.history_messages=Number(v);changed();},{type:'number'});limit.min='0';limit.step='1';limit.setAttribute('aria-label','历史聊天条数（当前输入始终保留）');history.append(field('历史聊天条数（当前输入始终保留）',limit));area.append(history);
-  area.append(params,button('保存游玩偏好',save));
+  area.append(params);
  }
  scopes.onchange=()=>{scope=scopes.value;draw();};draw();
 }
 
-export function renderResources(document,body,{config,changed,save,button,field,input,el}){
+export function renderResources(document,body,{config,changed,button,field,input,el}){
  body.append(el('p','在这里登记资源。全部资源自动汇入同一段多媒体提示词，AI 用 @rendering{ID} 引用。'));
  const list=el('div');body.append(list);
  function draw(){list.replaceChildren();for(const resource of renderingResources(config.resources??[])){const row=el('p',resource.id+' · '+resource.name+' · '+resource.kind+' · '+RESOURCE_SLOTS[resource.slot]);list.append(row);}}
- draw();const draft={id:'',name:'',kind:'image',slot:'body',url:''};
- for(const [key,label]of [['id','参数 ID'],['name','资源含义'],['url','资源地址']]){const control=input('',v=>draft[key]=v);control.setAttribute('aria-label',label);body.append(field(label,control));}
- body.append(field('资源类型',input(draft.kind,v=>draft.kind=v,{options:['image','audio','video','emotion']})),field('对应位置',input(draft.slot,v=>draft.slot=v,{options:Object.keys(RESOURCE_SLOTS)})));
- body.append(button('登记并保存资源',async()=>{const resources=[...(config.resources??[]),{...draft}];renderingResources(resources);config.resources=resources;changed();await save();draw();}));
+ draw();const initial={id:'',name:'',kind:'image',slot:'body',url:''},draft={...initial},controls={};
+ const isDirty=()=>Object.keys(initial).some(key=>draft[key]!==initial[key]);
+ const nextResources=()=>{const resources=[...(config.resources??[]),{...draft}];renderingResources(resources);return resources;};
+ for(const [key,label]of [['id','参数 ID'],['name','资源含义'],['url','资源地址']]){const control=input('',value=>draft[key]=value);control.setAttribute('aria-label',label);controls[key]=control;body.append(field(label,control));}
+ for(const [key,label,options]of [['kind','资源类型',['image','audio','video','emotion']],['slot','对应位置',Object.keys(RESOURCE_SLOTS)]]){const control=input(draft[key],value=>draft[key]=value,{options});control.setAttribute('aria-label',label);controls[key]=control;body.append(field(label,control));}
+ body.append(button('加入资源列表',()=>{config.resources=nextResources();Object.assign(draft,initial);for(const [key,control]of Object.entries(controls)){control.value=draft[key];control.tisyaRefresh?.();}changed();draw();}),el('small','加入列表后仍是本页草稿，点击底部“保存”才会生效。也可填写完整一条资源后直接保存。'));
+ return {isDirty,prepareSave:()=>isDirty()?{...config,resources:nextResources()}:config};
 }

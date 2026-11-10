@@ -3,8 +3,8 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..'),output=process.env.TISYA_ACTION_EVIDENCE;
 const rows=[
- ['调查','提起铜铃，对着窗边的光看清裂纹，再问宋遥上次修补留下的位置。','有机会发现旧修补的痕迹，判断这次异响是否来自同一处。'],
- ['交流','把旧工具放回掌心，问陆舟为什么一直留着它。','可能让一句玩笑接上共同经历，打开尚未说透的话题。'],
+ ['调查线索·辨认铜铃留下的旧裂纹','提起铜铃，对着窗边的光看清裂纹，再问宋遥上次修补留下的位置。','有机会发现旧修补的痕迹，判断这次异响是否来自同一处。'],
+ ['交流往事·确认上一次共同修补的经历','把旧工具放回掌心，问陆舟为什么一直留着它。','可能让一句玩笑接上共同经历，打开尚未说透的话题。'],
  ['移动','绕到门廊听一听雨声，顺手查看等在檐下的送货人。','让室内谈话与门外的行程发生交集。'],
  ['休整','靠在窗边喝口热茶，等手指暖起来再试一次。','给紧张的修理过程留出停顿，也可能让人物换一种方式接话。']
 ];
@@ -23,12 +23,14 @@ const server=http.createServer((req,res)=>{
   for(const kind of ['message','reader'])for(const width of [320,360,430,900]){
    await page.setViewportSize({width,height:950});await page.evaluate(kind=>window.openView(kind),kind);
    const cards=page.locator('.tisya-reader-actions .action');assert.equal(await cards.count(),4);
-   const measurements=await cards.evaluateAll(cards=>cards.map(b=>{const bounds=n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};},main=b.querySelector('.text'),hint=b.querySelector('.action-possibility');return {card:bounds(b),main:bounds(main),hint:bounds(hint),type:b.querySelector('.action-type').textContent,mainSize:parseFloat(getComputedStyle(main).fontSize),hintSize:parseFloat(getComputedStyle(hint).fontSize),scroll:b.scrollWidth,client:b.clientWidth};}));
-   for(const [i,m]of measurements.entries()){assert.equal(m.type,rows[i][0]);assert(m.card.left>=0&&m.card.right<=width+1,JSON.stringify(m));assert(m.hint.top>=m.main.bottom&&m.hint.bottom<=m.card.bottom,JSON.stringify(m));assert(m.hintSize<m.mainSize);assert(m.scroll<=m.client+1);assert(m.card.height>=44);}
+   const measurements=await cards.evaluateAll(cards=>cards.map(b=>{const bounds=n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};},main=b.querySelector('.text'),hint=b.querySelector('.action-possibility'),label=b.querySelector('.action-type'),art=getComputedStyle(main,'::before'),rect=bounds(main);return {card:bounds(b),main:rect,hint:bounds(hint),label:bounds(label),art:{left:rect.left+parseFloat(art.left),right:rect.right-parseFloat(art.right)},type:label.textContent,mainSize:parseFloat(getComputedStyle(main).fontSize),hintSize:parseFloat(getComputedStyle(hint).fontSize),scroll:b.scrollWidth,client:b.clientWidth};}));
+   for(const [i,m]of measurements.entries()){assert.equal(m.type,rows[i][0]);assert(m.card.left>=0&&m.card.right<=width+1,JSON.stringify(m));assert(m.hint.top>=Math.max(m.main.bottom,m.label.bottom)&&m.hint.bottom<=m.card.bottom,JSON.stringify(m));assert(i%2?m.label.left>=m.art.right+2:m.label.right+2<=m.art.left,'Water artwork overlaps the side label: '+JSON.stringify(m));assert(m.label.left>=m.card.left&&m.label.right<=m.card.right+1,JSON.stringify(m));assert(m.art.left>=0&&m.art.right<=width+1,JSON.stringify(m));assert(m.hintSize<m.mainSize);assert(m.scroll<=m.client+7);assert(m.card.height>=44);}
+   // The supplied artwork intentionally overhangs its card by 6px; the page must not overflow.
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    await cards.first().locator('small').click();assert.deepEqual(await page.evaluate(()=>window.chosen.at(-1)),{text:rows[0][1],mode:'append'});assert.equal(await page.locator('#send_textarea').inputValue(),rows[0][1]);
    if(kind==='message')assert(await page.locator('.action-region img').evaluateAll(async imgs=>{await Promise.all(imgs.map(i=>i.decode()));return imgs.every(i=>i.naturalWidth>0);}));
    if(output&&kind==='message'){fs.mkdirSync(output,{recursive:true});await page.locator('.action-region').screenshot({path:path.join(output,'actions-'+width+'.png')});}
-   checks.push({kind,width,cards:measurements.length,overflow:false,smallTextBelow:true,actionOnly:true});
+   checks.push({kind,width,cards:measurements.length,overflow:false,sideLabelsClear:true,longSideLabels:true,smallTextBelow:true,actionOnly:true,measurements});
   }
   assert.deepEqual(errors,[]);const result={passed:true,browser:await browser.version(),checks,boundary:'Local Chromium, production modules/CSS and neutral fixture; not Android or installed TauriTavern.'};if(output)fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
  }finally{await browser.close();server.close();}
