@@ -1,0 +1,225 @@
+✖ non-bound identity modes preserve a legitimate selected source book (2.745892ms)
+✖ a missing source book rejects before a non-bound identity configuration is saved (0.742754ms)
+✖ source lookup that switches chats cannot save the selection into the new chat (0.428447ms)
+✔ failed new-slot creation does not block unrelated existing identities or pretend an active binding is pending (2.464764ms)
+✔ selection binds chat and stable card id while preserving history, defaults and unknown values (0.912126ms)
+✔ group selection binds only the group and keeps multi connection alternatives (0.266536ms)
+✔ selection without scope does not lock chat or alter global default (0.347958ms)
+✔ stale identity state and absent chat reject before mutation (0.246557ms)
+✔ failed chat persistence leaves a durable intent that a recreated service resumes (1.117251ms)
+✔ a context switch during settings save cannot lock the new chat (0.449228ms)
+✔ resume refuses later persona edits and preserves the recovery marker (0.403249ms)
+✔ profile editing keeps all descriptor extensions and validates stale drafts (0.508686ms)
+✔ archive binding failure retains intent and resumes with the same active identity (0.508455ms)
+✖ unconfirmed profile persistence restores its own native fields and preserves the original error (1.9102ms)
+✔ a false profile persistence receipt remains a failure even if fields already match the draft (0.291894ms)
+✔ failed profile rollback preserves concurrent values and new descriptor metadata (0.183844ms)
+✖ failed profile rollback removes only its own fields while preserving unrelated concurrent metadata (0.418131ms)
+✖ confirmed profile persistence survives a chat switch and reports the saved original scope (0.366695ms)
+✖ confirmed wish persistence is not rolled back when the chat changes after the write (0.246677ms)
+✖ failed wish rollback preserves a concurrent active description and descriptor replacement (0.341117ms)
+✖ unconfirmed wish persistence restores exact absent fields and remains retryable (0.284753ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 12
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.188552
+
+✖ failing tests:
+
+test at tests/story-identity-save.test.js:12:1
+✖ non-bound identity modes preserve a legitimate selected source book (2.745892ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - '另一本资料书'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/story-identity-save.test.js:16:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: '另一本资料书',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/story-identity-save.test.js:20:1
+✖ a missing source book rejects before a non-bound identity configuration is saved (0.742754ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/story-identity-save.test.js:21:43)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /资料来源|基点书/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/story-identity-save.test.js:24:1
+✖ source lookup that switches chats cannot save the selection into the new chat (0.428447ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/story-identity-save.test.js:26:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /聊天已切换/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:27:1
+✖ unconfirmed profile persistence restores its own native fields and preserves the original error (1.9102ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      characterId: 0,
+      characters: [
+        {
+          avatar: 'card.png'
+  ...
+      groupId: null,
+  +   name1: '未存新名',
+  -   name1: '甲',
+      powerUserSettings: {
+        default_persona: 'a.png',
+        persona_allow_multi_connections: false,
+  +     persona_description: '未存新设定',
+  -     persona_description: '甲设定',
+        persona_descriptions: {
+          'a.png': {
+            connections: [
+              {
+                id: 'card.png',
+  ...
+            ],
+  +         description: '未存新设定',
+  -         description: '甲设定',
+            unknown: {
+              empty: '',
+              flag: false,
+              zero: 0
+            }
+  ...
+        personas: {
+  +       'a.png': '未存新名',
+  -       'a.png': '甲',
+          'b.png': '乙'
+        }
+      }
+    }
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:30:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { chatId: 'one', characterId: 0, groupId: null, name1: '未存新名', characters: [ [Object] ], chatMetadata: { vendor: false }, chat: [ [Object] ], powerUserSettings: { personas: [Object], persona_descriptions: [Object], default_persona: 'a.png', persona_allow_multi_connections: false, persona_description: '未存新设定' } },
+    expected: { chatId: 'one', characterId: 0, groupId: null, name1: '甲', characters: [ [Object] ], chatMetadata: { vendor: false }, chat: [ [Object] ], powerUserSettings: { personas: [Object], persona_descriptions: [Object], default_persona: 'a.png', persona_allow_multi_connections: false, persona_description: '甲设定' } },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:44:1
+✖ failed profile rollback removes only its own fields while preserving unrelated concurrent metadata (0.418131ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '本页新名' !== '甲'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:47:39)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '本页新名',
+    expected: '甲',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:49:1
+✖ confirmed profile persistence survives a chat switch and reports the saved original scope (0.366695ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /已确认保存/. Input:
+  
+  '保存期间会话改变，请重新读取'
+  
+      at Object.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:52:10)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:51:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '保存期间会话改变，请重新读取',
+    expected: /已确认保存/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:56:1
+✖ confirmed wish persistence is not rolled back when the chat changes after the write (0.246677ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /已确认保存/. Input:
+  
+  '保存期间会话改变，请重新读取'
+  
+      at Object.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:59:10)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:58:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '保存期间会话改变，请重新读取',
+    expected: /已确认保存/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:63:1
+✖ failed wish rollback preserves a concurrent active description and descriptor replacement (0.341117ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '甲设定' !== '外部当前心愿'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:66:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '甲设定',
+    expected: '外部当前心愿',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/user-identity-service.test.js:68:1
+✖ unconfirmed wish persistence restores exact absent fields and remains retryable (0.284753ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/user-identity-service.test.js:71:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

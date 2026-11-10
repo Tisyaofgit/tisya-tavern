@@ -1,0 +1,41 @@
+✔ Matrix identity has one persistent save/cancel pair including unavailable role sources (34.339819ms)
+✔ one save commits name, wish choices and existing role binding and reads them back on reopen (23.089431ms)
+✔ identity selection is a draft until save and cancellation performs no persistence (26.116461ms)
+✔ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (37.762056ms)
+✔ cancel discards every unsaved field without changing source data or creating roles (11.643412ms)
+✔ creation requires explicit confirmation and validates the complete page before any persistent write (17.841473ms)
+✔ partial profile success preserves the rest of the draft and retry does not write the profile twice (15.498779ms)
+✔ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (24.676821ms)
+✔ concurrent configuration changes reject the entire save before changing the native profile (11.278169ms)
+✔ a chat switch during role preflight preserves drafts and cannot save them into the next chat (6.706041ms)
+✔ interrupted identity switching resumes through the same save button after reopen (21.83817ms)
+✔ unavailable role sources still allow the native identity draft to be saved (9.442489ms)
+✔ failed native profile persistence retains the complete draft and retries the same values (18.415351ms)
+✔ a confirmed profile save followed by chat change retains the receipt and blocks accidental retry in the next chat (11.351068ms)
+✔ discarding fresh edits keeps a durable pending identity recovery and still allows leaving (11.753105ms)
+✔ cancelling fresh edits does not force saving an existing legacy wish migration before leaving (12.08585ms)
+✔ a failed source read can be retried without clearing profile or creation drafts and saves to that exact source (11.356826ms)
+✔ a non-binding mode retains the explicitly selected source after save and reopen (13.367215ms)
+✔ listing does not write; role creation saves exact disabled entry and binds only this chat (4.972454ms)
+✔ failed binding retains saved role; retry reuses it without creating a default or duplicate (0.664298ms)
+✔ original persona description enters only the wish; selected original wish preset remains exact (2.40781ms)
+✔ user identity contains original wishes and creates exact core book role through its visible controls (39.412812ms)
+✔ native persona injection is disabled in the saved preset and relocated from depth or author note without changing history (0.886498ms)
+✔ binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs (2.215053ms)
+✔ legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback (0.958756ms)
+✔ empty native persona registry still displays the wish slot, opt-in W00 and every builtin wish (23.017864ms)
+✔ base and optional wishes remain absent when the original description is empty and every module is off (0.555486ms)
+✔ automatic core book preparation is idempotent and preserves existing global books and entries (0.781853ms)
+✔ preparation and selection never require or change native global worldbook activation (0.93473ms)
+✔ identity picker drafts the selection before a shared save; interrupted binding is recoverable on this page (52.836659ms)
+✔ unavailable worldbook service leaves persona switching usable and its error visible (13.624918ms)
+✔ one custom wish editor merges both existing sources exactly, persists one source and does not duplicate on partial-save retry (30.266252ms)
+✔ identity page allows its own clean return and native-manager navigation (7.273394ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 609.438448

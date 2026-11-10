@@ -1,0 +1,223 @@
+{
+  "schema": "tisya.settings-identity-validation/1",
+  "at_utc": "2026-11-10T04:03:59.128576+00:00",
+  "at_beijing": "2026-11-10T12:03:59.128576+08:00",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.10",
+  "base_commit": "b56937003765626ec45a5aacad9eb74c173889a6",
+  "scope": [
+    "Matrix身份页与兼容身份页共用底部取消修改/保存",
+    "选择暂存、整页预校验、单一离页提示",
+    "真实主设置→Matrix身份路由、混改保存/取消/重开",
+    "部分保存回执、失败重试、原点恢复、切聊天守卫"
+  ],
+  "validation": {
+    "generated_checks": 16,
+    "full_node_tests": 1542,
+    "passed": 1542,
+    "failed": 0,
+    "npm_test_exit": 0,
+    "runtime_rebuilt": true,
+    "runtime_bytes": 4199783,
+    "runtime_sha256": "496fa56928c1944a598ce3e68176ead5cc347bd6bc03c9dd59afdbbcde55731b",
+    "browser": "blocked at ordinary startup: socket() Operation not permitted; original error retained",
+    "android": "not run",
+    "real_host": "not run",
+    "real_model_calls": 0,
+    "user_live_data": "not accessed/reset"
+  },
+  "pre_fix_evidence": {
+    "matrix": "12 new core regressions failed on old implementation",
+    "shared_service": "9 of 21 failed on old implementation",
+    "legacy_scope": "same-memory successful result had wrong global default; exact command/output retained",
+    "legacy_first": "pre-service-fix test run intentionally stopped after retry remained unresolved; log not a completed suite"
+  },
+  "files": [
+    {
+      "path": "engine/identity-ui.mjs",
+      "bytes": 25227,
+      "sha256": "db738b73fe6454c5129588948bcd94618cc212b0f1d192081cf9bdc300469661"
+    },
+    {
+      "path": "engine/identity.mjs",
+      "bytes": 5663,
+      "sha256": "5f48a97426bea1532d164c006227841b3b41d144d548c78b1052ee6e16d5ff4a"
+    },
+    {
+      "path": "layout.js",
+      "bytes": 10366,
+      "sha256": "118ca1e80326b082dd344a012c708f2e320a69a308c0e7b978f3ac5687e32397"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 497,
+      "sha256": "d75ad2b0268a2525f1c9eeadac74bab1b5747a85b290abcc818cb52ae3217798"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 19475,
+      "sha256": "8ce031ed747a145e00becf2e525a6708bc48234331baede9cdda156dd917810e"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1379,
+      "sha256": "b543a454b8c13b9f183207b3e26fc2429b68f0f7857748549d51535a2a977193"
+    },
+    {
+      "path": "runtime.js",
+      "bytes": 4199783,
+      "sha256": "496fa56928c1944a598ce3e68176ead5cc347bd6bc03c9dd59afdbbcde55731b"
+    },
+    {
+      "path": "shell.css",
+      "bytes": 88969,
+      "sha256": "ffda3fe660b617835ac69d162de491aab3332fe5519c3a78617ba592c74a1bd1"
+    },
+    {
+      "path": "tables/service.js",
+      "bytes": 146445,
+      "sha256": "41171073cea2fd32b138a127d154a8db3a39074a2edb9ab2d940356ebc6b21fe"
+    },
+    {
+      "path": "tests/browser-matrix-identity.html",
+      "bytes": 2945,
+      "sha256": "8cdf587cb6d16055ebb8df9455119033cd2e8c51448e41ddc730be8cd7932569"
+    },
+    {
+      "path": "tests/matrix-identity-save.test.js",
+      "bytes": 21499,
+      "sha256": "ee3975c6688b53a64f1c914b89653d972a5e4bb9f8d3ddc6acb49266e9660847"
+    },
+    {
+      "path": "tests/matrix-identity.test.js",
+      "bytes": 18649,
+      "sha256": "b6ad9f215e0e66ada7c68986494d1149011e8f094aaae504ddeb0e90ed859798"
+    },
+    {
+      "path": "tests/persona-create-ui.test.js",
+      "bytes": 2283,
+      "sha256": "94602dde019cc89ed112b45dc4502d7818a0e08151628e31f57eb7801f471e32"
+    },
+    {
+      "path": "tests/reference/matrix-python/__pycache__/matrix_io.cpython-312.pyc",
+      "bytes": 41444,
+      "sha256": "f76995601623285d3dba7e638a4e56a79eba64ee3487bfd8f5683f24a1d3c0aa"
+    },
+    {
+      "path": "tests/reference/matrix-python/__pycache__/rule_math.cpython-312.pyc",
+      "bytes": 27639,
+      "sha256": "f8fe9066fcf125476c72f032b15cbaa1bb71a093ca8897194349c60547521ab8"
+    },
+    {
+      "path": "tests/shell.test.js",
+      "bytes": 91886,
+      "sha256": "bf59f83bc57078c3c281bb800dae147a1d045d48f9328f1b3d1832b52747c385"
+    },
+    {
+      "path": "tests/story-identity-save.test.js",
+      "bytes": 1939,
+      "sha256": "abd9d3e8eaf2e7859a2ca4cfba37349d8f414e2b2455bddde69291f827edabef"
+    },
+    {
+      "path": "tests/tables.test.js",
+      "bytes": 214641,
+      "sha256": "5d4fedb5004bb7c35516476320dfde4379cb476d3c3e14692f8d6afa446e392a"
+    },
+    {
+      "path": "tests/user-identity-origin-recovery.test.js",
+      "bytes": 6841,
+      "sha256": "3629afc9e16c66854805e744422eb32c3cd256c839f3c3a7a6062400646e8a68"
+    },
+    {
+      "path": "tests/user-identity-page-save.test.js",
+      "bytes": 7842,
+      "sha256": "68402ca41de1138ac01563df34b6eae79aeec1d614a4aa19f003989f7b48f996"
+    },
+    {
+      "path": "tests/user-identity-service.test.js",
+      "bytes": 14543,
+      "sha256": "1952bd64776ecaba6f209a0ecfdb9223da86c99c621711ad41e7696198278079"
+    },
+    {
+      "path": "tools/check-matrix-identity-browser.cjs",
+      "bytes": 6923,
+      "sha256": "16f95c68ffa18ee2c9b835141e0156d6fe56b200be9c458cbda8eb16057b7f38"
+    },
+    {
+      "path": "user-identity-page.js",
+      "bytes": 29387,
+      "sha256": "cda357fd99c6371097a58837f661457c7f8e867e18d51b5166ecf59291f23dab"
+    },
+    {
+      "path": "user-identity-service.js",
+      "bytes": 12027,
+      "sha256": "50665a5ff059e5ae86369c72cff96bb243f3e369c0db25250f36ce4a882dd206"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "full-regression.log",
+      "bytes": 169100,
+      "sha256": "5fd729d986e6f842c21392a73b16e04037db494de8e7787761168f3c8a925421"
+    },
+    {
+      "path": "legacy-first.log",
+      "bytes": 346,
+      "sha256": "21e12cd2005389529f3a02e123fdb536f0adcbc8f6baf23713929bcc19e0cde3"
+    },
+    {
+      "path": "legacy-final.log",
+      "bytes": 1182,
+      "sha256": "da773a971bcc9a5dc74a75ca7c457f8e6b77f9bd2e7a0fbfcdadcc254402a46a"
+    },
+    {
+      "path": "legacy-scope-before.json",
+      "bytes": 3629,
+      "sha256": "e26f3e6b444bb37d31d386b578fb4af46246106b76263c4d25b1137e4109af49"
+    },
+    {
+      "path": "origin-final-targeted.log",
+      "bytes": 3222,
+      "sha256": "5b3d052b960b1c080412238bbfe1c9309940619b92954cb10b0d4bfc7dc99284"
+    },
+    {
+      "path": "origin-no-session.log",
+      "bytes": 243,
+      "sha256": "30b38b7f4aefbfcba2a43aa784b1a3845f5e9df625d1ba6f3c53cec3619e15a5"
+    },
+    {
+      "path": "shared-services-before.tap",
+      "bytes": 10692,
+      "sha256": "08cb21da2ea8a563ff0a6930d2481dc0188a198537fbd7cb5cd42201e295b576"
+    },
+    {
+      "path": "shared-services-final.tap",
+      "bytes": 5790,
+      "sha256": "259fcce72799f6c67a928a5342015d9f5781216de786b6db04b9e1fa965be038"
+    },
+    {
+      "path": "shared-services-validation.json",
+      "bytes": 3610,
+      "sha256": "3c520cb8729893e3b10c5fe662970bc271b42dc53facbea26a10a7c1b316c0e3"
+    },
+    {
+      "path": "matrix-identity-before.log",
+      "bytes": 8399,
+      "sha256": "4dbd83e01d2cebfa99e67729901c5a207a886b000c22abdd5b60e26ed37de1c8"
+    },
+    {
+      "path": "matrix-identity-after.log",
+      "bytes": 3829,
+      "sha256": "0e922e825b3f93e2502921c89db34bade76bc5db038017dacf840cc9fcddadc6"
+    },
+    {
+      "path": "matrix-identity-validation.json",
+      "bytes": 1841,
+      "sha256": "9b2982ca439db0582700afe699a3ddcf40299a51d4e9eb09799c9d4163b21a8c"
+    },
+    {
+      "path": "browser-result.json",
+      "bytes": 5190,
+      "sha256": "1b02def76f69c8b963ef128a76e7692a06ff56558195740511a72c0758411888"
+    }
+  ]
+}

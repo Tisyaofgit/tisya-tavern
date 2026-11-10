@@ -16,3 +16,77 @@ test('resume refuses later persona edits and preserves the recovery marker',asyn
 test('profile editing keeps all descriptor extensions and validates stale drafts',async()=>{const f=fixture(),revision=f.api.read().revision;await f.api.saveProfile({id:'a.png',revision,name:'新甲',description:''});assert.equal(f.c.powerUserSettings.persona_descriptions['a.png'].description,'');assert.deepEqual(f.c.powerUserSettings.persona_descriptions['a.png'].unknown,{zero:0,flag:false,empty:''});await assert.rejects(f.api.saveProfile({id:'a.png',revision,name:'旧稿',description:'旧'}),/已变化/);});
 
 test('archive binding failure retains intent and resumes with the same active identity',async()=>{let fail=true,calls=[];const f=fixture({afterSelect:async id=>{calls.push(id);if(fail)throw Error('档案写入失败')}});await assert.rejects(f.api.select({id:'b.png',revision:f.api.read().revision,chat:false}),/档案写入失败/);assert(f.api.hasPending());assert.equal(f.c.chatMetadata.persona,undefined);fail=false;await createIdentityService(f.options).resume();assert.deepEqual(calls,['b.png','b.png']);assert.equal(f.api.hasPending(),false);});
+
+function profileFixture(persist){
+ const f=fixture(),apply=f.options.applyActive;
+ f.c.powerUserSettings.persona_description='甲设定';
+ f.options.applyActive=(id,name)=>{apply(id,name);f.c.powerUserSettings.persona_description=f.c.powerUserSettings.persona_descriptions?.[id]?.description??'';};
+ f.options.persistSettings=()=>persist(f);
+ f.api=createIdentityService(f.options);return f;
+}
+test('unconfirmed profile persistence restores its own native fields and preserves the original error',async()=>{
+ const failure=Error('profile disk failed'),f=profileFixture(()=>{throw failure;}),before=structuredClone(f.c),revision=f.api.read().revision;
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision,name:'未存新名',description:'未存新设定'}),error=>error===failure);
+ assert.deepEqual(f.c,before);assert.equal(f.api.read().revision,revision);assert.equal(f.api.isBusy(),false);
+});
+test('a false profile persistence receipt remains a failure even if fields already match the draft',async()=>{
+ const f=profileFixture(()=>false),revision=f.api.read().revision;
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision,name:'甲',description:'甲设定'}),/未确认/);
+ assert.equal(f.c.name1,'甲');assert.equal(f.c.powerUserSettings.persona_description,'甲设定');assert.equal(f.api.isBusy(),false);
+});
+test('failed profile rollback preserves concurrent values and new descriptor metadata',async()=>{
+ const failure=Error('profile save interrupted'),f=profileFixture(f=>{
+  const p=f.c.powerUserSettings;p.personas['a.png']='别处改名';p.persona_descriptions['a.png'].description='别处设定';p.persona_descriptions['a.png'].later={kept:true};p.persona_description='别处当前描述';f.c.name1='别处显示名';throw failure;
+ });
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision:f.api.read().revision,name:'本页新名',description:'本页新设定'}),error=>error===failure);
+ const p=f.c.powerUserSettings;assert.equal(p.personas['a.png'],'别处改名');assert.equal(p.persona_descriptions['a.png'].description,'别处设定');assert.deepEqual(p.persona_descriptions['a.png'].later,{kept:true});assert.equal(p.persona_description,'别处当前描述');assert.equal(f.c.name1,'别处显示名');
+});
+test('failed profile rollback removes only its own fields while preserving unrelated concurrent metadata',async()=>{
+ const f=profileFixture(f=>{f.c.powerUserSettings.persona_descriptions['a.png'].later=0;return false;});
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision:f.api.read().revision,name:'本页新名',description:'本页新设定'}),/未确认/);
+ const p=f.c.powerUserSettings;assert.equal(p.personas['a.png'],'甲');assert.equal(p.persona_descriptions['a.png'].description,'甲设定');assert.equal(p.persona_descriptions['a.png'].later,0);assert.equal(f.c.name1,'甲');assert.equal(p.persona_description,'甲设定');
+});
+test('confirmed profile persistence survives a chat switch and reports the saved original scope',async()=>{
+ const f=profileFixture(f=>{f.c.chatId='two';f.c.chatMetadata={persona:'b.png'};return true;});
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision:f.api.read().revision,name:'已存新名',description:'已存新设定'}),error=>{
+  assert.match(error.message,/已确认保存/);assert.deepEqual(error.receipt,{kind:'profile',id:'a.png',scope:{chatId:'one',characterAvatar:'card.png',groupId:null},confirmed:true});return true;
+ });
+ const p=f.c.powerUserSettings;assert.equal(p.personas['a.png'],'已存新名');assert.equal(p.persona_descriptions['a.png'].description,'已存新设定');assert.equal(p.persona_description,'已存新设定');assert.deepEqual(f.c.chatMetadata,{persona:'b.png'});
+});
+test('confirmed wish persistence is not rolled back when the chat changes after the write',async()=>{
+ const f=profileFixture(f=>{f.c.chatId='two';return true;});
+ await assert.rejects(f.api.saveWish({revision:f.api.read().revision,description:'已存心愿'}),error=>{
+  assert.match(error.message,/已确认保存/);assert.deepEqual(error.receipt,{kind:'wish',id:'a.png',scope:{chatId:'one',characterAvatar:'card.png',groupId:null},confirmed:true});return true;
+ });
+ assert.equal(f.c.powerUserSettings.persona_description,'已存心愿');assert.equal(f.c.powerUserSettings.persona_descriptions['a.png'].description,'已存心愿');
+});
+test('failed wish rollback preserves a concurrent active description and descriptor replacement',async()=>{
+ const failure=Error('wish disk failed'),f=profileFixture(f=>{const p=f.c.powerUserSettings;p.persona_description='外部当前心愿';p.persona_descriptions['a.png']={description:'外部新档案',kept:false};throw failure;});
+ await assert.rejects(f.api.saveWish({revision:f.api.read().revision,description:'本页心愿'}),error=>error===failure);
+ assert.equal(f.c.powerUserSettings.persona_description,'外部当前心愿');assert.deepEqual(f.c.powerUserSettings.persona_descriptions['a.png'],{description:'外部新档案',kept:false});
+});
+test('unconfirmed wish persistence restores exact absent fields and remains retryable',async()=>{
+ const f=fixture({persistSettings:async()=>false});delete f.c.powerUserSettings.persona_descriptions['a.png'].description;const revision=f.api.read().revision;
+ await assert.rejects(f.api.saveWish({revision,description:'未存心愿'}),/未确认/);
+ assert.equal(Object.hasOwn(f.c.powerUserSettings,'persona_description'),false);assert.equal(Object.hasOwn(f.c.powerUserSettings.persona_descriptions['a.png'],'description'),false);assert.equal(f.api.read().revision,revision);assert.equal(f.api.isBusy(),false);
+});
+test('failed profile persistence restores absent or null native descriptor containers exactly',async()=>{
+ for(const initial of ['absent','null-map','null-descriptor']){
+  const f=profileFixture(()=>false),p=f.c.powerUserSettings;delete p.persona_description;
+  if(initial==='absent')delete p.persona_descriptions;else if(initial==='null-map')p.persona_descriptions=null;else p.persona_descriptions['a.png']=null;
+  const before=structuredClone(f.c),revision=f.api.read().revision;
+  await assert.rejects(f.api.saveProfile({id:'a.png',revision,name:'未存新名',description:'未存设定'}),/未确认/);
+  assert.deepEqual(f.c,before);assert.equal(f.api.read().revision,revision);
+ }
+});
+test('a failed wish save never restores the previous persona description into a different active identity',async()=>{
+ const f=profileFixture(f=>{f.options.applyActive('b.png','乙');f.c.powerUserSettings.persona_description='恰好同文';return false;});
+ await assert.rejects(f.api.saveWish({revision:f.api.read().revision,description:'恰好同文'}),/未确认/);
+ assert.equal(f.avatar(),'b.png');assert.equal(f.c.powerUserSettings.persona_description,'恰好同文');assert.equal(f.c.powerUserSettings.persona_descriptions['a.png'].description,'甲设定');
+});
+test('a native projection rollback failure reports both failures without hiding the persistence error',async()=>{
+ const failure=Error('original persistence failure'),rollback=Error('native display failure'),f=profileFixture(()=>{throw failure;}),apply=f.options.applyActive;let calls=0;
+ f.options.applyActive=(...args)=>{if(++calls===2)throw rollback;apply(...args);};f.api=createIdentityService(f.options);
+ await assert.rejects(f.api.saveProfile({id:'a.png',revision:f.api.read().revision,name:'未存名字',description:'未存设定'}),error=>{assert(error instanceof AggregateError);assert.deepEqual(error.errors,[failure,rollback]);assert.equal(error.cause,failure);assert.match(error.message,/original persistence failure.*native display failure/);return true;});
+ assert.equal(f.c.powerUserSettings.personas['a.png'],'甲');assert.equal(f.c.powerUserSettings.persona_descriptions['a.png'].description,'甲设定');assert.equal(f.api.isBusy(),false);
+});

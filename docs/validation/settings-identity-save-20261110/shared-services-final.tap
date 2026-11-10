@@ -1,0 +1,154 @@
+TAP version 13
+# Subtest: non-bound identity modes preserve a legitimate selected source book
+ok 1 - non-bound identity modes preserve a legitimate selected source book
+  ---
+  duration_ms: 3.032468
+  type: 'test'
+  ...
+# Subtest: a missing source book rejects before a non-bound identity configuration is saved
+ok 2 - a missing source book rejects before a non-bound identity configuration is saved
+  ---
+  duration_ms: 1.537486
+  type: 'test'
+  ...
+# Subtest: source lookup that switches chats cannot save the selection into the new chat
+ok 3 - source lookup that switches chats cannot save the selection into the new chat
+  ---
+  duration_ms: 0.555727
+  type: 'test'
+  ...
+# Subtest: failed new-slot creation does not block unrelated existing identities or pretend an active binding is pending
+ok 4 - failed new-slot creation does not block unrelated existing identities or pretend an active binding is pending
+  ---
+  duration_ms: 2.664822
+  type: 'test'
+  ...
+# Subtest: selection binds chat and stable card id while preserving history, defaults and unknown values
+ok 5 - selection binds chat and stable card id while preserving history, defaults and unknown values
+  ---
+  duration_ms: 1.066075
+  type: 'test'
+  ...
+# Subtest: group selection binds only the group and keeps multi connection alternatives
+ok 6 - group selection binds only the group and keeps multi connection alternatives
+  ---
+  duration_ms: 0.375298
+  type: 'test'
+  ...
+# Subtest: selection without scope does not lock chat or alter global default
+ok 7 - selection without scope does not lock chat or alter global default
+  ---
+  duration_ms: 0.234289
+  type: 'test'
+  ...
+# Subtest: stale identity state and absent chat reject before mutation
+ok 8 - stale identity state and absent chat reject before mutation
+  ---
+  duration_ms: 1.668651
+  type: 'test'
+  ...
+# Subtest: failed chat persistence leaves a durable intent that a recreated service resumes
+ok 9 - failed chat persistence leaves a durable intent that a recreated service resumes
+  ---
+  duration_ms: 0.623237
+  type: 'test'
+  ...
+# Subtest: a context switch during settings save cannot lock the new chat
+ok 10 - a context switch during settings save cannot lock the new chat
+  ---
+  duration_ms: 0.48471
+  type: 'test'
+  ...
+# Subtest: resume refuses later persona edits and preserves the recovery marker
+ok 11 - resume refuses later persona edits and preserves the recovery marker
+  ---
+  duration_ms: 0.381918
+  type: 'test'
+  ...
+# Subtest: profile editing keeps all descriptor extensions and validates stale drafts
+ok 12 - profile editing keeps all descriptor extensions and validates stale drafts
+  ---
+  duration_ms: 0.580984
+  type: 'test'
+  ...
+# Subtest: archive binding failure retains intent and resumes with the same active identity
+ok 13 - archive binding failure retains intent and resumes with the same active identity
+  ---
+  duration_ms: 3.800291
+  type: 'test'
+  ...
+# Subtest: unconfirmed profile persistence restores its own native fields and preserves the original error
+ok 14 - unconfirmed profile persistence restores its own native fields and preserves the original error
+  ---
+  duration_ms: 0.446664
+  type: 'test'
+  ...
+# Subtest: a false profile persistence receipt remains a failure even if fields already match the draft
+ok 15 - a false profile persistence receipt remains a failure even if fields already match the draft
+  ---
+  duration_ms: 0.165717
+  type: 'test'
+  ...
+# Subtest: failed profile rollback preserves concurrent values and new descriptor metadata
+ok 16 - failed profile rollback preserves concurrent values and new descriptor metadata
+  ---
+  duration_ms: 0.328779
+  type: 'test'
+  ...
+# Subtest: failed profile rollback removes only its own fields while preserving unrelated concurrent metadata
+ok 17 - failed profile rollback removes only its own fields while preserving unrelated concurrent metadata
+  ---
+  duration_ms: 0.129072
+  type: 'test'
+  ...
+# Subtest: confirmed profile persistence survives a chat switch and reports the saved original scope
+ok 18 - confirmed profile persistence survives a chat switch and reports the saved original scope
+  ---
+  duration_ms: 0.303371
+  type: 'test'
+  ...
+# Subtest: confirmed wish persistence is not rolled back when the chat changes after the write
+ok 19 - confirmed wish persistence is not rolled back when the chat changes after the write
+  ---
+  duration_ms: 0.322249
+  type: 'test'
+  ...
+# Subtest: failed wish rollback preserves a concurrent active description and descriptor replacement
+ok 20 - failed wish rollback preserves a concurrent active description and descriptor replacement
+  ---
+  duration_ms: 0.183373
+  type: 'test'
+  ...
+# Subtest: unconfirmed wish persistence restores exact absent fields and remains retryable
+ok 21 - unconfirmed wish persistence restores exact absent fields and remains retryable
+  ---
+  duration_ms: 0.189532
+  type: 'test'
+  ...
+# Subtest: failed profile persistence restores absent or null native descriptor containers exactly
+ok 22 - failed profile persistence restores absent or null native descriptor containers exactly
+  ---
+  duration_ms: 0.55842
+  type: 'test'
+  ...
+# Subtest: a failed wish save never restores the previous persona description into a different active identity
+ok 23 - a failed wish save never restores the previous persona description into a different active identity
+  ---
+  duration_ms: 0.351497
+  type: 'test'
+  ...
+# Subtest: a native projection rollback failure reports both failures without hiding the persistence error
+ok 24 - a native projection rollback failure reports both failures without hiding the persistence error
+  ---
+  duration_ms: 0.332123
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 95.654253

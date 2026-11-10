@@ -1,0 +1,3 @@
+✔ saving an AI character through actual UI buttons creates its own slot and keeps the old active identity (40.78745ms)
+✔ legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs (51.401325ms)
+✔ legacy cancel discards mixed staged edits without persistence and restores selection (15.973629ms)

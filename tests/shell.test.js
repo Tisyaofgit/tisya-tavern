@@ -19,6 +19,9 @@ import {mountThemeWorkbench} from '../theme-workbench.js';
 import {messageCardCover} from '../message-cover.js';
 import {createIdentityService} from '../user-identity-service.js';
 import {mountIdentityPage} from '../user-identity-page.js';
+import {mountMatrixIdentity} from '../engine/identity-ui.mjs';
+import {createStoryIdentity} from '../engine/identity.mjs';
+import {IDBFactory} from 'fake-indexeddb';
 import {createPersonaGateway} from '../tables/persona.js';
 import {createWorldbookConditionGate} from '../worldbook-conditions.js';
 import * as panelSurfaces from '../panel-surface.js';
@@ -49,10 +52,11 @@ import * as replyFormats from '../reply-formats.js';import * as configCore from 
 import * as liveSettings from '../narrative-bridge.js';import * as appearanceSettings from '../appearance-settings.js';import {mountSettingsApp} from '../settings-app.js';
 import * as displaySettings from '../display-settings.js';
 import {HEART_DIRECTIONS,HEART_ROWS} from '../preset-hearts.js';import * as actions from '../actions.js';import {registerPresetProtocol} from '../preset.js';import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {Window} from 'happy-dom';import * as model from '../model.js';import * as layout from '../layout.js';import * as icons from '../icons.js';import * as navigation from '../navigation.js';import * as reader from '../reader.js';import * as notebook from '../notebook.js';import {fixture as replyFixture} from './fixtures/journey-r4.cjs';
-async function setup({generateWait,optionsWait,idleWait=async()=>{},welcome=false,bookHelper,realMessages=false,presetInstaller=async()=>({name:'Tisya',status:'current'})}={}){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
-if(realMessages)w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={},formatCalls=[],listeners=new Map();const on=(e,f)=>{if(!listeners.has(e))listeners.set(e,[]);listeners.get(e).push(f);handlers[e]=(...args)=>Promise.all([...(listeners.get(e)??[])].map(fn=>fn(...args)));};const ctx={registerMacro:()=>{},unregisterMacro:()=>{},saveChat:async()=>true,chatId:'a',characterId:0,chatMetadata:{},chatCompletionSettings:{prompts:[]},chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getChatCompletionModel:()=> 'test-model',substituteParams:s=>s,getCurrentChatId:()=> 'a',getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>[],getSelectedPresetName:()=>'',getCompletionPresetByName:()=>({})}),eventTypes:{WORLDINFO_ENTRIES_LOADED:'entries-loaded',WORLDINFO_SCAN_DONE:'scan-done',OAI_PRESET_CHANGED_AFTER:'preset-after',GENERATION_AFTER_COMMANDS:'before',CHAT_COMPLETION_SETTINGS_READY:'payload',APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received',MESSAGE_UPDATED:'updated',MESSAGE_EDITED:'edited',MESSAGE_DELETED:'deleted',MESSAGE_SWIPED:'swiped'},eventSource:{on,removeListener:(e,f)=>{const list=listeners.get(e);if(list)listeners.set(e,list.filter(fn=>fn!==f));}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={createMatrixHost,mountGenerationIdleGuard,mountMatrixConfiguration,createWorldSeedService,mountWorldSeed,createNativePersonaSlotHost,mountAssistantApp,personaNative:{},hostNative:{},isOnePassPreset,outputEnabled,nativePanelContentProcessor,resetNativePanelSources,chatSelectionDiagnostic,chatSelectionSummary,selectChatReady:options=>selectChatReady({...options,schedule:fn=>setTimeout(fn,16),cancel:clearTimeout}),notifySelectedChatContent,...uiOperation,...generationOperation,waitForGenerationIdle:idleWait,initializePresetConnection,createPresetUpdateController:options=>createPresetUpdateController({...options,install:presetInstaller}),mountPresetUpdateControl,showPresetUpdateError,createGlobalFonts,mountThemeWorkbench,messageCardCover,createIdentityService,mountIdentityPage,convertCharacterToPersona:async()=>true,saveMetadata:async()=>true,createPersonaGateway,createWorldbookConditionGate,projectToolTurns:undefined,user_avatar:'',initUserAvatar:()=>{},setPersonaDescription:()=>{},setUserName:()=>{},...panelSurfaces,mountSettingsHome,createCharacterGroupHost:()=>({open(target){w.characterGroupTarget=target;},identity:{connect(){}},bindings:{list:()=>[]},isBusy:()=>false,hasDraft:()=>false,dispose(){}}),installWorldbookOrder:()=>({clear(){},assertReady(){},available:true}),createWorldbookConsole:({openNative})=>({open(){w.worldbookOpened=(w.worldbookOpened??0)+1;},isBusy:()=>false,hasDraft:()=>false,dispose(){},openNative}),select_group_chats:(id)=>{w.groupEditorId=id;},...homeDirectory,deleteCharacter:async()=>false,deleteCharacterChatByName:async()=>{},closeCurrentChat:async()=>true,timestampToMoment:()=>({isValid:()=>false}),mountHome:(d,c,o)=>mountHome(d,c,{...o,mountArt:()=>({ready:Promise.resolve(),setPlaying(){},dispose(){}})}),getThumbnailUrl:(type,file)=>`/thumbnail?type=${type}&file=${encodeURIComponent(file)}`,...chatLoading,power_user:{chat_truncation:100},isBoundedChatSurfaceView:()=>false,...messageCache,...paragraphActions,...fullscreen,...communication,...revision,...userRevision,...settingsNavigation,...revisionUI,swipe:async(_,direction,{forceMesId:id,forceSwipeId:index})=>{ctx.chat[id].swipe_id=index;ctx.chat[id].mes=ctx.chat[id].swipes[index];},deleteSwipe:async(index,id)=>{const m=ctx.chat[id];m.swipes.splice(index,1);m.swipe_id=Math.min(m.swipe_id,m.swipes.length-1);m.mes=m.swipes[m.swipe_id];return m.swipe_id;},messageEdit:async id=>{const n=w.document.querySelector(`#chat .mes[mesid="${id}"] .mes_text`);n.innerHTML='<textarea class="edit_textarea"></textarea>';n.firstChild.value=ctx.chat[id].mes;},hydrateChatMessageSwipes:async()=>{},isMessageSwipeable:()=>true,getOverswipeBehavior:()=>'regenerate',branchChat:async()=>{},createTextTransport,createEditToolbarPlacement,interfaceSnapshot,validateInterfaceSettings,createNativeConfiguration,createRegexGate,isScopedScriptsAllowed:()=>true,allowScopedScripts:()=>{},isPresetScriptsAllowed:()=>true,allowPresetScripts:()=>{},createTableService:options=>createTableService({...options,...(bookHelper?{books:createBookGateway(()=>bookHelper,()=>ctx)}:{})}),createNativeVectors,setExtensionPrompt:()=>{},mountInputShortcuts,createNativeDisplayPipeline:options=>(w.displayPipeline=createNativeDisplayPipeline(options)),RegexProvider:{instance:{get:()=>null}},substituteParams:s=>s,substituteParamsExtended:s=>s,...replyFormats,appendFileContent:async(m,s)=>s,yaml:{parse:JSON.parse},...configCore,...configHost,...configPanel,...configContracts,...nativeBeauty,loadAgentSystemSettings:async()=>({agentModeEnabled:false}),getRegexScripts:()=>[],getRegexedString:s=>s,proxies:[],createGenerationParameters:async(settings,model,type,messages)=>({generate_data:{messages,model,type}}),...displaySettings,...liveSettings,...appearanceSettings,mountSettingsApp,enqueueChatSave:task=>task(),persistedChatMetadata:()=>({...ctx.chatMetadata}),saveCharacterChatMetadata:async()=>{},saveGroupChatMetadata:async()=>{},emotionCatalog:()=>({ready:Promise.resolve(),names:()=>[]}),mountEmotionAtlas:()=>({dispose(){}}),saveSettings:async()=>true,HEART_DIRECTIONS,HEART_ROWS,...actions,sendTextareaMessage:async()=>{generated.push(['native-send',w.document.querySelector('#send_textarea').value]);w.document.querySelector('#send_textarea').value='';},registerPresetProtocol,promptManager:{getPromptOrderForCharacter:()=>[]},mountMessageAppearance:realMessages?realMessageAppearance:()=>({sync(){},shouldRender:()=>true,revealHistory(){},dispose(){},restore(){},refresh(){}}),mountChatEffects:()=>({dispose(){},refresh(){}}),mountPet:(_,options)=>{w.phoneOptions=options;return {dispose(){},refresh(){},isVisible:()=>true,setVisible(){}}},getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value]);await generateWait?.(...args);},getAgentGenerationOptions:async()=>await optionsWait?.()??({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader,...notebook};w.toastr={error:t=>errors.push(t)};
+async function setup({generateWait,optionsWait,idleWait=async()=>{},welcome=false,bookHelper,nativeIdentity,persistSettings,realMessages=false,presetInstaller=async()=>({name:'Tisya',status:'current'})}={}){const w=new Window({url:'http://localhost'});w.document.body.innerHTML='<div id="top-settings-holder">'+Array.from({length:9},(_,i)=>`<div id="${['ai-config-button','sys-settings-button','advanced-formatting-button','WI-SP-button','user-settings-button','backgrounds-button','extensions-settings-button','persona-management-button','rightNavHolder'][i]}" class="drawer"><div class="drawer-toggle"><i class="drawer-icon" title="${i}"></i></div><div class="drawer-content closedDrawer"></div></div>`).join('')+'</div><div id="sheld"><div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text">正文</div><div class="mes_buttons"><button class="mes_edit">edit</button><button class="mes_create_branch">branch</button><div class="extraMesButtonsHint"></div></div></div></div></div></div><div id="nonQRFormItems"><div id="leftSendForm"></div><textarea id="send_textarea"></textarea><div id="rightSendForm"></div></div><button id="option_regenerate"></button><button id="options_button"></button>';
+if(realMessages)w.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};w.structuredClone=structuredClone;w.fetch=async(url,options)=>({ok:true,json:async()=>[{file_name:JSON.parse(options.body).avatar_url+'.jsonl',mes:'已保存正文'}]});const errors=[],handlers={},formatCalls=[],listeners=new Map();const on=(e,f)=>{if(!listeners.has(e))listeners.set(e,[]);listeners.get(e).push(f);handlers[e]=(...args)=>Promise.all([...(listeners.get(e)??[])].map(fn=>fn(...args)));};const ctx={registerMacro:()=>{},unregisterMacro:()=>{},saveChat:async()=>true,chatId:'a',characterId:0,chatMetadata:{},chatCompletionSettings:{prompts:[]},chat:[{mes:'正文',is_user:false}],characters:[{avatar:'a.png',name:'同名',chat:'a',tags:['悬疑']},{avatar:'b.png',name:'同名',chat:'b',tags:['日常']}],extensionSettings:{},getRequestHeaders:()=>({}),getChatCompletionModel:()=> 'test-model',substituteParams:s=>s,getCurrentChatId:()=> 'a',getWorldInfoNames:()=>[],getPresetManager:()=>({getAllPresets:()=>[],getSelectedPresetName:()=>'',getCompletionPresetByName:()=>({})}),eventTypes:{WORLDINFO_ENTRIES_LOADED:'entries-loaded',WORLDINFO_SCAN_DONE:'scan-done',OAI_PRESET_CHANGED_AFTER:'preset-after',GENERATION_AFTER_COMMANDS:'before',CHAT_COMPLETION_SETTINGS_READY:'payload',APP_READY:'ready',CHAT_CHANGED:'chat',GENERATION_STARTED:'generation-start',GENERATION_ENDED:'generation-end',GENERATION_STOPPED:'generation-stop',MESSAGE_RECEIVED:'received',MESSAGE_UPDATED:'updated',MESSAGE_EDITED:'edited',MESSAGE_DELETED:'deleted',MESSAGE_SWIPED:'swiped'},eventSource:{on,removeListener:(e,f)=>{const list=listeners.get(e);if(list)listeners.set(e,list.filter(fn=>fn!==f));}},saveSettingsDebounced:()=>{},mainApi:'openai'};let generating=false,generated=[];w.fixture={createMatrixHost,mountGenerationIdleGuard,mountMatrixConfiguration,createWorldSeedService,mountWorldSeed,createNativePersonaSlotHost,mountAssistantApp,personaNative:{},hostNative:{},isOnePassPreset,outputEnabled,nativePanelContentProcessor,resetNativePanelSources,chatSelectionDiagnostic,chatSelectionSummary,selectChatReady:options=>selectChatReady({...options,schedule:fn=>setTimeout(fn,16),cancel:clearTimeout}),notifySelectedChatContent,...uiOperation,...generationOperation,waitForGenerationIdle:idleWait,initializePresetConnection,createPresetUpdateController:options=>createPresetUpdateController({...options,install:presetInstaller}),mountPresetUpdateControl,showPresetUpdateError,createGlobalFonts,mountThemeWorkbench,messageCardCover,createIdentityService,mountIdentityPage,mountMatrixIdentity,createStoryIdentity:options=>createStoryIdentity({...options,...(bookHelper?{getHelper:()=>bookHelper}:{})}),convertCharacterToPersona:async()=>true,saveMetadata:async()=>true,createPersonaGateway,createWorldbookConditionGate,projectToolTurns:undefined,user_avatar:'',initUserAvatar:()=>{},setPersonaDescription:()=>{},setUserName:()=>{},...panelSurfaces,mountSettingsHome,createCharacterGroupHost:()=>({open(target){w.characterGroupTarget=target;},identity:{connect(){}},bindings:{list:()=>[]},isBusy:()=>false,hasDraft:()=>false,dispose(){}}),installWorldbookOrder:()=>({clear(){},assertReady(){},available:true}),createWorldbookConsole:({openNative})=>({open(){w.worldbookOpened=(w.worldbookOpened??0)+1;},isBusy:()=>false,hasDraft:()=>false,dispose(){},openNative}),select_group_chats:(id)=>{w.groupEditorId=id;},...homeDirectory,deleteCharacter:async()=>false,deleteCharacterChatByName:async()=>{},closeCurrentChat:async()=>true,timestampToMoment:()=>({isValid:()=>false}),mountHome:(d,c,o)=>mountHome(d,c,{...o,mountArt:()=>({ready:Promise.resolve(),setPlaying(){},dispose(){}})}),getThumbnailUrl:(type,file)=>`/thumbnail?type=${type}&file=${encodeURIComponent(file)}`,...chatLoading,power_user:{chat_truncation:100},isBoundedChatSurfaceView:()=>false,...messageCache,...paragraphActions,...fullscreen,...communication,...revision,...userRevision,...settingsNavigation,...revisionUI,swipe:async(_,direction,{forceMesId:id,forceSwipeId:index})=>{ctx.chat[id].swipe_id=index;ctx.chat[id].mes=ctx.chat[id].swipes[index];},deleteSwipe:async(index,id)=>{const m=ctx.chat[id];m.swipes.splice(index,1);m.swipe_id=Math.min(m.swipe_id,m.swipes.length-1);m.mes=m.swipes[m.swipe_id];return m.swipe_id;},messageEdit:async id=>{const n=w.document.querySelector(`#chat .mes[mesid="${id}"] .mes_text`);n.innerHTML='<textarea class="edit_textarea"></textarea>';n.firstChild.value=ctx.chat[id].mes;},hydrateChatMessageSwipes:async()=>{},isMessageSwipeable:()=>true,getOverswipeBehavior:()=>'regenerate',branchChat:async()=>{},createTextTransport,createEditToolbarPlacement,interfaceSnapshot,validateInterfaceSettings,createNativeConfiguration,createRegexGate,isScopedScriptsAllowed:()=>true,allowScopedScripts:()=>{},isPresetScriptsAllowed:()=>true,allowPresetScripts:()=>{},createTableService:options=>createTableService({...options,...(bookHelper?{books:createBookGateway(()=>bookHelper,()=>ctx)}:{})}),createNativeVectors,setExtensionPrompt:()=>{},mountInputShortcuts,createNativeDisplayPipeline:options=>(w.displayPipeline=createNativeDisplayPipeline(options)),RegexProvider:{instance:{get:()=>null}},substituteParams:s=>s,substituteParamsExtended:s=>s,...replyFormats,appendFileContent:async(m,s)=>s,yaml:{parse:JSON.parse},...configCore,...configHost,...configPanel,...configContracts,...nativeBeauty,loadAgentSystemSettings:async()=>({agentModeEnabled:false}),getRegexScripts:()=>[],getRegexedString:s=>s,proxies:[],createGenerationParameters:async(settings,model,type,messages)=>({generate_data:{messages,model,type}}),...displaySettings,...liveSettings,...appearanceSettings,mountSettingsApp,enqueueChatSave:task=>task(),persistedChatMetadata:()=>({...ctx.chatMetadata}),saveCharacterChatMetadata:async()=>{},saveGroupChatMetadata:async()=>{},emotionCatalog:()=>({ready:Promise.resolve(),names:()=>[]}),mountEmotionAtlas:()=>({dispose(){}}),saveSettings:async()=>persistSettings?persistSettings(ctx):true,HEART_DIRECTIONS,HEART_ROWS,...actions,sendTextareaMessage:async()=>{generated.push(['native-send',w.document.querySelector('#send_textarea').value]);w.document.querySelector('#send_textarea').value='';},registerPresetProtocol,promptManager:{getPromptOrderForCharacter:()=>[]},mountMessageAppearance:realMessages?realMessageAppearance:()=>({sync(){},shouldRender:()=>true,revealHistory(){},dispose(){},restore(){},refresh(){}}),mountChatEffects:()=>({dispose(){},refresh(){}}),mountPet:(_,options)=>{w.phoneOptions=options;return {dispose(){},refresh(){},isVisible:()=>true,setVisible(){}}},getContext:()=>ctx,isGenerating:()=>generating,Generate:async(...args)=>{generated.push([...args,w.document.querySelector('#send_textarea').value]);await generateWait?.(...args);},getAgentGenerationOptions:async()=>await optionsWait?.()??({}),hasActiveAgentRun:()=>false,loadReadingFont:async()=>{},messageFormatting:(...args)=>{formatCalls.push(args);return args[0].replaceAll('&','&amp;').replaceAll('<','&lt;');},...model,...layout,...icons,...navigation,...reader,...notebook};w.toastr={error:t=>errors.push(t)};
+if(nativeIdentity){w.indexedDB=new IDBFactory();const {active,...state}=structuredClone(nativeIdentity);Object.assign(ctx,state);ctx.powerUserSettings={chat_truncation:100,...ctx.powerUserSettings};Object.assign(w.fixture,{user_avatar:active??'',power_user:ctx.powerUserSettings,initUserAvatar:id=>{w.fixture.user_avatar=id;},setUserName:name=>{ctx.name1=name;},setPersonaDescription:()=>{ctx.powerUserSettings.persona_description=ctx.powerUserSettings.persona_descriptions?.[w.fixture.user_avatar]?.description??'';}});}
 if(welcome){ctx.chatId=undefined;ctx.characterId=undefined;if(welcome!=='existing')ctx.characters=[];ctx.chat=[{mes:'欢迎',is_system:true}];}
-let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replaceAll('import.meta.url',JSON.stringify('http://localhost/scripts/extensions/third-party/tisya-tavern/index.js')).replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>`const {${names}}=window.fixture;`).replace(/^import \* as ([A-Za-z_$][\w$]*) from '[^']+';/gm,(_,name)=>`const ${name}=window.fixture.${name};`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);await handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,emit:async(e,...args)=>{for(const fn of [...(listeners.get(e)??[])])await fn(...args);},formatCalls,setGenerating:v=>generating=v};}
+let code=await readFile(new URL('../index.js',import.meta.url),'utf8');code=code.replaceAll('import.meta.url',JSON.stringify('http://localhost/scripts/extensions/third-party/tisya-tavern/index.js')).replace(/^import \{([^}]+)\} from '[^']+';/gm,(_,names)=>{const ids=names.split(',').map(name=>name.trim());if(nativeIdentity&&ids.includes('user_avatar'))return `let user_avatar=window.fixture.user_avatar;const initUserAvatar=id=>{window.fixture.initUserAvatar(id);user_avatar=window.fixture.user_avatar;};const {${ids.filter(name=>!['user_avatar','initUserAvatar'].includes(name)).join(',')}}=window.fixture;`;return `const {${names}}=window.fixture;`;}).replace(/^import \* as ([A-Za-z_$][\w$]*) from '[^']+';/gm,(_,name)=>`const ${name}=window.fixture.${name};`).replace('export function registerChatSurface','function registerChatSurface');w.eval(code);await handlers.ready();await w.happyDOM.whenAsyncComplete();return {w,ctx,errors,generated,handlers,emit:async(e,...args)=>{for(const fn of [...(listeners.get(e)??[])])await fn(...args);},formatCalls,setGenerating:v=>generating=v};}
 async function click(f,a){let target=a==='menu'?f.w.document.querySelector('#tisya-menu-trigger'):f.w.document.querySelector(`[data-tisya-action="${a}"]`);if(!target&&['contacts','home'].includes(a)){await click(f,'menu');if(a==='contacts')await click(f,'home');target=f.w.document.querySelector(`[data-tisya-action="${a}"]`);}target.click();await f.w.happyDOM.whenAsyncComplete();}
 test('W71 actual welcome sidebar opens idea-only creation without a card and retains the draft across navigation',async()=>{
  const f=await setup({welcome:true}),d=f.w.document,baselineErrors=[...f.errors];await click(f,'menu');await click(f,'new-world');assert(d.querySelector('[aria-label="我的世界点子"]'));d.querySelector('[aria-label="我的世界点子"]').value='天空群岛与失落的朋友';
@@ -538,4 +542,143 @@ test('native token-count dry runs do not clear pending one-pass storage work',as
 test('token count between a real start and its end still completes the real generation lifecycle',async()=>{
  const f=await setup();let clears=0;const clear=f.w.Tisya.tables.clear;f.w.Tisya.tables.clear=(...args)=>{clears++;return clear(...args);};
  await f.emit('before','normal',{},false);const started=clears;await f.emit('before','normal',{},true);assert.equal(clears,started);await f.emit('generation-end');assert.equal(clears,started+1);await f.emit('generation-end');assert.equal(clears,started+1);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+});
+
+// These route regressions execute index.js with the actual Matrix identity UI,
+// identity service and story-identity service. Only native host persistence and
+// worldbook storage are in-memory fixtures; they never touch a user's data.
+async function setupIdentityRoute({empty=false,persistSettings}={}){
+ const books={基点书:[{uid:0,name:'【角色】原角色',content:'原角色的完整设定',enabled:false}]};
+ let bookWrites=0;
+ const bookHelper={
+  getWorldbookNames:async()=>Object.keys(books),
+  getWorldbook:async name=>structuredClone(books[name]),
+  createWorldbook:async(name,entries)=>{bookWrites++;books[name]=entries.map((entry,uid)=>({...entry,uid}));return true;},
+  updateWorldbookWith:async(name,update)=>{bookWrites++;books[name]=update(structuredClone(books[name])).map((entry,uid)=>({...entry,uid:entry.uid??uid}));},
+  getCharWorldbookNames:async()=>({primary:'',additional:[]})
+ };
+ const f=await setup({bookHelper,persistSettings,nativeIdentity:{
+  active:empty?'':'native-a',name1:empty?'用户':'原身份',
+  chatCompletionSettings:{prompts:structuredClone(matrixBaseline.prompts)},
+  powerUserSettings:{
+   personas:empty?{}:{'native-a':'原身份','native-b':'另一身份'},
+   persona_descriptions:empty?{}:{'native-a':{description:'原心愿',connections:[]},'native-b':{description:'另一身份的心愿',connections:[]}},
+   persona_description:'原心愿'
+  }
+ }});
+ f.ctx.loadWorldInfo=async name=>({entries:Object.fromEntries(books[name].map(entry=>[entry.uid,{...entry,comment:entry.name}]))});
+ const config=f.w.Tisya.configuration.read();
+ config.story={...config.story,userMode:'generic',userBinding:null,userName:'',play:{choices:{W:[]}}};
+ await f.w.Tisya.configuration.save(config);
+ return {...f,books,bookWrites:()=>bookWrites};
+}
+function routeButton(root,label){const button=[...root.querySelectorAll('button')].find(node=>node.textContent===label);assert(button,`missing visible button: ${label}`);return button;}
+async function pressRouteButton(f,root,label){routeButton(root,label).click();await f.w.happyDOM.whenAsyncComplete();}
+function editIdentityField(f,selector,value,event='input'){
+ const node=f.w.document.querySelector('#tisya-user-page '+selector);assert(node,`missing identity field: ${selector}`);
+ if(node.type==='checkbox')node.checked=value;else node.value=value;
+ node.dispatchEvent(new f.w.Event(event,{bubbles:true}));return node;
+}
+async function openIdentityFromSettings(f){
+ await click(f,'menu');await click(f,'settings-app');
+ await pressRouteButton(f,f.w.document.querySelector('#tisya-settings-app'),'用户身份');
+ const page=f.w.document.querySelector('#tisya-user-page');
+ assert(page?.classList.contains('tisya-matrix-identity'),'the production route must mount the actual Matrix identity page');return page;
+}
+function unsavedDialog(f){const dialogs=f.w.document.querySelectorAll('[role="dialog"][aria-label="保存未完成的修改"]');assert.equal(dialogs.length,1,'one attempted navigation must have one decision');return dialogs[0];}
+
+test('Matrix identity production route saves mixed profile, wish and story binding through its only save and reads them back',async()=>{
+ const f=await setupIdentityRoute(),d=f.w.document,history=structuredClone(f.ctx.chat),chatId=f.ctx.chatId;
+ try{
+  await click(f,'menu');await click(f,'settings-app');let settings=d.querySelector('#tisya-settings-app');
+  await pressRouteButton(f,settings,'回复格式');
+  const body=[...settings.querySelectorAll('label')].find(node=>node.textContent==='正文').querySelector('input');
+  body.value='identity_route_body';body.dispatchEvent(new f.w.Event('input',{bubbles:true}));
+  await pressRouteButton(f,settings,'用户身份');
+  assert.equal(d.querySelector('#tisya-user-page'),null);assert(body.isConnected);
+  await pressRouteButton(f,unsavedDialog(f),'保存并切换');
+  let page=d.querySelector('#tisya-user-page');assert(page?.classList.contains('tisya-matrix-identity'));
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);
+  assert.equal(f.w.Tisya.configuration.read().tags.body,'identity_route_body');
+  assert.deepEqual([...page.querySelectorAll('button')].filter(node=>node.textContent.includes('保存')).map(node=>node.textContent),['保存']);
+  const beforeNative=structuredClone(f.ctx.powerUserSettings),beforeConfig=f.w.Tisya.configuration.read();
+  editIdentityField(f,'[data-identity-name]','改后的身份');
+  editIdentityField(f,'[data-identity-wish]','混改后的完整心愿');
+  editIdentityField(f,'[data-wish-option="W00"]',true,'change');
+  editIdentityField(f,'[data-avatar-mode]','bound','change');
+  editIdentityField(f,'[data-role-entry]','0','change');
+  assert.deepEqual(f.ctx.powerUserSettings,beforeNative);assert.deepEqual(f.w.Tisya.configuration.read(),beforeConfig);
+  await pressRouteButton(f,page,'保存');
+  const saved=f.w.Tisya.configuration.read();
+  assert.equal(f.ctx.powerUserSettings.personas['native-a'],'改后的身份');
+  assert.equal(f.ctx.powerUserSettings.persona_descriptions['native-a'].description,'混改后的完整心愿');
+  assert.equal(f.ctx.powerUserSettings.persona_description,'混改后的完整心愿');
+  assert.deepEqual(saved.story.play.choices.W,['W00','W07']);
+  assert.equal(saved.story.userMode,'bound');assert.deepEqual(saved.story.userBinding,{book:'基点书',uid:0});
+  assert.equal(saved.story.userName,'原角色');assert.equal(f.bookWrites(),0);
+  d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);
+  page=await openIdentityFromSettings(f);
+  assert.equal(page.querySelector('[data-identity-name]').value,'改后的身份');
+  assert.equal(page.querySelector('[data-identity-wish]').value,'混改后的完整心愿');
+  assert.equal(page.querySelector('[data-wish-option="W00"]').checked,true);
+  assert.equal(page.querySelector('[data-avatar-mode]').value,'bound');assert.equal(page.querySelector('[data-role-entry]').value,'0');
+  assert.equal(f.ctx.chatId,chatId);assert.deepEqual(f.ctx.chat,history);assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('Matrix identity production route cancels a staged persona switch and all mixed changes without writing them',async()=>{
+ const f=await setupIdentityRoute(),d=f.w.document;
+ try{
+  let page=await openIdentityFromSettings(f);
+  const beforeNative=structuredClone(f.ctx.powerUserSettings),beforeConfig=f.w.Tisya.configuration.read(),beforeMetadata=structuredClone(f.ctx.chatMetadata);
+  editIdentityField(f,'[data-identity-picker]','native-b','change');await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(f.w.fixture.user_avatar,'native-a');assert.deepEqual(f.ctx.chatMetadata,beforeMetadata);
+  editIdentityField(f,'[data-identity-name]','不应保存的名称');
+  editIdentityField(f,'[data-identity-wish]','不应保存的心愿');
+  editIdentityField(f,'[data-wish-option="W00"]',true,'change');
+  editIdentityField(f,'[data-avatar-mode]','ensemble','change');
+  editIdentityField(f,'[data-role-name]','不应创建的角色');editIdentityField(f,'[data-role-content]','不应写入世界书');
+  await pressRouteButton(f,page,'取消修改');
+  assert.deepEqual(f.ctx.powerUserSettings,beforeNative);assert.deepEqual(f.w.Tisya.configuration.read(),beforeConfig);
+  assert.deepEqual(f.ctx.chatMetadata,beforeMetadata);assert.equal(f.w.fixture.user_avatar,'native-a');assert.equal(f.bookWrites(),0);
+  assert.equal(page.querySelector('[data-identity-picker]').value,'native-a');assert.equal(page.querySelector('[data-identity-name]').value,'原身份');
+  assert.equal(page.querySelector('[data-identity-wish]').value,'原心愿');assert.equal(page.querySelector('[data-wish-option="W00"]').checked,false);
+  assert.equal(page.querySelector('[data-avatar-mode]').value,'generic');assert.equal(page.querySelector('[data-role-name]').value,'');
+  d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);
+  page=await openIdentityFromSettings(f);assert.equal(page.querySelector('[data-identity-picker]').value,'native-a');
+  assert.equal(page.querySelector('[data-identity-wish]').value,'原心愿');assert.equal(page.querySelector('[data-avatar-mode]').value,'generic');
+  assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('Matrix identity production route preserves an empty-registry wish on stay and failed leave-save, then saves and leaves on retry',async()=>{
+ let failSave=false;
+ const f=await setupIdentityRoute({empty:true,persistSettings:async()=>{if(failSave)throw Error('模拟宿主保存失败');return true;}}),d=f.w.document;
+ try{
+  let page=await openIdentityFromSettings(f);
+  editIdentityField(f,'[data-identity-wish]','无身份注册表的心愿草稿');
+  editIdentityField(f,'[data-wish-option="W00"]',true,'change');
+  editIdentityField(f,'[data-avatar-mode]','ensemble','change');
+  const chat=()=>d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();
+  chat();await f.w.happyDOM.whenAsyncComplete();
+  await pressRouteButton(f,unsavedDialog(f),'继续编辑');
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert(page.isConnected);
+  assert.equal(page.querySelector('[data-identity-wish]').value,'无身份注册表的心愿草稿');
+  assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');
+  chat();await f.w.happyDOM.whenAsyncComplete();failSave=true;
+  await pressRouteButton(f,unsavedDialog(f),'保存并切换');
+  const failed=unsavedDialog(f);assert.match(failed.querySelector('[role="alert"]').textContent,/模拟宿主保存失败/);
+  assert(page.isConnected);assert.equal(page.querySelector('[data-identity-wish]').value,'无身份注册表的心愿草稿');
+  assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');assert.deepEqual(f.ctx.powerUserSettings.personas,{});
+  failSave=false;await pressRouteButton(f,failed,'保存并切换');
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);
+  assert.equal(f.ctx.powerUserSettings.persona_description,'无身份注册表的心愿草稿');
+  assert.deepEqual(f.w.Tisya.configuration.read().story.play.choices.W,['W00','W07']);
+  assert.equal(f.w.Tisya.configuration.read().story.userMode,'ensemble');
+  page=await openIdentityFromSettings(f);assert.equal(page.querySelector('[data-identity-wish]').value,'无身份注册表的心愿草稿');
+  assert.equal(page.querySelector('[data-avatar-mode]').value,'ensemble');assert.equal(f.bookWrites(),0);
+  assert.deepEqual(f.errors,[]);
+ }finally{await f.w.happyDOM.abort();}
 });

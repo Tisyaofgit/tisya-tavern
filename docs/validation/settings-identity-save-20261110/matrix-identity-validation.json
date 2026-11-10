@@ -1,0 +1,59 @@
+{
+  "scope": "Matrix identity unified draft, shared bottom save/cancel and recovery behavior",
+  "unit_dom": {
+    "command": "node --test tests/matrix-identity.test.js tests/matrix-identity-save.test.js",
+    "exit_code": 0,
+    "tests": 33,
+    "passed": 33,
+    "evidence": "matrix-identity-after.log",
+    "boundary": "Node and Happy DOM using real services with simulated host/worldbook adapters"
+  },
+  "before": {
+    "tests": 12,
+    "failed": 12,
+    "evidence": "matrix-identity-before.log"
+  },
+  "static_diff_check": {
+    "exit_code": 0,
+    "evidence": "matrix-identity-diff-check.log"
+  },
+  "browser": {
+    "passed": false,
+    "evidence": "browser/browser-result.json",
+    "blocker": "Chromium socket() failed: Operation not permitted; default tool execution, no escalation or policy changes"
+  },
+  "not_run": [
+    "Android device",
+    "live SillyTavern host",
+    "model calls"
+  ],
+  "files": [
+    {
+      "path": "engine/identity-ui.mjs",
+      "bytes": 25227,
+      "sha256": "db738b73fe6454c5129588948bcd94618cc212b0f1d192081cf9bdc300469661"
+    },
+    {
+      "path": "tests/matrix-identity.test.js",
+      "bytes": 18649,
+      "sha256": "b6ad9f215e0e66ada7c68986494d1149011e8f094aaae504ddeb0e90ed859798"
+    },
+    {
+      "path": "tests/matrix-identity-save.test.js",
+      "bytes": 21499,
+      "sha256": "ee3975c6688b53a64f1c914b89653d972a5e4bb9f8d3ddc6acb49266e9660847"
+    },
+    {
+      "path": "tools/check-matrix-identity-browser.cjs",
+      "bytes": 6923,
+      "sha256": "16f95c68ffa18ee2c9b835141e0156d6fe56b200be9c458cbda8eb16057b7f38"
+    },
+    {
+      "path": "tests/browser-matrix-identity.html",
+      "bytes": 2945,
+      "sha256": "8cdf587cb6d16055ebb8df9455119033cd2e8c51448e41ddc730be8cd7932569"
+    }
+  ],
+  "at_utc": "2026-11-10T04:00:41Z",
+  "at_beijing": "2026-11-10T12:00:41+08:00"
+}

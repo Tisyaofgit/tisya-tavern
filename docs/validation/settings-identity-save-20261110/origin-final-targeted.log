@@ -1,0 +1,36 @@
+✔ saving an AI character through actual UI buttons creates its own slot and keeps the old active identity (34.774714ms)
+✔ archive and review exclude intermediate tool owners while final prose keeps its original source key (288.222958ms)
+✔ initialization blockers leave all proposed origin and session writes unsaved (311.906045ms)
+✔ worldbook binding preserves original and database books, persistence survives service recreation (237.059319ms)
+✔ handwritten import has review draft, original provenance, unknown time and duplicate guard (246.80152ms)
+✔ historical anchors keep the selected origin version at that time and omit later imported assets (905.336747ms)
+✔ new genesis initial references remain valid after explicit origin selections (378.626017ms)
+✔ first table use auto-creates card origin and independent session; repeated initialize is idempotent (329.316682ms)
+✔ retry reuses origin left by an old current-only binding failure (170.07523ms)
+✔ plot object remains a session overlay and source removal never pollutes origin (256.950494ms)
+✔ global preferences require confirmation, survive reload and reach new origin design while local preferences stay scoped (814.744309ms)
+✔ independent archive single-book failure leaves neither rows nor schema nor origin candidates (294.220834ms)
+✔ explicit schema and rows save in one session commit, reload and withdraw together while origin stays unchanged (527.438419ms)
+✔ identity origin binding stores a fixed reference, resumes partial save and avoids duplicate projection (570.458988ms)
+✔ same reviewed origin retries its pending journal and repeated confirmation does not write another revision (536.623458ms)
+✔ origin recovery checks the reviewed persona and source before resuming a durable pending intent (499.356107ms)
+✔ fixed origin preview refuses altered source bytes without writing native persona (307.979805ms)
+✔ idea creation produces an immutable new origin while leaving session progress unchanged (233.103064ms)
+✔ selecting an origin persona updates the same session binding idempotently without resetting progress (414.976066ms)
+✔ deleted origin recovery creates an independent pair and preserves the surviving archive (345.256953ms)
+✔ legacy origin recovery resumes the reviewed partial binding without repeating its stale preview write (42.955087ms)
+✔ legacy creation checks the original chat after draft persistence before creating a persona slot and retries only that slot (15.107718ms)
+✔ legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs (40.736839ms)
+✔ legacy cancel discards mixed staged edits without persistence and restores selection (13.902972ms)
+✔ legacy leave prompt coalesces navigation and keeps failed save editable before retry (17.644875ms)
+✔ legacy retries only unfinished binding after profile persistence succeeds (17.908748ms)
+✔ legacy retains unsaved fields and scope on page recreation (12.758671ms)
+✔ legacy refuses external identity revisions and a changed chat before any write (9.336422ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7815.792022

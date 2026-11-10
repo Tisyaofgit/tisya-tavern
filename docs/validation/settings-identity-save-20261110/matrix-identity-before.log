@@ -1,0 +1,154 @@
+✖ Matrix identity has one persistent save/cancel pair including unavailable role sources (19.912335ms)
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (8.49513ms)
+✖ identity selection is a draft until save and cancellation performs no persistence (12.195011ms)
+✖ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (6.28847ms)
+✖ cancel discards every unsaved field without changing source data or creating roles (5.100403ms)
+✖ creation requires explicit confirmation and validates the complete page before any persistent write (5.673966ms)
+✖ partial profile success preserves the rest of the draft and retry does not write the profile twice (7.704545ms)
+✖ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (5.365588ms)
+✖ concurrent configuration changes reject the entire save before changing the native profile (5.781095ms)
+✖ a chat switch during role preflight preserves drafts and cannot save them into the next chat (5.704221ms)
+✖ interrupted identity switching resumes through the same save button after reopen (11.095867ms)
+✖ unavailable role sources still allow the native identity draft to be saved (5.895806ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 0
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 309.320293
+
+✖ failing tests:
+
+test at tests/matrix-identity-save.test.js:68:1
+✖ Matrix identity has one persistent save/cancel pair including unavailable role sources (19.912335ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:72:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:81:1
+✖ one save commits name, wish choices and existing role binding and reads them back on reopen (8.49513ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:90:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:103:1
+✖ identity selection is a draft until save and cancellation performs no persistence (12.195011ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'b' !== 'a'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:107:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'b',
+    expected: 'a',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:119:1
+✖ switching identities and leaving use one prompt, preserve drafts on stay, and do not auto-commit the next identity (6.28847ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:124:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:142:1
+✖ cancel discards every unsaved field without changing source data or creating roles (5.100403ms)
+  TypeError [Error]: f.view.discardDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:149:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:158:1
+✖ creation requires explicit confirmation and validates the complete page before any persistent write (5.673966ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:162:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:177:1
+✖ partial profile success preserves the rest of the draft and retry does not write the profile twice (7.704545ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:183:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:193:1
+✖ role creation followed by binding failure retains its exact source and safe retry creates no duplicate (5.365588ms)
+  AssertionError [ERR_ASSERTION]: [data-role-create-confirm]
+      at input (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:13:2)
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:198:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/matrix-identity-save.test.js:212:1
+✖ concurrent configuration changes reject the entire save before changing the native profile (5.781095ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:217:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:225:1
+✖ a chat switch during role preflight preserves drafts and cannot save them into the next chat (5.704221ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:232:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:239:1
+✖ interrupted identity switching resumes through the same save button after reopen (11.095867ms)
+  TypeError [Error]: f.view.saveDraft is not a function
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:243:29)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tests/matrix-identity-save.test.js:254:1
+✖ unavailable role sources still allow the native identity draft to be saved (5.895806ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'b' !== 'a'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/390b9cf04a3c/settings-identity-fix/tests/matrix-identity-save.test.js:258:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'b',
+    expected: 'a',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

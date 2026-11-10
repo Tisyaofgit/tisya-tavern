@@ -1,0 +1,18 @@
+✔ saving an AI character through actual UI buttons creates its own slot and keeps the old active identity (43.830325ms)
+✔ legacy origin recovery resumes the reviewed partial binding without repeating its stale preview write (54.315198ms)
+✔ legacy creation checks the original chat after draft persistence before creating a persona slot and retries only that slot (18.274562ms)
+✔ legacy identity has one footer save and stages mixed profiles, scope, and selected identity across tabs (57.468538ms)
+✔ legacy cancel discards mixed staged edits without persistence and restores selection (23.812476ms)
+✔ legacy leave prompt coalesces navigation and keeps failed save editable before retry (21.837719ms)
+✔ legacy retries only unfinished binding after profile persistence succeeds (11.626968ms)
+✔ legacy retains unsaved fields and scope on page recreation (13.073328ms)
+✔ legacy refuses external identity revisions and a changed chat before any write (10.947568ms)
+✔ legacy recovery saves scope edits made after a failed earlier binding (19.077705ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 396.629849

@@ -33,7 +33,13 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
   if(mode==='bound'){
    const rows=await list(book);check(rows.exists,'请选择已建立的基点书');const entry=rows.entries.find(e=>String(e.uid)===String(uid));check(entry,'基点书的角色条目已不存在');
    value.coreBook=book;value.story.userBinding={book,uid:entry.uid};value.story.userName=entry.name.slice('【角色】'.length);value.story.userMode='bound';
-  }else{check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;}
+  }else{
+   check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');
+   if(book!==undefined&&book!==null&&book!==''){
+    check(typeof book==='string'&&book.trim()===book,'资料来源名称无效');const names=await helper().getWorldbookNames();check(Array.isArray(names)&&names.includes(book),'请选择已建立的资料来源书');value.coreBook=book;
+   }
+   value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;
+  }
   check(captured===scope(),'聊天已切换，绑定尚未保存');return config.save(value);
  }
  async function create({book=config.read().coreBook??'基点书',name,content},expected=config.read().revision){

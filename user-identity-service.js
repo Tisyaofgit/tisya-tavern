@@ -18,7 +18,50 @@ export function createIdentityService({getContext,getAvatar,applyActive,persistS
  await validateSelection(input.id);check(revision()===before.revision,'身份或会话已变化，请重新读取');const c=getContext(),p=power();guard();if(input.character){if(!p.persona_allow_multi_connections)for(const [id,d]of Object.entries(p.persona_descriptions))if(id!==input.id&&d.connections)d.connections=d.connections.filter(x=>!(x.type===target.type&&String(x.id)===String(target.id)));const d=p.persona_descriptions[input.id]??={};d.connections=[...(d.connections??[]).filter(x=>!(x.type===target.type&&String(x.id)===String(target.id))),target];}
  if(input.global)p.default_persona=input.id;applyActive(input.id,selected.name);guard();check(getAvatar()===input.id,'活动身份回读不同');const intent={format:'tisya.identity-intent/1',id:input.id,scope:before.scope,lockBefore:before.locked,chat:!!input.chat,stage:'settings',after:settingsStamp()};p.tisya_identity_pending=intent;const result=await finish(intent);changed();return result;
  }catch(e){if(power().tisya_identity_pending)power().tisya_identity_pending.error=e.message;changed();throw e}finally{busy=false}}
- async function saveProfile(input){check(!busy&&!slots.isBusy()&&!power().tisya_identity_pending,'请先完成正在处理的身份绑定或创建');assertIdle();const before=read();check(input.revision===before.revision,'身份已变化，请重新读取');check(typeof input.name==='string'&&input.name.trim()&&!/[\r\n]/.test(input.name),'名字须是单行非空文字');check(typeof input.description==='string','设定须为文字');check(before.personas.some(p=>p.id===input.id),'身份已不存在');check(input.id!==power().tisya_identity_creation_pending?.id,'新人物槽尚未确认保存，请先继续创建');busy=true;try{const p=power();p.personas[input.id]=input.name;p.persona_descriptions[input.id]={...p.persona_descriptions[input.id],description:input.description};if(getAvatar()===input.id)applyActive(input.id,input.name);check(await persistSettings()===true,'修改已在内存生效，持久保存未确认，请核对');check(stamp(scope())===stamp(before.scope),'保存期间会话改变，请重新读取');changed();return read()}finally{busy=false}}
- async function saveWish(input){check(!busy&&!slots.isBusy()&&!power().tisya_identity_pending,'请先完成正在处理的身份绑定或创建');assertIdle();const before=read();check(input.revision===before.revision,'身份已变化，请重新读取');check(typeof input.description==='string','心愿须为文字');busy=true;const p=power(),id=getAvatar(),old=p.persona_description,descriptor=p.persona_descriptions?.[id],previous=descriptor?.description;try{p.persona_description=input.description;if(descriptor)descriptor.description=input.description;check(await persistSettings()===true,'心愿已在内存更新，持久保存未确认，请核对');check(stamp(scope())===stamp(before.scope),'保存期间会话改变，请重新读取');changed();return read();}catch(e){p.persona_description=old;if(descriptor)descriptor.description=previous;throw e;}finally{busy=false}}
+ const fieldSnapshot=(owner,key)=>({present:Object.hasOwn(owner,key),value:owner[key]});
+ function restoreField(owner,key,before,written){if(owner[key]!==written)return false;if(before.present)owner[key]=before.value;else delete owner[key];return true;}
+ function confirmedError(error,kind,id,originalScope){const result=error instanceof Error?error:Error(String(error),{cause:error});result.receipt={kind,id,scope:clone(originalScope),confirmed:true};return result;}
+ async function saveProfile(input){
+  check(!busy&&!slots.isBusy()&&!power().tisya_identity_pending,'请先完成正在处理的身份绑定或创建');assertIdle();const before=read();
+  check(input.revision===before.revision,'身份已变化，请重新读取');check(typeof input.name==='string'&&input.name.trim()&&!/[\r\n]/.test(input.name),'名字须是单行非空文字');check(typeof input.description==='string','设定须为文字');check(before.personas.some(p=>p.id===input.id),'身份已不存在');check(input.id!==power().tisya_identity_creation_pending?.id,'新人物槽尚未确认保存，请先继续创建');
+  const p=power(),names=p.personas,oldDescriptions=fieldSnapshot(p,'persona_descriptions'),descriptions=p.persona_descriptions??(p.persona_descriptions={}),oldDescriptor=fieldSnapshot(descriptions,input.id),descriptor=descriptions[input.id]??(descriptions[input.id]={});
+  const oldName=fieldSnapshot(names,input.id),oldDescription=fieldSnapshot(descriptor,'description'),oldActiveDescription=fieldSnapshot(p,'persona_description'),oldDisplayName=getContext().name1;
+  let confirmed=false,projection=null;busy=true;
+  try{
+   names[input.id]=input.name;descriptor.description=input.description;
+   if(getAvatar()===input.id){try{applyActive(input.id,input.name);}finally{projection={name:getContext().name1,description:p.persona_description};}}
+   check(await persistSettings()===true,'身份资料持久保存尚未确认；本页修改仍需重试');confirmed=true;
+   check(stamp(scope())===stamp(before.scope),'身份资料已确认保存；保存期间会话改变，请回到原会话核对已保存部分');changed();return read();
+  }catch(error){
+   if(confirmed)throw confirmedError(error,'profile',input.id,before.scope);
+   // Undo only values still owned by this failed attempt. Other writers may have
+   // changed individual fields or replaced the native maps during persistence.
+   const nameRestored=p.personas===names&&restoreField(names,input.id,oldName,input.name);
+   const descriptionRestored=p.persona_descriptions===descriptions&&descriptions[input.id]===descriptor&&restoreField(descriptor,'description',oldDescription,input.description);
+   if(oldDescriptor.value!==descriptor&&descriptions[input.id]===descriptor&&!Object.keys(descriptor).length)restoreField(descriptions,input.id,oldDescriptor,descriptor);
+   if(oldDescriptions.value!==descriptions&&p.persona_descriptions===descriptions&&!Object.keys(descriptions).length)restoreField(p,'persona_descriptions',oldDescriptions,descriptions);
+   if(projection&&power()===p&&getAvatar()===input.id&&Object.hasOwn(p.personas??{},input.id)&&getContext().name1===projection.name&&p.persona_description===projection.description){
+    try{
+     applyActive(input.id,nameRestored?(oldDisplayName??oldName.value):p.personas[input.id]);
+     if(descriptionRestored){if(oldActiveDescription.present)p.persona_description=oldActiveDescription.value;else delete p.persona_description;}
+    }catch(rollbackError){throw new AggregateError([error,rollbackError],String(error?.message??error)+'；身份显示恢复未完成：'+String(rollbackError?.message??rollbackError),{cause:error});}
+   }
+   throw error;
+  }finally{busy=false;}
+ }
+ async function saveWish(input){
+  check(!busy&&!slots.isBusy()&&!power().tisya_identity_pending,'请先完成正在处理的身份绑定或创建');assertIdle();const before=read();check(input.revision===before.revision,'身份已变化，请重新读取');check(typeof input.description==='string','心愿须为文字');
+  const p=power(),id=getAvatar(),descriptions=p.persona_descriptions,descriptor=descriptions?.[id],old=fieldSnapshot(p,'persona_description'),previous=descriptor?fieldSnapshot(descriptor,'description'):null;let confirmed=false;busy=true;
+  try{
+   p.persona_description=input.description;if(descriptor)descriptor.description=input.description;
+   check(await persistSettings()===true,'心愿持久保存尚未确认；本页修改仍需重试');confirmed=true;
+   check(stamp(scope())===stamp(before.scope),'心愿已确认保存；保存期间会话改变，请回到原会话核对已保存部分');changed();return read();
+  }catch(error){
+   if(confirmed)throw confirmedError(error,'wish',id,before.scope);
+   if(power()!==p||getAvatar()===id)restoreField(p,'persona_description',old,input.description);
+   if(descriptor&&p.persona_descriptions===descriptions&&descriptions[id]===descriptor)restoreField(descriptor,'description',previous,input.description);
+   throw error;
+  }finally{busy=false;}
+ }
  return {read,saveWish,refresh(){changed();return read()},select,resume,saveProfile,async convertCharacter(input){check(!busy&&!slots.isBusy()&&!power().tisya_identity_pending,'请先完成身份绑定或创建');assertIdle();check(typeof convertCharacter==='function','角色转换接口不可用');busy=true;try{const done=await convertCharacter(input.id);if(done===false)return {cancelled:true};check(await persistSettings()===true,'角色已转换，身份保存未确认');changed();return {converted:true};}finally{busy=false}},createFromOrigin:ref=>{check(!busy,'身份操作尚未完成');return slots.createFromOrigin(ref);},resumeCreation:()=>{check(!busy,'身份操作尚未完成');return slots.resume();},isBusy:()=>busy||slots.isBusy(),hasPending:()=>!!power().tisya_identity_pending,hasCreationPending:()=>slots.hasPending(),capabilities:['openNative','select','bind','convertCharacter'],readContext:async()=>({status:'connected',capabilities:['openNative','select','bind','convertCharacter'],personaId:getAvatar(),displayName:getContext().name1,source:read().personas.find(x=>x.id===getAvatar())?.descriptor.tisyaOrigin??null,locked:!!getContext().chatMetadata?.persona,context:scope(),contextRevision:stamp(scope())}),resolve:async id=>read().personas.find(x=>x.id===id)??null,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},openNative:()=>openPage?openPage():openNative(),bind:()=>openPage?.(),dispose(){listeners.clear()}};
 }

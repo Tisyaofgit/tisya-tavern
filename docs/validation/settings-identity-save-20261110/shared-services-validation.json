@@ -1,0 +1,90 @@
+{
+  "at_utc": "2026-11-10T03:58:40.352507+00:00",
+  "scope": "Identity shared-service persistence recovery and legitimate source-book retention",
+  "source_root": "/workspace/scratch/390b9cf04a3c/settings-identity-fix",
+  "files": [
+    {
+      "path": "user-identity-service.js",
+      "before": {
+        "bytes": 8963,
+        "sha256": "85785f586657e3a60fa74af2b1c0047b7384120c3334ed058f69784265ea214c"
+      },
+      "after": {
+        "bytes": 12027,
+        "sha256": "50665a5ff059e5ae86369c72cff96bb243f3e369c0db25250f36ce4a882dd206"
+      }
+    },
+    {
+      "path": "engine/identity.mjs",
+      "before": {
+        "bytes": 5360,
+        "sha256": "7495d33ae22ca629111723353c9bd2f12995d4fb6d89ab2bf18fad173d66c9bf"
+      },
+      "after": {
+        "bytes": 5663,
+        "sha256": "5f48a97426bea1532d164c006227841b3b41d144d548c78b1052ee6e16d5ff4a"
+      }
+    },
+    {
+      "path": "tests/user-identity-service.test.js",
+      "before": {
+        "bytes": 6689,
+        "sha256": "4b69a2bff2d380a66e29dea414bb3f2b23faff92b2933e41e7fe087aa924c2f0"
+      },
+      "after": {
+        "bytes": 14543,
+        "sha256": "1952bd64776ecaba6f209a0ecfdb9223da86c99c621711ad41e7696198278079"
+      }
+    },
+    {
+      "path": "tests/story-identity-save.test.js",
+      "before": null,
+      "after": {
+        "bytes": 1939,
+        "sha256": "abd9d3e8eaf2e7859a2ca4cfba37349d8f414e2b2455bddde69291f827edabef"
+      }
+    }
+  ],
+  "validation": {
+    "before": {
+      "tests": 21,
+      "pass": 12,
+      "fail": 9,
+      "log": "/workspace/scratch/390b9cf04a3c/identity-evidence/shared-services-before.tap",
+      "source": "Original published shared services with new targeted regression tests; original error output preserved."
+    },
+    "after_initial_fix": {
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "log": "/workspace/scratch/390b9cf04a3c/identity-evidence/shared-services-after.tap"
+    },
+    "final": {
+      "tests": 24,
+      "pass": 24,
+      "fail": 0,
+      "log": "/workspace/scratch/390b9cf04a3c/identity-evidence/shared-services-final.tap",
+      "coverage": [
+        "Unconfirmed profile save restores only own fields/native projection and preserves original failure",
+        "False persistence receipt is failure even when data equals draft",
+        "Concurrent native values, descriptors and new metadata survive rollback",
+        "Confirmed profile/wish write followed by chat switch retains saved data and original-scope receipt",
+        "Exact absent/null descriptor containers restored on failure",
+        "Other active identity description is never rolled back",
+        "Projection rollback failure retains both original persistence and rollback errors",
+        "Non-bound modes preserve legitimate selected source book",
+        "Missing source or context change during source read causes zero config writes"
+      ]
+    }
+  },
+  "receipt_contract": {
+    "confirmed_error": "error.receipt = {kind: profile|wish, id, scope: original scope, confirmed: true}; only set after await persistSettings() === true",
+    "unconfirmed_error": "Original failure rethrown after conditional own-field rollback; AggregateError only if native projection recovery also throws; field equality never proves persistence."
+  },
+  "verification_type": "Node tests with actual identity/story services; native persistence/worldbook callbacks are controlled test boundaries. No real host/model/Android claim.",
+  "parent_owned_work": [
+    "UI route integration tests and full build",
+    "Canonical blueprint/checkpoint persistence",
+    "Commit/push and publication"
+  ]
+}

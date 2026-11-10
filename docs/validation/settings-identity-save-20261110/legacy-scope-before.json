@@ -1,0 +1,21 @@
+{
+  "evidence_kind": "historical_failure_reproduction_before_fix",
+  "saved_utc": "2026-11-10T04:02:04.100204+00:00",
+  "saved_beijing": "2026-11-10T12:02:04.100204+08:00",
+  "execution_utc": null,
+  "execution_timestamp_note": "The command was executed earlier in this same session before the root agent applied the selectionSubmission fix; a separate execution clock timestamp was not captured.",
+  "source_state": "Old user-identity-page.js before selectionSubmission={id,scopes} was added. The old code assigned scopeBaseline=JSON.stringify(scopes) after pending resume, swallowing scopes edited after the failed first selection. This evidence is not a result from the current fixed source.",
+  "source_sha256_at_execution": null,
+  "source_hash_note": "No per-file source hash was captured at the moment of this ad hoc reproduction; no current-source hash is substituted.",
+  "workdir": "/workspace/scratch/390b9cf04a3c/settings-identity-fix",
+  "command": "node --input-type=module <<'JS'\nimport {Window} from 'happy-dom';\nimport {mountIdentityPage} from './user-identity-page.js';\nimport {createIdentityService} from './user-identity-service.js';\nconst c={chatId:'audit-scope-after-pending',characterId:0,characters:[{avatar:'card'}],chatMetadata:{},name1:'甲',powerUserSettings:{personas:{a:'甲',b:'乙'},persona_description:'甲设定',persona_descriptions:{a:{description:'甲设定'},b:{description:'乙设定'}},default_persona:'a'}};\nlet active='a',failChat=true,selects=0;\nconst service=createIdentityService({getContext:()=>c,getAvatar:()=>active,applyActive:(id,name)=>{active=id;c.name1=name;c.powerUserSettings.persona_description=c.powerUserSettings.persona_descriptions[id].description;},persistSettings:async()=>true,persistChat:async()=>!failChat});\nconst select=service.select;service.select=async input=>{selects++;return select(input);};\nconst tables={state:()=>({busy:false,jobs:[],progress:null}),reportError(){}};\nconst w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const ui=mountIdentityPage(root,{service,tables,onClose(){}});\nconst picker=root.querySelector('[data-user-select]');picker.value='b';picker.dispatchEvent(new w.Event('change',{bubbles:true}));\nconst first=await ui.saveDraft();\nroot.querySelector('[data-user-tab=bindings]').click();const global=root.querySelector('[data-scope=global]');global.checked=true;global.dispatchEvent(new w.Event('change',{bubbles:true}));\nfailChat=false;const second=await ui.saveDraft();\nconsole.log(JSON.stringify({first,second,selects,active,desiredGlobal:global.checked,actualDefault:c.powerUserSettings.default_persona,dirty:ui.hasDraft(),pending:service.hasPending()}));\nawait ui.discardDraft();ui.dispose();await w.happyDOM.abort();\nJS",
+  "tool_call_result": {
+    "chunk_id": "d73e52",
+    "wall_time_seconds": 0.201974275,
+    "exit_code": 0,
+    "output": "{\"first\":false,\"second\":true,\"selects\":1,\"active\":\"b\",\"desiredGlobal\":true,\"actualDefault\":\"a\",\"dirty\":false,\"pending\":false}\n"
+  },
+  "observed_failure": "After first selection failed at chat persistence, global-default=true was edited. Retry returned success and cleared dirty/pending, but actualDefault stayed a although selected active identity was b. Only one select ran.",
+  "verification_scope": "Actual mountIdentityPage and createIdentityService under happy-dom, with in-memory native host persistence. No real model call, real user data, browser or Android validation.",
+  "preservation_note": "Original command and original observed output preserved on request without rerunning or modifying source."
+}
