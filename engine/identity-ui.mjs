@@ -355,7 +355,24 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
   }
   if(generationDraft){
    const request=generationSavedDraft??{...generationDraft,destination:clone(creationDestination),proposal:parseGeneration(),createPersona:generationCreatePersona};
-   if(!generationReceipt){let result;try{result=await roles.saveCreation(request,{destination:request.destination});}catch(error){if(error.draft||error.archiveReceipt){const retained=error.draft?clone(error.draft):{...clone(request),archiveReceipt:clone(error.archiveReceipt)};generationSavedDraft=clone(retained);generationDraft=clone(retained);generationText=JSON.stringify(retained.proposal,null,2);if(retained.archiveReceipt?.confirmed)recordReceipt('基点书归档（聊天接入待继续）');}throw error;}check(result?.state&&result.contextKey===request.contextKey&&Number.isInteger(result.revision),'创作保存未返回当前聊天的确认表单');generationReceipt=result;generationSavedDraft=clone(request);recordReceipt('基点书角色或世界档案与当前表单');}
+   if(!generationReceipt){
+    let result;
+    try{result=await roles.saveCreation(request,{destination:request.destination});}
+    catch(error){
+     if(error.draft||error.archivePlan||error.archiveReceipt){
+      const retained=error.draft?clone(error.draft):clone(request);
+      if(error.archivePlan)retained.archivePlan=clone(error.archivePlan);
+      if(error.archiveReceipt)retained.archiveReceipt=clone(error.archiveReceipt);
+      // A rejected source preflight retains editable input. Once an archive
+      // plan or durable intent exists, even an unknown result must resume it.
+      if(retained.archivePlan||retained.recovery||retained.archiveReceipt)generationSavedDraft=clone(retained);
+      generationDraft=clone(retained);generationText=JSON.stringify(retained.proposal,null,2);
+      if(retained.archiveReceipt?.confirmed)recordReceipt('基点书归档（聊天接入待继续）');
+     }
+     throw error;
+    }
+    check(result?.state&&result.contextKey===request.contextKey&&Number.isInteger(result.revision),'创作保存未返回当前聊天的确认表单');generationReceipt=result;generationSavedDraft=clone(request);recordReceipt('基点书角色或世界档案与当前表单');
+   }
    const result=generationReceipt;
    const receipt={confirmed:true,contextKey:result.contextKey,beforeRevision:request.expectedRevision,revision:result.revision,records:request.proposal.matrix.changes.map(change=>({tableId:change.tableId,recordId:change.recordId}))};
    await companion?.acceptDatabaseReceipt?.(receipt);
@@ -479,7 +496,9 @@ export function mountMatrixIdentity(document, root, {identity, config, roles, on
      const def=spec?.fields?.find(field=>field.key===key),complex=value!==null&&typeof value==='object',node=el(typeof value==='boolean'?'select':'textarea');
      if(typeof value==='boolean'){option(node,'是','true');option(node,'否','false');}
      const fieldKey=index+':'+key;node.className='text_pole';node.value=generationFieldTexts[fieldKey]??(complex?JSON.stringify(value,null,2):String(value??''));node.dataset.creationRow=String(index);node.dataset.creationKey=key;if(node.tagName==='TEXTAREA')node.rows=complex||String(value??'').length>100?5:2;if(generationFieldErrors[fieldKey])node.setCustomValidity('请保持当前字段的数据格式');
-     const update=()=>{generationFieldTexts[fieldKey]=node.value;try{let parsed=node.value;if(complex)parsed=JSON.parse(parsed);else if(typeof value==='number'){check(parsed.trim()&&Number.isFinite(Number(parsed)),'请输入有效数字');parsed=Number(parsed);}else if(typeof value==='boolean')parsed=parsed==='true';proposal.matrix.changes[index].values[key]=parsed;generationText=JSON.stringify(proposal,null,2);delete generationFieldErrors[fieldKey];node.setCustomValidity('');}catch{generationFieldErrors[fieldKey]=true;node.setCustomValidity('请保持当前字段的数据格式');}invalidate();};
+     const update=()=>{generationFieldTexts[fieldKey]=node.value;try{let parsed=node.value;if(complex)parsed=JSON.parse(parsed);else if(typeof value==='number'){check(parsed.trim()&&Number.isFinite(Number(parsed)),'请输入有效数字');parsed=Number(parsed);}else if(typeof value==='boolean')parsed=parsed==='true';proposal.matrix.changes[index].values[key]=parsed;
+      if(key==='name'&&(generationKind==='character'&&change.tableId==='T_CHAR_DOSSIER'&&change.recordId===proposal.matrix.binding?.dossierId||generationKind==='world'&&change.tableId==='T_STATIC_WORLDS'&&change.recordId===proposal.matrix.binding?.worldId))proposal.name=parsed;
+      generationText=JSON.stringify(proposal,null,2);delete generationFieldErrors[fieldKey];node.setCustomValidity('');}catch{generationFieldErrors[fieldKey]=true;node.setCustomValidity('请保持当前字段的数据格式');}invalidate();};
      node.oninput=node.onchange=update;group.append(field(def?.label??key,node));
     }
     typed.append(group);

@@ -36,12 +36,12 @@ export function taskMessages({preset,task,input,selected='',substitute=s=>s}){
  const slots=taskSlots(task,input),messages=[],seen=new Set(),byId=new Map(preset.prompts.map(p=>[p.identifier,p]));
  for(const order of preset.prompt_order[0].order){
   if(seen.has(order.identifier))throw Error('专用预设条目重复：'+order.identifier);seen.add(order.identifier);
-  const p=byId.get(order.identifier);if(!p)throw Error('专用预设条目缺失：'+order.identifier);if(!order.enabled||!p.enabled)continue;
+  const p=byId.get(order.identifier);if(!p)throw Error('专用预设条目缺失：'+order.identifier);if(!order.enabled||p.enabled===false)continue;
   // Only instruction text is macro-expanded. Source values are serialized once
   // without executing scripts, applying display regex or substituting macros.
   const content=p.tisyaMaterialSlot?slotText(p.tisyaMaterialSlot,slots[p.tisyaMaterialSlot]):p.tisyaSelectedResources?(selected?'[SELECTED_RESOURCE]\n'+substitute(selected)+'\n[/SELECTED_RESOURCE]':''):substitute(p.content);
   if(content)messages.push({role:p.role,content});
  }
- for(const key of Object.keys(slots))if(slots[key]!==undefined&&slots[key]!==null&&!preset.prompts.some(p=>p.tisyaMaterialSlot===key&&p.enabled&&preset.prompt_order[0].order.some(o=>o.identifier===p.identifier&&o.enabled)))throw Error('专用预设缺少来源资料槽：'+key);
+ for(const key of Object.keys(slots))if(slots[key]!==undefined&&slots[key]!==null&&!preset.prompts.some(p=>p.tisyaMaterialSlot===key&&p.enabled!==false&&preset.prompt_order[0].order.some(o=>o.identifier===p.identifier&&o.enabled)))throw Error('专用预设缺少来源资料槽：'+key);
  return messages;
 }

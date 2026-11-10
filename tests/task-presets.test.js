@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {emptyConfig,defaultWorld} from '../config/core.js';
 import {pairedPreset,taskMessages} from '../tables/paired-preset.js';
 import {TABLE_MODES} from '../tables/modes.js';
-import {TASK_PROFILES} from '../tables/task-profiles.js';
+import {TASK_PROFILES,taskProfile,SIMPLE_FORM_CONTRACT} from '../tables/task-profiles.js';
+import matrixReply from '../presets/Tisya-Matrix.json' with {type:'json'};
 import {SLOT_NAMES,SLOT_TARGETS} from '../tables/slots.js';
 import {cardAIMaterials,cardDefinitionSource,bookAIMaterials} from '../tables/card-source.js';
 import {historyEvidence,prepareCommit} from '../tables/ledger.js';
@@ -13,14 +14,20 @@ const configuration={data:emptyConfig(),world:defaultWorld()};
 const input={goal:'核对原始定义',sourceCardRaw:{fields:{name:'源卡',description:'原始定义 {{user}} <not-a-macro> 0 false null'},entries:[{id:7,content:'格式：<receipt>完整值</receipt>'}]},sourceHistory:[{floor:1,role:'user',text:'原始用户 {{user}}'},{floor:2,role:'assistant',text:'<body>实际事件</body><memory>旧摘要</memory>'}],sourceBooks:[],registry:defaultRegistry(),currentRows:[]};
 function slot(messages,name){const text=messages.find(m=>m.content.startsWith('[TISYA.DATA.'+name.toUpperCase()+']\n'))?.content;assert(text,name);return JSON.parse(text.split('\n').slice(2,-1).join('\n'));}
 
-test('all eleven operations own distinct authorization, routing, procedure and norms in narrative preset order',()=>{
+test('all eleven operations retain their authorization, routing and procedure under the selected reply contract',()=>{
  assert.deepEqual(Object.keys(TABLE_MODES).sort(),Object.keys(TASK_PROFILES).sort());
  const authorizations=new Set(),routes=new Set(),workflows=new Set();
  for(const task of Object.keys(TABLE_MODES)){
   const p=pairedPreset({task,configuration}),messages=taskMessages({preset:p,task,input:{registry:{tables:[],types:[]},currentRows:[]}});
-  authorizations.add(p.entries.tisya_user_relation);routes.add(p.entries.tisya_task_start);workflows.add(p.entries.tisya_inner_chain);
-  assert.match(p.entries.tisya_user_relation,/\[MODE.AUTHORIZE\]/);assert.match(p.entries.tisya_task_start,/@DESTINATIONS/);assert.match(p.entries.tisya_registry,/@NORMS/);assert.match(p.entries.tisya_inner_chain,/\[FILL.1\]/);
-  const content=messages.map(m=>m.content).join('\n');assert(content.indexOf('[MATERIALS]')<content.indexOf('[REGISTRY]'));assert(content.indexOf('[REGISTRY]')<content.indexOf('[INNER.LOGIN]'));assert.equal(messages.at(-1).role,'system');
+  const profile=taskProfile(task,{formContract:p.formContract}),simple=p.formContract===SIMPLE_FORM_CONTRACT;
+  authorizations.add(profile.authorize);routes.add(p.entries.tisya_task_start);workflows.add(simple?p.entries.tisya_session_reset:p.entries.tisya_inner_chain);
+  assert.match(p.entries.tisya_task_start,/@DESTINATIONS/);for(const destination of profile.route)assert(p.entries.tisya_task_start.includes(destination),task);
+  if(simple){
+   assert(p.entries.tisya_task_start.includes(profile.authorize));assert.match(p.entries.tisya_session_reset,/\[FILL.1\]/);assert.match(p.entries.tisya_registry,/<reply id="tisya-onepass-1">/);assert.match(p.entries.tisya_registry,/<cells format="form">/);assert.match(p.entries.tisya_registry,/<vars\/>/);assert.match(p.entries.tisya_registry,/<archive\/>/);
+   for(const id of ['main','tisya_identity_attestation','tisya_user_relation','tisya_flow_gate','tisya_think_commit','tisya_delivery_warning','tisya_prepare_trigger'])assert.equal(p.entries[id],matrixReply.prompts.find(x=>x.identifier===id).content,id);
+   assert.match(p.entries.tisya_creative_guide,/\[GENESIS.DESIGN\]/);
+  }else{assert.match(p.entries.tisya_user_relation,/\[MODE.AUTHORIZE\]/);assert(p.entries.tisya_user_relation.includes(profile.authorize));assert.match(p.entries.tisya_registry,/@NORMS/);assert.match(p.entries.tisya_inner_chain,/\[FILL.1\]/);}
+  const content=messages.map(m=>m.content).join('\n'),material=content.indexOf(simple?'[Dream Rules]':'[MATERIALS]'),registry=content.indexOf('[REGISTRY]'),flow=content.indexOf(simple?'[FLOW]':'[INNER.LOGIN]');assert(material>=0&&material<registry);assert(registry<flow);assert.equal(messages.at(-1).role,simple?'user':'system');
   assert.equal(new Set(p.prompts.map(x=>x.identifier)).size,p.prompts.length);assert.equal(p.prompts.filter(x=>x.tisyaMaterialSlot).length,Object.keys(SLOT_NAMES).length);
  }
  assert.equal(authorizations.size,11);assert.equal(routes.size,11);assert.equal(workflows.size,11);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);

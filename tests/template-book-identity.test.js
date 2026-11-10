@@ -8,6 +8,7 @@ import {mountStoryResources} from '../engine/identity-ui.mjs';
 import {DEFAULT_TEMPLATE_BOOK,bundledTemplateEntries,bundledNativeTemplateBook,PHONE_FIELDS_GUIDE,ensureTemplateBook,readCreationTemplates,stripPhoneInitialization,excludeTemplateBookEntries,readStoryReferenceBooks,scanStoryReferenceBooks} from '../engine/template-book.mjs';
 import {parsePhoneWorld,parsePhoneCharacter} from '../phone-life-config.mjs';
 import {prepareWorldbookOrder} from '../worldbook-order.js';
+import {WORLD_FORM_TEMPLATE,CHARACTER_FORM_TEMPLATE,MATRIX_CREATION_CONTRACT,FORM_TEMPLATE_GUIDE} from '../engine/builtin-book-data.mjs';
 
 function fixture(){
  const books={},ctx={extensionSettings:{},chatMetadata:{phone:{balance:7431,story:'already progressed'}},chatId:'a',characterId:0};let writes=0,hook=null;
@@ -19,10 +20,14 @@ function fixture(){
 const button=(root,label)=>[...root.querySelectorAll('button')].find(b=>b.textContent===label);
 const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
 
-test('packaged templates reference the unified schema and do not create independent phone states',()=>{
+test('packaged authoring templates derive readable rules from canonical definitions and share the form contract',()=>{
  const entries=bundledTemplateEntries();assert.equal(parsePhoneWorld(entries[0].content),null);assert.equal(parsePhoneCharacter(entries[1].content),null);
- assert.match(entries[0].content,/T_STATIC_WORLDS/);assert.match(entries[1].content,/T_CHAR_DOSSIER/);assert.match(entries[3].content,/统一表单/);
- assert.match(entries[0].content,/matrix/);assert(!entries.some(e=>/^【模板】.*初态/u.test(e.name)));
+ for(const [entry,definition] of [[entries[0],WORLD_FORM_TEMPLATE],[entries[1],CHARACTER_FORM_TEMPLATE]]){
+  for(const target of definition.targets)assert(entry.content.includes(target.instruction));
+  assert(entry.content.endsWith(MATRIX_CREATION_CONTRACT));assert.doesNotMatch(entry.content,/"(?:tableId|fields|matrix|changes)"\s*:/);
+ }
+ assert(WORLD_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_STATIC_WORLDS'));assert(CHARACTER_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_CHAR_DOSSIER'));assert.match(entries[1].content,/本领外显只写能力的实际表现/);assert.equal(entries[3].content,FORM_TEMPLATE_GUIDE);
+ assert(entries.every(e=>e.content.includes(MATRIX_CREATION_CONTRACT)));assert(!entries.some(e=>/^【模板】.*初态/u.test(e.name)));
 });
 test('complete native template book and readable field guide match runtime templates exactly',()=>{
  const book=JSON.parse(readFileSync(new URL('../templates/tisya-template-book.json',import.meta.url),'utf8'));assert.deepEqual(book,bundledNativeTemplateBook());assert.equal(Object.keys(book.entries).length,4);assert(Object.values(book.entries).every(e=>e.disable===true));
