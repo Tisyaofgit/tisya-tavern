@@ -6,6 +6,7 @@ import {digest as databaseDigest} from './engine/common.mjs';
 import {createInitialPhoneLife,validatePhoneLife} from './phone-life-config.mjs';
 import {reduce as reduceLifeCore} from './phone-life/core.mjs';
 import {reduceSocial as reduceLifeSocial} from './phone-life/social.mjs';
+import {displayText,accountDisplayName} from './phone-life/display.mjs';
 
 export const PHONE_FORMAT='tisya.virtual-phone/1';
 const STREAMS=new Set(['forum','group','bubble','dm']);
@@ -93,7 +94,7 @@ function lifeProjectionEnvelope(state,domain){
   const bindingKey=domain.bindingKey,prefix=`life-${signature(bindingKey)}`,social=domain.state.social;
   const actorId=actor=>`${prefix}-actor-${encodeURIComponent(actor)}`;
   const accounts={},documents=[],blocks=[];
-  for(const a of social.accounts){const key=actorId(a.id);if(!own(state.suite.accounts,key))accounts[key]={name:a.name,platform:'weibo',personId:a.personId??a.id};}
+  for(const a of social.accounts){const key=actorId(a.id);if(!own(state.suite.accounts,key))accounts[key]={name:accountDisplayName(a),...(!displayText(a.name)?{nameState:'unknown'}:{}),platform:'weibo',personId:a.personId??a.id};}
   for(const post of social.posts){
     const docId=`${prefix}-post-${encodeURIComponent(post.id)}`,existing=state.suite.documents[docId];
     const owned=social.ownedAccountIds.includes(post.authorId),isPublic=post.visibility==='public';
@@ -109,7 +110,7 @@ function rejectLifeProjectionWrite(state,threadId){if(state.suite.documents[thre
 function lifeContext(boundary,actions){
   const domain=boundary?.life;if(!domain)return null;const s=domain.state,chosen=new Set(actions.map(a=>a.lifeAction?.postId).filter(Boolean));
   const projectionPrefix=`life-${signature(domain.bindingKey)}-post-`;const posts=s.social.posts.filter(p=>p.visibility==='public'||chosen.has(p.id)).slice(-40).map(p=>({...p,projectionDocumentId:projectionPrefix+encodeURIComponent(p.id)}));
-  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,world:{id:domain.world.id,name:domain.world.name,currency:domain.world.currency},apps:domain.world.apps,clock:s.clock,contacts:(s.contacts??[]).map(c=>({id:c.id,name:c.name})),privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{pendingTransfers:s.wallet.pendingTransfers??[],accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:[...Object.entries({...LIFE_EXTENDED_WORLD_ACTIONS,...SOCIAL_WORLD_ACTIONS}).map(([type,fields])=>type+' {'+fields.join(',')+'}'),'order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。'};
+  return {bindingKey:domain.bindingKey,weiboProjectionPrefix:projectionPrefix,initialization:domain.initialization,world:{id:domain.world.id,name:domain.world.name,currency:domain.world.currency},apps:domain.world.apps,clock:s.clock,contacts:(s.contacts??[]).map(c=>({id:c.id,name:c.name})),privacy:'私人账户、余额和待办仅属于当前使用者，不使其他角色自动知情。',wallet:{pendingTransfers:s.wallet.pendingTransfers??[],accounts:s.wallet.accounts,card:{used:s.wallet.card.used,limit:s.wallet.card.limit},loans:s.wallet.loans.map(l=>({id:l.id,remainingPrincipal:l.remainingPrincipal,status:l.status}))},orders:s.commerce.orders.filter(o=>!['cancelled','refunded','completed'].includes(o.status)).slice(-30),inventory:s.inventory.filter(i=>i.qty>0).slice(-60),map:{position:s.map.position,journey:s.map.journey,places:s.map.places.filter(p=>p.known)},calendar:s.calendar.events.filter(e=>e.status!=='cancelled').slice(-30),social:{activeAccountId:s.social.activeAccountId,accounts:s.social.accounts.map(a=>({id:a.id,name:a.name,personId:a.personId})),posts,pending:s.social.pending.filter(a=>!['cancelled','notification-seen'].includes(a.status)).slice(-40)},allowedWorldUpdates:[...Object.entries({...LIFE_EXTENDED_WORLD_ACTIONS,...SOCIAL_WORLD_ACTIONS}).map(([type,fields])=>type+' {'+fields.join(',')+'}'),'order.advance {orderId}','calendar.confirm {eventId}','world.advance {minutes}','social.network.advance {}','social.npc.post {postId,authorId,text}','social.npc.comment {postId,authorId,text}'],rules:'lifeUpdates只处理已发生用户操作的世界后果；不能输出支付、借还款、理财、转账、本人发帖或私密资料操作。新生活微博由life唯一实体投影到suite，不能用blocks改写lifeProjection页面。账号nameState为unknown时name仅为界面标签，不是已知网名；新增资料通过同一简表补充，未填写的资料保持未知。'};
 }
 
 export function createPhoneState(seed,contextKey){return {format:PHONE_FORMAT,contextKey:id(contextKey,'聊天标识'),revision:0,suite:createSuite(seed),actions:[],requests:{},frames:{},rejectedSources:{},selectedSources:[],notifications:[],drafts:{}};}
@@ -231,7 +232,7 @@ const PHONE_CONTEXT_TAIL=40;
 const PHONE_CONTEXT_MAX_ITEMS=160;
 const PHONE_ROUTE_ACTORS=12;
 function compactIdentity(account){
-  return Object.fromEntries(['name','platform','personId','role'].filter(k=>typeof account?.[k]==='string').map(k=>[k,account[k]]));
+  return Object.fromEntries(['name','nameState','platform','personId','role'].filter(k=>typeof account?.[k]==='string').map(k=>[k,account[k]]));
 }
 function contextThread(doc,selected,excluded){
   const items=(doc.items??[]).filter(m=>!excluded.some(a=>a.threadId===doc.id&&(a.reference.floor?m.floor===a.reference.floor:m.id===a.reference.itemId)));
@@ -435,7 +436,7 @@ export function attachPhoneDatabaseSnapshot(input,{revision=0}={}){
     const documents=Object.fromEntries(Object.entries(state.suite.documents).filter(([,d])=>d.meta?.lifeProjection?.bindingKey!==binding));
     const fresh=lifeProjectionEnvelope({...state,suite:{...state.suite,documents}},currentLife);
     state.suite.documents={...documents,...Object.fromEntries((fresh.documents??[]).map(d=>[d.id,d]))};
-    for(const actor of currentLife.state.social.accounts)state.suite.accounts[`${prefix}-actor-${encodeURIComponent(actor.id)}`]={name:actor.name,platform:'weibo',personId:actor.personId??actor.id};
+    for(const actor of currentLife.state.social.accounts)state.suite.accounts[`${prefix}-actor-${encodeURIComponent(actor.id)}`]={name:accountDisplayName(actor),...(!displayText(actor.name)?{nameState:'unknown'}:{}),platform:'weibo',personId:actor.personId??actor.id};
   }
   const expected=createSuite(state.suite.seed);let rebuilt=expected;for(const envelope of state.suite.branches[state.suite.activeBranch].envelopes)rebuilt=applyEnvelope(rebuilt,envelope);
   // These are derived network replay receipts, not financial action receipts.

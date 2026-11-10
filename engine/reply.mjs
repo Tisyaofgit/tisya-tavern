@@ -1,5 +1,7 @@
 import {clone,fail,sha256,digest,stableId,asError} from './common.mjs';
-import {normalizeEnvelope} from './tags.mjs';
+import {normalizeEnvelope,envelopeTags} from './tags.mjs';
+import {xmlTokens} from '../reader-core.js';
+import {groupedExtraSlots} from '../native-mvu-wire.js';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges} from '../tables/foundation/engine.js';
 import {stageArchive,formalizeArchives} from './archive.mjs';
 const mark=/^[ \t\u3000]*(?:\[(?:P)?(\d+)\]|【(?:P)?(\d+)】|\((\d+)\)|P(\d+)[.、:：]?|(\d+)[.、．:：)]|(\d+)(?=[ \t\u3000]))[ \t\u3000]*/i;
@@ -11,10 +13,17 @@ export function paragraphs(body){
  fragments.forEach(f=>f.sha256=sha256(f.raw_block));return {fragments,normalized:fragments.map((f,i)=>(i+1)+' '+f.chunk_text).join('\n\n'),mapping,warnings:valid?[]:[{code:'PARAGRAPH_NORMALIZED',message:'连续段号已在读取投影中归一，原文及映射保留',mapping}]};
 }
 export function envelope(raw){
- const text=normalizeEnvelope(raw),root=/^\s*<reply\b[^>]*>([\s\S]*)<\/reply>\s*(?:<StatusPlaceHolderImpl\s*\/>\s*)?$/.exec(text);if(!root)fail('REPLY_ROOT','需要完整回复外壳');const inner=root[1],blocks={},attrs={};let at=0;
- while(at<inner.length){const m=/^\s*<([a-z][\w.-]*)\b([^>]*?)(\/?)>/i.exec(inner.slice(at));if(!m){if(inner.slice(at).trim())fail('REPLY_BLOCK','区块之间有未识别内容',{offset:at});break;}const tag=m[1].toLowerCase(),a=Object.fromEntries([...m[2].matchAll(/([\w.-]+)\s*=\s*["']([^"']*)["']/g)].map(x=>[x[1],x[2]])),key=tag==='anchor'?a.phase:tag;if(!['task','before','after','title','body','extra','cells','vars','archive','actions'].includes(key))fail('REPLY_BLOCK','未知回复区块',{tag});if(Object.hasOwn(blocks,key))fail('REPLY_DUPLICATE_BLOCK','回复区块重复',{block:key});at+=m[0].length;attrs[key]=a;
-  if(m[3]){blocks[key]='';continue;}const re=new RegExp('</'+tag+'\\s*>','ig');re.lastIndex=at;const close=re.exec(inner);if(!close)fail('REPLY_BLOCK','回复区块未闭合',{block:key});blocks[key]=inner.slice(at,close.index);at=re.lastIndex;
+ const text=groupedExtraSlots(normalizeEnvelope(raw),xmlTokens,envelopeTags(raw)??undefined),blocks={},attrs={},stack=[];let slot=null,end=null;
+ for(const t of xmlTokens(text,{literalAmpersands:true})){
+  if(t.kind==='open'){
+   if(!stack.length){if(t.name!=='reply'||t.selfClose||end!==null)fail('REPLY_ROOT','需要完整回复外壳');}
+   else if(stack.length===1){const tag=t.name.toLowerCase(),key=tag==='anchor'?t.attrs.phase:tag;if(!['task','before','after','title','body','extra','cells','vars','archive','actions'].includes(key))fail('REPLY_BLOCK','未知回复区块',{tag});if(Object.hasOwn(blocks,key))fail('REPLY_DUPLICATE_BLOCK','回复区块重复',{block:key});blocks[key]='';attrs[key]=t.attrs;slot=t.selfClose?null:{key,start:t.end};}
+   if(!t.selfClose)stack.push(t.name);
+  }else if(t.kind==='close'){
+   if(stack.at(-1)!==t.name)fail('REPLY_BLOCK','回复区块未正确闭合',{tag:t.name});if(stack.length===2&&slot){blocks[slot.key]=text.slice(slot.start,t.start);slot=null;}stack.pop();if(!stack.length){end=t.end;break;}
+  }else if(stack.length<2&&t.kind!=='comment'&&t.value.trim())fail('REPLY_BLOCK','区块之间有未识别内容',{offset:t.start});
  }
+ if(end===null||stack.length||!/^\s*(?:<StatusPlaceHolderImpl\s*\/>\s*)?$/.test(text.slice(end)))fail('REPLY_ROOT','需要完整回复外壳');
  if(!blocks.body?.trim())fail('BODY_EMPTY','正文为空');return {blocks,attrs,raw,canonical:text};
 }
 export function parseReply(raw,entryId,revision=1){

@@ -1,11 +1,18 @@
 import {phoneTimeText,phoneDateParts,phoneCalendarPage} from './time-view.mjs';
 import {quoteLoan,quoteJourney} from './core.mjs';
 import {renderBusinessView,renderBusinessExtras} from './business-ui.mjs';
+import {displayText} from './display.mjs';
+
+function pendingCalendar(h){
+ const rows=h.formReadiness?.()?.pendingCalendar??[];
+ if(!rows.length)return '';
+ return '<section class="card u-card phone-pending-calendar"><h3>时间待定的安排</h3>'+rows.map(row=>'<article class="list-item"><strong>'+h.esc(displayText(row.title,'未命名安排'))+'</strong><p class="muted small">待补充：'+h.esc(row.missing.join('、'))+'</p></article>').join('')+'<p class="muted small">已知内容先保留，补好时间后再进入日历和提醒。</p></section>';
+}
 
 // Presentation only. All changes go through the shared, persisted action reducer.
 export function renderUtility(state,ui,h){
  if(!['wallet','shop','food','map','calendar'].includes(ui.app))return null;
- if(ui.app==='calendar'&&!state.config?.calendar)return '<div class="empty"><h2>世界时间尚未配置</h2><p>在当前表单明确世界历法与时刻后，才能安排故事日程。</p></div>';
+ if(ui.app==='calendar'&&!state.config?.calendar)return '<div class="empty"><h2>世界时间尚未配置</h2><p>当前世界尚未提供日历起点，已知安排会先保留；补好时间后再进入日历。</p></div>'+pendingCalendar(h);
  const extendedView=renderBusinessView(state,ui,h);if(extendedView!==null)return '<div class="life-utility">'+extendedView+'</div>';
  const e=h.esc,m=v=>h.money(v),hosted=h.hosted===true,unit=e(state.config?.currency?.symbol??''),currencyName=state.config?.currency?.name??'世界货币',bank=state.wallet.fundingAccountId??state.wallet.accounts[0]?.id??'',cashAccount=state.wallet.defaultAccountId??state.wallet.accounts[0]?.id??'',loanConfig=state.config?.economy?.loan,contacts=state.contacts??[],b=(label,type,payload={},cls='u-secondary')=>h.btn(e(label),type,payload,cls);
  const ib=(icon,label,type,payload={},cls='u-secondary')=>b(label,type,payload,cls).replace('>','>'+h.icon(icon));
@@ -25,7 +32,7 @@ export function renderUtility(state,ui,h){
  const submit=(label,cls='')=>'<button type="submit" class="u-submit '+cls+'">'+e(label)+'</button>';
  const form=(type,content)=>'<form class="u-form" data-action="'+e(type)+'">'+content+'</form>';
  const accounts=state.wallet.accounts,places=state.map.places.filter(p=>p.known!==false),products=state.commerce.products;
- const accountOptions=accounts.map(a=>[a.id,a.name+' · '+unit+''+m(a.balance)]);
+ const accountOptions=accounts.map(a=>[a.id,displayText(a.name,'未命名账户')+' · '+unit+''+m(a.balance)]);
  const place=id=>places.find(p=>p.id===id);
  const locationName=id=>place(id)?.name??'未指定地点';
  const nav=(app,tab='',detail='')=>({app,tab,detail});
@@ -50,13 +57,13 @@ export function renderUtility(state,ui,h){
   return '<section class="u-hero"><div class="u-hero-brand"><span>'+e(state.config?.appNames?.wallet??'钱包')+' · WALLET</span><span>◈</span></div><p class="u-label">我的可用现金</p><div class="u-hero-amount"><small>'+unit+'</small>'+m(cash)+'</div><div class="u-hero-footer"><span>零钱与银行卡合计</span><strong>故事内账户</strong></div></section>'+
    '<div class="u-actions">'+ib('send','转账','nav',nav('wallet','transfer'))+ib('card','信用卡','nav',nav('wallet','card'))+ib('star','轻理财','nav',nav('wallet','invest'))+ib('clock','账单','nav',nav('wallet','ledger'))+'</div>'+
    '<div class="u-grid"><div class="u-finance-card"><p class="u-kicker">CREDIT</p><h3>留一点周转空间</h3><div class="u-value">'+unit+''+m((w.card.limit===null?null:Math.max(0,w.card.limit-w.card.used)))+'</div><p class="u-subtle">剩余信用额度</p>'+b('查看信用账户','nav',nav('wallet','card'),'u-secondary')+'</div><div class="u-finance-card gold"><p class="u-kicker">SAVINGS</p><h3>给生活存一点</h3><div class="u-value">'+unit+''+m(invest)+'</div><p class="u-subtle">持有本金与已结算收益</p>'+b('查看我的理财','nav',nav('wallet','invest'),'u-secondary')+'</div></div>'+
-   section('我的账户')+card(accounts.map(a=>'<div class="u-list-row"><span class="u-mini-icon">'+h.icon(a.id==='bank'?'card':'wallet')+'</span><div class="u-list-copy"><p class="u-item-title">'+e(a.name)+'</p><p class="u-item-sub">可用于付款与转账</p></div><strong>'+unit+''+m(a.balance)+'</strong></div>').join(''))+
+   section('我的账户')+card(accounts.map(a=>'<div class="u-list-row"><span class="u-mini-icon">'+h.icon(a.id==='bank'?'card':'wallet')+'</span><div class="u-list-copy"><p class="u-item-title">'+e(displayText(a.name,'未命名账户'))+'</p><p class="u-item-sub">可用于付款与转账</p></div><strong>'+unit+''+m(a.balance)+'</strong></div>').join(''))+
    section('最近账单',b('查看全部','nav',nav('wallet','ledger'),'u-text'))+ledgerList(w.ledger.slice(0,4));
  }
  function transfer(){
   return card('<h3>转一笔，记一笔</h3>'+note('在已登记的账户之间划转，或转给角色联系人。确认后扣款并保留账单。')+'<div class="u-rule"></div>'+form('wallet.transfer',
    field('付款账户',select('from',accountOptions,cashAccount))+
-   field('转给谁',select('to',[...accounts.map(a=>[a.id,a.name]),...contacts.map(c=>[c.id,c.name+' · 联系人'])],contacts[0]?.id??bank))+
+   field('转给谁',select('to',[...accounts.map(a=>[a.id,displayText(a.name,'未命名账户')]),...contacts.map(c=>[c.id,displayText(c.name,'未填姓名')+' · 联系人'])],contacts[0]?.id??bank))+
    field('转账金额（'+currencyName+'）',amount('amount',5000))+submit('确认转账')));
  }
  function credit(){
@@ -194,7 +201,7 @@ export function renderUtility(state,ui,h){
    '<div class="u-form-row">'+field('日期','<input type="number" name="day" min="1" max="'+count+'" value="'+day+'" required>')+(page.standardTime?field('时间','<input type="time" name="minute" data-minutes value="'+hh(c.minute)+'" required>'):field('时刻（当日分钟）','<input type="number" name="minute" min="0" max="'+(page.minutesPerDay-1)+'" value="'+c.minute+'" required>'))+'</div>'+
    field('地点',select('placeId',places.map(p=>[p.id,p.name]),state.map.position))+
    field('一起的人',select('participantId',[['','仅自己'],...contacts.map(c=>[c.id,c.name+' · 发出邀请'])],''))+submit('保存安排'))+note('邀请先显示待确认，由下一轮剧情返回对方的实际回应。'));
-  return heading('LITTLE PLANS','把日子记下来','故事时间 · '+period+c.day+'日 '+hh(c.minute))+month+section(period+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
+  return heading('LITTLE PLANS','把日子记下来','故事时间 · '+period+c.day+'日 '+hh(c.minute))+month+pendingCalendar(h)+section(period+day+'日的安排',pill(rows.filter(r=>r.status!=='cancelled').length+' 项'))+agenda+section('新的安排')+add;
  }
  return '<div class="life-utility" data-utility-app="'+e(ui.app)+'">'+(ui.app==='wallet'?wallet():ui.app==='shop'||ui.app==='food'?commerce():ui.app==='map'?mapView():calendar())+renderBusinessExtras(state,ui,h)+'</div>';
 }

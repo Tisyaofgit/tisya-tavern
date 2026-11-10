@@ -5,6 +5,8 @@ const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const fail=text=>{throw Error(text);};
 export const NATIVE_DISPLAY_ROUTE='最终区块定位：状态栏显示占位符只输出一次，单独放在 extra 中；vars 仅含原生更新块。即使来源示例把占位符接在 UpdateVariable 后面，也要将两者拆开；不要照抄历史回复的混排位置。';
 export const NATIVE_DISPLAY_EXAMPLE='<extra>\n<StatusPlaceHolderImpl/>\n</extra>\n<vars format="xml">\n<![CDATA[<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>]]>\n</vars>';
+export const GROUPED_NATIVE_DISPLAY_ROUTE='最终区块定位：extra 是唯一附件容器，cells 和 vars 各作为其直接子块输出一次。状态栏显示占位符直接放在 extra 中并独占一行；完整原生更新块只放进 extra 的 vars 子块。显示占位符不进入 cells、vars 或其 CDATA；不再在 extra 外另写 cells/vars，不照抄来源示例的旧混排位置。';
+export const GROUPED_NATIVE_DISPLAY_EXAMPLE='<extra>\n<StatusPlaceHolderImpl/>\n<cells/>\n<vars format="xml">\n<![CDATA[<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>]]>\n</vars>\n</extra>';
 function scripts(rows){return (Array.isArray(rows)?rows:[]).flatMap(row=>row?.type==='folder'?scripts(row.value??row.scripts):[row]);}
 export function nativeMvuDeclaration(context,world){
  if(!world||!isTableContinuity(world)&&world.context.owner==='tisya'&&!world.context.card||world.modes[world.mode].nativeMvu==='off')return null;
@@ -27,6 +29,7 @@ export async function nativeMvuFormats(context,world){
  return {...declaration,enabled,formats:enabled.filter(e=>/<UpdateVariable>[\s\S]*<JSONPatch>/i.test(e.content??'')).map(e=>String(e.content).trim())};
 }
 export async function prepareNativeMvu(context,world,type='normal',runtime=globalThis.Mvu,structured=true){
+ const grouped=structured?.groupMachineInExtra===true;
  const declaration=await nativeMvuFormats(context,world);if(!declaration)return null;
  if(isTableContinuity(world)&&!world.tables.nativeBridge)fail('原卡 MVU 已启用；仅表单接续须先接通原生变量桥。');
  if(typeof runtime?.getMvuData!=='function'||typeof runtime?.parseMessage!=='function')fail('角色卡已启用 MVU 脚本，但原生 MVU 尚未就绪。请检查酒馆助手的卡片脚本运行状态；缇斯亚没有关闭它，也不会代建变量存档。');
@@ -55,8 +58,8 @@ export async function prepareNativeMvu(context,world,type='normal',runtime=globa
   ...rules,
   ...declaration.formats,
   '原卡变量规则与格式按来源原样提供；由预设 TASK.START 分类、C.2 与 blk.vars 路由输出，原卡脚本负责结算。',
-  ...(structured?[NATIVE_DISPLAY_ROUTE,
-  '仅当原卡提供 StatusPlaceHolderImpl 时，以下示例表示两个相邻区块的位置；JSONPatch 数组填写本轮真实操作，无操作时使用 <vars/>。不要输出第二份示例：\n'+NATIVE_DISPLAY_EXAMPLE]:[])
+  ...(structured?[grouped?GROUPED_NATIVE_DISPLAY_ROUTE:NATIVE_DISPLAY_ROUTE,
+  '仅当原卡提供 StatusPlaceHolderImpl 时，以下示例表示组件归属；cells 与 JSONPatch 填写本轮真实内容，无操作时对应子块自闭合。不要输出第二份示例：\n'+(grouped?GROUPED_NATIVE_DISPLAY_EXAMPLE:NATIVE_DISPLAY_EXAMPLE)]:[])
  ].join('\n\n')};
 }
 export function applySourceOutputRoutes(entries){

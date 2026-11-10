@@ -17,7 +17,7 @@ function text(x,label,{nullable=false,max=2000}={}){if(x==null&&nullable)return 
 function id(x,label,{nullable=false}={}){if(x==null&&nullable)return null;const v=text(x,label,{max:160});need(!BAD.has(v)&&!/[\u0000-\u001f]/u.test(v),label+'无效。');return v;}
 function validateBinding(binding){need(plain(binding),'手机表单绑定缺失。');safe(binding);for(const key of ['world','character']){const ref=binding[key];need(ref?.database===true,'手机只接受当前表单记录绑定。');id(key==='world'?ref.worldId:ref.entityId,key+'表单记录');if(key==='character'&&ref.dossierId!==undefined)id(ref.dossierId,'人物原点记录');}return true;}
 function assertNormalizedWorld(w){need(w?.format===PHONE_WORLD_FORMAT,'手机世界必须来自当前表单。');safe(w);id(w.id,'已填写的世界编号');text(w.name,'已填写的世界名称');need(Array.isArray(w.apps)&&w.apps.every(a=>APPS.includes(a))&&new Set(w.apps).size===w.apps.length,'应用清单无效。');need(plain(w.theme)&&plain(w.economy)&&Array.isArray(w.catalog)&&Array.isArray(w.places),'世界结构不完整。');for(const [key,value]of Object.entries(w.theme)){need(['background','panel','text','accent','radius'].includes(key),'画风含未知字段。');if(key==='radius')need(value===null||Number.isSafeInteger(value)&&value>=0&&value<=40,'画风圆角超出范围。');else need(value===null||typeof value==='string'&&/^#(?:[a-f\d]{3}|[a-f\d]{4}|[a-f\d]{6}|[a-f\d]{8})$/i.test(value),'画风须使用安全颜色令牌。');}}
-export function createInitialPhoneLife({world,character,binding,calendar=null,database=false}={}){
+export function createInitialPhoneLife({world,character,binding,calendar=null,database=false,formReadiness}={}){
  need(database===true&&world?.settlementOwner==='tables','手机只从统一表单初始化。');
  assertNormalizedWorld(world);need(character?.format===PHONE_CHARACTER_FORMAT,'角色必须有已填写的手机初态。');safe(character);id(character.id,'已填写的角色编号');text(character.name,'已填写的角色姓名');validateBinding(binding);
  const w=clone(world),c=clone(character),owned=c.accounts.filter(a=>a.owned).map(a=>a.id);for(const a of c.accounts)if(a.owned){need(a.personId===null||a.personId===c.id,'本人账号不能归属另一人物。');a.personId=c.id;}
@@ -33,7 +33,7 @@ export function createInitialPhoneLife({world,character,binding,calendar=null,da
  for(const row of state.wallet.investments)need(state.wallet.investmentProducts.some(p=>p.id===row.productId),'已有持仓的产品没有世界定义。');
  if(database){state.config.database=true;if(calendar){const time=new WorldClock(calendar),c=time.c;state.config.calendar=clone(c);state.config.calendarOrigin=time.ordinal();state.clock={year:c.year,month:c.month??c.season,day:c.day,minute:c.hour*c.hour_minutes+c.minute,totalMinutes:0,...(c.mode==='SEASON_FIXED'?{season:c.season}:{})};}}
  const worldDigest=w.sourceDigest??digest(w),characterDigest=c.sourceDigest??digest(c),initialDigest=digest({binding,worldDigest,characterDigest});
- const life={format:PHONE_LIFE_FORMAT,binding:clone(binding),world:w,initialization:{id:'phone-init:'+initialDigest,digest:initialDigest,worldDigest,characterDigest,subjectId:c.id,worldId:w.id},state:refreshState(state)};
+ const life={format:PHONE_LIFE_FORMAT,binding:clone(binding),world:w,initialization:{id:'phone-init:'+initialDigest,digest:initialDigest,worldDigest,characterDigest,subjectId:c.id,worldId:w.id},state:refreshState(state),...(formReadiness?{formReadiness:clone(formReadiness)}:{})};
  validatePhoneLife(life);return life;
 }
 export function validatePhoneLife(life,{binding}={}){

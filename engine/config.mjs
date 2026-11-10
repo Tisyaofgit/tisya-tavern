@@ -13,7 +13,7 @@ export const CONFIG_KEY='tisya_matrix_configuration';
 export const REPLY_ENVELOPE_RULE=`@ENVELOPE :: Whole response boundary
 禁止在唯一 reply 根块之前或之后输出任何内容，包括说明文字、原卡触发符、变量更新、Markdown 代码围栏或第二个回复根块。
 整条响应从 <reply id="tisya-onepass-1"> 开始，以对应的 </reply> 结束；按下方骨架把本轮全部交付内容放入这个根块。
-正文与互动使用各自的 body、anchor、actions 区块。原卡状态栏等显示占位符只放在 extra；完整原生 UpdateVariable 更新只放在 vars，由原卡执行器解析。
+正文与互动使用各自的 body、anchor、actions 区块。extra 是统一附件容器：原卡状态栏等显示占位符直接放在 extra 内，cells 与 vars 也作为 extra 的直接子块各放一次。完整原生 UpdateVariable 更新只放在 extra 内的 vars 中，由原卡执行器解析；显示占位符不得塞进 vars 或 cells。
 原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时用于 extra，普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。
 @END_ENVELOPE`;
 function withReplyEnvelope(text){return String(text).replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'').replace('[REGISTRY]','[REGISTRY]\n'+REPLY_ENVELOPE_RULE);}

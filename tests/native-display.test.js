@@ -118,12 +118,14 @@ test('a claimed helper container remains identifiable while its iframe is pendin
  finally{keeper.dispose();await w.happyDOM.abort();}
 });
 
-test('plain DOM scripts in regex cards stay helper-owned and never get a second isolated runtime',async()=>{
+test('the world orb expands the original helper panel directly without a waiting notice or a second runtime',async()=>{
  const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;w.IntersectionObserver=class{observe(){}disconnect(){}};d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="TH-render"><pre><code></code></pre></div></div></div></div></div>';
  const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),root=d.querySelector('.TH-render'),html='<!doctype html><html><body><button onclick="document.body.dataset.clicked=1">open</button><script>document.body.dataset.started=1</script></body></html>',msg={mes:source};root.querySelector('code').textContent=html;
  const ui=mountMessageAppearance(d,{getMessage:()=>msg,formatBody:x=>x,getNativeDisplay:()=>({body:'第一段',extraPanels:[{id:'p',html,ruleName:'card'}]}),getMotion:()=>false});
- try{ui.sync(node);const visual=node.querySelector('.tisya-message-visual'),notice=visual.shadowRoot.querySelector('.native-host-note');assert(notice&&!notice.hidden);assert.equal(visual.shadowRoot.querySelector('iframe'),null);assert.equal(d.body.dataset.started,undefined);
- const frame=d.createElement('iframe');frame.id='TH-message--0--0';root.append(frame);await new Promise(r=>setTimeout(r,40));assert(notice.hidden);assert.equal(native.querySelectorAll('iframe').length,1);assert.equal(frame.parentElement,root);}
+ try{ui.sync(node);const visual=node.querySelector('.tisya-message-visual'),shadow=visual.shadowRoot,toggle=shadow.querySelector('#world-extension-toggle');assert.equal(shadow.querySelector('.native-host-note'),null);assert.doesNotMatch(shadow.textContent,/等待酒馆助手挂载世界/);assert.equal(shadow.querySelector('iframe'),null);assert.equal(d.body.dataset.started,undefined);
+ const initiallyOpen=toggle.getAttribute('aria-expanded')==='true';if(initiallyOpen)toggle.click();assert(native.classList.contains('tisya-native-collapsed'));toggle.click();assert.equal(toggle.getAttribute('aria-expanded'),'true');assert(!native.classList.contains('tisya-native-collapsed'));
+ const frame=d.createElement('iframe');frame.id='TH-message--0--0';root.append(frame);await new Promise(r=>setTimeout(r,40));assert.equal(shadow.querySelector('.native-host-note'),null);assert.equal(native.querySelectorAll('iframe').length,1);assert.equal(frame.parentElement,root);const realm=frame.contentWindow;
+ toggle.click();assert(root.classList.contains('tisya-native-extra-collapsed'));toggle.click();assert(!root.classList.contains('tisya-native-extra-collapsed'));assert.equal(frame.contentWindow,realm);assert.equal(frame.parentElement,root);assert.equal(msg.mes,source);}
  finally{ui.dispose();assert(!root.classList.contains('tisya-native-panel-root'));await w.happyDOM.abort();}
 });
 

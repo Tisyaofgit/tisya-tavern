@@ -1,3 +1,4 @@
+import {compactCreationSchema} from './prompt-boundary.mjs';
 const copy=value=>structuredClone(value);
 const phases={preparing:'正在读取来源与模板',streaming:'缇斯亚正在创作',ready:'草稿已就绪，等待你核对',error:'这次创作没有完成',cancelled:'已停止，已收到的内容保留'};
 export const creationTaskRunning=task=>['preparing','streaming'].includes(task?.status);
@@ -65,6 +66,7 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  const button=(text,fn)=>{const n=el('button',text);n.type='button';n.className='menu_button';n.onclick=fn;return n;};
  const options=select=>{for(const [value,label]of [['string','文字'],['number','数字'],['boolean','是 / 否'],['object','字段组'],['array','列表'],['null','未设置']]){const o=el('option',label);o.value=value;select.append(o);}};
+ const availableSchema=compactCreationSchema({schema}),openedFields=new Map();
  root.dataset.creationFields='';root.dataset.creationDraft='';
  function clearPathState(index,key,path,{arrayIndex}={}){
   const prefix=index+':'+key+':',under=(candidate,ancestor)=>ancestor.every((value,i)=>String(candidate[i])===String(value));
@@ -79,28 +81,39 @@ export function mountCreationTable(document,root,{proposal,schema={},fieldTexts=
   onInvalid('',Object.keys(fieldErrors).length>0);
  }
  function editValue(value,{index,key,path=[],set,def,canChangeType=false}){
+  const missing=value===undefined,type=String(def?.type??'TEXT').toUpperCase();
+  if(missing){const kind=['NUMBER','INTEGER','INT','DECIMAL','FLOAT','RATIO'].includes(type)?'number':['BOOL','BOOLEAN'].includes(type)?'boolean':['ARRAY','REF_LIST','TEXT_LIST','TAGS'].includes(type)?'array':['OBJECT','JSON','BAG'].includes(type)?'object':'string';value=copy(emptyValue(kind));}
   const box=el('div');box.className='tisya-creation-value';const kind=kindOf(value),token=index+':'+key+':'+JSON.stringify(path);
   const mark=(node)=>{node.dataset.creationRow=String(index);node.dataset.creationKey=key;node.dataset.creationPath=JSON.stringify(path);node.setAttribute('aria-label',(def?.label??key)+(path.length?' / '+path.join(' / '):''));};
   const change=next=>{clearPathState(index,key,path);set(next);onInvalid(token,false);onChange(proposal);};
-  if(canChangeType||kind==='null'){
+  if(canChangeType||kind==='null'||missing&&type==='JSON'){
    const types=el('select');types.dataset.creationValueType='';options(types);types.value=kind;types.setAttribute('aria-label','字段类型');types.onchange=()=>{change(copy(emptyValue(types.value)));draw();};box.append(types);
   }
   if(kind==='null'){box.append(el('small','未设置；不会被当成空文字或否。'));return box;}
   if(kind==='object'||kind==='array'){
    const entries=Object.entries(value);
-   for(const [childKey,childValue]of entries){const group=el('fieldset');group.append(el('legend',kind==='array'?'第 '+(Number(childKey)+1)+' 项':childKey));group.append(editValue(childValue,{index,key,path:[...path,childKey],set:next=>{value[childKey]=next;},canChangeType:true}));group.append(button('移除此项',()=>{if(kind==='array'){clearPathState(index,key,path,{arrayIndex:Number(childKey)});value.splice(Number(childKey),1);}else{clearPathState(index,key,[...path,childKey]);delete value[childKey];}onChange(proposal);draw();}));box.append(group);}
-   const add=el('div'),type=el('select');options(type);type.setAttribute('aria-label','新项目类型');const name=el('input');name.placeholder='字段名称';name.setAttribute('aria-label','新字段名称');if(kind==='object')add.append(name);add.append(type,button('添加'+(kind==='array'?'一项':'字段'),()=>{if(kind==='object'){const childKey=name.value.trim();if(!safeKey(childKey)||Object.hasOwn(value,childKey)){name.setCustomValidity('请输入不重复的有效字段名');name.reportValidity();return;}value[childKey]=copy(emptyValue(type.value));}else value.push(copy(emptyValue(type.value)));onChange(proposal);draw();}));box.append(add);return box;
+   for(const [childKey,childValue]of entries){const group=el('fieldset');group.append(el('legend',kind==='array'?'第 '+(Number(childKey)+1)+' 项':childKey));group.append(editValue(childValue,{index,key,path:[...path,childKey],set:next=>{value[childKey]=next;set(value);},canChangeType:true}));group.append(button('移除此项',()=>{if(kind==='array'){clearPathState(index,key,path,{arrayIndex:Number(childKey)});value.splice(Number(childKey),1);}else{clearPathState(index,key,[...path,childKey]);delete value[childKey];}set(value);onChange(proposal);draw();}));box.append(group);}
+   const add=el('div'),type=el('select');options(type);type.setAttribute('aria-label','新项目类型');const name=el('input');name.placeholder='字段名称';name.setAttribute('aria-label','新字段名称');if(kind==='object')add.append(name);add.append(type,button('添加'+(kind==='array'?'一项':'字段'),()=>{if(kind==='object'){const childKey=name.value.trim();if(!safeKey(childKey)||Object.hasOwn(value,childKey)){name.setCustomValidity('请输入不重复的有效字段名');name.reportValidity();return;}value[childKey]=copy(emptyValue(type.value));}else value.push(copy(emptyValue(type.value)));set(value);onChange(proposal);draw();}));box.append(add);return box;
   }
-  const node=el(kind==='boolean'?'select':kind==='number'?'input':'textarea');node.className='text_pole';mark(node);
-  if(kind==='boolean'){for(const [v,label]of [['true','是'],['false','否']]){const o=el('option',label);o.value=v;node.append(o);}}
+  const enumValues=type==='ENUM'?(def.enum??def.options):null,node=el(kind==='boolean'||enumValues?'select':kind==='number'?'input':'textarea');node.className='text_pole';mark(node);
+  if(missing&&(kind==='boolean'||enumValues)){const option=el('option','尚未填写');option.value='';node.append(option);}
+  if(enumValues){for(const value of enumValues){const option=el('option',String(value));option.value=String(value);node.append(option);}}
+  else if(kind==='boolean'){for(const [v,label]of [['true','是'],['false','否']]){const o=el('option',label);o.value=v;node.append(o);}}
   else if(kind==='number'){node.type='text';node.inputMode='decimal';}else node.rows=String(value??'').length>100?5:2;
-  node.value=fieldTexts[token]??String(value);if(fieldErrors[token])node.setCustomValidity('请输入有效的'+(kind==='number'?'数字':'内容'));
-  const update=()=>{fieldTexts[token]=node.value;let next=node.value;if(kind==='number'){if(!next.trim()||!Number.isFinite(Number(next))){fieldErrors[token]=true;node.setCustomValidity('请输入有效数字');onInvalid(token,true);return;}next=Number(next);}else if(kind==='boolean')next=next==='true';set(next);delete fieldErrors[token];node.setCustomValidity('');onInvalid(token,false);onChange(proposal);};node.oninput=node.onchange=update;box.append(node);return box;
+  node.value=fieldTexts[token]??(missing?'':String(value));if(missing)node.setAttribute('data-creation-unfilled','');if(fieldErrors[token])node.setCustomValidity('请输入有效的'+(kind==='number'?'数字':'内容'));
+  const update=()=>{fieldTexts[token]=node.value;let next=node.value;if(missing&&next===''){set(undefined);delete fieldErrors[token];node.setCustomValidity('');onInvalid(token,false);onChange(proposal);return;}if(enumValues)next=enumValues.find(value=>String(value)===next);else if(kind==='number'){if(!next.trim()||!Number.isFinite(Number(next))){fieldErrors[token]=true;node.setCustomValidity('请输入有效数字');onInvalid(token,true);return;}next=Number(next);}else if(kind==='boolean')next=next==='true';set(next);delete fieldErrors[token];node.setCustomValidity('');onInvalid(token,false);onChange(proposal);};node.oninput=node.onchange=update;box.append(node);return box;
  }
  function draw(){root.replaceChildren();for(const [index,change]of(proposal?.matrix?.changes??[]).entries()){
   const spec=schema[change.tableId],section=el('section');section.dataset.creationTable=change.tableId;section.append(el('h4',(spec?.label??change.tableId)+' · '+(change.values.name??change.values.label??'记录 '+(index+1))));
   const table=el('table');table.className='tisya-creation-table';const head=el('thead'),headRow=el('tr');headRow.append(el('th','项目'),el('th','内容'));head.append(headRow);table.append(head);const body=el('tbody');
-  for(const [key,value]of Object.entries(change.values)){const def=spec?.fields?.find(field=>field.key===key),row=el('tr'),label=el('th',def?.label??key),cell=el('td');label.scope='row';const rule=el('div',[def?.description??def?.help??'',def?.required?'必填':'',def?.type?'类型：'+def.type:''].filter(Boolean).join(' · '));rule.className='tisya-creation-field-rule';label.append(rule);cell.append(editValue(value,{index,key,def,set:next=>{change.values[key]=next;}}));row.append(label,cell);body.append(row);}
-  table.append(body);section.append(table);root.append(section);
+  const opened=openedFields.get(index)??new Set(),keys=[...new Set([...Object.keys(change.values),...opened])];
+  for(const key of keys){const value=change.values[key],def=spec?.fields?.find(field=>field.key===key),row=el('tr'),label=el('th',def?.label??key),cell=el('td');label.scope='row';const rule=el('div',[def?.description??def?.help??'',def?.required?'必填':'',def?.type?'类型：'+def.type:''].filter(Boolean).join(' · '));rule.className='tisya-creation-field-rule';label.append(rule);cell.append(editValue(value,{index,key,def,set:next=>{if(next===undefined){delete change.values[key];if(change.states)delete change.states[key];}else{change.values[key]=next;if(change.states?.[key]&&next!==null)change.states[key]='known';}}}));
+   if(opened.has(key)){const omit=button('撤回本次补填',()=>{const hadValue=Object.hasOwn(change.values,key);delete change.values[key];if(change.states)delete change.states[key];opened.delete(key);clearPathState(index,key,[]);if(hadValue)onChange(proposal);draw();});omit.dataset.creationOmitField=key;cell.append(omit);}
+   row.append(label,cell);body.append(row);}
+  table.append(body);section.append(table);
+  const missing=(availableSchema[change.tableId]?.fields??[]).filter(field=>field.type!=='ID'&&safeKey(field.key)&&!Object.hasOwn(change.values,field.key)&&!opened.has(field.key));
+  if(missing.length){const addRow=el('div'),select=el('select');select.dataset.creationAddField=String(index);select.setAttribute('aria-label','选择要补充的项目');const empty=el('option','选择要补充的项目');empty.value='';select.append(empty);for(const field of missing){const option=el('option',field.label??field.key);option.value=field.key;select.append(option);}
+   const add=button('补填项目',()=>{const key=select.value;if(!missing.some(field=>field.key===key))return;opened.add(key);openedFields.set(index,opened);draw();});add.dataset.creationAdd=String(index);add.disabled=true;select.onchange=()=>{add.disabled=!select.value;};addRow.append(select,add,el('small','按已知资料补充；未填写的项目保留原状。'));section.append(addRow);}
+  root.append(section);
  }}draw();return {redraw:draw,value:()=>copy(proposal)};
 }

@@ -148,7 +148,7 @@ function perform(s, a,options={}) {
       const destination = s.wallet.accounts.find(x => x.id === a.to);
       const recipient=(s.contacts||[]).find(x=>x.id===a.to); need(destination||recipient,'请先确认收款人的稳定身份。'); debit(s, from, n);
       if (destination) credit(s, destination.id, n); else s.wallet.external += n;
-      record(s, 'transfer', `转给${destination?.name || recipient.name}`, -n, from, { to: a.to });
+      record(s, 'transfer', `转给${destination ? (destination.name || destination.id) : (recipient.name || recipient.id)}`, -n, from, { to: a.to });
       if (destination) record(s, 'transfer.in', `从${account(s, from).name}转入`, n, destination.id);
       return msg(`已转账 ${money(n)} ${s.config.currency?.name||''}，付款记录已保留。`);
     }
