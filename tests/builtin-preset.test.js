@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {matrixPreset} from '../engine/config.mjs';
+import {matrixPreset,REPLY_ENVELOPE_RULE} from '../engine/config.mjs';
 const bundled=matrixPreset();
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import {installBuiltInPreset,BUILTIN_PRESET_REVISION} from '../builtin-preset.js';
@@ -62,7 +62,18 @@ test('manual refresh reinstalls same revision while automatic startup preserves 
  }finally{await f.w.happyDOM.close();}
 });
 test('built-in keeps the complete 69-slot new preset with separate user binding',()=>{
- assert.equal(bundled.name,'Tisya');assert.equal(bundled.prompts.length,70);for(const p of original.prompts){if(p.identifier==='personaDescription')continue;assert.equal(bundled.prompts.find(x=>x.identifier===p.identifier).content,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,').replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>').replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}'));}assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);assert.equal(bundled.prompt_order[0].order.length,70);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
+ assert.equal(bundled.name,'Tisya');assert.equal(bundled.prompts.length,70);
+ for(const p of original.prompts){
+  if(p.identifier==='personaDescription')continue;
+  let actual=bundled.prompts.find(x=>x.identifier===p.identifier).content;
+  if(p.identifier==='tisya_registry'){
+   assert.equal(actual.split(REPLY_ENVELOPE_RULE).length-1,1,'one approved whole-response boundary');
+   assert(actual.startsWith('[REGISTRY]\n'+REPLY_ENVELOPE_RULE+'\n'),'boundary stays inside the registry');
+   actual=actual.replace('\n'+REPLY_ENVELOPE_RULE,'');
+  }
+  assert.equal(actual,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,').replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>').replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}'),p.identifier+' preserves all other preset text');
+ }
+ assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);assert.equal(bundled.prompt_order[0].order.length,70);assert.match(BUILTIN_PRESET_REVISION,/^[a-f0-9]{64}$/);assert(!bundled.prompts.some(p=>p.content?.includes('{{tisya_live_onepass_')));
 });
 test('first install uses native persistence, adds one Tisya and leaves another selected preset/settings untouched',async()=>{
  const f=fixture({existing:false}),settings=copy(f.context.chatCompletionSettings),other=copy(f.disk.get('Other'));
