@@ -51,6 +51,11 @@ export function phoneFormReferenceCandidates(state,{tableId,recordId,field,targe
  const declared=phoneFormReference(tableId,field)??PHONE_FORM_LIST_REFERENCES[tableId]?.[field],targets=Array.isArray(declared)?declared:[declared];
  if(!target?.startsWith('X_')||!targets.includes(target))return null;
  const world=state.tables?.[tableId]?.[recordId]?.values?.world_ref;
+ // An existing canonical row in another world cannot be reinterpreted as a
+ // same-spelled business alias in this world. Same-world ambiguity stays an
+ // error: both the UUID and business-ID matches are still returned below.
+ const canonical=state.tables?.[target]?.[value];
+ if(world&&canonical?.values?.world_ref&&canonical.values.world_ref!==world)return [];
  return Object.entries(state.tables?.[target]??{}).filter(([id,row])=>(id===value||row.values?.id===value)&&(!world||!row.values?.world_ref||row.values.world_ref===world)).map(([id])=>id);
 }
 export const PHONE_FORM_LIST_REFERENCES=Object.freeze({X_SOCIAL_ACCOUNTS:{following:'X_SOCIAL_ACCOUNTS'},X_SOCIAL_POSTS:{mediaIds:'X_MEDIA_PHOTOS',mediaGrants:'X_MEDIA_PHOTOS'},X_MEDIA_SONGS:{audience:'X_SOCIAL_ACCOUNTS'},X_MEDIA_PLAYLISTS:{songIds:'X_MEDIA_SONGS'},X_MEDIA_PLAYBACK:{queue:'X_MEDIA_SONGS',history:'X_MEDIA_SONGS'},X_SHOP_PRODUCT_DETAILS:{deliveryPlaceIds:'T_STATIC_PLACES'}});

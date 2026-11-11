@@ -76,6 +76,7 @@ import {createStore,register,registry,worldKey} from './config/core.js';
 import {createHost,blockPayload} from './config/host.js';
 import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
 import {createNativeDisplayPipeline} from './native-display.js';
+import {inspectNativeRender} from './native-render-diagnostic.js';
 import {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from '/scripts/extensions/regex/engine.js';
 import {readNarrative} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
@@ -92,7 +93,7 @@ import {createEditToolbarPlacement} from './edit-toolbar.js';
 let inputShortcuts=null,communicationUI=null,revisionEditor=null,paragraphActions=null;
 const revisionDrafts=new Map();
 let editToolbarPlacement=null;
-import { mountMessageReader } from './reader.js';
+import { mountMessageReader,inspectMessage } from './reader.js';
 import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
 import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';
@@ -606,8 +607,17 @@ function messageToken(id) { return capture(context(),id); }
 function messageMenu(node) {
     const id = Number(node.getAttribute('mesid'));
     const token = messageToken(id);
-    const visible=messageSlots();sheet('消息操作',`<div class="tisya-message-actions" aria-label="更多消息操作">${MESSAGE_TOOLS.filter(([id])=>id!=='more'&&!visible.includes(id)).map(([id])=>messageToolButton(id,id==='regen'?'msg-regen':id==='next'?'msg-next':id,token.message.is_user)).join('')}${iconButton('配置消息快捷栏','message-tools','sliders','tisya-orb-button')}</div>`);
+    const visible=messageSlots();sheet('消息操作',`<div class="tisya-message-actions" aria-label="更多消息操作">${MESSAGE_TOOLS.filter(([id])=>id!=='more'&&!visible.includes(id)).map(([id])=>messageToolButton(id,id==='regen'?'msg-regen':id==='next'?'msg-next':id,token.message.is_user)).join('')}${iconButton('配置消息快捷栏','message-tools','sliders','tisya-orb-button')}</div>${button('显示检查','msg-display-check')}`);
     overlay._messageToken = token;
+}
+function showMessageDisplayDiagnostic(token){
+ const node=nodeFor(token),report=inspectNativeRender(document,node,{version:VERSION,structured:inspectMessage(token.message.mes).structured,
+  projection:!!node.querySelector('.tisya-message-visual'),panelStatus:appearance?.nativeStatus?.(node),managed});
+ const hidden=report.frames?.filter(frame=>frame.hiddenByStyles===true).length??0;
+ const order=report.toolbar?.last===true?'位于内容之后':report.toolbar?.last===false?'后面仍有消息内容':'当前布局尚不能判断';
+ const counts=report.counts??{};
+ sheet('显示检查',`<p>${esc(report.runtime?.note??'当前消息未在显示区。')}</p><p>扩展版本：${esc(report.version??'未知')}<br>页面节点：${report.runtime?.activeIframeCount??0}，其中隐藏：${hidden}<br>宿主占位：${counts.hostPlaceholders??0}；源码开关：${counts.codeToggles??0}<br>消息按钮：${esc(order)}</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify(report,null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
+ overlay._messageToken=token;
 }
 function openCandidates(token){
  validate(context(),token,{tail:true});const pos=candidatePosition(token.message);
@@ -632,6 +642,12 @@ async function messageAction(action) {
     if(revisionController.navigating())throw Error('版本切换尚未完成，请稍候');
     const token = overlay._messageToken;
     const node = nodeFor(token);
+    if(action==='msg-display-check'){showMessageDisplayDiagnostic(token);return;}
+    if(action==='msg-display-check-copy'){
+        const content=query('#tisya-render-diagnostic');if(!content)throw Error('检查记录已关闭，请重新打开');
+        const epoch=sheetEpoch;await navigator.clipboard.writeText(content.textContent);
+        if(epoch===sheetEpoch){const copy=overlay.querySelector('[data-tisya-action="msg-display-check-copy"]');if(copy)copy.textContent='已复制检查';}return;
+    }
     if(action==='msg-regen'||action==='msg-next'){close();return generateAt(token,action==='msg-regen');}
     if(action==='msg-read') {openReader(token);return;}
     if(action==='msg-copy') { const epoch=sheetEpoch;await navigator.clipboard.writeText(validate(context(),token).mes);close(epoch);return; }

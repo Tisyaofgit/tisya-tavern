@@ -154,3 +154,91 @@ test('malformed, duplicate and foreign references still fail atomically with spa
  ]){await assert.rejects(f.put(id,changes),undefined,id);assert.deepEqual(await f.host.readDatabase(),before);}
  await f.put('foreign-world-account',[row('T_STATIC_WORLDS','other',{name:'另一世界'}),row('X_SOCIAL_ACCOUNTS','other-account',{id:'foreign',world_ref:'other',owner_ref:'p',personId:'p',owned:true})]);await service.refresh();assert.deepEqual(service.readLife().state.social.accounts.map(x=>x.id),['a']);
 });
+
+// Ordinary form references use table row UUIDs; the phone runtime uses the
+// account's authored business id. Both declared reference spellings remain
+// valid without rewriting a user's existing selection on an unrelated save.
+async function phoneReferenceFixture(config={}){
+ const f=await fixture();
+ await f.put('reference-accounts',[
+  row('T_STATIC_ITEMS_SKILLS','coin',{name:'核验币',category:'currency'}),
+  row('T_DYN_CURRENCY_BALANCES','cash-balance',{owner_ref:'p',currency_ref:'coin',balance:100}),
+  row('T_DYN_CURRENCY_BALANCES','bank-balance',{owner_ref:'p',currency_ref:'coin',balance:0}),
+  row('X_FIN_ACCOUNTS','money-cash-row',{id:'cash',world_ref:'w',owner_ref:'p',name:'零钱',balance_ref:'cash-balance'}),
+  row('X_FIN_ACCOUNTS','money-bank-row',{id:'bank',world_ref:'w',owner_ref:'p',name:'储蓄',balance_ref:'bank-balance'}),
+  row('X_SOCIAL_ACCOUNTS','social-a-row',{id:'a',world_ref:'w',owner_ref:'p',personId:'p',owned:true}),
+  row('X_SOCIAL_ACCOUNTS','social-b-row',{id:'b',world_ref:'w',owner_ref:'p',personId:'p',owned:true}),
+  row('X_PHONE_WORLD_CONFIG','settings',{currency_ref:'coin',...config})
+ ]);
+ return f;
+}
+
+for(const [configField,canonical,business,path]of [
+ ['active_account_ref','social-a-row','a',['social','activeAccountId']],
+ ['default_account_ref','money-cash-row','cash',['wallet','defaultAccountId']],
+ ['funding_account_ref','money-bank-row','bank',['wallet','fundingAccountId']]
+])for(const [kind,value]of [['canonical UUID',canonical],['business id',business]]){
+ test(`phone reference ${configField} accepts ${kind} and preserves its authored reference across save and cold reopen`,async()=>{
+  const f=await phoneReferenceFixture({[configField]:value}),service=await f.open();
+  assert.equal(service.readLife().state[path[0]][path[1]],business);
+  const editedAccountId=service.readLife().state.social.activeAccountId;
+  const initialized=await f.host.readDatabase();assert.equal(field(initialized,'X_PHONE_WORLD_CONFIG','settings',configField),value);
+  await action(service,'ref-unrelated-profile','social.profile.edit',{bio:'与账户选择无关的简介'});
+  const saved=await f.host.readDatabase();assert.equal(field(saved,'X_PHONE_WORLD_CONFIG','settings',configField),value);
+  assert.deepEqual(Object.keys(saved.state.tables.X_FIN_ACCOUNTS).sort(),['money-bank-row','money-cash-row']);
+  assert.deepEqual(Object.keys(saved.state.tables.T_DYN_CURRENCY_BALANCES).sort(),['bank-balance','cash-balance']);
+  const cold=await f.open();assert.equal(cold.readLife().state[path[0]][path[1]],business);assert.deepEqual(await f.host.readDatabase(),saved);
+  assert.equal(cold.readLife().state.social.accounts.find(a=>a.id===editedAccountId).bio,'与账户选择无关的简介');
+ });
+}
+
+test('phone reference explicit active account changes once and persists the newly selected canonical account row',async()=>{
+ const f=await phoneReferenceFixture({active_account_ref:'a'}),service=await f.open();
+ assert.equal(service.readLife().state.social.activeAccountId,'a');
+ await action(service,'ref-switch-to-b','social.account',{accountId:'b'});
+ assert.equal(service.readLife().state.social.activeAccountId,'b');
+ let saved=await f.host.readDatabase();assert.equal(field(saved,'X_PHONE_WORLD_CONFIG','settings','active_account_ref'),'social-b-row');
+ assert.deepEqual(Object.keys(saved.state.tables.X_SOCIAL_ACCOUNTS).sort(),['social-a-row','social-b-row']);
+ await action(service,'ref-edit-b','social.profile.edit',{bio:'切换后的小号简介'});
+ assert.equal(field(await f.host.readDatabase(),'X_PHONE_WORLD_CONFIG','settings','active_account_ref'),'social-b-row');
+ const cold=await f.open();assert.equal(cold.readLife().state.social.activeAccountId,'b');assert.equal(cold.readLife().state.social.accounts.find(a=>a.id==='b').bio,'切换后的小号简介');
+ assert.equal(cold.readLife().state.social.accounts.find(a=>a.id==='a').bio,null);
+ saved=await f.host.readDatabase();const retry=await action(cold,'ref-switch-to-b','social.account',{accountId:'b'});assert.equal(retry.result.replayed,true);assert.deepEqual(await f.host.readDatabase(),saved);
+});
+
+test('phone reference foreign canonical UUID cannot silently resolve to a current-world business alias',async()=>{
+ const f=await fixture();await f.put('reference-world-collision',[
+  row('T_STATIC_WORLDS','other',{name:'其他世界'}),
+  row('X_SOCIAL_ACCOUNTS','selected-ref',{id:'foreign-business',world_ref:'other',owner_ref:'p',personId:'p',owned:true}),
+  row('X_SOCIAL_ACCOUNTS','current-world-row',{id:'selected-ref',world_ref:'w',owner_ref:'p',personId:'p',owned:true})
+ ]);
+ const before=await f.host.readDatabase();
+ await assert.rejects(f.put('reference-no-retarget',[row('X_PHONE_WORLD_CONFIG','settings',{active_account_ref:'selected-ref'})]),e=>e.code==='REFERENCE_MISSING');
+ assert.deepEqual(await f.host.readDatabase(),before);
+});
+
+for(const canonicalCollision of [false,true])test(`phone reference same-world ${canonicalCollision?'canonical UUID and business alias':'duplicate business id'} ambiguity remains rejected`,async()=>{
+ const f=await fixture();await f.put('reference-same-world-collision',[
+  row('X_SOCIAL_ACCOUNTS',canonicalCollision?'ambiguous':'first-row',{id:canonicalCollision?'first-business':'ambiguous',world_ref:'w',owner_ref:'p',personId:'p',owned:true}),
+  row('X_SOCIAL_ACCOUNTS','second-row',{id:'ambiguous',world_ref:'w',owner_ref:'p',personId:'p',owned:true})
+ ]);
+ const before=await f.host.readDatabase();
+ await assert.rejects(f.put('reference-ambiguous-selection',[row('X_PHONE_WORLD_CONFIG','settings',{active_account_ref:'ambiguous'})]),e=>e.code==='REFERENCE_AMBIGUOUS');
+ assert.deepEqual(await f.host.readDatabase(),before);
+});
+
+test('phone reference normalization never grants control over another person or unknown-owned account',async()=>{
+ const f=await phoneReferenceFixture({active_account_ref:'a'});await f.put('reference-denied-accounts',[
+  row('T_CHAR_DOSSIER','other-person',{name:'同行人'}),row('T_SYS_ENTITIES','other-person',{kind:'character',origin_record_ref:'origin-other'}),
+  row('M_FIELD_REFERENCES','origin-other',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'other-person',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'other-person',reference_kind:'record',resolution_status:'resolved'}),
+  row('X_SOCIAL_ACCOUNTS','other-person-row',{id:'other-person-account',world_ref:'w',owner_ref:'other-person',personId:'other-person',owned:true}),
+  row('X_SOCIAL_ACCOUNTS','unknown-owned-row',{id:'unknown-owned-account',world_ref:'w',owner_ref:'p',personId:'p',owned:true},{owned:'unknown'})
+ ]);
+ const service=await f.open(),before=await f.host.readDatabase();assert.deepEqual([...service.readLife().state.social.ownedAccountIds].sort(),['a','b']);
+ for(const accountId of ['other-person-account','unknown-owned-account']){
+  await assert.rejects(action(service,'reference-denied-'+accountId,'social.account',{accountId}),/只能切换自己的已登记账号/);
+  assert.deepEqual(await f.host.readDatabase(),before);assert.equal(service.readLife().state.social.activeAccountId,'a');
+ }
+ assert.equal(before.state.tables.X_SOCIAL_ACCOUNTS['unknown-owned-row'].states.owned,'unknown');
+ assert.equal(before.state.tables.X_SOCIAL_ACCOUNTS['other-person-row'].values.owned,true);
+});

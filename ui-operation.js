@@ -1,6 +1,6 @@
 // Ownership is observable; a pending read must never own the history-write lock.
 export function messageActionExclusive(action){
- return !['more','msg-read','msg-copy','msg-info','candidate-picker'].includes(action);
+ return !['more','msg-read','msg-copy','msg-info','msg-display-check','msg-display-check-copy','candidate-picker'].includes(action);
 }
 export function createUiOperations({now=()=>Date.now()}={}){
  let owner=null;

@@ -98,7 +98,11 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
  const life=phone.life,person=life?.state?.identity?.personId,world=life?.world?.id;
  const projection=life?phoneProfileFromForms(databaseState,{worldId:world,entityId:person,dossierId:life.binding?.character?.dossierId,calendar:life.state.config.calendar??null}):null;
  const formDefaults=projection?.formDefaults??{},optionalCoordinates=new Map();
- const worldConfigs=Object.entries(databaseState.tables?.X_PHONE_WORLD_CONFIG??{}).filter(([,r])=>r.values.world_ref===world),configuredCurrency=worldConfigs[0]?.[1]?.values?.currency_ref;
+ const worldConfigs=life?Object.entries(databaseState.tables?.X_PHONE_WORLD_CONFIG??{}).filter(([,r])=>(r.values.world_ref==null||r.values.world_ref===world)&&(r.values.owner_ref==null||r.values.owner_ref===person)):[],configuredCurrency=worldConfigs[0]?.[1]?.values?.currency_ref;
+ const configRecordId=worldConfigs[0]?.[0]??phoneDatabaseRecordId(['life','world']);
+ // Detect an actual selection change, including when the author has not yet
+ // filled a default. A projected fallback alone must not create a new fact.
+ const previousLife=life&&!initializing&&databaseState.tables?.[PHONE_BINDING_TABLE]?.[currentId]?.values?.layout?.children?.life?decodePhoneDatabase(databaseState).life:null;
  const currencies=Object.entries(databaseState.tables?.T_STATIC_ITEMS_SKILLS??{}).filter(([,r])=>r.values.category==='currency'&&r.values.name===life?.world?.currency?.name);
  if(currencies.length>1&&!configuredCurrency)fail('PHONE_CURRENCY_BINDING','同名币种有多条记录，请明确选择币种引用');const currency=configuredCurrency??currencies[0]?.[0]??(world&&life?.world?.currency?world+':currency':null);
  const recordFor=(path,table,obj)=>{if(path.join('/')==='life/world'&&worldConfigs.length===1)return worldConfigs[0][0];if(obj?.id){const rows=Object.entries(databaseState.tables?.[table]??{}).filter(([,r])=>(r.values.id===obj.id||r.values.row_uuid===obj.id||table==='X_SHOP_PRODUCT_DETAILS'&&r.values.item_ref===obj.id||table==='X_PLACE_MAP_POINTS'&&r.values.place_ref===obj.id)&&(table==='X_SOCIAL_ACCOUNTS'||r.values.owner_ref==null||r.values.owner_ref===person)&&(r.values.world_ref==null||r.values.world_ref===world));if(rows.length>1)fail('PHONE_ENTITY_DUPLICATE','同一主体有重复业务实体ID',{table,id:obj.id});if(rows.length===1)return rows[0][0];}return phoneDatabaseRecordId(entityPath(path,phone));};
@@ -113,6 +117,27 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
  };
  function canonical(path,obj,key,value){
   const p=path.join('/');let target=null,unit=null;
+  const selectionField=p==='life/state/social'&&key==='activeAccountId'?'active_account_ref':p==='life/state/wallet'?({defaultAccountId:'default_account_ref',fundingAccountId:'funding_account_ref'})[key]:null;
+  if(selectionField){
+   const social=selectionField==='active_account_ref',group=social?'social':'wallet',table=social?'X_SOCIAL_ACCOUNTS':'X_FIN_ACCOUNTS',configuration=worldConfigs[0]?.[1];
+   const declared=configuration&&Object.hasOwn(configuration.values,selectionField)&&(!configuration.states?.[selectionField]||['known','derived'].includes(configuration.states[selectionField]));
+   const projected=social?projection?.character?.activeAccountId:projection?.character?.wallet?.[key];
+   const previous=previousLife?.state?.[group]?.[key],changed=previousLife&&value!==previous;
+   if(!declared&&!changed)return null;
+   const at=['X_PHONE_WORLD_CONFIG',configRecordId,selectionField];
+   if(declared&&value===projected)return {at,unavailable:value};
+   if(value===null){write(...at,null);return {at,unavailable:null};}
+   const list=social?life.state.social.accounts:life.state.wallet.accounts;
+   if(!list.some(a=>a.id===value)||social&&!life.state.social.ownedAccountIds.includes(value))fail('PHONE_ACCOUNT_BINDING','所选账户不属于当前人物',{field:selectionField,accountId:value});
+   // Here value is a business ID from the validated phone view, not an
+   // author-entered REF. Resolve it as such before writing the canonical UUID.
+   const matches=Object.entries(databaseState.tables?.[table]??{}).filter(([rid,row])=>{
+    const available=field=>Object.hasOwn(row.values,field)&&(!row.states?.[field]||['known','derived'].includes(row.states[field]));
+    return (available('id')?row.values.id:rid)===value&&(row.values.world_ref==null||row.values.world_ref===world)&&(row.values.owner_ref==null||available('owner_ref')&&row.values.owner_ref===person)&&(!social||available('personId')&&row.values.personId===person&&available('owned')&&row.values.owned===true);
+   });
+   if(matches.length!==1)fail('PHONE_ACCOUNT_BINDING','所选账户没有当前范围内唯一的规范记录',{field:selectionField,accountId:value});
+   write(...at,matches[0][0]);return {at,unavailable:value};
+  }
   if(p==='life/world/theme'||p==='life/world/currency'&&['symbol','minorUnits'].includes(key)||p==='life/world/economy/deliveryFees'){const prefix=p.endsWith('theme')?'theme_':p.endsWith('currency')?'currency_':'delivery_',suffix=key==='minorUnits'?'minor_units':key;const at=write('X_PHONE_WORLD_CONFIG',worldConfigs[0]?.[0]??phoneDatabaseRecordId(['life','world']),prefix+suffix,value);return {at,empty:value===''?'string':null};}
   if(p==='life/world/travel/speeds'&&['walk','bike','transit'].includes(key)){const at=write('X_PHONE_WORLD_CONFIG',worldConfigs[0]?.[0]??phoneDatabaseRecordId(['life','world']),({walk:'walk_speed',bike:'bike_speed',transit:'transit_speed'})[key],value);return {at};}
   if(p==='life/world/economy'&&key==='quoteMinutes'||p==='life/world/economy/minimumOrders'&&['shop','food'].includes(key)){const at=write('X_PHONE_WORLD_CONFIG',worldConfigs[0]?.[0]??phoneDatabaseRecordId(['life','world']),key==='quoteMinutes'?'quote_minutes':'minimum_'+key,value);return {at};}
@@ -252,7 +277,7 @@ function refreshPhoneFormProjection(state,life,clockBinding,recordChildren){
  life.world={...life.world,...clone(profile.world)};s.identity.name=c.name;
  for(const key of ['apps','appNames','theme','currency','economy','travel','settlementOwner'])s.config[key]=clone(life.world[key]);
  s.wallet.accounts=clone(c.wallet.accounts);s.wallet.investmentProducts=clone(profile.world.economy.investments);
- const configurationRow=Object.values(state.tables.X_PHONE_WORLD_CONFIG??{}).find(row=>row.values.world_ref===worldId&&(row.values.owner_ref==null||row.values.owner_ref===entityId));
+ const configurationRow=Object.values(state.tables.X_PHONE_WORLD_CONFIG??{}).find(row=>(row.values.world_ref==null||row.values.world_ref===worldId)&&(row.values.owner_ref==null||row.values.owner_ref===entityId));
  const declared=key=>configurationRow&&Object.hasOwn(configurationRow.values,key)&&(!configurationRow.states?.[key]||['known','derived'].includes(configurationRow.states[key]));
  for(const [key,field]of [['defaultAccountId','default_account_ref'],['fundingAccountId','funding_account_ref']]){
   if(declared(field))s.wallet[key]=c.wallet[key];
