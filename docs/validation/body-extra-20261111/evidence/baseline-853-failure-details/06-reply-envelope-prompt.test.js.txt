@@ -1,0 +1,20 @@
+test at tests/reply-envelope-prompt.test.js:39:1
+✖ generated preset and the actual default compiled model payload contain one whole-response boundary (23.004548ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(contract.includes('显示占位符只放在 '+tags.extra))
+  
+      at assertContract (file:///workspace/scratch/c3a4767f6ef6/baseline-853/tests/reply-envelope-prompt.test.js:32:2)
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/baseline-853/tests/reply-envelope-prompt.test.js:42:32)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+

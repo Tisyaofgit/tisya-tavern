@@ -16,3 +16,15 @@ test('creation retains the full master reply and delivers native sources to thei
 test('configuration, source initialization and history use the same registered reply with task-specific form profiles',()=>{
  for(const task of ['tableAssistant','templateInit','historyImport']){const input={formContract:'tisya.simple-form/1',forms:'【所选表／1】\n1 内容',sourceHistory:['实际原文']},preset=pairedPreset({task,configuration:{world:defaultWorld()},formContract:input.formContract}),wire=taskMessages({preset,task,input}).map(x=>x.content).join('\n');assert.match(wire,/<reply id="tisya-onepass-1">/);assert.match(wire,/实际原文/);assert.match(wire,/STATE.forms/);assert.doesNotMatch(wire,/Return JSON only|严格 JSON|matrix\.changes/);}
 });
+test('task-specific form replies retain unique cells and vars inside the shared extra container',()=>{
+ for(const task of ['tableGenesis','tableAssistant','templateInit','historyImport']){
+  const input={formContract:'tisya.simple-form/1',forms:'【所选表／1】\n1 内容'},preset=pairedPreset({task,configuration:{world:defaultWorld()},formContract:input.formContract});
+  const registry=taskMessages({preset,task,input}).find(m=>m.content.startsWith('[REGISTRY]')).content;
+  const frame=registry.match(/\n<reply id="tisya-onepass-1">[\s\S]*?\n<\/reply>/)?.[0];assert.ok(frame,task);
+  const extras=[...frame.matchAll(/<extra>([\s\S]*?)<\/extra>/g)];assert.equal(extras.length,1,task);
+  assert.equal([...extras[0][1].matchAll(/<cells format="form">/g)].length,1,task);
+  assert.equal([...extras[0][1].matchAll(/<vars\/>/g)].length,1,task);
+  assert.ok(extras[0][1].indexOf('</cells>')<extras[0][1].indexOf('<vars/>'),task);
+  assert.doesNotMatch(frame.replace(extras[0][0],''),/<(?:cells|vars)\b/,task);
+ }
+});

@@ -1,0 +1,37 @@
+✔ all current writable business tables use the shared sheet catalog; storage identity and owner coordinates are private (201.323198ms)
+✔ complete character fields and canonical child rows compile into the same database without storing prose in manifest (262.222246ms)
+✔ malformed labels, unauthorized groups, missing references and live operations fail before canonical writes (245.01302ms)
+✔ existing names must select the explicit revision row; partial dossier edits preserve its identity and untouched fields (179.186589ms)
+✔ typed leaves preserve zero, false, unknown and explicit collection shape without a nested model JSON envelope (4.90687ms)
+✔ shared workbook tickets handle independent records and reject stale/manual changes atomically (1.609206ms)
+✔ creation retains the full master reply and delivers native sources to their actual material slots (6.21179ms)
+✔ configuration, source initialization and history use the same registered reply with task-specific form profiles (6.008953ms)
+✔ task-specific form replies retain unique cells and vars inside the shared extra container (5.828096ms)
+✔ extra groups machine children without exposing them or changing the saved source (32.341424ms)
+✔ the reported marker-before-update layout recovers its original native panel once (7.112594ms)
+✔ grouped cells settle once through the existing form writer and display never settles again (32.215147ms)
+✔ duplicate placements and hidden machine nesting fail instead of merging or rendering commands (2.03929ms)
+✔ custom protocol names apply to machine children inside extra without changing native JSON literals (4.261664ms)
+✔ the shipped Matrix skeleton nests the unique cells and vars blocks inside extra (0.486485ms)
+✔ grouped raw JSON owns its quoted closing tags and retains all original payload bytes (16.193623ms)
+✔ mixed-case grouped machine wrappers are private and remain available to the existing form writer (14.029622ms)
+✔ machine nesting and duplicate case variants fail before cells can be accepted (4.650794ms)
+✔ custom aliases keep Unicode attachments and quoted JSON separate at known slot boundaries (9.582751ms)
+✔ aliases may use another canonical machine name without swapping normalized outer slots (2.605952ms)
+✔ a sparse grouped cells alias selects Matrix without exposing the whole source as prose (2.633617ms)
+✔ repeated native update blocks fail even when their display marker is already outside vars (5.835832ms)
+✔ all eleven operations retain their authorization, routing and procedure under the selected reply contract (225.716646ms)
+✔ material values survive actual paired message assembly without source macro expansion (22.40672ms)
+✔ large source layers retain every record, Unicode and final sentinel without a summarizing substitute (44.218741ms)
+✔ AI notices retain complete rules and format examples while scripts remain only in the original card (1.485078ms)
+✔ manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence (0.842512ms)
+✔ manual old or undated history cannot overwrite current sourced state, later evidenced time can (20.398647ms)
+✔ actual archive request separates operational blockers and inaccessible corrections from source data (55.90563ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1451.820421

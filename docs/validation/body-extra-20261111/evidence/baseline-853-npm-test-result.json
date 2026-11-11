@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npm",
+    "test"
+  ],
+  "baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "startedUTC": "2026-11-11T04:01:09.139828+00:00",
+  "finishedUTC": "2026-11-11T04:08:07.286342+00:00",
+  "exit_code": 1,
+  "worktree": "/workspace/scratch/c3a4767f6ef6/baseline-853",
+  "worktree_status_after": "?? tests/reference/matrix-python/__pycache__/\n",
+  "node_modules": "/workspace/scratch/390b9cf04a3c/dependencies/node_modules"
+}

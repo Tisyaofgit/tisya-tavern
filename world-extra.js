@@ -1,6 +1,7 @@
 import {mountIsolatedCard} from './card-runtime.js';
 import {runReplyDisplay as runDisplay} from './reply-protocol.js';
 import {observeDisplaySize,CARD_MOTION_CSS} from './visual-core.js';
+import {formatProse,proseStyles} from './prose.js';
 
 // Original full-envelope partition and reader ACL; no regex rerun on individual
 // pages, no raw-message fallback and no state write while displaying history.
@@ -26,15 +27,18 @@ function inspect(document,html){
  for(const node of template.content.querySelectorAll('*'))for(const attr of node.attributes)if(/^(?:href|src|xlink:href)$/i.test(attr.name)&&/^\s*(?:javascript|vbscript):/i.test(attr.value))fail('TISYA_EXTRA_RUNTIME_REQUIRED');
  return template;
 }
-function mountDocument(document,container,html,label,{formatBody,onError}){
+export function mountDisplayDocument(document,container,html,label,{formatBody,onError}){
  const template=inspect(document,html);
  // A card may guard an unavailable host sender with typeof and silently do
  // nothing. Keep its display usable, but make that known limitation visible.
  if([...template.content.querySelectorAll('script')].some(n=>/\btriggerSlash\s*\(/.test(n.textContent))){const note=document.createElement('p');note.className='public-note card-capability-note';note.textContent='卡片可浏览，发送与直播控制按钮暂不可用。';container.append(note);}
  const interactive=!!template.content.querySelector('script,button,input,select,textarea,audio,video,link')||[...template.content.querySelectorAll('*')].some(n=>[...n.attributes].some(a=>/^on/i.test(a.name)));
  if(interactive){const box=document.createElement('div');container.append(box);const view=mountIsolatedCard({container:box,html,label,onError});view.ready.catch(onError);let paused=null;return {source:html,capture:()=>view.captureState().details,restore:folds=>view.restoreState({details:folds}),refresh(value){if(paused!==value){paused=value;view.setPaused(value);}},dispose(){view.dispose();box.remove();}};}
- const authored=!!template.content.querySelector('style,div,section,article,table,details,html');
- if(!authored)html=formatBody(html);
+ const authored=/^\s*(?:<!doctype[^>]*>\s*)?<html\b/i.test(html)||!!template.content.querySelector('style,div,section,article,table,details,html');
+ // Plain public marks use the shared prose presentation. Authored documents
+ // retain their original markup and styles, without a second regex pass.
+ const marked=!authored&&html.includes('〔');
+ if(!authored)html=marked?formatProse(document,html,formatBody):formatBody(html);
  inspect(document,html);
  const frame=document.createElement('iframe');frame.title=label;frame.dataset.tisyaExtraDocument='';frame.sandbox='allow-same-origin';frame.referrerPolicy='no-referrer';
  frame.style.cssText='display:block;width:100%;max-width:100%;height:1px;border:0;background:transparent';
@@ -50,7 +54,7 @@ function mountDocument(document,container,html,label,{formatBody,onError}){
   doc.documentElement.toggleAttribute('data-tisya-card-paused',paused);
   sizing=observeDisplaySize(doc,h=>{if(alive)frame.style.height=h+'px';},onError);ready=true;if(pending)restore(pending);clearTimeout(timer);
  }catch(error){clearTimeout(timer);onError(error);}};
- const head='<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'none\'; style-src \'unsafe-inline\'; img-src https: data: blob:; font-src \'none\'; frame-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'"><style>html{color-scheme:dark;background:transparent}body{margin:0;display:flow-root;font:16px/1.8 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#dce5d4;overflow-wrap:anywhere;background:transparent}img,video,svg{max-width:100%;height:auto}pre{white-space:pre-wrap}'+CARD_MOTION_CSS+'</style>';
+ const head='<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'none\'; style-src \'unsafe-inline\'; img-src https: data: blob:; font-src \'none\'; frame-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'"><style>html{color-scheme:dark;background:transparent}body{margin:0;display:flow-root;font:16px/1.8 var(--tisya-global-font,TisyaReading),TisyaReading,serif;color:#dce5d4;overflow-wrap:anywhere;background:transparent}img,video,svg{max-width:100%;height:auto}pre{white-space:pre-wrap}'+CARD_MOTION_CSS+(marked?proseStyles():'')+'</style>';
  const h=/^\s*(?:<!doctype[^>]*>\s*)?<html\b[^>]*>\s*(?:<head\b[^>]*>)?/i.exec(html);
  frame.srcdoc=h?html.slice(0,h[0].length)+(/<head\b/i.test(h[0])?head:'<head>'+head+'</head>')+html.slice(h[0].length):'<!doctype html><html><head>'+head+'</head><body>'+html+'</body></html>';
  container.append(frame);
@@ -80,7 +84,7 @@ export function mountWorldExtra(document,container,{source,structured,formatBody
   const unformatted=native&&!row.ruleName&&!template.content.querySelector('style,script,div,section,article,table,details,h1,h2,h3');
   if(unformatted){const raw=make('details',undefined,'native-unformatted');raw.append(make('summary',title+' · 原始内容'),make('pre',row.html));panel.append(raw);page.mount=()=>{};page.raw=raw;continue;}
   const failed=error=>{if(!alive)return;let note=panel.querySelector('.extra-error');if(!note){note=make('p',undefined,'public-note extra-error');note.setAttribute('role','status');panel.append(note);const raw=make('details'),summary=make('summary','查看原始扩展文本'),pre=make('pre',row.html);raw.append(summary,pre);panel.append(raw);}note.textContent=error.message==='TISYA_EXTRA_RUNTIME_REQUIRED'?'这一页需要卡片脚本或交互运行时，尚未接入；原始内容保留。':error.message==='TISYA_EXTRA_RESOURCE_FAILED'?'这一页有图片未能加载，已显示的内容和原始文本均保留。':'这一页暂时无法显示，原始内容保留。';onError(error);};
-  page.mount=()=>{if(page.mounted||!alive)return;page.mounted=true;try{for(const html of splitExtraDocuments(row.html)){const child={...mountDocument(document,panel,html,title,{formatBody,onError:failed}),page:row.id};children.push(child);const saved=savedDocuments.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}}catch(error){failed(error);}};if(!lazy)page.mount();
+  page.mount=()=>{if(page.mounted||!alive)return;page.mounted=true;try{for(const html of splitExtraDocuments(row.html)){const child={...mountDisplayDocument(document,panel,html,title,{formatBody,onError:failed}),page:row.id};children.push(child);const saved=savedDocuments.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}}catch(error){failed(error);}};if(!lazy)page.mount();
  }
  if(pages.length)select(pages[0].id);nav.hidden=pages.length<2;
  return {hasContent:rows.length>0,presentation:native?'native':'pages',capture:()=>({active,raw:pages.filter(p=>p.raw).map(p=>({id:p.id,open:p.raw.open})),documents:[...savedDocuments.filter(d=>!children.some(c=>c.page===d.page&&c.source===d.source)),...children.map(c=>({page:c.page,source:c.source,folds:c.capture()}))]}),restore(state){if(!state)return;savedDocuments=state.documents??[];if(pages.some(p=>p.id===state.active))select(state.active);for(const page of pages)if(page.raw)page.raw.open=state.raw?.some(p=>p.id===page.id&&p.open)??false;for(const child of children){const saved=state.documents?.find(d=>d.page===child.page&&d.source===child.source);if(saved)child.restore(saved.folds);}},refresh(value,show=true){paused=value;shown=show;if(!alive)return;if(shown)pages.filter(p=>native||p.id===active).forEach(p=>p.mount());for(const child of children)child.refresh(paused||!shown||(!native&&child.page!==active));},dispose(){alive=false;children.forEach(c=>c.dispose());pages.forEach(p=>p.button.onclick=null);container.replaceChildren();}};

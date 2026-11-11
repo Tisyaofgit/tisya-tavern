@@ -1,0 +1,13 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "/workspace/scratch/c3a4767f6ef6/evidence/reader-body/baseline-fixed-inputs.test.mjs"
+  ],
+  "exit_code": 1,
+  "start_utc": "2026-11-11T03:36:35.971612+00:00",
+  "end_utc": "2026-11-11T03:36:37.040633+00:00",
+  "source": "git HEAD:reader.js; relative imports resolved to fixed local tree",
+  "reason": "first test inputs had an invalid taskExtra line; use valid private pending row"
+}

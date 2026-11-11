@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "tests/reader-body-display.test.js",
+    "tests/reader.test.js",
+    "tests/reply-details.test.js",
+    "tests/extension-host-ui.test.js"
+  ],
+  "exit_code": 0,
+  "start_utc": "2026-11-11T03:36:42.834418+00:00",
+  "end_utc": "2026-11-11T03:36:45.249526+00:00"
+}

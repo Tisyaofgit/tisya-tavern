@@ -1,0 +1,6 @@
+{
+  "exit_code": 0,
+  "startedUTC": "2026-11-11T04:14:12.001395+00:00",
+  "finishedUTC": "2026-11-11T04:14:19.735384+00:00",
+  "change": "test only: explicitly hold older storage write, enter newer input, then wait for public saved/leave state; production autosave unchanged"
+}

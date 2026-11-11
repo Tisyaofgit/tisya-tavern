@@ -1,0 +1,91 @@
+✖ creation retains the full master reply and delivers native sources to their actual material slots (24.749271ms)
+✔ configuration, source initialization and history use the same registered reply with task-specific form profiles (13.393ms)
+✖ all eleven operations retain their authorization, routing and procedure under the selected reply contract (260.183069ms)
+✔ material values survive actual paired message assembly without source macro expansion (31.980986ms)
+✔ large source layers retain every record, Unicode and final sentinel without a summarizing substitute (55.397554ms)
+✔ AI notices retain complete rules and format examples while scripts remain only in the original card (1.461226ms)
+✔ manual multi-reply history keeps every body and interleaved user definition, excludes auxiliary evidence (0.752668ms)
+✔ manual old or undated history cannot overwrite current sourced state, later evidenced time can (28.743792ms)
+✔ actual archive request separates operational blockers and inaccessible corrections from source data (171.967502ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 7
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 911.840359
+
+✖ failing tests:
+
+test at tests/matrix-creation-wire.test.js:8:1
+✖ creation retains the full master reply and delivers native sources to their actual material slots (24.749271ms)
+  AssertionError [ERR_ASSERTION]: <cells
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/matrix-creation-wire.test.js:13:199)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/task-presets.test.js:17:1
+✖ all eleven operations retain their authorization, routing and procedure under the selected reply contract (260.183069ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /<cells format="form">/. Input:
+  
+  '[REGISTRY]\n' +
+    '@OUT.kind := the same complete structured `<reply id="tisya-onepass-1">`.\n' +
+    '@PROFILE := tableGenesis; readable form cells. Body explains the result; task and anchors keep their existing audience roles. vars/archive remain empty because this is not a story turn.\n' +
+    '\n' +
+    '<reply id="tisya-onepass-1">\n' +
+    '<task format="pipes">\n' +
+    '信号|<本次明确要求与范围>\n' +
+    '叙事|<创作对象与已有事实边界>\n' +
+    '文风|<方案语体与世界表达>\n' +
+    '情节|<可游玩目标与条件>\n' +
+    '塑造|<本次人物差异和具体特征>\n' +
+    '</task>\n' +
+    '<anchor phase="before">\n' +
+    '构想|<简短说明本次设计想达成的体验>\n' +
+    '与用户互动|<以缇斯亚声口回应要求，不披露内部推理>\n' +
+    '</anchor>\n' +
+    '<title format="pipes">\n' +
+    '<方案名称>|<故事时期或~>|<地点或~>|<世界名称或~>\n' +
+    '</title>\n' +
+    '<body min="1" max="5000" unit="字">\n' +
+    '<按1、2、3连续段号给出可读方案说明。永久定义与初值落入cells，正文说明选择的内容及相互关系，不声称已保存或已发生。无需为凑字数复抄每一格。>\n' +
+    '</body>\n' +
+    '<anchor phase="after">\n' +
+    '已交付|<已在本次草稿中具体写出的内容>\n' +
+    '与用户互动|<供契约者继续调整的一两句>\n' +
+    '</anchor>\n' +
+    '<extra>\n' +
+    '<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>\n' +
+    '</extra>\n' +
+    '<archive/>\n' +
+    '<actions min="0" max="6">\n' +
+    '<可继续细化的方向>|<简短的创作选项>|<它会改变的体验或内容>\n' +
+    '</actions>\n' +
+    '</reply>\n' +
+    '@DRAFT := The single final `<reply id="tisya-onepass-1">...</reply>` defined above, with its wording composed directly in the response. FROZEN(@DRAFT) binds current @IN, the registered block order, and all required deliverables for this turn.\n' +
+    '@DELIVERY := Deliver @DRAFT in one response, completing every required block in its registered order through the final root `</reply>`.\n' +
+    '@execute requires DONE(COMMIT.READY)+INTAKE_READY+@FORMAT=PASSED+FROZEN(@DRAFT)+CURRENT(@DRAFT,@IN)+@LOCK=READY+@SENT=false. Execute @DELIVERY once; set @SENT=true after the final root `</reply>`, then end the response. Call only from PREPARE_STEP.\n' +
+    '[/REGISTRY]'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/task-presets.test.js:26:201)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '[REGISTRY]\n@OUT.kind := the same complete structured `<reply id="tisya-onepass-1">`.\n@PROFILE := tableGenesis; readable form cells. Body explains the result; task and anchors keep their existing audience roles. vars/archive remain empty because this is not a story turn.\n\n<reply id="tisya-onepass-1">\n<task format="pipes">\n信号|<本次明确要求与范围>\n叙事|<创作对象与已有事实边界>\n文风|<方案语体与世界表达>\n情节|<可游玩目标与条件>\n塑造|<本次人物差异和具体特征>\n</task>\n<anchor phase="before">\n构想|<简短说明本次设计想达成的体验>\n与用户互动|<以缇斯亚声口回应要求，不披露内部推理>\n</anchor>\n<title format="pipes">\n<方案名称>|<故事时期或~>|<地点或~>|<世界名称或~>\n</title>\n<body min="1" max="5000" unit="字">\n<按1、2、3连续段号给出可读方案说明。永久定义与初值落入cells，正文说明选择的内容及相互关系，不声称已保存或已发生。无需为凑字数复抄每一格。>\n</body>\n<anchor phase="after">\n已交付|<已在本次草稿中具体写出的内容>\n与用户互动|<供契约者继续调整的一两句>\n</anchor>\n<extra>\n<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>\n</extra>\n<archive/>\n<actions min="0" max="6">\n<可继续细化的方向>|<简短的创作选项>|<它会改变的体验或内容>\n</actions>\n</reply>\n@DRAFT := The single final `<reply id="tisya-onepass-1">...</reply>` defined above, with its wording composed directly in the response. FROZEN(@DRAFT) binds current @IN, the registered block order, and all required deliverables for this turn.\n@DELIVERY := Deliver @DRAFT in one response, completing every required block in its registered order through the final root `</reply>`.\n@execute requires DONE(COMMIT.READY)+INTAKE_READY+@FORMAT=PASSED+FROZEN(@DRAFT)+CURRENT(@DRAFT,@IN)+@LOCK=READY+@SENT=false. Execute @DELIVERY once; set @SENT=true after the final root `</reply>`, then end the response. Call only from PREPARE_STEP.\n[/REGISTRY]',
+    expected: /<cells format="form">/,
+    operator: 'match',
+    diff: 'simple'
+  }

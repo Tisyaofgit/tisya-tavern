@@ -1,0 +1,25 @@
+{
+  "utc": "2026-11-11T03:45:38.773271+00:00",
+  "tests": 39,
+  "passed": 39,
+  "failed": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "exit_code": 0,
+  "log": "after-shared-body-content.tap",
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "tests/reader-body-display.test.js",
+    "tests/reader.test.js",
+    "tests/reply-details.test.js",
+    "tests/extension-host-ui.test.js",
+    "tests/prose.test.js",
+    "tests/display-extra.test.js"
+  ],
+  "source_sha256": {
+    "reader.js": "a9080d4e995ef0a21f116e6d02dffd1b22513feaf917617fc8ea54193841b6ce",
+    "tests/reader-body-display.test.js": "9ff26aaa935317f10e30b9aa4f500e34eb7b63d167c15f766bf8e7dd0137e2b2"
+  }
+}

@@ -14,10 +14,10 @@ const baseCharacter={name:'阿青',accounts:[{id:'main',name:'青鸟',handle:'bl
 const profile=(w={},c={})=>{const {calendar={...currentCalendar(),month:4,day:8,hour:15,minute:30},...world}=w;return phoneProfile({worldId:'world-1',personId:'person-1',world:{...baseWorld,...world},character:{...baseCharacter,...c},calendar});};
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function fixture({world={},character={},appId='home',initialize=true,slow=false}={}){
- let context={chatId:'life-dom',characterId:0,groupId:null,chatMetadata:{},chat:[]},selection='profile-1',app,saves=0,serial=0;
+ let context={chatId:'life-dom',characterId:0,groupId:null,chatMetadata:{},chat:[]},selection='profile-1',app,saves=0,serial=0,nextWriteGate=null;
  const original=context,key=chatKey(context),win=new Window({url:'http://localhost/phone.html?chat='+encodeURIComponent(key)+'&app='+appId,settings:{disableIframePageLoading:true}}),doc=win.document;
  doc.body.innerHTML='<div id="phone-root" style="height:800px"></div>';Object.defineProperty(win,'indexedDB',{value:indexedDB,configurable:true});
- const matrix=await currentPhoneHost({context,getContext:()=>context,profile:profile(world,character),storage:matrixMemoryStorage({onWrite:async()=>{saves++;if(slow)await wait(25);}})}),storage=matrix.phoneStorage;
+ const matrix=await currentPhoneHost({context,getContext:()=>context,profile:profile(world,character),storage:matrixMemoryStorage({onWrite:async()=>{saves++;if(nextWriteGate){const gate=nextWriteGate;nextWriteGate=null;gate.started=true;await gate.pending;}if(slow)await wait(25);}})}),storage=matrix.phoneStorage;
  const service=createPhoneService({seed:{accounts:{me:{name:'我'}},documents:[]},contextKey:key,storage,idFactory:()=>`life-dom-${++serial}`,onChange:()=>app?.refresh()});await service.init();if(initialize)await service.initLife(profile(world,character));
  const host={contextKey:()=>chatKey(context),selectionKey:()=>selection,service:async()=>service,open:()=>{},openIdentity:()=>{}};win.Tisya={phone:host};
  app=await bootPhone({win,doc});const root=app.getRoot?.();
@@ -25,7 +25,7 @@ async function fixture({world={},character={},appId='home',initialize=true,slow=
  const click=async selector=>{const target=root.querySelector(selector);assert.ok(target,selector);target.click();await settle();};
  const input=(selector,value)=>{const target=root.querySelector(selector);assert.ok(target,selector);target.value=value;target.dispatchEvent(new win.Event('input',{bubbles:true}));return target;};
  const submit=async selector=>{root.querySelector(selector).dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));await settle();};
- return {win,doc,root,app,service,original,host,matrix,settle,click,input,submit,get saves(){return saves;},setSelection:value=>{selection=value;},switchChat:()=>{context={...context,chatId:'other',chatMetadata:{}};},close:()=>{app.dispose();win.close();}};
+ return {win,doc,root,app,service,original,host,matrix,settle,click,input,submit,get saves(){return saves;},holdNextWrite(){const gate={started:false};gate.pending=new Promise(resolve=>{gate.release=resolve;});nextWriteGate=gate;return gate;},setSelection:value=>{selection=value;},switchChat:()=>{context={...context,chatId:'other',chatMetadata:{}};},close:()=>{app.dispose();win.close();}};
 }
 
 test('real phone boot mounts configured life apps and no preview identities',async()=>{
@@ -56,8 +56,13 @@ test('unconfigured values stay unknown and accountless personal media remains us
  assert.match(f.root.textContent,/未配置/);assert.doesNotMatch(f.root.querySelector('.u-hero-amount').textContent,/0\.00/);await f.app.handle('nav',{app:'album'});assert.match(f.root.textContent,/相册/);await f.app.handle('nav',{app:'music'});assert.match(f.root.textContent,/音乐/);await f.app.handle('nav',{app:'calendar'});assert.match(f.root.textContent,/尚未提供日历起点/);assert.equal(f.service.readLife().state.social.activeAccountId,null);f.close();
 });
 test('draft autosave retains newer input arriving during an older database save',async()=>{
- const f=await fixture({appId:'weibo',slow:true});await f.app.handle('nav',{app:'weibo',tab:'compose'});const field=f.input('[name="text"]','第一句');assert.equal(f.app.requestLeave().allowed,false);await wait(455);field.value='第一句，第二句';field.dispatchEvent(new f.win.Event('input',{bubbles:true}));await wait(650);await f.settle();
- assert.equal(f.service.readLife().state.social.drafts.main.text,'第一句，第二句');assert.equal(f.root.querySelector('[name="text"]'),field);assert.equal(field.value,'第一句，第二句');assert.equal(f.app.requestLeave().allowed,true);f.close();
+ const f=await fixture({appId:'weibo',slow:true});let gate;
+ const until=async(predicate,label)=>{const deadline=Date.now()+30000;while(!predicate()&&Date.now()<deadline)await wait(10);assert(predicate(),label);};
+ try{await f.app.handle('nav',{app:'weibo',tab:'compose'});gate=f.holdNextWrite();const field=f.input('[name="text"]','第一句');assert.equal(f.app.requestLeave().allowed,false);
+  await until(()=>gate.started,'older save reached storage');field.value='第一句，第二句';field.dispatchEvent(new f.win.Event('input',{bubbles:true}));gate.release();
+  await until(()=>f.app.requestLeave().allowed,'all draft changes finished saving');await f.settle();
+  assert.equal(f.service.readLife().state.social.drafts.main.text,'第一句，第二句');assert.equal(f.root.querySelector('[name="text"]'),field);assert.equal(field.value,'第一句，第二句');assert.equal(f.app.requestLeave().allowed,true);
+ }finally{gate?.release();f.close();}
 });
 test('old frame rejects changed selection and changed chat without overwriting either archive',async()=>{
  const f=await fixture({appId:'wallet'}),before=JSON.stringify(await f.matrix.read());f.setSelection('new-person');await assert.rejects(()=>f.app.dispatch({type:'wallet.transfer',from:'cash',to:'person-2',amount:1}),/已切换/);assert.equal(JSON.stringify(await f.matrix.read()),before);

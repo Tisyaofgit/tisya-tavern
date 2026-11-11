@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>正文与 extra · Chromium 隔离验证</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:16px;background:#06261e;color:#e5eee7;font:16px/1.65 system-ui,sans-serif}main{max-width:1040px;margin:auto}h1{font-size:23px;margin:0 0 8px}p{margin:8px 0}.controls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}button,input{font:inherit}button{min-height:44px;padding:7px 12px;border:1px solid #9ab5a0;border-radius:8px;background:#163f33;color:inherit;cursor:pointer}button[aria-pressed=true]{background:#54745b}#stage{width:960px;max-width:100%;min-width:0;margin:16px auto;border:1px solid #54745b;padding:10px}.mes,.mes_block,.mes_text{min-width:0;max-width:100%}.TH-render{width:100%;min-width:0;margin:12px 0}.TH-render>iframe{display:block;width:100%;max-width:100%;height:220px;border:1px solid #a6b98c66;border-radius:10px}.tisya-source-concealed{display:none!important}.fixture-report{overflow-wrap:anywhere;white-space:pre-wrap;max-width:100%;font:13px/1.5 ui-monospace,monospace}#state{color:#ffe2a0}#report-box{padding:12px;border:1px solid #54745b;border-radius:8px}#error-list{color:#ffb3ac}.boundary{font-size:14px;color:#b9cfc0}@media(max-width:430px){body{padding:8px}#stage{padding:4px}.controls button{flex:1 1 auto}}
+  </style>
+</head>
+<body class="tisya-active">
+<main>
+  <h1>正文与 extra · 浏览器隔离验证</h1>
+  <p class="boundary">使用当前源码与真实浏览器 CSS。酒馆消息和公开 helper 根由本页模拟；不代表真实酒馆、Android 或真实模型调用。</p>
+  <div class="controls" aria-label="验证场景">
+    <button id="case-static" type="button" aria-pressed="true">静态正文与 extra</button>
+    <button id="case-native" type="button" aria-pressed="false">原生 helper（宿主模拟）</button>
+    <button id="width-wide" type="button" aria-pressed="true">宽屏内容</button>
+    <button id="width-narrow" type="button" aria-pressed="false">390px 内容</button>
+    <button id="toggle-world" type="button">切换世界球</button>
+    <button id="check-current" type="button">运行当前检查</button>
+  </div>
+  <p id="state" role="status">正在载入当前源码……</p>
+  <details id="report-box" open><summary>检查结果（JSON）</summary><pre id="report" class="fixture-report">尚未运行检查。</pre></details>
+  <ul id="error-list"></ul>
+  <div id="stage"><div id="chat"></div></div>
+</main>
+<script type="module">
+import {mountMessageAppearance} from '../message-ui.js';
+import {createNativeDisplayPipeline} from '../native-display.js';
+import {DISPLAY_DEFAULTS} from '../display-settings.js';
+
+const boundary='Real Chromium rendering; simulated host messages and public native-helper roots; no real Tavern, Android, external model or state writer.';
+const staticHTML='<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;padding:14px;background:#122e28}.static-note{color:rgb(189,132,38);font-size:20px;margin:6px 0}.static-box{border:2px solid #bd8426;border-radius:8px;padding:8px}</style></head><body><article class="static-box"><h2>正文静态卡</h2><p class="static-note">静态卡的金色文字</p><details open><summary>保留展开状态</summary><p>正文卡片中的折叠内容。</p></details></article></body></html>';
+const extraHTML='<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;padding:14px;background:#112f32}.extra-note{color:rgb(74,217,196);font-size:20px;margin:6px 0}</style></head><body><section><h2>extra 独立卡</h2><p class="extra-note">扩展卡的青色文字</p></section></body></html>';
+function nativeHTML(owner){return '<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;padding:12px;background:#23362c;color:#edf4dc;font:16px/1.6 system-ui}input{width:100%;max-width:100%;padding:8px}button{margin-top:8px;padding:8px 12px}h2{font-size:18px;margin:0 0 8px}</style></head><body><h2>'+owner+' · 原生 helper 宿主模拟</h2><label>保存此输入<input id="native-input" value="初始值"></label><button id="native-button">点一次增加计数</button> <output id="native-count">0</output><script>window.__tisyaNativeScriptRuns=(window.__tisyaNativeScriptRuns||0)+1;document.querySelector("#native-button").addEventListener("click",()=>{const out=document.querySelector("#native-count");out.value=String(Number(out.value)+1)});<'+ '/script></body></html>';}
+const liveBody=nativeHTML('正文'),liveExtra=nativeHTML('extra'),fence=html=>'```html\n'+html+'\n```';
+const rules=[['信笺','LETTER_TOKEN','〔信笺：河畔来信〕纸上有一行问候。〔/信笺〕'],['正文静态卡','STATIC_BODY_TOKEN',fence(staticHTML)],['extra 静态卡','EXTRA_STATIC_TOKEN',fence(extraHTML)],['正文原生卡','LIVE_BODY_TOKEN',fence(liveBody)],['extra 原生卡','LIVE_EXTRA_TOKEN',fence(liveExtra)]].map(([scriptName,token,replaceString])=>({scriptName,findRegex:'/'+token+'/g',replaceString,markdownOnly:true,placement:[2]}));
+const canaries=['PRIVATE_CELLS_BODY_EXTRA_731','PRIVATE_VARS_BODY_EXTRA_947'];
+const makeSource=mode=>'<reply id="tisya-onepass-1"><task/><anchor phase="before"/><title>正文与扩展|午后|河畔|隔离验证</title><body>1 前文：信从河畔送来。\n\n2\nLETTER_TOKEN\n\n3\nSTATIC_BODY_TOKEN\n\n'+(mode==='native'?'4\nLIVE_BODY_TOKEN\n\n5 ':'4 ')+'后文：读完信，再继续往前走。</body><anchor phase="after"/><extra>EXTRA_STATIC_TOKEN\n'+(mode==='native'?'LIVE_EXTRA_TOKEN\n':'')+'<cells format="form">'+canaries[0]+'</cells><vars><UpdateVariable><JSONPatch>[{"op":"replace","path":"/note","value":"'+canaries[1]+'"}]</JSONPatch></UpdateVariable></vars></extra><archive/><actions/></reply>';
+const stage=document.querySelector('#stage'),chat=document.querySelector('#chat'),status=document.querySelector('#state'),reportNode=document.querySelector('#report'),errorList=document.querySelector('#error-list');
+let current=null,mode='static',width=960,runSequence=0,formatCalls=0;
+const errors=[];
+function recordError(error){const value={name:error?.name??'Error',message:error?.message??String(error),stack:error?.stack??null};errors.push(value);const li=document.createElement('li');li.textContent=value.message;errorList.append(li);}
+window.addEventListener('error',e=>recordError(e.error??e.message));window.addEventListener('unhandledrejection',e=>recordError(e.reason));
+// This is a minimal, explicit host formatter adapter, not the real host parser.
+function hostFormat(text){formatCalls++;const template=document.createElement('template');template.innerHTML=text;for(const node of template.content.querySelectorAll('script,iframe,object,embed'))node.remove();return template.innerHTML;}
+function helperRoot(source,id){
+ const root=document.createElement('div');root.className='TH-render';root.dataset.hostSimulation='true';const pre=document.createElement('pre'),code=document.createElement('code'),frame=document.createElement('iframe');code.textContent=source;pre.append(code);frame.id='TH-message--0--'+id;frame.title='宿主模拟 · '+id;frame.setAttribute('sandbox','allow-scripts allow-same-origin');frame.srcdoc=source;root.append(pre,frame);return {root,frame,realm:null,document:null};
+}
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(predicate,message){const start=performance.now();while(!predicate()){if(performance.now()-start>10000)throw Error(message);await delay(30);}}
+function all(root,selector){const found=[...root.querySelectorAll(selector)];for(const node of root.querySelectorAll('*'))if(node.shadowRoot)found.push(...all(node.shadowRoot,selector));return found;}
+function shown(node){if(!node)return false;for(let n=node;n;){if(n.nodeType===1){const css=n.ownerDocument.defaultView.getComputedStyle(n);if(n.hidden||css.display==='none'||css.visibility==='hidden')return false;}n=n.parentElement??n.getRootNode?.().host??null;}return node.getBoundingClientRect().width>0&&node.getBoundingClientRect().height>0;}
+function visibleText(root){let out='';for(const node of root.childNodes){if(node.nodeType===3){out+=node.textContent;continue;}if(node.nodeType!==1||/^(?:SCRIPT|STYLE|TEMPLATE|HEAD)$/.test(node.tagName)||!shown(node))continue;if(node.tagName==='IFRAME'){try{out+=visibleText(node.contentDocument.body);}catch{}continue;}out+=visibleText(node.shadowRoot??node);}return out;}
+function worldButton(){return all(chat,'#world-extension-toggle')[0];}
+function setWidth(value){width=value;stage.style.width=value+'px';document.querySelector('#width-wide').setAttribute('aria-pressed',String(value===960));document.querySelector('#width-narrow').setAttribute('aria-pressed',String(value===390));status.textContent='场景：'+(mode==='native'?'原生 helper（宿主模拟）':'静态正文与 extra')+'；内容目标宽度 '+width+'px；浏览器视口 '+innerWidth+'px。';}
+async function mount(next=mode){
+ current?.controller.dispose();chat.replaceChildren();mode=next;errors.length=0;errorList.replaceChildren();formatCalls=0;
+ const node=document.createElement('div');node.className='mes';node.setAttribute('mesid','0');node.innerHTML='<div class="mes_block"><div class="mes_text"></div></div>';chat.append(node);const native=node.querySelector('.mes_text'),source=makeSource(mode),message={mes:source,name:'隔离验证',extra:{}},helpers=[];native.append(document.createTextNode(source));
+ if(mode==='native')for(const [html,id]of [[liveBody,'body'],[liveExtra,'extra']]){const row=helperRoot(html,id);native.append(row.root);helpers.push(row);}
+ let compilations=0;const pipeline=createNativeDisplayPipeline({scripts:()=>rules,enabled:()=>true,regexProvider:{get(value){compilations++;const match=/^\/(.*)\/([a-z]*)$/.exec(value);return new RegExp(match[1],match[2]);}},contextKey:()=> 'browser-body-extra'});
+ const projected=pipeline.project(source,message,node);
+ const controller=mountMessageAppearance(document,{getMessage:target=>target===node?message:null,getMessageCount:()=>1,getScope:()=> 'browser-body-extra',getNativeDisplay:()=>projected,formatBody:hostFormat,formatPreparedBody:hostFormat,getMotion:()=>false,getDisplay:()=>({...DISPLAY_DEFAULTS,世界扩展默认状态:'展开',旅程球默认状态:'收起'}),getAppearance:()=>({标记美化:true,动画效果:false,装饰程度:'适中'}),onError:recordError});
+ current={node,native,source,message,helpers,pipeline,projected,controller,compilations:()=>compilations};controller.sync(node);
+ document.querySelector('#case-static').setAttribute('aria-pressed',String(mode==='static'));document.querySelector('#case-native').setAttribute('aria-pressed',String(mode==='native'));setWidth(width);
+ await until(()=>all(chat,'iframe[data-tisya-body-document]').some(frame=>frame.contentDocument?.querySelector('.static-note')),'正文静态 iframe 未就绪');
+ await until(()=>all(chat,'iframe[data-tisya-extra-document]').some(frame=>frame.contentDocument?.querySelector('.extra-note')),'extra 静态 iframe 未就绪');
+ for(const row of helpers){await until(()=>row.frame.contentDocument?.querySelector('#native-button')&&row.frame.contentWindow.__tisyaNativeScriptRuns===1,'模拟 helper iframe 未就绪');row.realm=row.frame.contentWindow;row.document=row.frame.contentDocument;}
+ await delay(80);window.fixture.ready=true;return current;
+}
+function metrics(){
+ const bodyFrame=all(chat,'iframe[data-tisya-body-document]').find(frame=>frame.contentDocument?.querySelector('.static-note'));
+ const extraFrame=all(chat,'iframe[data-tisya-extra-document]').find(frame=>frame.contentDocument?.querySelector('.extra-note'));
+ const color=(frame,selector)=>frame?.contentWindow.getComputedStyle(frame.contentDocument.querySelector(selector)).color??null;
+ const letter=all(chat,'[data-tisya-mark="信笺"]')[0],text=visibleText(chat),bodyHost=bodyFrame?.parentElement;
+ return {mode,viewportWidth:innerWidth,stageWidth:Math.round(stage.getBoundingClientRect().width),pageScrollWidth:document.documentElement.scrollWidth,pageOverflow:document.documentElement.scrollWidth>innerWidth+1,bodyColor:color(bodyFrame,'.static-note'),extraColor:color(extraFrame,'.extra-note'),letterCount:all(chat,'[data-tisya-mark="信笺"]').length,letterVisible:shown(letter),bodyFrameVisible:shown(bodyFrame),bodyTextPresent:text.includes('前文：信从河畔送来。')&&text.includes('后文：读完信，再继续往前走。'),canaryLeak:canaries.some(canary=>text.includes(canary)),parentScriptExecuted:window.__tisyaNativeScriptRuns!==undefined,sourceUnchanged:current.message.mes===current.source,compilations:current.compilations(),bodyChildren:bodyHost?[...bodyHost.parentElement.children].map(n=>n.className):[],helperStates:current.helpers.map(row=>({id:row.frame.id,visible:shown(row.frame),sameElement:row.frame.isConnected&&row.frame.parentElement===row.root,sameRealm:row.frame.contentWindow===row.realm,sameDocument:row.frame.contentDocument===row.document,input:row.frame.contentDocument.querySelector('#native-input').value,count:row.frame.contentDocument.querySelector('#native-count').value,scriptRuns:row.frame.contentWindow.__tisyaNativeScriptRuns})),errors:[...errors]};
+}
+async function checkCurrent(){
+ const sequence=++runSequence;document.querySelector('#check-current').disabled=true;window.fixture.lastReport=null;
+ try{
+  if(worldButton().getAttribute('aria-expanded')!=='true'){worldButton().click();await delay(120);}
+  const bodyFrame=all(chat,'iframe[data-tisya-body-document]')[0],bodyRealm=bodyFrame.contentWindow,bodyDocument=bodyFrame.contentDocument,extraFrame=all(chat,'iframe[data-tisya-extra-document]').find(frame=>frame.contentDocument?.querySelector('.extra-note')),compilations=current.compilations();
+  for(const row of current.helpers){row.frame.contentDocument.querySelector('#native-input').value='保留输入 '+row.frame.id;row.frame.contentDocument.querySelector('#native-button').click();}
+  const before=metrics(),expectedCounts=before.helperStates.map(x=>x.count);
+  worldButton().click();await delay(120);const closed=metrics();worldButton().click();await delay(120);current.controller.refresh();await delay(80);const reopened=metrics();
+  const checks={letterRendered:before.letterCount===1&&before.letterVisible,bodyStaticStyle:before.bodyColor==='rgb(189, 132, 38)',extraStaticStyle:before.extraColor==='rgb(74, 217, 196)',bodyProseAndFrameVisible:[before,closed,reopened].every(x=>x.bodyTextPresent&&x.bodyFrameVisible),noPageOverflow:[before,closed,reopened].every(x=>!x.pageOverflow),privateMachineDataHidden:[before,closed,reopened].every(x=>!x.canaryLeak),parentScriptNotExecuted:[before,closed,reopened].every(x=>!x.parentScriptExecuted),sourceUnchanged:reopened.sourceUnchanged,regexNotRerun:reopened.compilations===compilations,staticFrameNotRebuilt:all(chat,'iframe[data-tisya-body-document]')[0]===bodyFrame&&bodyFrame.contentWindow===bodyRealm&&bodyFrame.contentDocument===bodyDocument,extraFrameNotRebuilt:all(chat,'iframe[data-tisya-extra-document]').includes(extraFrame),helperStateRetained:reopened.helperStates.every((x,i)=>x.sameElement&&x.sameRealm&&x.sameDocument&&x.scriptRuns===1&&x.input==='保留输入 '+x.id&&x.count===expectedCounts[i]),nativeBodyStaysVisible:mode!=='native'||closed.helperStates.find(x=>x.id.endsWith('--body'))?.visible===true,nativeExtraFolds:mode!=='native'||closed.helperStates.find(x=>x.id.endsWith('--extra'))?.visible===false,noApplicationErrors:errors.length===0};
+  const result={sequence,passed:Object.values(checks).every(Boolean),boundary,utc:new Date().toISOString(),checks,before,closed,reopened};window.fixture.lastReport=result;reportNode.textContent=JSON.stringify(result,null,2);document.querySelector('#report-box').dataset.complete=String(sequence);status.textContent=(result.passed?'当前检查通过':'当前检查存在失败')+' · '+mode+' · 浏览器视口 '+innerWidth+'px / 内容 '+reopened.stageWidth+'px';return result;
+ }catch(error){recordError(error);const result={sequence,passed:false,boundary,utc:new Date().toISOString(),error:{message:error.message,stack:error.stack},errors:[...errors]};window.fixture.lastReport=result;reportNode.textContent=JSON.stringify(result,null,2);throw error;}
+ finally{document.querySelector('#check-current').disabled=false;}
+}
+window.fixture={boundary,ready:false,lastReport:null,mount,metrics,checkCurrent,setWidth,errors};
+for(const [id,next]of [['case-static','static'],['case-native','native']])document.getElementById(id).onclick=()=>{window.fixture.ready=false;void mount(next).catch(recordError);};
+document.querySelector('#width-wide').onclick=()=>setWidth(960);document.querySelector('#width-narrow').onclick=()=>setWidth(390);document.querySelector('#toggle-world').onclick=()=>worldButton()?.click();document.querySelector('#check-current').onclick=()=>void checkCurrent().catch(()=>{});
+await mount(new URL(location.href).searchParams.get('mode')==='native'?'native':'static');
+</script>
+</body>
+</html>

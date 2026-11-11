@@ -1,0 +1,13 @@
+{
+  "phase": "before",
+  "base_commit": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "command": [
+    "node",
+    "--test",
+    "tests/matrix-creation-wire.test.js",
+    "tests/task-presets.test.js"
+  ],
+  "started_utc": "2026-11-11T03:37:11.188702+00:00",
+  "finished_utc": "2026-11-11T03:37:12.248267+00:00",
+  "exit_code": 1
+}

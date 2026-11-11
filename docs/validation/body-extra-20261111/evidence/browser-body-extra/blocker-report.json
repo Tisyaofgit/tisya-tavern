@@ -1,0 +1,90 @@
+{
+  "status": "browser-validation-blocked",
+  "recorded_utc": "2026-11-11T03:50:57.128504+00:00",
+  "boundary": "Automated Chromium and shared Chrome were attempted. No successful real-browser rendering, CSS, viewport, helper-state or Android validation is claimed. Fixture uses current application modules with explicit simulated host adapters.",
+  "deliverables": [
+    {
+      "path": "tests/browser-body-extra.html",
+      "bytes": 17050,
+      "sha256": "b2e6a0c36a881e947e22381722b172753a5503df969ea7aac825e1490da1420a",
+      "snapshot": "source/tests/browser-body-extra.html"
+    },
+    {
+      "path": "tools/check-body-extra-browser.mjs",
+      "bytes": 4929,
+      "sha256": "2c00b88551733051ef347dcf2e80f7e508161f1140026f626e723879491b5d93",
+      "snapshot": "source/tools/check-body-extra-browser.mjs"
+    }
+  ],
+  "intended_checks": [
+    "1280px and 390px browser viewports",
+    "body prose before and after regex letter mark and static complete HTML card",
+    "extra separate static card and actual computed colors",
+    "world orb keeps body visible",
+    "same helper iframe element, Window and Document plus input and button state across world folding",
+    "no parent-page native script execution",
+    "private cells/vars canaries absent from visible rendered content",
+    "no document horizontal overflow"
+  ],
+  "playwright_attempts": [
+    {
+      "metadata": "launch-probe.json",
+      "raw_log": "launch-probe.log",
+      "outcome": "blocked at Chromium singleton Unix socket creation"
+    },
+    {
+      "metadata": "runner-attempt-1/browser-result.json",
+      "raw_log": "runner-attempt-1/run.log",
+      "outcome": "blocked at Chromium launch",
+      "completed_browser_checks": 0
+    }
+  ],
+  "shared_browser_attempt": {
+    "attempt_utc": null,
+    "recorded_clock_utc": "2026-11-11 03:49:51 UTC",
+    "source": "Parent agent reported its actual shared Chrome createBrowserTab call; exact tool timestamp was not provided to this child",
+    "url": "http://127.0.0.1:8765/tests/browser-body-extra.html",
+    "raw_error": "Browser reported: net::ERR_CONNECTION_REFUSED",
+    "outcome": "blocked-before-fixture-load",
+    "timestamp_note": "Parent approximate time was about 03:55 UTC; child clock read at receipt was 03:49:51 UTC. No exact attempt time is inferred."
+  },
+  "http_service": {
+    "port": 8765,
+    "session_id": 15867,
+    "served_directory": "/workspace/scratch/c3a4767f6ef6/tisya-tavern",
+    "independent_exec_probe": "URLError <urlopen error [Errno 111] Connection refused>",
+    "shutdown": "session interrupted after parent shared-browser attempt; observed exit_code 130",
+    "running": false
+  },
+  "non_browser_verification": {
+    "javascript_syntax": "node --check passed for runner and extracted fixture module",
+    "projection_sanity": "Node + happy-dom parsing only, not rendering",
+    "static_case": {
+      "parts": [
+        "prose",
+        "static document",
+        "prose"
+      ],
+      "extra_panels": 1,
+      "display_canary_leak": false
+    },
+    "native_case": {
+      "parts": [
+        "prose",
+        "static document",
+        "prose",
+        "native document",
+        "prose"
+      ],
+      "extra_panels": 1,
+      "display_canary_leak": false
+    }
+  },
+  "screenshots": {
+    "created": 0,
+    "uploaded": 0
+  },
+  "changes_outside_assigned_fixture_and_runner": false,
+  "git_commit_created": false,
+  "handoff": "Source files and fixture are ready for parent review; test runner can be rerun where Chromium startup and local fixture access work. Parent owns full checkpoint and unique todo update."
+}

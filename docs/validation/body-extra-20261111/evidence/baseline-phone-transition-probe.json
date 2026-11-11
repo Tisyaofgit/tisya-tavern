@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=候选接线包含实际双预设hook",
+    "tests/phone-host.test.js"
+  ],
+  "startUTC": "2026-11-11T04:07:45.809447+00:00",
+  "endUTC": "2026-11-11T04:07:49.415031+00:00",
+  "exit_code": 0,
+  "timed_out": false,
+  "reason": "Full baseline log has not advanced beyond the immediately preceding phone markers for several minutes; bounded targeted probe only."
+}

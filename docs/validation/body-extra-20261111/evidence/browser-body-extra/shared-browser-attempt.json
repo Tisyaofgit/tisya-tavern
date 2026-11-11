@@ -1,0 +1,9 @@
+{
+  "attempt_utc": null,
+  "recorded_clock_utc": "2026-11-11 03:49:51 UTC",
+  "source": "Parent agent reported its actual shared Chrome createBrowserTab call; exact tool timestamp was not provided to this child",
+  "url": "http://127.0.0.1:8765/tests/browser-body-extra.html",
+  "raw_error": "Browser reported: net::ERR_CONNECTION_REFUSED",
+  "outcome": "blocked-before-fixture-load",
+  "timestamp_note": "Parent approximate time was about 03:55 UTC; child clock read at receipt was 03:49:51 UTC. No exact attempt time is inferred."
+}

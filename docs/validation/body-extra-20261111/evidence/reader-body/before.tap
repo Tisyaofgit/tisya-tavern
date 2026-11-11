@@ -1,0 +1,97 @@
+✖ reader shares one full-message display projection between body and extra without repeating host regex (41.352344ms)
+✖ regex-generated prose marks honor reader appearance while authored HTML and code remain literal (25.476275ms)
+✖ record projections coexist with regex output and async arrival does not rerun display or replace another tab (12.687821ms)
+✖ a failed display pass stays visible and is not retried by reader tab changes (8.21967ms)
+✔ reader without a display provider retains ordinary paragraph anchors and the original safe formatter (15.077829ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 1
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 817.015643
+
+✖ failing tests:
+
+test at tests/reader-body-display.test.js:17:1
+✖ reader shares one full-message display projection between body and extra without repeating host regex (41.352344ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:22:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/reader-body-display.test.js:28:1
+✖ regex-generated prose marks honor reader appearance while authored HTML and code remain literal (25.476275ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:33:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/reader-body-display.test.js:39:1
+✖ record projections coexist with regex output and async arrival does not rerun display or replace another tab (12.687821ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /新正文/. Input:
+  
+  '1旧正文2正在读取当时的记录。'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:44:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '1旧正文2正在读取当时的记录。',
+    expected: /新正文/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/reader-body-display.test.js:50:1
+✖ a failed display pass stays visible and is not retried by reader tab changes (8.21967ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:55:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,77 @@
+[
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-failures.json",
+    "bytes": 13462,
+    "sha256": "71aaab0896e55bd72395103c69ca53158ff6ec3b4815b75d1c731eb4fdd06c3d"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-npm-test.log",
+    "bytes": 340104,
+    "sha256": "312daf8929d9e8aa9fc14aee07053dca9a3a8b1055d9e50d2498a06a458758bd"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-npm-test-result.json",
+    "bytes": 445,
+    "sha256": "3d8eecd99e35025ee3d838ef651bfd93058e7e51adc1e73d078a5e5d9277cd37"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-phone-transition-probe.tap",
+    "bytes": 380,
+    "sha256": "5146a44cf3237d6ec2e80a36716d83fd6cfb96d18088c811e1fc03b1bec61893"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-phone-transition-probe.json",
+    "bytes": 457,
+    "sha256": "8574e4adb98e16f5404fa5baa4ff6e1d61a11d1d919f2805e8e59eb18c76d58c"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/01-configuration.test.js.txt",
+    "bytes": 22301,
+    "sha256": "2387a0ae9e0818ce77290f8b019bebc21f1b1fd8b4933438edeb26b11dd499b8"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/02-configuration.test.js.txt",
+    "bytes": 23748,
+    "sha256": "a4f674d972a591a3d0214be9ce3926a83a3d8ca93a3a1f382b654d771bf98dc0"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/03-matrix-consumer-wire.test.js.txt",
+    "bytes": 642,
+    "sha256": "66fc14dc4127efa81787abb04a8597e62482ea603d57b02865c1849106df391d"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/04-matrix-creation-wire.test.js.txt",
+    "bytes": 728,
+    "sha256": "1b39a4a4d08ea11faa52d40d7e68738fc224cd6ee1519ba64f0cf8f981960e06"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/05-phone-life-host-dom.test.js.txt",
+    "bytes": 707,
+    "sha256": "a014f09b0472ffb88ad760720a3a67fc9f4aa630fdbcff847aee41b8a0995702"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/06-reply-envelope-prompt.test.js.txt",
+    "bytes": 962,
+    "sha256": "1799946cae83fdad76949b80e29ee8ac8a148eddf6472011d9bfb9b4f7b40bdb"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/07-reply-envelope-prompt.test.js.txt",
+    "bytes": 1106,
+    "sha256": "4ed60785e8ce02c178020f3b59cf094ecb8f8c07a9ae87e12aa42e4199939d10"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/08-reply-envelope-prompt.test.js.txt",
+    "bytes": 1101,
+    "sha256": "9c964b3dad5e5872ca0fd0494fbff507e1af2901d7f5e99200e94c48d4691624"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/09-table-forms.test.js.txt",
+    "bytes": 22509,
+    "sha256": "22a0feefdaf7ea067b34f35e3dd513c3c6fb6bbc93349d374ca858b07e283089"
+  },
+  {
+    "path": "/workspace/scratch/c3a4767f6ef6/evidence/baseline-853-failure-details/10-task-presets.test.js.txt",
+    "bytes": 5332,
+    "sha256": "ed3142e01f9982690dbb87c0b8eb77cb618c53647e360dae8e7bf7b20d6df252"
+  }
+]

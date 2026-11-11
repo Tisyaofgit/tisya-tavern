@@ -13,8 +13,9 @@ export const CONFIG_KEY='tisya_matrix_configuration';
 export const REPLY_ENVELOPE_RULE=`@ENVELOPE :: Whole response boundary
 禁止在唯一 reply 根块之前或之后输出任何内容，包括说明文字、原卡触发符、变量更新、Markdown 代码围栏或第二个回复根块。
 整条响应从 <reply id="tisya-onepass-1"> 开始，以对应的 </reply> 结束；按下方骨架把本轮全部交付内容放入这个根块。
-正文与互动使用各自的 body、anchor、actions 区块。extra 是统一附件容器：原卡状态栏等显示占位符直接放在 extra 内，cells 与 vars 也作为 extra 的直接子块各放一次。完整原生 UpdateVariable 更新只放在 extra 内的 vars 中，由原卡执行器解析；显示占位符不得塞进 vars 或 cells。
-原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时用于 extra，普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。
+正文与互动使用各自的 body、anchor、actions 区块。用于正文就地展示的原卡标记与美化标签放在 body 对应位置，独立扩展面板的显示标记放在 extra；两处都使用当前启用的正则渲染，每个显示组件只在实际展示位置输出一次。
+extra 同时收纳唯一的 cells 与 vars 直接子块。它们是隐藏的机器数据，不复制到可见正文或扩展面板；完整原生 UpdateVariable 更新只放在 extra 内的 vars 中，由原卡执行器解析。显示标记不得塞进 vars 或 cells。
+原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时输出：正文就地页面放在 body，独立面板放在 extra；普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。
 @END_ENVELOPE`;
 function withReplyEnvelope(text){return String(text).replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'').replace('[REGISTRY]','[REGISTRY]\n'+REPLY_ENVELOPE_RULE);}
 export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE});

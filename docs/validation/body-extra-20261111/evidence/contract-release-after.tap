@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: installed, displayed and stylesheet versions agree
+ok 1 - installed, displayed and stylesheet versions agree
+  ---
+  duration_ms: 2.885629
+  type: 'test'
+  ...
+# Subtest: generated preset and the actual default compiled model payload contain one whole-response boundary
+ok 2 - generated preset and the actual default compiled model payload contain one whole-response boundary
+  ---
+  duration_ms: 12.711856
+  type: 'test'
+  ...
+# Subtest: custom tag names reach the whole boundary, both display locations, and hidden extra/cells/vars ownership
+ok 3 - custom tag names reach the whole boundary, both display locations, and hidden extra/cells/vars ownership
+  ---
+  duration_ms: 6.830657
+  type: 'test'
+  ...
+# Subtest: an existing registry override and an old loaded preset still produce exactly one current boundary
+ok 4 - an existing registry override and an old loaded preset still produce exactly one current boundary
+  ---
+  duration_ms: 8.526336
+  type: 'test'
+  ...
+# Subtest: final prompt fragment replacement refuses duplicate or missing registry inputs instead of guessing which system text to edit
+ok 5 - final prompt fragment replacement refuses duplicate or missing registry inputs instead of guessing which system text to edit
+  ---
+  duration_ms: 1.13798
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 370.101963

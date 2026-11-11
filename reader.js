@@ -12,6 +12,7 @@ import {mountActionChoice} from './actions.js';
 import {readReplyBlock,readPublicReplyEnvelope} from './reply-formats.js';
 import {readReplyDetails,mountHeartBlock,mountAuditBlock,replyControlsCSS} from './reply-details.js';
 import {formatProse,proseCSS,proseStyles} from './prose.js';
+import {mountBodyContent} from './body-content.js';
 import {mountWorldExtra,extraCSS} from './world-extra.js';
 import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-core.js';
 import {readJourney} from './reply-records.js';
@@ -91,9 +92,13 @@ function inspectUncached(source,options) {
     return {structured,body,journey,actions,details:attempt(()=>readReplyDetails(source))};
 }
 
-export function mountMessageReader(document, container, {source,message=null,phoneMessage=message,getPresentation=message=>document.defaultView?.Tisya?.presentation?.forMessage?.(message),formatBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,onError=()=>{}}) {
+export function mountMessageReader(document, container, {source,message=null,phoneMessage=message,getPresentation=message=>document.defaultView?.Tisya?.presentation?.forMessage?.(message),formatBody,formatPreparedBody,getNativeDisplay,onChooseAction,getActionMode,setActionMode,initialTab='body',getAppearance=()=>({}),getDisplay=()=>({}),getPlayerName=()=>null,onError=()=>{}}) {
     const data=inspectMessage(source,{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()});
-    let alive=true,actionChoice=null,extraView=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=source.includes('@record{')?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
+    // One public display pass owns both tabs. Formatting this prepared copy must
+    // not apply the card's rules again, including after an async record lookup.
+    let display=null,displayError=null;try{if(data.structured)display=getNativeDisplay?.()??null;}catch(error){displayError=error;onError(error);}
+    const projectedBody=typeof display?.body==='string'?display.body:null,preparedFormat=formatPreparedBody??formatBody;
+    let alive=true,actionChoice=null,extraView=null,bodyView=null,bodyState=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=(source.includes('@record{')||projectedBody?.includes('@record{'))?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};
@@ -117,18 +122,20 @@ export function mountMessageReader(document, container, {source,message=null,pho
     const valueText=value=>typeof value==='string'?value:JSON.stringify(value);
     function renderBody(){
         if(data.body.error){failure(panel,'正文',data.body.error);return;}
+        if(displayError)failure(panel,'正文正则',readerErrorCode(displayError));
         if(data.body.count.error)failure(panel,'字数',data.body.count.error);
         else panel.append(note(`${data.body.count.value} 字`));
         const text=make('div',null,'tisya-reader-body');
         try {
             const paragraphs=data.body.paragraphs.value;
-            if(paragraphs?.length)for(const p of paragraphs){
+            if(projectedBody!==null){bodyView=mountBodyContent(document,text,{display,formatBody:preparedFormat,options:bodyOptions(),onError});if(bodyState)bodyView.restore(bodyState);}
+            else if(paragraphs?.length)for(const p of paragraphs){
                 const section=make('section',null,'tisya-reader-paragraph'),number=make('span',p.id,'tisya-paragraph-number'),content=make('div');
                 number.hidden=true;number.setAttribute('aria-hidden','true');section.dataset.paragraph=p.id;content.innerHTML=formatProse(document,p.raw,formatBody,bodyOptions());section.append(number,content);text.append(section);
             }
             else text.innerHTML=formatProse(document,data.body.value,formatBody,bodyOptions());
             panel.append(text);
-        } catch {failure(panel,'正文排版','TISYA_READER_FORMAT');}
+        } catch(error) {failure(panel,'正文排版',readerErrorCode(error));onError(error);}
     }
     function renderJourney(){
         if(data.journey.error){failure(panel,'回合记录',data.journey.error);return;}
@@ -166,10 +173,10 @@ export function mountMessageReader(document, container, {source,message=null,pho
         actionChoice=mountActionChoice(document,panel,{rows:data.actions.value,onChoose:onChooseAction,getMode:getActionMode,setMode:setActionMode});
     }
     function render(key){
-        if(!alive)return;activeTab=key;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;panel.replaceChildren();
+        if(!alive)return;if(key==='body'&&activeTab==='body'&&bodyView){bodyView.refresh(bodyOptions());return;}activeTab=key;actionChoice?.dispose();actionChoice=null;extraView?.dispose();extraView=null;if(bodyView){bodyState=bodyView.capture();bodyView.dispose();bodyView=null;}panel.replaceChildren();
         for(const [id,b]of buttons)b.setAttribute('aria-pressed',String(id===key));
         panel.setAttribute('aria-label',buttons.get(key).textContent);
-        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){let display=null,displayError=null;try{display=data.structured?getNativeDisplay?.():null;}catch(error){displayError=error;}extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody,display,displayError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;if(value.heartDiagnostic)panel.append(note(value.heartDiagnostic));mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
+        if(key==='body')renderBody();else if(key==='journey')renderJourney();else if(key==='actions')renderActions();else if(key==='extra'){extraView=mountWorldExtra(document,panel,{source,structured:data.structured,formatBody:display?preparedFormat:formatBody,display,displayError,onError});}else {if(data.details?.error)failure(panel,'心声与核验',data.details.error);else if(data.details?.value){const value=data.details.value;if(value.heartDiagnostic)panel.append(note(value.heartDiagnostic));mountHeartBlock(document,panel,value.taskHeart,{label:'开篇心声'});mountAuditBlock(document,panel,value.audit);mountHeartBlock(document,panel,value.nextHeart,{label:'收篇心声'});if(!value.taskHeart.items.length&&!value.nextHeart.items.length)panel.append(note('本条心声为关闭或沉默。'));}else panel.append(note('本条没有心声与核验区块。'));}
         panel.scrollTop=0;
     }
     render(buttons.has(initialTab)?initialTab:'body');
@@ -177,5 +184,5 @@ export function mountMessageReader(document, container, {source,message=null,pho
       if(!alive||phoneMessage&&phoneMessage.mes!==raw){releasePresentation(value);return;}const current=document.defaultView?.Tisya?.phone?.contextKey?.();if(current&&presentationContext&&current!==presentationContext){releasePresentation(value);return;}
       releasePresentation(presentationOptions);presentationOptions=value??{projections:[],contextKey:presentationContext};if(activeTab==='body'){const scroll=panel.scrollTop;render('body');panel.scrollTop=scroll;}
     },error=>{if(!alive)return;onError(error);presentationOptions={projections:[],contextKey:presentationContext};if(activeTab==='body')render('body');}).catch(onError);}
-    return {dispose(){alive=false;releasePresentation(presentationOptions);actionChoice?.dispose();extraView?.dispose();container.replaceChildren();buttons.clear();}};
+    return {dispose(){alive=false;releasePresentation(presentationOptions);actionChoice?.dispose();extraView?.dispose();bodyView?.dispose();bodyView=null;bodyState=null;container.replaceChildren();buttons.clear();}};
 }

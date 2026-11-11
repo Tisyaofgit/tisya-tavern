@@ -1,0 +1,21 @@
+{
+  "recordedUTC": "2026-11-11T04:01:42.927882+00:00",
+  "phase": "source-feature-checkpoint-before-final-build",
+  "baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "targeted_counts": {
+    "body_chain": {
+      "tests": 59,
+      "pass": 59
+    },
+    "native_record_joint": {
+      "tests": 26,
+      "pass": 26
+    }
+  },
+  "full_gate": "pending",
+  "runtime_rebuild": "pending",
+  "indent_code_followup": "in_progress",
+  "browser_successful_checks": 0,
+  "main_updated": false,
+  "state_data": "no_user_runtime_access"
+}

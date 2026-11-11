@@ -1,0 +1,137 @@
+TAP version 13
+# Subtest: four-space, tab and mixed indentation preserve literal HTML and unclosed marks exactly
+not ok 1 - four-space, tab and mixed indentation preserve literal HTML and unclosed marks exactly
+  ---
+  duration_ms: 55.689916
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+        
+    + actual - expected
+    
+    + '    <b title="〔信笺〕">代码 &amp; 标记〔内心〕\r\n    第二行\t保持原样\r\n</b>'
+    - '    <b title="〔信笺〕">代码 &amp; 标记〔内心〕\r\n    第二行\t保持原样\r\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: |-
+        <b title="〔信笺〕">代码 &amp; 标记〔内心〕
+        第二行	保持原样
+    
+  actual: |-
+        <b title="〔信笺〕">代码 &amp; 标记〔内心〕
+        第二行	保持原样
+    </b>
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:18:11)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: indented chunks survive blank lines and end at the next unindented paragraph
+not ok 2 - indented chunks survive blank lines and end at the next unindented paragraph
+  ---
+  duration_ms: 28.457709
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:23:1'
+  failureType: 'testCodeFailure'
+  error: 'TISYA_MARK_UNCLOSED'
+  code: 'TISYA_MARK_UNCLOSED'
+  stack: |-
+    fail (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:108:39)
+    parseMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:116:44)
+    formatMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:138:118)
+    formatProse (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/prose.js:42:3)
+    prepared (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:10:44)
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:25:107)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+  ...
+# Subtest: indentation cannot turn a paragraph continuation into a code block
+ok 3 - indentation cannot turn a paragraph continuation into a code block
+  ---
+  duration_ms: 20.376202
+  type: 'test'
+  ...
+# Subtest: fences allow up to three leading spaces while a four-space fence line is indented code
+not ok 4 - fences allow up to three leading spaces while a four-space fence line is indented code
+  ---
+  duration_ms: 16.765758
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(value.startsWith('    ```html\n'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:46:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: headings and thematic breaks can be followed immediately by indented code
+not ok 5 - headings and thematic breaks can be followed immediately by indented code
+  ---
+  duration_ms: 14.959454
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: 'TISYA_MARK_UNCLOSED'
+  code: 'TISYA_MARK_UNCLOSED'
+  stack: |-
+    fail (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:108:39)
+    parseMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:116:44)
+    formatMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:138:118)
+    formatProse (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/prose.js:42:3)
+    prepared (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:10:44)
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:53:56)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+  ...
+# Subtest: list indentation belongs to the item before it can count toward code indentation
+not ok 6 - list indentation belongs to the item before it can count toward code indentation
+  ---
+  duration_ms: 15.329475
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:58:1'
+  failureType: 'testCodeFailure'
+  error: 'TISYA_MARK_UNCLOSED'
+  code: 'TISYA_MARK_UNCLOSED'
+  stack: |-
+    fail (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:108:39)
+    parseMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:116:44)
+    formatMarks (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/typography-core.js:138:118)
+    formatProse (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/prose.js:42:3)
+    prepared (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:10:44)
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/prose-code-literals.test.js:61:61)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 1
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 979.676451

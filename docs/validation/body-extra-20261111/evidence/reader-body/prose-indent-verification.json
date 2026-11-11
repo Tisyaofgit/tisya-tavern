@@ -1,0 +1,69 @@
+{
+  "stage": "indented_code_protection_complete",
+  "utc": "2026-11-11T04:04:13.680607+00:00",
+  "beijing": "2026-11-11T12:04:13.680607+08:00",
+  "source_baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "changed_files": [
+    "prose.js",
+    "tests/prose-code-literals.test.js"
+  ],
+  "source_sha256": {
+    "prose.js": "550791f3fbaab78a1611b5a1f8983731668f1c6f80d05c0e7078cef327a35a30",
+    "tests/prose-code-literals.test.js": "ad50d0cbb2553f7cb06c8f2a44300841f0d72b7a7db5b5b2109f3bfd9ffdcf98"
+  },
+  "before": {
+    "tests": 6,
+    "passed": 1,
+    "failed": 5,
+    "exit_code": 1,
+    "log": "prose-indent-before.tap",
+    "source_copy": "prose-before-indented-code.js"
+  },
+  "after": {
+    "tests": 6,
+    "passed": 6,
+    "failed": 0,
+    "exit_code": 0,
+    "log": "prose-indent-after-first.tap"
+  },
+  "related": {
+    "tests": 69,
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "exit_code": 0,
+    "log": "prose-indent-related.tap",
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "tests/prose-code-literals.test.js",
+      "tests/prose.test.js",
+      "tests/body-extra-rendering.test.js",
+      "tests/reader-body-display.test.js",
+      "tests/reader.test.js",
+      "tests/native-body.test.js",
+      "tests/extension-presentation.test.js",
+      "tests/display-extra.test.js"
+    ]
+  },
+  "git_diff_check": "passed",
+  "reference": "https://spec.commonmark.org/0.31.2/#indented-code-blocks",
+  "verified": [
+    "four-column spaces/tabs/mixed prefixes protect code from HTML parsing and mark decoration",
+    "unclosed mark examples remain literal inside indented code",
+    "blank code chunks retain exact source bytes including CRLF and tabs",
+    "a nonindented paragraph ends code immediately",
+    "indentation does not interrupt an existing paragraph",
+    "zero-to-three-space fences remain fenced code; four-space fence lines remain indented code",
+    "headings and thematic breaks allow following indented code without a blank line",
+    "list content indentation is deducted before the additional four code columns",
+    "host formatter receives each prepared source once"
+  ],
+  "limitations": [
+    "isolated happy-dom DOM tests only",
+    "not a new general Markdown parser; existing container-fence handling remains outside this patch",
+    "no runtime build, Git commit, browser, model or Android verification by this agent"
+  ]
+}

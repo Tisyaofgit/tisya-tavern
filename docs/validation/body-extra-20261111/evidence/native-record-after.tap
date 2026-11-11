@@ -1,0 +1,302 @@
+TAP version 13
+# Subtest: regex marks render in body after the same pass that handles extra and refresh without rerunning rules
+ok 1 - regex marks render in body after the same pass that handles extra and refresh without rerunning rules
+  ---
+  duration_ms: 135.13243
+  type: 'test'
+  ...
+# Subtest: opening extra consumes the prepared projection once and styles plain public marks
+ok 2 - opening extra consumes the prepared projection once and styles plain public marks
+  ---
+  duration_ms: 101.981227
+  type: 'test'
+  ...
+# Subtest: a complete authored body document without its own style still bypasses prose reformatting
+ok 3 - a complete authored body document without its own style still bypasses prose reformatting
+  ---
+  duration_ms: 60.905914
+  type: 'test'
+  ...
+# Subtest: record references and regex body formatting coexist after asynchronous historical lookup
+ok 4 - record references and regex body formatting coexist after asynchronous historical lookup
+  ---
+  duration_ms: 43.437214
+  type: 'test'
+  ...
+# Subtest: regex-authored static documents render between prose and keep their frame across appearance refresh and world folding
+ok 5 - regex-authored static documents render between prose and keep their frame across appearance refresh and world folding
+  ---
+  duration_ms: 40.484848
+  type: 'test'
+  ...
+# Subtest: only complete regex-authored HTML fences become body documents; literal examples remain code
+ok 6 - only complete regex-authored HTML fences become body documents; literal examples remain code
+  ---
+  duration_ms: 5.063887
+  type: 'test'
+  ...
+# Subtest: mixed static and live body cards preserve original helper roots while the world orb only folds extra
+ok 7 - mixed static and live body cards preserve original helper roots while the world orb only folds extra
+  ---
+  duration_ms: 18.333335
+  type: 'test'
+  ...
+# Subtest: prose keeps Markdown code and HTML literal attributes out of mark decoration
+ok 8 - prose keeps Markdown code and HTML literal attributes out of mark decoration
+  ---
+  duration_ms: 7.826285
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: same-pass body provenance stays aligned after numbering and CDATA; literal examples remain text
+ok 9 - same-pass body provenance stays aligned after numbering and CDATA; literal examples remain text
+  ---
+  duration_ms: 84.460045
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: body cards keep exact live frames and prose order, while extra folds independently and private source stays hidden
+ok 10 - body cards keep exact live frames and prose order, while extra folds independently and private source stays hidden
+  ---
+  duration_ms: 88.953637
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: async reader completion cannot replace the body card with a static code block; refresh settles without DOM churn
+ok 11 - async reader completion cannot replace the body card with a static code block; refresh settles without DOM churn
+  ---
+  duration_ms: 192.233664
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: missing or replaced helper roots keep safe prose plus a waiting state and never reveal source
+ok 12 - missing or replaced helper roots keep safe prose plus a waiting state and never reveal source
+  ---
+  duration_ms: 10.426041
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: ambiguous repeated documents and mixed private source wrappers stay concealed instead of guessing ownership
+ok 13 - ambiguous repeated documents and mixed private source wrappers stay concealed instead of guessing ownership
+  ---
+  duration_ms: 35.09142
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: body-only structured regex receives an inert host source, while ordinary openings are untouched
+ok 14 - body-only structured regex receives an inert host source, while ordinary openings are untouched
+  ---
+  duration_ms: 17.092
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: source revision changes discard removed-pre identity and code toolbar text cannot change source identity
+ok 15 - source revision changes discard removed-pre identity and code toolbar text cannot change source identity
+  ---
+  duration_ms: 8.321888
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: body prose keeps the original long-press menu through its shadow event path without guessing paragraph IDs
+ok 16 - body prose keeps the original long-press menu through its shadow event path without guessing paragraph IDs
+  ---
+  duration_ms: 291.030058
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: only verified helper and host control element types can share a public runtime root
+ok 17 - only verified helper and host control element types can share a public runtime root
+  ---
+  duration_ms: 82.115391
+  type: 'test'
+  ...
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: native body prose receives original and regex-generated historical record projections without replacing live cards
+ok 18 - native body prose receives original and regex-generated historical record projections without replacing live cards
+  ---
+  duration_ms: 133.799079
+  type: 'test'
+  ...
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 19 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 164.612934
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 20 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 52.432938
+  type: 'test'
+  ...
+# Subtest: reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+ok 21 - reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+  ---
+  duration_ms: 27.053451
+  type: 'test'
+  ...
+# Subtest: reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+ok 22 - reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+  ---
+  duration_ms: 71.284274
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 23 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 25.821136
+  type: 'test'
+  ...
+# Subtest: a record reference introduced by regex uses the original message snapshot without another display pass
+ok 24 - a record reference introduced by regex uses the original message snapshot without another display pass
+  ---
+  duration_ms: 31.363089
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 25 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 25.860628
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 26 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 10.134506
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2110.139402

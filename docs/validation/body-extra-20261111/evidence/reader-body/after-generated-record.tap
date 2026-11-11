@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: actual message visual requests its message snapshot asynchronously and updates only public body
+ok 1 - actual message visual requests its message snapshot asynchronously and updates only public body
+  ---
+  duration_ms: 149.022191
+  type: 'test'
+  ...
+# Subtest: read-only reader uses the exact selected message and leaves unrelated tabs intact
+ok 2 - read-only reader uses the exact selected message and leaves unrelated tabs intact
+  ---
+  duration_ms: 27.542107
+  type: 'test'
+  ...
+# Subtest: stale message result and disposed views never replace current content
+ok 3 - stale message result and disposed views never replace current content
+  ---
+  duration_ms: 65.816705
+  type: 'test'
+  ...
+# Subtest: missing record produces local notice and preserves surrounding prose
+ok 4 - missing record produces local notice and preserves surrounding prose
+  ---
+  duration_ms: 14.012677
+  type: 'test'
+  ...
+# Subtest: reader releases a media result arriving after it was disposed
+ok 5 - reader releases a media result arriving after it was disposed
+  ---
+  duration_ms: 10.130185
+  type: 'test'
+  ...
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 6 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 98.068706
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 7 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 23.586839
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 8 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 38.739513
+  type: 'test'
+  ...
+# Subtest: a record reference introduced by regex uses the original message snapshot without another display pass
+ok 9 - a record reference introduced by regex uses the original message snapshot without another display pass
+  ---
+  duration_ms: 30.925929
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 10 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 16.812519
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 11 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 10.552752
+  type: 'test'
+  ...
+# Subtest: ordinary messages read unchanged; structured replies expose body and action text without internal payload
+ok 12 - ordinary messages read unchanged; structured replies expose body and action text without internal payload
+  ---
+  duration_ms: 37.317309
+  type: 'test'
+  ...
+# Subtest: closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+ok 13 - closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+  ---
+  duration_ms: 65.459958
+  type: 'test'
+  ...
+# Subtest: reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+ok 14 - reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+  ---
+  duration_ms: 96.469818
+  type: 'test'
+  ...
+# Subtest: turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+ok 15 - turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+  ---
+  duration_ms: 41.309732
+  type: 'test'
+  ...
+# Subtest: disposing the reader disconnects action effects even when an old button reference survives
+ok 16 - disposing the reader disconnects action effects even when an old button reference survives
+  ---
+  duration_ms: 23.886732
+  type: 'test'
+  ...
+# Subtest: empty optional unlock placeholders do not block other blocks or alter native variable payload
+ok 17 - empty optional unlock placeholders do not block other blocks or alter native variable payload
+  ---
+  duration_ms: 57.909231
+  type: 'test'
+  ...
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 18 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 63.93542
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 19 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 9.648069
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+ok 20 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 48.466944
+  type: 'test'
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 21 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 8.794983
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 22 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 668.652472
+  type: 'test'
+  ...
+# Subtest: action cards show type and a secondary possibility while submitting only the chosen action
+ok 23 - action cards show type and a secondary possibility while submitting only the chosen action
+  ---
+  duration_ms: 661.05792
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2221.828088

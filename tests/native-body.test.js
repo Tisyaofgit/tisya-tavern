@@ -11,6 +11,7 @@ import {inspectMessage} from '../reader.js';
 import {preferNativeBeauty} from '../native-beauty.js';
 import {DISPLAY_DEFAULTS} from '../display-settings.js';
 import {mountParagraphActions} from '../paragraph-actions.js';
+import {presentationReferenceParameter} from '../extension-presentation.mjs';
 const html=id=>'<!doctype html><html><body><button id="'+id+'">原卡</button><script>window.cardInitCount=(window.cardInitCount||0)+1;document.querySelector("button").onclick=function(){window.cardClickCount=(window.cardClickCount||0)+1;this.textContent=String(window.cardClickCount);};</script></body></html>';
 const fence=id=>'```html\n'+html(id)+'\n```';
 const rule=id=>({scriptName:'native-'+id,findRegex:'CARD_'+id,replaceString:fence(id),markdownOnly:true,placement:[2]});
@@ -92,5 +93,18 @@ test('only verified helper and host control element types can share a public run
  for(const [tag,className,allowed]of [['div','TH-collapse-code-block-button',true],['button','tt-runtime-placeholder',true],['div','tt-runtime-ghost',true],['div','code-toggle',false],['span','TH-collapse-code-block-button',false]]){
   const {w,d,native}=setup(),a=host(d,native,'A'),control=d.createElement(tag);control.className=className;a.root.prepend(control);const keeper=preserveNativePanels(d,native,pipeline().project(fixture({body:'1\nCARD_A'})),{formatBody:format});
   assert.equal(keeper.bodyStatus().mounted,allowed?1:0,className+'/'+tag);assert.equal(a.root.classList.contains('tisya-native-pruned'),!allowed);assert.equal(a.frame.contentWindow,a.realm);keeper.dispose();await w.happyDOM.abort();
+ }
+});
+
+test('native body prose receives original and regex-generated historical record projections without replacing live cards',async()=>{
+ for(const generated of [false,true]){
+  const {w,d,native,mes}=setup(),a=host(d,native,'A');let ui,lookups=0;try{
+   const reference={tableId:'T_DYN_TRANSFERS',recordId:'t1',snapshotId:'@message'},mark='〔消息:'+presentationReferenceParameter({kind:'transfer',reference})+'〕转账〔/消息〕';
+   const source=fixture({body:'1\nCARD_A\n\n2\n'+(generated?'RECORD_TOKEN':mark)}),message={mes:source,name:'回声',extra:{tisya_engine:{uid:'native-record'}}};
+   const scripts=[rule('A'),...(generated?[{scriptName:'历史转账',findRegex:'/RECORD_TOKEN/g',replaceString:mark,markdownOnly:true,placement:[2]}]:[])],p=createNativeDisplayPipeline({enabled:()=>true,scripts:()=>scripts,regexProvider:{get:s=>s.startsWith('/')?new RegExp(s.slice(1,-2),'g'):new RegExp(s,'g')}});
+   w.Tisya={phone:{contextKey:()=>'ctx'},presentation:{forMessage:async()=>{lookups++;return {contextKey:'ctx',messageSnapshotId:'snap',projections:[{reference:{...reference,snapshotId:'snap'},contextKey:'ctx',kind:'transfer',allowed:true,value:{amount:25,currencyLabel:'银两',status:'已存'}}]};}}};
+   ui=mountMessageAppearance(d,{getMessage:()=>message,getNativeDisplay:(...args)=>p.project(...args),formatBody:format,formatPreparedBody:format,getMotion:()=>false});ui.sync(mes);await pause();
+   const text=[...native.querySelectorAll('.tisya-native-body-prose')].map(n=>n.shadowRoot.querySelector('.story').textContent).join('');assert.match(text,/25 银两/,generated?'generated record':'original record');assert.equal(lookups,1);assert.equal(a.frame.contentWindow,a.realm);assert.equal(a.frame.parentElement,a.root);assert.equal(a.realm.cardInitCount,1);a.realm.document.querySelector('button').click();assert.equal(a.realm.cardClickCount,1);assert.equal(message.mes,source);
+  }finally{ui?.dispose();await w.happyDOM.abort();}
  }
 });

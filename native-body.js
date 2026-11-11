@@ -3,7 +3,7 @@ export const canonicalNativeSource=value=>value.replace(/\r\n?/g,'\n').trim();
 
 // Only complete HTML fences whose entire document came from this display pass's
 // public regex runs are eligible. Literal examples and incomplete fences stay text.
-export function nativeBodyParts(document,display){
+function bodyParts(document,display,{includeStatic=false}={}){
  const body=display?.body,runs=display?.bodyRuns;
  if(typeof body!=='string'||!Array.isArray(runs)||runs.map(r=>r.text).join('')!==body)return null;
  const lines=[...body.matchAll(/[^\n]*\n|[^\n]+$/g)],cards=[];let fence=null;
@@ -12,9 +12,16 @@ export function nativeBodyParts(document,display){
   if(!fence){if(marker)fence={start:line.index,bodyStart:line.index+line[0].length,mark:marker[1][0],length:marker[1].length,info:marker[2].trim().toLowerCase()};continue;}
   if(!marker||marker[1][0]!==fence.mark||marker[1].length<fence.length||marker[2].trim())continue;
   const html=body.slice(fence.bodyStart,line.index),end=line.index+line[0].length;
-  if(['','html','htm'].includes(fence.info)&&/^\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b/i.test(html)&&/<\/html\s*>\s*$/i.test(html)&&authored(fence.start,end)&&requiresNativePanel(document,html))cards.push({start:fence.start,end,html,source:canonicalNativeSource(html)});
+  if(['','html','htm'].includes(fence.info)&&/^\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b/i.test(html)&&/<\/html\s*>\s*$/i.test(html)&&authored(fence.start,end)){
+   const nativeHosted=requiresNativePanel(document,html);
+   if(includeStatic||nativeHosted)cards.push({start:fence.start,end,html,source:canonicalNativeSource(html),nativeHosted});
+  }
   fence=null;
  }
  if(!cards.length)return null;
- const parts=[];let cursor=0;for(const card of cards){if(card.start>cursor)parts.push({text:body.slice(cursor,card.start)});parts.push({html:card.html,source:card.source});cursor=card.end;}if(cursor<body.length)parts.push({text:body.slice(cursor)});return parts;
+ const parts=[];let cursor=0;for(const card of cards){if(card.start>cursor)parts.push({text:body.slice(cursor,card.start)});parts.push({html:card.html,source:card.source,nativeHosted:card.nativeHosted});cursor=card.end;}if(cursor<body.length)parts.push({text:body.slice(cursor)});return parts;
 }
+export const nativeBodyParts=(document,display)=>bodyParts(document,display);
+// Static documents share the same provenance boundary as helper-owned cards.
+// Literal examples and partially authored fences remain ordinary prose/code.
+export const bodyDisplayParts=(document,display)=>bodyParts(document,display,{includeStatic:true});

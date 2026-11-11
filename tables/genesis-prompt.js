@@ -16,13 +16,17 @@ export function creationReplyRegistry(original,{task='tableGenesis'}={}){
  const start=original.indexOf('\n<reply id='),end=original.indexOf('\n</reply>',start);
  if(start<0||end<0)throw Error('创作需要现有完整 reply 骨架');
  let frame=original.slice(start,end+'\n</reply>'.length);
- const replace=(tag,content,attributes='')=>{frame=frame.replace(new RegExp('<'+tag+'\\b[^>]*>[\\s\\S]*?</'+tag+'>'),'<'+tag+attributes+'>\n'+content+'\n</'+tag+'>');};
+ const replace=(tag,content,attributes='')=>{frame=frame.replace(new RegExp('<'+tag+'\\b[^>]*?(?:/\\s*>|>[\\s\\S]*?</'+tag+'>)'),()=>'<'+tag+attributes+'>\n'+content+'\n</'+tag+'>');};
  replace('task','信号|<本次明确要求与范围>\n叙事|<创作对象与已有事实边界>\n文风|<方案语体与世界表达>\n情节|<可游玩目标与条件>\n塑造|<本次人物差异和具体特征>',' format="pipes"');
  frame=frame.replace(/<anchor phase="before">[\s\S]*?<\/anchor>/,'<anchor phase="before">\n构想|<简短说明本次设计想达成的体验>\n与用户互动|<以缇斯亚声口回应要求，不披露内部推理>\n</anchor>');
  replace('title','<方案名称>|<故事时期或~>|<地点或~>|<世界名称或~>',' format="pipes"');
  replace('body',task==='tableGenesis'?'<按1、2、3连续段号给出可读方案说明。永久定义与初值落入cells，正文说明选择的内容及相互关系，不声称已保存或已发生。无需为凑字数复抄每一格。>':'<按1、2、3连续段号给出本次任务的可读回答与结果说明。仅有来源支持的值进入cells；说明事实、候选与仍缺事项，不宣称尚未执行的保存或变更已完成。>',' min="1" max="5000" unit="字"');
  frame=frame.replace(/<anchor phase="after">[\s\S]*?<\/anchor>/,'<anchor phase="after">\n已交付|<已在本次草稿中具体写出的内容>\n与用户互动|<供契约者继续调整的一两句>\n</anchor>');
- replace('extra','<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>');
+ // Project the display instructions without removing the machine slots now
+ // owned by extra. Older complete frames may still keep those slots at root.
+ const extra=/<extra\b[^>]*>([\s\S]*?)<\/extra>/.exec(frame)?.[1]??'';
+ const machineSlots=[...extra.matchAll(/<(cells|vars)\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/\1>)/g)].map(m=>m[0]);
+ replace('extra',['<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>',...machineSlots].join('\n'));
  replace('cells','<根据STATE.forms选取所需分组，每行只写“行号 字段名：值”。不写内部表键、记录ID、字段路径、嵌套JSON或运行指令。>',' format="form"');
  frame=frame.replace(/<vars>[\s\S]*?<\/vars>/,'<vars/>').replace(/<archive\b[^>]*>[\s\S]*?<\/archive>/,'<archive/>');
  replace('actions','<可继续细化的方向>|<简短的创作选项>|<它会改变的体验或内容>',' min="0" max="6"');

@@ -29,9 +29,16 @@ function assertContract(text,tags=DEFAULT_TAGS){
  assert(contract.includes('禁止在唯一 '+tags.reply+' 根块之前或之后输出任何内容'));
  assert(contract.includes('从 <'+tags.reply+' id="tisya-onepass-1"> 开始'));
  assert(contract.includes('以对应的 </'+tags.reply+'> 结束'));
- assert(contract.includes('显示占位符只放在 '+tags.extra));
- assert(contract.includes('完整原生 UpdateVariable 更新只放在 '+tags.vars));
- assert(contract.includes('本轮明确请求进入该页面时用于 '+tags.extra));
+ assert(contract.includes('原卡标记与美化标签放在 '+tags.body+' 对应位置'));
+ assert(contract.includes('独立扩展面板的显示标记放在 '+tags.extra));
+ assert(contract.includes('两处都使用当前启用的正则渲染'));
+ assert(contract.includes('每个显示组件只在实际展示位置输出一次'));
+ assert(contract.includes(tags.extra+' 同时收纳唯一的 '+tags.cells+' 与 '+tags.vars+' 直接子块'));
+ assert(contract.includes('隐藏的机器数据，不复制到可见正文或扩展面板'));
+ assert(contract.includes('完整原生 UpdateVariable 更新只放在 '+tags.extra+' 内的 '+tags.vars));
+ assert(contract.includes('显示标记不得塞进 '+tags.vars+' 或 '+tags.cells));
+ assert(contract.includes('本轮明确请求进入该页面时输出：正文就地页面放在 '+tags.body+'，独立面板放在 '+tags.extra));
+ assert(!contract.includes('显示占位符只放在 '+tags.extra));
  assert(contract.includes('Markdown 代码围栏或第二个回复根块'));
  return contract;
 }
@@ -42,7 +49,7 @@ test('generated preset and the actual default compiled model payload contain one
  const {system}=finalPayload();assertContract(system);assert.equal(system.split(REPLY_ENVELOPE_RULE).length-1,1);
 });
 
-test('custom tag names reach both final opening/closing instructions and the extra/vars ownership clauses',()=>{
+test('custom tag names reach the whole boundary, both display locations, and hidden extra/cells/vars ownership',()=>{
  const tags={...DEFAULT_TAGS,reply:'scene.',body:'story-',anchor:'beat',extra:'cardExtra',cells:'deltaCells',vars:'nativeVars',archive:'archiveRows',actions:'choices'},out=finalPayload({tags}),contract=assertContract(out.system,tags);
  assert.doesNotMatch(contract,/<\/?reply\b/);assert(contract.includes('story-、beat、choices'));
  const registry=out.compiled.prompts.find(row=>row.identifier==='tisya_registry').content;assert(registry.includes('<scene. id="tisya-onepass-1">'));assert(registry.includes('</scene.>'));

@@ -1,0 +1,21 @@
+{
+  "schema": "tisya-gate/1",
+  "command": "npm test",
+  "startedUTC": "2026-11-11T04:15:31.635157+00:00",
+  "finishedUTC": "2026-11-11T04:20:35.191818+00:00",
+  "exit_code": 0,
+  "counts": {
+    "tests": 2213,
+    "suites": 0,
+    "pass": 2213,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 300696.015918
+  },
+  "files": 1703,
+  "source_drift": [],
+  "failures": [],
+  "scope": "17 generated-output checks then node --test tests/*.test.js; no external model or Android"
+}

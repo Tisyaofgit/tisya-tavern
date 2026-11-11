@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: actual message visual requests its message snapshot asynchronously and updates only public body
+ok 1 - actual message visual requests its message snapshot asynchronously and updates only public body
+  ---
+  duration_ms: 117.098642
+  type: 'test'
+  ...
+# Subtest: read-only reader uses the exact selected message and leaves unrelated tabs intact
+ok 2 - read-only reader uses the exact selected message and leaves unrelated tabs intact
+  ---
+  duration_ms: 23.837139
+  type: 'test'
+  ...
+# Subtest: stale message result and disposed views never replace current content
+ok 3 - stale message result and disposed views never replace current content
+  ---
+  duration_ms: 82.726267
+  type: 'test'
+  ...
+# Subtest: missing record produces local notice and preserves surrounding prose
+ok 4 - missing record produces local notice and preserves surrounding prose
+  ---
+  duration_ms: 10.250427
+  type: 'test'
+  ...
+# Subtest: reader releases a media result arriving after it was disposed
+ok 5 - reader releases a media result arriving after it was disposed
+  ---
+  duration_ms: 7.713586
+  type: 'test'
+  ...
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 6 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 106.304447
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 7 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 22.902083
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 8 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 35.099577
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 9 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 25.930468
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 10 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 10.994777
+  type: 'test'
+  ...
+# Subtest: ordinary messages read unchanged; structured replies expose body and action text without internal payload
+ok 11 - ordinary messages read unchanged; structured replies expose body and action text without internal payload
+  ---
+  duration_ms: 33.523982
+  type: 'test'
+  ...
+# Subtest: closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+ok 12 - closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+  ---
+  duration_ms: 45.947531
+  type: 'test'
+  ...
+# Subtest: reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+ok 13 - reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+  ---
+  duration_ms: 63.109397
+  type: 'test'
+  ...
+# Subtest: turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+ok 14 - turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+  ---
+  duration_ms: 34.711281
+  type: 'test'
+  ...
+# Subtest: disposing the reader disconnects action effects even when an old button reference survives
+ok 15 - disposing the reader disconnects action effects even when an old button reference survives
+  ---
+  duration_ms: 15.257401
+  type: 'test'
+  ...
+# Subtest: empty optional unlock placeholders do not block other blocks or alter native variable payload
+ok 16 - empty optional unlock placeholders do not block other blocks or alter native variable payload
+  ---
+  duration_ms: 48.233779
+  type: 'test'
+  ...
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 17 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 67.420428
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 18 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 8.362762
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+ok 19 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 46.354495
+  type: 'test'
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 20 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 10.281686
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 21 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 672.769204
+  type: 'test'
+  ...
+# Subtest: action cards show type and a secondary possibility while submitting only the chosen action
+ok 22 - action cards show type and a secondary possibility while submitting only the chosen action
+  ---
+  duration_ms: 666.584216
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2251.647541

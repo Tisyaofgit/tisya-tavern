@@ -1,0 +1,67 @@
+{
+  "schema": "tisya-body-extra-validation/1",
+  "candidate": "0.2.0-alpha.31.31.19-onepass.16-candidate.15",
+  "tested_product_commit": "2af0cfd55768fe700781862bf0a66481cb859098",
+  "baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "final_gate": {
+    "schema": "tisya-gate/1",
+    "command": "npm test",
+    "startedUTC": "2026-11-11T04:15:31.635157+00:00",
+    "finishedUTC": "2026-11-11T04:20:35.191818+00:00",
+    "exit_code": 0,
+    "counts": {
+      "tests": 2213,
+      "suites": 0,
+      "pass": 2213,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 300696.015918
+    },
+    "files": 1703,
+    "source_drift": [],
+    "failures": [],
+    "scope": "17 generated-output checks then node --test tests/*.test.js; no external model or Android"
+  },
+  "first_gate": {
+    "schema": "tisya-gate/1",
+    "command": "npm test",
+    "startedUTC": "2026-11-11T04:04:37.016788+00:00",
+    "finishedUTC": "2026-11-11T04:11:39.062518+00:00",
+    "exit_code": 1,
+    "counts": {
+      "tests": 2213,
+      "suites": 0,
+      "pass": 2208,
+      "fail": 5,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 418256.284868
+    },
+    "files": 1667,
+    "source_drift": [],
+    "failures": [
+      "draft autosave retains newer input arriving during an older database save",
+      "installed, displayed and stylesheet versions agree",
+      "generated preset and the actual default compiled model payload contain one whole-response boundary",
+      "custom tag names reach both final opening/closing instructions and the extra/vars ownership clauses",
+      "an existing registry override and an old loaded preset still produce exactly one current boundary"
+    ],
+    "scope": "17 generated-output checks then node --test tests/*.test.js; no external model or Android"
+  },
+  "real_browser": {
+    "successful_checks": 0,
+    "status": "blocked",
+    "chromium": "socket() failed: Operation not permitted (1)",
+    "shared_chrome": "net::ERR_CONNECTION_REFUSED"
+  },
+  "real_user_host": false,
+  "external_model_calls": 0,
+  "android_tests": 0,
+  "user_data_accessed_or_changed": false,
+  "autosave": "test-only deterministic older-write gate and public save-complete wait; original failure retained, production untouched",
+  "remote_save": "blocked by automatic approval review pending explicit user authorization for public GitHub push",
+  "main_changed": false
+}

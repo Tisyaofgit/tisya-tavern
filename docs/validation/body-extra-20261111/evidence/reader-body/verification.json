@@ -1,0 +1,92 @@
+{
+  "stage": "reader_shared_body_content_complete",
+  "utc": "2026-11-11T03:45:38.773271+00:00",
+  "source_baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "changed_files": [
+    "reader.js",
+    "tests/reader-body-display.test.js"
+  ],
+  "source_sha256": {
+    "reader.js": "a9080d4e995ef0a21f116e6d02dffd1b22513feaf917617fc8ea54193841b6ce",
+    "tests/reader-body-display.test.js": "9ff26aaa935317f10e30b9aa4f500e34eb7b63d167c15f766bf8e7dd0137e2b2"
+  },
+  "before": {
+    "tests": 5,
+    "passed": 1,
+    "failed": 4,
+    "log": "before-fixed-inputs.tap",
+    "note": "Fixed invalid initial taskExtra fixture before authoritative red check; first original logs retained."
+  },
+  "after": {
+    "tests": 39,
+    "passed": 39,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": "after-shared-body-content.tap",
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "tests/reader-body-display.test.js",
+      "tests/reader.test.js",
+      "tests/reply-details.test.js",
+      "tests/extension-host-ui.test.js",
+      "tests/prose.test.js",
+      "tests/display-extra.test.js"
+    ]
+  },
+  "verified": [
+    "shared body/extra display projection called once",
+    "prepared formatting consumes public projection without raw regex path",
+    "regex-generated prose marks and appearance toggle",
+    "authored HTML attributes and HTML code literals unchanged",
+    "record projection asynchronous arrival preserves regex result and active tab",
+    "display errors visibly reported and not retried by tab changes",
+    "original source unchanged",
+    "no-provider paragraph anchors retained",
+    "regex-created record references bind original message snapshot once",
+    "shared body renderer keeps regex-authored static HTML/CSS in document iframe",
+    "script and event card documents do not create a second reader runtime",
+    "static body iframe identity and details survive active-tab and async record refresh",
+    "details state captured on leaving body and restored on returning",
+    "Markdown fenced and inline code literals reach host unchanged",
+    "source-authored complete HTML fence remains a code literal, not a card"
+  ],
+  "limitations": [
+    "isolated happy-dom DOM tests only",
+    "no real browser, model, Android or deployed-host verification",
+    "static frame load test supplies an empty images collection missing from happy-dom srcdoc documents"
+  ],
+  "no_runtime_build": true,
+  "no_git_commit": true,
+  "shared_interface": {
+    "module": "body-content.js",
+    "export": "mountBodyContent",
+    "provided_by": "parent agent",
+    "reader_uses": [
+      "refresh",
+      "capture",
+      "restore",
+      "dispose"
+    ]
+  },
+  "first_integration_failures": {
+    "log": "first-static-integration.tap",
+    "tests": 8,
+    "passed": 6,
+    "failed": 2,
+    "causes": [
+      "Initial literal HTML example included a raw doctype in the legacy XML protocol; corrected fixture wraps literal full HTML fence in CDATA.",
+      "happy-dom srcdoc document lacked the iterable browser images collection during explicit load dispatch; test now supplies empty images collection."
+    ],
+    "corrected_log": "static-integration-valid-fixture.tap",
+    "corrected_passed": 8
+  },
+  "metadata_write_retry": {
+    "failed_utc": "2026-11-11 03:45:22 UTC",
+    "error": "SyntaxError: unterminated string literal (detected at line 10)",
+    "cause": "Typo in inline Python dictionary key corrected_log; failed script parsed before any writes."
+  }
+}

@@ -1,5 +1,5 @@
-import {splitExtraDocuments} from './world-extra.js';
-import {nativeBodyParts,canonicalNativeSource as canonical,requiresNativePanel} from './native-body.js';
+import {splitExtraDocuments,mountDisplayDocument} from './world-extra.js';
+import {bodyDisplayParts,canonicalNativeSource as canonical,requiresNativePanel} from './native-body.js';
 import {formatProse,proseStyles} from './prose.js';
 export {requiresNativePanel} from './native-body.js';
 // Source identity is local to the actual content node and message revision.
@@ -21,23 +21,24 @@ const toggle=(node,name,value)=>{if(node&&node.classList.contains(name)!==value)
 // Never reveal an arbitrary parent containing other raw/private message content.
 const safeRoot=root=>[...root.childNodes].every(n=>n.nodeType===8||n.nodeType===3&&!n.textContent.trim()||n.nodeType===1&&(n.matches('pre,iframe[id^="TH-message--"],div.TH-collapse-code-block-button,button.tt-runtime-placeholder,div.tt-runtime-ghost')))&&root.querySelectorAll('iframe[id^="TH-message--"]').length<=1;
 export function preserveNativePanels(document,native,display,{formatBody=text=>text,getAppearance=()=>({}),onError=()=>{}}={}){
- const bodyParts=nativeBodyParts(document,display),wanted=[];
- const bodyCards=bodyParts?.filter(part=>part.html).map((part,index)=>({...part,id:'body:'+index,owner:'body'}))??[];wanted.push(...bodyCards);
+ const parts=bodyDisplayParts(document,display),bodyParts=parts?.some(part=>part.nativeHosted)?parts:null,wanted=[];
+ const bodyCards=bodyParts?.filter(part=>part.nativeHosted).map((part,index)=>({...part,id:'body:'+index,owner:'body'}))??[];wanted.push(...bodyCards);
  const projected={...display,...(bodyParts?{body:'',nativeBody:true}:{}),extraPanels:(display?.extraPanels??[]).flatMap(row=>{
   const parts=splitExtraDocuments(row.html);if(!row.ruleName||!parts.some(html=>requiresNativePanel(document,html)))return [row];
   return parts.map((html,index)=>{const nativeHosted=requiresNativePanel(document,html),id=parts.length>1?row.id+':document:'+index:row.id;if(nativeHosted)wanted.push({source:canonical(html),owner:'extra',id});return {...row,id,html,nativeHosted};});
  })};
  if(!wanted.length)return {display,refresh(){},dispose(){}};
  let style=document.getElementById('tisya-native-panels-style');if(!style){style=document.createElement('style');style.id='tisya-native-panels-style';style.textContent=CSS;document.head.append(style);}
- const marked=new Set(),wrappers=new Set(),ownedRoots=new Set(),layout=native.parentElement,bodyNodes=[];let expanded=true,alive=true,assigned=new Map(),appearanceStamp=null;
+ const marked=new Set(),wrappers=new Set(),ownedRoots=new Set(),layout=native.parentElement,bodyNodes=[];let expanded=true,alive=true,assigned=new Map(),appearanceStamp=null,presentation=null;
  let cardIndex=0;
  for(const part of bodyParts??[]){
   const node=document.createElement('div');
-  if(part.html){node.className='tisya-native-body-wait';node.setAttribute('role','status');node.textContent='等待酒馆助手挂载正文卡片。';bodyNodes.push({node,card:bodyCards[cardIndex++]});}
+  if(part.nativeHosted){node.className='tisya-native-body-wait';node.setAttribute('role','status');node.textContent='等待酒馆助手挂载正文卡片。';bodyNodes.push({node,card:bodyCards[cardIndex++]});}
+  else if(part.html){node.className='tisya-native-body-document';const row={node};bodyNodes.push(row);try{row.view=mountDisplayDocument(document,node,part.html,'正文卡片',{formatBody,onError});for(const frame of node.querySelectorAll('iframe'))frame.dataset.tisyaBodyDocument='';}catch(error){const note=document.createElement('p'),pre=document.createElement('pre');note.textContent='这一处正文卡片暂时无法显示，原始文本保留。';note.setAttribute('role','status');pre.textContent=part.html;node.append(note,pre);onError(error);}}
   else{node.className='tisya-native-body-prose';const shadow=node.attachShadow({mode:'open'}),style=document.createElement('style'),text=document.createElement('div');text.className='story';shadow.append(style,text);bodyNodes.push({node,text,style,source:part.text});}
  }
  const mark=(n,hide)=>{toggle(n,'tisya-native-pruned',hide);if(hide)marked.add(n);else marked.delete(n);};
- function formatBodyNodes(){const appearance=getAppearance('body'),stamp=JSON.stringify(appearance);if(stamp===appearanceStamp)return;for(const row of bodyNodes)if(row.text){row.style.textContent=':host{display:block;font:17px/1.85 var(--tisya-body-font,var(--tisya-global-font,TisyaReading)),serif;color:var(--tisya-ink,#fff9ed);overflow-wrap:anywhere}'+proseStyles(appearance);try{row.text.innerHTML=formatProse(document,row.source,formatBody,appearance);}catch(error){row.text.textContent=row.source;onError(error);}}appearanceStamp=stamp;}
+ function formatBodyNodes(){const appearance=getAppearance('body'),options=presentation?{...appearance,presentation:{...presentation,onError}}:appearance,stamp=JSON.stringify(options);for(const row of bodyNodes)row.view?.refresh(document.hidden||appearance.动画效果===false);if(stamp===appearanceStamp)return;for(const row of bodyNodes)if(row.text){const folds=[...row.text.querySelectorAll('details')].map(n=>n.open);row.style.textContent=':host{display:block;font:17px/1.85 var(--tisya-body-font,var(--tisya-global-font,TisyaReading)),serif;color:var(--tisya-ink,#fff9ed);overflow-wrap:anywhere}'+proseStyles(options);try{row.text.innerHTML=formatProse(document,row.source,formatBody,options);}catch(error){row.text.textContent=row.source;onError(error);}row.text.querySelectorAll('details').forEach((n,i)=>{if(folds[i]!==undefined)n.open=folds[i];});}appearanceStamp=stamp;}
  // Move only our own prose/wait nodes. Every live helper root remains in place.
  function placeBody(){
   let before=[];const beforeRoot=(root,nodes)=>{let cursor=root;for(const node of [...nodes].reverse()){if(node.nextSibling!==cursor)cursor.before(node);cursor=node;}};const after=(anchor,nodes)=>{let cursor=anchor;for(const node of nodes){if(cursor.nextSibling!==node)cursor.after(node);cursor=node;}};
@@ -61,5 +62,5 @@ export function preserveNativePanels(document,native,display,{formatBody=text=>t
  }
  refresh();
  const status=(owner='extra')=>({expected:wanted.filter(p=>p.owner===owner).length,mounted:[...assigned].filter(([item,root])=>item.owner===owner&&native.contains(root)&&root.querySelector('iframe[id^="TH-message--"]')).length});
- return {display:projected,refresh,status,bodyStatus:()=>status('body'),setExpanded(value){expanded=value;refresh();},hasMounted:()=>[...assigned.values()].some(root=>native.contains(root)&&root.querySelector('iframe[id^="TH-message--"]')),dispose(){alive=false;for(const root of ownedRoots)root.classList.remove('tisya-native-panel-root','tisya-native-extra-collapsed');for(const n of marked)n.classList.remove('tisya-native-pruned');for(const row of bodyNodes)row.node.remove();for(const n of wrappers)if(n.parentNode)n.replaceWith(...n.childNodes);native.classList.remove('tisya-native-panels','tisya-native-collapsed','tisya-native-body-flow');layout?.classList.remove('tisya-native-layout');}};
+ return {display:projected,refresh,status,bodyStatus:()=>status('body'),setPresentation(value){if(!alive||presentation===value)return;presentation=value;formatBodyNodes();},setExpanded(value){expanded=value;refresh();},hasMounted:()=>[...assigned.values()].some(root=>native.contains(root)&&root.querySelector('iframe[id^="TH-message--"]')),dispose(){alive=false;for(const root of ownedRoots)root.classList.remove('tisya-native-panel-root','tisya-native-extra-collapsed');for(const n of marked)n.classList.remove('tisya-native-pruned');for(const row of bodyNodes){row.view?.dispose();row.node.remove();}for(const n of wrappers)if(n.parentNode)n.replaceWith(...n.childNodes);native.classList.remove('tisya-native-panels','tisya-native-collapsed','tisya-native-body-flow');layout?.classList.remove('tisya-native-layout');}};
 }

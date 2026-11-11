@@ -1,0 +1,38 @@
+TAP version 13
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Warning! Happy DOM has JavaScript evaluation enabled and is running in an insecure environment.
+# A VM Context is not an isolated environment, and if you run untrusted code you are at risk of RCE (Remote Code Execution) attacks. The attacker can escape the VM and run code at process level.
+# It is recommended to disable code generation and freeze all builtins at process level by running node with the flags "--disallow-code-generation-from-strings" and "--frozen-intrinsics". You can suppress this warning by setting "suppressInsecureJavaScriptEnvironmentWarning" to "true" at your own risk.
+# For more information, see https://github.com/capricorn86/happy-dom/wiki/JavaScript-Evaluation-Warning
+# Subtest: native body prose receives original and regex-generated historical record projections without replacing live cards
+not ok 1 - native body prose receives original and regex-generated historical record projections without replacing live cards
+  ---
+  duration_ms: 166.846691
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/native-body.test.js:99:1'
+  failureType: 'testCodeFailure'
+  error: 'original record'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    
+    @record{"kind":"transfer","tableId":"T_DYN_TRANSFERS","recordId":"t1","snapshotId":"@message"}转账
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/native-body.test.js:107:145)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 845.130773

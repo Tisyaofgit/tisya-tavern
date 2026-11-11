@@ -1,0 +1,173 @@
+TAP version 13
+# Subtest: actual message visual requests its message snapshot asynchronously and updates only public body
+ok 1 - actual message visual requests its message snapshot asynchronously and updates only public body
+  ---
+  duration_ms: 110.905861
+  type: 'test'
+  ...
+# Subtest: read-only reader uses the exact selected message and leaves unrelated tabs intact
+ok 2 - read-only reader uses the exact selected message and leaves unrelated tabs intact
+  ---
+  duration_ms: 14.348882
+  type: 'test'
+  ...
+# Subtest: stale message result and disposed views never replace current content
+ok 3 - stale message result and disposed views never replace current content
+  ---
+  duration_ms: 46.717448
+  type: 'test'
+  ...
+# Subtest: missing record produces local notice and preserves surrounding prose
+ok 4 - missing record produces local notice and preserves surrounding prose
+  ---
+  duration_ms: 11.512178
+  type: 'test'
+  ...
+# Subtest: reader releases a media result arriving after it was disposed
+ok 5 - reader releases a media result arriving after it was disposed
+  ---
+  duration_ms: 8.949944
+  type: 'test'
+  ...
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+not ok 6 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 41.239475
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:17:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'rules')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:22:46)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 7 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 37.201834
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 8 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 19.322988
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+not ok 9 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 18.210597
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:56:61)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 10 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 17.744069
+  type: 'test'
+  ...
+# Subtest: ordinary messages read unchanged; structured replies expose body and action text without internal payload
+ok 11 - ordinary messages read unchanged; structured replies expose body and action text without internal payload
+  ---
+  duration_ms: 39.001465
+  type: 'test'
+  ...
+# Subtest: closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+ok 12 - closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+  ---
+  duration_ms: 58.118324
+  type: 'test'
+  ...
+# Subtest: reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+ok 13 - reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+  ---
+  duration_ms: 98.456506
+  type: 'test'
+  ...
+# Subtest: turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+ok 14 - turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+  ---
+  duration_ms: 33.636287
+  type: 'test'
+  ...
+# Subtest: disposing the reader disconnects action effects even when an old button reference survives
+ok 15 - disposing the reader disconnects action effects even when an old button reference survives
+  ---
+  duration_ms: 17.526868
+  type: 'test'
+  ...
+# Subtest: empty optional unlock placeholders do not block other blocks or alter native variable payload
+ok 16 - empty optional unlock placeholders do not block other blocks or alter native variable payload
+  ---
+  duration_ms: 35.762743
+  type: 'test'
+  ...
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 17 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 79.302267
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 18 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 12.733405
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+ok 19 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 59.979853
+  type: 'test'
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 20 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 12.824845
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 21 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 672.709883
+  type: 'test'
+  ...
+# Subtest: action cards show type and a secondary possibility while submitting only the chosen action
+ok 22 - action cards show type and a secondary possibility while submitting only the chosen action
+  ---
+  duration_ms: 662.579732
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 20
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2389.8531

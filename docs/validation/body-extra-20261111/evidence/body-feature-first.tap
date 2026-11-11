@@ -1,0 +1,37 @@
+✔ regex marks render in body after the same pass that handles extra and refresh without rerunning rules (171.076134ms)
+✔ record references and regex body formatting coexist after asynchronous historical lookup (174.40946ms)
+✔ regex-authored static documents render between prose and keep their frame across appearance refresh and world folding (164.570594ms)
+✔ only complete regex-authored HTML fences become body documents; literal examples remain code (5.658469ms)
+✔ mixed static and live body cards preserve original helper roots while the world orb only folds extra (19.74627ms)
+✖ prose keeps Markdown code and HTML literal attributes out of mark decoration (21.400502ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1871.001737
+
+✖ failing tests:
+
+test at tests/body-extra-rendering.test.js:67:1
+✖ prose keeps Markdown code and HTML literal attributes out of mark decoration (21.400502ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(prepared.includes(inline))
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/body-extra-rendering.test.js:70:87)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

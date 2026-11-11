@@ -1,0 +1,45 @@
+{
+  "stage": "reader_shared_projection_complete_static_document_interface_pending",
+  "utc": "2026-11-11T03:37:31.208581+00:00",
+  "source_baseline": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "changed_files": [
+    "reader.js",
+    "tests/reader-body-display.test.js"
+  ],
+  "source_sha256": {
+    "reader.js": "cb19e4c2c278fd73393a3709017c44de9adf3f29c16b56a9e01ff1f3e62637d3",
+    "tests/reader-body-display.test.js": "b03137bcb5dc5f59e56f5d60211cef1df9494d2168c6a5456b356d596046a566"
+  },
+  "before": {
+    "tests": 5,
+    "passed": 1,
+    "failed": 4,
+    "log": "before-fixed-inputs.tap",
+    "note": "Fixed invalid initial taskExtra fixture before authoritative red check; first original logs retained."
+  },
+  "after": {
+    "tests": 22,
+    "passed": 22,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "log": "after-fixed-inputs.tap"
+  },
+  "verified": [
+    "shared body/extra display projection called once",
+    "prepared formatting consumes public projection without raw regex path",
+    "regex-generated prose marks and appearance toggle",
+    "authored HTML attributes and HTML code literals unchanged",
+    "record projection asynchronous arrival preserves regex result and active tab",
+    "display errors visibly reported and not retried by tab changes",
+    "original source unchanged",
+    "no-provider paragraph anchors retained"
+  ],
+  "limitations": [
+    "isolated DOM tests only",
+    "no real browser, model, Android or deployed-host verification",
+    "static complete body document parity pending parent shared renderer interface"
+  ],
+  "no_runtime_build": true,
+  "no_git_commit": true
+}

@@ -1,0 +1,244 @@
+TAP version 13
+# Subtest: display inheritance is read-only; false stays false and clearing removes only the explicit custom value
+ok 1 - display inheritance is read-only; false stays false and clearing removes only the explicit custom value
+  ---
+  duration_ms: 3.547841
+  type: 'test'
+  ...
+# Subtest: display settings have a draft, native-save receipt, local retry and stale-draft rejection
+ok 2 - display settings have a draft, native-save receipt, local retry and stale-draft rejection
+  ---
+  duration_ms: 62.949661
+  type: 'test'
+  ...
+# Subtest: world extra uses top-level ownership, decodes CDATA after partition and excludes forbidden contents even on error paths
+ok 3 - world extra uses top-level ownership, decodes CDATA after partition and excludes forbidden contents even on error paths
+  ---
+  duration_ms: 50.435609
+  type: 'test'
+  ...
+# Subtest: extra document fences preserve code, reject incomplete fences, and unsupported pages retain only their own public text
+ok 4 - extra document fences preserve code, reject incomplete fences, and unsupported pages retain only their own public text
+  ---
+  duration_ms: 40.090484
+  type: 'test'
+  ...
+# Subtest: a guarded host send call has an explicit capability note without blocking card display
+ok 5 - a guarded host send call has an explicit capability note without blocking card display
+  ---
+  duration_ms: 26.238235
+  type: 'test'
+  ...
+# Subtest: one decoded ten-emotion catalog feeds the atlas, every heart image and actual preset mood macro
+ok 6 - one decoded ten-emotion catalog feeds the atlas, every heart image and actual preset mood macro
+  ---
+  duration_ms: 134.867415
+  type: 'test'
+  ...
+# Subtest: missing and unknown emotion resources show an error; delayed old bindings cannot replace the current page or detached heart
+ok 7 - missing and unknown emotion resources show an error; delayed old bindings cannot replace the current page or detached heart
+  ---
+  duration_ms: 65.443771
+  type: 'test'
+  ...
+# Subtest: actual message visual requests its message snapshot asynchronously and updates only public body
+ok 8 - actual message visual requests its message snapshot asynchronously and updates only public body
+  ---
+  duration_ms: 180.014317
+  type: 'test'
+  ...
+# Subtest: read-only reader uses the exact selected message and leaves unrelated tabs intact
+ok 9 - read-only reader uses the exact selected message and leaves unrelated tabs intact
+  ---
+  duration_ms: 34.196721
+  type: 'test'
+  ...
+# Subtest: stale message result and disposed views never replace current content
+ok 10 - stale message result and disposed views never replace current content
+  ---
+  duration_ms: 70.079642
+  type: 'test'
+  ...
+# Subtest: missing record produces local notice and preserves surrounding prose
+ok 11 - missing record produces local notice and preserves surrounding prose
+  ---
+  duration_ms: 8.484626
+  type: 'test'
+  ...
+# Subtest: reader releases a media result arriving after it was disposed
+ok 12 - reader releases a media result arriving after it was disposed
+  ---
+  duration_ms: 6.337231
+  type: 'test'
+  ...
+# Subtest: original paragraph, indent, dialogue and punctuation rules reach sanitized host prose
+ok 13 - original paragraph, indent, dialogue and punctuation rules reach sanitized host prose
+  ---
+  duration_ms: 37.948858
+  type: 'test'
+  ...
+# Subtest: multiline and nested marks are built before Markdown separates their boundaries
+ok 14 - multiline and nested marks are built before Markdown separates their boundaries
+  ---
+  duration_ms: 17.136461
+  type: 'test'
+  ...
+# Subtest: authored cards, code and link targets survive formatting without inner decoration
+ok 15 - authored cards, code and link targets survive formatting without inner decoration
+  ---
+  duration_ms: 11.702633
+  type: 'test'
+  ...
+# Subtest: unavailable references remain labels, invalid mark boundaries stop explicitly
+ok 16 - unavailable references remain labels, invalid mark boundaries stop explicitly
+  ---
+  duration_ms: 15.294709
+  type: 'test'
+  ...
+# Subtest: message and reader both mount original prose styles and keep private blocks outside formatter
+ok 17 - message and reader both mount original prose styles and keep private blocks outside formatter
+  ---
+  duration_ms: 116.045083
+  type: 'test'
+  ...
+# Subtest: broken prose formatting has an explicit local notice without exposing the original envelope
+ok 18 - broken prose formatting has an explicit local notice without exposing the original envelope
+  ---
+  duration_ms: 71.916186
+  type: 'test'
+  ...
+# Subtest: reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables
+ok 19 - reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables
+  ---
+  duration_ms: 7.757436
+  type: 'test'
+  ...
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 20 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 121.820549
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 21 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 28.569346
+  type: 'test'
+  ...
+# Subtest: reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+ok 22 - reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+  ---
+  duration_ms: 30.715421
+  type: 'test'
+  ...
+# Subtest: reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+ok 23 - reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+  ---
+  duration_ms: 72.899327
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 24 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 28.919834
+  type: 'test'
+  ...
+# Subtest: a record reference introduced by regex uses the original message snapshot without another display pass
+ok 25 - a record reference introduced by regex uses the original message snapshot without another display pass
+  ---
+  duration_ms: 29.529273
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 26 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 26.528546
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 27 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 30.751133
+  type: 'test'
+  ...
+# Subtest: ordinary messages read unchanged; structured replies expose body and action text without internal payload
+ok 28 - ordinary messages read unchanged; structured replies expose body and action text without internal payload
+  ---
+  duration_ms: 27.661788
+  type: 'test'
+  ...
+# Subtest: closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+ok 29 - closed body still reads if later blocks are incomplete; broken structured payload never falls back to raw source
+  ---
+  duration_ms: 51.238546
+  type: 'test'
+  ...
+# Subtest: reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+ok 30 - reader DOM never contains hidden payload, hidden counts, raw ACLs or executable action markup
+  ---
+  duration_ms: 96.222848
+  type: 'test'
+  ...
+# Subtest: turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+ok 31 - turn records preserve null, false, zero and deletion; all-secret records leave no cards or counts
+  ---
+  duration_ms: 44.939835
+  type: 'test'
+  ...
+# Subtest: disposing the reader disconnects action effects even when an old button reference survives
+ok 32 - disposing the reader disconnects action effects even when an old button reference survives
+  ---
+  duration_ms: 14.757082
+  type: 'test'
+  ...
+# Subtest: empty optional unlock placeholders do not block other blocks or alter native variable payload
+ok 33 - empty optional unlock placeholders do not block other blocks or alter native variable payload
+  ---
+  duration_ms: 50.512932
+  type: 'test'
+  ...
+# Subtest: public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+ok 34 - public heart and audit projection uses canonical pipe ownership and never exposes unrelated task or machine blocks
+  ---
+  duration_ms: 99.719502
+  type: 'test'
+  ...
+# Subtest: broken heart state has a local error while body and source remain intact; display text is not executable markup
+ok 35 - broken heart state has a local error while body and source remain intact; display text is not executable markup
+  ---
+  duration_ms: 11.798957
+  type: 'test'
+  ...
+# Subtest: reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+ok 36 - reader hides paragraph labels while keeping canonical source references and shows heart/audit tab
+  ---
+  duration_ms: 61.076172
+  type: 'test'
+  ...
+# Subtest: draft changed during input notification prevents direct send and preserves user text
+ok 37 - draft changed during input notification prevents direct send and preserves user text
+  ---
+  duration_ms: 7.466189
+  type: 'test'
+  ...
+# Subtest: a held action cannot be submitted twice and a disposed menu cannot apply anything
+ok 38 - a held action cannot be submitted twice and a disposed menu cannot apply anything
+  ---
+  duration_ms: 680.777414
+  type: 'test'
+  ...
+# Subtest: action cards show type and a secondary possibility while submitting only the chosen action
+ok 39 - action cards show type and a secondary possibility while submitting only the chosen action
+  ---
+  duration_ms: 669.752028
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2587.018462

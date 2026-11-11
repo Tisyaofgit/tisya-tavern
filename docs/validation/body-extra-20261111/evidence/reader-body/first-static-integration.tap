@@ -1,0 +1,127 @@
+TAP version 13
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 1 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 90.259092
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 2 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 20.016856
+  type: 'test'
+  ...
+# Subtest: reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+not ok 3 - reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+  ---
+  duration_ms: 12.879567
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + [
+    +   Error: TISHA_OUTPUT_XML_TAG
+    +       at bad (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:933:38)
+    +       at xmlTokens (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:995:53)
+    +       at xmlTokens.next (<anonymous>)
+    +       at Object.replyRegion (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:1032:12)
+    +       at replyRegion (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-compat.js:70:125)
+    +       at partition (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:49:9)
+    +       at runDisplay (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:159:74)
+    +       at projection (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:10:34)
+    +       at getNativeDisplay (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:44:69)
+    +       at mountMessageReader (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader.js:99:89) {
+    +     code: 'TISHA_OUTPUT_XML_TAG'
+    +   }
+    + ]
+    - []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+    0:
+    error: 'TISHA_OUTPUT_XML_TAG'
+    stack: |-
+      bad (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:933:38)
+      xmlTokens (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:995:53)
+      xmlTokens.next (<anonymous>)
+      Object.replyRegion (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:1032:12)
+      replyRegion (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-compat.js:70:125)
+      partition (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:49:9)
+      runDisplay (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader-core.js:159:74)
+      projection (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:10:34)
+      getNativeDisplay (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:44:69)
+      mountMessageReader (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/reader.js:99:89)
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:45:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+not ok 4 - reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+  ---
+  duration_ms: 48.647033
+  type: 'test'
+  location: '/workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/tisya-tavern/tests/reader-body-display.test.js:57:135)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 5 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 21.507486
+  type: 'test'
+  ...
+# Subtest: a record reference introduced by regex uses the original message snapshot without another display pass
+ok 6 - a record reference introduced by regex uses the original message snapshot without another display pass
+  ---
+  duration_ms: 20.178082
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 7 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 21.980325
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 8 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 12.907229
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 923.515592

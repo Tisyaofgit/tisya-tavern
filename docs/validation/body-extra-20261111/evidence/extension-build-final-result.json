@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "finishedUTC": "2026-11-11T04:13:03.034488+00:00",
+  "output": "{\"file\":\"runtime.js\",\"localModules\":300,\"bytes\":4850916,\"externalImports\":40,\"checked\":false}\n"
+}

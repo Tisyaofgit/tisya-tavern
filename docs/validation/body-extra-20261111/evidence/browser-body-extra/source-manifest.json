@@ -1,0 +1,17 @@
+{
+  "captured_utc": "2026-11-11T03:50:57.128504+00:00",
+  "files": [
+    {
+      "path": "tests/browser-body-extra.html",
+      "bytes": 17050,
+      "sha256": "b2e6a0c36a881e947e22381722b172753a5503df969ea7aac825e1490da1420a",
+      "snapshot": "source/tests/browser-body-extra.html"
+    },
+    {
+      "path": "tools/check-body-extra-browser.mjs",
+      "bytes": 4929,
+      "sha256": "2c00b88551733051ef347dcf2e80f7e508161f1140026f626e723879491b5d93",
+      "snapshot": "source/tools/check-body-extra-browser.mjs"
+    }
+  ]
+}

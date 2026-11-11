@@ -1,0 +1,105 @@
+{
+  "schema": "tisya-autosave-diagnostic/1",
+  "observedUTC": "2026-11-11T04:13:28.537072+00:00",
+  "single_existing_test_run": {
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "--test-name-pattern=^draft autosave retains newer input arriving during an older database save$",
+      "tests/phone-life-host-dom.test.js"
+    ],
+    "startedUTC": "2026-11-11T04:12:17.735272+00:00",
+    "finishedUTC": "2026-11-11T04:12:25.605271+00:00",
+    "exit_code": 0,
+    "timed_out": false,
+    "attempt": 1,
+    "source_sha256": {
+      "tests/phone-life-host-dom.test.js": "687c52645e66922e2aba296f721ec14d14c0f8d97c7c2f41fd4230e58fbf9efe",
+      "phone-app.mjs": "3eed316bf6296bb169d00296b83c64506d847a08995858d8e134cded316a0282",
+      "phone-core.mjs": "ee83f4d216f4723ba86d4a03d2534ec53031295afef15dd4b202c68bf479f143"
+    },
+    "concurrent_full_gates_finished_per_parent": true
+  },
+  "result": {
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "attempts": 1
+  },
+  "source_evidence": {
+    "scheduleDraft": [
+      {
+        "line": 144,
+        "text": " function scheduleDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>{if(disposed)return;if(busy){scheduleDraft();return;}stashDraft().catch(e=>toast(e.message,true));},450);}"
+      }
+    ],
+    "stashDraft": [
+      {
+        "line": 64,
+        "text": "async function stashDraft(){if(!state||ui.app!=='weibo'||ui.tab!=='compose')return;const form=$('#screen form[data-action=\"social.publish\"]');if(!form)return;const capturedVersion=draftVersion,text=form.elements.namedItem('text')?.value??'',visibility=form.elements.namedItem('visibility')?.value??'public';const previous=state.social.drafts?.[state.social.activeAccountId];if(previous?.text===text&&previous?.visibility===visibility){draftDirty=false;return;}await dispatch({type:'social.draft.save',text,visibility},false,{quiet:true});if(capturedVersion===draftVersion)draftDirty=false;else scheduleDraft();}"
+      }
+    ],
+    "inputVersion": [
+      {
+        "line": 145,
+        "text": " listen(surface,'input',e=>{if(e.target.matches('textarea[name=\"text\"]')&&ui.app==='weibo'&&ui.tab==='compose'){draftDirty=true;draftVersion++;scheduleDraft();}});"
+      }
+    ],
+    "settledAndLeave": [
+      {
+        "line": 150,
+        "text": " return Object.freeze({refresh,dispatch,navigate,handle,helpers,getState:()=>clone(state),getRoot:()=>surface,settled:async()=>{await playback.settled();await service.settled?.();},requestLeave:()=>{if(playback.dirty()){playback.pause().catch(e=>toast(e.message,true));return {allowed:false,reason:'播放位置正在保存，请稍后再收起手机。'};}return busy||draftDirty?{allowed:false,reason:busy?'手机正在保存，请稍候。':'微博草稿正在保存，请稍候。'}:{allowed:true};},inspect:()=>({screen:ui.app,tab:ui.tab,bindingKey}),dispose});"
+      }
+    ],
+    "fixtureSettle": [
+      {
+        "line": 24,
+        "text": " const settle=async()=>{await wait(5);await app.settled?.();await wait(5);};"
+      }
+    ],
+    "slowStorage": [
+      {
+        "line": 20,
+        "text": " const matrix=await currentPhoneHost({context,getContext:()=>context,profile:profile(world,character),storage:matrixMemoryStorage({onWrite:async()=>{saves++;if(slow)await wait(25);}})}),storage=matrix.phoneStorage;"
+      }
+    ],
+    "testTiming": [
+      {
+        "line": 59,
+        "text": " const f=await fixture({appId:'weibo',slow:true});await f.app.handle('nav',{app:'weibo',tab:'compose'});const field=f.input('[name=\"text\"]','第一句');assert.equal(f.app.requestLeave().allowed,false);await wait(455);field.value='第一句，第二句';field.dispatchEvent(new f.win.Event('input',{bubbles:true}));await wait(650);await f.settle();"
+      }
+    ]
+  },
+  "source_hashes": {
+    "phone-life/host-app.mjs": "97f09e6f7c26d45e353e6e6ff2a0fdfd046f206333b2aebae26f68766077be73",
+    "tests/phone-life-host-dom.test.js": "687c52645e66922e2aba296f721ec14d14c0f8d97c7c2f41fd4230e58fbf9efe",
+    "tests/fixtures/phone-host-current.mjs": "2ffe7aa80b5028a6a0686a0b959fd21a3aecc34e2addfefeac8b15b85bff6994"
+  },
+  "established": [
+    "The existing isolated case passed once with no code/test changes, after both complete gates had ended.",
+    "Draft scheduling uses 450 ms timers; busy callbacks reschedule instead of joining a tracked promise.",
+    "stashDraft captures draftVersion and reschedules after a save when newer input arrived; the ordinary code keeps dirty state until that later save.",
+    "The public settled method awaits playback and service queues but not a scheduled draft timer or a later re-scheduled stashDraft.",
+    "The fixture fixed 650 ms delay plus settled is therefore not a deterministic proof that all draft work has finished."
+  ],
+  "not_established": [
+    "The exact event ordering in either failed full run was not instrumented, so causation for those failures remains unverified.",
+    "One isolated pass does not prove an environment-only cause or rule out all product races.",
+    "No product loss of the newer input was demonstrated by this single follow-up run."
+  ],
+  "recommended_test_boundary": "Wait with an explicit bounded timeout for public requestLeave().allowed, then retain the existing persisted text, same field node, current field text and leave-allowed assertions; fail visibly if the boundary never arrives.",
+  "modifications": "No production or test source modified. Only requested diagnostic evidence written.",
+  "evidence": [
+    {
+      "path": "/workspace/scratch/c3a4767f6ef6/evidence/autosave-isolated-once.tap",
+      "bytes": 340,
+      "sha256": "6a26075f93ea198541da9dab2ee3145f4b2781855db03babd8be4dbee918c6d7"
+    },
+    {
+      "path": "/workspace/scratch/c3a4767f6ef6/evidence/autosave-isolated-once.json",
+      "bytes": 746,
+      "sha256": "67d5eed6eaa7e2bcab268bed179fa71465daa5f99350a48687fce8b6e170afdf"
+    }
+  ]
+}

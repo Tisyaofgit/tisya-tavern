@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: four-space, tab and mixed indentation preserve literal HTML and unclosed marks exactly
+ok 1 - four-space, tab and mixed indentation preserve literal HTML and unclosed marks exactly
+  ---
+  duration_ms: 73.14867
+  type: 'test'
+  ...
+# Subtest: indented chunks survive blank lines and end at the next unindented paragraph
+ok 2 - indented chunks survive blank lines and end at the next unindented paragraph
+  ---
+  duration_ms: 48.980707
+  type: 'test'
+  ...
+# Subtest: indentation cannot turn a paragraph continuation into a code block
+ok 3 - indentation cannot turn a paragraph continuation into a code block
+  ---
+  duration_ms: 19.69291
+  type: 'test'
+  ...
+# Subtest: fences allow up to three leading spaces while a four-space fence line is indented code
+ok 4 - fences allow up to three leading spaces while a four-space fence line is indented code
+  ---
+  duration_ms: 21.191714
+  type: 'test'
+  ...
+# Subtest: headings and thematic breaks can be followed immediately by indented code
+ok 5 - headings and thematic breaks can be followed immediately by indented code
+  ---
+  duration_ms: 9.59469
+  type: 'test'
+  ...
+# Subtest: list indentation belongs to the item before it can count toward code indentation
+ok 6 - list indentation belongs to the item before it can count toward code indentation
+  ---
+  duration_ms: 12.945969
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1294.505939

@@ -1,0 +1,16 @@
+test at tests/matrix-creation-wire.test.js:8:1
+✖ creation retains the full master reply and delivers native sources to their actual material slots (8.484931ms)
+  AssertionError [ERR_ASSERTION]: <cells
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/baseline-853/tests/matrix-creation-wire.test.js:13:199)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+

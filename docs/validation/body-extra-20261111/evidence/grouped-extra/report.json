@@ -1,0 +1,61 @@
+{
+  "base_commit": "853dc3d928dd20f9d3c8e327cc00aca69214e6ae",
+  "status": "targeted-validation-passed",
+  "cause": "creationReplyRegistry replaced the entire extra block before projecting nested cells/vars, deleting both machine slots",
+  "change": "preserve grouped machine slots while replacing extra display instructions; project form cells in place; support empty machine slots; correct prompt routing to body inline markers and extra separate panels with hidden machine children",
+  "baseline": {
+    "tests": 9,
+    "passed": 7,
+    "failed": 2,
+    "log": "baseline.log"
+  },
+  "final": {
+    "tests": 29,
+    "passed": 29,
+    "failed": 0,
+    "log": "targeted-final.log",
+    "metadata": "targeted-final.json"
+  },
+  "master_changed_entries": [
+    "tisya_task_start",
+    "tisya_registry"
+  ],
+  "other_master_entries_unchanged": true,
+  "validation_scope": [
+    "Node unit/integration tests",
+    "actual taskMessages assembly",
+    "grouped machine parsing and sheet writer tests"
+  ],
+  "not_run": [
+    "generated bundle/preset build",
+    "external model call",
+    "Android device verification"
+  ],
+  "files": [
+    {
+      "path": "tables/genesis-prompt.js",
+      "bytes": 6156,
+      "sha256": "a43273d851d20f56794af6e9809737ace95175ee47b9689fec60984f3398c48f",
+      "snapshot": "source/tables/genesis-prompt.js"
+    },
+    {
+      "path": "engine/config.mjs",
+      "bytes": 11441,
+      "sha256": "3b2688eee784990e9721cf2b1edec5e0c2b4f602efe30362f57e3e9c7dbb3634",
+      "snapshot": "source/engine/config.mjs"
+    },
+    {
+      "path": "presets/Tisya-Matrix.json",
+      "bytes": 124848,
+      "sha256": "c930242f9c3677aec35f1222ebff70c587ccdf2eb465f6f10c97c5f1ed0d5e23",
+      "snapshot": "source/presets/Tisya-Matrix.json"
+    },
+    {
+      "path": "tests/matrix-creation-wire.test.js",
+      "bytes": 4004,
+      "sha256": "f36784d900b0d716e1f49df549df061b3c407fbc57e34aa1350ab74b5a3dc80f",
+      "snapshot": "source/tests/matrix-creation-wire.test.js"
+    }
+  ],
+  "handoff": "Parent owns full gate, generated artifacts, source checkpoint, unique todo update and persistence; child made no commits"
+}

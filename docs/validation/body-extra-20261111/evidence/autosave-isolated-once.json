@@ -1,0 +1,20 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=^draft autosave retains newer input arriving during an older database save$",
+    "tests/phone-life-host-dom.test.js"
+  ],
+  "startedUTC": "2026-11-11T04:12:17.735272+00:00",
+  "finishedUTC": "2026-11-11T04:12:25.605271+00:00",
+  "exit_code": 0,
+  "timed_out": false,
+  "attempt": 1,
+  "source_sha256": {
+    "tests/phone-life-host-dom.test.js": "687c52645e66922e2aba296f721ec14d14c0f8d97c7c2f41fd4230e58fbf9efe",
+    "phone-app.mjs": "3eed316bf6296bb169d00296b83c64506d847a08995858d8e134cded316a0282",
+    "phone-core.mjs": "ee83f4d216f4723ba86d4a03d2534ec53031295afef15dd4b202c68bf479f143"
+  },
+  "concurrent_full_gates_finished_per_parent": true
+}

@@ -1,0 +1,17 @@
+test at tests/phone-life-host-dom.test.js:58:1
+✖ draft autosave retains newer input arriving during an older database save (10728.65884ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '第一句' !== '第一句，第二句'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/c3a4767f6ef6/baseline-853/tests/phone-life-host-dom.test.js:60:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '第一句',
+    expected: '第一句，第二句',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+

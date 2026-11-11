@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: reader shares one full-message display projection between body and extra without repeating host regex
+ok 1 - reader shares one full-message display projection between body and extra without repeating host regex
+  ---
+  duration_ms: 96.699288
+  type: 'test'
+  ...
+# Subtest: regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+ok 2 - regex-generated prose marks honor reader appearance while authored HTML and code remain literal
+  ---
+  duration_ms: 31.477107
+  type: 'test'
+  ...
+# Subtest: reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+ok 3 - reader preserves Markdown fenced and inline examples before host formatting instead of decorating literal marks
+  ---
+  duration_ms: 24.948821
+  type: 'test'
+  ...
+# Subtest: reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+ok 4 - reader isolates regex-authored static documents and preserves their state while leaving script cards in the original message
+  ---
+  duration_ms: 51.231501
+  type: 'test'
+  ...
+# Subtest: record projections coexist with regex output and async arrival does not rerun display or replace another tab
+ok 5 - record projections coexist with regex output and async arrival does not rerun display or replace another tab
+  ---
+  duration_ms: 19.687169
+  type: 'test'
+  ...
+# Subtest: a record reference introduced by regex uses the original message snapshot without another display pass
+ok 6 - a record reference introduced by regex uses the original message snapshot without another display pass
+  ---
+  duration_ms: 26.969268
+  type: 'test'
+  ...
+# Subtest: a failed display pass stays visible and is not retried by reader tab changes
+ok 7 - a failed display pass stays visible and is not retried by reader tab changes
+  ---
+  duration_ms: 22.56004
+  type: 'test'
+  ...
+# Subtest: reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+ok 8 - reader without a display provider retains ordinary paragraph anchors and the original safe formatter
+  ---
+  duration_ms: 16.985804
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1045.309721
