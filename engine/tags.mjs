@@ -31,7 +31,7 @@ export function normalizeEnvelope(source,tags=active){
  const first=source.indexOf('>')+1;let at=first,out=source.slice(0,first).replace(new RegExp('(<)'+root,'i'),'$1reply');
  while(at<rootEnd.index){const m=/^\s*<([_A-Za-z][\w.-]*)(?=[\s/>])([^>]*?)(\/?)>/.exec(source.slice(at));if(!m)break;const name=m[1],canon=inverse[name.toLowerCase()];if(!canon||canon==='reply')break;
   const open=m[0].replace('<'+name,'<'+canon);out+=open;at+=m[0].length;if(m[3])continue;
-  const close=new RegExp('</'+regexLiteral(name)+'\\s*>','ig');close.lastIndex=at;const end=['extra','vars'].includes(canon)?opaqueBlockEnd(source,at-m[0].length,xmlTokens,canon,selected):close.exec(source);if(!end)break;out+=source.slice(at,end.index)+'</'+canon+'>';at=end.end??close.lastIndex;
+  const close=new RegExp('</'+regexLiteral(name)+'\\s*>','ig');close.lastIndex=at;const end=['extra','vars','task','anchor','title','body','actions'].includes(canon)?opaqueBlockEnd(source,at-m[0].length,xmlTokens,canon,selected):close.exec(source);if(!end)break;out+=source.slice(at,end.index)+'</'+canon+'>';at=end.end??close.lastIndex;
  }
  return out+source.slice(at,rootEnd.index)+source.slice(rootEnd.index).replace(new RegExp('</'+root,'i'),'</reply');
 }

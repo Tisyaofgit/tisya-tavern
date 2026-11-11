@@ -60,11 +60,12 @@ export function sourceVarsJSON(text,parse){
  return text;
 }
 
-// Locate a machine/attachment block through XML tokens so a closing tag inside
-// JSON or CDATA cannot terminate its surrounding protocol slot.
+// Locate a protocol block without letting JSON, CDATA or text-slot examples
+// end it. Only text-slot boundary scans preserve script/style as HTML raw text;
+// the full envelope and machine validators keep their strict XML rules.
 export function opaqueBlockEnd(source,start,xmlTokens,protocolBlock=null,machineTags=null){
- const prefix='<reply>',stack=[];
- for(const t of xmlTokens(prefix+source.slice(start),{literalAmpersands:true,protocolBlock,machineTags,rawVarsJSON:true})){
+ const prefix='<reply>',stack=[],boundaryHTMLRawText=['task','anchor','title','body','actions'].includes(protocolBlock);
+ for(const t of xmlTokens(prefix+source.slice(start),{literalAmpersands:true,protocolBlock,machineTags,rawVarsJSON:true,boundaryHTMLRawText})){
   if(t.kind==='open'){if(!t.selfClose)stack.push(t.name);}
   else if(t.kind==='close'){
    if(stack.at(-1)?.toLowerCase()!==t.name.toLowerCase())return null;

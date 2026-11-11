@@ -9,21 +9,33 @@ export function appendPhrase(document,text){
  const input=document.querySelector('#send_textarea');if(!input||input.disabled||input.readOnly)throw Error('输入框暂不可用');
  input.value+=text;input.dispatchEvent(new document.defaultView.Event('input',{bubbles:true}));input.focus();input.setSelectionRange(input.value.length,input.value.length);
 }
-export function mountInputShortcuts(document,{getSettings,save,onError=()=>{}}){
+export function mountInputShortcuts(document,{getSettings,save,onError=()=>{},requirementsControl=null,phoneControl=null,onPhone}={}){
  const win=document.defaultView,composer=document.querySelector('#nonQRFormItems'),left=document.querySelector('#leftSendForm'),right=document.querySelector('#rightSendForm');
  if(!composer||!left||!right)throw Error('输入快捷栏尚未就绪');
+ const knownPhone=document.getElementById('tisya-phone-open');
+ if(knownPhone&&(phoneControl?phoneControl!==knownPhone:!composer.contains(knownPhone)))throw Error('手机入口不属于当前输入区，未建立重复入口');
+ phoneControl??=knownPhone;
+ for(const node of [requirementsControl,phoneControl].filter(Boolean))if(node.ownerDocument!==document||node.tagName!=='BUTTON'||['send_but','mes_stop','tisya-menu-trigger'].includes(node.id))throw Error('输入快捷入口无效，原生发送控件未改动');
  const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
- let alive=true,busy=false,view='more',serial=0,preferences=shortcutPreferences(getSettings());const entries=new Map();
- const root=make('section');root.id='tisya-shortcuts';root.setAttribute('aria-label','输入快捷栏');const bar=make('div');bar.className='tisya-shortcut-bar';const slots=Array.from({length:7},()=>{const n=make('div');n.className='tisya-shortcut-slot';bar.append(n);return n;});
- const more=make('button','更多');more.type='button';more.id='tisya-shortcut-more';more.setAttribute('aria-expanded','false');bar.append(more);
+ let alive=true,busy=false,phonePending=false,view='more',serial=0,preferences=shortcutPreferences(getSettings());const entries=new Map(),coreEntries=[];
+ const root=make('section');root.id='tisya-shortcuts';root.setAttribute('aria-label','输入快捷栏');const bar=make('div'),core=make('div'),rail=make('div');bar.className='tisya-shortcut-bar';core.className='tisya-shortcut-core';core.setAttribute('role','group');core.setAttribute('aria-label','常用入口');rail.className='tisya-shortcut-rail';rail.setAttribute('role','group');rail.setAttribute('aria-label','自定快捷位');const slots=Array.from({length:7},()=>{const n=make('div');n.className='tisya-shortcut-slot';rail.append(n);return n;});bar.append(core,rail);
+ const more=make('button');more.type='button';more.id='tisya-shortcut-more';more.innerHTML=iconMarkup('more')+'<span>更多</span>';more.setAttribute('aria-expanded','false');bar.append(more);
  const panel=make('div');panel.className='tisya-shortcut-panel';panel.hidden=true;const header=make('nav'),content=make('div'),overflow=make('div');overflow.className='tisya-shortcut-overflow';const status=make('p');status.setAttribute('role','status');panel.append(header,content,overflow,status);root.append(bar,panel);composer.prepend(root);
+ function adoptCore(node,{phone=false,own=false}={}){const anchor=node.parentNode?document.createComment('tisya core shortcut'):null;if(anchor)node.before(anchor);const row={node,anchor,own,classAbsent:!node.hasAttribute('class'),classes:['tisya-shortcut-item','tisya-shortcut-core-item'].filter(name=>!node.classList.contains(name))};
+  if(phone){row.children=[...node.childNodes];row.attributes=Object.fromEntries(['title','aria-label'].map(name=>[name,node.getAttribute(name)]));node.innerHTML=iconMarkup('phone')+'<span>手机</span>';if(!node.title)node.title='打开手机';if(!node.hasAttribute('aria-label'))node.setAttribute('aria-label','打开手机');}
+  node.classList.add(...row.classes);core.append(node);coreEntries.push(row);
+ }
+ if(requirementsControl)adoptCore(requirementsControl);
+ if(phoneControl)adoptCore(phoneControl,{phone:true});
+ else if(typeof onPhone==='function'){const phone=make('button');phone.id='tisya-phone-open';phone.type='button';adoptCore(phone,{phone:true,own:true});phone.onclick=async()=>{if(!alive||phonePending)return;phonePending=true;phone.disabled=true;phone.dataset.busy='true';close();try{await onPhone();}catch(e){if(alive)notice(e);}finally{if(alive){phonePending=false;phone.disabled=false;delete phone.dataset.busy;}}};}
+ core.addEventListener('click',close);
  const phrases=make('button');phrases.id='tisya-phrases';phrases.type='button';phrases.innerHTML=iconMarkup('book')+'<span>常用语</span>';phrases.onclick=()=>open('phrases');
  entries.set(phrases.id,{node:phrases,label:'常用语',own:true});
  const top=make('button');top.id='tisya-top-message';top.type='button';top.dataset.tisyaShortcut='top';top.innerHTML=iconMarkup('previous')+'<span>回顶</span>';top.title='回到已载入消息顶部';top.onclick=()=>{const chat=document.getElementById('chat');if(!chat)return;chat.scrollTo({top:win.getComputedStyle(chat).flexDirection==='column-reverse'?-chat.scrollHeight:0,behavior:'instant'});};entries.set(top.id,{node:top,label:'回顶',own:true});
  function notice(e){status.textContent=e.message;status.setAttribute('role','alert');onError(e);}
  function label(n){return n.getAttribute('data-tisya-tool-label')||n.getAttribute('aria-label')||n.title||n.textContent.trim()||'扩展操作';}
  function scan(){if(!alive)return;let changed=false;for(const parent of [left,right])for(const node of [...parent.children]){
-  if(['send_but','mes_stop','tisya-menu-trigger'].includes(node.id)||node===root)continue;
+  if(['send_but','mes_stop','tisya-menu-trigger'].includes(node.id)||node===root||coreEntries.some(e=>e.node===node))continue;
   if([...entries.values()].some(e=>e.node===node))continue;
   const id=node.id||'native-extra-'+(++serial),anchor=document.createComment('tisya shortcut');parent.insertBefore(anchor,node);entries.set(id,{node,label:label(node),anchor});changed=true;
  }if(changed)renderPositions();}
@@ -46,5 +58,5 @@ export function mountInputShortcuts(document,{getSettings,save,onError=()=>{}}){
  win.addEventListener('resize',position);win.visualViewport?.addEventListener('resize',position);
  more.onclick=()=>panel.hidden?open('more'):close();const outside=e=>{if(!root.contains(e.target))close();},escape=e=>{if(e.key==='Escape'){close();more.focus();}};document.addEventListener('pointerdown',outside);root.addEventListener('keydown',escape);
  const observer=new win.MutationObserver(scan);observer.observe(left,{childList:true});observer.observe(right,{childList:true});scan();renderPositions();
- return {open,refresh(){preferences=shortcutPreferences(getSettings());renderPositions();if(!panel.hidden)open(view);},dispose(){alive=false;observer.disconnect();win.removeEventListener('resize',position);win.visualViewport?.removeEventListener('resize',position);document.removeEventListener('pointerdown',outside);root.removeEventListener('keydown',escape);for(const e of entries.values()){e.node.classList.remove('tisya-shortcut-item');delete e.node.dataset.shortcutKey;if(e.anchor?.parentNode){e.anchor.replaceWith(e.node);}else if(!e.own)left.append(e.node);}root.remove();}};
+ return {open,refresh(){preferences=shortcutPreferences(getSettings());renderPositions();if(!panel.hidden)open(view);},dispose(){alive=false;observer.disconnect();win.removeEventListener('resize',position);win.visualViewport?.removeEventListener('resize',position);document.removeEventListener('pointerdown',outside);root.removeEventListener('keydown',escape);core.removeEventListener('click',close);for(const e of coreEntries){e.node.classList.remove(...e.classes);if(e.classAbsent&&!e.node.getAttribute('class'))e.node.removeAttribute('class');if(e.children)e.node.replaceChildren(...e.children);for(const [name,value]of Object.entries(e.attributes??{}))if(value===null)e.node.removeAttribute(name);else e.node.setAttribute(name,value);if(e.anchor?.parentNode)e.anchor.replaceWith(e.node);else if(!e.own)e.node.remove();}for(const e of entries.values()){e.node.classList.remove('tisya-shortcut-item');delete e.node.dataset.shortcutKey;if(e.anchor?.parentNode){e.anchor.replaceWith(e.node);}else if(!e.own)left.append(e.node);}root.remove();}};
 }

@@ -18,6 +18,7 @@ const shapes = {
     next:'<path d="m6 11 6 6 6-6M6 20h12M12 4v13"/>',
     bottom:'<path d="m6 5 6 6 6-6m-12 7 6 6 6-6M5 22h14"/>',
     book:'<path d="M12 6v14M12 6C8 3 5 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-2-1-5-1-9 2Z"/>',
+    phone:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 5h4M11 18.5h2"/>',
     edit:'<path d="m15 4 5 5M4 20l4-1 12-12a2 2 0 0 0-4-4L4 15l-1 6Z"/>',
     rollback:'<path d="M4 9a8 8 0 1 1 0 6M4 3v6h6M12 7v5l3 2"/>',
     trash:'<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',

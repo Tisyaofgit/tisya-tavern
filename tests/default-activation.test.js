@@ -113,6 +113,30 @@ test('explicit retry can recover a failed preset startup and binds only after su
  await assert.rejects(activation.start(),/first preset failure/);assert.equal(f.disk.size,0);await activation.retry();assert.equal(f.ctx.chatMetadata[NS].enabled,true);assert.equal(selects,2);
 });
 
+test('APP_READY with a selected but unloaded chat cannot create a binding or write metadata',async()=>{
+ for(const groupId of [null,'group-a']){
+  const f=fixture();f.ctx.groupId=groupId;
+  const activation=createDefaultActivation({getContext:()=>f.ctx,activatePreset:async()=>({active:true}),ensureBound:options=>f.controller.ensureBound(f.createState,options),isChatReady:c=>typeof c.chatMetadata.integrity==='string'&&c.chatMetadata.integrity.length>0});
+  assert.equal((await activation.start()).status,'chat-loading');
+  await assert.rejects(activation.ready(),e=>e.code==='HOST_CHAT_LOADING');
+  assert.deepEqual(f.counts(),{reads:0,writes:0,catalogs:0});assert.equal(f.savedMetadata.length,0);assert.deepEqual(f.ctx.chatMetadata,{});
+  // The host may fill the same object, so readiness must not be cached merely
+  // because its chat ID and metadata reference are unchanged.
+  f.ctx.chatMetadata.integrity='loaded-host-identity';
+  await activation.chatChanged();await activation.ready();
+  assert.equal(f.ctx.chatMetadata[NS].enabled,true);assert.equal(f.counts().writes,1);
+  assert.equal(f.ctx.chatMetadata.integrity,'loaded-host-identity');
+ }
+});
+
+test('loading a different chat invalidates an in-flight opening before it can save to a placeholder',async()=>{
+ const f=fixture(),gate=deferred();f.ctx.chatMetadata.integrity='chat-a';
+ const activation=createDefaultActivation({getContext:()=>f.ctx,activatePreset:async()=>({active:true}),ensureBound:options=>f.controller.ensureBound(async scope=>{await gate.promise;return f.createState(scope);},options),isChatReady:c=>typeof c.chatMetadata.integrity==='string'&&c.chatMetadata.integrity.length>0});
+ const pending=activation.start();pending.catch(()=>{});await new Promise(r=>setImmediate(r));const previous=f.ctx;f.switch('b');
+ assert.equal((await activation.chatChanged()).status,'chat-loading');gate.resolve();await assert.rejects(pending,e=>e.code==='CHAT_CHANGED');
+ assert.equal(f.savedMetadata.length,0);assert.equal(f.disk.size,0);assert.equal(previous.chatMetadata[NS],undefined);assert.deepEqual(f.ctx.chatMetadata,{});
+});
+
 test('actual Matrix host shares automatic and form initialization without resetting an existing owner',async()=>{
  const {readFileSync}=await import('node:fs');const {createMatrixHost}=await import('../engine/host.mjs');const {matrixPreset}=await import('../engine/config.mjs');
  const {PHONE_FORM_SCHEMAS}=await import('../engine/phone-form-contract.mjs');

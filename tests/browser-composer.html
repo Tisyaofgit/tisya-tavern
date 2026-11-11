@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>输入快捷栏 · 隔离宿主验证</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,sans-serif;color:#e1e8dc;background:#06261e}main{max-width:960px;margin:auto}header,.fixture-tools,.fixture-evidence{padding:12px 16px}h1{font-size:21px;margin:0 0 8px}.boundary{font-size:13px;color:#b3c4b7;margin:0}.fixture-tools{display:flex;gap:8px;flex-wrap:wrap}.fixture-tools button,.fixture-evidence button{min-height:44px;padding:7px 12px;border:1px solid #b5aa7866;border-radius:8px;background:#183f32;color:#e2d4a8;font:inherit;cursor:pointer}.fixture-tools button[aria-pressed=true]{border-color:#e2ca8d;background:#365b4c}#stage{width:390px;max-width:100%;margin:0 auto 16px;background:radial-gradient(ellipse at 0 0,#668b6540,transparent 70%),#0b3027;border-block:1px solid #9a9f6866;padding-block:12px}#chat{height:180px;overflow:auto}.fixture-message{line-height:1.85;color:#cfdbc7}#send_form{display:block}#nonQRFormItems{width:100%}.menu_button{min-height:44px;background:#111;color:#ddd;border:1px solid #555;border-radius:8px;padding:6px;cursor:pointer}#send_textarea{font:inherit;min-width:0}.fixture-native-stop[hidden]{display:none!important}.fixture-evidence{font-size:13px;overflow-wrap:anywhere}pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}#phone-surface{margin:12px 16px;padding:16px;border:1px solid #cfbd80;border-radius:16px;background:#193d32}#phone-surface[hidden]{display:none}#errors{color:#ffc4ad}#native-summary{display:block;white-space:pre-wrap}.fixture-note{margin:6px 0;color:#b8c9b9}
+  </style>
+  <!-- Production stylesheet follows only the minimal simulated native host styles. -->
+  <link rel="stylesheet" href="../shell.css">
+</head>
+<body class="tisya-active">
+<main>
+  <header><h1>输入快捷栏 · 隔离宿主验证</h1><p class="boundary">导入当前正式 communication / input-shortcuts / icons 与 shell.css。输入区、聊天、保存和手机内容由本页模拟；不访问真实存档，不请求模型，不代表 Android 实测。</p></header>
+  <nav class="fixture-tools" aria-label="验证宽度与手机来源">
+    <button type="button" data-width="320">320px</button><button type="button" data-width="390">390px</button><button type="button" data-width="768">768px</button>
+    <button type="button" data-phone="callback">新建入口 · 回调</button><button type="button" data-phone="native">接入原手机节点</button>
+  </nav>
+  <div id="stage">
+    <div id="chat"><p class="fixture-message">风从河岸吹来，树影落在信纸上。<br>这里是合成聊天内容，用来检查输入区的高度与窄屏排布。</p></div>
+    <div id="form_sheld"><form id="send_form"><div id="nonQRFormItems">
+      <div id="leftSendForm"><button type="button" id="tisya-attach" class="menu_button" aria-label="附件">附件</button><button type="button" id="tisya-previous-message" class="menu_button" aria-label="上一条">上一条</button><button type="button" id="tisya-next-message" class="menu_button" aria-label="下一条">下一条</button><button type="button" id="options_button" class="menu_button" aria-label="聊天">聊天</button><button type="button" id="extensionsMenuButton" class="menu_button" aria-label="扩展">扩展</button><button type="button" id="fixture-extra" class="menu_button">原生额外动作</button></div>
+      <button type="button" id="tisya-menu-trigger" class="menu_button" aria-label="设置与功能">设置</button>
+      <textarea id="send_textarea" rows="2" aria-label="剧情输入">保留的剧情草稿</textarea>
+      <div id="rightSendForm"><button type="button" id="send_but" aria-label="发送">发送</button><button type="button" id="mes_stop" class="fixture-native-stop" aria-label="停止剧情" hidden>停止剧情</button></div>
+    </div></form></div>
+    <section id="phone-surface" hidden><strong>模拟手机</strong><p class="fixture-note">入口确实调用了一次；此处仅模拟手机内容。</p><button type="button" id="close-phone" class="menu_button">关闭</button></section>
+  </div>
+  <section class="fixture-evidence">
+    <p class="fixture-note">“要求”展开后可改为“与缇斯亚交流”；主发送启动一个等待中的模拟请求，“停止交流”中止它并保留草稿。</p>
+    <div class="fixture-tools"><button type="button" id="check-current">运行当前检查</button><button type="button" id="finish-talk">完成模拟交流</button><button type="button" id="toggle-native-stop">切换原生停止键</button><button type="button" id="teardown">卸载并核原节点</button></div>
+    <output id="native-summary" aria-live="polite"></output><p id="state" role="status">加载中……</p><ul id="errors"></ul><pre id="report">尚未运行检查。</pre>
+  </section>
+</main>
+<script type="module">
+import {createCommunication,mountCommunication} from '../communication.js';
+import {mountInputShortcuts,DEFAULT_SLOTS} from '../input-shortcuts.js';
+import {iconMarkup} from '../icons.js';
+
+const boundary='Current production modules and CSS in a simulated host. No real user save, model call or Android validation.';
+const params=new URLSearchParams(location.search),phoneMode=params.get('phone')==='native'?'native':'callback',stage=document.getElementById('stage'),composer=document.getElementById('nonQRFormItems'),reportNode=document.getElementById('report'),state=document.getElementById('state'),errors=[];
+const counts={nativeSend:0,nativeStop:0,nativeExtra:0,phoneNative:0,phoneCallback:0,simulatedRequests:0,simulatedSaves:0,shortcutSaves:0};
+const settings={输入快捷栏:{位置:[...DEFAULT_SLOTS],常用语:[{id:'fixture-phrase',text:'继续往前走。'}]}},originalPreferences=JSON.stringify(settings),context={saveChat:async()=>true,chatId:'composer-fixture',characterId:0,characters:[{avatar:'fixture.png'}],chatMetadata:{},chat:[{is_user:false,mes:'合成宿主的旧回复',swipe_id:0}],userAvatar:'fixture-user'};
+const nativeSend=document.getElementById('send_but'),nativeStop=document.getElementById('mes_stop'),nativeExtra=document.getElementById('fixture-extra'),originalSendParent=nativeSend.parentNode,originalStopParent=nativeStop.parentNode,originalExtraParent=nativeExtra.parentNode,originalDraft=document.getElementById('send_textarea').value;
+let ui,shortcuts,pendingReply=null,disposed=false;
+const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+function showCounts(){document.getElementById('native-summary').textContent=JSON.stringify(counts,null,2);}
+function error(error){errors.push(error.message??String(error));const li=document.createElement('li');li.textContent=errors.at(-1);document.getElementById('errors').append(li);}
+window.addEventListener('error',event=>error(event.error??event.message));window.addEventListener('unhandledrejection',event=>error(event.reason));
+for(const [id,icon]of [['tisya-attach','link'],['tisya-previous-message','previous'],['tisya-next-message','next'],['options_button','menu'],['extensionsMenuButton','tools'],['tisya-menu-trigger','sliders']]){const node=document.getElementById(id),label=node.textContent;node.innerHTML=iconMarkup(icon)+'<span>'+label+'</span>';}
+document.getElementById('send_form').addEventListener('submit',event=>event.preventDefault());
+nativeSend.onclick=()=>{counts.nativeSend++;showCounts();};nativeStop.onclick=()=>{counts.nativeStop++;showCounts();};nativeExtra.onclick=()=>{counts.nativeExtra++;showCounts();};
+const originalSendAction=nativeSend.onclick,originalStopAction=nativeStop.onclick,originalExtraAction=nativeExtra.onclick;
+function openPhone(kind){counts[kind]++;document.getElementById('phone-surface').hidden=false;showCounts();}
+let nativePhone=null,phoneOriginal=null;
+if(phoneMode==='native'){nativePhone=document.createElement('button');nativePhone.id='tisya-phone-open';nativePhone.type='button';nativePhone.className='menu_button';nativePhone.title='原手机按钮';nativePhone.innerHTML='<span>手机</span>';nativePhone.onclick=()=>openPhone('phoneNative');composer.prepend(nativePhone);phoneOriginal={parent:nativePhone.parentNode,next:nativePhone.nextSibling,child:nativePhone.firstChild,action:nativePhone.onclick,className:nativePhone.className,title:nativePhone.title,ariaLabel:nativePhone.getAttribute('aria-label')};}
+const controller=createCommunication({getContext:()=>context,persist:async()=>{counts.simulatedSaves++;showCounts();return true;},onChange:()=>ui?.refresh(),request:async(_kind,_input,{signal})=>{counts.simulatedRequests++;showCounts();return new Promise((resolve,reject)=>{const abort=()=>{pendingReply=null;reject(Error('模拟交流已停止，草稿保留'));};signal.addEventListener('abort',abort,{once:true});pendingReply=()=>{signal.removeEventListener('abort',abort);pendingReply=null;resolve('模拟回复：我会记住这一轮的要求。');};if(signal.aborted)abort();});}});
+controller.setDraft('这一轮，请留给我回应的余地。');
+ui=mountCommunication(document,{controller,onError:error});
+shortcuts=mountInputShortcuts(document,{getSettings:()=>settings,save:async value=>{counts.shortcutSaves++;settings.输入快捷栏=structuredClone(value);showCounts();},requirementsControl:ui.trigger,onPhone:()=>openPhone('phoneCallback'),onError:error});
+document.getElementById('close-phone').onclick=()=>document.getElementById('phone-surface').hidden=true;
+document.getElementById('finish-talk').onclick=()=>pendingReply?.();
+document.getElementById('toggle-native-stop').onclick=()=>{nativeStop.hidden=!nativeStop.hidden;nativeSend.hidden=!nativeStop.hidden;};
+function setWidth(width){stage.style.width=width+'px';for(const node of document.querySelectorAll('[data-width]'))node.setAttribute('aria-pressed',String(Number(node.dataset.width)===width));state.textContent='内容目标宽度 '+width+'px；视口 '+innerWidth+'px；手机来源：'+phoneMode+'。';}
+for(const node of document.querySelectorAll('[data-width]'))node.onclick=()=>setWidth(Number(node.dataset.width));
+for(const node of document.querySelectorAll('[data-phone]')){node.setAttribute('aria-pressed',String(node.dataset.phone===phoneMode));node.onclick=()=>{const url=new URL(location.href);url.searchParams.set('phone',node.dataset.phone);url.searchParams.set('width',parseInt(stage.style.width,10));location.href=url.href;};}
+function box(node){if(!node)return null;const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};}
+function metrics(){const bar=document.querySelector('.tisya-shortcut-bar'),rail=document.querySelector('.tisya-shortcut-rail'),more=document.getElementById('tisya-shortcut-more');return {phoneMode,viewport:innerWidth,stage:box(stage),bar:box(bar),rail:box(rail),railScrollWidth:rail?.scrollWidth,railScrollLeft:rail?.scrollLeft,more:box(more),requirements:box(ui.root),requirementsHidden:ui.root.hidden,requirementsDisplay:getComputedStyle(ui.root).display,requirementsOpen:ui.root.open,trigger:box(ui.trigger),phone:box(document.getElementById('tisya-phone-open')),scrollWidth:document.documentElement.scrollWidth,counts:{...counts},draft:controller.view().draft,rpDraft:document.getElementById('send_textarea').value,slots:[...document.querySelectorAll('.tisya-shortcut-slot')].map(box),preferencesUnchanged:JSON.stringify(settings)===originalPreferences,errors:[...errors]};}
+async function checkCurrent(){const checks=[],assert=(name,ok,detail)=>{checks.push({name,passed:!!ok,...(detail===undefined?{}:{detail})});if(!ok)throw Error(name);};window.fixture.lastReport=null;
+ try{if(disposed)throw Error('已经卸载，请刷新后再检查');ui.root.open=false;ui.refresh();shortcuts.open();document.getElementById('tisya-shortcut-more').click();await tick();const before=metrics();
+  assert('collapsed requirements consume no row',before.requirementsHidden&&before.requirementsDisplay==='none'&&before.requirements.height===0,before.requirements);
+  assert('seven saved positions remain unchanged',before.slots.length===7&&before.preferencesUnchanged&&counts.shortcutSaves===0);
+  assert('core and More touch targets are at least 44px',[before.trigger,before.phone,before.more].every(r=>r.width>=44&&r.height>=44));
+  assert('More stays inside the same toolbar row',before.more.x>=before.bar.x&&before.more.right<=before.bar.right+1&&Math.abs(before.more.y-before.bar.y)<1);
+  assert('page does not overflow horizontally',before.scrollWidth<=innerWidth+1);
+  assert('configured buttons keep their width',before.slots.every(r=>r.width>=44));
+  const rail=document.querySelector('.tisya-shortcut-rail'),moreBefore=box(document.getElementById('tisya-shortcut-more'));rail.scrollLeft=rail.scrollWidth;await tick();const moreAfter=box(document.getElementById('tisya-shortcut-more'));assert('scrolling saved shortcuts leaves More fixed',Math.abs(moreBefore.x-moreAfter.x)<1);if(before.rail.width<before.railScrollWidth)assert('narrow toolbar scrolls saved positions',rail.scrollLeft>0);rail.scrollLeft=0;
+  ui.trigger.click();assert('requirements open from toolbar',ui.root.open&&!ui.root.hidden&&ui.root.getBoundingClientRect().height>0);
+  const input=document.getElementById('tisya-contractor-input'),draft=controller.view().draft,mode=ui.root.querySelector('select');mode.value='talk';mode.dispatchEvent(new Event('change'));ui.trigger.click();assert('folding keeps draft and talk mode',ui.root.hidden&&controller.view().draft===draft&&mode.value==='talk'&&ui.trigger.textContent==='交流');ui.trigger.click();input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert('Escape folds and returns focus',ui.root.hidden&&document.activeElement===ui.trigger&&controller.view().draft===draft);
+  ui.trigger.click();mode.value='story';mode.dispatchEvent(new Event('change'));ui.trigger.click();const sendCount=counts.nativeSend;nativeSend.click();assert('original send action runs exactly once in story mode',counts.nativeSend===sendCount+1&&nativeSend.onclick===originalSendAction&&nativeSend.parentNode===originalSendParent);
+  const phone=document.getElementById('tisya-phone-open'),phoneCounts=counts.phoneNative+counts.phoneCallback;phone.click();await tick();assert('phone action runs exactly once',counts.phoneNative+counts.phoneCallback===phoneCounts+1);assert('only the selected phone action runs',phoneMode==='native'?counts.phoneCallback===0&&phone===nativePhone&&phone.onclick===phoneOriginal.action:counts.phoneNative===0);assert('one SVG phone entry',document.querySelectorAll('#tisya-phone-open').length===1&&!!phone.querySelector('svg'));
+  document.getElementById('close-phone').click();assert('RP and requirement drafts remain unchanged',document.getElementById('send_textarea').value===originalDraft&&controller.view().draft===draft);
+  shortcuts.open('more');const extrasBefore=counts.nativeExtra;nativeExtra.click();assert('moved native extra action is the original node and listener',counts.nativeExtra===extrasBefore+1&&nativeExtra.onclick===originalExtraAction);document.getElementById('tisya-shortcut-more').click();
+  const stopBefore=counts.nativeStop;nativeStop.click();assert('original stop control is preserved',counts.nativeStop===stopBefore+1&&nativeStop.parentNode===originalStopParent&&nativeStop.onclick===originalStopAction);
+  assert('no unexpected errors',errors.length===0,errors);const report={passed:true,boundary,checks,before,after:metrics()};window.fixture.lastReport=report;reportNode.textContent=JSON.stringify(report,null,2);return report;
+ }catch(e){const report={passed:false,boundary,checks,error:{message:e.message,stack:e.stack},after:metrics()};window.fixture.lastReport=report;reportNode.textContent=JSON.stringify(report,null,2);return report;}}
+function teardown(){if(disposed)throw Error('已卸载');disposed=true;shortcuts.dispose();ui.dispose();const report={nativeSendRestored:nativeSend.parentNode===originalSendParent&&nativeSend.onclick===originalSendAction,nativeStopRestored:nativeStop.parentNode===originalStopParent&&nativeStop.onclick===originalStopAction,nativeExtraRestored:nativeExtra.parentNode===originalExtraParent&&nativeExtra.onclick===originalExtraAction,phoneRestored:phoneMode==='native'?nativePhone.parentNode===phoneOriginal.parent&&nativePhone.nextSibling===phoneOriginal.next&&nativePhone.firstChild===phoneOriginal.child&&nativePhone.className===phoneOriginal.className&&nativePhone.title===phoneOriginal.title&&nativePhone.getAttribute('aria-label')===phoneOriginal.ariaLabel&&nativePhone.onclick===phoneOriginal.action:document.getElementById('tisya-phone-open')===null,rpDraftPreserved:document.getElementById('send_textarea').value===originalDraft,preferencesUnchanged:JSON.stringify(settings)===originalPreferences};report.passed=Object.values(report).every(Boolean);reportNode.textContent=JSON.stringify(report,null,2);state.textContent='已卸载；刷新页面可重新检查。';return report;}
+document.getElementById('check-current').onclick=checkCurrent;document.getElementById('teardown').onclick=teardown;
+setWidth([320,390,768].includes(Number(params.get('width')))?Number(params.get('width')):390);showCounts();
+window.fixture={ready:true,boundary,metrics,checkCurrent,teardown,controller,ui,shortcuts,counts};
+</script>
+</body>
+</html>

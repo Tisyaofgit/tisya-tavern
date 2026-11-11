@@ -5,8 +5,9 @@ export function adaptReaderSource(id,source){
  if(id==='xml-envelope.cjs'){
   source=replaceOnce(source,
    'function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false}={}){',
-   'function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false}={}){');
+   'function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false,boundaryHTMLRawText=false}={}){');
   source=replaceOnce(source,' let p=0;const path=[];',` let p=0;const path=[];
+ const codeLiterals=createProtocolLiteralReader(s),textSlots=new Set(['task','anchor','think','title','body','actions','next']);
  // Only a declared protocol slot, or its direct grouped vars child, may
  // contain raw JSON. Display components never acquire JSON ownership.
  const machineNames=new Map([['cells','cells'],['vars','vars'],[machineTags?.cells?.toLowerCase()??'cells','cells'],[machineTags?.vars?.toLowerCase()??'vars','vars']]);`);
@@ -18,6 +19,20 @@ export function adaptReaderSource(id,source){
   source=replaceOnce(source,"const end=jsonTextEnd(s,p,literalAmpersands);","const end=jsonTextEnd(s,p,rawJSON?'native':literalAmpersands);");
   source=replaceOnce(source,"value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true","value:rawJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true");
   source=replaceOnce(source,"if(!m&&path[0]==='reply'&&path[1]==='extra'&&path.length>=2)","if(!m&&path[0]==='reply'&&(protocolBlock??path[1])==='extra'&&path.length>=2)");
+  source=replaceOnce(source,"  if(s[p]!=='<'){",`  // Alias boundary location preserves native script/style source. Full
+  // envelope validators never enable this option, and machines stay XML.
+  if(boundaryHTMLRawText&&path[0]==='reply'&&path.length>2&&/^(?:script|style)$/i.test(path.at(-1))&&textSlots.has((protocolBlock??path[1]).toLowerCase())&&!path.slice(2).some(name=>machineNames.has(name.toLowerCase())||['extra','archive',machineTags?.extra?.toLowerCase(),machineTags?.archive?.toLowerCase()].includes(name.toLowerCase()))){
+   const close=new RegExp('</'+path.at(-1)+'\\\\s*>','ig');close.lastIndex=p;const end=close.exec(s);if(!end)bad('XML_CLOSE');
+   if(end.index>p){const raw=s.slice(p,end.index);yield {kind:'text',value:raw,raw,htmlRaw:true,start:p,end:end.index};p=end.index;continue;}
+  }
+  if(path.length===2&&path[0]==='reply'&&textSlots.has((protocolBlock??path[1]).toLowerCase())){
+   const tagAt=s.indexOf('<',p),literal=codeLiterals.next(p,tagAt<0?s.length:tagAt);
+   if(literal){
+    if(literal.start>p){const raw=s.slice(p,literal.start);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,start:p,end:literal.start};}
+    const raw=s.slice(literal.start,literal.end);yield {kind:'text',value:raw,raw,literalCode:literal.kind,start:literal.start,end:literal.end};p=literal.end;continue;
+   }
+  }
+  if(s[p]!=='<'){`);
  }
  if(id==='pipes-wire.cjs')source=replaceOnce(source,"if(t==='p')return ACL.validate(wireValue(s));","if(t==='p')return ACL.validate(s==='~'?'~':wireValue(s));");
  if(id==='pipes-wire.cjs')source=replaceOnce(source,

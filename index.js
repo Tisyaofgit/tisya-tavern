@@ -15,6 +15,7 @@ import {finishMatrixGeneration} from './engine/lifecycle.mjs';
 import {mountGenerationIdleGuard} from './generation-idle-guard.js';
 import {createMatrixHost} from './engine/host.mjs';
 import {createDefaultActivation} from './default-activation.js';
+import {describeChatMetadataFailure} from './chat-persistence-error.js';
 import {mountMatrixConfiguration} from './engine/ui.mjs';
 import {createWorldSeedService,mountWorldSeed} from './world-seed.js';
 import * as personaNative from '/scripts/personas.js';
@@ -404,7 +405,10 @@ function openNotebook(mode){
 function presetSource(){const c=context();return {identity:[c.chatCompletionSettings?.preset_settings_openai,query('#settings_preset_openai')?.value,c.characterId,c.groupId],prompts:c.chatCompletionSettings?.prompts??[],order:promptManager?.getPromptOrderForCharacter(promptManager.activeCharacter)??[]};}
 async function persistConversationMetadata(c,t){return enqueueChatSave(async()=>{
  const live=context();if(live.chatId!==t.id||live.characterId!==t.character||live.groupId!==t.group||live.chatMetadata!==t.meta)throw Error('聊天已切换，旧页面未写入新聊天。');
- const metadata=persistedChatMetadata();if(t.group){await saveGroupChatMetadata({id:t.id,chatMetadata:metadata});}else{const card=c.characters[t.character];if(!card||card.chat!==t.id)throw Error('聊天目标已变化。');await saveCharacterChatMetadata({characterName:card.name,avatarUrl:card.avatar,fileName:t.id,chatMetadata:metadata});}return true;
+ const metadata=persistedChatMetadata();
+ if(typeof metadata.integrity!=='string'||!metadata.integrity.length)throw Object.assign(Error('聊天数据尚未载入完成，本次未写入；请等聊天打开后重试。'),{code:'HOST_CHAT_LOADING'});
+ try{if(t.group){await saveGroupChatMetadata({id:t.id,chatMetadata:metadata});}else{const card=c.characters[t.character];if(!card||card.chat!==t.id)throw Error('聊天目标已变化。');await saveCharacterChatMetadata({characterName:card.name,avatarUrl:card.avatar,fileName:t.id,chatMetadata:metadata});}}
+ catch(cause){throw describeChatMetadataFailure(cause,{group:!!t.group,hasIntegrity:typeof metadata.integrity==='string'&&metadata.integrity.length>0});}return true;
  });}
 
 async function saveAssistantConfiguration({data,revision,key,value,expected}){
@@ -832,7 +836,7 @@ function init() {
     messageNavigation=mountMessageNavigation(document,{getLanding:()=>getDisplay().上条落点,onNavigate:()=>{appearance?.revealHistory();closeNativeDrawers();hidePage();}});cleanups.push(()=>messageNavigation.dispose());
     communicationUI=mountCommunication(document,{controller:communication,onError:error});cleanups.push(()=>{communicationUI?.dispose();communicationUI=null;});
     nativeIdleGuard=mountGenerationIdleGuard(document,{events:context().eventSource,eventTypes:context().eventTypes,waitForIdle:waitForGenerationIdle,isGenerating,onError:error});cleanups.push(()=>{nativeIdleGuard?.dispose();nativeIdleGuard=null;});
-    inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
+    inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),requirementsControl:communicationUI.trigger,onPhone:()=>openVirtualPhone(),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=async e=>{if(directoryPanel&&!directoryRow?.contains(e.target))closeDirectoryMenu();const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
         if(['assistant','user-identity','home','contacts','groups','notes','memory','chat','menu','settings-app','settings-tab','display-settings','display-cache','context-overview','emotion-atlas','role-library','group-library','group-create','group-edit','select','drawer','section','input-tools','disable','fullscreen'].includes(action)&&!await mayLeaveUtility())return;
@@ -903,9 +907,20 @@ export function registerChatSurface() {
     if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content,mesid,signal}){notifySelectedChatContent({element,content,mesid,signal});resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
 }
 const builtinPreset=createPresetUpdateController({getContext:context,document,isBusy:isGenerating});
-const defaultActivation=createDefaultActivation({getContext:context,activatePreset:()=>builtinPreset.update({activate:true}),ensureBound:options=>matrixHost.ensureBound(options)});
+const defaultActivation=createDefaultActivation({getContext:context,activatePreset:()=>builtinPreset.update({activate:true}),ensureBound:options=>matrixHost.ensureBound(options),isChatReady:c=>typeof c.chatMetadata?.integrity==='string'&&c.chatMetadata.integrity.length>0});
 let presetPageControl=null;
 context().eventSource.on(context().eventTypes.APP_READY,async()=>{
+    const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
+    // Install this before any awaited preset/book work: the initial native
+    // load can finish while APP_READY listeners are still running.
+    bind('CHAT_CHANGED',async()=>{
+      worldbookConditions.end();
+      const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
+      nativeGenerationEpoch++;nativeGenerationOpen=false;phoneTurn.contextChanged();communication.contextChanged();configHost.cancelTransport();
+      tableService.contextChanged();
+      try{const activation=await defaultActivation.chatChanged();if(activation?.status==='chat-loading'||phoneChatKey(context())!==key||context().chatMetadata!==metadata)return;await matrixHost.event('CHAT_CHANGED');}
+      catch(e){error(e);}
+    });
     initializePresetConnection(context(),document);
     try{await defaultActivation.start();}catch(err){error(err);}
     try{const installed=await builtinBooks.update();if(installed.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:installed.conflicts,errors:installed.errors})));}catch(err){error(err);}
@@ -919,7 +934,6 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     try{const syncMessageCache=()=>{const c=context();if(c.chatId)reconcileReaderCache(worldKey(c),c.chat);};
      for(const name of ['CHAT_CHANGED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','GENERATION_ENDED','GENERATION_STOPPED']){const event=context().eventTypes[name];if(event)context().eventSource.on(event,()=>{if(!isGenerating()||['MESSAGE_DELETED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED'].includes(name))syncMessageCache();});}
      syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
-     const bind=(name,fn)=>{const ev=context().eventTypes[name];if(!ev)throw Error('宿主缺少事件 '+name);context().eventSource.on(ev,fn);};
      bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));
      bind('GENERATION_AFTER_COMMANDS',async(...args)=>{
       nativeDryRun=args[2]===true||args[1]?.dryRun===true;if(nativeDryRun)return;
@@ -943,16 +957,6 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      bind('GENERATION_STOPPED',async()=>{
       worldbookConditions.end();nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();nativeGenerationOpen=false;
       await phoneTurn.stopped().catch(error);await Promise.all([matrixHost.event('GENERATION_STOPPED'),communication.stopped().catch(error)]);
-     });
-     bind('CHAT_CHANGED',async()=>{
-      worldbookConditions.end();
-      const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
-      nativeGenerationEpoch++;nativeGenerationOpen=false;phoneTurn.contextChanged();communication.contextChanged();configHost.cancelTransport();
-      // Auxiliary drafts may be cancelled, but chat entry never initializes the
-      // old origin/session books or replays a retired generation pipeline.
-      tableService.contextChanged();
-      try{await defaultActivation.chatChanged();if(phoneChatKey(context())!==key||context().chatMetadata!==metadata)return;await matrixHost.event('CHAT_CHANGED');}
-      catch(e){error(e);}
      });
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
      window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const service=await phoneTurn.service();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});

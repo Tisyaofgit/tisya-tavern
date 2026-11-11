@@ -1,7 +1,9 @@
-// Generated from verified Foundation r243 sources plus explicit read-only adapters.
+// Generated from verified Foundation r243 sources plus explicit read adapters.
+// Text-slot code literals share XML boundaries; machine validators stay strict.
 // No eval, host access, storage writes, or dynamic dependency loading.
 import {adaptReaderModule} from './reader-compat.js';
 import {projectBodyRuns} from './body-display-runs.js';
+import {createProtocolLiteralReader} from './protocol-code-literals.js';
 const foundationModules={
 "body-count.cjs":[function(module,exports,require){
 'use strict';
@@ -971,10 +973,11 @@ function jsonTextEnd(s,start,literalAmpersands){
  }
  return null;
 }
-function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false}={}){
+function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=null,machineTags=null,rawVarsJSON=false,boundaryHTMLRawText=false}={}){
  if(typeof s!=='string'||s.length>2000000)bad('SIZE');
  if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s))bad('XML_CHARACTER');
  let p=0;const path=[];
+ const codeLiterals=createProtocolLiteralReader(s),textSlots=new Set(['task','anchor','think','title','body','actions','next']);
  // Only a declared protocol slot, or its direct grouped vars child, may
  // contain raw JSON. Display components never acquire JSON ownership.
  const machineNames=new Map([['cells','cells'],['vars','vars'],[machineTags?.cells?.toLowerCase()??'cells','cells'],[machineTags?.vars?.toLowerCase()??'vars','vars']]);
@@ -985,6 +988,19 @@ function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=
   if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(owner)||groupedJSON||nativeJSON){
    const end=jsonTextEnd(s,p,rawJSON?'native':literalAmpersands);
    if(end!==null){const raw=s.slice(p,end);yield {kind:'text',value:rawJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true,start:p,end};p=end;continue;}
+  }
+  // Alias boundary location preserves native script/style source. Full
+  // envelope validators never enable this option, and machines stay XML.
+  if(boundaryHTMLRawText&&path[0]==='reply'&&path.length>2&&/^(?:script|style)$/i.test(path.at(-1))&&textSlots.has((protocolBlock??path[1]).toLowerCase())&&!path.slice(2).some(name=>machineNames.has(name.toLowerCase())||['extra','archive',machineTags?.extra?.toLowerCase(),machineTags?.archive?.toLowerCase()].includes(name.toLowerCase()))){
+   const close=new RegExp('</'+path.at(-1)+'\\s*>','ig');close.lastIndex=p;const end=close.exec(s);if(!end)bad('XML_CLOSE');
+   if(end.index>p){const raw=s.slice(p,end.index);yield {kind:'text',value:raw,raw,htmlRaw:true,start:p,end:end.index};p=end.index;continue;}
+  }
+  if(path.length===2&&path[0]==='reply'&&textSlots.has((protocolBlock??path[1]).toLowerCase())){
+   const tagAt=s.indexOf('<',p),literal=codeLiterals.next(p,tagAt<0?s.length:tagAt);
+   if(literal){
+    if(literal.start>p){const raw=s.slice(p,literal.start);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,start:p,end:literal.start};}
+    const raw=s.slice(literal.start,literal.end);yield {kind:'text',value:raw,raw,literalCode:literal.kind,start:literal.start,end:literal.end};p=literal.end;continue;
+   }
   }
   if(s[p]!=='<'){let q=s.indexOf('<',p);if(q<0)q=s.length;const raw=s.slice(p,q);yield {kind:'text',value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,start:p,end:q};p=q;continue;}
   if(s.startsWith('<![CDATA[',p)){const q=s.indexOf(']]>',p+9);if(q<0){if(tolerateTail)return;bad('XML_CDATA');}yield {kind:'text',value:s.slice(p+9,q),cdata:true,start:p,end:q+3};p=q+3;continue;}

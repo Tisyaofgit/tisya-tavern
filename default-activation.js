@@ -2,14 +2,18 @@ import {chatKey,NS} from './engine/controller.mjs';
 
 // One owner for startup activation and each observed chat opening. Generation
 // waits for this same promise; it never performs a second initialization.
-export function createDefaultActivation({getContext,activatePreset,ensureBound}){
+export function createDefaultActivation({getContext,activatePreset,ensureBound,isChatReady=()=>true}){
  let startup=null,startupError=null,current=null,epoch=0,disposed=false;
- const snapshot=()=>{const c=getContext();return {key:chatKey(c),metadata:c.chatMetadata,chat:c.chat};};
- const same=(a,b)=>a?.key===b?.key&&a?.metadata===b?.metadata&&a?.chat===b?.chat;
+ const snapshot=()=>{const c=getContext();return {key:chatKey(c),metadata:c.chatMetadata,chat:c.chat,ready:isChatReady(c)};};
+ const same=(a,b)=>a?.key===b?.key&&a?.metadata===b?.metadata&&a?.chat===b?.chat&&a?.ready===b?.ready;
  const stale=()=>Object.assign(Error('自动接入期间聊天已变化，原操作已停止'),{code:'CHAT_CHANGED'});
  function open({retry=false}={}){
   if(disposed)return Promise.reject(Object.assign(Error('插件已关闭'),{code:'PLUGIN_CLOSED'}));
   const captured=snapshot();
+  // APP_READY does not await the host's initial chat load. A target ID may
+  // already exist while its metadata is still the empty loading placeholder.
+  // Do not create an owner or cache this placeholder as a completed opening.
+  if(captured.key&&!captured.ready){epoch++;current=null;return Promise.resolve({status:'chat-loading',key:captured.key});}
   if(!retry&&same(current,captured))return current.promise;
   const token=++epoch;
   const record={...captured,promise:null};current=record;
@@ -27,6 +31,7 @@ export function createDefaultActivation({getContext,activatePreset,ensureBound})
  async function chatChanged(){if(!startup)return start();await startup;return open();}
  async function ready(){
   const result=await chatChanged();
+  if(result?.status==='chat-loading')throw Object.assign(Error('聊天内容尚在载入，请等载入完成后重试。'),{code:'HOST_CHAT_LOADING'});
   if(result?.key&&getContext().chatMetadata?.[NS]?.enabled!==true)throw Object.assign(Error('当前聊天的新引擎已停用；重新打开聊天后默认启用'),{code:'ENGINE_DISABLED'});
   return result;
  }

@@ -17,12 +17,14 @@ import {mountWorldExtra,extraCSS} from './world-extra.js';
 import {isReplyMessage,extractXMLBody,countBody,readParagraphs} from './reader-core.js';
 import {readJourney} from './reply-records.js';
 
-export const readerErrorCode=error=>[error?.code,error?.message].find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';
+const matrixReaderErrors=new Set(['REPLY_ROOT','REPLY_BLOCK','REPLY_DUPLICATE_BLOCK','REPLY_MACHINE_NESTING','BODY_EMPTY']);
+export const readerErrorCode=error=>{const values=[error?.code,error?.message],matrix=values.find(code=>matrixReaderErrors.has(code));return matrix?'TISYA_MATRIX_'+matrix:values.find(code=>typeof code==='string'&&code.length<=96&&/^TIS(?:YA|HA)_[A-Z0-9_]+$/.test(code))??'TISYA_READER_INVALID';};
 export const journeyEmptyText='本条没有已记录的事件或状态。';
 export function journeyCompatibilityText(view){const n=view?.compatibility?.length??0;return n?`已识别 ${n} 条旧权限注记：本条没有对应的变量写入，注记未参与授权；原消息保留。`:'';}
 export function readerErrorText(code){
     const safe=readerErrorCode({code});
     if(safe==='TISYA_DISPLAY_START_BOUNDARY')return '空开场标记之后没有唯一、完整且边界明确的回复；本条暂不展示，原消息完整保留。（'+safe+'）';
+    if(safe.startsWith('TISYA_MATRIX_')){const reason={TISYA_MATRIX_REPLY_ROOT:'回复外壳不完整',TISYA_MATRIX_REPLY_BLOCK:'回复区块未正确闭合或包含未知区块',TISYA_MATRIX_REPLY_DUPLICATE_BLOCK:'同一回复区块重复出现',TISYA_MATRIX_REPLY_MACHINE_NESTING:'变量或表格区块嵌套位置不符合协议',TISYA_MATRIX_BODY_EMPTY:'正文区块为空'}[safe]??'回复结构未通过读取校验';return `${reason}；原消息仍保留。（${safe}）`;}
     if(safe.startsWith('TISYA_ONEPASS_'))return `单次完整回复的${safe.includes('JSON_')?'表格 JSON':'结构或偏好记录'}未通过校验；原消息保留，未据此报告填表成功。（${safe}）`;
     const row=/^TISYA_V3_REPLY_(BEFORE|AFTER)_LINE_(\d+)_(LABEL|COLUMNS|EMPTY|OUTCOME)$/.exec(safe);
     if(row)return `${row[1]==='BEFORE'?'开头':'结尾'}摘要第 ${row[2]} 行${{LABEL:'标签不在约定格式内',COLUMNS:'字段列数不符',EMPTY:'必填字段为空',OUTCOME:'留白类别不符'}[row[3]]}；正文和原消息保留。（${safe}）`;
@@ -46,7 +48,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 // Version parsed projections independently of the disk rows so reader updates
 // recompute old successes/errors while retaining the user's fold and tab state.
-const projectionKey=selected=>'matrix-v3-bounded-start-display:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
+const projectionKey=selected=>'matrix-v4-text-code-display:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
 const inspectionKey=(source,selected)=>projectionKey(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
