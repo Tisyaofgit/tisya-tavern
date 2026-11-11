@@ -43,6 +43,7 @@ export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isG
  const selectedSources=(c,svc)=>selectedPhoneSources(c,svc.getState());
  async function synchronize(){
   const c=getContext(),s=scope(c),svc=await service(c);if(!svc)return null;
+  need(matches(getContext(),s),'PHONE_CONTEXT_CHANGED','聊天在读取手机历史时已切换。');
   await identities(c);need(matches(getContext(),s),'PHONE_CONTEXT_CHANGED','聊天在读取手机历史时已切换。');
   const sources=selectedSources(c,svc),stamp=JSON.stringify(sources),result=await svc.reconcile({chatKey:s.key,sources});
   need(matches(getContext(),s)&&JSON.stringify(selectedSources(getContext(),svc))===stamp,'PHONE_HISTORY_CHANGED','手机历史在同步期间已变化，请重新打开。');onChange();return result;
@@ -58,7 +59,13 @@ export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isG
    const lastUser=c.chat.findLast(m=>m?.is_user&&!m.is_system),lastAssistant=c.chat.findLast(m=>m&&!m.is_user&&!m.is_system);
    const rejected=lastAssistant?svc.getState().rejectedSources?.[phoneSource(lastAssistant).sourceId]:null;
    const replay=['swipe','regenerate','continue'].includes(type)?rejected?.requestId??readPhoneRequestId(lastAssistant?.mes):null;
-   const prepared=await svc.prepareTurn({chatKey:s.key,anchorUid:lastUser?.extra?.tisya_engine?.uid??null,type,...(replay?{replayRequestId:replay}:{})});run.request=prepared?copy(prepared):null;valid(run);
+   // An older story-only reply has no captured phone request to replay. Phone
+   // actions performed after that reply belong to its continuation, not to a
+   // newly invented request for an earlier point in the story.
+   if(['swipe','regenerate'].includes(type)&&!replay){active=null;onChange();return;}
+   const replayBindings=replay?(lastUser?.extra?.[PHONE_TURN_KEY]?.requests??[]).filter(r=>r.requestId===replay):[];
+   if(replay)need(replayBindings.length===1&&/^[a-f0-9]{64}$/.test(replayBindings[0].promptSignature??''),'PHONE_SOURCE_OWNERSHIP','原手机请求缺少对应用户回合的冻结绑定，未重放。');
+   const prepared=await svc.prepareTurn({chatKey:s.key,anchorUid:lastUser?.extra?.tisya_engine?.uid??null,type,...(replay?{replayRequestId:replay,expectedPromptSignature:replayBindings[0].promptSignature}:{})});run.request=prepared?copy(prepared):null;valid(run);
    if(!prepared||!prepared.messages?.length){active=null;return;}
    need(typeof prepared.requestId==='string'&&prepared.requestId&&Array.isArray(prepared.messages)&&prepared.messages.every(m=>['system','user','assistant'].includes(m.role)&&typeof m.content==='string'),'PHONE_TURN_INVALID','手机本轮提示词格式无效。');
    run.request=copy(prepared);run.promptSignature=sha256(JSON.stringify(prepared.messages));

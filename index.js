@@ -145,20 +145,33 @@ const textTransport=createTextTransport({target:window});
 const phoneServices=new Map();let phoneSeedPromise=null;
 const phoneChanged=()=>{window.dispatchEvent(new CustomEvent('tisya:phone-change'));queueMicrotask(()=>{appearance?.refresh();pet?.refresh();});};
 async function getPhoneService(c=context()){
- const key=phoneChatKey(c);if(!key)throw Error('请先打开聊天，再使用手机。');
- const stored=await matrixDatabase.peek();
+ const key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat;if(!key)throw Error('请先打开聊天，再使用手机。');
+ const assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};
+ const ready=async(service,creating=false)=>{
+  const read=()=>creating?service.init():service.refresh();
+  try{await read();}catch(error){
+   const targets=error.code==='PHONE_DATABASE_DETACHED'?error.details?.hydrateSwipes:null;if(!Array.isArray(targets)||!targets.length)throw error;
+   for(const target of targets){
+    assertCurrent();const message=chat[target.index];if(!message||message.extra?.tisya_engine?.uid!==target.uid)throw error;
+    const hydrated=await hydrateChatMessageSwipes(target.index);assertCurrent();
+    if(!hydrated||chat[target.index]!==message||message.extra?.tisya_engine?.uid!==target.uid){const changed=Error('手机来源消息在读取候选时已变化，请重试。');changed.code='PHONE_CONTEXT_CHANGED';throw changed;}
+   }
+   await read();
+  }
+  assertCurrent();return service;
+ };
+ assertCurrent();const stored=await matrixDatabase.peek();assertCurrent();
  if(nativeGenerationOpen||isGenerating()||revisionController.active()){if(!stored||!decodePhoneDatabase(stored.state,{contextKey:stored.contextKey,revision:stored.revision}))return null;}
- const found=phoneServices.get(key);if(found?.meta===c.chatMetadata)return found.promise;
- const row={meta:c.chatMetadata,promise:null};phoneServices.set(key,row);
+ const found=phoneServices.get(key);if(found?.meta===metadata){const service=await found.promise;assertCurrent();return ready(service);}
+ const row={meta:metadata,promise:null};phoneServices.set(key,row);
  row.promise=(async()=>{
   phoneSeedPromise??=fetch(new URL('./phone-seed.json',import.meta.url)).then(r=>{if(!r.ok)throw Error('手机初始配置加载失败：'+r.status);return r.json();});
   const seed=await phoneSeedPromise;
-  if(phoneChatKey(context())!==key||context().chatMetadata!==c.chatMetadata)throw Error('聊天已切换，手机尚未初始化。');
-  if(!stored)await ensureMatrixDatabase();
+  assertCurrent();if(!stored){await ensureMatrixDatabase();assertCurrent();}
   const storage=createPhoneDatabaseStorage({database:matrixHost.createPhoneDatabaseBridge(),contextKey:key});
-  const service=createPhoneService({seed,storage,contextKey:key,onChange:phoneChanged});await service.init();row.service=service;return service;
+  const service=createPhoneService({seed,storage,contextKey:key,onChange:phoneChanged});await ready(service,true);row.service=service;return service;
  })();
- try{return await row.promise;}catch(error){if(phoneServices.get(key)===row&&!error.phoneStorageUncertain)phoneServices.delete(key);throw error;}
+ try{const service=await row.promise;assertCurrent();return service;}catch(error){if(phoneServices.get(key)===row&&!error.phoneStorageUncertain)phoneServices.delete(key);throw error;}
 }
 const phoneTurn=createPhoneTurnHost({getContext:context,persistMetadata:persistConversationMetadata,phoneService:getPhoneService,isGenerating:()=>isGenerating()||!!revisionController.active(),onChange:phoneChanged,onError:error});
 async function reconcilePhoneHistory(){
@@ -280,13 +293,16 @@ function phoneDesktop(){
  return {title:life.world.name,subtitle:'当前角色的生活应用',theme:life.world.theme,apps:life.world.apps.map(id=>({id,name:life.world.appNames?.[id]??names[id]??id})),emptyLabel:'当前世界未启用应用'};
 }
 async function openVirtualPhone({docId,appId}={}){
- if(!await mayLeaveUtility())return false;let service;try{service=await getPhoneService();if(!service)throw Error('当前正在生成，请稍后重试打开手机。');if(appId)await initializeLifeForCurrentSelection(service);}catch(cause){
+ const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,ownsCurrent=()=>{const live=context();return phoneChatKey(live)===key&&live.chatMetadata===metadata&&live.chat===chat;};
+ if(!await mayLeaveUtility()||!ownsCurrent())return false;let service;try{service=await getPhoneService(c);if(!ownsCurrent())return false;if(!service)throw Error('当前正在生成，请稍后重试打开手机。');if(appId)await initializeLifeForCurrentSelection(service);}catch(cause){
+  if(!ownsCurrent())return false;
   close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('手机待核对','<section class="tisya-sub-card" role="alert"><h3>手机暂时未打开</h3><p>'+esc(cause.message)+'</p><p>原手机进度已保留。请核对当前人物、世界和聊天来源后重试。</p><div class="tisya-actions"><button type="button" data-phone-retry>重试</button><button type="button" data-phone-identity>核对身份与世界</button><button type="button" data-phone-dismiss>返回</button></div></section>');
   query('[data-phone-retry]').onclick=()=>openVirtualPhone({docId,appId}).catch(error);query('[data-phone-identity]').onclick=()=>openIdentity().catch(error);query('[data-phone-dismiss]').onclick=()=>hidePage();return false;
  }
+ if(!ownsCurrent())return false;
  close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;
  page('手机','<div id="tisya-phone-host-slot"></div>');
- const frame=document.createElement('iframe'),url=new URL('./phone.html',import.meta.url);url.searchParams.set('chat',phoneChatKey(context()));if(typeof docId==='string'&&docId)url.searchParams.set('doc',docId);if(appId)url.searchParams.set('app',appId);
+ const frame=document.createElement('iframe'),url=new URL('./phone.html',import.meta.url);url.searchParams.set('chat',key);if(typeof docId==='string'&&docId)url.searchParams.set('doc',docId);if(appId)url.searchParams.set('app',appId);
  frame.src=url.href;frame.title='缇斯亚虚拟手机';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-downloads');frame.style.cssText='display:block;width:100%;height:calc(100dvh - 130px);min-height:420px;border:0;border-radius:16px;background:#f4f5f1';
  query('#tisya-phone-host-slot').append(frame);utility={kind:'phone',root:frame,requestLeave(){return frame.contentWindow?.tisyaPhoneApp?.requestLeave?.()??{allowed:true};},dispose(){frame.contentWindow?.tisyaPhoneApp?.dispose?.();frame.remove();}};return true;
 }
@@ -996,7 +1012,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       await phoneTurn.stopped().catch(error);await Promise.all([matrixHost.event('GENERATION_STOPPED'),communication.stopped().catch(error)]);
      });
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
-     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const service=await phoneTurn.service();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service();assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,()=>reconcilePhoneHistory().catch(error));}
      window.addEventListener('pagehide',event=>{if(!event.persisted){defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
 

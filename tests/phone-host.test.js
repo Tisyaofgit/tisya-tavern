@@ -165,13 +165,13 @@ test('正文marker拒绝跨源页面，不允许以当前状态替代未找到�
  assert.throws(()=>mountPhoneMarkers(document,document.body,assistant(),{phoneUrl:'https://elsewhere.test/phone.html',contextKey:'chat-key'}),code('PHONE_FRAME_ORIGIN'));
 });
 
-test('候选接线包含实际双预设hook与延后候选归档、显式恢复、聊天iframe门禁',async()=>{
+test('候选接线包含实际双预设hook与延后候选归档、显式恢复',async()=>{
  const source=await readFile(new URL('../index.js',import.meta.url),'utf8');
  assert.equal((source.match(/getContractorMessages:turnDirections/g)??[]).length,2);
  assert.ok(source.includes('if(!delegated)await phoneTurn.finished({accepted})'));
  assert.ok(source.includes('await phoneTurn.finished({accepted:true});return result;'));
  assert.ok(source.includes('recoverPending:options=>phoneTurn.recoverPending(options)'));
- assert.ok(source.includes("url.searchParams.set('chat',phoneChatKey(context()))"));
+ // Captured iframe ownership across navigation is executed in phone-entry-switch.test.js.
 });
 
 test('被拒的坏JSON、错ack、错request与坏引用保留证据，冷重开后下一轮仍可成功',async t=>{
