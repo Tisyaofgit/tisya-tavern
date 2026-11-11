@@ -7,6 +7,25 @@ import {mountMessageAppearance,mountMessageVisual} from '../message-ui.js';
 import {mountWorldExtra} from '../world-extra.js';
 import {preserveNativePanels} from '../native-panels.js';
 
+test('connected host status frame stays visible when its rendered source differs from the projected source',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;
+ d.head.innerHTML='<style>body.tisya-active .tisya-source-concealed{display:none!important}</style>';d.body.className='tisya-active';
+ d.body.innerHTML='<div class="mes_block"><div class="mes_text tisya-source-concealed"><p class="private">PRIVATE_RAW</p><div class="TH-render"><pre><code>host-expanded source</code></pre><div class="TH-collapse-code-block-button"></div><iframe id="TH-message--0--0"></iframe></div></div></div>';
+ const native=d.querySelector('.mes_text'),frame=native.querySelector('iframe'),parent=frame.parentElement,realm=frame.contentWindow;
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'status',ruleName:'status',html:'<script>hostMacro()</script><p>status</p>'}]});
+ try{for(let i=0;i<3;i++){keeper.refresh();assert.notEqual(w.getComputedStyle(native).display,'none');assert.equal(frame.parentElement,parent);assert.equal(frame.contentWindow,realm);assert.equal(native.querySelectorAll('iframe').length,1);assert.equal(w.getComputedStyle(parent.querySelector('pre')).display,'none');assert(native.querySelector('.private').classList.contains('tisya-native-pruned'));assert.equal(keeper.status().mounted,0,'an unmatched host frame must not be claimed as a matched projected panel');}}finally{keeper.dispose();await w.happyDOM.abort();}
+});
+
+test('preserved sole host status frame does not reveal raw reply, cells, vars, or archive siblings',async()=>{
+ const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;
+ d.head.innerHTML='<style>body.tisya-active .tisya-source-concealed{display:none!important}</style>';d.body.className='tisya-active';
+ d.body.innerHTML='<div class="mes_block"><div class="mes_text tisya-source-concealed"><pre class="private"></pre><div class="TH-render"><pre><code>host-expanded source</code></pre><iframe id="TH-message--0--0"></iframe></div></div></div>';
+ const native=d.querySelector('.mes_text'),raw=native.querySelector('.private'),frame=native.querySelector('iframe'),parent=frame.parentElement,realm=frame.contentWindow;
+ const original=fixture({body:'1\n中性正文',extra:'<StatusPlaceHolderImpl/><cells format="delta">@TIME tick(+1h)</cells><vars format="xml"><![CDATA[<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>]]></vars>'});raw.textContent=original;
+ const keeper=preserveNativePanels(d,native,{extraPanels:[{id:'status',ruleName:'status',html:'<script>hostMacro()</script><p>status</p>'}]});
+ try{keeper.refresh();assert.notEqual(w.getComputedStyle(native).display,'none');assert.equal(w.getComputedStyle(raw).display,'none');assert.equal(raw.textContent,original);assert.equal(frame.parentElement,parent);assert.equal(frame.contentWindow,realm);assert.equal(native.querySelectorAll('iframe').length,1);assert.equal(keeper.status().mounted,0);}finally{keeper.dispose();await w.happyDOM.abort();}
+});
+
 test('structured projection preserves only matching public native frames without reload or duplication',async()=>{
  const w=new Window({settings:{disableIframePageLoading:true}}),d=w.document;d.body.innerHTML='<div class="mes_block"><div class="mes_text">PRIVATE_RAW<div class="host"><pre><code></code></pre><iframe id="TH-message--0-0"></iframe></div><div class="secret"><pre><code>private source</code></pre><iframe id="TH-message--0-1"></iframe></div></div></div>';
  const native=d.querySelector('.mes_text'),html='<script>getVariables()</script><button>open</button>',code=native.querySelector('code');code.textContent=html;

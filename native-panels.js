@@ -52,7 +52,13 @@ export function preserveNativePanels(document,native,display,{formatBody=text=>t
   assigned=new Map();for(const item of wanted){const roots=sources.get(item.source)??[];if(roots.length===1&&wanted.filter(p=>p.source===item.source).length===1)assigned.set(item,roots[0]);}
   const bodyRoots=bodyCards.map(card=>assigned.get(card)).filter(Boolean);
   if(bodyRoots.some((root,i)=>i>0&&!(bodyRoots[i-1].compareDocumentPosition(root)&4)))for(const card of bodyCards)assigned.delete(card);
-  const roots=new Set(assigned.values());for(const root of ownedRoots)if(!roots.has(root)){root.classList.remove('tisya-native-panel-root','tisya-native-extra-collapsed');ownedRoots.delete(root);}
+  const roots=new Set(assigned.values());
+  // The host can expand macros before creating its live frame. A sole safe
+  // helper surface is still host-owned when its source no longer matches our
+  // projection. Preserve that existing surface, without claiming panel identity
+  // or revealing the surrounding raw reply. Ambiguous/body layouts stay strict.
+  if(!bodyParts&&wanted.length===1&&!roots.size){const frames=[...native.querySelectorAll('iframe[id^="TH-message--"]')].filter(frame=>frame.isConnected);if(frames.length===1){const root=frames[0].closest('.TH-render');if(root&&native.contains(root)&&safeRoot(root)){roots.add(root);ownedRoots.add(root);toggle(root,'tisya-native-panel-root',true);toggle(root,'tisya-native-extra-collapsed',false);}}}
+  for(const root of ownedRoots)if(!roots.has(root)){root.classList.remove('tisya-native-panel-root','tisya-native-extra-collapsed');ownedRoots.delete(root);}
   for(const [item,root]of assigned){ownedRoots.add(root);toggle(root,'tisya-native-panel-root',true);toggle(root,'tisya-native-extra-collapsed',item.owner==='extra'&&!expanded);}
   placeBody();
   const visible=roots.size>0||bodyNodes.length>0;toggle(native,'tisya-native-panels',visible);toggle(native,'tisya-native-body-flow',!!bodyParts);toggle(native,'tisya-native-collapsed',!expanded);toggle(layout,'tisya-native-layout',visible);
