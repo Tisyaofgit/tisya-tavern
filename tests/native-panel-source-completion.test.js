@@ -35,3 +35,21 @@ test('ambiguous duplicate source identities and contradictory existing order rem
  try{for(const base of [code('A')+code('A'),code('B')+code('A')])assert.equal(prepareNativePanelSource(d,base,display),base);const duplicate=p.project(fixture({body:'1\nCARD_A',extra:'CARD_A'}));for(const base of ['<p>原生正文</p>',code('A')])assert.equal(prepareNativePanelSource(d,base,duplicate),base);}
  finally{await w.happyDOM.abort();}
 });
+
+test('a host-transformed public source is retained while a missing public document is completed once',async()=>{
+ const w=new Window(),d=w.document;
+ const original='<html><body><script>const label=\'&quot;\';\n    \ngetVariables();</script></body></html>';
+ const hosted='<html><body><script>const label=\'"\';\n\ngetVariables();</script></body></html>';
+ const second=documentFor('B'),display={extraPanels:[{id:'first',ruleName:'first',html:original},{id:'second',ruleName:'second',html:second}]};
+ const base='<p>原有附件</p><pre><code>'+escape(hosted)+'</code></pre>';
+ try{const output=prepareNativePanelSource(d,base,display);assert.deepEqual(sources(d,output),[hosted,second]);assert.equal(prepareNativePanelSource(d,output,display),output);assert.equal(display.extraPanels[0].html,original);assert.equal(d.querySelector('script,iframe'),null);}
+ finally{await w.happyDOM.abort();}
+});
+
+test('completion rejects public documents whose host-normalized identities collide',async()=>{
+ const w=new Window(),d=w.document;
+ const encoded='<html><body><script>const label=\'&quot;\';</script></body></html>',decoded='<html><body><script>const label=\'"\';</script></body></html>';
+ const display={extraPanels:[{id:'one',ruleName:'one',html:encoded},{id:'two',ruleName:'two',html:decoded}]};
+ try{for(const base of ['<p>原文</p>','<pre><code>'+escape(encoded)+'</code></pre>','<pre><code>'+escape(decoded)+'</code></pre>'])assert.equal(prepareNativePanelSource(d,base,display),base);}
+ finally{await w.happyDOM.abort();}
+});

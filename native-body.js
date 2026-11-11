@@ -1,6 +1,18 @@
 export function requiresNativePanel(document,html){const t=document.createElement('template');t.innerHTML=html;return !!t.content.querySelector('script')||[...t.content.querySelectorAll('*')].some(n=>[...n.attributes].some(a=>/^on/i.test(a.name)));}
 export const canonicalNativeSource=value=>value.replace(/\r\n?/g,'\n').trim();
 
+// Keep exact source identity across the two observed host paths: a public
+// document inserted as inert code, and a fenced document passed through
+// Showdown plus finishMessageFormatting. The latter removes whitespace-only
+// lines and decodes code entities once. This is not fuzzy HTML equivalence and
+// never changes the real source, iframe, or authored script. See the pinned
+// host comparison in docs/validation/native-panel-source-20261111.md.
+export function nativePanelSourceIdentities(document,value){
+ const source=canonicalNativeSource(value),code=document.createElement('code');
+ code.innerHTML=source.replace(/^[ \t]+$/gm,'').replaceAll('<','&lt;').replaceAll('>','&gt;');
+ return new Set([source,canonicalNativeSource(code.textContent)]);
+}
+
 // Only complete HTML fences whose entire document came from this display pass's
 // public regex runs are eligible. Literal examples and incomplete fences stay text.
 function bodyParts(document,display,{includeStatic=false}={}){

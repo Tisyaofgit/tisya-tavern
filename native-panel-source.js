@@ -1,6 +1,6 @@
 import {inspectMessage} from './reader.js';
 import {splitExtraDocuments} from './world-extra.js';
-import {requiresNativePanel,nativeBodyParts} from './native-body.js';
+import {requiresNativePanel,nativeBodyParts,nativePanelSourceIdentities} from './native-body.js';
 
 const canonical=s=>s.replace(/\r\n?/g,'\n').trim();
 // A Markdown fence glued to an XML tag/CDATA is not a code block. Prepare only
@@ -12,18 +12,18 @@ export function prepareNativePanelSource(document,html,display){
  const wanted=[...body,...(display?.extraPanels??[]).filter(row=>row.ruleName).flatMap(row=>splitExtraDocuments(row.html))
   .filter(part=>/^\s*(?:<!doctype\s+html\b|<html\b)/i.test(part)&&requiresNativePanel(document,part))];
  if(!wanted.length)return html;
- const identities=wanted.map(canonical);
+ const identities=wanted.map(canonical),aliases=identities.map(source=>nativePanelSourceIdentities(document,source));
  // Repeated documents have no unique owner. Do not manufacture two runtime
  // candidates for a source that the later ownership check cannot distinguish.
- if(new Set(identities).size!==identities.length)return html;
+ if(aliases.some((keys,index)=>aliases.some((other,j)=>j!==index&&[...keys].some(key=>other.has(key)))))return html;
  const root=document.createElement('div');root.innerHTML=html;
- const existing=[...root.querySelectorAll('pre')].map(pre=>({pre,source:canonical((pre.querySelector('code')??pre).textContent)}));
+ const existing=[...root.querySelectorAll('pre')].map(pre=>{const source=canonical((pre.querySelector('code')??pre).textContent);return {pre,source,owner:aliases.findIndex(keys=>keys.has(source))};});
  // An unidentified native runtime may already own a transformed source. Do not
  // start a second copy merely because its bytes differ from our projection.
- if(root.querySelector('iframe,.TH-render')||existing.some(row=>requiresNativePanel(document,row.source)&&!identities.includes(row.source)))return html;
- const known=existing.filter(row=>identities.includes(row.source));
- if(new Set(known.map(row=>row.source)).size!==known.length||known.some((row,index)=>index>0&&identities.indexOf(known[index-1].source)>identities.indexOf(row.source)))return html;
- const present=new Map(known.map(row=>[row.source,row.pre]));
+ if(root.querySelector('iframe,.TH-render')||existing.some(row=>requiresNativePanel(document,row.source)&&row.owner<0))return html;
+ const known=existing.filter(row=>row.owner>=0);
+ if(new Set(known.map(row=>row.owner)).size!==known.length||known.some((row,index)=>index>0&&known[index-1].owner>row.owner))return html;
+ const present=new Map(known.map(row=>[identities[row.owner],row.pre]));
  let added=false;
  for(const [index,part]of wanted.entries()){
   if(present.has(identities[index]))continue;

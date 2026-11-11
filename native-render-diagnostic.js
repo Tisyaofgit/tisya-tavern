@@ -76,9 +76,13 @@ export function inspectNativeRender(document, node, {version, structured, projec
  const mixed = content.some(element => tools.includes(element));
  const later = (contentNodes, toolNodes, ordered) => contentNodes.filter(element => toolNodes.some(toolbar => ordered.indexOf(toolbar) < ordered.indexOf(element))).length;
  const children = [...block.children], domLater = tools.length && !mixed ? later(content, tools, children) : null;
- const blockStyle = style(block), visibleContent = content.filter(element => visibility(element).hiddenByStyles !== true), visibleTools = tools.filter(element => visibility(element).hiddenByStyles !== true);
+ // Check the actual toolbar/content before lifting it to a layout child. A
+ // hidden toolbar inside a visible header does not participate in visible flow.
+ const visibleChildren = nodes => [...new Set(nodes.filter(Boolean).filter(element => visibility(element).hiddenByStyles !== true).map(directChild).filter(Boolean))];
+ const blockStyle = style(block), visibleContent = visibleChildren([source, ...projections, ...tails]), visibleTools = visibleChildren(toolbars);
+ const visibleMixed = visibleContent.some(element => visibleTools.includes(element));
  let orderBasis = 'unavailable', flowLater = null;
- if (visibleTools.length && !mixed && blockStyle.available) {
+ if (visibleTools.length && !visibleMixed && blockStyle.available) {
   let ordered = children;
   if (['flex', 'inline-flex'].includes(blockStyle.display) && ['column', 'column-reverse'].includes(blockStyle.direction)) {
    ordered = children.map((element, index) => ({element, index, order: style(element).order})).sort((a, b) => a.order - b.order || a.index - b.index).map(item => item.element);

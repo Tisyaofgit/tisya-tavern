@@ -1,5 +1,5 @@
 import {splitExtraDocuments,mountDisplayDocument} from './world-extra.js';
-import {bodyDisplayParts,canonicalNativeSource as canonical,requiresNativePanel} from './native-body.js';
+import {bodyDisplayParts,canonicalNativeSource as canonical,nativePanelSourceIdentities,requiresNativePanel} from './native-body.js';
 import {formatProse,proseStyles} from './prose.js';
 export {requiresNativePanel} from './native-body.js';
 // Source identity is local to the actual content node and message revision.
@@ -15,7 +15,7 @@ export function captureNativePanelSources(native,revision){
  }
  return record.roots;
 }
-const CSS='.tisya-native-panel-root>pre{display:none!important}body.tisya-active .tisya-source-concealed.tisya-native-panels{display:block!important}.tisya-native-pruned{display:none!important}.mes_block.tisya-native-layout{display:flex!important;flex-direction:column!important}.tisya-native-layout>.tisya-message-visual{order:10}.tisya-native-layout>.tisya-native-panels{order:20}.tisya-native-layout>.tisya-message-actions-tail{order:30}.tisya-native-layout>.tisya-actions{order:40}.tisya-native-layout>:is(.mes_buttons,.edit_block,.edit_buttons){order:50}body.tisya-active .tisya-source-concealed.tisya-native-panels.tisya-native-collapsed:not(.tisya-native-body-flow){display:none!important}.tisya-native-extra-collapsed{display:none!important}.tisya-native-body-wait{font:13px/1.7 system-ui;color:#b7c9ba;padding:12px 4px}';
+const CSS='.tisya-native-panel-root>pre{display:none!important}body.tisya-active .tisya-source-concealed.tisya-native-panels:not([hidden]){display:block!important}.tisya-native-pruned{display:none!important}.mes_block.tisya-native-layout{display:flex!important;flex-direction:column!important}.tisya-native-layout>.tisya-message-visual{order:10}.tisya-native-layout>.tisya-native-panels{order:20}.tisya-native-layout>.tisya-message-actions-tail{order:30}.tisya-native-layout>.tisya-actions{order:40}.tisya-native-layout>:is(.mes_buttons,.edit_block,.edit_buttons){order:50}body.tisya-active .tisya-source-concealed.tisya-native-panels.tisya-native-collapsed:not(.tisya-native-body-flow){display:none!important}.tisya-native-extra-collapsed{display:none!important}.tisya-native-body-wait{font:13px/1.7 system-ui;color:#b7c9ba;padding:12px 4px}';
 const toggle=(node,name,value)=>{if(node&&node.classList.contains(name)!==value)node.classList.toggle(name,value);};
 // A claimed source wrapper may contain helper controls, its source and one frame.
 // Never reveal an arbitrary parent containing other raw/private message content.
@@ -28,6 +28,7 @@ export function preserveNativePanels(document,native,display,{formatBody=text=>t
   return parts.map((html,index)=>{const nativeHosted=requiresNativePanel(document,html),id=parts.length>1?row.id+':document:'+index:row.id;if(nativeHosted)wanted.push({source:canonical(html),owner:'extra',id});return {...row,id,html,nativeHosted};});
  })};
  if(!wanted.length)return {display,refresh(){},dispose(){}};
+ const identities=new Map(wanted.map(item=>[item,nativePanelSourceIdentities(document,item.source)]));
  let style=document.getElementById('tisya-native-panels-style');if(!style){style=document.createElement('style');style.id='tisya-native-panels-style';style.textContent=CSS;document.head.append(style);}
  const marked=new Set(),wrappers=new Set(),ownedRoots=new Set(),layout=native.parentElement,bodyNodes=[];let expanded=true,alive=true,assigned=new Map(),appearanceStamp=null,presentation=null;
  let cardIndex=0;
@@ -49,15 +50,13 @@ export function preserveNativePanels(document,native,display,{formatBody=text=>t
  function refresh(){
   if(!alive)return;formatBodyNodes();
   const sources=new Map();for(const [root,{source}]of captureNativePanelSources(native))if((root.matches('.TH-render')||root.querySelector('iframe[id^="TH-message--"]'))&&safeRoot(root)){const rows=sources.get(source)??[];rows.push(root);sources.set(source,rows);}
-  assigned=new Map();for(const item of wanted){const roots=sources.get(item.source)??[];if(roots.length===1&&wanted.filter(p=>p.source===item.source).length===1)assigned.set(item,roots[0]);}
+  // A transformed source still needs a unique public owner. Collisions between
+  // public documents or multiple matching roots remain unassigned.
+  const candidates=new Map(wanted.map(item=>[item,[...new Set([...identities.get(item)].flatMap(source=>sources.get(source)??[]))]]));
+  assigned=new Map();for(const [item,roots]of candidates)if(roots.length===1&&[...candidates.values()].filter(rows=>rows.includes(roots[0])).length===1)assigned.set(item,roots[0]);
   const bodyRoots=bodyCards.map(card=>assigned.get(card)).filter(Boolean);
   if(bodyRoots.some((root,i)=>i>0&&!(bodyRoots[i-1].compareDocumentPosition(root)&4)))for(const card of bodyCards)assigned.delete(card);
   const roots=new Set(assigned.values());
-  // The host can expand macros before creating its live frame. A sole safe
-  // helper surface is still host-owned when its source no longer matches our
-  // projection. Preserve that existing surface, without claiming panel identity
-  // or revealing the surrounding raw reply. Ambiguous/body layouts stay strict.
-  if(!bodyParts&&wanted.length===1&&!roots.size){const frames=[...native.querySelectorAll('iframe[id^="TH-message--"]')].filter(frame=>frame.isConnected);if(frames.length===1){const root=frames[0].closest('.TH-render');if(root&&native.contains(root)&&safeRoot(root)){roots.add(root);ownedRoots.add(root);toggle(root,'tisya-native-panel-root',true);toggle(root,'tisya-native-extra-collapsed',false);}}}
   for(const root of ownedRoots)if(!roots.has(root)){root.classList.remove('tisya-native-panel-root','tisya-native-extra-collapsed');ownedRoots.delete(root);}
   for(const [item,root]of assigned){ownedRoots.add(root);toggle(root,'tisya-native-panel-root',true);toggle(root,'tisya-native-extra-collapsed',item.owner==='extra'&&!expanded);}
   placeBody();

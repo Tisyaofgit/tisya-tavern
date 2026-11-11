@@ -63,3 +63,15 @@ test('toolbar evidence distinguishes actual content after it from CSS column ord
   assert.equal(node.outerHTML, before);
  } finally { await w.happyDOM.abort(); }
 });
+
+test('a hidden toolbar in a visible header does not make the actual trailing actions look misplaced', async () => {
+ const {w, d, node} = setup('<header><div class="mes_buttons" style="display:none"></div></header><div class="mes_text"></div><div class="tisya-message-visual"></div><div class="tisya-message-actions-tail"></div><div class="tisya-actions"></div>');
+ try {
+  const before = node.outerHTML, result = inspectNativeRender(d, node);
+  assert.equal(result.toolbar.count, 2);
+  assert.equal(result.toolbar.domLast, false, 'DOM position still includes the hidden original toolbar');
+  assert.equal(result.toolbar.last, true, 'visible flow excludes the hidden original toolbar before mapping its ancestor');
+  assert.equal(result.toolbar.laterContentCount, 0);
+  assert.equal(node.outerHTML, before);
+ } finally { await w.happyDOM.abort(); }
+});
