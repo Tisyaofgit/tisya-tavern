@@ -29,3 +29,19 @@ candidate 19 的用户现场检查显示：原生消息和祖先均可见，没�
 ## 进入检查
 
 在出问题的消息上打开“更多 → 消息操作 → 显示检查”，待读取完成后使用“复制检查”。记录附加 `runtimeInspection`，原有 `tisya.native-render-diagnostic/1` 字段保持兼容。
+
+
+## candidate 21：正则进入显示链之前的只读检查
+
+占位型开场白可能只有标记而没有直接的 HTML 代码块。若宿主控制器属于当前消息、运行候选为空，单靠助手 enabled/depth 还不能判断前面的显示规则是否进入链路。candidate 21 为现有记录附加 `regexInspection`，诊断不修改显示行为。
+
+- 分别读取当前原始 `chatId` 是否存在、Tisya `nativeRegex` 开关、宿主 regex 扩展禁用状态；只输出布尔值，不输出 ID。
+- 分别统计宿主 `getRegexScripts({allowedOnly:false})` 和 `allowedOnly:true` 的规则总数与 disabled/Markdown/当前消息 placement 的元数据资格。该 getter 的许可筛选不负责判断 regex 扩展禁用状态。
+- 记录 Tisya 已有 pipeline 的 enabled、当前规则计数与 prepared entry 数量；读取时间不表示 pipeline 最近刷新时间。
+- 不执行规则、不测试消息匹配、不编译、不刷新 pipeline。元数据资格不证明深度、宏替换、匹配、前端生成或脚本启动成功。
+- 缺失、访问器、字段类型错误、读取失败、超时和扫描预算不足显式保留 unknown；不返回卡名、规则名、find/replace、聊天正文、URL、变量或异常正文。
+- 各读取并非原子快照。异步返回继续使用原消息与面板身份校验；关闭面板、切换候选或切换消息后丢弃旧结果。
+
+固定宿主正则依据为 `Darkatse/TauriTavern@85dc99089e3fcc9d3a0aafc085564bd642895261` 的 `src/scripts/extensions/regex/engine.js` 与预设字段读取链。兼容依据不表示自动识别了用户设备上的实际源码版本。
+
+中性占位输入与实际模块/固定宿主函数探针可重现多种相同外观：规则缺失、未允许、禁用或显示位置不符等。现场原因为未知，候选 21 是定位更新；真实宿主与 Android 的前端显示仍需用户检查，不用 Node/DOM 通过代替。

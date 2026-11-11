@@ -78,6 +78,7 @@ import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
 import {createNativeDisplayPipeline} from './native-display.js';
 import {inspectNativeRender} from './native-render-diagnostic.js';
 import {collectNativeRuntimeDiagnostic,nativeRuntimeDiagnosticSummary} from './native-runtime-diagnostic.js';
+import {collectNativeRegexDiagnostic} from './native-regex-diagnostic.js';
 import {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from '/scripts/extensions/regex/engine.js';
 import {readNarrative} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
@@ -621,17 +622,22 @@ async function showMessageDisplayDiagnostic(token){
   const order=report.toolbar?.last===true?'位于内容之后':report.toolbar?.last===false?'后面仍有消息内容':'当前布局尚不能判断',counts=report.counts??{};
   return `<p>${esc(report.runtime?.note??'当前消息未在显示区。')}</p><p>扩展版本：${esc(report.version??'未知')}<br>页面节点：${report.runtime?.activeIframeCount??0}，其中隐藏：${hidden}<br>宿主占位：${counts.hostPlaceholders??0}；源码开关：${counts.codeToggles??0}<br>消息按钮：${esc(order)}</p>`;
  };
- sheet('显示检查',`<div id="tisya-render-diagnostic-overview">${describe(report)}</div><p id="tisya-runtime-diagnostic-summary" role="status">正在读取助手渲染资格和本条页面的运行状态……</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify({...report,runtimeInspection:{status:'collecting'}},null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
+ sheet('显示检查',`<div id="tisya-render-diagnostic-overview">${describe(report)}</div><p id="tisya-runtime-diagnostic-summary" role="status">正在读取显示规则、助手渲染资格和本条页面的运行状态……</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify({...report,runtimeInspection:{status:'collecting'},regexInspection:{status:'collecting'}},null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
  overlay._messageToken=token;
  const epoch=sheetEpoch,copy=overlay.querySelector('[data-tisya-action="msg-display-check-copy"]');copy.disabled=true;
- const runtimeInspection=await collectNativeRuntimeDiagnostic(document,node,{getContext:context});
+ const [runtimeInspection,regexInspection]=await Promise.all([
+  collectNativeRuntimeDiagnostic(document,node,{getContext:context}),
+  collectNativeRegexDiagnostic({isUser:!!token.message.is_user,context:()=>context(),theme:()=>configStore.read().world.theme,
+   nativeDisplay:nativeDisplay?{state:()=>nativeDisplay.state(),report:()=>nativeDisplay.report()}:undefined,
+   hostRules:{allowedOnly:{all:()=>getRegexScripts({allowedOnly:true})},all:{all:()=>getRegexScripts({allowedOnly:false})}}})
+ ]);
  if(epoch!==sheetEpoch||overlay._messageToken!==token)return;
  let current;try{current=nodeFor(token);}catch{sheet('显示检查','<p role="status">消息或聊天已变化，请在当前消息重新打开检查。</p>');return;}
  if(current!==node){sheet('显示检查','<p role="status">消息显示已更新，请在当前消息重新打开检查。</p>');return;}
  const completed=inspect();
  overlay.querySelector('#tisya-render-diagnostic-overview').innerHTML=describe(completed);
- overlay.querySelector('#tisya-render-diagnostic').textContent=JSON.stringify({...completed,runtimeInspection},null,2);
- overlay.querySelector('#tisya-runtime-diagnostic-summary').textContent=nativeRuntimeDiagnosticSummary(runtimeInspection).join(' ');
+ overlay.querySelector('#tisya-render-diagnostic').textContent=JSON.stringify({...completed,runtimeInspection,regexInspection},null,2);
+ overlay.querySelector('#tisya-runtime-diagnostic-summary').textContent=nativeRuntimeDiagnosticSummary(runtimeInspection).join(' ')+' 显示规则的读取结果已写入详细检查记录。';
  copy.disabled=false;
 }
 function openCandidates(token){
