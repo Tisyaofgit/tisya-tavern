@@ -315,22 +315,22 @@
       "options": [
         {
           "id": "N06-A",
-          "label": "重大抉择留给玩家 + 停在拍板临界点 (默认)",
-          "effect": "@STOP.GATE := Reserve consequential branch, alliance, or relationship-shifting choices for {{user}}; halt cleanly at the exact threshold requiring {{user}}'s decision with zero meta-prompts.",
+          "label": "重大抉择由玩家决定（默认）",
+          "effect": "@STOP.GATE := Complete ordinary local exchanges and authorized actions to a natural stopping beat. When an already-established situation actually requires {{user}}'s unauthorized consequential branch, alliance, or relationship commitment, stop before that decision. Do not create a crossroads just to end the reply. A character's question must serve their present purpose; optional actions do not determine the body's ending. A genuine authorization boundary takes precedence over the length floor.",
           "default": true,
           "source_line": 146
         },
         {
           "id": "N06-B",
           "label": "自然戏剧节拍停点",
-          "effect": "@STOP.GATE := Conclude at a natural dramatic beat after a complete local exchange, halting earlier if an unauthorized major choice is reached.",
+          "effect": "@STOP.GATE := Conclude at a natural dramatic beat after a complete local exchange. Actions settling, a character reaction, or quiet continuity can close the scene; no question or new choice is required. Halt earlier only when an already-established situation actually reaches an unauthorized major choice. Optional actions do not determine the body's ending; a genuine authorization boundary takes precedence over the length floor.",
           "default": false,
           "source_line": 147
         },
         {
           "id": "N06-C",
           "label": "授权片段一口气写透",
-          "effect": "@STOP.GATE := Complete the explicitly authorized plot segment and its immediate causal aftermath in full before closing the turn.",
+          "effect": "@STOP.GATE := Complete the explicitly authorized plot segment and its immediate causal aftermath in full, then close at its natural endpoint. Stop before any consequential choice beyond that authorization. Do not add a question, new dilemma, or unresolved task merely to supply a next-turn opening; optional actions remain suggestions after the completed scene.",
           "default": false,
           "source_line": 148
         }

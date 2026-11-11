@@ -6,7 +6,7 @@ import {companionSlots} from './host-companion-wire.mjs';
 // V3 wire only. These projections are display data, never archive or MVU writes.
 export const V3_REPLY_ORDER=Object.freeze(['before','title','body','after','extra','actions']);
 const HEART=new Set(['输入评价','回应用户评价','剧情吐槽']);
-const OUTCOMES=new Set(['本轮变化','角色主动','世界动向','关系位移','人物厚度','语言亮点','下一步张力']);
+const OUTCOMES=new Set(['本轮变化','角色主动','世界动向','关系位移','人物厚度','语言亮点','下一步张力','余波','错位','牵连','惯性','生长','余地']);
 const TODO=new Set(['剧情待处理任务','系统任务','下轮基础任务']);
 const BLANKABLE=new Set([...OUTCOMES,...TODO,'候选','已交付']);
 export const BEFORE_ROWS=Object.freeze(Object.fromEntries([...['用户偏好','文风用词','情节取向','角色锚点','篇幅重点','信息迷雾','文风','世界观','环境','玩法','世界书','人物','历史','世界推演','伏笔','工具','待定'].map(k=>[k,1]),['设计',3],['解锁',3],...[...HEART].map(k=>[k,2])]));

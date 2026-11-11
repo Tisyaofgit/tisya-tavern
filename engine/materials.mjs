@@ -36,12 +36,14 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
     if(context.audience!=='author'&&key==='true_name'&&['D','E','Access D','Access E'].includes(r.values.true_name_lock))continue;
     values[key]=['known','derived'].includes(state)?v:({unknown:'?',cleared:'!',none:'∅',not_applicable:'—'})[state];
     if(r.metadata?.[key]?.gauge_max!=null&&['known','derived'].includes(state))values[key]+='/'+r.metadata[key].gauge_max;
-    if(!f.read_only&&!f.lock_level)used.add(key);
+    if(creationFieldAllowed(f))used.add(key);
    }
    if(!Object.keys(values).length)continue;
    (blocks['tisya_material_'+(tid==='T_PREF_CHAR_FILTER'?'focus_entities':routes[schema.sheet]??'task_material')]??=[]).push({table_id:tid,record_id:rid,values});
   }
-  const writable=schema.fields.filter(f=>creationFieldAllowed(f)&&(context.audience==='author'||!f.lock_level)&&(!entries.length||!Object.values(rows).every(r=>r.metadata?.phone_projection===true)));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+'/'+f.type+((f.enum??f.options)?'/'+(f.enum??f.options).join('、'):'')+')').join('；'));
+  // The complete form already defines creation fields, types and enums. Delta
+  // targets need only key-to-label mappings for writable fields projected above.
+  const writable=schema.fields.filter(f=>used.has(f.key));if(writable.length)dict.push(tid+'('+schema.label+') 字段：'+writable.map(f=>f.key+'('+f.label+')').join('；'));
  }
  slots=renderBlocks(e,blocks);
  const pendingArchives=(e.data.runtime.archive_queue??[]).filter(b=>b.status==='blocked'||b.plan?.pending?.length);
