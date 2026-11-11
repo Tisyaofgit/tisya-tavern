@@ -29,7 +29,9 @@ export function captureMessages(ctx,{omitLastAssistant=false,excludeFrom=null}={
     if(Number.isInteger(excludeFrom))chat=chat.slice(0,excludeFrom);
     if(omitLastAssistant&&chat.length&&!chat.at(-1).is_user&&!chat.at(-1).is_system)chat=chat.slice(0,-1);
     return chat.map(m=>{
-        const info=m.extra[NS];
+        const info=m&&m.extra&&m.extra[NS];
+        if(!info||!info.uid)fail('MESSAGE_IDENTITY_MISSING','聊天消息尚未保存稳定身份，请等待聊天载入后重试');
+        if(typeof info.uid!=='string')fail('MESSAGE_IDENTITY_INVALID','聊天消息的稳定身份格式无效，原状态已保留');
         // A visible draft may replace an already accepted swipe. Until explicit
         // adoption, replay the accepted source, including after a cold reopen.
         if(!m.is_user&&!m.is_system&&info.pending_sha256&&info.pending_previous)return {...info.pending_previous,uid:info.uid};
@@ -184,15 +186,23 @@ export class Controller{
         // generation also exclude its unfinished assistant tail.
         if(this.generating.get(key)&&!options.preview)options={...options,preview:true,omitLastAssistant:true};
         const previous=this.owners.get(id)??Promise.resolve();
+        // Native loading may append a greeting while save/read/reconcile awaits.
+        // Capture stays read-only; retry through ensureMessages + saveChat before
+        // using a new identity. Never settle an incomplete identity snapshot.
+        const capture=ctx=>{try{return captureMessages(ctx,options);}catch(error){if(error.code!=='MESSAGE_IDENTITY_MISSING')throw error;return null;}};
+        const ownsCurrent=()=>{const live=this.getContext();return chatKey(live)===key&&live.chatMetadata?.[NS]?.chat_uid===id;};
+        const retry=()=>{if(!ownsCurrent())return null;this.onUpdate({status:'检测到请求期间聊天变化，正在按最新内容重算。',pending:true});return {stale:true};};
         // Only one chat's updates are ordered. Different owners remain independent.
         const task=previous.catch(()=>{}).then(async()=>{
-            const live=this.getContext();if(chatKey(live)!==key)return null;
+            const live=this.getContext();if(!ownsCurrent())return null;
             const changed=ensureMessages(live,this.uid);if(changed)await live.saveChat();
-            let bundle=await this.storage.get(id);if(!bundle)throw Error('此聊天尚未绑定引擎，请导入沙盒JSON或绑定空白引擎。');
-            let messages=captureMessages(live,options),stamp=signature(messages);
+            if(!ownsCurrent())return null;
+            let bundle=await this.storage.get(id);if(!ownsCurrent())return null;
+            if(!bundle)throw Error('此聊天尚未绑定引擎，请导入沙盒JSON或绑定空白引擎。');
+            let messages=capture(this.getContext());if(!messages)return retry();const stamp=signature(messages);
             const response=await this.request('/api/plugin/reconcile',{bundle,messages,scope:bundle.journal?.scope??bundle.state.runtime?.scope});
-            if(chatKey(this.getContext())===key&&signature(captureMessages(this.getContext(),options))!==stamp){
-                this.onUpdate({status:'检测到请求期间聊天变化，正在按最新内容重算。',pending:true});return {stale:true};
+            if(ownsCurrent()){
+                const current=capture(this.getContext());if(!current||signature(current)!==stamp)return retry();
             }
             // A chat switch does not erase a completed old chat settlement. Keep
             // it under its captured owner; don't project old data into the new UI.
@@ -204,12 +214,12 @@ export class Controller{
                 const current=await this.storage.get(id);if((current?.local_revision??0)!==expected)throw Error('同一聊天状态版本已变化，较新结果已保留。');
                 await this.storage.set(id,response.bundle);
             }
-            if(chatKey(this.getContext())!==key)return response;
-            const fresh=captureMessages(this.getContext(),options);
-            if(signature(fresh)!==stamp){this.onUpdate({status:'检测到请求期间聊天变化，正在按最新内容重算。',pending:true});return {stale:true};}
+            if(!ownsCurrent())return response;
+            const fresh=capture(this.getContext());
+            if(!fresh||signature(fresh)!==stamp)return retry();
             this.materials.set(id,response.materials??{});this.packets.set(id,response.packet??'');this.onUpdate(response);return response;
         });
-        this.owners.set(id,task);try{const result=await task;if(result?.stale)return this.run(options);return result;}finally{if(this.owners.get(id)===task)this.owners.delete(id);}
+        this.owners.set(id,task);try{const result=await task;if(result?.stale)return ownsCurrent()?this.run(options):null;return result;}finally{if(this.owners.get(id)===task)this.owners.delete(id);}
     }
     async beforeGeneration(type,abort){
         const c=this.getContext();if(!this.enabled(c)||type==='quiet'||type==='impersonate')return;

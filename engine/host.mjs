@@ -84,13 +84,22 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  // The forms database is available regardless of the prompt preset. Reads do
  // not create business rows; all clients share this single bundle CAS boundary.
  async function peekDatabase(){const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS];if(!meta?.chat_uid||meta.owner_chat_key!==key)return null;const bundle=await storage.get(meta.chat_uid);return bundle?{state:clone(bundle.state),revision:bundle.local_revision??0,contextKey:key}:null;}
+ // Reconciliation can remove a detached binding from bundle.state. Its saved
+ // initialization patch remains evidence that this is not a fresh phone.
+ function hasPhoneInitializationPatch(bundle,key,origins){
+  return (bundle.manual_edits??[]).some(edit=>(edit.patch??[]).some(patch=>{
+   if(patch.op!=='set'||patch.path?.[0]!=='tables'||patch.path[1]!=='X_PHONE_BINDINGS')return false;
+   const row=patch.path.length===2?patch.value?.['phone-current']:patch.path.length===3&&patch.path[2]==='phone-current'?patch.value:null;
+   const owner=row?.values?.context_key;return typeof owner==='string'&&(owner===key||origins.includes(owner));
+  }));
+ }
  async function readDatabase(){
   const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS];if(!meta?.chat_uid||meta.owner_chat_key!==key)return null;
   const bundle=await storage.get(meta.chat_uid);if(!bundle)return null;
   const hasIds=(c.chat??[]).every(m=>m.extra?.[NS]?.uid);const current=hasIds?reconcile(bundle,captureMessages(c)).bundle:bundle;
   let allowedOriginContextKeys=[];if(typeof c.chatMetadata?.main_chat==='string'&&c.chatMetadata?.integrity){const scope=JSON.parse(key),parent=JSON.stringify([scope[0],scope[1],c.chatMetadata.main_chat]);if((meta.origin_chat_keys??[]).includes(parent))allowedOriginContextKeys=(meta.origin_chat_keys??[]).filter(k=>{try{const a=JSON.parse(k);return a[0]===scope[0]&&a[1]===scope[1];}catch{return false;}});}
   const restored=restorePhoneDatabaseHistory(current.state,bundle.state,{contextKey:key,allowedOriginContextKeys});
-  return {state:clone(restored),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&!current.state.tables?.X_PHONE_BINDINGS?.['phone-current'],phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+  return {state:clone(restored),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||hasPhoneInitializationPatch(bundle,key,allowedOriginContextKeys)),phoneActionReservations:clone(bundle.phone_action_reservations??{})};
  }
  async function readDatabaseSnapshot(input){const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS];if(!meta?.chat_uid||meta.owner_chat_key!==key)return null;const bundle=await storage.get(meta.chat_uid);return bundle?databaseSnapshotAtMessage(bundle,input,key):null;}
  async function ensureDatabase(){await ensureBound();return readDatabase();}
