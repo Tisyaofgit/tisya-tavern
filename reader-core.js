@@ -1006,8 +1006,9 @@ function* xmlTokens(s,{tolerateTail=false,literalAmpersands=false,protocolBlock=
   if(s.startsWith('<![CDATA[',p)){const q=s.indexOf(']]>',p+9);if(q<0){if(tolerateTail)return;bad('XML_CDATA');}yield {kind:'text',value:s.slice(p+9,q),cdata:true,start:p,end:q+3};p=q+3;continue;}
   if(s.startsWith('<!--',p)){const q=s.indexOf('-->',p+4);if(q<0){if(tolerateTail)return;bad('XML_COMMENT');}if(s.slice(p+4,q).includes('--'))bad('XML_COMMENT');yield {kind:'comment',value:s.slice(p+4,q),start:p,end:q+3};p=q+3;continue;}
   let m=/^<(\/)?([A-Za-z_][\w.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/.exec(s.slice(p));
-  // Native card marker names may be Unicode, exclusively inside extra.
-  if(!m&&path[0]==='reply'&&(protocolBlock??path[1])==='extra'&&path.length>=2)m=/^<(\/)?([\p{L}_][\p{L}\p{N}\p{M}_.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/u.exec(s.slice(p));
+  // Unicode card markers belong only to public body/extra content. Nested
+  // machine slots retain their original ASCII/JSON/native payload contracts.
+  if(!m&&path[0]==='reply'&&['body','extra'].includes((protocolBlock??path[1])?.toLowerCase())&&path.length>=2&&!path.slice(2).some(name=>machineNames.has(name.toLowerCase())||['archive','memory','status',machineTags?.archive?.toLowerCase()].includes(name.toLowerCase())))m=/^<(\/)?([\p{L}_][\p{L}\p{N}\p{M}_.:-]*)((?:\s+[A-Za-z_][\w.:-]*\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*)(\/?)>/u.exec(s.slice(p));
   if(!m){if(tolerateTail&&s.indexOf('>',p)<0)return;bad('XML_TAG');}
   if(m[1]&&(m[3].trim()||m[4]))bad('XML_CLOSE');
   const attrs={};for(const a of m[3].matchAll(/([A-Za-z_][\w.:-]*)\s*=\s*(["'])(.*?)\2/g)){if(Object.hasOwn(attrs,a[1]))bad('XML_ATTRIBUTE_DUPLICATE');attrs[a[1]]=unxml(a[3]);}

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {baseline,matrixPreset,MATRIX_REVISION,REPLY_ENVELOPE_RULE,compilePrompts,applyCompiledMessages} from '../engine/config.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
+import {cardDefinitionSource} from '../tables/card-source.js';
 
 const marker='@ENVELOPE :: Whole response boundary';
 const history=[
@@ -11,14 +12,14 @@ const history=[
  {role:'tool',content:'{"raw":"<start></start>","exact":false}'}
 ];
 const cardMaterial={role:'system',content:'[ORIGINAL_CARD]\n原卡逐字正文：<start></start>；<StatusPlaceHolderImpl/>；<UpdateVariable>原卡独立协议材料</UpdateVariable>。\n[/ORIGINAL_CARD]'};
-function finalPayload({tags=DEFAULT_TAGS,override,oldPreset=false}={}){
+function finalPayload({tags=DEFAULT_TAGS,override,oldPreset=false,cardRows=[cardMaterial]}={}){
  const source=structuredClone(baseline),registry=source.prompts.find(p=>p.identifier==='tisya_registry');
  if(oldPreset)registry.content=registry.content.replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'');
  const config={tags:{...tags},prompts:override===undefined?{}:{tisya_registry:override},story:{userName:'绑定人物',wish:''}},slots={tisya_user_identity:'唯一绑定人物档案',tisya_contractor_wish:'保留玩家当轮要求'};
  const expand=text=>text.replace(/\{\{(tisya_[\w]+)\}\}/g,(_,key)=>slots[key]??'').replaceAll('{{user}}','宿主人物').replaceAll('{{char}}','原卡人物');
  const order=source.prompt_order.find(row=>row.character_id===100001).order,enabled=new Set(order.filter(row=>row.enabled).map(row=>row.identifier));
  const messages=source.prompts.filter(row=>!row.marker&&row.enabled!==false&&enabled.has(row.identifier)&&expand(row.content??'').trim()).map(row=>({role:row.role??'system',content:expand(row.content)}));
- const originalRows=[structuredClone(cardMaterial),...structuredClone(history)];messages.push(...originalRows);const before=structuredClone(messages),sourceBefore=structuredClone(source);
+ const originalRows=[...structuredClone(cardRows),...structuredClone(history)];messages.push(...originalRows);const before=structuredClone(messages),sourceBefore=structuredClone(source);
  const compiled=compilePrompts(source,config,slots),result=applyCompiledMessages(messages,source,compiled,expand);
  assert.deepEqual(messages,before,'final request preparation does not edit the host message input');assert.deepEqual(source,sourceBefore,'preset source is not rewritten');assert.deepEqual(result.slice(-originalRows.length),originalRows,'original card and all history roles remain exact');
  return {source,compiled,result,system:result.filter(row=>row.role==='system').map(row=>row.content).join('\n')};
@@ -33,6 +34,12 @@ function assertContract(text,tags=DEFAULT_TAGS){
  assert(contract.includes('独立扩展面板的显示标记放在 '+tags.extra));
  assert(contract.includes('两处都使用当前启用的正则渲染'));
  assert(contract.includes('每个显示组件只在实际展示位置输出一次'));
+ assert(contract.includes('先读取本轮已注入的角色卡、世界书和输出格式条目'));
+ assert(contract.includes('完整同组标签连续放在 '+tags.extra));
+ assert(contract.includes('并保留面板之间的先后顺序'));
+ assert(contract.includes('正文内联的弹幕、信笺和局部美化仍在 '+tags.body+' 原位置'));
+ assert(contract.includes('中文标签保持原名'));
+ assert(contract.includes('禁止额外包裹反引号或 Markdown 代码围栏'));
  assert(contract.includes(tags.extra+' 同时收纳唯一的 '+tags.cells+' 与 '+tags.vars+' 直接子块'));
  assert(contract.includes('隐藏的机器数据，不复制到可见正文或扩展面板'));
  assert(contract.includes('完整原生 UpdateVariable 更新只放在 '+tags.extra+' 内的 '+tags.vars));
@@ -66,4 +73,20 @@ test('an existing registry override and an old loaded preset still produce exact
 test('final prompt fragment replacement refuses duplicate or missing registry inputs instead of guessing which system text to edit',()=>{
  const source=structuredClone(baseline),registry=source.prompts.find(p=>p.identifier==='tisya_registry'),minimal={prompts:[registry],order:[{identifier:'tisya_registry',enabled:true}]},config={tags:DEFAULT_TAGS,prompts:{tisya_registry:'[REGISTRY]\n自定义新合同\n[/REGISTRY]'},story:{userName:'角色'}};
  const compiled=compilePrompts(minimal,config,{});assert.throws(()=>applyCompiledMessages([{role:'system',content:registry.content+'\n'+registry.content}],minimal,compiled),{code:'PROMPT_MATCH'});assert.throws(()=>applyCompiledMessages([{role:'system',content:'missing'}],minimal,compiled),{code:'PROMPT_MATCH'});
+});
+
+test('compiled request keeps original card format groups while routing independent panels to extra without display templates',()=>{
+ const stateFormat='<日期>{{日期}}</日期>\n<时间>{{时间}}</时间>\n<天气>{{天气}}</天气>\n<地点>{{地点}}</地点>\n<评语>{{评语}}</评语>';
+ const card={data:{name:'中性格式卡',description:'正文内联弹幕保留在动作之间。',character_book:{entries:[
+  {id:1,comment:'状态输出格式',enabled:true,content:'正文结束前输出以下整组状态字段，字段顺序固定：\n'+stateFormat},
+  {id:2,comment:'音乐输出格式',enabled:true,content:'在状态栏之前输出 <bgm>当前bgm:歌名 - 歌手</bgm>。'},
+  {id:3,comment:'关闭定义',enabled:false,content:'DISABLED_FORMAT_SENTINEL'}
+ ]},extensions:{regex_scripts:[{findRegex:'<日期>.*',replaceString:'<html><script>DISPLAY_TEMPLATE_SENTINEL()</script></html>'}]}}};
+ const before=structuredClone(card),material=cardDefinitionSource(card),rows=[{role:'system',content:material}],{result,system}=finalPayload({cardRows:rows});
+ assertContract(system);assert.equal(system.split(REPLY_ENVELOPE_RULE).length-1,1);
+ assert.equal(result.find(row=>row.content===material)?.content,material);
+ assert(system.includes(stateFormat));assert(system.includes('在状态栏之前输出 <bgm>当前bgm:歌名 - 歌手</bgm>。'));
+ assert.match(system,/原卡要求这些面板位于[^。\n]*“正文结束前”[^。\n]*“消息末尾”[^。\n]*旧 context 容器内[^。\n]*同样归入 extra/);
+ assert(system.includes('并保留面板之间的先后顺序'));
+ assert.doesNotMatch(system,/DISPLAY_TEMPLATE_SENTINEL|DISABLED_FORMAT_SENTINEL/);assert.deepEqual(card,before);
 });

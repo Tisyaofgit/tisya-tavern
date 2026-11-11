@@ -18,7 +18,12 @@ export function adaptReaderSource(id,source){
    "const nativeJSON=path.at(-1)==='JSONPatch'&&path.at(-2)==='UpdateVariable';\n  const owner=protocolBlock??path[1],groupedJSON=path.length===3&&path[0]==='reply'&&owner==='extra'&&machineNames.get(path[2].toLowerCase())==='vars';\n  const rawJSON=nativeJSON||rawVarsJSON&&path[0]==='reply'&&(path.length===2&&owner==='vars'||groupedJSON);\n  if(path.length===2&&path[0]==='reply'&&JSON_BLOCKS.has(owner)||groupedJSON||nativeJSON){");
   source=replaceOnce(source,"const end=jsonTextEnd(s,p,literalAmpersands);","const end=jsonTextEnd(s,p,rawJSON?'native':literalAmpersands);");
   source=replaceOnce(source,"value:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true","value:rawJSON?raw:unxml(literalAmpersands?escapeBareAmpersands(raw):raw),raw,json:true");
-  source=replaceOnce(source,"if(!m&&path[0]==='reply'&&path[1]==='extra'&&path.length>=2)","if(!m&&path[0]==='reply'&&(protocolBlock??path[1])==='extra'&&path.length>=2)");
+  source=replaceOnce(source,
+   '// Native card marker names may be Unicode, exclusively inside extra.',
+   '// Unicode card markers belong only to public body/extra content. Nested\n  // machine slots retain their original ASCII/JSON/native payload contracts.');
+  source=replaceOnce(source,
+   "if(!m&&path[0]==='reply'&&path[1]==='extra'&&path.length>=2)",
+   "if(!m&&path[0]==='reply'&&['body','extra'].includes((protocolBlock??path[1])?.toLowerCase())&&path.length>=2&&!path.slice(2).some(name=>machineNames.has(name.toLowerCase())||['archive','memory','status',machineTags?.archive?.toLowerCase()].includes(name.toLowerCase())))");
   source=replaceOnce(source,"  if(s[p]!=='<'){",`  // Alias boundary location preserves native script/style source. Full
   // envelope validators never enable this option, and machines stay XML.
   if(boundaryHTMLRawText&&path[0]==='reply'&&path.length>2&&/^(?:script|style)$/i.test(path.at(-1))&&textSlots.has((protocolBlock??path[1]).toLowerCase())&&!path.slice(2).some(name=>machineNames.has(name.toLowerCase())||['extra','archive',machineTags?.extra?.toLowerCase(),machineTags?.archive?.toLowerCase()].includes(name.toLowerCase()))){

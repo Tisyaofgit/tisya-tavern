@@ -48,7 +48,7 @@ const inspectionCache=createDisplayCache();
 const selectedOptions=options=>({showPsychology:options.showPsychology===true,playerName:typeof options.playerName==='string'?options.playerName:null});
 // Version parsed projections independently of the disk rows so reader updates
 // recompute old successes/errors while retaining the user's fold and tab state.
-const projectionKey=selected=>'matrix-v4-text-code-display:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
+const projectionKey=selected=>'matrix-v5-unicode-display-markers:'+tagRevision()+':'+replyFormatRevision()+':'+JSON.stringify(selected);
 const inspectionKey=(source,selected)=>projectionKey(selected)+':'+source;
 export function startReaderCache(window,onError=()=>{}){
  if(!localCache)localCache=createMessageCache(window,{version:'reader-six-w54.1',onError});
