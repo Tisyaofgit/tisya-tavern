@@ -7,6 +7,16 @@ const publicStates = new Set(['pending', 'waiting', 'ready', 'mounted', 'missing
 const panel = value => value && typeof value === 'object' ? {
  expected: count(value.expected), mounted: count(value.mounted), status: publicStates.has(value.status) ? value.status : null,
 } : null;
+const recoveryStates = new Set(['render-requested', 'source-not-prepared', 'changed-before-request', 'failed']);
+const errorTypes = new Set(['Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'URIError', 'EvalError', 'AggregateError', 'AbortError', 'TimeoutError']);
+const preparation = value => value && typeof value === 'object' ? {
+ installed: boolean(value.installed), pending: count(value.pending), repairing: boolean(value.repairing),
+ repairAttempts: count(value.repairAttempts), sourcePrepared: count(value.sourcePrepared), renderRequests: count(value.renderRequests), failures: count(value.failures),
+ lastRecovery: value.lastRecovery && typeof value.lastRecovery === 'object' ? {
+  messageId: count(value.lastRecovery.messageId), status: recoveryStates.has(value.lastRecovery.status) ? value.lastRecovery.status : null,
+  errorType: value.lastRecovery.errorType == null ? null : errorTypes.has(value.lastRecovery.errorType) ? value.lastRecovery.errorType : 'OtherError',
+ } : null,
+} : null;
 const displayValues = new Set(['none', 'contents', 'block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'flow-root', 'table', 'inline-table', 'table-row', 'table-cell', 'table-row-group', 'table-header-group', 'table-footer-group', 'table-column', 'table-column-group', 'table-caption', 'list-item']);
 const visibilityValues = new Set(['visible', 'hidden', 'collapse']);
 const markers = ['tisya-source-concealed', 'tisya-native-pruned', 'tisya-native-extra-collapsed', 'tisya-native-collapsed', 'tisya-native-panels'];
@@ -26,7 +36,7 @@ function role(element) {
  * "iframe-present" means a connected TH iframe node, not successful loading.
  * Toolbar order is DOM/flex flow order, not a screenshot or a pixel-layout test.
  */
-export function inspectNativeRender(document, node, {version, structured, projection, panelStatus, managed} = {}) {
+export function inspectNativeRender(document, node, {version, structured, projection, panelStatus, managed, sourcePreparation} = {}) {
  const message = node?.matches?.('.mes') ? node : node?.closest?.('.mes');
  const base = {schema: 'tisya.native-render-diagnostic/1', version: versionNumber(version), available: !!message};
  if (!message || !document?.defaultView?.getComputedStyle) return {...base, available: false};
@@ -106,5 +116,6 @@ export function inspectNativeRender(document, node, {version, structured, projec
   toolbar: {count: toolbars.length, domLast: domLater === null ? null : domLater === 0,
    last: flowLater === null ? null : flowLater === 0, orderBasis, laterContentCount: flowLater},
   publicPanels: panelStatus && typeof panelStatus === 'object' && ('body' in panelStatus || 'extra' in panelStatus) ? {body: panel(panelStatus.body), extra: panel(panelStatus.extra)} : panel(panelStatus),
+  sourcePreparation: preparation(sourcePreparation),
  };
 }

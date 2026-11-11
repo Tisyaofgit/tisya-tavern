@@ -13,18 +13,33 @@ export function nativePanelSourceIdentities(document,value){
  return new Set([source,canonicalNativeSource(code.textContent)]);
 }
 
-// Only complete HTML fences whose entire document came from this display pass's
-// public regex runs are eligible. Literal examples and incomplete fences stay text.
+// Only complete HTML fences from this display pass's public regex runs are
+// eligible. A single literal tick pair may surround one complete replacement;
+// it never permits literal HTML, mixed provenance, or an incomplete inner fence.
 function bodyParts(document,display,{includeStatic=false}={}){
  const body=display?.body,runs=display?.bodyRuns;
  if(typeof body!=='string'||!Array.isArray(runs)||runs.map(r=>r.text).join('')!==body)return null;
  const lines=[...body.matchAll(/[^\n]*\n|[^\n]+$/g)],cards=[];let fence=null;
  const authored=(start,end)=>{let at=0,seen=false;for(const run of runs){const stop=at+run.text.length;if(stop>start&&at<end&&run.text.slice(Math.max(0,start-at),end-at).trim()){if(!run.ruleName)return false;seen=true;}at=stop;if(at>=end)break;}return seen;};
+ const singleTickWrapped=(opening,closing,marker)=>{
+  if(opening.mark!=='`'||opening.length!==4||marker[1]!=='````'||body[opening.start]!=='`'||!/^````(?:\r?\n)?$/.test(closing[0]))return false;
+  const left=opening.start,right=closing.index+3;let at=0,inner=false,leftLiteral=false,rightLiteral=false;
+  for(const run of runs){
+   const stop=at+run.text.length;
+   if(at<=left&&stop>left)leftLiteral=!run.ruleName;
+   // Both inner fences and every HTML byte must belong to this one run.
+   // Checking only the HTML, or merely matching rule names, would admit examples.
+   if(at===left+1&&stop===right&&run.ruleName)inner=true;
+   if(at<=right&&stop>right)rightLiteral=!run.ruleName;
+   at=stop;if(at>right)break;
+  }
+  return inner&&leftLiteral&&rightLiteral;
+ };
  for(const line of lines){const marker=/^ {0,3}(`{3,}|~{3,})([^\r\n]*)\r?\n?$/.exec(line[0]);
   if(!fence){if(marker)fence={start:line.index,bodyStart:line.index+line[0].length,mark:marker[1][0],length:marker[1].length,info:marker[2].trim().toLowerCase()};continue;}
   if(!marker||marker[1][0]!==fence.mark||marker[1].length<fence.length||marker[2].trim())continue;
   const html=body.slice(fence.bodyStart,line.index),end=line.index+line[0].length;
-  if(['','html','htm'].includes(fence.info)&&/^\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b/i.test(html)&&/<\/html\s*>\s*$/i.test(html)&&authored(fence.start,end)){
+  if(['','html','htm'].includes(fence.info)&&/^\s*(?:<!doctype\s+html\b[^>]*>\s*)?<html\b/i.test(html)&&/<\/html\s*>\s*$/i.test(html)&&(authored(fence.start,end)||singleTickWrapped(fence,line,marker))){
    const nativeHosted=requiresNativePanel(document,html);
    if(includeStatic||nativeHosted)cards.push({start:fence.start,end,html,source:canonicalNativeSource(html),nativeHosted});
   }

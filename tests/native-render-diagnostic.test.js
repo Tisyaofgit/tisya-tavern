@@ -15,10 +15,14 @@ test('diagnostic is observational and excludes source, URLs, variables and arbit
  observer.observe(node, {subtree: true, childList: true, attributes: true, characterData: true});
  try {
   const result = inspectNativeRender(d, node, {version: '0.2.0-alpha.31-candidate.16', structured: false, managed: false,
-   projection: {source: 'PRIVATE_PROJECTION'}, panelStatus: {expected: 2, mounted: 1, status: 'PRIVATE_STATUS', variables: {secret: 'PRIVATE_VARIABLE'}}});
+   projection: {source: 'PRIVATE_PROJECTION'}, panelStatus: {expected: 2, mounted: 1, status: 'PRIVATE_STATUS', variables: {secret: 'PRIVATE_VARIABLE'}},
+   sourcePreparation: {installed: true, pending: 0, repairing: false, repairAttempts: 1, sourcePrepared: 1, renderRequests: 1, failures: 0,
+    lastRecovery: {messageId: 2, status: 'render-requested', errorType: 'PRIVATE_ERROR', source: 'PRIVATE_ORIGINAL'}, message: 'PRIVATE_MESSAGE'}});
   assert.equal(result.runtime.state, 'iframe-present'); assert.equal(result.runtime.activeIframeCount, 1);
   assert.equal(result.state.nativeBeauty, true); assert.equal(result.state.projectionReported, null);
   assert.deepEqual(result.publicPanels, {expected: 2, mounted: 1, status: null});
+  assert.deepEqual(result.sourcePreparation, {installed: true, pending: 0, repairing: false, repairAttempts: 1, sourcePrepared: 1, renderRequests: 1, failures: 0,
+   lastRecovery: {messageId: 2, status: 'render-requested', errorType: 'OtherError'}});
   assert.doesNotMatch(JSON.stringify(result), /PRIVATE_|private\.invalid|srcdoc|https:/);
   assert.equal(node.outerHTML, before); assert.equal(d.querySelector('iframe'), frame);
   assert.equal(observer.takeRecords().length, 0); assert.equal(d.querySelectorAll('iframe').length, 1);

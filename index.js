@@ -22,6 +22,7 @@ import * as personaNative from '/scripts/personas.js';
 import * as hostNative from '/script.js';
 import {createNativePersonaSlotHost} from './persona-slots.js';
 import {nativePanelContentProcessor} from './native-panel-source.js';
+import {installNativePanelFormatting} from './native-panel-formatting.js';
 import {selectChatReady,notifySelectedChatContent,chatSelectionDiagnostic,chatSelectionSummary} from './chat-selection.js';
 import {createUiOperations,messageActionExclusive} from './ui-operation.js';
 import {createGenerationOperations} from './generation-operation.js';
@@ -632,7 +633,7 @@ function messageMenu(node) {
 async function showMessageDisplayDiagnostic(token){
  const node=nodeFor(token);
  const inspect=()=>inspectNativeRender(document,node,{version:VERSION,structured:inspectMessage(token.message.mes).structured,
-  projection:!!node.querySelector('.tisya-message-visual'),panelStatus:appearance?.nativeStatus?.(node),managed});
+  projection:!!node.querySelector('.tisya-message-visual'),panelStatus:appearance?.nativeStatus?.(node),managed,sourcePreparation:nativePanelFormatting.state()});
  const report=inspect();
  const describe=report=>{
   const hidden=report.frames?.filter(frame=>frame.hiddenByStyles===true).length??0;
@@ -960,6 +961,21 @@ export function registerChatSurface() {
     if(managed&&typeof api.registerContentProcessor==='function')api.registerContentProcessor(nativePanelContentProcessor({document,current:(message,id)=>context().chat[id]===message,project:(source,message,id)=>{const pipeline=ensureNativeDisplay();pipeline.refresh();return pipeline.project(source,message,{getAttribute:()=>String(id)});},onError:visualError}));
     if(managed) participant=api.registerParticipant({id:'tisya-ui/message-actions',protocolVersion:api.protocolVersion,didCommitContent({element,content,mesid,signal}){notifySelectedChatContent({element,content,mesid,signal});resetNativePanelSources(content);decorate(element);},didMount({element}){decorate(element);return ()=>{editToolbarPlacement?.restore(element);appearance?.restore(element);element.querySelector('.tisya-actions')?.remove();element.querySelector('.tisya-turn-direction')?.remove();};}});
 }
+// Register independently of ChatSurface ownership: eager hosts deliberately do
+// not invoke manifest chatSurface hooks, and their first autoload may precede us.
+const nativePanelFormatting=installNativePanelFormatting({
+    formatter:context().messageFormatter,document,getMessage:id=>context().chat[id],
+    scope:()=>JSON.stringify([context().chatId,context().characterId,context().groupId]),
+    enabled:()=>enabled&&!!context().chatId&&configStore.read().world.theme.nativeRegex,
+    project:(source,message,id)=>{const pipeline=ensureNativeDisplay();pipeline.refresh();return pipeline.project(source,message,{getAttribute:()=>String(id)});},
+    isEager:()=>window.__TAURITAVERN__?.api?.chatSurface?.isManagedOwnershipRequired?.()===false,
+    busy:()=>isGenerating()||hasActiveAgentRun()||generationBusy||nativeGenerationOpen||revisionController.active(),
+    updateMessageBlock:(...args)=>hostNative.updateMessageBlock(...args),
+    requestRender:id=>context().eventSource.emit('TH_REQUEST_RENDER_MESSAGE',id),onError:visualError,
+});
+const repairNativePanelSources=()=>nativePanelFormatting.repairMissing().catch(visualError);
+for(const name of ['APP_READY','CHAT_CHANGED','CHAT_LOADED']){const event=context().eventTypes[name];if(event)context().eventSource.on(event,repairNativePanelSources);}
+void repairNativePanelSources();
 const builtinPreset=createPresetUpdateController({getContext:context,document,isBusy:isGenerating});
 const defaultActivation=createDefaultActivation({getContext:context,activatePreset:()=>builtinPreset.update({activate:true}),ensureBound:options=>matrixHost.ensureBound(options),isChatReady:c=>typeof c.chatMetadata?.integrity==='string'&&c.chatMetadata.integrity.length>0});
 let presetPageControl=null;
