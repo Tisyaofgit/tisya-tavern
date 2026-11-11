@@ -77,6 +77,7 @@ import {createHost,blockPayload} from './config/host.js';
 import {preferNativeBeauty,createNativeBodyFormatter} from './native-beauty.js';
 import {createNativeDisplayPipeline} from './native-display.js';
 import {inspectNativeRender} from './native-render-diagnostic.js';
+import {collectNativeRuntimeDiagnostic,nativeRuntimeDiagnosticSummary} from './native-runtime-diagnostic.js';
 import {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from '/scripts/extensions/regex/engine.js';
 import {readNarrative} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
@@ -610,14 +611,28 @@ function messageMenu(node) {
     const visible=messageSlots();sheet('消息操作',`<div class="tisya-message-actions" aria-label="更多消息操作">${MESSAGE_TOOLS.filter(([id])=>id!=='more'&&!visible.includes(id)).map(([id])=>messageToolButton(id,id==='regen'?'msg-regen':id==='next'?'msg-next':id,token.message.is_user)).join('')}${iconButton('配置消息快捷栏','message-tools','sliders','tisya-orb-button')}</div>${button('显示检查','msg-display-check')}`);
     overlay._messageToken = token;
 }
-function showMessageDisplayDiagnostic(token){
- const node=nodeFor(token),report=inspectNativeRender(document,node,{version:VERSION,structured:inspectMessage(token.message.mes).structured,
+async function showMessageDisplayDiagnostic(token){
+ const node=nodeFor(token);
+ const inspect=()=>inspectNativeRender(document,node,{version:VERSION,structured:inspectMessage(token.message.mes).structured,
   projection:!!node.querySelector('.tisya-message-visual'),panelStatus:appearance?.nativeStatus?.(node),managed});
- const hidden=report.frames?.filter(frame=>frame.hiddenByStyles===true).length??0;
- const order=report.toolbar?.last===true?'位于内容之后':report.toolbar?.last===false?'后面仍有消息内容':'当前布局尚不能判断';
- const counts=report.counts??{};
- sheet('显示检查',`<p>${esc(report.runtime?.note??'当前消息未在显示区。')}</p><p>扩展版本：${esc(report.version??'未知')}<br>页面节点：${report.runtime?.activeIframeCount??0}，其中隐藏：${hidden}<br>宿主占位：${counts.hostPlaceholders??0}；源码开关：${counts.codeToggles??0}<br>消息按钮：${esc(order)}</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify(report,null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
+ const report=inspect();
+ const describe=report=>{
+  const hidden=report.frames?.filter(frame=>frame.hiddenByStyles===true).length??0;
+  const order=report.toolbar?.last===true?'位于内容之后':report.toolbar?.last===false?'后面仍有消息内容':'当前布局尚不能判断',counts=report.counts??{};
+  return `<p>${esc(report.runtime?.note??'当前消息未在显示区。')}</p><p>扩展版本：${esc(report.version??'未知')}<br>页面节点：${report.runtime?.activeIframeCount??0}，其中隐藏：${hidden}<br>宿主占位：${counts.hostPlaceholders??0}；源码开关：${counts.codeToggles??0}<br>消息按钮：${esc(order)}</p>`;
+ };
+ sheet('显示检查',`<div id="tisya-render-diagnostic-overview">${describe(report)}</div><p id="tisya-runtime-diagnostic-summary" role="status">正在读取助手渲染资格和本条页面的运行状态……</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify({...report,runtimeInspection:{status:'collecting'}},null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
  overlay._messageToken=token;
+ const epoch=sheetEpoch,copy=overlay.querySelector('[data-tisya-action="msg-display-check-copy"]');copy.disabled=true;
+ const runtimeInspection=await collectNativeRuntimeDiagnostic(document,node,{getContext:context});
+ if(epoch!==sheetEpoch||overlay._messageToken!==token)return;
+ let current;try{current=nodeFor(token);}catch{sheet('显示检查','<p role="status">消息或聊天已变化，请在当前消息重新打开检查。</p>');return;}
+ if(current!==node){sheet('显示检查','<p role="status">消息显示已更新，请在当前消息重新打开检查。</p>');return;}
+ const completed=inspect();
+ overlay.querySelector('#tisya-render-diagnostic-overview').innerHTML=describe(completed);
+ overlay.querySelector('#tisya-render-diagnostic').textContent=JSON.stringify({...completed,runtimeInspection},null,2);
+ overlay.querySelector('#tisya-runtime-diagnostic-summary').textContent=nativeRuntimeDiagnosticSummary(runtimeInspection).join(' ');
+ copy.disabled=false;
 }
 function openCandidates(token){
  validate(context(),token,{tail:true});const pos=candidatePosition(token.message);
@@ -642,7 +657,7 @@ async function messageAction(action) {
     if(revisionController.navigating())throw Error('版本切换尚未完成，请稍候');
     const token = overlay._messageToken;
     const node = nodeFor(token);
-    if(action==='msg-display-check'){showMessageDisplayDiagnostic(token);return;}
+    if(action==='msg-display-check')return showMessageDisplayDiagnostic(token);
     if(action==='msg-display-check-copy'){
         const content=query('#tisya-render-diagnostic');if(!content)throw Error('检查记录已关闭，请重新打开');
         const epoch=sheetEpoch;await navigator.clipboard.writeText(content.textContent);
