@@ -14,6 +14,9 @@ import {chatKey as phoneChatKey} from './engine/controller.mjs';
 import {finishMatrixGeneration} from './engine/lifecycle.mjs';
 import {mountGenerationIdleGuard} from './generation-idle-guard.js';
 import {createMatrixHost} from './engine/host.mjs';
+import {createNativeSourceLayers} from './engine/native-source-layers.mjs';
+import {PromptManager} from '/scripts/PromptManager.js';
+import {shouldWIAddPrompt} from '/scripts/authors-note.js';
 import {createDefaultActivation} from './default-activation.js';
 import {describeChatMetadataFailure} from './chat-persistence-error.js';
 import {mountMatrixConfiguration} from './engine/ui.mjs';
@@ -50,7 +53,7 @@ import {directoryState,directoryEntry,directoryToken,changeDirectory,mountDirect
 import {deleteCharacterChatByName,closeCurrentChat} from '/script.js';
 import {createChatLoadingController,mountChatLoadingSettings} from './chat-loading.js';
 import {select_group_chats} from '/scripts/group-chats.js';
-import {power_user} from '/scripts/power-user.js';
+import {power_user,persona_description_positions} from '/scripts/power-user.js';
 import {isBoundedChatSurfaceView,getThumbnailUrl} from '/script.js';
 import {mountHome} from './home.js';
 import {timestampToMoment,getCharaFilename} from '/scripts/utils.js';
@@ -99,7 +102,7 @@ let editToolbarPlacement=null;
 import { mountMessageReader,inspectMessage } from './reader.js';
 import { mountNotebook } from './notebook.js';
 import { getContext } from '/scripts/st-context.js';
-import { promptManager,createGenerationParameters,proxies } from '/scripts/openai.js';
+import { promptManager,Message,ChatCompletion,createGenerationParameters,proxies } from '/scripts/openai.js';
 import { setUserName, setExtensionPrompt, isGenerating, Generate, swipe, deleteSwipe, messageEdit, hydrateChatMessageSwipes, isMessageSwipeable, getOverswipeBehavior, messageFormatting, substituteParams, substituteParamsExtended, sendTextareaMessage, saveSettings, enqueueChatSave, persistedChatMetadata, waitForGenerationIdle } from '/script.js';
 import { getAgentGenerationOptions } from '/scripts/tauritavern/agent/agent-generation-router.js';
 import { hasActiveAgentRun } from '/scripts/tauritavern/agent/agent-run-controller.js';
@@ -189,7 +192,8 @@ const configHost=createHost({projectToolTurns,openArchiveQuery:(task,input,optio
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 function currentNativeDisplayRules(){const c=context();return !c.chatId||!configStore.read().world.theme.nativeRegex||c.extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true});}
-const matrixHost=createMatrixHost({getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,expand:text=>substituteParams(text),assertIdle,onError:error});
+const nativeSourceLayers=createNativeSourceLayers({PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
+const matrixHost=createMatrixHost({getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
 const sourceBooks=createBookGateway(undefined,context);
@@ -1005,6 +1009,11 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      for(const name of ['CHAT_CHANGED','MESSAGE_RECEIVED','MESSAGE_UPDATED','MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','GENERATION_ENDED','GENERATION_STOPPED']){const event=context().eventTypes[name];if(event)context().eventSource.on(event,()=>{if(!isGenerating()||['MESSAGE_DELETED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED'].includes(name))syncMessageCache();});}
      syncMessageCache();document.addEventListener('visibilitychange',()=>{if(document.hidden)readerCache.flush();});textTransport.install();window.addEventListener('pagehide',event=>{if(!event.persisted)textTransport.dispose();});context().registerMacro('tisya_config_selected',()=>configHost.selectedText(),'缇斯亚：只装入选中资源');
      bind('MESSAGE_RECEIVED',(id,type)=>revisionController.received(id,type));
+     bind('GENERATION_STARTED',(_type,options,dryRun)=>{
+      if(dryRun)return;
+      try{matrixHost.assertNativeResume(options);}
+      catch(e){context().stopGeneration?.();error(e);throw e;}
+     });
      bind('GENERATION_AFTER_COMMANDS',async(...args)=>{
       nativeDryRun=args[2]===true||args[1]?.dryRun===true;if(nativeDryRun)return;
       nativeGenerationOpen=true;nativeGenerationEpoch++;nativeGenerationMatrix=matrixHost.active();preparationError=null;
@@ -1018,6 +1027,12 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      });
      bind('WORLDINFO_ENTRIES_LOADED',async p=>{excludeTemplateBookEntries(p,storyBookSettings());if(matrixHost.active()){await defaultActivation.ready();await matrixHost.entriesLoaded(p);return worldbookConditions.entriesLoaded(p);}});
      bind('WORLDINFO_SCAN_DONE',p=>matrixHost.active()?worldbookConditions.scanDone(p):undefined);
+     bind('WORLD_INFO_ACTIVATED',entries=>nativeGenerationMatrix&&!nativeDryRun?matrixHost.activated(entries):undefined);
+     bind('GENERATE_AFTER_COMBINE_PROMPTS',async p=>{
+      if(nativeDryRun||!nativeGenerationMatrix)return;
+      try{if(preparationError)throw preparationError;return await matrixHost.afterCombine(p);}
+      catch(e){preparationError=e;context().stopGeneration?.();error(e);throw e;}
+     });
      bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{
       if(nativeDryRun||!nativeGenerationMatrix)return;
       try{if(preparationError)throw preparationError;await worldbookConditions.assertReady();return await matrixHost.payloadReady(p);}
@@ -1031,7 +1046,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
      window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service();assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,()=>reconcilePhoneHistory().catch(error));}
-     window.addEventListener('pagehide',event=>{if(!event.persisted){defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
+     window.addEventListener('pagehide',event=>{if(!event.persisted){nativeSourceLayers.dispose();defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
 
     }catch(err){error(err);}
     emotionCatalog(document).ready.catch(()=>error(new Error('表情图鉴加载失败，请更新扩展后重启。')));

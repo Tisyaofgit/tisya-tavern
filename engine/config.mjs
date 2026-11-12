@@ -6,6 +6,7 @@ import {configureRenderingResources,renderingResources} from '../rendering-resou
 import {applyOutputConfiguration} from './output-config.mjs';
 import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
 import {compilePromptLayerPlan,resolvePromptLayerText} from './prompt-layers.mjs';
+import {createPromptSourceMap} from './request-layers.mjs';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import configuration from './configuration.json' with {type:'json'};
 import {clone,fail,digest,asError} from './common.mjs';
@@ -97,10 +98,15 @@ export async function identitySlots(ctx,config,persona,databaseSnapshot=null){
 // Native messages may have merged system entries. Replace each enabled preset
 // fragment exactly once after native macros, while preserving every history row.
 export function applyCompiledMessages(messages,source,compiled,expand=s=>s){
- const out=clone(messages),order=source.order??source.prompt_order?.find(o=>o.character_id===100001)?.order??[],enabled=new Set(order.filter(x=>x.enabled).map(x=>x.identifier)),next=new Map(compiled.prompts.map(p=>[p.identifier,p]));
- for(const p of source.prompts){if(p.marker||p.enabled===false||!enabled.has(p.identifier))continue;const a=expand(p.content??'').trim(),b=expand(next.get(p.identifier)?.content??'').trim();if(a===b||!a)continue;const matches=[];
-  for(const m of out){if(m.role!==(p.role??'system'))continue;if(typeof m.content==='string')matches.push({get:()=>m.content,set:v=>m.content=v});else if(Array.isArray(m.content))for(const part of m.content)if(part.type==='text')matches.push({get:()=>part.text,set:v=>part.text=v});}
-  const count=matches.reduce((n,c)=>n+c.get().split(a).length-1,0);if(count!==1)fail('PROMPT_MATCH','预设条目在最终请求中缺失或重复，未猜测替换',{identifier:p.identifier,matches:count});const target=matches.find(c=>c.get().includes(a));target.set(target.get().replace(a,()=>b));
+ const out=clone(messages),order=source.order??source.prompt_order?.find(o=>o.character_id===100001)?.order??[],enabled=new Set(order.filter(x=>x.enabled).map(x=>x.identifier)),next=new Map(compiled.prompts.map(p=>[p.identifier,p])),sourceMap=createPromptSourceMap(out,source,{expand}),edits=[];
+ for(const p of source.prompts){if(p.marker||p.enabled===false||!enabled.has(p.identifier))continue;const a=expand(p.content??'').trim(),b=expand(next.get(p.identifier)?.content??'').trim();if(a===b||!a)continue;
+  const matches=sourceMap.find(a,{role:p.role??'system'}).found;
+  if(matches.length!==1)fail('PROMPT_MATCH','预设条目在最终请求中缺失或重复，未猜测替换',{identifier:p.identifier,matches:matches.length});
+  const edit={...matches[0],text:b};if(edits.some(other=>edit.globalStart<other.globalEnd&&other.globalStart<edit.globalEnd))fail('PROMPT_OVERLAP','待编译预设片段重叠，未猜测拆分',{identifier:p.identifier});edits.push(edit);
+ }
+ for(const part of sourceMap.parts){
+  let value=part.text;for(const edit of edits.filter(row=>row.part===part).sort((a,b)=>b.start-a.start))value=value.slice(0,edit.start)+edit.text+value.slice(edit.end);
+  if(part.partIndex===null)part.message.content=value;else part.message.content[part.partIndex].text=value;
  }
  return out;
 }
