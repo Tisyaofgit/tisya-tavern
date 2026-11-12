@@ -2,6 +2,7 @@ import {matrixPreset} from './engine/config.mjs';
 const bundled=matrixPreset();
 import {keepPresetConnection} from './preset-connection.js';
 import {presetLoadMismatch} from './preset-load-check.js';
+import {resolveProseStyleText} from './engine/prose-style-policy.mjs';
 
 export const BUILTIN_PRESET_NAME='Tisya';
 export const BUILTIN_PRESET_REVISION=bundled.extensions.tisya_builtin.revision;
@@ -10,6 +11,27 @@ const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)
 const updateError=(message,saved=false)=>Object.assign(Error(message+'。请点“更新 Tisya 预设”重试。'),{tisyaPresetUpdate:true,tisyaPresetSaved:saved});
 const fail=message=>{throw updateError('Tisya 内置预设同步失败：'+message);};
 const inFlight=new WeakMap();
+const shippedPrompts=new Map(bundled.prompts.map(row=>[row.identifier,row]));
+function installedMatrix(value){
+ return object(value)&&value.extensions?.tisya_matrix?.version===1&&typeof value.extensions?.tisya_builtin?.revision==='string'&&Array.isArray(value.prompts)&&value.prompts.every(row=>object(row)&&typeof row.identifier==='string')&&new Set(value.prompts.map(row=>row.identifier)).size===value.prompts.length&&Array.isArray(value.prompt_order)&&value.prompt_order.every(group=>object(group)&&Array.isArray(group.order));
+}
+function updatedExtensions(saved={},live={}){
+ const next={...clone(saved??{}),...clone(live??{})};
+ for(const [key,value]of Object.entries(bundled.extensions))next[key]={...(object(next[key])?next[key]:{}),...clone(value)};
+ return next;
+}
+function upgradeInstalled(previous,live){
+ const next=clone(previous),source=installedMatrix(live)?live:previous;
+ next.prompts=clone(source.prompts).map(row=>{
+  const resolved=resolveProseStyleText(row.identifier,row.content);
+  return resolved!==row.content?{...row,content:shippedPrompts.get(row.identifier)?.content??resolved}:row;
+ });
+ next.prompt_order=clone(source.prompt_order);
+ // candidate.29 and this release have the same identities. A missing row is
+ // a deletion, not an invitation to restore it. Future new slots need an
+ // explicit identity/version migration, never a blanket bundle merge.
+ return next;
+}
 
 // Save through PresetManager. Its updateList always selects the saved preset;
 // register the acknowledged record before an explicitly requested activation.
@@ -38,7 +60,9 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
   const extensions=active?context.chatCompletionSettings?.extensions:previous?.extensions;
   if(extensions!=null&&!object(extensions))fail('已有预设扩展字段格式无效');
   const write=force||!savedCurrent;
-  const next=write?{...clone(previous??{}),...clone(bundled),extensions:{...clone(extensions??{}),...clone(bundled.extensions)}}:clone(previous);
+  const preserve=write&&!force&&installedMatrix(previous);
+  const next=write?(preserve?upgradeInstalled(previous,active?context.chatCompletionSettings:null):{...clone(previous??{}),...clone(bundled)}):clone(previous);
+  if(write)next.extensions=updatedExtensions(previous?.extensions,extensions);
   if(write)await manager.savePreset(BUILTIN_PRESET_NAME,next,{skipUpdate:true});
   // No speculative local mutation precedes the native save acknowledgement.
   const current=manager.getPresetList();
@@ -64,7 +88,7 @@ export function installBuiltInPreset(context,document,{isBusy=()=>false,timeout=
      protectedChange=true;keepPresetConnection({...change,settings:change.settings??context.chatCompletionSettings});
      // Refresh only the shipped prompt fields, preserving active sampling/API settings.
      for(const key of Object.keys(change.preset))if(!['name','prompts','prompt_order','extensions'].includes(key))delete change.preset[key];
-     change.preset.extensions={...clone(context.chatCompletionSettings.extensions??{}),...clone(bundled.extensions)};
+     change.preset.extensions=updatedExtensions(next.extensions,context.chatCompletionSettings.extensions);
     };
     const done=()=>{if(!protectedChange)return;cleanup();if(manager.getSelectedPresetName()!==BUILTIN_PRESET_NAME)return reject(updateError('Tisya 已保存，但当前选择在刷新时变化；请重新选中 Tisya',true));const mismatch=presetLoadMismatch(context.chatCompletionSettings,next);if(mismatch)return reject(updateError('Tisya 已保存，当前载入校验未通过：'+mismatch,true));resolve();};
     context.eventSource.on(before,protect);context.eventSource.on(after,done);
