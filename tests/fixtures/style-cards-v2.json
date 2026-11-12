@@ -1,0 +1,117 @@
+[
+  {
+    "id": "builtin.card.tone.tender",
+    "kind": "style",
+    "styleRole": "tone",
+    "name": "微热·克制心动",
+    "content": "把欲望藏在仍需完成的事务里。细写想靠近的理由、真正靠近后的反应与停住的原因；让一次回视、改口或主动邀请留下余热。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2
+  },
+  {
+    "id": "builtin.card.tone.playful",
+    "kind": "style",
+    "styleRole": "tone",
+    "name": "轻盈·机锋往返",
+    "content": "用个人声口、小算盘和机锋组织互动。调侃有具体对象，接话、回敬与行动互相牵动，认真处让情绪落地。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2
+  },
+  {
+    "id": "builtin.card.tone.grounded",
+    "kind": "style",
+    "styleRole": "tone",
+    "name": "沉静·日常质感",
+    "content": "用职责、物件和处境承载情绪。细写关键交流，简写过渡，让生活事务与个人欲望一起向前走。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2
+  },
+  {
+    "id": "builtin.card.view.female",
+    "kind": "style",
+    "styleRole": "view",
+    "name": "女凝·欲望体验",
+    "content": "从欲望主体的感官、审美与判断出发，让被看者成为值得渴望的人。贴近声音、皮肤、手部、体态、能力和反差带来的吸引，写出想看、想触碰、想靠近的具体缘由。把被看者的回望与自主回应写进交流，借关注、反馈与距离变化勾起观看者的欲望。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2,
+    "viewAxis": "lens"
+  },
+  {
+    "id": "builtin.card.view.male",
+    "kind": "style",
+    "styleRole": "view",
+    "name": "男凝·视觉欲望",
+    "content": "站在观看者的欲望位置组织画面。用身形、姿态、衣料、光线和动作的显露与遮蔽强化被看者的诱惑力；让镜头在审美偏爱的细节上停留，借观看、期待与回应勾起欲望。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2,
+    "viewAxis": "lens"
+  },
+  {
+    "id": "builtin.card.view.char",
+    "kind": "style",
+    "styleRole": "view",
+    "name": "char凝视·char→user",
+    "content": "以 char 的审美和欲望凝视 user，写 user 哪些具体特征吸引 char，以及这种吸引怎样改变 char 的注意、措辞、距离与行动。让 char 主动看、接近、邀请，以人物专属的选择制造被渴望的体验。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2,
+    "viewAxis": "direction"
+  },
+  {
+    "id": "builtin.card.view.user",
+    "kind": "style",
+    "styleRole": "view",
+    "name": "user凝视·user→char",
+    "content": "以 user 选择的审美凝视 char，把 char 塑造成值得看、值得靠近的人。选择让 user 心动或产生欲望的声音、身体细节、姿态、能力与反差，让 char 察觉目光后的回视和行动形成拉扯。通过获准的视角与可见细节传达吸引。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2,
+    "viewAxis": "direction"
+  },
+  {
+    "id": "builtin.card.view.audience",
+    "kind": "style",
+    "styleRole": "view",
+    "name": "观众凝视·交互之间",
+    "content": "站在场外观看双方的欲望交锋。细写谁先看、谁接住目光、谁接近、谁回应，欣赏个人魅力、距离和节奏怎样在来回互动中擦出张力。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2,
+    "viewAxis": "direction"
+  },
+  {
+    "id": "builtin.card.sentence.subtext",
+    "kind": "style",
+    "styleRole": "sentence",
+    "name": "留白·对白潜流",
+    "content": "让对白处理表层事务，改口、停顿、动作和下一句回应承载欲望。关键处用短句和留白，其余处流畅承接，让读者从交流里读到潜台词。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2
+  },
+  {
+    "id": "builtin.card.sentence.fluid",
+    "kind": "style",
+    "styleRole": "sentence",
+    "name": "流动·自然叙事",
+    "content": "用精确名词和主动动词建立空间，句长随注意变化。让对白接住动作和物件，用长短有别的段落承接反馈、感受与后果。",
+    "tasks": [
+      "main"
+    ],
+    "version": 2
+  }
+]

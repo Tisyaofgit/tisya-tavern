@@ -7,6 +7,7 @@ import {applyOutputConfiguration} from './output-config.mjs';
 import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
 import {compilePromptLayerPlan,resolvePromptLayerText} from './prompt-layers.mjs';
 import {createPromptSourceMap} from './request-layers.mjs';
+import {resolveProseStyleText} from './prose-style-policy.mjs';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import configuration from './configuration.json' with {type:'json'};
 import {clone,fail,digest,asError} from './common.mjs';
@@ -75,7 +76,10 @@ export function compilePromptText(text,config,slots={}){
 }
 export function compilePrompts(source,config,slots){
  const out=clone(source);
- for(const p of out.prompts)if(Object.hasOwn(config.prompts,p.identifier))p.content=config.prompts[p.identifier];
+ for(const p of out.prompts){
+  if(Object.hasOwn(config.prompts,p.identifier))p.content=config.prompts[p.identifier];
+  else if(typeof p.content==='string')p.content=resolveProseStyleText(p.identifier,p.content);
+ }
  if(slots.tisya_output_configuration)applyOutputConfiguration(out.prompts,JSON.parse(slots.tisya_output_configuration));
  const parameters=applyPreferences(out.prompts,config);if(parameters.min_length!=null||parameters.max_length!=null)applyOutputConfiguration(out.prompts,parameters);
  for(const p of out.prompts){if(p.marker)continue;

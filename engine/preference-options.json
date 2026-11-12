@@ -504,8 +504,8 @@
       "options": [
         {
           "id": "S01-A",
-          "label": "完整小说主谓宾句法 + 零重复高信息密度推进 (默认常驻)",
-          "effect": "@GRAMMAR.DENSITY := Write in complete, grammatically grounded fiction sentences with explicit subjects and clear spatial choreography; maximize information density so every sentence advances new action, sensory discovery, or subtext—strictly ban subjectless RP fragments and never restate the same scene beat, emotion, or physical detail in different words.",
+          "label": "完整小说句法 + 层次丰富、细节清晰（允许慢写与留白）",
+          "effect": "@GRAMMAR.DENSITY := Write clear, grammatically grounded fiction with coherent subjects and legible spatial relationships. Build richness through precise sensory detail, atmosphere, appearance, gesture, and viewpoint-appropriate interiority. Let sentences dwell on one moment, carry a pause, or return to an image with a changed nuance; density comes from layered perception and implication, not a quota of new events. Keep deliberate echoes and natural ellipsis when referents remain clear, and trim empty paraphrase. Do not require every sentence to advance the plot or alter a relationship.",
           "default": true,
           "source_line": 173
         }
@@ -902,8 +902,8 @@
       "options": [
         {
           "id": "P00",
-          "label": "动态比率篇幅驱动 (65%–95% 区间) + 拒绝起手环境与结尾升华模板 (常驻首行)",
-          "effect": "@CLIMAX.INK_BASE := Ratio-scaled expressive fullness (65%–95% of [min, max]) & zero structural templates: aim naturally for the 65%–95% upper-middle zone of the active [min, max] length interval (strictly never below 100% of min, and 90%–100% of max at climax); strictly ban formulaic opening scenery descriptions or closing value summaries—earn length purely through back-and-forth interaction turns, object handling, and immediate reactions.",
+          "label": "动态比率篇幅驱动（65%–95% 区间）+ 依场景展开与自然收束",
+          "effect": "@CLIMAX.INK_BASE := Ratio-scaled expressive fullness (65%–95% of [min, max]) & scene-specific structure: aim naturally for the 65%–95% upper-middle zone of the active [min, max] length interval; at a genuine climax, work near 90%–100% of max when the scene and authorization support it. The active min is the ordinary body floor; an actual @STOP.GATE authorization boundary or an explicit short-scene request from @U takes precedence. Build length through meaningful exchanges, object handling, immediate reactions, atmosphere, sensory texture, viewpoint-appropriate psychology, appearance, and gestures, allowing an established moment to unfold at its own pace. Opening scenery and a quiet ending may serve the particular scene; avoid interchangeable scenery introductions, empty paraphrase, and closing moral summaries. Do not manufacture a question, dilemma, or new event merely to fill the length target.",
           "default": true,
           "source_line": 232
         }
@@ -977,7 +977,7 @@
         {
           "id": "P02-B",
           "label": "慢写显微镜拉丝",
-          "effect": "@PLOT.PACE := Slow-burn micro-pacing: linger deeply within the current scene's sensory tension, pauses, and subtle power shifts—ensuring every micro-beat alters interpersonal temperature without repetitive padding.",
+          "effect": "@PLOT.PACE := Slow-burn micro-pacing: stay within the current scene long enough for atmosphere, sensory impressions, appearance, small gestures, and viewpoint-appropriate thought to unfold. Follow an exchange through its response, hesitation, and quiet aftermath; a stable feeling, held distance, or shared silence may occupy several beats. Let relationship or power changes arise only when the characters' actions and circumstances support them. Vary detail and sentence rhythm without forcing fresh events, continuous escalation, or a question at the end.",
           "default": false,
           "source_line": 240
         },
@@ -1415,8 +1415,8 @@
         },
         {
           "id": "TECH-10",
-          "label": "一镜到底高密度递进技法 （严禁原地踏步换词复述，每段必须产生新位移）",
-          "effect": "@TECH.PROGRESSION := Non-repetitive causal progression: ensure every paragraph introduces a new action beat, spatial shift, or emotional escalation; once a sensory detail or psychological state is established, immediately build upon it rather than paraphrasing it.",
+          "label": "一镜到底连续递进技法（承接动作、感受与余波，允许停驻慢写）",
+          "effect": "@TECH.PROGRESSION := Continuous causal progression: sustain a coherent line of attention through action, response, perception, and aftermath. Let successive paragraphs accumulate meaningful detail or reveal a new aspect of an established moment, including stillness and stable relationships; movement or emotional escalation is not required in every paragraph. Use deliberate echoes when their context or emphasis matters, and trim empty restatement. Develop actual changes from the ongoing scene rather than inventing a twist or question to keep it moving.",
           "default": false,
           "source_line": 319
         },
