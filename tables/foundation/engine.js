@@ -13,6 +13,8 @@ export function matrixInputField(template,line){
  const legacy=template.fields[parsed.row-1];if(matches(legacy))return legacy;
  check(false,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
 }
+function existingRecordCandidates(context,heading){return [...new Map(context.references.filter(r=>r.display===heading||r.legacyDisplay===heading).map(r=>[r.tableId+'#'+r.recordId,r])).values()];}
+const ambiguousExistingHeading=heading=>'已有记录标题有歧义，无法确定修订对象：'+heading;
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
 // Shared reviewable workbook. This module never writes a canonical store.
 export function sheetSections(text,{tolerant=false}={}){
@@ -35,7 +37,7 @@ function sheetFieldText(line,cells){
 // It authorizes only dependencies of a repair target, never unrelated output.
 export function matrixSheetReferenceGraph(context,text){
  const rows=sheetSections(text,{tolerant:true}).map(section=>{
-  const existing=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading),label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=[];
+  const candidates=existingRecordCandidates(context,section.heading),existing=candidates.length===1?candidates[0]:undefined,label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=candidates.length>1?[ambiguousExistingHeading(section.heading)]:[];
   if(template){const fields=template.fields.map(field=>({...field,row:fieldRow(template,field)}));for(const line of section.lines)try{const field=matrixInputField(template,line),normalized=line.replace(/^\d+/,String(fieldRow(template,field))),parsed=sheetFieldText(normalized,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
   return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??raw.instance_name??existing?.name??'',raw,diagnostics,dependencies:[]};
  });
@@ -332,9 +334,10 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=fa
  if(!partial)return acceptMatrixSheetBatch(context,snapshot,{blocks,parsed});
  check(plain(blocks),'简表需要已解析的回复区块');
  const sections=sheetSections(blocks.cells??'',{tolerant:true});check(sections.length<=500,'创作表单记录过多');
- const counts=new Map();for(const section of sections)counts.set(section.heading,(counts.get(section.heading)??0)+1);
+ const counts=new Map(),headingErrors=new Map();for(const section of sections)counts.set(section.heading,(counts.get(section.heading)??0)+1);
  const entries=sections.map((section,index)=>{
-  const prior=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading),match=/^(.+)／([1-9]\d*)$/.exec(section.heading),template=prior?context.catalog.templates.find(t=>t.id===prior.tableId):context.catalog.templates.find(t=>t.label===match?.[1]);
+  const candidates=existingRecordCandidates(context,section.heading),prior=candidates.length===1?candidates[0]:undefined,match=/^(.+)／([1-9]\d*)$/.exec(section.heading),template=prior?context.catalog.templates.find(t=>t.id===prior.tableId):context.catalog.templates.find(t=>t.label===match?.[1]);
+  if(candidates.length>1)headingErrors.set(section.heading,Error(ambiguousExistingHeading(section.heading)));
   const tableId=prior?.tableId??template?.id??null,recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??prior?.recordId??stableId(context.operationId+'|'+(tableId??'pending')+'|'+(match?.[2]??index+1));
   return {...section,key:stableId(context.operationId+'|group|'+recordId),tableId,recordId,raw:['【'+section.heading+'】',...section.lines].join('\n'),records:[]};
  });
@@ -342,7 +345,7 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=fa
  const pending=[],remaining=[];
  const reject=(entry,error)=>{const location=error.formLocation??{};pending.push({...clone(entry),reason:error.message,field:location.label??location.field??'',...(location.rawValue!==undefined?{rawValue:location.rawValue}:{}),errors:[{message:error.message,code:error.code??'MATRIX_CREATION',...clone(location)}],...(error.reference?{dependency:error.reference}:{})});};
  if(!entries.length)reject({key:stableId(context.operationId+'|empty'),heading:'未提供表单',tableId:null,recordId:stableId(context.operationId+'|empty-record'),raw:blocks.cells??'',lines:[],records:[]},Error('回复没有可读取的表单条目'));
- for(const entry of entries)if(counts.get(entry.heading)>1)reject(entry,Error('分组重复，须合并为一份记录：'+entry.heading));else remaining.push(entry);
+ for(const entry of entries)if(counts.get(entry.heading)>1)reject(entry,Error('分组重复，须合并为一份记录：'+entry.heading));else if(headingErrors.has(entry.heading))reject(entry,headingErrors.get(entry.heading));else remaining.push(entry);
  let result=null;
  while(remaining.length){
   try{
@@ -370,7 +373,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const sections=sheetSections(cellText),engine=createSheetEngine(context.catalog,v=>typeof v==='string'),rows=[],counts=new Map(),selections=[];
  check(sections.length<=500,'创作表单记录过多');
  for(const section of sections){
-  try{const existing=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading);let t,number,recordId;
+  try{const candidates=existingRecordCandidates(context,section.heading);check(candidates.length<=1,ambiguousExistingHeading(section.heading));const existing=candidates[0];let t,number,recordId;
   if(existing){check(context.mode==='revise','新增创作不能覆盖已有记录');t=context.catalog.templates.find(t=>t.id===existing.tableId);check(t,'本次未开放该表修订：'+section.heading);recordId=existing.recordId;}
   else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=Number(match[2]);check(partition||number===(counts.get(t.id)??0)+1,'同表记录须从1连续编号：'+section.heading);counts.set(t.id,number);recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
   const made=engine.create(t.id),keys=section.lines.map((line,index)=>{const f=matrixInputField(t,line);section.lines[index]=line.replace(/^\d+/,String(fieldRow(t,f)));return f.key;});
