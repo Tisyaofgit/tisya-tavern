@@ -2,7 +2,7 @@ import {clone,fail,sha256,digest,stableId,asError} from './common.mjs';
 import {normalizeEnvelope,envelopeTags} from './tags.mjs';
 import {xmlTokens} from '../reader-core.js';
 import {groupedExtraSlots} from '../native-mvu-wire.js';
-import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputField} from '../tables/foundation/engine.js';
 import {stageArchive,formalizeArchives} from './archive.mjs';
 const mark=/^[ \t\u3000]*(?:\[(?:P)?(\d+)\]|【(?:P)?(\d+)】|\((\d+)\)|P(\d+)[.、:：]?|(\d+)[.、．:：)]|(\d+)(?=[ \t\u3000]))[ \t\u3000]*/i;
 export function paragraphs(body){
@@ -39,12 +39,13 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main'){
  if(formMode&&parsed.delta_ops.length){let result;try{result=e.transaction(operation+':sheets',{cells:parsed.delta_ops,reply_sha256:parsed.reply_sha256},()=>{
   const snapshot={state:e.data},context=prepareMatrixSheets(snapshot,{operationId:operation+':sheets',kind:'rows',mode:'revise',task:'main'}),blocks={...envelope(raw).blocks,cells:parsed.delta_ops.join('\n')};
   const accepted=acceptMatrixSheets(context,snapshot,{blocks,parsed}),changes=accepted.proposal.matrix.changes;applyMatrixChanges(e,changes,{mode:'revise'});
-  let heading;const evidence=new Map();for(const line of parsed.delta_ops){const h=/^【([^】]+)】$/.exec(line);if(h){heading=h[1];continue;}const m=/^(\d+)\s+.*?\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line);if(m&&heading)evidence.set(heading+'|'+Number(m[1]),m[2]);}
+  let heading;const evidence=new Map();for(const line of parsed.delta_ops){const h=/^【([^】]+)】$/.exec(line);if(h){heading=h[1];continue;}const m=/^\d+\s+.*?\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line);if(m&&heading){const binding=accepted.bindings.find(b=>b.heading===heading),template=context.catalog.templates.find(t=>t.id===binding?.tableId);if(template)evidence.set(heading+'|'+matrixInputField(template,line).key,m[1]);}}
   const sourcePointer={source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256,operation_id:operation+':sheets'};
   for(const change of changes)for(const field of Object.keys(change.values)){const record=e.record(change.tableId,change.recordId);record.metadata[field]={...(record.metadata[field]??{}),source_pointer:{...sourcePointer,paragraph_reference:null}};}
   for(const binding of accepted.bindings){const row=accepted.workbook.records.find(r=>r.id===binding.workbookId),template=context.catalog.templates.find(t=>t.id===binding.tableId),target=e.record(binding.tableId,binding.recordId);
-   for(const field of template.fields){if(!Object.hasOwn(row.values,field.key))continue;target.metadata[field.key].source_pointer.paragraph_reference=evidence.get(binding.heading+'|'+(template.fields.indexOf(field)+1))??null;}
+   for(const field of template.fields){if(!Object.hasOwn(row.values,field.key))continue;target.metadata[field.key].source_pointer.paragraph_reference=evidence.get(binding.heading+'|'+field.key)??null;}
   }
+  for(const change of changes){const values=change.values,parent=e.rows(values.owner_table??values.owner_form??'')[values.owner_row_uuid],pointer=parent?.metadata?.[values.owner_field]?.source_pointer;if(pointer)for(const field of Object.keys(values))e.record(change.tableId,change.recordId).metadata[field].source_pointer=clone(pointer);}
   return {format:'tisya.matrix-sheets/1',changes:clone(changes)};
  });}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({format:'form',original:parsed.cells_raw,effective:parsed.delta_ops.join('\n'),...result});if(result.status==='FAILED')warnings.push({code:'CELL_FORM_FAILED',original:parsed.cells_raw,error:result.error,message:'本次分组简表已整体回滚，正文与原始回复保留'});
  }else parsed.delta_ops.forEach((line,i)=>{let result;try{result=e.transaction(operation+':line:'+(i+1),{line},()=>e.micro(line,{source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256}));}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({line_number:i+1,original:parsed.original_delta_ops[i],effective:line,...result});const data=(result.receipt??result).result;if(data?.warning)warnings.push({...data.warning,line_number:i+1});if(result.status==='FAILED')warnings.push({code:'CELL_FAILED',line_number:i+1,original:parsed.original_delta_ops[i],error:result.error,message:'本行已回滚，正文和其他成功行保留'});});

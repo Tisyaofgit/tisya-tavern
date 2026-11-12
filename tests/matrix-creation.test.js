@@ -6,7 +6,7 @@ import {digest} from '../engine/common.mjs';
 import {bundledNativeTemplateBook} from '../engine/template-book.mjs';
 
 function fixture(){
- const r=new Runtime();r.registerTable('T_SYS_ENTITIES',[{key:'name',type:'TEXT'},{key:'enabled',type:'BOOLEAN'}],'人物主体');r.registerTable('T_CHAR_DOSSIER',[{key:'entity_ref',type:'REF'},{key:'name',label:'显示名称',type:'TEXT'},{key:'description',label:'描述',type:'TEXT'}],'人物');r.registerTable('T_DYN_CURRENCY_BALANCES',[{key:'amount',label:'数额',type:'NUMBER'},{key:'enabled',label:'启用',type:'BOOLEAN'}],'余额');r.registerTable('X_PHONE_RECEIPTS',[{key:'data',type:'JSON'}]);
+ const r=new Runtime();r.registerTable('T_SYS_ENTITIES',[{key:'name',type:'TEXT'},{key:'enabled',type:'BOOLEAN'}],'人物主体');r.registerTable('T_CHAR_DOSSIER',[{key:'entity_ref',type:'REF'},{key:'name',label:'显示名称',type:'TEXT'},{key:'description',label:'描述',type:'TEXT'}],'人物');r.registerTable('T_DYN_CURRENCY_BALANCES',[{key:'amount',label:'数额',type:'NUMBER'},{key:'enabled',label:'启用',type:'BOOLEAN'}],'余额');r.registerTable('X_PHONE_RECEIPTS',[{key:'data',type:'JSON'}]);r.data.schema.X_PHONE_RECEIPTS.program_owned=true;
  let snapshot={state:r.data,revision:0,contextKey:'chat-a'},writes=0;const receipts=new Map();
  const database={read:async()=>structuredClone(snapshot),commit:async input=>{const key=input.operationId,hash=digest({changes:input.changes,source:input.source});if(receipts.has(key)){assert.equal(hash,receipts.get(key));return {...structuredClone(snapshot),receipt:{replayed:true}};}assert.equal(input.contextKey,snapshot.contextKey);assert.equal(input.expectedRevision,snapshot.revision,'SAVE_CONFLICT');const rt=new Runtime(snapshot.state);for(const c of input.changes){if(!rt.rows(c.tableId)[c.recordId])rt.newRecord(c.tableId,{},c.recordId);for(const [k,v]of Object.entries(c.values))rt.set([c.tableId,c.recordId,k,[]],v,c.states?.[k]??'known');}snapshot={...snapshot,state:rt.data,revision:snapshot.revision+1};receipts.set(key,hash);writes++;return {...structuredClone(snapshot),receipt:{replayed:false}};}};
  return {database,get snapshot(){return snapshot;},set snapshot(v){snapshot=v;},get writes(){return writes;}};
@@ -48,6 +48,6 @@ test('phone creation request carries progressive known-field rules without requi
  await creator.draft('手机初始化：仅建立人物最小档案，网名、住址和日程时间稍后再补',{kind:'character',mode:'revise'});
  assert.match(sent.template,/最小档案/);assert.match(sent.template,/后补/);assert.match(sent.template,/同一表单/);assert.match(sent.template,/时间待定/);assert.match(sent.template,/不能当作零/);
  assert.doesNotMatch(sent.template,/先按来源确定世界、人物和唯一故事时钟，再/);
- assert.match(sent.forms,/只写本轮有内容的字段/);
+ for(const rule of [/只填有据的新值/,/保留未改内容/,/未知省略/])assert.match(sent.forms,rule);
  assert.equal(Object.keys(f.snapshot.state.tables.T_CHAR_DOSSIER??{}).length,0);
 });

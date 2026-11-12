@@ -1,8 +1,18 @@
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
-import {programOwnedTable,creationFieldAllowed,compactCreationSchema} from '../../engine/prompt-boundary.mjs';
+import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible} from '../../engine/prompt-boundary.mjs';
 import {Runtime} from '../../engine/runtime.mjs';
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
+const fieldRow=(template,field)=>field.row??template.fields.indexOf(field)+1;
+export function matrixInputField(template,line){
+ const parsed=sheetLine(line),matches=field=>field&&parsed.body.startsWith(field.label)&&(!parsed.body.slice(field.label.length)||/^[\s：:]/.test(parsed.body.slice(field.label.length)));
+ const current=template.fields.find(field=>fieldRow(template,field)===parsed.row);
+ if(matches(current))return current;
+ // Persisted replies before schema-coordinate projection used compact row
+ // positions. Exact field labels keep this read compatibility unambiguous.
+ const legacy=template.fields[parsed.row-1];if(matches(legacy))return legacy;
+ check(false,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
+}
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
 // Shared reviewable workbook. This module never writes a canonical store.
 export function sheetSections(text,{tolerant=false}={}){
@@ -25,9 +35,9 @@ function sheetFieldText(line,cells){
 // It authorizes only dependencies of a repair target, never unrelated output.
 export function matrixSheetReferenceGraph(context,text){
  const rows=sheetSections(text,{tolerant:true}).map(section=>{
-  const existing=context.references.find(r=>r.display===section.heading),label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=[];
-  if(template){const fields=template.fields.map((field,index)=>({...field,row:index+1}));for(const line of section.lines)try{const parsed=sheetFieldText(line,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
-  return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??existing?.name??'',raw,diagnostics,dependencies:[]};
+  const existing=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading),label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=[];
+  if(template){const fields=template.fields.map(field=>({...field,row:fieldRow(template,field)}));for(const line of section.lines)try{const field=matrixInputField(template,line),normalized=line.replace(/^\d+/,String(fieldRow(template,field))),parsed=sheetFieldText(normalized,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
+  return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??raw.instance_name??existing?.name??'',raw,diagnostics,dependencies:[]};
  });
  const table=raw=>context.catalog.templates.find(t=>t.id===raw||t.label===raw)?.id??raw;
  for(const row of rows){const dependencies=new Set();for(const [key,raw]of Object.entries(row.raw)){
@@ -81,7 +91,7 @@ export function createSheetEngine(catalog, validateValue) {
   const shape=d=>({类型:types[d.type]??d.type,...(d.values?{选项:clone(d.values)}:{}),...(d.fields?{字段:Object.fromEntries(Object.entries(d.fields).map(([k,v])=>[k,shape(v)]))}:{}),...(d.items?{条目:shape(d.items)}:{}),...(d.required?{必填:true}:{}),...(d.min!==undefined?{最小:d.min}:{}),...(d.max!==undefined?{最大:d.max}:{})});
   const hasRef=d=>['ref','refs'].includes(d.type)||Object.values(d.fields??{}).some(hasRef)||(d.items&&hasRef(d.items));
   const encode=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\','\\\\').replaceAll('|','\\|').replaceAll('\n','<br>');
-  const cells=fields.map(f=>({row:t.fields.indexOf(f)+1,key:f.key,label:f.label,definition:f.definition}));
+  const cells=fields.map(f=>({row:fieldRow(t,f),key:f.key,label:f.label,definition:f.definition}));
   const token='fill-'+(++serial),ticket={record:id,revision:r.revision,workbookRevision:state.revision,keys:selected,refs:[...refs],cells};pending.set(token,ticket);
   const typeRule=f=>{const def=f.definition;let text=types[def.type]??def.type;if(def.values)text+='，可选：'+def.values.join('／');if(def.min!==undefined)text+='，最小'+def.min;if(def.max!==undefined)text+='，最大'+def.max;if(['texts','refs'].includes(def.type))text+='，每项用<br>分行，无条目填[]';if(def.type==='text'&&!def.required)text+='，明确空文本填""';if(['object','array','map'].includes(def.type))text+='，结构：'+JSON.stringify(shape(def));return text;};
   const instructions=['表单：'+t.label,'档案：'+(at(r.values,['名称'])||r.title),'表级要求：根据资料填回下表；保留行号、A列和表头，只填B列。未知格留空，不拿0或否代替未知。只返回填好的表格。','列级要求：A为字段名，不修改；B为内容。文字中的竖线写\\|，换行写<br>，字面<br>写&lt;br&gt;。',...(rules.table?['本表补充：'+rules.table]:[]),...(rules.columns?.B?['B列补充：'+rules.columns.B]:[])];
@@ -177,7 +187,7 @@ export function createSheetEngine(catalog, validateValue) {
   const records=chosen.map(record);check(records.every(r=>r.id===id||r.parentId===id),'不能混入其他人物子表');
   const known=allowedRefs();check(referenceIds.every(x=>known.has(x)),'引用对象未获授权');
   const counts={},parts=[];
-  for(const r of records){const t=template(r.template),keys=selectedKeys(r,undefined,options.deriveObjects!==false),cells=keys.map(k=>{const f=field(t,k);return {row:t.fields.indexOf(f)+1,key:k,label:f.label,definition:f.definition};});
+  for(const r of records){const t=template(r.template),keys=selectedKeys(r,undefined,options.deriveObjects!==false),cells=keys.map(k=>{const f=field(t,k);return {row:fieldRow(t,f),key:k,label:f.label,definition:f.definition};});
    if(!cells.length)continue;const kind=r.template.split('.').at(-1),n=(counts[kind]??0)+1;counts[kind]=n;
    const num=['一','二','三','四','五','六','七','八','九','十'][n-1]??String(n);
    parts.push(partFor(r,cells,r.id===id?'人物':childTypes[kind]+'／'+num));
@@ -191,7 +201,7 @@ export function createSheetEngine(catalog, validateValue) {
  function requestWorkbook(selections,{source='',referenceIds=[],rules={}}={}){
   check(Array.isArray(selections)&&selections.length&&new Set(selections.map(s=>s.recordId)).size===selections.length,'请明确选择本次表单记录');
   const known=allowedRefs();check(referenceIds.every(id=>known.has(id)),'引用对象未获授权');
-  const parts=selections.map(({recordId,keys,heading})=>{const r=record(recordId),t=template(r.template),selected=selectedKeys(r,keys,false);check(selected.length&&new Set(selected).size===selected.length,'没有可填写的字段或字段重复');const cells=selected.map(key=>{const f=field(t,key);check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);return {row:t.fields.indexOf(f)+1,key,label:f.label,definition:f.definition};});return partFor(r,cells,heading);});
+  const parts=selections.map(({recordId,keys,heading})=>{const r=record(recordId),t=template(r.template),selected=selectedKeys(r,keys,false);check(selected.length&&new Set(selected).size===selected.length,'没有可填写的字段或字段重复');const cells=selected.map(key=>{const f=field(t,key);check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);return {row:fieldRow(t,f),key,label:f.label,definition:f.definition};});return partFor(r,cells,heading);});
   const aliases=makeAliases(referenceIds),token='fill-'+(++serial),ticket={record:parts[0].record,workbookRevision:state.revision,parts,refs:[...referenceIds],aliases,deriveObjects:false};pending.set(token,ticket);
   return {token,recordId:parts[0].record,modelInput:plainInput(parts,source,aliases,rules)};
  }
@@ -274,24 +284,46 @@ function structuredCell(raw,array=false){
 }
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null}={}){
+const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all'}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
- const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null;
- if(selected){let size;do{size=selected.size;for(const id of [...selected])for(const f of allSchemas[id]?.fields??[])if(f.ref&&allSchemas[f.ref])selected.add(f.ref);}while(size!==selected.size);}
- const schemas=selected?Object.fromEntries(Object.entries(allSchemas).filter(([id])=>selected.has(id))):allSchemas,used=new Map(),templates=[],schemaByTemplate={};
+ const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
+ // Names and coordinates belong to the complete schema, not to the current
+ // selection. Opening another table cannot renumber an existing form.
+ for(const [id,schema]of Object.entries(allSchemas)){let label=schema.label&&schema.label!==id?schema.label:'资料表 '+(labels.size+1);const count=(used.get(label)??0)+1;used.set(label,count);labels.set(id,count>1?label+'〔'+count+'〕':label);}
+ if(selected){let size;do{size=selected.size;for(const id of [...selected])for(const f of allSchemas[id]?.fields??[])if(f.ref&&allSchemas[f.ref]&&(expandReferences==='all'||f.type==='CHILD_REF'))selected.add(f.ref);}while(size!==selected.size);}
+ const schemas=selected?Object.fromEntries(Object.entries(allSchemas).filter(([id])=>selected.has(id))):allSchemas,templates=[],schemaByTemplate={};
  for(const [id,schema]of Object.entries(schemas)){
-  let label=schema.label&&schema.label!==id?schema.label:'资料表 '+(templates.length+1);const count=(used.get(label)??0)+1;used.set(label,count);if(count>1)label+='〔'+count+'〕';
-  const isOwned=ownedTable(schema),fields=schema.fields.filter(f=>(task!=='main'||scope.audience==='author'||!snapshot.state.schema[id].fields.find(x=>x.key===f.key)?.lock_level)&&!(isOwned&&ownerKeys.has(f.key))&&!(isOwned&&['sequence','value_state'].includes(f.key)));
-  if(!fields.length)continue;schema.fields=schema.fields.filter(f=>task!=='main'||scope.audience==='author'||!snapshot.state.schema[id].fields.find(x=>x.key===f.key)?.lock_level);
-  const names=new Map();const t={id,table:id,label,fields:fields.map(f=>{let name=f.label||f.key;const n=(names.get(name)??0)+1;names.set(name,n);if(n>1)name+='〔'+n+'〕';return {key:f.key,label:name,path:[f.key],group:'内容',definition:{type:'text',description:f.description??f.instruction??''}};})};templates.push(t);schemaByTemplate[id]=schema;
+  const isOwned=ownedTable(schema),allowed=f=>task!=='main'||scope.audience==='author'||!snapshot.state.schema[id].fields.find(x=>x.key===f.key)?.lock_level;
+  const fields=schema.fields.filter(f=>allowed(f)&&!(isOwned&&ownerKeys.has(f.key))&&!(isOwned&&['sequence','value_state'].includes(f.key)));
+  if(!fields.length)continue;
+  const names=new Map(),fieldLabels=new Map();for(const f of allSchemas[id].fields){const name=f.label||f.key,n=(names.get(name)??0)+1;names.set(name,n);fieldLabels.set(f.key,n>1?name+'〔'+n+'〕':name);}
+  schema.fields=schema.fields.filter(allowed);
+  const t={id,table:id,label:labels.get(id),fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'}}))};templates.push(t);schemaByTemplate[id]=schema;
  }
- const refs=[];for(const t of templates)for(const [index,[recordId,row]]of Object.entries(snapshot.state.tables[t.id]??{}).entries()){
-  if(row.metadata?.phone_projection)continue;const name=String(row.values?.name??row.values?.label??row.values?.title??'第'+(index+1)+'项').trim();
-  const base=t.label+'／已有：'+name,n=refs.filter(r=>r.base===base).length+1;refs.push({tableId:t.id,recordId,name,base,display:base+'〔'+n+'〕'});
+ const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
+ const refs=[],refCounts=new Map(),legacyCounts=new Map(),recordMeta=new Map(Object.values(snapshot.state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));for(const id of referenceTables)for(const [index,[recordId,row]]of Object.entries(snapshot.state.tables[id]??{}).entries()){
+  if(row.metadata?.phone_projection)continue;
+  const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&(parent.values.name??parent.values.label??parent.values.title??parent.values.instance_name),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
+  const name=String(row.values?.name??row.values?.label??row.values?.title??row.values?.instance_name??(ownerName&&ownerField?(labels.get(owner)??owner)+'／'+ownerName+'／'+ownerField:'第'+(index+1)+'项')).trim();
+  const base=labels.get(id)+'／已有：'+name,n=(refCounts.get(base)??0)+1;refCounts.set(base,n);
+  const legacyName=String(row.values?.name??row.values?.label??row.values?.title??'第'+(index+1)+'项').trim(),legacyBase=labels.get(id)+'／已有：'+legacyName,legacyNumber=(legacyCounts.get(legacyBase)??0)+1;legacyCounts.set(legacyBase,legacyNumber);
+  if(task==='main'&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
+  refs.push({tableId:id,recordId,name,base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
- const fieldsText=templates.map(t=>'【'+t.label+'／序号】\n'+t.fields.map((f,i)=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key);let hint=scalarTypes[spec.type]??(['REF','ROW_REF','CHILD_REF'].includes(spec.type)?'已登记名称或本次表单分组名':'文字');if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES')hint='多项用分号分隔；文字直接写，关联填“关联：分组名”，数值/布尔填“数值：0”/“布尔：否”，子表填“条目：分组名”；明确无项填“无”';if(spec.enum??spec.options)hint+='：'+(spec.enum??spec.options).join('／');if(spec.unit)hint+='，单位 '+spec.unit;if(spec.required)hint+='，必填';if(spec.ref&&spec.ref!=='M_LIST_VALUES')hint+='；只能关联 '+(templates.find(x=>x.id===spec.ref)?.label??snapshot.state.schema[spec.ref]?.label??spec.ref);return (i+1)+' '+f.label+'（'+hint+'）';}).join('\n')).join('\n\n');
- const instructions='在完整 reply 的 cells 中填写分组简表。每条记录用【表名／1】等标题，同表从1连续编号；每行“行号 字段名：值”。只写本轮有内容的字段，未知省略或留空；不修改行号与字段名。按需要选表，不为凑齐定义创建空记录。关联填写已登记名称或本次“表名／序号”，程序生成稳定编号与归属。人物从人物原点档案填写，主体注册及原点引用由程序建立。列表原子直接写多项，其他子表分组填写后由父格引用。不填写程序回执、原生变量或执行指令。'+(mode==='revise'?'修订已有记录用给定“表名／已有：名称〔序号〕”标题，只写本次任务明确授权且有据的改变。':'本轮只新增定义，不覆盖已有记录。')+(task==='main'?'本次为当前回复已发生的变化；每个有值字段可附 | Pn 指向正文依据，不把设想当既成事实。':task==='tableGenesis'?'本次为获准的创作草稿，不推进现有故事或补造既成历史。':'本次为来源提炼，只填给定原文明确支持的事实与定义；不能用创作补完缺口。');
- return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
+ const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=spec=>{
+  let hint=['TEXT','LONG_TEXT'].includes(spec.type)?'':scalarTypes[spec.type]??(['REF','ROW_REF','CHILD_REF'].includes(spec.type)?'名称':'文字');
+  if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'||task==='main'&&inline(spec))hint=inlineChildHints[spec.ref];
+  else if(spec.ref)hint=(spec.type==='CHILD_REF'?'分组：':'名称：')+(labels.get(spec.ref)??snapshot.state.schema[spec.ref]?.label??spec.ref);
+  if(spec.enum??spec.options)hint=(spec.enum??spec.options).join('／');
+  if(spec.unit)hint+=(hint?'；':'')+'单位 '+spec.unit;
+  if(spec.minimum!==undefined)hint+=(hint?'；':'')+'≥'+spec.minimum;if(spec.maximum!==undefined)hint+=(hint?'；':'')+'≤'+spec.maximum;
+  if(spec.required)hint+=(hint?'；':'')+'必填';return hint;
+ };
+ const modelTemplates=task==='main'?templates.filter(t=>!Object.hasOwn(inlineChildHints,t.id)):templates;
+ const fieldsText=modelTemplates.map(t=>'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')).join('\n\n');
+ const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号 字段名：值”。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
+ return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This
@@ -302,7 +334,7 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=fa
  const sections=sheetSections(blocks.cells??'',{tolerant:true});check(sections.length<=500,'创作表单记录过多');
  const counts=new Map();for(const section of sections)counts.set(section.heading,(counts.get(section.heading)??0)+1);
  const entries=sections.map((section,index)=>{
-  const prior=context.references.find(r=>r.display===section.heading),match=/^(.+)／([1-9]\d*)$/.exec(section.heading),template=prior?context.catalog.templates.find(t=>t.id===prior.tableId):context.catalog.templates.find(t=>t.label===match?.[1]);
+  const prior=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading),match=/^(.+)／([1-9]\d*)$/.exec(section.heading),template=prior?context.catalog.templates.find(t=>t.id===prior.tableId):context.catalog.templates.find(t=>t.label===match?.[1]);
   const tableId=prior?.tableId??template?.id??null,recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??prior?.recordId??stableId(context.operationId+'|'+(tableId??'pending')+'|'+(match?.[2]??index+1));
   return {...section,key:stableId(context.operationId+'|group|'+recordId),tableId,recordId,raw:['【'+section.heading+'】',...section.lines].join('\n'),records:[]};
  });
@@ -338,16 +370,16 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const sections=sheetSections(cellText),engine=createSheetEngine(context.catalog,v=>typeof v==='string'),rows=[],counts=new Map(),selections=[];
  check(sections.length<=500,'创作表单记录过多');
  for(const section of sections){
-  try{const existing=context.references.find(r=>r.display===section.heading);let t,number,recordId;
-  if(existing){check(context.mode==='revise','新增创作不能覆盖已有记录');t=context.catalog.templates.find(t=>t.id===existing.tableId);recordId=existing.recordId;}
+  try{const existing=context.references.find(r=>r.display===section.heading||r.legacyDisplay===section.heading);let t,number,recordId;
+  if(existing){check(context.mode==='revise','新增创作不能覆盖已有记录');t=context.catalog.templates.find(t=>t.id===existing.tableId);check(t,'本次未开放该表修订：'+section.heading);recordId=existing.recordId;}
   else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=Number(match[2]);check(partition||number===(counts.get(t.id)??0)+1,'同表记录须从1连续编号：'+section.heading);counts.set(t.id,number);recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
-  const made=engine.create(t.id),keys=section.lines.map(line=>{const {row}=sheetLine(line),f=t.fields[row-1];check(f,'字段行未开放：'+section.heading+'/'+row);return f.key;});
+  const made=engine.create(t.id),keys=section.lines.map((line,index)=>{const f=matrixInputField(t,line);section.lines[index]=line.replace(/^\d+/,String(fieldRow(t,f)));return f.key;});
   check(keys.length,'不创建没有字段的记录：'+section.heading);selections.push({recordId:made.id,keys,heading:section.heading});rows.push({tableId:t.id,recordId,workbookId:made.id,heading:section.heading,existing:!!existing,values:{},states:{}});
   }catch(error){error.formLocation??={heading:section.heading};throw error;}
  }
  if(partition){for(const [index,selection]of selections.entries())try{const ticket=engine.requestWorkbook([selection]);engine.accept(ticket.token,['【'+sections[index].heading+'】',...sections[index].lines].join('\n'));}catch(error){error.formLocation??={heading:sections[index].heading};throw error;}}
  else {const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));}
- for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??previous?.name??previous?.label??previous?.title??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
+ for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  // Build the canonical actor links before resolving references to newly created
  // people. These IDs are private to this draft and stable across save retries.
  const generated=[],actors=[];
@@ -369,10 +401,51 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  }
  const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,display:r.heading})),...actors];
  function tableId(raw){const matches=context.catalog.templates.filter(t=>t.label===raw||t.id===raw);check(matches.length===1,'表名不存在或不唯一：'+raw);return matches[0].id;}
- function reference(raw,target){let candidates=references.filter(r=>r.name===raw||r.display===raw);if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}const matches=candidates.filter(r=>(!target||(Array.isArray(target)?target.includes(r.tableId):r.tableId===target))),unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];if(unique.length!==1){const wanted=(Array.isArray(target)?target:[target]).filter(Boolean).map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});}return unique[0];}
+ function reference(raw,target){let candidates=references.filter(r=>r.name===raw||r.display===raw||r.legacyDisplay===raw);if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}const matches=candidates.filter(r=>(!target||(Array.isArray(target)?target.includes(r.tableId):r.tableId===target))),unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];if(unique.length!==1){const wanted=(Array.isArray(target)?target:[target]).filter(Boolean).map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});}return unique[0];}
  const attach=(parent,field,child)=>{const schema=context.schemas[child.tableId];if(!schema||!ownedTable(schema))return;const metadata={...(schema.fields.some(f=>f.key==='owner_table')?{owner_table:parent.tableId}:{owner_form:parent.tableId}),owner_row_uuid:parent.recordId,owner_field:field.key};if(child.owner)check(digest(child.owner)===digest(metadata),'同一子表不能归属两个字段：'+child.heading);child.owner=metadata;};
+ function inlineChild(row,spec,raw){
+  const target=spec.ref;if(!Object.hasOwn(inlineChildHints,target)||target==='M_LIST_VALUES'||!['REF','CHILD_REF'].includes(spec.type))return null;
+  // An explicit old group or registered child name still goes through the
+  // original reference codec, including old saved replies and author tasks.
+  if(references.some(r=>r.tableId===target&&(r.display===raw||r.legacyDisplay===raw||r.name===raw)))return null;
+  const childSchema=snapshot.state.schema[target];check(childSchema,'填写所需子表尚未登记');
+  const owned=Object.entries(snapshot.state.tables[target]??{}).filter(([,r])=>r.values.owner_table===row.tableId&&r.values.owner_row_uuid===row.recordId&&r.values.owner_field===spec.key);check(owned.length<=1,'多条已有明细须按原分组修订，不能压成单值：'+spec.label);
+  const values={owner_table:row.tableId,owner_row_uuid:row.recordId,owner_field:spec.key},id=owned[0]?.[0]??stableId(context.operationId+'|inline|'+row.recordId+'|'+spec.key);
+  if(childSchema.fields.some(f=>f.key==='sequence'))values.sequence=1;
+  if(childSchema.fields.some(f=>f.key==='value_state'))values.value_state='known';
+  const properties=()=>{const out={};for(const token of raw.split(/[；;]/)){const match=/^([^：:]+)[：:]\s*([\s\S]*)$/.exec(token.trim());check(match&&match[2].trim(),'填写需要明确的名称和值');check(!Object.hasOwn(out,match[1].trim()),'填写项重复：'+match[1]);out[match[1].trim()]=match[2].trim();}return out;};
+  const previous=snapshot.state.tables[row.tableId]?.[row.recordId]?.values?.[spec.key],previousChildren=[...owned.map(([,r])=>r.values),...(Array.isArray(previous)?previous:[previous]).filter(Boolean).map(key=>snapshot.state.tables[target]?.[key]?.values).filter(Boolean)];
+  const preserve=(field,allowed)=>check(previousChildren.every(child=>allowed.includes(child[field])),'已有精确值或执行规则不能改写为描述或观察：'+spec.label);
+  const description=prefix=>{const match=new RegExp('^'+prefix+'[：:]\\s*([\\s\\S]+)$').exec(raw);check(match&&match[1].trim(),'请填写已有名称，或明确使用“'+prefix+'：原文”');const source=snapshot.state.schema[row.tableId].fields.find(f=>f.key===spec.key);check(['TEXT','LONG_TEXT','WORLD_TIME'].includes(source.source_type),'此字段没有描述型填写合同');return match[1].trim();};
+  if(target==='M_FIELD_REFERENCES'){
+   const coordinate=/^([\s\S]+?)\s*→\s*([^→]+)$/.exec(raw),ref=reference(coordinate?coordinate[1].trim():raw);Object.assign(values,{target_table:ref.tableId,target_row_uuid:ref.recordId,reference_kind:coordinate?'cell':'record',resolution_status:'resolved'});
+   if(coordinate){const fields=snapshot.state.schema[ref.tableId]?.fields.filter(f=>f.label===coordinate[2].trim()||f.key===coordinate[2].trim())??[];check(fields.length===1,'关联字段名称不存在或重名：'+coordinate[2]);const record=snapshot.state.tables[ref.tableId]?.[ref.recordId]??{values:rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId)?.raw??{}};check(context.task!=='main'||matrixFieldVisible(fields[0],record,context.scope??snapshot.state.runtime?.scope??{}),'关联字段本次不可读：'+coordinate[2]);values.target_field=fields[0].key;}
+  }else if(target==='M_WORLD_TIME'){
+   preserve('precision',['unknown']);Object.assign(values,{precision:'unknown',original_text:description('原文')});
+  }else if(target==='M_TIME_RANGES'){
+   if(/^描述[：:]/.test(raw)){preserve('time_basis',['narrative_only']);Object.assign(values,{time_basis:'narrative_only',narrative:description('描述')});}
+   else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'起始轮次')&&Object.hasOwn(input,'结束轮次'),'区间填写起始轮次与结束轮次，或已有名称');const [start,startState]=decode(input['起始轮次'],{type:'INTEGER',minimum:0}),[end,endState]=decode(input['结束轮次'],{type:'INTEGER',minimum:0});check(startState==='known'&&endState==='known','区间端点须明确，未知请整格填“?”');check(end>=start,'结束轮次不能早于起始轮次');Object.assign(values,{time_basis:'turn_range',start_turn:start,end_turn:end});}
+  }else if(target==='M_QUANTITIES'){
+   if(/^描述[：:]/.test(raw)){preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:description('描述')});}
+   else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'数值')&&Object.hasOwn(input,'单位'),'定量填写数值与已登记单位，或已有名称');const [value,state]=decode(input['数值'],{type:'NUMBER'});check(state==='known','数值须明确，未知请整格填“?”');preserve('quantity_mode',['exact','range','narrative_only']);Object.assign(values,{quantity_mode:'exact',value,unit_ref:reference(input['单位'],'M_UNITS').recordId});}
+  }else if(target==='M_CONDITIONS'){
+   const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'观察')&&Object.hasOwn(input,'依据'),'条件填写明确观察与依据，未知条件填“?”');const [observed,state]=decode(input['观察'],{type:'BOOLEAN'});check(state==='known','观察须明确是或否，未知请整格填“?”');preserve('predicate_kind',['observed_boolean']);Object.assign(values,{group_key:id,combine:'all',predicate_kind:'observed_boolean',observed_result:observed,narrative:input['依据']});
+  }else if(target==='M_EFFECTS'){
+   preserve('operation',['narrative_only']);Object.assign(values,{operation:'narrative_only',narrative:description('描述')});
+  }else if(target==='M_POLICY_RULES'){
+   preserve('implementation_kind',['narrative_only']);Object.assign(values,{implementation_kind:'narrative_only',narrative:description('描述')});
+  }else if(target==='M_ACCESS_RULES'){
+   const input=properties();check(Object.keys(input).length===4&&['受众','动作','决定','依据'].every(k=>Object.hasOwn(input,k)),'披露边界需要受众、动作、明确决定与依据');const audience={'公开':'public','读者':'player','作者':'author'}[input['受众']],permission={'读取':'read','披露':'disclose'}[input['动作']],decision={'允许':'allow','禁止':'deny'}[input['决定']];check(permission&&decision,'仅接受明确的读取/披露与允许/禁止');Object.assign(values,{audience_kind:audience??'character',permission,decision,narrative:input['依据']});if(!audience)values.audience_entity_ref=reference(input['受众'].replace(/^角色[：:]/,''),'T_SYS_ENTITIES').recordId;
+  }
+  const states={};for(const key of Object.keys(owned[0]?.[1].values??{})){const field=childSchema.fields.find(f=>f.key===key);if(field&&creationFieldAllowed(field)&&!Object.hasOwn(values,key)){values[key]=null;states[key]='unset';}}
+  generated.push({tableId:target,recordId:id,values,...(Object.keys(states).length?{states}:{})});return [id,'known'];
+ }
  function fieldValue(row,spec,raw){
-  if(['?','~','!','∅','—'].includes(raw))return decode(raw,spec);
+  if(['?','~','!','∅','—'].includes(raw)){
+   const decoded=decode(raw,spec),childSchema=snapshot.state.schema[spec.ref];
+   if(spec.type==='CHILD_REF'&&Object.hasOwn(inlineChildHints,spec.ref)&&childSchema?.fields.some(f=>f.key==='value_state'))for(const [recordId,child]of Object.entries(snapshot.state.tables[spec.ref]??{}))if(child.values.owner_table===row.tableId&&child.values.owner_row_uuid===row.recordId&&child.values.owner_field===spec.key)generated.push({tableId:spec.ref,recordId,values:{owner_table:row.tableId,owner_row_uuid:row.recordId,owner_field:spec.key,value_state:decoded[1]}});
+   return decoded;
+  }
   if(spec.type==='TABLE_KEY'||['target_table','source_table','output_table'].includes(spec.key))return [tableId(raw),'known'];
   if(spec.type==='FIELD_KEY'||['target_field','source_field','output_field'].includes(spec.key)){
    const prefix=spec.key.replace(/_field(?:_key)?$/,'_table'),target=row.values[prefix]??row.values[prefix+'_id']??row.owner?.owner_table;const tables=target?[snapshot.state.schema[target]]:Object.values(snapshot.state.schema);const matches=tables.flatMap(t=>(t?.fields??[]).filter(f=>f.label===raw||f.key===raw));const keys=[...new Set(matches.map(f=>f.key))];check(keys.length===1,'字段名称不存在或不唯一：'+raw);return [keys[0],'known'];
@@ -381,6 +454,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   const phoneId=ref=>{const made=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId),old=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;return made?.values.id??old?.id??ref.recordId;};
   if(businessRef){const ref=reference(raw,businessRef);return [ref.tableId.startsWith('X_')?phoneId(ref):ref.recordId,'known'];}
   if(listRef)return [list(raw).map(token=>{const ref=reference(token,listRef);return listRef.startsWith('X_')?phoneId(ref):ref.recordId;}),'known'];
+  const inline=inlineChild(row,spec,raw);if(inline)return inline;
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'){
    const values=list(raw),ids=[];for(const [i,text]of values.entries()){
     const typed=/^(关联|数值|布尔|条目|文字)[：:]\s*(.*)$/.exec(text);if(typed?.[1]==='条目'){const ref=reference(typed[2],'M_LIST_VALUES'),child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);else{const own=snapshot.state.tables.M_LIST_VALUES?.[ref.recordId]?.values;check(own?.owner_table===row.tableId&&own.owner_row_uuid===row.recordId&&own.owner_field===spec.key,'列表条目不能改挂另一字段');}ids.push(ref.recordId);continue;}
@@ -395,7 +469,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    let target=spec.ref;if(target?.startsWith('@'))target=row.values[target.slice(1)];if(spec.type==='ROW_REF'){const prefix=spec.key.replace(/_row_uuid$/,'_table');target=row.values[prefix]??target;}
    if(/^(?:target|source|output)_row_uuid$/.test(spec.key))target=row.values[spec.key.replace(/_row_uuid$/,'_table')]??target;
    if(target&&!snapshot.state.schema[target])return decode(raw,spec);
-   const many=spec.type==='REF_LIST'||spec.type==='CHILD_REF'&&/[；;]/.test(raw),tokens=many?list(raw):[raw],resolved=tokens.map(token=>reference(token,target));for(const ref of resolved){const child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);}return [many?resolved.map(r=>r.recordId):resolved[0]?.recordId,'known'];
+   const many=spec.type==='REF_LIST'||spec.type==='CHILD_REF'&&/[；;]/.test(raw),tokens=many?list(raw):[raw],resolved=tokens.map(token=>reference(token,target));for(const ref of resolved){const child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);else if(spec.type==='CHILD_REF'&&ownedTable(snapshot.state.schema[ref.tableId])){const own=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;check((own?.owner_table??own?.owner_form)===row.tableId&&own.owner_row_uuid===row.recordId&&own.owner_field===spec.key,'已有子表不能改挂另一字段');}}return [many?resolved.map(r=>r.recordId):resolved[0]?.recordId,'known'];
   }
   if(['ARRAY','TEXT_LIST'].includes(spec.type))return decode(spec.type==='TEXT_LIST'?list(raw):structuredCell(raw,true),spec);
   if(['JSON','OBJECT'].includes(spec.type)){const value=structuredCell(raw);return decode(typeof value==='string'?JSON.stringify(value):value,spec);}

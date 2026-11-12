@@ -4,6 +4,7 @@ import {validateStoryLibraries} from './template-book.mjs';
 import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
 import {applyOutputConfiguration} from './output-config.mjs';
+import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import configuration from './configuration.json' with {type:'json'};
 import {clone,fail,digest,asError} from './common.mjs';
@@ -20,10 +21,11 @@ extra 同时收纳唯一的 cells 与 vars 直接子块。它们是隐藏的机�
 原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时输出：正文就地页面放在 body，独立面板放在 extra；普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。
 @END_ENVELOPE`;
 function withReplyEnvelope(text){return String(text).replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'').replace('[REGISTRY]','[REGISTRY]\n'+REPLY_ENVELOPE_RULE);}
-export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE});
+export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE,narrative_source_routing:NARRATIVE_SOURCE_ROUTING});
 export function matrixPreset(){
  const p=clone(original);p.name='Tisya';p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
  for(const row of p.prompts){
+  if(typeof row.content==='string')row.content=resolveNarrativeIntakeText(row.identifier,row.content);
   if(row.identifier==='main')row.content=row.content.replace('@U:={id:user,','@U:={id:contractor,');
   if(row.identifier==='personaDescription'){row.enabled=false;}
   else if(typeof row.content==='string')row.content=row.content.replaceAll('`personaDescription`','`tisya_user_identity`');
@@ -77,7 +79,7 @@ export function compilePrompts(source,config,slots){
  for(const p of out.prompts){if(p.marker)continue;
   // {{user}} names the bound protagonist. The native persona is injected once
   // into the contractor wish and cannot silently become the protagonist.
-  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):p.content??'',config,slots);
+  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):resolveNarrativeIntakeText(p.identifier,p.content??''),config,slots);
  }
  return out;
 }

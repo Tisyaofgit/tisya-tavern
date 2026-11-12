@@ -91,5 +91,26 @@ export class Runtime{
   if(/^[+\->~]\[/.test(op)){const chunks=[...op.matchAll(/([+\->~])\[([^\]]+)\]/g)];if(chunks.map(m=>m[0]).join('').replace(/\s/g,'')!==op.replace(/\s/g,''))fail('MICRO_SYNTAX','容器操作含未解析部分',{op});for(const [,symbol,body]of chunks){if(symbol==='>'){const at=body.lastIndexOf('@');if(at<0)fail('TRANSFER_SYNTAX','转移缺少目标');for(const [item,q]of Object.entries(decode(body.slice(0,at).trim(),{type:'BAG'})[0])){this.bagChange(target,item,-q);this.bagChange(body.slice(at+1).trim(),item,q);}}else if(Array.isArray(this.get(target))){let name=body;if(symbol==='~'){const parts=body.split('->');if(parts.length!==2)fail('TAG_REPLACE','状态替换格式错误');this.set(target,this.get(target).filter(x=>x.name!==parts[0]));name=parts[1];}if(symbol==='-')this.set(target,this.get(target).filter(x=>x.name!==name.replace(/\([^)]*\)$/,'')));else{const m=/^(.+?)\((\d+(?:\.\d+)?[dhmt])\)$/.exec(name);this.tag(target,m?m[1]:name,m?.[2]);}}else{if(symbol==='~')fail('BAG_OPERATOR','物品容器不支持状态替换');for(const [item,q]of Object.entries(decode(body,{type:'BAG'})[0]))this.bagChange(target,item,q*(symbol==='+'?1:-1));}}return {target,value:this.get(target)};}
   let value=op.replace(/^=/,'').trim();if(this.resolve(target,true)[3].length)try{value=JSON.parse(value);}catch{}const written=this.set(target,value);return {target,value:written};
  }
- mechanicalPayload(){const p={tables:{},child_tables:{},parameters:{},derivations:this.data.definition_meta?.derivations??[],source_manifests:[],parameter_bindings:[]},metadata=new Map(Object.values(this.rows('X_RECORD_META')).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));for(const [tid,rows]of Object.entries(this.data.tables)){if(!/^[TM]_/.test(tid))continue;const child=tid.startsWith('M_'),target=child?p.child_tables:p.tables;target[tid]=Object.entries(rows).map(([rid,r])=>{const common=Object.fromEntries(Object.entries(metadata.get(tid+'#'+rid)??{}).filter(([k])=>!['row_uuid','table_id','record_id'].includes(k))),values={...common,...clone(r.values)},states={...Object.fromEntries(Object.keys(common).map(k=>[k,'known'])),...r.states};return child?{...values,__value_states:states}:{row_uuid:rid,values,value_states:states,record_state:'active',cell_metadata:clone(r.metadata??{})};});}for(const s of Object.values(this.data.runtime.sources))p.source_manifests.push({entry_id:s.entry_id,revision:s.revision,expected_chunks:s.fragments.length,first_chunk_index:1,sha256:s.body_sha256,byte_length:new TextEncoder().encode(s.body_raw).length,encoding:'UTF-8',newline_normalization:false});return p;}
+ mechanicalPayload(){
+  const p={tables:{},child_tables:{},parameters:{},derivations:this.data.definition_meta?.derivations??[],source_manifests:[],parameter_bindings:[]},metadata=new Map(Object.values(this.rows('X_RECORD_META')).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values])),active=new Map();
+  const activeChild=(tid,rid,r,trail=new Set())=>{
+   const key=tid+'#'+rid;if(active.has(key))return active.get(key);if(trail.has(key))fail('OWNER_CYCLE','子表归属循环',{table:tid,record:rid});
+   const {owner_table:owner,owner_row_uuid:ownerId,owner_field:field}=r.values,parent=this.rows(owner)[ownerId];if(!parent)return true;
+   const next=new Set(trail);next.add(key);
+   if(owner?.startsWith('M_')&&!activeChild(owner,ownerId,parent,next)){active.set(key,false);return false;}
+   const spec=this.data.schema[owner]?.fields.find(f=>f.key===field);let enabled=true;
+   // Explicit parent references select the live children. Historical rows stay
+   // in canonical storage; a legacy import without any parent cell still uses
+   // its original owner-based children.
+   if(spec?.type==='CHILD_REF'&&spec.ref===tid&&(own(parent.values,field)||own(parent.states,field))){
+    const value=parent.values[field],state=parent.states[field]??(value==null?'unset':'known');enabled=['known','derived'].includes(state)&&(Array.isArray(value)?value:[value]).includes(rid);
+   }
+   active.set(key,enabled);return enabled;
+  };
+  for(const [tid,rows]of Object.entries(this.data.tables)){
+   if(!/^[TM]_/.test(tid))continue;const child=tid.startsWith('M_'),target=child?p.child_tables:p.tables;
+   target[tid]=Object.entries(rows).filter(([rid,r])=>!child||activeChild(tid,rid,r)).map(([rid,r])=>{const common=Object.fromEntries(Object.entries(metadata.get(tid+'#'+rid)??{}).filter(([k])=>!['row_uuid','table_id','record_id'].includes(k))),values={...common,...clone(r.values)},states={...Object.fromEntries(Object.keys(common).map(k=>[k,'known'])),...r.states};return child?{...values,__value_states:states}:{row_uuid:rid,values,value_states:states,record_state:'active',cell_metadata:clone(r.metadata??{})};});
+  }
+  for(const s of Object.values(this.data.runtime.sources))p.source_manifests.push({entry_id:s.entry_id,revision:s.revision,expected_chunks:s.fragments.length,first_chunk_index:1,sha256:s.body_sha256,byte_length:new TextEncoder().encode(s.body_raw).length,encoding:'UTF-8',newline_normalization:false});return p;
+ }
 }

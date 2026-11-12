@@ -17,9 +17,9 @@ export const ARCHIVE_ROUTES=Object.freeze({
  '场外与日程':['T_DYN_ACTIVITIES_LIFELINES','T_DYN_TASKS','T_DYN_TIMERS'],
  '待定':['T_SYS_CELL_REQUESTS','T_SYS_ARCHIVE_BATCHES']
 });
-const allowed=new Set([...Object.values(ARCHIVE_ROUTES).flat(),'T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS','T_DYN_STAGE_SUMMARIES']);
-export const ARCHIVE_PROTOCOL=`记忆归档与 cells 共用本轮已登记的极简表单、字段行号与关联名称。在 <archive format="form"> 中使用【表名／序号】及“行号 字段名：值 | Pn”；更新已有记录使用给定的完整已有标题。只填本轮正文支持的事实、认知、档案、关系、线索、已成立事务与日程；不用 JSON，不写程序回执。未知字段省略，明确需要后续核对的值填“?”，由程序保留未知状态与待补提示；不把愿望变成玩家义务。每条业务记录须有真实 Pn 依据，程序核范围并绑定原消息、修订与原文校验。来源原文即时保存，最近两条已接纳回复保持临时层，较早归档经同一事务校验后入表；停止、未选重骰与其他分支不进入当前正史。
-非空归档只使用当前 format="form"。不接受旧管道语义协议，不猜测旧文本的字段归属；缺块或坏格式保留原文并明确待处理。没有新增语义记忆时输出 <archive/>。状态数值与已由 cells 精确落位的事实不在 archive 重复写。`;
+export const ARCHIVE_TABLE_IDS=Object.freeze([...new Set([...Object.values(ARCHIVE_ROUTES).flat(),'T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS','T_DYN_STAGE_SUMMARIES'])]);
+const allowed=new Set(ARCHIVE_TABLE_IDS);
+export const ARCHIVE_PROTOCOL=`<archive format="form"> 沿用上述表名、原行号、字段名与关联名称：每条记录写【表名／序号】，每行写“行号 字段名：值 | Pn”；修订已有记录使用给定的完整标题。只填本轮正文有据的事实、角色认知、档案、关系、线索、已成立事务与日程，每条记录须标明正文段号 Pn。未知省略，需后续核对填“?”；同批关联可用分组名，不把角色猜测写成世界事实，也不把愿望写成玩家义务。已由 cells 填写的内容不重复；没有新增记忆时写 <archive/>。`;
 
 const check=(ok,code,message,details)=>{if(!ok)fail(code,message,details);};
 const VERSION='tisya.semantic-archive/1';

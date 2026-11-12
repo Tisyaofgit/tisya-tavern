@@ -97,12 +97,12 @@ test('main archive grouped form uses the existing field contract and keeps expli
  await f.accept(formReply(1,body));await f.accept(reply(2,''));const saved=await f.accept(reply(3,''));const row=Object.values(saved.state.tables.T_DYN_EVENTS)[0];
  assert.equal(row.values.title,'门后的信');assert.equal(row.states.cause,'unknown');assert.equal(row.values.cause,null);
  assert.equal(Object.values(saved.state.tables.T_SYS_CELL_REQUESTS)[0].values.result_status,'待填写');assert(f.host.latest().result.warnings.some(w=>w.code==='ARCHIVE_DECLARED_PENDING'));
- assert.match(f.host.latest().materials.tisya_material_offstage_state,/归档待处理/);
+ assert.match(f.host.latest().materials.tisya_material_offstage_state,/记忆待核/);
 });
 
 test('staged definitions can be referenced next turn, then dependency and canonical identities commit in order',async()=>{
  const f=await fixture();await f.accept(reply(1,form(initializeState(catalog),'T_CHAR_DOSSIER',{name:'阿紫',overall_physique:'身形瘦高'})));
- assert.match(f.host.latest().materials.tisya_material_cell_prompts,/临时两轮已校验的关联名称.*阿紫/);
+ assert.match(f.host.latest().materials.tisya_material_cell_prompts,/近期回复中的关联名称.*阿紫/);
  await f.accept(reply(2,form(initializeState(catalog),'T_DYN_COGNITION',{name:'来到门前',subject_ref:'阿紫',epistemic_level:'K3',acquisition_channel:'本人自述',subjective_belief:'知道自己已经来到门前'})));
  let saved=await f.accept(reply(3,''));assert.equal(Object.keys(saved.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(Object.keys(saved.state.tables.T_DYN_COGNITION).length,0);
  saved=await f.accept(reply(4,''));const entity=Object.entries(saved.state.tables.T_SYS_ENTITIES).find(([,r])=>r.values.name==='阿紫'),cognition=Object.values(saved.state.tables.T_DYN_COGNITION)[0];
