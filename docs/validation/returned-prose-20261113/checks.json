@@ -1,0 +1,248 @@
+{
+  "schema": "tisya.returned-prose-release-validation/1",
+  "recorded_utc": "2026-11-12T17:29:23.130361+00:00",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.30",
+  "gate": {
+    "status": "passed",
+    "start_utc": "2026-11-12T17:19:34.774008+00:00",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "log": "implementation-w15/build/full-gate-release.log",
+    "source_files": 1773,
+    "end_utc": "2026-11-12T17:26:16.682764+00:00",
+    "exit_code": 0,
+    "source_unchanged": true,
+    "totals": {
+      "tests": 2550,
+      "suites": 0,
+      "pass": 2550,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "duration_ms": 398716.26107
+    },
+    "start_manifest_sha256": "90b291e38bbe5340eaa9e5e0e9505b8012e905706c4cbe61ac4a61b3e66e81d1",
+    "end_manifest_sha256": "90b291e38bbe5340eaa9e5e0e9505b8012e905706c4cbe61ac4a61b3e66e81d1"
+  },
+  "previous_attempts": [
+    {
+      "status": "interrupted_superseded",
+      "observed_utc": "2026-11-12T17:06:00.039707+00:00",
+      "tool_exit_code": 130,
+      "passed_markers": 2275,
+      "failed_markers": 17,
+      "reason": "14 expectations still used predecessor English prose; exact assertions have been revised after independent checks. Final program-parent ownership fix was also made after this run began, so run a fresh complete gate on frozen source.",
+      "full_run_complete": false,
+      "raw_log_retained": true
+    },
+    {
+      "status": "failed",
+      "start_utc": "2026-11-12T17:06:00.761951+00:00",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "log": "implementation-w15/build/full-gate-final.log",
+      "source_files": 1771,
+      "end_utc": "2026-11-12T17:12:41.665652+00:00",
+      "exit_code": 1,
+      "source_unchanged": true,
+      "totals": {
+        "tests": 2545,
+        "suites": 0,
+        "pass": 2542,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 397083.245222
+      },
+      "failure_scope": [
+        "two predecessor stop/length assertions",
+        "one displayed version mismatch"
+      ]
+    }
+  ],
+  "runtime_bundle_sha256": "53aab79f0d3a1a9d76c48a7ade7aa0b0421123b7e5659c2dbd4542d9aaa9fa98",
+  "native_fixture_assembly": {
+    "run": "implementation-w15/runtime/runs/20261112T172028456Z",
+    "cases": [
+      {
+        "id": "default-empty",
+        "messageCount": 33,
+        "totalCharacters": 35041,
+        "formCharacters": 9734,
+        "bodyOpening": "<body>",
+        "checks": {
+          "accepted": true,
+          "originalPresetPreserved": true,
+          "managerPreserved": true,
+          "historyPreserved": true,
+          "oneExtensionContract": true,
+          "noUnexpandedTisyaMacros": true,
+          "oneAuthority": true,
+          "threeLayerPriority": true,
+          "nativeMaterialWrapped": true,
+          "rulesWindowPresent": true,
+          "historyWindowPresent": true,
+          "cellsAndArchiveFormGroups": true,
+          "limitedSchemaAuthority": true,
+          "cellMaterialRemainsDream": true,
+          "bodyRangeMatchesExplicitChoice": true,
+          "noHardTitleLength": true,
+          "noForbiddenRuntimeResidual": true
+        }
+      },
+      {
+        "id": "all-apps-person",
+        "messageCount": 35,
+        "totalCharacters": 40771,
+        "formCharacters": 15288,
+        "bodyOpening": "<body>",
+        "checks": {
+          "accepted": true,
+          "originalPresetPreserved": true,
+          "managerPreserved": true,
+          "historyPreserved": true,
+          "oneExtensionContract": true,
+          "noUnexpandedTisyaMacros": true,
+          "oneAuthority": true,
+          "threeLayerPriority": true,
+          "nativeMaterialWrapped": true,
+          "rulesWindowPresent": true,
+          "historyWindowPresent": true,
+          "cellsAndArchiveFormGroups": true,
+          "limitedSchemaAuthority": true,
+          "cellMaterialRemainsDream": true,
+          "bodyRangeMatchesExplicitChoice": true,
+          "noHardTitleLength": true,
+          "noForbiddenRuntimeResidual": true
+        }
+      },
+      {
+        "id": "explicit-length-slow",
+        "messageCount": 33,
+        "totalCharacters": 35062,
+        "formCharacters": 9734,
+        "bodyOpening": "<body min=\"120\" max=\"340\" unit=\"字\">",
+        "checks": {
+          "accepted": true,
+          "originalPresetPreserved": true,
+          "managerPreserved": true,
+          "historyPreserved": true,
+          "oneExtensionContract": true,
+          "noUnexpandedTisyaMacros": true,
+          "oneAuthority": true,
+          "threeLayerPriority": true,
+          "nativeMaterialWrapped": true,
+          "rulesWindowPresent": true,
+          "historyWindowPresent": true,
+          "cellsAndArchiveFormGroups": true,
+          "limitedSchemaAuthority": true,
+          "cellMaterialRemainsDream": true,
+          "bodyRangeMatchesExplicitChoice": true,
+          "noHardTitleLength": true,
+          "noForbiddenRuntimeResidual": true
+        }
+      }
+    ],
+    "model_calls": 0,
+    "live_host_runs": 0,
+    "android_runs": 0,
+    "model_tokens_measured": false,
+    "optional_menu_findings": 0,
+    "source_owner_findings": 0
+  },
+  "complete_export": {
+    "batch": "20261113T012057BJT",
+    "counts": {
+      "preset": 71,
+      "preference_groups": 43,
+      "preference_options": 190,
+      "style_cards": 10,
+      "configuration_definitions": 11,
+      "registered_forms": 180,
+      "coordinate_rows": 2217
+    },
+    "validation": {
+      "raw_preset_byte_equal": true,
+      "all_71_contents_exact": true,
+      "all_190_effects_exact": true,
+      "all_10_cards_exact": true,
+      "all_runtime_messages_exact": true,
+      "all_included_source_files_exact": true,
+      "forms_and_coordinates_exact": true
+    },
+    "independent_checks": {
+      "file_receipts": true,
+      "all_preset_metadata_and_content_exact_in_order": true,
+      "all_option_metadata_and_effect_exact_in_order": true,
+      "all_style_card_metadata_and_content_exact_in_order": true,
+      "all_separate_requests_exact_once": true
+    }
+  },
+  "post_gate_source_policy": {
+    "allowed_additions": [
+      "docs/validation/returned-prose-20261113/README.md",
+      "docs/validation/returned-prose-20261113/checks.json"
+    ],
+    "product_and_test_changes": 0
+  },
+  "source_checkpoint_before_documents": {
+    "commit": "58537645d74e61b2a8b152c2700c809c01532865",
+    "tree": "9abe758644c5d31bb8b4dd325d494997897f5745",
+    "files": 1773
+  },
+  "raw_evidence": [
+    {
+      "path": "implementation-w15/build/full-gate-first.log",
+      "bytes": 274242,
+      "sha256": "be7823cb77bde43ba0b9682277627e3736ee8990c6f6d0bcea24ec314b0d2c9e"
+    },
+    {
+      "path": "implementation-w15/build/full-gate-first-interruption.json",
+      "bytes": 476,
+      "sha256": "b183aedbb3d60e9c061d8b1395d10c7962c416d5587e826670e16d6d0d298c04"
+    },
+    {
+      "path": "implementation-w15/build/full-gate-final.log",
+      "bytes": 305824,
+      "sha256": "332b071c8fbc04095dc5d19487920429ea6f2e19801c26156cc43b5f7c3a4b9c"
+    },
+    {
+      "path": "implementation-w15/build/full-gate-final.json",
+      "bytes": 326,
+      "sha256": "cf01c56975005cdd67fae9ab969be5e681023058047a319bc4bc7cd6d3f37665"
+    },
+    {
+      "path": "implementation-w15/build/full-gate-release.log",
+      "bytes": 302777,
+      "sha256": "e47bfa2957e462cf4e6ce35b63b7f7ecd97512f2afbafc8926336e0aa36fb599"
+    },
+    {
+      "path": "implementation-w15/build/full-gate-release.json",
+      "bytes": 328,
+      "sha256": "3729a3b2abe5b34eccd84ecff61487461001c63cd7244ccd0522355aa3edde66"
+    },
+    {
+      "path": "implementation-w15/build/release-source-start-manifest.json",
+      "bytes": 297052,
+      "sha256": "90b291e38bbe5340eaa9e5e0e9505b8012e905706c4cbe61ac4a61b3e66e81d1"
+    },
+    {
+      "path": "implementation-w15/build/release-source-end-manifest.json",
+      "bytes": 297052,
+      "sha256": "90b291e38bbe5340eaa9e5e0e9505b8012e905706c4cbe61ac4a61b3e66e81d1"
+    }
+  ],
+  "limitations": [
+    "No real model call or prose-quality acceptance.",
+    "No Android or live-host test.",
+    "Character counts are not model token counts.",
+    "Native host method fixtures are offline source-fragment execution.",
+    "Earlier interruption and failure remain separate from the successful release gate."
+  ]
+}
