@@ -1,0 +1,1958 @@
+{
+  "format": "tisya.pre-ownership-staged-fixture/1",
+  "description": "Synthetic states accepted by the unmodified candidate.29 reply/archive source, before reply-form ownership. Imports alone are redirected to existing modules for generation. No live model or user data.",
+  "baseline": {
+    "archive_sha256": "053918b8647e7fc9c29ef576f8bb125fd994b60f378887a55acc8d541090ddd9",
+    "reply_sha256": "030396ccc43473c8dd6679b444978dea4759a7c0bbefed410bb28d229d232e19",
+    "journal_sha256": "79765293acc236cc32b895a4ec13122e0d3177a86717ccf14889ee2a52fe1cac",
+    "catalog_sha256": "f1dd1e8793491b84733d51d98693e99506b36c4375cac7ffba5b5ba6f1056933"
+  },
+  "cases": {
+    "dossier": {
+      "tables": {
+        "T_SYS_SOURCE_FRAGMENTS": {
+          "8cc9aa47-43d5-5c4a-95cb-398378da601d": {
+            "values": {
+              "row_uuid": "8cc9aa47-43d5-5c4a-95cb-398378da601d",
+              "fragment_id": "8cc9aa47-43d5-5c4a-95cb-398378da601d",
+              "entry_id": "legacy-dossier",
+              "revision": 1,
+              "entry_hash": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+              "paragraph_id": "P1",
+              "chunk_index": 1,
+              "chunk_text": "1 阿紫来到门前，说明自己是送信人。",
+              "chunk_hash": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+              "source_locator": "main/legacy-dossier@1#P1",
+              "total_chunks": 1
+            },
+            "states": {
+              "row_uuid": "known",
+              "fragment_id": "known",
+              "entry_id": "known",
+              "revision": "known",
+              "entry_hash": "known",
+              "paragraph_id": "known",
+              "chunk_index": "known",
+              "chunk_text": "known",
+              "chunk_hash": "known",
+              "source_locator": "known",
+              "total_chunks": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_ARCHIVE_BATCHES": {
+          "28bb128e-e48b-542e-b7cc-0d59cc4e3ec9": {
+            "values": {
+              "row_uuid": "28bb128e-e48b-542e-b7cc-0d59cc4e3ec9",
+              "archive_batch_id": "28bb128e-e48b-542e-b7cc-0d59cc4e3ec9",
+              "source_sequence": 1,
+              "chat_ref": "memory-chain",
+              "message_ref": "legacy-dossier",
+              "candidate_ref": "main/legacy-dossier@1",
+              "revision_ref": "1",
+              "source_hash": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+              "formal_boundary": "已接纳回复序号 <= 当前序号 - 2",
+              "temporary_boundary": "最近两条已接纳回复",
+              "review_mode": "自动隔层接纳",
+              "commit_status": "未写入",
+              "blocked_dependencies": ""
+            },
+            "states": {
+              "row_uuid": "known",
+              "archive_batch_id": "known",
+              "source_sequence": "known",
+              "chat_ref": "known",
+              "message_ref": "known",
+              "candidate_ref": "known",
+              "revision_ref": "known",
+              "source_hash": "known",
+              "formal_boundary": "known",
+              "temporary_boundary": "known",
+              "review_mode": "known",
+              "commit_status": "known",
+              "blocked_dependencies": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "X_RECORD_META": {
+          "98910a38-9dbc-5767-ae61-d9a72907f021": {
+            "values": {
+              "row_uuid": "98910a38-9dbc-5767-ae61-d9a72907f021",
+              "table_id": "T_SYS_SOURCE_FRAGMENTS",
+              "record_id": "8cc9aa47-43d5-5c4a-95cb-398378da601d",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "bcfa3c7f-38e5-5dc5-890a-e295254ecd73": {
+            "values": {
+              "row_uuid": "bcfa3c7f-38e5-5dc5-890a-e295254ecd73",
+              "table_id": "T_SYS_ARCHIVE_BATCHES",
+              "record_id": "28bb128e-e48b-542e-b7cc-0d59cc4e3ec9",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        }
+      },
+      "runtime": {
+        "scope": {
+          "session_ref": "memory-chain",
+          "branch_ref": "main"
+        },
+        "revision": 2,
+        "receipts": {
+          "reply:main/legacy-dossier@1:source": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/legacy-dossier@1:source",
+            "request_sha256": "3ee22bb726242c882529b72309fc33c37190166bdcab300b5728ad68302a37f6",
+            "revision": 1,
+            "result": {
+              "source_key": "main/legacy-dossier@1"
+            },
+            "written_utc": "2026-11-12T16:51:08.366Z"
+          },
+          "reply:main/legacy-dossier@1": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/legacy-dossier@1",
+            "request_sha256": "3ee22bb726242c882529b72309fc33c37190166bdcab300b5728ad68302a37f6",
+            "revision": 2,
+            "result": {
+              "source_key": "main/legacy-dossier@1",
+              "body_sha256": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+              "normalized_sha256": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+              "paragraphs": 1,
+              "operations": [],
+              "warnings": [],
+              "formalized_sources": [],
+              "staged_rows": 3
+            },
+            "written_utc": "2026-11-12T16:51:08.468Z"
+          }
+        },
+        "failures": [],
+        "sources": {
+          "main/legacy-dossier@1": {
+            "entry_id": "legacy-dossier",
+            "revision": 1,
+            "reply_raw": "<reply><title>旧版合成记忆</title><body>1 阿紫来到门前，说明自己是送信人。</body><cells/><archive format=\"form\">【人物原点档案／1】\n3 显示名称：阿紫 | P1\n26 整体体貌：身形瘦高 | P1</archive></reply>",
+            "reply_sha256": "192a3e51a31b636dc3b47c6d918d46e7c706e04ec15a67d3470cda899a7895b3",
+            "body_raw": "1 阿紫来到门前，说明自己是送信人。",
+            "body_sha256": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+            "body_normalized": "1 阿紫来到门前，说明自己是送信人。",
+            "normalized_sha256": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14",
+            "paragraph_mapping": [
+              {
+                "normalized": "P1",
+                "original_label": "1",
+                "source_start": 0,
+                "source_end": 18
+              }
+            ],
+            "fragments": [
+              {
+                "paragraph_id": "P1",
+                "chunk_index": 1,
+                "raw_block": "1 阿紫来到门前，说明自己是送信人。",
+                "chunk_text": "阿紫来到门前，说明自己是送信人。",
+                "source_start": 0,
+                "source_end": 18,
+                "original_label": "1",
+                "sha256": "53a46514176f7762553b007cc02409970315db681505457870c01c0db7dbcf14"
+              }
+            ],
+            "delta_ops": [],
+            "original_delta_ops": [],
+            "cells_raw": "",
+            "cells_format": "delta",
+            "warnings": [],
+            "archive_present": true,
+            "archive_raw": "【人物原点档案／1】\n3 显示名称：阿紫 | P1\n26 整体体貌：身形瘦高 | P1",
+            "archive_format": "form",
+            "archive_rows": [
+              {
+                "raw": "【人物原点档案／1】"
+              },
+              {
+                "raw": "3 显示名称：阿紫 | P1"
+              },
+              {
+                "raw": "26 整体体貌：身形瘦高 | P1"
+              }
+            ],
+            "title": "旧版合成记忆",
+            "actions": "",
+            "anchors": {
+              "before": "",
+              "after": ""
+            },
+            "native_vars": "",
+            "branch": "main",
+            "settlement": {
+              "operations": [],
+              "warnings": []
+            }
+          }
+        },
+        "archive_queue": [
+          {
+            "sequence": 1,
+            "source_key": "main/legacy-dossier@1",
+            "rows": [
+              {
+                "raw": "【人物原点档案／1】"
+              },
+              {
+                "raw": "3 显示名称：阿紫 | P1"
+              },
+              {
+                "raw": "26 整体体貌：身形瘦高 | P1"
+              }
+            ],
+            "status": "staged",
+            "format": "tisya.semantic-archive/1",
+            "raw": "【人物原点档案／1】\n3 显示名称：阿紫 | P1\n26 整体体貌：身形瘦高 | P1",
+            "mapped": true,
+            "plan": {
+              "changes": [
+                {
+                  "tableId": "T_CHAR_DOSSIER",
+                  "recordId": "137f44e7-8cf7-563d-a06c-54f241ef27e5",
+                  "values": {
+                    "name": "阿紫",
+                    "overall_physique": "身形瘦高"
+                  }
+                },
+                {
+                  "tableId": "M_FIELD_REFERENCES",
+                  "recordId": "e69756a5-ddbb-56a2-aa29-f237d3da4e88",
+                  "values": {
+                    "owner_table": "T_SYS_ENTITIES",
+                    "owner_row_uuid": "c0191af6-cd4a-5a12-b204-8bc849167be6",
+                    "owner_field": "origin_record_ref",
+                    "target_table": "T_CHAR_DOSSIER",
+                    "target_row_uuid": "137f44e7-8cf7-563d-a06c-54f241ef27e5",
+                    "reference_kind": "record",
+                    "resolution_status": "resolved"
+                  }
+                },
+                {
+                  "tableId": "T_SYS_ENTITIES",
+                  "recordId": "c0191af6-cd4a-5a12-b204-8bc849167be6",
+                  "values": {
+                    "kind": "character",
+                    "origin_record_ref": "e69756a5-ddbb-56a2-aa29-f237d3da4e88"
+                  }
+                }
+              ],
+              "guards": [
+                {
+                  "tableId": "T_CHAR_DOSSIER",
+                  "recordId": "137f44e7-8cf7-563d-a06c-54f241ef27e5",
+                  "exists": false,
+                  "fields": {
+                    "name": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "overall_physique": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    }
+                  }
+                },
+                {
+                  "tableId": "M_FIELD_REFERENCES",
+                  "recordId": "e69756a5-ddbb-56a2-aa29-f237d3da4e88",
+                  "exists": false,
+                  "fields": {
+                    "owner_table": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "owner_row_uuid": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "owner_field": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "target_table": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "target_row_uuid": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "reference_kind": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "resolution_status": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    }
+                  }
+                },
+                {
+                  "tableId": "T_SYS_ENTITIES",
+                  "recordId": "c0191af6-cd4a-5a12-b204-8bc849167be6",
+                  "exists": false,
+                  "fields": {
+                    "kind": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "origin_record_ref": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    }
+                  }
+                }
+              ],
+              "schema": [],
+              "dependencies": [],
+              "references": [
+                {
+                  "tableId": "T_SYS_ENTITIES",
+                  "recordId": "c0191af6-cd4a-5a12-b204-8bc849167be6",
+                  "field": "owner_row_uuid"
+                },
+                {
+                  "tableId": "M_FIELD_REFERENCES",
+                  "recordId": "e69756a5-ddbb-56a2-aa29-f237d3da4e88",
+                  "field": "origin_record_ref"
+                }
+              ],
+              "pending": [],
+              "warnings": [],
+              "recordParagraphs": {
+                "T_CHAR_DOSSIER#137f44e7-8cf7-563d-a06c-54f241ef27e5": [
+                  "P1"
+                ],
+                "T_SYS_ENTITIES#c0191af6-cd4a-5a12-b204-8bc849167be6": [
+                  "P1"
+                ],
+                "M_FIELD_REFERENCES#e69756a5-ddbb-56a2-aa29-f237d3da4e88": [
+                  "P1"
+                ]
+              },
+              "paragraphs": [
+                "P1"
+              ]
+            }
+          }
+        ],
+        "archive": [],
+        "turn_order": [
+          "main/legacy-dossier@1"
+        ],
+        "events": [],
+        "preferences": [],
+        "warnings": []
+      }
+    },
+    "gauge": {
+      "tables": {
+        "T_CHAR_DOSSIER": {
+          "d-a": {
+            "values": {
+              "row_uuid": "d-a",
+              "char_id": "d-a",
+              "name": "阿青"
+            },
+            "states": {
+              "row_uuid": "known",
+              "char_id": "known",
+              "name": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_SOURCE_FRAGMENTS": {
+          "d8822842-db9e-5739-9cf9-fcabe7cc3bc2": {
+            "values": {
+              "row_uuid": "d8822842-db9e-5739-9cf9-fcabe7cc3bc2",
+              "fragment_id": "d8822842-db9e-5739-9cf9-fcabe7cc3bc2",
+              "entry_id": "legacy-gauge",
+              "revision": 1,
+              "entry_hash": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+              "paragraph_id": "P1",
+              "chunk_index": 1,
+              "chunk_text": "1 阿青查看记录，确认当前余力为十二。",
+              "chunk_hash": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+              "source_locator": "main/legacy-gauge@1#P1",
+              "total_chunks": 1
+            },
+            "states": {
+              "row_uuid": "known",
+              "fragment_id": "known",
+              "entry_id": "known",
+              "revision": "known",
+              "entry_hash": "known",
+              "paragraph_id": "known",
+              "chunk_index": "known",
+              "chunk_text": "known",
+              "chunk_hash": "known",
+              "source_locator": "known",
+              "total_chunks": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_ENTITIES": {
+          "a": {
+            "values": {
+              "row_uuid": "a",
+              "entity_id": "a",
+              "name": "阿青",
+              "kind": "character",
+              "origin_record_ref": "o-a"
+            },
+            "states": {
+              "row_uuid": "known",
+              "entity_id": "known",
+              "name": "known",
+              "kind": "known",
+              "origin_record_ref": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_ARCHIVE_BATCHES": {
+          "d6141b98-e3ac-5a45-af4a-b4c298be0d69": {
+            "values": {
+              "row_uuid": "d6141b98-e3ac-5a45-af4a-b4c298be0d69",
+              "archive_batch_id": "d6141b98-e3ac-5a45-af4a-b4c298be0d69",
+              "source_sequence": 1,
+              "chat_ref": "memory-chain",
+              "message_ref": "legacy-gauge",
+              "candidate_ref": "main/legacy-gauge@1",
+              "revision_ref": "1",
+              "source_hash": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+              "formal_boundary": "已接纳回复序号 <= 当前序号 - 2",
+              "temporary_boundary": "最近两条已接纳回复",
+              "review_mode": "自动隔层接纳",
+              "commit_status": "未写入",
+              "blocked_dependencies": ""
+            },
+            "states": {
+              "row_uuid": "known",
+              "archive_batch_id": "known",
+              "source_sequence": "known",
+              "chat_ref": "known",
+              "message_ref": "known",
+              "candidate_ref": "known",
+              "revision_ref": "known",
+              "source_hash": "known",
+              "formal_boundary": "known",
+              "temporary_boundary": "known",
+              "review_mode": "known",
+              "commit_status": "known",
+              "blocked_dependencies": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "M_FIELD_REFERENCES": {
+          "o-a": {
+            "values": {
+              "row_uuid": "o-a",
+              "owner_table": "T_SYS_ENTITIES",
+              "owner_row_uuid": "a",
+              "owner_field": "origin_record_ref",
+              "target_table": "T_CHAR_DOSSIER",
+              "target_row_uuid": "d-a",
+              "reference_kind": "record",
+              "resolution_status": "resolved"
+            },
+            "states": {
+              "row_uuid": "known",
+              "owner_table": "known",
+              "owner_row_uuid": "known",
+              "owner_field": "known",
+              "target_table": "known",
+              "target_row_uuid": "known",
+              "reference_kind": "known",
+              "resolution_status": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "X_RECORD_META": {
+          "01680d70-3a14-5d61-aadf-95b76e6a91d2": {
+            "values": {
+              "row_uuid": "01680d70-3a14-5d61-aadf-95b76e6a91d2",
+              "table_id": "T_CHAR_DOSSIER",
+              "record_id": "d-a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "0c9e05a9-1ea0-5c90-a793-6700106faf7a": {
+            "values": {
+              "row_uuid": "0c9e05a9-1ea0-5c90-a793-6700106faf7a",
+              "table_id": "M_FIELD_REFERENCES",
+              "record_id": "o-a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "02e0ef90-96b0-59fe-b858-c3fc4e1a6dc6": {
+            "values": {
+              "row_uuid": "02e0ef90-96b0-59fe-b858-c3fc4e1a6dc6",
+              "table_id": "T_SYS_ENTITIES",
+              "record_id": "a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "9a591f67-7393-5dae-96df-b6ee81c3dcb5": {
+            "values": {
+              "row_uuid": "9a591f67-7393-5dae-96df-b6ee81c3dcb5",
+              "table_id": "T_SYS_SOURCE_FRAGMENTS",
+              "record_id": "d8822842-db9e-5739-9cf9-fcabe7cc3bc2",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "173f805a-6cfe-5c1f-9a65-30c87aa11a36": {
+            "values": {
+              "row_uuid": "173f805a-6cfe-5c1f-9a65-30c87aa11a36",
+              "table_id": "T_SYS_ARCHIVE_BATCHES",
+              "record_id": "d6141b98-e3ac-5a45-af4a-b4c298be0d69",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        }
+      },
+      "runtime": {
+        "scope": {
+          "session_ref": "memory-chain",
+          "branch_ref": "main"
+        },
+        "revision": 2,
+        "receipts": {
+          "reply:main/legacy-gauge@1:source": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/legacy-gauge@1:source",
+            "request_sha256": "3ac31265581e1949fa44ea704556c9d6c82d458a95feda30f1b21ce955fb3704",
+            "revision": 1,
+            "result": {
+              "source_key": "main/legacy-gauge@1"
+            },
+            "written_utc": "2026-11-12T16:51:08.710Z"
+          },
+          "reply:main/legacy-gauge@1": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/legacy-gauge@1",
+            "request_sha256": "3ac31265581e1949fa44ea704556c9d6c82d458a95feda30f1b21ce955fb3704",
+            "revision": 2,
+            "result": {
+              "source_key": "main/legacy-gauge@1",
+              "body_sha256": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+              "normalized_sha256": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+              "paragraphs": 1,
+              "operations": [],
+              "warnings": [],
+              "formalized_sources": [],
+              "staged_rows": 5
+            },
+            "written_utc": "2026-11-12T16:51:08.772Z"
+          }
+        },
+        "failures": [],
+        "sources": {
+          "main/legacy-gauge@1": {
+            "entry_id": "legacy-gauge",
+            "revision": 1,
+            "reply_raw": "<reply><title>旧版合成记忆</title><body>1 阿青查看记录，确认当前余力为十二。</body><cells/><archive format=\"form\">【实体数值与资源轴／1】\n3 状态名称：余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1</archive></reply>",
+            "reply_sha256": "71b8871e368879af3e48f9368d0337d272063afbcd88c5590f81895afa79cc8c",
+            "body_raw": "1 阿青查看记录，确认当前余力为十二。",
+            "body_sha256": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+            "body_normalized": "1 阿青查看记录，确认当前余力为十二。",
+            "normalized_sha256": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3",
+            "paragraph_mapping": [
+              {
+                "normalized": "P1",
+                "original_label": "1",
+                "source_start": 0,
+                "source_end": 19
+              }
+            ],
+            "fragments": [
+              {
+                "paragraph_id": "P1",
+                "chunk_index": 1,
+                "raw_block": "1 阿青查看记录，确认当前余力为十二。",
+                "chunk_text": "阿青查看记录，确认当前余力为十二。",
+                "source_start": 0,
+                "source_end": 19,
+                "original_label": "1",
+                "sha256": "5be919a320d82fa5d33e0d004dce928672f1deca183fe2cc6e1b26fc966670f3"
+              }
+            ],
+            "delta_ops": [],
+            "original_delta_ops": [],
+            "cells_raw": "",
+            "cells_format": "delta",
+            "warnings": [],
+            "archive_present": true,
+            "archive_raw": "【实体数值与资源轴／1】\n3 状态名称：余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1",
+            "archive_format": "form",
+            "archive_rows": [
+              {
+                "raw": "【实体数值与资源轴／1】"
+              },
+              {
+                "raw": "3 状态名称：余力 | P1"
+              },
+              {
+                "raw": "4 所属实体：阿青 | P1"
+              },
+              {
+                "raw": "5 状态字段键：energy | P1"
+              },
+              {
+                "raw": "6 当前数值：12 | P1"
+              }
+            ],
+            "title": "旧版合成记忆",
+            "actions": "",
+            "anchors": {
+              "before": "",
+              "after": ""
+            },
+            "native_vars": "",
+            "branch": "main",
+            "settlement": {
+              "operations": [],
+              "warnings": []
+            }
+          }
+        },
+        "archive_queue": [
+          {
+            "sequence": 1,
+            "source_key": "main/legacy-gauge@1",
+            "rows": [
+              {
+                "raw": "【实体数值与资源轴／1】"
+              },
+              {
+                "raw": "3 状态名称：余力 | P1"
+              },
+              {
+                "raw": "4 所属实体：阿青 | P1"
+              },
+              {
+                "raw": "5 状态字段键：energy | P1"
+              },
+              {
+                "raw": "6 当前数值：12 | P1"
+              }
+            ],
+            "status": "staged",
+            "format": "tisya.semantic-archive/1",
+            "raw": "【实体数值与资源轴／1】\n3 状态名称：余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1",
+            "mapped": true,
+            "plan": {
+              "changes": [
+                {
+                  "tableId": "T_DYN_ENTITY_GAUGES",
+                  "recordId": "6ca2408d-331f-559f-9347-ebdda67414f4",
+                  "values": {
+                    "name": "余力",
+                    "entity_id": "a",
+                    "field_key": "energy",
+                    "value": 12
+                  }
+                }
+              ],
+              "guards": [
+                {
+                  "tableId": "T_DYN_ENTITY_GAUGES",
+                  "recordId": "6ca2408d-331f-559f-9347-ebdda67414f4",
+                  "exists": false,
+                  "fields": {
+                    "name": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "entity_id": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "field_key": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "value": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    }
+                  }
+                }
+              ],
+              "schema": [],
+              "dependencies": [],
+              "references": [
+                {
+                  "tableId": "T_SYS_ENTITIES",
+                  "recordId": "a",
+                  "field": "entity_id"
+                }
+              ],
+              "pending": [],
+              "warnings": [],
+              "recordParagraphs": {
+                "T_DYN_ENTITY_GAUGES#6ca2408d-331f-559f-9347-ebdda67414f4": [
+                  "P1"
+                ]
+              },
+              "paragraphs": [
+                "P1"
+              ]
+            }
+          }
+        ],
+        "archive": [],
+        "turn_order": [
+          "main/legacy-gauge@1"
+        ],
+        "events": [],
+        "preferences": [],
+        "warnings": []
+      }
+    },
+    "history": {
+      "messages": [
+        {
+          "uid": "u1",
+          "role": "user",
+          "text": "去门前看看"
+        },
+        {
+          "uid": "a1",
+          "role": "assistant",
+          "text": "<reply><body>1 阿青看见门前的木盒。</body><cells format=\"form\">【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1</cells><archive/></reply>"
+        },
+        {
+          "uid": "u2",
+          "role": "user",
+          "text": "查看记录"
+        },
+        {
+          "uid": "a2",
+          "role": "assistant",
+          "text": "<reply><body>1 阿青确认记录中的余力为十二。</body><cells/><archive format=\"form\">【实体数值与资源轴／1】\n3 状态名称：旧版余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1</archive></reply>"
+        }
+      ],
+      "tables": {
+        "T_CHAR_DOSSIER": {
+          "d-a": {
+            "values": {
+              "row_uuid": "d-a",
+              "char_id": "d-a",
+              "name": "阿青"
+            },
+            "states": {
+              "row_uuid": "known",
+              "char_id": "known",
+              "name": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_DYN_EVENTS": {
+          "f51a5f6b-88b9-54c6-8018-cae4445946f4": {
+            "values": {
+              "row_uuid": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+              "event_id": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+              "title": "旧版直接记下的见闻",
+              "spine_digest": "阿青在门前看见木盒"
+            },
+            "states": {
+              "row_uuid": "known",
+              "event_id": "known",
+              "title": "known",
+              "spine_digest": "known"
+            },
+            "formulas": {},
+            "metadata": {
+              "title": {
+                "source_pointer": {
+                  "source_key": "main/a1@1",
+                  "entry_id": "a1",
+                  "revision": 1,
+                  "body_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+                  "operation_id": "reply:main/a1@1:sheets",
+                  "paragraph_reference": "P1"
+                }
+              },
+              "spine_digest": {
+                "source_pointer": {
+                  "source_key": "main/a1@1",
+                  "entry_id": "a1",
+                  "revision": 1,
+                  "body_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+                  "operation_id": "reply:main/a1@1:sheets",
+                  "paragraph_reference": "P1"
+                }
+              }
+            }
+          }
+        },
+        "T_SYS_SOURCE_FRAGMENTS": {
+          "a483cdc6-6867-5d10-ae27-cb2704bacf53": {
+            "values": {
+              "row_uuid": "a483cdc6-6867-5d10-ae27-cb2704bacf53",
+              "fragment_id": "a483cdc6-6867-5d10-ae27-cb2704bacf53",
+              "entry_id": "a1",
+              "revision": 1,
+              "entry_hash": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+              "paragraph_id": "P1",
+              "chunk_index": 1,
+              "chunk_text": "1 阿青看见门前的木盒。",
+              "chunk_hash": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+              "source_locator": "main/a1@1#P1",
+              "total_chunks": 1
+            },
+            "states": {
+              "row_uuid": "known",
+              "fragment_id": "known",
+              "entry_id": "known",
+              "revision": "known",
+              "entry_hash": "known",
+              "paragraph_id": "known",
+              "chunk_index": "known",
+              "chunk_text": "known",
+              "chunk_hash": "known",
+              "source_locator": "known",
+              "total_chunks": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "e724a726-a08a-5d3e-b1c4-9b3fecf4bf63": {
+            "values": {
+              "row_uuid": "e724a726-a08a-5d3e-b1c4-9b3fecf4bf63",
+              "fragment_id": "e724a726-a08a-5d3e-b1c4-9b3fecf4bf63",
+              "entry_id": "a2",
+              "revision": 1,
+              "entry_hash": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+              "paragraph_id": "P1",
+              "chunk_index": 1,
+              "chunk_text": "1 阿青确认记录中的余力为十二。",
+              "chunk_hash": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+              "source_locator": "main/a2@1#P1",
+              "total_chunks": 1
+            },
+            "states": {
+              "row_uuid": "known",
+              "fragment_id": "known",
+              "entry_id": "known",
+              "revision": "known",
+              "entry_hash": "known",
+              "paragraph_id": "known",
+              "chunk_index": "known",
+              "chunk_text": "known",
+              "chunk_hash": "known",
+              "source_locator": "known",
+              "total_chunks": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_ENTITIES": {
+          "a": {
+            "values": {
+              "row_uuid": "a",
+              "entity_id": "a",
+              "name": "阿青",
+              "kind": "character",
+              "origin_record_ref": "o-a"
+            },
+            "states": {
+              "row_uuid": "known",
+              "entity_id": "known",
+              "name": "derived",
+              "kind": "known",
+              "origin_record_ref": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "T_SYS_ARCHIVE_BATCHES": {
+          "0291491c-4373-5d51-9777-0e243f627409": {
+            "values": {
+              "row_uuid": "0291491c-4373-5d51-9777-0e243f627409",
+              "archive_batch_id": "0291491c-4373-5d51-9777-0e243f627409",
+              "source_sequence": 1,
+              "chat_ref": "memory-chain",
+              "message_ref": "a1",
+              "candidate_ref": "main/a1@1",
+              "revision_ref": "1",
+              "source_hash": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+              "formal_boundary": "已接纳回复序号 <= 当前序号 - 2",
+              "temporary_boundary": "最近两条已接纳回复",
+              "review_mode": "自动隔层接纳",
+              "commit_status": "未写入",
+              "blocked_dependencies": ""
+            },
+            "states": {
+              "row_uuid": "known",
+              "archive_batch_id": "known",
+              "source_sequence": "known",
+              "chat_ref": "known",
+              "message_ref": "known",
+              "candidate_ref": "known",
+              "revision_ref": "known",
+              "source_hash": "known",
+              "formal_boundary": "known",
+              "temporary_boundary": "known",
+              "review_mode": "known",
+              "commit_status": "known",
+              "blocked_dependencies": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "1709a3dc-1859-5ce9-b8b6-4bd9e6b14b4e": {
+            "values": {
+              "row_uuid": "1709a3dc-1859-5ce9-b8b6-4bd9e6b14b4e",
+              "archive_batch_id": "1709a3dc-1859-5ce9-b8b6-4bd9e6b14b4e",
+              "source_sequence": 2,
+              "chat_ref": "memory-chain",
+              "message_ref": "a2",
+              "candidate_ref": "main/a2@1",
+              "revision_ref": "1",
+              "source_hash": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+              "formal_boundary": "已接纳回复序号 <= 当前序号 - 2",
+              "temporary_boundary": "最近两条已接纳回复",
+              "review_mode": "自动隔层接纳",
+              "commit_status": "未写入",
+              "blocked_dependencies": ""
+            },
+            "states": {
+              "row_uuid": "known",
+              "archive_batch_id": "known",
+              "source_sequence": "known",
+              "chat_ref": "known",
+              "message_ref": "known",
+              "candidate_ref": "known",
+              "revision_ref": "known",
+              "source_hash": "known",
+              "formal_boundary": "known",
+              "temporary_boundary": "known",
+              "review_mode": "known",
+              "commit_status": "known",
+              "blocked_dependencies": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "M_FIELD_REFERENCES": {
+          "o-a": {
+            "values": {
+              "row_uuid": "o-a",
+              "owner_table": "T_SYS_ENTITIES",
+              "owner_row_uuid": "a",
+              "owner_field": "origin_record_ref",
+              "target_table": "T_CHAR_DOSSIER",
+              "target_row_uuid": "d-a",
+              "reference_kind": "record",
+              "resolution_status": "resolved"
+            },
+            "states": {
+              "row_uuid": "known",
+              "owner_table": "known",
+              "owner_row_uuid": "known",
+              "owner_field": "known",
+              "target_table": "known",
+              "target_row_uuid": "known",
+              "reference_kind": "known",
+              "resolution_status": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        },
+        "X_RECORD_META": {
+          "01680d70-3a14-5d61-aadf-95b76e6a91d2": {
+            "values": {
+              "row_uuid": "01680d70-3a14-5d61-aadf-95b76e6a91d2",
+              "table_id": "T_CHAR_DOSSIER",
+              "record_id": "d-a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "0c9e05a9-1ea0-5c90-a793-6700106faf7a": {
+            "values": {
+              "row_uuid": "0c9e05a9-1ea0-5c90-a793-6700106faf7a",
+              "table_id": "M_FIELD_REFERENCES",
+              "record_id": "o-a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "02e0ef90-96b0-59fe-b858-c3fc4e1a6dc6": {
+            "values": {
+              "row_uuid": "02e0ef90-96b0-59fe-b858-c3fc4e1a6dc6",
+              "table_id": "T_SYS_ENTITIES",
+              "record_id": "a",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "3b958345-8c27-555b-8968-a8ff70ef2a9a": {
+            "values": {
+              "row_uuid": "3b958345-8c27-555b-8968-a8ff70ef2a9a",
+              "table_id": "T_SYS_SOURCE_FRAGMENTS",
+              "record_id": "a483cdc6-6867-5d10-ae27-cb2704bacf53",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "96cb0fa4-1abe-58e3-9d43-21d5cc3fd8ce": {
+            "values": {
+              "row_uuid": "96cb0fa4-1abe-58e3-9d43-21d5cc3fd8ce",
+              "table_id": "T_DYN_EVENTS",
+              "record_id": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "269e230a-19a1-5ed2-a0ed-b11e92e1fad2": {
+            "values": {
+              "row_uuid": "269e230a-19a1-5ed2-a0ed-b11e92e1fad2",
+              "table_id": "T_SYS_ARCHIVE_BATCHES",
+              "record_id": "0291491c-4373-5d51-9777-0e243f627409",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "31ac2b4d-cace-5dfc-a9a5-4a6b24bde676": {
+            "values": {
+              "row_uuid": "31ac2b4d-cace-5dfc-a9a5-4a6b24bde676",
+              "table_id": "T_SYS_SOURCE_FRAGMENTS",
+              "record_id": "e724a726-a08a-5d3e-b1c4-9b3fecf4bf63",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          },
+          "9d0d8755-d0a5-5039-bf7d-a3f4a8e76b3b": {
+            "values": {
+              "row_uuid": "9d0d8755-d0a5-5039-bf7d-a3f4a8e76b3b",
+              "table_id": "T_SYS_ARCHIVE_BATCHES",
+              "record_id": "1709a3dc-1859-5ce9-b8b6-4bd9e6b14b4e",
+              "record_revision": 0,
+              "record_status": "草稿",
+              "default_source_status": "待确认",
+              "scope_session_id": "memory-chain",
+              "scope_branch_id": "main"
+            },
+            "states": {
+              "row_uuid": "known",
+              "table_id": "known",
+              "record_id": "known",
+              "record_revision": "known",
+              "record_status": "known",
+              "default_source_status": "known",
+              "scope_session_id": "known",
+              "scope_branch_id": "known"
+            },
+            "formulas": {},
+            "metadata": {}
+          }
+        }
+      },
+      "runtime": {
+        "scope": {
+          "session_ref": "memory-chain",
+          "branch_ref": "main"
+        },
+        "revision": 5,
+        "receipts": {
+          "reply:main/a1@1:source": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/a1@1:source",
+            "request_sha256": "213b2999736841481b74d2905a06b63978bec05cb887feae51200b6b88ae166f",
+            "revision": 1,
+            "result": {
+              "source_key": "main/a1@1"
+            },
+            "written_utc": "2026-11-12T16:51:09.203Z"
+          },
+          "reply:main/a1@1:sheets": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/a1@1:sheets",
+            "request_sha256": "ac2ec54d15fd95581df191035aa9c7a0087d4a0dd023b91e51e8a1d98c30d152",
+            "revision": 2,
+            "result": {
+              "format": "tisya.matrix-sheets/1",
+              "changes": [
+                {
+                  "tableId": "T_DYN_EVENTS",
+                  "recordId": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+                  "values": {
+                    "title": "旧版直接记下的见闻",
+                    "spine_digest": "阿青在门前看见木盒"
+                  }
+                }
+              ]
+            },
+            "written_utc": "2026-11-12T16:51:09.253Z"
+          },
+          "reply:main/a1@1": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/a1@1",
+            "request_sha256": "213b2999736841481b74d2905a06b63978bec05cb887feae51200b6b88ae166f",
+            "revision": 3,
+            "result": {
+              "source_key": "main/a1@1",
+              "body_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+              "normalized_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+              "paragraphs": 1,
+              "operations": [
+                {
+                  "format": "form",
+                  "original": "【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1",
+                  "effective": "【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1",
+                  "status": "COMMITTED",
+                  "operation_id": "reply:main/a1@1:sheets",
+                  "request_sha256": "ac2ec54d15fd95581df191035aa9c7a0087d4a0dd023b91e51e8a1d98c30d152",
+                  "revision": 2,
+                  "result": {
+                    "format": "tisya.matrix-sheets/1",
+                    "changes": [
+                      {
+                        "tableId": "T_DYN_EVENTS",
+                        "recordId": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+                        "values": {
+                          "title": "旧版直接记下的见闻",
+                          "spine_digest": "阿青在门前看见木盒"
+                        }
+                      }
+                    ]
+                  },
+                  "written_utc": "2026-11-12T16:51:09.253Z"
+                }
+              ],
+              "warnings": [],
+              "formalized_sources": [],
+              "staged_rows": 0
+            },
+            "written_utc": "2026-11-12T16:51:09.274Z"
+          },
+          "reply:main/a2@1:source": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/a2@1:source",
+            "request_sha256": "c041d871347957a699213a1ab9f558924069d04f03d976dfcd6d12f650547774",
+            "revision": 4,
+            "result": {
+              "source_key": "main/a2@1"
+            },
+            "written_utc": "2026-11-12T16:51:09.825Z"
+          },
+          "reply:main/a2@1": {
+            "status": "COMMITTED",
+            "operation_id": "reply:main/a2@1",
+            "request_sha256": "c041d871347957a699213a1ab9f558924069d04f03d976dfcd6d12f650547774",
+            "revision": 5,
+            "result": {
+              "source_key": "main/a2@1",
+              "body_sha256": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+              "normalized_sha256": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+              "paragraphs": 1,
+              "operations": [],
+              "warnings": [],
+              "formalized_sources": [],
+              "staged_rows": 5
+            },
+            "written_utc": "2026-11-12T16:51:09.925Z"
+          }
+        },
+        "failures": [],
+        "sources": {
+          "main/a1@1": {
+            "entry_id": "a1",
+            "revision": 1,
+            "reply_raw": "<reply><body>1 阿青看见门前的木盒。</body><cells format=\"form\">【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1</cells><archive/></reply>",
+            "reply_sha256": "f74906a8aa5af377af1b48e44c394a7e17fcf974208849d13afd143e60744480",
+            "body_raw": "1 阿青看见门前的木盒。",
+            "body_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+            "body_normalized": "1 阿青看见门前的木盒。",
+            "normalized_sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f",
+            "paragraph_mapping": [
+              {
+                "normalized": "P1",
+                "original_label": "1",
+                "source_start": 0,
+                "source_end": 12
+              }
+            ],
+            "fragments": [
+              {
+                "paragraph_id": "P1",
+                "chunk_index": 1,
+                "raw_block": "1 阿青看见门前的木盒。",
+                "chunk_text": "阿青看见门前的木盒。",
+                "source_start": 0,
+                "source_end": 12,
+                "original_label": "1",
+                "sha256": "81f96b9039b2a286c4b74a69bafe222ee2ebc159738a407d93750cfbc49de37f"
+              }
+            ],
+            "delta_ops": [
+              "【双层历史事件／1】",
+              "4 事件标题：旧版直接记下的见闻 | P1",
+              "19 一行因果梗概：阿青在门前看见木盒 | P1"
+            ],
+            "original_delta_ops": [
+              "【双层历史事件／1】",
+              "4 事件标题：旧版直接记下的见闻 | P1",
+              "19 一行因果梗概：阿青在门前看见木盒 | P1"
+            ],
+            "cells_raw": "【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1",
+            "cells_format": "form",
+            "warnings": [],
+            "archive_present": true,
+            "archive_raw": "",
+            "archive_format": "",
+            "archive_rows": [],
+            "title": "",
+            "actions": "",
+            "anchors": {
+              "before": "",
+              "after": ""
+            },
+            "native_vars": "",
+            "branch": "main",
+            "settlement": {
+              "operations": [
+                {
+                  "format": "form",
+                  "original": "【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1",
+                  "effective": "【双层历史事件／1】\n4 事件标题：旧版直接记下的见闻 | P1\n19 一行因果梗概：阿青在门前看见木盒 | P1",
+                  "status": "COMMITTED",
+                  "operation_id": "reply:main/a1@1:sheets",
+                  "request_sha256": "ac2ec54d15fd95581df191035aa9c7a0087d4a0dd023b91e51e8a1d98c30d152",
+                  "revision": 2,
+                  "result": {
+                    "format": "tisya.matrix-sheets/1",
+                    "changes": [
+                      {
+                        "tableId": "T_DYN_EVENTS",
+                        "recordId": "f51a5f6b-88b9-54c6-8018-cae4445946f4",
+                        "values": {
+                          "title": "旧版直接记下的见闻",
+                          "spine_digest": "阿青在门前看见木盒"
+                        }
+                      }
+                    ]
+                  },
+                  "written_utc": "2026-11-12T16:51:09.253Z"
+                }
+              ],
+              "warnings": []
+            },
+            "host_message_sha256": "f74906a8aa5af377af1b48e44c394a7e17fcf974208849d13afd143e60744480",
+            "host_message_source_field": "reply_raw"
+          },
+          "main/a2@1": {
+            "entry_id": "a2",
+            "revision": 1,
+            "reply_raw": "<reply><body>1 阿青确认记录中的余力为十二。</body><cells/><archive format=\"form\">【实体数值与资源轴／1】\n3 状态名称：旧版余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1</archive></reply>",
+            "reply_sha256": "ab7e2171455a85d236fbd7f501bdc468fe25d0a24393712785dcdd8a335efa30",
+            "body_raw": "1 阿青确认记录中的余力为十二。",
+            "body_sha256": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+            "body_normalized": "1 阿青确认记录中的余力为十二。",
+            "normalized_sha256": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b",
+            "paragraph_mapping": [
+              {
+                "normalized": "P1",
+                "original_label": "1",
+                "source_start": 0,
+                "source_end": 16
+              }
+            ],
+            "fragments": [
+              {
+                "paragraph_id": "P1",
+                "chunk_index": 1,
+                "raw_block": "1 阿青确认记录中的余力为十二。",
+                "chunk_text": "阿青确认记录中的余力为十二。",
+                "source_start": 0,
+                "source_end": 16,
+                "original_label": "1",
+                "sha256": "49fce5a67deae1b6b94aca15f64745bdbbb6e5861f5f208f4ff69b4eaa463a0b"
+              }
+            ],
+            "delta_ops": [],
+            "original_delta_ops": [],
+            "cells_raw": "",
+            "cells_format": "delta",
+            "warnings": [],
+            "archive_present": true,
+            "archive_raw": "【实体数值与资源轴／1】\n3 状态名称：旧版余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1",
+            "archive_format": "form",
+            "archive_rows": [
+              {
+                "raw": "【实体数值与资源轴／1】"
+              },
+              {
+                "raw": "3 状态名称：旧版余力 | P1"
+              },
+              {
+                "raw": "4 所属实体：阿青 | P1"
+              },
+              {
+                "raw": "5 状态字段键：energy | P1"
+              },
+              {
+                "raw": "6 当前数值：12 | P1"
+              }
+            ],
+            "title": "",
+            "actions": "",
+            "anchors": {
+              "before": "",
+              "after": ""
+            },
+            "native_vars": "",
+            "branch": "main",
+            "settlement": {
+              "operations": [],
+              "warnings": []
+            },
+            "host_message_sha256": "ab7e2171455a85d236fbd7f501bdc468fe25d0a24393712785dcdd8a335efa30",
+            "host_message_source_field": "reply_raw"
+          }
+        },
+        "archive_queue": [
+          {
+            "sequence": 1,
+            "source_key": "main/a1@1",
+            "rows": [],
+            "status": "staged",
+            "format": "tisya.semantic-archive/1",
+            "raw": "",
+            "mapped": true,
+            "plan": {
+              "changes": [],
+              "guards": [],
+              "schema": [],
+              "references": [],
+              "pending": [],
+              "paragraphs": []
+            }
+          },
+          {
+            "sequence": 2,
+            "source_key": "main/a2@1",
+            "rows": [
+              {
+                "raw": "【实体数值与资源轴／1】"
+              },
+              {
+                "raw": "3 状态名称：旧版余力 | P1"
+              },
+              {
+                "raw": "4 所属实体：阿青 | P1"
+              },
+              {
+                "raw": "5 状态字段键：energy | P1"
+              },
+              {
+                "raw": "6 当前数值：12 | P1"
+              }
+            ],
+            "status": "staged",
+            "format": "tisya.semantic-archive/1",
+            "raw": "【实体数值与资源轴／1】\n3 状态名称：旧版余力 | P1\n4 所属实体：阿青 | P1\n5 状态字段键：energy | P1\n6 当前数值：12 | P1",
+            "mapped": true,
+            "plan": {
+              "changes": [
+                {
+                  "tableId": "T_DYN_ENTITY_GAUGES",
+                  "recordId": "ca57bb19-3376-5377-b923-8ba72186ee15",
+                  "values": {
+                    "name": "旧版余力",
+                    "entity_id": "a",
+                    "field_key": "energy",
+                    "value": 12
+                  }
+                }
+              ],
+              "guards": [
+                {
+                  "tableId": "T_DYN_ENTITY_GAUGES",
+                  "recordId": "ca57bb19-3376-5377-b923-8ba72186ee15",
+                  "exists": false,
+                  "fields": {
+                    "name": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "entity_id": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "field_key": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    },
+                    "value": {
+                      "present": false,
+                      "value": null,
+                      "state": "unset"
+                    }
+                  }
+                }
+              ],
+              "schema": [],
+              "dependencies": [],
+              "references": [
+                {
+                  "tableId": "T_SYS_ENTITIES",
+                  "recordId": "a",
+                  "field": "entity_id"
+                }
+              ],
+              "pending": [],
+              "warnings": [],
+              "recordParagraphs": {
+                "T_DYN_ENTITY_GAUGES#ca57bb19-3376-5377-b923-8ba72186ee15": [
+                  "P1"
+                ]
+              },
+              "paragraphs": [
+                "P1"
+              ]
+            }
+          }
+        ],
+        "archive": [],
+        "turn_order": [
+          "main/a1@1",
+          "main/a2@1"
+        ],
+        "events": [],
+        "preferences": [],
+        "warnings": []
+      },
+      "journal": {
+        "entries": [
+          {
+            "uid": "u1",
+            "signature": "899a7addb28c86aeafbacf61bce95dc6b6b09445e40949e0c04a6eaee99f9120",
+            "role": "user",
+            "revision": 1,
+            "pre_turn_snapshot": {
+              "format": "tisya.inverse-patch.v1",
+              "inverse_patch": []
+            },
+            "warnings": [],
+            "settlement_status": "CONTEXT_ONLY"
+          },
+          {
+            "uid": "a1",
+            "signature": "e9087de28de41cc0d58e4a0035baf70350263848428e0411665357fc7ecab216",
+            "role": "assistant",
+            "revision": 1,
+            "pre_turn_snapshot": {
+              "format": "tisya.inverse-patch.v1",
+              "inverse_patch": [
+                {
+                  "op": "truncate",
+                  "path": [
+                    "runtime",
+                    "archive_queue"
+                  ],
+                  "length": 0
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "receipts",
+                    "reply:main/a1@1"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "receipts",
+                    "reply:main/a1@1:sheets"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "receipts",
+                    "reply:main/a1@1:source"
+                  ]
+                },
+                {
+                  "op": "set",
+                  "path": [
+                    "runtime",
+                    "revision"
+                  ],
+                  "value": 0
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "sources",
+                    "main/a1@1"
+                  ]
+                },
+                {
+                  "op": "truncate",
+                  "path": [
+                    "runtime",
+                    "turn_order"
+                  ],
+                  "length": 0
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "warnings"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "T_DYN_EVENTS",
+                    "f51a5f6b-88b9-54c6-8018-cae4445946f4"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "T_SYS_ARCHIVE_BATCHES",
+                    "0291491c-4373-5d51-9777-0e243f627409"
+                  ]
+                },
+                {
+                  "op": "set",
+                  "path": [
+                    "tables",
+                    "T_SYS_ENTITIES",
+                    "a",
+                    "states",
+                    "name"
+                  ],
+                  "value": "known"
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "T_SYS_SOURCE_FRAGMENTS",
+                    "a483cdc6-6867-5d10-ae27-cb2704bacf53"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "X_RECORD_META",
+                    "269e230a-19a1-5ed2-a0ed-b11e92e1fad2"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "X_RECORD_META",
+                    "3b958345-8c27-555b-8968-a8ff70ef2a9a"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "X_RECORD_META",
+                    "96cb0fa4-1abe-58e3-9d43-21d5cc3fd8ce"
+                  ]
+                }
+              ]
+            },
+            "warnings": [],
+            "settlement_status": "COMMITTED"
+          },
+          {
+            "uid": "u2",
+            "signature": "6a85e52fa8a3073e643a3058a33b158deb858fcd5cd3bc0df4cc431590dbd4b1",
+            "role": "user",
+            "revision": 1,
+            "pre_turn_snapshot": {
+              "format": "tisya.inverse-patch.v1",
+              "inverse_patch": []
+            },
+            "warnings": [],
+            "settlement_status": "CONTEXT_ONLY"
+          },
+          {
+            "uid": "a2",
+            "signature": "1a584aa449f95166746f897559a9cb03f0632510df25d7b97ac4e9d729eae440",
+            "role": "assistant",
+            "revision": 1,
+            "pre_turn_snapshot": {
+              "format": "tisya.inverse-patch.v1",
+              "inverse_patch": [
+                {
+                  "op": "truncate",
+                  "path": [
+                    "runtime",
+                    "archive_queue"
+                  ],
+                  "length": 1
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "receipts",
+                    "reply:main/a2@1"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "receipts",
+                    "reply:main/a2@1:source"
+                  ]
+                },
+                {
+                  "op": "set",
+                  "path": [
+                    "runtime",
+                    "revision"
+                  ],
+                  "value": 3
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "runtime",
+                    "sources",
+                    "main/a2@1"
+                  ]
+                },
+                {
+                  "op": "truncate",
+                  "path": [
+                    "runtime",
+                    "turn_order"
+                  ],
+                  "length": 1
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "T_SYS_ARCHIVE_BATCHES",
+                    "1709a3dc-1859-5ce9-b8b6-4bd9e6b14b4e"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "T_SYS_SOURCE_FRAGMENTS",
+                    "e724a726-a08a-5d3e-b1c4-9b3fecf4bf63"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "X_RECORD_META",
+                    "31ac2b4d-cace-5dfc-a9a5-4a6b24bde676"
+                  ]
+                },
+                {
+                  "op": "remove",
+                  "path": [
+                    "tables",
+                    "X_RECORD_META",
+                    "9d0d8755-d0a5-5039-bf7d-a3f4a8e76b3b"
+                  ]
+                }
+              ]
+            },
+            "warnings": [],
+            "settlement_status": "COMMITTED"
+          }
+        ],
+        "revision_by_uid": {
+          "u1": 1,
+          "a1": 1,
+          "u2": 1,
+          "a2": 1
+        },
+        "scope": {
+          "session_ref": "memory-chain",
+          "branch_ref": "main"
+        }
+      }
+    }
+  }
+}

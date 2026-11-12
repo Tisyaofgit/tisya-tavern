@@ -14,8 +14,10 @@ const extra=[{id:'scene.door',name:'门边的画',kind:'image',slot:'body',url:'
 const key=effect=>/^@([^\s:={]+)/u.exec(effect)[1];
 const tick=()=>new Promise(r=>setTimeout(r,0));
 const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent===text);
-test('all 188 recovered choices compile their exact source effect once and remove competing choices',()=>{
- assert.equal(PREFERENCE_GROUPS.length,43);assert.equal(PREFERENCE_GROUPS.reduce((n,g)=>n+g.options.length,0),188);
+test('all 190 recovered choices compile their exact source effect once and remove competing choices',()=>{
+ assert.equal(PREFERENCE_GROUPS.length,43);assert.equal(PREFERENCE_GROUPS.reduce((n,g)=>n+g.options.length,0),190);
+ assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).filter(o=>o.default===true).length,53);
+ for(const id of ['S04-Sc9','S04-Sc10'])assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===id).default,false);
  for(const group of PREFERENCE_GROUPS)for(const option of group.options){
   const config={tags:{},prompts:{},story:{userName:'阿青',wish:'只写眼前的事。',play:{choices:{[group.id]:group.multiple?[option.id]:option.id},parameters:{main_language:'中文',active_avatar_dossier_id:'u01'}}}};
   if(option.id==='N01-B')config.story.userBinding={book:'基点书',uid:7};

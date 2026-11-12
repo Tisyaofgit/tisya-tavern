@@ -39,7 +39,7 @@ test('configuration saves and reopens a viewpoint card with its gaze relation an
 });
 
 test('legacy direction references stay effective and explicit empty gaze removes that selection without mutating old values',()=>{
- const d=emptyConfig(),w=defaultWorld();d.worlds.a=w;w.styleCards={view:'builtin.card.view.char'};const before=JSON.stringify(w);validateConfig(d);assert.match(compileSelected(d,w).text,/char 的审美和欲望凝视 user/);assert.equal(viewSelection(w).gaze,'builtin.card.view.char');assert.equal(JSON.stringify(w),before);w.styleCards.gaze=null;assert.equal(compileSelected(d,w).text,'');
+ const d=emptyConfig(),w=defaultWorld();d.worlds.a=w;w.styleCards={view:'builtin.card.view.char'};const before=JSON.stringify(w);validateConfig(d);assert.match(compileSelected(d,w).text,/char 的私心、审美偏爱/);assert.equal(viewSelection(w).gaze,'builtin.card.view.char');assert.equal(JSON.stringify(w),before);w.styleCards.gaze=null;assert.equal(compileSelected(d,w).text,'');
 });
 test('desire lens and gaze direction combine independently while roles and target aesthetics reach the style owner once',()=>{
  for(const lens of ['female','male'])for(const gaze of ['user','char','audience']){const c=fullDefaultConfiguration();c.world.styleCards={view:'builtin.card.view.'+lens,gaze:'builtin.card.view.'+gaze};c.world.styleGaze={userRole:'主攻',focus:'声音'};c.world.styleAesthetics={user:['高冷化'],others:['富态','慕强']};const out=onePassEntries(c,DEFAULT_MOODS);assert.match(out.tisya_material_style,/user主攻/);assert.match(out.tisya_material_style,/其他角色审美：富态/);assert.match(out.tisya_material_style,/user审美：高冷化/);assert.match(out.tisya_material_style,/凝视关注：声音/);assert.match(out.tisya_material_style,new RegExp(lens==='female'?'女凝':'男凝'));assert.match(out.tisya_material_style,new RegExp(gaze==='user'?'user凝视':gaze==='char'?'char凝视':'观众凝视'));assert.doesNotMatch(out.tisya_material_rule_material,/user主攻/);}
@@ -49,7 +49,7 @@ test('aesthetic and role configuration validates exact values; necessary youthfu
 });
 test('built-in writing cards use direct positive instructions without repeated boundary paragraphs',()=>{
  assert.equal(STYLE_CARDS.length,10);assert.equal(new Set(STYLE_CARDS.map(card=>card.id)).size,10);
- for(const card of STYLE_CARDS){assert.doesNotMatch(card.content,/不把|不从|不替|不让|不要|不借|不强制|禁止/);assert.equal(card.version,3);}
+ for(const card of STYLE_CARDS){assert.doesNotMatch(card.content,/不把|不从|不替|不让|不要|不借|不强制|禁止/);assert.equal(card.version,4);}
 });
 
 test('legacy select-style mode accepts actual three-card resources and still rejects an empty selection',()=>{
@@ -66,7 +66,7 @@ test('all ten exact saved stock bodies upgrade only at the resource view and ret
  assert.deepEqual(compiled.ids,w.modes.narrative.selected);
  for(const old of d.resources){
   const current=STYLE_CARDS.find(row=>row.id===old.id),effective=resources(d).find(row=>row.id===old.id);
-  assert.deepEqual(effective,{...old,content:current.content,version:3});
+  assert.deepEqual(effective,{...old,content:current.content,version:4});
   assert.equal(compiled.text.split(current.content).length-1,1);assert.ok(!compiled.text.includes(old.content));assert.ok(compiled.text.includes(old.name));
  }
  assert.deepEqual(d,before);assert.deepEqual(cleanExport(d).configuration.resources,before.resources);

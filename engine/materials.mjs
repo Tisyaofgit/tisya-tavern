@@ -4,7 +4,9 @@ import {clone} from './common.mjs';
 import {activePreferences} from './business.mjs';
 import {recall} from './reply.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
-import {ARCHIVE_PROTOCOL,ARCHIVE_TABLE_IDS,stagedArchiveReferences} from './archive.mjs';
+import {stagedArchiveReferences} from './archive.mjs';
+import {ARCHIVE_TABLE_IDS,CELLS_BOOTSTRAP_TABLE_IDS,REPLY_FORM_PROTOCOL,replyFormOwner,replyFormTableIds} from './reply-form-ownership.mjs';
+import {characterSubject,recallCharacterFragments} from './character-knowledge.mjs';
 import {extendPhoneFormCatalog} from './phone-form-contract.mjs';
 import {PHONE_FORM_TEMPLATES,PHONE_APP_NAMES} from './form-template-routing.mjs';
 const routes={'世界与规则':'world_context','类型与物品':'asset_context','地点与交通':'location_context','组织与制度':'faction_context','场景与环境':'current_state','状态与成长':'current_state','持有与交易':'current_state','关系与约定':'current_state','人物原点':'focus_entities','人物细节':'focus_entities','认知与情报':'knowledge_material','历史与记忆':'memory_archive','任务与调度':'pending_tasks','生产与设施':'current_state','冲突与检定':'current_state','创世与跨世界':'cardflow','规则与执行':'cell_prompts','宿主与投影':'display_material','运行与归档':'offstage_state'};
@@ -18,7 +20,7 @@ function mainFormTable(id,schema){
  return true;
 }
 export function materialFormTables(e,blocks,context={}){
- const selected=new Set([...ARCHIVE_TABLE_IDS,...replyTables]);
+ const selected=new Set([...ARCHIVE_TABLE_IDS,...CELLS_BOOTSTRAP_TABLE_IDS,...replyTables]);
  for(const row of Object.values(blocks).flat())selected.add(row.table_id);
  // An empty custom business table remains a valid creation surface. Built-in
  // schemas carry partition/phone metadata; a prefix alone is not ownership.
@@ -44,7 +46,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
    if(tid==='T_PREF_OUTPUT_CONFIG')continue; // Compiled once through the selected output contract.
    const fields=Object.fromEntries(schema.fields.map(f=>[f.key,f])),values={};
    for(const [key,v]of Object.entries(r.values)){
-    const f=fields[key]??{},state=r.states[key];if(!fields[key]||!matrixFieldVisible(f,r,context))continue;
+    const f=fields[key]??{},state=r.states[key];if(!fields[key]||!matrixFieldVisible(f,r,context,tid,e.data,rid))continue;
     if(!['known','derived','unknown','cleared','none','not_applicable'].includes(state))continue;
     values[key]=['known','derived'].includes(state)?v:({unknown:'?',cleared:'!',none:'∅',not_applicable:'—'})[state];
     if(r.metadata?.[key]?.gauge_max!=null&&['known','derived'].includes(state))values[key]+='/'+r.metadata[key].gauge_max;
@@ -56,15 +58,18 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
  slots=renderBlocks(e,blocks);
  const sourceLabel=key=>{const index=e.data.runtime.turn_order?.indexOf(key)??-1,source=e.data.runtime.sources?.[key];return (index>=0?'第'+(index+1)+'条已接纳回复':'历史回复')+(source?.revision?'（修订'+source.revision+'）':'');};
  const pendingArchives=(e.data.runtime.archive_queue??[]).filter(b=>b.status==='blocked'||b.plan?.pending?.length);
- if(pendingArchives.length)add('tisya_material_offstage_state','记忆待核（尚未确认）：'+pendingArchives.map(b=>sourceLabel(b.source_key)+((b.plan?.pending??[]).length?'，待补 '+b.plan.pending.map(p=>p.target+'：'+p.missing).join('；'):'')).join('；'));
+ if(!characterSubject(context)&&pendingArchives.length)add('tisya_material_offstage_state','记忆待核（尚未确认）：'+pendingArchives.map(b=>sourceLabel(b.source_key)+((b.plan?.pending??[]).length?'，待补 '+b.plan.pending.map(p=>p.target+'：'+p.missing).join('；'):'')).join('；'));
  for(const p of activePreferences(e,context))add('tisya_contractor_wish',p.directive);
- if(query){let hits=recall(e,query,{branch:context.branch_ref});if(context.subject_ref){const known=new Set(Object.values(e.rows('T_DYN_COGNITION')).filter(r=>r.values.subject_ref===context.subject_ref).map(r=>r.values.event_ref));const entries=new Set(Object.entries(e.rows('T_DYN_EVENTS')).filter(([id])=>known.has(id)).map(([,r])=>r.values.source_entry_id));hits=hits.filter(h=>entries.has(h.entry_id));}for(const h of hits)add('tisya_material_memory_excerpt','原文：'+sourceLabel(h.source_key)+'\n'+h.fragments.map(f=>f.paragraph_id+'：'+f.raw_block).join('\n'));}
+ if(query){const hits=characterSubject(context)?recallCharacterFragments(e,query,context):recall(e,query,{branch:context.branch_ref});for(const h of hits)add('tisya_material_memory_excerpt','原文：'+sourceLabel(h.source_key)+'\n'+h.fragments.map(f=>f.paragraph_id+'：'+f.raw_block).join('\n'));}
  if(e.data.runtime.calendar||Object.keys(e.rows('X_WORLD_CLOCKS')).length)add('tisya_material_event_context','世界历法：'+e.clock().text());
- const sheets=prepareMatrixSheets({state:e.data},{operationId:'material-preview',kind:'rows',mode:'revise',task:'main',scope:context,tableIds:materialFormTables(e,blocks,context),expandReferences:'children'});
+ const selectedTables=materialFormTables(e,blocks,context),groups=['cells','archive'].map(block=>({block,sheets:prepareMatrixSheets({state:e.data},{operationId:'material-preview-'+block,kind:'rows',mode:'revise',task:'main',scope:context,tableIds:replyFormTableIds(e.data,block,selectedTables),expandReferences:'children'})}));
+ const sheets={references:[...new Map(groups.flatMap(g=>g.sheets.references).map(r=>[r.tableId+'#'+r.recordId,r])).values()]};
  const visible=new Set(Object.values(blocks).flat().map(row=>row.table_id+'#'+row.record_id)),references=sheets.references.filter(r=>{if(visible.has(r.tableId+'#'+r.recordId))return true;const values=e.data.tables[r.tableId]?.[r.recordId]?.values;return e.data.schema[r.tableId]?.partition==='M'&&(r.tableId==='M_UNITS'||values?.owner_table&&visible.has(values.owner_table+'#'+values.owner_row_uuid));});
- add('tisya_material_cell_prompts',sheets.form+(references.length?'\n可修订或引用的已有记录：\n'+references.map(r=>r.display).join('\n'):''));
-
- add('tisya_material_cell_prompts',ARCHIVE_PROTOCOL);
- const stagedReferences=stagedArchiveReferences(e);if(stagedReferences.length)add('tisya_material_cell_prompts','近期回复中的关联名称（仅供关联，事实依据仍须见原文）：'+stagedReferences.map(r=>r.table+'／'+r.name).join('；'));
+ add('tisya_material_cell_prompts',REPLY_FORM_PROTOCOL);
+ add('tisya_material_cell_prompts',groups[0].sheets.instructions.replace('<cells format="form"> 使用下列分组简表：','两组共用填写方法：'));
+ const details=new Map();for(const {block,sheets:group}of groups){const roots=[];for(const section of group.formSections)if(replyFormOwner(e.data,section.tableId)==='owned')details.set(section.tableId,section.text);else roots.push(section.text);if(roots.length)add('tisya_material_cell_prompts',block+' 可填写的表单：\n'+roots.join('\n\n'));}
+ if(details.size)add('tisya_material_cell_prompts','所属明细表（随业务父记录进入同一块，共用字段只列一次）：\n'+[...details.values()].join('\n\n'));
+ if(references.length)add('tisya_material_cell_prompts','可修订或引用的已有记录：\n'+references.map(r=>r.display).join('\n'));
+ const stagedReferences=characterSubject(context)?[]:stagedArchiveReferences(e);if(stagedReferences.length)add('tisya_material_cell_prompts','近期回复中的关联名称（仅供关联，事实依据仍须见原文）：'+stagedReferences.map(r=>r.table+'／'+r.name).join('；'));
  return Object.fromEntries(Object.entries(slots).map(([k,v])=>[k,[...new Set(v)].join('\n')]));
 }

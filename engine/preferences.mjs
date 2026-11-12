@@ -17,7 +17,7 @@ export function validatePreferences(value={}){
  }
  const p=value.parameters??{};
  if(p.history_messages!=null&&(!Number.isSafeInteger(p.history_messages)||p.history_messages<0))fail('HISTORY_COUNT','历史聊天条数须为非负整数');
- if(p.min_length!=null||p.max_length!=null){const min=p.min_length??2000,max=p.max_length??5000;if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||min<0||max<min)fail('PREFERENCE_LENGTH','篇幅范围无效');}
+ if(p.min_length!=null||p.max_length!=null){const min=p.min_length,max=p.max_length;if([min,max].some(v=>v!=null&&(!Number.isSafeInteger(v)||v<0))||min!=null&&max!=null&&max<min)fail('PREFERENCE_LENGTH','篇幅范围无效');}
  return value;
 }
 const escape=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');

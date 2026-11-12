@@ -306,10 +306,11 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
  const refs=[],refCounts=new Map(),legacyCounts=new Map(),recordMeta=new Map(Object.values(snapshot.state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));for(const id of referenceTables)for(const [index,[recordId,row]]of Object.entries(snapshot.state.tables[id]??{}).entries()){
   if(row.metadata?.phone_projection)continue;
-  const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&(parent.values.name??parent.values.label??parent.values.title??parent.values.instance_name),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
-  const name=String(row.values?.name??row.values?.label??row.values?.title??row.values?.instance_name??(ownerName&&ownerField?(labels.get(owner)??owner)+'／'+ownerName+'／'+ownerField:'第'+(index+1)+'项')).trim();
+  const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&['name','label','title','instance_name'].map(key=>task!=='main'||matrixFieldVisible(snapshot.state.schema[owner]?.fields.find(f=>f.key===key)??{key},parent,scope,owner,snapshot.state,row.values.owner_row_uuid)?parent.values[key]:undefined).find(value=>value!=null),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
+  const visibleName=key=>task!=='main'||matrixFieldVisible(snapshot.state.schema[id]?.fields.find(f=>f.key===key)??{key},row,scope,id,snapshot.state,recordId)?row.values?.[key]:undefined;
+  const name=String(visibleName('name')??visibleName('label')??visibleName('title')??visibleName('instance_name')??(ownerName&&ownerField?(labels.get(owner)??owner)+'／'+ownerName+'／'+ownerField:'第'+(index+1)+'项')).trim();
   const base=labels.get(id)+'／已有：'+name,n=(refCounts.get(base)??0)+1;refCounts.set(base,n);
-  const legacyName=String(row.values?.name??row.values?.label??row.values?.title??'第'+(index+1)+'项').trim(),legacyBase=labels.get(id)+'／已有：'+legacyName,legacyNumber=(legacyCounts.get(legacyBase)??0)+1;legacyCounts.set(legacyBase,legacyNumber);
+  const legacyName=String(visibleName('name')??visibleName('label')??visibleName('title')??'第'+(index+1)+'项').trim(),legacyBase=labels.get(id)+'／已有：'+legacyName,legacyNumber=(legacyCounts.get(legacyBase)??0)+1;legacyCounts.set(legacyBase,legacyNumber);
   if(task==='main'&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
   refs.push({tableId:id,recordId,name,base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
@@ -323,9 +324,9 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(spec.required)hint+=(hint?'；':'')+'必填';return hint;
  };
  const modelTemplates=task==='main'?templates.filter(t=>!Object.hasOwn(inlineChildHints,t.id)):templates;
- const fieldsText=modelTemplates.map(t=>'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')).join('\n\n');
+ const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
  const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号 字段名：值”。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
- return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
+ return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions,formSections,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This

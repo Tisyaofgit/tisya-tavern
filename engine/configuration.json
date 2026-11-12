@@ -1,5 +1,5 @@
 {
-  "说明": "由交接包完整默认配置及原生表单目录抽取，不改写预设正文；可导入预设见presets目录。",
+  "说明": "配置定义与提示词目录；正文使用当前 presets/Tisya-Matrix.json，生成交付预设为 presets/Tisya.json。旧“69槽目录”键仅作兼容别名，不代表当前槽数。",
   "生成参数与输出设置": {
     "temperature": 1.2,
     "frequency_penalty": 0,
@@ -5957,415 +5957,421 @@
       "identifier": "tisya_new_chat",
       "name": "层0 · 清场重置 [SESSION.RESET]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/0"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/0"
+    },
+    {
+      "identifier": "tisya_layer_authority",
+      "name": "rule · 层级与冲突权威 [LAYER.AUTHORITY]",
+      "role": "system",
+      "正文位置": "presets/Tisya-Matrix.json#prompts/1"
     },
     {
       "identifier": "main",
       "name": "层① · 核心身份 [ID]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/1"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/2"
     },
     {
       "identifier": "nsfw",
       "name": "层① · 见证法则 [WITNESS]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/2"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/3"
     },
     {
       "identifier": "tisya_identity_attestation",
       "name": "层① · 角色认领 [ATTEST]",
       "role": "assistant",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/3"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/4"
     },
     {
       "identifier": "tisya_user_relation",
       "name": "层① · 契约关系 [REL]",
       "role": "user",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/4"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/5"
     },
     {
       "identifier": "tisya_contractor_wish",
       "name": "层① · 契约者私密心愿槽 [CONTRACTOR.WISH]",
       "role": "user",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/5"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/6"
     },
     {
       "identifier": "tisya_scene_anchor",
       "name": "层① · 梦境舞台锚点 [SCENE]",
       "role": "assistant",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/6"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/7"
     },
     {
       "identifier": "tisya_task_start",
       "name": "层② · 摄入与路由 [TASK.START]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/7"
-    },
-    {
-      "identifier": "tisya_material_boundary_open",
-      "name": "层③ · 资料层起 [Dream Rules]",
-      "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/8"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/8"
     },
     {
       "identifier": "tisya_pref_narrative",
       "name": "偏好1 · 叙事与代演边界 <Pref_Narrative>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/9"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/9"
     },
     {
       "identifier": "tisya_pref_style",
       "name": "偏好2 · 文风[基调/视角/着墨/行文] <Pref_Style>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/10"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/10"
     },
     {
       "identifier": "tisya_material_style_card",
       "name": "偏好3 · 激活文风卡 <StyleResources>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/11"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/11"
     },
     {
       "identifier": "tisya_pref_lexical_ban",
       "name": "偏好4 · 禁词命中即删与禁元术语 <Pref_LexicalGate>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/12"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/12"
     },
     {
       "identifier": "tisya_pref_plot",
       "name": "偏好5 · 情节走向与双尺区间 <Pref_Plot>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/13"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/13"
     },
     {
       "identifier": "tisya_pref_portrayal",
       "name": "偏好6 · 角色塑造[全局+单角色定制] <Pref_Portrayal>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/14"
-    },
-    {
-      "identifier": "tisya_material_rule_material",
-      "name": "偏好兼容槽 · 外部插件规则动态挂载",
-      "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/15"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/14"
     },
     {
       "identifier": "tisya_kb_techniques",
       "name": "知识库层 · 缇斯亚内置技法书语料库 <TisyaKnowledgeBase>",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/16"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/15"
+    },
+    {
+      "identifier": "tisya_material_boundary_open",
+      "name": "层③ · 资料层起 [Dream Rules]",
+      "role": "system",
+      "正文位置": "presets/Tisya-Matrix.json#prompts/16"
+    },
+    {
+      "identifier": "tisya_material_rule_material",
+      "name": "偏好兼容槽 · 外部插件规则动态挂载",
+      "role": "system",
+      "正文位置": "presets/Tisya-Matrix.json#prompts/17"
     },
     {
       "identifier": "worldInfoBefore",
       "name": "世界槽1 · 原生全局/前置世界书 (worldInfoBefore)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/17"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/18"
     },
     {
       "identifier": "tisya_material_world_context",
       "name": "世界槽2 · 世界定义与基础法则 (world_context)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/18"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/19"
     },
     {
       "identifier": "tisya_material_faction_context",
       "name": "世界槽3 · 组织与势力底档 (faction_context)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/19"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/20"
     },
     {
       "identifier": "tisya_material_asset_context",
       "name": "世界槽4 · 物品与技能资产底档 (asset_context)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/20"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/21"
     },
     {
       "identifier": "tisya_material_location_context",
       "name": "全局槽1 · 当前场景与空间关系 (location_context)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/21"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/22"
     },
     {
       "identifier": "tisya_material_current_state",
       "name": "全局槽2 · 单层只读状态基线 (current_state)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/22"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/23"
     },
     {
       "identifier": "tisya_material_offstage_state",
       "name": "全局槽3 · 场外非玩家推进[活动/生命线] (offstage_state)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/23"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/24"
     },
     {
       "identifier": "tisya_material_pending_tasks",
       "name": "全局槽4 · 日程倒计时与伏笔待办 (pending_tasks)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/24"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/25"
     },
     {
       "identifier": "personaDescription",
       "name": "用户槽1 · 原生用户人设卡 (personaDescription)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/25"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/26"
     },
     {
       "identifier": "tisya_material_player_archive",
       "name": "用户槽2 · 玩家角色原点与状态档案 (player_archive)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/26"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/27"
     },
     {
       "identifier": "tisya_material_persona_extensions",
       "name": "用户槽3 · 玩家身份扩展与持有 (persona_extensions)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/27"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/28"
     },
     {
       "identifier": "charDescription",
       "name": "角色槽01 · 原生角色卡核心设定 (charDescription)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/28"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/29"
     },
     {
       "identifier": "charPersonality",
       "name": "角色槽02 · 原生角色卡性格 (charPersonality)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/29"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/30"
     },
     {
       "identifier": "scenario",
       "name": "角色槽03 · 原生角色卡开局场景 (scenario)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/30"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/31"
     },
     {
       "identifier": "worldInfoAfter",
       "name": "角色槽04 · 原生角色卡绑定/后置世界书 (worldInfoAfter)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/31"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/32"
     },
     {
       "identifier": "dialogueExamples",
       "name": "角色槽05 · 原生角色卡示例对白[声纹参考] (dialogueExamples)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/32"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/33"
     },
     {
       "identifier": "tisya_material_card_extensions",
       "name": "角色槽06 · 来源卡扩展字段 (card_extensions)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/33"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/34"
     },
     {
       "identifier": "tisya_material_cardflow",
       "name": "角色槽07 · 来源卡有效流程与状态机 (cardflow)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/34"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/35"
     },
     {
       "identifier": "tisya_material_display_material",
       "name": "角色槽08 · 状态栏展示模板 (display_material)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/35"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/36"
     },
     {
       "identifier": "tisya_material_cast_registry",
       "name": "角色槽09 · 本轮人物名单注册表 (cast_registry)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/36"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/37"
     },
     {
       "identifier": "tisya_material_focus_entities",
       "name": "角色槽10 · 本轮焦点对象完整档[含关系/成长] (focus_entities)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/37"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/38"
     },
     {
       "identifier": "tisya_material_present_entities",
       "name": "角色槽11 · 在场非焦点对象速写 (present_entities)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/38"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/39"
     },
     {
       "identifier": "tisya_material_character_archives",
       "name": "角色槽12 · 角色补充档案与基点适配 (character_archives)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/39"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/40"
     },
     {
       "identifier": "tisya_material_habit_anchors",
       "name": "角色槽13 · 习惯锚点与回忆默契[跨周期懂梗] (habit_anchors)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/40"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/41"
     },
     {
       "identifier": "tisya_material_knowledge_material",
       "name": "角色槽14 · 人物知情账本与K0-K3盲区 (knowledge_material)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/41"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/42"
     },
     {
       "identifier": "tisya_material_secret_material",
       "name": "角色槽15 · 前史、关系底稿与隐情秘密 (secret_material)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/42"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/43"
     },
     {
       "identifier": "tisya_material_memory_archive",
       "name": "记忆槽1 · 隔一层正式归档事件时间线 (memory_archive)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/43"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/44"
     },
     {
       "identifier": "tisya_material_memory_summary",
       "name": "记忆槽2 · 阶段历史摘要 (memory_summary)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/44"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/45"
     },
     {
       "identifier": "tisya_material_memory_excerpt",
       "name": "记忆槽3 · 远期历史原文段号摘录 (memory_excerpt)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/45"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/46"
     },
     {
       "identifier": "tisya_material_event_context",
       "name": "记忆槽4 · 时间锚快照与事件因果链 (event_context)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/46"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/47"
     },
     {
       "identifier": "tisya_material_cell_prompts",
       "name": "填表槽1 · 坐标增量快照与极简格待填指令 [CELL_PROMPTS]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/47"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/48"
     },
     {
       "identifier": "tisya_material_calculation_result",
       "name": "填表槽2 · 多表嵌套公式与@ACT游戏事务结算回执 (calculation_result)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/48"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/49"
     },
     {
       "identifier": "tisya_material_task_analysis",
       "name": "扩展槽1 · 前置任务分析结果 (task_analysis)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/49"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/50"
     },
     {
       "identifier": "tisya_material_external_evidence",
       "name": "扩展槽2 · 外部资料证据 (external_evidence)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/50"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/51"
     },
     {
       "identifier": "tisya_material_task_material",
       "name": "扩展槽3 · 本轮附加任务资料 (task_material)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/51"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/52"
     },
     {
       "identifier": "tisya_material_tool_prompt",
       "name": "工具槽1 · 当前任务工具提示 (tool_prompt)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/52"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/53"
     },
     {
       "identifier": "tisya_material_tool_calls",
       "name": "工具槽2 · 待执行工具调用 (tool_calls)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/53"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/54"
     },
     {
       "identifier": "tisya_material_tool_result",
       "name": "工具槽3 · 真实工具回执 (tool_result)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/54"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/55"
     },
     {
       "identifier": "tisya_selected_resources",
       "name": "扩展槽4 · 当前选中附加资源 (selected_resources)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/55"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/56"
     },
     {
       "identifier": "tisya_material_boundary_close",
       "name": "层③ · 资料层止 [/Dream Rules]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/56"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/57"
     },
     {
       "identifier": "tisya_history_open",
       "name": "层④ · 历史层起 [Dream History]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/57"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/58"
     },
     {
       "identifier": "chatHistory",
       "name": "层④ · 原生对话历史记录 (chatHistory)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/58"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/59"
     },
     {
       "identifier": "tisya_history_close",
       "name": "层④ · 历史层止 [/Dream History]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/59"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/60"
     },
     {
       "identifier": "tisya_calibrate",
       "name": "层⑤ · 世界基础逻辑校准层 [CALIBRATE]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/60"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/61"
     },
     {
       "identifier": "tisya_session_reset",
       "name": "层⑥ · 创作注意力与首端锁 [RR]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/61"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/62"
     },
     {
       "identifier": "tisya_creative_guide",
       "name": "层⑥ · 登录锁与同向双阶六维导引 [CREATIVE.GUIDE]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/62"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/63"
     },
     {
       "identifier": "tisya_registry",
       "name": "层⑦ · 五大分区交付注册表 [REGISTRY]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/63"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/64"
     },
     {
       "identifier": "tisya_flow_gate",
       "name": "层⑦ · 完整交付核验 [FLOW]",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/64"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/65"
     },
     {
       "identifier": "tisya_think_commit",
       "name": "层⑦ · 完整交付认领 [COMMIT.READY] (assistant)",
       "role": "assistant",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/65"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/66"
     },
     {
       "identifier": "tisya_prepare_trigger",
       "name": "层⑦ · 单次完整交付触发 [PREPARE_STEP] (system)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/66"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/67"
     },
     {
       "identifier": "jailbreak",
       "name": "Post-History Instructions (Unused/Disabled)",
       "role": "system",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/67"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/68"
     },
     {
       "identifier": "tisya_delivery_warning",
       "name": "层⑦ · 开始响应与完整交付授权 (user)",
       "role": "user",
-      "正文位置": "presets/缇斯亚_完整默认配置预设.json#prompts/68"
+      "正文位置": "presets/Tisya-Matrix.json#prompts/69"
     }
   ],
   "来源SHA256": {

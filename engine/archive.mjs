@@ -1,26 +1,11 @@
 import {clone,digest,stableId,fail,asError} from './common.mjs';
 import {Runtime} from './runtime.mjs';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,sheetSections} from '../tables/foundation/engine.js';
+import {assertReplyFormOwnership,assertReplyFormVersion,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
+export {ARCHIVE_ROUTES,ARCHIVE_TABLE_IDS,ARCHIVE_PROTOCOL} from './reply-form-ownership.mjs';
 
 // One archive consumer: semantic rows become the same reviewable workbook used
 // by main cells and creation. The enclosing reply journal owns persistence.
-export const ARCHIVE_ROUTES=Object.freeze({
- '引用':['T_SYS_ENTITIES'],
- '事件':['T_DYN_EVENTS'],
- '状态与流转':['T_DYN_ENTITY_STATE','T_DYN_ENTITY_GAUGES','T_DYN_TRANSFERS'],
- '认知':['T_DYN_COGNITION'],
- '新建档案':['T_CHAR_DOSSIER','T_STATIC_ITEMS_SKILLS','T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_WORLD_RULES','T_SYS_ENTITIES'],
- '事实与底稿':['T_STATIC_FACTS','T_STATIC_WORLD_RULES','T_DYN_EVENTS','T_CHAR_RELATION_ORIGINS'],
- '隐情':['T_CHAR_SECRETS'],
- '习惯锚点':['T_CHAR_ANCHORS'],
- '伏笔':['T_DYN_CLUES'],
- '场外与日程':['T_DYN_ACTIVITIES_LIFELINES','T_DYN_TASKS','T_DYN_TIMERS'],
- '待定':['T_SYS_CELL_REQUESTS','T_SYS_ARCHIVE_BATCHES']
-});
-export const ARCHIVE_TABLE_IDS=Object.freeze([...new Set([...Object.values(ARCHIVE_ROUTES).flat(),'T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS','T_DYN_STAGE_SUMMARIES'])]);
-const allowed=new Set(ARCHIVE_TABLE_IDS);
-export const ARCHIVE_PROTOCOL=`<archive format="form"> 沿用上述表名、原行号、字段名与关联名称：每条记录写【表名／序号】，每行写“行号 字段名：值 | Pn”；修订已有记录使用给定的完整标题。只填本轮正文有据的事实、角色认知、档案、关系、线索、已成立事务与日程，每条记录须标明正文段号 Pn。未知省略，需后续核对填“?”；同批关联可用分组名，不把角色猜测写成世界事实，也不把愿望写成玩家义务。已由 cells 填写的内容不重复；没有新增记忆时写 <archive/>。`;
-
 const check=(ok,code,message,details)=>{if(!ok)fail(code,message,details);};
 const VERSION='tisya.semantic-archive/1';
 const own=(o,k)=>Object.hasOwn(o??{},k);
@@ -48,18 +33,17 @@ function stagingView(runtime,sourceKey){
 }
 function preparePlan(runtime,source,sourceKey){
  check(source.archive_present===true,'ARCHIVE_MISSING','回复缺少 archive 区块；原文已保存，语义记忆待补');
- const raw=source.archive_raw??'',format=source.archive_format??'';
+ const raw=source.archive_raw??'',format=source.archive_format??'',ownershipVersion=assertReplyFormVersion(source.reply_form_ownership_version??LEGACY_REPLY_FORM_OWNERSHIP_VERSION);
  check(format==='form'||!raw.trim()&&format==='','ARCHIVE_FORMAT','非空归档仅接受当前 format="form" 极简表单；旧格式保留原文待处理',{format});
- if(!raw.trim())return {changes:[],guards:[],schema:[],references:[],pending:[],paragraphs:[]};
+ if(!raw.trim())return {ownership_version:ownershipVersion,changes:[],guards:[],schema:[],references:[],pending:[],paragraphs:[]};
  const {temp,dependencies,schema,warnings}=stagingView(runtime,sourceKey);
  const snapshot={state:temp.data},context=prepareMatrixSheets(snapshot,{kind:'rows',mode:'revise',task:'main',operationId:'archive:'+sourceKey}),evidenceByHeading={};
  for(const section of sheetSections(raw)){const t=context.catalog.templates.find(t=>section.heading.startsWith(t.label+'／')),owned=t&&context.schemas[t.id].fields.some(f=>f.key==='owner_row_uuid');evidenceByHeading[section.heading]=evidence(section.lines.join('\n'),source,{required:!owned});}
  const input={form:raw,evidenceByHeading,pending:[]};
  const accepted=input.form.trim()?acceptMatrixSheets(context,snapshot,{blocks:{cells:input.form,body:source.body_raw,title:source.title},parsed:source}):{proposal:{matrix:{changes:[]}}};
  const changes=accepted.proposal.matrix.changes;
- for(const change of changes)check(allowed.has(change.tableId)||change.tableId.startsWith('M_'),'ARCHIVE_TABLE','该表不属于语义记忆归档写集',{table:change.tableId});
+ assertReplyFormOwnership(temp.data,changes,'archive',{version:ownershipVersion});
  for(const change of changes){
-  if(change.tableId==='T_DYN_TASKS'){const existing=temp.rows(change.tableId)[change.recordId]?.values??{},status=own(change.values,'status')?change.values.status:existing.status,accepted=own(change.values,'accept_evidence')?change.values.accept_evidence:existing.accept_evidence;check(status,'ARCHIVE_TASK_ACCEPTANCE','归档任务必须明确状态，不能将愿望默记为已接受');if(['接受','进行','完成'].includes(status))check(accepted,'ARCHIVE_TASK_ACCEPTANCE','已接受任务需要明确接受证据');}
   for(const [field,state]of Object.entries(change.states??{}))if(['unknown','unset'].includes(state))input.pending.push({target:context.schemas[change.tableId].label+'／'+(change.values.name??change.values.title??change.recordId)+'／'+(context.schemas[change.tableId].fields.find(f=>f.key===field)?.label??field),missing:'本轮表单明确标为未知，尚无可采用值',condition:'提供该字段的明确依据',tableId:change.tableId,recordId:change.recordId,field});
  }
  const guards=changes.map(c=>({tableId:c.tableId,recordId:c.recordId,exists:!!temp.rows(c.tableId)[c.recordId],fields:Object.fromEntries(Object.keys(c.values).map(k=>[k,fieldState(temp.rows(c.tableId)[c.recordId],k)]))}));
@@ -70,7 +54,7 @@ function preparePlan(runtime,source,sourceKey){
  const references=[];for(const change of changes)for(const spec of temp.data.schema[change.tableId].fields){if(!['REF','ROW_REF','CHILD_REF','REF_LIST'].includes(spec.type))continue;const target=spec.ref?.startsWith('@')?change.values[spec.ref.slice(1)]:spec.ref;if(!target)continue;for(const value of [change.values[spec.key]].flat())if(typeof value==='string'&&temp.rows(target)[value])references.push({tableId:target,recordId:value,field:spec.key});}
 
  for(const ref of references){const dep=dependencies.get(ref.tableId+'#'+ref.recordId);if(dep)dependencyKeys.add(dep);}
- return {changes:clone(changes),guards,schema,dependencies:[...dependencyKeys],references,pending:input.pending,warnings,recordParagraphs,paragraphs:evidence(raw,source,{required:false})};
+ return {ownership_version:ownershipVersion,changes:clone(changes),guards,schema,dependencies:[...dependencyKeys],references,pending:input.pending,warnings,recordParagraphs,paragraphs:evidence(raw,source,{required:false})};
 }
 function batchRow(runtime,batch,source,status,error=null){
  const tid='T_SYS_ARCHIVE_BATCHES';if(!runtime.data.schema[tid])return;

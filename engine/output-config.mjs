@@ -11,5 +11,11 @@ export function applyOutputConfiguration(entries,values){
  bind(n,'STOP.GATE',values.preferred_ending);bind(s,'GRAMMAR.DENSITY',values.sentence_pattern);bind(s,'DIALOGUE.RATIO',values.dialogue);bind(s,'PROSE.DISCIPLINE',values.diction);bind(plot,'INK.GRANULARITY',values.description_focus);bind(plot,'INK.ALLOCATION',values.scene_allocation);
  if(values.style){const style=p('tisya_material_style_card');style.content=print(values.style);}
  for(const [field,key]of [['secret_display','SECRET.DISPLAY'],['visible_blocks','VISIBLE.BLOCKS'],['count_scope','COUNT.SCOPE']])bind(registry,key,values[field]);
- if(['min_length','max_length','length_unit'].some(k=>values[k]!=null)){const match=/<body\s+min="(\d+)"\s+max="(\d+)"\s+unit="([^"]+)"/.exec(registry.content);if(!match)fail('OUTPUT_LENGTH_CONTRACT','篇幅配置没有对应的正文骨架');const min=values.min_length??Number(match[1]),max=values.max_length??Number(match[2]),unit=values.length_unit??match[3];if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||min<0||max<min||!['字','词','字符','段落'].includes(unit))fail('OUTPUT_LENGTH','篇幅范围或单位无效');registry.content=registry.content.replace(match[0],()=>'<body min="'+min+'" max="'+max+'" unit="'+unit+'"');}
+ if(['min_length','max_length','length_unit'].some(k=>values[k]!=null)){
+  const match=/<body\b([^>]*)>/.exec(registry.content);if(!match)fail('OUTPUT_LENGTH_CONTRACT','篇幅配置没有对应的正文骨架');
+  const old=key=>new RegExp('\\b'+key+'="([^"]+)"').exec(match[1])?.[1],min=values.min_length??(old('min')==null?undefined:Number(old('min'))),max=values.max_length??(old('max')==null?undefined:Number(old('max'))),unit=values.length_unit??old('unit')??'字';
+  if([min,max].some(v=>v!=null&&(!Number.isSafeInteger(v)||v<0))||min!=null&&max!=null&&max<min||!['字','词','字符','段落'].includes(unit))fail('OUTPUT_LENGTH','篇幅范围或单位无效');
+  const other=match[1].replace(/\s+(?:min|max|unit)="[^"]*"/g,'').replace(/\s*\/$/,'').trim(),attributes=[other,min==null?'':'min="'+min+'"',max==null?'':'max="'+max+'"','unit="'+unit+'"'].filter(Boolean).join(' ');
+  registry.content=registry.content.replace(match[0],()=>'<body '+attributes+(match[1].trimEnd().endsWith('/')?'/':'')+'>');
+ }
 }
