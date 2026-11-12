@@ -81,8 +81,10 @@ test('only exact known stock boundary text is migrated',()=>{
  assert.equal(resolvePromptLayerText('user-custom',oldBoundary),oldBoundary);
 });
 
-test('layer classification does not alter original identity, narrative stopping, craft or output-body text',()=>{
- const protectedHashes={main:'427739f76ce710aa68bb4cfadded373ff5f0975d1cab9b71581ed19e220a7d15',nsfw:'6d8b76688a8507c5c55a123f0c9082b3791ad0f4fce47c676c54d8be049085dd',tisya_identity_attestation:'1c4c9fff2c77bf5c04399bfb1e6e0d32b265acfef088c6e425a5305af0c6caa1',tisya_user_relation:'1f0f32a655e58d6000ea49e4ffcb316dc722f91296aa4f66ffb84c24509716db',tisya_pref_narrative:'0ba30c5240d672c020b92b04e4d7f5d00baaec80951e80bbfd614d3384f5143e',tisya_pref_style:'f83c0022a3c2f6bd098d3079d57ab8d6e759a67cec013ad08bdcb310437fa564',tisya_kb_techniques:'640ea6b14ece1ad56e2f5d1797e5a9364f0581b04696661c27542097367e6213',tisya_registry:'8c93bb07820a506e4b2e9e4bb74ed78ba08e710ba825115ea8c833e2c5e2cac8'};
+test('layer classification preserves identity, narrative stopping, craft and output-body text against the W13 candidate baseline',()=>{
+ // W13 intentionally revised the stock style and progression prose. Only those
+ // two fixed hashes change; pacing and exact-stock migration have separate tests.
+ const protectedHashes={main:'427739f76ce710aa68bb4cfadded373ff5f0975d1cab9b71581ed19e220a7d15',nsfw:'6d8b76688a8507c5c55a123f0c9082b3791ad0f4fce47c676c54d8be049085dd',tisya_identity_attestation:'1c4c9fff2c77bf5c04399bfb1e6e0d32b265acfef088c6e425a5305af0c6caa1',tisya_user_relation:'1f0f32a655e58d6000ea49e4ffcb316dc722f91296aa4f66ffb84c24509716db',tisya_pref_narrative:'0ba30c5240d672c020b92b04e4d7f5d00baaec80951e80bbfd614d3384f5143e',tisya_pref_style:'8cca49152478ef568fb02ef6ddb7b5146a2a58a42f0d4f36cb1b3af6554ebb88',tisya_kb_techniques:'d435f629c85452f8cebe42f4fe9e15a9b41df2cc003d76ff559741a86fc519b2',tisya_registry:'8c93bb07820a506e4b2e9e4bb74ed78ba08e710ba825115ea8c833e2c5e2cac8'};
  for(const [identifier,expected]of Object.entries(protectedHashes))assert.equal(createHash('sha256').update(original.prompts.find(row=>row.identifier===identifier).content).digest('hex'),expected,identifier);
 });
 
