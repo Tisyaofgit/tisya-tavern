@@ -5,6 +5,7 @@ import {applyPreferences,validatePreferences,effectivePreferences,wishPreference
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
 import {applyOutputConfiguration} from './output-config.mjs';
 import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
+import {compilePromptLayerPlan,resolvePromptLayerText} from './prompt-layers.mjs';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
 import configuration from './configuration.json' with {type:'json'};
 import {clone,fail,digest,asError} from './common.mjs';
@@ -25,7 +26,7 @@ export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js
 export function matrixPreset(){
  const p=clone(original);p.name='Tisya';p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
  for(const row of p.prompts){
-  if(typeof row.content==='string')row.content=resolveNarrativeIntakeText(row.identifier,row.content);
+  if(typeof row.content==='string')row.content=resolvePromptLayerText(row.identifier,resolveNarrativeIntakeText(row.identifier,row.content));
   if(row.identifier==='main')row.content=row.content.replace('@U:={id:user,','@U:={id:contractor,');
   if(row.identifier==='personaDescription'){row.enabled=false;}
   else if(typeof row.content==='string')row.content=row.content.replaceAll('`personaDescription`','`tisya_user_identity`');
@@ -79,8 +80,9 @@ export function compilePrompts(source,config,slots){
  for(const p of out.prompts){if(p.marker)continue;
   // {{user}} names the bound protagonist. The native persona is injected once
   // into the contractor wish and cannot silently become the protagonist.
-  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):resolveNarrativeIntakeText(p.identifier,p.content??''),config,slots);
+  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):resolvePromptLayerText(p.identifier,resolveNarrativeIntakeText(p.identifier,p.content??'')),config,slots);
  }
+ out.layerPlan=compilePromptLayerPlan(out);
  return out;
 }
 export async function identitySlots(ctx,config,persona,databaseSnapshot=null){
