@@ -4,9 +4,10 @@ import catalog from '../engine/catalog.json' with {type:'json'};
 import {Runtime} from '../engine/runtime.mjs';
 import {initializeState} from '../engine/materials.mjs';
 import {acceptReply} from '../engine/reply.mjs';
+import {reconcile} from '../engine/journal.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
 import legacyFixture from './fixtures/reply-form-legacy-staged.json' with {type:'json'};
-import {replyFormTableIds,REPLY_FORM_OWNERSHIP_VERSION} from '../engine/reply-form-ownership.mjs';
+import {replyFormTableIds,assertReplyFormOwnership,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from '../engine/reply-form-ownership.mjs';
 
 const fresh=()=>new Runtime(initializeState(catalog,{session_ref:'ownership-test',branch_ref:'main',audience:'author'}));
 function seed(){
@@ -122,7 +123,7 @@ test('a saved pre-partition archive plan keeps its old write set and guards afte
 
 test('legacy delta remains readable while new empty blocks make no business changes',()=>{
  const e=seed();e.newRecord('T_DYN_EVENTS',{title:'旧事件'},'old-event');
- const raw='<reply><body>1 核对先前记录。</body><cells>T_DYN_EVENTS#old-event.title: =核对后的旧事件 | P1</cells><archive/></reply>',r=acceptReply(e,raw,'legacy-delta');
+ const raw='<reply><body>1 核对先前记录。</body><cells>T_DYN_EVENTS#old-event.title: =核对后的旧事件 | P1</cells><archive/></reply>',r=acceptReply(e,raw,'legacy-delta',1,'main',{formOwnershipVersion:LEGACY_REPLY_FORM_OWNERSHIP_VERSION});
  assert.equal(r.result.operations[0].status,'COMMITTED');assert.equal(e.rows('T_DYN_EVENTS')['old-event'].values.title,'核对后的旧事件');
  const before=structuredClone(business(e));const empty=accept(e,'','','empty');assert.deepEqual(empty.result.operations,[]);assert.deepEqual(business(e),before);
 });
@@ -131,4 +132,75 @@ test('form selection does not turn references to memory or current records into 
  const e=seed(),cells=replyFormTableIds(e.data,'cells',['T_CHAR_DOSSIER','T_DYN_ENTITY_GAUGES','T_DYN_EVENTS']),archive=replyFormTableIds(e.data,'archive',['T_DYN_EVENTS','T_DYN_COGNITION','T_SYS_ENTITIES']);
  assert(cells.includes('T_CHAR_DOSSIER'));assert(cells.includes('M_WORLD_TIME'));assert(!cells.includes('T_DYN_EVENTS'));
  assert(archive.includes('T_DYN_COGNITION'));assert(archive.includes('M_CONDITIONS'));assert(!archive.includes('T_SYS_ENTITIES'));assert(!archive.includes('T_DYN_ENTITY_GAUGES'));
+});
+
+function legacyHistory(){
+ const saved=structuredClone(legacyFixture.cases.history),state=initializeState(catalog,saved.runtime.scope);Object.assign(state.tables,saved.tables);state.runtime=saved.runtime;
+ return {bundle:{state,journal:saved.journal},messages:saved.messages};
+}
+
+test('editing earlier context replays unchanged accepted legacy forms using their recorded provenance',()=>{
+ const {bundle,messages}=legacyHistory(),branch='main';
+ const original=messages[3].text;messages[0].text='先在门前停下，再查看木盒';let r=reconcile(bundle,messages);
+ assert.equal(r.result.rewound,4);assert.deepEqual(r.result.warnings,[]);assert.equal(Object.keys(r.bundle.state.tables.T_DYN_EVENTS).length,1);assert.equal(Object.keys(r.bundle.state.tables.T_DYN_ENTITY_GAUGES).length,0);
+ for(const id of ['a1','a2']){assert.equal(r.bundle.state.runtime.sources[branch+'/'+id+'@2'].reply_form_ownership_version,LEGACY_REPLY_FORM_OWNERSHIP_VERSION);assert.equal(r.bundle.journal.entries.find(e=>e.uid===id).reply_form_ownership_version,LEGACY_REPLY_FORM_OWNERSHIP_VERSION);}
+ const staged=r.bundle.state.runtime.archive_queue[1];assert.equal(staged.status,'staged');assert.equal(staged.plan.ownership_version,LEGACY_REPLY_FORM_OWNERSHIP_VERSION);assert(staged.plan.guards.length);assert.equal(r.bundle.state.runtime.sources[branch+'/a2@2'].reply_raw,original);
+ // A later replay uses the now explicit saved marker instead of classifying
+ // the same historical text as new merely because it was replayed once.
+ messages[2].text='再核对一次记录';r=reconcile(r.bundle,messages);assert.deepEqual(r.result.warnings,[]);assert.equal(r.bundle.state.runtime.archive_queue[1].status,'staged');
+ messages.push({uid:'a3',role:'assistant',text:reply()},{uid:'a4',role:'assistant',text:reply()});r=reconcile(r.bundle,messages);
+ assert.deepEqual(r.result.warnings,[]);assert.equal(Object.values(r.bundle.state.tables.T_DYN_ENTITY_GAUGES)[0].values.value,12);assert.equal(r.bundle.state.runtime.archive_queue[1].status,'formal');assert.equal(r.bundle.state.runtime.sources[branch+'/a3@1'].reply_form_ownership_version,REPLY_FORM_OWNERSHIP_VERSION);
+});
+
+test('editing a legacy reply itself is a current revision and cannot reuse an old message ID to bypass ownership',()=>{
+ const {bundle,messages}=legacyHistory(),edited=messages[3].text.replace('为十二','为十三').replace('：12 | P1','：13 | P1');messages[3].text=edited;
+ let r=reconcile(bundle,messages),source=r.bundle.state.runtime.sources['main/a2@2'];assert.equal(source.reply_form_ownership_version,REPLY_FORM_OWNERSHIP_VERSION);assert.equal(source.reply_raw,edited);assert.equal(r.bundle.state.runtime.archive_queue[1].error.code,'REPLY_FORM_OWNERSHIP');assert.equal(Object.keys(r.bundle.state.tables.T_DYN_ENTITY_GAUGES).length,0);assert.equal(Object.keys(r.bundle.state.tables.T_DYN_EVENTS).length,1);
+ const e=new Runtime(bundle.state),cells=form(e,'T_DYN_ENTITY_GAUGES',{name:'当前余力',entity_id:'阿青',field_key:'energy',value:13});messages[3].text=reply(cells,'','1 阿青确认当前余力为十三。');r=reconcile(bundle,messages);
+ assert.deepEqual(r.result.warnings,[]);assert.equal(Object.values(r.bundle.state.tables.T_DYN_ENTITY_GAUGES)[0].values.value,13);assert.equal(r.bundle.state.runtime.sources['main/a2@2'].reply_form_ownership_version,REPLY_FORM_OWNERSHIP_VERSION);
+});
+
+test('a new reply cannot select legacy ownership by copying historical form text or declaring an XML attribute',()=>{
+ const {bundle,messages}=legacyHistory(),raw=messages[1].text.replace('<reply>','<reply reply_form_ownership_version="tisya.reply-form-ownership/legacy">').replace('旧版直接记下的见闻','新的同格式见闻');messages.push({uid:'new-reply',role:'assistant',text:raw});
+ const r=reconcile(bundle,messages),source=r.bundle.state.runtime.sources['main/new-reply@1'];assert.equal(source.reply_form_ownership_version,REPLY_FORM_OWNERSHIP_VERSION);assert.equal(source.reply_raw,raw);assert.equal(source.settlement.operations[0].error.code,'REPLY_FORM_OWNERSHIP');assert.equal(Object.keys(r.bundle.state.tables.T_DYN_EVENTS).length,1);
+});
+
+test('current delta syntax cannot append or edit memory through cells, while an ordinary numeric line still settles',()=>{
+ const e=seed();e.newRecord('T_DYN_EVENTS',{title:'已有事件'},'old');e.newRecord('T_DYN_ENTITY_GAUGES',{name:'余力',entity_id:'a',field_key:'energy',value:10},'g');
+ const lines=[
+  'T_DYN_ENTITY_GAUGES#g.value: +2 | P1',
+  'T_DYN_EVENTS#old.title: =不该即时写入 | P1',
+  '@EVENTS+: bypass[当天]：门前出现木盒(原文:P1)',
+  '@ROW+: {"table_id":"T_DYN_COGNITION","record_id":"bypass-cognition","values":{"name":"不该即时写入的认知","subject_ref":"a","subjective_belief":"看见木盒"}} | P1'
+ ],raw='<reply><body>1 阿青核对余力并回想门前见闻。</body><cells format="delta">'+lines.join('\n')+'</cells><archive/></reply>',r=acceptReply(e,raw,'delta-bypass');
+ assert.equal(r.result.operations[0].status,'COMMITTED');assert.equal(e.rows('T_DYN_ENTITY_GAUGES').g.values.value,12);
+ for(let i=1;i<lines.length;i++){assert.equal(r.result.operations[i].status,'FAILED');assert.equal(r.result.operations[i].error.code,'REPLY_FORM_OWNERSHIP');assert.equal(r.result.operations[i].original,lines[i]);}
+ assert.equal(e.rows('T_DYN_EVENTS').old.values.title,'已有事件');assert.equal(rows(e,'T_DYN_EVENTS').length,1);assert.equal(rows(e,'T_DYN_COGNITION').length,0);assert.equal(e.data.runtime.sources['main/delta-bypass@1'].reply_raw,raw);
+});
+
+test('current delta validates complete action writes but excludes executor receipts and derived fields',()=>{
+ const e=seed();e.registerTable('NEUTRAL_COUNTER',[{key:'name',type:'TEXT'},{key:'count',type:'NUMBER'}]);e.newRecord('NEUTRAL_COUNTER',{name:'计数',count:2},'counter');
+ e.registerTable('NEUTRAL_RECEIPTS',[{key:'name',type:'TEXT'}]);e.data.schema.NEUTRAL_RECEIPTS.program_owned=true;
+ e.declareField('T_DYN_EVENTS',{key:'count_projection',type:'NUMBER',read_only:true});e.newRecord('T_DYN_EVENTS',{title:'已有事件',count_projection:2},'event');
+ e.operators.NEUTRAL=()=>{e.delta('NEUTRAL_COUNTER#counter.count',1);e.newRecord('NEUTRAL_RECEIPTS',{name:'执行回执'},'receipt');e.set(['T_DYN_EVENTS','event','count_projection',[]],3,'derived');return {done:true};};
+ let raw='<reply><body>1 计数增加一。</body><cells>@ACT: {"action":"NEUTRAL","arguments":{}} | P1</cells><archive/></reply>',r=acceptReply(e,raw,'action-ok');assert.equal(r.result.operations[0].status,'COMMITTED',JSON.stringify(r.result));assert.equal(e.rows('NEUTRAL_COUNTER').counter.values.count,3);assert.equal(e.rows('T_DYN_EVENTS').event.values.count_projection,3);assert.equal(rows(e,'NEUTRAL_RECEIPTS').length,1);
+ e.operators.BAD_MEMORY=()=>{e.delta('NEUTRAL_COUNTER#counter.count',1);e.set(['T_DYN_EVENTS','event','title',[]],'绕路改写');return {done:true};};
+ raw='<reply><body>1 核对记录。</body><cells>@ACT: {"action":"BAD_MEMORY","arguments":{}} | P1</cells><archive/></reply>';r=acceptReply(e,raw,'action-wrong');assert.equal(r.result.operations[0].error.code,'REPLY_FORM_OWNERSHIP');assert.equal(e.rows('NEUTRAL_COUNTER').counter.values.count,3);assert.equal(e.rows('T_DYN_EVENTS').event.values.title,'已有事件');assert.equal(e.data.runtime.sources['main/action-wrong@1'].reply_raw,raw);
+});
+
+test('current delta cannot move a memory detail under a current parent to evade its original ownership',()=>{
+ const e=seed();e.newRecord('T_DYN_EVENTS',{title:'已有事件'},'event');e.newRecord('T_DYN_ENTITY_GAUGES',{name:'余力',entity_id:'a',field_key:'energy',value:10},'g');e.newRecord('M_LIST_VALUES',{owner_table:'T_DYN_EVENTS',owner_row_uuid:'event',owner_field:'tags',text_value:'旧线索',item_type:'text',value_state:'known',sequence:1},'detail');
+ const raw='<reply><body>1 核对线索。</body><cells>M_LIST_VALUES#detail.owner_table: =T_DYN_ENTITY_GAUGES | P1</cells><archive/></reply>',r=acceptReply(e,raw,'move-detail');assert.equal(r.result.operations[0].error.code,'REPLY_FORM_OWNER');assert.equal(e.rows('M_LIST_VALUES').detail.values.owner_table,'T_DYN_EVENTS');assert.equal(e.data.runtime.sources['main/move-detail@1'].reply_raw,raw);
+});
+
+test('current ownership rejects details rooted in a program-owned source record',()=>{
+ const e=seed();e.newRecord('T_SYS_SOURCE_FRAGMENTS',{entry_id:'retained',chunk_text:'保留的中性原文'},'raw');
+ const changes=[{tableId:'M_ACCESS_RULES',recordId:'source-acl',values:{owner_table:'T_SYS_SOURCE_FRAGMENTS',owner_row_uuid:'raw',owner_field:'chunk_text',audience_kind:'public',permission:'disclose',decision:'allow',value_state:'known'}}];
+ assert.throws(()=>assertReplyFormOwnership(e.data,changes,'cells'),error=>error.code==='REPLY_FORM_OWNER'&&error.details.table==='T_SYS_SOURCE_FRAGMENTS');
+ assert.equal(assertReplyFormOwnership(e.data,changes,'archive',{version:LEGACY_REPLY_FORM_OWNERSHIP_VERSION}),changes,'historical legacy interpretation is unchanged');
+});
+
+test('current delta cannot attach an ACL to retained source fragments by a guessed record ID',()=>{
+ const e=seed();e.newRecord('T_SYS_SOURCE_FRAGMENTS',{entry_id:'retained',chunk_text:'保留的中性原文'},'raw');const sourceBefore=structuredClone(e.rows('T_SYS_SOURCE_FRAGMENTS').raw),before=structuredClone(business(e));
+ const line='@ROW+: '+JSON.stringify({table_id:'M_ACCESS_RULES',record_id:'source-acl',values:{owner_table:'T_SYS_SOURCE_FRAGMENTS',owner_row_uuid:'raw',owner_field:'chunk_text',audience_kind:'public',permission:'disclose',decision:'allow',value_state:'known'}})+' | P1',raw='<reply><body>1 核对原文。</body><cells>'+line+'</cells><archive/></reply>',r=acceptReply(e,raw,'source-acl-attempt');
+ assert.equal(r.result.operations[0].status,'FAILED');assert.equal(r.result.operations[0].error.code,'REPLY_FORM_OWNER');assert.equal(r.result.operations[0].original,line);assert.deepEqual(business(e),before);assert.deepEqual(e.rows('T_SYS_SOURCE_FRAGMENTS').raw,sourceBefore);assert.equal(e.data.runtime.sources['main/source-acl-attempt@1'].reply_raw,raw);
 });

@@ -77,19 +77,23 @@ test('built-in keeps every source slot, one layer authority and a separate user 
   if(p.identifier==='personaDescription')continue;
   let actual=bundled.prompts.find(x=>x.identifier===p.identifier).content;
   const migration=narrativeIntakeMigrations[p.identifier];
-  if(migration){
+  if(migration&&p.content.includes(migration[0])){
    const [before,after]=migration;
    assert.equal(p.content.split(before).length-1,1,p.identifier+' has one exact original intake paragraph');
    assert.equal(actual.split(after).length-1,1,p.identifier+' has one exact approved intake paragraph');
    assert.equal(actual.includes(before),false,p.identifier+' does not retain the superseded paragraph');
    actual=actual.replace(after,before);
   }
+  let expectedContent=p.content;
   if(p.identifier==='tisya_registry'){
    assert.equal(actual.split(REPLY_ENVELOPE_RULE).length-1,1,'one approved whole-response boundary');
    assert(actual.startsWith('[REGISTRY]\n'+REPLY_ENVELOPE_RULE+'\n'),'boundary stays inside the registry');
    actual=actual.replace('\n'+REPLY_ENVELOPE_RULE,'');
+   // The returned W15 source already includes the approved boundary. Compare
+   // all remaining text while requiring exactly one boundary in the product.
+   expectedContent=expectedContent.replace('\n'+REPLY_ENVELOPE_RULE,'');
   }
-  assert.equal(actual,p.content.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,').replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>').replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}'),p.identifier+' preserves all other preset text');
+  assert.equal(actual,expectedContent.replaceAll('`personaDescription`','`tisya_user_identity`').replace('@U:={id:user,','@U:={id:contractor,').replace(/<切入维度：[^>]+>/g,'<自由命名的切入点，可留空>').replace(/<挑个心情[^>]*>|<换个新鲜心情>/g,'@rendering{表情ID}'),p.identifier+' preserves all other preset text');
  }
  assert(bundled.prompts.some(p=>p.identifier==='tisya_user_identity'));assert.equal(bundled.prompts.find(p=>p.identifier==='personaDescription').enabled,false);
  for(const [index,group]of bundled.prompt_order.entries())assert.deepEqual(group.order,original.prompt_order[index].order.flatMap(row=>row.identifier==='personaDescription'?[{...row,enabled:false},{...row,identifier:'tisya_user_identity',enabled:true}]:[row]));

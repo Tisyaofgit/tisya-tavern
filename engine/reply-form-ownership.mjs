@@ -1,4 +1,5 @@
-import {fail} from './common.mjs';
+import {fail,digest} from './common.mjs';
+import {programOwnedTable} from './prompt-boundary.mjs';
 
 // Only new reply forms use this partition. Stored rows, legacy delta operations
 // and already prepared archive plans keep their original lifecycle and data.
@@ -28,7 +29,7 @@ export function assertReplyFormVersion(version){
 }
 
 export const CELLS_PROTOCOL='<cells format="form"> 填本轮立即生效的状态与业务记录，包括数值、文字状态、当前关系、已成立事务、消息和展示内容。新人物、实体及其档案也在此登记，供本条 archive 按名称引用；现有记录只改有据的字段，保留它本身的关系说明、接受证据和改变原因，不另抄一份当前值作为记忆。没有变化时写 <cells/>。';
-export const ARCHIVE_PROTOCOL='<archive format="form"> 填本轮有据且需要保留的事件、事实命题、角色认知、参与者理解、回忆锚点、关系来历与线索。沿用所列分组简表、原行号和字段名，每条业务记录用 | Pn 标明本条正文依据；修订已有记录使用完整标题，未知省略，待核填“?”。每个人的理解、误信和心理归其本人，不把角色猜测写成世界事实；当前任务及其接受证据在 cells 维护，不把愿望记成已接受义务。可引用 cells 已登记的名称和同批分组；不重复抄入 cells 的当前状态。没有新增记忆时写 <archive/>。';
+export const ARCHIVE_PROTOCOL='<archive format="form"> 填本轮有据且需要保留的事件、事实命题、角色认知、参与者理解、回忆锚点、关系来历与线索。沿用所列分组简表、原行号和字段名，每条业务记录用 | Pn 标明本条正文依据；修订已有记录使用完整标题，未知省略，待核填“?”。事件记录经过和结果，客观命题保留实际验证状态；当时心理、理解与后来重释优先填对应主体的参与者或认知字段，不把角色猜测写成世界事实。当前任务及其接受证据在 cells 维护，不把愿望记成已接受义务。可引用 cells 已登记的名称和同批分组；不重复抄入 cells 的当前状态。没有新增记忆时写 <archive/>。';
 export const REPLY_FORM_PROTOCOL=CELLS_PROTOCOL+'\n'+ARCHIVE_PROTOCOL+'\n两组共用表单与同一份数据；所属明细跟随它的业务父记录，不因表名以 M_ 开头就可跨组改写。';
 
 const ownedSchema=schema=>schema?.fields?.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>f.key==='owner_table'||f.key==='owner_form');
@@ -73,6 +74,7 @@ export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM
  const resolve=(tableId,recordId,trail=new Set())=>{
   const owner=replyFormOwner(state,tableId),key=tableId+'#'+recordId;
   if(!owner)fail('REPLY_FORM_OWNER','表单所属表尚未登记',{block,table:tableId,record:recordId});
+  if(programOwnedTable(tableId,state.schema[tableId]))fail('REPLY_FORM_OWNER','所属业务父记录由程序管理，不能通过明细改写其内容或读取规则',{block,table:tableId,record:recordId});
   if(owner!=='owned')return {block:owner,table:tableId,record:recordId};
   if(trail.has(key))fail('REPLY_FORM_OWNER','所属明细形成循环，不能确定业务父记录',{block,table:tableId,record:recordId});
   const row=values(tableId,recordId),parentTable=row?.owner_table??row?.owner_form,parentId=row?.owner_row_uuid;
@@ -80,6 +82,8 @@ export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM
   const next=new Set(trail);next.add(key);return resolve(parentTable,parentId,next);
  };
  for(const change of changes){
+  const prior=state.tables?.[change.tableId]?.[change.recordId];
+  if(prior&&replyFormOwner(state,change.tableId)==='owned')for(const key of ['owner_table','owner_form','owner_row_uuid','owner_field'])if(Object.hasOwn(change.values??{},key)&&digest(change.values[key]??null)!==digest(prior.values?.[key]??null))fail('REPLY_FORM_OWNER','已有所属明细不能改挂业务父记录或字段',{block,table:change.tableId,record:change.recordId,field:key});
   const target=resolve(change.tableId,change.recordId);
   if(target.block!==block)fail('REPLY_FORM_OWNERSHIP','该记录应由 <'+target.block+' format="form"> 填写，不能写入 <'+block+'>；本块不写入任何业务记录',{block,expected:target.block,table:change.tableId,record:change.recordId,owner_table:target.table,owner_record:target.record});
  }

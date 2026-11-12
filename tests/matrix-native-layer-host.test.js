@@ -42,9 +42,9 @@ for(const legacy of [false,true])test('native-layer host preserves card defaults
  await f.host.before('normal');await f.host.entriesLoaded({characterLore:[]});f.host.activated([]);f.host.afterCombine({dryRun:false});
  const request=f.payload();await f.host.payloadReady(request);
  const system=request.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
- assert.equal(f.host.accepted(),true);assert(system.includes(cardText));assert.match(system,/<tisya>[\s\S]*@POV\.PERSON := Second-person narration/);
+ assert.equal(f.host.accepted(),true);assert(system.includes(cardText));assert.match(system,/<tisya>[\s\S]*@POV\.PERSON := 全文使用第二人称/);
  const materialOpening=system.indexOf('[Dream Rules]\n@BOUNDARY ');assert(materialOpening>=0);
- assert(system.indexOf('@POV.PERSON := Second-person narration')<materialOpening);
+ assert(system.indexOf('@POV.PERSON := 全文使用第二人称')<materialOpening);
  assert.match(system,/<rule>[\s\S]*\[REGISTRY\]/);
  assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);
  assert.equal(f.host.latest().promptAudit.narrativeSourceProjection.removed.length,0);

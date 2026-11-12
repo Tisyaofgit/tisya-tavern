@@ -27,8 +27,8 @@ test('native persona injection is disabled in the saved preset and relocated fro
 test('binding and ensemble mode drive the same original N01 contract despite stale legacy choices and IDs',async()=>{
  const f=setup();let v=f.config.read();v.playDefaults={choices:{N01:'N01-C'},parameters:{active_avatar_dossier_id:'WRONG_LEGACY_ID'}};await f.config.save(v);
  await useCurrentIdentity(f,'统一角色','只属于统一角色的原文');v=f.config.read();const slots=await identitySlots(f.ctx,v,'原身份心愿');const compiled=compilePrompts(baseline,v,slots),n=compiled.prompts.find(p=>p.identifier==='tisya_pref_narrative').content;
- assert.match(n,/dossier \[T_CHAR_DOSSIER#dossier\]/);assert(!n.includes('WRONG_LEGACY_ID'));assert.equal(n.split('@AVATAR.BIND :=').length-1,1);assert.match(slots.tisya_user_identity,/统一角色的原文/);
- await f.roles.bind({mode:'ensemble'});v=f.config.read();const zero=await identitySlots(f.ctx,v,'原身份心愿');assert.equal(zero.tisya_user_identity,'');assert.match(compilePrompts(baseline,v,zero).prompts.find(p=>p.identifier==='tisya_pref_narrative').content,/Zero-avatar ensemble/);assert.equal(v.playDefaults.parameters.active_avatar_dossier_id,'WRONG_LEGACY_ID');
+ assert.match(n,/绑定角色档案 `\[T_CHAR_DOSSIER#dossier\]`/);assert(!n.includes('WRONG_LEGACY_ID'));assert.equal(n.split('@AVATAR.BIND :=').length-1,1);assert.match(slots.tisya_user_identity,/统一角色的原文/);
+ await f.roles.bind({mode:'ensemble'});v=f.config.read();const zero=await identitySlots(f.ctx,v,'原身份心愿');assert.equal(zero.tisya_user_identity,'');assert.match(compilePrompts(baseline,v,zero).prompts.find(p=>p.identifier==='tisya_pref_narrative').content,/@AVATAR\.BIND := `@U` 纯作场外导演，所有角色档案均作为独立局内人物自主交互。/);assert.equal(v.playDefaults.parameters.active_avatar_dossier_id,'WRONG_LEGACY_ID');
  f.ctx.chatId='b';assert.equal(f.config.read().story.userBinding,null);f.ctx.chatId='a';assert.equal(f.config.read().story.userMode,'ensemble');
 });
 test('legacy select-dossier mode requires an actual selected entry instead of a typed ID fallback',async()=>{

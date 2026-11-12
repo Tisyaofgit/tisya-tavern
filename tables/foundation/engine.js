@@ -1,5 +1,6 @@
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
 import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible} from '../../engine/prompt-boundary.mjs';
+import {characterSubject} from '../../engine/character-knowledge.mjs';
 import {Runtime} from '../../engine/runtime.mjs';
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
@@ -289,6 +290,7 @@ const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'�
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
 export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all'}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
+ const restrictReferences=task==='main'||!!characterSubject(scope);
  const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
  // Names and coordinates belong to the complete schema, not to the current
  // selection. Opening another table cannot renumber an existing form.
@@ -306,12 +308,12 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
  const refs=[],refCounts=new Map(),legacyCounts=new Map(),recordMeta=new Map(Object.values(snapshot.state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));for(const id of referenceTables)for(const [index,[recordId,row]]of Object.entries(snapshot.state.tables[id]??{}).entries()){
   if(row.metadata?.phone_projection)continue;
-  const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&['name','label','title','instance_name'].map(key=>task!=='main'||matrixFieldVisible(snapshot.state.schema[owner]?.fields.find(f=>f.key===key)??{key},parent,scope,owner,snapshot.state,row.values.owner_row_uuid)?parent.values[key]:undefined).find(value=>value!=null),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
-  const visibleName=key=>task!=='main'||matrixFieldVisible(snapshot.state.schema[id]?.fields.find(f=>f.key===key)??{key},row,scope,id,snapshot.state,recordId)?row.values?.[key]:undefined;
+  const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&['name','label','title','instance_name'].map(key=>!restrictReferences||matrixFieldVisible(snapshot.state.schema[owner]?.fields.find(f=>f.key===key)??{key},parent,scope,owner,snapshot.state,row.values.owner_row_uuid)?parent.values[key]:undefined).find(value=>value!=null),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
+  const visibleName=key=>!restrictReferences||matrixFieldVisible(snapshot.state.schema[id]?.fields.find(f=>f.key===key)??{key},row,scope,id,snapshot.state,recordId)?row.values?.[key]:undefined;
   const name=String(visibleName('name')??visibleName('label')??visibleName('title')??visibleName('instance_name')??(ownerName&&ownerField?(labels.get(owner)??owner)+'／'+ownerName+'／'+ownerField:'第'+(index+1)+'项')).trim();
   const base=labels.get(id)+'／已有：'+name,n=(refCounts.get(base)??0)+1;refCounts.set(base,n);
   const legacyName=String(visibleName('name')??visibleName('label')??visibleName('title')??'第'+(index+1)+'项').trim(),legacyBase=labels.get(id)+'／已有：'+legacyName,legacyNumber=(legacyCounts.get(legacyBase)??0)+1;legacyCounts.set(legacyBase,legacyNumber);
-  if(task==='main'&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
+  if(restrictReferences&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
   refs.push({tableId:id,recordId,name,base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
  const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=spec=>{

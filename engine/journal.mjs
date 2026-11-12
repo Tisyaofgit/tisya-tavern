@@ -17,10 +17,11 @@ let state=clone(bundle.state);const journal=clone(bundle.journal??{entries:[],re
  // Only an unchanged descendant reuses its saved decoder. Any edited reply is
  // a new revision and uses the current contract, including a new candidate on
  // an old message ID. The reply text cannot opt itself into legacy ownership.
- const replayFormVersions=new Map();
+ const replayFormVersions=new Map(),sourcesByEntry=new Map();
+ for(const source of Object.values(state.runtime.sources??{})){const key=source.entry_id+'@'+source.revision,group=sourcesByEntry.get(key)??[];group.push(source);sourcesByEntry.set(key,group);}
  for(const entry of journal.entries){
   if(entry.role!=='assistant')continue;
-  const originalSources=Object.values(state.runtime.sources??{}).filter(s=>s.entry_id===entry.uid&&s.revision===entry.revision),source=state.runtime.sources?.[`${scope.branch_ref??'main'}/${entry.uid}@${entry.revision}`]??(originalSources.length===1?originalSources[0]:null),entryVersion=entry.reply_form_ownership_version,sourceVersion=source?.reply_form_ownership_version;
+  const originalSources=sourcesByEntry.get(entry.uid+'@'+entry.revision)??[],source=state.runtime.sources?.[`${scope.branch_ref??'main'}/${entry.uid}@${entry.revision}`]??(originalSources.length===1?originalSources[0]:null),entryVersion=entry.reply_form_ownership_version,sourceVersion=source?.reply_form_ownership_version;
   if(entryVersion&&sourceVersion&&entryVersion!==sourceVersion)fail('REPLY_FORM_VERSION','已存回复与日志的表单协议版本不一致',{uid:entry.uid,entryVersion,sourceVersion});
   if(source||entryVersion)replayFormVersions.set(entry.uid,{signature:entry.signature,version:sourceVersion??entryVersion??LEGACY_REPLY_FORM_OWNERSHIP_VERSION});
  }

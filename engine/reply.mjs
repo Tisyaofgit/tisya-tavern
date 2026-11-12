@@ -4,7 +4,8 @@ import {xmlTokens} from '../reader-core.js';
 import {groupedExtraSlots} from '../native-mvu-wire.js';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputField} from '../tables/foundation/engine.js';
 import {stageArchive,formalizeArchives} from './archive.mjs';
-import {assertReplyFormOwnership,assertReplyFormVersion,REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
+import {assertReplyFormOwnership,assertReplyFormVersion,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
+import {programOwnedTable,creationFieldAllowed} from './prompt-boundary.mjs';
 const mark=/^[ \t\u3000]*(?:\[(?:P)?(\d+)\]|【(?:P)?(\d+)】|\((\d+)\)|P(\d+)[.、:：]?|(\d+)[.、．:：)]|(\d+)(?=[ \t\u3000]))[ \t\u3000]*/i;
 export function paragraphs(body){
  const numbered=[...body.matchAll(/^[ \t]*(\d+) /gm)],natural=[...body.matchAll(/\r?\n[ \t\u3000]*\r?\n+/g)];let valid=numbered.length>0&&!body.slice(0,numbered[0].index).trim()&&numbered.every((m,i)=>Number(m[1])===i+1);
@@ -31,6 +32,22 @@ export function parseReply(raw,entryId,revision=1){
  const e=envelope(raw),p=paragraphs(e.blocks.body),original=(e.blocks.cells??'').split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!/^(#|\/\/)/.test(s)),ops=[],warnings=[...p.warnings];original.forEach((line,i)=>{const m=/\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line);if(m){const ns=[...m[1].matchAll(/P?(\d+)/g)].map(x=>Number(x[1])),clamped=ns.map(n=>Math.min(Math.max(1,n),p.fragments.length));if(ns.some((n,j)=>n!==clamped[j])){const fixed=clamped.map(n=>'P'+n).join('..');warnings.push({code:'PARAGRAPH_CLAMPED',line_number:i+1,original_reference:m[1],effective_reference:fixed,message:'仅修正引用段号，未增加事实证据'});line=line.slice(0,m.index)+m[0].replace(m[1],fixed);}}ops.push(line);});
  return {entry_id:entryId,revision,reply_raw:raw,reply_sha256:sha256(raw),body_raw:e.blocks.body,body_sha256:sha256(e.blocks.body),body_normalized:p.normalized,normalized_sha256:sha256(p.normalized),paragraph_mapping:p.mapping,fragments:p.fragments,delta_ops:ops,original_delta_ops:original,cells_raw:e.blocks.cells??'',cells_format:e.attrs.cells?.format??'delta',warnings,archive_present:Object.hasOwn(e.blocks,'archive'),archive_raw:e.blocks.archive??'',archive_format:e.attrs.archive?.format??'',archive_rows:(e.blocks.archive??'').split(/\r?\n/).filter(s=>s.trim()).map(raw=>({raw})),title:e.blocks.title??'',actions:e.blocks.actions??'',anchors:{before:e.blocks.before??'',after:e.blocks.after??''},native_vars:e.blocks.vars??''};
 }
+function changedBusinessRecords(beforeTables,state){
+ const changes=[];
+ for(const [tableId,rows]of Object.entries(state.tables)){
+  const schema=state.schema[tableId];if(!schema||programOwnedTable(tableId,schema))continue;
+  const fields=schema.fields.filter(creationFieldAllowed);
+  for(const [recordId,row]of Object.entries(rows)){
+   const before=beforeTables[tableId]?.[recordId],values={},states={};
+   for(const field of fields){const key=field.key;if(!Object.hasOwn(row.values,key)||row.states?.[key]==='derived'||Object.hasOwn(row.formulas??{},key))continue;
+    const current={present:true,value:row.values[key],state:row.states?.[key]??'unset'},previous={present:Object.hasOwn(before?.values??{},key),value:before?.values?.[key]??null,state:before?.states?.[key]??'unset'};
+    if(digest(current)!==digest(previous)){values[key]=clone(row.values[key]);states[key]=row.states?.[key]??'unset';}
+   }
+   if(Object.keys(values).length)changes.push({tableId,recordId,values,states});
+  }
+ }
+ return changes;
+}
 export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershipVersion=REPLY_FORM_OWNERSHIP_VERSION}={}){
  assertReplyFormVersion(formOwnershipVersion);
  const parsed=parseReply(raw,entryId,revision),sourceKey=`${branch}/${entryId}@${revision}`,operation='reply:'+sourceKey,request={reply_sha256:parsed.reply_sha256,entry_id:entryId,revision,branch},prior=e.data.runtime.receipts[operation];if(prior){if(prior.request_sha256!==digest(request))fail('OPERATION_CONFLICT','同一回复版本内容不同');return {status:'REPLAY',receipt:clone(prior)};}
@@ -51,7 +68,14 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershi
   for(const change of changes){const values=change.values,parent=e.rows(values.owner_table??values.owner_form??'')[values.owner_row_uuid],pointer=parent?.metadata?.[values.owner_field]?.source_pointer;if(pointer)for(const field of Object.keys(values))e.record(change.tableId,change.recordId).metadata[field].source_pointer=clone(pointer);}
   return {format:'tisya.matrix-sheets/1',ownership_version:formOwnershipVersion,changes:clone(changes)};
  });}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({format:'form',original:parsed.cells_raw,effective:parsed.delta_ops.join('\n'),...result});if(result.status==='FAILED')warnings.push({code:'CELL_FORM_FAILED',original:parsed.cells_raw,error:result.error,message:'本次分组简表已整体回滚，正文与原始回复保留'});
- }else parsed.delta_ops.forEach((line,i)=>{let result;try{result=e.transaction(operation+':line:'+(i+1),{line},()=>e.micro(line,{source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256}));}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({line_number:i+1,original:parsed.original_delta_ops[i],effective:line,...result});const data=(result.receipt??result).result;if(data?.warning)warnings.push({...data.warning,line_number:i+1});if(result.status==='FAILED')warnings.push({code:'CELL_FAILED',line_number:i+1,original:parsed.original_delta_ops[i],error:result.error,message:'本行已回滚，正文和其他成功行保留'});});
+ }else parsed.delta_ops.forEach((line,i)=>{let result;try{result=e.transaction(operation+':line:'+(i+1),{line},()=>{
+  const beforeTables=formOwnershipVersion===LEGACY_REPLY_FORM_OWNERSHIP_VERSION?null:clone(e.data.tables),value=e.micro(line,{source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256});
+  // A new reply cannot bypass its write set by selecting the old delta syntax.
+  // Inspect business writes only; program receipts and derived fields retain
+  // their executor-owned behavior. A rejection rolls back this whole line.
+  if(beforeTables)assertReplyFormOwnership({schema:e.data.schema,tables:beforeTables},changedBusinessRecords(beforeTables,e.data),'cells',{version:formOwnershipVersion});
+  return value;
+ });}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({line_number:i+1,original:parsed.original_delta_ops[i],effective:line,...result});const data=(result.receipt??result).result;if(data?.warning)warnings.push({...data.warning,line_number:i+1});if(result.status==='FAILED')warnings.push({code:'CELL_FAILED',line_number:i+1,original:parsed.original_delta_ops[i],error:result.error,message:'本行已回滚，正文和其他成功行保留'});});
  warnings.push(...stageArchive(e,sourceKey));const archive=formalizeArchives(e);warnings.push(...archive.warnings);
  return e.transaction(operation,request,()=>{e.data.runtime.warnings??=[];e.data.runtime.warnings.push(...warnings.map(x=>({...x,source_key:x.source_key??sourceKey})));e.data.runtime.sources[sourceKey].settlement={operations:clone(operations),warnings:clone(warnings)};return {source_key:sourceKey,body_sha256:parsed.body_sha256,normalized_sha256:parsed.normalized_sha256,paragraphs:parsed.fragments.length,operations,warnings,formalized_sources:archive.formalized_sources,staged_rows:parsed.archive_rows.length};});
 }

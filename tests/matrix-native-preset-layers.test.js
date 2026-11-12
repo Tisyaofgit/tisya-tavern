@@ -44,13 +44,13 @@ for(const legacy of [false,true])test('real native preparation applies selected 
  const two=await s.assemble(second);
  for(const output of [one,two]){
   const system=output.result.filter(row=>row.role==='system').map(row=>row.content).join('\n');
-  assert.match(system,/@POV\.PERSON := Second-person narration/);assert.doesNotMatch(system,/Third-person narration from stored preset/);
-  assert(system.indexOf('@POV.PERSON := Second-person narration')<system.indexOf('[Dream Rules]\n@BOUNDARY '));
+  assert.match(system,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(system,/Third-person narration from stored preset/);
+  assert(system.indexOf('@POV.PERSON := 全文使用第二人称')<system.indexOf('[Dream Rules]\n@BOUNDARY '));
   assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);assert.match(system,/<DreamMaterial[^>]*>\n守夜人资料。\n叙事人称：第三人称\n<\/DreamMaterial>/);
   assert(output.result.some(row=>row.role==='assistant'&&row.content==='他将旧伞放在门边。'));
  }
  const narrativeCounts=s.native.tokenCalls.filter(row=>row.content?.startsWith('<tisya>\n<Pref_Narrative>\n'));
- assert.equal(narrativeCounts.length,2);assert(narrativeCounts.every(row=>row.content.startsWith('<tisya>\n')&&row.content.includes('@POV.PERSON := Second-person narration')));
+ assert.equal(narrativeCounts.length,2);assert(narrativeCounts.every(row=>row.content.startsWith('<tisya>\n')&&row.content.includes('@POV.PERSON := 全文使用第二人称')));
  assert.equal(s.projection.lastFinalization().managers,2);assert.equal(s.projection.lastFinalization().compiledBeforeNativeBudget,true);assert.equal(s.adapter.assertReady().finalizations,2);
 });
 
