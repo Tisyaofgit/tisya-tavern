@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
+import returned from './fixtures/returned-prose-stock.json' with {type:'json'};
 import {baseline,compilePrompts} from '../engine/config.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
 import {NARRATIVE_SOURCE_ROUTING} from '../engine/narrative-source-policy.mjs';
@@ -81,11 +82,8 @@ test('only exact known stock boundary text is migrated',()=>{
  assert.equal(resolvePromptLayerText('user-custom',oldBoundary),oldBoundary);
 });
 
-test('layer classification preserves identity, narrative stopping, craft and output-body text against the reviewed W15 returned baseline',()=>{
- // W15 explicitly applies the user-returned prose and relaxes fixed writing
- // templates; exact reviewed text stays guarded independently of layer routing.
- const protectedHashes={"main":"6018598e336b7f74a5aeb7be1f4a3f80522a7623f0fc03c73238dcb80d7e3fcd","nsfw":"79a9f5340043e61e393e6e988d0a8ef2bf4a8de45666622417872bb789ce0fc5","tisya_identity_attestation":"a74e183dd967b1f849a40951a5ac528fc1d89e34c2db98254909edae97668787","tisya_user_relation":"d7b7cbd1050d7ace918118d2ccfea9ea513ec8a6715d7024019f33f117f18577","tisya_pref_narrative":"6fbd6bb50608fb599a99c60c1444e67ba634f155869d8277ba51eb4da82ec39b","tisya_pref_style":"929b238c3d99104202bc2a22341136b9183d95df2edbeb9ebd82bd0fecdd2be3","tisya_kb_techniques":"f1edb55e0861b2c4d0eb051d134036e6763484427469ddee27e5f55a535c3581","tisya_registry":"45745b35a827e932755811b4ffe4fd4531ec245c1f797df23b1f677425a7f596"};
- for(const [identifier,expected]of Object.entries(protectedHashes))assert.equal(createHash('sha256').update(original.prompts.find(row=>row.identifier===identifier).content).digest('hex'),expected,identifier);
+test('layer classification preserves the original 4a creative text',()=>{
+ for(const identifier of ['main','nsfw','tisya_identity_attestation','tisya_user_relation','tisya_pref_narrative','tisya_pref_style','tisya_kb_techniques'])assert.equal(original.prompts.find(row=>row.identifier===identifier).content,returned.returned[identifier],identifier);
 });
 
 test('duplicate enabled identities and missing enabled entries are rejected rather than guessed',()=>{

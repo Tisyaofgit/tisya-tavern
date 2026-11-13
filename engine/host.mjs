@@ -18,6 +18,7 @@ import {importPhone} from '../phone-core.mjs';
 import {databaseSnapshotAtMessage} from './database-snapshot.mjs';
 import {inversePatch} from './journal.mjs';
 import {reconcilePhoneBundle} from './phone-bootstrap.mjs';
+import {snapshotProjection} from './projection-cache.mjs';
 import {materials,initializeState} from './materials.mjs';
 import {createConfiguration,materialNames,identitySlots,compilePrompts,compilePromptText,isMatrixPreset,applyCompiledMessages} from './config.mjs';
 import {configureTags} from './tags.mjs';
@@ -32,11 +33,13 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};
  function phoneOrigins(c,key,meta=c.chatMetadata?.[NS]){if(typeof c.chatMetadata?.main_chat!=='string'||!c.chatMetadata.integrity)return [];const scope=JSON.parse(key),parent=JSON.stringify([scope[0],scope[1],c.chatMetadata.main_chat]);return (meta?.origin_chat_keys??[]).includes(parent)?meta.origin_chat_keys.filter(origin=>{try{const value=JSON.parse(origin);return value[0]===scope[0]&&value[1]===scope[1];}catch{return false;}}):[];}
- const reconcile=(bundle,messages,scope)=>{const c=ctx(),key=chatKey(c);return reconcilePhoneBundle(bundle,messages,scope,{contextKey:key,nativeMessages:c.chat,allowedOriginContextKeys:phoneOrigins(c,key)});};
+ const bundleProjection=snapshotProjection(reconcilePhoneBundle),materialProjection=snapshotProjection((state,scope)=>materials(new Runtime(state),scope));
+ const phoneProof=c=>{const key=chatKey(c),nativeMessages=(c.chat??[]).map(m=>({mes:m.mes,is_user:m.is_user,is_system:m.is_system,extra:{tisya_engine:m.extra?.tisya_engine},swipe_id:m.swipe_id,swipes:m.swipes,swipe_info:m.swipe_info?.map(info=>({extra:{tisya_engine:info?.extra?.tisya_engine}})),tt_swipe_cold:m.tt_swipe_cold}));return {contextKey:key,nativeMessages,allowedOriginContextKeys:phoneOrigins(c,key)};};
+ const reconcile=(bundle,messages,scope)=>bundleProjection(bundle,messages,scope,phoneProof(ctx()));
  const notify=r=>{latest=r;for(const fn of listeners)fn(r);};
  const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
   const result=reconcile(bundle,messages,scope);let values={},materials_error;
-  try{values=materials(new Runtime(result.bundle.state),scope);}catch(e){materials_error=asError(e);}
+  try{values=materialProjection(result.bundle.state,scope);}catch(e){materials_error=asError(e);}
   return {...result,materials:values,materials_error};
  }});
  controller.inject=async()=>{ctx().setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);};
@@ -69,7 +72,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  // MVU copies identical variables to a newly sent user message asynchronously.
  // Compare script, contract and value bytes; a copied floor alone is not stale.
  async function payloadReady(payload){if(prepared?.passthrough)return payload;if(!prepared)fail('PREPARATION_MISSING','新版引擎未完成本轮资料准备');if(prepared.key!==chatKey(ctx())||prepared.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(!Array.isArray(payload.messages))fail('PAYLOAD_MESSAGES','宿主最终请求缺少消息列表');const captured=prepared;await assertReferences(captured.settings,captured.key);if(captured.historyLimit!==historyLimit())fail('HISTORY_STALE','历史可见条数已变化，请重新生成');const native=await prepareNativeMvu(ctx(),nativeWorld,captured.type,undefined,{groupMachineInExtra:true});if(prepared!==captured||captured.key!==chatKey(ctx())||captured.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(!!native!==!!captured.native||native&&['signature','stateDigest','text'].some(k=>native[k]!==captured.native[k]))fail('NATIVE_MVU_STALE','原卡 MVU 来源或变量已变化，请重新生成');if(displayFormatMaterial(getDisplayRules())!==captured.displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');if(digest(narrativeSourceFragments(ctx()))!==digest(captured.narrativeSources??[]))fail('NARRATIVE_SOURCE_STALE','角色卡叙事来源在准备后已变化，请重新生成');assertGeneration(ctx(),captured.settings.generation);const compiled=compilePrompts(prepared.source,prepared.settings,prepared.slots);if(nativeSources)await nativeSources.assertReady();const nativeLayerAudit=captured.nativePresetLayers?.lastFinalization();const compiledMessages=nativeLayerAudit?clone(payload.messages):applyCompiledMessages(payload.messages,prepared.source,compiled,expand);const layerProjection=nativeSources?(nativeLayerAudit?{messages:compiledMessages,audit:nativeLayerAudit}:applyRequestLayers(compiledMessages,compiled,{expand})):null;const narrativeProjection=layerProjection?{messages:layerProjection.messages,audit:{status:'source-envelopes',removed:[],reason:'whole-native-source-preserved'}}:projectNarrativeSourceDefaults(compiledMessages,{compiled,sources:[...(captured.narrativeSources??[]),...(narrativeLoreSnapshot?.key===captured.key&&narrativeLoreSnapshot.revision===captured.revision?narrativeLoreSnapshot.sources:[])],expand});payload.messages=contractorMessages(narrativeProjection.messages,ctx(),persona(),expand);const system=payload.messages.filter(m=>m.role==='system').flatMap(m=>typeof m.content==='string'?[m.content]:(m.content??[]).filter(p=>p.type==='text').map(p=>p.text)).join('\n');const sourceMap=nativeSources?(nativeLayerAudit?captured.nativePresetLayers.sourceMap(payload.messages):createPromptSourceMap(payload.messages,compiled,{expand})):null;const hasUnexpanded=sourceMap?sourceMap.parts.some(part=>part.role==='system'&&[...part.text.matchAll(/\{\{tisya_[^{}]+\}\}/g)].some(match=>!sourceMap.protection(part,match.index,match.index+match[0].length))):/\{\{tisya_[^{}]+\}\}/.test(system);if(hasUnexpanded)fail('UNEXPANDED_MACRO','最终请求有未展开的缇斯亚资料宏');const identity=expand(compilePromptText(prepared.slots.tisya_user_identity??'',prepared.settings,prepared.slots));const identityCount=identity?(sourceMap?sourceMap.find(identity,{role:'system'}).found.length:system.split(identity).length-1):0;if(identity&&identityCount!==1)fail('USER_IDENTITY_COUNT','最终请求缺少或重复了绑定的user身份资料',{matches:identityCount});const registryCount=sourceMap?sourceMap.parts.filter(part=>part.role==='system').reduce((n,part)=>n+[...part.text.matchAll(/(?:^|\n)\[REGISTRY\]\s*\n/g)].filter(match=>!sourceMap.protection(part,match.index,match.index+match[0].length)).length,0):[...system.matchAll(/(?:^|\n)\[REGISTRY\]\s*\n/g)].length;if(registryCount!==1)fail('REGISTRY_COUNT','最终请求需要唯一新版输出合同');if(prepared.user&&prepared.user.mes!==prepared.userText)fail('USER_REVISION_STALE','用户改写依据在准备后变化');const directions=await getContractorMessages();if(prepared!==captured||captured.key!==chatKey(ctx())||captured.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(displayFormatMaterial(getDisplayRules())!==captured.displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');if(JSON.stringify(directions)!==JSON.stringify(captured.directions))fail('TURN_DIRECTION_STALE','本轮场外要求在准备后变化，请重新生成');appendContractorMessages(payload.messages,captured.directions);for(const m of captured.directives)if(!payload.messages.some(x=>x.role===m.role&&x.content===m.content))payload.messages.push(m);captured.accepted=true;latest={...latest,promptAudit:{status:'validated',messages:payload.messages.length,configurationRevision:captured.revision,tags:clone(captured.settings.tags),narrativeSourceProjection:narrativeProjection.audit,...(layerProjection?{layers:layerProjection.audit,nativeSources:nativeSources.audit()}:{} )}};return payload;}
- async function event(name,...args){if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))nativeSources?.end();if(name==='CHAT_CHANGED'){prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;configureTags(config.read().tags,config.read().aliases);configureRenderingResources(config.read().resources??[]);}if(!active())return;try{await controller.event(name,...args);if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))prepared=null;}catch(e){notify({status:e.message,error:asError(e)});onError(e);throw e;}}
+ async function event(name,...args){if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))nativeSources?.end();if(name==='CHAT_CHANGED'){bundleProjection.clear();materialProjection.clear();databaseProjection.clear();prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;configureTags(config.read().tags,config.read().aliases);configureRenderingResources(config.read().resources??[]);}if(!active())return;try{await controller.event(name,...args);if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))prepared=null;}catch(e){notify({status:e.message,error:asError(e)});onError(e);throw e;}}
  async function mutate(callback){
   assertIdle();
   const {ctx:c,id,key}=await controller.identity();
@@ -103,20 +106,20 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  async function peekDatabase(){return readOwnedDatabase((bundle,_c,key)=>({state:clone(bundle.state),revision:bundle.local_revision??0,contextKey:key}));}
  // Reconciliation can remove a detached binding from bundle.state. Its saved
  // initialization patch remains evidence that this is not a fresh phone.
- function hasPhoneInitializationPatch(bundle,key,origins){
-  return (bundle.manual_edits??[]).some(edit=>(edit.patch??[]).some(patch=>{
+ function phoneInitializationEdits(bundle,key,origins){
+  return (bundle.manual_edits??[]).filter(edit=>(edit.patch??[]).some(patch=>{
    if(patch.op!=='set'||patch.path?.[0]!=='tables'||patch.path[1]!=='X_PHONE_BINDINGS')return false;
    const row=patch.path.length===2?patch.value?.['phone-current']:patch.path.length===3&&patch.path[2]==='phone-current'?patch.value:null;
    const owner=row?.values?.context_key;return typeof owner==='string'&&(owner===key||origins.includes(owner));
   }));
  }
- async function readDatabase(){
-  return readOwnedDatabase((bundle,c,key,meta)=>{
-  const hasIds=(c.chat??[]).every(m=>m.extra?.[NS]?.uid),projection=hasIds?reconcile(bundle,captureMessages(c)):null,current=projection?.bundle??bundle;
-  const allowedOriginContextKeys=phoneOrigins(c,key,meta);
-  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||hasPhoneInitializationPatch(bundle,key,allowedOriginContextKeys)),phoneBootstrapHydration:clone(projection?.result?.phone_bootstrap_hydration??[]),phoneActionReservations:clone(bundle.phone_action_reservations??{})};
-  });
- }
+ const databaseProjection=snapshotProjection((bundle,messages,proof)=>{
+  const projection=messages?bundleProjection(bundle,messages,undefined,proof):null,current=projection?.bundle??bundle,key=proof.contextKey,allowedOriginContextKeys=proof.allowedOriginContextKeys;
+  const phoneInitializationSources=phoneInitializationEdits(bundle,key,allowedOriginContextKeys).map(edit=>({messageUid:edit.after_uid??edit.anchor_chain?.at(-1)?.uid??null})).filter((entry,index,all)=>entry.messageUid&&all.findIndex(other=>other.messageUid===entry.messageUid)===index).map(entry=>({...entry,index:(messages??[]).findIndex(m=>m.uid===entry.messageUid)}));
+  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.result?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+ });
+ async function readDatabase(){return readOwnedDatabase((bundle,c)=>databaseProjection(bundle,(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,phoneProof(c)));}
+
  async function readDatabaseSnapshot(input){return readOwnedDatabase((bundle,_c,key)=>databaseSnapshotAtMessage(bundle,input,key));}
  async function ensureDatabase(){await ensureBound();return readDatabase();}
  const lifecycleKinds=new Set(['turn-prepare','turn-accept','turn-fail','turn-reconcile','turn-reject']);

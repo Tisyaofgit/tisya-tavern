@@ -16,9 +16,9 @@ test('all three stop settings reach compilation, override an older stop and reta
  const narrative=source.prompts.find(row=>row.identifier==='tisya_pref_narrative');
  narrative.content=narrative.content.replace(/^@STOP\.GATE :=[^\n]*/m,'@STOP.GATE := OLD_REQUIRED_QUESTION');
  const expected={
-  'N06-A':/完成当前局部交流与已获授权的动作后.*不固定末句形式.*未经授权的重大分支.*作出决定之前/,
-  'N06-B':/局部交流或动作完成.*静默自然延续时收尾.*未经授权的重大决定仍须停在决定之前/,
-  'N06-C':/已授权剧情片段及其直接余波完整写出.*未获授权的重大决定留给.*不为写满篇幅扩展新的分支/,
+  'N06-A':/走完当前局部交锋与获准动作后.*遇未经授权的重大分支.*拍板前自然停笔/,
+  'N06-B':/顺着当前场面呼吸.*完整动作落定.*静默余温处直接收尾/,
+  'N06-C':/将本轮授权剧情片段及其直接因果余波一口气写透.*动作上收尾/,
  };
  const compiledStops=[];
  for(const choice of Object.keys(expected)){
@@ -27,7 +27,7 @@ test('all three stop settings reach compilation, override an older stop and reta
   assert.equal(effective.length,1);
   assert.match(effective[0],expected[choice]);
   assert.doesNotMatch(effective[0],/OLD_REQUIRED_QUESTION|\{\{user\}\}/);
-  assert.match(effective[0],/短场景.*优先.*篇幅下限/);
+  assert.doesNotMatch(effective[0],/短场景.*优先.*篇幅下限/);
   assert.match(prompt(result,'tisya_history_open'),/未被玩家选中的 `<actions>` 备选行.*严禁当作已发生事件/,'unselected action candidates remain separate from completed scene history');
   assert.deepEqual(selected,saved,'compilation must not replace saved selections or defaults');
   assert.deepEqual(result.prompt_order,source.prompt_order);
@@ -40,25 +40,25 @@ test('all three stop settings reach compilation, override an older stop and reta
  assert.deepEqual(baseline,original);
 });
 
-test('default compilation has no hard body range, retains explicit bounds and action ranges, and needs no obligatory closing question',()=>{
+test('default compilation retains body min/max, configured bounds and action ranges',()=>{
  const result=compilePrompts(baseline,config(),{}),registry=prompt(result,'tisya_registry');
  const bodyTag=text=>text.match(/^<body\b[^>]*>$/m)?.[0];
  const actions=/<actions\s+min="(\d+)"\s+max="(\d+)"/.exec(registry);
- assert.equal(bodyTag(registry),'<body>','the actual body scaffold must not impose the former default 2000–5000 range');
+ assert.equal(bodyTag(registry),'<body min="2000" max="5000" unit="字">','the user explicitly requires both bounds');
  for(const [values,expected] of [
   [{min_length:2400,max_length:6200},'<body min="2400" max="6200" unit="字">'],
   [{min_length:0,max_length:1800},'<body min="0" max="1800" unit="字">'],
-  [{min_length:900},'<body min="900" unit="字">'],
-  [{max_length:1600},'<body max="1600" unit="字">'],
+  [{min_length:900},'<body min="900" max="5000" unit="字">'],
+  [{max_length:8000},'<body min="2000" max="8000" unit="字">'],
  ]){
   const configured=compilePrompts(baseline,config(),{tisya_output_configuration:JSON.stringify(values)});
   assert.equal(bodyTag(prompt(configured,'tisya_registry')),expected,'explicit user bounds, including zero and single-sided bounds, must survive compilation');
  }
  assert.deepEqual(actions.slice(1),['4','6']);
- assert.match(prompt(result,'tisya_pref_plot'),/实际长度由本轮内容与授权范围决定，不按固定比例填充/);
- assert.match(prompt(result,'tisya_pref_plot'),/短场景优先于篇幅下限/);
+ assert.match(prompt(result,'tisya_pref_plot'),/65%–95%/);
+ assert.doesNotMatch(prompt(result,'tisya_pref_plot'),/短场景优先于篇幅下限/);
  assert.doesNotMatch(registry,/最终停笔交还点|live playable opening|下轮基础任务\|/);
- assert.match(registry,/自然停在本轮已完成的局部进程，不另造问题或“等待回答”提示/);
+ assert.match(registry,/末段严格按 `<Pref_Narrative> @STOP.GATE`/);
  assert.match(prompt(result,'tisya_creative_guide'),/行序并非正文段落大纲/);
  assert.match(prompt(result,'tisya_creative_guide'),/声口自然发挥，其字数不计入 `<body>` 篇幅区间/);
  const before=registry.match(/<anchor phase="before">([\s\S]*?)<\/anchor>/)[1];
@@ -66,7 +66,7 @@ test('default compilation has no hard body range, retains explicit bounds and ac
  const scaffoldStart=registry.search(/^<reply id="tisya-onepass-1">$/m);
  assert(scaffoldStart>=0,'the actual reply scaffold must remain present');
  const scaffold=registry.slice(scaffoldStart);
- const ordered=[/^<task /m,/^<anchor phase="before">$/m,/^<title /m,/^<body>$/m,/^<anchor phase="after">$/m,/^<extra>$/m,/^<archive /m,/^<actions /m].map(tag=>scaffold.search(tag));
+ const ordered=[/^<task /m,/^<anchor phase="before">$/m,/^<title /m,/^<body\b[^>]*>$/m,/^<anchor phase="after">$/m,/^<extra>$/m,/^<archive /m,/^<actions /m].map(tag=>scaffold.search(tag));
  assert(ordered.every((at,i)=>at>=0&&(i===0||at>ordered[i-1])));
 });
 

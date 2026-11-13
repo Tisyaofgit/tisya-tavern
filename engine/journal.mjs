@@ -34,5 +34,6 @@ let state=clone(bundle.state);const journal=clone(bundle.journal??{entries:[],re
   if(e.data.runtime.calendar||Object.keys(e.rows('X_WORLD_CLOCKS')).length)try{e.clock();}catch(x){warnings.push({code:'MATERIALS_CONFIG',message:'正文保留，历法配置需要修复',error:asError(x)});}
   state=e.data;const source=state.runtime.sources?.[`${scope.branch_ref??'main'}/${m.uid}@${revision}`],entry={uid:m.uid,signature:m.signature,role:m.role,revision,pre_turn_snapshot:{format:'tisya.inverse-patch.v1',inverse_patch:inversePatch(before,state)},warnings,settlement_status:result?.status??'CONTEXT_ONLY',...(source?.reply_form_ownership_version?{reply_form_ownership_version:source.reply_form_ownership_version}:{})};journal.entries.push(entry);reports.push({uid:m.uid,revision,status:entry.settlement_status,warnings});
  }
- return {bundle:{...clone(bundle),format:'tisya.chat-bundle.v1',state,journal},result:{common_prefix:common,rewound,processed:reports.length,turns:reports,warnings:[...(journal.notices??[]),...journal.entries.flatMap(e=>e.warnings.map(w=>({...w,message_uid:e.uid,revision:e.revision})))],replayed_descendants:rewound?Math.max(0,reports.length-1):0}};
+ const {state:oldState,journal:oldJournal,...metadata}=bundle;
+ return {bundle:{...clone(metadata),format:'tisya.chat-bundle.v1',state,journal},result:{common_prefix:common,rewound,processed:reports.length,turns:reports,warnings:[...(journal.notices??[]),...journal.entries.flatMap(e=>e.warnings.map(w=>({...w,message_uid:e.uid,revision:e.revision})))],replayed_descendants:rewound?Math.max(0,reports.length-1):0}};
 }

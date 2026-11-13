@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {digest} from '../engine/common.mjs';
+import originalText from './fixtures/returned-4a-text-digests.json' with {type:'json'};
 import * as style from '../config/style-cards.js';
 import {emptyConfig,defaultWorld,resources,validateConfig,compileSelected,cleanExport} from '../config/core.js';
 import {BUILTIN_STYLE_RULES,styleRules,stylePrompt,scanStyle} from '../tables/style-rules.js';
@@ -143,12 +145,12 @@ test('returned cards retain all ten public interfaces and independently selected
  assert.deepEqual(Object.keys(style).sort(),['AESTHETICS','STYLE_CARDS','STYLE_CARD_ROLES','USER_POSITIONS','currentStyleCard','isDirectionCard','styleCardIds','styleProjection','validateStyleCards','viewSelection'].sort());
  assert.equal(style.STYLE_CARDS.length,10);
  assert.deepEqual(style.STYLE_CARDS.map(row=>[row.id,row.name,row.styleRole,row.viewAxis]),V3_CARDS.map(row=>[row.id,row.name,row.styleRole,row.viewAxis]));
- assert(style.STYLE_CARDS.every(row=>row.version===4));
+ assert(style.STYLE_CARDS.every(row=>row.version===5));
  const world=defaultWorld();world.styleCards={tone:'builtin.card.tone.playful',view:'builtin.card.view.female',gaze:'builtin.card.view.char',sentence:'builtin.card.sentence.fluid'};
  assert.deepEqual(style.styleCardIds(world),[world.styleCards.tone,world.styleCards.view,world.styleCards.sentence,world.styleCards.gaze]);
 });
 
-test('all ten exact v2 and v3 stock bodies project to v4 while saved metadata and exports remain unchanged',()=>{
+test('all ten exact v2 and v3 stock bodies project to v5 while saved metadata and exports remain unchanged',()=>{
  for(const shipped of [V2_CARDS,V3_CARDS]){
   const data=emptyConfig(),world=defaultWorld();data.worlds.a=world;
   data.resources=shipped.map((row,index)=>({...structuredClone(row),name:'我的标题 '+index,enabled:false,custom:{count:0,flag:false}}));
@@ -157,7 +159,7 @@ test('all ten exact v2 and v3 stock bodies project to v4 while saved metadata an
   assert.deepEqual(compiled.ids,world.modes.narrative.selected);
   for(const saved of data.resources){
    const current=style.STYLE_CARDS.find(row=>row.id===saved.id);
-   assert.deepEqual(effective.find(row=>row.id===saved.id),{...saved,content:current.content,version:4});
+   assert.deepEqual(effective.find(row=>row.id===saved.id),{...saved,content:current.content,version:5});
    assert.equal(compiled.text.split(current.content).length-1,1,saved.id);
   }
   assert.deepEqual(data,before);
@@ -183,20 +185,20 @@ test('explicit off is respected even when a saved card is also selected by role,
  data.resources[0].tasks=['summary'];assert.equal(compileSelected(data,world).text,'');assert(compileSelected(data,world,'summary').text);
 });
 
-test('old non-erotic aesthetic remains valid and two added names have only non-erotic meanings',()=>{
+test('old aesthetic remains valid and returned names preserve their original meanings',()=>{
  const data=emptyConfig(),world=defaultWorld();data.worlds.a=world;world.styleAesthetics={user:['幼态（非情色造型）'],others:['稚拙','白幼瘦']};
  const before=structuredClone(data);assert.doesNotThrow(()=>validateConfig(data));
- const text=style.styleProjection(world);assert(text.startsWith('禁止将幼态特征用于欲望或情色描写。'));assert.match(text,/稚拙与白幼瘦仅作非情色形貌与举止标签/);assert.doesNotMatch(text,/undefined|校园初恋|单手可圈握|少年感/);assert.deepEqual(data,before);
+ const text=style.styleProjection(world);assert.match(text,/幼态（非情色造型）.*非情色场景/);assert.match(text,/稚拙.*澄澈眼神/);assert.match(text,/白幼瘦.*冷白细腻/);assert.doesNotMatch(text,/undefined|稚拙与白幼瘦仅作非情色/);assert.deepEqual(data,before);
  world.styleAesthetics.user=['未知'];assert.throws(()=>validateConfig(data),/审美选项/);
 });
 
-test('returned voices retain their distinct material without mandatory sentence lengths, feedback loops or a common ending',()=>{
+test('returned voices retain their distinct original 4a text',()=>{
  const bodies=style.STYLE_CARDS.map(row=>row.content).join('\n');
- assert.doesNotMatch(bodies,/6[–—-]12|14[–—-]24|每处动作均|每次动作都|每拍随动作|动作—台词—微反应|全程将对白|零抽象情绪词|收尾直接|段尾直接|段落定格/);
+ for(const row of originalText.styleCards)assert.equal(digest(style.STYLE_CARDS.find(c=>c.id===row.id).content),row.sha256,row.id);
  const anchors={'tone.tender':'衣袖擦过器物','tone.playful':'小算盘','tone.grounded':'饭菜热气','view.female':'感官与私心','view.male':'景别','view.char':'char 的私心','view.user':'user 的审美偏爱','view.audience':'场外半步','sentence.subtext':'半截改口','sentence.fluid':'精准名词'};
  for(const [id,anchor]of Object.entries(anchors))assert(style.STYLE_CARDS.find(row=>row.id==='builtin.card.'+id).content.includes(anchor),id);
- assert.match(style.STYLE_CARDS.find(row=>row.id==='builtin.card.view.char').content,/user 的回应留在已提供的言行与当前授权范围内/);
- assert.match(style.STYLE_CARDS.find(row=>row.id==='builtin.card.view.audience').content,/既定知情权限/);
+ assert.doesNotMatch(bodies,/user 的回应留在已提供的言行与当前授权范围内/);
+ assert.doesNotMatch(bodies,/既定知情权限/);
 });
 
 test('old exact built-in ending rule projects once while off, saved data and custom edits are preserved',()=>{

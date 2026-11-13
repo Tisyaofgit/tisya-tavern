@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import stock from '../presets/Tisya-Matrix.json' with {type:'json'};
 import fixture from './fixtures/returned-prose-stock.json' with {type:'json'};
+import candidate31 from './fixtures/candidate31-prose.json' with {type:'json'};
 import {baseline,compilePrompts,compilePromptText,applyCompiledMessages} from '../engine/config.mjs';
 import {PROSE_STYLE_REVISIONS,resolveProseStyleText} from '../engine/prose-style-policy.mjs';
 import {PREFERENCE_GROUPS} from '../engine/preferences.mjs';
@@ -92,4 +93,9 @@ for(const merge of [false,true])test('known stock reaches native outgoing fragme
  assert.deepEqual(compilePrompts(compiled,c,{}),compiled);
  assert.deepEqual(applyCompiledMessages(result,compiled,compilePrompts(compiled,c,{})),result);
  assert.deepEqual(messages,old);assert.deepEqual(source,saved);
+});
+
+test('installed candidate31 stock upgrades back to 4a text and body bounds while leaving source bytes unchanged',()=>{
+ const source=clone(baseline);for(const [id,text]of Object.entries(candidate31))row(source,id).content=text;
+ const before=clone(source),c=config();assert.deepEqual(compilePrompts(source,c,{}),compilePrompts(baseline,c,{}));assert.deepEqual(source,before);
 });

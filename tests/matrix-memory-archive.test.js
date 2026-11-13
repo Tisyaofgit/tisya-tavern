@@ -54,6 +54,7 @@ function seed(){
 }
 const routes=[
  ['事件','T_DYN_EVENTS',{short_code:'e1',title:'新事件',spine_digest:'推门后看见信'}],
+ ['阶段摘要','T_DYN_STAGE_SUMMARIES',{name:'渡口阶段',summary_text:'推门后看见信，仍待辨认落款。'}],
  ['状态','T_DYN_ENTITY_STATE',{entity_id:'阿青',posture:'站立'},'cells'],
  ['指标','T_DYN_ENTITY_GAUGES',{name:'紧张',entity_id:'阿青',field_key:'nervous',text_value:'稍紧张'},'cells'],
  ['资产流转','T_DYN_TRANSFERS',{instance_ref:'木盒',from_owner_ref:'阿青',to_owner_ref:'阿白',direction:'赠送',reason:'当面递交木盒'},'cells'],

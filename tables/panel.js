@@ -344,11 +344,11 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  async function atlasPage(){
   if(beginPage('atlas'))return;
   const controls=el('div');main.append(controls);
-  button(controls,'刷新最新版',atlasPage);button(controls,'填写当前表单',forms);button(controls,'查看全部变更（含删除）',timeline);
+  button(controls,'刷新最新版',atlasPage);button(controls,'填写当前表单',forms);if(!service.matrixDatabase)button(controls,'查看全部变更（含删除）',timeline);
   const snapshot=await service.readAtlasSnapshot();assertActive();
   const host=el('div'),shadow=host.attachShadow({mode:'open'}),style=el('style'),app=el('div');style.textContent=ATLAS_STYLE+'\n:host{display:block;font-family:inherit}#app{min-height:500px}.shell{min-height:400px}.navigation{position:static}.preview-note{padding-bottom:16px}.content{overflow-wrap:anywhere}.detail-tabs{flex-wrap:wrap}.scopebar select{max-width:100%}';app.id='app';shadow.append(style,app);main.append(host);
   mountArchiveAtlas(app,snapshot.data,{onIdentity:onIdentity?record=>{check(!busy&&!dirty&&!draft&&!pageDrafts.size,'请先保存或放弃表单草稿');onIdentity({book:snapshot.data.originBook,id:record.id,rev:record.rev});}:null,beforeRead:async()=>{assertActive();await snapshot.verify();},onFault:error=>{app.replaceChildren(el('p',error.message+'；请刷新最新版。'));notice.textContent=error.message;notice.setAttribute('role','alert');}});
-  notice.textContent='已载入当前存档修订 '+snapshot.data.revision+'；可切换原点，查看关联与修改路径。';
+  notice.textContent='已载入当前存档修订 '+snapshot.data.revision+(snapshot.data.matrix?'；查看正式档案、事件与正文来源。':'；可切换原点，查看关联与修改路径。');
  }
  async function timeline(){if(beginPage('timeline'))return;const data=await refresh(),g=section('时间锚与变化');table(g,['剧情时间','记录时间','所属表','变动','来源'],data.anchors.slice().reverse().map(a=>[a.worldTime??'未知',a.recordedAt,a.table,JSON.stringify({before:a.before,after:a.after}),a.evidence]));const j=section('最近辅助任务');const receipts=service.nativeConfiguration?.state().receipts??[];if(receipts.length)table(j,['原生配置','名称','状态','说明'],receipts.map(r=>[r.kind,r.name,r.status,r.detail]));table(j,['任务','状态','说明'],service.state().jobs.map(x=>[x.task,x.status,x.detail]));button(j,'查看最近注入内容',()=>{const p=service.preview();j.append(el('pre',p?.text??'尚未组装本轮上下文'));});}
  async function conditions(editId=null){

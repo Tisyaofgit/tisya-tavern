@@ -75,7 +75,7 @@ export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMes
   previous=reconcile(bundle,original,scope).bundle.state;
  }
  const current=result.bundle.state,merged=restorePhoneDatabaseHistory(current,previous,{contextKey,allowedOriginContextKeys});
- const patch=inversePatch({schema:merged.schema,tables:merged.tables},{schema:current.schema,tables:current.tables});
+ const patch=merged===current?[]:inversePatch({schema:merged.schema,tables:merged.tables},{schema:current.schema,tables:current.tables});
  if(patch.length){
   const ids=messages.map(m=>m.uid),anchors=messages.map(m=>({uid:m.uid,signature:signature(m)}));
   const edit={uid:'phone-history:'+digest({contextKey,anchors,patch,before:digest(current.tables)}),after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:anchors,patch};

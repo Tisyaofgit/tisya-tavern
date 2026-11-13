@@ -52,7 +52,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
     if(r.metadata?.[key]?.gauge_max!=null&&['known','derived'].includes(state))values[key]+='/'+r.metadata[key].gauge_max;
    }
    if(!Object.keys(values).length)continue;
-   (blocks['tisya_material_'+(tid==='T_PREF_CHAR_FILTER'?'focus_entities':routes[schema.sheet]??'task_material')]??=[]).push({table_id:tid,record_id:rid,values});
+   (blocks['tisya_material_'+(tid==='T_PREF_CHAR_FILTER'?'focus_entities':tid==='T_DYN_STAGE_SUMMARIES'?'memory_summary':routes[schema.sheet]??'task_material')]??=[]).push({table_id:tid,record_id:rid,values});
   }
  }
  slots=renderBlocks(e,blocks);

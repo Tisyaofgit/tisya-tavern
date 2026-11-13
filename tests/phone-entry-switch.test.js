@@ -84,5 +84,6 @@ test('stable A to independently loaded B initializes B and keeps A bundle unchan
 test('genuine B history detachment is retained without reinitializing or altering stored evidence',async()=>{
  const f=await fixture();f.select('B');await f.host.ensureDatabase();await f.getPhoneService();const key=chatKey(f.context());
  f.context().chat[0].mes='合成的真实历史修改';await f.host.sync();const before=clone([...f.disk]),writes=f.writes();f.phoneServices.delete(key);
- await assert.rejects(f.getPhoneService(),error=>error?.code==='PHONE_DATABASE_DETACHED');assert.equal(f.writes(),writes);assert.deepEqual([...f.disk],before);
+ await assert.rejects(f.getPhoneService(),error=>error?.code==='PHONE_DATABASE_DETACHED'&&error.details.initializationSources.some(row=>row.index===0&&row.messageUid===f.context().chat[0].extra.tisya_engine.uid));
+ await f.openVirtualPhone();assert.match(f.ui.pages.at(-1).html,/查看初始化楼层/);assert.match(f.ui.pages.at(-1).html,/第 1 楼/);assert.equal(f.writes(),writes);assert.deepEqual([...f.disk],before);
 });

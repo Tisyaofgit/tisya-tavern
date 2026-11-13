@@ -12,15 +12,12 @@ test('progression consumes both formal archive projections with current state pr
   assert.match(WORLD_RULES,/stable ID in basis/);
 });
 
-test('phone compact prompt uses formal archive without widening character knowledge',()=>{
+test('phone instructions reuse the main request materials without a second archive-policy paragraph',()=>{
   const fixed=readFileSync(new URL('../PHONE-PROMPT.txt',import.meta.url),'utf8');
   const core=readFileSync(new URL('../phone-core.mjs',import.meta.url),'utf8');
   for(const text of [fixed,core]){
-    assert.match(text,/memory_archive/);
-    assert.match(text,/memory_summary/);
-    assert.match(text,/current_state\/cells/);
-    assert.match(text,/当前状态 > 近期正式归档 > 较早正式归档/);
-    assert.match(text,/读者或作者能看到归档，不等于角色知道/);
+    assert.doesNotMatch(text,/归档只作为已保存的世界内证据使用|当前状态 > 近期正式归档 > 较早正式归档/);
+    assert.match(text,/沿用已有type\/thread和稳定账号ID/);
   }
 });
 
