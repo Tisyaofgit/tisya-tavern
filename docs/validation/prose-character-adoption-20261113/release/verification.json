@@ -1,0 +1,15 @@
+{
+  "verified_utc": "2026-11-13T13:17:42.197466+00:00",
+  "candidate_commit": "a75dbfe033ffcf4b5bc99b2b1a758bd063c0fb1f",
+  "files": 1812,
+  "pre_post_bytes_identical": true,
+  "generated_checks": 18,
+  "tests": 2588,
+  "passed": 2588,
+  "failed": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "exit_code": 0,
+  "full_log_sha256": "294951eee89988eaf9ad35781fb970160b6c061c977f02e4daa62ebc10f84be2",
+  "runtime_sha256": "c3b16706a4eb06dacd485a9ec170409ae6c9bfa093a5ac23b54691506a9cf421"
+}

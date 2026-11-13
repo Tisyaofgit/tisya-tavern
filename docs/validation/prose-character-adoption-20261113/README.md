@@ -1,5 +1,9 @@
 # Prose character adoption continuation
 
+## Published to main — 2026-11-13
+
+The production fix was fast-forwarded to `main` at `a75dbfe033ffcf4b5bc99b2b1a758bd063c0fb1f` and independently read back. Version: `candidate.34-prose.1`. This release reran all 18 build consistency checks and 2,588 Node tests, with exit code 0 and no failures, cancellations or skips. All 1,812 pre-release files retained their exact bytes and modes. See `release/` for the full log, scope and native publication receipt. Browser/real-host/Android/model acceptance remains pending; this release does not merge the separate parallel candidates.
+
 Base: `Tisyaofgit/tisya-tavern` main at `aba3858675cd60c204449e8f95e890f1995b646d`, tree `3510e4a6ca242fac41e1429495a991d1ea277dd5`. All 1,799 original blob bytes were verified against that tree. This candidate implements the authorized repair where a saved prose character was blocked by a form-only identity prerequisite.
 
 The identity UI previews and saves a source reference through the existing configuration owner. Configuration reopening retains book, UID and semantic digest. The generation identity slot loads the selected source and checks it again at final acceptance; whole-book exclusion and existing request uniqueness remain in effect. No form record, model extraction or source-book rewrite is performed by adoption. Preset text is unchanged.

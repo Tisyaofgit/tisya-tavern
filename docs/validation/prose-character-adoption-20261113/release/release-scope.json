@@ -1,0 +1,22 @@
+{
+  "task": "prose-character-adoption-release",
+  "base_main": "aba3858675cd60c204449e8f95e890f1995b646d",
+  "candidate": "a75dbfe033ffcf4b5bc99b2b1a758bd063c0fb1f",
+  "candidate_tree": "0c35eedf88422451dc1d3e05e79cb123d6134033",
+  "main_diverged": false,
+  "ahead_commits": 2,
+  "files": 1812,
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.34-prose.1",
+  "scope": "修复基点原文角色选中后被要求填写表单的入口及绑定；已有标准表单路径保留",
+  "preset_changes": [],
+  "parallel_candidates_merged": [],
+  "tests": "npm test: 18 generated build checks plus all Node test files",
+  "unverified": [
+    "real browser geometry/clicks",
+    "real Tavern host",
+    "external model",
+    "Android"
+  ],
+  "browser_limitation": "Prior Chromium attempts stopped at socket() permission failure before loading a page. No changed environment evidenced this continuation.",
+  "readonly_chat_cause": "unknown"
+}
