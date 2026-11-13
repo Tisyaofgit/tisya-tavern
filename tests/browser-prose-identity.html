@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>基点人物原文采用验证</title><link rel="stylesheet" href="/shell.css">
+<style>body{margin:0;background:#06261e;color:#e1e8dc;font:16px system-ui}#controls{padding:12px;display:flex;flex-wrap:wrap;gap:8px}#tisya-shell{position:relative;pointer-events:auto;width:390px;max-width:100%;margin:auto}#app{--tisya-settings-height:780px}#result{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px}button{min-height:44px}#controls button{padding:8px}</style>
+<body class="tisya-active">
+<header id="controls"><button id="narrow">360px</button><button id="phone">390px</button><button id="wide">709px</button><button id="reopen">重新打开</button><button id="request">检查最终请求</button></header>
+<main id="tisya-shell"><div id="app"></div></main><pre id="result" role="status"></pre>
+<script type="module">
+import {proseFixture} from './fixtures/prose-identity.mjs';
+const key='tisya-prose-browser-fixture-v1',result=document.querySelector('#result');
+try{
+const saved=JSON.parse(localStorage.getItem(key)??'null');
+const fixture=await proseFixture({saved,persist:data=>localStorage.setItem(key,JSON.stringify(data))});
+await fixture.mount(document,document.querySelector('#app'));
+const run=fn=>async()=>{try{await fn();}catch(error){result.textContent='失败：'+error.message;}};
+for(const [id,width] of [['narrow',360],['phone',390],['wide',709]])document.getElementById(id).onclick=()=>document.querySelector('#tisya-shell').style.width=width+'px';
+document.querySelector('#reopen').onclick=run(async()=>{fixture.makeHost();await fixture.mount(document,document.querySelector('#app'));result.textContent='已重新打开；当前人物：'+(fixture.host.config.read().story.userBinding?.name??'未选择');});
+document.querySelector('#request').onclick=run(async()=>{
+ await fixture.host.before('normal');
+ const lore={globalLore:fixture.data.books.基点书.map(row=>({...row,world:'基点书'})),characterLore:[],personaLore:[],chatLore:[]};await fixture.host.entriesLoaded(lore);
+ const payload=fixture.payload();await fixture.host.payloadReady(payload);
+ const text=payload.messages.map(m=>m.content).join('\n');
+ const occurrences=text.split(fixture.text).length-1;
+ result.textContent=JSON.stringify({accepted:fixture.host.accepted(),selectedSourceOccurrences:occurrences,unselectedSourcePresent:text.includes('不得注入的其他人物'),wholeBookEntries: lore.globalLore.length,sourceUnchanged:fixture.data.books.基点书[0].content===fixture.text,binding:fixture.host.config.read().story.userBinding},null,2);
+});
+result.textContent='已加载生产身份页面；测试世界书与存档仅保存在本页浏览器。';
+}catch(error){result.textContent=error.stack;}
+</script></body></html>

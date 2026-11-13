@@ -1,5 +1,5 @@
 import {applyGeneration,assertGeneration,validateGeneration} from './generation.mjs';
-import {storyAvatar,projectDatabaseIdentity} from './identity.mjs';
+import {storyAvatar,projectDatabaseIdentity,readProseIdentity} from './identity.mjs';
 import {validateStoryLibraries} from './template-book.mjs';
 import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences,preferenceWishSlot} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
@@ -95,7 +95,8 @@ export function compilePrompts(source,config,slots){
 export async function identitySlots(ctx,config,persona,databaseSnapshot=null){
  const story=config.story,slots={},avatar=storyAvatar(config);if(avatar.mode==='bound'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');let bound='',name=story.userName||'user';
  if(avatar.binding?.database){const snapshot=databaseSnapshot??await ctx.tisyaReadDatabase?.();if(!snapshot)fail('USER_DATABASE_MISSING','当前表单尚未读取，角色资料没有使用旧书替代');const projection=projectDatabaseIdentity(snapshot,avatar.binding);name=projection.name;bound=projection.text;}
- else if(avatar.binding)fail('USER_BINDING','请选择当前表单中的人物档案');
+ else if(avatar.binding?.sourceMode==='prose'){const projection=await readProseIdentity(ctx,avatar.binding);name=projection.name;bound=projection.text;}
+ else if(avatar.binding)fail('USER_BINDING','请在用户身份页重新预览并采用基点人物原文，或选择当前表单人物');
  slots.tisya_user_identity=avatar.binding?('[USER.IDENTITY]\n故事主角：'+name+'\n'+bound+'\n[/USER.IDENTITY]'):'';
  slots.tisya_user_name=avatar.binding?name:'';
  const wish=wishPreferences({...config,story:{...story,wish:persona}});

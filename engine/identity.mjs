@@ -12,6 +12,21 @@ export function storyAvatar(config){
   binding:mode==='bound'?story.userBinding??null:null};
 }
 export const avatarReference=binding=>binding?(binding.database?'T_CHAR_DOSSIER#'+binding.dossierId:binding.book+'#'+binding.uid):'';
+// A prose reference selects author material, not a completed mechanical dossier.
+// Hash only the selected meaning: native/helper wrappers have different metadata.
+export function proseIdentityReference(source){
+ check(source&&!source.definition&&typeof source.content==='string'&&source.content.trim(),'请选择有完整人物原文的条目');
+ const name=String(source.title??source.name??'').replace(/^【角色】/u,'').trim();check(name,'人物原文缺少名称');
+ return {sourceMode:'prose',book:source.book,uid:source.uid,sourceDigest:digest({book:source.book,uid:String(source.uid),name,content:source.content}),name};
+}
+export async function readProseIdentity(ctx,binding){
+ check(binding?.sourceMode==='prose'&&binding.sourceDigest,'请重新预览并采用基点人物原文');
+ const key=JSON.stringify([ctx.chatId,ctx.characterId,ctx.groupId]);
+ const source=await createBookGateway(undefined,()=>ctx).readSource(binding),reference=proseIdentityReference(source);
+ check(reference.sourceDigest===binding.sourceDigest,'基点人物原文已变化，请在用户身份页重新预览并采用；原绑定仍保留');
+ check(key===JSON.stringify([ctx.chatId,ctx.characterId,ctx.groupId]),'读取人物原文期间聊天已切换');
+ return {name:reference.name,text:source.content,source:reference};
+}
 export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.TavernHelper,assertIdle=()=>{},database=null,builtins=null,creator=null,sourceBooks=null}){
  check(database,'身份服务需要统一表单；书籍原文请先交给助手提炼，再选择已登记人物');
  return createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,database,builtins,creator,sourceBooks});
@@ -51,9 +66,10 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  const read=async()=>{const key=scope(),snapshot=await database.read();check(key===scope(),'聊天已切换，请重新读取');check(snapshot?.state,'当前聊天尚未接入统一表单，请先创建世界或接入表单');return snapshot;};
  const names=async()=>{const c=getContext(),helper=getHelper();const result=typeof c.getWorldInfoNames==='function'?await c.getWorldInfoNames():typeof helper?.getWorldbookNames==='function'?await helper.getWorldbookNames():null;check(Array.isArray(result),'宿主世界书列表尚未就绪');return result;};
  async function list(){const snapshot=await read();return {book:DATABASE_LABEL,books:[DATABASE_LABEL],exists:true,database:true,entries:databaseCharacters(snapshot),schema:structuredClone(snapshot.state.schema.T_CHAR_DOSSIER?.fields??[]),revision:snapshot.revision};}
- async function bind({uid,dossierId=uid,entityId,mode='bound'},expected=config.read().revision){
+ async function bind({uid,dossierId=uid,entityId,source,mode='bound'},expected=config.read().revision){
   assertIdle();const key=scope(),value=config.read();check(value.revision===expected,'身份配置已变化，请重新读取');check(getContext().chatId,'请先打开聊天');
-  if(mode==='bound'){const snapshot=await read(),row=databaseCharacters(snapshot).find(r=>r.dossierId===String(dossierId));check(row&&row.entityId,'人物缺少统一实体登记，请先在表单补齐');if(entityId)check(entityId===row.entityId,'人物实体引用不匹配');value.story.userBinding={database:true,entityId:row.entityId,dossierId:row.dossierId};value.story.userName=row.name.slice(4);value.story.userMode='bound';}
+  if(mode==='bound'&&source){const fresh=await readAuthorSource(source),reference=proseIdentityReference(fresh);check(source.sourceDigest===reference.sourceDigest,'人物原文已变化，请重新预览后采用');value.story.userBinding=reference;value.story.userName=reference.name;value.story.userMode='bound';}
+  else if(mode==='bound'){const snapshot=await read(),row=databaseCharacters(snapshot).find(r=>r.dossierId===String(dossierId));check(row&&row.entityId,'人物缺少统一实体登记，请先在表单补齐');if(entityId)check(entityId===row.entityId,'人物实体引用不匹配');value.story.userBinding={database:true,entityId:row.entityId,dossierId:row.dossierId};value.story.userName=row.name.slice(4);value.story.userMode='bound';}
   else{check(['unbound','generic','ensemble'].includes(mode),'角色绑定模式无效');value.story.userBinding=null;value.story.userName='';value.story.userMode=mode;}
   check(key===scope(),'聊天已切换，选择未保存');return config.save(value);
  }

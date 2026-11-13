@@ -1,0 +1,113 @@
+{
+  "task": "prose-character-adoption",
+  "utc": "2026-11-13T12:49:40.668538+00:00",
+  "base_commit": "aba3858675cd60c204449e8f95e890f1995b646d",
+  "base_tree": "3510e4a6ca242fac41e1429495a991d1ea277dd5",
+  "base_files_verified": 1799,
+  "product_changes_this_resume": false,
+  "full_regression": {
+    "tests": 2588,
+    "passed": 2588,
+    "failed": 0,
+    "source": "restored prior-window terminal log; exact product bytes verified unchanged",
+    "log_sha256": "15b9c919b14a089cd1a9f8d05da2f041d085cdbf9f0f27ad0b66b1eca4be30ad",
+    "exit_receipt": "not retained in prior window"
+  },
+  "restored_targeted": {
+    "tests": 52,
+    "passed": 52,
+    "failed": 0,
+    "exit_code": 0,
+    "log": "restored-targeted.log"
+  },
+  "extension_build_check": "passed",
+  "version_consistency": "passed",
+  "browser": {
+    "attempted": true,
+    "page_opened": false,
+    "error": "process_singleton_posix.cc:297 socket() failed: Operation not permitted (1)",
+    "log": "browser-current-launch.log"
+  },
+  "not_verified": [
+    "Browser pixel/layout and real browser clicks",
+    "Native Tavern host",
+    "Real model",
+    "Android"
+  ],
+  "parallel_work": {
+    "worldbook_style_w21": "not merged or overwritten",
+    "alternate_source_character_candidate": "70380aa0f67949d7dbce70a9753fe345eb173be3 retained as separate candidate; implementation chooses prose reference rather than manufacturing form records"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "fe4f9afd126a8f0f1479bdc10878ee1fb656b14b824ee91449a7455aad66f50b",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "docs/validation/preference-simple-core-20261113/README.md",
+      "sha256": "f1a16c82dda3f69eb66e742c07f47e6196b8b0da0b01f8a60548a4b19de5a6c6",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "engine/config.mjs",
+      "sha256": "b750884279232b6928f238cd20aef83fb5c5a072537bea8f63dd590da0563f72",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "engine/host.mjs",
+      "sha256": "253236eba12ff5630e5d61312b2133696e965617cf71dfac25aaade0554570c1",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "engine/identity-ui.mjs",
+      "sha256": "17d4ed64a6b71bf3c88729f970f465dcb96d769dff84a4f91f44fc7238549001",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "engine/identity.mjs",
+      "sha256": "141db6cf28b7cc04ba3bd8e7833a7f9b30aeb5828e31ab215f8c996820ffcc6e",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "engine/preferences-ui.mjs",
+      "sha256": "ce25a5132610b705ef1bb55eb244a8e350eb8e3ada453f2ea544e8a209be9037",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "layout.js",
+      "sha256": "963bca3500fd6e14c14d4e82a3963ffa6b3590fd100f9b4f895606ca42fedabb",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "58a1d8cd87625d0a2587c3002617a4118e89e6f01a87b5e727e3001e669112db",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "cc2c2bf30a056d6d12422fb3a2ac5d27c1b904e613edfbeb412f63cc59c44143",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "package.json",
+      "sha256": "54ce84092c0eaeeb268593d40835ada1f2be5c6e5744c9fd9ee94599e7ad4eb2",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "runtime.js",
+      "sha256": "c3b16706a4eb06dacd485a9ec170409ae6c9bfa093a5ac23b54691506a9cf421",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "shell.css",
+      "sha256": "645bd801f24207f4cff5c1b86d98c4268ec2c7bca73bedaa4d13961b9a1a6931",
+      "unchanged_since_full_regression": true
+    },
+    {
+      "path": "tests/template-book-identity.test.js",
+      "sha256": "0ae5e9ee15fbb54fe1e4f36981e213b7be095265867f87ed9973aa0445c859d9",
+      "unchanged_since_full_regression": true
+    }
+  ]
+}

@@ -60,7 +60,7 @@ test('legacy raw phone initialization is rejected without accepting a separate b
 });
 test('old book binding cannot bypass current form identity projection and source text remains intact',async()=>{
  const f=fixture(),content='姓名和经历\n<手机初态>{"钱包":{"余额":9876}}</手机初态>\n结语';f.books.基点书=[{uid:0,name:'【角色】青',content}];const value=f.config.read();value.story.userBinding={book:'基点书',uid:0};await f.config.save(value);
- await assert.rejects(identitySlots(f.ctx,f.config.read(),''),/当前表单中的人物档案/);assert.equal(f.books.基点书[0].content,content);assert.equal(templateModule.stripPhoneInitialization,undefined);
+ await assert.rejects(identitySlots(f.ctx,f.config.read(),''),/重新预览并采用基点人物原文/);assert.equal(f.books.基点书[0].content,content);assert.equal(templateModule.stripPhoneInitialization,undefined);
 });
 test('reference scan uses current native conditions, retains source UID and deduplicates without enabling',async()=>{
  const f=fixture(),settings=f.config.read();settings.story.referenceBooks=['资料'];f.books.资料=[{uid:3,name:'世界',content:'叙述<手机世界>{"商品":[]}</手机世界>',disable:true,constant:false,key:['云'],probability:19,useProbability:true,extensions:{custom:{condition:'keep'}}},{uid:4,name:'分支',content:'条件信息',key:['雨'],order:8}];
