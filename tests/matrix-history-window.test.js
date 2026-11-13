@@ -9,3 +9,9 @@ test('matrix history hook trims only native sending copies, keeps current input 
  const f=setup();f.ctx.chat=Array.from({length:60},(_,i)=>({is_user:i%2===1,mes:'H'+i}));f.ctx.chat.push({is_user:true,mes:'CURRENT',extra:{media:[{url:'original.png'}]}});const original=structuredClone(f.ctx.chat),core=f.ctx.chat.map((m,index)=>({...structuredClone(m),index})),extension={is_system:true,mes:'EXTERNAL_MATERIAL'};core.unshift(extension);
  const report=f.host.historyInput(core,'normal');assert.equal(report.configured,17);assert.equal(core.filter(m=>Number.isInteger(m.index)).length,18);assert.equal(core.at(-1).mes,'CURRENT');assert.deepEqual(core.at(-1).extra,original.at(-1).extra);assert(core.includes(extension));assert.deepEqual(f.ctx.chat,original);assert.throws(()=>f.host.historyInput(f.ctx.chat),/发送副本/);assert.equal(f.host.historyInput(core,'quiet'),null);
 });
+test('a missing preset source leaves preference failures visible while history and configuration navigation remain usable',async()=>{
+ const f=setup(),w=new Window(),root=w.document.createElement('div'),errors=[];w.document.body.append(root);const ui=mountMatrixConfiguration(w.document,root,{service:f.host,onError:e=>errors.push(e)});try{
+  assert.equal(await ui.ready,true);assert.match(root.textContent,/当前预设原文尚未读取/);assert.match(root.textContent,/偏好包暂不可用/);assert(root.querySelector('[aria-label="历史聊天条数（当前输入始终保留）"]'));
+  [...root.querySelectorAll('button')].find(b=>b.textContent==='回复格式').click();await ui.settled();assert([...root.querySelectorAll('label')].some(n=>n.textContent==='正文'));assert.deepEqual(errors,[]);assert.equal(ui.state().dirty,false);
+ }finally{ui.dispose();await w.happyDOM.abort();}
+});

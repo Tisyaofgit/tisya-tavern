@@ -84,6 +84,34 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getConte
  const sourceSnapshot=(book,entry)=>{const definition=readMatrixDefinition(entry);return {book,uid:entry.uid,name:definitionTitle(entry),title:definitionTitle(entry),content:entry.content,entry:copy(entry),digest:matrixDigest({book,entry}),version:definition?.revision??null,definition};};
  async function readSource({book,uid}){check(uid!==null&&uid!==undefined,'请选择世界书条目');const entries=await sourceEntries(book),rows=entries.filter(e=>String(e.uid)===String(uid));check(rows.length===1,'来源条目不存在或 UID 重复：'+book);return sourceSnapshot(book,rows[0]);}
  async function nativeSourceBook(book){const c=getContext?.();if(typeof c?.loadWorldInfo==='function'){const data=await c.loadWorldInfo(book);check(object(data?.entries),'原生世界书读取格式无效：'+book);return {name:book,entries:copy(Object.values(data.entries))};}return {name:book,entries:await sourceEntries(book)};}
+ async function prepareAuthorSource({book,uid=null,name,content,before=null}){
+  check(typeof book==='string'&&book.trim()===book&&book,'请选择基点书');
+  check(typeof name==='string'&&name.trim()&& !/[\r\n]/u.test(name),'人物名称须为单行非空文字');
+  check(typeof content==='string'&&content.trim(),'请填写人物原文');
+  const exists=(await sourceNames()).includes(book),entries=exists?await sourceEntries(book):[];
+  const old=uid===null?null:entries.find(e=>String(e.uid)===String(uid));
+  if(uid!==null){check(old&&before&&sourceSnapshot(book,old).digest===before.digest,'人物原文已变化，请保留草稿后重新读取');check(!readMatrixDefinition(old),'规范表单请使用表单编辑，不能覆盖为简单人物');}
+  const title='【角色】'+name.trim().replace(/^【角色】/u,''),entry=old?{...copy(old),...(Object.hasOwn(old,'name')?{name:title}:{comment:title}),content}:{...disabledEntry(title,content),uid:Math.max(-1,...entries.map(e=>Number(e.uid)).filter(Number.isFinite))+1};
+  const plan={format:'tisya.author-source-plan/1',operationId:uuid('author'),book,exists,before:entries,entry};plan.digest=planHash(plan);return plan;
+ }
+ async function commitAuthorSource(plan,{guard=()=>{}}={}){
+  check(plan?.format==='tisya.author-source-plan/1'&&plan.digest===planHash(plan),'人物原文草稿已变化，请重新核对');
+  check(!locks.has(plan.book),'这本世界书正在保存');locks.set(plan.book,true);
+  const wanted=copy(plan.before),at=wanted.findIndex(e=>String(e.uid)===String(plan.entry.uid));if(at<0)wanted.push(copy(plan.entry));else wanted[at]=copy(plan.entry);
+  const verify=async()=>{const rows=await sourceEntries(plan.book);check(matrixDigest(rows)===matrixDigest(wanted),'人物原文保存未确认，请保留草稿核对');return {confirmed:true,operationId:plan.operationId,source:sourceSnapshot(plan.book,rows.find(e=>String(e.uid)===String(plan.entry.uid)))};};
+  let attempted=false;
+  try{
+   guard();const exists=(await sourceNames()).includes(plan.book);guard();
+   const current=exists?await sourceEntries(plan.book):[];guard();
+   if(exists&&matrixDigest(current)===matrixDigest(wanted)){const receipt=await verify();guard();return receipt;}
+   check(exists===plan.exists&&matrixDigest(current)===matrixDigest(plan.before),'基点书已变化，原文草稿保留，未覆盖新内容');
+   const h=helper();attempted=true;
+   if(!exists){check(await h.createWorldbook(plan.book,wanted)===true,'基点书创建未确认');}
+   else{let invoked=false;await h.updateWorldbookWith(plan.book,entries=>{guard();check(matrixDigest(entries)===matrixDigest(plan.before),'基点书写入前已变化');invoked=true;return copy(wanted);},{render:'immediate'});check(invoked,'宿主未执行人物原文保存');}
+   const receipt=await verify();guard();return receipt;
+  }catch(error){let receipt={confirmed:false,operationId:plan.operationId,status:attempted?'unknown':'not-written'};if(attempted)try{receipt=await verify();}catch(readError){receipt.readError=readError.message;}throw Object.assign(new Error((receipt.confirmed?'人物原文已保存；后续步骤未完成：':'人物原文未确认保存：')+error.message,{cause:error}),{authorReceipt:receipt});}
+  finally{locks.delete(plan.book);}
+ }
  async function listSources({book,kind='character'}={}){
   check(['character','world','all'].includes(kind),'来源类型无效');const books=await sourceNames(),exists=typeof book==='string'&&books.includes(book),all=exists?(await sourceEntries(book)).filter(e=>definitionTitle(e)!==ENTRY).map(e=>sourceSnapshot(book,e)):[];
   const matches=row=>kind==='all'||row.definition?.kind===kind&&(!row.definition.group||(kind==='character'?row.definition.group.tableId==='T_CHAR_DOSSIER':row.definition.group.tableId==='T_STATIC_WORLDS'))||(!row.definition&&kind==='character'&&/^【角色】.+/u.test(row.name));
@@ -277,5 +305,5 @@ export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getConte
    throw Object.assign(new Error((receipt.confirmed?'世界书定义已保存；后续步骤未完成：':'世界书归档未完成：')+error.message,{cause:error}),{archivePlan:copy(plan),archiveReceipt:receipt});
   }finally{locks.delete(plan.book);}
  }
- return {read,write,create,bindOrigin,cardBooks,materials,originNames,listSources,readSource,reviewDefinitionGroups,prepareDefinitionArchive,inspectDefinitionArchive,commitDefinitionArchive,names:sourceNames,available:()=>{try{helper();return true;}catch{return false;}}};
+ return {read,write,create,bindOrigin,cardBooks,materials,originNames,listSources,readSource,prepareAuthorSource,commitAuthorSource,reviewDefinitionGroups,prepareDefinitionArchive,inspectDefinitionArchive,commitDefinitionArchive,names:sourceNames,available:()=>{try{helper();return true;}catch{return false;}}};
 }

@@ -3,6 +3,8 @@ import {clone,fail} from './common.mjs';
 import {storyAvatar,avatarReference} from './identity.mjs';
 
 export const PREFERENCE_GROUPS=catalog.groups;
+export const USER_PREFERENCE_GROUP={id:'USER',label:'用户偏好',section:'用户偏好',slot:'tisya_contractor_wish',multiple:false,options:[]};
+export const preferenceGroup=id=>id==='USER'?USER_PREFERENCE_GROUP:PREFERENCE_GROUPS.find(g=>g.id===id);
 export const effectivePreferences=config=>({
  choices:{...(config.playDefaults?.choices??{}),...(config.story?.play?.choices??{})},
  parameters:{...(config.playDefaults?.parameters??{}),...(config.story?.play?.parameters??{})},
@@ -14,7 +16,7 @@ export function validatePreferences(value={}){
   if(!group)fail('PREFERENCE_GROUP','配置分组不存在：'+id);
   if(selection===null)continue;
   if(group.multiple?!Array.isArray(selection):typeof selection!=='string')fail('PREFERENCE_SELECTION','配置选择类型不符：'+id);
-  for(const key of group.multiple?selection:[selection])if(!group.options.some(o=>o.id===key))fail('PREFERENCE_OPTION','配置选项不存在：'+key);
+  for(const key of group.multiple?selection:[selection])if(!group.options.some(o=>o.id===key)&&!/^custom:[a-zA-Z0-9_-]+$/.test(key))fail('PREFERENCE_OPTION','配置选项不存在：'+key);
  }
  const p=value.parameters??{};
  if(p.history_messages!=null&&(!Number.isSafeInteger(p.history_messages)||p.history_messages<0))fail('HISTORY_COUNT','历史聊天条数须为非负整数');
@@ -37,9 +39,9 @@ export function expandPreferenceText(text,config,parameters){return text
   .replaceAll('{{active_avatar_dossier_id}}',avatarReference(storyAvatar(config).binding)||parameters.active_avatar_dossier_id||config.story?.userName||'user')
   .replaceAll('{{user_custom_wish_raw_text}}',config.story?.wish??'')
   .replaceAll('personaDescription','tisya_user_identity');}
-function effects(group,selection,config,parameters){
+function effects(group,selection,config,parameters,textRows={}){
  const ids=group.multiple?selection:[selection];
- return ids.map(id=>expandPreferenceText(group.options.find(o=>o.id===id).effect,config,parameters));
+ return ids.map(id=>{const builtin=group.options.find(o=>o.id===id);if(builtin)return expandPreferenceText(builtin.effect,config,parameters);const key=preferenceTextKey(group.id,group.multiple?[id]:id),custom=textRows[key]??config.playDefaults?.textOverrides?.[key];if(custom?.kind!=='custom'||custom.enabled===false)fail('PREFERENCE_CUSTOM_MISSING','自定义选项不存在或已停用：'+id);return '@TISYA.CUSTOM.'+custom.id+' :=\n'+expandPreferenceText(custom.text,config,parameters);});
 }
 export function wishPreferences(config){
  const value=validatePreferences(effectivePreferences(config)),selection=value.choices.W;
@@ -58,7 +60,7 @@ export function applyPreferences(entries,config,textRows={}){
  for(const group of PREFERENCE_GROUPS){
   const selection=value.choices[group.id];if(selection==null||group.id==='W')continue;
   const row=entries.find(p=>p.identifier===group.slot);if(!row)fail('PREFERENCE_SLOT','配置所属提示词槽不存在：'+group.slot);
-  const selected=effects(group,selection,config,value.parameters),keys=new Set(group.options.map(o=>keyOf(o.effect)));
+  const selected=effects(group,selection,config,value.parameters,textRows),keys=new Set(group.options.map(o=>keyOf(o.effect)));
   if(group.id==='S04-Sculpt')keys.add('ART.SCULPT');
   for(const key of keys)row.content=replaceDirective(row.content,key,'');
   const closing=group.id==='TECH'?'</TechniqueCorpus>':group.id==='CORP'?'</ScenarioPersonaCorpus>':['LIT','MOTIF'].includes(group.id)?'</LiteraryPlayCorpus>':undefined;
@@ -67,7 +69,7 @@ export function applyPreferences(entries,config,textRows={}){
  for(const group of PREFERENCE_GROUPS){
   if(['W','N01'].includes(group.id))continue;
   const key=preferenceTextKey(group.id,value.choices[group.id]),override=textRows[key]??config.playDefaults?.textOverrides?.[key];
-  if(!override||override.enabled===false)continue;
+  if(!override||override.enabled===false||override.kind==='custom')continue;
   const row=entries.find(p=>p.identifier===group.slot);if(!row)fail('PREFERENCE_SLOT','配置所属提示词槽不存在：'+group.slot);
   for(const key of new Set(group.options.map(o=>keyOf(o.effect))))row.content=replaceDirective(row.content,key,'');
   if(group.id==='S04-Sculpt')row.content=replaceDirective(row.content,'ART.SCULPT','');
@@ -85,10 +87,14 @@ export function preferenceTextKey(group,selection,encoded=false){return group+':
 export function validatePreferenceTexts(rows={}){
  if(!rows||typeof rows!=='object'||Array.isArray(rows))fail('PREFERENCE_TEXT','编辑原文须为记录集合');
  for(const [key,row]of Object.entries(rows)){
-  const group=PREFERENCE_GROUPS.find(g=>g.id===row?.group&&!['W','N01'].includes(g.id));
+  const group=!['W','N01'].includes(row?.group)?preferenceGroup(row?.group):null;
   if(!group||typeof row.id!=='string'||!row.id||typeof row.text!=='string'||typeof row.selection!=='string'||typeof row.enabled!=='boolean'||key!==preferenceTextKey(row.group,row.selection,true))fail('PREFERENCE_TEXT','编辑原文记录无效');
   let selection;try{selection=JSON.parse(row.selection);}catch{fail('PREFERENCE_TEXT','原文对应选择无效');}
-  validatePreferences({choices:{[group.id]:selection}});
+  if(group.id==='USER'){if(row.kind!=='user'||selection!==row.id||typeof row.name!=='string'||typeof row.evidence_quote!=='string')fail('USER_PREFERENCE','用户偏好字段无效');}
+  else validatePreferences({choices:{[group.id]:selection}});
+  if(row.kind!=null&&!['custom','override','user'].includes(row.kind))fail('PREFERENCE_TEXT_KIND','偏好条目种类无效');
+  if(row.kind==='custom'&&(typeof row.name!=='string'||!row.name.trim()||JSON.stringify(selection)!==JSON.stringify(group.multiple?['custom:'+row.id]:'custom:'+row.id)))fail('PREFERENCE_CUSTOM','自定义选项名称或身份无效');
+  if(row.kind==='user'&&row.enabled&&!row.name.trim())fail('USER_PREFERENCE_NAME','用户偏好名称不能为空');
   if(row.enabled&&!row.text.trim())fail('PREFERENCE_TEXT_EMPTY','编辑原文不能为空；停用请使用分组选项');
  }
  return rows;
@@ -100,7 +106,21 @@ export function groupOriginalText(source,config,group){
  const blocks=[...raw.matchAll(/^@([^\s:={]+)\s*(?::=|::|=)[\s\S]*?(?=^@[^\s:={]+\s*(?::=|::|=)|^<\/|^\[\/|(?![\s\S]))/gmu)];
  return blocks.filter(m=>keys.has(m[1])).map(m=>m[0].trimEnd()).join('\n');
 }
-export function selectedPreferenceText(source,config,group){
+export function selectedPreferenceText(source,config,group,textRows={}){
  const value=effectivePreferences(config),selected=value.choices[group.id];
- return selected==null?groupOriginalText(source,config,group):effects(group,selected,config,value.parameters).join('\n');
+ return selected==null?groupOriginalText(source,config,group):effects(group,selected,config,value.parameters,textRows).join('\n');
+}
+
+export function preferenceOptions(group,config,rows={}){
+ const custom=Object.values({...config.playDefaults?.textOverrides,...rows}).filter(r=>r.group===group.id&&r.kind==='custom'&&r.enabled!==false).map(r=>({id:'custom:'+r.id,label:r.name,effect:r.text,custom:true}));
+ return [...group.options,...custom];
+}
+
+export function userPreferenceMaterial(config,rows={}){
+ return Object.values({...config.playDefaults?.textOverrides,...rows}).filter(r=>r.group==='USER'&&r.enabled&&r.legacy!==true).map(r=>'用户偏好：'+r.name+'\n'+expandPreferenceText(r.text,config,effectivePreferences(config).parameters)).join('\n\n');
+}
+
+export function preferenceWishSlot(config,slots={}){
+ const rows=slots.tisya_preference_texts?JSON.parse(slots.tisya_preference_texts):{},text=userPreferenceMaterial(config,rows);
+ return [slots.tisya_contractor_wish,text?'[USER.PREFERENCES]\n'+text+'\n[/USER.PREFERENCES]':''].filter(Boolean).join('\n');
 }

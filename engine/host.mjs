@@ -4,7 +4,7 @@ import {narrativeSourceFragments,projectNarrativeSourceDefaults} from './narrati
 import {applyRequestLayers,createPromptSourceMap} from './request-layers.mjs';
 import {createNativePresetLayers} from './native-preset-layers.mjs';
 import {extendPhoneFormCatalog,phoneFormReferenceCandidates} from './phone-form-contract.mjs';
-import {effectivePreferences} from './preferences.mjs';
+import {effectivePreferences,preferenceWishSlot} from './preferences.mjs';
 import {limitNativeHistory} from '../config/history-context.js';
 import {contractorMessages} from './contractor.mjs';
 import {resourcePromptSlots,configureRenderingResources} from '../rendering-resources.js';
@@ -63,7 +63,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const captured=referenceSnapshot,sources=await referenceSources(settings);
   if(referenceSnapshot!==captured||captured.source!==JSON.stringify(sources)||key!==chatKey(ctx())||settings.revision!==config.read().revision)fail('REFERENCE_BOOK_STALE','资料书在扫描后已变化，请重新生成');
  }
- function register(){const c=getContext();if(!c.macros?.register&&!c.registerMacro)fail('HOST_MACROS','宿主缺少动态资料宏接口');for(const name of materialNames){const handler=()=>active()?slots[name]??'':'';if(c.macros?.register)c.macros.register(name,{handler,description:'缇斯亚新版动态资料'});else c.registerMacro(name,handler,'缇斯亚新版动态资料');}}
+ function register(){const c=getContext();if(!c.macros?.register&&!c.registerMacro)fail('HOST_MACROS','宿主缺少动态资料宏接口');for(const name of materialNames){const handler=()=>active()?(name==='tisya_contractor_wish'?preferenceWishSlot(config.read(),slots):slots[name]??''):'';if(c.macros?.register)c.macros.register(name,{handler,description:'缇斯亚新版动态资料'});else c.registerMacro(name,handler,'缇斯亚新版动态资料');}}
  function historyLimit(){const count=effectivePreferences(config.read()).parameters.history_messages??getHistoryLimit();if(!Number.isSafeInteger(count)||count<0)fail('HISTORY_COUNT','历史聊天条数须为非负整数');return count;}
  function historyInput(chat,type='normal'){if(['quiet','impersonate'].includes(type))return null;if(chat===ctx().chat)fail('HISTORY_COPY','宿主应传入历史发送副本');const count=prepared?.historyLimit??historyLimit(),report=limitNativeHistory(chat,count,type,projectToolTurns);if(prepared)prepared.historyWindow=report;latest={...latest,historyWindow:report};return report;}
  async function ensureBound(options={}){assertIdle();return controller.ensureBound(async scope=>initializeState(await catalog(),scope),options);}

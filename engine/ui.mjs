@@ -34,6 +34,9 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  .tisya-matrix-config .tisya-settings-actions button{width:100%;min-width:0;min-height:44px;margin:0!important;padding:10px 12px}
  .tisya-matrix-config .tisya-settings-actions button:disabled{opacity:.5;cursor:default}
  .tisya-matrix-config .tisya-directory-buttons{display:flex;flex-wrap:wrap;gap:6px}
+ .tisya-matrix-config .tisya-sub-card button{min-height:44px;white-space:normal;max-width:100%}
+ .tisya-matrix-config .tisya-sub-card textarea{width:100%;resize:vertical}
+ .tisya-matrix-config .tisya-sub-card fieldset{max-width:100%;box-sizing:border-box}
  .tisya-matrix-config [role=alert]{color:#edbd9d}
  `;
  root.classList.add('tisya-matrix-config');root.replaceChildren(style,content,footer,dialogs);
@@ -44,7 +47,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  function report(error){if(disposed)return;lastError=error;status.setAttribute('role','alert');status.textContent=error?.message||String(error);onError(error);}
  function changed(kind='config'){
   if(kind==='form')formDirty=!!formDraft&&Object.keys(formDraft.values).length>0;
-  else dirty=JSON.stringify(config)!==savedFingerprint||!!resourceDraft?.isDirty()||!!preferenceDraft&&preferenceTextChanges(preferenceDraft.before,preferenceDraft.rows).length>0;
+  else dirty=JSON.stringify(config)!==savedFingerprint||!!resourceDraft?.isDirty()||!!preferenceDraft&&JSON.stringify(preferenceDraft.before)!==JSON.stringify(preferenceDraft.rows);
   status.setAttribute('role','status');status.textContent=hasChanges()?'有未保存修改':'';syncActions();
  }
  function run(fn){
@@ -136,8 +139,8 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
   if(tab==='preferences'){
-   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows)};}
-   renderPreferences(document,body,{config,editor:preferenceDraft,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
+   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
+   renderPreferences(document,body,{config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
   }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el});
   if(tab==='tags'){

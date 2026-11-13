@@ -1,7 +1,7 @@
 import {applyGeneration,assertGeneration,validateGeneration} from './generation.mjs';
 import {storyAvatar,projectDatabaseIdentity} from './identity.mjs';
 import {validateStoryLibraries} from './template-book.mjs';
-import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences} from './preferences.mjs';
+import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences,preferenceWishSlot} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
 import {applyOutputConfiguration} from './output-config.mjs';
 import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
@@ -55,6 +55,7 @@ export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
   if(next.contextKey!==undefined&&next.contextKey!==scope)fail('CONFIG_SCOPE','配置草稿属于另一聊天，请重新打开配置');
   if(next.revision!==before.revision)fail('CONFIG_CONFLICT','配置已被其他页面更新，请重新打开');
   validate(next);
+  for(const [id,row]of Object.entries(before.playDefaults?.textOverrides??{})){const updated=next.playDefaults?.textOverrides?.[id];if(row.group==='USER'&&updated&&updated.evidence_quote!==row.evidence_quote)fail('PREFERENCE_EVIDENCE','原始反馈不可被改写；请另建反馈条目');}
   const value=clone(next);value.tags=validateTags(value.tags);value.aliases=[...before.aliases];if(JSON.stringify(value.tags)!==JSON.stringify(before.tags))value.aliases.push(before.tags);value.aliases=[...new Map(value.aliases.map(a=>[JSON.stringify(a),a])).values()];value.stories??={};value.stories[scope]=value.story;delete value.story;delete value.contextKey;value.revision++;
   const undoGeneration=applyGeneration(c,value.generation);saving=true;c.extensionSettings[CONFIG_KEY]=value;let confirmed=false;
   try{if(await persist()!==true)fail('CONFIG_SAVE','宿主尚未确认配置保存');confirmed=true;if(key()!==scope||getContext().extensionSettings!==c.extensionSettings)fail('CONFIG_SCOPE','保存期间聊天已切换；已停止当前配置操作，请重新核对');if(c.extensionSettings[CONFIG_KEY]!==value)fail('CONFIG_CONFLICT','保存期间配置已被其他位置替换');assertGeneration(c,value.generation);}
@@ -76,6 +77,7 @@ export function compilePromptText(text,config,slots={}){
 }
 export function compilePrompts(source,config,slots){
  const out=clone(source);
+ slots={...slots,tisya_contractor_wish:preferenceWishSlot(config,slots)};
  for(const p of out.prompts){
   if(Object.hasOwn(config.prompts,p.identifier))p.content=config.prompts[p.identifier];
   else if(typeof p.content==='string')p.content=resolveProseStyleText(p.identifier,p.content);

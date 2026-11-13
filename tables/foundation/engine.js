@@ -153,6 +153,7 @@ export function createSheetEngine(catalog, validateValue) {
  function plainInput(parts,source,refs,rules={}){
   const out=['档案：'+parts[0].ownerName,'按资料填写，保留分组、行号和字段名，每行填一个字段。字段名后可用冒号；未知留空，只返回填好的内容。'];
   if(parts.some(p=>p.cells.some(c=>listType(c.definition))))out.push('列表格多项用“；”分隔，明确没有条目填“无”；普通文字中的标点原样保留。');
+  if(parts.some(p=>p.cells.some(c=>c.definition.multiline)))out.push('长文本字段：换行写\\n，字面反斜杠写\\\\；仍将完整内容填写在同一字段行。');
   if(rules.table)out.push(rules.table);if(rules.columns?.B)out.push(rules.columns.B);
   const all=parts.flatMap(p=>p.cells);for(const type of new Set(all.map(c=>c.definition.type)))if(rules.types?.[type])out.push(rules.types[type]);
   if(all.some(c=>['ref','refs'].includes(c.definition.type)))out.push('关联格填写已登记名称：'+refs.map(x=>x.显示).join('；')+'。同名对象使用所列完整名称。');
@@ -222,7 +223,7 @@ export function createSheetEngine(catalog, validateValue) {
   else if(d.type==='boolean'){check(['是','否','true','false'].includes(raw),'请填是或否：'+c.label);value=['是','true'].includes(raw);}
   else if(d.type==='enum')value=raw;
   else if(['json','array','map','object'].includes(d.type)){value=JSON.parse(raw);}
-  else throw Error('未支持的单元格类型');return value;
+  else throw Error('未支持的单元格类型');if(d.type==='text'&&d.multiline)value=value.replace(/\\(\\|n)/g,(_,c)=>c==='n'?'\n':'\\');return value;
  }
  function parsePlain(ticket,text){
   check(typeof text==='string','请粘贴填好的文本');let input=text.trim();

@@ -89,6 +89,15 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
   const author=await readAuthorSource(reference);if(reference.digest)check(reference.digest===author.digest,'来源已变化，请重新读取后提炼');if(author.definition)return previewSourceImport(author);
   return {kind:'source-extraction',requiresExtraction:true,mode:'extend',source:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
  }
+ async function previewAuthorSource(input){
+  assertIdle();const key=scope(),managed=builtins?.bookNames?.()??{};
+  check(![managed.templates??templateBookName(config.read()),managed.beauty??'缇斯亚美化书'].includes(input.book),'定义专用书不能保存简单人物');
+  const plan=await books.prepareAuthorSource(input);check(key===scope(),'聊天已切换，人物原文未保存');return {scope:key,plan};
+ }
+ async function saveAuthorSource(draft){
+  assertIdle();const guard=()=>check(draft.scope===scope(),'聊天已切换，未覆盖其他聊天的角色来源');guard();
+  return books.commitAuthorSource(draft.plan,{guard});
+ }
  const archiveReference=source=>({book:source.book,uid:source.uid,definitionId:source.definition.id,version:source.definition.revision,digest:source.digest,definitionDigest:digest(source.definition),operationId:source.definition.operationId??null,kind:source.definition.kind});
  function isInstantiatedFrom(snapshot,row,source,record){const ref=archiveReference(source),same=link=>link?.book===ref.book&&String(link.uid)===String(ref.uid)&&link.definitionId===ref.definitionId&&link.version===ref.version&&link.definitionDigest===ref.definitionDigest;if(same(row.metadata?.sourceDefinition))return true;const owns=link=>!link?.records||link.records.some(value=>value.tableId===record.tableId&&value.recordId===record.recordId);return Object.values(snapshot.state.runtime?.receipts??{}).some(receipt=>{const saved=receipt.result?.source,links=[saved?.sourceArchive,...(saved?.sourceArchive?.entries??[]),...(saved?.sourceArchives??[])];return links.some(link=>same(link)&&owns(link));});}
  async function definitionClosure(source,snapshot){
@@ -171,5 +180,5 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  async function repairCreation(saved,options={}){
   check(creator?.repair,'待修服务尚未接入；原始内容与已保存条目仍保留');rejectLegacySource(saved?.repairContext??saved?.draft??saved);return creator.repair(saved,options);
  }
- return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewSourceImport,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceExtraction,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
+ return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewAuthorSource,saveAuthorSource,previewSourceImport,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceExtraction,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
 }

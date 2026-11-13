@@ -11,6 +11,7 @@ import {mountMatrixIdentity} from '../engine/identity-ui.mjs';
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
 const copy=structuredClone;
 let serial=0;
+function simpleField(f,key,value){const node=f.root.querySelector('[data-simple-core-field="'+key+'"]');assert(node,key);node.value=value;node.dispatchEvent(new f.window.Event('input'));}
 async function fixture({reply}={}){
  const original='阿青是河口旅人，习惯先听人说话。',books=new Map([['角色来源',[{uid:3,name:'【角色】阿青',content:original,enabled:false}]]]),disk=new Map();
  const ctx={chatId:'recovery-ui-'+(++serial),characterId:0,characters:[{avatar:'world.png'}],chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>true};
@@ -126,5 +127,34 @@ test('source extraction keeps existing receipt-backed records unchanged and reje
   assert.equal(route.mode,'extend');assert.equal(route.source.revisionTarget,undefined);assert.equal(route.source.content,f.original);
   await assert.rejects(f.roles.createDraft({...route,source:{...route.source,revisionTarget:{entityId:'old-dossier',dossierId:'old-dossier'}}}),/旧迁移目标已退役/);
   assert.equal(f.roles.previewSourceRepair,undefined);assert.deepEqual(await f.database.read(),before);assert.deepEqual(f.books.get('角色来源'),book);assert.equal(f.archiveWrites(),0);
+ }finally{await f.close();}
+});
+
+test('simple core prose creates and edits through the real identity buttons, then survives reopening without touching runtime records',async()=>{
+ const f=await fixture();try{
+  const state=await f.database.read();await f.mount();await f.pick('[data-role-book]','角色来源');await f.click('新建简单基点人物');
+  simpleField(f,'name','阿墨');simpleField(f,'content','只想先写两句话。\n不强制填写表单。');
+  assert.equal(f.books.get('角色来源').length,1);assert.equal(f.view.requestLeave().allowed,false);
+  assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.books.get('角色来源').length,2);assert.deepEqual(await f.database.read(),state);
+  const row=f.books.get('角色来源')[1];assert.equal(row.content,'只想先写两句话。\n不强制填写表单。');assert.equal(row.name,'【角色】阿墨');
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);await f.click('编辑简单基点人物');simpleField(f,'content','修订后的完整原文。');
+  assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.books.get('角色来源')[1].uid,row.uid);assert.equal(f.books.get('角色来源')[1].content,'修订后的完整原文。');assert.equal(f.books.get('角色来源')[0].content,f.original);
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);await f.click('编辑简单基点人物');assert.equal(f.root.querySelector('[data-simple-core-field="content"]').value,'修订后的完整原文。');await f.view.discardDraft();assert.equal(f.view.state().dirty,false);
+ }finally{await f.close();}
+});
+test('simple core rejects concurrent edits and preserves input; uncertain saves retry once without duplicate entries',async()=>{
+ const f=await fixture();try{
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);await f.click('编辑简单基点人物');simpleField(f,'content','本页草稿');f.books.get('角色来源')[0].content='另一个页面保存';
+  assert.equal(await f.view.saveDraft(),false);assert.equal(f.view.exportDraft().authorDraft.content,'本页草稿');assert.equal(f.books.get('角色来源')[0].content,'另一个页面保存');await f.view.discardDraft();
+  await f.click('新建简单基点人物');simpleField(f,'name','小白');simpleField(f,'content','完整原文');f.failArchive(true);
+  assert.equal(await f.view.saveDraft(),false);assert.equal(f.view.exportDraft().authorSavePending,true);assert.equal(await f.view.discardDraft(),false);const operation=f.view.exportDraft().authorPlan.plan.operationId;
+  f.failArchive(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.archiveWrites(),1);assert.equal(f.books.get('角色来源').length,2);assert(operation);assert.equal(f.commits.length,0);
+ }finally{await f.close();}
+});
+test('simple core rejects cross-chat saves and typed definition overwrite',async()=>{
+ const f=await fixture();try{
+  const draft=await f.roles.previewAuthorSource({book:'新基点书',name:'阿墨',content:'两行设定'});f.ctx.chatId+='-other';await assert.rejects(()=>f.roles.saveAuthorSource(draft),/聊天已切换/);assert.equal(f.books.has('新基点书'),false);
+  const definition={format:'tisya.matrix-definition/1',kind:'character',id:'id',revision:1,name:'定义',matrix:{changes:[{tableId:'T_CHAR_DOSSIER',recordId:'id',values:{name:'定义'}}]}};
+  f.books.set('规范书',[{uid:0,name:'【角色】定义',content:JSON.stringify(definition),enabled:false}]);const before=await f.roles.readSource({book:'规范书',uid:0});await assert.rejects(()=>f.roles.previewAuthorSource({book:'规范书',uid:0,name:'替换',content:'不能覆盖',before}),/规范表单/);
  }finally{await f.close();}
 });
