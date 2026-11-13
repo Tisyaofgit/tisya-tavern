@@ -158,3 +158,33 @@ test('simple core rejects cross-chat saves and typed definition overwrite',async
   f.books.set('规范书',[{uid:0,name:'【角色】定义',content:JSON.stringify(definition),enabled:false}]);const before=await f.roles.readSource({book:'规范书',uid:0});await assert.rejects(()=>f.roles.previewAuthorSource({book:'规范书',uid:0,name:'替换',content:'不能覆盖',before}),/规范表单/);
  }finally{await f.close();}
 });
+
+test('use prose source supersedes an incomplete mode choice and binds the reviewed creation',async()=>{
+ const f=await fixture();try{
+  await f.mount();await f.pick('[data-avatar-mode]','bound');await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);
+  assert.equal(await f.view.saveDraft(),false);assert.match(f.root.textContent,/提炼并用作当前人物/);
+  await f.click('提炼并用作当前人物');assert.equal(f.routes.length,1);assert.equal(f.routes[0].bindOnSave,true);assert.equal(f.commits.length,0);
+  await f.mount(f.routes[0]);assert(f.root.querySelector('[data-creation-bind-intent]'));await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
+  assert.equal(await f.view.saveDraft(),true,f.root.textContent);const cfg=f.host.config.read(),snapshot=await f.database.read();assert.equal(cfg.story.userMode,'bound');assert.equal(cfg.story.userBinding.database,true);assert.equal(snapshot.state.tables.T_CHAR_DOSSIER[cfg.story.userBinding.dossierId].values.name,'阿青');
+  const {identitySlots}=await import('../engine/config.mjs');const slots=await identitySlots(f.ctx,cfg,'',snapshot);assert.match(slots.tisya_user_identity,/河口旅人/);assert.equal(slots.tisya_user_name,'阿青');
+  assert.equal(f.books.get('角色来源')[0].uid,3);assert.equal(JSON.parse(f.books.get('角色来源')[0].content).source.content,f.original);assert.equal(f.view.state().dirty,false);
+  await f.mount();assert.equal(f.root.querySelector('[data-role-entry]').value,cfg.story.userBinding.dossierId);
+ }finally{await f.close();}
+});
+
+test('saved source character resumes a failed binding after a cold view without creating twice',async()=>{
+ const f=await fixture();try{
+  const source=await f.roles.readSource({book:'角色来源',uid:3});await f.mount({kind:'character',goal:'使用阿青',source,destination:{book:'角色来源',uid:3},bindOnSave:true});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
+  const save=f.host.config.save;f.host.config.save=async()=>{throw Error('绑定确认中断');};assert.equal(await f.view.saveDraft(),false);assert.match(f.root.textContent,/当前人物绑定未完成/);assert.equal(f.commits.filter(c=>c.source.kind==='creation').length,1);
+  f.host.config.save=save;await f.mount();assert(f.root.querySelector('[data-creation-recovery]'));assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.commits.filter(c=>c.source.kind==='creation').length,1);assert.equal(f.archiveWrites(),1);assert.equal(f.host.config.read().story.userMode,'bound');
+ }finally{await f.close();}
+});
+
+test('source-use binding intent does not replace a concurrently saved protagonist mode',async()=>{
+ const f=await fixture();try{
+  const source=await f.roles.readSource({book:'角色来源',uid:3});await f.mount({kind:'character',goal:'使用阿青',source,destination:{book:'角色来源',uid:3},bindOnSave:true});await f.click('生成表单草稿');f.confirm('[data-creation-confirm]');
+  const save=f.host.config.save;f.host.config.save=async()=>{throw Error('绑定确认中断');};assert.equal(await f.view.saveDraft(),false);f.host.config.save=save;
+  await f.roles.bind({mode:'ensemble'});await f.mount();assert.equal(await f.view.saveDraft(),false);assert.match(f.root.textContent,/当前聊天选择已改变/);assert.equal(f.host.config.read().story.userMode,'ensemble');assert.equal(f.commits.filter(c=>c.source.kind==='creation').length,1);
+  await f.click('保留当前选择，结束绑定');assert.equal(f.host.config.read().story.userMode,'ensemble');assert.equal(await f.roles.pendingCreation(),null);await f.mount();assert.equal(f.root.querySelector('[data-creation-recovery]'),null);assert.equal(Object.keys((await f.database.read()).state.tables.T_CHAR_DOSSIER).length,1);
+ }finally{await f.close();}
+});

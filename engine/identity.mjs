@@ -177,8 +177,31 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  }
  async function validateCreation(draft){check(creator?.validate,'统一创作预检服务尚未接入');rejectLegacySource(draft);return creator.validate(draft);}
  async function saveCreation(draft){check(creator?.save,'统一创作保存服务尚未接入');rejectLegacySource(draft);return creator.save(draft);}
+ async function pendingCreation(){
+  const pending=await creator?.pending?.();if(pending)return pending;
+  const key=scope(),snapshot=await database.read();check(key===scope(),'聊天已切换，请重新读取');if(snapshot===null||snapshot===undefined)return null;
+  check(snapshot.state,'当前表单读取结果损坏，人物绑定恢复已停止');
+  const receipts=snapshot.state.runtime?.receipts??{},unfinished=[];
+  for(const receipt of Object.values(receipts)){
+   const saved=receipt.result?.source?.kind==='creation-intent'?receipt.result.source.draft:null;
+   if(saved?.bindOnSave&&receipts[saved.operationId]&&!receipts[saved.operationId+':character-binding'])unfinished.push(saved);
+  }
+  check(unfinished.length<=1,'当前聊天有多份人物绑定待核对，请先查看已保存档案');
+  return unfinished.length?structuredClone(unfinished[0]):null;
+ }
+ async function completeCreationBinding(draft,{keepCurrent=false}={}){
+  assertIdle();const key=scope(),snapshot=await read(),receipts=snapshot.state.runtime?.receipts??{};
+  const saved=receipts[draft.operationId+':creation-intent']?.result?.source?.draft,binding=saved?.proposal?.matrix?.binding;
+  check(saved?.bindOnSave&&saved.contextKey===snapshot.contextKey&&receipts[draft.operationId]?.result?.source?.kind==='creation','人物使用意图与已保存档案不匹配');
+  check(sameValue(binding,draft.proposal?.matrix?.binding),'人物使用目标已变化，请核对已保存档案');
+  const current=storyAvatar(config.read());if(!keepCurrent)check(current.mode==='bound'&&current.binding?.database&&current.binding.dossierId===binding.dossierId&&current.binding.entityId===binding.entityId,'当前人物绑定尚未确认');
+  check(key===scope(),'聊天已切换，未确认另一聊天的人物绑定');
+  const operationId=draft.operationId+':character-binding';
+  const result=await database.commit({operationId,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,changes:[],source:{kind:'creation-binding',operationId:draft.operationId,binding:structuredClone(binding),resolution:keepCurrent?'kept-current':'bound'}});
+  check(result?.contextKey===snapshot.contextKey&&result.state?.runtime?.receipts?.[operationId],'人物绑定收尾未获确认，已保存档案与选择保留');return result;
+ }
  async function repairCreation(saved,options={}){
   check(creator?.repair,'待修服务尚未接入；原始内容与已保存条目仍保留');rejectLegacySource(saved?.repairContext??saved?.draft??saved);return creator.repair(saved,options);
  }
- return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewAuthorSource,saveAuthorSource,previewSourceImport,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceExtraction,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation:()=>creator?.pending?.()??Promise.resolve(null),builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
+ return {database:true,scope,list,bind,sourceChoices,readSource:readAuthorSource,previewAuthorSource,saveAuthorSource,previewSourceImport,previewEdit,validateEdit,commitEdit,previewCreate,previewSourceExtraction,edit:previewEdit,create:previewCreate,ensureBook:async()=>DATABASE_LABEL,ensureTemplates,resources,worldDefinitions:async()=>{const r=await resources();return r.worlds;},saveResources,phoneProfile,creationTask:()=>creator?.creationTask?.()??null,subscribeCreation:fn=>creator?.subscribeCreation?.(fn)??(()=>{}),cancelCreation:()=>creator?.cancelCreation?.()??false,rememberCreationView:view=>creator?.rememberCreationView?.(view),creationView:()=>creator?.creationView?.()??null,clearCreationView:()=>creator?.clearCreationView?.(),createDraft,repairCreation,validateCreation,saveCreation,pendingCreation,completeCreationBinding,builtinStatus:()=>builtins?.status?.(),resolveBuiltinConflict:args=>{check(builtins,'内置书服务尚未接入');return builtins.resolveConflict(args);}};
 }
