@@ -1,0 +1,30 @@
+{
+  "task": "prose-character-adoption",
+  "state": "paused",
+  "started_utc": "2026-11-13T12:37:48.695399+00:00",
+  "deadline_utc": "2026-11-13T13:37:48.695399+00:00",
+  "save_by_utc": "2026-11-13T13:22:48.695399+00:00",
+  "authorization": "我允许浏览器授权，继续",
+  "previous_window": {
+    "task": "prose-character-adoption",
+    "state": "active",
+    "started_utc": "2026-11-13T10:57:03Z",
+    "deadline_utc": "2026-11-13T11:55:25Z",
+    "save_by_utc": "2026-11-13T11:35:25Z",
+    "basis": "本会话首个读取时钟为10:57:03Z；并行W21仍为active，保守沿其11:55:25Z截止，不重置续接期限。",
+    "scope": "基点原文人物直接采用修复"
+  },
+  "resumed_utc": "2026-11-13T12:46:42.633806+00:00",
+  "resumed_from": "/workspace/scratch/cf5099b47f43",
+  "current_authorization": "试了一下发现好像只读就是因为用浏览器了（费解）你继续",
+  "closed_utc": "2026-11-13T13:01:46.190866+00:00",
+  "scope": "完成原文人物直接采用候选的分支保存、完整源恢复核验与接续；未追加新功能",
+  "automatic_continue": false,
+  "history": [
+    {
+      "event": "screenshot_continuation_completed",
+      "utc": "2026-11-13T13:01:46.190866+00:00",
+      "deadline_preserved": "2026-11-13T13:37:48.695399+00:00"
+    }
+  ]
+}

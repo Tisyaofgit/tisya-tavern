@@ -1,0 +1,50 @@
+{
+  "task": "prose-character-adoption",
+  "status": "candidate_saved_browser_host_acceptance_pending",
+  "utc": "2026-11-13T13:01:46.190866+00:00",
+  "local_time": "2026-11-13T21:01:46.190866+08:00",
+  "repository": "Tisyaofgit/tisya-tavern",
+  "branch": "work/prose-character-adoption-20261113T123748Z",
+  "source_commit": "9a3aac185cadfccb606e0bdb8cdb1d425e44999d",
+  "source_tree": "9828fdc9312d74632e504911e3d805622d9b7a7f",
+  "source_manifest": "docs/validation/prose-character-adoption-20261113/source-manifest.json",
+  "source_files_verified": 1808,
+  "source_files_changed_this_continuation": false,
+  "base_main": "aba3858675cd60c204449e8f95e890f1995b646d",
+  "main_updated": false,
+  "checks": {
+    "historical_full_regression": {
+      "pass": 2588,
+      "fail": 0,
+      "exit_receipt": "missing from original run"
+    },
+    "previous_continuation_targeted": {
+      "pass": 52,
+      "fail": 0,
+      "exit": 0
+    },
+    "extension_build": "previous continuation passed, same bytes",
+    "empty_directory_restore": "passed this continuation",
+    "remote_tree": "all 1808 paths/modes/blob SHA match",
+    "browser": "prior attempts failed at socket creation before page opened; not rerun without environment change",
+    "android": "not tested",
+    "real_host": "not tested",
+    "real_model": "not tested"
+  },
+  "tasks": {
+    "RAW-USE": "implemented",
+    "RAW-VERIFY": "production services and DOM fixtures verified; browser/host/Android pending",
+    "RAW-SAVE": "branch created and read back; local complete recovery verified; master blueprint writeback performed after this checkpoint commit"
+  },
+  "next": [
+    "Run tests/browser-prose-identity.html in a browser-capable environment at 360/390/709 px, select 基点书/原文旅人, preview/confirm/save/reopen/check final request.",
+    "Require selectedSourceOccurrences=1, unselectedSourcePresent=false, wholeBookEntries=0, sourceUnchanged=true and accepted=true.",
+    "Check actual Tavern host and Android; reconcile overlapping identity changes with the separate source-character and unified-sources candidates before a combined release."
+  ],
+  "parallel_work_preserved": [
+    "work/source-character-use-20261113T111142Z@70380aa0f67949d7dbce70a9753fe345eb173be3",
+    "work/unified-sources-20261113T102525Z",
+    "separate codex mirror UI branch"
+  ],
+  "read_only_chat_cause": "unknown; Chromium socket failure does not establish causality"
+}
