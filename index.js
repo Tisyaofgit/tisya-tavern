@@ -61,8 +61,8 @@ import {resetNativePanelSources} from './native-panels.js';
 import {immersiveState,immersiveSupported} from './fullscreen.js';
 import {createCommunication,mountCommunication,readTurnDirection,syncTurnDirectionEditor} from './communication.js';
 import {createRevisionController,candidatePosition} from './revision.js';
-import {startReaderCache,clearReaderCache,prepareReaderMessage,reconcileReaderCache,readerCacheGeneration} from './reader.js';
-import {messageCacheOwner} from './message-cache.js';
+import {startReaderCache,clearReaderCache,reconcileReaderCache} from './reader.js';
+import {createMessagePreparation} from './message-preparation.js';
 import {mountParagraphActions,LONG_PRESS_TOOLS,longPressSlots} from './paragraph-actions.js';
 import {mountRevisionEditor} from './revision-ui.js';
 import {branchChat} from '/scripts/bookmarks.js';
@@ -879,9 +879,7 @@ function init() {
         getStreamingSource:(node,msg)=>streamingMessageSource(context(),node,msg),
         getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar)),
         getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
-        getCacheKey:msg=>JSON.stringify([context().chatId?worldKey(context()):null,messageCacheOwner(msg),msg.mes,getDisplay().显示角色心理===true,getPlayerName(),readerCacheGeneration(),isGenerating()]),
-        getStateKey:msg=>JSON.stringify([context().chatId?worldKey(context()):null,messageCacheOwner(msg),msg.mes]),
-        prepareMessage:msg=>context().chatId&&!isGenerating()?prepareReaderMessage({scope:worldKey(context()),owner:messageCacheOwner(msg),source:msg.mes},{showPsychology:getDisplay().显示角色心理===true,playerName:getPlayerName()}):null,
+        ...createMessagePreparation({getScope:()=>context().chatId?worldKey(context()):null,getDisplay,getPlayerName}),
         formatPreparedBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:body}),
         getNativeDisplay:(...args)=>nativeDisplay.project(...args),getRenderKey:(...args)=>nativeDisplay.key(...args),
         preferNative:(message,native,data)=>preferNativeBeauty({message,native,structured:data.structured,...nativeDisplay.state()}),

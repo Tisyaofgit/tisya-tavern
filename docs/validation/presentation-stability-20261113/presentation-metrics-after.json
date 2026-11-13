@@ -1,0 +1,23 @@
+{
+  "utc": "2026-11-13T05:46:23.021Z",
+  "kind": "Node + Happy DOM simulation; not browser or Android",
+  "otherReplyLifecycle": {
+    "notifications": 4,
+    "remounts": 0,
+    "visibleGaps": 0,
+    "cacheReads": 1,
+    "elapsedMs": 101.7681
+  },
+  "sameOutputVariables": {
+    "notifications": 4,
+    "remounts": 0,
+    "elapsedMs": 8.253992999999923
+  },
+  "scrollInput": {
+    "messages": 600,
+    "deferred": 590,
+    "touchEvents": 200,
+    "deferredMembershipChecks": 0,
+    "elapsedMs": 2.107163000000014
+  }
+}
