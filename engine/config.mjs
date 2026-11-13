@@ -81,7 +81,7 @@ export function compilePrompts(source,config,slots){
   else if(typeof p.content==='string')p.content=resolveProseStyleText(p.identifier,p.content);
  }
  if(slots.tisya_output_configuration)applyOutputConfiguration(out.prompts,JSON.parse(slots.tisya_output_configuration));
- const parameters=applyPreferences(out.prompts,config);if(parameters.min_length!=null||parameters.max_length!=null)applyOutputConfiguration(out.prompts,parameters);
+ const parameters=applyPreferences(out.prompts,config,slots.tisya_preference_texts?JSON.parse(slots.tisya_preference_texts):{});if(parameters.min_length!=null||parameters.max_length!=null)applyOutputConfiguration(out.prompts,parameters);
  for(const p of out.prompts){if(p.marker)continue;
   // {{user}} names the bound protagonist. The native persona is injected once
   // into the contractor wish and cannot silently become the protagonist.

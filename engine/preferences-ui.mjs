@@ -1,15 +1,17 @@
+import {renderPreferenceText} from './preference-text-ui.mjs';
 import {PREFERENCE_GROUPS,effectivePreferences} from './preferences.mjs';
 import {storyAvatar} from './identity.mjs';
 import {selectControl} from './form-controls.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
 
-export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit}){
+export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit,editor}){
  const option=(label,value)=>{const n=document.createElement('option');n.textContent=label;n.value=value;return n;};
  let scope='story';
  const intro=el('p','选择叙事、文风、情节和人物表现。沿用预设会保留当前完整原文；明确选择后，下轮请求只在对应位置写入所选效果。');
  const scopes=el('select');scopes.className='text_pole';scopes.style.cssText='width:100%;min-width:0;max-width:100%';scopes.setAttribute('aria-label','偏好范围');
  for(const [id,label]of [['story','当前故事'],['global','所有故事默认']])scopes.append(option(label,id));
- const area=el('div');body.append(intro,field('偏好范围',scopes),area);
+ const area=el('div'),search=input('',()=>filter());search.setAttribute('aria-label','搜索偏好');search.placeholder='搜索名称或原文';body.append(intro,field('偏好范围',scopes),field('搜索偏好',search),area);
+ function filter(){const q=search.value.trim().toLocaleLowerCase();for(const box of area.querySelectorAll('[data-preference-group]')){box.hidden=!!q&&!box.textContent.toLocaleLowerCase().includes(q)&&![...box.querySelectorAll('textarea')].some(n=>n.value.toLocaleLowerCase().includes(q));if(q&&!box.hidden)box.parentElement.open=true;}}
  const owner=()=>scope==='global'?(config.playDefaults??={choices:{},parameters:{}}):(config.story.play??={choices:{},parameters:{}});
  const chosen=()=>scope==='global'?config.playDefaults??{}:effectivePreferences(config);
  const set=(id,value)=>{const target=owner();target.choices??={};target.choices[id]=value;changed();};
@@ -24,14 +26,15 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
    if(!group.multiple){
     const select=el('select');select.className='text_pole';select.style.cssText='width:100%;min-width:0;max-width:100%';select.setAttribute('aria-label',group.label);select.append(option('沿用完整预设',''));
     for(const choice of group.options)select.append(option(choice.label,choice.id));
-    select.value=selected??'';select.onchange=()=>set(group.id,select.value||null);box.append(selectControl(document,select));
+    select.value=selected??'';select.onchange=()=>{set(group.id,select.value||null);draw();};box.append(selectControl(document,select));
    }else{
     const note=el('small',selected==null?'当前沿用完整预设；勾选后采用本组勾选结果。':'当前采用本组勾选结果。');box.append(note);
     const checks=[];
-    for(const option of group.options){const check=el('input');check.type='checkbox';check.value=option.id;check.checked=Array.isArray(selected)&&selected.includes(option.id);check.setAttribute('aria-label',option.label);checks.push(check);check.onchange=()=>{set(group.id,checks.filter(i=>i.checked).map(i=>i.value));note.textContent='当前采用本组勾选结果。';};const row=field(option.label,check);row.classList.add('tisya-check-row');row.style.display='flex';row.style.alignItems='center';row.style.justifyContent='space-between';box.append(row);}
+    for(const option of group.options){const check=el('input');check.type='checkbox';check.value=option.id;check.checked=Array.isArray(selected)&&selected.includes(option.id);check.setAttribute('aria-label',option.label);checks.push(check);check.onchange=()=>{set(group.id,checks.filter(i=>i.checked).map(i=>i.value));note.textContent='当前采用本组勾选结果。';draw();};const row=field(option.label,check);row.classList.add('tisya-check-row');row.style.display='flex';row.style.alignItems='center';row.style.justifyContent='space-between';box.append(row);}
     box.append(button('沿用本组预设',()=>{set(group.id,null);draw();}),button('关闭本组',()=>{set(group.id,[]);draw();}));
    }
    if(scope==='story'&&Object.hasOwn(config.story.play?.choices??{},group.id))box.append(button('恢复默认继承',()=>{delete config.story.play.choices[group.id];changed();draw();}));
+   if(editor)renderPreferenceText(document,box,{group,scope,config,editor,changed,button,input,field,el});
    section.append(box);
   }
   const params=el('details');params.append(el('summary','语言与篇幅'));
@@ -40,7 +43,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
   }
 
   const history=el('fieldset');history.append(el('legend','历史可见记忆条数'));const limit=input(value.parameters?.history_messages??historyLimit?.()??50,v=>{const target=owner();target.parameters??={};if(v==='')delete target.parameters.history_messages;else target.parameters.history_messages=Number(v);changed();},{type:'number'});limit.min='0';limit.step='1';limit.setAttribute('aria-label','历史聊天条数（当前输入始终保留）');history.append(field('历史聊天条数（当前输入始终保留）',limit));area.append(history);
-  area.append(params);
+  area.append(params);filter();
  }
  scopes.onchange=()=>{scope=scopes.value;draw();};draw();
 }

@@ -43,7 +43,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
   const entries=Object.entries(rows);
   for(const [rid,r]of entries){
    if(!matrixRecordVisible(e.data,tid,rid,context,meta))continue;
-   if(tid==='T_PREF_OUTPUT_CONFIG')continue; // Compiled once through the selected output contract.
+   if(tid==='T_PREF_OUTPUT_CONFIG'||tid==='T_PREF_SELECTION_OPTIONS'&&r.values.option_version==='tisya.preference-text/1')continue; // Compiled once through the selected output contract.
    const fields=Object.fromEntries(schema.fields.map(f=>[f.key,f])),values={};
    for(const [key,v]of Object.entries(r.values)){
     const f=fields[key]??{},state=r.states[key];if(!fields[key]||!matrixFieldVisible(f,r,context,tid,e.data,rid))continue;

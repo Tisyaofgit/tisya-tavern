@@ -1,3 +1,4 @@
+import {preferenceTextRows,preferenceTextChanges,preferenceTextFields} from './preference-editor.mjs';
 import {renderPreferences,renderResources} from './preferences-ui.mjs';
 import {baseline,configuration} from './config.mjs';
 import {DEFAULT_TAGS,validateTags} from './tags.mjs';
@@ -13,7 +14,7 @@ const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tag
 export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
  let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
  let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
- let formDraft=null,resourceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
+ let formDraft=null,resourceDraft=null,preferenceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
  const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
  const content=el('div',null,'tisya-matrix-content'),footer=el('footer',null,'tisya-settings-actions'),status=el('p'),dialogs=el('div');
@@ -43,7 +44,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  function report(error){if(disposed)return;lastError=error;status.setAttribute('role','alert');status.textContent=error?.message||String(error);onError(error);}
  function changed(kind='config'){
   if(kind==='form')formDirty=!!formDraft&&Object.keys(formDraft.values).length>0;
-  else dirty=JSON.stringify(config)!==savedFingerprint||!!resourceDraft?.isDirty();
+  else dirty=JSON.stringify(config)!==savedFingerprint||!!resourceDraft?.isDirty()||!!preferenceDraft&&preferenceTextChanges(preferenceDraft.before,preferenceDraft.rows).length>0;
   status.setAttribute('role','status');status.textContent=hasChanges()?'有未保存修改':'';syncActions();
  }
  function run(fn){
@@ -85,20 +86,26 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
    if(!current)throw Error('本会话尚未接入，表单输入仍保留。');
    applyForm(new Runtime(current.state),edit);
   }
+  const preferenceChanges=preferenceDraft?preferenceTextChanges(preferenceDraft.before,preferenceDraft.rows):[];
+  if(preferenceChanges.length&&!preferenceDraft.database)throw Error('当前聊天表单尚未接入，原文草稿仍保留；请先接入聊天。');
   let savedForm=false;
   try{
+   if(preferenceChanges.length){
+    const result=await service.commitDatabase({operationId:preferenceDraft.operationId??=crypto.randomUUID(),expectedRevision:preferenceDraft.database.revision,contextKey:preferenceDraft.database.contextKey,changes:preferenceChanges,schema:[{id:'T_PREF_SELECTION_OPTIONS',fields:preferenceTextFields}],source:{kind:'preference-editor'}});
+    preferenceDraft.database=result;preferenceDraft.before=structuredClone(preferenceDraft.rows);preferenceDraft.operationId=null;savedForm=true;
+   }
    if(edit){await service.mutate(engine=>applyForm(engine,edit));selectedRecord=edit.recordId||edit.newId;formDirty=false;formDraft=null;savedForm=true;}
-   if(dirty){config=await service.config.save(next);savedFingerprint=JSON.stringify(config);dirty=false;resourceDraft=null;}
+   if(dirty){config=await service.config.save(next);savedFingerprint=JSON.stringify(config);dirty=false;resourceDraft=null;preferenceDraft=null;}
   }catch(error){
    // One store may have completed. Do not retry its write or clear the other draft.
-   if(savedForm&&!disposed){await render();throw new Error('表单记录已保存，配置保存未完成：'+error.message,{cause:error});}
+   if(savedForm&&!disposed){throw new Error('表单记录已保存，配置保存未完成：'+error.message,{cause:error});}
    throw error;
   }
   if(!disposed){await render();status.setAttribute('role','status');status.textContent='已保存，本页修改下次使用时生效。';}
   return true;
  }
  async function discard(){
-  const saved=service.config.read();config=saved;savedFingerprint=JSON.stringify(saved);dirty=false;formDirty=false;formDraft=null;resourceDraft=null;
+  const saved=service.config.read();config=saved;savedFingerprint=JSON.stringify(saved);dirty=false;formDirty=false;formDraft=null;resourceDraft=null;preferenceDraft=null;
   await render();status.setAttribute('role','status');status.textContent='已取消修改，恢复到上次保存的内容。';return true;
  }
  const saveDraft=()=>run(save),discardDraft=()=>run(discard);
@@ -128,7 +135,10 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   for(const [id,name]of tabs){const b=routeButton(name,async()=>{tab=id;await run(render);});if(id===tab)b.onclick=()=>Promise.resolve(true);b.setAttribute('aria-current',String(tab===id));nav.append(b);}
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
-  if(tab==='preferences')renderPreferences(document,body,{config,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
+  if(tab==='preferences'){
+   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows)};}
+   renderPreferences(document,body,{config,editor:preferenceDraft,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
+  }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el});
   if(tab==='tags'){
    body.append(el('p','输入标签名即可统一更新输出骨架、预设引用与插件读取。已保存的旧回复继续使用原来的标签。'));
