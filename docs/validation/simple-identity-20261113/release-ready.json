@@ -1,0 +1,18 @@
+{
+  "utc": "2026-11-13T16:17:26.712885+00:00",
+  "baseline": "eca60e10c3cd3cedfa15e489982f0aaaffb228ae",
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.34-prose.2",
+  "testedFiles": 1819,
+  "testedBytesMatch": true,
+  "fullGate": {
+    "tests": 2596,
+    "pass": 2596,
+    "fail": 0,
+    "exitCode": 0
+  },
+  "browser": "launch blocked by socket permission, raw browser-resume.log retained",
+  "realHost": false,
+  "android": false,
+  "authorization": "用户：你继续，改完发布然后改小手机",
+  "next": "Publish binding repair, then inspect phone initialization and scope switching on the same services."
+}

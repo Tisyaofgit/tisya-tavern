@@ -825,7 +825,7 @@ test('cold-start source selection opens the production assistant and archives re
   const before=await f.w.Tisya.matrix.readDatabase();let page=await openIdentityFromSettings(f);
   editIdentityField(f,'[data-role-book]','首次基点','change');await settleIdentityRoute(f);
   editIdentityField(f,'[data-source-entry]','7','change');await settleIdentityRoute(f);
-  assert.match(page.querySelector('[data-source-books]').textContent,/原文与 \{\{user\}\} 保留/);
+  assert.match(page.querySelector('[data-simple-core-field=content]').value,/原文与 \{\{user\}\} 保留/);
   await pressRouteButton(f,page,'交给缇斯亚助手提炼');page=assistantCreationRoot(f);
   assert.equal(page.querySelector('[data-creation-kind]').value,'character');
   assert.equal(page.querySelector('[data-creation-persona]').checked,false);

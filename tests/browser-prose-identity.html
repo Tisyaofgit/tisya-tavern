@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>基点人物原文采用验证</title><link rel="stylesheet" href="/shell.css">
+<title>人物一页绑定与滚动验证</title><link rel="stylesheet" href="/shell.css">
 <style>body{margin:0;background:#06261e;color:#e1e8dc;font:16px system-ui}#controls{padding:12px;display:flex;flex-wrap:wrap;gap:8px}#tisya-shell{position:relative;pointer-events:auto;width:390px;max-width:100%;margin:auto}#app{--tisya-settings-height:780px}#result{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px}button{min-height:44px}#controls button{padding:8px}</style>
 <body class="tisya-active">
 <header id="controls"><button id="narrow">360px</button><button id="phone">390px</button><button id="wide">709px</button><button id="reopen">重新打开</button><button id="request">检查最终请求</button></header>
@@ -20,9 +20,10 @@ document.querySelector('#request').onclick=run(async()=>{
  const lore={globalLore:fixture.data.books.基点书.map(row=>({...row,world:'基点书'})),characterLore:[],personaLore:[],chatLore:[]};await fixture.host.entriesLoaded(lore);
  const payload=fixture.payload();await fixture.host.payloadReady(payload);
  const text=payload.messages.map(m=>m.content).join('\n');
- const occurrences=text.split(fixture.text).length-1;
+ const binding=fixture.host.config.read().story.userBinding,selected=fixture.data.books[binding?.book]?.find(row=>String(row.uid)===String(binding.uid));
+ const occurrences=selected?.content?text.split(selected.content).length-1:0;
  result.textContent=JSON.stringify({accepted:fixture.host.accepted(),selectedSourceOccurrences:occurrences,unselectedSourcePresent:text.includes('不得注入的其他人物'),wholeBookEntries: lore.globalLore.length,sourceUnchanged:fixture.data.books.基点书[0].content===fixture.text,binding:fixture.host.config.read().story.userBinding},null,2);
 });
-result.textContent='已加载生产身份页面；测试世界书与存档仅保存在本页浏览器。';
+result.textContent='已加载生产身份页面。选绑定 → 选基点书和角色/自定义 → 可编辑名称与原文 → 保存。切换书和人物时核对滚动位置；保存后重新打开并检查最终请求。测试世界书与存档仅保存在本页浏览器。';
 }catch(error){result.textContent=error.stack;}
 </script></body></html>

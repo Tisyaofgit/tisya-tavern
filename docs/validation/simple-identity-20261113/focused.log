@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: book/character selection updates stable controls without replacing the scroller or unrelated content
+ok 1 - book/character selection updates stable controls without replacing the scroller or unrelated content
+  ---
+  duration_ms: 1460.50505
+  type: 'test'
+  ...
+# Subtest: save keeps live contents until ready, restores scroll, open optional sections, focus and caret
+ok 2 - save keeps live contents until ready, restores scroll, open optional sections, focus and caret
+  ---
+  duration_ms: 1017.338087
+  type: 'test'
+  ...
+# Subtest: renaming a selected character preserves original line endings, UID, unrelated entries and unknown metadata
+ok 3 - renaming a selected character preserves original line endings, UID, unrelated entries and unknown metadata
+  ---
+  duration_ms: 1414.647587
+  type: 'test'
+  ...
+# Subtest: inline prose edit saves and rebinds its new digest in one action, surviving a cold reopen
+ok 4 - inline prose edit saves and rebinds its new digest in one action, surviving a cold reopen
+  ---
+  duration_ms: 1328.439478
+  type: 'test'
+  ...
+# Subtest: custom character creates and binds in one save; binding failure retries the same saved UID
+ok 5 - custom character creates and binds in one save; binding failure retries the same saved UID
+  ---
+  duration_ms: 1255.32828
+  type: 'test'
+  ...
+# Subtest: source conflicts keep inline edits and saved binding; cancel restores the saved selection
+ok 6 - source conflicts keep inline edits and saved binding; cancel restores the saved selection
+  ---
+  duration_ms: 998.619281
+  type: 'test'
+  ...
+# Subtest: failed source read leaves the previous selection, controls and input intact
+ok 7 - failed source read leaves the previous selection, controls and input intact
+  ---
+  duration_ms: 934.842349
+  type: 'test'
+  ...
+# Subtest: choosing empty custom then another character requires no discard or extra confirmation
+ok 8 - choosing empty custom then another character requires no discard or extra confirmation
+  ---
+  duration_ms: 860.720206
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10027.411449

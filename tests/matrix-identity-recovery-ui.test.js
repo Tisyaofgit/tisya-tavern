@@ -46,7 +46,7 @@ test('existing typed records require a reviewed diff and retry without rewriting
  const f=await fixture();try{
   await seedLegacy(f);await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);
   assert.equal(f.root.querySelector('[data-source-repair]'),null);assert(![...f.root.querySelectorAll('button')].some(node=>node.textContent==='按原文整理旧档案'));assert.equal(f.commits.length,1);
-  f.field('public_identity','河口旅人');await f.click('预览档案变更');assert(f.root.querySelector('[data-identity-draft]'));assert.equal(await f.view.saveDraft(),false);assert.equal(f.commits.length,1);
+  await f.pick('[data-role-entry]','old-dossier');f.field('public_identity','河口旅人');await f.click('预览档案变更');assert(f.root.querySelector('[data-identity-draft]'));assert.equal(await f.view.saveDraft(),false);assert.equal(f.commits.length,1);
   f.confirm('[data-database-confirm]');f.failRepair(true);assert.equal(await f.view.saveDraft(),false);const operation=f.view.exportDraft().recordDraft.id;assert.match(f.root.textContent,/表单保存中断/);
   f.failRepair(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);const saved=await f.database.read(),row=saved.state.tables.T_CHAR_DOSSIER['old-dossier'];
   assert.equal(row.values.public_identity,'河口旅人');assert.equal(row.values.manifest,f.original);assert.equal(Object.keys(saved.state.tables.T_CHAR_DOSSIER).length,1);assert.equal(Object.keys(saved.state.tables.T_SYS_ENTITIES).length,1);
@@ -130,23 +130,23 @@ test('source extraction keeps existing receipt-backed records unchanged and reje
  }finally{await f.close();}
 });
 
-test('simple core prose creates and edits through the real identity buttons, then survives reopening without touching runtime records',async()=>{
+test('simple core prose creates and edits through the inline identity editor, then survives reopening without touching runtime records',async()=>{
  const f=await fixture();try{
-  const state=await f.database.read();await f.mount();await f.pick('[data-role-book]','角色来源');await f.click('新建简单基点人物');
+  const state=await f.database.read();await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]','__custom__');
   simpleField(f,'name','阿墨');simpleField(f,'content','只想先写两句话。\n不强制填写表单。');
   assert.equal(f.books.get('角色来源').length,1);assert.equal(f.view.requestLeave().allowed,false);
   assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.books.get('角色来源').length,2);assert.deepEqual(await f.database.read(),state);
   const row=f.books.get('角色来源')[1];assert.equal(row.content,'只想先写两句话。\n不强制填写表单。');assert.equal(row.name,'【角色】阿墨');
-  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);await f.click('编辑简单基点人物');simpleField(f,'content','修订后的完整原文。');
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);simpleField(f,'content','修订后的完整原文。');
   assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.books.get('角色来源')[1].uid,row.uid);assert.equal(f.books.get('角色来源')[1].content,'修订后的完整原文。');assert.equal(f.books.get('角色来源')[0].content,f.original);
-  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);await f.click('编辑简单基点人物');assert.equal(f.root.querySelector('[data-simple-core-field="content"]').value,'修订后的完整原文。');await f.view.discardDraft();assert.equal(f.view.state().dirty,false);
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',row.uid);assert.equal(f.root.querySelector('[data-simple-core-field="content"]').value,'修订后的完整原文。');await f.view.discardDraft();assert.equal(f.view.state().dirty,false);
  }finally{await f.close();}
 });
 test('simple core rejects concurrent edits and preserves input; uncertain saves retry once without duplicate entries',async()=>{
  const f=await fixture();try{
-  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);await f.click('编辑简单基点人物');simpleField(f,'content','本页草稿');f.books.get('角色来源')[0].content='另一个页面保存';
+  await f.mount();await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]',3);simpleField(f,'content','本页草稿');f.books.get('角色来源')[0].content='另一个页面保存';
   assert.equal(await f.view.saveDraft(),false);assert.equal(f.view.exportDraft().authorDraft.content,'本页草稿');assert.equal(f.books.get('角色来源')[0].content,'另一个页面保存');await f.view.discardDraft();
-  await f.click('新建简单基点人物');simpleField(f,'name','小白');simpleField(f,'content','完整原文');f.failArchive(true);
+  await f.pick('[data-role-book]','角色来源');await f.pick('[data-source-entry]','__custom__');simpleField(f,'name','小白');simpleField(f,'content','完整原文');f.failArchive(true);
   assert.equal(await f.view.saveDraft(),false);assert.equal(f.view.exportDraft().authorSavePending,true);assert.equal(await f.view.discardDraft(),false);const operation=f.view.exportDraft().authorPlan.plan.operationId;
   f.failArchive(false);assert.equal(await f.view.saveDraft(),true,f.root.textContent);assert.equal(f.archiveWrites(),1);assert.equal(f.books.get('角色来源').length,2);assert(operation);assert.equal(f.commits.length,0);
  }finally{await f.close();}

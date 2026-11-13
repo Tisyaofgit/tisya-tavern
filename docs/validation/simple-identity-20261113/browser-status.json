@@ -1,0 +1,12 @@
+{
+  "observedInThisWindow": true,
+  "engine": "Chromium via Playwright",
+  "stage": "launch, before opening a page",
+  "error": "process_singleton_posix.cc:297 socket() failed: Operation not permitted (1); ptrace Operation not permitted",
+  "rawOutputRetained": false,
+  "retryAfterSameFailure": false,
+  "browserPixelsVerified": false,
+  "realTavernVerified": false,
+  "androidVerified": false,
+  "note": "This is a launch limitation of the automated runtime, not evidence about the ChatGPT read-only session."
+}
