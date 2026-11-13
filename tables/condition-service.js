@@ -191,7 +191,7 @@ function databaseConditions({database,getContext,draw}){
    check(final?.contextKey===key&&final.receipt?.result?.source?.kind==='worldbook-condition','条件机会写入尚未获得完整回执');guard();
   }
   const stateHash=matrixDigest(final.state),revision=final.revision;
-  return {requestId,contextRevision:matrixDigest([key,revision,stateHash,stamp]),results:plans.map(({ref,plan})=>({bookRef:ref.bookRef,uid:ref.uid,ruleRef:ref.ruleRef,ruleVersion:ref.ruleVersion,state:plan.matched?'matched':plan.status==='unknown'?'unknown':'not_matched',reasonCode:plan.status})),
+  return {requestId,contextRevision:matrixDigest([key,revision,stateHash,stamp]),results:plans.map(({ref,plan,rule})=>({bookRef:ref.bookRef,uid:ref.uid,ruleRef:ref.ruleRef,ruleVersion:ref.ruleVersion,chance:rule.policy.chance,state:plan.matched?'matched':plan.status==='unknown'?'unknown':'not_matched',reasonCode:plan.status})),
    async assertCurrent(){guard();const now=await database.read();guard();check(now?.contextKey===key&&now.revision===revision&&matrixDigest(now.state)===stateHash,'条件扫描后规范表单已变化，已停止发送');}};
  });}
  return {describeConditionRules,evaluateConditionEntries};

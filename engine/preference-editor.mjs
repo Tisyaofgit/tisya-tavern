@@ -1,6 +1,7 @@
 import {clone,fail} from './common.mjs';
 import {PREFERENCE_GROUPS,preferenceGroup,preferenceTextKey,validatePreferenceTexts} from './preferences.mjs';
 import {compilePrompts} from './config.mjs';
+import {preferenceSourceFromRoute,preferenceSourceChange} from './preference-sources.mjs';
 
 export const PREFERENCE_TEXT_VERSION='tisya.preference-text/1';
 export const PREFERENCE_TEXT_TABLE='T_PREF_SELECTION_OPTIONS';
@@ -9,6 +10,7 @@ export const preferenceTextFields=[
  {key:'selection_key',label:'对应选择',type:'TEXT'},
  {key:'editor_kind',label:'编辑条目种类',type:'TEXT'},
  {key:'editor_enabled',label:'采用编辑原文',type:'BOOLEAN'},
+ {key:'source_route_ref',label:'原世界书来源路由',type:'REF',ref:'T_SYS_SOURCE_ROUTES'},
 ];
 export function extendPreferenceCatalog(catalog){
  const next=clone(catalog),table=next.tables.find(t=>t.id===PREFERENCE_TEXT_TABLE);
@@ -21,7 +23,7 @@ export function preferenceTextRows(state){
   const v=row.values;if(v.option_version!==PREFERENCE_TEXT_VERSION)continue;
   const key=preferenceTextKey(v.preference_group,v.selection_key,true);
   if(Object.hasOwn(out,key))fail('PREFERENCE_TEXT_DUPLICATE','同一选择存在多条编辑原文，请在表单中核对');
-  out[key]={id,group:v.preference_group,selection:v.selection_key,text:v.effect_directive,enabled:v.editor_enabled!==false,...(v.editor_kind?{kind:v.editor_kind}:{}),...(v.editor_kind==='custom'?{name:v.display_name}:{})};
+  out[key]={id,group:v.preference_group,selection:v.selection_key,text:v.effect_directive,enabled:v.editor_enabled!==false,...(v.editor_kind?{kind:v.editor_kind}:{}),...(v.editor_kind==='custom'?{name:v.display_name}:{}),...(v.source_route_ref?{source:preferenceSourceFromRoute(state,v.source_route_ref)}:{})};
  }
  for(const [id,row]of Object.entries(state?.tables?.T_PREF_SCOPES??{})){const v=row.values;out[preferenceTextKey('USER',id)]={id,group:'USER',selection:JSON.stringify(id),kind:'user',name:v.name??'',text:v.compiled_directive??'',evidence_quote:v.evidence_quote??'',enabled:v.enabled!==false&&!!v.compiled_directive?.trim(),legacy:v.contrib_id!=='tisya.preference-editor/1'};}
  validatePreferenceTexts(out);return out;
@@ -32,7 +34,8 @@ export function preferenceTextChanges(before,after){
   if(JSON.stringify(row)===JSON.stringify(before[key]))continue;
   const group=preferenceGroup(row.group);
   if(group.id==='USER'){if(before[key]&&row.evidence_quote!==before[key].evidence_quote)fail('PREFERENCE_EVIDENCE','原始反馈不可被改写；请另建反馈条目');changes.push({tableId:'T_PREF_SCOPES',recordId:row.id,values:{name:row.name,compiled_directive:row.text,enabled:row.enabled,...(!before[key]?{evidence_quote:row.evidence_quote,contrib_id:'tisya.preference-editor/1'}:{})}});continue;}
-  changes.push({tableId:PREFERENCE_TEXT_TABLE,recordId:row.id,values:{option_version:PREFERENCE_TEXT_VERSION,display_name:row.name??group.label+' · 编辑原文',effect_directive:row.text,injection_position:group.slot,preference_group:row.group,selection_key:row.selection,editor_enabled:row.enabled!==false,editor_kind:row.kind??'override'}});
+  if(row.source)changes.push(preferenceSourceChange(row,group));
+  changes.push({tableId:PREFERENCE_TEXT_TABLE,recordId:row.id,values:{option_version:PREFERENCE_TEXT_VERSION,display_name:row.name??group.label+' · 编辑原文',effect_directive:row.text,injection_position:group.slot,preference_group:row.group,selection_key:row.selection,editor_enabled:row.enabled!==false,editor_kind:row.kind??'override',...(row.source?{source_route_ref:row.source.routeId}:before[key]?.source?{source_route_ref:null}:{})}});
  }
  for(const [key,row]of Object.entries(before))if(!Object.hasOwn(after,key))changes.push({tableId:row.group==='USER'?'T_PREF_SCOPES':PREFERENCE_TEXT_TABLE,recordId:row.id,remove:true});
  return changes;

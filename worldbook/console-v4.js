@@ -21,3 +21,7 @@ sheetContent=function(){if(sheet?.type==='hostRename'){const p=deleteImpact;retu
 render=function(){renderV3();const button=document.querySelector('header .native-link');if(button){button.textContent='导入文件';button.onclick=()=>nativeManage();}const sheetRoot=$('#sheet-root')??$('#sheet');if(sheetRoot)sheetRoot.classList.toggle('host-busy',hostBusy);};
 const originalSetHostData=setHostData;setHostData=function(data){originalSetHostData(data);if(hostPort&&!linkCharacters.length)setTimeout(()=>selectLinkCharacter(),0);};
 render();
+
+// A saved native entry opens the same story adoption editor used by preferences.
+async function openSourceLibrary(){if(hasUnsaved()||hostBusy){say('请先保存或放弃世界书草稿');return}const entry=entries.find(e=>e.uid===editing);if(!entry){say('请先保存这个新条目');return}try{await hostCall('sources',{id:entry.book,uid:entry.nativeUid});}catch(error){say(error.message)}}
+const sourceEditorBase=editorPageV2;editorPageV2=function(){return sourceEditorBase()+(HOST_MODE?'<div class="panel"><button type="button" onclick="openSourceLibrary()">在资料与文风库中查看／采用</button><p class="hint">原书保持原样；到统一入口选择当前故事的用途、条件预览与采用原文。</p></div>':'');};

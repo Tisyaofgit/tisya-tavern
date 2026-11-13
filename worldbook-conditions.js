@@ -3,14 +3,14 @@ const check=(ok,m)=>{if(!ok)throw Error(m);};
 const key=e=>JSON.stringify([e.world,String(e.uid)]);
 const condition=e=>e.extensions?.tisyaWorldbook?.condition;
 // Hooks run on disposable scan copies only. Never edit native stored entries.
-export function createWorldbookConditionGate({getContext,engine,onError=()=>{},timeoutMs=15000}){
+export function createWorldbookConditionGate({getContext,engine,onError=()=>{},timeoutMs=15000,getSupplementalEntries=()=>[],onSupplementalDecisions=()=>{}}){
  let active=null,epoch=0,failure=null,checks=[],decisions=new Map(),references=new Map();
  const scope=()=>{const c=getContext();return JSON.stringify([c.chatId,c.characterId,c.groupId]);};
  function end(){epoch++;active?.controller.abort(Error('条件扫描已取消'));active=null;checks=[];decisions=new Map();references=new Map();failure=null;}
  function begin(trigger='normal',options={}){end();if(options?.dryRun)return;active={id:'condition-scan:'+crypto.randomUUID(),trigger,scope:scope(),epoch,controller:new AbortController()};}
  async function entriesLoaded(data){
   const lists=['globalLore','characterLore','chatLore','personaLore'].map(k=>{check(Array.isArray(data[k]),'宿主缺少世界书来源集合：'+k);return data[k];});
-  const all=lists.flat(),gated=all.filter(e=>condition(e)?.mode==='external');if(!gated.length)return;
+  const supplemental=getSupplementalEntries(),all=[...lists.flat(),...supplemental],gated=all.filter(e=>condition(e)?.mode==='external');if(!gated.length)return;
   const run=active;
   // Host preload/token estimates have no authorized chance opportunity.
   if(!run){for(const list of lists)list.splice(0,list.length,...list.filter(e=>condition(e)?.mode!=='external'));return;}
@@ -28,6 +28,7 @@ export function createWorldbookConditionGate({getContext,engine,onError=()=>{},t
     checks=[response.assertCurrent];
    }
    for(const e of gated)if(e.disable)decisions.set(key(e),'disabled');
+   if(supplemental.length)onSupplementalDecisions(new Map(decisions));
    for(const list of lists)list.splice(0,list.length,...list.flatMap(e=>{if(condition(e)?.mode!=='external')return [e];if(decisions.get(key(e))!=='matched')return [];return [{...e,constant:true,vectorized:false,useProbability:false,probability:100}];}));
   }catch(e){if(active===run)failure=e;for(const list of lists)list.splice(0,list.length,...list.filter(e=>condition(e)?.mode!=='external'));throw e;}
  }

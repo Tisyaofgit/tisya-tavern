@@ -1,3 +1,4 @@
+import {renderPreferenceSources} from './preference-sources-ui.mjs';
 import {preferenceTextRows,preferenceTextChanges,preferenceTextFields} from './preference-editor.mjs';
 import {renderPreferences,renderResources} from './preferences-ui.mjs';
 import {baseline,configuration} from './config.mjs';
@@ -9,9 +10,9 @@ import {selectControl} from './form-controls.mjs';
 import {mountUnsavedPrompt} from '../settings-unsaved.js';
 
 const labels={reply:'回复外壳',task:'任务',anchor:'前后摘要',title:'标题',body:'正文',extra:'附加卡片',cells:'表单指令',vars:'原卡变量',archive:'归档',actions:'行动建议'};
-const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tags','回复格式'],['prompts','完整预设'],['tables','表单与存档'],['generation','生成设置']];
+const tabs=[['preferences','游玩偏好'],['sources','资料与文风库'],['resources','多媒体资源'],['tags','回复格式'],['prompts','完整预设'],['tables','表单与存档'],['generation','生成设置']];
 
-export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
+export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onWorldbook=()=>{},onStateChange=()=>{},initialTab='preferences',initialSource=null,initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
  let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
  let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
  let formDraft=null,resourceDraft=null,preferenceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
@@ -89,6 +90,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
    if(!current)throw Error('本会话尚未接入，表单输入仍保留。');
    applyForm(new Runtime(current.state),edit);
   }
+  if(preferenceDraft&&service.previewPreferenceSources)await service.previewPreferenceSources(preferenceDraft.rows,next);
   const preferenceChanges=preferenceDraft?preferenceTextChanges(preferenceDraft.before,preferenceDraft.rows):[];
   if(preferenceChanges.length&&!preferenceDraft.database)throw Error('当前聊天表单尚未接入，原文草稿仍保留；请先接入聊天。');
   let savedForm=false;
@@ -138,9 +140,10 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   for(const [id,name]of tabs){const b=routeButton(name,async()=>{tab=id;await run(render);});if(id===tab)b.onclick=()=>Promise.resolve(true);b.setAttribute('aria-current',String(tab===id));nav.append(b);}
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
-  if(tab==='preferences'){
-   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
-   renderPreferences(document,body,{config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
+  if(['preferences','sources'].includes(tab)){
+   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,previewSources:service.previewPreferenceSources,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
+   if(tab==='sources'){if(!service.sourceLibrary||!preferenceDraft)body.append(el('p','资料与文风库尚未连接，请重新载入插件。'));else {const view=renderPreferenceSources(document,body,{initialSource,library:service.sourceLibrary,config,editor:preferenceDraft,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,onWorldbook,onConditions:async rule=>{tab='tables';selectedTable='T_SYS_SOURCE_ROUTES';selectedRecord=rule;await run(render);},onPreferences:async()=>{tab='preferences';await run(render);}});await view.ready;initialSource=null;}}
+   else renderPreferences(document,body,{config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
   }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el});
   if(tab==='tags'){

@@ -44,6 +44,7 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
   for(const [rid,r]of entries){
    if(!matrixRecordVisible(e.data,tid,rid,context,meta))continue;
    if(tid==='T_PREF_SCOPES'&&(r.values.enabled===false||r.values.contrib_id==='tisya.preference-editor/1'))continue;
+   if(tid==='T_SYS_SOURCE_ROUTES'&&r.values.source_type==='tisya.worldbook-preference/1')continue; // Provenance is inspected by the source service, not narrated as story data.
    if(tid==='T_PREF_OUTPUT_CONFIG'||tid==='T_PREF_SELECTION_OPTIONS'&&r.values.option_version==='tisya.preference-text/1')continue; // Compiled once through the selected output contract.
    const fields=Object.fromEntries(schema.fields.map(f=>[f.key,f])),values={};
    for(const [key,v]of Object.entries(r.values)){

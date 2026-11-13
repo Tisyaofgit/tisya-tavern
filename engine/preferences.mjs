@@ -1,6 +1,7 @@
 import catalog from './preference-options.json' with {type:'json'};
 import {clone,fail} from './common.mjs';
 import {storyAvatar,avatarReference} from './identity.mjs';
+import {validatePreferenceSource} from './preference-sources.mjs';
 
 export const PREFERENCE_GROUPS=catalog.groups;
 export const USER_PREFERENCE_GROUP={id:'USER',label:'用户偏好',section:'用户偏好',slot:'tisya_contractor_wish',multiple:false,options:[]};
@@ -11,6 +12,7 @@ export const effectivePreferences=config=>({
 });
 export function validatePreferences(value={}){
  validatePreferenceTexts(value.textOverrides??{});
+ if(Object.values(value.textOverrides??{}).some(row=>row.source||Object.hasOwn(row,'_sourceGateState')))fail('PREFERENCE_SOURCE_SCOPE','世界书来源引用属于当前故事；跨故事请导出原文副本后明确采用');
  for(const [id,selection] of Object.entries(value.choices??{})){
   const group=PREFERENCE_GROUPS.find(g=>g.id===id);
   if(!group)fail('PREFERENCE_GROUP','配置分组不存在：'+id);
@@ -41,7 +43,7 @@ export function expandPreferenceText(text,config,parameters){return text
   .replaceAll('personaDescription','tisya_user_identity');}
 function effects(group,selection,config,parameters,textRows={}){
  const ids=group.multiple?selection:[selection];
- return ids.map(id=>{const builtin=group.options.find(o=>o.id===id);if(builtin)return expandPreferenceText(builtin.effect,config,parameters);const key=preferenceTextKey(group.id,group.multiple?[id]:id),custom=textRows[key]??config.playDefaults?.textOverrides?.[key];if(custom?.kind!=='custom'||custom.enabled===false)fail('PREFERENCE_CUSTOM_MISSING','自定义选项不存在或已停用：'+id);return '@TISYA.CUSTOM.'+custom.id+' :=\n'+expandPreferenceText(custom.text,config,parameters);});
+ return ids.map(id=>{const builtin=group.options.find(o=>o.id===id);if(builtin)return expandPreferenceText(builtin.effect,config,parameters);const key=preferenceTextKey(group.id,group.multiple?[id]:id),custom=textRows[key]??config.playDefaults?.textOverrides?.[key];if(custom?.kind!=='custom'||custom.enabled===false)fail('PREFERENCE_CUSTOM_MISSING','自定义选项不存在或已停用：'+id);if(custom._sourceGateState==='pending')fail('PREFERENCE_CONDITION_MISSING','文风条件尚未完成本轮扫描');if(['not_matched','unknown'].includes(custom._sourceGateState))return null;return '@TISYA.CUSTOM.'+custom.id+' :=\n'+expandPreferenceText(custom.text,config,parameters);}).filter(value=>value!==null);
 }
 export function wishPreferences(config){
  const value=validatePreferences(effectivePreferences(config)),selection=value.choices.W;
@@ -88,13 +90,14 @@ export function applyPreferences(entries,config,textRows={}){
 export function preferenceTextKey(group,selection,encoded=false){return group+':'+(encoded?selection:JSON.stringify(selection??null));}
 export function validatePreferenceTexts(rows={}){
  if(!rows||typeof rows!=='object'||Array.isArray(rows))fail('PREFERENCE_TEXT','编辑原文须为记录集合');
- const identities=new Set();
+ const identities=new Set(),sourceRoutes=new Set();
  for(const [key,row]of Object.entries(rows)){
   const group=!['W','N01'].includes(row?.group)?preferenceGroup(row?.group):null;
   if(!group||typeof row.id!=='string'||!row.id||typeof row.text!=='string'||typeof row.selection!=='string'||typeof row.enabled!=='boolean'||key!==preferenceTextKey(row.group,row.selection,true))fail('PREFERENCE_TEXT','编辑原文记录无效');
   const identity=(group.id==='USER'?'user:':'selection:')+row.id;
   if(identities.has(identity))fail('PREFERENCE_IDENTITY_CONFLICT','偏好条目身份冲突；请保留本地或另存新项');
   identities.add(identity);
+  if(row.source){validatePreferenceSource(row.source);if(sourceRoutes.has(row.source.routeId))fail('PREFERENCE_SOURCE','不同偏好条目不能覆盖同一来源路由');sourceRoutes.add(row.source.routeId);if(row.kind!=='custom'||!['文风与凝视','技法与场合'].includes(group.section))fail('PREFERENCE_SOURCE','来源只能绑定文风或技法自定义项');}
   let selection;try{selection=JSON.parse(row.selection);}catch{fail('PREFERENCE_TEXT','原文对应选择无效');}
   if(group.id==='USER'){if(row.kind!=='user'||selection!==row.id||typeof row.name!=='string'||typeof row.evidence_quote!=='string')fail('USER_PREFERENCE','用户偏好字段无效');}
   else validatePreferences({choices:{[group.id]:selection}});

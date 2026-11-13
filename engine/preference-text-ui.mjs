@@ -20,15 +20,17 @@ export function renderPreferenceText(document,box,{group,scope,config,editor,cha
  function put(value){
   const records=scope==='global'?((config.playDefaults??={}).textOverrides??={}):editor.rows;
   const retained=records[key]??initial;
-  records[key]={id:records[key]?.id??crypto.randomUUID(),group:group.id,selection:JSON.stringify(selected??null),text:value,enabled:true,...(retained?.kind?{kind:retained.kind,...(retained.name?{name:retained.name}:{})}:{})};
+  records[key]={id:records[key]?.id??crypto.randomUUID(),group:group.id,selection:JSON.stringify(selected??null),text:value,enabled:true,...(retained?.kind?{kind:retained.kind,...(retained.name?{name:retained.name}:{})}:{}),...(retained?.source?{source:clone(retained.source)}:{})};
   excerpt.textContent=value;changed();
  }
  const preview=el('pre');preview.style.cssText='white-space:pre-wrap;max-height:24rem;overflow:auto;font:inherit';preview.setAttribute('aria-label',group.label+' · 编译预览');
  if(initial?.kind==='custom'){const name=input(initial.name,value=>{put(control.value);local().name=value;changed();});name.setAttribute('aria-label',group.label+' · 自定义名称');full.append(field('自定义名称',name));}
  full.append(field('编辑原文',control),el('small','修改后点击底部“保存”。此处编辑当前选择；切换选项会采用相应原文。'));
- full.append(button('查看实际生效预览',()=>{
-  const result=previewPreferenceText(editor.source,previewConfig(),editor.slots,scope==='story'?editor.rows:{},group);
-  preview.textContent=(result.enabled?'对应提示词槽已启用。以下是当前草稿编译后的完整槽内容：':'对应提示词槽未启用，此内容不会发送。编译内容：')+'\n\n'+result.text;
+ if(initial?.source)full.append(el('p','来源：'+initial.source.book+' / '+initial.source.uid+'。此处仅改本故事，原书原文保留；来源更新请到“资料与文风库”比较。'));
+ full.append(button('查看实际生效预览',async()=>{
+  const projected=scope==='story'&&editor.previewSources?await editor.previewSources(editor.rows,previewConfig()):{rows:scope==='story'?editor.rows:{},notes:[]};
+  const result=previewPreferenceText(editor.source,previewConfig(),editor.slots,projected.rows,group);
+  preview.textContent=(result.enabled?'对应提示词槽已启用。以下是当前草稿编译后的完整槽内容：':'对应提示词槽未启用，此内容不会发送。编译内容：')+'\n'+projected.notes.join('\n')+'\n\n'+result.text;
  }));
  renderPreferenceAssistant(document,full,{assistant,group,initial,control,editor,config,put,onCopy,button,input,field,el});
  if(onCopy)full.append(button('复制为自定义项',()=>onCopy(group,(initial?.name??group.label)+'副本',control.value)));
