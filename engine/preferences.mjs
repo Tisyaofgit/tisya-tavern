@@ -71,6 +71,8 @@ export function applyPreferences(entries,config,textRows={}){
   const key=preferenceTextKey(group.id,value.choices[group.id]),override=textRows[key]??config.playDefaults?.textOverrides?.[key];
   if(!override||override.enabled===false||override.kind==='custom')continue;
   const row=entries.find(p=>p.identifier===group.slot);if(!row)fail('PREFERENCE_SLOT','配置所属提示词槽不存在：'+group.slot);
+  const selection=value.choices[group.id];
+  for(const id of Array.isArray(selection)?selection:[selection])if(typeof id==='string'&&id.startsWith('custom:'))row.content=replaceDirective(row.content,'TISYA.CUSTOM.'+id.slice(7),'');
   for(const key of new Set(group.options.map(o=>keyOf(o.effect))))row.content=replaceDirective(row.content,key,'');
   if(group.id==='S04-Sculpt')row.content=replaceDirective(row.content,'ART.SCULPT','');
   const closing=group.id==='TECH'?'</TechniqueCorpus>':group.id==='CORP'?'</ScenarioPersonaCorpus>':['LIT','MOTIF'].includes(group.id)?'</LiteraryPlayCorpus>':undefined;
@@ -86,9 +88,13 @@ export function applyPreferences(entries,config,textRows={}){
 export function preferenceTextKey(group,selection,encoded=false){return group+':'+(encoded?selection:JSON.stringify(selection??null));}
 export function validatePreferenceTexts(rows={}){
  if(!rows||typeof rows!=='object'||Array.isArray(rows))fail('PREFERENCE_TEXT','编辑原文须为记录集合');
+ const identities=new Set();
  for(const [key,row]of Object.entries(rows)){
   const group=!['W','N01'].includes(row?.group)?preferenceGroup(row?.group):null;
   if(!group||typeof row.id!=='string'||!row.id||typeof row.text!=='string'||typeof row.selection!=='string'||typeof row.enabled!=='boolean'||key!==preferenceTextKey(row.group,row.selection,true))fail('PREFERENCE_TEXT','编辑原文记录无效');
+  const identity=(group.id==='USER'?'user:':'selection:')+row.id;
+  if(identities.has(identity))fail('PREFERENCE_IDENTITY_CONFLICT','偏好条目身份冲突；请保留本地或另存新项');
+  identities.add(identity);
   let selection;try{selection=JSON.parse(row.selection);}catch{fail('PREFERENCE_TEXT','原文对应选择无效');}
   if(group.id==='USER'){if(row.kind!=='user'||selection!==row.id||typeof row.name!=='string'||typeof row.evidence_quote!=='string')fail('USER_PREFERENCE','用户偏好字段无效');}
   else validatePreferences({choices:{[group.id]:selection}});

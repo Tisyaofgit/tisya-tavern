@@ -8,6 +8,20 @@ import {preferenceTextRows,previewPreferenceText} from '../engine/preference-edi
 import {createMatrixHost} from '../engine/host.mjs';
 import {mountMatrixConfiguration} from '../engine/ui.mjs';
 const clone=structuredClone;
+test('edited multi-selection replaces its custom prose once while preserving another group in the same prompt slot',async()=>{
+ const selections={TECH:['TECH-01','custom:tech'],CORP:['custom:corp']};
+ const rows={
+  [preferenceTextKey('TECH',['custom:tech'])]:{id:'tech',group:'TECH',selection:'["custom:tech"]',kind:'custom',name:'技法',text:'应退出的旧技法专用标记',enabled:true},
+  [preferenceTextKey('CORP',['custom:corp'])]:{id:'corp',group:'CORP',selection:'["custom:corp"]',kind:'custom',name:'场合',text:'保留的场合专用标记',enabled:true},
+  [preferenceTextKey('TECH',selections.TECH)]:{id:'edited-tech',group:'TECH',selection:JSON.stringify(selections.TECH),kind:'override',text:'整组新技法专用标记',enabled:true},
+ };
+ const {host,source}=await fixture(),config=host.config.read();config.story.play={choices:selections};
+ const compiled=compilePrompts(source,config,{tisya_preference_texts:JSON.stringify(rows)});
+ const text=compiled.prompts.map(p=>p.content).join('\n');
+ assert(!text.includes('应退出的旧技法专用标记'));
+ assert.equal(text.split('整组新技法专用标记').length-1,1);
+ assert.equal(text.split('保留的场合专用标记').length-1,1);
+});
 const click=(root,text)=>[...root.querySelectorAll('button')].find(n=>n.textContent===text).click();
 async function fixture(){
  const macros=new Map(),disk=new Map(),ctx={extensionSettings:{},chatMetadata:{},chatId:'editor',characterId:0,characters:[{name:'世界'}],chat:[{is_user:true,mes:'开场'}],registerMacro:(name,fn)=>macros.set(name,fn),saveChat:async()=>true};

@@ -25,7 +25,7 @@ export function packageEntries(source,config,rows,scope='story'){
 }
 export function makePreferencePackage(entries){return validatePreferencePackage({format:PREFERENCE_PACKAGE_FORMAT,entries:clone(entries)});}
 export function planPreferenceImport(value,existing){
- const pack=validatePreferencePackage(value);return pack.entries.map(entry=>{const key=preferenceTextKey(entry.record.group,entry.record.selection,true);return {entry,key,conflict:Object.hasOwn(existing,key),action:Object.hasOwn(existing,key)?'keep':'add'};});
+ const pack=validatePreferencePackage(value);return pack.entries.map(entry=>{const key=preferenceTextKey(entry.record.group,entry.record.selection,true),conflict=Object.hasOwn(existing,key)||Object.values(existing).some(r=>r.id===entry.record.id&&(r.group==='USER')===(entry.record.group==='USER'));return {entry,key,conflict,action:conflict?'keep':'add'};});
 }
 export function applyPreferenceImport(plans,target){
  const next=clone(target);for(const {entry,action}of plans){

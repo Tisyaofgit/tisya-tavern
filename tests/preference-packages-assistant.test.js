@@ -5,6 +5,17 @@ import {preferenceTextKey} from '../engine/preferences.mjs';
 import {createPreferenceAssistant} from '../engine/preference-assistant.mjs';
 const record={id:'one',group:'S05',selection:'"S05-A"',text:'完整文风原文，不省略。',enabled:true,kind:'override'};
 const entry={record,scope:'story',parameters:{min_length:1234,max_length:2345},source:'本地文件'};
+test('an imported identity cannot overwrite a different existing preference; preview offers a separate copy',()=>{
+ const old={...record,group:'N02',selection:'"N02-B"',text:'应当保留的另一组偏好'};
+ const key=preferenceTextKey(old.group,old.selection,true),existing={[key]:old};
+ const plans=planPreferenceImport(makePreferencePackage([entry]),existing);
+ assert.equal(plans[0].conflict,true);assert.equal(plans[0].action,'keep');
+ plans[0].action='overwrite';assert.throws(()=>applyPreferenceImport(plans,existing),/身份冲突/);
+ assert.equal(existing[key].text,'应当保留的另一组偏好');
+ plans[0].action='duplicate';const result=applyPreferenceImport(plans,existing);
+ assert.equal(Object.keys(result).length,2);assert.equal(result[key].text,old.text);
+ assert.equal(new Set(Object.values(result).map(r=>r.id)).size,2);
+});
 test('preference packages contain only selected text and validated fields, with explicit keep/overwrite/duplicate conflicts',()=>{
  const pack=makePreferencePackage([entry]);assert.equal(pack.entries.length,1);assert.equal(pack.entries[0].record.text,record.text);assert.equal(pack.entries[0].parameters.min_length,1234);
  assert.throws(()=>validatePreferencePackage({...pack,chat:[]}),/格式/);assert.throws(()=>makePreferencePackage([{...entry,token:'credential'}]),/未支持/);assert.throws(()=>makePreferencePackage([{...entry,record:{...record,rawResponse:'private'}}]),/未支持/);
