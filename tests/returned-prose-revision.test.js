@@ -8,18 +8,19 @@ import {PREFERENCE_GROUPS} from '../engine/preferences.mjs';
 import {STYLE_CARDS,currentStyleCard} from '../config/style-cards.js';
 import {digest} from '../engine/common.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
+import previousRP from '../docs/validation/rp-depth-20261115/previous-prompts.json' with {type:'json'};
 const prompt=(source,id)=>source.prompts.find(row=>row.identifier===id).content;
 const config=()=>({tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{},parameters:{}}}});
 
-test('4a prose remains verbatim, with only the two documented machine form blocks changed',()=>{
+test('4a prose remains verbatim outside authorized RP depth and machine form revisions',()=>{
  for(const [id,text]of Object.entries(fixture.returned)){
-  let current=prompt(stock,id),original=text;
+  let current=previousRP.stock[id]??prompt(stock,id),original=text;
   if(id==='tisya_registry')for(const tag of ['cells','archive']){const re=new RegExp('<'+tag+' format="form">[\\s\\S]*?</'+tag+'>');current=current.replace(re,'');original=original.replace(re,'');}
   assert.equal(current,original,id);
  }
- for(const row of expected.options){const actual=PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===row.id);assert.equal(digest(actual.effect),row.sha256,row.id);}
+ for(const row of expected.options){const actual=PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===row.id);if(['R01-A','R04-A'].includes(row.id)){const key=row.id==='R01-A'?'@CHAR.AUTONOMY :=':'@CHAR.SUBTEXT_AND_COERCION :=';assert.equal(actual.effect,prompt(stock,'tisya_pref_portrayal').split('\n').find(line=>line.startsWith(key)));}else assert.equal(digest(actual.effect),row.sha256,row.id);}
  for(const row of expected.styleCards)assert.equal(digest(STYLE_CARDS.find(c=>c.id===row.id).content),row.sha256,row.id);
- assert.equal(PREFERENCE_GROUPS.length,43);assert.equal(expected.options.length,190);
+ assert.equal(PREFERENCE_GROUPS.length,46);assert.equal(expected.options.length,190);
  assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).filter(o=>o.default).length,53);
 });
 

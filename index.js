@@ -1,3 +1,4 @@
+import {revealPhoneOrigin} from './phone-origin-navigation.mjs';
 import {streamingMessageSource} from './streaming-message.js';
 import {createPhoneService,phoneSnapshot} from './phone-core.mjs';
 import {createPhoneDatabaseStorage,readPhoneDatabaseProfile,decodePhoneDatabase} from './engine/phone-database.mjs';
@@ -305,8 +306,8 @@ async function openVirtualPhone({docId,appId}={}){
   if(!ownsCurrent())return false;
   const origin=cause.details?.initializationSources?.find(row=>row.index>=0),detached=cause.code==='PHONE_DATABASE_DETACHED';
   const help=detached?(origin?'手机初始化所依据的历史与当前分支不一致。可回到第 '+(origin.index+1)+' 楼核对回复与候选；原进度已保留。':'手机初始化所在的历史目前不可定位；原进度已保留。请核对聊天来源。'):'原手机进度已保留。请核对当前人物、世界和聊天来源后重试。';
-  close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('手机待核对','<section class="tisya-sub-card" role="alert"><h3>手机暂时未打开</h3><p>'+esc(cause.message)+'</p><p>'+esc(help)+'</p><div class="tisya-actions"><button type="button" data-phone-retry>重试</button>'+(origin?'<button type="button" data-phone-origin>查看初始化楼层</button>':'')+'<button type="button" data-phone-identity>核对身份与世界</button><button type="button" data-phone-dismiss>返回</button></div></section>');
-  if(origin)query('[data-phone-origin]').onclick=()=>{if(!ownsCurrent())return;const at=context().chat.findIndex(m=>m.extra?.tisya_engine?.uid===origin.messageUid);if(at<0)return error(Error('初始化所在回复已不在当前聊天中。'));hidePage();const node=query('#chat .mes[mesid="'+at+'"]');if(node?.scrollIntoView)node.scrollIntoView({block:'center',behavior:'smooth'});else error(Error('该楼尚未加载，请在聊天中载入第 '+(at+1)+' 楼后核对。'));};
+  close();closeNativeDrawers();hideAllPanels(document);renderEpoch++;page('手机待核对','<section class="tisya-sub-card" role="alert"><h3>手机暂时未打开</h3><p>'+esc(cause.message)+'</p><p>'+esc(help)+(origin?.problem?' '+esc(origin.problem):'')+'</p><div class="tisya-actions"><button type="button" data-phone-retry>重试</button>'+(origin?'<button type="button" data-phone-origin>查看初始化楼层</button>':'')+'<button type="button" data-phone-identity>核对身份与世界</button><button type="button" data-phone-dismiss>返回</button></div></section>');
+  if(origin)query('[data-phone-origin]').onclick=()=>revealPhoneOrigin({document,context,ownsCurrent,messageUid:origin.messageUid,native:hostNative,beforeReveal:hidePage}).catch(cause=>{if(ownsCurrent())error(cause);});
   query('[data-phone-retry]').onclick=()=>openVirtualPhone({docId,appId}).catch(error);query('[data-phone-identity]').onclick=()=>openIdentity().catch(error);query('[data-phone-dismiss]').onclick=()=>hidePage();return false;
  }
  if(!ownsCurrent())return false;

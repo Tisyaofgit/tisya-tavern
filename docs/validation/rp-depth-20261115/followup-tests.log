@@ -1,0 +1,22 @@
+✔ all three stop settings reach compilation, override an older stop and retain the selected settings (21.237328ms)
+✔ default compilation retains body min/max, configured bounds and action ranges (20.980331ms)
+✔ new complementary after rows survive the real display parser alongside a completed scene and independent optional actions (9.380948ms)
+✔ historical after rows remain readable while malformed new rows still report an error (1.691244ms)
+✔ bounded whole-stock digests migrate the predecessor, returned packet and already supported variants without mutation (47.633164ms)
+✔ one authored byte change prevents automatic prose migration, including unchanged stock clauses inside custom text (41.958439ms)
+✔ explicit saved prose overrides remain authored text even when their bytes equal known stock (6.788109ms)
+✔ explicit preferences replace the migrated default and custom clauses outside those directives survive (7.672158ms)
+✔ known stock reaches native outgoing fragments once and preserves roles, order, history and source; merged=false (12.100061ms)
+✔ known stock reaches native outgoing fragments once and preserves roles, order, history and source; merged=true (10.917809ms)
+✔ installed candidate31 stock upgrades back to 4a text and body bounds while leaving source bytes unchanged (4.492066ms)
+✔ installed stock receives RP analysis in the actual merged outgoing request; historical messages stay literal (9.990123ms)
+✔ the RP update keeps authored prompt bytes and every unrelated stock line (11.525973ms)
+✔ new analysis labels parse without becoming state writes or replacing the separate heart comments (6.985126ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 271.357406

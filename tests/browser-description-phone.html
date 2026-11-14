@@ -1,0 +1,8 @@
+<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缇斯亚 · 描写设置与跨聊天核验</title><link rel="stylesheet" href="../shell.css">
+<style>body{margin:0;background:#06261e;color:#e1e8dc;font:16px system-ui}header{padding:12px;display:flex;gap:8px;flex-wrap:wrap}header button{min-height:44px;padding:8px}#tisya-shell{position:relative;pointer-events:auto;width:390px;max-width:100%;margin:auto}#app{--tisya-settings-height:650px}pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px;font:13px monospace}#chat,#phone-page{margin:14px;padding:12px;border:1px solid #bdac71}#chat .mes{padding:20px}#phone-page:empty{display:none}</style>
+<body class="tisya-active"><header>
+<button id="chat-a">切到聊天 A</button><button id="chat-b">切到聊天 B</button><button id="reopen">重新打开设置</button><button id="inspect">检查实际请求</button>
+<button id="phone-open">读取当前手机</button><button id="phone-action">添加当前聊天记录</button><button id="phone-detach">模拟历史正文变化</button><button id="narrow">360px</button>
+</header><pre id="build"></pre><pre id="status" role="status"></pre><main id="tisya-shell"><div id="app"></div></main><section id="phone-page"></section><section id="chat"><div class="mes" mesid="20">合成末楼；初始化楼层暂未挂载。</div></section><pre id="report"></pre><pre id="errors" role="alert"></pre>
+<script type="module" src="./browser-description-phone.mjs"></script></body></html>

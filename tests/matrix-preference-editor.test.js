@@ -35,7 +35,7 @@ async function uiFor(host){const w=new Window(),root=w.document.createElement('d
 async function settle(ui){await new Promise(r=>setTimeout(r,0));await ui.pending?.();await new Promise(r=>setTimeout(r,30));}
 test('full text editor persists through formal database and cold host into the real final payload, without inactive text or evidence',async()=>{
  const f=await fixture(),{host,source,expand,options}=f;const conf=host.config.read();conf.story.play={choices:{N02:'N02-B'},parameters:{min_length:730,max_length:940}};await host.config.save(conf);
- const u=await uiFor(host);assert.equal(u.root.querySelectorAll('[data-preference-text]').length,41);
+ const u=await uiFor(host);assert.equal(u.root.querySelectorAll('[data-preference-text]').length,44);
  const box=u.root.querySelector('[data-preference-group="N02"]'),control=box.querySelector('textarea');assert.match(control.value,/@/);
  control.value='写作测试专用原文：以{{main_language}}记叙石阶上的雨。';control.dispatchEvent(new u.w.Event('input'));click(u.root,'保存');await settle(u.ui);assert.deepEqual(u.errors,[]);
  const rows=preferenceTextRows((await host.readDatabase()).state);assert.equal(Object.values(rows).length,1);assert.equal(Object.values(rows)[0].text,control.value);

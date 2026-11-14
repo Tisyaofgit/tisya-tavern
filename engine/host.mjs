@@ -1,3 +1,4 @@
+import {phoneOriginStatus} from './phone-origin-status.mjs';
 import {readProseIdentity} from './identity.mjs';
 import {extendPreferenceCatalog,preferenceTextRows} from './preference-editor.mjs';
 import {displayFormatMaterial} from './display-format.mjs';
@@ -117,7 +118,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  }
  const databaseProjection=snapshotProjection((bundle,messages,proof)=>{
   const projection=messages?bundleProjection(bundle,messages,undefined,proof):null,current=projection?.bundle??bundle,key=proof.contextKey,allowedOriginContextKeys=proof.allowedOriginContextKeys;
-  const phoneInitializationSources=phoneInitializationEdits(bundle,key,allowedOriginContextKeys).map(edit=>({messageUid:edit.after_uid??edit.anchor_chain?.at(-1)?.uid??null})).filter((entry,index,all)=>entry.messageUid&&all.findIndex(other=>other.messageUid===entry.messageUid)===index).map(entry=>({...entry,index:(messages??[]).findIndex(m=>m.uid===entry.messageUid)}));
+  const seenOrigins=new Set(),hasPhone=!!current.state.tables?.X_PHONE_BINDINGS?.['phone-current'];
+  const phoneInitializationSources=phoneInitializationEdits(bundle,key,allowedOriginContextKeys).flatMap(edit=>{const messageUid=edit.after_uid??edit.anchor_chain?.at(-1)?.uid;if(!messageUid||seenOrigins.has(messageUid))return [];seenOrigins.add(messageUid);return [{messageUid,index:(messages??[]).findIndex(m=>m.uid===messageUid),...(!hasPhone?phoneOriginStatus(edit,messages):{})}];});
   return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.result?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
  });
  async function readDatabase(){return readOwnedDatabase((bundle,c)=>databaseProjection(bundle,(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,phoneProof(c)));}

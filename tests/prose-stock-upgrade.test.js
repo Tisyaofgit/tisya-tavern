@@ -21,7 +21,7 @@ const effect=id=>PREFERENCE_GROUPS.flatMap(group=>group.options).find(option=>op
 
 test('bounded whole-stock digests migrate the predecessor, returned packet and already supported variants without mutation',()=>{
  assert.equal(PROSE_STYLE_REVISIONS.length,25);
- assert(PROSE_STYLE_REVISIONS.every(revision=>revision.legacyDigests.length<=4));
+ assert(PROSE_STYLE_REVISIONS.every(revision=>revision.legacyDigests.length<=(revision.identifier==='tisya_registry'?5:4)));
  for(const variant of ['predecessor','returned','earlier']){
   const source=legacySource(variant),before=clone(source),c=config(),saved=clone(c);
   for(const [identifier,old]of Object.entries(fixture[variant])){

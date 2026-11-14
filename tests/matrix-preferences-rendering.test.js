@@ -14,8 +14,8 @@ const extra=[{id:'scene.door',name:'门边的画',kind:'image',slot:'body',url:'
 const key=effect=>/^@([^\s:={]+)/u.exec(effect)[1];
 const tick=()=>new Promise(r=>setTimeout(r,0));
 const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent===text);
-test('all 190 recovered choices compile their exact source effect once and remove competing choices',()=>{
- assert.equal(PREFERENCE_GROUPS.length,43);assert.equal(PREFERENCE_GROUPS.reduce((n,g)=>n+g.options.length,0),190);
+test('all recovered and added choices compile their exact source effect once and remove competing choices',()=>{
+ assert.equal(PREFERENCE_GROUPS.length,46);assert.equal(PREFERENCE_GROUPS.reduce((n,g)=>n+g.options.length,0),201);
  assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).filter(o=>o.default===true).length,53);
  for(const id of ['S04-Sc9','S04-Sc10'])assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===id).default,false);
  for(const group of PREFERENCE_GROUPS)for(const option of group.options){
@@ -34,7 +34,7 @@ test('story overrides inherit global choices and survive UI save, second save an
  const w=new Window(),ctx={extensionSettings:{},chatId:'story',characterId:0};const store=createConfiguration({getContext:()=>ctx,persist:async()=>true});
  const v=store.read();v.playDefaults={choices:{N02:'N02-B'},parameters:{main_language:'中文'}};await store.save(v);
  const root=w.document.createElement('div');w.document.body.append(root);let ui=mountMatrixConfiguration(w.document,root,{service:{config:store}});await ui.ready;
- assert.equal(root.querySelectorAll('[data-preference-group]').length,41);
+ assert.equal(root.querySelectorAll('[data-preference-group]').length,44);
  let select=root.querySelector('[data-preference-group="N02"] select');assert.equal(select.value,'N02-B');select.value='N02-C';select.dispatchEvent(new w.Event('change'));
  button(root,'保存').click();await tick();select=root.querySelector('[data-preference-group="N02"] select');select.value='N02-D';select.dispatchEvent(new w.Event('change'));button(root,'保存').click();await tick();assert.equal(store.read().story.play.choices.N02,'N02-D');
  ui.dispose();const reopened=createConfiguration({getContext:()=>ctx,persist:async()=>true});ui=mountMatrixConfiguration(w.document,root,{service:{config:reopened}});await ui.ready;assert.equal(root.querySelector('[data-preference-group="N02"] select').value,'N02-D');

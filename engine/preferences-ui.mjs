@@ -13,7 +13,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
  const scopes=el('select');scopes.className='text_pole';scopes.style.cssText='width:100%;min-width:0;max-width:100%';scopes.setAttribute('aria-label','偏好范围');
  for(const [id,label]of [['story','当前故事'],['global','所有故事默认']])scopes.append(option(label,id));
  const area=el('div'),search=input('',()=>filter());search.setAttribute('aria-label','搜索偏好');search.placeholder='搜索名称或原文';body.append(intro,field('偏好范围',scopes),field('搜索偏好',search),area);
- function filter(){const q=search.value.trim().toLocaleLowerCase();for(const box of area.querySelectorAll('[data-preference-group]')){box.hidden=!!q&&!box.textContent.toLocaleLowerCase().includes(q)&&![...box.querySelectorAll('textarea')].some(n=>n.value.toLocaleLowerCase().includes(q));if(q&&!box.hidden)box.parentElement.open=true;}}
+ function filter(){const q=search.value.trim().toLocaleLowerCase();for(const box of area.querySelectorAll('[data-preference-group]')){box.hidden=!!q&&!(box.dataset.preferenceKeywords??'').includes(q)&&!box.textContent.toLocaleLowerCase().includes(q)&&![...box.querySelectorAll('textarea')].some(n=>n.value.toLocaleLowerCase().includes(q));if(q&&!box.hidden)box.parentElement.open=true;}}
  const owner=()=>scope==='global'?(config.playDefaults??={choices:{},parameters:{}}):(config.story.play??={choices:{},parameters:{}});
  const chosen=()=>scope==='global'?config.playDefaults??{}:effectivePreferences(config);
  const set=(id,value)=>{const target=owner();target.choices??={};target.choices[id]=value;changed();};
@@ -25,7 +25,8 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
    const category=['文风与凝视','技法与场合'].includes(group.section)?'文风与技法':'游玩规则';
    let section=sections.get(category);
    if(!section){section=el('details');section.open=sections.size===0;section.append(el('summary',category));sections.set(category,section);area.append(section);}
-   const box=el('fieldset');box.style.minWidth='0';box.dataset.preferenceGroup=group.id;box.append(el('legend',group.label));
+   if(group.id==='S08-Dial')section.append(el('h3','描写占比'),el('p','对白、外貌与心理可分别选择侧重；强度表示行文重点。第一人称心声可单独设置，主控内心仍遵循“主控心理与生理边界”。'));
+   const box=el('fieldset');box.style.minWidth='0';box.dataset.preferenceGroup=group.id;if(['S08-Dial','S08-Look','S08-Mind','S08-MindVoice'].includes(group.id))box.dataset.preferenceKeywords='描写占比';box.append(el('legend',group.label));
    const selected=value.choices?.[group.id];
    if(!group.multiple){
     const select=el('select');select.className='text_pole';select.style.cssText='width:100%;min-width:0;max-width:100%';select.setAttribute('aria-label',group.label);select.append(option('沿用完整预设',''));

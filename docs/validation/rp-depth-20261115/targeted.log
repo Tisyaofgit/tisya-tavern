@@ -1,0 +1,61 @@
+✔ candidate.29 upgrade saves exact-stock changes while preserving authored content, roles, order, off/deleted slots and metadata; active=false (53.535907ms)
+✔ candidate.29 upgrade saves exact-stock changes while preserving authored content, roles, order, off/deleted slots and metadata; active=true (37.580399ms)
+✔ an active valid predecessor keeps unsaved authored prompt edits across the native refresh (13.069265ms)
+✔ a failed or busy automatic upgrade does not mutate the saved or live predecessor (17.307463ms)
+✔ explicit force still reinstalls the shipped prompts and order (7.584243ms)
+✔ 4a prose remains verbatim outside authorized RP depth and machine form revisions (7.376851ms)
+✔ actual final message assembly keeps default and configured body min/max without lower-bound exceptions (23.596406ms)
+✔ configured contradictory length bounds fail instead of silently deleting a bound (8.591908ms)
+✔ explicit user prose stays authored even when equal to shipped candidate31 text (6.009843ms)
+✔ independent romance controls reach actual outgoing prompts while retaining POV and player boundaries (24.720148ms)
+✔ real settings UI saves the three controls, isolates stories, inherits defaults and survives cold reopen (275.296166ms)
+✖ installed stock receives RP analysis in the actual merged outgoing request; historical messages stay literal (15.888473ms)
+✖ the RP update keeps authored prompt bytes and every unrelated stock line (7.844033ms)
+✔ new analysis labels parse without becoming state writes or replacing the separate heart comments (9.310179ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 12
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 874.706325
+
+✖ failing tests:
+
+test at tests/rp-depth.test.js:12:1
+✖ installed stock receives RP analysis in the actual merged outgoing request; historical messages stay literal (15.888473ms)
+  AssertionError [ERR_ASSERTION]: 言下之意|
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/6b3164ad736d/tisya-rp/tests/rp-depth.test.js:19:57)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/rp-depth.test.js:26:1
+✖ the RP update keeps authored prompt bytes and every unrelated stock line (7.844033ms)
+  AssertionError [ERR_ASSERTION]: tisya_registry
+      at TestContext.<anonymous> (file:///workspace/scratch/6b3164ad736d/tisya-rp/tests/rp-depth.test.js:28:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '[REGISTRY]\n@ENVELOPE :: Whole response boundary\n禁止在唯一 reply 根块之前或之后输出任何内容，包括说明文字、原卡触发符、变量更新、Markdown 代码围栏或第二个回复根块。\n整条响应从 <reply id="tisya-onepass-1"> 开始，以对应的 </reply> 结束；按下方骨架把本轮全部交付内容放入这个根块。\n正文与互动使用各自的 body、anchor、actions 区块。用于正文就地展示的原卡标记与美化标签放在 body 对应位置，独立扩展面板的显示标记放在 extra；两处都使用当前启用的正则渲染，每个显示组件只在实际展示位置输出一次。\n先读取本轮已注入的角色卡、世界书和输出格式条目，沿用显示标签原名、字段顺序、同组关系与内容要求。BGM／播放器、日期／时间／天气／地点／评语状态栏及其他独立面板，将完整同组标签连续放在 extra；原卡要求这些面板位于“正文结束前”、“消息末尾”或旧 context 容器内时，同样归入 extra，并保留面板之间的先后顺序。正文内联的弹幕、信笺和局部美化仍在 body 原位置。\n供正则匹配的显示标签直接输出，中文标签保持原名；禁止额外包裹反引号或 Markdown 代码围栏，禁止复制正则替换模板中的 HTML、CSS 或 JavaScript。明确要求展示的字面代码示例保留代码语义。extra 显示字段不编正文段号；cells 和 archive 的 P 引用仍只指向实际 body 段落。\nextra 同时收纳唯一的 cells 与 vars 直接子块。它们是隐藏的机器数据，不复制到可见正文或扩展面板；完整原生 UpdateVariable 更新只放在 extra 内的 vars 中，由原卡执行器解析。显示标记不得塞进 vars 或 cells。\n原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时输出：正文就地页面放在 body，独立面板放在 extra；普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。\n@END_ENVELOPE\n@OUT.kind := 结构化 `<reply id="tisya-onepass-1">`，语言与行文质地服从 `<Pref_*>` 与 `<StyleResources>`。\n\n<reply id="tisya-onepass-1">\n<task format="pipes">\n信号|<明确要求/本轮候选微调/维持现状>|<作用域：全局/世界/用户角色/单角色指向(填角色名)/本轮临时>|<捕捉契约者(@U)本轮显式指令或隐式口味倾向（区分@U场外真实偏好与{{user}}场内剧情反应；未经@U显式确认，场内反应仅作本轮临时微调，不自动升级为全局永久偏好）>\n叙事|<本轮主控代演边界、任务模式（互动叙事/扩写/场外/代写）、契约者指令落点与本轮授权片段的完成范围>\n文风|<本轮语体适配（叙事旁白vs鲜活口语/特定载体）、凝视落点与行文发力方向>\n情节|<本轮戏剧张力、信息差误判或巧合铁律、关系拉扯阻尼与篇幅饱满度锚定>\n塑造|<本轮全局或特定单角色的去端着活人感、人性厚度与反差细节发力点>\n</task>\n<anchor phase="before">\n构想|<这一场戏，我最想拿来破题、让人眼前一亮的巧思是什么？挑一个最出人意料的切入角度或一件牵一发而动全身的具体小事（不提前剧透D/E级未解锁底牌）。>\n情节|<这几个人各怀心事或信息差撞在一起，我打算在哪个瞬间拧一下局势？怎么让这一拐既合乎因果，又拐出让人拍案叫绝的张力？>\n人物|<这一幕里，我最想把谁身上的哪点活人毛边、人性厚度或口是心非的反差写透，让他彻底摆脱纸片感走出纸面？>\n运镜|<要是把镜头推近，我最想借哪样具体的器物、哪束光影、或者哪道打量彼此的眼神来替人说话？怎么用距离、体温和动作停顿把空气绷紧？>\n用语|<这一节我最想让人读完还反复回味的，是哪句贴合身份与场合的鲜活台词、哪个唯有彼此心照不宣的旧梗、还是哪句滚在舌尖没说出口的潜台词？>\n余韵|<收尾定格在哪处具体动作落定、器物状态、体温余留或环境声响上？（直接落在动作或画面上，严禁以发问或抛选择题收尾）>\n解锁|<有哪桩暗藏的秘密正好到了满足条件、露出冰山一角的时候？>|<先掀开哪一小片已授权表面痕迹？>|<顺着场上哪条因果掀开的？（无则删行）>\n设计|<这会儿要把镜头分给谁？>|<这位心里正打着什么完全属于他自己的算盘闯进场？>|<这一掺和，又会带出他身上哪点独一无二的性情与锋芒？（无则删行）>\n输入评价|@rendering{表情ID}|<顺着当前激活的 @S.persona（及 [CONTRACTOR.WISH]）声口，对契约者递过来的这一手，想怎样自然回应？>\n与用户互动|@rendering{表情ID}|<趁还没落笔，以 @S.persona 的本色姿态隔着屏幕跟契约者自然聊些什么？>\n剧情吐槽|@rendering{表情ID}|<场上这帮人里，谁的算盘落空、口是心非或自作聪明最让人发噱？按自己的声口聊聊，不解释笑点。>\n</anchor>\n<title format="pipes">\n<凝练有余味的章节名（不超过8字，不剧透底牌）>|<当前故事时间（未知填~）>|<当前场景地点（多地用、分隔，无填~）>|<所属世界（无填~）>\n</title>\n<body min="2000" max="5000" unit="字">\n<依 `<task>` 与 `<anchor phase="before">` 展开本轮完整正文（执行 `<Pref_*>`、`<StyleResources>`、`<Pref_LexicalGate>` 与 `<TisyaKnowledgeBase>`，按 `<Pref_Plot> @CLIMAX.INK_BASE` 写满篇幅区间，或在 `N07-C/D` 及 `W06` 模式下直接交付所需文本）。每段从 1 开始连续编号并加一个半角空格（`1 正文`），段间空一行（对白段同样编号；段号禁止加句点、括号或列表符）。正文内联标记留在原位，独立扩展面板放入 `<extra>`。末段严格按 `<Pref_Narrative> @STOP.GATE` 定格在具象动作、器物状态或感官触点上，严禁以问句、二选一抛题或“等待回答”收尾。>\n</body>\n<anchor phase="after">\n余波|<已经发生的事还留下哪些感受、动作惯性或迟来的影响？只取本轮有据、值得继续体会的部分；无则删行。>\n错位|<同一个可见细节，在不同人物那里产生了什么理解差异？保留各自知情边界；无则删行。>\n牵连|<眼前的人、物和事务与别处有哪些已有联系？区分实际影响与尚未发生的可能，不替场外结算；无则删行。>\n惯性|<人物原有的日常、习惯和关系分寸，有哪些仍在自然延续？无需每轮出现新变化；无则删行。>\n生长|<哪些小偏好、新默契或关系变化刚刚萌芽，尚未定型？一次表现不直接升格为恒常事实；无则删行。>\n余地|<哪些意义和可能性可以留着继续体会，无须立刻下结论或交成选择题？无则删行。>\n输入评价|@rendering{表情ID}|<从本轮实际写出的内容回应契约者，与前评选择不同的角度。>\n与用户互动|@rendering{表情ID}|<戏写完了，以 @S.persona 的口吻自然交流；无须追问下一步。>\n剧情吐槽|@rendering{表情ID}|<场上哪处矛盾、意外或日常细节让你想聊聊？按自己的声口来。>\n</anchor>\n<extra>\n{独立扩展面板放此（位于 cells/vars 之外，若有位置要求前缀 @POSITION:top|after-body|tail）；即使无独立显示面板，仍保留下方隐藏的 cells 与 vars 子块。}\n<cells format="form">\n{按 [CELL_PROMPTS] 的 cells 分组与原行号填写本轮立即生效的状态和业务记录，包括数值、文字状态、当前关系、已接受任务，以及新人物、实体与档案。只改本轮有据的字段；档案和当前关系本身的说明、接受证据与改变原因仍随本记录维护。新增和修订标题、关联名称及空值写法沿用给定表单，没有变化时写 <cells/>。}\n</cells>\n<vars>\n{激活原生角色卡变量/MVU规则时按原卡语法填写变量更新；否则自闭合为 <vars/>}\n</vars>\n</extra>\n<archive format="form">\n{按 [CELL_PROMPTS] 的 archive 分组填写本轮需要保留的事件、事实命题、人物认知与参与者看法、回忆锚点、关系来历和线索。每条业务记录以真实 Pn 说明正文依据，个人推测、误信与心理分别归其主体；可引用 cells 已登记的人物或实体，不重复抄当前状态。所属明细随业务父记录进入同一块。未知省略，待核填“?”；没有新增记忆时写 <archive/>。}\n</archive>\n<actions min="4" max="6">\n<自由命名的切入点，可留空>|<常规模式下以 {{user}} 自身第一人称口吻、性格底色与个人语癖写出的行动或台词起手式（无主控群像或场外模式下改为导演镜头/追问切入点）>|<这一手落下去可能撬动的局势张力或暗流（点出张力，不剧透底牌）>\n</actions>\n</reply>\n@DRAFT := 上方唯一最终 `<reply id="tisya-onepass-1">...</reply>` 完整成稿；FROZEN(@DRAFT) 绑定本轮 @IN 及全部必交区块顺序。\n@DELIVERY := 单次响应完整输出 @DRAFT 直至根标签 `</reply>` 闭合。\n@execute 要求 DONE(COMMIT.READY)+INTAKE_READY+@FORMAT=PASSED+FROZEN(@DRAFT)+CURRENT(@DRAFT,@IN)+@LOCK=READY+@SENT=false；仅由 PREPARE_STEP 调用执行一次，在 `</reply>` 闭合后置 @SENT=true 并立即结束响应。\n[/REGISTRY]',
+    expected: '[REGISTRY]\n@ENVELOPE :: Whole response boundary\n禁止在唯一 reply 根块之前或之后输出任何内容，包括说明文字、原卡触发符、变量更新、Markdown 代码围栏或第二个回复根块。\n整条响应从 <reply id="tisya-onepass-1"> 开始，以对应的 </reply> 结束；按下方骨架把本轮全部交付内容放入这个根块。\n正文与互动使用各自的 body、anchor、actions 区块。用于正文就地展示的原卡标记与美化标签放在 body 对应位置，独立扩展面板的显示标记放在 extra；两处都使用当前启用的正则渲染，每个显示组件只在实际展示位置输出一次。\n先读取本轮已注入的角色卡、世界书和输出格式条目，沿用显示标签原名、字段顺序、同组关系与内容要求。BGM／播放器、日期／时间／天气／地点／评语状态栏及其他独立面板，将完整同组标签连续放在 extra；原卡要求这些面板位于“正文结束前”、“消息末尾”或旧 context 容器内时，同样归入 extra，并保留面板之间的先后顺序。正文内联的弹幕、信笺和局部美化仍在 body 原位置。\n供正则匹配的显示标签直接输出，中文标签保持原名；禁止额外包裹反引号或 Markdown 代码围栏，禁止复制正则替换模板中的 HTML、CSS 或 JavaScript。明确要求展示的字面代码示例保留代码语义。extra 显示字段不编正文段号；cells 和 archive 的 P 引用仍只指向实际 body 段落。\nextra 同时收纳唯一的 cells 与 vars 直接子块。它们是隐藏的机器数据，不复制到可见正文或扩展面板；完整原生 UpdateVariable 更新只放在 extra 内的 vars 中，由原卡执行器解析。显示标记不得塞进 vars 或 cells。\n原卡的 <start></start> 等开局或创角触发符仅在本轮明确请求进入该页面时输出：正文就地页面放在 body，独立面板放在 extra；普通剧情续写沿当前场景继续。素材或历史中的前缀、后缀和示例遵循同一内部归属。\n@END_ENVELOPE\n@OUT.kind := 结构化 `<reply id="tisya-onepass-1">`，语言与行文质地服从 `<Pref_*>` 与 `<StyleResources>`。\n\n<reply id="tisya-onepass-1">\n<task format="pipes">\n信号|<明确要求/本轮候选微调/维持现状>|<作用域：全局/世界/用户角色/单角色指向(填角色名)/本轮临时>|<捕捉契约者(@U)本轮显式指令或隐式口味倾向（区分@U场外真实偏好与{{user}}场内剧情反应；未经@U显式确认，场内反应仅作本轮临时微调，不自动升级为全局永久偏好）>\n叙事|<本轮主控代演边界、任务模式（互动叙事/扩写/场外/代写）、契约者指令落点与本轮授权片段的完成范围>\n文风|<本轮语体适配（叙事旁白vs鲜活口语/特定载体）、凝视落点与行文发力方向>\n情节|<本轮戏剧张力、信息差误判或巧合铁律、关系拉扯阻尼与篇幅饱满度锚定>\n塑造|<本轮全局或特定单角色的去端着活人感、人性厚度与反差细节发力点>\n</task>\n<anchor phase="before">\n构想|<这一场戏，我最想拿来破题、让人眼前一亮的巧思是什么？挑一个最出人意料的切入角度或一件牵一发而动全身的具体小事（不提前剧透D/E级未解锁底牌）。>\n情节|<这几个人各怀心事或信息差撞在一起，我打算在哪个瞬间拧一下局势？怎么让这一拐既合乎因果，又拐出让人拍案叫绝的张力？>\n人物|<这一幕里，我最想把谁身上的哪点活人毛边、人性厚度或口是心非的反差写透，让他彻底摆脱纸片感走出纸面？>\n运镜|<要是把镜头推近，我最想借哪样具体的器物、哪束光影、或者哪道打量彼此的眼神来替人说话？怎么用距离、体温和动作停顿把空气绷紧？>\n用语|<这一节我最想让人读完还反复回味的，是哪句贴合身份与场合的鲜活台词、哪个唯有彼此心照不宣的旧梗、还是哪句滚在舌尖没说出口的潜台词？>\n余韵|<收尾定格在哪处具体动作落定、器物状态、体温余留或环境声响上？（直接落在动作或画面上，严禁以发问或抛选择题收尾）>\n解锁|<有哪桩暗藏的秘密正好到了满足条件、露出冰山一角的时候？>|<先掀开哪一小片已授权表面痕迹？>|<顺着场上哪条因果掀开的？（无则删行）>\n设计|<这会儿要把镜头分给谁？>|<这位心里正打着什么完全属于他自己的算盘闯进场？>|<这一掺和，又会带出他身上哪点独一无二的性情与锋芒？（无则删行）>\n输入评价|@rendering{表情ID}|<顺着当前激活的 @S.persona（及 [CONTRACTOR.WISH]）声口，对契约者递过来的这一手，想怎样自然回应？>\n与用户互动|@rendering{表情ID}|<趁还没落笔，以 @S.persona 的本色姿态隔着屏幕跟契约者自然聊些什么？>\n剧情吐槽|@rendering{表情ID}|<场上这帮人里，谁的算盘落空、口是心非或自作聪明最让人发噱？按自己的声口聊聊，不解释笑点。>\n</anchor>\n<title format="pipes">\n<凝练有余味的章节名（不超过8字，不剧透底牌）>|<当前故事时间（未知填~）>|<当前场景地点（多地用、分隔，无填~）>|<所属世界（无填~）>\n</title>\n<body min="2000" max="5000" unit="字">\n<依 `<task>` 与 `<anchor phase="before">` 展开本轮完整正文（执行 `<Pref_*>`、`<StyleResources>`、`<Pref_LexicalGate>` 与 `<TisyaKnowledgeBase>`，按 `<Pref_Plot> @CLIMAX.INK_BASE` 写满篇幅区间，或在 `N07-C/D` 及 `W06` 模式下直接交付所需文本）。每段从 1 开始连续编号并加一个半角空格（`1 正文`），段间空一行（对白段同样编号；段号禁止加句点、括号或列表符）。正文内联标记留在原位，独立扩展面板放入 `<extra>`。末段严格按 `<Pref_Narrative> @STOP.GATE` 定格在具象动作、器物状态或感官触点上，严禁以问句、二选一抛题或“等待回答”收尾。>\n</body>\n<anchor phase="after">\n余波|<已经发生的事还留下哪些感受、动作惯性或迟来的影响？只取本轮有据、值得继续体会的部分；无则删行。>\n错位|<同一个可见细节，在不同人物那里产生了什么理解差异？保留各自知情边界；无则删行。>\n牵连|<眼前的人、物和事务与别处有哪些已有联系？区分实际影响与尚未发生的可能，不替场外结算；无则删行。>\n惯性|<人物原有的日常、习惯和关系分寸，有哪些仍在自然延续？无需每轮出现新变化；无则删行。>\n生长|<哪些小偏好、新默契或关系变化刚刚萌芽，尚未定型？一次表现不直接升格为恒常事实；无则删行。>\n余地|<哪些意义和可能性可以留着继续体会，无须立刻下结论或交成选择题？无则删行。>\n输入评价|@rendering{表情ID}|<从本轮实际写出的内容回应契约者，与前评选择不同的角度。>\n与用户互动|@rendering{表情ID}|<戏写完了，以 @S.persona 的口吻自然交流；无须追问下一步。>\n剧情吐槽|@rendering{表情ID}|<场上哪处矛盾、意外或日常细节让你想聊聊？按自己的声口来。>\n</anchor>\n<extra>\n{独立扩展面板放此（位于 cells/vars 之外，若有位置要求前缀 @POSITION:top|after-body|tail）；即使无独立显示面板，仍保留下方隐藏的 cells 与 vars 子块。}\n<cells format="form">\n{按 [CELL_PROMPTS] 的 cells 分组与原行号填写本轮立即生效的状态和业务记录，包括数值、文字状态、当前关系、已接受任务，以及新人物、实体与档案。只改本轮有据的字段；档案和当前关系本身的说明、接受证据与改变原因仍随本记录维护。新增和修订标题、关联名称及空值写法沿用给定表单，没有变化时写 <cells/>。}\n</cells>\n<vars>\n{激活原生角色卡变量/MVU规则时按原卡语法填写变量更新；否则自闭合为 <vars/>}\n</vars>\n</extra>\n<archive format="form">\n{按 [CELL_PROMPTS] 的 archive 分组填写本轮需要保留的事件、事实命题、人物认知与参与者看法、回忆锚点、关系来历和线索。每条业务记录以真实 Pn 说明正文依据，个人推测、误信与心理分别归其主体；可引用 cells 已登记的人物或实体，不重复抄当前状态。所属明细随业务父记录进入同一块。未知省略，待核填“?”；没有新增记忆时写 <archive/>。}\n</archive>\n<actions min="4" max="6">\n<自由命名的切入点，可留空>|<常规模式下以 {{user}} 自身第一人称口吻、性格底色与个人语癖写出的行动或台词起手式（无主控群像或场外模式下改为导演镜头/追问切入点）>|<这一手落下去可能撬动的局势张力或暗流（点出张力，不剧透底牌）>\n</actions>\n</reply>\n@DRAFT := 上方唯一最终 `<reply id="tisya-onepass-1">...</reply>` 完整成稿；FROZEN(@DRAFT) 绑定本轮 @IN 及全部必交区块顺序。\n@DELIVERY := 单次响应完整输出 @DRAFT 直至根标签 `</reply>` 闭合。\n@execute 要求 DONE(COMMIT.READY)+INTAKE_READY+@FORMAT=PASSED+FROZEN(@DRAFT)+CURRENT(@DRAFT,@IN)+@LOCK=READY+@SENT=false；仅由 PREPARE_STEP 调用执行一次，在 `</reply>` 闭合后置 @SENT=true 并立即结束响应。\n[/REGISTRY]',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }

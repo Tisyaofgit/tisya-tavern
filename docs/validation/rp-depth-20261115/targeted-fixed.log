@@ -1,0 +1,22 @@
+✔ candidate.29 upgrade saves exact-stock changes while preserving authored content, roles, order, off/deleted slots and metadata; active=false (44.771554ms)
+✔ candidate.29 upgrade saves exact-stock changes while preserving authored content, roles, order, off/deleted slots and metadata; active=true (36.303142ms)
+✔ an active valid predecessor keeps unsaved authored prompt edits across the native refresh (21.457122ms)
+✔ a failed or busy automatic upgrade does not mutate the saved or live predecessor (16.862021ms)
+✔ explicit force still reinstalls the shipped prompts and order (8.429128ms)
+✔ 4a prose remains verbatim outside authorized RP depth and machine form revisions (6.399614ms)
+✔ actual final message assembly keeps default and configured body min/max without lower-bound exceptions (18.950838ms)
+✔ configured contradictory length bounds fail instead of silently deleting a bound (3.142611ms)
+✔ explicit user prose stays authored even when equal to shipped candidate31 text (3.560079ms)
+✔ independent romance controls reach actual outgoing prompts while retaining POV and player boundaries (12.438598ms)
+✔ real settings UI saves the three controls, isolates stories, inherits defaults and survives cold reopen (382.146609ms)
+✔ installed stock receives RP analysis in the actual merged outgoing request; historical messages stay literal (15.292361ms)
+✔ the RP update keeps authored prompt bytes and every unrelated stock line (13.718932ms)
+✔ new analysis labels parse without becoming state writes or replacing the separate heart comments (7.2873ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 827.083313

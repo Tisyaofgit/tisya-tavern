@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.34-rp.1",
+  "captured_utc": "2026-11-14T18:59:24.461298+00:00",
+  "files": [
+    {
+      "path": "index.js",
+      "size": 125660,
+      "sha256": "7aebd6f46fc8c15fbdaa96760543449399afce5ea79af68a6556b8f5d07baf2d"
+    },
+    {
+      "path": "runtime.js",
+      "size": 5043226,
+      "sha256": "38a6e25589775eabde3841b1e0c6567bf78250b5de376afbbf347e2916ea89bb"
+    },
+    {
+      "path": "engine/preferences-ui.mjs",
+      "size": 9770,
+      "sha256": "a1bb81b9fde09126bd0629cfe36b373c42daded7ab18a2defd7db78b8c7131ef"
+    },
+    {
+      "path": "engine/preference-options.json",
+      "size": 88903,
+      "sha256": "aed67233ad1940fbc8f9962100408503c1f702cfd0829870eff47b41c52c19c1"
+    },
+    {
+      "path": "engine/prose-style-policy.mjs",
+      "size": 7880,
+      "sha256": "37c684c60da661cc37d7db922fb26fa36f2971f26f11770d4ba4d3e5d271e64a"
+    },
+    {
+      "path": "engine/phone-origin-status.mjs",
+      "size": 1084,
+      "sha256": "2b3c8b9928c62440d826e65545cb49474c44646a281595d4f0a3c9b92b41caa8"
+    },
+    {
+      "path": "phone-origin-navigation.mjs",
+      "size": 1686,
+      "sha256": "4ceeafa84bf1a3b82e74ad1f1c42f6f5f7c70c4bfc41d3e13a5f492f8caac721"
+    },
+    {
+      "path": "presets/Tisya-Matrix.json",
+      "size": 98509,
+      "sha256": "fe75917bda1b5fc23b122c292dd8018680823eabb6046d80e550371c6c64476a"
+    },
+    {
+      "path": "presets/Tisya.json",
+      "size": 99314,
+      "sha256": "25e7c41d66559ccf4929ccd5b908f1e29cb2a09f14cea4de2efbbd3297823323"
+    },
+    {
+      "path": "tests/browser-description-phone.mjs",
+      "size": 7245,
+      "sha256": "d8a926032a39f90a3ba71168a7f30b45662fcd404e470b0515cd14daa83b89c4"
+    }
+  ]
+}

@@ -734,6 +734,99 @@
       ]
     },
     {
+      "id": "S08-Look",
+      "label": "外貌描写比重",
+      "slot": "tisya_pref_style",
+      "section": "文风与凝视",
+      "multiple": false,
+      "options": [
+        {
+          "id": "S08-Look-A",
+          "label": "点到即止",
+          "effect": "@APPEARANCE.RATIO := 用少量准确的外貌细节辨认人物，将篇幅留给当前事件。",
+          "default": false
+        },
+        {
+          "id": "S08-Look-B",
+          "label": "随场景展开",
+          "effect": "@APPEARANCE.RATIO := 在出场、靠近、目光停留或仪容变化时展开外貌，细节随人物动作与现场光线自然出现。",
+          "default": false
+        },
+        {
+          "id": "S08-Look-C",
+          "label": "细写容貌与风姿",
+          "effect": "@APPEARANCE.RATIO := 为 {{char}} 与 {{user}} 的容貌、发肤、衣着、身形、姿态与神情留出充足篇幅，依据各自档案写出可辨认的美感与气质；让光线、距离、动作改变细节，以具体形象呈现美貌与帅气。",
+          "default": false
+        },
+        {
+          "id": "S08-Look-D",
+          "label": "重点凝视（恋爱向）",
+          "effect": "@APPEARANCE.RATIO := 将 {{char}} 与 {{user}} 的美貌、帅气和相互吸引作为当前场面的重点描写。依据双方档案细写五官、眉眼、唇角、发肤、衣着与身姿在光线和动作中的变化；通过当前视角人物的审美与目光，写清对方哪里好看、为何移不开眼、哪一处神态使其心动，随关系进展展开不同细节。描写双方的机会由当前视角与在场信息决定。",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "S08-Mind",
+      "label": "心理描写比重",
+      "slot": "tisya_pref_style",
+      "section": "文风与凝视",
+      "multiple": false,
+      "options": [
+        {
+          "id": "S08-Mind-A",
+          "label": "留在言行中",
+          "effect": "@PSYCHOLOGY.RATIO := 将心理主要藏入人物言语、动作、停顿和选择，用可见反差让读者体会情绪。",
+          "default": false
+        },
+        {
+          "id": "S08-Mind-B",
+          "label": "随情绪展开",
+          "effect": "@PSYCHOLOGY.RATIO := 在人物判断、情绪转折与关系变化处呈现必要心理，思想紧扣眼前的人与事。{{user}} 的内心描写遵循 @AUTH.MIND，人物知情遵循当前视角。",
+          "default": false
+        },
+        {
+          "id": "S08-Mind-C",
+          "label": "细写心理过程",
+          "effect": "@PSYCHOLOGY.RATIO := 给视角人物的心理过程留出充足篇幅：从眼前触动进入联想、犹疑、自我辩解与取舍，写清心念怎样改变下一句台词或动作。用人物自己的声口承载具体思绪。{{user}} 的内心描写遵循 @AUTH.MIND，人物知情遵循当前视角。",
+          "default": false
+        },
+        {
+          "id": "S08-Mind-D",
+          "label": "重点展开（恋爱向）",
+          "effect": "@PSYCHOLOGY.RATIO := 将视角人物面对 {{char}} 或 {{user}} 时的心理拉扯作为当前场面的重点：由对方具体的容貌、言行与距离触动，展开心动、试探、期待、误读、退缩、嘴硬或自我说服的连续心念，选取符合人设和关系阶段的矛盾，让思绪与当下对白、动作互相推动。心声保留人物独特的措辞与联想。{{user}} 的内心描写遵循 @AUTH.MIND，人物知情遵循当前视角。",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "S08-MindVoice",
+      "label": "心理呈现方式",
+      "slot": "tisya_pref_style",
+      "section": "文风与凝视",
+      "multiple": false,
+      "options": [
+        {
+          "id": "S08-MindVoice-A",
+          "label": "跟随叙述人称",
+          "effect": "@PSYCHOLOGY.VOICE := 心理描写跟随 @POV.PERSON 与当前焦点人物，以贴近人物声口的叙述呈现思绪。",
+          "default": false
+        },
+        {
+          "id": "S08-MindVoice-B",
+          "label": "第一人称心声",
+          "effect": "@PSYCHOLOGY.VOICE := 在获准展开的心理段落中，以当前焦点人物的「我」直接呈现内心独白，写出其当下的疑问、欲言又止与自我辩解。外部叙事仍遵循 @POV.PERSON；心声以清楚的段落或语境归属于该人物，切换焦点遵循当前视角。{{user}} 的心声遵循 @AUTH.MIND。",
+          "default": false
+        },
+        {
+          "id": "S08-MindVoice-C",
+          "label": "心声与表面反差",
+          "effect": "@PSYCHOLOGY.VOICE := 将当前焦点人物的第一人称心声与其外在言行相邻呈现，写出嘴上应对、身体反应和心里真正纠结的差异；每次反差来自具体人设、关系与现场触动。外部叙事遵循 @POV.PERSON，人物知情遵循当前视角，{{user}} 的心声遵循 @AUTH.MIND。",
+          "default": false
+        }
+      ]
+    },
+    {
       "id": "S08-Disc",
       "label": "表达纪律",
       "slot": "tisya_pref_style",
@@ -1216,15 +1309,15 @@
     },
     {
       "id": "R01",
-      "label": "全员不捧 {{user}} 与去端着活人感",
+      "label": "人物自主与活人感",
       "slot": "tisya_pref_portrayal",
       "section": "角色塑造",
       "multiple": false,
       "options": [
         {
           "id": "R01-A",
-          "label": "冷酷去主角中心（全世界不欠 {{user}}）+ 剥离舞台腔去端着 + 主动破局 (默认首选)",
-          "effect": "@CHAR.AUTONOMY := 在场人物各怀私心与正事，唯有 `{{user}}` 亮出真筹码、硬地位或过命交情时才买账，面对虚张声势或无理抢戏直接无视、打断、冷笑拆穿或顶回去；赋予人物未经雕琢的活人松弛感——借手头活计、器物小习惯、犯困走神、不耐烦啧声或顺嘴损人侧面立住性情，卸掉戏剧舞台腔。",
+          "label": "独立立场与因果回应（默认）",
+          "effect": "@CHAR.AUTONOMY := 人物依据自己的目标、关系、职责、资源与底线回应 {{user}}，有亲近、帮助、拒绝、讨价还价、迟疑和坚持原计划的具体理由。愿望与行动尝试交由当前处境产生结果；人物通过手头正事、习惯、措辞和有代价的选择显出独立性与活人感。",
           "default": true,
           "source_line": 271
         },
@@ -1285,15 +1378,15 @@
     },
     {
       "id": "R04",
-      "label": "潜台词解码与场外合谋强制爱 {{user}}",
+      "label": "言下之意与人物解读",
       "slot": "tisya_pref_portrayal",
       "section": "角色塑造",
       "multiple": false,
       "options": [
         {
           "id": "R04-A",
-          "label": "口是心非解码 + 场外 @U 合谋强制爱 {{user}} 演绎 (默认王牌)",
-          "effect": "@CHAR.SUBTEXT_AND_COERCION := 敏锐对手凭观察看穿 `{{user}}` 嘴硬拒斥或发抖背后的动摇，专挑防线松动处步步紧逼；当场外 `@U` 渴望对不情愿的 `{{user}}` 实施强迫、破防或死局纠缠时，与 `@U` 幕后共谋——既 100% 写活 `{{user}}` 局内的傲骨、抗拒与挣扎，又驱动 `{{char}}` 的偏执手腕与局势陷阱碾过 `{{user}}` 的反抗，把 `{{user}}` 的每次挣扎与逃跑都化作激怒 `{{char}}` 收紧笼子的燃料。",
+          "label": "有据推测与互动验证（默认）",
+          "effect": "@CHAR.SUBTEXT_AND_COERCION := 按 CREATIVE.GUIDE 的 RP.DEPTH 从外显言行辨认可能的诉求、试探与防御，敏锐程度受经历和信息限制；把人物的解读落实为具体回应，后续反馈可以证实或推翻判断。角色明说的意愿、尚未确认的动机与契约者场外要求分别处理，既有设定、心理代演与本轮授权共同决定演绎范围。",
           "default": true,
           "source_line": 277
         },
