@@ -1,0 +1,35 @@
+{
+  "verified_utc": "2026-11-14T17:54:59.176525+00:00",
+  "repository": "Tisyaofgit/tisya-tavern",
+  "visibility": "public",
+  "branch": "work/phone-selection-verified-20261114",
+  "local_candidate": "3475efe354979c39d3b05b44917f23c6ca9c8f3c",
+  "remote_candidate": "22dee653705f1f7bf7d2109374a0b4f23b8f9ddc",
+  "candidate_tree": "d1a2c3ea959f2649ea2d868e366b3572e4d76495",
+  "complete_remote_tree": true,
+  "files_compared_by_path_mode_type_blob": 1844,
+  "tree_mismatches": [],
+  "tested_manifest_files_rechecked": 1811,
+  "tested_manifest_mismatches": [],
+  "main_after_publish": "59aafd3ce554853c5385d02ed8c0962d41ab2bbb",
+  "authorization": "User approved publishing the prepared repair and synthetic test evidence to the independent candidate branch. No main merge authorized by this publication.",
+  "prior_validation": {
+    "full_suite": {
+      "pass": 2616,
+      "fail": 0,
+      "exit_code": 0
+    },
+    "resume_targeted": {
+      "pass": 30,
+      "fail": 0
+    },
+    "cloud_browser": "Production phone UI/service/database bridge with synthetic host/profile fixtures; native canvas and IndexedDB. Selection race rejected with zero writes; retry succeeds; crop survives reload without changing original."
+  },
+  "this_run": "Read and verify existing evidence; confirm tested source hashes, published commit/ref and complete tree. No product code changes or new browser/model/device testing.",
+  "not_verified": [
+    "real TauriTavern host",
+    "external model",
+    "Android hardware"
+  ],
+  "next": "Test candidate in the real host and Android; merge main only under a separately applicable authorization."
+}

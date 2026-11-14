@@ -7,7 +7,7 @@
 - [x] SEL-VERIFY：相同 17 项转绿；关联回归 62/62；恢复的完整门禁在修正裁剪测试等待后 2616/2616、exit 0；本次 1811 项受测文件逐字节核同，再跑 30 项选择/完整手机 UI 测试全部通过。
 - [x] SEL-CROP：测试原先固定等待约 10ms，可能早于 IndexedDB/图片异步处理完成；改为等待实际保存状态，限时 5 秒，保留图像坐标、原图、私密性及副本来源断言。产品裁剪实现未改变。
 - [x] SEL-BROWSER：官方预览服务＋云 Chromium 实际点击：暂停初始化→切换人物→继续→PHONE_SELECTION_CHANGED 且 0 写入；切回重新初始化→1 次写入。真实 Canvas/IndexedDB 裁剪 200×100 原图为 100×80 副本；原图 SHA 未变，刷新后两图内容一致。360px 手机容器实测，页面错误为空。
-- [ ] SEL-REMOTE：候选尚未推送。之前报告的 776643f 和 work/phone-selection-20261114T034643Z 均未在远端找到。当前远端 Tisyaofgit/tisya-tavern 为 public，已核匹配连接账号；候选公开上传仍等待本轮明确决定。
+- [x] SEL-REMOTE：用户已明确同意将修复与合成测试证据上传到 Tisyaofgit/tisya-tavern 的独立候选分支。work/phone-selection-verified-20261114 已创建，候选提交为 22dee653705f1f7bf7d2109374a0b4f23b8f9ddc；与本地 3475efe 的 tree 同为 d1a2c3ea959f2649ea2d868e366b3572e4d76495。远端完整递归树的 1844 个文件按路径、mode、type、blob SHA 全部核同。main 独立读回仍为 59aafd3ce554853c5385d02ed8c0962d41ab2bbb。本条及 publish-verification.json 为候选推送后的文档补记，产品源码未变。
 - [ ] SEL-DEVICE：真实 TauriTavern 宿主、外部模型、Android 真机未测。没有恢复用户运行时存档，全部浏览器测试使用合成夹具。
 
 浏览器夹具使用生产初始化入口、手机页面、服务及数据库桥；人物投影与宿主持久化由测试适配提供。浏览器本地存储仅保存独立测试数据，不代替生产存储。浏览器控制扩展的 metadata 错误单列在 browser-evidence.json，不归因为产品页面异常。
@@ -18,4 +18,4 @@
 
 当前托管服务不接受 static.directory 为点号；测试时将源码复制到预览根的 public 子目录，再用 sites-preview start 返回的 URL。生产文件复制前后按 SHA 核对。普通命令启动 Chromium 的 socket 权限失败属于另一条路径，不代表官方预览不可用。
 
-下一步：确认候选公开上传范围；允许后推送固定候选分支，读回提交与树；合入 main 另按具体授权执行。设备试用只在真实设备操作后记录。
+下一步：使用候选分支进行真实宿主与 Android 试用；合入 main 另按具体授权执行。设备试用只在真实设备操作后记录。本次仅恢复并完成已授权的候选推送，复核此前测试证据与源文件一致性，未重新宣称运行完整测试或浏览器验收。
