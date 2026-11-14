@@ -284,11 +284,12 @@ function phoneBindingSelection(){
 }
 function phoneSelectionKey(){return JSON.stringify(phoneBindingSelection());}
 async function initializeLifeForCurrentSelection(service){
- const captured=phoneSelectionKey(),roles=storyRoles(),profile=await roles.phoneProfile();
- if(phoneSelectionKey()!==captured)throw Error('角色或世界选择已变化，请重新打开手机。');
+ const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,captured=phoneSelectionKey();
+ const assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}if(phoneSelectionKey()!==captured){const error=Error('角色或世界选择已变化，请重新打开手机。');error.code='PHONE_SELECTION_CHANGED';throw error;}};
+ const roles=storyRoles(),profile=await roles.phoneProfile();assertCurrent();
  if(!profile){if(service.readLife())throw Error('请选择这份手机进度原本绑定的角色档案和世界定义；原进度已保留。');return null;}
  const selection=phoneBindingSelection();
- if(profile.database){await service.refresh();const snapshot=await matrixDatabase.read();const normalized=readPhoneDatabaseProfile(snapshot.state,{worldId:profile.worldId,entityId:profile.entityId,dossierId:profile.dossierId});if(!normalized)throw Error('请先在表单中填写所选角色与世界的手机初态；已有数据不会被默认值覆盖。');if(normalized.life)return normalized.life;return service.initLife({...normalized,binding:selection});}
+ if(profile.database){await service.refresh();assertCurrent();const snapshot=await matrixDatabase.read();assertCurrent();const normalized=readPhoneDatabaseProfile(snapshot.state,{worldId:profile.worldId,entityId:profile.entityId,dossierId:profile.dossierId});if(!normalized)throw Error('请先在表单中填写所选角色与世界的手机初态；已有数据不会被默认值覆盖。');if(normalized.life)return normalized.life;return service.initLife({...normalized,binding:selection},{assertCurrent});}
  throw Error('手机需要当前表单中的人物和世界设置。');
 }
 function phoneDesktop(){

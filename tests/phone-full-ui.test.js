@@ -64,6 +64,10 @@ test('crop preview and actual save handler create a derived file without changin
  const f=await fixture();t.after(()=>f.close());await f.addPhoto();const calls=[];f.win.createImageBitmap=async()=>({width:200,height:100,close(){}});
  const original=f.doc.createElement.bind(f.doc);f.doc.createElement=(name,...args)=>name==='canvas'?{width:0,height:0,getContext:()=>({drawImage(...a){calls.push(a.slice(1));}}),toBlob(fn){fn(new Blob(['cropped real canvas adapter bytes'],{type:'image/png'}));}}:original(name,...args);
  await f.app.handle('media.edit',{photoId:'photo'});await f.submit('form[data-action="media.edit.apply"]',{kind:'crop',x:25,y:10,width:50,height:80});
+ // DOM submission awaits IndexedDB and image work before entering the service queue.
+ // Wait for the real save state instead of assuming the fixture's 10 ms settle covers it.
+ const saveDeadline=Date.now()+5000;while(!f.app.requestLeave().allowed&&Date.now()<saveDeadline)await sleep(10);
+ assert.equal(f.app.requestLeave().allowed,true,'crop save completes within the test deadline');
  const photos=f.service.readLife().state.media.photos;assert.equal(photos.length,2);assert.equal(photos[1].derivedFrom,'photo');assert.equal(photos[1].visibility,'private');assert.equal(photos[0].name,'图片 photo');assert.deepEqual(calls[0],[50,10,100,80,0,0,100,80]);assert.equal(await f.urls.get(f.app.helpers.mediaUrl('photo')).text(),'original photo');assert.equal(photos[1].edit.kind,'crop');
 });
 test('actual audio progress, volume, mode and queue reopen paused with the saved position',async t=>{

@@ -1,0 +1,384 @@
+TAP version 13
+# Subtest: a completed A to B switch reads B existing progress through warm and cold phone services
+ok 1 - a completed A to B switch reads B existing progress through warm and cold phone services
+  ---
+  duration_ms: 5566.935948
+  type: 'test'
+  ...
+# Subtest: a completed A to a new B switch initializes B independently and preserves A progress
+ok 2 - a completed A to a new B switch initializes B independently and preserves A progress
+  ---
+  duration_ms: 3138.096787
+  type: 'test'
+  ...
+# Subtest: a phone read pending in A rejects its old scope after native chat contents become B
+ok 3 - a phone read pending in A rejects its old scope after native chat contents become B
+  ---
+  duration_ms: 4156.894769
+  type: 'test'
+  ...
+# Subtest: peek and message snapshot reads do not return an old owner after a chat switch
+    # Subtest: peekDatabase
+    ok 1 - peekDatabase
+      ---
+      duration_ms: 2370.244763
+      type: 'test'
+      ...
+    # Subtest: readDatabaseSnapshot
+    ok 2 - readDatabaseSnapshot
+      ---
+      duration_ms: 2221.841554
+      type: 'test'
+      ...
+    1..2
+ok 4 - peek and message snapshot reads do not return an old owner after a chat switch
+  ---
+  duration_ms: 4593.292041
+  type: 'test'
+  ...
+# Subtest: a same-chat native clear or reload cannot be projected as a detached branch during an awaited read
+    # Subtest: clear
+    ok 1 - clear
+      ---
+      duration_ms: 1975.972029
+      type: 'test'
+      ...
+    # Subtest: reload
+    ok 2 - reload
+      ---
+      duration_ms: 1827.181398
+      type: 'test'
+      ...
+    1..2
+ok 5 - a same-chat native clear or reload cannot be projected as a detached branch during an awaited read
+  ---
+  duration_ms: 3803.999611
+  type: 'test'
+  ...
+# Subtest: a real deleted initialization floor stays detached and does not reset the saved phone
+ok 6 - a real deleted initialization floor stays detached and does not reset the saved phone
+  ---
+  duration_ms: 2768.350421
+  type: 'test'
+  ...
+# Subtest: declared phone references resolve business IDs only in their world and reject ambiguity atomically
+ok 7 - declared phone references resolve business IDs only in their world and reject ambiguity atomically
+  ---
+  duration_ms: 2360.334857
+  type: 'test'
+  ...
+# Subtest: read/peek do not assign message IDs or write; DB CAS and exact receipts survive cold host
+ok 8 - read/peek do not assign message IDs or write; DB CAS and exact receipts survive cold host
+  ---
+  duration_ms: 1965.952406
+  type: 'test'
+  ...
+# Subtest: financial action anchor is detached on reroll and never relocated to older text
+ok 9 - financial action anchor is detached on reroll and never relocated to older text
+  ---
+  duration_ms: 2800.62546
+  type: 'test'
+  ...
+# Subtest: generation bypass is limited to internal phone turn lifecycle
+ok 10 - generation bypass is limited to internal phone turn lifecycle
+  ---
+  duration_ms: 874.166549
+  type: 'test'
+  ...
+# Subtest: real Matrix host initializes phone from form rows and transfers against the same canonical balances
+ok 11 - real Matrix host initializes phone from form rows and transfers against the same canonical balances
+  ---
+  duration_ms: 3679.716942
+  type: 'test'
+  ...
+# Subtest: entry hydrates only requested evidence and rereads once in its original scope
+ok 12 - entry hydrates only requested evidence and rereads once in its original scope
+  ---
+  duration_ms: 2.5192
+  type: 'test'
+  ...
+# Subtest: entry preserves the exact native hydration failure and performs no retry write
+ok 13 - entry preserves the exact native hydration failure and performs no retry write
+  ---
+  duration_ms: 1.488991
+  type: 'test'
+  ...
+# Subtest: entry refuses its old service when native hydration finishes after switching to B
+ok 14 - entry refuses its old service when native hydration finishes after switching to B
+  ---
+  duration_ms: 1.847619
+  type: 'test'
+  ...
+# Subtest: entry cache rejects A after completed peek is delayed until navigation to B
+ok 15 - entry cache rejects A after completed peek is delayed until navigation to B
+  ---
+  duration_ms: 1754.778666
+  type: 'test'
+  ...
+# Subtest: entry cache rejects when the same chat key reloads a different metadata object
+ok 16 - entry cache rejects when the same chat key reloads a different metadata object
+  ---
+  duration_ms: 1095.194028
+  type: 'test'
+  ...
+# Subtest: entry cache rechecks ownership after an existing cache promise resolves
+ok 17 - entry cache rechecks ownership after an existing cache promise resolves
+  ---
+  duration_ms: 1360.273066
+  type: 'test'
+  ...
+# Subtest: late successful A opening leaves B page untouched and does not create a B iframe
+ok 18 - late successful A opening leaves B page untouched and does not create a B iframe
+  ---
+  duration_ms: 1344.26896
+  type: 'test'
+  ...
+# Subtest: late failed A opening leaves B page untouched instead of painting A error there
+ok 19 - late failed A opening leaves B page untouched instead of painting A error there
+  ---
+  duration_ms: 975.547522
+  type: 'test'
+  ...
+# Subtest: stable A to independently loaded B initializes B and keeps A bundle unchanged
+ok 20 - stable A to independently loaded B initializes B and keeps A bundle unchanged
+  ---
+  duration_ms: 1935.864522
+  type: 'test'
+  ...
+# Subtest: genuine B history detachment is retained without reinitializing or altering stored evidence
+ok 21 - genuine B history detachment is retained without reinitializing or altering stored evidence
+  ---
+  duration_ms: 2514.913121
+  type: 'test'
+  ...
+# Subtest: phone facade rejects A service when its queued reconciliation runs after switch to B
+ok 22 - phone facade rejects A service when its queued reconciliation runs after switch to B
+  ---
+  duration_ms: 3241.573057
+  type: 'test'
+  ...
+# Subtest: phone turn checks captured owner before assigning message identities after service await
+ok 23 - phone turn checks captured owner before assigning message identities after service await
+  ---
+  duration_ms: 2772.333982
+  type: 'test'
+  ...
+# Subtest: unchanged selection initializes once through the current entry
+ok 24 - unchanged selection initializes once through the current entry
+  ---
+  duration_ms: 1.998899
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting profile without writing
+ok 25 - initialization rejects selection while awaiting profile without writing
+  ---
+  duration_ms: 0.79469
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting profile without writing
+ok 26 - initialization rejects reload while awaiting profile without writing
+  ---
+  duration_ms: 0.201955
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting profile without writing
+ok 27 - initialization rejects chat while awaiting profile without writing
+  ---
+  duration_ms: 0.134233
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting refresh without writing
+ok 28 - initialization rejects selection while awaiting refresh without writing
+  ---
+  duration_ms: 0.13234
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting refresh without writing
+ok 29 - initialization rejects reload while awaiting refresh without writing
+  ---
+  duration_ms: 0.150027
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting refresh without writing
+ok 30 - initialization rejects chat while awaiting refresh without writing
+  ---
+  duration_ms: 0.110888
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting read without writing
+ok 31 - initialization rejects selection while awaiting read without writing
+  ---
+  duration_ms: 0.115474
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting read without writing
+ok 32 - initialization rejects reload while awaiting read without writing
+  ---
+  duration_ms: 0.17934
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting read without writing
+ok 33 - initialization rejects chat while awaiting read without writing
+  ---
+  duration_ms: 0.297119
+  type: 'test'
+  ...
+# Subtest: a late existing-life projection is not returned for the newly selected person
+ok 34 - a late existing-life projection is not returned for the newly selected person
+  ---
+  duration_ms: 0.456429
+  type: 'test'
+  ...
+# Subtest: profile transport failure retains its original error and makes no writes
+ok 35 - profile transport failure retains its original error and makes no writes
+  ---
+  duration_ms: 0.167573
+  type: 'test'
+  ...
+# Subtest: a queued initialization rechecks selection after the previous phone job completes
+ok 36 - a queued initialization rechecks selection after the previous phone job completes
+  ---
+  duration_ms: 2368.464534
+  type: 'test'
+  ...
+# Subtest: selection changes during the authoritative queue refresh cannot initialize the phone
+ok 37 - selection changes during the authoritative queue refresh cannot initialize the phone
+  ---
+  duration_ms: 2592.215489
+  type: 'test'
+  ...
+# Subtest: the database save reread checks selection before submitting a transaction
+ok 38 - the database save reread checks selection before submitting a transaction
+  ---
+  duration_ms: 1889.795631
+  type: 'test'
+  ...
+# Subtest: the Matrix commit queue rejects an expired caller without changing the stored revision
+ok 39 - the Matrix commit queue rejects an expired caller without changing the stored revision
+  ---
+  duration_ms: 1588.756653
+  type: 'test'
+  ...
+# Subtest: a caller expires while waiting behind another Matrix transaction
+ok 40 - a caller expires while waiting behind another Matrix transaction
+  ---
+  duration_ms: 2124.86083
+  type: 'test'
+  ...
+# Subtest: a selection change during the Matrix source read stops the actual storage commit
+ok 41 - a selection change during the Matrix source read stops the actual storage commit
+  ---
+  duration_ms: 1981.636786
+  type: 'test'
+  ...
+# Subtest: a completed storage write remains recorded when its caller expires before the receipt
+ok 42 - a completed storage write remains recorded when its caller expires before the receipt
+  ---
+  duration_ms: 2144.78742
+  type: 'test'
+  ...
+# Subtest: existing life data survives rejected initialization and a cold host reopen
+ok 43 - existing life data survives rejected initialization and a cold host reopen
+  ---
+  duration_ms: 3794.693945
+  type: 'test'
+  ...
+# Subtest: current database keeps life uninitialized until an explicit normalized profile is applied
+ok 44 - current database keeps life uninitialized until an explicit normalized profile is applied
+  ---
+  duration_ms: 2818.784095
+  type: 'test'
+  ...
+# Subtest: current media origin follows verified native branches and cold reopen without metadata copies
+ok 45 - current media origin follows verified native branches and cold reopen without metadata copies
+  ---
+  duration_ms: 8816.262972
+  type: 'test'
+  ...
+# Subtest: ordinary archive import cannot borrow another chat media namespace
+ok 46 - ordinary archive import cannot borrow another chat media namespace
+  ---
+  duration_ms: 3793.914192
+  type: 'test'
+  ...
+# Subtest: real payment is one serialized commit, exact-id replay is free, stale caller cannot overwrite it
+ok 47 - real payment is one serialized commit, exact-id replay is free, stale caller cannot overwrite it
+  ---
+  duration_ms: 5956.77407
+  type: 'test'
+  ...
+# Subtest: persistence failure keeps financial state, journal, pending list and original archive intact
+ok 48 - persistence failure keeps financial state, journal, pending list and original archive intact
+  ---
+  duration_ms: 4002.632278
+  type: 'test'
+  ...
+# Subtest: role/world binding switch refuses reseeding; style and application changes preserve all transactions
+ok 49 - role/world binding switch refuses reseeding; style and application changes preserve all transactions
+  ---
+  duration_ms: 3934.028671
+  type: 'test'
+  ...
+# Subtest: prepared native turn freezes life mutations and captures actual already-paid facts
+ok 50 - prepared native turn freezes life mutations and captures actual already-paid facts
+  ---
+  duration_ms: 3895.366506
+  type: 'test'
+  ...
+# Subtest: next-turn cannot pay or borrow for user, failed batch never consumes pending actions
+ok 51 - next-turn cannot pay or borrow for user, failed batch never consumes pending actions
+  ---
+  duration_ms: 3792.87022
+  type: 'test'
+  ...
+# Subtest: next-turn resolves invited person contacts without requiring a social account
+ok 52 - next-turn resolves invited person contacts without requiring a social account
+  ---
+  duration_ms: 3606.876511
+  type: 'test'
+  ...
+# Subtest: delivery and story-time feedback freeze with original source; later changes cannot rewrite it
+ok 53 - delivery and story-time feedback freeze with original source; later changes cannot rewrite it
+  ---
+  duration_ms: 9184.647793
+  type: 'test'
+  ...
+# Subtest: reroll restores captured life boundary, detaches later local transactions, and keeps old frozen result
+ok 54 - reroll restores captured life boundary, detaches later local transactions, and keeps old frozen result
+  ---
+  duration_ms: 8516.618511
+  type: 'test'
+  ...
+# Subtest: native history truncation restores life before removed reply while preserving its snapshot
+ok 55 - native history truncation restores life before removed reply while preserving its snapshot
+  ---
+  duration_ms: 10335.008506
+  type: 'test'
+  ...
+# Subtest: living weibo has one editable entity and an explicitly read-only suite projection
+ok 56 - living weibo has one editable entity and an explicitly read-only suite projection
+  ---
+  duration_ms: 3102.07173
+  type: 'test'
+  ...
+# Subtest: accepted NPC replies populate the same social domain and its frozen projection; impersonation/private reads fail
+ok 57 - accepted NPC replies populate the same social domain and its frozen projection; impersonation/private reads fail
+  ---
+  duration_ms: 8030.359347
+  type: 'test'
+  ...
+# Subtest: archive import performs revision CAS after media staging and rejects life journal tampering
+ok 58 - archive import performs revision CAS after media staging and rejects life journal tampering
+  ---
+  duration_ms: 3129.155274
+  type: 'test'
+  ...
+1..58
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83390.204391

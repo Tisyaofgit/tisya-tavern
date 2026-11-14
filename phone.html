@@ -2868,11 +2868,12 @@ function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=()=>new
   if(!storage||typeof storage.load!=='function'||typeof storage.save!=='function')fail('PHONE_STORAGE','缺少手机存储接口');
   let state=null,chain=Promise.resolve(),disposed=false;
   const assert=()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(!state)fail('PHONE_NOT_READY','手机尚未初始化');};
-  const enqueue=fn=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');if(state&&storage.authoritativeDatabase){const fresh=await storage.load();if(!fresh)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，未把旧手机数据写回当前历史；请恢复原历史后继续');state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
-  async function commit(next,kind='state'){
+  const enqueue=(fn,assertCurrent)=>{const p=chain.then(async()=>{if(disposed)fail('PHONE_DISPOSED','手机实例已关闭');assertCurrent?.();if(state&&storage.authoritativeDatabase){const fresh=await storage.load();assertCurrent?.();if(!fresh)fail('PHONE_DATABASE_DETACHED','当前历史已离开手机初始化分支，未把旧手机数据写回当前历史；请恢复原历史后继续');state=importPhone(fresh,{contextKey});}return fn();});chain=p.catch(()=>{});return p;};
+  async function commit(next,kind='state',assertCurrent){
     assert();if(next===state)return state;
     const previous=state.revision;next.revision=previous+1;scoped(next,contextKey);
-    const archive=JSON.parse(exportPhone(next)),saved=await storage.save(archive,{expectedRevision:previous,kind});
+    assertCurrent?.();const archive=JSON.parse(exportPhone(next)),saved=await storage.save(archive,{expectedRevision:previous,kind,...(assertCurrent?{assertCurrent}:{})});
+    try{assertCurrent?.();}catch(error){error.phoneCommitReceipt={contextKey,revision:saved?.phoneArchive?.revision??next.revision,kind};throw error;}
     if(disposed)fail('PHONE_DISPOSED','保存结束时手机实例已关闭；未更新其他上下文');state=saved?.phoneArchive?importPhone(saved.phoneArchive,{contextKey}):next;onChange({kind,revision:state.revision});return state;
   }
   const api={
@@ -2881,7 +2882,7 @@ function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=()=>new
     getState(){assert();return clone(state);},
     readLife(){assert();return state.life?clone(state.life):null;},
     lifeRouteForDocument(docId){assert();const route=state.suite.documents[docId]?.meta?.lifeProjection;return route?{appId:route.appId,detail:route.entityId,bindingKey:route.bindingKey}:null;},
-    initLife(profile){return enqueue(async()=>{
+    initLife(profile,{assertCurrent}={}){return enqueue(async()=>{
       assert();assertEditable(state);if(profile?.database&&state.life){if(profile.worldId!==state.life.world.id||profile.entityId!==state.life.state.identity.personId)fail('PHONE_LIFE_BINDING','所选表单世界或角色尚未有手机初始化记录');return clone(state.life);}const initial=createInitialPhoneLife(asPlain(profile));initial.bindingKey=phoneLifeBindingKey(initial.binding);initial.mediaOriginContextKey=state.lifeInitial?.mediaOriginContextKey??state.contextKey;validatePhoneLife(initial);
       const previous=state.life??state.lifeInitial;
       if(previous&&previous.bindingKey!==initial.bindingKey)fail('PHONE_LIFE_BINDING','这条聊天已有另一世界或角色的生活进度；请切回原世界/角色，或另开聊天。原进度没有重置。',{existingBinding:previous.binding});
@@ -2890,12 +2891,12 @@ function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=()=>new
         if(stableLife(oldWorld)!==stableLife(newWorld))fail('PHONE_LIFE_PROFILE_MIGRATION','世界的货币、时间或机制已经改变，需要明确迁移；已有账户与订单保留。');
         if(state.life.world.name===initial.world.name&&stableLife(state.life.world.theme)===stableLife(initial.world.theme)&&stableLife(state.life.world.apps)===stableLife(initial.world.apps)&&stableLife(state.life.world.appNames)===stableLife(initial.world.appNames))return clone(state.life);
         const next=clone(state),event={envelopeId:`phone-life-profile:${idFactory()}`,kind:'profile',bindingKey:initial.bindingKey,name:initial.world.name,theme:initial.world.theme,apps:initial.world.apps,appNames:initial.world.appNames,sourceDigest:initial.world.sourceDigest};
-        appendLifeEvent(next,event);await commit(next,'life-profile');return clone(state.life);
+        appendLifeEvent(next,event);await commit(next,'life-profile',assertCurrent);return clone(state.life);
       }
       const next=clone(state);next.lifeInitial??=clone(initial);
       appendLifeEvent(next,{envelopeId:`phone-life-init:${idFactory()}`,kind:'init',initial},lifeProjectionEnvelope(next,initial));
-      await commit(next,'life-init');return clone(state.life);
-    });},
+      await commit(next,'life-init',assertCurrent);return clone(state.life);
+    },assertCurrent);},
     dispatchLife(action,{expectedRevision,bindingKey}={}){return enqueue(async()=>{
       assert();assertEditable(state);const input=asPlain(action);id(input.id,'生活操作编号');
       if(!state.life)fail('PHONE_LIFE_NOT_READY','请先选择世界和角色并初始化生活手机。');

@@ -1,0 +1,15 @@
+{
+  "scope": "Recovered 2616-test final manifest; browser source binding and browser result assertions",
+  "files_in_original_manifest": 1811,
+  "changed_since_full_test": [],
+  "browser_assertions": "passed",
+  "focused_tests": {
+    "passed": 30,
+    "failed": 0,
+    "command": "node --test tests/phone-initialization-selection.test.js tests/phone-full-ui.test.js"
+  },
+  "product_files_unchanged": true,
+  "host_and_android_tested": false,
+  "browser_console_note": "Only cloud browser extension metadata errors observed; test page errors empty.",
+  "verified_utc": "2026-11-14T05:04:18.173704+00:00"
+}

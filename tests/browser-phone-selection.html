@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缇斯亚 · 手机选择与裁剪验收</title>
+<style>body{margin:0;background:#edf3f4;color:#183339;font:15px system-ui}header,aside{max-width:1000px;margin:12px auto;padding:12px}header{display:flex;gap:8px;flex-wrap:wrap}button{min-height:44px;padding:8px 12px}label{display:flex;align-items:center;gap:5px}#phone-root{width:390px;max-width:100%;margin:auto}#phone-root .tisya-phone-life-host{display:block}pre{white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:20px}#errors{color:#9b2a26}</style>
+<body><aside><h1>手机选择与裁剪验收</h1><p id="build">正在核对版本…</p><p>仅使用独立合成世界、人物与测试图片；真实宿主及 Android 未连接。</p><p id="stage" role="status"></p></aside>
+<header><label><input type="checkbox" id="hold" checked>暂停读取人物资料</label><button id="switch">切换到人物乙</button><button id="release">继续读取资料</button><button id="reopen">选回人物甲并重开</button><button id="photo">加入测试原图</button><button id="inspect">核对实际保存</button><button id="narrow">360px</button><button id="normal">390px</button></header>
+<main id="phone-root"></main><aside><pre id="result" role="status"></pre><pre id="errors"></pre></aside>
+<script>window.__TISYA_PHONE_NO_AUTOBOOT__=true;</script>
+<script type="module" src="./browser-phone-selection.mjs"></script></body></html>

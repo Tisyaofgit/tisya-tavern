@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: unchanged selection initializes once through the current entry
+ok 1 - unchanged selection initializes once through the current entry
+  ---
+  duration_ms: 1.967458
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting profile without writing
+ok 2 - initialization rejects selection while awaiting profile without writing
+  ---
+  duration_ms: 0.683728
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting profile without writing
+ok 3 - initialization rejects reload while awaiting profile without writing
+  ---
+  duration_ms: 0.130967
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting profile without writing
+ok 4 - initialization rejects chat while awaiting profile without writing
+  ---
+  duration_ms: 0.27299
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting refresh without writing
+ok 5 - initialization rejects selection while awaiting refresh without writing
+  ---
+  duration_ms: 0.260081
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting refresh without writing
+ok 6 - initialization rejects reload while awaiting refresh without writing
+  ---
+  duration_ms: 0.132499
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting refresh without writing
+ok 7 - initialization rejects chat while awaiting refresh without writing
+  ---
+  duration_ms: 0.191188
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting read without writing
+ok 8 - initialization rejects selection while awaiting read without writing
+  ---
+  duration_ms: 0.227051
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting read without writing
+ok 9 - initialization rejects reload while awaiting read without writing
+  ---
+  duration_ms: 0.491519
+  type: 'test'
+  ...
+# Subtest: initialization rejects chat while awaiting read without writing
+ok 10 - initialization rejects chat while awaiting read without writing
+  ---
+  duration_ms: 0.305189
+  type: 'test'
+  ...
+# Subtest: a late existing-life projection is not returned for the newly selected person
+ok 11 - a late existing-life projection is not returned for the newly selected person
+  ---
+  duration_ms: 0.430428
+  type: 'test'
+  ...
+# Subtest: profile transport failure retains its original error and makes no writes
+ok 12 - profile transport failure retains its original error and makes no writes
+  ---
+  duration_ms: 0.207342
+  type: 'test'
+  ...
+# Subtest: a queued initialization rechecks selection after the previous phone job completes
+ok 13 - a queued initialization rechecks selection after the previous phone job completes
+  ---
+  duration_ms: 2049.712281
+  type: 'test'
+  ...
+# Subtest: selection changes during the authoritative queue refresh cannot initialize the phone
+ok 14 - selection changes during the authoritative queue refresh cannot initialize the phone
+  ---
+  duration_ms: 1710.79117
+  type: 'test'
+  ...
+# Subtest: the database save reread checks selection before submitting a transaction
+ok 15 - the database save reread checks selection before submitting a transaction
+  ---
+  duration_ms: 1759.318736
+  type: 'test'
+  ...
+# Subtest: the Matrix commit queue rejects an expired caller without changing the stored revision
+ok 16 - the Matrix commit queue rejects an expired caller without changing the stored revision
+  ---
+  duration_ms: 1724.705434
+  type: 'test'
+  ...
+# Subtest: existing life data survives rejected initialization and a cold host reopen
+ok 17 - existing life data survives rejected initialization and a cold host reopen
+  ---
+  duration_ms: 3450.563945
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11184.903544

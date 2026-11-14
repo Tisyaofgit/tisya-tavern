@@ -1,0 +1,38 @@
+✔ uninitialized phone offers explicit initialization and identity navigation without seeding on open (381.864002ms)
+✔ actual album UI creates, assigns, trashes, restores and keeps referenced bytes (1565.966684ms)
+✔ theme uses actual owned media, survives reopen and cannot publish a private background (774.736749ms)
+✔ crop preview and actual save handler create a derived file without changing the original (513.842545ms)
+✔ actual audio progress, volume, mode and queue reopen paused with the saved position (1370.487602ms)
+✔ private songs stop when switching account and remain absent from its music views (786.081481ms)
+✔ lyrics and comments use actual forms and only real time tags synchronize (557.194501ms)
+✔ missing and unauthorized paid audio never call play (297.972454ms)
+✔ ownership error boot retains data and exposes real retry, identity and close controls (13.275243ms)
+✔ crop bounds reject invalid regions before decoding or producing derivatives (0.504009ms)
+✔ unchanged selection initializes once through the current entry (1.947604ms)
+✔ initialization rejects selection while awaiting profile without writing (0.590399ms)
+✔ initialization rejects reload while awaiting profile without writing (0.211037ms)
+✔ initialization rejects chat while awaiting profile without writing (0.141443ms)
+✔ initialization rejects selection while awaiting refresh without writing (0.291299ms)
+✔ initialization rejects reload while awaiting refresh without writing (0.160351ms)
+✔ initialization rejects chat while awaiting refresh without writing (0.128033ms)
+✔ initialization rejects selection while awaiting read without writing (0.133752ms)
+✔ initialization rejects reload while awaiting read without writing (0.1526ms)
+✔ initialization rejects chat while awaiting read without writing (0.288906ms)
+✔ a late existing-life projection is not returned for the newly selected person (0.201073ms)
+✔ profile transport failure retains its original error and makes no writes (0.147692ms)
+✔ a queued initialization rechecks selection after the previous phone job completes (2158.799973ms)
+✔ selection changes during the authoritative queue refresh cannot initialize the phone (1863.556901ms)
+✔ the database save reread checks selection before submitting a transaction (1604.245779ms)
+✔ the Matrix commit queue rejects an expired caller without changing the stored revision (1480.091092ms)
+✔ a caller expires while waiting behind another Matrix transaction (1970.755388ms)
+✔ a selection change during the Matrix source read stops the actual storage commit (1615.776589ms)
+✔ a completed storage write remains recorded when its caller expires before the receipt (1931.023203ms)
+✔ existing life data survives rejected initialization and a cold host reopen (3497.89011ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16536.627141

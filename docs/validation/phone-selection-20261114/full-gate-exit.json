@@ -1,0 +1,13 @@
+{
+  "started_utc": "2026-11-14T03:53:29.289503+00:00",
+  "finished_utc": "2026-11-14T03:57:20.275484+00:00",
+  "command": [
+    "npm",
+    "test",
+    "--",
+    "--test-reporter=tap"
+  ],
+  "exit_code": 1,
+  "files_checked": 1811,
+  "source_unchanged": true
+}

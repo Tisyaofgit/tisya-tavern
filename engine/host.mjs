@@ -131,17 +131,18 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   if(input?.source?.kind!=='worldbook-condition'||!Array.isArray(input.changes)||input.changes.length||input.schema?.length)fail('DATABASE_CAPABILITY','世界书扫描只可保存已核对的条件机会回执，不可改写业务字段');
   const job=databaseChain.then(()=>commitDatabaseNow(input,true));databaseChain=job.catch(()=>{});return job;
  }};}
- function commitDatabase(input){const job=databaseChain.then(()=>commitDatabaseNow(input));databaseChain=job.catch(()=>{});return job;}
- async function commitDatabaseNow({operationId,expectedRevision,contextKey,changes=[],schema=[],source=null}={},lifecycle=false){
+ function commitDatabase(input,{assertCurrent}={}){const job=databaseChain.then(()=>commitDatabaseNow(input,false,assertCurrent));databaseChain=job.catch(()=>{});return job;}
+ async function commitDatabaseNow({operationId,expectedRevision,contextKey,changes=[],schema=[],source=null}={},lifecycle=false,assertCurrent){
+  assertCurrent?.();
   if(!lifecycle)assertIdle();if(typeof operationId!=='string'||!operationId.trim())fail('OPERATION_ID','表单提交需要稳定操作ID');
   if(!Array.isArray(changes)||!Array.isArray(schema))fail('DATABASE_BATCH','表单批次必须为列表');
-  const {ctx:c,id,key}=await controller.identity();if(contextKey!==key)fail('CHAT_CHANGED','表单提交归属已变化');
-  if(ensureMessages(c))await c.saveChat();const bundle=await storage.get(id);if(!bundle)fail('ENGINE_NOT_BOUND','请先接入本会话');
+  const {ctx:c,id,key}=await controller.identity();assertCurrent?.();if(contextKey!==key)fail('CHAT_CHANGED','表单提交归属已变化');
+  if(ensureMessages(c))await c.saveChat();assertCurrent?.();const bundle=await storage.get(id);assertCurrent?.();if(!bundle)fail('ENGINE_NOT_BOUND','请先接入本会话');
   const messages=captureMessages(c),current=reconcile(bundle,messages).bundle,request={operationId,contextKey,changes,schema,source},hash=digest(request),prior=bundle.database_operations?.[operationId];
   if(prior){if(prior.hash!==hash)fail('OPERATION_CONFLICT','同一操作ID不能替换内容');const receipt=current.state.runtime?.receipts?.[operationId];if(!receipt)fail('OPERATION_DETACHED','这项操作属于已离开的历史，不能搬到当前分支');return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,receipt:{...clone(receipt),replayed:true}};}
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision!==(bundle.local_revision??0))fail('SAVE_CONFLICT','表单已被另一页面更新，请刷新后重试');
   for(const action of source?.newPhoneActions??[]){const priorAction=bundle.phone_action_reservations?.[action.id];if(priorAction)fail('PHONE_LIFE_ACTION_BRANCH','这个操作ID已在旧历史中使用，不能搬到当前分支',{actionId:action.id});}
-  const e=new Runtime(current.state),registered=await catalog();
+  const e=new Runtime(current.state),registered=await catalog();assertCurrent?.();
   for(const table of [...registered.tables,...schema]){
    if(!e.data.schema[table.id]){e.data.schema[table.id]=clone(table);e.data.tables[table.id]={};}
    else for(const field of table.fields??[]){const old=e.data.schema[table.id].fields.find(x=>x.key===field.key);if(!old)e.declareField(table.id,field);else if(old.type!==field.type)fail('SCHEMA_TYPE_CHANGE','已有字段类型不可隐式迁移',{table:table.id,field:field.key});}
@@ -172,7 +173,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const ids=messages.map(m=>m.uid),edit={uid:'database:'+operationId,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:messages.map(m=>({uid:m.uid,signature:digest({role:m.role,text:m.text??'',uid:m.uid})})),patch:inversePatch(e.data,current.state)};
   const staged={...current,manual_edits:[...(current.manual_edits??[]),edit],database_operations:{...(bundle.database_operations??{}),[operationId]:{hash,contextKey:key,anchor_uid:ids.at(-1)??null}},phone_action_reservations:{...(bundle.phone_action_reservations??{}),...Object.fromEntries((source?.newPhoneActions??[]).map(a=>[a.id,{fingerprint:digest(a),operationId,contextKey:key}]))}};
   const next={...reconcile(staged,messages).bundle,local_revision:(bundle.local_revision??0)+1};
-  if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');if(!await storage.commit(id,bundle.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已经更新此会话，请刷新后重试');
+  assertCurrent?.();if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');if(!await storage.commit(id,bundle.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已经更新此会话，请刷新后重试');
+  try{assertCurrent?.();}catch(error){error.databaseCommitReceipt={operationId,revision:next.local_revision,contextKey:key};throw error;}
   notify({status:'表单事务已保存',bundle:clone(next),database:true});
   return {state:clone(next.state),revision:next.local_revision,contextKey:key,receipt:clone(transaction)};
  }

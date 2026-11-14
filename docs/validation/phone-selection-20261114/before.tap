@@ -1,0 +1,243 @@
+TAP version 13
+# Subtest: unchanged selection initializes once through the current entry
+ok 1 - unchanged selection initializes once through the current entry
+  ---
+  duration_ms: 1.729206
+  type: 'test'
+  ...
+# Subtest: initialization rejects selection while awaiting profile without writing
+ok 2 - initialization rejects selection while awaiting profile without writing
+  ---
+  duration_ms: 0.556556
+  type: 'test'
+  ...
+# Subtest: initialization rejects reload while awaiting profile without writing
+not ok 3 - initialization rejects reload while awaiting profile without writing
+  ---
+  duration_ms: 0.527823
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects chat while awaiting profile without writing
+not ok 4 - initialization rejects chat while awaiting profile without writing
+  ---
+  duration_ms: 0.322544
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects selection while awaiting refresh without writing
+not ok 5 - initialization rejects selection while awaiting refresh without writing
+  ---
+  duration_ms: 0.224417
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects reload while awaiting refresh without writing
+not ok 6 - initialization rejects reload while awaiting refresh without writing
+  ---
+  duration_ms: 0.189695
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects chat while awaiting refresh without writing
+not ok 7 - initialization rejects chat while awaiting refresh without writing
+  ---
+  duration_ms: 0.163786
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects selection while awaiting read without writing
+not ok 8 - initialization rejects selection while awaiting read without writing
+  ---
+  duration_ms: 0.335454
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects reload while awaiting read without writing
+not ok 9 - initialization rejects reload while awaiting read without writing
+  ---
+  duration_ms: 0.565799
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: initialization rejects chat while awaiting read without writing
+not ok 10 - initialization rejects chat while awaiting read without writing
+  ---
+  duration_ms: 0.371528
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:34:2'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:35:100)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: a late existing-life projection is not returned for the newly selected person
+not ok 11 - a late existing-life projection is not returned for the newly selected person
+  ---
+  duration_ms: 0.282073
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:39:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:40:119)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: profile transport failure retains its original error and makes no writes
+ok 12 - profile transport failure retains its original error and makes no writes
+  ---
+  duration_ms: 0.1665
+  type: 'test'
+  ...
+# Subtest: a queued initialization rechecks selection after the previous phone job completes
+not ok 13 - a queued initialization rechecks selection after the previous phone job completes
+  ---
+  duration_ms: 2602.650488
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:59:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:62:116)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: selection changes during the authoritative queue refresh cannot initialize the phone
+not ok 14 - selection changes during the authoritative queue refresh cannot initialize the phone
+  ---
+  duration_ms: 2120.791212
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:66:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:68:121)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: the database save reread checks selection before submitting a transaction
+not ok 15 - the database save reread checks selection before submitting a transaction
+  ---
+  duration_ms: 1763.847275
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:72:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:75:151)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: the Matrix commit queue rejects an expired caller without changing the stored revision
+not ok 16 - the Matrix commit queue rejects an expired caller without changing the stored revision
+  ---
+  duration_ms: 1748.575681
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:79:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection (changed).'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:81:2)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: existing life data survives rejected initialization and a cold host reopen
+not ok 17 - existing life data survives rejected initialization and a cold host reopen
+  ---
+  duration_ms: 3347.250494
+  type: 'test'
+  location: '/workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:85:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The "changed" validation function is expected to return "true". Received false
+    
+    Caught error:
+    
+    Error: 所选表单世界或角色尚未有手机初始化记录
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/scratch/b78716000ece/tisya-recovery/tests/phone-initialization-selection.test.js:87:66)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 3
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12041.425301

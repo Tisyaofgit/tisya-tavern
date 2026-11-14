@@ -1,0 +1,11 @@
+{
+  "started_utc": "2026-11-14T03:59:19.245879+00:00",
+  "finished_utc": "2026-11-14T04:03:29.885779+00:00",
+  "command": [
+    "npm",
+    "test"
+  ],
+  "exit_code": 0,
+  "files_checked": 1811,
+  "source_unchanged": true
+}
