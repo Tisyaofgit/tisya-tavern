@@ -1,0 +1,272 @@
+{
+  "version": "PRV-2",
+  "cases": [
+    {
+      "case": "standing-360",
+      "geometry": {
+        "version": "PRV-2",
+        "viewport": [
+          360,
+          780
+        ],
+        "placement": "bubble",
+        "notice": {
+          "x": 244.96875,
+          "y": 441.625,
+          "width": 111.03125,
+          "height": 44,
+          "bottom": 485.625,
+          "right": 356
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "form": {
+          "x": 8,
+          "y": 631.015625,
+          "width": 344,
+          "height": 148.984375,
+          "bottom": 780,
+          "right": 352
+        },
+        "send": {
+          "x": 275,
+          "y": 691.40625,
+          "width": 64,
+          "height": 75.59375,
+          "bottom": 767,
+          "right": 339
+        },
+        "sendHit": true,
+        "pet": "standing",
+        "petVisible": true,
+        "panelOpen": false
+      }
+    },
+    {
+      "case": "drawer-360",
+      "geometry": {
+        "version": "PRV-2",
+        "viewport": [
+          360,
+          780
+        ],
+        "placement": "drawer",
+        "notice": {
+          "x": 314,
+          "y": 299.109375,
+          "width": 46,
+          "height": 80.796875,
+          "bottom": 379.90625,
+          "right": 360
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "form": {
+          "x": 8,
+          "y": 631.015625,
+          "width": 344,
+          "height": 148.984375,
+          "bottom": 780,
+          "right": 352
+        },
+        "send": {
+          "x": 275,
+          "y": 691.40625,
+          "width": 64,
+          "height": 75.59375,
+          "bottom": 767,
+          "right": 339
+        },
+        "sendHit": true,
+        "pet": "standing",
+        "petVisible": false,
+        "panelOpen": false
+      }
+    },
+    {
+      "case": "empty-context",
+      "noticeVisible": false
+    },
+    {
+      "case": "drawer-390-short-tall-composer",
+      "geometry": {
+        "version": "PRV-2",
+        "viewport": [
+          390,
+          500
+        ],
+        "placement": "drawer",
+        "notice": {
+          "x": 344,
+          "y": 99.59375,
+          "width": 46,
+          "height": 80.796875,
+          "bottom": 180.390625,
+          "right": 390
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "form": {
+          "x": 8,
+          "y": 240,
+          "width": 374,
+          "height": 260,
+          "bottom": 500,
+          "right": 382
+        },
+        "send": {
+          "x": 305,
+          "y": 300.390625,
+          "width": 64,
+          "height": 166,
+          "bottom": 466.390625,
+          "right": 369
+        },
+        "sendHit": true,
+        "pet": "standing",
+        "petVisible": false,
+        "panelOpen": false
+      }
+    },
+    {
+      "case": "open-panel-390-short-tall-composer",
+      "panel": {
+        "bottom": 222,
+        "height": 164,
+        "width": 370,
+        "x": 10,
+        "y": 58
+      },
+      "form": {
+        "height": 260,
+        "y": 240
+      },
+      "sendResult": "发送按钮已响应 4 次：发送可用"
+    },
+    {
+      "case": "expanded-phone-360",
+      "placement": "bubble",
+      "notice": {
+        "bottom": 115.1875,
+        "height": 44,
+        "width": 111.03125,
+        "x": 212.796875,
+        "y": 71.1875
+      },
+      "sendResult": "发送按钮已响应 5 次：发送可用"
+    },
+    {
+      "case": "desktop",
+      "geometry": {
+        "version": "PRV-2",
+        "viewport": [
+          1363,
+          936
+        ],
+        "placement": "bubble",
+        "notice": {
+          "x": 1247.96875,
+          "y": 597.625,
+          "width": 111.03125,
+          "height": 44,
+          "bottom": 641.625,
+          "right": 1359
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "bottom": 0,
+          "right": 0
+        },
+        "form": {
+          "x": 8,
+          "y": 787.015625,
+          "width": 1347,
+          "height": 148.984375,
+          "bottom": 936,
+          "right": 1355
+        },
+        "send": {
+          "x": 1278,
+          "y": 847.40625,
+          "width": 64,
+          "height": 75.59375,
+          "bottom": 923,
+          "right": 1342
+        },
+        "sendHit": true,
+        "pet": "standing",
+        "petVisible": true,
+        "panelOpen": false
+      }
+    },
+    {
+      "case": "desktop-open-panel",
+      "panel": {
+        "bottom": 675.9375,
+        "height": 617.9375,
+        "width": 480,
+        "x": 873,
+        "y": 58
+      },
+      "form": {
+        "height": 148.984375,
+        "y": 787.015625
+      },
+      "sendResult": "发送按钮已响应 1 次："
+    }
+  ],
+  "resources": [
+    {
+      "complete": true,
+      "height": 1536,
+      "width": 1024
+    },
+    {
+      "complete": true,
+      "height": 350,
+      "width": 320
+    },
+    {
+      "complete": true,
+      "height": 350,
+      "width": 320
+    },
+    {
+      "complete": true,
+      "height": 350,
+      "width": 320
+    }
+  ],
+  "uiError": "",
+  "console": {
+    "mobileSample": 30,
+    "desktopSample": 8,
+    "pageErrors": [],
+    "environmentNote": "Sampled errors originate in the browser automation extension metadata bridge."
+  },
+  "limitations": [
+    "Isolated synthetic service and composer, real production pet/review components",
+    "No native TauriTavern, model, OS keyboard or Android device verification"
+  ]
+}

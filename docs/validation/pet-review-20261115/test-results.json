@@ -1,0 +1,23 @@
+{
+  "version": "candidate.36-world.2",
+  "integration": {
+    "command": "node --test tests/shell.test.js tests/pet-review-ui.test.js tests/visual.test.js tests/turn-review-host.test.js tests/review-workflow-production.test.js",
+    "passed": 152,
+    "failed": 0
+  },
+  "full": {
+    "command": "npm test",
+    "generatedChecks": "all passed",
+    "tests": 2694,
+    "passed": 2693,
+    "failed": 1,
+    "failure": "release.test.js: installed/displayed/stylesheet version mismatch after package version bump",
+    "resolution": "Updated layout.js VERSION and shell.css version literal, regenerated runtime.js. No functional code changed after full test."
+  },
+  "final": {
+    "command": "node --test tests/release.test.js tests/pet-review-ui.test.js tests/visual.test.js",
+    "passed": 27,
+    "failed": 0,
+    "buildCheck": "node tools/build-extension.mjs --check passed"
+  }
+}

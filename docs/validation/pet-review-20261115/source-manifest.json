@@ -1,0 +1,10 @@
+{
+  "pet.js": "bedfc8a2a7113482bcde7111b3577b0cb1164d0ab7ecc7ab419bbf23e4cbaf6b",
+  "floating-bounds.js": "b715368870c5cab8c0014e9ccc4b465464b9a6771770834e5284b97c1262de7a",
+  "engine/turn-review-ui.mjs": "3c5f724c03558b780f0ca9f022eded4aae1232826517244a4bc9164cff0c176e",
+  "index.js": "724a55b640b4623b9f215c099af709aae1838b0b9d775793af9bf6ab7a93b01c",
+  "runtime.js": "8c070ab6c3fc3890ac3138dc83a85a44ceffff1e303f8a25c234e429ad654f78",
+  "tests/browser-pet-review.mjs": "b539c8bc10ef0484ab6e21d52f724e01d4169edbe3c1cd4370ca48dbea00e528",
+  "tests/browser-pet-review.html": "86782a047ca869bd051a5bbb0e9fef0aa4c7c7c8be448bb99fb5ad7a3a7b49b4",
+  "tests/fixtures/pet-review.mjs": "404b20edd89ef6b024d40cc36e02bcb49ac43d0c5f232df3678a1d16d7c4e7b3"
+}
