@@ -1,0 +1,60 @@
+{
+  "build": "版本 0.2.0-alpha.31.31.19-onepass.16-candidate.34-rp.2\n生产偏好页 SHA256 561e0bb13368cf9a28ba30bf7e88bef4ffc71340a62d7378e6a0cf3fba87ab49\n隔离合成宿主 · 实际配置服务 / IndexedDB / 生产偏好 UI",
+  "report": {
+    "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.34-rp.2",
+    "choices": {
+      "S08-Look": "S08-Look-D",
+      "S08-Mind": "S08-Mind-D",
+      "S08-MindVoice": "S08-MindVoice-C",
+      "N10-Plus": [
+        "N10-Plus1",
+        "N10-Plus2"
+      ]
+    },
+    "changes": [
+      {
+        "group": "S08-MindVoice",
+        "otherNodePreserved": true,
+        "controlPreserved": true,
+        "scrollBefore": 1543,
+        "scrollAfter": 1543
+      },
+      {
+        "group": "S08-MindVoice",
+        "otherNodePreserved": true,
+        "controlPreserved": true,
+        "scrollBefore": 1543,
+        "scrollAfter": 1543
+      },
+      {
+        "group": "N10-Plus",
+        "otherNodePreserved": true,
+        "controlPreserved": true,
+        "scrollBefore": 699,
+        "scrollAfter": 699
+      },
+      {
+        "group": "N10-Plus",
+        "otherNodePreserved": true,
+        "controlPreserved": true,
+        "scrollBefore": 764,
+        "scrollAfter": 764
+      },
+      {
+        "group": "S08-Look",
+        "otherNodePreserved": true,
+        "controlPreserved": true,
+        "scrollBefore": 201,
+        "scrollAfter": 201
+      }
+    ],
+    "newUserPreference": false,
+    "shellWidth": 709,
+    "overflow": false,
+    "errors": ""
+  },
+  "globalScopeAfterSave": "global",
+  "saveStatus": "已保存，本页修改下次使用时生效。\n\n取消修改\n保存",
+  "validation": "Cloud Chromium, production UI/services with isolated IndexedDB fixture. Not TauriTavern, external model or Android.",
+  "consoleNotes": "Observed errors belong to chrome-extension metadata transport; page error collector is empty."
+}

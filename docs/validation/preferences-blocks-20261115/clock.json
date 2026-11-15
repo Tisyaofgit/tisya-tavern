@@ -1,0 +1,11 @@
+{
+  "started_at": null,
+  "deadline": "2026-11-15T02:36:00Z",
+  "task": "preferences-blocks",
+  "base": "526ea72db6ee9c8c5c31c51b0de1a6edacb8e6f1",
+  "remote_base": "da3808a2295f16d523a9a1d81528a3ba0dbe7628",
+  "scope": "偏好页交互与UI修复；翻译心声区块只做示意图，等用户定稿",
+  "runtime_data": "isolated synthetic fixture only",
+  "first_observed_at": "2026-11-15T01:45:45Z",
+  "clock_note": "精确开工时刻未采集；first_observed_at 为最早命令时钟。保留更早的保守截止，不把估计时间称作精确起点。"
+}

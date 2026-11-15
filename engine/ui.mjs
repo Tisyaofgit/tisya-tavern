@@ -14,6 +14,7 @@ const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tag
 export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
  let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
  let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
+ let preferenceView=null,renderedTab=null;
  let formDraft=null,resourceDraft=null,preferenceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
  const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
@@ -133,14 +134,15 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  cancel.onclick=discardDraft;saveButton.onclick=saveDraft;
  async function render(){
   if(disposed)return;
+   if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
+  const keepPosition=renderedTab===tab,scrollTop=keepPosition?content.scrollTop:0,preferenceState=keepPosition?preferenceView?.state():undefined;renderedTab=tab;preferenceView=null;
   content.replaceChildren(el('h3','缇斯亚 · 配置'));resourceDraft=null;formDraft=null;
   const nav=el('div',null,'tisya-directory-buttons');
   for(const [id,name]of tabs){const b=routeButton(name,async()=>{tab=id;await run(render);});if(id===tab)b.onclick=()=>Promise.resolve(true);b.setAttribute('aria-current',String(tab===id));nav.append(b);}
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
   const body=el('section',null,'tisya-sub-card');content.append(body);
   if(tab==='preferences'){
-   if(!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
-   renderPreferences(document,body,{config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});
+   preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});content.scrollTop=scrollTop;
   }
   if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el});
   if(tab==='tags'){

@@ -1,0 +1,21 @@
+✔ history control inherits the old saved count, persists through reopen and has one identity route without duplicate IDs (196.895794ms)
+✔ matrix history hook trims only native sending copies, keeps current input and leaves stored chat and extension material exact (2.413513ms)
+✔ a missing preset source leaves preference failures visible while history and configuration navigation remain usable (105.938715ms)
+✔ edited multi-selection replaces its custom prose once while preserving another group in the same prompt slot (592.255903ms)
+✔ full text editor persists through formal database and cold host into the real final payload, without inactive text or evidence (1415.295207ms)
+✔ inherited source is taken from the actual active preset and global originals survive another story (359.424948ms)
+✔ invalid or stale edits retain drafts and do not mutate the formal record (1163.508677ms)
+✔ custom item is created from the actual UI, saved and compiled; switching choices does not inject it (971.051534ms)
+✔ user feedback and directive keep separate formal fields, survive reopen and reach payload only while enabled (2357.791503ms)
+✔ import uses actual file preview and separate adoption; invalid files leave existing data untouched (1984.473307ms)
+✔ changing choices keeps unrelated nodes, expanded editors and unsaved text; save preserves the current view (860.406648ms)
+✔ independent romance controls reach actual outgoing prompts while retaining POV and player boundaries (47.501356ms)
+✔ real settings UI saves the three controls, isolates stories, inherits defaults and survives cold reopen (271.350845ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10693.608198

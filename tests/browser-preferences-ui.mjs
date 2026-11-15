@@ -1,0 +1,20 @@
+import catalog from '../engine/catalog.json' with {type:'json'};
+import {baseline} from '../engine/config.mjs';
+import {createMatrixHost} from '../engine/host.mjs';
+import {mountMatrixConfiguration} from '../engine/ui.mjs';
+const $=s=>document.querySelector(s),clone=structuredClone,fail=e=>$('#errors').textContent+=String(e.stack??e)+'\n';
+window.addEventListener('error',e=>fail(e.error??e.message));window.addEventListener('unhandledrejection',e=>fail(e.reason));
+const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('tisya-preferences-asides-20261115',1);q.onupgradeneeded=()=>q.result.createObjectStore('fixture');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+const data=await new Promise((resolve,reject)=>{const q=db.transaction('fixture').objectStore('fixture').get('data');q.onsuccess=()=>resolve(q.result??{disk:{},settings:{},metadata:{}});q.onerror=()=>reject(q.error);});
+const persist=()=>new Promise((resolve,reject)=>{const tx=db.transaction('fixture','readwrite');tx.objectStore('fixture').put(clone(data),'data');tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);});
+const context={saveChat:persist,chatId:'preferences-fixture',characterId:1,chat:[{mes:'合成开场',is_user:true}],characters:[{name:'合成世界'}],extensionSettings:data.settings,chatMetadata:data.metadata};
+const host=createMatrixHost({getContext:()=>context,getSource:()=>baseline,loadCatalog:async()=>catalog,storage:{get:async id=>clone(data.disk[id]),set:async(id,v)=>{data.disk[id]=clone(v);await persist();},commit:async(id,revision,v)=>{if((data.disk[id]?.local_revision??0)!==revision)return false;data.disk[id]=clone(v);await persist();return true;}},persistMetadata:persist,persistSettings:persist});
+await host.ensureDatabase();let ui;async function mount(){ui?.dispose();ui=mountMatrixConfiguration(document,$('#app'),{service:host,onError:fail});await ui.ready;}
+const version=(await(await fetch('../package.json',{cache:'no-store'})).json()).version;
+const sha=async file=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await(await fetch(file,{cache:'no-store'})).arrayBuffer())),n=>n.toString(16).padStart(2,'0')).join('');
+$('#build').textContent=`版本 ${version}\n生产偏好页 SHA256 ${await sha('../engine/preferences-ui.mjs')}\n隔离合成宿主 · 实际配置服务 / IndexedDB / 生产偏好 UI`;
+const changes=[];document.addEventListener('change',e=>{const group=e.target.closest('[data-preference-group]');if(!group)return;const other=[...$('#app').querySelectorAll('[data-preference-group]')].find(n=>n!==group),before=other,top=$('.tisya-matrix-content').scrollTop,control=e.target;queueMicrotask(()=>changes.push({group:group.dataset.preferenceGroup,otherNodePreserved:before===document.querySelector('[data-preference-group="'+other.dataset.preferenceGroup+'"]'),controlPreserved:control.isConnected,scrollBefore:top,scrollAfter:$('.tisya-matrix-content').scrollTop}));},true);
+$('#preferences').onclick=()=>{$('#app').hidden=false;$('#prose').hidden=true;$('h1').textContent='游玩偏好';};
+$('#narrow').onclick=()=>$('#tisya-shell').style.width='360px';$('#wide').onclick=()=>$('#tisya-shell').style.width='709px';$('#reopen').onclick=()=>mount().catch(fail);
+$('#inspect').onclick=()=>{$('#report').textContent=JSON.stringify({version,choices:host.config.read().story.play?.choices??{},changes,newUserPreference:[...$('#app').querySelectorAll('button')].some(b=>/新建用户偏好|复制用户偏好/.test(b.textContent)),shellWidth:$('#tisya-shell').getBoundingClientRect().width,overflow:$('#tisya-shell').scrollWidth>$('#tisya-shell').clientWidth,errors:$('#errors').textContent},null,2);};
+await mount();

@@ -4,7 +4,7 @@ import {Window} from 'happy-dom';
 import catalog from '../engine/catalog.json' with {type:'json'};
 import {baseline,compilePrompts} from '../engine/config.mjs';
 import {PREFERENCE_GROUPS,preferenceTextKey,groupOriginalText} from '../engine/preferences.mjs';
-import {preferenceTextRows,previewPreferenceText} from '../engine/preference-editor.mjs';
+import {preferenceTextRows,previewPreferenceText,preferenceTextChanges} from '../engine/preference-editor.mjs';
 import {createMatrixHost} from '../engine/host.mjs';
 import {mountMatrixConfiguration} from '../engine/ui.mjs';
 const clone=structuredClone;
@@ -68,9 +68,9 @@ test('custom item is created from the actual UI, saved and compiled; switching c
 });
 
 test('user feedback and directive keep separate formal fields, survive reopen and reach payload only while enabled',async()=>{
- const {host,source,expand}=await fixture(),u=await uiFor(host);click(u.root,'新建用户偏好');await u.ui.settled();
+ const {host,source,expand}=await fixture();const db0=await host.readDatabase(),old={id:'existing-user',group:'USER',selection:'\"existing-user\"',kind:'user',name:'已有偏好',text:'原有指令',evidence_quote:'我不想每次都被问选A还是B',enabled:true};await host.commitDatabase({operationId:'seed-user',expectedRevision:db0.revision,contextKey:db0.contextKey,changes:preferenceTextChanges({}, {[preferenceTextKey('USER',old.id)]:old}),source:{kind:'test'}});const u=await uiFor(host);assert(![...u.root.querySelectorAll('button')].some(n=>/新建用户偏好|复制用户偏好/.test(n.textContent)));
  let row=u.root.querySelector('[data-user-preference]');const name=row.querySelector('[aria-label="用户偏好名称"]'),quote=row.querySelector('[aria-label="用户反馈原话"]'),directive=row.querySelector('[aria-label="用户偏好完整创作指令"]');
- name.value='自然停笔';name.dispatchEvent(new u.w.Event('input'));quote.value='我不想每次都被问选A还是B';quote.dispatchEvent(new u.w.Event('input'));directive.value='用户指令专用标记：在自然的情绪落点停笔。';directive.dispatchEvent(new u.w.Event('input'));click(u.root,'保存');await u.ui.settled();assert.deepEqual(u.errors,[]);
+ name.value='自然停笔';name.dispatchEvent(new u.w.Event('input'));assert.equal(quote.value,'我不想每次都被问选A还是B');assert.equal(quote.disabled,true);directive.value='用户指令专用标记：在自然的情绪落点停笔。';directive.dispatchEvent(new u.w.Event('input'));click(u.root,'保存');await u.ui.settled();assert.deepEqual(u.errors,[]);
  const db=await host.readDatabase(),saved=Object.values(db.state.tables.T_PREF_SCOPES)[0];assert.equal(saved.values.evidence_quote,quote.value);assert.equal(saved.values.compiled_directive,directive.value);
  row=u.root.querySelector('[data-user-preference]');assert.equal(row.querySelector('[aria-label="用户反馈原话"]').disabled,true);
  await host.before('normal');const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier)),payload={messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))};await host.payloadReady(payload);const final=payload.messages.map(m=>m.content).join('\n');assert.equal(final.split('用户指令专用标记').length-1,1);assert(!final.includes('我不想每次都被问选A还是B'));host.clear();
@@ -83,5 +83,18 @@ test('import uses actual file preview and separate adoption; invalid files leave
  let data=await host.preferenceEditorSource(),rows=preferenceTextRows(data.database.state);assert.equal(Object.values(rows)[0].enabled,false);let compiled=compilePrompts(data.source,host.config.read(),{...data.slots,tisya_preference_texts:JSON.stringify(rows)});assert(!JSON.stringify(compiled).includes('下载包独有原文'));assert.equal(host.config.read().playDefaults,undefined);
  const item=u.root.querySelector('[data-preference-package-item="downloaded"]');click(item,'采用此项');await u.ui.settled();click(u.root,'保存');await u.ui.settled();data=await host.preferenceEditorSource();rows=preferenceTextRows(data.database.state);compiled=compilePrompts(data.source,host.config.read(),{...data.slots,tisya_preference_texts:JSON.stringify(rows)});assert.equal(compiled.prompts.map(p=>p.content).join('\n').split('下载包独有原文').length-1,1);
  const before=JSON.stringify(rows),bad=u.root.querySelector('[aria-label="导入偏好包文件"]');Object.defineProperty(bad,'files',{value:[{size:5,text:async()=>'{broken'}]});bad.dispatchEvent(new u.w.Event('change'));await u.ui.settled();assert(u.errors.length);assert.equal(JSON.stringify(preferenceTextRows((await host.readDatabase()).state)),before);
+ u.ui.dispose();await u.w.happyDOM.abort();
+});
+
+
+test('changing choices keeps unrelated nodes, expanded editors and unsaved text; save preserves the current view',async()=>{
+ const {host}=await fixture(),u=await uiFor(host),root=u.root;
+ const search=root.querySelector('[aria-label="搜索偏好"]');search.value='描写占比';search.dispatchEvent(new u.w.Event('input'));
+ const other=root.querySelector('[data-preference-group="S08-Mind"]'),text=other.querySelector('textarea');other.querySelector('details').open=true;text.value='保留未保存心理原文';text.dispatchEvent(new u.w.Event('input'));
+ const group=root.querySelector('[data-preference-group="S08-Look"]'),select=group.querySelector('select');group.querySelector('details').open=true;select.focus();select.value='S08-Look-D';select.dispatchEvent(new u.w.Event('change'));
+ assert.equal(root.querySelector('[data-preference-group="S08-Mind"]'),other);assert.equal(other.querySelector('textarea'),text);assert.equal(text.value,'保留未保存心理原文');assert.equal(root.ownerDocument.activeElement,select);assert(group.querySelector('details').open);assert(other.querySelector('details').open);
+ const multiple=root.querySelector('[data-preference-group="TECH"]'),check=multiple.querySelector('input[type="checkbox"]');check.checked=true;check.dispatchEvent(new u.w.Event('change'));assert.equal(multiple.querySelector('input[type="checkbox"]'),check);assert.equal(other.querySelector('textarea'),text);
+ root.querySelector('.tisya-matrix-content').scrollTop=470;click(root,'保存');await u.ui.settled();assert.deepEqual(u.errors,[]);assert.equal(root.querySelector('[aria-label="搜索偏好"]').value,'描写占比');assert(root.querySelector('[data-preference-text="S08-Mind"]').open);assert.equal(root.querySelector('.tisya-matrix-content').scrollTop,470);
+ assert.equal(root.querySelector('[data-preference-group="S08-Mind"] textarea').value,'保留未保存心理原文');
  u.ui.dispose();await u.w.happyDOM.abort();
 });

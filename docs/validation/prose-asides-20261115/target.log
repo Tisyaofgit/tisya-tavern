@@ -1,0 +1,27 @@
+✔ translation and thought preserve text, inline emphasis and surrounding paragraphs (21.333942ms)
+✔ adjacent and mixed nested blocks retain order without leftover delimiters (7.265937ms)
+✔ literal code, authored cards, attributes, links and controls keep ownership (4.249874ms)
+✔ partial stream remains visible and a complete revision can render; no crossing protected boundaries (5.205175ms)
+✔ existing marker switches disable projections and repeated rendering is idempotent (4.764885ms)
+✔ message and reader consumers share aside projection while source and private task stay untouched (46.940771ms)
+✔ four-space, tab and mixed indentation preserve literal HTML and unclosed marks exactly (17.383508ms)
+✔ indented chunks survive blank lines and end at the next unindented paragraph (5.28811ms)
+✔ indentation cannot turn a paragraph continuation into a code block (10.048199ms)
+✔ fences allow up to three leading spaces while a four-space fence line is indented code (3.136994ms)
+✔ headings and thematic breaks can be followed immediately by indented code (3.316984ms)
+✔ list indentation belongs to the item before it can count toward code indentation (2.754079ms)
+✔ original paragraph, indent, dialogue and punctuation rules reach sanitized host prose (16.6915ms)
+✔ multiline and nested marks are built before Markdown separates their boundaries (5.560928ms)
+✔ authored cards, code and link targets survive formatting without inner decoration (5.342882ms)
+✔ unavailable references remain labels, invalid mark boundaries stop explicitly (3.420579ms)
+✔ message and reader both mount original prose styles and keep private blocks outside formatter (47.425769ms)
+✔ broken prose formatting has an explicit local notice without exposing the original envelope (34.290051ms)
+✔ reading palette brightens ordinary dialogue and punctuation while retaining explicit color variables (4.542231ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 480.97018

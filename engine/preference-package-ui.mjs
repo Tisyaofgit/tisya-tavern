@@ -6,7 +6,7 @@ export function renderPreferencePackages(document,area,{scope,config,editor,chan
  const own=()=>scope==='story'?editor.rows:((config.playDefaults??={}).textOverrides??={});
  const choices=()=>{const owner=scope==='story'?(config.story.play??={}):(config.playDefaults??={});return owner.choices??={};};
  const entries=packageEntries(editor.source,config,editor.rows,scope);
- const panel=el('details');panel.dataset.preferencePackages='';panel.append(el('summary','自定义项与偏好包'),el('p','导出只包含偏好原文与参数。导入后先加入列表，点击“采用此项”才启用；底部保存后生效。'));
+ const panel=el('details');panel.dataset.preferencePackages='';panel.dataset.preferenceSection='packages';panel.append(el('summary','自定义项与偏好包'),el('p','导出只包含偏好原文与参数。导入后先加入列表，点击“采用此项”才启用；底部保存后生效。'));
  const selections=new Set();
  const exportEntries=list=>download('Tisya-preferences.json',makePreferencePackage(list));
  panel.append(button('导出所选条目',()=>exportEntries(entries.filter(e=>selections.has(e.record.id)))),button('导出全部当前偏好',()=>exportEntries(entries)));
