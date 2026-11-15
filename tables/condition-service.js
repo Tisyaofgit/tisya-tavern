@@ -1,7 +1,8 @@
+import {conditionCells,conditionForm,compileConditionForm} from './condition-form.js';
 import {check,copy} from './schema.js';
 import {Runtime} from '../engine/runtime.mjs';
 import {normalizeTables,evaluateConditionGroup,MechanicalError} from '../engine/mechanical_runtime.mjs';
-import {digest as matrixDigest} from '../engine/common.mjs';
+import {digest as matrixDigest,stableId} from '../engine/common.mjs';
 import {captureMessages,chatKey,NS} from '../engine/controller.mjs';
 import {digest} from './books.js';
 import {prepareCommit} from './ledger.js';
@@ -92,7 +93,8 @@ function databaseConditions({database,getContext,draw}){
  const rowValues=(state,table,id)=>state.tables?.[table]?.[id]?.values;
  const metadata=(state,table,id)=>Object.values(state.tables?.X_RECORD_META??{}).find(r=>r.values.table_id===table&&r.values.record_id===id)?.values??{};
  const scopeAllowed=(state,table,id)=>{
-  const m=metadata(state,table,id),scope=state.runtime?.scope??{};
+  const m=metadata(state,table,id),scope=state.runtime?.scope??{},v=rowValues(state,table,id)??{};
+  if(scope.world_ref&&(table==='T_STATIC_WORLDS'&&id!==scope.world_ref||[v.world_ref,v.scope_world_id].some(x=>x&&!['GLOBAL',scope.world_ref].includes(x))))return false;
   return !['废弃','归档'].includes(m.record_status)&&[['world_ref','scope_world_id'],['session_ref','scope_session_id'],['branch_ref','scope_branch_id']].every(([s,k])=>!m[k]||m[k]==='GLOBAL'||!scope[s]||scope[s]===m[k]);
  };
  const policyOf=row=>{
@@ -194,5 +196,23 @@ function databaseConditions({database,getContext,draw}){
   return {requestId,contextRevision:matrixDigest([key,revision,stateHash,stamp]),results:plans.map(({ref,plan})=>({bookRef:ref.bookRef,uid:ref.uid,ruleRef:ref.ruleRef,ruleVersion:ref.ruleVersion,state:plan.matched?'matched':plan.status==='unknown'?'unknown':'not_matched',reasonCode:plan.status})),
    async assertCurrent(){guard();const now=await database.read();guard();check(now?.contextKey===key&&now.revision===revision&&matrixDigest(now.state)===stateHash,'条件扫描后规范表单已变化，已停止发送');}};
  });}
- return {describeConditionRules,evaluateConditionEntries};
+ async function listConditionRules(){
+  const {db}=await current(),rules=[];
+  for(const [id,row]of Object.entries(db.state.tables.T_SYS_SOURCE_ROUTES??{}))if(row.values.activation_condition&&scopeAllowed(db.state,'T_SYS_SOURCE_ROUTES',id)){
+   try{rules.push(conditionForm(definition(db,id),db.state));}catch(error){rules.push({id,name:row.values.source_name||id,editable:false,diagnostic:error.message});}
+  }
+  return {format:'tisya.condition-form/1',revision:db.revision,contextKey:db.contextKey,rules,cells:conditionCells(db.state,(t,r,f)=>publicSource(db.state,t,r,f))};
+ }
+ async function saveConditionRule(input,expected,contextKey){return serial(async()=>{
+  check(typeof database.commit==='function','条件编辑未接入规范表单提交');
+  const {db,key,stamp}=await current();check(db.revision===expected&&key===contextKey,'表单或当前会话已变化，请重新载入');
+  const old=input.id?conditionForm(definition(db,input.id),db.state):null;
+  check(!old||input.revision===old.revision,'条件版本已改变，请重新载入');
+  check(!Object.entries(db.state.tables.T_SYS_SOURCE_ROUTES??{}).some(([id,r])=>id!==input.id&&r.values.source_name===input.name?.trim()&&scopeAllowed(db.state,'T_SYS_SOURCE_ROUTES',id)),'条件名称重复');
+  const compiled=compileConditionForm(db.state,input,conditionCells(db.state,(t,r,f)=>publicSource(db.state,t,r,f)),old);policyOf(compiled.route);
+  if(!old){const scope=db.state.runtime?.scope??{};compiled.changes.push({tableId:'X_RECORD_META',recordId:stableId('T_SYS_SOURCE_ROUTES#'+compiled.id),values:{table_id:'T_SYS_SOURCE_ROUTES',record_id:compiled.id,record_revision:1,record_status:'生效',default_source_status:'用户确认',...(scope.world_ref?{scope_world_id:scope.world_ref}:{}),...(scope.session_ref?{scope_session_id:scope.session_ref}:{}),...(scope.branch_ref?{scope_branch_id:scope.branch_ref}:{})}});}
+  const result=await database.commit({operationId:'condition-edit:'+crypto.randomUUID(),expectedRevision:db.revision,contextKey:key,changes:compiled.changes,source:{kind:'condition-form'}},{assertCurrent:()=>check(key===chatKey(getContext())&&stamp===chatStamp(),'条件编辑来源已变化')});
+  return conditionForm(definition(result,compiled.id),result.state);
+ });}
+ return {canonicalConditions:true,describeConditionRules,listConditionRules,saveConditionRule,evaluateConditionEntries};
 }

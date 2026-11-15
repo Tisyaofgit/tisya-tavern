@@ -37,7 +37,7 @@ test('legacy raw archive remains retained without entering current semantic memo
  const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url))),e=new Runtime(initializeState(catalog));
  e.newRecord('T_DYN_EVENTS',{short_code:'e01',title:'门开了',spine_digest:'钥匙转动->门开了'},'event1');
  e.data.runtime.archive=[{rows:[{category:'事件',raw:'事件|e01[傍晚]：钥匙转动->门开了'},{category:'事件',raw:'事件|e01[傍晚]：门后还有一封信'}]}];
- const retained=structuredClone(e.data.runtime.archive),memory=materials(e).tisya_material_memory_archive;assert.equal(memory.split('e01').length-1,1);assert.doesNotMatch(memory,/门后还有一封信/);assert.deepEqual(e.data.runtime.archive,retained);
+ const retained=structuredClone(e.data.runtime.archive),memory=materials(e).tisya_material_memory_archive;assert.equal(memory.split('钥匙转动->门开了').length-1,1);assert.doesNotMatch(memory,/门后还有一封信/);assert.deepEqual(e.data.runtime.archive,retained);
 });
 
 test('a stopped reroll retains the previously accepted state across refresh and reopen',async()=>{

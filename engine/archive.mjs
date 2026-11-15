@@ -59,7 +59,7 @@ function preparePlan(runtime,source,sourceKey){
 function batchRow(runtime,batch,source,status,error=null){
  const tid='T_SYS_ARCHIVE_BATCHES';if(!runtime.data.schema[tid])return;
  const id=stableId('archive-batch:'+batch.source_key);if(!runtime.rows(tid)[id])runtime.newRecord(tid,{},id);
- const values={source_sequence:batch.sequence,chat_ref:runtime.data.runtime.scope.session_ref??'',message_ref:source.entry_id,candidate_ref:batch.source_key,revision_ref:String(source.revision),source_hash:source.body_sha256,formal_boundary:'已接纳回复序号 <= 当前序号 - 2',temporary_boundary:'最近两条已接纳回复',review_mode:'自动隔层接纳',commit_status:status,blocked_dependencies:error?error.message:(batch.plan?.pending??[]).map(p=>p.target+'：'+p.missing+'；'+p.condition).join('\n')};
+ const values={source_sequence:batch.sequence,chat_ref:runtime.data.runtime.scope.session_ref??'',message_ref:source.entry_id,candidate_ref:batch.source_key,revision_ref:String(source.revision),source_hash:source.body_sha256,formal_boundary:batch.confirmed_by_user?'用户确认本轮后正式入档':'已接纳回复序号 <= 当前序号 - 2',temporary_boundary:batch.confirmed_by_user?'未确认候选不入档':'最近两条已接纳回复',review_mode:batch.confirmed_by_user?'手动复核定轨':'自动隔层接纳',commit_status:status,blocked_dependencies:error?error.message:(batch.plan?.pending??[]).map(p=>p.target+'：'+p.missing+'；'+p.condition).join('\n')};
  for(const [key,value]of Object.entries(values))if(runtime.data.schema[tid].fields.some(f=>f.key===key))runtime.set([tid,id,key,[]],value);
 }
 export function stageArchive(runtime,sourceKey){
@@ -68,9 +68,9 @@ export function stageArchive(runtime,sourceKey){
  try{batch.plan=preparePlan(runtime,source,sourceKey);batch.status='staged';batchRow(runtime,batch,source,'未写入');return [...(batch.plan.warnings??[]),...(batch.plan.pending.length?[{code:'ARCHIVE_DECLARED_PENDING',message:'归档包含明确待补项；不会把缺失条件当作已成立事实',source_key:sourceKey,pending:clone(batch.plan.pending)}]:[])];}
  catch(error){batch.status='blocked';batch.error=asError(error);batchRow(runtime,batch,source,'未写入',batch.error);return [{code:error.code?.startsWith('ARCHIVE_')?error.code:'ARCHIVE_VALIDATION',message:'语义记忆未入表；原文已保存，需修正归档后重试',source_key:sourceKey,error:asError(error),raw:batch.raw}];}
 }
-export function formalizeArchives(runtime){
+export function formalizeArchives(runtime,{confirmedSource=null}={}){
  const sequence=runtime.data.runtime.turn_order.length,formal=[],warnings=[];
- for(const key of runtime.data.runtime.archive_queue.filter(b=>b.sequence<=sequence-2&&b.status==='staged').map(b=>b.source_key)){
+ for(const key of runtime.data.runtime.archive_queue.filter(b=>(b.sequence<=sequence-2||b.source_key===confirmedSource)&&b.status==='staged').map(b=>b.source_key)){
   let batch=runtime.data.runtime.archive_queue.find(b=>b.source_key===key),source=runtime.data.runtime.sources[key];
   if(batch.format!==VERSION){batch.status='blocked';batch.error={code:'ARCHIVE_VERSION',message:'旧归档批次不自动执行，原文保留待核对'};warnings.push({code:'ARCHIVE_VERSION',source_key:key,message:batch.error.message});continue;}
   const plan=batch.plan,request={source_key:key,source_sha256:source.reply_sha256,plan_digest:digest(plan)},result=runtime.transaction('archive:'+key,request,()=>{
@@ -84,7 +84,7 @@ export function formalizeArchives(runtime){
     if(change.tableId==='T_DYN_EVENTS')for(const [field,value]of Object.entries({source_entry_id:source.entry_id,source_revision:source.revision,source_hash:source.body_sha256,source_paragraphs:paragraphs.join('、')}))if(runtime.data.schema[change.tableId].fields.some(f=>f.key===field))runtime.set([change.tableId,change.recordId,field,[]],value,'derived');
    }
    for(const [i,p]of plan.pending.entries()){const tid='T_SYS_CELL_REQUESTS';if(!runtime.data.schema[tid])continue;const id=stableId('archive-pending:'+key+':'+i);runtime.newRecord(tid,{instruction:p.target,action:'未知',source_entry_ref:source.entry_id,source_revision:String(source.revision),result_status:'待填写',task_purpose:'归档',missing_reason:p.missing+'；解除条件：'+p.condition,commit_status:'未提交'},id);}
-   batch=runtime.data.runtime.archive_queue.find(b=>b.source_key===key);batch.status='formal';batchRow(runtime,batch,source,'完成');runtime.data.runtime.archive.push(clone(batch));source.archive_references=clone(plan.references);return {source_key:key,changes:plan.changes.length,pending:clone(plan.pending),references:clone(plan.references)};
+   batch=runtime.data.runtime.archive_queue.find(b=>b.source_key===key);batch.status='formal';batch.confirmed_by_user=key===confirmedSource;batchRow(runtime,batch,source,'完成');runtime.data.runtime.archive.push(clone(batch));source.archive_references=clone(plan.references);return {source_key:key,changes:plan.changes.length,pending:clone(plan.pending),references:clone(plan.references)};
   });
   if(result.status==='FAILED'){batch=runtime.data.runtime.archive_queue.find(b=>b.source_key===key);batch.status='blocked';batch.error=result.error;batchRow(runtime,batch,source,'冲突',result.error);warnings.push({code:result.error.code?.startsWith('ARCHIVE_')?result.error.code:'ARCHIVE_COMMIT',message:'本批语义归档未写入，较新数据与原文保留',source_key:key,error:result.error,raw:batch.raw});}
   else formal.push(key);

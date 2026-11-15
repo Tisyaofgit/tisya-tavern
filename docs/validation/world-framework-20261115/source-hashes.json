@@ -1,0 +1,14 @@
+{
+  "engine/world-framework.mjs": "f606293e82a809e490c8483ece873e64d104c259bf6e14048c021951659062e2",
+  "engine/materials.mjs": "aa743f135904a9437ec4e9340f2f64e2514686adb09ba58decdd3274488bb027",
+  "tables/condition-form.js": "b9ce751bf9f1a7ec046f46a93fbf0cd08e55796f6148f9718b268196f33d9fa7",
+  "tables/condition-editor.js": "ed91eccf372b95df94b4284ed8c7c002a45c2df24dc507fd4f998caa60f507a5",
+  "tables/condition-service.js": "d04146d0c921927b3f564f94ff20eee7b1c1525781db6131eb6fc1f42bc2d63c",
+  "tables/world-framework-editor.js": "12c3670a246b856f7d0f546d4525dcb4822adda37389cfdafec46401f02677ba",
+  "tables/panel.js": "b016c5d9183d6829db940ea7a2ba46495bf755cb07eb9ca0a387572242cc5797",
+  "tables/service.js": "d338f0dea4d0682f31f968629244a7cd278b3cbdf3739fc43e5a3f2dacc4b1e0",
+  "index.js": "483ba398cd019e23a731ce857de584a7c69ff5246ba1580712ec36f6a2926ce8",
+  "runtime.js": "90839368771df3390025b9d4c520567ff8d18c505298c369605e52fa70c98473",
+  "tests/browser-world-framework.mjs": "650267cae4cc3aadf4527bcf6ce6479842eb19c84e69bcb51b65dbc0488f9358",
+  "tests/browser-world-framework.html": "74e1a7af258daded1707473aeda0575b7f48702f17da3ef58ddb874d7e23d723"
+}

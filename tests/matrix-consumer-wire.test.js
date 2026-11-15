@@ -93,7 +93,7 @@ test('history final request retains supplied story time and the confirmed-source
  await f.foundation.generate({kind:'history',sourceKind:'chat',from:1,to:4});
  assert.equal(slot(sent[1].messages,'source').policy,f.inputs[1].input.policy);
  assert.match(slot(sent[1].messages,'source').policy,/只有所选已确认AI回复/);
- assert.deepEqual(slot(sent[1].messages,'history'),[{floor:1,role:'user',text:'开门'},{floor:2,role:'assistant',text:'我推开渡口木门。'},{floor:3,role:'user',text:'看看屋内'}]);
+ assert.deepEqual(slot(sent[1].messages,'history'),[{floor:1,role:'user',text:'开门'},{floor:2,role:'assistant',text:'我推开渡口木门。'}]);
  assert.equal(Object.keys(f.snapshot.state.tables.T_DYN_EVENTS).length,0);
 });
 

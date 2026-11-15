@@ -1,0 +1,104 @@
+{
+  "schema": "tisya-preview-validation/2",
+  "recorded_at": "2026-11-15T06:28:00.290165+00:00",
+  "build": "turn-review-v2",
+  "scope": "standalone preview only",
+  "catalog": {
+    "source": "engine/catalog.json",
+    "sha256": "f1dd1e8793491b84733d51d98693e99506b36c4375cac7ffba5b5ba6f1056933",
+    "tables": 207,
+    "fields": 3022,
+    "editable": 2370
+  },
+  "files": {
+    "demo.js": {
+      "bytes": 23056,
+      "sha256": "36ef8e3d7b4cc17ea9167b57849122b18636a3dfda66121ed8e97f2c54325569"
+    },
+    "preview.html": {
+      "bytes": 1296868,
+      "sha256": "47784c723865b00b6f4f749faa94a2179cdfe4a4f2a22b14eccb5795991526f1"
+    },
+    "style.css": {
+      "bytes": 16855,
+      "sha256": "21e888a1bef04ce970207b91206a08cc924a3969d38311c603c287e1c1c2e95b"
+    },
+    "catalog.js": {
+      "bytes": 596671,
+      "sha256": "910a43400081ce56c5e834f0969251b5023c983258aec2ae936d7b455e5b8c29"
+    },
+    "model.mjs": {
+      "bytes": 10525,
+      "sha256": "534f31ae06cdf49b9aa22c9723937129c80e2a66c516301e272a3c2a760404b9"
+    },
+    "reading.woff2": {
+      "bytes": 480648,
+      "sha256": "9294ddeec947339b7d4baaf5d58477e86ef2ff67f119b5d5d2643989e1df4977"
+    },
+    "index.html": {
+      "bytes": 8974,
+      "sha256": "956ab36b16a5ccbdb091d635d63c55e19e4f4698dfb1a718c52ceeb91bdfd5b2"
+    },
+    "build-preview.py": {
+      "bytes": 1016,
+      "sha256": "7346a259cb689e5c4ce8566cb75a3996cf4f89bb7d48b7318cf34111bde9ba61"
+    },
+    "build-catalog.mjs": {
+      "bytes": 1193,
+      "sha256": "aba39cc7bc81a38ebcf5ee78b11c7c46ac7376c2c0e4b4207cccb93bfb22dd14"
+    },
+    "model.test.mjs": {
+      "bytes": 4108,
+      "sha256": "c1787deaea87363e3fc791621cab6b2eb8727ddaef6f7bdc092f861c960a41d2"
+    }
+  },
+  "node_tests": {
+    "passed": 9,
+    "failed": 0,
+    "log": "model-tests-v2.txt"
+  },
+  "browser": {
+    "type": "cloud Chrome",
+    "tab": "139",
+    "url": "http://127.0.0.1:4173/preview.html",
+    "mobile_iframe": [
+      390,
+      844
+    ],
+    "tested": [
+      "catalog and read-only fields",
+      "draft isolation",
+      "custom field type/range",
+      "unknown vs zero",
+      "explicit required responses",
+      "next-turn persistence",
+      "empty table requirements without fabricated records",
+      "confirmed snapshot restore and refresh",
+      "template and future history preserved across restore",
+      "latest compact edit buttons",
+      "mobile field edit/save/scroll and fixed footer"
+    ],
+    "screenshots": [
+      "v2-main.jpg",
+      "v2-fields.jpg",
+      "v2-required.jpg",
+      "v2-mobile.jpg",
+      "v2-mobile-fields.jpg"
+    ],
+    "captured_error_count": 100,
+    "extension_error_count": 100,
+    "project_errors_in_captured_window": 0,
+    "automation_issue": "body Control+Home timed out; business state unchanged; no repeat"
+  },
+  "not_verified": [
+    "production manual confirmation transaction",
+    "real host chat events and rollback",
+    "external model",
+    "Android device",
+    "cross-world switching"
+  ],
+  "production_files_changed": false,
+  "pushed": false,
+  "template_rollback_semantics": "proposal: retain world field definitions and required policy, restore historical facts and memory",
+  "final_visible_state": "floor 41 confirmed, floor 42 pending; affection 12 pending, tasks require explicit no-involvement response"
+}

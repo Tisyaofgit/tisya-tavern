@@ -1,0 +1,40 @@
+✔ self-contained HTML keeps parser fixture script boundaries inside data URLs (175.569618ms)
+✔ same entity field at different historical floors is not mistaken for a conflicting fact (15.064037ms)
+✔ 全目录来自实际字段，种子不使用未登记字段 (2.944384ms)
+✔ 编辑和新增字段仅改候选，未确认必填拒绝提交 (2.278748ms)
+✔ 明确未知后可确认，模板与每轮要求进入下一轮 (2.26715ms)
+✔ 回退恢复事实值，世界模板与勾选保持，未来存档保留 (1.535329ms)
+✔ 初值只作用选中记录，不把好感度批量赋给其他人物 (0.661069ms)
+✔ 空值不会变成零，零与false保留，范围和同表重名拒绝 (0.872185ms)
+✔ 系统字段只读、过期确认拒绝、重复确认不新增记录 (1.371771ms)
+✔ 尚无记录的表可以预选必填，明确未涉及不生成虚构记录 (1.175716ms)
+✔ 确认留存每个必填渠道的实际回应与当时值 (1.246189ms)
+✔ all eligible floors are planned in order and partial field coverage skips only matching fields (27.256584ms)
+✔ generating/editing never commits and explicit review is required (1.455002ms)
+✔ known values require source evidence and all selected fields must have an answer (2.407654ms)
+✔ readonly, source edits, history deletion and stale revisions reject rather than duplicate (1.794525ms)
+✔ unknown is not zero and range validation precedes all writes (1.304804ms)
+✔ one selected field can contain multiple distinct records without losing coverage (1.644407ms)
+✔ bad body is blocked and all raw source bytes remain available (0.708498ms)
+✔ edited source copies cannot authenticate fabricated evidence and permission changes invalidate review (3.54103ms)
+✔ an old candidate cannot bypass completed field coverage by changing its record identity (3.383111ms)
+✔ three layers retain complete latest triplet, only windowed earlier char body, and no old user text (15.56617ms)
+✔ paragraph markers only are removed; source prose digits and fenced content remain (3.512409ms)
+✔ custom body aliases use the shared envelope reader (0.801463ms)
+✔ reviewed fact coverage deduplicates by information identity, preserving independent knowledge (7.639329ms)
+✔ same source is insufficient to remove independent facts; unreviewed or stale coverage is not trusted (2.676805ms)
+✔ latest full reply owns covered archive facts and is excluded from recent body (3.364058ms)
+✔ 0/1 limits never restore old raw messages; latest triplet remains independently complete (2.01225ms)
+✔ latest complete reply also carries reviewed evidence spanning numbered paragraphs (0.970409ms)
+✔ old malformed/untagged replies are reported, not flattened with machine blocks into body history (0.770028ms)
+✔ unconfirmed/other-branch/deleted-source archive entries are excluded and conflicting fact IDs rejected (1.382817ms)
+✔ XML data cannot break wrapper boundaries and missing turns stay explicit (0.2547ms)
+✔ confirmed full archive passage subsumes the same reviewed point while independent knowledge survives (1.090633ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 634.383368

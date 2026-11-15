@@ -1,0 +1,25 @@
+✔ canonical gate reads standard cells and records one chance through the actual Matrix owner (2610.140296ms)
+✔ current false and unknown values cannot reuse an earlier successful chance (3939.29015ms)
+✔ all policies retain probability, successful-count limits, cooldown and inclusive turn windows (7629.102522ms)
+✔ whole-batch validation precedes any draw or receipt; changed chance cannot reroll an existing opportunity (2520.815361ms)
+✔ explicit unknown policy never falls back to a permissive default (1961.3136ms)
+✔ restarted and concurrent consumers share one durable opportunity (2558.367442ms)
+✔ source edits invalidate selected rule versions and scanned snapshots (2410.625491ms)
+✔ private input and explicit expiry never reveal a successful gate or consume chance (3855.016119ms)
+✔ generation capability only records gate receipts; business writes retain idle guard (1757.282032ms)
+✔ old schema defaults stay read-only until an explicit normal form edit installs optional fields (2603.656928ms)
+✔ failed persistence retains the original error and no successful chance receipt (1995.49887ms)
+✔ actual scan gate consumes canonical definitions and preserves host entry fields (1917.223357ms)
+✔ minimal editor saves into the same canonical rules consumed by worldbook scanning (3175.146382ms)
+✔ minimal editor preserves extended conditions and blocks stale context and nonnumeric comparisons (1598.871855ms)
+✔ global framework groups canonical definitions once and consumers retain references (222.758861ms)
+✔ multiple worlds do not infer ownership for unscoped legacy places and currencies (128.986371ms)
+✔ framework edits use actual Matrix transactions, preserve consumers and reject stale or cross-world changes (1778.23251ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40932.879938

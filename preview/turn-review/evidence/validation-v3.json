@@ -1,0 +1,146 @@
+{
+  "version": "turn-review-v3",
+  "observed_utc": "2026-11-15T07:18:27.939573+00:00",
+  "base_commit": "e764df77b509c5ff29e38e6416a3cab394294bd5",
+  "scope": "independent preview and pure candidate functions; not enabled in production host",
+  "tests": {
+    "targeted_pass": 32,
+    "targeted_fail": 0,
+    "full_production_suite": "not run for this inactive candidate",
+    "syntax_check": true
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4173/preview.html",
+    "latest_desktop_rechecked": true,
+    "window_counts": [
+      6,
+      0,
+      6
+    ],
+    "all_selected_floors": [
+      36,
+      38,
+      40,
+      42
+    ],
+    "current_energy_unchanged": 78,
+    "late_new_fields_only": true,
+    "persisted_draft_reload": true,
+    "unreviewed_rejected": true,
+    "invalid_number_rejected": true,
+    "mobile_iframe": [
+      390,
+      844
+    ],
+    "mobile_confirm_button_bottom": 805.671875,
+    "context_scroll": {
+      "scrollTop": 1149,
+      "clientHeight": 691,
+      "scrollHeight": 1840,
+      "clientWidth": 320,
+      "scrollWidth": 320
+    },
+    "mobile_scope": "same UI before final pure validation guards; not Android",
+    "initial_packaging_error": "07:03:51Z SyntaxError, corrected and rechecked; retained in log"
+  },
+  "not_verified": [
+    "real host",
+    "external model extraction",
+    "Android device",
+    "production manual transaction",
+    "production rollback linked to backfill queue",
+    "production final prompt replacement"
+  ],
+  "files": {
+    "engine/history-layers.mjs": {
+      "bytes": 7924,
+      "sha256": "3849919ea9f1426d17a07897f52ec5dc700e82fdca8fd5cdbf881dbfe36b7f11"
+    },
+    "engine/history-backfill.mjs": {
+      "bytes": 6336,
+      "sha256": "e561af1d22f0bbec23ad5ccfa6fc231aeae01b9a922ce21f39c740a2d5139107"
+    },
+    "tests/history-layers.test.js": {
+      "bytes": 7570,
+      "sha256": "4dd20354b176bf43f47eb8670413ea5b149e1f0d043be02c61bdb10bb237ce87"
+    },
+    "tests/history-backfill.test.js": {
+      "bytes": 5431,
+      "sha256": "4be9876f31b1b92391e1c0f013b18009939258060ddb660f92eab7cabed26948"
+    },
+    "preview/turn-review/index.html": {
+      "bytes": 13321,
+      "sha256": "96ff2dac75c65c3255f1c489238cb4ef55ec52fb63e9a5f266d248a60d22c98b"
+    },
+    "preview/turn-review/demo.js": {
+      "bytes": 23174,
+      "sha256": "3f816005cfe98480d5e16d1dce7545edcca37e131b5ed3892045fb8d184b42e4"
+    },
+    "preview/turn-review/history-tools.mjs": {
+      "bytes": 15813,
+      "sha256": "516f6983b5b66222937bd97de6ef13c57fdeddc2a4378f4478b1f40767fa7395"
+    },
+    "preview/turn-review/style.css": {
+      "bytes": 19882,
+      "sha256": "5fb16da2833fe42bd82522d1d5fdc8c73573ca968cc98e5151167882afac4691"
+    },
+    "preview/turn-review/reading.woff2": {
+      "bytes": 441772,
+      "sha256": "a6dc23a1b95991e6bc437bdb1acb41ead324aad2b70b74692a7ed243106fea17"
+    },
+    "preview/turn-review/build-preview.py": {
+      "bytes": 1173,
+      "sha256": "e6d8205deac3a888d54e8749041fb3122af89325fd2fc09c40f4971e2356bc49"
+    },
+    "preview/turn-review/bundle-preview.mjs": {
+      "bytes": 329,
+      "sha256": "1bf382d55c55ae466d4e220036b53e25253e5dd03b57b476a2b0a366f1512d8b"
+    },
+    "preview/turn-review/preview.html": {
+      "bytes": 1726369,
+      "sha256": "2a3eae54cae6d2e2feecc3f81904df07eab05ae1009fbb558d018b97ca8586de"
+    },
+    "preview/turn-review/model.test.mjs": {
+      "bytes": 4108,
+      "sha256": "c1787deaea87363e3fc791621cab6b2eb8727ddaef6f7bdc092f861c960a41d2"
+    },
+    "preview/turn-review/build-preview.test.mjs": {
+      "bytes": 1228,
+      "sha256": "be012d4f48d003c627012e4cd86a1036f70bef4550a6c4815586f9949d14fa3b"
+    },
+    "preview/turn-review/history-tools.test.mjs": {
+      "bytes": 1027,
+      "sha256": "d163fbaca8376bb429ded45cece6b75f3003d6f211dafc80479c53730d794ee4"
+    },
+    "preview/turn-review/evidence/v3-mobile-backfill.jpg": {
+      "bytes": 46134,
+      "sha256": "bcc7dc56739dc89e2fefc8b347a3235e985bd2e94c6873ff68643d3bdcc32bcf"
+    },
+    "preview/turn-review/evidence/v3-context.jpg": {
+      "bytes": 104413,
+      "sha256": "f98e020bfd3cbaae872c9f14dbd4bdc33053259c40e4fcc8d23f3b20289d158f"
+    },
+    "preview/turn-review/evidence/v3-mobile-context.jpg": {
+      "bytes": 58397,
+      "sha256": "2ab4343d4e7f43d7bc24d85c4193c26cb6bf03f222c3ab8e94b97028e2e9a8a9"
+    },
+    "preview/turn-review/evidence/v3-backfill.jpg": {
+      "bytes": 59899,
+      "sha256": "ed33e312784adaa0c639e99e2746347d2534a7065ab69a5c503d351667086971"
+    },
+    "preview/turn-review/evidence/tests-v3.txt": {
+      "bytes": 3207,
+      "sha256": "04ef06177949857cc21f3aa385f05554552f6da292bf05d716ff4910fc53a175"
+    },
+    "preview/turn-review/evidence/browser-logs-v3.json": {
+      "bytes": 345,
+      "sha256": "d3cb48e6237aaadeb61d2eff1657eb1e0da0e1b684f9751d0414c93e4ffedd52"
+    }
+  },
+  "font_coverage": {
+    "v2_glyphs": 1076,
+    "v3_glyphs": 1099,
+    "v2_characters_missing": 0,
+    "verified_with": "system Python fontTools WOFF2 decoder"
+  }
+}

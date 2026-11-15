@@ -1,6 +1,20 @@
+import {matrixRecordVisible} from './prompt-boundary.mjs';
 import {fail,digest,stableId,clone,sha256} from './common.mjs';
-function ref(e,tid,value){if(['','~','?'].includes(value))return null;if(e.rows(tid)[value])return value;const hits=Object.entries(e.rows(tid)).filter(([,r])=>['short_code','name','title'].some(k=>r.values[k]===value));if(hits.length===1)return hits[0][0];const alias=e.data.runtime.business_aliases?.[tid+'|'+value];if(alias)return alias;fail('BUSINESS_REFERENCE','引用不存在或名称不唯一',{table:tid,value});}
-function entity(e,value){try{return ref(e,'T_SYS_ENTITIES',value);}catch(x){if(x.code!=='BUSINESS_REFERENCE')throw x;const id=ref(e,'T_CHAR_DOSSIER',value);if(!e.rows('T_SYS_ENTITIES')[id])e.newRecord('T_SYS_ENTITIES',{name:e.rows('T_CHAR_DOSSIER')[id].values.name??id,kind:'character',origin_record_ref:{table_id:'T_CHAR_DOSSIER',record_id:id}},id);return id;}}
+function ref(e,tid,value){if(['','~','?'].includes(value))return null;if(e.rows(tid)[value]&&matrixRecordVisible(e.data,tid,value,{...e.data.runtime.scope,audience:'author'}))return value;const hits=Object.entries(e.rows(tid)).filter(([id,r])=>matrixRecordVisible(e.data,tid,id,{...e.data.runtime.scope,audience:'author'})&&['short_code','name','title'].some(k=>r.values[k]===value));if(hits.length===1)return hits[0][0];const alias=e.data.runtime.business_aliases?.[tid+'|'+value];if(alias)return alias;fail('BUSINESS_REFERENCE','引用不存在或名称不唯一',{table:tid,value});}
+function entity(e,value){
+ try{return ref(e,'T_SYS_ENTITIES',value);}catch(x){
+  if(x.code!=='BUSINESS_REFERENCE')throw x;
+  const dossier=ref(e,'T_CHAR_DOSSIER',value),existing=Object.entries(e.rows('T_SYS_ENTITIES')).filter(([,r])=>{const origin=e.rows('M_FIELD_REFERENCES')[r.values.origin_record_ref]?.values;return origin?.target_table==='T_CHAR_DOSSIER'&&origin.target_row_uuid===dossier;});
+  if(existing.length>1)fail('BUSINESS_REFERENCE','人物档案有多个实例，请明确选择');
+  if(existing.length)return existing[0][0];
+  const id=stableId('business-entity:'+dossier),origin=stableId('business-origin:'+dossier);
+  e.newRecord('T_SYS_ENTITIES',{kind:'character'},id);
+  e.newRecord('M_FIELD_REFERENCES',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:id,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:dossier,reference_kind:'record'},origin);
+  e.set(['T_SYS_ENTITIES',id,'origin_record_ref',[]],origin);
+  e.set(['T_SYS_ENTITIES',id,'name',[]],e.rows('T_CHAR_DOSSIER')[dossier].values.name,'derived');
+  return id;
+ }
+}
 export function appendBusiness(e,kind,raw,ctx={}){
  raw=raw.startsWith('{')?raw:raw.replaceAll('｜','|');const parts=raw.split('|').map(s=>s.trim()),tid={EVENTS:'T_DYN_EVENTS',ANCHORS:'T_CHAR_ANCHORS',PACTS:'T_DYN_PACTS'}[kind];let values,code;
  if(raw.startsWith('{')){const p=JSON.parse(raw);values={...(p.values??p)};code=p.record_id??values.short_code??sha256(raw).slice(0,12);delete values.record_id;delete values.table_id;}
@@ -8,8 +22,13 @@ export function appendBusiness(e,kind,raw,ctx={}){
  else if(kind==='ANCHORS'){if(parts.length!==10)fail('ANCHOR_INPUT','行为锚点需要10列',{columns:parts.length});const [id,char,event,action,trigger,defense,motive,boundary,w,evolution]=parts;code=id;const weight=Number(w);if(!Number.isFinite(weight)||weight<0||weight>1)fail('ANCHOR_WEIGHT','召回权重需要0—1数字');if(!e.data.schema[tid].fields.some(f=>f.key==='recall_weight'))e.declareField(tid,{key:'recall_weight',label:'召回权重',type:'NUMBER'});values={name:code,char_ref:ref(e,'T_CHAR_DOSSIER',char),origin_event_ref:ref(e,'T_DYN_EVENTS',event),actions:action,trigger_cues:trigger,psychology:defense,internal_motive:motive,response_boundary:boundary,recall_weight:weight,validity:evolution};}
  else{if(parts.length<5)fail('PACT_INPUT','约定需要短号、双方、内容、期限或代价、状态');const [id,parties,content,deadline,status]=parts;code=id;const people=parties.split(/[,，、/↔与]/).map(s=>s.trim()).filter(Boolean);if(people.length<2)fail('PACT_PARTIES','约定需要明确双方');values={name:code,party_a_ref:entity(e,people[0]),party_b_ref:entity(e,people[1]),content,time_basis:deadline,status};if(people.length>2)values.additional_parties=people.slice(2).map(v=>entity(e,v));}
  const s=e.data.runtime.scope,ns=['world_ref','session_ref','branch_ref'].map(k=>s[k]??'').join('/'),rid=stableId('tisya-business/'+ns+'/'+tid+'/'+code);e.data.runtime.business_aliases??={};
+ const additionalPeople=kind==='PACTS'&&Array.isArray(values.additional_parties)?values.additional_parties:null;if(additionalPeople)values.additional_parties=additionalPeople.map((_,index)=>stableId(rid+':party:'+index));
  if(e.rows(tid)[rid]){const old=e.rows(tid)[rid].values;if(Object.entries(values).every(([k,v])=>digest(old[k]??null)===digest(v)))return {table_id:tid,record_id:rid,short_code:code,status:'REPLAY'};fail('BUSINESS_ID_CONFLICT','短号已用于其他内容，请使用新短号或显式更新字段',{table:tid,short_code:code});}
  if(kind==='EVENTS'&&ctx.entry_id){Object.assign(values,{source_entry_id:ctx.entry_id,source_revision:ctx.revision??1,source_hash:ctx.body_sha256??''});if(ctx.evidence)values.source_paragraphs=ctx.evidence;}
+ if(additionalPeople){
+  const refs=additionalPeople.map((person,index)=>{const id=stableId(rid+':party:'+index);e.newRecord('M_LIST_VALUES',{owner_table:tid,owner_row_uuid:rid,owner_field:'additional_parties',sequence:index+1,item_type:'reference',target_table:'T_SYS_ENTITIES',target_row_uuid:person,value_state:'known'},id);return id;});
+  values.additional_parties=refs;
+ }
  e.newRecord(tid,values,rid);e.data.runtime.business_aliases[tid+'|'+code]=rid;const mid=stableId(tid+'#'+rid);if(ctx.source_key&&e.rows('X_RECORD_META')[mid]){e.set(`X_RECORD_META#${mid}.default_source_ref`,ctx.source_key+(ctx.evidence?'#'+ctx.evidence:''));e.set(`X_RECORD_META#${mid}.updated_turn_id`,ctx.entry_id??'');}return {table_id:tid,record_id:rid,short_code:code,values};
 }
 export function learnPreference(e,{owner,dimension,observation,alpha=.2,directive,scope={},confirmed=false,operation_id}){

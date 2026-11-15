@@ -1,4 +1,7 @@
+import {worldFrameworkEditor} from './world-framework-editor.js';
+import {conditionEditor} from './condition-editor.js';
 import {mountArchiveAtlas} from './atlas-ui.js';
+import {MEMORY_STATUS_LABELS} from '../engine/memory-status.mjs';
 import {ATLAS_STYLE} from './atlas-style.js';
 import {parseStateEvents} from './state-event-rules.js';
 import {stateKindLabel,stateGridColumns} from './state-registry.js';
@@ -119,8 +122,16 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
   });
  }
  async function matrixHistory(mode='history',range=null){
-  if(beginPage(mode==='narrative'?'foundation':'history'))return;const api=service.matrixFoundation,state=await api.inspect();assertActive();
+  if(beginPage(mode==='narrative'?'foundation':'history'))return;if(mode==='history'&&service.openReviewWorkflow){const g=section('逐层补录与每轮确认');g.append(el('p','勾选表与字段、编辑候选和确认归档统一在右下角窗口。保存候选不会入档，确认后才写入；历史补录不重放当前状态。'));button(g,'打开逐层补录与确认',()=>service.openReviewWorkflow());notice.textContent='本页与右下角窗口共用同一存档';return;}const api=service.matrixFoundation,state=await api.inspect();assertActive();
   main.append(el('p','原文先提炼成当前规范表单的简表草稿。核对后才写入正式档案；已有值保持，历史事件不会再次扣费、发奖或推进时间。'));
+  if(mode!=='narrative'){
+   const memory=section('当前记忆归档'),replies=state.history.filter(r=>r.role==='assistant'),count=status=>replies.filter(r=>r.archiveStatus===status).length;
+   memory.append(el('p','正式归档 '+count('formal')+' · 已补录 '+count('imported')+' · 近期暂存 '+count('staged')+' · 待修 '+(count('blocked')+count('rejected')+count('changed'))+' · 待提炼 '+count('unarchived')));
+   memory.append(el('p','最近两条已接纳回复保留在暂存层，较早的合法归档自动入表。原文已保存不等于记忆已入档；补录会跳过正式记录和近期暂存。'));
+   const preview=el('details');preview.append(el('summary','查看当前记忆文本投影'),el('p','这是当前表单的文本内容；下一次请求按启用的资料槽装入，近期原文仍遵循聊天历史条数。'));
+   for(const [key,label]of [['archive','事件与记忆'],['summary','阶段摘要'],['knowledge','人物认知']])preview.append(el('h4',label),el('pre',state.memory?.[key]||'暂无正式记录'));
+   memory.append(preview);button(memory,'刷新归档状态',()=>{check(!draft&&!dirty,'请先保存或关闭当前草稿');return matrixHistory(mode,range);});
+  }
   const resultArea=el('div');main.append(resultArea);
   function show(value){
    resultArea.replaceChildren();if(value.already){notice.textContent='这份来源已经入档，未重复导入';return;}
@@ -137,10 +148,10 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
   const generate=async input=>{check(!draft,'请先保存或关闭当前提炼草稿');try{show(await api.generate(input));notice.textContent='原答与草稿已保留，正式档案尚未修改';}catch(error){if(error.draft)show(error.draft);throw error;}};
   if(mode!=='narrative'){
    const init=section('从当前角色卡补齐初始化');init.append(el('p','读取当前角色卡、人设与已绑定资料；示例和备选开场不会自动成为已经发生的历史。已有角色和进度不会被初值覆盖。'));button(init,'生成初始化简表草稿',()=>generate({kind:'initialization',sourceKind:'card',label:'角色卡初始化'}));
-   const history=section('选择已确认会话楼层'),pending=state.history.filter(r=>r.role==='assistant'&&!r.latest&&!r.archived&&!r.changed);let from=range?.from??pending[0]?.floor??1,to=range?.to??pending.at(-1)?.floor??state.history.at(-1)?.floor??1,includeLatest=false;
+   const history=section('选择已确认会话楼层'),pending=state.history.filter(r=>r.role==='assistant'&&!r.latest&&r.canImport);let from=range?.from??pending[0]?.floor??1,to=range?.to??pending.at(-1)?.floor??state.history.at(-1)?.floor??1,includeLatest=false;
    field(history,'起始楼层',from,{type:'number',track:false,change:v=>from=v});field(history,'结束楼层',to,{type:'number',track:false,change:v=>to=v});field(history,'本次明确保留最新回复',false,{type:'checkbox',track:false,change:v=>includeLatest=v});
    button(history,'生成所选历史简表草稿',()=>generate({kind:'history',sourceKind:'chat',from,to,includeLatest,label:'会话历史 '+from+'—'+to}));const stop=el('button','停止当前提炼');stop.type='button';stop.onclick=()=>service.clear?.({reason:'用户停止规范提炼'});history.append(stop);
-   const list=el('details');list.append(el('summary','查看原始楼层与入档状态'));history.append(list);table(list,['楼层','角色','状态','原文预览'],state.history.map(r=>[r.floor,r.role,r.changed?'来源已变，需核对':r.archived?'已入档':r.role==='assistant_pending'?'未采纳候选':r.latest?'最新待确认':'待提炼',r.preview]));
+   const list=el('details');list.append(el('summary','查看原始楼层与入档状态'));history.append(list);table(list,['楼层','角色','状态与待办','原文预览'],state.history.map(r=>[r.floor,r.role,[MEMORY_STATUS_LABELS[r.archiveStatus]??'待提炼',...(r.pending??[]).map(p=>p.reason)].join('；'),r.preview]));
   }
   const manual=section(mode==='narrative'?'从叙事提炼标准人物资料':'手写历史与旧日志');let text='',label=mode==='narrative'?'人物资料':'手写历史',worldTime='';field(manual,'来源名称',label,{change:v=>label=v});if(mode!=='narrative')field(manual,'已知剧情时间（未知留空）','',{change:v=>worldTime=v});const area=field(manual,mode==='narrative'?'作者人物原文':'历史原文或手写摘要','',{type:'textarea',change:v=>text=v});area.rows=10;
   const file=el('input');file.type='file';file.accept='.txt,.md,.jsonl,.json';file.setAttribute('aria-label','导入原始资料');file.onchange=()=>run(async()=>{if(!file.files?.length)return;text=await file.files[0].text();area.value=text;dirty=true;notice.textContent='原文已载入，尚未提炼或入档';});manual.append(file);button(manual,'生成原文简表草稿',()=>generate({kind:mode==='narrative'?'narrative':'history',sourceKind:'text',text,label,worldTime:worldTime||null}));
@@ -351,9 +362,15 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
   notice.textContent='已载入当前存档修订 '+snapshot.data.revision+(snapshot.data.matrix?'；查看正式档案、事件与正文来源。':'；可切换原点，查看关联与修改路径。');
  }
  async function timeline(){if(beginPage('timeline'))return;const data=await refresh(),g=section('时间锚与变化');table(g,['剧情时间','记录时间','所属表','变动','来源'],data.anchors.slice().reverse().map(a=>[a.worldTime??'未知',a.recordedAt,a.table,JSON.stringify({before:a.before,after:a.after}),a.evidence]));const j=section('最近辅助任务');const receipts=service.nativeConfiguration?.state().receipts??[];if(receipts.length)table(j,['原生配置','名称','状态','说明'],receipts.map(r=>[r.kind,r.name,r.status,r.detail]));table(j,['任务','状态','说明'],service.state().jobs.map(x=>[x.task,x.status,x.detail]));button(j,'查看最近注入内容',()=>{const p=service.preview();j.append(el('pre',p?.text??'尚未组装本轮上下文'));});}
+ async function framework(worldId,selection={}){
+  if(beginPage('framework'))return;check(service.readWorldFramework,'当前存档尚未接入世界框架');
+  const data=await service.readWorldFramework(worldId);assertActive();worldFrameworkEditor({data,selection,el,field,button,section,check,isDirty:()=>dirty,changed:()=>dirty=true,saved:()=>dirty=false,reload:framework,save:service.saveWorldFrameworkRecord});notice.textContent='公共定义与各处引用共用同一存档';
+ }
  async function conditions(editId=null){
   if(beginPage('conditions'))return;
-  const data=await service.listConditionRules(),snapshot=await refresh(),g=section('条件运行');
+  const data=await service.listConditionRules();
+  if(data.format==='tisya.condition-form/1'){conditionEditor({data,editId,el,field,button,section,check,changed:()=>dirty=true,saved:()=>dirty=false,isDirty:()=>dirty,reload:conditions,save:service.saveConditionRule});notice.textContent='条件与世界书共用当前规范表单';return;}
+  const snapshot=await refresh(),g=section('条件运行');
   g.append(el('p','门禁随当前状态重新判断；动作只有选中已确认事件并确认后才结算。未知不命中。概率未中也保存，同一机会重开不重抽。'));
   table(g,['规则','用途','世界书引用'],data.rules.map(r=>[r.name,r.mode==='gate'?'持续门禁':'事件动作',r.id]));
   let selected=editId??'';field(g,'编辑已登记规则',selected,{choices:[['','新建规则'],...data.rules.map(r=>[r.id,r.name+' · v'+r.revision])],track:false,change:v=>selected=v});button(g,'载入所选规则',async()=>{check(!dirty,'请先保存或放弃当前规则草稿');await conditions(selected);});const editing=data.rules.find(r=>r.id===editId);const form=section(editing?'修改条件 v'+editing.revision:'登记条件');let name=editing?.name??'',mode=editing?.mode??'gate',source=editing?.source??'',narrative=editing?.narrative??'',sourceRef=editing?.sourceRef??null;const policy=structuredClone(editing?.policy??{chance:100,cooldown:0,limit:null,start:0,end:null}),bindings=[];
@@ -378,6 +395,6 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  }
 
  const unsubscribeArchive=service.subscribeArchive?.(()=>{if(alive&&page==='atlas'&&!busy)void run(atlasPage);});
- const pages=[['settings','设置与绑定',setup],['atlas','图鉴 · 最新存档',atlasPage],['forms','当前表单',forms],['foundation','档案提炼',foundation],['states','状态与等级',states],['conditions','条件运行',conditions],['history','初始化与历史',history],['identity','用户身份',identity],['genesis','创世与模板',genesis],['preferences','偏好确认',preferences],['style','禁词与文风',style],['progression','世界推进',progression],['parallel','平行存档',parallel],['core','基点与原点',coreAssets],['timeline','修改时间线',timeline],['preview','预设与表单全文',preview],['assistant','缇斯亚助手',assistant]];for(const [id,name]of pages){const option=el('option',name);option.value=id;pageSelect.append(option);}pageSelect.value=page;pageSelect.onchange=()=>{const next=pageSelect.value;pageSelect.value=page;if(onAssistant&&['assistant','genesis','foundation','core','style'].includes(next)){if(busy||dirty||draft){notice.textContent='请先保存或放弃当前修改，再进入助手';return;}onAssistant(next==='core'?'core-assets':next);return;}return run(async()=>{await pages.find(p=>p[0]===next)[2]();});};
+ const pages=[['settings','设置与绑定',setup],['atlas','图鉴 · 最新存档',atlasPage],['forms','当前表单',forms],...(service.readWorldFramework?[['framework','世界总框架',framework]]:[]),['foundation','档案提炼',foundation],['states','状态与等级',states],['conditions','条件运行',conditions],['history','初始化与历史',history],['identity','用户身份',identity],['genesis','创世与模板',genesis],['preferences','偏好确认',preferences],['style','禁词与文风',style],['progression','世界推进',progression],['parallel','平行存档',parallel],['core','基点与原点',coreAssets],['timeline','修改时间线',timeline],['preview','预设与表单全文',preview],['assistant','缇斯亚助手',assistant]];for(const [id,name]of pages){const option=el('option',name);option.value=id;pageSelect.append(option);}pageSelect.value=page;pageSelect.onchange=()=>{const next=pageSelect.value;pageSelect.value=page;if(onAssistant&&['assistant','genesis','foundation','core','style'].includes(next)){if(busy||dirty||draft){notice.textContent='请先保存或放弃当前修改，再进入助手';return;}onAssistant(next==='core'?'core-assets':next);return;}return run(async()=>{await pages.find(p=>p[0]===next)[2]();});};
  button(root,'放弃当前未保存修改',async()=>{releaseArchiveReview(draft);if(draft?.kind==='state'){service.discardStateForm(draft.id);statePreviewIds.delete(draft.id);}draft=null;dirty=false;await pages.find(p=>p[0]===page)[2]();notice.textContent='未保存修改已放弃';});const ready=run(async()=>{if(service.matrixFoundation){if(!initialPage||initialPage==='settings')return history();const target=pages.find(p=>p[0]===initialPage);check(target,'未知功能页');return initialPage==='genesis'?genesis(initialGoal):target[2]();}if(service.matrixCreator&&onIdentity&&['genesis','identity'].includes(initialPage))return initialPage==='genesis'?genesis(initialGoal):identity();await setup();if(initialPage&&initialPage!=='settings'){const target=pages.find(p=>p[0]===initialPage);check(target,'未知功能页');await target[2]();}});return {root,ready,navigate:(id,prefill='')=>run(async()=>{const target=pages.find(p=>p[0]===id);check(target,'未知功能页');await (id==='genesis'?genesis(prefill):target[2]());}),kind:'tables',keepAlive:true,settled:()=>pending,resume:()=>{if(busy)return pending;if(dirty||draft){notice.textContent='草稿已保留，保存时将核对存档版本';return Promise.resolve();}return run(pages.find(p=>p[0]===page)[2]);},requestLeave:({preserve=false}={})=>{const hasDraft=!!(dirty||draft||pageDrafts.size);return {allowed:preserve||(!busy&&!hasDraft),reason:busy&&!preserve?'表单任务正在处理，请等待或停止任务':hasDraft&&!preserve?'表单草稿尚未保存；可保留草稿后切换':'',dirty:hasDraft};},dispose(){alive=false;unsubscribeArchive?.();if(ownsArchivePreview)service.clear({scope:'archive-review',reason:'归档草案页面已关闭'});for(const id of archiveReviewIds)service.discardArchiveReview?.(id);archiveReviewIds.clear();for(const id of statePreviewIds)service.discardStateForm(id);statePreviewIds.clear();for(const id of foundationPreviewIds)service.discardFoundationPreview(id);foundationPreviewIds.clear();for(const id of conditionPreviewIds)service.discardConditionPreview(id);conditionPreviewIds.clear();pageDrafts.clear();root.remove();}};
 }

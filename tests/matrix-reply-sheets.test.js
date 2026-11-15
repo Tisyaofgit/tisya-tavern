@@ -38,6 +38,6 @@ test('actual catalog main forms derive canonical actors and support typed list a
 
 test('material instructions and main acceptance share exact group labels while hidden record names stay out of the prompt',()=>{
  const e=simple();e.registerTable('SECRETS',[{key:'name',label:'名称',type:'TEXT'},{key:'lock_level',label:'权限',type:'TEXT'}],'隐秘资料');e.newRecord('PEOPLE',{name:'可见人物',money:2},'visible');e.newRecord('SECRETS',{name:'不可泄露的人物名',lock_level:'D'},'secret');const c=context(e),m=materials(e),input=m.tisya_material_cell_prompts;
- assert(input.includes('【'+c.catalog.templates.find(t=>t.id==='PEOPLE').label+'／序号】'));assert(input.includes(c.references.find(r=>r.recordId==='visible').display));assert.doesNotMatch(Object.values(m).join('\n'),/不可泄露的人物名/);assert.doesNotMatch(input,/@ROW\+.*JSON|matrix\.changes/);assert.match(input,/format="form"/);
+ assert(input.includes('【'+c.catalog.templates.find(t=>t.id==='PEOPLE').label+'／序号】'));assert(Object.values(m).join('\n').includes(c.references.find(r=>r.recordId==='visible').display));assert.doesNotMatch(Object.values(m).join('\n'),/不可泄露的人物名/);assert.doesNotMatch(input,/@ROW\+.*JSON|matrix\.changes/);assert.match(input,/format="form"/);
  const result=acceptMatrixSheets(c,{state:e.data},{blocks:{title:'独立数据任务',body:'已核对',cells:section(c,'PEOPLE',{name:'新记录',money:'0'})}}),copy=new Runtime(e.data);applyMatrixChanges(copy,result.proposal.matrix.changes);assert.equal(Object.keys(e.rows('PEOPLE')).length,1);assert.equal(Object.keys(copy.rows('PEOPLE')).length,2);
 });

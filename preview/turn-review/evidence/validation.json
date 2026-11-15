@@ -1,0 +1,39 @@
+{
+  "checked_at_utc": "2026-11-15T05:35:46.666984+00:00",
+  "scope": "independent interactive prototype; synthetic localStorage only",
+  "browser": {
+    "desktop": true,
+    "narrow_iframe": "390x844",
+    "host": false,
+    "external_model": false,
+    "android": false
+  },
+  "production_baseline": "75ab15b30423e62283ecf8eb6cbeaa21fd9b0594",
+  "files": {
+    "index.html": {
+      "bytes": 5096,
+      "sha256": "b275c083d3005c7df0440ec0b28328dffeb853d5f6c5af4d8324856abae42c25"
+    },
+    "style.css": {
+      "bytes": 8652,
+      "sha256": "991bfe6cbfeae817ba30aa4f052d18188c79e14e7e8751e9d88bb8ba3e65102f"
+    },
+    "demo.js": {
+      "bytes": 12392,
+      "sha256": "4ba1228bfcfe58b1a9132971ab4d4dc2bc6d11d10200844efd982f5fb1e48acf"
+    },
+    "reading.woff2": {
+      "bytes": 185588,
+      "sha256": "dc3d56b1205a669f1e289e9cb2292736a62f99d92f9532840cdb2fe7c56ffe79"
+    },
+    "build-preview.py": {
+      "bytes": 684,
+      "sha256": "19d1681b2523778f386ce830509134447ace62861d5391cc80a8d86db856bfae"
+    },
+    "preview.html": {
+      "bytes": 273563,
+      "sha256": "8d527999fd8f71dc31b547d35187cdaccc5133a811f93234a917d5b7ee9dab92"
+    }
+  },
+  "application_status": "candidate UI only; pending visual review and production integration"
+}

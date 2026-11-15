@@ -1,0 +1,24 @@
+{
+  "version": "model-field-audit-20261115",
+  "catalogTables": 207,
+  "runtimeTables": 213,
+  "fields": 3126,
+  "ownership": {
+    "internal-or-projection": 488,
+    "business": 1631,
+    "derived": 14,
+    "projection": 14,
+    "program": 394,
+    "configuration": 356,
+    "registration": 115,
+    "executor": 114
+  },
+  "modelReadable": 1773,
+  "modelWritable": 1625,
+  "referenceCount": 721,
+  "registryNamespaceReferences": 7,
+  "parameterBindings": 256,
+  "derivations": 60,
+  "duplicateProjectionDefinitions": 45,
+  "errors": []
+}

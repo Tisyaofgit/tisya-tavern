@@ -10,6 +10,12 @@ import {programOwnedTable} from '../engine/prompt-boundary.mjs';
 import {envelope} from '../engine/reply.mjs';
 import {cardAIMaterials,bookAIMaterials} from './card-source.js';
 import {personaSnapshot} from './persona.js';
+import {ARCHIVE_TABLE_IDS} from '../engine/reply-form-ownership.mjs';
+import {memoryCoverage,memoryMessageRows} from '../engine/memory-status.mjs';
+import {materials} from '../engine/materials.mjs';
+import {Runtime} from '../engine/runtime.mjs';
+import {normalizeEnvelope} from '../engine/tags.mjs';
+import {archivalText,historyEvidence} from './ledger.js';
 
 export function createFoundationService({run,capture,load,books,onCommitted=()=>{},database=null,request,getContext,ensureDatabase=async()=>{}}){
  if(database)return {matrixFoundation:createMatrixFoundation({run,books,onCommitted,database,request,getContext,ensureDatabase})};
@@ -67,17 +73,18 @@ export function createFoundationService({run,capture,load,books,onCommitted=()=>
 }
 
 const MATRIX_INTAKE='tisya.matrix-intake/1';
-const HISTORY_TABLES=new Set(['T_DYN_EVENTS','T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS','T_DYN_COGNITION','T_STATIC_FACTS','T_CHAR_DOSSIER','T_SYS_ENTITIES']);
+const HISTORY_TABLES=new Set([...ARCHIVE_TABLE_IDS,'T_CHAR_DOSSIER','T_SYS_ENTITIES']);
 function createMatrixFoundation({run=fn=>fn(),books,onCommitted,database,request,getContext,ensureDatabase}){
  check(typeof database.read==='function'&&typeof database.commit==='function'&&typeof getContext==='function','规范提炼缺少当前表单接口');const drafts=new Map();
  const contextIdentity=()=>{const c=getContext();return JSON.stringify([c.chatId,c.characterId,c.groupId]);};
  const guardFor=key=>()=>check(contextIdentity()===key,'聊天已切换，原提炼草稿保留，未写入新聊天');
- function messageRows(){return (getContext().chat??[]).map((m,index)=>({floor:index+1,uid:m.extra?.tisya_engine?.uid??'floor:'+index,role:m.is_system?'system':m.is_user?'user':m.extra?.tisya_engine?.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??''),candidate:m.swipe_id??0}));}
+ const messageRows=()=>memoryMessageRows(getContext().chat);
  const sourceHistory=snapshot=>Object.values(snapshot?.state?.runtime?.receipts??{}).map(r=>r.result?.source).filter(s=>s?.kind==='matrix-foundation');
  const requestRows=snapshot=>Object.values(snapshot?.state?.tables?.T_SYS_CELL_REQUESTS??{}).map(r=>r.metadata?.foundationDraft).filter(d=>d?.format===MATRIX_INTAKE);
  async function inspect(){
-  const key=contextIdentity(),snapshot=await database.read();guardFor(key)();const saved=sourceHistory(snapshot),rows=messageRows(),latest=rows.filter(r=>r.role==='assistant').at(-1)?.uid;
-  return {ready:!!snapshot,stateRevision:snapshot?.revision??null,tables:Object.keys(snapshot?.state?.schema??{}).length,history:rows.filter(r=>r.role!=='system').map(row=>{const prior=saved.flatMap(s=>s.source?.messages??[]).filter(m=>m.uid===row.uid),hash=matrixDigest(row);return {...row,preview:row.text.slice(0,160),latest:row.uid===latest,archived:prior.some(m=>m.hash===hash),changed:prior.some(m=>m.hash!==hash)};}),drafts:requestRows(snapshot).map(d=>({id:d.id,label:d.label,kind:d.kind,phase:d.phase,error:d.error??null}))};
+  const key=contextIdentity(),snapshot=await database.read();guardFor(key)();const rows=messageRows(),latest=rows.filter(r=>r.role==='assistant').at(-1)?.uid,coverage=memoryCoverage(snapshot?.state,rows);
+  const projected=snapshot?materials(new Runtime(snapshot.state)):{};
+  return {ready:!!snapshot,stateRevision:snapshot?.revision??null,tables:Object.keys(snapshot?.state?.schema??{}).length,history:rows.map((row,i)=>({...row,...coverage[i],preview:row.text.slice(0,160),latest:row.uid===latest})).filter(r=>r.role!=='system'),memory:{archive:projected.tisya_material_memory_archive??'',summary:projected.tisya_material_memory_summary??'',knowledge:projected.tisya_material_knowledge_material??''},drafts:requestRows(snapshot).map(d=>({id:d.id,label:d.label,kind:d.kind,phase:d.phase,error:d.error??null}))};
  }
  async function sourceFor(args,snapshot){
   const c=getContext(),kind=args.kind??'history',sourceKind=args.sourceKind??'text';check(['initialization','history','narrative'].includes(kind)&&['card','chat','text'].includes(sourceKind),'提炼来源或任务无效');
@@ -88,11 +95,13 @@ function createMatrixFoundation({run=fn=>fn(),books,onCommitted,database,request
   }
   if(sourceKind==='chat'){
    check(kind==='history','会话楼层只用于历史提炼');const rows=messageRows(),from=args.from??1,to=args.to??rows.length;check(Number.isSafeInteger(from)&&Number.isSafeInteger(to)&&from>=1&&to>=from,'楼层范围无效');const latest=rows.filter(r=>r.role==='assistant').at(-1)?.uid,all=rows.filter(r=>r.floor>=from&&r.floor<=to&&r.role==='assistant'&&(args.includeLatest===true||r.uid!==latest));
-   const confirmed=sourceHistory(snapshot).flatMap(s=>s.source?.messages??[]),skipped=[];const messages=all.filter(row=>{const prior=confirmed.filter(p=>p.uid===row.uid),hash=matrixDigest(row);check(!prior.some(p=>p.hash!==hash),'已入档楼层原文或候选已改变：'+row.floor+'；请先核对旧来源，未重复添加');if(prior.some(p=>p.hash===hash)){skipped.push(row.floor);return false;}return true;}).map(row=>({...row,hash:matrixDigest(row)}));
-   check(messages.length,'所选范围没有尚待提炼的已确认 AI 回复；最新回复须明确选择保留');const selected=new Set(messages.map(m=>m.uid)),context=rows.filter(r=>r.floor>=from&&r.floor<=to&&(selected.has(r.uid)||r.role==='user'));
-   const raw={messages,context},fingerprint=matrixDigest(raw);return {kind,sourceKind,key:'chat:'+messages.map(m=>m.uid).join(','),fingerprint,messages,skipped,range:{from,to,includeLatest:args.includeLatest===true},raw,materials:{sourceHistory:context.map(r=>({floor:r.floor,role:r.role,text:r.text})),policy:'只有所选已确认AI回复为待归档事件；用户话语是上下文依据，不把愿望、指令或尚未发生的计划当事件。'}};
+   const coverage=memoryCoverage(snapshot.state,all),skipped=[];const messages=all.filter((row,i)=>{const status=coverage[i];check(!status.changed,'已入档楼层原文或候选已改变：'+row.floor+'；请先核对旧来源，未重复添加');if(!status.canImport){skipped.push(row.floor);return false;}return true;}).map(row=>({...row,hash:matrixDigest(row)}));
+   check(messages.length,'所选范围没有尚待提炼的已确认 AI 回复；已正式归档和近期暂存会自动跳过，最新回复须明确选择保留');const selected=new Set(messages.map(m=>m.uid));
+   for(const message of messages){let index=rows.findIndex(r=>r.uid===message.uid)-1;while(index>=0&&rows[index].role==='user')selected.add(rows[index--].uid);}
+   const context=rows.filter(r=>selected.has(r.uid));
+   const raw={messages,context},fingerprint=matrixDigest(raw);return {kind,sourceKind,key:'chat:'+messages.map(m=>m.uid).join(','),fingerprint,messages,skipped,range:{from,to,includeLatest:args.includeLatest===true},raw,materials:{sourceHistory:context.map(r=>({floor:r.floor,role:r.role,text:r.role==='assistant'?archivalText(normalizeEnvelope(r.text)):r.text})),policy:'只有所选已确认AI回复的正文为待归档事件；用户话语是上下文依据，不把愿望、指令或尚未发生的计划当事件。'}};
   }
-  check(typeof args.text==='string'&&args.text.trim()&&args.text.length<=500000,'请提供不超过500000字符的完整原文');const label=typeof args.label==='string'&&args.label.trim()?args.label.trim():kind==='narrative'?'人物资料':'手写历史',raw={text:args.text,worldTime:args.worldTime??null};return {kind,sourceKind,key:'text:'+label,fingerprint:matrixDigest(raw),raw,materials:{sourceHistory:args.text,worldTime:args.worldTime??null}};
+  check(typeof args.text==='string'&&args.text.trim()&&args.text.length<=500000,'请提供不超过500000字符的完整原文');const label=typeof args.label==='string'&&args.label.trim()?args.label.trim():kind==='narrative'?'人物资料':'手写历史',raw={text:args.text,worldTime:args.worldTime??null};return {kind,sourceKind,key:'text:'+label,fingerprint:matrixDigest(raw),raw,materials:{sourceHistory:kind==='history'?historyEvidence(normalizeEnvelope(args.text)):args.text,worldTime:args.worldTime??null}};
  }
  async function prepare(args={}){return run(async()=>{
   check(getContext().chatId,'请先打开当前聊天');const key=contextIdentity(),guard=guardFor(key);await ensureDatabase();guard();if(/手机|全初始化|完整初始化/.test(args.goal??'')){await ensurePhoneFormSchema(database);guard();}const snapshot=await database.read();guard();check(snapshot?.state,'当前聊天尚未接入规范表单');const source=await sourceFor(args,snapshot);guard();
@@ -109,6 +118,8 @@ function createMatrixFoundation({run=fn=>fn(),books,onCommitted,database,request
   const guard=guardFor(draft.scope);guard();if(draft.source.sourceKind==='text')return;
   if(draft.source.sourceKind==='card'){const fresh=await sourceFor(draft.args,snapshot);guard();check(fresh.fingerprint===draft.source.fingerprint,'角色卡、人设或绑定资料已变化，请重新提炼');return;}
   const rows=messageRows();for(const original of draft.source.raw.context){const current=rows.find(r=>r.uid===original.uid);check(current&&matrixDigest(current)===matrixDigest(Object.fromEntries(Object.entries(original).filter(([key])=>key!=='hash'))),'历史原文、楼层或候选已变化，旧草稿未入档');}
+  const selected=new Set(draft.source.messages.map(m=>m.uid)),current=rows.filter(r=>selected.has(r.uid));
+  check(memoryCoverage(snapshot.state,current).every(r=>r.canImport),'所选来源已归档或进入近期暂存，请刷新核对，未重复写入');
  }
  function validateCandidate(draft,snapshot,raw){
   const parsed=acceptCreationSheets(draft.forms,snapshot,raw),proposal=validateCreationProposal(parsed.proposal,snapshot,{kind:'world',mode:'revise'});check(!(proposal.unresolved??[]).length,'提炼仍有待补事项，请先核对；原答完整保留');const changes=[],diff=[];

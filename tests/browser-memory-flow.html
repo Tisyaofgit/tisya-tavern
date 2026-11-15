@@ -1,0 +1,20 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>缇斯亚 · 表单记忆归档验收</title><style>body{margin:0;background:#102c26;color:#e4dfc7;font:16px/1.6 sans-serif}body>header,body>main{max-width:950px;margin:20px auto;padding:16px}button{min-height:44px;font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}#report{border:1px solid #708579;padding:16px}#app{min-width:0}fieldset{min-width:0}</style>
+<header><h1>表单记忆归档 · 隔离验收</h1><p>使用本次生产服务与真实 IndexedDB。模型回复使用固定测试原答；未连接用户聊天或外部模型。</p><p id="build">正在核对版本…</p><button id="request">核对下一轮实际请求</button><button id="reload">重新打开页面</button><pre id="report" role="status">正在建立隔离会话…</pre></header><main id="app"></main>
+<script type="module">
+import {memoryFlow,memoryForm,memoryReply,intakeReply} from './fixtures/memory-flow.mjs';
+import {indexedStorage} from '../engine/controller.mjs';
+import {mountTablePanel} from '../tables/panel.js';
+import {PANEL_CSS} from '../config/panel-style.js';
+const report=document.querySelector('#report'),errors=[];
+addEventListener('error',e=>{errors.push(e.message);report.textContent=e.message;});addEventListener('unhandledrejection',e=>{errors.push(e.reason?.message??String(e.reason));report.textContent=errors.at(-1);});
+const code=await(await fetch('../engine/memory-status.mjs')).text(),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(code)))].map(n=>n.toString(16).padStart(2,'0')).join('');document.querySelector('#build').textContent='memory-fix-v1 · memory-status SHA256 '+hash;
+const saved=sessionStorage.getItem('tisya-memory-flow-context-v1'),storage=indexedStorage({open:()=>indexedDB.open('tisya-memory-flow-isolated-20261115',1)}),f=await memoryFlow({storage,context:saved?JSON.parse(saved):null});
+if(!saved){for(let n=1;n<=4;n++)await f.accept(memoryReply(n,n===1?null:n===2?undefined:''));}
+const saveContext=()=>sessionStorage.setItem('tisya-memory-flow-context-v1',JSON.stringify(f.ctx));saveContext();
+f.respond(intakeReply(memoryForm('T_DYN_EVENTS',{title:'补录交信',spine_digest:'已在渡口交信。'},{evidence:false})+'\n'+memoryForm('T_DYN_STAGE_SUMMARIES',{name:'渡口阶段',summary_text:'交信已完成，等待船来。'},{evidence:false})));
+const style=document.createElement('style');style.textContent=PANEL_CSS;document.head.append(style);
+const panel=mountTablePanel(document,document.querySelector('#app'),{service:{matrixFoundation:f.foundation,state:()=>({busy:false,jobs:[]}),clear(){}},store:{read:()=>({revision:0,key:f.ctx.chatId})},initialPage:'history',onSaved:saveContext});await panel.ready;
+report.textContent=saved?'已从真实 IndexedDB 重开；下面显示当前保存结果。':'已接纳 4 条回复：1 条缺归档、1 条正式归档、2 条近期暂存。';
+document.querySelector('#request').onclick=async()=>{try{const payload=await f.prepare(),text=payload.messages.map(m=>m.content).join('\n');await f.host.event('GENERATION_STOPPED');saveContext();const result={formalEvent:text.includes('第2次在渡口交信'),supplementedEvent:text.includes('已在渡口交信。'),stageSummary:text.includes('交信已完成，等待船来。'),repairedWarningStillPresent:/记忆待核[^\n]*第1条已接纳回复/.test(text),messages:payload.messages.length,errors};report.textContent=JSON.stringify(result,null,2);const pre=document.createElement('pre'),details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='查看完整装配请求（隔离数据）';pre.textContent=JSON.stringify(payload,null,2);details.append(summary,pre);document.querySelector('header').append(details);window.memoryFlowEvidence={build:hash,result,payload};}catch(e){report.textContent=e.message;errors.push(e.message);}};
+document.querySelector('#reload').onclick=()=>{saveContext();location.reload();};window.memoryFlowFixture={f,panel,errors};
+</script></html>

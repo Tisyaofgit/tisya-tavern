@@ -1,0 +1,412 @@
+TAP version 13
+# Subtest: all eligible floors are planned in order and partial field coverage skips only matching fields
+ok 1 - all eligible floors are planned in order and partial field coverage skips only matching fields
+  ---
+  duration_ms: 29.952157
+  type: 'test'
+  ...
+# Subtest: generating/editing never commits and explicit review is required
+ok 2 - generating/editing never commits and explicit review is required
+  ---
+  duration_ms: 5.500996
+  type: 'test'
+  ...
+# Subtest: known values require source evidence and all selected fields must have an answer
+ok 3 - known values require source evidence and all selected fields must have an answer
+  ---
+  duration_ms: 1.733625
+  type: 'test'
+  ...
+# Subtest: readonly, source edits, history deletion and stale revisions reject rather than duplicate
+ok 4 - readonly, source edits, history deletion and stale revisions reject rather than duplicate
+  ---
+  duration_ms: 2.377243
+  type: 'test'
+  ...
+# Subtest: unknown is not zero and range validation precedes all writes
+ok 5 - unknown is not zero and range validation precedes all writes
+  ---
+  duration_ms: 3.712781
+  type: 'test'
+  ...
+# Subtest: one selected field can contain multiple distinct records without losing coverage
+ok 6 - one selected field can contain multiple distinct records without losing coverage
+  ---
+  duration_ms: 5.032155
+  type: 'test'
+  ...
+# Subtest: bad body is blocked and all raw source bytes remain available
+ok 7 - bad body is blocked and all raw source bytes remain available
+  ---
+  duration_ms: 1.007084
+  type: 'test'
+  ...
+# Subtest: edited source copies cannot authenticate fabricated evidence and permission changes invalidate review
+ok 8 - edited source copies cannot authenticate fabricated evidence and permission changes invalidate review
+  ---
+  duration_ms: 5.09622
+  type: 'test'
+  ...
+# Subtest: an old candidate cannot bypass completed field coverage by changing its record identity
+ok 9 - an old candidate cannot bypass completed field coverage by changing its record identity
+  ---
+  duration_ms: 5.00176
+  type: 'test'
+  ...
+# Subtest: three layers retain complete latest triplet, only windowed earlier char body, and no old user text
+ok 10 - three layers retain complete latest triplet, only windowed earlier char body, and no old user text
+  ---
+  duration_ms: 13.733537
+  type: 'test'
+  ...
+# Subtest: paragraph markers only are removed; source prose digits and fenced content remain
+ok 11 - paragraph markers only are removed; source prose digits and fenced content remain
+  ---
+  duration_ms: 2.629064
+  type: 'test'
+  ...
+# Subtest: custom body aliases use the shared envelope reader
+ok 12 - custom body aliases use the shared envelope reader
+  ---
+  duration_ms: 0.701984
+  type: 'test'
+  ...
+# Subtest: reviewed fact coverage deduplicates by information identity, preserving independent knowledge
+ok 13 - reviewed fact coverage deduplicates by information identity, preserving independent knowledge
+  ---
+  duration_ms: 8.573183
+  type: 'test'
+  ...
+# Subtest: same source is insufficient to remove independent facts; unreviewed or stale coverage is not trusted
+ok 14 - same source is insufficient to remove independent facts; unreviewed or stale coverage is not trusted
+  ---
+  duration_ms: 2.008179
+  type: 'test'
+  ...
+# Subtest: latest full reply owns covered archive facts and is excluded from recent body
+ok 15 - latest full reply owns covered archive facts and is excluded from recent body
+  ---
+  duration_ms: 3.537939
+  type: 'test'
+  ...
+# Subtest: 0/1 limits never restore old raw messages; latest triplet remains independently complete
+ok 16 - 0/1 limits never restore old raw messages; latest triplet remains independently complete
+  ---
+  duration_ms: 2.389852
+  type: 'test'
+  ...
+# Subtest: latest complete reply also carries reviewed evidence spanning numbered paragraphs
+ok 17 - latest complete reply also carries reviewed evidence spanning numbered paragraphs
+  ---
+  duration_ms: 2.950297
+  type: 'test'
+  ...
+# Subtest: old malformed/untagged replies are reported, not flattened with machine blocks into body history
+ok 18 - old malformed/untagged replies are reported, not flattened with machine blocks into body history
+  ---
+  duration_ms: 1.287307
+  type: 'test'
+  ...
+# Subtest: unconfirmed/other-branch/deleted-source archive entries are excluded and conflicting fact IDs rejected
+ok 19 - unconfirmed/other-branch/deleted-source archive entries are excluded and conflicting fact IDs rejected
+  ---
+  duration_ms: 3.144874
+  type: 'test'
+  ...
+# Subtest: XML data cannot break wrapper boundaries; absent turns and machine locators stay out of model text
+ok 20 - XML data cannot break wrapper boundaries; absent turns and machine locators stay out of model text
+  ---
+  duration_ms: 0.686963
+  type: 'test'
+  ...
+# Subtest: confirmed full archive passage subsumes the same reviewed point while independent knowledge survives
+ok 21 - confirmed full archive passage subsumes the same reviewed point while independent knowledge survives
+  ---
+  duration_ms: 1.654217
+  type: 'test'
+  ...
+# Subtest: ordinary and author materials never reveal program history, layouts or writable program tables
+ok 22 - ordinary and author materials never reveal program history, layouts or writable program tables
+  ---
+  duration_ms: 417.419118
+  type: 'test'
+  ...
+# Subtest: old schemas without new flags still block phone snapshots and dynamic execution containers
+ok 23 - old schemas without new flags still block phone snapshots and dynamic execution containers
+  ---
+  duration_ms: 210.476293
+  type: 'test'
+  ...
+# Subtest: current phone rows remain complete without character or row budgets, while aliases and other scopes are omitted
+ok 24 - current phone rows remain complete without character or row budgets, while aliases and other scopes are omitted
+  ---
+  duration_ms: 263.688676
+  type: 'test'
+  ...
+# Subtest: one form contains writable labels without a repeated delta dictionary or invented unknown values
+ok 25 - one form contains writable labels without a repeated delta dictionary or invented unknown values
+  ---
+  duration_ms: 138.410645
+  type: 'test'
+  ...
+# Subtest: creation contract compacts the full actual catalog and excludes program and field payloads
+ok 26 - creation contract compacts the full actual catalog and excludes program and field payloads
+  ---
+  duration_ms: 133.645938
+  type: 'test'
+  ...
+# Subtest: proposal blocks every program table and forbidden field, but accepts a canonical character with forward references
+ok 27 - proposal blocks every program table and forbidden field, but accepts a canonical character with forward references
+  ---
+  duration_ms: 821.589294
+  type: 'test'
+  ...
+# Subtest: real catalog creator integrates with actual Matrix host, derives actor links and never commits a story turn
+ok 28 - real catalog creator integrates with actual Matrix host, derives actor links and never commits a story turn
+  ---
+  duration_ms: 1379.674722
+  type: 'test'
+  ...
+# Subtest: current forms create canonical people immediately and archive can reference them in the same reply
+ok 29 - current forms create canonical people immediately and archive can reference them in the same reply
+  ---
+  duration_ms: 583.644883
+  type: 'test'
+  ...
+# Subtest: a memory record in cells rejects the whole form and retains the exact reply
+ok 30 - a memory record in cells rejects the whole form and retains the exact reply
+  ---
+  duration_ms: 160.640774
+  type: 'test'
+  ...
+# Subtest: a current state record in archive rejects the whole memory batch without moving it into cells
+ok 31 - a current state record in archive rejects the whole memory batch without moving it into cells
+  ---
+  duration_ms: 375.435673
+  type: 'test'
+  ...
+# Subtest: the presentation contract uses immediate forms for messages, blocks, items and media bindings
+ok 32 - the presentation contract uses immediate forms for messages, blocks, items and media bindings
+  ---
+  duration_ms: 919.429936
+  type: 'test'
+  ...
+# Subtest: owned time detail follows its business parent: T_DYN_EVENTS
+ok 33 - owned time detail follows its business parent: T_DYN_EVENTS
+  ---
+  duration_ms: 325.500976
+  type: 'test'
+  ...
+# Subtest: owned time detail follows its business parent: T_DYN_ENTITY_GAUGES
+ok 34 - owned time detail follows its business parent: T_DYN_ENTITY_GAUGES
+  ---
+  duration_ms: 272.421315
+  type: 'test'
+  ...
+# Subtest: nested M details inherit ownership through their parent, not their reference target
+ok 35 - nested M details inherit ownership through their parent, not their reference target
+  ---
+  duration_ms: 297.372043
+  type: 'test'
+  ...
+# Subtest: standalone M definitions have a current entry point instead of a blanket archive exemption
+ok 36 - standalone M definitions have a current entry point instead of a blanket archive exemption
+  ---
+  duration_ms: 190.182977
+  type: 'test'
+  ...
+# Subtest: current relation explanations and accepted task evidence stay on their original business records
+ok 37 - current relation explanations and accepted task evidence stay on their original business records
+  ---
+  duration_ms: 210.455062
+  type: 'test'
+  ...
+# Subtest: memory plans retain their two-reply dependency ordering for a later cognition record
+ok 38 - memory plans retain their two-reply dependency ordering for a later cognition record
+  ---
+  duration_ms: 303.764511
+  type: 'test'
+  ...
+# Subtest: a saved pre-partition archive plan keeps its old write set and guards after reload
+ok 39 - a saved pre-partition archive plan keeps its old write set and guards after reload
+  ---
+  duration_ms: 139.262169
+  type: 'test'
+  ...
+# Subtest: legacy delta remains readable while new empty blocks make no business changes
+ok 40 - legacy delta remains readable while new empty blocks make no business changes
+  ---
+  duration_ms: 137.818936
+  type: 'test'
+  ...
+# Subtest: form selection does not turn references to memory or current records into cross-group edit grants
+ok 41 - form selection does not turn references to memory or current records into cross-group edit grants
+  ---
+  duration_ms: 73.8747
+  type: 'test'
+  ...
+# Subtest: editing earlier context replays unchanged accepted legacy forms using their recorded provenance
+ok 42 - editing earlier context replays unchanged accepted legacy forms using their recorded provenance
+  ---
+  duration_ms: 1246.356249
+  type: 'test'
+  ...
+# Subtest: editing a legacy reply itself is a current revision and cannot reuse an old message ID to bypass ownership
+ok 43 - editing a legacy reply itself is a current revision and cannot reuse an old message ID to bypass ownership
+  ---
+  duration_ms: 465.110842
+  type: 'test'
+  ...
+# Subtest: a new reply cannot select legacy ownership by copying historical form text or declaring an XML attribute
+ok 44 - a new reply cannot select legacy ownership by copying historical form text or declaring an XML attribute
+  ---
+  duration_ms: 271.266625
+  type: 'test'
+  ...
+# Subtest: current delta syntax cannot append or edit memory through cells, while an ordinary numeric line still settles
+ok 45 - current delta syntax cannot append or edit memory through cells, while an ordinary numeric line still settles
+  ---
+  duration_ms: 164.287458
+  type: 'test'
+  ...
+# Subtest: current delta validates complete action writes but excludes executor receipts and derived fields
+ok 46 - current delta validates complete action writes but excludes executor receipts and derived fields
+  ---
+  duration_ms: 161.177529
+  type: 'test'
+  ...
+# Subtest: current delta cannot move a memory detail under a current parent to evade its original ownership
+ok 47 - current delta cannot move a memory detail under a current parent to evade its original ownership
+  ---
+  duration_ms: 124.965454
+  type: 'test'
+  ...
+# Subtest: current ownership rejects details rooted in a program-owned source record
+ok 48 - current ownership rejects details rooted in a program-owned source record
+  ---
+  duration_ms: 135.861541
+  type: 'test'
+  ...
+# Subtest: current delta cannot attach an ACL to retained source fragments by a guessed record ID
+ok 49 - current delta cannot attach an ACL to retained source fragments by a guessed record ID
+  ---
+  duration_ms: 166.52797
+  type: 'test'
+  ...
+# Subtest: production host defers all cells and archives until explicit confirmation; re-open is idempotent
+ok 50 - production host defers all cells and archives until explicit confirmation; re-open is idempotent
+  ---
+  duration_ms: 1896.014815
+  type: 'test'
+  ...
+# Subtest: edited draft is applied atomically, stale and invalid drafts cannot change the archive
+ok 51 - edited draft is applied atomically, stale and invalid drafts cannot change the archive
+  ---
+  duration_ms: 1428.746911
+  type: 'test'
+  ...
+# Subtest: reroll preserves the previous confirmed version until approved and rollback restores floor state
+ok 52 - reroll preserves the previous confirmed version until approved and rollback restores floor state
+  ---
+  duration_ms: 1797.102099
+  type: 'test'
+  ...
+# Subtest: confirming a changed earlier floor invalidates dependent later confirmations
+ok 53 - confirming a changed earlier floor invalidates dependent later confirmations
+  ---
+  duration_ms: 2249.243714
+  type: 'test'
+  ...
+# Subtest: custom fields and labels persist once; machine fields cannot become mandatory
+ok 54 - custom fields and labels persist once; machine fields cannot become mandatory
+  ---
+  duration_ms: 1074.241747
+  type: 'test'
+  ...
+# Subtest: mandatory unchanged and uninvolved fields require explicit response; changed fields are satisfied once
+ok 55 - mandatory unchanged and uninvolved fields require explicit response; changed fields are satisfied once
+  ---
+  duration_ms: 1583.442929
+  type: 'test'
+  ...
+# Subtest: backfill writes historical facts only after reviewed confirmation; rollback removes its facts
+ok 56 - backfill writes historical facts only after reviewed confirmation; rollback removes its facts
+  ---
+  duration_ms: 2655.878547
+  type: 'test'
+  ...
+# Subtest: stale backfill rejects and new branch cannot reuse receipts
+ok 57 - stale backfill rejects and new branch cannot reuse receipts
+  ---
+  duration_ms: 1789.366457
+  type: 'test'
+  ...
+# Subtest: three layers exclude old users, isolate body and appear once in final payload
+ok 58 - three layers exclude old users, isolate body and appear once in final payload
+  ---
+  duration_ms: 727.320663
+  type: 'test'
+  ...
+# Subtest: drafts persist without accepting cells
+ok 59 - drafts persist without accepting cells
+  ---
+  duration_ms: 1133.078002
+  type: 'test'
+  ...
+# Subtest: backfill model form uses labels; malformed response is retained for manual correction
+ok 60 - backfill model form uses labels; malformed response is retained for manual correction
+  ---
+  duration_ms: 1523.865395
+  type: 'test'
+  ...
+# Subtest: accepted archive is injected once through the three-layer route and stale history stops payload
+ok 61 - accepted archive is injected once through the three-layer route and stale history stops payload
+  ---
+  duration_ms: 1134.447175
+  type: 'test'
+  ...
+# Subtest: save candidate receipt can immediately confirm without an extra revision from refresh
+ok 62 - save candidate receipt can immediately confirm without an extra revision from refresh
+  ---
+  duration_ms: 1816.267703
+  type: 'test'
+  ...
+# Subtest: cells and archive coverage reference one historical fact, and reference values render names
+ok 63 - cells and archive coverage reference one historical fact, and reference values render names
+  ---
+  duration_ms: 2328.974473
+  type: 'test'
+  ...
+# Subtest: production host defers all cells and archives until explicit confirmation; re-open is idempotent
+ok 64 - production host defers all cells and archives until explicit confirmation; re-open is idempotent
+  ---
+  duration_ms: 1897.164535
+  type: 'test'
+  ...
+# Subtest: edited draft is applied atomically, stale and invalid drafts cannot change the archive
+ok 65 - edited draft is applied atomically, stale and invalid drafts cannot change the archive
+  ---
+  duration_ms: 1505.736111
+  type: 'test'
+  ...
+# Subtest: reroll preserves the previous confirmed version until approved and rollback restores floor state
+ok 66 - reroll preserves the previous confirmed version until approved and rollback restores floor state
+  ---
+  duration_ms: 1676.927645
+  type: 'test'
+  ...
+# Subtest: confirming a changed earlier floor invalidates dependent later confirmations
+ok 67 - confirming a changed earlier floor invalidates dependent later confirmations
+  ---
+  duration_ms: 2167.215423
+  type: 'test'
+  ...
+1..67
+# tests 67
+# suites 0
+# pass 67
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23624.556009

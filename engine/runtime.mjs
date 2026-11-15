@@ -5,9 +5,10 @@ import {worldClockConfiguration} from './world-clock.mjs';
 import {executeOperator,compileWorkbookPayload,evaluateCompiledFormula,runCompiledMacro} from './mechanical_runtime.mjs';
 import {installActions} from './actions.mjs';
 import {appendBusiness,preference} from './business.mjs';
+import {extendAttitudeSchema,advanceAttitudes} from './relation-attitudes.mjs';
 export class Runtime{
  constructor(state){
-  this.data=clone(state??{format:'tisya.matrix-state.v1',schema:{},tables:{},runtime:{}});this.data.runtime??={};
+  this.data=extendAttitudeSchema(clone(state??{format:'tisya.matrix-state.v1',schema:{},tables:{},runtime:{}}));this.data.runtime??={};
   for(const [k,v]of Object.entries({revision:0,receipts:{},failures:[],sources:{},archive_queue:[],archive:[],turn_order:[],events:[],preferences:[],scope:{}}))this.data.runtime[k]??=v;
   this.cache=new Map();this.stack=[];this.errors={};this.inTransaction=false;this.operators={};this.clockListeners=[];installActions(this);
   this.operators.MECHANICAL=ctx=>{let compiled,result;if(ctx.rule_ref||ctx.macro_ref){compiled=compileWorkbookPayload(this.mechanicalPayload());result=ctx.rule_ref?evaluateCompiledFormula(compiled,ctx.rule_ref,ctx.owner??{}):runCompiledMacro(compiled,ctx.macro_ref,ctx.owner??{});}else result=executeOperator(ctx.operator,ctx.arguments??{});if(ctx.output_target)this.set(ctx.output_target,result);return {status:'CALCULATED',result,...(compiled?{source_integrity:compiled.source_integrity,derived_projections:compiled.derived_projections}:{})};};
@@ -74,7 +75,7 @@ export class Runtime{
   const executed=[],due=Object.entries(this.rows('X_SCHEDULES')).filter(([,r])=>r.values.enabled===true&&r.values.next_at!=null&&r.values.next_at<=end).sort((a,b)=>a[1].values.next_at-b[1].values.next_at||(b[1].values.priority??0)-(a[1].values.priority??0)||a[0].localeCompare(b[0]));
   for(const [rid,r]of due){const s=r.values,interval=s.interval_minutes;if(interval!=null&&interval<=0)fail('SCHEDULE_INTERVAL','重复间隔须为正数');while(s.next_at<=end){const at=s.next_at,args=s.arguments??{};if(interval==null)this.set(`X_SCHEDULES#${rid}.enabled`,false);else this.set(`X_SCHEDULES#${rid}.next_at`,at+interval);if(!s.condition||this.expression(s.condition,args))executed.push(this.action(s.action_ref,args,`schedule:${rid}:${at}`));if(interval==null)break;}}
   for(const [rid,r]of Object.entries(this.rows('X_RESOURCE_CYCLES'))){const s=r.values;if(s.enabled!==true||s.next_at==null||s.next_at>end)continue;const period=s.interval_minutes;if(!(period>0))fail('RESOURCE_INTERVAL','资源周期须为正数');if([s.quantity,s.regeneration,s.capacity].some(v=>v==null))fail('RESOURCE_PARAMETERS','资源周期参数缺失');const count=Math.floor((end-s.next_at)/period)+1;this.set(`X_RESOURCE_CYCLES#${rid}.quantity`,Math.min(s.capacity,s.quantity+count*s.regeneration));this.set(`X_RESOURCE_CYCLES#${rid}.next_at`,s.next_at+count*period);}
-  const effects=this.clockListeners.flatMap(f=>f(start,end));this.cache.clear();return {elapsed_minutes:elapsed,time:c.text(),expired,scheduled_actions:executed,expired_effect_instances:effects};
+  const attitudes=advanceAttitudes(this,start,end),effects=this.clockListeners.flatMap(f=>f(start,end));this.cache.clear();return {elapsed_minutes:elapsed,time:c.text(),expired,scheduled_actions:executed,expired_effect_instances:effects,attitude_changes:attitudes};
  }
  micro(raw,context={}){
   let line=raw.trim(),ctx={...context};const ev=/\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line);if(ev)ctx.evidence=ev[1];line=line.replace(/^(@[A-Za-z_]+\+?)\s*[:：]\s*/,'$1:').replace(/\s*\|\s*(?:P\d+(?:\.\.P?\d+)?|P_AUTO|UI\w*|reroll\w*|auto)\s*$/i,'');if(!line||/^(#|\/\/)/.test(line))return null;

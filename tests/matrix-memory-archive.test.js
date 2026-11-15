@@ -40,7 +40,7 @@ test('actual host accepts every source and commits semantic event memory only be
  saved=await f.accept(reply(3));
  const events=Object.values(saved.state.tables.T_DYN_EVENTS);assert.equal(events.length,1,'archive form must actually reach the canonical event table');
  assert.equal(events[0].values.short_code,'e1');assert.equal(events[0].values.source_entry_id,f.ctx.chat[1].extra[NS].uid);
- assert.match(f.host.latest().materials.tisya_material_memory_archive,/e1/);assert.doesNotMatch(f.host.latest().materials.tisya_material_memory_archive,/e2|e3/);
+ assert.match(f.host.latest().materials.tisya_material_memory_archive,/事件1/);assert.doesNotMatch(f.host.latest().materials.tisya_material_memory_archive,/e2|e3/);
  const cold=f.cold();await cold.sync();const reopened=await cold.export();assert.deepEqual(reopened.state,saved.state);
  assert.equal(Object.values(reopened.state.tables.T_SYS_ARCHIVE_BATCHES).length,3);
 });

@@ -1,0 +1,20 @@
+✔ legacy pact routing registers canonical origins and multi-party child references without copied dossiers (156.813866ms)
+✔ executor receipts are readable results but not ordinary writable model forms (246.433418ms)
+✔ actual final host payload contains canonical facts once and no machine bindings or copied projections (568.947201ms)
+✔ phone text-backed references use the same registered name mapping as form acceptance (111.590087ms)
+✔ edited multi-selection replaces its custom prose once while preserving another group in the same prompt slot (652.482286ms)
+✔ full text editor persists through formal database and cold host into the real final payload, without inactive text or evidence (1299.918924ms)
+✔ inherited source is taken from the actual active preset and global originals survive another story (294.108677ms)
+✔ invalid or stale edits retain drafts and do not mutate the formal record (1055.036611ms)
+✔ custom item is created from the actual UI, saved and compiled; switching choices does not inject it (912.597394ms)
+✔ user feedback and directive keep separate formal fields, survive reopen and reach payload only while enabled (2111.984044ms)
+✔ import uses actual file preview and separate adoption; invalid files leave existing data untouched (1635.48025ms)
+✔ changing choices keeps unrelated nodes, expanded editors and unsaved text; save preserves the current view (855.440614ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9398.143038

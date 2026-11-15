@@ -1,5 +1,5 @@
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
-import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible} from '../../engine/prompt-boundary.mjs';
+import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible,modelFieldAllowed,modelTableAllowed,modelWriteFieldAllowed} from '../../engine/prompt-boundary.mjs';
 import {characterSubject} from '../../engine/character-knowledge.mjs';
 import {Runtime} from '../../engine/runtime.mjs';
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
@@ -307,6 +307,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   const t={id,table:id,label:labels.get(id),fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'}}))};templates.push(t);schemaByTemplate[id]=schema;
  }
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
+ for(const [id,schema]of Object.entries(schemaByTemplate))for(const field of schema.fields){const targets=phoneFormReference(id,field.key)??PHONE_FORM_LIST_REFERENCES[id]?.[field.key];for(const target of [targets].flat().filter(Boolean))if(allSchemas[target])referenceTables.add(target);}
  const refs=[],refCounts=new Map(),legacyCounts=new Map(),recordMeta=new Map(Object.values(snapshot.state.tables.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));for(const id of referenceTables)for(const [index,[recordId,row]]of Object.entries(snapshot.state.tables[id]??{}).entries()){
   if(row.metadata?.phone_projection)continue;
   const owner=row.values?.owner_table??row.values?.owner_form,parent=snapshot.state.tables[owner]?.[row.values.owner_row_uuid],ownerName=parent&&['name','label','title','instance_name'].map(key=>!restrictReferences||matrixFieldVisible(snapshot.state.schema[owner]?.fields.find(f=>f.key===key)??{key},parent,scope,owner,snapshot.state,row.values.owner_row_uuid)?parent.values[key]:undefined).find(value=>value!=null),ownerField=snapshot.state.schema[owner]?.fields.find(f=>f.key===row.values.owner_field)?.label;
@@ -317,17 +318,18 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(restrictReferences&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
   refs.push({tableId:id,recordId,name,base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
- const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=spec=>{
+ const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=(spec,tableId)=>{
   let hint=['TEXT','LONG_TEXT'].includes(spec.type)?'':scalarTypes[spec.type]??(['REF','ROW_REF','CHILD_REF'].includes(spec.type)?'名称':'文字');
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'||task==='main'&&inline(spec))hint=inlineChildHints[spec.ref];
-  else if(spec.ref)hint=(spec.type==='CHILD_REF'?'分组：':'名称：')+(labels.get(spec.ref)??snapshot.state.schema[spec.ref]?.label??spec.ref);
+  else if(spec.ref)hint=(spec.type==='CHILD_REF'?'分组：':'名称：')+(labels.get(spec.ref)??snapshot.state.schema[spec.ref]?.label??'关联对象');
+  const phoneTargets=phoneFormReference(tableId,spec.key)??PHONE_FORM_LIST_REFERENCES[tableId]?.[spec.key];if(phoneTargets)hint='名称：'+[phoneTargets].flat().map(id=>labels.get(id)??snapshot.state.schema[id]?.label??'关联对象').join('／');
   if(spec.enum??spec.options)hint=(spec.enum??spec.options).join('／');
   if(spec.unit)hint+=(hint?'；':'')+'单位 '+spec.unit;
   if(spec.minimum!==undefined)hint+=(hint?'；':'')+'≥'+spec.minimum;if(spec.maximum!==undefined)hint+=(hint?'；':'')+'≤'+spec.maximum;
   if(spec.required)hint+=(hint?'；':'')+'必填';return hint;
  };
- const modelTemplates=task==='main'?templates.filter(t=>!Object.hasOwn(inlineChildHints,t.id)):templates;
- const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
+ const modelTemplates=templates.filter(t=>(task!=='main'||!Object.hasOwn(inlineChildHints,t.id))&&modelTableAllowed(t.id,snapshot.state.schema[t.id],task)).map(t=>({...t,fields:t.fields.filter(f=>modelWriteFieldAllowed(snapshot.state.schema[t.id].fields.find(x=>x.key===f.key),snapshot.state.schema[t.id],task))})).filter(t=>t.fields.length);
+ const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
  const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号 字段名：值”。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
  return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions,formSections,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }

@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: a greeting retains every exact identity without loading hundreds of unrelated always/rule dossiers
+ok 1 - a greeting retains every exact identity without loading hundreds of unrelated always/rule dossiers
+  ---
+  duration_ms: 43.307605
+  type: 'test'
+  ...
+# Subtest: source names, user aliases and exact IDs select full content, without word-fragment false positives
+ok 2 - source names, user aliases and exact IDs select full content, without word-fragment false positives
+  ---
+  duration_ms: 7.419619
+  type: 'test'
+  ...
+# Subtest: scene, state and related subjects expand their direct objects, including custom nested refs
+ok 3 - scene, state and related subjects expand their direct objects, including custom nested refs
+  ---
+  duration_ms: 2.537406
+  type: 'test'
+  ...
+# Subtest: focus/bound player IDs and native persona stay full without recursive object link expansion
+ok 4 - focus/bound player IDs and native persona stay full without recursive object link expansion
+  ---
+  duration_ms: 2.436104
+  type: 'test'
+  ...
+# Subtest: facts, states and scenes that reference rules do not reload the rule library, including inherited rule types
+ok 5 - facts, states and scenes that reference rules do not reload the rule library, including inherited rule types
+  ---
+  duration_ms: 4.818327
+  type: 'test'
+  ...
+# Subtest: projection preserves each record ACL and cannot gain knowledge from parents, children or hidden refs
+ok 6 - projection preserves each record ACL and cannot gain knowledge from parents, children or hidden refs
+  ---
+  duration_ms: 10.244417
+  type: 'test'
+  ...
+# Subtest: all non-object records are retained exactly, including false, zero, empty values and metadata
+ok 7 - all non-object records are retained exactly, including false, zero, empty values and metadata
+  ---
+  duration_ms: 1.884755
+  type: 'test'
+  ...
+# Subtest: explicit reread supplies full records from the original view and never mutates that view
+ok 8 - explicit reread supplies full records from the original view and never mutates that view
+  ---
+  duration_ms: 3.724552
+  type: 'test'
+  ...
+# Subtest: needsRows rejects malformed, unknown and identity-only IDs, without alias-based authorization
+ok 9 - needsRows rejects malformed, unknown and identity-only IDs, without alias-based authorization
+  ---
+  duration_ms: 2.520661
+  type: 'test'
+  ...
+# Subtest: needsRows enforces a cumulative 200-row expansion budget across calls
+ok 10 - needsRows enforces a cumulative 200-row expansion budget across calls
+  ---
+  duration_ms: 1.919727
+  type: 'test'
+  ...
+# Subtest: existing identity-only proposal targets require reread even through table aliases and ACL-only changes
+ok 11 - existing identity-only proposal targets require reread even through table aliases and ACL-only changes
+  ---
+  duration_ms: 6.694819
+  type: 'test'
+  ...
+# Subtest: new object identity collisions trigger reread after table and field alias normalization without rewriting IDs
+ok 12 - new object identity collisions trigger reread after table and field alias normalization without rewriting IDs
+  ---
+  duration_ms: 2.819521
+  type: 'test'
+  ...
+# Subtest: referencing a thin object from a new event/state does not force an unrelated dossier reread
+ok 13 - referencing a thin object from a new event/state does not force an unrelated dossier reread
+  ---
+  duration_ms: 2.022021
+  type: 'test'
+  ...
+# Subtest: actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions
+ok 14 - actual native request accepts order-owned enabled state and retains explicit prompt/order exclusions
+  ---
+  duration_ms: 281.472769
+  type: 'test'
+  ...
+# Subtest: real foundation initialization snapshots contractor, card and bound books into the final native request
+ok 15 - real foundation initialization snapshots contractor, card and bound books into the final native request
+  ---
+  duration_ms: 513.527863
+  type: 'test'
+  ...
+# Subtest: history final request retains supplied story time and the confirmed-source policy
+ok 16 - history final request retains supplied story time and the confirmed-source policy
+  ---
+  duration_ms: 447.287618
+  type: 'test'
+  ...
+# Subtest: actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence
+ok 17 - actual source slot disabled by prompt refuses dispatch instead of silently dropping card evidence
+  ---
+  duration_ms: 294.372425
+  type: 'test'
+  ...
+# Subtest: actual source slot disabled by order refuses dispatch instead of silently dropping card evidence
+ok 18 - actual source slot disabled by order refuses dispatch instead of silently dropping card evidence
+  ---
+  duration_ms: 260.346094
+  type: 'test'
+  ...
+# Subtest: history uses full reply/simple forms, retains raw drafts in the current request table, and commits exactly once
+ok 19 - history uses full reply/simple forms, retains raw drafts in the current request table, and commits exactly once
+  ---
+  duration_ms: 656.756624
+  type: 'test'
+  ...
+# Subtest: malformed model reply is preserved across service recreation and can be corrected with the same parser
+ok 20 - malformed model reply is preserved across service recreation and can be corrected with the same parser
+  ---
+  duration_ms: 441.991678
+  type: 'test'
+  ...
+# Subtest: initialization cannot overwrite a known field and invalid raw response remains reviewable
+ok 21 - initialization cannot overwrite a known field and invalid raw response remains reviewable
+  ---
+  duration_ms: 327.110238
+  type: 'test'
+  ...
+# Subtest: chat history excludes latest and pending candidates, detects edited sources and never reimports confirmed floors
+ok 22 - chat history excludes latest and pending candidates, detects edited sources and never reimports confirmed floors
+  ---
+  duration_ms: 442.402912
+  type: 'test'
+  ...
+# Subtest: a source changed during generation retains the failed raw answer without creating history facts
+ok 23 - a source changed during generation retains the failed raw answer without creating history facts
+  ---
+  duration_ms: 214.009794
+  type: 'test'
+  ...
+# Subtest: history cannot use a creation reply to spend money or move the live clock
+ok 24 - history cannot use a creation reply to spend money or move the live clock
+  ---
+  duration_ms: 159.922923
+  type: 'test'
+  ...
+# Subtest: Matrix history panel opens directly and never loads legacy setup/origin/session
+ok 25 - Matrix history panel opens directly and never loads legacy setup/origin/session
+  ---
+  duration_ms: 124.448289
+  type: 'test'
+  ...
+# Subtest: automatic archive and manual history intake share completion and temporary status
+ok 26 - automatic archive and manual history intake share completion and temporary status
+  ---
+  duration_ms: 3724.936302
+  type: 'test'
+  ...
+# Subtest: real database retains editable-field validation and rejects forged derived provenance
+ok 27 - real database retains editable-field validation and rejects forged derived provenance
+  ---
+  duration_ms: 603.771419
+  type: 'test'
+  ...
+# Subtest: supplement saves once through IndexedDB, failed writes retain the draft, and edited history removes stale memory
+ok 28 - supplement saves once through IndexedDB, failed writes retain the draft, and edited history removes stale memory
+  ---
+  duration_ms: 5272.773437
+  type: 'test'
+  ...
+# Subtest: concatenated historical replies retain every body and exclude machine blocks including self-closing anchors
+ok 29 - concatenated historical replies retain every body and exclude machine blocks including self-closing anchors
+  ---
+  duration_ms: 0.92382
+  type: 'test'
+  ...
+# Subtest: missing archive can be supplemented with events and stage summaries, retaining raw evidence and only sending prose
+ok 30 - missing archive can be supplemented with events and stage summaries, retaining raw evidence and only sending prose
+  ---
+  duration_ms: 4183.555432
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14373.160488

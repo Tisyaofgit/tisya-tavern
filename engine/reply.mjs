@@ -48,7 +48,7 @@ function changedBusinessRecords(beforeTables,state){
  }
  return changes;
 }
-export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershipVersion=REPLY_FORM_OWNERSHIP_VERSION}={}){
+export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershipVersion=REPLY_FORM_OWNERSHIP_VERSION,manualConfirmed=false}={}){
  assertReplyFormVersion(formOwnershipVersion);
  const parsed=parseReply(raw,entryId,revision),sourceKey=`${branch}/${entryId}@${revision}`,operation='reply:'+sourceKey,request={reply_sha256:parsed.reply_sha256,entry_id:entryId,revision,branch},prior=e.data.runtime.receipts[operation];if(prior){if(prior.request_sha256!==digest(request))fail('OPERATION_CONFLICT','同一回复版本内容不同');return {status:'REPLAY',receipt:clone(prior)};}
  parsed.reply_form_ownership_version=formOwnershipVersion;
@@ -76,7 +76,7 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershi
   if(beforeTables)assertReplyFormOwnership({schema:e.data.schema,tables:beforeTables},changedBusinessRecords(beforeTables,e.data),'cells',{version:formOwnershipVersion});
   return value;
  });}catch(x){result={status:'FAILED',error:asError(x)};}operations.push({line_number:i+1,original:parsed.original_delta_ops[i],effective:line,...result});const data=(result.receipt??result).result;if(data?.warning)warnings.push({...data.warning,line_number:i+1});if(result.status==='FAILED')warnings.push({code:'CELL_FAILED',line_number:i+1,original:parsed.original_delta_ops[i],error:result.error,message:'本行已回滚，正文和其他成功行保留'});});
- warnings.push(...stageArchive(e,sourceKey));const archive=formalizeArchives(e);warnings.push(...archive.warnings);
+ warnings.push(...stageArchive(e,sourceKey));const archive=formalizeArchives(e,{confirmedSource:manualConfirmed?sourceKey:null});warnings.push(...archive.warnings);
  return e.transaction(operation,request,()=>{e.data.runtime.warnings??=[];e.data.runtime.warnings.push(...warnings.map(x=>({...x,source_key:x.source_key??sourceKey})));e.data.runtime.sources[sourceKey].settlement={operations:clone(operations),warnings:clone(warnings)};return {source_key:sourceKey,body_sha256:parsed.body_sha256,normalized_sha256:parsed.normalized_sha256,paragraphs:parsed.fragments.length,operations,warnings,formalized_sources:archive.formalized_sources,staged_rows:parsed.archive_rows.length};});
 }
 export function recall(e,query,{paragraphs:chosen,branch}={}){const terms=query.split(/[\s/,，；;]+/).filter(Boolean),out=[];for(const [key,s]of Object.entries(e.data.runtime.sources)){if(branch&&s.branch!==branch)continue;if(sha256(s.body_raw)!==s.body_sha256)fail('SOURCE_INTEGRITY','存储的原文发生变化',{source_key:key});const trigger=s.archive_rows.map(r=>r.raw).join(' '),hits=terms.filter(t=>s.body_raw.includes(t)||trigger.includes(t));if(terms.length&&!hits.length)continue;const fragments=s.fragments.filter(f=>!chosen||chosen.includes(f.paragraph_id));for(const f of fragments)if(sha256(f.raw_block)!==f.sha256)fail('SOURCE_INTEGRITY','存储的段落发生变化',{source_key:key,paragraph:f.paragraph_id});out.push({source_key:key,entry_id:s.entry_id,revision:s.revision,body_sha256:s.body_sha256,matched_terms:hits,fragments:clone(fragments)});}return out;}

@@ -58,6 +58,6 @@ test('two form groups use one field catalog and keep empty-database current busi
  const e=new Runtime(initializeState(catalog)),form=materials(e,{}).tisya_material_cell_prompts;
  assert(form.includes('cells 可填写的表单：'));assert(form.includes('archive 可填写的表单：'));
  for(const table of ['T_SYS_ENTITIES','T_CHAR_DOSSIER','T_DYN_TASKS','T_DYN_ENTITY_STATE','T_DYN_EVENTS','T_DYN_COGNITION'])assert(form.includes('【'+e.data.schema[table].label+'／序号】'),table);
- assert.equal((form.match(/两组共用填写方法/g)??[]).length,1);
+ assert.equal((form.match(/分组简表：/g)??[]).length,1);
  const labels=[...form.matchAll(/^【(.+)／序号】$/gm)].map(m=>m[1]);assert.equal(labels.length,new Set(labels).size,'shared child fields are not duplicated');
 });

@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-15",
+  "attachments": [
+    {
+      "name": "玉子美化.zip",
+      "bytes": 8801167,
+      "sha256": "688f17645d22797e6c1a0655576af4b063697ac80179307cf4430b5e67d6bc69",
+      "read_scope": [
+        "preview/styles.css",
+        "preview/index.html",
+        "projects/zi-yong-biao-ge/pages/protagonist/mount.js (selected sections)"
+      ],
+      "used": "边框分区、完整字段入口、固定编辑区",
+      "external_code_executed": false,
+      "prompts_imported": false
+    },
+    {
+      "name": "小剧场4.0.json",
+      "bytes": 45933,
+      "sha256": "046b4389048244e1257a43772c6f5a27baaa6a8f99a6b539427186027438d554",
+      "read_scope": [
+        "Six sheet headers; selected sourceData notes"
+      ],
+      "used": "正文与时间、来源、索引分列",
+      "external_code_executed": false,
+      "prompts_imported": false
+    },
+    {
+      "name": "时间召回_格林情境维护.json",
+      "bytes": 54063,
+      "sha256": "167d397058d6a7b6fa3a8798f64b0ad9630716b35016992a693b371b134fc74c",
+      "read_scope": [
+        "Recall/task snippets and finalSystemDirective"
+      ],
+      "used": "既有事件检索、已发生与计划/推测分开",
+      "external_code_executed": false,
+      "prompts_imported": false
+    }
+  ],
+  "vic": {
+    "package": "vi-project-dev-v2-v117",
+    "evidence": "previous audit only; original package not reread"
+  },
+  "shujuku_commit": "c45d50ee7e40a0e20b0095b6c71d6a29dd837862"
+}

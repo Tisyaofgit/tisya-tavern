@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-15",
+  "branch": "work/archive-memory-20261115",
+  "base": "bf82bccd6d746aece9252eb0bf1def27415b8b92",
+  "fieldAudit": {
+    "version": "model-field-audit-20261115",
+    "catalogTables": 207,
+    "runtimeTables": 213,
+    "fields": 3126,
+    "ownership": {
+      "internal-or-projection": 488,
+      "business": 1631,
+      "derived": 14,
+      "projection": 14,
+      "program": 394,
+      "configuration": 356,
+      "registration": 115,
+      "executor": 114
+    },
+    "modelReadable": 1773,
+    "modelWritable": 1625,
+    "referenceCount": 721,
+    "registryNamespaceReferences": 7,
+    "parameterBindings": 256,
+    "derivations": 60,
+    "duplicateProjectionDefinitions": 45,
+    "errors": []
+  },
+  "checks": {
+    "generatedBuilds": 18,
+    "fullTests": {
+      "passed": 2672,
+      "failed": 0,
+      "note": "最后回执元数据修复由随后 41 项定向测试覆盖"
+    },
+    "finalReceiptTests": {
+      "passed": 41,
+      "failed": 0
+    },
+    "preferenceAndPayloadTests": {
+      "passed": 12,
+      "failed": 0
+    },
+    "finalRuntimeBuildCheck": true
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4173/",
+    "source": "real production host/runtime/review UI with synthetic isolated data",
+    "latestBundleSha256": "658a983596b76444efd8d6bd4a31534073039c49d24e6806bca858addf3311b4",
+    "desktopTab": "143",
+    "narrowTab": "144",
+    "width": 390,
+    "confirmedHP": 8,
+    "confirmedArchives": 1,
+    "actualFinalPayloadMessages": 31,
+    "internalRecordIdLeaked": false,
+    "databaseTableKeyLeaked": false,
+    "observedRevisionConflict": "同时打开桌面与窄屏的版本冲突被拒绝；刷新后最终验收成功"
+  },
+  "unverified": [
+    "real host integration",
+    "external model",
+    "Android",
+    "production history-backfill and three-layer replacement"
+  ],
+  "published": false
+}

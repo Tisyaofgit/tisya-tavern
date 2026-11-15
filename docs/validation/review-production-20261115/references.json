@@ -1,0 +1,101 @@
+{
+  "shujuku": {
+    "repository": "https://github.com/AlbusKen/shujuku",
+    "commit": "c45d50ee7e40a0e20b0095b6c71d6a29dd837862",
+    "read": [
+      "src/presentation/theme/custom-confirm.ts",
+      "src/service/table/canonical-snapshot-envelope.ts",
+      "src/data/gateways/chat-message-snapshot.ts"
+    ],
+    "applied": "独立候选确认、可见边界、会话身份和版本复核、隔离快照"
+  },
+  "comic": {
+    "version": "2.4.2",
+    "sha256": "f7440c0f985abb92222f5466fe23c7653c56e0f7ca72b62e38d24e4968dc46fe",
+    "applied": "候选编辑与确认保存分开"
+  },
+  "voice": {
+    "version": "10.32.6",
+    "sha256": "e0900fe72c58939061b13e92e5365dbcabb8c4caad94a568d3a02244843cbc9f",
+    "applied": "多个触发入口共享状态；本项目仍按会话归属隔离"
+  },
+  "preset": {
+    "version": "V19.6",
+    "sha256": "a4b12874631bf94664846c072e5a97a5f1eab1fc3d1d3390d78ecb6ecc0eca65",
+    "applied": "正文边界与变量更新分工",
+    "story_content_imported": false
+  },
+  "vic": {
+    "package": "vi-project-dev-v2-v117",
+    "scope": "沿用前次核验记录，本轮未重新取得原包"
+  },
+  "external_code_executed": false,
+  "third_party_source_published": false,
+  "three_kingdoms": {
+    "source": "三国.zip",
+    "card_version": "v3.21",
+    "spec": "chara_card_v3/3.0",
+    "zip_sha256": "b32b09aea3aa4665632c813653a0bff413122a90dfe4fdc420c19e4903aedca4",
+    "png_sha256": "fe2ce8fd5658e09cbb6baf707c9557a62f18396d07b5afefa5c86df44fa57d7b",
+    "inventory": {
+      "worldbook_entries": 1559,
+      "enabled_entries": 113,
+      "enabled_constant_entries": 11,
+      "helper_scripts": 9,
+      "enabled_helper_scripts": 8,
+      "regex_scripts": 17,
+      "enabled_regex_scripts": 16,
+      "chara_and_ccv3_identical": true
+    },
+    "inspected": [
+      "helper 1 变量结构: selected schema definitions",
+      "helper 6 三国月度经济2432: projection, identity, monthly settlement, battle prepare/apply/confirm/finish and protected fields",
+      "helper 8 三国行政数据发送优化: complete source",
+      "regex 7 状态栏美化: grouped layout, recent changes, deletion boundary",
+      "regex 4/6/12/13/14/15/16: prompt/display placement settings",
+      "worldbook id 36: selected update rules",
+      "worldbook id 474: route/year controller"
+    ],
+    "adopted_review_criteria": [
+      "事实输入与机械结算结果分权",
+      "候选不入档、确认后同一事务落地、重试不重复结算",
+      "完整存档与可读发送投影分开、共用一份字段定义",
+      "界面按业务分组并显示近期变化、详细字段按需展开"
+    ],
+    "deferred": [
+      "公共字段与行列布局的无损发送编码：需往返等值、知识边界和真实模型可读性证据",
+      "按世界/阶段/条件选择资料：复用既有路由，不复制人物和历史控制器"
+    ],
+    "rejected": [
+      "将大量机械公式重新灌入普通模型提示词",
+      "同名跨身份搬表或退场删除历史档案",
+      "按字符预算截断事实、失败静默保留旧投影",
+      "照搬硬编码的三国经济与人物数据"
+    ],
+    "verification": {
+      "kind": "existing Node contract tests; no browser or external reference execution",
+      "tests": 67,
+      "pass": 67,
+      "fail": 0,
+      "log": "three-kingdoms-contract-check.tap",
+      "tested_file_sha256": {
+        "engine/review-workflow.mjs": "180388d1399b2e4a7b7c3f7e8505a85cfb96ed73f8a9a8ac475bb1e3a0535bdf",
+        "engine/turn-review.mjs": "6c93c84be014e17c6135659c02142758df83292d184b5e1893c8da0ca402fcbb",
+        "engine/review-history.mjs": "0e1e6201b44cbaabe7d8b683e95f6b67dcd6a3484e7850d0fc8a5be35b2ee25c",
+        "engine/prompt-boundary.mjs": "f8871c0ab6d034bae6d9d5d77fcb44bf9c503a85db11dee5fb442cf62dccb243",
+        "engine/history-layers.mjs": "6d0bf0d61613aa8e7e76b274feb32f5d02520960a3c007a579918de4d54657b7",
+        "engine/history-backfill.mjs": "e561af1d22f0bbec23ad5ccfa6fc231aeae01b9a922ce21f39c740a2d5139107",
+        "engine/material-render.mjs": "108092f628c67d4359905de1c4e332a99f3ba24beb2eef5ccf27de669bf03f1a",
+        "tests/review-workflow-production.test.js": "a68e612a0a26fd83e237080466c26fb2f63419d9c459ddef5bc84017b75a8bab",
+        "tests/turn-review-host.test.js": "51bc0ee64136d931e7b5dfc4ffec766cd157296af9202c913a908fdb362ab61f",
+        "tests/history-backfill.test.js": "4be9876f31b1b92391e1c0f013b18009939258060ddb660f92eab7cabed26948",
+        "tests/history-layers.test.js": "0bd3abf66c3c50d80476d2a37cbb093622fd2f850db10bf8b23aefbbef78f315",
+        "tests/reply-form-ownership.test.js": "5c72b41387197288f29870502b8757b6cc9e5b736201bbdb8a54f560d85a9b74",
+        "tests/prompt-boundary.test.js": "774e6ac7eb37e6aabdd4e9f18a5409d3886c7bde19bc508a7d155aadf7de995f"
+      }
+    },
+    "implementation_change": false,
+    "external_code_executed": false,
+    "third_party_source_published": false
+  }
+}

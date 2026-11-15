@@ -104,3 +104,26 @@ test('actual scan gate consumes canonical definitions and preserves host entry f
  const entry={world:'世界书',uid:7,content:'受控资料',disable:false,useProbability:false,order:42,position:3,extensions:{tisyaWorldbook:{condition:{mode:'external',provider:ref.provider,ruleRef:ref.ruleRef,ruleVersion:ref.ruleVersion}}}};
  const original=clone(entry),data={globalLore:[entry],characterLore:[],chatLore:[],personaLore:[]};gate.begin();await gate.entriesLoaded(data);assert.equal(data.globalLore.length,0);assert.deepEqual(entry,original);await gate.scanDone({activated:{entries:new Map()}});await gate.assertReady();assert.equal(f.draws(),1);
 });
+
+test('minimal editor saves into the same canonical rules consumed by worldbook scanning',async()=>{
+ const f=await fixture(),data=await f.service.listConditionRules();assert.equal(data.format,'tisya.condition-form/1');assert(!data.cells.some(c=>c.table==='T_SYS_SOURCE_ROUTES'));assert(!data.cells.some(c=>c.field==='owner_row_uuid'));
+ const cell=data.cells.find(c=>c.table==='T_DYN_ENTITY_GAUGES'&&c.id==='stamina'&&c.field==='value');assert(cell);
+ const input={name:'阶段条件',active:{combine:'all',rows:[{cell:cell.key,comparator:'ge',kind:'number',value:15}]},expiry:{combine:'all',rows:[]},policy:{chance:100,cooldown:0,start:0}};
+ const saved=await f.service.saveConditionRule(input,data.revision,data.contextKey);assert.equal(saved.editable,true);assert.equal(saved.name,'阶段条件');
+ const ref={bookRef:'测试书',uid:8,provider:CONDITION_PROVIDER,ruleRef:saved.id,ruleVersion:saved.revision};
+ const run=()=>f.service.evaluateConditionEntries({requestId:'editor',entryRefs:[ref],dryRun:false});assert.equal((await run()).results[0].state,'matched');
+ const db=await f.reads();assert.equal(db.state.tables.T_DYN_ENTITY_GAUGES.stamina.values.value,20);assert.equal(db.state.tables.T_SYS_SOURCE_ROUTES[saved.id].values.source_name,'阶段条件');
+ const nodes=Object.values(db.state.tables.M_CONDITIONS).filter(r=>r.values.owner_row_uuid===saved.id);assert.equal(nodes.length,1);assert.equal(nodes[0].values.rhs_number,15);assert(!Object.hasOwn(nodes[0].values,'source'));
+ await f.save([{tableId:'T_DYN_ENTITY_GAUGES',recordId:'stamina',values:{value:5}}]);assert.equal((await run()).results[0].state,'not_matched');
+ await assert.rejects(f.service.saveConditionRule({...input,name:'过时草稿'},data.revision,data.contextKey),/已变化/);
+ const current=await f.service.listConditionRules();await assert.rejects(f.service.saveConditionRule({...input,name:'坏引用',active:{combine:'all',rows:[{...input.active.rows[0],cell:'missing'}]}},current.revision,current.contextKey),/引用/);
+ const before=await f.reads(),updated=await f.service.saveConditionRule({...saved,name:'修改阶段条件',active:{combine:'any',rows:[{...input.active.rows[0],value:3}]}},current.revision,current.contextKey);assert.notEqual(updated.revision,saved.revision);
+ const after=await f.reads();assert.equal(Object.keys(after.state.tables.M_CONDITIONS).length,Object.keys(before.state.tables.M_CONDITIONS).length);assert.equal(Object.keys(after.state.tables.M_FIELD_REFERENCES).length,Object.keys(before.state.tables.M_FIELD_REFERENCES).length);
+});
+test('minimal editor preserves extended conditions and blocks stale context and nonnumeric comparisons',async()=>{
+ const f=await fixture();let data=await f.service.listConditionRules();const rule=data.rules[0];
+ await assert.rejects(f.service.saveConditionRule({...rule,active:{combine:'all',rows:[{...rule.active.rows[0],kind:'text',value:'20'}]}},data.revision,data.contextKey),/类型/);
+ await assert.rejects(f.service.saveConditionRule(rule,data.revision,'another-chat'),/会话/);
+ await f.save([{tableId:'M_CONDITIONS',recordId:'gate-condition',values:{narrative:'有额外依据，不可丢弃'}}]);data=await f.service.listConditionRules();assert.equal(data.rules[0].editable,false);
+ const before=await f.reads();await assert.rejects(f.service.saveConditionRule(data.rules[0],data.revision,data.contextKey),/扩展判定/);assert.deepEqual(await f.reads(),before);
+});

@@ -28,9 +28,9 @@ export function assertReplyFormVersion(version){
  return version;
 }
 
-export const CELLS_PROTOCOL='<cells format="form"> 填本轮立即生效的状态与业务记录，包括数值、文字状态、当前关系、已成立事务、消息和展示内容。新人物、实体及其档案也在此登记，供本条 archive 按名称引用；现有记录只改有据的字段，保留它本身的关系说明、接受证据和改变原因，不另抄一份当前值作为记忆。没有变化时写 <cells/>。';
-export const ARCHIVE_PROTOCOL='<archive format="form"> 填本轮有据且需要保留的事件、事实命题、角色认知、参与者理解、回忆锚点、关系来历与线索。沿用所列分组简表、原行号和字段名，每条业务记录用 | Pn 标明本条正文依据；修订已有记录使用完整标题，未知省略，待核填“?”。事件记录经过和结果，客观命题保留实际验证状态；当时心理、理解与后来重释优先填对应主体的参与者或认知字段，不把角色猜测写成世界事实。当前任务及其接受证据在 cells 维护，不把愿望记成已接受义务。可引用 cells 已登记的名称和同批分组；不重复抄入 cells 的当前状态。没有新增记忆时写 <archive/>。';
-export const REPLY_FORM_PROTOCOL=CELLS_PROTOCOL+'\n'+ARCHIVE_PROTOCOL+'\n两组共用表单与同一份数据；所属明细跟随它的业务父记录，不因表名以 M_ 开头就可跨组改写。';
+export const CELLS_PROTOCOL='<cells format="form"> 填当前状态、本轮业务变化及新人物档案；任务保留接受证据。无变化写 <cells/>。';
+export const ARCHIVE_PROTOCOL='<archive format="form"> 填需保留的经过、事实、认知、关系来历和线索，附 | Pn 正文依据；猜测归所属人物认知。可引用本轮新建名称。无新增写 <archive/>。';
+export const REPLY_FORM_PROTOCOL=CELLS_PROTOCOL+'\n'+ARCHIVE_PROTOCOL+'\n每个信息点只填一处；归档不复抄当前状态。';
 
 const ownedSchema=schema=>schema?.fields?.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>f.key==='owner_table'||f.key==='owner_form');
 export function replyFormOwner(state,tableId){

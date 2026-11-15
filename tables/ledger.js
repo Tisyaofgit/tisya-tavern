@@ -132,23 +132,22 @@ export function dueChecks(view,chain){
  });
 }
 
-export function archivalText(text){
- text=String(text??'');const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);let prose=body?body[1]:text;
- const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
+function withoutAuxiliary(text){
+ let prose=String(text??'').replace(/<(?:task|next|status|memory|vars|extra|actions|archive|cells|anchor|title|think|thinking|analysis|UpdateVariable|JSONPatch)\b[^>]*\/\s*>/gi,'');
+ const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|cells|anchor|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
  // Nested control blocks can appear inside a body as well; neither path may
  // turn old summaries, task labels or native commands into narrative evidence.
  let prior;do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
- return prose.replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
+ return prose;
+}
+export function archivalText(text){
+ text=String(text??'');const body=text.match(/<body(?:\s[^>]*)?>([\s\S]*?)<\/body>/i);
+ return withoutAuxiliary(body?body[1]:text).replace(/<\/?reply(?:\s[^>]*)?>/gi,'').trim();
 }
 // Handwritten history can contain several complete replies plus user prose
 // between them. Preserve all body segments; the single-reply reader above is
 // deliberately not applied to the entire concatenation.
-export function historyEvidence(text){
- let prose=String(text??''),prior;
- const auxiliary=/<(task|next|status|memory|vars|extra|actions|archive|title|think|thinking|analysis|UpdateVariable|JSONPatch)(?:\s[^>]*)?>[\s\S]*?<\/\1\s*>/gi;
- do{prior=prose;prose=prose.replace(auxiliary,'');}while(prior!==prose);
- return prose.replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();
-}
+export function historyEvidence(text){return withoutAuxiliary(text).replace(/<\/?(?:reply|body)(?:\s[^>]*)?>/gi,'').trim();}
 // A bad independent record must not discard valid records or mark the floor complete.
 export function prepareRecoverable(view,proposal,options){
  try{return prepareCommit(view,proposal,options);}catch(first){

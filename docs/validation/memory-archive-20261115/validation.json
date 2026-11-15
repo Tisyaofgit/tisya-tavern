@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.35-memory.1",
+  "verifiedAt": "2026-11-15T04:56:13.774474+00:00",
+  "fullGate": {
+    "command": "npm test",
+    "exitCode": 0,
+    "buildChecks": 18,
+    "tests": 2638,
+    "pass": 2638,
+    "fail": 0,
+    "skipped": 0
+  },
+  "targeted": {
+    "tests": 30,
+    "pass": 30,
+    "fail": 0
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4173/tests/browser-memory-flow.html",
+    "sourceHash": "0b9ff73d4fba20f2781aa9710032d2ec5095732326ace109ce11deb1ab0c2d89",
+    "storage": "real Chromium IndexedDB; isolated synthetic chat",
+    "steps": [
+      "generate selected history draft",
+      "review source and event/stage-summary diff",
+      "check reviewed and save",
+      "reload page and recover records",
+      "assemble next request through before/payloadReady",
+      "reject duplicate import",
+      "refresh and inspect canonical memory text"
+    ],
+    "applicationErrors": [],
+    "unrelatedConsoleErrors": "Cloud browser extension metadata errors from chrome-extension://; no application errors observed"
+  },
+  "notVerified": [
+    "actual TauriTavern/SillyTavern host session",
+    "external model generation quality",
+    "Android device"
+  ],
+  "phone": "paused; no phone implementation changed",
+  "publication": "local candidate only; main unchanged"
+}

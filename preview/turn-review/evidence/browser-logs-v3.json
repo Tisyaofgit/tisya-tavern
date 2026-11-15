@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-11-15T07:17:13.419Z",
+  "scope": "captured warning/error window only",
+  "total": 194,
+  "extension": 193,
+  "project": [
+    {
+      "level": "error",
+      "message": "SyntaxError: Invalid or unexpected token",
+      "timestamp": "2026-11-15T07:03:51.895Z",
+      "url": "http://127.0.0.1:4173/preview.html"
+    }
+  ]
+}
