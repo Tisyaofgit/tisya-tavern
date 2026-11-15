@@ -1,0 +1,58 @@
+{
+  "engine/host.mjs": {
+    "bytes": 43651,
+    "sha256": "037740e9f5204b9ee78a95b1c3a23312c6db890f20a5838f31baca40aaf1012a"
+  },
+  "engine/ui.mjs": {
+    "bytes": 20694,
+    "sha256": "31197a57af51a2699ba7462caf862221af36f8e59afc68b7a66236fb1011a0bb"
+  },
+  "index.js": {
+    "bytes": 126358,
+    "sha256": "0589fd1fcf0979b7d038f236cd72c7f52fd8725faee260371535be50c95c1ee8"
+  },
+  "layout.js": {
+    "bytes": 10376,
+    "sha256": "60b17eabfd3f81889796a7082ae6832fa8855555fbcf664265a1ca3b351d619a"
+  },
+  "manifest.json": {
+    "bytes": 507,
+    "sha256": "e16cc4d3189e01165d7eac2b00babcc75bbe4ffbc4cf71e5b522bded9166825d"
+  },
+  "package-lock.json": {
+    "bytes": 19495,
+    "sha256": "c1ab7b3f0b3c1c39239d1c009246eddbe4e143a269f7400e7f1f6bdbce870149"
+  },
+  "package.json": {
+    "bytes": 1540,
+    "sha256": "16709af3898596d82f8869b51dfba4ab7399fc4f30eb6ad69ae735bf70ac8f2e"
+  },
+  "runtime.js": {
+    "bytes": 5178178,
+    "sha256": "a1e819efeb4e2d6f579b0b047c623c2609b6712b9b946ad51a7963098f0896a9"
+  },
+  "shell.css": {
+    "bytes": 91177,
+    "sha256": "b1b2e36e916123d640a2344b566c83f8db6416b4a5aee0870efaebeb4ff10176"
+  },
+  "tests/shell.test.js": {
+    "bytes": 145557,
+    "sha256": "363f27e12fa21e5d04bd0febd83aa4469895f3695c91ca2e0475f9c0c6c6f149"
+  },
+  "engine/chat-archive-book.mjs": {
+    "bytes": 6855,
+    "sha256": "201d26e06526dde4ae605ef46fb340dc7559a16796459da52f2163755906b25b"
+  },
+  "tests/browser-chat-archive.html": {
+    "bytes": 1468,
+    "sha256": "7b53e27f32428d26fe106d565600dfc3a1e3b48971a1d28b607519ae28bd561b"
+  },
+  "tests/browser-chat-archive.mjs": {
+    "bytes": 5152,
+    "sha256": "bd004566442cb7b777dcb2919053d1ea8eefb0f1cb0c8bc088eba71b48a0e7d0"
+  },
+  "tests/chat-archive-book.test.js": {
+    "bytes": 10171,
+    "sha256": "3e37c0a61d86bc6abcf3c7f44a52cb579b5e8df53f92b023be6bc307c0709606"
+  }
+}

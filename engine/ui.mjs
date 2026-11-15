@@ -167,6 +167,8 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   if(bundle){
    tools.append(button('同步回合',async()=>{requireSaved();await service.sync();await render();}),button('导出完整存档',async()=>{const current=await service.export();if(!current)throw Error('本会话尚未接入');download('Tisya-chat-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json',current);}));
   }else tools.append(button('重试接入当前聊天',async()=>{requireSaved();if(typeof service.ensureBound!=='function')throw Error('当前聊天的自动接入服务尚未就绪');await service.ensureBound();await render();}));
+  const archive=service.archiveStatus?.();
+  if(archive){const label=archive.status==='saved'?'已同步':archive.status==='error'?'待重试':archive.status==='saving'?'保存中':'等待同步';body.append(el('p','当前聊天存档书：'+(archive.name??'待创建')+' · '+label));if(archive.error)body.append(el('p','本地数据已保留。'+archive.error));tools.append(button('重试同步存档书',async()=>{requireSaved();await service.syncArchive();await render();}));body.append(el('p','聊天打开时自动建书并绑定；保存后的完整状态同步到此书。存档条目不参与正文注入。'));}
   const file=el('input');file.type='file';file.accept='.json,application/json';file.hidden=true;
   file.onchange=()=>run(async()=>{requireSaved();if(file.files[0])await service.import(JSON.parse(await file.files[0].text()));await render();});
   tools.append(button('导入已有新版状态',()=>{requireSaved();file.click();}),file);body.append(tools);

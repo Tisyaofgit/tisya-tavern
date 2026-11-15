@@ -1,0 +1,26 @@
+{
+  "version": "candidate.38-archive.1",
+  "page": "CAB-1",
+  "environment": "official sites-preview and cloud Chromium",
+  "native_worldbook_backend": "isolated IndexedDB fixture through production native adapter",
+  "live_database": "real browser IndexedDB through production storage and host",
+  "production_ui": "mountMatrixConfiguration, 360px container",
+  "observations": [
+    "Initial chat A: one book, local/book revision 1, all checkpoint entries disabled.",
+    "Repeated concurrent opening: still one book and one write.",
+    "Save A: local/book value 1, revision 3.",
+    "Open B: two books, B empty with revision 1.",
+    "Fork A: three books; branch inherits value 1 but receives distinct UID and book.",
+    "Injected branch save failure: local value 2/revision 4; book value 1/revision 3; explicit error visible.",
+    "Production retry button: archive saved; cold reload retains value 2/revision 4; no new book or business replay.",
+    "Return A: value 1/revision 3 unchanged; total books 3 and writes 6.",
+    "Final source rebuilt after retry integration. Fresh chat first-save failure leaves local revision 1 and no extra book.",
+    "Production retry uses default activation retry; cold reload shows fourth book, revision 1, total writes 7.",
+    "Existing native narrative worldbook binding remains unchanged.",
+    "Panel measured clientWidth=358 and scrollWidth=358 within 360px container. Book label wraps."
+  ],
+  "fixture_issue_fixed": "Initial localStorage-backed fake book store exceeded browser quota; replaced test backend with IndexedDB. Production backend already uses native worldbook API.",
+  "browser_extension_noise": "Chrome control extension logged metadata sending errors; these are separate from application errors.",
+  "unverified": ["real TauriTavern", "external model", "Android device", "cross-device synchronization"],
+  "production_data_used": false
+}

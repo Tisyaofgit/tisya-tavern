@@ -1,0 +1,48 @@
+{
+  "version": "candidate.38-archive.1",
+  "source_base": "8ee53bc64671021416f01fd732e1cfe1c510c40e",
+  "final_command": "npm test",
+  "final_node_tests": {
+    "total": 2706,
+    "passed": 2706,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "build_checks": "all 18 passed",
+  "archive_targeted": {
+    "total": 12,
+    "passed": 12
+  },
+  "startup_targeted": {
+    "total": 1,
+    "passed": 1
+  },
+  "final_source_manifest_verified": true,
+  "checked_utc": "2026-11-15T15:34:32.741514+00:00",
+  "prior_failures": [
+    {
+      "run": "full-gate-initial (raw log retained locally)",
+      "total": 2705,
+      "passed": 2597,
+      "failed": 108,
+      "cause": "shell fixture did not expose newly imported production archive factory"
+    },
+    {
+      "run": "intermediate-targeted (raw log retained locally)",
+      "total": 139,
+      "passed": 138,
+      "failed": 1,
+      "cause": "startup metadata-write count expected two, now includes third archive-binding save",
+      "resolution": "fixture now verifies the additional metadata write and created book"
+    }
+  ],
+  "browser_evidence": "browser-evidence.json",
+  "unverified": [
+    "real TauriTavern",
+    "external model",
+    "Android",
+    "cross-device synchronization"
+  ],
+  "publication_content": "Only implementation, synthetic tests, generated runtime, and concise validation summaries; no raw logs, user attachments, private blueprint or live user data."
+}
