@@ -8,6 +8,7 @@ const fieldRow=(template,field)=>field.row??template.fields.indexOf(field)+1;
 export function matrixInputField(template,line){
  const parsed=sheetLine(line),matches=field=>field&&parsed.body.startsWith(field.label)&&(!parsed.body.slice(field.label.length)||/^[\s：:]/.test(parsed.body.slice(field.label.length)));
  const current=template.fields.find(field=>fieldRow(template,field)===parsed.row);
+ if(parsed.compact){check(current,'字段行号未开放：'+template.label+'/'+parsed.row);return current;}
  if(matches(current))return current;
  // Persisted replies before schema-coordinate projection used compact row
  // positions. Exact field labels keep this read compatibility unambiguous.
@@ -28,9 +29,9 @@ export function sheetSections(text,{tolerant=false}={}){
  }
  return sections;
 }
-export function sheetLine(line){const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2]};}
+export function sheetLine(line){const compact=/^(\d+)\s*[：:]\s*([\s\S]*)$/.exec(line.trim());if(compact)return {row:Number(compact[1]),body:compact[2],compact:true};const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2],compact:false};}
 function sheetFieldText(line,cells){
- const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
+ const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);if(parsed.compact)return {row:parsed.row,cell,raw:parsed.body};check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
  let raw=parsed.body.slice(cell.label.length);check(!raw||/^[\s：:]/.test(raw),'字段名被修改：'+parsed.row);raw=raw.trimStart();if(/^[：:]/.test(raw))raw=raw.slice(1).trimStart();return {row:parsed.row,cell,raw};
 }
 // Reference reachability is derived from registered field types and the same
@@ -330,7 +331,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  };
  const modelTemplates=templates.filter(t=>(task!=='main'||!Object.hasOwn(inlineChildHints,t.id))&&modelTableAllowed(t.id,snapshot.state.schema[t.id],task)).map(t=>({...t,fields:t.fields.filter(f=>modelWriteFieldAllowed(snapshot.state.schema[t.id].fields.find(x=>x.key===f.key),snapshot.state.schema[t.id],task))})).filter(t=>t.fields.length);
  const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
- const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号 字段名：值”。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
+ const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名，稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
  return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions,formSections,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
@@ -391,7 +392,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  // Build the canonical actor links before resolving references to newly created
  // people. These IDs are private to this draft and stable across save retries.
- const generated=[],actors=[];
+ const generated=[],actors=[],generatedParents=new Map();
  for(const row of rows.filter(r=>r.tableId==='T_CHAR_DOSSIER')){
   try{check(row.name,'人物档案需要显示名称');const schema=snapshot.state.schema.T_SYS_ENTITIES;check(schema,'人物主体表尚未登记');
   let existingEntity;if(row.existing)existingEntity=Object.entries(snapshot.state.tables.T_SYS_ENTITIES??{}).find(([,e])=>{const ref=snapshot.state.tables.M_FIELD_REFERENCES?.[e.values.origin_record_ref]?.values;return ref?.target_table===row.tableId&&ref.target_row_uuid===row.recordId;});
@@ -411,6 +412,23 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,display:r.heading})),...actors];
  function tableId(raw){const matches=context.catalog.templates.filter(t=>t.label===raw||t.id===raw);check(matches.length===1,'表名不存在或不唯一：'+raw);return matches[0].id;}
  function reference(raw,target){let candidates=references.filter(r=>r.name===raw||r.display===raw||r.legacyDisplay===raw);if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}const matches=candidates.filter(r=>(!target||(Array.isArray(target)?target.includes(r.tableId):r.tableId===target))),unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];if(unique.length!==1){const wanted=(Array.isArray(target)?target:[target]).filter(Boolean).map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});}return unique[0];}
+ // Resolve known time-unit aliases in the active world. Creating a unit needs
+ // an actual calendar identity; absent definitions remain source text, never
+ // invented calendar rules or silently assumed conversion ratios.
+ function quantityUnit(row,raw){
+  const exact=references.filter(r=>r.tableId==='M_UNITS'&&(r.name===raw||r.display===raw||r.legacyDisplay===raw));
+  if(exact.length)return reference(raw,'M_UNITS').recordId;
+  const component=({分钟:'minute',分:'minute',小时:'hour',时:'hour',天:'day',日:'day',周:'week',星期:'week',月:'month',年:'year',季:'season'})[raw];
+  if(!component)return reference(raw,'M_UNITS').recordId;
+  const state=snapshot.state,worlds=Object.keys(state.tables.T_STATIC_WORLDS??{}),world=context.scope?.world_ref??(worlds.length===1?worlds[0]:null),worldRow=state.tables.T_STATIC_WORLDS?.[world]?.values;
+  const units=references.filter(r=>r.tableId==='M_UNITS').filter(r=>{const u=state.tables.M_UNITS?.[r.recordId]?.values??generated.find(g=>g.tableId==='M_UNITS'&&g.recordId===r.recordId)?.values;return u?.dimension==='time'&&u.time_component===component&&(!world||u.scope_world_id===world);});
+  check(units.length<=1,'当前世界有多个同类时间单位，请指定已登记单位全名：'+raw);if(units.length)return units[0].recordId;
+  const calendars=Object.entries(state.tables.M_CALENDAR_RULES??{}).filter(([id,r])=>world&&(worldRow?.calendar_id?id===worldRow.calendar_id:r.values.world_ref===world));
+  check(calendars.length<=1,'当前世界有多个历法，请先明确所用历法');if(!world||calendars.length!==1)return null;
+  const [calendarId,calendar]=calendars[0];check(calendar.values.world_ref===world,'历法不属于当前世界');
+  const recordId=stableId('unit|'+world+'|'+calendarId+'|'+component),values={scope_world_id:world,label:raw,dimension:'time',calendar_ref:calendarId,time_component:component};
+  generated.push({tableId:'M_UNITS',recordId,values});generatedParents.set('M_UNITS#'+recordId,row.tableId+'#'+row.recordId);references.push({tableId:'M_UNITS',recordId,name:raw,display:'单位定义／'+raw});return recordId;
+ }
  const attach=(parent,field,child)=>{const schema=context.schemas[child.tableId];if(!schema||!ownedTable(schema))return;const metadata={...(schema.fields.some(f=>f.key==='owner_table')?{owner_table:parent.tableId}:{owner_form:parent.tableId}),owner_row_uuid:parent.recordId,owner_field:field.key};if(child.owner)check(digest(child.owner)===digest(metadata),'同一子表不能归属两个字段：'+child.heading);child.owner=metadata;};
  function inlineChild(row,spec,raw){
   const target=spec.ref;if(!Object.hasOwn(inlineChildHints,target)||target==='M_LIST_VALUES'||!['REF','CHILD_REF'].includes(spec.type))return null;
@@ -436,7 +454,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'起始轮次')&&Object.hasOwn(input,'结束轮次'),'区间填写起始轮次与结束轮次，或已有名称');const [start,startState]=decode(input['起始轮次'],{type:'INTEGER',minimum:0}),[end,endState]=decode(input['结束轮次'],{type:'INTEGER',minimum:0});check(startState==='known'&&endState==='known','区间端点须明确，未知请整格填“?”');check(end>=start,'结束轮次不能早于起始轮次');Object.assign(values,{time_basis:'turn_range',start_turn:start,end_turn:end});}
   }else if(target==='M_QUANTITIES'){
    if(/^描述[：:]/.test(raw)){preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:description('描述')});}
-   else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'数值')&&Object.hasOwn(input,'单位'),'定量填写数值与已登记单位，或已有名称');const [value,state]=decode(input['数值'],{type:'NUMBER'});check(state==='known','数值须明确，未知请整格填“?”');preserve('quantity_mode',['exact','range','narrative_only']);Object.assign(values,{quantity_mode:'exact',value,unit_ref:reference(input['单位'],'M_UNITS').recordId});}
+   else{const short=/^([+-]?\d+(?:\.\d+)?)\s*(分钟|小时|天|日|周|星期|月|年|季|分|时)$/.exec(raw),input=short?{'数值':short[1],'单位':short[2]}:properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'数值')&&Object.hasOwn(input,'单位'),'定量填写数值与单位，或已有名称');const [value,state]=decode(input['数值'],{type:'NUMBER'});check(state==='known','数值须明确，未知请整格填“?”');const unit=quantityUnit(row,input['单位']);if(unit){preserve('quantity_mode',['exact','range','narrative_only']);Object.assign(values,{quantity_mode:'exact',value,unit_ref:unit});}else{preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:raw});}}
   }else if(target==='M_CONDITIONS'){
    const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'观察')&&Object.hasOwn(input,'依据'),'条件填写明确观察与依据，未知条件填“?”');const [observed,state]=decode(input['观察'],{type:'BOOLEAN'});check(state==='known','观察须明确是或否，未知请整格填“?”');preserve('predicate_kind',['observed_boolean']);Object.assign(values,{group_key:id,combine:'all',predicate_kind:'observed_boolean',observed_result:observed,narrative:input['依据']});
   }else if(target==='M_EFFECTS'){
@@ -498,7 +516,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const groups=rows.map(row=>({heading:row.heading,records:[{tableId:row.tableId,recordId:row.recordId}]}));
  const byRecord=new Map(rows.map((row,index)=>[row.tableId+'#'+row.recordId,groups[index]]));
  for(const actor of actors){const group=byRecord.get('T_CHAR_DOSSIER#'+actor.dossierId);byRecord.set('T_SYS_ENTITIES#'+actor.recordId,group);}
- let unassigned=[...generated];while(unassigned.length){let progress=false;unassigned=unassigned.filter(change=>{const values=change.values,group=byRecord.get(change.tableId+'#'+change.recordId)??byRecord.get((values.owner_table??values.owner_form)+'#'+values.owner_row_uuid);if(!group)return true;group.records.push({tableId:change.tableId,recordId:change.recordId});byRecord.set(change.tableId+'#'+change.recordId,group);progress=true;return false;});check(progress,'生成子记录缺少归属，未接纳');}
+ let unassigned=[...generated];while(unassigned.length){let progress=false;unassigned=unassigned.filter(change=>{const values=change.values,group=byRecord.get(change.tableId+'#'+change.recordId)??byRecord.get(generatedParents.get(change.tableId+'#'+change.recordId))??byRecord.get((values.owner_table??values.owner_form)+'#'+values.owner_row_uuid);if(!group)return true;group.records.push({tableId:change.tableId,recordId:change.recordId});byRecord.set(change.tableId+'#'+change.recordId,group);progress=true;return false;});check(progress,'生成子记录缺少归属，未接纳');}
  return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),groups,bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
 }
 export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='world'}={}){

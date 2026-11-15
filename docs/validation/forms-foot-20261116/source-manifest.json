@@ -1,0 +1,98 @@
+{
+  "docs/validation/forms-foot-20261116/verification.json": {
+    "bytes": 2497,
+    "sha256": "560472cf22b5d15dfdb3c2e3d3bd956db39acb94fd44acddc6a10558fba3a5d0"
+  },
+  "engine/database-snapshot.mjs": {
+    "bytes": 2737,
+    "sha256": "d4826ae174ab7c80b76a527d87b167590d0b1fb6044166c098db9ea325f5b850"
+  },
+  "engine/host.mjs": {
+    "bytes": 44514,
+    "sha256": "99a7358528769fec083eeb4e6f68fe918595ef0bfa7b13e0ca9adc439a2395a7"
+  },
+  "engine/reply.mjs": {
+    "bytes": 13763,
+    "sha256": "abb6a1528b75fce7cf9faed6c3ff50c979818a72e3a11b7d357d0acb3acc6f79"
+  },
+  "engine/review-form-document.mjs": {
+    "bytes": 5046,
+    "sha256": "f86f40b9af378f7fb00798f2affbf03b1f3e5533a5cb15ef941faa0be703a6e9"
+  },
+  "engine/review-form-ui.mjs": {
+    "bytes": 4105,
+    "sha256": "c4f820f5b97cf9247472674747cc475798c2d384728f63b104ab75e671cf2003"
+  },
+  "engine/review-workbench-ui.mjs": {
+    "bytes": 17549,
+    "sha256": "328820b36f3065accc6913280d7a39778cf72e148beef9f36119d4ec103e1a56"
+  },
+  "engine/review-workflow.mjs": {
+    "bytes": 12941,
+    "sha256": "89c37408d0d5c592447dec1e54a618deb0e868f111909ccdee26b256caa9597c"
+  },
+  "engine/turn-review-ui.mjs": {
+    "bytes": 17708,
+    "sha256": "53922c2179f408347910880d91c88110cd65814898efe7911941e55c303f212a"
+  },
+  "layout.js": {
+    "bytes": 10376,
+    "sha256": "d9e884529edd385aa0de055ca023eeabdb4f0158201463471478d59c7095859a"
+  },
+  "manifest.json": {
+    "bytes": 507,
+    "sha256": "d34a397466f5330b6cb10f706c24bb58044b6fdc6593bee00a5a9fa265281bb7"
+  },
+  "package-lock.json": {
+    "bytes": 19495,
+    "sha256": "a9264bfa56f4e74da9bcd349a7e0a5632ce255775efa488076a20d2e92cdbf35"
+  },
+  "package.json": {
+    "bytes": 1540,
+    "sha256": "b604eb20f62af9920c32d79c5735f74452cafb6fc5a28aea2103f7b8d8799ce1"
+  },
+  "pet.js": {
+    "bytes": 17780,
+    "sha256": "1a6d222f432597d974b4c3acd267b09568b32dc5e1e802cf817b6da7124d16b8"
+  },
+  "runtime.js": {
+    "bytes": 5199444,
+    "sha256": "c0217be456f8ee9e4349a3303d26a4aaf6925077daa87a5d08cdd95814eb2c10"
+  },
+  "shell.css": {
+    "bytes": 91177,
+    "sha256": "90873c3eb4e8ba8f3934993f78eae8d3e80ac87b462556365701bc95eb4ef522"
+  },
+  "tables/foundation/engine.js": {
+    "bytes": 78524,
+    "sha256": "359d05cda00af0c72915bc84ba463586b3bf272c9ce5393528aa8a92b838be9d"
+  },
+  "tests/browser-pet-review.html": {
+    "bytes": 3071,
+    "sha256": "4b6f5e71b284b12e094cf1ab263f22769befc0c598143243d74d253b35f2085e"
+  },
+  "tests/browser-pet-review.mjs": {
+    "bytes": 2305,
+    "sha256": "01eba1ecf55a26fcc9e285d2d961a8c6b4cae6b42a190a92747deb7276f77d8d"
+  },
+  "tests/browser-turn-review.html": {
+    "bytes": 1152,
+    "sha256": "10da6bbdf14f3f82f3d03c45ce810a9f89a3c06ea60d8f8c9bc6a7c2475a975e"
+  },
+  "tests/browser-turn-review.mjs": {
+    "bytes": 4947,
+    "sha256": "2fc5cc64caafeac9dedce3bc39f57819ed7137e55459b645c20ddbf835bea726"
+  },
+  "tests/fixtures/pet-review.mjs": {
+    "bytes": 1489,
+    "sha256": "d1001a0bed0921ac714348f4e732a9675aad27b0979002ba02f5b1703d70e4cc"
+  },
+  "tests/pet-review-ui.test.js": {
+    "bytes": 5029,
+    "sha256": "912ba2d95d6c1650d2645752d234aea00c37b80906a62e7973980a430dfabd69"
+  },
+  "tests/review-visual-forms.test.js": {
+    "bytes": 5606,
+    "sha256": "ca77459c134180aa3ef1301c0fbc996baeec07cbe46609b70fc895601f9bbe59"
+  }
+}

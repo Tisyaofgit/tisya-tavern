@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.2",
+  "scope": [
+    "Per-record visual field editor using existing review services; raw protocol is an advanced view",
+    "Whole-table and all-business-table selection, populated-field presets and persistent named plans; dependent detail tables excluded",
+    "Canonical numbered-only form fields with existing named syntax retained; source paragraphs preserved",
+    "Time aliases and deterministic unit links when a single bound calendar exists; source duration retained without invented conversion if calendar is absent",
+    "28 px visible notice below pet with 44 px hit area and hidden-pet drawer"
+  ],
+  "validation": {
+    "full_suite": {
+      "passed": 2715,
+      "failed": 0,
+      "build_checks": 18
+    },
+    "final_targeted_ui_host": {
+      "passed": 26,
+      "failed": 0
+    },
+    "release_visual_pet_forms": {
+      "passed": 36,
+      "failed": 0
+    },
+    "real_browser": {
+      "engine": "cloud Chromium",
+      "preview": "official sites-preview",
+      "data": "synthetic only; production review host and IndexedDB, no real user chat",
+      "checks": [
+        "draft edit and reload retain -2 without changing HP10; confirmation gives HP8 and one event",
+        "named whole-table plan survives reload; all 118 selectable tables checked; generated detail tables excluded",
+        "reroll preview uses pre-turn HP10; confirmation gives HP5 without duplicate event",
+        "number-only 3-minute scene form confirms, persists and cold-reopens with source duration intact",
+        "pet standing, folded and expanded modes keep notice below component; drag updates both",
+        "hidden pet exposes drawer; restore returns foot notice",
+        "360x780,390x500,320x650 real iframe viewports; 260 px input area stays separate; actual Send and Confirm clicks succeed",
+        "final UI wording and active named plan rechecked after final build"
+      ],
+      "errors": "No application error shown. Unrelated browser extension metadata errors observed."
+    },
+    "not_verified": [
+      "real TauriTavern/SillyTavern host",
+      "external model generation",
+      "Android device"
+    ]
+  },
+  "notes": [
+    "Creating a unit identity does not invent calendar conversion ratios. Missing calendar preserves declared duration as narrative_only.",
+    "Public payload contains source, build, synthetic fixtures and this summary. User screenshots, private notes and raw logs are excluded."
+  ]
+}

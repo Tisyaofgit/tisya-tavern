@@ -1,0 +1,57 @@
+import {prepareMatrixSheets,matrixInputField,sheetLine} from '../tables/foundation/engine.js';
+import {Runtime} from './runtime.mjs';
+
+// A view of the existing protocol. Edits replace only the original value span;
+// the normal review service still parses, validates and commits the whole turn.
+export function describeReviewForms(state,blocks){
+ const context=prepareMatrixSheets({state},{operationId:'review-editor',mode:'revise',task:'main',scope:{...state.runtime.scope,audience:'author'}});
+ return Object.fromEntries(['cells','archive'].map(channel=>[channel,describeReviewDocument(state,context,String(blocks[channel]??''))]));
+}
+function describeReviewDocument(state,context,text){
+ const groups=[],runtime=new Runtime(state);let group=null,offset=0;
+ const form=/^\s*【/m.test(text);
+ for(const part of text.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[]){
+  if(!part)continue;
+  const line=part.replace(/[\r\n]+$/,''),trimmed=line.trim(),heading=/^【([^】]+)】$/.exec(trimmed);
+  if(!trimmed){offset+=part.length;continue;}
+  if(heading){
+   const refs=context.references.filter(r=>r.display===heading[1]||r.legacyDisplay===heading[1]),ref=refs.length===1?refs[0]:null;
+   const tableLabel=/^(.+)／[1-9]\d*$/.exec(heading[1])?.[1],template=context.catalog.templates.find(t=>ref?t.id===ref.tableId:t.label===tableLabel);
+   group={title:ref?template?.label+' · '+ref.name:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);offset+=part.length;continue;
+  }
+  if(!group||!form){if(!group||group.form){group={title:'本轮状态变化',rows:[]};groups.push(group);}}
+  const row={raw:line,start:offset,end:offset+line.length};
+  try{
+   let spec,record,valueStart;
+   if(form){
+    if(!group.template)throw Error('此分组没有唯一对应的表单，请在原始内容中检查标题。');
+    const field=matrixInputField(group.template,trimmed);spec=state.schema[group.tableId].fields.find(f=>f.key===field.key);record=state.tables[group.tableId]?.[group.recordId];
+    const parsed=sheetLine(trimmed),prefix=parsed.compact?(/^\d+\s*[：:]\s*/.exec(trimmed)[0]):trimmed.slice(0,trimmed.length-parsed.body.length)+field.label;
+    valueStart=line.indexOf(trimmed)+prefix.length;while(/[\s：:]/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
+    row.tableId=group.tableId;row.recordId=group.recordId;
+   }else{
+    const separator=line.search(/[：:]/);if(separator<0||trimmed.startsWith('@'))throw Error('此行是旧版指令，保留在原始内容中查看；不会自动改写。');
+    const address=line.slice(0,separator).trim(),[tableId,recordId,key,path]=runtime.resolve(address);if(path.length)throw Error('此行修改嵌套内容，保留原始指令。');
+    spec=runtime.spec(tableId,key);record=runtime.record(tableId,recordId);row.tableId=tableId;row.recordId=recordId;row.recordName=record.values.name??record.values.title??'已有记录';
+    valueStart=separator+1;while(/\s/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
+   }
+   const evidence=/\s*\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line),valueEnd=evidence?evidence.index:line.length;
+   Object.assign(row,{key:spec.key,label:spec.label??spec.key,type:spec.type,options:spec.enum??spec.options,minimum:spec.minimum,maximum:spec.maximum,previous:record?.values[spec.key],previousState:record?.states[spec.key]??'unset',value:line.slice(valueStart,valueEnd),valueStart:offset+valueStart,valueEnd:offset+valueEnd,evidence:evidence?.[1]??'',delta:!form});
+   if(spec.ref&&row.previous!=null){const display=id=>{const r=state.tables[spec.ref]?.[id]?.values;if(!r)return '关联记录待核对';if(spec.ref==='M_QUANTITIES'){const u=state.tables.M_UNITS?.[r.unit_ref]?.values;return r.quantity_mode==='exact'?String(r.value)+' '+(u?.label??'单位待核对'):r.narrative??'尚未填写';}return r.name??r.label??r.title??r.original_text??r.narrative??'已有关联明细';};row.previousDisplay=(Array.isArray(row.previous)?row.previous:[row.previous]).map(display).join('；');}
+   if(spec.ref==='M_QUANTITIES')row.help='可填 3分钟，或数值：3；单位：分钟。插件处理关联；缺少历法定义时保留原始耗时，不自动换算。';
+   if(!form){runtime.micro(line);row.proposed=runtime.get([row.tableId,row.recordId,row.key,[]]);}
+  }catch(error){row.error=error.message;}
+  group.rows.push(row);offset+=part.length;
+ }
+ for(const group of groups)delete group.template;
+ return {text,groups};
+}
+export function editReviewDocument(document,changes){
+ const edits=document.groups.flatMap(g=>g.rows).filter(r=>Object.hasOwn(changes,r.start));let text=document.text;
+ for(const row of edits.sort((a,b)=>b.valueStart-a.valueStart)){
+  if(row.error||!Number.isInteger(row.valueStart))throw Error('此行不能通过字段编辑器改写。');
+  const value=String(changes[row.start]);if(/[\r\n]/.test(value))throw Error('字段内容请保持一行；分段使用原表单约定。');
+  text=text.slice(0,row.valueStart)+value+text.slice(row.valueEnd);
+ }
+ return text;
+}

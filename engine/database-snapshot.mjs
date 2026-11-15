@@ -1,6 +1,20 @@
 import {clone,digest,sha256,fail} from './common.mjs';
 import {rewind} from './journal.mjs';
 
+// The editor needs the state before this turn, including when the current
+// candidate rerolls an already confirmed turn. Never subtract it twice.
+export function databaseSnapshotBeforeMessage(bundle,{uid}={},contextKey){
+ if(typeof contextKey!=='string'||!contextKey||typeof uid!=='string'||!uid)fail('SNAPSHOT_SCOPE','本轮预览需要当前会话与消息身份');
+ const entries=bundle?.journal?.entries,positions=entries?.flatMap((e,i)=>e.uid===uid?[i]:[])??[];
+ if(positions.length!==1||entries[positions[0]].baseline)fail('SNAPSHOT_MISSING','本轮缺少可核对的前置快照');
+ let state=clone(bundle.state);
+ for(const entry of entries.slice(positions[0]).reverse()){
+  const patch=entry.pre_turn_snapshot?.inverse_patch;if(!Array.isArray(patch))fail('SNAPSHOT_PATCH','本轮恢复链缺少可验证补丁');
+  state=rewind(state,patch);
+ }
+ return {state,contextKey,uid};
+}
+
 // Read exactly the accepted database state at a message. This function owns no
 // persistence, does not reconcile new text, and never substitutes current rows.
 export function databaseSnapshotAtMessage(bundle,{uid,raw,role='assistant',sourceId}={},contextKey){
