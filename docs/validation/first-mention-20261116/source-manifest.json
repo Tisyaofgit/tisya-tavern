@@ -1,0 +1,16 @@
+{
+  "tables/foundation/engine.js": "22bd6cd909ef88a09c28e214ec92a71a9862e0dc42c7ff64996f7781f09a80a1",
+  "engine/reply-form-ownership.mjs": "332a5e69a73aa4d3e7233d444322d808dbfcd4062b01c428f39ae959de50a807",
+  "engine/reply.mjs": "6d151387748b67a6a6b5a896ebcefd9476be75542280f158bae3181b3f00a8d1",
+  "engine/archive.mjs": "2d4f4015142a889a94e40f5c0d18bf93acecc85780440ae6cf21938f920da5a0",
+  "engine/review-form-document.mjs": "b1208506540140f8509bd426b63304cbd35a057f257deda3f6c3e16277a8ecc7",
+  "tests/first-mention-registration.test.js": "66d9d8614e807d3c2c489ecb68190b4113959daff99ee3818df558bd3985162e",
+  "tests/browser-first-mention.mjs": "2a433d6ddc907535cecb536609095a5fee0ef98ce9a1dd569f46c81a034b5a19",
+  "tests/browser-first-mention.html": "1b91d207b5692f89af367977e158402309f22de1bbe2fd9f11f54e96d0ec728e",
+  "runtime.js": "3cc7cf3ad0e0c7916d2cc2c6b7f700dca559e7f0d86cc5c99d8f2fd73f900468",
+  "manifest.json": "03a89ca1e4d52946f346f461bdf9550437a1b01ec3a4fa1d17a50e74cb71b18c",
+  "package.json": "2a66f095245de17a0d7c9ac25c55da5f9e39e9e8f0e870cf11fe23b20abf293a",
+  "package-lock.json": "ff91819d8ca6cf2e05e6af5b1da6bb7f498379510ebb2a116106afa0bb5b6ea6",
+  "layout.js": "3e06ec5f8841774cf0c6dd81779129a1a4e2c8fa3ef990a461e11ffe1344a351",
+  "shell.css": "5e3134046838ae4d9526bd20023ba1943b855eb85a7a10ad97724e2e3f207795"
+}

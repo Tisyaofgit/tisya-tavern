@@ -55,7 +55,7 @@ function assertTaskAcceptance(state,changes,block,legacy=false){
   if(['接受','进行','完成'].includes(task.status)&&!task.accept_evidence)fail(code,'已接受任务需要明确接受证据；可沿用该记录已有的接受证据',{block,table:change.tableId,record:change.recordId});
  }
 }
-export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM_OWNERSHIP_VERSION}={}){
+export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM_OWNERSHIP_VERSION,generatedIdentities=[]}={}){
  if(!['cells','archive'].includes(block))fail('REPLY_FORM_BLOCK','未知表单入口',{block});
  assertReplyFormVersion(version);
  if(version===LEGACY_REPLY_FORM_OWNERSHIP_VERSION){
@@ -65,6 +65,9 @@ export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM
   }
   return changes;
  }
+ // Only parser-created minimum identity objects may accompany an archive
+ // reference. Authored cross-group records never receive this exemption.
+ const generated=new Set(generatedIdentities);
  const pending=new Map();
  for(const change of changes){const key=change.tableId+'#'+change.recordId;pending.set(key,{...(pending.get(key)??{}),...(change.values??{})});}
  const values=(tableId,recordId)=>{
@@ -84,6 +87,7 @@ export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM
  for(const change of changes){
   const prior=state.tables?.[change.tableId]?.[change.recordId];
   if(prior&&replyFormOwner(state,change.tableId)==='owned')for(const key of ['owner_table','owner_form','owner_row_uuid','owner_field'])if(Object.hasOwn(change.values??{},key)&&digest(change.values[key]??null)!==digest(prior.values?.[key]??null))fail('REPLY_FORM_OWNER','已有所属明细不能改挂业务父记录或字段',{block,table:change.tableId,record:change.recordId,field:key});
+  if(!prior&&generated.has(change))continue;
   const target=resolve(change.tableId,change.recordId);
   if(target.block!==block)fail('REPLY_FORM_OWNERSHIP','该记录应由 <'+target.block+' format="form"> 填写，不能写入 <'+block+'>；本块不写入任何业务记录',{block,expected:target.block,table:change.tableId,record:change.recordId,owner_table:target.table,owner_record:target.record});
  }

@@ -15,7 +15,7 @@ export function matrixInputField(template,line){
  const legacy=template.fields[parsed.row-1];if(matches(legacy))return legacy;
  check(false,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
 }
-function existingRecordCandidates(context,heading){return [...new Map(context.references.filter(r=>r.display===heading||r.legacyDisplay===heading).map(r=>[r.tableId+'#'+r.recordId,r])).values()];}
+export function existingRecordCandidates(context,heading){return [...new Map(context.references.filter(r=>r.display===heading||r.legacyDisplay===heading||context.task==='main'&&heading===(context.catalog.templates.find(t=>t.id===r.tableId)?.label+'／'+r.name)).map(r=>[r.tableId+'#'+r.recordId,r])).values()];}
 const ambiguousExistingHeading=heading=>'已有记录标题有歧义，无法确定修订对象：'+heading;
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
 // Shared reviewable workbook. This module never writes a canonical store.
@@ -274,6 +274,7 @@ export function createSheetEngine(catalog, validateValue) {
 }
 
 // Canonical Matrix binding for the shared workbook. Callers own commit lifecycle.
+export const FIRST_MENTION_TABLES=new Set(['T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_ITEMS_SKILLS','T_CHAR_DOSSIER','T_SYS_ENTITIES']);
 const ownerKeys=new Set(['owner_table','owner_form','owner_row_uuid','owner_field']);
 const list=raw=>['无','[]'].includes(raw.trim())?[]:raw.split(/[；;\n]/).map(x=>x.trim()).filter(Boolean);
 const atom=raw=>raw==='true'||raw==='是'?true:raw==='false'||raw==='否'?false:raw==='null'?null:/^[+-]?\d+(?:\.\d+)?$/.test(raw)?Number(raw):raw;
@@ -331,7 +332,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  };
  const modelTemplates=templates.filter(t=>(task!=='main'||!Object.hasOwn(inlineChildHints,t.id))&&modelTableAllowed(t.id,snapshot.state.schema[t.id],task)).map(t=>({...t,fields:t.fields.filter(f=>modelWriteFieldAllowed(snapshot.state.schema[t.id].fields.find(x=>x.key===f.key),snapshot.state.schema[t.id],task))})).filter(t=>t.fields.length);
  const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
- const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名，稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?'已有记录使用给定的“表名／已有：名称〔序号〕”标题，只填本次改变的格。':'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
+ const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(task==='main'?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(task==='main'?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
  return {format:'tisya.matrix-sheets/1',operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions,formSections,form:instructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
@@ -389,16 +390,33 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  }
  if(partition){for(const [index,selection]of selections.entries())try{const ticket=engine.requestWorkbook([selection]);engine.accept(ticket.token,['【'+sections[index].heading+'】',...sections[index].lines].join('\n'));}catch(error){error.formLocation??={heading:sections[index].heading};throw error;}}
  else {const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));}
- for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name)check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
+ for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name&&!(context.task==='main'&&FIRST_MENTION_TABLES.has(row.tableId)))check(!context.references.some(r=>r.tableId===row.tableId&&r.name===row.name),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
+ // Identity tables are sparse patches keyed by a visible, unique name. Other
+ // tables (especially events) can legitimately contain separate same-name rows.
+ if(context.task==='main'){
+  const named=new Map();
+  for(const row of rows)if(!row.existing&&row.name&&FIRST_MENTION_TABLES.has(row.tableId)){
+   const matches=context.references.filter(r=>r.tableId===row.tableId&&r.name===row.name);
+   check(matches.length<=1,'同表名称有重名，请使用已有记录完整标题：'+row.name);
+   const key=row.tableId+'#'+row.name,previous=matches[0]??named.get(key);
+   if(previous){row.recordId=previous.recordId;row.existing=!!snapshot.state.tables[row.tableId]?.[row.recordId];}
+   named.set(key,row);
+  }
+ }
  // Build the canonical actor links before resolving references to newly created
  // people. These IDs are private to this draft and stable across save retries.
- const generated=[],actors=[],generatedParents=new Map();
+ const generated=[],actors=[],generatedParents=new Map(),identityOrigins=[],generatedIdentities=[];
  for(const row of rows.filter(r=>r.tableId==='T_CHAR_DOSSIER')){
   try{check(row.name,'人物档案需要显示名称');const schema=snapshot.state.schema.T_SYS_ENTITIES;check(schema,'人物主体表尚未登记');
   let existingEntity;if(row.existing)existingEntity=Object.entries(snapshot.state.tables.T_SYS_ENTITIES??{}).find(([,e])=>{const ref=snapshot.state.tables.M_FIELD_REFERENCES?.[e.values.origin_record_ref]?.values;return ref?.target_table===row.tableId&&ref.target_row_uuid===row.recordId;});
+  if(!existingEntity&&context.task==='main'){
+   const candidates=context.references.filter(r=>r.tableId==='T_SYS_ENTITIES'&&r.name===row.name).filter(r=>{const v=snapshot.state.tables.T_SYS_ENTITIES[r.recordId].values;return !v.origin_record_ref&&['unclassified','character'].includes(v.kind);});
+   check(candidates.length<=1,'人物主体重名，请先明确对应记录：'+row.name);
+   if(candidates.length)existingEntity=[candidates[0].recordId,snapshot.state.tables.T_SYS_ENTITIES[candidates[0].recordId]];
+  }
   const entityId=existingEntity?.[0]??stableId(context.operationId+'|actor|'+row.recordId),values={};const has=k=>schema.fields.some(f=>f.key===k&&!f.read_only&&!f.alias_of);if(has('kind'))values.kind='character';if(has('name'))values.name=row.name;
-  if(!existingEntity&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});}
-  if(partition&&existingEntity){
+  if(!existingEntity?.[1].values.origin_record_ref&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});}
+  if(partition&&existingEntity?.[1].values.origin_record_ref){
    const link=existingEntity[1].values.origin_record_ref,ref=snapshot.state.tables.M_FIELD_REFERENCES?.[link]?.values;
    check(existingEntity[1].values.kind==='character'&&ref?.owner_table==='T_SYS_ENTITIES'&&ref.owner_row_uuid===entityId&&ref.owner_field==='origin_record_ref','既有人物的稳定身份引用不一致');
    // Identity coordinates are reusable; live character attributes are not an
@@ -406,12 +424,37 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values:{kind:'character',origin_record_ref:link}});
    generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});
   }
-  if(!existingEntity)generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values});actors.push({tableId:'T_SYS_ENTITIES',recordId:entityId,name:row.name,display:(schema.label??'主体')+'／'+row.name,dossierId:row.recordId});
+  if(!existingEntity||values.origin_record_ref)generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values});actors.push({tableId:'T_SYS_ENTITIES',recordId:entityId,name:row.name,display:(schema.label??'主体')+'／'+row.name,dossierId:row.recordId});
   if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}
  }
  const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,display:r.heading})),...actors];
  function tableId(raw){const matches=context.catalog.templates.filter(t=>t.label===raw||t.id===raw);check(matches.length===1,'表名不存在或不唯一：'+raw);return matches[0].id;}
- function reference(raw,target){let candidates=references.filter(r=>r.name===raw||r.display===raw||r.legacyDisplay===raw);if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}const matches=candidates.filter(r=>(!target||(Array.isArray(target)?target.includes(r.tableId):r.tableId===target))),unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];if(unique.length!==1){const wanted=(Array.isArray(target)?target:[target]).filter(Boolean).map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});}return unique[0];}
+ function reference(raw,target,source){
+  let candidates=references.filter(r=>r.name===raw||r.display===raw||r.legacyDisplay===raw||raw===(snapshot.state.schema[r.tableId]?.label+'／'+r.name));
+  if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}
+  const targets=[target].flat().filter(Boolean),matches=candidates.filter(r=>!target||targets.includes(r.tableId)),unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
+  if(unique.length===1)return unique[0];
+  if(!unique.length&&context.task==='main'&&targets.length===1&&FIRST_MENTION_TABLES.has(targets[0])&&source){
+   const tableId=targets[0],schema=snapshot.state.schema[tableId];
+   // Group selectors and unresolved coordinates are not new display names.
+   check(schema&&raw.trim()&&!/[／#→]/.test(raw)&&!/^已有[：:]/.test(raw),'关联分组未找到，请核对对应记录：'+raw);
+   const recordId=stableId(context.operationId+'|first-mention|'+digest(['world_ref','session_ref','branch_ref'].map(k=>context.scope?.[k]??null))+'|'+tableId+'|'+raw),values={name:raw};
+   if(tableId==='T_SYS_ENTITIES'){delete values.name;values.instance_name=raw;values.kind='unclassified';}
+   const change={tableId,recordId,values};generated.push(change);generatedIdentities.push(change);
+   generatedParents.set(tableId+'#'+recordId,source.row.tableId+'#'+source.row.recordId);
+   identityOrigins.push({tableId,recordId,parentTable:source.row.tableId,parentRecord:source.row.recordId,field:source.field});
+   const ref={tableId,recordId,name:raw,display:schema.label+'／'+raw};references.push(ref);
+   if(tableId==='T_CHAR_DOSSIER'){
+    const entityId=stableId(context.operationId+'|actor|'+recordId),linkId=stableId(context.operationId+'|origin|'+recordId);
+    const entity={tableId:'T_SYS_ENTITIES',recordId:entityId,values:{kind:'character',origin_record_ref:linkId}},link={tableId:'M_FIELD_REFERENCES',recordId:linkId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:tableId,target_row_uuid:recordId,reference_kind:'record',resolution_status:'resolved'}};
+    for(const child of [entity,link]){generated.push(child);generatedIdentities.push(child);generatedParents.set(child.tableId+'#'+child.recordId,tableId+'#'+recordId);identityOrigins.push({tableId:child.tableId,recordId:child.recordId,parentTable:source.row.tableId,parentRecord:source.row.recordId,field:source.field});}
+    const actor={tableId:'T_SYS_ENTITIES',recordId:entityId,name:raw,display:'对象与实例注册／'+raw,dossierId:recordId};actors.push(actor);references.push(actor);
+   }
+   return ref;
+  }
+  const wanted=targets.map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');
+  throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});
+ }
  // Resolve known time-unit aliases in the active world. Creating a unit needs
  // an actual calendar identity; absent definitions remain source text, never
  // invented calendar rules or silently assumed conversion ratios.
@@ -462,7 +505,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   }else if(target==='M_POLICY_RULES'){
    preserve('implementation_kind',['narrative_only']);Object.assign(values,{implementation_kind:'narrative_only',narrative:description('描述')});
   }else if(target==='M_ACCESS_RULES'){
-   const input=properties();check(Object.keys(input).length===4&&['受众','动作','决定','依据'].every(k=>Object.hasOwn(input,k)),'披露边界需要受众、动作、明确决定与依据');const audience={'公开':'public','读者':'player','作者':'author'}[input['受众']],permission={'读取':'read','披露':'disclose'}[input['动作']],decision={'允许':'allow','禁止':'deny'}[input['决定']];check(permission&&decision,'仅接受明确的读取/披露与允许/禁止');Object.assign(values,{audience_kind:audience??'character',permission,decision,narrative:input['依据']});if(!audience)values.audience_entity_ref=reference(input['受众'].replace(/^角色[：:]/,''),'T_SYS_ENTITIES').recordId;
+   const input=properties();check(Object.keys(input).length===4&&['受众','动作','决定','依据'].every(k=>Object.hasOwn(input,k)),'披露边界需要受众、动作、明确决定与依据');const audience={'公开':'public','读者':'player','作者':'author'}[input['受众']],permission={'读取':'read','披露':'disclose'}[input['动作']],decision={'允许':'allow','禁止':'deny'}[input['决定']];check(permission&&decision,'仅接受明确的读取/披露与允许/禁止');Object.assign(values,{audience_kind:audience??'character',permission,decision,narrative:input['依据']});if(!audience)values.audience_entity_ref=reference(input['受众'].replace(/^角色[：:]/,''),'T_SYS_ENTITIES',{row,field:spec.key}).recordId;
   }
   const states={};for(const key of Object.keys(owned[0]?.[1].values??{})){const field=childSchema.fields.find(f=>f.key===key);if(field&&creationFieldAllowed(field)&&!Object.hasOwn(values,key)){values[key]=null;states[key]='unset';}}
   generated.push({tableId:target,recordId:id,values,...(Object.keys(states).length?{states}:{})});return [id,'known'];
@@ -479,8 +522,8 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   }
   const businessRef=phoneFormReference(row.tableId,spec.key),listRef=PHONE_FORM_LIST_REFERENCES[row.tableId]?.[spec.key];
   const phoneId=ref=>{const made=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId),old=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;return made?.values.id??old?.id??ref.recordId;};
-  if(businessRef){const ref=reference(raw,businessRef);return [ref.tableId.startsWith('X_')?phoneId(ref):ref.recordId,'known'];}
-  if(listRef)return [list(raw).map(token=>{const ref=reference(token,listRef);return listRef.startsWith('X_')?phoneId(ref):ref.recordId;}),'known'];
+  if(businessRef){const ref=reference(raw,businessRef,{row,field:spec.key});return [ref.tableId.startsWith('X_')?phoneId(ref):ref.recordId,'known'];}
+  if(listRef)return [list(raw).map(token=>{const ref=reference(token,listRef,{row,field:spec.key});return listRef.startsWith('X_')?phoneId(ref):ref.recordId;}),'known'];
   const inline=inlineChild(row,spec,raw);if(inline)return inline;
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'){
    const values=list(raw),ids=[];for(const [i,text]of values.entries()){
@@ -496,7 +539,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    let target=spec.ref;if(target?.startsWith('@'))target=row.values[target.slice(1)];if(spec.type==='ROW_REF'){const prefix=spec.key.replace(/_row_uuid$/,'_table');target=row.values[prefix]??target;}
    if(/^(?:target|source|output)_row_uuid$/.test(spec.key))target=row.values[spec.key.replace(/_row_uuid$/,'_table')]??target;
    if(target&&!snapshot.state.schema[target])return decode(raw,spec);
-   const many=spec.type==='REF_LIST'||spec.type==='CHILD_REF'&&/[；;]/.test(raw),tokens=many?list(raw):[raw],resolved=tokens.map(token=>reference(token,target));for(const ref of resolved){const child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);else if(spec.type==='CHILD_REF'&&ownedTable(snapshot.state.schema[ref.tableId])){const own=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;check((own?.owner_table??own?.owner_form)===row.tableId&&own.owner_row_uuid===row.recordId&&own.owner_field===spec.key,'已有子表不能改挂另一字段');}}return [many?resolved.map(r=>r.recordId):resolved[0]?.recordId,'known'];
+   const many=spec.type==='REF_LIST'||spec.type==='CHILD_REF'&&/[；;]/.test(raw),tokens=many?list(raw):[raw],resolved=tokens.map(token=>reference(token,target,{row,field:spec.key}));for(const ref of resolved){const child=rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId);if(child)attach(row,spec,child);else if(spec.type==='CHILD_REF'&&ownedTable(snapshot.state.schema[ref.tableId])){const own=snapshot.state.tables[ref.tableId]?.[ref.recordId]?.values;check((own?.owner_table??own?.owner_form)===row.tableId&&own.owner_row_uuid===row.recordId&&own.owner_field===spec.key,'已有子表不能改挂另一字段');}}return [many?resolved.map(r=>r.recordId):resolved[0]?.recordId,'known'];
   }
   if(['ARRAY','TEXT_LIST'].includes(spec.type))return decode(spec.type==='TEXT_LIST'?list(raw):structuredCell(raw,true),spec);
   if(['JSON','OBJECT'].includes(spec.type)){const value=structuredCell(raw);return decode(typeof value==='string'?JSON.stringify(value):value,spec);}
@@ -508,7 +551,16 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  for(const row of rows){const schema=context.schemas[row.tableId];const pairs=Object.entries(row.raw).sort(([a],[b])=>Number(/table/.test(b))-Number(/table/.test(a)));for(const [key,rawValue]of pairs){const spec=schema.fields.find(f=>f.key===key);try{const [value,state]=fieldValue(row,spec,rawValue);row.values[key]=normalizePhoneFormValue(row.tableId,key,value);if(state!=='known')row.states[key]=state;}catch(error){error.message='【'+row.heading+'】'+spec.label+'：'+error.message;error.formLocation={tableId:row.tableId,heading:row.heading,field:key,label:spec.label,rawValue};throw error;}}}
  for(const row of rows){try{const schema=context.schemas[row.tableId];if(ownedTable(schema)){check(row.owner&&Object.keys(row.owner).length,'子表需要从所属档案字段引用：'+row.heading);Object.assign(row.values,row.owner);if(schema.fields.some(f=>f.key==='value_state')&&!Object.hasOwn(row.values,'value_state'))row.values.value_state=Object.values(row.states).find(s=>['unknown','unset','none','not_applicable','cleared'].includes(s))??'known';if(schema.fields.some(f=>f.key==='sequence')&&!Object.hasOwn(row.values,'sequence'))row.values.sequence=row.existing?snapshot.state.tables[row.tableId][row.recordId].values.sequence:Number(row.heading.split('／').at(-1));}}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  for(const row of rows)if(snapshot.state.schema[row.tableId]?.phone_internal&&snapshot.state.schema[row.tableId].fields.some(f=>f.key==='id')&&!row.existing)row.values.id=row.recordId;
- const changes=[...rows.map(({tableId,recordId,values,states})=>({tableId,recordId,values,...(Object.keys(states).length?{states}:{})})),...generated];
+ const merged=new Map();
+ for(const change of [...rows.map(({tableId,recordId,values,states})=>({tableId,recordId,values,...(Object.keys(states).length?{states}:{})})),...generated]){
+  const key=change.tableId+'#'+change.recordId,prior=merged.get(key);
+  if(!prior){merged.set(key,change);continue;}
+  for(const [field,value]of Object.entries(change.values)){
+   check(!Object.hasOwn(prior.values,field)||digest([prior.values[field],prior.states?.[field]??'known'])===digest([value,change.states?.[field]??'known']),'同一记录的字段填写冲突：'+snapshot.state.schema[change.tableId].label+'／'+field);
+   prior.values[field]=value;if(change.states?.[field])(prior.states??={})[field]=change.states[field];
+  }
+ }
+ const changes=[...merged.values()];
  if(context.kind==='character'&&(!partition||actors.length>1)){if(actors.length!==1)throw Object.assign(Error('创建单个人物时须有且只有一份人物原点档案'),{blockedHeadings:rows.filter(r=>r.tableId==='T_CHAR_DOSSIER').map(r=>r.heading)});}
  const world=rows.find(r=>r.tableId==='T_STATIC_WORLDS');if(!partition&&context.kind==='world'&&context.task==='tableGenesis'&&context.mode==='extend'&&snapshot.state.schema.T_STATIC_WORLDS)check(world,'创建新世界须填写世界与历法身份');
  const binding=context.kind==='character'&&actors.length===1?{entityId:actors[0].recordId,dossierId:actors[0].dossierId,...(world?{worldId:world.recordId}:{})}:world?{worldId:world.recordId}:undefined;
@@ -517,7 +569,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const byRecord=new Map(rows.map((row,index)=>[row.tableId+'#'+row.recordId,groups[index]]));
  for(const actor of actors){const group=byRecord.get('T_CHAR_DOSSIER#'+actor.dossierId);byRecord.set('T_SYS_ENTITIES#'+actor.recordId,group);}
  let unassigned=[...generated];while(unassigned.length){let progress=false;unassigned=unassigned.filter(change=>{const values=change.values,group=byRecord.get(change.tableId+'#'+change.recordId)??byRecord.get(generatedParents.get(change.tableId+'#'+change.recordId))??byRecord.get((values.owner_table??values.owner_form)+'#'+values.owner_row_uuid);if(!group)return true;group.records.push({tableId:change.tableId,recordId:change.recordId});byRecord.set(change.tableId+'#'+change.recordId,group);progress=true;return false;});check(progress,'生成子记录缺少归属，未接纳');}
- return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),groups,bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
+ return {proposal:{name,summary:parsed.body_normalized??blocks.body??'',unresolved,matrix:{changes,...(binding?{binding}:{})}},parsed,workbook:engine.snapshot(),groups,generatedIdentities,identityOrigins,bindings:rows.map(({tableId,recordId,workbookId,heading})=>({tableId,recordId,workbookId,heading}))};
 }
 export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='world'}={}){
  check(plain(proposal)&&typeof proposal.name==='string'&&proposal.name.trim(),'创作结果缺少名称');

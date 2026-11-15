@@ -42,7 +42,7 @@ function preparePlan(runtime,source,sourceKey){
  const input={form:raw,evidenceByHeading,pending:[]};
  const accepted=input.form.trim()?acceptMatrixSheets(context,snapshot,{blocks:{cells:input.form,body:source.body_raw,title:source.title},parsed:source}):{proposal:{matrix:{changes:[]}}};
  const changes=accepted.proposal.matrix.changes;
- assertReplyFormOwnership(temp.data,changes,'archive',{version:ownershipVersion});
+ assertReplyFormOwnership(temp.data,changes,'archive',{version:ownershipVersion,generatedIdentities:accepted.generatedIdentities});
  for(const change of changes){
   for(const [field,state]of Object.entries(change.states??{}))if(['unknown','unset'].includes(state))input.pending.push({target:context.schemas[change.tableId].label+'／'+(change.values.name??change.values.title??change.recordId)+'／'+(context.schemas[change.tableId].fields.find(f=>f.key===field)?.label??field),missing:'本轮表单明确标为未知，尚无可采用值',condition:'提供该字段的明确依据',tableId:change.tableId,recordId:change.recordId,field});
  }
@@ -50,6 +50,7 @@ function preparePlan(runtime,source,sourceKey){
  const dependencyKeys=new Set();for(const change of changes){const direct=dependencies.get(change.tableId+'#'+change.recordId);if(direct)dependencyKeys.add(direct);for(const value of Object.values(change.values).flat())if(typeof value==='string')for(const [target,key]of dependencies)if(target.endsWith('#'+value))dependencyKeys.add(key);}
  if(changes.length)applyMatrixChanges(temp,changes,{mode:'revise'});
  const recordParagraphs=Object.fromEntries((accepted.bindings??[]).map(b=>[b.tableId+'#'+b.recordId,clone(input.evidenceByHeading[b.heading]??[])]));
+ for(const origin of accepted.identityOrigins??[])recordParagraphs[origin.tableId+'#'+origin.recordId]=clone(recordParagraphs[origin.parentTable+'#'+origin.parentRecord]??[]);
  for(let pass=0;pass<3;pass++)for(const change of changes){const key=change.tableId+'#'+change.recordId;if(recordParagraphs[key]?.length)continue;const v=change.values,origin=changes.find(c=>c.tableId==='M_FIELD_REFERENCES'&&c.recordId===v.origin_record_ref)?.values,owner=v.owner_table&&v.owner_row_uuid?v.owner_table+'#'+v.owner_row_uuid:origin?.target_table&&origin.target_row_uuid?origin.target_table+'#'+origin.target_row_uuid:null;if(owner&&recordParagraphs[owner]?.length)recordParagraphs[key]=clone(recordParagraphs[owner]);}
  const references=[];for(const change of changes)for(const spec of temp.data.schema[change.tableId].fields){if(!['REF','ROW_REF','CHILD_REF','REF_LIST'].includes(spec.type))continue;const target=spec.ref?.startsWith('@')?change.values[spec.ref.slice(1)]:spec.ref;if(!target)continue;for(const value of [change.values[spec.key]].flat())if(typeof value==='string'&&temp.rows(target)[value])references.push({tableId:target,recordId:value,field:spec.key});}
 

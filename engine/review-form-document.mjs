@@ -1,4 +1,4 @@
-import {prepareMatrixSheets,matrixInputField,sheetLine} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets,matrixInputField,sheetLine,existingRecordCandidates,FIRST_MENTION_TABLES,sheetSections} from '../tables/foundation/engine.js';
 import {Runtime} from './runtime.mjs';
 
 // A view of the existing protocol. Edits replace only the original value span;
@@ -9,14 +9,18 @@ export function describeReviewForms(state,blocks){
 }
 function describeReviewDocument(state,context,text){
  const groups=[],runtime=new Runtime(state);let group=null,offset=0;
- const form=/^\s*【/m.test(text);
+ const form=/^\s*【/m.test(text),sections=form?sheetSections(text,{tolerant:true}):[];
  for(const part of text.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[]){
   if(!part)continue;
   const line=part.replace(/[\r\n]+$/,''),trimmed=line.trim(),heading=/^【([^】]+)】$/.exec(trimmed);
   if(!trimmed){offset+=part.length;continue;}
   if(heading){
-   const refs=context.references.filter(r=>r.display===heading[1]||r.legacyDisplay===heading[1]),ref=refs.length===1?refs[0]:null;
+   const refs=existingRecordCandidates(context,heading[1]);let ref=refs.length===1?refs[0]:null;
    const tableLabel=/^(.+)／[1-9]\d*$/.exec(heading[1])?.[1],template=context.catalog.templates.find(t=>ref?t.id===ref.tableId:t.label===tableLabel);
+   if(!ref&&template&&FIRST_MENTION_TABLES.has(template.id)){
+    const line=sections.find(s=>s.heading===heading[1])?.lines.find(line=>{try{return ['name','instance_name'].includes(matrixInputField(template,line).key);}catch{return false;}});
+    if(line){const field=matrixInputField(template,line),parsed=sheetLine(line),name=(parsed.compact?parsed.body:parsed.body.slice(field.label.length).replace(/^[\s：:]+/,'')).replace(/\s*\|\s*P\d+(?:\.\.P?\d+)?\s*$/i,'').trim(),matches=context.references.filter(r=>r.tableId===template.id&&r.name===name);if(matches.length===1)ref=matches[0];}
+   }
    group={title:ref?template?.label+' · '+ref.name:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);offset+=part.length;continue;
   }
   if(!group||!form){if(!group||group.form){group={title:'本轮状态变化',rows:[]};groups.push(group);}}
@@ -38,6 +42,7 @@ function describeReviewDocument(state,context,text){
    const evidence=/\s*\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line),valueEnd=evidence?evidence.index:line.length;
    Object.assign(row,{key:spec.key,label:spec.label??spec.key,type:spec.type,options:spec.enum??spec.options,minimum:spec.minimum,maximum:spec.maximum,previous:record?.values[spec.key],previousState:record?.states[spec.key]??'unset',value:line.slice(valueStart,valueEnd),valueStart:offset+valueStart,valueEnd:offset+valueEnd,evidence:evidence?.[1]??'',delta:!form});
    if(spec.ref&&row.previous!=null){const display=id=>{const r=state.tables[spec.ref]?.[id]?.values;if(!r)return '关联记录待核对';if(spec.ref==='M_QUANTITIES'){const u=state.tables.M_UNITS?.[r.unit_ref]?.values;return r.quantity_mode==='exact'?String(r.value)+' '+(u?.label??'单位待核对'):r.narrative??'尚未填写';}return r.name??r.label??r.title??r.original_text??r.narrative??'已有关联明细';};row.previousDisplay=(Array.isArray(row.previous)?row.previous:[row.previous]).map(display).join('；');}
+   if(['T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_ITEMS_SKILLS','T_CHAR_DOSSIER','T_SYS_ENTITIES'].includes(spec.ref))row.help='填写名称即可：已有档案自动引用，首次出现自动建立最小档案；其余资料按后续信息补充。';
    if(spec.ref==='M_QUANTITIES')row.help='可填 3分钟，或数值：3；单位：分钟。插件处理关联；缺少历法定义时保留原始耗时，不自动换算。';
    if(!form){runtime.micro(line);row.proposed=runtime.get([row.tableId,row.recordId,row.key,[]]);}
   }catch(error){row.error=error.message;}

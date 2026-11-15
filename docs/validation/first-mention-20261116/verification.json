@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.3",
+  "base_remote_commit": "9e2f93b4ee27a2abb73987e3597c2787f7139c92",
+  "changes": [
+    "Typed first-mention identity references propose minimum records, with shared names, provenance and scope.",
+    "Unique same-table names and table/name headings select existing rows; omitted fields are retained; compatible repeated patches merge.",
+    "Archive references may create only parser-generated minimum identities. Conflicting or ambiguous values remain errors."
+  ],
+  "validation": {
+    "full_suite": {
+      "pass": 2729,
+      "fail": 0,
+      "build_checks": 18
+    },
+    "final_prompt_scope_adjustment": {
+      "targeted_pass": 14,
+      "build_extension_check": true
+    },
+    "real_browser": {
+      "page": "FMR-1 / archive.3",
+      "storage": "isolated IndexedDB",
+      "steps": [
+        "Initial state zero; generating a candidate did not persist identities.",
+        "Confirm created one place, one subject, one event; scene, organization and event shared the same place.",
+        "Next table/name form exposed only the light field; edited via textbox and confirmed.",
+        "Cold reopen retained the edited light and one place.",
+        "Final bundle reloaded; reroll confirmation removed the superseded light patch and created the dock identity, while retaining the earlier turn."
+      ],
+      "result": "passed",
+      "application_errors": 0,
+      "harness_setup_correction": "Supplied required registerMacro host fixture before behavioral testing.",
+      "external_browser_extension_console_noise": true
+    },
+    "not_verified": [
+      "Real TauriTavern host",
+      "External model generation",
+      "Android device"
+    ]
+  }
+}
