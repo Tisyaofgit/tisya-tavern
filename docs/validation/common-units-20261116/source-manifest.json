@@ -1,9 +1,9 @@
 [
   {
     "path": "docs/validation/common-units-20261116/README.md",
-    "bytes": 1885,
-    "sha256": "fddf6e09e77fdc08bd56efca844377273cd2e65bcc59fa6cbf54675f332c582d",
-    "blob": "6e3ac68c039564e5d87ec20c63017e1a518715d8"
+    "bytes": 2456,
+    "sha256": "f6bf38856970e25f7bf00f30232b975c46642b446a7a6eb5266c3ca82a6bb91a",
+    "blob": "7489209d0e26ae133e8b1ef5409009b124902bb5"
   },
   {
     "path": "engine/archive.mjs",
@@ -55,9 +55,9 @@
   },
   {
     "path": "runtime.js",
-    "bytes": 5231330,
-    "sha256": "cd7060892aa3bc62ca14479add230dee753caf9538bd4e5fc6120dedd0626d81",
-    "blob": "763a6512d033c0219ee393de4b2f59b052aa00cc"
+    "bytes": 5235118,
+    "sha256": "ca47ecc65d9f76250802911604b4f0e50c9335e651882a34af803ac58efe9bb7",
+    "blob": "934e779b50f221e870eff14d2b10a336d1700a9d"
   },
   {
     "path": "shell.css",
@@ -67,9 +67,9 @@
   },
   {
     "path": "tables/foundation/common-units.js",
-    "bytes": 2671,
-    "sha256": "e8a6855e51e3375ced53657feed72f4695fefa03a8ca8c32dd967a3b60ece8ff",
-    "blob": "98ac3af538b8b3ced4cdded2b6709e472f75937b"
+    "bytes": 6623,
+    "sha256": "257262e96f5b2989b9fc5d757a3e37c362ab4bae41dfdc632fcab84476488dfa",
+    "blob": "eed8c63da5fe25fc7af423dcd652f269c73b8d0b"
   },
   {
     "path": "tables/foundation/engine.js",
@@ -79,21 +79,21 @@
   },
   {
     "path": "tests/browser-common-units.html",
-    "bytes": 877,
-    "sha256": "3d2b2a0fa8305199dbeafddbc6f325b12eac1211b0c6052aae46e705e1b020a3",
-    "blob": "b41fd7a17776e22f795bfa92df4292deb6ca64a2"
+    "bytes": 950,
+    "sha256": "3667a2da1bcee563fe95a25e18b234664a8164ab3378c18046383f24222ce570",
+    "blob": "a27c5be7f0fad97f2ba320799e2d441ad1d8adcf"
   },
   {
     "path": "tests/browser-common-units.mjs",
-    "bytes": 3543,
-    "sha256": "11d521c71068e83bb68b5c10fd2cc2393de974a0ec4418ed5b98d4b6dc1318a4",
-    "blob": "bc2028511f0ac2bf5962b77ebd91bcbdcb9b7303"
+    "bytes": 4029,
+    "sha256": "eb0f7a042d7606a712872693c7d2067e0c3b25a37d135b6d0bec5db0b0190a85",
+    "blob": "90345276c1f3389dce7f4826c0c5c0b4bb6a5c07"
   },
   {
     "path": "tests/common-unit-registration.test.js",
-    "bytes": 9910,
-    "sha256": "9563a75a7cb163e921b765fb8c7f24381cb03e38de4d32e6781051229dce4613",
-    "blob": "acc47e769c0cb2c427337e1200181a6dd8a29a59"
+    "bytes": 13696,
+    "sha256": "8b900b558a441265f2437a86a259298b45d85eaa860cc1ca21a6bb54111ea59e",
+    "blob": "9905832984351da036b94c751cb483c92a24706e"
   },
   {
     "path": "tests/review-visual-forms.test.js",

@@ -1,7 +1,7 @@
 {
   "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.5",
   "base_remote_commit": "ce4161d2496ff84596e2b304c7417ac4cfa11a02",
-  "verified_at": "2026-11-16T16:42:56.751211+00:00",
+  "verified_at": "2026-11-16T17:24:48.152092+00:00",
   "baseline_reproduction": {
     "code": "FORM_REFERENCE",
     "message": "【人物原点档案／1】年龄原值：关联名称不存在、重名或表不匹配：岁；需要 单位定义"
@@ -15,24 +15,19 @@
     "skipped": 0,
     "build_checks": 18,
     "only_failure": "release.test.js: layout VERSION and stylesheet version still archive.4",
-    "resolution": "Updated both version literals to archive.5; rebuilt runtime.js; final targeted suite below passes."
-  },
-  "final_targeted": {
-    "command": "node --test tests/release.test.js tests/common-unit-registration.test.js tests/review-visual-forms.test.js tests/reply-form-ownership.test.js",
-    "tests": 46,
-    "pass": 46,
-    "fail": 0
+    "resolution": "Updated both version literals to archive.5, rebuilt runtime.js and passed the targeted checks; the final expanded catalog then passed all 2770 tests and all 18 build checks."
   },
   "final_runtime_build_check": true,
   "source_manifest_mismatches": 0,
   "browser": {
     "environment": "Cloud Chromium, production host/review services, isolated IndexedDB and synthetic replies",
-    "fixture": "CU-3 / archive.5",
+    "fixture": "CU-4 / archive.5",
     "steps": [
-      "Generate 18岁, 2小时, 3米; observe zero unit rows before confirmation.",
-      "Confirm through production review panel; observe three quantities and three unit records.",
-      "Submit explicit 灵息 definition and a 3灵息 reference in one reply; confirm four quantities and four units.",
-      "Reload final bundle; four units/quantities and confirmed status persist; new help text visible."
+      "Load new CU-4 bundle with isolated v3 IndexedDB prefix; generate 18岁, 2小时, 3米 and observe zero unit/quantity rows before confirmation.",
+      "Confirm through production review controls; observe three quantities and three units.",
+      "Generate 3厘米, 2分钟, 3个月, 4季, 5季度; observe eight units and eight exact quantities after confirmation.",
+      "Submit explicit 灵息 custom definition and a 3灵息 reference in one reply; confirm nine units and nine quantities.",
+      "Click reload; CU-4, nine definitions, all nine exact quantities and confirmed status persist."
     ],
     "console": "No application error observed; browser-extension metadata messages were unrelated to the application."
   },
@@ -41,5 +36,46 @@
     "External model compliance",
     "Android physical device"
   ],
-  "full_suite_rerun_after_version_only_fix": false
+  "full_suite_rerun_after_version_only_fix": true,
+  "catalog": {
+    "units": 135,
+    "names_and_aliases": 312,
+    "dimensions": [
+      "time",
+      "length",
+      "mass",
+      "area",
+      "volume",
+      "count",
+      "ratio",
+      "score",
+      "temperature",
+      "currency"
+    ],
+    "conversions_created": 0
+  },
+  "before_expansion_targeted": {
+    "command": "node --test tests/release.test.js tests/common-unit-registration.test.js tests/review-visual-forms.test.js tests/reply-form-ownership.test.js",
+    "tests": 46,
+    "pass": 46,
+    "fail": 0
+  },
+  "expanded_targeted": {
+    "command": "node --test tests/common-unit-registration.test.js",
+    "tests": 18,
+    "pass": 18,
+    "fail": 0,
+    "all_aliases_checked": 312
+  },
+  "final_full_regression": {
+    "command": "npm test",
+    "tests": 2770,
+    "pass": 2770,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "duration_ms": 415425.135497,
+    "build_checks": 18
+  }
 }
