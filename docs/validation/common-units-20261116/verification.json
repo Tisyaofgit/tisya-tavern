@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.5",
+  "base_remote_commit": "ce4161d2496ff84596e2b304c7417ac4cfa11a02",
+  "verified_at": "2026-11-16T16:42:56.751211+00:00",
+  "baseline_reproduction": {
+    "code": "FORM_REFERENCE",
+    "message": "【人物原点档案／1】年龄原值：关联名称不存在、重名或表不匹配：岁；需要 单位定义"
+  },
+  "full_regression_before_release_marker_sync": {
+    "command": "npm test",
+    "tests": 2767,
+    "pass": 2766,
+    "fail": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "build_checks": 18,
+    "only_failure": "release.test.js: layout VERSION and stylesheet version still archive.4",
+    "resolution": "Updated both version literals to archive.5; rebuilt runtime.js; final targeted suite below passes."
+  },
+  "final_targeted": {
+    "command": "node --test tests/release.test.js tests/common-unit-registration.test.js tests/review-visual-forms.test.js tests/reply-form-ownership.test.js",
+    "tests": 46,
+    "pass": 46,
+    "fail": 0
+  },
+  "final_runtime_build_check": true,
+  "source_manifest_mismatches": 0,
+  "browser": {
+    "environment": "Cloud Chromium, production host/review services, isolated IndexedDB and synthetic replies",
+    "fixture": "CU-3 / archive.5",
+    "steps": [
+      "Generate 18岁, 2小时, 3米; observe zero unit rows before confirmation.",
+      "Confirm through production review panel; observe three quantities and three unit records.",
+      "Submit explicit 灵息 definition and a 3灵息 reference in one reply; confirm four quantities and four units.",
+      "Reload final bundle; four units/quantities and confirmed status persist; new help text visible."
+    ],
+    "console": "No application error observed; browser-extension metadata messages were unrelated to the application."
+  },
+  "not_verified": [
+    "Real SillyTavern/TauriTavern host",
+    "External model compliance",
+    "Android physical device"
+  ],
+  "full_suite_rerun_after_version_only_fix": false
+}

@@ -1,7 +1,7 @@
 import {clone,digest,stableId,fail,asError} from './common.mjs';
 import {Runtime} from './runtime.mjs';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,sheetSections} from '../tables/foundation/engine.js';
-import {assertReplyFormOwnership,assertReplyFormVersion,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
+import {REPLY_FORM_OWNERSHIP_VERSION,assertReplyFormOwnership,assertReplyFormVersion,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
 export {ARCHIVE_ROUTES,ARCHIVE_TABLE_IDS,ARCHIVE_PROTOCOL} from './reply-form-ownership.mjs';
 
 // One archive consumer: semantic rows become the same reviewable workbook used
@@ -37,7 +37,7 @@ function preparePlan(runtime,source,sourceKey){
  check(format==='form'||!raw.trim()&&format==='','ARCHIVE_FORMAT','非空归档仅接受当前 format="form" 极简表单；旧格式保留原文待处理',{format});
  if(!raw.trim())return {ownership_version:ownershipVersion,changes:[],guards:[],schema:[],references:[],pending:[],paragraphs:[]};
  const {temp,dependencies,schema,warnings}=stagingView(runtime,sourceKey);
- const snapshot={state:temp.data},context=prepareMatrixSheets(snapshot,{kind:'rows',mode:'revise',task:'main',operationId:'archive:'+sourceKey}),evidenceByHeading={};
+ const snapshot={state:temp.data},context=prepareMatrixSheets(snapshot,{commonUnits:ownershipVersion===REPLY_FORM_OWNERSHIP_VERSION,kind:'rows',mode:'revise',task:'main',operationId:'archive:'+sourceKey}),evidenceByHeading={};
  for(const section of sheetSections(raw)){const t=context.catalog.templates.find(t=>section.heading.startsWith(t.label+'／')),owned=t&&context.schemas[t.id].fields.some(f=>f.key==='owner_row_uuid');evidenceByHeading[section.heading]=evidence(section.lines.join('\n'),source,{required:!owned});}
  const input={form:raw,evidenceByHeading,pending:[]};
  const accepted=input.form.trim()?acceptMatrixSheets(context,snapshot,{blocks:{cells:input.form,body:source.body_raw,title:source.title},parsed:source}):{proposal:{matrix:{changes:[]}}};

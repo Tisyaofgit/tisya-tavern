@@ -45,7 +45,7 @@ function describeReviewDocument(state,context,text){
    if(spec.ref&&row.previous!=null){const display=id=>{const r=state.tables[spec.ref]?.[id]?.values;if(!r)return '关联记录待核对';if(spec.ref==='M_QUANTITIES'){const u=state.tables.M_UNITS?.[r.unit_ref]?.values;return r.quantity_mode==='exact'?String(r.value)+' '+(u?.label??'单位待核对'):r.narrative??'尚未填写';}return r.name??r.label??r.title??r.original_text??r.narrative??'已有关联明细';};row.previousDisplay=(Array.isArray(row.previous)?row.previous:[row.previous]).map(display).join('；');}
    if(['T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_ITEMS_SKILLS','T_CHAR_DOSSIER','T_SYS_ENTITIES'].includes(spec.ref))row.help='填写名称即可：已有档案自动引用，首次出现自动建立最小档案；其余资料按后续信息补充。';
    if(spec.key==='exact_dialogues')row.help=dialogueFieldHint+(unattributedDialogue(row.value)?'。此记录有台词未标说话人，请对照原文补齐；不自动猜测。':'');
-   if(spec.ref==='M_QUANTITIES')row.help='可填 3分钟，或数值：3；单位：分钟。插件处理关联；缺少历法定义时保留原始耗时，不自动换算。';
+   if(spec.ref==='M_QUANTITIES')row.help='可填 18岁、2小时、3米，或数值：3；单位：米。常见单位自动登记；自定义单位可在本轮单位定义中补充，不自动推算换算率。';
    if(!form){runtime.micro(line);row.proposed=runtime.get([row.tableId,row.recordId,row.key,[]]);}
   }catch(error){row.error=error.message;}
   group.rows.push(row);offset+=part.length;

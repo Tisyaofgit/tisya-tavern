@@ -17,9 +17,9 @@ test('compact coordinates keep canonical fields and per-field source; visual edi
  const result=acceptReply(e,'<reply><body>1 抵达。\n\n2 休息。</body><cells format="form">'+edited+'</cells></reply>','compact');assert.equal(result.result.operations[0].status,'COMMITTED');const r=Object.values(e.rows('PEOPLE'))[0];assert.equal(r.values.hp,5);assert.equal(r.metadata.hp.source_pointer.paragraph_reference,'P2');
  assert.throws(()=>compile(e,'【人物／1】\n999：错位'),/未开放/);
 });
-test('missing calendar retains three-minute source and saves without inventing a unit or conversion',()=>{
+test('missing calendar registers a named minute without inventing calendar rules or conversion',()=>{
  const e=new Runtime(initializeState(catalog)),text=section(context(e),'T_DYN_SCENE_SPACE',{name:'测试渡口',turn_elapsed:'3分钟'}),{copy}=compile(e,text),q=Object.values(copy.rows('M_QUANTITIES'))[0].values;
- assert.equal(q.quantity_mode,'narrative_only');assert.equal(q.narrative,'3分钟');assert.equal(Object.keys(copy.rows('M_UNITS')).length,0);assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,0);
+ assert.equal(q.quantity_mode,'exact');assert.equal(q.value,3);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,'分钟');assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.calendar_ref,undefined);assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,0);
 });
 test('bound calendar gets deterministic unit link; alias reuses it and unknown units still fail',()=>{
  const e=new Runtime(initializeState(catalog));e.newRecord('T_STATIC_WORLDS',{name:'测试世界',calendar_id:'calendar'},'world');e.newRecord('M_CALENDAR_RULES',{world_ref:'world',year_numbering:e.data.schema.M_CALENDAR_RULES.fields.find(f=>f.key==='year_numbering').enum[0],mode:'FIXED',value_state:'known'},'calendar');e.data.runtime.scope.world_ref='world';

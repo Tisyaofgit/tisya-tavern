@@ -57,7 +57,7 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershi
  const warnings=clone(parsed.warnings),operations=[];
  const formMode=parsed.cells_format==='form'||parsed.delta_ops.some(line=>/^【/.test(line));
  if(formMode&&parsed.delta_ops.length){let result;try{result=e.transaction(operation+':sheets',{cells:parsed.delta_ops,reply_sha256:parsed.reply_sha256},()=>{
-  const snapshot={state:e.data},context=prepareMatrixSheets(snapshot,{operationId:operation+':sheets',kind:'rows',mode:'revise',task:'main'}),blocks={...envelope(raw).blocks,cells:parsed.delta_ops.join('\n')};
+  const snapshot={state:e.data},context=prepareMatrixSheets(snapshot,{commonUnits:formOwnershipVersion===REPLY_FORM_OWNERSHIP_VERSION,operationId:operation+':sheets',kind:'rows',mode:'revise',task:'main'}),blocks={...envelope(raw).blocks,cells:parsed.delta_ops.join('\n')};
   const accepted=acceptMatrixSheets(context,snapshot,{blocks,parsed}),changes=accepted.proposal.matrix.changes;assertReplyFormOwnership(e.data,changes,'cells',{version:formOwnershipVersion,generatedIdentities:accepted.generatedIdentities});applyMatrixChanges(e,changes,{mode:'revise'});
   let heading;const evidence=new Map();for(const line of parsed.delta_ops){const h=/^【([^】]+)】$/.exec(line);if(h){heading=h[1];continue;}const m=/^\d+(?:\s+|[：:]).*?\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line);if(m&&heading){const binding=accepted.bindings.find(b=>b.heading===heading),template=context.catalog.templates.find(t=>t.id===binding?.tableId);if(template)evidence.set(heading+'|'+matrixInputField(template,line).key,m[1]);}}
   const sourcePointer={source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256,operation_id:operation+':sheets'};

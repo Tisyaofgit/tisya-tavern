@@ -3,7 +3,10 @@ import {programOwnedTable} from './prompt-boundary.mjs';
 
 // Only new reply forms use this partition. Stored rows, legacy delta operations
 // and already prepared archive plans keep their original lifecycle and data.
-export const REPLY_FORM_OWNERSHIP_VERSION='tisya.reply-form-ownership/1';
+// v2 adds common-unit registration. Unchanged accepted v1/legacy replies keep
+// their original unit decoder when the journal replays an earlier branch.
+export const REPLY_FORM_OWNERSHIP_VERSION='tisya.reply-form-ownership/2';
+export const PRE_UNIT_REPLY_FORM_VERSION='tisya.reply-form-ownership/1';
 export const LEGACY_REPLY_FORM_OWNERSHIP_VERSION='tisya.reply-form-ownership/legacy';
 export const ARCHIVE_ROUTES=Object.freeze({
  '事件与参与':Object.freeze(['T_DYN_EVENTS','T_DYN_EVENT_LINKS','T_DYN_EVENT_PARTICIPANTS','T_DYN_STAGE_SUMMARIES']),
@@ -15,7 +18,7 @@ export const ARCHIVE_TABLE_IDS=Object.freeze([...new Set(Object.values(ARCHIVE_R
 // These were available from the former shared archive catalog even in an
 // empty world. Retain their creation surfaces at their immediate entry point.
 export const CELLS_BOOTSTRAP_TABLE_IDS=Object.freeze([
- 'T_SYS_ENTITIES','T_CHAR_DOSSIER','T_STATIC_ITEMS_SKILLS','T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_WORLD_RULES',
+ 'M_UNITS','M_UNIT_RATIOS','T_SYS_ENTITIES','T_CHAR_DOSSIER','T_STATIC_ITEMS_SKILLS','T_STATIC_PLACES','T_STATIC_ORGANIZATIONS','T_STATIC_WORLD_RULES',
  'T_DYN_ENTITY_STATE','T_DYN_ENTITY_GAUGES','T_DYN_TRANSFERS','T_DYN_ACTIVITIES_LIFELINES','T_DYN_TASKS','T_DYN_TIMERS'
 ]);
 const memoryTables=new Set(ARCHIVE_TABLE_IDS);
@@ -24,7 +27,7 @@ const memoryTables=new Set(ARCHIVE_TABLE_IDS);
 // that path; it is never offered as a choice in the current prompt.
 const legacyArchiveTables=new Set([...ARCHIVE_TABLE_IDS,...CELLS_BOOTSTRAP_TABLE_IDS,'T_SYS_CELL_REQUESTS','T_SYS_ARCHIVE_BATCHES']);
 export function assertReplyFormVersion(version){
- if(![REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION].includes(version))fail('REPLY_FORM_VERSION','回复表单协议版本未知，原文保留待核',{version});
+ if(![REPLY_FORM_OWNERSHIP_VERSION,PRE_UNIT_REPLY_FORM_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION].includes(version))fail('REPLY_FORM_VERSION','回复表单协议版本未知，原文保留待核',{version});
  return version;
 }
 
