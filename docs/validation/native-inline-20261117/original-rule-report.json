@@ -1,0 +1,16 @@
+[
+  {
+    "case": "inline-original-rule",
+    "preCount": 1,
+    "exactOriginalSources": 1,
+    "rawMessageUnchanged": true,
+    "liveScripts": 0
+  },
+  {
+    "case": "line-original-rule",
+    "preCount": 1,
+    "exactOriginalSources": 1,
+    "rawMessageUnchanged": true,
+    "liveScripts": 0
+  }
+]

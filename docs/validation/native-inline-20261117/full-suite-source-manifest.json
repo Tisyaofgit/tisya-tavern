@@ -1,0 +1,57 @@
+[
+  {
+    "path": "native-body.js",
+    "bytes": 7401,
+    "sha256": "98e8b55d916481e24f684b0942cbd3f5884a251a7a1aae0d95dea6e34313aa40"
+  },
+  {
+    "path": "native-panel-formatting.js",
+    "bytes": 9025,
+    "sha256": "05d406ef3d59156954cfd3559143b3063e7c505b4df89ac4689ba1945801a98d"
+  },
+  {
+    "path": "markdown-code.js",
+    "bytes": 3394,
+    "sha256": "2019668e7b4a59d4487ef8bdd1a9969b2e03fae1b9082d8f7537f8934561b0c8"
+  },
+  {
+    "path": "prose.js",
+    "bytes": 2194,
+    "sha256": "51e03770be3436544e98067d36392a5b9c1e30d790776a00d34adc1ea0595ec9"
+  },
+  {
+    "path": "tests/native-body-inline-boundary.test.js",
+    "bytes": 5153,
+    "sha256": "656bad824a307dd975506fb9de1bd3151068a08b2a125de9df1198ed55cafe07"
+  },
+  {
+    "path": "tests/native-panel-formatting.test.js",
+    "bytes": 16006,
+    "sha256": "4255e1e9fc1bf02ead1175873751ab09225fd7950c513f9cf7adfeff4ce2e77e"
+  },
+  {
+    "path": "package.json",
+    "bytes": 1540,
+    "sha256": "5a20c163009b63e4e4293c4ca42aed7adc054b4e6c4cd60f7e29680af3d120f2"
+  },
+  {
+    "path": "manifest.json",
+    "bytes": 507,
+    "sha256": "cb53dccd2f1a8292dc1d43f0dbc45f0067650880bcd408b69336f1d08e7efa6e"
+  },
+  {
+    "path": "layout.js",
+    "bytes": 10376,
+    "sha256": "149f93fff172fe91f7f60e9c38512f72e127fc31dbaba3d6139c2c7e97b6b695"
+  },
+  {
+    "path": "shell.css",
+    "bytes": 91177,
+    "sha256": "d13ae5f0181d0392f41d0adab5c648298bf193f9d78f70f81de3dbc4a601fda4"
+  },
+  {
+    "path": "runtime.js",
+    "bytes": 5238061,
+    "sha256": "825e34df772e01a4c65596ba438045fe015b53a1af75e30a4908a5794aaaa277"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "version": "archive.6 / 98e8b55d9164",
+  "bodyDocuments": 1,
+  "frames": 2,
+  "scriptTextVisible": false,
+  "sourceUnchanged": true,
+  "frameRuns": [
+    1,
+    1
+  ],
+  "inputValues": [
+    "正文输入已保留",
+    "扩展输入已保留"
+  ],
+  "clickCounts": [
+    "1",
+    "2"
+  ],
+  "width": 390,
+  "overflow": false,
+  "errors": [],
+  "passed": true
+}

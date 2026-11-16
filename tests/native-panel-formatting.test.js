@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {installNativePanelFormatting} from '../native-panel-formatting.js';
+import {createNativeDisplayPipeline} from '../native-display.js';
 import {fixture} from './fixtures/journey-r4.cjs';
 
 const panel='<!DOCTYPE html>\n<html><body><button>neutral</button><script>window.neutralStarts=(window.neutralStarts||0)+1;</script></body></html>';
@@ -130,5 +131,37 @@ test('interleaved same-id batches cannot lend a full reply ticket to a later fra
   assert.equal(s.after('<p>full result</p>'),'<p>full result</p>');
   assert.equal(s.after('<p>fragment result</p>'),'<p>fragment result</p>');assert.equal(s.projects,0);
   s.before();s.before('fragment');assert.equal(s.after(),base);s.before();assert.equal(s.after(),base);assert.equal(s.after(),base);assert.equal(s.projects,0);
+ }finally{await s.w.happyDOM.abort();}
+});
+
+const bodyFence='```html\n'+panel+'\n```';
+function inlineSetup(body='1 BeforeCARDafter'){
+ const s=setup();s.messages[0].mes='<reply><anchor phase="before"/><title>Neutral|noon|garden|test</title><body>'+body+'</body><anchor phase="after"/><extra><cells/><vars/></extra><archive/><actions/></reply>';
+ const pipe=createNativeDisplayPipeline({enabled:()=>true,scripts:()=>[{scriptName:'neutral',findRegex:'CARD',replaceString:bodyFence,markdownOnly:true,placement:[2]}],regexProvider:{get:p=>new RegExp(p,'g')}});
+ s.options.project=source=>pipe.project(source,s.messages[0]);
+ s.regex=()=>s.messages[0].mes.replaceAll('CARD',bodyFence);
+ s.afterRegex=(text=s.regex(),context=s.context())=>s.formatter.runStage('afterRegex',text,context);
+ return s;
+}
+test('public AFTER_REGEX isolates complete inline rule documents before host Markdown, preserving every script byte',async()=>{
+ const s=inlineSetup();try{
+  installNativePanelFormatting(s.options);const raw=JSON.stringify(s.messages);s.before();const original=s.regex(),prepared=s.afterRegex();
+  assert.notEqual(prepared,original);assert(prepared.includes('Before\n\n'+bodyFence+'\n\nafter'));
+  assert.equal(prepared.replaceAll('\n\n',''),original.replaceAll('\n\n',''));
+  assert.equal(s.afterRegex(prepared),prepared);assert.equal(JSON.stringify(s.messages),raw);assert.equal(s.w.neutralStarts,undefined);
+  s.after();assert.equal(s.afterRegex(),original);
+ }finally{await s.w.happyDOM.abort();}
+});
+test('pre-Markdown boundary repair refuses literals, duplicated source, fragments and changed context',async()=>{
+ for(const body of ['1 Example: `CARD`','1 Example\n\n```text\nCARD\n```','1 BeforeCARDmiddleCARDafter']){
+  const s=inlineSetup(body);try{installNativePanelFormatting(s.options);s.before();assert.equal(s.afterRegex(),s.regex());}finally{await s.w.happyDOM.abort();}
+ }
+ for(const change of [s=>s.before('fragment'),s=>s.switchScope(),s=>s.disable(),s=>s.messages[0].mes+='changed',s=>s.messages[0].name='Other']){
+  const s=inlineSetup();try{installNativePanelFormatting(s.options);s.before();change(s);assert.equal(s.afterRegex(),s.regex());}finally{await s.w.happyDOM.abort();}
+ }
+});
+test('pre-Markdown projection failure invalidates its ticket and reports once without altering host text',async()=>{
+ const s=inlineSetup(),error=new Error('projection');try{
+  s.options.project=()=>{throw error;};installNativePanelFormatting(s.options);s.before();assert.equal(s.afterRegex(),s.regex());assert.equal(s.after(),base);assert.deepEqual(s.errors,[error]);
  }finally{await s.w.happyDOM.abort();}
 });

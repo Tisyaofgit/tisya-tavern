@@ -1,5 +1,6 @@
 import {readPublicReplyEnvelope} from './reply-formats.js';
 import {prepareNativePanelSource} from './native-panel-source.js';
+import {prepareNativeBodyMarkdown} from './native-body.js';
 
 const registrations=new WeakMap();
 const runtimeSelector='iframe,object,embed,.TH-render,.TH-streaming,.xiaobaix-iframe-wrapper,[data-tt-runtime-slot-id],.tt-runtime-placeholder,.tt-runtime-ghost';
@@ -48,6 +49,17 @@ export function installNativePanelFormatting({formatter,document,getMessage,scop
    frame.ticket={id:context.messageId,message,source:text,name:message.name,scope:nextScope};
   }catch(error){report(error);}
   return text;
+ }
+ function afterRegex(text,context){
+  const key=contextKey(context),frame=pending.get(key)?.at(-1);
+  if(ticketOverflow||!frame?.ticket)return text;
+  try{
+   const ticket=frame.ticket;if(!current(ticket))return text;
+   projecting.add(key);
+   const display=project(ticket.source,ticket.message,ticket.id);
+   if(!current(ticket)||frame.ticket!==ticket)return text;
+   return prepareNativeBodyMarkdown(document,text,display);
+  }catch(error){frame.ticket=null;report(error);return text;}finally{projecting.delete(key);}
  }
  function after(html,context){
   const key=contextKey(context),frames=pending.get(key),frame=frames?.pop();
@@ -108,6 +120,7 @@ export function installNativePanelFormatting({formatter,document,getMessage,scop
  registrations.set(formatter,handle);
  try{
   formatter.addHook(before,{stage:formatter.stage.BEFORE_REGEX,order:formatter.order?.EARLIEST??0});
+  if(typeof formatter.stage.AFTER_REGEX==='string')formatter.addHook(afterRegex,{stage:formatter.stage.AFTER_REGEX,order:formatter.order?.LATEST??100});
   formatter.addHook(after,{stage:formatter.stage.AFTER_MARKDOWN,order:formatter.order?.LATEST??100});
  }catch(error){active=false;pending.clear();report(error);}
  return handle;
