@@ -1,0 +1,80 @@
+[
+  {
+    "path": "engine/archive.mjs",
+    "bytes": 14446,
+    "sha256": "6d60f31ea38b18f5ea16226f4873a7b8084d74fa0c2d10acf12e74bff4884fd0",
+    "blob": "a30b0415b65879ce4f09d71f03cb8e3303a83fe7"
+  },
+  {
+    "path": "engine/reply-form-ownership.mjs",
+    "bytes": 8158,
+    "sha256": "53e022baf9545f58933d02c4327de66045aa454dcf2edca7cc294ef3b4c65456",
+    "blob": "ae58d14331b2ded63f0d4612c18c864bd25e71b9"
+  },
+  {
+    "path": "engine/reply.mjs",
+    "bytes": 14240,
+    "sha256": "3f91647a4c19fd01633139b72271d2b4f34cb932019a26678abb80880970cd8d",
+    "blob": "fb48a951468b65a9d5869554570ce21230ac93c1"
+  },
+  {
+    "path": "engine/review-form-document.mjs",
+    "bytes": 6547,
+    "sha256": "09371c84fa78bd90ee0bf2fe914c4ceba30a991dc7c8af864d9cbcbbf4c4e4f4",
+    "blob": "b674355c57669a7ae8d1cabb2754cbd3e1981cfa"
+  },
+  {
+    "path": "tables/foundation/engine.js",
+    "bytes": 90007,
+    "sha256": "c245e7621ad50d8688e55d3199a607e06292092665d53ef59a95eac6b9c8c040",
+    "blob": "d00e4eb64f7215d9759b96ee242063031561e018"
+  },
+  {
+    "path": "tests/form-time-text.test.js",
+    "bytes": 10752,
+    "sha256": "d2f323fd042e4248d75b4b80d69a1b22d53155dc0787b2e97b7c1927f007dc4a",
+    "blob": "78e9d816b5ec7da0d5370465e5a43863dd982603"
+  },
+  {
+    "path": "tests/browser-form-time.mjs",
+    "bytes": 4132,
+    "sha256": "09e8f6270a445b0aa60ca269d92fe824056dab3941138d22c90b842680a4ee25",
+    "blob": "ae6dc7daa574434831a78e2b6b86dd35db8b7b7f"
+  },
+  {
+    "path": "tests/browser-form-time.html",
+    "bytes": 1024,
+    "sha256": "25d0bb03d00f173dc5a1774a0c40dd51c5e7e911cfc9f7a6960b492ec8e1a012",
+    "blob": "6dcd9b91a296737340eac01d07862cf8718ae392"
+  },
+  {
+    "path": "package.json",
+    "bytes": 1540,
+    "sha256": "64d1fae7008fea2dc6501b4adc782daa8853c3f2d1a0986e9f251c2806b74dd8",
+    "blob": "4c7648ac78c8f60ad7bb40ed1c79f770dd957fa8"
+  },
+  {
+    "path": "manifest.json",
+    "bytes": 507,
+    "sha256": "9bdb186f30314b0a3789f166a95c09c900dba07793a4a0f9d28c0911faf0267b",
+    "blob": "1ee981df457b890302b2cc83673e8ceea51d87af"
+  },
+  {
+    "path": "layout.js",
+    "bytes": 10376,
+    "sha256": "a5af3e5b422fc6d70719cd7c1664a63ffa89094805c131b0bc3c51ac065a3aba",
+    "blob": "5a33fd232129d9e3b5845e4a28b0cd3850a6bbc4"
+  },
+  {
+    "path": "shell.css",
+    "bytes": 91177,
+    "sha256": "7a03147954143e05b7ec2aa051d9f353106a7d7a68d4d5924936bd83a5a8eaae",
+    "blob": "88ab3fe2fd0130132a4dacd18af8ecc340d46f74"
+  },
+  {
+    "path": "runtime.js",
+    "bytes": 5239622,
+    "sha256": "9f2aefbdb307dd64a2380c12071165ac647cb7fd2d77d0108f9edcf633d6ddb2",
+    "blob": "f822df2184eaf51eb37149ecac0e7e13ecdc9c44"
+  }
+]

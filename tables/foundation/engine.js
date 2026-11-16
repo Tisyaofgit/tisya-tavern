@@ -294,7 +294,7 @@ function structuredCell(raw,array=false){
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true}={}){
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
  const restrictReferences=task==='main'||!!characterSubject(scope);
  const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
@@ -328,6 +328,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'||permitsIdentityReuse(task)&&inline(spec))hint=inlineChildHints[spec.ref];
   else if(spec.ref)hint=(spec.type==='CHILD_REF'?'分组：':'名称：')+(labels.get(spec.ref)??snapshot.state.schema[spec.ref]?.label??'关联对象');
   const phoneTargets=phoneFormReference(tableId,spec.key)??PHONE_FORM_LIST_REFERENCES[tableId]?.[spec.key];if(phoneTargets)hint='名称：'+[phoneTargets].flat().map(id=>labels.get(id)??snapshot.state.schema[id]?.label??'关联对象').join('／');
+  if(plainTimeText&&inline(spec)&&spec.ref==='M_WORLD_TIME'&&permitsIdentityReuse(task))hint='时间原文或已有名称';
   if(spec.enum??spec.options)hint=(spec.enum??spec.options).join('／');
   if(spec.unit)hint+=(hint?'；':'')+'单位 '+spec.unit;
   if(spec.minimum!==undefined)hint+=(hint?'；':'')+'≥'+spec.minimum;if(spec.maximum!==undefined)hint+=(hint?'；':'')+'≤'+spec.maximum;
@@ -337,8 +338,8 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  const modelTemplates=templates.filter(t=>(!permitsIdentityReuse(task)||!Object.hasOwn(inlineChildHints,t.id))&&modelTableAllowed(t.id,snapshot.state.schema[t.id],task)).map(t=>({...t,fields:t.fields.filter(f=>modelWriteFieldAllowed(snapshot.state.schema[t.id].fields.find(x=>x.key===f.key),snapshot.state.schema[t.id],task))})).filter(t=>t.fields.length);
  const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
  const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
- const sharedInstructions=instructions+'\n'+narrativeFormContract+'\n'+unitFormInstructions;
- return {format:'tisya.matrix-sheets/1',commonUnits,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,formSections,form:sharedInstructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
+ const sharedInstructions=instructions+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+unitFormInstructions;
+ return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,formSections,form:sharedInstructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This
@@ -518,7 +519,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   const target=spec.ref;if(!Object.hasOwn(inlineChildHints,target)||target==='M_LIST_VALUES'||!['REF','CHILD_REF'].includes(spec.type))return null;
   // An explicit old group or registered child name still goes through the
   // original reference codec, including old saved replies and author tasks.
-  if(references.some(r=>r.tableId===target&&(r.display===raw||r.legacyDisplay===raw||r.name===raw)))return null;
+  if(references.some(r=>r.tableId===target&&(r.display===raw||r.legacyDisplay===raw||r.name===raw||target==='M_WORLD_TIME'&&context.plainTimeText!==false&&raw===snapshot.state.schema[target].label+'／'+r.name)))return null;
   const childSchema=snapshot.state.schema[target];check(childSchema,'填写所需子表尚未登记');
   const owned=Object.entries(snapshot.state.tables[target]??{}).filter(([,r])=>r.values.owner_table===row.tableId&&r.values.owner_row_uuid===row.recordId&&r.values.owner_field===spec.key);check(owned.length<=1,'多条已有明细须按原分组修订，不能压成单值：'+spec.label);
   const values={owner_table:row.tableId,owner_row_uuid:row.recordId,owner_field:spec.key},id=owned[0]?.[0]??stableId(context.operationId+'|inline|'+row.recordId+'|'+spec.key);
@@ -532,7 +533,18 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    const coordinate=/^([\s\S]+?)\s*→\s*([^→]+)$/.exec(raw),ref=reference(coordinate?coordinate[1].trim():raw);Object.assign(values,{target_table:ref.tableId,target_row_uuid:ref.recordId,reference_kind:coordinate?'cell':'record',resolution_status:'resolved'});
    if(coordinate){const fields=snapshot.state.schema[ref.tableId]?.fields.filter(f=>f.label===coordinate[2].trim()||f.key===coordinate[2].trim())??[];check(fields.length===1,'关联字段名称不存在或重名：'+coordinate[2]);const record=snapshot.state.tables[ref.tableId]?.[ref.recordId]??{values:rows.find(r=>r.tableId===ref.tableId&&r.recordId===ref.recordId)?.raw??{}};check(context.task!=='main'||matrixFieldVisible(fields[0],record,context.scope??snapshot.state.runtime?.scope??{}),'关联字段本次不可读：'+coordinate[2]);values.target_field=fields[0].key;}
   }else if(target==='M_WORLD_TIME'){
-   preserve('precision',['unknown']);Object.assign(values,{precision:'unknown',original_text:description('原文')});
+   preserve('precision',['unknown']);
+   let text;
+   if(context.plainTimeText===false||/^原文[：:]/.test(raw))text=description('原文');
+   else{
+    const source=snapshot.state.schema[row.tableId].fields.find(f=>f.key===spec.key);
+    check(['TEXT','LONG_TEXT','WORLD_TIME'].includes(source.source_type),'此字段没有描述型填写合同');
+    // Explicit selectors must still resolve; a missing reference cannot silently
+    // turn into prose. Plain text records no calendar, component or trigger.
+    check(!(/[【】]|^[^／\r\n]+／|^[A-Z][A-Z0-9_]*#|^(?:关联|名称)[：:]/.test(raw)),'时间关联不存在或不唯一，请选择已有时间；填写时间原文可用“原文：当晚”');
+    check(raw.trim()&&raw!=='""','时间原文不能为空；未知请填“?”，明确无请填“∅”');text=raw;
+   }
+   Object.assign(values,{precision:'unknown',original_text:text});
   }else if(target==='M_TIME_RANGES'){
    if(/^描述[：:]/.test(raw)){preserve('time_basis',['narrative_only']);Object.assign(values,{time_basis:'narrative_only',narrative:description('描述')});}
    else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'起始轮次')&&Object.hasOwn(input,'结束轮次'),'区间填写起始轮次与结束轮次，或已有名称');const [start,startState]=decode(input['起始轮次'],{type:'INTEGER',minimum:0}),[end,endState]=decode(input['结束轮次'],{type:'INTEGER',minimum:0});check(startState==='known'&&endState==='known','区间端点须明确，未知请整格填“?”');check(end>=start,'结束轮次不能早于起始轮次');Object.assign(values,{time_basis:'turn_range',start_turn:start,end_turn:end});}

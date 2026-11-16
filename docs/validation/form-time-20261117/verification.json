@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.7",
+  "base_local_commit": "1aaaabc4289d19d906622a0200a12041e6446be5",
+  "base_remote_commit": "04788ae40c89ee15ef8764c8a0408a76c2ba6984",
+  "completed_at_utc": "2026-11-16T23:29:23.303504+00:00",
+  "full_suite": {
+    "command": "npm test",
+    "exit_code": 0,
+    "build_checks": 18,
+    "tests": 2793,
+    "pass": 2793,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 337491.964746
+  },
+  "targeted_suite": {
+    "tests": 80,
+    "pass": 80,
+    "fail": 0
+  },
+  "browser": "browser-report.json",
+  "source_manifest": "source-manifest.json",
+  "limits": [
+    "Actual failed field value is not shown in the supplied screenshot",
+    "Same error reproduced with synthetic unprefixed narrative time",
+    "No installed SillyTavern/TauriTavern or Android device validation",
+    "No external model call"
+  ]
+}

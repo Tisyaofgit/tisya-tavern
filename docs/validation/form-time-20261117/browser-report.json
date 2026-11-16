@@ -1,0 +1,37 @@
+{
+  "version": "archive.7",
+  "form_protocol": "tisya.reply-form-ownership/3",
+  "fixture": "tests/browser-form-time.mjs",
+  "storage": "isolated IndexedDB and synthetic chat context",
+  "before_confirmation": {
+    "conditions": 0,
+    "events": 0,
+    "times": 0
+  },
+  "edited_start_time": "当晚 19:30",
+  "after_confirmation": {
+    "conditions": 1,
+    "events": 1,
+    "times": 3
+  },
+  "reload_preserved": true,
+  "raw_chat_unmodified_by_edit": true,
+  "reroll_before_confirmation": "original confirmed times retained",
+  "reroll_after_confirmation": {
+    "conditions": 1,
+    "events": 1,
+    "times": 3,
+    "start_time": "昨晚",
+    "story_time": "昨晚"
+  },
+  "narrow_viewport": {
+    "width": 390,
+    "document_scroll_width": 390,
+    "panel_client_width": 353,
+    "panel_scroll_width": 353,
+    "panel_scroll_top": 577
+  },
+  "application_errors": [],
+  "excluded_browser_instrumentation": "chrome-extension metadata delivery logs; no application URL errors",
+  "scope": "real browser with production review UI/host; synthetic reply, not installed Tavern or Android"
+}
