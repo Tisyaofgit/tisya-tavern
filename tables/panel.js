@@ -1,3 +1,4 @@
+import {mountHistoryBatch} from './history-batch-ui.js';
 import {worldFrameworkEditor} from './world-framework-editor.js';
 import {conditionEditor} from './condition-editor.js';
 import {mountArchiveAtlas} from './atlas-ui.js';
@@ -122,7 +123,7 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
   });
  }
  async function matrixHistory(mode='history',range=null){
-  if(beginPage(mode==='narrative'?'foundation':'history'))return;if(mode==='history'&&service.openReviewWorkflow){const g=section('逐层补录与每轮确认');g.append(el('p','勾选表与字段、编辑候选和确认归档统一在右下角窗口。保存候选不会入档，确认后才写入；历史补录不重放当前状态。'));button(g,'打开逐层补录与确认',()=>service.openReviewWorkflow());notice.textContent='本页与右下角窗口共用同一存档';return;}const api=service.matrixFoundation,state=await api.inspect();assertActive();
+  if(beginPage(mode==='narrative'?'foundation':'history'))return;const api=service.matrixFoundation,state=await api.inspect();assertActive();
   main.append(el('p','原文先提炼成当前规范表单的简表草稿。核对后才写入正式档案；已有值保持，历史事件不会再次扣费、发奖或推进时间。'));
   if(mode!=='narrative'){
    const memory=section('当前记忆归档'),replies=state.history.filter(r=>r.role==='assistant'),count=status=>replies.filter(r=>r.archiveStatus===status).length;
@@ -136,21 +137,24 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
   function show(value){
    resultArea.replaceChildren();if(value.already){notice.textContent='这份来源已经入档，未重复导入';return;}
    draft={kind:'matrix-intake',id:value.id};dirty=true;const box=section(value.label+' · '+({ready:'待核对',invalid:'填写待修',failed:'请求未完成',stale:'来源待重读',committed:'已入档'}[value.phase]??'草稿'),resultArea);
+   if(value.source.sourceKind==='card'){const books=value.source.raw.books??[],entries=books.flatMap(b=>b.entries);box.append(el('p','来源：当前角色卡、人设与 '+books.length+' 本世界书；启用 '+entries.filter(e=>e.enabled).length+' 条，停用 '+entries.filter(e=>!e.enabled).length+' 条。世界书：'+(books.map(b=>b.book).join('、')||'无')));}
    const original=el('details');original.append(el('summary','原始来源与模型原答'),el('pre',JSON.stringify(value.source.raw,null,2)),el('pre',String(value.rawResponse??'')));box.append(original);
    if(value.error)box.append(el('p',value.error));if(value.phase==='committed'){dirty=false;draft=null;box.append(el('p','此来源已确认入档。'));return;}
    const cellsOnly=typeof value.cells==='string'&&value.cells.length>0,initial=cellsOnly?value.cells:String(value.rawResponse??''),answer=field(box,cellsOnly?'极简填写内容（可修订）':'完整原答（待修订）',initial,{type:'textarea'});answer.rows=12;
-   if(value.diff?.length)table(box,['表格与记录','字段','原值','填写值'],value.diff.map(d=>[d.tableId+' / '+d.recordId,d.label,d.before===undefined?'未提供':d.before,d.after]));
+   if(value.diff?.length)table(box,['表格与记录','字段','原值','填写值'],value.diff.map(d=>[(d.tableLabel??d.tableId)+'／'+(d.recordName??d.recordId),d.label,d.before===undefined?'未提供':(d.beforeDisplay??d.before),d.afterDisplay??d.after]));
    const reviewed=field(box,'已核对原文、语义、遗漏与隐情归属',false,{type:'checkbox',track:false});
    button(box,'检查修订并重新预览',async()=>{try{show(await api.preview(value.id,cellsOnly?{cells:answer.value}:answer.value));notice.textContent='结构与引用已检查；请核对具体语义后确认';}catch(error){if(error.draft)show(error.draft);throw error;}});
    button(box,'确认保存规范表单',async()=>{check(value.phase==='ready','请先修正原答并重新预览');check(answer.value===initial,'填写内容已改变，请先重新预览');await api.commit(value.id,{reviewed:reviewed.checked});draft=null;dirty=false;onSaved();await matrixHistory(mode,range);notice.textContent='已写入当前规范表单；没有重放历史动作或成本';});
    button(box,'关闭这份草稿',()=>{api.discard(value.id);draft=null;dirty=false;resultArea.replaceChildren();notice.textContent='页面草稿已关闭，原答仍保留在填写请求记录中';});
   }
-  const generate=async input=>{check(!draft,'请先保存或关闭当前提炼草稿');try{show(await api.generate(input));notice.textContent='原答与草稿已保留，正式档案尚未修改';}catch(error){if(error.draft)show(error.draft);throw error;}};
+  const generate=async input=>{check(!draft,'请先保存或关闭当前提炼草稿');try{const value=await api.generate(input);show(value);if(!value.already)notice.textContent='原答与草稿已保留，正式档案尚未修改';}catch(error){if(error.draft)show(error.draft);throw error;}};
   if(mode!=='narrative'){
-   const init=section('从当前角色卡补齐初始化');init.append(el('p','读取当前角色卡、人设与已绑定资料；示例和备选开场不会自动成为已经发生的历史。已有角色和进度不会被初值覆盖。'));button(init,'生成初始化简表草稿',()=>generate({kind:'initialization',sourceKind:'card',label:'角色卡初始化'}));
+   const init=section('角色卡与世界书 → 初始化简表');init.append(el('p','自动读取当前角色卡、人设和绑定世界书的已启用条目；示例和备选开场不会自动成为已经发生的历史。已有角色和进度不会被初值覆盖。'));button(init,'生成初始化简表草稿',()=>generate({kind:'initialization',sourceKind:'card',label:'角色卡初始化'}));
    const history=section('选择已确认会话楼层'),pending=state.history.filter(r=>r.role==='assistant'&&!r.latest&&r.canImport);let from=range?.from??pending[0]?.floor??1,to=range?.to??pending.at(-1)?.floor??state.history.at(-1)?.floor??1,includeLatest=false;
    field(history,'起始楼层',from,{type:'number',track:false,change:v=>from=v});field(history,'结束楼层',to,{type:'number',track:false,change:v=>to=v});field(history,'本次明确保留最新回复',false,{type:'checkbox',track:false,change:v=>includeLatest=v});
    button(history,'生成所选历史简表草稿',()=>generate({kind:'history',sourceKind:'chat',from,to,includeLatest,label:'会话历史 '+from+'—'+to}));const stop=el('button','停止当前提炼');stop.type='button';stop.onclick=()=>service.clear?.({reason:'用户停止规范提炼'});history.append(stop);
+   if(api.batch){const batch=section('自动分批补录与总结');await mountHistoryBatch({api,parent:batch,el,field,button,table,range:()=>({from,to,includeLatest}),showDraft:value=>{check(!draft,'请先保存或关闭当前草稿');show(value);},onSaved,notice});assertActive();}
+   if(service.openReviewWorkflow){const advanced=el('details');advanced.append(el('summary','高级：逐层选择表与字段'));history.append(advanced);button(advanced,'打开逐层补录与确认',()=>service.openReviewWorkflow());}
    const list=el('details');list.append(el('summary','查看原始楼层与入档状态'));history.append(list);table(list,['楼层','角色','状态与待办','原文预览'],state.history.map(r=>[r.floor,r.role,[MEMORY_STATUS_LABELS[r.archiveStatus]??'待提炼',...(r.pending??[]).map(p=>p.reason)].join('；'),r.preview]));
   }
   const manual=section(mode==='narrative'?'从叙事提炼标准人物资料':'手写历史与旧日志');let text='',label=mode==='narrative'?'人物资料':'手写历史',worldTime='';field(manual,'来源名称',label,{change:v=>label=v});if(mode!=='narrative')field(manual,'已知剧情时间（未知留空）','',{change:v=>worldTime=v});const area=field(manual,mode==='narrative'?'作者人物原文':'历史原文或手写摘要','',{type:'textarea',change:v=>text=v});area.rows=10;

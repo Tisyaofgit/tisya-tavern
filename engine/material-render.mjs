@@ -45,7 +45,7 @@ export function renderBlocks(engine,slots,scope=engine.data.runtime?.scope??{},r
   for(const b of rows){
    const v={...b.values},omit=new Set(['name','title','label','instance_name']);
    // Detailed source prose and its generated digest represent one event.
-   if(b.table_id==='T_DYN_EVENTS'){if(v.full_process!=null||v.spine_digest===v.title)omit.add('spine_digest');omit.add('short_code');}
+   if(b.table_id==='T_DYN_EVENTS'){if(v.spine_digest===v.title||typeof v.spine_digest==='string'&&typeof v.full_process==='string'&&v.full_process.includes(v.spine_digest))omit.add('spine_digest');omit.add('short_code');}
    const parts=fields(b.table_id,b.record_id,v,omit);
    const content='【'+ref(b.table_id,b.record_id)+'】'+(parts.length?' '+parts.join('；'):'');
    rendered.push(b.table_id==='T_CHAR_ANCHORS'?'<十维行为锚点>'+content+'</十维行为锚点>':b.table_id==='T_PREF_CHAR_FILTER'?'<演出时角色滤镜>'+content+'</演出时角色滤镜>':content);

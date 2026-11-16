@@ -1,0 +1,128 @@
+[
+  {
+    "path": "engine/material-render.mjs",
+    "size": 5196,
+    "sha256": "0168555990b51bcadaf01ce49375275924261c33064f84736bd1fa89e96a2742",
+    "blob": "14dde013a32ad41493f2e5034a34567be7f3de1b"
+  },
+  {
+    "path": "engine/memory-status.mjs",
+    "size": 3265,
+    "sha256": "9a57351896e72fc62af7a9ee8abfb8df1864888f966f47e5d40109f17741623d",
+    "blob": "2fc70aa4184e3bdf2cb4da49c13fa9983182a1e4"
+  },
+  {
+    "path": "engine/review-form-document.mjs",
+    "size": 6267,
+    "sha256": "a6197f65246df2f4141b585c4d161e3c2d608df09998fb49eece34cf50c1e458",
+    "blob": "10e0d7d598fb98a669c25dfc2210181a4abda393"
+  },
+  {
+    "path": "layout.js",
+    "size": 10376,
+    "sha256": "fdf091debbcb4076bf24dd0526ef03032976d1ae59900de9aaad6048d7291119",
+    "blob": "fc7e10046037635ec8011da094971710ca563c20"
+  },
+  {
+    "path": "manifest.json",
+    "size": 507,
+    "sha256": "8cb2a16f9558e463f25b41cb2a16fea4f5e3b1cf630cf4db2ff403e67fe1e45b",
+    "blob": "918e6f90ac6d83795d04700da8f44549a2de31c1"
+  },
+  {
+    "path": "package-lock.json",
+    "size": 19495,
+    "sha256": "622c16c67237aa38919f3003f73fc6caff94b8a7fbc07885f63e0a101b07baf8",
+    "blob": "3b2a24313a2ad2ea493433c3d9de2ae84823ae20"
+  },
+  {
+    "path": "package.json",
+    "size": 1540,
+    "sha256": "a592985e45ca81d20caff7f3e2886d81ecb484d67e8a8f98aea57e388a42edaa",
+    "blob": "9e60d8330483dfbed300fbc94994025e29a5db2a"
+  },
+  {
+    "path": "runtime.js",
+    "size": 5224323,
+    "sha256": "2167f9dcb7e25b0c748355aac1905e4633c3c8a19c27ed4b80326aa77d1f48b8",
+    "blob": "04d440ee211807663563e0009896b99401e4cd65"
+  },
+  {
+    "path": "shell.css",
+    "size": 91177,
+    "sha256": "ef8b1a43818f931f0848a1b9f41b90113865a1c6d565302d88b1deb04427d9d5",
+    "blob": "ba3148e58f8225d3a8dd8c8b210508db842e83f5"
+  },
+  {
+    "path": "tables/foundation-service.js",
+    "size": 27022,
+    "sha256": "c9f52ee68c89ef9840e1b23435b8f16357bf2681b8eef74b75d710904f268adc",
+    "blob": "1366f9dd63201114c86bf64a53b67ef0f6f382fe"
+  },
+  {
+    "path": "tables/foundation/engine.js",
+    "size": 84677,
+    "sha256": "7afc38a1f27961f5768d4517fcf422257957e492f604df28072f5c0a9f141722",
+    "blob": "a065018c0ebb6b8d1a986bdf3a265dcc5dff75f1"
+  },
+  {
+    "path": "tables/panel.js",
+    "size": 106118,
+    "sha256": "b30d6f26318ebb907cfef5cc316f1ab1803e24f7eb8a738203f27bfee91a767c",
+    "blob": "64621ee364ecf67b16e618d3b75d1dcd89836727"
+  },
+  {
+    "path": "tables/foundation/narrative-contract.js",
+    "size": 2223,
+    "sha256": "ca841badd24a79820fe832e7178bbf5acec1836fe7c4f78c30eed74fa07c5a3c",
+    "blob": "42cb4b90dc049d6cf3127b49cb60c7389d74ca49"
+  },
+  {
+    "path": "tables/history-batch-ui.js",
+    "size": 3748,
+    "sha256": "2b3e1dc1ca62db7cb3d0e9c1929a5ffd03bb2d2e6c533ffefc584526bcc026e2",
+    "blob": "07935889c7a4f0693b5e29609b2e36ce0a02181e"
+  },
+  {
+    "path": "tables/history-batch.js",
+    "size": 9666,
+    "sha256": "6088e947674ea15151a7d7aadc6e6642f5c6bdc571916c20508a4962071c1d95",
+    "blob": "db15fcc9a790c37de90664c4e60f1aee791171c0"
+  },
+  {
+    "path": "tests/matrix-consumer-wire.test.js",
+    "size": 11624,
+    "sha256": "9dfe52ac3090a3e7047c0b1ef493bd72deec020365cee7b5417379f28d735970",
+    "blob": "83c0ed37e661ad6800699be063ee676f65c5362b"
+  },
+  {
+    "path": "tests/matrix-foundation-intake.test.js",
+    "size": 9227,
+    "sha256": "5543784f3624f185dba0f1e7012703d8a2d762d04b6c5860274f76144cbb3fbe",
+    "blob": "9f2b9c473aa90d9dcb7504b38dbf949a6319b6a2"
+  },
+  {
+    "path": "tests/browser-history-batch.html",
+    "size": 1551,
+    "sha256": "922ffda0f316fa0e41b72cee178cbc5297986ee86ce46e68d3857ad3883a4434",
+    "blob": "6befa8e9b5c9999d6638be30e816dcc692cc3d73"
+  },
+  {
+    "path": "tests/browser-history-batch.mjs",
+    "size": 5324,
+    "sha256": "6abff520c8330c4a0497558d6b8275d875c61cfa05964543d5fb200510fd3778",
+    "blob": "5dceec9b42ef8ae2d0892631ca515a2d1e545e81"
+  },
+  {
+    "path": "tests/history-batch.test.js",
+    "size": 9958,
+    "sha256": "55d2a9bfb083e567e58e32fb9f5fff29fbcd72edd6dd6a61f19050e63fbd28eb",
+    "blob": "f9d0a40611012bf8a8d69551c636a632295d7273"
+  },
+  {
+    "path": "tests/narrative-form-contract.test.js",
+    "size": 3860,
+    "sha256": "fcc354b88cbaba174be32d2082d8e75d73c3dec1334dc70fb14a7e9820fdc557",
+    "blob": "1efc82f1dc9dbe54e8dd9b3355e238bc576d54e2"
+  }
+]

@@ -3,11 +3,11 @@ import {digest,sha256} from './common.mjs';
 // Read-only coverage shared by automatic settlement, history intake and UI.
 // Saving a source is not proof that its semantic records reached the tables.
 export function memoryImports(state){
- return Object.values(state?.runtime?.receipts??{}).map(r=>r.result?.source)
-  .filter(s=>s?.kind==='matrix-foundation'&&s.source?.kind==='history'&&s.source?.sourceKind==='chat');
+ return Object.values(state?.runtime?.receipts??{}).flatMap(r=>r.result?.source?.kind==='matrix-foundation-batch'?r.result.source.items:[r.result?.source])
+  .filter(s=>s?.kind==='matrix-foundation'&&s.source?.kind==='history'&&s.source?.sourceKind==='chat'&&s.source?.output!=='summary');
 }
 export function memoryMessageRows(chat){
- return (chat??[]).map((m,index)=>({floor:index+1,uid:m.extra?.tisya_engine?.uid??'floor:'+index,role:m.is_system?'system':m.is_user?'user':m.extra?.tisya_engine?.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??''),candidate:m.swipe_id??0}));
+ return (chat??[]).map((m,index)=>({floor:index+1,uid:m.extra?.tisya_engine?.uid??'floor:'+index,role:m.is_system||m.is_tool||m.role==='tool'?'system':m.is_user?'user':m.extra?.tisya_engine?.pending_sha256?'assistant_pending':'assistant',text:String(m.mes??''),candidate:m.swipe_id??0}));
 }
 export function archiveSupplemented(state,source,imports=memoryImports(state)){
  const hash=source?.host_message_sha256??source?.reply_sha256;

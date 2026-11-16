@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.4",
+  "base_remote_commit": "6fc5c716bcc4eaacc721dfcb6af3e9651f3b574c",
+  "changes": [
+    "Persistent history batches, pause/resume, retained failed responses, per-batch revision and atomic reviewed confirmation.",
+    "Stage summaries use original source batches and do not mark detailed history as archived.",
+    "Speaker attribution, complementary event projections, shared place references and editable enabled-worldbook initialization."
+  ],
+  "validation": {
+    "prior_exact_source_full_suite": {
+      "tests": 2752,
+      "pass": 2752,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "build_checks": 18
+    },
+    "current_source_manifest": {
+      "files": 21,
+      "mismatches": 0
+    },
+    "current_runtime_build_check": true,
+    "prior_browser": {
+      "environment": "Cloud Chromium, production host and forms, isolated IndexedDB and synthetic model/worldbook fixtures",
+      "steps": [
+        "Five AI messages grouped 2/2/1; pause, reload, resume, reviewed commit: three events, one place, five covered messages.",
+        "Bad response retained after reopening and successful retry; completed batches reused.",
+        "Three separate stage summaries confirmed.",
+        "One enabled and one disabled worldbook entry distinguished; editable initialization confirmed; repeated initialization makes no extra request.",
+        "Final source reloaded and persistence checked."
+      ]
+    }
+  },
+  "not_verified": [
+    "Real SillyTavern/TauriTavern host",
+    "External model",
+    "Android device"
+  ],
+  "not_implemented": [
+    "Cross-stage final synthesis",
+    "Batch-specific field selection (existing advanced single-message entry remains)",
+    "Full canonical-form MVU writeback takeover"
+  ],
+  "recovery_checked_at": "2026-11-16T04:47:46.389245+00:00"
+}
