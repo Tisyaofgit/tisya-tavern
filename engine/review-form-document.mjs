@@ -1,3 +1,4 @@
+import {paragraphEvidence,stripParagraphEvidence} from './paragraph-evidence.mjs';
 import {recordIdentityLabel,identityFieldHidden} from './record-identity.mjs';
 import {dialogueFieldHint,unattributedDialogue} from '../tables/foundation/narrative-contract.js';
 import {prepareMatrixSheets,acceptMatrixSheets,matrixInputField,sheetLine,existingRecordCandidates,reusesNamedRow,sheetSections} from '../tables/foundation/engine.js';
@@ -24,7 +25,7 @@ function describeReviewDocument(state,context,text){
    const tableLabel=/^(.+)／[1-9]\d*$/.exec(heading[1])?.[1],template=context.catalog.templates.find(t=>ref?t.id===ref.tableId:t.label===tableLabel);
    if(!ref&&template&&reusesNamedRow(context,template.id)){
     const line=sections.find(s=>s.heading===heading[1])?.lines.find(line=>{try{return ['name','instance_name'].includes(matrixInputField(template,line).key);}catch{return false;}});
-    if(line){const field=matrixInputField(template,line),parsed=sheetLine(line),name=(parsed.compact?parsed.body:parsed.body.slice(field.label.length).replace(/^[\s：:]+/,'')).replace(/\s*\|\s*P\d+(?:\.\.P?\d+)?\s*$/i,'').trim(),matches=context.references.filter(r=>r.tableId===template.id&&r.name===name);if(matches.length===1)ref=matches[0];}
+    if(line){const field=matrixInputField(template,line),parsed=sheetLine(line),name=stripParagraphEvidence(parsed.compact?parsed.body:parsed.body.slice(field.label.length).replace(/^[\s：:]+/,'')).trim(),matches=context.references.filter(r=>r.tableId===template.id&&r.name===name);if(matches.length===1)ref=matches[0];}
    }
    if(ref&&!ref.name){const value=changes.find(c=>c.tableId===ref.tableId&&c.recordId===ref.recordId)?.values??{};ref.name=value.short_code??value.name??value.title??heading[1];}
    group={title:ref?template?.label+' · '+ref.name:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);offset+=part.length;continue;
@@ -45,7 +46,7 @@ function describeReviewDocument(state,context,text){
     spec=runtime.spec(tableId,key);record=runtime.record(tableId,recordId);row.tableId=tableId;row.recordId=recordId;row.recordName=record.values.name??record.values.title??'已有记录';
     valueStart=separator+1;while(/\s/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
    }
-   const evidence=/\s*\|\s*(P\d+(?:\.\.P?\d+)?)\s*$/i.exec(line),valueEnd=evidence?evidence.index:line.length;
+   const evidence=paragraphEvidence(line),valueEnd=evidence?evidence.index:line.length;
    Object.assign(row,{key:spec.key,label:spec.label??spec.key,type:spec.type,options:spec.enum??spec.options,minimum:spec.minimum,maximum:spec.maximum,previous:record?.values[spec.key],previousState:record?.states[spec.key]??'unset',value:line.slice(valueStart,valueEnd),valueStart:offset+valueStart,valueEnd:offset+valueEnd,evidence:evidence?.[1]??'',delta:!form});
    const canonicalName=changes.find(c=>c.tableId===row.tableId&&c.recordId===row.recordId)?.values?.name;if(spec.key==='name'&&canonicalName&&canonicalName!==row.value)row.help='已识别为已有对象“'+canonicalName+'”，本轮更新原记录并沿用正式名称。';
    row.hidden=identityFieldHidden(row.tableId,spec.key);if(row.tableId==='T_DYN_EVENTS'&&spec.key==='short_code')row.label='事件编号';

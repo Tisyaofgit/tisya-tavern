@@ -1,0 +1,103 @@
+{
+  "version": "archive.11",
+  "build_sha256": "a15eeae85e5bfaa534eb23b925ff80f7a4c616326f73ecd0a8212356ed28a39c",
+  "environment": "official managed preview + cloud Chromium, isolated IndexedDB",
+  "rounds": [
+    {
+      "round": 1,
+      "history_message_count": 0,
+      "payload_message_count": 31,
+      "payload_unicode_characters": 36409,
+      "raw_reply_unchanged": true,
+      "source_read_receipt_hashes_valid": true
+    },
+    {
+      "round": 2,
+      "history_message_count": 2,
+      "payload_message_count": 36,
+      "payload_unicode_characters": 42209,
+      "raw_reply_unchanged": true,
+      "source_read_receipt_hashes_valid": true
+    },
+    {
+      "round": 3,
+      "history_message_count": 4,
+      "payload_message_count": 37,
+      "payload_unicode_characters": 45119,
+      "raw_reply_unchanged": true,
+      "source_read_receipt_hashes_valid": true
+    },
+    {
+      "round": 4,
+      "history_message_count": 4,
+      "payload_message_count": 37,
+      "payload_unicode_characters": 45836,
+      "raw_reply_unchanged": true,
+      "source_read_receipt_hashes_valid": true
+    },
+    {
+      "round": 5,
+      "history_message_count": 4,
+      "payload_message_count": 37,
+      "payload_unicode_characters": 47044,
+      "raw_reply_unchanged": true,
+      "source_read_receipt_hashes_valid": true
+    }
+  ],
+  "final": {
+    "version": "archive.11 修复候选",
+    "run": "resume-0858",
+    "history": 4,
+    "confirmed": 5,
+    "total": 5,
+    "events": 5,
+    "relations": 0,
+    "archives": 5,
+    "holdings": 1,
+    "evidenceSuffixValues": [],
+    "queue": [
+      {
+        "status": "formal"
+      },
+      {
+        "status": "formal"
+      },
+      {
+        "status": "formal"
+      },
+      {
+        "status": "formal"
+      },
+      {
+        "status": "formal"
+      }
+    ],
+    "errors": []
+  },
+  "application_errors": [],
+  "excluded_extension_errors": [
+    "Error sending browser metadata to extension"
+  ],
+  "full_suite": {
+    "tests": 2857,
+    "pass": 2857,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "build_checks": 18,
+    "duration_ms": 417232.206065,
+    "log_sha256": "b811f8b091bdcfaec5075cdd3b80994ed0631faac0aeb50c4c9ab7bc343f4022"
+  },
+  "resume_checks": {
+    "pretest_manifest_12_files_match": true,
+    "runtime_build_check": true,
+    "git_diff_check": true
+  },
+  "scope": "Five previously generated original replies replayed through fixed program and browser confirmation. No fresh five-round model generation on archive.11.",
+  "not_tested": [
+    "complete SillyTavern/TauriTavern host",
+    "user external model API",
+    "Android device",
+    "relationship updates in this five-turn scenario"
+  ]
+}

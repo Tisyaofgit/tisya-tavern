@@ -1,3 +1,4 @@
+import {stripParagraphEvidence} from '../../engine/paragraph-evidence.mjs';
 import {OBJECT_IDENTITY_FIELDS,namedIdentityTable,normalizeIdentityName,identityAliases} from '../../engine/object-identity.mjs';
 import {eventCodes,recordIdentityLabel,identityFieldHidden} from '../../engine/record-identity.mjs';
 import {commonUnit,unitFormInstructions} from './common-units.js';
@@ -299,7 +300,7 @@ function structuredCell(raw,array=false){
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true}={}){
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
  const restrictReferences=task==='main'||!!characterSubject(scope);
  const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
@@ -345,7 +346,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
  const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=narrativeIdentity&&t.id==='T_DYN_EVENTS'&&f.key==='short_code'?'续接已有事件时填编号；新事件省略，由程序编号':hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
  const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
  const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+unitFormInstructions;
- return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,formSections,form:sharedInstructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
+ return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,formSections,form:sharedInstructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This
@@ -389,7 +390,7 @@ export function acceptMatrixSheets(context,snapshot,{blocks,parsed={},partial=fa
 
 function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=false,recordIds={}}){
  check(plain(blocks),'简表需要已解析的回复区块');
- const cellText=context.task==='main'?(blocks.cells??'').split(/\r?\n/).map(line=>line.replace(/\|\s*P\d+(?:\.\.P?\d+)?\s*$/i,'').trimEnd()).join('\n'):(blocks.cells??'');
+ const cellText=context.task==='main'?(blocks.cells??'').split(/\r?\n/).map(line=>stripParagraphEvidence(line,context.multipleEvidence!==false).trimEnd()).join('\n'):(blocks.cells??'');
  const sections=sheetSections(cellText),engine=createSheetEngine(context.catalog,v=>typeof v==='string'),rows=[],counts=new Map(),selections=[];
  check(sections.length<=500,'创作表单记录过多');
  for(const section of sections){
@@ -460,6 +461,19 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}
   const targets=[target].flat().filter(Boolean),matches=candidates.filter(r=>!target||targets.includes(r.tableId));
   let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
+  if(!target&&context.narrativeIdentity!==false&&!/[／#]/.test(raw)){
+   // A person's dossier and its proven actor link are one referent in an
+   // untyped list. Explicit table selectors still address the dossier itself.
+   const linked=new Set();
+   for(const entity of unique.filter(r=>r.tableId==='T_SYS_ENTITIES')){
+    const actor=actors.find(a=>a.recordId===entity.recordId);
+    if(actor?.dossierId){linked.add(actor.dossierId);continue;}
+    const value=generated.find(r=>r.tableId==='T_SYS_ENTITIES'&&r.recordId===entity.recordId)?.values??snapshot.state.tables.T_SYS_ENTITIES?.[entity.recordId]?.values;
+    const origin=generated.find(r=>r.tableId==='M_FIELD_REFERENCES'&&r.recordId===value?.origin_record_ref)?.values??snapshot.state.tables.M_FIELD_REFERENCES?.[value?.origin_record_ref]?.values;
+    if(origin?.owner_table==='T_SYS_ENTITIES'&&origin.owner_row_uuid===entity.recordId&&origin.owner_field==='origin_record_ref'&&origin.target_table==='T_CHAR_DOSSIER')linked.add(origin.target_row_uuid);
+   }
+   unique=unique.filter(r=>r.tableId!=='T_CHAR_DOSSIER'||!linked.has(r.recordId));
+  }
   if(context.commonUnits!==false&&target==='M_UNITS'&&unique.length>1&&unique.every(r=>r.name===raw)){const local=unique.filter(r=>unitValues(r).scope_world_id===unitScope());if(local.length)unique=local;}
   if(unique.length===1)return unique[0];
   if(context.commonUnits!==false&&!unique.length&&target==='M_UNITS'&&source){const unit=registerCommonUnit(source.row,raw,source.field);if(unit)return unit;}
@@ -489,15 +503,16 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  if(context.narrativeIdentity!==false&&permitsIdentityReuse(context.task)){
   const resolved=[];
   for(const row of rows.filter(r=>Object.hasOwn(OBJECT_IDENTITY_FIELDS,r.tableId)&&(!namedIdentityTable(r.tableId)||r.tableId==='T_STATIC_PLACES'&&r.raw.parent_place_ref)))try{
-   const relation=row.tableId==='T_DYN_RELATIONS_PACTS',keys=row.tableId==='T_STATIC_PLACES'?['name','parent_place_ref']:OBJECT_IDENTITY_FIELDS[row.tableId],old=snapshot.state.tables[row.tableId]?.[row.recordId]?.values??{},identity={};
+   const relation=row.tableId==='T_DYN_RELATIONS_PACTS',old=snapshot.state.tables[row.tableId]?.[row.recordId]?.values??{},holding=row.tableId==='T_DYN_HOLDINGS_INVENTORY'&&context.namedHoldingReuse!==false,merged={...old,...row.raw},namedHolding=holding&&context.namedHoldingReuse!==false&&!merged.item_instance_ref&&!merged.holding_end,keys=row.tableId==='T_STATIC_PLACES'?['name','parent_place_ref']:namedHolding?['item_ref','instance_name']:OBJECT_IDENTITY_FIELDS[row.tableId],identity={};
+   if(holding&&merged.holding_end)continue;
    for(const key of keys){const raw=row.raw[key],spec=snapshot.state.schema[row.tableId].fields.find(f=>f.key===key),target=spec?.ref;identity[key]=raw!==undefined?(target?reference(raw,target,{row,field:key}).recordId:normalizeIdentityName(decode(raw,spec)[0])):normalizeIdentityName(old[key]);}
    if(keys.some(k=>identity[k]===undefined||identity[k]===null||identity[k]==='')){if(relation||row.tableId==='T_CHAR_ANCHORS')check(false,'续接记录需要明确所属对象与身份字段：'+keys.join('、'));continue;}
    if(row.tableId==='T_CHAR_ANCHORS'&&row.raw.related_target_ref)identity.related_target_ref=reference(row.raw.related_target_ref,'T_SYS_ENTITIES',{row,field:'related_target_ref'}).recordId;
    if(row.existing&&relation)for(const key of keys)check(!old[key]||identity[key]===old[key],'已有关系不能改换主体或目标，请另建对应方向的关系');
    if(!row.existing){
-    const matches=context.references.filter(r=>r.tableId===row.tableId&&Object.entries(identity).every(([k,v])=>(snapshot.state.schema[row.tableId].fields.find(f=>f.key===k)?.ref?snapshot.state.tables[r.tableId]?.[r.recordId]?.values[k]:normalizeIdentityName(snapshot.state.tables[r.tableId]?.[r.recordId]?.values[k]))===v));
+    const matches=context.references.filter(r=>r.tableId===row.tableId&&(!holding||!snapshot.state.tables[r.tableId]?.[r.recordId]?.values.holding_end)&&(!namedHolding||!snapshot.state.tables[r.tableId]?.[r.recordId]?.values.item_instance_ref)&&Object.entries(identity).every(([k,v])=>(snapshot.state.schema[row.tableId].fields.find(f=>f.key===k)?.ref?snapshot.state.tables[r.tableId]?.[r.recordId]?.values[k]:normalizeIdentityName(snapshot.state.tables[r.tableId]?.[r.recordId]?.values[k]))===v));
     check(matches.length<=1,'同一身份有多条旧记录，请使用已有完整分组标题：'+row.heading);
-    const prior=matches[0]??resolved.find(r=>r.tableId===row.tableId&&Object.entries(identity).every(([k,v])=>r.identity[k]===v));
+    const prior=matches[0]??resolved.find(r=>r.tableId===row.tableId&&(!holding||!r.raw.holding_end)&&(!namedHolding||!r.raw.item_instance_ref)&&Object.entries(identity).every(([k,v])=>r.identity[k]===v));
     if(prior){const oldId=row.recordId;row.recordId=prior.recordId;row.existing=!!snapshot.state.tables[row.tableId]?.[row.recordId];for(const r of references)if(r.tableId===row.tableId&&r.recordId===oldId)r.recordId=row.recordId;for(const [k,v]of generatedParents)if(v===row.tableId+'#'+oldId)generatedParents.set(k,row.tableId+'#'+row.recordId);for(const o of identityOrigins)if(o.parentTable===row.tableId&&o.parentRecord===oldId)o.parentRecord=row.recordId;}
    }
    row.identity=identity;resolved.push(row);
