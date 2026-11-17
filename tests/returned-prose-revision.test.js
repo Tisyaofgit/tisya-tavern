@@ -20,7 +20,7 @@ test('4a prose remains verbatim outside authorized RP depth and machine form rev
  }
  for(const row of expected.options){const actual=PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===row.id);if(['R01-A','R04-A'].includes(row.id)){const key=row.id==='R01-A'?'@CHAR.AUTONOMY :=':'@CHAR.SUBTEXT_AND_COERCION :=';assert.equal(actual.effect,prompt(stock,'tisya_pref_portrayal').split('\n').find(line=>line.startsWith(key)));}else assert.equal(digest(actual.effect),row.sha256,row.id);}
  for(const row of expected.styleCards)assert.equal(digest(STYLE_CARDS.find(c=>c.id===row.id).content),row.sha256,row.id);
- assert.equal(PREFERENCE_GROUPS.length,46);assert.equal(expected.options.length,190);
+ assert.equal(PREFERENCE_GROUPS.length,47);assert.equal(expected.options.length,190);
  assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).filter(o=>o.default).length,53);
 });
 

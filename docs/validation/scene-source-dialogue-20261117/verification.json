@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.9",
+  "base_remote_commit": "ba9652ee3c7763ff6550124c4a5e6eece4e891fc",
+  "base_tree": "4933d1ff1bfc7e8d67f13670a2fb17d5b9ee9c2b",
+  "source_files_verified": 37,
+  "full_suite": {
+    "origin": "preceding development run, restored log and unchanged source manifest verified in continuation",
+    "command": "npm test",
+    "tests": 2826,
+    "pass": 2826,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 347196.440075,
+    "log_sha256": "bb10a5808ff75f84c56cb185a684f1c78a463fc814f6ea93c87fe4d775144a64"
+  },
+  "continuation_checks": {
+    "runtime_build_check": true,
+    "git_diff_check": true,
+    "browser_rebuilt_from_verified_sources": true
+  },
+  "not_verified": [
+    "complete live SillyTavern or TauriTavern host",
+    "external model response and style compliance",
+    "Android device"
+  ],
+  "scope": "Program code, approved presentation modules/assets, synthetic tests, validation summary only."
+}

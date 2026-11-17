@@ -5,6 +5,7 @@ import {Runtime} from '../engine/runtime.mjs';
 import {initializeState} from '../engine/materials.mjs';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges} from '../tables/foundation/engine.js';
 import {acceptReply} from '../engine/reply.mjs';
+import {replyFormDecoding,PRE_SCENE_REUSE_REPLY_FORM_VERSION,REPLY_FORM_OWNERSHIP_VERSION} from '../engine/reply-form-ownership.mjs';
 import {fixture} from './turn-review-host.test.js';
 import {describeReviewForms} from '../engine/review-form-document.mjs';
 const fresh=()=>new Runtime(initializeState(catalog,{audience:'author',world_ref:'test-world'}));
@@ -59,4 +60,31 @@ test('conflicting same-record fields reject, source-only fields are retained, ex
 });
 test('archive cannot use an authored cross-group record as an automatic identity grant',()=>{
  const e=fresh();acceptReply(e,reply('',form(e,'T_STATIC_PLACES',{name:'客舍',visual_atmosphere:'越过职责的写入'})),'bad',1,'main',{manualConfirmed:true});assert.equal(Object.keys(e.rows('T_STATIC_PLACES')).length,0);assert(e.data.runtime.warnings.some(w=>w.error?.code==='REPLY_FORM_OWNERSHIP'));
+});
+
+
+test('same visible scene name continues one row and review shows inherited values',()=>{
+ const e=fresh();e.newRecord('T_DYN_SCENE_SPACE',{name:'春宴初遇',stage:'抵达',temporary_environment:'雨后'},'scene');
+ const text=form(e,'T_DYN_SCENE_SPACE',{name:'春宴初遇',stage:'交谈',turn_elapsed:'3分钟'}),view=describeReviewForms(e.data,{cells:text});
+ assert.equal(view.cells.groups[0].recordId,'scene');assert.equal(view.cells.groups[0].rows.find(r=>r.key==='stage').previous,'抵达');
+ const {copy}=compile(e,text);assert.equal(Object.keys(copy.rows('T_DYN_SCENE_SPACE')).length,1);assert.equal(copy.rows('T_DYN_SCENE_SPACE').scene.values.stage,'交谈');assert.equal(copy.rows('T_DYN_SCENE_SPACE').scene.values.temporary_environment,'雨后');
+});
+test('ambiguous scenes still require explicit identity and old reply decoders retain original semantics',()=>{
+ const e=fresh();for(const id of ['scene-a','scene-b'])e.newRecord('T_DYN_SCENE_SPACE',{name:'春宴初遇'},id);
+ const text=form(e,'T_DYN_SCENE_SPACE',{name:'春宴初遇',stage:'交谈'});assert.throws(()=>compile(e,text),/重名/);
+ const unique=fresh();unique.newRecord('T_DYN_SCENE_SPACE',{name:'春宴初遇'},'scene');
+ const c={...context(unique),sceneNameReuse:false};assert.throws(()=>acceptMatrixSheets(c,{state:unique.data},{blocks:{cells:text}}),/已有同名记录/);
+});
+
+test('saved v3 scene decoder rejects the former collision while a newly reviewed v4 reply continues it',()=>{
+ assert.equal(replyFormDecoding(PRE_SCENE_REUSE_REPLY_FORM_VERSION).sceneNameReuse,false);
+ assert.equal(replyFormDecoding(PRE_SCENE_REUSE_REPLY_FORM_VERSION).plainTimeText,true);
+ for(const version of [PRE_SCENE_REUSE_REPLY_FORM_VERSION,REPLY_FORM_OWNERSHIP_VERSION]){
+  const e=fresh();e.newRecord('T_DYN_SCENE_SPACE',{name:'春宴初遇',stage:'抵达'},'scene');
+  const text=reply(form(e,'T_DYN_SCENE_SPACE',{name:'春宴初遇',stage:'交谈'}));
+  const result=acceptReply(e,text,'continued-scene',1,'main',{formOwnershipVersion:version,manualConfirmed:true});
+  assert.equal(result.result.operations[0].status,version===REPLY_FORM_OWNERSHIP_VERSION?'COMMITTED':'FAILED');
+  assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,1);
+  assert.equal(e.rows('T_DYN_SCENE_SPACE').scene.values.stage,version===REPLY_FORM_OWNERSHIP_VERSION?'交谈':'抵达');
+ }
 });

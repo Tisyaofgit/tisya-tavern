@@ -1,3 +1,4 @@
+import {dialogueBlocks} from './prose-dialogue.js';
 import {createNativeChatArchiveBooks} from './engine/chat-archive-book.mjs';
 import {mountTurnReview} from './engine/turn-review-ui.mjs';
 import {revealPhoneOrigin} from './phone-origin-navigation.mjs';
@@ -122,7 +123,13 @@ const button = (text, action) => `<button type="button" data-tisya-action="${esc
 let layout, top, controls, messageNavigation, releaseReader, readerToken, notebook, appearance, chatEffects, pet;
 const assistantViews=new Map();
 let motionEnabled=true,utility=null,nativeDisplay=null,homeView=null;
-const getAppearance=owner=>appearanceValues(settings(),owner);
+const getAppearance=owner=>{
+ const value=appearanceValues(settings(),owner);if(owner!=='body')return value;
+ const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;
+ const cards=group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);
+ const characters=cards.map(card=>({id:card.avatar,name:card.name,avatar:card.avatar?getThumbnailUrl('avatar',card.avatar):''}));
+ return {...value,dialogueCharacterRevision:JSON.stringify(characters),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:{},scope:{session_ref:String(c.chatId??'')}}))};
+};
 const getDisplay=()=>getAppearance('extensions');
 const getPlayerName=()=>context().name1??null;
 let displaySaving=false;
@@ -195,7 +202,7 @@ const configHost=createHost({projectToolTurns,openArchiveQuery:(task,input,optio
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 function currentNativeDisplayRules(){const c=context();return !c.chatId||!configStore.read().world.theme.nativeRegex||c.extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true});}
-const nativeSourceLayers=createNativeSourceLayers({PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
+const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};

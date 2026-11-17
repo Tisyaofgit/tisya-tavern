@@ -11,7 +11,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
  let scope=viewState.scope??'story';const refreshers=new Map();
  body.classList.add('tisya-preferences');const style=el('style');style.textContent=preferenceStyles;body.append(style);
- const intro=el('p','选择故事的叙事方式。修改后保存，下轮回复生效。');intro.className='preference-intro';
+ const intro=el('p','选择故事的叙事方式。修改后保存，下轮回复生效。叙述人称管外部叙事，第一人称心声独立设置。');intro.className='preference-intro';
  const scopes=el('select');scopes.setAttribute('aria-label','偏好范围');
  for(const [id,label]of [['story','当前故事'],['global','所有故事默认']])scopes.append(option(label,id));scopes.value=scope;
  const toolbar=el('div');toolbar.className='preference-toolbar';
@@ -25,7 +25,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
  function restoreOpen(state){for(const n of area.querySelectorAll('details[data-preference-section],details[data-preference-text]')){const key=n.dataset.preferenceSection??n.dataset.preferenceText;if(Object.hasOwn(state,key))n.open=state[key];}}
  function addCustom(group,name=group.label+' · 自定义',text=''){const id=crypto.randomUUID(),selection=group.multiple?['custom:'+id]:'custom:'+id;const records=scope==='story'?editor.rows:((config.playDefaults??={}).textOverrides??={});records[preferenceTextKey(group.id,selection)]={id,group:group.id,selection:JSON.stringify(selection),kind:'custom',name,text,enabled:true};set(group.id,selection);refreshers.get(group.id)?.(true);}
  function mountGroup(group){
-  const box=el('fieldset');box.dataset.preferenceGroup=group.id;if(['S08-Dial','S08-Look','S08-Mind','S08-MindVoice'].includes(group.id))box.dataset.preferenceKeywords='描写占比';box.append(el('legend',group.label));
+  const box=el('fieldset');box.dataset.preferenceGroup=group.id;if(group.id==='S09-Blocks')box.dataset.preferenceKeywords='角色 对白 对话 情绪 心声 格式 署名';if(group.id==='S08-MindVoice')box.dataset.preferenceKeywords='心声 内心 独白 第一人称';if(['S08-Dial','S08-Look','S08-Mind','S08-MindVoice'].includes(group.id))box.dataset.preferenceKeywords=(box.dataset.preferenceKeywords??'')+' 描写占比';box.append(el('legend',group.label));
   const picker=el('div'),tools=el('div'),textHost=el('div');tools.className='preference-actions';textHost.className='preference-text';box.append(picker,tools,textHost);
   let select,note,checks=[];
   const choose=value=>{set(group.id,value);refresh();};
@@ -58,7 +58,7 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
    if(['W','N01'].includes(group.id))continue;
    const category=['文风与凝视','技法与场合'].includes(group.section)?'文风与技法':'游玩规则';let section=sections.get(category);
    if(!section){section=el('details');section.dataset.preferenceCategory=category;section.dataset.preferenceSection=category;section.open=sections.size===0;section.append(el('summary',category));sections.set(category,section);area.append(section);}
-   if(group.id==='S08-Dial'){const heading=el('div');heading.className='preference-section-note';heading.append(el('h3','描写占比'),el('p','对白、外貌、心理分别调整。第一人称心声独立设置。'));section.append(heading);}section.append(mountGroup(group));
+   if(group.id==='S09-Blocks')section.append(el('p','勾选后保存，下轮按【角色#情绪】“对白”和【角色#情绪】■心声■输出。外观开关在阅读外观 → 区块样式 → 正文。'));if(group.id==='S08-Dial'){const heading=el('div');heading.className='preference-section-note';heading.append(el('h3','描写占比'),el('p','对白、外貌、心理分别调整。第一人称心声独立设置。'));section.append(heading);}section.append(mountGroup(group));
   }
   const params=el('details');params.dataset.preferenceSection='parameters';params.append(el('summary','语言、篇幅与记忆'));
   for(const [id,label,type,fallback]of [['main_language','主语言','text','中文'],['min_length','正文最少字数','number',2000],['max_length','正文最多字数','number',5000],['history_messages','历史聊天条数（当前输入始终保留）','number',historyLimit?.()??50]]){

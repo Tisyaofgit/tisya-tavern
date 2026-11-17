@@ -1,6 +1,7 @@
+import {createNativeSourcePlacement} from './native-source-placement.mjs';
 // Request-only source framing for the verified TauriTavern PromptManager path.
-// Source text is retained. Card/World Info activation and native placement stay
-// with the host; this adapter never reads a card again to expand its macros.
+// Source text and activation stay with the host. Owned sources are optionally
+// relocated into the dream material region after native assembly; this adapter never reads a card again to expand its macros.
 const NOTE = '2_floating_prompt';
 const EVENTS = ['GENERATION_AFTER_COMMANDS', 'WORLDINFO_ENTRIES_LOADED',
  'WORLD_INFO_ACTIVATED', 'GENERATE_AFTER_COMBINE_PROMPTS',
@@ -79,7 +80,7 @@ function freshBoundary() {
 export function createNativeSourceLayers({
  PromptManager, Message, ChatCompletion, getContext, getScope,
  isManagerActive = defaultManager, getAuthorsNotePolicy = () => ({enabled:undefined}),
- preparePreset = null, prepareMessage = null, finalizeMessages = null,
+ preparePreset = null, prepareMessage = null, finalizeMessages = null, relocateSources = false,
 } = {}) {
  let current = null, last = null, serial = 0, disposed = false;
  const handlers = new WeakMap(), prepared = new WeakMap(), messageOwners = new WeakMap();
@@ -107,6 +108,10 @@ export function createNativeSourceLayers({
  function activeManager(state, manager) {
   if (!state?.open || state.phase !== 'assembly') return false;
   return isManagerActive(manager) === true;
+ }
+ function ownedSource(state,text,kind){
+  const placement=state.placement;const wrapped=wrapNativeSource(placement?placement.strip(text):text,kind);
+  return placement&&wrapped.trim()?placement.mark(wrapped):wrapped;
  }
  function pendingSource(state, text, kind) {
   if (!text.trim()) return text;
@@ -161,7 +166,7 @@ export function createNativeSourceLayers({
     const body=text.slice(begin,end);
     if(body.includes(boundary.start))
      throw sourceError(state,'NATIVE_LAYER_BOUNDARY_NESTING','原生资料宏自嵌套，无法唯一还原');
-    const wrapped=wrapNativeSource(resolvePending(state,body,depth+1),boundary.kind);
+    const wrapped=ownedSource(state,resolvePending(state,body,depth+1),boundary.kind);
     text=text.slice(0,at)+wrapped+text.slice(end+boundary.end.length);
     at+=wrapped.length;
     state.report.expandedExtensions++;
@@ -249,7 +254,7 @@ export function createNativeSourceLayers({
    throw sourceError(state, 'NATIVE_LAYER_CONTENT', '原生资料 Prompt 不是文本', {identifier:result.identifier});
   if (!result.content.trim()) return result;
   const raw = result.content;
-  result.content = (prefix ? prefix + '\n\n' : '') + wrapNativeSource(raw, kind);
+  result.content = (prefix ? prefix + '\n\n' : '') + ownedSource(state,raw, kind);
   prepared.set(result, {raw, wrapped:result.content, kind, prefix});
   count(state, kind, raw, result.identifier);
   return result;
@@ -266,15 +271,16 @@ export function createNativeSourceLayers({
   if (example && typeof content !== 'string')
    throw sourceError(state, 'NATIVE_LAYER_EXAMPLE', '原生示例不是文本');
   const resolved = resolvePending(state,content);
-  let framed = example ? wrapNativeSource(resolved, '角色卡与世界书示例') : resolved;
+  let framed = example ? ownedSource(state,resolved, '角色卡与世界书示例') : resolved;
   if (typeof prepareMessage === 'function') {
    framed = invoke(state,'NATIVE_LAYER_MESSAGE_CALLBACK',prepareMessage,{role,content:framed,identifier,manager:binding.manager});
    if (typeof framed !== 'string' && !Array.isArray(framed) && framed !== null)
     throw sourceError(state, 'NATIVE_LAYER_MESSAGE_CALLBACK', '原生消息投影必须同步返回文本或原生内容数组');
   }
-  const result = await originalCreate.call(this, role, framed, identifier, tokenHandler);
+  const clean=state.placement?state.placement.strip(framed):framed;
+  const result = await originalCreate.call(this, role, clean, identifier, tokenHandler);
   check(state);
-  messageOwners.set(result, {state,manager:binding.manager});
+  messageOwners.set(result, {state,manager:binding.manager,...(framed!==clean?{tagged:framed,clean}:{})});
   state.report.ownedMessages++;
   if (example && framed !== content) {
    count(state, '角色卡与世界书示例', content, identifier);
@@ -305,8 +311,25 @@ export function createNativeSourceLayers({
   if(state.pending.some(boundary=>serialized.includes(boundary.start.split('\n')[1])
    ||serialized.includes(boundary.end.split('\n')[1])))
    throw sourceError(state,'NATIVE_LAYER_BOUNDARY_UNRESOLVED','最终消息残留未完成的原生资料边界');
+  const projected=copy(raw);
+  if(state.placement){
+   const flat=messages.flatten().filter(message=>message.content||message.tool_calls||message.role==='tool');
+   if(flat.length!==projected.length)throw sourceError(state,'NATIVE_SOURCE_MAPPING','宿主最终消息与来源集合不一致');
+   for(const [index,message]of flat.entries()){
+    const owner=messageOwners.get(message);if(owner?.tagged===undefined)continue;
+    const target=projected[index];
+    if(typeof target.content==='string'&&target.content===owner.clean)target.content=owner.tagged;
+    else if(Array.isArray(target.content)){
+     const parts=target.content.filter(p=>p?.type==='text'&&p.text===owner.clean);
+     if(parts.length!==1)throw sourceError(state,'NATIVE_SOURCE_CHANGED','来源消息的文字在计数后发生变化');
+     parts[0].text=owner.tagged;
+    }else throw sourceError(state,'NATIVE_SOURCE_CHANGED','来源消息在计数后发生变化');
+   }
+  }
   const result = typeof finalizeMessages === 'function'
-   ? invoke(state,'NATIVE_LAYER_FINALIZE_CALLBACK',finalizeMessages,copy(raw), {manager, completion:this}) : raw;
+   ? invoke(state,'NATIVE_LAYER_FINALIZE_CALLBACK',finalizeMessages,projected, {manager, completion:this, sourcePlacement:state.placement}) : raw;
+  if(state.placement&&JSON.stringify(result)!==state.placement.strip(JSON.stringify(result)))
+   throw sourceError(state,'NATIVE_SOURCE_UNPLACED','最终请求未完成原生资料归位');
   check(state);
   if (!Array.isArray(result))
    throw sourceError(state, 'NATIVE_LAYER_FINALIZE_CALLBACK', '最终层级投影必须同步返回消息数组');
@@ -358,7 +381,7 @@ export function createNativeSourceLayers({
   if (typeof capturedScope !== 'string' || !capturedScope) missing.push('generation scope');
   const state = {
    id:++serial, scope:capturedScope, type, phase:'prepare', open:true, error:null,
-   managers:new WeakSet(), changes:[], pending:[], baseline:null, activated:[],
+   managers:new WeakSet(), changes:[], pending:[],placement:relocateSources?createNativeSourcePlacement():null, baseline:null, activated:[],
    report:{status:'preparing', generation:serial, scope:capturedScope, type, dryRun:Boolean(dryRun),
     capabilities:{ready:missing.length === 0, missing, markerProjection:installed.prepare,
      exampleBeforeBudget:installed.message, finalMessageProjection:installed.finalize, events:EVENTS.slice()},

@@ -1,0 +1,48 @@
+{
+  "at_utc": "2026-11-17T05:52:04.401593+00:00",
+  "browser": "cloud Chromium",
+  "preview": "official sites-preview",
+  "build": "archive.9 final source rebuilt during continuation",
+  "production_code": "host, review UI, IndexedDB, prose formatter, preference compiler and native source projection",
+  "native_host_fixture": "pinned assembly excerpts, a1855be4a4f8b6ee7cd0374a84dbb3709c3e5375",
+  "actions": [
+    {
+      "case": "same-name scene",
+      "observed": "existing name and prior stage visible; edited candidate stage; confirmed; reload retains one scene with the edited stage"
+    },
+    {
+      "case": "generation format",
+      "observed": "closed both named-format choices and saved: directives absent; enabled both and saved: both directives present"
+    },
+    {
+      "case": "display switch",
+      "observed": "dialogue count 1 -> 0 -> 1, named thought and old unnamed thought each stay 1"
+    },
+    {
+      "case": "material placement",
+      "observed": "five native sources including expanded macro, card, depth card, depth World Info and attached scene moved within dream material boundaries in native relative order; edited user history preserved; no temporary marker remains"
+    },
+    {
+      "case": "viewpoint",
+      "observed": "second-person directive remains above the material region while conflicting third-person fixture text stays in the material region"
+    },
+    {
+      "case": "width",
+      "observed": {
+        "content_client_width": 390,
+        "content_scroll_width": 390,
+        "dialogue_width": 390,
+        "thought_width": 382
+      }
+    }
+  ],
+  "page_error_text": "",
+  "application_console_errors": [],
+  "browser_extension_errors": "metadata transport errors from chrome-extension URL excluded from application findings",
+  "not_executed": [
+    "external model call",
+    "complete target host",
+    "Android device"
+  ],
+  "screenshots": "kept outside the public source commit"
+}

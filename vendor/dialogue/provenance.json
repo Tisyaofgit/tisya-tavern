@@ -1,0 +1,12 @@
+{
+  "source": "approved inline-dialogue-approved-20261116-v3 / portrait-adaptive-20261116-v4",
+  "files": {
+    "dialogue-blocks.cjs": "cf5c0c1d6e2a7ac3767586e730bfa9c9091de4c01681b7075c53f54f015af630",
+    "media-bindings-model.cjs": "a8dbb3f5d2105e9b8bc406117b8d1af3c04e3f8f79ff4999fb57acdb178df65c"
+  },
+  "assets": {
+    "frame-879c88127dda.png": "879c88127dda6284e31784eff1fe4bdcfcff11d299219da13af4dc9b021dffeb",
+    "frame-f8471cac8587.png": "f8471cac85870bb6bdd8eb9fc728a50bf17fb9a557d1205afbd21edb8e4b87a2"
+  },
+  "original_css_sha256": "b2cac8a3f037cc2cceb976db3e8e1eea41048387836afc9784943cd661efceab"
+}

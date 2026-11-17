@@ -8,13 +8,14 @@ import {loadNativeHost} from './fixtures/native-layers/load-host-fragments.mjs';
 
 const clone=structuredClone;
 const eventNames=['GENERATION_AFTER_COMMANDS','WORLDINFO_ENTRIES_LOADED','WORLD_INFO_ACTIVATED','GENERATE_AFTER_COMBINE_PROMPTS','CHAT_COMPLETION_SETTINGS_READY','GENERATION_ENDED','GENERATION_STOPPED'];
-function setup(t,{legacy=false,substitute=value=>String(value??'').replaceAll('{{char}}','守夜人'),customPrompt=null}={}){
- const native=loadNativeHost({substitute}),settings={tags:clone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{N02:'N02-C'}}}};
- const projection=createNativePresetLayers({settings,slots:{}}),context={eventTypes:Object.fromEntries(eventNames.map(name=>[name,name])),extensionPrompts:{}};
- const adapter=createNativeSourceLayers({PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:projection.preparePreset,finalizeMessages:projection.finalizeMessages});
- t.after(()=>adapter.dispose());adapter.begin();adapter.entriesLoaded({globalLore:[],characterLore:[],chatLore:[],personaLore:[]});adapter.afterCombine();
+function setup(t,{legacy=false,substitute=value=>String(value??'').replaceAll('{{char}}','守夜人'),customPrompt=null,extensions={},historyTransform=null,beforeCombine=null,cardOverrides=false}={}){
+ const native=loadNativeHost({substitute}),settings={tags:clone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{N02:'N02-C','S08-MindVoice':'S08-MindVoice-C',N11:'N11-A','S09-Blocks':['S09-Dialogue','S09-Thought']}}}};
+ const projection=createNativePresetLayers({settings,slots:{}}),context={eventTypes:Object.fromEntries(eventNames.map(name=>[name,name])),extensionPrompts:extensions};
+ const adapter=createNativeSourceLayers({relocateSources:true,PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:projection.preparePreset,finalizeMessages:projection.finalizeMessages});
+ t.after(()=>adapter.dispose());adapter.begin();adapter.entriesLoaded({globalLore:[],characterLore:[],chatLore:[],personaLore:[]});if(beforeCombine)beforeCombine(adapter,context);adapter.afterCombine();
  function manager(){
   const value=new native.PromptManager();value.serviceSettings={prompts:clone(baseline.prompts),prompt_order:clone(baseline.prompt_order[1].order)};
+  if(cardOverrides){value.serviceSettings.prompt_order.find(p=>p.identifier==='jailbreak').enabled=true;Object.assign(value.serviceSettings.prompts.find(p=>p.identifier==='jailbreak'),{enabled:true,content:'历史后预设原文'});}
   if(legacy){
    value.serviceSettings.prompts=value.serviceSettings.prompts.filter(row=>row.identifier!=='tisya_layer_authority');
    const order=value.serviceSettings.prompt_order.filter(row=>row.identifier!=='tisya_layer_authority'),at=order.findIndex(row=>row.identifier==='tisya_material_boundary_open'),[opening]=order.splice(at,1);order.splice(order.findIndex(row=>row.identifier==='tisya_pref_narrative'),0,opening);value.serviceSettings.prompt_order=order;
@@ -28,14 +29,16 @@ function setup(t,{legacy=false,substitute=value=>String(value??'').replaceAll('{
   for(const item of owner.serviceSettings.prompt_order){if(!item.enabled)continue;const prompt=prompts.get(item.identifier);if(!prompt)continue;
    if(item.identifier==='charDescription'){messages.add(await native.Message.fromPromptAsync(card,owner.tokenHandler));continue;}
    if(item.identifier==='chatHistory'){
-    messages.add(await native.Message.createAsync('assistant','他将旧伞放在门边。','chatHistory-2',owner.tokenHandler));
-    messages.add(await native.Message.createAsync('user','继续谈话。','chatHistory-1',owner.tokenHandler));continue;
+    let history=[{role:'assistant',content:'他将旧伞放在门边。'},{role:'user',content:'继续谈话。'}];
+    if(historyTransform)history=await historyTransform({native,owner,history,context});
+    for(const [i,row]of history.entries())messages.add(await native.Message.createAsync(row.role,row.content,row.identifier??'chatHistory-'+i,owner.tokenHandler));continue;
    }
+   if(cardOverrides&&['main','jailbreak'].includes(item.identifier)){messages.add(await native.Message.fromPromptAsync(owner.preparePrompt({identifier:item.identifier,role:prompt.role,content:item.identifier==='main'?'卡片系统要求':'卡片历史后要求'},prompt.content),owner.tokenHandler));continue;}
    if(prompt.content)messages.add(await native.Message.fromPromptAsync(prompt,owner.tokenHandler));
   }
   completion.add(messages,0);const result=completion.getChat();assert.deepEqual(owner.serviceSettings,original);return {result,completion};
  }
- return {native,projection,adapter,manager,assemble};
+ return {native,projection,adapter,manager,assemble,context};
 }
 
 for(const legacy of [false,true])test('real native preparation applies selected configuration before budget and finalizes current/headless managers '+(legacy?'legacy':'new'),async t=>{
@@ -62,4 +65,58 @@ test('configuration macro has one native expansion across preparation and final 
 test('native trigger filtering never turns an excluded configuration on',async t=>{
  const s=setup(t,{customPrompt:{identifier:'custom-quiet-only',role:'system',content:'禁止在normal轮插入',enabled:true,fixtureTrigger:false}});
  const {result}=await s.assemble(s.manager());assert(!result.some(row=>row.content?.includes('禁止在normal轮插入')));
+});
+
+
+test('native depth and attached sources move into Dream Rules in native order; exact history and multimodal data stay',async t=>{
+ const extensions={DEPTH_PROMPT:{value:'深度卡文本',position:1,depth:1,role:0},customDepthWI_1_1:{value:'深度书文本',position:1,depth:1,role:1}};
+ const quoted='<DreamMaterial source="角色卡场景">\n附加场景\n</DreamMaterial>';
+ const s=setup(t,{extensions,historyTransform:async({native,owner,history,context})=>{
+  history[0].content+='\n'+quoted;
+  const scenario=owner.preparePrompt({identifier:'scenario',role:'system',content:'附加场景',attach_role:'user',attach_index:1,attach_side:'end'});
+  native.applyAttachedPromptsToMessages([scenario],history);
+  return native.populationInjectionPrompts([],history,context.extensionPrompts,native.runtime);
+ }});
+ const {result,completion}=await s.assemble(s.manager()),joined=result.map(m=>m.content).join('\n');
+ const begin=joined.indexOf('[Dream Rules]\n@BOUNDARY'),end=joined.indexOf('[/Dream Rules]');
+ for(const text of ['守夜人资料。','深度卡文本','深度书文本','附加场景'])assert(joined.indexOf(text)>begin&&joined.indexOf(text)<end,text);
+ assert(result.some(m=>m.role==='assistant'&&m.content==='他将旧伞放在门边。\n'+quoted));
+ assert(result.some(m=>m.role==='user'&&m.content.trim()==='继续谈话。'));
+ const original=completion.getMessages().flatten().map(m=>m.content).join('\n');
+ const ordered=['深度卡文本','深度书文本','附加场景'].sort((a,b)=>original.indexOf(a)-original.indexOf(b));
+ assert.deepEqual(ordered,[...ordered].sort((a,b)=>joined.indexOf(a)-joined.indexOf(b)));
+ assert.doesNotMatch(JSON.stringify(result),/TISYA_SOURCE_(?:START|END)/);
+ assert(s.native.tokenCalls.every(m=>!String(m.content).includes('TISYA_SOURCE_START')));
+ assert.equal(s.projection.lastFinalization().nativeSources.moved,4);
+ assert.match(joined,/@PSYCHOLOGY.VOICE := 将当前焦点人物的第一人称心声/);
+ assert.match(joined,/@LANG.GATE/);assert.match(joined,/@BODY.NAMED_DIALOGUE := 每段角色直接对白使用【角色名#当下情绪】“完整对白”/);assert.match(joined,/@BODY.NAMED_THOUGHT/);assert(joined.indexOf('@BODY.NAMED_DIALOGUE')<begin);assert(joined.indexOf('@PSYCHOLOGY.VOICE')<begin);
+ assert.deepEqual(completion.getChat(),result,'repeat projection never mutates the host collection');
+ s.adapter.end();assert.equal(extensions.DEPTH_PROMPT.value,'深度卡文本');
+});
+
+test('card macro inside configuration keeps surrounding upper rule and only relocates its source',async t=>{
+ const s=setup(t,{customPrompt:{identifier:'custom-card',role:'system',content:'上文 {{description}} 下文',enabled:true},substitute:value=>String(value??'').replaceAll('{{description}}','原生描述')});
+ const {result}=await s.assemble(s.manager()),text=result.map(m=>m.content).join('\n');
+ assert.match(text,/<tisya>\n上文  下文\n<\/tisya>/);
+ assert(text.indexOf('原生描述')>text.indexOf('[Dream Rules]\n@BOUNDARY'));
+});
+
+test('native author note worldbook, outlet, examples and effective card overrides all enter the same material region',async t=>{
+ const extensions={'2_floating_prompt':{value:'作者原文',position:1,depth:1,role:0},customWIOutlet_gate:{value:'出口书内容',position:4,depth:0,role:0}};
+ const s=setup(t,{extensions,cardOverrides:true,beforeCombine(adapter){adapter.activated([{position:2},{position:3}]);extensions['2_floating_prompt'].value='前注书内容\n作者原文\n后注书内容';},historyTransform:async({native,owner,history,context})=>{
+  const note=owner.preparePrompt({identifier:'authorsNote',role:'system',content:context.extensionPrompts['2_floating_prompt'].value});
+  const outlet=owner.preparePrompt({identifier:'outlet-test',role:'system',content:context.extensionPrompts.customWIOutlet_gate.value});
+  return [...history,{role:note.role,content:note.content},{role:outlet.role,content:outlet.content},{role:'system',content:'人物示例对白',identifier:'dialogueExamples 0-0'}];
+ }});
+ const {result}=await s.assemble(s.manager()),all=result.map(m=>m.content).join('\n'),open=all.indexOf('[Dream Rules]\n@BOUNDARY'),close=all.indexOf('[/Dream Rules]');
+ for(const text of ['前注书内容','后注书内容','出口书内容','人物示例对白','卡片系统要求','卡片历史后要求'])assert(all.indexOf(text)>open&&all.indexOf(text)<close,text);
+ assert(result.some(m=>m.content==='作者原文'));assert.doesNotMatch(all,/TISYA_SOURCE_(?:START|END)/);
+});
+
+test('source macro inside a JSON-framed upper rule remains movable without corrupting that rule',async t=>{
+ const s=setup(t,{customPrompt:{identifier:'quoted-layer-card',role:'system',content:'上文 <tisya> 是引用 {{description}} 下文',enabled:true},substitute:value=>String(value??'').replaceAll('{{description}}','引用内的卡片描述')});
+ const {result}=await s.assemble(s.manager()),text=result.map(m=>m.content).join('\n');
+ assert(text.indexOf('引用内的卡片描述')>text.indexOf('[Dream Rules]\n@BOUNDARY'));
+ const upper=result.find(m=>m.content.startsWith('<tisya encoding="json">')&&m.content.includes('上文'));
+ assert.equal(JSON.parse(upper.content.split('\n')[1]),'上文 <tisya> 是引用  下文');
 });

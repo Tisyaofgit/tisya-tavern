@@ -24,6 +24,7 @@ export function decorateAsides(root,options={}){
   for(let i=0;i<text.length;i++){
    const mark=text[i];if(mark!=='◆'&&mark!=='■')continue;
    const end=text.indexOf(mark,i+1);if(end<0)continue;
+   if(mark==='■'&&/【[^【】#\r\n]+#[^【】#\r\n]+】\s*$/.test(text.slice(0,i))){i=end;continue;}
    if(text.slice(i+1,end).trim()&&(mark!=='■'||options.标记内心!==false))pairs.push({start:i,end,kind:mark==='◆'?'translation':'thought'});
    i=end;
   }

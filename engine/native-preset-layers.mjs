@@ -42,7 +42,7 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
    return content;
   }};
  }
- function finalizeMessages(messages,{manager}={}){
+ function finalizeMessages(messages,{manager,sourcePlacement}={}){
   const value=owner(manager);
   const entries=value.compiled.layerPlan.entries.map(entry=>{
    if(!entry.enabled||entry.marker)return entry;
@@ -51,6 +51,8 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
   });
   const compiled={...value.compiled,layerPlan:{...value.compiled.layerPlan,entries}};
   const result=applyRequestLayers(messages,compiled);
+  const relocated=sourcePlacement?.relocate(result.messages,compiled);
+  if(relocated){result.messages=relocated.messages;result.audit.nativeSources=relocated.audit;}
   const sources=createPromptSourceMap(result.messages,compiled);
   for(const part of sources.parts)for(const match of part.text.matchAll(/\{\{tisya_[^{}]+\}\}/g))if(!sources.protection(part,match.index,match.index+match[0].length))fail('UNEXPANDED_MACRO','最终请求有未展开的缇斯亚资料宏');
   finalizedCompiled=compiled;

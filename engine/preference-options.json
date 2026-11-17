@@ -697,6 +697,27 @@
       ]
     },
     {
+      "id": "S09-Blocks",
+      "label": "角色对白与署名心声",
+      "slot": "tisya_pref_style",
+      "section": "文风与凝视",
+      "multiple": true,
+      "options": [
+        {
+          "id": "S09-Dialogue",
+          "label": "角色对白框【角色#情绪】“对白”",
+          "effect": "@BODY.NAMED_DIALOGUE := 每段角色直接对白使用【角色名#当下情绪】“完整对白”的格式，角色名与当前人物对应，情绪由该句的声口、动作与处境确定；连续发言自然连贯，旁白照常书写。标记只承载署名与情绪，人物知情和说话方式遵循当前人设。",
+          "default": false
+        },
+        {
+          "id": "S09-Thought",
+          "label": "署名心声【角色#情绪】■心声■",
+          "effect": "@BODY.NAMED_THOUGHT := 已获准描写的角色心声使用【角色名#当下情绪】■第一人称心声■；保留人物自己的措辞、疑问与自我辩解，让心声贴合当下触动，并与可见言行形成有据的相应或反差。角色与情绪写在心声前置块，外部叙述继续遵循 @POV.PERSON，主控心理遵循 @AUTH.MIND，人物认知遵循当前视角。",
+          "default": false
+        }
+      ]
+    },
+    {
       "id": "S08-Dial",
       "label": "对白比重",
       "slot": "tisya_pref_style",

@@ -1,5 +1,5 @@
 import {dialogueFieldHint,unattributedDialogue} from '../tables/foundation/narrative-contract.js';
-import {prepareMatrixSheets,matrixInputField,sheetLine,existingRecordCandidates,FIRST_MENTION_TABLES,sheetSections} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets,matrixInputField,sheetLine,existingRecordCandidates,reusesNamedRow,sheetSections} from '../tables/foundation/engine.js';
 import {Runtime} from './runtime.mjs';
 
 // A view of the existing protocol. Edits replace only the original value span;
@@ -18,7 +18,7 @@ function describeReviewDocument(state,context,text){
   if(heading){
    const refs=existingRecordCandidates(context,heading[1]);let ref=refs.length===1?refs[0]:null;
    const tableLabel=/^(.+)／[1-9]\d*$/.exec(heading[1])?.[1],template=context.catalog.templates.find(t=>ref?t.id===ref.tableId:t.label===tableLabel);
-   if(!ref&&template&&FIRST_MENTION_TABLES.has(template.id)){
+   if(!ref&&template&&reusesNamedRow(context,template.id)){
     const line=sections.find(s=>s.heading===heading[1])?.lines.find(line=>{try{return ['name','instance_name'].includes(matrixInputField(template,line).key);}catch{return false;}});
     if(line){const field=matrixInputField(template,line),parsed=sheetLine(line),name=(parsed.compact?parsed.body:parsed.body.slice(field.label.length).replace(/^[\s：:]+/,'')).replace(/\s*\|\s*P\d+(?:\.\.P?\d+)?\s*$/i,'').trim(),matches=context.references.filter(r=>r.tableId===template.id&&r.name===name);if(matches.length===1)ref=matches[0];}
    }
