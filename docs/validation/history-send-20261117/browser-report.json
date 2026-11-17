@@ -1,0 +1,34 @@
+{
+  "version": "archive.8",
+  "fixture": "tests/browser-history-send.mjs",
+  "runtime_blob": "dae44fe188194519f6fe41c324ed25ed7f11c5cb",
+  "preview_sha256": "a891bac4ca2f5abc334ae157b5ded12e91206a5746c373c1a7a64d5bb30fae3d",
+  "baseline_result": "HISTORY_BODY_BOUNDARY / TISHA_OUTPUT_REPLY",
+  "final_result": {
+    "accepted": true,
+    "old_history_copies": 1,
+    "current_input_copies": 1,
+    "chat_bytes_unchanged": true,
+    "payload_sha256": "3269ec1a4110d9bd4d8ef91e9eb1fd427c41ff17d11f857659b8e4702956cb8e"
+  },
+  "reload_preserved_input_and_history": true,
+  "malformed_protocol": {
+    "accepted": false,
+    "reported_floor": 1,
+    "error": "HISTORY_BODY_BOUNDARY / TISHA_OUTPUT_BODY_BOUNDARY"
+  },
+  "correction_retry_accepted": true,
+  "narrow_viewport": {
+    "iframe_width": 390,
+    "content_client_width": 375,
+    "document_scroll_width": 375,
+    "scroll_top": 321,
+    "client_height": 850,
+    "scroll_height": 1171
+  },
+  "final_source_reload_and_click_rechecked": true,
+  "observed_application_errors": [],
+  "excluded_instrumentation": "chrome-extension browser metadata delivery logs",
+  "external_model_calls": 0,
+  "scope": "production services in a real cloud browser, isolated synthetic chat and IndexedDB; not installed Tavern or Android"
+}

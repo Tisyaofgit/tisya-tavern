@@ -24,7 +24,7 @@ export function prepareReviewHistory(bundle,messages,scope,count){
  });
  const result=projectHistoryLayers({messages:rows,archives:units,scope,historyCount:count});
  const malformed=result.audit.find(x=>x.layer==='excluded'&&x.reason.startsWith('正文边界'));
- if(malformed)fail('HISTORY_BODY_BOUNDARY',malformed.reason);
+ if(malformed)fail('HISTORY_BODY_BOUNDARY','历史第'+malformed.floor+'层（AI回复）'+malformed.reason+'。请检查该层原文的回复外壳和段号。',{messageId:malformed.id,floor:malformed.floor});
  return {...result,text:Object.values(result.layers).join('\n'),messages:clone(messages),signature:digest(messages)};
 }
 export function applyReviewHistory(chat,prepared){

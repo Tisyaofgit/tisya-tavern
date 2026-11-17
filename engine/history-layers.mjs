@@ -1,7 +1,7 @@
 // Read-only candidate for the explicitly selected three-layer history route.
 // It does not enable/disable native history, write sources or call a model.
 import {extractXMLBody} from '../reader-core.js';
-import {normalizeEnvelope,DEFAULT_TAGS} from './tags.mjs';
+import {normalizeEnvelope,DEFAULT_TAGS,hasEnvelopeMarkers} from './tags.mjs';
 import {parseNumberedBody} from '../six/paragraphs.mjs';
 import {sha256,digest} from './common.mjs';
 
@@ -15,17 +15,23 @@ export function selectedMessages(messages,scope){
  check(new Set(rows.map(m=>m.id)).size===rows.length,'历史消息身份重复。');
  return [...rows].sort((a,b)=>a.floor-b.floor);
 }
-export function historyBody(text){
- const raw=String(text),normalized=normalizeEnvelope(/<\/?[A-Za-z][\w:.-]*(?:\s|\/?>)/.test(raw)?raw:'<reply><body>'+raw+'</body></reply>');
+function historySource(text){
+ const raw=String(text);
+ // Legacy messages are source material, not malformed newly generated forms.
+ // Preserve all their bytes; CDATA wrapping below keeps markup inert. Never
+ // use this route after a recognized protocol has failed boundary validation.
+ if(!hasEnvelopeMarkers(raw))return {text:raw,format:'legacy_source'};
+ const normalized=normalizeEnvelope(raw);
  // boby is a supported old spelling only at the envelope's body boundary.
  const canonical=/<boby(?:\s|>)/i.test(normalized)&&!/<body(?:\s|>)/i.test(normalized)?normalizeEnvelope(normalized,{...DEFAULT_TAGS,body:'boby'}):normalized;
  const body=extractXMLBody(canonical);
- if(!/^\s*1(?:[ \t]|\r?\n)/.test(body))return body;
+ if(!/^\s*1(?:[ \t]|\r?\n)/.test(body))return {text:body,format:'structured_body'};
  const paragraphs=parseNumberedBody(body);
  // Remove validated paragraph markers only. Keep prose digits, indentation,
  // fences and original newline/blank-line structure byte-for-byte.
- let at=0,out='';for(const p of paragraphs){out+=body.slice(at,p.blockStart)+body.slice(p.contentStart,p.blockEnd);at=p.blockEnd;}return out+body.slice(at);
+ let at=0,out='';for(const p of paragraphs){out+=body.slice(at,p.blockStart)+body.slice(p.contentStart,p.blockEnd);at=p.blockEnd;}return {text:out+body.slice(at),format:'structured_body'};
 }
+export const historyBody=text=>historySource(text).text;
 function messageXML(tag,m,text=m?.text??''){return m?'<'+tag+'>'+cdata(text)+'</'+tag+'>':'';}
 export function projectHistoryLayers({messages,archives=[],scope,historyCount=10,currentCommand=null}){
  check(Number.isSafeInteger(historyCount)&&historyCount>=0,'历史消息条数须为非负整数。');
@@ -39,8 +45,8 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
  const window=historyCount?past.slice(-historyCount):[];
  const recent=[];
  for(const m of window.filter(m=>m.role==='assistant'&&m.id!==last?.id)){
-  try{const text=historyBody(m.text);bodyCache.set(m.id,text);recent.push({...m,body:text});audit.push({id:m.id,layer:'recent_body',reason:'所选消息窗口内的char正文'});}
-  catch(error){audit.push({id:m.id,layer:'excluded',reason:'正文边界/段号无法可靠读取：'+error.message});}
+  try{const {text,format}=historySource(m.text);bodyCache.set(m.id,text);recent.push({...m,body:text,format});audit.push({id:m.id,floor:m.floor,layer:'recent_body',format,reason:format==='legacy_source'?'所选消息窗口内的旧版原文；未作为结构化指令执行':'所选消息窗口内的char正文'});}
+  catch(error){audit.push({id:m.id,floor:m.floor,layer:'excluded',reason:'正文边界/段号无法可靠读取：'+error.message});}
  }
  const sourceMap=new Map(rows.map(m=>[m.id,m])),recentIds=new Set(recent.map(m=>m.id)),seen=new Map(),record=[];
  for(const unit of archives){

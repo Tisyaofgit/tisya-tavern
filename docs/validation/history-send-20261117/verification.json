@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0-alpha.31.31.19-onepass.16-candidate.38-archive.8",
+  "base_local_commit": "817fcc866db15c2bfef28dfa0f2f12b37d9ed918",
+  "base_remote_commit": "5c993e06e4667308b6d0218c39d2d9b1d2680546",
+  "completed_at_utc": "2026-11-17T03:56:05.488807+00:00",
+  "full_suite": {
+    "command": "npm test",
+    "exit_code": 0,
+    "build_checks": 18,
+    "tests": 2813,
+    "pass": 2813,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 359910.087937
+  },
+  "final_targeted": {
+    "tests": 32,
+    "pass": 32,
+    "fail": 0
+  },
+  "scope": "history classification, production request lifecycle, regression tests and rebuilt runtime",
+  "browser": "browser-report.json",
+  "exact_sources": "source-manifest.json",
+  "limits": [
+    "Screenshot did not expose full offending history or floor",
+    "Synthetic old HTML reproduces the same error",
+    "No installed Tavern, Android or external model validation"
+  ]
+}

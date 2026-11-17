@@ -1,6 +1,7 @@
 import {clone,fail} from './common.mjs';
 import {xmlTokens} from '../reader-core.js';
 import {opaqueBlockEnd,groupedExtraSlots} from '../native-mvu-wire.js';
+import {protectCode} from '../markdown-code.js';
 export const DEFAULT_TAGS=Object.freeze(Object.fromEntries(['reply','task','anchor','title','body','extra','cells','vars','archive','actions'].map(k=>[k,k])));
 const blocked=new Set(['script','style','iframe','html','head','meta','link','svg','math','template','object','embed','img','input','button','a','div','span','p']);
 let active={...DEFAULT_TAGS},history=[],revision=0;
@@ -11,6 +12,36 @@ export function validateTags(tags={}){
 }
 export function configureTags(tags={},aliases=[]){active=validateTags(tags);history=aliases.map(validateTags);revision++;}
 export const currentTags=()=>clone(active);
+// Historical prose may contain arbitrary HTML. Only our own protocol markers
+// select the envelope reader; markup, attributes and quoted code do not.
+// This classification grants no permission to accept or execute a reply.
+export function hasEnvelopeMarkers(source){
+ const raw=String(source);
+ const names=new Set([...Object.values(DEFAULT_TAGS),...Object.values(active),...history.flatMap(Object.values),'boby','think','thinking','world_thinking','character_mode','character_thinking','output','narrative_close','next','status','memory','before','after'].map(n=>n.toLowerCase()));
+ // Whitespace before an actual root has always been legal. Do not let the
+ // Markdown indentation rules reclassify that root as a historical code block.
+ const first=/^\s*(?:<!--[\s\S]*?-->\s*)*<\/?([A-Za-z_][\w:.-]*)(?=[\s/>]|$)/.exec(raw);
+ if(first&&names.has(first[1].toLowerCase()))return true;
+ const text=protectCode(raw).prepared;
+ const leading=text.replace(/^\s*(?:<!--[\s\S]*?-->\s*)*/,'').replace(/^<!doctype\s+html[^>]*>\s*/i,'');
+ // body/title also belong to ordinary complete HTML documents. The remaining
+ // protocol blocks still identify a malformed machine envelope inside one.
+ if(/^<html(?=[\s>])/i.test(leading)){names.delete('body');names.delete('title');}
+ const tags=/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\/?([A-Za-z_][\w:.-]*)(?=[\s/>]|$)/g;
+ for(let match;(match=tags.exec(text));){
+  if(!match[1])continue;
+  const name=match[1].toLowerCase();if(names.has(name))return true;
+  // Advance over the whole tag so a protocol example in an HTML attribute is
+  // not mistaken for an actual boundary. Script/style source is opaque data.
+  const tail=/^(?:[^<>"']|"[^"]*"|'[^']*')*>/.exec(text.slice(tags.lastIndex));
+  if(!tail)continue;tags.lastIndex+=tail[0].length;
+  if(!match[0].startsWith('</')&&['script','style'].includes(name)){
+   const close=new RegExp('</'+name+'\\s*>','ig');close.lastIndex=tags.lastIndex;
+   const end=close.exec(text);if(!end)break;tags.lastIndex=close.lastIndex;
+  }
+ }
+ return false;
+}
 // Prompt references are token replacements, not a destructive source-code edit.
 // Word boundaries include identifiers to avoid changing "bodyguard" or storage keys.
 export function rewriteTagReferences(text,from=DEFAULT_TAGS,to=active){
