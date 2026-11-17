@@ -4,8 +4,9 @@ import {programOwnedTable} from './prompt-boundary.mjs';
 // Only new reply forms use this partition. Stored rows, legacy delta operations
 // and already prepared archive plans keep their original lifecycle and data.
 // Preserve each saved reply's decoder when the journal replays an earlier
-// branch: v2 adds common units; v3 accepts plain narrative time text; v4 continues unique named scenes.
-export const REPLY_FORM_OWNERSHIP_VERSION='tisya.reply-form-ownership/4';
+// branch: v2 adds common units; v3 accepts plain narrative time text; v4 continues unique named scenes; v5 uses event codes and directed pairs.
+export const REPLY_FORM_OWNERSHIP_VERSION='tisya.reply-form-ownership/5';
+export const PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION='tisya.reply-form-ownership/4';
 export const PRE_SCENE_REUSE_REPLY_FORM_VERSION='tisya.reply-form-ownership/3';
 export const PRE_TIME_TEXT_REPLY_FORM_VERSION='tisya.reply-form-ownership/2';
 export const PRE_UNIT_REPLY_FORM_VERSION='tisya.reply-form-ownership/1';
@@ -29,12 +30,12 @@ const memoryTables=new Set(ARCHIVE_TABLE_IDS);
 // that path; it is never offered as a choice in the current prompt.
 const legacyArchiveTables=new Set([...ARCHIVE_TABLE_IDS,...CELLS_BOOTSTRAP_TABLE_IDS,'T_SYS_CELL_REQUESTS','T_SYS_ARCHIVE_BATCHES']);
 export function assertReplyFormVersion(version){
- if(![REPLY_FORM_OWNERSHIP_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION,PRE_TIME_TEXT_REPLY_FORM_VERSION,PRE_UNIT_REPLY_FORM_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION].includes(version))fail('REPLY_FORM_VERSION','回复表单协议版本未知，原文保留待核',{version});
+ if(![REPLY_FORM_OWNERSHIP_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION,PRE_TIME_TEXT_REPLY_FORM_VERSION,PRE_UNIT_REPLY_FORM_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION].includes(version))fail('REPLY_FORM_VERSION','回复表单协议版本未知，原文保留待核',{version});
  return version;
 }
 export function replyFormDecoding(version){
  assertReplyFormVersion(version);
- return {commonUnits:[REPLY_FORM_OWNERSHIP_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION,PRE_TIME_TEXT_REPLY_FORM_VERSION].includes(version),plainTimeText:[REPLY_FORM_OWNERSHIP_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION].includes(version),sceneNameReuse:version===REPLY_FORM_OWNERSHIP_VERSION};
+ return {commonUnits:[REPLY_FORM_OWNERSHIP_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION,PRE_TIME_TEXT_REPLY_FORM_VERSION].includes(version),plainTimeText:[REPLY_FORM_OWNERSHIP_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION].includes(version),sceneNameReuse:[REPLY_FORM_OWNERSHIP_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION].includes(version),narrativeIdentity:version===REPLY_FORM_OWNERSHIP_VERSION};
 }
 
 export const CELLS_PROTOCOL='<cells format="form"> 填当前状态、本轮业务变化及新人物档案；任务保留接受证据。无变化写 <cells/>。';
@@ -96,7 +97,13 @@ export function assertReplyFormOwnership(state,changes,block,{version=REPLY_FORM
  for(const change of changes){
   const prior=state.tables?.[change.tableId]?.[change.recordId];
   if(prior&&replyFormOwner(state,change.tableId)==='owned')for(const key of ['owner_table','owner_form','owner_row_uuid','owner_field'])if(Object.hasOwn(change.values??{},key)&&digest(change.values[key]??null)!==digest(prior.values?.[key]??null))fail('REPLY_FORM_OWNER','已有所属明细不能改挂业务父记录或字段',{block,table:change.tableId,record:change.recordId,field:key});
-  if(!prior&&generated.has(change))continue;
+  if(generated.has(change)){
+   if(!prior)continue;
+   // A newly discovered dossier may complete the origin link of an already
+   // registered subject. This parser-owned operation cannot overwrite facts.
+   const v=change.values??{},link=values('M_FIELD_REFERENCES',v.origin_record_ref),dossier=link?.target_table==='T_CHAR_DOSSIER'&&values('T_CHAR_DOSSIER',link.target_row_uuid);
+   if(change.tableId==='T_SYS_ENTITIES'&&!prior.values.origin_record_ref&&['unclassified','character'].includes(prior.values.kind)&&Object.keys(v).every(k=>['kind','origin_record_ref'].includes(k))&&v.kind==='character'&&link?.owner_table==='T_SYS_ENTITIES'&&link.owner_row_uuid===change.recordId&&link.owner_field==='origin_record_ref'&&dossier?.name===(prior.values.name??prior.values.instance_name))continue;
+  }
   const target=resolve(change.tableId,change.recordId);
   if(target.block!==block)fail('REPLY_FORM_OWNERSHIP','该记录应由 <'+target.block+' format="form"> 填写，不能写入 <'+block+'>；本块不写入任何业务记录',{block,expected:target.block,table:change.tableId,record:change.recordId,owner_table:target.table,owner_record:target.record});
  }

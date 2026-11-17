@@ -1,3 +1,4 @@
+import {assertObjectUniqueness} from './object-identity.mjs';
 import {describeReviewForms} from './review-form-document.mjs';
 import {createChatArchiveStorage} from './chat-archive-book.mjs';
 import {applyReviewAction} from './review-host-actions.mjs';
@@ -103,7 +104,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   if(!bundle)fail('ENGINE_NOT_BOUND','请先接入本会话');
   if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');
   const messages=captureMessages(c),current=reconcile(bundle,messages).bundle;
-  const e=new Runtime(current.state),result=e.transaction('manual:'+crypto.randomUUID(),{source:'configuration'},()=>callback(e));
+  const e=new Runtime(current.state),result=e.transaction('manual:'+crypto.randomUUID(),{source:'configuration'},()=>{const value=callback(e);assertObjectUniqueness(current.state,e.data);return value;});
   if(result.status==='FAILED')fail(result.error.code,result.error.message,result.error.details);
   const patch=inversePatch({schema:e.data.schema,tables:e.data.tables},{schema:current.state.schema,tables:current.state.tables});
   if(e.data.tables.X_PHONE_BINDINGS?.['phone-current']){const archive=decodePhoneDatabase(e.data);if(archive)importPhone(archive);}
@@ -255,6 +256,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
      }
     }
    }
+   assertObjectUniqueness(current.state,e.data,changes);
    return {changed:changes.length,source:clone(source)};
   });
   if(transaction.status==='FAILED')fail(transaction.error.code,transaction.error.message,transaction.error.details);

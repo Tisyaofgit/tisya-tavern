@@ -1,0 +1,24 @@
+{
+  "version": "archive.10",
+  "verified_at": "2026-11-17T07:08:53.072661+00:00",
+  "build_sha256": "7ebee036d53d7143e706a2119c2cffb1ff98482f7c1766e4308afb36c4e23efa",
+  "environment": "managed preview and cloud Chromium, isolated IndexedDB v4 namespace",
+  "checks": {
+    "initial_event_without_title": "01; one event, relation and anchor after confirmation",
+    "same_event_and_direction": "same counts; result preserved; attitude changed from wary to trust; prior values visible",
+    "reverse_and_new_event": "event 02; two opposite directed relations",
+    "alias": "North Gate in fullwidth with extra spaces resolves to canonical 北门",
+    "manual_input": "edited light to 验收灯光 and saw that exact prior value on next form",
+    "owner_state_and_gauge": "one state and one gauge after label change, prior posture and value shown",
+    "cold_reload": "2 events, 2 relations, 1 anchor, 1 place, 2 subjects, 1 state, 1 gauge; confirmed status retained"
+  },
+  "application_errors": [],
+  "excluded_browser_extension_errors": [
+    "Error sending browser metadata to extension"
+  ],
+  "not_tested": [
+    "complete SillyTavern/TauriTavern host",
+    "external model",
+    "Android device"
+  ]
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "path": "engine/archive.mjs",
+    "bytes": 14446,
+    "sha256": "6d0469f684b7ddd26b3b6ed97d259226a90187dff6d62a911981d9e0bbcbb3d0",
+    "sha": "e74d44dd17fbf650476e4593417a296d21459210"
+  },
+  {
+    "path": "engine/host.mjs",
+    "bytes": 44706,
+    "sha256": "c5af9a51f35d2b9b53d81ff0ab8a6a11984cc1b6efdb3c88ab85a0ddd6c38e03",
+    "sha": "3c22d8fe0ae388641ad2604dac002b49c57eb35f"
+  },
+  {
+    "path": "engine/object-identity.mjs",
+    "bytes": 5402,
+    "sha256": "e0d5fccbb2776bf6153185b80b6f6c609f303e9c4eed9d7023d62a9d819378af",
+    "sha": "575e9d514356ac614bd804acdd02eaf9bbb47615"
+  },
+  {
+    "path": "engine/record-identity.mjs",
+    "bytes": 1323,
+    "sha256": "6c1bb25f9300a0329e69755ae2b875ec100bd028e34b2002ad356ea9fd9460f3",
+    "sha": "e10a61b50686deb09b87bd6c4ebee9c5a9f2973b"
+  },
+  {
+    "path": "engine/reply-form-ownership.mjs",
+    "bytes": 9557,
+    "sha256": "90396d341385ebe0780138efb184aa97d4b803261a1116e1da23bbe64dc5c6de",
+    "sha": "add12d0ecbcf8936fb36a6e87e3db7d4fe8d27a7"
+  },
+  {
+    "path": "engine/review-form-document.mjs",
+    "bytes": 7657,
+    "sha256": "2dc55bf6affde18f99f9ab214e133607eea46e3992819a56bb932962c6770be8",
+    "sha": "362bb8344a09a6fffac4be195103e0c6efe95e11"
+  },
+  {
+    "path": "engine/review-form-ui.mjs",
+    "bytes": 4134,
+    "sha256": "0584b19789b1f227eb347aff95d69c030a68b06d7071c82bc01a262cba908fa4",
+    "sha": "289ab7c378c7751240e3b8e664e4dc1c68d01c84"
+  },
+  {
+    "path": "engine/ui.mjs",
+    "bytes": 20770,
+    "sha256": "4ef5abe14472762ad748be4860e8cb224f21db4edc75b53b2ae2ff118dba2f41",
+    "sha": "456efe4b40f4900af1f9871ba7bdf6e8839c1b8a"
+  },
+  {
+    "path": "layout.js",
+    "bytes": 10377,
+    "sha256": "96553ed184beb2260e30e6fc3a4de06f439ea89c3c601f25e933d94f2387007f",
+    "sha": "5d52ae5b0e38b9eeeb9cf9ed0b7ec6bc40702ccb"
+  },
+  {
+    "path": "manifest.json",
+    "bytes": 508,
+    "sha256": "6c04e31eadce2fea40da5b06ce13a351701093343737496ffe3fe809afe9971b",
+    "sha": "0c84b77fd0d5b6e9f2a0207959fe9599b03294d7"
+  },
+  {
+    "path": "package.json",
+    "bytes": 1541,
+    "sha256": "158e3fabdf469e49c9cca09ddf54158e234cfdb807ebdfbce0761d6389c9aeff",
+    "sha": "cfdc3dea1b272af6be807f8a0398bb65a982f4d1"
+  },
+  {
+    "path": "runtime.js",
+    "bytes": 5296461,
+    "sha256": "3acdf5c74b36cd8fb696d3674ad28a3d546caf1d56b2ac7d55c38e3c387b8a68",
+    "sha": "b60b5593128016915e57a679f2f587f4d66002eb"
+  },
+  {
+    "path": "shell.css",
+    "bytes": 91178,
+    "sha256": "c416299bc40dc49ab255f95439f5a4f62d58d35c62f6a3ed75ce474cf2628a44",
+    "sha": "b00911ec68d8636df976779b12796d8267889e9d"
+  },
+  {
+    "path": "tables/foundation/engine.js",
+    "bytes": 98291,
+    "sha256": "28fe1bed245a2a3f02aacae21a0f4d6721e867ff2608b865ee3c48ca6a306c54",
+    "sha": "16d54f52b51d075a2fb8ec59ed15d144dc749e88"
+  },
+  {
+    "path": "tests/browser-event-relation.html",
+    "bytes": 1068,
+    "sha256": "d3813c346b413e0c5f3de53e771217002289f3fb990f9be35ca2982bdb7a87d1",
+    "sha": "4c7fcc65488e716c3469c91dd737eb01c9eafdc6"
+  },
+  {
+    "path": "tests/browser-event-relation.mjs",
+    "bytes": 5496,
+    "sha256": "339c784ba694d16b3b8b551d54ce721050205a404ed603f95d835bebbd0ff8e5",
+    "sha": "1e276f86e204d0efcca78e8ada67df22344f00ad"
+  },
+  {
+    "path": "tests/event-relation-identity.test.js",
+    "bytes": 10584,
+    "sha256": "22bcd8a5e8ad7ee17846fa023d30ab93d02764dd4dd6a9fb1d9ffaaf4bc0403e",
+    "sha": "9dd8321d05817fdc2cfb0e77ba4dc6dceda304f8"
+  },
+  {
+    "path": "tests/fixtures/memory-flow.mjs",
+    "bytes": 3871,
+    "sha256": "a4263cbbb0aa4b3c9240b00e9595d8138594cacc1b555823db0cc7c75d8aabf3",
+    "sha": "40d2409ca7fe91c112e9e5f2c6b2f979f48b5821"
+  },
+  {
+    "path": "tests/global-object-identity.test.js",
+    "bytes": 6342,
+    "sha256": "2aa558f789fb456fe0f7faf738e23e82719eee9a9ebc843360cd7966113198af",
+    "sha": "f73482bd0bf75380cee1c03a39d3add13989fe03"
+  },
+  {
+    "path": "tests/matrix-memory-archive.test.js",
+    "bytes": 20013,
+    "sha256": "a7b605d02d18c3172792bb890638ff4609e81af1f3f084a4069c2bf8d5e988a4",
+    "sha": "606ceec42b6ea2d4d576d959d4e4df7782d80020"
+  },
+  {
+    "path": "tools/build-event-relation-browser.mjs",
+    "bytes": 920,
+    "sha256": "0d2c2405c1ed6bc79afb25653157746adeb8c2e91c02cf17fdbddb69e15208d5",
+    "sha": "214975e4e6bbfd1e1e36e3845087c700497c6727"
+  }
+]

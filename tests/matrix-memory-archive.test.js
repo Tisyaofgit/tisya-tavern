@@ -13,7 +13,7 @@ import {prepareMatrixSheets} from '../tables/foundation/engine.js';
 const clone=structuredClone,catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 const legacyFixture=JSON.parse(readFileSync(new URL('./fixtures/reply-form-legacy-staged.json',import.meta.url)));
 function legacyState(kind){const saved=clone(legacyFixture.cases[kind]),state=initializeState(catalog,saved.runtime.scope);Object.assign(state.tables,saved.tables);state.runtime=saved.runtime;return state;}
-const eventForm=n=>form(initializeState(catalog),'T_DYN_EVENTS',{short_code:'e'+n,title:'事件'+n,spine_digest:'本轮看见信'});
+const eventForm=n=>form(initializeState(catalog),'T_DYN_EVENTS',{title:'事件'+n,spine_digest:'本轮看见信'});
 const reply=(n,archive=eventForm(n))=>`<reply><task/><anchor phase="before"/><title>门前${n}|雾历一日|门口|雾城</title><body>1 第${n}次推门，看见信上留下的线索。</body><anchor phase="after"/><extra/><cells/><vars/>${archive===null?'':archive?`<archive format="form">${archive}</archive>`:'<archive/>'}<actions/></reply>`;
 async function fixture(state=null){
  const macros=new Map(),ctx={chatId:'memory-chain',characterId:0,extensionSettings:{},chatMetadata:{},chat:[],saveChat:async()=>true,saveSettingsDebounced(){},registerMacro:(k,f)=>macros.set(k,f)};
@@ -39,8 +39,8 @@ test('actual host accepts every source and commits semantic event memory only be
  saved=await f.accept(reply(2));assert.equal(saved.state.runtime.archive.length,0);
  saved=await f.accept(reply(3));
  const events=Object.values(saved.state.tables.T_DYN_EVENTS);assert.equal(events.length,1,'archive form must actually reach the canonical event table');
- assert.equal(events[0].values.short_code,'e1');assert.equal(events[0].values.source_entry_id,f.ctx.chat[1].extra[NS].uid);
- assert.match(f.host.latest().materials.tisya_material_memory_archive,/事件1/);assert.doesNotMatch(f.host.latest().materials.tisya_material_memory_archive,/e2|e3/);
+ assert.equal(events[0].values.short_code,'01');assert.equal(events[0].values.source_entry_id,f.ctx.chat[1].extra[NS].uid);
+ assert.match(f.host.latest().materials.tisya_material_memory_archive,/01.*本轮看见信/);assert.doesNotMatch(f.host.latest().materials.tisya_material_memory_archive,/e2|e3/);
  const cold=f.cold();await cold.sync();const reopened=await cold.export();assert.deepEqual(reopened.state,saved.state);
  assert.equal(Object.values(reopened.state.tables.T_SYS_ARCHIVE_BATCHES).length,3);
 });
@@ -53,7 +53,7 @@ function seed(){
  return e;
 }
 const routes=[
- ['事件','T_DYN_EVENTS',{short_code:'e1',title:'新事件',spine_digest:'推门后看见信'}],
+ ['事件','T_DYN_EVENTS',{title:'新事件',spine_digest:'推门后看见信'}],
  ['阶段摘要','T_DYN_STAGE_SUMMARIES',{name:'渡口阶段',summary_text:'推门后看见信，仍待辨认落款。'}],
  ['状态','T_DYN_ENTITY_STATE',{entity_id:'阿青',posture:'站立'},'cells'],
  ['指标','T_DYN_ENTITY_GAUGES',{name:'紧张',entity_id:'阿青',field_key:'nervous',text_value:'稍紧张'},'cells'],
@@ -98,7 +98,7 @@ function form(state,tableId,values,recordId=null){
 const formReply=(n,text)=>reply(n,text);
 
 test('main archive grouped form uses the existing field contract and keeps explicit unknowns plus pending items',async()=>{
- const f=await fixture(),state=(await f.host.export()).state,body=form(state,'T_DYN_EVENTS',{short_code:'form-event',title:'门后的信',spine_digest:'看到信件',cause:'?'});
+ const f=await fixture(),state=(await f.host.export()).state,body=form(state,'T_DYN_EVENTS',{title:'门后的信',spine_digest:'看到信件',cause:'?'});
  await f.accept(formReply(1,body));await f.accept(reply(2,''));const saved=await f.accept(reply(3,''));const row=Object.values(saved.state.tables.T_DYN_EVENTS)[0];
  assert.equal(row.values.title,'门后的信');assert.equal(row.states.cause,'unknown');assert.equal(row.values.cause,null);
  assert.equal(Object.values(saved.state.tables.T_SYS_CELL_REQUESTS)[0].values.result_status,'待填写');assert(f.host.latest().result.warnings.some(w=>w.code==='ARCHIVE_DECLARED_PENDING'));
@@ -134,9 +134,9 @@ test('failed native state commit retains the previous database and a retry settl
 test('stopped reroll, accepted edit, deletion and child branch preserve only their selected semantic memories',async()=>{
  const f=await fixture();await f.accept(reply(1));await f.accept(reply(2));await f.accept(reply(3));const parent=clone({chatId:f.ctx.chatId,chat:f.ctx.chat,chatMetadata:f.ctx.chatMetadata}),before=await f.host.export();
  await f.prepare('swipe');f.ctx.chat.at(-1).mes=reply(99);await f.host.event('GENERATION_STOPPED');await f.cold().sync();assert.deepEqual((await f.host.export()).state,before.state);
- Object.assign(f.ctx,clone(parent));f.ctx.chat[1].mes=reply(10);await f.host.event('MESSAGE_EDITED',1);let state=(await f.host.export()).state;assert.deepEqual(Object.values(state.tables.T_DYN_EVENTS).map(r=>r.values.short_code),['e10']);
+ Object.assign(f.ctx,clone(parent));f.ctx.chat[1].mes=reply(10);await f.host.event('MESSAGE_EDITED',1);let state=(await f.host.export()).state;assert.deepEqual(Object.values(state.tables.T_DYN_EVENTS).map(r=>r.values.title),['事件10']);
  const kept=clone({chatId:f.ctx.chatId,chat:f.ctx.chat,chatMetadata:f.ctx.chatMetadata}),keptBundle=await f.host.export();f.ctx.chatId='memory-child';f.ctx.chat.splice(-2);await f.host.event('CHAT_CHANGED');state=(await f.host.export()).state;assert.equal(Object.keys(state.tables.T_DYN_EVENTS).length,0);
- Object.assign(f.ctx,kept);assert.deepEqual(await f.host.export(),keptBundle);await f.cold().sync();assert.equal(Object.values((await f.host.export()).state.tables.T_DYN_EVENTS)[0].values.short_code,'e10');
+ Object.assign(f.ctx,kept);assert.deepEqual(await f.host.export(),keptBundle);await f.cold().sync();assert.equal(Object.values((await f.host.export()).state.tables.T_DYN_EVENTS)[0].values.title,'事件10');
 });
 
 for(const [label,make,block='archive']of [
@@ -166,7 +166,7 @@ test('an already accepted task can record a later field delta without inventing 
 });
 
 test('each event binds only its own retained source fragments and never borrows another event paragraph',()=>{
- const e=seed(),archive=form(e.data,'T_DYN_EVENTS',{short_code:'e1',title:'门开了'})+'\n'+form(e.data,'T_DYN_EVENTS',{short_code:'e2',title:'窗边落雨'}).replace('／1】','／2】').replaceAll('P1','P2'),raw=reply(1,archive).replace('1 第1次推门，看见信上留下的线索。','1 门开了。\n\n2 窗边落雨。');
+ const e=seed(),archive=form(e.data,'T_DYN_EVENTS',{title:'门开了'})+'\n'+form(e.data,'T_DYN_EVENTS',{title:'窗边落雨'}).replace('／1】','／2】').replaceAll('P1','P2'),raw=reply(1,archive).replace('1 第1次推门，看见信上留下的线索。','1 门开了。\n\n2 窗边落雨。');
  acceptReply(e,raw,'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
- for(const [code,p]of [['e1','P1'],['e2','P2']]){const row=Object.values(e.rows('T_DYN_EVENTS')).find(r=>r.values.short_code===code);assert(row,JSON.stringify(e.data.runtime.archive_queue[0].error));assert.equal(row.values.source_paragraphs,p);assert.deepEqual(row.metadata.archive_source.paragraphs,[p]);assert.equal(row.metadata.archive_source.fragment_ids.length,1);const fragment=e.rows('T_SYS_SOURCE_FRAGMENTS')[row.metadata.archive_source.fragment_ids[0]];assert.equal(fragment.values.paragraph_id,p);assert.equal(fragment.values.entry_hash,row.values.source_hash);}
+ for(const [code,p]of [['01','P1'],['02','P2']]){const row=Object.values(e.rows('T_DYN_EVENTS')).find(r=>r.values.short_code===code);assert(row,JSON.stringify(e.data.runtime.archive_queue[0].error));assert.equal(row.values.source_paragraphs,p);assert.deepEqual(row.metadata.archive_source.paragraphs,[p]);assert.equal(row.metadata.archive_source.fragment_ids.length,1);const fragment=e.rows('T_SYS_SOURCE_FRAGMENTS')[row.metadata.archive_source.fragment_ids[0]];assert.equal(fragment.values.paragraph_id,p);assert.equal(fragment.values.entry_hash,row.values.source_hash);}
 });

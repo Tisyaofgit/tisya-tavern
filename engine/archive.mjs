@@ -94,5 +94,5 @@ export function formalizeArchives(runtime,{confirmedSource=null}={}){
 }
 export function stagedArchiveReferences(runtime){
  const {temp,warnings}=stagingView(runtime,null);if(warnings.length)fail('ARCHIVE_TEMPORARY_VIEW','临时层关联读取失败；原文与正式状态保留',{warnings});const current=new Set(Object.entries(runtime.data.tables).flatMap(([tid,rows])=>Object.keys(rows).map(id=>tid+'#'+id)));
- return Object.entries(temp.data.tables).filter(([tid])=>!tid.startsWith('M_')&&!['T_CHAR_SECRETS','T_SYS_ARCHIVE_BATCHES','T_SYS_CELL_REQUESTS'].includes(tid)).flatMap(([tid,rows])=>Object.entries(rows).filter(([id])=>!current.has(tid+'#'+id)).map(([,row])=>({table:temp.data.schema[tid].label,name:row.values.name??row.values.title??row.values.short_code??row.values.instance_name})).filter(r=>r.name));
+ return Object.entries(temp.data.tables).filter(([tid])=>!tid.startsWith('M_')&&!['T_CHAR_SECRETS','T_SYS_ARCHIVE_BATCHES','T_SYS_CELL_REQUESTS'].includes(tid)).flatMap(([tid,rows])=>Object.entries(rows).filter(([id])=>!current.has(tid+'#'+id)).map(([,row])=>({table:temp.data.schema[tid].label,name:row.values.short_code??row.values.name??row.values.title??row.values.instance_name})).filter(r=>r.name));
 }

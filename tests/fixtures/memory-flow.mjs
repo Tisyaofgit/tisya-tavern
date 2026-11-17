@@ -14,7 +14,7 @@ export function memoryForm(tableId,values,{evidence=true}={}){
   return (index+1)+' '+template.fields[index].label+'：'+value+(evidence?' | P1':'');
  }).join('\n');
 }
-export const memoryReply=(n,archive=memoryForm('T_DYN_EVENTS',{short_code:'e'+n,title:'渡口事件'+n,spine_digest:'第'+n+'次在渡口交信。'}))=>'<reply><task>内部规划不得当成经历</task><anchor phase="before"/><title>渡口'+n+'</title><body>1 第'+n+'次在渡口交信。</body><anchor phase="after"/><extra/><cells/><vars/>'+(archive===null?'':archive?'<archive format="form">'+archive+'</archive>':'<archive/>')+'<actions/></reply>';
+export const memoryReply=(n,archive=memoryForm('T_DYN_EVENTS',{title:'渡口事件'+n,spine_digest:'第'+n+'次在渡口交信。'}))=>'<reply><task>内部规划不得当成经历</task><anchor phase="before"/><title>渡口'+n+'</title><body>1 第'+n+'次在渡口交信。</body><anchor phase="after"/><extra/><cells/><vars/>'+(archive===null?'':archive?'<archive format="form">'+archive+'</archive>':'<archive/>')+'<actions/></reply>';
 export const intakeReply=cells=>'<reply><task/><anchor phase="before"/><title>历史提炼</title><body>1 已整理原文。</body><anchor phase="after"/><extra/><cells>'+cells+'</cells><vars/><archive/><actions/></reply>';
 
 export async function memoryFlow({storage=null,context=null}={}){

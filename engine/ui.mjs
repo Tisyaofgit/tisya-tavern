@@ -1,3 +1,4 @@
+import {recordIdentityLabel} from './record-identity.mjs';
 import {preferenceTextRows,preferenceTextChanges,preferenceTextFields} from './preference-editor.mjs';
 import {renderPreferences,renderResources} from './preferences-ui.mjs';
 import {baseline,configuration} from './config.mjs';
@@ -179,7 +180,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   for(const table of catalog.tables)tableSelect.append(option(table.label+' · '+table.id,table.id));tableSelect.value=selectedTable;
   tableSelect.onchange=()=>{const next=tableSelect.value;if(next===selectedTable)return Promise.resolve(true);tableSelect.value=selectedTable;tableSelect.tisyaRefresh?.();return route(async()=>{selectedTable=next;selectedRecord='';await run(render);});};body.append(field('表单',tableSelect));
   const records=bundle.state.tables[selectedTable]??{},record=el('select');record.className='text_pole';record.setAttribute('aria-label','记录');record.append(option('新建记录',''));
-  for(const [id,row]of Object.entries(records))record.append(option(row.values.name??row.values.title??id,id));record.value=selectedRecord;
+  for(const [id,row]of Object.entries(records))record.append(option(recordIdentityLabel(bundle.state,selectedTable,id)??id,id));record.value=selectedRecord;
   record.onchange=()=>{const next=record.value;if(next===selectedRecord)return Promise.resolve(true);record.value=selectedRecord;record.tisyaRefresh?.();return route(async()=>{selectedRecord=next;await run(render);});};body.append(field('记录',record));
   if(selectedRecord&&!records[selectedRecord])throw Error('所选记录已不存在，请重新选择记录。');
   if(selectedTable==='T_PREF_OUTPUT_CONFIG'&&selectedRecord){

@@ -16,6 +16,7 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
    for(const group of model.groups){
     const card=el('fieldset');card.className='review-record';card.append(el('legend',group.title));
     for(const row of group.rows){
+     if(row.hidden)continue;
      if(row.error){const warning=el('p',row.error);warning.className='review-field-warning';card.append(warning);continue;}
      const field=el('label'),name=el('strong',(row.recordName?row.recordName+' · ':'')+row.label),control=el(row.options?'select':row.type==='LONG_TEXT'||row.value.length>90?'textarea':'input');
      field.className='review-value-field';control.setAttribute('aria-label',titles[channel]+' · '+row.label);control.disabled=readonly;
