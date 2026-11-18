@@ -563,11 +563,12 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  function registerCommonUnit(row,raw,field){
   const definition=commonUnit(raw);if(!definition)return null;
   const world=unitScope();
-  let matches=references.filter(r=>r.tableId==='M_UNITS').filter(r=>{const u=unitValues(r);return commonUnit(r.name)?.label===definition.label&&u.dimension===definition.dimension&&(!u.scope_world_id||['GLOBAL',world].includes(u.scope_world_id));});
+  let matches=references.filter(r=>r.tableId==='M_UNITS').filter(r=>{const u=unitValues(r);return commonUnit(r.name)?.label===definition.label&&u.dimension===definition.dimension&&(u.custom_dimension??null)===(definition.customDimension??null)&&(!u.scope_world_id||['GLOBAL',world].includes(u.scope_world_id));});
   matches=[...new Map(matches.map(r=>[r.recordId,r])).values()];
   const local=matches.filter(r=>unitValues(r).scope_world_id===world);if(local.length)matches=local;
   check(matches.length<=1,'当前世界有多个同名单位，请指定已登记单位全名：'+raw);if(matches.length)return matches[0];
   const recordId=stableId(context.operationId+'|common-unit|'+digest(context.scope??{})+'|'+world+'|'+definition.label),values={scope_world_id:world,label:definition.label,dimension:definition.dimension};
+  if(definition.customDimension)values.custom_dimension=definition.customDimension;
   const worldRow=snapshot.state.tables.T_STATIC_WORLDS?.[world]?.values;
   const calendars=Object.entries(snapshot.state.tables.M_CALENDAR_RULES??{}).filter(([id,r])=>world!=='GLOBAL'&&(worldRow?.calendar_id?id===worldRow.calendar_id:r.values.world_ref===world));
   if(definition.component&&calendars.length===1&&calendars[0][1].values.world_ref===world)Object.assign(values,{calendar_ref:calendars[0][0],time_component:definition.component});

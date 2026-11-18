@@ -154,16 +154,17 @@ export function compileUnitRatios(tables){
     const calendar_ref=from.calendar_ref??null;if((to.calendar_ref??null)!==calendar_ref)fail('CALENDAR_MISMATCH','Units belong to different calendars');
     if(dimension==='time'&&(!blank(from.time_component)||!blank(to.time_component))&&blank(calendar_ref))fail('MISSING_CALENDAR_SCOPE','Calendar-dependent time units require a bound calendar');
     if(!blank(row.calendar_ref)&&row.calendar_ref!==calendar_ref)fail('CALENDAR_MISMATCH','Ratio calendar disagrees with unit definitions');
-    if(!blank(from.scope_world_id)&&!blank(to.scope_world_id)&&from.scope_world_id!==to.scope_world_id)fail('UNIT_SCOPE','Units belong to different worlds');
-    const unitWorld=from.scope_world_id??to.scope_world_id??null;
-    if(!blank(row.scope_world_id)&&!blank(unitWorld)&&row.scope_world_id!==unitWorld)fail('UNIT_SCOPE','Ratio world differs from unit world');
+    const localWorld=id=>blank(id)||id==='GLOBAL'?null:id,fromWorld=localWorld(from.scope_world_id),toWorld=localWorld(to.scope_world_id);
+    if(fromWorld&&toWorld&&fromWorld!==toWorld)fail('UNIT_SCOPE','Units belong to different worlds');
+    const unitWorld=fromWorld??toWorld;
+    if(!blank(row.scope_world_id)&&unitWorld&&row.scope_world_id!==unitWorld)fail('UNIT_SCOPE','Ratio world differs from unit world');
     const mode=requireKey(row.conversion_mode,'conversion_mode');let denominator,offset;
     if(mode==='LINEAR_FACTOR'){
       if(!blank(row.denominator)&&row.denominator!==1)fail('CONVERSION_MODE_CONFLICT','Linear-factor denominator is structurally 1');if(!blank(row.offset)&&row.offset!==0)fail('CONVERSION_MODE_CONFLICT','Linear-factor offset is structurally 0');denominator=1;offset=0;
     }else if(mode==='FRACTION'){
       if(!blank(row.offset)&&row.offset!==0)fail('CONVERSION_MODE_CONFLICT','Fraction conversion offset is structurally 0');denominator=row.denominator;offset=0;
     }else if(mode==='AFFINE'){denominator=row.denominator;offset=row.offset;}else fail('CONVERSION_MODE','Conversion mode is not registered',{mode});
-    const result={...row,dimension,calendar_ref,scope_world_id:row.scope_world_id??unitWorld,denominator,offset};
+    const result={...row,dimension,calendar_ref,scope_world_id:row.scope_world_id??unitWorld??from.scope_world_id??to.scope_world_id??null,denominator,offset};
     if(result.value_state==='known'){positive(result.numerator,'numerator');positive(result.denominator,'denominator');num(result.offset,'offset');}
     return result;
   });

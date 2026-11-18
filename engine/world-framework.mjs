@@ -1,5 +1,6 @@
 import {matrixRecordVisible,matrixFieldVisible,modelFieldAllowed} from './prompt-boundary.mjs';
 import {fail,stableId} from './common.mjs';
+import {planUnitSeedImport} from '../tables/foundation/unit-seeds.js';
 export const WORLD_FRAMEWORK_GROUPS=[
  {name:'世界',tables:['T_STATIC_WORLDS']},
  {name:'历法',tables:['M_CALENDAR_RULES','M_CALENDAR_MONTHS','M_CALENDAR_EXCEPTIONS']},
@@ -34,7 +35,7 @@ export function worldFramework(state,scope=state.runtime?.scope??{}){
   if(table==='T_STATIC_ITEMS_SKILLS')return currencyIds.has(id)||/^(货币|币种|currency)$/i.test(r.values.category??'');
   return true;
  }).map(([id,r])=>{
-  const schema=state.schema[table],name=r.values.name??r.values.label??(table==='M_CALENDAR_RULES'?worldName+'历法':table==='M_CALENDAR_MONTHS'?String(r.values.month??'')+'月':schema.label),values={};
+  const schema=state.schema[table],ratioName=table==='M_UNIT_RATIOS'?[r.values.from_unit,r.values.to_unit].map(id=>state.tables.M_UNITS?.[id]?.values.label).filter(Boolean):[],name=(ratioName.length===2?ratioName.join(' → '):null)??r.values.name??r.values.label??(table==='M_CALENDAR_RULES'?worldName+'历法':table==='M_CALENDAR_MONTHS'?String(r.values.month??'')+'月':schema.label),values={};
   for(const [key,v]of Object.entries(r.values)){const f=schema.fields.find(f=>f.key===key);if(!f||hiddenKey(table,key)||!modelFieldAllowed(f,schema)||!matrixFieldVisible(f,r,scope,table,state,id))continue;
    if(known(r,key))values[key]=v;else if(r.states[key]==='unknown')values[key]='?';
   }
@@ -74,5 +75,14 @@ export function createWorldFrameworkService(database){
   const result=await database.commit({operationId:'world-framework:'+crypto.randomUUID(),expectedRevision:revision,contextKey,changes,source:{kind:'world-framework'}});
   return {...result,recordId,worldId:table==='T_STATIC_WORLDS'?recordId:worldId};
  }
- return {readWorldFramework,saveWorldFrameworkRecord};
+ async function importWorldUnitSeeds({worldId,contextKey,revision,unitIds,ratioIds,confirm=false}){
+  const data=await readWorldFramework(worldId);
+  if(data.worldId!==worldId||data.contextKey!==contextKey||data.revision!==revision)
+   fail('SAVE_CONFLICT','世界框架已变化，请刷新后重试');
+  const {changes,items}=planUnitSeedImport(data.state,data,{unitIds,ratioIds});
+  if(!confirm||!changes.length)return {worldId,items,applied:false};
+  const result=await database.commit({operationId:'world-unit-seeds:'+crypto.randomUUID(),expectedRevision:revision,contextKey,changes,source:{kind:'world-unit-seeds'}});
+  return {...result,worldId,items,applied:true};
+ }
+ return {readWorldFramework,saveWorldFrameworkRecord,importWorldUnitSeeds};
 }

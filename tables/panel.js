@@ -368,7 +368,7 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  async function timeline(){if(beginPage('timeline'))return;const data=await refresh(),g=section('时间锚与变化');table(g,['剧情时间','记录时间','所属表','变动','来源'],data.anchors.slice().reverse().map(a=>[a.worldTime??'未知',a.recordedAt,a.table,JSON.stringify({before:a.before,after:a.after}),a.evidence]));const j=section('最近辅助任务');const receipts=service.nativeConfiguration?.state().receipts??[];if(receipts.length)table(j,['原生配置','名称','状态','说明'],receipts.map(r=>[r.kind,r.name,r.status,r.detail]));table(j,['任务','状态','说明'],service.state().jobs.map(x=>[x.task,x.status,x.detail]));button(j,'查看最近注入内容',()=>{const p=service.preview();j.append(el('pre',p?.text??'尚未组装本轮上下文'));});}
  async function framework(worldId,selection={}){
   if(beginPage('framework'))return;check(service.readWorldFramework,'当前存档尚未接入世界框架');
-  const data=await service.readWorldFramework(worldId);assertActive();worldFrameworkEditor({data,selection,el,field,button,section,check,isDirty:()=>dirty,changed:()=>dirty=true,saved:()=>dirty=false,reload:framework,save:service.saveWorldFrameworkRecord});notice.textContent='公共定义与各处引用共用同一存档';
+  const data=await service.readWorldFramework(worldId);assertActive();worldFrameworkEditor({data,selection,el,field,button,section,check,isDirty:()=>dirty,changed:()=>dirty=true,saved:()=>dirty=false,reload:framework,save:service.saveWorldFrameworkRecord,importSeeds:service.importWorldUnitSeeds});notice.textContent='公共定义与各处引用共用同一存档';
  }
  async function conditions(editId=null){
   if(beginPage('conditions'))return;
