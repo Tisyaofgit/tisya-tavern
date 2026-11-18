@@ -17,6 +17,39 @@ test('compact coordinates keep canonical fields and per-field source; visual edi
  const result=acceptReply(e,'<reply><body>1 抵达。\n\n2 休息。</body><cells format="form">'+edited+'</cells></reply>','compact');assert.equal(result.result.operations[0].status,'COMMITTED');const r=Object.values(e.rows('PEOPLE'))[0];assert.equal(r.values.hp,5);assert.equal(r.metadata.hp.source_pointer.paragraph_reference,'P2');
  assert.throws(()=>compile(e,'【人物／1】\n999：错位'),/未开放/);
 });
+test('a pending floor with bare numbered values can be edited and confirmed without regenerating its reply',async()=>{
+ const f=await fixture();
+ const cells=[
+  '【当前场景与时钟／1】','3 示例春宴','15 5分钟 | P1','20 旅人走到台阶边',
+  '【在场站位与视听／3】','3 示例春宴','4 旅人','6 台阶边缘 | P2','8 2步 | P2','9 船夫',
+  '【实时状态值／1】','3 旅人临时状态','4 旅人','5 袖口沾水 | P1','7 扶着栏杆 | P2'
+ ].join('\n');
+ const raw='<reply><body>1 旅人等了五分钟。\n\n2 旅人走到台阶边，距船夫两步。</body><cells format="form">'+cells+'</cells><archive/></reply>';
+ f.ctx.chat.push({mes:raw});
+ await f.host.sync();
+ const draft=await f.draft(),model=(await f.host.describeTurnReview(draft)).cells;
+ assert.deepEqual(model.groups.map(group=>group.rows.map(row=>row.key)),[
+  ['name','turn_elapsed','stage'],
+  ['scene_ref','entity_ref','position','distance_to_target','target_ref'],
+  ['name','entity_id','live_appearance','posture']
+ ]);
+ const row=model.groups[1].rows[2];
+ assert.equal(row.value,'台阶边缘');
+ assert.equal(row.evidence,'P2');
+ const edited=editReviewDocument(model,{[row.start]:'台阶内侧'});
+ assert.equal(edited,cells.replace('6 台阶边缘 | P2','6 台阶内侧 | P2'));
+ await f.host.confirmTurn({...draft,cells:edited});
+ const {state}=await f.snapshot();
+ const [scene]=Object.values(state.tables.T_DYN_SCENE_SPACE);
+ const [presence]=Object.values(state.tables.T_DYN_SCENE_PARTICIPANTS);
+ const [status]=Object.values(state.tables.T_DYN_ENTITY_STATE);
+ assert.equal(state.tables.M_QUANTITIES[scene.values.turn_elapsed].values.value,5);
+ assert.equal(presence.values.position,'台阶内侧');
+ assert.equal(presence.metadata.position.source_pointer.paragraph_reference,'P2');
+ assert.equal(status.values.posture,'扶着栏杆');
+ assert.equal((await f.host.listTurnReviews()).reviews[0].status,'confirmed');
+ assert.equal(f.ctx.chat[0].mes,raw);
+});
 test('archive evidence can be repaired in the visual editor without changing its value',()=>{
  const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_DYN_EVENTS');
  const raw='【'+t.label+'／1】\n4 事件标题：渡口交信\n19 一行因果梗概：信已交给船夫',model=describeReviewForms(e.data,{archive:raw}).archive;

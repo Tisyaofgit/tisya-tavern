@@ -12,15 +12,35 @@ import {narrativeFormContract,dialogueFieldHint,unattributedDialogue} from './na
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const fieldRow=(template,field)=>field.row??template.fields.indexOf(field)+1;
-export function matrixInputField(template,line){
- const parsed=sheetLine(line),matches=field=>field&&parsed.body.startsWith(field.label)&&(!parsed.body.slice(field.label.length)||/^[\s：:]/.test(parsed.body.slice(field.label.length)));
+export function matrixInputLine(template,line,{stripEvidence=true,multipleEvidence=true}={}){
+ const trimmed=line.trim();
+ const text=stripEvidence?stripParagraphEvidence(trimmed,multipleEvidence):trimmed;
+ const parsed=sheetLine(text);
  const current=template.fields.find(field=>fieldRow(template,field)===parsed.row);
- if(parsed.compact){check(current,'字段行号未开放：'+template.label+'/'+parsed.row);return current;}
- if(matches(current))return current;
- // Persisted replies before schema-coordinate projection used compact row
- // positions. Exact field labels keep this read compatibility unambiguous.
- const legacy=template.fields[parsed.row-1];if(matches(legacy))return legacy;
- check(false,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
+ const bodyStart=parsed.valueStart??(/^(?:\d+\s*[：:]\s*|\d+\s+)/.exec(text)[0].length);
+ let field=current,valueStart=bodyStart;
+ if(!parsed.compact){
+  const labelMatches=field=>field&&parsed.body.startsWith(field.label)&&
+   (!parsed.body.slice(field.label.length)||/^[\s：:]/.test(parsed.body.slice(field.label.length)));
+  // Older labeled replies used positions within the visible field list.
+  const legacy=template.fields[parsed.row-1];
+  const labeled=[current,legacy].find(labelMatches);
+  if(labeled){
+   const suffix=parsed.body.slice(labeled.label.length);
+   valueStart+=labeled.label.length+/^\s*(?:[：:]\s*)?/.exec(suffix)[0].length;
+   field=labeled;
+  }else{
+   // A bare value uses the schema coordinate. An explicit conflicting
+   // registered label still signals a mismatched field.
+   const explicitLabel=/^([^：:]+)[：:]/.exec(parsed.body)?.[1].trimEnd();
+   const conflict=template.fields.some(field=>field.label===explicitLabel)||
+    template.unavailableLabels?.includes(explicitLabel);
+   check(!conflict,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
+  }
+ }
+ check(field,'字段行号未开放：'+template.label+'/'+parsed.row);
+ const valueEnd=parsed.valueEnd??text.length;
+ return {field,raw:text.slice(valueStart,valueEnd),valueStart,valueEnd};
 }
 const permitsIdentityReuse=task=>['main','historyImport','templateInit'].includes(task);
 // A state description, remaining duration or source of the latest change
@@ -61,7 +81,10 @@ function sheetFieldText(line,cells){
 export function matrixSheetReferenceGraph(context,text){
  const rows=sheetSections(text,{tolerant:true}).map(section=>{
   const candidates=existingRecordCandidates(context,section.heading),existing=candidates.length===1?candidates[0]:undefined,label=/^(.+)／[1-9]\d*$/.exec(section.heading)?.[1],template=context.catalog.templates.find(t=>existing?t.id===existing.tableId:t.label===label),raw={},diagnostics=candidates.length>1?[ambiguousExistingHeading(section.heading)]:[];
-  if(template){const fields=template.fields.map(field=>({...field,row:fieldRow(template,field)}));for(const line of section.lines)try{const field=matrixInputField(template,line),normalized=line.replace(/^\d+/,String(fieldRow(template,field))),parsed=sheetFieldText(normalized,fields);if(parsed.raw)raw[parsed.cell.key]=parsed.raw;}catch(error){diagnostics.push(error.message);}}
+  if(template)for(const line of section.lines)try{
+   const parsed=matrixInputLine(template,line,{stripEvidence:context.task==='main',multipleEvidence:context.multipleEvidence!==false});
+   if(parsed.raw)raw[parsed.field.key]=parsed.raw;
+  }catch(error){diagnostics.push(error.message);}
   return {heading:section.heading,tableId:template?.id??null,name:raw.name??raw.label??raw.title??raw.instance_name??existing?.name??'',raw,diagnostics,dependencies:[]};
  });
  const table=raw=>context.catalog.templates.find(t=>t.id===raw||t.label===raw)?.id??raw;
@@ -329,7 +352,10 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(!fields.length)continue;
   const names=new Map(),fieldLabels=new Map();for(const f of allSchemas[id].fields){const name=f.label||f.key,n=(names.get(name)??0)+1;names.set(name,n);fieldLabels.set(f.key,n>1?name+'〔'+n+'〕':name);}
   schema.fields=schema.fields.filter(allowed);
-  const t={id,table:id,label:labels.get(id),fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'}}))};templates.push(t);schemaByTemplate[id]=schema;
+  const openKeys=new Set(fields.map(f=>f.key));
+  const unavailableLabels=snapshot.state.schema[id].fields.filter(f=>!openKeys.has(f.key))
+   .flatMap(f=>[f.label??f.key,fieldLabels.get(f.key)].filter(Boolean));
+  const t={id,table:id,label:labels.get(id),unavailableLabels,fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'}}))};templates.push(t);schemaByTemplate[id]=schema;
  }
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
  for(const [id,schema]of Object.entries(schemaByTemplate))for(const field of schema.fields){const targets=phoneFormReference(id,field.key)??PHONE_FORM_LIST_REFERENCES[id]?.[field.key];for(const target of [targets].flat().filter(Boolean))if(allSchemas[target])referenceTables.add(target);}
@@ -436,7 +462,11 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
     counts.set(t.id,expected);
    }
    recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
-  const made=engine.create(t.id),keys=section.lines.map((line,index)=>{const f=matrixInputField(t,line);section.lines[index]=line.replace(/^\d+/,String(fieldRow(t,f)));return f.key;});
+  const made=engine.create(t.id),keys=section.lines.map((line,index)=>{
+   const {field,raw}=matrixInputLine(t,line,{stripEvidence:false});
+   section.lines[index]=fieldRow(t,field)+'{'+raw+'}';
+   return field.key;
+  });
   check(keys.length,'不创建没有字段的记录：'+section.heading);selections.push({recordId:made.id,keys,heading:section.heading});rows.push({tableId:t.id,recordId,workbookId:made.id,heading:section.heading,existing:!!existing,values:{},states:{}});
   }catch(error){error.formLocation??={heading:section.heading};throw error;}
  }

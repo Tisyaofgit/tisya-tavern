@@ -3,7 +3,7 @@ import {clone,fail,sha256,digest,stableId,asError} from './common.mjs';
 import {normalizeEnvelope,envelopeTags} from './tags.mjs';
 import {xmlTokens} from '../reader-core.js';
 import {groupedExtraSlots} from '../native-mvu-wire.js';
-import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputField} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputLine} from '../tables/foundation/engine.js';
 import {stageArchive,formalizeArchives} from './archive.mjs';
 import {assertReplyFormOwnership,replyFormDecoding,assertReplyFormVersion,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
 import {programOwnedTable,creationFieldAllowed} from './prompt-boundary.mjs';
@@ -60,7 +60,7 @@ export function acceptReply(e,raw,entryId,revision=1,branch='main',{formOwnershi
  if(formMode&&parsed.delta_ops.length){let result;try{result=e.transaction(operation+':sheets',{cells:parsed.delta_ops,reply_sha256:parsed.reply_sha256},()=>{
   const snapshot={state:e.data},context=prepareMatrixSheets(snapshot,{...replyFormDecoding(formOwnershipVersion),operationId:operation+':sheets',kind:'rows',mode:'revise',task:'main'}),blocks={...envelope(raw).blocks,cells:parsed.delta_ops.join('\n')};
   const accepted=acceptMatrixSheets(context,snapshot,{blocks,parsed}),changes=accepted.proposal.matrix.changes;assertReplyFormOwnership(e.data,changes,'cells',{version:formOwnershipVersion,generatedIdentities:accepted.generatedIdentities});applyMatrixChanges(e,changes,{mode:'revise'});
-  let heading;const evidence=new Map();for(const line of parsed.delta_ops){const h=/^【([^】]+)】$/.exec(line);if(h){heading=h[1];continue;}const m=/^\d+(?:\s+|[：:{])/.test(line)&&paragraphEvidence(line,context.multipleEvidence!==false);if(m&&heading){const binding=accepted.bindings.find(b=>b.heading===heading),template=context.catalog.templates.find(t=>t.id===binding?.tableId);if(template)evidence.set(heading+'|'+matrixInputField(template,line).key,m[1]);}}
+  let heading;const evidence=new Map();for(const line of parsed.delta_ops){const h=/^【([^】]+)】$/.exec(line);if(h){heading=h[1];continue;}const m=/^\d+(?:\s+|[：:{])/.test(line)&&paragraphEvidence(line,context.multipleEvidence!==false);if(m&&heading){const binding=accepted.bindings.find(b=>b.heading===heading),template=context.catalog.templates.find(t=>t.id===binding?.tableId);if(template)evidence.set(heading+'|'+matrixInputLine(template,line,{multipleEvidence:context.multipleEvidence!==false}).field.key,m[1]);}}
   const sourcePointer={source_key:sourceKey,entry_id:entryId,revision,body_sha256:parsed.body_sha256,operation_id:operation+':sheets'};
   for(const change of changes)for(const field of Object.keys(change.values)){const record=e.record(change.tableId,change.recordId);record.metadata[field]={...(record.metadata[field]??{}),source_pointer:{...sourcePointer,paragraph_reference:null}};}
   for(const binding of accepted.bindings){const row=accepted.workbook.records.find(r=>r.id===binding.workbookId),template=context.catalog.templates.find(t=>t.id===binding.tableId),target=e.record(binding.tableId,binding.recordId);

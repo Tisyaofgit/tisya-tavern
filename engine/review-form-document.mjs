@@ -1,7 +1,7 @@
-import {paragraphEvidence,stripParagraphEvidence} from './paragraph-evidence.mjs';
+import {paragraphEvidence} from './paragraph-evidence.mjs';
 import {recordIdentityLabel,identityFieldHidden} from './record-identity.mjs';
 import {dialogueFieldHint,unattributedDialogue} from '../tables/foundation/narrative-contract.js';
-import {prepareMatrixSheets,acceptMatrixSheets,matrixInputField,sheetLine,existingRecordCandidates,reusesNamedRow,sheetSections} from '../tables/foundation/engine.js';
+import {prepareMatrixSheets,acceptMatrixSheets,matrixInputLine,existingRecordCandidates,reusesNamedRow,sheetSections} from '../tables/foundation/engine.js';
 import {Runtime} from './runtime.mjs';
 
 // A view of the existing protocol. Edits replace only the original value span;
@@ -24,8 +24,14 @@ function describeReviewDocument(state,context,text){
    const binding=compiled?.bindings.find(r=>r.heading===heading[1]);if(binding)ref={...binding,name:context.references.find(r=>r.tableId===binding.tableId&&r.recordId===binding.recordId)?.name};
    const tableLabel=/^(.+)／[1-9]\d*$/.exec(heading[1])?.[1],template=context.catalog.templates.find(t=>ref?t.id===ref.tableId:t.label===tableLabel);
    if(!ref&&template&&reusesNamedRow(context,template.id)){
-    const line=sections.find(s=>s.heading===heading[1])?.lines.find(line=>{try{return ['name','instance_name'].includes(matrixInputField(template,line).key);}catch{return false;}});
-    if(line){const field=matrixInputField(template,line),parsed=sheetLine(line),name=stripParagraphEvidence(parsed.compact?parsed.body:parsed.body.slice(field.label.length).replace(/^[\s：:]+/,'')).trim(),matches=context.references.filter(r=>r.tableId===template.id&&r.name===name);if(matches.length===1)ref=matches[0];}
+    for(const line of sections.find(s=>s.heading===heading[1])?.lines??[]){
+     let parsed;
+     try{parsed=matrixInputLine(template,line);}catch{continue;}
+     if(!['name','instance_name'].includes(parsed.field.key))continue;
+     const matches=context.references.filter(r=>r.tableId===template.id&&r.name===parsed.raw.trim());
+     if(matches.length===1)ref=matches[0];
+     break;
+    }
    }
    if(ref&&!ref.name){const value=changes.find(c=>c.tableId===ref.tableId&&c.recordId===ref.recordId)?.values??{};ref.name=value.short_code??value.name??value.title??heading[1];}
    group={title:ref?template?.label+' · '+ref.name:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);offset+=part.length;continue;
@@ -33,21 +39,22 @@ function describeReviewDocument(state,context,text){
   if(!group||!form){if(!group||group.form){group={title:'本轮状态变化',rows:[]};groups.push(group);}}
   const row={raw:line,start:offset,end:offset+line.length};
   try{
-   let spec,record,valueStart,bracedEnd;
+   let spec,record,valueStart,valueEnd;
+   const evidence=paragraphEvidence(line);
    if(form){
     if(!group.template)throw Error('此分组没有唯一对应的表单，请在原始内容中检查标题。');
-    const field=matrixInputField(group.template,trimmed);spec=state.schema[group.tableId].fields.find(f=>f.key===field.key);record=state.tables[group.tableId]?.[group.recordId];
-    const parsed=sheetLine(trimmed),prefix=parsed.valueStart!==undefined?trimmed.slice(0,parsed.valueStart):parsed.compact?(/^\d+\s*[：:]\s*/.exec(trimmed)[0]):trimmed.slice(0,trimmed.length-parsed.body.length)+field.label;
-    valueStart=line.indexOf(trimmed)+prefix.length;while(parsed.valueStart===undefined&&/[\s：:]/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
-    if(parsed.valueEnd!==undefined)bracedEnd=line.indexOf(trimmed)+parsed.valueEnd;
+    const parsed=matrixInputLine(group.template,trimmed);
+    spec=state.schema[group.tableId].fields.find(f=>f.key===parsed.field.key);record=state.tables[group.tableId]?.[group.recordId];
+    const indent=line.indexOf(trimmed);
+    valueStart=indent+parsed.valueStart;valueEnd=indent+parsed.valueEnd;
     row.tableId=group.tableId;row.recordId=group.recordId;
    }else{
     const separator=line.search(/[：:]/);if(separator<0||trimmed.startsWith('@'))throw Error('此行是旧版指令，保留在原始内容中查看；不会自动改写。');
     const address=line.slice(0,separator).trim(),[tableId,recordId,key,path]=runtime.resolve(address);if(path.length)throw Error('此行修改嵌套内容，保留原始指令。');
     spec=runtime.spec(tableId,key);record=runtime.record(tableId,recordId);row.tableId=tableId;row.recordId=recordId;row.recordName=record.values.name??record.values.title??'已有记录';
     valueStart=separator+1;while(/\s/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
+    valueEnd=evidence?.index??line.length;
    }
-   const evidence=paragraphEvidence(line),valueEnd=bracedEnd??(evidence?evidence.index:line.length);
    Object.assign(row,{key:spec.key,label:spec.label??spec.key,type:spec.type,options:spec.enum??spec.options,minimum:spec.minimum,maximum:spec.maximum,previous:record?.values[spec.key],previousState:record?.states[spec.key]??'unset',value:line.slice(valueStart,valueEnd),valueStart:offset+valueStart,valueEnd:offset+valueEnd,evidence:evidence?.[1]??'',delta:!form});
    const canonicalName=changes.find(c=>c.tableId===row.tableId&&c.recordId===row.recordId)?.values?.name;if(spec.key==='name'&&canonicalName&&canonicalName!==row.value)row.help='已识别为已有对象“'+canonicalName+'”，本轮更新原记录并沿用正式名称。';
    row.hidden=identityFieldHidden(row.tableId,spec.key);if(row.tableId==='T_DYN_EVENTS'&&spec.key==='short_code')row.label='事件编号';
