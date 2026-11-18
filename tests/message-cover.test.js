@@ -16,3 +16,10 @@ test('group portraits require exact message card identity and never guess from n
  assert.equal(messageCardCover(context,{original_avatar:'second.png'},thumb),thumb('second.png'));
  for(const message of [{name:'同名'},{original_avatar:'removed.png'},{is_user:true,original_avatar:'first.png'}])assert.equal(messageCardCover(context,message,thumb),null);
 });
+test('bound cover wins only after stable native card selection and retains card fallback',()=>{
+ const context={characters,characterId:0,groupId:'group'},atlas={avatar:name=>({url:name==='同名'?'/bound.png':''})};
+ assert.equal(messageCardCover(context,{original_avatar:'second.png'},thumb,atlas),'/bound.png');
+ assert.equal(messageCardCover(context,{original_avatar:'removed.png'},thumb,atlas),null);
+ assert.equal(messageCardCover(context,{is_user:true,original_avatar:'second.png'},thumb,atlas),null);
+ const empty={avatar:()=>({url:''})};assert.equal(messageCardCover({characters,characterId:1},{},thumb,empty),thumb('second.png'));
+});

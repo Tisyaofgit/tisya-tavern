@@ -6,6 +6,7 @@ import {PREFERENCE_GROUPS,effectivePreferences,preferenceOptions,preferenceTextK
 import {storyAvatar} from './identity.mjs';
 import {selectControl} from './form-controls.mjs';
 import {renderingResources,RESOURCE_SLOTS} from '../rendering-resources.js';
+import {renderMediaAtlas} from '../media-atlas-ui.js';
 
 export function renderPreferences(document,body,{config,changed,button,navigationButton=button,field,input,el,onIdentity,historyLimit,editor,download,assistant,viewState={}}){
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
@@ -71,7 +72,9 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
  return {state:()=>({scope,search:search.value,open:openState()})};
 }
 
-export function renderResources(document,body,{config,changed,button,field,input,el}){
+export function renderResources(document,body,{config,changed,button,field,input,el,mediaAtlas=null}){
+ const localView=mediaAtlas?renderMediaAtlas(document,body,{atlas:mediaAtlas,button,field,input,el}):null;
+ const external=el('details');external.open=!mediaAtlas;external.append(el('summary','提示词与外链资源'));body.append(external);body=external;
  body.append(el('p','在这里登记资源。全部资源自动汇入同一段多媒体提示词，AI 用 @rendering{ID} 引用。'));
  const list=el('div');body.append(list);
  function draw(){list.replaceChildren();for(const resource of renderingResources(config.resources??[])){const row=el('p',resource.id+' · '+resource.name+' · '+resource.kind+' · '+RESOURCE_SLOTS[resource.slot]);list.append(row);}}
@@ -81,5 +84,5 @@ export function renderResources(document,body,{config,changed,button,field,input
  for(const [key,label]of [['id','参数 ID'],['name','资源含义'],['url','资源地址']]){const control=input('',value=>draft[key]=value);control.setAttribute('aria-label',label);controls[key]=control;body.append(field(label,control));}
  for(const [key,label,options]of [['kind','资源类型',['image','audio','video','emotion']],['slot','对应位置',Object.keys(RESOURCE_SLOTS)]]){const control=input(draft[key],value=>draft[key]=value,{options});control.setAttribute('aria-label',label);controls[key]=control;body.append(field(label,control));}
  body.append(button('加入资源列表',()=>{config.resources=nextResources();Object.assign(draft,initial);for(const [key,control]of Object.entries(controls)){control.value=draft[key];control.tisyaRefresh?.();}changed();draw();}),el('small','加入列表后仍是本页草稿，点击底部“保存”才会生效。也可填写完整一条资源后直接保存。'));
- return {isDirty,prepareSave:()=>isDirty()?{...config,resources:nextResources()}:config};
+ return {isDirty,prepareSave:()=>isDirty()?{...config,resources:nextResources()}:config,dispose:()=>localView?.dispose()};
 }

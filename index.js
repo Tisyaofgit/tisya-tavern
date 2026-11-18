@@ -38,6 +38,7 @@ import {createPresetUpdateController,mountPresetUpdateControl,showPresetUpdateEr
 import {createGlobalFonts} from './global-fonts.js';
 import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
+import {createChatMediaAtlas,createMediaAssetStore} from './media-atlas.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
 import {mountMatrixIdentity,mountMatrixCreation,mountStoryResources} from './engine/identity-ui.mjs';
@@ -128,9 +129,12 @@ const getAppearance=owner=>{
  const value=appearanceValues(settings(),owner);if(owner!=='body')return value;
  const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;
  const cards=group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);
- const characters=cards.map(card=>({id:card.avatar,name:card.name,avatar:card.avatar?getThumbnailUrl('avatar',card.avatar):''}));
+ const nativeCharacters=cards.map(card=>({id:card.avatar,name:card.name,avatar:card.avatar?getThumbnailUrl('avatar',card.avatar):''}));
+ const media=chatMedia.view();chatMedia.request().catch(visualError);
+ const characters=media.characters.map(character=>{const matches=nativeCharacters.filter(card=>card.name===character.name);return {...character,avatar:character.avatar||(matches.length===1?matches[0].avatar:'')};});
+ for(const card of nativeCharacters)if(!characters.some(character=>character.id===card.id||character.name===card.name))characters.push(card);
  const speech=window.Tisya?.matrix?.config.dialogueDisplay();
- return {...value,...speech,dialogueCharacterRevision:JSON.stringify(characters),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:{},scope:{session_ref:String(c.chatId??'')}}))};
+ return {...value,...speech,dialogueCharacterRevision:JSON.stringify([media.revision,characters]),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:media.media,scope:media.scope}),media.resolve)};
 };
 const getDisplay=()=>getAppearance('extensions');
 const getPlayerName=()=>context().name1??null;
@@ -208,6 +212,7 @@ const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardP
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
+const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),onChange:()=>appearance?.refresh(),onError:visualError});
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
 const sourceBooks=createBookGateway(undefined,context);
 const sourceBookReader=Object.freeze({names:sourceBooks.names,listSources:sourceBooks.listSources,readSource:sourceBooks.readSource,materials:sourceBooks.materials,cardBooks:sourceBooks.cardBooks,available:sourceBooks.available});
@@ -468,7 +473,7 @@ async function openSettings(tab='play',initialView=''){
  if(tab==='theme'){renderEpoch++;page('外观工坊','<div id="tisya-theme-workbench"></div>');utility=mountThemeWorkbench(document,query('#tisya-theme-workbench'),{getSettings:settings,saveAppearance:async(owner,value)=>saveInterfaceSettings(withAppearanceOverrides(settings(),owner,value)),saveAppearanceProfiles:async bank=>saveInterfaceSettings({...settings(),外观方案:bank}),fontService:fontsService(),onError:error});return;}
  if(!context().chatId){renderEpoch++;page('缇斯亚功能','<section class="tisya-sub-card"><h3>先打开一段会话</h3><p>这些设置跟随当前故事保存。选择角色或群聊的会话后，再回来继续。</p><div class="tisya-directory-buttons">'+button('角色会话','contacts')+button('群聊会话','groups')+'</div></section>');return;}
  renderEpoch++;page(tab==='play'?'游玩偏好':'缇斯亚 · 设置','<div id="tisya-settings-app"></div>');
- utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,preferenceDraft:tableService.preferenceDraft,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button'),initialTab:tab==='tables'?'tables':'preferences',initialTable:initialView==='output'?'T_PREF_OUTPUT_CONFIG':undefined});utility.ready.catch(error);
+ utility=mountMatrixConfiguration(document,query('#tisya-settings-app'),{service:{...matrixHost,mediaAtlas:chatMedia,preferenceDraft:tableService.preferenceDraft,ensureBound:()=>defaultActivation.retry()},onError:error,onClose:()=>nav(),onIdentity:()=>openIdentity(),onAppearance:()=>openSettings('theme'),onNative:()=>nativeDrawer('sys-settings-button'),initialTab:tab==='tables'?'tables':tab==='resources'?'resources':'preferences',initialTable:initialView==='output'?'T_PREF_OUTPUT_CONFIG':undefined});utility.ready.catch(error);
 
 }
 function openDisplaySettings(){return openSettings('theme');}
@@ -892,7 +897,7 @@ function init() {
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],getPhoneContext:()=>phoneChatKey(context()),
         getPending:node=>Number(node.getAttribute('mesid'))===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy),
         getStreamingSource:(node,msg)=>streamingMessageSource(context(),node,msg),
-        getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar)),
+        getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar),chatMedia),
         getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
         ...createMessagePreparation({getScope:()=>context().chatId?worldKey(context()):null,getDisplay,getPlayerName}),
         formatPreparedBody:(body,msg,node)=>messageFormatting(body,msg.name,!!msg.is_system,!!msg.is_user,Number(node.getAttribute('mesid')),{},false,{regexPrepared:true,regexSourceText:body}),

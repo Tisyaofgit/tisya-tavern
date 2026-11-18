@@ -100,7 +100,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
     preferenceDraft.database=result;preferenceDraft.before=structuredClone(preferenceDraft.rows);preferenceDraft.operationId=null;savedForm=true;
    }
    if(edit){await service.mutate(engine=>applyForm(engine,edit));selectedRecord=edit.recordId||edit.newId;formDirty=false;formDraft=null;savedForm=true;}
-   if(dirty){config=await service.config.save(next);savedFingerprint=JSON.stringify(config);dirty=false;resourceDraft=null;preferenceDraft=null;}
+   if(dirty){config=await service.config.save(next);savedFingerprint=JSON.stringify(config);dirty=false;resourceDraft?.dispose?.();resourceDraft=null;preferenceDraft=null;}
   }catch(error){
    // One store may have completed. Do not retry its write or clear the other draft.
    if(savedForm&&!disposed){throw new Error('表单记录已保存，配置保存未完成：'+error.message,{cause:error});}
@@ -110,7 +110,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   return true;
  }
  async function discard(){
-  const saved=service.config.read();config=saved;savedFingerprint=JSON.stringify(saved);dirty=false;formDirty=false;formDraft=null;resourceDraft=null;preferenceDraft=null;
+  const saved=service.config.read();config=saved;savedFingerprint=JSON.stringify(saved);dirty=false;formDirty=false;formDraft=null;resourceDraft?.dispose?.();resourceDraft=null;preferenceDraft=null;
   await render();status.setAttribute('role','status');status.textContent='已取消修改，恢复到上次保存的内容。';return true;
  }
  const saveDraft=()=>run(save),discardDraft=()=>run(discard);
@@ -137,7 +137,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   if(disposed)return;
    if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
   const keepPosition=renderedTab===tab,scrollTop=keepPosition?content.scrollTop:0,preferenceState=keepPosition?preferenceView?.state():undefined;renderedTab=tab;preferenceView=null;
-  content.replaceChildren(el('h3','缇斯亚 · 配置'));resourceDraft=null;formDraft=null;
+  content.replaceChildren(el('h3','缇斯亚 · 配置'));resourceDraft?.dispose?.();resourceDraft=null;formDraft=null;
   const nav=el('div',null,'tisya-directory-buttons');
   for(const [id,name]of tabs){const b=routeButton(name,async()=>{tab=id;await run(render);});if(id===tab)b.onclick=()=>Promise.resolve(true);b.setAttribute('aria-current',String(tab===id));nav.append(b);}
   nav.append(routeButton('用户身份',onIdentity,true),routeButton('连接与模型',onNative,true),routeButton('外观',onAppearance,true),routeButton('返回',onClose,true));content.append(nav);
@@ -145,7 +145,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   if(tab==='preferences'){
    preferenceView=renderPreferences(document,body,{viewState:preferenceState,config,editor:preferenceDraft,assistant:service.preferenceDraft,download,changed:()=>changed(),button,navigationButton:(text,fn)=>routeButton(text,fn,true),field,input,el,historyLimit:()=>service.historyLimit?.()??50,onIdentity});content.scrollTop=scrollTop;
   }
-  if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el});
+  if(tab==='resources')resourceDraft=renderResources(document,body,{config,changed:()=>changed(),button,field,input,el,mediaAtlas:service.mediaAtlas??null});
   if(tab==='tags'){
    body.append(el('p','输入标签名即可统一更新输出骨架、预设引用与插件读取。已保存的旧回复继续使用原来的标签。'));
    for(const key of Object.keys(DEFAULT_TAGS))body.append(field(labels[key],input(config.tags[key],value=>config.tags[key]=value)));
