@@ -27,12 +27,12 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  `;
  const panel=el('section');panel.hidden=true;panel.id='tisya-turn-review-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','每轮表单与归档确认');panel.tabIndex=-1;
  const toggle=el('button','表单与归档'),header=el('header'),title=el('h2','本轮待确认'),close=el('button','收起');
- header.append(title,close);const note=el('p'),status=el('p');status.setAttribute('role','status');
+ header.append(title,close);const note=el('p'),archiveNote=el('p'),status=el('p');archiveNote.className='review-field-warning';archiveNote.hidden=true;status.setAttribute('role','status');
  const nav=el('nav'),currentButton=el('button','本轮'),historyButton=el('button','已存归档');nav.className='review-tabs';nav.append(currentButton,historyButton);
  const current=el('div'),history=el('div');history.hidden=true;
  const rawDetails=el('details');rawDetails.className='review-raw';rawDetails.append(el('summary','高级：查看或修正原始表单文本'));current.append(rawDetails);const editors={};for(const [key,label]of [['cells','本轮表单'],['archive','记忆归档']]){const group=el('label'),check=el('input');check.type='checkbox';check.checked=true;check.setAttribute('aria-label','保存'+label);const input=el('textarea');input.setAttribute('aria-label',label);group.append(check,document.createTextNode(label),input);rawDetails.append(group);editors[key]={input,check};}
  const footer=el('footer'),forms=el('button','表单字段'),confirm=el('button','确认并保存');confirm.className='confirm';footer.append(forms,confirm);current.append(footer);
- panel.append(header,note,nav,current,history,status);root.append(style,panel,toggle);document.body.append(root);
+ panel.append(header,note,archiveNote,nav,current,history,status);root.append(style,panel,toggle);document.body.append(root);
  let disposed=false,busy=false,dirty=false,snapshot=null,selected=null,epoch=0,pet=null,detachPet=null,petAnchor=null,pendingCount=0,noticeLabel='表单与归档';
  const win=document.defaultView,off=[];toggle.type=close.type='button';toggle.className='review-notice';toggle.setAttribute('aria-controls',panel.id);toggle.setAttribute('aria-expanded','false');
  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('fill','none');icon.setAttribute('stroke','currentColor');icon.setAttribute('stroke-width','1.5');icon.setAttribute('aria-hidden','true');const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h4');icon.append(path);const noticeText=el('span'),count=el('span');count.className='review-count';count.setAttribute('aria-hidden','true');const noticeFace=el('span');noticeFace.className='review-notice-face';noticeFace.append(icon,noticeText,count);toggle.replaceChildren(noticeFace);
@@ -40,7 +40,7 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  function place(){
   if(disposed)return;root.hidden=!active||!snapshot?.enabled;pet?.setNoticeSpace?.(root.hidden?0:50);
   const b=floatingBounds(document),foot=petAnchor?.foot,atFoot=petAnchor?.visible&&foot;
-  const placement=atFoot?'foot':'drawer';toggle.dataset.placement=placement;toggle.dataset.pending=String(pendingCount>0);noticeText.textContent=atFoot?(pendingCount?'待确认 · '+pendingCount:snapshot?.reviews?.length?'已确认 ✓':'表单与归档'):'核验';count.textContent=String(pendingCount);count.hidden=!!atFoot||!pendingCount;toggle.setAttribute('aria-label',noticeLabel+'，打开表单与归档');toggle.title=noticeLabel;toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.hidden=!panel.hidden||b.height<44;
+  const placement=atFoot?'foot':'drawer';toggle.dataset.placement=placement;toggle.dataset.pending=String(pendingCount>0);noticeText.textContent=atFoot?noticeLabel:'核验';count.textContent=String(pendingCount);count.hidden=!!atFoot||!pendingCount;toggle.setAttribute('aria-label',noticeLabel+'，打开表单与归档');toggle.title=noticeLabel;toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.hidden=!panel.hidden||b.height<44;
   const r=toggle.getBoundingClientRect(),width=atFoot?(r.width||100):46,height=r.height||(atFoot?44:76),cx=foot?foot.x+foot.width/2:0;
   const x=atFoot?clamp(cx-width/2,b.x,b.x+b.width-width):b.x+b.width-width+4,y=atFoot?clamp(foot.y+4,b.y,b.y+b.height-height):clamp(b.y+b.height*.5-height/2,b.y,b.y+b.height-height);
   Object.assign(toggle.style,{left:x+'px',top:y+'px',maxWidth:Math.min(150,b.width)+'px'});
@@ -54,21 +54,57 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  const editorInput=review=>({uid:review.uid,sourceHash:review.sourceHash,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,cells:editors.cells.input.value,archive:editors.archive.input.value});
  const reparse=el('button','展开修改后的字段');reparse.type='button';reparse.onclick=()=>{if(selected)visualEditor.load(editorInput(selected),{readonly:selected.status==='confirmed'});};rawDetails.append(reparse);
  const workbench=mountReviewWorkbench(document,{service,run,getSnapshot:()=>snapshot,onForms});panel.insertBefore(workbench.root,status);current.insertBefore(workbench.requirements,footer);const saveDraft=el('button','保存候选草稿');footer.insertBefore(saveDraft,confirm);const reload=el('button','重载本轮');nav.append(reload);reload.onclick=()=>{dirty=false;selected=null;workbench.resetRequirements();refresh();};
- const select=review=>{selected=review;dirty=false;current.hidden=false;history.hidden=true;title.textContent=review.status==='confirmed'?'本轮已确认':'本轮待确认';note.textContent='第 '+(review.index+1)+' 层'+(review.previousConfirmed?' · 重骰待确认，仍保留上次存档':'');for(const key of ['cells','archive']){const draft=snapshot.drafts?.[review.uid];editors[key].input.value=draft?.hash===review.sourceHash?draft[key]:review[key]??'';editors[key].check.checked=true;editors[key].input.readOnly=review.status==='confirmed';}visualEditor.load(editorInput(review),{readonly:review.status==='confirmed'});workbench.renderRequirements(snapshot,review,snapshot.drafts?.[review.uid]?.responses);status.textContent=review.error??'';confirm.disabled=busy||review.status==='confirmed'||!!review.error;};
+ const reviewState=review=>review.status==='confirmed'?'已确认':review.archivePending?'归档待补':'待确认';
+ const select=review=>{
+  selected=review;dirty=false;current.hidden=false;history.hidden=true;
+  const confirmed=review.status==='confirmed',candidate=snapshot.drafts?.[review.uid];
+  const draft=!confirmed&&candidate?.hash===review.sourceHash?candidate:null;
+  title.textContent=review.archivePending?'状态表单已保存，归档待补':'本轮'+reviewState(review);
+  note.textContent='第 '+(review.index+1)+' 层'+(review.previousConfirmed?' · 重骰待确认，仍保留上次存档':'');
+  archiveNote.hidden=!review.archivePending;
+  archiveNote.textContent=review.archivePending?(review.archiveIssue??'请核对本轮记忆归档后再确认。'):'';
+  for(const key of ['cells','archive']){editors[key].input.value=draft?.[key]??review[key]??'';editors[key].check.checked=true;editors[key].input.readOnly=confirmed;}
+  visualEditor.load(editorInput(review),{readonly:confirmed});
+  workbench.renderRequirements(snapshot,review,draft?.responses??review.decision?.responses);
+  status.textContent=review.error??'';
+  confirm.disabled=busy||confirmed||!!review.error;
+ };
  async function refresh(){
   const at=++epoch;try{const next=await service.listTurnReviews();if(disposed||at!==epoch)return;if(!next){snapshot=null;selected=null;dirty=false;visualEditor.invalidate();show(false);return;}const before=selected;if(snapshot&&snapshot.contextKey!==next.contextKey){dirty=false;selected=null;panel.hidden=true;visualEditor.invalidate();}snapshot=next;workbench.refresh(next);
-   const reviews=next?.reviews??[],pending=reviews.filter(r=>r.status==='pending');pendingCount=pending.length;confirm.disabled=!reviews.length;noticeLabel=pending.length?'待确认 · '+pending.length:reviews.length?'本轮已确认 ✓':'表单与归档';place();
+   const reviews=next.reviews,pending=reviews.filter(r=>r.status==='pending');pendingCount=pending.length;confirm.disabled=busy||!reviews.length;noticeLabel=pending.length?(pending.every(r=>r.archivePending)?'归档待补':'待确认')+' · '+pending.length:reviews.length?'本轮已确认 ✓':'表单与归档';place();
    if(dirty&&before){const live=reviews.find(r=>r.uid===before.uid);if(!live||live.sourceHash!==before.sourceHash||live.contextHash!==before.contextHash){status.textContent='正文或前序存档已变化，请重新打开本轮。';confirm.disabled=true;return;}}
-   else{const chosen=reviews.find(r=>r.uid===before?.uid&&r.status==='pending')??pending[0]??reviews.at(-1);if(chosen){const workOpen=!workbench.root.hidden;select(chosen);if(workOpen){current.hidden=true;history.hidden=true;}}else{selected=null;visualEditor.invalidate();for(const e of Object.values(editors))e.input.value='';title.textContent='本轮暂无待确认内容';confirm.disabled=true;}}
-   history.replaceChildren();for(const review of [...reviews].reverse()){const row=el('div');row.className='history-entry';const show=el('button','第 '+(review.index+1)+' 层 · '+(review.status==='confirmed'?'已确认':'待确认'));show.onclick=()=>select(review);row.append(show);if(review.status==='confirmed'){const undo=el('button','回退至此层之前');undo.onclick=()=>run(async()=>{await service.rewindTurnReviews({uid:review.uid,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});dirty=false;selected=null;});row.append(undo);}history.append(row);}
+   else{const chosen=reviews.find(r=>r.uid===before?.uid&&r.status==='pending')??pending[0]??reviews.at(-1);if(chosen){const workOpen=!workbench.root.hidden;select(chosen);if(workOpen){current.hidden=true;history.hidden=true;}}else{selected=null;visualEditor.invalidate();for(const e of Object.values(editors))e.input.value='';title.textContent='本轮暂无待确认内容';archiveNote.hidden=true;confirm.disabled=true;}}
+   history.replaceChildren();for(const review of [...reviews].reverse()){const row=el('div');row.className='history-entry';const show=el('button','第 '+(review.index+1)+' 层 · '+reviewState(review));show.onclick=()=>select(review);row.append(show);if(review.status==='confirmed'){const undo=el('button','回退至此层之前');undo.onclick=()=>run(async()=>{await service.rewindTurnReviews({uid:review.uid,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});dirty=false;selected=null;});row.append(undo);}history.append(row);}
+   return true;
   }catch(error){if(error.code==='CHAT_CHANGED'){snapshot=null;selected=null;dirty=false;show(false);return;}status.textContent=error.message;onError(error);}
  }
- async function run(fn){if(busy)return;busy=true;confirm.disabled=true;try{await fn();status.textContent='已保存';}catch(error){status.textContent=error.message;onError(error);}finally{busy=false;await refresh();}}
+ async function run(fn){
+  if(busy)return;
+  const contextKey=snapshot?.contextKey;
+  busy=true;confirm.disabled=true;status.textContent='正在保存…';
+  let message;
+  try{message=await fn()??'已保存';}catch(error){message=error.message;onError(error);}
+  finally{busy=false;}
+  if(await refresh()&&snapshot?.contextKey===contextKey)status.textContent=message;
+ }
  for(const {input,check}of Object.values(editors)){input.oninput=()=>{dirty=true;visualEditor.rawChanged();};check.onchange=()=>{dirty=true;};}
  toggle.onclick=()=>{show(panel.hidden,true);if(!panel.hidden)refresh();};
  close.onclick=()=>show(false,true);
  currentButton.onclick=()=>{workbench.close();current.hidden=false;history.hidden=true;};historyButton.onclick=()=>{workbench.close();current.hidden=true;history.hidden=false;};
- forms.onclick=()=>{current.hidden=true;history.hidden=true;workbench.open();};const fieldsNav=el('button','字段与补录');fieldsNav.onclick=forms.onclick;nav.append(fieldsNav);saveDraft.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();const result=await service.reviewAction({action:'draft',uid:selected.uid,hash:selected.sourceHash,cells:editors.cells.input.value,archive:editors.archive.input.value,responses:workbench.responses(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});snapshot.revision=result.revision;dirty=false;});confirm.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();await service.confirmTurn({uid:selected.uid,sourceHash:selected.sourceHash,contextHash:selected.contextHash,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,responses:workbench.responses(),...Object.fromEntries(Object.entries(editors).map(([key,e])=>[key,e.check.checked?e.input.value:'']))});dirty=false;selected=null;});
+ forms.onclick=()=>{current.hidden=true;history.hidden=true;workbench.open();};const fieldsNav=el('button','字段与补录');fieldsNav.onclick=forms.onclick;nav.append(fieldsNav);saveDraft.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();const result=await service.reviewAction({action:'draft',uid:selected.uid,hash:selected.sourceHash,cells:editors.cells.input.value,archive:editors.archive.input.value,responses:workbench.responses(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});snapshot.revision=result.revision;dirty=false;});
+ confirm.onclick=()=>{
+  if(!selected)return;
+  return run(async()=>{
+   const review=selected;
+   const input={uid:review.uid,sourceHash:review.sourceHash,contextHash:review.contextHash,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,responses:workbench.responses(),...Object.fromEntries(Object.entries(editors).map(([key,e])=>[key,e.check.checked?e.input.value:'']))};
+   await visualEditor.settled();
+   const result=await service.confirmTurn(input);
+   dirty=false;
+   if(result?.status==='archive-pending')return '本轮归档待补：'+result.archiveIssue;
+   selected=null;
+   return '第 '+(review.index+1)+' 层已确认并保存。';
+  });
+ };
  panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();show(false,true);}});
  const unsubscribe=service.subscribe(()=>refresh());const ready=refresh();return {root,ready,refresh,attachPet(value){detachPet?.();pet?.setNoticeSpace?.(0);pet=value;petAnchor=null;detachPet=pet?.observeAnchor?.(anchor=>{petAnchor=anchor;place();});place();},setActive(value){active=!!value;if(!active)panel.hidden=true;place();},openWorkbench(view='fields'){show(true);current.hidden=true;history.hidden=true;workbench.open(view);},dispose(){disposed=true;visualEditor.invalidate();detachPet?.();pet?.setNoticeSpace?.(0);resize?.disconnect();off.splice(0).forEach(fn=>fn());unsubscribe();root.remove();}};
 }

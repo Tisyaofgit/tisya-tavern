@@ -39,6 +39,12 @@ import {clone,fail,asError,digest} from './common.mjs';
 import {prepareNativeMvu} from '../config/native-mvu.js';
 import {excludeTemplateBookEntries,readStoryReferenceBooks,applyStoryReferenceBooks} from './template-book.mjs';
 const nativeWorld={context:{owner:'native',card:true},mode:'matrix',modes:{matrix:{nativeMvu:'on'}},tables:{nativeBridge:false}};
+function turnArchiveIssue(journal,entry){
+ if(!entry)return null;
+ const sourceKey=(journal.scope?.branch_ref??'main')+'/'+entry.uid+'@'+entry.revision;
+ const warning=entry.warnings.find(w=>w.source_key===sourceKey&&/^ARCHIVE_/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
+ return warning?warning.error?.message??warning.message??null:null;
+}
 export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null;const listeners=new Set();
@@ -147,10 +153,11 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
 
  async function listTurnReviews(){
   return await readOwnedDatabase((original,c,key)=>{
-   const bundle=reconcile(manualReview?enableTurnReview(original):original,captureMessages(c)).bundle,messages=captureMessages(c),projection=reviewProjection(bundle,messages);
+   const bundle=reconcile(manualReview?enableTurnReview(original):original,captureMessages(c)).bundle,messages=captureMessages(c),projection=reviewProjection(bundle,messages),entries=new Map(bundle.journal.entries.map(entry=>[entry.uid,entry]));
    return {contextKey:key,revision:original.local_revision??0,enabled:!!bundle.turn_review,catalog:reviewCatalog(bundle.state),settings:clone(bundle.turn_review?.settings??{policy:{},custom:[],labels:{}}),requirements:reviewRequirements(bundle.state,bundle.turn_review?.settings??{}),backfill:clone(bundle.turn_review?.backfill??null),drafts:clone(bundle.turn_review?.drafts??{}),reviews:projection.reviews.map(review=>{
     const raw=review.decision?.reply??messages[review.index].text;
-    try{return {...review,...reviewBlocks(raw)};}catch(error){return {...review,error:error.message,cells:'',archive:''};}
+    const archiveIssue=review.archivePending?turnArchiveIssue(bundle.journal,entries.get(review.uid)):null;
+    try{return {...review,...reviewBlocks(raw),archiveIssue};}catch(error){return {...review,error:error.message,cells:'',archive:''};}
    })};
   });
  }
@@ -178,20 +185,22 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
    staged.turn_review.legacy=staged.turn_review.legacy.filter(d=>!removed.has(d.uid));staged.manual_edits=(staged.manual_edits??[]).filter(e=>e.kind!=='reviewBackfill'||!removed.has(e.source_uid));for(const r of staged.turn_review.backfillReceipts??[])if(removed.has(r.messageId))r.active=false;staged.turn_review.backfill=null;
   }else {staged=addTurnDecision(bundle,messages,input).bundle;if(input.settings)staged.turn_review.settings=validateReviewSettings(staged.state,input.settings);}
   const result=reconcile(staged,messages),target=result.bundle.journal.entries.find(e=>e.uid===input.uid);
+  let archiveIssue=null;
   if(!rewind){
    const policy=staged.turn_review.settings??{};const base=projectReviewSchema(clone(bundle.state),policy);const missing=reviewRequirements(base,policy,result.bundle.state,input.responses??{}).filter(r=>!r.done);if(missing.length)fail('REVIEW_REQUIRED','请核对必填字段：'+missing.map(r=>r.recordName+'／'+r.label).join('、'));
    const failures=(target?.warnings??[]).filter(w=>/^CELL.*FAILED/.test(w.code??''));
-   const archiveFailures=(target?.warnings??[]).filter(w=>/^ARCHIVE_/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
-   const decision=result.bundle.turn_review.decisions.findLast(d=>d.uid===input.uid&&d.sourceHash===input.sourceHash&&d.contextHash===input.contextHash);
-   if(decision)decision.archive_pending=archiveFailures.length>0;
    if(target?.settlement_status==='FAILED'||failures.length)fail('REVIEW_INVALID','本轮表单尚不能保存：'+(failures[0]?.error?.message??failures[0]?.message??'填写校验失败'),{warnings:failures});
+   archiveIssue=turnArchiveIssue(result.bundle.journal,target);
+   const decision=result.bundle.turn_review.decisions.at(-1);
+   decision.archive_pending=archiveIssue!==null;
+   if(result.bundle.turn_review.drafts)delete result.bundle.turn_review.drafts[input.uid];
   }
   const live=ctx();if(chatKey(live)!==key||live.chatMetadata?.[NS]?.chat_uid!==id||digest(captureMessages(live))!==stamp)fail('REVIEW_STALE','确认期间正文或会话已变化');
   const next={...result.bundle,local_revision:(original.local_revision??0)+1};
   if(!await storage.commit(id,original.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已更新存档，请重新核对');
   bundleProjection.clear();materialProjection.clear();databaseProjection.clear();
   if(chatKey(ctx())===key)await sync({preview:true});
-  return {status:rewind?'rewound':'confirmed',uid:input.uid,revision:next.local_revision};
+  return {status:rewind?'rewound':archiveIssue!==null?'archive-pending':'confirmed',uid:input.uid,revision:next.local_revision,archiveIssue};
  }
 
  function reviewAction(input){const job=databaseChain.then(async()=>{

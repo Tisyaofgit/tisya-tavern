@@ -12,4 +12,20 @@ function setup(){
 }
 test('one notice follows pet visibility and geometry without opening on a new candidate',async()=>{const f=setup();try{await f.ui.ready;await flush();const notice=f.ui.root.querySelector('.review-notice'),panel=f.ui.root.querySelector('[role=dialog]');assert.equal(notice.dataset.placement,'foot');assert.equal(panel.hidden,true);f.pet.setVisible(false);assert.equal(notice.dataset.placement,'drawer');assert.equal(f.d.querySelectorAll('.review-notice').length,1);assert.ok(parseFloat(notice.style.top)+76<620);f.pet.setVisible(true);assert.equal(notice.dataset.placement,'foot');const top=parseFloat(f.d.querySelector('#tisya-pet').style.top),height=parseFloat(f.d.querySelector('#tisya-pet').style.height);assert.ok(parseFloat(notice.style.top)>=top+height);f.pet.setMode('expanded');await flush();assert.ok(parseFloat(notice.style.top)>=parseFloat(f.d.querySelector('#tisya-pet').style.top)+parseFloat(f.d.querySelector('#tisya-pet').style.height));f.fixture.addPending();await flush();assert.equal(panel.hidden,true);assert.deepEqual(f.errors,[]);}finally{await f.close();}});
 test('closing and reopening preserves the same dirty editor; confirmation changes the same notice',async()=>{const f=setup();try{await f.ui.ready;const notice=f.ui.root.querySelector('.review-notice');notice.click();await flush();const editor=f.ui.root.querySelector('textarea[aria-label="本轮表单"]');editor.value='旅人.体力：6';editor.dispatchEvent(new f.w.Event('input'));[...f.ui.root.querySelectorAll('button')].find(b=>b.textContent==='展开修改后的字段').click();await flush();f.ui.root.querySelector('header button').click();assert.equal(notice.hidden,false);notice.click();await flush();assert.equal(f.ui.root.querySelector('textarea[aria-label="本轮表单"]'),editor);assert.equal(editor.value,'旅人.体力：6');f.ui.root.querySelector('.confirm').click();await flush();assert.equal(f.fixture.state.reviews[0].status,'confirmed');assert.equal(f.fixture.state.reviews[0].cells,'旅人.体力：6');assert.equal(editor.value,'旅人.体力：6');f.ui.root.querySelector('header button').click();assert.match(notice.getAttribute('aria-label'),/已确认/);assert.equal(notice.dataset.pending,'false');assert.deepEqual(f.errors,[]);}finally{await f.close();}});
+test('confirmation rejection stays visible after a clean editor refresh',async()=>{
+ const f=setup();
+ try{
+  await f.ui.ready;
+  const message='本轮表单尚不能保存：填写校验失败';
+  f.fixture.service.confirmTurn=async()=>{throw Error(message);};
+  f.ui.root.querySelector('.review-notice').click();
+  await flush();
+  f.ui.root.querySelector('.confirm').click();
+  await flush();
+  assert.equal(f.ui.root.querySelector('[role="status"]').textContent,message);
+  assert.equal(f.ui.root.querySelector('.confirm').disabled,false);
+  assert.equal(f.fixture.state.reviews[0].status,'pending');
+  assert.deepEqual(f.errors,[message]);
+ }finally{await f.close();}
+});
 test('composer height changes bound both forms and trigger; disable and dispose release them',async()=>{const f=setup();try{await f.ui.ready;const notice=f.ui.root.querySelector('.review-notice'),panel=f.ui.root.querySelector('[role=dialog]');f.pet.setVisible(false);notice.click();f.formTop(280);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.maxHeight)<280);f.ui.root.querySelector('header button').click();assert.ok(parseFloat(notice.style.top)+76<280);f.ui.setActive(false);assert.equal(f.ui.root.hidden,true);f.ui.setActive(true);assert.equal(f.ui.root.hidden,false);f.fixture.setAvailable(false);await flush();assert.equal(f.ui.root.hidden,true);f.ui.dispose();assert.equal(f.fixture.listenerCount(),0);f.pet.setVisible(true);assert.equal(f.d.querySelector('.review-notice'),null);}finally{await f.close();}});
