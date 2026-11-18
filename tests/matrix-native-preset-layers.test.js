@@ -8,10 +8,10 @@ import {loadNativeHost} from './fixtures/native-layers/load-host-fragments.mjs';
 
 const clone=structuredClone;
 const eventNames=['GENERATION_AFTER_COMMANDS','WORLDINFO_ENTRIES_LOADED','WORLD_INFO_ACTIVATED','GENERATE_AFTER_COMBINE_PROMPTS','CHAT_COMPLETION_SETTINGS_READY','GENERATION_ENDED','GENERATION_STOPPED'];
-function setup(t,{legacy=false,substitute=value=>String(value??'').replaceAll('{{char}}','守夜人'),customPrompt=null,extensions={},historyTransform=null,beforeCombine=null,cardOverrides=false}={}){
+function setup(t,{legacy=false,substitute=value=>String(value??'').replaceAll('{{char}}','守夜人'),customPrompt=null,extensions={},historyTransform=null,beforeCombine=null,cardOverrides=false,getCardPrompts=null}={}){
  const native=loadNativeHost({substitute}),settings={tags:clone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{N02:'N02-C','S08-MindVoice':'S08-MindVoice-C',N11:'N11-A','S09-Blocks':['S09-Dialogue','S09-Thought']}}}};
  const projection=createNativePresetLayers({settings,slots:{}}),context={eventTypes:Object.fromEntries(eventNames.map(name=>[name,name])),extensionPrompts:extensions};
- const adapter=createNativeSourceLayers({relocateSources:true,PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:projection.preparePreset,finalizeMessages:projection.finalizeMessages});
+ const adapter=createNativeSourceLayers({relocateSources:true,getCardPrompts,PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:projection.preparePreset,finalizeMessages:projection.finalizeMessages});
  t.after(()=>adapter.dispose());adapter.begin();adapter.entriesLoaded({globalLore:[],characterLore:[],chatLore:[],personaLore:[]});if(beforeCombine)beforeCombine(adapter,context);adapter.afterCombine();
  function manager(){
   const value=new native.PromptManager();value.serviceSettings={prompts:clone(baseline.prompts),prompt_order:clone(baseline.prompt_order[1].order)};
@@ -51,7 +51,8 @@ for(const legacy of [false,true])test('real native preparation applies selected 
   assert.equal(system.indexOf('@POV.PERSON := 全文使用第二人称')<system.indexOf('[Dream Rules]\n@BOUNDARY '),!legacy);
   assert.match(system,/角色卡和世界书在 DreamMaterial 中给出的冲突要求，以预设对应条目为准/);
   assert.deepEqual(s.projection.lastFinalization().moved,[]);
-  assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);assert.match(system,/<DreamMaterial[^>]*>\n守夜人资料。\n叙事人称：第三人称\n<\/DreamMaterial>/);
+  assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);assert.doesNotMatch(system,/守夜人资料。/);
+  assert(output.result.some(row=>row.role==='assistant'&&/<DreamMaterial[^>]*>\n守夜人资料。\n叙事人称：第三人称\n<\/DreamMaterial>/.test(row.content)));
   assert(output.result.some(row=>row.role==='assistant'&&row.content==='他将旧伞放在门边。'));
  }
  const narrativeCounts=s.native.tokenCalls.filter(row=>row.content?.startsWith('<tisya>\n<Pref_Narrative>\n'));
@@ -90,7 +91,7 @@ test('native depth and attached sources move into Dream Rules in native order; e
  assert.doesNotMatch(JSON.stringify(result),/TISYA_SOURCE_(?:START|END)/);
  assert(s.native.tokenCalls.every(m=>!String(m.content).includes('TISYA_SOURCE_START')));
  assert.equal(s.projection.lastFinalization().nativeSources.moved,4);
- assert.match(joined,/@PSYCHOLOGY.VOICE := 将当前焦点人物的第一人称心声/);
+ assert.match(joined,/@PSYCHOLOGY.VOICE := 当前对手戏人物开口或以动作回应时/);
  assert.match(joined,/@LANG.GATE/);assert.match(joined,/@BODY.NAMED_DIALOGUE := 每段角色直接对白使用【角色名#当下情绪】“完整对白”/);assert.match(joined,/@BODY.NAMED_THOUGHT/);assert(joined.indexOf('@BODY.NAMED_DIALOGUE')<begin);assert(joined.indexOf('@PSYCHOLOGY.VOICE')<begin);
  assert.deepEqual(completion.getChat(),result,'repeat projection never mutates the host collection');
  s.adapter.end();assert.equal(extensions.DEPTH_PROMPT.value,'深度卡文本');
@@ -121,4 +122,17 @@ test('source macro inside a JSON-framed upper rule remains movable without corru
  assert(text.indexOf('引用内的卡片描述')>text.indexOf('[Dream Rules]\n@BOUNDARY'));
  const upper=result.find(m=>m.content.startsWith('<tisya encoding="json">')&&m.content.includes('上文'));
  assert.equal(JSON.parse(upper.content.split('\n')[1]),'上文 <tisya> 是引用  下文');
+});
+
+test('the source-only contract includes the card main and PHI even with preset override forbidden or disabled',async t=>{
+ const getCardPrompts=()=>({system:'卡原文 {{original}}',jailbreak:'卡历史后 {{char}}'});
+ const substitute=(text,options)=>String(text??'').replaceAll('{{original}}',options?.original??'').replaceAll('{{char}}','守夜人');
+ const s=setup(t,{getCardPrompts,substitute});
+ const {result}=await s.assemble(s.manager());
+ const row=result.find(message=>message.content.startsWith('<NativeDreamSources>'));
+ assert.equal(row.role,'assistant');
+ assert.match(row.content,/<DreamMaterial source="角色卡系统资料">\n卡原文 \n<\/DreamMaterial>/);
+ assert.match(row.content,/<DreamMaterial source="角色卡历史后资料">\n卡历史后 守夜人/);
+ assert.doesNotMatch(row.content,/\{\{original\}\}/);
+ assert(result.filter(message=>message.role==='system').every(message=>!message.content.includes('卡原文')));
 });

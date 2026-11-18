@@ -30,3 +30,39 @@ test('format selections enter upper preset once and closing the group removes bo
  config.story.play.choices['S09-Blocks']=[];const off=compilePrompts(source,config,{}).prompts.find(p=>p.identifier==='tisya_pref_style').content;assert.doesNotMatch(off,/@BODY.NAMED_(?:DIALOGUE|THOUGHT)/);
  const display=withAppearanceOverrides({},'body',{角色对白框:false,署名心声:true});assert.equal(appearanceValues(display,'body').角色对白框,false);assert.equal(appearanceValues(display,'body').署名心声,true);
 });
+
+test('the stock opponent lens follows the scene on an ensemble card and leaves custom lenses alone',()=>{
+ const source={prompts:baseline.prompts,order:baseline.prompt_order[1].order};
+ const config={tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{play:{choices:{N02:'N02-C'}}}};
+ const row=()=>compilePrompts(source,config,{}).prompts.find(p=>p.identifier==='tisya_pref_narrative').content;
+ for(const selection of [undefined,'N03-A']){
+  if(selection)config.story.play.choices.N03=selection;
+  const text=row(),lens=text.split('\n').find(line=>line.startsWith('@POV.LENS'));
+  assert.match(lens,/场上人物/);assert.doesNotMatch(lens,/\{\{char\}\}/);assert.match(text,/叙述本轮玩家所扮人物/);
+ }
+ config.story.play.choices.N03='N03-B';assert.match(row(),/镜头与感知范围锁定主控/);
+ delete config.story.play.choices.N03;
+ config.prompts.tisya_pref_narrative='<Pref_Narrative>\n@POV.LENS := 只随记录者。\n</Pref_Narrative>';
+ assert.match(row(),/@POV.LENS := 只随记录者。/);
+});
+
+test('the reply template mirrors only enabled unmodified named formats',()=>{
+ const source=structuredClone(baseline);
+ const config={tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{play:{choices:{'S09-Blocks':['S09-Dialogue','S09-Thought']}}}};
+ const registry=()=>compilePrompts(source,config,{}).prompts.find(p=>p.identifier==='tisya_registry').content;
+ assert.match(registry(),/【人物姓名#当下情绪】“所说的话”/);assert.match(registry(),/【人物姓名#当下情绪】■我心里此刻的话■/);
+ config.story.play.choices['S09-Blocks']=['S09-Thought'];
+ assert.doesNotMatch(registry(),/所说的话/);assert.match(registry(),/我心里此刻的话/);
+ source.prompt_order.find(row=>row.character_id===100001).order.find(row=>row.identifier==='tisya_pref_style').enabled=false;
+ assert.doesNotMatch(registry(),/本轮正文按所选人称/);
+});
+
+test('selected named dialogue renders complete unquoted speech and keeps other labels and incomplete thoughts literal',()=>scenario(d=>{
+ const text='<p>【守门人#迟疑】听见了。</p><p>【旅人】你也听见了？</p><p>【场景】雨后的路。</p><p>【旅人#惊讶】■没说完</p><p>旁白里【旅人#平静】举个例。</p>';
+ const root=render(d,text,{namedDialogue:true,playerDialogueNames:['旅人']});
+ assert.deepEqual([...root.querySelectorAll('.tisya-dialogue-text')].map(x=>x.textContent),['“听见了。”','“你也听见了？”']);
+ assert.equal(root.querySelectorAll('.tisya-dialogue-mood').length,1);
+ assert.match(root.textContent,/【场景】雨后的路/);assert.match(root.textContent,/■没说完/);assert.match(root.textContent,/旁白里【旅人#平静】/);
+ assert.equal(render(d,text,{}).querySelectorAll('[data-tisya-block]').length,0);
+ assert.equal(render(d,text,{namedDialogue:true,角色对白框:false}).querySelectorAll('[data-tisya-block]').length,0);
+}));

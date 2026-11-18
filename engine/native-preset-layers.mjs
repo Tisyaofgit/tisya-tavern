@@ -1,12 +1,14 @@
 import {compilePrompts} from './config.mjs';
 import {applyRequestLayers,wrapRequestLayer,createPromptSourceMap} from './request-layers.mjs';
 import {clone,fail} from './common.mjs';
+import {captureTemplateSources,projectTemplateSources} from './template-dream-sources.mjs';
 
 // Compile the actual manager's selected preset before its one native macro
 // expansion and token accounting. Agent preset-ref assemblies use a separate
 // manager and must cross this same boundary, even without SETTINGS_READY.
 export function createNativePresetLayers({settings,slots,type='normal'}){
- const owners=new WeakMap();let finalization=null,finalizedCompiled=null,managerCount=0;
+ const owners=new WeakMap(),templatePayloads=new WeakMap();
+ let finalization=null,finalizedCompiled=null,nativeContent=null,managerCount=0;
  function owner(manager){
   let value=owners.get(manager);if(value)return value;
   const prompts=manager?.serviceSettings?.prompts;
@@ -42,7 +44,7 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
    return content;
   }};
  }
- function finalizeMessages(messages,{manager,sourcePlacement}={}){
+ function finalizeMessages(messages,{manager,sourcePlacement,cardSources}={}){
   const value=owner(manager);
   const entries=value.compiled.layerPlan.entries.map(entry=>{
    if(!entry.enabled||entry.marker)return entry;
@@ -51,15 +53,31 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
   });
   const compiled={...value.compiled,layerPlan:{...value.compiled.layerPlan,entries}};
   const result=applyRequestLayers(messages,compiled);
-  const relocated=sourcePlacement?.relocate(result.messages,compiled);
+  const relocated=sourcePlacement?.relocate(result.messages,compiled,cardSources);
   if(relocated){result.messages=relocated.messages;result.audit.nativeSources=relocated.audit;}
+  nativeContent=relocated?.content??null;
   const sources=createPromptSourceMap(result.messages,compiled);
   for(const part of sources.parts)for(const match of part.text.matchAll(/\{\{tisya_[^{}]+\}\}/g))if(!sources.protection(part,match.index,match.index+match[0].length))fail('UNEXPANDED_MACRO','最终请求有未展开的缇斯亚资料宏');
   finalizedCompiled=compiled;
   finalization={manager:value.number,managers:managerCount,compiledBeforeNativeBudget:true,macroExpansion:'native-once',...result.audit};
   return result.messages;
  }
- return {preparePreset,finalizeMessages,lastFinalization:()=>finalization?clone(finalization):null,sourceMap:messages=>{
+ function captureTemplatePayload(payload){
+  if(!finalizedCompiled)fail('NATIVE_PRESET_UNFINALIZED','模板处理前尚未装配梦境资料');
+  if(templatePayloads.has(payload))fail('TEMPLATE_SOURCE_REPEATED','本请求已进入提示词模板流程');
+  const capture=captureTemplateSources(payload.messages,nativeContent);
+  templatePayloads.set(payload,capture);
+  payload.messages=capture.messages;
+ }
+ function mergeTemplatePayload(payload){
+  const capture=templatePayloads.get(payload);
+  if(!capture)return;
+  const result=projectTemplateSources(payload.messages,capture,finalizedCompiled);
+  payload.messages=result.messages;
+  finalization.nativeTemplateSources=result.additions;
+  templatePayloads.delete(payload);
+ }
+ return {preparePreset,finalizeMessages,captureTemplatePayload,mergeTemplatePayload,lastFinalization:()=>finalization?clone(finalization):null,sourceMap:messages=>{
   if(!finalizedCompiled)fail('NATIVE_PRESET_UNFINALIZED','本轮配置尚未完成最终分层');
   return createPromptSourceMap(messages,finalizedCompiled);
  }};

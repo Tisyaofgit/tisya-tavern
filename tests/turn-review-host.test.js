@@ -41,3 +41,27 @@ test('confirming a changed earlier floor invalidates dependent later confirmatio
  const f=await fixture();f.ctx.chat.push({mes:f.reply(1)});await f.host.sync();await f.host.confirmTurn(await f.draft());f.ctx.chat.push({is_user:true,mes:'继续'},{mes:f.reply(2).replaceAll('渡口交信','入夜')});await f.host.sync();await f.host.confirmTurn(await f.draft());assert.equal(await f.hp(),7);
  f.ctx.chat[0].mes=f.reply(4);await f.host.sync();await f.host.confirmTurn(await f.draft());assert.equal(await f.hp(),6);assert.equal((await f.host.listTurnReviews()).reviews[1].status,'pending');
 });
+
+test('review saves a sparse presence group without inventing missing rows or renumbering references', async () => {
+ const f = await fixture();
+ const cells = '【在场站位与视听／3】\n6{站在门旁} | P1';
+ const text = f.reply().replace(/<cells>[\s\S]*?<\/cells>/, '<cells format="form">' + cells + '</cells>');
+ f.ctx.chat.push({mes:text});
+ await f.host.sync();
+ await f.host.confirmTurn(await f.draft());
+ const positions = async () => (await f.snapshot()).state.tables.T_DYN_SCENE_PARTICIPANTS;
+ const rows = await positions();
+ assert.equal(Object.keys(rows).length, 1);
+ assert.equal(Object.values(rows)[0].values.position, '站在门旁');
+ await createMatrixHost(f.options).sync();
+ assert.deepEqual(await positions(), rows);
+ assert.equal(f.ctx.chat[0].mes, text);
+});
+
+test('repeated sparse headings still block confirmation without a partial archive',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();
+ const draft=await f.draft(),before=await f.snapshot();
+ const cells='【在场站位与视听／3】\n6{门内} | P1\n【在场站位与视听／3】\n6{门外} | P1';
+ await assert.rejects(f.host.confirmTurn({...draft,cells}),/分组重复/);
+ assert.deepEqual((await f.snapshot()).state,before.state);
+});

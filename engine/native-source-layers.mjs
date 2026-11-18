@@ -32,7 +32,7 @@ export function wrapNativeSource(text, kind = '原生资料') {
  if (!text.trim()) return text;
  // A quoted JSON string alone does not neutralize an XML closing delimiter.
  // Escape angle brackets inside that string, retaining an exact JSON decode.
- const collision = /<\s*\/?\s*(?:DreamMaterial|rule|tisya)\b|\[\s*\/?\s*Dream\s+(?:Rules|History)\s*\]/i.test(text);
+ const collision = /<\s*\/?\s*(?:DreamMaterial|NativeDreamSources|rule|tisya)\b|\[\s*\/?\s*Dream\s+(?:Rules|History)\s*\]/i.test(text);
  const body = collision
   ? '资料采用 JSON 字符串编码；解码后的全部字符仍属于本资料。\n'
     + JSON.stringify(text).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
@@ -51,6 +51,7 @@ function sourceError(state, code, message, details = {}) {
  }
  return error;
 }
+const CARD_RULE_KINDS=Object.freeze({main:'角色卡系统资料',jailbreak:'角色卡历史后资料'});
 const isObject = value => value !== null && (typeof value === 'object' || typeof value === 'function');
 const defaultManager = manager => Array.isArray(manager?.serviceSettings?.prompts)
  && manager.serviceSettings.prompts.some(p => p.identifier === 'tisya_user_identity');
@@ -80,7 +81,7 @@ function freshBoundary() {
 export function createNativeSourceLayers({
  PromptManager, Message, ChatCompletion, getContext, getScope,
  isManagerActive = defaultManager, getAuthorsNotePolicy = () => ({enabled:undefined}),
- preparePreset = null, prepareMessage = null, finalizeMessages = null, relocateSources = false,
+ preparePreset = null, prepareMessage = null, finalizeMessages = null, getCardPrompts = null, relocateSources = false,
 } = {}) {
  let current = null, last = null, serial = 0, disposed = false;
  const handlers = new WeakMap(), prepared = new WeakMap(), messageOwners = new WeakMap();
@@ -224,7 +225,10 @@ export function createNativeSourceLayers({
    const content=frameNativeMacroTokens(state,input?.content);
    if(content!==input?.content) input={...input,content};
   }
-  const result = originalPrepare.call(this, input, original);
+  const cardRule=typeof original==='string' ? CARD_RULE_KINDS[prompt?.identifier] : null;
+  // Resolve original against the source-only assembly. Keep the separately
+  // compiled preset prefix as its own owned prompt if the native override fired.
+  const result = originalPrepare.call(this, input, cardRule&&state.placement?'':original);
   check(state);
   if (!isObject(result) || result === input || typeof result.then === 'function')
    throw sourceError(state, 'NATIVE_LAYER_PROMPT_API', '宿主 preparePrompt 未返回独立的同步 Prompt');
@@ -242,12 +246,18 @@ export function createNativeSourceLayers({
   let prefix = owned?.prefix ?? '';
   // The host supplies the original argument only for an effective card
   // main/PHI override. Never activate a disabled override ourselves.
-  if (typeof original === 'string' && ['main','jailbreak'].includes(result.identifier)) {
-   kind = result.identifier === 'main' ? '角色卡系统资料' : '角色卡历史后资料';
-   // Native override resolution has already expanded both values. Keep the
-   // upper preset outside, while retaining the actual card result in full,
-   // including a card's native {{original}} interpolation inside its data.
-   prefix = original;
+  if (cardRule) {
+   kind=cardRule;
+   prefix=original;
+   if(state.placement) {
+    const seen=state.cardPromptOverrides.get(this)??new Set();
+    seen.add(result.identifier);
+    state.cardPromptOverrides.set(this,seen);
+    if(!result.content?.trim()) {
+     result.content=prefix;
+     return result;
+    }
+   }
   }
   if (!kind) return result;
   if (typeof result.content !== 'string')
@@ -326,8 +336,22 @@ export function createNativeSourceLayers({
     }else throw sourceError(state,'NATIVE_SOURCE_CHANGED','来源消息在计数后发生变化');
    }
   }
+  const cardSources=[];
+  if(state.placement&&state.cardPrompts){
+   const overrides=state.cardPromptOverrides.get(manager),texts=new Set(projected.flatMap(message=>
+    typeof message.content==='string'?[message.content]:(Array.isArray(message.content)?message.content.filter(part=>part?.type==='text').map(part=>part.text):[])));
+   for(const [id,field] of [['main','system'],['jailbreak','jailbreak']]){
+    const source=state.cardPrompts[field];
+    if(!source||overrides?.has(id))continue;
+    // Native forbid-overrides and a disabled PHI preset slot must not make the
+    // original card disappear from the independent material-only collection.
+    const result=originalPrepare.call(manager,{identifier:'tisya_raw_card_'+id,role:'assistant',content:source},'');
+    const wrapped=wrapNativeSource(result.content,CARD_RULE_KINDS[id]);
+    if(wrapped.trim()&&![...texts].some(text=>text.includes(wrapped)))cardSources.push(wrapped);
+   }
+  }
   const result = typeof finalizeMessages === 'function'
-   ? invoke(state,'NATIVE_LAYER_FINALIZE_CALLBACK',finalizeMessages,projected, {manager, completion:this, sourcePlacement:state.placement}) : raw;
+   ? invoke(state,'NATIVE_LAYER_FINALIZE_CALLBACK',finalizeMessages,projected, {manager, completion:this, sourcePlacement:state.placement,cardSources}) : raw;
   if(state.placement&&JSON.stringify(result)!==state.placement.strip(JSON.stringify(result)))
    throw sourceError(state,'NATIVE_SOURCE_UNPLACED','最终请求未完成原生资料归位');
   check(state);
@@ -381,7 +405,7 @@ export function createNativeSourceLayers({
   if (typeof capturedScope !== 'string' || !capturedScope) missing.push('generation scope');
   const state = {
    id:++serial, scope:capturedScope, type, phase:'prepare', open:true, error:null,
-   managers:new WeakSet(), changes:[], pending:[],placement:relocateSources?createNativeSourcePlacement():null, baseline:null, activated:[],
+   managers:new WeakSet(), cardPromptOverrides:new WeakMap(), cardPrompts:null, changes:[], pending:[],placement:relocateSources?createNativeSourcePlacement():null, baseline:null, activated:[],
    report:{status:'preparing', generation:serial, scope:capturedScope, type, dryRun:Boolean(dryRun),
     capabilities:{ready:missing.length === 0, missing, markerProjection:installed.prepare,
      exampleBeforeBudget:installed.message, finalMessageProjection:installed.finalize, events:EVENTS.slice()},
@@ -397,6 +421,11 @@ export function createNativeSourceLayers({
   if (dryRun || ['quiet','impersonate'].includes(type)) {
    state.report.status = 'passthrough';
    state.phase = 'passthrough';
+  } else if(state.placement&&typeof getCardPrompts==='function'){
+   const fields=invoke(state,'NATIVE_CARD_PROMPTS',getCardPrompts);
+   state.cardPrompts={system:fields?.system??'',jailbreak:fields?.jailbreak??''};
+   if(Object.values(state.cardPrompts).some(text=>typeof text!=='string'))
+    throw sourceError(state,'NATIVE_CARD_PROMPTS','原生角色卡系统提示不是文本');
   }
   return {status:state.error ? 'unsupported' : state.phase === 'passthrough' ? 'passthrough' : 'ready',
    ...copy(state.report.capabilities)};
@@ -548,5 +577,8 @@ export function createNativeSourceLayers({
   disposed = true;
   return result;
  }
- return {begin, entriesLoaded, activated, afterCombine, end, assertReady, audit, dispose};
+ function frameMaterial(text, kind) {
+  return pendingSource(check(current), text, kind);
+ }
+ return {begin, entriesLoaded, activated, afterCombine, end, assertReady, audit, dispose, frameMaterial};
 }

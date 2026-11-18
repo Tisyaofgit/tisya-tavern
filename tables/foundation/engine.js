@@ -418,7 +418,14 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  for(const section of sections){
   try{const candidates=existingRecordCandidates(context,section.heading);check(candidates.length<=1,ambiguousExistingHeading(section.heading));const existing=candidates[0];let t,number,recordId;
   if(existing){check(context.mode==='revise','新增创作不能覆盖已有记录');t=context.catalog.templates.find(t=>t.id===existing.tableId);check(t,'本次未开放该表修订：'+section.heading);recordId=existing.recordId;}
-  else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=Number(match[2]);check(partition||number===(counts.get(t.id)??0)+1,'同表记录须从1连续编号：'+section.heading);counts.set(t.id,number);recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
+  else {const match=/^(.+)／([1-9]\d*)$/.exec(section.heading);check(match,'表单标题须为已登记表名／序号：'+section.heading);t=context.catalog.templates.find(t=>t.label===match[1]);check(t,'表单未登记：'+match[1]);number=match[2];
+   // A reply may contain only the changed groups. Keep its literal key for references and replay.
+   if(!partition&&context.task!=='main'){
+    const expected=(counts.get(t.id)??0)+1;
+    check(number===String(expected),'同表记录须从1连续编号：'+section.heading);
+    counts.set(t.id,expected);
+   }
+   recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
   const made=engine.create(t.id),keys=section.lines.map((line,index)=>{const f=matrixInputField(t,line);section.lines[index]=line.replace(/^\d+/,String(fieldRow(t,f)));return f.key;});
   check(keys.length,'不创建没有字段的记录：'+section.heading);selections.push({recordId:made.id,keys,heading:section.heading});rows.push({tableId:t.id,recordId,workbookId:made.id,heading:section.heading,existing:!!existing,values:{},states:{}});
   }catch(error){error.formLocation??={heading:section.heading};throw error;}

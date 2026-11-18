@@ -9,7 +9,7 @@ test('owned source order crosses boundary and multipart history without moving q
  const image={type:'image_url',image_url:{url:'data:image/png;base64,fixture'}};
  const input=[msg(p.mark(a)),msg('[Dream Rules]\n资料起\n[/Dream Rules]'),msg([{type:'text',text:'用户原文\n'+b+p.mark(b)},image],'user')],before=structuredClone(input);
  const {messages,audit}=p.relocate(input,compiled);assert.deepEqual(input,before);
- assert.deepEqual(messages.slice(1,3).map(m=>m.content),[a,b]);assert.equal(messages[2].role,'user');
+ assert.deepEqual(messages[1],msg('<NativeDreamSources>\n'+a+'\n'+b+'\n</NativeDreamSources>','assistant'));assert.equal(messages[0].role,'system');
  assert.deepEqual(messages.at(-1),msg([{type:'text',text:'用户原文\n'+b},image],'user'));assert.equal(audit.moved,2);
 });
 test('missing destination and truncated owned source block instead of leaving it at old position',()=>{

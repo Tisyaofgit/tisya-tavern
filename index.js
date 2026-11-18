@@ -44,6 +44,7 @@ import {mountMatrixIdentity,mountMatrixCreation,mountStoryResources} from './eng
 import {createStoryIdentity,storyAvatar} from './engine/identity.mjs';
 import {excludeTemplateBookEntries} from './engine/template-book.mjs';
 import {createWorldbookConditionGate} from './worldbook-conditions.js';
+import {usesPromptTemplate} from './engine/template-dream-sources.mjs';
 import {createPersonaGateway} from './tables/persona.js';
 import {projectToolTurns} from '/scripts/tauritavern/tool-turn-projection.js';
 import {user_avatar,initUserAvatar,setPersonaDescription,convertCharacterToPersona} from '/scripts/personas.js';
@@ -128,7 +129,8 @@ const getAppearance=owner=>{
  const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;
  const cards=group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);
  const characters=cards.map(card=>({id:card.avatar,name:card.name,avatar:card.avatar?getThumbnailUrl('avatar',card.avatar):''}));
- return {...value,dialogueCharacterRevision:JSON.stringify(characters),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:{},scope:{session_ref:String(c.chatId??'')}}))};
+ const speech=window.Tisya?.matrix?.config.dialogueDisplay();
+ return {...value,...speech,dialogueCharacterRevision:JSON.stringify(characters),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:{},scope:{session_ref:String(c.chatId??'')}}))};
 };
 const getDisplay=()=>getAppearance('extensions');
 const getPlayerName=()=>context().name1??null;
@@ -202,7 +204,7 @@ const configHost=createHost({projectToolTurns,openArchiveQuery:(task,input,optio
 const nativeConfiguration=createNativeConfiguration({getContext:context,regexGate:createRegexGate({getContext:context,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts,saveSettings})});
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 function currentNativeDisplayRules(){const c=context();return !c.chatId||!configStore.read().world.theme.nativeRegex||c.extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true});}
-const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
+const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardPrompts:hostNative.getCharacterCardFieldsSource,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
@@ -1029,6 +1031,20 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       try{matrixHost.assertNativeResume(options);}
       catch(e){context().stopGeneration?.();error(e);throw e;}
      });
+     const loadGenerationLore=async p=>{
+      excludeTemplateBookEntries(p,storyBookSettings());
+      if(matrixHost.active()){await defaultActivation.ready();await matrixHost.entriesLoaded(p);return worldbookConditions.entriesLoaded(p);}
+     };
+     const beforePromptTemplate=p=>{
+      if(nativeDryRun||!nativeGenerationMatrix||preparationError||!usesPromptTemplate(context()))return;
+      try{matrixHost.captureTemplatePayload(p);}
+      catch(e){preparationError=e;blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}
+     };
+     const finishMainPayload=async p=>{
+      if(nativeDryRun||!nativeGenerationMatrix)return;
+      try{if(preparationError)throw preparationError;await worldbookConditions.assertReady();return await matrixHost.payloadReady(p);}
+      catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}
+     };
      bind('GENERATION_AFTER_COMMANDS',async(...args)=>{
       nativeDryRun=args[2]===true||args[1]?.dryRun===true;if(nativeDryRun)return;
       nativeGenerationOpen=true;nativeGenerationEpoch++;nativeGenerationMatrix=matrixHost.active();preparationError=null;
@@ -1037,10 +1053,20 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       try{
        await defaultActivation.ready();builtinPreset.assertReady();
        if(worldSeedService.isBusy()||identityService.hasPending()||identityService.isBusy()||characterGroup?.isBusy()||worldbookConsole?.isBusy()||worldbookConsole?.hasUnconfirmedSettings())throw Error('资料保存尚未完成，请先等待或重试保存');
-       await phoneTurn.begin(...args);await communication.beginNative(String(query('#send_textarea')?.value??''),...args);await matrixHost.before(...args);if(!['quiet','impersonate'].includes(args[0]))worldbookConditions.begin(args[0]??'normal',args[1]??{});
+       await phoneTurn.begin(...args);await communication.beginNative(String(query('#send_textarea')?.value??''),...args);await matrixHost.before(...args);
+       if(!['quiet','impersonate'].includes(args[0])){
+        worldbookConditions.begin(args[0]??'normal',args[1]??{});
+        const {eventSource,eventTypes}=context();
+        if(usesPromptTemplate(context())){
+         if(typeof eventSource.makeFirst!=='function'||typeof eventSource.makeLast!=='function')throw Error('宿主无法在提示词模板前后锁定梦境资料');
+         eventSource.makeLast(eventTypes.WORLDINFO_ENTRIES_LOADED,loadGenerationLore);
+         eventSource.makeFirst(eventTypes.CHAT_COMPLETION_SETTINGS_READY,beforePromptTemplate);
+         eventSource.makeLast(eventTypes.CHAT_COMPLETION_SETTINGS_READY,finishMainPayload);
+        }
+       }
       }catch(e){await phoneTurn.stopped().catch(error);await communication.stopped().catch(error);preparationError=e;context().stopGeneration?.();error(e);throw e;}
      });
-     bind('WORLDINFO_ENTRIES_LOADED',async p=>{excludeTemplateBookEntries(p,storyBookSettings());if(matrixHost.active()){await defaultActivation.ready();await matrixHost.entriesLoaded(p);return worldbookConditions.entriesLoaded(p);}});
+     bind('WORLDINFO_ENTRIES_LOADED',loadGenerationLore);
      bind('WORLDINFO_SCAN_DONE',p=>matrixHost.active()?worldbookConditions.scanDone(p):undefined);
      bind('WORLD_INFO_ACTIVATED',entries=>nativeGenerationMatrix&&!nativeDryRun?matrixHost.activated(entries):undefined);
      bind('GENERATE_AFTER_COMBINE_PROMPTS',async p=>{
@@ -1048,11 +1074,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       try{if(preparationError)throw preparationError;return await matrixHost.afterCombine(p);}
       catch(e){preparationError=e;context().stopGeneration?.();error(e);throw e;}
      });
-     bind('CHAT_COMPLETION_SETTINGS_READY',async p=>{
-      if(nativeDryRun||!nativeGenerationMatrix)return;
-      try{if(preparationError)throw preparationError;await worldbookConditions.assertReady();return await matrixHost.payloadReady(p);}
-      catch(e){blockPayload(p,e);context().stopGeneration?.();error(e);throw e;}
-     });
+     bind('CHAT_COMPLETION_SETTINGS_READY',finishMainPayload);
      bind('GENERATION_ENDED',finishMainGeneration);
      bind('GENERATION_STOPPED',async()=>{
       worldbookConditions.end();nativeGenerationEpoch++;generationOperations.stop();revisionController.stopped();nativeGenerationOpen=false;

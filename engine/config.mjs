@@ -1,7 +1,7 @@
 import {applyGeneration,assertGeneration,validateGeneration} from './generation.mjs';
 import {storyAvatar,projectDatabaseIdentity,readProseIdentity} from './identity.mjs';
 import {validateStoryLibraries} from './template-book.mjs';
-import {applyPreferences,validatePreferences,effectivePreferences,wishPreferences,preferenceWishSlot} from './preferences.mjs';
+import {preferenceGroup,applyPreferences,validatePreferences,effectivePreferences,wishPreferences,preferenceWishSlot} from './preferences.mjs';
 import {configureRenderingResources,renderingResources} from '../rendering-resources.js';
 import {applyOutputConfiguration} from './output-config.mjs';
 import {NARRATIVE_SOURCE_ROUTING,resolveNarrativeIntakeText} from './narrative-source-policy.mjs';
@@ -48,6 +48,11 @@ export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
  let saving=false;
  function key(){const c=getContext();return JSON.stringify([c.groupId?'group':'character',String(c.groupId??c.characterId??''),String(c.chatId)]);}
  function story(all){const keys=[key(),...(getContext().chatMetadata?.tisya_engine?.origin_chat_keys??[])],normalize=k=>{try{return JSON.stringify(JSON.parse(k).map(String));}catch{return k;}};for(const candidate of keys){const found=Object.keys(all.stories??{}).find(k=>normalize(k)===normalize(candidate));if(found)return all.stories[found];}return {userBinding:null,userName:'',wish:''};}
+ function dialogueDisplay(){
+  const ctx=getContext(),all=ctx.extensionSettings[CONFIG_KEY]??{},current=story(all);
+  const blocks=effectivePreferences({playDefaults:all.playDefaults,story:current}).choices['S09-Blocks'];
+  return {namedDialogue:isMatrixPreset(ctx.chatCompletionSettings)&&!!blocks?.includes('S09-Dialogue'),playerDialogueNames:[ctx.name1,current.userName].filter(Boolean)};
+ }
  function read(){const all=getContext().extensionSettings[CONFIG_KEY]??{format:1,tags:{...DEFAULT_TAGS},aliases:[],prompts:{},generation:{},stories:{},revision:0};if(all.format!==1)fail('CONFIG_VERSION','新版配置格式不受支持');return {...clone(all),story:clone(story(all)),contextKey:key()};}
  function validate(next){validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));validateGeneration(next.generation??{},getContext());renderingResources(next.resources??[]);validateStoryLibraries(next);validateTags(next.tags);return clone(next);}
  async function save(next){
@@ -67,13 +72,30 @@ export function createConfiguration({getContext,persist,assertIdle=()=>{}}){
   }finally{saving=false;}
   configureTags(value.tags,value.aliases);configureRenderingResources(value.resources??[]);return read();
  }
- configureTags(read().tags,read().aliases);configureRenderingResources(read().resources??[]);return {read,save,validate};
+ configureTags(read().tags,read().aliases);configureRenderingResources(read().resources??[]);return {read,save,validate,dialogueDisplay};
 }
 export function compilePromptText(text,config,slots={}){
  // Expand injected material before resolving the protagonist macro inside it.
  text=text.replace(/\{\{(tisya_[\w]+)\}\}/g,(_,name)=>Object.hasOwn(slots,name)?slots[name]:'');
  const tags=validateTags(config.tags);
  return text.split(/(\[MULTIMEDIA\][\s\S]*?\[\/MULTIMEDIA\])/g).map(part=>part.startsWith('[MULTIMEDIA]')?part:rewriteTagReferences(part.replaceAll('{{user}}',slots.tisya_user_name||config.story.userName||'user'),DEFAULT_TAGS,tags)).join('');
+}
+const SCENE_PREFERENCE_OUTPUT=[
+ [preferenceGroup('N02'),'N02-C',"@POV.PERSON := 全文使用第二人称。叙述本轮玩家所扮人物（`{{user}}`）的动作、位置和感知时称「你」，其余人物用姓名或第三人称；对白和心声保留说话者自己的称谓。"],
+ [preferenceGroup('N03'),'N03-A',"@POV.LENS := 跟随本场与主控直接交手或交谈的具体人物，只写该人物能感知的言行及其获准的内心。以当前剧情确定人物姓名，群像卡和世界卡同样按场上人物取景。"],
+ [preferenceGroup('S08-MindVoice'),'S08-MindVoice-C',"@PSYCHOLOGY.VOICE := 当前对手戏人物开口或以动作回应时，在相邻正文段写出此人当下的一句第一人称心声，呈现嘴上应对、身体反应和内心真实顾虑的差异；每次反差来自具体人设、关系与现场触动。外部叙事遵循 @POV.PERSON，人物知情遵循当前视角，{{user}} 的心声遵循 @AUTH.MIND。"],
+];
+function selectedBodyForms(preset){
+ const style=preset.prompts.find(row=>row.identifier==='tisya_pref_style');
+ const order=preset.order??preset.prompt_order?.find(row=>row.character_id===100001)?.order;
+ if(!style||style.enabled===false||!order?.some(row=>row.identifier===style.identifier&&row.enabled))return '';
+ const options=preferenceGroup('S09-Blocks').options;
+ const forms=[];
+ for(const [id,form] of [['S09-Dialogue','人物发言写成【人物姓名#当下情绪】“所说的话”'],['S09-Thought','内心独白写成【人物姓名#当下情绪】■我心里此刻的话■']]){
+  const option=options.find(row=>row.id===id);
+  if(style.content.includes(option.effect))forms.push(form);
+ }
+ return forms.length?'\n本轮正文按所选人称与镜头叙述。卡内发言示例提供人物和话意，实际正文执行下列行样式（替换为真实内容）：'+forms.join('。')+'。每行沿用正文段号。':'';
 }
 export function compilePrompts(source,config,slots){
  const out=clone(source);
@@ -84,10 +106,18 @@ export function compilePrompts(source,config,slots){
  }
  if(slots.tisya_output_configuration)applyOutputConfiguration(out.prompts,JSON.parse(slots.tisya_output_configuration));
  const parameters=applyPreferences(out.prompts,config,slots.tisya_preference_texts?JSON.parse(slots.tisya_preference_texts):{});if(parameters.min_length!=null||parameters.max_length!=null)applyOutputConfiguration(out.prompts,parameters);
+ // Resolve stock placeholders for the live scene without editing authored preset or option text.
+ for(const [group,id,effect] of SCENE_PREFERENCE_OUTPUT){
+  const row=out.prompts.find(p=>p.identifier===group.slot);
+  if(!row||Object.hasOwn(config.prompts,row.identifier))continue;
+  const original=group.options.find(o=>o.id===id).effect;
+  row.content=row.content.replace(original,()=>effect);
+ }
+ const bodyForms=selectedBodyForms(out);
  for(const p of out.prompts){if(p.marker)continue;
   // {{user}} names the bound protagonist. The native persona is injected once
   // into the contractor wish and cannot silently become the protagonist.
-  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??''):resolvePromptLayerText(p.identifier,resolveNarrativeIntakeText(p.identifier,p.content??'')),config,slots);
+  p.content=compilePromptText(p.identifier==='tisya_registry'?withReplyEnvelope(p.content??'').replace('@END_ENVELOPE',()=>bodyForms?bodyForms.trimStart()+'\n@END_ENVELOPE':'@END_ENVELOPE'):resolvePromptLayerText(p.identifier,resolveNarrativeIntakeText(p.identifier,p.content??'')),config,slots);
  }
  out.layerPlan=compilePromptLayerPlan(out);
  return out;

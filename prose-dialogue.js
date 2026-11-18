@@ -4,6 +4,16 @@ export const dialogueBlocks=globalThis.TisyaDialogueBlocks;
 const plainTags=new Set(['P','DIV','SECTION','EM','STRONG','B','I','U','S','SPAN','Q','BR']);
 // Project only sanitized, unowned prose text. Code, links, authored cards and
 // already decorated blocks retain their DOM and never become speaker metadata.
+function unquotedSpeakerLine(text,start,options){
+ if(!options.namedDialogue||text.slice(text.lastIndexOf('\n',start-1)+1,start).trim())return null;
+ const line=text.slice(start).split('\n',1)[0].trimEnd();
+ const match=/^【([^【】#\r\n]+?)(?:#([^【】#\r\n]+))?】[ \t]*(.+)$/u.exec(line);
+ if(!match)return null;
+ const name=match[1].trim(),mood=match[2]?.trim()??'',speech=match[3].trim();
+ if(!name||!speech||/^[■“【`<]/u.test(speech)||/[■【】]/u.test(speech))return null;
+ if(!mood&&!options.playerDialogueNames?.includes(name)&&!options.dialogueCharacters?.resolve(name))return null;
+ return {start,end:start+line.length,name,mood,text:speech,unquoted:true};
+}
 export function decorateDialogue(root,options={}){
  if(options.标记美化===false)return 0;
  const runs=[];let run=null,count=0;const doc=root.ownerDocument;
@@ -19,14 +29,19 @@ export function decorateDialogue(root,options={}){
   const matches=[];
   for(let i=0;i<group.text.length;i++){
    if(group.text[i]!=='【')continue;let before=i;while(before&&group.text[before-1]==='\\')before--;if((i-before)%2)continue;
-   const thought=dialogueBlocks.thoughtAt(group.text,i),dialogue=dialogueBlocks.dialogueAt(group.text,i),match=thought??dialogue;
+   const thought=dialogueBlocks.thoughtAt(group.text,i),dialogue=dialogueBlocks.dialogueAt(group.text,i),match=thought??dialogue??unquotedSpeakerLine(group.text,i,options);
    if(!match)continue;
    if(thought?options.署名心声!==false&&options.标记内心!==false:options.角色对白框!==false)matches.push({...match,thought:!!thought});
    i=match.end-1;
   }
   for(const match of matches.reverse()){
    const first=group.leaves.find(x=>x.start<=match.start&&x.end>match.start),last=group.leaves.find(x=>x.start<match.end&&x.end>=match.end);if(!first||!last)continue;
-   const raw=group.text.slice(match.start,match.end),template=doc.createElement('template');template.innerHTML=dialogueBlocks.registry.project(raw,{characters:options.dialogueCharacters,literal:true});
+   const raw=group.text.slice(match.start,match.end),template=doc.createElement('template');
+   const renderOptions={characters:options.dialogueCharacters,literal:true};
+   template.innerHTML=match.unquoted
+    ?dialogueBlocks.registry.entries().find(entry=>entry.id==='tisya.content.dialogue').render(match,renderOptions)
+    :dialogueBlocks.registry.project(raw,renderOptions);
+   if(match.unquoted&&!match.mood)template.content.querySelector('.tisya-dialogue-mood')?.remove();
    const range=doc.createRange();range.setStart(first.node,match.start-first.start);range.setEnd(last.node,match.end-last.start);range.deleteContents();range.insertNode(template.content);count++;
   }
  }
