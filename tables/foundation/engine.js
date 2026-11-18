@@ -23,6 +23,16 @@ export function matrixInputField(template,line){
  check(false,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
 }
 const permitsIdentityReuse=task=>['main','historyImport','templateInit'].includes(task);
+// A state description, remaining duration or source of the latest change
+// can change on every turn. Resolve the state before decoding those fields.
+const stateOwners=Object.freeze({
+ T_DYN_CONDITIONS:'entity_ref',T_DYN_ENTITY_STATE:'entity_id',
+ T_DYN_ENTITY_GAUGES:'entity_id',T_DYN_GLOBAL_GAUGES:'scope_ref'
+});
+function usesStateName(context,row){
+ return context.stateNamePatches&&context.narrativeIdentity!==false&&context.task==='main'&&
+  context.mode==='revise'&&row.name&&Object.hasOwn(stateOwners,row.tableId);
+}
 export function existingRecordCandidates(context,heading){return [...new Map(context.references.filter(r=>r.display===heading||r.legacyDisplay===heading||permitsIdentityReuse(context.task)&&!(context.narrativeIdentity!==false&&r.tableId==='T_DYN_EVENTS')&&heading===(context.catalog.templates.find(t=>t.id===r.tableId)?.label+'／'+r.name)).map(r=>[r.tableId+'#'+r.recordId,r])).values()];}
 const ambiguousExistingHeading=heading=>'已有记录标题有歧义，无法确定修订对象：'+heading;
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
@@ -304,7 +314,7 @@ function structuredCell(raw,array=false){
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true,vocabulary=formVocabulary()}={}){
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true,stateNamePatches=true,vocabulary=formVocabulary()}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
  const restrictReferences=task==='main'||!!characterSubject(scope);
  const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
@@ -367,8 +377,8 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   return f.row+'{'+content+'}';
  }).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
  const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；'+formWriteSyntax+'编号按本表模板。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
- const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+FORM_OWNERSHIP_CONTRACT+'\n'+unitFormInstructions;
- return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,vocabularyText:formVocabularyText(vocabulary),formSections,form:[formVocabularyText(vocabulary),sharedInstructions,fieldsText].filter(Boolean).join('\n\n'),referenceText:refs.map(r=>r.display).join('\n')};
+ const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(stateNamePatches&&task==='main'?'同一对象的同一项当前状态续写原记录，只填变化的表现、当前值、有效性或时效；多人有同名状态时填写所属对象。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+FORM_OWNERSHIP_CONTRACT+'\n'+unitFormInstructions;
+ return {format:'tisya.matrix-sheets/1',stateNamePatches,commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,vocabularyText:formVocabularyText(vocabulary),formSections,form:[formVocabularyText(vocabulary),sharedInstructions,fieldsText].filter(Boolean).join('\n\n'),referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This
@@ -432,7 +442,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  }
  if(partition){for(const [index,selection]of selections.entries())try{const ticket=engine.requestWorkbook([selection]);engine.accept(ticket.token,['【'+sections[index].heading+'】',...sections[index].lines].join('\n'));}catch(error){error.formLocation??={heading:sections[index].heading};throw error;}}
  else {const ticket=engine.requestWorkbook(selections);engine.accept(ticket.token,sections.flatMap(s=>['【'+s.heading+'】',...s.lines]).join('\n'));}
- for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();if(context.enforceDialogueAttribution&&row.tableId==='T_DYN_EVENTS'&&row.raw.exact_dialogues!==previous?.exact_dialogues)check(!unattributedDialogue(row.raw.exact_dialogues),'关键原话台词须逐句注明说话人；归属不明请标说话人未明，原句保持不变');check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name&&!(context.narrativeIdentity!==false&&!(row.tableId==='T_DYN_SCENE_SPACE'&&context.sceneNameReuse===false)&&(row.tableId==='T_DYN_EVENTS'||permitsIdentityReuse(context.task)&&Object.hasOwn(OBJECT_IDENTITY_FIELDS,row.tableId)))&&!(permitsIdentityReuse(context.task)&&reusesNamedRow(context,row.tableId)))check(!context.references.some(r=>r.tableId===row.tableId&&(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(row.name)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(row.name)):r.name===row.name)),'已有同名记录，请明确选择修订对象，不能默建副本：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
+ for(const row of rows){try{row.raw=engine.values(row.workbookId).values;const previous=row.existing?snapshot.state.tables[row.tableId]?.[row.recordId]?.values:null;row.name=String(row.raw.name??row.raw.label??row.raw.title??row.raw.instance_name??previous?.name??previous?.label??previous?.title??previous?.instance_name??'').trim();if(context.enforceDialogueAttribution&&row.tableId==='T_DYN_EVENTS'&&row.raw.exact_dialogues!==previous?.exact_dialogues)check(!unattributedDialogue(row.raw.exact_dialogues),'关键原话台词须逐句注明说话人；归属不明请标说话人未明，原句保持不变');check(Object.keys(row.raw).length,'不创建所有字段均未知的空记录：'+row.heading);if(row.tableId==='T_STATIC_WORLDS')check(row.name,'世界身份需要明确名称：'+row.heading);if(!row.existing&&row.name&&!usesStateName(context,row)&&!(context.narrativeIdentity!==false&&!(row.tableId==='T_DYN_SCENE_SPACE'&&context.sceneNameReuse===false)&&(row.tableId==='T_DYN_EVENTS'||permitsIdentityReuse(context.task)&&Object.hasOwn(OBJECT_IDENTITY_FIELDS,row.tableId)))&&!(permitsIdentityReuse(context.task)&&reusesNamedRow(context,row.tableId)))check(!context.references.some(r=>r.tableId===row.tableId&&(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(row.name)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(row.name)):r.name===row.name)),'【'+row.heading+'】已有同名记录，请明确选择修订对象：'+row.name);if(row.existing&&ownedTable(context.schemas[row.tableId]))row.owner=Object.fromEntries([...ownerKeys].filter(k=>Object.hasOwn(previous??{},k)).map(k=>[k,previous[k]]));}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}}
  // Identity tables are sparse patches keyed by a visible, unique name. Other
  // tables can legitimately contain separate same-name rows.
  if(permitsIdentityReuse(context.task)){
@@ -529,6 +539,50 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   const wanted=targets.map(id=>snapshot.state.schema[id]?.label??id).join('／'),found=[...new Set(candidates.map(r=>snapshot.state.schema[r.tableId]?.label??r.tableId))].join('／');
   throw Object.assign(Error('关联名称不存在、重名或表不匹配：'+raw+(wanted?'；需要 '+wanted:'')+(found?'；实际为 '+found:'')),{code:'FORM_REFERENCE',reference:raw,target,actualTables:candidates.map(r=>r.tableId)});
  }
+ // Owner and axis IDs, when supplied, retain their normal matching rules.
+ // A numbered group can also carry just the visible state name and new prose.
+ for(const row of rows.filter(r=>usesStateName(context,r)))try{
+  const ownerKey=stateOwners[row.tableId],ownerRaw=row.raw[ownerKey],axis=row.raw.field_key;
+  const markers=['?','~','!','∅','—'];
+  check(!markers.includes(ownerRaw)&&!markers.includes(axis),'【'+row.heading+'】所属对象和状态字段键须明确，沿用原值时请省略该格');
+  if(row.existing){
+   const old=snapshot.state.tables[row.tableId][row.recordId].values;
+   if(ownerRaw&&old[ownerKey])check(reference(ownerRaw,'T_SYS_ENTITIES',{row,field:ownerKey}).recordId===old[ownerKey],'【'+row.heading+'】所选状态与所属对象不符');
+   if(axis&&old.field_key)check(normalizeIdentityName(axis)===normalizeIdentityName(old.field_key),'【'+row.heading+'】所选状态与字段键不符');
+   continue;
+  }
+  if(ownerRaw&&(row.tableId==='T_DYN_ENTITY_STATE'||row.tableId==='T_DYN_ENTITY_GAUGES'&&axis))continue;
+  const name=normalizeIdentityName(row.name);
+  const named=context.references.filter(r=>r.tableId===row.tableId&&normalizeIdentityName(r.name)===name);
+  if(!named.length)continue;
+  const owner=ownerRaw?reference(ownerRaw,'T_SYS_ENTITIES',{row,field:ownerKey}).recordId:null;
+  const valuesOf=r=>snapshot.state.tables[row.tableId][r.recordId].values;
+  const sameOwner=named.filter(r=>(!owner||valuesOf(r)[ownerKey]===owner)&&(!axis||normalizeIdentityName(valuesOf(r).field_key)===normalizeIdentityName(axis)));
+  // Distinct bearers may have identically named conditions. Ended instances
+  // remain in history when a new current condition with that name starts.
+  if(!sameOwner.length)continue;
+  let matches=sameOwner.filter(r=>valuesOf(r).validity!=='失效');
+  if(!matches.length){
+   if(!owner&&row.tableId!=='T_DYN_GLOBAL_GAUGES')check(false,'【'+row.heading+'】同名状态已失效，新状态请填写所属实体：'+row.name);
+   continue;
+  }
+  if(row.tableId==='T_DYN_CONDITIONS'&&(row.raw.stacking_policy==='separate_instances'||matches.some(r=>valuesOf(r).stacking_policy==='separate_instances'))){
+   // An explicitly separate effect can have several sources on one bearer.
+   const sources=['source_event_ref','source_asset_ref'].filter(k=>row.raw[k]&&!markers.includes(row.raw[k]));
+   if(sources.length){
+    for(const key of sources){
+     const target=snapshot.state.schema[row.tableId].fields.find(f=>f.key===key).ref;
+     const id=reference(row.raw[key],target,{row,field:key}).recordId;
+     matches=matches.filter(r=>valuesOf(r)[key]===id);
+    }
+    if(!matches.length&&owner)continue;
+   }
+  }
+  check(matches.length===1,'【'+row.heading+'】存在多条同名状态，请补全所属对象或引用已有记录完整标题：'+row.name);
+  const target=matches[0],groupRef=references.find(r=>r.tableId===row.tableId&&r.display===row.heading&&r.recordId===row.recordId);
+  row.recordId=target.recordId;row.existing=true;row.raw.name=target.name;row.name=target.name;
+  groupRef.recordId=target.recordId;groupRef.name=target.name;
+ }catch(error){error.formLocation??={heading:row.heading,tableId:row.tableId};throw error;}
  if(context.narrativeIdentity!==false&&permitsIdentityReuse(context.task)){
   const resolved=[];
   for(const row of rows.filter(r=>Object.hasOwn(OBJECT_IDENTITY_FIELDS,r.tableId)&&(!namedIdentityTable(r.tableId)||r.tableId==='T_STATIC_PLACES'&&r.raw.parent_place_ref)))try{

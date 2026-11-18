@@ -76,3 +76,72 @@ test('one batch can discover a subject through an object reference and then its 
  const e=fresh(),next=compile(e,form(e,'T_STATIC_ORGANIZATIONS',{name:'行会',leader_ref:'甲'})+'\n'+form(e,'T_CHAR_ANCHORS',{char_ref:'甲',name:'先观察',speech:'稍等'})).copy;
  assert.equal(Object.keys(next.rows('T_SYS_ENTITIES')).length,1);assert.equal(Object.keys(next.rows('T_CHAR_DOSSIER')).length,1);
 });
+
+test('ongoing narrative condition changes its description and duration in place across review and reopen',async()=>{
+ const f=await fixture();
+ const e=new Runtime((await f.snapshot()).state);
+ const condition=(values)=>reply(form(e,'T_DYN_CONDITIONS',values));
+ const first=condition({entity_ref:'巡夜人',name:'旧伤',observable_effect:'抬不起手',remaining_value:'3',validity:'有效'});
+ f.ctx.chat.push({mes:first});await f.host.sync();await f.host.confirmTurn(await f.draft());
+ const states=async()=>(await f.snapshot()).state.tables.T_DYN_CONDITIONS;
+ const [id]=Object.keys(await states());
+ const patch=condition({name:'旧伤',observable_effect:'能够抬手',remaining_value:'1'});
+ f.ctx.chat.push({is_user:true,mes:'继续'},{mes:patch});await f.host.sync();
+ const candidate=await f.draft(),preview=await f.host.describeTurnReview(candidate);
+ assert.equal(preview.cells.groups[0].recordId,id);
+ assert.equal(preview.cells.groups[0].rows.find(r=>r.key==='observable_effect').previous,'抬不起手');
+ await f.host.confirmTurn(candidate);await createMatrixHost(f.options).sync();
+ const updated=await states();assert.deepEqual(Object.keys(updated),[id]);
+ assert.equal(updated[id].values.observable_effect,'能够抬手');assert.equal(updated[id].values.remaining_value,1);
+ assert.equal(updated[id].values.validity,'有效');
+ const list=await f.host.listTurnReviews(),historical=await f.host.describeTurnReview({...list.reviews[0],contextKey:list.contextKey,expectedRevision:list.revision});
+ assert.equal(historical.cells.groups[0].rows.find(r=>r.key==='observable_effect').value,'抬不起手');
+ await f.host.rewindTurnReviews({uid:candidate.uid,contextKey:list.contextKey,expectedRevision:list.revision});
+ assert.equal((await states())[id].values.observable_effect,'抬不起手');assert.equal((await states())[id].values.remaining_value,3);
+});
+
+test('same condition on two actors stays separate and sparse gauge and posture edits retain their owner',()=>{
+ const e=fresh();for(const [id,name] of [['a','东卫'],['b','西卫']])e.newRecord('T_SYS_ENTITIES',{kind:'character',name},id);
+ const table='T_DYN_CONDITIONS',values={name:'乏力',validity:'有效',observable_effect:'步慢'};
+ e.newRecord(table,{...values,entity_ref:'a'},'east');
+ const other=compile(e,form(e,table,{...values,entity_ref:'西卫'}),'add-other').copy;
+ assert.equal(Object.keys(other.rows(table)).length,2);
+ const next=compile(other,form(other,table,{entity_ref:'东卫',name:'乏力',observable_effect:'步稳'}),'update-east').copy;
+ assert.equal(next.rows(table).east.values.observable_effect,'步稳');
+ assert.equal(Object.values(next.rows(table)).find(r=>r.values.entity_ref==='b').values.observable_effect,'步慢');
+ assert.throws(()=>compile(next,form(next,table,{name:'乏力',observable_effect:'步稳'})),/多条同名状态/);
+ assert.throws(()=>compile(e,form(e,table,{name:'乏力',observable_effect:'步稳'}),'v6',replyFormDecoding('tisya.reply-form-ownership/6')),/已有同名/);
+ for(const [table,values,field] of [
+  ['T_DYN_ENTITY_GAUGES',{entity_id:'a',field_key:'focus',name:'注意力',text_value:'分散'},'text_value'],
+  ['T_DYN_ENTITY_STATE',{entity_id:'a',name:'执勤姿势',posture:'站立'},'posture'],
+ ]){
+  e.newRecord(table,values,'original');
+  const next=compile(e,form(e,table,{name:values.name,[field]:'已改变'})).copy;
+  assert.deepEqual(Object.keys(next.rows(table)),['original']);assert.equal(next.rows(table).original.values[field],'已改变');
+ }
+});
+
+test('ongoing status respects lifecycle, independent effect sources and explicit bearer identity',()=>{
+ const e=fresh(),table='T_DYN_CONDITIONS';
+ for(const [id,name] of [['east','东卫'],['west','西卫']])e.newRecord('T_SYS_ENTITIES',{kind:'character',name},id);
+ for(const [id,name] of [['charm','护符'],['seal','印记']])e.newRecord('T_STATIC_ITEMS_SKILLS',{name},id);
+ const common={entity_ref:'east',name:'辉光',stacking_policy:'separate_instances',source_asset_ref:'charm'};
+ e.newRecord(table,{...common,validity:'失效',observable_effect:'已暗淡'},'past');
+ e.newRecord(table,{...common,validity:'有效',observable_effect:'微光'},'current');
+ const patch={entity_ref:'东卫',name:'辉光',stacking_policy:'separate_instances',observable_effect:'更亮'};
+ const revised=compile(e,form(e,table,patch),'refresh').copy;
+ assert.deepEqual(Object.keys(revised.rows(table)),['past','current']);
+ assert.equal(revised.rows(table).current.values.observable_effect,'更亮');
+ assert.equal(revised.rows(table).past.values.observable_effect,'已暗淡');
+ const another=compile(revised,form(revised,table,{...patch,source_asset_ref:'印记',validity:'有效'}),'distinct-source').copy;
+ assert.equal(Object.keys(another.rows(table)).length,3);
+ const last=compile(another,form(another,table,{...patch,source_asset_ref:'护符',validity:'失效'}),'expire').copy;
+ assert.equal(last.rows(table).current.values.validity,'失效');
+ assert.equal(Object.values(last.rows(table)).filter(r=>r.values.validity==='有效').length,1);
+ const target=context(e).references.find(r=>r.recordId==='current').display;
+ assert.throws(()=>compile(e,form(e,table,{entity_ref:'西卫',observable_effect:'更亮'},{heading:target})),/所属对象不符/);
+ assert.throws(()=>compile(e,form(e,table,{...patch,entity_ref:'?'})),/所属对象和状态字段键须明确/);
+ e.newRecord('T_DYN_GLOBAL_GAUGES',{name:'潮位',value:2},'tide');
+ const tide=compile(e,form(e,'T_DYN_GLOBAL_GAUGES',{name:'潮位',value:'3'})).copy.rows('T_DYN_GLOBAL_GAUGES');
+ assert.deepEqual(Object.keys(tide),['tide']);assert.equal(tide.tide.values.value,3);
+});
