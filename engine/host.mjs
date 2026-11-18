@@ -180,7 +180,10 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const result=reconcile(staged,messages),target=result.bundle.journal.entries.find(e=>e.uid===input.uid);
   if(!rewind){
    const policy=staged.turn_review.settings??{};const base=projectReviewSchema(clone(bundle.state),policy);const missing=reviewRequirements(base,policy,result.bundle.state,input.responses??{}).filter(r=>!r.done);if(missing.length)fail('REVIEW_REQUIRED','请核对必填字段：'+missing.map(r=>r.recordName+'／'+r.label).join('、'));
-   const failures=(target?.warnings??[]).filter(w=>/^(?:CELL.*FAILED|ARCHIVE_)/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
+   const failures=(target?.warnings??[]).filter(w=>/^CELL.*FAILED/.test(w.code??''));
+   const archiveFailures=(target?.warnings??[]).filter(w=>/^ARCHIVE_/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
+   const decision=result.bundle.turn_review.decisions.findLast(d=>d.uid===input.uid&&d.sourceHash===input.sourceHash&&d.contextHash===input.contextHash);
+   if(decision)decision.archive_pending=archiveFailures.length>0;
    if(target?.settlement_status==='FAILED'||failures.length)fail('REVIEW_INVALID','本轮表单尚不能保存：'+(failures[0]?.error?.message??failures[0]?.message??'填写校验失败'),{warnings:failures});
   }
   const live=ctx();if(chatKey(live)!==key||live.chatMetadata?.[NS]?.chat_uid!==id||digest(captureMessages(live))!==stamp)fail('REVIEW_STALE','确认期间正文或会话已变化');

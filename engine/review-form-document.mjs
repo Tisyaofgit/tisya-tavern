@@ -64,11 +64,24 @@ function describeReviewDocument(state,context,text){
  return {text,groups};
 }
 export function editReviewDocument(document,changes){
- const edits=document.groups.flatMap(g=>g.rows).filter(r=>Object.hasOwn(changes,r.start));let text=document.text;
- for(const row of edits.sort((a,b)=>b.valueStart-a.valueStart)){
-  if(row.error||!Number.isInteger(row.valueStart))throw Error('此行不能通过字段编辑器改写。');
-  const value=String(changes[row.start]);if(/[\r\n]/.test(value))throw Error('字段内容请保持一行；分段使用原表单约定。');
-  text=text.slice(0,row.valueStart)+value+text.slice(row.valueEnd);
+ const rows=document.groups.flatMap(g=>g.rows),edited=rows.filter(r=>Object.hasOwn(changes,r.start)||Object.hasOwn(changes,'evidence:'+r.start)).sort((a,b)=>b.start-a.start);let text=document.text;
+ for(const row of edited){
+  if(row.error||!Number.isInteger(row.start))throw Error('此行不能通过字段编辑器改写。');
+  if(Object.hasOwn(changes,row.start)){
+   if(!Number.isInteger(row.valueStart))throw Error('此行不能通过字段编辑器改写。');
+   const value=String(changes[row.start]);if(/[\r\n]/.test(value))throw Error('字段内容请保持一行；分段使用原表单约定。');
+   text=text.slice(0,row.valueStart)+value+text.slice(row.valueEnd);
+  }
+  if(Object.hasOwn(changes,'evidence:'+row.start)){
+   const lineEnd=text.indexOf('\n',row.start)<0?text.length:text.indexOf('\n',row.start),line=text.slice(row.start,lineEnd),current=paragraphEvidence(line),raw=String(changes['evidence:'+row.start]).trim();
+   if(raw&&/[\r\n]/.test(raw))throw Error('正文段号依据请保持一行。');
+   const atoms=raw.replace(/[；，、,]/g,' ').trim().split(/\s+/).filter(Boolean).map(atom=>{
+    const match=/^P?(\d+)(?:\.\.P?(\d+))?$/i.exec(atom);if(!match)throw Error('正文段号依据请填写 P29 或 P29..P31。');
+    return 'P'+match[1]+(match[2]?'..P'+match[2]:'');
+   });
+   const replacement=atoms.length?' | '+atoms.join('、'):'';
+   text=current?text.slice(0,row.start+current.index)+replacement+text.slice(row.start+current.index+current[0].length):raw?text.slice(0,lineEnd).trimEnd()+replacement+text.slice(lineEnd):text;
+  }
  }
  return text;
 }

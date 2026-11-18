@@ -16,10 +16,10 @@ export function reviewProjection(bundle,messages){
   const contextHash=contextSignature(projected),sourceHash=sha256(m.text??''),decisions=(bundle.turn_review.decisions??[]).filter(d=>d.uid===m.uid&&d.contextHash===contextHash&&d.active!==false);
   const exact=decisions.findLast(d=>d.sourceHash===sourceHash||sha256(d.reply)===sourceHash),prior=exact??decisions.at(-1);
   const legacy=(bundle.turn_review.legacy??[]).find(d=>d.uid===m.uid&&(d.sourceHash===sourceHash||sha256(d.reply)===sourceHash));
-  if(prior)projected.push({uid:m.uid,role:'assistant',text:prior.reply,review_confirmed:true});
+  if(prior)projected.push({uid:m.uid,role:'assistant',text:prior.reply,review_confirmed:prior.archive_pending!==true});
   else if(legacy)projected.push({...clone(m),role:'assistant'});
   else projected.push({...clone(m),role:'assistant_pending'});
-  reviews.push({uid:m.uid,index,sourceHash,contextHash,status:exact||legacy?'confirmed':'pending',previousConfirmed:!!prior&&!exact,decision:exact??null});
+  reviews.push({uid:m.uid,index,sourceHash,contextHash,status:exact?.archive_pending===true?'pending':exact||legacy?'confirmed':'pending',previousConfirmed:!!prior&&!exact&&!prior.archive_pending,archivePending:exact?.archive_pending===true,decision:exact??null});
  }
  return {messages:projected,reviews};
 }

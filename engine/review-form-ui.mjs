@@ -29,8 +29,15 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
       if(m&&typeof row.previous==='number'){const n=Number(m[2]),old=row.previous,next=m[1]==='+'?decimal(old,n):m[1]==='-'?decimal(old,-n):m[1]==='*'?decimal(old,n,'*'):old/n;effect.textContent=Number.isFinite(next)?'本轮后：'+next:'请填写有效数值';}
       else effect.textContent='';effect.hidden=!effect.textContent;
      };updateEffect();
-     control.addEventListener('input',()=>{changes[channel][row.start]=control.value;updateEffect();try{const value=editReviewDocument(model,changes[channel]);errors.delete(channel);blocks[channel]=value;onChange({...blocks});}catch(error){errors.set(channel,error);onError(error);}});
-     field.append(name,saved,control,effect);if(row.help)field.append(el('small',row.help));if(row.evidence)field.append(el('small','来源：正文第 '+row.evidence.replace(/P/g,'')+' 段'));card.append(field);
+     const update=()=>{try{const value=editReviewDocument(model,changes[channel]);errors.delete(channel);blocks[channel]=value;onChange({...blocks});}catch(error){errors.set(channel,error);onError(error);}};
+     control.addEventListener('input',()=>{changes[channel][row.start]=control.value;updateEffect();update();});
+     field.append(name,saved,control,effect);if(row.help)field.append(el('small',row.help));
+     if(channel==='archive'){
+      const proof=el('input');proof.type='text';proof.value=row.evidence??'';proof.placeholder='P29';proof.disabled=readonly;proof.setAttribute('aria-label',titles[channel]+' · 正文段号依据');
+      proof.addEventListener('input',()=>{changes[channel]['evidence:'+row.start]=proof.value;update();});
+      field.append(el('small',row.evidence?'来源：正文第 '+row.evidence.replace(/P/g,'')+' 段':'正文段号依据（例如 P29）'),proof);
+     }else if(row.evidence)field.append(el('small','来源：正文第 '+row.evidence.replace(/P/g,'')+' 段'));
+     card.append(field);
     }
     section.append(card);
    }

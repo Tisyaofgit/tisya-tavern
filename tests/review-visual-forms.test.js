@@ -17,6 +17,14 @@ test('compact coordinates keep canonical fields and per-field source; visual edi
  const result=acceptReply(e,'<reply><body>1 抵达。\n\n2 休息。</body><cells format="form">'+edited+'</cells></reply>','compact');assert.equal(result.result.operations[0].status,'COMMITTED');const r=Object.values(e.rows('PEOPLE'))[0];assert.equal(r.values.hp,5);assert.equal(r.metadata.hp.source_pointer.paragraph_reference,'P2');
  assert.throws(()=>compile(e,'【人物／1】\n999：错位'),/未开放/);
 });
+test('archive evidence can be repaired in the visual editor without changing its value',()=>{
+ const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_DYN_EVENTS');
+ const raw='【'+t.label+'／1】\n4 事件标题：渡口交信\n19 一行因果梗概：信已交给船夫',model=describeReviewForms(e.data,{archive:raw}).archive;
+ const row=model.groups[0].rows.find(r=>r.key==='title');assert.equal(row.evidence,'');
+ const edited=editReviewDocument(model,{['evidence:'+row.start]:'P1'});
+ assert.match(edited,/4 事件标题：渡口交信 \| P1/);
+ assert.match(edited,/19 一行因果梗概：信已交给船夫/);
+});
 test('missing calendar registers a named minute without inventing calendar rules or conversion',()=>{
  const e=new Runtime(initializeState(catalog)),text=section(context(e),'T_DYN_SCENE_SPACE',{name:'测试渡口',turn_elapsed:'3分钟'}),{copy}=compile(e,text),q=Object.values(copy.rows('M_QUANTITIES'))[0].values;
  assert.equal(q.quantity_mode,'exact');assert.equal(q.value,3);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,'分钟');assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.calendar_ref,undefined);assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,0);

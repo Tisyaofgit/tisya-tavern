@@ -6,6 +6,7 @@ import {initializeState} from '../engine/materials.mjs';
 import {createMatrixHost} from '../engine/host.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
 import {baseline} from '../engine/config.mjs';
+import {describeReviewForms,editReviewDocument} from '../engine/review-form-document.mjs';
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 export async function fixture(){
  const disk=new Map(),ctx={chatId:'review-host',characterId:0,chat:[],extensionSettings:{},chatMetadata:{},saveChat:async()=>true,saveSettingsDebounced(){}};
@@ -31,6 +32,17 @@ test('edited draft is applied atomically, stale and invalid drafts cannot change
  await assert.rejects(f.host.confirmTurn({...d,cells:'不存在的对象.hp: -100'}),/不能保存/);assert.deepEqual((await f.snapshot()).state,before.state);
  await f.host.confirmTurn({...d,cells:'阿青.hp: -2 | P1'});assert.equal(await f.hp(),8);
  await assert.rejects(f.host.confirmTurn(d),/已更新/);
+});
+test('valid state changes confirm while an archive missing evidence stays pending for repair',async()=>{
+ const f=await fixture(),raw=f.reply().replace('4 事件标题：渡口交信 | P1\n19 一行因果梗概：信已交给船夫 | P1','4 事件标题：渡口交信\n19 一行因果梗概：信已交给船夫');
+ f.ctx.chat.push({mes:raw});await f.host.sync();let draft=await f.draft();
+ await f.host.confirmTurn(draft);assert.equal(await f.hp(),7);
+ let reviews=await f.host.listTurnReviews(),pending=reviews.reviews[0];assert.equal(pending.status,'pending');assert.equal(pending.archivePending,true);
+ const form=await f.host.describeTurnReview({...pending,contextKey:reviews.contextKey,expectedRevision:reviews.revision}),archive=form.archive;
+ const row=archive.groups[0].rows.find(r=>r.key==='title'),repaired=editReviewDocument(archive,{['evidence:'+row.start]:'P1'});
+ await f.host.confirmTurn({...pending,contextKey:reviews.contextKey,expectedRevision:reviews.revision,cells:pending.cells,archive:repaired});
+ reviews=await f.host.listTurnReviews();assert.equal(reviews.reviews[0].status,'confirmed');
+ const saved=await f.snapshot();assert.equal(Object.keys(saved.state.tables.T_DYN_EVENTS).length,1);assert.equal(saved.state.runtime.archive_queue[0].status,'formal');
 });
 test('reroll preserves the previous confirmed version until approved and rollback restores floor state',async()=>{
  const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();await f.host.confirmTurn(await f.draft());f.ctx.chat[0].mes=f.reply(5);await f.host.sync();assert.equal(await f.hp(),7);assert((await f.draft()).previousConfirmed);
