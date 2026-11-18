@@ -37,14 +37,19 @@ async function fixture({readyError=null,legacy=false,cardContent=cardText}={}){
  return {context,source,stored,calls,host,payload};
 }
 
-for(const legacy of [false,true])test('native-layer host preserves card defaults as data and applies the selected person outside dream '+(legacy?'installed preset':'new preset'),async()=>{
+for(const legacy of [false,true])test('native-layer host preserves card data and the configured position of the selected person: '+(legacy?'installed preset':'new preset'),async()=>{
  const f=await fixture({legacy}),card=clone(f.context.characters[0]),history=clone(f.context.chat);
  await f.host.before('normal');await f.host.entriesLoaded({characterLore:[]});f.host.activated([]);f.host.afterCombine({dryRun:false});
  const request=f.payload();await f.host.payloadReady(request);
  const system=request.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
  assert.equal(f.host.accepted(),true);assert(system.includes(cardText));assert.match(system,/<tisya>[\s\S]*@POV\.PERSON := 全文使用第二人称/);
  const materialOpening=system.indexOf('[Dream Rules]\n@BOUNDARY ');assert(materialOpening>=0);
- assert(system.indexOf('@POV.PERSON := 全文使用第二人称')<materialOpening);
+ const position=id=>f.stored.order.findIndex(row=>row.identifier===id);
+ const person=system.indexOf('@POV.PERSON := 全文使用第二人称');
+ assert(person>=0);
+ assert.equal(person<materialOpening,position('tisya_pref_narrative')<position('tisya_material_boundary_open'));
+ assert(person<system.indexOf('[/Dream Rules]',materialOpening));
+ assert(system.lastIndexOf('<tisya>',person)>system.lastIndexOf('</tisya>',person));
  assert.match(system,/<rule>[\s\S]*\[REGISTRY\]/);
  assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);
  assert.equal(f.host.latest().promptAudit.narrativeSourceProjection.removed.length,0);

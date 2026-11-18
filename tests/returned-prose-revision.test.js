@@ -12,9 +12,13 @@ import previousRP from '../docs/validation/rp-depth-20261115/previous-prompts.js
 const prompt=(source,id)=>source.prompts.find(row=>row.identifier===id).content;
 const config=()=>({tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{},parameters:{}}}});
 
-test('4a prose remains verbatim outside authorized RP depth and machine form revisions',()=>{
+test('4a prose remains verbatim outside authorized RP depth, form and layer authority revisions',()=>{
  for(const [id,text]of Object.entries(fixture.returned)){
   let current=previousRP.stock[id]??prompt(stock,id),original=text;
+  if(id==='tisya_layer_authority'){
+   const amendment='预设中的 rule 和 tisya 条目按各自层级生效，包括排在资料区内的条目。角色卡和世界书在 DreamMaterial 中给出的冲突要求，以预设对应条目为准。';
+   original=original.replace('\n[/LAYER.AUTHORITY]',amendment+'\n[/LAYER.AUTHORITY]');
+  }
   if(id==='tisya_registry')for(const tag of ['cells','archive']){const re=new RegExp('<'+tag+' format="form">[\\s\\S]*?</'+tag+'>');current=current.replace(re,'');original=original.replace(re,'');}
   assert.equal(current,original,id);
  }
