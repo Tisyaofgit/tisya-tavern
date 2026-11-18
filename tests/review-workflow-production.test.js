@@ -30,9 +30,9 @@ test('stale backfill rejects and new branch cannot reuse receipts',async()=>{
 });
 test('three layers exclude old users, isolate body and appear once in final payload',async()=>{
  const f=await fixture();f.ctx.chat.push({is_user:true,mes:'旧用户 A'},{mes:f.reply().replace('信已交给船夫。','早些时候。')},{is_user:true,mes:'上次用户 B'},{mes:f.reply()},{is_user:true,mes:'本轮用户 C'});await f.host.sync();const bundle=await f.snapshot(),s=await f.host.listTurnReviews(),p=prepareReviewHistory(bundle,captureMessages(f.ctx),s.contextKey,10);
- assert(!p.text.includes('旧用户 A'));assert(p.layers.recentBody.includes('早些时候。'));assert(!p.layers.recentBody.includes('<cells>'));assert(!p.layers.recentBody.includes('1 早'));assert(p.layers.recentSituation.includes('上次用户 B'));assert(p.layers.recentSituation.includes(f.reply()));
+ assert(!p.text.includes('旧用户 A'));assert(p.layers.recentBody.includes('早些时候。'));assert(!p.layers.recentBody.includes('<cells>'));assert(!p.layers.recentBody.includes('1 早'));assert(p.layers.recentSituation.includes('上次用户 B'));assert.match(p.layers.recentSituation,/上轮正文\n信已交给船夫。/);assert.doesNotMatch(p.layers.recentSituation,/<cells|<archive/);
  const native=f.ctx.chat.map((m,i)=>({...m,index:i}));applyReviewHistory(native,p);assert.equal(native.length,1);assert.equal(f.ctx.chat.length,5);
- const payload={messages:[{role:'system',content:'原预设'},...captureMessages(f.ctx).map(m=>({role:m.role,content:m.text}))]};ensureReviewHistoryPayload(payload,p);ensureReviewHistoryPayload(payload,p);assert.equal(payload.messages.filter(m=>m.content.includes('<history_record>')).length,1);assert.equal(payload.messages[0].content,'原预设');
+ const payload={messages:[{role:'system',content:'原预设'},...captureMessages(f.ctx).map(m=>({role:m.role,content:m.text}))]};ensureReviewHistoryPayload(payload,p);ensureReviewHistoryPayload(payload,p);assert.equal(payload.messages.filter(m=>m.content.includes('<recent_situation>\n')).length,1);assert.equal(payload.messages[0].content,'原预设');
 });
 test('drafts persist without accepting cells',async()=>{
  const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();const d=await f.draft();await act(f,{action:'draft',uid:d.uid,hash:d.sourceHash,cells:'阿青.hp: -1 | P1',archive:d.archive});assert.equal(await f.hp(),10);assert.equal((await f.host.listTurnReviews()).drafts[d.uid].cells,'阿青.hp: -1 | P1');
@@ -43,7 +43,7 @@ test('backfill model form uses labels; malformed response is retained for manual
  await act(f,{action:'modelBackfill',batchId:b.id,uid:floor.id,raw:'错误格式但保留回复'});const saved=(await f.host.listTurnReviews()).backfill.floors[0];assert.equal(saved.raw,'错误格式但保留回复');assert(saved.error.includes('校验'));
 });
 test('accepted archive is injected once through the three-layer route and stale history stops payload',async()=>{
- const f=await fixture();f.ctx.chat.push({is_user:true,mes:'交信'},{mes:f.reply()});await f.host.sync();await f.host.confirmTurn(await f.draft());const p=await f.host.previewReviewHistory();assert(!p.layers.historyRecord.includes('渡口交信'));assert(p.layers.recentSituation.includes('渡口交信'));assert(p.audit.some(a=>a.layer==='recent_situation'));
+ const f=await fixture();f.ctx.chat.push({is_user:true,mes:'交信'},{mes:f.reply()});await f.host.sync();await f.host.confirmTurn(await f.draft());const p=await f.host.previewReviewHistory();assert(!p.layers.historyRecord.includes('渡口交信'));assert(p.layers.recentSituation.includes('信已交给船夫。'));assert(!p.layers.recentSituation.includes('渡口交信'));assert(p.audit.some(a=>a.layer==='recent_situation'));
  await f.host.before('normal');f.ctx.chat[0].mes='改写';await assert.rejects(f.host.payloadReady({messages:[]}),/历史|REGISTRY|合同/);f.host.clear();f.host.controller.generating.clear();
 });
 test('save candidate receipt can immediately confirm without an extra revision from refresh',async()=>{

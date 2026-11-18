@@ -41,14 +41,14 @@ function fixture({authority=true,disabledAuthority=false,merge=false,multimodal=
 }
 const text=messages=>messages.flatMap(message=>typeof message.content==='string'?[message.content]:message.content.filter(part=>part.type==='text').map(part=>part.text)).join('\n');
 
-for(const merge of [false,true])test('legacy Dream window lifts only owned configuration, preserving roles and native/history text; merged='+merge,()=>{
+for(const merge of [false,true])test('legacy Dream window keeps owned configuration in preset order, preserving roles and native/history text; merged='+merge,()=>{
  const f=fixture({merge}),before=clone(f.native),source=clone(f.source),result=applyRequestLayers(f.native,f.compiled,{expand}),joined=text(result.messages),open=f.compiled.prompts.find(row=>row.identifier==='tisya_material_boundary_open').content;
  for(const id of ['main','tisya_identity_attestation','tisya_user_relation','tisya_pref_narrative','tisya_registry']){
   const row=f.compiled.layerPlan.entries.find(row=>row.identifier===id),wrapped=wrapRequestLayer(expand(row.content).trim(),row.layer);
-  assert(joined.indexOf(wrapped)<joined.indexOf(open),id+' moved before the source window');
-  assert(result.messages.some(message=>message.role===row.role&&message.content===wrapped),id+' retains role');
+  assert(joined.indexOf(wrapped)>joined.indexOf(open),id+' stays within the selected window');
+  assert(result.messages.some(message=>message.role===row.role&&(typeof message.content==='string'&&message.content.includes(wrapped))),id+' retains role');
  }
- assert.equal(result.audit.moved.length,5);assert(joined.includes(card));
+ assert.deepEqual(result.audit.moved,[]);assert(joined.includes(card));
  assert(joined.indexOf('当前场景：图书馆')>joined.indexOf(open));
  const retained=result.messages.filter(message=>f.history.some(old=>old.role===message.role&&old.content===message.content));assert.deepEqual(retained,f.history);
  assert.deepEqual(f.native,before);assert.deepEqual(f.source,source);
@@ -81,7 +81,7 @@ test('existing custom authority text and role are kept',()=>{
 
 test('copied preset text inside native material remains source, not another configuration match',()=>{
  const f=fixture(),pref=f.compiled.layerPlan.entries.find(row=>row.identifier==='tisya_pref_narrative').content,at=f.native.findIndex(message=>message.content===card),source='<DreamMaterial source="角色卡引用">\n'+pref+'\n</DreamMaterial>';
- f.native[at].content=source;const result=applyRequestLayers(f.native,f.compiled,{expand});assert(text(result.messages).includes(source));assert(result.audit.nativeQuotedMatches>0);assert.equal(result.audit.moved.filter(row=>row.identifier==='tisya_pref_narrative').length,1);
+ f.native[at].content=source;const result=applyRequestLayers(f.native,f.compiled,{expand});assert(text(result.messages).includes(source));assert(result.audit.nativeQuotedMatches>0);assert.deepEqual(result.audit.moved,[]);
 });
 
 test('an exact upper configuration may contain a complete native outlet while historical copies remain source',()=>{

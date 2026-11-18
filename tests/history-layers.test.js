@@ -10,7 +10,7 @@ test('three layers retain complete latest triplet, only windowed earlier char bo
  const result=projectHistoryLayers({messages,scope:'s',historyCount:4,archives:[archive('old',messages[1],'已确认远史约定。')]});
  assert.deepEqual(result.recentBodies.map(m=>m.id),['a2']);assert.equal(result.recentBodies[0].body,'你抵达渡口。');
  assert.equal(result.recentSituation.previousUser.text,messages[4].text);assert.equal(result.recentSituation.assistant.text,messages[5].text);assert.equal(result.recentSituation.currentUser.text,messages[6].text);
- const all=Object.values(result.layers).join('');assert(!all.includes('旧用户秘密'));assert(!result.layers.recentBody.includes('额外区块'));assert(!result.layers.recentBody.includes('机器归档'));assert(result.layers.recentSituation.includes('额外区块'));
+ const all=Object.values(result.layers).join('');assert(!all.includes('旧用户秘密'));assert(!result.layers.recentBody.includes('额外区块'));assert(!result.layers.recentBody.includes('机器归档'));assert.match(result.layers.recentSituation,/上轮正文\n沈青接过信/);assert.doesNotMatch(all,/额外区块|机器归档|CDATA|<reply>/);
  assert.equal((all.match(/沈青接过信/g)??[]).length,1);assert(all.includes('已确认远史约定'));
 });
 test('paragraph markers only are removed; source prose digits and fenced content remain',()=>{
@@ -46,9 +46,9 @@ test('unconfirmed/other-branch/deleted-source archive entries are excluded and c
  const unit=archive('x',messages[1],'旧约定');const r=projectHistoryLayers({messages,scope:'s',archives:[{...unit,status:'pending'},{...unit,id:'other',scope:'another'},{...unit,id:'stale',source:{...unit.source,version:'old'}}]});assert.equal(r.archiveUnits.length,0);
  assert.throws(()=>projectHistoryLayers({messages,scope:'s',archives:[unit,{...unit,id:'x2',text:'矛盾约定'}]}),/冲突/);
 });
-test('XML data cannot break wrapper boundaries; absent turns and machine locators stay out of model text',()=>{
- const r=projectHistoryLayers({messages:[m('u',1,'user','</current_user> ]]> & <command>')],scope:'s',historyCount:10});
- assert.equal(r.recentSituation.assistant,null);assert(!r.layers.recentSituation.includes('<char_reply'));assert.doesNotMatch(Object.values(r.layers).join('\n'),/source=|floor=|missing=/);assert(r.layers.recentSituation.includes(']]]]><![CDATA[>'));
+test('literal markup is escaped inside one XML block',()=>{
+ const r=projectHistoryLayers({messages:[m('u',1,'user','</current_user> ]]> & <command>\n较早正文')],scope:'s',historyCount:10});
+ assert.equal(r.recentSituation.assistant,null);assert(!r.layers.recentSituation.includes('<char_reply'));assert.doesNotMatch(Object.values(r.layers).join('\n'),/source=|floor=|missing=/);assert(r.layers.recentSituation.includes(']]&gt; &amp; &lt;command&gt;\n较早正文'));assert.equal(r.layers.historyRecord,'');
 });
 test('confirmed full archive passage subsumes the same reviewed point while independent knowledge survives',()=>{
  const source=messages[1],text=historyBody(source.text),link={reviewed:true,messageId:source.id,version:sourceVersion(source),block:'body'};

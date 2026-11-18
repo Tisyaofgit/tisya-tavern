@@ -35,7 +35,7 @@ test('one form contains writable labels without a repeated delta dictionary or i
  const before=JSON.stringify(e.data.tables),slots=materials(e,{...scope,audience:'character'}),prompt=slots.tisya_material_cell_prompts;
  assert.match(prompt,/【中性映射测试／序号】/);
  assert.doesNotMatch(prompt,/DELTA_FIXTURE\(|字段：|密项|只读项|程序项/);
- for(const label of ['名称','数量','状态','待核','未赋值'])assert(prompt.includes(' '+label));
+ for(const label of ['名称','数量','状态','待核','未赋值'])assert(prompt.includes('{'+label));
  assert.equal((prompt.match(/状态甲/g)??[]).length,1);
  const visible=Object.values(slots).join('\n');
  assert.match(visible,/数量=0/);assert.match(visible,/待核=\?/);

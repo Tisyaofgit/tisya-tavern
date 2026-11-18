@@ -7,7 +7,7 @@ export const normalizeIdentityName=value=>typeof value==='string'?value.normaliz
 // from similar prose. Each continues through its explicit canonical UUID.
 export const OBJECT_IDENTITY_FIELDS=Object.freeze({
  T_STATIC_WORLDS:['name'],T_STATIC_WORLD_RULES:['name'],T_STATIC_PLACES:['name'],T_STATIC_ORGANIZATIONS:['name'],T_STATIC_ITEMS_SKILLS:['name'],T_STATIC_FACILITIES:['name'],T_CHAR_DOSSIER:['name'],T_DYN_SCENE_SPACE:['name'],
- T_STATIC_ORG_RELATIONS:['subject_org_ref','target_org_ref'],T_CHAR_TYPE_BINDINGS:['char_ref','type_ref'],T_CHAR_SKILLS:['char_ref','asset_ref'],T_CHAR_ANCHORS:['char_ref','name'],T_CHAR_RELATION_ORIGINS:['subject_ref','target_ref'],
+ T_STATIC_ORG_RELATIONS:['subject_org_ref','target_org_ref'],T_CHAR_TYPE_BINDINGS:['char_ref','type_ref'],T_CHAR_SKILLS:['char_ref','asset_ref'],T_CHAR_ANCHORS:['char_ref','name'],T_CHAR_HABITS:['char_ref','name'],T_CHAR_MEASURES:['char_ref','axis_ref'],T_CHAR_RELATION_ORIGINS:['subject_ref','target_ref'],
  T_DYN_HOLDINGS_INVENTORY:['item_instance_ref'],T_DYN_RELATIONS_PACTS:['subject_ref','target_ref'],T_DYN_RELATION_AXES:['relation_ref','axis_key'],T_DYN_ENTITY_STATE:['entity_id'],T_DYN_ENTITY_GAUGES:['entity_id','field_key'],T_DYN_SCENE_PARTICIPANTS:['scene_ref','entity_ref'],T_DYN_EVENT_PARTICIPANTS:['event_ref','entity_ref'],T_DYN_COMMUNICATIONS:['source_ref','target_ref','medium'],T_DYN_CURRENCY_BALANCES:['owner_ref','currency_ref','native_ref'],
  T_STATIC_CONSTANTS:['rule_ref','matrix_name','row_key','column_key'],T_STATIC_RECIPE_COMPONENTS:['recipe_ref','component_role','asset_ref'],T_STATIC_FACILITY_LEVELS:['fac_type_ref','level','branch_name'],T_STATIC_FACILITY_MATERIALS:['upgrade_ref','asset_ref']
 });

@@ -2,7 +2,7 @@
 // form parser share this contract; no second initialization store is created.
 import {digest} from './common.mjs';
 export const PHONE_FORM_FIELDS=Object.freeze({
- X_PHONE_WORLD_CONFIG:{active_account_ref:['当前本人账号','REF','X_SOCIAL_ACCOUNTS'],default_account_ref:['默认付款账户','REF','X_FIN_ACCOUNTS'],funding_account_ref:['默认收支账户','REF','X_FIN_ACCOUNTS'],walk_speed:['步行速度','NUMBER'],bike_speed:['骑行速度','NUMBER'],transit_speed:['公共交通速度','NUMBER'],quote_minutes:['报价有效故事分钟','INTEGER'],minimum_shop:['商城起送金额','INTEGER'],minimum_food:['外卖起送金额','INTEGER']},
+ X_PHONE_WORLD_CONFIG:{active_account_ref:['当前本人账号','REF','X_SOCIAL_ACCOUNTS'],default_account_ref:['默认付款账户','REF','X_FIN_ACCOUNTS'],funding_account_ref:['默认收支账户','REF','X_FIN_ACCOUNTS'],walk_speed:['步行速度','NUMBER'],bike_speed:['骑行速度','NUMBER'],transit_speed:['公共交通速度','NUMBER'],quote_minutes:['报价有效故事分钟','INTEGER'],minimum_shop:['商城起送金额','INTEGER'],minimum_food:['外卖起送金额','INTEGER'],phone_number:['本人手机号','TEXT']},
  X_PHONE_LOAN_RULES:{annualRateBps:['年利率基点','INTEGER'],terms:['可选期数','ARRAY'],periodDays:['每期故事天数','INTEGER'],periodsPerYear:['每年计息期数','INTEGER'],minAmount:['最低本金','INTEGER'],maxAmount:['最高本金','INTEGER']},
  X_FIN_INVESTMENT_PRODUCTS:{minAmount:['最低申购金额','INTEGER'],maxAmount:['最高申购金额','INTEGER'],termMinutes:['期限故事分钟','INTEGER'],allowEarlyRedemption:['允许提前赎回','BOOLEAN']},
  X_FIN_CREDIT_CHARGES:{card_ref:['所属信用卡','REF','X_FIN_CREDIT_CARDS']},
@@ -12,12 +12,15 @@ export const PHONE_FORM_FIELDS=Object.freeze({
  X_SHOP_PRODUCT_DETAILS:{item_ref:['商品原点','REF','T_STATIC_ITEMS_SKILLS'],deliveryPlaceIds:['可配送地点','ARRAY'],availableFrom:['开始售卖故事分钟','INTEGER'],availableUntil:['结束售卖故事分钟','INTEGER'],fulfillment:['交付形式','TEXT'],entitlement:['数字权益定义','JSON'],policy:['售后规则','JSON'],version:['报价版本','INTEGER']},
  X_SHOP_PRODUCT_OPTIONS:{product_ref:['所属商品','REF','T_STATIC_ITEMS_SKILLS'],name:['规格名称','TEXT'],price:['规格附加价','INTEGER']},
  X_SHOP_COUPONS:{name:['优惠券名称','TEXT'],amount:['优惠金额','INTEGER'],minimum:['最低消费金额','INTEGER'],kind:['适用商城或外卖','TEXT'],expiresAt:['到期故事分钟','INTEGER']},
- X_SOCIAL_ACCOUNTS:{following:['关注账号','ARRAY']},
- X_SOCIAL_CONTACTS:{id:['业务编号','TEXT'],name:['名称','TEXT'],personId:['关联人物','REF','T_SYS_ENTITIES'],accountId:['关联账号','REF','X_SOCIAL_ACCOUNTS']},
+ X_SOCIAL_ACCOUNTS:{following:['关注账号','ARRAY'],platform:['所属平台','TEXT'],visibility:['账号可见范围','TEXT']},
+ X_SOCIAL_CONTACTS:{note:['私人备注内容','LONG_TEXT'],conversation_ref:['共享会话','REF','X_NETWORK_DOCUMENTS'],draft:['未发送草稿','LONG_TEXT'],id:['业务编号','TEXT'],name:['名称','TEXT'],personId:['关联人物','REF','T_SYS_ENTITIES'],accountId:['关联账号','REF','X_SOCIAL_ACCOUNTS'],phone_number:['联系人手机号','TEXT']},
+ X_NETWORK_DOCUMENTS:{participant_accounts:['会话成员账号','ARRAY']},
+ X_NETWORK_ITEMS:{thread_ref:['所属会话','REF','X_NETWORK_DOCUMENTS']},
+ X_NETWORK_ACCOUNTS:{account_ref:['独立账号','REF','X_SOCIAL_ACCOUNTS']},
  X_MEDIA_ALBUMS:{id:['业务编号','TEXT'],name:['相簿名称','TEXT'],ownerId:['所属人物或账号','REF']},
  X_MEDIA_PHOTOS:{asset_ref:['实际媒体原件','REF','T_SYS_MEDIA_ASSETS'],albumId:['所属相簿','REF','X_MEDIA_ALBUMS']},
- X_MEDIA_SONGS:{entitlementProductId:['所需购买商品','REF','T_STATIC_ITEMS_SKILLS'],ownerId:['歌曲所属人物或账号','REF'],visibility:['歌曲可见范围','TEXT'],audience:['授权收听账号','ARRAY'],asset_ref:['实际音源原件','REF','T_SYS_MEDIA_ASSETS'],lyrics:['导入歌词','LONG_TEXT']},
- X_MEDIA_THEME:{preset:['主题','TEXT'],backgroundId:['背景图片','REF','X_MEDIA_PHOTOS'],fit:['图片铺放方式','TEXT'],overlay:['遮罩百分比','NUMBER']},
+ X_MEDIA_SONGS:{design_description:['曲风与编配','LONG_TEXT'],entitlementProductId:['所需购买商品','REF','T_STATIC_ITEMS_SKILLS'],ownerId:['歌曲所属人物或账号','REF'],visibility:['歌曲可见范围','TEXT'],audience:['授权收听账号','ARRAY'],asset_ref:['实际音源原件','REF','T_SYS_MEDIA_ASSETS'],lyrics:['导入歌词','LONG_TEXT']},
+ X_MEDIA_THEME:{preset:['主题','TEXT'],backgroundId:['背景图片','REF','X_MEDIA_PHOTOS'],fit:['图片铺放方式','TEXT'],overlay:['遮罩百分比','NUMBER'],theme_song_ref:['人物主题曲','REF','X_MEDIA_SONGS']},
  X_MEDIA_PLAYBACK:{songId:['当前歌曲','REF','X_MEDIA_SONGS'],position:['实际播放秒数','NUMBER'],volume:['音量','NUMBER'],mode:['播放模式','TEXT'],queue:['播放队列','ARRAY'],history:['实际收听记录','ARRAY']},
  X_CALENDAR_EVENTS:{duration:['时长故事分钟','INTEGER'],reminderMinutes:['提前提醒分钟','INTEGER'],repeat:['重复规则','JSON'],visibility:['可见范围','TEXT'],source:['关联来源','JSON']},
  X_PLACE_MAP_POINTS:{place_ref:['地点原点','REF','T_STATIC_PLACES']}
@@ -38,10 +41,10 @@ const refs={
  X_PHONE_WORLD_CONFIG:{currency_ref:'T_STATIC_ITEMS_SKILLS',active_account_ref:'X_SOCIAL_ACCOUNTS',default_account_ref:'X_FIN_ACCOUNTS',funding_account_ref:'X_FIN_ACCOUNTS'},
  X_SHOP_OFFERS:{asset_ref:'T_STATIC_ITEMS_SKILLS',currency_ref:'T_STATIC_ITEMS_SKILLS'},X_ITEM_SPECS:{asset_ref:'T_STATIC_ITEMS_SKILLS'},
  X_FIN_ACCOUNTS:{balance_ref:'T_DYN_CURRENCY_BALANCES'},X_FIN_CREDIT_CARDS:{debt_ref:'T_DYN_CURRENCY_BALANCES'},X_FIN_LOANS:{debt_ref:'T_DYN_CURRENCY_BALANCES',accountId:'X_FIN_ACCOUNTS'},X_FIN_INVESTMENTS:{productId:'X_FIN_INVESTMENT_PRODUCTS'},
- X_FIN_TRANSACTIONS:{accountId:'X_FIN_ACCOUNTS',orderId:'X_SHOP_ORDERS'},X_FIN_CREDIT_CHARGES:{orderId:'X_SHOP_ORDERS'},X_SHOP_ORDERS:{accountId:'X_FIN_ACCOUNTS',placeId:'T_STATIC_PLACES'},X_SHOP_ORDER_ITEMS:{productId:'T_STATIC_ITEMS_SKILLS'},X_SHOP_CART_ITEMS:{productId:'T_STATIC_ITEMS_SKILLS'},X_NETWORK_ACCOUNTS:{personId:'T_SYS_ENTITIES'},
- X_SOCIAL_ACCOUNTS:{personId:'T_SYS_ENTITIES'},X_SOCIAL_CONTACTS:{personId:'T_SYS_ENTITIES',accountId:'X_SOCIAL_ACCOUNTS'},
+ X_FIN_TRANSACTIONS:{accountId:'X_FIN_ACCOUNTS',orderId:'X_SHOP_ORDERS'},X_FIN_CREDIT_CHARGES:{orderId:'X_SHOP_ORDERS'},X_SHOP_ORDERS:{accountId:'X_FIN_ACCOUNTS',placeId:'T_STATIC_PLACES'},X_SHOP_ORDER_ITEMS:{productId:'T_STATIC_ITEMS_SKILLS'},X_SHOP_CART_ITEMS:{productId:'T_STATIC_ITEMS_SKILLS'},
+ X_SOCIAL_ACCOUNTS:{personId:'T_SYS_ENTITIES'},X_SOCIAL_CONTACTS:{personId:'T_SYS_ENTITIES',accountId:'X_SOCIAL_ACCOUNTS',conversation_ref:'X_NETWORK_DOCUMENTS'},X_NETWORK_ITEMS:{thread_ref:'X_NETWORK_DOCUMENTS',by:'X_SOCIAL_ACCOUNTS'},X_NETWORK_DOCUMENTS:{author:'X_SOCIAL_ACCOUNTS'},X_NETWORK_ACCOUNTS:{personId:'T_SYS_ENTITIES',account_ref:'X_SOCIAL_ACCOUNTS'},
  X_SOCIAL_POSTS:{authorId:'X_SOCIAL_ACCOUNTS',repostOf:'X_SOCIAL_POSTS',songId:'X_MEDIA_SONGS'},X_SOCIAL_COMMENTS:{postId:'X_SOCIAL_POSTS',authorId:'X_SOCIAL_ACCOUNTS'},
- X_MEDIA_ALBUMS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS']},X_MEDIA_PHOTOS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS'],albumId:'X_MEDIA_ALBUMS',asset_ref:'T_SYS_MEDIA_ASSETS'},X_MEDIA_SONGS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS'],asset_ref:'T_SYS_MEDIA_ASSETS',entitlementProductId:'T_STATIC_ITEMS_SKILLS'},X_MEDIA_THEME:{backgroundId:'X_MEDIA_PHOTOS'},X_MEDIA_PLAYBACK:{songId:'X_MEDIA_SONGS'},
+ X_MEDIA_ALBUMS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS']},X_MEDIA_PHOTOS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS'],albumId:'X_MEDIA_ALBUMS',asset_ref:'T_SYS_MEDIA_ASSETS'},X_MEDIA_SONGS:{ownerId:['T_SYS_ENTITIES','X_SOCIAL_ACCOUNTS'],asset_ref:'T_SYS_MEDIA_ASSETS',entitlementProductId:'T_STATIC_ITEMS_SKILLS'},X_MEDIA_THEME:{backgroundId:'X_MEDIA_PHOTOS',theme_song_ref:'X_MEDIA_SONGS'},X_MEDIA_PLAYBACK:{songId:'X_MEDIA_SONGS'},
  X_PLACE_MAP_POINTS:{place_ref:'T_STATIC_PLACES'},X_CALENDAR_EVENTS:{placeId:'T_STATIC_PLACES',participantId:'X_SOCIAL_CONTACTS'},X_SHOP_PRODUCT_DETAILS:{item_ref:'T_STATIC_ITEMS_SKILLS',placeId:'T_STATIC_PLACES'},X_SHOP_PRODUCT_OPTIONS:{product_ref:'T_STATIC_ITEMS_SKILLS'}
 };
 export function phoneFormReference(table,key){return refs[table]?.[key]??(key==='world_ref'&&table.startsWith('X_')?'T_STATIC_WORLDS':key==='owner_ref'&&table.startsWith('X_')?'T_SYS_ENTITIES':null);}
@@ -59,7 +62,7 @@ export function phoneFormReferenceCandidates(state,{tableId,recordId,field,targe
  if(world&&canonical?.values?.world_ref&&canonical.values.world_ref!==world)return [];
  return Object.entries(state.tables?.[target]??{}).filter(([id,row])=>(id===value||row.values?.id===value)&&(!world||!row.values?.world_ref||row.values.world_ref===world)).map(([id])=>id);
 }
-export const PHONE_FORM_LIST_REFERENCES=Object.freeze({X_SOCIAL_ACCOUNTS:{following:'X_SOCIAL_ACCOUNTS'},X_SOCIAL_POSTS:{mediaIds:'X_MEDIA_PHOTOS',mediaGrants:'X_MEDIA_PHOTOS'},X_MEDIA_SONGS:{audience:'X_SOCIAL_ACCOUNTS'},X_MEDIA_PLAYLISTS:{songIds:'X_MEDIA_SONGS'},X_MEDIA_PLAYBACK:{queue:'X_MEDIA_SONGS',history:'X_MEDIA_SONGS'},X_SHOP_PRODUCT_DETAILS:{deliveryPlaceIds:'T_STATIC_PLACES'}});
+export const PHONE_FORM_LIST_REFERENCES=Object.freeze({X_NETWORK_DOCUMENTS:{participant_accounts:'X_SOCIAL_ACCOUNTS',audience:'X_SOCIAL_ACCOUNTS'},X_SOCIAL_ACCOUNTS:{following:'X_SOCIAL_ACCOUNTS'},X_SOCIAL_POSTS:{mediaIds:'X_MEDIA_PHOTOS',mediaGrants:'X_MEDIA_PHOTOS'},X_MEDIA_SONGS:{audience:'X_SOCIAL_ACCOUNTS'},X_MEDIA_PLAYLISTS:{songIds:'X_MEDIA_SONGS'},X_MEDIA_PLAYBACK:{queue:'X_MEDIA_SONGS',history:'X_MEDIA_SONGS'},X_SHOP_PRODUCT_DETAILS:{deliveryPlaceIds:'T_STATIC_PLACES'}});
 export const PHONE_FORM_INTERNAL_FIELDS=new Set(['id','format','sourceDigest','phoneEpoch','settlementOwner','dictionary_key','collection_ref','parent_ref','collection_field','ordinal']);
 export function normalizePhoneFormValue(table,key,value){
  const apps={微博:'weibo',钱包:'wallet',商城:'shop',外卖:'food',相册:'album',音乐:'music',地图:'map',日历:'calendar'};

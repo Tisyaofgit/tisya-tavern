@@ -48,7 +48,9 @@ for(const legacy of [false,true])test('real native preparation applies selected 
  for(const output of [one,two]){
   const system=output.result.filter(row=>row.role==='system').map(row=>row.content).join('\n');
   assert.match(system,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(system,/Third-person narration from stored preset/);
-  assert(system.indexOf('@POV.PERSON := 全文使用第二人称')<system.indexOf('[Dream Rules]\n@BOUNDARY '));
+  assert.equal(system.indexOf('@POV.PERSON := 全文使用第二人称')<system.indexOf('[Dream Rules]\n@BOUNDARY '),!legacy);
+  assert.match(system,/角色卡和世界书在 DreamMaterial 中给出的冲突要求，以预设对应条目为准/);
+  assert.deepEqual(s.projection.lastFinalization().moved,[]);
   assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);assert.match(system,/<DreamMaterial[^>]*>\n守夜人资料。\n叙事人称：第三人称\n<\/DreamMaterial>/);
   assert(output.result.some(row=>row.role==='assistant'&&row.content==='他将旧伞放在门边。'));
  }

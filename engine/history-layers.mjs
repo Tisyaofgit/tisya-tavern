@@ -1,12 +1,15 @@
 // Read-only candidate for the explicitly selected three-layer history route.
 // It does not enable/disable native history, write sources or call a model.
+import {xmlSection,xmlText} from './prompt-sections.mjs';
 import {extractXMLBody} from '../reader-core.js';
 import {normalizeEnvelope,DEFAULT_TAGS,hasEnvelopeMarkers} from './tags.mjs';
 import {parseNumberedBody} from '../six/paragraphs.mjs';
 import {sha256,digest} from './common.mjs';
 
 const check=(ok,message)=>{if(!ok)throw Error(message);};
-const cdata=text=>'<![CDATA['+String(text).replaceAll(']]>',']]]]><![CDATA[>')+']]>';
+export const historyHeadings={historyRecord:'已归档',recentBody:'较早正文',recentSituation:'本轮接续'};
+export const quotedHistory=xmlText;
+const section=(tag,content)=>xmlSection(tag,content.join('\n\n'),{escaped:true});
 export const sourceVersion=m=>digest({id:m.id,revision:m.revision??1,text:m.text,role:m.role,scope:m.scope,floor:m.floor});
 export function selectedMessages(messages,scope){
  check(Array.isArray(messages)&&typeof scope==='string'&&scope,'历史来源和会话范围无效。');
@@ -18,7 +21,7 @@ export function selectedMessages(messages,scope){
 function historySource(text){
  const raw=String(text);
  // Legacy messages are source material, not malformed newly generated forms.
- // Preserve all their bytes; CDATA wrapping below keeps markup inert. Never
+ // Preserve their original text. Never
  // use this route after a recognized protocol has failed boundary validation.
  if(!hasEnvelopeMarkers(raw))return {text:raw,format:'legacy_source'};
  const normalized=normalizeEnvelope(raw);
@@ -32,7 +35,7 @@ function historySource(text){
  let at=0,out='';for(const p of paragraphs){out+=body.slice(at,p.blockStart)+body.slice(p.contentStart,p.blockEnd);at=p.blockEnd;}return {text:out+body.slice(at),format:'structured_body'};
 }
 export const historyBody=text=>historySource(text).text;
-function messageXML(tag,m,text=m?.text??''){return m?'<'+tag+'>'+cdata(text)+'</'+tag+'>':'';}
+function historyMessage(label,message,text=message?.text){return message&&text?.trim()?label+'\n'+quotedHistory(text.trim()):'';}
 export function projectHistoryLayers({messages,archives=[],scope,historyCount=10,currentCommand=null}){
  check(Number.isSafeInteger(historyCount)&&historyCount>=0,'历史消息条数须为非负整数。');
  const rows=selectedMessages(messages,scope),audit=[],bodyCache=new Map();
@@ -48,6 +51,9 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
   try{const {text,format}=historySource(m.text);bodyCache.set(m.id,text);recent.push({...m,body:text,format});audit.push({id:m.id,floor:m.floor,layer:'recent_body',format,reason:format==='legacy_source'?'所选消息窗口内的旧版原文；未作为结构化指令执行':'所选消息窗口内的char正文'});}
   catch(error){audit.push({id:m.id,floor:m.floor,layer:'excluded',reason:'正文边界/段号无法可靠读取：'+error.message});}
  }
+ let latestBody='';
+ if(last)try{latestBody=historySource(last.text).text;}
+ catch(error){audit.push({id:last.id,floor:last.floor,layer:'excluded',reason:'上一轮正文无法读取：'+error.message});}
  const sourceMap=new Map(rows.map(m=>[m.id,m])),recentIds=new Set(recent.map(m=>m.id)),seen=new Map(),record=[];
  for(const unit of archives){
   if(unit.scope!==scope||unit.status!=='confirmed'||unit.active===false){audit.push({id:unit.id,layer:'excluded',reason:'非当前范围的已确认归档'});continue;}
@@ -61,13 +67,7 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
   for(const link of unit.coverage??[]){
    if(link.reviewed!==true||typeof link.quote!=='string'||!link.quote)continue;
    const m=sourceMap.get(link.messageId);if(!m||sourceVersion(m)!==link.version)continue;
-   if(m.id===last?.id){
-    let carries=m.text.includes(link.quote);
-    // A reviewed quote may span numbered paragraphs. The complete raw reply
-    // still carries it even though paragraph markers interrupt the quote.
-    if(!carries&&link.block==='body'){try{carries=historyBody(m.text).includes(link.quote);}catch{/* Keep independent archive when body cannot be verified. */}}
-    if(carries){covered=true;placement='recent_situation';break;}
-   }
+   if(m.id===last?.id&&link.block==='body'&&latestBody.includes(link.quote)){covered=true;placement='recent_situation';break;}
    if(m.id===previous?.id&&m.text.includes(link.quote)){covered=true;placement='recent_situation';break;}
    if(m.id===current?.id&&m.text.includes(link.quote)){covered=true;placement='recent_situation';break;}
    if(link.block==='body'&&recentIds.has(m.id)&&bodyCache.get(m.id)?.includes(link.quote)){covered=true;placement='recent_body';break;}
@@ -84,9 +84,12 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
   const item=audit.find(a=>a.id===unit.id);if(item){item.layer='excluded';item.reason='同一信息点由已核对的归档原文 '+owner.id+' 承载';}return false;
  });
  const recentSituation={previousUser:previous??null,assistant:last??null,currentUser:current??null};
- // Full fact IDs, hashes and field addresses remain in audit data. The prompt
- // only needs content and its source floor, not repeated database identifiers.
- const recordXML=u=>cdata(u.text);
- const layers={historyRecord:'<history_record>\n'+finalRecord.map(recordXML).join('\n')+'\n</history_record>',recentBody:'<history>\n'+recent.map(m=>messageXML('message',m,m.body)).join('\n')+'\n</history>',recentSituation:'<recent_situation>\n'+[messageXML('previous_user',previous),messageXML('char_reply',last),messageXML('current_user',current)].join('\n')+'\n</recent_situation>'};
+ const layers={
+  historyRecord:section('history_record',finalRecord.map(unit=>quotedHistory(unit.text))),
+  recentBody:section('history',recent.map(message=>quotedHistory(message.body.trim())).filter(Boolean)),
+  recentSituation:section('recent_situation',[
+   historyMessage('上轮用户',previous),historyMessage('上轮正文',last,latestBody),historyMessage('本轮用户',current)
+  ].filter(Boolean))
+ };
  return {layers,archiveUnits:finalRecord,recentBodies:recent,recentSituation,audit,window:{configured:historyCount,counted:'历史user与char消息合计；本轮命令另算',sourceIds:window.map(m=>m.id)},sourceSignature:sha256(JSON.stringify(rows)),nativeHistoryCompatible:false};
 }

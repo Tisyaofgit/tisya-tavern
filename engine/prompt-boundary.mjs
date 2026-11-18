@@ -1,3 +1,4 @@
+import {semanticField} from './form-semantics.mjs';
 import {PHONE_FORM_INTERNAL_FIELDS} from './phone-form-contract.mjs';
 import {characterRecordVisible,characterFieldVisible} from './character-knowledge.mjs';
 // One boundary for ordinary materials and model-authored database proposals.
@@ -47,10 +48,11 @@ export function matrixRecordVisible(state,tableId,recordId,scope={},meta=null,se
  if(scope.audience!=='author'&&(tableId==='T_CHAR_SECRETS'||['D','E','Access D','Access E'].includes(record.values.lock_level)))return false;
  meta??=new Map(Object.values(state.tables?.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));
  const values=record.values,m=meta.get(key)??{};
+ if(m.record_status==='废弃'||values.deleted===true)return false;
  if([['world_ref','scope_world_id'],['session_ref','scope_session_id'],['branch_ref','scope_branch_id']].some(([k,mk])=>scope[k]&&[m[mk],values[mk]].some(value=>value&&!['GLOBAL',scope[k]].includes(value))))return false;
  if(schema.phone_internal&&scope.world_ref&&values.world_ref&&!['GLOBAL',scope.world_ref].includes(values.world_ref))return false;
  if(!characterRecordVisible(state,tableId,recordId,scope))return false;
  const owner=values.owner_table??values.owner_form;if(owner&&values.owner_row_uuid){const field=state.schema?.[owner]?.fields.find(f=>f.key===values.owner_field);if(field&&!matrixFieldVisible(field,state.tables?.[owner]?.[values.owner_row_uuid],scope,owner,state,values.owner_row_uuid))return false;const trail=new Set(seen);trail.add(key);return matrixRecordVisible(state,owner,values.owner_row_uuid,scope,meta,trail);}
  return true;
 }
-export function compactCreationSchema(state){return Object.fromEntries(Object.entries(state.schema??{}).filter(([id,s])=>!programOwnedTable(id,s)).map(([id,s])=>[id,{id,label:s.label??id,fields:(s.fields??[]).map((f,index)=>({field:f,row:index+1})).filter(({field:f})=>creationFieldAllowed(f)&&!(s.phone_internal&&PHONE_FORM_INTERNAL_FIELDS.has(f.key))).map(({field:f,row})=>({row,...Object.fromEntries(['key','label','type','required','ref','enum','options','minimum','maximum','unit','unit_ref','child_schema'].filter(k=>f[k]!==undefined).map(k=>[k,structuredClone(f[k])]))})) }]).filter(([,s])=>s.fields.length));}
+export function compactCreationSchema(state){return Object.fromEntries(Object.entries(state.schema??{}).filter(([id,s])=>!programOwnedTable(id,s)).map(([id,s])=>[id,{id,label:s.label??id,fields:(s.fields??[]).map((f,index)=>({field:semanticField(id,f),row:index+1})).filter(({field:f})=>creationFieldAllowed(f)&&!(s.phone_internal&&PHONE_FORM_INTERNAL_FIELDS.has(f.key))).map(({field:f,row})=>({row,...Object.fromEntries(['key','label','type','required','ref','enum','options','minimum','maximum','unit','unit_ref','child_schema','fill_hint'].filter(k=>f[k]!==undefined).map(k=>[k,structuredClone(f[k])]))})) }]).filter(([,s])=>s.fields.length));}

@@ -1,11 +1,13 @@
+import {appendXmlSection} from './prompt-sections.mjs';
 import {clone,digest,sha256,fail} from './common.mjs';
 import {materials} from './materials.mjs';
 import {Runtime} from './runtime.mjs';
 import {historyMessages} from './review-workflow.mjs';
 import {projectHistoryLayers,sourceVersion} from './history-layers.mjs';
+import {recallNarrativePassages} from './narrative-recall.mjs';
 import {hasToolMetadata} from '../config/tool-history.js';
 
-export function prepareReviewHistory(bundle,messages,scope,count){
+export function prepareReviewHistory(bundle,messages,scope,count,{recall=true}={}){
  const rows=historyMessages(messages,scope),archives=[];
  materials(new Runtime(bundle.state),{...bundle.state.runtime.scope,reviewHistory:true,archiveCollector:archives});
  const map=new Map(rows.map(m=>[m.id,m]));
@@ -25,7 +27,9 @@ export function prepareReviewHistory(bundle,messages,scope,count){
  const result=projectHistoryLayers({messages:rows,archives:units,scope,historyCount:count});
  const malformed=result.audit.find(x=>x.layer==='excluded'&&x.reason.startsWith('正文边界'));
  if(malformed)fail('HISTORY_BODY_BOUNDARY','历史第'+malformed.floor+'层（AI回复）'+malformed.reason+'。请检查该层原文的回复外壳和段号。',{messageId:malformed.id,floor:malformed.floor});
- return {...result,text:Object.values(result.layers).join('\n'),messages:clone(messages),signature:digest(messages)};
+ const memoryExcerpt=recall?recallNarrativePassages(bundle.state,bundle.state.runtime.scope??{},result,rows,bundle.turn_review?.decisions):'';
+ if(memoryExcerpt)result.layers.historyRecord=appendXmlSection(result.layers.historyRecord,'history_record',memoryExcerpt,{escaped:true});
+ return {...result,memoryExcerpt,text:Object.values(result.layers).filter(Boolean).join('\n\n'),messages:clone(messages),signature:digest(messages)};
 }
 export function applyReviewHistory(chat,prepared){
  if(!Array.isArray(chat))fail('HISTORY_COPY','历史发送副本无效');
@@ -34,11 +38,12 @@ export function applyReviewHistory(chat,prepared){
  if(chat.length&&!native.length)fail('HISTORY_COPY','历史副本缺少楼层来源，未替换消息');
  const carrier=native.findLast(m=>m.is_user||m.role==='user')??native.at(-1)??{index:0};
  const before=chat.length,kept=chat.filter(m=>!native.includes(m));
- kept.push({...carrier,is_user:true,is_system:false,role:'user',mes:prepared.text,...(Object.hasOwn(carrier,'content')?{content:prepared.text}:{})});
+ if(prepared.text)kept.push({...carrier,is_user:true,is_system:false,role:'user',mes:prepared.text,...(Object.hasOwn(carrier,'content')?{content:prepared.text}:{})});
  chat.splice(0,chat.length,...kept);return {route:'three-layer',removed:before-native.length,sourceMessages:prepared.messages.length,window:prepared.window};
 }
 export function ensureReviewHistoryPayload(payload,prepared,previousText=null){
  if(previousText&&previousText!==prepared.text)for(const m of payload.messages)if(typeof m.content==='string'&&m.content.includes(previousText))m.content=m.content.replace(previousText,prepared.text);
+ if(!prepared.text)return;
  const texts=payload.messages.map(m=>typeof m.content==='string'?m.content:'');
  const found=texts.filter(t=>t.includes(prepared.text));
  if(found.length===1)return;

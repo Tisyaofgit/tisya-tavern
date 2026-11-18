@@ -1,19 +1,25 @@
 import {compactMaterial,PIPES_GUIDE} from './pipes.js';
 // Stable material channels shared by manual modes and automatic auxiliary calls.
-export const SLOT_NAMES=Object.freeze({source:'当前来源',card:'原卡 AI 须知原文',books:'绑定原始资料',history:'完整历史原文',archive:'已确认记忆',state:'当前表单',preferences:'已确认偏好',plan:'剧情设计候选',genesis:'创世蓝图',tools:'工具结果',toolInstructions:'已选工具定义与用法',toolCalls:'本轮工具调用'});
+export const SLOT_NAMES=Object.freeze({source:'当前来源',card:'原卡 AI 须知原文',books:'绑定原始资料',history:'完整历史原文',archive:'已确认记忆',state:'当前表单',preferences:'已确认偏好',plan:'剧情设计候选',genesis:'创世蓝图或所选任务模板',evidence:'具名外部原文',tools:'工具结果',toolInstructions:'已选工具定义与用法',toolCalls:'本轮工具调用'});
 export function materialSlots(slots){const text=Object.entries(SLOT_NAMES).filter(([key])=>slots[key]!==undefined&&slots[key]!==null&&!(Array.isArray(slots[key])&&!slots[key].length)).map(([key,label])=>'[TISYA.DATA.'+key.toUpperCase()+']\n'+label+'\n'+compactMaterial(slots[key])+'\n[/TISYA.DATA.'+key.toUpperCase()+']').join('\n\n');return text.includes('[PIPES.')?PIPES_GUIDE+'\n\n'+text:text;}
 export const SLOT_ROUTER=`[TASK.START]
-@ROUTE TISYA.DATA.SOURCE→current-source;ARCHIVE→established-source-records;STATE→form-snapshot;PREFERENCES→confirmed-user-rules;PLAN→conditional-proposals;GENESIS→reviewable-blueprint;TOOLS→source-tagged-tool-results;TOOLINSTRUCTIONS→selected-tool-definitions;TOOLCALLS→actual-call-records
+@ROUTE TISYA.DATA.SOURCE→current-source;ARCHIVE→established-source-records;STATE→form-snapshot;PREFERENCES→confirmed-user-rules;PLAN→conditional-proposals;GENESIS→reviewable-blueprint;EVIDENCE→named-external-source;TOOLS→source-tagged-tool-results;TOOLINSTRUCTIONS→selected-tool-definitions;TOOLCALLS→actual-call-records
 @KEEP slot source IDs,scope,time,permissions and revisions;missing slot stays missing
 @DISTINGUISH plans/drafts/tool claims from established facts;unconfirmed preference candidates never become hard rules
 @OUTPUT variable commands retain original dialect and belong only inside vars;form proposals are data under extra,never native variable commands
 [/TASK.START]`;
+function externalEvidence(input){
+ if(!Array.isArray(input.externalEvidence))return undefined;
+ const rows=input.externalEvidence.filter(row=>typeof row?.name==='string'&&row.name.trim()&&typeof row.text==='string'&&row.text.trim())
+  .map(({name,text})=>({name,text}));
+ return rows.length?rows:undefined;
+}
 export function taskSlots(task,input){
  if(input.formContract==='tisya.simple-form/1'||task==='tableGenesis'&&input.databaseContract==='tisya.matrix-creation/1')return {
-  source:{task,formContract:input.formContract,databaseContract:input.databaseContract,replyContract:input.replyContract,kind:input.kind,mode:input.mode,goal:input.goal,question:input.question,source:input.source,template:input.template,sourcePolicy:input.sourcePolicy,worldTime:input.worldTime,bindings:input.nativeSources?.bindings,contractor:input.contractor===undefined?input.nativeSources?.contractor:input.contractor,policy:input.policy===undefined?input.nativeSources?.policy:input.policy},
-  card:input.sourceCardRaw??input.nativeSources?.card,books:input.sourceBooks??input.nativeSources?.books,history:input.sourceHistory,archive:input.archive,state:{forms:input.forms,references:input.references,current:input.current},preferences:input.preferences,tools:input.toolResults,toolInstructions:input.toolInstructions,toolCalls:input.toolCalls
+  source:{task,formContract:input.formContract,databaseContract:input.databaseContract,replyContract:input.replyContract,kind:input.kind,mode:input.mode,goal:input.goal,question:input.question,source:input.source,sourcePolicy:input.sourcePolicy,worldTime:input.worldTime,bindings:input.nativeSources?.bindings,contractor:input.contractor===undefined?input.nativeSources?.contractor:input.contractor,policy:input.policy===undefined?input.nativeSources?.policy:input.policy},
+  card:input.sourceCardRaw??input.nativeSources?.card,books:input.sourceBooks??input.nativeSources?.books,history:input.sourceHistory,archive:input.archive,state:{forms:input.forms,references:input.references,current:input.current},preferences:input.preferences,genesis:input.template??input.blueprint,evidence:externalEvidence(input),tools:input.toolResults,toolInstructions:input.toolInstructions,toolCalls:input.toolCalls
  };
- if(task==='tableAssistant')return {source:{question:input.question,conversation:input.conversation},state:{configuration:input.configuration,editablePaths:input.editablePaths,choices:input.choices,registry:input.registry,rows:input.currentRows,storage:input.storage,history:input.history},tools:input.diagnostics,toolInstructions:input.toolInstructions,genesis:input.blueprint};
+ if(task==='tableAssistant')return {source:{question:input.question,conversation:input.conversation},state:{configuration:input.configuration,editablePaths:input.editablePaths,choices:input.choices,registry:input.registry,rows:input.currentRows,storage:input.storage,history:input.history},tools:input.diagnostics,toolInstructions:input.toolInstructions,genesis:input.blueprint,evidence:externalEvidence(input)};
  const slots={};
  if(input.sourceCardRaw!==undefined)slots.card=input.sourceCardRaw;
  if(input.sourceBooks!==undefined)slots.books=input.sourceBooks;
@@ -26,12 +32,13 @@ export function taskSlots(task,input){
  if(input.explicitRules||input.styleRules||input.preferences)slots.preferences={explicit:input.explicitRules,style:input.styleRules,rows:input.preferences};
  if(input.dueChecks)slots.state.dueChecks=input.dueChecks;
  if(input.blueprint)slots.genesis=input.blueprint;
+ const evidence=externalEvidence(input);if(evidence)slots.evidence=evidence;
  if(input.toolResults?.length)slots.tools=input.toolResults;
  if(input.toolInstructions)slots.toolInstructions=input.toolInstructions;
  if(input.toolCalls?.length)slots.toolCalls=input.toolCalls;
  return slots;
 }
 
-export const SLOT_TARGETS=Object.freeze({source:'tisya_current_input',card:'tisya_material_card_extensions',books:'tisya_material_world_context',history:'tisya_material_memory_excerpt',archive:'tisya_material_memory_archive',state:'tisya_material_current_state',preferences:'tisya_material_rule_material',plan:'tisya_material_task_analysis',genesis:'tisya_material_task_material',tools:'tisya_material_tool_result',toolInstructions:'tisya_material_tool_prompt',toolCalls:'tisya_material_tool_calls'});
+export const SLOT_TARGETS=Object.freeze({source:'tisya_current_input',card:'tisya_material_card_extensions',books:'tisya_material_world_context',history:'tisya_material_memory_excerpt',archive:'tisya_material_memory_archive',state:'tisya_material_current_state',preferences:'tisya_material_rule_material',plan:'tisya_material_task_analysis',genesis:'tisya_material_task_material',evidence:'tisya_material_external_evidence',tools:'tisya_material_tool_result',toolInstructions:'tisya_material_tool_prompt',toolCalls:'tisya_material_tool_calls'});
 export function slotText(key,value){return value===undefined||value===null?'':materialSlots({[key]:value});}
 export function preprocessTask(task,input){return materialSlots(taskSlots(task,input));}

@@ -137,31 +137,24 @@ export function applyRequestLayers(messages,compiled,{expand=s=>s}={}){
   if(open&&[open,close].some(boundary=>match.globalStart<boundary.globalEnd&&boundary.globalStart<match.globalEnd))fail('REQUEST_LAYER_OVERLAP','配置片段与资料边界重叠',{identifier:entry.identifier});
   matches.push(match);audit.matched.push(entry.identifier);
  }
- const moving=matches.filter(match=>open&&match.globalStart>=open.globalEnd&&match.globalEnd<=close.globalStart).sort((a,b)=>a.globalStart-b.globalStart);
  const events=new Map(),event=(part,value)=>{if(!events.has(part))events.set(part,[]);events.get(part).push(value);};
- const movedMessages=[];
- const standalone=(match,content)=>{
-  if(match.part.message.tool_calls||match.part.message.tool_call_id)fail('REQUEST_LAYER_TOOL_TURN','工具消息不能作为可移动预设配置',{identifier:match.entry.identifier});
-  return {...clone(match.part.message),content};
- };
+ // Preset position belongs to the host. Its explicit layer wrapper carries
+ // priority even when the user places a rule between the material markers.
  for(const match of matches){
-  const moved=moving.includes(match),content=match.alreadyWrapped?match.part.text.slice(match.start,match.end):wrapRequestLayer(match.text,match.entry.layer);
-  if(moved){movedMessages.push({match,message:standalone(match,content)});audit.moved.push({identifier:match.entry.identifier,role:match.entry.role,layer:match.entry.layer});event(match.part,{kind:'replace',start:match.start,end:match.end,text:''});}
-  else if(!match.alreadyWrapped)event(match.part,{kind:'replace',start:match.start,end:match.end,text:content});
-  if(!match.alreadyWrapped)audit.wrapped.push({identifier:match.entry.identifier,role:match.entry.role,layer:match.entry.layer});
+  if(match.alreadyWrapped)continue;
+  event(match.part,{kind:'replace',start:match.start,end:match.end,text:wrapRequestLayer(match.text,match.entry.layer)});
+  audit.wrapped.push(match.entry.identifier);
  }
  let prepend=[];
  if(!plan.authority.present&&plan.authority.enabled){
   const authority={...plan.authority,identifier:LAYER_AUTHORITY_IDENTIFIER,layer:'rule'},existing=locate(authority,{optional:true,ownedWrapper:true});
   if(!existing){
-   const message={role:authority.role,content:wrapRequestLayer(expanded(authority),'rule')},reset=matches.find(match=>match.entry.identifier==='tisya_new_chat'),movedReset=movedMessages.findIndex(item=>item.match===reset);
-   if(movedReset>=0)movedMessages.splice(movedReset+1,0,{match:null,message});
-   else if(reset)event(reset.part,{kind:'insert',start:reset.end,messages:[message],priority:0});
+   const message={role:authority.role,content:wrapRequestLayer(expanded(authority),'rule')},reset=matches.find(match=>match.entry.identifier==='tisya_new_chat');
+   if(reset)event(reset.part,{kind:'insert',start:reset.end,messages:[message],priority:0});
    else prepend=[message];
    audit.authority.inserted=true;
   }
  }
- if(movedMessages.length)event(open.part,{kind:'insert',start:open.start,messages:movedMessages.map(item=>item.message),priority:1});
 
  const result=[...prepend],partsByMessage=new Map();
  for(const part of parts){if(!partsByMessage.has(part.messageIndex))partsByMessage.set(part.messageIndex,new Map());partsByMessage.get(part.messageIndex).set(part.partIndex,part);}

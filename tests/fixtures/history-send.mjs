@@ -6,7 +6,7 @@ import catalog from '../../engine/catalog.json' with {type:'json'};
 
 export const oldGreeting='<div class="greeting"><p>旅人来到驿站。<br>灯还亮着。</p><img src="old-card.png"></div>';
 export const latestReply='<reply><body>1 守夜人打开门，递来一杯热茶。</body><cells/><archive/></reply>';
-export async function historySendFixture({storage,context,persist=async()=>true}={}){
+export async function historySendFixture({storage,context,initialState,persist=async()=>true}={}){
  const disk=new Map(),macros=new Map(),ctx=context??{chatId:'isolated-history-send',characterId:0,extensionSettings:{},chatMetadata:{},chat:[]};
  Object.assign(ctx,{registerMacro:(key,handler)=>macros.set(key,handler),saveChat:persist,saveSettingsDebounced(){}});
  storage??={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value)),commit:async(key,revision,value)=>{if((disk.get(key)?.local_revision??0)!==revision)return false;disk.set(key,structuredClone(value));return true;}};
@@ -16,7 +16,7 @@ export async function historySendFixture({storage,context,persist=async()=>true}
  host.register();
  if(!ctx.chatMetadata.tisya_engine){
   ctx.chat.push({mes:oldGreeting},{is_user:true,mes:'有人在吗？'});
-  await host.import({state:new Runtime(initializeState(catalog)).data});
+  await host.import({state:initialState??new Runtime(initializeState(catalog)).data});
   ctx.chat.push({mes:latestReply});await host.sync();
   const review=await host.listTurnReviews(),draft=review.reviews.find(row=>row.status==='pending');
   await host.confirmTurn({...draft,contextKey:review.contextKey,expectedRevision:review.revision});

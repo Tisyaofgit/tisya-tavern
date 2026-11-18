@@ -58,7 +58,10 @@ export function characterRecordVisible(state,tableId,recordId,scope){
 // causes. A character gets their cognition/participation record, not that spine.
  if(['T_DYN_EVENTS','T_DYN_EVENT_LINKS','T_DYN_STAGE_SUMMARIES','T_CHAR_SECRETS'].includes(tableId))return false;
  if(tableId==='T_DYN_EVENT_PARTICIPANTS')return ids.has(knownValue(row,'entity_ref'))&&['participant','witness','hearsay'].includes(knownValue(row,'role'));
- if(tableId==='T_CHAR_ANCHORS')return ids.has(knownValue(row,'char_ref'));
+ if(['T_CHAR_ANCHORS','T_CHAR_HABITS','T_CHAR_MEASURES'].includes(tableId))return ids.has(knownValue(row,'char_ref'));
+ if(tableId==='X_SOCIAL_CONTACTS')return ids.has(knownValue(row,'owner_ref'));
+ if(tableId==='X_NETWORK_DOCUMENTS'){if(knownValue(row,'visibility')==='public')return true;const owned=new Set(Object.entries(state.tables.X_SOCIAL_ACCOUNTS??{}).filter(([,r])=>ids.has(knownValue(r,'personId'))).flatMap(([id,r])=>[id,knownValue(r,'id')].filter(Boolean)));return (knownValue(row,'participant_accounts')??knownValue(row,'audience')??[]).some(id=>owned.has(id));}
+ if(tableId==='X_NETWORK_ITEMS'){const parent=knownValue(row,'thread_ref')??knownValue(row,'parent_ref');const found=Object.entries(state.tables.X_NETWORK_DOCUMENTS??{}).find(([id,r])=>id===parent||knownValue(r,'id')===parent);return !!found&&characterRecordVisible(state,'X_NETWORK_DOCUMENTS',found[0],scope);}
  if(tableId==='T_CHAR_RELATION_ORIGINS')return ids.has(knownValue(row,'subject_ref'));
  if(tableId==='T_DYN_CLUES'){
   if(knownValue(row,'visibility')==='全体公开')return true;

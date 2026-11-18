@@ -3,7 +3,7 @@ import {builtinExtensionDefinitions,builtinPresentationDefinitions} from '../ext
 
 export const BUILTIN_PACKAGE='tisya.builtin-books';
 export const BUILTIN_BOOK_NAMES=Object.freeze({templates:'缇斯亚模板书',extensions:'缇斯亚扩展资料书',beauty:'缇斯亚美化书'});
-export const MATRIX_CREATION_CONTRACT='保留完整 reply 框架；正文说明方案，cells 按本次实际注册简表填写“【表名／序号】＋行号 字段名：值”。模型只填可读内容和关联名称；程序掌握表、字段、稳定记录编号、主体关联、来源与提交回执。不要输出嵌套存储 JSON。已有记录只提交用户明确改变的字段；派生值、历史与程序回执不填。缺少必需定义时在 extra 写“待补：具体问题”，不猜值。世界、角色与生活手机共用同一规范字段，不另建时钟或钱包账本。模板是填写规则，不是当前事实；作者原文作为来源保留。';
+export const MATRIX_CREATION_CONTRACT='保留完整 reply 框架；正文说明方案，cells 按本次实际注册简表填写“【表名／序号】＋序号{值}”。模型只填可读内容和关联名称；程序掌握表、字段、稳定记录编号、主体关联、来源与提交回执。不要输出嵌套存储 JSON。已有记录只提交用户明确改变的字段；派生值、历史与程序回执不填。缺少必需定义时在 extra 写“待补：具体问题”，不猜值。世界、角色与生活手机共用同一规范字段，不另建时钟或钱包账本。模板是填写规则，不是当前事实；作者原文作为来源保留。';
 export const WORLD_FORM_TEMPLATE=Object.freeze({format:'tisya.form-authoring-template/1',id:'world.definition',kind:'world',targets:[
  {tableId:'T_STATIC_WORLDS',fields:['name','core_proposition','era_name'],projections:['world_id','calendar_id','base_year'],instruction:'填写世界名称、核心命题与纪年；编号由程序提供，历法与基准年填写注册关联子表。' },
  {tableId:'M_CALENDAR_RULES',fields:[],instruction:'使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。'},

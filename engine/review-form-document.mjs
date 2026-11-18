@@ -33,12 +33,13 @@ function describeReviewDocument(state,context,text){
   if(!group||!form){if(!group||group.form){group={title:'本轮状态变化',rows:[]};groups.push(group);}}
   const row={raw:line,start:offset,end:offset+line.length};
   try{
-   let spec,record,valueStart;
+   let spec,record,valueStart,bracedEnd;
    if(form){
     if(!group.template)throw Error('此分组没有唯一对应的表单，请在原始内容中检查标题。');
     const field=matrixInputField(group.template,trimmed);spec=state.schema[group.tableId].fields.find(f=>f.key===field.key);record=state.tables[group.tableId]?.[group.recordId];
-    const parsed=sheetLine(trimmed),prefix=parsed.compact?(/^\d+\s*[：:]\s*/.exec(trimmed)[0]):trimmed.slice(0,trimmed.length-parsed.body.length)+field.label;
-    valueStart=line.indexOf(trimmed)+prefix.length;while(/[\s：:]/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
+    const parsed=sheetLine(trimmed),prefix=parsed.valueStart!==undefined?trimmed.slice(0,parsed.valueStart):parsed.compact?(/^\d+\s*[：:]\s*/.exec(trimmed)[0]):trimmed.slice(0,trimmed.length-parsed.body.length)+field.label;
+    valueStart=line.indexOf(trimmed)+prefix.length;while(parsed.valueStart===undefined&&/[\s：:]/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
+    if(parsed.valueEnd!==undefined)bracedEnd=line.indexOf(trimmed)+parsed.valueEnd;
     row.tableId=group.tableId;row.recordId=group.recordId;
    }else{
     const separator=line.search(/[：:]/);if(separator<0||trimmed.startsWith('@'))throw Error('此行是旧版指令，保留在原始内容中查看；不会自动改写。');
@@ -46,7 +47,7 @@ function describeReviewDocument(state,context,text){
     spec=runtime.spec(tableId,key);record=runtime.record(tableId,recordId);row.tableId=tableId;row.recordId=recordId;row.recordName=record.values.name??record.values.title??'已有记录';
     valueStart=separator+1;while(/\s/.test(line[valueStart]??'')&&valueStart<line.length)valueStart++;
    }
-   const evidence=paragraphEvidence(line),valueEnd=evidence?evidence.index:line.length;
+   const evidence=paragraphEvidence(line),valueEnd=bracedEnd??(evidence?evidence.index:line.length);
    Object.assign(row,{key:spec.key,label:spec.label??spec.key,type:spec.type,options:spec.enum??spec.options,minimum:spec.minimum,maximum:spec.maximum,previous:record?.values[spec.key],previousState:record?.states[spec.key]??'unset',value:line.slice(valueStart,valueEnd),valueStart:offset+valueStart,valueEnd:offset+valueEnd,evidence:evidence?.[1]??'',delta:!form});
    const canonicalName=changes.find(c=>c.tableId===row.tableId&&c.recordId===row.recordId)?.values?.name;if(spec.key==='name'&&canonicalName&&canonicalName!==row.value)row.help='已识别为已有对象“'+canonicalName+'”，本轮更新原记录并沿用正式名称。';
    row.hidden=identityFieldHidden(row.tableId,spec.key);if(row.tableId==='T_DYN_EVENTS'&&spec.key==='short_code')row.label='事件编号';

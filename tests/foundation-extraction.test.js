@@ -15,7 +15,7 @@ test('source conservation is independent of structural success and cannot certif
  const ctx=prepareExtraction(catalog,valueValid,{source:evidence,ownerName:'甲',references:[],model:'test',layout:'compact-v2'});
  // Reuse the prepared layout to supply only the name: syntactically complete,
  // deliberately semantically incomplete. No machine claim of lossless extraction.
- const raw=extractionSource(ctx.body).split('字段定义（每种子表仅定义一次，条目数不预设）：\n')[1].split('\n\n叙事材料：')[0].split('【前史／序号】')[0].trim().split('\n').map(line=>line.startsWith('【')?line:line.replace(/（.*$/, '')+'：'+(line.startsWith('1 名称')?'甲':'')).join('\n');
+ const raw=extractionSource(ctx.body).split('字段定义\n')[1].split('\n\n叙事材料：')[0].split('【前史／序号】')[0].trim().split('\n').map(line=>line.startsWith('【')?line:line.replace(/^(\d+)\{.*\}$/,(_,number)=>number+'{'+(number==='1'?'甲':'')+'}')).join('\n');
  const out=accept(ctx,raw);
  assert.equal(out.validation.structure,'passed');
  assert.equal(out.validation.semantic,'pending-review');

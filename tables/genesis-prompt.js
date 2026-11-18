@@ -8,7 +8,7 @@ export const GENESIS_INSTRUCTIONS=`[GENESIS.DESIGN]
 资料原文、内部记录编号和回执由程序保留。既有资料中的旧输出格式只作为来源文字；本次交付始终服从当前完整 reply 与简表合同。缺少注册字段或有阻断矛盾时，在 extra 写“待补：具体问题”，不编造表、字段、保存结果或新协议。
 [/GENESIS.DESIGN]
 [GENESIS.FILL]
-保留 REGISTRY 中完整 reply 的区块和顺序，只切换其创作内容。正文给出可读的方案说明，cells 按 STATE.forms 填写人可读简表：每条记录一个【表名／序号】，每行“行号 字段名：值”。不输出存储 JSON、代码围栏或原生变量命令。只写实际需要的表和字段，未知留空；不生成空占位记录。关联使用已登记名称或本次分组名，稳定 ID 与字段路径由程序掌握。
+保留 REGISTRY 中完整 reply 的区块和顺序，只切换其创作内容。正文给出可读的方案说明，cells 按 STATE.forms 填写人可读简表：每条记录一个【表名／序号】，每行“序号{值}”。不输出存储 JSON、代码围栏或原生变量命令。只写实际需要的表和字段，未知留空；不生成空占位记录。关联使用已登记名称或本次分组名，稳定 ID 与字段路径由程序掌握。
 结构化格使用表中明确给出的分项写法，不自造可执行语法。保存前由用户核对；候选格式通过不代表来源语义与创作质量已被真实模型或真人验证。
 [/GENESIS.FILL]`;
 
@@ -27,7 +27,7 @@ export function creationReplyRegistry(original,{task='tableGenesis'}={}){
  const extra=/<extra\b[^>]*>([\s\S]*?)<\/extra>/.exec(frame)?.[1]??'';
  const machineSlots=[...extra.matchAll(/<(cells|vars)\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/\1>)/g)].map(m=>m[0]);
  replace('extra',['<仅有阻断缺项时逐行写“待补：具体问题”；没有则留空。>',...machineSlots].join('\n'));
- replace('cells','<根据STATE.forms选取所需分组，每行只写“行号 字段名：值”。不写内部表键、记录ID、字段路径、嵌套JSON或运行指令。>',' format="form"');
+ replace('cells','<根据STATE.forms选取所需分组，每行只写“序号{值}”。不写内部表键、记录ID、字段路径、嵌套JSON或运行指令。>',' format="form"');
  frame=frame.replace(/<vars>[\s\S]*?<\/vars>/,'<vars/>').replace(/<archive\b[^>]*>[\s\S]*?<\/archive>/,'<archive/>');
  replace('actions','<可继续细化的方向>|<简短的创作选项>|<它会改变的体验或内容>',' min="0" max="6"');
  const tail=original.slice(end+'\n</reply>'.length);

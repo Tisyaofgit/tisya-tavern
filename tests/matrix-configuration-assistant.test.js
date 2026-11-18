@@ -21,7 +21,7 @@ function fixture(){
 }
 function filled(input,edits){
  const chosen=new Map();for(const [pattern,value]of edits){const rows=input.source.configuration.filter(row=>typeof pattern==='function'?pattern(row):pattern.test(row.label));assert.equal(rows.length,1,'Expected one editable field for '+pattern+', got '+rows.map(r=>r.label));chosen.set(rows[0].row,value);}
- const rows=input.forms.split('待填写：\n').at(-1).split('\n').map(line=>{const m=/^(\d+) /.exec(line);return m&&chosen.has(Number(m[1]))?line+'：'+chosen.get(Number(m[1])):line;}).join('\n');
+ const rows=input.forms.split('待填写：\n').at(-1).split('\n').map(line=>{const m=/^(\d+)\{/.exec(line);return m?m[1]+'{'+(chosen.get(Number(m[1]))??'')+'}':line;}).join('\n');
  return '<reply><task>配置</task><body>核对后应用这些设置。</body><cells>'+rows+'</cells></reply>';
 }
 const temp=/当前引擎.*generation.*temperature$/;
@@ -31,7 +31,7 @@ const nativeModel=/^API 路由 › 通用 › 模型$/;
 test('real configuration owners receive a complete simple form; asking has zero writes and never exposes old world editors',async()=>{
  const f=fixture(),before=clone(f.ctx.extensionSettings);f.setEdits([[temp,'0'],[/当前引擎.*generation.*stream_openai$/,'否'],[/当前引擎.*generation.*send_if_empty$/,'（空）'],[localHistory,'0'],[nativeModel,'actual-model']]);
  const draft=await f.assistant.ask('把温度和聊天历史设为零，关闭流式，清空续写文字并改模型');
- assert.deepEqual(f.writes,{native:0,matrix:0});assert.deepEqual(f.ctx.extensionSettings,before);assert.equal(f.input().formContract,'tisya.simple-form/1');assert.match(f.input().forms,/【配置】\n1 /);assert.doesNotMatch(JSON.stringify(f.input()),/world\.tables|world\.modes|\/world\/tables|\/world\/modes|editablePaths/);
+ assert.deepEqual(f.writes,{native:0,matrix:0});assert.deepEqual(f.ctx.extensionSettings,before);assert.equal(f.input().formContract,'tisya.simple-form/1');assert.match(f.input().forms,/【配置】\n1\{/);assert.doesNotMatch(JSON.stringify(f.input()),/world\.tables|world\.modes|\/world\/tables|\/world\/modes|editablePaths/);
  assert.equal(f.input().source.configuration.find(r=>temp.test(r.label)).value,1.37);assert.equal(f.input().source.configuration.filter(r=>r.label==='当前会话 › 上下文 › 历史聊天条数').length,0);
  const result=await f.assistant.applyAndContinue(draft);assert.equal(result.count,5);assert.deepEqual(f.writes,{native:1,matrix:1});f.assistant.guard(result.next);
  assert.equal(f.ctx.chatCompletionSettings.temp_openai,0);assert.equal(f.ctx.chatCompletionSettings.stream_openai,false);assert.equal(f.ctx.chatCompletionSettings.send_if_empty,'');assert.equal(effectivePreferences(f.matrix.read()).parameters.history_messages,0);assert.equal(resolveRoute(f.store.read().data,f.store.read().world).model,'actual-model');assert.deepEqual(f.store.read().world.modes,before[KEY].worlds[worldKey(f.ctx)].modes);assert.equal(f.store.read().world.tables,undefined);

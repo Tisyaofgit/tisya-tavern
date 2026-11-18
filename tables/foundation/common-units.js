@@ -48,4 +48,4 @@ export const COMMON_UNITS=Object.freeze(groups.map(([dimension,label,names,compo
 const aliases=new Map();
 for(const unit of COMMON_UNITS)for(const name of unit.aliases){if(aliases.has(name))throw Error('重复的常见单位别名：'+name);aliases.set(name,unit);}
 export const commonUnit=name=>aliases.get(String(name).trim());
-export const unitFormInstructions='单位：岁、分钟、小时、月、季、厘米、米、公斤、平方米、升、件等常见单位及常用缩写由程序自动登记，数值可写“18岁”“3厘米”“2个月”或“数值：18；单位：岁”。优先沿用已登记定义。未登记的自定义单位在本轮 <cells> 的【单位定义／序号】填写单位显示名、量纲及来源说明，再由其他字段引用该名称；可先引用后定义。所属世界省略时沿用当前世界，尚无世界则使用GLOBAL。自定义量纲填写custom并说明自定义量纲名；换算率只按明确规则另填单位换算，未说明的月季长度、年龄计法、币种汇率、容器容量和古制度量不补造。';
+export const unitFormInstructions='优先选用单位表中的名称。常见单位首次使用自动登记。新自定义单位在本轮 <cells> 的【单位定义／序号】填写显示名、量纲与来源，可同轮引用。所属世界省略时沿用当前世界，无世界则为GLOBAL。自定义量纲填写custom并给出量纲名。换算只按已有依据填写。';

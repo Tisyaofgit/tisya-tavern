@@ -1,11 +1,14 @@
+import {extendSemanticCatalog} from './form-semantics.mjs';
 import {worldFramework} from './world-framework.mjs';
 import {requiredMaterial} from './review-workflow.mjs';
 import {programOwnedTable,matrixFieldVisible,matrixRecordVisible,hasBuiltinPartition,modelFieldAllowed,modelTableAllowed} from './prompt-boundary.mjs';
 import {renderBlocks} from './material-render.mjs';
+import {narrativeRoster,routeNarrativeRecord,castIndex,narrativeSection,calculationMaterial} from './narrative-material.mjs';
 import {clone} from './common.mjs';
 import {activePreferences} from './business.mjs';
 import {recall} from './reply.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
+import {formVocabulary,formVocabularyText} from '../tables/foundation/form-vocabulary.js';
 import {stagedArchiveReferences} from './archive.mjs';
 import {archiveSupplemented,memoryImports} from './memory-status.mjs';
 import {ARCHIVE_TABLE_IDS,CELLS_BOOTSTRAP_TABLE_IDS,REPLY_FORM_PROTOCOL,replyFormOwner,replyFormTableIds} from './reply-form-ownership.mjs';
@@ -34,7 +37,7 @@ export function materialFormTables(e,blocks,context={}){
  return [...selected].filter(id=>e.data.schema[id]&&mainFormTable(id,e.data.schema[id]));
 }
 export function initializeState(catalog,scope={}){
- catalog=extendAttitudeCatalog(extendPhoneFormCatalog(catalog));
+ catalog=extendSemanticCatalog(extendAttitudeCatalog(extendPhoneFormCatalog(catalog)));
  const schema=Object.fromEntries(catalog.tables.map(t=>[t.id,clone(t)]));
  return {format:'tisya.matrix-state.v1',schema,tables:Object.fromEntries(Object.keys(schema).map(id=>[id,{}])),definition_meta:{derivations:clone(catalog.derivations??[]),relations:clone(catalog.relations??[]),parameter_definitions:clone(catalog.parameter_definitions??[]),parameter_bindings:clone(catalog.parameter_bindings??[])},runtime:{scope:clone(scope)}};
 }
@@ -64,23 +67,40 @@ export function materials(e,context=e.data.runtime.scope??{},query=''){
  const framework=worldFramework(e.data,context),common=framework.groups.flatMap(g=>g.records),commonKeys=new Set(common.map(r=>r.table_id+'#'+r.record_id));
  for(const [slot,rows]of Object.entries(blocks))blocks[slot]=rows.filter(r=>!commonKeys.has(r.table_id+'#'+r.record_id));
  if(common.length)(blocks.tisya_material_world_context??=[]).unshift(...common);
- const selectedTables=materialFormTables(e,blocks,context),groups=['cells','archive'].map(block=>({block,sheets:prepareMatrixSheets({state:e.data},{operationId:'material-preview-'+block,kind:'rows',mode:'revise',task:'main',scope:context,tableIds:replyFormTableIds(e.data,block,selectedTables),expandReferences:'children'})}));
+ const vocabulary=formVocabulary(),selectedTables=materialFormTables(e,blocks,context),groups=['cells','archive'].map(block=>({block,sheets:prepareMatrixSheets({state:e.data},{operationId:'material-preview-'+block,kind:'rows',mode:'revise',task:'main',scope:context,tableIds:replyFormTableIds(e.data,block,selectedTables),expandReferences:'children',vocabulary})}));
  const sheets={references:[...new Map([...groups.flatMap(g=>g.sheets.references),...framework.references].map(r=>[r.tableId+'#'+r.recordId,r])).values()]};
- if(context.reviewHistory){for(const [slot,rows]of Object.entries(blocks)){blocks[slot]=rows.filter(row=>{if(!ARCHIVE_TABLE_IDS.includes(row.table_id))return true;const rendered=renderBlocks(e,{archive:[row]},context,sheets.references).archive??[];context.archiveCollector?.push({id:row.table_id+'#'+row.record_id,text:rendered.join('\n'),metadata:e.data.tables[row.table_id][row.record_id].metadata??{}});return false;});}}
- slots=renderBlocks(e,blocks,context,sheets.references);
+ if(context.reviewHistory){for(const [slot,rows]of Object.entries(blocks)){blocks[slot]=rows.filter(row=>{
+  if(!ARCHIVE_TABLE_IDS.includes(row.table_id))return true;
+  if(context.archiveCollector){
+   const key=row.table_id==='T_DYN_EVENTS'?'memory_archive':'archive';
+   const rendered=renderBlocks(e,{[key]:[row]},context,sheets.references,{narrative:true})[key];
+   if(rendered?.length)context.archiveCollector.push({id:row.table_id+'#'+row.record_id,text:rendered.join('\n'),metadata:e.data.tables[row.table_id][row.record_id].metadata??{}});
+  }
+  return false;
+ });}}
+ const dedicatedAudience=!context.narrativeReading||!!context.audience||!!characterSubject(context);
+ const roster=dedicatedAudience?null:narrativeRoster(e.data,context,meta),projected={};
+ if(roster)for(const [slot,rows] of Object.entries(blocks))for(const row of rows){
+  const routed=routeNarrativeRecord(row,slot.slice('tisya_material_'.length),e.data,context,roster);
+  if(routed&&Object.keys(routed.row.values).length)(projected[routed.slot]??=[]).push(routed.row);
+ }
+ slots=renderBlocks(e,roster?projected:blocks,context,sheets.references,{narrative:!!roster,roster});
+ for(const line of roster?castIndex(roster):[])add('tisya_material_cast_registry',line);
+ for(const line of characterSubject(context)?[]:calculationMaterial(e.data,context))add('tisya_material_calculation_result',line);
  const sourceLabel=key=>{const index=e.data.runtime.turn_order?.indexOf(key)??-1,source=e.data.runtime.sources?.[key];return (index>=0?'第'+(index+1)+'条已接纳回复':'历史回复')+(source?.revision?'（修订'+source.revision+'）':'');};
  const imports=memoryImports(e.data),pendingArchives=(e.data.runtime.archive_queue??[]).filter(b=>(b.status==='blocked'||b.plan?.pending?.length)&&!archiveSupplemented(e.data,e.data.runtime.sources?.[b.source_key],imports));
  if(!characterSubject(context)&&pendingArchives.length)add('tisya_material_offstage_state','记忆待核（尚未确认）：'+pendingArchives.map(b=>sourceLabel(b.source_key)+((b.plan?.pending??[]).length?'，待补 '+b.plan.pending.map(p=>p.target+'：'+p.missing).join('；'):'')).join('；'));
  for(const p of activePreferences(e,context))add('tisya_contractor_wish',p.directive);
  if(query){const hits=characterSubject(context)?recallCharacterFragments(e,query,context):recall(e,query,{branch:context.branch_ref});for(const h of hits)add('tisya_material_memory_excerpt','原文：'+sourceLabel(h.source_key)+'\n'+h.fragments.map(f=>f.paragraph_id+'：'+f.raw_block).join('\n'));}
  if(e.data.runtime.calendar||Object.keys(e.rows('X_WORLD_CLOCKS')).length)add('tisya_material_event_context','世界历法：'+e.clock().text());
- const visible=new Set(Object.values(blocks).flat().map(row=>row.table_id+'#'+row.record_id)),references=sheets.references.filter(r=>{if(visible.has(r.tableId+'#'+r.recordId))return false;const values=e.data.tables[r.tableId]?.[r.recordId]?.values;return e.data.schema[r.tableId]?.partition==='M'&&(r.tableId==='M_UNITS'||values?.owner_table&&visible.has(values.owner_table+'#'+values.owner_row_uuid));});
+ const visible=new Set(Object.values(blocks).flat().map(row=>row.table_id+'#'+row.record_id)),references=sheets.references.filter(r=>{if(visible.has(r.tableId+'#'+r.recordId))return false;const values=e.data.tables[r.tableId]?.[r.recordId]?.values;return e.data.schema[r.tableId]?.partition==='M'&&(r.tableId!=='M_UNITS'&&values?.owner_table&&visible.has(values.owner_table+'#'+values.owner_row_uuid));});
  add('tisya_material_cell_prompts',REPLY_FORM_PROTOCOL);
+ add('tisya_material_cell_prompts',formVocabularyText(vocabulary));
  add('tisya_material_cell_prompts',requiredMaterial(e.data,{policy:e.data.runtime.review_policy??{}}));
  add('tisya_material_cell_prompts',groups[0].sheets.instructions.replace('<cells format="form"> 使用下列分组简表：','分组简表：'));
  const details=new Map();for(const {block,sheets:group}of groups){const roots=[];for(const section of group.formSections)if(replyFormOwner(e.data,section.tableId)==='owned')details.set(section.tableId,section.text);else roots.push(section.text);if(roots.length)add('tisya_material_cell_prompts',block+' 可填写的表单：\n'+roots.join('\n\n'));}
  if(details.size)add('tisya_material_cell_prompts','明细随所属记录填写：\n'+[...details.values()].join('\n\n'));
  if(references.length)add('tisya_material_cell_prompts','可修订或引用的已有记录：\n'+references.map(r=>r.display).join('\n'));
  const stagedReferences=characterSubject(context)?[]:stagedArchiveReferences(e);if(stagedReferences.length)add('tisya_material_cell_prompts','近期回复中的关联名称（仅供关联，事实依据仍须见原文）：'+stagedReferences.map(r=>r.table+'／'+r.name).join('；'));
- return Object.fromEntries(Object.entries(slots).map(([k,v])=>[k,[...new Set(v)].join('\n')]));
+ return Object.fromEntries(Object.entries(slots).map(([k,v])=>[k,narrativeSection(k,[...new Set(v)].join(context.narrativeReading&&k!=='tisya_material_cell_prompts'?'\n\n':'\n'))]));
 }

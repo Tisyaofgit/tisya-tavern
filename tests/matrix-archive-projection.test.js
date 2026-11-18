@@ -17,7 +17,7 @@ test('both archive products reach actual host material macros after persistence 
  const host=createMatrixHost(options);await host.import({state:e.data});
  const cold=createMatrixHost(options);await cold.sync({preview:true});const slots=cold.latest().materials;
  assert.match(slots.tisya_material_memory_archive,/渡口交付信件/);
- assert.match(slots.tisya_material_memory_summary,/阶段摘要.*渡口阶段.*送信已完成/);
+ assert.match(slots.tisya_material_memory_summary,/<StageSummary>\n阶段摘要：渡口阶段\n跨阶段摘要：送信已完成，船仍未到。/);
  assert.doesNotMatch(slots.tisya_material_memory_archive,/送信已完成/);
  const character=materials(new Runtime(e.data),{...e.data.runtime.scope,subject_ref:'someone',audience:'character'});
  assert.doesNotMatch(JSON.stringify(character),/送信已完成|渡口交付信件/);

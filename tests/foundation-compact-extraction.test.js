@@ -13,7 +13,7 @@ const context=()=>prepareExtraction(c,valueValid,{source:'方鹿拜沈砚为师�
 const child=(label,kind,values)=>'【'+label+'／1】\n'+lines('origin.character.'+kind,{名称:label,...values}).join('\n');
 test('compact projection reduces requested cells without renumbering or changing canonical catalog',()=>{
  assert.deepEqual(['origin.character','origin.character.history','origin.character.relationships','origin.character.secrets'].map(t=>view(t).length),[40,8,6,6]);
- const ctx=context();assert.equal(ctx.layout,'compact-v2');assert(!extractionSource(ctx.body).includes('11 原文（'));assert(!extractionSource(ctx.body).includes('10 成立条件（'));assert(extractionSource(ctx.body).includes('25 日常习惯（'));assert(extractionSource(ctx.body).includes('数值格的裸数值沿用'));
+ const ctx=context();assert.equal(ctx.layout,'compact-v2');assert(!extractionSource(ctx.body).includes('11{原文'));assert(!extractionSource(ctx.body).includes('10{成立条件'));assert(extractionSource(ctx.body).includes('25{日常习惯'));assert(extractionSource(ctx.body).includes('数值格的裸数值沿用'));
  assert.equal(c.templates.find(t=>t.id==='origin.character').fields.length,45);
 });
 test('canonical sparse fields retain actual values, omitted duplicates remain absent and source is kept once',()=>{
@@ -63,5 +63,5 @@ test('mask purpose and visible cracks remain descriptive, absent when unknown, w
 test('history keeps subjective then-understanding distinct from factual events and ongoing effect without granting knowledge',()=>{
  const ctx=context(),r=acceptExtraction(c,valueValid,ctx,main()+'\n'+child('前史','history',{命题:'老师要求重做。','前史·当时理解':'当时以为老师不信任自己','前史·当下影响':'此后反复检查木料'})),h=r.snapshot.records.find(x=>x.id===r.children[0].id);
  assert.equal(h.values.前史.当时理解,'当时以为老师不信任自己');assert.equal(h.values.命题,'老师要求重做。');assert.equal(h.values.前史.当下影响,'此后反复检查木料');assert.equal(h.values.知情者,undefined);assert.equal(r.validation.semantic,'pending-review');assert.equal(r.conditions.length,0);
- assert(extractionSource(ctx.body).includes('13 当时理解'));assert(extractionSource(ctx.body).includes('10 延续影响'));
+ assert(extractionSource(ctx.body).includes('13{当时理解'));assert(extractionSource(ctx.body).includes('10{延续影响'));
 });

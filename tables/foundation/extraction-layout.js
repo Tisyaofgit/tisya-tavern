@@ -1,3 +1,4 @@
+import {sheetLine} from './engine.js';
 // One model-facing form, projected from the shared archive schema.
 // Unrequested schema fields stay absent, never inferred or copied.
 const excluded={
@@ -76,8 +77,9 @@ export function extractionHint(f,tid,layout){checkExtractionLayout(layout);retur
 export function expandExtractionSection(lines,fields,tid,layout){
  const visible=visibleExtractionFields(fields,tid,layout),allowed=new Map(visible.map(f=>[f.row,f])),seen=new Map();
  for(const line of lines){
-  const n=line.trim().match(/^(\d+)\s+/),f=n&&allowed.get(Number(n[1]));if(!f)throw Error('未开放的精简表行：'+line.trim());
+  const parsed=sheetLine(line),f=allowed.get(parsed.row);if(!f)throw Error('未开放的精简表行：'+line.trim());
   if(seen.has(f.row))throw Error('精简表行重复：'+f.row);
+  if(parsed.valueStart!==undefined){seen.set(f.row,parsed.body);continue;}
   const label=extractionLabel(f,tid,layout).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const match=line.trim().match(new RegExp('^'+f.row+'\\s+'+label+'(?:\\s*[：:]\\s*|\\s+)(.*)$'));
   if(!match)throw Error('精简表字段名或格式不符：'+f.row);

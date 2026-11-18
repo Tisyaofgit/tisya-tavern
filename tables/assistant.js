@@ -1,4 +1,5 @@
 import {createSheetEngine} from './foundation/engine.js';
+import {enumReference,formVocabulary,formVocabularyText} from './foundation/form-vocabulary.js';
 import {envelope} from '../engine/reply.mjs';
 import {PREFERENCE_GROUPS} from '../engine/preferences.mjs';
 import {generationValues} from '../engine/generation.mjs';
@@ -95,9 +96,15 @@ function matrixConfigurationAssistant({store,getContext,review,run,call,getChoic
    const type=group?(group.multiple?'list':'text'):numeric?'number':typeof value==='boolean'?'boolean':Array.isArray(value)?'list':'text';
    const options=group?.options.map(o=>({id:o.id,label:o.label}));items.push({key:'f'+(items.length+1),label,path:owner==='matrix'?'/'+path.slice(1).map(escape).join('/'):nativePath,owner,type,before:copy(value),options});
   };walk(view);
-  const template={id:'configuration',table:'configuration',label:'配置',fields:items.map(item=>({key:item.key,label:item.label,path:[item.key],group:'设置',definition:{type:'text'}}))};
+  const vocabulary=formVocabulary();
+  const fields=items.map(item=>{
+   const choice=item.options?enumReference(vocabulary,item.label,item.options.map(option=>option.label)):'';
+   return {key:item.key,label:item.label,path:[item.key],group:'设置',definition:{type:'text',...(choice&&choice!==item.label?{description:'见'+choice}:{})}};
+  });
+  const template={id:'configuration',table:'configuration',label:'配置',fields};
   const engine=createSheetEngine({version:1,templates:[template]},value=>typeof value==='string'),record=engine.create(template.id),ticket=engine.requestWorkbook([{recordId:record.id,heading:'配置'}]);
-  const current=items.map((item,i)=>({row:i+1,label:item.label,value:item.before,type:item.type,...(item.options?{options:item.options}: {})}));
+  ticket.modelInput=[formVocabularyText(vocabulary),ticket.modelInput].filter(Boolean).join('\n\n');
+  const current=items.map((item,i)=>({row:i+1,label:item.label,value:item.before,type:item.type}));
   return {engine,record,ticket,items,current};
  }
  function valueFor(raw,item){
@@ -125,7 +132,7 @@ function matrixConfigurationAssistant({store,getContext,review,run,call,getChoic
  }
  async function ask(question,conversation=[]){return run(async signal=>{
   check(typeof question==='string'&&question.trim(),'请告诉缇斯亚要调整什么');check(Array.isArray(conversation)&&conversation.length<=12&&conversation.every(x=>object(x)&&['user','assistant'].includes(x.role)&&typeof x.content==='string'),'助手对话格式无效');const state=await review(),captured=snapshot(),form=formFor(captured);
-  const input={formContract:'tisya.simple-form/1',question,conversation,goal:'核对当前配置，只填写用户要求改变的格；保持完整reply。body解释方案；cells使用给定配置分组与行号字段。未知留空，无需修改时cells留空。空文字填（空），恢复继承填（继承）；生成参数继承当前原生设置。不要返回JSON、存储路径或旧表单开关。',source:{configuration:form.current,choices:choices(),history:state.history,conversation},forms:form.ticket.modelInput,current:state.rows,references:[],output:{kind:'configuration'}};
+  const input={formContract:'tisya.simple-form/1',question,conversation,goal:'核对当前配置，只填写用户要求改变的格；保持完整reply。body解释方案；cells保留配置分组，逐行填写序号{值}。未知留空，无需修改时cells留空。空文字填（空），恢复继承填（继承）；生成参数继承当前原生设置。不要返回JSON、存储路径或旧表单开关。',source:{configuration:form.current,choices:choices(),history:state.history,conversation},forms:form.ticket.modelInput,current:state.rows,references:[],output:{kind:'configuration'}};
   const raw=await call(input,signal);try{let parsed;try{parsed=envelope(raw);}catch(cause){throw Error('配置助手没有返回完整reply；原答已保留',{cause});}
   check(!parsed.blocks.vars?.trim()&&!parsed.blocks.archive?.trim(),'配置助手不能直接执行故事指令');
   if(parsed.blocks.cells?.trim())form.engine.accept(form.ticket.token,parsed.blocks.cells);

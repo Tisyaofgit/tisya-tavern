@@ -1,7 +1,9 @@
+import {FORM_OWNERSHIP_CONTRACT} from '../../engine/form-semantics.mjs';
 import {stripParagraphEvidence} from '../../engine/paragraph-evidence.mjs';
 import {OBJECT_IDENTITY_FIELDS,namedIdentityTable,normalizeIdentityName,identityAliases} from '../../engine/object-identity.mjs';
 import {eventCodes,recordIdentityLabel,identityFieldHidden} from '../../engine/record-identity.mjs';
 import {commonUnit,unitFormInstructions} from './common-units.js';
+import {addRegisteredUnits,enumReference,formVocabulary,formVocabularyText,formWriteSyntax,unitReference} from './form-vocabulary.js';
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
 import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible,modelFieldAllowed,modelTableAllowed,modelWriteFieldAllowed} from '../../engine/prompt-boundary.mjs';
 import {characterSubject} from '../../engine/character-knowledge.mjs';
@@ -35,7 +37,10 @@ export function sheetSections(text,{tolerant=false}={}){
  }
  return sections;
 }
-export function sheetLine(line){const compact=/^(\d+)\s*[：:]\s*([\s\S]*)$/.exec(line.trim());if(compact)return {row:Number(compact[1]),body:compact[2],compact:true};const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2],compact:false};}
+export function sheetLine(line){
+ const text=line.trim(),braced=/^(\d+\s*\{)([\s\S]*)\}$/.exec(stripParagraphEvidence(text));
+ if(braced)return {row:Number.parseInt(braced[1],10),body:braced[2],compact:true,valueStart:braced[1].length,valueEnd:braced[1].length+braced[2].length};
+ const compact=/^(\d+)\s*[：:]\s*([\s\S]*)$/.exec(line.trim());if(compact)return {row:Number(compact[1]),body:compact[2],compact:true};const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2],compact:false};}
 function sheetFieldText(line,cells){
  const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);if(parsed.compact)return {row:parsed.row,cell,raw:parsed.body};check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
  let raw=parsed.body.slice(cell.label.length);check(!raw||/^[\s：:]/.test(raw),'字段名被修改：'+parsed.row);raw=raw.trimStart();if(/^[：:]/.test(raw))raw=raw.slice(1).trimStart();return {row:parsed.row,cell,raw};
@@ -158,7 +163,8 @@ export function createSheetEngine(catalog, validateValue) {
  }
  const listType=d=>['texts','refs'].includes(d.type);
  function plainInput(parts,source,refs,rules={}){
-  const out=['档案：'+parts[0].ownerName,'按资料填写，保留分组、行号和字段名，每行填一个字段。字段名后可用冒号；未知留空，只返回填好的内容。'];
+  const vocabulary=formVocabulary();
+  const out=['档案：'+parts[0].ownerName,formWriteSyntax+'保留分组和行号；未知填空花括号。'];
   if(parts.some(p=>p.cells.some(c=>listType(c.definition))))out.push('列表格多项用“；”分隔，明确没有条目填“无”；普通文字中的标点原样保留。');
   if(parts.some(p=>p.cells.some(c=>c.definition.multiline)))out.push('长文本字段：换行写\\n，字面反斜杠写\\\\；仍将完整内容填写在同一字段行。');
   if(rules.table)out.push(rules.table);if(rules.columns?.B)out.push(rules.columns.B);
@@ -167,22 +173,20 @@ export function createSheetEngine(catalog, validateValue) {
   const form=[];
   for(const p of parts){
    const groups=[...new Set(p.cells.map(c=>c.group))];
-   for(const g of groups){const title=p.tid==='origin.character'?'人物／'+g:p.heading;form.push('【'+title+'】');const hints=[];
+   for(const g of groups){const title=p.tid==='origin.character'?'人物／'+g:p.heading;form.push('【'+title+'】');
     for(const c of p.cells.filter(c=>c.group===g)){
      const d=c.definition;let hint=d.description??'';if(p.tid==='origin.character.secrets'&&c.label==='关联对象')hint='真相直接涉及的对象；物品来源人物不自动纳入，不据此推定知情。';
      if(listType(d))hint=(hint?hint+' ':'')+'多项';
-     if(d.values)hint+=' 可选：'+d.values.join('／');
+     if(d.values)hint+=' 见'+enumReference(vocabulary,c.label,d.values);
      if(['number','duration'].includes(d.type))hint+=' 数值'+(d.min!==undefined?'，最小'+d.min:'')+(d.max!==undefined?'，最大'+d.max:'');
      if(d.type==='boolean')hint+=' 是或否';
      if(['array','map','object','json'].includes(d.type))hint+=' 此复杂值仍须JSON；尚未展开为子格';
      if(rules.rows?.[c.row])hint+=' '+rules.rows[c.row];if(rules.cells?.['B'+c.row])hint+=' '+rules.cells['B'+c.row];
-     if(hint)hints.push(c.row+' '+hint.trim());
-     form.push(c.row+' '+c.label);
+     form.push(c.row+'{'+c.label+(hint?'，'+hint.trim():'')+'}');
     }
-    if(hints.length)out.push('【'+title+'】填写要求：',...hints);
    }
   }
-  return out.join('\n')+'\n\n资料：\n'+source+'\n\n待填写：\n'+form.join('\n');
+  return [formVocabularyText(vocabulary),...out].filter(Boolean).join('\n')+'\n\n资料：\n'+source+'\n\n待填写：\n'+form.join('\n');
  }
  function partFor(r,cells,heading){const t=template(r.template);return {record:r.id,tid:t.id,ownerName:at(record(r.parentId??r.id).values,['名称'])||record(r.parentId??r.id).title,heading:heading??t.label,cells:cells.map(c=>({...c,label:t.id==='origin.character.relationships'&&c.key==='关系底稿·对象'?'关系对象':c.label,group:field(t,c.key).group}))};}
  function request(id,options={}){
@@ -300,7 +304,7 @@ function structuredCell(raw,array=false){
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
-export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true}={}){
+export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true,vocabulary=formVocabulary()}={}){
  check(typeof operationId==='string'&&operationId.trim(),'简表任务需要稳定操作标识');
  const restrictReferences=task==='main'||!!characterSubject(scope);
  const allSchemas=compactCreationSchema(snapshot.state),selected=tableIds?new Set(tableIds):null,used=new Map(),labels=new Map();
@@ -330,23 +334,41 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(restrictReferences&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
   refs.push({tableId:id,recordId,name,legacyName,aliases:narrativeIdentity?identityAliases(snapshot.state,id,recordId,scope):[],base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
+ addRegisteredUnits(vocabulary,refs,snapshot.state,scope);
  const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=(spec,tableId)=>{
   let hint=['TEXT','LONG_TEXT'].includes(spec.type)?'':scalarTypes[spec.type]??(['REF','ROW_REF','CHILD_REF'].includes(spec.type)?'名称':'文字');
   if(spec.type==='CHILD_REF'&&spec.ref==='M_LIST_VALUES'||permitsIdentityReuse(task)&&inline(spec))hint=inlineChildHints[spec.ref];
   else if(spec.ref)hint=(spec.type==='CHILD_REF'?'分组：':'名称：')+(labels.get(spec.ref)??snapshot.state.schema[spec.ref]?.label??'关联对象');
   const phoneTargets=phoneFormReference(tableId,spec.key)??PHONE_FORM_LIST_REFERENCES[tableId]?.[spec.key];if(phoneTargets)hint='名称：'+[phoneTargets].flat().map(id=>labels.get(id)??snapshot.state.schema[id]?.label??'关联对象').join('／');
   if(plainTimeText&&inline(spec)&&spec.ref==='M_WORLD_TIME'&&permitsIdentityReuse(task))hint='时间原文或已有名称';
-  if(spec.enum??spec.options)hint=(spec.enum??spec.options).join('／');
+  const options=spec.enum??spec.options;
+  if(options)hint=enumReference(vocabulary,options.join('/')==='L1/L2/L3'?'知情锁级':spec.label??spec.key,options);
+  if(spec.ref==='M_QUANTITIES'&&inline(spec)&&permitsIdentityReuse(task)){
+   const dimension=['age_raw','turn_elapsed'].includes(spec.key)?'time':null;
+   const pool=unitReference(vocabulary,dimension);
+   hint=(spec.key==='age_raw'?'年龄数值':'数值')+'：N 单位（见'+pool+'），或描述：原文';
+  }
+  if(spec.ref==='M_UNITS')hint='已登记单位名称';
   if(spec.unit)hint+=(hint?'；':'')+'单位 '+spec.unit;
   if(spec.minimum!==undefined)hint+=(hint?'；':'')+'≥'+spec.minimum;if(spec.maximum!==undefined)hint+=(hint?'；':'')+'≤'+spec.maximum;
   if(tableId==='T_DYN_EVENTS'&&spec.key==='exact_dialogues')hint=dialogueFieldHint;
+  if(spec.fill_hint)hint+=(hint?'；':'')+spec.fill_hint;
   if(spec.required)hint+=(hint?'；':'')+'必填';return hint;
  };
  const modelTemplates=templates.filter(t=>(!permitsIdentityReuse(task)||!Object.hasOwn(inlineChildHints,t.id))&&modelTableAllowed(t.id,snapshot.state.schema[t.id],task)).map(t=>({...t,fields:t.fields.filter(f=>(!narrativeIdentity||!identityFieldHidden(t.id,f.key))&&modelWriteFieldAllowed(snapshot.state.schema[t.id].fields.find(x=>x.key===f.key),snapshot.state.schema[t.id],task))})).filter(t=>t.fields.length);
- const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key),hint=narrativeIdentity&&t.id==='T_DYN_EVENTS'&&f.key==='short_code'?'续接已有事件时填编号；新事件省略，由程序编号':hintFor(spec,t.id);return f.row+' '+f.label+(hint?'（'+hint+'）':'');}).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
- const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；每行“行号：值”，也兼容“行号 字段名：值”；编号严格对应本表给定字段。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
- const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+unitFormInstructions;
- return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,formSections,form:sharedInstructions+'\n\n'+fieldsText,referenceText:refs.map(r=>r.display).join('\n')};
+ const formSections=modelTemplates.map(t=>({tableId:t.id,text:'【'+t.label+'／序号】\n'+t.fields.map(f=>{
+  const spec=schemaByTemplate[t.id].fields.find(s=>s.key===f.key);
+  const hint=narrativeIdentity&&t.id==='T_DYN_EVENTS'&&f.key==='short_code'?'续接已有事件时填编号；新事件省略，由程序编号':hintFor(spec,t.id);
+  const characterLabel=t.id==='T_CHAR_DOSSIER'?({name:'角色对外显示名称',true_name:'角色真名'})[f.key]:undefined;
+  const label=characterLabel??f.label;
+  const isOwnEnum=hint===label||f.key==='true_name_lock'&&hint==='知情锁级';
+  const content=isOwnEnum||f.key==='age_raw'&&spec.ref==='M_QUANTITIES'?hint:
+   label+(hint?'（'+(spec.enum||spec.options?'见':'')+hint+'）':'');
+  return f.row+'{'+content+'}';
+ }).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
+ const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；'+formWriteSyntax+'编号按本表模板。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化；字段值后可加 | Pn 标明正文依据。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
+ const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+FORM_OWNERSHIP_CONTRACT+'\n'+unitFormInstructions;
+ return {format:'tisya.matrix-sheets/1',commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,vocabularyText:formVocabularyText(vocabulary),formSections,form:[formVocabularyText(vocabulary),sharedInstructions,fieldsText].filter(Boolean).join('\n\n'),referenceText:refs.map(r=>r.display).join('\n')};
 }
 // Partial acceptance uses the same codec and canonical validator. A failed
 // group is removed, then the remaining batch is recompiled together. This
