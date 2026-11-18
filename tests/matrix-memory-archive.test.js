@@ -23,7 +23,9 @@ async function fixture(state=null){
  async function prepare(type='normal'){
   if(type==='normal')ctx.chat.push({is_user:true,mes:'继续'});
   await host.before(type);const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier));
-  await host.payloadReady({messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))});
+  const payload={messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))};
+  await host.payloadReady(payload);
+  return payload;
  }
  async function accept(raw,type='normal'){
   await prepare(type);if(type==='normal')ctx.chat.push({mes:raw});else ctx.chat.at(-1).mes=raw;
@@ -31,6 +33,16 @@ async function fixture(state=null){
  }
  return {ctx,host,options,storage,prepare,accept,cold:()=>createMatrixHost(options)};
 }
+
+test('main request requires paragraph evidence per archive group and limits optional evidence to state cells',async()=>{
+ const f=await fixture(),payload=await f.prepare();
+ const lines=payload.messages.map(message=>message.content).join('\n').split('\n');
+ assert.match(lines.find(line=>line.includes('分组简表：')), /每条记录写/);
+ assert.doesNotMatch(lines.find(line=>line.includes('分组简表：')), /可加 \| Pn/);
+ assert.deepEqual(lines.filter(line=>line.includes('可加 | Pn')).map(line=>line.match(/^<\w+/)?.[0]),['<cells']);
+ assert.match(lines.find(line=>line.startsWith('每条业务记录（每个新增或修订分组）')), /至少.*字段行末.*19\{旅人把信交给船夫\} \| P3/);
+ assert(lines.some(line=>line.includes('段号取自本轮最终 <body>')));
+});
 
 test('actual host accepts every source and commits semantic event memory only beyond its two retained replies',async()=>{
  const f=await fixture();let saved=await f.accept(reply(1));

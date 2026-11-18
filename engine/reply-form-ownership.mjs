@@ -40,8 +40,13 @@ export function replyFormDecoding(version){
  return {commonUnits:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION,PRE_EVIDENCE_LIST_REPLY_FORM_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION,PRE_TIME_TEXT_REPLY_FORM_VERSION].includes(version),plainTimeText:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION,PRE_EVIDENCE_LIST_REPLY_FORM_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION,PRE_SCENE_REUSE_REPLY_FORM_VERSION].includes(version),sceneNameReuse:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION,PRE_EVIDENCE_LIST_REPLY_FORM_VERSION,PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION].includes(version),narrativeIdentity:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION,PRE_EVIDENCE_LIST_REPLY_FORM_VERSION].includes(version),multipleEvidence:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION].includes(version),namedHoldingReuse:[REPLY_FORM_OWNERSHIP_VERSION,PRE_STATE_PATCH_VERSION].includes(version),stateNamePatches:version===REPLY_FORM_OWNERSHIP_VERSION};
 }
 
-export const CELLS_PROTOCOL='<cells format="form"> 填当前状态、本轮业务变化及新人物档案；任务保留接受证据。无变化写 <cells/>。';
-export const ARCHIVE_PROTOCOL='<archive format="form"> 填需保留的经过、事实、认知、关系来历和线索，附 | Pn 正文依据；猜测归所属人物认知。可引用本轮新建名称。无新增写 <archive/>。';
+export const CELLS_PROTOCOL='<cells format="form"> 填当前状态、本轮业务变化及新人物档案。状态字段行末可加 | Pn 标明正文依据。任务保留接受证据。无变化写 <cells/>。';
+export const ARCHIVE_PROTOCOL=[
+ '<archive format="form"> 填本轮需保留的经过、事实、认知、关系来历和线索。猜测归所属人物认知；关联可填本轮新建名称。',
+ '每条业务记录（每个新增或修订分组）至少在一条承载该记录依据的字段行末填写 | Pn。例如 19{旅人把信交给船夫} | P3。跨段填 | P3..P5，分散在数段填 | P3、P7。',
+ '段号取自本轮最终 <body>。父记录同批填写时，所属明细可沿用父记录的证据；单独修订明细时，在明细字段行附正文段号。',
+ '输出前逐组核对段号存在且原文支持记录内容。缺少正文依据的记录留待后续补证；本轮无新增或修订的归档记录时写 <archive/>。'
+].join('\n');
 export const REPLY_FORM_PROTOCOL=CELLS_PROTOCOL+'\n'+ARCHIVE_PROTOCOL+'\n每个信息点只填一处；归档不复抄当前状态。';
 
 const ownedSchema=schema=>schema?.fields?.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>f.key==='owner_table'||f.key==='owner_form');
