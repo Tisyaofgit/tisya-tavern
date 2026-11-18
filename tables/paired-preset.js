@@ -12,7 +12,8 @@ export function pairedPreset({task,configuration,archiveProposal=false,source,fo
  const mode=TABLE_MODES[task];if(!mode)throw Error('未登记配套模式：'+task);
  if(task==='tableGenesis'||formContract===SIMPLE_FORM_CONTRACT){
   const preset=structuredClone(source?.prompts?.some(p=>p.identifier==='tisya_registry'&&p.content?.includes('<reply'))?source:matrixReply),base=Object.fromEntries(preset.prompts.map(p=>[p.identifier,p.content??'']));
-  const entries=auxiliaryEntries(base,task,AUX_TASKS[task].instructions+(configuration.world.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''),{formContract:SIMPLE_FORM_CONTRACT});
+  const supplemental=configuration.world.tables?.taskInstructions?.[task];
+  const entries=auxiliaryEntries(base,task,supplemental?'本模式补充要求：\n'+supplemental:'',{formContract:SIMPLE_FORM_CONTRACT});
   preset.task=task;preset.mode=mode.id;preset.entries=entries;preset.name=AUX_TASKS[task].name;preset.formContract=SIMPLE_FORM_CONTRACT;
   const targets=new Map(Object.entries(SLOT_TARGETS).map(([slot,id])=>[id,slot]));
   // Keep the complete master order and instruction scaffold. Native markers are

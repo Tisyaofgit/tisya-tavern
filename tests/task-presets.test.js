@@ -27,7 +27,7 @@ test('all eleven operations retain their authorization, routing and procedure un
    for(const id of ['main','tisya_identity_attestation','tisya_user_relation','tisya_flow_gate','tisya_think_commit','tisya_delivery_warning','tisya_prepare_trigger'])assert.equal(p.entries[id],matrixReply.prompts.find(x=>x.identifier===id).content,id);
    assert.match(p.entries.tisya_creative_guide,/\[GENESIS.DESIGN\]/);
   }else{assert.match(p.entries.tisya_user_relation,/\[MODE.AUTHORIZE\]/);assert(p.entries.tisya_user_relation.includes(profile.authorize));assert.match(p.entries.tisya_registry,/@NORMS/);assert.match(p.entries.tisya_inner_chain,/\[FILL.1\]/);}
-  const content=messages.map(m=>m.content).join('\n'),material=content.indexOf(simple?'[Dream Rules]':'[MATERIALS]'),registry=content.indexOf('[REGISTRY]'),flow=content.indexOf(simple?'[FLOW]':'[INNER.LOGIN]');assert(material>=0&&material<registry);assert(registry<flow);assert.equal(messages.at(-1).role,simple?'user':'system');
+  const opener=id=>messages.findIndex(m=>m.content.startsWith(id)),material=opener(simple?'[Dream Rules]':'[MATERIALS]'),registry=opener('[REGISTRY]'),flow=opener(simple?'[FLOW]':'[INNER.LOGIN]');assert(material>=0&&material<registry);assert(registry<flow);assert.equal(messages.at(-1).role,simple?'user':'system');
   assert.equal(new Set(p.prompts.map(x=>x.identifier)).size,p.prompts.length);assert.equal(p.prompts.filter(x=>x.tisyaMaterialSlot).length,Object.keys(SLOT_NAMES).length);
  }
  assert.equal(authorizations.size,11);assert.equal(routes.size,11);assert.equal(workflows.size,11);assert.equal(new Set(Object.values(SLOT_TARGETS)).size,Object.keys(SLOT_TARGETS).length);

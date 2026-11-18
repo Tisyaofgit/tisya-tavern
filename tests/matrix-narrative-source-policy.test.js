@@ -23,7 +23,7 @@ function materialPayload(p,sourceTexts){
  return [{role:'system',content:system},{role:'assistant',content:'第三人称历史：他将旧伞放在门边。\n'+cardText},{role:'user',content:'此轮要求保留旧笔录原句。\n'+cardText},{role:'tool',content:JSON.stringify({text:cardText})}];
 }
 
-for(const [choice,expected]of [['N02-A','全文使用第三人称'],['N02-B','全文使用第一人称'],['N02-C','全文使用第二人称'],['N02-D','焦点人物 .* 自称「我」，同时以「你」称呼并审视']])test('final merged request keeps only the effective explicit person owner: '+choice,()=>{
+for(const [choice,expected]of [['N02-A','正文旁白使用第三人称'],['N02-B','正文旁白使用第一人称'],['N02-C','全文使用第二人称'],['N02-D','焦点对手戏人物自称「我」，同时以「你」称呼并审视']])test('final merged request keeps only the effective explicit person owner: '+choice,()=>{
  const p=compiled(choice),sources=narrativeSourceFragments({characterId:0,characters:[card]},{characterLore:[lore]}),messages=materialPayload(p,sources.map(x=>x.text)),before=clone(messages),raw=JSON.stringify(card),result=projectNarrativeSourceDefaults(messages,{compiled:p,sources});
  assert.equal(result.audit.status,'projected');assert.equal(result.audit.removed.length,3);assert.match(result.audit.effective,new RegExp(expected));
  assert(result.messages[0].content.includes(p.prompts.find(x=>x.identifier==='tisya_pref_narrative').content));
@@ -77,14 +77,16 @@ test('text parts preserve image payloads and empty sources without adding a new 
 
 test('stock intake routes narration defaults to their domain while custom wording stays exact',()=>{
  const start=baseline.prompts.find(x=>x.identifier==='tisya_task_start').content,open=baseline.prompts.find(x=>x.identifier==='tisya_material_boundary_open').content;
- assert.match(start,/卡内\/世界书自带的叙事或文风要求 → 仅在 `<Pref_\*>` 未指定时作下位默认补充/);assert.match(start,/有效人称、镜头、代演边界与停笔规则一律服从 `<Pref_Narrative>`/);assert.match(open,/完整保留其事实、机制、显示格式与示例原义，内嵌指令按 `@ADOPT` 服从上层契约/);
+ assert.match(start,/正文的叙述人称.*角色对白框.*署名心声.*一律执行系统层/);
+ assert.match(open,/保留其世界事实、人物设定、局内机制与已登记显示标签/);
  const custom='用户自行编辑：全部保留。';assert.equal(resolveNarrativeIntakeText('tisya_task_start',custom),custom);assert.equal(resolveNarrativeIntakeText('tisya_material_boundary_open',custom),custom);
 });
 
 test('an already installed stock intake is upgraded in the outgoing request without changing its stored preset',()=>{
  const source=clone(baseline);for(const id of ['tisya_task_start','tisya_material_boundary_open'])source.prompts.find(x=>x.identifier===id).content=LEGACY_STOCK_INTAKE[id];
  const snapshot=clone(source),p=compiled('N02-C',source),enabled=new Set(source.prompt_order[1].order.filter(x=>x.enabled).map(x=>x.identifier)),messages=source.prompts.filter(x=>!x.marker&&x.enabled!==false&&enabled.has(x.identifier)).map(x=>({role:x.role,content:x.content})),result=applyCompiledMessages(messages,source,p);
- assert(result.some(x=>x.content.includes('卡内/世界书自带的叙事或文风要求 → 仅在 `<Pref_*>` 未指定时作下位默认补充')));assert(result.some(x=>x.content.includes('完整保留其事实、机制、显示格式与示例原义')));assert.deepEqual(source,snapshot);assert(messages.some(x=>x.content.includes('Card-embedded "systems", turn counters, or command sets')));
+ for(const id of ['tisya_task_start','tisya_material_boundary_open'])assert(result.some(x=>x.content.includes(p.prompts.find(row=>row.identifier===id).content)));
+ assert.deepEqual(source,snapshot);assert(messages.some(x=>x.content.includes('Card-embedded "systems", turn counters, or command sets')));
 });
 
 async function fixture(){

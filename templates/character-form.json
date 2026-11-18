@@ -14,7 +14,7 @@
         "entity_id",
         "name"
       ],
-      "instruction": "人物名称和完整设定写入人物原点档案；程序建立主体及原点关联，不由模型重复建立人物注册。"
+      "instruction": "人物名称和完整设定写入人物原点档案（`T_CHAR_DOSSIER`）；由程序建立主体（`T_SYS_ENTITIES`）及原点关联，禁止模型重复建立人物注册行。"
     },
     {
       "tableId": "T_CHAR_DOSSIER",
@@ -26,7 +26,7 @@
         "scene_personality_desc",
         "manifest"
       ],
-      "instruction": "按当前完整字段逐项填写身份、外貌、性格、欲望、矛盾、面具、生活、表达、能力和边界；本领外显只写能力的实际表现。前史、关系与隐情分别使用关联子表。"
+      "instruction": "按当前完整字段逐项填写身份、外貌、性格、欲望、矛盾、面具、生活、表达、能力和边界；本领外显仅写能力施展时的可见表现。前史、关系与隐情分别使用对应关联子表。"
     },
     {
       "tableId": "T_DYN_CURRENCY_BALANCES",
@@ -37,12 +37,12 @@
         "debt",
         "native_ref"
       ],
-      "instruction": "只采用明确有据的初值；未知不填零，不把授信或贷款同时算作现金。"
+      "instruction": "货币余额仅采用有明确依据的初值；未知余额留空，禁止填 0，禁止将授信额度或贷款同时计入可用现金。"
     },
     {
       "tableId": "T_DYN_HOLDINGS_INVENTORY",
       "fields": [],
-      "instruction": "关联已登记物品、所有者、保管者和数量，不因商品存在就授予持有。"
+      "instruction": "持有物关联已登记物品、所有者、保管者和数量，禁止因商品存在于目录而直接赋予人物持有。"
     }
   ]
 }

@@ -26,7 +26,7 @@ test('bound speaker avatar is exact; ambiguous names do not borrow an image',()=
 }));
 test('format selections enter upper preset once and closing the group removes both directives',()=>{
  const config={tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{userName:'旅人',play:{choices:{'S09-Blocks':['S09-Dialogue','S09-Thought']}}}},source={prompts:baseline.prompts,order:baseline.prompt_order[1].order};
- const compiled=compilePrompts(source,config,{}),style=compiled.prompts.find(p=>p.identifier==='tisya_pref_style').content;assert.match(style,/@BODY.NAMED_DIALOGUE/);assert.match(style,/【角色名#当下情绪】■第一人称心声■/);assert.equal((style.match(/@BODY.NAMED_DIALOGUE/g)||[]).length,1);
+ const compiled=compilePrompts(source,config,{}),style=compiled.prompts.find(p=>p.identifier==='tisya_pref_style').content;assert.match(style,/@BODY.NAMED_DIALOGUE/);assert.match(style,/【角色姓名#当下情绪】■第一人称心声■/);assert.equal((style.match(/@BODY.NAMED_DIALOGUE/g)||[]).length,1);
  config.story.play.choices['S09-Blocks']=[];const off=compilePrompts(source,config,{}).prompts.find(p=>p.identifier==='tisya_pref_style').content;assert.doesNotMatch(off,/@BODY.NAMED_(?:DIALOGUE|THOUGHT)/);
  const display=withAppearanceOverrides({},'body',{角色对白框:false,署名心声:true});assert.equal(appearanceValues(display,'body').角色对白框,false);assert.equal(appearanceValues(display,'body').署名心声,true);
 });

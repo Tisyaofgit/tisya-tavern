@@ -28,12 +28,12 @@ test('packaged authoring templates derive readable rules from canonical definiti
   for(const target of definition.targets)assert(entry.content.includes(target.instruction));
   assert(entry.content.endsWith(MATRIX_CREATION_CONTRACT));assert.doesNotMatch(entry.content,/"(?:tableId|fields|matrix|changes)"\s*:/);
  }
- assert(WORLD_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_STATIC_WORLDS'));assert(CHARACTER_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_CHAR_DOSSIER'));assert.match(entries[1].content,/本领外显只写能力的实际表现/);assert.equal(entries[3].content,FORM_TEMPLATE_GUIDE);
+ assert(WORLD_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_STATIC_WORLDS'));assert(CHARACTER_FORM_TEMPLATE.targets.some(t=>t.tableId==='T_CHAR_DOSSIER'));assert.match(entries[1].content,/本领外显仅写能力施展时的可见表现/);assert.equal(entries[3].content,FORM_TEMPLATE_GUIDE);
  assert(entries.slice(0,4).every(e=>e.content.includes(MATRIX_CREATION_CONTRACT)));assert(PHONE_FORM_TEMPLATES.every(entry=>entry.tasks.length&&entry.tables.length));assert(!entries.some(e=>/^【模板】.*初态/u.test(e.name)));
 });
 test('complete native template book contains all thirteen task templates with no legacy field-guide export',()=>{
  const book=JSON.parse(readFileSync(new URL('../templates/tisya-template-book.json',import.meta.url),'utf8'));assert.deepEqual(book,bundledNativeTemplateBook());assert.equal(Object.keys(book.entries).length,13);assert(Object.values(book.entries).every(e=>e.disable===true));
- assert.equal(templateModule.PHONE_FIELDS_GUIDE,undefined);const text=PHONE_FORM_TEMPLATES.map(entry=>entry.content).join('\n');for(const word of ['每年计息期数','当前账号','歌单','逐条授权','故事分钟'])assert(text.includes(word));
+ assert.equal(templateModule.PHONE_FIELDS_GUIDE,undefined);const text=PHONE_FORM_TEMPLATES.map(entry=>entry.content).join('\n');for(const word of ['每年计息期数','当前登录账号仅限本人','歌单','逐条授权','故事分钟'])assert(text.includes(word),word);
 });
 test('global template preparation appends missing entries and preserves user edits and activation',async()=>{
  const f=fixture(),a=await ensureTemplateBook({getHelper:()=>f.helper});assert.equal(a.created,true);assert.equal(f.books[DEFAULT_TEMPLATE_BOOK].length,13);assert(f.books[DEFAULT_TEMPLATE_BOOK].every(e=>e.enabled===false));

@@ -16,9 +16,9 @@ test('all three stop settings reach compilation, override an older stop and reta
  const narrative=source.prompts.find(row=>row.identifier==='tisya_pref_narrative');
  narrative.content=narrative.content.replace(/^@STOP\.GATE :=[^\n]*/m,'@STOP.GATE := OLD_REQUIRED_QUESTION');
  const expected={
-  'N06-A':/走完当前局部交锋与获准动作后.*遇未经授权的重大分支.*拍板前自然停笔/,
-  'N06-B':/顺着当前场面呼吸.*完整动作落定.*静默余温处直接收尾/,
-  'N06-C':/将本轮授权剧情片段及其直接因果余波一口气写透.*动作上收尾/,
+  'N06-A':/走完当前局部交锋与获准动作后.*未经 .*授权的重大分支.*在拍板动作发生前停笔/,
+  'N06-B':/走完一个完整节拍.*具体动作落定.*静默余温处直接收尾/,
+  'N06-C':/本轮授权的剧情片段及其直接因果余波完整写透.*动作上收尾/,
  };
  const compiledStops=[];
  for(const choice of Object.keys(expected)){
@@ -28,7 +28,7 @@ test('all three stop settings reach compilation, override an older stop and reta
   assert.match(effective[0],expected[choice]);
   assert.doesNotMatch(effective[0],/OLD_REQUIRED_QUESTION|\{\{user\}\}/);
   assert.doesNotMatch(effective[0],/短场景.*优先.*篇幅下限/);
-  assert.match(prompt(result,'tisya_history_open'),/未被玩家选中的 `<actions>` 备选行.*严禁当作已发生事件/,'unselected action candidates remain separate from completed scene history');
+  assert.match(prompt(result,'tisya_history_open'),/未被玩家选中的 `<actions>` 备选行.*当作已发生事件/,'unselected action candidates remain separate from completed scene history');
   assert.deepEqual(selected,saved,'compilation must not replace saved selections or defaults');
   assert.deepEqual(result.prompt_order,source.prompt_order);
   assert.deepEqual(result.prompts.map(({content,...row})=>row),source.prompts.map(({content,...row})=>row));
@@ -58,9 +58,9 @@ test('default compilation retains body min/max, configured bounds and action ran
  assert.match(prompt(result,'tisya_pref_plot'),/65%–95%/);
  assert.doesNotMatch(prompt(result,'tisya_pref_plot'),/短场景优先于篇幅下限/);
  assert.doesNotMatch(registry,/最终停笔交还点|live playable opening|下轮基础任务\|/);
- assert.match(registry,/末段严格按 `<Pref_Narrative> @STOP.GATE`/);
- assert.match(prompt(result,'tisya_creative_guide'),/行序并非正文段落大纲/);
- assert.match(prompt(result,'tisya_creative_guide'),/声口自然发挥，其字数不计入 `<body>` 篇幅区间/);
+ assert.match(registry,/末段按 `<Pref_Narrative> @STOP.GATE`/);
+ assert.match(prompt(result,'tisya_creative_guide'),/行序为构思切面，并非正文段落大纲/);
+ assert.match(prompt(result,'tisya_creative_guide'),/声口直接交流，其字数独立于 `<body>` 篇幅区间之外/);
  const before=registry.match(/<anchor phase="before">([\s\S]*?)<\/anchor>/)[1];
  for(const name of ['构想','情节','人物','运镜','用语','余韵'])assert.match(before,new RegExp('^'+name+'\\|','m'));
  const scaffoldStart=registry.search(/^<reply id="tisya-onepass-1">$/m);

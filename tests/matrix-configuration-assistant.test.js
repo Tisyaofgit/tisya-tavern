@@ -49,7 +49,7 @@ test('configuration generation validation is pure and rejects impossible native 
 });
 test('the actual paired assistant preset carries the same readable form and prior discussion through the complete reply scaffold',async()=>{
  const f=fixture();f.setEdits([[temp,'0']]);await f.assistant.ask('温度',[{role:'user',content:'上一条已明确的设置需求'}]);const source=matrixPreset(),preset=pairedPreset({task:'tableAssistant',configuration:f.store.read(),source,formContract:'tisya.simple-form/1'}),messages=taskMessages({preset,task:'tableAssistant',input:f.input()}),text=messages.map(m=>m.content).join('\n');
- assert.match(text,/【配置】/);assert.match(text,/<reply>/);assert.match(text,/上一条已明确的设置需求/);assert.doesNotMatch(text,/JSON Pointer|只返回严格 JSON|changes\":\[/);for(const row of source.prompt_order[0].order)assert(preset.prompt_order[0].order.some(x=>x.identifier===row.identifier));assert.deepEqual(f.writes,{native:0,matrix:0});
+ assert.match(text,/【配置】/);assert.match(text,/<reply id="tisya-onepass-1">/);assert.match(text,/上一条已明确的设置需求/);assert.doesNotMatch(text,/JSON Pointer|只返回严格 JSON|changes\":\[/);for(const row of source.prompt_order[0].order)assert(preset.prompt_order[0].order.some(x=>x.identifier===row.identifier));assert.deepEqual(f.writes,{native:0,matrix:0});
 });
 test('actual native generation edits invalidate both pending model replies and confirmed drafts',async()=>{
  const f=fixture();f.setResponse(input=>{f.ctx.chatCompletionSettings.temp_openai=2;return filled(input,[[temp,'0']]);});await assert.rejects(f.assistant.ask('温度'),e=>/已经改变/.test(e.message)&&e.rawResponse.includes('<reply>'));assert.deepEqual(f.writes,{native:0,matrix:0});

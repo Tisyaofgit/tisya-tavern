@@ -49,7 +49,7 @@ for(const legacy of [false,true])test('real native preparation applies selected 
   const system=output.result.filter(row=>row.role==='system').map(row=>row.content).join('\n');
   assert.match(system,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(system,/Third-person narration from stored preset/);
   assert.equal(system.indexOf('@POV.PERSON := 全文使用第二人称')<system.indexOf('[Dream Rules]\n@BOUNDARY '),!legacy);
-  assert.match(system,/角色卡和世界书在 DreamMaterial 中给出的冲突要求，以预设对应条目为准/);
+  assert.match(system,/正文（`<body>`）与交付结构一律执行系统层/);
   assert.deepEqual(s.projection.lastFinalization().moved,[]);
   assert.equal(system.split('[LAYER.AUTHORITY]').length-1,1);assert.doesNotMatch(system,/守夜人资料。/);
   assert(output.result.some(row=>row.role==='assistant'&&/<DreamMaterial[^>]*>\n守夜人资料。\n叙事人称：第三人称\n<\/DreamMaterial>/.test(row.content)));
@@ -92,7 +92,7 @@ test('native depth and attached sources move into Dream Rules in native order; e
  assert(s.native.tokenCalls.every(m=>!String(m.content).includes('TISYA_SOURCE_START')));
  assert.equal(s.projection.lastFinalization().nativeSources.moved,4);
  assert.match(joined,/@PSYCHOLOGY.VOICE := 当前对手戏人物开口或以动作回应时/);
- assert.match(joined,/@LANG.GATE/);assert.match(joined,/@BODY.NAMED_DIALOGUE := 每段角色直接对白使用【角色名#当下情绪】“完整对白”/);assert.match(joined,/@BODY.NAMED_THOUGHT/);assert(joined.indexOf('@BODY.NAMED_DIALOGUE')<begin);assert(joined.indexOf('@PSYCHOLOGY.VOICE')<begin);
+ assert.match(joined,/@LANG.GATE/);assert.match(joined,/@BODY.NAMED_DIALOGUE := [^\n]+必须写为 `【角色姓名#当下情绪】“完整对白”`/);assert.match(joined,/@BODY.NAMED_THOUGHT/);assert(joined.indexOf('@BODY.NAMED_DIALOGUE')<begin);assert(joined.indexOf('@PSYCHOLOGY.VOICE')<begin);
  assert.deepEqual(completion.getChat(),result,'repeat projection never mutates the host collection');
  s.adapter.end();assert.equal(extensions.DEPTH_PROMPT.value,'深度卡文本');
 });

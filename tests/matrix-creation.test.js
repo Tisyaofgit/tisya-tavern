@@ -46,7 +46,7 @@ test('phone creation request carries progressive known-field rules without requi
  const f=fixture();let sent;
  const creator=createMatrixCreator({database:f.database,getContext:()=>({}),request:async(_task,input)=>{sent=JSON.parse(input);return reply();}});
  await creator.draft('手机初始化：仅建立人物最小档案，网名、住址和日程时间稍后再补',{kind:'character',mode:'revise'});
- assert.match(sent.template,/最小档案/);assert.match(sent.template,/后补/);assert.match(sent.template,/同一表单/);assert.match(sent.template,/时间待定/);assert.match(sent.template,/不能当作零/);
+ assert.match(sent.template,/最小档案/);assert.match(sent.template,/后补/);assert.match(sent.template,/同一表单/);assert.match(sent.template,/时间待定/);assert.match(sent.template,/未知.*?(禁止|不得|不能).*?(0|零)/);
  assert.doesNotMatch(sent.template,/先按来源确定世界、人物和唯一故事时钟，再/);
  for(const rule of [/只填有据的新值/,/保留未改内容/,/未知省略/])assert.match(sent.forms,rule);
  assert.equal(Object.keys(f.snapshot.state.tables.T_CHAR_DOSSIER??{}).length,0);

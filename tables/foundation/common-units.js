@@ -48,4 +48,4 @@ export const COMMON_UNITS=Object.freeze(groups.map(([dimension,label,names,compo
 const aliases=new Map();
 for(const unit of COMMON_UNITS)for(const name of unit.aliases){if(aliases.has(name))throw Error('重复的常见单位别名：'+name);aliases.set(name,unit);}
 export const commonUnit=name=>aliases.get(String(name).trim());
-export const unitFormInstructions='优先选用单位表中的名称。常见单位首次使用自动登记。新自定义单位在本轮 <cells> 的【单位定义／序号】填写显示名、量纲与来源，可同轮引用。所属世界省略时沿用当前世界，无世界则为GLOBAL。自定义量纲填写custom并给出量纲名。换算只按已有依据填写。';
+export const unitFormInstructions='优先选用单位表中的名称。常见时间、长度、质量、面积、容量、计数、比例、分值、温度及货币单位首次使用自动登记。新自定义单位在本轮 <cells> 的【单位定义／序号】填写显示名、量纲与来源，可同轮引用。所属世界省略时沿用当前世界，无世界则为GLOBAL。自定义量纲填写custom并给出量纲名。换算只按已有依据填写。';

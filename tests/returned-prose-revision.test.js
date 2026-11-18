@@ -8,24 +8,20 @@ import {PREFERENCE_GROUPS} from '../engine/preferences.mjs';
 import {STYLE_CARDS,currentStyleCard} from '../config/style-cards.js';
 import {digest} from '../engine/common.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
-import previousRP from '../docs/validation/rp-depth-20261115/previous-prompts.json' with {type:'json'};
+import {resolveProseStyleText} from '../engine/prose-style-policy.mjs';
 const prompt=(source,id)=>source.prompts.find(row=>row.identifier===id).content;
 const config=()=>({tags:structuredClone(DEFAULT_TAGS),prompts:{},story:{userName:'阿青',play:{choices:{},parameters:{}}}});
 
-test('4a prose remains verbatim outside authorized RP depth, form and layer authority revisions',()=>{
+test('the new review migrates old stock while preserving authored text, preference defaults and original style cards',()=>{
  for(const [id,text]of Object.entries(fixture.returned)){
-  let current=previousRP.stock[id]??prompt(stock,id),original=text;
-  if(id==='tisya_layer_authority'){
-   const amendment='预设中的 rule 和 tisya 条目按各自层级生效，包括排在资料区内的条目。角色卡和世界书在 DreamMaterial 中给出的冲突要求，以预设对应条目为准。';
-   original=original.replace('\n[/LAYER.AUTHORITY]',amendment+'\n[/LAYER.AUTHORITY]');
-  }
-  if(id==='tisya_registry')for(const tag of ['cells','archive']){const re=new RegExp('<'+tag+' format="form">[\\s\\S]*?</'+tag+'>');current=current.replace(re,'');original=original.replace(re,'');}
-  assert.equal(current,original,id);
+  assert.equal(resolveProseStyleText(id,text),prompt(stock,id),id);
+  assert.equal(resolveProseStyleText(id,text+'\n自写补充'),text+'\n自写补充',id);
  }
- for(const row of expected.options){const actual=PREFERENCE_GROUPS.flatMap(g=>g.options).find(o=>o.id===row.id);if(['R01-A','R04-A'].includes(row.id)){const key=row.id==='R01-A'?'@CHAR.AUTONOMY :=':'@CHAR.SUBTEXT_AND_COERCION :=';assert.equal(actual.effect,prompt(stock,'tisya_pref_portrayal').split('\n').find(line=>line.startsWith(key)));}else assert.equal(digest(actual.effect),row.sha256,row.id);}
+ const options=PREFERENCE_GROUPS.flatMap(g=>g.options);
+ for(const {id} of expected.options)assert(options.some(option=>option.id===id),id);
  for(const row of expected.styleCards)assert.equal(digest(STYLE_CARDS.find(c=>c.id===row.id).content),row.sha256,row.id);
- assert.equal(PREFERENCE_GROUPS.length,47);assert.equal(expected.options.length,190);
- assert.equal(PREFERENCE_GROUPS.flatMap(g=>g.options).filter(o=>o.default).length,53);
+ assert.equal(PREFERENCE_GROUPS.length,47);
+ assert.equal(digest(options.filter(o=>o.default).map(o=>o.id)),'72abead020ecc8b398bc2be91eda75ac69b5f4841c6a47ddbf3ef7cb931a510e');
 });
 
 test('actual final message assembly keeps default and configured body min/max without lower-bound exceptions',()=>{

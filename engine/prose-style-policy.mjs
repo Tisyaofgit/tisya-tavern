@@ -17,7 +17,8 @@ export const PROSE_STYLE_REVISIONS=Object.freeze([
     "identifier": "tisya_layer_authority",
     "legacyDigests": [
       "1acf0c9be266fbe9618324a0bca81706a4b45d6d79386de4995e009e04fb38a7",
-      "d58df37b638ebf228ab72eb4edfb3cd5bdf159d0d75456123d24911789305492"
+      "d58df37b638ebf228ab72eb4edfb3cd5bdf159d0d75456123d24911789305492",
+      "5bdc86e6ff043defe01b895598b1b77bacaf1c9e4a024b6ffb15ba6766a39c6a"
     ]
   },
   {
@@ -113,7 +114,8 @@ export const PROSE_STYLE_REVISIONS=Object.freeze([
     "identifier": "tisya_pref_portrayal",
     "legacyDigests": [
       "cae13ab79af7faac19ac809276c55e11d15b1a68d3189ade22793731c9db32f6",
-      "fed9a2327d353041baeddb1af4744131e2de83d8b9a7c819cfe04544db51ce46"
+      "fed9a2327d353041baeddb1af4744131e2de83d8b9a7c819cfe04544db51ce46",
+      "6cb74ab4d9167f8cd735667d63ab68f522749277b411f9f1f0a33564d4ccd5e8"
     ]
   },
   {
@@ -165,7 +167,8 @@ export const PROSE_STYLE_REVISIONS=Object.freeze([
     "identifier": "tisya_creative_guide",
     "legacyDigests": [
       "613e2d81678ad7d0bd2b646667cbf7f210988b91011f55b524ec4595405dfcbe",
-      "ce8e91e3b581a399957f5188ffb681b8c32b34da3ef1aa39d9831c61c94a197e"
+      "ce8e91e3b581a399957f5188ffb681b8c32b34da3ef1aa39d9831c61c94a197e",
+      "f5dbb69567c168f106479efb723b7a88f742cebce8d1e3868638dd6640ec3fc7"
     ]
   },
   {
@@ -175,7 +178,8 @@ export const PROSE_STYLE_REVISIONS=Object.freeze([
       "49861ed94656c3187dfd40a46c3a2bedee38712f084c66d7bf66548deba7b401",
       "a4c0d2dd1223542ed1d7f89b8a4ad16cd832860ccf4e24e8c358b1ab4d7127cb",
       "92bd8b3b7c758feaefe56ef347dadc5a8845f94c9fc5d304f6828eff87341e3d",
-      "61002b229073851011e7356168ff21c08f19f274a64ff36fdd761031b995b370"
+      "61002b229073851011e7356168ff21c08f19f274a64ff36fdd761031b995b370",
+      "8956cc53ef97a8a364ea9c548bb2cd16db75950953b85c942c609a080321e429"
     ]
   },
   {

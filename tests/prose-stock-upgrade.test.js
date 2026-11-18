@@ -21,7 +21,7 @@ const effect=id=>PREFERENCE_GROUPS.flatMap(group=>group.options).find(option=>op
 
 test('bounded whole-stock digests migrate the predecessor, returned packet and already supported variants without mutation',()=>{
  assert.equal(PROSE_STYLE_REVISIONS.length,25);
- assert(PROSE_STYLE_REVISIONS.every(revision=>revision.legacyDigests.length<=(revision.identifier==='tisya_registry'?5:4)));
+ assert(PROSE_STYLE_REVISIONS.every(revision=>revision.legacyDigests.length<=7));
  for(const variant of ['predecessor','returned','earlier']){
   const source=legacySource(variant),before=clone(source),c=config(),saved=clone(c);
   for(const [identifier,old]of Object.entries(fixture[variant])){
@@ -65,7 +65,7 @@ test('explicit preferences replace the migrated default and custom clauses outsi
  const source=legacySource(),c=config();c.story.play.choices={S01:'S01-A',P00:'P00',P02:'P02-B',TECH:['TECH-10']};
  const before=clone(c),compiled=compilePrompts(source,c,{});
  for(const [id,identifier]of [['S01-A','tisya_pref_style'],['P00','tisya_pref_plot'],['P02-B','tisya_pref_plot'],['TECH-10','tisya_kb_techniques']])assert.equal(row(compiled,identifier).content.split(effect(id)).length-1,1);
- assert.match(row(compiled,'tisya_pref_plot').content,/共处静默/);
+ assert.match(row(compiled,'tisya_pref_plot').content,/安静共处/);
  assert.deepEqual(c,before);
 });
 

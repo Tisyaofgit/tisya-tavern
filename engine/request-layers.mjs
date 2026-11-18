@@ -24,7 +24,25 @@ export function createPromptSourceMap(messages,preset,{expand=s=>s}={}){
   if(typeof message.content==='string')add(message.content,null);
   else if(Array.isArray(message.content))for(const [index,item]of message.content.entries())if(item?.type==='text'&&typeof item.text==='string')add(item.text,index);
  }
- const all=parts.map(part=>part.text).join('\0'),ranges=[],tokens=[...all.matchAll(/<\s*\/?\s*DreamMaterial\b/gi)].map(token=>{
+ const plan=preset.layerPlan??compilePromptLayerPlan(preset),active=plan.entries.filter(entry=>entry.enabled&&!entry.marker);
+ const literalRanges=[];
+ for(const entry of active){
+  if(!entry.content?.includes('`')||!/DreamMaterial/i.test(entry.content))continue;
+  const expanded=expand(entry.content);
+  if(typeof expanded!=='string')fail('REQUEST_LAYER_CONTENT','提示词展开结果不是文本',{identifier:entry.identifier});
+  const text=expanded.trim();
+  const literals=[...text.matchAll(/`[^`\r\n]*`/g)].filter(match=>/DreamMaterial/i.test(match[0]));
+  for(const part of parts){
+   if(part.role!==entry.role)continue;
+   for(const offset of occurrences(part.text,text))for(const literal of literals){
+    const start=part.base+offset+literal.index;
+    literalRanges.push({start,end:start+literal[0].length});
+   }
+  }
+ }
+ // Inline XML examples in the exact enabled prompt are ordinary prose.
+ // An actual native boundary elsewhere still has to pass the XML checks.
+ const all=parts.map(part=>part.text).join('\0'),ranges=[],tokens=[...all.matchAll(/<\s*\/?\s*DreamMaterial\b/gi)].filter(token=>!literalRanges.some(range=>token.index>=range.start&&token.index<range.end)).map(token=>{
   const at=token.index,tail=all.slice(at);return {at,closing:/^<\/DreamMaterial\s*>/.exec(tail),opening:/^<DreamMaterial\s+source="[^"<>\r\n]*"\s*>/.exec(tail)};
  });
  // Locate exact history anchors without mistaking a sealed native quotation
@@ -60,7 +78,7 @@ export function createPromptSourceMap(messages,preset,{expand=s=>s}={}){
   }
   return {found,wrongRole,ignored};
  };
- const plan=preset.layerPlan??compilePromptLayerPlan(preset),active=plan.entries.filter(entry=>entry.enabled&&!entry.marker),open=active.find(entry=>entry.identifier==='tisya_history_open'),close=active.find(entry=>entry.identifier==='tisya_history_close'),historyEnabled=plan.entries.some(entry=>entry.identifier==='chatHistory'&&entry.enabled&&entry.marker);
+ const open=active.find(entry=>entry.identifier==='tisya_history_open'),close=active.find(entry=>entry.identifier==='tisya_history_close'),historyEnabled=plan.entries.some(entry=>entry.identifier==='chatHistory'&&entry.enabled&&entry.marker);
  let history=null;
  if(historyEnabled&&!open&&!close)fail('REQUEST_HISTORY_BOUNDARY','已启用聊天历史缺少可验证的资料边界');
  if(open||close){

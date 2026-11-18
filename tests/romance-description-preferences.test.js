@@ -13,8 +13,8 @@ test('independent romance controls reach actual outgoing prompts while retaining
  const input=baseline.prompts.filter(p=>!p.marker&&p.enabled!==false&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}));
  const text=applyCompiledMessages(input,baseline,compiled,expand).map(p=>p.content).join('\n');
  for(const key of ['APPEARANCE.RATIO','PSYCHOLOGY.RATIO','PSYCHOLOGY.VOICE'])assert.equal(text.split('@'+key+' :=').length-1,1,key);
- assert.match(text,/角色甲.*主控乙.*美貌、帅气/);assert.match(text,/第一人称|「我」直接呈现内心独白/);
- assert.match(text,/严禁新增任何未提供的/);assert.match(text,/全文使用第二人称/);assert.match(text,/台词少而狠准/);
+ assert.match(text,/场上对手戏人物.*主控乙.*容貌魅力及相互吸引/);assert.match(text,/第一人称|「我」直接呈现内心独白/);
+ assert.match(text,/禁止新增任何 .* 未明确提供的/);assert.match(text,/全文使用第二人称/);assert.match(text,/台词简短狠准/);
  assert.equal(config.story.play.choices.N05,'N05-C');assert.equal(config.story.play.choices.N02,'N02-C');
  const source=structuredClone(baseline),plain=compilePrompts(source,{tags:{},prompts:{},story:{play:{choices:{}}}},{});
  assert.doesNotMatch(plain.prompts.find(p=>p.identifier==='tisya_pref_style').content,/@APPEARANCE.RATIO|@PSYCHOLOGY\.(RATIO|VOICE)/);

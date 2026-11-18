@@ -15,27 +15,27 @@
         "calendar_id",
         "base_year"
       ],
-      "instruction": "填写世界名称、核心命题与纪年；编号由程序提供，历法与基准年填写注册关联子表。"
+      "instruction": "填写世界名称、核心命题与纪年；记录编号由程序生成，历法与基准年填写已注册关联子表。"
     },
     {
       "tableId": "M_CALENDAR_RULES",
       "fields": [],
-      "instruction": "使用实际 schema 中的完整历法规则；未定义的历法不换成设备公历。"
+      "instruction": "使用实际 schema 中的完整历法规则；当世界未定义历法时保持未定义，禁止替换为现实设备公历。"
     },
     {
       "tableId": "X_WORLD_CLOCKS",
       "fields": [],
-      "instruction": "当前可执行世界时钟唯一归此表；场景时间和手机日期均读取它。"
+      "instruction": "当前可执行世界时钟唯一归属 `X_WORLD_CLOCKS` 表；场景时间和手机日期均从该表读取。"
     },
     {
       "tableId": "T_STATIC_PLACES",
       "fields": [],
-      "instruction": "已有地点复用稳定记录，坐标、权限与已知范围按实际 schema。"
+      "instruction": "已有地点复用稳定记录，坐标、权限与已知范围按实际 schema 填写。"
     },
     {
       "tableId": "T_STATIC_ITEMS_SKILLS",
       "fields": [],
-      "instruction": "物品、货币及其单位先建或引用规范定义；商城报价不等于人物持有。"
+      "instruction": "物品、货币及其单位先建立或引用规范定义；商户报价仅代表商品可售，禁止将其等同于人物已持有。"
     }
   ]
 }

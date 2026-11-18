@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import original from '../presets/Tisya-Matrix.json' with {type:'json'};
-import returned from './fixtures/returned-prose-stock.json' with {type:'json'};
 import {baseline,compilePrompts} from '../engine/config.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
 import {NARRATIVE_SOURCE_ROUTING} from '../engine/narrative-source-policy.mjs';
@@ -82,8 +81,14 @@ test('only exact known stock boundary text is migrated',()=>{
  assert.equal(resolvePromptLayerText('user-custom',oldBoundary),oldBoundary);
 });
 
-test('layer classification preserves the original 4a creative text',()=>{
- for(const identifier of ['main','nsfw','tisya_identity_attestation','tisya_user_relation','tisya_pref_narrative','tisya_pref_style','tisya_kb_techniques'])assert.equal(original.prompts.find(row=>row.identifier===identifier).content,returned.returned[identifier],identifier);
+test('the revised creative text remains in the same preset layer with its native message roles',()=>{
+ for(const identifier of ['main','nsfw','tisya_identity_attestation','tisya_user_relation','tisya_pref_narrative','tisya_pref_style','tisya_kb_techniques']){
+  const raw=original.prompts.find(row=>row.identifier===identifier),generated=baseline.prompts.find(row=>row.identifier===identifier);
+  assert.equal(promptLayerOf(raw),'tisya',identifier);
+  assert.equal(generated.role,raw.role,identifier);
+  assert.equal(generated.enabled,raw.enabled,identifier);
+  assert.equal(generated.content,raw.content,identifier);
+ }
 });
 
 test('duplicate enabled identities and missing enabled entries are rejected rather than guessed',()=>{
