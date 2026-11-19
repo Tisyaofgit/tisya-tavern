@@ -127,8 +127,7 @@ const assistantViews=new Map();
 let motionEnabled=true,utility=null,nativeDisplay=null,homeView=null;
 const getAppearance=owner=>{
  const value=appearanceValues(settings(),owner);if(owner!=='body')return value;
- const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;
- const cards=group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);
+ const cards=activeNativeCards();
  const nativeCharacters=cards.map(card=>({id:card.avatar,name:card.name,avatar:card.avatar?getThumbnailUrl('avatar',card.avatar):''}));
  const media=chatMedia.view();chatMedia.request().catch(visualError);
  const characters=media.characters.map(character=>{const matches=nativeCharacters.filter(card=>card.name===character.name);return {...character,avatar:character.avatar||(matches.length===1?matches[0].avatar:'')};});
@@ -147,6 +146,7 @@ let nativeGenerationEpoch=0,nativeIdleGuard=null;
 let root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 let globalFonts=null;
+function activeNativeCards(){const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;return group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);}
 function fontsService(){return globalFonts??=createGlobalFonts(document,{getSettings:settings,saveSettings:saveInterfaceSettings,headers:()=>context().getRequestHeaders(),onError:error});}
 const FONT_URLS=Array.from({length:4},(_,i)=>new URL(`./font/reading.part${i+1}.bin`,import.meta.url).href);
 async function startFont(){
@@ -212,7 +212,7 @@ const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardP
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
-const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),onChange:()=>appearance?.refresh(),onError:visualError});
+const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),onChange:()=>appearance?.refresh(),onError:visualError});
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
 const sourceBooks=createBookGateway(undefined,context);
 const sourceBookReader=Object.freeze({names:sourceBooks.names,listSources:sourceBooks.listSources,readSource:sourceBooks.readSource,materials:sourceBooks.materials,cardBooks:sourceBooks.cardBooks,available:sourceBooks.available});

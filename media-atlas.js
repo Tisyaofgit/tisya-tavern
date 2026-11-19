@@ -3,6 +3,7 @@ import {dialogueBlocks} from './prose-dialogue.js';
 export const MEDIA_TABLE='T_SYS_MEDIA_ASSETS';
 export const MEDIA_LOCATOR_PREFIX='tisya-media://';
 export const MEDIA_USE_LABELS=Object.freeze({avatar:'头像',portrait:'立绘',expression:'表情'});
+export const MEDIA_SCOPE_LABELS=Object.freeze({chat:'本聊天',card:'角色卡',global:'全局'});
 const IMAGE_KINDS=new Set(['立绘','头像','图像','图片','image']);
 const aliases=value=>Array.isArray(value)?value.filter(x=>typeof x==='string'):typeof value==='string'?value.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean):[];
 const rows=(bundle,id)=>Object.entries(bundle?.state?.tables?.[id]??{}).map(([id,row])=>({id,...row.values}));
@@ -13,9 +14,11 @@ const mediaUse=value=>{
  if(text.includes('表情')||value.display_variant)return 'expression';
  return 'portrait';
 };
+const targetCopy=target=>({entity:String(target.entity),table:String(target.table??''),group:String(target.group??''),label:String(target.label??target.entity)});
+const cardCopies=value=>{const seen=new Set();return (value??[]).filter(card=>card?.id).map(card=>({id:String(card.id),name:String(card.name??card.id)})).filter(card=>!seen.has(card.id)&&seen.add(card.id));};
 
-// Matrix remains the canonical binding registry. Blob bytes live outside chat
-// JSON; the stable locator is resolved only after the local asset was read.
+// Chat bindings remain canonical Matrix rows. Card/global metadata and all Blob
+// bytes stay in IndexedDB, outside chat, character-card and archive JSON.
 export function projectMediaBundle(bundle,resolve=value=>value){
  const scope={session_ref:String(bundle?.contextKey??''),...(bundle?.state?.runtime?.scope??{})};
  const characters=rows(bundle,'T_CHAR_DOSSIER').map(row=>({id:row.id,name:row.name||row.id,aliases:aliases(row.aliases),avatar:row.avatar?resolve(row.avatar):''}));
@@ -38,18 +41,18 @@ export function mediaTargets(bundle){
 }
 
 export function createMediaAssetStore({indexedDB=globalThis.indexedDB,URL:URLApi=globalThis.URL,crypto:cryptoApi=globalThis.crypto,maxBytes=20*1024*1024}={}){
- if(!indexedDB){const unsupported=()=>{throw Error('当前宿主不支持本地图鉴数据库');};return {ready:Promise.resolve(),put:async()=>unsupported(),load:async locator=>localId(locator)?'':String(locator??''),remove:async locator=>{if(localId(locator))unsupported();},cached:locator=>localId(locator)?'':String(locator??''),dispose(){}};}
+ if(!indexedDB){const unsupported=()=>{throw Error('当前宿主不支持本地图鉴数据库');};return {ready:Promise.resolve(),put:async()=>unsupported(),load:async locator=>localId(locator)?'':String(locator??''),remove:async locator=>{if(localId(locator))unsupported();},listBindings:async()=>[],saveBinding:async()=>unsupported(),removeBinding:async()=>unsupported(),cached:locator=>localId(locator)?'':String(locator??''),dispose(){}};}
  let db=null,disposed=false;const urls=new Map(),pending=new Map();
  const ready=new Promise((resolve,reject)=>{
-  const open=indexedDB.open('tisya-media-atlas',1);
-  open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains('assets'))open.result.createObjectStore('assets',{keyPath:'id'});};
+  const open=indexedDB.open('tisya-media-atlas',2);
+  open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains('assets'))open.result.createObjectStore('assets',{keyPath:'id'});if(!open.result.objectStoreNames.contains('bindings'))open.result.createObjectStore('bindings',{keyPath:'id'});};
   open.onsuccess=()=>{if(disposed){open.result.close();resolve();return;}db=open.result;db.onversionchange=()=>{db.close();db=null;};resolve();};
   open.onerror=()=>reject(open.error??Error('无法打开本地图鉴数据库'));
   open.onblocked=()=>reject(Error('本地图鉴升级被旧页面占用，请关闭旧页面后重试'));
  });
- const transaction=async(mode,work)=>{
+ const transaction=async(mode,work,name='assets')=>{
   await ready;if(disposed||!db)throw Error('本地图鉴数据库已关闭');
-  return new Promise((resolve,reject)=>{const tx=db.transaction('assets',mode),store=tx.objectStore('assets');let value;tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error??Error('本地图鉴事务失败'));tx.onabort=()=>reject(tx.error??Error('本地图鉴事务中止'));try{work(store,v=>value=v);}catch(error){reject(error);try{tx.abort();}catch{}}});
+  return new Promise((resolve,reject)=>{const tx=db.transaction(name,mode),store=tx.objectStore(name);let value;tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error??Error('本地图鉴事务失败'));tx.onabort=()=>reject(tx.error??Error('本地图鉴事务中止'));try{work(store,v=>value=v);}catch(error){reject(error);try{tx.abort();}catch{}}});
  };
  async function put(file){
   if(!file||typeof file.arrayBuffer!=='function')throw Error('请选择图片文件');
@@ -71,37 +74,61 @@ export function createMediaAssetStore({indexedDB=globalThis.indexedDB,URL:URLApi
   const id=localId(locator);if(!id)return;
   await transaction('readwrite',store=>{store.delete(id);});const url=urls.get(id);if(url){URLApi.revokeObjectURL(url);urls.delete(id);}
  }
- return {ready,put,load,remove,cached:locator=>{const id=localId(locator);return id?urls.get(id)??'':String(locator??'');},dispose(){disposed=true;for(const url of urls.values())URLApi.revokeObjectURL(url);urls.clear();pending.clear();db?.close();db=null;}};
+ return {ready,put,load,remove,
+  listBindings:()=>transaction('readonly',(store,set)=>{const request=store.getAll();request.onsuccess=()=>set(request.result??[]);},'bindings'),
+  saveBinding:binding=>transaction('readwrite',store=>{store.put(structuredClone(binding));},'bindings'),
+  removeBinding:id=>transaction('readwrite',store=>{store.delete(id);},'bindings'),
+  cached:locator=>{const id=localId(locator);return id?urls.get(id)??'':String(locator??'');},dispose(){disposed=true;for(const url of urls.values())URLApi.revokeObjectURL(url);urls.clear();pending.clear();db?.close();db=null;}};
 }
 
-export function createChatMediaAtlas({peek,mutate,store,onChange=()=>{},onError=()=>{}}){
- let bundle=null,current={...projectMediaBundle(null),targets:[],rows:[],revision:'empty',resolve:value=>value},pending=null,lastKey='',disposed=false;
- const keyOf=value=>JSON.stringify([value?.contextKey??null,value?.revision??null,value?.local_revision??null]);
+export function createChatMediaAtlas({peek,mutate,store,cardContext=()=>[],onChange=()=>{},onError=()=>{}}){
+ let bundle=null,external=[],activeCards=[],current={...projectMediaBundle(null),targets:[],cards:[],rows:[],revision:'empty',resolve:value=>value},pending=null,lastKey='',disposed=false;
+ const keyOf=(value,cards)=>JSON.stringify([value?.contextKey??null,value?.revision??null,value?.local_revision??null,cards.map(card=>card.id)]);
  function project(){
-  const resolve=locator=>store.cached(locator),state=projectMediaBundle(bundle,resolve),list=rows(bundle,MEDIA_TABLE),targets=mediaTargets(bundle),labels=new Map(targets.map(x=>[x.entity,x]));
-  current={...state,targets,rows:list.map(row=>({...row,target:labels.get(row.entity_ref)??null,url:resolve(row.asset_locator)})),revision:keyOf(bundle),resolve};
+  const resolve=locator=>store.cached(locator),state=projectMediaBundle(bundle,resolve),targets=mediaTargets(bundle),labels=new Map(targets.map(x=>[x.entity,x]));
+  const chatRows=rows(bundle,MEDIA_TABLE).map(row=>({...row,target:labels.get(row.entity_ref)??null,url:resolve(row.asset_locator),source_locator:row.asset_locator,binding_scope:'chat',binding_scope_label:MEDIA_SCOPE_LABELS.chat}));
+  const list=[...chatRows];
+  for(const binding of external){
+   if(!['card','global'].includes(binding?.scope)||!binding.asset_locator)continue;
+   if(binding.scope==='card'&&!activeCards.some(card=>card.id===binding.card_ref))continue;
+   const savedTarget=binding.target??{},byName=targets.filter(target=>target.table===savedTarget.table&&target.label===savedTarget.label),byId=binding.scope==='card'?targets.filter(target=>target.table===savedTarget.table&&target.entity===savedTarget.entity):[],matches=byId.length?byId:byName;
+   const use=mediaUse(binding),variant=String(binding.display_variant??''),order=binding.scope==='card'?-1:0;
+   for(const target of matches){
+    const id=binding.id+'@'+target.entity;
+    state.media[id]={...binding,entity_ref:target.entity,'载体类型':'image','内容绑定':[{target:{entity:target.entity,field:''},use,variant,scope:{},order,updatedAt:binding.updatedAt??0}],asset_locator:resolve(binding.asset_locator),source_locator:binding.asset_locator};
+   }
+   list.push({...binding,entity_ref:matches[0]?.entity??savedTarget.entity,target:matches[0]??savedTarget,url:resolve(binding.asset_locator),source_locator:binding.asset_locator,applicable:matches.length>0,binding_scope:binding.scope,binding_scope_label:MEDIA_SCOPE_LABELS[binding.scope]});
+  }
+  current={...state,targets,cards:activeCards,rows:list,revision:JSON.stringify([keyOf(bundle,activeCards),external.map(row=>[row.id,row.updatedAt,row.asset_locator])]),resolve};
   return current;
  }
  async function refresh(force=false){
-  if(disposed)return current;const next=await peek(),key=keyOf(next);if(!force&&key===lastKey&&bundle!==null)return current;
-  bundle=next;lastKey=key;project();
-  await Promise.all(Object.values(current.media).map(row=>store.load(row.source_locator).catch(error=>{onError(error);return '';})));
+  if(disposed)return current;const next=await peek(),cards=cardCopies(cardContext()),key=keyOf(next,cards);if(!force&&key===lastKey&&bundle!==null)return current;
+  const scoped=await store.listBindings();bundle=next;activeCards=cards;external=scoped;lastKey=key;project();
+  const sources=new Map();for(const row of [...Object.values(current.media),...current.rows])if(row.source_locator)sources.set(row.source_locator,true);
+  await Promise.all([...sources.keys()].map(locator=>store.load(locator).catch(error=>{onError(error);return '';})));
   if(disposed)return current;project();onChange(current);return current;
  }
  function request(){if(!pending)pending=refresh().catch(error=>{onError(error);throw error;}).finally(()=>pending=null);return pending;}
- async function importImage({file,target,use='avatar',variant='',width=null,height=null,licenseSource='本地上传'}){
-  if(disposed)throw Error('本地图鉴已关闭');if(!target?.entity)throw Error('请选择要绑定的人物或物品');if(!Object.hasOwn(MEDIA_USE_LABELS,use))throw Error('请选择头像、立绘或表情用途');
+ async function importImage({file,target,use='avatar',scope='chat',card=null,variant='',width=null,height=null,licenseSource='本地上传'}){
+  if(disposed)throw Error('本地图鉴已关闭');if(!target?.entity)throw Error('请选择要绑定的人物或物品');if(!Object.hasOwn(MEDIA_USE_LABELS,use))throw Error('请选择头像、立绘或表情用途');if(!Object.hasOwn(MEDIA_SCOPE_LABELS,scope))throw Error('请选择本聊天、角色卡或全局绑定范围');
+  if(scope==='card'){card=cardCopies(cardContext()).find(item=>item.id===card?.id);if(!card)throw Error('请选择当前聊天中的角色卡');}else card=null;
   variant=String(variant??'').trim();if(use==='expression'&&!variant)throw Error('表情需要填写与对白标记完全一致的情绪名称');if(use!=='expression')variant='';
-  const asset=await store.put(file),recordId=crypto.randomUUID();let committed=false;
+  const asset=await store.put(file),recordId=(scope==='chat'?'':scope+':')+crypto.randomUUID();let committed=false;
+  const values={entity_ref:target.entity,kind:use==='portrait'?'立绘':'图像',asset_locator:asset.locator,checksum:asset.checksum,display_variant:variant,purpose:MEDIA_USE_LABELS[use],...(Number.isFinite(width)?{width}:{}),...(Number.isFinite(height)?{height}:{}),license_source:licenseSource};
   try{
-   await mutate(engine=>{engine.newRecord(MEDIA_TABLE,{entity_ref:target.entity,kind:use==='portrait'?'立绘':'图像',asset_locator:asset.locator,checksum:asset.checksum,display_variant:variant,purpose:MEDIA_USE_LABELS[use],...(Number.isFinite(width)?{width}:{}),...(Number.isFinite(height)?{height}:{}),license_source:licenseSource},recordId);});committed=true;
+   if(scope==='chat')await mutate(engine=>{engine.newRecord(MEDIA_TABLE,values,recordId);});
+   else await store.saveBinding({...values,id:recordId,scope,card_ref:card?.id??'',card_name:card?.name??'',target:targetCopy(target),updatedAt:Date.now()});
+   committed=true;
   }finally{if(!committed&&asset.created)await store.remove(asset.locator).catch(onError);}
   await refresh(true);return recordId;
  }
  async function remove(recordId){
-  const row=rows(bundle,MEDIA_TABLE).find(x=>x.id===recordId);if(!row)throw Error('所选媒体绑定已不存在');
-  await mutate(engine=>{delete engine.data.tables[MEDIA_TABLE]?.[recordId];for(const [id,meta]of Object.entries(engine.data.tables.X_RECORD_META??{}))if(meta.values?.table_id===MEDIA_TABLE&&meta.values?.record_id===recordId)delete engine.data.tables.X_RECORD_META[id];});
-  if(!rows(bundle,MEDIA_TABLE).some(x=>x.id!==recordId&&x.asset_locator===row.asset_locator))await store.remove(row.asset_locator);
+  const scoped=external.find(row=>row.id===recordId),chat=rows(bundle,MEDIA_TABLE).find(row=>row.id===recordId),row=scoped??chat;if(!row)throw Error('所选媒体绑定已不存在');
+  if(scoped)await store.removeBinding(recordId);
+  else await mutate(engine=>{delete engine.data.tables[MEDIA_TABLE]?.[recordId];for(const [id,meta]of Object.entries(engine.data.tables.X_RECORD_META??{}))if(meta.values?.table_id===MEDIA_TABLE&&meta.values?.record_id===recordId)delete engine.data.tables.X_RECORD_META[id];});
+  const referenced=rows(bundle,MEDIA_TABLE).some(item=>item.id!==recordId&&item.asset_locator===row.asset_locator)||external.some(item=>item.id!==recordId&&item.asset_locator===row.asset_locator);
+  if(!referenced)await store.remove(row.asset_locator);
   await refresh(true);
  }
  function avatar(label,mood=''){
