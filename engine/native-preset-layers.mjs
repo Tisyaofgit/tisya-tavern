@@ -1,14 +1,14 @@
 import {compilePrompts} from './config.mjs';
 import {applyRequestLayers,wrapRequestLayer,createPromptSourceMap} from './request-layers.mjs';
 import {clone,fail} from './common.mjs';
-import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource} from './template-dream-sources.mjs';
+import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource,templateBatchReferences} from './template-dream-sources.mjs';
 
 // Compile the actual manager's selected preset before its one native macro
 // expansion and token accounting. Agent preset-ref assemblies use a separate
 // manager and must cross this same boundary, even without SETTINGS_READY.
 export function createNativePresetLayers({settings,slots,type='normal'}){
  const owners=new WeakMap(),templatePayloads=new WeakMap();
- let finalization=null,finalizedCompiled=null,nativeContent=null,managerCount=0;
+ let finalization=null,finalizedCompiled=null,nativeContent=null,batchReferences=null,managerCount=0;
  function owner(manager){
   let value=owners.get(manager);if(value)return value;
   const prompts=manager?.serviceSettings?.prompts;
@@ -56,6 +56,7 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
   const relocated=sourcePlacement?.relocate(result.messages,compiled,cardSources);
   if(relocated){result.messages=relocated.messages;result.audit.nativeSources=relocated.audit;}
   nativeContent=relocated?.content??null;
+  batchReferences=nativeContent?templateBatchReferences(result.messages,nativeContent):null;
   const sources=createPromptSourceMap(result.messages,compiled);
   for(const part of sources.parts)for(const match of part.text.matchAll(/\{\{tisya_[^{}]+\}\}/g))if(!sources.protection(part,match.index,match.index+match[0].length))fail('UNEXPANDED_MACRO','最终请求有未展开的缇斯亚资料宏');
   finalizedCompiled=compiled;
@@ -65,8 +66,8 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
  function captureTemplatePayload(payload){
   if(!finalizedCompiled)fail('NATIVE_PRESET_UNFINALIZED','模板处理前尚未装配梦境资料');
   if(templatePayloads.has(payload))fail('TEMPLATE_SOURCE_REPEATED','本请求已进入提示词模板流程');
-  const source=ensureTemplateNativeSource(payload.messages,nativeContent,finalizedCompiled);
-  const capture=captureTemplateSources(source.messages,nativeContent);
+  const source=ensureTemplateNativeSource(payload.messages,nativeContent,finalizedCompiled,batchReferences);
+  const capture=captureTemplateSources(source.messages,source.content??nativeContent);
   templatePayloads.set(payload,capture);
   payload.messages=capture.messages;
   if(source.recovered)finalization.nativeTemplateSourceRecovered=true;

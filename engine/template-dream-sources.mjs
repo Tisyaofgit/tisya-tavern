@@ -10,26 +10,81 @@ const isTool=message=>message.role==='tool'||!!message.tool_calls||!!message.too
 const kind='世界书提示词模板';
 const isUpper=role=>role==='system'||role==='developer';
 
-// Some hosts rebuild the SETTINGS_READY payload from a second getChat result.
-// The exact native message can then be absent even though its verified source
-// batch was already assembled. Reinsert only that batch at the validated dream
-// boundaries; any partial or changed source still fails closed.
-export function ensureTemplateNativeSource(messages,nativeContent,compiled){
+const hasBatchTag=text=>text.includes(NATIVE_DREAM_OPEN)||text.includes(NATIVE_DREAM_CLOSE);
+const textParts=row=>typeof row.content==='string'?[row.content]:(Array.isArray(row.content)?row.content.filter(p=>p?.type==='text'&&typeof p.text==='string').map(p=>p.text):[]);
+
+// Keep a counted snapshot of literal references (including the preset's format
+// instructions). A second getChat() may return clones of those same messages.
+export function templateBatchReferences(messages,nativeContent){
+ const refs=new Map();
+ for(const row of messages){
+  if(row.role==='assistant'&&row.content===nativeContent)continue;
+  for(const text of textParts(row).filter(hasBatchTag)){
+   const key=row.role+'\n'+text;
+   refs.set(key,(refs.get(key)??0)+1);
+  }
+ }
+ return refs;
+}
+
+function batchBody(text){
+ const open=NATIVE_DREAM_OPEN+'\n',close='\n'+NATIVE_DREAM_CLOSE;
+ if(typeof text!=='string'||!text.startsWith(open)||!text.endsWith(close))return null;
+ const body=text.slice(open.length,-close.length);
+ return body.trim()&&!hasBatchTag(body)?body:null;
+}
+
+// Late variable/regex expansion can change text inside a source. Its position,
+// role and ordered DreamMaterial envelopes must still match the verified batch.
+function sourceLayout(body){
+ const labels=[],pattern=/<DreamMaterial source="([^"<>\r\n]*)">\n([\s\S]*?)\n<\/DreamMaterial>/gy;
+ let at=0;
+ while(at<body.length){
+  pattern.lastIndex=at;
+  const m=pattern.exec(body);
+  if(!m||/<\/?DreamMaterial\b/i.test(m[2]))return null;
+  labels.push(m[1]);at=pattern.lastIndex;
+  if(at<body.length&&body[at++]!=='\n')return null;
+ }
+ return JSON.stringify(labels);
+}
+
+export function ensureTemplateNativeSource(messages,nativeContent,compiled,references=new Map()){
  if(!nativeContent)return {messages,recovered:false};
  if(!Array.isArray(messages))fail('TEMPLATE_SOURCE_MESSAGES','宿主没有提供提示词模板的原始消息');
- const exact=messages.filter(message=>message.role==='assistant'&&message.content===nativeContent);
- if(exact.length===1)return {messages,recovered:false};
- if(exact.length>1)fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前重复');
- const serialized=JSON.stringify(messages);
- if(serialized.includes(NATIVE_DREAM_OPEN)||serialized.includes(NATIVE_DREAM_CLOSE)||serialized.includes(nativeContent))
-  fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前被改写，不能重复注入');
- if(!nativeContent.startsWith(NATIVE_DREAM_OPEN+'\n')||!nativeContent.endsWith('\n'+NATIVE_DREAM_CLOSE))
-  fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料边界无效');
- const body=nativeContent.slice(NATIVE_DREAM_OPEN.length+1,-NATIVE_DREAM_CLOSE.length-1);
- if(!body.trim())fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料为空');
+ const remainingRefs=new Map(references),candidates=[];
+ for(const [index,row] of messages.entries()){
+  const parts=textParts(row);
+  for(const text of parts.filter(hasBatchTag)){
+   const key=row.role+'\n'+text,count=remainingRefs.get(key)??0;
+   if(count){remainingRefs.set(key,count-1);continue;}
+   const plain=typeof row.content==='string'||(row.content.length===1&&Object.keys(row.content[0]).every(k=>k==='type'||k==='text'));
+   if(row.role!=='assistant'||isTool(row)||!plain||!batchBody(text))
+    fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前被改写，不能重复注入');
+   candidates.push({index,text});
+  }
+ }
+ if(candidates.length>1)fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前重复');
+ const body=batchBody(nativeContent);
+ if(!body)fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料边界无效');
+ const candidate=candidates[0];
+ if(candidate){
+  const {index,text}=candidate;
+  if(text!==nativeContent){
+   const layout=sourceLayout(body);
+   if(!layout||sourceLayout(batchBody(text))!==layout)
+    fail('TEMPLATE_SOURCE_BOUNDARY','模板处理前的原生资料来源或顺序已变化');
+   const rest=messages.filter((_,i)=>i!==index);
+   const check=insertNativeDreamSources(rest,compiled,[body]);
+   if(check.messages.length!==messages.length||check.messages[index]?.content!==nativeContent)
+    fail('TEMPLATE_SOURCE_BOUNDARY','模板处理前的原生资料不在本轮已核验的位置');
+  }
+  if(messages[index].content===text)return {messages,content:text,recovered:false};
+  const normalized=messages.slice();normalized[index]={...messages[index],content:text};
+  return {messages:normalized,content:text,recovered:false};
+ }
  const restored=insertNativeDreamSources(messages,compiled,[body]);
- if(restored.content!==nativeContent)fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料恢复后不一致');
- return {messages:restored.messages,recovered:true};
+ return {messages:restored.messages,content:restored.content,recovered:true};
 }
 
 function boundary(){

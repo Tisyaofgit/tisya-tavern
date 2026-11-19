@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource} from '../engine/template-dream-sources.mjs';
+import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource,templateBatchReferences} from '../engine/template-dream-sources.mjs';
 import {insertNativeDreamSources} from '../engine/native-source-placement.mjs';
 import {wrapNativeSource} from '../engine/native-source-layers.mjs';
 
@@ -56,4 +56,29 @@ test('a rebuilt pre-template payload recovers the verified native batch once at 
  assert.equal(ensureTemplateNativeSource(restored.messages,initial.content,compiled).recovered,false);
  assert.throws(()=>ensureTemplateNativeSource([...missing,item('assistant','<NativeDreamSources>\n被改写')],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
  assert.throws(()=>ensureTemplateNativeSource([...initial.messages,item('assistant',initial.content)],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
+});
+
+test('quoted preset markers survive a rebuild and an extra unowned marker blocks recovery',()=>{
+ const rule=item('system','The label `<NativeDreamSources>` denotes native material.');
+ const base=[rule,item('system',start),item('system',end)];
+ const initial=insertNativeDreamSources(base,compiled,[wrapNativeSource('source','card')]);
+ const refs=templateBatchReferences(initial.messages,initial.content);
+ assert.deepEqual(ensureTemplateNativeSource(base,initial.content,compiled,refs).messages,initial.messages);
+ for(const extra of [rule,item('user',rule.content),item('assistant','</NativeDreamSources>')])
+  assert.throws(()=>ensureTemplateNativeSource([...base,extra],initial.content,compiled,refs),{code:'TEMPLATE_SOURCE_BOUNDARY'});
+});
+
+test('late card variable expansion stays in its original native slot and preserves changed text',()=>{
+ const initial=insertNativeDreamSources([item('system',start),item('system',end),item('assistant','cover')],compiled,
+  [wrapNativeSource('description','card'),wrapNativeSource('current {{variable}}','worldbook')]);
+ const expanded=initial.content.replace('{{variable}}','{}');
+ const messages=structuredClone(initial.messages);messages[1].content=[{type:'text',text:expanded}];
+ const prepared=ensureTemplateNativeSource(messages,initial.content,compiled);
+ const capture=captureTemplateSources(prepared.messages,prepared.content);
+ assert.equal(projectTemplateSources(capture.messages,capture,compiled).messages[1].content,expanded);
+ assert(Array.isArray(messages[1].content));
+ for(const content of [expanded.replace('source="card"','source="other"'),expanded.replace('description','<DreamMaterial source="bad">'),
+  [{type:'text',text:expanded},{type:'image_url',image_url:{url:'local'}}]])
+  assert.throws(()=>ensureTemplateNativeSource([messages[0],item('assistant',content),...messages.slice(2)],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
+ assert.throws(()=>ensureTemplateNativeSource([messages[1],messages[0],...messages.slice(2)],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
 });
