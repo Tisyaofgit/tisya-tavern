@@ -33,17 +33,17 @@ export function renderPreferences(document,body,{config,changed,button,navigatio
   function options(){
    if(!group.multiple){
     if(!select){select=el('select');select.setAttribute('aria-label',group.label);select.onchange=()=>choose(select.value||null);picker.append(selectControl(document,select));}
-    select.replaceChildren(option('沿用完整预设',''));for(const choice of preferenceOptions(group,config,scope==='story'?editor?.rows:{}))select.append(option(choice.label,choice.id));
+    select.replaceChildren(option('使用本组默认',''));for(const choice of preferenceOptions(group,config,scope==='story'?editor?.rows:{}))select.append(option(choice.label,choice.id));
    }else{
     picker.replaceChildren();note=el('small');picker.append(note);checks=[];
     for(const choice of preferenceOptions(group,config,scope==='story'?editor?.rows:{})){const check=el('input');check.type='checkbox';check.value=choice.id;check.setAttribute('aria-label',choice.label);checks.push(check);check.onchange=()=>choose(checks.filter(n=>n.checked).map(n=>n.value));const row=field(choice.label,check);row.classList.add('tisya-check-row');picker.append(row);}
    }
   }
-  if(group.multiple)tools.append(button('沿用本组预设',()=>choose(null)),button('关闭本组',()=>choose([])));
+  if(group.multiple)tools.append(button('使用本组默认',()=>choose(null)),button('关闭本组',()=>choose([])));
   const inherit=button('恢复默认继承',()=>{delete config.story.play.choices[group.id];changed();refresh();});if(scope==='story')tools.append(inherit);
   function refresh(rebuildOptions=false){
    if(rebuildOptions)options();const value=chosen().choices?.[group.id];
-   if(select){select.value=value??'';select.tisyaRefresh?.();}else{note.textContent=value==null?'沿用预设 · 勾选后采用本组选择':'采用当前勾选';for(const check of checks)check.checked=Array.isArray(value)&&value.includes(check.value);}
+   if(select){select.value=value??'';select.tisyaRefresh?.();}else{note.textContent=value==null?'使用本组默认 · 未标默认的选项不会注入':'采用当前勾选';for(const check of checks)check.checked=Array.isArray(value)&&value.includes(check.value);}
    inherit.disabled=!Object.hasOwn(config.story.play?.choices??{},group.id);
    const opened=Object.fromEntries([...textHost.querySelectorAll('details')].map((n,i)=>[i,n.open]));textHost.replaceChildren();
    if(editor)try{renderPreferenceText(document,textHost,{group,scope,config,editor,changed,button,input,field,el,onCopy:addCustom,onNew:()=>addCustom(group),assistant});}catch(error){const warning=el('p',error.message+'；本组原文编辑暂不可用。');warning.setAttribute('role','alert');textHost.append(warning);}

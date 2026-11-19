@@ -5,6 +5,11 @@ import {storyAvatar,avatarReference} from './identity.mjs';
 export const PREFERENCE_GROUPS=catalog.groups;
 export const USER_PREFERENCE_GROUP={id:'USER',label:'用户偏好',section:'用户偏好',slot:'tisya_contractor_wish',multiple:false,options:[]};
 export const preferenceGroup=id=>id==='USER'?USER_PREFERENCE_GROUP:PREFERENCE_GROUPS.find(g=>g.id===id);
+export function defaultPreferenceSelection(group){
+ const ids=group.options.filter(option=>option.default===true).map(option=>option.id);
+ return group.multiple?ids:ids[0]??null;
+}
+export const resolvedPreferenceSelection=(group,selection)=>selection==null?defaultPreferenceSelection(group):selection;
 export const effectivePreferences=config=>({
  choices:{...(config.playDefaults?.choices??{}),...(config.story?.play?.choices??{})},
  parameters:{...(config.playDefaults?.parameters??{}),...(config.story?.play?.parameters??{})},
@@ -44,23 +49,32 @@ function effects(group,selection,config,parameters,textRows={}){
  return ids.map(id=>{const builtin=group.options.find(o=>o.id===id);if(builtin)return expandPreferenceText(builtin.effect,config,parameters);const key=preferenceTextKey(group.id,group.multiple?[id]:id),custom=textRows[key]??config.playDefaults?.textOverrides?.[key];if(custom?.kind!=='custom'||custom.enabled===false)fail('PREFERENCE_CUSTOM_MISSING','自定义选项不存在或已停用：'+id);return '@TISYA.CUSTOM.'+custom.id+' :=\n'+expandPreferenceText(custom.text,config,parameters);});
 }
 export function wishPreferences(config){
- const value=validatePreferences(effectivePreferences(config)),selection=value.choices.W;
+ const value=validatePreferences(effectivePreferences(config)),group=PREFERENCE_GROUPS.find(g=>g.id==='W'),selection=resolvedPreferenceSelection(group,value.choices.W);
  const base=PREFERENCE_GROUPS.find(g=>g.id==='W').base_effect;
- if(selection==null)return config.story?.wish?[base,config.story.wish].join('\n'):'';
- const result=effects(PREFERENCE_GROUPS.find(g=>g.id==='W'),selection,config,value.parameters);
+ const result=effects(group,selection,config,value.parameters);
  if(!selection.includes('W07')&&config.story?.wish)result.push(config.story.wish);
  return result.length?[base,...result].join('\n'):'';
 }
-export function applyPreferences(entries,config,textRows={}){
+export function applyPreferences(entries,config,textRows={},options={}){
  validatePreferenceTexts(textRows);
  const value=validatePreferences(effectivePreferences(config));
+ const authoredSlots=options.authoredSlots??new Set();
  const avatar=storyAvatar(config);
  if(avatar.choice==='N01-B'&&!avatar.binding)fail('USER_BINDING_REQUIRED','请在“用户身份”选择基点书的【角色】档案');
  if(avatar.managed)value.choices.N01=avatar.choice;
  for(const group of PREFERENCE_GROUPS){
-  const selection=value.choices[group.id];if(selection==null||group.id==='W')continue;
-  const row=entries.find(p=>p.identifier===group.slot);if(!row)fail('PREFERENCE_SLOT','配置所属提示词槽不存在：'+group.slot);
-  const selected=effects(group,selection,config,value.parameters,textRows),keys=new Set(group.options.map(o=>keyOf(o.effect)));
+  if(group.id==='W')continue;
+  const explicit=Object.hasOwn(value.choices,group.id),neutral=!explicit||value.choices[group.id]===null,selection=resolvedPreferenceSelection(group,value.choices[group.id]);
+  const row=entries.find(p=>p.identifier===group.slot);
+  if(!row){if(explicit)fail('PREFERENCE_SLOT','配置所属提示词槽不存在：'+group.slot);continue;}
+  if(neutral&&Object.hasOwn(config.prompts??{},row.identifier))continue;
+  if(neutral&&authoredSlots.has(row.identifier))continue;
+  // An omitted group with a declared default already owns authored stock text in
+  // its preset slot. Do not translate or replace that text merely by opening the
+  // configuration. Empty-default groups are different: any stock directives in
+  // those groups are leakage and must be removed until the user selects them.
+  if(neutral&&selection!=null&&(!Array.isArray(selection)||selection.length))continue;
+  const selected=selection==null?[]:effects(group,selection,config,value.parameters,textRows),keys=new Set(group.options.map(o=>keyOf(o.effect)));
   if(group.id==='S04-Sculpt')keys.add('ART.SCULPT');
   for(const key of keys)row.content=replaceDirective(row.content,key,'');
   const closing=group.id==='TECH'?'</TechniqueCorpus>':group.id==='CORP'?'</ScenarioPersonaCorpus>':['LIT','MOTIF'].includes(group.id)?'</LiteraryPlayCorpus>':undefined;
@@ -113,8 +127,12 @@ export function groupOriginalText(source,config,group){
  return blocks.filter(m=>keys.has(m[1])).map(m=>m[0].trimEnd()).join('\n');
 }
 export function selectedPreferenceText(source,config,group,textRows={}){
- const value=effectivePreferences(config),selected=value.choices[group.id];
- return selected==null?groupOriginalText(source,config,group):effects(group,selected,config,value.parameters,textRows).join('\n');
+ const value=effectivePreferences(config),raw=value.choices[group.id];
+ if(raw==null){
+  const original=groupOriginalText(source,config,group),selected=defaultPreferenceSelection(group);
+  return selected==null||Array.isArray(selected)&&!selected.length?'':original;
+ }
+ return effects(group,raw,config,value.parameters,textRows).join('\n');
 }
 
 export function preferenceOptions(group,config,rows={}){

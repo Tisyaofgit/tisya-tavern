@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
-import {PREFERENCE_GROUPS,applyPreferences,effectivePreferences,wishPreferences} from '../engine/preferences.mjs';
+import {PREFERENCE_GROUPS,applyPreferences,defaultPreferenceSelection,effectivePreferences,wishPreferences} from '../engine/preferences.mjs';
 import {baseline,createConfiguration,compilePrompts} from '../engine/config.mjs';
 import {mountMatrixConfiguration} from '../engine/ui.mjs';
 import {BUILTIN_RESOURCES,renderingResources,configureRenderingResources,resourcePromptSlots,resolveRendering,projectRendering} from '../rendering-resources.js';
@@ -12,6 +12,7 @@ const clone=structuredClone;
 const fixture=(actions='想怎么做都行|我打开门。|看清屋内')=>'<reply id="tisya-onepass-1"><task/><anchor phase="before">与用户互动|@rendering{emotion.好奇}|看看门后吧。</anchor><title>门前|夜|门外|世界</title><body>1 门上挂着一幅画。@rendering{scene.door}</body><anchor phase="after"/><extra>@rendering{sound.bell}</extra><cells/><vars/><archive/><actions>'+actions+'</actions></reply>';
 const extra=[{id:'scene.door',name:'门边的画',kind:'image',slot:'body',url:'https://example.test/door.png'},{id:'sound.bell',name:'钟声',kind:'audio',slot:'extra',url:'https://example.test/bell.ogg'}];
 const key=effect=>/^@([^\s:={]+)/u.exec(effect)[1];
+const hasDirective=(text,directive)=>new RegExp('^@'+directive.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*(?::=|::|=)','mu').test(text);
 const tick=()=>new Promise(r=>setTimeout(r,0));
 const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent===text);
 test('all recovered and added choices compile their exact source effect once and remove competing choices',()=>{
@@ -28,7 +29,37 @@ test('all recovered and added choices compile their exact source effect once and
   assert.equal(actual.split('\n').filter(line=>line.startsWith('@'+key(option.effect))&&/^@[^\s:={]+\s*(?::=|::|=)/u.test(line)).length,1,option.id+' duplicate');
   for(const other of group.options)if(key(other.effect)!==key(option.effect))assert(!actual.includes('@'+key(other.effect)+' '),option.id+' retained '+other.id);
  }
- const untouched=clone(baseline.prompts);applyPreferences(untouched,{story:{}});assert.deepEqual(untouched,baseline.prompts);
+ const defaults=clone(baseline.prompts);applyPreferences(defaults,{story:{}});
+ for(const group of PREFERENCE_GROUPS){
+  if(group.id==='W')continue;
+  const original=baseline.prompts.find(prompt=>prompt.identifier===group.slot),row=defaults.find(prompt=>prompt.identifier===group.slot),selection=defaultPreferenceSelection(group),selected=new Set(selection==null?[]:group.multiple?selection:[selection]);
+  for(const option of group.options){
+   const directive=key(option.effect);
+   if(selected.has(option.id))assert.equal(hasDirective(row.content,directive),hasDirective(original.content,directive),group.id+' rewrote its authored default '+option.id);
+   else if(!group.options.some(other=>selected.has(other.id)&&key(other.effect)===key(option.effect)))assert(!hasDirective(row.content,directive),group.id+' retained unselected '+option.id);
+  }
+ }
+ for(const id of ['N10-Plus','TECH','CORP']){
+  const group=PREFERENCE_GROUPS.find(row=>row.id===id),row=defaults.find(prompt=>prompt.identifier===group.slot);
+  for(const option of group.options)assert(!hasDirective(row.content,key(option.effect)),id+' leaked '+option.id);
+ }
+});
+test('the final body seal follows each actual selection and never hardcodes another mode',()=>{
+ const selected=(N02,blocks=[])=>compilePrompts(baseline,{tags:{},prompts:{},story:{userName:'林舟',play:{choices:{N02,'S09-Blocks':blocks,TECH:[],CORP:[]}}}},{}).prompts.find(row=>row.identifier==='tisya_registry').content;
+ const first=selected('N02-B'),second=selected('N02-C',['S09-Dialogue','S09-Thought']),third=selected('N02-A');
+ assert.match(first,/人称最终门禁：正文旁白使用第一人称/);assert.doesNotMatch(first,/必须至少输出一条该人物的署名心声块/);assert.doesNotMatch(first,/主控对白的署名必须使用/);
+ assert.match(second,/人称最终门禁：全文使用第二人称/);assert.match(second,/当前场内真实姓名（本轮绑定为 `林舟`）/);assert.doesNotMatch(second,/禁止输出(?:字面量 )?`user`、`林舟`/);assert.match(second,/必须至少输出一条该人物的署名心声块/);
+ assert.match(third,/人称最终门禁：正文旁白使用第三人称/);assert.doesNotMatch(third,/人称最终门禁：全文使用第二人称/);assert.doesNotMatch(third,/必须至少输出一条该人物的署名心声块/);
+ for(const text of [first,second,third])assert.equal(text.split('[FINAL_BODY_FORMAT]').length-1,1);
+});
+test('selected scene configuration resolves protagonist macros and excludes competing narration',()=>{
+ const choices={N02:'N02-C','S08-MindVoice':'S08-MindVoice-C','S09-Blocks':['S09-Dialogue','S09-Thought'],TECH:[],CORP:[]};
+ const named=compilePrompts(baseline,{tags:{},prompts:{},story:{userName:'加茂澄',play:{choices}}},{}),all=JSON.stringify(named.prompts),narrative=named.prompts.find(row=>row.identifier==='tisya_pref_narrative').content,style=named.prompts.find(row=>row.identifier==='tisya_pref_style').content,registry=named.prompts.find(row=>row.identifier==='tisya_registry').content;
+ assert.match(narrative,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(narrative,/@POV\.PERSON := 正文旁白使用第三人称/);
+ assert.match(style,/@BODY\.NAMED_DIALOGUE/);assert.match(style,/@BODY\.NAMED_THOUGHT/);assert.match(style,/主控对白使用 `加茂澄` 展开后的真实角色名/);assert.doesNotMatch(style,/禁止写(?:成)?(?:字面量 )?`user`、`加茂澄`/);
+ assert.match(style,/@PSYCHOLOGY\.VOICE := 当前对手戏人物开口或以动作回应时，必须/);assert.match(registry,/\[FINAL_BODY_FORMAT\]/);assert.match(registry,/资料层格式防火墙/);assert.match(registry,/当前场内真实姓名（本轮绑定为 `加茂澄`）/);assert.doesNotMatch(registry,/禁止输出(?:字面量 )?`user`、`加茂澄`/);assert.match(registry,/必须至少输出一条该人物的署名心声块/);assert.match(registry,/人称最终门禁：全文使用第二人称/);assert.match(registry,/交付终检/);
+ assert.doesNotMatch(all,/\{\{user\}\}/);
+ const native=compilePrompts(baseline,{tags:{},prompts:{},story:{play:{choices}}},{});assert(JSON.stringify(native.prompts).includes('{{user}}'),'unbound protagonist must remain available for one native macro expansion');
 });
 test('story overrides inherit global choices and survive UI save, second save and cold reopen',async()=>{
  const w=new Window(),ctx={extensionSettings:{},chatId:'story',characterId:0};const store=createConfiguration({getContext:()=>ctx,persist:async()=>true});
