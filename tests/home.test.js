@@ -23,6 +23,12 @@ test('homepage uses native routes and real card thumbnails, escapes all user con
  assert.equal(f.root.querySelector('[data-tisya-action=menu]').textContent,'设置');assert.equal(f.root.querySelector('.tisya-home-profile small').textContent,'用户入口 ↗');assert.match(f.root.querySelector('.tisya-home-dedication img').alt,/Svāti/);assert.equal(f.root.querySelector('.tisya-home-form-note'),null);
  f.view.refreshMotion(false);assert.equal(f.art.at(-1),false);await f.close();assert.equal(f.art.at(-1),'disposed');
 });
+test('each role on the conversation page offers a direct new-chat entry',async()=>{
+ const f=fixture();await f.view.ready;
+ assert.equal(f.root.querySelectorAll('[data-tisya-action^="new-chat:"]').length,2);
+ assert.equal(f.root.querySelector('[data-tisya-action="new-chat:0"]').textContent,'＋ 新会话');
+ await f.close();
+});
 test('slow metadata does not hold up another role; only four reads run at once',async()=>{
  const reads=[];const f=fixture({cards:cards(9),listChats:(card,signal)=>{const pending=deferred();reads.push({card,signal,...pending});return pending.promise;}});
  assert.equal(reads.length,4);assert.equal(f.root.querySelectorAll('.tisya-home-role').length,9);assert.equal(f.root.querySelectorAll('[data-home-chat]').length,0);

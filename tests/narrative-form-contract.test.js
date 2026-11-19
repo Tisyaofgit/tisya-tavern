@@ -25,3 +25,13 @@ test('complementary event digest is retained in material projection and an exact
 });
 
 test('older normal-turn dialogue remains readable and is not rejected during source replay',()=>{const e=fresh();compile(e,form(e,'T_DYN_EVENTS',{title:'旧记录',exact_dialogues:'明早见。'}));assert.equal(Object.values(e.rows('T_DYN_EVENTS'))[0].values.exact_dialogues,'明早见。');});
+
+test('timeline event e01 updates stored 01 without creating another event',()=>{
+ const e=fresh();e.newRecord('T_DYN_EVENTS',{short_code:'01',title:'信抵达',spine_digest:'门开了。'},'event-one');
+ compile(e,form(e,'T_DYN_EVENTS',{short_code:'e01',spine_digest:'来客进屋。'}));
+ assert.deepEqual(Object.keys(e.rows('T_DYN_EVENTS')),['event-one']);
+ assert.equal(e.rows('T_DYN_EVENTS')['event-one'].values.short_code,'01');
+ assert.equal(e.rows('T_DYN_EVENTS')['event-one'].values.spine_digest,'来客进屋。');
+ const collision=fresh();collision.newRecord('T_DYN_EVENTS',{short_code:'01',title:'甲'},'one');collision.newRecord('T_DYN_EVENTS',{short_code:'e01',title:'乙'},'two');
+ assert.throws(()=>compile(collision,form(collision,'T_DYN_EVENTS',{short_code:'e01',spine_digest:'无法确定。'})),/不存在或不唯一/);
+});

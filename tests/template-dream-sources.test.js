@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {captureTemplateSources,projectTemplateSources} from '../engine/template-dream-sources.mjs';
+import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource} from '../engine/template-dream-sources.mjs';
 import {insertNativeDreamSources} from '../engine/native-source-placement.mjs';
 import {wrapNativeSource} from '../engine/native-source-layers.mjs';
 
@@ -42,4 +42,18 @@ test('roles, lost provenance and unresolved template outlets cannot silently pas
  capture.messages[0].role='assistant';
  assert.throws(()=>projectTemplateSources(capture.messages,capture,compiled),{code:'TEMPLATE_SOURCE_ROLE'});
  assert.throws(()=>projectTemplateSources(capture.messages.slice(2),capture,compiled),{code:'TEMPLATE_SOURCE_MISSING'});
+});
+
+test('a rebuilt pre-template payload recovers the verified native batch once at its boundaries',()=>{
+ const original=[item('system',start),item('system',end),item('user','继续。')];
+ const initial=insertNativeDreamSources(original,compiled,[wrapNativeSource('人物原文。','角色卡')]);
+ const missing=initial.messages.filter(row=>row.content!==initial.content);
+ const restored=ensureTemplateNativeSource(missing,initial.content,compiled);
+ assert.equal(restored.recovered,true);
+ assert.deepEqual(restored.messages,initial.messages);
+ const capture=captureTemplateSources(restored.messages,initial.content);
+ assert.deepEqual(projectTemplateSources(capture.messages,capture,compiled).messages,initial.messages);
+ assert.equal(ensureTemplateNativeSource(restored.messages,initial.content,compiled).recovered,false);
+ assert.throws(()=>ensureTemplateNativeSource([...missing,item('assistant','<NativeDreamSources>\n被改写')],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
+ assert.throws(()=>ensureTemplateNativeSource([...initial.messages,item('assistant',initial.content)],initial.content,compiled),{code:'TEMPLATE_SOURCE_BOUNDARY'});
 });

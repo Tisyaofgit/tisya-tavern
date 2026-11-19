@@ -10,6 +10,28 @@ const isTool=message=>message.role==='tool'||!!message.tool_calls||!!message.too
 const kind='世界书提示词模板';
 const isUpper=role=>role==='system'||role==='developer';
 
+// Some hosts rebuild the SETTINGS_READY payload from a second getChat result.
+// The exact native message can then be absent even though its verified source
+// batch was already assembled. Reinsert only that batch at the validated dream
+// boundaries; any partial or changed source still fails closed.
+export function ensureTemplateNativeSource(messages,nativeContent,compiled){
+ if(!nativeContent)return {messages,recovered:false};
+ if(!Array.isArray(messages))fail('TEMPLATE_SOURCE_MESSAGES','宿主没有提供提示词模板的原始消息');
+ const exact=messages.filter(message=>message.role==='assistant'&&message.content===nativeContent);
+ if(exact.length===1)return {messages,recovered:false};
+ if(exact.length>1)fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前重复');
+ const serialized=JSON.stringify(messages);
+ if(serialized.includes(NATIVE_DREAM_OPEN)||serialized.includes(NATIVE_DREAM_CLOSE)||serialized.includes(nativeContent))
+  fail('TEMPLATE_SOURCE_BOUNDARY','梦境原生资料在模板处理前被改写，不能重复注入');
+ if(!nativeContent.startsWith(NATIVE_DREAM_OPEN+'\n')||!nativeContent.endsWith('\n'+NATIVE_DREAM_CLOSE))
+  fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料边界无效');
+ const body=nativeContent.slice(NATIVE_DREAM_OPEN.length+1,-NATIVE_DREAM_CLOSE.length-1);
+ if(!body.trim())fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料为空');
+ const restored=insertNativeDreamSources(messages,compiled,[body]);
+ if(restored.content!==nativeContent)fail('TEMPLATE_SOURCE_BOUNDARY','本轮梦境原生资料恢复后不一致');
+ return {messages:restored.messages,recovered:true};
+}
+
 function boundary(){
  const id=globalThis.crypto.randomUUID();
  return {start:'⟦TISYA_TEMPLATE_START_'+id+'⟧',end:'⟦TISYA_TEMPLATE_END_'+id+'⟧'};

@@ -510,10 +510,13 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};throw error;}
  }
  if(context.narrativeIdentity!==false){
-  const codes=eventCodes(snapshot.state),used=new Set(codes.values());let next=Math.max(0,...[...used].filter(x=>/^\d+$/.test(x)).map(Number))+1;
+  // The timeline presents stored 01 as e01. Accept that displayed identifier
+  // when editing, and reserve it when assigning the next code to a new event.
+  const eventKey=value=>String(value??'').trim().replace(/^e(?=\d+$)/i,'');
+  const codes=eventCodes(snapshot.state),used=new Set([...codes.values()].map(eventKey));let next=Math.max(0,...[...used].filter(x=>/^\d+$/.test(x)).map(Number))+1;
   for(const row of rows.filter(r=>r.tableId==='T_DYN_EVENTS'))try{
    const requested=row.raw.short_code;
-   if(requested){const matches=context.references.filter(r=>r.tableId===row.tableId&&codes.get(r.recordId)===requested);check(matches.length===1,'事件编号不存在或不唯一，请引用已有编号；新事件省略编号：'+requested);check(!row.existing||row.recordId===matches[0].recordId,'事件编号与所选记录不一致');row.recordId=matches[0].recordId;row.existing=true;}
+   if(requested){const matches=context.references.filter(r=>r.tableId===row.tableId&&eventKey(codes.get(r.recordId))===eventKey(requested));check(matches.length===1,'事件编号不存在或不唯一，请引用已有编号；新事件省略编号：'+requested);check(!row.existing||row.recordId===matches[0].recordId,'事件编号与所选记录不一致');row.recordId=matches[0].recordId;row.existing=true;}
    const code=codes.get(row.recordId)??String(next++).padStart(2,'0');codes.set(row.recordId,code);used.add(code);row.legacyName=row.name;row.name=code;row.raw.short_code=code;
    if(!row.existing&&!row.raw.title)row.raw.title='事件'+code;
   }catch(error){error.formLocation??={heading:row.heading};throw error;}

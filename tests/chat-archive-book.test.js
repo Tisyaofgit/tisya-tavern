@@ -27,6 +27,11 @@ test('opening creates one disabled complete archive and repeat/cold open reuse i
 test('old chat state is checkpointed without reset or replay',async()=>{
  const f=fixture();f.c.chatMetadata[NS]={chat_uid:'old',owner_chat_key:chatKey(f.c),enabled:true};const old={state:f.state(),local_revision:12,manual_edits:[{keep:'原修改'}]};f.disk.set('old',copy(old));await f.open();assert.deepEqual(f.content().bundle,old);assert.deepEqual(f.disk.get('old'),old);
 });
+test('deleted checkpoint book is rebuilt from the same local state on retry',async()=>{
+ const f=fixture();await f.open();const name=f.c.chatMetadata[NS].archive_book.name,id=f.c.chatMetadata[NS].chat_uid,before=copy(f.disk.get(id));
+ f.files.delete(name);await f.archive.sync();
+ assert.equal(f.files.size,1);assert.deepEqual(f.content().bundle,before);assert.equal(f.c.chatMetadata[NS].archive_book.name,name);
+});
 test('independent chats and copied forks receive separate books, parent stays exact',async()=>{
  const f=fixture();await f.open();const a=f.c,book=a.chatMetadata[NS].archive_book.name,before=copy(f.files.get(book));f.switch('乙');await f.open();assert.equal(f.files.size,2);
  const branch=f.context('甲分支');branch.chatMetadata=copy(a.chatMetadata);f.switch(branch);await f.open();assert.equal(f.files.size,3);assert.notEqual(branch.chatMetadata[NS].archive_book.name,book);assert.deepEqual(f.files.get(book),before);

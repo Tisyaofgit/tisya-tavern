@@ -14,6 +14,7 @@ import * as tagModule from '/scripts/tags.js';
 import {download,getCharaFilename} from '/scripts/utils.js';
 import {getTokenCountAsync} from '/scripts/tokenizers.js';
 import {createCharacterGroupStore,cardToUI,stamp,clone} from './character-group-store.js';
+import {createNamedChat} from './character-group-new-chat.js';
 const ensure=(v,m)=>{if(!v)throw Error(m)};
 export function createCharacterGroupHost({document,getContext,assertIdle,persistSettings,onError,openWorldbook,onSettings,worldbookBlocked=()=>false,pins}){
  let frame,surface,port,dirty=false,advancedDirty=false,uiBusy=false,disposed=false,requested={type:'character'},pendingSettings=false,bindingAccess=false,generatingFromUI=false;
@@ -48,7 +49,20 @@ export function createCharacterGroupHost({document,getContext,assertIdle,persist
  if(method==='duplicate'){await store.checkCard(p.id,p.revision);const r=await request('/api/characters/duplicate',{avatar_url:p.id});ensure(r.path,'复制未确认');await ctx().eventSource.emit(ctx().eventTypes.CHARACTER_DUPLICATED,{oldAvatar:p.id,newAvatar:r.path});await refresh();return r.path;}
  if(method==='create'){ensure(p.name?.trim(),'名称不能为空');if(p.seed)ensure(/^[a-f0-9-]{36}$/.test(p.seed),'世界创建身份无效');if(p.type==='character'){const f=new FormData();f.set('ch_name',p.name);f.set('name',p.name);f.set('description',p.seed?'这是独立的表单化世界游玩载体。世界与人物事实以本会话的缇斯亚表单为准。':'');if(p.seed)f.set('creator_notes','TISYA_WORLD_SEED:'+p.seed);f.set('first_mes','');f.set('fav','false');const id=await request('/api/characters/create',f,{form:true,text:true});await refresh();const card=ctx().characters.find(c=>c.avatar===id||c.avatar===id+'.png');ensure(card,'创建已提交但列表未确认');return card.avatar;}const chatId=new Date().toISOString().replace(/[:.]/g,'-'),r=await request('/api/groups/create',{name:p.name,members:[],disabled_members:[],allow_self_responses:false,activation_strategy:0,generation_mode:0,auto_mode_delay:5,fav:false,chat_id:chatId,chats:[chatId]});ensure(r.id!=null,'群聊创建未确认');await refresh();return String(r.id);}
  if(method==='openChat'){await selectTarget(p.type,p.id);if(p.chat){if(p.type==='group')await groups.openGroupChat(p.id,p.chat);else await host.openCharacterChat(p.chat);}display('hidden');return true;}
- if(method==='newChat'){await selectTarget(p.type,p.id);const previous=ctx().chatId;await host.doNewChat({deleteCurrentChat:p.deleteCurrent===true});ensure(ctx().chatId&&ctx().chatId!==previous,'新会话未获确认');display('hidden');return true;}
+ if(method==='newChat'){
+  ensure(['character','group'].includes(p.type),'会话类型无效');
+  const ids=async()=>p.type==='character'?(await sessions(p.id)).map(s=>s.id):(await listGroups()).find(g=>String(g.id)===String(p.id))?.chats??[];
+  const created=await createNamedChat({name:p.name,list:ids,current:()=>ctx().chatId,
+   select:()=>selectTarget(p.type,p.id),create:()=>host.doNewChat({deleteCurrentChat:false}),
+   open:id=>p.type==='character'?host.openCharacterChat(id):groups.openGroupChat(p.id,id),
+   rename:async(oldFileName,newFileName)=>{
+    const characterId=p.type==='character'?ctx().characters.findIndex(c=>c.avatar===p.id):undefined;
+    const renamed=await host.renameGroupOrCharacterChat({characterId,groupId:p.type==='group'?p.id:undefined,oldFileName,newFileName});
+    ensure(typeof renamed==='string'&&renamed,'会话更名未获确认');
+    return renamed;
+   }});
+  display('hidden');return created;
+ }
  if(method==='renameChat'){const id=ctx().characters.findIndex(x=>x.avatar===p.id);const renamed=await host.renameGroupOrCharacterChat({characterId:p.type==='character'?id:undefined,groupId:p.type==='group'?p.id:undefined,oldFileName:p.chat,newFileName:p.name});ensure(typeof renamed==='string'&&renamed,'会话更名未获确认');return true;}
  if(method==='deleteChat'){if(p.type==='group')await groups.deleteGroupChatByName(p.id,p.chat);else{const i=ctx().characters.findIndex(x=>x.avatar===p.id);ensure(i>=0,'角色不存在');await host.deleteCharacterChatByName(i,p.chat);ensure(!(await sessions(p.id)).some(x=>x.id===p.chat),'会话删除未获确认');}return true;}
  if(method==='rename'){await store.checkCard(p.id,p.revision);await selectTarget('character',p.id);ensure(await host.renameCharacter(p.name,{silent:true,renameChats:p.renameChats===true})!==false,'角色更名未确认');return true;}

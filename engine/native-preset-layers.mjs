@@ -1,7 +1,7 @@
 import {compilePrompts} from './config.mjs';
 import {applyRequestLayers,wrapRequestLayer,createPromptSourceMap} from './request-layers.mjs';
 import {clone,fail} from './common.mjs';
-import {captureTemplateSources,projectTemplateSources} from './template-dream-sources.mjs';
+import {captureTemplateSources,projectTemplateSources,ensureTemplateNativeSource} from './template-dream-sources.mjs';
 
 // Compile the actual manager's selected preset before its one native macro
 // expansion and token accounting. Agent preset-ref assemblies use a separate
@@ -65,9 +65,11 @@ export function createNativePresetLayers({settings,slots,type='normal'}){
  function captureTemplatePayload(payload){
   if(!finalizedCompiled)fail('NATIVE_PRESET_UNFINALIZED','模板处理前尚未装配梦境资料');
   if(templatePayloads.has(payload))fail('TEMPLATE_SOURCE_REPEATED','本请求已进入提示词模板流程');
-  const capture=captureTemplateSources(payload.messages,nativeContent);
+  const source=ensureTemplateNativeSource(payload.messages,nativeContent,finalizedCompiled);
+  const capture=captureTemplateSources(source.messages,nativeContent);
   templatePayloads.set(payload,capture);
   payload.messages=capture.messages;
+  if(source.recovered)finalization.nativeTemplateSourceRecovered=true;
  }
  function mergeTemplatePayload(payload){
   const capture=templatePayloads.get(payload);
