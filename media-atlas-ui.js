@@ -12,7 +12,7 @@ async function imageSize(file,document){
 
 export function renderMediaAtlas(document,body,{atlas,button,field,input,el}){
  const section=el('section',null,'tisya-media-atlas'),style=el('style');style.textContent=CSS;section.append(style);
- section.append(el('h3','本地图鉴 · 人物与物品'),el('p','绑定到已落账的人物或物品。范围优先级：本聊天 → 角色卡 → 全局；角色卡跟随所选原生角色卡，全局按同名档案跨聊天使用。对白【人物#情绪】仍优先使用精确情绪表情。图片与跨聊天绑定保存在此浏览器，不写入角色卡或存档 JSON，请保留原文件。','tisya-media-atlas-note'));
+ section.append(el('h3','本地图鉴 · 人物与物品'),el('p','绑定到已落账的对象档案条目。范围优先级：本聊天 → 角色卡 → 全局；角色卡与全局按同一来源书条目的稳定档案身份跨聊天复用，同名但来源不同的对象不会继承绑定。对白【人物#情绪】仍优先使用精确情绪表情。图片与跨聊天绑定保存在此浏览器，不写入角色卡或存档 JSON，请保留原文件。','tisya-media-atlas-note'));
  const form=el('div',null,'tisya-media-atlas-form'),list=el('div',null,'tisya-media-atlas-list'),status=el('p',null,'tisya-media-atlas-note');status.setAttribute('role','status');
  let alive=true,file=null,dimensions=null,use='avatar',scope='chat',armed=null,readToken=0,reading=Promise.resolve();
  const fileControl=el('input');fileControl.type='file';fileControl.accept='image/png,image/jpeg,image/webp,image/gif,image/avif';fileControl.setAttribute('aria-label','选择图鉴图片');

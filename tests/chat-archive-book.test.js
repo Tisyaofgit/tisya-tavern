@@ -19,10 +19,10 @@ function fixture(){
  const content=()=>JSON.parse(files.get(c.chatMetadata[NS].archive_book.name).entries[0].content);
  return {disk,files,writes,books,base,archive,controller,state,open,content,context,get c(){return c;},switch(value){c=typeof value==='string'?context(value):value;}};
 }
-test('opening creates one disabled complete archive and repeat/cold open reuse it',async()=>{
+test('opening creates disabled dossier, history and complete recovery books; repeat/cold open reuse them',async()=>{
  const f=fixture();await Promise.all([f.open(),f.open()]);const id=f.c.chatMetadata[NS].chat_uid;
- assert.equal(f.files.size,1);assert.equal(f.writes.length,1);assert.equal(f.c.chatMetadata.world_info,'已有剧情书');assert.deepEqual(f.content().bundle,f.disk.get(id));assert.equal([...f.files.values()][0].entries[0].disable,true);
- const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(f.writes.length,1);assert.equal(fresh.status().status,'saved');
+ assert.equal(f.files.size,3);assert.equal(f.writes.length,3);assert.equal(f.c.chatMetadata.world_info,'已有剧情书');assert.deepEqual(f.content().bundle,f.disk.get(id));assert([...f.files.values()].every(book=>Object.values(book.entries).every(row=>row.disable===true)));
+ const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(f.writes.length,3);assert.equal(fresh.status().status,'saved');
 });
 test('old chat state is checkpointed without reset or replay',async()=>{
  const f=fixture();f.c.chatMetadata[NS]={chat_uid:'old',owner_chat_key:chatKey(f.c),enabled:true};const old={state:f.state(),local_revision:12,manual_edits:[{keep:'原修改'}]};f.disk.set('old',copy(old));await f.open();assert.deepEqual(f.content().bundle,old);assert.deepEqual(f.disk.get('old'),old);
@@ -30,12 +30,12 @@ test('old chat state is checkpointed without reset or replay',async()=>{
 test('deleted checkpoint book is rebuilt from the same local state on retry',async()=>{
  const f=fixture();await f.open();const name=f.c.chatMetadata[NS].archive_book.name,id=f.c.chatMetadata[NS].chat_uid,before=copy(f.disk.get(id));
  f.files.delete(name);await f.archive.sync();
- assert.equal(f.files.size,1);assert.deepEqual(f.content().bundle,before);assert.equal(f.c.chatMetadata[NS].archive_book.name,name);
+ assert.equal(f.files.size,3);assert.deepEqual(f.content().bundle,before);assert.equal(f.c.chatMetadata[NS].archive_book.name,name);
 });
 test('independent chats and copied forks receive separate books, parent stays exact',async()=>{
- const f=fixture();await f.open();const a=f.c,book=a.chatMetadata[NS].archive_book.name,before=copy(f.files.get(book));f.switch('乙');await f.open();assert.equal(f.files.size,2);
- const branch=f.context('甲分支');branch.chatMetadata=copy(a.chatMetadata);f.switch(branch);await f.open();assert.equal(f.files.size,3);assert.notEqual(branch.chatMetadata[NS].archive_book.name,book);assert.deepEqual(f.files.get(book),before);
- f.switch(a);await f.open();assert.equal(f.files.size,3);
+ const f=fixture();await f.open();const a=f.c,book=a.chatMetadata[NS].archive_book.name,before=copy(f.files.get(book));f.switch('乙');await f.open();assert.equal(f.files.size,6);
+ const branch=f.context('甲分支');branch.chatMetadata=copy(a.chatMetadata);f.switch(branch);await f.open();assert.equal(f.files.size,9);assert.notEqual(branch.chatMetadata[NS].archive_book.name,book);assert.deepEqual(f.files.get(book),before);
+ f.switch(a);await f.open();assert.equal(f.files.size,9);
 });
 test('concurrent commits checkpoint latest revision without stale overwrite',async()=>{
  const f=fixture();await f.open();const id=f.c.chatMetadata[NS].chat_uid,b=copy(f.disk.get(id));await Promise.all([f.archive.storage.commit(id,1,{...b,local_revision:2,n:2}),f.archive.storage.commit(id,2,{...b,local_revision:3,n:3})]);assert.equal(f.content().revision,3);assert.equal(f.content().bundle.n,3);
@@ -47,13 +47,13 @@ test('book write failure keeps the committed state and retry only syncs',async()
 });
 test('creation saved then acknowledgement failed reuses same book on retry',async()=>{
  const f=fixture(),write=f.books.writeBook;let first=true;f.books.writeBook=async(...args)=>{await write(...args);if(first){first=false;throw Error('response lost');}};
- await assert.rejects(f.open(),/response lost/);await f.open();assert.equal(f.files.size,1);assert.equal(f.writes.length,1);assert.equal(f.archive.status().status,'saved');
+ await assert.rejects(f.open(),/response lost/);await f.open();assert.equal(f.files.size,3);assert.equal(f.writes.length,3);assert.equal(f.archive.status().status,'saved');
 });
 test('failed metadata binding makes no worldbook and can be retried',async()=>{
- const f=fixture();f.c.saveMetadata=async()=>{if(f.c.chatMetadata[NS]?.archive_book)throw Error('metadata failure');return true;};await assert.rejects(f.open(),/metadata failure/);assert.equal(f.files.size,0);assert.equal(f.c.chatMetadata[NS].archive_book,undefined);f.c.saveMetadata=async()=>true;await f.open();assert.equal(f.files.size,1);
+ const f=fixture();f.c.saveMetadata=async()=>{if(f.c.chatMetadata[NS]?.archive_book)throw Error('metadata failure');return true;};await assert.rejects(f.open(),/metadata failure/);assert.equal(f.files.size,0);assert.equal(f.c.chatMetadata[NS].archive_book,undefined);f.c.saveMetadata=async()=>true;await f.open();assert.equal(f.files.size,3);
 });
 test('switch during book save completes only the captured owner',async()=>{
- const f=fixture();await f.open();const a=f.c,id=a.chatMetadata[NS].chat_uid,write=f.books.writeBook;let release;f.books.writeBook=async(...args)=>{await new Promise(r=>release=r);await write(...args);};
+ const f=fixture();await f.open();const a=f.c,id=a.chatMetadata[NS].chat_uid,write=f.books.writeBook;let release,blocked=false;f.books.writeBook=async(...args)=>{if(!blocked){blocked=true;await new Promise(r=>release=r);}await write(...args);};
  const saving=f.archive.storage.commit(id,1,{...f.disk.get(id),local_revision:2});while(!release)await tick();f.switch('乙');release();await saving;assert.equal(f.c.chatMetadata[NS],undefined);assert.equal(f.archive.status(),null);f.switch(a);assert.equal(f.content().revision,2);
 });
 test('user entries survive updates; corruption, enabled entry and newer archive are rejected',async()=>{
@@ -82,5 +82,5 @@ test('explicit archive retry completes a failed first activation without a chat 
  const host=createMatrixHost({getContext:()=>f.c,getSource:()=>source,loadCatalog:async()=>catalog,storage:f.base,archiveBooks:f.books,persistSettings:async()=>true,persistMetadata:async()=>true,retryBinding:()=>activation.retry()});
  const activation=createDefaultActivation({getContext:()=>f.c,activatePreset:async()=>({active:true}),ensureBound:options=>host.ensureBound(options)}),write=f.books.writeBook;
  f.books.writeBook=async()=>{throw Error('first save failed');};await assert.rejects(activation.start(),/first save failed/);assert.equal(f.c.chatMetadata[NS].enabled,false);const before=copy([...f.disk.values()][0]);
- f.books.writeBook=write;await host.syncArchive();await activation.ready();assert.equal(f.c.chatMetadata[NS].enabled,true);assert.deepEqual(f.content().bundle,before);assert.equal(f.files.size,1);
+ f.books.writeBook=write;await host.syncArchive();await activation.ready();assert.equal(f.c.chatMetadata[NS].enabled,true);assert.deepEqual(f.content().bundle,before);assert.equal(f.files.size,3);
 });

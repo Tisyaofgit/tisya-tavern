@@ -1,5 +1,6 @@
 import {clone,digest,fail} from './common.mjs';
 import {chatKey,NS} from './controller.mjs';
+import {syncObjectArchiveBooks} from './object-archive-book.mjs';
 
 const FORMAT='tisya.chat-archive/1',MARKER='tisyaChatArchive';
 const check=(ok,code,message)=>{if(!ok)fail(code,message);};
@@ -17,14 +18,12 @@ export function createChatArchiveStorage({storage,books,getContext}){
  async function bind(owner){
   const {id,key,c,meta}=owner;
   const guard=()=>{const live=getContext();check(chatKey(live)===key&&live.chatMetadata===c.chatMetadata&&live.chatMetadata?.[NS]===meta,'CHAT_CHANGED','创建存档书期间已切换聊天，请在原聊天重试');};
-  let ref=meta.archive_book;
-  // Host forks copy metadata: the copied reference belongs to the parent.
-  if(ref?.chat_uid===id){check(ref.version===1&&typeof ref.name==='string'&&ref.name,'ARCHIVE_BINDING_INVALID','存档书绑定损坏，原数据已保留');return ref;}
-  guard();const title=String(c.chatId).replace(/[\\/:*?"<>|\u0000-\u001f]/gu,'_').slice(0,48);
-  ref={version:1,chat_uid:id,name:'缇斯亚存档 · '+title+' · '+id};
-  const prior=meta.archive_book;meta.archive_book=ref;
-  try{await c.saveMetadata();guard();}catch(error){if(meta.archive_book===ref){if(prior===undefined)delete meta.archive_book;else meta.archive_book=prior;}throw error;}
-  return ref;
+  const title=String(c.chatId).replace(/[\\/:*?"<>|\u0000-\u001f]/gu,'_').slice(0,48),specs=[['archive_book','缇斯亚存档'],['dossier_book','缇斯亚档案'],['history_book','缇斯亚历史']],prior={},refs={};let changed=false;
+  // Host forks copy metadata: copied references belong to the parent chat.
+  for(const [slot,prefix]of specs){let ref=meta[slot];if(ref?.chat_uid===id)check(ref.version===1&&typeof ref.name==='string'&&ref.name,'ARCHIVE_BINDING_INVALID','存档书绑定损坏，原数据已保留');else{ref={version:1,chat_uid:id,name:prefix+' · '+title+' · '+id};changed=true;}prior[slot]=meta[slot];refs[slot]=ref;meta[slot]=ref;}
+  if(!changed)return refs;
+  guard();try{await c.saveMetadata();guard();}catch(error){for(const [slot]of specs){if(prior[slot]===undefined)delete meta[slot];else if(meta[slot]===refs[slot])meta[slot]=prior[slot];}throw error;}
+  return refs;
  }
  function decode(data,owner){
   const rows=Object.values(data?.entries??{}).filter(e=>e.extensions?.[MARKER]===FORMAT);
@@ -38,17 +37,18 @@ export function createChatArchiveStorage({storage,books,getContext}){
   const owner=capture(id);if(!owner)return Promise.resolve(null);
   const previous=jobs.get(id)??Promise.resolve();
   const job=previous.catch(()=>{}).then(async()=>{
-   let revision=null,name=null;
+   let revision=null,name=null,dossierName=null,historyName=null;
    try{
-    const ref=await bind(owner);name=ref.name;
+    const refs=await bind(owner),ref=refs.archive_book;name=ref.name;dossierName=refs.dossier_book.name;historyName=refs.history_book.name;
     const bundle=await storage.get(id);check(bundle?.state?.schema&&bundle?.state?.tables,'ARCHIVE_STATE_MISSING','本地存档读取失败，未创建空白替代');
     revision=bundle.local_revision??0;const value={format:FORMAT,chat_uid:id,owner_chat_key:owner.key,revision,hash:digest(bundle),bundle};
-    reports.set(id,{status:'saving',name,revision});
+    reports.set(id,{status:'saving',name,dossier_name:dossierName,history_name:historyName,revision});
+    const objects=await syncObjectArchiveBooks({books,owner,bundle,dossierRef:refs.dossier_book,historyRef:refs.history_book});
     const names=await books.listBooks();const exists=names.includes(name),data=exists?await books.readBook(name):{entries:{}};
     let current=exists?decode(data,owner):null;
     if(current){
      check(current.value.revision<=revision,'ARCHIVE_BOOK_NEWER','存档书版本较新，未用本机旧数据覆盖');
-     if(current.value.revision===revision){check(current.value.hash===value.hash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,revision});return clone(reports.get(id));}
+     if(current.value.revision===revision){check(current.value.hash===value.hash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,objects:objects.objects,events:objects.events});return clone(reports.get(id));}
     }
     // Recheck the concrete file immediately before replacing it; preserve all
     // user entries and native book metadata outside our single owned entry.
@@ -58,9 +58,9 @@ export function createChatArchiveStorage({storage,books,getContext}){
     await books.writeBook(name,next);
     const verified=decode(await books.readBook(name),owner);
     check(verified.value.revision===revision&&verified.value.hash===value.hash,'ARCHIVE_BOOK_UNCONFIRMED','存档书写入后回读不一致，请重试同步');
-    reports.set(id,{status:'saved',name,revision});return clone(reports.get(id));
+    reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,objects:objects.objects,events:objects.events});return clone(reports.get(id));
    }catch(error){
-    reports.set(id,{status:'error',name:name??owner.meta.archive_book?.name??null,revision,error:error.message});
+    reports.set(id,{status:'error',name:name??owner.meta.archive_book?.name??null,dossier_name:dossierName??owner.meta.dossier_book?.name??null,history_name:historyName??owner.meta.history_book?.name??null,revision,error:error.message});
     const wrapped=Error('本地存档已保留，存档书尚未同步：'+error.message,{cause:error});wrapped.code='ARCHIVE_SAVE_FAILED';wrapped.databaseCommitReceipt={contextKey:owner.key,chat_uid:id,revision};throw wrapped;
    }
   }).finally(()=>{if(jobs.get(id)===job)jobs.delete(id);});jobs.set(id,job);return job;

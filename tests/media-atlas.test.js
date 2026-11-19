@@ -5,7 +5,7 @@ import {webcrypto} from 'node:crypto';
 import {createChatMediaAtlas,createMediaAssetStore,projectMediaBundle,mediaTargets,MEDIA_TABLE,MEDIA_LOCATOR_PREFIX} from '../media-atlas.js';
 import {dialogueBlocks} from '../prose-dialogue.js';
 
-const record=values=>({values});
+const record=values=>({values,metadata:{sourceDefinition:{book:'基点书',uid:7,definitionId:'object.root'}}});
 const urlApi=()=>{let id=0;const live=new Set();return {createObjectURL(blob){assert(blob instanceof Blob);const url='blob:test/'+(++id);live.add(url);return url;},revokeObjectURL(url){live.delete(url);},live};};
 const file=(text='image bytes',type='image/png')=>new Blob([text],{type});
 
@@ -98,14 +98,15 @@ test('global and card bindings survive chat changes and chat overrides card whic
  const atlas=createChatMediaAtlas({peek:db.peek,mutate:db.mutate,store,cardContext:()=>cards}),target=mediaTargets(base).find(row=>row.entity==='a');
  try{
   const globalId=await atlas.importImage({file:file('global'),target,use:'avatar',scope:'global'}),cardId=await atlas.importImage({file:file('card'),target,use:'avatar',scope:'card',card:cards[0]}),chatId=await atlas.importImage({file:file('chat'),target,use:'avatar'});
+  const saved=await store.listBindings();assert(saved.every(row=>row.target.archive_entry_ref===target.archive_entry_ref));assert.match(target.archive_entry_ref,/^dossier-/);
   assert.equal(atlas.avatar('守门人').url,'blob:test/3');assert.equal(Object.keys(db.get().state.tables[MEDIA_TABLE]).length,1);
   await atlas.remove(chatId);assert.equal(atlas.avatar('守门人').url,'blob:test/2');
-  const next=bundleFixture();next.contextKey='chat-b';next.local_revision=9;next.state.runtime.scope.session_ref='chat-b';next.state.tables[MEDIA_TABLE]={};next.state.tables.T_CHAR_DOSSIER={z:record({name:'守门人',aliases:['门官']})};db.set(next);await atlas.refresh(true);
-  assert.equal(atlas.avatar('守门人').url,'blob:test/2');assert.equal(atlas.view().targets[0].entity,'z');
+  const next=bundleFixture();next.contextKey='chat-b';next.local_revision=9;next.state.runtime.scope.session_ref='chat-b';next.state.tables[MEDIA_TABLE]={};next.state.tables.T_CHAR_DOSSIER={a:record({name:'守门人',aliases:['门官']})};db.set(next);await atlas.refresh(true);
+  assert.equal(atlas.avatar('守门人').url,'blob:test/2');assert.equal(atlas.view().targets[0].entity,'a');
   cards=[{id:'card-b',name:'角色卡 B'}];await atlas.refresh(true);assert.equal(atlas.avatar('守门人').url,'blob:test/1');
-  await atlas.importImage({file:file('mood'),target:{...target,entity:'z'},use:'expression',variant:'开心',scope:'global'});assert.equal(atlas.avatar('守门人','开心').url,'blob:test/4');assert.equal(atlas.avatar('守门人','冷漠').url,'blob:test/1');
+  await atlas.importImage({file:file('mood'),target:{...target,entity:'a'},use:'expression',variant:'开心',scope:'global'});assert.equal(atlas.avatar('守门人','开心').url,'blob:test/4');assert.equal(atlas.avatar('守门人','冷漠').url,'blob:test/1');
   const remaining=await store.listBindings();assert(remaining.some(row=>row.id===globalId));assert(remaining.some(row=>row.id===cardId));
-  const reusedId=bundleFixture();reusedId.contextKey='chat-c';reusedId.state.runtime.scope.session_ref='chat-c';reusedId.state.tables[MEDIA_TABLE]={};reusedId.state.tables.T_CHAR_DOSSIER={a:record({name:'冒充者',aliases:[]})};db.set(reusedId);await atlas.refresh(true);
+  const reusedId=bundleFixture();reusedId.contextKey='chat-c';reusedId.state.runtime.scope.session_ref='chat-c';reusedId.state.tables[MEDIA_TABLE]={};reusedId.state.tables.T_CHAR_DOSSIER={a:record({name:'冒充者',aliases:[]})};reusedId.state.tables.T_CHAR_DOSSIER.a.metadata.sourceDefinition.uid=8;db.set(reusedId);await atlas.refresh(true);
   assert.equal(atlas.avatar('冒充者').status,'missing');assert.equal(atlas.view().rows.find(row=>row.id===globalId).applicable,false);
  }finally{atlas.dispose();}
 });

@@ -1,4 +1,5 @@
 import {dialogueBlocks} from './prose-dialogue.js';
+import {objectArchiveIdentity} from './engine/object-archive.mjs';
 
 export const MEDIA_TABLE='T_SYS_MEDIA_ASSETS';
 export const MEDIA_LOCATOR_PREFIX='tisya-media://';
@@ -14,14 +15,14 @@ const mediaUse=value=>{
  if(text.includes('表情')||value.display_variant)return 'expression';
  return 'portrait';
 };
-const targetCopy=target=>({entity:String(target.entity),table:String(target.table??''),group:String(target.group??''),label:String(target.label??target.entity)});
+const targetCopy=target=>({entity:String(target.entity),table:String(target.table??''),group:String(target.group??''),label:String(target.label??target.entity),archive_entry_ref:String(target.archive_entry_ref??'')});
 const cardCopies=value=>{const seen=new Set();return (value??[]).filter(card=>card?.id).map(card=>({id:String(card.id),name:String(card.name??card.id)})).filter(card=>!seen.has(card.id)&&seen.add(card.id));};
 
 // Chat bindings remain canonical Matrix rows. Card/global metadata and all Blob
 // bytes stay in IndexedDB, outside chat, character-card and archive JSON.
 export function projectMediaBundle(bundle,resolve=value=>value){
  const scope={session_ref:String(bundle?.contextKey??''),...(bundle?.state?.runtime?.scope??{})};
- const characters=rows(bundle,'T_CHAR_DOSSIER').map(row=>({id:row.id,name:row.name||row.id,aliases:aliases(row.aliases),avatar:row.avatar?resolve(row.avatar):''}));
+ const characters=rows(bundle,'T_CHAR_DOSSIER').map(row=>({id:row.id,name:row.name||row.id,aliases:aliases(row.aliases),archive_entry_ref:objectArchiveIdentity(bundle.state,'T_CHAR_DOSSIER',row.id).archive_id,avatar:row.avatar?resolve(row.avatar):''}));
  const media={};
  for(const row of rows(bundle,MEDIA_TABLE)){
   if(!IMAGE_KINDS.has(row['载体类型']??row.kind)&&!IMAGE_KINDS.has(row.kind))continue;
@@ -35,7 +36,7 @@ export function projectMediaBundle(bundle,resolve=value=>value){
 export function mediaTargets(bundle){
  const targets=[];
  for(const [table,group]of [['T_CHAR_DOSSIER','人物'],['T_STATIC_ITEMS_SKILLS','物品']]){
-  for(const row of rows(bundle,table))targets.push({entity:row.id,table,group,label:String(row.name||row.title||row.id)});
+  for(const row of rows(bundle,table))targets.push({entity:row.id,table,group,label:String(row.name||row.title||row.id),archive_entry_ref:objectArchiveIdentity(bundle.state,table,row.id).archive_id});
  }
  return targets;
 }
@@ -86,18 +87,18 @@ export function createChatMediaAtlas({peek,mutate,store,cardContext=()=>[],onCha
  const keyOf=(value,cards)=>JSON.stringify([value?.contextKey??null,value?.revision??null,value?.local_revision??null,cards.map(card=>card.id)]);
  function project(){
   const resolve=locator=>store.cached(locator),state=projectMediaBundle(bundle,resolve),targets=mediaTargets(bundle),labels=new Map(targets.map(x=>[x.entity,x]));
-  const chatRows=rows(bundle,MEDIA_TABLE).map(row=>({...row,target:labels.get(row.entity_ref)??null,url:resolve(row.asset_locator),source_locator:row.asset_locator,binding_scope:'chat',binding_scope_label:MEDIA_SCOPE_LABELS.chat}));
+  const chatRows=rows(bundle,MEDIA_TABLE).map(row=>({...row,target:labels.get(row.entity_ref)??null,archive_entry_ref:labels.get(row.entity_ref)?.archive_entry_ref??'',url:resolve(row.asset_locator),source_locator:row.asset_locator,binding_scope:'chat',binding_scope_label:MEDIA_SCOPE_LABELS.chat}));
   const list=[...chatRows];
   for(const binding of external){
    if(!['card','global'].includes(binding?.scope)||!binding.asset_locator)continue;
    if(binding.scope==='card'&&!activeCards.some(card=>card.id===binding.card_ref))continue;
-   const savedTarget=binding.target??{},byName=targets.filter(target=>target.table===savedTarget.table&&target.label===savedTarget.label),byId=binding.scope==='card'?targets.filter(target=>target.table===savedTarget.table&&target.entity===savedTarget.entity):[],matches=byId.length?byId:byName;
+   const savedTarget=binding.target??{},byArchive=savedTarget.archive_entry_ref?targets.filter(target=>target.archive_entry_ref===savedTarget.archive_entry_ref):[],byName=savedTarget.archive_entry_ref?[]:targets.filter(target=>target.table===savedTarget.table&&target.label===savedTarget.label),byId=!savedTarget.archive_entry_ref&&binding.scope==='card'?targets.filter(target=>target.table===savedTarget.table&&target.entity===savedTarget.entity):[],matches=savedTarget.archive_entry_ref?byArchive:byId.length?byId:byName;
    const use=mediaUse(binding),variant=String(binding.display_variant??''),order=binding.scope==='card'?-1:0;
    for(const target of matches){
     const id=binding.id+'@'+target.entity;
-    state.media[id]={...binding,entity_ref:target.entity,'载体类型':'image','内容绑定':[{target:{entity:target.entity,field:''},use,variant,scope:{},order,updatedAt:binding.updatedAt??0}],asset_locator:resolve(binding.asset_locator),source_locator:binding.asset_locator};
+    state.media[id]={...binding,entity_ref:target.entity,'载体类型':'image','内容绑定':[{target:{entity:target.entity,field:'',archive_entry_ref:target.archive_entry_ref},use,variant,scope:{},order,updatedAt:binding.updatedAt??0}],asset_locator:resolve(binding.asset_locator),source_locator:binding.asset_locator};
    }
-   list.push({...binding,entity_ref:matches[0]?.entity??savedTarget.entity,target:matches[0]??savedTarget,url:resolve(binding.asset_locator),source_locator:binding.asset_locator,applicable:matches.length>0,binding_scope:binding.scope,binding_scope_label:MEDIA_SCOPE_LABELS[binding.scope]});
+   list.push({...binding,entity_ref:matches[0]?.entity??savedTarget.entity,archive_entry_ref:matches[0]?.archive_entry_ref??savedTarget.archive_entry_ref??'',target:matches[0]??savedTarget,url:resolve(binding.asset_locator),source_locator:binding.asset_locator,applicable:matches.length>0,binding_scope:binding.scope,binding_scope_label:MEDIA_SCOPE_LABELS[binding.scope]});
   }
   current={...state,targets,cards:activeCards,rows:list,revision:JSON.stringify([keyOf(bundle,activeCards),external.map(row=>[row.id,row.updatedAt,row.asset_locator])]),resolve};
   return current;
