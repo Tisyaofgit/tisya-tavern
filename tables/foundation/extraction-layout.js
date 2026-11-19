@@ -1,4 +1,4 @@
-import {sheetLine} from './engine.js';
+import {sheetLine,compactFieldValue} from './engine.js';
 // One model-facing form, projected from the shared archive schema.
 // Unrequested schema fields stay absent, never inferred or copied.
 const excluded={
@@ -79,8 +79,9 @@ export function expandExtractionSection(lines,fields,tid,layout){
  for(const line of lines){
   const parsed=sheetLine(line),f=allowed.get(parsed.row);if(!f)throw Error('未开放的精简表行：'+line.trim());
   if(seen.has(f.row))throw Error('精简表行重复：'+f.row);
-  if(parsed.valueStart!==undefined){seen.set(f.row,parsed.body);continue;}
-  const label=extractionLabel(f,tid,layout).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  let label=extractionLabel(f,tid,layout);
+  if(parsed.valueStart!==undefined){const projected={...f,label},compact=compactFieldValue(parsed.body,projected,visible.map(field=>({...field,label:extractionLabel(field,tid,layout)})));if(compact.conflict)throw Error('精简表字段行号或名称不符：'+f.row);seen.set(f.row,compact.raw);continue;}
+  label=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const match=line.trim().match(new RegExp('^'+f.row+'\\s+'+label+'(?:\\s*[：:]\\s*|\\s+)(.*)$'));
   if(!match)throw Error('精简表字段名或格式不符：'+f.row);
   seen.set(f.row,match[1]);

@@ -22,6 +22,9 @@ test('canonical sparse fields retain actual values, omitted duplicates remain ab
  const h=r.snapshot.records.find(x=>x.id===r.children[0].id),rel=r.snapshot.records.find(x=>x.id===r.children[1].id);assert.equal(h.values.命题,'得到旧铜铃。');assert.equal(h.values.前史.原文,undefined);assert.equal(h.values.前史.后果,undefined);assert.equal(rel.values.命题,undefined);assert.equal(rel.values.关系底稿.成立条件,undefined);
  assert.equal(r.provenance.sources.length,1);assert.equal(r.provenance.sources[0].text,ctx.source);assert.equal(r.provenance.records.length,3);assert(r.provenance.records.every(x=>x.scope.includes('requires semantic review')));
 });
+test('compact extraction accepts a matching label inside braces without storing the label',()=>{
+ const ctx=context(),raw=main().replace('2 名称：方鹿','2{名称：方鹿}'),r=acceptExtraction(c,valueValid,ctx,raw);assert.equal(r.snapshot.records[0].values.名称,'方鹿');
+});
 test('compact omissions, injected legacy rows, duplicate rows and label drift reject atomically',()=>{
  const ctx=context(),before=structuredClone(ctx),good=main();
  for(const bad of [good.replace('25 日常习惯：\n',''),good.replace('25 日常习惯：','25 习惯：'),good.replace('18 短处：','17 长处：坦诚\n18 短处：'),good.replace('25 日常习惯：','25 日常习惯：\n25 日常习惯：')]){assert.throws(()=>acceptExtraction(c,valueValid,ctx,bad));assert.deepEqual(ctx,before);}

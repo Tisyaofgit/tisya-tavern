@@ -103,7 +103,7 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  async function previewSourceExtraction(reference){
   assertIdle();check(reference?.book&&reference.uid!==undefined&&!reference.database,'请选择待提炼的书籍原文');check(!reference.revisionTarget,'旧迁移目标已退役，请重新选择原文并核对提炼结果');
   const author=await readAuthorSource(reference);if(reference.digest)check(reference.digest===author.digest,'来源已变化，请重新读取后提炼');if(author.definition)return previewSourceImport(author);
-  return {kind:'source-extraction',requiresExtraction:true,mode:'extend',source:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，未知留空，不猜数值。'};
+  return {kind:'source-extraction',requiresExtraction:true,mode:'extend',source:author,destination:{book:author.book,uid:author.uid},goal:'按原文提炼 '+author.title.replace(/^【角色】/u,'')+' 的标准人物字段；保留原文，保留每组全部开放字段行，未知字段填空花括号，不猜数值。'};
  }
  async function previewAuthorSource(input){
   assertIdle();const key=scope(),managed=builtins?.bookNames?.()??{};

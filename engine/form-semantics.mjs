@@ -4,7 +4,38 @@ export const FIELD_MERGES={T_STATIC_PLACES:{legacy_f0343:'macro_region'},X_NETWO
 export const FIELD_HINTS={
  T_STATIC_PLACES:{macro_region:'所属地域或地理位置；上级地点已有记录时引用上级，不复写其完整介绍',visual_atmosphere:'只写可见的色彩、轮廓、材质观感与空间观感；灯光数值归光照，布局设施归特征，人物往事归事件',legacy_f0344:'只写固定布局、设施、用途和可交互结构；颜色观感归视觉氛围，人物曾在此做什么归事件',light:'光源、明暗、照明覆盖与昼夜变化',background_sound:'地点通常可听见的声音；本轮临时声音归场景',smell:'地点稳定气味；人物气味归人物档案',access_conditions:'谁在什么条件下可进入；公共城市不填写私人住宅门禁'},
  T_STATIC_ITEMS_SKILLS:{identified_full_desc:'程序从独立字段组织完整说明；不另填一份综合副本',shape:'外形、尺寸与结构；材质单列',material:'构成材料及加工材料；不复述外形',usage:'能用来完成什么目标；操作步骤和适用条件另填',rule_effect:'确切作用、强度、作用对象和条件；没有数值规则时填写描述，不编固定消耗',narrative_meaning:'这件事物不可替代的象征或关系意义；没有则省略，不以通用来历凑写',narrative_manifest:'实际使用时旁人能够观察的动作、声音与结果；不复写能力定义、效果数字或代价',origin:'获得或形成经过；已有事件用关联，避免复制事件全文',consumption:'只有明定固定消耗才填数值；没有固定点数不等于消耗为0',cooldown:'再次可用的恢复条件；日常休息只有确实限制该能力时才填'},
- T_CHAR_DOSSIER:{overall_physique:'稳定身型、身高、体重；临时姿态与伤势归实时状态',facial_features:'五官、发色、肤色和瞳色；不重复身型',habitual_bearing:'跨场景的姿态倾向；具体重复动作归习惯',sensory_impression:'人物通常带来的气味、体温或触感印象；外貌与音色各归本格',core_personality_tags:'少量性格分类词；不复制具体反应',scene_personality_desc:'性格在不同情境下如何切换；具体触发与动作归习惯',desire_double_helix:'相互牵制的两项长期诉求；本轮强度归心性量值',core_contradiction:'两项诉求为何不能同时满足；不复述诉求',choice_cost:'为了坚持选择会实际失去什么',fatal_fracture_points:'恐惧的具体情景及失去功能的边界；不将恐惧写成已经发生的事实',value_priorities:'发生冲突时的价值排序',workflow:'跨多项本领的工作组织方式；某项技能步骤归该技能',manifest:'人物多种本领共同形成的辨识风格；不重复单项技能表现',skilled_abilities:'只引用已登记本领名称；熟练程度归人物本领掌握',ability_costs_limits:'跨能力共通的个体限制；单项代价归对应能力',short_term_plans:'由任务和生活计划读取，不另存摘要副本',legacy_f0367:'只写年龄依据确有冲突的内容；无冲突省略，不塞入身高、出生地或关系阶段'},
+ T_CHAR_DOSSIER:{
+  name:'角色当前对外使用的名称；真名与别名分别填写，不复制完整身份介绍',
+  true_name:'有来源支持的真名；公开称呼归显示名称，知情范围归真名知情锁级',
+  aliases:'其他稳定称呼；临时绰号只有一次语境依据时不扩成稳定别名',
+  gender:'来源明确的性别表述；人物自己的性别认同另填',gender_identity:'人物自己的性别认同；没有明确自述或授权心理依据时不推断',
+  life_stage:'当前生命阶段及其社会含义；具体年龄数值与参照时点另填',age_reference_time:'年龄成立的故事时点；不使用现实设备时间代替',
+  birth_precision:'出生时间实际已知到何种精度；未知日期不能补成精确日',
+  public_identity:'他人可公开识别的身份；该身份实际承担的义务归社会身份职责',social_identity_duty:'该身份要求人物持续承担的职责；不重复公开称谓',
+  overall_physique:'稳定身型、身高、体重；临时姿态与伤势归实时状态',facial_features:'五官、发色、肤色和瞳色；不重复身型',habitual_bearing:'跨场景的姿态倾向；具体重复动作归习惯',sensory_impression:'人物通常带来的气味、体温或触感印象；外貌与音色各归本格',
+  core_personality_tags:'少量性格分类词；不复制具体反应',scene_personality_desc:'性格在不同情境下如何切换；具体触发与动作归习惯',
+  desire_double_helix:'相互牵制的两项长期诉求；本轮强度归心性量值',core_contradiction:'两项诉求为何不能同时满足；不复述诉求',choice_cost:'为了坚持选择会实际失去什么',fatal_fracture_points:'恐惧的具体情景及失去功能的边界；不将恐惧写成已经发生的事实',
+  value_priorities:'发生冲突时的价值排序',judgment_method:'如何寻找证据、作判断和纠正判断；具体技能操作归操作流程',emotion_handling:'情绪出现和受压时如何调节或失控；单次心情归实时状态',
+  strengths:'稳定性情长处；专业技能归擅长本领',weaknesses:'稳定性情短处；不会的技能归不会的不足项',refusal_boundaries:'跨对象、跨场景的通用拒绝行为；特定关系边界归对应关系',
+  negotiation_conditions:'人物可被协商改变决定的条件；不能用协商条件软化永久拒绝',change_conditions:'长期性格或价值改变所需的经历与证据；不是本轮情绪波动',alignment_axes:'人物立场与自我定位；不用单一阵营标签替代价值取舍',
+  mask_presentation:'对外刻意维持的形象与表现；真实内在差异另填',mask_purpose:'维持面具要保护、获得或回避什么；须有独立目的依据',mask_gap:'外在形象与真实反应之间的稳定落差；何时显露归刺激外显映射',mask_fissures:'何种刺激下面具松动及可观察差异；不再写一遍真实性格',
+  livelihood:'长期职业、社会角色与谋生方式；公开称谓归公开身份',routine:'日常作息和反复做法；特定对象互动归对应关系',interests:'持续关注或参与的活动主题；好恶评价及其原因另填',likes_with_reasons:'明确喜爱及形成原因；不只把活动名称复抄到兴趣',dislikes_with_reasons:'明确厌恶及形成原因；通用拒绝行为归拒绝边界',
+  long_term_goals:'人物主动追求的长期方向；任务进度与短期下一步另填',
+  diction:'惯常用词、比喻与话题选择；长短快慢归句式节奏',voice:'音色、音高与可听质感；选词与句速另填',cadence:'语句长短、快慢及展开方式；具体用词归措辞',humor:'什么会使其发笑、如何开玩笑及分寸；不是作者搞笑标签',silence_conditions:'人物在何种条件下主动沉默；单次没有发言不算稳定条件',relational_diff:'面对不同对象时稳定改变的表达方式；具体关系经过归关系',banned_cliches:'该人物不会使用的台词套路；不是全局文风禁词',
+  workflow:'跨多项本领的工作组织方式；某项技能步骤归该技能',manifest:'人物多种本领共同形成的辨识风格；不重复单项技能表现',skilled_abilities:'只引用已登记本领名称；熟练程度归人物本领掌握',untrained_deficits:'明确不会或缺乏训练的事项；不是性情短处',ability_costs_limits:'跨能力共通的个体限制；单项代价归对应能力',
+  unique_narrative_role:'该人物在故事中独有的功能、视角或不可替代选择；不复述人物简介',current_stage_anchor:'引用人物当前成长阶段；阶段内变化与历史锚点保持各自记录',
+  short_term_plans:'由任务和生活计划读取，不另存摘要副本',legacy_f0367:'只写年龄依据确有冲突的内容；无冲突省略，不塞入身高、出生地或关系阶段'
+ },
+
+ T_CHAR_RELATION_ORIGINS:{
+  nature:'已经确立的联系性质；不在这里复述形成过程',formation_process:'联系如何形成；已有事件只引用，不复抄事件全文',interaction_pattern:'主体对此对象的惯常互动、表达与态度；单次事件不泛化成惯例',role_division:'双方稳定分工或职责；一般性格能力归人物档案',subject_boundary:'仅本关系特有的范围限制与边界；人物通用底线不重复',precondition:'关系成立的既有条件；不是未来恋爱或和解计划',before_state:'形成或转变前的关系状态',after_state:'形成或转变后的关系状态',understanding_difference:'双方各自如何理解同一关系；不代替客观关系性质',shared_event_chain:'实际共同经历的关联；不写成一篇公共摘要',promises_tacit:'已成立的承诺与默契；未说出口的期待需标明主体与确信',unresolved_tension:'仍存在的具体矛盾及牵引；不预设必然解决'
+ },
+ T_CHAR_SECRETS:{
+  fact_proposition:'隐情的事实正文，只在此写完整真相',observable_clues:'他人实际可观察的线索；不能直接泄入真相全文',unlock_condition:'允许揭示隐情的明确条件；不是自动知情条件',impact_scope:'隐情暴露或持续存在造成的影响；知情人物另填实际知情引用',related_object_refs:'隐情直接涉及的对象；物品来源者或地点不因此自动知情',allowed_reader_refs:'作者/读者读取权限，不等于世界内人物知情',allowed_disclosure_positions:'允许向谁或在何种范围披露；实际已经知情另填',cognition_refs:'引用人物实际获知记录；不得用读者可见代替人物知情'
+ },
+ T_DYN_EVENTS:{
+  spine_digest:'只写一行因果梗概供索引；完整过程与独立结果另填',cause:'本次事件已确认的前因；不把相邻事件自动当因果',full_process:'梗概不足以保留的关键经过；不逐句复抄正文',result:'事件实际落定的结果；影响与余波分别填写',impact:'事件结束后仍持续的客观影响；人物感受归情感余波',scene_blocking:'确有需要的场面调度与空间动作；不代替事件经过',core_imagery:'反复或承载意义的核心意象；单次普通物件不凑写',foreshadowing:'已埋设且指向后续的具体线索；不能提前写成已揭晓',unfinished_followup:'事件结束时仍未完成的牵引；下一步计划不等于已发生',emotional_aftermath:'事件后仍持续的情绪后果；各方当时心理另填',multi_party_psychology:'各主体在事件当时的授权心理与误解；按主体区分',before_state:'事件前已确认的相关状态',after_state:'事件后实际形成的相关状态',action_response_chain:'有顺序依据的动作与回应；不补写原文没有的来回',narrative_function:'该事件在故事中实际承担的独特作用；不复述事件摘要'
+ },
  T_CHAR_ANCHORS:{name:'一段可辨认的个人记忆；不使用日常习惯名称',category:'记忆的性质；反复动作单独填人物习惯',origin_event_ref:'引用实际发生的事件；事件经过只保存在事件表',initial_origin:'当事人如何理解记忆的成因；不重述客观事件',legacy_f0220:'只补关联事件未记录的主观记忆片段',trigger_situation:'什么情境会唤起此段记忆',trigger_cues:'能唤起记忆的具体感官线索',internal_motive:'唤起后试图保护或争取什么',psychology:'唤起时的判断或联想',feeling:'身体和情绪的主观感受，与判断分开',past_current_boundary:'当时事实与现在反应的边界；记忆不代表当前仍在发生',repeated_evidence:'如已形成习惯，引用对应习惯名；不复制动作'},
  T_CHAR_HABITS:{name:'一个可重复观察的习惯名称',category:'习惯用途或情境类别',trigger_situation:'习惯发生的常见条件',trigger_cues:'该条件中实际引起反应的信号',initial_origin:'形成习惯的成因；有记忆记录时引用记忆',repeated_evidence:'反复出现的依据；单次观察不能标成已稳定习惯',origin_event_ref:'首次或关键实例的来源事件；不复制事件正文',legacy_f0220:'仅放其余独立字段不能表达的习惯细节'},
  X_SOCIAL_ACCOUNTS:{name:'账号对外昵称；不是任何联系人的私有备注',personId:'账号持有人；一账号一份登记，其他角色通过关联引用',owner_ref:'数据作用域；账号持有人以关联人物为准，不填写观察者',handle:'平台内唯一账号标识',bio:'账号本人设置的简介；不复制人物完整档案',owned:'持有人可登录或控制此账号；不随查看此账号的角色改变'},

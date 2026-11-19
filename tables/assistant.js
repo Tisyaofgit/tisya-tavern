@@ -132,7 +132,7 @@ function matrixConfigurationAssistant({store,getContext,review,run,call,getChoic
  }
  async function ask(question,conversation=[]){return run(async signal=>{
   check(typeof question==='string'&&question.trim(),'请告诉缇斯亚要调整什么');check(Array.isArray(conversation)&&conversation.length<=12&&conversation.every(x=>object(x)&&['user','assistant'].includes(x.role)&&typeof x.content==='string'),'助手对话格式无效');const state=await review(),captured=snapshot(),form=formFor(captured);
-  const input={formContract:'tisya.simple-form/1',question,conversation,goal:'核对当前配置，只填写用户要求改变的格；保持完整reply。body解释方案；cells保留配置分组，逐行填写序号{值}。未知留空，无需修改时cells留空。空文字填（空），恢复继承填（继承）；生成参数继承当前原生设置。不要返回JSON、存储路径或旧表单开关。',source:{configuration:form.current,choices:choices(),history:state.history,conversation},forms:form.ticket.modelInput,current:state.rows,references:[],output:{kind:'configuration'}};
+  const input={formContract:'tisya.simple-form/1',question,conversation,goal:'核对当前配置，只填写用户要求改变的格；保持完整reply。body解释方案；cells保留配置分组和全部开放字段行，逐行填写序号{值}，花括号内只写实际值；本次不改的配置值填空花括号，整批无需修改时cells留空。空文字填（空），恢复继承填（继承）；生成参数继承当前原生设置。不要返回JSON、存储路径或旧表单开关。',source:{configuration:form.current,choices:choices(),history:state.history,conversation},forms:form.ticket.modelInput,current:state.rows,references:[],output:{kind:'configuration'}};
   const raw=await call(input,signal);try{let parsed;try{parsed=envelope(raw);}catch(cause){throw Error('配置助手没有返回完整reply；原答已保留',{cause});}
   check(!parsed.blocks.vars?.trim()&&!parsed.blocks.archive?.trim(),'配置助手不能直接执行故事指令');
   if(parsed.blocks.cells?.trim())form.engine.accept(form.ticket.token,parsed.blocks.cells);

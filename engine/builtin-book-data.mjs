@@ -3,7 +3,7 @@ import {builtinExtensionDefinitions,builtinPresentationDefinitions} from '../ext
 
 export const BUILTIN_PACKAGE='tisya.builtin-books';
 export const BUILTIN_BOOK_NAMES=Object.freeze({templates:'缇斯亚模板书',extensions:'缇斯亚扩展资料书',beauty:'缇斯亚美化书'});
-export const MATRIX_CREATION_CONTRACT="保留完整 `<reply id=\"tisya-onepass-1\">` 框架；`<body>` 说明方案，`<cells>` 按本次实际注册简表填写“【表名／序号】”与“序号{值}”。模型仅填写可读内容和关联名称；程序维护表、字段、稳定记录编号、主体关联、来源与提交回执，禁止输出嵌套存储 JSON。已有记录仅提交用户明确改变的字段；派生值、历史与程序回执禁止由模型填写。当缺少必需定义时，在 `<extra>` 写明“待补：具体问题”，禁止猜值。世界、角色与生活手机共用同一规范字段，禁止另建独立时钟或第二套钱包账本。模板仅作填写规则而非当前事实；作者原文作为版本化来源保留。";
+export const MATRIX_CREATION_CONTRACT="保留完整 `<reply id=\"tisya-onepass-1\">` 框架；`<body>` 说明方案，`<cells>` 按本次实际注册简表填写“【表名／序号】”与“序号{值}”。花括号内只写实际值，不写字段名或照抄填写说明；模型仅填写可读内容和关联名称，程序维护表、字段、稳定记录编号、主体关联、来源与提交回执，禁止输出嵌套存储 JSON。已有记录仅提交用户明确改变的字段；未涉及或无法确认的可选字段省略整行，派生值、历史与程序回执禁止由模型填写。必填定义缺依据时不创建该记录，并在 `<extra>` 写明“待补：表名／字段名／缺少的依据”，禁止用未知、空值、0或否凑齐。世界、角色与生活手机共用同一规范字段，禁止另建独立时钟或第二套钱包账本。模板仅作填写规则而非当前事实；作者原文作为版本化来源保留。";
 export const WORLD_FORM_TEMPLATE=Object.freeze({format:'tisya.form-authoring-template/1',id:'world.definition',kind:'world',targets:[
  {tableId:'T_STATIC_WORLDS',fields:['name','core_proposition','era_name'],projections:['world_id','calendar_id','base_year'],instruction:"填写世界名称、核心命题与纪年；记录编号由程序生成，历法与基准年填写已注册关联子表。" },
  {tableId:'M_CALENDAR_RULES',fields:[],instruction:"使用实际 schema 中的完整历法规则；当世界未定义历法时保持未定义，禁止替换为现实设备公历。"},

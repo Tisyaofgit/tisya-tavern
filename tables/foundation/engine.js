@@ -12,14 +12,40 @@ import {narrativeFormContract,dialogueFieldHint,unattributedDialogue} from './na
 import {clone,digest,fail,decode,stableId} from '../../engine/common.mjs';
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const fieldRow=(template,field)=>field.row??template.fields.indexOf(field)+1;
+const escapeRegExp=value=>value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function normalizeSheetLine(line){
+ let text=line.trim().replace(/^(?:[-+*•]\s+)(?=\d)/,'').replace(/^(\d+)[.、]\s+/,'$1 ');
+ return text.replace(/^(\d+\s*)｛([\s\S]*)｝$/,'$1{$2}');
+}
+function compactLabel(body,field){
+ if(!field)return '';
+ const match=new RegExp('^'+escapeRegExp(field.label)+'(?:（[^）]*）|\\([^)]*\\))?\\s*[：:]\\s*').exec(body);
+ return match?.[0]??'';
+}
+function explicitLabel(body){
+ const label=/^([^：:]+)[：:]/.exec(body)?.[1].trimEnd();
+ return label?.replace(/(?:（[^）]*）|\([^)]*\))$/,'').trimEnd();
+}
+export function compactFieldValue(body,field,fields=[]){
+ const prefix=compactLabel(body,field);if(prefix)return {raw:body.slice(prefix.length),conflict:false};
+ const label=explicitLabel(body);
+ return {raw:body,conflict:fields.some(candidate=>candidate.label===label)};
+}
 export function matrixInputLine(template,line,{stripEvidence=true,multipleEvidence=true}={}){
  const trimmed=line.trim();
- const text=stripEvidence?stripParagraphEvidence(trimmed,multipleEvidence):trimmed;
+ const text=normalizeSheetLine(stripEvidence?stripParagraphEvidence(trimmed,multipleEvidence):trimmed);
  const parsed=sheetLine(text);
  const current=template.fields.find(field=>fieldRow(template,field)===parsed.row);
  const bodyStart=parsed.valueStart??(/^(?:\d+\s*[：:]\s*|\d+\s+)/.exec(text)[0].length);
  let field=current,valueStart=bodyStart;
- if(!parsed.compact){
+ if(parsed.compact){
+  // Models often retain the visible label inside braces. Accept that label
+  // only when it agrees with the schema coordinate; never store it as data.
+  const compact=compactFieldValue(parsed.body,current,template.fields);
+  const conflict=compact.conflict||template.unavailableLabels?.includes(explicitLabel(parsed.body));
+  check(!conflict,'字段行号或名称未开放：'+template.label+'/'+parsed.row);
+  valueStart+=parsed.body.length-compact.raw.length;
+ }else{
   const labelMatches=field=>field&&parsed.body.startsWith(field.label)&&
    (!parsed.body.slice(field.label.length)||/^[\s：:]/.test(parsed.body.slice(field.label.length)));
   // Older labeled replies used positions within the visible field list.
@@ -39,8 +65,9 @@ export function matrixInputLine(template,line,{stripEvidence=true,multipleEviden
   }
  }
  check(field,'字段行号未开放：'+template.label+'/'+parsed.row);
- const valueEnd=parsed.valueEnd??text.length;
- return {field,raw:text.slice(valueStart,valueEnd),valueStart,valueEnd};
+ const valueEnd=parsed.valueEnd??text.length,raw=text.slice(valueStart,valueEnd);
+ if(field.formPlaceholder&&field.formPlaceholder!==field.label&&raw===field.formPlaceholder){const error=Error('字段值仍是填写说明，请替换为实际值：'+template.label+'／'+field.label);error.formLocation={tableId:template.id,field:field.key,label:field.label,rawValue:raw};throw error;}
+ return {field,raw,valueStart,valueEnd};
 }
 const permitsIdentityReuse=task=>['main','historyImport','templateInit'].includes(task);
 // A state description, remaining duration or source of the latest change
@@ -57,22 +84,28 @@ export function existingRecordCandidates(context,heading){return [...new Map(con
 const ambiguousExistingHeading=heading=>'已有记录标题有歧义，无法确定修订对象：'+heading;
 function check(ok,message){if(!ok)fail('MATRIX_CREATION',message);}
 // Shared reviewable workbook. This module never writes a canonical store.
+function normalizeSheetText(text){
+ const input=text.replace(/^\uFEFF/,'').trim(),fence=/^```(?:text|txt)?\s*\n([\s\S]*)\n```$/i.exec(input);
+ return fence?fence[1]:input;
+}
 export function sheetSections(text,{tolerant=false}={}){
  if(typeof text!=='string'||!text.trim()){if(tolerant)return [];throw Error('没有可读取的表单内容');}
  const sections=[],seen=new Set();let current;
- for(const raw of text.trim().split(/\r?\n/)){
-  const line=raw.trim();if(!line)continue;const heading=/^【([^】]+)】$/.exec(line);
+ for(const raw of normalizeSheetText(text).split(/\r?\n/)){
+  const line=raw.trim();if(!line)continue;const heading=/^(?:\*\*|__)?【([^】]+)】(?:\*\*|__)?$/.exec(line);
   if(heading){if(seen.has(heading[1])&&!tolerant)throw Error('分组重复：'+heading[1]);seen.add(heading[1]);current={heading:heading[1],lines:[]};sections.push(current);}
   else {if(!current){if(!tolerant)throw Error('结果须从分组标题开始');current={heading:'未分组内容',lines:[]};sections.push(current);}current.lines.push(line);}
  }
  return sections;
 }
 export function sheetLine(line){
- const text=line.trim(),braced=/^(\d+\s*\{)([\s\S]*)\}$/.exec(stripParagraphEvidence(text));
+ const text=normalizeSheetLine(line),braced=/^(\d+\s*\{)([\s\S]*)\}$/.exec(stripParagraphEvidence(text));
  if(braced)return {row:Number.parseInt(braced[1],10),body:braced[2],compact:true,valueStart:braced[1].length,valueEnd:braced[1].length+braced[2].length};
  const compact=/^(\d+)\s*[：:]\s*([\s\S]*)$/.exec(line.trim());if(compact)return {row:Number(compact[1]),body:compact[2],compact:true};const match=/^(\d+)\s+(.+)$/.exec(line.trim());if(!match)throw Error('无法识别字段行：'+line);return {row:Number(match[1]),body:match[2],compact:false};}
 function sheetFieldText(line,cells){
- const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);if(parsed.compact)return {row:parsed.row,cell,raw:parsed.body};check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
+ const parsed=sheetLine(line),cell=cells.find(c=>c.row===parsed.row);check(cell,'行号未开放：'+parsed.row);
+ if(parsed.compact){const compact=compactFieldValue(parsed.body,cell,cells);check(!compact.conflict,'字段行号或名称未开放：'+parsed.row);const raw=compact.raw;check(!cell.formPlaceholder||cell.formPlaceholder===cell.label||raw!==cell.formPlaceholder,'字段值仍是填写说明，请替换为实际值：'+cell.label);return {row:parsed.row,cell,raw};}
+ check(parsed.body.startsWith(cell.label),'字段名被修改：'+parsed.row);
  let raw=parsed.body.slice(cell.label.length);check(!raw||/^[\s：:]/.test(raw),'字段名被修改：'+parsed.row);raw=raw.trimStart();if(/^[：:]/.test(raw))raw=raw.slice(1).trimStart();return {row:parsed.row,cell,raw};
 }
 // Reference reachability is derived from registered field types and the same
@@ -215,7 +248,7 @@ export function createSheetEngine(catalog, validateValue) {
      if(d.type==='boolean')hint+=' 是或否';
      if(['array','map','object','json'].includes(d.type))hint+=' 此复杂值仍须JSON；尚未展开为子格';
      if(rules.rows?.[c.row])hint+=' '+rules.rows[c.row];if(rules.cells?.['B'+c.row])hint+=' '+rules.cells['B'+c.row];
-     form.push(c.row+'{'+c.label+(hint?'，'+hint.trim():'')+'}');
+     c.formPlaceholder=c.label+(hint?'，'+hint.trim():'');form.push(c.row+'{'+c.formPlaceholder+'}');
     }
    }
   }
@@ -270,13 +303,12 @@ export function createSheetEngine(catalog, validateValue) {
   else throw Error('未支持的单元格类型');if(d.type==='text'&&d.multiline)value=value.replace(/\\(\\|n)/g,(_,c)=>c==='n'?'\n':'\\');return value;
  }
  function parsePlain(ticket,text){
-  check(typeof text==='string','请粘贴填好的文本');let input=text.trim();
-  if(/^```(?:text|txt)?\s*\n/.test(input))input=input.replace(/^```(?:text|txt)?\s*\n/,'').replace(/\n```$/,'');
+  check(typeof text==='string','请粘贴填好的文本');const input=normalizeSheetText(text);
   const sections=new Map();for(const p of ticket.parts)for(const g of new Set(p.cells.map(c=>c.group))){const title=p.tid==='origin.character'?'人物／'+g:p.heading;check(!sections.has(title),'任务分组重复');sections.set(title,{part:p,cells:p.cells.filter(c=>c.group===g)});}
   let current=ticket.parts.length===1?{part:ticket.parts[0],cells:ticket.parts[0].cells}:null;const seenSections=new Set(),seen=new Set(),rawCells=[],result=new Map(ticket.parts.map(p=>[p.record,{}]));
   for(const rawLine of input.split(/\r?\n/)){
    const line=rawLine.trim();if(!line)continue;
-   const heading=line.match(/^【([^】]+)】$/);if(heading){check(sections.has(heading[1])&&!seenSections.has(heading[1]),'分组未开放或重复：'+heading[1]);current=sections.get(heading[1]);seenSections.add(heading[1]);continue;}
+   const heading=line.match(/^(?:\*\*|__)?【([^】]+)】(?:\*\*|__)?$/);if(heading){check(sections.has(heading[1])&&!seenSections.has(heading[1]),'分组未开放或重复：'+heading[1]);current=sections.get(heading[1]);seenSections.add(heading[1]);continue;}
    if(ticket.parts.length===1&&/^行\s+A\s+B$/.test(line)&&!seen.size)continue;
    check(current,'请保留分组标题');const {row:number,cell:c,raw}=sheetFieldText(line,current.cells);
    const identity=current.part.record+':'+number;check(!seen.has(identity),'行号重复：'+number);seen.add(identity);
@@ -400,9 +432,10 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   const isOwnEnum=hint===label||f.key==='true_name_lock'&&hint==='知情锁级';
   const content=isOwnEnum||f.key==='age_raw'&&spec.ref==='M_QUANTITIES'?hint:
    label+(hint?'（'+(spec.enum||spec.options?'见':'')+hint+'）':'');
+  f.formPlaceholder=content;
   return f.row+'{'+content+'}';
  }).join('\n')})),fieldsText=formSections.map(s=>s.text).join('\n\n');
- const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表从1连续编号；'+formWriteSyntax+'编号按本表模板。只填有据的新值，保留未改内容；未知省略，待核值填“?”，明确空文字填“""”。关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔，明确无项填“无”；列表中的关联、数值、布尔项分别写“关联：名称”“数值：0”“布尔：否”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
+ const instructions='<cells format="form"> 使用下列分组简表：每条记录写【表名／1】，同表新记录从1连续编号；编号按本表模板。'+formWriteSyntax+'只填有据的新值，保留未改内容；未涉及或无法确认的可选字段省略整行，需要显式记录未知状态时才填“?”。明确空文字填“""”，明确空列表填“无”。'+(task==='main'?'必填字段无法确认时省略该字段并保持原值；新记录缺少必填值时不要创建该记录。':'必填字段不能用“?”、空值、0或否凑齐；无法确认时不要创建该记录，在<extra>写“待补：表名／字段名／缺少的依据”。')+'关联填已登记名称或本次分组名。'+(permitsIdentityReuse(task)?'首次引用人物、地点、组织或物品的新名称由插件建立最小档案；已登记名称直接复用。':'')+'稳定编号、所属记录与关联明细由插件补齐，不填写存储结构。列表多项以“；”分隔；普通文字列表直接写各项，混合列表按模板使用“关联：名称”“数值：0”“布尔：否”“文字：文本”或“条目：已有条目”。'+(mode==='revise'?(permitsIdentityReuse(task)?'已有记录用“表名／名称”引用整行；重名时用给定的“表名／已有：名称〔序号〕”标题。未填字段沿用，只写变化；同一档案只填一次，其他表引用名称。':'已有记录使用给定的完整标题，只填本次改变的格。'):'本次只新增，已有记录不改。')+(task==='main'?'只填本轮已发生的变化。时间、条件、效果和规则可引用给定名称；“原文：”与“描述：”只填写来源描述，不替换已有精确数值或执行规则。':'只按本次任务与来源填写。');
  const sharedInstructions=instructions+(narrativeIdentity?'事件不拟标题：新事件省略编号，由程序生成01、02等；继续同一事件时填事件编号或已有完整分组标题，只写变化。新建分组序号与事件编号不同。关系不拟名称：主体与目标确定一条有向关系，态度标签、证据、生效时间随剧情更新；反方向另算。行为锚点按所属人物与锚点名称续接。旧节点保留当时状态。同一对象先复用已登记身份与别名，只填变化；当前状态按对象归属续接，不为每轮改名新建。物品模板共用一份，不同实体副本使用明确不同的实例名。':'')+(stateNamePatches&&task==='main'?'同一对象的同一项当前状态续写原记录，只填变化的表现、当前值、有效性或时效；多人有同名状态时填写所属对象。':'')+(sceneNameReuse?'当前场景延续时保留原场景名称，唯一同名记录按修订处理，只填本轮变化；存在多条同名记录时使用已有记录完整标题。':'')+(plainTimeText?'时间可直接填“当晚”等原文，也兼容“原文：当晚”；只保留文字，不据此推算历法、精确时刻或到期触发。':'')+'\n'+narrativeFormContract+'\n'+FORM_OWNERSHIP_CONTRACT+'\n'+unitFormInstructions;
  return {format:'tisya.matrix-sheets/1',stateNamePatches,commonUnits,plainTimeText,sceneNameReuse,narrativeIdentity,multipleEvidence,namedHoldingReuse,enforceDialogueAttribution:['historyImport','templateInit'].includes(task),operationId,kind,mode,task,scope:clone(scope),catalog:{version:1,templates},schemas:schemaByTemplate,references:refs,instructions:sharedInstructions,vocabularyText:formVocabularyText(vocabulary),formSections,form:[formVocabularyText(vocabulary),sharedInstructions,fieldsText].filter(Boolean).join('\n\n'),referenceText:refs.map(r=>r.display).join('\n')};
 }
@@ -462,11 +495,18 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
     counts.set(t.id,expected);
    }
    recordId=(Object.hasOwn(recordIds,section.heading)?recordIds[section.heading]:undefined)??stableId(context.operationId+'|'+t.id+'|'+number);}
-  const made=engine.create(t.id),keys=section.lines.map((line,index)=>{
-   const {field,raw}=matrixInputLine(t,line,{stripEvidence:false});
-   section.lines[index]=fieldRow(t,field)+'{'+raw+'}';
-   return field.key;
-  });
+  const made=engine.create(t.id),keys=[],seenKeys=new Set();
+  for(const [index,line]of section.lines.entries()){
+   let field;
+   try{
+    const parsed=matrixInputLine(t,line,{stripEvidence:false});field=parsed.field;
+    check(!seenKeys.has(field.key),'字段重复，请合并为一次填写：'+field.label);
+    seenKeys.add(field.key);section.lines[index]=fieldRow(t,field)+'{'+parsed.raw+'}';keys.push(field.key);
+   }catch(error){
+    error.formLocation??={tableId:t.id,heading:section.heading,...(field?{field:field.key,label:field.label}:{})};
+    throw error;
+   }
+  }
   check(keys.length,'不创建没有字段的记录：'+section.heading);selections.push({recordId:made.id,keys,heading:section.heading});rows.push({tableId:t.id,recordId,workbookId:made.id,heading:section.heading,existing:!!existing,values:{},states:{}});
   }catch(error){error.formLocation??={heading:section.heading};throw error;}
  }
@@ -834,8 +874,8 @@ export function applyMatrixChanges(runtime,changes,{mode='revise'}={}){
  }catch(error){error.formLocation??={tableId:change?.tableId,recordId:change?.recordId};throw error;}}
  for(const [rid,row]of Object.entries(runtime.rows('T_SYS_ENTITIES'))){const ref=runtime.rows('M_FIELD_REFERENCES')[row.values.origin_record_ref]?.values;if(ref?.target_table&&ref.target_row_uuid){const name=runtime.rows(ref.target_table)[ref.target_row_uuid]?.values?.[ref.target_field||'name'];if(typeof name==='string'&&runtime.data.schema.T_SYS_ENTITIES.fields.some(f=>f.key==='name'))runtime.set(['T_SYS_ENTITIES',rid,'name',[]],name,'derived');}}
  // References can target a later row in the same proposed batch.
- for(const change of changes){try{const row=runtime.record(change.tableId,change.recordId);for(const spec of runtime.data.schema[change.tableId].fields){
-  const value=row.values[spec.key],state=row.states[spec.key];check(!spec.required||spec.read_only||value!==undefined&&value!==null&&['known','derived'].includes(state),'必填字段尚未完整填写：'+change.tableId+'.'+spec.key);
+ for(const change of changes){let activeSpec;try{const row=runtime.record(change.tableId,change.recordId);for(const spec of runtime.data.schema[change.tableId].fields){activeSpec=spec;
+  const value=row.values[spec.key],state=row.states[spec.key],tableLabel=runtime.data.schema[change.tableId].label??change.tableId;check(!spec.required||spec.read_only||value!==undefined&&value!==null&&['known','derived'].includes(state),'【'+tableLabel+'】'+(spec.label??spec.key)+'：必填字段需要明确值；无法确认时保留待补，不用“?”或空值凑齐');
   if(value===null||value===undefined||!['known','derived'].includes(state))continue;const dynamic=/^(?:target|source|output)_row_uuid$/.test(spec.key);if(!['REF','CHILD_REF','REF_LIST','ROW_REF'].includes(spec.type)&&!dynamic)continue;
   const target=dynamic?row.values[spec.key.replace(/_row_uuid$/,'_table')]:spec.ref?.startsWith('@')?row.values[spec.ref.slice(1)]:spec.ref;if(!runtime.data.schema[target])continue;
   for(const ref of Array.isArray(value)?value:[value])if(typeof ref==='string'){
@@ -844,6 +884,6 @@ export function applyMatrixChanges(runtime,changes,{mode='revise'}={}){
    if(business?.length>1)fail('REFERENCE_AMBIGUOUS','表单业务引用对应多条记录，请明确目标',{table:change.tableId,record:change.recordId,field:spec.key,target,reference:ref});
    check(business?business.length===1:runtime.data.tables[target]?.[ref],'引用记录不存在：'+change.tableId+'.'+spec.key+' → '+target+'#'+ref);
   }
- }}catch(error){error.formLocation??={tableId:change.tableId,recordId:change.recordId};throw error;}}
+ }}catch(error){const location=error.formLocation??={tableId:change.tableId,recordId:change.recordId};if(activeSpec){location.field??=activeSpec.key;location.label??=activeSpec.label??activeSpec.key;if(Object.hasOwn(change.values??{},activeSpec.key))location.rawValue??=change.states?.[activeSpec.key]==='unknown'?'?':change.values[activeSpec.key];}throw error;}}
  return {changes:clone(changes)};
 }

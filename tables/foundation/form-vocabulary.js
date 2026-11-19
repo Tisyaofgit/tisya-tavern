@@ -55,4 +55,4 @@ export function formVocabularyText(vocabulary){
  return [units.length&&['单位表',...units].join('\n'),enums.length&&['枚举表',...enums].join('\n')].filter(Boolean).join('\n\n');
 }
 
-export const formWriteSyntax='每行写“序号{值}”，用实际值替换花括号里的填写说明。';
+export const formWriteSyntax='每行写“序号{值}”；花括号内只写实际值，不写字段名，也不照抄填写说明。';

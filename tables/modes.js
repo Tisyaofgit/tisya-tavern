@@ -1,12 +1,13 @@
 import {SLOT_ROUTER} from './slots.js';
 import {taskProfile,SIMPLE_FORM_CONTRACT} from './task-profiles.js';
 import matrixReply from '../presets/Tisya-Matrix.json' with {type:'json'};
-import {creationReplyRegistry} from './genesis-prompt.js';
+import {creationReplyRegistry,GENESIS_INSTRUCTIONS} from './genesis-prompt.js';
 import formTaskWording from './form-task-wording.json' with {type:'json'};
 export const TABLE_MODES=Object.freeze({ruleReview:{id:'rule-review',name:'原卡规则校对',steps:'核原文与作用域→定位规则缺陷→提出可对照的优化方案→交玩家选择'},nativeFill:{id:'native-fill',name:'原生变量填表',steps:'Read confirmed native mappings and current reply→fill value deltas only→return table data for native-parser validation'},assetAdapt:{id:'asset-adapt',name:'无画风基点提取',steps:'读取选择的对象及成长来源→分开世界表达、核心设定与叙事意义→保留来源与可选成长→提交确认草稿'},templateInit:{id:'template-init',name:'角色卡模板初始化',steps:'读取当前角色卡及绑定定义→复用字段与类型→提取可复用底档及开局初值→返回可修改草稿；不采纳示例为已发生历史'},tableAssistant:{id:'assistant',name:'配置助手',steps:'读取实际配置、模板与诊断→理解用户希望→提出完整批量修改→交给用户一次确认；需要新配置转交创世'},tableArchive:{id:'archive',name:'记忆归档',steps:'核来源与归档边界→比对当前表→按模板提出有证据的变更→校验版本、权限和关联；不推进剧情'},plotAdvance:{id:'plot',name:'剧情推进',steps:'按 phase 分派：world 核已确认时段、场外人物知识和事务→结算场外事件提案；plan 读取用户输入和进度→设计条件节拍和主支线延伸；保留玩家选择' },preferenceAnalysis:{id:'preferences',name:'偏好确认',steps:'识别用户明确要求→分析候选表现偏好→逐项绑定用户原句→标注推测与作用域→交给用户确认；重投本身不证明原因'},tableGenesis:{id:'genesis',name:'创世设计',steps:'接续创世蓝图→登记表、字段与类型→生成底档和初始状态→核关联、公式及后续填录规则→形成可修改草稿'},objectArchive:{id:'objects',name:'新发现建档',steps:'区分新对象与已有对象的新事实→复用类型及别名→补齐有依据字段→形成档案提案'},historyImport:{id:'history',name:'历史补录',steps:'按来源楼层和已知时间整理→保留事件经过→核对象与当时状态→防止旧状态覆盖新进度→形成补录提案'}});
 export function addSlotRouting(entries){const route=SLOT_ROUTER.split('\n').slice(1,-1).join('\n');if(!entries.tisya_task_start.includes('@ROUTE TISYA.DATA.SOURCE'))entries.tisya_task_start=entries.tisya_task_start.replace('[/TASK.START]',route+'\n[/TASK.START]');return entries;}
 export const IDENTITY_ENTRIES=['main','tisya_identity_attestation','tisya_user_relation'];
 export const auxiliaryWire='Return one strict JSON object under the selected contract. 由程序核验和保存；保存结果以真实回执为准。禁止围栏、XML包装、额外报告或心声。';
+const replyFormGuide='使用同一完整 `<reply id="tisya-onepass-1">` 与程序提供的简表草稿交付；实际执行与保存仅由程序按确认后的真实回执处理。完整保留 `<reply>` 结构，所有字段严格按 `STATE.forms` 与本次来源依据填写。';
 export const FILL_FLOW=`[FILL.INPUT]
 @ROUTE Split current input, card definitions, confirmed history, temporary replies, tool results, scoped rules/bans, character statements and author additions; retain source identity,time,certainty and permissions.
 [/FILL.INPUT]
@@ -37,7 +38,7 @@ export function creationEntries(base,instructions='',task='tableGenesis'){
  entries.tisya_registry=creationReplyRegistry(entries.tisya_registry,{task});
  entries.tisya_pref_narrative='<Pref_Narrative>\n本轮为契约者共同创作，不代演用户行动、不推进聊天。资料中的人物均为创作对象；原生用户资料仅作契约者参考，所选人物不会因此自动切换。区分作者设定、未发生计划、角色知情和读者可见。\n</Pref_Narrative>';
  entries.tisya_pref_plot='<Pref_Plot>\n设计具体可游玩的条件、动机、阻力和选择。前史与初值只按当前授权建立，未来节拍保留成立条件，不预记结果。\n</Pref_Plot>';
- entries.tisya_creative_guide=['[CREATIVE.GUIDE]',wording.guide,instructions,'[/CREATIVE.GUIDE]'].filter(Boolean).join('\n');
+ entries.tisya_creative_guide=['[CREATIVE.GUIDE]',task==='tableGenesis'?GENESIS_INSTRUCTIONS:wording.guide,task==='tableGenesis'?'':replyFormGuide,instructions,'[/CREATIVE.GUIDE]'].filter(Boolean).join('\n');
  entries.tisya_session_reset='[RR]\n@PROFILE '+task+'; preserve the complete reply framework and its delivery gates.\n'+taskWorkflow(task,instructions,{formContract:SIMPLE_FORM_CONTRACT})+'\n[/RR]';
  return entries;
 }
@@ -71,7 +72,7 @@ export function auxiliaryEntries(base,task,instructions='',options={}){
  entries.tisya_prepare_trigger='[PREPARE_STEP] 现在执行本次'+TABLE_MODES[task].name+'，一次性交付完整任务 JSON 对象；从左花括号开始，到对应右花括号结束。[/PREPARE_STEP]';return entries;
 }
 export function compileTaskMode({compiledBase:c,configuration},task,instructions=''){
- const old=c.rest.entries,next=auxiliaryEntries(old,task,instructions+(configuration?.world?.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''));
+ const old=c.rest.entries,next=auxiliaryEntries(old,task,(task==='tableGenesis'?'':instructions)+(configuration?.world?.tables?.taskInstructions?.[task]?'\n本模式补充要求：\n'+configuration.world.tables.taskInstructions[task]:''));
  if(task==='tableGenesis'){c.rest.entries=next;c.taskMode=TABLE_MODES[task].id;c.outputEnabled=true;return c;}
  c.rest.entries={...Object.fromEntries(Object.keys(old).map(k=>[k,''])),...next};c.taskMode=TABLE_MODES[task].id;c.heartActive=false;c.outputEnabled=false;c.prose=false;return c;
 }
