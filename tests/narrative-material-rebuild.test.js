@@ -24,7 +24,7 @@ test('narrative read distinguishes the bound protagonist, focus, minor and offst
  for(const [id,name,focus_level,short_term_plans]of actors){
   e.newRecord('T_CHAR_DOSSIER',{name,public_identity:id==='minor'?'暂避风的旅人':name,short_term_plans},id);
   e.newRecord('T_SYS_ENTITIES',{name,kind:'character'},id);
-  e.newRecord('T_DYN_SCENE_PARTICIPANTS',{scene_ref:'scene',entity_ref:id,focus_level},'presence-'+id);
+  e.newRecord('T_DYN_SCENE_PARTICIPANTS',{scene_ref:'scene',entity_ref:id,focus_level,...(id==='focus'?{position:'木案旁'}:{})},'presence-'+id);
  }
  e.newRecord('T_CHAR_ANCHORS',{name:'敲木案',char_ref:'focus',actions:'焦点锚点证据'},'anchor');
  e.newRecord('T_DYN_ENTITY_STATE',{name:'当前状态',entity_id:'absent',inner_thought:'离场私密心声',thought_authorization:'用户曾允许'},'state');
@@ -33,9 +33,12 @@ test('narrative read distinguishes the bound protagonist, focus, minor and offst
  e.set(['X_RECORD_META',removed[0],'record_status',[]],'废弃');
  const slots=materials(e,{...scope,narrativeReading:true,playerBinding:{database:true,entityId:'player',dossierId:'player'}});
  assert.match(slots.tisya_material_player_archive,/主控详档/);
+ assert.doesNotMatch(slots.tisya_material_player_archive,/公开身份：沈川/);
  assert.match(slots.tisya_material_character_archives,/因果详档[\s\S]*记忆锚点：[\s\S]*焦点锚点证据/);
  assert.match(slots.tisya_material_present_entities,/暂避风的旅人/);
- assert.match(slots.tisya_material_cast_registry,/离场索引：离场人/);
+ assert.equal(slots.tisya_material_cast_registry,'<CastRegistry>\n离场索引：离场人\n</CastRegistry>');
+ assert.match(slots.tisya_material_current_state,/陆弥，木案旁。/);
+ assert.doesNotMatch(slots.tisya_material_current_state,/在场站位与视听|焦点层级|场景：候船|沈川。|候船人。/);
  assert.doesNotMatch(Object.values(slots).join('\n'),/未公开离场动机|次要人物计划|离场私密心声|已废弃物品/);
  assert.match(slots.tisya_material_location_context,/^<SceneAndSpace>\n当前场景在候船棚。[\s\S]*薄雾/);
  assert.doesNotMatch(slots.tisya_material_location_context,/地点底档／已有|｜当前地点：/);

@@ -126,6 +126,16 @@ export function routeNarrativeRecord(row,defaultSlot,state,scope,roster){
   delete fields.thought_authorization;
   return result('current_state',fields);
  }
+ if(table==='T_DYN_SCENE_PARTICIPANTS'){
+  if(values.focus_level==='离场索引'||values.scene_ref&&values.scene_ref!==scene)return null;
+  const stored=state.tables[table]?.[id],fields={...values};
+  const details=Object.keys(fields).filter(key=>!['entity_ref','scene_ref','focus_level'].includes(key)&&known(stored,key));
+  // Presence and focus already live in the roster. Inject a participant row
+  // only when it contributes actual spatial or sensory detail.
+  if(!details.length)return null;
+  delete fields.scene_ref;delete fields.focus_level;
+  return result('current_state',fields);
+ }
  if(table===H){
   if(Object.hasOwn(values,'holding_end')&&!['?','!','∅','—'].includes(values.holding_end)&&values.holding_end!==null&&values.holding_end!=='')return null;
   const matchesPlayer=key=>{
@@ -142,7 +152,6 @@ export function routeNarrativeRecord(row,defaultSlot,state,scope,roster){
   return result(matchesPlayer('owner_ref')||matchesPlayer('holder_ref')?'persona_extensions':'current_state');
  }
  if(table==='T_DYN_CURRENCY_BALANCES'&&player&&[player.entityId,player.dossierId].includes(values.owner_ref))return result('persona_extensions');
- if(table==='T_DYN_SCENE_PARTICIPANTS'&&(values.focus_level==='离场索引'||values.scene_ref&&values.scene_ref!==scene))return null;
  if(table==='T_DYN_SCENE_SPACE'&&scene&&id!==scene)return null;
  if(table==='T_DYN_CLUES')return values.visibility==='全体公开'?result('pending_tasks',subset(values,visibleClueFields)):null;
  if(table==='T_CHAR_SECRETS')return values.lock_level==='L1'?result('secret_material',subset(values,knownSecretFields)):null;
@@ -155,6 +164,9 @@ export function routeNarrativeRecord(row,defaultSlot,state,scope,roster){
 export function castIndex(roster){
  const groups=new Map();
  for(const {name,level} of roster.people.values()){
+  // Detailed player/focus/minor slots already name these actors. The registry
+  // only supplies identities that would otherwise have no injected presence.
+  if(level!=='离场索引')continue;
   const names=groups.get(level)??[];names.push(name);groups.set(level,names);
  }
  return [...groups].map(([level,names])=>level+'：'+names.join('、'));

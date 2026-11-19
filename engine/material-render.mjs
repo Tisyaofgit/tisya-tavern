@@ -129,7 +129,10 @@ export function renderBlocks(engine,slots,scope=engine.data.runtime?.scope??{},r
    if(narrative&&b.group&&['T_CHAR_ANCHORS','T_CHAR_HABITS','T_CHAR_MEASURES','T_PREF_CHAR_FILTER'].includes(table))for(const key of ['char_ref','target_char_id'])omit.add(key);
    if(narrative&&scope.world_ref&&v.world_ref===scope.world_ref)omit.add('world_ref');
    if(narrative&&['X_MEDIA_PHOTOS','X_MEDIA_ALBUMS','X_MEDIA_SONGS'].includes(table)&&v.ownerId&&v.ownerId===v.owner_ref)omit.add('owner_ref');
-   const parts=fields(table,id,v,omit).map(field=>({...field,label:semanticField(table,field).label}));
+   let parts=fields(table,id,v,omit).map(field=>({...field,label:semanticField(table,field).label}));
+   // The display name is already the record heading. Repeating it verbatim as
+   // a public identity adds no reading content; a distinct public role remains.
+   if(narrative&&table==='T_CHAR_DOSSIER'&&typeof v.name==='string')parts=parts.filter(part=>part.key!=='public_identity'||part.text!==v.name);
    if(narrative&&table==='T_STATIC_PLACES'&&!parts.length&&locationIds.has(id))continue;
    let title=(titleKey?v[titleKey]:null)??b.name??ref(table,id);
    if(narrative&&['X_SOCIAL_POSTS','X_SOCIAL_COMMENTS'].includes(table)&&!titleKey)title=table==='X_SOCIAL_POSTS'?'社交动态':'社交评论';

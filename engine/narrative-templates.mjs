@@ -132,7 +132,7 @@ const templates={
 
 templates.T_CHAR_HABITS=templates.T_CHAR_ANCHORS;
 const innerHeadings={T_CHAR_HABITS:'日常习惯',T_CHAR_ANCHORS:'记忆锚点',T_PREF_CHAR_FILTER:'角色滤镜'};
-const headingInTemplate=new Set(['T_TYPE_ATTRIBUTES','T_STATIC_ITEMS_SKILLS','T_DYN_ENTITY_STATE','T_DYN_HOLDINGS_INVENTORY']);
+const headingInTemplate=new Set(['T_TYPE_ATTRIBUTES','T_STATIC_ITEMS_SKILLS','T_DYN_ENTITY_STATE','T_DYN_SCENE_PARTICIPANTS','T_DYN_HOLDINGS_INVENTORY']);
 
 export function narrativeTimeCode(code,time){
  const prefix=/^\d+$/u.test(code??'')?'e'+code:code;
