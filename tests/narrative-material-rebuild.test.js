@@ -73,8 +73,8 @@ test('braced forms confirm a custom unit once and expose it in the next model re
  const forms=prepareMatrixSheets({state:e.data},{task:'main',operationId:'braced-template'});
  const section=(id,values)=>{const t=forms.catalog.templates.find(table=>table.id===id);return '【'+t.label+'／1】\n'+Object.entries(values).map(([key,value])=>t.fields.find(field=>field.key===key).row+'{'+value+'} | P1').join('\n');};
  const dossier=forms.formSections.find(group=>group.tableId==='T_CHAR_DOSSIER').text;
- assert.match(dossier,/^3\{角色对外显示名称\}$/m);
- assert.match(dossier,/^4\{角色真名\}$/m);
+ assert.match(dossier,/^3\{角色对外显示名称（角色当前对外使用的名称/m);
+ assert.match(dossier,/^4\{角色真名（有来源支持的真名/m);
  assert.match(dossier,/^5\{知情锁级\}$/m);
  assert.match(dossier,/^13\{年龄数值：N 单位/m);
  const write=async(cells,readArchive=false)=>{

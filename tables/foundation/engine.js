@@ -28,8 +28,10 @@ function explicitLabel(body){
 }
 export function compactFieldValue(body,field,fields=[]){
  const prefix=compactLabel(body,field);if(prefix)return {raw:body.slice(prefix.length),conflict:false};
- const label=explicitLabel(body);
- return {raw:body,conflict:fields.some(candidate=>candidate.label===label)};
+ const label=explicitLabel(body),type=String(field?.type??field?.definition?.type??'').toUpperCase(),structured=field?.formStructured===true||['JSON','ARRAY','OBJECT'].includes(type);
+ // Structured values may legitimately begin with another field's name, e.g.
+ // 列表：0.内容=甲. Only scalar rows use a leading label as a conflict signal.
+ return {raw:body,conflict:!structured&&fields.some(candidate=>candidate.label===label)};
 }
 export function matrixInputLine(template,line,{stripEvidence=true,multipleEvidence=true}={}){
  const trimmed=line.trim();
@@ -172,7 +174,7 @@ export function createSheetEngine(catalog, validateValue) {
   const shape=d=>({类型:types[d.type]??d.type,...(d.values?{选项:clone(d.values)}:{}),...(d.fields?{字段:Object.fromEntries(Object.entries(d.fields).map(([k,v])=>[k,shape(v)]))}:{}),...(d.items?{条目:shape(d.items)}:{}),...(d.required?{必填:true}:{}),...(d.min!==undefined?{最小:d.min}:{}),...(d.max!==undefined?{最大:d.max}:{})});
   const hasRef=d=>['ref','refs'].includes(d.type)||Object.values(d.fields??{}).some(hasRef)||(d.items&&hasRef(d.items));
   const encode=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\\','\\\\').replaceAll('|','\\|').replaceAll('\n','<br>');
-  const cells=fields.map(f=>({row:fieldRow(t,f),key:f.key,label:f.label,definition:f.definition}));
+  const cells=fields.map(f=>({row:fieldRow(t,f),key:f.key,label:f.label,definition:f.definition,formStructured:f.formStructured}));
   const token='fill-'+(++serial),ticket={record:id,revision:r.revision,workbookRevision:state.revision,keys:selected,refs:[...refs],cells};pending.set(token,ticket);
   const typeRule=f=>{const def=f.definition;let text=types[def.type]??def.type;if(def.values)text+='，可选：'+def.values.join('／');if(def.min!==undefined)text+='，最小'+def.min;if(def.max!==undefined)text+='，最大'+def.max;if(['texts','refs'].includes(def.type))text+='，每项用<br>分行，无条目填[]';if(def.type==='text'&&!def.required)text+='，明确空文本填""';if(['object','array','map'].includes(def.type))text+='，结构：'+JSON.stringify(shape(def));return text;};
   const instructions=['表单：'+t.label,'档案：'+(at(r.values,['名称'])||r.title),'表级要求：根据资料填回下表；保留行号、A列和表头，只填B列。未知格留空，不拿0或否代替未知。只返回填好的表格。','列级要求：A为字段名，不修改；B为内容。文字中的竖线写\\|，换行写<br>，字面<br>写&lt;br&gt;。',...(rules.table?['本表补充：'+rules.table]:[]),...(rules.columns?.B?['B列补充：'+rules.columns.B]:[])];
@@ -268,7 +270,7 @@ export function createSheetEngine(catalog, validateValue) {
   const records=chosen.map(record);check(records.every(r=>r.id===id||r.parentId===id),'不能混入其他人物子表');
   const known=allowedRefs();check(referenceIds.every(x=>known.has(x)),'引用对象未获授权');
   const counts={},parts=[];
-  for(const r of records){const t=template(r.template),keys=selectedKeys(r,undefined,options.deriveObjects!==false),cells=keys.map(k=>{const f=field(t,k);return {row:fieldRow(t,f),key:k,label:f.label,definition:f.definition};});
+  for(const r of records){const t=template(r.template),keys=selectedKeys(r,undefined,options.deriveObjects!==false),cells=keys.map(k=>{const f=field(t,k);return {row:fieldRow(t,f),key:k,label:f.label,definition:f.definition,formStructured:f.formStructured};});
    if(!cells.length)continue;const kind=r.template.split('.').at(-1),n=(counts[kind]??0)+1;counts[kind]=n;
    const num=['一','二','三','四','五','六','七','八','九','十'][n-1]??String(n);
    parts.push(partFor(r,cells,r.id===id?'人物':childTypes[kind]+'／'+num));
@@ -282,7 +284,7 @@ export function createSheetEngine(catalog, validateValue) {
  function requestWorkbook(selections,{source='',referenceIds=[],rules={}}={}){
   check(Array.isArray(selections)&&selections.length&&new Set(selections.map(s=>s.recordId)).size===selections.length,'请明确选择本次表单记录');
   const known=allowedRefs();check(referenceIds.every(id=>known.has(id)),'引用对象未获授权');
-  const parts=selections.map(({recordId,keys,heading})=>{const r=record(recordId),t=template(r.template),selected=selectedKeys(r,keys,false);check(selected.length&&new Set(selected).size===selected.length,'没有可填写的字段或字段重复');const cells=selected.map(key=>{const f=field(t,key);check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);return {row:fieldRow(t,f),key,label:f.label,definition:f.definition};});return partFor(r,cells,heading);});
+  const parts=selections.map(({recordId,keys,heading})=>{const r=record(recordId),t=template(r.template),selected=selectedKeys(r,keys,false);check(selected.length&&new Set(selected).size===selected.length,'没有可填写的字段或字段重复');const cells=selected.map(key=>{const f=field(t,key);check(at(r.values,f.path)===undefined,'已填字段受保护：'+f.label);return {row:fieldRow(t,f),key,label:f.label,definition:f.definition,formStructured:f.formStructured};});return partFor(r,cells,heading);});
   const aliases=makeAliases(referenceIds),token='fill-'+(++serial),ticket={record:parts[0].record,workbookRevision:state.revision,parts,refs:[...referenceIds],aliases,deriveObjects:false};pending.set(token,ticket);
   return {token,recordId:parts[0].record,modelInput:plainInput(parts,source,aliases,rules)};
  }
@@ -387,7 +389,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   const openKeys=new Set(fields.map(f=>f.key));
   const unavailableLabels=snapshot.state.schema[id].fields.filter(f=>!openKeys.has(f.key))
    .flatMap(f=>[f.label??f.key,fieldLabels.get(f.key)].filter(Boolean));
-  const t={id,table:id,label:labels.get(id),unavailableLabels,fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'}}))};templates.push(t);schemaByTemplate[id]=schema;
+  const t={id,table:id,label:labels.get(id),unavailableLabels,fields:fields.map(f=>({key:f.key,label:fieldLabels.get(f.key),row:f.row,path:[f.key],group:'内容',definition:{type:'text'},formStructured:['JSON','ARRAY','OBJECT'].includes(f.type)}))};templates.push(t);schemaByTemplate[id]=schema;
  }
  const referenceTables=new Set(templates.map(t=>t.id));for(const schema of Object.values(schemaByTemplate))for(const f of schema.fields)if(allSchemas[f.ref])referenceTables.add(f.ref);
  for(const [id,schema]of Object.entries(schemaByTemplate))for(const field of schema.fields){const targets=phoneFormReference(id,field.key)??PHONE_FORM_LIST_REFERENCES[id]?.[field.key];for(const target of [targets].flat().filter(Boolean))if(allSchemas[target])referenceTables.add(target);}
