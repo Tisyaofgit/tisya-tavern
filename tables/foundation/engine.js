@@ -572,10 +572,10 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};if(!collectErrors)throw error;capture(error);}
  }
  checkpoint();
+ const eventKey=value=>String(value??'').trim().replace(/^e(?=\d+$)/i,'');
  if(context.narrativeIdentity!==false){
   // The timeline presents stored 01 as e01. Accept that displayed identifier
   // when editing, and reserve it when assigning the next code to a new event.
-  const eventKey=value=>String(value??'').trim().replace(/^e(?=\d+$)/i,'');
   const codes=eventCodes(snapshot.state),used=new Set([...codes.values()].map(eventKey));let next=Math.max(0,...[...used].filter(x=>/^\d+$/.test(x)).map(Number))+1;
   for(const row of rows.filter(r=>r.tableId==='T_DYN_EVENTS'))try{
    const requested=row.raw.short_code;
@@ -593,7 +593,8 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    check(scenes.length===1,'同场景地点需要本批唯一且明确填写地点的场景；多个场景请填写具体地点');
    return reference(scenes[0].raw.place_ref,target,source);
   }
-  let candidates=references.filter(r=>(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(raw)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(raw)):r.name===raw)||r.legacyName===raw||r.display===raw||r.legacyDisplay===raw||raw===(snapshot.state.schema[r.tableId]?.label+'／'+r.name));
+  const displayedEventCode=r=>r.tableId==='T_DYN_EVENTS'&&/^e?\d+$/i.test(String(raw).trim())&&eventKey(r.name)===eventKey(raw);
+  let candidates=references.filter(r=>displayedEventCode(r)||(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(raw)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(raw)):r.name===raw)||r.legacyName===raw||r.display===raw||r.legacyDisplay===raw||raw===(snapshot.state.schema[r.tableId]?.label+'／'+r.name));
   if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}
   const targets=[target].flat().filter(Boolean),matches=candidates.filter(r=>!target||targets.includes(r.tableId));
   let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];

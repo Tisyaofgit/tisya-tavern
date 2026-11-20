@@ -3,7 +3,7 @@ import {createAtlas} from './atlas.js';
 // Shared atlas renderer: standalone demo or an explicitly authorized host snapshot.
 export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null,onIdentity=null,media=null,onMediaManage=null}={}){
  const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=null,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[];
- const win=doc.defaultView;let pending=Promise.resolve();
+ const win=doc.defaultView;let pending=Promise.resolve(),definitionSequence=0;
  const failure=error=>{if(onFault)onFault(error);else notify(error.message);};
  const act=fn=>{pending=Promise.resolve().then(beforeRead).then(fn).catch(failure);return pending;};
  const icons={atlas:'◈',saves:'⌁',cores:'◇',overview:'⊞',changes:'⌁'};
@@ -30,7 +30,15 @@ export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},o
   }
   return el('span',String(value));
  }
- function dataField(name,value,valuePath,detail){const g=el('div',undefined,'field'),dd=el('dd');dd.append(displayValue(value,valuePath,detail));g.append(el('dt',name),dd);return g;}
+ function dataField(name,value,valuePath,detail){
+  const g=el('div',undefined,'field'),dt=el('dt'),dd=el('dd');dd.append(displayValue(value,valuePath,detail));
+  const definition=detail.definitions?.[name];
+  if(definition){
+   const id='atlas-field-definition-'+(++definitionSequence),note=el('p',definition,'field-definition');note.id=id;note.hidden=true;
+   const b=button(name,()=>{note.hidden=!note.hidden;b.setAttribute('aria-expanded',String(!note.hidden));},'field-term');b.setAttribute('aria-controls',id);b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','查看字段含义：'+name);b.dataset.navKey='definition:'+JSON.stringify(valuePath);dt.append(b);dd.append(note);
+  }else dt.textContent=name;
+  g.append(dt,dd);return g;
+ }
  function breadcrumbs(d){const nav=el('nav',undefined,'breadcrumbs');nav.setAttribute('aria-label','阅读路径');
   trail.forEach((f,i)=>{const name=f.selected?(f.path.length?pathLabel(f.path):atlas().detail(f.selected).record.values.名称):labels[f.page];const b=button(name,()=>jump(i));b.setAttribute('aria-label','返回路径：'+name);nav.append(b,el('span','/','crumb-divider'));});
   nav.append(el('span',path.length?pathLabel(path):d.record.values.名称,'crumb-current'));return nav;

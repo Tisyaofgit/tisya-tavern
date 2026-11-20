@@ -96,7 +96,9 @@ test('complete native/template/finalization chain emits no internal markers and 
   assert(request.messages.some(m=>m.role==='assistant'&&m.content==='他将旧伞放在门边。\n<StatusPlaceHolderImpl/> &lt;Unknown/&gt; &amp;amp;'));
   assert(request.messages.some(m=>m.role==='user'&&m.content==='继续谈话。'));
   const system=request.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
-  assert(!system.includes('自定义系统原文'));assert(!system.includes('模板生成的前缀'));assert.match(system,/@AUTHORITY := FIRST_PRIORITY/);
+  assert(!system.includes('自定义系统原文'));assert(!system.includes('模板生成的前缀'));
+  assert.match(system,/层级权重：rule > tisya > dream/);assert.match(system,/资料层格式防火墙/);
+  assert.doesNotMatch(system,/@AUTHORITY := FIRST_PRIORITY|@SESSION\.LOGIN|BEFORE_DELIVERY => ASSERT/);
   const dream=request.messages.filter(m=>m.role==='assistant'&&m.content.includes('<NativeDreamSources>')).map(m=>m.content).join('\n');
   for(const text of ['自定义系统原文','模板出口资料','模板生成的前缀','模板生成的尾部',cardText])assert(dream.includes(text),text);
   assert.equal(f.host.accepted(),true);assert.deepEqual(f.host.contextPreview().messages,request.messages);assert.deepEqual(f.host.contextPreview().tools,request.tools);assert.equal(f.host.contextPreview().parameters.model,'fixture-model');

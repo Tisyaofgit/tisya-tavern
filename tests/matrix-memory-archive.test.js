@@ -109,6 +109,35 @@ function form(state,tableId,values,recordId=null){
 }
 const formReply=(n,text)=>reply(n,text);
 
+test('displayed e02 event identity resolves in ordinary cognition references to the canonical event',()=>{
+ const e=seed();e.newRecord('T_DYN_EVENTS',{short_code:'02',title:'渡口交信',spine_digest:'阿青交付信件'},'event-02');
+ const archive=form(e.data,'T_DYN_COGNITION',{name:'交信认知',subject_ref:'阿青',event_ref:'e02',epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'知道信件已经交付'});
+ acceptReply(e,reply(1,archive),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const cognition=Object.values(e.rows('T_DYN_COGNITION')).find(row=>row.values.name==='交信认知');assert.equal(cognition.values.event_ref,'event-02');
+});
+
+test('new same-batch event codes resolve forward and cyclic event links',()=>{
+ const e=seed(),first=form(e.data,'T_DYN_EVENTS',{title:'先发生',spine_digest:'第一件事'}),second=form(e.data,'T_DYN_EVENTS',{title:'后发生',spine_digest:'第二件事'}).replace('／1】','／2】');
+ const forward=form(e.data,'T_DYN_EVENT_LINKS',{event_ref:'e01',target_event_ref:'e02',edge_kind:'明确因果',connection_evidence:'第一件事引起第二件事'});
+ const reverse=form(e.data,'T_DYN_EVENT_LINKS',{event_ref:'e02',target_event_ref:'e01',edge_kind:'主题回响',connection_evidence:'第二件事回望第一件事'}).replace('／1】','／2】');
+ acceptReply(e,reply(1,[first,second,forward,reverse].join('\n')),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const events=Object.entries(e.rows('T_DYN_EVENTS')).filter(([,row])=>['先发生','后发生'].includes(row.values.title));assert.equal(events.length,2);
+ const byCode=new Map(events.map(([id,row])=>[row.values.short_code,id])),links=Object.values(e.rows('T_DYN_EVENT_LINKS'));assert.equal(links.length,2);
+ assert(links.some(row=>row.values.event_ref===byCode.get('01')&&row.values.target_event_ref===byCode.get('02')));
+ assert(links.some(row=>row.values.event_ref===byCode.get('02')&&row.values.target_event_ref===byCode.get('01')));
+});
+
+for(const [label,prepare]of [
+ ['unknown code does not fall through to another table',e=>e.newRecord('T_SYS_ENTITIES',{name:'e99',kind:'character'},'not-an-event')],
+ ['duplicate codes stay ambiguous',e=>{e.newRecord('T_DYN_EVENTS',{short_code:'99',title:'重复甲'},'duplicate-a');e.newRecord('T_DYN_EVENTS',{short_code:'99',title:'重复乙'},'duplicate-b');}]
+])test('event code references retain strict validation: '+label,()=>{
+ const e=seed();prepare(e);const code=label.startsWith('unknown')?'e99':'e99',archive=form(e.data,'T_DYN_COGNITION',{name:'无效关联',subject_ref:'阿青',event_ref:code,epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'不应写入'});
+ acceptReply(e,reply(1,archive),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.match(e.data.runtime.archive_queue[0].error.message,/关联名称不存在、重名或表不匹配/);assert.equal(Object.keys(e.rows('T_DYN_COGNITION')).length,0);
+});
+
 test('main archive grouped form uses the existing field contract and keeps explicit unknowns plus pending items',async()=>{
  const f=await fixture(),state=(await f.host.export()).state,body=form(state,'T_DYN_EVENTS',{title:'门后的信',spine_digest:'看到信件',cause:'?'});
  await f.accept(formReply(1,body));await f.accept(reply(2,''));const saved=await f.accept(reply(3,''));const row=Object.values(saved.state.tables.T_DYN_EVENTS)[0];
