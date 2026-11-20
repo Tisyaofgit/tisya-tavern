@@ -74,3 +74,9 @@ test('a changed inventory arriving during paged cleanup is applied without reviv
  const w=env(),messages=Array.from({length:80},(_,i)=>message(i)),c=cache(w);for(const m of messages)await read(c,m);await c.flush();
  const first=c.reconcile('chat-a',messages);const final=c.reconcile('chat-a',messages.slice(60));await Promise.all([first,final]);const stored=await rows(w);assert.equal(stored.length,20);assert(stored.every(r=>messages.slice(60).some(m=>messageCacheOwner(m)===r.owner)));await c.dispose();
 });
+
+test('a superseded cleanup generation cannot delete rows belonging to the newer chat state',async()=>{
+ const w=env(),a=message(1),b=message(2),c=cache(w);await read(c,a);await read(c,b);await c.flush();assert.equal((await rows(w)).length,2);
+ let current=true;const stale=c.reconcile('chat-a',[],{isCurrent:()=>current});current=false;await stale;assert.equal((await rows(w)).length,2);
+ await c.reconcile('chat-a',[]);assert.deepEqual(await rows(w),[]);await c.dispose();
+});

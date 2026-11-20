@@ -28,3 +28,16 @@ export function displayFormatMaterial(rules,depth=0){
  const groups=displayFormatGroups(rules,depth);if(!groups.length)return '';
  return '[NATIVE.DISPLAY.FORMATS]\n当前允许的显示正则可明确识别以下标签组。仅在本轮角色卡、世界书或用户要求该组件时输出，内容和字段顺序沿用对应格式定义；独立面板完整同组放在 extra，正文内联组件保留在 body。未定义的内容不从正则猜补。\n'+groups.map((g,i)=>'组'+(i+1)+'：'+g.tags.join(' ')).join('\n')+'\n[/NATIVE.DISPLAY.FORMATS]';
 }
+
+// Some chat imports store a registered component as XML text. Restore only the
+// exact literal tags declared by an enabled display rule. Unknown tags, other
+// entities and ordinary card/source prose remain byte-for-byte unchanged.
+export function restoreDisplayFormatEntities(text,rules,depth=0){
+ if(typeof text!=='string'||!text.includes('&lt;'))return text;
+ let result=text;
+ for(const tag of new Set(displayFormatGroups(rules,depth).flatMap(group=>group.tags))){
+  const encoded=tag.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  result=result.split(encoded).join(tag);
+ }
+ return result;
+}

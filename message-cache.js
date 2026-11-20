@@ -101,20 +101,23 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
   })();inflight.set(signature,job);job.finally(()=>{if(inflight.get(signature)===job)inflight.delete(signature);}).catch(()=>{});return job;
  }
  function saveView({scope,owner,source},view){if(inventories.get(scope)?.owners.get(owner)?.count>1)return Promise.resolve();const started=epoch;return enqueue(async()=>{if(started!==epoch||!eligible(scope,owner,source))return;const row=await readRow(scope,owner,source);if(!row||started!==epoch||!eligible(scope,owner,source))return;row.view=view;await writeRow(row);});}
- function reconcile(scope,messages){
-  const inventory=messageCacheInventory(messages);if(sameInventory(inventories.get(scope),inventory))return reconciliations.get(scope)?.promise??Promise.resolve();
+ function reconcile(scope,messages,{isCurrent=()=>true}={}){
+  if(!isCurrent())return Promise.resolve();
+  const inventory=messageCacheInventory(messages),existing=reconciliations.get(scope);
+  if(existing){existing.inventory=inventory;existing.isCurrent=isCurrent;}
+  if(sameInventory(inventories.get(scope),inventory))return existing?.promise??Promise.resolve();
   knownScopes.add(scope);inventories.delete(scope);inventories.set(scope,inventory);
   while(inventories.size>3)inventories.delete(inventories.keys().next().value);
-  const existing=reconciliations.get(scope);if(existing){existing.inventory=inventory;return existing.promise;}
-  const job={inventory,promise:null},started=epoch;reconciliations.set(scope,job);
+  if(existing)return existing.promise;
+  const job={inventory,isCurrent,promise:null},started=epoch;reconciliations.set(scope,job);
   job.promise=enqueue(async()=>{
    let scanned;
    do{
     scanned=job.inventory;let after=null,more=true;
-    while(more&&!closed&&started===epoch&&state==='ready'){
+    while(more&&!closed&&started===epoch&&state==='ready'&&job.isCurrent()){
      const page=await transaction('readwrite',(store,set,progress)=>{
       let count=0,last=after;const began=Date.now(),cursor=store.index('scope').openCursor(scope);
-      cursor.onsuccess=()=>{progress();const c=cursor.result;if(!c){set({after:last,more:false});return;}
+      cursor.onsuccess=()=>{progress();const c=cursor.result;if(!job.isCurrent()){set({after:last,more:false});return;}if(!c){set({after:last,more:false});return;}
        if(after!==null&&window.indexedDB.cmp(c.primaryKey,after)<=0){if(window.indexedDB.cmp(c.primaryKey,after)<0)c.continuePrimaryKey(scope,after);else c.continue();return;}
        last=c.primaryKey;const row=c.value;if(row.version!==version||!allowed(job.inventory,row.owner,row.source))c.delete().onsuccess=progress;
        count++;if(count>=32||Date.now()-began>=8){set({after:last,more:true});return;}c.continue();
@@ -123,9 +126,9 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
      after=page.after;more=page.more;
      if(more)await new Promise(resolve=>setTimeout(resolve,0));
     }
-   }while(scanned!==job.inventory&&!closed&&started===epoch&&state==='ready');
+   }while(scanned!==job.inventory&&!closed&&started===epoch&&state==='ready'&&job.isCurrent());
   });
-  job.promise.finally(()=>{if(reconciliations.get(scope)===job)reconciliations.delete(scope);}).catch(()=>{});return job.promise;
+  job.promise.finally(()=>{if(reconciliations.get(scope)===job)reconciliations.delete(scope);if(!job.isCurrent()&&inventories.get(scope)===job.inventory){inventories.delete(scope);knownScopes.delete(scope);}}).catch(()=>{});return job.promise;
  }
  async function clear(){epoch++;inflight.clear();await enqueue(()=>transaction('readwrite',(store,set,progress)=>{store.clear().onsuccess=progress;},'清空'));if(state!=='ready')throw Error('显示缓存未清理：'+(error??state));}
  return {ready,prepare,saveView,reconcile,clear,flush:()=>tail,report:()=>({state,error,hits,misses,pending:inflight.size,delayedTicks,maxSchedulingGapMs:Math.round(maxSchedulingGap),lastFailure:lastFailure?{...lastFailure}:null}),async dispose(){await tail;closed=true;epoch++;db?.close();db=null;state='closed';}};

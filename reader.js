@@ -58,7 +58,7 @@ export async function clearReaderCache(){cacheGeneration++;await localCache?.cle
 export const readerCacheGeneration=()=>cacheGeneration;
 export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null};
 export const messageCacheReport=()=>inspectionCache.report();
-export const reconcileReaderCache=(scope,messages)=>localCache?.reconcile(scope,messages);
+export const reconcileReaderCache=(scope,messages,options)=>localCache?.reconcile(scope,messages,options);
 export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(inspectionKey(source,selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
 export async function prepareReaderMessage(identity,options={}){
  const generation=cacheGeneration,source=identity.source,base=selectedOptions({}),selected=selectedOptions(options);

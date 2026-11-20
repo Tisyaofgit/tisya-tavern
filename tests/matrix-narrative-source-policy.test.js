@@ -99,10 +99,11 @@ async function fixture(){
  return {context,host,payload};
 }
 
-test('real host preparation projects card and scanned lore defaults in final messages with a local audit',async()=>{
+test('real host preparation preserves complete card and lore text in the assistant dream layer',async()=>{
  const f=await fixture(),originalCard=clone(f.context.characters[0]),history=clone(f.context.chat);await f.host.before('normal');await f.host.entriesLoaded({characterLore:[clone(lore)]});const payload=f.payload(),nativePayload=clone(payload);await f.host.payloadReady(payload);
  if(process.env.TISYA_NARRATIVE_AUDIT_PATH)writeFileSync(process.env.TISYA_NARRATIVE_AUDIT_PATH,JSON.stringify({validation:'Node host assembly with neutral fixtures; zero model or Android calls',nativePayload,finalPayload:payload,audit:f.host.latest().promptAudit,sourceCard:originalCard,history:history.map(m=>({role:m.is_user?'user':'assistant',content:m.mes}))},null,2)+'\n');
- assert.equal(f.host.accepted(),true);assert.equal(f.host.latest().promptAudit.narrativeSourceProjection.removed.length,3);const finalSystem=payload.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');assert.match(finalSystem,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(finalSystem,/^叙事人称：第三人称$/m);assert.doesNotMatch(finalSystem,/^Narrative person: third-person$/m);
+ assert.equal(f.host.accepted(),true);assert.equal(f.host.latest().promptAudit.narrativeSourceProjection.removed.length,0);const finalSystem=payload.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n'),finalDream=payload.messages.filter(m=>m.role==='assistant'&&m.content.includes('<NativeDreamSources>')).map(m=>m.content).join('\n');assert.match(finalSystem,/@POV\.PERSON := 全文使用第二人称/);assert.doesNotMatch(finalSystem,/^叙事人称：第三人称$/m);assert.doesNotMatch(finalSystem,/^Narrative person: third-person$/m);
+ assert(finalDream.includes(cardText));assert(finalDream.includes(card.data.system_prompt));assert(finalDream.includes(lore.content));assert.match(finalDream,/叙事人称：第三人称/);assert.match(finalDream,/Narrative person: third-person/);
  assert.deepEqual(f.context.characters[0],originalCard);assert.deepEqual(f.context.chat.map(m=>m.mes),history.map(m=>m.mes));assert.equal(payload.messages.at(-2).content,'他将旧伞放在门边。');
 });
 

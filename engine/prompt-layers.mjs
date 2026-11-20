@@ -19,6 +19,12 @@ export function promptLayerOf(prompt){
  return layer;
 }
 
+export function isStockPrompt(identifier){
+ // The bound identity is a shipped dynamic slot added by the baseline compiler;
+ // it is not present as a literal row in Tisya-Matrix.json.
+ return stockPrompts.has(identifier)||identifier==='tisya_user_identity';
+}
+
 export function resolvePromptLayerText(identifier,text){
  if(identifier===LAYER_AUTHORITY_IDENTIFIER&&text===legacyAuthority)return stockPrompts.get(identifier).content;
  if(identifier==='tisya_material_boundary_open'&&knownBoundaryOpenings.has(text))return stockPrompts.get(identifier).content;

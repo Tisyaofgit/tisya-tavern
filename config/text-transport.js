@@ -153,7 +153,7 @@ export function createTextTransport({target=globalThis,isTauri=()=>!!target.__TA
    const key=typeof init?.body==='string'?init.body:input instanceof Request&&init?.body==null?await input.clone().text():null;
    let observation=observations.get(key),observationKey=key;
    if(!observation&&typeof key==='string'){let body;try{body=JSON.parse(key);}catch{}if(body){const matches=[...observations].filter(([,e])=>now()-e.created<=300000&&e.match?.(body));if(matches.length===1)[observationKey,observation]=matches[0];}}
-   if(observation){observations.delete(observationKey);if(now()-observation.created<=300000){const body=JSON.parse(key);observation.notify({stage:'host-fetch',at:new Date(now()).toISOString(),messages:structuredClone(body.messages??[]),tools:structuredClone(body.tools??[])});}}
+   if(observation){observations.delete(observationKey);if(now()-observation.created<=300000){const body=JSON.parse(key);observation.notify({stage:'host-fetch',at:new Date(now()).toISOString(),messages:structuredClone(body.messages??[]),tools:structuredClone(body.tools??[]),parameters:structuredClone(Object.fromEntries(Object.entries(body).filter(([key])=>!['messages','tools'].includes(key))))});}}
    const e=pending.get(key);
    if(!e){if(typeof key==='string'&&([...spent].some(name=>key.includes(name))||[...pending.values()].some(p=>p.plan.toolName&&key.includes(p.plan.toolName))))throw problem('TISYA_TRANSPORT_UNVERIFIED','抗截断请求已变更或已发送，未再次提交');return original.call(target,input,init);}
    retire(key,e);const controller=new AbortController(),parent=init?.signal??input?.signal;

@@ -4,10 +4,10 @@ import {createPromptSourceMap,wrapRequestLayer} from './request-layers.mjs';
 export const NATIVE_DREAM_OPEN='<NativeDreamSources>';
 export const NATIVE_DREAM_CLOSE='</NativeDreamSources>';
 
-export function insertNativeDreamSources(messages,compiled,material){
+export function insertNativeDreamSources(messages,compiled,material,{expand=s=>s}={}){
  if(!material.length)return {messages,content:null};
  const content=[NATIVE_DREAM_OPEN,...material,NATIVE_DREAM_CLOSE].join('\n');
- const sourceMap=createPromptSourceMap(messages,compiled);
+ const sourceMap=createPromptSourceMap(messages,compiled,{expand});
  const active=compiled.layerPlan.entries.filter(entry=>entry.enabled&&!entry.marker);
  const boundary=id=>{
   const entry=active.find(candidate=>candidate.identifier===id);

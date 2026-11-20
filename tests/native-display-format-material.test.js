@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {displayFormatGroups,displayFormatMaterial} from '../engine/display-format.mjs';
+import {displayFormatGroups,displayFormatMaterial,restoreDisplayFormatEntities} from '../engine/display-format.mjs';
 import {createMatrixHost} from '../engine/host.mjs';
 import {baseline} from '../engine/config.mjs';
 import {Runtime} from '../engine/runtime.mjs';
@@ -22,11 +22,31 @@ async function fixture(options={}){
  const payload=()=>{const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier));return {messages:source.prompts.filter(p=>!p.marker&&p.enabled!==false&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))};};
  return {host,payload,ctx,setRules:next=>allowed=next};
 }
+test('only exact registered component tags recover from XML text without global entity decoding',()=>{
+ const registered=[row('<StatusPlaceHolderImpl/>'),...rules],input='前 &lt;StatusPlaceHolderImpl/&gt; &lt;bgm&gt;雨&lt;/bgm&gt; &lt;Unknown/&gt; &amp;lt;bgm&amp;gt; &quot; 后';
+ const restored=restoreDisplayFormatEntities(input,registered);
+ assert.equal(restored,'前 <StatusPlaceHolderImpl/> <bgm>雨</bgm> &lt;Unknown/&gt; &amp;lt;bgm&amp;gt; &quot; 后');
+ assert.equal(restoreDisplayFormatEntities(restored,registered),restored);
+ assert.equal(restoreDisplayFormatEntities(input,[]),input);
+});
+
 test('real matrix before/payloadReady feeds one allowed format summary into the existing material slot',async()=>{
  const f=await fixture();await f.host.before('normal');const payload=f.payload();payload.messages.push({role:'system',content:'原格式：正文末输出 <bgm>当前bgm:歌名 - 歌手</bgm>，接着输出日期和时间。'});await f.host.payloadReady(payload);
  const text=payload.messages.map(m=>m.content).join('\n');assert.equal(text.split('[NATIVE.DISPLAY.FORMATS]').length-1,1);assert.match(text,/组1：<bgm> <\/bgm>/);assert.match(text,/组2：<日期> <\/日期> <时间> <\/时间>/);assert.match(text,/原格式：正文末输出/);assert.match(text,/完整同组标签连续放在 extra/);assert.doesNotMatch(text,/PRIVATE_DISPLAY_SENTINEL/);
  await f.host.event('GENERATION_ENDED');f.setRules([]);await f.host.before('normal');const next=f.payload();await f.host.payloadReady(next);assert(!next.messages.some(m=>m.content.includes('[NATIVE.DISPLAY.FORMATS]')));
 });
+test('history restores registered component brackets while roles and unknown entities stay intact',async()=>{
+ const registered=[row('<StatusPlaceHolderImpl/>'),...rules],f=await fixture({getDisplayRules:()=>registered});await f.host.before('normal');const request=f.payload();
+ const close=request.messages.findIndex(m=>m.content.includes('[/Dream History]'));assert(close>0);
+ request.messages.splice(close,0,
+  {role:'assistant',content:'旧回复 &lt;StatusPlaceHolderImpl/&gt; &lt;Unknown/&gt; &amp;amp;'},
+  {role:'user',content:'继续 &lt;bgm&gt;雨&lt;/bgm&gt;'});
+ await f.host.payloadReady(request);
+ assert(request.messages.some(m=>m.role==='assistant'&&m.content==='旧回复 <StatusPlaceHolderImpl/> &lt;Unknown/&gt; &amp;amp;'));
+ assert(request.messages.some(m=>m.role==='user'&&m.content==='继续 <bgm>雨</bgm>'));
+ assert.equal(f.host.latest().promptAudit.narrativeSourceProjection.historyDisplayComponents,2);
+});
+
 test('changed display permission or format after preparation refuses stale request material',async()=>{
  const f=await fixture();await f.host.before('normal');const payload=f.payload();f.setRules([]);await assert.rejects(f.host.payloadReady(payload),{code:'DISPLAY_FORMAT_STALE'});
 });
