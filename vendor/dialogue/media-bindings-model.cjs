@@ -58,7 +58,7 @@
   function imagePresentation(media={},binding={},info=media['媒体配置']?.imageInfo){
     const p=presentation(binding.presentation),ratio=info?.contentAspect||info?.width/info?.height;
     return {...p,layout:p.composition==='auto'?(ratio>=.92?'avatar':ratio>=.66?'bust':ratio>=.43?'half':ratio>0?'figure':'bust'):p.composition,
-      frame:(p.background==='auto'?info?.background:p.background)==='transparent'?'cutout':'framed',known:info?.background==='opaque'||info?.background==='transparent'};
+      frame:(p.background==='auto'?info?.background:p.background)==='transparent'?'cutout':'framed',aspect:Number.isFinite(ratio)&&ratio>0?ratio:'',known:info?.background==='opaque'||info?.background==='transparent'};
   }
   // Only image pixels determine transparency; extension and dimensions are not evidence of alpha.
   function analyseImageData({data,width,height},naturalWidth=width,naturalHeight=height){

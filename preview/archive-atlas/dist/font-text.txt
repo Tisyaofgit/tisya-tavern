@@ -63,149 +63,7 @@ function applyConditionTemplates(registry){
  for(const item of registry.tables){item.assemble??=tableCondition(item.id);fields(item.fields,item.id);}for(const item of registry.types)fields(item.fields,'type');return registry;
 }
 
-const {applyConditionTemplates,validateCondition,CAPTURE_RULES}=__m["../../tables/conditions.js"];
-// Form definitions are data shared by Genesis, archive filling and the editor.
-const FORMAT = 'tisya.tables/1';
-const copy = value => structuredClone(value);
-const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
-const check = (ok, message) => { if (!ok) throw Error(message); };
-// JSON object property order is not part of a schema definition; array order remains significant.
-function sameDefinition(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((value,i)=>sameDefinition(value,b[i]));const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&sameDefinition(a[key],b[key]));}
-const normalized = text => String(text).normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s_·・-]+/gu, '');
-const f = (type='text', extra={}) => ({type, ...extra});
-const text = names => Object.fromEntries(names.split(' ').map(n => [n, f()]));
-const refs = names => Object.fromEntries(names.split(' ').map(n => [n, f('refs')]));
-const scale = () => f('object',{fields:{值:f('number'),最小:f('number'),最大:f('number'),低端:f(),高端:f(),依据:f('refs'),原生引用:f()}});
-const preferenceInterval = () => f('object',{ui:'bipolar-interval',fields:{左端:f('text',{required:true}),右端:f('text',{required:true}),下限:f('number',{required:true,min:-100,max:100}),上限:f('number',{required:true,min:-100,max:100}),依据:f('text',{required:true}),说明:f('text')}});
-const pair = () => f('object',{fields:{正面:scale(),负面:scale()}});
-const table = (id, name, fields, owner='archive') => ({id, name, aliases:[], version:1, owner, fields:{名称:f('text',{required:true}), ...fields}});
-const TABLES = [
- table('objects','常量档案',{类型:f('type',{required:true}),别名:f('texts'),...text('世界 描述 核心引用'),...refs('关联'),标签:f('texts'),发现环境:f('object',{fields:{地点:f('refs'),时段:f(),出现条件:f(),来源依据:f(),确认程度:f('enum',{values:['设定明确','当事人陈述','一次观察']}),可复用:f('boolean')}}),属性:f('object')}),
- table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts')}),
- table('scene','场景与全局进度',{...text('世界 时代 场景 地点 当前时间 阶段'),...refs('参与者'),标志:f('object')}),
- table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
- table('relations','关系',{主体:f('ref',{required:true}),对象:f('ref',{required:true}),维度:f('object'),好感:pair(),声望:pair(),印象:f('map',{items:scale()}),...refs('锚点事件'),...text('证据 生效时间')}),
- table('cognition','认知与心理',{主体:f('ref',{required:true}),...refs('事实'),...text('获知途径 确认程度 认识 心理 授权依据')}),
- table('holdings','持有与流转',{物品:f('ref',{required:true}),...refs('所有者 保管者 地点 容器'),数量:f('number'),...text('单位 流转原因 原生引用')}),
- table('tasks','任务待办',{...text('来源 发布者 目标 条件 下一步 截止时间'),类别:f('enum',{values:['主线','支线','日常','个人']}),进度:f('object',{fields:{当前:f('number'),目标:f('number'),单位:f()}}),...refs('负责人 前置任务 锚点事件'),蓝本节点:f(),状态:f('enum',{values:['发布','接受','进行','完成','取消']})}),
- table('timers','日程倒计时',{...text('时间基准 起点 到期时间 触发条件 失效条件 重复规则'),到期轮次:f('number',{description:'绝对已保留AI回复数；重投不新增轮次，非相对延后数'}),...refs('任务'),状态:f('enum',{values:['等待','到期','完成','取消']})}),
- table('clues','伏笔线索',{...text('已出现内容 阶段 公开范围 推进条件'),...refs('事件 对象')}),
- table('events','历史事件记忆',{...text('时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波'),触发线索:f('texts'),...refs('参与者 关联事件 前置事件 后续事件'),标签:f('texts'),原文段落:f('texts')}),
- table('activities','进行中事务',{主体:f('ref',{required:true}),...text('目标 行动 开始时间 推进至 预计结束 阻力 下一步'),进度:f('number',{min:0,max:100}),状态:f('enum',{values:['计划','进行','等待','完成','取消']}),...refs('任务 地点 知情依据 锚点事件'),资源:f('object')}),
- table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
- table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
- table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
- table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),倾向区间:f('map',{items:preferenceInterval()}),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
-];
-const TYPES = [
- {id:'character',name:'人物',aliases:['角色','人类','NPC','角色档案'],fields:{...text('身份 外貌 性格 背景')}},
- {id:'item',name:'物品',aliases:['道具','物件','装备'],fields:{...text('形态 用途 材质 规则')}},
- {id:'place',name:'地点',aliases:['场所','位置','地区'],fields:{...text('环境 位置 特征 出入条件')}},
- {id:'rule',name:'规则',aliases:['法则','机制','制度'],fields:{...text('适用范围 条件 效果 例外')}},
- {id:'organization',name:'组织',aliases:['势力','团体'],fields:{...text('职责 结构 立场 历史')}},
-].map(t=>({...t,version:1,parent:null}));
-const defaultRegistry = () => applyConditionTemplates({tables:copy(TABLES),types:copy(TYPES)});
-const ID = /^[a-z][a-z0-9._-]{0,79}$/;
-const denied = new Set(['__proto__','constructor','prototype']);
-function registryIndex(registry){
- check(object(registry)&&Array.isArray(registry.tables)&&Array.isArray(registry.types),'模板注册表损坏');
- const result = {};
- for(const kind of ['tables','types']){
-  const names=new Map(),ids=new Set();
-  for(const item of registry[kind]){
-   check(ID.test(item.id)&&!ids.has(item.id),'模板 ID 无效或重复：'+item.id);ids.add(item.id);
-   check(typeof item.name==='string'&&item.name.trim()&&Array.isArray(item.aliases)&&Number.isSafeInteger(item.version)&&item.version>0,'模板名称或版本无效');
-   for(const label of [item.id,item.name,...item.aliases]){
-    check(typeof label==='string'&&label.trim(),'模板别名不能为空');const key=normalized(label);
-    check(!names.has(key)||names.get(key).id===item.id,'同义名称已属于 '+names.get(key)?.name+'：'+label);names.set(key,item);
-   }
-   check(object(item.fields)&&Object.keys(item.fields).length>0,'模板必须定义字段');
-   validateFields(item.fields);if(item.assemble)validateCondition(item.assemble);
-  }
-  result[kind]=names;
- }
- for(const type of registry.types){const seen=new Set([type.id]);let parent=type.parent;while(parent){const next=registry.types.find(t=>t.id===parent);check(next&&!seen.has(parent),'父模板不存在或循环');seen.add(parent);parent=next.parent;}}
- return result;
-}
-function addTypes(registry, proposals=[]){
- check(Array.isArray(proposals)&&proposals.length<=20,'新模板数量无效');const next=copy(registry);
- for(const p of proposals){
-  check(object(p),'新模板无效');const index=registryIndex(next).types;const same=index.get(normalized(p.name));
-  if(same){check(same.id===p.id,'请复用已有模板 '+same.id+'，不能另建同义类名');check(JSON.stringify(same)===JSON.stringify(p),'已有模板不能由自动归档覆盖');continue;}
-  check(p.parent&&next.types.some(t=>t.id===p.parent),'新模板必须扩展已登记父模板');next.types.push(copy(p));registryIndex(next);
- }
- return next;
-}
-function typeFields(registry,id){const t=registry.types.find(t=>t.id===id);check(t,'未登记类型：'+id);return {...(t.parent?typeFields(registry,t.parent):{}),...t.fields};}
-const FIELD_TYPES=['text','texts','number','boolean','enum','ref','refs','json','object','map','array','type','time','duration'];
-function validateFields(fields,depth=0){
- check(object(fields)&&depth<12,'字段嵌套过深或无效');const names=new Map();
- for(const [key,def] of Object.entries(fields)){
-  check(!denied.has(key)&&object(def)&&FIELD_TYPES.includes(def.type),'字段定义无效：'+key);
-  for(const name of [key,...(def.aliases??[])]){check(typeof name==='string'&&name.trim(),'字段别名无效');const n=normalized(name);check(!names.has(n)||names.get(n)===key,'字段同义名冲突：'+name);names.set(n,key);}
-  if(def.capture!==undefined)check(Object.hasOwn(CAPTURE_RULES,def.capture),'录入条件模板不存在：'+def.capture);if(def.include)validateCondition(def.include);
-  if(def.follow!==undefined)check(['ref','refs'].includes(def.type)&&['identity','record'].includes(def.follow),'引用展开条件无效：'+key);
-  if(def.type==='enum')check(Array.isArray(def.values)&&def.values.length&&def.values.every(x=>typeof x==='string'),'枚举未定义：'+key);
-  if(def.fields)validateFields(def.fields,depth+1);
-  if(['array','map'].includes(def.type)){check(object(def.items),'集合必须定义 items：'+key);validateFields({item:def.items},depth+1);}
-  if(def.formula)validateFormula(def.formula);
- }
-}
-function valueValid(v,def,depth=0){
- if(depth>12)return false;if(v===null)return def.nullable===true||def.type==='json';
- switch(def.type){
- case'text':case'time':case'ref':case'type':return typeof v==='string'&&(!def.required||!!v.trim());
- case'texts':case'refs':return Array.isArray(v)&&v.every(x=>typeof x==='string'&&!!x.trim())&&new Set(v).size===v.length;
- case'number':case'duration':return typeof v==='number'&&Number.isFinite(v)&&(def.min===undefined||v>=def.min)&&(def.max===undefined||v<=def.max);
- case'boolean':return typeof v==='boolean';case'enum':return def.values.includes(v);
- case'array':return Array.isArray(v)&&v.every(x=>valueValid(x,def.items,depth+1))&&(!def.idKey||v.every(x=>object(x)&&typeof x[def.idKey]==='string')&&new Set(v.map(x=>x[def.idKey])).size===v.length);
- case'map':return object(v)&&Object.entries(v).every(([k,x])=>!denied.has(k)&&valueValid(x,def.items,depth+1));
- case'object':return object(v)&&(!def.fields||Object.entries(v).every(([k,x])=>!denied.has(k)&&(def.fields[k]?valueValid(x,def.fields[k],depth+1):def.additionalProperties===true))&&Object.entries(def.fields).every(([k,d])=>!d.required||Object.hasOwn(v,k)));
- case'json':return v!==undefined;default:return false;
- }
-}
-function invalidPath(v,d,path){if(valueValid(v,d))return '';if(d.type==='array'&&Array.isArray(v)){for(let i=0;i<v.length;i++){const p=invalidPath(v[i],d.items,path+'['+i+']');if(p)return p;}}if(object(v)&&['object','map'].includes(d.type))for(const [k,x]of Object.entries(v)){const child=d.type==='map'?d.items:d.fields?.[k];if(child){const p=invalidPath(x,child,path+'.'+k);if(p)return p;}}return path+' ('+d.type+')';}
-function mapValue(v,def,fn,path='值'){if(v===undefined||v===null)return v;check(valueValid(v,def),'关联字段类型无效：'+invalidPath(v,def,path));if(def.type==='ref')return fn(v);if(def.type==='refs')return v.map(fn);if(def.type==='array')return v.map((x,i)=>mapValue(x,def.items,fn,path+'['+i+']'));if(def.type==='map')return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,mapValue(x,def.items,fn,path+'.'+k)]));if(def.type==='object'&&def.fields)return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,def.fields[k]?mapValue(x,def.fields[k],fn,path+'.'+k):x]));return v;}
-function mapRowReferences(row,registry,fn){const t=registry.tables.find(t=>t.id===row.table),prefix=(row.id??row.table)+'.';for(const [k,d]of Object.entries(t.fields))if(Object.hasOwn(row.values,k))row.values[k]=mapValue(row.values[k],d,fn,prefix+k);if(row.table==='objects')for(const [k,d]of Object.entries(typeFields(registry,row.values.类型)))if(Object.hasOwn(row.values.属性??{},k))row.values.属性[k]=mapValue(row.values.属性[k],d,fn,prefix+'属性.'+k);return row;}
-function validateRow(registry,row){
- check(object(row)&&typeof row.id==='string'&&row.id&&object(row.values),'表单记录无效');
- const table=registry.tables.find(t=>t.id===row.table);check(table,'未知表：'+row.table);
- for(const [key,def]of Object.entries(table.fields))check(!def.required||Object.hasOwn(row.values,key),'缺少必填字段：'+key);
- for(const [key,value]of Object.entries(row.values)){const def=table.fields[key];check(def&&!denied.has(key),'未知字段：'+key);check(!def.formula,'公式字段由程序计算：'+key);check(valueValid(value,def),'字段类型不符：'+key);}
- check(object(row.access)&&Array.isArray(row.access.readers)&&Array.isArray(row.access.knowers)&&row.access.readers.every(x=>typeof x==='string')&&row.access.knowers.every(x=>typeof x==='string'),'记录缺少读者／人物知情范围');
- if(row.table==='state')check([Object.hasOwn(row.values,'值'),!!row.values.原生引用,!!row.values.值引用].filter(Boolean).length===1,'当前状态必须且只能填写值、值引用或原生引用');
- if(row.table==='preferences')for(const [name,axis]of Object.entries(row.values.倾向区间??{})){check(name.trim()&&axis.左端!==axis.右端,'偏好刻度两端必须表示不同倾向');check(axis.下限<=axis.上限,'偏好区间下限不能高于上限');}
- if(row.table==='objects'){
-  const type=registry.types.find(t=>t.id===row.values.类型);check(type,'对象类型未登记');
-  const fields=typeFields(registry,type.id);for(const [key,def]of Object.entries(fields))check(!def.required||Object.hasOwn(row.values.属性??{},key),'缺少类型必填属性：'+key);for(const [key,value]of Object.entries(row.values.属性??{}))check(fields[key]&&valueValid(value,fields[key]),'类型属性无效：'+key);
- }
- for(const group of ['好感','声望'])if(row.table==='relations'&&row.values[group])for(const axis of Object.values(row.values[group]))validateScale(axis);if(row.table==='relations')for(const axis of Object.values(row.values.印象??{}))validateScale(axis);
- return row;
-}
-function references(row,registry){const refs=[];mapRowReferences(copy(row),registry,id=>{refs.push(id);return id;});return refs;}
-function validateReferences(rows,registry){const ids=new Set(rows.map(r=>r.id));for(const row of rows)for(const id of references(row,registry))check(ids.has(id),'关联对象不存在：'+id);}
-// Formula AST, not JavaScript. Bounded lookup; no eval, property paths or network.
-const OPS=new Set(['field','lookup','count','unique','join','add','subtract']);
-function validateFormula(node,depth=0){check(depth<12&&object(node)&&OPS.has(node.op),'公式无效或过深');check(!Object.keys(node).some(k=>denied.has(k)),'公式键名无效');for(const key of ['field','match'])if(node[key])check(typeof node[key]==='string'&&!denied.has(node[key]),'公式字段无效');if(node.args){check(Array.isArray(node.args)&&node.args.length<=30,'公式参数过多');for(const n of node.args)if(object(n))validateFormula(n,depth+1);}return node;}
-function formula(node,row,rows,depth=0){validateFormula(node,depth);const args=(node.args??[]).map(x=>object(x)?formula(x,row,rows,depth+1):x);switch(node.op){
- case'field':return row.values[node.field];
- case'lookup':{check(typeof node.table==='string'&&typeof node.field==='string'&&typeof node.match==='string','查询公式缺少字段');return rows.filter(r=>r.table===node.table&&r.values[node.match]===args[0]).map(r=>r.values[node.field]);}
- case'count':check(Array.isArray(args[0]),'count 需要数组');return args[0].length;
- case'unique':check(Array.isArray(args[0]),'unique 需要数组');return [...new Set(args[0])];
- case'join':check(Array.isArray(args[0]),'join 需要数组');return args[0].join(String(args[1]??'、'));
- case'add':case'subtract':check(args.length===2&&args.every(Number.isFinite),'算术公式需要两个数');return node.op==='add'?args[0]+args[1]:args[0]-args[1];}}
-function derive(rows,registry){return rows.map(row=>{const out=copy(row),visible=rows.filter(other=>row.access.readers.every(r=>other.access.readers.includes(r))&&row.access.knowers.every(r=>other.access.knowers.includes(r)));for(const [key,field]of Object.entries(registry.tables.find(t=>t.id===row.table).fields))if(field.formula)out.values[key]=formula(field.formula,row,visible);return out;});}
-const TABLE_SETTINGS = Object.freeze({enabled:false,continuity:'hybrid',styleEnabled:true,archive:true,plot:false,preferences:false,offstage:false,nativeBridge:false,focusObjects:[],focusText:'',playerObjects:[],objectsSeparate:false,injection:'worldbook',retrieval:'keywords',topK:8,originBook:'',sessionBook:'',originPins:[],hardRules:[],taskInstructions:{},contextChars:40000});
-function tableSettings(world){const s={...copy(TABLE_SETTINGS),styleEnabled:world.modes?.[world.mode]?.narrative?.缇斯亚叙事防八股??true,...world.tables};check(['hybrid','tables'].includes(s.continuity),'历史接续方式无效');check(['worldbook','direct'].includes(s.injection),'表单注入方式无效');check(['keywords','vector'].includes(s.retrieval),'检索方式无效');for(const key of ['enabled','styleEnabled','archive','plot','preferences','offstage','nativeBridge','objectsSeparate'])check(typeof s[key]==='boolean','表格开关无效：'+key);check(Number.isSafeInteger(s.topK)&&s.topK>=0&&s.topK<=100,'检索数量须为 0—100');check(Number.isSafeInteger(s.contextChars)&&s.contextChars>=2000,'表格上下文预算至少 2000 字符');check(Array.isArray(s.hardRules)&&s.hardRules.every(x=>typeof x==='string'),'明确偏好规则格式无效');check(Array.isArray(s.focusObjects)&&s.focusObjects.every(x=>typeof x==='string')&&Array.isArray(s.playerObjects)&&s.playerObjects.every(x=>typeof x==='string')&&typeof s.focusText==='string','推进关注配置无效');check(Array.isArray(s.originPins),'原点版本引用无效');check(object(s.taskInstructions)&&Object.entries(s.taskInstructions).every(([k,v])=>['ruleReview','tableAssistant','tableArchive','objectArchive','historyImport','tableGenesis','plotAdvance','preferenceAnalysis','templateInit','assetAdapt','nativeFill'].includes(k)&&typeof v==='string'),'辅助模式补充指令无效');return s;}
-
-const FORM_GROUPS=Object.freeze([{id:'definitions',name:'世界定义',tables:['facts']},{id:'archives',name:'对象底档',tables:['objects']},{id:'current',name:'当前状态',tables:['scene','state']},{id:'relationships',name:'关系与归属',tables:['relations','holdings']},{id:'knowledge',name:'认知与信息',tables:['cognition','experiences','growth']},{id:'affairs',name:'事务与日程',tables:['tasks','timers','activities']},{id:'history',name:'事件与修改历史',tables:['events']},{id:'threads',name:'线索与未解事项',tables:['clues']}]);
-function upgradeRegistry(source){const r=copy(source),state=r.tables.find(t=>t.id==='state'),objects=r.tables.find(t=>t.id==='objects');if(state){if(JSON.stringify(state.fields.值)===JSON.stringify({type:'json',required:true}))state.fields.值={type:'json'};state.fields.值引用??={type:'ref'};state.fields.有效性??=copy(TABLES.find(t=>t.id==='state').fields.有效性);}if(objects)objects.fields.发现环境??=copy(TABLES.find(t=>t.id==='objects').fields.发现环境);for(const def of TABLES){const old=r.tables.find(t=>t.id===def.id);if(!old)r.tables.push(copy(def));else for(const [name,field]of Object.entries(def.fields))old.fields[name]??=copy(field);}return applyConditionTemplates(r);}
-
-function validateScale(axis){check(!(axis.原生引用&&Object.hasOwn(axis,'值')),'原生刻度只保存引用，不复制数值');if(axis.值!==undefined){check(Number.isFinite(axis.最小)&&Number.isFinite(axis.最大)&&axis.最小<axis.最大,'刻度须明确上下限');check(axis.值>=axis.最小&&axis.值<=axis.最大,'刻度值超出范围');}return axis;}
-
-function isObjectType(registry,row,base){let type=registry.types.find(t=>t.id===row.values.类型);const seen=new Set();while(type&&!seen.has(type.id)){if(type.id===base)return true;seen.add(type.id);type=registry.types.find(t=>t.id===type.parent);}return false;}
-
-// FT01 candidate definitions. Not imported by the production service; no stored registry changes.
+// Shared FT01 definitions. W61 installs only the approved optional facts subrecords; other candidate groups retain their existing opt-in workflow.
 const FOUNDATION_DEFINITIONS = {
   "format": "tisya.foundation-template-catalog/1",
   "status": "candidate-not-installed",
@@ -1261,6 +1119,149 @@ const FOUNDATION_DEFINITIONS = {
   ]
 };
 
+const {applyConditionTemplates,validateCondition,CAPTURE_RULES}=__m["../../tables/conditions.js"];
+const {FOUNDATION_DEFINITIONS}=__m["../../tables/foundation-definitions.js"];
+// Form definitions are data shared by Genesis, archive filling and the editor.
+const FORMAT = 'tisya.tables/1';
+const copy = value => structuredClone(value);
+const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
+const check = (ok, message) => { if (!ok) throw Error(message); };
+// JSON object property order is not part of a schema definition; array order remains significant.
+function sameDefinition(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((value,i)=>sameDefinition(value,b[i]));const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(key=>Object.hasOwn(b,key)&&sameDefinition(a[key],b[key]));}
+const normalized = text => String(text).normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s_·・-]+/gu, '');
+const f = (type='text', extra={}) => ({type, ...extra});
+const text = names => Object.fromEntries(names.split(' ').map(n => [n, f()]));
+const refs = names => Object.fromEntries(names.split(' ').map(n => [n, f('refs')]));
+const scale = () => f('object',{fields:{值:f('number'),最小:f('number'),最大:f('number'),低端:f(),高端:f(),依据:f('refs'),原生引用:f()}});
+const preferenceInterval = () => f('object',{ui:'bipolar-interval',fields:{左端:f('text',{required:true}),右端:f('text',{required:true}),下限:f('number',{required:true,min:-100,max:100}),上限:f('number',{required:true,min:-100,max:100}),依据:f('text',{required:true}),说明:f('text')}});
+const pair = () => f('object',{fields:{正面:scale(),负面:scale()}});
+const table = (id, name, fields, owner='archive') => ({id, name, aliases:[], version:1, owner, fields:{名称:f('text',{required:true}), ...fields}});
+const TABLES = [
+ table('objects','常量档案',{类型:f('type',{required:true}),别名:f('texts'),...text('世界 描述 核心引用'),...refs('关联'),标签:f('texts'),发现环境:f('object',{fields:{地点:f('refs'),时段:f(),出现条件:f(),来源依据:f(),确认程度:f('enum',{values:['设定明确','当事人陈述','一次观察']}),可复用:f('boolean')}}),属性:f('object')}),
+ table('facts','事实与发现',{...text('命题 条件 生效时间 验证状态'),...refs('对象 替代事实'),证据:f('texts'),...structuredClone(FOUNDATION_DEFINITIONS.schemaChanges.find(x=>x.kind==='table'&&x.id==='facts').fields)}),
+ table('scene','场景与全局进度',{...text('世界 时代 场景 地点 当前时间 阶段'),...refs('参与者'),标志:f('object')}),
+ table('state','对象当前状态',{对象:f('ref',{required:true}),字段:f('text',{required:true}),有效性:f('enum',{values:['有效','失效','待确认']}),值:f('json'),值引用:f('ref'),...text('生效时间 失效时间 变动原因'),原生引用:f('text')}),
+ table('relations','关系',{主体:f('ref',{required:true}),对象:f('ref',{required:true}),维度:f('object'),好感:pair(),声望:pair(),印象:f('map',{items:scale()}),...refs('锚点事件'),...text('证据 生效时间')}),
+ table('cognition','认知与心理',{主体:f('ref',{required:true}),...refs('事实'),...text('获知途径 确认程度 认识 心理 授权依据')}),
+ table('holdings','持有与流转',{物品:f('ref',{required:true}),...refs('所有者 保管者 地点 容器'),数量:f('number'),...text('单位 流转原因 原生引用')}),
+ table('tasks','任务待办',{...text('来源 发布者 目标 条件 下一步 截止时间'),类别:f('enum',{values:['主线','支线','日常','个人']}),进度:f('object',{fields:{当前:f('number'),目标:f('number'),单位:f()}}),...refs('负责人 前置任务 锚点事件'),蓝本节点:f(),状态:f('enum',{values:['发布','接受','进行','完成','取消']})}),
+ table('timers','日程倒计时',{...text('时间基准 起点 到期时间 触发条件 失效条件 重复规则'),到期轮次:f('number',{description:'绝对已保留AI回复数；重投不新增轮次，非相对延后数'}),...refs('任务'),状态:f('enum',{values:['等待','到期','完成','取消']})}),
+ table('clues','伏笔线索',{...text('已出现内容 阶段 公开范围 推进条件'),...refs('事件 对象')}),
+ table('events','历史事件记忆',{...text('时间 时间范围 地点 经过 结果 场面 台词 意象 前因 影响 后续 情感余波 原文来源'),触发线索:f('texts'),...refs('参与者 关联事件 前置事件 后续事件'),标签:f('texts'),原文段落:f('texts'),原文段号:f('texts')}),
+ table('activities','进行中事务',{主体:f('ref',{required:true}),...text('目标 行动 开始时间 推进至 预计结束 阻力 下一步'),进度:f('number',{min:0,max:100}),状态:f('enum',{values:['计划','进行','等待','完成','取消']}),...refs('任务 地点 知情依据 锚点事件'),资源:f('object')}),
+ table('experiences','习惯喜好与回忆',{主体:f('ref',{required:true}),...refs('相关对象 锚点事件'),类别:f('enum',{values:['喜好','厌恶','习惯','回忆','安心方式','边界']}),...text('情境 内容 感受 例外 表现方式 回应边界 内在动因 初始成因 心理'),动作:f('texts'),神态:f('texts'),语言:f('texts'),触发线索:f('texts'),默契层次:f('enum',{values:['共同经历','明确约定','单方联想','待确认']}),确定性:f('enum',{values:['明确自述','反复表现','单次观察','暂定']}),有效性:f('enum',{values:['有效','已改变','待确认']})}),
+ table('growth','角色成长',{主体:f('ref',{required:true}),...text('方面 原有倾向 当前倾向 变化依据 反例 生效时间'),...refs('锚点事件'),阶段:f('enum',{values:['萌芽','积累','稳定','回退']}),原生引用:f()}),
+ table('native_cells','原生变量映射',{路径:f('text',{required:true}),值:f('json',{required:true}),启用:f('boolean')}),
+ table('preferences','用户叙事偏好',{...text('内容 范围 证据 修订原因'),性质:f('enum',{values:['明确要求','推测偏好']}),强度:f('enum',{values:['必须','喜爱','厌恶','禁止','偏好']}),类别:f('enum',{values:['用词','NSFW题材','SFW角色表现','剧情走向','文风','特定情节']}),标签:f('texts'),倾向区间:f('map',{items:preferenceInterval()}),作用域:f('object',{fields:{全局:f('boolean'),用户角色:f('texts'),角色卡:f('texts'),世界:f('texts'),会话:f('texts')}}),置信度:f('number'),例外:f('texts'),启用:f('boolean')},'preferences'),
+];
+const TYPES = [
+ {id:'character',name:'人物',aliases:['角色','人类','NPC','角色档案'],fields:{...text('身份 外貌 性格 背景')}},
+ {id:'item',name:'物品',aliases:['道具','物件','装备'],fields:{...text('形态 用途 材质 规则')}},
+ {id:'place',name:'地点',aliases:['场所','位置','地区'],fields:{...text('环境 位置 特征 出入条件')}},
+ {id:'rule',name:'规则',aliases:['法则','机制','制度'],fields:{...text('适用范围 条件 效果 例外')}},
+ {id:'organization',name:'组织',aliases:['势力','团体'],fields:{...text('职责 结构 立场 历史')}},
+].map(t=>({...t,version:1,parent:null}));
+const defaultRegistry = () => applyConditionTemplates({tables:copy(TABLES),types:copy(TYPES)});
+const ID = /^[a-z][a-z0-9._-]{0,79}$/;
+const denied = new Set(['__proto__','constructor','prototype']);
+function registryIndex(registry){
+ check(object(registry)&&Array.isArray(registry.tables)&&Array.isArray(registry.types),'模板注册表损坏');
+ const result = {};
+ for(const kind of ['tables','types']){
+  const names=new Map(),ids=new Set();
+  for(const item of registry[kind]){
+   check(ID.test(item.id)&&!ids.has(item.id),'模板 ID 无效或重复：'+item.id);ids.add(item.id);
+   check(typeof item.name==='string'&&item.name.trim()&&Array.isArray(item.aliases)&&Number.isSafeInteger(item.version)&&item.version>0,'模板名称或版本无效');
+   for(const label of [item.id,item.name,...item.aliases]){
+    check(typeof label==='string'&&label.trim(),'模板别名不能为空');const key=normalized(label);
+    check(!names.has(key)||names.get(key).id===item.id,'同义名称已属于 '+names.get(key)?.name+'：'+label);names.set(key,item);
+   }
+   check(object(item.fields)&&Object.keys(item.fields).length>0,'模板必须定义字段');
+   validateFields(item.fields);if(item.assemble)validateCondition(item.assemble);
+  }
+  result[kind]=names;
+ }
+ for(const type of registry.types){const seen=new Set([type.id]);let parent=type.parent;while(parent){const next=registry.types.find(t=>t.id===parent);check(next&&!seen.has(parent),'父模板不存在或循环');seen.add(parent);parent=next.parent;}}
+ return result;
+}
+function addTypes(registry, proposals=[]){
+ check(Array.isArray(proposals)&&proposals.length<=20,'新模板数量无效');const next=copy(registry);
+ for(const p of proposals){
+  check(object(p),'新模板无效');const index=registryIndex(next).types;const same=index.get(normalized(p.name));
+  if(same){check(same.id===p.id,'请复用已有模板 '+same.id+'，不能另建同义类名');check(JSON.stringify(same)===JSON.stringify(p),'已有模板不能由自动归档覆盖');continue;}
+  check(p.parent&&next.types.some(t=>t.id===p.parent),'新模板必须扩展已登记父模板');next.types.push(copy(p));registryIndex(next);
+ }
+ return next;
+}
+function typeFields(registry,id){const t=registry.types.find(t=>t.id===id);check(t,'未登记类型：'+id);return {...(t.parent?typeFields(registry,t.parent):{}),...t.fields};}
+const FIELD_TYPES=['text','texts','number','boolean','enum','ref','refs','json','object','map','array','type','time','duration'];
+function validateFields(fields,depth=0){
+ check(object(fields)&&depth<12,'字段嵌套过深或无效');const names=new Map();
+ for(const [key,def] of Object.entries(fields)){
+  check(!denied.has(key)&&object(def)&&FIELD_TYPES.includes(def.type),'字段定义无效：'+key);
+  for(const name of [key,...(def.aliases??[])]){check(typeof name==='string'&&name.trim(),'字段别名无效');const n=normalized(name);check(!names.has(n)||names.get(n)===key,'字段同义名冲突：'+name);names.set(n,key);}
+  if(def.capture!==undefined)check(Object.hasOwn(CAPTURE_RULES,def.capture),'录入条件模板不存在：'+def.capture);if(def.include)validateCondition(def.include);
+  if(def.follow!==undefined)check(['ref','refs'].includes(def.type)&&['identity','record'].includes(def.follow),'引用展开条件无效：'+key);
+  if(def.type==='enum')check(Array.isArray(def.values)&&def.values.length&&def.values.every(x=>typeof x==='string'),'枚举未定义：'+key);
+  if(def.fields)validateFields(def.fields,depth+1);
+  if(['array','map'].includes(def.type)){check(object(def.items),'集合必须定义 items：'+key);validateFields({item:def.items},depth+1);}
+  if(def.formula)validateFormula(def.formula);
+ }
+}
+function valueValid(v,def,depth=0){
+ if(depth>12)return false;if(v===null)return def.nullable===true||def.type==='json';
+ switch(def.type){
+ case'text':case'time':case'ref':case'type':return typeof v==='string'&&(!def.required||!!v.trim());
+ case'texts':case'refs':return Array.isArray(v)&&v.every(x=>typeof x==='string'&&!!x.trim())&&new Set(v).size===v.length;
+ case'number':case'duration':return typeof v==='number'&&Number.isFinite(v)&&(def.min===undefined||v>=def.min)&&(def.max===undefined||v<=def.max);
+ case'boolean':return typeof v==='boolean';case'enum':return def.values.includes(v);
+ case'array':return Array.isArray(v)&&v.every(x=>valueValid(x,def.items,depth+1))&&(!def.idKey||v.every(x=>object(x)&&typeof x[def.idKey]==='string')&&new Set(v.map(x=>x[def.idKey])).size===v.length);
+ case'map':return object(v)&&Object.entries(v).every(([k,x])=>!denied.has(k)&&valueValid(x,def.items,depth+1));
+ case'object':return object(v)&&(!def.fields||Object.entries(v).every(([k,x])=>!denied.has(k)&&(def.fields[k]?valueValid(x,def.fields[k],depth+1):def.additionalProperties===true))&&Object.entries(def.fields).every(([k,d])=>!d.required||Object.hasOwn(v,k)));
+ case'json':return v!==undefined;default:return false;
+ }
+}
+function invalidPath(v,d,path){if(valueValid(v,d))return '';if(d.type==='array'&&Array.isArray(v)){for(let i=0;i<v.length;i++){const p=invalidPath(v[i],d.items,path+'['+i+']');if(p)return p;}}if(object(v)&&['object','map'].includes(d.type))for(const [k,x]of Object.entries(v)){const child=d.type==='map'?d.items:d.fields?.[k];if(child){const p=invalidPath(x,child,path+'.'+k);if(p)return p;}}return path+' ('+d.type+')';}
+function mapValue(v,def,fn,path='值'){if(v===undefined||v===null)return v;check(valueValid(v,def),'关联字段类型无效：'+invalidPath(v,def,path));if(def.type==='ref')return fn(v);if(def.type==='refs')return v.map(fn);if(def.type==='array')return v.map((x,i)=>mapValue(x,def.items,fn,path+'['+i+']'));if(def.type==='map')return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,mapValue(x,def.items,fn,path+'.'+k)]));if(def.type==='object'&&def.fields)return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,def.fields[k]?mapValue(x,def.fields[k],fn,path+'.'+k):x]));return v;}
+function mapRowReferences(row,registry,fn){const t=registry.tables.find(t=>t.id===row.table),prefix=(row.id??row.table)+'.';for(const [k,d]of Object.entries(t.fields))if(Object.hasOwn(row.values,k))row.values[k]=mapValue(row.values[k],d,fn,prefix+k);if(row.table==='objects')for(const [k,d]of Object.entries(typeFields(registry,row.values.类型)))if(Object.hasOwn(row.values.属性??{},k))row.values.属性[k]=mapValue(row.values.属性[k],d,fn,prefix+'属性.'+k);return row;}
+function validateRow(registry,row){
+ check(object(row)&&typeof row.id==='string'&&row.id&&object(row.values),'表单记录无效');
+ const table=registry.tables.find(t=>t.id===row.table);check(table,'未知表：'+row.table);
+ for(const [key,def]of Object.entries(table.fields))check(!def.required||Object.hasOwn(row.values,key),'缺少必填字段：'+key);
+ for(const [key,value]of Object.entries(row.values)){const def=table.fields[key];check(def&&!denied.has(key),'未知字段：'+key);check(!def.formula,'公式字段由程序计算：'+key);check(valueValid(value,def),'字段类型不符：'+key);}
+ check(object(row.access)&&Array.isArray(row.access.readers)&&Array.isArray(row.access.knowers)&&row.access.readers.every(x=>typeof x==='string')&&row.access.knowers.every(x=>typeof x==='string'),'记录缺少读者／人物知情范围');
+ if(row.table==='state')check([Object.hasOwn(row.values,'值'),!!row.values.原生引用,!!row.values.值引用].filter(Boolean).length===1,'当前状态必须且只能填写值、值引用或原生引用');
+ if(row.table==='preferences')for(const [name,axis]of Object.entries(row.values.倾向区间??{})){check(name.trim()&&axis.左端!==axis.右端,'偏好刻度两端必须表示不同倾向');check(axis.下限<=axis.上限,'偏好区间下限不能高于上限');}
+ if(row.table==='objects'){
+  const type=registry.types.find(t=>t.id===row.values.类型);check(type,'对象类型未登记');
+  const fields=typeFields(registry,type.id);for(const [key,def]of Object.entries(fields))check(!def.required||Object.hasOwn(row.values.属性??{},key),'缺少类型必填属性：'+key);for(const [key,value]of Object.entries(row.values.属性??{}))check(fields[key]&&valueValid(value,fields[key]),'类型属性无效：'+key);
+ }
+ for(const group of ['好感','声望'])if(row.table==='relations'&&row.values[group])for(const axis of Object.values(row.values[group]))validateScale(axis);if(row.table==='relations')for(const axis of Object.values(row.values.印象??{}))validateScale(axis);
+ return row;
+}
+function references(row,registry){const refs=[];mapRowReferences(copy(row),registry,id=>{refs.push(id);return id;});return refs;}
+function validateReferences(rows,registry){const ids=new Set(rows.map(r=>r.id));for(const row of rows)for(const id of references(row,registry))check(ids.has(id),'关联对象不存在：'+id);}
+// Formula AST, not JavaScript. Bounded lookup; no eval, property paths or network.
+const OPS=new Set(['field','lookup','count','unique','join','add','subtract']);
+function validateFormula(node,depth=0){check(depth<12&&object(node)&&OPS.has(node.op),'公式无效或过深');check(!Object.keys(node).some(k=>denied.has(k)),'公式键名无效');for(const key of ['field','match'])if(node[key])check(typeof node[key]==='string'&&!denied.has(node[key]),'公式字段无效');if(node.args){check(Array.isArray(node.args)&&node.args.length<=30,'公式参数过多');for(const n of node.args)if(object(n))validateFormula(n,depth+1);}return node;}
+function formula(node,row,rows,depth=0){validateFormula(node,depth);const args=(node.args??[]).map(x=>object(x)?formula(x,row,rows,depth+1):x);switch(node.op){
+ case'field':return row.values[node.field];
+ case'lookup':{check(typeof node.table==='string'&&typeof node.field==='string'&&typeof node.match==='string','查询公式缺少字段');return rows.filter(r=>r.table===node.table&&r.values[node.match]===args[0]).map(r=>r.values[node.field]);}
+ case'count':check(Array.isArray(args[0]),'count 需要数组');return args[0].length;
+ case'unique':check(Array.isArray(args[0]),'unique 需要数组');return [...new Set(args[0])];
+ case'join':check(Array.isArray(args[0]),'join 需要数组');return args[0].join(String(args[1]??'、'));
+ case'add':case'subtract':check(args.length===2&&args.every(Number.isFinite),'算术公式需要两个数');return node.op==='add'?args[0]+args[1]:args[0]-args[1];}}
+function derive(rows,registry){return rows.map(row=>{const out=copy(row),visible=rows.filter(other=>row.access.readers.every(r=>other.access.readers.includes(r))&&row.access.knowers.every(r=>other.access.knowers.includes(r)));for(const [key,field]of Object.entries(registry.tables.find(t=>t.id===row.table).fields))if(field.formula)out.values[key]=formula(field.formula,row,visible);return out;});}
+const TABLE_SETTINGS = Object.freeze({enabled:false,continuity:'hybrid',styleEnabled:true,archive:true,plot:false,preferences:false,offstage:false,nativeBridge:false,focusObjects:[],focusText:'',playerObjects:[],objectsSeparate:false,injection:'worldbook',retrieval:'keywords',topK:8,originBook:'',sessionBook:'',originPins:[],hardRules:[],taskInstructions:{}});
+function tableSettings(world){const s={...copy(TABLE_SETTINGS),styleEnabled:world.modes?.[world.mode]?.narrative?.缇斯亚叙事防八股??true,...world.tables};check(['hybrid','tables'].includes(s.continuity),'历史接续方式无效');check(['worldbook','direct'].includes(s.injection),'表单注入方式无效');check(['keywords','vector'].includes(s.retrieval),'检索方式无效');for(const key of ['enabled','styleEnabled','archive','plot','preferences','offstage','nativeBridge','objectsSeparate'])check(typeof s[key]==='boolean','表格开关无效：'+key);check(Number.isSafeInteger(s.topK)&&s.topK>=0&&s.topK<=100,'检索数量须为 0—100');check(Array.isArray(s.hardRules)&&s.hardRules.every(x=>typeof x==='string'),'明确偏好规则格式无效');check(Array.isArray(s.focusObjects)&&s.focusObjects.every(x=>typeof x==='string')&&Array.isArray(s.playerObjects)&&s.playerObjects.every(x=>typeof x==='string')&&typeof s.focusText==='string','推进关注配置无效');check(Array.isArray(s.originPins),'原点版本引用无效');check(object(s.taskInstructions)&&Object.entries(s.taskInstructions).every(([k,v])=>['ruleReview','tableAssistant','tableArchive','objectArchive','historyImport','tableGenesis','plotAdvance','preferenceAnalysis','templateInit','assetAdapt','nativeFill'].includes(k)&&typeof v==='string'),'辅助模式补充指令无效');return s;}
+
+const FORM_GROUPS=Object.freeze([{id:'definitions',name:'世界定义',tables:['facts']},{id:'archives',name:'对象底档',tables:['objects']},{id:'current',name:'当前状态',tables:['scene','state']},{id:'relationships',name:'关系与归属',tables:['relations','holdings']},{id:'knowledge',name:'认知与信息',tables:['cognition','experiences','growth']},{id:'affairs',name:'事务与日程',tables:['tasks','timers','activities']},{id:'history',name:'事件与修改历史',tables:['events']},{id:'threads',name:'线索与未解事项',tables:['clues']}]);
+function upgradeRegistry(source){const r=copy(source),state=r.tables.find(t=>t.id==='state'),objects=r.tables.find(t=>t.id==='objects');if(state){if(JSON.stringify(state.fields.值)===JSON.stringify({type:'json',required:true}))state.fields.值={type:'json'};state.fields.值引用??={type:'ref'};state.fields.有效性??=copy(TABLES.find(t=>t.id==='state').fields.有效性);}if(objects)objects.fields.发现环境??=copy(TABLES.find(t=>t.id==='objects').fields.发现环境);for(const def of TABLES){const old=r.tables.find(t=>t.id===def.id);if(!old)r.tables.push(copy(def));else for(const [name,field]of Object.entries(def.fields))old.fields[name]??=copy(field);}return applyConditionTemplates(r);}
+
+function validateScale(axis){check(!(axis.原生引用&&Object.hasOwn(axis,'值')),'原生刻度只保存引用，不复制数值');if(axis.值!==undefined){check(Number.isFinite(axis.最小)&&Number.isFinite(axis.最大)&&axis.最小<axis.最大,'刻度须明确上下限');check(axis.值>=axis.最小&&axis.值<=axis.最大,'刻度值超出范围');}return axis;}
+
+function isObjectType(registry,row,base){let type=registry.types.find(t=>t.id===row.values.类型);const seen=new Set();while(type&&!seen.has(type.id)){if(type.id===base)return true;seen.add(type.id);type=registry.types.find(t=>t.id===type.parent);}return false;}
+
 const {defaultRegistry,copy}=__m["../../tables/schema.js"];
 const {FOUNDATION_DEFINITIONS}=__m["../../tables/foundation-definitions.js"];
 function demoArchive(){
@@ -1378,9 +1379,10 @@ function createAtlas({view,context,layout=ATLAS_LAYOUT,authorizeRow,authorizeFie
  };
 }
 
+const {isObjectType}=__m["../../tables/schema.js"];
 const {createAtlas}=__m["../../tables/atlas.js"];
 // Shared atlas renderer: standalone demo or an explicitly authorized host snapshot.
-function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null}={}){
+function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null,onIdentity=null,media=null,onMediaManage=null}={}){
  const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=null,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[];
  const win=doc.defaultView;let pending=Promise.resolve();
  const failure=error=>{if(onFault)onFault(error);else notify(error.message);};
@@ -1416,25 +1418,28 @@ function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=
  }
 
  function renderValue(value){if(value===null||value===undefined||value===''||Array.isArray(value)&&!value.length)return '待补充';if(typeof value!=='object')return String(value);if(Array.isArray(value))return value.map(renderValue).join('；');return Object.entries(value).map(([k,v])=>k+'：'+renderValue(v)).join('\n');}
- function atlas(){return createAtlas({view:{registry:layer==='origin'?(data.originRegistry??data.registry):data.registry,rows:layer==='origin'?data.originRows:layer==='save'?data.savedRows:data.rows},context:{layer},authorizeRow:r=>audience==='author'||r.access.readers.includes('读者'),authorizeField:()=>true});}
+ function atlas(){if(data.matrixAtlas)return data.matrixAtlas;return createAtlas({view:{registry:layer==='origin'?(data.originRegistry??data.registry):data.registry,rows:layer==='origin'?data.originRows:layer==='save'?data.savedRows:data.rows},context:{layer},authorizeRow:r=>audience==='author'||r.access.readers.includes('读者'),authorizeField:()=>true});}
  function tags(values){const wrap=el('div',undefined,'tags');for(const value of values)wrap.append(el('span',value));return wrap;}
+ function imagesFor(id){if(!media?.for)return {cover:null,images:[]};try{return media.for(id)??{cover:null,images:[]};}catch{return {cover:null,images:[]};}}
+ function imageNode(item,name,cls){const figure=el('figure',undefined,cls+'-frame'),img=el('img',undefined,cls),fallback=el('span','影像暂不可用','image-unavailable');img.src=item.url;img.alt=name+'的'+item.use+(item.variant?'·'+item.variant:'');img.loading='lazy';fallback.hidden=true;img.addEventListener('error',()=>{img.hidden=true;fallback.hidden=false;figure.classList.add('is-unavailable');});figure.append(img,fallback);return figure;}
  function top(){const head=el('header',undefined,'topbar');const brand=el('div',undefined,'brand');brand.append(el('span','缇','seal'),el('span','缇斯亚 / 档案馆'));head.append(brand,button(theme==='light'?'夜读':'日读',()=>{theme=theme==='light'?'dark':'light';root.dataset.theme=theme;render();},'quiet'));return head;}
- function navigation(){const nav=el('nav',undefined,'navigation');nav.setAttribute('aria-label','档案馆导航');for(const id of (data.live?['atlas','changes']:['overview','atlas','saves','cores'])){const b=button('',()=>{page=id;resetTrail();render();},page===id?'active':'');b.append(el('span',icons[id],'nav-icon'),el('span',labels[id]));b.setAttribute('aria-current',page===id?'page':'false');nav.append(b);}return nav;}
+ function navigation(){const nav=el('nav',undefined,'navigation');nav.setAttribute('aria-label','档案馆导航');for(const id of (data.navigation??(data.live?['atlas','changes']:['overview','atlas','saves','cores']))){const b=button('',()=>{page=id;resetTrail();render();},page===id?'active':'');b.append(el('span',icons[id],'nav-icon'),el('span',labels[id]));b.setAttribute('aria-current',page===id?'page':'false');nav.append(b);}return nav;}
  function heading(eyebrow,title,description){const h=el('div',undefined,'heading');h.append(el('p',eyebrow,'eyebrow'),el('h1',title),el('p',description,'lede'));return h;}
- function layerSwitch(){const bar=el('div',undefined,'scopebar');const select=el('select');select.setAttribute('aria-label','资料层');for(const [id,label]of [['session','当前存档 · '+data.branch],['origin','原点 · 世界初始档案'],...(!data.live?[['save','存档 · 渡口清晨']]:[])]){const o=el('option',label);o.value=id;select.append(o);}select.value=layer;select.addEventListener('change',()=>{const next=select.value;const change=()=>{layer=next;resetTrail();render();};if(data.live)act(change);else change();});const permission=button(audience==='reader'?'读者视图':'作者视图',()=>{audience=audience==='reader'?'author':'reader';resetTrail();render();},'quiet');permission.setAttribute('aria-label','切换读取视图');bar.append(select);if(!data.live)bar.append(permission);return bar;}
+ function layerSwitch(){const bar=el('div',undefined,'scopebar');const select=el('select');select.setAttribute('aria-label','资料层');for(const [id,label]of (data.layers??[['session','当前存档 · '+data.branch],['origin','原点 · 世界初始档案'],...(!data.live?[['save','存档 · 渡口清晨']]:[])])){const o=el('option',label);o.value=id;select.append(o);}select.value=layer;select.addEventListener('change',()=>{const next=select.value;const change=()=>{layer=next;resetTrail();render();};if(data.live)act(change);else change();});const permission=button(audience==='reader'?'读者视图':'作者视图',()=>{audience=audience==='reader'?'author':'reader';resetTrail();render();},'quiet');permission.setAttribute('aria-label','切换读取视图');bar.append(select);if(!data.live)bar.append(permission);return bar;}
  function collection(){const area=el('section',undefined,'collection');area.append(heading('WORLD ATLAS / '+(data.live?data.world:'青溪渡'),'众生与万象','从一个名字，读到它的来处。'),layerSwitch());const tools=el('div',undefined,'searchbar'),search=el('input');search.placeholder='寻找名字、别名或档案中的细节';search.value=query;search.type='search';search.setAttribute('aria-label','搜索图鉴');tools.append(el('span','⌕'),search);area.append(tools);const filters=el('div',undefined,'filters');filters.setAttribute('aria-label','图鉴分类');area.append(filters);const grid=el('div',undefined,'card-grid'),count=el('p',undefined,'result-count');area.append(count,grid);
   function refresh(){const list=atlas().list({query,category,limit:100});filters.replaceChildren();const all=button('全部',()=>{category=null;refresh();},!category?'selected':'');filters.append(all);for(const g of list.groups)filters.append(button(g.name+' '+g.count,()=>{category=g.id;refresh();},category===g.id?'selected':''));count.textContent=list.total+' 份可读档案';grid.replaceChildren();if(!list.total)grid.append(el('p','没有找到匹配的档案，试试其他名字。','empty'));
-   for(const c of list.items){const card=button('',()=>{visit(c.id);},'archive-card '+c.accent);card.setAttribute('aria-label','打开'+c.name);card.dataset.navKey='record:'+c.id;const line=el('div',undefined,'card-top');line.append(el('span',c.typeName,'type'),el('span','↗','arrow'));card.append(line,el('h2',c.name),el('p',c.summary,'card-summary'),tags(c.tags));grid.append(card);}
+   for(const c of list.items){const card=button('',()=>{visit(c.id);},'archive-card '+c.accent);card.setAttribute('aria-label','打开'+c.name);card.dataset.navKey='record:'+c.id;const cover=imagesFor(c.id).cover;if(cover)card.append(imageNode(cover,c.name,'archive-card-image'));else{const monogram=el('div',Array.from(c.name)[0]||'？','archive-card-monogram');monogram.setAttribute('aria-hidden','true');card.append(monogram);}const content=el('div',undefined,'archive-card-content'),line=el('div',undefined,'card-top');line.append(el('span',c.typeName,'type'),el('span','↗','arrow'));content.append(line,el('h2',c.name),el('p',c.summary,'card-summary'),tags(c.tags));card.append(content);grid.append(card);}
   }search.addEventListener('input',()=>{const change=()=>{query=search.value;refresh();};if(data.live)act(change);else change();});refresh();return area;
  }
  function detail(){const d=atlas().detail(selected),r=d.record,v=r.values;const panel=el('section',undefined,'detail');panel.setAttribute('aria-label','档案详情');
   const toolbar=el('div',undefined,'detail-toolbar');toolbar.append(button(trail.length?'← 返回上一层':'← 返回图鉴',back,'back'));
   if(trail.length)toolbar.append(button('返回图鉴',()=>{const index=trail.findIndex(f=>f.page==='atlas'&&!f.selected);if(index>=0)jump(index);else{resetTrail();render();}},'quiet'));
+  if(onIdentity&&data.live&&layer==='origin'&&r.table==='objects'&&isObjectType(data.originRegistry??data.registry,r,'character'))toolbar.append(button('用作用户身份',()=>onIdentity(r),'primary'));
   panel.append(toolbar,breadcrumbs(d));if(data.live)panel.append(layerSwitch());
-  const hero=el('div',undefined,'detail-hero');hero.append(el('p',(layer==='session'?'当前存档':layer==='origin'?'原点档案':'历史存档')+' / '+(audience==='reader'?'读者可见':'作者查看'),'eyebrow'),el('h1',path.length?pathLabel(path):v.名称),tags(path.length?[v.名称,'档案子项']:v.标签??[]),el('p',path.length?'所属档案：'+v.名称:v.描述??(r.table==='objects'?'':d.kind),'lede'));panel.append(hero);
+  const hero=el('div',undefined,'detail-hero'),copy=el('div',undefined,'detail-hero-copy');copy.append(el('p',(layer==='session'?'当前存档':layer==='origin'?'原点档案':'历史存档')+' / '+(audience==='reader'?'读者可见':'作者查看'),'eyebrow'),el('h1',path.length?pathLabel(path):v.名称),tags(path.length?[v.名称,'档案子项']:v.标签??[]),el('p',path.length?'所属档案：'+v.名称:v.描述??(r.table==='objects'?'':d.kind),'lede'));const cover=!path.length?imagesFor(selected).cover:null;if(cover){hero.classList.add('with-media');hero.append(imageNode(cover,v.名称,'detail-cover-image'),copy);}else hero.append(copy);panel.append(hero);
   const body=el('div',undefined,'detail-body');
   if(path.length){let child=v;for(const key of path){if(!child||!Object.hasOwn(child,key))throw Error('子项不存在或不可读取');child=child[key];}for(const [key,value]of Object.entries(child))body.append(dataField(key,value,[...path,key],d));panel.append(body);return panel;}
-  const tabs=el('div',undefined,'detail-tabs');tabs.setAttribute('role','tablist');const choices=r.table==='objects'?[['core','核心'],['dossier','档案'],['history','履历'],['links','关联']]:[['dossier','记录'],['links','关联']];if(data.live&&layer==='session')choices.push(['changes','变更']);
+  const tabs=el('div',undefined,'detail-tabs');tabs.setAttribute('role','tablist');const choices=r.table==='objects'?[['core','核心'],['dossier','档案'],['history','履历'],['links','关联']]:[['dossier','记录'],['links','关联']];if(media&&r.table==='objects')choices.push(['media','影像']);if(data.live&&!data.matrix&&layer==='session')choices.push(['changes','变更']);
   for(const [id,label]of choices){const b=button(label,()=>{tab=id;render();},id===tab?'selected':'');b.setAttribute('role','tab');b.setAttribute('aria-selected',String(id===tab));tabs.append(b);}panel.append(tabs);
   if(tab==='core'){const core=v.属性?.人物核心;if(core){body.append(tags(core.性格核心标签??[]));const spiral=el('div',undefined,'spiral');spiral.append(el('p','欲望双螺旋','eyebrow'));const desires=core.欲望双螺旋??[];if(desires.length)desires.forEach((s,i)=>spiral.append(field('欲望 '+(i+1),s)));else spiral.append(el('p','尚待提炼','pending-title'),el('p','资料尚不足以确认相互牵引的多股核心欲望。','muted'));body.append(spiral,field('核心矛盾',core.核心矛盾));const mask=v.属性?.面具层;const block=el('div',undefined,'mask');block.append(el('h3','面具层'));if(mask&&Object.values(mask).some(Boolean))Object.entries(mask).forEach(([k,x])=>block.append(field(k,x)));else block.append(el('p','资料尚未给出明确的面具与真实落差。','muted'));body.append(block);}else body.append(field('档案摘要',v.描述));}
   if(tab==='dossier'){for(const s of d.sections){if(s.name==='属性'&&s.value&&typeof s.value==='object'){for(const [key,value]of Object.entries(s.value))body.append(dataField(key,value,['属性',key],d));}else body.append(dataField(s.name,s.value,[s.name],d));}body.append(field('记录版本',r.rev));}
@@ -1444,6 +1449,11 @@ function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=
    if(d.neighbors.length){body.append(el('h3','相关对象'));const grid=el('div',undefined,'linked-grid');for(const target of d.neighbors){const card=el('article',undefined,'linked-object');card.append(recordLink(target),el('p',target.via.map(x=>x.label==='直接关联'?x.label:'共同记录 · '+x.label).join('；'),'muted'));grid.append(card);}body.append(grid);}
    const records=d.related.filter(x=>x.table!=='objects');if(records.length)body.append(el('h3','关联记录'));
    for(const item of records){const box=el('article',undefined,'link-card');box.append(el('p',item.kind,'eyebrow'),recordLink(item,'record-title'),el('p',item.values.证据??item.values.命题??item.values.经过??''));body.append(box);}
+  }
+  if(tab==='media'){
+   const images=imagesFor(selected).images;if(!images.length)body.append(el('p','这份档案尚未绑定影像。文字资料仍可正常阅读，也可以前往本地图鉴添加头像、立绘或表情。','empty'));
+   if(images.length){const gallery=el('div',undefined,'atlas-media-gallery');for(const item of images){const card=el('article',undefined,'atlas-media-item');card.append(imageNode(item,v.名称,'atlas-gallery-image'));const caption=el('div',undefined,'atlas-media-caption');caption.append(el('h3',item.use+(item.variant?' · '+item.variant:'')),el('p',(item.scope||'当前可用')+' · 已绑定档案'));card.append(caption);gallery.append(card);}body.append(gallery);}
+   if(onMediaManage)body.append(button('管理影像绑定',()=>onMediaManage({id:selected,record:r}),'secondary'));
   }
   if(tab==='changes'){
    const changes=(data.trace??[]).filter(a=>a.row===r.id).reverse();

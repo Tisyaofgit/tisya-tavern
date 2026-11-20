@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {formatProse} from '../prose.js';
 import {dialogueBlocks} from '../prose-dialogue.js';
+import {DIALOGUE_CSS} from '../prose-dialogue-style.js';
 import {compilePrompts,baseline} from '../engine/config.mjs';
 import {DEFAULT_TAGS} from '../engine/tags.mjs';
 import {appearanceValues,withAppearanceOverrides} from '../appearance-settings.js';
@@ -65,4 +66,13 @@ test('selected named dialogue renders complete unquoted speech and keeps other l
  assert.match(root.textContent,/【场景】雨后的路/);assert.match(root.textContent,/■没说完/);assert.match(root.textContent,/旁白里【旅人#平静】/);
  assert.equal(render(d,text,{}).querySelectorAll('[data-tisya-block]').length,0);
  assert.equal(render(d,text,{namedDialogue:true,角色对白框:false}).querySelectorAll('[data-tisya-block]').length,0);
+}));
+
+
+test('framed dialogue portraits preserve the source aspect ratio before and after image inspection',()=>scenario(async d=>{
+ const media={characters:[{id:'a',name:'守门人',aliases:['门官']}],media:{wide:{id:'wide',kind:'头像','载体类型':'image',display_variant:'',asset_locator:'wide.png','媒体配置':{imageInfo:{width:1200,height:600,background:'opaque'}},'内容绑定':[{target:{entity:'a'},use:'avatar',variant:''}]}}};
+ const registry=dialogueBlocks.characterRegistry(()=>media,locator=>locator),root=render(d,'<p>【守门人#平静】“完整显示。”</p>',{dialogueCharacters:registry}),block=root.querySelector('.tisya-dialogue'),img=root.querySelector('.tisya-dialogue-avatar');
+ assert.equal(block.style.getPropertyValue('--portrait-aspect'),'2');assert.match(DIALOGUE_CSS,/data-portrait-frame="framed"\] \.tisya-dialogue-avatar\{object-fit:contain/);assert.match(DIALOGUE_CSS,/aspect-ratio:var\(--portrait-aspect,/);
+ d.body.append(root);block.dataset.portraitKnown='false';const model=globalThis.TisyaMediaBindings,inspect=model.inspectImage;model.inspectImage=async()=>({width:800,height:1200,background:'opaque',contentAspect:2/3});
+ try{await dialogueBlocks.hydratePortrait(img);assert.equal(block.style.getPropertyValue('--portrait-aspect'),String(2/3));}finally{model.inspectImage=inspect;}
 }));

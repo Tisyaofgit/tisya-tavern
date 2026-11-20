@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
 import {webcrypto} from 'node:crypto';
-import {createChatMediaAtlas,createMediaAssetStore,projectMediaBundle,mediaTargets,MEDIA_TABLE,MEDIA_LOCATOR_PREFIX} from '../media-atlas.js';
+import {createChatMediaAtlas,createMediaAssetStore,projectMediaBundle,mediaTargets,createAtlasMediaProjection,MEDIA_TABLE,MEDIA_LOCATOR_PREFIX} from '../media-atlas.js';
 import {dialogueBlocks} from '../prose-dialogue.js';
 
 const record=values=>({values,metadata:{sourceDefinition:{book:'基点书',uid:7,definitionId:'object.root'}}});
@@ -119,4 +119,22 @@ test('foreign cards are rejected and shared bytes survive removal across binding
   await atlas.remove(globalId);assert.match(await store.load(locator),/^blob:test\//);assert.equal(atlas.avatar('守门人').status,'bound');
   await atlas.remove(chatId);assert.equal(await store.load(locator),'');
  }finally{atlas.dispose();}
+});
+
+
+test('archive media projection maps Matrix atlas IDs to exact entities without same-name or cross-table borrowing',()=>{
+ const targets=[
+  {entity:'a',table:'T_CHAR_DOSSIER',group:'人物',label:'守门人',archive_entry_ref:'origin-a'},
+  {entity:'a',table:'T_STATIC_ITEMS_SKILLS',group:'物品',label:'守门人',archive_entry_ref:'origin-item-a'}
+ ];
+ const rows=[
+  {id:'avatar',entity_ref:'a',archive_entry_ref:'origin-a',target:{archive_entry_ref:'origin-a'},url:'blob:avatar',purpose:'头像',display_variant:'',binding_scope_label:'全局',applicable:true},
+  {id:'portrait',entity_ref:'a',archive_entry_ref:'origin-a',target:{archive_entry_ref:'origin-a'},url:'blob:portrait',purpose:'立绘',display_variant:'',binding_scope_label:'本聊天',applicable:true},
+  {id:'happy',entity_ref:'a',archive_entry_ref:'origin-a',target:{archive_entry_ref:'origin-a'},url:'blob:happy',purpose:'表情',display_variant:'开心',binding_scope_label:'角色卡',applicable:true},
+  {id:'item',entity_ref:'a',archive_entry_ref:'origin-item-a',target:{archive_entry_ref:'origin-item-a'},url:'blob:item',purpose:'头像',display_variant:'',binding_scope_label:'全局',applicable:true},
+  {id:'stale',entity_ref:'a',archive_entry_ref:'other-origin',target:{archive_entry_ref:'other-origin'},url:'blob:stale',purpose:'头像',display_variant:'',binding_scope_label:'全局',applicable:false}
+ ];
+ const media=createAtlasMediaProjection({targets,rows}),character=media.for('T_CHAR_DOSSIER#a'),item=media.for('T_STATIC_ITEMS_SKILLS#a');
+ assert.equal(character.cover.id,'avatar');assert.deepEqual(character.images.map(row=>row.id),['avatar','portrait','happy']);assert.equal(character.images[2].variant,'开心');
+ assert.equal(item.cover.id,'item');assert.deepEqual(item.images.map(row=>row.id),['item']);assert.deepEqual(media.for('T_CHAR_DOSSIER#missing').images,[]);
 });

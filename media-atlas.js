@@ -17,6 +17,28 @@ const mediaUse=value=>{
 };
 const targetCopy=target=>({entity:String(target.entity),table:String(target.table??''),group:String(target.group??''),label:String(target.label??target.entity),archive_entry_ref:String(target.archive_entry_ref??'')});
 const cardCopies=value=>{const seen=new Set();return (value??[]).filter(card=>card?.id).map(card=>({id:String(card.id),name:String(card.name??card.id)})).filter(card=>!seen.has(card.id)&&seen.add(card.id));};
+const atlasImageUrl=value=>{const url=String(value??'');return /^(?:https?:|blob:|data:image\/(?:png|jpe?g|webp|gif);)/i.test(url)||url&&!/[\s:]/.test(url)?url:'';};
+
+// Matrix atlas IDs are table#entity while media bindings keep the raw entity.
+// Resolve through the current, already visibility-filtered targets; never borrow by name.
+export function createAtlasMediaProjection(source={}){
+ const view=()=>typeof source==='function'?source()??{}:source??{};
+ return {for(id){
+  const key=String(id??''),hash=key.indexOf('#'),table=hash<0?'':key.slice(0,hash),entity=hash<0?key:key.slice(hash+1),current=view();
+  let targets=(current.targets??[]).filter(target=>String(target.entity)===entity&&(!table||String(target.table)===table));
+  if(!table&&new Set(targets.map(target=>target.table)).size>1)targets=[];
+  if(!targets.length)return {cover:null,images:[]};
+  const identities=new Set(targets.map(target=>String(target.archive_entry_ref??'')).filter(Boolean)),entities=new Set(targets.map(target=>String(target.entity)));
+  const images=(current.rows??[]).filter(row=>{
+   if(row.applicable===false||!atlasImageUrl(row.url))return false;
+   const identity=String(row.archive_entry_ref??row.target?.archive_entry_ref??'');
+   return identity?identities.has(identity):entities.has(String(row.entity_ref??''));
+  }).map(row=>({id:String(row.id??''),url:atlasImageUrl(row.url),use:String(row.purpose??MEDIA_USE_LABELS[row.use]??'立绘'),variant:String(row.display_variant??row.variant??''),scope:String(row.binding_scope_label??MEDIA_SCOPE_LABELS[row.binding_scope]??row.binding_scope??'')}));
+  const rank=row=>row.use.includes('头像')?0:row.use.includes('立绘')?1:2;
+  const cover=[...images].sort((a,b)=>rank(a)-rank(b)||Number(!!a.variant)-Number(!!b.variant)||a.id.localeCompare(b.id))[0]??null;
+  return {cover,images};
+ }};
+}
 
 // Chat bindings remain canonical Matrix rows. Card/global metadata and all Blob
 // bytes stay in IndexedDB, outside chat, character-card and archive JSON.

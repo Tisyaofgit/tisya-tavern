@@ -4,18 +4,18 @@ import {mountRunView} from './run-view.js';
 
 // A separate utility view. The shell may park its root while the user chats,
 // so closing or opening Configuration does not commit/discard a table draft.
-export function mountTableApp(document,container,{service,store,onIdentity,onClose=()=>{},onSaved=()=>{}}){
+export function mountTableApp(document,container,{service,store,onIdentity,onMediaManage=null,onClose=()=>{},onSaved=()=>{},initialPage='',heading='表单推进'}){
  const root=document.createElement('div');root.className='tisya-table-app';container.append(root);
  const dom=root.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=PANEL_CSS;dom.append(style);
  const header=document.createElement('header'),title=document.createElement('h1'),close=document.createElement('button');
- title.textContent='表单推进';close.type='button';close.textContent='收起';header.append(title,close);dom.append(header);
+ title.textContent=heading;close.type='button';close.textContent='收起';header.append(title,close);dom.append(header);
  const world=document.createElement('p');world.className='note';const snapshot=store.read();world.textContent='当前世界／分支：'+(snapshot.label??snapshot.key);dom.append(world);
  const body=document.createElement('main'),notice=document.createElement('p');notice.className='note';notice.setAttribute('role','status');notice.hidden=true;dom.append(notice,body);
  let alive=true,panel,runView,timer;
  if(!service){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='表单推进服务尚未加载，无法读取或保存表单。';}
  else {
   runView=mountRunView(document,dom,{service,onMinimize:()=>onClose()});dom.insertBefore(runView.root,body);
-  panel=mountTablePanel(document,body,{service,store,onIdentity,onSaved:()=>{if(alive)onSaved();}});
+  panel=mountTablePanel(document,body,{service,store,onIdentity,onMediaManage,initialPage,onSaved:()=>{if(alive)onSaved();}});
   timer=setInterval(()=>{if(!alive)return;try{runView.tick();}catch(error){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='读取任务状态失败：'+error.message;}},500);
  }
  close.onclick=()=>{

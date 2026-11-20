@@ -43,3 +43,17 @@ test('structured array subitems remain expandable; plain text matching an ID is 
  const ui=mountArchiveAtlas(root,data);root.querySelector('[aria-label="打开方鹿"]').click();textButton(doc,'档案');root.querySelector('[aria-label="打开子项：第 1 项"]').click();assert.deepEqual(ui.state().path,['属性','部件',0]);assert.match(root.textContent,/bell/);assert.equal(root.querySelectorAll('[aria-label="打开旧铜铃"]').length,1);root.querySelector('[aria-label="打开旧铜铃"]').click();assert.equal(ui.state().selected,'bell');
  ui.dispose();await win.happyDOM.close();
 });
+
+
+test('bound images enrich cards and detail media without replacing archive navigation or hiding broken-image text',async()=>{
+ const win=new Window(),doc=win.document,root=doc.createElement('div');doc.body.append(root);let managed=0;
+ const image=(id,use='头像',variant='')=>({id,url:'blob:'+id,use,variant,scope:'全局'});
+ const media={for:id=>id==='fanglu'?{cover:image('portrait','立绘'),images:[image('avatar'),image('portrait','立绘'),image('happy','表情','开心')]}:{cover:null,images:[]}};
+ const ui=mountArchiveAtlas(root,demoArchive(),{media,onMediaManage:()=>managed++});
+ assert.equal(root.querySelectorAll('.archive-card-image').length,1);assert.equal(root.querySelector('.archive-card-image').alt,'方鹿的立绘');assert.equal(root.querySelectorAll('.archive-card-monogram').length,7);
+ root.querySelector('[aria-label="打开方鹿"]').click();assert.equal(root.querySelector('.detail-cover-image').alt,'方鹿的立绘');assert.match(root.textContent,/尚待提炼/);
+ textButton(doc,'影像');assert.equal(root.querySelectorAll('.atlas-gallery-image').length,3);assert.match(root.textContent,/开心/);assert.match(root.textContent,/角色卡|全局/);
+ const broken=root.querySelector('.atlas-gallery-image');broken.dispatchEvent(new win.Event('error'));assert(broken.hidden);assert.match(broken.parentElement.textContent,/影像暂不可用/);
+ textButton(doc,'管理影像绑定');assert.equal(managed,1);textButton(doc,'核心');assert.match(root.textContent,/尚待提炼/);textButton(doc,'返回图鉴');assert.equal(root.querySelectorAll('.archive-card').length,8);
+ ui.dispose();await win.happyDOM.close();
+});

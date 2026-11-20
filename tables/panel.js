@@ -2,6 +2,7 @@ import {mountHistoryBatch} from './history-batch-ui.js';
 import {worldFrameworkEditor} from './world-framework-editor.js';
 import {conditionEditor} from './condition-editor.js';
 import {mountArchiveAtlas} from './atlas-ui.js';
+import {createAtlasMediaProjection} from '../media-atlas.js';
 import {MEMORY_STATUS_LABELS} from '../engine/memory-status.mjs';
 import {ATLAS_STYLE} from './atlas-style.js';
 import {parseStateEvents} from './state-event-rules.js';
@@ -12,7 +13,7 @@ import {nativeConfigForm} from './native-config-ui.js';
 import {formUI} from './form-ui.js';
 import {styleRules,BUILTIN_STYLE_RULES} from './style-rules.js';
 import {tableSettings,copy,TABLES,check,FORM_GROUPS} from './schema.js';
-export function mountTablePanel(document,container,{service,store,onIdentity,onAssistant,initialPage='',initialGoal='',onSaved:notifySaved=()=>{}}){
+export function mountTablePanel(document,container,{service,store,onIdentity,onAssistant,onMediaManage=null,initialPage='',initialGoal='',onSaved:notifySaved=()=>{}}){
  let coreStageId=null;
  let alive=true,busy=false,dirty=false,draft=null,info=null,page='settings',currentTable='',pending=Promise.resolve();const assistantConversation=[],pageDrafts=new Map(),archiveReviewIds=new Set(),statePreviewIds=new Set(),foundationPreviewIds=new Set(),conditionPreviewIds=new Set();let ownsArchivePreview=false;const ui=formUI(document,{changed:()=>{dirty=true;}});const root=document.createElement('section');root.className='tisya-tables';container.append(root);
  const initialConfig=store.read();let notifiedRevision=initialConfig.revision;
@@ -359,11 +360,12 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  async function atlasPage(){
   if(beginPage('atlas'))return;
   const controls=el('div');main.append(controls);
-  button(controls,'刷新最新版',atlasPage);button(controls,'填写当前表单',forms);if(!service.matrixDatabase)button(controls,'查看全部变更（含删除）',timeline);
+  button(controls,'刷新最新版',atlasPage);button(controls,'填写当前表单',forms);if(onMediaManage)button(controls,'管理影像绑定',()=>onMediaManage());if(!service.matrixDatabase)button(controls,'查看全部变更（含删除）',timeline);
+  let mediaWarning='';if(service.mediaAtlas)try{await service.mediaAtlas.request();assertActive();}catch(error){mediaWarning='；影像绑定暂未刷新：'+error.message;}
   const snapshot=await service.readAtlasSnapshot();assertActive();
   const host=el('div'),shadow=host.attachShadow({mode:'open'}),style=el('style'),app=el('div');style.textContent=ATLAS_STYLE+'\n:host{display:block;font-family:inherit}#app{min-height:500px}.shell{min-height:400px}.navigation{position:static}.preview-note{padding-bottom:16px}.content{overflow-wrap:anywhere}.detail-tabs{flex-wrap:wrap}.scopebar select{max-width:100%}';app.id='app';shadow.append(style,app);main.append(host);
-  mountArchiveAtlas(app,snapshot.data,{onIdentity:onIdentity?record=>{check(!busy&&!dirty&&!draft&&!pageDrafts.size,'请先保存或放弃表单草稿');onIdentity({book:snapshot.data.originBook,id:record.id,rev:record.rev});}:null,beforeRead:async()=>{assertActive();await snapshot.verify();},onFault:error=>{app.replaceChildren(el('p',error.message+'；请刷新最新版。'));notice.textContent=error.message;notice.setAttribute('role','alert');}});
-  notice.textContent='已载入当前存档修订 '+snapshot.data.revision+(snapshot.data.matrix?'；查看正式档案、事件与正文来源。':'；可切换原点，查看关联与修改路径。');
+  mountArchiveAtlas(app,snapshot.data,{media:service.mediaAtlas?createAtlasMediaProjection(()=>service.mediaAtlas.view()):null,onMediaManage:onMediaManage?()=>onMediaManage():null,onIdentity:onIdentity?record=>{check(!busy&&!dirty&&!draft&&!pageDrafts.size,'请先保存或放弃表单草稿');onIdentity({book:snapshot.data.originBook,id:record.id,rev:record.rev});}:null,beforeRead:async()=>{assertActive();await snapshot.verify();},onFault:error=>{app.replaceChildren(el('p',error.message+'；请刷新最新版。'));notice.textContent=error.message;notice.setAttribute('role','alert');}});
+  notice.textContent='已载入当前存档修订 '+snapshot.data.revision+(snapshot.data.matrix?'；查看正式档案、事件、影像与正文来源。':'；可切换原点，查看关联与修改路径。')+mediaWarning;
  }
  async function timeline(){if(beginPage('timeline'))return;const data=await refresh(),g=section('时间锚与变化');table(g,['剧情时间','记录时间','所属表','变动','来源'],data.anchors.slice().reverse().map(a=>[a.worldTime??'未知',a.recordedAt,a.table,JSON.stringify({before:a.before,after:a.after}),a.evidence]));const j=section('最近辅助任务');const receipts=service.nativeConfiguration?.state().receipts??[];if(receipts.length)table(j,['原生配置','名称','状态','说明'],receipts.map(r=>[r.kind,r.name,r.status,r.detail]));table(j,['任务','状态','说明'],service.state().jobs.map(x=>[x.task,x.status,x.detail]));button(j,'查看最近注入内容',()=>{const p=service.preview();j.append(el('pre',p?.text??'尚未组装本轮上下文'));});}
  async function framework(worldId,selection={}){

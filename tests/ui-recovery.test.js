@@ -107,3 +107,16 @@ test('bundle UI keeps explicit selection, edited draft and mapping across page c
  input(f.window,find(panel.root,'核心所在原点书'),'已保存原点');await click(panel.root,'读取此书可用核心');await click(panel.root,'适配 · 双人组');assert.match(panel.root.textContent,/基点意义与世界表达对照/);await page(panel,'style');await page(panel,'core');await click(panel.root,'确认应用创世蓝图');
  const saved=calls.find(x=>x[0]==='save-genesis')[1];assert.deepEqual(saved.proposal.coreMapping,expectedMapping);assert.equal(saved.coreBinding.id,'bundle-one');assert.equal(saved.coreBinding.fingerprint,'retained');panel.dispose();await f.close();
 });
+
+
+test('formal atlas panel loads authorized bound media and keeps archive readable when media refresh fails',async()=>{
+ const f=fixture();let requested=0,managed=0;
+ f.service.mediaAtlas={request:async()=>{requested++;},view:()=>({targets:[{entity:'person-a',table:'',group:'人物',label:'记录甲',archive_entry_ref:'origin-a'}],rows:[{id:'avatar',entity_ref:'person-a',archive_entry_ref:'origin-a',url:'blob:avatar',purpose:'头像',display_variant:'',binding_scope_label:'全局',applicable:true}]})};
+ const panel=mountTablePanel(f.document,f.document.body,{service:f.service,store:f.store,initialPage:'atlas',onMediaManage:()=>managed++});await panel.ready;
+ const host=[...panel.root.querySelectorAll('div')].find(node=>node.shadowRoot),app=host.shadowRoot.querySelector('#app');assert(requested>0);assert.equal(app.querySelector('.archive-card-image').alt,'记录甲的头像');
+ const flush=()=>new Promise(resolve=>setTimeout(resolve,0));app.querySelector('[aria-label="打开记录甲"]').click();await flush();[...app.querySelectorAll('button')].find(node=>node.textContent==='影像').click();await flush();assert.equal(app.querySelectorAll('.atlas-gallery-image').length,1);
+ [...app.querySelectorAll('button')].find(node=>node.textContent==='管理影像绑定').click();await flush();assert.equal(managed,1);panel.dispose();
+ const offline=fixture();offline.service.mediaAtlas={request:async()=>{throw Error('媒体库暂不可用');},view:()=>({targets:[],rows:[]})};const fallback=mountTablePanel(offline.document,offline.document.body,{service:offline.service,store:offline.store,initialPage:'atlas'});await fallback.ready;
+ const fallbackApp=[...fallback.root.querySelectorAll('div')].find(node=>node.shadowRoot).shadowRoot.querySelector('#app');assert.equal(fallbackApp.querySelectorAll('.archive-card').length,2);assert.match(fallback.root.textContent,/影像绑定暂未刷新/);assert.equal(fallback.root.querySelector('[role=alert]'),null);
+ fallback.dispose();await f.close();await offline.close();
+});

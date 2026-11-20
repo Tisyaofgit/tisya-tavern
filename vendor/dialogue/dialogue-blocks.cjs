@@ -118,7 +118,7 @@
     const binding=o.characters?.avatar(m.name,m.mood)||{entity:null,url:''};
     const p=binding.presentation||root.TisyaMediaBindings.imagePresentation();
     const avatar=binding.url?'<img class="tisya-dialogue-avatar" src="'+esc(binding.url)+'" alt="'+esc(m.name)+'的头像" loading="lazy">':'';
-    return '<span class="tisya-dialogue" data-tisya-block="dialogue" data-portrait-layout="'+p.layout+'" data-portrait-frame="'+p.frame+'" data-portrait-composition="'+p.composition+'" data-portrait-background="'+p.background+'" data-portrait-known="'+p.known+'" style="--portrait-focus-y:'+p.focusY+'%"'+(binding.entity?' data-entity="'+esc(binding.entity)+'"':'')+'><span class="tisya-dialogue-portrait"><span class="tisya-dialogue-initial" aria-hidden="true">'+esc(Array.from(m.name)[0]||'？')+'</span>'+avatar+'</span><span class="tisya-dialogue-main"><span class="tisya-dialogue-heading"><strong>'+esc(m.name)+'</strong><span class="tisya-dialogue-mood">'+esc(m.mood)+'</span></span><span class="tisya-dialogue-text">'+esc('“'+m.text+'”')+'</span></span></span>';
+    return '<span class="tisya-dialogue" data-tisya-block="dialogue" data-portrait-layout="'+p.layout+'" data-portrait-frame="'+p.frame+'" data-portrait-composition="'+p.composition+'" data-portrait-background="'+p.background+'" data-portrait-known="'+p.known+'" style="--portrait-focus-y:'+p.focusY+'%;--portrait-aspect:'+(p.aspect||'.75')+'"'+(binding.entity?' data-entity="'+esc(binding.entity)+'"':'')+'><span class="tisya-dialogue-portrait"><span class="tisya-dialogue-initial" aria-hidden="true">'+esc(Array.from(m.name)[0]||'？')+'</span>'+avatar+'</span><span class="tisya-dialogue-main"><span class="tisya-dialogue-heading"><strong>'+esc(m.name)+'</strong><span class="tisya-dialogue-mood">'+esc(m.mood)+'</span></span><span class="tisya-dialogue-text">'+esc('“'+m.text+'”')+'</span></span></span>';
   }});
   registry.register('tisya.content.thought',{start:['【','■'],option:'thought',match:thoughtAt,render(m,o){
     const entity=m.name?o.characters?.resolve(m.name)?.character.id:null;
@@ -131,7 +131,7 @@
     const url=img.currentSrc||img.src,info=await M.inspectImage(url);
     if(!block.isConnected||(img.currentSrc||img.src)!==url)return;
     const p=M.imagePresentation({}, {presentation:{composition:block.dataset.portraitComposition,background:block.dataset.portraitBackground}},{...info,width:info.width||img.naturalWidth,height:info.height||img.naturalHeight});
-    block.dataset.portraitLayout=p.layout;block.dataset.portraitFrame=p.frame;block.dataset.portraitKnown=String(p.known);
+    block.dataset.portraitLayout=p.layout;block.dataset.portraitFrame=p.frame;block.dataset.portraitKnown=String(p.known);block.style.setProperty('--portrait-aspect',p.aspect||'.75');
   }
   if(root.document){
     if(root.__tisyaPortraitLoad)root.document.removeEventListener('load',root.__tisyaPortraitLoad,true);

@@ -1,5 +1,5 @@
 export const SETTINGS_GROUP=Object.freeze({
-'user-identity':'identity','role-library':'world','group-library':'world','drawer:WI-SP-button':'world','notes':'world','settings-tab:tables':'world','settings-tab:world':'world',
+'user-identity':'identity','role-library':'world','group-library':'world','drawer:WI-SP-button':'world','archive-atlas':'world','notes':'world','settings-tab:tables':'world','settings-tab:world':'world',
 'settings-app':'play','settings-tab:mode':'play','continue-settings':'play','input-tools':'play',
 'display-settings':'reading','drawer:backgrounds-button':'reading','emotion-atlas':'reading','pet-toggle':'reading','motion-toggle':'reading','fullscreen':'reading',
 'preset-update':'model','drawer:ai-config-button':'model','drawer:sys-settings-button':'model','settings-tab:api':'model','drawer:advanced-formatting-button':'model',
@@ -14,6 +14,7 @@ export const SETTINGS_DESTINATIONS=Object.freeze([
  ['preset-update','更新 Tisya 预设','重新写入内置提示词并核对当前载入','model','refresh'],
  ['drawer:ai-config-button','预设','生成参数与预设管理','library','sliders'],
  ['drawer:WI-SP-button','世界书','条目、角色绑定与批量操作','library','book'],
+ ['archive-atlas','世界图鉴','人物、地点、物品与绑定影像','world','book'],
  ['group-library','群聊','成员、规则与会话管理','library','group'],
  ['settings-app','游玩偏好','节奏、篇幅，以及由你决定的选择','play','sliders'],
  ['display-settings','阅读外观','字体、正文与各区块的显示','play','book'],
