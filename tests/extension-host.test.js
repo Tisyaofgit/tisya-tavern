@@ -5,6 +5,7 @@ import {phoneSource} from '../phone-turn-host.js';import {chatKey} from '../engi
 import {phoneDatabaseReference} from '../engine/phone-database.mjs';import {createPhoneState,preparePhoneTurn,acceptPhoneTurn,phoneSnapshot} from '../phone-core.mjs';import {communicationAccounts,communicationDocuments} from '../social-communication.mjs';
 import {publicAccounts,publicDocuments} from '../social-public.mjs';import {mediaAccounts,mediaDocuments} from '../social-media.mjs';
 import {builtinExtensionDefinitions,builtinPresentationDefinitions} from '../extension-preferences.mjs';import {fixture} from './fixtures/journey-r4.cjs';
+import {startReaderCache,clearReaderCache} from '../reader.js';import {IDBFactory} from 'fake-indexeddb';import {webcrypto} from 'node:crypto';
 const context=()=>({chatId:'chat-1',characterId:'character-1',groupId:null});
 const row=values=>({values,states:Object.fromEntries(Object.keys(values).map(k=>[k,'known']))});
 const ref=(id='message-1')=>({tableId:'T_DYN_MESSAGE_CONTENT',recordId:id,snapshotId:'@message'});
@@ -16,6 +17,19 @@ function setup(kind='text',values={}){
 }
 test('service reads genuine inverse-patch history and never substitutes current database rows',async()=>{
  const s=setup();try{const old=structuredClone(s.state);s.state.tables.T_DYN_MESSAGE_CONTENT['message-1'].values.text='后来的正文';s.bundle.journal.entries.push({uid:'later',revision:1,pre_turn_snapshot:{inverse_patch:inversePatch(old,s.state)}});const options=await s.service.forMessage(s.message);assert.equal(options.projections[0].value.text,'当时的正文');assert.match(options.messageReferences[0].snapshotId,/^matrix:uid-one:1:/);const html=formatProse(s.w.document,s.message.mes.match(/<body[^>]*>([\s\S]*?)<\/body>/)[1],x=>x,{presentation:options});assert.match(html,/当时的正文/);assert.ok(!html.includes('后来的正文'));}finally{await s.w.happyDOM.abort();}
+});
+test('natural prose receives archive links from its own historical snapshot without a model marker',async()=>{
+ const s=setup();try{
+  const raw=fixture({body:'阿青回到了渡口。'}),oldMessage=s.message.mes;s.message.mes=raw;
+  s.bundle.journal.entries[0].signature=digest({uid:'uid-one',role:'assistant',text:raw});
+  s.state.schema={T_SYS_ENTITIES:{id:'T_SYS_ENTITIES',label:'对象',fields:[{key:'name',type:'TEXT'},{key:'kind',type:'TEXT'},{key:'description',type:'LONG_TEXT'}]}};
+  s.state.tables.T_SYS_ENTITIES={aqing:row({name:'阿青',kind:'character',description:'当时的简介'})};
+  const old=structuredClone(s.state);s.state.tables.T_SYS_ENTITIES.aqing.values.name='后来的名字';s.state.tables.T_SYS_ENTITIES.aqing.values.description='后来的简介';
+  s.bundle.journal.entries.push({uid:'later',revision:2,pre_turn_snapshot:{inverse_patch:inversePatch(old,s.state)}});
+  const options=await s.service.forMessage(s.message);assert.equal(options.projections.length,0);assert.equal(options.archiveLinks.entries[0].title,'阿青');assert(!JSON.stringify(options.archiveLinks).includes('后来的简介'));
+  const body=raw.match(/<body[^>]*>([\s\S]*?)<\/body>/)[1],html=formatProse(s.w.document,body,text=>text,{presentation:options});assert.match(html,/data-tisya-archive-link/);assert.match(html,/当时的简介/);assert(!html.includes('后来的名字'));
+  s.message.mes=oldMessage;
+ }finally{await s.w.happyDOM.abort();}
 });
 test('unknown message UID is not invented during a historical read',async()=>{
  const s=setup();try{const message={mes:s.message.mes},before=JSON.stringify(message);await assert.rejects(()=>s.service.forMessage(message),/稳定消息/);assert.equal(JSON.stringify(message),before);}finally{await s.w.happyDOM.abort();}
@@ -72,4 +86,18 @@ test('presentation view settings use peek and hide cards without rewriting histo
 test('actual old news and live documents map their real text and author/seconds fields',()=>{
  const phone=createPhoneState({accounts:{...communicationAccounts,...publicAccounts,...mediaAccounts},documents:[...communicationDocuments,...publicDocuments,...mediaDocuments]},'ctx'),snapshot={frame:{sourceId:'source'},suite:phone.suite},requests=[['news-audio','news'],['live-encore','danmaku']].map(([id,kind])=>({kind,reference:{...phoneDatabaseReference(['suite','documents',id],{root:phone}),snapshotId:'source'}})),result=phonePresentationProjections(snapshot,{sourceId:'source',contextKey:'ctx',requests});
  assert.equal(result.length,2);assert.ok(result.find(r=>r.kind==='news').value.paragraphs.length);const live=result.find(r=>r.kind==='danmaku');assert.equal(live.value.items[0].atSeconds,0);assert.ok(live.value.items[0].author);assert.match(live.value.title,/演示素材/);
+});
+test('automatic archive links survive a cold service, invalidate by revision and clear on demand',async()=>{
+ const s=setup(),cache=startReaderCache({indexedDB:new IDBFactory(),crypto:webcrypto});let snapshots=0,revision=7;
+ try{
+  const raw=fixture({body:'阿青回到了渡口。'});s.message.mes=raw;s.message.send_date='fixed';s.message.name='角色';s.bundle.journal.entries[0].signature=digest({uid:'uid-one',role:'assistant',text:raw});
+  s.state.schema={T_SYS_ENTITIES:{id:'T_SYS_ENTITIES',label:'对象',fields:[{key:'name',type:'TEXT'},{key:'kind',type:'TEXT'},{key:'description',type:'LONG_TEXT'}]}};
+  s.state.tables.T_SYS_ENTITIES={aqing:row({name:'阿青',kind:'character',description:'当时的简介'})};
+  const database={peek:async()=>({state:s.state,revision,contextKey:chatKey(s.ctx)}),snapshot:input=>{snapshots++;return databaseSnapshotAtMessage(s.bundle,input,chatKey(s.ctx));},read:()=>{throw Error('historical rendering must not read current');}};
+  const make=()=>createExtensionPresentationService({document:s.w.document,getContext:()=>s.ctx,phone:{source:phoneSource,snapshot:async()=>null},database,getScope:()=>({ownerId:'owner-1',worldId:'world-1'})});
+  const hot=await make().forMessage(s.message);assert.equal(hot.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,1);await cache.flush();
+  const cold=await make().forMessage(s.message);assert.equal(cold.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,1,'cold service must reuse the persisted link index without replaying the snapshot');
+  revision=8;const changed=await make().forMessage(s.message);assert.equal(changed.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,2,'a new authoritative revision must be verified again');
+  await clearReaderCache();const cleared=await make().forMessage(s.message);assert.equal(cleared.archiveLinks.entries[0].title,'阿青');assert.equal(snapshots,3,'cleared derived data must not be treated as current');
+ }finally{await cache.dispose();await s.w.happyDOM.abort();}
 });

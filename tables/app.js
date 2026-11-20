@@ -4,7 +4,7 @@ import {mountRunView} from './run-view.js';
 
 // A separate utility view. The shell may park its root while the user chats,
 // so closing or opening Configuration does not commit/discard a table draft.
-export function mountTableApp(document,container,{service,store,onIdentity,onMediaManage=null,onClose=()=>{},onSaved=()=>{},initialPage='',heading='表单推进'}){
+export function mountTableApp(document,container,{service,store,onIdentity,onMediaManage=null,onClose=()=>{},onSaved=()=>{},initialPage='',initialAtlasTarget=null,heading='表单推进'}){
  const root=document.createElement('div');root.className='tisya-table-app';container.append(root);
  const dom=root.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=PANEL_CSS+'\n[hidden]{display:none!important}main.atlas-main{padding:0;margin:0}:host([data-view="atlas"]){display:block;min-height:100dvh}';dom.append(style);
  const header=document.createElement('header'),title=document.createElement('h1'),close=document.createElement('button');
@@ -16,7 +16,7 @@ export function mountTableApp(document,container,{service,store,onIdentity,onMed
  if(!service){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='表单推进服务尚未加载，无法读取或保存表单。';}
  else {
   runView=mountRunView(document,dom,{service,onMinimize:()=>onClose()});dom.insertBefore(runView.root,body);
-  panel=mountTablePanel(document,body,{service,store,onIdentity,onMediaManage,initialPage,standaloneAtlas:true,onPageChange:syncView,onAtlasExit:()=>panel.navigate(returnPage),onSaved:()=>{if(alive)onSaved();}});
+  panel=mountTablePanel(document,body,{service,store,onIdentity,onMediaManage,initialPage,initialAtlasTarget,standaloneAtlas:true,onPageChange:syncView,onAtlasExit:()=>panel.navigate(returnPage),onSaved:()=>{if(alive)onSaved();}});
   timer=setInterval(()=>{if(!alive)return;try{runView.tick();}catch(error){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='读取任务状态失败：'+error.message;}},500);
  }
  close.onclick=()=>{

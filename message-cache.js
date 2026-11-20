@@ -89,7 +89,7 @@ export function createMessageCache(window,{version,onError=()=>{},digest,timeout
    let row;try{row=await readRow(scope,owner,source);}catch(e){fail(e);}
    if(started!==epoch)row=null;
    const cached=row?.projections.find(p=>p.variant===variant);let value;
-   if(cached){hits++;value=cached.value;}else{misses++;value=compute();}
+   if(cached){hits++;value=cached.value;}else{misses++;value=await compute();}
    if(row&&!cached&&started===epoch&&eligible(scope,owner,source))enqueue(async()=>{
     if(started!==epoch||!eligible(scope,owner,source))return;
     // Re-read inside the serialized queue so a concurrent view-state save is retained.

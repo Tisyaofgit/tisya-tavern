@@ -118,7 +118,20 @@ test('same condition on two actors stays separate and sparse gauge and posture e
   e.newRecord(table,values,'original');
   const next=compile(e,form(e,table,{name:values.name,[field]:'已改变'})).copy;
   assert.deepEqual(Object.keys(next.rows(table)),['original']);assert.equal(next.rows(table).original.values[field],'已改变');
+  assert.equal(next.rows(table).original.values.name,values.name);
  }
+});
+
+test('a uniquely named pact accepts sparse stage updates without duplicating or clearing its terms',()=>{
+ const e=fresh(),table='T_DYN_PACTS';
+ e.newRecord(table,{name:'示例口头契约',content:'违反示例约定则承担后果',status:'生效',fulfillment_evidence:'原阶段描述'},'pact');
+ const next=compile(e,form(e,table,{name:'示例口头契约',status:'已履行',fulfillment_evidence:'新阶段描述'})).copy;
+ assert.deepEqual(Object.keys(next.rows(table)),['pact']);
+ assert.equal(next.rows(table).pact.values.status,'已履行');
+ assert.equal(next.rows(table).pact.values.fulfillment_evidence,'新阶段描述');
+ assert.equal(next.rows(table).pact.values.content,'违反示例约定则承担后果');
+ e.newRecord(table,{name:'示例口头契约',content:'另一份同名约定'},'other');
+ assert.throws(()=>compile(e,form(e,table,{name:'示例口头契约',status:'已履行'})),/同表名称有重名/);
 });
 
 test('ongoing status respects lifecycle, independent effect sources and explicit bearer identity',()=>{

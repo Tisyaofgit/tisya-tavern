@@ -25,3 +25,7 @@ test('an older idle completion cannot unlock a later generation, and disposal le
  const f=fixture();f.events.emit('started','normal');await tick();f.events.emit('started','normal');await tick();f.gates[0]();await tick();await tick();assert.equal(f.guard.pending(),true);
  f.click();assert.equal(f.sends,0);f.guard.dispose();f.click();assert.equal(f.sends,1);assert.equal(f.events.listenerCount('started'),0);f.gates[1]();await tick();await tick();assert.equal(f.guard.pending(),false);await f.w.happyDOM.abort();
 });
+
+test('chat switch rechecks an idle native gate without letting the old completion unlock early',async()=>{
+ const f=fixture();f.events.emit('started','normal');await tick();f.guard.contextChanged();await tick();assert.equal(f.gates.length,2);f.gates[0]();await tick();await tick();assert.equal(f.guard.pending(),true);f.gates[1]();await tick();await tick();f.guard.assertIdle();f.guard.dispose();await f.w.happyDOM.abort();
+});

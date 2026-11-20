@@ -155,7 +155,7 @@ function scheduleNativeDisplayRefresh(){
 function refreshVisuals(){cancelNativeDisplayRefresh();document.body.classList.toggle('tisya-motion-paused',!motionEnabled||document.hidden);nativeDisplay?.refresh();appearance?.refresh();chatEffects?.refresh();pet?.refresh();homeView?.refreshMotion(motionEnabled&&getAppearance('extensions').动画效果,getDisplay());}
 const uiOperations=createUiOperations();
 let nativeGenerationEpoch=0,nativeIdleGuard=null;
-let root, overlay, observer, enabled = true, generationBusy = false, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
+let root, overlay, observer, enabled = true, generationBusy = false, generationOwner = null, cleanups = [], renderEpoch = 0, sheetEpoch = 0;
 let managed = false, participant, fontController, releaseFont, fontState='使用默认字体';
 let globalFonts=null;
 function activeNativeCards(){const c=context(),group=c.groupId?c.groups?.find(g=>String(g.id)===String(c.groupId)):null;return group?(c.characters??[]).filter(card=>group.members?.includes(card.avatar)):[c.characters?.[c.characterId]].filter(Boolean);}
@@ -275,8 +275,11 @@ const revisionController=createRevisionController({getContext:context,assertIdle
  archive:async()=>{if(!matrixHost.active())return;try{const result=await matrixHost.acceptCandidate();await phoneTurn.finished({accepted:true});return result;}catch(e){await phoneTurn.finished({accepted:false});throw e;}},
  feedback:value=>communication.recordFeedback(value),onState:()=>{decorate();reconcilePhoneHistory().catch(error);}});
 
+function beginGenerationBusy(){const c=context();const owner={chat:c.chat,metadata:c.chatMetadata,chatId:c.getCurrentChatId?.()??c.chatId};generationOwner=owner;generationBusy=true;return owner;}
+function endGenerationBusy(owner){if(generationOwner===owner){generationOwner=null;generationBusy=false;}}
+function generationIsBusy(){if(!generationBusy)return false;if(!generationOwner)return true;const c=context();return generationOwner.chat===c.chat&&generationOwner.metadata===c.chatMetadata&&generationOwner.chatId===(c.getCurrentChatId?.()??c.chatId);}
 function assertGenerationIdle() {
-    if (isGenerating() || hasActiveAgentRun() || generationBusy || revisionController.active() || communication.busy()) throw new Error('请先等待或停止正在进行的生成');
+    if (isGenerating() || hasActiveAgentRun() || generationIsBusy() || revisionController.active() || communication.busy()) throw new Error('请先等待或停止正在进行的生成');
     nativeIdleGuard?.assertIdle();
 }
 function assertIdle() {
@@ -478,7 +481,7 @@ async function saveAssistantConfiguration({data,revision,key,value,expected}){
  motionEnabled=settings().动态效果!==false;if(pet&&pet.isVisible()!==(settings().显示桌宠!==false))pet.setVisible(settings().显示桌宠!==false);refreshVisuals();inputShortcuts?.refresh();messageNavigation?.update();decorate();
 }
 async function saveInterfaceSettings(next){assertIdle();const previous=settings();context().extensionSettings[KEY]=next;refreshVisuals();try{if(await saveSettings()!==true)throw Error('宿主尚未确认保存');}catch(e){if(context().extensionSettings[KEY]===next)context().extensionSettings[KEY]=previous;refreshVisuals();throw Error('保存未完成，草稿保留：'+e.message);}}
-const chatLoading=createChatLoadingController({powerUser:power_user,persist:saveSettings,assertIdle,isBounded:isBoundedChatSurfaceView,clearCache:async()=>{await clearReaderCache();nativeDisplay?.clear();},onApplied:count=>{for(const id of ['chat_truncation','chat_truncation_counter']){const input=document.getElementById(id);if(input)input.value=String(count);}}});
+const chatLoading=createChatLoadingController({powerUser:power_user,persist:saveSettings,assertIdle,isBounded:isBoundedChatSurfaceView,clearCache:async()=>{await Promise.all([clearReaderCache(),matrixHost.clearProjectionCache()]);nativeDisplay?.clear();},onApplied:count=>{for(const id of ['chat_truncation','chat_truncation_counter']){const input=document.getElementById(id);if(input)input.value=String(count);}}});
 async function openSettings(tab='play',initialView=''){
  if(!await mayLeaveUtility())return false;
  if(tab==='tables'&&['assistant','genesis','foundation','core','style'].includes(initialView))return openAssistant(initialView==='core'?'core-assets':initialView);
@@ -496,10 +499,11 @@ async function openContextInspector(){
  await utility.ready;return true;
 }
 function openChatLoading(){renderEpoch++;page('聊天显示与缓存','<div id="tisya-chat-loading"></div>');utility=mountChatLoadingSettings(document,query('#tisya-chat-loading'),{controller:chatLoading});utility.ready?.catch(error);}
-async function openArchiveAtlas(){
+async function openArchiveAtlas(target=null){
  if(!await mayLeaveUtility())return false;
+ const initialAtlasTarget=typeof target==='string'?target:target&&typeof target.tableId==='string'&&typeof target.recordId==='string'?target.tableId+'#'+target.recordId:null;
  renderEpoch++;page('世界图鉴','<div id="tisya-archive-atlas"></div>');
- utility=mountTableApp(document,query('#tisya-archive-atlas'),{service:tableService,store:configStore,heading:'世界图鉴',initialPage:'atlas',onIdentity:ref=>openIdentity(ref),onMediaManage:()=>openSettings('resources'),onClose:()=>hidePage(),onSaved:()=>{appearance?.refresh();decorate();}});
+ utility=mountTableApp(document,query('#tisya-archive-atlas'),{service:tableService,store:configStore,heading:'世界图鉴',initialPage:'atlas',initialAtlasTarget,onIdentity:ref=>openIdentity(ref),onMediaManage:()=>openSettings('resources'),onClose:()=>hidePage(),onSaved:()=>{appearance?.refresh();decorate();}});
  await utility.ready;return true;
 }
 function openEmotionAtlas(){renderEpoch++;page('图鉴 · 内置表情','<div id="tisya-emotion-atlas"></div>');utility=mountEmotionAtlas(document,query('#tisya-emotion-atlas'));}
@@ -817,9 +821,9 @@ async function rerollAfterUser(token,operation){
     const options=await operation.wait(()=>getAgentGenerationOptions({generationType:'normal',mainApi:context().mainApi,selectedGroup:context().groupId}));
     if(matrixHost.active()){await defaultActivation.ready();await matrixHost.sync();}operation.check();assertIdle();validate(context(),token,{tail:true});
     if(String(query('#send_textarea')?.value??'').trim())throw Error('输入框新增了草稿，未发送重投');
-    const material=userRevisionMaterial(token.message);generationBusy=true;
+    const material=userRevisionMaterial(token.message),busyOwner=beginGenerationBusy();
     try{if(matrixHost.active())matrixHost.setUserRevision(material?{...material,messageId:token.id}:null);decorate();await operation.host(()=>Generate('normal',{...options,automatic_trigger:true}));}
-    finally{if(matrixHost.active())matrixHost.setUserRevision(null);generationBusy=false;decorate();}
+    finally{if(generationOwner===busyOwner&&generationIsBusy()&&matrixHost.active())matrixHost.setUserRevision(null);endGenerationBusy(busyOwner);decorate();}
 }
 function generateAt(token,reroll=false){return generationOperations.run(operation=>generateAtOperation(token,reroll,operation));}
 async function generateAtOperation(token, reroll, operation) {
@@ -837,7 +841,7 @@ async function generateAtOperation(token, reroll, operation) {
     if(Array.from(following).some(m=>!m||typeof m.mes!=='string'))throw new Error('后续历史尚未完整加载，未回溯消息');
     const snapshots=following.map(m=>JSON.stringify(m));
     const selectedSnapshot=JSON.stringify(selected),chatId=ctx.getCurrentChatId();
-    generationBusy=true;decorate();let deleted=0;
+    const busyOwner=beginGenerationBusy();decorate();let deleted=0;
     try {
         for(let id=token.length-1;id>token.id;id--) {
             operation.check();validate(context(),token);
@@ -870,7 +874,7 @@ async function generateAtOperation(token, reroll, operation) {
             }else recovery='会话已变化，未自动覆盖现有消息；请核对历史或备份；';
         }
         throw new Error(`${recovery}生成未完成：${err.message}`);
-    } finally { generationBusy=false;decorate(); }
+    } finally { endGenerationBusy(busyOwner);decorate(); }
 }
 function decorate(element = null,deferDisplay = true) {
     if(!enabled)return;
@@ -897,10 +901,10 @@ function decorate(element = null,deferDisplay = true) {
         if(note){if(!noteView){noteView=document.createElement('details');noteView.className='tisya-turn-direction';const heading=document.createElement('summary');heading.textContent='本轮场外要求';noteView.append(heading,document.createElement('p'));(node.querySelector('.mes_block')??node).append(noteView);}if(noteView.lastElementChild.textContent!==note)noteView.lastElementChild.textContent=note;}else noteView?.remove();
         const row=node.querySelector('.tisya-actions'),key=JSON.stringify([messageSlots(),pos.label,!!msg?.is_user]);if(row.dataset.slots!==key){row.innerHTML=`<div class="tisya-message-tools">${messageSlots().map(id=>messageToolButton(id)).join('')}</div>`+(candidates?`<div class="tisya-candidate-row" role="group" aria-label="回复版本">${iconButton('上一候选','candidate-prev','left','tisya-orb-button')}<button type="button" class="tisya-candidate-count" data-tisya-action="candidate-picker" aria-label="当前候选" title="选择版本">${esc(pos.label)}</button>${iconButton('下一候选','candidate-next','right','tisya-orb-button')}</div>`:'');row.dataset.slots=key;}
         if(msg?.is_user){for(const b of row.querySelectorAll('[data-tisya-action=regen],[data-tisya-action=msg-regen]')){b.setAttribute('aria-label','重投下一条');const caption=b.querySelector('small');if(caption)caption.textContent='重投下一条';}}
-        appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy)});
+        appearance?.sync(node,{pending:id===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationIsBusy())});
         const actionBlock=node.querySelector('.mes_block')??node;if(row.parentElement!==actionBlock||actionBlock.lastElementChild!==row)actionBlock.append(row);
         editToolbarPlacement?.sync(node);
-        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':messageActionExclusive(b.dataset.tisyaAction)&&(isGenerating()||hasActiveAgentRun()||generationBusy||revisionController.active()||revisionController.navigating()||communication.busy())?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
+        node.querySelectorAll('.tisya-actions button').forEach(b=>{if(b.dataset.tisyaAction!=='more'){const reason=!msg?'消息尚未加载':['regen','msg-regen','msg-revision'].includes(b.dataset.tisyaAction)&&(msg.is_system||msg.role==='tool'||msg.is_user&&b.dataset.tisyaAction==='msg-revision')?'请选择角色回复进行重骰':messageActionExclusive(b.dataset.tisyaAction)&&(isGenerating()||hasActiveAgentRun()||generationIsBusy()||revisionController.active()||revisionController.navigating()||communication.busy())?'正在生成，请先停止或等待结束':b.dataset.tisyaAction==='candidate-prev'&&pos.index===0?'已经是第一个版本':b.dataset.tisyaAction==='candidate-next'&&pos.index>=pos.total-1?'已经是最后一个版本':'';b.disabled=!!reason;b.title=reason||(b.dataset.tisyaAction==='regen'?(msg.is_user?'重投下一条角色回复；保留旧候选，较早楼层先建立分支':'重骰保留旧候选；较早楼层先建立分支'):b.dataset.tisyaAction==='next'&&id<context().chat.length-1?'将删除后文再继续':(b.getAttribute('aria-label')??b.textContent));b.setAttribute('aria-disabled',String(!!reason));}});
         node.querySelectorAll('.mes_button, .mes_edit_buttons > div').forEach(el=>{
             const title=el.getAttribute('title')??el.getAttribute('data-tooltip')?.split('\n')[0];
             if(title)el.dataset.tisyaLabel=title;
@@ -913,7 +917,7 @@ async function run(fn,options={}) {
 function stopUI() {
     if(characterGroup?.isBusy()||characterGroup?.hasDraft())throw Error('角色页面还有未保存的修改');characterGroup?.dispose();characterGroup=null;
     if(worldbookConsole?.isBusy()||worldbookConsole?.hasDraft())throw Error('世界书还有未保存的修改，请先保存或放弃');worldbookConsole?.dispose();worldbookConsole=null;
-    if(uiOperations.busy()||generationBusy)throw new Error('请等当前聊天操作完成再返回原生界面');
+    if(uiOperations.busy()||generationIsBusy())throw new Error('请等当前聊天操作完成再返回原生界面');
     clearNotebook();clearReader();enabled=false;fontController?.abort();releaseFont?.();releaseFont=null;globalFonts?.dispose();globalFonts=null;observer?.disconnect();cleanups.forEach(fn=>fn());cleanups=[];layout.dispose();document.body.classList.remove('tisya-active','tisya-show-native-menu','tisya-motion-paused');
     document.querySelectorAll('.tisya-actions,.tisya-turn-direction').forEach(el=>el.remove());
     document.querySelectorAll('.tisya-native-tools').forEach(el=>el.classList.remove('tisya-native-tools'));
@@ -940,7 +944,7 @@ function init() {
     ensureNativeDisplay();
     appearance=mountMessageAppearance(document,{
         getMessage:node=>context().chat[Number(node.getAttribute('mesid'))],getPhoneContext:()=>phoneChatKey(context()),
-        getPending:node=>Number(node.getAttribute('mesid'))===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationBusy),
+        getPending:node=>Number(node.getAttribute('mesid'))===context().chat.length-1&&(isGenerating()||hasActiveAgentRun()||generationIsBusy()),
         getStreamingSource:(node,msg)=>streamingMessageSource(context(),node,msg),
         getCover:msg=>messageCardCover(context(),msg,avatar=>getThumbnailUrl('avatar',avatar),chatMedia),
         getMessageCount:()=>context().chat.length,getInitialRenderCount:()=>power_user.chat_truncation,getScope:()=>context().getCurrentChatId(),onHistoryReady:node=>decorate(node),
@@ -1040,7 +1044,7 @@ const nativePanelFormatting=installNativePanelFormatting({
     enabled:()=>enabled&&!!context().chatId&&configStore.read().world.theme.nativeRegex,
     project:(source,message,id)=>{const pipeline=ensureNativeDisplay();pipeline.refresh();return pipeline.project(source,message,{getAttribute:()=>String(id)});},
     isEager:()=>window.__TAURITAVERN__?.api?.chatSurface?.isManagedOwnershipRequired?.()===false,
-    busy:()=>isGenerating()||hasActiveAgentRun()||generationBusy||nativeGenerationOpen||revisionController.active(),
+    busy:()=>isGenerating()||hasActiveAgentRun()||generationIsBusy()||nativeGenerationOpen||revisionController.active(),
     updateMessageBlock:(...args)=>hostNative.updateMessageBlock(...args),
     requestRender:id=>context().eventSource.emit('TH_REQUEST_RENDER_MESSAGE',id),onError:visualError,
 });
@@ -1057,7 +1061,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
     bind('CHAT_CHANGED',async()=>{
       worldbookConditions.end();
       const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata;
-      nativeGenerationEpoch++;nativeGenerationOpen=false;phoneTurn.contextChanged();communication.contextChanged();configHost.cancelTransport();
+      nativeGenerationEpoch++;nativeGenerationOpen=false;generationOperations.stop();revisionController.contextChanged();phoneTurn.contextChanged();communication.contextChanged();nativeIdleGuard?.contextChanged();configHost.cancelTransport();
       tableService.contextChanged();
       try{const activation=await defaultActivation.chatChanged();if(activation?.status==='chat-loading'||phoneChatKey(context())!==key||context().chatMetadata!==metadata)return;await matrixHost.event('CHAT_CHANGED');}
       catch(e){error(e);}
@@ -1131,7 +1135,7 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       await phoneTurn.stopped().catch(error);await Promise.all([matrixHost.event('GENERATION_STOPPED'),communication.stopped().catch(error)]);
      });
      matrixHost.register();for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,(...args)=>{if(!revisionController.active())matrixHost.event(name,...args).catch(error);});}
-     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service();assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
+     window.Tisya=Object.freeze({version:VERSION,phone:Object.freeze({selectionKey:phoneSelectionKey,openIdentity:()=>openIdentity(),initializeLife:async()=>initializeLifeForCurrentSelection(await getPhoneService()),contextKey:()=>phoneChatKey(context()),recoverPending:options=>phoneTurn.recoverPending(options),service:async()=>{const c=context(),key=phoneChatKey(c),metadata=c.chatMetadata,chat=c.chat,assertCurrent=()=>{const live=context();if(phoneChatKey(live)!==key||live.chatMetadata!==metadata||live.chat!==chat){const error=Error('聊天已切换，请在当前聊天重新打开手机。');error.code='PHONE_CONTEXT_CHANGED';throw error;}};const service=await phoneTurn.service();assertCurrent();if(!isGenerating()&&!revisionController.active()&&!phoneTurn.state().active)await phoneTurn.reconcile();assertCurrent();return service;},snapshot:sourceId=>phoneTurn.snapshot(sourceId),source:message=>phoneTurn.source(message),open:options=>openVirtualPhone(options),close:async()=>{if(!await mayLeaveUtility())return false;hidePage();return true;},state:()=>phoneTurn.state()}),matrix:matrixHost,builtinBooks,creator:matrixCreator,presentation:extensionPresentation,archive:Object.freeze({open:target=>openArchiveAtlas(target).catch(cause=>{error(cause);return false;})}),builtinPreset:()=>{const s=builtinPreset.state();return {receipt:s.receipt,error:s.error?.message??null,busy:s.busy};},operationState:()=>uiOperations.state(),register,registry,communication:{read:()=>communication.view()},tables:Object.freeze({read:()=>matrixDatabase.read(),commit:input=>matrixDatabase.commit(input),sources:sourceBookReader,creation:matrixCreator,foundation:tableService.matrixFoundation,conditions:conditionService}),contracts:{generation:GENERATION_CONTRACTS,mode:MODE_CONTRACT,archive:ARCHIVE_CONTRACT,validateGeneratedTask},configuration:{read:()=>matrixHost.config.read(),save:(...args)=>matrixHost.config.save(...args)},request:(...args)=>configHost.request(...args),context:()=>configHost.preview()});
      for(const name of ['MESSAGE_EDITED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED','CHAT_CHANGED']){const ev=context().eventTypes[name];if(ev)context().eventSource.on(ev,()=>reconcilePhoneHistory().catch(error));}
      window.addEventListener('pagehide',event=>{if(!event.persisted){nativeSourceLayers.dispose();defaultActivation.dispose();presentationMedia.dispose();phoneTurn.dispose();for(const row of phoneServices.values())row.service?.dispose();}});
 

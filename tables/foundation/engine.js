@@ -659,7 +659,9 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   }
   if(ownerRaw&&(row.tableId==='T_DYN_ENTITY_STATE'||row.tableId==='T_DYN_ENTITY_GAUGES'&&axis))continue;
   const name=normalizeIdentityName(row.name);
-  const named=context.references.filter(r=>r.tableId===row.tableId&&normalizeIdentityName(r.name)===name);
+  // Live-state references are headed by their owner, while a sparse numbered
+  // patch still carries the mutable state name in the legacy coordinate.
+  const named=context.references.filter(r=>r.tableId===row.tableId&&normalizeIdentityName(row.tableId==='T_DYN_ENTITY_STATE'?r.legacyName:r.name)===name);
   if(!named.length)continue;
   const owner=ownerRaw?reference(ownerRaw,'T_SYS_ENTITIES',{row,field:ownerKey}).recordId:null;
   const valuesOf=r=>snapshot.state.tables[row.tableId][r.recordId].values;
@@ -686,7 +688,8 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   }
   check(matches.length===1,'【'+row.heading+'】存在多条同名状态，请补全所属对象或引用已有记录完整标题：'+row.name);
   const target=matches[0],groupRef=references.find(r=>r.tableId===row.tableId&&r.display===row.heading&&r.recordId===row.recordId);
-  row.recordId=target.recordId;row.existing=true;row.raw.name=target.name;row.name=target.name;
+  row.recordId=target.recordId;row.existing=true;
+  if(row.tableId!=='T_DYN_ENTITY_STATE'){row.raw.name=target.name;row.name=target.name;}
   groupRef.recordId=target.recordId;groupRef.name=target.name;
  }catch(error){error.formLocation??={heading:row.heading,tableId:row.tableId};throw error;}
  if(context.narrativeIdentity!==false&&permitsIdentityReuse(context.task)){

@@ -59,3 +59,16 @@ test('failed edited-user reroll clears one-shot comparison and keeps original ca
 });
 
 test('one-pass reroll delegates the completed selected candidate to its single-response archive',async()=>{const f=fixture('onepass');await f.control.generate(f.token(),null);assert.equal(candidatePosition(f.c.chat[0]).label,'2/2');assert.deepEqual(f.archiveModes,['onepass']);assert.equal(f.archives.length,1);});
+
+
+test('a late old-chat reroll cannot clear the new chat active operation',async()=>{
+ let c={chatId:'old',chat:[{mes:'旧版',swipe_id:0,swipes:['旧版']}],onlineStatus:'connected',getCurrentChatId(){return this.chatId;},async saveChat(){}};
+ const releases=new Map(),requests=[];let control;
+ const runGeneration=fn=>fn({check(){},host:start=>start(),signal:{aborted:false}});
+ control=createRevisionController({getContext:()=>c,assertIdle(){},runGeneration,hydrate:async()=>true,canSwipe:()=>true,overswipe:()=>'regenerate',setRevision:value=>requests.push(value),swipe:async(_a,_b,{message,forceMesId:id})=>{const chatId=c.chatId;await new Promise(resolve=>releases.set(chatId,()=>{message.swipes.push(chatId+'新版');message.swipe_id=1;message.mes=message.swipes[1];control.received(id,'swipe');control.ended(false);resolve();}));},archive:async()=>{},feedback:async()=>{}});
+ const oldRun=control.generate(capture(c,0),null);for(let i=0;!control.active()&&i<20;i++)await new Promise(resolve=>setImmediate(resolve));assert(control.active());
+ c={chatId:'new',chat:[{mes:'新聊天旧版',swipe_id:0,swipes:['新聊天旧版']}],onlineStatus:'connected',getCurrentChatId(){return this.chatId;},async saveChat(){}};control.contextChanged();assert.equal(control.active(),null);
+ const newRun=control.generate(capture(c,0),null);for(let i=0;!control.active()&&i<20;i++)await new Promise(resolve=>setImmediate(resolve));assert.equal(control.active().chatId,'new');
+ releases.get('old')();await assert.rejects(oldRun,/聊天已切换/);assert.equal(control.active().chatId,'new');
+ releases.get('new')();await newRun;assert.equal(control.active(),null);assert.equal(c.chat[0].mes,'new新版');
+});

@@ -2,10 +2,10 @@ import {decorateDialogue} from './prose-dialogue.js';
 import {DIALOGUE_CSS} from './prose-dialogue-style.js';
 import {protectCode} from './markdown-code.js';
 import {decorateBody,bodyCSS,formatMarks,MARK_CSS} from './typography-core.js';
-import {projectPresentationMarks,PRESENTATION_CSS} from './extension-presentation.mjs';
+import {projectPresentationMarks,projectArchiveLinks,PRESENTATION_CSS,ARCHIVE_LINK_CSS} from './extension-presentation.mjs';
 import {decorateAsides,ASIDE_CSS} from './prose-asides.js';
 
-export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS+PRESENTATION_CSS+ASIDE_CSS+DIALOGUE_CSS;
+export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS+PRESENTATION_CSS+ARCHIVE_LINK_CSS+ASIDE_CSS+DIALOGUE_CSS;
 export const proseCSS=proseStyles();
 
 // Only receives the public body selected by inspectMessage. Host sanitization
@@ -36,5 +36,6 @@ export function formatProse(document,source,hostFormat,options={}){
  decorateDialogue(root,options);
  decorateAsides(root,options);
  decorateBody(root,options);
+ if(options.presentation?.archiveLinks)projectArchiveLinks(root,options.presentation);
  return root.outerHTML;
 }

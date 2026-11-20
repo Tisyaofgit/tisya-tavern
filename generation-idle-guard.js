@@ -17,5 +17,5 @@ export function mountGenerationIdleGuard(document,{events,eventTypes,waitForIdle
  }
  events.on(eventTypes.GENERATION_STARTED,started);
  document.addEventListener('click',send,true);
- return {assertIdle,pending:()=>pending,dispose(){disposed=true;pending=false;epoch++;events.removeListener(eventTypes.GENERATION_STARTED,started);document.removeEventListener('click',send,true);}};
+ return {assertIdle,pending:()=>pending,contextChanged(){if(pending&&!isGenerating())started();},dispose(){disposed=true;pending=false;epoch++;events.removeListener(eventTypes.GENERATION_STARTED,started);document.removeEventListener('click',send,true);}};
 }

@@ -1,4 +1,5 @@
 import {normalizeRecordReference,MESSAGE_SUBTYPES} from './extension-preferences.mjs';
+import {archiveLinkTextIndex} from './archive-links.mjs';
 
 // Pure presentation of caller-authorized form projections. There are no state,
 // network, ledger, or generation services in this module.
@@ -158,3 +159,73 @@ export function projectPresentationMarks(root,{authoredNodes=new Set(),strict=fa
  return {count,errors};
 }
 export const PRESENTATION_CSS=`[data-tisya-presentation]{color:inherit}[data-tisya-presentation] p{white-space:pre-wrap;margin:.45em 0}[data-tisya-presentation] audio{display:block;width:100%;margin:.5em 0}[data-tisya-presentation] img{display:block;max-width:100%;height:auto;border-radius:.3em}[data-tisya-presentation] figure{margin:.5em 0}[data-tisya-presentation] figcaption,.tisya-presentation-meta,.tisya-presentation-muted,.tisya-presentation-provenance{font-size:.8em;opacity:.78}.tisya-presentation-amount{font-size:1.5em;font-variant-numeric:tabular-nums}.tisya-presentation-transcript{white-space:pre-wrap;border-left:2px solid #bfb48466;padding-left:.7em}.tisya-presentation-forum,.tisya-presentation-danmaku{list-style:none;padding:0;margin:0}.tisya-presentation-forum>li{border-top:1px solid #bfb48444;padding:.65em 0}.tisya-presentation-danmaku>li{display:flex;gap:.8em;align-items:baseline;padding:.3em .5em;background:#789d871a;margin:.25em 0;border-radius:.3em}.tisya-presentation-danmaku>li>span{flex-shrink:0;max-width:35%;overflow-wrap:anywhere;font-size:.8em;color:var(--tisya-dialogue-color,#ffedbf)}[data-tisya-presentation][data-density=compact]{padding:.4em .65em}[data-tisya-presentation][data-alignment=center]>header{text-align:center}[data-tisya-presentation][data-emphasis=quiet]{background:transparent}.tisya-presentation-provenance{display:block;margin-top:.65em}`;
+
+
+const ARCHIVE_SKIP='a,button,code,pre,script,style,textarea,input,select,option,iframe,object,embed,noscript,template,[contenteditable],[data-tisya-reference],[data-tisya-presentation],[data-tisya-no-archive-links],[data-tisya-archive-anchor]';
+const archiveInteractionState=new WeakMap();
+let archiveTooltipSequence=0;
+const archivePathElement=(event,attribute)=>event.composedPath().find(node=>node?.hasAttribute?.(attribute));
+function placeArchiveTooltip(anchor){
+ const rect=anchor.getBoundingClientRect(),win=anchor.ownerDocument.defaultView,width=win?.innerWidth??1024;
+ anchor.dataset.archivePlace=rect.top<240?'below':'above';
+ anchor.dataset.archiveAlign=rect.left<170?'left':rect.right>width-170?'right':'center';
+}
+function setArchiveTooltip(state,anchor,open,restoreFocus=false){
+ if(open){for(const other of [...state.open])if(other!==anchor)setArchiveTooltip(state,other,false);state.open.add(anchor);placeArchiveTooltip(anchor);}
+ else state.open.delete(anchor);
+ anchor.dataset.archiveOpen=String(open);const trigger=anchor.querySelector('[data-tisya-archive-link]');trigger?.setAttribute('aria-expanded',String(open));if(restoreFocus)trigger?.focus({preventScroll:true});
+}
+function archiveInteractions(document){
+ if(archiveInteractionState.has(document))return;
+ const state={open:new Set()};archiveInteractionState.set(document,state);
+ document.addEventListener('click',event=>{
+  const trigger=archivePathElement(event,'data-tisya-archive-link');
+  if(trigger){event.preventDefault();const anchor=trigger.closest('[data-tisya-archive-anchor]');setArchiveTooltip(state,anchor,anchor.dataset.archiveOpen!=='true');return;}
+  const close=archivePathElement(event,'data-tisya-archive-close');
+  if(close){event.preventDefault();const anchor=close.closest('[data-tisya-archive-anchor]');setArchiveTooltip(state,anchor,false,true);return;}
+  const open=archivePathElement(event,'data-tisya-archive-open');
+  if(open){event.preventDefault();const anchor=open.closest('[data-tisya-archive-anchor]'),tableId=open.getAttribute('data-table-id'),recordId=open.getAttribute('data-record-id');setArchiveTooltip(state,anchor,false);const launch=document.defaultView?.Tisya?.archive?.open;if(typeof launch==='function'&&tableId&&recordId)Promise.resolve(launch({tableId,recordId}));return;}
+  for(const anchor of [...state.open])if(!event.composedPath().includes(anchor))setArchiveTooltip(state,anchor,false);
+ });
+ document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape')return;const anchor=archivePathElement(event,'data-tisya-archive-anchor')??[...state.open].at(-1);if(anchor){event.preventDefault();setArchiveTooltip(state,anchor,false,true);}
+ });
+ const place=event=>{const trigger=archivePathElement(event,'data-tisya-archive-link');if(trigger)placeArchiveTooltip(trigger.closest('[data-tisya-archive-anchor]'));};
+ document.addEventListener('pointerover',place);document.addEventListener('focusin',place);
+}
+function archiveTooltip(document,name,entry){
+ const anchor=document.createElement('span');anchor.className='tisya-archive-anchor';anchor.dataset.tisyaArchiveAnchor='';anchor.dataset.archiveOpen='false';
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='tisya-archive-link';trigger.dataset.tisyaArchiveLink='';trigger.setAttribute('aria-expanded','false');trigger.textContent=name;
+ const tooltip=document.createElement('span'),id='tisya-archive-tip-'+(++archiveTooltipSequence);tooltip.id=id;tooltip.className='tisya-archive-tooltip';tooltip.dataset.tisyaArchiveTooltip='';tooltip.setAttribute('role','tooltip');trigger.setAttribute('aria-controls',id);trigger.setAttribute('aria-label',name+'：查看'+entry.kind+'档案');
+ const heading=document.createElement('span');heading.className='tisya-archive-tooltip-heading';
+ const titles=document.createElement('span');titles.className='tisya-archive-tooltip-titles';
+ const kind=document.createElement('span');kind.className='tisya-archive-tooltip-kind';kind.textContent=entry.kind;
+ const title=document.createElement('span');title.className='tisya-archive-tooltip-title';title.textContent=entry.title;titles.append(kind,title);
+ const close=document.createElement('button');close.type='button';close.className='tisya-archive-tooltip-close';close.dataset.tisyaArchiveClose='';close.setAttribute('aria-label','关闭'+entry.title+'档案提示');close.textContent='×';heading.append(titles,close);tooltip.append(heading);
+ for(const [label,value] of entry.fields??[]){const row=document.createElement('span'),term=document.createElement('span'),detail=document.createElement('span');row.className='tisya-archive-tooltip-field';term.className='tisya-archive-tooltip-label';detail.className='tisya-archive-tooltip-value';term.textContent=label;detail.textContent=value;row.append(term,detail);tooltip.append(row);}
+ if(typeof document.defaultView?.Tisya?.archive?.open==='function'){
+  const open=document.createElement('button');open.type='button';open.className='tisya-archive-tooltip-open';open.dataset.tisyaArchiveOpen='';open.dataset.tableId=entry.reference.tableId;open.dataset.recordId=entry.reference.recordId;open.textContent='在当前图鉴中打开 →';tooltip.append(open);
+ }
+ anchor.append(trigger,tooltip);return anchor;
+}
+const asciiWord=value=>typeof value==='string'&&/[A-Za-z0-9_]/u.test(value);
+function archiveBoundary(text,start,end,name){
+ return !(start>0&&asciiWord(name[0])&&asciiWord(text[start-1]))&&!(end<text.length&&asciiWord(name.at(-1))&&asciiWord(text[end]));
+}
+export function projectArchiveLinks(root,{archiveLinks=null,contextKey=null}={}){
+ if(!root||!archiveLinks)return;
+ const index=archiveLinkTextIndex({entries:(archiveLinks.entries??[]).filter(entry=>entry?.allowed===true&&entry.contextKey===contextKey&&entry.reference?.snapshotId)});if(!index.length)return;
+ const document=root.ownerDocument,walker=document.createTreeWalker(root,4),nodes=[];
+ while(walker.nextNode()){const node=walker.currentNode;if(node.parentElement?.closest(ARCHIVE_SKIP))continue;if(node.nodeValue?.trim())nodes.push(node);}
+ for(const node of nodes){
+  const source=node.nodeValue,fragment=document.createDocumentFragment();let cursor=0,from=0,matched=false;
+  while(cursor<source.length){
+   const found=index.find(({name})=>source.startsWith(name,cursor)&&archiveBoundary(source,cursor,cursor+name.length,name));
+   if(!found){cursor++;continue;}
+   matched=true;fragment.append(document.createTextNode(source.slice(from,cursor)),archiveTooltip(document,found.name,found.entry));cursor+=found.name.length;from=cursor;
+  }
+  if(matched){fragment.append(document.createTextNode(source.slice(from)));node.replaceWith(fragment);}
+ }
+ archiveInteractions(document);
+}
+export const ARCHIVE_LINK_CSS=`.tisya-archive-anchor{position:relative;display:inline-block}.tisya-archive-link{appearance:none;display:inline;vertical-align:baseline;margin:0;padding:0 .08em;border:0;border-bottom:1px solid color-mix(in srgb,var(--tisya-dialogue-color,#b98b4b) 62%,transparent);border-radius:0;background:transparent;color:inherit;font:inherit;line-height:inherit;letter-spacing:inherit;text-align:inherit;cursor:pointer;text-decoration:none}.tisya-archive-link:hover,.tisya-archive-link:focus-visible{color:var(--tisya-dialogue-color,#9b6a30);border-bottom-style:solid;outline:none;background:color-mix(in srgb,var(--tisya-dialogue-color,#b98b4b) 9%,transparent)}.tisya-archive-tooltip{position:absolute;z-index:80;bottom:calc(100% + 9px);left:50%;display:none;width:min(320px,calc(100vw - 32px));max-height:min(440px,58vh);overflow:auto;padding:14px 16px 13px;border:1px solid #b9a47b66;border-radius:10px;background:var(--tisya-archive-tooltip-bg,#fffdf7);box-shadow:0 12px 38px #251b1240;color:var(--tisya-archive-tooltip-text,#342c25);font-family:var(--tisya-global-font,TisyaReading),TisyaReading,serif;font-size:14px;font-style:normal;font-weight:400;line-height:1.65;letter-spacing:0;text-align:left;white-space:normal;transform:translateX(-50%);overflow-wrap:anywhere}.tisya-archive-anchor[data-archive-place=below]>.tisya-archive-tooltip{bottom:auto;top:calc(100% + 9px)}.tisya-archive-anchor[data-archive-align=left]>.tisya-archive-tooltip{left:0;transform:none}.tisya-archive-anchor[data-archive-align=right]>.tisya-archive-tooltip{left:auto;right:0;transform:none}.tisya-archive-anchor[data-archive-open=true]>.tisya-archive-tooltip{display:block}.tisya-archive-tooltip-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid #b9a47b44}.tisya-archive-tooltip-titles{display:block;min-width:0}.tisya-archive-tooltip-kind{display:block;margin-bottom:2px;color:#8b6c40;font-size:11px;letter-spacing:.12em}.tisya-archive-tooltip-title{display:block;color:#32261d;font-size:18px;font-weight:650;line-height:1.35}.tisya-archive-tooltip-close{flex:0 0 36px;width:36px;height:36px;margin:-8px -10px -5px 0;padding:0;border:0;border-radius:50%;background:transparent;color:#6f6255;font:24px/1 sans-serif;cursor:pointer}.tisya-archive-tooltip-close:hover,.tisya-archive-tooltip-close:focus-visible{background:#9c7a4520;outline:2px solid #9c7a4544;outline-offset:-2px}.tisya-archive-tooltip-field{display:block;margin-top:9px}.tisya-archive-tooltip-label{display:block;margin-bottom:1px;color:#887764;font-size:11px}.tisya-archive-tooltip-value{display:block;white-space:pre-wrap}.tisya-archive-tooltip-open{display:block;margin:12px 0 0;padding:7px 0 0;width:100%;border:0;border-top:1px solid #b9a47b44;background:transparent;color:#785a31;font:inherit;text-align:left;cursor:pointer}.tisya-archive-tooltip-open:hover,.tisya-archive-tooltip-open:focus-visible{text-decoration:underline;outline:none}@media (hover:hover) and (pointer:fine){.tisya-archive-anchor:hover>.tisya-archive-tooltip,.tisya-archive-anchor:focus-within>.tisya-archive-tooltip{display:block}}@media (pointer:coarse){.tisya-archive-tooltip-close{flex-basis:44px;width:44px;height:44px}.tisya-archive-link{min-height:24px}.tisya-archive-tooltip-open{min-height:44px;padding-top:10px}}@media (max-width:480px){.tisya-archive-tooltip{max-height:52vh;padding:13px 14px;font-size:14px}}`;

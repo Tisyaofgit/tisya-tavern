@@ -34,13 +34,14 @@ export function createCommunication({getContext,persist,persistMessage=async c=>
  function same(s){try{const n=scope();return n.key===s.key&&n.meta===s.meta;}catch{return false;}}
  function read(s=scope()){if(cache.has(s.key)&&cache.get(s.key).meta===s.meta)return cache.get(s.key);const all=s.meta[KEY];check(all===undefined||all?.version===1&&all.scopes&&typeof all.scopes==='object','场外记录版本无效，未覆盖');const data=clone(all?.scopes?.[s.key]??empty());check(typeof data.draft==='string'&&Array.isArray(data.turns)&&Array.isArray(data.feedback),'场外记录损坏，未覆盖');const row={meta:s.meta,data,error:null};cache.set(s.key,row);return row;}
  function save(s){const row=read(s),snapshot=clone(row.data);const operation=queue.catch(()=>{}).then(async()=>{check(same(s),'聊天或 user 人设已切换；原场外草稿仍在本次会话缓存');const before=s.meta[KEY],next={version:1,scopes:{...(before?.scopes??{}),[s.key]:snapshot}};s.meta[KEY]=next;try{const result=await persist(s.c,s);check(result!==false,'宿主未确认保存场外记录');row.error=null;}catch(e){if(s.meta[KEY]===next){if(before===undefined)delete s.meta[KEY];else s.meta[KEY]=before;}row.error=e.message;throw e;}finally{onChange();}});queue=operation;return operation;}
- function view(){if(!getContext().chatId)return {...empty(),scope:null,busy:false,error:null,available:false};const s=scope(),row=read(s);return {...clone(row.data),scope:s.key,available:true,busy:!!active||!!staged,talking:!!active,error:row.error};}
+ function busy(){return [active,staged].some(run=>run&&same(run.s));}
+ function view(){if(!getContext().chatId)return {...empty(),scope:null,busy:false,error:null,available:false};const s=scope(),row=read(s);return {...clone(row.data),scope:s.key,available:true,busy:busy(),talking:!!active&&same(active.s),error:row.error};}
  function setDraft(text){check(typeof text==='string','草稿须为文本');read().data.draft=text;onChange();}
- async function talk(){check(!active&&!staged,'上一项场外操作尚未结束');assertIdle();const s=scope(),row=read(s),text=row.data.draft;check(text.trim(),'请先填写场外交流内容');const controller=new AbortController(),run={controller,s};active=run;onChange();const referenceStamp=stamp(s.c),index=s.c.chat?.findLastIndex(m=>m&&!m.is_user&&!m.is_system)??-1,message=s.c.chat?.[index];
+ async function talk(){check(!busy(),'上一项场外操作尚未结束');assertIdle();const s=scope(),row=read(s),text=row.data.draft;check(text.trim(),'请先填写场外交流内容');const controller=new AbortController(),run={controller,s};active=run;onChange();const referenceStamp=stamp(s.c),index=s.c.chat?.findLastIndex(m=>m&&!m.is_user&&!m.is_system)??-1,message=s.c.chat?.[index];
   try{await save(s);check(same(s)&&stamp(getContext())===referenceStamp,'聊天内容已变化，请重新发送场外评价');const input={format:'tisya.communication-input/1',text,history:row.data.turns.slice(-12).map(t=>({user:t.user,assistant:t.assistant})),reference:message?{messageId:index,candidate:message.swipe_id??0,text:message.mes}:null};const answer=await request('communication',input,{signal:controller.signal});check(!controller.signal.aborted,'场外请求已取消，草稿保留');check(same(s)&&stamp(getContext())===referenceStamp,'原聊天或候选已变化，未将过期回复写入当前聊天');check(typeof answer==='string'&&answer.trim(),'场外请求没有返回正文');row.data.turns.push({id:crypto.randomUUID(),at:new Date().toISOString(),user:text,assistant:answer,source:input.reference});if(row.data.draft===text)row.data.draft='';try{await save(s);}catch(e){row.data.draft=text;throw Error('回复已保留在面板，但持久保存失败：'+e.message);}return answer;
   }finally{if(active===run)active=null;onChange();}}
  async function restoreDraft(r){if(!r?.consumed)return;const row=read(r.s);if(row.data.draft===''){row.data.draft=r.note;if(same(r.s))await save(r.s);}r.consumed=false;onChange();}
- async function withStory(text,send){check(!active&&!staged,'上一项场外操作尚未结束');assertIdle();const s=scope(),row=read(s),note=row.data.draft;check(note.trim(),'请先填写本轮要求');check(typeof text==='string'&&text.trim(),'请在剧情输入框填写角色行动或对白');check(!text.trimStart().startsWith('/'),'本轮合并发送不执行斜杠命令');const run={s,note,text:text.trim(),length:s.c.chat.length,prefix:stamp(s.c),used:false,finished:false,accepted:false};staged=run;onChange();
+ async function withStory(text,send){check(!busy(),'上一项场外操作尚未结束');assertIdle();const s=scope(),row=read(s),note=row.data.draft;check(note.trim(),'请先填写本轮要求');check(typeof text==='string'&&text.trim(),'请在剧情输入框填写角色行动或对白');check(!text.trimStart().startsWith('/'),'本轮合并发送不执行斜杠命令');const run={s,note,text:text.trim(),length:s.c.chat.length,prefix:stamp(s.c),used:false,finished:false,accepted:false};staged=run;onChange();
   try{await save(s);check(same(s)&&stamp(getContext())===run.prefix,'聊天已变化，未发送本轮要求');await send();check(run.used,'宿主未发送这一轮，场外草稿已保留');check(run.finished&&run.accepted,'本轮未完整完成，场外要求草稿保留以便重试');check(same(s),'聊天已切换，场外草稿未清除');row.data.feedback.push({id:crypto.randomUUID(),kind:'turn-direction',at:new Date().toISOString(),text:note,messageId:run.messageId,playerText:run.text});if(row.data.draft===note)row.data.draft='';await save(s);
   }catch(e){await restoreDraft(run);throw e;}finally{if(staged===run)staged=null;onChange();}}
  async function beginNative(text,type,options={},dryRun=false){
@@ -51,13 +52,13 @@ export function createCommunication({getContext,persist,persistMessage=async c=>
    const note=readTurnDirection(message);if(note)replay={s,message,note};return;
   }
   if(options.automatic_trigger||!['normal',undefined].includes(type))return;
-  if(staged)return;
+  if(staged&&same(staged.s))return;
   const s=scope(),row=read(s),note=row.data.draft;if(!note.trim())return;
   check(!active,'场外交流正在进行，请稍后发送剧情');check(typeof text==='string'&&text.trim(),'请填写下方剧情；只想交流时可切换为“与缇斯亚交流”后使用主发送键');
   const run={s,note,text:text.trim(),length:s.c.chat.length,prefix:stamp(s.c),used:false,native:true};staged=run;onChange();
   try{await save(s);check(same(s)&&stamp(getContext())===run.prefix,'聊天已变化，未发送本轮要求');}catch(e){if(staged===run)staged=null;onChange();throw e;}
  }
- async function finishNative(accepted){const r=staged;if(!r?.native)return;if(!accepted||!r.used||!getContext().chat.slice(r.messageId+1).some(m=>!m?.is_user&&!m?.is_system&&typeof m?.mes==='string'&&m.mes.trim())){try{await restoreDraft(r);}finally{staged=null;onChange();}return;}try{check(same(r.s),'聊天已切换，场外草稿仍保留');const row=read(r.s);row.data.feedback.push({id:crypto.randomUUID(),kind:'turn-direction',at:new Date().toISOString(),text:r.note,messageId:r.messageId,playerText:r.text});if(row.data.draft===r.note)row.data.draft='';try{await save(r.s);}catch(e){row.data.draft=r.note;throw e;}}finally{if(staged===r)staged=null;onChange();}}
+ async function finishNative(accepted){const r=staged;if(!r?.native||!same(r.s))return;if(!accepted||!r.used||!getContext().chat.slice(r.messageId+1).some(m=>!m?.is_user&&!m?.is_system&&typeof m?.mes==='string'&&m.mes.trim())){try{await restoreDraft(r);}finally{staged=null;onChange();}return;}try{check(same(r.s),'聊天已切换，场外草稿仍保留');const row=read(r.s);row.data.feedback.push({id:crypto.randomUUID(),kind:'turn-direction',at:new Date().toISOString(),text:r.note,messageId:r.messageId,playerText:r.text});if(row.data.draft===r.note)row.data.draft='';try{await save(r.s);}catch(e){row.data.draft=r.note;throw e;}}finally{if(staged===r)staged=null;onChange();}}
  async function directions({prepare=false}={}){
   if(!staged){
    if(!replay)return [];
@@ -86,14 +87,14 @@ export function createCommunication({getContext,persist,persistMessage=async c=>
 
  async function recordFeedback(value){const s=scope();read(s).data.feedback.push({...clone(value),kind:'revision-feedback'});await save(s);}
  async function editDirection(message,text,expected=readTurnDirection(message)){
-  assertEditIdle();check(!active&&!staged,'上一项场外操作尚未结束');check(typeof text==='string','本轮要求须为文本');
+  assertEditIdle();check(!busy(),'上一项场外操作尚未结束');check(typeof text==='string','本轮要求须为文本');
   const s=scope(),index=s.c.chat.indexOf(message);check(index>=0&&message.is_user&&!message.is_system,'用户消息已变化，请重新打开改写');check(readTurnDirection(message)===expected,'本轮要求已被其他操作修改，请重新打开改写');
   if(text===expected)return;
   const previous=message.extra,next={...previous};if(text)next[TURN_DIRECTION_KEY]={format:'tisya.turn-direction/1',text};else delete next[TURN_DIRECTION_KEY];message.extra=next;
   try{check(await persistMessage(s.c,s)!==false,'宿主未确认保存本轮要求');}catch(e){if(message.extra===next){if(previous===undefined)delete message.extra;else message.extra=previous;}throw e;}
   check(same(s)&&getContext().chat[index]===message,'本轮要求已保存到原聊天；当前聊天已变化，请重新打开改写');replay=null;onChange();
  }
- return {view,setDraft,talk,withStory,beginNative,finishNative,directions,recordFeedback,editDirection,flush:()=>save(scope()),busy:()=>!!active||!!staged,ended(accepted){if(staged){staged.finished=true;staged.accepted=!!accepted;}},async stopped(){replay=null;const r=staged;if(r)r.stopped=true;try{await restoreDraft(r);}finally{if(r&&staged===r){if(r.native)staged=null;else{r.finished=true;r.accepted=false;}}onChange();}},cancel(){active?.controller.abort();},contextChanged(){replay=null;if(active&&!same(active.s))active.controller.abort();onChange();},dispose(){replay=null;active?.controller.abort();},};
+ return {view,setDraft,talk,withStory,beginNative,finishNative,directions,recordFeedback,editDirection,flush:()=>save(scope()),busy,ended(accepted){if(staged&&same(staged.s)){staged.finished=true;staged.accepted=!!accepted;}},async stopped(){replay=null;const r=staged;if(r)r.stopped=true;try{await restoreDraft(r);}finally{if(r&&staged===r){if(r.native)staged=null;else{r.finished=true;r.accepted=false;}}onChange();}},cancel(){active?.controller.abort();},contextChanged(){replay=null;if(active&&!same(active.s))active.controller.abort();const r=staged;if(r&&!same(r.s)){r.stopped=true;staged=null;restoreDraft(r).catch(()=>{});}onChange();},dispose(){replay=null;active?.controller.abort();},};
 }
 // The host edits mes only. Keep the attached direction alongside its editor,
 // and confirm its persistence before allowing the native save to proceed.

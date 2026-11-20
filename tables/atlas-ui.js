@@ -1,8 +1,8 @@
 import {isObjectType} from './schema.js';
 import {createAtlas} from './atlas.js';
 // Shared atlas renderer: standalone demo or an explicitly authorized host snapshot.
-export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null,onIdentity=null,media=null,onMediaManage=null,onExit=null}={}){
- const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=null,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[],viewMode='list';
+export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},onFault=null,onIdentity=null,media=null,onMediaManage=null,onExit=null,initialSelected=null}={}){
+ const doc=root.ownerDocument;let page='atlas',layer='session',category=null,query='',selected=initialSelected,tab='core',audience=data.live?'author':'reader',theme='light',path=[],trail=[],viewMode='list';
  const win=doc.defaultView;let pending=Promise.resolve(),definitionSequence=0;
  const failure=error=>{if(onFault)onFault(error);else notify(error.message);};
  const act=fn=>{pending=Promise.resolve().then(beforeRead).then(fn).catch(failure);return pending;};
@@ -124,5 +124,6 @@ export function mountArchiveAtlas(root,data,{download=()=>{},beforeRead=()=>{},o
  function cores(){const box=el('section',undefined,'cores');box.append(heading('ESSENCE / 基点','不变的内核','身份可以世界化，核心意义逐项继承。'));for(const c of data.cores){const block=el('article',undefined,'core-card');block.append(el('p','人物基点 · 版本 '+c.version,'eyebrow'),el('h2',c.name));for(const t of c.traits)block.append(field(t.name,t.value==='？'?'待提炼':t.value));block.append(el('p','已映射原点：青溪渡 / 方鹿','core-link'),button('查看原点表达 →',()=>{layer='origin';resetTrail();visit('fanglu');},'text-link'));box.append(block);}return box;}
  function notify(text){const node=root.querySelector('[role="status"]');node.textContent=text;}
  function render(){root.dataset.theme=theme;root.dataset.page=page;const fragment=doc.createDocumentFragment();fragment.append(top());const shell=el('div',undefined,'shell');shell.append(navigation());const content=el('main',undefined,'content content-'+page);if(page==='atlas'&&selected)content.append(detail());else content.append(page==='atlas'?collection():page==='timeline'?timelinePage():page==='overview'?overview():page==='saves'?saves():page==='changes'?changeHistory():cores());shell.append(content);fragment.append(shell);const footer=el('footer',data.live?'与当前正式存档同步 · 图鉴与时间线均为只读视图':'独立交互预览 · 演示资料，不改动你的档案','preview-note');fragment.append(footer);const status=el('p',undefined,'toast');status.setAttribute('role','status');fragment.append(status);root.replaceChildren(fragment);}
+ if(selected){try{const detail=atlas().detail(selected);tab=detail.record.table!=='objects'?'dossier':'core';}catch{selected=null;}}
  render();return {settled:()=>pending,state:()=>({page,layer,category,query,selected,tab,audience,path:[...path],trail:trail.map(f=>({...f,path:[...f.path]}))}),dispose:()=>{root.replaceChildren();}};
 }

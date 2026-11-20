@@ -10,7 +10,7 @@ import {loadNativeHost} from './fixtures/native-layers/load-host-fragments.mjs';
 // separate fixed-host-source tests; this fixture never claims a live model run.
 const cardText='角色：港口守夜人。\n叙事人称：第三人称\n事实：旧伞放在门边。';
 const clone=structuredClone;
-async function fixture({readyError=null,legacy=false,cardContent=cardText,realNative=false,customPrompt=null,getDisplayRules=()=>[]}={}){
+async function fixture({readyError=null,legacy=false,cardContent=cardText,realNative=false,customPrompt=null,getDisplayRules=()=>[],manualReview=false}={}){
  const disk=new Map(),macros=new Map(),calls=[];
  const eventNames=['GENERATION_AFTER_COMMANDS','WORLDINFO_ENTRIES_LOADED','WORLD_INFO_ACTIVATED','GENERATE_AFTER_COMBINE_PROMPTS','CHAT_COMPLETION_SETTINGS_READY','GENERATION_ENDED','GENERATION_STOPPED'];
  const context={chatId:'layer-host',characterId:0,characters:[{avatar:'guard.png',data:{description:cardContent}}],extensionSettings:{},chatMetadata:{},chat:[{is_user:false,mes:'他将旧伞放在门边。'},{is_user:true,mes:'继续谈话。'}],registerMacro:(key,fn)=>macros.set(key,fn),saveChat:async()=>true};
@@ -29,7 +29,7 @@ async function fixture({readyError=null,legacy=false,cardContent=cardText,realNa
  let host;
  const nativeSources=realNative?createNativeSourceLayers({relocateSources:true,PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:(...args)=>host.prepareNativePreset(...args),finalizeMessages:(...args)=>host.finalizeNativeMessages(...args)}):{begin:()=>calls.push('begin'),end:()=>calls.push('end'),entriesLoaded:()=>calls.push('entriesLoaded'),activated:()=>calls.push('activated'),afterCombine:()=>calls.push('afterCombine'),assertReady(){calls.push('assertReady');if(readyError)throw readyError;},audit:()=>({status:'fixture-only',sources:['card:description'],liveHost:false})};
  const storage={get:async key=>clone(disk.get(key)),set:async(key,value)=>disk.set(key,clone(value)),commit:async(key,revision,value)=>{if((disk.get(key)?.local_revision??0)!==revision)return false;disk.set(key,clone(value));return true;}};
- host=createMatrixHost({getContext:()=>context,getSource:()=>source,loadCatalog:async()=>({tables:[]}),storage,persistSettings:async()=>true,persistMetadata:async()=>true,nativeSources,expand,getDisplayRules});
+ host=createMatrixHost({getContext:()=>context,getSource:()=>source,loadCatalog:async()=>({tables:[]}),storage,persistSettings:async()=>true,persistMetadata:async()=>true,nativeSources,expand,getDisplayRules,manualReview});
  host.register();const runtime=new Runtime();runtime.registerTable('ACTOR',[{key:'name',type:'TEXT'}]);runtime.newRecord('ACTOR',{name:'阿青'},'u');await host.import({state:runtime.data});
  const settings=host.config.read();settings.story.play={choices:{N02:'N02-C'}};await host.config.save(settings);
  function payload(){
@@ -103,6 +103,21 @@ test('complete native/template/finalization chain emits no internal markers and 
   for(const text of ['自定义系统原文','模板出口资料','模板生成的前缀','模板生成的尾部',cardText])assert(dream.includes(text),text);
   assert.equal(f.host.accepted(),true);assert.deepEqual(f.host.contextPreview().messages,request.messages);assert.deepEqual(f.host.contextPreview().tools,request.tools);assert.equal(f.host.contextPreview().parameters.model,'fixture-model');
  }finally{f.dispose();}
+});
+
+test('the first full native request after confirmTurn accepts an unchanged adjacent-floor MVU snapshot',async()=>{
+ const previous=globalThis.Mvu,f=await fixture({realNative:true,manualReview:true}),state={count:0,enabled:false,text:''},reads=[];
+ const card=f.context.characters[0];card.name='守夜人';card.data.extensions={tavern_helper:{scripts:[{type:'script',enabled:true,id:'mvu',content:"import 'https://example.test/MagVarUpdate@master/bundle.js'"}]}};card.data.character_book={entries:[{enabled:true,comment:'格式',content:'<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>'}]};
+ globalThis.Mvu={getMvuData:options=>{reads.push(options.message_id);return {stat_data:state};},parseMessage(){assert.fail('request preparation must not write native variables');}};
+ try{
+  f.context.chat.splice(0,f.context.chat.length,{is_user:false,mes:'<reply><body>1 旧伞仍在门边。</body><cells/><archive/></reply>'});await f.host.sync();
+  const view=await f.host.listTurnReviews(),draft=view.reviews.find(row=>row.status==='pending');await f.host.confirmTurn({...draft,contextKey:view.contextKey,expectedRevision:view.revision});
+  f.context.chat.push({is_user:true,mes:'继续谈话。'});
+  await f.host.before('normal');await f.host.entriesLoaded({globalLore:[],characterLore:[],chatLore:[],personaLore:[]});f.host.activated([]);await f.host.afterCombine({dryRun:false});
+  await f.host.historyInput(f.context.chat.map((message,index)=>({...clone(message),index})),'normal');
+  const request={messages:await f.nativePayload()};f.host.captureTemplatePayload(request);await f.host.payloadReady(request);
+  assert.equal(f.host.accepted(),true);assert(reads.length>=2,'before and payloadReady must both verify the native snapshot');const serialized=JSON.stringify(request.messages);assert.match(serialized,/旧伞仍在门边/);assert.match(serialized,/继续谈话。/);assert.deepEqual(state,{count:0,enabled:false,text:''});
+ }finally{f.dispose();if(previous===undefined)delete globalThis.Mvu;else globalThis.Mvu=previous;}
 });
 
 test('missing native coverage blocks before any outgoing request mutation',async()=>{

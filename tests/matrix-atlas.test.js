@@ -121,6 +121,13 @@ test('shared UI exposes field meanings and readable atom navigation without mach
  ui.dispose();await win.happyDOM.close();
 });
 
+test('shared UI opens a requested archive detail directly without a collection detour',async()=>{
+ const win=new Window(),doc=win.document,root=doc.createElement('div');doc.body.append(root);const current=snapshot(),snap=await readMatrixAtlasSnapshot({read:async()=>structuredClone(current)});
+ const ui=mountArchiveAtlas(root,snap.data,{beforeRead:snap.verify,initialSelected:'T_SYS_ENTITIES#a'});await ui.settled();
+ assert.equal(ui.state().selected,'T_SYS_ENTITIES#a');assert(root.querySelector('.detail[aria-label="档案详情"]'));assert.match(root.querySelector('.detail-hero').textContent,/阿青/);assert.equal(root.querySelector('.collection'),null);
+ ui.dispose();await win.happyDOM.close();
+});
+
 test('shared UI opens canonical entity history and stage summary by stable identity',async()=>{
  const win=new Window(),doc=win.document,root=doc.createElement('div');doc.body.append(root);const current=snapshot(),snap=await readMatrixAtlasSnapshot({read:async()=>structuredClone(current)});
  const ui=mountArchiveAtlas(root,snap.data,{beforeRead:snap.verify});

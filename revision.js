@@ -54,6 +54,7 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
  const operations=createGenerationOperations({waitForIdle:async()=>{}});
  const execute=runGeneration??operations.run;
  const same=run=>getContext().getCurrentChatId()===run.chatId&&getContext().chat[run.id]===run.message;
+ const current=()=>active&&same(active)?active:null;
  async function tail(token,checkCurrent=()=>{}){
   assertIdle();validate(getContext(),token,{tail:true});
   if(token.id===getContext().chat.length-1)return token;
@@ -64,7 +65,7 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
   const next=capture(getContext(),token.id);check(next.length===token.id+1&&next.text===token.text&&(next.swipe??0)===(token.swipe??0),'分支内容与重骰依据不一致');return next;
  }
  async function select(token,index){
-  check(!active&&!navigating,'版本正在切换');assertIdle();const before=candidatePosition(validate(getContext(),token,{tail:true}));check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');if(index===before.index)return;
+  check(!current()&&!navigating,'版本正在切换');assertIdle();const before=candidatePosition(validate(getContext(),token,{tail:true}));check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');if(index===before.index)return;
   navigating=true;onState();
   try{
    token=await tail(token);check(await hydrate(token.id)!==false,'候选尚未载入');validate(getContext(),token,{tail:true});check(canSwipe(token.id,token.message),'原生候选切换当前不可用');
@@ -76,14 +77,14 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
   }finally{navigating=false;onState();}
  }
  async function remove(token,index=token.swipe??0){
-  check(!active&&!navigating,'版本正在切换');assertIdle();const message=validate(getContext(),token,{tail:true});check(!message.is_user&&!message.is_system,'请选择角色回复');
+  check(!current()&&!navigating,'版本正在切换');assertIdle();const message=validate(getContext(),token,{tail:true});check(!message.is_user&&!message.is_system,'请选择角色回复');
   check(typeof deleteSwipe==='function','宿主未提供删除版本接口');check(await hydrate(token.id)!==false,'候选尚未载入');validate(getContext(),token,{tail:true});
   const before=candidatePosition(message);check(before.total>1,'至少保留一个版本');check(Number.isInteger(index)&&index>=0&&index<before.total,'候选编号无效');
   navigating=true;onState();try{const selected=await deleteSwipe(index,token.id);check(getContext().getCurrentChatId()===token.chatId&&getContext().chat[token.id]===message,'聊天已切换');check(Number.isInteger(selected)&&message.swipes.length===before.total-1&&message.swipe_id===selected&&message.mes===message.swipes[selected],'宿主未确认版本删除');}finally{navigating=false;onState();}
  }
  function generate(token,options){return execute(operation=>generateOperation(token,options,operation));}
  async function generateOperation(token,options,operation){
-  check(!active&&!navigating,'版本操作尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
+  check(!current()&&!navigating,'版本操作尚未结束');assertIdle();let request=makeRevision(token,options??{});validate(getContext(),token,{tail:true});
   check(!token.message.is_user&&!token.message.is_system&&token.message.role!=='tool','请选择角色回复进行重骰');
   check(getContext().onlineStatus!=='no_connection','模型尚未连接，未改动消息');
   const priorMessage=getContext().chat[token.id-1],priorText=priorMessage?.is_user?priorMessage.mes:null,prior=userRevisionMaterial(priorMessage);check(!prior||!getContext().mainApi||getContext().mainApi==='openai','当前生成后端尚未接入用户改写对照，请使用聊天补全后端后重投');
@@ -98,7 +99,7 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
    validateRevision(request,run.message.mes);accepted=true;await getContext().saveChat();operation.check();
   }catch(e){failure=e;
    if((e.name!=='AbortError'||e.hostSettled)&&same(run)&&candidatePosition(run.message).index!==before.index){await swipe(null,'left',{message:run.message,forceMesId:run.id,forceSwipeId:before.index,forceDuration:0});check(run.message.swipe_id===before.index,'自动退回旧版失败，请从候选列表恢复');await getContext().saveChat();}
-  }finally{setRevision(null);setUserRevision(null);active=null;onState();}
+  }finally{if(active===run){setRevision(null);setUserRevision(null);active=null;}onState();}
   if(same(run)&&run.finished&&run.received&&!run.stopped&&candidatePosition(run.message).total>before.total){
    try{await feedback({...request,id:crypto.randomUUID(),accepted,result:accepted?'accepted':'rejected',reason:failure?.message??'',createdAt:new Date().toISOString()});}catch(e){failure??=Error('候选已保留，但反馈记录未保存：'+e.message);}
   }
@@ -106,5 +107,5 @@ export function createRevisionController({getContext,assertIdle,hydrate,swipe,de
   if(!accepted&&same(run)&&run.message.mes===request.source)await onRejected();
   if(failure)throw failure;return {accepted};
  }
- return {generate,select,remove,navigating:()=>navigating,active:()=>active,received(id,type){if(active&&active.id===id&&type==='swipe'&&same(active))active.received=true;},ended(tables){if(!active)return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;operations.stop();}};
+ return {generate,select,remove,navigating:()=>navigating,active:current,received(id,type){if(current()&&active.id===id&&type==='swipe')active.received=true;},ended(tables){if(!current())return false;active.finished=true;active.tables=tables;return true;},stopped(){if(active)active.stopped=true;operations.stop();},contextChanged(){if(active&&!same(active)){active.stopped=true;operations.stop();onState();}}};
 }

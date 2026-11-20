@@ -78,3 +78,13 @@ test('native early preparation snapshots the note before the user row exists, th
  const early=await f.service.directions({prepare:true});assert.equal(JSON.parse(early[1].content).text,'本轮要求');assert.equal(f.service.view().draft,'本轮要求');assert.equal(f.c.chat.length,1);
  f.c.chat.push({is_user:true,mes:'新的行动'});const actual=await f.service.directions();assert.deepEqual(actual,early);assert.equal(readTurnDirection(f.c.chat.at(-1)),'本轮要求');assert.equal(f.service.view().draft,'');assert.deepEqual(await f.service.directions(),early);
 });
+
+
+test('an unfinished old-chat request cannot lock or clear a new chat generation',async()=>{
+ const f=fixture(),old=f.c;let release;const pending=new Promise(resolve=>release=resolve);
+ f.service.setDraft('旧聊天要求');const oldRun=f.service.withStory('旧行动',()=>pending);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.service.busy(),true);
+ const next={...old,chatId:'two',chatMetadata:{},chat:[]};f.setContext(next);f.service.contextChanged();assert.equal(f.service.busy(),false);
+ f.service.setDraft('新聊天要求');await f.service.beginNative('新行动','normal');next.chat.push({is_user:true,mes:'新行动'});await f.service.directions();assert.equal(f.service.busy(),true);
+ release();await assert.rejects(oldRun,/宿主未发送|聊天|生成|变化/);assert.equal(f.service.busy(),true);assert.equal(f.service.view().draft,'');assert.equal(next.chatId,'two');
+ await f.service.stopped();assert.equal(f.service.busy(),false);f.setContext(old);assert.equal(f.service.view().draft,'旧聊天要求');
+});

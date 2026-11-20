@@ -60,6 +60,10 @@ export const readerCacheState=()=>localCache?.report()??{state:'idle',error:null
 export const messageCacheReport=()=>inspectionCache.report();
 export const reconcileReaderCache=(scope,messages,options)=>localCache?.reconcile(scope,messages,options);
 export function inspectMessage(source,options={}){const selected=selectedOptions(options);return typeof source==='string'&&source.length<=2000000?inspectionCache.read(inspectionKey(source,selected),()=>inspectUncached(source,selected)):inspectUncached(source,selected);}
+export async function prepareMessageProjection(identity,variant,compute){
+ if(!localCache)return {value:await compute(),fromDisk:false};
+ return localCache.prepare({...identity,variant},compute);
+}
 export async function prepareReaderMessage(identity,options={}){
  const generation=cacheGeneration,source=identity.source,base=selectedOptions({}),selected=selectedOptions(options);
  if(!localCache||typeof source!=='string'||source.length>2000000)return {inspection:inspectMessage(source)};
@@ -100,7 +104,7 @@ export function mountMessageReader(document, container, {source,message=null,pho
     // not apply the card's rules again, including after an async record lookup.
     let display=null,displayError=null;try{if(data.structured)display=getNativeDisplay?.()??null;}catch(error){displayError=error;onError(error);}
     const projectedBody=typeof display?.body==='string'?display.body:null,preparedFormat=formatPreparedBody??formatBody;
-    let alive=true,actionChoice=null,extraView=null,bodyView=null,bodyState=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=(source.includes('@record{')||projectedBody?.includes('@record{'))?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
+    let alive=true,actionChoice=null,extraView=null,bodyView=null,bodyState=null,activeTab=initialTab;const presentationContext=document.defaultView?.Tisya?.phone?.contextKey?.();let presentationOptions=(phoneMessage||source.includes('@record{')||projectedBody?.includes('@record{'))?{pending:true,projections:[],contextKey:presentationContext}:null;const bodyOptions=()=>presentationOptions?{...getAppearance('body'),presentation:{...presentationOptions,onError}}:getAppearance('body');const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
     const make=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined&&text!==null)el.textContent=String(text);if(className)el.className=className;return el;};
     const note=text=>make('p',text,'tisya-note');
     const failure=(target,label,code)=>{const el=note(`${label}暂不可用。${readerErrorText(code)}`);el.setAttribute('role','status');target.append(el);};

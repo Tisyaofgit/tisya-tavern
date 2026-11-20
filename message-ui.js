@@ -58,7 +58,7 @@ export function mountMessageVisual(document,container,{source,name,phoneMessage=
  if(data.details?.value)taskRound=mountRoundPanel(document,task,data.details.value,'task');else{for(const n of task.querySelectorAll('.fold-head,#task-heart,#task-content'))n.remove();}
  const taskHeart=taskRound?.heart;
  let envelope=null;try{envelope=data.structured?readPublicReplyEnvelope(source):null;const title=envelope&&readReplyBlock(envelope,'title');if(typeof title?.text==='string'&&title.text.trim())heading.textContent=title.text;const meta=[title?.time,title?.place,title?.world].filter(x=>typeof x==='string'&&x.trim());if(meta.length)subtitle.textContent=meta.join(' · ');}catch(error){subtitle.textContent=readerErrorText(readerErrorCode(error));}
- const story=make('article',null,'story-region'),body=make('div',null,'story');story.append(make('div',null,'wave-rule'),body);root.append(story);let bodyStamp=null,presentationVersion=0;const needsPresentation=source.includes('@record{')||display?.body?.includes('@record{')||display?.bodyRuns?.map(run=>run.text).join('').includes('@record{');let presentationOptions=needsPresentation?{pending:true,projections:[],contextKey:phoneContextKey}:null;const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
+ const story=make('article',null,'story-region'),body=make('div',null,'story');story.append(make('div',null,'wave-rule'),body);root.append(story);let bodyStamp=null,presentationVersion=0;const explicitPresentation=source.includes('@record{')||display?.body?.includes('@record{')||display?.bodyRuns?.map(run=>run.text).join('').includes('@record{'),needsPresentation=!!phoneMessage||explicitPresentation;let presentationOptions=needsPresentation?{pending:true,projections:[],contextKey:phoneContextKey}:null;const releasePresentation=value=>{try{Promise.resolve(value?.dispose?.()).catch(onError);}catch(error){onError(error);}};
  const rawBody=data.body.paragraphs?.value?.length?data.body.paragraphs.value.map(p=>p.raw).join('\n\n'):data.body.value;
  let bodyView=null;
  function renderBody(){
@@ -73,7 +73,7 @@ export function mountMessageVisual(document,container,{source,name,phoneMessage=
     bodyView.refresh(options,!visible||!getMotion()||document.hidden);
    }else{
     body.replaceChildren();const rows=data.body.paragraphs?.value,format=display?(formatPreparedBody??formatBody):formatBody;
-    const nativeHTML=!display&&!needsPresentation?formatNativeBody?.(rawBody):null;
+    const nativeHTML=!display&&!explicitPresentation?formatNativeBody?.(rawBody):null;
     if(nativeHTML!==null&&nativeHTML!==undefined){const nativeBody=make('div',null,'mes_text tisya-native-body');nativeBody.innerHTML=formatProse(document,nativeHTML,text=>text,options);body.append(nativeBody);}
     else if(rows?.length){for(const p of rows){const section=make('section',null,'reading-paragraph'),text=make('div');text.innerHTML=formatProse(document,p.raw,format,options);section.dataset.paragraph=p.id;section.append(text);body.append(section);}}
     else body.innerHTML=formatProse(document,display?.body??data.body.value,format,options);

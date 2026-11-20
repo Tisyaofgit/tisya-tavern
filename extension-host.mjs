@@ -5,9 +5,11 @@ import {phoneDatabaseReference,decodePhoneDatabase} from './engine/phone-databas
 import {getDoc} from './social-suite-core.mjs';
 import {canReadPost} from './phone-life/social.mjs';
 import {formatMarks} from './typography-core.js';
-import {inspectMessage} from './reader.js';
+import {inspectMessage,prepareMessageProjection} from './reader.js';
+import {messageCacheOwner} from './message-cache.js';
 import {parsePresentationReference,PRESENTATION_RECORD_SCHEMA,EXTENSION_BLOCK_SCHEMA,EXTENSION_ITEM_SCHEMA} from './extension-presentation.mjs';
 import {EXTENSION_PREFERENCE_TABLE,normalizeExtensionPreferences,compileExtensionPreferences} from './extension-preferences.mjs';
+import {matrixArchiveLinkIndex} from './archive-links.mjs';
 
 const clone=v=>structuredClone(v),plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const fail=(code,message)=>{throw Object.assign(new Error(message),{code:'TISYA_PRESENTATION_'+code});};
@@ -113,23 +115,49 @@ export function createExtensionPresentationService({document=globalThis.document
  if(typeof getContext!=='function')fail('HOST','缺少当前会话读取接口');
  const currentKey=()=>chatKey(getContext());
  const assertKey=key=>{if(currentKey()!==key)fail('CONTEXT_CHANGED','读取历史记录期间会话已切换');};
+ const automaticMemory=new WeakMap();let peekBatch=null;
+ async function currentRevision(key){
+  if(!database?.peek)return null;const metadata=getContext().chatMetadata;
+  if(peekBatch&&peekBatch.key===key&&peekBatch.metadata===metadata)return peekBatch.promise;
+  const entry={key,metadata,promise:Promise.resolve().then(()=>database.peek())};peekBatch=entry;queueMicrotask(()=>{if(peekBatch===entry)peekBatch=null;});
+  try{return await entry.promise;}catch(error){if(peekBatch===entry)peekBatch=null;throw error;}
+ }
  async function forMessage(message){
-  const raw=String(message?.mes??'');if(!raw.includes('@record'))return null;
-  const requests=publicPresentationRequests(document,raw);if(!requests.length)return null;
+  const raw=String(message?.mes??''),marked=raw.includes('@record'),requests=marked?publicPresentationRequests(document,raw):[];if(marked&&!requests.length)return null;
+  // Automatic archive links are optional for native, streaming and legacy
+  // messages. Explicit record cards retain their strict historical identity.
+  if(!requests.length&&typeof message?.extra?.tisya_engine?.uid!=='string')return null;
   const key=currentKey(),scopeSignature=JSON.stringify(getScope()),source=(phone?.source??phoneSource)(message);const own=requests.filter(r=>r.reference.snapshotId==='@message'||r.reference.snapshotId===source.sourceId);
   // A marker may only bind this message's snapshot. Other historical messages
   // must be opened in their own reader; arbitrary cross-history access is denied.
-  const frame=phone?.snapshot?await phone.snapshot(source.sourceId):null;assertKey(key);if(message.mes!==raw)fail('MESSAGE_CHANGED','读取历史记录期间消息已改变');
-  let projections=phonePresentationProjections(frame,{sourceId:source.sourceId,contextKey:key,requests:own}),media=[],matrixSnapshotId=null;
-  if(requests.some(r=>!projections.some(p=>refKey(p.reference)===refKey(r.reference)&&p.kind===r.kind))&&database?.snapshot){
-   const historical=await database.snapshot({...source,raw});assertKey(key);
+  const frame=requests.length&&phone?.snapshot?await phone.snapshot(source.sourceId):null;assertKey(key);if(message.mes!==raw)fail('MESSAGE_CHANGED','读取历史记录期间消息已改变');
+  let projections=phonePresentationProjections(frame,{sourceId:source.sourceId,contextKey:key,requests:own}),media=[],matrixSnapshotId=null,archiveLinks=null,historical=null;
+  const needsMatrixRequests=requests.some(r=>!projections.some(p=>refKey(p.reference)===refKey(r.reference)&&p.kind===r.kind));
+  if(database?.snapshot&&!requests.length)try{
+   const current=await currentRevision(key);assertKey(key);if(current&&current.contextKey!==key)fail('CONTEXT','当前存档不属于本聊天');
+   const revision=current?.revision??'unversioned',memory=automaticMemory.get(message),cacheSignature=JSON.stringify([raw,key,source.sourceId,revision,scopeSignature]);
+   if(memory?.signature===cacheSignature){archiveLinks=memory.value.archiveLinks;matrixSnapshotId=memory.value.messageSnapshotId;}
+   else{
+    const packet=await prepareMessageProjection({scope:key,owner:messageCacheOwner(message),source:raw},'archive-links-v1:'+source.sourceId+':'+revision+':'+scopeSignature,async()=>{
+     const snapshot=await database.snapshot({...source,raw});assertKey(key);if(!snapshot)return {archiveLinks:null,messageSnapshotId:null};
+     if(snapshot.uid!==source.uid||snapshot.hostMessageSha256!==sha256(raw)||snapshot.sourceId!==source.sourceId)fail('SNAPSHOT_SOURCE','表单快照与本条消息的稳定身份或原文摘要不同');
+     return {messageSnapshotId:snapshot.snapshotId,archiveLinks:matrixArchiveLinkIndex(snapshot,{sourceId:snapshot.snapshotId,contextKey:key,scope:getScope()})};
+    });
+    if(packet.value?.archiveLinks){const entries=packet.value.archiveLinks.entries;if(!Array.isArray(entries)||entries.some(entry=>entry.contextKey!==key))fail('CACHE','图鉴链接缓存的会话归属无效');}
+    automaticMemory.set(message,{signature:cacheSignature,value:packet.value});archiveLinks=packet.value?.archiveLinks??null;matrixSnapshotId=packet.value?.messageSnapshotId??null;
+   }
+  }catch(error){if(['SNAPSHOT_MISSING','SNAPSHOT_UNVERIFIED','SNAPSHOT_REJECTED'].includes(error.code))return null;onError(error);return null;}
+  else if(database?.snapshot&&needsMatrixRequests){
+   historical=await database.snapshot({...source,raw});assertKey(key);
    if(historical){if(historical.uid!==source.uid||historical.hostMessageSha256!==sha256(raw)||historical.sourceId!==source.sourceId)fail('SNAPSHOT_SOURCE','表单快照与本条消息的稳定身份或原文摘要不同');
     matrixSnapshotId=historical.snapshotId;const selected=requests.filter(r=>r.reference.snapshotId==='@message'||r.reference.snapshotId===matrixSnapshotId||r.reference.snapshotId===undefined);
     const mapped=matrixPresentationProjections(historical,{sourceId:matrixSnapshotId,contextKey:key,requests:selected,scope:getScope(),authorizeRecord});
     projections.push(...mapped.projections.filter(p=>!projections.some(old=>refKey(old.reference)===refKey(p.reference)&&old.kind===p.kind)));media.push(...mapped.media);
+    archiveLinks=matrixArchiveLinkIndex(historical,{sourceId:matrixSnapshotId,contextKey:key,scope:getScope()});
    }
   }
-  let configs={};if(database?.peek){const preferences=await database.peek();assertKey(key);if(preferences){const compiled=await compilePreferences({snapshot:preferences,displayOnly:true});configs=Object.fromEntries(compiled.compiled.map(p=>[p.view,p]));}}
+  if(!requests.length&&!archiveLinks?.entries.length)return null;
+  let configs={};if(requests.length&&database?.peek){const preferences=await database.peek();assertKey(key);if(preferences){const compiled=await compilePreferences({snapshot:preferences,displayOnly:true});configs=Object.fromEntries(compiled.compiled.map(p=>[p.view,p]));}}
   const ids=[...new Set(projections.flatMap(p=>p.value.resourceId?[p.value.resourceId]:[]))];
   const mediaRequest={ids,snapshot:frame,contextKey:key,messageSource:source};let mediaRead=false,released=false;
   const dispose=()=>{if(released||!mediaRead)return;released=true;return releaseMedia(mediaRequest);};
@@ -137,7 +165,7 @@ export function createExtensionPresentationService({document=globalThis.document
    if(ids.length){const actual=await readMedia(mediaRequest);mediaRead=true;assertKey(key);if(!Array.isArray(actual))fail('MEDIA','真实媒体读取接口没有返回列表');for(const r of actual)if(ids.includes(r.id)&&r.allowed===true&&r.contextKey===key&&!media.some(m=>m.id===r.id))media.push(clone(r));}
    for(const p of projections)if(['voice','image'].includes(p.kind)&&p.value.resourceId&&!media.some(m=>m.id===p.value.resourceId))p.value={...p.value,resourceId:null,resourceUnavailable:true};
    if(message.mes!==raw)fail('MESSAGE_CHANGED','读取历史记录期间消息已改变');if(JSON.stringify(getScope())!==scopeSignature)fail('CONTEXT_CHANGED','读取历史记录期间当前主体或世界已变化');
-   return {contextKey:key,messageSnapshotId:frame?source.sourceId:matrixSnapshotId,messageReferences:projections.map(p=>({kind:p.kind,...p.reference})),projections,media,configs,dispose};
+   return {contextKey:key,messageSnapshotId:frame?source.sourceId:matrixSnapshotId,messageReferences:projections.map(p=>({kind:p.kind,...p.reference})),projections,media,configs,archiveLinks,dispose};
   }catch(error){try{await dispose();}catch(releaseError){onError(releaseError);}throw error;}
  }
  async function compilePreferences({snapshot,displayOnly=false}={}){
