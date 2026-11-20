@@ -791,8 +791,14 @@ async function removeMessages(rollback) {
             if(context().getCurrentChatId()!==token.chatId||message!==original[id-token.id]||!snapshot||message?.mes!==snapshot.text||message?.swipe_id!==snapshot.swipe) throw new Error('删除期间消息发生变化');
             await context().deleteMessage(id,undefined,false);deleted++;
         }
-        await context().saveChat();if(matrixHost.active())await matrixHost.sync();close(epoch);
     } catch(err) { throw new Error(`删除未完整完成（已调用删除 ${deleted} 条）：${err.message}`); }
+    try{await context().saveChat();}
+    catch(err){throw new Error(`已调用删除 ${deleted} 条，但聊天保存失败：${err.message}`);}
+    close(epoch);
+    // Chat deletion and its host save own the history lock. Reconciling the
+    // read-only archive projection is a separate, ordered database operation:
+    // a slow or stuck projection must not imprison an already deleted chat.
+    if(matrixHost.active())void matrixHost.sync().catch(err=>error(new Error(`消息删除流程已结束，但档案同步未完成：${err.message}`)));
 }
 function openRevision(token,selection){
  if(revisionController.navigating())throw Error('版本切换尚未完成，请稍候');

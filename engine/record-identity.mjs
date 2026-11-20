@@ -16,5 +16,12 @@ export function recordIdentityLabel(state,table,id,{read, codes=eventCodes(state
   const a=name(value(table,id,'subject_ref')),b=name(value(table,id,'target_ref'));
   if(a&&b)return a+' → '+b;
  }
+ // One live-appearance row belongs to one entity. Its owner is the stable
+ // revision identity shown to the model; the mutable state name remains a
+ // legacy coordinate so older replies can still be reviewed and replayed.
+ if(table==='T_DYN_ENTITY_STATE'){
+  const entity=value(table,id,'entity_id'),name=value('T_SYS_ENTITIES',entity,'name')??value('T_SYS_ENTITIES',entity,'instance_name');
+  if(name)return name;
+ }
  return value(table,id,'name')??value(table,id,'label')??value(table,id,'title')??value(table,id,'instance_name');
 }

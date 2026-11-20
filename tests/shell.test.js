@@ -126,6 +126,9 @@ function selectFixtureChat(f,id,chatFile){
  if(changed){c.chatMetadata={integrity:'synthetic-loaded-'+chatFile};c.chat=structuredClone(c.chat);for(const message of c.chat)delete message.extra?.tisya_engine;}
 }
 async function waitForShell(predicate,label){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>=deadline)assert.fail('Timed out: '+label);await new Promise(resolve=>setTimeout(resolve,5));}}
+// happy-dom has no host-side per-message cache. Its asynchronous capability
+// notice must not hide any other product error in zero-error assertions.
+const unexpectedErrors=errors=>errors.filter(error=>!error.includes('当前宿主不支持逐条显示缓存'));
 async function nativeMatrixPayload(f,messages=[]){
  const source=f.ctx.chatCompletionSettings,order=source.prompt_order?.find(row=>row.character_id===100001)?.order??source.prompt_order?.[0]?.order??[];
  await f.emit('entries-loaded',{characterLore:[],globalLore:[],chatLore:[],personaLore:[]});
@@ -149,7 +152,7 @@ test('APP_READY selects Tisya through the native preset lifecycle and attaches a
   const metadata=f.ctx.chatMetadata.tisya_engine,bundle=await f.matrixStorage.get(metadata.chat_uid);
   assert.equal(metadata.enabled,true);assert.equal(metadata.owner_chat_key,chatKey(f.ctx));assert.equal(metadata.binding_pending,undefined);
   assert.equal(Object.keys(bundle.state.tables.T_CHAR_DOSSIER??{}).length,0);assert(Object.keys(bundle.state.schema).length>100);
-  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -157,11 +160,11 @@ test('actual startup waits for native chat metadata before writing, then binds o
  let writes=0;
  const f=await setup({mediaStorage:true,chatLoaded:false,configureContext:async(c,{window})=>{window.fixture.saveCharacterChatMetadata=async()=>{writes++;if(!c.chatMetadata.integrity)throw Object.assign(Error('integrity'),{code:'integrity'});};}});
  try{
-  assert.equal(writes,0);assert.equal(f.ctx.chatMetadata.tisya_engine,undefined);assert.deepEqual(f.errors,[]);
+  assert.equal(writes,0);assert.equal(f.ctx.chatMetadata.tisya_engine,undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
   f.ctx.chatMetadata={integrity:'actual-load-completed'};f.ctx.chat=[{is_user:false,mes:'已载入的完整聊天'}];
   await f.emit('chat');await f.w.happyDOM.whenAsyncComplete();
   assert.equal(writes,3);assert.equal(f.ctx.chatMetadata.tisya_engine.enabled,true);assert(f.nativeBooks.has(f.ctx.chatMetadata.tisya_engine.archive_book.name));
-  assert.equal(f.ctx.chatMetadata.integrity,'actual-load-completed');assert.equal(f.ctx.chat[0].mes,'已载入的完整聊天');assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.chatMetadata.integrity,'actual-load-completed');assert.equal(f.ctx.chat[0].mes,'已载入的完整聊天');assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -174,7 +177,7 @@ test('initial CHAT_CHANGED during slow builtin-book startup is observed before A
    return update(...args);
   }};};
  }});
- try{assert.equal(emitted,true);assert.equal(f.ctx.chatMetadata.tisya_engine?.enabled,true);assert.equal(f.ctx.chatMetadata.integrity,'loaded-during-books');assert.deepEqual(f.errors,[]);}
+ try{assert.equal(emitted,true);assert.equal(f.ctx.chatMetadata.tisya_engine?.enabled,true);assert.equal(f.ctx.chatMetadata.integrity,'loaded-during-books');assert.deepEqual(unexpectedErrors(f.errors),[]);}
  finally{await f.w.happyDOM.abort();}
 });
 
@@ -202,7 +205,7 @@ test('CHAT_CHANGED attaches each real chat once and reopening enables the origin
   a.metadata.tisya_engine.enabled=false;f.ctx.chatId='a';f.ctx.characterId=0;f.ctx.chatMetadata=a.metadata;f.ctx.chat=a.chat;
   await f.emit('chat');assert.equal(f.ctx.chatMetadata.tisya_engine.chat_uid,id);assert.equal(f.ctx.chatMetadata.tisya_engine.enabled,true);
   assert.deepEqual((await f.matrixStorage.get(id)).state.tables,original);assert.equal(f.presetHost.selections(),1);
-  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -237,7 +240,7 @@ test('phone and sidebar open the same read-only notes and public memory pages',a
  assert.equal(f.w.phoneOptions.onOpenApp('手记'),true);await f.w.happyDOM.whenAsyncComplete();assert.match(d.querySelector('.tisya-page h2').textContent,/会话手记/);assert.equal(d.querySelectorAll('.tisya-notebook-card').length,1);
  d.querySelector('.tisya-notebook-card button').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('[data-reader-tab="body"]').getAttribute('aria-pressed'),'true');assert.equal(d.querySelector('#tisya-overlay').open,true);
  await click(f,'close');await click(f,'memory');assert.match(d.querySelector('.tisya-page h2').textContent,/公开记忆/);assert.equal(f.ctx.chat[0].mes,source);assert.equal(f.generated.length,0);
- assert.equal(f.w.phoneOptions.onOpenApp('图鉴'),true);assert.equal(f.w.phoneOptions.onOpenApp('不存在'),false);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ assert.equal(f.w.phoneOptions.onOpenApp('图鉴'),true);assert.equal(f.w.phoneOptions.onOpenApp('不存在'),false);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 test('native image and voice entries open existing settings without generating or rewriting controls',async()=>{
  const f=await setup(),d=f.w.document;
@@ -246,7 +249,7 @@ test('native image and voice entries open existing settings without generating o
   section.innerHTML='<div class="inline-drawer-toggle"><i class="inline-drawer-icon down"></i></div><input value="kept">';d.querySelector('#extensions-settings-button .drawer-content').append(section);let opened=0;section.querySelector('.inline-drawer-toggle').addEventListener('click',()=>opened++);
   assert.equal(f.w.phoneOptions.onOpenApp(name),true);await f.w.happyDOM.whenAsyncComplete();assert.equal(opened,1);assert.equal(section.querySelector('input').value,'kept');assert.equal(d.querySelector(selector),section);
  }
- assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 test('unavailable native phone actions report failure, never substitute another configuration',async()=>{
  const f=await setup();f.w.phoneOptions.onOpenApp('生图');await f.w.happyDOM.whenAsyncComplete();assert.match(f.errors.at(-1),/扩展尚未就绪/);assert.equal(f.generated.length,0);f.w.happyDOM.abort();
@@ -261,14 +264,14 @@ test('editing or swiping invalidates an open reader and notebook without touchin
  const f=await setup(),d=f.w.document;f.w.phoneOptions.onOpenApp('手记');await f.w.happyDOM.whenAsyncComplete();d.querySelector('.tisya-notebook-card button').click();
  f.ctx.chat[0].mes='已更新';f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('.tisya-reader'),null);assert.match(d.querySelector('#tisya-overlay').textContent,/已变化/);assert.equal(d.querySelectorAll('.tisya-notebook-card').length,0);assert.match(d.querySelector('#tisya-notebook').textContent,/已变化/);assert.equal(f.ctx.chat[0].mes,'已更新');
  await click(f,'close');d.querySelector('.tisya-notebook-pager').lastElementChild.click();await f.w.happyDOM.whenAsyncComplete();assert.match(d.querySelector('.tisya-notebook-card').textContent,/已更新/);
- f.ctx.chatId='b';f.handlers.chat();assert.equal(d.querySelector('#tisya-notebook'),null);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ f.ctx.chatId='b';f.handlers.chat();assert.equal(d.querySelector('#tisya-notebook'),null);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 test('notebook lookup works during a pending generation and tears down on return to native UI',async()=>{
  const stream=deferred(),f=await setup({generateWait:()=>stream.promise}),d=f.w.document;await click(f,'next');assert.equal(f.generated.length,1);
  f.w.phoneOptions.onOpenApp('手记');await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelectorAll('.tisya-notebook-card').length,1);d.querySelector('.tisya-notebook-actions').children[1].click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('#tisya-notebook'),null);assert.equal(f.generated.length,1);
- stream.resolve();await new Promise(resolve=>setTimeout(resolve,0));f.w.phoneOptions.onOpenApp('手记');await f.w.happyDOM.whenAsyncComplete();const old=d.querySelector('.tisya-notebook-card button');await click(f,'menu');await click(f,'disable');old.click();assert.equal(d.querySelector('#tisya-overlay'),null);assert.equal(f.w.phoneOptions.onOpenApp('手记'),false);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ stream.resolve();await new Promise(resolve=>setTimeout(resolve,0));f.w.phoneOptions.onOpenApp('手记');await f.w.happyDOM.whenAsyncComplete();const old=d.querySelector('.tisya-notebook-card button');await click(f,'menu');await click(f,'disable');old.click();assert.equal(d.querySelector('#tisya-overlay'),null);assert.equal(f.w.phoneOptions.onOpenApp('手记'),false);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
-test('contacts, labels, grouping and teardown keep native nodes',async()=>{const f=await setup();const native=f.w.document.querySelector('.mes_text');await click(f,'contacts');assert.equal(f.w.document.querySelectorAll('.tisya-contact').length,2);f.w.document.querySelector('.tisya-contact [data-tisya-action^="directory-menu:"]').click();await click(f,'directory-group');f.w.document.querySelector('#tisya-directory-group-name').value='世界卡';await click(f,'directory-group-save');assert.deepEqual(f.errors,[]);assert.equal(f.ctx.extensionSettings.缇斯亚界面.联系人分组['a.png'],'世界卡');await click(f,'menu');assert.match(f.w.document.querySelector('[data-tisya-action="drawer:backgrounds-button"]').textContent,/背景/);await click(f,'disable');assert.equal(f.w.document.querySelector('#tisya-shell'),null);assert.equal(f.w.document.querySelectorAll('.tisya-actions').length,0);assert.equal(f.w.document.querySelector('.mes_text'),native);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
+test('contacts, labels, grouping and teardown keep native nodes',async()=>{const f=await setup();const native=f.w.document.querySelector('.mes_text');await click(f,'contacts');assert.equal(f.w.document.querySelectorAll('.tisya-contact').length,2);f.w.document.querySelector('.tisya-contact [data-tisya-action^="directory-menu:"]').click();await click(f,'directory-group');f.w.document.querySelector('#tisya-directory-group-name').value='世界卡';await click(f,'directory-group-save');assert.deepEqual(unexpectedErrors(f.errors),[]);assert.equal(f.ctx.extensionSettings.缇斯亚界面.联系人分组['a.png'],'世界卡');await click(f,'menu');assert.match(f.w.document.querySelector('[data-tisya-action="drawer:backgrounds-button"]').textContent,/背景/);await click(f,'disable');assert.equal(f.w.document.querySelector('#tisya-shell'),null);assert.equal(f.w.document.querySelectorAll('.tisya-actions').length,0);assert.equal(f.w.document.querySelector('.mes_text'),native);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();});
 test('continue requests next normal response, never submits composer draft',async()=>{const f=await setup();f.w.document.querySelector('#send_textarea').value='未发送草稿';await click(f,'next');assert.equal(f.generated.length,0);assert.match(f.errors.at(-1),/草稿/);f.w.document.querySelector('#send_textarea').value='';await click(f,'next');assert.equal(f.generated.length,1);assert.equal(f.generated[0][0],'normal');assert.equal(f.generated[0][1].automatic_trigger,true);f.w.happyDOM.abort();});
 test('message menu refuses edited source and generation blocks editing',async()=>{const f=await setup();let edits=0;f.w.document.querySelector('.mes_edit').addEventListener('click',()=>edits++);await click(f,'more');f.ctx.chat[0].mes='变化';await click(f,'msg-edit');assert.equal(edits,0);assert.match(f.errors.at(-1),/变化/);f.ctx.chat[0].mes='正文';await click(f,'close');await click(f,'more');f.setGenerating(true);await click(f,'msg-edit');assert.equal(edits,0);assert.match(f.errors.at(-1),/生成/);f.w.happyDOM.abort();});
 
@@ -283,10 +286,10 @@ test('homepage USER opens the unified identity page and retains a real native-co
  const f=await setup({mediaStorage:true}),d=f.w.document;let opened=0;d.querySelector('#persona-management-button .drawer-toggle').onclick=()=>opened++;
  await click(f,'drawer:persona-management-button');await settleIdentityRoute(f);assert.equal(opened,0);assert(d.querySelector('#tisya-user-page').classList.contains('tisya-matrix-identity'));await pressRouteButton(f,d.querySelector('#tisya-user-page'),'原生身份管理');assert.equal(opened,1,JSON.stringify({errors:f.errors,identity:f.w.identityPanel?.state?.(),status:d.querySelector('.tisya-identity-status')?.textContent}));await click(f,'home');
  d.querySelector('#WI-SP-button .drawer-toggle').onclick=()=>opened++;await click(f,'drawer:WI-SP-button');assert.equal(opened,1);assert.equal(f.w.worldbookOpened,1);await click(f,'home');
- d.querySelector('.tisya-home-role-open').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('.tisya-page h2').textContent,'同名');assert(d.querySelector('[data-tisya-action="select:0"]'));assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ d.querySelector('.tisya-home-role-open').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('.tisya-page h2').textContent,'同名');assert(d.querySelector('[data-tisya-action="select:0"]'));assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
-test('worldbook entry stays accessible during streaming and chat editing stays locked',async()=>{const f=await setup();try{f.setGenerating(true);await click(f,'drawer:WI-SP-button');assert.equal(f.w.worldbookOpened,1);assert.deepEqual(f.errors,[]);await click(f,'more');await click(f,'msg-edit');assert.match(f.errors.at(-1),/生成/);}finally{await f.w.happyDOM.abort();}});
+test('worldbook entry stays accessible during streaming and chat editing stays locked',async()=>{const f=await setup();try{f.setGenerating(true);await click(f,'drawer:WI-SP-button');assert.equal(f.w.worldbookOpened,1);assert.deepEqual(unexpectedErrors(f.errors),[]);await click(f,'more');await click(f,'msg-edit');assert.match(f.errors.at(-1),/生成/);}finally{await f.w.happyDOM.abort();}});
 
 test('streaming disables actions and generation end re-enables both on same mounted message',async()=>{
  const f=await setup(),regen=f.w.document.querySelector('[data-tisya-action="regen"]'),next=f.w.document.querySelector('[data-tisya-action="next"]');
@@ -307,7 +310,7 @@ function addHistory(f){
 }
 test('old AI advanced reroll opens review without deleting history',async()=>{
  const f=await setup(),log=addHistory(f);await click(f,'more');await click(f,'msg-revision');
- assert.deepEqual(log,[]);assert.equal(f.ctx.chat.length,3);assert.equal(f.generated.length,0);assert.ok(f.w.document.querySelector('#tisya-revision-panel'));assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ assert.deepEqual(log,[]);assert.equal(f.ctx.chat.length,3);assert.equal(f.generated.length,0);assert.ok(f.w.document.querySelector('#tisya-revision-panel'));assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 test('old user continue returns to that turn and requests next reply',async()=>{
  const f=await setup(),log=addHistory(f);f.ctx.chat[0].is_user=true;await click(f,'next');
@@ -354,7 +357,7 @@ test('unloaded sparse history is rejected without deletion',async()=>{
 test('workflow navigation retains the original expansion control without duplicate shortcuts',async()=>{
  const f=await setup(),d=f.w.document,container=d.createElement('div');container.id='mcp_manager_container';container.innerHTML='<div class="inline-drawer-toggle"><i class="inline-drawer-icon down"></i></div><input value="preserved">';d.querySelector('#extensions-settings-button .drawer-content').append(container);
  let clicks=0;container.querySelector('.inline-drawer-toggle').addEventListener('click',()=>clicks++);
- await click(f,'menu');assert.equal(d.querySelector('[data-tisya-action="section:mcp"]'),null);await click(f,'drawer:extensions-settings-button');container.querySelector('.inline-drawer-toggle').click();assert.equal(clicks,1);assert.equal(container.querySelector('input').value,'preserved');assert.equal(d.querySelector('#mcp_manager_container'),container);assert.equal(d.querySelector('#tisya-overlay').open,false);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ await click(f,'menu');assert.equal(d.querySelector('[data-tisya-action="section:mcp"]'),null);await click(f,'drawer:extensions-settings-button');container.querySelector('.inline-drawer-toggle').click();assert.equal(clicks,1);assert.equal(container.querySelector('input').value,'preserved');assert.equal(d.querySelector('#mcp_manager_container'),container);assert.equal(d.querySelector('#tisya-overlay').open,false);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 
 test('chat menu keeps the native anchor and removes the duplicated settings entry',async()=>{
@@ -386,12 +389,12 @@ test('reading formats body without rerunning regex; selecting action fills compo
  const f=await setup(),originalNode=f.w.document.querySelector('.mes_text'),button=await openActions(f),source=f.ctx.chat[0].mes;
  assert.ok(f.formatCalls.length);assert.equal(f.formatCalls[0][7].regexPrepared,true);assert.ok(f.formatCalls[0][5].FORBID_TAGS.includes('custom-style'));
  let inputEvents=0;f.w.document.querySelector('#send_textarea').addEventListener('input',()=>inputEvents++);
- button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.document.querySelector('#send_textarea').value,'察看门锁');assert.equal(inputEvents,1);assert.equal(f.generated.length,0);assert.equal(f.ctx.chat[0].mes,source);assert.equal(f.w.document.querySelector('.mes_text'),originalNode);assert.equal(f.w.document.querySelector('#tisya-overlay').open,false);assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();
+ button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.document.querySelector('#send_textarea').value,'察看门锁');assert.equal(inputEvents,1);assert.equal(f.generated.length,0);assert.equal(f.ctx.chat[0].mes,source);assert.equal(f.w.document.querySelector('.mes_text'),originalNode);assert.equal(f.w.document.querySelector('#tisya-overlay').open,false);assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();
 });
 for(const mode of ['append','replace'])test('inline action mode '+mode+' changes draft without a confirmation modal',async()=>{
  const f=await setup(),button=await openActions(f),d=f.w.document,input=d.querySelector('#send_textarea');input.value='已有草稿';
  d.querySelector('.action-mode-toggle').click();d.querySelector('[data-mode="'+mode+'"]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(input.value,'已有草稿');assert.equal(f.generated.length,0);
- button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(input.value,mode==='append'?'已有草稿\n察看门锁':'察看门锁');assert.equal(d.querySelector('#tisya-overlay').open,false);assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(input.value,mode==='append'?'已有草稿\n察看门锁':'察看门锁');assert.equal(d.querySelector('#tisya-overlay').open,false);assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 for(const change of ['message','chat'])test('action refuses changed '+change+' after opening inline mode menu',async()=>{
  const f=await setup(),button=await openActions(f),d=f.w.document;d.querySelector('#send_textarea').value='原草稿';d.querySelector('.action-mode-toggle').click();
@@ -400,7 +403,7 @@ for(const change of ['message','chat'])test('action refuses changed '+change+' a
 });
 test('direct send is an explicit mode and native submission occurs only after an action click',async()=>{
  const f=await setup(),button=await openActions(f),d=f.w.document;d.querySelector('.action-mode-toggle').click();d.querySelector('[data-mode="send"]').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.generated.length,0);assert.equal(d.querySelector('#send_textarea').value,'');
- button.click();await f.w.happyDOM.whenAsyncComplete();assert.deepEqual(f.generated,[['native-send','察看门锁']]);assert.equal(d.querySelector('#send_textarea').value,'');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ button.click();await f.w.happyDOM.whenAsyncComplete();assert.deepEqual(f.generated,[['native-send','察看门锁']]);assert.equal(d.querySelector('#send_textarea').value,'');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('direct send preserves a nonempty draft with inline feedback',async()=>{
  const f=await setup(),button=await openActions(f),d=f.w.document;d.querySelector('#send_textarea').value='我的草稿';d.querySelector('.action-mode-toggle').click();d.querySelector('[data-mode="send"]').click();await f.w.happyDOM.whenAsyncComplete();button.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('#send_textarea').value,'我的草稿');assert.equal(f.generated.length,0);assert.match(d.querySelector('.action-feedback').textContent,/已有草稿/);await f.w.happyDOM.abort();
@@ -450,7 +453,7 @@ test('a pending stream allows all dialog dismissals, reading, settings and nativ
   await click(f,'menu');await click(f,'continue-settings');d.querySelector('#tisya-continue-text').value='以后继续用这条';await click(f,'save-continue');assert.equal(f.ctx.extensionSettings.缇斯亚界面.继续用户消息,'以后继续用这条');
   await click(f,'menu');await click(f,'motion-toggle');assert.equal(f.ctx.extensionSettings.缇斯亚界面.动态效果,false);
   let opened=0;d.querySelector('#backgrounds-button .drawer-toggle').addEventListener('click',()=>opened++);await click(f,'drawer:backgrounds-button');assert.equal(opened,1);assert.equal(d.querySelector('#tisya-overlay').open,false);
-  assert.deepEqual(f.errors,[]);assert.equal(f.generated.length,1);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);assert.equal(f.generated.length,1);
   const next=d.querySelector('[data-tisya-action="next"]');next.disabled=false;await click(f,'next');assert.equal(f.generated.length,1);assert.match(f.errors.at(-1),/当前操作尚未结束：继续（已等待 \d+ 秒）/);
   stream.resolve();await f.w.happyDOM.whenAsyncComplete();assert.equal(next.disabled,false);
  } finally {stream.resolve();await f.w.happyDOM.abort();}
@@ -460,7 +463,7 @@ test('UI completions cannot release the history lock while generation options ar
  const options=deferred();let calls=0;const f=await setup({optionsWait:()=>{calls++;return options.promise;}});
  try {
   await click(f,'next');assert.equal(calls,1);assert.equal(f.generated.length,0);
-  await click(f,'more');await click(f,'close');await click(f,'menu');await click(f,'input-tools');assert.deepEqual(f.errors,[]);
+  await click(f,'more');await click(f,'close');await click(f,'menu');await click(f,'input-tools');assert.deepEqual(unexpectedErrors(f.errors),[]);
   await click(f,'next');assert.equal(calls,1);assert.match(f.errors.at(-1),/当前操作尚未结束：继续（已等待 \d+ 秒）/);
   options.resolve({});await f.w.happyDOM.whenAsyncComplete();assert.equal(f.generated.length,1);
  } finally {options.resolve({});await f.w.happyDOM.abort();}
@@ -472,7 +475,7 @@ test('late clipboard completion leaves a newly opened menu intact',async()=>{
  try {
   await click(f,'more');await click(f,'msg-copy');assert.equal(copied,'正文');
   await click(f,'close');await click(f,'menu');copy.resolve();await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(d.querySelector('#tisya-overlay').open,false);assert(d.querySelector('#tisya-settings-home'));assert.equal(d.querySelector('.tisya-sub-title').textContent,'设置');assert.deepEqual(f.errors,[]);
+  assert.equal(d.querySelector('#tisya-overlay').open,false);assert(d.querySelector('#tisya-settings-home'));assert.equal(d.querySelector('.tisya-sub-title').textContent,'设置');assert.deepEqual(unexpectedErrors(f.errors),[]);
  } finally {copy.resolve();await f.w.happyDOM.abort();}
 });
 
@@ -481,11 +484,48 @@ test('pending history save allows menu dismissal and does not close a later pane
  try {
   await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,2);
   await click(f,'close');await click(f,'menu');save.resolve();await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(d.querySelector('#tisya-overlay').open,false);assert(d.querySelector('#tisya-settings-home'));assert.equal(d.querySelector('.tisya-sub-title').textContent,'设置');assert.deepEqual(f.errors,[]);
+  assert.equal(d.querySelector('#tisya-overlay').open,false);assert(d.querySelector('#tisya-settings-home'));assert.equal(d.querySelector('.tisya-sub-title').textContent,'设置');assert.deepEqual(f.errors.filter(e=>!e.includes('当前宿主不支持逐条显示缓存')),[]);
  } finally {save.resolve();await f.w.happyDOM.abort();}
 });
 
- test('message toolbar supports only more, custom order, full expansion, and persists independently',async()=>{const f=await setup(),d=f.w.document;await click(f,'more');await click(f,'message-tools');await click(f,'message-tools-collapse');await click(f,'message-tools-save');assert.deepEqual([...d.querySelectorAll('.tisya-actions button')].map(x=>x.dataset.tisyaAction),['more']);await click(f,'more');assert.ok(d.querySelector('[data-tisya-action="msg-regen"]'));await click(f,'message-tools');await click(f,'message-tools-expand');const selects=[...d.querySelectorAll('#tisya-message-slots select')];selects[0].value='more';selects[9].value='regen';await click(f,'message-tools-save');assert.equal(d.querySelectorAll('.tisya-actions button').length,10);assert.equal(d.querySelector('.tisya-actions button').dataset.tisyaAction,'more');assert.equal(f.ctx.extensionSettings.缇斯亚界面.消息快捷栏[0],'more');assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
+test('a stuck archive projection cannot retain the deletion lock after host deletion and save finish',async()=>{
+ const sync=deferred();let hold=false;const f=await setup({nativePresets:true,configureContext:async(c,{window})=>{
+  const create=window.fixture.createMatrixHost;window.fixture.createMatrixHost=options=>{const host=create(options);return {...host,async sync(...args){if(hold)await sync.promise;return host.sync(...args);}};};
+ }});addHistory(f);hold=true;
+ try{
+  await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,2);assert.equal(f.w.Tisya.operationState(),null);
+  await click(f,'more');await click(f,'msg-edit');assert(f.w.document.querySelector('.edit_textarea'));assert.deepEqual(unexpectedErrors(f.errors),[]);
+ }finally{sync.resolve();await f.w.happyDOM.abort();}
+});
+
+test('archive synchronization failure is not misreported as an incomplete deletion and leaves history usable',async()=>{
+ let failSync=false;const f=await setup({nativePresets:true,configureContext:async(c,{window})=>{
+  const create=window.fixture.createMatrixHost;window.fixture.createMatrixHost=options=>{const host=create(options);return {...host,async sync(...args){if(failSync)throw Error('档案服务离线');return host.sync(...args);}};};
+ }});addHistory(f);failSync=true;
+ try{
+  await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,2);assert.match(f.errors.at(-1),/消息删除流程已结束，但档案同步未完成：档案服务离线/);assert.doesNotMatch(f.errors.at(-1),/删除未完整完成/);
+  await click(f,'more');await click(f,'msg-edit');assert(f.w.document.querySelector('.edit_textarea'));
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('chat save failure reports the exact partial deletion and releases only after rejection',async()=>{
+ const f=await setup();addHistory(f);f.ctx.saveChat=async()=>{throw Error('磁盘写入失败');};
+ try{
+  await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,2);assert.match(f.errors.at(-1),/已调用删除 1 条，但聊天保存失败：磁盘写入失败/);assert.equal(f.w.Tisya.operationState(),null);
+  await click(f,'more');await click(f,'msg-edit');assert(f.w.document.querySelector('.edit_textarea'));
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('a pending host deletion keeps history protected and a late completion releases it',async()=>{
+ const deletion=deferred(),f=await setup();addHistory(f);const remove=f.ctx.deleteMessage;f.ctx.deleteMessage=async id=>{await deletion.promise;return remove(id);};
+ try{
+  await click(f,'more');await click(f,'msg-delete');await click(f,'delete-confirm');assert.equal(f.ctx.chat.length,3);assert.equal(f.w.Tisya.operationState().label,'确认删除');
+  await click(f,'next');assert.equal(f.ctx.chat.length,3);assert.match(f.errors.at(-1),/当前操作尚未结束：确认删除/);
+  deletion.resolve();await f.w.happyDOM.whenAsyncComplete();assert.equal(f.ctx.chat.length,2);assert.equal(f.w.Tisya.operationState(),null);
+ }finally{deletion.resolve();await f.w.happyDOM.abort();}
+});
+
+ test('message toolbar supports only more, custom order, full expansion, and persists independently',async()=>{const f=await setup(),d=f.w.document;await click(f,'more');await click(f,'message-tools');await click(f,'message-tools-collapse');await click(f,'message-tools-save');assert.deepEqual([...d.querySelectorAll('.tisya-actions button')].map(x=>x.dataset.tisyaAction),['more']);await click(f,'more');assert.ok(d.querySelector('[data-tisya-action="msg-regen"]'));await click(f,'message-tools');await click(f,'message-tools-expand');const selects=[...d.querySelectorAll('#tisya-message-slots select')];selects[0].value='more';selects[9].value='regen';await click(f,'message-tools-save');assert.equal(d.querySelectorAll('.tisya-actions button').length,10);assert.equal(d.querySelector('.tisya-actions button').dataset.tisyaAction,'more');assert.equal(f.ctx.extensionSettings.缇斯亚界面.消息快捷栏[0],'more');assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();});
 
 test('an explicitly disabled engine rejects generation without reopening it or starting old tables',async()=>{
  const f=await setup({nativePresets:true});try{
@@ -502,14 +542,14 @@ test('native edit focus places confirmation controls below the editor and exit r
  assert.equal(block.lastElementChild,toolbar);toolbar.querySelector('.mes_edit_done').click();assert.equal(saves,1);assert.equal(text.querySelector('textarea').value,'原生草稿');
  text.textContent='已保存';f.handlers.edited();await f.w.happyDOM.whenAsyncComplete();assert.equal(toolbar.parentElement,origin);
  text.innerHTML='<textarea class="edit_textarea">另一次草稿</textarea>';text.querySelector('textarea').focus();await f.w.happyDOM.whenAsyncComplete();assert.equal(block.lastElementChild,toolbar);
- await click(f,'menu');await click(f,'disable');assert.equal(toolbar.parentElement,origin);assert.equal(text.querySelector('textarea').value,'另一次草稿');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ await click(f,'menu');await click(f,'disable');assert.equal(toolbar.parentElement,origin);assert.equal(text.querySelector('textarea').value,'另一次草稿');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
 
 test('welcome startup mounts the pet and functional sidebar without a world or persistence',async()=>{
  for(const welcome of [true,'existing']){const f=await setup({welcome}),d=f.w.document;
  try{
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
   assert.ok(f.w.phoneOptions,'pet was mounted after the display pipeline');
   assert.equal(f.w.displayPipeline.state().enabled,false);
   await click(f,'menu');assert(d.querySelector('#tisya-settings-home'));assert.equal(d.querySelector('#tisya-overlay').open,false);
@@ -517,14 +557,14 @@ test('welcome startup mounts the pet and functional sidebar without a world or p
   await click(f,'settings-app');assert.match(d.querySelector('.tisya-page').textContent,/先打开一段会话/);await click(f,'home');await click(f,'contacts');assert.equal(d.querySelector('#tisya-overlay').open,false);
   assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);
   assert.equal(f.w.Tisya.configuration.read().format,1);assert.equal(f.ctx.extensionSettings.tisya_matrix_configuration,undefined);
-  assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);
+  assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}}
 });
 
 test('welcome to chat to welcome keeps sidebar alive and reads only the selected world display settings',async()=>{
  const f=await setup({welcome:true}),d=f.w.document;
  try{
-  assert.deepEqual(f.errors,[]);const pet=f.w.phoneOptions,shell=d.querySelector('#tisya-shell');
+  assert.deepEqual(unexpectedErrors(f.errors),[]);const pet=f.w.phoneOptions,shell=d.querySelector('#tisya-shell');
   f.ctx.characters=[{avatar:'a.png',name:'甲',chat:'a'},{avatar:'b.png',name:'乙',chat:'b'}];
   f.ctx.chatId='a';f.ctx.characterId=0;await f.emit('chat');await f.w.happyDOM.whenAsyncComplete();
   assert.equal(f.w.displayPipeline.state().enabled,true);
@@ -541,14 +581,14 @@ test('welcome to chat to welcome keeps sidebar alive and reads only the selected
   assert.equal(d.querySelectorAll('#tisya-menu-trigger').length,1);
   assert.equal(JSON.stringify(f.ctx.extensionSettings.缇斯亚配置),before);
   assert.equal(f.w.Tisya.configuration.read().format,1);assert.equal(f.ctx.extensionSettings.tisya_matrix_configuration,undefined);
-  assert.deepEqual(f.errors,[]);assert.equal(f.generated.length,0);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);assert.equal(f.generated.length,0);
  }finally{await f.w.happyDOM.abort();}
 });
 for(const initializedPhone of [true,false])test('native composer persists requirements separately and clears the draft before awaiting the reply: '+(initializedPhone?'explicitly initialized phone':'uninitialized phone stays absent'),async()=>{
  const f=await setup({mediaStorage:true,nativePresets:true});if(initializedPhone){await bindMatrixPhoneFixture(f);await f.w.Tisya.phone.initializeLife();}else assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);const d=f.w.document,input=d.querySelector('#tisya-contractor-input');input.value='请让角色主动回应';input.dispatchEvent(new f.w.Event('input'));d.querySelector('#send_textarea').value='递出礼物';
  await f.emit('before','normal',{},false);f.ctx.chat.push({is_user:true,mes:'递出礼物'});const payload=await nativeMatrixPayload(f,[{role:'user',content:'递出礼物'}]);await f.emit('payload',payload);
  assert(payload.messages.some(row=>row.role==='user'&&row.content.includes('本轮用户\n递出礼物')));assert.equal(payload.messages.filter(row=>row.content?.includes('<recent_situation>\n')).length,1);const requirements=payload.messages.filter(m=>m.role==='user'&&m.content.startsWith('{\"format\":\"tisya.turn-direction/1\"')),phones=payload.messages.filter(m=>m.role==='user'&&m.content.startsWith('{\"format\":\"tisya.phone-turn-input/1\"'));assert.equal(requirements.length,1);assert.equal(JSON.parse(requirements[0].content).text,'请让角色主动回应');assert.equal(phones.length,initializedPhone?1:0);if(initializedPhone)assert.equal(JSON.parse(phones[0].content).requestId,f.w.Tisya.phone.state().requestId);else{assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);}assert.equal(input.value,'');
- f.ctx.chat.push({is_user:false,mes:'角色接过礼物并回应'});await f.emit('generation-end');assert.equal(input.value,'');assert.equal(f.ctx.chat.at(-2).mes,'递出礼物');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ f.ctx.chat.push({is_user:false,mes:'角色接过礼物并回应'});await f.emit('generation-end');assert.equal(input.value,'');assert.equal(f.ctx.chat.at(-2).mes,'递出礼物');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
 
@@ -558,10 +598,10 @@ test('legacy native shortcut is hidden without overwriting settings; advanced re
 
 test('candidate navigation has its own final row after message tools',async()=>{const f=await setup(),d=f.w.document;f.ctx.chat[0].swipes=['旧版','正文','新版'];f.ctx.chat[0].swipe_id=1;f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();const actions=d.querySelector('.tisya-actions'),tools=actions.querySelector('.tisya-message-tools'),versions=actions.querySelector('.tisya-candidate-row');assert(versions);assert.equal(actions.lastElementChild,versions);assert.equal(tools.querySelector('[data-tisya-action=candidate-prev]'),null);assert(tools.querySelector('[data-tisya-action=more]'));assert.equal(versions.querySelectorAll('button').length,3);assert.equal(versions.querySelector('[aria-label="当前候选"]').textContent,'2/3');assert.equal(versions.querySelector('[data-tisya-action=candidate-prev]').disabled,false);assert.equal(versions.querySelector('[data-tisya-action=candidate-next]').disabled,false);await f.w.happyDOM.abort();});
 
-test('direct candidate jump edits the selected native text and deletes only selected version',async()=>{const f=await setup(),d=f.w.document;const m=f.ctx.chat[0];m.swipes=Array.from({length:11},(_,i)=>'版本'+(i+1));m.swipe_id=0;m.mes=m.swipes[0];f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');d.querySelector('#tisya-candidate-select').value='10';await click(f,'candidate-select');assert.equal(m.swipe_id,10);assert.equal(m.mes,'版本11');await click(f,'more');await click(f,'msg-edit');assert.equal(d.querySelector('.edit_textarea').value,'版本11');d.querySelector('.edit_textarea').remove();f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');assert.equal(d.querySelector('#tisya-candidate-select').value,'10');await click(f,'candidate-delete');await click(f,'candidate-delete-confirm');assert.equal(m.swipes.length,10);assert.equal(m.mes,'版本10');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();});
+test('direct candidate jump edits the selected native text and deletes only selected version',async()=>{const f=await setup(),d=f.w.document;const m=f.ctx.chat[0];m.swipes=Array.from({length:11},(_,i)=>'版本'+(i+1));m.swipe_id=0;m.mes=m.swipes[0];f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');d.querySelector('#tisya-candidate-select').value='10';await click(f,'candidate-select');assert.equal(m.swipe_id,10);assert.equal(m.mes,'版本11');await click(f,'more');await click(f,'msg-edit');assert.equal(d.querySelector('.edit_textarea').value,'版本11');d.querySelector('.edit_textarea').remove();f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');assert.equal(d.querySelector('#tisya-candidate-select').value,'10');await click(f,'candidate-delete');await click(f,'candidate-delete-confirm');assert.equal(m.swipes.length,10);assert.equal(m.mes,'版本10');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();});
 
 test('production initializer wires asynchronous message cache without disabling the shell',async()=>{
- const f=await setup({realMessages:true,mediaStorage:true});try{f.ctx.chat[0].mes=replyFixture();await f.emit('updated',0);await new Promise(r=>setTimeout(r,60));const visual=f.w.document.querySelector('#chat .tisya-message-visual');assert(visual);assert.match(visual.shadowRoot.querySelector('.story').textContent,/门开了/);assert.equal(visual.shadowRoot.querySelector('#cover').getAttribute('src'),messageCardCover(f.ctx,f.ctx.chat[0],avatar=>f.w.fixture.getThumbnailUrl('avatar',avatar)));await click(f,'menu');assert(f.w.document.querySelector('#tisya-settings-home'));assert.equal(f.w.document.querySelector('#tisya-overlay').open,false);assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);}finally{await f.w.happyDOM.abort();}
+ const f=await setup({realMessages:true,mediaStorage:true});try{f.ctx.chat[0].mes=replyFixture();await f.emit('updated',0);await waitForShell(()=>f.w.document.querySelector('#chat .tisya-message-visual')?.shadowRoot.querySelector('.story')?.textContent.includes('门开了'),'asynchronous message visual content');const visual=f.w.document.querySelector('#chat .tisya-message-visual');assert(visual);assert.match(visual.shadowRoot.querySelector('.story').textContent,/门开了/);assert.equal(visual.shadowRoot.querySelector('#cover').getAttribute('src'),messageCardCover(f.ctx,f.ctx.chat[0],avatar=>f.w.fixture.getThumbnailUrl('avatar',avatar)));await click(f,'menu');assert(f.w.document.querySelector('#tisya-settings-home'));assert.equal(f.w.document.querySelector('#tisya-overlay').open,false);assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);}finally{await f.w.happyDOM.abort();}
 });
 test('production long-press More saves manual order and keeps copy reachable',async()=>{
  const f=await setup(),d=f.w.document,node=d.querySelector('#chat .mes_text');node.textContent='正文';
@@ -572,23 +612,23 @@ test('production long-press More saves manual order and keeps copy reachable',as
  assert.deepEqual([...f.ctx.extensionSettings.缇斯亚界面.长按菜单],['edit','copy-source','more']);await press();assert.deepEqual([...d.querySelectorAll('#tisya-paragraph-menu button')].map(b=>b.textContent),['手工编辑','复制原消息','更多','关闭']);assert.deepEqual(f.errors.filter(e=>!e.includes('当前宿主不支持逐条显示缓存')),[]);await f.w.happyDOM.abort();
 });
 test('production display route saves the real host loading field without replacing history',async()=>{
- const f=await setup(),before=JSON.stringify(f.ctx.chat);try{await click(f,'menu');await click(f,'display-cache');const root=f.w.document.querySelector('#tisya-chat-loading'),press=text=>[...root.querySelectorAll('button')].find(n=>n.textContent===text).click();press('设为 10 条');press('保存');await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.fixture.power_user.chat_truncation,10);assert.equal(JSON.stringify(f.ctx.chat),before);assert.match(root.textContent,/已保存，下次进入会话生效/);assert.deepEqual(f.errors,[]);}finally{await f.w.happyDOM.abort();}
+ const f=await setup(),before=JSON.stringify(f.ctx.chat);try{await click(f,'menu');await click(f,'display-cache');const root=f.w.document.querySelector('#tisya-chat-loading'),press=text=>[...root.querySelectorAll('button')].find(n=>n.textContent===text).click();press('设为 10 条');press('保存');await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.fixture.power_user.chat_truncation,10);assert.equal(JSON.stringify(f.ctx.chat),before);assert.match(root.textContent,/已保存，下次进入会话生效/);assert.deepEqual(unexpectedErrors(f.errors),[]);}finally{await f.w.happyDOM.abort();}
 });
 
 test('settings has one destination per entry and discovers later native drawers',async()=>{
  const f=await setup(),d=f.w.document,extra=d.createElement('div');extra.className='drawer';extra.innerHTML='<button class="drawer-toggle"><i class="drawer-icon" title="新增扩展"></i></button><div class="drawer-content"><input value="kept"></div>';d.querySelector('#top-settings-holder').append(extra);
  await click(f,'menu');const menu=d.querySelector('#tisya-settings-home'),actions=[...menu.querySelectorAll('.tisya-settings-links [data-tisya-action]')].map(n=>n.dataset.tisyaAction);assert.equal(new Set(actions).size,actions.length);
  for(const obsolete of ['contacts','drawer:rightNavHolder','drawer:persona-management-button','cache-clear','memory','chat-all','section:mcp'])assert.equal(menu.querySelector(`[data-tisya-action="${obsolete}"]`),null);
- const entry=[...menu.querySelectorAll('button')].find(n=>n.getAttribute('aria-label')==='新增扩展');assert(entry);let opened=0;extra.querySelector('.drawer-toggle').onclick=()=>opened++;entry.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opened,1);assert.equal(extra.querySelector('input').value,'kept');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ const entry=[...menu.querySelectorAll('button')].find(n=>n.getAttribute('aria-label')==='新增扩展');assert(entry);let opened=0;extra.querySelector('.drawer-toggle').onclick=()=>opened++;entry.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opened,1);assert.equal(extra.querySelector('input').value,'kept');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('groups use stable native IDs; inline management does not load a chat',async()=>{
  const f=await setup(),d=f.w.document;f.ctx.groups=[{id:'g:1',name:'同名群',members:['a.png'],chats:['chat-1'],chat_id:'chat-1'},{id:'g2',name:'同名群',members:['b.png'],chats:['chat-2'],chat_id:'chat-2'}];let reads=0;f.ctx.openGroupChat=async(id,file)=>{reads++;f.ctx.groupId=id;f.ctx.chatId=file;};
  await click(f,'groups');assert.equal(d.querySelectorAll('.tisya-group-row').length,2);await click(f,'group-menu:g%3A1');assert.equal(d.querySelectorAll('.tisya-directory-inline').length,1);assert.equal(d.querySelector('#tisya-overlay').open,false);await click(f,'group-edit:g%3A1');assert.equal(f.w.characterGroupTarget.id,'g:1');assert.equal(reads,0);assert.equal(f.ctx.chatId,'a');assert(d.querySelector('.tisya-group-row'));
- await click(f,'group-open:g2');assert.equal(reads,1);assert.equal(f.ctx.groupId,'g2');assert.equal(f.ctx.chatId,'chat-2');assert.equal(d.querySelector('.tisya-group-row'),null);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ await click(f,'group-open:g2');assert.equal(reads,1);assert.equal(f.ctx.groupId,'g2');assert.equal(f.ctx.chatId,'chat-2');assert.equal(d.querySelector('.tisya-group-row'),null);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('cache drafts block page and phone navigation until saved or discarded',async()=>{
  const f=await setup(),d=f.w.document;await click(f,'menu');await click(f,'display-cache');const input=d.querySelector('[aria-label="首批消息条数"]');input.value='17';await click(f,'home');assert.equal(d.querySelector('[aria-label="首批消息条数"]'),input);f.w.phoneOptions.onOpenApp('通信');await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('[aria-label="首批消息条数"]'),input);assert.equal(f.w.fixture.power_user.chat_truncation,100);
- assert.equal(d.querySelectorAll('[role=dialog][aria-label="保存未完成的修改"]').length,1);[...d.querySelectorAll('.tisya-unsaved-prompt button')].find(n=>n.textContent==='保存并切换').click();await f.w.happyDOM.whenAsyncComplete();assert(d.querySelector('.tisya-home'));assert.equal(f.w.fixture.power_user.chat_truncation,17);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ assert.equal(d.querySelectorAll('[role=dialog][aria-label="保存未完成的修改"]').length,1);[...d.querySelectorAll('.tisya-unsaved-prompt button')].find(n=>n.textContent==='保存并切换').click();await f.w.happyDOM.whenAsyncComplete();assert(d.querySelector('.tisya-home'));assert.equal(f.w.fixture.power_user.chat_truncation,17);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('native API editor opens from clean configuration and preserves unsaved tags',async()=>{
  const f=await setup(),d=f.w.document;try{await click(f,'menu');await click(f,'settings-tab:api');const root=d.querySelector('#tisya-settings-app');let opens=0;d.querySelector('#sys-settings-button .drawer-toggle').onclick=()=>opens++;const manage=[...root.querySelectorAll('button')].find(n=>n.textContent==='连接与模型');manage.click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);[...root.querySelectorAll('button')].find(b=>b.textContent==='回复格式').click();await f.w.happyDOM.whenAsyncComplete();const input=root.querySelector('input');input.value='storyReply';input.dispatchEvent(new f.w.Event('input'));[...root.querySelectorAll('button')].find(n=>n.textContent==='连接与模型').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);assert.equal(root.querySelectorAll('[role=dialog]').length,1);assert.equal(input.value,'storyReply');[...root.querySelectorAll('.tisya-unsaved-prompt button')].find(n=>n.textContent==='继续编辑').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(opens,1);assert.equal(input.isConnected,true);}finally{await f.w.happyDOM.abort();}
@@ -596,11 +636,11 @@ test('native API editor opens from clean configuration and preserves unsaved tag
 test('home settings invokes the menu; menu rename and pin persist with native names unchanged',async()=>{
  const f=await setup(),d=f.w.document;d.querySelector('.tisya-home-rail-bottom [data-tisya-action="menu"]').click();await f.w.happyDOM.whenAsyncComplete();assert(d.querySelector('#tisya-settings-home').textContent.includes('游玩偏好'));assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(d.querySelector('#tisya-overlay').open,false);await click(f,'home');
  d.querySelector('.tisya-home-chat-row .tisya-home-menu').click();await click(f,'directory-rename');d.querySelector('#tisya-directory-name').value='我喜欢的故事';await click(f,'directory-save');assert.match(d.querySelector('[data-home-chat]').textContent,/我喜欢的故事/);assert.equal(f.ctx.characters[0].name,'同名');assert.equal(f.ctx.chat[0].mes,'正文');
- d.querySelectorAll('.tisya-home-role>summary .tisya-home-menu')[1].click();await click(f,'directory-pin');assert.match(d.querySelector('.tisya-home-role-open').dataset.tisyaAction,/card:1/);assert.equal(d.querySelector('.tisya-home-form-note'),null);assert.equal(d.querySelector('.tisya-home-profile small').textContent,'用户入口 ↗');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ d.querySelectorAll('.tisya-home-role>summary .tisya-home-menu')[1].click();await click(f,'directory-pin');assert.match(d.querySelector('.tisya-home-role-open').dataset.tisyaAction,/card:1/);assert.equal(d.querySelector('.tisya-home-form-note'),null);assert.equal(d.querySelector('.tisya-home-profile small').textContent,'用户入口 ↗');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('late host autoload leaves home visible, while choosing a row still opens exact chat',async()=>{
  const f=await setup(),d=f.w.document;const home=d.querySelector('.tisya-home');selectFixtureChat(f,0,'loaded-later');await f.emit('chat');assert(d.querySelector('.tisya-home')===home,'late host autoload replaced or closed the home');let selections=0;f.ctx.selectCharacterById=async(id,o)=>{selections++;selectFixtureChat(f,id,o.chatFile);await f.emit('chat');};
- d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();await waitForShell(()=>!d.querySelector('.tisya-home'),'selected chat leaves home');assert.equal(selections,1);assert(!d.querySelector('.tisya-home'),'home remains open');assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();await waitForShell(()=>!d.querySelector('.tisya-home'),'selected chat leaves home');assert.equal(selections,1);assert(!d.querySelector('.tisya-home'),'home remains open');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 test('deletion requires confirmation and checks the native result instead of assuming success',async()=>{
  const f=await setup(),d=f.w.document;d.querySelector('.tisya-home-chat-row .tisya-home-menu').click();await click(f,'directory-delete');assert.equal(d.querySelector('#tisya-overlay').open,false);assert.match(d.querySelector('.tisya-directory-inline').textContent,/永久删除/);assert(d.querySelector('[data-tisya-action="directory-delete-confirm"]'));await click(f,'directory-delete-confirm');assert.match(f.errors.at(-1),/会话仍在/);assert(d.querySelector('[data-home-chat]'));await f.w.happyDOM.abort();
@@ -613,7 +653,7 @@ test('directory menus toggle in their own row, remain nonmodal, edit in place an
  await click(f,'directory-rename');assert(role.querySelector('#tisya-directory-name'));await click(f,'directory-back');await click(f,'directory-group');assert(role.querySelector('#tisya-directory-group-name'));await click(f,'directory-back');await click(f,'directory-delete');assert(role.querySelector('.tisya-directory-warning'));await click(f,'directory-back');
  arrow.click();assert.equal(d.querySelector('.tisya-directory-inline'),null);assert.equal(arrow.getAttribute('aria-expanded'),'false');
  arrow.click();const other=d.querySelectorAll('.tisya-home-role .tisya-home-menu')[1];other.click();assert.equal(d.querySelectorAll('.tisya-directory-inline').length,1);assert.equal(arrow.getAttribute('aria-expanded'),'false');
- d.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(d.querySelector('.tisya-directory-inline'),null);assert.deepEqual(f.errors,[]);
+ d.dispatchEvent(new f.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(d.querySelector('.tisya-directory-inline'),null);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 test('detached inline edit is rejected instead of saving against a stale row',async()=>{
@@ -639,11 +679,11 @@ test('all settings entry points reuse one page, preserve search and discover a d
  await click(f,'menu');const page=d.querySelector('#tisya-settings-home'),input=page.querySelector('input');input.value='世界书';input.oninput();
  f.w.phoneOptions.onOpenApp('设置');await f.w.happyDOM.whenAsyncComplete();await click(f,'menu');assert.equal(d.querySelector('#tisya-settings-home'),page);assert.equal(page.querySelector('input'),input);assert.equal(input.value,'世界书');assert.equal(d.querySelectorAll('#tisya-settings-home').length,1);assert.equal(d.querySelector('#tisya-overlay').open,false);
  const extra=d.createElement('div');extra.id='late-plugin';extra.className='drawer';extra.innerHTML='<button class="drawer-toggle"><i class="drawer-icon" title="后装扩展"></i></button><div class="drawer-content"></div>';d.querySelector('#top-settings-holder').append(extra);await click(f,'menu');assert.equal(d.querySelector('#tisya-settings-home'),page);assert.equal(page.querySelector('input').value,'世界书');const search=page.querySelector('input');search.value='';search.oninput();assert(page.querySelector('[data-tisya-action="drawer:late-plugin"]'));
- for(const action of ['role-library','group-library','drawer:WI-SP-button','drawer:ai-config-button'])assert.equal(page.querySelectorAll(`[data-tisya-action="${action}"]`).length,1);assert.deepEqual(f.errors,[]);
+ for(const action of ['role-library','group-library','drawer:WI-SP-button','drawer:ai-config-button'])assert.equal(page.querySelectorAll(`[data-tisya-action="${action}"]`).length,1);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
-test('settings and identity headers return directly to current chat without changing its contents',async()=>{const f=await setup(),d=f.w.document,history=JSON.stringify(f.ctx.chat),chatId=f.ctx.chatId;await click(f,'menu');for(const route of ['settings-app','user-identity']){await click(f,route);await settleIdentityRoute(f);const back=d.querySelector('.tisya-sub-header [data-tisya-action="chat"]');assert.equal(back.textContent,'聊天 ›');back.click();await f.w.happyDOM.whenAsyncComplete();await f.w.identityPanel?.settled();assert(!d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),JSON.stringify({errors:f.errors,identity:f.w.identityPanel?.state?.(),status:d.querySelector('.tisya-identity-status')?.textContent}));assert.equal(f.ctx.chatId,chatId);assert.equal(JSON.stringify(f.ctx.chat),history);await click(f,'menu');}assert.deepEqual(f.errors,[]);f.w.happyDOM.abort();});
+test('settings and identity headers return directly to current chat without changing its contents',async()=>{const f=await setup(),d=f.w.document,history=JSON.stringify(f.ctx.chat),chatId=f.ctx.chatId;await click(f,'menu');for(const route of ['settings-app','user-identity']){await click(f,route);await settleIdentityRoute(f);const back=d.querySelector('.tisya-sub-header [data-tisya-action="chat"]');assert.equal(back.textContent,'聊天 ›');back.click();await f.w.happyDOM.whenAsyncComplete();await f.w.identityPanel?.settled();assert(!d.querySelector('#tisya-shell').classList.contains('tisya-page-open'),JSON.stringify({errors:f.errors,identity:f.w.identityPanel?.state?.(),status:d.querySelector('.tisya-identity-status')?.textContent}));assert.equal(f.ctx.chatId,chatId);assert.equal(JSON.stringify(f.ctx.chat),history);await click(f,'menu');}assert.deepEqual(unexpectedErrors(f.errors),[]);f.w.happyDOM.abort();});
 
 
 test('pending native clipboard on the actual message toolbar never blocks a new chat action',async()=>{
@@ -653,7 +693,7 @@ test('pending native clipboard on the actual message toolbar never blocks a new 
   await click(f,'more');await click(f,'msg-copy');
   assert.equal(f.w.Tisya.operationState(),null);
   await click(f,'next');assert.equal(f.generated.length,1);
-  assert.equal(f.w.Tisya.operationState(),null);assert.deepEqual(f.errors,[]);
+  assert.equal(f.w.Tisya.operationState(),null);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{copy.resolve();await f.w.happyDOM.abort();}
 });
 
@@ -667,7 +707,7 @@ test('rendered target chat releases actual home navigation lock while native sel
   await click(f,'home');assert(d.querySelector('.tisya-home'));
   d.querySelector('[data-home-chat]').click();await f.w.happyDOM.whenAsyncComplete();
   assert.equal(selections,1);assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(f.w.Tisya.operationState(),null);
-  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
+  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
 });
 
@@ -684,7 +724,7 @@ test('managed committed tail releases home lock even when host never emits CHAT_
   const element=d.querySelector('#chat .mes'),content=element.querySelector('.mes_text');
   participant.didCommitContent({element,content,mesid:0,signal:new f.w.AbortController().signal});
   await f.w.happyDOM.whenAsyncComplete();assert.equal(f.w.Tisya.operationState(),null);assert(!d.querySelector('.tisya-home'),'home remains open');
-  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
+  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
 });
 
@@ -709,7 +749,7 @@ test('target data loaded without completion events closes the directory and rele
  try{
   d.querySelector('[data-home-chat]').click();await new Promise(r=>setTimeout(r,50));await f.w.happyDOM.whenAsyncComplete();
   assert(!d.querySelector('.tisya-home'),'home remains open');assert.equal(f.w.Tisya.operationState(),null);
-  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(f.errors,[]);
+  await click(f,'next');assert.equal(f.generated.length,1);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{host.resolve();await f.w.happyDOM.abort();}
 });
 
@@ -722,13 +762,13 @@ test('a manually selected foreign preset passes native input through without eit
   const payload={messages:[{role:'system',content:'Other preset unchanged'},{role:'user',content:'保留原生请求'}],model:'native-model'},original=structuredClone(payload);
   await f.emit('before','normal',{},false);await f.emit('payload',payload);await f.emit('generation-end');
   assert.deepEqual(payload,original);assert.equal(oldWrites,0);assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');
-  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
 test('native token-count dry runs do not clear pending one-pass storage work',async()=>{
  const f=await setup();let clears=0,discards=0,accepts=0;f.w.tableService.clear=()=>clears++;f.w.tableService.discardOnePass=()=>discards++;f.w.tableService.acceptOnePass=async()=>accepts++;
- await f.emit('before','normal',{},true);assert.equal(await f.w.tisyaHistoryInput([],100,()=>{},'normal'),null);await f.emit('generation-end');assert.equal(clears,0);assert.equal(discards,0);assert.equal(accepts,0);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ await f.emit('before','normal',{},true);assert.equal(await f.w.tisyaHistoryInput([],100,()=>{},'normal'),null);await f.emit('generation-end');assert.equal(clears,0);assert.equal(discards,0);assert.equal(accepts,0);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
 test('token count between a real start and its end completes the Matrix lifecycle once without legacy settlement',async()=>{
@@ -736,7 +776,7 @@ test('token count between a real start and its end completes the Matrix lifecycl
  f.w.Tisya.matrix.event=async(name,...args)=>{if(name==='GENERATION_ENDED')ends++;return event(name,...args);};
  for(const name of ['clear','prepare','archiveFromMessages','acceptOnePass','discardOnePass'])assert.equal(typeof f.w.Tisya.tables[name],'undefined');
  await f.emit('before','normal',{},false);await f.emit('payload',await nativeMatrixPayload(f));await f.emit('before','normal',{},true);
- await f.emit('generation-end');assert.equal(ends,1);await f.emit('generation-end');assert.equal(ends,1);assert.equal(oldWrites,0);assert.deepEqual(f.errors,[]);await f.w.happyDOM.abort();
+ await f.emit('generation-end');assert.equal(ends,1);await f.emit('generation-end');assert.equal(ends,1);assert.equal(oldWrites,0);assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();
 });
 
 // These route regressions execute index.js with the actual Matrix identity UI,
@@ -831,7 +871,7 @@ test('cold-start without a chat opens unified identity and routes creation to th
   assert.equal(f.ctx.chatMetadata.tisya_engine,undefined);assert.deepEqual(f.ctx.powerUserSettings,native);assert.equal(f.bookWrites(),0);
   await pressRouteButton(f,seed,'返回');
   await click(f,'user-identity');await settleIdentityRoute(f);page=d.querySelector('#tisya-user-page');
-  assert(page.classList.contains('tisya-matrix-identity'));assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
+  assert(page.classList.contains('tisya-matrix-identity'));assert.equal(f.bookWrites(),0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -874,7 +914,7 @@ test('cold-start source selection opens the production assistant and archives re
   await pressRouteButton(f,page,'返回');await click(f,'user-identity');await settleIdentityRoute(f);page=d.querySelector('#tisya-user-page');
   assert.equal(page.querySelector('[data-role-entry]').value,binding.dossierId);
   assert.equal(Object.keys((await f.w.Tisya.matrix.readDatabase()).state.tables.T_CHAR_DOSSIER).length,1);
-  assert.deepEqual(f.w.Tisya.configuration.read().story.userBinding,binding);assert.deepEqual(f.ctx.powerUserSettings,native);assert.equal(requests.length,1);assert.equal(f.bookWrites(),1);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(f.w.Tisya.configuration.read().story.userBinding,binding);assert.deepEqual(f.ctx.powerUserSettings,native);assert.equal(requests.length,1);assert.equal(f.bookWrites(),1);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -890,7 +930,7 @@ test('manual preset navigation protects identity edits and does not reactivate T
   assert.equal(page.querySelector('[data-identity-wish]').value,'尚未保存的心愿');
   routeButton(page,'打开预设设置').click();await f.w.happyDOM.whenAsyncComplete();await pressRouteButton(f,unsavedDialog(f),'放弃修改');
   assert.equal(opened,1);assert.equal(f.ctx.powerUserSettings.persona_description,'原心愿');
-  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');assert.deepEqual(f.errors,[]);
+  assert.equal(f.presetHost.manager.getSelectedPresetName(),'Other');assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -903,7 +943,7 @@ test('cold-start identity omits retired origin recovery and preserves existing n
   assert.equal([...page.querySelectorAll('button')].some(b=>/核对未完成的原点绑定/.test(b.textContent)),false);
   assert(page.querySelector('[data-identity-wish]'));assert(page.classList.contains('tisya-matrix-identity'));
   assert.deepEqual(f.ctx.powerUserSettings,original);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);
-  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.extensionSettings.缇斯亚配置,undefined);assert.equal(f.bookWrites(),0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -915,7 +955,7 @@ test('explicit retired origin target cannot invoke the removed recovery adapter 
   f.w.requestedOrigin=ref;await f.w.eval('openIdentity(window.requestedOrigin)');await settleIdentityRoute(f);
   const page=d.querySelector('#tisya-user-page');assert(page.classList.contains('tisya-matrix-identity'));assert.equal(page.querySelector('.tisya-user'),null);
   assert.deepEqual(seen,[]);assert.equal(page.querySelector('[data-legacy-origins]'),null);assert.equal(page.querySelector('[data-origin-reviewed]'),null);
-  assert.deepEqual(f.ctx.powerUserSettings,native);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(f.ctx.powerUserSettings,native);assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);assert.equal(f.bookWrites(),0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{
   const page=d.querySelector('#tisya-user-page');if(page)await pressRouteButton(f,page,'取消修改');
   f.w.eval('clearNotebook()');await f.w.happyDOM.abort();
@@ -971,7 +1011,7 @@ test('Matrix identity production route saves mixed profile, wish and story bindi
   assert.equal(page.querySelector('[data-identity-wish]').value,'混改后的完整心愿');
   assert.equal(page.querySelector('[data-wish-option="W00"]').checked,true);
   assert.equal(page.querySelector('[data-avatar-mode]').value,'bound');assert.equal(page.querySelector('[data-role-entry]').value,'route-character');
-  assert.equal(f.ctx.chatId,chatId);assert.deepEqual(f.ctx.chat,history);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.chatId,chatId);assert.deepEqual(f.ctx.chat,history);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1003,7 +1043,7 @@ test('Matrix identity production route cancels a staged persona switch and all m
   assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);
   page=await openIdentityFromSettings(f);assert.equal(page.querySelector('[data-identity-picker]').value,'native-a');
   assert.equal(page.querySelector('[data-identity-wish]').value,'原心愿');assert.equal(page.querySelector('[data-avatar-mode]').value,'generic');
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1033,7 +1073,7 @@ test('Matrix identity production route preserves an empty-registry wish on stay 
   assert.equal(f.w.Tisya.configuration.read().story.userMode,'ensemble');
   page=await openIdentityFromSettings(f);assert.equal(page.querySelector('[data-identity-wish]').value,'无身份注册表的心愿草稿');
   assert.equal(page.querySelector('[data-avatar-mode]').value,'ensemble');assert.equal(f.bookWrites(),0);
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1061,7 +1101,7 @@ test('pet life entry initializes the selected Matrix profile in the original pho
   // The production Matrix bridge uses IndexedDB tasks outside Happy DOM's scheduler.
   for(let i=0;i<300&&!d.querySelector('#tisya-phone-host-slot iframe')&&!f.errors.length;i++)await new Promise(resolve=>setTimeout(resolve,10));
   const frame=d.querySelector('#tisya-phone-host-slot iframe');assert.ok(frame,JSON.stringify(f.errors));assert.equal(new URL(frame.src).searchParams.get('app'),'wallet');assert.equal(new URL(frame.src).searchParams.get('chat'),chatKey(f.ctx));
-  const service=await f.w.Tisya.phone.service(),life=service.readLife();assert.equal(life.state.wallet.accounts[0].balance,12345);assert.equal(life.binding.carrier.id,'a.png');assert.equal(life.binding.character.entityId,'ui-person');assert.equal(f.w.phoneOptions.getLifeDesktop().apps.length,2);const after=await f.w.Tisya.matrix.readDatabase();assert.equal(after.state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);assert.equal(Object.keys(after.state.tables.T_DYN_CURRENCY_BALANCES).length,1);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+  const service=await f.w.Tisya.phone.service(),life=service.readLife();assert.equal(life.state.wallet.accounts[0].balance,12345);assert.equal(life.binding.carrier.id,'a.png');assert.equal(life.binding.character.entityId,'ui-person');assert.equal(f.w.phoneOptions.getLifeDesktop().apps.length,2);const after=await f.w.Tisya.matrix.readDatabase();assert.equal(after.state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);assert.equal(Object.keys(after.state.tables.T_DYN_CURRENCY_BALANCES).length,1);assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1080,7 +1120,7 @@ test('canonical phone history events refresh the cached phone without legacy met
   for(let i=0;i<100&&service.readLife().state.wallet.accounts[0].balance!==12345&&!f.errors.length;i++)await new Promise(resolve=>setTimeout(resolve,10));
   assert.equal(service.readLife().state.wallet.accounts[0].balance,12345);
   assert.equal((await f.w.Tisya.matrix.readDatabase()).state.tables.T_DYN_CURRENCY_BALANCES.cash.values.balance,123.45);
-  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1091,7 +1131,7 @@ test('history events preserve the automatically bound engine without initializin
   await new Promise(resolve=>setTimeout(resolve,30));
   const database=await f.w.Tisya.matrix.peekDatabase();assert(database);
   assert.equal(database.state.tables.X_PHONE_BINDINGS?.['phone-current'],undefined);
-  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(f.errors,[]);
+  assert.equal(f.ctx.chatMetadata['缇斯亚虚拟手机'],undefined);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1113,7 +1153,7 @@ test('direct phone opening waits for the settings leave decision and cancellatio
   assert.equal(d.querySelector('#tisya-phone-host-slot'),null);
   await pressRouteButton(f,unsavedDialog(f),'继续编辑');
   assert.equal(await opening,false);assert(page.isConnected);assert.equal(body.value,'phone_navigation_draft');
-  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1125,7 +1165,7 @@ test('direct phone close waits for the settings leave decision and only hides af
   assert(page.isConnected,'a Promise is not leave permission');
   await pressRouteButton(f,unsavedDialog(f),'放弃修改');
   assert.equal(await closing,true);assert.equal(d.querySelector('#tisya-settings-app'),null);
-  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1137,7 +1177,7 @@ test('life setup entry retains the boolean dispatch contract while awaiting the 
   await f.w.happyDOM.whenAsyncComplete();assert(page.isConnected);assert.equal(d.querySelector('#tisya-user-page'),null);
   await pressRouteButton(f,unsavedDialog(f),'继续编辑');
   assert(page.isConnected);assert.equal(body.value,'phone_navigation_draft');
-  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(f.errors,[]);
+  assert.deepEqual(f.w.Tisya.configuration.read(),before);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1167,7 +1207,7 @@ test('identity production route owns presentation fields in its scroll region an
   d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
   assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);page=await openIdentityFromSettings(f);
   assert.equal(page.querySelector('[data-extension-count]').value,'3');assert.equal(page.querySelector('[data-extension-enabled]').checked,true);
-  assert.equal(page.querySelector('[data-identity-wish]').value,'同时保存论坛偏好的心愿');assert.deepEqual(f.errors,[]);
+  assert.equal(page.querySelector('[data-identity-wish]').value,'同时保存论坛偏好的心愿');assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1184,7 +1224,7 @@ test('presentation-only edits participate in the identity route leave prompt and
   assert.equal(page.querySelector('[data-extension-count]').value,'');
   assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),before);
   d.querySelector('.tisya-sub-header [data-tisya-action="chat"]').click();await f.w.happyDOM.whenAsyncComplete();
-  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);assert.deepEqual(f.errors,[]);
+  assert.equal(d.querySelectorAll('.tisya-unsaved-prompt').length,0);assert.equal(d.querySelector('#tisya-user-page'),null);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1205,7 +1245,7 @@ test('message display check stays read-only while generation runs and copies onl
   assert.doesNotMatch(copied,/PRIVATE_CARD_SOURCE|PRIVATE_CHAT_TEXT/);
   assert.equal(source.outerHTML,sourceBefore);assert.deepEqual(f.ctx.chat,chatBefore);
   assert.deepEqual(await f.w.Tisya.matrix.readDatabase(),databaseBefore);
-  assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);
+  assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1227,7 +1267,7 @@ test('a late runtime inspection cannot overwrite a newer sheet or copy an old me
   await f.w.happyDOM.whenAsyncComplete();
   assert.equal(d.querySelector('#tisya-render-diagnostic'),null);
   assert.equal(d.querySelector('.tisya-sheet h2').textContent,'消息操作');
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{finish({status:'unavailable'});await f.w.happyDOM.abort();}
 });
 
@@ -1247,7 +1287,7 @@ test('changing the selected candidate during runtime inspection invalidates the 
   assert.match(d.querySelector('.tisya-sheet').textContent,/消息或聊天已变化/);
   assert.equal(d.querySelector('#tisya-render-diagnostic'),null);
   assert.equal(d.querySelector('[data-tisya-action="msg-display-check-copy"]'),null);
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{finish({status:'unavailable'});await f.w.happyDOM.abort();}
 });
 
@@ -1272,7 +1312,7 @@ test('display checks separate host regex permission counts without exposing or r
   assert.ok(calls.includes(true));assert.ok(calls.includes(false));
   assert.doesNotMatch(JSON.stringify(report),/PRIVATE_RULE_NAME|PRIVATE_PATTERN|PRIVATE_REPLACEMENT/);
   assert.equal(d.querySelector('#chat .mes_text').outerHTML,before);assert.deepEqual(f.ctx.chat,chat);
-  assert.equal(f.generated.length,0);assert.deepEqual(f.errors,[]);
+  assert.equal(f.generated.length,0);assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{await f.w.happyDOM.abort();}
 });
 
@@ -1288,6 +1328,6 @@ test('a late regex inspection cannot reopen a closed diagnostic or enable a stal
   d.querySelector('[data-tisya-action="close"]').click();await click(f,'more');
   finish({status:'unavailable'});await f.w.happyDOM.whenAsyncComplete();
   assert.equal(d.querySelector('#tisya-render-diagnostic'),null);assert.equal(d.querySelector('.tisya-sheet h2').textContent,'消息操作');
-  assert.deepEqual(f.errors,[]);
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
  }finally{finish({status:'unavailable'});await f.w.happyDOM.abort();}
 });
