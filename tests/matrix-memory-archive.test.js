@@ -42,6 +42,7 @@ test('main request requires paragraph evidence per archive group and limits opti
  assert.deepEqual(lines.filter(line=>line.includes('可加 | Pn')).map(line=>line.match(/^<\w+/)?.[0]),['<cells']);
  assert.match(lines.find(line=>line.startsWith('每条业务记录（每个新增或修订分组）')), /至少.*字段行末.*19\{旅人把信交给船夫\} \| P3/);
  assert(lines.some(line=>line.includes('段号取自本轮最终 <body>')));
+ assert(lines.some(line=>line.includes('引用本批新事件时，同一归档必须包含该事件分组')));
 });
 
 test('actual host accepts every source and commits semantic event memory only beyond its two retained replies',async()=>{
@@ -117,6 +118,16 @@ test('displayed e02 event identity resolves in ordinary cognition references to 
  const cognition=Object.values(e.rows('T_DYN_COGNITION')).find(row=>row.values.name==='交信认知');assert.equal(cognition.values.event_ref,'event-02');
 });
 
+test('new same-batch event code resolves in multiple cognition references',()=>{
+ const e=seed(),first=form(e.data,'T_DYN_EVENTS',{title:'先发生',spine_digest:'第一件事'}),second=form(e.data,'T_DYN_EVENTS',{title:'后发生',spine_digest:'第二件事'}).replace('／1】','／2】');
+ const cognition=form(e.data,'T_DYN_COGNITION',{name:'第一重认知',subject_ref:'阿青',event_ref:'e02',epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'知道第二件事已经发生'});
+ const secondCognition=form(e.data,'T_DYN_COGNITION',{name:'第二重认知',subject_ref:'阿白',event_ref:'e02',epistemic_level:'K2',acquisition_channel:'他人转述',subjective_belief:'听说第二件事已经发生'}).replace('／1】','／2】');
+ acceptReply(e,reply(1,[first,second,cognition,secondCognition].join('\n')),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const event=Object.entries(e.rows('T_DYN_EVENTS')).find(([,row])=>row.values.title==='后发生');assert.equal(event[1].values.short_code,'02');
+ const rows=Object.values(e.rows('T_DYN_COGNITION')).filter(row=>['第一重认知','第二重认知'].includes(row.values.name));assert.equal(rows.length,2);assert(rows.every(row=>row.values.event_ref===event[0]));
+});
+
 test('new same-batch event codes resolve forward and cyclic event links',()=>{
  const e=seed(),first=form(e.data,'T_DYN_EVENTS',{title:'先发生',spine_digest:'第一件事'}),second=form(e.data,'T_DYN_EVENTS',{title:'后发生',spine_digest:'第二件事'}).replace('／1】','／2】');
  const forward=form(e.data,'T_DYN_EVENT_LINKS',{event_ref:'e01',target_event_ref:'e02',edge_kind:'明确因果',connection_evidence:'第一件事引起第二件事'});
@@ -135,7 +146,7 @@ for(const [label,prepare]of [
 ])test('event code references retain strict validation: '+label,()=>{
  const e=seed();prepare(e);const code=label.startsWith('unknown')?'e99':'e99',archive=form(e.data,'T_DYN_COGNITION',{name:'无效关联',subject_ref:'阿青',event_ref:code,epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'不应写入'});
  acceptReply(e,reply(1,archive),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
- assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.match(e.data.runtime.archive_queue[0].error.message,/关联名称不存在、重名或表不匹配/);assert.equal(Object.keys(e.rows('T_DYN_COGNITION')).length,0);
+ assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.match(e.data.runtime.archive_queue[0].error.message,/关联名称不存在、重名或表不匹配/);if(label.startsWith('unknown'))assert.match(e.data.runtime.archive_queue[0].error.message,/若指本批新事件，请补上对应的【双层历史事件】分组/);assert.equal(Object.keys(e.rows('T_DYN_COGNITION')).length,0);
 });
 
 test('main archive grouped form uses the existing field contract and keeps explicit unknowns plus pending items',async()=>{

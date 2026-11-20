@@ -37,6 +37,16 @@ test('standalone table application preserves all original pages and adds checked
  app.dispose();await f.close();
 });
 
+test('atlas opens as a full independent view and returns to the previous form page',async()=>{
+ const {mountTableApp}=await import('../tables/app.js'),f=fixture(),app=mountTableApp(f.document,f.document.body,{service:f.service,store:f.store,initialPage:'atlas'});try{
+  await app.ready;const root=app.root.shadowRoot,host=[...root.querySelectorAll('div')].find(node=>node.shadowRoot),atlas=host?.shadowRoot.querySelector('#app');
+  assert.equal(root.querySelector('header').hidden,true);assert.equal(root.querySelector('.note').hidden,true);assert.equal(find(root,'表单功能').closest('nav').hidden,true);assert.equal(app.root.dataset.view,'atlas');
+  assert(atlas);assert(!atlas.textContent.includes('刷新最新版'));assert(!atlas.textContent.includes('填写当前表单'));assert(!atlas.textContent.includes('表单推进'));
+  [...atlas.querySelectorAll('button')].find(node=>node.textContent==='返回表单').click();await new Promise(resolve=>setTimeout(resolve,0));await app.settled();
+  assert.equal(app.root.dataset.view,'form');assert.equal(root.querySelector('header').hidden,false);assert.equal(find(root,'表单功能').closest('nav').hidden,false);assert.equal(find(root,'表单功能').value,'settings');
+ }finally{app.dispose();await f.close();}
+});
+
 test('settings and identity drafts survive page switching and parking, failed binding keeps edits',async()=>{
  const f=fixture(),panel=mountTablePanel(f.document,f.document.body,{service:f.service,store:f.store});await panel.ready;
  input(f.window,find(panel.root,'启用表单推进'),true);await page(panel,'identity');await click(panel.root,'预览写回原生用户身份');

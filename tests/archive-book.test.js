@@ -54,7 +54,7 @@ test('host atlas uses actual current save, switches origin and refreshes after w
  const select=panel.root.querySelector('[aria-label="表单功能"]');select.value='atlas';await select.onchange();
  let app=panel.root.querySelector('div div')?.shadowRoot;const shadow=()=>[...panel.root.querySelectorAll('div')].find(e=>e.shadowRoot)?.shadowRoot;
  assert(shadow().textContent.includes('方鹿'));assert(!shadow().textContent.includes('渡口清晨'));const writes=f.writes();
- const layer=shadow().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));for(let i=0;i<100&&!shadow().textContent.includes('0 份可读档案');i++)await new Promise(r=>setTimeout(r,10));assert.equal(shadow().querySelector('.result-count')?.textContent,'0 份可读档案');assert.equal(f.writes(),writes);
+ const layer=shadow().querySelector('[aria-label="资料层"]');layer.value='origin';layer.dispatchEvent(new window.Event('change'));for(let i=0;i<100&&!shadow().textContent.includes('全部档案 · 0 份');i++)await new Promise(r=>setTimeout(r,10));assert.equal(shadow().querySelector('.result-count')?.textContent,'全部档案 · 0 份');assert.equal(f.writes(),writes);
  await f.service.edit({changes:[op(f.owner,{描述:'即时更新'},1)]});await panel.settled();assert(shadow().textContent.includes('即时更新'));
  panel.dispose();await window.happyDOM.abort();
 });

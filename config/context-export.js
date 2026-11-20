@@ -27,9 +27,17 @@ export async function copyContextText(document,text){
  await clipboard.writeText(text);
 }
 
-export async function exportContextText(text,fileName,{load=()=>import('/scripts/file-export.js')}={}){
+function browserDownload(text,fileName,document,url){
+ if(!document?.createElement||!document.body?.append||typeof url?.createObjectURL!=='function')throw Error('当前宿主缺少文件导出接口，且当前环境不支持浏览器下载；请使用复制');
+ const objectUrl=url.createObjectURL(new Blob([text],{type:'application/json;charset=utf-8'})),link=document.createElement('a');
+ link.href=objectUrl;link.download=fileName;link.hidden=true;document.body.append(link);
+ try{link.click();}finally{link.remove();setTimeout(()=>url.revokeObjectURL?.(objectUrl),1000);}
+ return {mode:'browser'};
+}
+
+export async function exportContextText(text,fileName,{load=()=>import('/scripts/file-export.js'),document=globalThis.document,url=globalThis.URL}={}){
  const module=await load();
- if(typeof module.downloadBlobWithRuntime!=='function')throw Error('当前宿主缺少文件导出接口');
+ if(typeof module.downloadBlobWithRuntime!=='function')return browserDownload(text,fileName,document,url);
  const result=await module.downloadBlobWithRuntime(new Blob([text],{type:'application/json;charset=utf-8'}),fileName);
  if(!['mobile-native','android-document-picker','ios-native-share','browser'].includes(result?.mode))throw Error('宿主未确认导出，请检查文件保存结果');
  return result;

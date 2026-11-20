@@ -6,16 +6,17 @@ import {mountRunView} from './run-view.js';
 // so closing or opening Configuration does not commit/discard a table draft.
 export function mountTableApp(document,container,{service,store,onIdentity,onMediaManage=null,onClose=()=>{},onSaved=()=>{},initialPage='',heading='表单推进'}){
  const root=document.createElement('div');root.className='tisya-table-app';container.append(root);
- const dom=root.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=PANEL_CSS;dom.append(style);
+ const dom=root.attachShadow({mode:'open'}),style=document.createElement('style');style.textContent=PANEL_CSS+'\n[hidden]{display:none!important}main.atlas-main{padding:0;margin:0}:host([data-view="atlas"]){display:block;min-height:100dvh}';dom.append(style);
  const header=document.createElement('header'),title=document.createElement('h1'),close=document.createElement('button');
  title.textContent=heading;close.type='button';close.textContent='收起';header.append(title,close);dom.append(header);
  const world=document.createElement('p');world.className='note';const snapshot=store.read();world.textContent='当前世界／分支：'+(snapshot.label??snapshot.key);dom.append(world);
  const body=document.createElement('main'),notice=document.createElement('p');notice.className='note';notice.setAttribute('role','status');notice.hidden=true;dom.append(notice,body);
- let alive=true,panel,runView,timer;
+ let alive=true,panel,runView,timer,returnPage=service?.matrixFoundation?'history':'settings';
+ const syncView=page=>{const atlas=page==='atlas';root.dataset.view=atlas?'atlas':'form';header.hidden=atlas;world.hidden=atlas;notice.hidden=atlas||!notice.textContent;body.classList.toggle('atlas-main',atlas);if(runView)runView.root.hidden=atlas;if(!atlas)returnPage=page;};
  if(!service){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='表单推进服务尚未加载，无法读取或保存表单。';}
  else {
   runView=mountRunView(document,dom,{service,onMinimize:()=>onClose()});dom.insertBefore(runView.root,body);
-  panel=mountTablePanel(document,body,{service,store,onIdentity,onMediaManage,initialPage,onSaved:()=>{if(alive)onSaved();}});
+  panel=mountTablePanel(document,body,{service,store,onIdentity,onMediaManage,initialPage,standaloneAtlas:true,onPageChange:syncView,onAtlasExit:()=>panel.navigate(returnPage),onSaved:()=>{if(alive)onSaved();}});
   timer=setInterval(()=>{if(!alive)return;try{runView.tick();}catch(error){notice.hidden=false;notice.setAttribute('role','alert');notice.textContent='读取任务状态失败：'+error.message;}},500);
  }
  close.onclick=()=>{

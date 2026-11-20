@@ -7,7 +7,7 @@ const textButton=(doc,text)=>{const b=[...doc.querySelectorAll('button')].find(b
 test('actual preview renders safe text, preserves query and separates reader and author details',async()=>{
  const win=new Window(),doc=win.document,root=doc.createElement('div');doc.body.append(root);const data=demoArchive();data.rows.find(r=>r.id==='bell').values.描述='<img src=x onerror=alert(1)>';const ui=mountArchiveAtlas(root,data);assert.equal(root.querySelectorAll('.archive-card').length,8);assert.equal(root.querySelector('img'),null);
  root.querySelector('[aria-label="打开方鹿"]').click();assert.match(root.textContent,/尚待提炼/);textButton(doc,'关联');assert(!root.textContent.includes('欠款凭据'));textButton(doc,'返回图鉴');textButton(doc,'读者视图');root.querySelector('[aria-label="打开方鹿"]').click();textButton(doc,'关联');assert(root.textContent.includes('铜铃夹层欠款凭据'));textButton(doc,'返回图鉴');textButton(doc,'作者视图');assert(!root.textContent.includes('欠款凭据'));
- const search=root.querySelector('input');search.value='根本没有这个名字';search.dispatchEvent(new win.Event('input'));assert.equal(root.querySelectorAll('.archive-card').length,0);assert.match(root.textContent,/没有找到/);ui.dispose();await win.happyDOM.close();
+ const search=root.querySelector('input');search.value='根本没有这个名字';search.dispatchEvent(new win.Event('input'));assert.equal(root.querySelectorAll('.archive-card').length,0);assert.match(root.textContent,/没有匹配的档案/);ui.dispose();await win.happyDOM.close();
 });
 test('all preview pages are reachable; demo export is explicitly not a runtime archive package',async()=>{
  const win=new Window(),doc=win.document,root=doc.createElement('div');doc.body.append(root);let output=null;const ui=mountArchiveAtlas(root,demoArchive(),{download:(name,text)=>output={name,text}});
@@ -50,7 +50,7 @@ test('bound images enrich cards and detail media without replacing archive navig
  const image=(id,use='头像',variant='')=>({id,url:'blob:'+id,use,variant,scope:'全局'});
  const media={for:id=>id==='fanglu'?{cover:image('portrait','立绘'),images:[image('avatar'),image('portrait','立绘'),image('happy','表情','开心')]}:{cover:null,images:[]}};
  const ui=mountArchiveAtlas(root,demoArchive(),{media,onMediaManage:()=>managed++});
- assert.equal(root.querySelectorAll('.archive-card-image').length,1);assert.equal(root.querySelector('.archive-card-image').alt,'方鹿的立绘');assert.equal(root.querySelectorAll('.archive-card-monogram').length,7);
+ assert.equal(root.querySelectorAll('.archive-card-image').length,1);assert.equal(root.querySelector('.archive-card-image').alt,'方鹿的立绘');assert.equal(root.querySelectorAll('.archive-card-monogram').length,0);assert.equal(root.querySelectorAll('.archive-card-content').length,8);
  root.querySelector('[aria-label="打开方鹿"]').click();assert.equal(root.querySelector('.detail-cover-image').alt,'方鹿的立绘');assert.match(root.textContent,/尚待提炼/);
  textButton(doc,'影像');assert.equal(root.querySelectorAll('.atlas-gallery-image').length,3);assert.match(root.textContent,/开心/);assert.match(root.textContent,/角色卡|全局/);
  const broken=root.querySelector('.atlas-gallery-image');broken.dispatchEvent(new win.Event('error'));assert(broken.hidden);assert.match(broken.parentElement.textContent,/影像暂不可用/);
