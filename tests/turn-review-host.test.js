@@ -33,6 +33,16 @@ test('edited draft is applied atomically, stale and invalid drafts cannot change
  await f.host.confirmTurn({...d,cells:'阿青.hp: -2 | P1'});assert.equal(await f.hp(),8);
  await assert.rejects(f.host.confirmTurn(d),/已更新/);
 });
+test('non-saving review reports every independent field error and accepts a corrected second pass',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();const draft=await f.draft(),before=await f.snapshot();
+ const cells='【人物原点档案／1】\n3{加茂述}\n4{加茂述}\n5{L9}\n13{很多}';
+ const checked=await f.host.checkTurnReview({...draft,cells});assert.equal(checked.status,'invalid');assert.equal(checked.issues.length,2);assert.deepEqual(checked.issues.map(issue=>issue.field),['true_name_lock','age_raw']);
+ await assert.rejects(f.host.confirmTurn({...draft,cells}),error=>{assert.equal(error.details.issues.length,2);assert.match(error.message,/1\./);assert.match(error.message,/2\./);return true;});
+ assert.deepEqual(await f.snapshot(),before);
+ const corrected=cells.replace('5{L9}','5{L1}').replace('13{很多}','13{数值：7 岁} | P1'),valid=await f.host.checkTurnReview({...draft,cells:corrected});assert.equal(valid.status,'valid');assert.deepEqual(valid.issues,[]);assert.deepEqual(await f.snapshot(),before);
+ await f.host.confirmTurn({...draft,cells:corrected});const state=(await f.snapshot()).state,dossier=Object.values(state.tables.T_CHAR_DOSSIER)[0],age=state.tables.M_QUANTITIES[dossier.values.age_raw];assert.equal(age.values.value,7);
+});
+
 test('valid state changes confirm while an archive missing evidence stays pending for repair',async()=>{
  const f=await fixture(),raw=f.reply().replace('4 事件标题：渡口交信 | P1\n19 一行因果梗概：信已交给船夫 | P1','4 事件标题：渡口交信\n19 一行因果梗概：信已交给船夫');
  f.ctx.chat.push({mes:raw});await f.host.sync();let draft=await f.draft();

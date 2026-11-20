@@ -79,7 +79,7 @@ test('braced forms confirm a custom unit once and expose it in the next model re
  assert.match(dossier,/^3\{角色对外显示名称（角色当前对外使用的名称/m);
  assert.match(dossier,/^4\{角色真名（有来源支持的真名/m);
  assert.match(dossier,/^5\{知情锁级\}$/m);
- assert.match(dossier,/^13\{年龄数值：N 单位/m);
+ assert.match(dossier,/^13\{7岁（推荐），或 数值：7；单位：岁/m);
  const write=async(cells,readArchive=false)=>{
   const archive=readArchive?'<archive format="form">'+section('T_DYN_EVENTS',{spine_digest:'沙桥来客以潮年记龄。'})+'</archive>':'<archive/>';
   f.ctx.chat.push({mes:'<reply><body>1 沙桥来客以潮年记龄。</body><cells format="form">'+cells+'</cells>'+archive+'</reply>'});

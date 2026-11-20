@@ -23,15 +23,21 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  .tisya-turn-review .review-table-choice{border:1px solid #c4ab6840;border-radius:9px;margin:7px 0;padding:4px 10px}.review-table-heading{display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px}.review-table-heading>span{flex:1;min-width:0}.review-table-heading small{white-space:nowrap}.tisya-turn-review .review-field-choice{display:flex;align-items:center;gap:7px;margin:0;padding:8px 0}.review-field-choice>span{flex:1}.review-table-choice input[type=checkbox]{flex:none;width:20px;height:20px}.tisya-turn-review .review-workbench>div>details{margin:14px 0}.tisya-turn-review details>summary{cursor:pointer}.review-table-choice>div{border-top:1px solid #c4ab6830}
  .review-form-channel h3{font-size:17px;font-weight:500;margin:16px 0 8px}.tisya-turn-review .review-record{background:#173f3238;border-radius:12px;min-width:0;padding:12px}.tisya-turn-review .review-record legend{color:#e1ce94;font-size:14px;padding:0 7px}.tisya-turn-review .review-value-field{display:grid;gap:5px;margin:0;padding:11px 0;border-bottom:1px solid #d1bb7d26}.review-value-field:last-child{border-bottom:0}.review-value-field strong{font-size:14px;font-weight:500}.review-value-field small{overflow-wrap:anywhere}.tisya-turn-review .review-value-field input,.tisya-turn-review .review-value-field select,.tisya-turn-review .review-value-field textarea{margin:2px 0;min-height:42px}.tisya-turn-review .review-value-field textarea{min-height:68px}.review-field-effect{color:#d7cd9f}.review-raw{margin:18px 0;font-size:12px}.review-raw summary{cursor:pointer;color:var(--muted)}.review-field-warning{color:#efbda1!important}
  .tisya-turn-review footer{flex-wrap:wrap;border-top:1px solid #c4ab6840;padding-top:16px;margin-top:15px}.tisya-turn-review header h2{min-width:0}.tisya-turn-review header>button{flex:none}.tisya-turn-review .confirm{background:#d7c18a;color:#173426}.tisya-turn-review .history-entry{padding:12px 0;border-bottom:1px solid #c4ab6840;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
- @media(max-width:600px){.tisya-turn-review>section{padding:14px}.tisya-turn-review .review-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:12px 0}.tisya-turn-review .review-tabs button{padding:6px 3px;font-size:12px;white-space:nowrap}.tisya-turn-review .review-value-field{gap:3px;padding:8px 0}}
+ .tisya-turn-review>section>header{position:sticky;top:-20px;z-index:4;margin:-4px -4px 0;padding:4px 4px 12px;background:#12372bf5;backdrop-filter:blur(12px)}
+ .tisya-turn-review .review-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.review-tabs button{font-weight:600}.review-tabs .review-nav-secondary{color:var(--muted);background:#102e25;font-weight:400}
+ .review-issues{margin:12px 0 18px;padding:14px;border:1px solid #e7a58b99;border-radius:12px;background:#542d27a8;box-shadow:inset 3px 0 #efb095}.review-issues>strong{font-size:16px;color:#ffe0cd}.review-issues p{margin:4px 0 10px;color:#f0c8b8}.review-issues ol{margin:0;padding-left:0;list-style:none;display:grid;gap:7px}.review-issues button{width:100%;height:auto;min-height:44px;padding:9px 11px;text-align:left;white-space:normal;line-height:1.55;background:#3b2823;border-color:#e7a58b66}
+ .review-value-field.has-review-issue{margin:4px -8px;padding:11px 8px;border-left:3px solid #efad92;border-radius:5px;background:#673c2b38}.review-value-field.has-review-issue>strong{color:#ffd5bd}
+ .tisya-turn-review footer{position:sticky;bottom:-20px;z-index:4;display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:9px;margin:18px -4px -4px;padding:14px 4px 4px;background:#0c2b22f5;backdrop-filter:blur(12px)}.tisya-turn-review footer button{min-height:48px;padding:10px 12px}.tisya-turn-review footer .confirm{font-weight:700;box-shadow:0 3px 14px #0003}
+ @media(min-width:760px){.review-form-editor{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.review-form-channel{min-width:0}}
+ @media(max-width:600px){.tisya-turn-review>section{padding:14px}.tisya-turn-review>section>header{top:-14px}.tisya-turn-review .review-tabs{gap:7px;margin:12px 0}.tisya-turn-review .review-tabs button{padding:9px 6px;font-size:14px;white-space:nowrap}.tisya-turn-review .review-value-field{gap:4px;padding:10px 0}.tisya-turn-review footer{bottom:-14px;grid-template-columns:1fr 1fr}.tisya-turn-review footer .confirm{grid-column:1/-1;grid-row:1;min-height:52px}.review-issues{padding:11px}}
  `;
  const panel=el('section');panel.hidden=true;panel.id='tisya-turn-review-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','每轮表单与归档确认');panel.tabIndex=-1;
  const toggle=el('button','表单与归档'),header=el('header'),title=el('h2','本轮待确认'),close=el('button','收起');
  header.append(title,close);const note=el('p'),archiveNote=el('p'),status=el('p');archiveNote.className='review-field-warning';archiveNote.hidden=true;status.setAttribute('role','status');
- const nav=el('nav'),currentButton=el('button','本轮'),historyButton=el('button','已存归档');nav.className='review-tabs';nav.append(currentButton,historyButton);
- const current=el('div'),history=el('div');history.hidden=true;
- const rawDetails=el('details');rawDetails.className='review-raw';rawDetails.append(el('summary','高级：查看或修正原始表单文本'));current.append(rawDetails);const editors={};for(const [key,label]of [['cells','本轮表单'],['archive','记忆归档']]){const group=el('label'),check=el('input');check.type='checkbox';check.checked=true;check.setAttribute('aria-label','保存'+label);const input=el('textarea');input.setAttribute('aria-label',label);group.append(check,document.createTextNode(label),input);rawDetails.append(group);editors[key]={input,check};}
- const footer=el('footer'),forms=el('button','表单字段'),confirm=el('button','确认并保存');confirm.className='confirm';footer.append(forms,confirm);current.append(footer);
+ const nav=el('nav'),currentButton=el('button','本轮核对'),historyButton=el('button','归档记录');nav.className='review-tabs';nav.append(currentButton,historyButton);
+ const current=el('div'),history=el('div');history.hidden=true;const issueBox=el('section');issueBox.className='review-issues';issueBox.hidden=true;
+ const rawDetails=el('details');rawDetails.className='review-raw';rawDetails.append(el('summary','高级：查看或修正原始表单文本'));current.append(issueBox,rawDetails);const editors={};for(const [key,label]of [['cells','本轮表单'],['archive','记忆归档']]){const group=el('label'),check=el('input');check.type='checkbox';check.checked=true;check.setAttribute('aria-label','保存'+label);const input=el('textarea');input.setAttribute('aria-label',label);group.append(check,document.createTextNode(label),input);rawDetails.append(group);editors[key]={input,check};}
+ const footer=el('footer'),confirm=el('button','确认并保存');confirm.className='confirm';footer.append(confirm);current.append(footer);
  panel.append(header,note,archiveNote,nav,current,history,status);root.append(style,panel,toggle);document.body.append(root);
  let disposed=false,busy=false,dirty=false,snapshot=null,selected=null,epoch=0,pet=null,detachPet=null,petAnchor=null,pendingCount=0,noticeLabel='表单与归档';
  const win=document.defaultView,off=[];toggle.type=close.type='button';toggle.className='review-notice';toggle.setAttribute('aria-controls',panel.id);toggle.setAttribute('aria-expanded','false');
@@ -44,16 +50,23 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
   const r=toggle.getBoundingClientRect(),width=atFoot?(r.width||100):46,height=r.height||(atFoot?44:76),cx=foot?foot.x+foot.width/2:0;
   const x=atFoot?clamp(cx-width/2,b.x,b.x+b.width-width):b.x+b.width-width+4,y=atFoot?clamp(foot.y+4,b.y,b.y+b.height-height):clamp(b.y+b.height*.5-height/2,b.y,b.y+b.height-height);
   Object.assign(toggle.style,{left:x+'px',top:y+'px',maxWidth:Math.min(150,b.width)+'px'});
-  const panelWidth=Math.min(480,Math.max(1,b.width-12));Object.assign(panel.style,{width:panelWidth+'px',maxHeight:Math.max(0,b.height-12)+'px',left:(b.x+b.width-panelWidth-6)+'px',top:(b.y+6)+'px',visibility:b.height<64?'hidden':'visible'});
+  const panelWidth=Math.min(860,Math.max(1,b.width-12));Object.assign(panel.style,{width:panelWidth+'px',maxHeight:Math.max(0,b.height-12)+'px',left:(b.x+b.width-panelWidth-6)+'px',top:(b.y+6)+'px',visibility:b.height<64?'hidden':'visible'});
  }
  const listen=(node,event,fn)=>{node?.addEventListener(event,fn);off.push(()=>node?.removeEventListener(event,fn));};
  listen(win,'resize',place);listen(win.visualViewport,'resize',place);listen(win.visualViewport,'scroll',place);
  const resize=win.ResizeObserver?new win.ResizeObserver(place):null;for(const node of [document.querySelector('#chat'),document.querySelector('#send_form'),toggle])if(node)resize?.observe(node);
  function show(value,focus=false){panel.hidden=!value;place();if(focus)(value?close:toggle).focus({preventScroll:true});}
- const visualEditor=mountReviewFormEditor(document,{service,onError:error=>{status.textContent=error.message;},onChange:blocks=>{for(const key of ['cells','archive'])editors[key].input.value=blocks[key];dirty=true;}});current.insertBefore(visualEditor.root,rawDetails);
+ const visualEditor=mountReviewFormEditor(document,{service,onError:error=>{status.textContent=error.message;},onChange:blocks=>{for(const key of ['cells','archive'])editors[key].input.value=blocks[key];dirty=true;presentIssues([]);}});current.insertBefore(visualEditor.root,rawDetails);
+ function presentIssues(issues=[]){
+  visualEditor.showIssues(issues);issueBox.replaceChildren();issueBox.hidden=!issues.length;if(!issues.length){issueBox.removeAttribute('role');return;}issueBox.setAttribute('role','alert');
+  issueBox.append(el('strong','发现 '+issues.length+' 处需要修正'),el('p','修改后可再次检查；检查通过前不会保存。'));
+  const list=el('ol');for(const [index,issue]of issues.entries()){
+   const item=el('li'),jump=el('button',(index+1)+'. '+(issue.message??issue.label??'字段需要修正'));jump.type='button';jump.onclick=()=>{if(!visualEditor.focusIssue(issue)){rawDetails.open=true;editors[issue.channel??'cells']?.input.focus();}};item.append(jump);list.append(item);
+  }issueBox.append(list);
+ }
  const editorInput=review=>({uid:review.uid,sourceHash:review.sourceHash,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,cells:editors.cells.input.value,archive:editors.archive.input.value});
  const reparse=el('button','展开修改后的字段');reparse.type='button';reparse.onclick=()=>{if(selected)visualEditor.load(editorInput(selected),{readonly:selected.status==='confirmed'});};rawDetails.append(reparse);
- const workbench=mountReviewWorkbench(document,{service,run,getSnapshot:()=>snapshot,onForms});panel.insertBefore(workbench.root,status);current.insertBefore(workbench.requirements,footer);const saveDraft=el('button','保存候选草稿');footer.insertBefore(saveDraft,confirm);const reload=el('button','重载本轮');nav.append(reload);reload.onclick=()=>{dirty=false;selected=null;workbench.resetRequirements();refresh();};
+ const workbench=mountReviewWorkbench(document,{service,run,getSnapshot:()=>snapshot,onForms});panel.insertBefore(workbench.root,status);current.insertBefore(workbench.requirements,footer);const saveDraft=el('button','保存草稿'),check=el('button','检查全部字段');footer.insertBefore(saveDraft,confirm);footer.insertBefore(check,confirm);const reload=el('button','重新读取');reload.className='review-nav-secondary';nav.append(reload);reload.onclick=()=>{dirty=false;selected=null;workbench.resetRequirements();refresh();};
  const reviewState=review=>review.status==='confirmed'?'已确认':review.archivePending?'归档待补':'待确认';
  const select=review=>{
   selected=review;dirty=false;current.hidden=false;history.hidden=true;
@@ -66,7 +79,7 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
   for(const key of ['cells','archive']){editors[key].input.value=draft?.[key]??review[key]??'';editors[key].check.checked=true;editors[key].input.readOnly=confirmed;}
   visualEditor.load(editorInput(review),{readonly:confirmed});
   workbench.renderRequirements(snapshot,review,draft?.responses??review.decision?.responses);
-  status.textContent=review.error??'';
+  status.textContent=review.error??'';presentIssues([]);
   confirm.disabled=busy||confirmed||!!review.error;
  };
  async function refresh(){
@@ -78,20 +91,21 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
    return true;
   }catch(error){if(error.code==='CHAT_CHANGED'){snapshot=null;selected=null;dirty=false;show(false);return;}status.textContent=error.message;onError(error);}
  }
- async function run(fn){
+ async function run(fn,{working='正在保存…'}={}){
   if(busy)return;
-  const contextKey=snapshot?.contextKey;
-  busy=true;confirm.disabled=true;status.textContent='正在保存…';
+  const contextKey=snapshot?.contextKey;let failure=null;
+  busy=true;confirm.disabled=true;check.disabled=true;status.textContent=working;
   let message;
-  try{message=await fn()??'已保存';}catch(error){message=error.message;onError(error);}
-  finally{busy=false;}
-  if(await refresh()&&snapshot?.contextKey===contextKey)status.textContent=message;
+  try{message=await fn()??'已保存';}catch(error){failure=error;message=error.message;onError(error);}
+  finally{busy=false;check.disabled=false;}
+  if(await refresh()&&snapshot?.contextKey===contextKey){status.textContent=message;if(failure)presentIssues(failure.details?.issues??[]);}
  }
- for(const {input,check}of Object.values(editors)){input.oninput=()=>{dirty=true;visualEditor.rawChanged();};check.onchange=()=>{dirty=true;};}
+ for(const {input,check:enabled}of Object.values(editors)){input.oninput=()=>{dirty=true;presentIssues([]);visualEditor.rawChanged();};enabled.onchange=()=>{dirty=true;};}
  toggle.onclick=()=>{show(panel.hidden,true);if(!panel.hidden)refresh();};
  close.onclick=()=>show(false,true);
  currentButton.onclick=()=>{workbench.close();current.hidden=false;history.hidden=true;};historyButton.onclick=()=>{workbench.close();current.hidden=true;history.hidden=false;};
- forms.onclick=()=>{current.hidden=true;history.hidden=true;workbench.open();};const fieldsNav=el('button','字段与补录');fieldsNav.onclick=forms.onclick;nav.append(fieldsNav);saveDraft.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();const result=await service.reviewAction({action:'draft',uid:selected.uid,hash:selected.sourceHash,cells:editors.cells.input.value,archive:editors.archive.input.value,responses:workbench.responses(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});snapshot.revision=result.revision;dirty=false;});
+ const fieldsNav=el('button','字段设置');fieldsNav.className='review-nav-secondary';fieldsNav.onclick=()=>{current.hidden=true;history.hidden=true;workbench.open();};nav.append(fieldsNav);saveDraft.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();const result=await service.reviewAction({action:'draft',uid:selected.uid,hash:selected.sourceHash,cells:editors.cells.input.value,archive:editors.archive.input.value,responses:workbench.responses(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});snapshot.revision=result.revision;dirty=false;return '草稿已保存，可稍后继续核对。';});
+ check.onclick=()=>{if(!selected)return;const review=selected;return run(async()=>{await visualEditor.settled();const input={uid:review.uid,sourceHash:review.sourceHash,contextHash:review.contextHash,contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,responses:workbench.responses(),...Object.fromEntries(Object.entries(editors).map(([key,e])=>[key,e.check.checked?e.input.value:'']))},result=await service.checkTurnReview(input);if(result.status==='invalid')throw Object.assign(Error('本轮表单尚不能保存，共 '+result.issues.length+' 处需要修正'),{details:{issues:result.issues}});return result.archiveIssue?'字段检查通过；记忆归档仍需补正：'+result.archiveIssue:'全部字段检查通过，可以确认保存。';},{working:'正在检查全部字段…'});};
  confirm.onclick=()=>{
   if(!selected)return;
   return run(async()=>{

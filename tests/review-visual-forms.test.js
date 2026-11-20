@@ -17,6 +17,14 @@ test('compact coordinates keep canonical fields and per-field source; visual edi
  const result=acceptReply(e,'<reply><body>1 抵达。\n\n2 休息。</body><cells format="form">'+edited+'</cells></reply>','compact');assert.equal(result.result.operations[0].status,'COMMITTED');const r=Object.values(e.rows('PEOPLE'))[0];assert.equal(r.values.hp,5);assert.equal(r.metadata.hp.source_pointer.paragraph_reference,'P2');
  assert.throws(()=>compile(e,'【人物／1】\n999：错位'),/未开放/);
 });
+test('the visual editor exposes both sides of an adjacent group heading and preserves the raw envelope',()=>{
+ const e=new Runtime();e.registerTable('PEOPLE',[{key:'name',label:'姓名',type:'TEXT'},{key:'hp',label:'体力',type:'NUMBER'}],'人物');
+ const raw='【人物／1】\n2{阿青}【人物／2】\n2{阿绿}\n3{6}',model=describeReviewForms(e.data,{cells:raw}).cells;
+ assert.equal(model.groups.length,2);assert.equal(model.groups[0].rows[0].value,'阿青');assert.equal(model.groups[1].rows[1].value,'6');
+ const row=model.groups[1].rows[1],edited=editReviewDocument(model,{[row.start]:'7'});assert.equal(edited,raw.replace('3{6}','3{7}'));
+ const {copy}=compile(e,edited);assert.equal(Object.keys(copy.rows('PEOPLE')).length,2);
+});
+
 test('a pending floor with bare numbered values can be edited and confirmed without regenerating its reply',async()=>{
  const f=await fixture();
  const cells=[
@@ -58,6 +66,14 @@ test('archive evidence can be repaired in the visual editor without changing its
  assert.match(edited,/4 事件标题：渡口交信 \| P1/);
  assert.match(edited,/19 一行因果梗概：信已交给船夫/);
 });
+test('the reported age spelling decodes as one exact quantity and the visible hint demonstrates valid syntax',()=>{
+ const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_CHAR_DOSSIER');
+ const raw='【'+t.label+'／1】\n3{加茂述}\n4{加茂述}\n5{L1}\n13{数值：7 岁} | P5',{copy}=compile(e,raw),dossier=Object.values(copy.rows('T_CHAR_DOSSIER'))[0],quantity=copy.rows('M_QUANTITIES')[dossier.values.age_raw].values;
+ assert.equal(quantity.quantity_mode,'exact');assert.equal(quantity.value,7);assert.equal(copy.rows('M_UNITS')[quantity.unit_ref].values.label,'岁');
+ const hint=c.formSections.find(s=>s.tableId==='T_CHAR_DOSSIER').text.split('\n').find(line=>line.startsWith('13{'));
+ assert.match(hint,/7岁/);assert.match(hint,/数值：7；单位：岁/);assert.doesNotMatch(hint,/年龄数值：N 单位/);
+});
+
 test('missing calendar registers a named minute without inventing calendar rules or conversion',()=>{
  const e=new Runtime(initializeState(catalog)),text=section(context(e),'T_DYN_SCENE_SPACE',{name:'测试渡口',turn_elapsed:'3分钟'}),{copy}=compile(e,text),q=Object.values(copy.rows('M_QUANTITIES'))[0].values;
  assert.equal(q.quantity_mode,'exact');assert.equal(q.value,3);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,'分钟');assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.calendar_ref,undefined);assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,0);

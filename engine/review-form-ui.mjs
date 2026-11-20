@@ -6,7 +6,7 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
  const el=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
  const titles={cells:'本轮状态更新',archive:'本轮记忆归档'};
  const text=value=>value===undefined?'尚未填写':value===null?'明确无':typeof value==='object'?JSON.stringify(value):String(value);
- let ticket=0,job=Promise.resolve(),models=null,changes={},blocks={},errors=new Map();
+ let ticket=0,job=Promise.resolve(),models=null,changes={},blocks={},errors=new Map(),visibleIssues=[];
  function render(readonly){
   root.replaceChildren();root.inert=false;
   for(const channel of ['cells','archive']){
@@ -14,12 +14,12 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
    const model=models[channel];changes[channel]={};
    if(!model.groups.length)section.append(el('p',channel==='cells'?'本轮没有状态更新。':'本轮没有新增记忆。'));
    for(const group of model.groups){
-    const card=el('fieldset');card.className='review-record';card.append(el('legend',group.title));
+    const card=el('fieldset');card.className='review-record';card.dataset.heading=group.heading??'';card.append(el('legend',group.title));
     for(const row of group.rows){
      if(row.hidden)continue;
      if(row.error){const warning=el('p',row.error);warning.className='review-field-warning';card.append(warning);continue;}
      const field=el('label'),name=el('strong',(row.recordName?row.recordName+' · ':'')+row.label),control=el(row.options?'select':row.type==='LONG_TEXT'||row.value.length>90?'textarea':'input');
-     field.className='review-value-field';control.setAttribute('aria-label',titles[channel]+' · '+row.label);control.disabled=readonly;
+     field.className='review-value-field';field.dataset.channel=channel;field.dataset.field=row.key;field.dataset.recordId=row.recordId??'';field.dataset.heading=group.heading??'';control.setAttribute('aria-label',titles[channel]+' · '+row.label);control.disabled=readonly;
      if(row.options){for(const value of [...new Set([row.value,...row.options])]){const opt=el('option',value);opt.value=value;control.append(opt);}}
      control.value=row.value;control.dataset.field=row.key;
      if(['NUMBER','INTEGER'].includes(row.type))control.inputMode='decimal';
@@ -43,6 +43,7 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
    }
    root.append(section);
   }
+  showIssues(visibleIssues);
  }
  function load(input,{readonly=false}={}){
   const at=++ticket;errors.clear();blocks={cells:input.cells??'',archive:input.archive??''};root.replaceChildren(el('p','正在整理本轮表单…'));
@@ -51,5 +52,7 @@ export function mountReviewFormEditor(document,{service,onChange,onError}){
    const next=await service.describeTurnReview(input);if(at!==ticket)return;models=next;render(readonly);
   }catch(error){if(at!==ticket)return;errors.set('load',error);root.replaceChildren(el('p','本轮表单未能展开：'+error.message));onError(error);}})();return job;
  }
- return {root,load,rawChanged(){ticket++;root.inert=true;errors.set('raw',Error('原始文本已修改，请点“展开修改后的字段”核对后保存'));},async settled(){await job;if(errors.size)throw errors.values().next().value;},invalidate(){ticket++;errors.clear();root.replaceChildren();},};
+ function fieldsFor(issue){return [...root.querySelectorAll('.review-value-field')].filter(field=>(!issue.channel||field.dataset.channel===issue.channel)&&(!issue.field||field.dataset.field===issue.field)&&(!issue.recordId||field.dataset.recordId===issue.recordId)&&(!issue.heading||field.dataset.heading===issue.heading));}
+ function showIssues(issues=[]){visibleIssues=issues;for(const field of root.querySelectorAll('.review-value-field'))field.classList.remove('has-review-issue');for(const issue of issues)for(const field of fieldsFor(issue))field.classList.add('has-review-issue');}
+ return {root,load,showIssues,focusIssue(issue){const field=fieldsFor(issue)[0];if(!field)return false;field.scrollIntoView?.({block:'center',behavior:'smooth'});const control=field.querySelector('input,textarea,select');control?.focus({preventScroll:true});return true;},rawChanged(){ticket++;root.inert=true;errors.set('raw',Error('原始文本已修改，请点“展开修改后的字段”核对后保存'));},async settled(){await job;if(errors.size)throw errors.values().next().value;},invalidate(){ticket++;errors.clear();root.replaceChildren();},};
 }

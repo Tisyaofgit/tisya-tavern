@@ -8,17 +8,25 @@ import {Runtime} from './runtime.mjs';
 // the normal review service still parses, validates and commits the whole turn.
 export function describeReviewForms(state,blocks){
  const context=prepareMatrixSheets({state},{operationId:'review-editor',mode:'revise',task:'main',scope:{...state.runtime.scope,audience:'author'}});
- return Object.fromEntries(['cells','archive'].map(channel=>[channel,describeReviewDocument(state,context,String(blocks[channel]??''))]));
+ return Object.fromEntries(['cells','archive'].map(channel=>{const model=describeReviewDocument(state,context,String(blocks[channel]??''));for(const group of model.groups)for(const row of group.rows)row.channel=channel;return [channel,model];}));
+}
+function reviewLineParts(text){
+ const parts=[];let base=0;
+ for(const part of text.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[]){
+  if(!part)continue;let start=0;
+  for(const match of part.matchAll(/[}｝](?=【[^】]+】)/g)){const end=match.index+1;parts.push({part:part.slice(start,end),offset:base+start});start=end;}
+  parts.push({part:part.slice(start),offset:base+start});base+=part.length;
+ }
+ return parts;
 }
 function describeReviewDocument(state,context,text){
- const groups=[],runtime=new Runtime(state);let group=null,offset=0,compiled;
+ const groups=[],runtime=new Runtime(state);let group=null,compiled;
  try{compiled=acceptMatrixSheets(context,{state},{blocks:{cells:text}});}catch{} // Invalid drafts remain editable; saving still uses the full validator.
  const changes=compiled?.proposal.matrix.changes??[];
  const form=/^\s*【/m.test(text),sections=form?sheetSections(text,{tolerant:true}):[];
- for(const part of text.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[]){
-  if(!part)continue;
+ for(const {part,offset}of reviewLineParts(text)){
   const line=part.replace(/[\r\n]+$/,''),trimmed=line.trim(),heading=/^【([^】]+)】$/.exec(trimmed);
-  if(!trimmed){offset+=part.length;continue;}
+  if(!trimmed)continue;
   if(heading){
    const refs=existingRecordCandidates(context,heading[1]);let ref=refs.length===1?refs[0]:null;
    const binding=compiled?.bindings.find(r=>r.heading===heading[1]);if(binding)ref={...binding,name:context.references.find(r=>r.tableId===binding.tableId&&r.recordId===binding.recordId)?.name};
@@ -34,7 +42,7 @@ function describeReviewDocument(state,context,text){
     }
    }
    if(ref&&!ref.name){const value=changes.find(c=>c.tableId===ref.tableId&&c.recordId===ref.recordId)?.values??{};ref.name=value.short_code??value.name??value.title??heading[1];}
-   group={title:ref?template?.label+' · '+ref.name:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);offset+=part.length;continue;
+   group={title:ref?template?.label+' · '+ref.name:heading[1],heading:heading[1],tableId:template?.id,recordId:ref?.recordId,template,rows:[]};groups.push(group);continue;
   }
   if(!group||!form){if(!group||group.form){group={title:'本轮状态变化',rows:[]};groups.push(group);}}
   const row={raw:line,start:offset,end:offset+line.length};
@@ -65,7 +73,7 @@ function describeReviewDocument(state,context,text){
    if(spec.ref==='M_QUANTITIES')row.help='可填 18岁、2小时、3米，或数值：3；单位：米。常见单位自动登记；自定义单位可在本轮单位定义中补充，不自动推算换算率。';
    if(!form){runtime.micro(line);row.proposed=runtime.get([row.tableId,row.recordId,row.key,[]]);}
   }catch(error){row.error=error.message;}
-  group.rows.push(row);offset+=part.length;
+  group.rows.push(row);
  }
  for(const group of groups)delete group.template;
  return {text,groups};

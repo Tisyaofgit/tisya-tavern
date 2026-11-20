@@ -17,8 +17,8 @@ function fixture(){
  const template=prepared.catalog.templates.find(table=>table.id==='NODES');
  const row=key=>template.fields.find(field=>field.key===key).row;
  const line=(key,value)=>row(key)+'{'+value+'}';
- const accept=(cells,partial=false)=>{
-  const accepted=acceptMatrixSheets(prepared,{state:engine.data},{partial,blocks:{title:'测试',body:'依据',cells}});
+ const accept=(cells,partial=false,collectErrors=false)=>{
+  const accepted=acceptMatrixSheets(prepared,{state:engine.data},{partial,collectErrors,blocks:{title:'测试',body:'依据',cells}});
   const runtime=new Runtime(engine.data);
   if(accepted.proposal.matrix.changes.length)applyMatrixChanges(runtime,accepted.proposal.matrix.changes,{mode:'revise'});
   return accepted;
@@ -72,6 +72,20 @@ test('partial acceptance still isolates a bad group without discarding a valid z
  const f=fixture(),cells=canonical(f)+'\n【节点／2】\n'+f.line('name','阿绿')+'\n'+f.line('amount','很多'),accepted=f.accept(cells,true);
  assert.equal(accepted.proposal.matrix.changes.length,1);assert.equal(accepted.proposal.matrix.changes[0].values.amount,3);assert.equal(accepted.proposal.matrix.changes[0].values.active,false);
  assert.equal(accepted.acceptance.pending.length,1);assert.equal(accepted.acceptance.pending[0].field,'数量');assert.equal(accepted.acceptance.pending[0].rawValue,'很多');
+});
+
+test('all independent field errors are returned together for a second correction pass',()=>{
+ const f=fixture(),cells=['【节点／1】',f.line('name','阿青'),f.line('amount','很多'),f.line('active','也许')].join('\n');
+ assert.throws(()=>f.accept(cells,false,true),error=>{
+  assert.equal(error.code,'MATRIX_CREATION');assert.equal(error.details.issues.length,2);
+  assert.deepEqual(error.details.issues.map(issue=>issue.field),['amount','active']);
+  assert.match(error.message,/1\. .*数量/);assert.match(error.message,/2\. .*启用/);return true;
+ });
+});
+
+test('a compact field may be followed immediately by the next group heading',()=>{
+ const f=fixture(),cells=canonical(f)+'【节点／2】\n'+f.line('name','阿绿')+'\n'+f.line('amount','6'),accepted=f.accept(cells);
+ assert.equal(accepted.proposal.matrix.changes.length,2);assert.deepEqual(accepted.proposal.matrix.changes.map(row=>row.values.tags),[['甲','乙'],undefined]);
 });
 
 test('narrative look-alike fields keep distinct boundaries in the actual model form',()=>{

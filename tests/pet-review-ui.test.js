@@ -28,4 +28,17 @@ test('confirmation rejection stays visible after a clean editor refresh',async()
   assert.deepEqual(f.errors,[message]);
  }finally{await f.close();}
 });
+test('check-all shows every issue with field navigation and permits a corrected second check',async()=>{
+ const f=setup();
+ try{
+  await f.ui.ready;f.ui.root.querySelector('.review-notice').click();await flush();let confirmed=false,checks=0;
+  f.fixture.service.confirmTurn=async()=>{confirmed=true;};
+  f.fixture.service.checkTurnReview=async()=>{checks++;return checks===1?{status:'invalid',issues:[{channel:'cells',recordId:'actor',field:'hp',label:'体力',message:'体力：请填写有效数字'},{channel:'cells',recordId:'actor',field:'name',label:'姓名',message:'姓名：需要明确值'}]}:{status:'valid',issues:[],archiveIssue:null};};
+  [...f.ui.root.querySelectorAll('footer button')].find(b=>b.textContent==='检查全部字段').click();await flush();
+  const box=f.ui.root.querySelector('.review-issues');assert.equal(box.hidden,false);assert.equal(box.querySelectorAll('li').length,2);assert.match(box.textContent,/不会保存/);assert.equal(confirmed,false);assert.equal(f.ui.root.querySelectorAll('.has-review-issue').length,1);
+  box.querySelector('li button').click();assert.equal(f.d.activeElement.getAttribute('aria-label'),'本轮状态更新 · 体力');
+  [...f.ui.root.querySelectorAll('footer button')].find(b=>b.textContent==='检查全部字段').click();await flush();assert.equal(box.hidden,true);assert.match(f.ui.root.querySelector('[role="status"]').textContent,/可以确认保存/);assert.equal(confirmed,false);
+ }finally{await f.close();}
+});
+
 test('composer height changes bound both forms and trigger; disable and dispose release them',async()=>{const f=setup();try{await f.ui.ready;const notice=f.ui.root.querySelector('.review-notice'),panel=f.ui.root.querySelector('[role=dialog]');f.pet.setVisible(false);notice.click();f.formTop(280);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.maxHeight)<280);f.ui.root.querySelector('header button').click();assert.ok(parseFloat(notice.style.top)+76<280);f.ui.setActive(false);assert.equal(f.ui.root.hidden,true);f.ui.setActive(true);assert.equal(f.ui.root.hidden,false);f.fixture.setAvailable(false);await flush();assert.equal(f.ui.root.hidden,true);f.ui.dispose();assert.equal(f.fixture.listenerCount(),0);f.pet.setVisible(true);assert.equal(f.d.querySelector('.review-notice'),null);}finally{await f.close();}});

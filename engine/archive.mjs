@@ -40,7 +40,7 @@ function preparePlan(runtime,source,sourceKey){
  const snapshot={state:temp.data},context=prepareMatrixSheets(snapshot,{...replyFormDecoding(ownershipVersion),kind:'rows',mode:'revise',task:'main',operationId:'archive:'+sourceKey}),evidenceByHeading={};
  for(const section of sheetSections(raw)){const t=context.catalog.templates.find(t=>section.heading.startsWith(t.label+'／')),owned=t&&context.schemas[t.id].fields.some(f=>f.key==='owner_row_uuid');evidenceByHeading[section.heading]=evidence(section.lines.join('\n'),source,{required:!owned});}
  const input={form:raw,evidenceByHeading,pending:[]};
- const accepted=input.form.trim()?acceptMatrixSheets(context,snapshot,{blocks:{cells:input.form,body:source.body_raw,title:source.title},parsed:source}):{proposal:{matrix:{changes:[]}}};
+ const accepted=input.form.trim()?acceptMatrixSheets(context,snapshot,{blocks:{cells:input.form,body:source.body_raw,title:source.title},parsed:source,collectErrors:true}):{proposal:{matrix:{changes:[]}}};
  const changes=accepted.proposal.matrix.changes;
  assertReplyFormOwnership(temp.data,changes,'archive',{version:ownershipVersion,generatedIdentities:accepted.generatedIdentities});
  for(const change of changes){
