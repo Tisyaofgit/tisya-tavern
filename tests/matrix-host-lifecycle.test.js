@@ -15,7 +15,7 @@ async function fixture(){
  const source={prompts:clone(baseline.prompts),order:clone(baseline.prompt_order[1].order)},expand=s=>s.replace(/\{\{([^{}]+)\}\}/g,(s,k)=>macros.get(k)?.()??(k==='user'?'user':k==='char'?'char':s));
  const options={getContext:()=>ctx,getSource:()=>source,loadCatalog:async()=>catalog,storage,persistSettings:async()=>true,persistMetadata:async()=>true,expand};
  const host=createMatrixHost(options);host.register();const e=new Runtime();e.registerTable('ACTOR',[{key:'name',type:'TEXT'},{key:'hp',type:'NUMBER'}]);e.newRecord('ACTOR',{name:'阿青',hp:10},'u');await host.import({state:e.data});
- async function start(type='normal'){await host.before(type);const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier));await host.payloadReady({messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))});}
+ async function start(type='normal'){await host.before(type);const enabled=new Set(source.order.filter(p=>p.enabled).map(p=>p.identifier)),payload={messages:source.prompts.filter(p=>!p.marker&&enabled.has(p.identifier)&&expand(p.content).trim()).map(p=>({role:p.role,content:expand(p.content)}))};await host.payloadReady(payload);return payload;}
  return {host,ctx,options,start,hp:async()=>(await host.export()).state.tables.ACTOR.u.values.hp};
 }
 for(const accept of [true,false])test(`delayed communication cannot change an already ${accept?'adopted':'rejected'} reroll`,async()=>{
@@ -26,6 +26,13 @@ for(const accept of [true,false])test(`delayed communication cannot change an al
  if(accept)await f.host.acceptCandidate();else{Object.assign(f.ctx.chat[0],original);await f.host.sync();}
  assert.equal(await f.hp(),accept?6:7);release();await finishing;await new createMatrixHost(f.options).sync();assert.equal(await f.hp(),accept?6:7);assert.equal(f.ctx.chat[0].extra[NS].pending_sha256,undefined);
 });
+test('the very first generation after a chat fork inherits the parent story configuration',async()=>{
+ const f=await fixture(),settings=f.host.config.read();settings.story.play={choices:{N02:'N02-C'}};await f.host.config.save(settings);
+ const parent=f.ctx.chatMetadata[NS].owner_chat_key;f.ctx.chatId='forked-host-life';f.ctx.chat.push({is_user:true,mes:'继续'});
+ const payload=await f.start(),system=payload.messages.filter(m=>m.role==='system').map(m=>m.content).join('\n');
+ assert(f.ctx.chatMetadata[NS].origin_chat_keys.includes(parent));assert.match(system,/@POV\.PERSON := 全文使用第二人称/);
+});
+
 test('manual edit after a new user input saves once and survives replay and cold reopen',async()=>{
  const f=await fixture();f.ctx.chat.push({mes:reply()});await f.host.sync();f.ctx.chat.push({is_user:true,mes:'调整为20'});
  await f.host.mutate(e=>e.set('阿青.hp',20));assert.equal(await f.hp(),20);

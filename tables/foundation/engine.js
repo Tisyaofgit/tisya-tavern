@@ -371,6 +371,13 @@ function structuredCell(raw,array=false){
  }const complete=v=>{if(Array.isArray(v))check(Array.from({length:v.length},(_,i)=>Object.hasOwn(v,i)).every(Boolean),'列表索引须从0连续填写');if(v&&typeof v==='object')for(const child of Object.values(v))complete(child);};complete(value);return value;
 }
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
+function narrativeQuantityText(raw){
+ const text=raw.trim(),annotation=/^(.*?)\s*(?:（[^（）\r\n]+）|\([^()\r\n]+\))$/.exec(text),core=(annotation?annotation[1]:text).trim();
+ const match=/^(?:(约|大约|大概|近|将近|不足|不到|未满|超过|逾)\s*)?([+-]?\d+(?:\.\d+)?)\s*(余|多|来)?\s*([^\d\s：:；;（）()]+?)(左右|上下|前后|开外|出头|以上|以下)?$/.exec(core);
+ if(!match||!annotation&&!match[1]&&!match[3]&&!match[5]||!commonUnit(match[4]))return null;
+ // Approximations and period notes have no lossless exact-number representation.
+ return text;
+}
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
 export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operationId,task='tableGenesis',scope=snapshot.state.runtime?.scope??{},tableIds=null,expandReferences='all',commonUnits=true,plainTimeText=true,sceneNameReuse=true,narrativeIdentity=true,multipleEvidence=true,namedHoldingReuse=true,stateNamePatches=true,vocabulary=formVocabulary()}={}){
@@ -418,7 +425,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   if(spec.ref==='M_QUANTITIES'&&inline(spec)&&permitsIdentityReuse(task)){
    const dimension=['age_raw','turn_elapsed'].includes(spec.key)?'time':null;
    const pool=unitReference(vocabulary,dimension);
-   hint=(spec.key==='age_raw'?'7岁':'3米')+'（推荐），或 数值：'+(spec.key==='age_raw'?'7':'3')+'；单位：'+(spec.key==='age_raw'?'岁':'米')+'；或 描述：原文（单位见'+pool+'）';
+   hint=(spec.key==='age_raw'?'7岁':'3米')+'（推荐），或 数值：'+(spec.key==='age_raw'?'7':'3')+'；单位：'+(spec.key==='age_raw'?'岁':'米')+(spec.key==='age_raw'?'；模糊年龄和时期注释可写 50余岁（雪宴时期）':'')+'；或 描述：原文（单位见'+pool+'）';
   }
   if(spec.ref==='M_UNITS')hint='已登记单位名称';
   if(spec.unit)hint+=(hint?'；':'')+'单位 '+spec.unit;
@@ -773,8 +780,11 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    if(/^描述[：:]/.test(raw)){preserve('time_basis',['narrative_only']);Object.assign(values,{time_basis:'narrative_only',narrative:description('描述')});}
    else{const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'起始轮次')&&Object.hasOwn(input,'结束轮次'),'区间填写起始轮次与结束轮次，或已有名称');const [start,startState]=decode(input['起始轮次'],{type:'INTEGER',minimum:0}),[end,endState]=decode(input['结束轮次'],{type:'INTEGER',minimum:0});check(startState==='known'&&endState==='known','区间端点须明确，未知请整格填“?”');check(end>=start,'结束轮次不能早于起始轮次');Object.assign(values,{time_basis:'turn_range',start_turn:start,end_turn:end});}
   }else if(target==='M_QUANTITIES'){
-   if(/^描述[：:]/.test(raw)){preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:description('描述')});}
-   else{
+   const narrative=/^描述[：:]/.test(raw)?description('描述'):narrativeQuantityText(raw);
+   if(narrative!==null){
+    const source=snapshot.state.schema[row.tableId].fields.find(f=>f.key===spec.key);check(['TEXT','LONG_TEXT','WORLD_TIME'].includes(source.source_type),'此字段没有描述型填写合同');
+    preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative});
+   }else{
     const short=(context.commonUnits===false?/^([+-]?\d+(?:\.\d+)?)\s*(分钟|小时|天|日|周|星期|月|年|季|分|时)$/:/^([+-]?\d+(?:\.\d+)?)\s*([^\d\s：:；;][^：:；;]*)$/).exec(raw.trim());
     let input=short?{'数值':short[1],'单位':short[2]}:properties();
     // The visible age hint historically led models to write “数值：7 岁”.

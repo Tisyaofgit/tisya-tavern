@@ -74,6 +74,18 @@ test('the reported age spelling decodes as one exact quantity and the visible hi
  assert.match(hint,/7岁/);assert.match(hint,/数值：7；单位：岁/);assert.doesNotMatch(hint,/年龄数值：N 单位/);
 });
 
+test('approximate age and period annotations preserve the complete narrative quantity',()=>{
+ const e=new Runtime(initializeState(catalog)),c=context(e),t=c.catalog.templates.find(t=>t.id==='T_CHAR_DOSSIER');
+ const value='50余岁（雪宴时期）',raw='【'+t.label+'／1】\n3{加茂述}\n4{加茂述}\n5{L1}\n13{'+value+'} | P5',{copy}=compile(e,raw),dossier=Object.values(copy.rows('T_CHAR_DOSSIER'))[0],quantity=copy.rows('M_QUANTITIES')[dossier.values.age_raw].values;
+ assert.equal(quantity.quantity_mode,'narrative_only');assert.equal(quantity.narrative,value);assert.equal(quantity.value,undefined);assert.equal(quantity.unit_ref,undefined);
+ const exact=compile(new Runtime(initializeState(catalog)),raw.replace(value,'50岁')).copy,exactQuantity=Object.values(exact.rows('M_QUANTITIES'))[0].values;
+ assert.equal(exactQuantity.quantity_mode,'exact');assert.equal(exactQuantity.value,50);
+ const hint=c.formSections.find(s=>s.tableId==='T_CHAR_DOSSIER').text.split('\n').find(line=>line.startsWith('13{'));
+ assert.match(hint,/50余岁（雪宴时期）/);assert.throws(()=>compile(new Runtime(initializeState(catalog)),raw.replace(value,'很多')),/填写|请填/);
+ const annotated=compile(new Runtime(initializeState(catalog)),raw.replace(value,'50岁（雪宴时期）')).copy,annotatedQuantity=Object.values(annotated.rows('M_QUANTITIES'))[0].values;
+ assert.equal(annotatedQuantity.quantity_mode,'narrative_only');assert.equal(annotatedQuantity.narrative,'50岁（雪宴时期）');
+});
+
 test('missing calendar registers a named minute without inventing calendar rules or conversion',()=>{
  const e=new Runtime(initializeState(catalog)),text=section(context(e),'T_DYN_SCENE_SPACE',{name:'测试渡口',turn_elapsed:'3分钟'}),{copy}=compile(e,text),q=Object.values(copy.rows('M_QUANTITIES'))[0].values;
  assert.equal(q.quantity_mode,'exact');assert.equal(q.value,3);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,'分钟');assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.calendar_ref,undefined);assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);assert.equal(Object.keys(e.rows('T_DYN_SCENE_SPACE')).length,0);

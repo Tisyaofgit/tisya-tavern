@@ -43,6 +43,14 @@ test('non-saving review reports every independent field error and accepts a corr
  await f.host.confirmTurn({...draft,cells:corrected});const state=(await f.snapshot()).state,dossier=Object.values(state.tables.T_CHAR_DOSSIER)[0],age=state.tables.M_QUANTITIES[dossier.values.age_raw];assert.equal(age.values.value,7);
 });
 
+test('production review checks and saves an approximate age with its period annotation intact',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();const draft=await f.draft(),before=await f.snapshot(),value='50余岁（雪宴时期）';
+ const cells='【人物原点档案／1】\n3{加茂述}\n4{加茂述}\n5{L1}\n13{'+value+'} | P1',checked=await f.host.checkTurnReview({...draft,cells});
+ assert.equal(checked.status,'valid');assert.deepEqual(checked.issues,[]);assert.deepEqual(await f.snapshot(),before);
+ await f.host.confirmTurn({...draft,cells});const state=(await f.snapshot()).state,dossier=Object.values(state.tables.T_CHAR_DOSSIER)[0],age=state.tables.M_QUANTITIES[dossier.values.age_raw].values;
+ assert.equal(age.quantity_mode,'narrative_only');assert.equal(age.narrative,value);assert.equal(age.value,undefined);assert.equal(age.unit_ref,undefined);
+});
+
 test('valid state changes confirm while an archive missing evidence stays pending for repair',async()=>{
  const f=await fixture(),raw=f.reply().replace('4 事件标题：渡口交信 | P1\n19 一行因果梗概：信已交给船夫 | P1','4 事件标题：渡口交信\n19 一行因果梗概：信已交给船夫');
  f.ctx.chat.push({mes:raw});await f.host.sync();let draft=await f.draft();
