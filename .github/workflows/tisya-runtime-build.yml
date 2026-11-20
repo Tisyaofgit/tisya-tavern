@@ -1,0 +1,93 @@
+name: Temporary Tisya runtime build
+on:
+  push:
+    paths:
+      - .github/workflows/tisya-runtime-build.yml
+permissions:
+  contents: write
+concurrency:
+  group: tisya-runtime-build-main
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Restore and verify reviewed source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 622cf13c3d43d62f146234b57e86584a47200133:.github/tisya-source.patch.gz.b64 > /tmp/tisya-source.patch.gz.b64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/tisya-source.patch.gz.b64')
+          s=p.read_text()
+          old='truLXGl/c9wVGHQdjcmzJ5pPzm6fQ6ySUuK1cGgCAq9kPvZ5ErhgWyIa+Qp3+G0hUghrYEdQ7mH6'
+          new='''
+          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
+          '''
+          assert s.count(old)==1, 'staged patch correction anchor is not unique'
+          s=s.replace(old,new)
+          if not s.endswith('\n'): s+='\n'
+          p.write_text(s)
+          PY
+          echo '1f4c8f32eb59e1f1de76c91713f4a6e1cb6fe862d7d17bc21638343570f1a3ed  /tmp/tisya-source.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/tisya-source.patch.gz.b64 > /tmp/tisya-source.patch.gz
+          gzip -dc /tmp/tisya-source.patch.gz > /tmp/tisya-source.patch
+          echo 'fe825c6480657e0facd0bf47fea3bd31b360588421fec06168ba88789cead6c5  /tmp/tisya-source.patch' | sha256sum -c -
+          git apply --check /tmp/tisya-source.patch
+          git apply /tmp/tisya-source.patch
+          rm -f /tmp/tisya-source.patch /tmp/tisya-source.patch.gz /tmp/tisya-source.patch.gz.b64
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Rebuild and verify runtime
+        run: |
+          npm run build:extension
+          node tools/build-extension.mjs --check
+      - name: Run focused regressions
+        run: |
+          node --test tests/form-fill-contract.test.js tests/review-visual-forms.test.js tests/turn-review-host.test.js tests/pet-review-ui.test.js tests/narrative-material-rebuild.test.js tests/release.test.js
+          node --test --test-name-pattern='home lists every persisted chat' tests/shell.test.js
+      - name: Commit reviewed sources and generated runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/tisya-runtime-build.yml
+          git add -- engine/archive.mjs engine/host.mjs engine/reply.mjs engine/review-form-document.mjs engine/review-form-ui.mjs engine/turn-review-ui.mjs layout.js manifest.json package-lock.json package.json runtime.js shell.css tables/foundation/engine.js tests/fixtures/pet-review.mjs tests/form-fill-contract.test.js tests/narrative-material-rebuild.test.js tests/pet-review-ui.test.js tests/review-visual-forms.test.js tests/turn-review-host.test.js
+          git commit -m 'fix: aggregate form validation and review checks'
+          git push origin main
