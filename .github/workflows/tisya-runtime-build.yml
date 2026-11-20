@@ -59,6 +59,7 @@ jobs:
           XzbaXluDspDvNsVsmQflorfDqIruNtq0s9y9zIbTHEbiBgASGpcXQOMJg0OZMuQ+OHmm/+bv5UGE
           Hl40FFOr6pT4EFxfqXnlGVy/uA9bJL4OIGbbpsDuULiRjzCiwvDGlIm8hBYcH8vvCcKSRlwFIGeO
           '''
+          new=new.strip()
           assert s.count(old)==1, 'staged patch correction anchor is not unique'
           s=s.replace(old,new)
           if not s.endswith('\n'): s+='\n'
