@@ -9,6 +9,7 @@ import {baseline} from '../engine/config.mjs';
 import {Runtime} from '../engine/runtime.mjs';
 import {acceptReply} from '../engine/reply.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
+import {PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION} from '../engine/reply-form-ownership.mjs';
 
 const clone=structuredClone,catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 const legacyFixture=JSON.parse(readFileSync(new URL('./fixtures/reply-form-legacy-staged.json',import.meta.url)));
@@ -116,6 +117,26 @@ test('displayed e02 event identity resolves in ordinary cognition references to 
  acceptReply(e,reply(1,archive),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
  assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
  const cognition=Object.values(e.rows('T_DYN_COGNITION')).find(row=>row.values.name==='交信认知');assert.equal(cognition.values.event_ref,'event-02');
+});
+
+test('pre-narrative replay resolves an explicitly supplied same-batch event code without assigning missing codes',()=>{
+ const e=seed(),event=form(e.data,'T_DYN_EVENTS',{short_code:'e02',spine_digest:'旧回复明确提供的第二事件'});
+ const cognition=form(e.data,'T_DYN_COGNITION',{name:'第一重旧认知',subject_ref:'阿青',event_ref:'e02',epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'知道第二件事已经发生'});
+ const secondCognition=form(e.data,'T_DYN_COGNITION',{name:'第二重旧认知',subject_ref:'阿白',event_ref:'e02',epistemic_level:'K2',acquisition_channel:'他人转述',subjective_belief:'听说第二件事已经发生'}).replace('／1】','／2】');
+ acceptReply(e,reply(1,[event,cognition,secondCognition].join('\n')),'m1',1,'main',{formOwnershipVersion:PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION});
+ acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const saved=Object.entries(e.rows('T_DYN_EVENTS')).find(([,row])=>row.values.spine_digest==='旧回复明确提供的第二事件');assert(saved);assert.equal(saved[1].values.short_code,'e02');assert.equal(saved[1].values.title,'事件02');
+ const rows=Object.values(e.rows('T_DYN_COGNITION')).filter(row=>['第一重旧认知','第二重旧认知'].includes(row.values.name));assert.equal(rows.length,2);assert(rows.every(row=>row.values.event_ref===saved[0]));
+ assert(!Object.values(e.rows('T_DYN_EVENTS')).some(row=>row.values.short_code==='01'),'legacy replay must not synthesize event codes');
+});
+
+test('pre-narrative replay keeps duplicate explicit event codes ambiguous',()=>{
+ const e=seed();e.newRecord('T_DYN_EVENTS',{short_code:'02',title:'既有第二事件',spine_digest:'既有第二事件'},'event-02');
+ const event=form(e.data,'T_DYN_EVENTS',{short_code:'e02',spine_digest:'同码的新事件'});
+ const cognition=form(e.data,'T_DYN_COGNITION',{name:'歧义认知',subject_ref:'阿青',event_ref:'e02',epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'不应猜测目标'});
+ acceptReply(e,reply(1,[event,cognition].join('\n')),'m1',1,'main',{formOwnershipVersion:PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION});
+ assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.match(e.data.runtime.archive_queue[0].error.message,/关联名称不存在、重名或表不匹配：e02/);assert.equal(e.rows('T_DYN_EVENTS')['event-02'].values.spine_digest,'既有第二事件');
 });
 
 test('new same-batch event code resolves in multiple cognition references',()=>{

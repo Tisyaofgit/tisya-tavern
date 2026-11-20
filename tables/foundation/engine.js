@@ -411,7 +411,7 @@ export function prepareMatrixSheets(snapshot,{kind='world',mode='extend',operati
   const base=labels.get(id)+'／已有：'+name,n=(refCounts.get(base)??0)+1;refCounts.set(base,n);
   const legacyName=String(visibleName('name')??visibleName('label')??visibleName('title')??'第'+(index+1)+'项').trim(),legacyBase=labels.get(id)+'／已有：'+legacyName,legacyNumber=(legacyCounts.get(legacyBase)??0)+1;legacyCounts.set(legacyBase,legacyNumber);
   if(restrictReferences&&!matrixRecordVisible(snapshot.state,id,recordId,scope,recordMeta))continue;
-  refs.push({tableId:id,recordId,name,legacyName,aliases:narrativeIdentity?identityAliases(snapshot.state,id,recordId,scope):[],base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
+  refs.push({tableId:id,recordId,name,legacyName,eventCode:id==='T_DYN_EVENTS'?(narrativeIdentity?identityName:visibleName('short_code')):undefined,aliases:narrativeIdentity?identityAliases(snapshot.state,id,recordId,scope):[],base,display:base+'〔'+n+'〕',legacyDisplay:legacyBase+'〔'+legacyNumber+'〕'});
  }
  addRegisteredUnits(vocabulary,refs,snapshot.state,scope);
  const inline=spec=>Object.hasOwn(inlineChildHints,spec.ref)&&['CHILD_REF','REF'].includes(spec.type),hintFor=(spec,tableId)=>{
@@ -584,8 +584,15 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    if(!row.existing&&!row.raw.title)row.raw.title='事件'+code;
   }catch(error){error.formLocation??={heading:row.heading};if(!collectErrors)throw error;capture(error);}
  }
+ // A current form omits the author-facing event title because its code is the
+ // display identity. If that reply was first journaled with an older decoder,
+ // retain the same mechanical title instead of demanding a new narrative fact.
+ if(context.narrativeIdentity===false)for(const row of rows.filter(r=>r.tableId==='T_DYN_EVENTS'&&!r.existing&&!Object.hasOwn(r.raw,'title')&&/^e?\d+$/i.test(String(r.raw.short_code??'').trim())))row.raw.title='事件'+eventKey(row.raw.short_code).padStart(2,'0');
  checkpoint();
- const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,legacyName:r.legacyName,display:r.heading})),...actors];
+ // Explicit event codes remain valid coordinates when an unchanged old reply
+ // replays with a pre-narrative decoder. This does not assign missing codes or
+ // turn a new legacy group into an existing event; duplicates stay ambiguous.
+ const references=[...context.references,...rows.map(r=>({tableId:r.tableId,recordId:r.recordId,name:r.name,legacyName:r.legacyName,eventCode:r.tableId==='T_DYN_EVENTS'?r.raw.short_code:undefined,display:r.heading})),...actors];
  function tableId(raw){const matches=context.catalog.templates.filter(t=>t.label===raw||t.id===raw);check(matches.length===1,'表名不存在或不唯一：'+raw);return matches[0].id;}
  function reference(raw,target,source){
   if(raw==='同场景地点'&&target==='T_STATIC_PLACES'){
@@ -593,7 +600,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    check(scenes.length===1,'同场景地点需要本批唯一且明确填写地点的场景；多个场景请填写具体地点');
    return reference(scenes[0].raw.place_ref,target,source);
   }
-  const displayedEventCode=r=>r.tableId==='T_DYN_EVENTS'&&/^e?\d+$/i.test(String(raw).trim())&&eventKey(r.name)===eventKey(raw);
+  const displayedEventCode=r=>r.tableId==='T_DYN_EVENTS'&&/^e?\d+$/i.test(String(raw).trim())&&eventKey(r.eventCode??r.name)===eventKey(raw);
   let candidates=references.filter(r=>displayedEventCode(r)||(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(raw)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(raw)):r.name===raw)||r.legacyName===raw||r.display===raw||r.legacyDisplay===raw||raw===(snapshot.state.schema[r.tableId]?.label+'／'+r.name));
   if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}
   const targets=[target].flat().filter(Boolean),matches=candidates.filter(r=>!target||targets.includes(r.tableId));
