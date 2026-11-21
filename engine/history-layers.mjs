@@ -4,7 +4,7 @@ import {xmlSection,xmlText} from './prompt-sections.mjs';
 import {extractXMLBody} from '../reader-core.js';
 import {normalizeEnvelope,DEFAULT_TAGS,hasEnvelopeMarkers} from './tags.mjs';
 import {parseNumberedBody} from '../six/paragraphs.mjs';
-import {sha256,digest} from './common.mjs';
+import {digest} from './common.mjs';
 
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 export const historyHeadings={historyRecord:'已归档',recentBody:'较早正文',recentSituation:'本轮接续'};
@@ -91,5 +91,5 @@ export function projectHistoryLayers({messages,archives=[],scope,historyCount=10
    historyMessage('上轮用户',previous),historyMessage('上轮正文',last,latestBody),historyMessage('本轮用户',current)
   ].filter(Boolean))
  };
- return {layers,archiveUnits:finalRecord,recentBodies:recent,recentSituation,audit,window:{configured:historyCount,counted:'历史user与char消息合计；本轮命令另算',sourceIds:window.map(m=>m.id)},sourceSignature:sha256(JSON.stringify(rows)),nativeHistoryCompatible:false};
+ return {layers,archiveUnits:finalRecord,recentBodies:recent,recentSituation,audit,window:{configured:historyCount,counted:'历史user与char消息合计；本轮命令另算',sourceIds:window.map(m=>m.id)},sourceSignature:digest(rows),nativeHistoryCompatible:false};
 }

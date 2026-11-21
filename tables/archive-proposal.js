@@ -1,5 +1,5 @@
 import {copy,object,normalized,typeFields,validateFields,sameDefinition,mapRowReferences} from './schema.js';
-import {digest} from './books.js';
+import {digest} from '../engine/common.mjs';
 import {reconcileProposal,fieldMerge} from './reconcile.js';
 import {prepareCommit} from './ledger.js';
 
@@ -175,7 +175,7 @@ export function createArchiveProposalSession({view,context,source,allowedTables,
     prepareCommit(raw,proposal,{source:basis.key,kind:'archive',evidence:basis.evidence,worldTime:basis.worldTime??null,allowedTables:tables,sourceOrder:basis.sourceOrder??{},...ARCHIVE_SCHEMA_OPTIONS});
    }
    catch(error){if(error instanceof ArchiveProposalError)throw error;throw new ArchiveProposalError('INVALID_PROPOSAL','归档草案未通过字段、证据、引用或批次校验；未写入档案。');}
-   await assertFresh();const hash=await digest(JSON.stringify(canonical({world:bound.world,branch:bound.branch,task:bound.task,source:basis.key,proposal})));await assertFresh();
+   await assertFresh();const hash=await digest(canonical({world:bound.world,branch:bound.branch,task:bound.task,source:basis.key,proposal}));await assertFresh();
    const draft={format:'tisya.archive-proposal/1',id:crypto.randomUUID(),requestId:value.requestId,fingerprint,hash,context:copy(bound),source:{key:basis.key,floor:basis.floor??null},proposal};drafts.set(value.requestId,draft);return draft;
   })();pending.set(value.requestId,{fingerprint,promise});
   try{return receipt(await promise);}finally{pending.delete(value.requestId);}

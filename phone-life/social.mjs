@@ -1,3 +1,5 @@
+import {stable} from '../engine/common.mjs';
+import {nextRecordId} from './record-id.mjs';
 import {phoneTimeText,phoneCalendarPage} from './time-view.mjs';
 import {displayText,accountDisplayName,accountMention} from './display.mjs';
 import {performMediaExtension,validateMediaExtensions} from './media-rules.mjs';
@@ -9,8 +11,6 @@ const assert = (ok, message) => { if (!ok) throw new Error(message); };
 const text = (v, max = 2000) => { const s=String(v ?? '').trim(); assert(s && s.length<=max, `请填写1—${max}字的内容。`); return s; };
 const list = (o,k) => o[k] || (o[k]=[]);
 const stamp = s => ({...s.clock});
-const next=(s,p)=>{const used=new Set();const walk=x=>{if(!x||typeof x!=='object')return;if(typeof x.id==='string')used.add(x.id);for(const v of Object.values(x))walk(v);};walk(s);let value;do{value=`${p}-${++s.seq}`;}while(used.has(value));return value;};
-const stable = value => Array.isArray(value)?`[${value.map(stable).join(',')}]`:value&&typeof value==='object'?`{${Object.keys(value).filter(k=>value[k]!==undefined).sort().map(k=>`${JSON.stringify(k)}:${stable(value[k])}`).join(',')}}`:JSON.stringify(value);
 const account = (s,id) => s.social.accounts.find(x=>x.id===id);
 const active = s => s.social.activeAccountId;
 const mediaOwner=s=>active(s)??s.media.ownerId;
@@ -65,8 +65,8 @@ function publish(s,a){
  for(const id of mediaIds){const p=needPhoto(s,id);assert(!p.purged&&p.deletedAt==null&&(p.ownerId===by||p.ownerId===s.media.ownerId),'只能使用当前账号自己的相片。');assert(p.visibility==='public'||visibility==='private'||a.allowPublicPhoto===true||a.allowPublicPhoto==='on'||a.allowPublicPhoto==='true','这张相片是私密的。请明确勾选本次分享授权，或设为仅自己可见。');}
  if(a.repostOf){const original=needPost(s,a.repostOf);assert(original.visibility==='public'||visibility==='private','非公开微博的转发请保留为仅自己可见。');}
  if(a.songId){const song=needSong(s,a.songId);assert(song.visibility!=='private'||visibility==='private'||a.allowPublicSong===true||a.allowPublicSong==='on','私密音乐需要明确授权本次分享。');}
- const p={id:next(s,'post'),authorId:by,text:content,visibility,mediaIds,mediaGrants:visibility==='private'?[]:mediaIds,repostOf:a.repostOf||null,songId:a.songId||null,songGrant:!!a.songId&&visibility!=='private',likesBase:0,version:1,createdAt:stamp(s)};
- s.social.posts.unshift(p);if(p.repostOf){const original=s.social.posts.find(x=>x.id===p.repostOf);p.repostSnapshot={text:original.text,authorId:original.authorId,version:original.version??1,mediaIds:[...original.mediaIds],visibility:original.visibility};}const mentionIds=Array.isArray(a.mentionIds)?a.mentionIds:accountMentions(s,p.text);p.mentionIds=[...new Set(mentionIds)];for(const id of p.mentionIds){assert(account(s,id),'提及的账号未登记。');if(id!==by&&canReadPost(s,p,id))s.social.notifications.push({id:next(s,'notice'),kind:'social.mention',actorId:by,recipientId:id,postId:p.id,text:accountDisplayName(account(s,by))+'提到了你',seen:false,withdrawn:false});}s.social.drafts??={};s.social.drafts[by]={text:'',visibility:'public'};return {message:visibility==='private'?'已保存为仅自己可见。':'微博已发布。',postId:p.id,navigate:{app:'weibo',tab:'latest',detail:'',photoId:'',repostOf:'',songId:'',query:''}};
+ const p={id:nextRecordId(s,'post'),authorId:by,text:content,visibility,mediaIds,mediaGrants:visibility==='private'?[]:mediaIds,repostOf:a.repostOf||null,songId:a.songId||null,songGrant:!!a.songId&&visibility!=='private',likesBase:0,version:1,createdAt:stamp(s)};
+ s.social.posts.unshift(p);if(p.repostOf){const original=s.social.posts.find(x=>x.id===p.repostOf);p.repostSnapshot={text:original.text,authorId:original.authorId,version:original.version??1,mediaIds:[...original.mediaIds],visibility:original.visibility};}const mentionIds=Array.isArray(a.mentionIds)?a.mentionIds:accountMentions(s,p.text);p.mentionIds=[...new Set(mentionIds)];for(const id of p.mentionIds){assert(account(s,id),'提及的账号未登记。');if(id!==by&&canReadPost(s,p,id))s.social.notifications.push({id:nextRecordId(s,'notice'),kind:'social.mention',actorId:by,recipientId:id,postId:p.id,text:accountDisplayName(account(s,by))+'提到了你',seen:false,withdrawn:false});}s.social.drafts??={};s.social.drafts[by]={text:'',visibility:'public'};return {message:visibility==='private'?'已保存为仅自己可见。':'微博已发布。',postId:p.id,navigate:{app:'weibo',tab:'latest',detail:'',photoId:'',repostOf:'',songId:'',query:''}};
 }
 export function reduceSocial(state,action,{acceptedSource=false}={}){
  assert(action&&typeof action.type==='string','操作格式不正确。');
@@ -83,7 +83,7 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
  if(a.type==='media.photo.share')assert(OWN.has(active(s))&&(!s.config||s.config.apps.includes('weibo')),'尚未配置可发博的本人账号或微博应用。');
  if(a.type==='music.share')assert(OWN.has(me)&&(!s.config||s.config.apps.includes('weibo')),'尚未配置可发博的本人账号或微博应用。');
  if(a.type==='social.network.advance')assert(acceptedSource,'正式送达只接受宿主已接纳的来源。');
- const mediaResult=performMediaExtension(s,a,{next})??performSocialExtension(s,a,{next,canRead:canReadPost},{acceptedSource});
+ const mediaResult=performMediaExtension(s,a,{next:nextRecordId})??performSocialExtension(s,a,{next:nextRecordId,canRead:canReadPost},{acceptedSource});
  if(mediaResult)result=mediaResult;else switch(a.type){
   case 'social.npc.post':{
    assert(acceptedSource,'NPC内容只接受宿主已接纳的来源。');const author=account(s,a.authorId);assert(author&&!OWN.has(author.id),'NPC作者必须是已登记的非本人账号。');
@@ -92,8 +92,8 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
   }
   case 'social.npc.comment':{
    assert(acceptedSource,'NPC内容只接受宿主已接纳的来源。');const author=account(s,a.authorId);assert(author&&!OWN.has(author.id),'NPC作者必须是已登记的非本人账号。');
-   const p=s.social.posts.find(row=>row.id===a.postId);assert(canReadPost(s,p,author.id),'该NPC没有读取这条微博的依据。');const c={id:next(s,'comment'),postId:p.id,authorId:author.id,text:text(a.text,500),createdAt:stamp(s)};s.social.comments.push(c);
-   if(p.authorId!==author.id)s.social.notifications.push({id:next(s,'notice'),kind:'social.comment',recipientId:p.authorId,actorId:author.id,postId:p.id,text:`${accountDisplayName(author)}评论了你的微博`,seen:false,withdrawn:false});result={message:'已接纳这一轮的评论。',commentId:c.id};break;
+   const p=s.social.posts.find(row=>row.id===a.postId);assert(canReadPost(s,p,author.id),'该NPC没有读取这条微博的依据。');const c={id:nextRecordId(s,'comment'),postId:p.id,authorId:author.id,text:text(a.text,500),createdAt:stamp(s)};s.social.comments.push(c);
+   if(p.authorId!==author.id)s.social.notifications.push({id:nextRecordId(s,'notice'),kind:'social.comment',recipientId:p.authorId,actorId:author.id,postId:p.id,text:`${accountDisplayName(author)}评论了你的微博`,seen:false,withdrawn:false});result={message:'已接纳这一轮的评论。',commentId:c.id};break;
   }
   case 'social.settings':assert(typeof a.accidentalLikes==='boolean','请选择是否启用双击点赞。');s.social.accidentalLikes=a.accidentalLikes;result={message:a.accidentalLikes?'已启用双击图片点赞；可在送出前撤销。':'已关闭双击图片点赞。'};break;
   case 'social.draft.save':{const content=String(a.text??'');assert(content.length<=2000,'微博草稿不能超过2000字。');const visibility=a.visibility||s.social.drafts?.[me]?.visibility||'public';assert(['public','followers','private'].includes(visibility),'草稿可见范围无效。');s.social.drafts??={};s.social.drafts[me]={text:content,visibility};result={message:'草稿已保存。'};break;}
@@ -101,14 +101,14 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
   case 'social.search':result={message:'已搜索当前手机中的微博。',navigate:{app:'weibo',tab:'search',query:text(a.query,100)}};break;
   case 'social.publish':result=publish(s,a);break;
   case 'social.delete':{const p=needPost(s,a.postId);assert(p.authorId===me,'只能删除当前账号自己的微博。');p.deleted=true;result={message:'这条微博已删除。',navigate:{app:'weibo',tab:'latest',detail:''}};break;}
-  case 'social.comment':{const p=needPost(s,a.postId);const reply=a.replyTo?s.social.comments.find(x=>x.id===a.replyTo&&x.postId===p.id):null;assert(!a.replyTo||reply,'回复的评论不存在或不属于原帖。');const c={id:next(s,'comment'),postId:p.id,authorId:me,text:text(a.text,500),replyTo:reply?.id??null,createdAt:stamp(s)};s.social.comments.push(c);const recipientId=reply?.authorId??p.authorId;if(recipientId!==me)s.social.notifications.push({id:next(s,'notice'),kind:'social.comment',recipientId,actorId:me,postId:p.id,text:`${accountDisplayName(account(s,me))}回复了你的内容`,seen:false,withdrawn:false});result={message:'评论已发出。',navigate:{app:'weibo',tab:'post',detail:p.id}};break;}
-  case 'social.follow':{assert(account(s,a.accountId)&&a.accountId!==me,'请选择其他账号。');assert(!(s.social.blocks?.[me]??[]).includes(a.accountId)&&!(s.social.blocks?.[a.accountId]??[]).includes(me),'已拉黑的账号不能关注。');const on=toggle(list(s.social.follows,me),a.accountId);if(on)s.social.notifications.push({id:next(s,'notice'),kind:'social.follow',recipientId:a.accountId,actorId:me,postId:null,text:accountDisplayName(account(s,me))+'关注了你',seen:false,withdrawn:false});result={message:on?'已关注。':'已取消关注。'};break;}
+  case 'social.comment':{const p=needPost(s,a.postId);const reply=a.replyTo?s.social.comments.find(x=>x.id===a.replyTo&&x.postId===p.id):null;assert(!a.replyTo||reply,'回复的评论不存在或不属于原帖。');const c={id:nextRecordId(s,'comment'),postId:p.id,authorId:me,text:text(a.text,500),replyTo:reply?.id??null,createdAt:stamp(s)};s.social.comments.push(c);const recipientId=reply?.authorId??p.authorId;if(recipientId!==me)s.social.notifications.push({id:nextRecordId(s,'notice'),kind:'social.comment',recipientId,actorId:me,postId:p.id,text:`${accountDisplayName(account(s,me))}回复了你的内容`,seen:false,withdrawn:false});result={message:'评论已发出。',navigate:{app:'weibo',tab:'post',detail:p.id}};break;}
+  case 'social.follow':{assert(account(s,a.accountId)&&a.accountId!==me,'请选择其他账号。');assert(!(s.social.blocks?.[me]??[]).includes(a.accountId)&&!(s.social.blocks?.[a.accountId]??[]).includes(me),'已拉黑的账号不能关注。');const on=toggle(list(s.social.follows,me),a.accountId);if(on)s.social.notifications.push({id:nextRecordId(s,'notice'),kind:'social.follow',recipientId:a.accountId,actorId:me,postId:null,text:accountDisplayName(account(s,me))+'关注了你',seen:false,withdrawn:false});result={message:on?'已关注。':'已取消关注。'};break;}
   case 'social.bookmark':{needPost(s,a.postId);const on=toggle(list(s.social.bookmarks,me),a.postId);result={message:on?'已收藏微博。':'已取消收藏。'};break;}
   case 'social.like':{
    needPost(s,a.postId);const current=list(s.social.likes,me),before=current.includes(a.postId),value=toggle(current,a.postId);
    const pending=[...s.social.pending].reverse().find(x=>x.kind==='like'&&x.actorId===me&&x.postId===a.postId&&x.status==='queued');
    if(pending&&value===pending.previous){pending.status='cancelled';pending.cancelledAt=stamp(s);result={message:'已在送出前撤销，不会产生点赞通知。'};}
-   else{if(pending)pending.value=value;else s.social.pending.push({id:next(s,'like'),kind:'like',actorId:me,postId:a.postId,value,previous:before,status:'queued',createdAt:stamp(s)});result={message:value?'赞已记下，等待送出。':'取消已记下；若赞已送出，将再发送取消。'};}
+   else{if(pending)pending.value=value;else s.social.pending.push({id:nextRecordId(s,'like'),kind:'like',actorId:me,postId:a.postId,value,previous:before,status:'queued',createdAt:stamp(s)});result={message:value?'赞已记下，等待送出。':'取消已记下；若赞已送出，将再发送取消。'};}
    break;
   }
   case 'social.network.advance':{
@@ -118,7 +118,7 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
     else if(p.status==='sent'){
      p.status='accepted';const accepted=list(s.social.acceptedLikes,p.actorId),has=accepted.includes(p.postId);if(has!==p.value)toggle(accepted,p.postId);
      const post=s.social.posts.find(x=>x.id===p.postId);
-     if(p.value&&post&&post.authorId!==p.actorId){const n={id:next(s,'notice'),kind:'social.like',recipientId:post.authorId,actorId:p.actorId,postId:p.postId,text:`${accountDisplayName(account(s,p.actorId))}赞了你的微博`,seen:false,withdrawn:false};s.social.notifications.push(n);p.notificationId=n.id;}
+     if(p.value&&post&&post.authorId!==p.actorId){const n={id:nextRecordId(s,'notice'),kind:'social.like',recipientId:post.authorId,actorId:p.actorId,postId:p.postId,text:`${accountDisplayName(account(s,p.actorId))}赞了你的微博`,seen:false,withdrawn:false};s.social.notifications.push(n);p.notificationId=n.id;}
      if(!p.value)for(const n of s.social.notifications)if(n.kind==='social.like'&&n.actorId===p.actorId&&n.postId===p.postId)n.withdrawn=true;
      changed++;
     }else if(p.status==='accepted'&&p.value&&p.notificationId){const n=s.social.notifications.find(x=>x.id===p.notificationId);if(n)n.seen=true;p.status='notification-seen';changed++;}
@@ -132,7 +132,7 @@ export function reduceSocial(state,action,{acceptedSource=false}={}){
   case 'music.song.add':{const p=a.song;assert(p&&typeof p.id==='string'&&!s.media.songs.some(x=>x.id===p.id),'歌曲编号无效或已存在。');s.media.songs.push({id:p.id,ownerId:mediaOwner(s),visibility:p.visibility==='public'?'public':'private',title:text(p.title,100),artist:String(p.artist||'本地导入'),album:String(p.album||'我的音乐'),cover:'album',audioId:p.audioId?String(p.audioId):null,...(Number.isFinite(p.duration)&&p.duration>=0?{duration:p.duration}:{})});result={message:'已加入音乐库。',navigate:{app:'music',tab:'library',detail:p.id}};break;}
   case 'music.source.attach':{const song=needSong(s,a.songId);assert(typeof a.mediaId==='string'&&a.mediaId,'缺少已保存的音源编号。');song.audioId=a.mediaId;if(Number.isFinite(a.duration)&&a.duration>=0)song.duration=a.duration;else delete song.duration;result={message:'已关联导入音源。',navigate:{app:'music',tab:'library',detail:song.id}};break;}
   case 'music.favorite':{needSong(s,a.songId);const on=toggle(s.media.favoriteSongs,a.songId);result={message:on?'已加入喜欢的音乐。':'已移出喜欢的音乐。'};break;}
-  case 'music.playlist.create':{const p={id:next(s,'playlist'),name:text(a.name,40),songIds:[]};s.media.playlists.push(p);result={message:'歌单已创建。',navigate:{app:'music',tab:'playlists',detail:p.id}};break;}
+  case 'music.playlist.create':{const p={id:nextRecordId(s,'playlist'),name:text(a.name,40),songIds:[]};s.media.playlists.push(p);result={message:'歌单已创建。',navigate:{app:'music',tab:'playlists',detail:p.id}};break;}
   case 'music.playlist.add':{const p=s.media.playlists.find(x=>x.id===a.playlistId);assert(p,'歌单不存在。');needSong(s,a.songId);if(!p.songIds.includes(a.songId))p.songIds.push(a.songId);result={message:'已加入歌单。'};break;}
   case 'music.playlist.remove':{const p=s.media.playlists.find(x=>x.id===a.playlistId);assert(p,'歌单不存在。');p.songIds=p.songIds.filter(x=>x!==a.songId);result={message:'已从歌单移除。'};break;}
   case 'music.share':{const sharedSong=needSong(s,a.songId);result={message:'写一句分享吧。',navigate:{app:'weibo',tab:'compose',songId:a.songId,photoId:'',repostOf:'',detail:'',visibility:sharedSong.visibility==='private'?'private':'public'}};break;}

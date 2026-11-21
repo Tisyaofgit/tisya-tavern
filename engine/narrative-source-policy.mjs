@@ -1,4 +1,6 @@
 import {clone} from './common.mjs';
+import {occurrences} from './text-search.mjs';
+import {enabledNarrativePrompts} from './prompt-selection.mjs';
 
 // Native cards/books remain authoritative sources of story facts. Only an
 // explicit configuration line in their request projection can be shadowed by
@@ -31,10 +33,6 @@ export function narrativeSourceFragments(context,lore={}){
  return out;
 }
 
-function enabledPrompts(compiled){
- const order=compiled.order??compiled.prompt_order?.find(x=>x.character_id===100001)?.order??[],enabled=new Set(order.filter(x=>x.enabled).map(x=>x.identifier));
- return compiled.prompts.filter(p=>!p.marker&&p.enabled!==false&&enabled.has(p.identifier));
-}
 function explicitPersonProjection(text){
  const lines=text.match(/[^\r\n]*(?:\r\n|\n|\r|$)/g)??[],removed=[],quoteTags=[],quoteMarks=[],closers={'“':'”','「':'」','『':'』'};let fence=null,line=0;
  const projected=lines.map(raw=>{
@@ -51,11 +49,10 @@ function explicitPersonProjection(text){
  }).join('');
  return {text:projected,removed};
 }
-function occurrences(text,needle){const out=[];if(!needle)return out;let at=0;while((at=text.indexOf(needle,at))!==-1){out.push(at);at+=needle.length;}return out;}
 const overlaps=(a,b)=>a.start<b.end&&b.start<a.end;
 
 export function projectNarrativeSourceDefaults(messages,{compiled,sources=[],expand=s=>s}={}){
- const out=clone(messages),prompts=enabledPrompts(compiled),pref=prompts.find(p=>p.identifier==='tisya_pref_narrative');
+ const out=clone(messages),prompts=enabledNarrativePrompts(compiled),pref=prompts.find(p=>p.identifier==='tisya_pref_narrative');
  const selected=pref?.content?.match(/^@POV\.PERSON\s*(?::=|=)[^\r\n]*/gmu)??[];
  const audit={domain:'POV.PERSON',status:'unchanged',removed:[],unmatched:[],ambiguous:[]};
  if(selected.length!==1){audit.reason=selected.length?'ambiguous-preset-person':'person-setting-disabled';return {messages:out,audit};}

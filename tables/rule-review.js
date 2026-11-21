@@ -1,5 +1,5 @@
 import {check,copy} from './schema.js';
-import {digest} from './books.js';
+import {digest} from '../engine/common.mjs';
 import {cardAIMaterials,bookAIMaterials} from './card-source.js';
 
 export async function ruleSources(card,books=[]){
@@ -10,7 +10,7 @@ export async function ruleSources(card,books=[]){
  }
  for(const e of ai.entries)sources.push({id:'card'+e.path,label:e.name||String(e.id),kind:'definition',text:e.content});
  bound.forEach((e,i)=>{if(!e.runtimeSource)sources.push({id:'book.'+i,label:e.book+' / '+e.entry,kind:'definition',text:e.content});});
- return {fingerprint:await digest(JSON.stringify({ai,bound})),sources:sources.map(s=>({...s,lines:sourceLines(s.text).map(({text},i)=>({line:i+1,text}))})),runtimeSources:[...ai.runtimeSources,...bound.filter(e=>e.runtimeSource)]};
+ return {fingerprint:digest({ai,bound}),sources:sources.map(s=>({...s,lines:sourceLines(s.text).map(({text},i)=>({line:i+1,text}))})),runtimeSources:[...ai.runtimeSources,...bound.filter(e=>e.runtimeSource)]};
 }
 function sourceLines(value){
  const lines=[];let at=0;for(const part of value.split(/(\r\n|\r|\n)/)){if(/^(?:\r\n|\r|\n)$/.test(part)){at+=part.length;continue;}lines.push({text:part,start:at,end:at+part.length});at+=part.length;}return lines;

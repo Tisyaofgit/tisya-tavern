@@ -1,5 +1,8 @@
 import {LIFE_EXTENDED_WORLD_ACTIONS} from './phone-life/life-extended.mjs';
 import {SOCIAL_WORLD_ACTIONS} from './phone-life/social-rules.mjs';
+import {digest} from './engine/common.mjs';
+
+export const phonePromptSignature=messages=>digest(messages);
 // Phone transport is data inside one <extra>; it never executes model text.
 const TOP_KEYS = new Set(['requestId', 'acks', 'blocks', 'accounts', 'documents', 'markers', 'lifeUpdates']);
 const MARKER_KEYS = new Set(['id', 'thread', 'floor', 'itemId']);

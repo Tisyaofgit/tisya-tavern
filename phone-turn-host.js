@@ -1,7 +1,7 @@
 import {chatKey,ensureMessages,captureMessages} from './engine/controller.mjs';
 import {sha256} from './engine/common.mjs';
 import {normalizeEnvelope} from './engine/tags.mjs';
-import {extractPhonePayload,findPhoneMarkers} from './phone-protocol.mjs';
+import {extractPhonePayload,findPhoneMarkers,phonePromptSignature} from './phone-protocol.mjs';
 
 export const PHONE_TURN_KEY='缇斯亚手机本轮';
 export const PHONE_SOURCE_KEY='缇斯亚手机来源';
@@ -68,7 +68,7 @@ export function createPhoneTurnHost({getContext,persistMetadata,phoneService,isG
    const prepared=await svc.prepareTurn({chatKey:s.key,anchorUid:lastUser?.extra?.tisya_engine?.uid??null,type,...(replay?{replayRequestId:replay,expectedPromptSignature:replayBindings[0].promptSignature}:{})});run.request=prepared?copy(prepared):null;valid(run);
    if(!prepared||!prepared.messages?.length){active=null;return;}
    need(typeof prepared.requestId==='string'&&prepared.requestId&&Array.isArray(prepared.messages)&&prepared.messages.every(m=>['system','user','assistant'].includes(m.role)&&typeof m.content==='string'),'PHONE_TURN_INVALID','手机本轮提示词格式无效。');
-   run.request=copy(prepared);run.promptSignature=sha256(JSON.stringify(prepared.messages));
+   run.request=copy(prepared);run.promptSignature=phonePromptSignature(prepared.messages);
    run.prefix=captureMessages(c);run.latestUser=lastUser;run.latestUserText=lastUser?.mes;run.initialLength=c.chat.length;
    onChange();return copy(prepared);
   }catch(error){

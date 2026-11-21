@@ -1,9 +1,8 @@
-import {sha256} from './common.mjs';
+import {sha256,stable} from './common.mjs';
 import {BUILTIN_PACKAGE,builtinBookDefinitions} from './builtin-book-data.mjs';
 
 export const BUILTIN_BOOK_SETTINGS='tisya_builtin_books';
 const META='tisyaBuiltin',copy=value=>structuredClone(value),check=(ok,message)=>{if(!ok)throw Error(message);};
-const stable=value=>JSON.stringify(value,(_key,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
 const same=(a,b)=>stable(a)===stable(b),hash=value=>sha256(stable(value)),fields=['comment','content'];
 const nativeEntry=(row,uid,bookId)=>({uid,key:[],keysecondary:[],comment:row.name,content:row.content,constant:false,selective:true,selectiveLogic:0,order:100,position:1,disable:true,excludeRecursion:true,preventRecursion:true,probability:100,useProbability:true,depth:0,role:0,extensions:{[META]:{package:BUILTIN_PACKAGE,bookId,entryId:row.id,purpose:row.purpose,retired:false,base:{comment:row.name,content:row.content},release:hash(row),checkedRelease:hash(row)}}});
 const entryMeta=row=>row?.extensions?.[META];

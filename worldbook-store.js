@@ -1,6 +1,7 @@
 // Native lorebooks remain authoritative. The console edits an explicit draft.
+import {stable} from './engine/common.mjs';
+export {stable};
 const clone=v=>structuredClone(v);
-export const stable=v=>JSON.stringify(v,(_k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
 const equal=(a,b)=>stable(a)===stable(b);
 const PREFS='缇斯亚世界书';
 const filterKeys=['characterFilterNames','characterFilterTags','characterFilterExclude'];

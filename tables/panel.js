@@ -1,4 +1,5 @@
 import {mountHistoryBatch} from './history-batch-ui.js';
+import {downloadJson} from '../engine/browser-download.mjs';
 import {worldFrameworkEditor} from './world-framework-editor.js';
 import {conditionEditor} from './condition-editor.js';
 import {mountArchiveAtlas} from './atlas-ui.js';
@@ -39,7 +40,7 @@ export function mountTablePanel(document,container,{service,store,onIdentity,onA
  function button(parent,label,fn){const b=el('button',label);b.type='button';b.onclick=()=>run(async()=>{check(page!=='history'||draft?.kind!=='archive-review'||['确认保存这批草案','放弃这批草案','放弃当前未保存修改'].includes(label),'请先保存或放弃当前归档审核草案');check(draft?.kind!=='archive-restore'||['确认恢复此存档','取消恢复','放弃当前未保存修改'].includes(label),'请先确认或取消存档恢复');return fn();});parent.append(b);return b;}
  function section(title,parent=main){const g=el('fieldset');g.append(el('legend',title));parent.append(g);return g;}
  async function refresh(){const value=await service.inspect();assertActive();info=value;return info;}
- function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ function download(name,data){downloadJson(document,name,data);}
  function table(parent,headers,rows){const wrap=el('div'),t=el('table'),thead=el('thead'),head=el('tr'),body=el('tbody');wrap.className='tisya-table-wrap';if(headers.length>2)t.className='tisya-wide-table';for(const h of headers){const th=el('th',h);th.scope='col';head.append(th);}thead.append(head);t.append(thead,body);for(const row of rows){const tr=el('tr');for(const [index,value]of row.entries()){const td=el('td',typeof value==='string'?value:JSON.stringify(value));td.dataset.label=headers[index]??'';tr.append(td);}body.append(tr);}wrap.append(t);parent.append(wrap);return t;}
  async function setup(){if(beginPage('settings'))return;const snap=store.read(),settings=tableSettings(snap.world),g=section('启用与独立开关');
   for(const [key,label]of [['enabled','启用表单推进'],['archive','自动归档已确认历史'],['plot','正文前运行剧情推进 API'],['offstage','随归档时间自动演算场外事务'],['preferences','分析用户叙事偏好'],['objectsSeparate','新对象／事实使用独立建档 API']])field(g,label,settings[key],{type:'checkbox',change:v=>settings[key]=v});

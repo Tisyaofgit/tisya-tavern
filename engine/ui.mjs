@@ -8,15 +8,17 @@ import {renderingResources} from '../rendering-resources.js';
 import {Runtime} from './runtime.mjs';
 import {selectControl} from './form-controls.mjs';
 import {mountUnsavedPrompt} from '../settings-unsaved.js';
+import {downloadJson} from './browser-download.mjs';
+import {createDraftWorkflow} from './draft-workflow.mjs';
 
 const labels={reply:'回复外壳',task:'任务',anchor:'前后摘要',title:'标题',body:'正文',extra:'附加卡片',cells:'表单指令',vars:'原卡变量',archive:'归档',actions:'行动建议'};
 const tabs=[['preferences','游玩偏好'],['resources','多媒体资源'],['tags','回复格式'],['prompts','完整预设'],['tables','表单与存档'],['generation','生成设置']];
 
 export function mountMatrixConfiguration(document,root,{service,onError=()=>{},onClose=()=>{},onAppearance=()=>{},onIdentity=()=>{},onNative=()=>{},onStateChange=()=>{},initialTab='preferences',initialTable='T_PREF_OUTPUT_CONFIG',initialRecord=null}){
- let busy=false,navigating=false,dirty=false,formDirty=false,disposed=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
+ let dirty=false,formDirty=false,tab=tabs.some(([id])=>id===initialTab)?initialTab:'preferences';
  let config=service.config.read(),savedFingerprint=JSON.stringify(config),selectedTable=initialTable,selectedRecord=initialRecord??(initialTab==='tables'&&initialTable==='T_PREF_OUTPUT_CONFIG'?config.story.outputConfigId??'':''),catalog;
  let preferenceView=null,renderedTab=null;
- let formDraft=null,resourceDraft=null,preferenceDraft=null,pending=Promise.resolve(true),navigationPending=null,lastError=null;
+ let formDraft=null,resourceDraft=null,preferenceDraft=null,workflow;
  const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
  const content=el('div',null,'tisya-matrix-content'),footer=el('footer',null,'tisya-settings-actions'),status=el('p'),dialogs=el('div');
@@ -43,20 +45,14 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
  `;
  root.classList.add('tisya-matrix-config');root.replaceChildren(style,content,footer,dialogs);
  const hasChanges=()=>dirty||formDirty;
- const state=()=>({dirty:hasChanges(),configDirty:dirty,formDirty,busy:busy||prompt.state().busy,canSave:hasChanges()&&!busy,page:tab,reason:busy?'配置正在保存或读取':hasChanges()?'有未保存的修改':''});
+ const state=()=>({dirty:hasChanges(),configDirty:dirty,formDirty,busy:workflow.busy||prompt.state().busy,canSave:hasChanges()&&!workflow.busy,page:tab,reason:workflow.busy?'配置正在保存或读取':hasChanges()?'有未保存的修改':''});
  const prompt=mountUnsavedPrompt(document,dialogs,{onStateChange:()=>syncActions()});
- function syncActions(){if(disposed)return;cancel.disabled=saveButton.disabled=busy||prompt.state().open||!hasChanges();content.inert=busy||prompt.state().open;root.setAttribute('aria-busy',String(busy));onStateChange(state());}
- function report(error){if(disposed)return;lastError=error;status.setAttribute('role','alert');status.textContent=error?.message||String(error);onError(error);}
+ function syncActions(){if(workflow.disposed)return;cancel.disabled=saveButton.disabled=workflow.busy||prompt.state().open||!hasChanges();content.inert=workflow.busy||prompt.state().open;root.setAttribute('aria-busy',String(workflow.busy));onStateChange(state());}
+ function report(error){if(workflow.disposed)return;status.setAttribute('role','alert');status.textContent=error?.message||String(error);onError(error);}
  function changed(kind='config'){
   if(kind==='form')formDirty=!!formDraft&&Object.keys(formDraft.values).length>0;
   else dirty=JSON.stringify(config)!==savedFingerprint||!!resourceDraft?.isDirty()||!!preferenceDraft&&JSON.stringify(preferenceDraft.before)!==JSON.stringify(preferenceDraft.rows);
   status.setAttribute('role','status');status.textContent=hasChanges()?'有未保存修改':'';syncActions();
- }
- function run(fn){
-  if(busy||disposed)return Promise.resolve(false);
-  busy=true;lastError=null;status.setAttribute('role','status');syncActions();
-  pending=(async()=>{try{return await fn()!==false;}catch(error){report(error);return false;}finally{busy=false;if(!disposed)syncActions();}})();
-  return pending;
  }
  const button=(text,fn)=>{const b=el('button',text,'menu_button');b.type='button';b.onclick=()=>run(fn);return b;};
  const routeButton=(text,fn,external=false)=>{const b=el('button',text,'menu_button');b.type='button';b.onclick=()=>route(fn,{external});return b;};
@@ -65,10 +61,10 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   const control=el(options?'select':multi?'textarea':'input');control.className='text_pole';control.style.cssText='max-width:100%;min-width:0;box-sizing:border-box';
   if(options){control.append(option('未填写',''));for(const value of options)control.append(option(String(value),String(value)));}else if(!multi)control.type=type;
   control.value=value??'';if(multi)control.rows=rows;control.disabled=readOnly;
-  control.oninput=()=>{if(busy||disposed||readOnly)return;try{change(control.value);changed(track);}catch(error){report(error);}};
+  control.oninput=()=>{if(workflow.busy||workflow.disposed||readOnly)return;try{change(control.value);changed(track);}catch(error){report(error);}};
   return control;
  };
- const download=(name,data)=>{const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=el('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ const download=(name,data)=>downloadJson(document,name,data);
  function validateConfig(next){
   if(next.revision!==service.config.read().revision)throw Error('配置已被其他页面更新，当前修改仍保留；请取消修改后重新读取。');
   validateTags(next.tags);validatePreferences(next.playDefaults);validatePreferences(next.story?.play);validatePreferences(effectivePreferences(next));renderingResources(next.resources??[]);
@@ -103,39 +99,25 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
    if(dirty){config=await service.config.save(next);savedFingerprint=JSON.stringify(config);dirty=false;resourceDraft?.dispose?.();resourceDraft=null;preferenceDraft=null;}
   }catch(error){
    // One store may have completed. Do not retry its write or clear the other draft.
-   if(savedForm&&!disposed){throw new Error('表单记录已保存，配置保存未完成：'+error.message,{cause:error});}
+   if(savedForm&&!workflow.disposed){throw new Error('表单记录已保存，配置保存未完成：'+error.message,{cause:error});}
    throw error;
   }
-  if(!disposed){await render();status.setAttribute('role','status');status.textContent='已保存，本页修改下次使用时生效。';}
+  if(!workflow.disposed){await render();status.setAttribute('role','status');status.textContent='已保存，本页修改下次使用时生效。';}
   return true;
  }
  async function discard(){
   const saved=service.config.read();config=saved;savedFingerprint=JSON.stringify(saved);dirty=false;formDirty=false;formDraft=null;resourceDraft?.dispose?.();resourceDraft=null;preferenceDraft=null;
   await render();status.setAttribute('role','status');status.textContent='已取消修改，恢复到上次保存的内容。';return true;
  }
- const saveDraft=()=>run(save),discardDraft=()=>run(discard);
- async function confirmLeave(){
-  if(disposed||busy&&!navigating)return false;
-  if(navigating)return true;
-  if(navigationPending)return false;
-  if(!hasChanges())return !prompt.state().open;
-  return prompt.request({
-   save:async()=>{if(!await saveDraft())throw lastError??Error('保存未完成，修改仍保留。');return !hasChanges();},
-   discard:async()=>{if(!await discardDraft())throw lastError??Error('取消修改未完成。');return !hasChanges();}
-  });
- }
- function route(fn,{external=false}={}){
-  if(busy||disposed||navigationPending)return Promise.resolve(false);
-  navigationPending=(async()=>{
-   if(!await confirmLeave()||disposed)return false;
-   navigating=external;try{await fn();return true;}catch(error){report(error);return false;}finally{navigating=false;}
-  })();
-  return navigationPending.finally(()=>{navigationPending=null;});
- }
+ workflow=createDraftWorkflow({
+  prompt,hasChanges,save,discard,onSync:syncActions,onReport:report,
+  onRunStart:()=>{status.setAttribute('role','status');}
+ });
+ const {run,route,confirmLeave,saveDraft,discardDraft}=workflow;
  cancel.onclick=discardDraft;saveButton.onclick=saveDraft;
  async function render(){
-  if(disposed)return;
-   if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
+  if(workflow.disposed)return;
+   if(tab==='preferences'&&!preferenceDraft&&service.preferenceEditorSource){const data=await service.preferenceEditorSource();if(workflow.disposed)return;const rows=preferenceTextRows(data.database?.state);preferenceDraft={...data,rows,before:structuredClone(rows),globalBefore:structuredClone(config.playDefaults?.textOverrides??{})};}
   const keepPosition=renderedTab===tab,scrollTop=keepPosition?content.scrollTop:0,preferenceState=keepPosition?preferenceView?.state():undefined;renderedTab=tab;preferenceView=null;
   content.replaceChildren(el('h3','缇斯亚 · 配置'));resourceDraft?.dispose?.();resourceDraft=null;formDraft=null;
   const nav=el('div',null,'tisya-directory-buttons');
@@ -162,7 +144,7 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   syncActions();
  }
  async function renderTables(body){
-  catalog??=await service.catalog();const bundle=await service.export();if(disposed)return;
+  catalog??=await service.catalog();const bundle=await service.export();if(workflow.disposed)return;
   const tools=el('div',null,'tisya-directory-buttons');
   const requireSaved=()=>{if(hasChanges())throw Error('请先使用底部按钮保存或取消本页修改。');};
   if(bundle){
@@ -198,9 +180,9 @@ export function mountMatrixConfiguration(document,root,{service,onError=()=>{},o
   if(warnings.length){const details=el('details');details.append(el('summary','回合提示与失败记录（'+warnings.length+'）'));for(const warning of warnings)details.append(el('pre',JSON.stringify(warning,null,2)));body.append(details);}
  }
  const ready=run(render);
- return {root,ready,state,saveDraft,discardDraft,confirmLeave,settled:()=>Promise.all([pending,...(navigationPending?[navigationPending]:[])]),
+ return {root,ready,state,saveDraft,discardDraft,confirmLeave,settled:()=>workflow.settled(),
   refresh:()=>run(async()=>{if(hasChanges()){status.textContent='当前修改已保留；保存前会核对最新版本。';return false;}config=service.config.read();savedFingerprint=JSON.stringify(config);await render();}),
-  requestLeave:()=>{const allowed=navigating||!busy&&!hasChanges()&&!prompt.state().open;return {allowed,dirty:hasChanges(),reason:allowed?'':busy?'配置正在保存或读取':'有未保存的修改'};},
-  dispose(){disposed=true;prompt.dispose();if(hostPage&&!hadHostClass)hostPage.classList.remove('tisya-matrix-page');root.inert=false;root.replaceChildren();}
+  requestLeave:()=>{const allowed=workflow.navigating||!workflow.busy&&!hasChanges()&&!prompt.state().open;return {allowed,dirty:hasChanges(),reason:allowed?'':workflow.busy?'配置正在保存或读取':'有未保存的修改'};},
+  dispose(){workflow.dispose();if(hostPage&&!hadHostClass)hostPage.classList.remove('tisya-matrix-page');root.inert=false;root.replaceChildren();}
  };
 }

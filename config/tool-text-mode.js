@@ -2,6 +2,7 @@
 // No executor, provider request, retry or history mutation lives here.
 import {prepareAntiTruncation,CONTINUATION_INSTRUCTION} from '../vendor/vertex-transport/anti-truncation.mjs';
 import {createSseParser} from '../vendor/vertex-transport/wire.mjs';
+import {stable} from '../engine/common.mjs';
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const fail=(code,message)=>{throw Object.assign(new Error(message),{code:'TISYA_TRANSPORT_'+code});};
 
@@ -52,12 +53,11 @@ export function verifyBufferedToolMirrors(value,plan){
  const native=parts.filter(p=>p?.functionCall).map(p=>p.functionCall);
  classifyToolTurn(native.map(f=>f.name),plan);
  const projected=value.choices?.[0]?.message?.tool_calls??[];
- const stable=v=>Array.isArray(v)?v.map(stable):object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
  if(native.length!==projected.length)fail('WRAP_MIRROR','宿主工具与检查工具数量不一致，回复未交给宿主执行');
  for(let i=0;i<native.length;i++){
   const n=native[i],p=projected[i];let args;
   try{args=JSON.parse(p.function.arguments);}catch{fail('WRAP_MIRROR','工具参数无法核对');}
-  if(!object(n.args)||n.partialArgs||n.willContinue||n.name!==p.function.name||n.id&&p.id&&n.id!==p.id||JSON.stringify(stable(n.args))!==JSON.stringify(stable(args)))fail('WRAP_MIRROR','宿主工具与检查工具内容不一致，回复未交给宿主执行');
+  if(!object(n.args)||n.partialArgs||n.willContinue||n.name!==p.function.name||n.id&&p.id&&n.id!==p.id||stable(n.args)!==stable(args))fail('WRAP_MIRROR','宿主工具与检查工具内容不一致，回复未交给宿主执行');
  }
 }
 

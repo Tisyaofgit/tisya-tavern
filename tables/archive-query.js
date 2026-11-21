@@ -1,10 +1,10 @@
 import {projectArchiveAccess} from './archive-access.js';
 import {copy,object,typeFields,valueValid,sameDefinition,validateRow} from './schema.js';
+import {stable} from '../engine/common.mjs';
 
 const MISSING=Symbol('missing'),DENIED=new Set(['__proto__','prototype','constructor']);
 export class ArchiveQueryError extends Error{constructor(code,message){super(message);this.name='ArchiveQueryError';this.code=code;}}
 const requireQuery=(condition,code,message)=>{if(!condition)throw new ArchiveQueryError(code,message);};
-const stable=value=>JSON.stringify(value,(_,v)=>object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const pathKey=path=>JSON.stringify(path);
 export function archiveFieldPath(value,{allowSelf=false}={}){
  const path=Array.isArray(value)?copy(value):typeof value==='string'?value.split('.'):null;

@@ -1,8 +1,8 @@
 import {LIFE_EXTENDED_WORLD_ACTIONS} from './phone-life/life-extended.mjs';
 import {SOCIAL_WORLD_ACTIONS} from './phone-life/social-rules.mjs';
 import {createSuite,applyEnvelope,getDoc,getVisibleDocuments,exportSuite,importSuite,projectSuiteAt,forkSuiteAt} from './social-suite-core.mjs';
-import {extractPhonePayload} from './phone-protocol.mjs';
-import {digest as databaseDigest,sha256} from './engine/common.mjs';
+import {extractPhonePayload,phonePromptSignature} from './phone-protocol.mjs';
+import {digest as databaseDigest} from './engine/common.mjs';
 import {createInitialPhoneLife,validatePhoneLife} from './phone-life-config.mjs';
 import {reduce as reduceLifeCore} from './phone-life/core.mjs';
 import {reduceSocial as reduceLifeSocial} from './phone-life/social.mjs';
@@ -518,7 +518,7 @@ export function createPhoneService({seed,storage,contextKey,onChange=()=>{},now=
     cancelAction(actionId){return enqueue(async()=>{assert();assertEditable(state);const next=clone(state),a=next.actions.find(x=>x.id===actionId);if(!a||!['queued','failed'].includes(a.status))fail('PHONE_CANCEL','只能撤回尚未随剧情发送的操作');a.status='cancelled';delete a.error;await commit(next);});},
     retryAction(actionId){return enqueue(async()=>{assert();const next=clone(state),a=next.actions.find(x=>x.id===actionId);if(!a||!['failed'].includes(a.status))fail('PHONE_RETRY','该操作当前不能重试');a.status='queued';delete a.error;await commit(next);});},
     readNotification(notificationId){return enqueue(async()=>{assert();const next=clone(state),n=next.notifications.find(x=>x.id===notificationId);if(!n)fail('PHONE_NOTIFICATION','通知不存在');n.read=true;await commit(next);});},
-    prepareTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);const result=preparePhoneTurn(state,{...options,requestId:options.requestId??idFactory(),at:now()});if(options.expectedPromptSignature!==undefined&&sha256(JSON.stringify(result.messages))!==options.expectedPromptSignature)fail('PHONE_SOURCE_OWNERSHIP','原手机请求与用户回合的冻结提示词不一致，未重放');if(result.changed)await commit(result.state,'turn-prepare');return {requestId:result.requestId,messages:result.messages};});},
+    prepareTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);const result=preparePhoneTurn(state,{...options,requestId:options.requestId??idFactory(),at:now()});if(options.expectedPromptSignature!==undefined&&phonePromptSignature(result.messages)!==options.expectedPromptSignature)fail('PHONE_SOURCE_OWNERSHIP','原手机请求与用户回合的冻结提示词不一致，未重放');if(result.changed)await commit(result.state,'turn-prepare');return {requestId:result.requestId,messages:result.messages};});},
     acceptTurn(options){return enqueue(async()=>{assert();scoped(state,options.chatKey);let r;try{r=acceptPhoneTurn(state,{...options,at:now()});}catch(error){error.phoneReplyInvalid=true;throw error;}await commit(r.state,'turn-accept');return {snapshot:r.snapshot,receipt:r.receipt};});},
     failTurn({requestId,error}){return enqueue(async()=>{assert();const next=clone(state),r=next.requests[requestId];if(!r)return;const reason=typeof error==='string'?error:error?.message??'本轮生成未完成';r.status='failed';r.error=reason;for(const a of next.actions)if(r.actionIds.includes(a.id)&&a.status==='sent'){a.status='failed';a.error=reason;}await commit(next,'turn-fail');});},
     rejectSource({sourceId,uid,candidate,requestId,error,raw}){return enqueue(async()=>{assert();id(sourceId);id(uid);id(candidate);if(sourceId!==`${uid}:${candidate}`||!own(state.requests,requestId)||own(state.frames,sourceId))fail('PHONE_REJECTION_SCOPE','不能将已接纳或无归属的手机来源记作失败');const next=clone(state);next.rejectedSources??={};next.rejectedSources[sourceId]={sourceId,uid,candidate,requestId,...(typeof raw==='string'?{raw}:{}),error:{code:error?.code??'PHONE_REPLY_REJECTED',message:String(error?.message??error)},at:now()};await commit(next,'turn-reject');});},

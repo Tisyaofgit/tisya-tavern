@@ -1,4 +1,5 @@
 import {safeDiagnostic} from '../config/stream-response.js';
+import {downloadText} from '../engine/browser-download.mjs';
 const scrub=value=>typeof value==='string'?safeDiagnostic(value):Array.isArray(value)?value.map(scrub):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,scrub(v)])):value;
 export function runDiagnostic(s){return scrub({title:'缇斯亚私人运行记录',privacy:'private-content',at:new Date().toISOString(),busy:s.busy,stage:s.progress?.stage,characters:s.progress?.characters,response:s.progress?{...(s.progress.responseDiagnostic??{}),text:s.progress.text??'',accepted:false,note:'仅为收到的输出；任务完成不等于档案保存成功，以保存回执为准。'}:null,jobs:s.jobs??[]});}
 export function mountRunView(document,parent,{service,onMinimize=()=>{}}){
@@ -9,7 +10,7 @@ export function mountRunView(document,parent,{service,onMinimize=()=>{}}){
  const track=el('div'),stageLabels=el('div');track.className='tisya-stage-track';track.setAttribute('role','progressbar');track.setAttribute('aria-label','任务阶段（不是模型完成百分比）');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','5');stageLabels.className='tisya-stage-labels';
  for(const name of ['准备材料','完整请求','生成档案','核对格式','审阅保存']){track.append(el('span'));stageLabels.append(el('span',name));}root.append(track,stageLabels,actions);
  const output=el('details'),preview=el('pre'),outputHeading=el('summary','查看正在生成的内容（尚未保存）');output.append(outputHeading,preview);root.append(output);
- const logs=el('details'),heading=el('summary','运行记录与报错'),list=el('pre'),copy=el('button','复制私人运行记录'),manual=el('textarea'),privacy=el('small','此区域含创作正文与任务详情，分享前请检查；默认脱敏报告请使用设置中的“完整检查”。');copy.type='button';manual.readOnly=true;manual.hidden=true;manual.setAttribute('aria-label','可手动复制的私人运行记录');logs.append(heading,privacy,list,copy,manual);root.append(logs);parent.append(root);const save=el('button','导出私人运行诊断');save.type='button';logs.append(save);save.onclick=()=>{const url=URL.createObjectURL(new Blob([text()],{type:'application/json'})),link=el('a');link.href=url;link.download='缇斯亚-私人运行诊断.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ const logs=el('details'),heading=el('summary','运行记录与报错'),list=el('pre'),copy=el('button','复制私人运行记录'),manual=el('textarea'),privacy=el('small','此区域含创作正文与任务详情，分享前请检查；默认脱敏报告请使用设置中的“完整检查”。');copy.type='button';manual.readOnly=true;manual.hidden=true;manual.setAttribute('aria-label','可手动复制的私人运行记录');logs.append(heading,privacy,list,copy,manual);root.append(logs);parent.append(root);const save=el('button','导出私人运行诊断');save.type='button';logs.append(save);save.onclick=()=>downloadText(document,text(),'缇斯亚-私人运行诊断.json','application/json');
  let lastError='',lastSignature='',lastOutput='',lastBusy=false;
  stop.onclick=()=>{service.clear({reason:'你已停止当前任务；已保存的表单保留，未完成的输出不会入档'});tick();};minimize.onclick=onMinimize;
  const text=()=>JSON.stringify(runDiagnostic(service.state()),null,2);

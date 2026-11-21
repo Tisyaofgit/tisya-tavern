@@ -1,5 +1,5 @@
 import {WorldClock} from './engine/math.mjs';
-import {sha256} from './engine/common.mjs';
+import {sha256,stable} from './engine/common.mjs';
 import {validateState,refreshState} from './phone-life/core.mjs';
 import {validateSocialState} from './phone-life/social.mjs';
 
@@ -9,7 +9,6 @@ export const PHONE_CHARACTER_FORMAT='tisya.phone-character/1';
 export const PHONE_APP_LABELS=Object.freeze({weibo:'微博',wallet:'钱包',shop:'商城',food:'外卖',album:'相册',music:'音乐',map:'地图',calendar:'日历'});
 const APPS=Object.keys(PHONE_APP_LABELS),BAD=new Set(['__proto__','prototype','constructor']);
 const own=(o,k)=>Object.hasOwn(o??{},k),plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x),clone=x=>structuredClone(x);
-const stable=x=>Array.isArray(x)?'['+x.map(stable).join(',')+']':plain(x)?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stable(x[k])).join(',')+'}':JSON.stringify(x);
 const digest=x=>sha256(stable(x));
 function need(ok,message,code='PHONE_LIFE_CONFIG'){if(!ok)throw Object.assign(new Error(message),{code});}
 function safe(x,seen=new Set()){if(!x||typeof x!=='object')return;need(!seen.has(x),'配置不能循环引用。');seen.add(x);need(!Object.getOwnPropertySymbols(x).length,'配置不能包含符号字段。');for(const [k,d] of Object.entries(Object.getOwnPropertyDescriptors(x))){need(!BAD.has(k)&&!d.get&&!d.set&&k!=='toJSON','配置只接受安全 JSON 数据。');safe(d.value,seen);}seen.delete(x);}

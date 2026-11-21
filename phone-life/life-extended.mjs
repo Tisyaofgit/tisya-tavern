@@ -1,5 +1,4 @@
-import {sha256} from '../engine/common.mjs';
-const stable=v=>Array.isArray(v)?`[${v.map(stable)}]`:v&&typeof v==='object'?`{${Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>`${JSON.stringify(k)}:${stable(v[k])}`)}}`:JSON.stringify(v);
+import {sha256,stable} from '../engine/common.mjs';
 const need=(x,m)=>{if(!x)throw new Error(m);};
 const int=(x,label,min=0)=>{const n=typeof x==='string'&&/^\d+$/.test(x)?Number(x):x;need(Number.isSafeInteger(n)&&n>=min,`${label}须是${min?'正':'非负'}整数。`);return n;};
 const by=(rows,id,label)=>{const row=(rows??[]).find(x=>x.id===id);need(row,`${label}不存在。`);return row;};

@@ -1,4 +1,5 @@
 import {createNativeSourcePlacement} from './native-source-placement.mjs';
+import {occurrences} from './text-search.mjs';
 // Request-only source framing for the verified TauriTavern PromptManager path.
 // Source text and activation stay with the host. Owned sources are optionally
 // relocated into the dream material region after native assembly; this adapter never reads a card again to expand its macros.
@@ -62,12 +63,6 @@ function extensionKind(key) {
  if (key.startsWith('customDepthWI_')) return '世界书深度资料';
  if (key.startsWith('customWIOutlet_')) return '世界书出口资料';
  return null;
-}
-function occurrences(text, part) {
- const indices = [];
- if (!part) return indices;
- for (let at = 0; (at = text.indexOf(part, at)) !== -1; at += part.length) indices.push(at);
- return indices;
 }
 function freshBoundary() {
  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();

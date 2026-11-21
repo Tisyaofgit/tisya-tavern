@@ -1,17 +1,12 @@
 import {clone,fail} from './common.mjs';
 import {compilePromptLayerPlan,LAYER_AUTHORITY_IDENTIFIER} from './prompt-layers.mjs';
+import {occurrences} from './text-search.mjs';
 
 export function wrapRequestLayer(text,layer){
  if(!['rule','tisya'].includes(layer))fail('REQUEST_LAYER','请求配置层级无效',{layer});
  const encoded=new RegExp('<\\/?'+layer+'\\b','i').test(text);
  const body=encoded?JSON.stringify(text).replaceAll('<','\\u003c'):text;
  return '<'+layer+(encoded?' encoding="json"':'')+'>\n'+body+'\n</'+layer+'>';
-}
-
-function occurrences(text,needle){
- const found=[];if(!needle)return found;
- for(let at=0;(at=text.indexOf(needle,at))!==-1;at+=needle.length)found.push(at);
- return found;
 }
 
 // Shared by preset replacement and final projection. History is recognized

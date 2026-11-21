@@ -1,4 +1,5 @@
 import {readCreationTemplates,creationTemplateText} from '../engine/template-book.mjs';
+import {enabledPresetPrompts} from '../engine/prompt-selection.mjs';
 import {selectedHeartDirections} from '../heart-contract.js';
 import {isOnePassPreset} from '../onepass/preset.mjs';
 import {resolveOnePassSource,applyOnePassSource,applyOnePassSelectedMaterials,assertOnePassInjection} from '../onepass/injection.mjs';
@@ -201,7 +202,7 @@ export function createHost({getContext,getAPI=()=>globalThis.__TAURITAVERN__?.ap
 }
 export function buildMessages({source,context:c,world:w,materials,slots={},substitute,nativeMessages=[],type='normal',options={},preparedHistory=new Map()}){w=continuityWorld(w);const suppliedSubstitute=substitute;substitute=s=>suppliedSubstitute(withoutRawMacros(s,w));const out=[],card=c.characters?.[c.characterId],body=card?.data??card??{},markers={charDescription:w.context.card?body.description:'',charPersonality:w.context.card?body.personality:'',scenario:w.context.card?body.scenario:'',personaDescription:w.context.persona&&!w.controller?c.powerUserSettings?.persona_description:'',worldInfoBefore:'',worldInfoAfter:'',dialogueExamples:w.context.card?body.mes_example:''};
  let historyInserted=false;const usedSlots=new Set();
- for(const p of enabledPrompts(source)){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
+ for(const p of enabledPresetPrompts(source)){if(p.injection_position===1)fail('配套选中项预设暂不接入原生深度注入；请将所选区块放在提示词顺序中');
   if(p.identifier==='chatHistory'){
    if(historyInserted)fail('聊天历史槽重复，请在预设中只保留一个已启用的 chatHistory');historyInserted=true;
    const chat=selectedHistory(c,w,type);for(const [i,m]of chat.entries()){
@@ -215,8 +216,6 @@ export function buildMessages({source,context:c,world:w,materials,slots={},subst
 
 function withoutRawMacros(text,world){return isTableContinuity(world)?String(text).replace(/\{\{\s*(?:description|charDescription|personality|charPersonality|scenario|persona|personaDescription|mesExamples|exampleDialogue|wiBefore|wiAfter|history|lastMessage|lastCharMessage|lastUserMessage)\s*\}\}/gi,''):text;}
 function substituteContext(text,context,world){return context.substituteParams(withoutRawMacros(text,world));}
-
-function enabledPrompts(source){const order=source.order??source.prompt_order?.find(r=>r.character_id===100001)?.order??source.prompt_order?.[0]?.order;return order?order.filter(r=>r.enabled).map(r=>source.prompts?.find(p=>p.identifier===r.identifier)).filter(p=>p&&p.enabled!==false):(source.prompts??[]).filter(p=>p.enabled!==false);}
 
 export function blockPayload(payload,error){Object.defineProperty(payload,'toJSON',{configurable:true,value(){throw error;}});}
 export function sealPayload(payload){const expected=JSON.stringify(Object.fromEntries(Object.entries(payload)));Object.defineProperty(payload,'toJSON',{configurable:true,value(){const data=Object.fromEntries(Object.entries(this));if(JSON.stringify(data)!==expected)throw Error('其他扩展改变了已核验的请求，请先将其内容登记为所选资源');return data;}});}

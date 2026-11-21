@@ -1,5 +1,6 @@
 // Pure life-domain rules. All world facts and initial values are supplied explicitly.
-import {sha256} from '../engine/common.mjs';
+import {sha256,stable} from '../engine/common.mjs';
+import {nextRecordId} from './record-id.mjs';
 import {WorldClock} from '../engine/math.mjs';
 import {performLifeExtension,refreshExtended,validateLifeExtensions,pendingMoney,quoteCommerce} from './life-extended.mjs';
 export {quoteCommerce} from './life-extended.mjs';
@@ -14,18 +15,12 @@ function integer(value, label, min = 0, max = Number.MAX_SAFE_INTEGER) {
   return n;
 }
 function amount(value) { return integer(value, '金额（分）', 1, 100000000); }
-function stable(value) {
-  if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
-  if (value && typeof value === 'object') return `{${Object.keys(value).filter(k => value[k] !== undefined).sort().map(k => `${JSON.stringify(k)}:${stable(value[k])}`).join(',')}}`;
-  return JSON.stringify(value);
-}
-function nextId(s,prefix){const used=new Set();const walk=x=>{if(!x||typeof x!=='object')return;if(typeof x.id==='string')used.add(x.id);for(const v of Object.values(x))walk(v);};walk(s);let value;do{value=`${prefix}-${++s.seq}`;}while(used.has(value));return value;}
 function byId(rows, id, label) { const found = rows.find(x => x.id === id); need(found, `${label}不存在。`, 'NOT_FOUND'); return found; }
 function account(s, id) { return byId(s.wallet.accounts, id, '账户'); }
 function debit(s, id, n) { const row = account(s, id),label=row.name||row.id; need(Number.isSafeInteger(row.balance), `${label}余额未配置。`, 'UNCONFIGURED_BALANCE'); need(row.balance >= n, `${label}余额不足；不会自动借款或透支。`, 'INSUFFICIENT_FUNDS'); row.balance -= n; }
 function credit(s, id, n) { const row=account(s,id); need(Number.isSafeInteger(row.balance), `${row.name||row.id}余额未配置。`, 'UNCONFIGURED_BALANCE'); row.balance += n; }
 function record(s, type, description, n, accountId = '', extra = {}) {
-  s.wallet.ledger.unshift({ id: nextId(s, 'ledger'), at: !!s.config?.calendar?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
+  s.wallet.ledger.unshift({ id: nextRecordId(s, 'ledger'), at: !!s.config?.calendar?s.clock.totalMinutes:null, type, description, amount: n, accountId, ...extra });
 }
 function epoch(s){need(s.config?.calendar,'世界故事时间尚未在表单配置。','UNCONFIGURED_CLOCK');return 0;}
 function owner(s) { need(typeof s.identity?.personId==='string'&&s.identity.personId,'当前人物身份未配置。','UNCONFIGURED_IDENTITY'); return s.identity.personId; }
@@ -40,7 +35,7 @@ function cardDates(s) {
   const current=formClock(s);need(current,'世界历法尚未配置。','UNCONFIGURED_CLOCK');let year=current.c.year,period=current.c.mode==='SEASON_FIXED'?current.c.season:current.c.month;const next=()=>{period++;if(period>current.lengths(year).length){period=1;year++;}};
   const end=dayMinutes(s)-1;let statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);if(statementAt<s.clock.totalMinutes){next();statementAt=atMinute(s,year,period,s.wallet.card.billDay,end);}if(s.wallet.card.dueDay<=s.wallet.card.billDay)next();return {statementAt,dueAt:atMinute(s,year,period,s.wallet.card.dueDay,end)};
 }
-const extensionHelpers={nextId,defaultAccount,amount,epoch,debit,credit,record};
+const extensionHelpers={nextId:nextRecordId,defaultAccount,amount,epoch,debit,credit,record};
 function refresh(s) {
   if(s.config?.calendar){const current=formClock(s),c=current.c;Object.assign(s.clock,{year:c.year,month:c.month??c.season,day:c.day,minute:c.hour*c.hour_minutes+c.minute,...(c.mode==='SEASON_FIXED'?{season:c.season}:{})});}
   const c = s.wallet.card; c.used = c.charges.reduce((sum, x) => sum + x.remaining, 0);
@@ -57,7 +52,7 @@ function refresh(s) {
   for (const event of s.calendar.events) {
     if (['personal', 'confirmed'].includes(event.status) && !!s.config?.calendar && Number.isSafeInteger(event.at) && event.at <= s.clock.totalMinutes && !event.notified) {
       event.notified = true;
-      s.audit.push({ id: nextId(s, 'reminder'), at: s.clock.totalMinutes, type: 'calendar.due', message: `故事日程已到时间：${event.title}` });
+      s.audit.push({ id: nextRecordId(s, 'reminder'), at: s.clock.totalMinutes, type: 'calendar.due', message: `故事日程已到时间：${event.title}` });
     }
   }
 }
@@ -106,7 +101,7 @@ function pay(s, order, payment, accountId) {
     const c = s.wallet.card; need(c.enabled!==false&&Number.isSafeInteger(c.limit),'信用账户未配置。','UNCONFIGURED_CREDIT'); const prepaid = Math.min(c.refundBalance, order.total); const debt = order.total - prepaid;
     need(c.used + debt <= c.limit, '信用卡可用额度不足；不会自动提高额度。', 'CREDIT_LIMIT');
     c.refundBalance -= prepaid;
-    const charge = { id: nextId(s, 'charge'), orderId: order.id, amount: order.total, originalDebt: debt, remaining: debt, paid: 0, refunded: 0, prepaid, createdAt: s.clock.totalMinutes, ...cardDates(s) };
+    const charge = { id: nextRecordId(s, 'charge'), orderId: order.id, amount: order.total, originalDebt: debt, remaining: debt, paid: 0, refunded: 0, prepaid, createdAt: s.clock.totalMinutes, ...cardDates(s) };
     c.charges.push(charge); c.used += debt; order.creditChargeId = charge.id;
     record(s, 'credit.purchase', '信用卡消费（不是现金到账）', -order.total, 'credit', { orderId: order.id });
   }
@@ -135,7 +130,7 @@ function refund(s, order, status, partial=null) {
 
 function fulfillDigital(s,order){
   const digital=order.items.filter(x=>x.fulfillment==='digital'||x.kind==='digital');
-  for(const item of digital){s.commerce.entitlements??=[];s.commerce.entitlements.push({id:nextId(s,'entitlement'),orderId:order.id,productId:item.productId,orderLineId:item.id,ownerId:order.recipientId,kind:item.entitlement?.kind??'content',resourceId:item.entitlement?.resourceId??item.productId,status:'active',used:0,createdAt:s.clock.totalMinutes,expiresAt:item.entitlement?.durationMinutes==null?null:s.clock.totalMinutes+integer(item.entitlement.durationMinutes,'权益有效分钟',1)});}
+  for(const item of digital){s.commerce.entitlements??=[];s.commerce.entitlements.push({id:nextRecordId(s,'entitlement'),orderId:order.id,productId:item.productId,orderLineId:item.id,ownerId:order.recipientId,kind:item.entitlement?.kind??'content',resourceId:item.entitlement?.resourceId??item.productId,status:'active',used:0,createdAt:s.clock.totalMinutes,expiresAt:item.entitlement?.durationMinutes==null?null:s.clock.totalMinutes+integer(item.entitlement.durationMinutes,'权益有效分钟',1)});}
   if(digital.length===order.items.length)order.status='completed';return digital;
 }
 
@@ -162,7 +157,7 @@ function perform(s, a,options={}) {
     case 'wallet.loan.borrow': {
       const quote = quoteLoan(a.amount, a.months, s); need(a.quoteId === quote.quoteId, '请先查看并确认本次贷款报价。', 'QUOTE_REQUIRED');
       epoch(s); const to = fundingAccount(s,a.accountId); account(s, to);
-      const loan = { ...quote, id: nextId(s, 'loan'), remainingPrincipal: quote.amount, paid: 0, status: 'active', createdAt: s.clock.totalMinutes, accountId: to, installments: quote.installments.map(x => ({ ...x, paid: 0, dueAt: s.clock.totalMinutes + x.number * quote.periodDays * dayMinutes(s) })) };
+      const loan = { ...quote, id: nextRecordId(s, 'loan'), remainingPrincipal: quote.amount, paid: 0, status: 'active', createdAt: s.clock.totalMinutes, accountId: to, installments: quote.installments.map(x => ({ ...x, paid: 0, dueAt: s.clock.totalMinutes + x.number * quote.periodDays * dayMinutes(s) })) };
       s.wallet.loans.push(loan); credit(s, to, loan.amount); record(s, 'loan.disburse', '贷款放款（同时产生负债）', loan.amount, to, { loanId: loan.id });
       return { message: `已按已确认报价放款 ${money(loan.amount)} ${s.config.currency?.name||''}，共${loan.months}期，总还款 ${money(loan.totalPayable)} ${s.config.currency?.name||''}。`, loanId: loan.id };
     }
@@ -183,7 +178,7 @@ function perform(s, a,options={}) {
     }
     case 'wallet.invest.buy': {
       epoch(s); const product = byId(s.wallet.investmentProducts, a.productId, '理财产品'); const n = amount(a.amount), from = fundingAccount(s,a.accountId); debit(s, from, n);
-      need(n>=(product.minAmount??1)&&n<=(product.maxAmount??100000000),'申购金额超出产品约定范围。'); const investment = { id: nextId(s, 'invest'), productId: product.id, productSnapshot:clone(product), accountId:from, maturityAt:product.termMinutes==null?null:s.clock.totalMinutes+integer(product.termMinutes,'理财期限',1), principal: n, accrued: 0, createdAt: s.clock.totalMinutes, settledAt: s.clock.totalMinutes, status: 'active' };
+      need(n>=(product.minAmount??1)&&n<=(product.maxAmount??100000000),'申购金额超出产品约定范围。'); const investment = { id: nextRecordId(s, 'invest'), productId: product.id, productSnapshot:clone(product), accountId:from, maturityAt:product.termMinutes==null?null:s.clock.totalMinutes+integer(product.termMinutes,'理财期限',1), principal: n, accrued: 0, createdAt: s.clock.totalMinutes, settledAt: s.clock.totalMinutes, status: 'active' };
       s.wallet.investments.push(investment); record(s, 'invest.buy', '理财申购（现金转为持有份额）', -n, from);
       return { message: `已申购 ${money(n)} ${s.config.currency?.name||''}。收益只在明确结算后入账。`, investmentId: investment.id };
     }
@@ -214,7 +209,7 @@ function perform(s, a,options={}) {
     case 'order.checkout': {
       need(a.quoteId,'请先生成并确认本次订单报价。','QUOTE_REQUIRED');let quote;
       {quote=(s.commerce.quotes??[]).find(q=>q.quoteId===a.quoteId);need(quote,'确认报价不存在，请重新生成。','QUOTE_REQUIRED');need(s.clock.totalMinutes<=quote.expiresAt,'报价已过期，请重新核对。','QUOTE_EXPIRED');const fresh=quoteCommerce(s,{...quote,kind:a.kind??quote.kind});need(fresh.quoteId===quote.quoteId,'价格、库存、规格或费用已经变化，请重新确认报价。','QUOTE_CHANGED');}
-      const order={...clone(quote),id:nextId(s,'order'),items:quote.items.map(({stock,version,...item})=>({...item,quotedStock:stock,quotedVersion:version})),status:'paid',createdAt:s.clock.totalMinutes,updatedAt:s.clock.totalMinutes,refunded:0,payerId:owner(s)};
+      const order={...clone(quote),id:nextRecordId(s,'order'),items:quote.items.map(({stock,version,...item})=>({...item,quotedStock:stock,quotedVersion:version})),status:'paid',createdAt:s.clock.totalMinutes,updatedAt:s.clock.totalMinutes,refunded:0,payerId:owner(s)};
       pay(s,order,order.payment,order.accountId);
       for(const item of order.items)byId(s.commerce.products,item.productId,'商品').stock-=item.qty;
       if(order.couponId){const coupon=byId(s.commerce.coupons,order.couponId,'优惠券');coupon.usedBy=order.id;}
@@ -224,7 +219,7 @@ function perform(s, a,options={}) {
     }
     case 'order.reserve': {
       const quote=(s.commerce.quotes??[]).find(q=>q.quoteId===a.quoteId);need(quote,'报价不存在，请重新核对。');need(s.clock.totalMinutes<=quote.expiresAt,'报价已过期。');need(quoteCommerce(s,quote).quoteId===quote.quoteId,'报价内容已经变化，请重新确认。');
-      const order={...clone(quote),id:nextId(s,'order'),status:'unpaid',payerId:owner(s),createdAt:s.clock.totalMinutes,updatedAt:s.clock.totalMinutes,refunded:0,reservedUntil:quote.expiresAt};
+      const order={...clone(quote),id:nextRecordId(s,'order'),status:'unpaid',payerId:owner(s),createdAt:s.clock.totalMinutes,updatedAt:s.clock.totalMinutes,refunded:0,reservedUntil:quote.expiresAt};
       for(const item of order.items)byId(s.commerce.products,item.productId,'商品').stock-=item.qty;
       const selected=new Set(order.items.map(i=>i.productId));s.commerce.cart=s.commerce.cart.filter(r=>!selected.has(r.productId));s.commerce.orders.unshift(order);return {message:'订单已预留库存，尚未扣款；到期未付款会释放。',orderId:order.id,navigate:{app:order.kind,tab:'order',detail:order.id}};
     }
@@ -241,7 +236,7 @@ function perform(s, a,options={}) {
     case 'order.collect': {
       const order = byId(s.commerce.orders, a.orderId, '订单'); need(order.status === 'delivered', '订单尚未送达，或者已经领取。');
       need(order.recipientId===owner(s),'这是赠礼订单，须等待实际收件人的签收回执。');need(!s.map.journey && s.map.position === order.placeId, '请先到达订单的收货地点再领取。');
-      for (const item of order.items.filter(x=>x.fulfillment!=='digital'&&x.kind!=='digital')) s.inventory.push({ id: nextId(s, 'item'), productId: item.productId, orderLineId:item.id, name: item.name, kind: item.kind, qty: item.qty, ownerId: owner(s), holderId: owner(s), storage: 'carried', placeId: order.placeId, orderId: order.id, consumed: 0 });
+      for (const item of order.items.filter(x=>x.fulfillment!=='digital'&&x.kind!=='digital')) s.inventory.push({ id: nextRecordId(s, 'item'), productId: item.productId, orderLineId:item.id, name: item.name, kind: item.kind, qty: item.qty, ownerId: owner(s), holderId: owner(s), storage: 'carried', placeId: order.placeId, orderId: order.id, consumed: 0 });
       order.status = 'completed'; order.updatedAt = s.clock.totalMinutes; return msg('已经领取，物品归本人持有；食物现在可以食用。');
     }
     case 'order.cancel': {
@@ -268,7 +263,7 @@ function perform(s, a,options={}) {
       const title = String(a.title || '').trim(); need(title.length > 0 && title.length <= 100, '日程标题须为1—100字。'); const current=formClock(s);need(current,'世界历法尚未配置。');const length=current.lengths(s.clock.year)[s.clock.month-1];const day = integer(a.day, '日期', 1, length), minute = integer(a.minute, '当日分钟', 0, dayMinutes(s)-1);
       const at = atMinute(s,s.clock.year, s.clock.month, day, minute); need(at >= s.clock.totalMinutes, '不能把新日程安排到故事过去。'); byId(s.map.places, a.placeId, '日程地点');
       const participantId = String(a.participantId || ''); need(!participantId||(s.contacts||[]).some(x=>x.id===participantId)||(s.social?.accounts||[]).some(x=>x.id===participantId),'请先确认邀请对象。');
-      const event = { id: nextId(s, 'event'), title, day, minute, placeId: a.placeId, participantId, status: participantId ? 'invited' : 'personal', at, notified: false };
+      const event = { id: nextRecordId(s, 'event'), title, day, minute, placeId: a.placeId, participantId, status: participantId ? 'invited' : 'personal', at, notified: false };
       s.calendar.events.push(event); return { message: participantId ? '已发出邀请，尚未得到参与者确认。' : '已记入个人日程。', eventId: event.id };
     }
     case 'calendar.confirm': { const event = byId(s.calendar.events, a.eventId, '日程'); need(event.status === 'invited', '只有待确认邀请可以接受。'); event.status = 'confirmed'; return msg('已按本轮回执记录参与者确认。'); }

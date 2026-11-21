@@ -3,7 +3,7 @@ import {archivePrefixRole} from './archive-prefix.js';
 import {archiveBookEntries} from './archive-book-entries.js';
 import {characterWorldbookScope} from './character-scope.js';
 import {FORMAT, check, copy, object, defaultRegistry} from './schema.js';
-import {digest as matrixDigest,decode as decodeMatrix,stableId} from '../engine/common.mjs';
+import {digest as matrixDigest,decode as decodeMatrix,stableId,sha256} from '../engine/common.mjs';
 import {programOwnedTable,creationFieldAllowed} from '../engine/prompt-boundary.mjs';
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES} from '../engine/phone-form-contract.mjs';
 const MANAGED=['【图鉴／静态】存档最新版','【图鉴／数据】存档最新版','【图鉴／动态快照】存档最新版','【图鉴／记忆】存档最新版','【原点】初始档案','【基点】核心版本','【存档】时间锚与变更路径'];
@@ -41,7 +41,7 @@ function definitionReferences(change,schema){
 function definitionReferenceState(records){const tables={};for(const change of records){tables[change.tableId]??={};tables[change.tableId][change.recordId]={values:change.values};}return {tables};}
 function definitionReferenceKeys(state,change,reference){return [...new Set((reference.tables??[reference.tableId]).flatMap(target=>{const matches=phoneFormReferenceCandidates(state,{tableId:change.tableId,recordId:change.recordId,field:reference.field,target,value:reference.recordId});return matches===null?(state.tables?.[target]?.[reference.recordId]?[target+'#'+reference.recordId]:[]):matches.map(id=>target+'#'+id);} ))];}
 const planHash=plan=>matrixDigest(Object.fromEntries(Object.entries(plan).filter(([key])=>key!=='digest')));
-export async function digest(value){const bytes=new TextEncoder().encode(typeof value==='string'?value:JSON.stringify(value));const hash=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+export async function digest(value){return sha256(typeof value==='string'?value:JSON.stringify(value));}
 export const uuid = prefix => prefix+':'+crypto.randomUUID();
 export function createBookGateway(getHelper=()=>globalThis.TavernHelper,getContext){
  const locks=new Map();
