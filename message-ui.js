@@ -151,18 +151,22 @@ const editing=n=>n.classList.contains('editing')||!!n.querySelector('.edit_texta
   for(const {anchor,text} of row.anchors.reverse())if(anchor.isConnected)anchor.replaceWith(document.createTextNode(text));
   if(!nativePresentations.size){nativeArchiveStyle?.remove();nativeArchiveStyle=null;}
  }
+ function paintNativeArchiveLinks(row){
+  for(const {anchor,text}of row.anchors)if(anchor.isConnected)anchor.replaceWith(document.createTextNode(text));row.anchors=[];
+  const {native,value}=row;if(!value?.archiveLinks?.entries.length)return;
+  const before=new Set(native.querySelectorAll('[data-tisya-archive-anchor]'));projectArchiveLinks(native,{...value,onError});
+  row.anchors=[...native.querySelectorAll('[data-tisya-archive-anchor]')].filter(anchor=>!before.has(anchor)).map(anchor=>({anchor,text:anchor.querySelector('[data-tisya-archive-link]')?.textContent??''}));
+  if(row.anchors.length&&!nativeArchiveStyle){nativeArchiveStyle=document.createElement('style');nativeArchiveStyle.dataset.tisyaNativeArchiveLinks='true';nativeArchiveStyle.textContent=ARCHIVE_LINK_CSS;document.head.append(nativeArchiveStyle);}
+ }
  function mountNativePresentation(node,msg,native,force=false){
   const raw=msg.mes,contextKey=getPhoneContext(),old=nativePresentations.get(node);
-  if(!force&&old?.message===msg&&old.native===native&&old.raw===raw&&old.contextKey===contextKey)return;
+  if(!force&&old?.message===msg&&old.native===native&&old.raw===raw&&old.contextKey===contextKey){if(old.anchors.some(({anchor})=>!anchor.isConnected))paintNativeArchiveLinks(old);return;}
   disposeNativePresentation(node);if(msg.is_user||typeof msg.extra?.tisya_engine?.uid!=='string')return;
   const row={message:msg,native,raw,contextKey,anchors:[],value:null,alive:true};nativePresentations.set(node,row);
   Promise.resolve().then(()=>getPresentation(msg)).then(value=>{
    const current=getPhoneContext(),valid=alive&&row.alive&&nativePresentations.get(node)===row&&getMessage(node)===msg&&msg.mes===raw&&native.isConnected&&(!contextKey||!current||current===contextKey);
    if(!valid){releasePresentation(value);return;}
-   row.value=value;if(!value?.archiveLinks?.entries.length)return;
-   const before=new Set(native.querySelectorAll('[data-tisya-archive-anchor]'));projectArchiveLinks(native,{...value,onError});
-   row.anchors=[...native.querySelectorAll('[data-tisya-archive-anchor]')].filter(anchor=>!before.has(anchor)).map(anchor=>({anchor,text:anchor.querySelector('[data-tisya-archive-link]')?.textContent??''}));
-   if(row.anchors.length&&!nativeArchiveStyle){nativeArchiveStyle=document.createElement('style');nativeArchiveStyle.dataset.tisyaNativeArchiveLinks='true';nativeArchiveStyle.textContent=ARCHIVE_LINK_CSS;document.head.append(nativeArchiveStyle);}
+   row.value=value;paintNativeArchiveLinks(row);
   },error=>{if(alive&&row.alive&&nativePresentations.get(node)===row)onError(error);}).catch(onError);
  }
  function restore(node,{keepNative=false}={}){if(!keepNative)disposeNativePresentation(node);const stream=streamViews.get(node);if(stream){stream.view.dispose();stream.native.classList.remove('tisya-source-concealed');streamViews.delete(node);}const row=views.get(node);if(!row)return;row.stopSaving?.();save(row);row.panels?.dispose();row.view.dispose();row.native.classList.remove('tisya-source-concealed');node.classList.remove('tisya-projected');views.delete(node);}

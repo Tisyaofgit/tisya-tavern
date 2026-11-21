@@ -89,3 +89,15 @@ test('a disposed native view cannot receive a late archive projection',async()=>
  const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>'ctx',getPresentation:()=>new Promise(resolve=>release=resolve),preferNative:()=>true,formatBody:text=>text});ui.sync(node);await Promise.resolve();ui.dispose();release({contextKey:'ctx',projections:[],archiveLinks:{entries:[entry('阿青',['阿青'])]}});await new Promise(resolve=>setTimeout(resolve,20));
  try{assert.equal(node.querySelector('[data-tisya-archive-link]'),null);assert.equal(d.querySelector('style[data-tisya-native-archive-links]'),null);}finally{await w.happyDOM.abort();}
 });
+
+test('native beauty rewrites reuse the resolved archive projection instead of leaving no tooltips',async()=>{
+ const w=new Window({url:'http://localhost'}),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><p>阿青第一次出现。</p></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),message={mes:'阿青第一次出现。',name:'角色',extra:{tisya_engine:{uid:'rewrite-links'}}};let lookups=0;
+ const getPresentation=async()=>{lookups++;return {contextKey:'ctx',projections:[],archiveLinks:{entries:[entry('阿青',['阿青'])]}};};
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>'ctx',getPresentation,preferNative:()=>true,formatBody:text=>text,getMotion:()=>false});ui.sync(node);await new Promise(resolve=>setTimeout(resolve,40));
+ try{
+  assert.equal(native.querySelectorAll('[data-tisya-archive-link]').length,1);
+  native.innerHTML='<div class="card-beauty"><p>阿青被后续原生美化覆盖。</p></div>';await new Promise(resolve=>setTimeout(resolve,70));
+  assert.equal(native.querySelectorAll('[data-tisya-archive-link]').length,1,'host overwrite must be repaired from the existing projection');assert.equal(lookups,1,'repair must not start another snapshot read');
+ }finally{ui.dispose();await w.happyDOM.abort();}
+});

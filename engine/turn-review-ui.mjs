@@ -12,9 +12,11 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  .tisya-turn-review>.review-notice{position:fixed;display:flex;align-items:center;justify-content:center;pointer-events:auto;min-height:44px;padding:8px 0;border:0;background:transparent;box-shadow:none;font-size:11px;line-height:1.4;max-width:150px;-webkit-tap-highlight-color:transparent}
  .review-notice-face{display:flex;align-items:center;justify-content:center;gap:4px;min-height:28px;padding:4px 9px;border:1px solid #d1bb7d80;border-radius:14px;background:linear-gradient(145deg,#254b3feb,#092b24f5);box-shadow:0 2px 8px #0003,inset 0 1px #f2e5aa1c;white-space:nowrap}
  .review-notice svg{width:13px;height:13px;flex:none}
- .tisya-turn-review>.review-notice[data-placement=drawer]{width:46px;min-height:76px;padding:9px 6px;border:1px solid #d1bb7d99;border-radius:15px 0 0 15px;border-right:0;font-size:12px;background:linear-gradient(145deg,#254b3feb,#092b24f5);box-shadow:-5px 4px 20px #0004}
- .review-notice[data-placement=drawer]>.review-notice-face{padding:0;border:0;border-radius:0;background:none;box-shadow:none;flex-direction:column;gap:4px}.review-notice[data-placement=drawer] svg{width:18px;height:18px}
- .review-notice[data-pending=true]>.review-notice-face{border-color:#e3c46b}.review-count{min-width:18px;padding:0 4px;border-radius:10px;background:#cfb56e;color:#16352b;font:12px/18px system-ui}
+ .tisya-turn-review>.review-notice[data-placement=drawer]{width:42px;min-height:64px;padding:7px 5px;border:1px solid #d1bb7d99;border-radius:13px;font-size:11px;background:linear-gradient(145deg,#254b3feb,#092b24f5);box-shadow:0 3px 14px #0004;touch-action:none;user-select:none;cursor:grab}
+ .tisya-turn-review>.review-notice[data-placement=drawer][data-dragging=true]{cursor:grabbing;box-shadow:0 5px 22px #0007}
+ .review-notice[data-placement=drawer][data-side=left]{border-radius:0 13px 13px 0;border-left:0}.review-notice[data-placement=drawer][data-side=right]{border-radius:13px 0 0 13px;border-right:0}
+ .review-notice[data-placement=drawer]>.review-notice-face{padding:0;border:0;border-radius:0;background:none;box-shadow:none;flex-direction:column;gap:3px}.review-notice[data-placement=drawer] svg{width:16px;height:16px}
+ .review-notice[data-pending=true]>.review-notice-face{border-color:#e3c46b}.review-count{min-width:18px;padding:0 4px;border-radius:10px;background:#cfb56e;color:#16352b;font:12px/18px system-ui}.review-notice[data-placement=drawer] .review-count{min-width:16px;padding:0 3px;font-size:11px;line-height:16px}
  .tisya-turn-review>section{position:fixed;pointer-events:auto;overflow:auto;overscroll-behavior:contain;background:linear-gradient(145deg,#153a2e,#09251e);border:1px solid #c4ab6890;border-radius:14px;padding:20px;box-shadow:0 24px 70px #0006,inset 0 1px #ecd59a18;margin:0}
  .tisya-turn-review header,.tisya-turn-review nav,.tisya-turn-review footer{display:flex;align-items:center;gap:10px;justify-content:space-between}.tisya-turn-review h2{font-size:23px;font-weight:400;margin:0}
  .tisya-turn-review nav{justify-content:flex-start;margin:16px 0}.tisya-turn-review p{color:var(--muted);font-size:13px;margin:10px 0}.tisya-turn-review label{display:block;margin:15px 0;color:var(--ink)}
@@ -43,18 +45,38 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
  const win=document.defaultView,off=[];toggle.type=close.type='button';toggle.className='review-notice';toggle.setAttribute('aria-controls',panel.id);toggle.setAttribute('aria-expanded','false');
  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('fill','none');icon.setAttribute('stroke','currentColor');icon.setAttribute('stroke-width','1.5');icon.setAttribute('aria-hidden','true');const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','M6 3h12v18H6z M9 7h6 M9 11h6 M9 15h4');icon.append(path);const noticeText=el('span'),count=el('span');count.className='review-count';count.setAttribute('aria-hidden','true');const noticeFace=el('span');noticeFace.className='review-notice-face';noticeFace.append(icon,noticeText,count);toggle.replaceChildren(noticeFace);
  const clamp=(value,min,max)=>Math.max(min,Math.min(value,Math.max(min,max)));
+ const positionKey='tisya.turn-review.drawer-position.v1';let drawerPosition={side:'right',ratio:.5},drag=null,suppressClick=false;
+ try{const saved=JSON.parse(win.localStorage?.getItem(positionKey)??'null');if(saved&&['left','right'].includes(saved.side)&&Number.isFinite(saved.ratio))drawerPosition={side:saved.side,ratio:clamp(saved.ratio,0,1)};}catch{}
+ function saveDrawerPosition(){try{win.localStorage?.setItem(positionKey,JSON.stringify(drawerPosition));}catch{}}
  function place(){
   if(disposed)return;root.hidden=!active||!snapshot?.enabled;pet?.setNoticeSpace?.(root.hidden?0:50);
   const b=floatingBounds(document),foot=petAnchor?.foot,atFoot=petAnchor?.visible&&foot;
-  const placement=atFoot?'foot':'drawer';toggle.dataset.placement=placement;toggle.dataset.pending=String(pendingCount>0);noticeText.textContent=atFoot?noticeLabel:'核验';count.textContent=String(pendingCount);count.hidden=!!atFoot||!pendingCount;toggle.setAttribute('aria-label',noticeLabel+'，打开表单与归档');toggle.title=noticeLabel;toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.hidden=!panel.hidden||b.height<44;
-  const r=toggle.getBoundingClientRect(),width=atFoot?(r.width||100):46,height=r.height||(atFoot?44:76),cx=foot?foot.x+foot.width/2:0;
-  const x=atFoot?clamp(cx-width/2,b.x,b.x+b.width-width):b.x+b.width-width+4,y=atFoot?clamp(foot.y+4,b.y,b.y+b.height-height):clamp(b.y+b.height*.5-height/2,b.y,b.y+b.height-height);
+  const placement=atFoot?'foot':'drawer';toggle.dataset.placement=placement;toggle.dataset.side=drawerPosition.side;toggle.dataset.pending=String(pendingCount>0);noticeText.textContent=atFoot?noticeLabel:'核验';count.textContent=String(pendingCount);count.hidden=!!atFoot||!pendingCount;toggle.setAttribute('aria-label',noticeLabel+'，打开表单与归档'+(atFoot?'':'；可拖动调整左右侧与上下位置'));toggle.title=noticeLabel+(atFoot?'':' · 拖动调整位置');toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.hidden=!panel.hidden||b.height<44;
+  const r=toggle.getBoundingClientRect(),width=atFoot?(r.width||100):42,height=r.height||(atFoot?44:64),cx=foot?foot.x+foot.width/2:0;
+  const drawerX=drawerPosition.side==='left'?b.x-4:b.x+b.width-width+4,x=atFoot?clamp(cx-width/2,b.x,b.x+b.width-width):drawerX,y=atFoot?clamp(foot.y+4,b.y,b.y+b.height-height):b.y+Math.max(0,b.height-height)*drawerPosition.ratio;
   Object.assign(toggle.style,{left:x+'px',top:y+'px',maxWidth:Math.min(150,b.width)+'px'});
-  const panelWidth=Math.min(860,Math.max(1,b.width-12));Object.assign(panel.style,{width:panelWidth+'px',maxHeight:Math.max(0,b.height-12)+'px',left:(b.x+b.width-panelWidth-6)+'px',top:(b.y+6)+'px',visibility:b.height<64?'hidden':'visible'});
+  const panelWidth=Math.min(860,Math.max(1,b.width-12)),panelLeft=drawerPosition.side==='left'?b.x+2:b.x+b.width-panelWidth-6;Object.assign(panel.style,{width:panelWidth+'px',maxHeight:Math.max(0,b.height-12)+'px',left:panelLeft+'px',top:(b.y+6)+'px',visibility:b.height<64?'hidden':'visible'});
  }
  const listen=(node,event,fn)=>{node?.addEventListener(event,fn);off.push(()=>node?.removeEventListener(event,fn));};
  listen(win,'resize',place);listen(win.visualViewport,'resize',place);listen(win.visualViewport,'scroll',place);
  const resize=win.ResizeObserver?new win.ResizeObserver(place):null;for(const node of [document.querySelector('#chat'),document.querySelector('#send_form'),toggle])if(node)resize?.observe(node);
+ listen(toggle,'pointerdown',event=>{
+  if(toggle.dataset.placement!=='drawer'||panel.hidden===false||event.button!==0)return;
+  drag={id:event.pointerId,x:event.clientX,y:event.clientY,top:parseFloat(toggle.style.top)||0,moved:false};toggle.dataset.dragging='false';try{toggle.setPointerCapture?.(event.pointerId);}catch{}
+ });
+ listen(toggle,'pointermove',event=>{
+  if(!drag||drag.id!==event.pointerId)return;if(!drag.moved&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;drag.moved=true;event.preventDefault();toggle.dataset.dragging='true';
+  const b=floatingBounds(document),height=toggle.getBoundingClientRect().height||64,available=Math.max(0,b.height-height),y=clamp(drag.top+event.clientY-drag.y,b.y,b.y+available),mid=b.x+b.width/2;
+  drawerPosition={side:event.clientX<mid?'left':'right',ratio:available?clamp((y-b.y)/available,0,1):.5};place();
+ });
+ const finishDrag=(event,cancelled=false)=>{
+  if(!drag||drag.id!==event.pointerId)return;const moved=drag.moved;drag=null;toggle.dataset.dragging='false';try{toggle.releasePointerCapture?.(event.pointerId);}catch{}if(moved){saveDrawerPosition();if(!cancelled){suppressClick=true;win.setTimeout(()=>{suppressClick=false;},0);}}
+ };
+ listen(toggle,'pointerup',event=>finishDrag(event));listen(toggle,'pointercancel',event=>finishDrag(event,true));
+ listen(toggle,'keydown',event=>{
+  if(toggle.dataset.placement!=='drawer'||!event.altKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();
+  if(event.key==='ArrowLeft'||event.key==='ArrowRight')drawerPosition.side=event.key==='ArrowLeft'?'left':'right';else drawerPosition.ratio=clamp(drawerPosition.ratio+(event.key==='ArrowUp'?-.08:.08),0,1);saveDrawerPosition();place();
+ });
  function show(value,focus=false){panel.hidden=!value;place();if(focus)(value?close:toggle).focus({preventScroll:true});}
  const visualEditor=mountReviewFormEditor(document,{service,onError:error=>{status.textContent=error.message;},onChange:blocks=>{for(const key of ['cells','archive'])editors[key].input.value=blocks[key];dirty=true;presentIssues([]);}});current.insertBefore(visualEditor.root,rawDetails);
  function presentIssues(issues=[]){
@@ -101,7 +123,7 @@ export function mountTurnReview(document,{service,onError=()=>{},onForms=()=>{},
   if(await refresh()&&snapshot?.contextKey===contextKey){status.textContent=message;if(failure)presentIssues(failure.details?.issues??[]);}
  }
  for(const {input,check:enabled}of Object.values(editors)){input.oninput=()=>{dirty=true;presentIssues([]);visualEditor.rawChanged();};enabled.onchange=()=>{dirty=true;};}
- toggle.onclick=()=>{show(panel.hidden,true);if(!panel.hidden)refresh();};
+ toggle.onclick=()=>{if(suppressClick){suppressClick=false;return;}show(panel.hidden,true);if(!panel.hidden)refresh();};
  close.onclick=()=>show(false,true);
  currentButton.onclick=()=>{workbench.close();current.hidden=false;history.hidden=true;};historyButton.onclick=()=>{workbench.close();current.hidden=true;history.hidden=false;};
  const fieldsNav=el('button','字段设置');fieldsNav.className='review-nav-secondary';fieldsNav.onclick=()=>{current.hidden=true;history.hidden=true;workbench.open();};nav.append(fieldsNav);saveDraft.onclick=()=>run(async()=>{if(!selected)return;await visualEditor.settled();const result=await service.reviewAction({action:'draft',uid:selected.uid,hash:selected.sourceHash,cells:editors.cells.input.value,archive:editors.archive.input.value,responses:workbench.responses(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision});snapshot.revision=result.revision;dirty=false;return '草稿已保存，可稍后继续核对。';});
