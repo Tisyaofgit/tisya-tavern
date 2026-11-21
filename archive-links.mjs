@@ -51,9 +51,11 @@ export function matrixArchiveLinkIndex(snapshot,{sourceId,contextKey,scope={}}={
   if(!title||!names.length)return;
   entries.push({reference:{tableId,recordId,snapshotId:sourceId},kind:clean(kind,40)||'档案',title,names,fields:fields.map(([label,value])=>[label,clean(value)]).filter(([,value])=>value).slice(0,4),contextKey,allowed:true});
  };
+ const linkedDossiers=new Set();
  for(const [recordId]of Object.entries(state.tables?.T_SYS_ENTITIES??{})){
   if(!allowed('T_SYS_ENTITIES',recordId))continue;
-  const origin=originOf('T_SYS_ENTITIES',recordId),title=text('T_SYS_ENTITIES',recordId,'instance_name')||text('T_SYS_ENTITIES',recordId,'name')||(origin&&text(origin.tableId,origin.recordId,'name'));
+  const origin=originOf('T_SYS_ENTITIES',recordId);if(origin?.tableId==='T_CHAR_DOSSIER')linkedDossiers.add(origin.recordId);
+  const title=text('T_SYS_ENTITIES',recordId,'instance_name')||text('T_SYS_ENTITIES',recordId,'name')||(origin&&text(origin.tableId,origin.recordId,'name'));
   const kindValue=text('T_SYS_ENTITIES',recordId,'kind'),names=[...childTexts('T_SYS_ENTITIES',recordId,'aliases'),...childTexts('T_SYS_ENTITIES',recordId,'instance_aliases')];
   if(origin)names.push(text(origin.tableId,origin.recordId,'name'),...childTexts(origin.tableId,origin.recordId,'aliases'));
   const fields=[['简介',text('T_SYS_ENTITIES',recordId,'description')]];
@@ -61,6 +63,13 @@ export function matrixArchiveLinkIndex(snapshot,{sourceId,contextKey,scope={}}={
   const runtimeId=text('T_SYS_ENTITIES',recordId,'runtime_state_ref');if(runtimeId&&allowed('T_DYN_ENTITY_STATE',runtimeId))fields.push(['当前外观',text('T_DYN_ENTITY_STATE',runtimeId,'live_appearance')],['当前姿态',text('T_DYN_ENTITY_STATE',runtimeId,'posture')]);
   const aliases=names.filter(name=>name!==title);if(aliases.length)fields.push(['别名',aliases.join('、')]);
   add({tableId:'T_SYS_ENTITIES',recordId,kind:entityKinds[kindValue]??kindValue??'对象',title,names,fields});
+ }
+ // Ordinary form writes register an origin dossier without manufacturing an
+ // entity instance. Index that dossier directly; a visible linked entity remains
+ // the single representative so the same name never becomes spuriously ambiguous.
+ for(const [recordId]of Object.entries(state.tables?.T_CHAR_DOSSIER??{})){
+  if(linkedDossiers.has(recordId)||!allowed('T_CHAR_DOSSIER',recordId))continue;
+  add({tableId:'T_CHAR_DOSSIER',recordId,kind:'人物',title:text('T_CHAR_DOSSIER',recordId,'name'),names:childTexts('T_CHAR_DOSSIER',recordId,'aliases'),fields:[['公开身份',text('T_CHAR_DOSSIER',recordId,'public_identity')]]});
  }
  for(const [recordId]of Object.entries(state.tables?.T_DYN_CLUES??{}))if(allowed('T_DYN_CLUES',recordId))add({tableId:'T_DYN_CLUES',recordId,kind:'线索',title:text('T_DYN_CLUES',recordId,'name'),fields:[['阶段',text('T_DYN_CLUES',recordId,'stage')],['已出现',text('T_DYN_CLUES',recordId,'shown_content')]]});
  for(const [recordId]of Object.entries(state.tables?.T_DYN_EVENTS??{}))if(allowed('T_DYN_EVENTS',recordId)){

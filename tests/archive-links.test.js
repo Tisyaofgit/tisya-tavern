@@ -7,6 +7,10 @@ import {matrixArchiveLinkIndex,archiveLinkTextIndex} from '../archive-links.mjs'
 import {formatProse} from '../prose.js';
 import {ARCHIVE_LINK_CSS} from '../extension-presentation.mjs';
 import {mountMessageAppearance} from '../message-ui.js';
+import {createExtensionPresentationService} from '../extension-host.mjs';
+import {databaseSnapshotAtMessage} from '../engine/database-snapshot.mjs';
+import {chatKey} from '../engine/controller.mjs';
+import {digest} from '../engine/common.mjs';
 
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 const row=(values,derived=[])=>{const states=Object.fromEntries(Object.keys(values).map(key=>[key,derived.includes(key)?'derived':'known']));if(!('row_uuid' in values)){values={row_uuid:values.name??values.title??'row',...values};states.row_uuid='known';}return {values,states};};
@@ -29,12 +33,29 @@ test('canonical link index uses aliases, rejects ambiguity and projects only dec
  const index=matrixArchiveLinkIndex(snapshot,{sourceId:'snapshot-1',contextKey:'ctx'});
  const person=index.entries.find(item=>item.reference.recordId==='entity-a');
  assert(person);assert.deepEqual(person.names,['青姐']);assert(!index.entries.some(item=>item.reference.recordId==='entity-b'));
+ assert(!index.entries.some(item=>item.reference.tableId==='T_CHAR_DOSSIER'),'a linked entity already represents its origin dossier');
  assert(person.fields.some(([label,value])=>label==='公开身份'&&value==='河口旅人'));
  assert(index.entries.some(item=>item.reference.recordId==='clue-a'));
  assert(index.entries.find(item=>item.reference.recordId==='event-a').names.includes('E02'));
  const serialized=JSON.stringify(index);assert(!serialized.includes('PRIVATE_HIDDEN_REMAINDER'));assert(!serialized.includes('PRIVATE_FULL_PROCESS'));
  assert.equal(JSON.stringify(state),before);
  assert.deepEqual(archiveLinkTextIndex({entries:[entry('甲',['重名']),entry('乙',['重名'])]}),[]);
+});
+
+test('an origin dossier without an entity instance reaches native beauty through the real snapshot service',async()=>{
+ const w=new Window({url:'http://localhost'}),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><p>阿青推门，青姐随后抵达。</p></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),ctx={chatId:'chat-1',characterId:'character-1',groupId:null},key=chatKey(ctx),raw='阿青推门，青姐随后抵达。',message={mes:raw,name:'角色',extra:{tisya_engine:{uid:'dossier-only'}}},opened=[];
+ const state=initializeState(catalog,{session_ref:'session',branch_ref:'main'});state.tables.T_SYS_ENTITIES={};Object.assign(state.tables,{
+  T_CHAR_DOSSIER:{'dossier-only':row({name:'阿青',public_identity:'河口旅人',aliases:['alias-only']})},
+  M_LIST_VALUES:{'alias-only':row({owner_table:'T_CHAR_DOSSIER',owner_row_uuid:'dossier-only',owner_field:'aliases',narrative:'青姐'})}
+ });
+ const bundle={state,journal:{entries:[{uid:'dossier-only',role:'assistant',signature:digest({role:'assistant',text:raw,uid:'dossier-only'}),revision:1,settlement_status:'APPLIED',pre_turn_snapshot:{inverse_patch:[]}}]}};
+ const service=createExtensionPresentationService({document:d,getContext:()=>ctx,database:{peek:async()=>({state,revision:1,contextKey:key}),snapshot:input=>databaseSnapshotAtMessage(bundle,input,key)}});w.Tisya={archive:{open:reference=>opened.push(reference)}};
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>key,getPresentation:message=>service.forMessage(message),preferNative:()=>true,formatBody:text=>text,getMotion:()=>false});ui.sync(node);await new Promise(resolve=>setTimeout(resolve,50));
+ try{
+  const links=[...native.querySelectorAll('[data-tisya-archive-link]')];assert.deepEqual(links.map(link=>link.textContent),['阿青','青姐']);
+  links[0].click();const anchor=links[0].closest('[data-tisya-archive-anchor]');anchor.querySelector('[data-tisya-archive-open]').click();assert.deepEqual(opened,[{tableId:'T_CHAR_DOSSIER',recordId:'dossier-only'}]);
+ }finally{ui.dispose();await w.happyDOM.abort();}
 });
 
 test('natural prose gains longest-match links without touching code, links, controls or existing anchors',async()=>{

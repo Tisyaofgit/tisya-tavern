@@ -138,7 +138,7 @@ export function createExtensionPresentationService({document=globalThis.document
    const revision=current?.revision??'unversioned',memory=automaticMemory.get(message),cacheSignature=JSON.stringify([raw,key,source.sourceId,revision,scopeSignature]);
    if(memory?.signature===cacheSignature){archiveLinks=memory.value.archiveLinks;matrixSnapshotId=memory.value.messageSnapshotId;}
    else{
-    const packet=await prepareMessageProjection({scope:key,owner:messageCacheOwner(message),source:raw},'archive-links-v1:'+source.sourceId+':'+revision+':'+scopeSignature,async()=>{
+    const packet=await prepareMessageProjection({scope:key,owner:messageCacheOwner(message),source:raw},'archive-links-v2-dossiers:'+source.sourceId+':'+revision+':'+scopeSignature,async()=>{
      const snapshot=await database.snapshot({...source,raw});assertKey(key);if(!snapshot)return {archiveLinks:null,messageSnapshotId:null};
      if(snapshot.uid!==source.uid||snapshot.hostMessageSha256!==sha256(raw)||snapshot.sourceId!==source.sourceId)fail('SNAPSHOT_SOURCE','表单快照与本条消息的稳定身份或原文摘要不同');
      return {messageSnapshotId:snapshot.snapshotId,archiveLinks:matrixArchiveLinkIndex(snapshot,{sourceId:snapshot.snapshotId,contextKey:key,scope:getScope()})};
