@@ -1,8 +1,11 @@
+import {clone,fail} from './common.mjs';
 
-  const clone=x=>JSON.parse(JSON.stringify(x));
-  const groups={instincts:['食','眠','色','御','执'],emotions:['喜','怒','哀','惧','爱','恶','欲'],axes:['外放','内敛','共生','独占','通透','戒备','直觉','迂回'],desires:['求安','求享','求亲','求认','求胜','求知']};
-  const paths=[...['instincts','emotions','axes'].flatMap(g=>groups[g].map(k=>g+'.'+k)),...groups.desires.flatMap(k=>['light','shadow'].map(s=>'desires.'+k+'.'+s))];
-  const labels={食:'吃些东西',眠:'休息一会',色:'寻求亲密',御:'确认周围安全',执:'靠近心中所系',求安:'寻求安定',求享:'享受片刻',求亲:'主动亲近',求认:'寻求认可',求胜:'争取胜利',求知:'探究疑问'};
+  export const PERSONA_GROUPS=Object.freeze({instincts:['食','眠','色','御','执'],emotions:['喜','怒','哀','惧','爱','恶','欲'],axes:['外放','内敛','共生','独占','通透','戒备','直觉','迂回'],desires:['求安','求享','求亲','求认','求胜','求知']});
+  const groups=PERSONA_GROUPS;
+  export const PERSONA_PATHS=Object.freeze([...['instincts','emotions','axes'].flatMap(g=>groups[g].map(k=>g+'.'+k)),...groups.desires.flatMap(k=>['light','shadow'].map(s=>'desires.'+k+'.'+s))]);
+  const paths=PERSONA_PATHS;
+  export const PERSONA_TASK_LABELS=Object.freeze({食:'吃些东西',眠:'休息一会',色:'寻求亲密',御:'确认周围安全',执:'靠近心中所系',求安:'寻求安定',求享:'享受片刻',求亲:'主动亲近',求认:'寻求认可',求胜:'争取胜利',求知:'探究疑问'});
+  const labels=PERSONA_TASK_LABELS;
   function initial(raw={}) {
     const d={version:1,values:{},rates:{},importance:{},threshold:85,release:65,daily:[],plans:[],statuses:[],armed:{},events:[],elapsedHours:0,target:'',...clone(raw)};
     for(const p of paths)if(!(p in d.values))d.values[p]=null;
@@ -64,5 +67,10 @@
     d.events.push(event.id);
     return d;
   }
+
+export function applyPersonaEvent(engine,actor,event){
+ const row=engine.rows('T_CHAR_DOSSIER')[actor];if(!row)fail('PERSONA_ACTOR','心性人物不存在');
+ const dynamics=reduce(row.values.persona_dynamics??{},event);engine.set(`T_CHAR_DOSSIER#${actor}.persona_dynamics`,dynamics);return {actor,event_id:event.id};
+}
 
 export {reduce as reducePersona, initial as initialPersona, validate as validatePersona};

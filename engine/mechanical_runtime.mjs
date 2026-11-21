@@ -386,6 +386,10 @@ export function compileTypedValues(rows,tables){
   const seen=new Set();
   const build=(row,stack)=>{
     knownRow(row);if(stack.has(row.row_uuid))fail('TYPED_CYCLE','Typed object/list contains a parent cycle');const active=new Set(stack);active.add(row.row_uuid);seen.add(row.row_uuid);
+    // History snapshots may preserve a known null without turning it into a
+    // live business reference or a non-null scalar during mechanical export.
+    if(row.owner_table==='T_SYS_CHANGE_LOG'&&row.value_type==='text')return row.text_value??null;
+    if(row.owner_table==='T_SYS_CHANGE_LOG'&&!['list','object'].includes(row.value_type)&&['number_value','boolean_value','text_value','reference_ref','list_ref'].every(key=>row[key]==null))return null;
     const children=rows.filter(r=>r.parent_value_ref===row.row_uuid);
     if(!['list','object'].includes(row.value_type)&&children.length)fail('TYPED_CHILDREN','Scalar typed value has child nodes');
     switch(row.value_type){

@@ -88,6 +88,19 @@ test('natural prose gains longest-match links without touching code, links, cont
  }finally{await w.happyDOM.abort();}
 });
 
+test('archive anchors preserve exact prose text and add no default gap or underline',async()=>{
+ const w=new Window();try{
+  const root=w.document.createElement('div');root.innerHTML=formatProse(w.document,'门前，阿青推门。',text=>text,{presentation:{contextKey:'ctx',archiveLinks:{entries:[entry('阿青',['阿青'])]}}});
+  const clean=root.cloneNode(true);clean.querySelectorAll('[data-tisya-archive-tooltip]').forEach(node=>node.remove());assert.equal(clean.textContent,'门前，阿青推门。');
+  const paragraph=root.querySelector('p'),textNodes=[...paragraph.childNodes].filter(node=>node.nodeType===3).map(node=>node.nodeValue);
+  assert(textNodes.length>=2&&textNodes.every(value=>!/^\s|\s$/u.test(value)),'projection must not insert whitespace text around the anchor');
+  assert.match(ARCHIVE_LINK_CSS,/\.tisya-archive-anchor\{position:relative;display:inline\}/);
+  assert.match(ARCHIVE_LINK_CSS,/\.tisya-archive-link\{[^}]*padding:0;[^}]*border:0;/);
+  assert.doesNotMatch(ARCHIVE_LINK_CSS,/\.tisya-archive-link\{[^}]*border-bottom:/);
+  assert.match(ARCHIVE_LINK_CSS,/\.tisya-archive-link:hover,\.tisya-archive-link:focus-visible\{[^}]*text-decoration:underline/);
+ }finally{await w.happyDOM.abort();}
+});
+
 test('synthetic viewport events place tooltips away from edges and retain desktop and touch styles',async()=>{
  const w=new Window();try{
   Object.defineProperty(w,'innerWidth',{value:360,configurable:true});const root=w.document.createElement('div');root.innerHTML=formatProse(w.document,'阿青',text=>text,{presentation:{contextKey:'ctx',archiveLinks:{entries:[entry('阿青',['阿青'])]}}});w.document.body.append(root);

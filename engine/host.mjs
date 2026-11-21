@@ -16,6 +16,8 @@ import {createMatrixContextRecorder} from './context-recorder.mjs';
 import {createNativePresetLayers} from './native-preset-layers.mjs';
 import {extendPhoneFormCatalog,phoneFormReferenceCandidates} from './phone-form-contract.mjs';
 import {extendAttitudeCatalog} from './relation-attitudes.mjs';
+import {extendOffstageCatalog} from './offstage-life.mjs';
+import {extendFieldHistoryCatalog} from './field-history.mjs';
 import {effectivePreferences,preferenceWishSlot} from './preferences.mjs';
 import {limitNativeHistory} from '../config/history-context.js';
 import {contractorMessages} from './contractor.mjs';
@@ -59,7 +61,7 @@ function turnArchiveIssue(journal,entry){
 export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null;const listeners=new Set();
- const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendPhoneFormCatalog).then(extendAttitudeCatalog).then(extendPreferenceCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
+ const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendPhoneFormCatalog).then(extendAttitudeCatalog).then(extendOffstageCatalog).then(extendFieldHistoryCatalog).then(extendPreferenceCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
  const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError});
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};
@@ -73,7 +75,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
   const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx()),playerBinding=config.read().story.userBinding;
   return finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
-   const result=reconcile(bundle,messages,scope,proof);let values={},materials_error;
+   const result=reconcile(bundle,messages,scope,{...proof,playerBinding});let values={},materials_error;
    try{values=materialProjection(result.bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}
    return {...result,materials:values,materials_error};
   });
@@ -306,7 +308,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const transaction=e.transaction(operationId,request,()=>{
    for(const change of changes){const tid=change.tableId??change.table,rid=change.recordId??change.id;if(typeof tid!=='string'||typeof rid!=='string'||!tid||!rid)fail('DATABASE_TARGET','表单修改缺少表或稳定记录ID');if(!e.data.schema[tid])fail('TABLE_MISSING','目标表尚未注册',{table:tid});
     if(e.rows(tid)[rid]?.metadata?.phone_projection&&source?.kind!=='phone')fail('DERIVED_WRITE','这个网络页面是生活微博的只读投影，请编辑X_SOCIAL_POSTS原记录');
-    if(change.remove){delete e.data.tables[tid][rid];continue;}
+    if(change.remove){e.removeRecord(tid,rid);continue;}
     if(!e.rows(tid)[rid])e.newRecord(tid,{},rid);
     for(const [field,value]of Object.entries(change.values??{})){const spec=e.spec(tid,field);if(spec.read_only&&!['row_uuid','common.row_uuid'].includes(spec.alias_of)&&field!=='row_uuid'&&JSON.stringify(e.record(tid,rid).values[field])!==JSON.stringify(value))fail('DERIVED_WRITE','派生字段不能直接修改，请修改原点字段',{table:tid,field});e.set([tid,rid,field,[]],value,change.states?.[field]??'known');}
     if(change.metadata)e.record(tid,rid).metadata={...(e.record(tid,rid).metadata??{}),...clone(change.metadata)};

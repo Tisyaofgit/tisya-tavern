@@ -142,7 +142,7 @@ test('actual Matrix host shares automatic and form initialization without resett
  const {PHONE_FORM_SCHEMAS}=await import('../engine/phone-form-contract.mjs');
  const f=fixture(),catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url),'utf8'));
  const host=createMatrixHost({getContext:()=>f.ctx,getSource:()=>matrixPreset(),loadCatalog:async()=>catalog,storage:f.storage,persistSettings:async()=>{},persistMetadata:async()=>{}});
- const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();assert.equal(database.contextKey,chatKey(f.ctx));assert.deepEqual(Object.keys(database.state.schema).sort(),[...new Set([...catalog.tables,...PHONE_FORM_SCHEMAS,{id:'T_CHAR_HABITS'},{id:'T_CHAR_MEASURES'}].map(t=>t.id))].sort());assert.deepEqual(f.disk.get(first.id),before);
+ const first=await host.ensureBound();assert.equal(first.status,'created');const before=clone(f.disk.get(first.id));const database=await host.ensureDatabase();assert.equal(database.contextKey,chatKey(f.ctx));assert.deepEqual(Object.keys(database.state.schema).sort(),[...new Set([...catalog.tables,...PHONE_FORM_SCHEMAS,{id:'T_CHAR_HABITS'},{id:'T_CHAR_MEASURES'},{id:'T_SYS_OFFSTAGE_RULES'}].map(t=>t.id))].sort());assert.deepEqual(f.disk.get(first.id),before);
  f.disk.delete(first.id);await assert.rejects(host.ensureDatabase(),e=>e.code==='ENGINE_STATE_MISSING');assert.equal(f.disk.size,0);
 });
 

@@ -123,6 +123,29 @@ test('character dossier, entity and live state resolve as one referent while tru
  assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
 });
 
+test('stable reverse state binding reunifies dossier, entity and state without using their names',()=>{
+ const e=seed();
+ // A minimal old import can retain the entity→state coordinate while its
+ // state points at the dossier coordinate and the optional origin link is absent.
+ delete e.rows('M_FIELD_REFERENCES')['o-a'];delete e.rows('T_SYS_ENTITIES').a.values.origin_record_ref;
+ e.rows('T_SYS_ENTITIES').a.values.runtime_state_ref='state-a';e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'d-a',posture:'站立'},'state-a');
+ const secret=form(e.data,'T_CHAR_SECRETS',{name:'旧约',fact_proposition:'旧约仍然有效',related_object_refs:'关联：阿青'});
+ const event=form(e.data,'T_DYN_EVENTS',{title:'重逢',spine_digest:'两人在渡口重逢',knowers:'关联：阿青'});
+ acceptReply(e,reply(1,[secret,event].join('\n')),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const links=Object.values(e.rows('M_LIST_VALUES')).filter(row=>['related_object_refs','knowers'].includes(row.values.owner_field));assert.equal(links.length,2);
+ assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
+});
+
+test('conflicting reverse state bindings stay ambiguous instead of merging by name',()=>{
+ const e=seed();delete e.rows('M_FIELD_REFERENCES')['o-a'];delete e.rows('T_SYS_ENTITIES').a.values.origin_record_ref;
+ e.rows('T_SYS_ENTITIES').a.values.runtime_state_ref='state-a';e.rows('T_SYS_ENTITIES').b.values.runtime_state_ref='state-a';
+ e.rows('T_CHAR_DOSSIER')['d-b'].values.name='阿青';e.rows('T_SYS_ENTITIES').b.values.name='阿青';e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'d-a',posture:'站立'},'state-a');
+ const secret=form(e.data,'T_CHAR_SECRETS',{name:'不可猜测',fact_proposition:'不能猜测关联目标',related_object_refs:'关联：阿青'});
+ acceptReply(e,reply(1,secret),'m1');assert.equal(e.data.runtime.archive_queue[0].status,'blocked');
+ assert.match(e.data.runtime.archive_queue[0].error.message,/人物.*(?:不唯一|多个)|关联名称不存在、重名或表不匹配/);
+});
+
 test('two distinct same-name characters remain ambiguous after projection',()=>{
  const e=seed();e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'a',posture:'站立'},'state-a');
  e.newRecord('T_CHAR_DOSSIER',{name:'阿青'},'d-c');e.newRecord('M_FIELD_REFERENCES',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'c',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'d-c',reference_kind:'record',resolution_status:'resolved'},'o-c');e.newRecord('T_SYS_ENTITIES',{name:'阿青',kind:'character',origin_record_ref:'o-c'},'c');e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'c',posture:'站立'},'state-c');
@@ -240,7 +263,7 @@ for(const [label,make,block='archive']of [
 ])test('unproved current form remains pending with zero semantic writes: '+label,()=>{
  const e=seed(),text=make(e),before=clone(e.data.tables),raw=block==='archive'?reply(1,text):reply(1,'').replace('<cells/>','<cells format="form">'+text+'</cells>');const first=acceptReply(e,raw,'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
  if(block==='archive'){const batch=e.data.runtime.archive_queue[0];assert.equal(batch.status,'blocked');assert(batch.error);}else{assert.equal(first.result.operations[0].status,'FAILED');assert.equal(first.result.operations[0].error.code,'REPLY_TASK_ACCEPTANCE');}
- for(const [id,rows]of Object.entries(before))if(!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES','X_RECORD_META'].includes(id))assert.deepEqual(e.data.tables[id],rows,id);
+ for(const [id,rows]of Object.entries(before))if(!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES','T_SYS_CHANGE_LOG','M_TYPED_VALUES','X_RECORD_META'].includes(id))assert.deepEqual(e.data.tables[id],rows,id);
  assert.equal(e.data.runtime.sources['main/m1@1'].reply_raw,raw);
 });
 
@@ -248,7 +271,7 @@ for(const [label,archive]of [['legacy payload','事件|e1[夜]：门开了(原�
  const e=seed(),before=clone(e.data.tables),raw=reply(1,'placeholder').replace('<archive format="form">placeholder</archive>',`<archive format="pipes">${archive}</archive>`);
  const result=acceptReply(e,raw,'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
  assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.equal(e.data.runtime.archive_queue[0].error.code,'ARCHIVE_FORMAT');assert(e.data.runtime.sources['main/m1@1'].settlement.warnings.some(w=>w.code==='ARCHIVE_FORMAT'));
- assert.equal(e.data.runtime.sources['main/m1@1'].reply_raw,raw);for(const [id,rows]of Object.entries(before))if(!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES','X_RECORD_META'].includes(id))assert.deepEqual(e.data.tables[id],rows,id);
+ assert.equal(e.data.runtime.sources['main/m1@1'].reply_raw,raw);for(const [id,rows]of Object.entries(before))if(!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES','T_SYS_CHANGE_LOG','M_TYPED_VALUES','X_RECORD_META'].includes(id))assert.deepEqual(e.data.tables[id],rows,id);
 });
 
 test('an already accepted task can record a later field delta without inventing or recopying acceptance',()=>{

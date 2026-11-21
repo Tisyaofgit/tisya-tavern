@@ -7,6 +7,7 @@ import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges,matrixInputLin
 import {stageArchive,formalizeArchives} from './archive.mjs';
 import {assertReplyFormOwnership,replyFormDecoding,assertReplyFormVersion,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
 import {programOwnedTable,creationFieldAllowed} from './prompt-boundary.mjs';
+import {isFieldHistoryRecord} from './field-history.mjs';
 const mark=/^[ \t\u3000]*(?:\[(?:P)?(\d+)\]|【(?:P)?(\d+)】|\((\d+)\)|P(\d+)[.、:：]?|(\d+)[.、．:：)]|(\d+)(?=[ \t\u3000]))[ \t\u3000]*/i;
 export function paragraphs(body){
  const numbered=[...body.matchAll(/^[ \t]*(\d+) /gm)],natural=[...body.matchAll(/\r?\n[ \t\u3000]*\r?\n+/g)];let valid=numbered.length>0&&!body.slice(0,numbered[0].index).trim()&&numbered.every((m,i)=>Number(m[1])===i+1);
@@ -39,6 +40,7 @@ function changedBusinessRecords(beforeTables,state){
   const schema=state.schema[tableId];if(!schema||programOwnedTable(tableId,schema))continue;
   const fields=schema.fields.filter(creationFieldAllowed);
   for(const [recordId,row]of Object.entries(rows)){
+   if(isFieldHistoryRecord(tableId,row))continue;
    const before=beforeTables[tableId]?.[recordId],values={},states={};
    for(const field of fields){const key=field.key;if(!Object.hasOwn(row.values,key)||row.states?.[key]==='derived'||Object.hasOwn(row.formulas??{},key))continue;
     const current={present:true,value:row.values[key],state:row.states?.[key]??'unset'},previous={present:Object.hasOwn(before?.values??{},key),value:before?.values?.[key]??null,state:before?.states?.[key]??'unset'};

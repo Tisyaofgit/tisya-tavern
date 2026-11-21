@@ -18,6 +18,7 @@ export function modelTableAllowed(id,schema={},task='main'){return !programOwned
 // business results; an ordinary model form must not recalculate or overwrite them.
 export const EXECUTOR_FIELDS=Object.freeze({
  X_EFFECT_INSTANCES:['started_at','expires_at','next_tick_at','stacks','status'],
+ T_CHAR_DOSSIER:['persona_dynamics'],
  X_RESOURCE_CYCLES:['next_at'],X_QUEST_RULES:['times_completed'],
  X_FIN_CREDIT_CARDS:['used','refundBalance'],
  X_FIN_LOANS:['apr','totalInterest','totalPayable','monthlyPayment','quoteId','paid','createdAt','status'],

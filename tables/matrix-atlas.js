@@ -1,6 +1,7 @@
 import {clone,fail} from '../engine/common.mjs';
 import {matrixRecordVisible,matrixFieldVisible,modelFieldAllowed} from '../engine/prompt-boundary.mjs';
 import {eventCodes} from '../engine/record-identity.mjs';
+import {readFieldHistory} from '../engine/field-history.mjs';
 
 const groups=[['people','人物','jade'],['places','山川与城邑','blue'],['factions','势力与群体','purple'],['items','器物与技艺','amber'],['memory','事件与记忆','blue'],['phone','手机档案','jade'],['other','其他档案','slate']].map(([id,name,accent])=>({id,name,accent}));
 const rootTypes={T_CHAR_DOSSIER:'people',T_STATIC_PLACES:'places',T_STATIC_ORGANIZATIONS:'factions',T_STATIC_ITEMS_SKILLS:'items'};
@@ -117,7 +118,11 @@ export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.sc
    const adjacent=related(id),expanded=new Map(adjacent.map(r=>[r.id,r]));
    for(const r of adjacent)if(r.sourceTable==='T_DYN_EVENT_PARTICIPANTS')for(const event of related(r.id))if(event.table==='events')expanded.set(event.id,event);
    const neighbors=new Map();for(const via of adjacent)for(const r of [via,...related(via.id)])if(r.id!==id&&r.table==='objects'){const old=neighbors.get(r.id)??{...target(r.id),via:[]};old.via.push({id:via.id,label:via.values.名称});neighbors.set(r.id,old);}
-   return {scope:clone(scope),record:clone({id:row.id,table:row.table,rev:row.rev,values:row.values}),kind:row.kind,definitions:clone(row.definitions),sections:Object.entries(row.values).filter(([name])=>!['名称','描述','事件标题'].includes(name)).map(([name,value])=>({name,value:clone(value)})),related:[...expanded.values()].map(r=>({...target(r.id),values:{...clone(r.values),经过:r.values.描述}})),links:clone(links(id)),references:row.paths.map(p=>({path:clone(p.path),target:target(p.id)})),neighbors:clone([...neighbors.values()])};
+   const stored=state.tables[row.sourceTable]?.[row.recordId],history=readFieldHistory(state,{tableId:row.sourceTable,recordId:row.recordId}).filter(item=>{
+    const spec=state.schema[row.sourceTable]?.fields.find(f=>f.key===item.field),log=state.tables.T_SYS_CHANGE_LOG?.[item.id];
+    return spec&&stored&&log&&matrixFieldVisible(spec,stored,scope,row.sourceTable,state,row.recordId);
+   }).map(item=>({...item,label:state.schema[row.sourceTable].fields.find(f=>f.key===item.field)?.label??item.field,storyTimeLabel:timeLabel(worldTime(item.storyTime))||'时间未明',event:item.eventRef&&records.has('T_DYN_EVENTS#'+item.eventRef)?target('T_DYN_EVENTS#'+item.eventRef):null}));
+   return {scope:clone(scope),record:clone({id:row.id,table:row.table,rev:row.rev,values:row.values}),kind:row.kind,definitions:clone(row.definitions),sections:Object.entries(row.values).filter(([name])=>!['名称','描述','事件标题'].includes(name)).map(([name,value])=>({name,value:clone(value)})),related:[...expanded.values()].map(r=>({...target(r.id),values:{...clone(r.values),经过:r.values.描述}})),links:clone(links(id)),references:row.paths.map(p=>({path:clone(p.path),target:target(p.id)})),neighbors:clone([...neighbors.values()]),history:clone(history)};
   }
  };
 }

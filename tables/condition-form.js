@@ -1,6 +1,7 @@
 import {worldFramework} from '../engine/world-framework.mjs';
 import {check} from './schema.js';
 import {matrixRecordVisible,modelFieldAllowed,modelTableAllowed} from '../engine/prompt-boundary.mjs';
+import {isFieldHistoryRecord} from '../engine/field-history.mjs';
 const scalar=new Set(['TEXT','LONG_TEXT','ENUM','NUMBER','INTEGER','BOOLEAN','REF']);
 export const CONDITION_COMPARATORS=[['eq','等于'],['ne','不等于'],['ge','至少'],['gt','大于'],['le','至多'],['lt','小于'],['exists','已填写']];
 export function conditionCells(state,allowed=()=>true){
@@ -38,10 +39,13 @@ export function compileConditionForm(state,input,cells,old=null){
  const obsoleteRefs=Object.entries(state.tables.M_FIELD_REFERENCES??{}).filter(([,r])=>r.values.owner_table==='M_CONDITIONS'&&oldNodes.has(r.values.owner_row_uuid));
  // Owned nodes may be replaced only if no other owner has reused their identities.
  const removed=new Map([['M_CONDITIONS',oldNodes],['M_FIELD_REFERENCES',new Set(obsoleteRefs.map(([id])=>id))]]);
- for(const [table,rows]of Object.entries(state.tables))for(const [rid,r]of Object.entries(rows))for(const f of state.schema[table]?.fields??[]){
-  const target=f.ref?.startsWith('@')?r.values[f.ref.slice(1)]:f.ref;if(!removed.has(target))continue;
-  if(table==='T_SYS_SOURCE_ROUTES'&&rid===id||removed.get(table)?.has(rid))continue;
-  check(!(Array.isArray(r.values[f.key])?r.values[f.key]:[r.values[f.key]]).some(v=>removed.get(target).has(v)),'条件明细被其他记录直接引用，请先修订该引用');
+ for(const [table,rows]of Object.entries(state.tables))for(const [rid,r]of Object.entries(rows)){
+  if(isFieldHistoryRecord(table,r))continue;
+  for(const f of state.schema[table]?.fields??[]){
+   const target=f.ref?.startsWith('@')?r.values[f.ref.slice(1)]:f.ref;if(!removed.has(target))continue;
+   if(table==='T_SYS_SOURCE_ROUTES'&&rid===id||removed.get(table)?.has(rid))continue;
+   check(!(Array.isArray(r.values[f.key])?r.values[f.key]:[r.values[f.key]]).some(v=>removed.get(target).has(v)),'条件明细被其他记录直接引用，请先修订该引用');
+  }
  }
  for(const [rid,r]of Object.entries(state.tables.X_RECORD_META??{}))if(removed.get(r.values.table_id)?.has(r.values.record_id))changes.push({tableId:'X_RECORD_META',recordId:rid,remove:true});
  for(const [rid]of existing)changes.push({tableId:'M_CONDITIONS',recordId:rid,remove:true});

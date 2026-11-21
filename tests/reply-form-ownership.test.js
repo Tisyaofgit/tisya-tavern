@@ -8,6 +8,7 @@ import {reconcile} from '../engine/journal.mjs';
 import {prepareMatrixSheets} from '../tables/foundation/engine.js';
 import legacyFixture from './fixtures/reply-form-legacy-staged.json' with {type:'json'};
 import {replyFormTableIds,assertReplyFormOwnership,REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from '../engine/reply-form-ownership.mjs';
+import {historyStorageTables} from '../engine/field-history.mjs';
 
 const fresh=()=>new Runtime(initializeState(catalog,{session_ref:'ownership-test',branch_ref:'main',audience:'author'}));
 function seed(){
@@ -28,7 +29,7 @@ function reply(cells='',archive='',body='1 阿青抵达门前，看见木盒，�
  return '<reply><title>门前</title><body>'+body+'</body><extra/><'+(cells?'cells format="form">'+cells+'</cells>':'cells/>')+'<vars/>'+(archive?'<archive format="form">'+archive+'</archive>':'<archive/>')+'<actions/></reply>';
 }
 const accept=(e,cells='',archive='',id='m1')=>acceptReply(e,reply(cells,archive),id);
-const business=e=>Object.fromEntries(Object.entries(e.data.tables).filter(([id])=>!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES','X_RECORD_META'].includes(id)));
+const business=e=>Object.fromEntries(Object.entries(e.data.tables).filter(([id])=>!['T_SYS_SOURCE_FRAGMENTS','T_SYS_ARCHIVE_BATCHES',...historyStorageTables()].includes(id)));
 const rows=(e,id)=>Object.values(e.rows(id));
 
 test('current forms create canonical people immediately and archive can reference them in the same reply',()=>{
@@ -190,6 +191,12 @@ test('current delta validates complete action writes but excludes executor recei
 test('current delta cannot move a memory detail under a current parent to evade its original ownership',()=>{
  const e=seed();e.newRecord('T_DYN_EVENTS',{title:'已有事件'},'event');e.newRecord('T_DYN_ENTITY_GAUGES',{name:'余力',entity_id:'a',field_key:'energy',value:10},'g');e.newRecord('M_LIST_VALUES',{owner_table:'T_DYN_EVENTS',owner_row_uuid:'event',owner_field:'tags',text_value:'旧线索',item_type:'text',value_state:'known',sequence:1},'detail');
  const raw='<reply><body>1 核对线索。</body><cells>M_LIST_VALUES#detail.owner_table: =T_DYN_ENTITY_GAUGES | P1</cells><archive/></reply>',r=acceptReply(e,raw,'move-detail');assert.equal(r.result.operations[0].error.code,'REPLY_FORM_OWNER');assert.equal(e.rows('M_LIST_VALUES').detail.values.owner_table,'T_DYN_EVENTS');assert.equal(e.data.runtime.sources['main/move-detail@1'].reply_raw,raw);
+});
+
+test('history exemptions never hide ordinary typed values from current ownership checks',()=>{
+ const e=seed();e.newRecord('T_DYN_EVENTS',{title:'已有事件'},'event');
+ const line='@ROW+: '+JSON.stringify({table_id:'M_TYPED_VALUES',record_id:'typed-bypass',values:{owner_table:'T_DYN_EVENTS',owner_row_uuid:'event',owner_field:'summary',value_type:'text',text_value:'不得绕过',value_state:'known'}})+' | P1',raw='<reply><body>1 核对历史。</body><cells>'+line+'</cells><archive/></reply>',r=acceptReply(e,raw,'typed-bypass');
+ assert.equal(r.result.operations[0].status,'FAILED');assert.match(r.result.operations[0].error.code,/^REPLY_FORM_/);assert(!e.rows('M_TYPED_VALUES')['typed-bypass']);
 });
 
 test('current ownership rejects details rooted in a program-owned source record',()=>{

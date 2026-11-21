@@ -42,6 +42,7 @@ test('canonical atlas reads formal rows, links actual references and shows sourc
  const data=snapshot(),before=structuredClone(data),atlas=createMatrixAtlas(data),person=atlas.detail('T_SYS_ENTITIES#a');
  assert(atlas.list().items.some(r=>r.id==='T_DYN_STAGE_SUMMARIES#s'));
  assert(person.related.some(r=>r.id==='T_DYN_EVENTS#e'));
+ assert(person.history.some(item=>item.field==='name'&&item.after==='阿青'&&item.readback==='阿青'),'field growth history reaches the readable atlas');
  assert.deepEqual(atlas.detail('T_DYN_EVENTS#e').record.values.正文来源,{回复:'m1',修订:2,段落:['P1']});
  assert.deepEqual(data,before);
  const reader=createMatrixAtlas(data,{scope:{...data.state.runtime.scope,audience:'reader'}});

@@ -28,11 +28,37 @@ export function characterOrigin(state,entityId,read){
 
 export function characterDossierId(state,entityId){return characterOrigin(state,entityId)?.dossierId??null;}
 
-export function characterEntityForDossier(state,dossierId){
+function originEntityForDossier(state,dossierId){
  const matches=[];
  for(const entityId of Object.keys(state.tables?.T_SYS_ENTITIES??{}))if(characterDossierId(state,entityId)===dossierId)matches.push(entityId);
  if(matches.length>1)fail('CHARACTER_IDENTITY_AMBIGUOUS','人物档案对应多个实体，请先核对稳定编号',{dossierId,entityIds:matches});
  return matches[0]??null;
+}
+
+function stateEntityCandidates(state,stateId){
+ const stateRow=state.tables?.T_DYN_ENTITY_STATE?.[stateId];if(!stateRow)return [];
+ const matches=new Set(),owner=stateRow.values?.entity_id;
+ if(typeof owner==='string'&&state.tables?.T_SYS_ENTITIES?.[owner])matches.add(owner);
+ else if(typeof owner==='string'&&state.tables?.T_CHAR_DOSSIER?.[owner]){
+  const entityId=originEntityForDossier(state,owner);if(entityId)matches.add(entityId);
+ }
+ // runtime_state_ref is the registered reverse coordinate of the same live
+ // state. It can recover a sparse import without treating equal display names
+ // as identity. Conflicting coordinates remain ambiguous and fail closed.
+ for(const [entityId,row]of Object.entries(state.tables?.T_SYS_ENTITIES??{}))if(row.values?.runtime_state_ref===stateId)matches.add(entityId);
+ return [...matches];
+}
+
+export function characterEntityForDossier(state,dossierId){
+ const matches=new Set(),origin=originEntityForDossier(state,dossierId);if(origin)matches.add(origin);
+ const direct=state.tables?.T_CHAR_DOSSIER?.[dossierId]?.values?.entity_ref;
+ if(typeof direct==='string'&&state.tables?.T_SYS_ENTITIES?.[direct])matches.add(direct);
+ for(const stateId of Object.keys(state.tables?.T_DYN_ENTITY_STATE??{})){
+  if(state.tables.T_DYN_ENTITY_STATE[stateId].values?.entity_id!==dossierId)continue;
+  for(const entityId of stateEntityCandidates(state,stateId))matches.add(entityId);
+ }
+ if(matches.size>1)fail('CHARACTER_IDENTITY_AMBIGUOUS','人物档案对应多个实体，请先核对稳定编号',{dossierId,entityIds:[...matches]});
+ return [...matches][0]??null;
 }
 
 // Returns the canonical live entity represented by a dossier/entity/state row.
@@ -40,8 +66,9 @@ export function characterEntityForDossier(state,dossierId){
 export function characterProjection(state,tableId,recordId){
  if(tableId==='T_SYS_ENTITIES')return {tableId,recordId};
  if(tableId==='T_DYN_ENTITY_STATE'){
-  const entityId=state.tables?.T_DYN_ENTITY_STATE?.[recordId]?.values?.entity_id;
-  return typeof entityId==='string'&&state.tables?.T_SYS_ENTITIES?.[entityId]?{tableId:'T_SYS_ENTITIES',recordId:entityId}:null;
+  const matches=stateEntityCandidates(state,recordId);
+  if(matches.length>1)fail('CHARACTER_IDENTITY_AMBIGUOUS','实时状态对应多个人物实体，请先核对稳定编号',{stateId:recordId,entityIds:matches});
+  return matches.length?{tableId:'T_SYS_ENTITIES',recordId:matches[0]}:null;
  }
  if(tableId!=='T_CHAR_DOSSIER')return null;
  const entityId=characterEntityForDossier(state,recordId);

@@ -52,13 +52,13 @@ function neutralRows(bundle,edit,contextKey,allowedOriginContextKeys){
 
 // Recovery is a derived, reversible journal event. The original initialization
 // and every business edit retain their original strict anchors and bytes.
-export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMessages=[],allowedOriginContextKeys=[]}={}){
+export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMessages=[],allowedOriginContextKeys=[],playerBinding=null}={}){
  const recoveries=[],hydration=[];
  for(const edit of bundle.manual_edits??[]){
   const proof=candidateProof(bundle,edit,messages,nativeMessages);if(!proof)continue;
   const neutral=neutralRows(bundle,edit,contextKey,allowedOriginContextKeys);if(!neutral)continue;
   if(proof.old===null){hydration.push({index:proof.index,uid:proof.uid});continue;}
-  const prefix=messages.slice(0,proof.index),base=reconcile(bundle,prefix,scope).bundle.state,next=clone(base);
+  const prefix=messages.slice(0,proof.index),base=reconcile(bundle,prefix,scope,{playerBinding}).bundle.state,next=clone(base);
   for(const row of neutral.rows){
    if(!next.schema[row.table])next.schema[row.table]=clone(row.schema);
    else for(const field of row.schema?.fields??[])if(!next.schema[row.table].fields.some(f=>f.key===field.key))next.schema[row.table].fields.push(clone(field));
@@ -68,11 +68,11 @@ export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMes
   recoveries.push({edit:{uid:'phone-bootstrap-recovery:'+neutral.id,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:edit.anchor_chain.slice(0,-1),patch},proof});
  }
  const staged=recoveries.length?{...bundle,manual_edits:[...(bundle.manual_edits??[]),...recoveries.map(r=>r.edit)]}:bundle;
- let result=reconcile(staged,messages,scope);if(recoveries.length)result.bundle.manual_edits=clone(bundle.manual_edits);
+ let result=reconcile(staged,messages,scope,{playerBinding});if(recoveries.length)result.bundle.manual_edits=clone(bundle.manual_edits);
  let previous=bundle.state;
  if(!previous.tables?.X_PHONE_BINDINGS?.['phone-current']&&recoveries.length){
   const {index,old}=recoveries[0].proof,original=clone(messages.slice(0,index+1));original[index].text=old;
-  previous=reconcile(bundle,original,scope).bundle.state;
+  previous=reconcile(bundle,original,scope,{playerBinding}).bundle.state;
  }
  const current=result.bundle.state,merged=restorePhoneDatabaseHistory(current,previous,{contextKey,allowedOriginContextKeys});
  const patch=merged===current?[]:inversePatch({schema:merged.schema,tables:merged.tables},{schema:current.schema,tables:current.tables});
@@ -83,7 +83,7 @@ export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMes
   // inverse through the same journal so a later swipe cannot delete a field
   // while leaving an unjournaled layout pointing at that removed field.
   const edits=[...(bundle.manual_edits??[])];if(!edits.some(e=>e.uid===edit.uid))edits.push(edit);
-  result=reconcile({...result.bundle,manual_edits:[...edits,...recoveries.map(r=>r.edit)]},messages,scope);
+  result=reconcile({...result.bundle,manual_edits:[...edits,...recoveries.map(r=>r.edit)]},messages,scope,{playerBinding});
   result.bundle.manual_edits=edits;
  }
  if(hydration.length)result.result.phone_bootstrap_hydration=[...new Map(hydration.map(target=>[target.index+':'+target.uid,target])).values()];
