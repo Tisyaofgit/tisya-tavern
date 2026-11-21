@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyGeneration,assertGeneration} from '../engine/generation.mjs';
-import {createConfiguration} from '../engine/config.mjs';
+import {applyGeneration,assertGeneration,generationValues} from '../engine/generation.mjs';
+import {createConfiguration,matrixPreset} from '../engine/config.mjs';
+
+test('shipped tool recursion defaults to five without overwriting an explicit native value',()=>{
+ assert.equal(matrixPreset().tool_call_recurse_limit,5);
+ const ctx={chatCompletionSettings:{tool_call_recurse_limit:37},ToolManager:{RECURSE_LIMIT:37}};
+ assert.equal(generationValues(ctx).tool_call_recurse_limit,37);
+ assert.equal(ctx.chatCompletionSettings.tool_call_recurse_limit,37);
+ assert.equal(ctx.ToolManager.RECURSE_LIMIT,37);
+});
 
 test('tool recursion limit changes the native execution limit and restores its actual previous value',()=>{
  const ctx={chatCompletionSettings:{tool_call_recurse_limit:8},ToolManager:{RECURSE_LIMIT:10}};

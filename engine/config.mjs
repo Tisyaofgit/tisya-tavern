@@ -27,9 +27,9 @@ function withReplyEnvelope(text){return String(text)
  .replace(/^\[FINAL_BODY_FORMAT\]\n[\s\S]*?^\[\/FINAL_BODY_FORMAT\]\n?/gm,'')
  .replace(/^@ENVELOPE :: Whole response boundary\n[\s\S]*?^@END_ENVELOPE\n?/gm,'')
  .replace('[REGISTRY]','[REGISTRY]\n'+REPLY_ENVELOPE_RULE);}
-export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE,narrative_source_routing:NARRATIVE_SOURCE_ROUTING});
+export const MATRIX_REVISION=digest({original,identity_slots:2,engine:'matrix-js-v4-unified-avatar-wish-history',reply_envelope:REPLY_ENVELOPE_RULE,narrative_source_routing:NARRATIVE_SOURCE_ROUTING,tool_call_recurse_limit:configuration['生成参数与输出设置'].tool_call_recurse_limit});
 export function matrixPreset(){
- const p=clone(original);p.name='Tisya';p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
+ const p=clone(original);p.name='Tisya';p.tool_call_recurse_limit=configuration['生成参数与输出设置'].tool_call_recurse_limit;p.extensions={tisya_builtin:{revision:MATRIX_REVISION},tisya_matrix:{version:1}};
  for(const row of p.prompts){
   if(typeof row.content==='string')row.content=resolvePromptLayerText(row.identifier,resolveNarrativeIntakeText(row.identifier,row.content));
   if(row.identifier==='main')row.content=row.content.replace('@U:={id:user,','@U:={id:contractor,');

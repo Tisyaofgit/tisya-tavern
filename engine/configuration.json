@@ -35,7 +35,7 @@
     "continue_prefill": false,
     "continue_postfix": " ",
     "function_calling": true,
-    "tool_call_recurse_limit": 10,
+    "tool_call_recurse_limit": 5,
     "show_thoughts": true,
     "reasoning_effort": "auto",
     "verbosity": "auto",

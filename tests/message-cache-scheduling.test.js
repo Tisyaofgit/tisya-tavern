@@ -17,7 +17,7 @@ test('a main-thread loading task cannot turn a healthy IndexedDB read into a tim
   const packet=await c.prepare(identity,()=>({text:'fresh'}));await c.flush();
   assert.equal(c.report().state,'ready',errors.join('\n'));
   assert.deepEqual(errors,[]);assert.equal(packet.fromDisk,false);
-  assert.equal((await c.prepare(identity,()=>{throw Error('must reuse persisted value');})).fromDisk,true);
+  const warm=await c.prepare(identity,()=>{throw Error('must reuse hot value');});assert.equal(warm.fromHot,true);assert.deepEqual(warm.value,{text:'fresh'});
  }finally{IDBDatabase.prototype.transaction=original;await c.dispose();}
 });
 

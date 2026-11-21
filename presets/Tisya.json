@@ -33,7 +33,7 @@
   "continue_prefill": false,
   "continue_postfix": " ",
   "function_calling": true,
-  "tool_call_recurse_limit": 10,
+  "tool_call_recurse_limit": 5,
   "show_thoughts": true,
   "reasoning_effort": "auto",
   "verbosity": "auto",
@@ -1624,7 +1624,7 @@
   "name": "Tisya",
   "extensions": {
     "tisya_builtin": {
-      "revision": "fb4c1016fc0985d5faaa9a7a6a972dffe20df5ba9d14715f0a56520963d52566"
+      "revision": "6d9511a66909b6be7727036a3a33db2c2f922325f5e87e549297b76e094718a4"
     },
     "tisya_matrix": {
       "version": 1

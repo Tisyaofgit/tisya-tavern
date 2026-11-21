@@ -17,9 +17,21 @@ test('disk retains more than hot LRU capacity and reopens by exact source, scope
 });
 test('delete and edit prune only removed sources; position shifts and retained candidates survive',async()=>{
  const w=env(),a=message(1),b=message(2),c=cache(w);b.swipes.push('候选二');await c.reconcile('chat-a',[a,b]);await read(c,a);await read(c,b);await c.prepare({...identity(b),source:'候选二'},()=>({text:'候选二'}));await read(c,a,'other');await c.flush();
- await c.reconcile('chat-a',[b]);assert.equal((await rows(w)).length,3);assert.equal((await read(c,b)).fromDisk,true);
+ await c.reconcile('chat-a',[b]);assert.equal((await rows(w)).length,3);assert.equal((await read(c,b)).fromHot,true);
  b.mes='候选二';b.swipes=['候选二'];await c.reconcile('chat-a',[b]);assert.equal((await rows(w)).filter(r=>r.scope==='chat-a').length,1);
  b.mes='编辑后';b.swipes=['编辑后'];await c.reconcile('chat-a',[b]);assert.equal((await rows(w)).filter(r=>r.scope==='chat-a').length,0);assert.equal((await rows(w)).filter(r=>r.scope==='other').length,1);await c.dispose();
+});
+test('candidate round trips reuse exact hot projections and prune only removed sources',async()=>{
+ const w=env(),m=message(1,'候选一');m.swipes=['候选一','候选二'];let computes=0,hashes=0;
+ const digest=async text=>{hashes++;const bytes=await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');};
+ const c=cache(w,{digest});await c.reconcile('chat-a',[m]);
+ const readCandidate=source=>c.prepare({...identity(m),source},()=>{computes++;return {text:source};});
+ assert.equal((await readCandidate('候选一')).fromHot,false);const afterFirst=hashes;
+ assert.equal((await readCandidate('候选二')).fromHot,false);assert(hashes>afterFirst);const afterBoth=hashes;
+ m.mes='候选二';m.swipe_id=1;await c.reconcile('chat-a',[m]);
+ assert.deepEqual((await readCandidate('候选一')).value,{text:'候选一'});assert.equal((await readCandidate('候选二')).fromHot,true);assert.equal(hashes,afterBoth);assert.equal(computes,2);
+ m.swipes=['候选二'];await c.reconcile('chat-a',[m]);assert.equal((await readCandidate('候选二')).fromHot,true);
+ assert.equal((await readCandidate('候选一')).fromHot,false);assert.equal(computes,3);await c.dispose();
 });
 test('cold or incomplete host records are not deletions; complete hydrated inventory can prune',async()=>{
  const w=env(),m=message(1),c=cache(w);m.swipes.push('未加载的旧候选');await c.reconcile('chat-a',[m]);await c.prepare({...identity(m),source:m.swipes[1]},()=>({text:'旧'}));await c.flush();
@@ -49,8 +61,9 @@ test('renderer upgrade discards obsolete derived entries but leaves the caller�
  const w=env(),m=message(1),snapshot=JSON.stringify(m);let c=cache(w);await read(c,m);await c.dispose();c=cache(w,{version:'v2'});await c.reconcile('chat-a',[m]);assert.deepEqual(await rows(w),[]);assert.equal((await read(c,m)).fromDisk,false);assert.equal(JSON.stringify(m),snapshot);await c.dispose();
 });
 test('quickly visiting many chats releases old inventories without deleting saved disk data',async()=>{
- const w=env(),m=message(1),c=cache(w);for(let i=0;i<8;i++){await c.reconcile('chat-'+i,[m]);await read(c,m,'chat-'+i);await c.flush();}assert.equal((await rows(w)).length,8);
- await Promise.all(Array.from({length:8},(_,i)=>c.reconcile('chat-'+i,[m])));assert.equal((await rows(w)).length,8);await c.reconcile('chat-0',[m]);assert.equal((await read(c,m,'chat-0')).fromDisk,true);await c.dispose();
+ const w=env(),m=message(1);let c=cache(w);for(let i=0;i<8;i++){await c.reconcile('chat-'+i,[m]);await read(c,m,'chat-'+i);await c.flush();}assert.equal((await rows(w)).length,8);
+ await Promise.all(Array.from({length:8},(_,i)=>c.reconcile('chat-'+i,[m])));assert.equal((await rows(w)).length,8);await c.reconcile('chat-0',[m]);assert.equal((await read(c,m,'chat-0')).fromHot,true);await c.dispose();
+ c=cache(w);assert.equal((await read(c,m,'chat-0')).fromDisk,true);await c.dispose();
 });
 
 test('progressing history cleanup does not time out merely because the whole scan exceeds one timeout',async()=>{

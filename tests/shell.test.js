@@ -128,6 +128,7 @@ function selectFixtureChat(f,id,chatFile){
  if(changed){c.chatMetadata={integrity:'synthetic-loaded-'+chatFile};c.chat=structuredClone(c.chat);for(const message of c.chat)delete message.extra?.tisya_engine;}
 }
 async function waitForShell(predicate,label){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>=deadline)assert.fail('Timed out: '+label);await new Promise(resolve=>setTimeout(resolve,5));}}
+async function waitForFormatQuiet(f){const deadline=Date.now()+5000;let previous=-1,quiet=0;while(Date.now()<deadline){const count=f.formatCalls.length;quiet=count===previous?quiet+40:0;previous=count;if(quiet>=160)return;await new Promise(resolve=>setTimeout(resolve,40));}assert.fail('Timed out: initial formatting did not become quiet');}
 // happy-dom has no host-side per-message cache. Its asynchronous capability
 // notice must not hide any other product error in zero-error assertions.
 const unexpectedErrors=errors=>errors.filter(error=>!error.includes('当前宿主不支持逐条显示缓存'));
@@ -614,6 +615,58 @@ test('Android immersive entry remains discoverable and invokes the persistent na
 test('legacy native shortcut is hidden without overwriting settings; advanced revision remains in More',async()=>{const f=await setup(),d=f.w.document;f.ctx.extensionSettings.缇斯亚界面={联系人分组:{},消息快捷栏:['regen','msg-native','more']};f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();assert.equal(d.querySelector('[data-tisya-action=msg-native]'),null);assert.deepEqual(f.ctx.extensionSettings.缇斯亚界面.消息快捷栏,['regen','msg-native','more']);await click(f,'more');assert(d.querySelector('[data-tisya-action=msg-revision]'));assert(!d.querySelector('[data-tisya-action=msg-native]'));await f.w.happyDOM.abort();});
 
 test('candidate navigation has its own final row after message tools',async()=>{const f=await setup(),d=f.w.document;f.ctx.chat[0].swipes=['旧版','正文','新版'];f.ctx.chat[0].swipe_id=1;f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();const actions=d.querySelector('.tisya-actions'),tools=actions.querySelector('.tisya-message-tools'),versions=actions.querySelector('.tisya-candidate-row');assert(versions);assert.equal(actions.lastElementChild,versions);assert.equal(tools.querySelector('[data-tisya-action=candidate-prev]'),null);assert(tools.querySelector('[data-tisya-action=more]'));assert.equal(versions.querySelectorAll('button').length,3);assert.equal(versions.querySelector('[aria-label="当前候选"]').textContent,'2/3');assert.equal(versions.querySelector('[data-tisya-action=candidate-prev]').disabled,false);assert.equal(versions.querySelector('[data-tisya-action=candidate-next]').disabled,false);await f.w.happyDOM.abort();});
+
+test('candidate round trips refresh only the selected message and keep historical visual instances mounted',async()=>{
+ const f=await setup({realMessages:true,mediaStorage:true,configureContext:async(ctx,{window})=>{
+  ctx.chat=Array.from({length:6},(_,i)=>({mes:'历史正文 '+i,name:'甲',send_date:'history-'+i,is_user:i%2===0,is_system:false}));
+  Object.assign(ctx.chat.at(-1),{mes:'新版',is_user:false,swipes:['旧版','新版'],swipe_id:1});
+  window.document.querySelector('#chat').innerHTML=ctx.chat.map((m,i)=>`<div class="mes" mesid="${i}"><div class="mes_block"><div class="mes_text">${m.mes}</div><div class="mes_buttons"></div></div></div>`).join('');
+ }});try{
+  await waitForShell(()=>f.w.document.querySelectorAll('#chat .tisya-message-visual').length===6,'initial historical visuals');
+  await waitForShell(()=>Array.from({length:5},(_,i)=>f.formatCalls.some(call=>call[0]==='历史正文 '+i)).every(Boolean)&&f.formatCalls.some(call=>call[0]==='新版'),'initial historical body formatting');
+  const nodes=[...f.w.document.querySelectorAll('#chat .mes')],historyHosts=nodes.slice(0,-1).map(n=>n.querySelector('.tisya-message-visual'));
+  await waitForFormatQuiet(f);
+  let refreshes=0;const refresh=f.w.displayPipeline.refresh.bind(f.w.displayPipeline);f.w.displayPipeline.refresh=()=>{refreshes++;return refresh();};f.formatCalls.length=0;
+  await click(f,'candidate-prev');await click(f,'candidate-next');await click(f,'candidate-prev');await new Promise(resolve=>setTimeout(resolve,90));
+  assert.equal(f.ctx.chat.at(-1).mes,'旧版');assert.equal(refreshes,0,'candidate selection must not re-read global display rules');
+  assert.deepEqual(nodes.slice(0,-1).map(n=>n.querySelector('.tisya-message-visual')),historyHosts,'other history stays mounted');
+  assert(f.formatCalls.every(call=>!String(call[0]).includes('历史正文')),'no historical body is reformatted during candidate round trips: '+JSON.stringify(f.formatCalls.map(call=>call[0])));
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('page navigation keeps historical visuals mounted and a no-op chat exit does not refresh display rules',async()=>{
+ const f=await setup({realMessages:true,mediaStorage:true,configureContext:async(ctx,{window})=>{
+  ctx.chat=Array.from({length:6},(_,i)=>({mes:'导航历史 '+i,name:'甲',send_date:'navigation-'+i,is_user:i%2===0,is_system:false}));
+  window.document.querySelector('#chat').innerHTML=ctx.chat.map((m,i)=>`<div class="mes" mesid="${i}"><div class="mes_block"><div class="mes_text">${m.mes}</div><div class="mes_buttons"></div></div></div>`).join('');
+ }});try{
+  await waitForShell(()=>f.w.document.querySelectorAll('#chat .tisya-message-visual').length===6,'navigation historical visuals');
+  await waitForShell(()=>Array.from({length:6},(_,i)=>f.formatCalls.some(call=>call[0]==='导航历史 '+i)).every(Boolean),'navigation historical body formatting');
+  const nodes=[...f.w.document.querySelectorAll('#chat .mes')],hosts=nodes.map(n=>n.querySelector('.tisya-message-visual'));
+  await waitForFormatQuiet(f);
+  let refreshes=0;const refresh=f.w.displayPipeline.refresh.bind(f.w.displayPipeline);f.w.displayPipeline.refresh=()=>{refreshes++;return refresh();};f.formatCalls.length=0;
+  await click(f,'menu');assert(f.w.document.querySelector('#tisya-settings-home'));
+  await click(f,'chat');assert.equal(f.w.document.querySelector('#tisya-shell').classList.contains('tisya-page-open'),false);
+  await click(f,'chat');
+  assert.equal(refreshes,0,'navigation and a repeated chat exit must not re-read display rules');
+  assert.deepEqual(nodes.map(n=>n.querySelector('.tisya-message-visual')),hosts,'navigation retains every mounted historical view');
+  assert.equal(f.formatCalls.length,0,'navigation must not reformat message bodies');
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
+ }finally{await f.w.happyDOM.abort();}
+});
+
+test('closing a reader during its first paint prevents a stale mount without refreshing display rules',async()=>{
+ const f=await setup({realMessages:true,mediaStorage:true});try{
+  await waitForShell(()=>f.w.document.querySelector('#chat .tisya-message-visual'),'reader source visual');
+  let refreshes=0;const refresh=f.w.displayPipeline.refresh.bind(f.w.displayPipeline);f.w.displayPipeline.refresh=()=>{refreshes++;return refresh();};
+  await click(f,'more');const read=f.w.document.querySelector('[data-tisya-action="msg-read"]');read.click();
+  const close=f.w.document.querySelector('#tisya-overlay [data-tisya-action="close"]');assert(close,'lightweight reader sheet appears first');close.click();
+  await f.w.happyDOM.whenAsyncComplete();await new Promise(resolve=>setTimeout(resolve,30));
+  assert.equal(f.w.document.querySelector('.tisya-reader'),null,'closed reader cannot mount after its paint wait');
+  assert.equal(refreshes,0,'reader opening does not re-read all display rules');
+  assert.deepEqual(unexpectedErrors(f.errors),[]);
+ }finally{await f.w.happyDOM.abort();}
+});
 
 test('direct candidate jump edits the selected native text and deletes only selected version',async()=>{const f=await setup(),d=f.w.document;const m=f.ctx.chat[0];m.swipes=Array.from({length:11},(_,i)=>'版本'+(i+1));m.swipe_id=0;m.mes=m.swipes[0];f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');d.querySelector('#tisya-candidate-select').value='10';await click(f,'candidate-select');assert.equal(m.swipe_id,10);assert.equal(m.mes,'版本11');await click(f,'more');await click(f,'msg-edit');assert.equal(d.querySelector('.edit_textarea').value,'版本11');d.querySelector('.edit_textarea').remove();f.handlers.updated();await f.w.happyDOM.whenAsyncComplete();await click(f,'candidate-picker');assert.equal(d.querySelector('#tisya-candidate-select').value,'10');await click(f,'candidate-delete');await click(f,'candidate-delete-confirm');assert.equal(m.swipes.length,10);assert.equal(m.mes,'版本10');assert.deepEqual(unexpectedErrors(f.errors),[]);await f.w.happyDOM.abort();});
 
