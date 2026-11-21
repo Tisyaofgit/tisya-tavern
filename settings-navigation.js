@@ -3,7 +3,7 @@ export const SETTINGS_GROUP=Object.freeze({
 'settings-app':'play','settings-tab:mode':'play','continue-settings':'play','input-tools':'play',
 'display-settings':'reading','drawer:backgrounds-button':'reading','emotion-atlas':'reading','pet-toggle':'reading','motion-toggle':'reading','fullscreen':'reading',
 'preset-update':'model','drawer:ai-config-button':'model','drawer:sys-settings-button':'model','settings-tab:api':'model','drawer:advanced-formatting-button':'model',
-'selection-diagnostic':'data','display-cache':'data','settings-tab:data':'data','context-overview':'data','font-retry':'data',
+'complete-inspection':'data','selection-diagnostic':'data','display-cache':'data','settings-tab:data':'data','context-overview':'data','font-retry':'data',
 'drawer:extensions-settings-button':'native','drawer:user-settings-button':'native','disable':'native'});
 // One canonical destination per item. Presentation never writes story settings.
 export const SETTINGS_DESTINATIONS=Object.freeze([
@@ -33,6 +33,7 @@ export const SETTINGS_DESTINATIONS=Object.freeze([
  ['settings-tab:api','任务连接分配','为不同任务选择 API 与预设引用','tisya','link'],
  ['drawer:advanced-formatting-button','输出格式','上下文与指令模板、停止字符串','advanced','tools'],
  ['settings-tab:data','上下文与备份','资料范围、导入与导出配置','tisya','book'],
+ ['complete-inspection','完整检查','显示、数据与运行时状态；复制或导出脱敏报告','tisya','search'],
  ['selection-diagnostic','会话进入诊断','查看当前进入阶段与只读诊断','tisya','search'],
  ['context-overview','请求检查','查看实际装配的上下文','tisya','search'],
  ['settings-tab:tables','世界维护','表单、创世、补录与时间线','tisya','sliders'],

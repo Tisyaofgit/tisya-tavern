@@ -11,7 +11,7 @@ test('old message uses accepted historical fields, including zero values, withou
  const b=bundle(),raw=structuredClone(b),s=databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first',sourceId:'reply-a:candidate'},'chat-a');assert.equal(s.state.tables.money.account.values.balance,10);assert.equal(b.state.tables.money.account.values.balance,30);assert.deepEqual(b,raw);assert.match(s.snapshotId,/^matrix:reply-a:1:/);
 });
 test('edited or imported baseline messages have no invented historical fallback',()=>{
- const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'changed'},'chat-a'),/原文/);b.journal.entries[0].baseline=true;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),/原文/);
+ const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'changed'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');b.journal.entries[0].baseline=true;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='BASELINE');
 });
 test('malformed later history and source mismatch preserve evidence and fail closed',()=>{
  const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first',sourceId:'other:x'},'chat-a'),/身份/);delete b.journal.entries[1].pre_turn_snapshot;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),/恢复链/);

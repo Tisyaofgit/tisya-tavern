@@ -57,6 +57,16 @@ test('snapshot and presentation failures expose fixed codes but never private er
  try{const result=await collectArchiveLinkDiagnostic(d,node,{message,contextKey:'ctx',getPresentation:async()=>{throw Object.assign(new Error('PRIVATE_PRESENTATION'),{code:'SNAPSHOT_REJECTED'});},database:{snapshot:async()=>{throw Object.assign(new Error('PRIVATE_SNAPSHOT'),{code:'SNAPSHOT_UNVERIFIED'});}}});assert.equal(result.assessment,'presentation-error');assert.equal(result.presentation.error,'SNAPSHOT_REJECTED');assert.equal(result.snapshot.error,'SNAPSHOT_UNVERIFIED');assert.doesNotMatch(JSON.stringify(result),/PRIVATE_/);}finally{await w.happyDOM.abort();}
 });
 
+test('snapshot verification distinguishes baseline entries from edited message signatures without private details',async()=>{
+ const {w,d,node}=setup(),message={mes:'PRIVATE_NAME',is_user:false,extra:{tisya_engine:{uid:'stable'}}};
+ try{
+  for(const [reason,assessment] of [['BASELINE','snapshot-baseline'],['SIGNATURE_MISMATCH','snapshot-signature-mismatch']]){
+   const result=await collectArchiveLinkDiagnostic(d,node,{message,contextKey:'ctx',getPresentation:async()=>null,database:{snapshot:async()=>{throw Object.assign(Error('PRIVATE_SNAPSHOT'),{code:'SNAPSHOT_UNVERIFIED',details:{reason,privateValue:'PRIVATE_DETAIL'}});}}});
+   assert.equal(result.assessment,assessment);assert.equal(result.snapshot.error,'SNAPSHOT_UNVERIFIED');assert.equal(result.snapshot.reason,reason);assert.doesNotMatch(JSON.stringify(result),/PRIVATE_/);
+  }
+ }finally{await w.happyDOM.abort();}
+});
+
 test('pending candidates and style-hidden links have distinct terminal states',async()=>{
  const {w,d,node}=setup('<div class="mes_text" style="display:none"><button data-tisya-archive-link>PRIVATE_NAME</button></div>'),base={mes:'PRIVATE_NAME',is_user:false,extra:{tisya_engine:{uid:'stable'}}};
  try{

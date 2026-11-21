@@ -94,6 +94,7 @@ import {inspectNativeRender} from './native-render-diagnostic.js';
 import {collectArchiveLinkDiagnostic,archiveLinkDiagnosticSummary} from './archive-link-diagnostic.js';
 import {collectNativeRuntimeDiagnostic,nativeRuntimeDiagnosticSummary} from './native-runtime-diagnostic.js';
 import {collectNativeRegexDiagnostic} from './native-regex-diagnostic.js';
+import {pendingInspectionReport,collectInspectionReport,safeDataInspection,safeRuntimeInspection,inspectionReportSummary} from './inspection-report.js';
 import {getRegexScripts,getRegexedString,RegexProvider,isScopedScriptsAllowed,allowScopedScripts,isPresetScriptsAllowed,allowPresetScripts} from '/scripts/extensions/regex/engine.js';
 import {readNarrative} from './narrative-bridge.js';
 import {mountSettingsApp} from './settings-app.js';
@@ -693,11 +694,23 @@ function messageMenu(node) {
     const visible=messageSlots();sheet('消息操作',`<div class="tisya-message-actions" aria-label="更多消息操作">${MESSAGE_TOOLS.filter(([id])=>id!=='more'&&!visible.includes(id)).map(([id])=>messageToolButton(id,id==='regen'?'msg-regen':id==='next'?'msg-next':id,token.message.is_user)).join('')}${iconButton('配置消息快捷栏','message-tools','sliders','tisya-orb-button')}</div>${button('显示检查','msg-display-check')}`);
     overlay._messageToken = token;
 }
-async function showMessageDisplayDiagnostic(token){
- const node=nodeFor(token);
+function messageDisplayInspection(token,node){
  const inspect=()=>inspectNativeRender(document,node,{version:VERSION,structured:inspectMessage(token.message.mes).structured,
   projection:!!node.querySelector('.tisya-message-visual'),panelStatus:appearance?.nativeStatus?.(node),managed,sourcePreparation:nativePanelFormatting.state()});
- const report=inspect();
+ const collect=async()=>{
+  const [runtimeInspection,regexInspection,archiveLinkInspection]=await Promise.all([
+   collectNativeRuntimeDiagnostic(document,node,{getContext:context}),
+   collectNativeRegexDiagnostic({isUser:!!token.message.is_user,context:()=>context(),theme:()=>configStore.read().world.theme,
+    nativeDisplay:nativeDisplay?{state:()=>nativeDisplay.state(),report:()=>nativeDisplay.report()}:undefined,
+    hostRules:{allowedOnly:{all:()=>getRegexScripts({allowedOnly:true})},all:{all:()=>getRegexScripts({allowedOnly:false})}}}),
+   collectArchiveLinkDiagnostic(document,node,{message:token.message,contextKey:phoneChatKey(context()),getPresentation:message=>extensionPresentation.forMessage(message),database:matrixDatabase,getScope:()=>{const story=matrixHost.config.read().story??{};return {ownerId:storyAvatar({story}).binding?.entityId??null,worldId:story.phoneWorld?.worldId??null,outputConfigId:story.outputConfigId??null};}})
+  ]);
+  return {runtimeInspection,regexInspection,archiveLinkInspection};
+ };
+ return {inspect,collect};
+}
+async function showMessageDisplayDiagnostic(token){
+ const node=nodeFor(token),view=messageDisplayInspection(token,node),report=view.inspect();
  const describe=report=>{
   const hidden=report.frames?.filter(frame=>frame.hiddenByStyles===true).length??0;
   const order=report.toolbar?.last===true?'位于内容之后':report.toolbar?.last===false?'后面仍有消息内容':'当前布局尚不能判断',counts=report.counts??{};
@@ -706,21 +719,59 @@ async function showMessageDisplayDiagnostic(token){
  sheet('显示检查',`<div id="tisya-render-diagnostic-overview">${describe(report)}</div><p id="tisya-runtime-diagnostic-summary" role="status">正在读取显示规则、助手渲染资格、Tooltips 生产链路和本条页面的运行状态……</p><details><summary>详细检查记录</summary><pre id="tisya-render-diagnostic" style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify({...report,runtimeInspection:{status:'collecting'},regexInspection:{status:'collecting'},archiveLinkInspection:{status:'collecting'}},null,2))}</pre></details>${button('刷新检查','msg-display-check')}${button('复制检查','msg-display-check-copy')}`);
  overlay._messageToken=token;
  const epoch=sheetEpoch,copy=overlay.querySelector('[data-tisya-action="msg-display-check-copy"]');copy.disabled=true;
- const [runtimeInspection,regexInspection,archiveLinkInspection]=await Promise.all([
-  collectNativeRuntimeDiagnostic(document,node,{getContext:context}),
-  collectNativeRegexDiagnostic({isUser:!!token.message.is_user,context:()=>context(),theme:()=>configStore.read().world.theme,
-   nativeDisplay:nativeDisplay?{state:()=>nativeDisplay.state(),report:()=>nativeDisplay.report()}:undefined,
-   hostRules:{allowedOnly:{all:()=>getRegexScripts({allowedOnly:true})},all:{all:()=>getRegexScripts({allowedOnly:false})}}}),
-  collectArchiveLinkDiagnostic(document,node,{message:token.message,contextKey:phoneChatKey(context()),getPresentation:message=>extensionPresentation.forMessage(message),database:matrixDatabase,getScope:()=>{const story=matrixHost.config.read().story??{};return {ownerId:storyAvatar({story}).binding?.entityId??null,worldId:story.phoneWorld?.worldId??null,outputConfigId:story.outputConfigId??null};}})
- ]);
+ const inspections=await view.collect();
  if(epoch!==sheetEpoch||overlay._messageToken!==token)return;
  let current;try{current=nodeFor(token);}catch{sheet('显示检查','<p role="status">消息或聊天已变化，请在当前消息重新打开检查。</p>');return;}
  if(current!==node){sheet('显示检查','<p role="status">消息显示已更新，请在当前消息重新打开检查。</p>');return;}
- const completed=inspect();
+ const completed=view.inspect();
  overlay.querySelector('#tisya-render-diagnostic-overview').innerHTML=describe(completed);
- overlay.querySelector('#tisya-render-diagnostic').textContent=JSON.stringify({...completed,runtimeInspection,regexInspection,archiveLinkInspection},null,2);
- overlay.querySelector('#tisya-runtime-diagnostic-summary').textContent=nativeRuntimeDiagnosticSummary(runtimeInspection).join(' ')+' '+archiveLinkDiagnosticSummary(archiveLinkInspection)+' 显示规则的读取结果已写入详细检查记录。';
+ overlay.querySelector('#tisya-render-diagnostic').textContent=JSON.stringify({...completed,...inspections},null,2);
+ overlay.querySelector('#tisya-runtime-diagnostic-summary').textContent=nativeRuntimeDiagnosticSummary(inspections.runtimeInspection).join(' ')+' '+archiveLinkDiagnosticSummary(inspections.archiveLinkInspection)+' 显示规则的读取结果已写入详细检查记录。';
  copy.disabled=false;
+}
+function latestCompleteInspectionTarget(){
+ const nodes=[...document.querySelectorAll('#chat .mes[mesid]')].reverse();
+ for(const assistantOnly of [true,false])for(const node of nodes){
+  const id=Number(node.getAttribute('mesid')),message=context().chat[id];
+  if(!message||assistantOnly&&(message.is_user!==false||message.is_system===true))continue;
+  return {token:messageToken(id),node};
+ }
+ return null;
+}
+async function showCompleteInspection(){
+ renderEpoch++;const epoch=renderEpoch,target=latestCompleteInspectionTarget(),c=context(),chat=c.chat,metadata=c.chatMetadata,chatId=c.getCurrentChatId?.()??c.chatId;
+ const pending=pendingInspectionReport({version:VERSION,managed});
+ page('完整检查',`<p>把显示、数据与运行时状态整理成同一份只读安全报告。可直接复制或导出后用于排错。</p><p class="tisya-note">默认不含正文、姓名、记录 ID、URL、变量值或凭据；完整上下文和失败回复原文仍使用各自明确标注的私人导出。</p><p id="tisya-complete-inspection-status" role="status">正在并行检查显示、数据与运行时状态……</p><details open><summary>统一安全报告</summary><pre id="tisya-complete-inspection" style="white-space:pre-wrap;overflow-wrap:anywhere;user-select:text">${esc(JSON.stringify(pending,null,2))}</pre></details><div>${button('重新检查','complete-inspection')}${button('复制安全报告','complete-inspection-copy')}${button('导出安全报告','complete-inspection-export')}</div><textarea id="tisya-complete-inspection-manual" aria-label="手动复制统一安全报告" readonly hidden></textarea>`);
+ for(const action of ['complete-inspection-copy','complete-inspection-export'])query(`[data-tisya-action="${action}"]`).disabled=true;
+ const report=await collectInspectionReport({version:VERSION,managed,
+  readDisplay:async()=>{
+   if(!target)return null;const view=messageDisplayInspection(target.token,target.node),inspections=await view.collect();
+   return {messageIndex:target.token.id,messageAssistant:target.token.message.is_user===false&&target.token.message.is_system!==true,...view.inspect(),...inspections};
+  },
+  readData:async()=>safeDataInspection({selection:chatSelectionDiagnostic(),database:await matrixDatabase.peek()}),
+  readRuntime:async()=>safeRuntimeInspection({operation:uiOperations.state(),tasks:tableService.state()})
+ });
+ if(epoch!==renderEpoch)return;
+ const status=query('#tisya-complete-inspection-status'),output=query('#tisya-complete-inspection');if(!status||!output)return;
+ let stale=context().chat!==chat||context().chatMetadata!==metadata||(context().getCurrentChatId?.()??context().chatId)!==chatId;
+ if(target)try{if(nodeFor(target.token)!==target.node)stale=true;}catch{stale=true;}
+ if(stale){status.textContent='会话、候选或消息显示已变化，本报告已失效；请重新检查。';output.textContent=JSON.stringify(pending,null,2);return;}
+ output.textContent=JSON.stringify(report,null,2);status.textContent=inspectionReportSummary(report);
+ for(const action of ['complete-inspection-copy','complete-inspection-export'])query(`[data-tisya-action="${action}"]`).disabled=false;
+}
+function completeInspectionText(){
+ const output=query('#tisya-complete-inspection'),copy=query('[data-tisya-action="complete-inspection-copy"]');
+ if(!output||!copy||copy.disabled)throw Error('检查尚未完成或已经失效，请重新检查');
+ const report=JSON.parse(output.textContent);if(report.schema!=='tisya.inspection-report/1'||['display','data','runtime'].some(key=>report[key]?.status==='collecting'))throw Error('检查尚未完成');
+ return JSON.stringify(report,null,2);
+}
+async function copyCompleteInspection(){
+ const text=completeInspectionText(),epoch=renderEpoch;
+ try{if(!navigator.clipboard?.writeText)throw Error('当前环境不能自动复制');await navigator.clipboard.writeText(text);if(epoch===renderEpoch){const button=query('[data-tisya-action="complete-inspection-copy"]');if(button)button.textContent='已复制安全报告';}}
+ catch(cause){if(epoch!==renderEpoch)return;const manual=query('#tisya-complete-inspection-manual');if(!manual)throw cause;manual.value=text;manual.hidden=false;manual.select();query('[data-tisya-action="complete-inspection-copy"]').textContent='请长按下方报告复制';}
+}
+function exportCompleteInspection(){
+ const text=completeInspectionText(),url=URL.createObjectURL(new Blob([text],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='缇斯亚-完整检查.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function openCandidates(token){
  validate(context(),token,{tail:true});const pos=candidatePosition(token.message);
@@ -982,7 +1033,7 @@ function init() {
     inputShortcuts=mountInputShortcuts(document,{getSettings:settings,save:async value=>saveInterfaceSettings({...settings(),输入快捷栏:value}),requirementsControl:communicationUI.trigger,onPhone:()=>openVirtualPhone(),onError:visualError});cleanups.unshift(()=>inputShortcuts.dispose());
     const cancelDialog=e=>{e.preventDefault();close();};overlay.addEventListener('cancel',cancelDialog);
     const listener=async e=>{if(directoryPanel&&!directoryRow?.contains(e.target))closeDirectoryMenu();const b=e.target.closest('[data-tisya-action]');if(!b||(!root.contains(b)&&!overlay.contains(b)&&!top.contains(b)&&!controls.contains(b)))return;const [action,id]=b.dataset.tisyaAction.split(':');
-        if(['assistant','user-identity','home','contacts','groups','notes','memory','chat','menu','settings-app','settings-tab','display-settings','display-cache','context-overview','archive-atlas','emotion-atlas','role-library','group-library','group-create','group-edit','select','drawer','section','input-tools','disable','fullscreen'].includes(action)&&!await mayLeaveUtility())return;
+        if(['assistant','user-identity','home','contacts','groups','notes','memory','chat','menu','settings-app','settings-tab','display-settings','display-cache','complete-inspection','context-overview','archive-atlas','emotion-atlas','role-library','group-library','group-create','group-edit','select','drawer','section','input-tools','disable','fullscreen'].includes(action)&&!await mayLeaveUtility())return;
         if(action==='home'){home().catch(error);return;}
         if(action==='contacts'){renderEpoch++;contacts();return;}
         if(action==='groups'){groupPage();return;}
@@ -995,7 +1046,7 @@ function init() {
         if(action==='selection-diagnostic-copy'){navigator.clipboard.writeText(query('#tisya-selection-diagnostic').textContent).catch(error);return;}
         if(action==='directory-menu'){try{directoryMenu(decodeURIComponent(id));}catch(e){error(e);}return;}
         run(async()=>{
-        if(action==='assistant')await openAssistant();else if(action==='user-identity')await openIdentity();else if(action==='directory-close')closeDirectoryMenu();else if(action==='directory-back')directoryButtons();else if(action==='directory-group')directoryGroup();else if(action==='directory-group-save')await directoryGroupSave();else if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')await openSettings();else if(action==='settings-tab')await openSettings(id);else if(action==='display-cache')openChatLoading();else if(action==='context-overview')await openContextInspector();else if(action==='role-library')openCharacterGroup();else if(action==='group-library')openCharacterGroup('group');else if(action==='group-create'){openCharacterGroup('group');}else if(action==='group-menu')groupMenu(id);else if(action==='group-edit'){const g=groupTarget(id);openCharacterGroup('group',String(g.id));}else if(action==='group-open')await openGroup(id);else if(action==='display-settings')await openDisplaySettings();else if(action==='archive-atlas')await openArchiveAtlas();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav(true);}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='new-chat'){const card=context().characters[Number(id)];if(!card)throw Error('角色已不存在，请刷新');openCharacterGroup('character',card.avatar,'new-chat');}else if(action==='select'){openCharacterGroup('character',context().characters[Number(id)]?.avatar);}else if(action==='disable')stopUI();
+        if(action==='complete-inspection')await showCompleteInspection();else if(action==='complete-inspection-copy')await copyCompleteInspection();else if(action==='complete-inspection-export')exportCompleteInspection();else if(action==='assistant')await openAssistant();else if(action==='user-identity')await openIdentity();else if(action==='directory-close')closeDirectoryMenu();else if(action==='directory-back')directoryButtons();else if(action==='directory-group')directoryGroup();else if(action==='directory-group-save')await directoryGroupSave();else if(action==='directory-rename')directoryRename();else if(action==='directory-save')await directorySave();else if(action==='directory-pin')await directoryPin();else if(action==='directory-delete')directoryDeleteAsk();else if(action==='directory-delete-confirm')await directoryDelete();else if(action==='longpress-save'){const slots=[...overlay.querySelectorAll('#tisya-longpress-slots select')].map(s=>s.value).filter(Boolean);longPressSlots({长按菜单:slots});if(JSON.stringify(longPressSlots(settings()))!==JSON.stringify(overlay._longPressSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),长按菜单:slots});close();}else if(['candidate-select','candidate-rewrite','candidate-delete','candidate-delete-confirm'].includes(action))await candidateAction(action);else if(action==='message-tools')messageToolsEditor(overlay._messageToken);else if(action==='message-tools-collapse'||action==='message-tools-expand'){const selects=[...overlay.querySelectorAll('#tisya-message-slots select')];selects.forEach((s,i)=>s.value=action==='message-tools-collapse'?(i===0?'more':''):MESSAGE_TOOLS[i][0]);overlay._describeMessageSlots?.();}else if(action==='message-tools-save'){const slots=[...overlay.querySelectorAll('#tisya-message-slots select')].map(s=>s.value).filter(Boolean);if(!slots.includes('more'))throw Error('请保留一个“更多”，以便找回收起的操作');if(new Set(slots).size!==slots.length)throw Error('按钮位置重复');if(JSON.stringify(messageSlots())!==JSON.stringify(overlay._messageSlots))throw Error('配置已变化，请重新打开');await saveInterfaceSettings({...settings(),消息快捷栏:slots});decorate();close();}else if(action==='settings-app')await openSettings();else if(action==='settings-tab')await openSettings(id);else if(action==='display-cache')openChatLoading();else if(action==='context-overview')await openContextInspector();else if(action==='role-library')openCharacterGroup();else if(action==='group-library')openCharacterGroup('group');else if(action==='group-create'){openCharacterGroup('group');}else if(action==='group-menu')groupMenu(id);else if(action==='group-edit'){const g=groupTarget(id);openCharacterGroup('group',String(g.id));}else if(action==='group-open')await openGroup(id);else if(action==='display-settings')await openDisplaySettings();else if(action==='archive-atlas')await openArchiveAtlas();else if(action==='emotion-atlas')openEmotionAtlas();else if(action==='pet-toggle'){pet.setVisible(!pet.isVisible());close();hidePage();}else if(action==='motion-toggle'){motionEnabled=!motionEnabled;const next=structuredClone(settings());next.动态效果=motionEnabled;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();refreshVisuals();nav(true);}else if(action==='continue-settings'){sheet('继续设置',`<p>点消息下的“继续”，保留该条并生成下一条。旧消息之后的内容会自动删除。</p><label for="tisya-continue-text">自动发送的用户消息</label><p class="tisya-note">需要 user 消息的渠道可在此填写；留空则直接请求下一条。</p><textarea id="tisya-continue-text" aria-label="继续时自动发送的用户消息">${esc(settings().继续用户消息??'')}</textarea>${button('保存','save-continue')}`);}else if(action==='save-continue'){const next=structuredClone(settings());next.继续用户消息=query('#tisya-continue-text').value;context().extensionSettings[KEY]=next;context().saveSettingsDebounced();close();}else if(action==='cache-clear'){await chatLoading.clear();sheet('显示缓存','<p>显示缓存已清理，原聊天、回复候选、记忆与偏好保留。</p>');}else if(action==='font-retry'){startFont();}else if(action==='close')close();else if(action==='drawer')nativeDrawer(id);else if(action==='section')extensionSection(id);else if(action==='fullscreen'){close();hidePage();nativeControl('#option_toggle_fullscreen');}else if(action==='input-tools'){close();closeNativeDrawers();hidePage();inputShortcuts?.open('slots');}else if(action==='card')await showCard(Number(id));else if(action==='new-chat'){const card=context().characters[Number(id)];if(!card)throw Error('角色已不存在，请刷新');openCharacterGroup('character',card.avatar,'new-chat');}else if(action==='select'){openCharacterGroup('character',context().characters[Number(id)]?.avatar);}else if(action==='disable')stopUI();
         else if(action==='group') {
             const card=context().characters[Number(id)];if(!card)throw new Error('角色不存在');
             sheet('角色分组',`<input id="tisya-group-name" aria-label="分组名称" value="${esc(settings().联系人分组[card.avatar]??'未分组')}">${button('保存',`save-group:${encodeURIComponent(card.avatar)}`)}`);

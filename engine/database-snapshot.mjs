@@ -23,7 +23,8 @@ export function databaseSnapshotAtMessage(bundle,{uid,raw,role='assistant',sourc
  const entries=bundle?.journal?.entries;if(!bundle?.state||!Array.isArray(entries))fail('SNAPSHOT_MISSING','该消息没有可核对的表单历史快照');
  const indexes=entries.flatMap((entry,index)=>entry.uid===uid?[index]:[]);if(indexes.length!==1)fail('SNAPSHOT_MISSING','历史消息未入档或身份重复');
  const at=indexes[0],entry=entries[at];
- if(entry.baseline||entry.settlement_status==='BASELINE'||entry.signature!==digest({role,text:raw,uid}))fail('SNAPSHOT_UNVERIFIED','该消息原文与已保存快照不同，未用当前数据替代');
+ if(entry.baseline||entry.settlement_status==='BASELINE')fail('SNAPSHOT_UNVERIFIED','该消息仅有基线快照，未用当前数据替代',{reason:'BASELINE'});
+ if(entry.signature!==digest({role,text:raw,uid}))fail('SNAPSHOT_UNVERIFIED','该消息原文与已保存快照不同，未用当前数据替代',{reason:'SIGNATURE_MISMATCH'});
  if(entry.settlement_status==='FAILED'||entry.role==='assistant_pending')fail('SNAPSHOT_REJECTED','该消息的表单修改没有通过接纳');
  let state=clone(bundle.state);
  for(const later of entries.slice(at+1).reverse()){

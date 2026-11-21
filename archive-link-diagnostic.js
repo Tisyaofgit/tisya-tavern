@@ -9,11 +9,12 @@ import {matrixArchiveLinkIndex,archiveLinkTextIndex} from './archive-links.mjs';
 const errorCode=value=>typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,90}$/.test(value)?value:'OTHER_ERROR';
 const count=value=>Number.isSafeInteger(value)&&value>=0?value:0;
 const publicTable=value=>typeof value==='string'&&/^T_[A-Z0-9_]+$/.test(value)?value:'OTHER';
+const snapshotReason=value=>['BASELINE','SIGNATURE_MISMATCH'].includes(value)?value:null;
 const bodyOf=inspection=>inspection?.body?.paragraphs?.value?.length?inspection.body.paragraphs.value.map(row=>row.raw).join('\n\n'):inspection?.body?.value??'';
 const occurrenceCount=(body,name)=>{let total=0,at=0;while(name&&(at=body.indexOf(name,at))>=0){total++;at+=name.length;}return total;};
 async function readStage(read,timeout,onLateValue){
  let timer;const work=Promise.resolve().then(read),expiry=new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'timeout',error:'DIAGNOSTIC_TIMEOUT',value:null}),timeout);});
- const result=await Promise.race([work.then(value=>({status:value?'object':'null',error:null,value:value??null}),error=>({status:'error',error:errorCode(error?.code),value:null})),expiry]);clearTimeout(timer);
+ const result=await Promise.race([work.then(value=>({status:value?'object':'null',error:null,reason:null,value:value??null}),error=>({status:'error',error:errorCode(error?.code),reason:snapshotReason(error?.details?.reason),value:null})),expiry]);clearTimeout(timer);
  if(result.status==='timeout')work.then(value=>onLateValue?.(value)).catch(()=>{});
  return result;
 }
@@ -59,13 +60,13 @@ function inspectDocumentRoots(document,node){
  return totals;
 }
 
-function assessment({message,sourceError,identity,presentationResult,presentationError,presentationContextMatches,snapshotResult,snapshotError,serviceIndex,snapshotIndex,dom}){
+function assessment({message,sourceError,identity,presentationResult,presentationError,presentationContextMatches,snapshotResult,snapshotError,snapshotReason,serviceIndex,snapshotIndex,dom}){
  if(!message)return 'message-unavailable';
  if(message.extra?.tisya_engine?.pending_sha256)return 'message-pending';
  if(presentationResult==='timeout')return 'presentation-timeout';
  if(presentationError)return 'presentation-error';
  if(snapshotResult==='timeout')return 'snapshot-timeout';
- if(snapshotError)return 'snapshot-error';
+ if(snapshotError)return snapshotReason==='BASELINE'?'snapshot-baseline':snapshotReason==='SIGNATURE_MISMATCH'?'snapshot-signature-mismatch':'snapshot-error';
  if(sourceError)return 'message-identity-error';
  if(presentationContextMatches===false)return 'presentation-context-mismatch';
  if(identity.snapshotContextMatches===false)return 'snapshot-context-mismatch';
@@ -97,12 +98,12 @@ export async function collectArchiveLinkDiagnostic(document,node,{message,contex
  }
  const serviceIndex=value?.archiveLinks?indexSummary(value.archiveLinks,body):null,dom=inspectDocumentRoots(document,node),presentationContextMatches=value?value.contextKey===contextKey:null;
  const identity={sourceReady:!!sourceValue,error:sourceError,contextKeyPresent:typeof contextKey==='string'&&!!contextKey,snapshotUidMatches:snapshot&&sourceValue?snapshot.uid===sourceValue.uid:null,snapshotRawDigestMatches:snapshot&&sourceValue?snapshot.hostMessageSha256===sha256(String(message.mes??'')):null,snapshotSourceMatches:snapshot&&sourceValue?snapshot.sourceId===sourceValue.sourceId:null,snapshotContextMatches:snapshot?snapshot.contextKey===contextKey:null};
- const result=assessment({message,sourceError,identity,presentationResult,presentationError,presentationContextMatches,snapshotResult,snapshotError,serviceIndex,snapshotIndex,dom});
+ const result=assessment({message,sourceError,identity,presentationResult,presentationError,presentationContextMatches,snapshotResult,snapshotError,snapshotReason:read.reason,serviceIndex,snapshotIndex,dom});
  try{await value?.dispose?.();}catch{}
- return {...base,available:true,assessment:result,message:{assistant:message.is_user===false&&message.is_system!==true,uidPresent:typeof message.extra?.tisya_engine?.uid==='string',pending:!!message.extra?.tisya_engine?.pending_sha256,structured:!!inspection?.structured,publicBodyError:bodyError},identity,presentation:{status:presentationResult,error:presentationError,messageSnapshotPresent:!!value?.messageSnapshotId,contextMatches:presentationContextMatches,index:serviceIndex},snapshot:{status:snapshotResult,error:snapshotError,index:snapshotIndex},dom};
+ return {...base,available:true,assessment:result,message:{assistant:message.is_user===false&&message.is_system!==true,uidPresent:typeof message.extra?.tisya_engine?.uid==='string',pending:!!message.extra?.tisya_engine?.pending_sha256,structured:!!inspection?.structured,publicBodyError:bodyError},identity,presentation:{status:presentationResult,error:presentationError,messageSnapshotPresent:!!value?.messageSnapshotId,contextMatches:presentationContextMatches,index:serviceIndex},snapshot:{status:snapshotResult,error:snapshotError,reason:read.reason??null,index:snapshotIndex},dom};
 }
 
 function getContextKey(document){try{return document.defaultView?.Tisya?.phone?.contextKey?.()??null;}catch{return null;}}
 
-const assessments={ 'message-unavailable':'当前消息不可用','message-pending':'当前候选尚未接纳，严格历史快照不会投射链接','message-identity-error':'消息缺少可核对的历史身份','presentation-timeout':'生产呈现服务读取超时','presentation-error':'生产呈现服务读取失败','presentation-context-mismatch':'生产呈现结果不属于当前会话','snapshot-timeout':'历史快照读取超时','snapshot-error':'历史快照读取或索引失败','snapshot-context-mismatch':'历史快照不属于当前会话','snapshot-identity-mismatch':'历史快照与消息 UID、原文或来源不一致','snapshot-missing':'本条消息没有可读取的历史快照','service-returned-empty':'快照可匹配正文，但生产呈现服务返回空','presentation-unavailable':'呈现服务与快照均不可用','no-index-entries':'历史快照中没有可公开的自动链接档案','no-public-body-match':'索引存在，但本条公开正文没有匹配名称','links-not-projected':'服务与正文均有匹配，但最终 DOM 没有链接','links-style-hidden':'链接已插入，但全部被样式隐藏','links-present':'链接已插入；数量与样式状态见下方报告'};
+const assessments={ 'message-unavailable':'当前消息不可用','message-pending':'当前候选尚未接纳，严格历史快照不会投射链接','message-identity-error':'消息缺少可核对的历史身份','presentation-timeout':'生产呈现服务读取超时','presentation-error':'生产呈现服务读取失败','presentation-context-mismatch':'生产呈现结果不属于当前会话','snapshot-timeout':'历史快照读取超时','snapshot-error':'历史快照读取或索引失败','snapshot-baseline':'该消息只有基线快照，没有可核对的逐轮档案状态','snapshot-signature-mismatch':'消息原文与已接纳快照签名不一致','snapshot-context-mismatch':'历史快照不属于当前会话','snapshot-identity-mismatch':'历史快照与消息 UID、原文或来源不一致','snapshot-missing':'本条消息没有可读取的历史快照','service-returned-empty':'快照可匹配正文，但生产呈现服务返回空','presentation-unavailable':'呈现服务与快照均不可用','no-index-entries':'历史快照中没有可公开的自动链接档案','no-public-body-match':'索引存在，但本条公开正文没有匹配名称','links-not-projected':'服务与正文均有匹配，但最终 DOM 没有链接','links-style-hidden':'链接已插入，但全部被样式隐藏','links-present':'链接已插入；数量与样式状态见下方报告'};
 export function archiveLinkDiagnosticSummary(report){if(!report?.available)return 'Tooltips：当前消息无法检查。';return `Tooltips：${assessments[report.assessment]??'检查完成'}。服务条目 ${count(report.presentation?.index?.entries)}；快照条目 ${count(report.snapshot?.index?.entries)}；正文匹配 ${Math.max(count(report.presentation?.index?.matchedNames),count(report.snapshot?.index?.matchedNames))}；DOM 链接 ${count(report.dom?.links)}；样式可见 ${count(report.dom?.styleVisibleLinks)}。`;}
