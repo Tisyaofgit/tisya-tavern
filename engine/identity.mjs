@@ -1,3 +1,4 @@
+import {characterDossierId,characterOriginChanges} from './character-identity.mjs';
 import {decode,digest} from './common.mjs';
 import {templateBookName} from './template-book.mjs';
 import {createBookGateway,readMatrixDefinition} from '../tables/books.js';
@@ -35,14 +36,7 @@ export function createStoryIdentity({config,getContext,getHelper=()=>globalThis.
 const DATABASE_LABEL='当前世界表单';
 const rowEntries=(state,table)=>Object.entries(state?.tables?.[table]??{}).map(([id,row])=>({id,values:row.values??row,states:row.states??{}}));
 const sameValue=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-function entityDossierId(state,entity){
- const refs=rowEntries(state,'M_FIELD_REFERENCES').filter(r=>r.values.owner_table==='T_SYS_ENTITIES'&&r.values.owner_row_uuid===entity.id&&r.values.owner_field==='origin_record_ref'&&r.values.target_table==='T_CHAR_DOSSIER');
- const selected=entity.values.origin_record_ref,ids=typeof selected==='string'?[selected]:Array.isArray(selected)?selected:[];
- const linked=refs.filter(r=>!ids.length||ids.includes(r.id));check(linked.length<=1,'人物实体的原点档案引用不唯一');
- if(linked.length)return linked[0].values.target_row_uuid;
- if(selected)return null;
- return state.tables?.T_CHAR_DOSSIER?.[entity.id]?entity.id:null;
-}
+function entityDossierId(state,entity){return characterDossierId(state,entity.id);}
 function databaseCharacters(snapshot){
  const entities=rowEntries(snapshot.state,'T_SYS_ENTITIES');
  return rowEntries(snapshot.state,'T_CHAR_DOSSIER').map(row=>{
@@ -85,7 +79,7 @@ function createDatabaseStoryIdentity({config,getContext,getHelper,assertIdle,dat
  }
  async function previewCreate({name,content='',values={}}){
   assertIdle();check(typeof name==='string'&&name.trim()===name&&name,'请填写角色名称');check(typeof content==='string','人物设定须为文字');check(!content.trim()||Object.keys(values).some(key=>key!=='name'),'叙事资料须先交给助手提炼为标准字段；作者原文不会写入本领外显表现');const snapshot=await read(),id=crypto.randomUUID(),originId=crypto.randomUUID();
-  const changes=[{tableId:'T_CHAR_DOSSIER',recordId:id,values:{...structuredClone(values),name}},{tableId:'T_SYS_ENTITIES',recordId:id,values:{kind:'character',origin_record_ref:originId}},{tableId:'M_FIELD_REFERENCES',recordId:originId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:id,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:id,reference_kind:'record',resolution_status:'resolved'}}];
+  const changes=[{tableId:'T_CHAR_DOSSIER',recordId:id,values:{...structuredClone(values),name}},...characterOriginChanges({entityId:id,dossierId:id,originId})];
   validateCreationProposal({name,matrix:{changes,binding:{entityId:id,dossierId:id}}},snapshot,{kind:'character'});
   const draft={id:'identity:'+crypto.randomUUID(),kind:'create',scope:scope(),contextKey:snapshot.contextKey,expectedRevision:snapshot.revision,configurationRevision:config.read().revision,changes,diff:Object.entries(changes[0].values).map(([field,after])=>({field,label:snapshot.state.schema.T_CHAR_DOSSIER.fields.find(f=>f.key===field)?.label??field,before:undefined,after})),binding:{database:true,entityId:id,dossierId:id},source:{kind:'manual-character',text:content},bindOnCommit:true};drafts.set(draft.id,structuredClone(draft));return structuredClone(draft);
  }

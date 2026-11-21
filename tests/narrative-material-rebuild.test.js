@@ -78,6 +78,7 @@ test('braced forms confirm a custom unit once and expose it in the next model re
  const dossier=forms.formSections.find(group=>group.tableId==='T_CHAR_DOSSIER').text;
  assert.match(dossier,/^3\{角色对外显示名称（角色当前对外使用的名称/m);
  assert.match(dossier,/^4\{角色真名（有来源支持的真名/m);
+ assert.match(dossier,/只知晓姓氏时可暂存，后续有依据可补全或修正；真名不是身份键，修改不改变人物与关联/);
  assert.match(dossier,/^5\{知情锁级\}$/m);
  assert.match(dossier,/^13\{7岁（推荐），或 数值：7；单位：岁/m);
  const write=async(cells,readArchive=false)=>{

@@ -1,5 +1,6 @@
-import {clone,digest,sha256,fail} from './common.mjs';
+import {clone,sha256,fail} from './common.mjs';
 import {rewind} from './journal.mjs';
+import {acceptedMessageSource} from './message-identity.mjs';
 
 // The editor needs the state before this turn, including when the current
 // candidate rerolls an already confirmed turn. Never subtract it twice.
@@ -24,12 +25,13 @@ export function databaseSnapshotAtMessage(bundle,{uid,raw,role='assistant',sourc
  const indexes=entries.flatMap((entry,index)=>entry.uid===uid?[index]:[]);if(indexes.length!==1)fail('SNAPSHOT_MISSING','历史消息未入档或身份重复');
  const at=indexes[0],entry=entries[at];
  if(entry.baseline||entry.settlement_status==='BASELINE')fail('SNAPSHOT_UNVERIFIED','该消息仅有基线快照，未用当前数据替代',{reason:'BASELINE'});
- if(entry.signature!==digest({role,text:raw,uid}))fail('SNAPSHOT_UNVERIFIED','该消息原文与已保存快照不同，未用当前数据替代',{reason:'SIGNATURE_MISMATCH'});
+ const acceptedSource=acceptedMessageSource(bundle,entry,raw);
+ if(!acceptedSource)fail('SNAPSHOT_UNVERIFIED','该消息原文与已保存快照不同，未用当前数据替代',{reason:'SIGNATURE_MISMATCH'});
  if(entry.settlement_status==='FAILED'||entry.role==='assistant_pending')fail('SNAPSHOT_REJECTED','该消息的表单修改没有通过接纳');
  let state=clone(bundle.state);
  for(const later of entries.slice(at+1).reverse()){
   const patch=later.pre_turn_snapshot?.inverse_patch;if(!Array.isArray(patch))fail('SNAPSHOT_PATCH','历史恢复链缺少可验证补丁');
   state=rewind(state,patch);
  }
- return {state,revision:entry.revision,contextKey,snapshotId:'matrix:'+uid+':'+entry.revision+':'+entry.signature,sourceId:sourceId??null,uid,signature:entry.signature,hostMessageSha256:sha256(raw)};
+ return {state,revision:entry.revision,contextKey,snapshotId:'matrix:'+uid+':'+entry.revision+':'+entry.signature,sourceId:sourceId??null,uid,signature:entry.signature,acceptedSource,hostMessageSha256:sha256(raw)};
 }

@@ -1,3 +1,4 @@
+import {characterDossierId,characterOriginValues} from './character-identity.mjs';
 import {PHONE_FORM_SCHEMAS} from './phone-form-contract.mjs';
 import {phoneProfileFromForms} from './phone-form-profile.mjs';
 // Phone views are hydrated from the forms database. The layout contains only
@@ -145,9 +146,9 @@ export function encodePhoneDatabase(archive,databaseState,{initializing=false}={
   if(p==='life/world/currency'&&key==='name'){if(!known(databaseState,'T_STATIC_ITEMS_SKILLS',currency,'category'))write('T_STATIC_ITEMS_SKILLS',currency,'category','currency',{canonical:true});target=['T_STATIC_ITEMS_SKILLS',currency,'name'];}
   if(p==='life/world'&&['id','name'].includes(key))target=['T_STATIC_WORLDS',world,key==='id'?'world_id':'name'];
   if(p==='life/state/identity'&&['personId','name'].includes(key)){
-   const ref=rowValue(databaseState,'T_SYS_ENTITIES',person,'origin_record_ref'),link=typeof ref==='string'?databaseState.tables?.M_FIELD_REFERENCES?.[ref]?.values:null,dossier=link?.target_table==='T_CHAR_DOSSIER'?link.target_row_uuid:person;
+   const ref=rowValue(databaseState,'T_SYS_ENTITIES',person,'origin_record_ref'),dossier=characterDossierId(databaseState,person)??person;
    if(!databaseState.tables?.T_SYS_ENTITIES?.[person]?.values?.kind)write('T_SYS_ENTITIES',person,'kind','character',{canonical:true});target=key==='personId'?['T_SYS_ENTITIES',person,'entity_id']:['T_CHAR_DOSSIER',dossier,'name'];
-   if(!ref){const rid='origin:'+person;for(const [k,v]of Object.entries({owner_table:'T_SYS_ENTITIES',owner_row_uuid:person,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:dossier,reference_kind:'record',resolution_status:'resolved'}))write('M_FIELD_REFERENCES',rid,k,v,{canonical:true});write('T_SYS_ENTITIES',person,'origin_record_ref',rid,{canonical:true});}
+   if(!ref){const rid='origin:'+person;for(const [k,v]of Object.entries(characterOriginValues(person,dossier)))write('M_FIELD_REFERENCES',rid,k,v,{canonical:true});write('T_SYS_ENTITIES',person,'origin_record_ref',rid,{canonical:true});}
   }
   if(/^life\/state\/wallet\/accounts\/\d+$/.test(p)&&key==='balance'){
    const accountRows=Object.values(databaseState.tables?.X_FIN_ACCOUNTS??{}).filter(r=>r.values.id===obj.id&&r.values.owner_ref===person),explicit=obj.balance_ref??accountRows[0]?.values.balance_ref,expected='account:'+person+':'+obj.id,existing=Object.entries(databaseState.tables?.T_DYN_CURRENCY_BALANCES??{}).filter(([,r])=>r.values.owner_ref===person&&r.values.currency_ref===currency&&Object.hasOwn(r.values,'balance'));

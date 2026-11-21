@@ -1,16 +1,16 @@
+import {characterEntityForDossier,characterOriginChanges} from './character-identity.mjs';
 import {matrixRecordVisible} from './prompt-boundary.mjs';
 import {fail,digest,stableId,clone,sha256} from './common.mjs';
 function ref(e,tid,value){if(['','~','?'].includes(value))return null;if(e.rows(tid)[value]&&matrixRecordVisible(e.data,tid,value,{...e.data.runtime.scope,audience:'author'}))return value;const hits=Object.entries(e.rows(tid)).filter(([id,r])=>matrixRecordVisible(e.data,tid,id,{...e.data.runtime.scope,audience:'author'})&&['short_code','name','title'].some(k=>r.values[k]===value));if(hits.length===1)return hits[0][0];const alias=e.data.runtime.business_aliases?.[tid+'|'+value];if(alias)return alias;fail('BUSINESS_REFERENCE','引用不存在或名称不唯一',{table:tid,value});}
 function entity(e,value){
  try{return ref(e,'T_SYS_ENTITIES',value);}catch(x){
   if(x.code!=='BUSINESS_REFERENCE')throw x;
-  const dossier=ref(e,'T_CHAR_DOSSIER',value),existing=Object.entries(e.rows('T_SYS_ENTITIES')).filter(([,r])=>{const origin=e.rows('M_FIELD_REFERENCES')[r.values.origin_record_ref]?.values;return origin?.target_table==='T_CHAR_DOSSIER'&&origin.target_row_uuid===dossier;});
-  if(existing.length>1)fail('BUSINESS_REFERENCE','人物档案有多个实例，请明确选择');
-  if(existing.length)return existing[0][0];
+  const dossier=ref(e,'T_CHAR_DOSSIER',value),existing=characterEntityForDossier(e.data,dossier);
+  if(existing)return existing;
   const id=stableId('business-entity:'+dossier),origin=stableId('business-origin:'+dossier);
-  e.newRecord('T_SYS_ENTITIES',{kind:'character'},id);
-  e.newRecord('M_FIELD_REFERENCES',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:id,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:dossier,reference_kind:'record'},origin);
-  e.set(['T_SYS_ENTITIES',id,'origin_record_ref',[]],origin);
+  const [entityRecord,originRecord]=characterOriginChanges({entityId:id,dossierId:dossier,originId:origin});
+  e.newRecord(entityRecord.tableId,entityRecord.values,id);
+  e.newRecord(originRecord.tableId,originRecord.values,origin);
   e.set(['T_SYS_ENTITIES',id,'name',[]],e.rows('T_CHAR_DOSSIER')[dossier].values.name,'derived');
   return id;
  }

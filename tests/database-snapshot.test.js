@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {databaseSnapshotAtMessage} from '../engine/database-snapshot.mjs';
 import {inversePatch} from '../engine/journal.mjs';
-import {digest} from '../engine/common.mjs';
+import {digest,sha256} from '../engine/common.mjs';
+import {messageSignature} from '../engine/message-identity.mjs';
 function bundle(){
  const before={schema:{},tables:{money:{account:{values:{balance:0}}}},runtime:{}},at=structuredClone(before);at.tables.money.account.values.balance=10;const later=structuredClone(at);later.tables.money.account.values.balance=30;
  return {state:later,journal:{entries:[{uid:'reply-a',role:'assistant',signature:digest({uid:'reply-a',role:'assistant',text:'first'}),revision:1,settlement_status:'COMMITTED',pre_turn_snapshot:{inverse_patch:inversePatch(before,at)}},{uid:'later',role:'manual',signature:'later',revision:1,pre_turn_snapshot:{inverse_patch:inversePatch(at,later)}}]}};
@@ -12,6 +13,16 @@ test('old message uses accepted historical fields, including zero values, withou
 });
 test('edited or imported baseline messages have no invented historical fallback',()=>{
  const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'changed'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');b.journal.entries[0].baseline=true;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='BASELINE');
+});
+test('a reviewed reply accepts only its proven original host message',()=>{
+ const b=bundle(),raw='first',reply='first with reviewed cells';
+ b.journal.entries[0].signature=messageSignature({uid:'reply-a',role:'assistant',text:reply});
+ b.turn_review={decisions:[{uid:'reply-a',sourceHash:sha256(raw),reply}],legacy:[]};
+ const snapshot=databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a');
+ assert.equal(snapshot.acceptedSource,'REVIEWED');assert.equal(snapshot.state.tables.money.account.values.balance,10);
+ assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'arbitrary rewrite',sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
+ b.turn_review.decisions[0].active=false;
+ assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
 });
 test('malformed later history and source mismatch preserve evidence and fail closed',()=>{
  const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first',sourceId:'other:x'},'chat-a'),/身份/);delete b.journal.entries[1].pre_turn_snapshot;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),/恢复链/);

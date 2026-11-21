@@ -10,7 +10,8 @@ import {mountMessageAppearance} from '../message-ui.js';
 import {createExtensionPresentationService} from '../extension-host.mjs';
 import {databaseSnapshotAtMessage} from '../engine/database-snapshot.mjs';
 import {chatKey} from '../engine/controller.mjs';
-import {digest} from '../engine/common.mjs';
+import {digest,sha256} from '../engine/common.mjs';
+import {messageSignature} from '../engine/message-identity.mjs';
 
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 const row=(values,derived=[])=>{const states=Object.fromEntries(Object.keys(values).map(key=>[key,derived.includes(key)?'derived':'known']));if(!('row_uuid' in values)){values={row_uuid:values.name??values.title??'row',...values};states.row_uuid='known';}return {values,states};};
@@ -56,6 +57,17 @@ test('an origin dossier without an entity instance reaches native beauty through
   const links=[...native.querySelectorAll('[data-tisya-archive-link]')];assert.deepEqual(links.map(link=>link.textContent),['阿青','青姐']);
   links[0].click();const anchor=links[0].closest('[data-tisya-archive-anchor]');anchor.querySelector('[data-tisya-archive-open]').click();assert.deepEqual(opened,[{tableId:'T_CHAR_DOSSIER',recordId:'dossier-only'}]);
  }finally{ui.dispose();await w.happyDOM.abort();}
+});
+
+test('the original host message of a reviewed reply produces tooltips from its historical snapshot',async()=>{
+ const w=new Window({url:'http://localhost'}),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><p>阿青推门。</p></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),ctx={chatId:'chat-reviewed',characterId:'character-1',groupId:null},key=chatKey(ctx),raw='阿青推门。',reply='阿青在复核后推门。',message={mes:raw,name:'角色',extra:{tisya_engine:{uid:'reviewed-links'}}};
+ const state=initializeState(catalog,{session_ref:'session',branch_ref:'main'});state.tables.T_SYS_ENTITIES={};state.tables.T_CHAR_DOSSIER={'dossier-reviewed':row({name:'阿青',public_identity:'河口旅人'})};
+ const bundle={state,turn_review:{decisions:[{uid:'reviewed-links',sourceHash:sha256(raw),reply}],legacy:[]},journal:{entries:[{uid:'reviewed-links',role:'assistant',signature:messageSignature({uid:'reviewed-links',role:'assistant',text:reply}),revision:1,settlement_status:'APPLIED',pre_turn_snapshot:{inverse_patch:[]}}]}};
+ const service=createExtensionPresentationService({document:d,getContext:()=>ctx,database:{peek:async()=>({state,revision:1,contextKey:key}),snapshot:input=>databaseSnapshotAtMessage(bundle,input,key)}});w.Tisya={archive:{open(){}}};
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>key,getPresentation:message=>service.forMessage(message),preferNative:()=>true,formatBody:text=>text,getMotion:()=>false});ui.sync(node);await new Promise(resolve=>setTimeout(resolve,50));
+ try{assert.deepEqual([...native.querySelectorAll('[data-tisya-archive-link]')].map(link=>link.textContent),['阿青']);}
+ finally{ui.dispose();await w.happyDOM.abort();}
 });
 
 test('natural prose gains longest-match links without touching code, links, controls or existing anchors',async()=>{

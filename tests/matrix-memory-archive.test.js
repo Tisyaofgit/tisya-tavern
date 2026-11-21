@@ -111,6 +111,25 @@ function form(state,tableId,values,recordId=null){
 }
 const formReply=(n,text)=>reply(n,text);
 
+test('character dossier, entity and live state resolve as one referent while true name is completed',()=>{
+ const e=seed();e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'a',posture:'站立'},'state-a');e.set(['T_CHAR_DOSSIER','d-a','true_name',[]],'青');
+ const secret=form(e.data,'T_CHAR_SECRETS',{name:'渡口旧约',fact_proposition:'旧约仍然有效',related_object_refs:'关联：阿青'});
+ const event=form(e.data,'T_DYN_EVENTS',{title:'渡口重逢',spine_digest:'两人在渡口重逢',knowers:'关联：阿青'});
+ const dossier=form(e.data,'T_CHAR_DOSSIER',{true_name:'青禾'},'d-a');
+ acceptReply(e,reply(1,[secret,event].join('\n')).replace('<cells/>','<cells format="form">'+dossier+'</cells>'),'m1');acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ assert.equal(e.rows('T_CHAR_DOSSIER')['d-a'].values.true_name,'青禾');assert.equal(e.rows('T_SYS_ENTITIES').a.values.origin_record_ref,'o-a');assert.equal(e.rows('M_FIELD_REFERENCES')['o-a'].values.target_row_uuid,'d-a');
+ const links=Object.values(e.rows('M_LIST_VALUES')).filter(row=>['related_object_refs','knowers'].includes(row.values.owner_field));assert.equal(links.length,2);
+ assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
+});
+
+test('two distinct same-name characters remain ambiguous after projection',()=>{
+ const e=seed();e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'a',posture:'站立'},'state-a');
+ e.newRecord('T_CHAR_DOSSIER',{name:'阿青'},'d-c');e.newRecord('M_FIELD_REFERENCES',{owner_table:'T_SYS_ENTITIES',owner_row_uuid:'c',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'d-c',reference_kind:'record',resolution_status:'resolved'},'o-c');e.newRecord('T_SYS_ENTITIES',{name:'阿青',kind:'character',origin_record_ref:'o-c'},'c');e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'c',posture:'站立'},'state-c');
+ const secret=form(e.data,'T_CHAR_SECRETS',{name:'不可猜测的秘密',fact_proposition:'不能猜测关联目标',related_object_refs:'关联：阿青'});acceptReply(e,reply(1,secret),'m1');
+ assert.equal(e.data.runtime.archive_queue[0].status,'blocked');assert.match(e.data.runtime.archive_queue[0].error.message,/关联名称不存在、重名或表不匹配：阿青/);assert.equal(Object.keys(e.rows('T_CHAR_SECRETS')).length,0);
+});
+
 test('displayed e02 event identity resolves in ordinary cognition references to the canonical event',()=>{
  const e=seed();e.newRecord('T_DYN_EVENTS',{short_code:'02',title:'渡口交信',spine_digest:'阿青交付信件'},'event-02');
  const archive=form(e.data,'T_DYN_COGNITION',{name:'交信认知',subject_ref:'阿青',event_ref:'e02',epistemic_level:'K3',acquisition_channel:'亲眼看见',subjective_belief:'知道信件已经交付'});

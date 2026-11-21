@@ -1,10 +1,10 @@
 import seed from '../phone-seed.json' with {type:'json'};
+import {messageSignature} from './message-identity.mjs';
 import {clone,digest,stable} from './common.mjs';
 import {reconcile,inversePatch,rewind} from './journal.mjs';
 import {decodePhoneDatabase,encodePhoneDatabase,restorePhoneDatabaseHistory} from './phone-database.mjs';
 import {createPhoneState,exportPhone} from '../phone-core.mjs';
 
-const signature=m=>digest({uid:m?.uid,role:m?.role,text:m?.text??''});
 function receiptInPatch(edit,id){
  for(const op of edit.patch??[]){
   if(op.op!=='set'||op.path?.[0]!=='runtime'||op.path[1]!=='receipts')continue;
@@ -16,15 +16,15 @@ function receiptInPatch(edit,id){
 function candidateProof(bundle,edit,messages,native){
  const anchors=edit.anchor_chain;if(!edit.strict||!Array.isArray(anchors)||!anchors.length)return null;
  const index=anchors.length-1,target=messages[index],anchor=anchors[index],message=native[index];
- if(!target||target.uid!==anchor.uid||target.role!=='assistant'||signature(target)===anchor.signature)return null;
- if(anchors.slice(0,-1).some((a,i)=>messages[i]?.uid!==a.uid||signature(messages[i])!==a.signature))return null;
+ if(!target||target.uid!==anchor.uid||target.role!=='assistant'||messageSignature(target)===anchor.signature)return null;
+ if(anchors.slice(0,-1).some((a,i)=>messages[i]?.uid!==a.uid||messageSignature(messages[i])!==a.signature))return null;
  if(message?.extra?.tisya_engine?.uid!==anchor.uid||message.is_user||message.is_system||String(message.mes??'')!==target.text)return null;
  const selected=message.swipe_id;
  if(!Number.isSafeInteger(selected)||selected<0||!Array.isArray(message.swipes)||message.swipes[selected]!==target.text||message.swipe_info?.[selected]?.extra?.tisya_engine?.uid!==anchor.uid)return null;
- let old=message.swipes.find((text,i)=>typeof text==='string'&&message.swipe_info?.[i]?.extra?.tisya_engine?.uid===anchor.uid&&signature({uid:anchor.uid,role:'assistant',text})===anchor.signature);
+ let old=message.swipes.find((text,i)=>typeof text==='string'&&message.swipe_info?.[i]?.extra?.tisya_engine?.uid===anchor.uid&&messageSignature({uid:anchor.uid,role:'assistant',text})===anchor.signature);
  // A cold swipe slot can be null. An exact accepted baseline is evidence of
  // the original text; an arbitrary current body is never such evidence.
- if(old===undefined){const baseline=bundle.journal?.baseline_messages?.find(m=>m.uid===anchor.uid&&m.role==='assistant'&&signature(m)===anchor.signature);old=baseline?.text;}
+ if(old===undefined){const baseline=bundle.journal?.baseline_messages?.find(m=>m.uid===anchor.uid&&m.role==='assistant'&&messageSignature(m)===anchor.signature);old=baseline?.text;}
  if(typeof old!=='string')return message.tt_swipe_cold?{index,old:null,uid:anchor.uid}:null;
  return {index,old};
 }
@@ -77,7 +77,7 @@ export function reconcilePhoneBundle(bundle,messages,scope,{contextKey,nativeMes
  const current=result.bundle.state,merged=restorePhoneDatabaseHistory(current,previous,{contextKey,allowedOriginContextKeys});
  const patch=merged===current?[]:inversePatch({schema:merged.schema,tables:merged.tables},{schema:current.schema,tables:current.tables});
  if(patch.length){
-  const ids=messages.map(m=>m.uid),anchors=messages.map(m=>({uid:m.uid,signature:signature(m)}));
+  const ids=messages.map(m=>m.uid),anchors=messages.map(m=>({uid:m.uid,signature:messageSignature(m)}));
   const edit={uid:'phone-history:'+digest({contextKey,anchors,patch,before:digest(current.tables)}),after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:anchors,patch};
   // History adds layout coordinates as well as immutable evidence. Record its
   // inverse through the same journal so a later swipe cannot delete a field

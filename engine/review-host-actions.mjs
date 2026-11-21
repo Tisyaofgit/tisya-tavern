@@ -1,4 +1,5 @@
-import {clone,digest,sha256,fail} from './common.mjs';
+import {clone,sha256,fail} from './common.mjs';
+import {messageSignature} from './message-identity.mjs';
 import {Runtime} from './runtime.mjs';
 import {inversePatch} from './journal.mjs';
 import {fillBackfillFloor} from './history-backfill.mjs';
@@ -27,7 +28,7 @@ export function applyReviewAction(bundle,messages,scope,input){
   const result=commitReviewBackfill(next.state,meta.backfill,input.uid,messages,activeBackfillReceipts(next,messages,scope)),e=new Runtime(next.state);
   for(const change of result.changes){if(!e.rows(change.tableId)[change.recordId])e.newRecord(change.tableId,{},change.recordId);for(const [k,v]of Object.entries(change.values))e.set([change.tableId,change.recordId,k,[]],v);e.record(change.tableId,change.recordId).metadata={...e.record(change.tableId,change.recordId).metadata,...change.metadata};}
   const at=messages.findIndex(m=>m.uid===input.uid),prefix=messages.slice(0,at+1),ids=prefix.map(m=>m.uid);
-  next.manual_edits??=[];next.manual_edits.push({uid:'backfill:'+meta.backfill.id+':'+input.uid,kind:'reviewBackfill',source_uid:input.uid,after_uid:input.uid,previous_uids:ids.slice(0,-1),strict:true,anchor_chain:prefix.map(m=>({uid:m.uid,signature:digest({role:m.role,text:m.text??'',uid:m.uid})})),patch:inversePatch(e.data,next.state)});
+  next.manual_edits??=[];next.manual_edits.push({uid:'backfill:'+meta.backfill.id+':'+input.uid,kind:'reviewBackfill',source_uid:input.uid,after_uid:input.uid,previous_uids:ids.slice(0,-1),strict:true,anchor_chain:prefix.map(m=>({uid:m.uid,signature:messageSignature(m)})),patch:inversePatch(e.data,next.state)});
   meta.backfill=result.batch;meta.backfillReceipts=result.receipts;
  }else fail('REVIEW_ACTION','未知归档操作');
  return next;

@@ -38,6 +38,7 @@ import {appendXmlSection} from './prompt-sections.mjs';
 import {narrativeSection} from './narrative-material.mjs';
 import {createConfiguration,materialNames,identitySlots,compilePrompts,compilePromptText,isMatrixPreset,applyCompiledMessages} from './config.mjs';
 import {configureTags} from './tags.mjs';
+import {messageSignature} from './message-identity.mjs';
 import {clone,fail,asError,digest} from './common.mjs';
 import {prepareNativeMvu} from '../config/native-mvu.js';
 import {excludeTemplateBookEntries,readStoryReferenceBooks,applyStoryReferenceBooks} from './template-book.mjs';
@@ -328,7 +329,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   });
   if(transaction.status==='FAILED')fail(transaction.error.code,transaction.error.message,transaction.error.details);
   if(e.data.tables.X_PHONE_BINDINGS?.['phone-current']){const archive=decodePhoneDatabase(e.data);if(archive)importPhone(archive);}
-  const ids=messages.map(m=>m.uid),edit={uid:'database:'+operationId,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:messages.map(m=>({uid:m.uid,signature:digest({role:m.role,text:m.text??'',uid:m.uid})})),patch:inversePatch(e.data,current.state)};
+  const ids=messages.map(m=>m.uid),edit={uid:'database:'+operationId,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:messages.map(m=>({uid:m.uid,signature:messageSignature(m)})),patch:inversePatch(e.data,current.state)};
   const staged={...current,manual_edits:[...(current.manual_edits??[]),edit],database_operations:{...(bundle.database_operations??{}),[operationId]:{hash,contextKey:key,anchor_uid:ids.at(-1)??null}},phone_action_reservations:{...(bundle.phone_action_reservations??{}),...Object.fromEntries((source?.newPhoneActions??[]).map(a=>[a.id,{fingerprint:digest(a),operationId,contextKey:key}]))}};
   const next={...reconcile(staged,messages).bundle,local_revision:(bundle.local_revision??0)+1};
   assertCurrent?.();if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');if(!await storage.commit(id,bundle.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已经更新此会话，请刷新后重试');

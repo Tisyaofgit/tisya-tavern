@@ -1,4 +1,5 @@
 import {matrixRecordVisible,matrixFieldVisible} from './engine/prompt-boundary.mjs';
+import {characterOrigin} from './engine/character-identity.mjs';
 
 const clone=value=>structuredClone(value);
 const clean=(value,limit=280)=>{
@@ -41,6 +42,10 @@ export function matrixArchiveLinkIndex(snapshot,{sourceId,contextKey,scope={}}={
   return [...new Set(result)];
  };
  const originOf=(tableId,recordId)=>{
+  if(tableId==='T_SYS_ENTITIES'){
+   const origin=characterOrigin(state,recordId,field);
+   if(origin)return allowed('T_CHAR_DOSSIER',origin.dossierId)?{tableId:'T_CHAR_DOSSIER',recordId:origin.dossierId}:null;
+  }
   const referenceId=field(tableId,recordId,'origin_record_ref');if(typeof referenceId!=='string'||!allowed('M_FIELD_REFERENCES',referenceId))return null;
   const targetTable=text('M_FIELD_REFERENCES',referenceId,'target_table'),targetId=text('M_FIELD_REFERENCES',referenceId,'target_row_uuid');
   if(!targetTable||!targetId||text('M_FIELD_REFERENCES',referenceId,'owner_table')!==tableId||text('M_FIELD_REFERENCES',referenceId,'owner_row_uuid')!==recordId||!allowed(targetTable,targetId))return null;

@@ -1,3 +1,4 @@
+import {characterDossierId,characterEntityForDossier,characterOrigin,characterOriginChanges,characterOriginValues,characterProjection} from '../../engine/character-identity.mjs';
 import {FORM_OWNERSHIP_CONTRACT} from '../../engine/form-semantics.mjs';
 import {stripParagraphEvidence} from '../../engine/paragraph-evidence.mjs';
 import {OBJECT_IDENTITY_FIELDS,namedIdentityTable,normalizeIdentityName,identityAliases} from '../../engine/object-identity.mjs';
@@ -552,21 +553,21 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
  const generated=[],actors=[],generatedParents=new Map(),identityOrigins=[],generatedIdentities=[];
  for(const row of rows.filter(r=>r.tableId==='T_CHAR_DOSSIER')){
   try{check(row.name,'人物档案需要显示名称');const schema=snapshot.state.schema.T_SYS_ENTITIES;check(schema,'人物主体表尚未登记');
-  let existingEntity;if(row.existing)existingEntity=Object.entries(snapshot.state.tables.T_SYS_ENTITIES??{}).find(([,e])=>{const ref=snapshot.state.tables.M_FIELD_REFERENCES?.[e.values.origin_record_ref]?.values;return ref?.target_table===row.tableId&&ref.target_row_uuid===row.recordId;});
+  let existingEntity;if(row.existing){const entityId=characterEntityForDossier(snapshot.state,row.recordId);existingEntity=entityId?[entityId,snapshot.state.tables.T_SYS_ENTITIES[entityId]]:undefined;}
   if(!existingEntity&&permitsIdentityReuse(context.task)){
    const candidates=context.references.filter(r=>r.tableId==='T_SYS_ENTITIES'&&r.name===row.name).filter(r=>{const v=snapshot.state.tables.T_SYS_ENTITIES[r.recordId].values;return !v.origin_record_ref&&['unclassified','character'].includes(v.kind);});
    check(candidates.length<=1,'人物主体重名，请先明确对应记录：'+row.name);
    if(candidates.length)existingEntity=[candidates[0].recordId,snapshot.state.tables.T_SYS_ENTITIES[candidates[0].recordId]];
   }
   const entityId=existingEntity?.[0]??stableId(context.operationId+'|actor|'+row.recordId),values={};const has=k=>schema.fields.some(f=>f.key===k&&!f.read_only&&!f.alias_of);if(has('kind'))values.kind='character';if(has('name'))values.name=row.name;
-  if(!existingEntity?.[1].values.origin_record_ref&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});}
+  if(!existingEntity?.[1].values.origin_record_ref&&has('origin_record_ref')&&snapshot.state.schema.M_FIELD_REFERENCES){const link=stableId(context.operationId+'|origin|'+row.recordId);values.origin_record_ref=link;generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:characterOriginValues(entityId,row.recordId)});}
   if(partition&&existingEntity?.[1].values.origin_record_ref){
-   const link=existingEntity[1].values.origin_record_ref,ref=snapshot.state.tables.M_FIELD_REFERENCES?.[link]?.values;
-   check(existingEntity[1].values.kind==='character'&&ref?.owner_table==='T_SYS_ENTITIES'&&ref.owner_row_uuid===entityId&&ref.owner_field==='origin_record_ref','既有人物的稳定身份引用不一致');
+   const link=existingEntity[1].values.origin_record_ref,origin=characterOrigin(snapshot.state,entityId);
+   check(existingEntity[1].values.kind==='character'&&origin?.originId===link&&origin.dossierId===row.recordId,'既有人物的稳定身份引用不一致');
    // Identity coordinates are reusable; live character attributes are not an
    // author definition and must never be silently copied into the worldbook.
    generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values:{kind:'character',origin_record_ref:link}});
-   generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:row.recordId,reference_kind:'record',resolution_status:'resolved'}});
+   generated.push({tableId:'M_FIELD_REFERENCES',recordId:link,values:characterOriginValues(entityId,row.recordId)});
   }
   if(!existingEntity||values.origin_record_ref)generated.push({tableId:'T_SYS_ENTITIES',recordId:entityId,values});actors.push({tableId:'T_SYS_ENTITIES',recordId:entityId,name:row.name,display:(schema.label??'主体')+'／'+row.name,dossierId:row.recordId});
   if(snapshot.state.schema.T_CHAR_DOSSIER.fields.some(f=>f.key==='entity_ref'))row.values.entity_ref=entityId;}catch(error){error.formLocation??={tableId:row.tableId,recordId:row.recordId,heading:row.heading};if(!collectErrors)throw error;capture(error);}
@@ -602,22 +603,34 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
   }
   const displayedEventCode=r=>r.tableId==='T_DYN_EVENTS'&&/^e?\d+$/i.test(String(raw).trim())&&eventKey(r.eventCode??r.name)===eventKey(raw);
   let candidates=references.filter(r=>displayedEventCode(r)||(context.narrativeIdentity!==false?normalizeIdentityName(r.name)===normalizeIdentityName(raw)||(r.aliases??[]).some(a=>normalizeIdentityName(a)===normalizeIdentityName(raw)):r.name===raw)||r.legacyName===raw||r.display===raw||r.legacyDisplay===raw||raw===(snapshot.state.schema[r.tableId]?.label+'／'+r.name));
-  if(target==='T_SYS_ENTITIES'){const dossiers=candidates.filter(r=>r.tableId==='T_CHAR_DOSSIER');candidates=candidates.concat(actors.filter(a=>dossiers.some(d=>d.recordId===a.dossierId)));}
-  const targets=[target].flat().filter(Boolean),matches=candidates.filter(r=>!target||targets.includes(r.tableId));
-  let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
-  if(!target&&context.narrativeIdentity!==false&&!/[／#]/.test(raw)){
-   // A person's dossier and its proven actor link are one referent in an
-   // untyped list. Explicit table selectors still address the dossier itself.
-   const linked=new Set();
-   for(const entity of unique.filter(r=>r.tableId==='T_SYS_ENTITIES')){
-    const actor=actors.find(a=>a.recordId===entity.recordId);
-    if(actor?.dossierId){linked.add(actor.dossierId);continue;}
-    const value=generated.find(r=>r.tableId==='T_SYS_ENTITIES'&&r.recordId===entity.recordId)?.values??snapshot.state.tables.T_SYS_ENTITIES?.[entity.recordId]?.values;
-    const origin=generated.find(r=>r.tableId==='M_FIELD_REFERENCES'&&r.recordId===value?.origin_record_ref)?.values??snapshot.state.tables.M_FIELD_REFERENCES?.[value?.origin_record_ref]?.values;
-    if(origin?.owner_table==='T_SYS_ENTITIES'&&origin.owner_row_uuid===entity.recordId&&origin.owner_field==='origin_record_ref'&&origin.target_table==='T_CHAR_DOSSIER')linked.add(origin.target_row_uuid);
+  const targets=[target].flat().filter(Boolean);
+  const visible=(tableId,recordId)=>references.find(r=>r.tableId===tableId&&r.recordId===recordId)??null;
+  function characterView(row,wanted){
+   let entity=null,actor=null;
+   if(row.tableId==='T_SYS_ENTITIES')entity=row;
+   else if(row.tableId==='T_CHAR_DOSSIER'){
+    actor=actors.find(a=>a.dossierId===row.recordId)??null;
+    const entityId=actor?.recordId??characterEntityForDossier(snapshot.state,row.recordId);
+    entity=entityId?visible('T_SYS_ENTITIES',entityId):null;
+   }else if(row.tableId==='T_DYN_ENTITY_STATE'){
+    const projection=characterProjection(snapshot.state,row.tableId,row.recordId);
+    entity=projection?visible(projection.tableId,projection.recordId):null;
    }
-   unique=unique.filter(r=>r.tableId!=='T_CHAR_DOSSIER'||!linked.has(r.recordId));
+   if(!entity)return null;
+   if(wanted==='T_SYS_ENTITIES')return entity;
+   if(wanted!=='T_CHAR_DOSSIER')return null;
+   actor??=actors.find(a=>a.recordId===entity.recordId)??null;
+   const dossierId=actor?.dossierId??characterDossierId(snapshot.state,entity.recordId);
+   return dossierId?visible('T_CHAR_DOSSIER',dossierId):null;
   }
+  if(targets.length)candidates=candidates.map(row=>{
+   if(targets.includes(row.tableId))return row;
+   for(const wanted of targets){const mapped=characterView(row,wanted);if(mapped)return mapped;}
+   return row;
+  });
+  else if(context.narrativeIdentity!==false&&!/[／#]/.test(raw))candidates=candidates.map(row=>characterView(row,'T_SYS_ENTITIES')??row);
+  const matches=candidates.filter(r=>!target||targets.includes(r.tableId));
+  let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
   if(context.commonUnits!==false&&target==='M_UNITS'&&unique.length>1&&unique.every(r=>r.name===raw)){const local=unique.filter(r=>unitValues(r).scope_world_id===unitScope());if(local.length)unique=local;}
   if(unique.length===1)return unique[0];
   if(context.commonUnits!==false&&!unique.length&&target==='M_UNITS'&&source){const unit=registerCommonUnit(source.row,raw,source.field);if(unit)return unit;}
@@ -635,7 +648,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
     const reusable=context.narrativeIdentity!==false?references.filter(r=>r.tableId==='T_SYS_ENTITIES'&&r.name===raw).filter(r=>{const v=snapshot.state.tables.T_SYS_ENTITIES?.[r.recordId]?.values??generated.find(g=>g.tableId===r.tableId&&g.recordId===r.recordId)?.values;return v&&!v.origin_record_ref&&['unclassified','character'].includes(v.kind);}):[];
     check(reusable.length<=1,'人物主体重名，请先明确对应记录：'+raw);
     const entityId=reusable[0]?.recordId??stableId(context.operationId+'|actor|'+recordId),linkId=stableId(context.operationId+'|origin|'+recordId);
-    const entity={tableId:'T_SYS_ENTITIES',recordId:entityId,values:{kind:'character',origin_record_ref:linkId}},link={tableId:'M_FIELD_REFERENCES',recordId:linkId,values:{owner_table:'T_SYS_ENTITIES',owner_row_uuid:entityId,owner_field:'origin_record_ref',target_table:tableId,target_row_uuid:recordId,reference_kind:'record',resolution_status:'resolved'}};
+    const [entity,link]=characterOriginChanges({entityId,dossierId:recordId,originId:linkId});
     for(const child of [entity,link]){generated.push(child);generatedIdentities.push(child);generatedParents.set(child.tableId+'#'+child.recordId,tableId+'#'+recordId);identityOrigins.push({tableId:child.tableId,recordId:child.recordId,parentTable:source.row.tableId,parentRecord:source.row.recordId,field:source.field});}
     const actor={tableId:'T_SYS_ENTITIES',recordId:entityId,name:raw,display:'对象与实例注册／'+raw,dossierId:recordId};actors.push(actor);references.push(actor);
    }
@@ -897,7 +910,7 @@ export function validateMatrixProposal(proposal,snapshot,{mode='extend',kind='wo
   check(plain(binding)&&typeof binding.entityId==='string','新人物必须明确唯一主体 entityId');
   check(runtime.data.tables.T_SYS_ENTITIES?.[binding.entityId],'人物主体未登记在 T_SYS_ENTITIES');
   if(binding.dossierId)check(runtime.data.tables.T_CHAR_DOSSIER?.[binding.dossierId],'人物档案引用不存在');
-  if(runtime.data.schema.M_FIELD_REFERENCES&&runtime.data.schema.T_SYS_ENTITIES.fields.some(f=>f.key==='origin_record_ref')){const entity=runtime.data.tables.T_SYS_ENTITIES[binding.entityId].values,ref=runtime.data.tables.M_FIELD_REFERENCES?.[entity.origin_record_ref]?.values;check(ref?.owner_table==='T_SYS_ENTITIES'&&ref.owner_row_uuid===binding.entityId&&ref.owner_field==='origin_record_ref'&&ref.target_table==='T_CHAR_DOSSIER'&&ref.target_row_uuid===binding.dossierId,'人物实体必须以规范原点引用连接所选档案');}
+  if(runtime.data.schema.M_FIELD_REFERENCES&&runtime.data.schema.T_SYS_ENTITIES.fields.some(f=>f.key==='origin_record_ref')){const entity=runtime.data.tables.T_SYS_ENTITIES[binding.entityId].values,origin=characterOrigin(runtime.data,binding.entityId);check(origin?.originId===entity.origin_record_ref&&origin.dossierId===binding.dossierId,'人物实体必须以规范原点引用连接所选档案');}
  }
  return clone(proposal);
 }
