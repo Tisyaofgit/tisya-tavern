@@ -6,6 +6,7 @@ import {initializeState} from '../engine/materials.mjs';
 import {matrixArchiveLinkIndex,archiveLinkTextIndex} from '../archive-links.mjs';
 import {formatProse} from '../prose.js';
 import {ARCHIVE_LINK_CSS} from '../extension-presentation.mjs';
+import {mountMessageAppearance} from '../message-ui.js';
 
 const catalog=JSON.parse(readFileSync(new URL('../engine/catalog.json',import.meta.url)));
 const row=(values,derived=[])=>{const states=Object.fromEntries(Object.keys(values).map(key=>[key,derived.includes(key)?'derived':'known']));if(!('row_uuid' in values)){values={row_uuid:values.name??values.title??'row',...values};states.row_uuid='known';}return {values,states};};
@@ -67,4 +68,24 @@ test('synthetic viewport events place tooltips away from edges and retain deskto
 
 test('wrong-context or unauthorized link projections never reach the DOM',async()=>{
  const w=new Window();try{const root=w.document.createElement('div'),secret=entry('秘密',['秘密'],{contextKey:'other',fields:[['内容','PRIVATE_CANARY']]});root.innerHTML=formatProse(w.document,'秘密',text=>text,{presentation:{contextKey:'ctx',archiveLinks:{entries:[secret]}}});assert.equal(root.querySelector('[data-tisya-archive-link]'),null);assert(!root.innerHTML.includes('PRIVATE_CANARY'));}finally{await w.happyDOM.abort();}
+});
+
+test('native beauty receives archive links without replacing live nodes and unwraps them on disposal',async()=>{
+ const w=new Window({url:'http://localhost'}),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><button>原生按钮</button><p>阿青推门。</p></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),button=d.querySelector('.card-beauty>button'),message={mes:'阿青推门。',name:'角色',extra:{tisya_engine:{uid:'native-links'}}},opened=[];let clicks=0,lookups=0,disposals=0;button.onclick=()=>clicks++;w.Tisya={archive:{open:reference=>opened.push(reference)}};
+ const getPresentation=async()=>{lookups++;return {contextKey:'ctx',projections:[],archiveLinks:{entries:[entry('阿青',['阿青'])]},dispose:()=>{disposals++;}};},pause=()=>new Promise(resolve=>setTimeout(resolve,30));
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>'ctx',getPresentation,preferNative:()=>true,formatBody:text=>text,getMotion:()=>false});ui.sync(node);await pause();
+ try{
+  assert.equal(lookups,1);assert.equal(native.querySelectorAll('[data-tisya-archive-link]').length,1);assert.equal(d.querySelector('.card-beauty>button'),button);assert(d.querySelector('style[data-tisya-native-archive-links]'));
+  const trigger=native.querySelector('[data-tisya-archive-link]');trigger.click();const anchor=trigger.closest('[data-tisya-archive-anchor]');assert.equal(anchor.dataset.archiveOpen,'true');anchor.querySelector('[data-tisya-archive-open]').click();assert.deepEqual(opened,[{tableId:'T_SYS_ENTITIES',recordId:'阿青'}]);
+  ui.sync(node);ui.sync(node);await pause();assert.equal(lookups,1,'native DOM mutations must not restart the presentation request');assert.equal(native.querySelectorAll('[data-tisya-archive-link]').length,1);
+  ui.refresh();await pause();assert.equal(lookups,2,'archive completion can explicitly refresh the link projection');assert.equal(native.querySelectorAll('[data-tisya-archive-link]').length,1);
+  ui.dispose();assert.equal(native.querySelector('[data-tisya-archive-link]'),null);assert.equal(d.querySelector('style[data-tisya-native-archive-links]'),null);assert.equal(d.querySelector('.card-beauty>button'),button);assert.match(native.textContent,/阿青推门/);button.click();assert.equal(clicks,1);assert.equal(disposals,2);
+ }finally{ui.dispose();await w.happyDOM.abort();}
+});
+
+test('a disposed native view cannot receive a late archive projection',async()=>{
+ const w=new Window(),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_text">阿青</div></div></div>';const node=d.querySelector('.mes'),message={mes:'阿青',extra:{tisya_engine:{uid:'late-native'}}};let release;
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>'ctx',getPresentation:()=>new Promise(resolve=>release=resolve),preferNative:()=>true,formatBody:text=>text});ui.sync(node);await Promise.resolve();ui.dispose();release({contextKey:'ctx',projections:[],archiveLinks:{entries:[entry('阿青',['阿青'])]}});await new Promise(resolve=>setTimeout(resolve,20));
+ try{assert.equal(node.querySelector('[data-tisya-archive-link]'),null);assert.equal(d.querySelector('style[data-tisya-native-archive-links]'),null);}finally{await w.happyDOM.abort();}
 });
