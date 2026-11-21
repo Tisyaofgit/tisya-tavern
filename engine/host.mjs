@@ -7,17 +7,14 @@ import {prepareReviewHistory,applyReviewHistory,ensureReviewHistoryPayload} from
 import {enableTurnReview,reviewProjection,reviewBlocks,addTurnDecision} from './turn-review.mjs';
 import {phoneOriginStatus} from './phone-origin-status.mjs';
 import {readProseIdentity} from './identity.mjs';
-import {extendPreferenceCatalog,preferenceTextRows} from './preference-editor.mjs';
+import {preferenceTextRows} from './preference-editor.mjs';
 import {displayFormatMaterial,restoreDisplayFormatEntities} from './display-format.mjs';
 import {narrativeSourceFragments} from './narrative-source-policy.mjs';
 import {applyRequestLayers,createPromptSourceMap} from './request-layers.mjs';
 import {projectSystemAuthority} from './system-authority.mjs';
 import {createMatrixContextRecorder} from './context-recorder.mjs';
 import {createNativePresetLayers} from './native-preset-layers.mjs';
-import {extendPhoneFormCatalog,phoneFormReferenceCandidates} from './phone-form-contract.mjs';
-import {extendAttitudeCatalog} from './relation-attitudes.mjs';
-import {extendOffstageCatalog} from './offstage-life.mjs';
-import {extendFieldHistoryCatalog} from './field-history.mjs';
+import {phoneFormReferenceCandidates} from './phone-form-contract.mjs';
 import {effectivePreferences,preferenceWishSlot} from './preferences.mjs';
 import {limitNativeHistory} from '../config/history-context.js';
 import {contractorMessages} from './contractor.mjs';
@@ -35,7 +32,7 @@ import {inversePatch} from './journal.mjs';
 import {reconcilePhoneBundle} from './phone-bootstrap.mjs';
 import {snapshotProjection} from './projection-cache.mjs';
 import {createFinalProjectionCache} from './final-projection-cache.mjs';
-import {materials,initializeState} from './materials.mjs';
+import {materials,initializeState,extendMatrixCatalog} from './materials.mjs';
 import {appendXmlSection} from './prompt-sections.mjs';
 import {narrativeSection} from './narrative-material.mjs';
 import {createConfiguration,materialNames,identitySlots,compilePrompts,compilePromptText,isMatrixPreset,applyCompiledMessages} from './config.mjs';
@@ -61,7 +58,7 @@ function turnArchiveIssue(journal,entry){
 export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null;const listeners=new Set();
- const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendPhoneFormCatalog).then(extendAttitudeCatalog).then(extendOffstageCatalog).then(extendFieldHistoryCatalog).then(extendPreferenceCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
+ const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendMatrixCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
  const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError});
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};

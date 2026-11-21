@@ -17,6 +17,7 @@ import {extendPhoneFormCatalog} from './phone-form-contract.mjs';
 import {extendAttitudeCatalog} from './relation-attitudes.mjs';
 import {extendOffstageCatalog} from './offstage-life.mjs';
 import {extendFieldHistoryCatalog} from './field-history.mjs';
+import {extendPreferenceCatalog} from './preference-editor.mjs';
 import {PHONE_FORM_TEMPLATES,PHONE_APP_NAMES} from './form-template-routing.mjs';
 const routes={'世界与规则':'world_context','类型与物品':'asset_context','地点与交通':'location_context','组织与制度':'faction_context','场景与环境':'current_state','状态与成长':'current_state','持有与交易':'current_state','关系与约定':'current_state','人物原点':'focus_entities','人物细节':'focus_entities','认知与情报':'knowledge_material','历史与记忆':'memory_archive','任务与调度':'pending_tasks','生产与设施':'current_state','冲突与检定':'current_state','创世与跨世界':'cardflow','规则与执行':'cell_prompts','宿主与投影':'display_material','运行与归档':'offstage_state'};
 const text=v=>v==null?'~':typeof v==='boolean'?(v?'是':'否'):Array.isArray(v)?v.map(text).join('、')||'[]':typeof v==='object'?Object.entries(v).map(([k,x])=>k+'='+text(x)).join('；')||'{}':String(v).replace(/\r?\n/g,' ⏎ ');
@@ -38,8 +39,11 @@ export function materialFormTables(e,blocks,context={}){
  for(const row of Object.values(e.rows('X_ACTIONS'))){if(row.values.enabled===false)continue;for(const key of ['actor_table','definition_table','target_table'])if(typeof row.values[key]==='string')selected.add(row.values[key]);}
  return [...selected].filter(id=>e.data.schema[id]&&mainFormTable(id,e.data.schema[id]));
 }
+export function extendMatrixCatalog(catalog){
+ return extendPreferenceCatalog(extendFieldHistoryCatalog(extendOffstageCatalog(extendSemanticCatalog(extendAttitudeCatalog(extendPhoneFormCatalog(catalog))))));
+}
 export function initializeState(catalog,scope={}){
- catalog=extendFieldHistoryCatalog(extendOffstageCatalog(extendSemanticCatalog(extendAttitudeCatalog(extendPhoneFormCatalog(catalog)))));
+ catalog=extendMatrixCatalog(catalog);
  const schema=Object.fromEntries(catalog.tables.map(t=>[t.id,clone(t)]));
  return {format:'tisya.matrix-state.v1',schema,tables:Object.fromEntries(Object.keys(schema).map(id=>[id,{}])),definition_meta:{derivations:clone(catalog.derivations??[]),relations:clone(catalog.relations??[]),parameter_definitions:clone(catalog.parameter_definitions??[]),parameter_bindings:clone(catalog.parameter_bindings??[])},runtime:{scope:clone(scope)}};
 }
