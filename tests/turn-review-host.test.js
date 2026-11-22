@@ -103,3 +103,17 @@ test('repeated sparse headings still block confirmation without a partial archiv
  await assert.rejects(f.host.confirmTurn({...draft,cells}),/分组重复/);
  assert.deepEqual((await f.snapshot()).state,before.state);
 });
+
+test('valid background precheck is read-only and confirmation time belongs to the actual click',async()=>{
+ const f=await fixture();f.ctx.chat.push({mes:f.reply()});await f.host.sync();const draft=await f.draft(),before=await f.snapshot(),input={...draft,cells:'阿青.hp: -2 | P1'};
+ assert.equal((await f.host.checkTurnReview(input)).status,'valid');assert.deepEqual(await f.snapshot(),before);
+ await new Promise(resolve=>setTimeout(resolve,5));const clicked=new Date().toISOString();await f.host.confirmTurn(input);assert.equal(await f.hp(),8);
+ const decision=(await f.snapshot()).turn_review.decisions.at(-1);assert(decision.confirmedAt>=clicked);assert.equal(decision.archive_pending,false);
+});
+
+test('prepared validation cannot cross edited form bytes or changed message evidence',async()=>{
+ const edited=await fixture();edited.ctx.chat.push({mes:edited.reply()});await edited.host.sync();const draft=await edited.draft(),input={...draft,cells:'阿青.hp: -2 | P1'};
+ await edited.host.checkTurnReview(input);await edited.host.confirmTurn({...input,cells:'阿青.hp: -5 | P1'});assert.equal(await edited.hp(),5);
+ const stale=await fixture();stale.ctx.chat.push({mes:stale.reply()});await stale.host.sync();const pending=await stale.draft(),before=await stale.snapshot();await stale.host.checkTurnReview(pending);
+ stale.ctx.chat[0].mes=stale.reply(9);await assert.rejects(stale.host.confirmTurn(pending),/正文已变化|本轮正文已变化|已变化/);assert.deepEqual(await stale.snapshot(),before);
+});

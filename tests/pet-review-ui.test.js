@@ -53,3 +53,23 @@ test('check-all shows every issue with field navigation and permits a corrected 
 });
 
 test('composer height changes bound both forms and trigger; disable and dispose release them',async()=>{const f=setup();try{await f.ui.ready;const notice=f.ui.root.querySelector('.review-notice'),panel=f.ui.root.querySelector('[role=dialog]');f.pet.setVisible(false);notice.click();f.formTop(280);assert.ok(parseFloat(panel.style.top)+parseFloat(panel.style.maxHeight)<280);f.ui.root.querySelector('header button').click();assert.ok(parseFloat(notice.style.top)+64<280);f.ui.setActive(false);assert.equal(f.ui.root.hidden,true);f.ui.setActive(true);assert.equal(f.ui.root.hidden,false);f.fixture.setAvailable(false);await flush();assert.equal(f.ui.root.hidden,true);f.ui.dispose();assert.equal(f.fixture.listenerCount(),0);f.pet.setVisible(true);assert.equal(f.d.querySelector('.review-notice'),null);}finally{await f.close();}});
+
+test('pending review prewarms in the background and revalidates the exact edited bytes without confirming',async()=>{
+ const f=setup();try{
+  const inputs=[];let confirmations=0;
+  f.fixture.service.checkTurnReview=async input=>{inputs.push(structuredClone(input));return {status:'valid',issues:[],archiveIssue:null};};
+  f.fixture.service.confirmTurn=async input=>{confirmations++;return {status:'confirmed'};};
+  await f.ui.ready;await new Promise(resolve=>f.w.setTimeout(resolve,220));
+  assert.equal(inputs.length,1);assert.equal(confirmations,0);
+  const editor=f.ui.root.querySelector('textarea[aria-label="本轮表单"]');editor.value='旅人.hp: -4 | P1';editor.dispatchEvent(new f.w.Event('input'));
+  [...f.ui.root.querySelectorAll('button')].find(button=>button.textContent==='展开修改后的字段').click();
+  await new Promise(resolve=>f.w.setTimeout(resolve,220));assert.equal(inputs.length,2);assert.equal(inputs.at(-1).cells,'旅人.hp: -4 | P1');assert.equal(confirmations,0);assert.deepEqual(f.errors,[]);
+ }finally{await f.close();}
+});
+
+test('background prevalidation errors stay silent until the user explicitly checks or confirms',async()=>{
+ const f=setup();try{
+  f.fixture.service.checkTurnReview=async()=>{throw Error('background stale');};await f.ui.ready;
+  await new Promise(resolve=>f.w.setTimeout(resolve,220));assert.deepEqual(f.errors,[]);assert.equal(f.fixture.state.reviews[0].status,'pending');
+ }finally{await f.close();}
+});

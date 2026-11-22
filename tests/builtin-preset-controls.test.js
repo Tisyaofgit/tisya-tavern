@@ -27,3 +27,10 @@ test('native reselection clears only a proven saved-load failure, never an unack
   if(saved){assert.doesNotThrow(()=>controller.assertReady());assert.equal(controller.state().error,null);}else{assert.throws(()=>controller.assertReady(),/first failure/);assert.equal(controller.state().error,failure);}
  }
 });
+
+test('preset update panel exposes the installed extension version and native extension-manager route',async()=>{
+ const w=new Window(),document=w.document,controller=createPresetUpdateController({getContext:()=>({}),document,isBusy:()=>false});let opened=0;
+ const ui=mountPresetUpdateControl(document.body,controller,{onOpenExtensions:()=>opened++});
+ assert.match(document.body.textContent,/扩展程序版本：0\.2\./);assert.match(document.body.textContent,/只更新提示词预设/);
+ const button=[...document.querySelectorAll('button')].find(node=>node.textContent.includes('更新代码'));button.click();assert.equal(opened,1);ui.dispose();await w.happyDOM.close();
+});

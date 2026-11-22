@@ -234,7 +234,7 @@ test('mounted preset recovery is available on both settings and native preset pa
  let fail=true,calls=0;
  const f=await setup({presetInstaller:async(_c,_d,options)=>{calls++;if(fail)throw Object.assign(Error('preset load mismatch'),{tisyaPresetUpdate:true});assert.equal(options.force,true);return {name:'Tisya',status:'updated',active:true};}});
  const chat=structuredClone(f.ctx.chat);assert.match(f.w.Tisya.builtinPreset().error,/preset load mismatch/);
- assert.equal(f.w.document.querySelectorAll('#ai-config-button .tisya-preset-update button').length,1);
+ assert.equal(f.w.document.querySelectorAll('#ai-config-button .tisya-preset-update button').length,2);
  await click(f,'menu');await click(f,'preset-update');assert.match(f.w.document.querySelector('#tisya-preset-update-page').textContent,/preset load mismatch/);
  fail=false;f.w.document.querySelector('#tisya-preset-update-page button').click();await f.w.happyDOM.whenAsyncComplete();assert.equal(calls,2);assert.equal(f.w.Tisya.builtinPreset().error,null);assert.equal(f.w.Tisya.builtinPreset().receipt.status,'updated');assert.deepEqual(f.ctx.chat,chat);assert.match(f.w.document.querySelector('#ai-config-button .tisya-preset-update').textContent,/已就绪/);await f.w.happyDOM.close();
 });

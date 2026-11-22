@@ -76,3 +76,10 @@ test('all three importable book artifacts exactly match this version of the fact
 test('unsupported installation receipt blocks all writes and preserves existing books',async()=>{
  const f=fixture();f.ctx.extensionSettings[BUILTIN_BOOK_SETTINGS]={format:2,revision:1,books:{}};const before=structuredClone(f.ctx.extensionSettings);const r=await f.installer.update();assert.equal(r.status,'partial');assert.match(r.errors[0].message,/版本或结构无效/);assert.equal(f.writes.length,0);assert.deepEqual(f.ctx.extensionSettings,before);
 });
+
+test('preferred builtin book is read first and remaining identity audits use bounded concurrent reads',async()=>{
+ const f=fixture();await f.installer.update();for(let i=0;i<7;i++)f.books['用户书'+i]={entries:{}};
+ let active=0,maximum=0,preferredReads=0;const original=f.args.readBook;
+ f.args.readBook=async name=>{active++;maximum=Math.max(maximum,active);if(name==='模板测试')preferredReads++;await new Promise(resolve=>setTimeout(resolve,5));try{return await original(name);}finally{active--;}};
+ const next=f.replace(defs()),report=await next.update();assert.equal(report.status,'ready');assert(maximum>1&&maximum<=4,String(maximum));assert.equal(preferredReads,1);
+});

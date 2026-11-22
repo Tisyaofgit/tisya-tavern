@@ -29,13 +29,19 @@ export function createBuiltinBookInstaller({getContext,listBooks,readBook,writeB
   catch(error){if(context.extensionSettings[BUILTIN_BOOK_SETTINGS]===next){if(prior===undefined)delete context.extensionSettings[BUILTIN_BOOK_SETTINGS];else context.extensionSettings[BUILTIN_BOOK_SETTINGS]=prior;}throw error;}
  }
  async function locate(def,names,cache=null,fast=false){
-  const preferred=bookName(def),previous=settings().books[def.id];let preferredData=null,found=null;
+  const preferred=bookName(def),previous=settings().books[def.id];let preferredData=null,found=null,preferredFound=null;
   const read=async name=>{if(cache?.has(name))return copy(cache.get(name));const data=await readBook(name);cache?.set(name,copy(data));return data;};
-  if(fast&&names.includes(preferred)){const data=await read(preferred);if(data?.extensions?.[META]?.package===BUILTIN_PACKAGE&&data.extensions[META].bookId===def.id)return {name:preferred,data:validateBook(data,preferred)};}
-  for(const name of names){const data=await read(name),marker=data?.extensions?.[META],claim=marker?.package===BUILTIN_PACKAGE&&marker.bookId===def.id||Object.values(data?.entries??{}).some(e=>owned(e,def.id));
+  const inspect=async name=>{const data=await read(name),marker=data?.extensions?.[META];return {name,data,claim:marker?.package===BUILTIN_PACKAGE&&marker.bookId===def.id||Object.values(data?.entries??{}).some(e=>owned(e,def.id))};};
+  if(fast&&names.includes(preferred)){const row=await inspect(preferred);if(row.data?.extensions?.[META]?.package===BUILTIN_PACKAGE&&row.data.extensions[META].bookId===def.id){preferredData=validateBook(row.data,preferred);preferredFound={name:preferred,data:preferredData};}}
+  // Preferred data is read first, then the remaining identity audit runs with
+  // bounded reads. Skipping that audit would hide duplicate owned books.
+  const pending=preferredFound?names.filter(name=>name!==preferred):names,rows=[];
+  for(let at=0;at<pending.length;at+=4)rows.push(...await Promise.all(pending.slice(at,at+4).map(inspect)));
+  for(const {name,data,claim}of rows){
    if(name===preferred)preferredData=validateBook(data,name);
    if(claim){check(!found,'多本书声称同一内置身份：'+def.id);found={name,data:validateBook(data,name)};}
   }
+  if(preferredFound){check(!found,'多本书声称同一内置身份：'+def.id);return preferredFound;}
   if(found)return found;
   if(previous)return {name:preferred,data:null};
   const marker=preferredData?.extensions?.[META];check(!marker||marker.package!==BUILTIN_PACKAGE||marker.bookId===def.id,'目标书名已由另一内置用途占用：'+preferred);
@@ -66,7 +72,7 @@ export function createBuiltinBookInstaller({getContext,listBooks,readBook,writeB
   return {data,conflicts,receipt:{name,checkedRelease:hash(def),...(conflicts.length?{release:receipt.release??null}:{release:hash(def)}),entries:seen}};
  }
  async function installOne(def,names,cache){
-  const previous=settings().books[def.id],found=await locate(def,names,cache),{name}=found;
+  const previous=settings().books[def.id],found=await locate(def,names,cache,true),{name}=found;
   if(!found.data&&previous){return {id:def.id,name,status:'conflict',written:false,conflicts:[{bookId:def.id,book:name,entryId:null,type:'missing-book',fields:[],expectedDigest:hash(null)}]};}
   const planned=plan(def,name,found.data,previous);let written=false;
   if(!same(found.data,planned.data)){

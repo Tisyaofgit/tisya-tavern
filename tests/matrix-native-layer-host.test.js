@@ -10,7 +10,7 @@ import {loadNativeHost} from './fixtures/native-layers/load-host-fragments.mjs';
 // separate fixed-host-source tests; this fixture never claims a live model run.
 const cardText='角色：港口守夜人。\n叙事人称：第三人称\n事实：旧伞放在门边。';
 const clone=structuredClone;
-async function fixture({readyError=null,legacy=false,cardContent=cardText,realNative=false,customPrompt=null,getDisplayRules=()=>[],manualReview=false}={}){
+async function fixture({readyError=null,legacy=false,cardContent=cardText,realNative=false,customPrompt=null,getDisplayRules=()=>[],manualReview=false,getContractorMessages=async()=>[]}={}){
  const disk=new Map(),macros=new Map(),calls=[];
  const eventNames=['GENERATION_AFTER_COMMANDS','WORLDINFO_ENTRIES_LOADED','WORLD_INFO_ACTIVATED','GENERATE_AFTER_COMBINE_PROMPTS','CHAT_COMPLETION_SETTINGS_READY','GENERATION_ENDED','GENERATION_STOPPED'];
  const context={chatId:'layer-host',characterId:0,characters:[{avatar:'guard.png',data:{description:cardContent}}],extensionSettings:{},chatMetadata:{},chat:[{is_user:false,mes:'他将旧伞放在门边。'},{is_user:true,mes:'继续谈话。'}],registerMacro:(key,fn)=>macros.set(key,fn),saveChat:async()=>true};
@@ -29,7 +29,7 @@ async function fixture({readyError=null,legacy=false,cardContent=cardText,realNa
  let host;
  const nativeSources=realNative?createNativeSourceLayers({relocateSources:true,PromptManager:native.PromptManager,Message:native.Message,ChatCompletion:native.ChatCompletion,getContext:()=>context,getScope:()=>'chat:fixed:window12',getAuthorsNotePolicy:()=>({enabled:true}),preparePreset:(...args)=>host.prepareNativePreset(...args),finalizeMessages:(...args)=>host.finalizeNativeMessages(...args)}):{begin:()=>calls.push('begin'),end:()=>calls.push('end'),entriesLoaded:()=>calls.push('entriesLoaded'),activated:()=>calls.push('activated'),afterCombine:()=>calls.push('afterCombine'),assertReady(){calls.push('assertReady');if(readyError)throw readyError;},audit:()=>({status:'fixture-only',sources:['card:description'],liveHost:false})};
  const storage={get:async key=>clone(disk.get(key)),set:async(key,value)=>disk.set(key,clone(value)),commit:async(key,revision,value)=>{if((disk.get(key)?.local_revision??0)!==revision)return false;disk.set(key,clone(value));return true;}};
- host=createMatrixHost({getContext:()=>context,getSource:()=>source,loadCatalog:async()=>({tables:[]}),storage,persistSettings:async()=>true,persistMetadata:async()=>true,nativeSources,expand,getDisplayRules,manualReview});
+ host=createMatrixHost({getContext:()=>context,getSource:()=>source,loadCatalog:async()=>({tables:[]}),storage,persistSettings:async()=>true,persistMetadata:async()=>true,nativeSources,expand,getDisplayRules,manualReview,getContractorMessages});
  host.register();const runtime=new Runtime();runtime.registerTable('ACTOR',[{key:'name',type:'TEXT'}]);runtime.newRecord('ACTOR',{name:'阿青'},'u');await host.import({state:runtime.data});
  const settings=host.config.read();settings.story.play={choices:{N02:'N02-C'}};await host.config.save(settings);
  function payload(){
@@ -143,4 +143,21 @@ test('an old native agent resume cannot bypass the source preparation boundary',
  const f=await fixture();assert.doesNotThrow(()=>f.host.assertNativeResume({agentResume:false}));
  assert.throws(()=>f.host.assertNativeResume({agentResume:true}),error=>error.code==='NATIVE_LAYER_RESUME_UNAVAILABLE');
  assert.equal(f.host.accepted(),false);assert.deepEqual(f.source,f.stored);
+});
+
+test('before runs independent native and contractor reads concurrently while final MVU evidence stays enforced',async()=>{
+ const previous=globalThis.Mvu,state={count:0};let releaseNative,nativeReadStarted=false,directionsStarted=false;
+ const nativeGate=new Promise(resolve=>releaseNative=resolve);
+ const f=await fixture({getContractorMessages:async()=>{directionsStarted=true;return [];}});
+ const card=f.context.characters[0];card.name='守夜人';card.data.extensions={tavern_helper:{scripts:[{type:'script',enabled:true,id:'mvu',content:"import 'https://example.test/MagVarUpdate@master/bundle.js'"}],},world:'MVU书'};
+ card.data.character_book={entries:[{enabled:true,comment:'格式',content:'<UpdateVariable><JSONPatch>[]</JSONPatch></UpdateVariable>'}]};
+ f.context.loadWorldInfo=async()=>{nativeReadStarted=true;await nativeGate;return {entries:Object.fromEntries(f.context.characters[0].data.character_book.entries.map((entry,uid)=>[uid,{...entry,uid}]))};};
+ globalThis.Mvu={getMvuData:()=>({stat_data:state}),parseMessage(){}};
+ let job;
+ try{
+  job=f.host.before('normal');await new Promise(resolve=>setTimeout(resolve,20));assert.equal(nativeReadStarted,true);assert.equal(directionsStarted,true);
+ }finally{releaseNative();}
+ try{
+  await job;state.count++;await assert.rejects(f.host.payloadReady(f.payload()),error=>error.code==='NATIVE_MVU_STALE');
+ }finally{f.dispose();if(previous===undefined)delete globalThis.Mvu;else globalThis.Mvu=previous;}
 });

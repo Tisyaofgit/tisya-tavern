@@ -1,6 +1,7 @@
 import {installBuiltInPreset,BUILTIN_PRESET_NAME,BUILTIN_PRESET_REVISION} from './builtin-preset.js';
 import {presetLoadMismatch} from './preset-load-check.js';
 import bundled from './presets/Tisya.json' with {type:'json'};
+import manifest from './manifest.json' with {type:'json'};
 
 export function createPresetUpdateController({getContext,document,isBusy,install=installBuiltInPreset}){
  let receipt=null,error=null,pending=null;
@@ -25,14 +26,15 @@ export function presetUpdateMessage({receipt,error,busy}){
  return '将内置新版提示词写入同名 Tisya，并刷新当前载入。';
 }
 
-export function mountPresetUpdateControl(container,controller,{onError=()=>{},onOpenPresets}={}){
+export function mountPresetUpdateControl(container,controller,{onError=()=>{},onOpenPresets,onOpenExtensions}={}){
  const document=container.ownerDocument,section=document.createElement('section'),status=document.createElement('p'),note=document.createElement('small'),button=document.createElement('button');
  section.className='tisya-preset-update';section.style.cssText='margin:12px 0;padding:14px;border:1px solid #b7a46f66;border-radius:10px;background:#061b14;color:#e2ddc8;';
  status.setAttribute('role','status');status.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 10px';
- note.textContent='覆盖 Tisya 的提示词手改；保留连接、模型、聊天和其他预设。';note.style.cssText='display:block;opacity:.8;margin-bottom:10px';
+ note.textContent='扩展程序版本：'+manifest.version+'。此按钮只更新提示词预设；扩展代码请在酒馆的扩展管理中更新。覆盖 Tisya 的提示词手改；保留连接、模型、聊天和其他预设。';note.style.cssText='display:block;opacity:.8;margin-bottom:10px';
  button.type='button';button.textContent='更新 Tisya 预设';button.style.cssText='min-height:44px;white-space:normal;font:inherit';
  const retry=()=>controller.update({force:true}).catch(onError);button.addEventListener('click',retry);section.append(status,note,button);
  if(onOpenPresets){const open=document.createElement('button');open.type='button';open.textContent='打开预设管理';open.style.cssText='min-height:44px;white-space:normal;font:inherit';open.onclick=onOpenPresets;section.append(open);}
+ if(onOpenExtensions){const open=document.createElement('button');open.type='button';open.textContent='打开扩展管理（更新代码）';open.style.cssText='min-height:44px;white-space:normal;font:inherit';open.onclick=onOpenExtensions;section.append(open);}
  container.prepend(section);
  const unsubscribe=controller.subscribe(value=>{status.textContent=presetUpdateMessage(value);button.disabled=value.busy;button.textContent=value.busy?'正在更新…':'更新 Tisya 预设';});
  return {dispose(){unsubscribe();button.removeEventListener('click',retry);section.remove();}};

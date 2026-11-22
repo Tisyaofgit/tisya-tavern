@@ -226,7 +226,7 @@ const nativeConfiguration=createNativeConfiguration({getContext:context,regexGat
 const personaGateway=createPersonaGateway({getContext:context,getAvatar:()=>user_avatar,applyActive:(id,name)=>{initUserAvatar(id);setUserName(name,{toastPersonaNameChange:false});setPersonaDescription();},persist:saveSettings});
 function currentNativeDisplayRules(){const c=context();return !c.chatId||!configStore.read().world.theme.nativeRegex||c.extensionSettings.disabledExtensions?.includes('regex')?[]:getRegexScripts({allowedOnly:true});}
 const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardPrompts:hostNative.getCharacterCardFieldsSource,PromptManager,Message,ChatCompletion,getContext:context,getScope:()=>JSON.stringify([phoneChatKey(context()),matrixHost.config.read().revision,nativeGenerationEpoch]),preparePreset:(prompt,manager)=>matrixHost.prepareNativePreset(prompt,manager),finalizeMessages:(messages,info)=>matrixHost.finalizeNativeMessages(messages,info),getAuthorsNotePolicy:()=>({enabled:shouldWIAddPrompt,personaBefore:power_user.persona_description_position===persona_description_positions.TOP_AN?power_user.persona_description??'':'',personaAfter:power_user.persona_description_position===persona_description_positions.BOTTOM_AN?power_user.persona_description??'':''})});
-const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport});
+const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},catalogSignature:globalThis.__TISYA_CATALOG_SIGNATURE__,persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
 const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),evaluateConditions:input=>conditionService.evaluateMediaConditions(input),onChange:()=>appearance?.refresh(),onError:visualError});
@@ -396,7 +396,7 @@ function nativeDrawerOriginal(key) {
 }
 function showPresetUpdate(){
  page('Tisya 预设更新','<div id="tisya-preset-update-page"></div>');
- presetPageControl?.dispose();presetPageControl=mountPresetUpdateControl(root.querySelector('#tisya-preset-update-page'),builtinPreset,{onError:error,onOpenPresets:()=>nativeDrawerOriginal('ai-config-button')});
+ presetPageControl?.dispose();presetPageControl=mountPresetUpdateControl(root.querySelector('#tisya-preset-update-page'),builtinPreset,{onError:error,onOpenPresets:()=>nativeDrawerOriginal('ai-config-button'),onOpenExtensions:()=>nativeDrawerOriginal('extensions-settings-button')});
 }
 function nativeControl(selector) {
     const target = query(selector);
@@ -1134,10 +1134,12 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       catch(e){error(e);}
     });
     initializePresetConnection(context(),document);
-    try{await defaultActivation.start();}catch(err){error(err);}
-    try{const installed=await builtinBooks.update();if(installed.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:installed.conflicts,errors:installed.errors})));}catch(err){error(err);}
+    const [activation,books]=await Promise.allSettled([defaultActivation.start(),builtinBooks.update()]);
+    if(activation.status==='rejected')error(activation.reason);
+    if(books.status==='rejected')error(books.reason);
+    else if(books.value.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:books.value.conflicts,errors:books.value.errors})));
     const presetDrawer=document.querySelector('#ai-config-button .drawer-content');
-    if(presetDrawer)mountPresetUpdateControl(presetDrawer,builtinPreset,{onError:error});
+    if(presetDrawer)mountPresetUpdateControl(presetDrawer,builtinPreset,{onError:error,onOpenExtensions:()=>nativeDrawerOriginal('extensions-settings-button')});
     installUserEditHistory(document,context,userEditHistory);
     const readerCache=startReaderCache(window,error);
     try{init();}catch(err){error(err);}

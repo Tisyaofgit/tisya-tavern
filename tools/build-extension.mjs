@@ -2,8 +2,10 @@ import {build} from 'esbuild';
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import {digest} from '../engine/common.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const result=await build({absWorkingDir:root,entryPoints:['index.js'],outfile:'runtime.js',bundle:true,format:'esm',platform:'browser',target:'chrome110',external:['/script.js','/scripts/*','/lib.js'],write:false,metafile:true,legalComments:'inline',charset:'utf8',minifyWhitespace:true});
+const catalog=JSON.parse(await readFile(path.join(root,'engine/catalog.json'),'utf8'));
+const result=await build({absWorkingDir:root,entryPoints:['index.js'],outfile:'runtime.js',bundle:true,format:'esm',platform:'browser',target:'chrome110',external:['/script.js','/scripts/*','/lib.js'],define:{'globalThis.__TISYA_CATALOG_SIGNATURE__':JSON.stringify(digest(catalog))},write:false,metafile:true,legalComments:'inline',charset:'utf8',minifyWhitespace:true});
 // Every asset-owning module currently lives at the extension root. Reject a
 // future nested import.meta.url instead of silently changing its asset base.
 for(const name of Object.keys(result.metafile.inputs)){

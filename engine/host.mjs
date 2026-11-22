@@ -23,7 +23,7 @@ import {revisionMessages} from '../revision.js';
 import {userRevisionMaterial,userRevisionMessages} from '../user-revision.js';
 import {appendContractorMessages} from '../communication.js';
 import {applyGeneration,generationValues,assertGeneration} from './generation.mjs';
-import {Controller,indexedStorage,chatKey,captureMessages,ensureMessages,NS,PROMPT_KEY} from './controller.mjs';
+import {Controller,indexedStorage,chatKey,captureMessages,ensureMessages,signature as messageListSignature,NS,PROMPT_KEY} from './controller.mjs';
 import {Runtime} from './runtime.mjs';
 import {decodePhoneDatabase} from './phone-database.mjs';
 import {importPhone} from '../phone-core.mjs';
@@ -55,10 +55,17 @@ function turnArchiveIssue(journal,entry){
  const warning=entry.warnings.find(w=>w.source_key===sourceKey&&/^ARCHIVE_/.test(w.code??'')&&w.code!=='ARCHIVE_DECLARED_PENDING');
  return warning?warning.error?.message??warning.message??null:null;
 }
-export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
+export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignature=null,storage=null,persistSettings,persistMetadata,persona=()=>'',getHistoryLimit=()=>50,projectToolTurns,getContractorMessages=async()=>[],getDisplayRules=()=>[],nativeSources=null,expand=s=>s,assertIdle=()=>{},onError=()=>{},manualReview=false,request=null,archiveBooks=null,retryBinding=null,requestTransport=null}){
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
- let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null;const listeners=new Set();
- const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendMatrixCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
+ let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null,warmProjection=null,preparedTurn=null;const listeners=new Set();
+ const catalogCacheWarning=error=>{try{onError(Error('表单目录缓存不可用，已使用正式目录：'+error.message));}catch{}};
+ const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(async()=>{
+  const cacheKey='derived:matrix-catalog',signed=typeof catalogSignature==='string'&&/^[a-f0-9]{64}$/.test(catalogSignature);
+  if(signed)try{const row=await projectionStorage.get(cacheKey);if(row?.format==='tisya.matrix-catalog/1'&&row.signature===catalogSignature&&row.value&&digest(row.value)===catalogSignature)return extendMatrixCatalog(clone(row.value));}catch(error){catalogCacheWarning(error);}
+  const value=await loadCatalog();
+  if(signed){if(digest(value)!==catalogSignature)fail('CATALOG_SIGNATURE_MISMATCH','新版表单定义内容校验失败，请更新扩展后重试');try{await projectionStorage.set(cacheKey,{format:'tisya.matrix-catalog/1',signature:catalogSignature,value:clone(value)});}catch(error){catalogCacheWarning(error);}}
+  return extendMatrixCatalog(value);
+ }).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
  const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError,
   // The authoritative bundle is read and reconciled on a cold reopen. Persist
   // only the expensive derived materials instead of a second full database.
@@ -75,7 +82,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  const reconcile=(bundle,messages,scope,proof=phoneProof(ctx()))=>bundleProjection(bundle,messages,scope,proof);
  const projectMaterials=(bundle,scope,playerBinding)=>{let materials={},materials_error;try{materials=materialProjection(bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}return {materials,materials_error};};
  const committedResponse=(result,next)=>({...result,bundle:next,preview:true,...projectMaterials(next,next.journal?.scope??next.state.runtime?.scope,config.read().story.userBinding)});
- const notify=r=>{latest=r;for(const fn of listeners)fn(r);};
+ const notify=(r,id,stamp)=>{latest=r;if(id&&r?.bundle&&typeof stamp==='string'){warmProjection={id,revision:r.bundle.local_revision??0,stamp,bundle:r.bundle};preparedTurn=null;}for(const fn of listeners)fn(r);};
+ const warmReviewBase=(original,id,messages,stamp=messageListSignature(messages))=>warmProjection?.id===id&&warmProjection.revision===(original?.local_revision??0)&&warmProjection.stamp===stamp?warmProjection.bundle:null;
  const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
   const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx()),playerBinding=config.read().story.userBinding;
   return finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
@@ -158,12 +166,12 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  // A successful CAS commit is already the authoritative result. Reuse its
  // journal/state and compute materials once instead of reading and reconciling
  // the identical turn a second time for the button's visual refresh.
- async function syncCommitted(id,response){busy=true;try{controller.publish(id,response);return await present(response);}finally{busy=false;}}
- async function before(type,options={},dryRun=false){nativeSources?.end();if(dryRun||['quiet','impersonate'].includes(type)){prepared={passthrough:true,accepted:true};return;}prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;await controller.inject();if(!controller.enabled())fail('ENGINE_NOT_BOUND','请在新版配置的“表单与存档”中接入本会话，或导入已有新版状态');await controller.beginGeneration();const key=chatKey(ctx()),settings=config.read();configureTags(settings.tags,settings.aliases);applyGeneration(ctx(),settings.generation);try{const reviewed=await sync({preview:true,omitLastAssistant:['swipe','regenerate','continue'].includes(type)});const historySources=captureMessages(ctx(),{omitLastAssistant:['swipe','regenerate'].includes(type)}).map((m,i)=>({...m,hidden:!!ctx().chat[i]?.extra?.[Symbol.for('ignore')]}));const source=getSource(),recall=promptEnabled(source,'tisya_material_memory_excerpt');const reviewHistory=manualReview?prepareReviewHistory(reviewed.bundle,historySources,key,historyLimit(),{recall}):null;const native=await prepareNativeMvu(ctx(),nativeWorld,type,undefined,{groupMachineInExtra:true});nativeSources?.begin({type,dryRun});appendNativeMaterial(source,'tisya_material_cardflow',native?.text,'原卡变量规约');const displayFormats=displayFormatMaterial(getDisplayRules());appendNativeMaterial(source,'tisya_material_display_material',displayFormats,'原卡显示格式');if(chatKey(ctx())!==key)fail('CHAT_CHANGED','准备期间已切换会话');const user=ctx().chat?.[ctx().chat.length-(ctx().chat.at(-1)?.is_user?1:2)],rewrite=['swipe','regenerate'].includes(type)?userRevisionMaterial(user):null,directives=[...revisionMessages(pendingRevision),...userRevisionMessages(pendingUserRevision??rewrite)],directions=await getContractorMessages({prepare:true});if(chatKey(ctx())!==key||config.read().revision!==settings.revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(displayFormatMaterial(getDisplayRules())!==displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');prepared={native,reviewHistory,recall,reviewBundle:reviewed.bundle,displayFormats,type,historyLimit:historyLimit(),directives,directions,user,userText:user?.mes,key,revision:settings.revision,source:clone(getSource()),settings,slots:clone(slots),narrativeSources:narrativeSourceFragments(ctx()),accepted:false};if(nativeSources)prepared.nativePresetLayers=createNativePresetLayers({settings:prepared.settings,slots:prepared.slots,type:prepared.type});}catch(e){nativeSources?.end();controller.generating.delete(key);throw e;}}
+ async function syncCommitted(id,response,stamp){busy=true;try{controller.publish(id,response,stamp);return await present(response);}finally{busy=false;}}
+ async function before(type,options={},dryRun=false){nativeSources?.end();if(dryRun||['quiet','impersonate'].includes(type)){prepared={passthrough:true,accepted:true};return;}prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;await controller.inject();if(!controller.enabled())fail('ENGINE_NOT_BOUND','请在新版配置的“表单与存档”中接入本会话，或导入已有新版状态');await controller.beginGeneration();const key=chatKey(ctx()),settings=config.read();configureTags(settings.tags,settings.aliases);applyGeneration(ctx(),settings.generation);try{const omitLastAssistant=['swipe','regenerate','continue'].includes(type),[reviewed,native,directions]=await Promise.all([sync({preview:true,omitLastAssistant}),prepareNativeMvu(ctx(),nativeWorld,type,undefined,{groupMachineInExtra:true}),getContractorMessages({prepare:true})]);const historySources=captureMessages(ctx(),{omitLastAssistant:['swipe','regenerate'].includes(type)}).map((m,i)=>({...m,hidden:!!ctx().chat[i]?.extra?.[Symbol.for('ignore')]}));const source=getSource(),recall=promptEnabled(source,'tisya_material_memory_excerpt');const reviewHistory=manualReview?prepareReviewHistory(reviewed.bundle,historySources,key,historyLimit(),{recall}):null;nativeSources?.begin({type,dryRun});appendNativeMaterial(source,'tisya_material_cardflow',native?.text,'原卡变量规约');const displayFormats=displayFormatMaterial(getDisplayRules());appendNativeMaterial(source,'tisya_material_display_material',displayFormats,'原卡显示格式');if(chatKey(ctx())!==key)fail('CHAT_CHANGED','准备期间已切换会话');const user=ctx().chat?.[ctx().chat.length-(ctx().chat.at(-1)?.is_user?1:2)],rewrite=['swipe','regenerate'].includes(type)?userRevisionMaterial(user):null,directives=[...revisionMessages(pendingRevision),...userRevisionMessages(pendingUserRevision??rewrite)];if(chatKey(ctx())!==key||config.read().revision!==settings.revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(displayFormatMaterial(getDisplayRules())!==displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');prepared={native,reviewHistory,recall,reviewBundle:reviewed.bundle,displayFormats,type,historyLimit:historyLimit(),directives,directions,user,userText:user?.mes,key,revision:settings.revision,source:clone(getSource()),settings,slots:clone(slots),narrativeSources:narrativeSourceFragments(ctx()),accepted:false};if(nativeSources)prepared.nativePresetLayers=createNativePresetLayers({settings:prepared.settings,slots:prepared.slots,type:prepared.type});}catch(e){nativeSources?.end();controller.generating.delete(key);throw e;}}
  // MVU copies identical variables to a newly sent user message asynchronously.
  // Compare script, contract and value bytes; a copied floor alone is not stale.
  async function payloadReady(payload){if(prepared?.passthrough)return payload;if(!prepared)fail('PREPARATION_MISSING','新版引擎未完成本轮资料准备');if(prepared.key!==chatKey(ctx())||prepared.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(!Array.isArray(payload.messages))fail('PAYLOAD_MESSAGES','宿主最终请求缺少消息列表');const captured=prepared;await assertReferences(captured.settings,captured.key);if(captured.settings.story.userBinding?.sourceMode==='prose')await readProseIdentity(ctx(),captured.settings.story.userBinding);if(captured.historyLimit!==historyLimit())fail('HISTORY_STALE','历史可见条数已变化，请重新生成');const native=await prepareNativeMvu(ctx(),nativeWorld,captured.type,undefined,{groupMachineInExtra:true});if(prepared!==captured||captured.key!==chatKey(ctx())||captured.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(!!native!==!!captured.native||native&&['signature','stateDigest','text'].some(k=>native[k]!==captured.native[k]))fail('NATIVE_MVU_STALE','原卡 MVU 来源或变量已变化，请重新生成');if(displayFormatMaterial(getDisplayRules())!==captured.displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');if(digest(narrativeSourceFragments(ctx()))!==digest(captured.narrativeSources??[]))fail('NARRATIVE_SOURCE_STALE','角色卡叙事来源在准备后已变化，请重新生成');assertGeneration(ctx(),captured.settings.generation);const compiled=compilePrompts(prepared.source,prepared.settings,prepared.slots);if(nativeSources)await nativeSources.assertReady();captured.nativePresetLayers?.mergeTemplatePayload(payload);const nativeLayerAudit=captured.nativePresetLayers?.lastFinalization();const compiledMessages=nativeLayerAudit?clone(payload.messages):applyCompiledMessages(payload.messages,prepared.source,compiled,expand);const layerProjection=nativeSources?(nativeLayerAudit?{messages:compiledMessages,audit:nativeLayerAudit}:applyRequestLayers(compiledMessages,compiled,{expand})):null;const narrativeProjection=layerProjection?{messages:layerProjection.messages,audit:{status:'source-envelopes',removed:[],reason:'whole-native-source-preserved'}}:{messages:compiledMessages,audit:{status:'source-text-preserved',removed:[],reason:'role-consolidation-without-card-cleanup'}};const consolidated=contractorMessages(narrativeProjection.messages,ctx(),persona(),expand),authorityProjection=projectSystemAuthority(consolidated,compiled,{expand}),displayProjection=restoreHistoryDisplayComponents(authorityProjection.messages,compiled,getDisplayRules());payload.messages=displayProjection.messages;assertFinalRequestHygiene(payload.messages);narrativeProjection.audit={...narrativeProjection.audit,systemAuthority:authorityProjection.audit,historyDisplayComponents:displayProjection.restored};const system=payload.messages.filter(m=>m.role==='system').flatMap(m=>typeof m.content==='string'?[m.content]:(m.content??[]).filter(p=>p.type==='text').map(p=>p.text)).join('\n');const sourceMap=nativeSources?(nativeLayerAudit?captured.nativePresetLayers.sourceMap(payload.messages):createPromptSourceMap(payload.messages,compiled,{expand})):null;const hasUnexpanded=sourceMap?sourceMap.parts.some(part=>part.role==='system'&&[...part.text.matchAll(/\{\{tisya_[^{}]+\}\}/g)].some(match=>!sourceMap.protection(part,match.index,match.index+match[0].length))):/\{\{tisya_[^{}]+\}\}/.test(system);if(hasUnexpanded)fail('UNEXPANDED_MACRO','最终请求有未展开的缇斯亚资料宏');const identity=expand(compilePromptText(prepared.slots.tisya_user_identity??'',prepared.settings,prepared.slots));const identityCount=identity?(sourceMap?sourceMap.find(identity,{role:'system'}).found.length:system.split(identity).length-1):0;if(identity&&identityCount!==1)fail('USER_IDENTITY_COUNT','最终请求缺少或重复了绑定的user身份资料',{matches:identityCount});const registryCount=sourceMap?sourceMap.parts.filter(part=>part.role==='system').reduce((n,part)=>n+[...part.text.matchAll(/(?:^|\n)\[REGISTRY\]\s*\n/g)].filter(match=>!sourceMap.protection(part,match.index,match.index+match[0].length)).length,0):[...system.matchAll(/(?:^|\n)\[REGISTRY\]\s*\n/g)].length;if(registryCount!==1)fail('REGISTRY_COUNT','最终请求需要唯一新版输出合同');if(prepared.user&&prepared.user.mes!==prepared.userText)fail('USER_REVISION_STALE','用户改写依据在准备后变化');const directions=await getContractorMessages();if(captured.settings.story.userBinding?.sourceMode==='prose')await readProseIdentity(ctx(),captured.settings.story.userBinding);if(prepared!==captured||captured.key!==chatKey(ctx())||captured.revision!==config.read().revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(displayFormatMaterial(getDisplayRules())!==captured.displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');if(JSON.stringify(directions)!==JSON.stringify(captured.directions))fail('TURN_DIRECTION_STALE','本轮场外要求在准备后变化，请重新生成');if(captured.reviewHistory){await refreshReviewHistory(captured);ensureReviewHistoryPayload(payload,captured.reviewHistory,captured.historySentText);}appendContractorMessages(payload.messages,captured.directions);for(const m of captured.directives)if(!payload.messages.some(x=>x.role===m.role&&x.content===m.content))payload.messages.push(m);assertFinalRequestHygiene(payload.messages);contextRecorder.capture(payload,captured.key);captured.accepted=true;latest={...latest,promptAudit:{status:'validated',messages:payload.messages.length,configurationRevision:captured.revision,tags:clone(captured.settings.tags),narrativeSourceProjection:narrativeProjection.audit,...(layerProjection?{layers:layerProjection.audit,nativeSources:nativeSources.audit()}:{} )}};return payload;}
- async function event(name,...args){if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))nativeSources?.end();if(name==='CHAT_CHANGED'){contextRecorder.invalidate();bundleProjection.clear();materialProjection.clear();databaseProjection.clear();prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;configureTags(config.read().tags,config.read().aliases);configureRenderingResources(config.read().resources??[]);}if(!active())return;try{await controller.event(name,...args);if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))prepared=null;}catch(e){notify({status:e.message,error:asError(e)});onError(e);throw e;}}
+ async function event(name,...args){if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))nativeSources?.end();if(name==='CHAT_CHANGED'){contextRecorder.invalidate();bundleProjection.clear();materialProjection.clear();databaseProjection.clear();prepared=null;warmProjection=null;preparedTurn=null;referenceSnapshot=null;narrativeLoreSnapshot=null;configureTags(config.read().tags,config.read().aliases);configureRenderingResources(config.read().resources??[]);}if(!active())return;try{await controller.event(name,...args);if(['CHAT_CHANGED','GENERATION_ENDED','GENERATION_STOPPED'].includes(name))prepared=null;}catch(e){notify({status:e.message,error:asError(e)});onError(e);throw e;}}
  async function mutate(callback){
   assertIdle();
   const {ctx:c,id,key}=await controller.identity();
@@ -196,8 +204,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  }
 
  async function listTurnReviews(){
-  return await readOwnedDatabase((original,c,key)=>{
-   const bundle=reconcile(manualReview?enableTurnReview(original):original,captureMessages(c)).bundle,messages=captureMessages(c),projection=reviewProjection(bundle,messages),entries=new Map(bundle.journal.entries.map(entry=>[entry.uid,entry]));
+  return await readOwnedDatabase((original,c,key,meta)=>{
+   const messages=captureMessages(c),bundle=warmReviewBase(original,meta.chat_uid,messages)??reconcile(manualReview?enableTurnReview(original):original,messages).bundle,projection=reviewProjection(bundle,messages),entries=new Map(bundle.journal.entries.map(entry=>[entry.uid,entry]));
    return {contextKey:key,revision:original.local_revision??0,enabled:!!bundle.turn_review,catalog:reviewCatalog(bundle.state),settings:clone(bundle.turn_review?.settings??{policy:{},custom:[],labels:{}}),requirements:reviewRequirements(bundle.state,bundle.turn_review?.settings??{}),backfill:clone(bundle.turn_review?.backfill??null),drafts:clone(bundle.turn_review?.drafts??{}),reviews:projection.reviews.map(review=>{
     const raw=review.decision?.reply??messages[review.index].text;
     const archiveIssue=review.archivePending?turnArchiveIssue(bundle.journal,entries.get(review.uid)):null;
@@ -206,9 +214,9 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   });
  }
  async function describeTurnReview(input){
-  return await readOwnedDatabase((original,c,key)=>{
+  return await readOwnedDatabase((original,c,key,meta)=>{
    if(input.contextKey!==key||input.expectedRevision!==(original.local_revision??0))fail('REVIEW_STALE','表单预览对应的聊天或存档已变化，请重新打开本轮');
-   const messages=captureMessages(c),bundle=reconcile(enableTurnReview(original),messages).bundle,review=reviewProjection(bundle,messages).reviews.find(r=>r.uid===input.uid);
+   const messages=captureMessages(c),bundle=warmReviewBase(original,meta.chat_uid,messages)??reconcile(enableTurnReview(original),messages).bundle,review=reviewProjection(bundle,messages).reviews.find(r=>r.uid===input.uid);
    if(!review||review.sourceHash!==input.sourceHash)fail('REVIEW_STALE','本轮正文已变化，请重载表单');
    const before=databaseSnapshotBeforeMessage(bundle,{uid:input.uid},key);return describeReviewForms(projectReviewSchema(before.state,bundle.turn_review?.settings??{}),input);
   });
@@ -219,33 +227,40 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  async function saveTurnReview(input,rewind=false,checkOnly=false){
   assertIdle();const {ctx:c,id,key}=await controller.identity();
   if(input.contextKey!==key)fail('CHAT_CHANGED','确认窗所属会话已变化');
-  const original=await storage.get(id),bundle=manualReview?enableTurnReview(original):original;
-  if(!bundle.turn_review)fail('REVIEW_DISABLED','本会话未启用每轮确认');
+  const original=await storage.get(id);
   if(input.expectedRevision!==(original.local_revision??0))fail('SAVE_CONFLICT','存档已更新，请重新打开确认窗');
-  const messages=captureMessages(c),stamp=digest(messages);let staged;
-  if(rewind){
+  const messages=captureMessages(c),stamp=messageListSignature(messages),inputStamp=JSON.stringify(input),reusable=!rewind&&preparedTurn?.id===id&&preparedTurn.key===key&&preparedTurn.revision===(original.local_revision??0)&&preparedTurn.stamp===stamp&&preparedTurn.inputStamp===inputStamp?preparedTurn:null;
+  if(reusable&&checkOnly)return {status:'valid',issues:[],archiveIssue:reusable.archiveIssue};
+  if(reusable)preparedTurn=null;
+  const bundle=reusable?.bundle??warmReviewBase(original,id,messages,stamp)??(manualReview?enableTurnReview(original):original);
+  if(!bundle.turn_review)fail('REVIEW_DISABLED','本会话未启用每轮确认');
+  let staged;
+  if(reusable)staged=reusable.staged;
+  else if(rewind){
    const at=messages.findIndex(m=>m.uid===input.uid);if(at<0)fail('REVIEW_STALE','目标楼层已不存在');
    staged=clone(bundle);const removed=new Set(messages.slice(at).map(m=>m.uid));
    for(const decision of staged.turn_review.decisions)if(removed.has(decision.uid))decision.active=false;
    staged.turn_review.legacy=staged.turn_review.legacy.filter(d=>!removed.has(d.uid));staged.manual_edits=(staged.manual_edits??[]).filter(e=>e.kind!=='reviewBackfill'||!removed.has(e.source_uid));for(const r of staged.turn_review.backfillReceipts??[])if(removed.has(r.messageId))r.active=false;staged.turn_review.backfill=null;
   }else {staged=addTurnDecision(bundle,messages,input).bundle;if(input.settings)staged.turn_review.settings=validateReviewSettings(staged.state,input.settings);}
-  const result=reconcile(staged,messages),target=result.bundle.journal.entries.find(e=>e.uid===input.uid);
-  let archiveIssue=null;
-  if(!rewind){
+  const result=reusable?.result??reconcile(staged,messages),target=result.bundle.journal.entries.find(e=>e.uid===input.uid);
+  let archiveIssue=reusable?.archiveIssue??null;
+  if(!rewind&&!reusable){
    const policy=staged.turn_review.settings??{};const base=projectReviewSchema(clone(bundle.state),policy);const missing=reviewRequirements(base,policy,result.bundle.state,input.responses??{}).filter(r=>!r.done);
    const failures=(target?.warnings??[]).filter(w=>/^CELL.*FAILED/.test(w.code??'')),issues=[...turnValidationIssues(failures),...missing.map(item=>({code:'REVIEW_REQUIRED',message:'请核对必填字段：'+item.recordName+'／'+item.label,channel:item.channel,tableId:item.table,recordId:item.recordId==='*'?null:item.recordId,field:item.key,label:item.label}))];
    if(target?.settlement_status==='FAILED'&&!issues.length)issues.push({code:'REVIEW_INVALID',message:'填写校验失败'});
-   if(issues.length){if(checkOnly)return {status:'invalid',issues:clone(issues),archiveIssue:turnArchiveIssue(result.bundle.journal,target)};fail('REVIEW_INVALID','本轮表单尚不能保存，共 '+issues.length+' 处需要修正：\n'+issues.map((issue,index)=>(index+1)+'. '+issue.message).join('\n'),{warnings:failures,issues:clone(issues)});}
+   if(issues.length){preparedTurn=null;if(checkOnly)return {status:'invalid',issues:clone(issues),archiveIssue:turnArchiveIssue(result.bundle.journal,target)};fail('REVIEW_INVALID','本轮表单尚不能保存，共 '+issues.length+' 处需要修正：\n'+issues.map((issue,index)=>(index+1)+'. '+issue.message).join('\n'),{warnings:failures,issues:clone(issues)});}
    archiveIssue=turnArchiveIssue(result.bundle.journal,target);
-   if(checkOnly)return {status:'valid',issues:[],archiveIssue};
-   const decision=result.bundle.turn_review.decisions.at(-1);
+   if(checkOnly){preparedTurn={id,key,revision:original.local_revision??0,stamp,inputStamp,bundle,staged,result,archiveIssue};return {status:'valid',issues:[],archiveIssue};}
+  }
+  if(!rewind){
+   const decision=result.bundle.turn_review.decisions.at(-1);decision.confirmedAt=new Date().toISOString();
    decision.archive_pending=archiveIssue!==null;
    if(result.bundle.turn_review.drafts)delete result.bundle.turn_review.drafts[input.uid];
   }
-  const live=ctx();if(chatKey(live)!==key||live.chatMetadata?.[NS]?.chat_uid!==id||digest(captureMessages(live))!==stamp)fail('REVIEW_STALE','确认期间正文或会话已变化');
+  const live=ctx();if(chatKey(live)!==key||live.chatMetadata?.[NS]?.chat_uid!==id||messageListSignature(captureMessages(live))!==stamp)fail('REVIEW_STALE','确认期间正文或会话已变化');
   const next={...result.bundle,local_revision:(original.local_revision??0)+1};
   if(!await storage.commit(id,original.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已更新存档，请重新核对');
-  if(chatKey(ctx())===key&&digest(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next));
+  if(chatKey(ctx())===key&&messageListSignature(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next),stamp);
   else if(chatKey(ctx())===key)await sync({preview:true});
   return {status:rewind?'rewound':archiveIssue!==null?'archive-pending':'confirmed',uid:input.uid,revision:next.local_revision,archiveIssue};
  }
@@ -253,11 +268,11 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  function reviewAction(input){const job=databaseChain.then(async()=>{
   assertIdle();const {ctx:c,id,key}=await controller.identity();if(input.contextKey!==key)fail('CHAT_CHANGED','归档窗口所属会话已变化');
   const original=await storage.get(id);if(!original||input.expectedRevision!==(original.local_revision??0))fail('SAVE_CONFLICT','存档已更新，请刷新');
-  const messages=captureMessages(c),stamp=digest(messages),current=reconcile(enableTurnReview(original),messages).bundle;
+  const messages=captureMessages(c),stamp=messageListSignature(messages),current=warmReviewBase(original,id,messages,stamp)??reconcile(enableTurnReview(original),messages).bundle;
   const staged=applyReviewAction(current,messages,key,input),result=reconcile(staged,messages),next={...result.bundle,local_revision:(original.local_revision??0)+1};
-  if(chatKey(ctx())!==key||digest(captureMessages(ctx()))!==stamp)fail('REVIEW_STALE','操作期间会话或正文变化');
+  if(chatKey(ctx())!==key||messageListSignature(captureMessages(ctx()))!==stamp)fail('REVIEW_STALE','操作期间会话或正文变化');
   if(!await storage.commit(id,original.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已保存，请刷新');
-  if(chatKey(ctx())===key&&digest(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next));else await sync({preview:true});return {status:'saved',revision:next.local_revision};
+  if(chatKey(ctx())===key&&messageListSignature(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next),stamp);else await sync({preview:true});return {status:'saved',revision:next.local_revision};
  });databaseChain=job.catch(()=>{});return job;}
  async function generateBackfill(input){
   if(!request)fail('REVIEW_MODEL','尚未配置历史提炼接口，可手动填写');
@@ -268,7 +283,7 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   if(typeof raw!=='string'||!raw.trim())fail('REVIEW_MODEL_EMPTY','提炼接口未返回文本；原候选保留');
   return reviewAction({...input,action:'modelBackfill',raw});
  }
- async function previewReviewHistory(){return readOwnedDatabase((original,c,key)=>{const messages=captureMessages(c).map((m,i)=>({...m,hidden:!!c.chat[i]?.extra?.[Symbol.for('ignore')]})),bundle=reconcile(enableTurnReview(original),messages).bundle;return prepareReviewHistory(bundle,messages,key,historyLimit());});}
+ async function previewReviewHistory(){return readOwnedDatabase((original,c,key,meta)=>{const messages=captureMessages(c).map((m,i)=>({...m,hidden:!!c.chat[i]?.extra?.[Symbol.for('ignore')]})),bundle=warmReviewBase(original,meta.chat_uid,messages)??reconcile(enableTurnReview(original),messages).bundle;return prepareReviewHistory(bundle,messages,key,historyLimit());});}
  async function peekDatabase(){return readOwnedDatabase((bundle,_c,key)=>({state:clone(bundle.state),revision:bundle.local_revision??0,contextKey:key}));}
  // Reconciliation can remove a detached binding from bundle.state. Its saved
  // initialization patch remains evidence that this is not a fresh phone.

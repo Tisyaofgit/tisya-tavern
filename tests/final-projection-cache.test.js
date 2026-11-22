@@ -22,6 +22,20 @@ test('persistent entries can contain derived materials only while cold restore r
  assert.equal((await cold.project('chat',{messages:input.messages,bundle:input.bundle},()=>{computes++;})).materials.name,'阿青');assert.equal(computes,1);
 });
 
+test('identical in-flight projections share native hashing, storage and computation but return independent values',async()=>{
+ const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))};let release,calls=0;
+ const gate=new Promise(resolve=>release=resolve),cache=createFinalProjectionCache({storage}),input={bundle:{revision:8},messages:[{uid:'m',text:'正文'}]};
+ const compute=()=>{calls++;return gate;},first=cache.project('chat',input,compute),second=cache.project('chat',structuredClone(input),compute),third=cache.project('chat',input,compute);
+ assert.equal(cache.report().inflight,1);assert.equal(cache.report().coalesced,2);release({materials:{name:'阿青'}});const [a,b,c]=await Promise.all([first,second,third]);
+ assert.equal(calls,1);assert.deepEqual(a,b);a.materials.name='调用方改动';assert.equal(b.materials.name,'阿青');assert.equal(c.materials.name,'阿青');assert.equal(cache.report().inflight,0);assert.equal(cache.report().misses,1);
+});
+
+test('a rejected shared projection does not poison the next authoritative attempt',async()=>{
+ const storage={get:async()=>null,set:async()=>{}},cache=createFinalProjectionCache({storage});let calls=0;
+ const input={revision:1},fail=()=>{calls++;throw Error('transient');};await Promise.all([assert.rejects(cache.project('chat',input,fail),/transient/),assert.rejects(cache.project('chat',input,fail),/transient/)]);
+ assert.equal(calls,1);assert.equal(cache.report().inflight,0);assert.deepEqual(await cache.project('chat',input,()=>({value:'recovered'})),{value:'recovered'});
+});
+
 test('cache read and write failures degrade to authoritative recomputation without changing the result',async()=>{
  const errors=[],storage={get:async()=>{throw Error('read unavailable');},set:async()=>{throw Error('write unavailable');}};const cache=createFinalProjectionCache({storage,onError:error=>errors.push(error.message)});
  assert.deepEqual(await cache.project('chat',{revision:1},()=>({value:7})),{value:7});await cache.flush();assert.equal(errors.length,1);assert.match(errors[0],/实时计算/);
