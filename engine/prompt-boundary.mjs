@@ -19,6 +19,7 @@ export function modelTableAllowed(id,schema={},task='main'){return !programOwned
 export const EXECUTOR_FIELDS=Object.freeze({
  X_EFFECT_INSTANCES:['started_at','expires_at','next_tick_at','stacks','status'],
  T_CHAR_DOSSIER:['persona_dynamics'],
+ T_DYN_COGNITION:['lifecycle_phase','closure_event_ref','closure_reason','subject_sequence','recall_label'],
  X_RESOURCE_CYCLES:['next_at'],X_QUEST_RULES:['times_completed'],
  X_FIN_CREDIT_CARDS:['used','refundBalance'],
  X_FIN_LOANS:['apr','totalInterest','totalPayable','monthlyPayment','quoteId','paid','createdAt','status'],
@@ -45,6 +46,7 @@ export function modelFieldAllowed(field={},schema={},task='main'){
 export function matrixFieldVisible(field={},record={},scope={},tableId='',state=null,recordId=''){return promptFieldAllowed(field)&&field.key!=='row_uuid'&&!field.alias_of&&(scope.audience==='author'||!field.lock_level)&&!(scope.audience!=='author'&&field.key==='true_name'&&['D','E','Access D','Access E'].includes(record?.values?.true_name_lock))&&(!state||characterFieldVisible(state,tableId,recordId,field.key,scope));}
 export function matrixRecordVisible(state,tableId,recordId,scope={},meta=null,seen=new Set()){
  const schema=state.schema?.[tableId],record=state.tables?.[tableId]?.[recordId],key=tableId+'#'+recordId;if(!schema||!record||programOwnedTable(tableId,schema)||seen.has(key))return false;
+ if(tableId==='T_DYN_COGNITION'&&scope.cognition_selection&&!scope.cognition_selection.has(recordId))return false;
  if(record.metadata?.phone_projection||scope.phone_context_key&&record.metadata?.phone_scope&&scope.phone_context_key!==record.metadata.phone_scope)return false;
  if(scope.audience!=='author'&&(tableId==='T_CHAR_SECRETS'||['D','E','Access D','Access E'].includes(record.values.lock_level)))return false;
  meta??=new Map(Object.values(state.tables?.X_RECORD_META??{}).map(r=>[r.values.table_id+'#'+r.values.record_id,r.values]));

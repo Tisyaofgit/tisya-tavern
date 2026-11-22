@@ -4,8 +4,9 @@ import {protectCode} from './markdown-code.js';
 import {decorateBody,bodyCSS,formatMarks,MARK_CSS} from './typography-core.js';
 import {projectPresentationMarks,projectArchiveLinks,PRESENTATION_CSS,ARCHIVE_LINK_CSS} from './extension-presentation.mjs';
 import {decorateAsides,ASIDE_CSS} from './prose-asides.js';
+import {BOUND_MEDIA_CSS} from './rendering-resources.js';
 
-export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS+PRESENTATION_CSS+ARCHIVE_LINK_CSS+ASIDE_CSS+DIALOGUE_CSS;
+export const proseStyles=(options={})=>bodyCSS(options).replace('#dfc98e','#ffedbf').replace('#a9c8bf','#e8f0ea')+MARK_CSS+PRESENTATION_CSS+ARCHIVE_LINK_CSS+ASIDE_CSS+DIALOGUE_CSS+BOUND_MEDIA_CSS;
 export const proseCSS=proseStyles();
 
 // Only receives the public body selected by inspectMessage. Host sanitization

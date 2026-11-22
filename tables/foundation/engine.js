@@ -4,6 +4,7 @@ import {stripParagraphEvidence} from '../../engine/paragraph-evidence.mjs';
 import {OBJECT_IDENTITY_FIELDS,namedIdentityTable,normalizeIdentityName,identityAliases} from '../../engine/object-identity.mjs';
 import {eventCodes,recordIdentityLabel,identityFieldHidden} from '../../engine/record-identity.mjs';
 import {commonUnit,unitFormInstructions} from './common-units.js';
+import {parseQuantityNumber,parseQuantityShorthand} from './quantity-input.js';
 import {addRegisteredUnits,enumReference,formVocabulary,formVocabularyText,formWriteSyntax,unitReference} from './form-vocabulary.js';
 import {phoneFormReference,phoneFormReferenceCandidates,PHONE_FORM_LIST_REFERENCES,normalizePhoneFormValue} from '../../engine/phone-form-contract.mjs';
 import {programOwnedTable,creationFieldAllowed,compactCreationSchema,matrixRecordVisible,matrixFieldVisible,modelFieldAllowed,modelTableAllowed,modelWriteFieldAllowed} from '../../engine/prompt-boundary.mjs';
@@ -373,11 +374,10 @@ function structuredCell(raw,array=false){
 }
 function ownedTable(schema){return schema.fields.some(f=>f.key==='owner_row_uuid')&&schema.fields.some(f=>['owner_table','owner_form'].includes(f.key));}
 function narrativeQuantityText(raw){
- const text=raw.trim(),annotation=/^(.*?)\s*(?:（[^（）\r\n]+）|\([^()\r\n]+\))$/.exec(text),core=(annotation?annotation[1]:text).trim();
- const match=/^(?:(约|大约|大概|近|将近|不足|不到|未满|超过|逾)\s*)?([+-]?\d+(?:\.\d+)?)\s*(余|多|来)?\s*([^\d\s：:；;（）()]+?)(左右|上下|前后|开外|出头|以上|以下)?$/.exec(core);
- if(!match||!annotation&&!match[1]&&!match[3]&&!match[5]||!commonUnit(match[4]))return null;
+ const parsed=parseQuantityShorthand(raw);
+ if(!parsed?.narrativeOnly||!commonUnit(parsed.unit))return null;
  // Approximations and period notes have no lossless exact-number representation.
- return text;
+ return raw.trim();
 }
 const scalarTypes={NUMBER:'数值',INTEGER:'整数',BOOLEAN:'是或否',ENUM:'选项',BAG:'物品×数量，多项分号分隔',TAGS:'状态名称，多项分号分隔',ARRAY:'多项分号分隔；复合项用 从0连续序号.属性=值',JSON:'文字或值；复合内容注明“对象：属性=值”或“列表：序号.属性=值”，分号分隔；空列表/对象写“列表：无”/“对象：无”',OBJECT:'属性=值，分号分隔',TEXT_LIST:'多项分号分隔',REF_LIST:'关联名称，多项分号分隔'};
 const inlineChildHints={M_LIST_VALUES:'列表',M_FIELD_REFERENCES:'对象名称，可加 → 字段名',M_WORLD_TIME:'原文：时间原文',M_TIME_RANGES:'起始轮次：n；结束轮次：n，或描述：原文',M_QUANTITIES:'数值：n；单位：名称，或描述：原文',M_CONDITIONS:'观察：是或否；依据：原文',M_EFFECTS:'描述：效果原文',M_POLICY_RULES:'描述：规则原文',M_ACCESS_RULES:'受众：公开/读者/作者/角色名；动作：读取/披露；决定：允许/禁止；依据：原文'};
@@ -810,16 +810,16 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
     const source=snapshot.state.schema[row.tableId].fields.find(f=>f.key===spec.key);check(['TEXT','LONG_TEXT','WORLD_TIME'].includes(source.source_type),'此字段没有描述型填写合同');
     preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative});
    }else{
-    const short=(context.commonUnits===false?/^([+-]?\d+(?:\.\d+)?)\s*(分钟|小时|天|日|周|星期|月|年|季|分|时)$/:/^([+-]?\d+(?:\.\d+)?)\s*([^\d\s：:；;][^：:；;]*)$/).exec(raw.trim());
-    let input=short?{'数值':short[1],'单位':short[2]}:properties();
+    const short=context.commonUnits===false?null:parseQuantityShorthand(raw),legacyShort=context.commonUnits===false?/^([+-]?\d+(?:\.\d+)?)\s*(分钟|小时|天|日|周|星期|月|年|季|分|时)$/.exec(raw.trim()):null;
+    let input=short&&!short.narrativeOnly?{'数值':String(short.value),'单位':short.unit}:legacyShort?{'数值':legacyShort[1],'单位':legacyShort[2]}:properties();
     // The visible age hint historically led models to write “数值：7 岁”.
     // Split only the numeric field when no separate unit was supplied; the
     // canonical two-property form remains unchanged and fully validated.
     if(Object.keys(input).length===1&&Object.hasOwn(input,'数值')){
-     const combined=/^([+-]?\d+(?:\.\d+)?)\s+(\S[^\d\s：:；;]*|[^\d\s：:；;][^：:；;]*)$/.exec(input['数值'].trim());
-     if(combined)input={'数值':combined[1],'单位':combined[2]};
+     const combined=parseQuantityShorthand(input['数值']);
+     if(combined&&!combined.narrativeOnly)input={'数值':String(combined.value),'单位':combined.unit};
     }
-    check(Object.keys(input).length===2&&Object.hasOwn(input,'数值')&&Object.hasOwn(input,'单位'),'请填“7岁”，或“数值：7；单位：岁”（单位按实际量纲替换），也可填已有名称');const [value,state]=decode(input['数值'],{type:'NUMBER'});check(state==='known','数值须明确，未知请整格填“?”');const unit=quantityUnit(row,input['单位'].trim(),spec.key);if(unit){preserve('quantity_mode',['exact','range','narrative_only']);Object.assign(values,{quantity_mode:'exact',value,unit_ref:unit});}else{preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:raw});}
+    check(Object.keys(input).length===2&&Object.hasOwn(input,'数值')&&Object.hasOwn(input,'单位'),'请填“7岁”或“三米”，或“数值：7；单位：岁”（单位按实际量纲替换），也可填已有名称');const parsedValue=parseQuantityNumber(input['数值']),[value,state]=parsedValue===null?decode(input['数值'],{type:'NUMBER'}):[parsedValue,'known'];check(state==='known','数值须明确，未知请整格填“?”');const unit=quantityUnit(row,input['单位'].trim(),spec.key);if(unit){preserve('quantity_mode',['exact','range','narrative_only']);Object.assign(values,{quantity_mode:'exact',value,unit_ref:unit});}else{preserve('quantity_mode',['narrative_only']);Object.assign(values,{quantity_mode:'narrative_only',narrative:raw});}
    }
   }else if(target==='M_CONDITIONS'){
    const input=properties();check(Object.keys(input).length===2&&Object.hasOwn(input,'观察')&&Object.hasOwn(input,'依据'),'条件填写明确观察与依据，未知条件填“?”');const [observed,state]=decode(input['观察'],{type:'BOOLEAN'});check(state==='known','观察须明确是或否，未知请整格填“?”');preserve('predicate_kind',['observed_boolean']);Object.assign(values,{group_key:id,combine:'all',predicate_kind:'observed_boolean',observed_result:observed,narrative:input['依据']});

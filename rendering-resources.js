@@ -1,8 +1,9 @@
 import {EMOTIONS} from './emotion-catalog.js';
 
 export const RESOURCE_SLOTS=Object.freeze({anchor:'心声',body:'正文',extra:'附加面板'});
+export const BOUND_MEDIA_CSS='.tisya-bound-media{box-sizing:border-box;display:block;width:min(100%,42rem);margin:.8em auto;aspect-ratio:var(--tisya-media-ratio,auto);overflow:hidden}.tisya-bound-media[data-media-use=sticker]{display:inline-block;width:auto;max-width:min(100%,12rem);margin:0 .2em;vertical-align:middle;overflow:visible}.tisya-bound-media>img{display:block;width:100%;height:100%;max-width:100%;object-fit:contain}.tisya-bound-media[data-media-use=sticker]>img{width:auto;height:auto;max-height:12rem}';
 export const BUILTIN_RESOURCES=Object.freeze(EMOTIONS.map(e=>Object.freeze({id:'emotion.'+e.name,name:e.name,kind:'emotion',slot:'anchor',url:e.url,assetId:e.id})));
-let current=[...BUILTIN_RESOURCES];
+let current=[...BUILTIN_RESOURCES],boundMedia=null;
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderingResources(additional=[]){
  const result=[...BUILTIN_RESOURCES],seen=new Set(result.map(r=>r.id));
@@ -18,6 +19,9 @@ export function renderingResources(additional=[]){
  return result;
 }
 export const configureRenderingResources=additional=>{current=renderingResources(additional);return current;};
+// The chat atlas is the sole owner of bound-object selection and CG conditions.
+// This adapter only lets the established @rendering pipeline consume that API.
+export function configureRenderingMedia(atlas=null){boundMedia=atlas&&typeof atlas.rendering==='function'?atlas:null;return boundMedia;}
 export const getRenderingResources=()=>current.map(r=>({...r}));
 export function renderingIds(value){
  const match=/^@rendering\{([^{}]*)\}$/u.exec(String(value).trim());
@@ -28,7 +32,15 @@ export function renderingIds(value){
 }
 export function resolveRendering(value,slot,resources=current){
  const ids=renderingIds(value);if(!ids)throw Error('资源格式应为 @rendering{参数ID}');
- return ids.map(id=>{const row=resources.find(r=>r.id===id&&r.slot===slot);if(!row)throw Error('资源参数未登记于'+RESOURCE_SLOTS[slot]+'：'+id);return row;});
+ return ids.map(id=>{
+  const registered=resources.find(r=>r.id===id);if(registered){if(registered.slot!==slot)throw Error('资源参数未登记于'+RESOURCE_SLOTS[slot]+'：'+id);return registered;}
+  if(boundMedia)return boundMedia.rendering(id,slot);
+  throw Error('资源参数未登记于'+RESOURCE_SLOTS[slot]+'：'+id);
+ });
+}
+export function resolveBoundHeart(name){
+ if(!boundMedia||typeof name!=='string'||!name.trim()||renderingIds(name))return null;
+ return boundMedia.rendering(name.trim(),'anchor');
 }
 export function resourcePromptSlots(additional=[]){
  const resources=renderingResources(additional);
@@ -41,7 +53,13 @@ export function projectRendering(text,slot,resources=current){
    const location=new URL(r.url),moduleLocation=new URL(import.meta.url);
    const local=['tauri:','asset:'].includes(location.protocol)&&location.protocol===moduleLocation.protocol&&location.host===moduleLocation.host;
    const url=escape(local?location.pathname+location.search+location.hash:r.url),name=escape(r.name);
-   if(r.kind==='image')return '<img src="'+url+'" alt="'+name+'" />';
+   if(r.kind==='image'){
+    if(r.frame){
+     const ratio=escape(r.frame.aspectRatio??'auto'),use=escape(r.use??'portrait'),tag=r.use==='sticker'?'span':'figure';
+     return '<'+tag+' class="tisya-bound-media" data-media-use="'+use+'" style="--tisya-media-ratio:'+ratio+'"><img src="'+url+'" alt="'+name+'" loading="lazy" /></'+tag+'>';
+    }
+    return '<img src="'+url+'" alt="'+name+'" />';
+   }
    if(r.kind==='audio'||r.kind==='video')return '<'+r.kind+' controls="controls" src="'+url+'" aria-label="'+name+'"></'+r.kind+'>';
    throw Error('此槽位不支持该资源');
   }).join('');}catch(e){return '<span class="tisya-resource-error" role="status">'+escape(e.message)+'</span>';}

@@ -1,5 +1,6 @@
 // Presentation preferences are projections of the form database. This module
 // owns no store and never writes books, phone state, or business records.
+import {MEDIA_USE_LABELS} from './media-contract.js';
 export const EXTENSION_PREFERENCE_TABLE='T_PREF_EXTENSION_PRESENTATION';
 export const EXTENSION_VIEWS=Object.freeze(['danmaku','rumor','notice','settlement','messages','theater','forum','news']);
 export const AUDIENCE_KINDS=Object.freeze(['world_fans','higher_dimensional','mixed','none']);
@@ -13,7 +14,7 @@ export const EXTENSION_PREFERENCE_SCHEMA=Object.freeze({
   field('output_config_ref','所属输出配置','REF',{ref:'T_PREF_OUTPUT_CONFIG'}),
   field('owner_ref','所属主体','REF',{ref:'T_SYS_ENTITIES'}),field('world_ref','所属世界','REF',{ref:'T_STATIC_WORLDS'}),
   field('view_id','显示区域','ENUM',{enum:[...EXTENSION_VIEWS],required:true}),field('enabled','启用','BOOLEAN'),
-  field('enabled_kinds','允许内容类型','TEXT_LIST'),field('style_book','画风来源书','TEXT'),field('style_uid','画风条目ID','TEXT'),field('style_digest','画风内容摘要','TEXT'),
+  field('enabled_kinds','允许内容类型','TEXT_LIST'),field('media_enabled','启用多媒体','BOOLEAN'),field('media_kinds','多媒体类型','TEXT_LIST'),field('style_book','画风来源书','TEXT'),field('style_uid','画风条目ID','TEXT'),field('style_digest','画风内容摘要','TEXT'),
   field('extension_book','扩展定义来源书','TEXT'),field('extension_uid','扩展定义条目ID','TEXT'),field('extension_digest','扩展定义内容摘要','TEXT'),
   field('world_sources','世界材料来源','ARRAY',{description:'明确选择的书定义或表单记录引用；选择本身不授予读取权限。'}),
   field('audience_sources','观众材料来源','ARRAY',{description:'观众身份/可知材料的引用；模板不等于已经存在或已经知情的角色。'}),
@@ -66,6 +67,8 @@ export function normalizeExtensionPreferences(record){
  result.view_id=get('view_id')==='message'?'messages':get('view_id')??null;if(result.view_id!==null&&!EXTENSION_VIEWS.includes(result.view_id))fail('VIEW','显示区域未登记');
  result.enabled=get('enabled')??false;if(typeof result.enabled!=='boolean')fail('ENABLED','启用值须为布尔值');
  const kinds=get('enabled_kinds')??[];if(!Array.isArray(kinds)||kinds.some(k=>!EXTENSION_KINDS.includes(k))||new Set(kinds).size!==kinds.length)fail('KINDS','内容类型未登记或重复');result.enabled_kinds=[...kinds];
+ result.media_enabled=get('media_enabled')??false;if(typeof result.media_enabled!=='boolean')fail('MEDIA_ENABLED','多媒体启用值须为布尔值');
+ const selectedMedia=get('media_kinds')??[];if(!Array.isArray(selectedMedia)||selectedMedia.some(k=>!mediaKinds.includes(k))||new Set(selectedMedia).size!==selectedMedia.length)fail('MEDIA_KINDS','多媒体类型未登记或重复');result.media_kinds=[...selectedMedia];
  for(const prefix of ['style','extension']){
   const keys=['book','uid','digest'].map(k=>prefix+'_'+k);for(const key of keys)result[key]=text(get(key),key,{nullable:true,max:512});
   const filled=keys.filter(k=>result[k]!==null).length;if(filled!==0&&filled!==3)fail('STYLE_SOURCE','定义来源须同时指定书、条目和内容摘要');
@@ -80,10 +83,12 @@ export function normalizeExtensionPreferences(record){
 }
 const layoutByView={message:'messages',danmaku:'danmaku',rumor:'feed',notice:'notice',settlement:'ledger',messages:'messages',theater:'theater',forum:'forum',news:'news'};
 const names={message:'消息',danmaku:'弹幕',rumor:'风闻',notice:'公告',settlement:'结算展示',messages:'近日留言回读',theater:'小剧场',forum:'论坛',news:'新闻'};
-export function builtinExtensionDefinitions(){return EXTENSION_VIEWS.map(view=>({format:'tisya.extension-definition/1',kind:'extension',id:'extension.'+view,view,name:names[view],layout:layoutByView[view],allowedKinds:view==='messages'?[...MESSAGE_SUBTYPES]:view==='forum'?['forum','text','image','news']:view==='settlement'?['transfer','settlement']:[view==='danmaku'?'danmaku':view==='theater'?'theater':view==='news'?'news':'text'],counts:{min:0,max:50,default:5},topicTags:[],sourceRoles:['world','audience']}));}
-export function builtinPresentationDefinitions(){return [{format:'tisya.presentation-definition/1',kind:'presentation',id:'presentation.existing',name:'既有缇斯亚排版',views:[...EXTENSION_VIEWS],messageSubtypes:[...MESSAGE_SUBTYPES],tokens:{density:'comfortable',alignment:'start',emphasis:'existing'}}];}
+const mediaKinds=Object.keys(MEDIA_USE_LABELS),media=(enabled,kinds)=>({enabled,kinds});
+export function builtinExtensionDefinitions(){return EXTENSION_VIEWS.map(view=>({format:'tisya.extension-definition/1',kind:'extension',id:'extension.'+view,view,name:names[view],layout:layoutByView[view],allowedKinds:view==='messages'?[...MESSAGE_SUBTYPES]:view==='forum'?['forum','text','image','news']:view==='settlement'?['transfer','settlement']:[view==='danmaku'?'danmaku':view==='theater'?'theater':view==='news'?'news':'text'],counts:{min:0,max:50,default:5},topicTags:[],sourceRoles:['world','audience'],media:media(true,view==='messages'?[...mediaKinds]:view==='settlement'?['sticker']:['portrait','expression','cg','sticker'])}));}
+export function builtinPresentationDefinitions(){return [{format:'tisya.presentation-definition/1',kind:'presentation',id:'presentation.existing',name:'既有缇斯亚排版',views:[...EXTENSION_VIEWS],messageSubtypes:[...MESSAGE_SUBTYPES],media:media(true,[...mediaKinds]),tokens:{density:'comfortable',alignment:'start',emphasis:'existing'}}];}
 export function validateExtensionDefinition(value){
  if(!plain(value))fail('DEFINITION','定义须为对象');const d=clone(value);text(d.id,'定义ID',{max:256});text(d.name,'定义名称',{max:500});
+ const mediaPolicy=d.media??{enabled:false,kinds:[]};if(!plain(mediaPolicy)||typeof mediaPolicy.enabled!=='boolean'||!Array.isArray(mediaPolicy.kinds)||mediaPolicy.kinds.some(k=>!mediaKinds.includes(k))||new Set(mediaPolicy.kinds).size!==mediaPolicy.kinds.length)fail('MEDIA_KINDS','美化区块多媒体注册无效');d.media={enabled:mediaPolicy.enabled,kinds:[...mediaPolicy.kinds]};
  if(d.kind==='presentation'){
   if(d.format!=='tisya.presentation-definition/1'||!Array.isArray(d.views)||d.views.some(v=>!EXTENSION_VIEWS.includes(v))||!Array.isArray(d.messageSubtypes)||d.messageSubtypes.some(v=>!MESSAGE_SUBTYPES.includes(v)))fail('DEFINITION','美化定义契约无效');
   const tokens=d.tokens??{};if(!plain(tokens)||Object.keys(tokens).some(k=>!['density','alignment','emphasis'].includes(k))||!['comfortable','compact'].includes(tokens.density??'comfortable')||!['start','center'].includes(tokens.alignment??'start')||!['existing','quiet'].includes(tokens.emphasis??'existing'))fail('STYLE_TOKEN','只允许登记的画风令牌，不能注入CSS或HTML');
@@ -93,7 +98,7 @@ export function validateExtensionDefinition(value){
   const c=d.counts;if(!plain(c)||number(c.min,'最少条数',50)===null||number(c.max,'最多条数',50)===null||number(c.default,'建议条数',50)===null||c.min>c.max||c.default<c.min||c.default>c.max)fail('DEFINITION','定义条数范围无效');
   if(!Array.isArray(d.topicTags)||d.topicTags.some(v=>typeof v!=='string'||v.length>500)||!Array.isArray(d.sourceRoles)||d.sourceRoles.some(v=>!['world','audience'].includes(v)))fail('DEFINITION','定义材料来源或主题无效');
  }else fail('DEFINITION','未登记的定义类型');
- const allowed=d.kind==='presentation'?['format','kind','id','name','views','messageSubtypes','tokens']:['format','kind','id','view','name','layout','allowedKinds','counts','topicTags','sourceRoles'];
+ const allowed=d.kind==='presentation'?['format','kind','id','name','views','messageSubtypes','media','tokens']:['format','kind','id','view','name','layout','allowedKinds','counts','topicTags','sourceRoles','media'];
  if(Object.keys(d).some(k=>!allowed.includes(k)))fail('DEFINITION','定义含未登记字段');return d;
 }
 function sourceKey(r){return r.kind==='book'?'book:'+JSON.stringify([r.book,r.uid,r.digest]):'record:'+JSON.stringify([r.tableId,r.recordId,r.snapshotId??null,r.revision??null]);}
@@ -111,12 +116,13 @@ export function compileExtensionPreferences(record,{definitions=[],context={},so
  const pick=(rows,role)=>rows.map(ref=>{const item=materialMap.get(role+':'+sourceKey(ref));if(!item)fail('SOURCE_UNAVAILABLE','选定'+(role==='world'?'世界':'观众')+'材料当前不可读取');return clone(item);});
  const materials={world:pick(p.world_sources,'world'),audience:p.audience_kind==='none'?[]:pick(p.audience_sources,'audience')};
  const kinds=p.enabled_kinds.filter(k=>(!presentation||!MESSAGE_SUBTYPES.includes(k)||presentation.definition.messageSubtypes.includes(k))&&(!extension||extension.definition.allowedKinds.includes(k)));
+ const availableMedia=p.media_enabled?p.media_kinds.filter(k=>(!presentation||presentation.definition.media.enabled&&presentation.definition.media.kinds.includes(k))&&(!extension||extension.definition.media.enabled&&extension.definition.media.kinds.includes(k))):[];
  if(extension)for(const role of ['world','audience'])if(materials[role].length&&!extension.definition.sourceRoles.includes(role))fail('SOURCE_ROLE','选定扩展定义不接受此类材料');
  const needsAudience=['forum','danmaku'].includes(p.view_id),audienceReady=!needsAudience||p.audience_kind!==null&&p.audience_kind!=='none';
- const generation={enabled:p.enabled&&!!extension&&p.generate_count!==null&&p.generate_count>0&&kinds.length>0&&audienceReady,count:p.generate_count,audienceKind:p.audience_kind,topics:clone(p.topic_preferences),materials};
- const display={enabled:p.enabled&&p.display_limit!==null&&p.display_limit>0&&kinds.length>0,limit:p.display_limit,layout:p.view_id?layoutByView[p.view_id]:null,kinds,tokens:presentation?clone(presentation.definition.tokens):null};
+ const generation={enabled:p.enabled&&!!extension&&p.generate_count!==null&&p.generate_count>0&&kinds.length>0&&audienceReady,count:p.generate_count,audienceKind:p.audience_kind,topics:clone(p.topic_preferences),materials,media:{enabled:availableMedia.length>0,kinds:availableMedia}};
+ const display={enabled:p.enabled&&p.display_limit!==null&&p.display_limit>0&&kinds.length>0,limit:p.display_limit,layout:p.view_id?layoutByView[p.view_id]:null,kinds,media:{enabled:p.enabled&&availableMedia.length>0,kinds:p.enabled?availableMedia:[]},tokens:presentation?clone(presentation.definition.tokens):null};
  const contract={format:'tisya.extension-compiled/1',preferenceId:p.row_uuid,scope:{ownerId:p.owner_ref,worldId:p.world_ref},view:p.view_id,outputConfigRef:p.output_config_ref,presentation:presentation?clone(presentation):null,extension:extension?clone(extension):null,generation,display};
- return {...contract,prompt:generation.enabled?'[EXTENSION.CONFIG]\n'+JSON.stringify({view:contract.view,count:generation.count,kinds,audienceKind:p.audience_kind,topics:generation.topics,world:materials.world,audience:materials.audience,rules:['仅使用当前获准材料；来源选择不扩大人物知情或可见范围。','观众模板不是已存在的角色或真实在线人数。',({world_fans:'本世界观众只依据该世界已公开或明确获准的信息，不默认在场或已知私密。',higher_dimensional:'高维观众属于选定输出设定；高维不等于自动全知，仍受所选材料边界限制。',mixed:'混合观众须分别标明本体归属，不因并列而互通私密知识。',none:'不生成观众发言。'})[p.audience_kind]??'观众本体尚未配置，不生成有身份归属的观众发言。','内容仅写入已授权表单路径；渲染标记不结算、不推进时间、不创建媒体。']})+'\n[/EXTENSION.CONFIG]':''};
+ return {...contract,prompt:generation.enabled?'[EXTENSION.CONFIG]\n'+JSON.stringify({view:contract.view,count:generation.count,kinds,media:generation.media,audienceKind:p.audience_kind,topics:generation.topics,world:materials.world,audience:materials.audience,rules:['仅使用当前获准材料；来源选择不扩大人物知情或可见范围。','观众模板不是已存在的角色或真实在线人数。',({world_fans:'本世界观众只依据该世界已公开或明确获准的信息，不默认在场或已知私密。',higher_dimensional:'高维观众属于选定输出设定；高维不等于自动全知，仍受所选材料边界限制。',mixed:'混合观众须分别标明本体归属，不因并列而互通私密知识。',none:'不生成观众发言。'})[p.audience_kind]??'观众本体尚未配置，不生成有身份归属的观众发言。','内容仅写入已授权表单路径；渲染标记不结算、不推进时间、不创建媒体。','多媒体只使用本区块登记类型；CG另须条件服务通过，未知或未通过不可调用。']})+'\n[/EXTENSION.CONFIG]':''};
 }
 export function extensionPreferenceRecordId({worldId,ownerId,view}){
  if(view==='message')view='messages';

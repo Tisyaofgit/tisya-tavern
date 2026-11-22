@@ -123,6 +123,13 @@ test('character dossier, entity and live state resolve as one referent while tru
  assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
 });
 
+test('same-reply cells and archive share one identity closure for stored and newly created characters',()=>{
+ const e=seed(),dossier=form(e.data,'T_CHAR_DOSSIER',{name:'阿紫'}),secret=form(e.data,'T_CHAR_SECRETS',{name:'渡口密约',char_ref:'阿青',fact_proposition:'两人共同保管渡口密约',related_object_refs:'关联：阿青；关联：阿紫'}),event=form(e.data,'T_DYN_EVENTS',{spine_digest:'两人在渡口核对密约',knowers:'关联：阿青；关联：阿紫'});
+ acceptReply(e,reply(1,[secret,event].join('\n')).replace('<cells/>','<cells format="form">'+dossier+'</cells>'),'m1');
+ const batch=e.data.runtime.archive_queue[0];assert.equal(batch.status,'staged',JSON.stringify(batch.error));const links=batch.plan.changes.filter(change=>change.tableId==='M_LIST_VALUES'&&['related_object_refs','knowers'].includes(change.values.owner_field));assert.equal(links.length,4);
+ const entityId=Object.entries(e.rows('T_SYS_ENTITIES')).find(([id,row])=>id!=='a'&&id!=='b'&&row.values.kind==='character')?.[0];assert(entityId);for(const link of links){assert.equal(link.values.target_table,'T_SYS_ENTITIES');assert(['a',entityId].includes(link.values.target_row_uuid));}
+});
+
 test('stable reverse state binding reunifies dossier, entity and state without using their names',()=>{
  const e=seed();
  // A minimal old import can retain the entity→state coordinate while its

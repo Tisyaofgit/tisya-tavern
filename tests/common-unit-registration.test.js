@@ -5,6 +5,7 @@ import {Runtime} from '../engine/runtime.mjs';
 import {initializeState,materials} from '../engine/materials.mjs';
 import {prepareMatrixSheets,acceptMatrixSheets,applyMatrixChanges} from '../tables/foundation/engine.js';
 import {fixture} from './turn-review-host.test.js';
+import {parseQuantityNumber,parseQuantityShorthand} from '../tables/foundation/quantity-input.js';
 const fresh=()=>new Runtime(initializeState(catalog));
 const context=(e,operationId='units')=>prepareMatrixSheets({state:e.data},{operationId,task:'main',mode:'revise'});
 function form(e,id,values,n=1){const t=context(e).catalog.templates.find(t=>t.id===id);return '【'+t.label+'／'+n+'】\n'+Object.entries(values).map(([k,v])=>t.fields.find(f=>f.key===k).row+'：'+v+' | P1').join('\n');}
@@ -67,4 +68,22 @@ test('centimeter, minute, month, season and quarter shorthand save distinct exac
 test('calendar seasons, unqualified quarters and age-counting labels are not silently equated',async()=>{
  const {commonUnit}=await import('../tables/foundation/common-units.js');assert.equal(commonUnit('季').component,'season');assert.equal(commonUnit('季度').component,undefined);assert.notEqual(commonUnit('周岁').label,commonUnit('虚岁').label);assert.notEqual(commonUnit('元').label,commonUnit('CNY').label);assert.notEqual(commonUnit('oz').dimension,commonUnit('fl oz').dimension);assert.equal(commonUnit('$'),undefined);assert.equal(commonUnit('¥'),undefined);
  const e=fresh();e.newRecord('T_STATIC_WORLDS',{name:'历法世界',calendar_id:'cal'},'w');e.newRecord('M_CALENDAR_RULES',{world_ref:'w',year_numbering:e.data.schema.M_CALENDAR_RULES.fields.find(f=>f.key==='year_numbering').enum[0],mode:'FIXED',value_state:'known'},'cal');e.data.runtime.scope.world_ref='w';const {copy}=compile(e,form(e,'T_DYN_SCENE_SPACE',{name:'一季',turn_elapsed:'1季'})+'\n'+form(e,'T_DYN_SCENE_SPACE',{name:'一季度',turn_elapsed:'1季度'},2));const units=Object.values(copy.rows('M_UNITS')).map(r=>r.values);assert.equal(units.find(u=>u.label==='季').calendar_ref,'cal');assert.equal(units.find(u=>u.label==='季度').calendar_ref,undefined);assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);
+});
+
+test('Chinese quantity numbers parse exact integers, decimals, signs and mixed notation without guessing abbreviations',()=>{
+ const cases=[['三',3],['十二',12],['二十点五',20.5],['负三点五',-3.5],['壹佰零伍',105],['一万二千',12000],['一万三千零二',13002],['零',0],['一亿零三万',100030000],['3点5',3.5],['三点5',3.5]];
+ for(const [raw,expected]of cases)assert.equal(parseQuantityNumber(raw),expected,raw);
+ for(const raw of ['三三','三万五','一万二千三','一万三千二','一万零三千二','一万二万','一零二','一万二零','十十','三.点.五',''])assert.equal(parseQuantityNumber(raw),null,raw);
+ assert.equal(parseQuantityShorthand('三尺').value,3);assert.equal(parseQuantityShorthand('三米').unit,'米');assert.equal(parseQuantityShorthand('约三米').narrativeOnly,true);assert.equal(parseQuantityShorthand('三米左右').narrativeOnly,true);assert.equal(parseQuantityShorthand('三万五米'),null);
+});
+
+test('Chinese shorthand and explicit quantity properties share exact storage while approximate text remains narrative only',()=>{
+ const e=fresh();e.registerTable('UNIT_MEASURE',[{key:'amount',label:'数量',type:'CHILD_REF',ref:'M_QUANTITIES',source_type:'LONG_TEXT'}],'单位样本');
+ const cases=[['三尺',3,'尺'],['三米',3,'米'],['3米',3,'米'],['十二米',12,'米'],['二十点五米',20.5,'米'],['负三米',-3,'米'],['数值：三；单位：米',3,'米'],['数值：三 米',3,'米']];
+ const c=context(e),t=c.catalog.templates.find(t=>t.id==='UNIT_MEASURE'),cells=cases.map(([value],i)=>'【单位样本／'+(i+1)+'】\n'+t.fields[0].row+'：'+value).join('\n'),{copy}=compile(e,cells),quantities=Object.values(copy.rows('UNIT_MEASURE')).map(row=>copy.rows('M_QUANTITIES')[row.values.amount].values);
+ quantities.forEach((q,i)=>{assert.equal(q.quantity_mode,'exact');assert.equal(q.value,cases[i][1]);assert.equal(copy.rows('M_UNITS')[q.unit_ref].values.label,cases[i][2]);});assert.equal(Object.keys(copy.rows('M_UNIT_RATIOS')).length,0);
+ const narrative=['约三米','三米多','三米左右','三米（当前阶段）'],text=narrative.map((value,i)=>'【单位样本／'+(i+9)+'】\n'+t.fields[0].row+'：'+value).join('\n'),next=compile(copy,text,'narrative-quantities').copy;
+ for(const [i,raw]of narrative.entries()){const q=Object.values(next.rows('M_QUANTITIES')).find(row=>row.values.narrative===raw)?.values;assert(q,raw);assert.equal(q.quantity_mode,'narrative_only');assert.equal(q.value,undefined,i);}
+ for(const raw of ['三三米','三万五米','数值：三；米'])assert.throws(()=>compile(fresh(),form(fresh(),'T_DYN_SCENE_PARTICIPANTS',{distance_to_target:raw}),'invalid-'+raw),/明确的名称和值|请填/);
+ const actual=compile(fresh(),form(fresh(),'T_DYN_SCENE_PARTICIPANTS',{distance_to_target:'三米'}),'actual-distance').copy;assert.equal(Object.values(actual.rows('M_QUANTITIES'))[0].values.value,3);
 });

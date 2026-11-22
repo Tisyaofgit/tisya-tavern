@@ -4,6 +4,7 @@ import {IDBFactory} from 'fake-indexeddb';
 import {webcrypto} from 'node:crypto';
 import {createChatMediaAtlas,createMediaAssetStore,projectMediaBundle,mediaTargets,createAtlasMediaProjection,MEDIA_TABLE,MEDIA_LOCATOR_PREFIX} from '../media-atlas.js';
 import {dialogueBlocks} from '../prose-dialogue.js';
+import {configureRenderingMedia,projectRendering,resolveBoundHeart,resolveRendering} from '../rendering-resources.js';
 
 const record=values=>({values,metadata:{sourceDefinition:{book:'基点书',uid:7,definitionId:'object.root'}}});
 const urlApi=()=>{let id=0;const live=new Set();return {createObjectURL(blob){assert(blob instanceof Blob);const url='blob:test/'+(++id);live.add(url);return url;},revokeObjectURL(url){live.delete(url);},live};};
@@ -137,4 +138,74 @@ test('archive media projection maps Matrix atlas IDs to exact entities without s
  const media=createAtlasMediaProjection({targets,rows}),character=media.for('T_CHAR_DOSSIER#a'),item=media.for('T_STATIC_ITEMS_SKILLS#a');
  assert.equal(character.cover.id,'avatar');assert.deepEqual(character.images.map(row=>row.id),['avatar','portrait','happy']);assert.equal(character.images[2].variant,'开心');
  assert.equal(item.cover.id,'item');assert.deepEqual(item.images.map(row=>row.id),['item']);assert.deepEqual(media.for('T_CHAR_DOSSIER#missing').images,[]);
+});
+
+function stableObjectFixture(){
+ const bundle=bundleFixture();bundle.state.tables[MEDIA_TABLE]={};bundle.state.tables.T_CHAR_DOSSIER.a.values.life_stage='少年';
+ bundle.state.tables.T_STATIC_PLACES={hall:record({name:'月灯大厅'})};
+ bundle.state.tables.T_SYS_ENTITIES={
+  'entity-a':record({kind:'character',name:'守门人',origin_record_ref:'origin-a'}),
+  'entity-lamp':record({kind:'item',name:'月灯',origin_record_ref:'origin-lamp'}),
+  'entity-hall':record({kind:'place',name:'月灯大厅',origin_record_ref:'origin-hall'})
+ };
+ bundle.state.tables.M_FIELD_REFERENCES={
+  'origin-a':record({owner_table:'T_SYS_ENTITIES',owner_row_uuid:'entity-a',owner_field:'origin_record_ref',target_table:'T_CHAR_DOSSIER',target_row_uuid:'a',reference_kind:'record',resolution_status:'resolved'}),
+  'origin-lamp':record({owner_table:'T_SYS_ENTITIES',owner_row_uuid:'entity-lamp',owner_field:'origin_record_ref',target_table:'T_STATIC_ITEMS_SKILLS',target_row_uuid:'lamp',reference_kind:'record',resolution_status:'resolved'}),
+  'origin-hall':record({owner_table:'T_SYS_ENTITIES',owner_row_uuid:'entity-hall',owner_field:'origin_record_ref',target_table:'T_STATIC_PLACES',target_row_uuid:'hall',reference_kind:'record',resolution_status:'resolved'})
+ };
+ bundle.state.tables.M_CONDITIONS={cgCondition:record({owner_table:'T_SYS_SOURCE_ROUTES',owner_row_uuid:'gate',owner_field:'activation_condition',group_key:'cg',sequence:0})};
+ return bundle;
+}
+
+test('stable entities expose every object kind once and stage portraits select exact variants without name borrowing',async()=>{
+ const base=stableObjectFixture(),targets=mediaTargets(base);assert.equal(targets.filter(row=>row.table==='T_CHAR_DOSSIER'&&row.origin_record_id==='a').length,1);assert.equal(targets.find(row=>row.entity==='entity-hall').group,'地点');assert.equal(targets.find(row=>row.entity==='entity-lamp').entity,'entity-lamp');
+ const db=mutableBundle(base),store=createMediaAssetStore({indexedDB:new IDBFactory(),URL:urlApi(),crypto:webcrypto}),atlas=createChatMediaAtlas({peek:db.peek,mutate:db.mutate,store}),target=targets.find(row=>row.entity==='entity-a');
+ try{
+  await atlas.importImage({file:file('young'),target,use:'portrait',lifeStage:'少年',width:1200,height:1600});
+  await atlas.importImage({file:file('young happy'),target,use:'portrait',lifeStage:'少年',variant:'开心'});
+  await atlas.importImage({file:file('adult'),target,use:'portrait',lifeStage:'成年'});
+  assert.equal(atlas.portrait('守门人','开心').url,'blob:test/2');assert.equal(atlas.portrait('守门人','冷漠').url,'blob:test/1');assert.equal(atlas.portrait('守门人').frame.ratio,'3:4');
+  await db.mutate(engine=>{engine.data.tables.T_CHAR_DOSSIER.a.values.life_stage='成年';});await atlas.refresh(true);assert.equal(atlas.portrait('守门人','开心').url,'blob:test/3');
+  assert.equal(atlas.portrait('月灯').status,'missing');assert.equal(atlas.portrait('月灯大厅').status,'missing');
+  const ambiguous=stableObjectFixture();ambiguous.state.tables.T_STATIC_PLACES.hall.values.name='守门人';ambiguous.state.tables.T_SYS_ENTITIES['entity-hall'].values.name='守门人';db.set(ambiguous);await atlas.refresh(true);assert.equal(atlas.portrait('守门人').status,'unresolved');
+ }finally{atlas.dispose();}
+});
+
+test('generic stickers and heart candidate lists work without a character target',async()=>{
+ const base=stableObjectFixture(),db=mutableBundle(base),store=createMediaAssetStore({indexedDB:new IDBFactory(),URL:urlApi(),crypto:webcrypto}),atlas=createChatMediaAtlas({peek:db.peek,mutate:db.mutate,store});
+ try{
+  await atlas.importImage({file:file('global sticker'),use:'sticker',scope:'global',variant:'开心'});await atlas.importImage({file:file('chat sticker'),use:'sticker',variant:'开心'});await atlas.importImage({file:file('calm sticker'),use:'sticker',variant:'平静'});
+  assert.equal(atlas.sticker('开心').url,'blob:test/2');const heart=atlas.heart(['开心','平静','不存在']);assert.deepEqual(heart.items.map(row=>row.status),['bound','bound','missing']);assert.equal(heart.items[0].url,'blob:test/2');
+  await assert.throws(()=>atlas.heart([]),/一个或多个/);
+ }finally{atlas.dispose();}
+});
+
+test('CG selection consumes only the condition service result and requires its exact registered scene',async()=>{
+ const base=stableObjectFixture(),db=mutableBundle(base),store=createMediaAssetStore({indexedDB:new IDBFactory(),URL:urlApi(),crypto:webcrypto});let matched=false;
+ const atlas=createChatMediaAtlas({peek:db.peek,mutate:db.mutate,store,evaluateConditions:async({recordIds})=>({results:recordIds.map(recordId=>({recordId,state:matched?'matched':'not_matched',reasonCode:'test'}))})}),target=mediaTargets(base).find(row=>row.entity==='entity-hall');
+ try{
+  await assert.rejects(()=>atlas.importImage({file:file('bad'),target,use:'cg',variant:'月下相遇',sceneDescription:'大厅',triggerCondition:'missing'}),/条件组不存在/);
+  await atlas.importImage({file:file('cg'),target,use:'cg',variant:'月下相遇',sceneDescription:'月灯大厅的夜晚',triggerCondition:'cgCondition'});assert.equal(atlas.cg('月下相遇','月灯大厅的夜晚').status,'locked');
+  matched=true;await atlas.refresh(true);assert.equal(atlas.cg('月下相遇','月灯大厅的夜晚').url,'blob:test/1');assert.equal(atlas.cg('月下相遇','编造场景').status,'mismatch');
+  matched=false;await atlas.refresh(true);assert.equal(atlas.cg('月下相遇','月灯大厅的夜晚').status,'locked');
+  await assert.rejects(()=>atlas.importImage({file:file('external'),target,use:'cg',scope:'global',variant:'外部',sceneDescription:'外部',triggerCondition:'cgCondition'}),/只保存在本聊天/);
+ }finally{atlas.dispose();}
+});
+
+test('established rendering syntax consumes bound portraits, stickers, hearts and condition-gated CG',async()=>{
+ const base=stableObjectFixture(),db=mutableBundle(base),store=createMediaAssetStore({indexedDB:new IDBFactory(),URL:urlApi(),crypto:webcrypto});let matched=false;
+ const atlas=createChatMediaAtlas({peek:db.peek,mutate:db.mutate,store,evaluateConditions:async({recordIds})=>({results:recordIds.map(recordId=>({recordId,state:matched?'matched':'not_matched'}))})}),person=mediaTargets(base).find(row=>row.entity==='entity-a'),place=mediaTargets(base).find(row=>row.entity==='entity-hall');
+ configureRenderingMedia(atlas);
+ try{
+  await atlas.importImage({file:file('portrait'),target:person,use:'portrait',lifeStage:'少年',variant:'开心',width:1200,height:1600});
+  await atlas.importImage({file:file('sticker'),use:'sticker',variant:'开心'});
+  await atlas.importImage({file:file('cg'),target:place,use:'cg',variant:'月下相遇',sceneDescription:'月灯大厅的夜晚',triggerCondition:'cgCondition',width:1600,height:900});
+  assert.equal(atlas.rendering('守门人：开心','body').use,'portrait');assert.equal(atlas.rendering('通用表情：开心','body').use,'sticker');assert.equal(resolveBoundHeart('开心').use,'sticker');
+  assert.match(projectRendering('@rendering{守门人：开心}','body'),/<figure class="tisya-bound-media"[^>]+--tisya-media-ratio:1200 \/ 1600/);
+  assert.match(projectRendering('@rendering{通用表情：开心}','body'),/<span class="tisya-bound-media"/);
+  assert.match(projectRendering('@rendering{月下相遇：月灯大厅的夜晚}','body'),/条件CG尚未通过规范条件/);
+  matched=true;await atlas.refresh(true);assert.match(projectRendering('@rendering{月下相遇：月灯大厅的夜晚}','body'),/<figure class="tisya-bound-media"/);
+  assert.match(projectRendering('@rendering{月下相遇：编造场景}','body'),/未绑定或场景描述不一致/);
+  assert.equal(resolveRendering('@rendering{emotion.好奇}','anchor')[0].name,'好奇');
+ }finally{configureRenderingMedia(null);atlas.dispose();}
 });

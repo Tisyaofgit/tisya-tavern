@@ -39,6 +39,7 @@ import {createGlobalFonts} from './global-fonts.js';
 import {mountThemeWorkbench} from './theme-workbench.js';
 import {messageCardCover} from './message-cover.js';
 import {createChatMediaAtlas,createMediaAssetStore} from './media-atlas.js';
+import {configureRenderingMedia} from './rendering-resources.js';
 import {mountAssistantApp} from './assistant-app.js';
 import {createIdentityService} from './user-identity-service.js';
 import {mountMatrixIdentity,mountMatrixCreation,mountStoryResources} from './engine/identity-ui.mjs';
@@ -138,8 +139,9 @@ const getAppearance=owner=>{
  const media=chatMedia.view();chatMedia.request().catch(visualError);
  const characters=media.characters.map(character=>{const matches=nativeCharacters.filter(card=>card.name===character.name);return {...character,avatar:character.avatar||(matches.length===1?matches[0].avatar:'')};});
  for(const card of nativeCharacters)if(!characters.some(character=>character.id===card.id||character.name===card.name))characters.push(card);
- const speech=window.Tisya?.matrix?.config.dialogueDisplay();
- return {...value,...speech,dialogueCharacterRevision:JSON.stringify([media.revision,characters]),dialogueCharacters:dialogueBlocks.characterRegistry(()=>({characters,media:media.media,scope:media.scope}),media.resolve)};
+ const speech=window.Tisya?.matrix?.config.dialogueDisplay(),registry=dialogueBlocks.characterRegistry(()=>({characters,media:media.media,scope:media.scope}),media.resolve),nativeRegistry=dialogueBlocks.characterRegistry(()=>({characters:nativeCharacters,media:{},scope:media.scope}),media.resolve);
+ const dialogueCharacters={resolve:registry.resolve,avatar(label,mood=''){const bound=chatMedia.avatar(label,mood);if(bound.url||bound.reason==='ambiguous')return bound;return nativeRegistry.avatar(label,mood);}};
+ return {...value,...speech,dialogueCharacterRevision:JSON.stringify([media.revision,characters]),dialogueCharacters};
 };
 const getDisplay=()=>getAppearance('extensions');
 const getPlayerName=()=>context().name1??null;
@@ -227,7 +229,8 @@ const nativeSourceLayers=createNativeSourceLayers({relocateSources:true,getCardP
 const matrixHost=createMatrixHost({retryBinding:()=>defaultActivation.retry(),archiveBooks:createNativeChatArchiveBooks({native:worldInfoNative,getContext:context}),manualReview:true,request:(...args)=>configHost.request(...args),getContext:context,getSource:presetSource,loadCatalog:async()=>{const r=await fetch(new URL('./engine/catalog.json',import.meta.url));if(!r.ok)throw Error('新版表单定义加载失败：'+r.status);return r.json();},persistSettings:saveSettings,persistMetadata:persistConversationMetadata,persona:()=>power_user.persona_description??'',projectToolTurns,getHistoryLimit:()=>configStore.read().world.context.history,getContractorMessages:turnDirections,getDisplayRules:currentNativeDisplayRules,nativeSources:nativeSourceLayers,expand:text=>substituteParams(text),assertIdle,onError:error,requestTransport:textTransport});
 const turnReviewUI=mountTurnReview(document,{service:matrixHost,onError:error,onForms:()=>openSettings('tables'),active:false});
 const matrixDatabase={read:()=>matrixHost.readDatabase(),peek:()=>matrixHost.peekDatabase(),commit:patch=>matrixHost.commitDatabase(patch),snapshot:input=>matrixHost.readDatabaseSnapshot(input)};
-const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),onChange:()=>appearance?.refresh(),onError:visualError});
+const chatMedia=createChatMediaAtlas({peek:matrixDatabase.peek,mutate:callback=>matrixHost.mutate(callback),store:createMediaAssetStore({indexedDB:window.indexedDB,URL:window.URL,crypto:window.crypto}),cardContext:()=>activeNativeCards().map(card=>({id:card.avatar,name:card.name})),evaluateConditions:input=>conditionService.evaluateMediaConditions(input),onChange:()=>appearance?.refresh(),onError:visualError});
+configureRenderingMedia(chatMedia);
 async function ensureMatrixDatabase(){return matrixHost.ensureDatabase();}
 const sourceBooks=createBookGateway(undefined,context);
 const sourceBookReader=Object.freeze({names:sourceBooks.names,listSources:sourceBooks.listSources,readSource:sourceBooks.readSource,materials:sourceBooks.materials,cardBooks:sourceBooks.cardBooks,available:sourceBooks.available});

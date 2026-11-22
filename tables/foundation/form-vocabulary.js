@@ -1,10 +1,10 @@
 const dimensionLabels={
  time:'时间与年龄单位',length:'长度单位',mass:'质量单位',area:'面积单位',volume:'体积单位',
- count:'计数单位',ratio:'比例单位',score:'积分单位',temperature:'温度单位',currency:'货币单位',custom:'自定义单位'
+ count:'计数单位',ratio:'比例单位',score:'积分单位',temperature:'温度单位',currency:'货币单位',display:'显示尺寸单位',custom:'自定义单位'
 };
 const builtins={
  time:['小时','天','周','月','岁'],length:['厘米','米','千米'],mass:['克','千克'],
- area:['平方米'],volume:['升','毫升'],count:['件','个','次'],ratio:['百分比'],score:['点'],temperature:['摄氏度']
+ area:['平方米'],volume:['升','毫升'],count:['件','个','次'],ratio:['百分比'],score:['点'],temperature:['摄氏度'],display:['像素']
 };
 
 export function formVocabulary(){return {choices:new Map(),units:new Map(),registeredUnitGroups:new Map()};}

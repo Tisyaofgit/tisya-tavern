@@ -72,3 +72,12 @@ test('audience ontology is explicit, preserves unconfigured null and never grant
  for(const kind of [null,'none'])assert.equal(compileExtensionPreferences(row({audience_kind:kind}),options()).generation.enabled,false);
  assert.throws(()=>normalizeExtensionPreferences(row({audience_kind:'all-knowing'})),/本体类型/);
 });
+
+test('each presentation block registers and intersects its enabled media types without enabling CG unconditionally',()=>{
+ const compiled=compileExtensionPreferences(row({media_enabled:true,media_kinds:['portrait','expression','cg','sticker']}),options());
+ assert.deepEqual(compiled.generation.media,{enabled:true,kinds:['portrait','expression','cg','sticker']});assert.match(compiled.prompt,/CG另须条件服务通过/);
+ const disabled=compileExtensionPreferences(row({media_enabled:false,media_kinds:['cg']}),options());assert.deepEqual(disabled.display.media,{enabled:false,kinds:[]});
+ const restricted=options();restricted.definitions[1].definition.media={enabled:true,kinds:['sticker']};const filtered=compileExtensionPreferences(row({media_enabled:true,media_kinds:['cg','sticker']}),restricted);assert.deepEqual(filtered.generation.media.kinds,['sticker']);
+ assert.throws(()=>normalizeExtensionPreferences(row({media_kinds:['video']})),/多媒体类型/);
+ assert.throws(()=>validateExtensionDefinition({...builtinExtensionDefinitions()[0],media:{enabled:true,kinds:['script']}}),/多媒体注册/);
+});

@@ -4,7 +4,7 @@ import {Window} from 'happy-dom';
 import {PREFERENCE_GROUPS,applyPreferences,defaultPreferenceSelection,effectivePreferences,wishPreferences} from '../engine/preferences.mjs';
 import {baseline,createConfiguration,compilePrompts} from '../engine/config.mjs';
 import {mountMatrixConfiguration} from '../engine/ui.mjs';
-import {BUILTIN_RESOURCES,renderingResources,configureRenderingResources,resourcePromptSlots,resolveRendering,projectRendering} from '../rendering-resources.js';
+import {BUILTIN_RESOURCES,renderingResources,configureRenderingResources,configureRenderingMedia,resourcePromptSlots,resolveRendering,projectRendering} from '../rendering-resources.js';
 import {inspectMatrix} from '../engine/display.mjs';
 import {mountActionChoice} from '../actions.js';
 import {mountHeartBlock} from '../reply-details.js';
@@ -87,4 +87,13 @@ test('free and omitted action categories keep exact labels and submit only actio
  const w=new Window(),root=w.document.createElement('div');w.document.body.append(root);const calls=[];mountActionChoice(w.document,root,{rows:v.actions.value,onChoose:t=>calls.push(t)});assert.equal(root.querySelectorAll('.action-type').length,1);root.querySelectorAll('.action')[1].click();await tick();assert.deepEqual(calls,['我坐下等一会儿。']);
  const host=w.document.createElement('div');w.document.body.append(host);mountHeartBlock(w.document,host,{status:'有内容',items:[{type:'输入评价',mood:'@rendering{emotion.好奇}',text:'看看门后吧。'}]});await tick();assert.equal(host.querySelector('img')?.alt,'好奇');assert.match(host.querySelector('img')?.src,/assets\/emotions\/2.png/);
  configureRenderingResources([]);await w.happyDOM.abort();
+});
+
+test('heart mounting resolves a plain custom name through the same bound-media service',async()=>{
+ const calls=[];configureRenderingMedia({rendering(id,slot){calls.push([id,slot]);return {id:'custom-happy',name:'自定义开心',kind:'image',slot,url:'https://example.test/custom-happy.png',use:'sticker',frame:{aspectRatio:'1 / 1'}};}});
+ const w=new Window(),host=w.document.createElement('div');w.document.body.append(host);
+ try{
+  mountHeartBlock(w.document,host,{status:'有内容',items:[{type:'输入评价',mood:'自定义开心',text:'保留这条心声。'}]});await tick();
+  assert.deepEqual(calls,[['自定义开心','anchor']]);assert.equal(host.querySelector('img')?.alt,'自定义开心');assert.equal(host.querySelector('img')?.src,'https://example.test/custom-happy.png');assert.match(host.textContent,/保留这条心声/);
+ }finally{configureRenderingMedia(null);await w.happyDOM.abort();}
 });

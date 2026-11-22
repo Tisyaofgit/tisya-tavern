@@ -109,17 +109,14 @@ function databaseConditions({database,getContext,draw}){
   check(db?.state&&db.contextKey===key&&key===chatKey(getContext())&&stamp===chatStamp(),'条件表单来源未准备或聊天已变化');
   return {db,key,stamp};
  }
- function definition(db,id){
-  const state=db.state,route=rowValues(state,'T_SYS_SOURCE_ROUTES',id);
-  check(route?.activation_condition,'条件规则尚未登记到当前规范表单；旧规则需先按稳定格位迁移');
-  check(scopeAllowed(state,'T_SYS_SOURCE_ROUTES',id),'条件来源不属于当前生效作用域');
-  const groups=[],refs=[];
-  for(const field of ['activation_condition','expiry_condition']){
-   const ref=route[field];if(ref==null||ref==='')continue;
+ function conditionGroups(db,ownerTable,ownerId,fields){
+  const state=db.state,groups=[],refs=[];
+  for(const field of fields){
+   const owner=rowValues(state,ownerTable,ownerId),ref=owner?.[field];if(ref==null||ref==='')continue;
    check(typeof ref==='string','条件须引用唯一的标准条件组');
    const first=rowValues(state,'M_CONDITIONS',ref);check(first,'条件节点引用已不存在');
-   check(first.owner_table==='T_SYS_SOURCE_ROUTES'&&first.owner_row_uuid===id&&first.owner_field===field,'条件组归属与来源路由不一致');
-   const nodes=Object.values(state.tables?.M_CONDITIONS??{}).map(r=>r.values).filter(n=>n.owner_table===first.owner_table&&n.owner_row_uuid===id&&n.owner_field===field&&n.group_key===first.group_key);
+   check(first.owner_table===ownerTable&&first.owner_row_uuid===ownerId&&first.owner_field===field,'条件组归属与来源记录不一致');
+   const nodes=Object.values(state.tables?.M_CONDITIONS??{}).map(r=>r.values).filter(n=>n.owner_table===ownerTable&&n.owner_row_uuid===ownerId&&n.owner_field===field&&n.group_key===first.group_key);
    check(nodes.length>0&&nodes.length<=128,'条件组为空或超出128项');
    for(const node of nodes)for(const key of ['lhs_ref',...(node.rhs_kind==='reference'?['rhs_ref']:[])])if(node[key]){
     check(typeof node[key]==='string','条件格位须为标准引用ID');
@@ -127,11 +124,26 @@ function databaseConditions({database,getContext,draw}){
    }
    groups.push({field,first,nodes});
   }
+  return {groups,refs};
+ }
+ function definition(db,id){
+  const state=db.state,route=rowValues(state,'T_SYS_SOURCE_ROUTES',id);
+  check(route?.activation_condition,'条件规则尚未登记到当前规范表单；旧规则需先按稳定格位迁移');
+  check(scopeAllowed(state,'T_SYS_SOURCE_ROUTES',id),'条件来源不属于当前生效作用域');
+  const {groups,refs}=conditionGroups(db,'T_SYS_SOURCE_ROUTES',id,['activation_condition','expiry_condition']);
   const record=state.tables.T_SYS_SOURCE_ROUTES[id];for(const key of ['activation_condition','expiry_condition','condition_chance','condition_cooldown_turns','condition_limit','condition_start_turn','condition_end_turn'])if(route[key]!=null||record.states?.[key]==='unknown')check(['known','derived'].includes(record.states?.[key]),'条件定义字段尚未确认：'+key);
   const policy=policyOf(route),acl=Object.values(state.tables?.M_ACCESS_RULES??{}).map(r=>r.values).filter(a=>a.owner_table==='T_SYS_SOURCE_ROUTES'&&a.owner_row_uuid===id||refs.some(ref=>a.owner_table===ref.target_table&&a.owner_row_uuid===ref.target_row_uuid));
   const fieldDefinitions=refs.map(ref=>({table:ref.target_table,field:state.schema?.[ref.target_table]?.fields.find(f=>f.key===ref.target_field)??null}));
   const revision=parseInt(matrixDigest({route,groups,refs,acl,fieldDefinitions}).slice(0,12),16)+1;
   return {id,name:route.source_name||id,revision,mode:'gate',policy,route,groups,refs,acl};
+ }
+ function mediaDefinition(db,id){
+  const media=rowValues(db.state,'T_SYS_MEDIA_ASSETS',id),ref=media?.trigger_condition;
+  check(typeof ref==='string'&&ref,'条件CG没有规范条件引用');
+  const first=rowValues(db.state,'M_CONDITIONS',ref);check(first,'条件CG引用的条件组不存在');
+  const owner={table:first.owner_table,id:first.owner_row_uuid,field:first.owner_field},{groups,refs}=conditionGroups(db,owner.table,owner.id,[owner.field]);
+  check(groups.length===1&&groups[0].first.group_key===first.group_key,'条件CG必须引用一个完整条件组');
+  return {id:'media:'+id,owner,groups,refs,revision:parseInt(matrixDigest({media,groups,refs}).slice(0,12),16)+1};
  }
  function publicSource(state,table,id,field=''){
   const row=state.tables?.[table]?.[id],schema=state.schema?.[table],m=metadata(state,table,id);
@@ -145,7 +157,8 @@ function databaseConditions({database,getContext,draw}){
   return publicRules.some(r=>r.decision==='allow'&&r.value_state==='known')&&!publicRules.some(r=>r.decision==='deny'||r.value_state!=='known');
  }
  function evaluate(db,rule,prepared={}){
-  if(!publicSource(db.state,'T_SYS_SOURCE_ROUTES',rule.id,'activation_condition')||rule.refs.some(ref=>!publicSource(db.state,ref.target_table,ref.target_row_uuid,ref.target_field??'')))return {status:'private',changes:[],basis:[]};
+  const owner=rule.owner??{table:'T_SYS_SOURCE_ROUTES',id:rule.id,field:'activation_condition'};
+  if(!publicSource(db.state,owner.table,owner.id,owner.field)||rule.refs.some(ref=>!publicSource(db.state,ref.target_table,ref.target_row_uuid,ref.target_field??'')))return {status:'private',changes:[],basis:[]};
   const e=prepared.engine??=new Runtime(db.state);
   // Resolve only this rule's formula-backed inputs through their existing owner.
   for(const ref of rule.refs)if(ref.reference_kind==='cell'&&ref.resolution_status==='resolved'){
@@ -214,5 +227,20 @@ function databaseConditions({database,getContext,draw}){
   const result=await database.commit({operationId:'condition-edit:'+crypto.randomUUID(),expectedRevision:db.revision,contextKey:key,changes:compiled.changes,source:{kind:'condition-form'}},{assertCurrent:()=>check(key===chatKey(getContext())&&stamp===chatStamp(),'条件编辑来源已变化')});
   return conditionForm(definition(result,compiled.id),result.state);
  });}
- return {canonicalConditions:true,describeConditionRules,listConditionRules,saveConditionRule,evaluateConditionEntries};
+ async function evaluateMediaConditions({recordIds=[]}={}){
+  check(Array.isArray(recordIds)&&recordIds.length<=512&&new Set(recordIds).size===recordIds.length&&recordIds.every(id=>typeof id==='string'&&id),'媒体条件请求无效');
+  const key=chatKey(getContext()),db=await database.read();check(db?.state&&db.contextKey===key&&key===chatKey(getContext()),'媒体条件来源不属于当前聊天');
+  const results=[],prepared={};
+  for(const recordId of recordIds){
+   const media=rowValues(db.state,'T_SYS_MEDIA_ASSETS',recordId);
+   if(!media||!scopeAllowed(db.state,'T_SYS_MEDIA_ASSETS',recordId)){results.push({recordId,state:'not_matched',reasonCode:'out_of_scope'});continue;}
+   if(!media.trigger_condition){results.push({recordId,state:'not_matched',reasonCode:'missing_condition'});continue;}
+   try{
+    const rule=mediaDefinition(db,recordId),result=evaluate(db,rule,prepared);
+    results.push({recordId,state:result.status==='ready'?'matched':result.status==='unknown'?'unknown':'not_matched',reasonCode:result.status,conditionRevision:rule.revision});
+   }catch(error){results.push({recordId,state:'not_matched',reasonCode:'invalid_condition',diagnostic:error.message});}
+  }
+  check(key===chatKey(getContext()),'媒体条件求值期间聊天已变化');return {contextKey:key,revision:db.revision,results};
+ }
+ return {canonicalConditions:true,describeConditionRules,listConditionRules,saveConditionRule,evaluateConditionEntries,evaluateMediaConditions};
 }

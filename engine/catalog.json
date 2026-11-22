@@ -46006,6 +46006,7 @@
             "ratio",
             "score",
             "temperature",
+            "display",
             "custom"
           ],
           "editor": "enum",
@@ -137251,6 +137252,7 @@
             "ratio",
             "score",
             "temperature",
+            "display",
             "custom"
           ],
           "editor": "enum",
@@ -170632,6 +170634,7 @@
           "ratio",
           "score",
           "temperature",
+          "display",
           "custom"
         ],
         "origin": "mechanical_contract_encoding"

@@ -53,3 +53,41 @@ test('reply time settlement accepts executor-owned offstage writes and replays t
  const e=fixture();e.action('OFFSTAGE_RULE_REGISTER',{...base,name:'药师戒备',subject_ref:'npc',rate_per_hour:20,transaction_name:'药师整理药箱',task_name:'查看药师的药箱'},'rule:npc');
  const raw='<reply><body>1 时间经过了一小时。</body><cells>@TIME: tick(+60m)</cells><archive/></reply>',accepted=acceptReply(e,raw,'offstage-entry');assert.equal(accepted.status,'COMMITTED');assert(!accepted.result.warnings.some(warning=>warning.code==='CELL_FAILED'));assert.equal(tasks(e).length,1);const count=Object.keys(e.rows('T_SYS_OFFSTAGE_ADVANCES')).length,replay=acceptReply(e,raw,'offstage-entry');assert.equal(replay.status,'REPLAY');assert.equal(tasks(e).length,1);assert.equal(Object.keys(e.rows('T_SYS_OFFSTAGE_ADVANCES')).length,count);
 });
+
+
+test('event closure retains subjective beliefs with stable labels and query-only recall',()=>{
+ const e=fixture();e.newRecord('T_DYN_EVENTS',{title:'渡口误会',lifecycle_status:'进行中'},'event');e.newRecord('T_STATIC_FACTS',{name:'客观命题',proposition:'OBJECTIVE_TRUTH_NOT_FOR_CHARACTER'},'fact');
+ e.newRecord('T_DYN_COGNITION',{name:'BACKEND_TITLE_A',subject_ref:'npc',target_fact_ref:'fact',event_ref:'event',epistemic_level:'K_MIS',subjective_belief:'药师本人以为门后有人',belief_truth_status:'错误'},'a1');
+ e.newRecord('T_DYN_COGNITION',{name:'BACKEND_TITLE_B',subject_ref:'npc',event_ref:'event',epistemic_level:'K1',subjective_belief:'药师仍惦记自己的药箱'},'a2');
+ e.newRecord('T_DYN_COGNITION',{subject_ref:'present',event_ref:'event',epistemic_level:'K3',subjective_belief:'OTHER_CHARACTER_PRIVATE_BELIEF'},'other');e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K0',subjective_belief:'K0_NEVER_KNOWN'},'unseen');
+ const closed=e.action('EVENT_CLOSE',{event_ref:'event'},'event-close');assert.equal(closed.status,'COMMITTED');assert.equal(closed.result.retained_event,3);
+ for(const id of ['a1','a2','other']){const row=e.rows('T_DYN_COGNITION')[id];assert.equal(row.values.lifecycle_phase,'离场确信');assert.equal(row.values.closure_reason,'事件结束');assert.equal(row.values.closure_event_ref,'event');}assert.notEqual(e.rows('T_DYN_COGNITION').unseen.values.lifecycle_phase,'离场确信');
+ const scope={audience:'character',subject_ref:'npc',world_ref:'world-a',branch_ref:'main'},all=slots=>Object.values(slots).join('\n'),resident=all(materials(e,scope));
+ for(const hidden of ['门后有人','药箱','OTHER_CHARACTER_PRIVATE_BELIEF','OBJECTIVE_TRUTH_NOT_FOR_CHARACTER','BACKEND_TITLE_A'])assert(!resident.includes(hidden),hidden);
+ const recalled=all(materials(e,scope,'门后'));assert(recalled.includes('角色认知1'));assert(recalled.includes('药师本人以为门后有人'));for(const hidden of ['药箱','OTHER_CHARACTER_PRIVATE_BELIEF','OBJECTIVE_TRUTH_NOT_FOR_CHARACTER','BACKEND_TITLE_A'])assert(!recalled.includes(hidden),hidden);
+ const before=JSON.stringify(e.data.tables),again=e.action('COGNITION_SETTLE',{},'event-settle-again');assert.equal(again.status,'COMMITTED');assert.equal(JSON.stringify(e.data.tables),before);
+ e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K2',subjective_belief:'后来补入的另一条误信'},'a0');e.action('COGNITION_SETTLE',{},'event-settle-new');assert.equal(e.rows('T_DYN_COGNITION').a1.values.subject_sequence,1);assert.equal(e.rows('T_DYN_COGNITION').a2.values.subject_sequence,2);assert(e.rows('T_DYN_COGNITION').a0.values.subject_sequence>2);assert(all(materials(e,scope,'门后')).includes('角色认知1'));
+ const author=all(materials(e,{...scope,audience:'author'}));assert(author.includes('OTHER_CHARACTER_PRIVATE_BELIEF'));assert(author.includes('OBJECTIVE_TRUTH_NOT_FOR_CHARACTER'));
+});
+
+test('departure and later world progression share one idempotent cognition transaction',()=>{
+ const e=fixture();e.newRecord('T_DYN_EVENTS',{title:'仍在进行的事件',lifecycle_status:'进行中'},'event');e.newRecord('T_DYN_EVENTS',{title:'药师离开渡口'},'departure');
+ e.newRecord('T_DYN_SCENE_PARTICIPANTS',{scene_ref:'scene',entity_ref:'npc',focus_level:'在场次要'},'npc-presence');e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K_MIS',subjective_belief:'药师离场时仍以为守卫没有看见他'},'npc-cog');e.newRecord('T_DYN_COGNITION',{subject_ref:'present',event_ref:'event',epistemic_level:'K1',subjective_belief:'守卫仍在场观察'},'present-cog');
+ const left=e.action('CHARACTER_DEPART',{presence_ref:'npc-presence',departure_event_ref:'departure'},'depart:npc');assert.equal(left.status,'COMMITTED');assert.equal(left.result.retained_departure,1);assert.equal(e.rows('T_DYN_COGNITION')['npc-cog'].values.lifecycle_phase,'离场确信');assert.equal(e.rows('T_DYN_COGNITION')['npc-cog'].values.closure_event_ref,'departure');assert.notEqual(e.rows('T_DYN_COGNITION')['present-cog'].values.lifecycle_phase,'离场确信');
+ const tables=JSON.stringify(e.data.tables),replay=e.action('CHARACTER_DEPART',{presence_ref:'npc-presence',departure_event_ref:'departure'},'depart:npc');assert.equal(replay.status,'REPLAY');assert.equal(JSON.stringify(e.data.tables),tables);
+ const tick=e.transaction('after-departure',{},()=>e.tick(60));assert.equal(tick.status,'COMMITTED');assert.equal(tick.result.offstage.cognition.retained_departure,0);assert.equal(JSON.stringify(e.data.tables),tables);
+ const closed=e.action('EVENT_CLOSE',{event_ref:'event'},'close-after-departure');assert.equal(closed.result.retained_event,1);assert.equal(e.rows('T_DYN_COGNITION')['present-cog'].values.lifecycle_phase,'离场确信');
+});
+
+test('only an explicit same-subject acyclic correction retires an old belief',()=>{
+ const e=fixture();e.newRecord('T_DYN_EVENTS',{title:'纠正误信',lifecycle_status:'进行中'},'event');e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K_MIS',subjective_belief:'OLD_MISTAKEN_BELIEF'},'old');e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K2',subjective_belief:'CURRENT_OWN_BELIEF',supersedes_ref:'old'},'new');
+ const settled=e.action('COGNITION_SETTLE',{},'settle-correction');assert.equal(settled.status,'COMMITTED');assert.equal(settled.result.superseded,1);assert.equal(e.rows('T_DYN_COGNITION').old.values.lifecycle_phase,'已被修正');assert.notEqual(e.rows('T_DYN_COGNITION').new.values.lifecycle_phase,'已被修正');
+ const scope={audience:'character',subject_ref:'npc',world_ref:'world-a',branch_ref:'main'},text=Object.values(materials(e,scope,'BELIEF')).join('\n');assert(!text.includes('OLD_MISTAKEN_BELIEF'));assert(text.includes('CURRENT_OWN_BELIEF'));
+ e.newRecord('T_DYN_COGNITION',{subject_ref:'present',event_ref:'event',epistemic_level:'K3',subjective_belief:'FOREIGN_CORRECTION',supersedes_ref:'new'},'foreign');const rejected=e.action('COGNITION_SETTLE',{},'reject-foreign-correction');assert.equal(rejected.status,'FAILED');assert.equal(rejected.error.code,'COGNITION_SUPERSESSION');assert.notEqual(e.rows('T_DYN_COGNITION').new.values.lifecycle_phase,'已被修正');
+ e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K2',subjective_belief:'CYCLE_B',supersedes_ref:'new'},'cycle-b');const cycle=e.transaction('reject-cycle',{},()=>{e.set('T_DYN_COGNITION#new.supersedes_ref','cycle-b');e.action('COGNITION_SETTLE',{},'nested-cycle');});assert.equal(cycle.status,'FAILED');assert.equal(cycle.error.code,'COGNITION_SUPERSESSION');assert.equal(e.rows('T_DYN_COGNITION').new.values.supersedes_ref,'old');
+});
+
+test('unknown event or presence state cannot manufacture a departure belief',()=>{
+ const e=fixture();e.newRecord('T_DYN_EVENTS',{title:'状态待定'},'event');e.newRecord('T_DYN_SCENE_PARTICIPANTS',{scene_ref:'scene',entity_ref:'npc',focus_level:'在场次要'},'npc-presence');e.newRecord('T_DYN_COGNITION',{subject_ref:'npc',event_ref:'event',epistemic_level:'K1',subjective_belief:'仍属事件中'},'cog');
+ e.set('T_DYN_EVENTS#event.lifecycle_status','已结束','unknown');e.set('T_DYN_SCENE_PARTICIPANTS#npc-presence.focus_level','离场索引','unknown');const result=e.action('COGNITION_SETTLE',{},'unknown-lifecycle');assert.equal(result.status,'COMMITTED');assert.equal(result.result.retained_event,0);assert.equal(result.result.retained_departure,0);assert.notEqual(e.rows('T_DYN_COGNITION').cog.values.lifecycle_phase,'离场确信');
+});

@@ -127,3 +127,16 @@ test('minimal editor preserves extended conditions and blocks stale context and 
  await f.save([{tableId:'M_CONDITIONS',recordId:'gate-condition',values:{narrative:'有额外依据，不可丢弃'}}]);data=await f.service.listConditionRules();assert.equal(data.rules[0].editable,false);
  const before=await f.reads();await assert.rejects(f.service.saveConditionRule(data.rules[0],data.revision,data.contextKey),/扩展判定/);assert.deepEqual(await f.reads(),before);
 });
+
+test('media CG reads the same canonical condition groups without writes, chance, or permissive fallback',async()=>{
+ const f=await fixture();
+ await f.save([{tableId:'T_SYS_MEDIA_ASSETS',recordId:'cg',values:{kind:'图像',purpose:'条件CG',display_variant:'月夜',scene_description:'月下大厅',trigger_condition:'gate-condition',asset_locator:'tisya-media://cg'}}]);
+ const start=f.writes(),draws=f.draws(),evaluate=()=>f.service.evaluateMediaConditions({recordIds:['cg']});
+ let result=await evaluate();assert.equal(result.results[0].state,'matched');assert.equal(f.writes(),start);assert.equal(f.draws(),draws);
+ await f.save([{tableId:'T_DYN_ENTITY_GAUGES',recordId:'stamina',values:{value:2}}]);assert.equal((await evaluate()).results[0].state,'not_matched');
+ await f.save([{tableId:'T_DYN_ENTITY_GAUGES',recordId:'stamina',values:{value:null},states:{value:'unknown'}}]);assert.equal((await evaluate()).results[0].state,'unknown');
+ await f.save([{tableId:'T_SYS_MEDIA_ASSETS',recordId:'open',values:{kind:'图像',purpose:'条件CG',asset_locator:'tisya-media://open'}}]);assert.equal((await f.service.evaluateMediaConditions({recordIds:['open']})).results[0].reasonCode,'missing_condition');
+ await f.save([{tableId:'T_SYS_MEDIA_ASSETS',recordId:'other',values:{kind:'图像',purpose:'条件CG',asset_locator:'tisya-media://other'}},{tableId:'M_CONDITIONS',recordId:'alien-condition',values:{owner_table:'T_SYS_MEDIA_ASSETS',owner_row_uuid:'other',owner_field:'trigger_condition',group_key:'other',sequence:0,combine:'all',predicate_kind:'observed_boolean',observed_result:true,value_state:'known'}},{tableId:'T_SYS_MEDIA_ASSETS',recordId:'broken',values:{kind:'图像',purpose:'条件CG',trigger_condition:'alien-condition',asset_locator:'tisya-media://broken'}}]);assert.equal((await f.service.evaluateMediaConditions({recordIds:['broken']})).results[0].reasonCode,'invalid_condition');
+ await f.save([{tableId:'M_ACCESS_RULES',recordId:'secret-media-input',values:{owner_table:'T_DYN_ENTITY_GAUGES',owner_row_uuid:'stamina',owner_field:'value',audience_kind:'character',audience_entity_ref:'person',permission:'read',decision:'allow',value_state:'known'}}]);
+ assert.equal((await evaluate()).results[0].state,'not_matched');assert.equal((await evaluate()).results[0].reasonCode,'private');assert.equal(f.draws(),draws);
+});

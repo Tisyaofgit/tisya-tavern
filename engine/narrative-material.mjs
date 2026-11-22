@@ -1,6 +1,6 @@
 import {xmlSection} from './prompt-sections.mjs';
 import {matrixRecordVisible} from './prompt-boundary.mjs';
-import {inKnowledgeScope} from './character-knowledge.mjs';
+import {COGNITION_PHASE,cognitionPhase,inKnowledgeScope} from './character-knowledge.mjs';
 
 const tagNames={
  rule_material:'RuleMaterial', world_context:'WorldContext', faction_context:'FactionContext',
@@ -157,6 +157,12 @@ export function routeNarrativeRecord(row,defaultSlot,state,scope,roster){
  if(table==='T_CHAR_SECRETS')return values.lock_level==='L1'?result('secret_material',subset(values,knownSecretFields)):null;
  if(directSlots[table]==='offstage_state')return result('offstage_state',subset(values,visibleOffstageFields));
  if(table==='T_SYS_GENESIS_WORKBENCH'||table==='T_CORE_ADAPTATION'||table==='T_CORE_WORLD_MAPPINGS')return null;
+ if(table==='T_DYN_COGNITION'){
+  const actor=byIdentity(values.subject_ref),phase=cognitionPhase(state.tables[table]?.[id]);
+  if(phase===COGNITION_PHASE.RETAINED)return result('offstage_state',values,actor?.dossier??actor?.id??null);
+  if(!actor||!['主控','在场焦点'].includes(actor.level))return null;
+  return result('knowledge_material',values,actor.dossier??actor.id);
+ }
  if(table==='T_DYN_EVENTS')return result('memory_archive');
  return result(directSlots[table]??defaultSlot);
 }

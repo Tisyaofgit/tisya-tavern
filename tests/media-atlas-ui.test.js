@@ -18,7 +18,7 @@ test('atlas form waits for image decoding and binds exact target, use, mood and 
  const env=fixture(),body=env.document.body;let decode;
  env.window.createImageBitmap=()=>new Promise(resolve=>{decode=resolve;});
  const view=renderMediaAtlas(env.document,body,{atlas:env.atlas,button:env.button,field:env.field,input:env.input,el:env.el});
- const fileControl=body.querySelector('input[type=file]'),target=body.querySelector('select[aria-label="绑定人物或物品"]'),use=body.querySelector('select[aria-label="图片用途"]'),mood=body.querySelector('input[aria-label="情绪名称"]'),submit=[...body.querySelectorAll('button')].find(x=>x.textContent==='上传并绑定');
+ const fileControl=body.querySelector('input[type=file]'),target=body.querySelector('select[aria-label="绑定对象"]'),use=body.querySelector('select[aria-label="图片用途"]'),mood=body.querySelector('input[aria-label="情绪或媒体名称"]'),submit=[...body.querySelectorAll('button')].find(x=>x.textContent==='上传并绑定');
  assert.equal(body.querySelectorAll('optgroup').length,2);assert.equal(env.getRequestCount(),1);
  Object.defineProperty(fileControl,'files',{configurable:true,value:[new Blob(['image'],{type:'image/png'})]});fileControl.onchange();
  target.value='a';use.value='expression';use.onchange();mood.value='开心';mood.oninput();
@@ -44,7 +44,7 @@ test('only the latest selected image may update decode state after a slow earlie
 
 test('card scope selects an active native card and global scope needs no card',async()=>{
  const env=fixture(),body=env.document.body;env.window.createImageBitmap=async()=>({width:80,height:90,close(){}});
- const view=renderMediaAtlas(env.document,body,{atlas:env.atlas,button:env.button,field:env.field,input:env.input,el:env.el}),fileControl=body.querySelector('input[type=file]'),target=body.querySelector('select[aria-label="绑定人物或物品"]'),scope=body.querySelector('select[aria-label="绑定范围"]'),card=body.querySelector('select[aria-label="绑定角色卡"]'),submit=[...body.querySelectorAll('button')].find(x=>x.textContent==='上传并绑定');
+ const view=renderMediaAtlas(env.document,body,{atlas:env.atlas,button:env.button,field:env.field,input:env.input,el:env.el}),fileControl=body.querySelector('input[type=file]'),target=body.querySelector('select[aria-label="绑定对象"]'),scope=body.querySelector('select[aria-label="绑定范围"]'),card=body.querySelector('select[aria-label="绑定角色卡"]'),submit=[...body.querySelectorAll('button')].find(x=>x.textContent==='上传并绑定');
  scope.value='card';scope.onchange();assert.equal(card.closest('label').hidden,false);assert.equal(card.value,'card-a');
  Object.defineProperty(fileControl,'files',{configurable:true,value:[new Blob(['image'],{type:'image/png'})]});fileControl.onchange();target.value='a';await submit.run();
  assert.equal(env.getImported().scope,'card');assert.equal(env.getImported().card.id,'card-a');assert.match(body.textContent,/角色卡/);

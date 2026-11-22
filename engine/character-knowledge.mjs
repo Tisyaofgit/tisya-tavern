@@ -3,8 +3,14 @@ import {clone,sha256,fail} from './common.mjs';
 // An author/reader view is not a character's knowledge. Only an explicitly
 // selected subject activates this projection; ordinary authoring stays intact.
 export const characterSubject=scope=>scope?.subject_ref&&!['author','reader','player'].includes(scope.audience)?scope.subject_ref:null;
+export const COGNITION_PHASE=Object.freeze({EVENT:'事件中',RETAINED:'离场确信',SUPERSEDED:'已被修正'});
 const rows=(state,id)=>Object.values(state.tables?.[id]??{});
 const knownValue=(row,key)=>['known','derived'].includes(row?.states?.[key])?row.values?.[key]:undefined;
+export function cognitionPhase(row){if(!Object.hasOwn(row?.states??{},'lifecycle_phase')&&!Object.hasOwn(row?.values??{},'lifecycle_phase'))return COGNITION_PHASE.EVENT;return knownValue(row,'lifecycle_phase')??'未知';}
+export function cognitionRecallMatch(row,query=''){
+ const terms=String(query).split(/[\s/,，；;]+/).filter(Boolean);if(!terms.length)return false;
+ const text=['subjective_belief','psychology','acquisition_channel','evidence_nature','uncertain_points','proposition_granularity'].map(key=>knownValue(row,key)).filter(value=>typeof value==='string').join('\n');return terms.some(term=>text.includes(term));
+}
 export function inKnowledgeScope(state,tableId,recordId,scope){
  const record=state.tables?.[tableId]?.[recordId];if(!record)return false;
  const meta=rows(state,'X_RECORD_META').filter(r=>r.values.table_id===tableId&&r.values.record_id===recordId);
@@ -45,6 +51,15 @@ export function subjectIdentities(state,scope){
 // history and private identity are not implicitly shared with another actor.
 const publicDossierFields=new Set(['name','gender','pronouns','public_identity','social_identity_duty','overall_physique','facial_features','habitual_bearing','habitual_attire','sensory_impression','mask_presentation','diction','voice','cadence','humor','manifest']);
 function ownCognitions(state,scope){const ids=subjectIdentities(state,scope);return Object.entries(state.tables?.T_DYN_COGNITION??{}).filter(([id,r])=>ids.has(knownValue(r,'subject_ref'))&&inKnowledgeScope(state,'T_DYN_COGNITION',id,scope));}
+export function characterCognitionProjection(state,scope,query=''){
+ const eligible=ownCognitions(state,scope).filter(([,row])=>knownValue(row,'epistemic_level')&&knownValue(row,'epistemic_level')!=='K0'&&[COGNITION_PHASE.EVENT,COGNITION_PHASE.RETAINED].includes(cognitionPhase(row)));
+ const acquisition=([id,row])=>{const ref=knownValue(row,'acquisition_time'),time=state.tables?.M_WORLD_TIME?.[ref];return [knownValue(time,'tick')??Number.POSITIVE_INFINITY,id];};
+ const assigned=eligible.filter(([,row])=>knownValue(row,'subject_sequence')!=null).sort((a,b)=>knownValue(a[1],'subject_sequence')-knownValue(b[1],'subject_sequence')||a[0].localeCompare(b[0]));
+ const unassigned=eligible.filter(([,row])=>knownValue(row,'subject_sequence')==null).sort((a,b)=>{const x=acquisition(a),y=acquisition(b);return x[0]-y[0]||x[1].localeCompare(y[1]);});
+ let next=assigned.reduce((max,[,row])=>Math.max(max,knownValue(row,'subject_sequence')),0);const labels=new Map(),selected=new Set();
+ for(const [id,row]of [...assigned,...unassigned]){labels.set(id,'角色认知'+(knownValue(row,'subject_sequence')??++next));if(cognitionPhase(row)===COGNITION_PHASE.EVENT||cognitionRecallMatch(row,query))selected.add(id);}
+ return {labels,selected};
+}
 function confirmedFact(state,recordId,scope){
  return ownCognitions(state,scope).some(([,r])=>knownValue(r,'target_fact_ref')===recordId&&knownValue(r,'epistemic_level')==='K3'&&knownValue(r,'belief_truth_status')==='正确');
 }
@@ -77,7 +92,7 @@ export function characterFieldVisible(state,tableId,recordId,field,scope){
   if(['belief_truth_status','secret_ref','asset_ref','disclosure_permission','auth_basis'].includes(field))return false;
   if(field==='name'){const row=state.tables?.[tableId]?.[recordId];return knownValue(row,'epistemic_level')==='K3'&&knownValue(row,'belief_truth_status')==='正确';}
   if(field==='target_fact_ref'){const row=state.tables?.[tableId]?.[recordId];return knownValue(row,'epistemic_level')==='K3'&&knownValue(row,'belief_truth_status')==='正确';}
-  if(field==='event_ref')return false;
+  if(['event_ref','closure_event_ref','supersedes_ref'].includes(field))return false;
   const level=knownValue(state.tables?.[tableId]?.[recordId],'epistemic_level');
   if((!level||level==='K0')&&!['subject_ref','epistemic_level'].includes(field))return false;
  }

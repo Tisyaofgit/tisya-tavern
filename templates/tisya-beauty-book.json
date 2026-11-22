@@ -40,7 +40,7 @@
       "key": [],
       "keysecondary": [],
       "comment": "【美化】既有缇斯亚排版",
-      "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}",
+      "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"media\": {\n    \"enabled\": true,\n    \"kinds\": [\n      \"avatar\",\n      \"portrait\",\n      \"expression\",\n      \"cg\",\n      \"sticker\"\n    ]\n  },\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}",
       "constant": false,
       "selective": true,
       "selectiveLogic": 0,
@@ -62,10 +62,10 @@
           "retired": false,
           "base": {
             "comment": "【美化】既有缇斯亚排版",
-            "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}"
+            "content": "{\n  \"format\": \"tisya.presentation-definition/1\",\n  \"kind\": \"presentation\",\n  \"id\": \"presentation.existing\",\n  \"name\": \"既有缇斯亚排版\",\n  \"views\": [\n    \"danmaku\",\n    \"rumor\",\n    \"notice\",\n    \"settlement\",\n    \"messages\",\n    \"theater\",\n    \"forum\",\n    \"news\"\n  ],\n  \"messageSubtypes\": [\n    \"text\",\n    \"transfer\",\n    \"voice\",\n    \"image\",\n    \"news\"\n  ],\n  \"media\": {\n    \"enabled\": true,\n    \"kinds\": [\n      \"avatar\",\n      \"portrait\",\n      \"expression\",\n      \"cg\",\n      \"sticker\"\n    ]\n  },\n  \"tokens\": {\n    \"density\": \"comfortable\",\n    \"alignment\": \"start\",\n    \"emphasis\": \"existing\"\n  }\n}"
           },
-          "release": "d91e78981ce80f5c3b40215ec6eb3b4cdd7ef4eb315684865f0ec638b7c57e09",
-          "checkedRelease": "d91e78981ce80f5c3b40215ec6eb3b4cdd7ef4eb315684865f0ec638b7c57e09"
+          "release": "bfc16b367114e231cd5f8bada18106be223ad1d1d937e4a61673a888d982f9ab",
+          "checkedRelease": "bfc16b367114e231cd5f8bada18106be223ad1d1d937e4a61673a888d982f9ab"
         }
       }
     }
@@ -74,8 +74,8 @@
     "tisyaBuiltin": {
       "package": "tisya.builtin-books",
       "bookId": "beauty",
-      "release": "e5540c7e0052c27729d9b84ed40005ad493117e0ff63a51393487b6cab870d3b",
-      "checkedRelease": "e5540c7e0052c27729d9b84ed40005ad493117e0ff63a51393487b6cab870d3b"
+      "release": "de29c7c53de0920262284040c6a4690db7e9f9bf056f93da0441758c0bba52c2",
+      "checkedRelease": "de29c7c53de0920262284040c6a4690db7e9f9bf056f93da0441758c0bba52c2"
     }
   }
 }

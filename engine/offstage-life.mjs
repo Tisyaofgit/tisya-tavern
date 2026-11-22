@@ -2,8 +2,20 @@ import {clone,fail,stableId} from './common.mjs';
 import {matrixRecordVisible} from './prompt-boundary.mjs';
 import {characterDossierId,characterEntityForDossier} from './character-identity.mjs';
 import {PERSONA_GROUPS,PERSONA_TASK_LABELS,applyPersonaEvent} from './persona.mjs';
+import {COGNITION_PHASE,cognitionPhase} from './character-knowledge.mjs';
 
 export const OFFSTAGE_RULES='T_SYS_OFFSTAGE_RULES';
+const EVENT_LIFECYCLE_FIELDS=[
+ {key:'lifecycle_status',label:'事件生命周期',type:'ENUM',enum:['进行中','已结束'],description:'事件仍在发生时填写进行中；事件实际落定后填写已结束。结束时由统一运行时结算参与人的认知阶段。'}
+];
+const COGNITION_LIFECYCLE_FIELDS=[
+ {key:'lifecycle_phase',label:'认知生命周期',type:'ENUM',enum:Object.values(COGNITION_PHASE),read_only:true,description:'事件中认知在事件结束或本人离场后转为离场确信；后续明确修正只淘汰被修正记录，不改写客观事实。'},
+ {key:'closure_event_ref',label:'阶段结算事件',type:'REF',ref:'T_DYN_EVENTS',read_only:true,description:'导致本次认知阶段结算的事件；角色离场时引用实际离场事件。'},
+ {key:'closure_reason',label:'阶段结算原因',type:'ENUM',enum:['事件结束','角色离场','后续修正'],read_only:true},
+ {key:'supersedes_ref',label:'修正的认知',type:'REF',ref:'T_DYN_COGNITION',description:'本记录明确修正的同一人物旧认知；只建立主体内的修正链，不按相同名称或客观真相同并。'},
+ {key:'subject_sequence',label:'人物认知序号',type:'INTEGER',read_only:true,classification:'automatic_identity',description:'统一生命周期服务按人物分配且不复用的展示序号；不是记录身份键。'},
+ {key:'recall_label',label:'认知召回编号',type:'TEXT',read_only:true,classification:'derived_projection',description:'由人物认知序号派生为角色认知n；不保存第二份标签或信念正文。'}
+];
 const RULE_FIELDS=[
  {key:'rule_id',label:'规则ID',type:'ID',read_only:true,alias_of:'common.row_uuid'},
  {key:'name',label:'规则名称',type:'TEXT',required:true,description:'该对象或世界默认槽位规则的显示名称。'},
@@ -32,11 +44,13 @@ const RULE_FIELDS=[
 const own=(object,key)=>Object.hasOwn(object??{},key);
 const finite=(value,label)=>{if(typeof value!=='number'||!Number.isFinite(value))fail('OFFSTAGE_RULE_NUMBER',label+'必须是有限数值');return value;};
 const known=(row,key)=>['known','derived'].includes(row?.states?.[key]);
+const read=(row,key)=>known(row,key)?row.values[key]:undefined;
 
 export function extendOffstageSchema(state){
  if(!state?.schema)return state;state.tables??={};
  if(!state.schema[OFFSTAGE_RULES])state.schema[OFFSTAGE_RULES]={id:OFFSTAGE_RULES,label:'对象级场外推进规则',sheet:'运行与归档',partition:'REG',record_kind:'registration_definition',fields:[{key:'row_uuid',label:'稳定记录ID',type:'ID',required:true}]};
  const schema=state.schema[OFFSTAGE_RULES];for(const field of RULE_FIELDS)if(!schema.fields.some(item=>item.key===field.key))schema.fields.push(clone(field));state.tables[OFFSTAGE_RULES]??={};
+ for(const [tableId,fields]of [['T_DYN_EVENTS',EVENT_LIFECYCLE_FIELDS],['T_DYN_COGNITION',COGNITION_LIFECYCLE_FIELDS]]){const table=state.schema[tableId];if(table)for(const field of fields)if(!table.fields.some(item=>item.key===field.key))table.fields.push(clone(field));}
  const dossier=state.schema.T_CHAR_DOSSIER;if(dossier&&!dossier.fields.some(field=>field.key==='persona_dynamics'))dossier.fields.push({key:'persona_dynamics',label:'五能七情六欲动态',type:'OBJECT',description:'由统一场外推进与心性事件服务写入的对象级数值、速率、阈值、状态和待办；未知槽保持 null。'});
  return state;
 }
@@ -85,10 +99,65 @@ function actors(engine){
  for(const [id,row]of Object.entries(engine.rows('T_CHAR_DOSSIER')))if(!linked.has(id)&&row.values.persona_dynamics&&!characterEntityForDossier(engine.data,id))result.push({key:'dossier:'+id,entityId:null,dossierId:id,kind:'character'});
  return result;
 }
+function currentPresence(engine){
+ const scope=engine.data.runtime.scope??{},scenes=Object.keys(engine.rows('T_DYN_SCENE_SPACE')),scene=scope.scene_ref??scenes.at(-1);
+ return {scene,rows:Object.entries(engine.rows('T_DYN_SCENE_PARTICIPANTS')).filter(([,row])=>!known(row,'scene_ref')||row.values.scene_ref===scene)};
+}
 function exclusions(engine){
- const scope=engine.data.runtime.scope??{},configured=engine.offstageContext?.playerBinding??scope.playerBinding??scope.player_binding,binding=configured?.database?configured:null,players=new Set([binding?.entityId,binding?.dossierId].filter(Boolean)),present=new Set(),scenes=Object.keys(engine.rows('T_DYN_SCENE_SPACE')),scene=scope.scene_ref??scenes.at(-1);
- for(const row of Object.values(engine.rows('T_DYN_SCENE_PARTICIPANTS'))){const v=row.values;if((!v.scene_ref||v.scene_ref===scene)&&v.focus_level!=='离场索引'&&v.entity_ref)present.add(v.entity_ref);}
+ const scope=engine.data.runtime.scope??{},configured=engine.offstageContext?.playerBinding??scope.playerBinding??scope.player_binding,binding=configured?.database?configured:null,players=new Set([binding?.entityId,binding?.dossierId].filter(Boolean)),present=new Set();
+ for(const [,row]of currentPresence(engine).rows)if(known(row,'focus_level')&&row.values.focus_level!=='离场索引'&&known(row,'entity_ref'))present.add(row.values.entity_ref);
  return {players,present};
+}
+const writeCognition=(engine,id,field,value)=>{const row=engine.rows('T_DYN_COGNITION')[id];if(!known(row,field)||row.values[field]!==value)engine.set(['T_DYN_COGNITION',id,field,[]],value);};
+function sequenceCognitions(engine){
+ const groups=new Map();for(const [id,row]of Object.entries(engine.rows('T_DYN_COGNITION'))){if(!known(row,'subject_ref'))continue;const subject=row.values.subject_ref;if(!groups.has(subject))groups.set(subject,[]);groups.get(subject).push([id,row]);}
+ let sequenced=0;for(const [subject,records]of groups){
+  const used=new Set();let maximum=0;for(const [id,row]of records){if(known(row,'subject_sequence')){const sequence=row.values.subject_sequence;if(!Number.isSafeInteger(sequence)||sequence<1||used.has(sequence))fail('COGNITION_SEQUENCE','人物认知序号冲突或无效',{subject_ref:subject,record:id});used.add(sequence);maximum=Math.max(maximum,sequence);}else if(Object.hasOwn(row.states,'subject_sequence'))fail('COGNITION_SEQUENCE','未知认知序号不能被自动覆盖',{subject_ref:subject,record:id});}
+  const order=([id,row])=>{const ref=read(row,'acquisition_time'),time=ref?engine.rows('M_WORLD_TIME')[ref]:null,tick=read(time,'tick')??Number.POSITIVE_INFINITY;return [tick,id];};
+  records.filter(([,row])=>!known(row,'subject_sequence')).sort((a,b)=>{const x=order(a),y=order(b);return x[0]-y[0]||x[1].localeCompare(y[1]);}).forEach(([id])=>{writeCognition(engine,id,'subject_sequence',++maximum);sequenced++;});
+ }
+ return sequenced;
+}
+export function synchronizeCognitionLifecycle(engine){
+ const records=Object.entries(engine.rows('T_DYN_COGNITION')),byId=new Map(records),summary={retained_event:0,retained_departure:0,superseded:0,sequenced:0};
+ const close=(id,reason,eventRef)=>{
+  writeCognition(engine,id,'lifecycle_phase',reason==='后续修正'?COGNITION_PHASE.SUPERSEDED:COGNITION_PHASE.RETAINED);writeCognition(engine,id,'closure_reason',reason);
+  if(eventRef){engine.record('T_DYN_EVENTS',eventRef);writeCognition(engine,id,'closure_event_ref',eventRef);}
+ };
+ for(const [id,row]of records){
+  const targetId=read(row,'supersedes_ref');if(!targetId)continue;
+  if(!known(row,'subject_ref')||!known(row,'epistemic_level')||row.values.epistemic_level==='K0')fail('COGNITION_SUPERSESSION','未知或未获知记录不能修正其他认知',{record:id});
+  const targetRow=engine.rows('T_DYN_COGNITION')[targetId];
+  if(!targetRow)fail('COGNITION_SUPERSESSION','修正目标不存在',{record:id,target:targetId});
+  if(targetId===id)fail('COGNITION_SUPERSESSION','认知不能修正自身',{record:id,target:targetId});
+  if(!known(targetRow,'subject_ref')||targetRow.values.subject_ref!==row.values.subject_ref)fail('COGNITION_SUPERSESSION','修正链必须指向同一人物的既有认知',{record:id,target:targetId,expected_subject:row.values.subject_ref,actual_subject:targetRow.values.subject_ref,target_state:targetRow.states.subject_ref});
+  const seen=new Set([id]);let cursor=targetRow,cursorId=targetId;
+  while(cursor){
+   if(seen.has(cursorId))fail('COGNITION_SUPERSESSION','认知修正链不能成环',{record:id,target:cursorId});seen.add(cursorId);
+   const next=read(cursor,'supersedes_ref');if(!next)break;cursor=byId.get(next)?.[1];cursorId=next;
+   if(!cursor)fail('COGNITION_SUPERSESSION','认知修正链包含不存在的记录',{record:id,target:next});
+  }
+  if(cognitionPhase(targetRow)!==COGNITION_PHASE.SUPERSEDED){close(targetId,'后续修正',read(row,'event_ref'));summary.superseded++;}
+ }
+ for(const [id,row]of records){
+  if(cognitionPhase(row)!==COGNITION_PHASE.EVENT||!known(row,'subject_ref')||!known(row,'epistemic_level')||row.values.epistemic_level==='K0')continue;
+  const eventRef=read(row,'event_ref');if(!eventRef)continue;const event=engine.record('T_DYN_EVENTS',eventRef);
+  if(known(event,'lifecycle_status')&&event.values.lifecycle_status==='已结束'){close(id,'事件结束',eventRef);summary.retained_event++;}
+ }
+ const present=new Set(),departed=new Map();
+ for(const [id,row]of currentPresence(engine).rows){if(!known(row,'entity_ref')||!known(row,'focus_level'))continue;if(row.values.focus_level==='离场索引')departed.set(row.values.entity_ref,{id,row});else present.add(row.values.entity_ref);}
+ for(const [id,row]of records){
+  if(cognitionPhase(row)!==COGNITION_PHASE.EVENT||!known(row,'subject_ref')||!known(row,'epistemic_level')||row.values.epistemic_level==='K0')continue;
+  const departure=departed.get(row.values.subject_ref);if(!departure||present.has(row.values.subject_ref))continue;close(id,'角色离场',read(departure.row,'departure_event_ref'));summary.retained_departure++;
+ }
+ summary.sequenced=sequenceCognitions(engine);return summary;
+}
+export function closeEventCognitions(engine,input){
+ const id=engine.find('T_DYN_EVENTS',String(input.event_ref??input.event??''));engine.set(['T_DYN_EVENTS',id,'lifecycle_status',[]],'已结束');return {event_ref:id,...synchronizeCognitionLifecycle(engine)};
+}
+export function departCharacter(engine,input){
+ let id=input.presence_ref;if(!id){const scene=input.scene_ref??currentPresence(engine).scene,subject=input.subject_ref??input.entity_ref??input.actor;const matches=currentPresence(engine).rows.filter(([,row])=>known(row,'entity_ref')&&row.values.entity_ref===subject&&(!scene||!known(row,'scene_ref')||row.values.scene_ref===scene));if(matches.length!==1)fail('COGNITION_DEPARTURE','离场站位必须唯一匹配当前人物与场景',{subject_ref:subject,matches:matches.length});id=matches[0][0];}
+ const row=engine.record('T_DYN_SCENE_PARTICIPANTS',id),eventRef=input.departure_event_ref??input.event_ref??null;if(eventRef)engine.record('T_DYN_EVENTS',eventRef);engine.set(['T_DYN_SCENE_PARTICIPANTS',id,'focus_level',[]],'离场索引');if(eventRef)engine.set(['T_DYN_SCENE_PARTICIPANTS',id,'departure_event_ref',[]],eventRef);return {presence_ref:id,subject_ref:known(row,'entity_ref')?row.values.entity_ref:null,...synchronizeCognitionLifecycle(engine)};
 }
 function windowRecord(engine,actor,start,end){
  const id=stableId('offstage-window|'+actor.key+'|'+start+'|'+end),values={subject_ref:actor.entityId??null,actual_progress:'等待',change_operation_ref:engine.activeOperation??'direct',confirmed_results:'',continuation_candidates:'仅累计已登记槽位；满槽后推送待前台结算的候选事务',reserved_player_choices:'主控和当前场内人物不在后台时窗内推进',blocked_dependencies:'',visible_timing:'前台待办出现后',contact_channel:'任务与委托'};engine.newRecord('T_SYS_OFFSTAGE_ADVANCES',values,id);
@@ -121,7 +190,8 @@ export function applyOffstageDelta(engine,input){
  try{engine.set(['T_DYN_ENTITY_GAUGES',gaugeId,'value',[]],after);engine.set(['T_DYN_ENTITY_GAUGES',gaugeId,'change_reason',[]],input.evidence);if(createdTime)engine.set(['T_DYN_ENTITY_GAUGES',gaugeId,'effective_from',[]],createdTime);if(input.event_ref)engine.set(['T_DYN_ENTITY_GAUGES',gaugeId,'anchor_event_ref',[]],input.event_ref);}finally{engine.historyContext=prior;}return {before,after};
 }
 export function advanceOffstage(engine,start,end){
- if(end<start)fail('OFFSTAGE_TIME_REVERSE','场外时间回退须恢复对应楼层存档');const summary={actors:0,skipped_player:0,skipped_present:0,windows:0,persona_ticks:0,gauge_changes:0,tasks_created:0,unknown_slots:0};if(end===start)return summary;
+ if(end<start)fail('OFFSTAGE_TIME_REVERSE','场外时间回退须恢复对应楼层存档');const summary={actors:0,skipped_player:0,skipped_present:0,windows:0,persona_ticks:0,gauge_changes:0,tasks_created:0,unknown_slots:0,cognition:null};if(end===start)return summary;
+ const cognition=synchronizeCognitionLifecycle(engine);summary.cognition=cognition;
  const excluded=exclusions(engine),hours=(end-start)/engine.clock().c.hour_minutes,rules=ruleRows(engine);
  for(const actor of actors(engine)){summary.actors++;if(excluded.players.has(actor.entityId)||excluded.players.has(actor.dossierId)){summary.skipped_player++;continue;}if(actor.entityId&&excluded.present.has(actor.entityId)){summary.skipped_present++;continue;}
   const applicable=rulesFor(engine,actor,rules),dossier=actor.dossierId?engine.rows('T_CHAR_DOSSIER')[actor.dossierId]:null,dynamics=dossier?.values.persona_dynamics;if(!applicable.length&&!dynamics)continue;const advance=windowRecord(engine,actor,start,end),prior=engine.historyContext;engine.historyContext={...prior,kind:'offstage',reason:'合法时窗内后台自推进',storyTime:advance.endTime};summary.windows++;
@@ -134,6 +204,7 @@ export function advanceOffstage(engine,start,end){
 }
 export function installOffstage(engine){
  extendOffstageSchema(engine.data);engine.operators.OFFSTAGE_RULE_REGISTER=context=>registerOffstageRule(engine,{...context,subject_ref:context.subject_ref??context.actor});engine.operators.OFFSTAGE_DELTA=context=>applyOffstageDelta(engine,{...context,subject_ref:context.subject_ref??context.actor});
+ engine.operators.COGNITION_SETTLE=()=>synchronizeCognitionLifecycle(engine);engine.operators.EVENT_CLOSE=context=>closeEventCognitions(engine,context);engine.operators.CHARACTER_DEPART=context=>departCharacter(engine,context);
 }
 export function offstageDiagnostics(state){
  const count=(table,predicate=()=>true)=>Object.values(state.tables?.[table]??{}).filter(predicate).length;return {rules:count(OFFSTAGE_RULES,row=>row.values.enabled===true),gauges:count('T_DYN_ENTITY_GAUGES',row=>row.values.native_ref?.startsWith('offstage:')),pending_tasks:count('T_DYN_TASKS',row=>row.values.status==='发布'&&String(row.values.source??'').includes('槽位')),candidate_activities:count('T_DYN_ACTIVITIES_LIFELINES',row=>row.values.status==='等待'),windows:count('T_SYS_OFFSTAGE_ADVANCES')};
