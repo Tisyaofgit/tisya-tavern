@@ -24,6 +24,24 @@ test('a reviewed reply accepts only its proven original host message',()=>{
  b.turn_review.decisions[0].active=false;
  assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
 });
+test('canonical accepted source verifies the original host text without duplicated review metadata',()=>{
+ const b=bundle(),raw='original host reply',reply='accepted reply with cells';
+ b.journal.entries[0].signature=messageSignature({uid:'reply-a',role:'assistant',text:reply});
+ b.state.runtime.sources={'main/reply-a@1':{entry_id:'reply-a',revision:1,reply_raw:reply,reply_sha256:sha256(reply),host_message_sha256:sha256(raw)}};
+ const snapshot=databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a');
+ assert.equal(snapshot.acceptedSource,'SOURCE');assert.equal(snapshot.state.tables.money.account.values.balance,10);
+ assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'unreviewed replacement',sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
+ delete b.state.runtime.sources['main/reply-a@1'].host_message_sha256;
+ assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
+});
+test('archive-pending repair verifies against the latest active reviewed reply, not the superseded first save',()=>{
+ const b=bundle(),raw='original host reply',first='first reviewed cells',repaired='repaired reviewed cells and archive';
+ b.journal.entries[0].signature=messageSignature({uid:'reply-a',role:'assistant',text:repaired});
+ b.turn_review={decisions:[{uid:'reply-a',sourceHash:sha256(raw),reply:first,archive_pending:true},{uid:'reply-a',sourceHash:sha256(raw),reply:repaired}],legacy:[]};
+ const snapshot=databaseSnapshotAtMessage(b,{uid:'reply-a',raw,sourceId:'reply-a:candidate'},'chat-a');
+ assert.equal(snapshot.acceptedSource,'REVIEWED');assert.equal(snapshot.state.tables.money.account.values.balance,10);
+ assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'unreviewed replacement',sourceId:'reply-a:candidate'},'chat-a'),error=>error.code==='SNAPSHOT_UNVERIFIED'&&error.details.reason==='SIGNATURE_MISMATCH');
+});
 test('malformed later history and source mismatch preserve evidence and fail closed',()=>{
  const b=bundle();assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first',sourceId:'other:x'},'chat-a'),/身份/);delete b.journal.entries[1].pre_turn_snapshot;assert.throws(()=>databaseSnapshotAtMessage(b,{uid:'reply-a',raw:'first'},'chat-a'),/恢复链/);
 });

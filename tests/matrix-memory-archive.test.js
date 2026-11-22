@@ -123,6 +123,16 @@ test('character dossier, entity and live state resolve as one referent while tru
  assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
 });
 
+test('pre-narrative replay still projects dossier, entity and live state into one list referent',()=>{
+ const e=seed();e.newRecord('T_DYN_ENTITY_STATE',{entity_id:'a',posture:'站立'},'state-a');
+ const secret=form(e.data,'T_CHAR_SECRETS',{name:'渡口旧约',fact_proposition:'旧约仍然有效',related_object_refs:'关联：阿青'});
+ const event=form(e.data,'T_DYN_EVENTS',{title:'渡口重逢',spine_digest:'两人在渡口重逢',knowers:'关联：阿青'});
+ acceptReply(e,reply(1,[secret,event].join('\n')),'m1',1,'main',{formOwnershipVersion:PRE_NARRATIVE_IDENTITY_REPLY_FORM_VERSION});acceptReply(e,reply(2,''),'m2');acceptReply(e,reply(3,''),'m3');
+ assert.equal(e.data.runtime.archive_queue[0].status,'formal',JSON.stringify(e.data.runtime.archive_queue[0].error));
+ const links=Object.values(e.rows('M_LIST_VALUES')).filter(row=>['related_object_refs','knowers'].includes(row.values.owner_field));assert.equal(links.length,2);
+ assert(links.every(row=>row.values.target_table==='T_SYS_ENTITIES'&&row.values.target_row_uuid==='a'));
+});
+
 test('same-reply cells and archive share one identity closure for stored and newly created characters',()=>{
  const e=seed(),dossier=form(e.data,'T_CHAR_DOSSIER',{name:'阿紫'}),secret=form(e.data,'T_CHAR_SECRETS',{name:'渡口密约',char_ref:'阿青',fact_proposition:'两人共同保管渡口密约',related_object_refs:'关联：阿青；关联：阿紫'}),event=form(e.data,'T_DYN_EVENTS',{spine_digest:'两人在渡口核对密约',knowers:'关联：阿青；关联：阿紫'});
  acceptReply(e,reply(1,[secret,event].join('\n')).replace('<cells/>','<cells format="form">'+dossier+'</cells>'),'m1');

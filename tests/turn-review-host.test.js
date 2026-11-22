@@ -60,12 +60,14 @@ test('valid state changes confirm while an archive missing evidence stays pendin
  assert.equal(partial.status,'archive-pending');assert.match(partial.archiveIssue,/缺少本条正文段号依据/);assert.equal(await f.hp(),7);
  const reopened=createMatrixHost(f.options);
  let reviews=await reopened.listTurnReviews(),pending=reviews.reviews[0];assert.equal(pending.status,'pending');assert.equal(pending.archivePending,true);
+ let historical=await reopened.readDatabaseSnapshot({uid:pending.uid,raw,sourceId:pending.uid+':candidate'});assert.equal(historical.acceptedSource,'DIRECT');
  assert.equal(pending.archiveIssue,partial.archiveIssue);assert.equal(reviews.drafts[draft.uid],undefined);
  const form=await reopened.describeTurnReview({...pending,contextKey:reviews.contextKey,expectedRevision:reviews.revision}),archive=form.archive;
  const row=archive.groups[0].rows.find(r=>r.key==='title'),repaired=editReviewDocument(archive,{['evidence:'+row.start]:'P1'});
  const confirmed=await reopened.confirmTurn({...pending,contextKey:reviews.contextKey,expectedRevision:reviews.revision,cells:pending.cells,archive:repaired});
  assert.equal(confirmed.status,'confirmed');assert.equal(confirmed.archiveIssue,null);assert.equal(await f.hp(),7);
  reviews=await reopened.listTurnReviews();assert.equal(reviews.reviews[0].status,'confirmed');
+ historical=await reopened.readDatabaseSnapshot({uid:pending.uid,raw,sourceId:pending.uid+':candidate'});assert.equal(historical.acceptedSource,'REVIEWED');
  const saved=await f.snapshot();assert.equal(Object.keys(saved.state.tables.T_DYN_EVENTS).length,1);assert.equal(saved.state.runtime.archive_queue[0].status,'formal');
 });
 test('reroll preserves the previous confirmed version until approved and rollback restores floor state',async()=>{

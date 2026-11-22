@@ -70,6 +70,17 @@ test('the original host message of a reviewed reply produces tooltips from its h
  finally{ui.dispose();await w.happyDOM.abort();}
 });
 
+test('canonical accepted source restores native tooltips without requiring duplicated review metadata',async()=>{
+ const w=new Window({url:'http://localhost'}),d=w.document;d.body.innerHTML='<div id="chat"><div class="mes" mesid="0"><div class="mes_block"><div class="mes_text"><div class="card-beauty"><p>阿青推门。</p></div></div></div></div></div>';
+ const node=d.querySelector('.mes'),native=d.querySelector('.mes_text'),ctx={chatId:'chat-source',characterId:'character-1',groupId:null},key=chatKey(ctx),raw='阿青推门。',reply='阿青在保存后推门。',message={mes:raw,name:'角色',extra:{tisya_engine:{uid:'source-links'}}};
+ const state=initializeState(catalog,{session_ref:'session',branch_ref:'main'});state.tables.T_SYS_ENTITIES={};state.tables.T_CHAR_DOSSIER={'dossier-source':row({name:'阿青',public_identity:'河口旅人'})};state.runtime.sources={'main/source-links@1':{entry_id:'source-links',revision:1,reply_raw:reply,reply_sha256:sha256(reply),host_message_sha256:sha256(raw)}};
+ const bundle={state,journal:{entries:[{uid:'source-links',role:'assistant',signature:messageSignature({uid:'source-links',role:'assistant',text:reply}),revision:1,settlement_status:'APPLIED',pre_turn_snapshot:{inverse_patch:[]}}]}};
+ const service=createExtensionPresentationService({document:d,getContext:()=>ctx,database:{peek:async()=>({state,revision:1,contextKey:key}),snapshot:input=>databaseSnapshotAtMessage(bundle,input,key)}});w.Tisya={archive:{open(){}}};
+ const ui=mountMessageAppearance(d,{getMessage:()=>message,getPhoneContext:()=>key,getPresentation:message=>service.forMessage(message),preferNative:()=>true,formatBody:text=>text,getMotion:()=>false});ui.sync(node);await new Promise(resolve=>setTimeout(resolve,50));
+ try{assert.deepEqual([...native.querySelectorAll('[data-tisya-archive-link]')].map(link=>link.textContent),['阿青']);}
+ finally{ui.dispose();await w.happyDOM.abort();}
+});
+
 test('natural prose gains longest-match links without touching code, links, controls or existing anchors',async()=>{
  const w=new Window();try{
   const opened=[];w.Tisya={archive:{open:reference=>{opened.push(reference);}}};

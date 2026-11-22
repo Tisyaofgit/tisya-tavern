@@ -628,7 +628,7 @@ function acceptMatrixSheetBatch(context,snapshot,{blocks,parsed={},partition=fal
    for(const wanted of targets){const mapped=characterView(row,wanted);if(mapped)return mapped;}
    return row;
   });
-  else if(context.narrativeIdentity!==false&&!/[／#]/.test(raw))candidates=candidates.map(row=>characterView(row,'T_SYS_ENTITIES')??row);
+  else if(!/[／#]/.test(raw))candidates=candidates.map(row=>characterView(row,'T_SYS_ENTITIES')??row);
   const matches=candidates.filter(r=>!target||targets.includes(r.tableId));
   let unique=[...new Map(matches.map(r=>[r.tableId+'#'+r.recordId,r])).values()];
   if(context.commonUnits!==false&&target==='M_UNITS'&&unique.length>1&&unique.every(r=>r.name===raw)){const local=unique.filter(r=>unitValues(r).scope_world_id===unitScope());if(local.length)unique=local;}
