@@ -11,6 +11,22 @@ test('final projections survive a cold cache instance only for identical authori
  await cold.clear('chat');await createFinalProjectionCache({storage}).project('chat',input,()=>{calls++;return {materials:{name:'重算'}};});assert.equal(calls,3);
 });
 
+test('adopt freezes committed evidence and flush covers hashing plus persistence',async()=>{
+ const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))},cache=createFinalProjectionCache({storage});
+ const input={bundle:{revision:5},messages:[{uid:'m',text:'正文'}]},original=structuredClone(input),value={bundle:input.bundle,materials:{name:'阿青'}},pending=cache.adopt('chat',input,value);
+ input.bundle.revision=99;value.materials.name='调用方改动';
+ assert.equal((await cache.project('chat',original,()=>{throw Error('hot adopted input must not recompute');})).materials.name,'阿青');await pending;await cache.flush();
+ const cold=createFinalProjectionCache({storage});assert.equal((await cold.project('chat',original,()=>{throw Error('cold adopted input must not recompute');})).materials.name,'阿青');assert.equal(cold.report().diskHits,1);assert.equal(cold.report().misses,0);
+});
+
+test('queued adopts retain only the latest full snapshot and flush persists it last',async()=>{
+ const disk=new Map(),writes=[];let release,started,sets=0;const gate=new Promise(resolve=>release=resolve),firstWrite=new Promise(resolve=>started=resolve);
+ const storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>{sets++;if(sets===1){started();await gate;}writes.push(value.value.materials.name);disk.set(key,structuredClone(value));}},cache=createFinalProjectionCache({storage});
+ cache.adopt('chat',{bundle:{revision:1}},{materials:{name:'第一份'}});cache.adopt('chat',{bundle:{revision:2}},{materials:{name:'被取代'}});cache.adopt('chat',{bundle:{revision:3}},{materials:{name:'最新'}});await firstWrite;
+ let flushed=false;const pending=cache.flush().then(()=>{flushed=true;});await new Promise(resolve=>setTimeout(resolve,0));assert.equal(flushed,false);release();await pending;
+ assert.deepEqual(writes,['第一份','最新']);const cold=createFinalProjectionCache({storage});assert.equal((await cold.project('chat',{bundle:{revision:3}},()=>{throw Error('latest adopted input must not recompute');})).materials.name,'最新');
+});
+
 test('persistent entries can contain derived materials only while cold restore reattaches the authoritative projection',async()=>{
  const disk=new Map(),storage={get:async key=>structuredClone(disk.get(key)),set:async(key,value)=>disk.set(key,structuredClone(value))};let computes=0,restores=0;
  const options={storage,persist:value=>({materials:value.materials}),restore:(derived,input)=>{restores++;return {bundle:input.bundle,materials:derived.materials};}};

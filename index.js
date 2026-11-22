@@ -1134,10 +1134,6 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
       catch(e){error(e);}
     });
     initializePresetConnection(context(),document);
-    const [activation,books]=await Promise.allSettled([defaultActivation.start(),builtinBooks.update()]);
-    if(activation.status==='rejected')error(activation.reason);
-    if(books.status==='rejected')error(books.reason);
-    else if(books.value.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:books.value.conflicts,errors:books.value.errors})));
     const presetDrawer=document.querySelector('#ai-config-button .drawer-content');
     if(presetDrawer)mountPresetUpdateControl(presetDrawer,builtinPreset,{onError:error,onOpenExtensions:()=>nativeDrawerOriginal('extensions-settings-button')});
     installUserEditHistory(document,context,userEditHistory);
@@ -1210,4 +1206,12 @@ context().eventSource.on(context().eventTypes.APP_READY,async()=>{
 
     }catch(err){error(err);}
     emotionCatalog(document).ready.catch(()=>error(new Error('表情图鉴加载失败，请更新扩展后重启。')));
+    // Take over the native surface and install every generation guard first.
+    // Slow preset/chat binding and book updates continue in a later task;
+    // generation still awaits the same defaultActivation.ready() promise.
+    setTimeout(()=>{void Promise.allSettled([defaultActivation.start(),builtinBooks.update()]).then(([activation,books])=>{
+      if(activation.status==='rejected')error(activation.reason);
+      if(books.status==='rejected')error(books.reason);
+      else if(books.value.status!=='ready')error(Error('内置书部分更新待处理：'+JSON.stringify({conflicts:books.value.conflicts,errors:books.value.errors})));
+    }).catch(error);},0);
 });

@@ -38,7 +38,7 @@ import {narrativeSection} from './narrative-material.mjs';
 import {createConfiguration,materialNames,identitySlots,compilePrompts,compilePromptText,isMatrixPreset,applyCompiledMessages} from './config.mjs';
 import {configureTags} from './tags.mjs';
 import {messageSignature} from './message-identity.mjs';
-import {clone,fail,asError,digest} from './common.mjs';
+import {clone,fail,asError,digest,stable,sha256Async} from './common.mjs';
 import {prepareNativeMvu} from '../config/native-mvu.js';
 import {excludeTemplateBookEntries,readStoryReferenceBooks,applyStoryReferenceBooks} from './template-book.mjs';
 const nativeWorld={context:{owner:'native',card:true},mode:'matrix',modes:{matrix:{nativeMvu:'on'}},tables:{nativeBridge:false}};
@@ -61,17 +61,17 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
  const catalogCacheWarning=error=>{try{onError(Error('表单目录缓存不可用，已使用正式目录：'+error.message));}catch{}};
  const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(async()=>{
   const cacheKey='derived:matrix-catalog',signed=typeof catalogSignature==='string'&&/^[a-f0-9]{64}$/.test(catalogSignature);
-  if(signed)try{const row=await projectionStorage.get(cacheKey);if(row?.format==='tisya.matrix-catalog/1'&&row.signature===catalogSignature&&row.value&&digest(row.value)===catalogSignature)return extendMatrixCatalog(clone(row.value));}catch(error){catalogCacheWarning(error);}
+  if(signed)try{const row=await projectionStorage.get(cacheKey);if(row?.format==='tisya.matrix-catalog/3'&&row.signature===catalogSignature&&typeof row.bytes==='string'&&typeof row.projectionSignature==='string'&&await sha256Async(catalogSignature+'\n'+row.bytes)===row.projectionSignature)return JSON.parse(row.bytes);}catch(error){catalogCacheWarning(error);}
   const value=await loadCatalog();
-  if(signed){if(digest(value)!==catalogSignature)fail('CATALOG_SIGNATURE_MISMATCH','新版表单定义内容校验失败，请更新扩展后重试');try{await projectionStorage.set(cacheKey,{format:'tisya.matrix-catalog/1',signature:catalogSignature,value:clone(value)});}catch(error){catalogCacheWarning(error);}}
-  return extendMatrixCatalog(value);
+  if(signed){const sourceBytes=stable(value);if(await sha256Async(sourceBytes)!==catalogSignature)fail('CATALOG_SIGNATURE_MISMATCH','新版表单定义内容校验失败，请更新扩展后重试');}
+  const result=extendMatrixCatalog(value);
+  if(signed)try{const bytes=stable(result),projectionSignature=await sha256Async(catalogSignature+'\n'+bytes);await projectionStorage.set(cacheKey,{format:'tisya.matrix-catalog/3',signature:catalogSignature,projectionSignature,bytes});}catch(error){catalogCacheWarning(error);}
+  return result;
  }).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
- const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError,
-  // The authoritative bundle is read and reconciled on a cold reopen. Persist
-  // only the expensive derived materials instead of a second full database.
-  persist:value=>({materials:value.materials,materials_error:value.materials_error}),
-  restore:(derived,input)=>({...reconcile(input.bundle,input.messages,input.scope,{...input.proof,playerBinding:input.playerBinding}),...derived})
- });
+ // The database remains authoritative; this is a complete derived snapshot.
+ // Exact input evidence is checked before reuse, so an unchanged reopen does
+ // not reconcile the same bundle again and changed evidence cannot go stale.
+ const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError});
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};
  const contextRecorder=createMatrixContextRecorder({getKey:()=>chatKey(ctx()),transport:requestTransport});
@@ -82,13 +82,25 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
  const reconcile=(bundle,messages,scope,proof=phoneProof(ctx()))=>bundleProjection(bundle,messages,scope,proof);
  const projectMaterials=(bundle,scope,playerBinding)=>{let materials={},materials_error;try{materials=materialProjection(bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}return {materials,materials_error};};
  const committedResponse=(result,next)=>({...result,bundle:next,preview:true,...projectMaterials(next,next.journal?.scope??next.state.runtime?.scope,config.read().story.userBinding)});
- const notify=(r,id,stamp)=>{latest=r;if(id&&r?.bundle&&typeof stamp==='string'){warmProjection={id,revision:r.bundle.local_revision??0,stamp,bundle:r.bundle};preparedTurn=null;}for(const fn of listeners)fn(r);};
+ const notify=(r,id,stamp)=>{
+  latest=r;
+  if(id&&r?.bundle&&typeof stamp==='string'){
+   warmProjection={id,revision:r.bundle.local_revision??0,stamp,bundle:r.bundle};preparedTurn=null;
+   if(r.preview!==true){
+    const c=ctx(),messages=captureMessages(c),scope=r.bundle.journal?.scope??r.bundle.state.runtime?.scope;
+    void finalProjection.adopt(id,{bundle:r.bundle,messages,scope,proof:phoneProof(c),playerBinding:config.read().story.userBinding,manualReview},r);
+   }
+  }
+  for(const fn of listeners)fn(r);
+ };
  const warmReviewBase=(original,id,messages,stamp=messageListSignature(messages))=>warmProjection?.id===id&&warmProjection.revision===(original?.local_revision??0)&&warmProjection.stamp===stamp?warmProjection.bundle:null;
+ // Generation and read-only database clients share the same persistent final
+ // projection. A cold archive opening must not reconcile the whole chat again.
+ const projectFinal=(id,bundle,messages,scope,proof,playerBinding=config.read().story.userBinding)=>finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
+  const result=reconcile(bundle,messages,scope,{...proof,playerBinding});return {...result,...projectMaterials(result.bundle,scope,playerBinding)};
+ });
  const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
-  const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx()),playerBinding=config.read().story.userBinding;
-  return finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
-   const result=reconcile(bundle,messages,scope,{...proof,playerBinding});return {...result,...projectMaterials(result.bundle,scope,playerBinding)};
-  });
+  const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx());return projectFinal(id,bundle,messages,scope,proof);
  }});
  controller.inject=async()=>{ctx().setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);};
  const active=()=>isMatrixPreset(getSource());
@@ -198,9 +210,10 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   const c=ctx(),key=chatKey(c),meta=c.chatMetadata?.[NS],id=meta?.chat_uid;if(!id||meta.owner_chat_key!==key)return null;
   // Native chat loading mutates a shared array. Retaining that array alone
   // would pair the old owner's bundle with the newly loaded chat's messages.
-  const messages=(c.chat??[]).slice(),bundle=await storage.get(id),live=ctx();
-  if(chatKey(live)!==key||live.chatMetadata!==c.chatMetadata||live.chatMetadata?.[NS]!==meta||meta.chat_uid!==id||meta.owner_chat_key!==key||live.chat!==c.chat||(live.chat??[]).length!==messages.length||messages.some((m,i)=>live.chat[i]!==m))fail('CHAT_CHANGED','读取期间会话或历史已变化，请重试');
-  return bundle?project(bundle,c,key,meta):null;
+  const messages=(c.chat??[]).slice(),bundle=await storage.get(id),assertCurrent=()=>{const live=ctx();
+   if(chatKey(live)!==key||live.chatMetadata!==c.chatMetadata||live.chatMetadata?.[NS]!==meta||meta.chat_uid!==id||meta.owner_chat_key!==key||live.chat!==c.chat||(live.chat??[]).length!==messages.length||messages.some((m,i)=>live.chat[i]!==m))fail('CHAT_CHANGED','读取期间会话或历史已变化，请重试');
+  };
+  assertCurrent();if(!bundle)return null;const result=await project(bundle,c,key,meta);assertCurrent();return result;
  }
 
  async function listTurnReviews(){
@@ -294,13 +307,17 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
    const owner=row?.values?.context_key;return typeof owner==='string'&&(owner===key||origins.includes(owner));
   }));
  }
- const databaseProjection=snapshotProjection((bundle,messages,proof)=>{
-  const projection=messages?bundleProjection(bundle,messages,undefined,proof):null,current=projection?.bundle??bundle,key=proof.contextKey,allowedOriginContextKeys=proof.allowedOriginContextKeys;
+ function databaseView(bundle,messages,proof,projection=null){
+  const current=projection?.bundle??bundle,key=proof.contextKey,allowedOriginContextKeys=proof.allowedOriginContextKeys;
   const seenOrigins=new Set(),hasPhone=!!current.state.tables?.X_PHONE_BINDINGS?.['phone-current'];
   const phoneInitializationSources=phoneInitializationEdits(bundle,key,allowedOriginContextKeys).flatMap(edit=>{const messageUid=edit.after_uid??edit.anchor_chain?.at(-1)?.uid;if(!messageUid||seenOrigins.has(messageUid))return [];seenOrigins.add(messageUid);return [{messageUid,index:(messages??[]).findIndex(m=>m.uid===messageUid),...(!hasPhone?phoneOriginStatus(edit,messages):{})}];});
-  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.result?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
- });
- async function readDatabase(){return readOwnedDatabase((bundle,c)=>databaseProjection(bundle,(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,phoneProof(c)));}
+  return {state:clone(current.state),revision:bundle.local_revision??0,contextKey:key,allowedOriginContextKeys,phoneDetached:!current.state.tables?.X_PHONE_BINDINGS?.['phone-current']&&(!!bundle.state.tables?.X_PHONE_BINDINGS?.['phone-current']||phoneInitializationEdits(bundle,key,allowedOriginContextKeys).length>0),phoneBootstrapHydration:clone(projection?.phone_bootstrap_hydration??[]),phoneInitializationSources,phoneActionReservations:clone(bundle.phone_action_reservations??{})};
+ }
+ const databaseProjection=snapshotProjection((bundle,messages,proof)=>databaseView(bundle,messages,proof,messages?bundleProjection(bundle,messages,undefined,proof):null));
+ async function readDatabase(){return readOwnedDatabase(async(bundle,c,key,meta)=>{
+  const messages=(c.chat??[]).every(m=>m.extra?.[NS]?.uid)?captureMessages(c):null,proof=phoneProof(c);if(!messages)return databaseProjection(bundle,null,proof);
+  const projected=await projectFinal(meta.chat_uid,bundle,messages,bundle.journal?.scope??bundle.state.runtime?.scope,proof);return databaseView(bundle,messages,proof,projected);
+ });}
 
  async function readDatabaseSnapshot(input){return readOwnedDatabase((bundle,_c,key)=>databaseSnapshotAtMessage(bundle,input,key));}
  async function ensureDatabase(){await ensureBound();return readDatabase();}
@@ -355,9 +372,11 @@ export function createMatrixHost({getContext,getSource,loadCatalog,catalogSignat
   if(e.data.tables.X_PHONE_BINDINGS?.['phone-current']){const archive=decodePhoneDatabase(e.data);if(archive)importPhone(archive);}
   const ids=messages.map(m=>m.uid),edit={uid:'database:'+operationId,after_uid:ids.at(-1),previous_uids:ids.slice(0,-1),strict:true,anchor_chain:messages.map(m=>({uid:m.uid,signature:messageSignature(m)})),patch:inversePatch(e.data,current.state)};
   const staged={...current,manual_edits:[...(current.manual_edits??[]),edit],database_operations:{...(bundle.database_operations??{}),[operationId]:{hash,contextKey:key,anchor_uid:ids.at(-1)??null}},phone_action_reservations:{...(bundle.phone_action_reservations??{}),...Object.fromEntries((source?.newPhoneActions??[]).map(a=>[a.id,{fingerprint:digest(a),operationId,contextKey:key}]))}};
-  const next={...reconcile(staged,messages).bundle,local_revision:(bundle.local_revision??0)+1};
+  const reconciled=reconcile(staged,messages),next={...reconciled.bundle,local_revision:(bundle.local_revision??0)+1};
   assertCurrent?.();if(chatKey(ctx())!==key)fail('CHAT_CHANGED','保存期间已切换会话');if(!await storage.commit(id,bundle.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已经更新此会话，请刷新后重试');
   try{assertCurrent?.();}catch(error){error.databaseCommitReceipt={operationId,revision:next.local_revision,contextKey:key};throw error;}
+  const scope=next.journal?.scope??next.state.runtime?.scope,playerBinding=config.read().story.userBinding;
+  void finalProjection.adopt(id,{bundle:next,messages,scope,proof:phoneProof(c),playerBinding,manualReview},{...reconciled,bundle:next,...projectMaterials(next,scope,playerBinding)});
   notify({status:'表单事务已保存',bundle:clone(next),database:true});
   return {state:clone(next.state),revision:next.local_revision,contextKey:key,receipt:clone(transaction)};
  }

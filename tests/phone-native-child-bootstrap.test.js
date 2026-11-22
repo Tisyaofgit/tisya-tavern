@@ -25,8 +25,8 @@ async function fixture(){
 }
 
 test('a verified native child recovers only the inherited neutral bootstrap on the same UID candidate',async()=>{
- const f=await fixture(),before=clone([...f.disk]),writes=f.writes();
- assert.equal((await f.host.readDatabase()).phoneDetached,false);const phone=f.open();await phone.init();
+ const f=await fixture();assert.equal((await f.host.readDatabase()).phoneDetached,false);await f.host.flushProjectionCache();
+ const before=clone([...f.disk]),writes=f.writes(),phone=f.open();await phone.init();
  assert.equal(phone.getState().contextKey,f.childKey);assert.equal(f.writes(),writes);assert.deepEqual([...f.disk],before);assert.deepEqual(f.disk.get(f.parentId),f.parent);
 });
 
@@ -35,6 +35,6 @@ for(const kind of ['wrong-parent','missing-integrity','cross-group-origin'])test
  if(kind==='wrong-parent')f.c.chatMetadata.main_chat='unrelated-parent';
  if(kind==='missing-integrity')delete f.c.chatMetadata.integrity;
  if(kind==='cross-group-origin')f.c.chatMetadata[NS].origin_chat_keys=[JSON.stringify(['group','unrelated-group','native-parent'])];
- const before=clone([...f.disk]),writes=f.writes();assert.equal((await f.host.readDatabase()).phoneDetached,true);
+ assert.equal((await f.host.readDatabase()).phoneDetached,true);await f.host.flushProjectionCache();const before=clone([...f.disk]),writes=f.writes();
  await assert.rejects(f.open().init(),e=>e.code==='PHONE_DATABASE_DETACHED');assert.equal(f.writes(),writes);assert.deepEqual([...f.disk],before);
 });

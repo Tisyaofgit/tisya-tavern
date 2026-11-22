@@ -49,7 +49,11 @@ export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.sc
  });
  const codes=eventCodes(state),displayCode=id=>{const raw=String(codes.get(records.get(id).recordId)??'');return /^e/i.test(raw)?raw.toLocaleLowerCase():'e'+raw;};
  const target=id=>{const row=records.get(id);return {id,table:row.table,revision:row.rev,name:row.values.名称,kind:row.kind,...(row.table==='events'?{code:displayCode(id)}:{})};};
- const links=id=>records.get(id).paths.map(p=>p.id),related=id=>[...records.values()].filter(r=>r.id!==id&&(links(id).includes(r.id)||links(r.id).includes(id)));
+ const links=id=>records.get(id).paths.map(p=>p.id),relatedIds=new Map([...records.keys()].map(id=>[id,new Set()]));
+ for(const row of records.values())for(const path of row.paths)if(path.id!==row.id&&records.has(path.id)){relatedIds.get(row.id).add(path.id);relatedIds.get(path.id).add(row.id);}
+ // Index each edge once. Preserve canonical record order without rescanning
+ // every row's path array for every candidate during a detail read.
+ const related=id=>[...records.values()].filter(r=>relatedIds.get(id)?.has(r.id));
  const cards=[...records.values()].filter(r=>r.card),searchText=new Map(cards.map(r=>[r.id,(JSON.stringify(r.values)+' '+r.kind+' '+groups.find(g=>g.id===r.category).name+(r.table==='events'?' '+displayCode(r.id):'')).normalize('NFKC').toLocaleLowerCase()]));
  const number=value=>typeof value==='number'&&Number.isFinite(value)?value:null;
  const worldTime=ref=>{const row=typeof ref==='string'?records.get('M_WORLD_TIME#'+ref):null;if(!row)return null;const value=row.keys;return {year:number(value.year),season:number(value.season),month:number(value.month),day:number(value.day),hour:number(value.hour),minute:number(value.minute),tick:number(value.tick),precision:value.precision??'',original:value.original_text??'',calendar:typeof value.calendar_ref==='string'?value.calendar_ref:''};};
@@ -129,8 +133,8 @@ export function createMatrixAtlas(snapshot,{scope={...snapshot.state.runtime?.sc
 
 export async function readMatrixAtlasSnapshot(database){
  const snapshot=await database.read();if(!snapshot)fail('ENGINE_NOT_BOUND','请先接入当前会话表单');
- const stamp=JSON.stringify(snapshot.state),atlas=createMatrixAtlas(snapshot),scope=snapshot.state.runtime?.scope??{};
+ const atlas=createMatrixAtlas(snapshot),scope=snapshot.state.runtime?.scope??{};let stamp=null;
  return {data:{live:true,matrix:true,world:scope.world_ref??'当前世界',branch:scope.branch_ref??'当前线路',revision:snapshot.revision,matrixAtlas:atlas,layers:[['session','当前存档']],navigation:['atlas','timeline'],trace:[]},async verify(){
-  const current=await database.read();if(!current||current.contextKey!==snapshot.contextKey||current.revision!==snapshot.revision||JSON.stringify(current.state)!==stamp)fail('ATLAS_STALE','当前会话或档案已变化，请刷新图鉴');
+  const current=await database.read();stamp??=JSON.stringify(snapshot.state);if(!current||current.contextKey!==snapshot.contextKey||current.revision!==snapshot.revision||JSON.stringify(current.state)!==stamp)fail('ATLAS_STALE','当前会话或档案已变化，请刷新图鉴');
  }};
 }

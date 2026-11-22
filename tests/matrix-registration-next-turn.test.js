@@ -39,13 +39,26 @@ test('the first request after a database registration matches a cold reopen and 
  ],source:{kind:'identity-form'}});
  f.ctx.chat.push({is_user:true,mes:'继续'});
  const hot=await f.start(f.host);await f.host.flushProjectionCache();
- const derived=[...f.disk.entries()].find(([key])=>key.startsWith('derived:final-projection:'))?.[1];assert(derived);assert.equal(derived.value.bundle,undefined);assert(derived.value.materials);
+ const derived=[...f.disk.entries()].find(([key])=>key.startsWith('derived:final-projection:'))?.[1];assert(derived);assert.equal(derived.format,'tisya.final-projection/2');assert(derived.value.bundle,'cold reopen requires the complete derived bundle, not a reconcile-only fragment');assert(derived.value.materials);
  const coldHost=createMatrixHost(f.options);coldHost.register();
  const cold=await f.start(coldHost);
  assert.deepEqual(hot,cold);assert(coldHost.projectionCacheReport().diskHits>0,'cold reopen must reuse the verified final projection');
  const text=hot.messages.map(message=>message.content).join('\n');
  assert.match(text,/阿青/);
  assert.match(text,/河口旅人/);
+});
+
+test('a cold read-only database and archive opening reuse the persisted final projection',async()=>{
+ const f=await fixture();f.ctx.chat.push({is_user:true,mes:'登记阿青'},{is_user:false,mes:'已登记。'});await f.host.sync();await f.host.flushProjectionCache();
+ const coldHost=createMatrixHost(f.options),actual=await coldHost.readDatabase(),expected=await f.host.readDatabase();
+ assert.deepEqual(actual,expected);assert.equal(coldHost.projectionCacheReport().diskHits,1);assert.equal(coldHost.projectionCacheReport().misses,0);
+});
+
+test('a direct database transaction also adopts its committed projection for the first cold read',async()=>{
+ const f=await fixture();f.ctx.chat.push({is_user:true,mes:'登记阿青'},{is_user:false,mes:'已登记。'});await f.host.sync();const database=await f.host.readDatabase();
+ await f.host.commitDatabase({operationId:'adopt-committed-projection',contextKey:database.contextKey,expectedRevision:database.revision,changes:[{tableId:'T_CHAR_DOSSIER',recordId:'committed-person',values:{name:'阿青'}}],source:{kind:'identity-form'}});await f.host.flushProjectionCache();
+ const coldHost=createMatrixHost(f.options),actual=await coldHost.readDatabase(),expected=await f.host.readDatabase();
+ assert.deepEqual(actual,expected);assert.equal(actual.state.tables.T_CHAR_DOSSIER['committed-person'].values.name,'阿青');assert.equal(coldHost.projectionCacheReport().diskHits,1);assert.equal(coldHost.projectionCacheReport().misses,0);
 });
 
 

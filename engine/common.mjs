@@ -39,7 +39,11 @@ export const sha256=input=>createSha256().update(input).digest();
 export async function sha256Async(input){
  const raw=typeof input==='string'?new TextEncoder().encode(input):input,subtle=globalThis.crypto?.subtle;
  if(subtle){const bytes=await subtle.digest('SHA-256',raw);return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');}
- return sha256(raw);
+ // Insecure HTTP hosts do not expose SubtleCrypto. Keep the identical fallback
+ // hash, but yield between bounded chunks instead of freezing the whole UI.
+ const engine=createSha256(),size=256*1024;
+ for(let offset=0;offset<raw.length;offset+=size){engine.update(raw.subarray(offset,Math.min(offset+size,raw.length)));if(offset+size<raw.length)await new Promise(resolve=>setTimeout(resolve,0));}
+ return engine.digest();
 }
 export const digest=v=>sha256(stable(v));
 export const digestAsync=v=>sha256Async(stable(v));

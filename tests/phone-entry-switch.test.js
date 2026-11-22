@@ -40,7 +40,7 @@ async function fixture(){
  const document={createElement(tag){return {tag,style:{},setAttribute(){},contentWindow:null,remove(){}};}};
  const uiDeps={mayLeaveUtility:async()=>true,getPhoneService,initializeLifeForCurrentSelection:async()=>{},close:()=>{ui.closures++;},closeNativeDrawers:()=>{},hideAllPanels:()=>{},document,renderEpoch:0,page:(title,html)=>ui.pages.push({title,html,key:chatKey(context())}),esc:value=>String(value),query:selector=>{if(!nodes.has(selector))nodes.set(selector,{append:node=>ui.frames.push({src:node.src,key:chatKey(context())})});return nodes.get(selector);},openIdentity:async()=>{},hidePage:()=>{},error:()=>{},phoneChatKey:chatKey,context,utility:null};
  const openVirtualPhone=Function(...Object.keys(uiDeps),extracted('async function openVirtualPhone(','\nasync function openWorldSeed(')+'\nreturn openVirtualPhone;')(...Object.values(uiDeps));
- select('A');await host.ensureDatabase();const a=await getPhoneService();
+ select('A');await host.ensureDatabase();const a=await getPhoneService();await host.flushProjectionCache();
  return {host,context,select,disk,getPhoneService,phoneServices,pausePeek,ui,openVirtualPhone,a,writes:()=>writes,saves:()=>saves};
 }
 

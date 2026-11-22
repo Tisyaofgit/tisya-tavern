@@ -18,6 +18,14 @@ test('async SHA-256 and canonical digests preserve the exact synchronous signatu
  assert.equal(await digestAsync({b:[2,'世界'],a:1}),digest({a:1,b:[2,'世界']}));
 });
 
+test('SHA-256 fallback yields between bounded chunks when SubtleCrypto is unavailable',async()=>{
+ const descriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto'),raw=new TextEncoder().encode('世界🌙'.repeat(200000));let ticks=0,timer;
+ Object.defineProperty(globalThis,'crypto',{value:undefined,configurable:true});
+ const tick=()=>{ticks++;timer=setTimeout(tick,0);};timer=setTimeout(tick,0);
+ try{assert.equal(await sha256Async(raw),sha256(raw));assert(ticks>0,'fallback hashing never yielded to the UI event loop');}
+ finally{clearTimeout(timer);if(descriptor)Object.defineProperty(globalThis,'crypto',descriptor);else delete globalThis.crypto;}
+});
+
 test('review context fingerprints remain the exact canonical hashes of every projected prefix',()=>{
  const messages=Array.from({length:120},(_,i)=>({uid:'m'+i,role:i%2?'assistant':'user',text:'正文 '+i+' 🌙'}));
  const firstContext=digest([messages[0]]),decision={uid:'m1',contextHash:firstContext,sourceHash:sha256(messages[1].text),reply:'已确认回复',active:true};

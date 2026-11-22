@@ -33,7 +33,7 @@ test('a completed A to B switch reads B existing progress through warm and cold 
  const f=fixture(),a=await f.initialize('A','A 的已有搜索'),b=await f.initialize('B','B 的已有搜索');
  f.load('A',a.saved);await f.settled();const reopenedA=f.service();await reopenedA.init();assert.deepEqual(reopenedA.getState(),a.state);
  const storedA=structuredClone(f.disk.get(a.owner));
- f.load('B',b.saved);await f.settled();const before=f.writes(),storedB=structuredClone(f.disk.get(b.owner));
+ f.load('B',b.saved);await f.settled();await f.host.flushProjectionCache();const before=f.writes(),storedB=structuredClone(f.disk.get(b.owner));
  await b.phone.init();const reopenedB=f.service();await reopenedB.init();
  assert.deepEqual(b.phone.getState(),b.state);assert.deepEqual(reopenedB.getState(),b.state);
  assert.notEqual(a.owner,b.owner);assert.deepEqual(f.context().chatMetadata[NS].origin_chat_keys,[]);
@@ -82,7 +82,7 @@ test('a same-chat native clear or reload cannot be projected as a detached branc
 
 test('a real deleted initialization floor stays detached and does not reset the saved phone',async()=>{
  const f=fixture(),a=await f.initialize('A','不可重置的已有搜索');f.context().chat.splice(0,1);
- await f.host.controller.event('CHAT_CHANGED');const before=structuredClone([...f.disk]),writes=f.writes();
+ await f.host.controller.event('CHAT_CHANGED');await f.host.flushProjectionCache();const before=structuredClone([...f.disk]),writes=f.writes();
  assert.equal((await f.host.readDatabase()).phoneDetached,true);
  await assert.rejects(f.service().init(),error=>error.code==='PHONE_DATABASE_DETACHED');
  assert.equal(f.writes(),writes);assert.deepEqual([...f.disk],before);

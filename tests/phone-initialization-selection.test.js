@@ -111,7 +111,7 @@ test('a completed storage write remains recorded when its caller expires before 
 
 test('existing life data survives rejected initialization and a cold host reopen',async()=>{
  const f=await serviceFixture();await f.service.initLife(f.profile);await f.service.dispatchLife({id:'saved-transfer',type:'wallet.transfer',to:'person-b',amount:50},{expectedRevision:f.service.getState().revision});
- const before=await f.db.snapshot(),writes=f.writes();f.change();await assert.rejects(f.service.initLife(f.profile,{assertCurrent:f.assertCurrent}),changed);
+ const before=await f.db.snapshot();await f.db.host.flushProjectionCache();const writes=f.writes();f.change();await assert.rejects(f.service.initLife(f.profile,{assertCurrent:f.assertCurrent}),changed);
  const cold=await currentPhoneHost({context:f.context,storage:f.disk});const reopened=createPhoneService({seed,contextKey:f.key,storage:cold.phoneStorage});await reopened.init();
  assert.equal(reopened.readLife().state.wallet.accounts[0].balance,99950);assert.equal(f.writes(),writes);assert.deepEqual(await cold.snapshot(),before);
 });

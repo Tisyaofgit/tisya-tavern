@@ -30,7 +30,7 @@ async function fixture(){
  const facade=Function('phoneTurn','isGenerating','revisionController','context','phoneChatKey','return '+facadeCode)(phoneTurn,deps.isGenerating,deps.revisionController,context,chatKey);
  function select(id,metadata={integrity:id+'-integrity'},messages=[{is_user:false,mes:'合成 '+id}]){live={...live,chatId:id,chatMetadata:metadata};for(let i=0;i<messages.length;i++)chat[i]=clone(messages[i]);chat.length=messages.length;phoneTurn.contextChanged();}
  select('B');await host.ensureDatabase();await getPhoneService();const bPayload={metadata:clone(context().chatMetadata),messages:clone(chat)};
- select('A');await host.ensureDatabase();const a=await getPhoneService();
+ select('A');await host.ensureDatabase();const a=await getPhoneService();await host.flushProjectionCache();
  function pauseGet(){const wait={begun:deferred(),hold:deferred()};waitGet=wait;return {begun:wait.begun.promise,release:()=>wait.hold.resolve()};}
  return {context,host,disk,saves,phoneTurn,facade,a,select,pauseGet,bPayload,switchAfterService:action=>{afterService=action;}};
 }

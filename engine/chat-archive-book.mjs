@@ -41,15 +41,18 @@ export function createChatArchiveStorage({storage,books,getContext}){
    try{
     const refs=await bind(owner),ref=refs.archive_book;name=ref.name;dossierName=refs.dossier_book.name;historyName=refs.history_book.name;
     const bundle=await storage.get(id);check(bundle?.state?.schema&&bundle?.state?.tables,'ARCHIVE_STATE_MISSING','本地存档读取失败，未创建空白替代');
-    revision=bundle.local_revision??0;const value={format:FORMAT,chat_uid:id,owner_chat_key:owner.key,revision,hash:digest(bundle),bundle};
-    reports.set(id,{status:'saving',name,dossier_name:dossierName,history_name:historyName,revision});
-    const objects=await syncObjectArchiveBooks({books,owner,bundle,dossierRef:refs.dossier_book,historyRef:refs.history_book});
+    revision=bundle.local_revision??0;
+    // A cold reopen is a cache lookup, not a request to rebuild every derived
+    // dossier and event. Validate the persisted checkpoint before doing any
+    // object-archive work; only an actual revision/content change can continue.
     const names=await books.listBooks();const exists=names.includes(name),data=exists?await books.readBook(name):{entries:{}};
-    let current=exists?decode(data,owner):null;
+    const current=exists?decode(data,owner):null,hash=digest(bundle),value={format:FORMAT,chat_uid:id,owner_chat_key:owner.key,revision,hash,bundle};
     if(current){
      check(current.value.revision<=revision,'ARCHIVE_BOOK_NEWER','存档书版本较新，未用本机旧数据覆盖');
-     if(current.value.revision===revision){check(current.value.hash===value.hash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,objects:objects.objects,events:objects.events});return clone(reports.get(id));}
+     if(current.value.revision===revision){check(current.value.hash===hash,'ARCHIVE_BOOK_CONFLICT','同一版本的本地存档与存档书不同，已保留双方');reports.set(id,{status:'saved',name,dossier_name:dossierName,history_name:historyName,revision,reused:true});return clone(reports.get(id));}
     }
+    reports.set(id,{status:'saving',name,dossier_name:dossierName,history_name:historyName,revision});
+    const objects=await syncObjectArchiveBooks({books,owner,bundle,dossierRef:refs.dossier_book,historyRef:refs.history_book});
     // Recheck the concrete file immediately before replacing it; preserve all
     // user entries and native book metadata outside our single owned entry.
     if(exists)check(digest(await books.readBook(name))===digest(data),'ARCHIVE_BOOK_CONFLICT','保存前存档书被其他页面修改，请重试');

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMatrixHost} from '../engine/host.mjs';
-import {digest} from '../engine/common.mjs';
+import {digest,stable} from '../engine/common.mjs';
 
 function fixture({catalog,signature=digest(catalog),loadCatalog=null,storage=null,onError=()=>{}}={}){
  const disk=new Map(),context={chatId:'catalog-cache',characterId:0,chat:[],chatMetadata:{},extensionSettings:{}};
@@ -14,6 +14,7 @@ function fixture({catalog,signature=digest(catalog),loadCatalog=null,storage=nul
 test('signed catalog cache reopens without a network read and concurrent first loads share one fetch',async()=>{
  const catalog={tables:[{id:'T_ONE',label:'一',fields:[]}]},f=fixture({catalog});
  const [first,second]=await Promise.all([f.host.catalog(),f.host.catalog()]);assert.deepEqual(first,second);assert.equal(f.loads(),1);
+ const row=f.disk.get('derived:matrix-catalog');assert.equal(row.format,'tisya.matrix-catalog/3');assert.equal(typeof row.bytes,'string');assert.equal('value' in row,false);
  // The reopening fixture uses the same canonical backend through cloning wrappers.
  const storage={get:async key=>structuredClone(f.disk.get(key)),set:async(key,value)=>f.disk.set(key,structuredClone(value))};
  const cached=fixture({catalog,storage,loadCatalog:()=>{throw Error('network must not be read');}});
@@ -26,7 +27,7 @@ test('stale or corrupted cached bytes never replace the signed official catalog'
  const storage={get:async key=>structuredClone(f.disk.get(key)),set:async(key,value)=>f.disk.set(key,structuredClone(value))};
  f.disk.get('derived:matrix-catalog').signature=digest(other);
  const stale=fixture({catalog:official,storage});assert.deepEqual(await stale.host.catalog(),await f.host.catalog());assert.equal(stale.loads(),1);
- f.disk.get('derived:matrix-catalog').signature=digest(official);f.disk.get('derived:matrix-catalog').value=other;
+ f.disk.get('derived:matrix-catalog').signature=digest(official);f.disk.get('derived:matrix-catalog').bytes=stable(other);
  const corrupted=fixture({catalog:official,storage});assert.deepEqual(await corrupted.host.catalog(),await f.host.catalog());assert.equal(corrupted.loads(),1);
 });
 

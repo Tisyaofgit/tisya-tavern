@@ -22,7 +22,8 @@ function fixture(){
 test('opening creates disabled dossier, history and complete recovery books; repeat/cold open reuse them',async()=>{
  const f=fixture();await Promise.all([f.open(),f.open()]);const id=f.c.chatMetadata[NS].chat_uid;
  assert.equal(f.files.size,3);assert.equal(f.writes.length,3);assert.equal(f.c.chatMetadata.world_info,'已有剧情书');assert.deepEqual(f.content().bundle,f.disk.get(id));assert([...f.files.values()].every(book=>Object.values(book.entries).every(row=>row.disable===true)));
- const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(f.writes.length,3);assert.equal(fresh.status().status,'saved');
+ const archiveName=f.c.chatMetadata[NS].archive_book.name,read=f.books.readBook,reads=[];f.books.readBook=async name=>{reads.push(name);if(name!==archiveName)throw Error('unchanged cold open must not rebuild object archives');return read(name);};
+ const fresh=createChatArchiveStorage({storage:f.base,books:f.books,getContext:()=>f.c});await fresh.sync();assert.equal(f.writes.length,3);assert.deepEqual(reads,[archiveName]);assert.equal(fresh.status().status,'saved');assert.equal(fresh.status().reused,true);
 });
 test('old chat state is checkpointed without reset or replay',async()=>{
  const f=fixture();f.c.chatMetadata[NS]={chat_uid:'old',owner_chat_key:chatKey(f.c),enabled:true};const old={state:f.state(),local_revision:12,manual_edits:[{keep:'原修改'}]};f.disk.set('old',copy(old));await f.open();assert.deepEqual(f.content().bundle,old);assert.deepEqual(f.disk.get('old'),old);

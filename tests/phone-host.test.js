@@ -40,7 +40,8 @@ test('真实Matrix表单是手机唯一真源；重复初始化不另写metadata
 });
 
 test('损坏数据库绑定拒绝，不拿空种子覆盖原始值',async()=>{
- const f=await fixture(),id=f.c.chatMetadata[NS].chat_uid,bundle=await f.engineStorage.get(id);bundle.state.tables.X_PHONE_BINDINGS['phone-current'].values.layout={damaged:true};await f.engineStorage.set(id,bundle);const writes=f.counters().diskWrites;
+ const f=await fixture(),id=f.c.chatMetadata[NS].chat_uid,bundle=await f.engineStorage.get(id);bundle.state.tables.X_PHONE_BINDINGS['phone-current'].values.layout={damaged:true};await f.engineStorage.set(id,bundle);
+ await assert.rejects(f.storage.load());await f.database.host.flushProjectionCache();const writes=f.counters().diskWrites;
  await assert.rejects(f.storage.load());assert.deepEqual((await f.engineStorage.get(id)).state.tables.X_PHONE_BINDINGS['phone-current'].values.layout,{damaged:true});assert.equal(f.counters().diskWrites,writes);
 });
 
