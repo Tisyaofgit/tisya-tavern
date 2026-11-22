@@ -1,8 +1,10 @@
-import {clone,digest,sha256,fail} from './common.mjs';
+import {clone,createSha256,sha256,fail} from './common.mjs';
 import {envelope} from './reply.mjs';
 import {xmlTokens} from '../reader-core.js';
 
-const contextSignature=messages=>digest(messages.map(m=>({uid:m.uid,role:m.role,text:m.text??''})));
+// Canonical keys are already in stable() order. Hash the same JSON bytes as
+// digest(messages.map(...)), while retaining each completed SHA-256 prefix.
+const contextMessage=m=>JSON.stringify({role:m.role,text:m.text??'',uid:m.uid});
 export function enableTurnReview(bundle){
  if(bundle.turn_review)return bundle;
  const legacy=Object.values(bundle.state.runtime?.sources??{}).map(s=>({uid:s.entry_id,sourceHash:s.host_message_sha256??s.reply_sha256,reply:s.reply_raw}));
@@ -10,15 +12,20 @@ export function enableTurnReview(bundle){
 }
 export function reviewProjection(bundle,messages){
  if(!bundle.turn_review)return {messages:clone(messages),reviews:[]};
- const projected=[],reviews=[],baseline=new Set((bundle.journal?.baseline_messages??[]).map(m=>m.uid));
+ const projected=[],reviews=[],baseline=new Set((bundle.journal?.baseline_messages??[]).map(m=>m.uid)),prefix=createSha256().update('['),decisionIndex=new Map(),legacyIndex=new Map();
+ for(const decision of bundle.turn_review.decisions??[])if(decision.active!==false){const rows=decisionIndex.get(decision.uid)??[];rows.push(decision);decisionIndex.set(decision.uid,rows);}
+ for(const decision of bundle.turn_review.legacy??[]){const rows=legacyIndex.get(decision.uid)??[];rows.push(decision);legacyIndex.set(decision.uid,rows);}
  for(const [index,m]of messages.entries()){
-  if(!['assistant','assistant_pending'].includes(m.role)||baseline.has(m.uid)){projected.push(clone(m));continue;}
-  const contextHash=contextSignature(projected),sourceHash=sha256(m.text??''),decisions=(bundle.turn_review.decisions??[]).filter(d=>d.uid===m.uid&&d.contextHash===contextHash&&d.active!==false);
+  if(!['assistant','assistant_pending'].includes(m.role)||baseline.has(m.uid)){projected.push(clone(m));prefix.update((index?',':'')+contextMessage(projected.at(-1)));continue;}
+  // Empty projected history is exactly digest([]). Later hashes reuse the
+  // canonical prefix and only consume the newly projected message.
+  const contextHash=prefix.digest(']'),sourceHash=sha256(m.text??''),decisions=(decisionIndex.get(m.uid)??[]).filter(d=>d.contextHash===contextHash);
   const exact=decisions.findLast(d=>d.sourceHash===sourceHash||sha256(d.reply)===sourceHash),prior=exact??decisions.at(-1);
-  const legacy=(bundle.turn_review.legacy??[]).find(d=>d.uid===m.uid&&(d.sourceHash===sourceHash||sha256(d.reply)===sourceHash));
+  const legacy=(legacyIndex.get(m.uid)??[]).find(d=>d.sourceHash===sourceHash||sha256(d.reply)===sourceHash);
   if(prior)projected.push({uid:m.uid,role:'assistant',text:prior.reply,review_confirmed:prior.archive_pending!==true});
   else if(legacy)projected.push({...clone(m),role:'assistant'});
   else projected.push({...clone(m),role:'assistant_pending'});
+  prefix.update((index?',':'')+contextMessage(projected.at(-1)));
   reviews.push({uid:m.uid,index,sourceHash,contextHash,status:exact?.archive_pending===true?'pending':exact||legacy?'confirmed':'pending',previousConfirmed:!!prior&&!exact&&!prior.archive_pending,archivePending:exact?.archive_pending===true,decision:exact??null});
  }
  return {messages:projected,reviews};

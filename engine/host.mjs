@@ -59,7 +59,12 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  let storageOwner;storage??={get:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).get(...a),set:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).set(...a),commit:(...a)=>(storageOwner??=indexedStorage(globalThis.indexedDB)).commit(...a)};
  let pendingRevision=null,pendingUserRevision=null;let catalogPromise,prepared=null,latest=null,slots={},busy=false,referenceSnapshot=null,narrativeLoreSnapshot=null;const listeners=new Set();
  const catalog=()=>{if(!catalogPromise){const request=Promise.resolve().then(loadCatalog).then(extendMatrixCatalog).catch(error=>{if(catalogPromise===request)catalogPromise=null;throw error;});catalogPromise=request;}return catalogPromise;};
- const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError});
+ const projectionStorage=storage,finalProjection=createFinalProjectionCache({storage:projectionStorage,onError,
+  // The authoritative bundle is read and reconciled on a cold reopen. Persist
+  // only the expensive derived materials instead of a second full database.
+  persist:value=>({materials:value.materials,materials_error:value.materials_error}),
+  restore:(derived,input)=>({...reconcile(input.bundle,input.messages,input.scope,{...input.proof,playerBinding:input.playerBinding}),...derived})
+ });
  const config=createConfiguration({getContext,persist:persistSettings,assertIdle});
  const ctx=()=>{const c=getContext();return {...c,saveMetadata:()=>persistMetadata(c,{id:c.chatId,character:c.characterId,group:c.groupId,meta:c.chatMetadata})};};
  const contextRecorder=createMatrixContextRecorder({getKey:()=>chatKey(ctx()),transport:requestTransport});
@@ -68,13 +73,13 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  const archive=archiveBooks?createChatArchiveStorage({storage,books:archiveBooks,getContext:ctx}):null;if(archive)storage=archive.storage;
  const phoneProof=c=>{const key=chatKey(c),nativeMessages=(c.chat??[]).map(m=>({mes:m.mes,is_user:m.is_user,is_system:m.is_system,extra:{tisya_engine:m.extra?.tisya_engine},swipe_id:m.swipe_id,swipes:m.swipes,swipe_info:m.swipe_info?.map(info=>({extra:{tisya_engine:info?.extra?.tisya_engine}})),tt_swipe_cold:m.tt_swipe_cold}));return {contextKey:key,nativeMessages,allowedOriginContextKeys:phoneOrigins(c,key)};};
  const reconcile=(bundle,messages,scope,proof=phoneProof(ctx()))=>bundleProjection(bundle,messages,scope,proof);
+ const projectMaterials=(bundle,scope,playerBinding)=>{let materials={},materials_error;try{materials=materialProjection(bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}return {materials,materials_error};};
+ const committedResponse=(result,next)=>({...result,bundle:next,preview:true,...projectMaterials(next,next.journal?.scope??next.state.runtime?.scope,config.read().story.userBinding)});
  const notify=r=>{latest=r;for(const fn of listeners)fn(r);};
  const controller=new Controller({getContext:ctx,storage,onUpdate:notify,request:async(_path,{bundle,messages,scope})=>{
   const id=ctx().chatMetadata?.[NS]?.chat_uid,proof=phoneProof(ctx()),playerBinding=config.read().story.userBinding;
   return finalProjection.project(id,{bundle,messages,scope,proof,playerBinding,manualReview},()=>{
-   const result=reconcile(bundle,messages,scope,{...proof,playerBinding});let values={},materials_error;
-   try{values=materialProjection(result.bundle.state,{...scope,playerBinding,narrativeReading:true});}catch(e){materials_error=asError(e);}
-   return {...result,materials:values,materials_error};
+   const result=reconcile(bundle,messages,scope,{...proof,playerBinding});return {...result,...projectMaterials(result.bundle,scope,playerBinding)};
   });
  }});
  controller.inject=async()=>{ctx().setExtensionPrompt?.(PROMPT_KEY,'',0,0,false,0);};
@@ -144,11 +149,16 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
  }
  async function ensureBound(options={}){assertIdle();const result=await controller.ensureBound(async scope=>initializeState(await catalog(),scope),options);if(result.key){options.assertCurrent?.();if(chatKey(ctx())!==result.key||ctx().chatMetadata?.[NS]?.chat_uid!==result.id)fail('CHAT_CHANGED','自动接入后聊天已切换');await archive?.sync();options.assertCurrent?.();}return result;}
  async function initialize(){assertIdle();const current=await controller.current();if(current)fail('ENGINE_EXISTS','本会话已有引擎状态，请导出备份或继续使用');const c=ctx();await controller.attach({state:initializeState(await catalog(),{session_ref:String(c.chatId),branch_ref:'main'})});await sync();}
- async function sync(options={}){busy=true;try{const r=await controller.run(options);if(r?.materials_error)fail('MATERIALS_ERROR','表单已保存，材料读取失败',{error:r.materials_error});slots={...(r?.materials??{}),tisya_preference_texts:JSON.stringify(preferenceTextRows(r?.bundle?.state))};const selected=config.read().story.outputConfigId;if(selected){const row=r?.bundle?.state?.tables?.T_PREF_OUTPUT_CONFIG?.[selected];if(!row)fail('OUTPUT_CONFIGURATION_MISSING','当前输出配置记录已不存在');slots.tisya_output_configuration=JSON.stringify(row.values);}const identities=await identitySlots(ctx(),config.read(),persona(),{state:r?.bundle?.state,revision:r?.bundle?.local_revision??0,contextKey:chatKey(ctx())});slots.tisya_contractor_wish=identities.tisya_contractor_wish?identities.tisya_contractor_wish.replace('[/CONTRACTOR.WISH]',()=>[slots.tisya_contractor_wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n')):slots.tisya_contractor_wish?'[CONTRACTOR.WISH]\n'+slots.tisya_contractor_wish+'\n[/CONTRACTOR.WISH]':'';slots.tisya_user_identity=identities.tisya_user_identity;
- if(config.read().story.userBinding?.database&&slots.tisya_material_player_archive&&promptEnabled(getSource(),'tisya_material_player_archive')){
-  slots.tisya_user_identity='[USER.IDENTITY]\n故事主角：'+identities.tisya_user_name+'\n详档见 PlayerArchive。\n[/USER.IDENTITY]';
+ async function present(r){
+  if(r?.materials_error)fail('MATERIALS_ERROR','表单已保存，材料读取失败',{error:r.materials_error});slots={...(r?.materials??{}),tisya_preference_texts:JSON.stringify(preferenceTextRows(r?.bundle?.state))};const selected=config.read().story.outputConfigId;if(selected){const row=r?.bundle?.state?.tables?.T_PREF_OUTPUT_CONFIG?.[selected];if(!row)fail('OUTPUT_CONFIGURATION_MISSING','当前输出配置记录已不存在');slots.tisya_output_configuration=JSON.stringify(row.values);}const identities=await identitySlots(ctx(),config.read(),persona(),{state:r?.bundle?.state,revision:r?.bundle?.local_revision??0,contextKey:chatKey(ctx())});slots.tisya_contractor_wish=identities.tisya_contractor_wish?identities.tisya_contractor_wish.replace('[/CONTRACTOR.WISH]',()=>[slots.tisya_contractor_wish,'[/CONTRACTOR.WISH]'].filter(Boolean).join('\n')):slots.tisya_contractor_wish?'[CONTRACTOR.WISH]\n'+slots.tisya_contractor_wish+'\n[/CONTRACTOR.WISH]':'';slots.tisya_user_identity=identities.tisya_user_identity;
+  if(config.read().story.userBinding?.database&&slots.tisya_material_player_archive&&promptEnabled(getSource(),'tisya_material_player_archive'))slots.tisya_user_identity='[USER.IDENTITY]\n故事主角：'+identities.tisya_user_name+'\n详档见 PlayerArchive。\n[/USER.IDENTITY]';
+  slots.tisya_user_name=identities.tisya_user_name;for(const [name,text]of Object.entries(resourcePromptSlots(config.read().resources??[])))slots[name]=[slots[name],text].filter(Boolean).join('\n');return r;
  }
- slots.tisya_user_name=identities.tisya_user_name;for(const [name,text]of Object.entries(resourcePromptSlots(config.read().resources??[])))slots[name]=[slots[name],text].filter(Boolean).join('\n');return r;}finally{busy=false;}}
+ async function sync(options={}){busy=true;try{return await present(await controller.run(options));}finally{busy=false;}}
+ // A successful CAS commit is already the authoritative result. Reuse its
+ // journal/state and compute materials once instead of reading and reconciling
+ // the identical turn a second time for the button's visual refresh.
+ async function syncCommitted(id,response){busy=true;try{controller.publish(id,response);return await present(response);}finally{busy=false;}}
  async function before(type,options={},dryRun=false){nativeSources?.end();if(dryRun||['quiet','impersonate'].includes(type)){prepared={passthrough:true,accepted:true};return;}prepared=null;referenceSnapshot=null;narrativeLoreSnapshot=null;await controller.inject();if(!controller.enabled())fail('ENGINE_NOT_BOUND','请在新版配置的“表单与存档”中接入本会话，或导入已有新版状态');await controller.beginGeneration();const key=chatKey(ctx()),settings=config.read();configureTags(settings.tags,settings.aliases);applyGeneration(ctx(),settings.generation);try{const reviewed=await sync({preview:true,omitLastAssistant:['swipe','regenerate','continue'].includes(type)});const historySources=captureMessages(ctx(),{omitLastAssistant:['swipe','regenerate'].includes(type)}).map((m,i)=>({...m,hidden:!!ctx().chat[i]?.extra?.[Symbol.for('ignore')]}));const source=getSource(),recall=promptEnabled(source,'tisya_material_memory_excerpt');const reviewHistory=manualReview?prepareReviewHistory(reviewed.bundle,historySources,key,historyLimit(),{recall}):null;const native=await prepareNativeMvu(ctx(),nativeWorld,type,undefined,{groupMachineInExtra:true});nativeSources?.begin({type,dryRun});appendNativeMaterial(source,'tisya_material_cardflow',native?.text,'原卡变量规约');const displayFormats=displayFormatMaterial(getDisplayRules());appendNativeMaterial(source,'tisya_material_display_material',displayFormats,'原卡显示格式');if(chatKey(ctx())!==key)fail('CHAT_CHANGED','准备期间已切换会话');const user=ctx().chat?.[ctx().chat.length-(ctx().chat.at(-1)?.is_user?1:2)],rewrite=['swipe','regenerate'].includes(type)?userRevisionMaterial(user):null,directives=[...revisionMessages(pendingRevision),...userRevisionMessages(pendingUserRevision??rewrite)],directions=await getContractorMessages({prepare:true});if(chatKey(ctx())!==key||config.read().revision!==settings.revision)fail('PREPARATION_STALE','会话或配置在准备期间变化');if(displayFormatMaterial(getDisplayRules())!==displayFormats)fail('DISPLAY_FORMAT_STALE','显示正则的格式或许可已变化，请重新生成');prepared={native,reviewHistory,recall,reviewBundle:reviewed.bundle,displayFormats,type,historyLimit:historyLimit(),directives,directions,user,userText:user?.mes,key,revision:settings.revision,source:clone(getSource()),settings,slots:clone(slots),narrativeSources:narrativeSourceFragments(ctx()),accepted:false};if(nativeSources)prepared.nativePresetLayers=createNativePresetLayers({settings:prepared.settings,slots:prepared.slots,type:prepared.type});}catch(e){nativeSources?.end();controller.generating.delete(key);throw e;}}
  // MVU copies identical variables to a newly sent user message asynchronously.
  // Compare script, contract and value bytes; a copied floor alone is not stale.
@@ -235,8 +245,8 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   const live=ctx();if(chatKey(live)!==key||live.chatMetadata?.[NS]?.chat_uid!==id||digest(captureMessages(live))!==stamp)fail('REVIEW_STALE','确认期间正文或会话已变化');
   const next={...result.bundle,local_revision:(original.local_revision??0)+1};
   if(!await storage.commit(id,original.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已更新存档，请重新核对');
-  bundleProjection.clear();materialProjection.clear();databaseProjection.clear();
-  if(chatKey(ctx())===key)await sync({preview:true});
+  if(chatKey(ctx())===key&&digest(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next));
+  else if(chatKey(ctx())===key)await sync({preview:true});
   return {status:rewind?'rewound':archiveIssue!==null?'archive-pending':'confirmed',uid:input.uid,revision:next.local_revision,archiveIssue};
  }
 
@@ -244,10 +254,10 @@ export function createMatrixHost({getContext,getSource,loadCatalog,storage=null,
   assertIdle();const {ctx:c,id,key}=await controller.identity();if(input.contextKey!==key)fail('CHAT_CHANGED','归档窗口所属会话已变化');
   const original=await storage.get(id);if(!original||input.expectedRevision!==(original.local_revision??0))fail('SAVE_CONFLICT','存档已更新，请刷新');
   const messages=captureMessages(c),stamp=digest(messages),current=reconcile(enableTurnReview(original),messages).bundle;
-  const staged=applyReviewAction(current,messages,key,input),next={...reconcile(staged,messages).bundle,local_revision:(original.local_revision??0)+1};
+  const staged=applyReviewAction(current,messages,key,input),result=reconcile(staged,messages),next={...result.bundle,local_revision:(original.local_revision??0)+1};
   if(chatKey(ctx())!==key||digest(captureMessages(ctx()))!==stamp)fail('REVIEW_STALE','操作期间会话或正文变化');
   if(!await storage.commit(id,original.local_revision??0,next))fail('SAVE_CONFLICT','另一页面已保存，请刷新');
-  bundleProjection.clear();materialProjection.clear();databaseProjection.clear();await sync({preview:true});return {status:'saved',revision:next.local_revision};
+  if(chatKey(ctx())===key&&digest(captureMessages(ctx()))===stamp)await syncCommitted(id,committedResponse(result,next));else await sync({preview:true});return {status:'saved',revision:next.local_revision};
  });databaseChain=job.catch(()=>{});return job;}
  async function generateBackfill(input){
   if(!request)fail('REVIEW_MODEL','尚未配置历史提炼接口，可手动填写');

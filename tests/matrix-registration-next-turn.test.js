@@ -26,7 +26,7 @@ async function fixture({manualReview=false,nativeSources=null}={}){
   await target.payloadReady(payload);
   return payload;
  }
- return {host,ctx,options,start};
+ return {host,ctx,options,start,disk};
 }
 
 test('the first request after a database registration matches a cold reopen and contains the new record',async()=>{
@@ -39,6 +39,7 @@ test('the first request after a database registration matches a cold reopen and 
  ],source:{kind:'identity-form'}});
  f.ctx.chat.push({is_user:true,mes:'继续'});
  const hot=await f.start(f.host);await f.host.flushProjectionCache();
+ const derived=[...f.disk.entries()].find(([key])=>key.startsWith('derived:final-projection:'))?.[1];assert(derived);assert.equal(derived.value.bundle,undefined);assert(derived.value.materials);
  const coldHost=createMatrixHost(f.options);coldHost.register();
  const cold=await f.start(coldHost);
  assert.deepEqual(hot,cold);assert(coldHost.projectionCacheReport().diskHits>0,'cold reopen must reuse the verified final projection');

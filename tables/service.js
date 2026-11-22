@@ -37,7 +37,7 @@ import {styleRules,stylePrompt,scanStyle} from './style-rules.js';
 import {validateGeneratedTask} from '../config/contracts.js';
 import {tableSettings,copy,check,isObjectType,sameDefinition,derive,normalized,registryIndex,validateRow,defaultRegistry,upgradeRegistry,mapRowReferences,references} from './schema.js';
 import {createBookGateway,digest} from './books.js';
-import {precedingUserSource,memoryBlock,taskTags,project,originPinsAtStart,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
+import {precedingUserSource,memoryBlock,taskTags,project,committedView,originPinsAtStart,parseJSONResponse,prepareCommit,prepareRecoverable,archivalText,historyEvidence,retrieval,sourceTime,dueChecks} from './ledger.js';
 import {worldbookEntries,createWorldbookProjection} from './worldbook-context.js';
 import {NARRATIVE_TAGS} from './prompts.js';
 import {parseOnePassReply,isOnePassReply} from '../onepass/reply.mjs';
@@ -96,8 +96,8 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
    const result=copy(parseJSONResponse(response));c.guard();status(task,'返回待校验');return result;
   }catch(e){const failure=requestError(e,signal);if(e.responseDiagnostic){progress={...progress,text:e.responseDiagnostic.text??progress.text,responseDiagnostic:copy(e.responseDiagnostic)};progress.characters=progress.text.length;}progress={...progress,stage:signal?.aborted?'stopped':'error',updatedAt:Date.now(),finishedAt:Date.now()};status(task,signal?.aborted?'已停止':'失败',failure.message,failure);throw failure;}
  }
- async function commit(c,loaded,proposal,options){
-  const prepared=(options.recover?prepareRecoverable:prepareCommit)(loaded.view,proposal,{...options,sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))});c.guard();let origin=loaded.origin;
+ async function commit(c,loaded,proposal,options,validated=null){
+  const prepared=validated??(options.recover?prepareRecoverable:prepareCommit)(loaded.view,proposal,{...options,sourceOrder:Object.fromEntries(loaded.chain.map(s=>[s.key,s.index]))});c.guard();let origin=loaded.origin;
   if(options.archiveProposal){prepared.commit.archiveProposal=copy(options.archiveProposal);prepared.commit.complete=false;}
   for(const change of prepared.commit.changes)if(change.after?.table==='preferences')change.after.preferenceConfirmed=true;
   if(options.independentPreference){check(options.source===null&&prepared.commit.changes.every(ch=>ch.after?.table==='preferences'),'独立偏好提交不得写入故事事实');prepared.commit.depends=null;}
@@ -115,7 +115,7 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
   // Plot changes are overlays of this save. Only explicit init/genesis writes
   // origin assets; ordinary archive/manual changes never rewrite the beginning.
   const next=copy(loaded.session.data);next.revision++;if(options.importSource)prepared.commit.importSource=copy(options.importSource);if(options.nativeReceipt)prepared.commit.nativeReceipt=copy(options.nativeReceipt);if(options.progression)prepared.commit.progression=copy(options.progression);next.commits.push(prepared.commit);if(options.reviewId){const draft=next.preferenceDrafts?.find(x=>x.id===options.reviewId);check(draft&&draft.status==='pending','偏好候选已处理');draft.status='accepted';draft.reviewedAt=new Date().toISOString();}
-  try{const session=await books.write(loaded.session,next,c.guard);status(options.kind,prepared.commit.complete===false?'部分待处理':'已保存',prepared.commit.changes.length+' 项修改'+(prepared.commit.pending?.length?'，'+prepared.commit.pending.length+' 项待修正':''));return {...loaded,origin,session,view:withGlobalPreferences(project(origin.data,session.data,loaded.chain.map(s=>s.key)),c.data.全局偏好)};}
+  try{const session=await books.write(loaded.session,next,c.guard);status(options.kind,prepared.commit.complete===false?'部分待处理':'已保存',prepared.commit.changes.length+' 项修改'+(prepared.commit.pending?.length?'，'+prepared.commit.pending.length+' 项待修正':''));return {...loaded,origin,session,view:withGlobalPreferences(committedView(loaded.view,prepared,next.revision),c.data.全局偏好)};}
   catch(e){if(origin.stamp!==loaded.origin.stamp)throw Error('原点候选版本已保存，但会话提交未确认；未绑定版本不会注入。'+e.message);throw e;}
  }
  async function archiveProposal(task,input,view,c,signal,reading){
@@ -157,15 +157,15 @@ export function createTableService({store,getContext,request,projectToolTurns,bo
     }
     let history=await archiveProposal(task,input,working,c,signal,reading);
     if(discovery)onlyArchiveObjects(history,working,false);
-    let proposal=discovery?mergeArchiveProposals(discovery,history):history;
-    try{prepareCommit(loaded.view,proposal,options);}catch(e){
+    let proposal=discovery?mergeArchiveProposals(discovery,history):history,validated=null;
+    try{validated=prepareCommit(loaded.view,proposal,options);}catch(e){
      status('楼层归档','修正格式',e.message);
      history=await archiveProposal(task,{...input,repair:{error:e.message,previous:history,instruction:'修正本次会话提案；保留正确项和所有 discovery ID。不能修改独立对象提案或编造证据，不能解决的项放入 pending。'}},working,c,signal,reading);
      if(discovery)onlyArchiveObjects(history,working,false);proposal=discovery?mergeArchiveProposals(discovery,history):history;
     }
     // Discovery and historical state share one commit. No discovery is visible
     // while the second request is in flight or if either request is cancelled.
-    loaded=await commit(c,loaded,proposal,{...options,recover:!discovery});
+    loaded=await commit(c,loaded,proposal,{...options,recover:!discovery},validated);
     if(!loaded.view.archived.has(source.key)){status('楼层归档','待处理','第 '+source.floor+' 层仍有未解决项目，后续楼层暂停');break;}
    }catch(e){c.guard();if(signal.aborted)throw e;status('楼层归档','待重试','第 '+source.floor+' 层：'+e.message);loaded=await commit(c,loaded,{changes:[],pending:[{reason:e.message,source:source.key,floor:source.floor}]},{...options});break;}
   }

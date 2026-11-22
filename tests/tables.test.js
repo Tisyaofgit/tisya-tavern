@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {KEY,emptyConfig,defaultWorld,createStore,worldKey,resolveRoute,registry} from '../config/core.js';
 import {defaultRegistry,addTypes,registryIndex,formula,derive,validateRow,upgradeRegistry} from '../tables/schema.js';
 import {createBookGateway} from '../tables/books.js';
-import {sources,project,prepareCommit,retrieval,taskTags} from '../tables/ledger.js';
+import {sources,project,committedView,prepareCommit,retrieval,taskTags} from '../tables/ledger.js';
 import {createTableService} from '../tables/service.js';
 import {createNativeVectors} from '../tables/vectors.js';
 const access={readers:['读者'],knowers:[]};
@@ -330,6 +330,17 @@ test('floor scanner, limited batches and repeat runs skip confirmed rows',async(
  const f=fixture();await f.service.initialize();f.c.chat=[ai('第一层'),user('第二层'),ai('第三层'),user('第四层'),ai('最新层')];const scan=await f.service.scan();assert.deepEqual(scan.map(x=>x.floor),[1,2,3,4,5]);assert.equal(scan.at(-1).latest,true);
  await f.service.archive({range:{from:1,to:5,limit:1}});assert.equal(f.calls.length,1);assert.equal(f.calls[0].task,'historyImport');assert.equal(f.calls[0].input.archiveSource.floor,1);
  await f.service.archive({range:{from:1,to:5,limit:5}});assert.equal(f.calls.length,2);assert.equal(f.calls[1].input.archiveSource.floor,3);await f.service.archive({range:{from:1,to:5,limit:5}});assert.equal(f.calls.length,2);
+});
+test('incremental committed views equal cold replay for discovery, history, partial and manual commits',()=>{
+ const origin={registry:defaultRegistry(),bases:[]},session={revision:0,commits:[]},sourceKeys=['floor-1','floor-2','floor-3'];let view={...blank(),anchors:[],commits:[],archived:new Set(),revision:0};
+ const compare=()=>{const cold=project(origin,session,sourceKeys);for(const key of ['registry','rows','anchors','commits','last','revision'])assert.deepEqual(view[key],cold[key],key);assert.deepEqual([...view.archived],[...cold.archived]);};
+ const apply=(proposal,options)=>{const prepared=prepareCommit(view,proposal,{allowedTables:['objects','state','events'],sourceOrder:{'floor-1':0,'floor-2':2,'floor-3':4},...options});session.commits.push(prepared.commit);session.revision++;view=committedView(view,prepared,session.revision);compare();return prepared;};
+ const discovered=apply({templates:[{id:'gate-keeper',name:'城门守卫',aliases:[],version:1,parent:'character',fields:{执勤门:{type:'text'}},evidence:'岚在城门。'}],changes:[op('new:person','objects',{名称:'岚',类型:'gate-keeper',属性:{执勤门:'城门'}},'岚在城门。'),op('new:arrival','events',{名称:'抵达',经过:'岚在城门。',参与者:['new:person']},'岚在城门。')]},{source:'floor-1',kind:'history',evidence:'岚在城门。'}),person=discovered.commit.changes[0].id;
+ apply({changes:[op('new:where','state',{名称:'岚位置',对象:person,字段:'当前位置',值:'城门'},'岚在城门。')],pending:[{reason:'待确认'}]},{source:'floor-2',kind:'archive',evidence:'岚在城门。'});assert.deepEqual([...view.archived],['floor-1']);
+ apply({changes:[op('new:departure','events',{名称:'离开',经过:'次日离开。',时间:'2026-04-02 11:30',参与者:[person]},'次日离开。')]},{source:'floor-3',kind:'archive',evidence:'2026-04-02 11:30 次日离开。'});assert.equal(view.anchors.at(-1).worldTime,'2026-04-02 11:30');
+ apply({changes:[op(person,'objects',{描述:'手动修订。'},'手动修订。',1)]},{source:null,kind:'manual',evidence:'手动修订。'});
+ assert.throws(()=>prepareCommit(view,{changes:[op('new:bad','state',{名称:'错误引用',对象:'missing',字段:'当前位置',值:'城门'},'手动修订。')]},{source:null,kind:'manual',evidence:'手动修订。',allowedTables:['state']}),/关联对象不存在/);
+ assert.throws(()=>prepareCommit(view,{changes:[op('new:duplicate','objects',{名称:'岚',类型:'gate-keeper'},'手动修订。')]},{source:null,kind:'manual',evidence:'手动修订。',allowedTables:['objects']}),/对象显示名称冲突/);compare();
 });
 test('handwritten import has review draft, original provenance, unknown time and duplicate guard',async()=>{
  const f=fixture();await f.service.initialize();f.responder(async()=>({templates:[],changes:[op('new:history','events',{名称:'旧事',经过:'曾到过城门'},'曾到过城门')]}));const before=JSON.stringify([...f.saved]);const draft=await f.service.importHistory('曾到过城门');assert.equal(JSON.stringify([...f.saved]),before);await f.service.saveHistory(draft);const data=await f.service.inspect();assert.equal(data.rows[0].table,'events');assert.equal(data.anchors[0].worldTime,null);assert.equal(data.session.commits[0].importSource.text,'曾到过城门');await assert.rejects(f.service.importHistory('曾到过城门'),/已导入/);

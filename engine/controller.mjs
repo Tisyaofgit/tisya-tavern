@@ -217,10 +217,11 @@ export class Controller{
             if(!ownsCurrent())return response;
             const fresh=capture(this.getContext());
             if(!fresh||signature(fresh)!==stamp)return retry();
-            this.materials.set(id,response.materials??{});this.packets.set(id,response.packet??'');this.onUpdate(response);return response;
+            this.publish(id,response);return response;
         });
         this.owners.set(id,task);try{const result=await task;if(result?.stale)return ownsCurrent()?this.run(options):null;return result;}finally{if(this.owners.get(id)===task)this.owners.delete(id);}
     }
+    publish(id,response){this.materials.set(id,response.materials??{});this.packets.set(id,response.packet??'');this.onUpdate(response);return response;}
     async beforeGeneration(type,abort){
         const c=this.getContext();if(!this.enabled(c)||type==='quiet'||type==='impersonate')return;
         const key=chatKey(c);await this.beginGeneration();

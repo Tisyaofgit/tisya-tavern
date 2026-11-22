@@ -6,18 +6,43 @@ export class EngineError extends Error {
 export const fail=(code,message,details)=>{throw new EngineError(code,message,details);};
 export const clone=v=>structuredClone(v);
 export const own=(o,k)=>Object.hasOwn(o??{},k);
-export const stable=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
+export const stable=v=>{
+ const stack=new Set();
+ function write(x){
+  if(x&&typeof x.toJSON==='function')x=x.toJSON();if(x===null||typeof x!=='object')return JSON.stringify(x);if(stack.has(x))throw new TypeError('Converting circular structure to JSON');stack.add(x);let out;
+  if(Array.isArray(x))out='['+x.map(item=>write(item)??'null').join(',')+']';else{const parts=[];for(const key of Object.keys(x).sort()){const text=write(x[key]);if(text!==undefined)parts.push(JSON.stringify(key)+':'+text);}out='{'+parts.join(',')+'}';}
+  stack.delete(x);return out;
+ }
+ return write(v);
+};
 const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
 const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
-export function sha256(input){
- const raw=typeof input==='string'?new TextEncoder().encode(input):input, n=Math.ceil((raw.length+9)/64)*64,b=new Uint8Array(n);b.set(raw);b[raw.length]=128;
- const d=new DataView(b.buffer);d.setUint32(n-8,Math.floor(raw.length/0x20000000));d.setUint32(n-4,(raw.length*8)>>>0);
- const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Uint32Array(64);
- for(let off=0;off<n;off+=64){for(let i=0;i<16;i++)w[i]=d.getUint32(off+4*i);for(let i=16;i<64;i++){const a=w[i-15],z=w[i-2];w[i]=(w[i-16]+(rotr(a,7)^rotr(a,18)^(a>>>3))+w[i-7]+(rotr(z,17)^rotr(z,19)^(z>>>10)))>>>0;}
- let [a,c,e,g,j,k,l,m]=h;for(let i=0;i<64;i++){const t1=(m+(rotr(j,6)^rotr(j,11)^rotr(j,25))+((j&k)^(~j&l))+K[i]+w[i])>>>0,t2=((rotr(a,2)^rotr(a,13)^rotr(a,22))+((a&c)^(a&e)^(c&e)))>>>0;m=l;l=k;k=j;j=(g+t1)>>>0;g=e;e=c;c=a;a=(t1+t2)>>>0;}[a,c,e,g,j,k,l,m].forEach((v,i)=>h[i]=(h[i]+v)>>>0);}
- return h.map(v=>v.toString(16).padStart(8,'0')).join('');
+// The streaming form lets callers hash growing canonical prefixes without
+// rereading every earlier message. digest(suffix) never mutates the prefix.
+export function createSha256(){
+ const state={h:[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],buffer:new Uint8Array(64),used:0,length:0,w:new Uint32Array(64)};
+ function compress(s,d,off){
+  const {h,w}=s;for(let i=0;i<16;i++)w[i]=d.getUint32(off+4*i);for(let i=16;i<64;i++){const a=w[i-15],z=w[i-2];w[i]=(w[i-16]+(rotr(a,7)^rotr(a,18)^(a>>>3))+w[i-7]+(rotr(z,17)^rotr(z,19)^(z>>>10)))>>>0;}
+  let [a,c,e,g,j,k,l,m]=h;for(let i=0;i<64;i++){const t1=(m+(rotr(j,6)^rotr(j,11)^rotr(j,25))+((j&k)^(~j&l))+K[i]+w[i])>>>0,t2=((rotr(a,2)^rotr(a,13)^rotr(a,22))+((a&c)^(a&e)^(c&e)))>>>0;m=l;l=k;k=j;j=(g+t1)>>>0;g=e;e=c;c=a;a=(t1+t2)>>>0;}[a,c,e,g,j,k,l,m].forEach((v,i)=>h[i]=(h[i]+v)>>>0);
+ }
+ function update(s,input){
+  const raw=typeof input==='string'?new TextEncoder().encode(input):input;s.length+=raw.length;let offset=0;
+  if(s.used){const take=Math.min(64-s.used,raw.length);s.buffer.set(raw.subarray(0,take),s.used);s.used+=take;offset=take;if(s.used===64){compress(s,new DataView(s.buffer.buffer),0);s.used=0;}}
+  if(offset<raw.length){const d=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);while(offset+64<=raw.length){compress(s,d,offset);offset+=64;}if(offset<raw.length){s.buffer.set(raw.subarray(offset));s.used=raw.length-offset;}}
+ }
+ const api={update(input){update(state,input);return api;},digest(suffix=''){
+  const s={...state,h:[...state.h],buffer:state.buffer.slice(),w:new Uint32Array(64)};if(suffix)update(s,suffix);const n=Math.ceil((s.used+9)/64)*64,tail=new Uint8Array(n);tail.set(s.buffer.subarray(0,s.used));tail[s.used]=128;const d=new DataView(tail.buffer);d.setUint32(n-8,Math.floor(s.length/0x20000000));d.setUint32(n-4,(s.length*8)>>>0);for(let off=0;off<n;off+=64)compress(s,d,off);return s.h.map(v=>v.toString(16).padStart(8,'0')).join('');
+ }};
+ return api;
+}
+export const sha256=input=>createSha256().update(input).digest();
+export async function sha256Async(input){
+ const raw=typeof input==='string'?new TextEncoder().encode(input):input,subtle=globalThis.crypto?.subtle;
+ if(subtle){const bytes=await subtle.digest('SHA-256',raw);return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');}
+ return sha256(raw);
 }
 export const digest=v=>sha256(stable(v));
+export const digestAsync=v=>sha256Async(stable(v));
 export const stableId=v=>uuid5(typeof v==='string'?v:digest(v));
 export const asError=e=>e?.toJSON?.()??{code:e?.code??'EXECUTION_ERROR',message:String(e?.message??e)};
 export function decimal(a,b,op='+'){

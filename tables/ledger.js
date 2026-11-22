@@ -43,6 +43,13 @@ export function project(origin,session,sourceKeys){
  const values=[...rows.values()];for(const row of values)validateRow(registry,row);validateReferences(values,registry);
  return {registry,inheritedTrace:copy(session.branchSeed?.history??[]),baseTime:session.branchSeed?.anchor?.worldTime??null,rows:values,anchors,commits:accepted,archived:new Set([...(session.branchSeed?.archivedSources??[]).filter(s=>allowed.has(s)),...accepted.filter(c=>['archive','history'].includes(c.kind)&&c.complete!==false).map(c=>c.source)]),last:accepted.at(-1)?.id??null,revision:session.revision};
 }
+export function committedView(view,prepared,revision){
+ const commit=prepared.commit,archived=['archive','history'].includes(commit.kind)&&commit.complete!==false?new Set([...view.archived,commit.source]):view.archived;
+ // prepareCommit already applied and validated this linear change against the
+ // authoritative view. Appending its receipt is the same projection as a full
+ // cold replay, without replaying every earlier commit after each floor.
+ return {...view,registry:commit.registry?upgradeRegistry(commit.registry):prepared.registry,rows:prepared.rows,anchors:[...view.anchors,...commit.anchors],commits:[...view.commits,commit],archived,last:commit.id,revision};
+}
 export function parseJSONResponse(response){
  if(object(response)&&(Array.isArray(response.issues)||Array.isArray(response.changes)||Array.isArray(response.needsRows)||Array.isArray(response.renames)||Array.isArray(response.events)||typeof response.goal==='string'||response.blueprint&&response.artifacts||response.base&&response.initial))return response;
  let text=typeof response==='string'?response:response?.choices?.[0]?.message?.content??response?.content?.filter?.(x=>x.type==='text').map(x=>x.text).join('')??response?.candidates?.[0]?.content?.parts?.map(x=>x.text??'').join('');

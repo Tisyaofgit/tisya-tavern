@@ -6,9 +6,18 @@ import {Runtime} from './runtime.mjs';
 import {acceptReply} from './reply.mjs';
 import {normalizeEnvelope} from './tags.mjs';
 import {REPLY_FORM_OWNERSHIP_VERSION,LEGACY_REPLY_FORM_OWNERSHIP_VERSION} from './reply-form-ownership.mjs';
+// JSON values in a bundle are acyclic. Compare them directly instead of
+// canonicalizing the whole database at every node of every inverse patch.
+function sameJson(a,b,arrayItem=false){
+ if(a&&typeof a.toJSON==='function')a=a.toJSON();if(b&&typeof b.toJSON==='function')b=b.toJSON();
+ if(a===null||b===null||typeof a!=='object'||typeof b!=='object'){const left=JSON.stringify(a),right=JSON.stringify(b);return left===right||(arrayItem&&(left??'null')===(right??'null'));}
+ if(Array.isArray(a)||Array.isArray(b)){if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(!sameJson(a[i],b[i],true))return false;return true;}
+ const serializable=v=>{if(v&&typeof v.toJSON==='function')v=v.toJSON();return v!==undefined&&typeof v!=='function'&&typeof v!=='symbol';},aKeys=Object.keys(a).filter(k=>serializable(a[k])),bKeys=Object.keys(b).filter(k=>serializable(b[k]));if(aKeys.length!==bKeys.length)return false;
+ for(const key of aKeys)if(!Object.hasOwn(b,key)||!sameJson(a[key],b[key]))return false;return true;
+}
 export function inversePatch(before,after,path=[]){
- if(stable(before)===stable(after))return [];if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after)){const out=[];for(const k of [...new Set([...Object.keys(before),...Object.keys(after)])].sort()){const p=[...path,k];if(!Object.hasOwn(before,k))out.push({op:'remove',path:p});else if(!Object.hasOwn(after,k))out.push({op:'set',path:p,value:clone(before[k])});else out.push(...inversePatch(before[k],after[k],p));}return out;}
- if(Array.isArray(before)&&Array.isArray(after)){let common=0;while(common<Math.min(before.length,after.length)&&stable(before[common])===stable(after[common]))common++;if(common===before.length)return [{op:'truncate',path,length:before.length}];if(before.length===after.length)return before.slice(common).flatMap((v,i)=>inversePatch(v,after[common+i],[...path,common+i]));return [{op:'splice',path,index:common,remove:after.length-common,items:clone(before.slice(common))}];}return [{op:'set',path,value:clone(before)}];
+ if(sameJson(before,after))return [];if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after)){const out=[];for(const k of [...new Set([...Object.keys(before),...Object.keys(after)])].sort()){const p=[...path,k];if(!Object.hasOwn(before,k))out.push({op:'remove',path:p});else if(!Object.hasOwn(after,k))out.push({op:'set',path:p,value:clone(before[k])});else out.push(...inversePatch(before[k],after[k],p));}return out;}
+ if(Array.isArray(before)&&Array.isArray(after)){let common=0;while(common<Math.min(before.length,after.length)&&sameJson(before[common],after[common]))common++;if(common===before.length)return [{op:'truncate',path,length:before.length}];if(before.length===after.length)return before.slice(common).flatMap((v,i)=>inversePatch(v,after[common+i],[...path,common+i]));return [{op:'splice',path,index:common,remove:after.length-common,items:clone(before.slice(common))}];}return [{op:'set',path,value:clone(before)}];
 }
 export function rewind(state,ops){for(const op of [...ops].reverse()){const path=op.path;if(!path.length){if(op.op!=='set')fail('SNAPSHOT_PATCH','根快照操作无效');state=clone(op.value);continue;}let parent=state;for(const k of path.slice(0,-1))parent=parent[k];const key=path.at(-1);if(op.op==='remove')delete parent[key];else if(op.op==='set')parent[key]=clone(op.value);else if(op.op==='truncate')parent[key].length=op.length;else if(op.op==='splice')parent[key].splice(op.index,op.remove,...clone(op.items));else fail('SNAPSHOT_PATCH','未知恢复操作');}return state;}
 export function reconcile(bundle,messages,scope,execution={}){
